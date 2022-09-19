@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
-project(YggInterfaceP)
+project(YggInterfaceCPP)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -14,7 +14,7 @@ endif("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
 
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${PROJECT_SOURCE_DIR}/cmake")
 
-file(GLOB_RECURSE SOURCES "communication/*.cpp")
+file(GLOB_RECURSE SOURCES "communication/**/*.cpp")
 
 set(YGG_BUILD_FLAGS "")
 #find cppzmq wrapper, installed by make of cppzmq
@@ -41,6 +41,8 @@ IF (cppzmq_FOUND)
     set(YGG_BUILD_FLAGS = "${YGG_BUILD_FLAGS} -DZMQ_BUILD_DRAFT_API")
 ENDIF()
 
+find_package(Boost REQUIRED)
+include_directories(${Boost_INCLUDE_DIRS})
 ########################################################################
 # LIBCZMQ dependency
 ########################################################################
@@ -61,7 +63,7 @@ ENDIF (libczmq_FOUND)
 
 find_package(OpenMP)
 if (OpenMP_FOUND)
-    set(YGG_BUILD_FLAGS "${YGG_BUILD_FLAGS} -D_OPENMP")
+    set(YGG_BUILD_FLAGS "${YGG_BUILD_FLAGS} -D_OPENMP -DMPIINSTALLED")
 endif()
 
 find_package(Python REQUIRED COMPONENTS Interpreter Development NumPy)
