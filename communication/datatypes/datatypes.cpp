@@ -1,6 +1,27 @@
 #include "datatypes.hpp"
 
-comm_head_t::comm_head_t(Address* adr, std::string id): address(adr), id(id){
+using namespace communication;
+using namespace communication::utils;
+using namespace communication::datatypes;
+
+/*!
+  @brief String comparison structure.
+ */
+struct strcomp : public std::binary_function<const char*, const char*, bool>
+{
+    /*!
+      @brief Comparison operator.
+      @param[in] a char const * First string for comparison.
+      @param[in] b char const * Second string for comparison.
+      @returns bool true if the strings are equivalent, false otherwise.
+     */
+    bool operator()(const char *a, const char *b) const
+    {
+        return strcmp(a, b) < 0;
+    }
+};
+
+comm_head_t::comm_head_t(utils::Address* adr, const std::string &id): address(adr), id(id){
     // Parameters set during read
     bodysiz = 0;
     bodybeg = 0;
@@ -83,7 +104,7 @@ int split_head_body(const char *buf, const size_t buf_siz,
     return 0;
 };
 
-comm_head_t::comm_head_t(const char *buf, const size_t buf_siz) {
+comm_head_t::comm_head_t(const char *buf, const size_t &buf_siz) {
     int ret;
     char *head = nullptr;
     size_t headsiz;
@@ -115,7 +136,7 @@ comm_head_t::comm_head_t(const char *buf, const size_t buf_siz) {
         if (head_doc.HasMember("datatype")) {
             dtype = new DataType(type_from_header_doc(head_doc));
         } else if (head_doc.HasMember("type_in_data")) {
-            dtype = NULL;
+            dtype = nullptr;
         } else {
             dtype = create_dtype_direct();
         }
@@ -247,6 +268,17 @@ DataType::DataType(MetaschemaType* type_class, const bool use_generic) {
     }
 }
 
+DataType::DataType(DataType *data_type) {
+    type = data_type->type;
+    use_generic = data_type->use_generic;
+    obj = data_type->obj;
+    // TODO
+    //if (data_type->obj != nullptr) {
+    //    //*obj = *(data_type->obj);
+    //} else {
+    //    obj = nullptr;
+    //}
+}
 void DataType::init_dtype_class(MetaschemaType* type_class) {
     if (obj != nullptr) {
         ygglog_throw_error("init_dtype_class: Data type class already set.");
