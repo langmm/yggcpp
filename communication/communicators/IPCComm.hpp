@@ -1,6 +1,4 @@
-#ifndef YGGINTERFACEP_IPCCOMM_HPP
-#define YGGINTERFACEP_IPCCOMM_HPP
-
+#pragma once
 //#define IPCINSTALLED
 
 #ifdef USE_OSR_YGG
@@ -19,6 +17,9 @@
 
 /*! @brief Maximum number of channels. */
 #define _yggTrackChannels 256
+
+namespace communication {
+namespace communicator {
 /*!
   @brief Message buffer structure.
 */
@@ -28,25 +29,43 @@ typedef struct msgbuf_t {
 } msgbuf_t;
 
 
-class IPCComm : public CommBase<int,void> {
+class IPCComm : public CommBase<int, int> {
 public:
-    explicit IPCComm(const std::string &name = "", Address *address = new Address(), const Direction direction = NONE,
-                     DataType* datatype = nullptr);
+    explicit IPCComm(const std::string &name = "", utils::Address *address = new utils::Address(),
+                     Direction direction = NONE,
+                     datatypes::DataType *datatype = nullptr);
+
+    //explicit IPCComm(Comm_t* comm);
     ~IPCComm();
+
     int check_channels();
+
     void add_channel();
+
     int remove_comm(bool close_comm);
+
+    int comm_nmsg() const override;
+
+    int send(const char *data, const size_t &len) override;
+
+    long recv(char **data, const size_t &len, bool allow_realloc) override;
+
+protected:
     int new_address();
-    int comm_nmsg() override;
-    int send(const std::string &data) override;
-    int recv(std::string &data) override;
-    int send_nolimit(const std::string &data) override;
+
 private:
+    void init() override;
+
     /*! @brief Names of channels in use. */
     static int _yggChannelNames[_yggTrackChannels];
     /*! @brief Number of channels in use. */
     static unsigned _yggChannelsUsed;
     static bool _ipc_rand_seeded;
+
+    int send_normal(const char *data, const size_t &len);
+
+    int send_large(const char *data, const size_t &len);
 };
 
-#endif //YGGINTERFACEP_IPCCOMM_HPP
+}
+}

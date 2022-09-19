@@ -1,5 +1,9 @@
 #include "IPCComm.hpp"
 
+using namespace communication::communicator;
+using namespace communication::utils;
+using namespace communication::datatypes;
+
 unsigned IPCComm::_yggChannelsUsed = 0;
 bool IPCComm::_ipc_rand_seeded = false;
 
@@ -153,7 +157,7 @@ int IPCComm::new_address() {
   @brief Get number of messages in the comm.
   @returns int Number of messages. -1 indicates an error.
  */
-int IPCComm::comm_nmsg() {
+int IPCComm::comm_nmsg() const {
     struct msqid_ds buf;
     if (handle == nullptr) {
         ygglog_error("ipc_comm_nmsg: Queue handle is NULL.");
@@ -176,16 +180,21 @@ int IPCComm::comm_nmsg() {
   @param[in] data character pointer to message that should be sent.
   @returns int 0 if send succesfull, -1 if send unsuccessful.
  */
-int IPCComm::send(const std::string &data) {
-    ygglog_debug("ipc_comm_send(%s): %d bytes", name.c_str(), data.size());
-   if (check(data) == -1)
-        return -1;
+int IPCComm::send(const char* data, const size_t &len) {
+    ygglog_debug("ipc_comm_send(%s): %d bytes", name.c_str(), len);
+    if (!check_size(len))
+        return send_normal(data, len);
+    send_large(data, len);
+}
+
+int IPCComm::send_normal(const char *data, const size_t &len) {
+    int ret = -1;
+
     msgbuf_t t;
     t.mtype = 1;
-    memcpy(t.data, data.c_str(), data.size());
-    int ret;
+    memcpy(t.data, data, len);
     while (true) {
-        ret = msgsnd(handle[0], &t, data.size(), IPC_NOWAIT);
+        ret = msgsnd(handle[0], &t, len, IPC_NOWAIT);
         ygglog_debug("ipc_comm_send(%s): msgsnd returned %d", name.c_str(), ret);
         if (ret == 0)
             break;
@@ -195,18 +204,57 @@ int IPCComm::send(const std::string &data) {
         } else {
             struct msqid_ds buf;
             int rtrn = msgctl(handle[0], IPC_STAT, &buf);
-            if ((rtrn == 0) && ((buf.msg_qnum + data.size()) > buf.msg_qbytes)) {
+            if ((rtrn == 0) && ((buf.msg_qnum + len) > buf.msg_qbytes)) {
                 ygglog_debug("ipc_comm_send(%s): msgsnd, queue full, sleep", name.c_str());
                 usleep(YGG_SLEEP_TIME);
             } else {
                 ygglog_error("ipc_comm_send:  msgsend(%d, %p, %d, IPC_NOWAIT) ret(%d), errno(%d): %s",
-                             handle[0], &t, data.size(), ret, errno, strerror(errno));
+                             handle[0], &t, len, ret, errno, strerror(errno));
                 ret = -1;
                 break;
             }
         }
     }
-    ygglog_debug("ipc_comm_send(%s): returning %d", name.c_str(), ret);
+}
+
+/*!
+  @brief Send a large message to an output comm.
+  Send a message larger than YGG_MSG_MAX bytes to an output comm by breaking
+  it up between several smaller messages and sending initial message with the
+  size of the message that should be expected. Must be partnered with
+  ipc_comm_recv_nolimit for communication to make sense.
+  @param[in] data character pointer to message that should be sent.
+  @returns int 0 if send succesfull, -1 if send unsuccessful.
+ */
+int IPCComm::send_large(const char *data, const size_t &len) {
+    int ret;
+    size_t msgsiz = 0;
+    char msg[YGG_MSG_MAX];
+    sprintf(msg, "%ld", (long)(len));
+
+    if ((ret = send_normal(msg, strlen(msg))) != 0) {
+        ygglog_debug("ipc_comm_send_nolimit(%s): sending size of payload failed.", name.c_str());
+        return ret;
+    }
+    size_t prev = 0;
+    while (prev < len) {
+        if ((len - prev) > YGG_MSG_MAX)
+            msgsiz = YGG_MSG_MAX;
+        else
+            msgsiz = len - prev;
+        ret = send_normal(data + prev, msgsiz);
+        if (ret != 0) {
+            ygglog_debug("ipc_comm_send_nolimit(%s): send interupted at %d of %d bytes.",
+                         name.c_str(), static_cast<int>(prev), static_cast<int>(len));
+            break;
+        }
+        prev += msgsiz;
+        ygglog_debug("ipc_comm_send_nolimit(%s): %d of %d bytes sent",
+                     name.c_str(), prev, len);
+    }
+
+    if (ret == 0)
+        ygglog_debug("ipc_comm_send(%s): returning %d", name.c_str(), ret);
     return ret;
 }
 
@@ -218,11 +266,13 @@ int IPCComm::send(const std::string &data) {
   @returns int -1 if message could not be received. Length of the received
   message if message was received.
  */
-int IPCComm::recv(std::string &data) {
+ // TODO: Handle long messages
+long IPCComm::recv(char** data, const size_t& len, bool allow_realloc) {
     ygglog_debug("ipc_comm_recv(%s)", name.c_str());
     msgbuf_t t;
     t.mtype = 1;
-    long ret;
+    long ret = -1;
+    int len_recv = -1;
     while (true) {
         ret = msgrcv(handle[0], &t, YGG_MSG_MAX, 0, IPC_NOWAIT);
         if (ret == -1 && errno == ENOMSG) {
@@ -239,49 +289,32 @@ int IPCComm::recv(std::string &data) {
                      handle, &t, (int)YGG_MSG_MAX, strerror(errno));
         return -1;
     }
-
-    data.assign(t.data);
-    ygglog_debug("ipc_comm_recv(%s): returns %d bytes", name.c_str(), ret);
-    return static_cast<int>(ret);
-}
-
-/*!
-  @brief Send a large message to an output comm.
-  Send a message larger than YGG_MSG_MAX bytes to an output comm by breaking
-  it up between several smaller messages and sending initial message with the
-  size of the message that should be expected. Must be partnered with
-  ipc_comm_recv_nolimit for communication to make sense.
-  @param[in] data character pointer to message that should be sent.
-  @returns int 0 if send succesfull, -1 if send unsuccessful.
- */
-int IPCComm::send_nolimit(const std::string &data) {
-    ygglog_debug("ipc_comm_send_nolimit(%s): %d bytes", name.c_str(), data.size());
-    int ret = -1;
-    size_t msgsiz;
-    size_t len = data.size();
-    size_t pos = 0;
-    while (pos < len) {
-        if ((ret = send(data.substr(pos, YGG_MSG_MAX))) != 0) {
-            ygglog_debug("ipc_comm_send_nolimit(%s): send interupted at %d of %d bytes.",
-                         name.c_str(), pos, len);
-            break;
+    len_recv = ret + 1;
+    if (len_recv > (int)len) {
+        if (allow_realloc) {
+            ygglog_debug("ipc_comm_recv(%s): reallocating buffer from %d to %d bytes.",
+                         name.c_str(), (int)len, len_recv);
+            (*data) = (char*)realloc(*data, len_recv);
+            if (*data == nullptr) {
+                ygglog_error("ipc_comm_recv(%s): failed to realloc buffer.", name.c_str());
+                return -1;
+            }
+        } else {
+            ygglog_error("ipc_comm_recv(%s): buffer (%d bytes) is not large enough for message (%d bytes)",
+                         name.c_str(), len, len_recv);
+            return -(len_recv - 1);
         }
-        if ((len - pos) > YGG_MSG_MAX)
-            msgsiz = YGG_MSG_MAX;
-        else
-            msgsiz = len - pos;
-        pos += msgsiz;
-        ygglog_debug("ipc_comm_send_nolimit(%s): %d of %d bytes sent",
-                     name.c_str(), pos, len);
     }
-
-    if (ret == 0)
-        ygglog_debug("ipc_comm_send_nolimit(%s): %d bytes completed", name.c_str(), len);
+    memcpy(*data, t.data, len_recv);
+    (*data)[len_recv - 1] = '\0';
+    ret = len_recv - 1;
+    ygglog_debug("ipc_comm_recv(%s): returns %d bytes", name.c_str(), ret);
     return ret;
 }
 
-IPCComm::IPCComm(const std::string &name, Address *address, const Direction direction,
-                 DataType *datatype) : CommBase(address, direction, IPC_COMM, datatype) {
+void IPCComm::init() {
+    if (address == nullptr)
+        new_address();
     if (name.empty()) {
         this->name = "tempinitIPC." + this->address->address();
     } else {
@@ -296,6 +329,20 @@ IPCComm::IPCComm(const std::string &name, Address *address, const Direction dire
     handle = fid;
 }
 
+IPCComm::IPCComm(const std::string &name, Address *address, Direction direction,
+                 DataType *datatype) : CommBase(address, direction, IPC_COMM, datatype) {
+    init();
+}
+
+/*IPCComm::IPCComm(communication::Comm_t *comm) : CommBase(comm, IPC_COMM){
+    if (handle == nullptr) {
+        add_channel();
+        int qkey = this->address->key();
+        int *fid = new int;
+        fid[0] = msgget(qkey, 0600);
+        handle = fid;
+    }
+}*/
 #else /*IPCINSTALLED*/
 
 /*!
