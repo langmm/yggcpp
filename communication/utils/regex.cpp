@@ -3,7 +3,7 @@
 //
 
 #include "regex.hpp"
-
+using namespace communication::utils;
 /*!
   @brief Find first match to regex.
   @param[in] regex_text constant character pointer to string that should be

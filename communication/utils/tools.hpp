@@ -1,9 +1,4 @@
-//
-// Created by friedel on 8/22/22.
-//
-
-#ifndef YGGDRASIL_TOOLS_HPP
-#define YGGDRASIL_TOOLS_HPP
+#pragma once
 
 
 #ifdef _MSC_VER
@@ -13,6 +8,7 @@
 #endif
 
 #ifdef _OPENMP
+
 #include <omp.h>
 #endif
 
@@ -173,6 +169,9 @@ typedef struct complex_long_double_t {
 #ifdef PSI_DEBUG
 #define YGG_DEBUG PSI_DEBUG
 #endif
+namespace communication {
+namespace utils {
+
 static int _ygg_error_flag = 0;
 
 /*! @brief Define macros to allow counts of variables. */
@@ -244,7 +243,7 @@ int get_thread_id() {
         return global_thread_id;
 #ifdef _OPENMP
     if (omp_in_parallel())
-    out = omp_get_thread_num();
+        out = omp_get_thread_num();
 /* #elif defined pthread_self */
 /*   // TODO: Finalize/test support for pthread */
 /*   out = pthread_self(); */
@@ -279,12 +278,12 @@ int init_numpy_API() {
 #pragma omp critical (numpy)
     {
 #endif
-    if (PyArray_API == NULL) {
-        if (_import_array() < 0) {
-            PyErr_Print();
-            out = -2;
+        if (PyArray_API == NULL) {
+            if (_import_array() < 0) {
+                PyErr_Print();
+                out = -2;
+            }
         }
-    }
 #ifdef _OPENMP
     }
 #endif
@@ -303,27 +302,27 @@ int init_python_API() {
 #pragma omp critical (python)
     {
 #endif
-    if (!(Py_IsInitialized())) {
-        char *name = getenv("YGG_PYTHON_EXEC");
-        if (name != NULL) {
-            wchar_t *wname = Py_DecodeLocale(name, NULL);
-            if (wname == NULL) {
-                printf("Error decoding YGG_PYTHON_EXEC\n");
-                out = -1;
-            } else {
-                Py_SetProgramName(wname);
-                PyMem_RawFree(wname);
+        if (!(Py_IsInitialized())) {
+            char *name = getenv("YGG_PYTHON_EXEC");
+            if (name != NULL) {
+                wchar_t *wname = Py_DecodeLocale(name, NULL);
+                if (wname == NULL) {
+                    printf("Error decoding YGG_PYTHON_EXEC\n");
+                    out = -1;
+                } else {
+                    Py_SetProgramName(wname);
+                    PyMem_RawFree(wname);
+                }
+            }
+            if (out >= 0) {
+                Py_Initialize();
+                if (!(Py_IsInitialized()))
+                    out = -1;
             }
         }
         if (out >= 0) {
-            Py_Initialize();
-            if (!(Py_IsInitialized()))
-                out = -1;
+            out = init_numpy_API();
         }
-    }
-    if (out >= 0) {
-        out = init_numpy_API();
-    }
 #ifdef _OPENMP
     }
 #endif
@@ -391,7 +390,6 @@ void yggInfo(const char *fmt, ...) {
     va_end(ap);
 }
 
-#ifdef YGG_DEBUG
 /*!
   @brief Print an debug log message.
   Prints a formatted message, prepending it with DEBUG and the process id. A
@@ -407,7 +405,6 @@ void yggDebug(const char *fmt, ...) {
     va_end(ap);
 }
 
-#endif /*YGG_DEBUG*/
 /*!
   @brief Print an error log message from a variable argument list.
   Prints a formatted message, prepending it with ERROR and the process id. A
@@ -448,7 +445,7 @@ void yggError(const char *fmt, ...) {
   @param[in] ... Parameters that should be formated using the format string.
  */
 static inline
-void ygglog_throw_error(const char* fmt, ...) {
+void ygglog_throw_error(const char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
     yggError_va(fmt, ap);
@@ -456,6 +453,7 @@ void ygglog_throw_error(const char* fmt, ...) {
     throw std::exception();
 }
 
+#define YGG_DEBUG 10
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 #ifdef YGG_DEBUG
 #if YGG_DEBUG <= 10
@@ -637,14 +635,14 @@ void va_list_t_skip(va_list_t *ap, size_t nbytes) {
         ap->iptr++;
     } else {
         if (nbytes == sizeof(void *)) {
-            va_arg(ap->va, void * );
+            va_arg(ap->va, void *);
         } else if (nbytes == sizeof(size_t)) {
             va_arg(ap->va, size_t);
         } else if (nbytes == sizeof(char *)) {
-            va_arg(ap->va, char * );
+            va_arg(ap->va, char *);
         } else {
             printf("WARNING: Cannot get argument of size %ld.\n", nbytes);
-            va_arg(ap->va, void * );
+            va_arg(ap->va, void *);
             // va_arg(ap->va, char[nbytes]);
         }
     }
@@ -655,13 +653,20 @@ public:
     Address(const std::string &addr = "") {
         address(addr);
     }
-    std::string& address() {
+
+    Address(Address *adr) {
+        address(adr->address());
+    }
+
+    std::string &address() {
         return _address;
     }
+
     int key() const {
         return _key;
     }
-    void address(const std::string& addr) {
+
+    void address(const std::string &addr) {
         _address = addr;
         if (_address.size() > COMM_ADDRESS_SIZE)
             _address.resize(COMM_ADDRESS_SIZE);
@@ -676,15 +681,18 @@ public:
     bool operator==(const Address *adr) {
         return this->_address == adr->_address;
     }
+
     bool operator==(const Address &adr) {
         return this->_address == adr._address;
     }
-    bool valid() const {return _valid;}
+
+    bool valid() const { return _valid; }
+
 private:
     std::string _address;
     int _key;
     bool _valid;
 };
 
-
-#endif //YGGDRASIL_TOOLS_HPP
+}
+}
