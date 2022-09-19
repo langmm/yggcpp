@@ -1,15 +1,17 @@
 #pragma once
 
 #include "CommBase.hpp"
-using namespace communicator::CommBase;
+
 #ifdef ZMQINSTALLED
 #include <zmq.hpp>
+#include <zmq_addon.hpp>
 #else
 
 #endif
 #include <vector>
+namespace communication {
 namespace communicator {
-namespace ZMQ {
+class ClientComm;
 static unsigned _zmq_rand_seeded = 0;
 static unsigned _last_port_set = 0;
 static int _last_port = 49152;
@@ -96,41 +98,61 @@ typedef struct zmq_reply_t {
     }
 
     std::vector<ygg_sock_t *> sockets;
-    std::vector<Address *> addresses;
+    std::vector<utils::Address *> addresses;
     int n_msg = 0;
     int n_rep = 0;
 } zmq_reply_t;
 
-class ZMQComm : public CommBase::CommBase<ygg_sock_t, zmq_reply_t> {
+class ZMQComm : public CommBase<ygg_sock_t, zmq_reply_t> {
 public:
-    explicit ZMQComm(const std::string &name = "", Address *address = new Address(), Direction direction = NONE,
-                     DataType *datatype = nullptr);
+    explicit ZMQComm(const std::string &name = "", utils::Address *address = new utils::Address(), Direction direction = NONE,
+                     datatypes::DataType *datatype = nullptr);
+
+    //explicit ZMQComm(Comm_t* comm);
     ~ZMQComm();
-    int send(const std::string &data) override;
-    int send_nolimit(const std::string &data) override {
-        return send(data);
-    }
-    int set_reply_recv(Address *adr);
-    int recv(std::string &data) override;
-    void open() override;
-    void close() override;
-    int comm_nmsg() override;
-    static std::string check_reply_send(const std::string &data);
-    int do_reply_recv(const int &isock, const char *msg);
-    void init_reply();
-    std::string set_reply_send();
-    int find_reply_socket(Address *address = nullptr);
-    int check_reply_recv(std::string &data, const size_t &len);
+
+    int send(const char *data, const size_t &len) override;
+
+    long recv(char **data, const size_t &len, bool allow_realloc) override;
+
+    //void open() override;
+    //void close() override;
+    int comm_nmsg() const override;
+
+protected:
+    int new_address();
+    void init() override;
+
 private:
+    friend ClientComm;
     ygg_sock_t *sock;
-    static ygg_sock_t *new_zsock(const int &type);
-    static ygg_sock_t *create_zsock(const int &type);
-    ygg_sock_t *recv_zframe();
+
+    std::string set_reply_send();
+
+    int find_reply_socket(utils::Address *address = nullptr);
+
+    int check_reply_recv(const char *data, const size_t &len);
+
+    static void check_reply_send(const char *data);
+
+    int do_reply_recv(const int &isock, const char *msg);
+
+    void init_reply();
+
+    int set_reply_recv(utils::Address *adr);
+
     int do_reply_send();
+
     void init_zmq_reply();
+
     void destroy();
-    bool create_new();
+
+    //bool create_new();
     bool connect_to_existing();
+
+    int recv_time_limit(zmq::multipart_t &msg);
+
+    int send(zmq::multipart_t &msgs);
 };
 
 }
