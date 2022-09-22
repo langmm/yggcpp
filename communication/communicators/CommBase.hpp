@@ -26,13 +26,6 @@
 #define COMM_NAME_SIZE 100
 #define COMM_DIR_SIZE 100
 
-namespace communication {
-namespace communicator {
-class ServerComm;
-
-class ClientComm;
-
-/*! @brief Communicator types. */
 enum comm_enum {
     NULL_COMM, IPC_COMM, ZMQ_COMM,
     SERVER_COMM, CLIENT_COMM,
@@ -42,6 +35,17 @@ enum comm_enum {
 enum Direction {
     SEND, NONE, RECV
 };
+
+namespace communication {
+namespace datatypes {
+class DataType;
+}
+namespace communicator {
+class ServerComm;
+
+class ClientComm;
+
+/*! @brief Communicator types. */
 typedef enum comm_enum comm_type;
 
 class Comm_t {
@@ -99,11 +103,17 @@ class CommBase : public Comm_t {
 public:
     CommBase() = delete;
 
-    virtual int send(const char *data, const size_t &len) = 0;
+    int send(const char *data, const size_t &len) override {
+        utils::ygglog_throw_error("Send of base class called, must be overridden");
+    }
 
-    virtual long recv(char **data, const size_t &len, bool allow_realloc) = 0;
+    long recv(char **data, const size_t &len, bool allow_realloc) override {
+        utils::ygglog_throw_error("Recv of base class called, must be overridden");
+    }
 
-    virtual int comm_nmsg() const = 0;
+    int comm_nmsg() const override {
+        utils::ygglog_throw_error("Comm_nmsg of base class called, must be overridden");
+    }
 
 protected:
     CommBase(utils::Address *address, Direction direction, const comm_type &t, datatypes::DataType *datatype);
@@ -112,7 +122,9 @@ protected:
     explicit CommBase(const std::string &name, Direction direction = NONE, const comm_type &t = NULL_COMM,
                       datatypes::DataType *datatype = nullptr);
 
-    virtual void init() = 0;
+    virtual void init() override {
+        utils::ygglog_throw_error("init of base class called, must be overridden");
+    }
 
     void reset() override;
 
@@ -168,4 +180,15 @@ CommBase<H, R>::~CommBase() {
 
 }
 
+}
+
+extern "C" {
+    struct comm_t;
+    int free_comm(comm_t* x);
+    //comm_t empty_comm();
+    comm_t* new_comm(char* address, const Direction dir, const comm_enum type, dtype_t* datatype);
+    comm_t* init_comm(const char* name, const Direction dir, const comm_enum type, dtype_t* datatype);
+    int send(const comm_t* x, const char *data, const size_t &len);
+    long recv(comm_t* x, char **data, const size_t &len, bool allow_realloc);
+    int comm_nmsg(const comm_t* x);
 }

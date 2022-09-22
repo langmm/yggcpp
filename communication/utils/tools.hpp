@@ -82,7 +82,7 @@ typedef std::complex<long double> complex_long_double;
 #define print_complex(x) printf("%lf+%lfj\n", (double)creal(x), (double)cimag(x))
 #endif
 
-#include <math.h> // Required to prevent error when using mingw on windows
+#include <cmath> // Required to prevent error when using mingw on windows
 
 #ifdef _DEBUG
 #undef _DEBUG
@@ -137,7 +137,7 @@ typedef struct complex_long_double_t {
 #define usleep(usec) Sleep(usec/1000)
 #else
 
-#include <stdint.h>
+#include <cstdint>
 #include <unistd.h>
 
 #define ygg_getpid getpid
@@ -169,10 +169,11 @@ typedef struct complex_long_double_t {
 #ifdef PSI_DEBUG
 #define YGG_DEBUG PSI_DEBUG
 #endif
+
+#include "logging.hpp"
+
 namespace communication {
 namespace utils {
-
-static int _ygg_error_flag = 0;
 
 /*! @brief Define macros to allow counts of variables. */
 // https://codecraft.co/2014/11/25/variadic-macros-tricks/
@@ -204,33 +205,10 @@ static int global_thread_id = -1;
  */
 static inline
 unsigned long ptr2seed(void *ptr) {
-    uint64_t v = (uint64_t) ptr;
-    unsigned long seed = (unsigned long) (v & 0xFFFFFFFFLL);
+    auto v = (uint64_t) ptr;
+    auto seed = (unsigned long) (v & 0xFFFFFFFFLL);
     return seed;
 }
-
-
-/*! @brief Structure used to wrap va_list and allow pointer passing.
-@param va va_list Wrapped variable argument list.
-*/
-typedef struct va_list_t {
-    va_list va;  //!< Traditional variable argument list.
-    int using_ptrs; //!< Flag that is 1 if the arguments are stored using pointers.
-    void **ptrs; //!< Variable arguments stored as pointers.
-    int nptrs; //!< The number of variable arguments stored as pointers.
-    int iptr; //!< The index of the current variable argument pointer.
-    int for_fortran; //!< Flag that is 1 if this structure will be accessed by fortran.
-} va_list_t;
-
-
-/*! @brief Structure used to wrap Python objects. */
-typedef struct python_t {
-    char name[PYTHON_NAME_SIZE]; //!<Name of the Python class/type/function.
-    void *args; //!< Arguments used in creating a Python instance.
-    void *kwargs; //!< Keyword arguments used in creating a Python instance.
-    PyObject *obj; //!< Python object.
-} python_t;
-
 
 /*!
   @brief Get the ID for the current thread (if inside one).
@@ -252,233 +230,8 @@ int get_thread_id() {
 }
 
 
-/*!
-  @brief Initialize a structure to contain a Python object.
-  @returns python_t New Python object structure.
- */
-static inline
-python_t init_python() {
-    python_t out;
-    out.name[0] = '\0';
-    out.args = NULL;
-    out.kwargs = NULL;
-    out.obj = NULL;
-    return out;
-}
 
 
-/*!
-  @brief Initialize Numpy arrays if it is not initalized.
-  @returns int 0 if successful, other values indicate errors.
- */
-static inline
-int init_numpy_API() {
-    int out = 0;
-#ifdef _OPENMP
-#pragma omp critical (numpy)
-    {
-#endif
-        if (PyArray_API == NULL) {
-            if (_import_array() < 0) {
-                PyErr_Print();
-                out = -2;
-            }
-        }
-#ifdef _OPENMP
-    }
-#endif
-    return out;
-}
-
-
-/*!
-  @brief Initialize Python if it is not initialized.
-  @returns int 0 if successful, other values indicate errors.
- */
-static inline
-int init_python_API() {
-    int out = 0;
-#ifdef _OPENMP
-#pragma omp critical (python)
-    {
-#endif
-        if (!(Py_IsInitialized())) {
-            char *name = getenv("YGG_PYTHON_EXEC");
-            if (name != NULL) {
-                wchar_t *wname = Py_DecodeLocale(name, NULL);
-                if (wname == NULL) {
-                    printf("Error decoding YGG_PYTHON_EXEC\n");
-                    out = -1;
-                } else {
-                    Py_SetProgramName(wname);
-                    PyMem_RawFree(wname);
-                }
-            }
-            if (out >= 0) {
-                Py_Initialize();
-                if (!(Py_IsInitialized()))
-                    out = -1;
-            }
-        }
-        if (out >= 0) {
-            out = init_numpy_API();
-        }
-#ifdef _OPENMP
-    }
-#endif
-    return out;
-}
-
-
-//==============================================================================
-/*!
-  Logging
-
-  Alliases are set at compile-time based on the value of YGG_CLIENT_DEBUG. If
-  set to INFO, only messages logged with info or error alias are printed. If
-  set to DEBUG, messages logged with error, info or debug aliases are printed.
-  Otherwise, only error messages are printed. If the YGG_CLIENT_DEBUG is
-  changed, any code including this header must be recompiled for the change to
-  take effect.
-
-*/
-//==============================================================================
-
-/*!
-  @brief Print a log message.
-  Prints a formatted message, prepending it with the process id and appending
-  it with a newline.
-  @param[in] prefix a constant character pointer to the prefix that should
-  preceed the message and process id.
-  @param[in] fmt a constant character pointer to a format string.
-  @param[in] ap va_list of arguments to be formatted in the format string.
- */
-static inline
-void yggLog(const char *prefix, const char *fmt, va_list ap) {
-    fprintf(stdout, "%s: %d:%d ", prefix, ygg_getpid(), get_thread_id());
-    char *model_name = getenv("YGG_MODEL_NAME");
-    if (model_name != NULL) {
-        fprintf(stdout, "%s", model_name);
-        char *model_copy = getenv("YGG_MODEL_COPY");
-        if (model_copy != NULL) {
-            fprintf(stdout, "_copy%s", model_copy);
-        }
-        fprintf(stdout, " ");
-    }
-    vfprintf(stdout, fmt, ap);
-    fprintf(stdout, "\n");
-    fflush(stdout);
-}
-
-static inline
-void yggLog(const std::string &prefix, const std::string &fmt, va_list ap) {
-    yggLog(prefix.c_str(), fmt.c_str(), ap);
-}
-
-/*!
-  @brief Print an info log message.
-  Prints a formatted message, prepending it with INFO and the process id. A
-  newline character is added to the end of the message.
-  @param[in] fmt a constant character pointer to a format string.
-  @param[in] ... arguments to be formatted in the format string.
- */
-static inline
-void yggInfo(const char *fmt, ...) {
-    va_list ap;
-    va_start(ap, fmt);
-    yggLog("INFO", fmt, ap);
-    va_end(ap);
-}
-
-/*!
-  @brief Print an debug log message.
-  Prints a formatted message, prepending it with DEBUG and the process id. A
-  newline character is added to the end of the message.
-  @param[in] fmt a constant character pointer to a format string.
-  @param[in] ... arguments to be formatted in the format string.
- */
-static inline
-void yggDebug(const char *fmt, ...) {
-    va_list ap;
-    va_start(ap, fmt);
-    yggLog("DEBUG", fmt, ap);
-    va_end(ap);
-}
-
-/*!
-  @brief Print an error log message from a variable argument list.
-  Prints a formatted message, prepending it with ERROR and the process id. A
-  newline character is added to the end of the message.
-  @param[in] fmt a constant character pointer to a format string.
-  @param[in] ap va_list Variable argument list.
-  @param[in] ... arguments to be formatted in the format string.
- */
-static inline
-void yggError_va(const char *fmt, va_list ap) {
-    yggLog("ERROR", fmt, ap);
-    _ygg_error_flag = 1;
-}
-
-static inline
-void yggError_va(const std::string &fmt, va_list &ap) {
-    yggError_va(fmt.c_str(), ap);
-}
-
-/*!
-  @brief Print an error log message.
-  Prints a formatted message, prepending it with ERROR and the process id. A
-  newline character is added to the end of the message.
-  @param[in] fmt a constant character pointer to a format string.
-  @param[in] ... arguments to be formatted in the format string.
- */
-static inline
-void yggError(const char *fmt, ...) {
-    va_list ap;
-    va_start(ap, fmt);
-    yggError_va(fmt, ap);
-    va_end(ap);
-}
-
-/*!
-  @brief Throw an error and long it.
-  @param[in] fmt char* Format string.
-  @param[in] ... Parameters that should be formated using the format string.
- */
-static inline
-void ygglog_throw_error(const char *fmt, ...) {
-    va_list ap;
-    va_start(ap, fmt);
-    yggError_va(fmt, ap);
-    va_end(ap);
-    throw std::exception();
-}
-
-#define YGG_DEBUG 10
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-#ifdef YGG_DEBUG
-#if YGG_DEBUG <= 10
-#define ygglog_error yggError
-#define ygglog_info yggInfo
-#define ygglog_debug yggDebug
-#elif YGG_DEBUG <= 20
-#define ygglog_error yggError
-#define ygglog_info yggInfo
-#define ygglog_debug while (0) yggDebug
-#elif YGG_DEBUG <= 40
-#define ygglog_error yggError
-#define ygglog_info while (0) yggInfo
-#define ygglog_debug while (0) yggDebug
-#else
-#define ygglog_error while (0) yggError
-#define ygglog_info while (0) yggInfo
-#define ygglog_debug while (0) yggDebug
-#endif
-#else
-#define ygglog_error yggError
-#define ygglog_info while (0) yggInfo
-#define ygglog_debug while (0) yggDebug
-#endif
-#endif // DOXYGEN_SHOULD_SKIP_THIS
 
 /*!
   @brief Get the length (in bytes) of a character array containing 4 byte
@@ -516,8 +269,8 @@ int snprintf_realloc(char **dst, size_t *max_len, size_t *offset,
                      const char *format_str, ...) {
     va_list arglist;
     va_start(arglist, format_str);
-    int fmt_len = 0;
-    while (1) {
+    int fmt_len;
+    while (true) {
         va_list arglist_copy;
         va_copy(arglist_copy, arglist);
         fmt_len = vsnprintf(dst[0] + offset[0],
@@ -526,7 +279,7 @@ int snprintf_realloc(char **dst, size_t *max_len, size_t *offset,
         if (fmt_len > (int) (max_len[0] - offset[0])) {
             max_len[0] = max_len[0] + fmt_len + 1;
             char *temp = (char *) realloc(dst[0], max_len[0]);
-            if (temp == NULL) {
+            if (temp == nullptr) {
                 ygglog_error("snprintf_realloc: Error reallocating buffer.");
                 fmt_len = -1;
                 break;
@@ -562,98 +315,14 @@ int is_eof(const char *buf) {
     return not_empty_match(YGG_MSG_EOF, buf);
 }
 
-/*!
-  @brief Initialize a variable argument list from an existing va_list.
-  @returns va_list_t New variable argument list structure.
- */
-static inline
-va_list_t init_va_list() {
-    va_list_t out;
-    out.using_ptrs = 0;
-    out.ptrs = NULL;
-    out.nptrs = 0;
-    out.iptr = 0;
-    out.for_fortran = 0;
-    return out;
-}
-
-
-/*! Initialize a variable argument list from an array of pointers.
-  @param[in] nptrs int Number of pointers.
-  @param[in] ptrs void** Array of pointers.
-  @returns va_list_t New variable argument list structure.
-*/
-static inline
-va_list_t init_va_ptrs(const int nptrs, void **ptrs) {
-    va_list_t out;
-    out.using_ptrs = 1;
-    out.ptrs = ptrs;
-    out.nptrs = nptrs;
-    out.iptr = 0;
-    out.for_fortran = 0;
-    return out;
-}
-
-
-/*! Finalize a variable argument list.
-  @param[in] ap va_list_t Variable argument list.
-*/
-static inline
-void end_va_list(va_list_t *ap) {
-    if (!(ap->using_ptrs)) {
-        va_end(ap->va);
-    }
-}
-
-
-/*! Copy a variable argument list.
-  @param[in] ap va_list_t Variable argument list structure to copy.
-  @returns va_list_t New variable argument list structure.
-*/
-static inline
-va_list_t copy_va_list(va_list_t ap) {
-    va_list_t out;
-    if (ap.using_ptrs) {
-        out = init_va_ptrs(ap.nptrs, ap.ptrs);
-        out.iptr = ap.iptr;
-    } else {
-        out = init_va_list();
-        va_copy(out.va, ap.va);
-    }
-    out.for_fortran = ap.for_fortran;
-    return out;
-}
-
-
-/*! @brief Method for skipping a number of bytes in the argument list.
-  @param[in] ap va_list_t* Structure containing variable argument list.
-  @param[in] nbytes size_t Number of bytes that should be skipped.
- */
-static inline
-void va_list_t_skip(va_list_t *ap, size_t nbytes) {
-    if (ap->using_ptrs) {
-        ap->iptr++;
-    } else {
-        if (nbytes == sizeof(void *)) {
-            va_arg(ap->va, void *);
-        } else if (nbytes == sizeof(size_t)) {
-            va_arg(ap->va, size_t);
-        } else if (nbytes == sizeof(char *)) {
-            va_arg(ap->va, char *);
-        } else {
-            printf("WARNING: Cannot get argument of size %ld.\n", nbytes);
-            va_arg(ap->va, void *);
-            // va_arg(ap->va, char[nbytes]);
-        }
-    }
-}
-
 class Address {
 public:
-    Address(const std::string &addr = "") {
-        address(addr);
+    Address(const std::string &adr = "") {
+        address(adr);
     }
-
+    Address(char* adr) {
+        address(adr);
+    }
     Address(Address *adr) {
         address(adr->address());
     }

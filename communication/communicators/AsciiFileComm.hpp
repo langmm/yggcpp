@@ -6,7 +6,7 @@ namespace communicator {
 
 class AsciiFileComm : public CommBase<datatypes::asciiFile_t, int> {
 public:
-    AsciiFileComm(const std::string &name, Direction &direct, datatypes::DataType *datatype);
+    AsciiFileComm(const std::string &name, const Direction &direct, datatypes::DataType *datatype);
 
     ~AsciiFileComm();
 
@@ -19,7 +19,7 @@ public:
 private:
     static unsigned _yggAsciiFilesCreated;
 
-    void init(const std::string &name, Direction &direct, datatypes::DataType *datatype);
+    void init(const std::string &name, const Direction &direct, datatypes::DataType *datatype);
 
     void new_ascii_file_address();
 };

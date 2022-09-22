@@ -41,7 +41,7 @@ mpi_registry_t &mpi_registry_t::Clone() const {
     }
 }*/
 
-MPIComm::MPIComm(const std::string &name, std::string &address, Direction direction,
+MPIComm::MPIComm(const std::string &name, std::string &address, const Direction direction,
                  DataType *datatype) : CommBase(nullptr, direction, MPI_COMM, datatype) {
 
     //if (!(comm->flags & COMM_FLAG_VALID))

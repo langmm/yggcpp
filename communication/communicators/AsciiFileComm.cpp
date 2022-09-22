@@ -6,7 +6,7 @@ using namespace communication::datatypes;
 
 unsigned AsciiFileComm::_yggAsciiFilesCreated = 0;
 
-AsciiFileComm::AsciiFileComm(const std::string &name, Direction &direct, DataType *datatype) :
+AsciiFileComm::AsciiFileComm(const std::string &name, const Direction &direct, DataType *datatype) :
         CommBase<asciiFile_t, int>(name, direct, ASCII_FILE_COMM, datatype) {
     init(name, direct, datatype);
 }
@@ -17,7 +17,7 @@ AsciiFileComm::~AsciiFileComm() {
         delete handle;
     }
 }
-void AsciiFileComm::init(const std::string &name, Direction &direct, DataType* datatype) {
+void AsciiFileComm::init(const std::string &name, const Direction &direct, DataType* datatype) {
     // Don't check base validity since address is name
     flags |= COMM_FLAG_FILE;
     address->address(name);

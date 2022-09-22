@@ -1,6 +1,6 @@
 #include "AsciiTable.hpp"
 #include "utils/regex.hpp"
-#include <string.h>
+#include <cstring>
 #include <memory>
 
 #define FMT_LEN 100
@@ -9,9 +9,9 @@ using namespace communication;
 using namespace communication::datatypes;
 using namespace communication::utils;
 
-int regex_replace_sub(char *buf, const size_t len_buf,
+int regex_replace_sub(char *buf, const size_t &len_buf,
                       const char *re, const char *rp,
-                      const size_t nreplace);
+                      const size_t &nreplace);
 
 int simplify_formats(char *fmt_str, const size_t fmt_len) {
     const char * fmt_regex1 = "%([[:digit:]]+\\$)?[+-]?([ 0]|\'.{1})?-?[[:digit:]]*(\\.[[:digit:]]+)?([lhjztL]*)([eEfFgG])";
@@ -100,7 +100,7 @@ int asciiTable_t::readline_full_realloc(char** buf, const size_t &len_buf, const
             ygglog_debug("at_readline_full_realloc: reallocating buffer from %d to %d bytes.",
                          (int)len_buf, ret + 1);
             char *temp_buf = (char*)realloc(*buf, ret + 1);
-            if (temp_buf == NULL) {
+            if (temp_buf == nullptr) {
                 ygglog_error("at_readline_full_realloc: Failed to realloc buffer.");
                 free(*buf);
                 free(line);
@@ -176,17 +176,17 @@ int asciiTable_t::vwriteline(va_list &ap){
     return vfprintf(f.fd, format_str, ap);
 }
 
-int asciiTable_t::readline(...){
+int asciiTable_t::readline(asciiTable_t* t, ...){
     va_list ap;
-    va_start(ap, this); // might need to use last element in structure
+    va_start(ap, t); // might need to use last element in structure
     int ret = vreadline(ap);
     va_end(ap);
     return ret;
 }
 
-int asciiTable_t::writeline(...){
+int asciiTable_t::writeline(asciiTable_t* t, ...){
     va_list ap;
-    va_start(ap, this);
+    va_start(ap, t);
     int ret = vwriteline(ap);
     va_end(ap);
     return ret;
@@ -236,13 +236,13 @@ int asciiTable_t::set_ncols() {
 
 int asciiTable_t::set_format_siz(){
     /* (*t).format_siz = (int*)malloc((*t).ncols*sizeof(int)); */
-    int i, typ, siz;
+    int i = 0, typ, siz;
     row_siz = 0;
     for (auto &c : columns) {
         typ = c.type;
         switch(c.type) {
             case AT_STRING:
-                siz = c.size;
+                siz = static_cast<int>(c.size);
                 break; // TODO
             case AT_FLOAT:
                 siz = sizeof(float);
@@ -291,6 +291,7 @@ int asciiTable_t::set_format_siz(){
             ygglog_error("at_set_format_siz: Could not set size for column %d with type %d", i, typ);
             return -1;
         }
+        i++;
         c.size = siz;
         row_siz += siz;
         // printf("format_str = %s\n", t->format_str);
@@ -303,7 +304,7 @@ int asciiTable_t::set_format_typ(){
     columns.clear();
     columns.resize(expected_cols);
     size_t beg = 0, end;
-    int icol = 0;
+    int icol;
     char ifmt[FMT_LEN];
 
     // Loop over string
@@ -459,13 +460,13 @@ int asciiTable_t::array_to_bytes(char* data, const size_t data_siz, ...){
     return ret;
 }
 
-int asciiTable_t::cleanup(){
+void asciiTable_t::cleanup(){
     columns.clear();
 }
 
 int asciiTable_t::update(const char* filepath, const char* io_mode){
     f.update(filepath, io_mode);
-    int flag;
+    int flag = 0;
     if ((strlen(format_str) == 0) && (strcmp(io_mode, "r") == 0))
         if ((flag = discover_format_str()) >= 0)
             if ((flag = set_ncols()) >= 0)
@@ -475,3 +476,9 @@ int asciiTable_t::update(const char* filepath, const char* io_mode){
     return flag;
 }
 
+int count_formats(const char* fmt_str) {
+    const char * fmt_regex = "%([[:digit:]]+\\$)?[+-]?([ 0]|\'.{1})?-?[[:digit:]]*(\\.[[:digit:]]+)?[lhjztL]*(64)?[bcdeEufFgGosxX]";
+    int ret = count_matches(fmt_regex, fmt_str);
+    /* printf("%d, %s\n", ret, fmt_str); */
+    return ret;
+}

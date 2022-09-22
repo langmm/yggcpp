@@ -1,0 +1,11 @@
+#pragma once
+#include "MetaschemaType.hpp"
+#include "AnyMetaschemaType.hpp"
+#include "AsciiTableMetaschemaType.hpp"
+#include "DirectMetaschemaType.hpp"
+#include "JSONArrayMetaschemaType.hpp"
+#include "JSONObjectMetaschemaType.hpp"
+#include "ObjMetaschemaType.hpp"
+#include "PlyMetaschemaType.hpp"
+#include "PyInstMetaschemaType.hpp"
+#include "PyObjMetaschemaType.hpp"

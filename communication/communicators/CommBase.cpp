@@ -1,12 +1,11 @@
-#include "CommBase.hpp"
-
+#include "comms.hpp"
 
 using namespace communication::communicator;
 using namespace communication::utils;
 using namespace communication::datatypes;
 
 
-Comm_t::Comm_t(Address *address, communication::Direction dirn, const communication::comm_type &t,
+Comm_t::Comm_t(Address *address, Direction dirn, const comm_type &t,
                DataType *datatype, int flgs) : address(address), type(t), _valid(false), direction(direction), flags(flgs) {
     name = "";
 
@@ -16,7 +15,7 @@ Comm_t::Comm_t(Address *address, communication::Direction dirn, const communicat
 
     datatype = complete_dtype(datatype, false);
     if (datatype == nullptr)
-        EXCEPTION;
+        throw("Invalid data type");
     maxMsgSize = YGG_MSG_MAX;
     const_flags = 0;
     thread_id = get_thread_id();
@@ -30,7 +29,7 @@ Comm_t::Comm_t(Address *address, communication::Direction dirn, const communicat
     last_send = nullptr;
 }
 
-Comm_t::Comm_t(const std::string &name, communication::Direction direction, const communication::comm_type &t,
+Comm_t::Comm_t(const std::string &name, Direction direction, const comm_type &t,
                DataType *datatype) : Comm_t(new Address(), direction, t, datatype) {
     std::string full_name;
     if (!name.empty()) {
@@ -126,4 +125,66 @@ bool Comm_t::check_size(const size_t &len) const {
         return false;
     }
     return true;
+}
+
+struct comm_t {
+    void* comm;
+};
+
+int free_comm(comm_t* x) {
+    auto temp = static_cast<Comm_t*>(x->comm);
+    if (temp != nullptr) {
+        delete temp;
+        temp = nullptr;
+        free(x);
+    }
+}
+//comm_t* empty_comm() {
+//    comm_t* comm;
+//
+//}
+Comm_t* new_Comm_t(const Direction dir, const comm_enum type, DataType* datatype, const std::string &name="", char* address=nullptr) {
+    switch(type) {
+        case NULL_COMM:
+            break;
+        case IPC_COMM:
+            return new IPCComm(name, (address == nullptr) ? nullptr : new Address(address), dir, datatype);
+        case ZMQ_COMM:
+            return new ZMQComm(name, (address == nullptr) ? nullptr : new Address(address), dir, datatype);
+        case SERVER_COMM:
+            return new ServerComm(name, (address == nullptr) ? nullptr : new Address(address), dir, datatype);
+        case CLIENT_COMM:
+            return new ClientComm(name, (address == nullptr) ? nullptr : new Address(address), dir, datatype);
+        case ASCII_FILE_COMM:
+            return new AsciiFileComm(name, dir, datatype);
+        case ASCII_TABLE_COMM:
+            return new AsciiTableComm(name, dir, datatype);
+        case ASCII_TABLE_ARRAY_COMM:
+            break;
+        case MPI_COMM:
+            std::string adr;
+            return new MPIComm(name, (address == nullptr) ? adr : reinterpret_cast<std::string &>(address), dir, datatype);
+    }
+}
+comm_t* new_comm(char* address, const Direction dir, const comm_enum type, dtype_t* datatype) {
+    auto comm = (comm_t*)malloc(sizeof(comm_t));
+    comm->comm = new_Comm_t(dir, type, static_cast<DataType*>(datatype->type), "", address);
+    return comm;
+}
+comm_t* init_comm(const char* name, const Direction dir, const comm_enum type, dtype_t* datatype) {
+    auto comm = (comm_t*)malloc(sizeof(comm_t));
+    comm->comm = new_Comm_t(dir, type, static_cast<DataType*>(datatype->type), name);
+    return comm;
+}
+int send(const comm_t* x, const char *data, const size_t &len) {
+    auto comm = (Comm_t*)x->comm;
+    return comm->send(data, len);
+}
+long recv(comm_t* x, char **data, const size_t &len, bool allow_realloc) {
+    auto comm = (Comm_t*)x->comm;
+    return comm->recv(data, len, allow_realloc);
+}
+int comm_nmsg(const comm_t* x) {
+    auto comm = (Comm_t*)x->comm;
+    return comm->comm_nmsg();
 }

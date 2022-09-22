@@ -28,7 +28,7 @@ class MPIComm : public CommBase<mpi_registry_t, int> {
     class MPIComm : public CommBase<void,void> {};
 #endif
 public:
-    MPIComm(const std::string &name, std::string &address, Direction direction,
+    MPIComm(const std::string &name, std::string &address, const Direction direction,
             datatypes::DataType *datatype);
 
     //explicit MPIComm(const Comm_t* comm);
@@ -38,7 +38,7 @@ public:
 
     long recv(char **data, const size_t &len, bool allow_realloc) override;
 
-    int comm_nmsg() override;
+    int comm_nmsg() const override;
 
     int mpi_comm_source_id();
 

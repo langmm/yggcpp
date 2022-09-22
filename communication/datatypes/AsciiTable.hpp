@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vector>
-#include <stdio.h>
+#include <cstdio>
 #include "AsciiFile.hpp"
 #include "utils/tools.hpp"
 
@@ -12,6 +12,9 @@ class AsciiTableComm;
 
 namespace datatypes {
 
+namespace Metaschema {
+class AsciiTableMetaschemaType;
+}
 
 /*! @brief Enumerated types to be used for interpreting formats. */
 enum fmt_type {
@@ -37,7 +40,7 @@ public:
 
     void close();
 
-    int readline_full_realloc(char **buf, const size_t &len_buf, const bool allow_realloc);
+    int readline_full_realloc(char **buf, const size_t &len_buf, bool allow_realloc);
 
     int readline_full(char *buf, const size_t &len_buf);
 
@@ -51,9 +54,9 @@ public:
 
     int vwriteline(va_list &ap);
 
-    int readline(...);
+    int readline(asciiTable_t* t, ...);
 
-    int writeline(...);
+    int writeline(asciiTable_t* t, ...);
 
     int writeformat();
 
@@ -73,12 +76,14 @@ public:
 
     int array_to_bytes(char *data, const size_t data_siz, ...);
 
-    int cleanup();
+    void cleanup();
 
+    size_t ncols() {return columns.size();}
     int update(const char *filepath, const char *io_mode);
 
 private:
     friend communicator::AsciiTableComm;
+    friend Metaschema::AsciiTableMetaschemaType;
     asciiFile_t f; //!< ASCII file structure.
     char format_str[LINE_SIZE_MAX]; //!< Format string for rows.
     char column[64]; //!< Character(s) used to seperate columns.
@@ -89,6 +94,6 @@ private:
     int status; //!< Negative if format_str has not been set yet
     int expected_cols;
 };
-
+int count_formats(const char* fmt_str);
 }
 } // communication

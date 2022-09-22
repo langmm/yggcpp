@@ -1,5 +1,5 @@
 #include "AsciiFile.hpp"
-#include <string.h>
+#include <cstring>
 
 using namespace communication;
 using namespace communication::datatypes;
@@ -25,7 +25,7 @@ bool asciiFile_t::is_open() const{
 bool asciiFile_t::open(){
     if (!is_open()) {
         fd = fopen(filepath, io_mode);
-        if (fd != NULL)
+        if (fd != nullptr)
             return true;
     } else {
         return true;
@@ -48,7 +48,7 @@ bool asciiFile_t::is_comment(const char *line) const {
 
 int asciiFile_t::readline_full_norealloc(char *line, size_t n) {
     if (is_open()) {
-        if (fgets(line, (int)n, fd) == NULL) {
+        if (fgets(line, (int)n, fd) == nullptr) {
             return -1;
         }
         int nread = (int)strlen(line);

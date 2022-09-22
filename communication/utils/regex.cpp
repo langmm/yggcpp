@@ -1,7 +1,4 @@
-//
-// Created by friedel on 8/30/22.
-//
-
+#include <memory>
 #include "regex.hpp"
 using namespace communication::utils;
 /*!
@@ -57,5 +54,63 @@ bool compile_regex (regex_t * r, const char * regex_text)
         return false;
     }
     return true;
+}
+
+int count_matches(const char *regex_text, const char *to_match) {
+    bool ret;
+    int n_match = 0;
+    regex_t r;
+    // Compile
+    ret = communication::utils::compile_regex(&r, regex_text);
+    if (ret)
+        return -1;
+    // Loop until string done
+    const char * p = to_match;
+    const size_t n_sub_matches = 10;
+    regmatch_t m[n_sub_matches];
+    while (1) {
+        int nomatch = regexec(&r, p, n_sub_matches, m, 0);
+        if (nomatch)
+            break;
+        n_match++;
+        p += m[0].rm_eo;
+    }
+    regfree(&r);
+    return n_match;
+}
+
+int find_matches(const char *regex_text, const char *to_match,
+                 size_t **sind, size_t **eind) {
+    bool ret;
+    int n_match = 0;
+    regex_t r;
+    // Compile
+    ret = communication::utils::compile_regex(&r, regex_text);
+    if (ret)
+        return -1;
+    // Loop until string done
+    const size_t n_sub_matches = 50;
+    regmatch_t m[n_sub_matches];
+    int nomatch = regexec(&r, to_match, n_sub_matches, m, 0);
+    if (!(nomatch)) {
+        // Count
+        while (n_match < (int)n_sub_matches) {
+            if ((m[n_match].rm_so == -1) && (m[n_match].rm_eo == -1)) {
+                break;
+            }
+            n_match++;
+        }
+        // Realloc
+        *sind = (size_t*)realloc(*sind, n_match*sizeof(size_t));
+        *eind = (size_t*)realloc(*eind, n_match*sizeof(size_t));
+        // Record
+        int i;
+        for (i = 0; i < n_match; i++) {
+            (*sind)[i] = m[i].rm_so;
+            (*eind)[i] = m[i].rm_eo;
+        }
+    }
+    regfree(&r);
+    return n_match;
 }
 

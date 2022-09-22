@@ -6,7 +6,7 @@ using namespace communication::datatypes;
 
 unsigned AsciiTableComm::_yggAsciiTablesCreated = 0;
 
-AsciiTableComm::AsciiTableComm(const std::string &name, Direction &direct, DataType* datatype) : CommBase<asciiTable_t, int>(name, direct, ASCII_TABLE_COMM, datatype) {
+AsciiTableComm::AsciiTableComm(const std::string &name, const Direction &direct, DataType* datatype) : CommBase<asciiTable_t, int>(name, direct, ASCII_TABLE_COMM, datatype) {
     init(name, direct, datatype);
 }
 
@@ -17,7 +17,7 @@ AsciiTableComm::~AsciiTableComm() {
     }
 }
 
-void AsciiTableComm::init(const std::string &name, Direction &direct,  DataType* datatype) {
+void AsciiTableComm::init(const std::string &name, const Direction &direct,  DataType* datatype) {
     flags |= COMM_FLAG_FILE;
     address->address(name);
     handle = (asciiTable_t*)(dtype_ascii_table(datatype));
