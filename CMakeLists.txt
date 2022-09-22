@@ -66,10 +66,10 @@ if (OpenMP_FOUND)
     set(YGG_BUILD_FLAGS "${YGG_BUILD_FLAGS} -D_OPENMP -DMPIINSTALLED")
 endif()
 
-find_package(Python REQUIRED COMPONENTS Interpreter Development NumPy)
+find_package(Python3 COMPONENTS Interpreter Development NumPy REQUIRED)
 include_directories(${Python_INCLUDE_DIRS})
 add_library(YggInterface SHARED ${SOURCES})
-target_link_libraries(YggInterface ${Python_LIBRARIES})
+target_link_libraries(YggInterface ${PYTHON_LIBRARIES} Python3::NumPy)
 include_directories("communication")
 
 IF (WIN32)
