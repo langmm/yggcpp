@@ -1,5 +1,6 @@
 #pragma once
 
+#include "enums.hpp"
 #include "utils/tools.hpp"
 #include "datatypes/datatypes.hpp"
 
@@ -26,15 +27,6 @@
 #define COMM_NAME_SIZE 100
 #define COMM_DIR_SIZE 100
 
-enum comm_enum {
-    NULL_COMM, IPC_COMM, ZMQ_COMM,
-    SERVER_COMM, CLIENT_COMM,
-    ASCII_FILE_COMM, ASCII_TABLE_COMM, ASCII_TABLE_ARRAY_COMM,
-    MPI_COMM
-};
-enum Direction {
-    SEND, NONE, RECV
-};
 
 namespace communication {
 namespace datatypes {
@@ -45,12 +37,9 @@ class ServerComm;
 
 class ClientComm;
 
-/*! @brief Communicator types. */
-typedef enum comm_enum comm_type;
-
 class Comm_t {
 public:
-    ~Comm_t();
+    virtual ~Comm_t();
 
     virtual int send(const char *data, const size_t &len) = 0;
 
@@ -177,18 +166,5 @@ CommBase<H, R>::~CommBase() {
         delete reply;
     utils::ygglog_debug("~CommBase: Finished");
 }
-
 }
-
-}
-
-extern "C" {
-    struct comm_t;
-    int free_comm(comm_t* x);
-    //comm_t empty_comm();
-    comm_t* new_comm(char* address, const Direction dir, const comm_enum type, dtype_t* datatype);
-    comm_t* init_comm(const char* name, const Direction dir, const comm_enum type, dtype_t* datatype);
-    int send(const comm_t* x, const char *data, const size_t &len);
-    long recv(comm_t* x, char **data, const size_t &len, bool allow_realloc);
-    int comm_nmsg(const comm_t* x);
 }

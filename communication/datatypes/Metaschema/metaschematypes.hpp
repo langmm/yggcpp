@@ -9,3 +9,7 @@
 #include "PlyMetaschemaType.hpp"
 #include "PyInstMetaschemaType.hpp"
 #include "PyObjMetaschemaType.hpp"
+#include "ScalarMetaschemaType.hpp"
+#include "SchemaMetaschemaType.hpp"
+#include "NDArrayMetaschemaType.hpp"
+#include "OneDArrayMetaschemaType.hpp"

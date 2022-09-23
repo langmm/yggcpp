@@ -29,11 +29,6 @@ AnyMetaschemaType::~AnyMetaschemaType() {
     }
 }
 
-/*!
-  @brief Equivalence operator.
-  @param[in] Ref MetaschemaType instance to compare against.
-  @returns bool true if the instance is equivalent, false otherwise.
- */
 bool AnyMetaschemaType::operator==(const MetaschemaType &Ref) const {
     if (!(MetaschemaType::operator==(Ref)))
         return false;

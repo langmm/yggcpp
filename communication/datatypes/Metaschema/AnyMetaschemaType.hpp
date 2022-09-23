@@ -136,7 +136,7 @@ public:
       @param[in] ap va_list_t Variable argument list.
       @returns size_t Number of arguments in ap consumed.
      */
-    size_t update_from_serialization_args(size_t *nargs, communication::utils::va_list_t &ap) override;
+    size_t update_from_serialization_args(size_t *nargs, struct `va_list_t &ap) override;
 
     // /*!
     //   @brief Update the type object with info from provided variable arguments for deserialization.

@@ -9,6 +9,7 @@
 #include "datatypes/datatypes.hpp"
 #include "YggGeneric.hpp"
 #include "Dict.hpp"
+#include "utils/va_list_t.hpp"
 
 namespace communication {
 namespace datatypes {
@@ -178,7 +179,7 @@ public:
       @param[in] ap va_list_t Variable argument list.
       @returns size_t Number of arguments in ap consumed.
      */
-    virtual size_t update_from_serialization_args(size_t *nargs, communication::utils::va_list_t &ap);
+    virtual size_t update_from_serialization_args(size_t *nargs, struct va_list_t &ap);
 
     /*!
       @brief Update the type object with info from provided variable arguments for deserialization.
@@ -187,7 +188,7 @@ public:
       @param[in] ap va_list_t Variable argument list.
       @returns size_t Number of arguments in ap consumed.
      */
-    virtual size_t update_from_deserialization_args(size_t *nargs, communication::utils::va_list_t &ap);
+    virtual size_t update_from_deserialization_args(size_t *nargs, struct va_list_t &ap);
 
     /*!
       @brief Update the type object with info from provided variable arguments for serialization.
@@ -378,7 +379,7 @@ public:
       @param[in, out] nargs Pointer to number of arguments in ap.
       @param[in, out] ap va_list_t Variable argument list.
      */
-    void skip_va_elements(size_t *nargs, communication::utils::va_list_t *ap) const {
+    void skip_va_elements(size_t *nargs, struct va_list_t *ap) const {
         skip_va_elements_wrap(nargs, ap);
         // size_t i;
         // std::vector<size_t> skip_bytes = nbytes_va();
@@ -394,14 +395,14 @@ public:
       @param[in, out] nargs Pointer to number of arguments in ap.
       @param[in, out] ap va_list_t Variable argument list.
      */
-    virtual void skip_va_elements_core(size_t *nargs, communication::utils::va_list_t *ap) const;
+    virtual void skip_va_elements_core(size_t *nargs, struct va_list_t *ap) const;
 
     /*!
       @brief Skip arguments that make of this type.
       @param[in, out] nargs Pointer to number of arguments in ap.
       @param[in, out] ap va_list_t Variable argument list.
      */
-    void skip_va_elements_wrap(size_t *nargs, communication::utils::va_list_t *ap) const;
+    void skip_va_elements_wrap(size_t *nargs, struct va_list_t *ap) const;
 
     /*!
       @brief Get the number of arguments expected to be filled/used by the type.
@@ -433,7 +434,7 @@ public:
       to skip the element defining the number of arguments.
       @returns YggGeneric Generic structure if one is present.
     */
-    YggGeneric pop_generic(size_t *nargs, communication::utils::va_list_t &ap, bool skip_nargs_dec = false) const {
+    YggGeneric pop_generic(size_t *nargs, struct va_list_t &ap, bool skip_nargs_dec = false) const {
         if (skip_nargs_dec)
             (*nargs)++;
         YggGeneric gen_arg = pop_generic_va(nargs, &ap);
@@ -453,7 +454,7 @@ public:
       Defaults to false.
       @returns YggGeneric* Generic structure if one is present, NULL otherwise.
     */
-    YggGeneric *pop_generic_ptr(size_t *nargs, communication::utils::va_list_t &ap, bool skip_nargs_dec = false) const;
+    YggGeneric *pop_generic_ptr(size_t *nargs, struct va_list_t &ap, bool skip_nargs_dec = false) const;
 
     // Encoding
     /*!
@@ -490,7 +491,7 @@ public:
       @returns bool true if the encoding was successful, false otherwise.
      */
     virtual bool encode_data(rapidjson::Writer<rapidjson::StringBuffer> *writer,
-                             size_t *nargs, communication::utils::va_list_t &ap) const;
+                             size_t *nargs, struct va_list_t &ap) const;
 
     /*!
       @brief Encode arguments describine an instance of this type into a JSON string.
@@ -503,7 +504,7 @@ public:
      */
     bool encode_data(rapidjson::Writer<rapidjson::StringBuffer> *writer,
                      size_t *nargs, ...) const {
-        communication::utils::va_list_t ap_s = communication::utils::init_va_list();
+        struct va_list_t ap_s = init_va_list();
         va_start(ap_s.va, nargs);
         bool out = encode_data(writer, nargs, ap_s);
         va_end(ap_s.va);
@@ -521,7 +522,7 @@ public:
       @returns bool true if the encoding was successful, false otherwise.
      */
     bool encode_data_wrap(rapidjson::Writer<rapidjson::StringBuffer> *writer,
-                          size_t *nargs, communication::utils::va_list_t &ap) const;
+                          size_t *nargs, struct va_list_t &ap) const;
 
     /*!
       @brief Encode arguments describine an instance of this type into a JSON string
@@ -622,7 +623,7 @@ public:
       @returns int Size of the serialized data in buf.
      */
     virtual int serialize(char **buf, size_t *buf_siz,
-                          const int allow_realloc, size_t *nargs, communication::utils::va_list_t &ap);
+                          const int allow_realloc, size_t *nargs, struct va_list_t &ap);
 
     /*!
       @brief Serialize an instance including it's type and data.
@@ -652,7 +653,7 @@ public:
       @returns bool true if the data was successfully decoded, false otherwise.
      */
     virtual bool decode_data(rapidjson::Value &data, const int allow_realloc,
-                             size_t *nargs, communication::utils::va_list_t &ap) const;
+                             size_t *nargs, struct va_list_t &ap) const;
 
     /*!
       @brief Decode variables from a JSON string.
@@ -689,7 +690,7 @@ public:
       @returns bool true if the data was successfully decoded, false otherwise.
      */
     bool decode_data_wrap(rapidjson::Value &data, const int allow_realloc,
-                          size_t *nargs, communication::utils::va_list_t &ap) const;
+                          size_t *nargs, struct va_list_t &ap) const;
 
     /*!
       @brief Decode variables from a JSON string, first checking if the
@@ -735,7 +736,7 @@ public:
       used.
      */
     virtual int deserialize(const char *buf, const size_t buf_siz,
-                            const int allow_realloc, size_t *nargs, communication::utils::va_list_t &ap);
+                            const int allow_realloc, size_t *nargs, struct va_list_t &ap);
 
     /*!
       @brief Deserialize variables from a JSON string.

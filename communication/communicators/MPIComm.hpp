@@ -28,7 +28,7 @@ class MPIComm : public CommBase<mpi_registry_t, int> {
     class MPIComm : public CommBase<void,void> {};
 #endif
 public:
-    MPIComm(const std::string &name, std::string &address, const Direction direction,
+    MPIComm(const std::string &name, utils::Address *address, const Direction direction,
             datatypes::DataType *datatype);
 
     //explicit MPIComm(const Comm_t* comm);

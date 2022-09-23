@@ -5,7 +5,7 @@ namespace datatypes {
 namespace Metaschema {
 
 
-class PlyDict : public Dict{
+class PlyDict : public Dict {
 public:
     PlyDict();
     PlyDict(const PlyDict* src);
