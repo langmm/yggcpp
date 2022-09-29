@@ -3,6 +3,7 @@
 #include <vector>
 #include <cstdio>
 #include "AsciiFile.hpp"
+#include "AsciiTable.h"
 #include "utils/tools.hpp"
 
 namespace communication {
@@ -12,29 +13,18 @@ class AsciiTableComm;
 
 namespace datatypes {
 
-namespace Metaschema {
-class AsciiTableMetaschemaType;
-}
-
-/*! @brief Enumerated types to be used for interpreting formats. */
-enum fmt_type {
-    AT_STRING, AT_FLOAT, AT_DOUBLE, AT_COMPLEX,
-    AT_SHORTSHORT, AT_SHORT, AT_INT, AT_LONG, AT_LONGLONG,
-    AT_USHORTSHORT, AT_USHORT, AT_UINT, AT_ULONG, AT_ULONGLONG
-};
-
 struct columnDesc {
     fmt_type type;
     size_t size;
 };
 
-class asciiTable_t {
+class AsciiTable {
 public:
-    asciiTable_t(const char *filepath, const char *io_mode,
+    AsciiTable(const char *filepath, const char *io_mode,
                  const char *format_str, const char *comment,
                  const char *column, const char *newline);
 
-    ~asciiTable_t();
+    ~AsciiTable();
 
     int open();
 
@@ -46,17 +36,17 @@ public:
 
     int writeline_full(const char *line);
 
-    int vbytes_to_row(const char *line, va_list &ap);
+    int bytes_to_row(const char *line, va_list &ap);
 
-    int vrow_to_bytes(char *buf, const size_t &buf_siz, va_list &ap);
+    int row_to_bytes(char *buf, const size_t &buf_siz, va_list &ap);
 
-    int vreadline(va_list &ap);
+    int readline(va_list &ap);
 
-    int vwriteline(va_list &ap);
+    int writeline(va_list &ap);
 
-    int readline(asciiTable_t* t, ...);
+    int readline(AsciiTable* t, ...);
 
-    int writeline(asciiTable_t* t, ...);
+    int writeline(AsciiTable* t, ...);
 
     int writeformat();
 
@@ -68,13 +58,13 @@ public:
 
     int set_format_typ();
 
-    int vbytes_to_array(const char *data, const size_t &data_siz, va_list &ap);
+    int bytes_to_array(char *data, const size_t &data_siz, va_list &ap);
 
-    int varray_to_bytes(char *data, const size_t &data_siz, va_list &ap);
+    int array_to_bytes(char *data, const size_t &data_siz, va_list &ap);
 
     int bytes_to_array(char *data, size_t data_siz, ...);
 
-    int array_to_bytes(char *data, const size_t data_siz, ...);
+    int array_to_bytes(char *data, size_t data_siz, ...);
 
     void cleanup();
 
@@ -83,8 +73,7 @@ public:
 
 private:
     friend communicator::AsciiTableComm;
-    friend Metaschema::AsciiTableMetaschemaType;
-    asciiFile_t f; //!< ASCII file structure.
+    AsciiFile f; //!< ASCII file structure.
     char format_str[LINE_SIZE_MAX]; //!< Format string for rows.
     char column[64]; //!< Character(s) used to seperate columns.
     std::vector<columnDesc> columns;

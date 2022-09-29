@@ -4,11 +4,11 @@
 namespace communication {
 namespace communicator {
 
-class AsciiFileComm : public CommBase<datatypes::asciiFile_t, int> {
+class AsciiFileComm : public CommBase<datatypes::AsciiFile, int> {
 public:
-    AsciiFileComm(const std::string &name, const Direction &direct, datatypes::DataType *datatype);
+    AsciiFileComm(const std::string &name, const DIRECTION &direct);
 
-    ~AsciiFileComm();
+    ~AsciiFileComm() override;
 
     int send(const char *data, const size_t &len) override;
 
@@ -19,7 +19,7 @@ public:
 private:
     static unsigned _yggAsciiFilesCreated;
 
-    void init(const std::string &name, const Direction &direct, datatypes::DataType *datatype);
+    void init(const std::string &name, const DIRECTION &direct);
 
     void new_ascii_file_address();
 };

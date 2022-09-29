@@ -1,17 +1,19 @@
 #pragma once
 #include <cstdio>
+#include <string>
 #define LINE_SIZE_MAX 1024*2
 
 namespace communication {
 namespace datatypes {
-class asciiTable_t;
+class AsciiTable;
 
-class asciiFile_t {
+class AsciiFile {
 public:
-    asciiFile_t(const char *filepath, const char *io_mode,
-                const char *comment, const char *newline);
+    AsciiFile() = delete;
+    AsciiFile(const char *filepath, const char *io_mode,
+              const char *comment, const char *newline);
 
-    ~asciiFile_t();
+    ~AsciiFile();
 
     bool is_open() const;
 
@@ -30,8 +32,8 @@ public:
     void update(const char *filepath, const char *io_mode);
 
 private:
-    friend asciiTable_t;
-    const char *filepath; //!< Full path to file.
+    friend AsciiTable;
+    const char* filepath; //!< Full path to file.
     char io_mode[64]; //!< I/O mode. 'r' for read, 'w' for write.
     char comment[64]; //!< Character(s) indicating a comment.
     char newline[64]; //!< Character(s) indicating a newline.

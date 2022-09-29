@@ -6,9 +6,9 @@ using namespace communication::datatypes;
 
 unsigned AsciiFileComm::_yggAsciiFilesCreated = 0;
 
-AsciiFileComm::AsciiFileComm(const std::string &name, const Direction &direct, DataType *datatype) :
-        CommBase<asciiFile_t, int>(name, direct, ASCII_FILE_COMM, datatype) {
-    init(name, direct, datatype);
+AsciiFileComm::AsciiFileComm(const std::string &name, const DIRECTION &direct) :
+        CommBase<AsciiFile, int>(name, direct, ASCII_FILE_COMM) {
+    init(name, direct);
 }
 
 AsciiFileComm::~AsciiFileComm() {
@@ -17,15 +17,15 @@ AsciiFileComm::~AsciiFileComm() {
         delete handle;
     }
 }
-void AsciiFileComm::init(const std::string &name, const Direction &direct, DataType* datatype) {
+void AsciiFileComm::init(const std::string &name, const DIRECTION &direct) {
     // Don't check base validity since address is name
     flags |= COMM_FLAG_FILE;
     address->address(name);
 
     if (direction == SEND) {
-        handle = new asciiFile_t(address->address().c_str(), "w", nullptr, nullptr);
+        handle = new AsciiFile(address->address().c_str(), "w", nullptr, nullptr);
     } else {
-        handle =  new asciiFile_t(address->address().c_str(), "r", nullptr, nullptr);
+        handle =  new AsciiFile(address->address().c_str(), "r", nullptr, nullptr);
     }
     int ret = handle->open();
     if (ret != 0) {
@@ -36,7 +36,7 @@ void AsciiFileComm::init(const std::string &name, const Direction &direct, DataT
 
 void AsciiFileComm::new_ascii_file_address() {
     name = "temp" + std::to_string(_yggAsciiFilesCreated);
-    init(name, direction, datatype);
+    init(name, direction);
 }
 
 int AsciiFileComm::comm_nmsg() const {

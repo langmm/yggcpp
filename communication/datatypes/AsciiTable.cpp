@@ -1,13 +1,13 @@
 #include "AsciiTable.hpp"
+#include "AsciiTable.h"
 #include "utils/regex.hpp"
 #include <cstring>
 #include <memory>
 
 #define FMT_LEN 100
 
-using namespace communication;
-using namespace communication::datatypes;
-using namespace communication::utils;
+namespace communication {
+namespace datatypes {
 
 int regex_replace_sub(char *buf, const size_t &len_buf,
                       const char *re, const char *rp,
@@ -33,14 +33,14 @@ int simplify_formats(char *fmt_str, const size_t fmt_len) {
     return ret;
 }
 
-asciiTable_t::asciiTable_t(const char *filepath, const char *io_mode,
+AsciiTable::AsciiTable(const char *filepath, const char *io_mode,
                            const char *format_str, const char *comment,
                            const char *column, const char *newline) :
-                           f(asciiFile_t(filepath, io_mode, comment, newline)),
+                           f(AsciiFile(filepath, io_mode, comment, newline)),
                            row_siz(0), status(0), expected_cols(0){
     columns.clear();
     strncpy(this->format_str, "\0", LINE_SIZE_MAX);
-    f = asciiFile_t(filepath, io_mode, comment, newline);
+    f = AsciiFile(filepath, io_mode, comment, newline);
     // Set defaults for optional parameters
     if (column == nullptr)
         strncpy(this->column, "\t", 64);
@@ -66,25 +66,26 @@ asciiTable_t::asciiTable_t(const char *filepath, const char *io_mode,
     /* printf("ncols = %d, row_siz = %d\n", t.ncols, t.row_siz); */
 }
 
-asciiTable_t::~asciiTable_t(){
+AsciiTable::~AsciiTable(){
+    cleanup();
 }
 
-int asciiTable_t::open(){
+int AsciiTable::open(){
     return f.open();
 }
 
-void asciiTable_t::close(){
+void AsciiTable::close(){
     f.close();
 }
 
-int asciiTable_t::readline_full_realloc(char** buf, const size_t &len_buf, const bool allow_realloc){
+int AsciiTable::readline_full_realloc(char** buf, const size_t &len_buf, const bool allow_realloc){
     // Read lines until there's one that's not a comment
     int ret = 0;
     bool com = true;
     size_t nread = LINE_SIZE_MAX;
     char *line = (char*)malloc(nread);
     if (line == nullptr) {
-        ygglog_error("at_readline_full_realloc: Failed to malloc line.");
+        utils::ygglog_error("at_readline_full_realloc: Failed to malloc line.");
         return -1;
     }
     while (com) {
@@ -97,18 +98,18 @@ int asciiTable_t::readline_full_realloc(char** buf, const size_t &len_buf, const
     }
     if (ret > (int)len_buf) {
         if (allow_realloc) {
-            ygglog_debug("at_readline_full_realloc: reallocating buffer from %d to %d bytes.",
+            utils::ygglog_debug("at_readline_full_realloc: reallocating buffer from %d to %d bytes.",
                          (int)len_buf, ret + 1);
             char *temp_buf = (char*)realloc(*buf, ret + 1);
             if (temp_buf == nullptr) {
-                ygglog_error("at_readline_full_realloc: Failed to realloc buffer.");
+                utils:: ygglog_error("at_readline_full_realloc: Failed to realloc buffer.");
                 free(*buf);
                 free(line);
                 return -1;
             }
             *buf = temp_buf;
         } else {
-            ygglog_error("at_readline_full_realloc: line (%d bytes) is larger than destination buffer (%d bytes)",
+            utils::ygglog_error("at_readline_full_realloc: line (%d bytes) is larger than destination buffer (%d bytes)",
                          ret, (int)len_buf);
             ret = -1;
             free(line);
@@ -120,43 +121,43 @@ int asciiTable_t::readline_full_realloc(char** buf, const size_t &len_buf, const
     return ret;
 }
 
-int asciiTable_t::readline_full(char* buf, const size_t &len_buf){
+int AsciiTable::readline_full(char* buf, const size_t &len_buf){
     return readline_full_realloc(&buf, len_buf, false);
 }
 
-int asciiTable_t::writeline_full(const char* line){
+int AsciiTable::writeline_full(const char* line){
     return f.writeline_full(line);
 }
 
-int asciiTable_t::vbytes_to_row(const char* line, va_list &ap){
+int AsciiTable::bytes_to_row(const char* line, va_list &ap){
     char fmt[LINE_SIZE_MAX];
     strncpy(fmt, format_str, LINE_SIZE_MAX);
     int sret = simplify_formats(fmt, LINE_SIZE_MAX);
     if (sret < 0) {
-        ygglog_debug("at_vbytes_to_row: simplify_formats returned %d", sret);
+        utils::ygglog_debug("at_vbytes_to_row: simplify_formats returned %d", sret);
         return -1;
     }
     // Interpret line
     int ret = vsscanf(line, fmt, ap);
     if (ret != columns.size()) {
-        ygglog_error("at_vbytes_to_row: %d arguments filled, but %d were expected",
+        utils::ygglog_error("at_vbytes_to_row: %d arguments filled, but %d were expected",
                      sret, columns.size());
         ret = -1;
     }
     return ret;
 }
 
-int asciiTable_t::vrow_to_bytes(char *buf, const size_t &buf_siz, va_list &ap){
+int AsciiTable::row_to_bytes(char *buf, const size_t &buf_siz, va_list &ap){
     return vsnprintf(buf, buf_siz, format_str, ap);
 }
 
-int asciiTable_t::vreadline(va_list &ap){
+int AsciiTable::readline(va_list &ap){
     int ret;
     // Read lines until there's one that's not a comment
     size_t nread = LINE_SIZE_MAX;
     char *line = (char*)malloc(nread);
     if (line == nullptr) {
-        ygglog_error("at_vreadline: Failed to malloc line.");
+        utils::ygglog_error("at_vreadline: Failed to malloc line.");
         return -1;
     }
 
@@ -166,33 +167,33 @@ int asciiTable_t::vreadline(va_list &ap){
     }
     // Parse line
 
-    if (vbytes_to_row(line, ap) < 0)
+    if (bytes_to_row(line, ap) < 0)
         ret = -1;
     free(line);
     return ret;
 }
 
-int asciiTable_t::vwriteline(va_list &ap){
+int AsciiTable::writeline(va_list &ap){
     return vfprintf(f.fd, format_str, ap);
 }
 
-int asciiTable_t::readline(asciiTable_t* t, ...){
+int AsciiTable::readline(AsciiTable* t, ...){
     va_list ap;
     va_start(ap, t); // might need to use last element in structure
-    int ret = vreadline(ap);
+    int ret = readline(ap);
     va_end(ap);
     return ret;
 }
 
-int asciiTable_t::writeline(asciiTable_t* t, ...){
+int AsciiTable::writeline(AsciiTable* t, ...){
     va_list ap;
     va_start(ap, t);
-    int ret = vwriteline(ap);
+    int ret = writeline(ap);
     va_end(ap);
     return ret;
 }
 
-int asciiTable_t::writeformat(){
+int AsciiTable::writeformat(){
     int ret;
     if (f.is_open()) {
         ret = (int)fwrite(f.comment, 1, strlen(f.comment), f.fd);
@@ -203,14 +204,14 @@ int asciiTable_t::writeformat(){
     return ret;
 }
 
-int asciiTable_t::discover_format_str(){
+int AsciiTable::discover_format_str(){
     int ret = open();
     if (ret < 0)
         return ret;
     size_t nread = LINE_SIZE_MAX;
     char *line = (char*)malloc(nread);
     if (line == nullptr) {
-        ygglog_error("at_discover_format_str: Failed to malloc line.");
+        utils::ygglog_error("at_discover_format_str: Failed to malloc line.");
         return -1;
     }
     ret = -1;
@@ -228,13 +229,13 @@ int asciiTable_t::discover_format_str(){
     return ret;
 }
 
-int asciiTable_t::set_ncols() {
+int AsciiTable::set_ncols() {
     // Assumes that format_str already done
     expected_cols = count_formats(format_str);
     return expected_cols;
 }
 
-int asciiTable_t::set_format_siz(){
+int AsciiTable::set_format_siz(){
     /* (*t).format_siz = (int*)malloc((*t).ncols*sizeof(int)); */
     int i = 0, typ, siz;
     row_siz = 0;
@@ -288,7 +289,7 @@ int asciiTable_t::set_format_siz(){
                 break;
         }
         if (siz < 0) {
-            ygglog_error("at_set_format_siz: Could not set size for column %d with type %d", i, typ);
+            utils::ygglog_error("at_set_format_siz: Could not set size for column %d with type %d", i, typ);
             return -1;
         }
         i++;
@@ -300,7 +301,7 @@ int asciiTable_t::set_format_siz(){
     return 0;
 }
 
-int asciiTable_t::set_format_typ(){
+int AsciiTable::set_format_typ(){
     columns.clear();
     columns.resize(expected_cols);
     size_t beg = 0, end;
@@ -315,9 +316,9 @@ int asciiTable_t::set_format_typ(){
     sprintf(re_fmt, "%%[^%s%s]+[%s%s]",
             column, f.newline, column, f.newline);
     while (beg < strlen(format_str)) {
-        mres = find_match(re_fmt, format_str + beg, &sind, &eind);
+        mres = utils::find_match(re_fmt, format_str + beg, &sind, &eind);
         if (mres < 0) {
-            ygglog_error("at_set_format_typ: find_match returned %d", mres);
+            utils::ygglog_error("at_set_format_typ: find_match returned %d", mres);
             return -1;
         } else if (mres == 0) {
             beg++;
@@ -327,7 +328,7 @@ int asciiTable_t::set_format_typ(){
         end = beg + (eind - sind);
         strncpy(ifmt, &(format_str)[beg], end-beg);
         ifmt[end-beg] = '\0';
-        if (find_match("%.*s", ifmt, &sind, &eind)) {
+        if (utils::find_match("%.*s", ifmt, &sind, &eind)) {
             columns[icol].type = AT_STRING;
             mres = regex_replace_sub(ifmt, FMT_LEN,
                                      "%(\\.)?([[:digit:]]*)s(.*)", "$2", 0);
@@ -335,44 +336,44 @@ int asciiTable_t::set_format_typ(){
 #ifdef _WIN32
             } else if (find_match("(%.*[fFeEgG]){2}j", ifmt, &sind, &eind)) {
 #else
-        } else if (find_match("(\%.*[fFeEgG]){2}j", ifmt, &sind, &eind)) {
+        } else if (utils::find_match("(\%.*[fFeEgG]){2}j", ifmt, &sind, &eind)) {
 #endif
             /* columns[icol].type = AT_COMPLEX; */
             columns[icol].type = AT_DOUBLE;
             icol++;
             columns[icol].type = AT_DOUBLE;
-        } else if (find_match("%.*[fFeEgG]", ifmt, &sind, &eind)) {
+        } else if (utils::find_match("%.*[fFeEgG]", ifmt, &sind, &eind)) {
             columns[icol].type = AT_DOUBLE;
             /* } else if (find_match("%.*l[fFeEgG]", ifmt, &sind, &eind)) { */
             /*   columns[icol].type = AT_DOUBLE; */
             /* } else if (find_match("%.*[fFeEgG]", ifmt, &sind, &eind)) { */
             /*   columns[icol].type = AT_FLOAT; */
-        } else if (find_match("%.*hh[id]", ifmt, &sind, &eind)) {
+        } else if (utils::find_match("%.*hh[id]", ifmt, &sind, &eind)) {
             columns[icol].type = AT_SHORTSHORT;
-        } else if (find_match("%.*h[id]", ifmt, &sind, &eind)) {
+        } else if (utils::find_match("%.*h[id]", ifmt, &sind, &eind)) {
             columns[icol].type = AT_SHORT;
-        } else if (find_match("%.*ll[id]", ifmt, &sind, &eind)) {
+        } else if (utils::find_match("%.*ll[id]", ifmt, &sind, &eind)) {
             columns[icol].type = AT_LONGLONG;
-        } else if (find_match("%.*l64[id]", ifmt, &sind, &eind)) {
+        } else if (utils::find_match("%.*l64[id]", ifmt, &sind, &eind)) {
             columns[icol].type = AT_LONGLONG;
-        } else if (find_match("%.*l[id]", ifmt, &sind, &eind)) {
+        } else if (utils::find_match("%.*l[id]", ifmt, &sind, &eind)) {
             columns[icol].type = AT_LONG;
-        } else if (find_match("%.*[id]", ifmt, &sind, &eind)) {
+        } else if (utils::find_match("%.*[id]", ifmt, &sind, &eind)) {
             columns[icol].type = AT_INT;
-        } else if (find_match("%.*hh[uoxX]", ifmt, &sind, &eind)) {
+        } else if (utils::find_match("%.*hh[uoxX]", ifmt, &sind, &eind)) {
             columns[icol].type = AT_USHORTSHORT;
-        } else if (find_match("%.*h[uoxX]", ifmt, &sind, &eind)) {
+        } else if (utils::find_match("%.*h[uoxX]", ifmt, &sind, &eind)) {
             columns[icol].type = AT_USHORT;
-        } else if (find_match("%.*ll[uoxX]", ifmt, &sind, &eind)) {
+        } else if (utils::find_match("%.*ll[uoxX]", ifmt, &sind, &eind)) {
             columns[icol].type = AT_ULONGLONG;
-        } else if (find_match("%.*l64[uoxX]", ifmt, &sind, &eind)) {
+        } else if (utils::find_match("%.*l64[uoxX]", ifmt, &sind, &eind)) {
             columns[icol].type = AT_ULONGLONG;
-        } else if (find_match("%.*l[uoxX]", ifmt, &sind, &eind)) {
+        } else if (utils::find_match("%.*l[uoxX]", ifmt, &sind, &eind)) {
             columns[icol].type = AT_ULONG;
-        } else if (find_match("%.*[uoxX]", ifmt, &sind, &eind)) {
+        } else if (utils::find_match("%.*[uoxX]", ifmt, &sind, &eind)) {
             columns[icol].type = AT_UINT;
         } else {
-            ygglog_error("at_set_format_typ: Could not parse format string: %s", ifmt);
+            utils::ygglog_error("at_set_format_typ: Could not parse format string: %s", ifmt);
             return -1;
         }
         beg = end;
@@ -381,12 +382,12 @@ int asciiTable_t::set_format_typ(){
     return set_format_siz();
 }
 
-int asciiTable_t::vbytes_to_array(const char* data, const size_t &data_siz, va_list &ap){
+int AsciiTable::bytes_to_array(char* data, const size_t &data_siz, va_list &ap){
     // check size of array
     /* size_t data_siz = strlen(data); */
     if ((data_siz % row_siz) != 0) {
-        ygglog_error("at_vbytes_to_array: Data: %s", data);
-        ygglog_error("at_vbytes_to_array: Data size (%d) not an even number of rows (row size is %d)",
+        utils::ygglog_error("at_vbytes_to_array: Data: %s", data);
+        utils::ygglog_error("at_vbytes_to_array: Data size (%d) not an even number of rows (row size is %d)",
                      (int)data_siz, row_siz);
         return -1;
     }
@@ -402,7 +403,7 @@ int asciiTable_t::vbytes_to_array(const char* data, const size_t &data_siz, va_l
         col_siz = nrows * c.size;
         t2 = (char*)realloc(*temp, col_siz);
         if (t2 == nullptr) {
-            ygglog_error("at_vbytes_to_array: Failed to realloc temp var.");
+            utils::ygglog_error("at_vbytes_to_array: Failed to realloc temp var.");
             free(*temp);
             return -1;
         }
@@ -422,18 +423,18 @@ int asciiTable_t::vbytes_to_array(const char* data, const size_t &data_siz, va_l
     return (int)nrows;
 }
 
-int asciiTable_t::varray_to_bytes(char* data, const size_t &data_siz, va_list &ap){
+int AsciiTable::array_to_bytes(char* data, const size_t &data_siz, va_list &ap){
     int nrows = va_arg(ap, int);
     size_t msg_siz = nrows * row_siz;
     if (msg_siz > data_siz) {
-        ygglog_debug("at_varray_to_bytes: Message size (%d bytes) will exceed allocated buffer (%d bytes).",
+        utils::ygglog_debug("at_varray_to_bytes: Message size (%d bytes) will exceed allocated buffer (%d bytes).",
                      msg_siz, (int)data_siz);
         return (int)msg_siz;
     }
     // Loop through
     int cur_pos = 0, col_siz;
     char *temp;
-    int i;
+    //int i;
     for (auto c: columns) {
     //for (i = 0; i < t.ncols; i++) {
         col_siz = nrows * (int)c.size;
@@ -444,27 +445,28 @@ int asciiTable_t::varray_to_bytes(char* data, const size_t &data_siz, va_list &a
     return cur_pos;
 }
 
-int asciiTable_t::bytes_to_array(char* data, size_t data_siz, ...){
+int AsciiTable::bytes_to_array(char* data, size_t data_siz, ...){
     va_list ap;
     va_start(ap, data_siz);
-    int ret = vbytes_to_array(data, data_siz, ap);
+    int ret = bytes_to_array(data, data_siz, ap);
     va_end(ap);
     return ret;
 }
 
-int asciiTable_t::array_to_bytes(char* data, const size_t data_siz, ...){
+int AsciiTable::array_to_bytes(char* data, size_t data_siz, ...){
     va_list ap;
     va_start(ap, data_siz);
-    int ret = varray_to_bytes(data, data_siz, ap);
+    int ret = array_to_bytes(data, data_siz, ap);
     va_end(ap);
     return ret;
 }
 
-void asciiTable_t::cleanup(){
+void AsciiTable::cleanup(){
     columns.clear();
+    row_siz = 0;
 }
 
-int asciiTable_t::update(const char* filepath, const char* io_mode){
+int AsciiTable::update(const char* filepath, const char* io_mode){
     f.update(filepath, io_mode);
     int flag = 0;
     if ((strlen(format_str) == 0) && (strcmp(io_mode, "r") == 0))
@@ -478,7 +480,199 @@ int asciiTable_t::update(const char* filepath, const char* io_mode){
 
 int count_formats(const char* fmt_str) {
     const char * fmt_regex = "%([[:digit:]]+\\$)?[+-]?([ 0]|\'.{1})?-?[[:digit:]]*(\\.[[:digit:]]+)?[lhjztL]*(64)?[bcdeEufFgGosxX]";
-    int ret = count_matches(fmt_regex, fmt_str);
+    int ret = utils::count_matches(fmt_regex, fmt_str);
     /* printf("%d, %s\n", ret, fmt_str); */
     return ret;
 }
+
+}
+}
+
+GET_ITEM(asciiTable,AsciiTable)
+GET_ITEMC(asciiTable,AsciiTable)
+GET_ITEMP(asciiTable,AsciiTable)
+
+int at_open(asciiTable_t *t) {
+    auto x = get_asciiTable(t);
+    if (x == nullptr)
+        return -1;
+    return x->open();
+}
+
+void at_close(asciiTable_t *t) {
+    auto x = get_asciiTable(t);
+    if (x == nullptr)
+        return;
+    x->close();
+}
+
+int at_readline_full_realloc(const asciiTable_t &t, char **buf,
+                             const size_t &len_buf, const int &allow_realloc) {
+    auto x = get_asciiTable(t);
+    if (x == nullptr)
+        return -1;
+    return x->readline_full_realloc(buf, len_buf, allow_realloc);
+}
+
+int at_readline_full(const asciiTable_t &t, char *buf, const size_t &len_buf) {
+    auto x = get_asciiTable(t);
+    if (x == nullptr)
+        return -1;
+    return x->readline_full(buf, len_buf);
+}
+
+int at_writeline_full(const asciiTable_t &t, const char* line) {
+    auto x = get_asciiTable(t);
+    if (x == nullptr)
+        return -1;
+    return x->writeline_full(line);
+}
+
+int at_vbytes_to_row(const asciiTable_t &t, const char* line, va_list &ap) {
+    auto x = get_asciiTable(t);
+    if (x == nullptr)
+        return -1;
+    return x->bytes_to_row(line, ap);
+}
+
+int at_vrow_to_bytes(const asciiTable_t &t, char *buf, const size_t &buf_siz, va_list &ap) {
+    auto x = get_asciiTable(t);
+    if (x == nullptr)
+        return -1;
+    return x->row_to_bytes(buf, buf_siz, ap);
+}
+
+int at_vreadline(const asciiTable_t &t, va_list &ap) {
+    auto x = get_asciiTable(t);
+    if (x == nullptr)
+        return -1;
+    return x->readline(ap);
+}
+
+int at_vwriteline(const asciiTable_t &t, va_list &ap) {
+    auto x = get_asciiTable(t);
+    if (x == nullptr)
+        return -1;
+    return x->writeline(ap);
+}
+
+int at_readline(asciiTable_t t, ...) {
+    auto x = get_asciiTable(t);
+    if (x == nullptr)
+        return -1;
+    va_list ap;
+    va_start(ap, t);
+    int ret = x->readline(ap);
+    va_end(ap);
+    return ret;
+}
+
+int at_writeline(asciiTable_t t, ...) {
+    auto x = get_asciiTable(t);
+    if (x == nullptr)
+        return -1;
+    va_list ap;
+    va_start(ap, t);
+    int ret = x->writeline(ap);
+    va_end(ap);
+    return ret;
+}
+
+int at_writeformat(const asciiTable_t &t) {
+    auto x = get_asciiTable(t);
+    if (x == nullptr)
+        return -1;
+    return x->writeformat();
+}
+
+int at_discover_format_str(asciiTable_t *t) {
+    auto x = get_asciiTable(t);
+    if (x == nullptr)
+        return -1;
+    return x->discover_format_str();
+}
+
+int at_set_ncols(asciiTable_t *t) {
+    auto x = get_asciiTable(t);
+    if (x == nullptr)
+        return -1;
+    return x->set_ncols();
+}
+
+int at_set_format_siz(asciiTable_t *t) {
+    auto x = get_asciiTable(t);
+    if (x == nullptr)
+        return -1;
+    return x->set_format_siz();
+}
+
+int at_set_format_typ(asciiTable_t *t) {
+    auto x = get_asciiTable(t);
+    if (x == nullptr)
+        return -1;
+    return x->set_format_typ();
+}
+
+int at_vbytes_to_array(const asciiTable_t &t, char *data,
+                       const size_t &data_siz, va_list &ap) {
+    auto x = get_asciiTable(t);
+    if (x == nullptr)
+        return -1;
+    return x->bytes_to_array(data, data_siz, ap);
+}
+
+int at_varray_to_bytes(const asciiTable_t &t, char *data, const size_t &data_siz, va_list &ap) {
+    auto x = get_asciiTable(t);
+    if (x == nullptr)
+        return -1;
+    return x->array_to_bytes(data, data_siz, ap);
+}
+
+int at_bytes_to_array(const asciiTable_t &t, char *data, size_t data_siz, ...) {
+    auto x = get_asciiTable(t);
+    if (x == nullptr)
+        return -1;
+    va_list ap;
+    va_start(ap, data_siz);
+    int ret = x->bytes_to_array(data, data_siz, ap);
+    va_end(ap);
+    return ret;
+}
+
+int at_array_to_bytes(const asciiTable_t &t, char *data, size_t data_siz, ...) {
+    auto x = get_asciiTable(t);
+    if (x == nullptr)
+        return -1;
+    va_list ap;
+    va_start(ap, data_siz);
+    int ret = x->array_to_bytes(data, data_siz, ap);
+    va_end(ap);
+    return ret;
+}
+
+void at_cleanup(asciiTable_t *t) {
+    auto x = get_asciiTable(t);
+    if (x == nullptr)
+        return;
+    x->cleanup();
+    delete x;
+    t->obj = nullptr;
+}
+
+int at_update(asciiTable_t *t, const char *filepath, const char *io_mode) {
+    auto x = get_asciiTable(t);
+    if (x == nullptr)
+        return -1;
+    return x->update(filepath, io_mode);
+}
+
+asciiTable_t init_asciiTable(const char *filepath, const char *io_mode,
+                        const char *format_str, const char *comment,
+                        const char *column, const char *newline) {
+    asciiTable_t at;
+    auto aft = new communication::datatypes::AsciiTable(filepath, io_mode, format_str,
+                                                        comment, column, newline);
+    at.obj = static_cast<void*>(aft);
+    return at;
+}
+

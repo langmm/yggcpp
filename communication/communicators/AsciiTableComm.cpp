@@ -6,8 +6,9 @@ using namespace communication::datatypes;
 
 unsigned AsciiTableComm::_yggAsciiTablesCreated = 0;
 
-AsciiTableComm::AsciiTableComm(const std::string &name, const Direction &direct, DataType* datatype) : CommBase<asciiTable_t, int>(name, direct, ASCII_TABLE_COMM, datatype) {
-    init(name, direct, datatype);
+AsciiTableComm::AsciiTableComm(const std::string &name, const DIRECTION &direct) :
+        CommBase<AsciiTable, int>(name, direct, ASCII_TABLE_COMM) {
+    init(name, direct);
 }
 
 AsciiTableComm::~AsciiTableComm() {
@@ -17,7 +18,7 @@ AsciiTableComm::~AsciiTableComm() {
     }
 }
 
-void AsciiTableComm::init(const std::string &name, const Direction &direct,  DataType* datatype) {
+void AsciiTableComm::init(const std::string &name, const DIRECTION &direct) {
     flags |= COMM_FLAG_FILE;
     address->address(name);
     handle = (asciiTable_t*)(dtype_ascii_table(datatype));
@@ -53,14 +54,14 @@ void AsciiTableComm::init(const std::string &name, const Direction &direct,  Dat
 
 int AsciiTableComm::new_ascii_table_address() {
     name = "tempASCIITable." + std::to_string(_yggAsciiTablesCreated);
-    init(name, direction, datatype);
+    init(name, direction);
     _yggAsciiTablesCreated++;
     return 0;
 }
 
 int AsciiTableComm::new_ascii_table_array_address() {
     name = "tempASCIITableArray." + std::to_string(_yggAsciiTablesCreated);
-    init(name, direction, datatype);
+    init(name, direction);
     _yggAsciiTablesCreated++;
     return 0;
 }
