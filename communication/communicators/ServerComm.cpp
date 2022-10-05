@@ -1,11 +1,13 @@
 #include "ServerComm.hpp"
 #include "DefaultComm.hpp"
+#include "utils/tools.hpp"
 
 using namespace communication::communicator;
 using namespace communication::utils;
 using namespace communication::datatypes;
 
-ServerComm::ServerComm(const std::string &name, Address *address, Direction direction, DataType* datatype) : COMM_BASE(name, address, direction, datatype){
+ServerComm::ServerComm(const std::string &name, Address *address, DIRECTION direction) :
+        COMM_BASE(name, address, direction){
     comms.clear();
     response_id.clear();
     request_id.clear();
@@ -15,13 +17,13 @@ ServerComm::ServerComm(const std::string &name, Address *address, Direction dire
     if (name.empty() && address != nullptr && address->valid())
         return;
     // Called to initialize/create server comm
-    DataType *dtype_in = create_dtype_format(this->direction, 0, false);
+    //DataType *dtype_in = create_dtype_format(this->direction, 0, false);
 
     if (this->name.empty()) {
-        base_handle = new COMM_BASE("", this->address, RECV, dtype_in);
+        base_handle = new COMM_BASE("", this->address, RECV);
         base_handle->name = "server_request." + this->address->address();
     } else {
-        base_handle = new COMM_BASE(this->name, nullptr, RECV, dtype_in);
+        base_handle = new COMM_BASE(this->name, nullptr, RECV);
     }
     base_handle->flags |= COMM_FLAG_SERVER;
     base_handle->init();
@@ -76,17 +78,17 @@ int ServerComm::has_comm(const Address* resp_address) const {
     return -1;
 }
 
-int ServerComm::add_comm(::std::string &address, const DataType* datatype){
-    return add_comm(new Address(address), datatype);
+int ServerComm::add_comm(::std::string &address){
+    return add_comm(new Address(address));
 }
-int ServerComm::add_comm(Address* address, const DataType* datatype){
-    DataType* dtype_copy = copy_dtype(datatype);
-    if (dtype_copy == nullptr) {
-        ygglog_error("server_add_comm(%s): Failed to create dtype_copy.",
-                     address->address().c_str());
-        return -1;
-    }
-    auto *base = new COMM_BASE("", address, SEND, dtype_copy);
+int ServerComm::add_comm(Address* address){
+    //DataType* dtype_copy = copy_dtype(datatype);
+    //if (dtype_copy == nullptr) {
+    //    ygglog_error("server_add_comm(%s): Failed to create dtype_copy.",
+    //                 address->address().c_str());
+    //    return -1;
+    //}
+    auto *base = new COMM_BASE("", address, SEND);
     base->flags |= COMM_ALLOW_MULTIPLE_COMMS;
     base->const_flags |= COMM_EOF_SENT | COMM_EOF_RECV;
     comms.push_back(base);
@@ -107,7 +109,7 @@ Comm_t* ServerComm::get_comm(const int idx) const{
     }
 }
 
-int ServerComm::add_request(const std::string &req_id, Address* response_address, const DataType* datatype){
+int ServerComm::add_request(const std::string &req_id, Address* response_address){
     ygglog_debug("server_add_request: adding request %s for address %s",
                  req_id.c_str(), response_address->address().c_str());
     std::string resp_id = req_id;
@@ -131,7 +133,7 @@ int ServerComm::add_request(const std::string &req_id, Address* response_address
     // comm
     int c_idx = has_comm(response_address);
     if (c_idx < 0) {
-        if (add_comm(new Address(response_address), datatype) < 0) {
+        if (add_comm(new Address(response_address)) < 0) {
             ygglog_error("server_add_request: Failed to add comm");
             return -1;
         }
@@ -232,7 +234,7 @@ long ServerComm::recv(char** data, const size_t &len, bool allow_realloc){
         return -1;
     }
     address->address(head.id);
-    if (add_request(head.request_id, head.response_address,
-                    datatype) < 0) return -1;
+    if (add_request(head.request_id, head.response_address) < 0)
+        return -1;
     return ret;
 }

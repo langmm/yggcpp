@@ -81,8 +81,8 @@ void ZMQComm::init() {
   @param[in] comm comm_t * Comm structure initialized with init_comm_base.
   @returns int -1 if the comm could not be initialized.
  */
-ZMQComm::ZMQComm(const std::string &name, Address *address, const Direction direction, DataType* datatype) :
-        CommBase(address, direction, ZMQ_COMM, datatype) {
+ZMQComm::ZMQComm(const std::string &name, Address *address, const DIRECTION direction) :
+        CommBase(address, direction, ZMQ_COMM) {
     init();
 }
 

@@ -1,5 +1,6 @@
 #pragma once
 //#define IPCINSTALLED
+#include "utils/tools.hpp"
 
 #ifdef USE_OSR_YGG
 #undef IPCINSTALLED
@@ -32,11 +33,10 @@ typedef struct msgbuf_t {
 class IPCComm : public CommBase<int, int> {
 public:
     explicit IPCComm(const std::string &name = "", utils::Address *address = new utils::Address(),
-                     Direction direction = NONE,
-                     datatypes::DataType *datatype = nullptr);
+                     DIRECTION direction = NONE);
 
     //explicit IPCComm(Comm_t* comm);
-    ~IPCComm();
+    ~IPCComm() override;
 
     int check_channels();
 
@@ -49,6 +49,8 @@ public:
     int send(const char *data, const size_t &len) override;
 
     long recv(char **data, const size_t &len, bool allow_realloc) override;
+    int send(const dtype_t* dtype) override;
+    long recv(dtype_t* dtype) override;
 
 protected:
     int new_address();

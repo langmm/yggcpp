@@ -13,10 +13,9 @@ namespace communicator {
 // @brief Structure for storing requests
 class ServerComm : public COMM_BASE {
 public:
-    explicit ServerComm(const std::string &name = "", utils::Address *address = nullptr, Direction direction = NONE,
-                        datatypes::DataType *datatype = nullptr);
+    explicit ServerComm(const std::string &name = "", utils::Address *address = nullptr, DIRECTION direction = NONE);
 
-    ~ServerComm();
+    ~ServerComm() override;
 
     int has_request(const std::string &req_id) const;
 
@@ -26,13 +25,13 @@ public:
 
     int has_comm(const utils::Address *resp_address) const;
 
-    int add_comm(::std::string &address, const datatypes::DataType *datatype);
+    int add_comm(::std::string &address);
 
-    int add_comm(utils::Address *address, const datatypes::DataType *datatype);
+    int add_comm(utils::Address *address);
 
     Comm_t *get_comm(const int idx = -1) const;
 
-    int add_request(const std::string &req_id, utils::Address *response_address, const datatypes::DataType *datatype);
+    int add_request(const std::string &req_id, utils::Address *response_address);
 
     int remove_request(size_t idx);
 
@@ -43,6 +42,8 @@ public:
     int send(const char *data, const size_t &len) override;
 
     long recv(char **data, const size_t &len, bool allow_realloc) override;
+    int send(const dtype_t* dtype) override;
+    long recv(dtype_t* dtype) override;
 
 private:
     ::std::vector<Comm_t *> comms; //!< Array of response comms.

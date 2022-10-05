@@ -7,10 +7,9 @@ namespace communicator {
 
 class ClientComm : public COMM_BASE {
 public:
-    explicit ClientComm(const std::string &name = "", utils::Address *address = nullptr, Direction direction = NONE,
-                        datatypes::DataType *datatype = nullptr);
+    explicit ClientComm(const std::string &name = "", utils::Address *address = nullptr, DIRECTION direction = NONE);
 
-    ~ClientComm();
+    ~ClientComm() override;
 
     int has_request(const std::string &req_id);
 
@@ -35,6 +34,8 @@ public:
     int send(const char *data, const size_t &len) override;
 
     long recv(char **data, const size_t &len, bool allow_realloc) override;
+    int send(const dtype_t* dtype) override;
+    long recv(dtype_t* dtype) override;
 
 private:
     COMM_BASE *comm;

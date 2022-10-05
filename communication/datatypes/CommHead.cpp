@@ -1,11 +1,11 @@
 #include "CommHead.hpp"
-#include "datatypes.hpp"
-#include "Metaschema/MetaschemaType.hpp"
+#include "utils/logging.hpp"
+#include "utils/tools.hpp"
 
 using namespace communication::datatypes;
 using namespace communication::utils;
 
-comm_head_t::comm_head_t(utils::Address* adr, const std::string &id): address(adr), id(id){
+CommHead::CommHead(utils::Address* adr, const std::string &id): address(adr), id(id){
     // Parameters set during read
     bodysiz = 0;
     bodybeg = 0;
@@ -22,10 +22,10 @@ comm_head_t::comm_head_t(utils::Address* adr, const std::string &id): address(ad
     serializer_type = -1;
     format_str = "";
     // Parameters used for type
-    dtype = nullptr;
+    //dtype = T_ANY;
 }
 
-comm_head_t::comm_head_t(const char *buf, const size_t &buf_siz) {
+CommHead::CommHead(const char *buf, const size_t &buf_siz) {
     int ret;
     char *head = nullptr;
     size_t headsiz;
@@ -33,7 +33,7 @@ comm_head_t::comm_head_t(const char *buf, const size_t &buf_siz) {
         // Split header/body
         ret = split_head_body(buf, buf_siz, &head, &headsiz);
         if (ret < 0) {
-            ygglog_error("parse_comm_header: Error splitting head and body.");
+            utils::ygglog_error("parse_comm_header: Error splitting head and body.");
             flags &= ~HEAD_FLAG_VALID;
             if (head != nullptr)
                 free(head);
@@ -77,7 +77,7 @@ comm_head_t::comm_head_t(const char *buf, const size_t &buf_siz) {
     }
 }
 
-bool comm_head_t::update_header_from_doc(rapidjson::Value &head_doc) {
+bool CommHead::update_header_from_doc(rapidjson::Value &head_doc) {
     // Type
     if (!(head_doc.IsObject())) {
         ygglog_error("update_header_from_doc: head document must be an object.");
@@ -163,7 +163,7 @@ bool comm_head_t::update_header_from_doc(rapidjson::Value &head_doc) {
     return true;
 }
 
-comm_head_t::~comm_head_t() {
+CommHead::~CommHead() {
     if (dtype != nullptr)
         delete dtype;
     if (address != nullptr)

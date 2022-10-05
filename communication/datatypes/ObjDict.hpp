@@ -4,8 +4,6 @@
 #include "Dict.hpp"
 namespace communication {
 namespace datatypes {
-namespace Metaschema {
-
 
 class ObjDict : public Dict {
 public:
@@ -14,9 +12,9 @@ public:
     ObjDict(const ObjDict* obj);
     ~ObjDict();
 
-    int alloc(int nvert, int ntexc, int nnorm, int nparam,
-              int npoint, int nline, int nface, int ncurve, int ncurve2,
-              int nsurf, int do_color);
+    int alloc(int i_nvert, int i_ntexc, int i_nnorm, int i_nparam,
+              int i_npoint, int i_nline, int i_nface, int i_ncurve, int i_ncurve2,
+              int i_nsurf, int do_color);
 
     void display_indent(const char* indent) const override;
     void display() const override { display_indent("");}
@@ -50,8 +48,8 @@ public:
     float **surface_params_v; //!< Starting and ending parameters for each curve in the v direction.
     int **surface_texcoords; //!< Indices of texcoords for each surface vertex.
     int **surface_normals; //!< Indices of normals for each surface vertex.
-
+protected:
+    void clear();
 };
-}
 }
 }

@@ -1,12 +1,13 @@
 #pragma once
 #include <cstdlib>
+#include "utils/enums.hpp"
 #ifdef __cplusplus
 extern "C" {
 #endif
 #include <Python.h>
 struct dtype_t {
     void* obj;
-    char* type;
+    DTYPE type;
     bool use_generic;
 };
 
@@ -59,13 +60,6 @@ const size_t dtype_precision(const dtype_t* type_class);
   @returns dtype_t* Initialized type structure/class.
 */
 dtype_t* complete_dtype(dtype_t *dtype, const bool use_generic);
-
-/*!
-  @brief Get the ascii table data structure.
-  @param[in] dtype dtype_t* Wrapper struct for C++ Metaschema type class.
-  @returns: void* Cast pointer to ascii table.
-*/
-void* dtype_ascii_table(const dtype_t* dtype);
 
 
 /*!
@@ -152,7 +146,7 @@ void display_dtype(const dtype_t *dtype, const char* indent);
 */
 size_t nargs_exp_dtype(const dtype_t *dtype);
 
-
+dtype_t* create_dtype(DTYPE dtype, ushort precision=0, bool use_generic=false);
 
 /*!
   @brief Construct and empty type object.
@@ -213,8 +207,8 @@ dtype_t* create_dtype_default(const char* type,
   objects will be expected to be YggGeneric classes.
   @returns dtype_t* Type structure/class.
 */
-dtype_t* create_dtype_scalar(const char* subtype, const size_t precision,
-                             const char* units, const bool use_generic);
+dtype_t* create_dtype_scalar(DTYPE type, size_t precision=0,
+                             const char* units=nullptr, bool use_generic=false);
 
 
 /*!
@@ -313,21 +307,6 @@ dtype_t* create_dtype_obj(const bool use_generic);
 
 
 /*!
-  @brief Construct an AsciiTable type object.
-  @param[in] format_str const char* C-style format string that will be used to determine
-  the type of elements in arrays that will be serialized/deserialized using
-  the resulting type.
-  @param[in] as_array int If 1, the types will be arrays. Otherwise they will be
-  scalars.
-  @param[in] use_generic bool If true, serialized/deserialized
-  objects will be expected to be YggGeneric classes.
-  @returns dtype_t* Type structure/class.
-*/
-dtype_t* create_dtype_ascii_table(const char *format_str, const int as_array,
-                                  const bool use_generic);
-
-
-/*!
   @brief Construct a type object based on the provided format string.
   @param[in] format_str const char* C-style format string that will be used to determine
   the type of elements in arrays that will be serialized/deserialized using
@@ -395,8 +374,6 @@ dtype_t* create_dtype_any(const bool use_generic);
 int destroy_dtype(dtype_t** dtype);
 
 int set_dtype_name(dtype_t* dtype, const char* name);
-
-int destroy_dtype(dtype_t **dtype);
 
 dtype_t* create_dtype_format(const char* format_str, const int as_array=0, const bool use_generic=false);
 

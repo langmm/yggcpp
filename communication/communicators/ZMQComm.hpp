@@ -105,14 +105,15 @@ typedef struct zmq_reply_t {
 
 class ZMQComm : public CommBase<ygg_sock_t, zmq_reply_t> {
 public:
-    explicit ZMQComm(const std::string &name = "", utils::Address *address = new utils::Address(), Direction direction = NONE,
-                     datatypes::DataType *datatype = nullptr);
+    explicit ZMQComm(const std::string &name = "", utils::Address *address = new utils::Address(),
+                     DIRECTION direction = NONE);
 
     //explicit ZMQComm(Comm_t* comm);
-    ~ZMQComm();
+    ~ZMQComm() override;
 
     int send(const char *data, const size_t &len) override;
-
+    int send(const dtype_t* dtype) override;
+    long recv(dtype_t* dtype) override;
     long recv(char **data, const size_t &len, bool allow_realloc) override;
 
     //void open() override;

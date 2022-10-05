@@ -329,8 +329,8 @@ void IPCComm::init() {
     handle = fid;
 }
 
-IPCComm::IPCComm(const std::string &name, Address *address, Direction direction,
-                 DataType *datatype) : CommBase(address, direction, IPC_COMM, datatype) {
+IPCComm::IPCComm(const std::string &name, Address *address, DIRECTION direction) :
+        CommBase(address, direction, IPC_COMM) {
     init();
 }
 

@@ -68,9 +68,14 @@ endif()
 
 find_package(Python3 COMPONENTS Interpreter Development NumPy REQUIRED)
 include_directories(${Python_INCLUDE_DIRS})
+include_directories(${Python3_NumPy_INCLUDE_DIRS})
 add_library(YggInterface SHARED ${SOURCES})
 target_link_libraries(YggInterface ${PYTHON_LIBRARIES} Python3::NumPy)
 include_directories("communication")
+
+add_definitions(-DRAPIDJSON_YGGDRASIL)
+add_definitions(-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION)
+add_definitions(-D_USE_MATH_DEFINES)
 
 IF (WIN32)
     ADD_LIBRARY(regex_win32 STATIC IMPORTED)

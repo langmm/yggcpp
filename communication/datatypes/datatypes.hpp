@@ -7,18 +7,8 @@
 #include "rapidjson/document.h"
 #define MSG_HEAD_SEP "YGG_MSG_HEAD"
 
-enum DTYPE {
-    T_BOOLEAN, T_INTEGER, T_NULL, T_NUMBER, T_STRING, T_ARRAY, T_OBJECT,
-    T_DIRECT, T_1DARRAY, T_NDARRAY, T_SCALAR, T_FLOAT, T_UINT, T_INT, T_COMPLEX,
-    T_BYTES, T_UNICODE, T_PLY, T_OBJ, T_ASCII_TABLE,
-    T_CLASS, T_FUNCTION, T_INSTANCE, T_SCHEMA, T_ANY
-};
-
 namespace communication {
 namespace datatypes {
-namespace Metaschema {
-class MetaschemaType;
-}
 
 /*!
   @brief String comparison structure.

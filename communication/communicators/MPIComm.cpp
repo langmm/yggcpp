@@ -41,13 +41,13 @@ mpi_registry_t &mpi_registry_t::Clone() const {
     }
 }*/
 
-MPIComm::MPIComm(const std::string &name, std::string &address, const Direction direction,
-                 DataType *datatype) : CommBase(nullptr, direction, MPI_COMM, datatype) {
+MPIComm::MPIComm(const std::string &name, utils::Address *address, const DIRECTION direction) :
+        CommBase(nullptr, direction, MPI_COMM) {
 
     //if (!(comm->flags & COMM_FLAG_VALID))
     //    return -1;
     if (name.empty()) {
-        this->name = "tempinitMPI." + address;
+        this->name = "tempinitMPI." + address->address();
     }
     handle = new mpi_registry_t(MPI_COMM_WORLD);
     if (handle == nullptr) {
@@ -59,7 +59,7 @@ MPIComm::MPIComm(const std::string &name, std::string &address, const Direction 
     handle->tag = 0;
     handle->nproc = 1;
     std::vector<std::string> adrs;
-    boost::split(adrs, address, boost::is_any_of(","));
+    boost::split(adrs, address->address(), boost::is_any_of(","));
     handle->nproc += static_cast<int>(adrs.size());
 
     size_t ibeg, iend;
@@ -118,7 +118,7 @@ int MPIComm::mpi_comm_source_id() {
     return 0;
 }
 
-int MPIComm::comm_nmsg() {
+int MPIComm::comm_nmsg() const {
     int src = mpi_comm_source_id();
     int nmsg = 0;
     if (src < 0) {

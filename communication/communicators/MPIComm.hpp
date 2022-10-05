@@ -3,7 +3,7 @@
 #ifdef MPIINSTALLED
 #include <mpi.h>
 #endif /*MPIINSTALLED*/
-#include <CommBase.hpp>
+#include "CommBase.hpp"
 #include <vector>
 
 namespace communication {
@@ -28,15 +28,16 @@ class MPIComm : public CommBase<mpi_registry_t, int> {
     class MPIComm : public CommBase<void,void> {};
 #endif
 public:
-    MPIComm(const std::string &name, utils::Address *address, const Direction direction,
-            datatypes::DataType *datatype);
+    MPIComm(const std::string &name, utils::Address *address, const DIRECTION direction);
 
     //explicit MPIComm(const Comm_t* comm);
-    ~MPIComm();
+    ~MPIComm() override;
 
     int send(const char *data, const size_t &len) override;
 
     long recv(char **data, const size_t &len, bool allow_realloc) override;
+    int send(const dtype_t* dtype) override;
+    long recv(dtype_t* dtype) override;
 
     int comm_nmsg() const override;
 

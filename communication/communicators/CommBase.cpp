@@ -2,20 +2,16 @@
 
 using namespace communication::communicator;
 using namespace communication::utils;
-using namespace communication::datatypes;
 
 
-Comm_t::Comm_t(Address *address, Direction dirn, const comm_type &t,
-               DataType *datatype, int flgs) : address(address), type(t), _valid(false), direction(direction), flags(flgs) {
+Comm_t::Comm_t(Address *address, DIRECTION dirn, const COMM_TYPE &t, int flgs) :
+        address(address), type(t), _valid(false), direction(direction), flags(flgs) {
     name = "";
 
     flags |= COMM_FLAG_VALID;
     if (direction == NONE)
         flags &= ~COMM_FLAG_VALID;
 
-    datatype = complete_dtype(datatype, false);
-    if (datatype == nullptr)
-        throw("Invalid data type");
     maxMsgSize = YGG_MSG_MAX;
     const_flags = 0;
     thread_id = get_thread_id();
@@ -29,8 +25,8 @@ Comm_t::Comm_t(Address *address, Direction dirn, const comm_type &t,
     last_send = nullptr;
 }
 
-Comm_t::Comm_t(const std::string &name, Direction direction, const comm_type &t,
-               DataType *datatype) : Comm_t(new Address(), direction, t, datatype) {
+Comm_t::Comm_t(const std::string &name, DIRECTION direction, const COMM_TYPE &t) :
+        Comm_t(new Address(), direction, t) {
     std::string full_name;
     if (!name.empty()) {
         full_name = name;
@@ -84,7 +80,7 @@ Comm_t::Comm_t(const std::string &name, Direction direction, const comm_type &t,
 
 }
 
-/*Comm_t::Comm_t(const communication::Comm_t *comm, comm_type type) {
+/*Comm_t::Comm_t(const communication::Comm_t *comm, COMM_TYPE type) {
     this->type = type;
     name =  comm->name; //!< Comm name.
 
@@ -106,8 +102,6 @@ Comm_t::~Comm_t() {
     ygglog_debug("~CommBase: Started");
     if (last_send != nullptr)
         delete last_send;
-    if (datatype != nullptr)
-        delete datatype;
     if (address != nullptr)
         delete address;
     ygglog_debug("~CommBase: Finished");
@@ -143,40 +137,40 @@ int free_comm(comm_t* x) {
 //    comm_t* comm;
 //
 //}
-Comm_t* new_Comm_t(const Direction dir, const comm_enum type, DataType* datatype, const std::string &name="", char* address=nullptr) {
+Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name="", char* address=nullptr) {
     switch(type) {
         case NULL_COMM:
             break;
         case IPC_COMM:
-            return new IPCComm(name, (address == nullptr) ? nullptr : new Address(address), dir, datatype);
+            return new IPCComm(name, (address == nullptr) ? nullptr : new Address(address), dir);
         case ZMQ_COMM:
-            return new ZMQComm(name, (address == nullptr) ? nullptr : new Address(address), dir, datatype);
+            return new ZMQComm(name, (address == nullptr) ? nullptr : new Address(address), dir);
         case SERVER_COMM:
-            return new ServerComm(name, (address == nullptr) ? nullptr : new Address(address), dir, datatype);
+            return new ServerComm(name, (address == nullptr) ? nullptr : new Address(address), dir);
         case CLIENT_COMM:
-            return new ClientComm(name, (address == nullptr) ? nullptr : new Address(address), dir, datatype);
+            return new ClientComm(name, (address == nullptr) ? nullptr : new Address(address), dir);
         case ASCII_FILE_COMM:
-            return new AsciiFileComm(name, dir, datatype);
+            return new AsciiFileComm(name, dir);
         case ASCII_TABLE_COMM:
-            return new AsciiTableComm(name, dir, datatype);
+            return new AsciiTableComm(name, dir);
         case ASCII_TABLE_ARRAY_COMM:
             break;
         case MPI_COMM:
             std::string adr;
-            return new MPIComm(name, (address == nullptr) ? adr : reinterpret_cast<std::string &>(address), dir, datatype);
+            return new MPIComm(name, (address == nullptr) ? adr : reinterpret_cast<std::string &>(address), dir);
     }
 }
-comm_t* new_comm(char* address, const Direction dir, const comm_enum type, dtype_t* datatype) {
+comm_t* new_comm(char* address, const DIRECTION dir, const COMM_TYPE type) {
     auto comm = (comm_t*)malloc(sizeof(comm_t));
-    comm->comm = new_Comm_t(dir, type, static_cast<DataType*>(datatype->type), "", address);
+    comm->comm = new_Comm_t(dir, type, "", address);
     return comm;
 }
-comm_t* init_comm(const char* name, const Direction dir, const comm_enum type, dtype_t* datatype) {
+comm_t* init_comm(const char* name, const DIRECTION dir, const COMM_TYPE type) {
     auto comm = (comm_t*)malloc(sizeof(comm_t));
-    comm->comm = new_Comm_t(dir, type, static_cast<DataType*>(datatype->type), name);
+    comm->comm = new_Comm_t(dir, type, name);
     return comm;
 }
-int send(const comm_t* x, const char *data, const size_t &len) {
+/*int send(const comm_t* x, const char *data, const size_t &len) {
     auto comm = (Comm_t*)x->comm;
     return comm->send(data, len);
 }
@@ -188,3 +182,4 @@ int comm_nmsg(const comm_t* x) {
     auto comm = (Comm_t*)x->comm;
     return comm->comm_nmsg();
 }
+ */

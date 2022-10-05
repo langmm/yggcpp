@@ -170,6 +170,43 @@ typedef struct complex_long_double_t {
 #define YGG_DEBUG PSI_DEBUG
 #endif
 
+#define GET_ITEM(O,P) \
+static inline \
+communication::datatypes::P* get_ ## O(O ## _t &x) { \
+    if (x.obj == nullptr) \
+        return nullptr; \
+    return static_cast<communication::datatypes::P*>(x.obj); \
+}
+
+#define GET_ITEMP(O,P) \
+static inline \
+communication::datatypes::P* get_ ## O(O ## _t* x) { \
+    if (x == NULL) \
+        return nullptr; \
+    if (x->obj == nullptr) \
+        return nullptr; \
+    return static_cast<communication::datatypes::P*>(x->obj); \
+}
+
+#define GET_ITEMC(O,P) \
+static inline \
+communication::datatypes::P* get_ ## O(const O ## _t &x) { \
+    if (x.obj == nullptr) \
+        return nullptr; \
+    return static_cast<communication::datatypes::P*>(x.obj); \
+}
+
+#define GET_ITEMCP(O,P) \
+static inline \
+communication::datatypes::P* get_ ## O(const O ## _t* x) { \
+    if (x == NULL) \
+        return nullptr; \
+    if (x->obj == nullptr) \
+        return nullptr; \
+    return static_cast<communication::datatypes::P*>(x->obj); \
+}
+
+
 #include "logging.hpp"
 
 namespace communication {
@@ -196,7 +233,6 @@ static int global_thread_id = -1;
 #ifdef _OPENMP
 #pragma omp threadprivate(global_thread_id)
 #endif
-#define COMM_ADDRESS_SIZE 500
 
 /*!
   @brief Get an unsigned long seed from the least significant 32bits of a pointer.
@@ -314,54 +350,6 @@ static inline
 int is_eof(const char *buf) {
     return not_empty_match(YGG_MSG_EOF, buf);
 }
-
-class Address {
-public:
-    Address(const std::string &adr = "") {
-        address(adr);
-    }
-    Address(char* adr) {
-        address(adr);
-    }
-    Address(Address *adr) {
-        address(adr->address());
-    }
-
-    std::string &address() {
-        return _address;
-    }
-
-    int key() const {
-        return _key;
-    }
-
-    void address(const std::string &addr) {
-        _address = addr;
-        if (_address.size() > COMM_ADDRESS_SIZE)
-            _address.resize(COMM_ADDRESS_SIZE);
-
-        _key = stoi(addr);
-        if (!_address.empty())
-            _valid = true;
-        else
-            _valid = false;
-    }
-
-    bool operator==(const Address *adr) {
-        return this->_address == adr->_address;
-    }
-
-    bool operator==(const Address &adr) {
-        return this->_address == adr._address;
-    }
-
-    bool valid() const { return _valid; }
-
-private:
-    std::string _address;
-    int _key;
-    bool _valid;
-};
 
 }
 }

@@ -1,8 +1,7 @@
 #pragma once
 
 #include <map>
-#include "utils/tools.hpp"
-#include "DataType.hpp"
+#include "utils/Address.hpp"
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
@@ -26,13 +25,13 @@ const std::map<fields, std::string> string_fields = {{ADDRESS,          "address
                                                      {ZMQ_REPLY_WORKER, "zmq_reply_worker"},
                                                      {MODEL,            "model"}};
 
-class comm_head_t {
+class CommHead {
 public:
-    explicit comm_head_t(utils::Address *adr = nullptr, const std::string &id = "");
+    explicit CommHead(utils::Address *adr = nullptr, const std::string &id = "");
 
-    comm_head_t(const char *buf, const size_t &buf_siz);
+    CommHead(const char *buf, const size_t &buf_siz);
 
-    ~comm_head_t();
+    ~CommHead();
 
     size_t bodysiz; //!< Size of body.
     size_t bodybeg; //!< Start of body in header.
@@ -53,7 +52,7 @@ public:
     std::string field_names; //!< String containing field names.
     std::string field_units; //!< String containing field units.
     //
-    DataType *dtype; //!< Type structure.
+    //DTYPE dtype;
 private:
     bool update_header_from_doc(rapidjson::Value &head_doc);
 };

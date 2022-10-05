@@ -1,11 +1,10 @@
 #include "datatypes.hpp"
+#include "dtype_t.hpp"
 #include "utils/tools.hpp"
-#include "Metaschema/metaschematypes.hpp"
 #include "utils/regex.hpp"
 using namespace communication;
 using namespace communication::utils;
 using namespace communication::datatypes;
-using namespace communication::datatypes::Metaschema;
 
 #define CSafe(x)  \
   try          \
@@ -105,7 +104,6 @@ std::map<const char*, int, strcomp> datatypes::get_type_map() {
         global_type_map["unicode"] = T_UNICODE;
         global_type_map["ply"] = T_PLY;
         global_type_map["obj"] = T_OBJ;
-        global_type_map["ascii_table"] = T_ASCII_TABLE;
         global_type_map["class"] = T_CLASS;
         global_type_map["function"] = T_FUNCTION;
         global_type_map["instance"] = T_INSTANCE;
@@ -281,13 +279,59 @@ void init_dtype_class(dtype_t *dtype, MetaschemaType *type_class) {
     strncpy(dtype->type, type_class->type(), COMMBUFFSIZ);
 }
 
-dtype_t* create_dtype(MetaschemaType* type_class=nullptr, const bool use_generic=false) {
+/*dtype_t* create_dtype(DTYPE dtype, ushort precision, bool use_generic) {
+    switch (dtype) {
+        case T_NULL:
+            return create_dtype_empty(use_generic);
+            break;
+        case T_BOOLEAN:
+            break;
+        case T_INTEGER:
+            break;
+        case T_NUMBER:
+            break;
+        case T_STRING:
+            break;
+        case T_ARRAY:
+            break;
+        case T_OBJECT:
+            break;
+        case T_DIRECT:
+            break;
+        case T_1DARRAY:
+            break;
+        case T_NDARRAY:
+            break;
+        case T_SCALAR:
+        case T_FLOAT:
+        case T_UINT:
+        case T_INT:
+        case T_COMPLEX:
+        case T_BYTES:
+        case T_UNICODE:
+            return create_dtype_scalar(dtype, precision, use_generic);
+            break;
+        case T_PLY:
+            break;
+        case T_OBJ:
+            break;
+        case T_CLASS:
+            break;
+        case T_FUNCTION:
+            break;
+        case T_INSTANCE:
+            break;
+        case T_SCHEMA:
+            break;
+        case T_ANY:
+            break;
+    }
     dtype_t *out = nullptr;
     out = (dtype_t *) malloc(sizeof(dtype_t));
     if (out == nullptr) {
         ygglog_throw_error("create_dtype: Failed to malloc for datatype.");
     }
-    out->type[0] = '\0';
+    out->type = dtype
     out->use_generic = use_generic;
     out->obj = nullptr;
     if (type_class != nullptr) {
@@ -301,7 +345,8 @@ dtype_t* create_dtype(MetaschemaType* type_class=nullptr, const bool use_generic
     }
     return out;
 
-}
+}*/
+
 int skip_va_elements(const dtype_t* dtype, size_t *nargs, struct va_list_t *ap) {
     try {
         if (dtype == nullptr) {
@@ -422,15 +467,6 @@ int destroy_dtype(dtype_t **dtype) {
         }
     }
     return ret;
-}
-void* dtype_ascii_table(const dtype_t* dtype) {
-    try {
-      auto table_type = dynamic_cast<AsciiTableMetaschemaType*>(dtype2class(dtype));
-      return (void*)(table_type->table());
-    } catch (...) {
-      ygglog_error("dtype_ascii_table: C++ exception thrown.");
-      return nullptr;
-    }
 }
 
 
@@ -577,7 +613,12 @@ size_t nargs_exp_dtype(const dtype_t *dtype) {
 
 dtype_t* create_dtype_empty(const bool use_generic) {
     try {
-        return create_dtype(nullptr, use_generic);
+        auto out = (dtype_t*) malloc(sizeof(dtype_t));
+        if (out == nullptr)
+            ygglog_throw_error("create_dtype: Failed to malloc for empty dtype_t.");
+        out->type = T_NULL;
+        out->use_generic = use_generic;
+        out->obj = nullptr;
     } catch(...) {
         ygglog_error("create_dtype_empty: C++ exception thrown.");
         return nullptr;
@@ -648,8 +689,20 @@ dtype_t* create_dtype_default(const char* type,
 }
 
 
-dtype_t* create_dtype_scalar(const char* subtype, const size_t precision,
+dtype_t* create_dtype_scalar(DTYPE type, const size_t precision,
                              const char* units, const bool use_generic) {
+    try {
+        auto out = (dtype_t*) malloc(sizeof(dtype_t));
+        if (out == nullptr)
+            ygglog_throw_error("create_dtype: Failed to malloc for empty dtype_t.");
+        out->type = T_NULL;
+        out->use_generic = use_generic;
+        out->obj = nullptr;
+    } catch(...) {
+        ygglog_error("create_dtype_empty: C++ exception thrown.");
+        return nullptr;
+    }
+
     ScalarMetaschemaType* obj = nullptr;
     try {
         obj = new ScalarMetaschemaType(subtype, precision, units, use_generic);
@@ -786,19 +839,6 @@ dtype_t* create_dtype_obj(const bool use_generic) {
     }
 }
 
-
-dtype_t* create_dtype_ascii_table(const char *format_str, const int as_array,
-                                  const bool use_generic) {
-    AsciiTableMetaschemaType* obj = nullptr;
-    try {
-        obj = new AsciiTableMetaschemaType(format_str, as_array, use_generic);
-        return create_dtype(obj);
-    } catch(...) {
-        ygglog_error("create_dtype_ascii_table: C++ exception thrown.");
-        CSafe(delete obj);
-        return nullptr;
-    }
-}
 
 dtype_t* create_dtype_pyobj(const char* type, const bool use_generic=false) {
     PyObjMetaschemaType* obj = nullptr;

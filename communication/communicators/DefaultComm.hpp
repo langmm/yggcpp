@@ -4,7 +4,7 @@
 #include "IPCComm.hpp"
 namespace communication {
 namespace communicator {
-static comm_type _default_comm = IPC_COMM;
+static COMM_TYPE _default_comm = IPC_COMM;
 }
 }
 #define COMM_BASE IPPComm
@@ -12,7 +12,7 @@ static comm_type _default_comm = IPC_COMM;
 #include "ZMQComm.hpp"
 namespace communication {
 namespace communicator {
-static comm_type _default_comm = ZMQ_COMM;
+static COMM_TYPE _default_comm = ZMQ_COMM;
 }
 }
 #define COMM_BASE ZMQComm

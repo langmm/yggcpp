@@ -1,8 +1,12 @@
 #pragma once
 
-#include "enums.hpp"
-#include "utils/tools.hpp"
-#include "datatypes/datatypes.hpp"
+#include "utils/enums.hpp"
+#include "utils/Address.hpp"
+#include "utils/logging.hpp"
+//#include "datatypes/datatypes.hpp"
+#include "datatypes/dtype_t.hpp"
+#include "rapidjson/document.h"
+#include "rapidjson/writer.h"
 
 //#define __cplusplus
 
@@ -30,7 +34,7 @@
 
 namespace communication {
 namespace datatypes {
-class DataType;
+
 }
 namespace communicator {
 class ServerComm;
@@ -42,12 +46,14 @@ public:
     virtual ~Comm_t();
 
     virtual int send(const char *data, const size_t &len) = 0;
+    virtual int send(const dtype_t* dtype) = 0;
 
     virtual long recv(char **data, const size_t &len, bool allow_realloc) = 0;
+    virtual long recv(dtype_t* dtype) = 0;
 
     virtual int comm_nmsg() const = 0;
 
-    comm_type getType() const { return type; }
+    COMM_TYPE getType() const { return type; }
 
     bool valid() const { return _valid; }
 
@@ -55,11 +61,10 @@ protected:
     friend ServerComm;
     friend ClientComm;
 
-    //Comm_t(const Comm_t* comm, comm_type type);
-    Comm_t(utils::Address *address, Direction direction, const comm_type &t, datatypes::DataType *datatype, int flgs = 0);
+    //Comm_t(const Comm_t* comm, COMM_TYPE type);
+    Comm_t(utils::Address *address, DIRECTION direction, const COMM_TYPE &t, int flgs = 0);
 
-    explicit Comm_t(const std::string &name, Direction direction = NONE, const comm_type &t = NULL_COMM,
-                    datatypes::DataType *datatype = nullptr);
+    explicit Comm_t(const std::string &name, DIRECTION direction = NONE, const COMM_TYPE &t = NULL_COMM);
 
     bool check_size(const size_t &len) const;
 
@@ -67,15 +72,14 @@ protected:
 
     virtual void reset() = 0;
 
-    comm_type type; //!< Comm type.
+    COMM_TYPE type; //!< Comm type.
     //void *other; //!< Pointer to additional information for the comm.
     std::string name; //!< Comm name.
     utils::Address *address; //!< Comm address.
-    Direction direction; //!< send or recv for direction messages will go.
+    DIRECTION direction; //!< send or recv for direction messages will go.
     int flags; //!< Flags describing the status of the comm.
     int const_flags;  //!< Flags describing the status of the comm that can be est for const.
     ServerComm *info; //!< Pointer to any extra info comm requires.
-    datatypes::DataType *datatype; //!< Data type for comm messages.
     size_t maxMsgSize; //!< The maximum message size.
     size_t msgBufSize; //!< The size that should be reserved in messages.
     int index_in_register; //!< Index of the comm in the comm register.
@@ -95,6 +99,8 @@ public:
     int send(const char *data, const size_t &len) override {
         utils::ygglog_throw_error("Send of base class called, must be overridden");
     }
+    int send(const dtype_t* dtype) override;
+    long recv(dtype_t* dtype) override;
 
     long recv(char **data, const size_t &len, bool allow_realloc) override {
         utils::ygglog_throw_error("Recv of base class called, must be overridden");
@@ -105,48 +111,34 @@ public:
     }
 
 protected:
-    CommBase(utils::Address *address, Direction direction, const comm_type &t, datatypes::DataType *datatype);
+    CommBase(utils::Address *address, DIRECTION direction, const COMM_TYPE &t);
 
-    //CommBase(Comm_t* comm, const comm_type &type);
-    explicit CommBase(const std::string &name, Direction direction = NONE, const comm_type &t = NULL_COMM,
-                      datatypes::DataType *datatype = nullptr);
+    //CommBase(Comm_t* comm, const COMM_TYPE &type);
+    explicit CommBase(const std::string &name, DIRECTION direction = NONE, const COMM_TYPE &t = NULL_COMM);
 
-    virtual void init() override {
+    void init() override {
         utils::ygglog_throw_error("init of base class called, must be overridden");
     }
 
     void reset() override;
 
-    ~CommBase();
+    ~CommBase() override;
 
     H *handle; //!< Pointer to handle for comm.
     R *reply; //!< Reply information.
 };
 
-/*template<typename H, typename R>
-CommBase<H, R>::CommBase(Comm_t *comm, const comm_type &type) : Comm_t(comm, type) {
-    if (comm->getType() == type) {
-        const auto *temp = reinterpret_cast<CommBase<H,R>* const>(comm);
-        *handle = *(temp->handle);
-        *reply = *(temp->reply);
-    } else {
-        handle = nullptr;
-        reply = nullptr;
-    }
-}*/
-
 template<typename H, typename R>
-CommBase<H, R>::CommBase(utils::Address *address, Direction direction, const comm_type &t, datatypes::DataType *datatype) :
-        Comm_t(address, direction, t, datatype, 0) {
+CommBase<H, R>::CommBase(utils::Address *address, DIRECTION direction, const COMM_TYPE &t) :
+        Comm_t(address, direction, t, 0) {
     //other = NULL_ptr;
     handle = nullptr;
     reply = nullptr;
 }
 
 template<typename H, typename R>
-CommBase<H, R>::CommBase(const std::string &name, Direction direction, const comm_type &t,
-                         datatypes::DataType *datatype) :
-        Comm_t(name, direction, t, datatype) {
+CommBase<H, R>::CommBase(const std::string &name, DIRECTION direction, const COMM_TYPE &t) :
+        Comm_t(name, direction, t) {
 }
 
 template<typename H, typename R>
@@ -166,5 +158,34 @@ CommBase<H, R>::~CommBase() {
         delete reply;
     utils::ygglog_debug("~CommBase: Finished");
 }
+
+template<typename H, typename R>
+int CommBase<H, R>::send(const dtype_t* dtype) {
+    if (dtype == nullptr)
+        return -1;
+    rapidjson::Document type_doc;
+    rapidjson::StringBuffer buffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    switch (dtype->type) {
+        case T_PLY:
+            type_doc.Set(static_cast<rapidjson::Ply*>(dtype->obj));
+            break;
+        case T_OBJ:
+            type_doc.Set(static_cast<rapidjson::ObjBase*>(dtype->obj));
+            break;
+        default:
+            break;
+    }
+    type_doc.Accept(writer);
+    const size_t len = buffer.GetLength();
+    const char* data = buffer.GetString();
+    return this->send(data, len);
+}
+
+template<typename H, typename R>
+long CommBase<H, R>::recv(dtype_t* dtype) {
+
+}
+
 }
 }
