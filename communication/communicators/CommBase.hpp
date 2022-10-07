@@ -5,6 +5,7 @@
 #include "utils/logging.hpp"
 //#include "datatypes/datatypes.hpp"
 #include "datatypes/dtype_t.hpp"
+#include "datatypes/YggPly.hpp"
 #include "datatypes/YggObj.hpp"
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
@@ -168,9 +169,17 @@ int CommBase<H, R>::send(const dtype_t* dtype) {
     rapidjson::StringBuffer buffer;
     rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
     switch (dtype->type) {
+        case T_PLY: {
+            type_doc.Set(static_cast<rapidjson::Ply *>(dtype->obj));
             break;
+        }
         case T_OBJ: {
             type_doc.Set(static_cast<rapidjson::ObjBase *>(dtype->obj));
+            break;
+        }
+        case T_PLY_T: {
+            datatypes::YggPly tempPly(static_cast<ply_t *>(dtype->obj));
+            type_doc.Set(tempPly);
             break;
         }
         case T_OBJ_T: {
