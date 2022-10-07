@@ -38,7 +38,7 @@ find_package(cppzmq)
 IF (cppzmq_FOUND)
     message("Found cppzmq   ${ZeroMQ_INCLUDE_DIRS}  XX")
     include_directories("/opt/anaconda3/include")
-    set(YGG_BUILD_FLAGS = "${YGG_BUILD_FLAGS} -DZMQ_BUILD_DRAFT_API")
+    set(YGG_BUILD_FLAGS "${YGG_BUILD_FLAGS} -DZMQ_BUILD_DRAFT_API")
 ENDIF()
 
 find_package(Boost REQUIRED)

@@ -4,7 +4,34 @@
 extern "C" {
 #endif
 
-typedef struct dtype_t ply_t;
+/*! @brief Ply structure. */
+typedef struct ply_t {
+    char material[100]; //!< Name of material.
+    int nvert; //!< Number of vertices.
+    int nface; //!< Number of faces.
+    int nedge; //!< Number of edges.
+    float **vertices; //!< X, Y, Z positions of vertices.
+    int **faces; //!< Indices of the vertices composing each face.
+    int **edges; //!< Indices of the vertices composing each edge.
+    int **vertex_colors; //!< RGB colors of each vertex.
+    int **edge_colors; //!< RGB colors of each edge.
+    int *nvert_in_face; //!< Number of vertices in each face.
+} ply_t;
+
+dtype_t* wrap_ply(ply_t* ply);
+
+ply_t init_ply();
+
+void free_ply(ply_t* ply);
+
+int alloc_ply(ply_t *p, int nvert, int nface, int nedge, int do_vert_color, int do_edge_color);
+
+ply_t copy_ply(ply_t src);
+
+void display_ply_indent(ply_t p, const char *indent);
+
+void display_ply(ply_t p);
+/*
 
 ply_t init_ply();
 
@@ -35,7 +62,7 @@ size_t ply_count_elements(const ply_t* ply, const char* name);
 size_t ply_nvert(const ply_t* ply);
 size_t ply_nedge(const ply_t* ply);
 size_t ply_nface(const ply_t* ply);
-
+*/
 #ifdef __cplusplus
 }
 #endif
