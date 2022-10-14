@@ -80,9 +80,8 @@ public:
  */
     static void ygglogThrowError(const char *fmt, ...);
 
-private:
     static int _ygg_error_flag;
-
+private:
 #define ygglog_throw_error Logger::ygglogThrowError
 #define YGG_DEBUG 10
 #ifndef DOXYGEN_SHOULD_SKIP_THIS

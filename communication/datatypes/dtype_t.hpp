@@ -1,6 +1,8 @@
 #pragma once
 #include <cstdlib>
 #include "utils/enums.hpp"
+#include "utils/macros.hpp"
+#include "utils/tools.hpp"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -199,7 +201,7 @@ dtype_t* create_dtype_default(const char* type,
 
 
 /*!
-  @brief Construct a Scalar type object.
+  @brief Construct a Value type object.
   @param[in] subtype char* Name of the scalar subtype (e.g. int, uint, float, bytes).
   @param[in] precision size_t Precision of the scalar in bits.
   @param[in] units char* Units for scalar. (e.g. "cm", "g", "" for unitless)
@@ -207,9 +209,40 @@ dtype_t* create_dtype_default(const char* type,
   objects will be expected to be YggGeneric classes.
   @returns dtype_t* Type structure/class.
 */
-dtype_t* create_dtype_scalar(DTYPE type, size_t precision=0,
-                             const char* units=nullptr, bool use_generic=false);
-
+dtype_t* create_dtype_scalar(SUBTYPE type, size_t precision=0,
+                             const char* units="");
+dtype_t* create_dtype_short(int8_t &val, const char* units="");
+dtype_t* create_dtype_int(int16_t &val, const char* units="");
+dtype_t* create_dtype_long(int32_t &val, const char* units="");
+dtype_t* create_dtype_llong(int64_t &val, const char* units="");
+dtype_t* create_dtype_bool(bool val, const char* units="");
+dtype_t* create_dtype_float(float &val, const char* units="");
+dtype_t* create_dtype_double(double &val, const char* units="");
+dtype_t* create_dtype_ldouble(long double &val, const char* units="");
+dtype_t* create_dtype_ushort(uint8_t &val, const char* units="");
+dtype_t* create_dtype_uint(uint16_t &val, const char* units="");
+dtype_t* create_dtype_ulong(uint32_t &val, const char* units="");
+dtype_t* create_dtype_ullong(uint64_t &val, const char* units="");
+dtype_t* create_dtype_complex_float(complex_float_t &val, const char* units="");
+dtype_t* create_dtype_complex_double(complex_double_t &val, const char* units="");
+dtype_t* create_dtype_complex_ldouble( complex_long_double_t &val, const char* units="");
+dtype_t* create_dtype_string(char* val);
+void set_dtype_short(dtype_t* dt, int8_t &val, const char* units="");
+void set_dtype_int(dtype_t* dt, int16_t &val, const char* units="");
+void set_dtype_long(dtype_t* dt, int32_t &val, const char* units="");
+void set_dtype_llong(dtype_t* dt, int64_t &val, const char* units="");
+void set_dtype_bool(bool val, const char* units="");
+void set_dtype_float(dtype_t* dt, float &val, const char* units="");
+void set_dtype_double(dtype_t* dt, double &val, const char* units="");
+void set_dtype_ldouble(long double &val, const char* units="");
+void set_dtype_ushort(dtype_t* dt, uint8_t &val, const char* units="");
+void set_dtype_uint(dtype_t* dt, uint16_t &val, const char* units="");
+void set_dtype_ulong(dtype_t* dt, uint32_t &val, const char* units="");
+void set_dtype_ullong(dtype_t* dt, uint64_t &val, const char* units="");
+void set_dtype_complex_float(dtype_t* dt, complex_float_t &val, const char* units="");
+void set_dtype_complex_double(dtype_t* dt, complex_double_t &val, const char* units="");
+void set_dtype_complex_ldouble(dtype_t* dt, complex_long_double_t &val, const char* units="");
+void set_dtype_string(dtype_t* dt, char* val);
 
 /*!
   @brief Construct a 1D array type object.
@@ -221,9 +254,71 @@ dtype_t* create_dtype_scalar(DTYPE type, size_t precision=0,
   objects will be expected to be YggGeneric classes.
   @returns dtype_t* Type structure/class.
 */
-dtype_t* create_dtype_1darray(const char* subtype, const size_t precision,
-                              const size_t length, const char* units,
-                              const bool use_generic);
+dtype_t* create_dtype_1darray(SUBTYPE subtype, const size_t& precision, const char* units="");
+dtype_t* create_dtype_1dshort(int8_t *val, const size_t& N, const char* units="");
+dtype_t* create_dtype_1dint(int16_t *val, const size_t& N, const char* units="");
+dtype_t* create_dtype_1dlong(int32_t *val, const size_t& N, const char* units="");
+dtype_t* create_dtype_1dllong(int64_t *val, const size_t& N, const char* units="");
+dtype_t* create_dtype_1dbool(bool val, const size_t& N, const char* units="");
+dtype_t* create_dtype_1dfloat(float *val, const size_t& N, const char* units="");
+dtype_t* create_dtype_1ddouble(double *val, const size_t& N, const char* units="");
+dtype_t* create_dtype_1dldouble(long double *val, const size_t& N, const char* units="");
+dtype_t* create_dtype_1dushort(uint8_t *val, const size_t& N, const char* units="");
+dtype_t* create_dtype_1duint(uint16_t *val, const size_t& N, const char* units="");
+dtype_t* create_dtype_1dulong(uint32_t *val, const size_t& N, const char* units="");
+dtype_t* create_dtype_1dullong(uint64_t *val, const size_t& N, const char* units="");
+dtype_t* create_dtype_1dcomplex_float(complex_float_t *val, const size_t& N, const char* units="");
+dtype_t* create_dtype_1dcomplex_double(complex_double_t *val, const size_t& N, const char* units="");
+dtype_t* create_dtype_1dcomplex_ldouble(complex_long_double_t *val, const size_t& N, const char* units="");
+dtype_t* create_dtype_1dstring(char** val, const size_t& N);
+void set_dtype_1dshort(dtype_t* dt, int8_t *val, const size_t& N, const char* units="");
+void set_dtype_1dint(dtype_t* dt, int16_t *val, const size_t& N, const char* units="");
+void set_dtype_1dlong(dtype_t* dt, int32_t *val, const size_t& N, const char* units="");
+void set_dtype_1dllong(dtype_t* dt, int64_t *val, const size_t& N, const char* units="");
+void set_dtype_1dbool(dtype_t* dt, bool val, const size_t& N, const char* units="");
+void set_dtype_1dfloat(dtype_t* dt, float *val, const size_t& N, const char* units="");
+void set_dtype_1ddouble(dtype_t* dt, double *val, const size_t& N, const char* units="");
+void set_dtype_1dldouble(dtype_t* dt, long double *val, const size_t& N, const char* units="");
+void set_dtype_1dushort(dtype_t* dt, uint8_t *val, const size_t& N, const char* units="");
+void set_dtype_1duint(dtype_t* dt, uint16_t *val, const size_t& N, const char* units="");
+void set_dtype_1dulong(dtype_t* dt, uint32_t *val, const size_t& N, const char* units="");
+void set_dtype_1dullong(dtype_t* dt, uint64_t *val, const size_t& N, const char* units="");
+void set_dtype_1dcomplex_float(dtype_t* dt, complex_float_t *val, const size_t& N, const char* units="");
+void set_dtype_1dcomplex_double(dtype_t* dt, complex_double_t *val, const size_t& N, const char* units="");
+void set_dtype_1dcomplex_ldouble(dtype_t* dt, complex_long_double_t *val, const size_t& N, const char* units="");
+void set_dtype_1dstring(dtype_t* dt, char** val, const size_t& N);
+
+dtype_t* create_dtype_2darray(SUBTYPE subtype, const size_t& precision, const char* units="");
+dtype_t* create_dtype_2dshort(int8_t *val, const size_t& N, const size_t &M, const char* units="");
+dtype_t* create_dtype_2dint(int16_t *val, const size_t& N, const size_t &M, const char* units="");
+dtype_t* create_dtype_2dlong(int32_t *val, const size_t& N, const size_t &M, const char* units="");
+dtype_t* create_dtype_2dllong(int64_t *val, const size_t& N, const size_t &M, const char* units="");
+dtype_t* create_dtype_2dbool(bool val, const size_t& N, const size_t &M, const char* units="");
+dtype_t* create_dtype_2dfloat(float *val, const size_t& N, const size_t &M, const char* units="");
+dtype_t* create_dtype_2ddouble(double *val, const size_t& N, const size_t &M, const char* units="");
+dtype_t* create_dtype_2dldouble(long double *val, const size_t& N, const size_t &M, const char* units="");
+dtype_t* create_dtype_2dushort(uint8_t *val, const size_t& N, const size_t &M, const char* units="");
+dtype_t* create_dtype_2duint(uint16_t *val, const size_t& N, const size_t &M, const char* units="");
+dtype_t* create_dtype_2dulong(uint32_t *val, const size_t& N, const size_t &M, const char* units="");
+dtype_t* create_dtype_2dullong(uint64_t *val, const size_t& N, const size_t &M, const char* units="");
+dtype_t* create_dtype_2dcomplex_float(complex_float_t *val, const size_t& N, const size_t &M, const char* units="");
+dtype_t* create_dtype_2dcomplex_double(complex_double_t *val, const size_t& N, const size_t &M, const char* units="");
+dtype_t* create_dtype_2dcomplex_ldouble(complex_long_double_t *val, const size_t& N, const size_t &M, const char* units="");
+void set_dtype_2dshort(dtype_t* dt, int8_t *val, const size_t& N, const size_t &M, const char* units="");
+void set_dtype_2dint(dtype_t* dt, int16_t *val, const size_t& N, const size_t &M, const char* units="");
+void set_dtype_2dlong(dtype_t* dt, int32_t *val, const size_t& N, const size_t &M, const char* units="");
+void set_dtype_2dllong(dtype_t* dt, int64_t *val, const size_t& N, const size_t &M, const char* units="");
+void set_dtype_2dbool(dtype_t* dt, bool val, const size_t& N, const size_t &M, const char* units="");
+void set_dtype_2dfloat(dtype_t* dt, float *val, const size_t& N, const size_t &M, const char* units="");
+void set_dtype_2ddouble(dtype_t* dt, double *val, const size_t& N, const size_t &M, const char* units="");
+void set_dtype_2dldouble(dtype_t* dt, long double *val, const size_t& N, const size_t &M, const char* units="");
+void set_dtype_2dushort(dtype_t* dt, uint8_t *val, const size_t& N, const size_t &M, const char* units="");
+void set_dtype_2duint(dtype_t* dt, uint16_t *val, const size_t& N, const size_t &M, const char* units="");
+void set_dtype_2dulong(dtype_t* dt, uint32_t *val, const size_t& N, const size_t &M, const char* units="");
+void set_dtype_2dullong(dtype_t* dt, uint64_t *val, const size_t& N, const size_t &M, const char* units="");
+void set_dtype_2dcomplex_float(dtype_t* dt, complex_float_t *val, const size_t& N, const size_t &M, const char* units="");
+void set_dtype_2dcomplex_double(dtype_t* dt, complex_double_t *val, const size_t& N, const size_t &M, const char* units="");
+void set_dtype_2dcomplex_ldouble(dtype_t* dt, complex_long_double_t *val, const size_t& N, const size_t &M, const char* units="");
 
 
 /*!
@@ -376,6 +471,11 @@ int destroy_dtype(dtype_t** dtype);
 int set_dtype_name(dtype_t* dtype, const char* name);
 
 dtype_t* create_dtype_format(const char* format_str, const int as_array=0, const bool use_generic=false);
+
+dtype_t* init_valgroup();
+int add_VtoGroup(dtype_t* val, dtype_t* grp);
+int add_AtoGroup(dtype_t* val, dtype_t* grp);
+int add_2DAtoGroup(dtype_t* val, dtype_t* grp);
 
 #ifdef __cplusplus
 }
