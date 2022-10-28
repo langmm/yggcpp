@@ -2,6 +2,7 @@
 
 #include <vector>
 #include "DefaultComm.hpp"
+#include "datatypes/CommHead.hpp"
 #ifdef _OPENMP
 #pragma omp threadprivate(_default_comm)
 #endif
@@ -37,7 +38,7 @@ public:
 
     int comm_nmsg() const override;
 
-    datatypes::comm_head_t response_header(datatypes::comm_head_t head);
+    datatypes::CommHead response_header(datatypes::CommHead &head);
 
     int send(const char *data, const size_t &len) override;
 

@@ -100,16 +100,19 @@ public:
 
     int send(const char *data, const size_t &len) override {
         utils::ygglog_throw_error("Send of base class called, must be overridden");
+        return -1;
     }
     int send(const dtype_t* dtype) override;
     long recv(dtype_t* dtype) override;
 
     long recv(char **data, const size_t &len, bool allow_realloc) override {
         utils::ygglog_throw_error("Recv of base class called, must be overridden");
+        return -1;
     }
 
     int comm_nmsg() const override {
         utils::ygglog_throw_error("Comm_nmsg of base class called, must be overridden");
+        return -1;
     }
 
 protected:
@@ -169,22 +172,27 @@ int CommBase<H, R>::send(const dtype_t* dtype) {
     rapidjson::StringBuffer buffer;
     rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
     switch (dtype->type) {
+        case T_SCALAR: {
+            int x = 5;
+            type_doc.Set(x);
+            break;
+        }
         case T_PLY: {
-            type_doc.Set(static_cast<rapidjson::Ply *>(dtype->obj));
+            type_doc.Set(*(static_cast<rapidjson::Ply *>(dtype->obj)));
             break;
         }
         case T_OBJ: {
-            type_doc.Set(static_cast<rapidjson::ObjBase *>(dtype->obj));
+            //type_doc.Set(*(static_cast<rapidjson::ObjBase *>(dtype->obj)));
             break;
         }
         case T_PLY_T: {
-            datatypes::YggPly tempPly(static_cast<ply_t *>(dtype->obj));
-            type_doc.Set(tempPly);
+            //datatypes::YggPly tempPly(static_cast<ply_t *>(dtype->obj));
+            //type_doc.Set(tempPly);
             break;
         }
         case T_OBJ_T: {
-            datatypes::YggObj tempObj(static_cast<obj_t *>(dtype->obj));
-            type_doc.Set(tempObj);
+            //datatypes::YggObj tempObj(static_cast<obj_t *>(dtype->obj));
+            //type_doc.Set(tempObj);
             break;
         }
         default:
@@ -198,6 +206,7 @@ int CommBase<H, R>::send(const dtype_t* dtype) {
 
 template<typename H, typename R>
 long CommBase<H, R>::recv(dtype_t* dtype) {
+    return -1;
 
 }
 

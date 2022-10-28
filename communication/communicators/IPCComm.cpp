@@ -215,6 +215,7 @@ int IPCComm::send_normal(const char *data, const size_t &len) {
             }
         }
     }
+    return ret;
 }
 
 /*!

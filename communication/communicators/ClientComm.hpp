@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DefaultComm.hpp"
+#include "datatypes/CommHead.hpp"
 
 namespace communication {
 namespace communicator {
@@ -29,7 +30,7 @@ public:
 
     int comm_nmsg() const override;
 
-    datatypes::comm_head_t response_header(datatypes::comm_head_t head);
+    datatypes::CommHead response_header(datatypes::CommHead head);
 
     int send(const char *data, const size_t &len) override;
 

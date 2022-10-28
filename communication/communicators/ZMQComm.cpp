@@ -7,8 +7,10 @@ using namespace communication::datatypes;
 #include <zmq.hpp>
 #include <zmq_addon.hpp>
 #include <boost/algorithm/string.hpp>
-#include "datatypes/datatypes.hpp"
+//#include "datatypes/datatypes.hpp"
 #include "utils/tools.hpp"
+#include "utils/logging.hpp"
+#include "datatypes/CommHead.hpp"
 
 const std::chrono::milliseconds timeout{1000};
 const std::chrono::milliseconds short_timeout{10};
@@ -421,7 +423,7 @@ int ZMQComm::check_reply_recv(const char* data, const size_t &len) {
     }
     reply->n_msg++;
     // Extract address
-    comm_head_t head(data, len);
+    datatypes::CommHead head(data, len);
     if (!(head.flags & HEAD_FLAG_VALID)) {
         ygglog_error("check_reply_recv(%s): Invalid header.", name.c_str());
         return -1;
@@ -565,14 +567,14 @@ void ZMQComm::destroy() {
     // Drain input
     if (direction == RECV && flags & COMM_FLAG_VALID
         && (!(const_flags & COMM_EOF_RECV))) {
-        if (_ygg_error_flag == 0) {
+        if (Logger::_ygg_error_flag == 0) {
             size_t data_len = 100;
             char *data = (char*)malloc(data_len);
-            comm_head_t head;
+            datatypes::CommHead head;
             bool is_eof_flag = false;
             while (comm_nmsg() > 0) {
                 if (long ret = recv(&data, data_len, true) >= 0) {
-                    head = comm_head_t(data, ret);
+                    head = datatypes::CommHead(data, ret);
                     if (strncmp(YGG_MSG_EOF, data + head.bodybeg, strlen(YGG_MSG_EOF)) == 0)
                         is_eof_flag = true;
 

@@ -126,6 +126,7 @@ protected:
 
 private:
     friend ClientComm;
+    friend ServerComm;
     ygg_sock_t *sock;
 
     std::string set_reply_send();

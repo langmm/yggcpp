@@ -156,7 +156,7 @@ int ClientComm::comm_nmsg() const  {
     return base_handle->comm_nmsg();
 }
 
-comm_head_t ClientComm::response_header(comm_head_t head) {
+communication::datatypes::CommHead ClientComm::response_header(datatypes::CommHead head) {
     // Initialize new comm
     if (comm == nullptr) {
         comm = new COMM_BASE("", nullptr, RECV);
@@ -219,7 +219,7 @@ long ClientComm::recv(char** rdata, const size_t &rlen, bool allow_realloc)  {
                          name.c_str(), ret);
             return ret;
         }
-        auto head = comm_head_t(*rdata, rlen);
+        auto head = datatypes::CommHead(*rdata, rlen);
         if (!(head.flags & HEAD_FLAG_VALID)) {
             ygglog_error("client_comm_recv(%s): Invalid header.", name.c_str());
             return -1;
