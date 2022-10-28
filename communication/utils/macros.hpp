@@ -47,3 +47,39 @@
     /* Do nothing, just terminate */ \
   )
 #define _MAP() MAP
+
+#define GET_ITEM(O,P) \
+static inline \
+communication::datatypes::P* get_ ## O(O ## _t &x) { \
+    if (x.obj == nullptr) \
+        return nullptr; \
+    return static_cast<communication::datatypes::P*>(x.obj); \
+}
+
+#define GET_ITEMP(O,P) \
+static inline \
+communication::datatypes::P* get_ ## O(O ## _t* x) { \
+    if (x == NULL) \
+        return nullptr; \
+    if (x->obj == nullptr) \
+        return nullptr; \
+    return static_cast<communication::datatypes::P*>(x->obj); \
+}
+
+#define GET_ITEMC(O,P) \
+static inline \
+communication::datatypes::P* get_ ## O(const O ## _t &x) { \
+    if (x.obj == nullptr) \
+        return nullptr; \
+    return static_cast<communication::datatypes::P*>(x.obj); \
+}
+
+#define GET_ITEMCP(O,P) \
+static inline \
+communication::datatypes::P* get_ ## O(const O ## _t* x) { \
+    if (x == NULL) \
+        return nullptr; \
+    if (x->obj == nullptr) \
+        return nullptr; \
+    return static_cast<communication::datatypes::P*>(x->obj); \
+}

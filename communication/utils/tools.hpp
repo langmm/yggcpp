@@ -1,5 +1,8 @@
 #pragma once
-
+#ifdef __cplusplus
+#include <vector>
+#include "templates.hpp"
+#include "complex_type.hpp"
 
 #ifdef _MSC_VER
 #ifndef _CRT_SECURE_NO_WARNINGS
@@ -19,63 +22,6 @@
 #include <cerrno>
 #include <ctime>
 
-#ifdef USE_OSR_YGG
-struct complex_float{
-  float re;
-  float im;
-};
-struct complex_double{
-  double re;
-  double im;
-};
-struct complex_long_double{
-  long double re;
-  long double im;
-};
-typedef struct complex_float complex_float;
-typedef struct complex_double complex_double;
-typedef struct complex_long_double complex_long_double;
-#define creal(x) x.re
-#define crealf(x) x.re
-#define creall(x) x.re
-#define cimag(x) x.im
-#define cimagf(x) x.im
-#define cimagl(x) x.im
-#else /*USE_YGG_OSR*/
-#ifdef _MSC_VER
-#include <complex>
-typedef std::complex<float> complex_float;
-typedef std::complex<double> complex_double;
-typedef std::complex<long double> complex_long_double;
-#ifndef creal
-#define creal(x) x.real()
-#define crealf(x) x.real()
-#define creall(x) x.real()
-#define cimag(x) x.imag()
-#define cimagf(x) x.imag()
-#define cimagl(x) x.imag()
-#endif /*creal*/
-
-#else // Unix
-
-#include <complex>
-typedef std::complex<float> complex_float;
-typedef std::complex<double> complex_double;
-typedef std::complex<long double> complex_long_double;
-#ifndef creal
-#define creal(x) x.real()
-#define crealf(x) x.real()
-#define creall(x) x.real()
-#define cimag(x) x.imag()
-#define cimagf(x) x.imag()
-#define cimagl(x) x.imag()
-#endif /*creal*/
-
-#endif /*_MSC_VER*/
-#endif /*USE_OSR_YGG*/
-#ifndef print_complex
-#define print_complex(x) printf("%lf+%lfj\n", (double)creal(x), (double)cimag(x))
-#endif
 #define COMMBUFFSIZ 2000
 
 #ifndef print_complex
@@ -100,21 +46,6 @@ typedef std::complex<long double> complex_long_double;
 
 #endif
 
-/*! @brief Wrapper for a complex number with float components. */
-typedef struct complex_float_t {
-    float re; //!< Real component
-    float im; //!< Imaginary component
-} complex_float_t;
-/*! @brief Wrapper for a complex number with double components. */
-typedef struct complex_double_t {
-    double re; //!< Real component
-    double im; //!< Imaginary component
-} complex_double_t;
-/*! @brief Wrapper for a complex number with long double components. */
-typedef struct complex_long_double_t {
-    long double re; //!< Real component
-    long double im; //!< Imaginary component
-} complex_long_double_t;
 // Platform specific
 #ifdef _WIN32
 #include "regex/regex_win32.h"
@@ -169,48 +100,67 @@ typedef struct complex_long_double_t {
 #ifdef PSI_DEBUG
 #define YGG_DEBUG PSI_DEBUG
 #endif
+#include "complex_type.hpp"
 
-#define GET_ITEM(O,P) \
-static inline \
-communication::datatypes::P* get_ ## O(O ## _t &x) { \
-    if (x.obj == nullptr) \
-        return nullptr; \
-    return static_cast<communication::datatypes::P*>(x.obj); \
-}
-
-#define GET_ITEMP(O,P) \
-static inline \
-communication::datatypes::P* get_ ## O(O ## _t* x) { \
-    if (x == NULL) \
-        return nullptr; \
-    if (x->obj == nullptr) \
-        return nullptr; \
-    return static_cast<communication::datatypes::P*>(x->obj); \
-}
-
-#define GET_ITEMC(O,P) \
-static inline \
-communication::datatypes::P* get_ ## O(const O ## _t &x) { \
-    if (x.obj == nullptr) \
-        return nullptr; \
-    return static_cast<communication::datatypes::P*>(x.obj); \
-}
-
-#define GET_ITEMCP(O,P) \
-static inline \
-communication::datatypes::P* get_ ## O(const O ## _t* x) { \
-    if (x == NULL) \
-        return nullptr; \
-    if (x->obj == nullptr) \
-        return nullptr; \
-    return static_cast<communication::datatypes::P*>(x->obj); \
-}
-
+#define DELIMITER ','
 
 #include "logging.hpp"
 
 namespace communication {
 namespace utils {
+
+template<typename T>
+void _join(const std::vector<T>& values, std::ostream& out, const char delim=DELIMITER)  {
+    for (auto i = 0; i < values.size()-1; i++)
+        out << values[i] << delim;
+    out << values[values.size()-1];
+}
+
+template<typename T>
+auto join(const std::vector<T>& values, std::ostream& out) -> EnableWithEnum<T> {
+    _join(values, out);
+}
+
+template<typename T>
+auto join(const std::vector<T>& values, std::ostream& out) -> EnableForString<T> {
+    _join(values, out, '|');
+}
+
+
+template<typename T>
+auto parse(std::vector<T>& values, const int count, std::istream &input) -> EnableWithEnum<T> {
+    values.clear();
+    values.reserve(count);
+    input >> std::ws;
+    char c;
+    for (auto i = 0; i < count; i++) {
+        if (input.eof())
+            throw std::exception();
+        T v;
+        input >> v;
+        values.push_back(v);
+        input >> c;
+    }
+    //if (!input.eof())
+    //    throw std::exception();
+}
+
+template<typename T>
+auto parse(std::vector<T>& values, const int count, std::istream &input) -> EnableForString<T> {
+    values.clear();
+    char temp[1000];
+    values.reserve(count);
+    for (auto i = 0; i < count - 1; i++) {
+        if (input.eof())
+            throw std::exception();
+        input.getline(temp, 1000, '|');
+        values.push_back(temp);
+    }
+    input.getline(temp, 1000);
+    values.push_back(temp);
+    //if (!input.eof())
+    //    throw std::exception();
+}
 
 /*! @brief Define macros to allow counts of variables. */
 // https://codecraft.co/2014/11/25/variadic-macros-tricks/
@@ -353,3 +303,5 @@ int is_eof(const char *buf) {
 
 }
 }
+
+#endif

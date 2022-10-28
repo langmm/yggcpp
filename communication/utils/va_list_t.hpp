@@ -16,7 +16,7 @@ typedef struct va_list_t {
     int iptr; //!< The index of the current variable argument pointer.
     int for_fortran; //!< Flag that is 1 if this structure will be accessed by fortran.
 
-};
+} va_list_t;
 
 va_list_t init_va_list();
 
