@@ -95,98 +95,11 @@ int add_VtoGroup(dtype_t* val, dtype_t* grp) {
     return 0;
 }
 
-dtype_t* create_dtype_scalar(SUBTYPE type, size_t precision, const char* units) {
+dtype_t* create_dtype_scalar(SUBTYPE type, uint8_t precision, const char* units) {
     auto dt = (dtype_t*)malloc(sizeof(dtype_t));
     dt->type = T_SCALAR;
     dt->use_generic = false;
-    communication::datatypes::ValueItem* vi;
-    switch (type) {
-        case T_INT: {
-            switch (precision) {
-                case 8:
-                    vi = new communication::datatypes::Value<int8_t>(T_INT, units, 8);
-                    break;
-                case 16:
-                    vi = new communication::datatypes::Value<int16_t>(T_INT, units, 16);
-                    break;
-                case 32:
-                    vi = new communication::datatypes::Value<int32_t>(T_INT, units, 32);
-                    break;
-                case 64:
-                    vi = new communication::datatypes::Value<int64_t>(T_INT, units, 64);
-                    break;
-                default:
-                    communication::utils::ygglog_error("Invalid precision given.");
-                    return nullptr;
-            }
-            break;
-        }
-        case T_BOOLEAN: {
-            vi = new communication::datatypes::Value<bool>(T_BOOLEAN, units, 1);
-            break;
-        }
-        case T_FLOAT: {
-            switch (precision) {
-                case 4:
-                    vi = new communication::datatypes::Value<float>(T_FLOAT, units, 4);
-                    break;
-                case 8:
-                    vi = new communication::datatypes::Value<double>(T_FLOAT, units, 8);
-                    break;
-                case 10:
-                case 12:
-                    vi = new communication::datatypes::Value<long double>(T_FLOAT, units, 12);
-                    break;
-                default:
-                    communication::utils::ygglog_error("Invalid precision given.");
-                    return nullptr;
-            }
-            break;
-        }
-        case T_UINT: {
-            switch (precision) {
-                case 8:
-                    vi = new communication::datatypes::Value<uint8_t>(T_UINT, units, 8);
-                    break;
-                case 16:
-                    vi = new communication::datatypes::Value<uint16_t>(T_UINT, units, 16);
-                    break;
-                case 32:
-                    vi = new communication::datatypes::Value<uint32_t>(T_UINT, units, 32);
-                    break;
-                case 64:
-                    vi = new communication::datatypes::Value<uint64_t>(T_UINT, units, 64);
-                    break;
-                default:
-                    communication::utils::ygglog_error("Invalid precision given.");
-                    return nullptr;
-            }
-            break;
-        }
-        case T_STRING: {
-            vi = new communication::datatypes::Value<std::string>(T_STRING, units, 0);
-            break;
-        }
-        case T_COMPLEX: {
-            switch (precision) {
-                case 4:
-                    vi = new communication::datatypes::Value<complex_float_t>(T_COMPLEX, units, 4);
-                    break;
-                case 8:
-                    vi = new communication::datatypes::Value<complex_double_t>(T_COMPLEX, units, 4);
-                    break;
-                case 10:
-                case 12:
-                    vi = new communication::datatypes::Value<complex_long_double_t>(T_COMPLEX, units, 12);
-                    break;
-                default:
-                    communication::utils::ygglog_error("Invalid precision given.");
-                    return nullptr;
-
-            }
-            break;
-        }
-    }
+    communication::datatypes::ValueItem* vi = communication::datatypes::createValue(type, precision, units);
     dt->obj = vi;
     return dt;
 }
@@ -335,3 +248,102 @@ void set_dtype_string(dtype_t* dt, char* val) {
     std::string temp(val);
     static_cast<communication::datatypes::Value<std::string>*>(dt->obj)->set(temp);
 }
+
+communication::datatypes::ValueItem* createValue(SUBTYPE t, const size_t &precision, const char* units) {
+    communication::datatypes::ValueItem* vi;
+    switch (t) {
+        case T_INT: {
+            switch (precision) {
+                case 8:
+                    vi = new communication::datatypes::Value<int8_t>(T_INT, units, 8);
+                    break;
+                case 16:
+                    vi = new communication::datatypes::Value<int16_t>(T_INT, units, 16);
+                    break;
+                case 32:
+                    vi = new communication::datatypes::Value<int32_t>(T_INT, units, 32);
+                    break;
+                case 64:
+                    vi = new communication::datatypes::Value<int64_t>(T_INT, units, 64);
+                    break;
+                default:
+                    communication::utils::ygglog_error("Invalid precision given.");
+                    return nullptr;
+            }
+            break;
+        }
+        case T_BOOLEAN: {
+            vi = new communication::datatypes::Value<bool>(T_BOOLEAN, units, 1);
+            break;
+        }
+        case T_FLOAT: {
+            switch (precision) {
+                case 4:
+                    vi = new communication::datatypes::Value<float>(T_FLOAT, units, 4);
+                    break;
+                case 8:
+                    vi = new communication::datatypes::Value<double>(T_FLOAT, units, 8);
+                    break;
+                case 10:
+                case 12:
+                    vi = new communication::datatypes::Value<long double>(T_FLOAT, units, 12);
+                    break;
+                default:
+                    communication::utils::ygglog_error("Invalid precision given.");
+                    return nullptr;
+            }
+            break;
+        }
+        case T_UINT: {
+            switch (precision) {
+                case 8:
+                    vi = new communication::datatypes::Value<uint8_t>(T_UINT, units, 8);
+                    break;
+                case 16:
+                    vi = new communication::datatypes::Value<uint16_t>(T_UINT, units, 16);
+                    break;
+                case 32:
+                    vi = new communication::datatypes::Value<uint32_t>(T_UINT, units, 32);
+                    break;
+                case 64:
+                    vi = new communication::datatypes::Value<uint64_t>(T_UINT, units, 64);
+                    break;
+                default:
+                    communication::utils::ygglog_error("Invalid precision given.");
+                    return nullptr;
+            }
+            break;
+        }
+        case T_STRING: {
+            vi = new communication::datatypes::Value<std::string>(T_STRING, units, 0);
+            break;
+        }
+        case T_COMPLEX: {
+            switch (precision) {
+                case 4:
+                    vi = new communication::datatypes::Value<complex_float_t>(T_COMPLEX, units, 4);
+                    break;
+                case 8:
+                    vi = new communication::datatypes::Value<complex_double_t>(T_COMPLEX, units, 8);
+                    break;
+                case 10:
+                case 12:
+                    vi = new communication::datatypes::Value<complex_long_double_t>(T_COMPLEX, units, 12);
+                    break;
+                default:
+                    communication::utils::ygglog_error("Invalid precision given.");
+                    return nullptr;
+
+            }
+            break;
+        }
+    }
+    return vi;
+
+
+    //auto temp = create_dtype_scalar(t, precision, units);
+    //auto res = static_cast<communication::datatypes::ValueItem*>(temp->obj);
+    //free(temp);
+    //return res;
+}
+

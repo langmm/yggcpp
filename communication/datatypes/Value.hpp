@@ -3,125 +3,85 @@
 #include <vector>
 #include "utils/macros.hpp"
 #include "ValueItem.hpp"
-#include "utils/tools.hpp"
+#include "utils/complex_type.hpp"
+#include "utils/templates.hpp"
 
 namespace communication {
 namespace datatypes {
 
-template<typename T>
+ENABLE_TYPECHECK
 class Value : public ValueItem {
 public:
     using ValueItem::get;
     using ValueItem::set;
     Value() = delete;
-    Value(const T &val, SUBTYPE st, const std::string &unit="", const int& precision=0);
-    explicit Value(SUBTYPE st, const std::string &unit="", const int& precision=0);
+    Value(const T &val, SUBTYPE st, const std::string &unit="", const uint8_t& precision=0) :
+            ValueItem(st, T_SCALABLE, unit, precision) {
+        value = val;
+    }
+    explicit Value(SUBTYPE st, const std::string &unit="", const uint8_t& precision=0) :
+            ValueItem(st, T_SCALABLE, unit, precision){}
     //explicit Value(const value_t* val);
     ~Value() = default;
-    void get(T &val) const override;
-    void get(T &val, std::string& un) const override;
-    void set(T &val) override;
-    void set(T &val, std::string& un) override;
+    void get(T &val) const override {
+        val = value;
+    }
+
+    void get(T &val, std::string& un) const override {
+        val = value;
+        un = unit;
+    }
+    void set(T &val) override {
+        value = val;
+    }
+
+    void set(T &val, std::string& un) override {
+        value = val;
+        unit = un;
+    }
+    void display(const std::string& indent) const override {
+        printf("%s%-15s = %s\n", indent.c_str(), "type", "SCALAR");
+        printf("%s%-15s = %s\n", indent.c_str(), "subtype", mapsub.at(type).c_str());
+        printf("%s%-15s = %d\n", indent.c_str(), "precision", precision);
+        //printf("%s%-15s = %s\n", indent.c_str(), "value", make_string(value).c_str());
+        //printf("%s%-15s = %s\n");
+    }
+
+    int nargs_exp() const override {return 4;}
+    DTYPE getType() const override {return T_SCALAR;}
+
+    std::ostream& write(std::ostream& out) override {
+        out << "scalarvalue" << std::endl
+            << " type " << type << std::endl
+            << " precision " << precision << std::endl
+            << " unit ";
+        if (unit.empty())
+            out << "None";
+        else
+            out << unit;
+        out << std::endl << " value " << value;
+        out << std::endl;
+        return out;
+    }
+
+    std::istream& read(std::istream& in) override {
+        std::string word;
+        in >> std::ws;
+        in >> word;
+        if (word != "scalarvalue")
+            throw std::exception();
+        in >> type;
+        in >> precision;
+        in >> value;
+        return in;
+    }
     //value_t* toValue_t();
-    T getValue() const;
+    T getValue() const {
+        return value;
+    }
 private:
     T value;
 };
-
-template<typename T>
-Value<T>::Value(SUBTYPE st, const std::string &unit, const int &precision) : ValueItem(st, unit, precision){}
-//template<typename T>
-//Value<T>* toValue(const value_t* val);
-
-template<typename T>
-void Value<T>::set(T &val) {
-    value = val;
-}
-
-template<typename T>
-void Value<T>::set(T &val, std::string &un) {
-    value = val;
-    unit = un;
-}
-
-template<typename T>
-void Value<T>::get(T& val) const {
-    val = value;
-}
-
-template<typename T>                                \
-Value<T>::Value(const T &val, SUBTYPE st, const std::string &unit, const int& precision) : \
-    ValueItem(st, unit, precision) { \
-    value = val;                          \
-}
-
-template<>
-Value<complex_float_t>::Value(const complex_float_t &val, SUBTYPE st, const std::string &unit, const int& precision) :
-        ValueItem(T_COMPLEX, unit, 4) {
-    value.re = val.re;
-    value.im = val.im;
-}
-template<>
-Value<complex_double_t>::Value(const complex_double_t &val, SUBTYPE st, const std::string &unit, const int& precision) :
-        ValueItem(T_COMPLEX, unit, 8) {
-    value.re = val.re;
-    value.im = val.im;
-}
-template<>
-Value<complex_long_double_t>::Value(const complex_long_double_t &val, SUBTYPE st, const std::string &unit, const int& precision) :
-        ValueItem(T_COMPLEX, unit, 12) {
-    value.re = val.re;
-    value.im = val.im;
-}
-template<>
-void Value<complex_float_t>::set(complex_float_t &val, std::string &unit) {
-    value.re = val.re;
-    value.im = val.im;
-    this->unit = unit;
-}
-
-template<>
-void Value<complex_float_t>::set(complex_float_t &val) {
-    value.re = val.re;
-    value.im = val.im;
-}
-
-template<>
-void Value<complex_double_t>::set(complex_double_t &val, std::string &unit) {
-    value.re = val.re;
-    value.im = val.im;
-    this->unit = unit;
-}
-
-template<>
-void Value<complex_double_t>::set(complex_double_t &val) {
-    value.re = val.re;
-    value.im = val.im;
-}
-
-template<>
-void Value<complex_long_double_t>::set(complex_long_double_t &val, std::string &unit) {
-    value.re = val.re;
-    value.im = val.im;
-    this->unit = unit;
-}
-
-template<>
-void Value<complex_long_double_t>::set(complex_long_double_t &val) {
-    value.re = val.re;
-    value.im = val.im;
-}
-
-template<typename T>
-void Value<T>::get(T &val, std::string &un) const {
-    val = value;
-    un = unit;
-}
-
-template<typename T>
-T Value<T>::getValue() const {
-    return value;
-}
 
 //EVAL(MAP(VALUE_T_GET_METHOD, int, bool, float, uint, complex_float_t))
 
