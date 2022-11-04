@@ -44,16 +44,54 @@ TEST(VALUE, Enum) {
 
 TEST(ADDRESS, Init) {
     const std::string astr = "this.is.a.test";
-    const char* cstr = "this.is.C.test";
-    communication::utils::Address adr(astr);
-    EXPECT_TRUE(adr.valid());
-    EXPECT_EQ(adr.address(), astr);
-    EXPECT_EQ(0, adr.key());
+    std::string cstr = "this.is.C.test";
+    auto *adr = new Address(astr);
+    EXPECT_TRUE(adr->valid());
+    EXPECT_EQ(adr->address(), astr);
+    EXPECT_EQ(0, adr->key());
 
-    communication::utils::Address adrc(cstr);
+    Address adrc(cstr.c_str());
     EXPECT_TRUE(adrc.valid());
-    EXPECT_EQ(adrc.address().c_str(), astr);
+    EXPECT_EQ(adrc.address(), cstr);
     EXPECT_EQ(0, adrc.key());
+    EXPECT_NE(adrc.address(), adr->address());
+
+    auto* adrcmp = new Address(adr);
+    EXPECT_TRUE(adrcmp->valid());
+    EXPECT_EQ(adrcmp->address(), adr->address());
+    EXPECT_NE(adr, adrcmp);
+    delete adr;
+    delete adrcmp;
+}
+
+TEST(ADDRESS, set) {
+    Address adr;
+    EXPECT_FALSE(adr.valid());
+    const int val = 12345;
+    adr.address(std::to_string(val));
+    EXPECT_TRUE(adr.valid());
+    EXPECT_EQ(adr.key(), val);
+    EXPECT_EQ(val, stoi(adr.address()));
+
+    std::string longadr(COMM_ADDRESS_SIZE+5, 'x');
+    Address adr1(longadr);
+    EXPECT_NE(adr1.address(), longadr);
+    EXPECT_TRUE(adr1.valid());
+}
+
+TEST(ADDRESS, operators) {
+    const std::string a1 = "this.is.a.test";
+    const std::string a2 = "this.is.b.test";
+    auto* adr1 = new Address(a1);
+    auto* adr11 = new Address(a1);
+    auto* adr2 = new Address(a2);
+    EXPECT_TRUE(*adr1 == *adr11);
+    EXPECT_FALSE(*adr1 == *adr2);
+
+    delete adr1;
+    delete adr11;
+    delete adr2;
+}
 
 }
 }

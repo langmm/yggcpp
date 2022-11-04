@@ -10,7 +10,7 @@ class Address {
 public:
     Address(const std::string &adr = "");
 
-    Address(char *adr);
+    Address(const char *adr);
 
     Address(Address *adr);
 
@@ -19,8 +19,6 @@ public:
     int key() const;
 
     void address(const std::string &addr);
-
-    bool operator==(const Address *adr);
 
     bool operator==(const Address &adr);
 
