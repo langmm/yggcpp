@@ -86,7 +86,7 @@ int update_dtype(dtype_t* dtype1, dtype_t* dtype2);
   @param[in] ap va_list_t Variable argument list.
   @returns: int 0 if successfull, -1 if there was an error.
  */
-int update_dtype_from_generic_ap(dtype_t* dtype1, size_t nargs, struct va_list_t ap);
+//int update_dtype_from_generic_ap(dtype_t* dtype1, size_t nargs, struct va_list_t ap);
 
 
 /*!
@@ -111,8 +111,8 @@ int update_precision_dtype(const dtype_t* dtype,
   @param[in] ap va_list Arguments to be parsed from message.
   returns: int The number of populated arguments. -1 indicates an error.
 */
-int deserialize_dtype(const dtype_t *dtype, const char *buf, const size_t buf_siz,
-                      const int allow_realloc, size_t *nargs, struct va_list_t ap);
+//int deserialize_dtype(const dtype_t *dtype, const char *buf, const size_t buf_siz,
+//                      const int allow_realloc, size_t *nargs, struct va_list_t ap);
 
 
 /*!
@@ -127,8 +127,8 @@ int deserialize_dtype(const dtype_t *dtype, const char *buf, const size_t buf_si
   @param[in] ap va_list Arguments to be formatted.
   returns: int The length of the serialized message or -1 if there is an error.
 */
-int serialize_dtype(const dtype_t *dtype, char **buf, size_t *buf_siz,
-                    const int allow_realloc, size_t *nargs, struct va_list_t ap);
+//int serialize_dtype(const dtype_t *dtype, char **buf, size_t *buf_siz,
+//                    const int allow_realloc, size_t *nargs, struct va_list_t ap);
 
 
 /*!
