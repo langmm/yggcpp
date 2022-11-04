@@ -19,7 +19,7 @@ void set_unit(char* u, const char* unit, const size_t &unit_size) {
 
 int add_VtoGroup(dtype_t* val, dtype_t* grp) {
     if (val->type != T_SCALAR) {
-        communication::utils::ygglog_error("Incorrect datatype given");
+        ygglog_error << "Incorrect datatype given";
         return -1;
     }
     auto v = static_cast<communication::datatypes::ValueItem*>(val->obj);
@@ -267,7 +267,7 @@ communication::datatypes::ValueItem* createValue(SUBTYPE t, const size_t &precis
                     vi = new communication::datatypes::Value<int64_t>(T_INT, units, 64);
                     break;
                 default:
-                    communication::utils::ygglog_error("Invalid precision given.");
+                    ygglog_error << "Invalid precision given.";
                     return nullptr;
             }
             break;
@@ -289,7 +289,7 @@ communication::datatypes::ValueItem* createValue(SUBTYPE t, const size_t &precis
                     vi = new communication::datatypes::Value<long double>(T_FLOAT, units, 12);
                     break;
                 default:
-                    communication::utils::ygglog_error("Invalid precision given.");
+                    ygglog_error << "Invalid precision given.";
                     return nullptr;
             }
             break;
@@ -309,7 +309,7 @@ communication::datatypes::ValueItem* createValue(SUBTYPE t, const size_t &precis
                     vi = new communication::datatypes::Value<uint64_t>(T_UINT, units, 64);
                     break;
                 default:
-                    communication::utils::ygglog_error("Invalid precision given.");
+                    ygglog_error << "Invalid precision given.";
                     return nullptr;
             }
             break;
@@ -331,7 +331,7 @@ communication::datatypes::ValueItem* createValue(SUBTYPE t, const size_t &precis
                     vi = new communication::datatypes::Value<complex_long_double_t>(T_COMPLEX, units, 12);
                     break;
                 default:
-                    communication::utils::ygglog_error("Invalid precision given.");
+                    ygglog_error << "Invalid precision given.";
                     return nullptr;
 
             }

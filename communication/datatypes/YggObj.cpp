@@ -174,7 +174,7 @@ obj_t *YggObj::toObjt() {
         obj->nvert_in_point[i] = static_cast<int>(points.size());
         auto cpnts = (int *) malloc(sizeof(int) * points.size());
         if (cpnts == nullptr) {
-            utils::ygglog_error("Failed to alloc");
+            ygglog_error << "Failed to alloc";
             free_obj(obj);
             return nullptr;
         }
@@ -188,12 +188,12 @@ obj_t *YggObj::toObjt() {
         auto cpnts = (int *) malloc(sizeof(int) * refs.size());
         auto ctex = (int *) malloc(sizeof(int) * refs.size());
         if (cpnts == nullptr) {
-            utils::ygglog_error("Failed to alloc");
+            ygglog_error << "Failed to alloc";
             free_obj(obj);
             return nullptr;
         }
         if (ctex == nullptr) {
-            utils::ygglog_error("Failed to alloc");
+            ygglog_error << "Failed to alloc";
             free_obj(obj);
             return nullptr;
         }
@@ -212,17 +212,17 @@ obj_t *YggObj::toObjt() {
         auto ctex = (int *) malloc(sizeof(int) * refs.size());
         auto cnorm = (int *) malloc(sizeof(int) * refs.size());
         if (cpnts == nullptr) {
-            utils::ygglog_error("Failed to alloc");
+            ygglog_error <<"Failed to alloc";
             free_obj(obj);
             return nullptr;
         }
         if (ctex == nullptr) {
-            utils::ygglog_error("Failed to alloc");
+            ygglog_error << "Failed to alloc";
             free_obj(obj);
             return nullptr;
         }
         if (cnorm == nullptr) {
-            utils::ygglog_error("Failed to alloc");
+            ygglog_error << "Failed to alloc";
             free_obj(obj);
             return nullptr;
         }
@@ -242,7 +242,7 @@ obj_t *YggObj::toObjt() {
         obj->nvert_in_curve[i] = static_cast<int>(refs.size());
         auto cpnts = (int *) malloc(sizeof(int) * refs.size());
         if (cpnts == nullptr) {
-            utils::ygglog_error("Failed to alloc");
+            ygglog_error << "Failed to alloc";
             free_obj(obj);
             return nullptr;
         }
@@ -259,7 +259,7 @@ obj_t *YggObj::toObjt() {
         obj->nvert_in_curve[i] = static_cast<int>(refs.size());
         auto cpnts = (int *) malloc(sizeof(int) * refs.size());
         if (cpnts == nullptr) {
-            utils::ygglog_error("Failed to alloc");
+            ygglog_error << "Failed to alloc";
             free_obj(obj);
             return nullptr;
         }
@@ -276,17 +276,17 @@ obj_t *YggObj::toObjt() {
         auto ctex = (int *) malloc(sizeof(int) * refs.size());
         auto cnorm = (int *) malloc(sizeof(int) * refs.size());
         if (cpnts == nullptr) {
-            utils::ygglog_error("Failed to alloc");
+            ygglog_error << "Failed to alloc";
             free_obj(obj);
             return nullptr;
         }
         if (ctex == nullptr) {
-            utils::ygglog_error("Failed to alloc");
+            ygglog_error << "Failed to alloc";
             free_obj(obj);
             return nullptr;
         }
         if (cnorm == nullptr) {
-            utils::ygglog_error("Failed to alloc");
+            ygglog_error << "Failed to alloc";
             free_obj(obj);
             return nullptr;
         }
@@ -618,7 +618,7 @@ int alloc_obj(obj_t *p, int nvert, int ntexc, int nnorm, int nparam,
     if (nvert > 0) {
         auto new_vert = (float **) malloc(p->nvert * sizeof(float *));
         if (new_vert == nullptr) {
-            communication::utils::ygglog_error("alloc_obj: Failed to allocate vertices.");
+            ygglog_error << "alloc_obj: Failed to allocate vertices.";
             free_obj(p);
             return -1;
         }
@@ -626,19 +626,19 @@ int alloc_obj(obj_t *p, int nvert, int ntexc, int nnorm, int nparam,
         for (i = 0; i < p->nvert; i++) {
             auto ivert = (float *) malloc(4 * sizeof(float));
             if (ivert == nullptr) {
-                communication::utils::ygglog_error("alloc_obj: Failed to allocate vertex %d.", i);
+                ygglog_error << "alloc_obj: Failed to allocate vertex " << i << ".";
                 free_obj(p);
                 return -1;
             }
             p->vertices[i] = ivert;
         }
-        communication::utils::ygglog_debug("alloc_obj: Allocated %d vertices.", nvert);
+        ygglog_debug << "alloc_obj: Allocated " << nvert << " vertices.";
     }
     // Allocate vertex colors
     if ((nvert > 0) && (do_color)) {
         int **new_vert_colors = (int **) malloc(p->nvert * sizeof(int *));
         if (new_vert_colors == nullptr) {
-            communication::utils::ygglog_error("alloc_obj: Failed to allocate vertex_colors.");
+            ygglog_error << "alloc_obj: Failed to allocate vertex_colors.";
             free_obj(p);
             return -1;
         }
@@ -646,19 +646,19 @@ int alloc_obj(obj_t *p, int nvert, int ntexc, int nnorm, int nparam,
         for (i = 0; i < p->nvert; i++) {
             int *ivert = (int *) malloc(3 * sizeof(int));
             if (ivert == nullptr) {
-                communication::utils::ygglog_error("alloc_obj: Failed to allocate vertex color %d.", i);
+                ygglog_error << "alloc_obj: Failed to allocate vertex color " << i << ".";
                 free_obj(p);
                 return -1;
             }
             p->vertex_colors[i] = ivert;
         }
-        communication::utils::ygglog_debug("alloc_obj: Allocated %d vertex colors.", nvert);
+        ygglog_debug << "alloc_obj: Allocated " << nvert << " vertex colors.";
     }
     // Allocate texcoords
     if (p->ntexc > 0) {
         auto new_texc = (float **) malloc(p->ntexc * sizeof(float *));
         if (new_texc == nullptr) {
-            communication::utils::ygglog_error("alloc_obj: Failed to allocate texcoords.");
+            ygglog_error << "alloc_obj: Failed to allocate texcoords.";
             free_obj(p);
             return -1;
         }
@@ -666,19 +666,19 @@ int alloc_obj(obj_t *p, int nvert, int ntexc, int nnorm, int nparam,
         for (i = 0; i < p->ntexc; i++) {
             auto itexc = (float *) malloc(3 * sizeof(float));
             if (itexc == nullptr) {
-                communication::utils::ygglog_error("alloc_obj: Failed to allocate texcoord %d.", i);
+                ygglog_error << "alloc_obj: Failed to allocate texcoord " << i << ".";
                 free_obj(p);
                 return -1;
             }
             p->texcoords[i] = itexc;
         }
-        communication::utils::ygglog_debug("alloc_obj: Allocated %d texcoords.", ntexc);
+        ygglog_debug << "alloc_obj: Allocated " << ntexc << " texcoords.";
     }
     // Allocate normals
     if (p->nnorm > 0) {
         auto new_norm = (float **) malloc(p->nnorm * sizeof(float *));
         if (new_norm == nullptr) {
-            communication::utils::ygglog_error("alloc_obj: Failed to allocate normals.");
+            ygglog_error << "alloc_obj: Failed to allocate normals.";
             free_obj(p);
             return -1;
         }
@@ -686,19 +686,19 @@ int alloc_obj(obj_t *p, int nvert, int ntexc, int nnorm, int nparam,
         for (i = 0; i < p->nnorm; i++) {
             auto inorm = (float *) malloc(3 * sizeof(float));
             if (inorm == nullptr) {
-                communication::utils::ygglog_error("alloc_obj: Failed to allocate normal %d.", i);
+                ygglog_error << "alloc_obj: Failed to allocate normal " << i << ".";
                 free_obj(p);
                 return -1;
             }
             p->normals[i] = inorm;
         }
-        communication::utils::ygglog_debug("alloc_obj: Allocated %d normals.", nnorm);
+        ygglog_debug << "alloc_obj: Allocated " << nnorm << " normals.";
     }
     // Allocate parameters
     if (p->nparam > 0) {
         auto new_param = (float **) malloc(p->nparam * sizeof(float *));
         if (new_param == nullptr) {
-            communication::utils::ygglog_error("alloc_obj: Failed to allocate params.");
+            ygglog_error << "alloc_obj: Failed to allocate params.";
             free_obj(p);
             return -1;
         }
@@ -706,19 +706,19 @@ int alloc_obj(obj_t *p, int nvert, int ntexc, int nnorm, int nparam,
         for (i = 0; i < p->nparam; i++) {
             auto iparam = (float *) malloc(3 * sizeof(float));
             if (iparam == nullptr) {
-                communication::utils::ygglog_error("alloc_obj: Failed to allocate param %d.", i);
+                ygglog_error << "alloc_obj: Failed to allocate param " << i << ".";
                 free_obj(p);
                 return -1;
             }
             p->params[i] = iparam;
         }
-        communication::utils::ygglog_debug("alloc_obj: Allocated %d params.", nparam);
+        ygglog_debug << "alloc_obj: Allocated " << nparam << " params.";
     }
     // Allocate points
     if (p->npoint > 0) {
         auto new_point = (int **) malloc(p->npoint * sizeof(int *));
         if (new_point == nullptr) {
-            communication::utils::ygglog_error("alloc_obj: Failed to allocate points.");
+            ygglog_error << "alloc_obj: Failed to allocate points.";
             free_obj(p);
             return -1;
         }
@@ -728,7 +728,7 @@ int alloc_obj(obj_t *p, int nvert, int ntexc, int nnorm, int nparam,
         }
         int *new_nvert_point = (int *) malloc(p->npoint * sizeof(int));
         if (new_nvert_point == nullptr) {
-            communication::utils::ygglog_error("alloc_obj: Failed to allocate nvert_in_point.");
+            ygglog_error << "alloc_obj: Failed to allocate nvert_in_point.";
             free_obj(p);
             return -1;
         }
@@ -741,7 +741,7 @@ int alloc_obj(obj_t *p, int nvert, int ntexc, int nnorm, int nparam,
     if (p->nline > 0) {
         auto new_line = (int **) malloc(p->nline * sizeof(int *));
         if (new_line == nullptr) {
-            communication::utils::ygglog_error("alloc_obj: Failed to allocate lines.");
+            ygglog_error << "alloc_obj: Failed to allocate lines.";
             free_obj(p);
             return -1;
         }
@@ -751,7 +751,7 @@ int alloc_obj(obj_t *p, int nvert, int ntexc, int nnorm, int nparam,
         }
         auto new_nvert_line = (int *) malloc(p->nline * sizeof(int));
         if (new_nvert_line == nullptr) {
-            communication::utils::ygglog_error("alloc_obj: Failed to allocate nvert_in_line.");
+            ygglog_error << "alloc_obj: Failed to allocate nvert_in_line.";
             free_obj(p);
             return -1;
         }
@@ -761,7 +761,7 @@ int alloc_obj(obj_t *p, int nvert, int ntexc, int nnorm, int nparam,
         }
         auto new_line_texcoords = (int **) malloc(p->nline * sizeof(int *));
         if (new_line_texcoords == nullptr) {
-            communication::utils::ygglog_error("alloc_obj: Failed to allocate line_texcoords.");
+            ygglog_error << "alloc_obj: Failed to allocate line_texcoords.";
             free_obj(p);
             return -1;
         }
@@ -774,7 +774,7 @@ int alloc_obj(obj_t *p, int nvert, int ntexc, int nnorm, int nparam,
     if (p->nface > 0) {
         auto new_face = (int **) malloc(p->nface * sizeof(int *));
         if (new_face == nullptr) {
-            communication::utils::ygglog_error("alloc_obj: Failed to allocate faces.");
+            ygglog_error << "alloc_obj: Failed to allocate faces.";
             free_obj(p);
             return -1;
         }
@@ -784,7 +784,7 @@ int alloc_obj(obj_t *p, int nvert, int ntexc, int nnorm, int nparam,
         }
         auto new_nvert_face = (int *) malloc(p->nface * sizeof(int));
         if (new_nvert_face == nullptr) {
-            communication::utils::ygglog_error("alloc_obj: Failed to allocate nvert_in_face.");
+            ygglog_error << "alloc_obj: Failed to allocate nvert_in_face.";
             free_obj(p);
             return -1;
         }
@@ -794,7 +794,7 @@ int alloc_obj(obj_t *p, int nvert, int ntexc, int nnorm, int nparam,
         }
         auto new_face_texcoords = (int **) malloc(p->nface * sizeof(int *));
         if (new_face_texcoords == nullptr) {
-            communication::utils::ygglog_error("alloc_obj: Failed to allocate face_texcoords.");
+            ygglog_error << "alloc_obj: Failed to allocate face_texcoords.";
             free_obj(p);
             return -1;
         }
@@ -804,7 +804,7 @@ int alloc_obj(obj_t *p, int nvert, int ntexc, int nnorm, int nparam,
         }
         auto new_face_normals = (int **) malloc(p->nface * sizeof(int *));
         if (new_face_normals == nullptr) {
-            communication::utils::ygglog_error("alloc_obj: Failed to allocate face_normals.");
+            ygglog_error << "alloc_obj: Failed to allocate face_normals.";
             free_obj(p);
             return -1;
         }
@@ -812,13 +812,13 @@ int alloc_obj(obj_t *p, int nvert, int ntexc, int nnorm, int nparam,
         for (i = 0; i < p->nface; i++) {
             p->face_normals[i] = nullptr;
         }
-        communication::utils::ygglog_debug("alloc_obj: Allocated %d faces.", nface);
+        ygglog_debug << "alloc_obj: Allocated " + std::to_string(nface) + " faces.";
     }
     // Allocate curves
     if (p->ncurve > 0) {
         auto new_curve = (int **) malloc(p->ncurve * sizeof(int *));
         if (new_curve == nullptr) {
-            communication::utils::ygglog_error("alloc_obj: Failed to allocate curves.");
+            ygglog_error << "alloc_obj: Failed to allocate curves.";
             free_obj(p);
             return -1;
         }
@@ -828,7 +828,7 @@ int alloc_obj(obj_t *p, int nvert, int ntexc, int nnorm, int nparam,
         }
         auto new_nvert_curve = (int *) malloc(p->ncurve * sizeof(int));
         if (new_nvert_curve == nullptr) {
-            communication::utils::ygglog_error("alloc_obj: Failed to allocate nvert_in_curve.");
+            ygglog_error << "alloc_obj: Failed to allocate nvert_in_curve.";
             free_obj(p);
             return -1;
         }
@@ -838,7 +838,7 @@ int alloc_obj(obj_t *p, int nvert, int ntexc, int nnorm, int nparam,
         }
         auto new_curve_params = (float **) malloc(p->ncurve * sizeof(float *));
         if (new_curve_params == nullptr) {
-            communication::utils::ygglog_error("alloc_obj: Failed to allocate curve_params.");
+            ygglog_error << "alloc_obj: Failed to allocate curve_params.";
             free_obj(p);
             return -1;
         }
@@ -846,7 +846,7 @@ int alloc_obj(obj_t *p, int nvert, int ntexc, int nnorm, int nparam,
         for (i = 0; i < p->ncurve; i++) {
             auto iparam = (float *) malloc(2 * sizeof(float));
             if (iparam == nullptr) {
-                communication::utils::ygglog_error("alloc_obj: Failed to allocate curve param %d.", i);
+                ygglog_error << "alloc_obj: Failed to allocate curve param " << i << ".";
                 free_obj(p);
                 return -1;
             }
@@ -857,7 +857,7 @@ int alloc_obj(obj_t *p, int nvert, int ntexc, int nnorm, int nparam,
     if (p->ncurve2 > 0) {
         auto new_curve2 = (int **) malloc(p->ncurve2 * sizeof(int *));
         if (new_curve2 == nullptr) {
-            communication::utils::ygglog_error("alloc_obj: Failed to allocate curves2.");
+            ygglog_error << "alloc_obj: Failed to allocate curves2.";
             free_obj(p);
             return -1;
         }
@@ -867,7 +867,7 @@ int alloc_obj(obj_t *p, int nvert, int ntexc, int nnorm, int nparam,
         }
         int *new_nparam_curve2 = (int *) malloc(p->ncurve2 * sizeof(int));
         if (new_nparam_curve2 == nullptr) {
-            communication::utils::ygglog_error("alloc_obj: Failed to allocate nparam_in_curve2.");
+            ygglog_error << "alloc_obj: Failed to allocate nparam_in_curve2.";
             free_obj(p);
             return -1;
         }
@@ -880,7 +880,7 @@ int alloc_obj(obj_t *p, int nvert, int ntexc, int nnorm, int nparam,
     if (p->nsurf > 0) {
         auto new_surface = (int **) malloc(p->nsurf * sizeof(int *));
         if (new_surface == nullptr) {
-            communication::utils::ygglog_error("alloc_obj: Failed to allocate surfaces.");
+            ygglog_error << "alloc_obj: Failed to allocate surfaces.";
             free_obj(p);
             return -1;
         }
@@ -890,7 +890,7 @@ int alloc_obj(obj_t *p, int nvert, int ntexc, int nnorm, int nparam,
         }
         auto new_nvert_surface = (int *) malloc(p->nsurf * sizeof(int));
         if (new_nvert_surface == nullptr) {
-            communication::utils::ygglog_error("alloc_obj: Failed to allocate nvert_in_surface.");
+            ygglog_error << "alloc_obj: Failed to allocate nvert_in_surface.";
             free_obj(p);
             return -1;
         }
@@ -900,7 +900,7 @@ int alloc_obj(obj_t *p, int nvert, int ntexc, int nnorm, int nparam,
         }
         auto new_surface_params_u = (float **) malloc(p->nsurf * sizeof(float *));
         if (new_surface_params_u == nullptr) {
-            communication::utils::ygglog_error("alloc_obj: Failed to allocate surface_params_u.");
+            ygglog_error << "alloc_obj: Failed to allocate surface_params_u.";
             free_obj(p);
             return -1;
         }
@@ -908,7 +908,7 @@ int alloc_obj(obj_t *p, int nvert, int ntexc, int nnorm, int nparam,
         for (i = 0; i < p->nsurf; i++) {
             auto iparam = (float *) malloc(2 * sizeof(float));
             if (iparam == nullptr) {
-                communication::utils::ygglog_error("alloc_obj: Failed to allocate surface param %d.", i);
+                ygglog_error << "alloc_obj: Failed to allocate surface param " + std::to_string(i) + ".";
                 free_obj(p);
                 return -1;
             }
@@ -916,7 +916,7 @@ int alloc_obj(obj_t *p, int nvert, int ntexc, int nnorm, int nparam,
         }
         auto new_surface_params_v = (float **) malloc(p->nsurf * sizeof(float *));
         if (new_surface_params_v == nullptr) {
-            communication::utils::ygglog_error("alloc_obj: Failed to allocate surface_params_v.");
+            ygglog_error << "alloc_obj: Failed to allocate surface_params_v.";
             free_obj(p);
             return -1;
         }
@@ -924,7 +924,7 @@ int alloc_obj(obj_t *p, int nvert, int ntexc, int nnorm, int nparam,
         for (i = 0; i < p->nsurf; i++) {
             auto iparam = (float *) malloc(2 * sizeof(float));
             if (iparam == nullptr) {
-                communication::utils::ygglog_error("alloc_obj: Failed to allocate surface param %d.", i);
+                ygglog_error << "alloc_obj: Failed to allocate surface param " + std::to_string(i) + ".";
                 free_obj(p);
                 return -1;
             }
@@ -932,7 +932,7 @@ int alloc_obj(obj_t *p, int nvert, int ntexc, int nnorm, int nparam,
         }
         auto new_surface_texcoords = (int **) malloc(p->nsurf * sizeof(int *));
         if (new_surface_texcoords == nullptr) {
-            communication::utils::ygglog_error("alloc_obj: Failed to allocate surface_texcoords.");
+            ygglog_error << "alloc_obj: Failed to allocate surface_texcoords.";
             free_obj(p);
             return -1;
         }
@@ -942,7 +942,7 @@ int alloc_obj(obj_t *p, int nvert, int ntexc, int nnorm, int nparam,
         }
         auto new_surface_normals = (int **) malloc(p->nsurf * sizeof(int *));
         if (new_surface_normals == nullptr) {
-            communication::utils::ygglog_error("alloc_obj: Failed to allocate surface_normals.");
+            ygglog_error << "alloc_obj: Failed to allocate surface_normals.";
             free_obj(p);
             return -1;
         }
@@ -952,19 +952,10 @@ int alloc_obj(obj_t *p, int nvert, int ntexc, int nnorm, int nparam,
         }
     }
     // Return
-    communication::utils::ygglog_debug("alloc_obj: Allocated for\n"
-                                       "\t%d vertices,\n"
-                                       "\t%d texture coordinates,\n"
-                                       "\t%d normals,\n"
-                                       "\t%d parameters,\n"
-                                       "\t%d points,\n"
-                                       "\t%d lines,\n"
-                                       "\t%d faces,\n"
-                                       "\t%d curves,\n"
-                                       "\t%d curve2, and\n"
-                                       "\t%d surfaces.\n",
-                                       p->nvert, p->ntexc, p->nnorm, p->nparam, p->npoint,
-                                       p->nline, p->nface, p->ncurve, p->ncurve2, p->nsurf);
+    ygglog_debug << "alloc_obj: Allocated for\n\t" << p->nvert << " vertices,\n\t" << p->ntexc << " texture coordinates,\n\t"
+                 << p->nnorm << " normals,\n\t" << p->nparam << " parameters,\n\t" << p->npoint << " points,\n\t"
+                 << p->nline << " lines,\n\t" << p->nface << " faces,\n\t" << p->ncurve << " curves,\n\t"
+                 << p->ncurve2 << " curve2, and\n\t" << p->nsurf << " surfaces.\n";
     return 0;
 }
 
@@ -1007,7 +998,7 @@ obj_t copy_obj(obj_t src) {
         for (i = 0; i < dst.npoint; i++) {
             int *ipoint = (int *) realloc(dst.points[i], src.nvert_in_point[i] * sizeof(int));
             if (ipoint == nullptr) {
-                communication::utils::ygglog_error("ObjDict::copy_obj: Could not allocate point %d.", i);
+                ygglog_error << "ObjDict::copy_obj: Could not allocate point " << i <<  ".";
                 free_obj(&dst);
                 return dst;
             }
@@ -1021,7 +1012,7 @@ obj_t copy_obj(obj_t src) {
         for (i = 0; i < dst.nline; i++) {
             int *iline = (int *) realloc(dst.lines[i], src.nvert_in_line[i] * sizeof(int));
             if (iline == nullptr) {
-                communication::utils::ygglog_error("ObjDict::copy_obj: Could not allocate line %d.", i);
+                ygglog_error << "ObjDict::copy_obj: Could not allocate line " << i << ".";
                 free_obj(&dst);
                 return dst;
             }
@@ -1036,7 +1027,7 @@ obj_t copy_obj(obj_t src) {
                 int *iline_texcoord = (int *) realloc(dst.line_texcoords[i], src.nvert_in_line[i] * sizeof(int));
                 if (iline_texcoord == nullptr) {
 
-                    communication::utils::ygglog_error("ObjDict::copy_obj: Could not allocate line texcoord %d.", i);
+                    ygglog_error << "ObjDict::copy_obj: Could not allocate line texcoord " << i << ".";
                     free_obj(&dst);
                     return dst;
                 }
@@ -1051,7 +1042,7 @@ obj_t copy_obj(obj_t src) {
         for (i = 0; i < dst.nface; i++) {
             int *iface = (int *) realloc(dst.faces[i], src.nvert_in_face[i] * sizeof(int));
             if (iface == nullptr) {
-                communication::utils::ygglog_error("ObjDict::copy_obj: Could not allocate face %d.", i);
+                ygglog_error << "ObjDict::copy_obj: Could not allocate face " << i << ".";
                 free_obj(&dst);
                 return dst;
             }
@@ -1066,7 +1057,7 @@ obj_t copy_obj(obj_t src) {
                 int *iface_texcoord = (int *) realloc(dst.face_texcoords[i], src.nvert_in_face[i] * sizeof(int));
                 if (iface_texcoord == nullptr) {
 
-                    communication::utils::ygglog_error("ObjDict::copy_obj: Could not allocate face texcoord %d.", i);
+                    ygglog_error << "ObjDict::copy_obj: Could not allocate face texcoord " << i << ".";
                     free_obj(&dst);
                     return dst;
                 }
@@ -1082,7 +1073,7 @@ obj_t copy_obj(obj_t src) {
                 int *iface_texcoord = (int *) realloc(dst.face_normals[i], src.nvert_in_face[i] * sizeof(int));
                 if (iface_texcoord == nullptr) {
 
-                    communication::utils::ygglog_error("ObjDict::copy_obj: Could not allocate face texcoord %d.", i);
+                    ygglog_error << "ObjDict::copy_obj: Could not allocate face texcoord " << i << ".";
                     free_obj(&dst);
                     return dst;
                 }
@@ -1097,7 +1088,7 @@ obj_t copy_obj(obj_t src) {
         for (i = 0; i < dst.ncurve; i++) {
             int *icurve = (int *) realloc(dst.curves[i], src.nvert_in_curve[i] * sizeof(int));
             if (icurve == nullptr) {
-                communication::utils::ygglog_error("ObjDict::copy_obj: Could not allocate curve %d.", i);
+                ygglog_error << "ObjDict::copy_obj: Could not allocate curve " << i << ".";
                 free_obj(&dst);
                 return dst;
             }
@@ -1114,7 +1105,7 @@ obj_t copy_obj(obj_t src) {
         for (i = 0; i < dst.ncurve2; i++) {
             int *icurve2 = (int *) realloc(dst.curves2[i], src.nparam_in_curve2[i] * sizeof(int));
             if (icurve2 == nullptr) {
-                communication::utils::ygglog_error("ObjDict::copy_obj: Could not allocate curve2 %d.", i);
+                ygglog_error << "ObjDict::copy_obj: Could not allocate curve2 " << i << ".";
                 free_obj(&dst);
                 return dst;
             }
@@ -1128,7 +1119,7 @@ obj_t copy_obj(obj_t src) {
         for (i = 0; i < dst.nsurf; i++) {
             int *isurface = (int *) realloc(dst.surfaces[i], src.nvert_in_surface[i] * sizeof(int));
             if (isurface == nullptr) {
-                communication::utils::ygglog_error("ObjDict::copy_obj: Could not allocate surface %d.", i);
+                ygglog_error << "ObjDict::copy_obj: Could not allocate surface " << i << ".";
                 free_obj(&dst);
                 return dst;
             }
@@ -1150,7 +1141,7 @@ obj_t copy_obj(obj_t src) {
                                                          src.nvert_in_surface[i] * sizeof(int));
                 if (isurface_texcoord == nullptr) {
 
-                    communication::utils::ygglog_error("ObjDict::copy_obj: Could not allocate surface texcoord %d.", i);
+                    ygglog_error << "ObjDict::copy_obj: Could not allocate surface texcoord " << i << ".";
                     free_obj(&dst);
                     return dst;
                 }
@@ -1166,7 +1157,7 @@ obj_t copy_obj(obj_t src) {
                 int *isurface_texcoord = (int *) realloc(dst.surface_normals[i], src.nvert_in_surface[i] * sizeof(int));
                 if (isurface_texcoord == nullptr) {
 
-                    communication::utils::ygglog_error("ObjDict::copy_obj: Could not allocate surface texcoord %d.", i);
+                    ygglog_error << "ObjDict::copy_obj: Could not allocate surface texcoord " << i << ".";
                     free_obj(&dst);
                     return dst;
                 }

@@ -9,7 +9,7 @@
     }          \
   catch(...)      \
     {          \
-      communication::utils::ygglog_error("C++ exception thrown.");    \
+      ygglog_error << "C++ exception thrown.";    \
     }
 
 namespace communication {
@@ -92,8 +92,7 @@ FormattedData::FormattedData(const std::string &format_str, const bool as_array)
         } else {
             utils::ygglog_throw_error("create_dtype_format_class: Could not parse format string: %s", ifmt.c_str());
         }
-        utils::ygglog_debug("isubtype = %s, iprecision = %lu, ifmt = %s",
-                            isubtype, iprecision, ifmt.c_str());
+        ygglog_debug << "isubtype = " << isubtype << " iprecision = " << iprecision << " ifmt = " << ifmt;
         if (as_array) {
             addItem(createArray(isubtype, iprecision, 0, ""));
         } else {
@@ -129,7 +128,7 @@ dtype_t* create_dtype_format(const char* format_str, const int as_array, const b
         dt->type = T_FORMATTED;
         return dt;
     } catch(...) {
-        communication::utils::ygglog_error("create_dtype_format: C++ exception thrown.");
+        ygglog_error << "create_dtype_format: C++ exception thrown.";
         CSafe(delete obj)
         return nullptr;
     }

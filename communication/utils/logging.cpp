@@ -1,65 +1,33 @@
-#include <stdarg.h>
 #include "logging.hpp"
 #include "tools.hpp"
-
-using namespace communication::utils;
-
-int Logger::_ygg_error_flag = 0;
-
-void Logger::yggLog(const char *prefix, const char *fmt, va_list ap) {
-    fprintf(stdout, "%s: %d:%d ", prefix, ygg_getpid(), get_thread_id());
+#ifndef YGG_TEST
+#include <boost/log/core.hpp>
+#include <boost/log/expressions.hpp>
+#endif
+std::string communication::utils::_getLogPretex() {
+    if (!communication::utils::_loginit)
+        communication::utils::init_logger();
+    std::string out = std::to_string(ygg_getpid()) + ":" + std::to_string(get_thread_id()) + " ";
     char *model_name = getenv("YGG_MODEL_NAME");
     if (model_name != nullptr) {
-        fprintf(stdout, "%s", model_name);
+        out += model_name;
         char *model_copy = getenv("YGG_MODEL_COPY");
         if (model_copy != nullptr) {
-            fprintf(stdout, "_copy%s", model_copy);
+            out += "_copy" + std::string(model_copy);
         }
-        fprintf(stdout, " ");
+        out += " ";
     }
-    vfprintf(stdout, fmt, ap);
-    fprintf(stdout, "\n");
-    fflush(stdout);
+    return out;
 }
 
-void Logger::yggLog(const std::string &prefix, const std::string &fmt, va_list ap) {
-    yggLog(prefix.c_str(), fmt.c_str(), ap);
+void communication::utils::init_logger() {
+#ifndef YGG_TEST
+    boost::log::core::get()->set_filter(boost::log::trivial::severity >= loggingLevel);
+#endif
+    communication::utils::_loginit = true;
 }
 
-void Logger::yggInfo(const char *fmt, ...) {
-    va_list ap;
-    va_start(ap, fmt);
-    yggLog("INFO", fmt, ap);
-    va_end(ap);
-}
-
-void Logger::yggDebug(const char *fmt, ...) {
-    va_list ap;
-    va_start(ap, fmt);
-    yggLog("DEBUG", fmt, ap);
-    va_end(ap);
-}
-
-void Logger::yggError_va(const char *fmt, va_list ap) {
-    yggLog("ERROR", fmt, ap);
-    _ygg_error_flag = 1;
-}
-
-void Logger::yggError_va(const std::string &fmt, va_list &ap) {
-    yggError_va(fmt.c_str(), ap);
-}
-
-void Logger::yggError(const char *fmt, ...) {
-    va_list ap;
-    va_start(ap, fmt);
-    yggError_va(fmt, ap);
-    va_end(ap);
-}
-
-void Logger::ygglogThrowError(const char *fmt, ...) {
-    va_list ap;
-    va_start(ap, fmt);
-    yggError_va(fmt, ap);
-    va_end(ap);
+void communication::utils::ygglog_throw_error(const std::string& msg) {
+    ygglog_error << msg;
     throw std::exception();
 }

@@ -273,7 +273,7 @@ int alloc_ply(ply_t *p, int nvert, int nface, int nedge, int do_vert_color, int 
     // Allocate vertices
     auto new_vert = (float **) malloc(p->nvert * sizeof(float *));
     if (new_vert == nullptr) {
-        communication::utils::ygglog_error("alloc_ply: Failed to allocate vertices.");
+        ygglog_error << "alloc_ply: Failed to allocate vertices.";
         free_ply(p);
         return -1;
     }
@@ -281,18 +281,18 @@ int alloc_ply(ply_t *p, int nvert, int nface, int nedge, int do_vert_color, int 
     for (i = 0; i < p->nvert; i++) {
         auto ivert = (float *) malloc(3 * sizeof(float));
         if (ivert == nullptr) {
-            communication::utils::ygglog_error("alloc_ply: Failed to allocate vertex %d.", i);
+            ygglog_error << "alloc_ply: Failed to allocate vertex " << i << ".";
             free_ply(p);
             return -1;
         }
         p->vertices[i] = ivert;
     }
-    communication::utils::ygglog_debug("alloc_ply: Allocated %d vertices.", nvert);
+    ygglog_debug << "alloc_ply: Allocated " << nvert << " vertices.";
     // Allocate vertex colors
     if (do_vert_color) {
         int **new_vert_colors = (int **) malloc(p->nvert * sizeof(int *));
         if (new_vert_colors == nullptr) {
-            communication::utils::ygglog_error("alloc_ply: Failed to allocate vertex_colors.");
+            ygglog_error << "alloc_ply: Failed to allocate vertex_colors.";
             free_ply(p);
             return -1;
         }
@@ -300,18 +300,18 @@ int alloc_ply(ply_t *p, int nvert, int nface, int nedge, int do_vert_color, int 
         for (i = 0; i < p->nvert; i++) {
             int *ivert = (int *) malloc(3 * sizeof(int));
             if (ivert == nullptr) {
-                communication::utils::ygglog_error("alloc_ply: Failed to allocate vertex color %d.", i);
+                ygglog_error << "alloc_ply: Failed to allocate vertex color " << i << ".";
                 free_ply(p);
                 return -1;
             }
             p->vertex_colors[i] = ivert;
         }
-        communication::utils::ygglog_debug("alloc_ply: Allocated %d vertex colors.", nvert);
+        ygglog_debug << "alloc_ply: Allocated " << nvert << " vertex colors.";
     }
     // Allocate faces
     int **new_face = (int **) malloc(p->nface * sizeof(int *));
     if (new_face == nullptr) {
-        communication::utils::ygglog_error("alloc_ply: Failed to allocate faces.");
+        ygglog_error << "alloc_ply: Failed to allocate faces.";
         free_ply(p);
         return -1;
     }
@@ -325,11 +325,11 @@ int alloc_ply(ply_t *p, int nvert, int nface, int nedge, int do_vert_color, int 
         /*   return -1; */
         /* } */
     }
-    communication::utils::ygglog_debug("alloc_ply: Allocated %d faces.", nface);
+    ygglog_debug << "alloc_ply: Allocated " << nface << " faces.";
     // Allocate nvert_in_face
     int *new_nvert = (int *) malloc(p->nface * sizeof(int));
     if (new_nvert == nullptr) {
-        communication::utils::ygglog_error("alloc_ply: Failed to allocate nvert_in_face.");
+        ygglog_error << "alloc_ply: Failed to allocate nvert_in_face.";
         free_ply(p);
         return -1;
     }
@@ -340,7 +340,7 @@ int alloc_ply(ply_t *p, int nvert, int nface, int nedge, int do_vert_color, int 
     // Allocate edges
     int **new_edge = (int **) malloc(p->nedge * sizeof(int *));
     if (new_edge == nullptr) {
-        communication::utils::ygglog_error("alloc_ply: Failed to allocate edges.");
+        ygglog_error << "alloc_ply: Failed to allocate edges.";
         free_ply(p);
         return -1;
     }
@@ -348,18 +348,18 @@ int alloc_ply(ply_t *p, int nvert, int nface, int nedge, int do_vert_color, int 
     for (i = 0; i < p->nedge; i++) {
         int *iedge = (int *) malloc(2 * sizeof(int));
         if (iedge == nullptr) {
-            communication::utils::ygglog_error("alloc_ply: Failed to allocate edge %d.", i);
+            ygglog_error << "alloc_ply: Failed to allocate edge " << i << ".";
             free_ply(p);
             return -1;
         }
         p->edges[i] = iedge;
     }
-    communication::utils::ygglog_debug("alloc_ply: Allocated %d edges.", nedge);
+    ygglog_debug << "alloc_ply: Allocated " << nedge << " edges.";
     // Allocate edge colors
     if (do_edge_color) {
         int **new_edge_colors = (int **) malloc(p->nedge * sizeof(int *));
         if (new_edge_colors == nullptr) {
-            communication::utils::ygglog_error("alloc_ply: Failed to allocate edge_colors.");
+            ygglog_error << "alloc_ply: Failed to allocate edge_colors.";
             free_ply(p);
             return -1;
         }
@@ -367,16 +367,15 @@ int alloc_ply(ply_t *p, int nvert, int nface, int nedge, int do_vert_color, int 
         for (i = 0; i < p->nedge; i++) {
             int *iedge = (int *) malloc(3 * sizeof(int));
             if (iedge == nullptr) {
-                communication::utils::ygglog_error("alloc_ply: Failed to allocate edge color %d.", i);
+                ygglog_error << "alloc_ply: Failed to allocate edge color " << i << ".";
                 free_ply(p);
                 return -1;
             }
             p->edge_colors[i] = iedge;
         }
-        communication::utils::ygglog_debug("alloc_ply: Allocated %d edge colors.", nedge);
+        ygglog_debug << "alloc_ply: Allocated " << nedge << " edge colors.";
     }
-    communication::utils::ygglog_debug("alloc_ply: Allocate for %d vertices, %d faces, and %d edges.",
-                 p->nvert, p->nface, p->nedge);
+    ygglog_debug << "alloc_ply: Allocate for " << p->nvert << " vertices, " << p->nface << " faces, and " << p->nedge << " edges.";
     return 0;
 }
 
@@ -406,7 +405,7 @@ ply_t copy_ply(ply_t src) {
     for (i = 0; i < src.nface; i++) {
         int *iface = (int *) realloc(out.faces[i], src.nvert_in_face[i] * sizeof(int));
         if (iface == nullptr) {
-            communication::utils::ygglog_error("PlyDict::copy_ply: Could not allocate face %d.", i);
+            ygglog_debug << "PlyDict::copy_ply: Could not allocate face " << i << ".";
             free_ply(&out);
             return out;
         }

@@ -48,7 +48,7 @@ IF (cppzmq_FOUND)
     set(YGG_BUILD_FLAGS "${YGG_BUILD_FLAGS} -DZMQ_BUILD_DRAFT_API")
 ENDIF()
 
-find_package(Boost REQUIRED)
+find_package(Boost COMPONENTS log REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
 ########################################################################
 # LIBCZMQ dependency
@@ -86,6 +86,7 @@ endif()
 
 add_library(YggInterface SHARED ${SOURCES})
 target_link_libraries(YggInterface ${PYTHON_LIBRARIES} Python3::NumPy)
+target_link_libraries(YggInterface ${Boost_LOG_LIBRARY})
 include_directories("communication")
 
 add_definitions(-DRAPIDJSON_YGGDRASIL)
