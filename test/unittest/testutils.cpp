@@ -185,5 +185,63 @@ TEST(TOOLS, joinParse) {
     EXPECT_ANY_THROW(parse(strvec, strvals.size() + 5, ss));
 }
 
+TEST(REGEX, findmatch) {
+    std::string input = "This is the text to match";
+    size_t res, start, sind, eind;
+    res = find_match(" to", input, sind, eind);
+    EXPECT_EQ(sind, 16);
+    EXPECT_EQ(eind, 19);
+    EXPECT_EQ(res, 1);
+    sind = 0;
+    res = find_match(" to", input, eind, sind, eind);
+    EXPECT_EQ(sind, 0);
+    EXPECT_EQ(res, 0);
+}
+
+TEST(REGEX, countmatches) {
+    std::string input = "This is the line of text to be matched";
+    EXPECT_EQ(count_matches(" t", input), 3);
+    EXPECT_EQ(count_matches(" to", input), 1);
+    EXPECT_EQ(count_matches(" a", input), 0);
+}
+
+TEST(REGEX, findmatches) {
+    std::string input = "This is the line of text to be matched";
+    std::vector<size_t> sind, eind;
+    EXPECT_EQ(find_matches(" t", input, sind, eind), 3);
+    EXPECT_EQ(3, sind.size());
+    EXPECT_EQ(eind.size(), sind.size());
+    EXPECT_EQ(sind[0], 7);
+    for (auto i = 0; i < 3; i++) {
+        EXPECT_EQ(sind[i] + 2, eind[i]);
+    }
+    EXPECT_EQ(find_matches("bob", input, sind, eind), 0);
+    EXPECT_EQ(eind.size(), 0);
+}
+
+TEST(REGEX, replacenosub) {
+    std::string input = "This is the line of text to be matched";
+    EXPECT_EQ(count_matches(" t", input), 3);
+    EXPECT_EQ(count_matches(" QQ", input), 0);
+    EXPECT_EQ(regex_replace(input, " t", " QQ", 1), 1);
+    EXPECT_EQ(count_matches(" t", input), 2);
+    EXPECT_EQ(count_matches(" QQ", input), 1);
+    EXPECT_EQ(regex_replace(input, " t", " QQ"), 2);
+    EXPECT_EQ(count_matches(" t", input), 0);
+    EXPECT_EQ(count_matches(" QQ", input), 3);
+    input = "This is the line of text to be matched";
+    EXPECT_EQ(count_matches(" t", input), 3);
+    EXPECT_EQ(count_matches(" QQ", input), 0);
+    EXPECT_EQ(regex_replace(input, " t", " QQ", 6), 3);
+    EXPECT_EQ(count_matches(" t", input), 0);
+    EXPECT_EQ(count_matches(" QQ", input), 3);
+    input = "This is the line of text to be matched";
+    const size_t size = input.size();
+    EXPECT_EQ(count_matches(" t", input), 3);
+    EXPECT_EQ(count_matches(" q-", input), 0);
+    EXPECT_EQ(regex_replace(input, " (t)([^ ]*)", " q-$2"), 3);
+    EXPECT_EQ(input.size(), size + 3);
+    EXPECT_EQ(count_matches(" t", input), 0);
+    EXPECT_EQ(count_matches(" q-", input), 3);
 }
 }
