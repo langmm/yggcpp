@@ -128,7 +128,7 @@ auto join(const std::vector<T>& values, std::ostream& out) -> EnableForString<T>
 
 
 template<typename T>
-auto parse(std::vector<T>& values, const int count, std::istream &input) -> EnableWithEnum<T> {
+auto parse(std::vector<T>& values, const size_t count, std::istream &input) -> EnableWithEnum<T> {
     values.clear();
     values.reserve(count);
     input >> std::ws;
@@ -146,7 +146,7 @@ auto parse(std::vector<T>& values, const int count, std::istream &input) -> Enab
 }
 
 template<typename T>
-auto parse(std::vector<T>& values, const int count, std::istream &input) -> EnableForString<T> {
+auto parse(std::vector<T>& values, const size_t count, std::istream &input) -> EnableForString<T> {
     values.clear();
     char temp[1000];
     values.reserve(count);
@@ -156,6 +156,8 @@ auto parse(std::vector<T>& values, const int count, std::istream &input) -> Enab
         input.getline(temp, 1000, '|');
         values.push_back(temp);
     }
+    if (input.eof())
+        throw std::exception();
     input.getline(temp, 1000);
     values.push_back(temp);
     //if (!input.eof())
@@ -250,7 +252,7 @@ size_t strlen4(char *strarg) {
   @returns int -1 if there is an error, otherwise the number of new
   characters written to the buffer.
  */
-static inline
+/*static inline
 int snprintf_realloc(char **dst, size_t *max_len, size_t *offset,
                      const char *format_str, ...) {
     va_list arglist;
@@ -278,7 +280,7 @@ int snprintf_realloc(char **dst, size_t *max_len, size_t *offset,
     }
     va_end(arglist);
     return fmt_len;
-}
+}*/
 
 /*!
   @brief Check if a character array matches a message and is non-zero length.

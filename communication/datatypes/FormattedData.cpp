@@ -38,11 +38,11 @@ FormattedData::FormattedData(const std::string &format_str, const bool as_array)
         }
         beg += sind;
         end = beg + (eind - sind);
-        const std::string ifmt = format_str.substr(beg, end);
+        std::string ifmt = format_str.substr(beg, end);
         // String
         if (utils::find_match(utils::RE_STRING, ifmt, sind, eind)) {
             isubtype = T_STRING;
-            utils::regex_replace_sub(ifmt, utils::RE_STRLEN, "$2", 0);
+            utils::regex_replace(ifmt, utils::RE_STRLEN, "$2", 0);
             iprecision = 8 * std::stoi(ifmt);
             // Complex
         } else if (utils::find_match(utils::RE_COMPLEX, ifmt, sind, eind)) {
@@ -90,7 +90,7 @@ FormattedData::FormattedData(const std::string &format_str, const bool as_array)
             isubtype = T_UINT;
             iprecision = 8 * sizeof(unsigned int);
         } else {
-            utils::ygglog_throw_error("create_dtype_format_class: Could not parse format string: %s", ifmt.c_str());
+            utils::ygglog_throw_error("create_dtype_format_class: Could not parse format string: " + ifmt);
         }
         ygglog_debug << "isubtype = " << isubtype << " iprecision = " << iprecision << " ifmt = " << ifmt;
         if (as_array) {

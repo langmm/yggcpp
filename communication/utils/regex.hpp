@@ -1,6 +1,7 @@
 #pragma once
 #include <regex>
 #include <cstdio>
+#include <iostream>
 #define FMT_LEN 100
 
 namespace communication {
@@ -35,35 +36,27 @@ size_t find_match(const std::string &regex_text, const std::string &to_match,
   @return int Number of matches found. -1 is returned if the regex could not be
   compiled.
 */
-size_t count_matches(const std::string &regex_text, const std::string &to_match);
+size_t count_matches(const std::regex &re, const std::string &to_match);
+
+static
+size_t count_matches(const std::string &regex_text, const std::string &to_match) {
+    std::regex re(regex_text);
+    return count_matches(re,to_match);
+}
+
 
 size_t find_matches(const std::string &regex_text, const std::string &to_match,
                  std::vector<size_t> &sind, std::vector<size_t> &eind);
 
-size_t regex_replace_sub(const std::string &buf, const std::regex &re, const std::string &rp,
-                      const size_t &nreplace);
+size_t regex_replace(std::string &buf, const std::regex &re, const std::string &rp,
+                     const size_t &nreplace=0);
 static
-size_t regex_replace_sub(const std::string &buf, const std::string &re, const std::string &rp,
-                      const size_t &nreplace) {
+size_t regex_replace(std::string &buf, const std::string &re, const std::string &rp,
+                      const size_t &nreplace=0) {
     std::regex regex(re, std::regex::extended);
-    return regex_replace_sub(buf, regex, rp, nreplace);
+    return regex_replace(buf, regex, rp, nreplace);
 }
 
-size_t regex_replace_nosub(std::string &buf, const std::regex &re, const std::string &rp,
-                        const size_t &nreplace);
-static
-size_t regex_replace_nosub(std::string &buf, const std::string &re, const std::string &rp,
-                        const size_t &nreplace) {
-    std::regex regex(re, std::regex::extended);
-    return regex_replace_nosub(buf, regex, rp, nreplace);
-}
-
-size_t get_subrefs(const std::string &buff, std::vector<size_t> &refs);
-
-//char re_fmt[FMT_LEN];
-//char re_fmt_eof[FMT_LEN];
-//sprintf(re_fmt, "%%[^%s%s ]+[%s%s ]", "\t", "\n", "\t", "\n");
-//sprintf(re_fmt_eof, "%%[^%s%s ]+", "\t", "\n");
 const std::string sre_fmt = "%%[^\t\n ]+[\t\n ]";
 const std::string sre_fmt_eof = "%%[^\t\n ]+";
 
@@ -88,7 +81,6 @@ const std::regex RE_ULONG_LONG("%.*ll[uoxX]", std::regex::extended);
 const std::regex RE_ULONG_LONG2("%.*l64[uoxX]", std::regex::extended);
 const std::regex RE_ULONG("%.*l[uoxX]", std::regex::extended);
 const std::regex RE_UINT("%.*[uoxX]", std::regex::extended);
-const std::regex RE_SUBREFS("\\$([[:digit:]])", std::regex::extended);
 const std::regex RE_STRLEN("%(\\.)?([[:digit:]]*)s(.*)", std::regex::extended);
 //const std::regex (, std::regex::extended);
 //const std::regex (, std::regex::extended);

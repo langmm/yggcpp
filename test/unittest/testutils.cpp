@@ -1,9 +1,21 @@
 #include <sstream>
+#include <algorithm>
+#include <cstdlib>
 #include "unittest.hpp"
 #include "utils/complex_type.hpp"
 #include "utils/enums.hpp"
 #include "utils/Address.hpp"
+#include "utils/logging.hpp"
+#include "utils/tools.hpp"
+#include "utils/regex.hpp"
 
+#define BEGIN_CAPTURE(B) \
+std::stringstream B;     \
+std::streambuf* prevbuf = std::cout.rdbuf(B.rdbuf());
+
+#define END_CAPTURE std::cout.rdbuf(prevbuf);
+
+using namespace communication::utils;
 namespace {
 #define COMPLEX_UNIT_TEST(type, typenm, comparator, real, img) { \
 complex_ ## type ## _t cmplx;                                      \
@@ -22,24 +34,6 @@ TEST(Value, Complex) {
     COMPLEX_UNIT_TEST(float, float, FLOAT, 1.2, 6.4)
     COMPLEX_UNIT_TEST(double, double, DOUBLE, 1.64452778, 9.28667775882)
     COMPLEX_UNIT_TEST(long_double, long double, DOUBLE, 162.2235992765, -84.22876639)
-}
-
-TEST(VALUE, Enum) {
-    SUBTYPE st = T_STRING;
-    SUBTYPE et = T_UNICODE;
-    EXPECT_NE(st, et);
-    std::stringstream ss;
-    ss << st;
-    ss >> et;
-    EXPECT_EQ(st, et);
-
-    VTYPE vt = T_SCALABLE;
-    VTYPE evt = T_ARRAY1D;
-    EXPECT_NE(vt, evt);
-    std::stringstream ss1;
-    ss1 << vt;
-    ss1 >> evt;
-    EXPECT_EQ(vt, evt);
 }
 
 TEST(ADDRESS, Init) {
@@ -93,5 +87,50 @@ TEST(ADDRESS, operators) {
     delete adr2;
 }
 
+TEST(LOGGING, fulltest) {
+    BEGIN_CAPTURE(buffer)
+    ygglog_error << "An error occurred at " << 5;
+    std::string temp = buffer.str();
+    auto loc = temp.find("at");
+    EXPECT_EQ(std::count(temp.begin() + loc, temp.end(),'5'), 1);
+    EXPECT_EQ(temp.find("ERROR"), 0);
+    buffer.str(std::string());
+    ygglog_info << "This is informational";
+    temp = buffer.str();
+    EXPECT_EQ(temp.find("INFO"), 0);
+    buffer.str(std::string());
+    ygglog_debug << "This is a debug message";
+    temp = buffer.str();
+    EXPECT_EQ(temp.find("DEBUG"), 0);
+    buffer.str(std::string());
+    char* eval = getenv("YGG_MODEL_NAME");
+    setenv("YGG_MODEL_NAME", "MY_TEST_MODEL", 1);
+    ygglog_info << "Another info message";
+    temp = buffer.str();
+    EXPECT_NE(temp.find("MY_TEST_MODEL"), std::string::npos);
+    EXPECT_EQ(temp.find("MY_TEST_COPY"), std::string::npos);
+    buffer.str(std::string());
+    char* eval2 = getenv("YGG_MODEL_COPY");
+    setenv("YGG_MODEL_COPY", "MY_TEST_COPY", 1);
+    ygglog_info << "Another info message";
+    temp = buffer.str();
+    EXPECT_NE(temp.find("MY_TEST_MODEL"), std::string::npos);
+    EXPECT_NE(temp.find("MY_TEST_COPY"), std::string::npos);
+    if (eval2 != nullptr) {
+        setenv("YGG_MODEL_COPY", eval2, 1);
+    } else {
+        unsetenv("YGG_MODEL_COPY");
+    }
+    if (eval != nullptr) {
+        setenv("MY_TEST_MODEL", eval, 1);
+    } else {
+        unsetenv("MY_TEST_MODEL");
+    }
+    buffer.str(std::string());
+    EXPECT_ANY_THROW(ygglog_throw_error("Another fatal error occurred"));
+    temp = buffer.str();
+    EXPECT_EQ(temp.find("ERROR"), 0);
+    END_CAPTURE
+}
 }
 }
