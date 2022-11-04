@@ -33,7 +33,7 @@ public:
     uint8_t getPrecision() const {
         return precision;
     }
-    void display() {DataType::display("");}
+    void display(const std::string& indent) const override {}
     //virtual void display(const std::string& indent="") = 0;
     //virtual int nargs_exp() = 0;
     //virtual DTYPE getType() = 0;

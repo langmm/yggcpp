@@ -17,7 +17,7 @@ void ValueGroup::display(const std::string &indent) const {
     printf("%s%-15s = %zu\n", indent.c_str(), "number", items.size());
     for (auto i : items) {
         printf("%s  %-15s\n", indent.c_str(), "Item");
-        i->DataType::display(indent + "  ");
+        i->display(indent + "  ");
     }
 }
 

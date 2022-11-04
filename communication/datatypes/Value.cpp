@@ -249,7 +249,7 @@ void set_dtype_string(dtype_t* dt, char* val) {
     static_cast<communication::datatypes::Value<std::string>*>(dt->obj)->set(temp);
 }
 
-communication::datatypes::ValueItem* createValue(SUBTYPE t, const size_t &precision, const char* units) {
+communication::datatypes::ValueItem* communication::datatypes::createValue(SUBTYPE t, const uint8_t &precision, const char* units) {
     communication::datatypes::ValueItem* vi;
     switch (t) {
         case T_INT: {
