@@ -47,7 +47,7 @@ add_executable(unittest ${UNITTEST_SOURCES})
 target_link_libraries(unittest ${TEST_LIBRARIES} YggInterface gomp)
 
 add_dependencies(tests unittest)
-
+add_definitions(-DYGG_TEST)
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|ARMClang")
     add_custom_command(TARGET unittest POST_BUILD
             COMMAND dsymutil unittest
