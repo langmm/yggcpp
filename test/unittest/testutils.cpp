@@ -132,5 +132,58 @@ TEST(LOGGING, fulltest) {
     EXPECT_EQ(temp.find("ERROR"), 0);
     END_CAPTURE
 }
+
+TEST(TOOLS, joinParse) {
+    std::vector<int> ivals = {2, 5, 18, 226, -19};
+    std::stringstream ss;
+    join(ivals, ss);
+    std::string temp = ss.str();
+    EXPECT_EQ(std::count(temp.begin(), temp.end(), DELIMITER), ivals.size() - 1);
+
+    std::vector<int> retvals;
+    parse(retvals, ivals.size(), ss);
+    EXPECT_EQ(ivals, retvals);
+
+    ss.str(std::string());
+    ss.clear();
+
+    std::vector<SUBTYPE> svals = {T_FLOAT, T_UINT, T_INT, T_COMPLEX, T_BYTES, T_UNICODE, T_UINT, T_INT};
+    join(svals, ss);
+    temp = ss.str();
+    EXPECT_EQ(std::count(temp.begin(), temp.end(), DELIMITER), svals.size() - 1);
+    std::vector<SUBTYPE> sretval;
+    parse(sretval, svals.size(), ss);
+    EXPECT_EQ(svals, sretval);
+
+    ss.str(std::string());
+    ss.clear();
+
+    std::vector<std::string> strvals = {"hello", "goodbye", "this is a , test"};
+    join(strvals, ss);
+    temp = ss.str();
+    EXPECT_EQ(std::count(temp.begin(), temp.end(), '|'), strvals.size() - 1);
+    std::vector<std::string> strvec;
+    parse(strvec, strvals.size(), ss);
+    EXPECT_EQ(strvec, strvals);
+
+    ss.str(std::string());
+    ss.clear();
+
+    std::vector<VTYPE> vvals = {T_ARRAY1D};
+    join(vvals, ss);
+    temp = ss.str();
+    EXPECT_EQ(std::count(temp.begin(), temp.end(), DELIMITER), 0);
+    std::vector<VTYPE> vret;
+    EXPECT_ANY_THROW(parse(vret, vvals.size() + 1, ss));
+    ss.str(std::string());
+    ss.clear();
+
+    join(strvals, ss);
+    temp = ss.str();
+    EXPECT_EQ(std::count(temp.begin(), temp.end(), '|'), strvals.size() - 1);
+    EXPECT_ANY_THROW(parse(strvec, strvals.size() + 1, ss));
+    EXPECT_ANY_THROW(parse(strvec, strvals.size() + 5, ss));
+}
+
 }
 }
