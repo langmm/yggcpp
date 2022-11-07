@@ -255,16 +255,16 @@ communication::datatypes::ValueItem* communication::datatypes::createArray(SUBTY
         case T_INT: {
             switch (precision) {
                 case 8:
-                    vi = new communication::datatypes::ValueArray1D<int8_t>(T_INT, dim, units, 8);
+                    vi = new communication::datatypes::ValueArray1D<int8_t>(dim, units);
                     break;
                 case 16:
-                    vi = new communication::datatypes::ValueArray1D<int16_t>(T_INT, dim, units, 16);
+                    vi = new communication::datatypes::ValueArray1D<int16_t>(dim, units);
                     break;
                 case 32:
-                    vi = new communication::datatypes::ValueArray1D<int32_t>(T_INT, dim, units, 32);
+                    vi = new communication::datatypes::ValueArray1D<int32_t>(dim, units);
                     break;
                 case 64:
-                    vi = new communication::datatypes::ValueArray1D<int64_t>(T_INT, dim, units, 64);
+                    vi = new communication::datatypes::ValueArray1D<int64_t>(dim, units);
                     break;
                 default:
                     ygglog_error << "Invalid precision given.";
@@ -273,20 +273,20 @@ communication::datatypes::ValueItem* communication::datatypes::createArray(SUBTY
             break;
         }
         case T_BOOLEAN: {
-            vi = new communication::datatypes::ValueArray1D<bool>(T_BOOLEAN, dim, units, 1);
+            vi = new communication::datatypes::ValueArray1D<bool>(dim, units);
             break;
         }
         case T_FLOAT: {
             switch (precision) {
                 case 4:
-                    vi = new communication::datatypes::ValueArray1D<float>(T_FLOAT, dim, units, 4);
+                    vi = new communication::datatypes::ValueArray1D<float>(dim, units);
                     break;
                 case 8:
-                    vi = new communication::datatypes::ValueArray1D<double>(T_FLOAT, dim, units, 8);
+                    vi = new communication::datatypes::ValueArray1D<double>(dim, units);
                     break;
                 case 10:
                 case 12:
-                    vi = new communication::datatypes::ValueArray1D<long double>(T_FLOAT, dim, units, 12);
+                    vi = new communication::datatypes::ValueArray1D<long double>(dim, units);
                     break;
                 default:
                     ygglog_error << "Invalid precision given.";
@@ -297,16 +297,16 @@ communication::datatypes::ValueItem* communication::datatypes::createArray(SUBTY
         case T_UINT: {
             switch (precision) {
                 case 8:
-                    vi = new communication::datatypes::ValueArray1D<uint8_t>(T_UINT, dim, units, 8);
+                    vi = new communication::datatypes::ValueArray1D<uint8_t>(dim, units);
                     break;
                 case 16:
-                    vi = new communication::datatypes::ValueArray1D<uint16_t>(T_UINT, dim, units, 16);
+                    vi = new communication::datatypes::ValueArray1D<uint16_t>(dim, units);
                     break;
                 case 32:
-                    vi = new communication::datatypes::ValueArray1D<uint32_t>(T_UINT, dim, units, 32);
+                    vi = new communication::datatypes::ValueArray1D<uint32_t>(dim, units);
                     break;
                 case 64:
-                    vi = new communication::datatypes::ValueArray1D<uint64_t>(T_UINT, dim, units, 64);
+                    vi = new communication::datatypes::ValueArray1D<uint64_t>(dim, units);
                     break;
                 default:
                     ygglog_error << "Invalid precision given.";
@@ -315,20 +315,20 @@ communication::datatypes::ValueItem* communication::datatypes::createArray(SUBTY
             break;
         }
         case T_STRING: {
-            vi = new communication::datatypes::ValueArray1D<std::string>(T_STRING, dim, units, 0);
+            vi = new communication::datatypes::ValueArray1D<std::string>(dim, units);
             break;
         }
         case T_COMPLEX: {
             switch (precision) {
                 case 4:
-                    vi = new communication::datatypes::ValueArray1D<complex_float_t>(T_COMPLEX, dim, units, 4);
+                    vi = new communication::datatypes::ValueArray1D<complex_float_t>(dim, units);
                     break;
                 case 8:
-                    vi = new communication::datatypes::ValueArray1D<complex_double_t>(T_COMPLEX, dim, units, 4);
+                    vi = new communication::datatypes::ValueArray1D<complex_double_t>(dim, units);
                     break;
                 case 10:
                 case 12:
-                    vi = new communication::datatypes::ValueArray1D<complex_long_double_t>(T_COMPLEX, dim, units, 12);
+                    vi = new communication::datatypes::ValueArray1D<complex_long_double_t>(dim, units);
                     break;
                 default:
                     ygglog_error << "Invalid precision given.";

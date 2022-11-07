@@ -255,16 +255,16 @@ communication::datatypes::ValueItem* communication::datatypes::createValue(SUBTY
         case T_INT: {
             switch (precision) {
                 case 8:
-                    vi = new communication::datatypes::Value<int8_t>(T_INT, units, 8);
+                    vi = new communication::datatypes::Value<int8_t>(units);
                     break;
                 case 16:
-                    vi = new communication::datatypes::Value<int16_t>(T_INT, units, 16);
+                    vi = new communication::datatypes::Value<int16_t>(units);
                     break;
                 case 32:
-                    vi = new communication::datatypes::Value<int32_t>(T_INT, units, 32);
+                    vi = new communication::datatypes::Value<int32_t>(units);
                     break;
                 case 64:
-                    vi = new communication::datatypes::Value<int64_t>(T_INT, units, 64);
+                    vi = new communication::datatypes::Value<int64_t>(units);
                     break;
                 default:
                     ygglog_error << "Invalid precision given.";
@@ -273,20 +273,20 @@ communication::datatypes::ValueItem* communication::datatypes::createValue(SUBTY
             break;
         }
         case T_BOOLEAN: {
-            vi = new communication::datatypes::Value<bool>(T_BOOLEAN, units, 1);
+            vi = new communication::datatypes::Value<bool>(units);
             break;
         }
         case T_FLOAT: {
             switch (precision) {
                 case 4:
-                    vi = new communication::datatypes::Value<float>(T_FLOAT, units, 4);
+                    vi = new communication::datatypes::Value<float>(units);
                     break;
                 case 8:
-                    vi = new communication::datatypes::Value<double>(T_FLOAT, units, 8);
+                    vi = new communication::datatypes::Value<double>(units);
                     break;
                 case 10:
                 case 12:
-                    vi = new communication::datatypes::Value<long double>(T_FLOAT, units, 12);
+                    vi = new communication::datatypes::Value<long double>(units);
                     break;
                 default:
                     ygglog_error << "Invalid precision given.";
@@ -297,16 +297,16 @@ communication::datatypes::ValueItem* communication::datatypes::createValue(SUBTY
         case T_UINT: {
             switch (precision) {
                 case 8:
-                    vi = new communication::datatypes::Value<uint8_t>(T_UINT, units, 8);
+                    vi = new communication::datatypes::Value<uint8_t>(units);
                     break;
                 case 16:
-                    vi = new communication::datatypes::Value<uint16_t>(T_UINT, units, 16);
+                    vi = new communication::datatypes::Value<uint16_t>(units);
                     break;
                 case 32:
-                    vi = new communication::datatypes::Value<uint32_t>(T_UINT, units, 32);
+                    vi = new communication::datatypes::Value<uint32_t>(units);
                     break;
                 case 64:
-                    vi = new communication::datatypes::Value<uint64_t>(T_UINT, units, 64);
+                    vi = new communication::datatypes::Value<uint64_t>(units);
                     break;
                 default:
                     ygglog_error << "Invalid precision given.";
@@ -315,20 +315,20 @@ communication::datatypes::ValueItem* communication::datatypes::createValue(SUBTY
             break;
         }
         case T_STRING: {
-            vi = new communication::datatypes::Value<std::string>(T_STRING, units, 0);
+            vi = new communication::datatypes::Value<std::string>("", units);
             break;
         }
         case T_COMPLEX: {
             switch (precision) {
                 case 4:
-                    vi = new communication::datatypes::Value<complex_float_t>(T_COMPLEX, units, 4);
+                    vi = new communication::datatypes::Value<complex_float_t>(units);
                     break;
                 case 8:
-                    vi = new communication::datatypes::Value<complex_double_t>(T_COMPLEX, units, 8);
+                    vi = new communication::datatypes::Value<complex_double_t>(units);
                     break;
                 case 10:
                 case 12:
-                    vi = new communication::datatypes::Value<complex_long_double_t>(T_COMPLEX, units, 12);
+                    vi = new communication::datatypes::Value<complex_long_double_t>(units);
                     break;
                 default:
                     ygglog_error << "Invalid precision given.";
