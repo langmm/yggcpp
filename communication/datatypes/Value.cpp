@@ -126,7 +126,7 @@ dtype_t* create_dtype_llong(int64_t &val, const char* units) {
 }
 dtype_t* create_dtype_bool(bool val, const char* units) {
     auto dt = create_dtype_scalar(T_BOOLEAN, 1, units);
-    static_cast<communication::datatypes::Value<double>*>(dt->obj)->set(val);
+    static_cast<communication::datatypes::Value<bool>*>(dt->obj)->set(val);
     return dt;
 }
 dtype_t* create_dtype_float(float &val, const char* units) {
@@ -141,7 +141,7 @@ dtype_t* create_dtype_double(double &val, const char* units) {
 }
 dtype_t* create_dtype_ldouble(long double &val, const char* units) {
     auto dt = create_dtype_scalar(T_FLOAT, 12, units);
-    static_cast<communication::datatypes::Value<double>*>(dt->obj)->set(val);
+    static_cast<communication::datatypes::Value<long double>*>(dt->obj)->set(val);
     return dt;
 }
 dtype_t* create_dtype_ushort(uint8_t &val, const char* units) {
