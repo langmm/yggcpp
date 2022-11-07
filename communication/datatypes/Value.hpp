@@ -71,7 +71,7 @@ public:
         //printf("%s%-15s = %s\n");
     }
 
-    int nargs_exp() const override {return 4;}
+    int nargs_exp() const override {return 2;}
     DTYPE getType() const override {return T_SCALAR;}
 
     std::ostream& write(std::ostream& out) override {
@@ -94,11 +94,50 @@ public:
         in >> word;
         if (word != "scalarvalue")
             throw std::exception();
+        in >> word;
+        if (word != "type")
+            throw std::exception();
         in >> type;
+        in >> word;
+        if (word != "precision")
+            throw std::exception();
         in >> precision;
+        in >> word;
+        if (word != "unit")
+            throw std::exception();
+        in >> unit;
+        in >> word;
+        if (word != "value")
+            throw std::exception();
         in >> value;
+        if (unit == "None")
+            unit .clear();
         return in;
     }
+
+    friend std::ostream &operator<<(std::ostream &out, Value<T> &v) {
+        return v.write(out);
+    }
+    friend std::istream &operator>>(std::istream &in, Value<T> &v) {
+        return v.read(in);
+    }
+    friend bool operator==(const Value<T> &a, const Value<T> &b) {
+        if (!COMPARE<T>(a.value, b.value))
+            return false;
+        //if (a.precision != b.precision) {
+        //    return false;
+        //}
+        if (a.unit != b.unit)
+            return false;
+        return true;
+    }
+    template<typename H>
+    friend bool operator==(const Value<T> &a, const Value<H> &b) {return false;}
+    template<typename H>
+    friend bool operator!=(const Value<T> &a, const Value<H> &b) {return true;}
+
+    friend bool operator!=(const Value<T> &a, const Value<T> &b) {
+        return !(a==b);
     }
 private:
     T value;

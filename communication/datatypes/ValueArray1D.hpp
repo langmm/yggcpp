@@ -7,16 +7,6 @@
 namespace communication {
 namespace datatypes {
 
-std::string joinvalues(const std::vector<size_t> &items, const char &delim) {
-    std::vector<std::string> strings;
-    strings.reserve(items.size());
-    for (auto v : items)
-        strings.push_back(std::to_string(v));
-    return std::accumulate(strings.begin(), strings.end(), std::string(),
-                           [&delim](std::string &x, std::string &y) {
-                               return x.empty() ? y : x + delim + y;
-                           });
-}
 
 //template<typename T, std::enable_if_t<std::is_arithmetic<T>::value ||
 //                                      is_complex<T>::value || std::is_same<T, std::string>::value, bool> = true>
@@ -92,7 +82,17 @@ public:
     int nargs_exp() const override {return 4;}
     DTYPE getType() const override {return T_NDARRAY;}
     std::ostream& write(std::ostream& out) override {
-        out << "scalararray " << type << "  " << precision << " " << 1 << " " << dims << " " << unit << " ";
+        out << "scalararray" << std::endl
+            << " type " << type << std::endl
+            << " precision " << precision << std::endl
+            << " dim1 " << 1 << std::endl
+            << " dims " << dims << std::endl
+            << " unit ";
+        if (unit.empty())
+            out << "None";
+        else
+            out << unit;
+        out << std::endl << " value ";
         communication::utils::join<T>(value, out);
         return out << std::endl;
     }
@@ -103,13 +103,31 @@ public:
         in >> word;
         if (word != "scalararray")
             throw std::exception();
-        int t;
-        in >> t;
-        type = static_cast<SUBTYPE>(t);
+        in >> word;
+        if (word != "type")
+            throw std::exception();
+        in >> type;
+        in >> word;
+        if (word != "precision")
+            throw std::exception();
         in >> precision;
-        in >> t;
+        in >> word;
+        if (word != "dim1")
+            throw std::exception();
         in >> dims;
+        in >> word;
+        if (word != "dims")
+            throw std::exception();
+        in >> dims;
+        in >> word;
+        if (word != "unit")
+            throw std::exception();
         in >> unit;
+        if (unit == "None")
+            unit .clear();
+        in >> word;
+        if (word != "value")
+            throw std::exception();
         communication::utils::parse<T>(value, dims, in);
         return in;
     }
