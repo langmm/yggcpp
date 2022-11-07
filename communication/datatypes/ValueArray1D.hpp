@@ -25,13 +25,16 @@ class ValueArray1D : public ValueItem {
 public:
     ValueArray1D() = delete;
     //ValueArray(std::vector<T> &val, SUBTYPE st, const std::string& unit="", const int& precision=0);
-    explicit ValueArray1D(SUBTYPE st, const size_t& dim, const std::string& un="", const int& precision=0) :
-            ValueItem(st, T_ARRAY1D, un, precision), dims(dim) {}
-    explicit ValueArray1D(SUBTYPE st, const std::string& un="", const int& precision=0) :
-            ValueItem(st, T_ARRAY1D, un, precision) {}
-
-    ValueArray1D(T* val, const size_t& dim, SUBTYPE st, const std::string& unit="", const int& precision=0) :
-            ValueItem(st, T_ARRAY1D, unit, precision), dims(dim) {
+    explicit ValueArray1D(const size_t& dim, const std::string& un="") :
+            ValueItem(GET_ST<T>(), T_ARRAY1D, un, PRECISION<T>()), dims(dim) {}
+    explicit ValueArray1D(const std::string& un="") :
+            ValueItem(GET_ST<T>(), T_ARRAY1D, un, PRECISION<T>()) {}
+    explicit ValueArray1D(std::vector<T> &val, const std::string& un="") :
+            ValueItem(GET_ST<T>(), T_ARRAY1D, un, PRECISION<T>()), dims(val.size()){
+        value = val;
+    }
+    ValueArray1D(T* val, const size_t& dim, const std::string& unit="") :
+            ValueItem(GET_ST<T>(), T_ARRAY1D, unit, PRECISION<T>()), dims(dim) {
         value = val;
     }
 
@@ -65,6 +68,17 @@ public:
     void set(T* val, std::string &un) {
         set(val);
         unit = un;
+    }
+
+    void set(std::vector<T> &val, std::string un) {
+        value = val;
+        dims = val.size();
+        unit = un;
+    }
+
+    void set(std::vector<T> &val) {
+        value = val;
+        dims = val.size();
     }
 
     void display(const std::string& indent) const override {

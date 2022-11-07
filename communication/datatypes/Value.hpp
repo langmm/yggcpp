@@ -12,15 +12,14 @@ namespace datatypes {
 ENABLE_TYPECHECK
 class Value : public ValueItem {
 public:
-    using ValueItem::get;
-    using ValueItem::set;
-    Value() = delete;
-    Value(const T &val, SUBTYPE st, const std::string &unit="", const uint8_t& precision=0) :
-            ValueItem(st, T_SCALABLE, unit, precision) {
+
+    Value() : ValueItem(GET_ST<T>(), T_SCALABLE, "", PRECISION<T>()) {}
+    Value(const T &val, const std::string &unit="") :
+            ValueItem(GET_ST<T>(), T_SCALABLE, unit, PRECISION<T>()) {
         value = val;
     }
-    explicit Value(SUBTYPE st, const std::string &unit="", const uint8_t& precision=0) :
-            ValueItem(st, T_SCALABLE, unit, precision){}
+    Value(const std::string &unit) :
+            ValueItem(GET_ST<T>(), T_SCALABLE, unit, PRECISION<T>()){}
     //explicit Value(const value_t* val);
     ~Value() = default;
 
