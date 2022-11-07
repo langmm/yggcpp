@@ -110,6 +110,18 @@ template<>
 struct is_complex<complex_long_double_t> {
     static const bool value = true;
 };
+template<>
+struct is_complex<std::complex<float>> {
+    static const bool value = true;
+};
+template<>
+struct is_complex<std::complex<double>> {
+    static const bool value = true;
+};
+template<>
+struct is_complex<std::complex<long double>> {
+    static const bool value = true;
+};
 
 
 template<typename Type, typename ReType = void>
@@ -132,5 +144,24 @@ auto operator>>(std::istream& in, T& x) ->EnableForComplex<T, std::istream&> {
     char c;
     return in >> c >> x.re >> c >> x.im >> c;
 }
+
+template<typename T>
+auto operator+(const T& a, const T& b) ->EnableForComplex<T, T> {
+    T c;
+    c.re = a.re + b.re;
+    c.im = a.im + b.im;
+    return c;
+}
+
+template<typename T>
+auto operator==(const T& a, const T& b) ->EnableForComplex<T, bool> {
+    return COMPARE(a.re, b.re) && COMPARE(a.im, b.im);
+}
+
+template<typename T>
+auto operator!=(const T& a, const T& b) ->EnableForComplex<T, bool> {
+    return !(a==b);
+}
+
 
 #endif
