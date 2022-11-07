@@ -23,22 +23,47 @@ public:
             ValueItem(st, T_SCALABLE, unit, precision){}
     //explicit Value(const value_t* val);
     ~Value() = default;
-    void get(T &val) const override {
+
+    T get() const {
+        return value;
+    }
+
+    void get(T &val) const {
         val = value;
     }
 
-    void get(T &val, std::string& un) const override {
+    void get(T &val, std::string& un) const {
         val = value;
         un = unit;
     }
-    void set(T &val) override {
+
+    void get(T *val) const {
+        *val = value;
+    }
+
+    void get(T* val, std::string& un) const {
+        *val = value;
+        un = unit;
+    }
+
+    void set(T* val) {
+        value = *val;
+    }
+
+    void set(T* val, std::string& un) {
+        value = *val;
+        unit = un;
+    }
+
+    void set(T val) {
         value = val;
     }
 
-    void set(T &val, std::string& un) override {
+    void set(T val, std::string un) {
         value = val;
         unit = un;
     }
+
     void display(const std::string& indent) const override {
         printf("%s%-15s = %s\n", indent.c_str(), "type", "SCALAR");
         printf("%s%-15s = %s\n", indent.c_str(), "subtype", mapsub.at(type).c_str());
@@ -75,9 +100,6 @@ public:
         in >> value;
         return in;
     }
-    //value_t* toValue_t();
-    T getValue() const {
-        return value;
     }
 private:
     T value;
