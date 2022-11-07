@@ -2,7 +2,9 @@ include(CheckCXXCompilerFlag)
 
 set(UNITTEST_SOURCES
         testutils.cpp
-        unittest.cpp)
+        unittest.cpp
+        valuetest.cpp
+        arraytest.cpp)
 
 find_program(CCACH_FOUND ccache)
 if(CCACHE_FOUND)
