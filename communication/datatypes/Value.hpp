@@ -72,18 +72,27 @@ public:
     int nargs_exp() const override {return 2;}
     DTYPE getType() const override {return T_SCALAR;}
 
+    void process_value(std::ostream& out) {
+        out << value;
+    }
+
     std::ostream& write(std::ostream& out) override {
         out << "scalarvalue" << std::endl
-            << " type " << type << std::endl
-            << " precision " << precision << std::endl
-            << " unit ";
+            << "type " << type << std::endl
+            << "precision " << precision << std::endl
+            << "unit ";
         if (unit.empty())
             out << "None";
         else
             out << unit;
-        out << std::endl << " value " << value;
+        out << std::endl << " value ";
+        process_value(out);
         out << std::endl;
         return out;
+    }
+
+    void reprocess_value(std::istream& in) {
+        in >> value;
     }
 
     std::istream& read(std::istream& in) override {
@@ -107,7 +116,7 @@ public:
         in >> word;
         if (word != "value")
             throw std::exception();
-        in >> value;
+        reprocess_value(in);
         if (unit == "None")
             unit .clear();
         return in;
@@ -140,6 +149,82 @@ public:
 private:
     T value;
 };
+
+template<>
+inline
+void Value<float>::process_value(std::ostream &out) {
+    out.setf(std::ios::fixed);
+    out.precision(std::numeric_limits<float>::digits10);
+    out << value;
+}
+
+template<>
+inline
+void Value<double>::process_value(std::ostream &out) {
+    out.setf(std::ios::fixed);
+    out.precision(std::numeric_limits<double>::digits10);
+    out << value;
+}
+
+template<>
+inline
+void Value<long double>::process_value(std::ostream &out) {
+    out.setf(std::ios::fixed);
+    out.precision(std::numeric_limits<long double>::digits10);
+    out << value;
+}
+
+template<>
+inline
+void Value<uint8_t>::process_value(std::ostream &out) {
+    out << +value;
+}
+
+template<>
+inline
+void Value<int8_t>::process_value(std::ostream &out) {
+    out << +value;
+}
+
+
+template<>
+inline
+void Value<std::string>::process_value(std::ostream& out) {
+    std::string temp = value;
+    int i;
+    for (i = 0; i < REPLACE_SPACE.size(); i++) {
+        if (temp.find(REPLACE_SPACE[i]) == std::string::npos) {
+            break;
+        }
+    }
+    std::replace(temp.begin(), temp.end(), ' ', REPLACE_SPACE[i]);
+    out << REPLACE_SPACE[i] << " " << temp;
+}
+
+template<>
+inline
+void Value<std::string>::reprocess_value(std::istream &in) {
+    char spacer;
+    in >> spacer;
+    in >> value;
+    std::replace(value.begin(), value.end(), spacer, ' ');
+}
+
+template<>
+inline
+void Value<uint8_t>::reprocess_value(std::istream &in) {
+    int v;
+    in >> v;
+    value = static_cast<uint8_t>(v);
+}
+
+template<>
+inline
+void Value<int8_t>::reprocess_value(std::istream &in) {
+    int v;
+    in >> v;
+    value = static_cast<int8_t>(v);
+}
 
 //EVAL(MAP(VALUE_T_GET_METHOD, int, bool, float, uint, complex_float_t))
 
