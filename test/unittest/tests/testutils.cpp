@@ -1,7 +1,7 @@
 #include <sstream>
 #include <algorithm>
 #include <cstdlib>
-#include "unittest.hpp"
+#include "../unittest.hpp"
 #include "utils/complex_type.hpp"
 #include "utils/enums.hpp"
 #include "utils/Address.hpp"
@@ -18,16 +18,16 @@ std::streambuf* prevbuf = std::cout.rdbuf(B.rdbuf());
 using namespace communication::utils;
 namespace {
 #define COMPLEX_UNIT_TEST(type, typenm, comparator, real, img) { \
-complex_ ## type ## _t cmplx;                                      \
-complex_ ## type ## _t ncmplx;                                     \
+complex_ ## type ## _t cmplx;                                    \
+complex_ ## type ## _t ncmplx;                                   \
 typenm r1, i1;                                                   \
-cmplx.re = real;                                                   \
-cmplx.im = img;                                                    \
-std::stringstream ss;                                              \
-ss << cmplx;                                                       \
-ss >> ncmplx;                                                      \
-EXPECT_ ## comparator ## _EQ(cmplx.re, ncmplx.re);                 \
-EXPECT_ ## comparator ## _EQ(cmplx.im, ncmplx.im);                 \
+cmplx.re = real;                                                 \
+cmplx.im = img;                                                  \
+std::stringstream ss;                                            \
+ss << cmplx;                                                     \
+ss >> ncmplx;                                                    \
+EXPECT_ ## comparator ## _EQ(cmplx.re, ncmplx.re);               \
+EXPECT_ ## comparator ## _EQ(cmplx.im, ncmplx.im);               \
 }
 
 TEST(Value, Complex) {
@@ -161,7 +161,8 @@ TEST(TOOLS, joinParse) {
     std::vector<std::string> strvals = {"hello", "goodbye", "this is a , test"};
     join(strvals, ss);
     temp = ss.str();
-    EXPECT_EQ(std::count(temp.begin(), temp.end(), '|'), strvals.size() - 1);
+    std::cout << temp << std::endl;
+    EXPECT_EQ(std::count(temp.begin(), temp.end(), REPLACE_SPACE[1]), strvals.size());
     std::vector<std::string> strvec;
     parse(strvec, strvals.size(), ss);
     EXPECT_EQ(strvec, strvals);
@@ -180,7 +181,7 @@ TEST(TOOLS, joinParse) {
 
     join(strvals, ss);
     temp = ss.str();
-    EXPECT_EQ(std::count(temp.begin(), temp.end(), '|'), strvals.size() - 1);
+    EXPECT_EQ(std::count(temp.begin(), temp.end(), REPLACE_SPACE[1]), strvals.size());
     EXPECT_ANY_THROW(parse(strvec, strvals.size() + 1, ss));
     EXPECT_ANY_THROW(parse(strvec, strvals.size() + 5, ss));
 }

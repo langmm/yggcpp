@@ -18,8 +18,6 @@ public:
             ValueItem(GET_ST<T>(), T_SCALABLE, unit, PRECISION<T>()) {
         value = val;
     }
-    Value(const std::string &unit) :
-            ValueItem(GET_ST<T>(), T_SCALABLE, unit, PRECISION<T>()){}
     //explicit Value(const value_t* val);
     ~Value() = default;
 
