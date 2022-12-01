@@ -12,6 +12,10 @@ ValueGroup::~ValueGroup() {
     typesCalculated = false;
 }
 
+ValueGroup::ValueGroup(std::vector<ValueItem*> &values, const std::string &type) : ValueGroup(type) {
+    items = values;
+}
+
 void ValueGroup::display(const std::string &indent) const {
     printf("%s%-15s = %s\n", indent.c_str(), "type", "GROUP");
     printf("%s%-15s = %zu\n", indent.c_str(), "number", items.size());
@@ -51,10 +55,9 @@ ValueItem* ValueGroup::pop(const long& idx) {
     return item;
 }
 
-ValueItem* ValueGroup::operator[](const long &idx) {
+ValueItem* ValueGroup::operator[](const long &idx) const {
     if (idx >= items.size())
         return nullptr;
-    typesCalculated = false;
     return items[idx];
 }
 
@@ -86,7 +89,7 @@ std::ostream& ValueGroup::write(std::ostream &out) {
 
     for (auto i : items) {
         out << "item" << std::endl;
-        out << i << std::endl;
+        i->write(out);
     }
     out << "end_" << _type << std::endl;
     return out;
@@ -126,15 +129,25 @@ std::istream& ValueGroup::read(std::istream &in) {
     return in;
 }
 
-inline std::ostream & operator << (std::ostream &out, ValueGroup &vg) {
-    return vg.write(out);
-}
-inline std::istream & operator >> (std::istream &in, ValueGroup &vg) {
-    return vg.read(in);
+bool ValueGroup::operator==(const ValueGroup &b) const {
+    if (size() != b.size())
+        return false;
+    for (auto i = 0; i < size(); i++) {
+        if (this->operator[](i)->type != b[i]->type)
+            return false;
+        if (this->operator[](i)->vtype != b[i]->vtype)
+            return false;
+        if (this->operator[](i)->getUnit() != b[i]->getUnit())
+            return false;
+        if (*this->operator[](i) != *b[i])
+            return false;
+    }
+    return true;
 }
 
 } // communication
 } // datatype
+
 
 dtype_t* init_valgroup() {
     auto grp = (dtype_t*)malloc(sizeof(dtype_t));

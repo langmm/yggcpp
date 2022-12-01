@@ -21,21 +21,21 @@ namespace datatypes {
 class ValueGroup : public DataType {
 public:
     explicit ValueGroup(const std::string &type="valuegroup") : DataType(), _type(type) {}
-
+    ValueGroup(std::vector<ValueItem*> &values, const std::string &type="valuegroup");
 
     ~ValueGroup();
     void addItem(ValueItem* item);
     void insertItem(ValueItem* item, const long& idx);
     void removeItem(const long& idx);
     ValueItem* pop(const long& idx);
-    ValueItem* pop_fron() {return pop(0);}
+    ValueItem* pop_front() {return pop(0);}
     ValueItem* pop_back() {
         auto r = items.back();
         items.pop_back();
         return r;
     }
     void getItemTypes();
-    ValueItem* operator[](const long& idx);
+    ValueItem* operator[](const long& idx) const;
 
     void display(const std::string& indent) const override;
     int nargs_exp() const override {return 0;}
@@ -43,14 +43,23 @@ public:
 
     std::ostream& write(std::ostream &out) override;
     std::istream& read(std::istream &in) override;
-    friend std::ostream & operator << (std::ostream &out, ValueGroup &vg);
-    friend std::istream & operator >> (std::istream &in,  ValueGroup &vg);
+    friend std::ostream & operator<< (std::ostream &out, ValueGroup &vg) {
+        return vg.write(out);
+    }
+    friend std::istream & operator>> (std::istream &in,  ValueGroup &vg) {
+        return vg.read(in);
+    }
+    size_t size() const {return items.size();}
 
+    bool operator==(const ValueGroup &b) const;
+    bool operator!=(const ValueGroup &b) const {return !(*this == b);}
+#ifndef YGG_TEST
 protected:
-    std::vector<ValueItem*> items;
-    std::vector<SUBTYPE> types;
-    std::vector<VTYPE> vtypes;
-    std::vector<uint8_t> prec;
+#endif
+    std::vector<ValueItem*> items = {};
+    std::vector<SUBTYPE> types = {};
+    std::vector<VTYPE> vtypes = {};
+    std::vector<uint8_t> prec = {};
 
     const std::string _type;
 private:
