@@ -1,10 +1,10 @@
 include(CheckCXXCompilerFlag)
 
-set(UNITTEST_SOURCES
-        testutils.cpp
-        unittest.cpp
-        valuetest.cpp
-        arraytest.cpp)
+#set(UNITTEST_SOURCES
+#        testutils.cpp
+#        unittest.cpp
+#        valuetest.cpp
+#        arraytest.cpp)
 
 find_program(CCACH_FOUND ccache)
 if(CCACHE_FOUND)
@@ -44,11 +44,22 @@ endif()
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DRAPIDJSON_HAS_STDSTRING=1")
 
 #add_library(namespacetest STATIC namespacetest.cpp)
+include(GoogleTest)
+file(GLOB files "${CMAKE_CURRENT_SOURCE_DIR}/unittest/tests/*.cpp")
+message("HERE ${files} __")
+message("${CMAKE_CURRENT_SOURCE_DIR}")
+foreach(ffname ${files})
+    message("FILE  ${ffname}")
+    get_filename_component(fname ${ffname} NAME_WE)
+    add_executable(unittest_${fname} ${CMAKE_CURRENT_SOURCE_DIR}/unittest/unittest.cpp ${ffname})
+    target_link_libraries(unittest_${fname} ${TEST_LIBRARIES} YggInterface gomp ${PYTHON_LIBRARIES} Python3::NumPy)
+    add_test(NAME unittest_${fname}
+            COMMAND ${CMAKE_BINARY_DIR}/test/unittest_${fname}
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+    gtest_discover_tests(unittest_${fname})
+endforeach()
 
-add_executable(unittest ${UNITTEST_SOURCES})
-target_link_libraries(unittest ${TEST_LIBRARIES} YggInterface gomp)
-
-add_dependencies(tests unittest)
+#add_dependencies(tests unittest)
 add_definitions(-DYGG_TEST)
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|ARMClang")
     add_custom_command(TARGET unittest POST_BUILD
@@ -56,14 +67,14 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|ARMClang")
             WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
             COMMENT "Creating debug symbols...")
 endif(CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|ARMClang")
-
+set(CMAKE_CXX_FLAGS_DEBUG "-g -DYGG_DEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS}")
+set(CMAKE_CXX_FLAGS_RELEASE "-g -DYGG_DEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS}")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -DYGG_DEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS}")
 message(STATUS "YGG_PYTHON_ENV = ${YGG_PYTHON_ENV}")
-add_test(NAME unittest
-        COMMAND ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/unittest
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
-set_tests_properties(unittest PROPERTIES
-        ENVIRONMENT
-        "${YGG_PYTHON_ENV}")
+
+#set_tests_properties(unittest PROPERTIES
+#        ENVIRONMENT
+#        "${YGG_PYTHON_ENV}")
 
 
 option(YGG_SKIP_VALGRIND_TESTS "Disable valgrind tests" OFF)
@@ -87,3 +98,5 @@ if(NOT MSVC)
     #endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
 
 endif(NOT MSVC)
+#include(GoogleTest)
+#gtest_discover_tests(GeneratorTest)

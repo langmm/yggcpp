@@ -138,12 +138,21 @@ if(YGG_BUILD_TESTS)
     add_definitions(-DYGG_TEST)
     if(YGG_ENABLE_COVERAGE)
         target_link_libraries(YggInterface gcov)
-        message("ENABLE")
-        set(YGG_BUILD_FLAGS "${YGG_BUILD_FLAGS} --coverage -fno-inline -fno-inline-small-functions -fno-default-inline")
+        # find required tools
+        find_program(LCOV lcov REQUIRED)
+        find_program(GENHTML genhtml REQUIRED)
+        add_custom_target(coverage
+                # gather data
+                COMMAND ${LCOV} --rc lcov_branch_coverage=1 --exclude '/usr/*' --exclude '/opt/*' --directory . --capture --output-file coverage.info
+                # generate report
+                COMMAND ${GENHTML} --rc genhtml_branch_coverage=1 --demangle-cpp -o coverage coverage.info
+                WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+        set(YGG_BUILD_FLAGS "${YGG_BUILD_FLAGS} --coverage -fno-inline -fno-inline-small-functions -fno-default-inline -fpermissive")
     endif(YGG_ENABLE_COVERAGE)
 endif()
 add_link_options(-L/opt/anaconda3/envs/Yggdrasil/lib)
-set(CMAKE_CXX_FLAGS_DEBUG "-g -DYGG_DEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS}")
-set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS}")
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -DYGG_DEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS}")
+message(${YGG_BUILD_FLAGS})
+set(CMAKE_CXX_FLAGS_DEBUG "-g -DNDEBUG -DYGG_DEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS} -fpermissive")
+set(CMAKE_CXX_FLAGS_RELEASE "-g -DNDEBUG -DYGG_DEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS} -fpermissive")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -DNDEBUG -DYGG_DEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS} -fpermissive")
 
