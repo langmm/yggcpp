@@ -2,6 +2,7 @@
 
 #ifdef __cplusplus
 #include <string>
+#include <cmath>
 #include "enums.hpp"
 #include "complex_type.hpp"
 
@@ -14,6 +15,18 @@ template<>
 struct is_string<std::string> {
     static const bool value = true;
 };
+
+template<typename T, typename _ = void>
+struct is_vector {
+    static const bool value = false;
+};
+
+/*template<typename T>
+struct is_vector<T, typename std::enable_if<std::is_same<T, std::vector< typename T::value_type,
+                                                                         typename T::allocator_type> >::value
+                                                                         >::type>{
+    static const bool value = true;
+};*/
 
 template<typename Type, typename ReType = void>
 using EnableForString = typename std::enable_if<is_string<Type>::value, ReType>::type;
@@ -76,22 +89,25 @@ using EnableWithEnum = typename std::enable_if<std::is_floating_point<Type>::val
                                                                is_complex<T>::value ||         \
                                                                is_string<T>::value, bool> = true>
 
-template<typename T, std::enable_if_t<!std::is_floating_point<T>::value &&
-                                      !is_complex<T>::value, bool> = true>
+template<typename T, std::enable_if_t<!std::is_floating_point<T>::value, bool> = true>
 bool COMPARE(const T &a, const T &b) {return a == b;}
 
-template<typename T, std::enable_if_t<std::is_same<T, float>::value, bool> = true>
-bool COMPARE(const T &a, const T &b) {return abs(a - b) < 1e-6;}
+template<typename T, std::enable_if_t<std::is_floating_point<T>::value, bool> = true>
+bool COMPARE(const T &a, const T &b) {return abs(a - b) < pow(10, -(std::numeric_limits<T>::digits10 - 1));}
 
-template<typename T, std::enable_if_t<std::is_same<T, double>::value, bool> = true>
-bool COMPARE(const T &a, const T &b) {return abs(a-b) < 1e-13;}
+template<typename T, std::enable_if_t<!std::is_floating_point<T>::value, bool> = true >
+bool COMPARE(const std::vector<T> &a, const std::vector<T> &b) {
+    return a == b;
+}
 
-template<typename T, std::enable_if_t<std::is_same<T, long double>::value, bool> = true>
-bool COMPARE(const T &a, const T &b) {return abs(a-b) < 1e-15;}
-
-template<typename T, std::enable_if_t<is_complex<T>::value, bool> = true>
-bool COMPARE(const T &a, const T &b) {
-    return COMPARE(a.re, b.re) && COMPARE(a.im, b.im);
+template<typename T, std::enable_if_t<std::is_floating_point<T>::value, bool> = true >
+bool COMPARE(const std::vector<T> &a, const std::vector<T> &b) {
+    if (a.size() != b.size())
+        return false;
+    for (auto i = 0; i < a.size(); i++)
+        if (!COMPARE(a[i], b[i]))
+            return false;
+    return true;
 }
 
 template<typename T, std::enable_if_t<std::is_same<T, int8_t>::value ||
@@ -150,5 +166,6 @@ SUBTYPE GET_ST() {return T_BOOLEAN;}
 template<typename T, std::enable_if_t<is_string<T>::value, bool> = true>
 SUBTYPE GET_ST() {return T_STRING;}
 
+const std::vector<char> REPLACE_SPACE = {'|', '@', '&', '!', '_', '^', '/', '~'};
 
 #endif
