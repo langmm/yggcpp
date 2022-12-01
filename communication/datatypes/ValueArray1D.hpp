@@ -3,6 +3,7 @@
 #include "utils/tools.hpp"
 #include <vector>
 #include <numeric>
+#include <memory>
 
 namespace communication {
 namespace datatypes {
@@ -13,11 +14,13 @@ namespace datatypes {
 ENABLE_TYPECHECK
 class ValueArray1D : public ValueItem {
 public:
-    ValueArray1D() = delete;
+    ValueArray1D() : ValueItem(GET_ST<T>(), T_ARRAY1D, "", PRECISION<T>()), dims(0){}
     //ValueArray(std::vector<T> &val, SUBTYPE st, const std::string& unit="", const int& precision=0);
     explicit ValueArray1D(const size_t& dim, const std::string& un="") :
-            ValueItem(GET_ST<T>(), T_ARRAY1D, un, PRECISION<T>()), dims(dim) {}
-    explicit ValueArray1D(const std::string& un="") :
+            ValueItem(GET_ST<T>(), T_ARRAY1D, un, PRECISION<T>()), dims(dim) {
+        value.reserve(dim);
+    }
+    explicit ValueArray1D(const std::string& un) :
             ValueItem(GET_ST<T>(), T_ARRAY1D, un, PRECISION<T>()) {}
     explicit ValueArray1D(std::vector<T> &val, const std::string& un="") :
             ValueItem(GET_ST<T>(), T_ARRAY1D, un, PRECISION<T>()), dims(val.size()){
@@ -25,21 +28,42 @@ public:
     }
     ValueArray1D(T* val, const size_t& dim, const std::string& unit="") :
             ValueItem(GET_ST<T>(), T_ARRAY1D, unit, PRECISION<T>()), dims(dim) {
-        value = val;
+        //value.resize(dim);
+        //for (auto i = 0; i < dim; i++) {
+        //    value[i] = val[i];
+        //}
+        value.insert(value.end(), val, val + dim);
     }
 
     ~ValueArray1D() = default;
     using ValueItem::get;
     void get(T* val, size_t& dim) {
-        if (val == nullptr)
-            return;
-        val = value;
+        //if (val == nullptr)
+        //    return;
+        //std::cout << val << "  ";
+        //val = (T*)realloc(val, sizeof(T) * dims);
+        //std::cout << val << std::endl;
+        for(auto i = 0; i < dims; i++)
+            val[i] = value[i];
         dim = this->dims;
     }
 //    void get(std::vector<T> &val) const;
     void get(T* val, size_t& dim, std::string &un) {
         get(val, dim);
         un = unit;
+    }
+
+    void get(std::vector<T> &val, std::string &un) {
+        val = value;
+        un = unit;
+    }
+
+    void get(std::vector<T> &val) {
+        val = value;
+    }
+
+    std::vector<T> &get() {
+        return value;
     }
 //    void get(std::vector<T> &val, std::string& un) const;
     void set(T* val) {
@@ -81,6 +105,7 @@ public:
 
     int nargs_exp() const override {return 4;}
     DTYPE getType() const override {return T_NDARRAY;}
+
     std::ostream& write(std::ostream& out) override {
         out << "scalararray" << std::endl
             << " type " << type << std::endl
@@ -173,6 +198,7 @@ public:
     T& operator[](const size_t& idx) const {
         return value[idx];
     }
+    size_t getDims() const {return dims;}
 private:
     std::vector<T> value;
     size_t dims;
