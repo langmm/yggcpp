@@ -96,7 +96,7 @@ std::istream& ValueGroup::read(std::istream &in) {
     in >> std::ws;
     in >> word;
     if (word != _type)
-        throw std::exception();
+        throw std::invalid_argument("Invalid format, expected " + _type + " but got " + word + "instead");
     int count;
     in >> count;
     communication::utils::parse<SUBTYPE>(types, count, in);
@@ -106,9 +106,12 @@ std::istream& ValueGroup::read(std::istream &in) {
     items.reserve(count);
     in >> word;
     if (word != "end_header")
-        throw std::exception();
+        throw std::invalid_argument("Invalid format, expected end_header but got " + word + "instead");
     communication::datatypes::ValueItem* vi;
     for (auto i = 0; i < count; i++) {
+        in >> word;
+        if (word != "item")
+            throw std::invalid_argument("Invalid format, expected item but got " + word + "instead");
         switch (vtypes[i]) {
             case T_ARRAY1D:
                 vi = createArray(types[i], prec[i], count, "");

@@ -47,7 +47,7 @@ public:
         value = *val;
     }
 
-    void set(T* val, std::string& un) {
+    void set(T* val, std::string un) {
         value = *val;
         unit = un;
     }
@@ -100,22 +100,22 @@ public:
         in >> std::ws;
         in >> word;
         if (word != "scalarvalue")
-            throw std::exception();
+            throw std::invalid_argument("Missing keyword scalarvalue, got " + word);
         in >> word;
         if (word != "type")
-            throw std::exception();
+            throw std::invalid_argument("Missing keyword type, got " + word);
         in >> type;
         in >> word;
         if (word != "precision")
-            throw std::exception();
+            throw std::invalid_argument("Missing keyword precision, got " + word);
         in >> precision;
         in >> word;
         if (word != "unit")
-            throw std::exception();
+            throw std::invalid_argument("Missing keyword unit, got " + word);
         in >> unit;
         in >> word;
         if (word != "value")
-            throw std::exception();
+            throw std::invalid_argument("Missing keyword value, got " + word);
         reprocess_value(in);
         if (unit == "None")
             unit .clear();

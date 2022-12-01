@@ -102,32 +102,32 @@ public:
         in >> std::ws;
         in >> word;
         if (word != "scalararray")
-            throw std::exception();
+            throw std::invalid_argument("Missing keyword scalararray, got " + word);
         in >> word;
         if (word != "type")
-            throw std::exception();
+            throw std::invalid_argument("Missing keyword type, got " + word);
         in >> type;
         in >> word;
         if (word != "precision")
-            throw std::exception();
+            throw std::invalid_argument("Missing keyword precision, got " + word);
         in >> precision;
         in >> word;
         if (word != "dim1")
-            throw std::exception();
+            throw std::invalid_argument("Missing keyword dim1, got " + word);
         in >> dims;
         in >> word;
         if (word != "dims")
-            throw std::exception();
+            throw std::invalid_argument("Missing keyword dims, got " + word);
         in >> dims;
         in >> word;
         if (word != "unit")
-            throw std::exception();
+            throw std::invalid_argument("Missing keyword unit, got " + word);
         in >> unit;
         if (unit == "None")
             unit .clear();
         in >> word;
         if (word != "value")
-            throw std::exception();
+            throw std::invalid_argument("Missing keyword value, got " + word);
         communication::utils::parse<T>(value, dims, in);
         return in;
     }
