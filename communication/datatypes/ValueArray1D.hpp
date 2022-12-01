@@ -133,9 +133,43 @@ public:
     }
 
 
-//    void set(std::vector<T> &val, std::string& un);
+    friend std::ostream &operator<<(std::ostream &out, ValueArray1D<T> &v) {
+        return v.write(out);
+    }
 
-//    std::vector<T>& getValue() const;
+    friend std::istream &operator>>(std::istream &in, ValueArray1D<T> &v) {
+        return v.read(in);
+    }
+    bool operator==(const ValueArray1D<T> &b) const {
+        if (this->dims != b.dims) {
+            return false;
+        }
+        if (!COMPARE<T>(this->value, b.value)) {
+            return false;
+        }
+        if (this->unit != b.unit)
+            return false;
+        return true;
+    }
+    bool operator==(const ValueItem &b) const override {
+        if (b.vtype != T_ARRAY1D)
+            return false;
+        if (b.type != this->type)
+            return false;
+        if (b.getPrecision() != this->getPrecision())
+            return false;
+        return *(static_cast<ValueArray1D<T>*>(const_cast<ValueItem*>(&b))) == *this;
+    }
+    bool operator!=(const ValueItem &b) const override {
+        return !(this->operator==(b));
+    }
+    template<typename H, std::enable_if_t<!std::is_same<T, H>::value, bool> = true>
+    bool operator==(const ValueArray1D<H> &b) const {return false;}
+    template<typename H, std::enable_if_t<!std::is_same<T, H>::value, bool> = true>
+    bool operator!=(const ValueArray1D<H> &b) const {return true;}
+    bool operator!=(const ValueArray1D<T> &b) const {
+        return !(this->operator==(b));
+    }
     T& operator[](const size_t& idx) const {
         return value[idx];
     }
@@ -144,41 +178,6 @@ private:
     size_t dims;
 
 };
-
-template<typename T>
-void walk(std::string& out, T* values,  const size_t& count, const std::vector<size_t>& dims) {
-
-}
-
-//template<>
-//ValueArray1D<std::vector<std::string> >::~ValueArray1D() {
-//    value->clear();
-//    delete value;
-//}
-
-//template<typename T>
-//ValueArray1D<T>::~ValueArray1D() {}
-
-
-/*template<typename T>
-ValueArray<T>::~ValueArray() {
-    value.clear();
-}*/
-
-/*template<typename T>
-T& ValueArray<T>::getValue() const {
-    return value;
-}*/
-
-/*template<typename T>
-void ValueArray<T>::get(std::vector<T> &val) const {
-    val = value;
-}
-template<typename T>
-void ValueArray<T>::get(std::vector<T> &val, std::string &un) const {
-    val = value;
-    un = unit;
-}*/
 
 } // communication
 } // datatypes

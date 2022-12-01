@@ -61,23 +61,27 @@ public:
 
     SUBTYPE type;
     VTYPE vtype;
-    uint8_t getPrecision() const {
+    unsigned short getPrecision() const {
         return precision;
     }
-    void display(const std::string& indent) const override {}
-    //virtual void display(const std::string& indent="") = 0;
-    //virtual int nargs_exp() = 0;
-    //virtual DTYPE getType() = 0;
+    virtual bool operator==(const ValueItem &b) const = 0;
+    virtual bool operator!=(const ValueItem &b) const = 0;
+    friend std::ostream &operator>>(std::ostream &out, ValueItem &v) {
+        return v.write(out);
+    }
+    friend std::istream &operator<<(std::istream &in, ValueItem &v) {
+        return v.read(in);
+    }
 protected:
-    explicit ValueItem(const SUBTYPE t, const VTYPE v, const std::string& val = "", const uint8_t &precision=0) :
+    explicit ValueItem(const SUBTYPE t, const VTYPE v, const std::string& val = "", const unsigned short &precision=0) :
             type(t), vtype(v), unit(val), precision(precision) {}
     std::string unit;
-    uint8_t precision;
+    unsigned short precision;
 };
 
 void set_unit(char* v, const char* unit, const size_t &unit_size);
-ValueItem* createArray(SUBTYPE t, const uint8_t &precision, const size_t &size, const char* units);
-ValueItem* createValue(SUBTYPE t, const uint8_t &precision, const char* units);
+ValueItem* createArray(SUBTYPE t, const unsigned short &precision, const size_t &size, const char* units);
+ValueItem* createValue(SUBTYPE t, const unsigned short &precision, const char* units);
 ValueItem* createFormatted();
 
 }

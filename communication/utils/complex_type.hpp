@@ -129,6 +129,7 @@ using EnableForComplex = typename std::enable_if<is_complex<Type>::value, ReType
 
 template<typename T>
 auto operator<<(std::ostream& out, const T& x) -> EnableForComplex<T, std::ostream&> {
+    out.setf(std::ios::fixed);
     if (sizeof(x.re) == sizeof(float)) {
         out.precision(std::numeric_limits<float>::digits10);
     } else if (sizeof(x.re) == sizeof(double)) {
@@ -153,9 +154,78 @@ auto operator+(const T& a, const T& b) ->EnableForComplex<T, T> {
     return c;
 }
 
+template<typename T, typename F>
+auto operator+(const T&a, const F v) -> EnableForComplex<T, T> {
+    T c;
+    c.re = a.re + v;
+    c.im = a.im;
+    return c;
+}
+
 template<typename T>
-auto operator==(const T& a, const T& b) ->EnableForComplex<T, bool> {
-    return COMPARE(a.re, b.re) && COMPARE(a.im, b.im);
+auto operator-(const T& a, const T& b) ->EnableForComplex<T, T> {
+    T c;
+    c.re = a.re - b.re;
+    c.im = a.im - b.im;
+    return c;
+}
+
+template<typename T, typename F>
+auto operator-(const T&a, const F v) -> EnableForComplex<T, T> {
+    T c;
+    c.re = a.re - v;
+    c.im = a.im;
+    return c;
+}
+template<typename T>
+auto operator*(const T& a, const T& b) ->EnableForComplex<T, T> {
+    T c;
+    c.re = (a.re * b.re - a.im * b.im);
+    c.im = (a.re * b.im + a.im * b.re);
+    return c;
+}
+
+template<typename T, typename F>
+auto operator*(const T&a, const F v) -> EnableForComplex<T, T> {
+    T c;
+    c.re = a.re * v;
+    c.im = a.im * v;
+    return c;
+}
+template<typename T>
+auto operator/(const T& a, const T& b) ->EnableForComplex<T, T> {
+    T c;
+    long double xy = b.re * b.re + b.im * b.im;
+    c.re = (a.re * b.re + a.im * b.im)/xy;
+    c.im = (a.im * b.re - a.re * b.im)/xy;
+    return c;
+}
+
+template<typename T, typename F>
+auto operator/(const T&a, const F v) -> EnableForComplex<T, T> {
+    T c;
+    c.re = a.re / v;
+    c.im = a.im / v;
+    return c;
+}
+
+
+template<typename T, std::enable_if_t<std::is_same<T, complex_float_t>::value, bool> = true>
+bool operator==(const T& a, const T& b) {
+    return (abs(a.re - b.re) < pow(10, -(std::numeric_limits<float>::digits10 - 1))) &&
+           (abs(a.im - b.im) < pow(10, -(std::numeric_limits<float>::digits10 - 1)));
+}
+
+template<typename T, std::enable_if_t<std::is_same<T, complex_double_t>::value, bool> = true>
+bool operator==(const T& a, const T& b) {
+    return (abs(a.re - b.re) < pow(10, -(std::numeric_limits<double>::digits10 - 1))) &&
+           (abs(a.im - b.im) < pow(10, -(std::numeric_limits<double>::digits10 - 1)));
+}
+
+template<typename T, std::enable_if_t<std::is_same<T, complex_long_double_t>::value, bool> = true>
+bool operator==(const T& a, const T& b) {
+    return (abs(a.re - b.re) < pow(10, -(std::numeric_limits<long double>::digits10 - 1))) &&
+           (abs(a.im - b.im) < pow(10, -(std::numeric_limits<long double>::digits10 - 1)));
 }
 
 template<typename T>
@@ -163,5 +233,22 @@ auto operator!=(const T& a, const T& b) ->EnableForComplex<T, bool> {
     return !(a==b);
 }
 
+template<typename T>
+auto complex_f(const T& a) ->EnableForComplex<T, complex_float_t> {
+    complex_float_t f = {static_cast<float>(a.re), static_cast<float>(a.im)};
+    return f;
+}
+
+template<typename T>
+auto complex_d(const T& a) ->EnableForComplex<T, complex_double_t> {
+    complex_double_t f = {static_cast<double>(a.re), static_cast<double>(a.im)};
+    return f;
+}
+
+template<typename T>
+auto complex_ld(const T& a) ->EnableForComplex<T, complex_long_double_t> {
+    complex_long_double_t f = {static_cast<long double>(a.re), static_cast<long double>(a.im)};
+    return f;
+}
 
 #endif

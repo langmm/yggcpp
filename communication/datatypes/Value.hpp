@@ -1,6 +1,8 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <stdexcept>
+#include <algorithm>
 #include "utils/macros.hpp"
 #include "ValueItem.hpp"
 #include "utils/complex_type.hpp"
@@ -128,24 +130,35 @@ public:
     friend std::istream &operator>>(std::istream &in, Value<T> &v) {
         return v.read(in);
     }
-    friend bool operator==(const Value<T> &a, const Value<T> &b) {
-        if (!COMPARE<T>(a.value, b.value))
+    bool operator==(const Value<T> &b) const {
+        if (!COMPARE<T>(this->value, b.value)) {
             return false;
-        //if (a.precision != b.precision) {
-        //    return false;
-        //}
-        if (a.unit != b.unit)
+        }
+        if (this->precision != b.precision) {
+            return false;
+        }
+        if (this->unit != b.unit)
             return false;
         return true;
     }
-    template<typename H>
-    friend bool operator==(const Value<T> &a, const Value<H> &b) {return false;}
-    template<typename H>
-    friend bool operator!=(const Value<T> &a, const Value<H> &b) {return true;}
-
-    friend bool operator!=(const Value<T> &a, const Value<T> &b) {
-        return !(a==b);
+    bool operator==(const ValueItem &b) const override {
+        if (b.vtype != T_SCALABLE)
+            return false;
+        if (b.type != this->type)
+            return false;
+        if (b.getPrecision() != this->getPrecision())
+            return false;
+        return *(static_cast<Value<T>*>(const_cast<ValueItem*>(&b))) == *this;
     }
+    bool operator!=(const ValueItem &b) const override {return !this->operator==(b);}
+    template<typename H, std::enable_if_t<!std::is_same<T, H>::value, bool> = true>
+    bool operator==(const Value<H> &b) const {return false;}
+    template<typename H, std::enable_if_t<!std::is_same<T, H>::value, bool> = true>
+    bool operator!=(const Value<H> &b) const {return true;}
+    bool operator!=(const Value<T> &b) const {
+        return !(this->operator==(b));
+    }
+
 private:
     T value;
 };
