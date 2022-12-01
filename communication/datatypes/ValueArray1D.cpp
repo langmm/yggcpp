@@ -249,7 +249,7 @@ void set_dtype_1dcomplex_ldouble(dtype_t* dt, complex_long_double_t *val, const 
 //}
 
 
-communication::datatypes::ValueItem* communication::datatypes::createArray(SUBTYPE t, const uint8_t &precision, const size_t &dim, const char* units) {
+communication::datatypes::ValueItem* communication::datatypes::createArray(SUBTYPE t, const unsigned short &precision, const size_t &dim, const char* units) {
     communication::datatypes::ValueItem* vi;
     switch (t) {
         case T_INT: {
