@@ -5,7 +5,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#include <Python.h>
+//#include <Python.h>
 
 dtype_t* create_dtype(DTYPE dtype, ushort precision=0, bool use_generic=false);
 
