@@ -100,6 +100,7 @@ endif()
 add_library(YggInterface SHARED ${SOURCES})
 target_link_libraries(YggInterface ${PYTHON_LIBRARIES} Python3::NumPy)
 target_link_libraries(YggInterface ${Boost_LOG_LIBRARY})
+
 include_directories("communication")
 
 FetchContent_MakeAvailable(RapidJSON_ygg)
