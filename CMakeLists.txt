@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.16)
 
 if (POLICY CMP0048)
     cmake_policy(SET CMP0048 NEW)
@@ -9,8 +9,16 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 ADD_DEFINITIONS(-D_CRT_SECURE_NO_WARNINGS)
-
-
+include(FetchContent)
+FetchContent_Declare(
+        RapidJSON_ygg
+        GIT_REPOSITORY https://github.com/astro-friedel/rapidjson_ygg.git
+        GIT_TAG 8563bd7301ef2d96fae35f883d030f79a84b7d04
+)
+FetchContent_Declare(
+        Cppzmq
+        GIT_REPOSITORY https://github.com/zeromq/cppzmq.git
+)
 
 if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
     message(FATAL_ERROR "In-source build prohibited.")
@@ -43,9 +51,10 @@ find_package(cppzmq)
 #    message("libzmq not found." )
 #ENDIF (libzmq_FOUND)
 IF (cppzmq_FOUND)
-    message("Found cppzmq   ${ZeroMQ_INCLUDE_DIRS}  XX")
-    include_directories("/opt/anaconda3/include")
+    include_directories("${cppzmq_INCLUDE_DIR}")
     add_definitions(-DZMQ_BUILD_DRAFT_API)
+ELSE()
+    FetchContent_MakeAvailable(Cppzmq)
 ENDIF()
 
 find_package(Boost COMPONENTS log REQUIRED)
@@ -73,6 +82,8 @@ ENDIF (libczmq_FOUND)
 find_package(OpenMP)
 if (OpenMP_FOUND)
     add_definitions(-D_OPENMP -DMPIINSTALLED)
+else()
+    message("NO OpenMP")
 endif()
 
 find_package(Python3 COMPONENTS Interpreter Development NumPy REQUIRED)
@@ -88,10 +99,12 @@ endif()
 
 add_library(YggInterface SHARED ${SOURCES})
 target_link_libraries(YggInterface ${PYTHON_LIBRARIES} Python3::NumPy)
-message("X ${Boost_LOG_LIBRARY}")
 target_link_libraries(YggInterface ${Boost_LOG_LIBRARY})
 include_directories("communication")
 
+FetchContent_MakeAvailable(RapidJSON_ygg)
+include_directories("${rapidjson_ygg_SOURCE_DIR}/include")
+message("XYZ  ${rapidjson_ygg_SOURCE_DIR}/include")
 add_definitions(-DRAPIDJSON_YGGDRASIL)
 add_definitions(-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION)
 add_definitions(-D_USE_MATH_DEFINES)
@@ -151,7 +164,7 @@ if(YGG_BUILD_TESTS)
     endif(YGG_ENABLE_COVERAGE)
 endif()
 add_link_options(-L/opt/anaconda3/envs/Yggdrasil/lib)
-message(${YGG_BUILD_FLAGS})
+#message(${YGG_BUILD_FLAGS})
 set(CMAKE_CXX_FLAGS_DEBUG "-g -DNDEBUG -DYGG_DEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS} -fpermissive")
 set(CMAKE_CXX_FLAGS_RELEASE "-g -DNDEBUG -DYGG_DEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS} -fpermissive")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -DNDEBUG -DYGG_DEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS} -fpermissive")
