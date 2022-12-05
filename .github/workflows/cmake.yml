@@ -41,6 +41,10 @@ jobs:
       run: make test
 
     - name: Coverage
+      working-directory: ${{github.workspace}}/build
+      run: make coverage
+      
+    - name: Coverage report
       uses: romeovs/lcov-reporter-action@v0.2.16
       with:
         lcov-file: ${{github.workspace}}/build/coverage.info
