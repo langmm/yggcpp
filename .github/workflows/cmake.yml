@@ -43,5 +43,4 @@ jobs:
     - name: Coverage
       uses: romeovs/lcov-reporter-action@v0.2.16
       with:
-        working-directory: ${{github.workspace}}/build
-        lcov-file: coverage.info
+        lcov-file: ./build/coverage.info
