@@ -44,8 +44,8 @@ jobs:
       working-directory: ${{github.workspace}}/build
       run: make coverage
       
-    - name: Coverage report
-      uses: romeovs/lcov-reporter-action@v0.2.11
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        lcov-file: ${{github.workspace}}/build/coverage.info
+    #- name: Coverage report
+    #  uses: romeovs/lcov-reporter-action@v0.2.11
+    #  with:
+    #    github-token: ${{ secrets.GITHUB_TOKEN }}
+    #    lcov-file: ${{github.workspace}}/build/coverage.info
