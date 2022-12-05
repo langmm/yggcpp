@@ -15,10 +15,10 @@ FetchContent_Declare(
         GIT_REPOSITORY https://github.com/astro-friedel/rapidjson_ygg.git
         GIT_TAG 8563bd7301ef2d96fae35f883d030f79a84b7d04
 )
-FetchContent_Declare(
-        Cppzmq
-        GIT_REPOSITORY https://github.com/zeromq/cppzmq.git
-)
+#FetchContent_Declare(
+#        Cppzmq
+#        GIT_REPOSITORY https://github.com/zeromq/cppzmq.git
+#)
 
 if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
     message(FATAL_ERROR "In-source build prohibited.")
@@ -33,7 +33,7 @@ option(YGG_BUILD_THIRDPARTY_GTEST "Use gtest installation in 'thirdpart/gtest' b
 
 set(YGG_BUILD_FLAGS "")
 #find cppzmq wrapper, installed by make of cppzmq
-find_package(cppzmq)
+#find_package(cppzmq)
 ########################################################################
 # LIBZMQ dependency
 ########################################################################
@@ -50,12 +50,12 @@ find_package(cppzmq)
 #ELSE (libzmq_FOUND)
 #    message("libzmq not found." )
 #ENDIF (libzmq_FOUND)
-IF (cppzmq_FOUND)
-    include_directories("${cppzmq_INCLUDE_DIR}")
-    add_definitions(-DZMQ_BUILD_DRAFT_API)
-ELSE()
-    FetchContent_MakeAvailable(Cppzmq)
-ENDIF()
+#IF (cppzmq_FOUND)
+#    include_directories("${cppzmq_INCLUDE_DIR}")
+#    add_definitions(-DZMQ_BUILD_DRAFT_API)
+#ELSE()
+#    FetchContent_MakeAvailable(Cppzmq)
+#ENDIF()
 
 find_package(Boost COMPONENTS log REQUIRED)
 include_directories(${Boost_INCLUDE_DIRS})
