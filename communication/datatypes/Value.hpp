@@ -63,6 +63,8 @@ public:
         unit = un;
     }
 
+    size_t size() const override {return 1;}
+
     void display(const std::string& indent) const override {
         printf("%s%-15s = %s\n", indent.c_str(), "type", "SCALAR");
         printf("%s%-15s = %s\n", indent.c_str(), "subtype", mapsub.at(type).c_str());

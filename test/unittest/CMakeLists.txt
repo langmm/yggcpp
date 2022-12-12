@@ -45,7 +45,7 @@ endif()
 
 #add_library(namespacetest STATIC namespacetest.cpp)
 include(GoogleTest)
-file(GLOB files "${CMAKE_CURRENT_SOURCE_DIR}/unittest/tests/*.cpp")
+file(GLOB files "${CMAKE_CURRENT_SOURCE_DIR}/unittest/tests/communicators/*.cpp")
 foreach(ffname ${files})
     get_filename_component(fname ${ffname} NAME_WE)
     add_executable(unittest_${fname} ${CMAKE_CURRENT_SOURCE_DIR}/unittest/unittest.cpp ${ffname})

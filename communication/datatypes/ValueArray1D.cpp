@@ -44,7 +44,7 @@ int add_AtoGroup(dtype_t* val, dtype_t* grp) {
                     v = static_cast<communication::datatypes::ValueArray1D<double> *>(val->obj);
                     break;
                 case 10:
-                case 12:
+                case 16:
                     v = static_cast<communication::datatypes::ValueArray1D<long double> *>(val->obj);
                     break;
             }
@@ -76,8 +76,7 @@ int add_AtoGroup(dtype_t* val, dtype_t* grp) {
                 case 8:
                     v = static_cast<communication::datatypes::ValueArray1D<complex_double_t> *>(val->obj);
                     break;
-                case 10:
-                case 12:
+                case 16:
                     v = static_cast<communication::datatypes::ValueArray1D<complex_long_double_t> *>(val->obj);
                     break;
             }
@@ -139,7 +138,7 @@ dtype_t* create_dtype_1ddouble(double *val, const size_t& N, const char* units) 
     return dt;
 }
 dtype_t* create_dtype_1dldouble(long double *val, const size_t& N, const char* units) {
-    auto dt = create_dtype_1darray(T_FLOAT, N, 12, units);
+    auto dt = create_dtype_1darray(T_FLOAT, N, 16, units);
     static_cast<communication::datatypes::ValueArray1D<long double>*>(dt->obj)->set(val);
     return dt;
 }
@@ -174,7 +173,7 @@ dtype_t* create_dtype_1dcomplex_double(complex_double_t *val, const size_t& N, c
     return dt;
 }
 dtype_t* create_dtype_1dcomplex_ldouble(complex_long_double_t *val, const size_t& N, const char* units) {
-    auto dt = create_dtype_1darray(T_COMPLEX, N, 12, units);
+    auto dt = create_dtype_1darray(T_COMPLEX, N, 16, units);
     static_cast<communication::datatypes::ValueArray1D<complex_long_double_t>*>(dt->obj)->set(val);
     return dt;
 }
@@ -285,7 +284,7 @@ communication::datatypes::ValueItem* communication::datatypes::createArray(SUBTY
                     vi = new communication::datatypes::ValueArray1D<double>(dim, units);
                     break;
                 case 10:
-                case 12:
+                case 16:
                     vi = new communication::datatypes::ValueArray1D<long double>(dim, units);
                     break;
                 default:
@@ -326,8 +325,7 @@ communication::datatypes::ValueItem* communication::datatypes::createArray(SUBTY
                 case 8:
                     vi = new communication::datatypes::ValueArray1D<complex_double_t>(dim, units);
                     break;
-                case 10:
-                case 12:
+                case 16:
                     vi = new communication::datatypes::ValueArray1D<complex_long_double_t>(dim, units);
                     break;
                 default:

@@ -199,6 +199,7 @@ public:
         return value[idx];
     }
     size_t getDims() const {return dims;}
+    size_t size() const override {return dims;}
 private:
     std::vector<T> value;
     size_t dims;

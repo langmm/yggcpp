@@ -14,15 +14,42 @@
 
 namespace communication {
 namespace datatypes {
+
+size_t getIntPrecision(const std::string& input, const std::regex &re) {
+    std::string a = std::regex_replace(input, re, "$1");
+    int b = 9;
+    if (!a.empty())
+        b = std::stoi(a);
+    if (b < 3) {
+        return 8;
+    } else if (b < 5) {
+        return 16;
+    } else if (b < 10) {
+        return 32;
+    }
+    return 64;
+}
+
+size_t getFloatPrecision(const std::string& input, const std::regex &re) {
+    std::string a = std::regex_replace(input, re, "$1");
+    int b = 0;
+    if (!a.empty())
+        b += std::stoi(a);
+    a = std::regex_replace(input, re, "$3");
+    if (!a.empty())
+        b += std::stoi(a);
+    if (b < 8) {
+        return 4;
+    } else if (b < 16) {
+        return 8;
+    }
+    return 16;
+}
+
 FormattedData::FormattedData(const std::string &format_str, const bool as_array) : ValueGroup("formatteddata") {
     // Loop over string
     size_t mres;
     size_t sind, eind, beg = 0, end;
-    char re_fmt[FMT_LEN];
-    char re_fmt_eof[FMT_LEN];
-    sprintf(re_fmt, "%%[^%s%s ]+[%s%s ]", "\t", "\n", "\t", "\n");
-    sprintf(re_fmt_eof, "%%[^%s%s ]+", "\t", "\n");
-
 
     size_t iprecision = 0;
     while (beg < format_str.size()) {
@@ -42,17 +69,17 @@ FormattedData::FormattedData(const std::string &format_str, const bool as_array)
         // String
         if (utils::find_match(utils::RE_STRING, ifmt, sind, eind)) {
             isubtype = T_STRING;
-            utils::regex_replace(ifmt, utils::RE_STRLEN, "$2", 0);
-            iprecision = 8 * std::stoi(ifmt);
+            //utils::regex_replace(ifmt, utils::RE_STRING, "$1", 0);
+            iprecision = 0;
             // Complex
         } else if (utils::find_match(utils::RE_COMPLEX, ifmt, sind, eind)) {
             isubtype = T_COMPLEX;
-            iprecision = 8 * 2 * sizeof(double);
+            iprecision = getFloatPrecision(ifmt, utils::RE_COMPLEX);
         }
             // Floats
         else if (utils::find_match(utils::RE_FLOAT, ifmt, sind, eind)) {
             isubtype = T_FLOAT;
-            iprecision = 8 * sizeof(double);
+            iprecision = getFloatPrecision(ifmt, utils::RE_FLOAT);
         }
             // Integers
         else if (utils::find_match(utils::RE_CHAR, ifmt, sind, eind)) {
@@ -60,39 +87,39 @@ FormattedData::FormattedData(const std::string &format_str, const bool as_array)
             iprecision = 8 * sizeof(char);
         } else if (utils::find_match(utils::RE_SHORT, ifmt, sind, eind)) {
             isubtype = T_INT;
-            iprecision = 8 * sizeof(short);
-        } else if (utils::find_match(utils::RE_LONG_LONG, ifmt, sind, eind) ||
-                   utils::find_match(utils::RE_LONG_LONG2, ifmt, sind, eind)) {
-            isubtype = T_INT;
-            iprecision = 8 * sizeof(long long);
+            iprecision = 16;
+        //} else if (utils::find_match(utils::RE_LONG_LONG, ifmt, sind, eind) ||
+        //           utils::find_match(utils::RE_LONG_LONG2, ifmt, sind, eind)) {
+        //    isubtype = T_INT;
+        //    iprecision = 64;
         } else if (utils::find_match(utils::RE_LONG, ifmt, sind, eind)) {
             isubtype = T_INT;
-            iprecision = 8 * sizeof(long);
+            iprecision = 64;
         } else if (utils::find_match(utils::RE_INT, ifmt, sind, eind)) {
             isubtype = T_INT;
-            iprecision = 8 * sizeof(int);
+            iprecision = getIntPrecision(ifmt, utils::RE_INT);
         }
             // Unsigned integers
         else if (utils::find_match(utils::RE_UCHAR, ifmt, sind, eind)) {
             isubtype = T_UINT;
-            iprecision = 8 * sizeof(unsigned char);
+            iprecision = 8;
         } else if (utils::find_match(utils::RE_USHORT, ifmt, sind, eind)) {
             isubtype = T_UINT;
-            iprecision = 8 * sizeof(unsigned short);
-        } else if (utils::find_match(utils::RE_ULONG_LONG, ifmt, sind, eind) ||
-                   utils::find_match(utils::RE_ULONG_LONG2, ifmt, sind, eind)) {
-            isubtype = T_UINT;
-            iprecision = 8 * sizeof(unsigned long long);
+            iprecision = 16;
+        //} else if (utils::find_match(utils::RE_ULONG_LONG, ifmt, sind, eind) ||
+        //           utils::find_match(utils::RE_ULONG_LONG2, ifmt, sind, eind)) {
+        //    isubtype = T_UINT;
+        //    iprecision = 8 * sizeof(unsigned long long);
         } else if (utils::find_match(utils::RE_ULONG, ifmt, sind, eind)) {
             isubtype = T_UINT;
-            iprecision = 8 * sizeof(unsigned long);
+            iprecision = 64;
         } else if (utils::find_match(utils::RE_UINT, ifmt, sind, eind)) {
             isubtype = T_UINT;
-            iprecision = 8 * sizeof(unsigned int);
+            iprecision = getIntPrecision(ifmt, utils::RE_UINT);
         } else {
             utils::ygglog_throw_error("create_dtype_format_class: Could not parse format string: " + ifmt);
         }
-        ygglog_debug << "isubtype = " << isubtype << " iprecision = " << iprecision << " ifmt = " << ifmt;
+        std::cout << "isubtype = " << isubtype << " iprecision = " << iprecision << " ifmt = " << ifmt << std::endl;
         if (as_array) {
             addItem(createArray(isubtype, iprecision, 0, ""));
         } else {
@@ -114,6 +141,17 @@ void FormattedData::display(const std::string &indent) const {
         printf("%s  %-15s\n", indent.c_str(), "Item");
         i->display(indent + "  ");
     }
+}
+
+void FormattedData::set(size_t& count, ...) {
+    va_list_t ap = init_va_list();
+    va_start(ap.va, &count);
+    set(count, ap);
+    va_end(ap.va);
+}
+
+void FormattedData::set(size_t& count, va_list_t& val) {
+
 }
 
 } // communication

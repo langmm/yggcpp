@@ -4,11 +4,28 @@
 extern "C" {
 #endif
 
-struct dtype_t {
-    void* obj;
-    DTYPE type;
-    bool use_generic;
-};
+static char prefix_char = '#';
+#ifdef _OPENMP
+#pragma omp threadprivate(prefix_char)
+#endif
+
+/*! @brief Bit flags. */
+#define HEAD_FLAG_VALID      0x00000001  //!< Set if the header is valid.
+#define HEAD_FLAG_MULTIPART  0x00000002  //!< Set if the header is for a multipart message
+#define HEAD_META_IN_DATA    0x00000004  //!< Set if the type is stored with the data during serialization
+#define HEAD_AS_ARRAY        0x00000008  //!< Set if messages will be serialized arrays
+
+/*! @brief C-friendly definition of rapidjson::Document. */
+typedef struct dtype_t {
+    void *schema; //!< Pointer to rapidjson::Value for validation.
+    void *metadata; //!< Pointer ot rapidjson::Document containing additional metadata.
+} dtype_t;
+
+/*! @brief C-friendly wrapper for rapidjson::Document. */
+typedef struct generic_t {
+    char prefix; //!< Prefix character for limited verification.
+    void *obj; //!< Pointer to rapidjson::Document class.
+} generic_t;
 
 /*!
   @brief Skip datatype arguments.

@@ -85,6 +85,22 @@ using EnableWithEnum = typename std::enable_if<std::is_floating_point<Type>::val
                                                std::is_same<Type, SUBTYPE>::value ||
                                                std::is_same<Type, VTYPE>::value, ReType>::type;
 
+template<typename Type, typename ReType = void>
+using EnableForInts = typename std::enable_if<std::is_same<Type, int8_t>::value ||
+                                              std::is_same<Type, int16_t>::value ||
+                                              std::is_same<Type, int32_t>::value ||
+                                              std::is_same<Type, int64_t>::value ||
+                                              std::is_same<Type, uint8_t>::value ||
+                                              std::is_same<Type, uint16_t>::value ||
+                                              std::is_same<Type, uint32_t>::value ||
+                                              std::is_same<Type, uint64_t>::value, ReType>::type;
+
+template<typename Type, typename ReType = void>
+using EnableForUInts = typename std::enable_if<std::is_same<Type, uint8_t>::value ||
+                                               std::is_same<Type, uint16_t>::value ||
+                                               std::is_same<Type, uint32_t>::value ||
+                                               std::is_same<Type, uint64_t>::value, ReType>::type;
+
 #define ENABLE_TYPECHECK template<typename T, std::enable_if_t<std::is_arithmetic<T>::value || \
                                                                is_complex<T>::value ||         \
                                                                is_string<T>::value, bool> = true>
@@ -138,7 +154,7 @@ uint8_t PRECISION() {return 64;}
 
 template<typename T, std::enable_if_t<std::is_same<T, long double>::value ||
                                       std::is_same<T, complex_long_double_t>::value, bool> = true>
-uint8_t PRECISION() {return 12;}
+uint8_t PRECISION() {return 16;}
 
 template<typename T, std::enable_if_t<std::is_same<T, int8_t>::value ||
                                       std::is_same<T, int16_t>::value ||

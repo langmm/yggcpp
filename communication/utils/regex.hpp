@@ -57,31 +57,31 @@ size_t regex_replace(std::string &buf, const std::string &re, const std::string 
     return regex_replace(buf, regex, rp, nreplace);
 }
 
-const std::string sre_fmt = "%%[^\t\n ]+[\t\n ]";
-const std::string sre_fmt_eof = "%%[^\t\n ]+";
-
+const std::string sre_fmt = "%[^\t\n ]+[\t\n ]";
+const std::string sre_fmt_eof = "%[^\t\n ]+";
+const std::string FLOAT_STR = "%([[:digit:]]*)(\\.)?([[:digit:]]*)[eEfFgG]";
 const std::regex RE_FMT(sre_fmt, std::regex::extended);
 const std::regex RE_FMT_EOF(sre_fmt_eof, std::regex::extended);
-const std::regex RE_STRING("%.*s", std::regex::extended);  // string
+const std::regex RE_STRING("%([[:digit:]])*s", std::regex::extended);  // string
 #ifdef _WIN32
 const std::regex RE_COMPLEX("(%.*[fFeEgG]){2}j", std::regex::extended);
 #else
-const std::regex RE_COMPLEX("(\%.*[fFeEgG]){2}j", std::regex::extended);
+const std::regex RE_COMPLEX(FLOAT_STR + FLOAT_STR + "j", std::regex::extended);
 #endif
-const std::regex RE_FLOAT("%.*[fFeEgG]", std::regex::extended);
-const std::regex RE_CHAR("%.*hh[id]", std::regex::extended);
-const std::regex RE_SHORT("%.*h[id]", std::regex::extended);
-const std::regex RE_LONG_LONG("%.*ll[id]", std::regex::extended);
-const std::regex RE_LONG_LONG2("%.*l64[id]", std::regex::extended);
-const std::regex RE_LONG("%.*l[id]", std::regex::extended);
-const std::regex RE_INT("%.*[id]", std::regex::extended);
-const std::regex RE_UCHAR("%.*hh[uoxX]", std::regex::extended);
-const std::regex RE_USHORT("%.*h[uoxX]", std::regex::extended);
-const std::regex RE_ULONG_LONG("%.*ll[uoxX]", std::regex::extended);
-const std::regex RE_ULONG_LONG2("%.*l64[uoxX]", std::regex::extended);
-const std::regex RE_ULONG("%.*l[uoxX]", std::regex::extended);
-const std::regex RE_UINT("%.*[uoxX]", std::regex::extended);
-const std::regex RE_STRLEN("%(\\.)?([[:digit:]]*)s(.*)", std::regex::extended);
+const std::regex RE_FLOAT(FLOAT_STR, std::regex::extended);
+const std::regex RE_CHAR("%([[:digit:]]*)hh[id]", std::regex::extended);
+const std::regex RE_SHORT("%([[:digit:]]*)h[id]", std::regex::extended);
+//const std::regex RE_LONG_LONG("%([[:digit:]]*)ll[id]", std::regex::extended);
+//const std::regex RE_LONG_LONG2("%([[:digit:]]*)l64[id]", std::regex::extended);
+const std::regex RE_LONG("%([[:digit:]]*)l[id]", std::regex::extended);
+const std::regex RE_INT("%([[:digit:]]*)[id]", std::regex::extended);
+const std::regex RE_UCHAR("%([[:digit:]]*)hh[uoxX]", std::regex::extended);
+const std::regex RE_USHORT("%([[:digit:]]*)h[uoxX]", std::regex::extended);
+//const std::regex RE_ULONG_LONG("%([[:digit:]]*)ll[uoxX]", std::regex::extended);
+//const std::regex RE_ULONG_LONG2("%([[:digit:]]*)l64[uoxX]", std::regex::extended);
+const std::regex RE_ULONG("%([[:digit:]]*)l[uoxX]", std::regex::extended);
+const std::regex RE_UINT("%([[:digit:]]*)[uoxX]", std::regex::extended);
+//const std::regex RE_STRLEN("%(\\.)?([[:digit:]]*)s(.*)", std::regex::extended);
 //const std::regex (, std::regex::extended);
 //const std::regex (, std::regex::extended);
 }

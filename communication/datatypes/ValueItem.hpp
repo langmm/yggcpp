@@ -64,6 +64,7 @@ public:
     unsigned short getPrecision() const {
         return precision;
     }
+    virtual size_t size() const = 0;
     virtual bool operator==(const ValueItem &b) const = 0;
     virtual bool operator!=(const ValueItem &b) const = 0;
     friend std::ostream &operator>>(std::ostream &out, ValueItem &v) {

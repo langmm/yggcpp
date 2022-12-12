@@ -52,7 +52,7 @@ int add_VtoGroup(dtype_t* val, dtype_t* grp) {
                     v = static_cast<communication::datatypes::Value<double> *>(val->obj);
                     break;
                 case 10:
-                case 12:
+                case 16:
                     v = static_cast<communication::datatypes::Value<long double> *>(val->obj);
                     break;
             }
@@ -85,7 +85,7 @@ int add_VtoGroup(dtype_t* val, dtype_t* grp) {
                     v = static_cast<communication::datatypes::Value<complex_double_t> *>(val->obj);
                     break;
                 case 10:
-                case 12:
+                case 16:
                     v = static_cast<communication::datatypes::Value<complex_long_double_t> *>(val->obj);
                     break;
             }
@@ -140,7 +140,7 @@ dtype_t* create_dtype_double(double &val, const char* units) {
     return dt;
 }
 dtype_t* create_dtype_ldouble(long double &val, const char* units) {
-    auto dt = create_dtype_scalar(T_FLOAT, 12, units);
+    auto dt = create_dtype_scalar(T_FLOAT, 16, units);
     static_cast<communication::datatypes::Value<long double>*>(dt->obj)->set(val);
     return dt;
 }
@@ -175,7 +175,7 @@ dtype_t* create_dtype_complex_double(complex_double_t &val, const char* units) {
     return dt;
 }
 dtype_t* create_dtype_complex_ldouble(complex_long_double_t &val, const char* units) {
-    auto dt = create_dtype_scalar(T_COMPLEX, 12, units);
+    auto dt = create_dtype_scalar(T_COMPLEX, 16, units);
     static_cast<communication::datatypes::Value<complex_long_double_t>*>(dt->obj)->set(val);
     return dt;
 }
@@ -284,8 +284,7 @@ communication::datatypes::ValueItem* communication::datatypes::createValue(SUBTY
                 case 8:
                     vi = new communication::datatypes::Value<double>(0., units);
                     break;
-                case 10:
-                case 12:
+                case 16:
                     vi = new communication::datatypes::Value<long double>(0., units);
                     break;
                 default:
@@ -326,8 +325,7 @@ communication::datatypes::ValueItem* communication::datatypes::createValue(SUBTY
                 case 8:
                     vi = new communication::datatypes::Value<complex_double_t>({0.,0.},units);
                     break;
-                case 10:
-                case 12:
+                case 16:
                     vi = new communication::datatypes::Value<complex_long_double_t>({0.,0.},units);
                     break;
                 default:

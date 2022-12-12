@@ -27,7 +27,7 @@ endif("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${PROJECT_SOURCE_DIR}/cmake")
 
 #file(GLOB_RECURSE SOURCES "communication/**/*.cpp")
-file(GLOB SOURCES "communication/utils/*.cpp" "communication/datatypes/*.cpp")
+file(GLOB SOURCES "communication/utils/*.cpp" "communication/communicators/*.cpp")
 option(YGG_BUILD_TESTS "Build tests" ON)
 option(YGG_BUILD_THIRDPARTY_GTEST "Use gtest installation in 'thirdpart/gtest' by default if available" ON)
 
