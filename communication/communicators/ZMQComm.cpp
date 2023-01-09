@@ -3,14 +3,14 @@
 #ifdef ZMQINSTALLED
 using namespace communication::communicator;
 using namespace communication::utils;
-using namespace communication::datatypes;
+//using namespace communication::datatypes;
 #include <zmq.hpp>
 #include <zmq_addon.hpp>
 #include <boost/algorithm/string.hpp>
 //#include "datatypes/datatypes.hpp"
 #include "utils/tools.hpp"
 #include "utils/logging.hpp"
-#include "datatypes/CommHead.hpp"
+#include "CommHead.hpp"
 
 const std::chrono::milliseconds timeout{1000};
 const std::chrono::milliseconds short_timeout{10};
@@ -40,7 +40,7 @@ zmq::context_t &ygg_sock_t::get_context() {
 // TODO??  #pragma omp critical (zmq)
 
 ygg_sock_t::ygg_sock_t(int type) : zmq::socket_t(get_context(), type), tag(0xcafe0004), type(type) {
-#else
+#else // _OPENMP
     zmq::context_t &ygg_sock_t::get_context() {
         zqm::context ctx;
         return ctx;
@@ -50,7 +50,7 @@ ygg_sock_t::ygg_sock_t(int type) : zmq::socket_t(get_context(), type), tag(0xcaf
 
     }
     ygg_sock_t::ygg_sock_t(int type) : zmq::socket_t(get_context(), type) {
-#endif
+#endif // _OPENMP
     set(zmq::sockopt::linger, 0);
     set(zmq::sockopt::immediate, 1);
 }
@@ -164,8 +164,10 @@ int ZMQComm::do_reply_send() {
     // TODO: There seems to be an error in the poller when using it in C++
 //#else
     zmq::poller_t<> in_poller;
+
     in_poller.add(*sock, zmq::event_flags::pollin);
     std::vector<zmq::poller_event<>> in_events(1);
+
     ygglog_debug << "do_reply_send(" << name << ") : waiting on poller...";
     size_t nin = 0;
     size_t nout = 0;
@@ -563,13 +565,13 @@ void ZMQComm::destroy() {
     // Drain input
     if (direction == RECV && flags & COMM_FLAG_VALID
         && (!(const_flags & COMM_EOF_RECV))) {
-        if (Logger::_ygg_error_flag == 0) {
+        if (utils::_ygg_error_flag == 0) {
             size_t data_len = 100;
             char *data = (char*)malloc(data_len);
             datatypes::CommHead head;
             bool is_eof_flag = false;
             while (comm_nmsg() > 0) {
-                if (long ret = recv(&data, data_len, true) >= 0) {
+                if (long ret = recv(data, data_len, true) >= 0) {
                     head = datatypes::CommHead(data, ret);
                     if (strncmp(YGG_MSG_EOF, data + head.bodybeg, strlen(YGG_MSG_EOF)) == 0)
                         is_eof_flag = true;

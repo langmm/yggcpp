@@ -5,7 +5,7 @@ using namespace communication::utils;
 
 
 Comm_t::Comm_t(Address *address, DIRECTION dirn, const COMM_TYPE &t, int flgs) :
-        address(address), type(t), _valid(false), direction(direction), flags(flgs) {
+        address(address), type(t), _valid(false), direction(dirn), flags(flgs) {
     name = "";
 
     flags |= COMM_FLAG_VALID;
@@ -131,6 +131,7 @@ int free_comm(comm_t* x) {
         temp = nullptr;
         free(x);
     }
+    return 0;
 }
 //comm_t* empty_comm() {
 //    comm_t* comm;
@@ -149,9 +150,10 @@ Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string 
         case CLIENT_COMM:
             return new ClientComm(name, (address == nullptr) ? nullptr : new Address(address), dir);
         case MPI_COMM:
-            std::string adr;
-            return new MPIComm(name, (address == nullptr) ? adr : reinterpret_cast<std::string &>(address), dir);
+            //std::string adr;
+            return new MPIComm(name, (address == nullptr) ? nullptr : new Address(address), dir);
     }
+    return nullptr;
 }
 comm_t* new_comm(char* address, const DIRECTION dir, const COMM_TYPE type) {
     auto comm = (comm_t*)malloc(sizeof(comm_t));
@@ -163,6 +165,24 @@ comm_t* init_comm(const char* name, const DIRECTION dir, const COMM_TYPE type) {
     comm->comm = new_Comm_t(dir, type, name);
     return comm;
 }
+
+int Comm_t::send(const dtype_t *dtype) {
+    rapidjson::Document *doc = static_cast<rapidjson::Document*>(dtype->schema);
+    rapidjson::StringBuffer buffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    doc->Accept(writer);
+    return this->send(buffer.GetString(), buffer.GetSize());
+}
+
+long Comm_t::recv(dtype_t *dtype) {
+    char* data = (char*)malloc(sizeof(char) * YGG_MSG_MAX);
+    long size = recv(data, YGG_MSG_MAX, true);
+    if (dtype->schema == nullptr)
+        dtype->schema = (void*)new rapidjson::Document();
+    static_cast<rapidjson::Document*>(dtype->schema)->Parse(data);
+    return size;
+}
+
 /*int send(const comm_t* x, const char *data, const size_t &len) {
     auto comm = (Comm_t*)x->comm;
     return comm->send(data, len);

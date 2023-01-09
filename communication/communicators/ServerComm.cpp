@@ -1,5 +1,6 @@
 #include "ServerComm.hpp"
 #include "DefaultComm.hpp"
+#include "CommHead.hpp"
 #include "utils/tools.hpp"
 
 using namespace communication::communicator;
@@ -165,7 +166,7 @@ int ServerComm::remove_request(size_t idx){
 int ServerComm::comm_nmsg() const {
     return base_handle->comm_nmsg();
 }
-comm_head_t ServerComm::response_header(comm_head_t head){
+CommHead ServerComm::response_header(CommHead &head){
     if (request_id.empty()) {
         ygglog_error << "server_response_header(" << name << "): There are not any registered requests.";
         head.flags = head.flags & ~HEAD_FLAG_VALID;

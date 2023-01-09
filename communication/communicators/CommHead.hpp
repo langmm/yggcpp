@@ -54,6 +54,7 @@ public:
     std::string field_units; //!< String containing field units.
     //
     //DTYPE dtype;
+    dtype_t *dtype = nullptr;
 private:
     bool update_header_from_doc(rapidjson::Value &head_doc);
 };

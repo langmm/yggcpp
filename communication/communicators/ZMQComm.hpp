@@ -11,7 +11,7 @@
 #include <vector>
 namespace communication {
 namespace communicator {
-class ClientComm;
+//class ClientComm;
 static unsigned _zmq_rand_seeded = 0;
 static unsigned _last_port_set = 0;
 static int _last_port = 49152;
@@ -112,8 +112,6 @@ public:
     ~ZMQComm() override;
 
     int send(const char *data, const size_t &len) override;
-    int send(const dtype_t* dtype) override;
-    long recv(dtype_t* dtype) override;
     long recv(char *data, const size_t &len, bool allow_realloc) override;
 
     //void open() override;
@@ -121,12 +119,12 @@ public:
     int comm_nmsg() const override;
 
 protected:
-    int new_address();
+    virtual int new_address();
     void init() override;
 
 private:
-    friend ClientComm;
-    friend ServerComm;
+    friend class ClientComm;
+    friend class ServerComm;
     ygg_sock_t *sock;
 
     std::string set_reply_send();

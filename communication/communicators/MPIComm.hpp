@@ -35,13 +35,11 @@ public:
 
     int send(const char *data, const size_t &len) override;
 
-    int send(const dtype_t* dtype) override;
-    long recv(dtype_t* dtype) override;
     long recv(char *data, const size_t &len, bool allow_realloc) override;
 
     int comm_nmsg() const override;
 
-    int mpi_comm_source_id();
+    int mpi_comm_source_id() const;
 
 private:
     std::vector<utils::Address *> addresses;

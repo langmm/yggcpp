@@ -1,9 +1,78 @@
 #include "CommHead.hpp"
 #include "utils/logging.hpp"
 #include "utils/tools.hpp"
+#include "utils/regex.hpp"
 
 using namespace communication::datatypes;
 using namespace communication::utils;
+
+#ifndef MSG_HEAD_SEP
+#define MSG_HEAD_SEP "YGG_MSG_HEAD"
+#endif
+
+/*!
+  @brief Split header and body of message.
+  @param[in] buf const char* Message that should be split.
+  @param[in] buf_siz size_t Size of buf.
+  @param[out] head const char** pointer to buffer where the extracted header
+  should be stored.
+  @param[out] headsiz size_t reference to memory where size of extracted header
+  should be stored.
+  @returns: int 0 if split is successful, -1 if there was an error.
+*/
+int split_head_body(const char *buf, const size_t buf_siz,
+                    char **head, size_t *headsiz) {
+    // Split buffer into head and body
+    int ret;
+    size_t sind, eind, sind_head, eind_head;
+    sind = 0;
+    eind = 0;
+#ifdef _WIN32
+    // Windows regex of newline is buggy
+  UNUSED(buf_siz);
+  size_t sind1, eind1, sind2, eind2;
+  char re_head_tag[COMMBUFFSIZ];
+  sprintf(re_head_tag, "(%s)", MSG_HEAD_SEP);
+  ret = find_match(re_head_tag, buf, &sind1, &eind1);
+  if (ret > 0) {
+    sind = sind1;
+    ret = find_match(re_head_tag, buf + eind1, &sind2, &eind2);
+    if (ret > 0)
+      eind = eind1 + eind2;
+  }
+#else
+    // Extract just header
+    char re_head[COMMBUFFSIZ] = MSG_HEAD_SEP;
+    strcat(re_head, "(.*)");
+    strcat(re_head, MSG_HEAD_SEP);
+    // strcat(re_head, ".*");
+    ret = static_cast<int>(communication::utils::find_match(re_head, buf, sind, eind));
+#endif
+    if (ret < 0) {
+        ygglog_error <<"split_head_body: Could not find header in " << buf;
+        return -1;
+    } else if (ret == 0) {
+#ifdef YGG_DEBUG
+        ygglog_debug << "split_head_body: No header in " << buf;
+#endif
+        sind_head = 0;
+        eind_head = 0;
+    } else {
+        sind_head = sind + strlen(MSG_HEAD_SEP);
+        eind_head = eind - strlen(MSG_HEAD_SEP);
+    }
+    headsiz[0] = (eind_head - sind_head);
+    char* temp = (char*)realloc(*head, *headsiz + 1);
+    if (temp == nullptr) {
+        ygglog_error << "split_head_body: Failed to reallocate header.";
+        return -1;
+    }
+    *head = temp;
+    memcpy(*head, buf + sind_head, *headsiz);
+    (*head)[*headsiz] = '\0';
+    return 0;
+}
+
 
 CommHead::CommHead(utils::Address* adr, const std::string &id): address(adr), id(id){
     // Parameters set during read
@@ -54,11 +123,12 @@ CommHead::CommHead(const char *buf, const size_t &buf_siz) {
         if (!(head_doc.IsObject()))
             ygglog_throw_error("parse_comm_header: Parsed header document is not an object.");
         if (head_doc.HasMember("datatype")) {
-            dtype = new DataType(type_from_header_doc(head_doc), false);
-        } else if (head_doc.HasMember("type_in_data")) {
+        //    dtype = new DataType(type_from_header_doc(head_doc), false);
+        // TODO: fix
+        //} else if (head_doc.HasMember("type_in_data")) {
             dtype = nullptr;
-        } else {
-            dtype = create_dtype_direct();
+        //} else {
+        //    dtype = create_dtype_direct();
         }
         if (!(update_header_from_doc(head_doc))) {
             ygglog_error << "parse_comm_header: Error updating header from JSON doc.";
@@ -164,8 +234,6 @@ bool CommHead::update_header_from_doc(rapidjson::Value &head_doc) {
 }
 
 CommHead::~CommHead() {
-    if (dtype != nullptr)
-        delete dtype;
     if (address != nullptr)
         delete address;
     if (response_address != nullptr)

@@ -22,11 +22,11 @@ public:
 
     int remove_request(const std::string &req_id);
 
-    int pop_response(const std::string &req_id, char **rdata, const size_t &rlen, const int allow_realloc);
+    int pop_response(const std::string &req_id, char *rdata, const size_t &rlen, const int allow_realloc);
 
-    int new_address();
+    int new_address() override;
 
-    int init_comm();
+    //int init_comm();
 
     int comm_nmsg() const override;
 
@@ -34,8 +34,6 @@ public:
 
     int send(const char *data, const size_t &len) override;
 
-    int send(const dtype_t* dtype) override;
-    long recv(dtype_t* dtype) override;
     long recv(char *data, const size_t &len, bool allow_realloc) override;
 
 private:

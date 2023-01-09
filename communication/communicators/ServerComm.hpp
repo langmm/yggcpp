@@ -2,14 +2,14 @@
 
 #include <vector>
 #include "DefaultComm.hpp"
-#include "datatypes/CommHead.hpp"
-#ifdef _OPENMP
-#pragma omp threadprivate(_default_comm)
-#endif
+#include "CommHead.hpp"
 #include "CommBase.hpp"
 
 namespace communication {
 namespace communicator {
+#ifdef _OPENMP
+#pragma omp threadprivate(_default_comm)
+#endif
 
 // @brief Structure for storing requests
 class ServerComm : public COMM_BASE {
@@ -42,8 +42,6 @@ public:
 
     int send(const char *data, const size_t &len) override;
 
-    int send(const dtype_t* dtype) override;
-    long recv(dtype_t* dtype) override;
     long recv(char *data, const size_t &len, bool allow_realloc) override;
 
 private:

@@ -33,7 +33,8 @@ ClientComm::ClientComm(const std::string &name, Address *address, DIRECTION dire
     // Called to initialize/create client comm
 
     if (this->direction != NONE) {
-        dtype_out = create_dtype_format(this->direction, 0, false);
+        // TODO: fix
+        //dtype_out = create_dtype_format(this->direction, 0, false);
     }
     if (this->name.empty()) {
         base_handle = new COMM_BASE("", this->address, SEND);
@@ -147,7 +148,7 @@ int ClientComm::new_address() {
     }
 #endif
     comm->type = _default_comm;
-    return new_default_address(comm);
+    return comm->new_address();
 
 }
 

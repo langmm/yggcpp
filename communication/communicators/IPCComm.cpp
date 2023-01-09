@@ -1,13 +1,16 @@
 #include "IPCComm.hpp"
+#include "rapidjson/document.h"
+#include "rapidjson/writer.h"
 
 using namespace communication::communicator;
 using namespace communication::utils;
-using namespace communication::datatypes;
+//using namespace communication::datatypes;
 
 unsigned IPCComm::_yggChannelsUsed = 0;
+int IPCComm::_yggChannelNames[_yggTrackChannels];
 bool IPCComm::_ipc_rand_seeded = false;
 
-#ifdef IPCINSTALLED
+#ifdef _YGGIPC
 
 IPCComm::~IPCComm() {
     if (handle != nullptr) {
@@ -35,7 +38,7 @@ int IPCComm::check_channels() {
     unsigned i;
     int error_code = 0;
 #ifdef _OPENMP
-    #pragma omp critical (ipc)
+#pragma omp critical (ipc)
   {
 #endif
     for (i = 0; i < _yggChannelsUsed; i++ ) {
@@ -90,7 +93,7 @@ int IPCComm::remove_comm(bool close_comm) {
     unsigned i;
     int ich = address->key();
 #ifdef _OPENMP
-    #pragma omp critical (ipc)
+#pragma omp critical (ipc)
   {
 #endif
     for (i = 0; i < IPCComm::_yggChannelsUsed; i++) {
@@ -120,7 +123,7 @@ int IPCComm::new_address() {
     // TODO: small chance of reusing same number
     int key = 0;
 #ifdef _OPENMP
-    #pragma omp critical (ipc)
+#pragma omp critical (ipc)
   {
 #endif
     if (!_ipc_rand_seeded) {
@@ -184,7 +187,7 @@ int IPCComm::send(const char* data, const size_t &len) {
     ygglog_debug << "ipc_comm_send(" << name << "): " << len << " bytes";
     if (!check_size(len))
         return send_normal(data, len);
-    send_large(data, len);
+    return send_large(data, len);
 }
 
 int IPCComm::send_normal(const char *data, const size_t &len) {
@@ -349,62 +352,107 @@ IPCComm::IPCComm(const std::string &name, Address *address, DIRECTION direction)
   @brief Print error message about IPC library not being installed.
  */
 static inline
-void ipc_install_error << ) {
+void ipc_install_error() {
     ygglog_error << "Compiler flag 'IPCINSTALLED' not defined so IPC bindings are disabled.";
 };
 
-IPCComm::IPCComm() {
-ipc_install_error();
-}
+//IPCComm::IPCComm() {
+//ipc_install_error();
+//}
 IPCComm::~IPCComm() {
-ipc_install_error();
+    ipc_install_error();
 }
+
 int IPCComm::check_channels() {
-ipc_install_error();
-return -1;
+    ipc_install_error();
+    return -1;
 }
+
 void IPCComm::add_channel() {
-ipc_install_error();
+    ipc_install_error();
 }
+
 int IPCComm::remove_comm(bool close_comm) {
-      // Prevent C4100 warning on windows by referencing param
+    // Prevent C4100 warning on windows by referencing param
 #ifdef _WIN32
-  UNUSED(close_comm);
+    UNUSED(close_comm);
 #endif
-  ipc_install_error();
-  return -1;
+    ipc_install_error();
+    return -1;
 }
-int IPCComm::new_ipc_address() {
-ipc_install_error();
-return -1;
+
+int IPCComm::new_address() {
+    ipc_install_error();
+    return -1;
 }
-int IPCComm::ipc_comm_nmsg() {
-ipc_install_error();
-return -1;
+
+int IPCComm::comm_nmsg() const {
+    ipc_install_error();
+    return -1;
 }
-int IPCComm::send(const std::string &data) {
-      // Prevent C4100 warning on windows by referencing param
+
+int IPCComm::send(const char *data, const size_t &len) {
+    // Prevent C4100 warning on windows by referencing param
 #ifdef _WIN32
-  UNUSED(data);
+    UNUSED(data);
 #endif
-  ipc_install_error();
-  return -1;
+    ipc_install_error();
+    return -1;
 }
-int IPCComm::recv(std::string &data) {
-      // Prevent C4100 warning on windows by referencing param
+
+int IPCComm::send(const dtype_t* dtype) {
+    // Prevent C4100 warning on windows by referencing param
 #ifdef _WIN32
-  UNUSED(data);
+    UNUSED(data);
 #endif
-  ipc_install_error();
-  return -1;
+    ipc_install_error();
+    return -1;
 }
-int IPCComm::send_nolimit(const std::string &data) {
-      // Prevent C4100 warning on windows by referencing param
+
+long IPCComm::recv(dtype_t* dtype) {
+    // Prevent C4100 warning on windows by referencing param
 #ifdef _WIN32
-  UNUSED(data);
+    UNUSED(data);
 #endif
-  ipc_install_error();
-  return -1;
+    ipc_install_error();
+    return -1;
 }
+
+long IPCComm::recv(char **data, const size_t &len, bool allow_realloc) {
+    // Prevent C4100 warning on windows by referencing param
+#ifdef _WIN32
+    UNUSED(data);
+#endif
+    ipc_install_error();
+    return -1;
+}
+
+int IPCComm::send_large(const char* data, const size_t &len) {
+    // Prevent C4100 warning on windows by referencing param
+#ifdef _WIN32
+    UNUSED(data);
+#endif
+    ipc_install_error();
+    return -1;
+}
+
+void IPCComm::init() {
+    ipc_install_error();
+}
+
+IPCComm::IPCComm(const std::string &name, utils::Address *address, DIRECTION direction) :
+        CommBase(address, direction, IPC_COMM) {
+    ipc_install_error();
+}
+
+int IPCComm::send_normal(const char* data, const size_t &len) {
+    // Prevent C4100 warning on windows by referencing param
+#ifdef _WIN32
+    UNUSED(data);
+#endif
+    ipc_install_error();
+    return -1;
+}
+
 
 #endif /*IPCINSTALLED*/

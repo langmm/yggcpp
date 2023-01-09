@@ -4,13 +4,13 @@
 
 using namespace communication::communicator;
 using namespace communication::utils;
-using namespace communication::datatypes;
+//using namespace communication::datatypes;
 
 #if defined(MPIINSTALLED) && defined(MPI_COMM_WORLD)
 
 mpi_registry_t &mpi_registry_t::Clone() const {
     MPI_Comm ncomm;
-    MPI_Comm_dup( (MPI_Comm)the_real_comm, &ncomm);
+    MPI_Comm_dup( (MPI_Comm)this->mpi_comm, &ncomm);
     auto *clone = new mpi_registry_t(ncomm);
     return *clone;
 }
@@ -81,7 +81,7 @@ MPIComm::~MPIComm() {
     handle = nullptr;
 }
 
-int MPIComm::mpi_comm_source_id() {
+int MPIComm::mpi_comm_source_id() const {
     if (direction == SEND)
         return 0;
     if (handle == nullptr) {
