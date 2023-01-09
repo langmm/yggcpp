@@ -148,12 +148,6 @@ Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string 
             return new ServerComm(name, (address == nullptr) ? nullptr : new Address(address), dir);
         case CLIENT_COMM:
             return new ClientComm(name, (address == nullptr) ? nullptr : new Address(address), dir);
-        case ASCII_FILE_COMM:
-            return new AsciiFileComm(name, dir);
-        case ASCII_TABLE_COMM:
-            return new AsciiTableComm(name, dir);
-        case ASCII_TABLE_ARRAY_COMM:
-            break;
         case MPI_COMM:
             std::string adr;
             return new MPIComm(name, (address == nullptr) ? adr : reinterpret_cast<std::string &>(address), dir);

@@ -36,15 +36,6 @@ comm_t* open_comm(const char* address, DIRECTION dir, const COMM_TYPE &t) {
         case CLIENT_COMM:
             ret->comm = (void*) new communication::communicator::ClientComm("", new communication::utils::Address(address), dir);
             break;
-        case ASCII_FILE_COMM:
-            ret->comm = (void*) new communication::communicator::AsciiFileComm(address, dir);
-            break;
-        case ASCII_TABLE_COMM:
-            ret->comm = (void*) new communication::communicator::AsciiTableComm(address, dir);
-            break;
-        case ASCII_TABLE_ARRAY_COMM:
-            ret->comm = (void*) new AsciiTableArrayComm("", new communication::utils::Address(address), dir);
-            break;
         case MPI_COMM:
             ret->comm = (void*) new communication::communicator::MPIComm("", new communication::utils::Address(address), dir);
             break;
@@ -73,15 +64,6 @@ comm_t* ini_comm(const char* name, DIRECTION dir, const COMM_TYPE &t) {
             break;
         case CLIENT_COMM:
             ret->comm = (void*) new communication::communicator::ClientComm(name, nullptr, dir);
-            break;
-        case ASCII_FILE_COMM:
-            ret->comm = (void*) new communication::communicator::AsciiFileComm(name, dir);
-            break;
-        case ASCII_TABLE_COMM:
-            ret->comm = (void*) new communication::communicator::AsciiTableComm(name, dir);
-            break;
-        case ASCII_TABLE_ARRAY_COMM:
-            ret->comm = (void*) new AsciiTableArrayComm(name, nullptr, dir);
             break;
         case MPI_COMM:
             ret->comm = (void*) new communication::communicator::MPIComm(name, nullptr, dir);
