@@ -85,7 +85,7 @@ int comm_send(comm_t* comm, const dtype_t* dtype) {
     return static_cast<communication::communicator::Comm_t*>(comm->comm)->send(dtype);
 }
 
-int comm_recv(comm_t* comm, dtype_t* dtype) {
+long comm_recv(comm_t* comm, dtype_t* dtype) {
     if (comm == NULL)
         return -1;
 }
