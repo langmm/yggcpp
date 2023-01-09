@@ -6,6 +6,10 @@ include(CheckCXXCompilerFlag)
 #        valuetest.cpp
 #        arraytest.cpp)
 
+set(UNITTEST_SOURCES
+        testutils.cpp
+        unittest.cpp)
+
 find_program(CCACH_FOUND ccache)
 if(CCACHE_FOUND)
     set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
@@ -43,13 +47,13 @@ endif()
 
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DRAPIDJSON_HAS_STDSTRING=1")
 
-#add_library(namespacetest STATIC namespacetest.cpp)
 include(GoogleTest)
-file(GLOB files "${CMAKE_CURRENT_SOURCE_DIR}/unittest/tests/communicators/*.cpp")
+file(GLOB files "${CMAKE_CURRENT_SOURCE_DIR}/unittest/tests/communicators/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/unittest/tests/utils/*.cpp")
 foreach(ffname ${files})
     get_filename_component(fname ${ffname} NAME_WE)
+    message("ZMQ  ${YGG_ZMQ_LIBS}")
     add_executable(unittest_${fname} ${CMAKE_CURRENT_SOURCE_DIR}/unittest/unittest.cpp ${ffname})
-    target_link_libraries(unittest_${fname} ${TEST_LIBRARIES} YggInterface gomp ${PYTHON_LIBRARIES} Python3::NumPy)
+    target_link_libraries(unittest_${fname} ${TEST_LIBRARIES} YggInterface gomp ${PYTHON_LIBRARIES} Python3::NumPy ${YGG_ZMQ_LIBS})
     add_test(NAME unittest_${fname}
             COMMAND ${CMAKE_BINARY_DIR}/test/unittest_${fname}
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR})

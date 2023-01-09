@@ -1,8 +1,14 @@
 cmake_minimum_required(VERSION 3.16)
-
+set(CMAKE_VERBOSE_MAKEFILE True)
 if (POLICY CMP0048)
     cmake_policy(SET CMP0048 NEW)
 endif (POLICY CMP0048)
+
+if (POLICY CMP0135)
+    cmake_policy(SET CMP0135 NEW)
+endif()
+
+set(CMAKE_INSTALL_PREFIX /home/friedel/devel/yggtests)
 
 project(YggInterfaceCPP VERSION 0.1.0.0)
 set(CMAKE_CXX_STANDARD 14)
@@ -13,12 +19,8 @@ include(FetchContent)
 FetchContent_Declare(
         RapidJSON_ygg
         GIT_REPOSITORY https://github.com/astro-friedel/rapidjson_ygg.git
-        GIT_TAG 8563bd7301ef2d96fae35f883d030f79a84b7d04
+        GIT_TAG 11179034d8fce7216d01f5183102ce9bfb044401
 )
-#FetchContent_Declare(
-#        Cppzmq
-#        GIT_REPOSITORY https://github.com/zeromq/cppzmq.git
-#)
 
 if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
     message(FATAL_ERROR "In-source build prohibited.")
@@ -28,63 +30,78 @@ set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${PROJECT_SOURCE_DIR}/cmake")
 
 #file(GLOB_RECURSE SOURCES "communication/**/*.cpp")
 file(GLOB SOURCES "communication/utils/*.cpp" "communication/communicators/*.cpp")
+add_library(YggInterface SHARED ${SOURCES})
+
 option(YGG_BUILD_TESTS "Build tests" ON)
 option(YGG_BUILD_THIRDPARTY_GTEST "Use gtest installation in 'thirdpart/gtest' by default if available" ON)
 
 set(YGG_BUILD_FLAGS "")
+option(ENABLE_ZMQ "Enable zeromq" ON)
 #find cppzmq wrapper, installed by make of cppzmq
-#find_package(cppzmq)
 ########################################################################
 # LIBZMQ dependency
 ########################################################################
-#find_package(libzmq)
-#IF (libzmq_FOUND)
-#    include_directories(${libzmq_INCLUDE_DIRS})
-#    list(APPEND MORE_LIBRARIES ${libzmq_LIBRARIES})
-#    IF (PC_LIBZMQ_FOUND)
-#        set(pkg_config_names_private "${pkg_config_names_private} libzmq")
-#        list(APPEND OPTIONAL_LIBRARIES_STATIC ${PC_LIBZMQ_STATIC_LDFLAGS})
-#    ELSE (PC_LIBZMQ_FOUND)
-#        set(pkg_config_libs_private "${pkg_config_libs_private} -lzmq")
-#    ENDIF (PC_LIBZMQ_FOUND)
-#ELSE (libzmq_FOUND)
-#    message("libzmq not found." )
-#ENDIF (libzmq_FOUND)
-#IF (cppzmq_FOUND)
-#    include_directories("${cppzmq_INCLUDE_DIR}")
-#    add_definitions(-DZMQ_BUILD_DRAFT_API)
-#ELSE()
-#    FetchContent_MakeAvailable(Cppzmq)
-#ENDIF()
+if(ENABLE_ZMQ)
+    include(ExternalProject)
 
-find_package(Boost COMPONENTS log REQUIRED)
+    EXTERNALPROJECT_ADD(
+            yggLibzmq
+            URL https://github.com/zeromq/libzmq/archive/refs/tags/v4.3.4.tar.gz
+            CMAKE_ARGS -DCMAKE_PREFIX_PATH=${CMAKE_INSTALL_PREFIX} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} -DBUILD_TESTS=0 -DENABLE_DRAFTS=1 -DWITH_DOCS=0 -DZMQ_BUILD_TESTS=0
+    )
+    EXTERNALPROJECT_GET_PROPERTY(yggLibzmq install_dir)
+    set(LIB_ZMQ_INSTALL_DIR install_dir)
+
+    EXTERNALPROJECT_ADD(
+            yggcppzmq
+            DEPENDS yggLibzmq
+            URL https://github.com/zeromq/cppzmq/archive/refs/tags/v4.9.0.zip
+            CMAKE_ARGS -DCMAKE_PREFIX_PATH=${LIB_ZMQ_INSTALL_DIR} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} -DCPPZMQ_BUILD_TESTS=0 -DCATCH_INSTALL_DOCS=0 -DCATCH_BUILD_TESTING=0 -DENABLE_DRAFTS=1
+    )
+
+    add_dependencies(YggInterface yggLibzmq yggcppzmq)
+    add_definitions(-DZMQINSTALLED -DZMQ_BUILD_DRAFT_API)
+
+    include_directories(${CMAKE_INSTALL_PREFIX}/include/libzmq
+            ${CMAKE_INSTALL_PREFIX}/include/cppzmq
+            ${CMAKE_INSTALL_PREFIX}/include)
+    target_link_libraries(YggInterface ${CMAKE_INSTALL_PREFIX}/lib/libzmq.so)
+
+    message("libzmq found ${libzmq_LIBRARIES}  ${libzmq_INCLUDE_DIRS}")
+else (ENABLE_ZMQ)
+    message("No zmq support will be built." )
+endif (ENABLE_ZMQ)
+
+find_package(Boost REQUIRED COMPONENTS log)
 include_directories(${Boost_INCLUDE_DIRS})
 add_definitions(-DBOOST_LOG_DYN_LINK)
+#if(Boost_date_time_FOUND)
+#    message("DATE TIME")
+#    add_definitions(-D_YGGIPC)
+#endif()
+add_definitions(-D_YGGIPC)
 
-########################################################################
-# LIBCZMQ dependency
-########################################################################
-find_package(libczmq)
-IF (libczmq_FOUND)
-    include_directories(${libczmq_INCLUDE_DIRS})
-    list(APPEND MORE_LIBRARIES ${libczmq_LIBRARIES})
-    IF (PC_LIBCZMQ_FOUND)
-        set(pkg_config_names_private "${pkg_config_names_private} libczmq")
-        list(APPEND OPTIONAL_LIBRARIES_STATIC ${PC_LIBCZMQ_STATIC_LDFLAGS})
-    ELSE (PC_LIBCZMQ_FOUND)
-        set(pkg_config_libs_private "${pkg_config_libs_private} -lczmq")
-    ENDIF (PC_LIBCZMQ_FOUND)
-    add_definitions(-DZMQINSTALLED)
-ELSE (libczmq_FOUND)
-    message("libczmq not found." )
-ENDIF (libczmq_FOUND)
 
 find_package(OpenMP)
-if (OpenMP_FOUND)
+if (OpenMP_CXX_FOUND)
     add_definitions(-D_OPENMP -DMPIINSTALLED)
+    message("MPI found")
+    target_link_libraries(YggInterface OpenMP::OpenMP_CXX)
 else()
     message("NO OpenMP")
 endif()
+
+find_package(MPI)
+if(MPI_CXX_FOUND)
+    target_link_libraries(YggInterface MPI::MPI_CXX)
+ENDIF()
+
+#get_cmake_property(_variableNames VARIABLES)
+#list (SORT _variableNames)
+#foreach (_variableName ${_variableNames})
+#    message(STATUS "${_variableName}=${${_variableName}}")
+#endforeach()
+
 
 find_package(Python3 COMPONENTS Interpreter Development NumPy REQUIRED)
 include_directories(${Python_INCLUDE_DIRS})
@@ -97,9 +114,13 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     set(YGG_PYTHON_ENV "${YGG_PYTHON_ENV};PYTHONHOME=${Python3_RUNTIME_LIBRARY_DIRS}")
 endif()
 
-add_library(YggInterface SHARED ${SOURCES})
 target_link_libraries(YggInterface ${PYTHON_LIBRARIES} Python3::NumPy)
 target_link_libraries(YggInterface ${Boost_LOG_LIBRARY})
+if (Boost_DATE_TIME_FOUND)
+    target_link_libraries(YggInterface ${Boost_DATE_TIME_LIBRARY})
+else()
+    add_definitions(-DBOOST_DATE_TIME_NO_LIB)
+endif()
 
 include_directories("communication")
 
@@ -129,15 +150,10 @@ IF (WIN32)
                 czmq PROPERTIES
                 IMPORTED_LOCATION C:\\projects\\build_czmq\\Debug\\czmq.lib)
         TARGET_LINK_LIBRARIES(YggInterface czmq)
-        add_definitions(-DIPCINSTALLED)
     endif()
 ELSE(WIN32)
     if (libzmq_FOUND)
         target_link_libraries(YggInterface ${libzmq_LIBRARIES})
-    endif()
-    if (libczmq_FOUND)
-        target_link_libraries(YggInterface ${libczmq_LIBRARIES})
-        add_definitions(-DIPCINSTALLED)
     endif()
 ENDIF(WIN32)
 
