@@ -107,17 +107,17 @@ int ClientComm::remove_request(const std::string& req_id) {
     return 0;
 }
 
-int ClientComm::pop_response(const std::string& req_id, char** rdata,const size_t &rlen, const int allow_realloc) {
+int ClientComm::pop_response(const std::string& req_id, char* rdata,const size_t &rlen, const int allow_realloc) {
     int idx = has_response(req_id);
     if (idx < 0)
         return -1;
     size_t ret = len[idx];
     if ((ret + 1) > rlen) {
         if (allow_realloc) {
-            (*rdata) = (char*)realloc(*rdata, ret + 1);
-            if (*rdata == nullptr) {
             ygglog_debug << "client_pop_response: reallocating buffer from " << rlen << " to "
             << ret + 1 << " bytes.";
+            rdata = (char*)realloc(rdata, ret + 1);
+            if (rdata == nullptr) {
                 ygglog_error << "client_pop_response: failed to realloc buffer.";
                 return -1;
             }
@@ -127,8 +127,8 @@ int ClientComm::pop_response(const std::string& req_id, char** rdata,const size_
             return -((int)(ret));
         }
     }
-    memcpy(*rdata, data[idx], ret);
-    (*rdata)[ret] = '\0';
+    memcpy(rdata, data[idx], ret);
+    rdata[ret] = '\0';
     if (remove_request(req_id) < 0)
         return -1;
     return static_cast<int>(ret);
