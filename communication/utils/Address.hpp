@@ -23,6 +23,10 @@ public:
     bool operator==(const Address &adr);
 
     bool valid() const;
+    friend std::ostream &operator<<(std::ostream &out, const Address &addr) {
+        out << addr._address;
+        return out;
+    }
 
 private:
     std::string _address;
