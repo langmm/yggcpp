@@ -20,7 +20,7 @@ void close_comm(comm_t* comm) {
 comm_t* open_comm(const char* address, DIRECTION dir, const COMM_TYPE &t) {
     auto ret = (comm_t*)malloc(sizeof(comm_t));
     if (ret == nullptr) {
-        communication::utils::ygglog_error("new_comm_base: Failed to malloc comm.");
+        ygglog_error << "new_comm_base: Failed to malloc comm.";
         return ret;
     }
     switch (t) {
@@ -58,7 +58,7 @@ comm_t* open_comm(const char* address, DIRECTION dir, const COMM_TYPE &t) {
 comm_t* ini_comm(const char* name, DIRECTION dir, const COMM_TYPE &t) {
     auto ret = (comm_t*)malloc(sizeof(comm_t));
     if (ret == nullptr) {
-        communication::utils::ygglog_error("new_comm_base: Failed to malloc comm.");
+        ygglog_error << "new_comm_base: Failed to malloc comm.";
         return ret;
     }
     switch (t) {

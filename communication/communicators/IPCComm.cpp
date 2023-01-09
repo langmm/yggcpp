@@ -28,7 +28,7 @@ IPCComm::~IPCComm() {
 int IPCComm::check_channels() {
     // Fail if name is empty
     if (name.empty()) {
-        ygglog_error("Cannot create channel with empty name.");
+        ygglog_error << "Cannot create channel with empty name.";
         return -1;
     }
     // Fail if trying to re-use the same channel twice
@@ -40,15 +40,15 @@ int IPCComm::check_channels() {
 #endif
     for (i = 0; i < _yggChannelsUsed; i++ ) {
         if (IPCComm::_yggChannelNames[i] == address->key()) {
-            ygglog_error("Attempt to re-use channel: name=%s, key=%s, i=%d",
-                         name.c_str(), address->address().c_str(), i);
+            ygglog_error << "Attempt to re-use channel: name=" << name << ", key="
+                         << address << ", i=" << i;
             error_code = -1;
             break;
         }
     }
     // Fail if > _yggTrackChannels channels used
     if ((!error_code) && (IPCComm::_yggChannelsUsed >= _yggTrackChannels)) {
-        ygglog_error("Too many channels in use, max: %d", _yggTrackChannels);
+        ygglog_error << "Too many channels in use, max: " << _yggTrackChannels;
         error_code = -1;
     }
 #ifdef _OPENMP
@@ -103,7 +103,7 @@ int IPCComm::remove_comm(bool close_comm) {
         }
     }
     if (ret < 0) {
-        ygglog_error("remove_comm(%s): Could not locate comm in register.", name.c_str());
+        ygglog_error << "remove_comm(" << name << "): Could not locate comm in register.";
     }
 #ifdef _OPENMP
     }
@@ -144,8 +144,8 @@ int IPCComm::new_address() {
     int *fid = new int;
     fid[0] = msgget(key, (IPC_CREAT | 0777));
     if (fid[0] < 0) {
-        ygglog_error("new_ipc_address: msgget(%d, %d | 0777) ret(%d), errno(%d): %s",
-                     key, IPC_CREAT, fid[0], errno, strerror(errno));
+        ygglog_error << "new_ipc_address: msgget(" << key << ", " << IPC_CREAT << " | 0777) ret(" << fid[0]
+                     << "), errno(" << errno << "): " << strerror(errno);
         return -1;
     }
     handle = fid;
@@ -160,13 +160,13 @@ int IPCComm::new_address() {
 int IPCComm::comm_nmsg() const {
     struct msqid_ds buf;
     if (handle == nullptr) {
-        ygglog_error("ipc_comm_nmsg: Queue handle is NULL.");
+        ygglog_error << "ipc_comm_nmsg: Queue handle is NULL.";
         return -1;
     }
 
     int rc = msgctl(handle[0], IPC_STAT, &buf);
     if (rc != 0) {
-        /* ygglog_error("ipc_comm_nmsg: Could not access queue."); */
+        /* ygglog_error << "ipc_comm_nmsg: Could not access queue."); */
         return 0;
     }
     int ret = static_cast<int>(buf.msg_qnum);
@@ -181,7 +181,7 @@ int IPCComm::comm_nmsg() const {
   @returns int 0 if send succesfull, -1 if send unsuccessful.
  */
 int IPCComm::send(const char* data, const size_t &len) {
-    ygglog_debug("ipc_comm_send(%s): %d bytes", name.c_str(), len);
+    ygglog_debug << "ipc_comm_send(" << name << "): " << len << " bytes";
     if (!check_size(len))
         return send_normal(data, len);
     send_large(data, len);
@@ -195,21 +195,21 @@ int IPCComm::send_normal(const char *data, const size_t &len) {
     memcpy(t.data, data, len);
     while (true) {
         ret = msgsnd(handle[0], &t, len, IPC_NOWAIT);
-        ygglog_debug("ipc_comm_send(%s): msgsnd returned %d", name.c_str(), ret);
+        ygglog_debug << "ipc_comm_send(" << name << "): msgsnd returned " << ret;
         if (ret == 0)
             break;
         if ((ret == -1) && (errno == EAGAIN)) {
-            ygglog_debug("ipc_comm_send(%s): msgsnd, sleep", name.c_str());
+            ygglog_debug << "ipc_comm_send(" << name << "): msgsnd, sleep";
             usleep(YGG_SLEEP_TIME);
         } else {
             struct msqid_ds buf;
             int rtrn = msgctl(handle[0], IPC_STAT, &buf);
             if ((rtrn == 0) && ((buf.msg_qnum + len) > buf.msg_qbytes)) {
-                ygglog_debug("ipc_comm_send(%s): msgsnd, queue full, sleep", name.c_str());
+                ygglog_debug << "ipc_comm_send(" << name << "): msgsnd, queue full, sleep";
                 usleep(YGG_SLEEP_TIME);
             } else {
-                ygglog_error("ipc_comm_send:  msgsend(%d, %p, %d, IPC_NOWAIT) ret(%d), errno(%d): %s",
-                             handle[0], &t, len, ret, errno, strerror(errno));
+                ygglog_error << "ipc_comm_send:  msgsend(" << handle[0] << ", " << &t << ", " << len
+                             << ", IPC_NOWAIT) ret(" << ret << "), errno(" << errno << "): " << strerror(errno);
                 ret = -1;
                 break;
             }
@@ -234,7 +234,7 @@ int IPCComm::send_large(const char *data, const size_t &len) {
     sprintf(msg, "%ld", (long)(len));
 
     if ((ret = send_normal(msg, strlen(msg))) != 0) {
-        ygglog_debug("ipc_comm_send_nolimit(%s): sending size of payload failed.", name.c_str());
+        ygglog_debug << "ipc_comm_send_nolimit(" << name << "): sending size of payload failed.";
         return ret;
     }
     size_t prev = 0;
@@ -245,17 +245,16 @@ int IPCComm::send_large(const char *data, const size_t &len) {
             msgsiz = len - prev;
         ret = send_normal(data + prev, msgsiz);
         if (ret != 0) {
-            ygglog_debug("ipc_comm_send_nolimit(%s): send interupted at %d of %d bytes.",
-                         name.c_str(), static_cast<int>(prev), static_cast<int>(len));
+            ygglog_debug << "ipc_comm_send_nolimit(" << name << "): send interupted at " << prev
+                         << " of " << len << " bytes.";
             break;
         }
         prev += msgsiz;
-        ygglog_debug("ipc_comm_send_nolimit(%s): %d of %d bytes sent",
-                     name.c_str(), prev, len);
+        ygglog_debug << "ipc_comm_send_nolimit(" << name << "): " << prev << " of " << len << " bytes sent";
     }
 
     if (ret == 0)
-        ygglog_debug("ipc_comm_send(%s): returning %d", name.c_str(), ret);
+        ygglog_debug << "ipc_comm_send(" << name << "): returning " <<  ret;
     return ret;
 }
 
@@ -269,7 +268,7 @@ int IPCComm::send_large(const char *data, const size_t &len) {
  */
  // TODO: Handle long messages
 long IPCComm::recv(char** data, const size_t& len, bool allow_realloc) {
-    ygglog_debug("ipc_comm_recv(%s)", name.c_str());
+    ygglog_debug << "ipc_comm_recv(" << name << ")";
     msgbuf_t t;
     t.mtype = 1;
     long ret = -1;
@@ -280,36 +279,36 @@ long IPCComm::recv(char** data, const size_t& len, bool allow_realloc) {
             ygglog_debug("ipc_comm_recv(%s): no input, sleep", name.c_str());
             usleep(YGG_SLEEP_TIME);
         } else {
-            ygglog_debug("ipc_comm_recv(%s): received input: %d bytes, ret=%d",
-                         name.c_str(), strlen(t.data), ret);
+            ygglog_debug << "ipc_comm_recv(" << name << "): received input: " << strlen(t.data) << " bytes, ret="
+                         << ret;
             break;
         }
     }
     if (ret <= 0) {
-        ygglog_debug("ipc_comm_recv: msgrecv(%d, %p, %d, 0, IPC_NOWAIT): %s",
-                     handle, &t, (int)YGG_MSG_MAX, strerror(errno));
+        ygglog_debug << "ipc_comm_recv: msgrecv(" << handle << ", " << &t << ", " << YGG_MSG_MAX << ", 0, IPC_NOWAIT): "
+                     << strerror(errno);
         return -1;
     }
     len_recv = ret + 1;
     if (len_recv > (int)len) {
         if (allow_realloc) {
-            ygglog_debug("ipc_comm_recv(%s): reallocating buffer from %d to %d bytes.",
-                         name.c_str(), (int)len, len_recv);
             (*data) = (char*)realloc(*data, len_recv);
             if (*data == nullptr) {
-                ygglog_error("ipc_comm_recv(%s): failed to realloc buffer.", name.c_str());
+            ygglog_debug << "ipc_comm_recv(" << name << "): reallocating buffer from " << len << " to "
+                         << len_recv << " bytes.";
+                ygglog_error << "ipc_comm_recv(" << name << "): failed to realloc buffer.";
                 return -1;
             }
         } else {
-            ygglog_error("ipc_comm_recv(%s): buffer (%d bytes) is not large enough for message (%d bytes)",
-                         name.c_str(), len, len_recv);
+            ygglog_error << "ipc_comm_recv(" << name << "): buffer (" << len
+                         << " bytes) is not large enough for message (" << len_recv << " bytes)";
             return -(len_recv - 1);
         }
     }
     memcpy(*data, t.data, len_recv);
     (*data)[len_recv - 1] = '\0';
     ret = len_recv - 1;
-    ygglog_debug("ipc_comm_recv(%s): returns %d bytes", name.c_str(), ret);
+    ygglog_debug << "ipc_comm_recv(" << name << "): returns " << ret << " bytes";
     return ret;
 }
 
@@ -350,8 +349,8 @@ IPCComm::IPCComm(const std::string &name, Address *address, DIRECTION direction)
   @brief Print error message about IPC library not being installed.
  */
 static inline
-void ipc_install_error() {
-  ygglog_error("Compiler flag 'IPCINSTALLED' not defined so IPC bindings are disabled.");
+void ipc_install_error << ) {
+    ygglog_error << "Compiler flag 'IPCINSTALLED' not defined so IPC bindings are disabled.";
 };
 
 IPCComm::IPCComm() {

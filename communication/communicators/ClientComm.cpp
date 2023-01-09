@@ -14,7 +14,7 @@ ClientComm::ClientComm(const std::string &name, Address *address, DIRECTION dire
     data.clear();
     len.clear();
 
-    ygglog_debug("init_client_comm: Creating a client comm");
+    ygglog_debug << "init_client_comm: Creating a client comm";
 #ifdef _OPENMP
 #pragma omp critical (client)
     {
@@ -86,7 +86,7 @@ int ClientComm::add_request(const std::string& req_id) {
 int ClientComm::add_response(const std::string& req_id, const char* rdata, const size_t &rlen) {
     int idx = has_request(req_id);
     if (idx < 0) {
-        ygglog_error("add_response: idx = %d", idx);
+        ygglog_error << "add_response: idx = " << idx;
         return idx;
     }
     memcpy(data[idx], rdata, rlen);
@@ -114,16 +114,16 @@ int ClientComm::pop_response(const std::string& req_id, char** rdata,const size_
     size_t ret = len[idx];
     if ((ret + 1) > rlen) {
         if (allow_realloc) {
-            ygglog_debug("client_pop_response: reallocating buffer from %d to %d bytes.",
-                         rlen, ret + 1);
             (*rdata) = (char*)realloc(*rdata, ret + 1);
             if (*rdata == nullptr) {
-                ygglog_error("client_pop_response: failed to realloc buffer.");
+            ygglog_debug << "client_pop_response: reallocating buffer from " << rlen << " to "
+            << ret + 1 << " bytes.";
+                ygglog_error << "client_pop_response: failed to realloc buffer.";
                 return -1;
             }
         } else {
-            ygglog_error("client_pop_response: buffer (%d bytes) is not large enough for message (%d bytes)",
-                         rlen, ret + 1);
+            ygglog_error << "client_pop_response: buffer (" << rlen << " bytes) is not large enough for message ("
+                         << ret + 1 << " bytes)";
             return -((int)(ret));
         }
     }
@@ -163,34 +163,31 @@ communication::datatypes::CommHead ClientComm::response_header(datatypes::CommHe
         comm->flags |= COMM_FLAG_CLIENT_RESPONSE;
         //int ret = comm->new_address();
         comm->const_flags |= COMM_EOF_SENT | COMM_EOF_RECV;
-        ygglog_debug("client_response_header(%s): Created response comm",
-                     name.c_str());
+        ygglog_debug << "client_response_header(" << name << "): Created response comm";
     }
     // Add address & request ID to header
     head.response_address->address(comm->address->address());
     head.request_id = std::to_string(rand());
     if (add_request(head.request_id) < 0) {
-        ygglog_error("client_response_header(%s): Failed to add request",
-                     name.c_str());
+        ygglog_error << "client_response_header(" << name << "): Failed to add request";
         head.flags = head.flags & ~HEAD_FLAG_VALID;
         return head;
     }
     if (has_request(head.request_id) < 0) {
-        ygglog_error("client_response_header(%s): Failed to add request",
-                     name.c_str());
+        ygglog_error << "client_response_header(" << name << "): Failed to add request";
         head.flags = head.flags & ~HEAD_FLAG_VALID;
         return head;
     }
-    ygglog_debug("client_response_header(%s): response_address = %s, request_id = %s",
-                 name.c_str(), head.response_address, head.request_id.c_str());
+    ygglog_debug << "client_response_header(" << name << "): response_address = " << head.response_address
+                 << ", request_id = " << head.request_id;
     return head;
 }
 
 int ClientComm::send(const char* rdata, const size_t &rlen) {
     int ret;
-    ygglog_debug("client_comm_send(%s): %d bytes", name.c_str(), rlen);
+    ygglog_debug << "client_comm_send(" << name << "): " << rlen << " bytes";
     if (base_handle == nullptr) {
-        ygglog_error("client_comm_send(%s): no request comm registered", name.c_str());
+        ygglog_error <<"client_comm_send(" << name << "): no request comm registered";
         return -1;
     }
     ret = base_handle->send(rdata, rlen);
@@ -201,13 +198,13 @@ int ClientComm::send(const char* rdata, const size_t &rlen) {
 }
 
 long ClientComm::recv(char** rdata, const size_t &rlen, bool allow_realloc)  {
-    ygglog_debug("client_comm_recv(%s)", name.c_str());
+    ygglog_debug << "client_comm_recv(" << name << ")";
     if (comm == nullptr) {
-        ygglog_error("client_comm_recv(%s): no response struct set up", name.c_str());
+        ygglog_error << "client_comm_recv(" << name << "): no response struct set up";
         return -1;
     }
     if (request_id.empty()) {
-        ygglog_error("client_comm_recv(%s): no response comm registered", name.c_str());
+        ygglog_error << "client_comm_recv(" << name << "): no response comm registered";
         return -1;
     }
     std::string req_id = request_id[0];
@@ -215,35 +212,30 @@ long ClientComm::recv(char** rdata, const size_t &rlen, bool allow_realloc)  {
     while (has_response(req_id) < 0) {
         ret = comm->recv(rdata, rlen, allow_realloc);
         if (ret < 0) {
-            ygglog_error("client_comm_recv(%s): default_comm_recv returned %d",
-                         name.c_str(), ret);
+            ygglog_error << "client_comm_recv(" << name << "): default_comm_recv returned " << ret;
             return ret;
         }
         auto head = datatypes::CommHead(*rdata, rlen);
         if (!(head.flags & HEAD_FLAG_VALID)) {
-            ygglog_error("client_comm_recv(%s): Invalid header.", name.c_str());
+            ygglog_error << "client_comm_recv(" << name << "): Invalid header.";
             return -1;
         }
         if (head.request_id == req_id) {
-            ygglog_debug("client_comm_recv(%s): default_comm_recv returned %d",
-                         name.c_str(), ret);
+            ygglog_debug << "client_comm_recv(" << name << "): default_comm_recv returned " << ret;
             if (remove_request(req_id) < 0) {
-                ygglog_error("client_comm_recv(%s): Failed to remove request %s",
-                             name.c_str(), req_id.c_str());
+                ygglog_error << "client_comm_recv(" << name << "): Failed to remove request " << req_id;
                 return -1;
             }
             return ret;
         }
         if (add_response(head.request_id, *rdata, ret) < 0) {
-            ygglog_error("client_comm_recv(%s): Failed to add response %s",
-                         name.c_str(), head.request_id.c_str());
+            ygglog_error << "client_comm_recv(" << name << "): Failed to add response " << head.request_id;
             return -1;
         }
     }
     ret = pop_response(req_id, rdata, rlen, allow_realloc);
     // Close response comm and decrement count of response comms
-    ygglog_debug("client_comm_recv(%s): client_pop_response returned %d",
-                 name.c_str(), ret);
+    ygglog_debug << "client_comm_recv(" << name << "): client_pop_response returned %d";
     return ret;
 }
 

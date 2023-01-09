@@ -1,7 +1,7 @@
 #pragma once
 
 #include "DefaultComm.hpp"
-#include "datatypes/CommHead.hpp"
+#include "CommHead.hpp"
 
 namespace communication {
 namespace communicator {

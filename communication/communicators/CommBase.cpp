@@ -60,8 +60,8 @@ Comm_t::Comm_t(const std::string &name, DIRECTION direction, const COMM_TYPE &t)
             }
             addr = getenv(temp_name.c_str());
         }
-        ygglog_debug("init_comm_base: model_name = %s, full_name = %s, address = %s",
-                     model_name, full_name.c_str(), addr);
+        ygglog_debug << "init_comm_base: model_name = " << model_name << ", full_name = " << full_name
+                     << ", address = " << addr;
         this->name = full_name;
         if (addr != nullptr) {
             this->address->address(addr);
@@ -72,11 +72,10 @@ Comm_t::Comm_t(const std::string &name, DIRECTION direction, const COMM_TYPE &t)
     }
 
     if (!this->address->valid() && t != SERVER_COMM && t != CLIENT_COMM) {
-        ygglog_error("init_comm_base: %s not registered as environment variable.\n",
-                     full_name.c_str());
+        ygglog_error << "init_comm_base: " << full_name << " not registered as environment variable.\n";
         flags &= ~COMM_FLAG_VALID;
     }
-    ygglog_debug("init_comm_base(%s): Done", name.c_str());
+    ygglog_debug << "init_comm_base(" << name << "): Done";
 
 }
 
@@ -99,12 +98,12 @@ Comm_t::Comm_t(const std::string &name, DIRECTION direction, const COMM_TYPE &t)
 }*/
 
 Comm_t::~Comm_t() {
-    ygglog_debug("~CommBase: Started");
+    ygglog_debug << "~CommBase: Started";
     if (last_send != nullptr)
         delete last_send;
     if (address != nullptr)
         delete address;
-    ygglog_debug("~CommBase: Finished");
+    ygglog_debug << "~CommBase: Finished";
 }
 
 bool Comm_t::check_size(const size_t &len) const {
@@ -114,8 +113,8 @@ bool Comm_t::check_size(const size_t &len) const {
 #endif
     // Make sure you aren't sending a message that is too big
     if (len > YGG_MSG_MAX) {
-        ygglog_error("comm_base_send(%s): message too large for single packet (YGG_MSG_MAX=%d, len=%d)",
-                     name.c_str(), YGG_MSG_MAX, len);
+        ygglog_error << "comm_base_send(" << name << "): message too large for single packet (YGG_MSG_MAX="
+                     << YGG_MSG_MAX << ", len=" << len << ")";
         return false;
     }
     return true;

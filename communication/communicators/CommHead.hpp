@@ -1,6 +1,7 @@
 #pragma once
 
 #include <map>
+#include "datatypes/dtype_t.hpp"
 #include "utils/Address.hpp"
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"

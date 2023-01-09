@@ -33,7 +33,7 @@ CommHead::CommHead(const char *buf, const size_t &buf_siz) {
         // Split header/body
         ret = split_head_body(buf, buf_siz, &head, &headsiz);
         if (ret < 0) {
-            utils::ygglog_error("parse_comm_header: Error splitting head and body.");
+            ygglog_error << "parse_comm_header: Error splitting head and body.";
             flags &= ~HEAD_FLAG_VALID;
             if (head != nullptr)
                 free(head);
@@ -61,7 +61,7 @@ CommHead::CommHead(const char *buf, const size_t &buf_siz) {
             dtype = create_dtype_direct();
         }
         if (!(update_header_from_doc(head_doc))) {
-            ygglog_error("parse_comm_header: Error updating header from JSON doc.");
+            ygglog_error << "parse_comm_header: Error updating header from JSON doc.";
             flags &= ~HEAD_FLAG_VALID;
             delete dtype;
             dtype = nullptr;
@@ -70,7 +70,7 @@ CommHead::CommHead(const char *buf, const size_t &buf_siz) {
         }
         free(head);
     } catch(...) {
-        ygglog_error("parse_comm_header: C++ exception thrown.");
+        ygglog_error << "parse_comm_header: C++ exception thrown.";
         flags &= ~HEAD_FLAG_VALID;
         if (head != nullptr)
             free(head);
@@ -80,16 +80,16 @@ CommHead::CommHead(const char *buf, const size_t &buf_siz) {
 bool CommHead::update_header_from_doc(rapidjson::Value &head_doc) {
     // Type
     if (!(head_doc.IsObject())) {
-        ygglog_error("update_header_from_doc: head document must be an object.");
+        ygglog_error << "update_header_from_doc: head document must be an object.";
         return false;
     }
     // Size
     if (!(head_doc.HasMember("size"))) {
-        ygglog_error("update_header_from_doc: No size information in the header.");
+        ygglog_error << "update_header_from_doc: No size information in the header.";
         return false;
     }
     if (!(head_doc["size"].IsInt())) {
-        ygglog_error("update_header_from_doc: Size is not integer.");
+        ygglog_error << "update_header_from_doc: Size is not integer.";
         return false;
     }
     size = (size_t)(head_doc["size"].GetInt());
@@ -101,7 +101,7 @@ bool CommHead::update_header_from_doc(rapidjson::Value &head_doc) {
     // Flag specifying that type is in data
     if (head_doc.HasMember("type_in_data")) {
         if (!(head_doc["type_in_data"].IsBool())) {
-            ygglog_error("update_header_from_doc: type_in_data is not boolean.");
+            ygglog_error << "update_header_from_doc: type_in_data is not boolean.";
             return false;
         }
         if (head_doc["type_in_data"].GetBool()) {
@@ -116,13 +116,13 @@ bool CommHead::update_header_from_doc(rapidjson::Value &head_doc) {
     for (const auto& n : string_fields) {
         if (head_doc.HasMember(n.second.c_str())) {
             if (!(head_doc[n.second.c_str()].IsString())) {
-                ygglog_error("update_header_from_doc: '%s' is not a string.", n.second.c_str());
+                ygglog_error << "update_header_from_doc: '" << n.second << "' is not a string.";
                 return false;
             }
             const std::string value(head_doc[n.second.c_str()].GetString());
             if (value.size() > COMMBUFFSIZ) {
-                ygglog_error("update_header_from_doc: Size of value for key '%s' (%d) exceeds size of target buffer (%d).",
-                             n.second.c_str(), std::to_string(value.size()).c_str(), COMMBUFFSIZ);
+                ygglog_error << "update_header_from_doc: Size of value for key '" << n.second << "' ("
+                             << value.size() << ") exceeds size of target buffer (" << COMMBUFFSIZ << ").";
                 return false;
             }
             switch (n.first) {

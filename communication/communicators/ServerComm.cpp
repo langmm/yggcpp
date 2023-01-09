@@ -54,7 +54,7 @@ int ServerComm::has_request(const std::string &req_id) const {
 }
 
 int ServerComm::has_response(const std::string &resp_id) const {
-    ygglog_debug("server_has_response: nreq = %ld", request_id.size());
+    ygglog_debug << "server_has_response: nreq = " << request_id.size();
     for (size_t i = 0; i < request_id.size(); i++) {
         if (response_id[i] == resp_id)
             return (int)i;
@@ -92,7 +92,7 @@ int ServerComm::add_comm(Address* address){
     base->flags |= COMM_ALLOW_MULTIPLE_COMMS;
     base->const_flags |= COMM_EOF_SENT | COMM_EOF_RECV;
     comms.push_back(base);
-    ygglog_debug("server_add_comm(%s): Added comm %ld", address->address().c_str(), comms.size());
+    ygglog_debug << "server_add_comm(" << address->address() << "): Added comm " << comms.size();
     return 0;
 }
 Comm_t* ServerComm::get_comm(const int idx) const{
@@ -110,8 +110,8 @@ Comm_t* ServerComm::get_comm(const int idx) const{
 }
 
 int ServerComm::add_request(const std::string &req_id, Address* response_address){
-    ygglog_debug("server_add_request: adding request %s for address %s",
-                 req_id.c_str(), response_address->address().c_str());
+    ygglog_debug << "server_add_request: adding request " << req_id << " for address "
+                 << response_address->address();
     std::string resp_id = req_id;
     std::string uuid;
 
@@ -119,7 +119,7 @@ int ServerComm::add_request(const std::string &req_id, Address* response_address
         uuid = std::to_string(rand());
         resp_id += uuid;
     }
-    ygglog_debug("server_add_request: Response id = %s", resp_id.c_str());
+    ygglog_debug << "server_add_request: Response id = " << resp_id;
     // request_id
     //size_t nrq = request_id.size();
     //request_id.resize(nrq + 1);
@@ -134,23 +134,22 @@ int ServerComm::add_request(const std::string &req_id, Address* response_address
     int c_idx = has_comm(response_address);
     if (c_idx < 0) {
         if (add_comm(new Address(response_address)) < 0) {
-            ygglog_error("server_add_request: Failed to add comm");
+            ygglog_error << "server_add_request: Failed to add comm";
             return -1;
         }
         c_idx = comms.size() - 1;
-        ygglog_debug("server_add_request: Added comm %ld (of %ld), %s",
-                     c_idx, comms.size(), response_address);
+        ygglog_debug << "server_add_request: Added comm " << c_idx << " (of " << comms.size() << "), "
+                     << response_address;
     }
 
     comm_idx.push_back(static_cast<size_t>(c_idx));
-    ygglog_debug("server_add_request: nreq = %ld, comm_idx = %ld",
-                 request_id.size(), c_idx);
+    ygglog_debug << "server_add_request: nreq = " << request_id.size() << ", comm_idx = " << c_idx;
     return 0;
 }
 int ServerComm::remove_request(size_t idx){
     if (request_id.empty() || idx >= request_id.size())
         return -1;
-    ygglog_debug("server_remove_request: Removing request %ld", idx);
+    ygglog_debug << "server_remove_request: Removing request " <<  idx;
     int nrem = request_id.size() - (idx + 1);
 
     // TODO: should this be a smart pointer?
@@ -168,40 +167,38 @@ int ServerComm::comm_nmsg() const {
 }
 comm_head_t ServerComm::response_header(comm_head_t head){
     if (request_id.empty()) {
-        ygglog_error("server_response_header(%s): There are not any registered requests.",
-                     name.c_str());
+        ygglog_error << "server_response_header(" << name << "): There are not any registered requests.";
         head.flags = head.flags & ~HEAD_FLAG_VALID;
         return head;
     }
     // Add request ID to header
     head.request_id = info->request_id[0];
-    ygglog_debug("server_response_header(%s): request_id = %s",
-                 name.c_str(), head.request_id.c_str());
+    ygglog_debug << "server_response_header(" << name << "): request_id = " << head.request_id;
     return head;
 
 }
 int ServerComm::send(const char* data, const size_t &len){
-    ygglog_debug("server_comm_send(%s): %d bytes", name.c_str(), len);
+    ygglog_debug << "server_comm_send(" << name << "): " << len << " bytes";
     if (comms.empty()) {
-        ygglog_error("server_comm_send(%s): no response comm registered", name.c_str());
+        ygglog_error << "server_comm_send(" << name << "): no response comm registered";
         return -1;
     }
     Comm_t* response_comm = get_comm(0);
     if (response_comm == nullptr) {
-        ygglog_error("server_comm_send(%s): Failed to get response comm", name.c_str());
+        ygglog_error << "server_comm_send(" << name << "): Failed to get response comm";
         return -1;
     }
     int ret = response_comm->send(data, len);
-    ygglog_debug("server_comm_send(%s): Sent %d bytes", name.c_str(), len);
+    ygglog_debug << "server_comm_send(" << name << "): Sent " << len << " bytes";
     if (remove_request(0) < 0)
         return -1;
     return ret;
 }
 
 long ServerComm::recv(char** data, const size_t &len, bool allow_realloc){
-    ygglog_debug("server_comm_recv(%s)", name.c_str());
+    ygglog_debug << "server_comm_recv(" << name << ")";
     if (base_handle == nullptr) {
-        ygglog_error("server_comm_recv(%s): no request comm registered", name.c_str());
+        ygglog_error << "server_comm_recv(" << name << "): no request comm registered";
         return -1;
     }
     long ret = base_handle->recv(data, len, allow_realloc);
@@ -216,7 +213,7 @@ long ServerComm::recv(char** data, const size_t &len, bool allow_realloc){
     // Initialize new comm from received address
     auto head = comm_head_t(*data, len);
     if (!(head.flags & HEAD_FLAG_VALID)) {
-        ygglog_error("server_comm_recv(%s): Error parsing header.", name.c_str());
+        ygglog_error << "server_comm_recv(" << name << "): Error parsing header.";
         return -1;
     }
     // Return EOF
@@ -230,7 +227,7 @@ long ServerComm::recv(char** data, const size_t &len, bool allow_realloc){
     }
     // If there is not a response address
     if (head.response_address != nullptr || !head.response_address->valid()) {
-        ygglog_error("server_comm_recv(%s): No response address in message.", name.c_str());
+        ygglog_error << "server_comm_recv(" << name << "): No response address in message.";
         return -1;
     }
     address->address(head.id);

@@ -157,12 +157,12 @@ void CommBase<H, R>::reset() {
 
 template<typename H, typename R>
 CommBase<H, R>::~CommBase() {
-    utils::ygglog_debug("~CommBase: Started");
+    ygglog_debug << "~CommBase: Started";
     if (handle != nullptr)
         delete handle;
     if (reply != nullptr)
         delete reply;
-    utils::ygglog_debug("~CommBase: Finished");
+    ygglog_debug << "~CommBase: Finished";
 }
 
 template<typename H, typename R>
