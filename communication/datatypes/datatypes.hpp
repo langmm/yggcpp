@@ -4,8 +4,9 @@
 #include "utils/enums.hpp"
 #include <rapidjson/document.h>
 
+#ifndef MSG_HEAD_SEP
 #define MSG_HEAD_SEP "YGG_MSG_HEAD"
-
+#endif
 namespace communication {
 namespace datatypes {
 

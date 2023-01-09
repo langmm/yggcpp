@@ -1,6 +1,5 @@
 #include "comm_t.hpp"
 #include "comms.hpp"
-#include "utils/tools.hpp"
 #include "utils/logging.hpp"
 
 void free_comm(comm_t* comm) {
@@ -88,9 +87,12 @@ int comm_send(comm_t* comm, const dtype_t* dtype) {
 long comm_recv(comm_t* comm, dtype_t* dtype) {
     if (comm == NULL)
         return -1;
+
+    return static_cast<communication::communicator::Comm_t*>(comm->comm)->recv(dtype);
 }
 
 int comm_nmsg(comm_t* comm) {
     if (comm == NULL)
         return -1;
+    return static_cast<communication::communicator::Comm_t*>(comm->comm)->comm_nmsg();
 }
