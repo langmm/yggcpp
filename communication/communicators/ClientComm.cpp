@@ -197,7 +197,7 @@ int ClientComm::send(const char* rdata, const size_t &rlen) {
     return ret;
 }
 
-long ClientComm::recv(char** rdata, const size_t &rlen, bool allow_realloc)  {
+long ClientComm::recv(char* rdata, const size_t &rlen, bool allow_realloc)  {
     ygglog_debug << "client_comm_recv(" << name << ")";
     if (comm == nullptr) {
         ygglog_error << "client_comm_recv(" << name << "): no response struct set up";
@@ -215,7 +215,7 @@ long ClientComm::recv(char** rdata, const size_t &rlen, bool allow_realloc)  {
             ygglog_error << "client_comm_recv(" << name << "): default_comm_recv returned " << ret;
             return ret;
         }
-        auto head = datatypes::CommHead(*rdata, rlen);
+        auto head = datatypes::CommHead(rdata, rlen);
         if (!(head.flags & HEAD_FLAG_VALID)) {
             ygglog_error << "client_comm_recv(" << name << "): Invalid header.";
             return -1;
@@ -228,7 +228,7 @@ long ClientComm::recv(char** rdata, const size_t &rlen, bool allow_realloc)  {
             }
             return ret;
         }
-        if (add_response(head.request_id, *rdata, ret) < 0) {
+        if (add_response(head.request_id, rdata, ret) < 0) {
             ygglog_error << "client_comm_recv(" << name << "): Failed to add response " << head.request_id;
             return -1;
         }

@@ -157,7 +157,7 @@ int MPIComm::send(const char *data, const size_t &len) {
     return ret;
 }
 
-long MPIComm::recv(char** data, const size_t &len, bool allow_realloc) {
+long MPIComm::recv(char* data, const size_t &len, bool allow_realloc) {
     ygglog_debug << "mpi_comm_recv(" <<  name << ")";
     MPI::Status status;
     int adr = mpi_comm_source_id();
@@ -174,9 +174,9 @@ long MPIComm::recv(char** data, const size_t &len, bool allow_realloc) {
     }
     if (len_recv > len) {
         if (allow_realloc) {
-            (*data) = (char*)realloc(*data, len_recv);
-            if (*data == nullptr) {
             ygglog_debug << "mpi_comm_recv(" << name << "): reallocating buffer from " << len << " to " << len_recv << " bytes.";
+            data = (char*)realloc(data, len_recv);
+            if (data == nullptr) {
                 ygglog_error << "mpi_comm_recv(" << name << "): failed to realloc buffer.";
                 return -1;
             }
@@ -186,11 +186,10 @@ long MPIComm::recv(char** data, const size_t &len, bool allow_realloc) {
             return -len_recv;
         }
     }
-    handle->Recv(*data, len_recv, MPI_CHAR, adr, handle->tag, status);
+    handle->Recv(data, len_recv, MPI_CHAR, adr, handle->tag, status);
     if (status.Get_error()) {
         // TODO: Check status?
-        ygglog_error("mpi_comm_recv(%s): Error receiving message for tag = %d.",
-                     name.c_str(), handle->tag);
+        ygglog_error << "mpi_comm_recv(" << name << "): Error receiving message for tag = " << handle->tag;
         return -1;
     }
     ygglog_debug << "mpi_comm_recv(" << name << "): returns " << len_recv << " bytes";

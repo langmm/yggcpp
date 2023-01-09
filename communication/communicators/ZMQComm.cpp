@@ -362,11 +362,11 @@ int ZMQComm::set_reply_recv(Address* adr) {
         ygglog_error << "set_reply_recv(" << name << ") : Reply structure not initialized.";
         return out;
     }
-    // Match address and create if it dosn't exist
+    // Match address and create if it doesn't exist
     int isock = find_reply_socket(adr);
     if (isock < 0) {
         if (isock == -2) {
-            ygglog_error("set_reply_recv(%s): Error locating socket.", name.c_str());
+            ygglog_error << "set_reply_recv(" << name << ") : Error locating socket.";
             return out;
         }
         // Create new socket
@@ -757,7 +757,7 @@ int ZMQComm::recv_time_limit(zmq::multipart_t &msgs) {
   @returns int -1 if message could not be received. Length of the received
   message if message was received.
  */
-long ZMQComm::recv(char** data, const size_t &len, bool allow_realloc) {
+long ZMQComm::recv(char* data, const size_t &len, bool allow_realloc) {
     long ret = -1;
     zmq::multipart_t msgs;
     ygglog_debug << "zmq_comm_recv(" << name << ") ";
@@ -822,10 +822,10 @@ long ZMQComm::recv(char** data, const size_t &len, bool allow_realloc) {
     // Realloc and copy data
     if (len_recv > len) {
         if (allow_realloc) {
-            (*data) = (char*)realloc(*data, len_recv);
-            if (*data == nullptr) {
             ygglog_debug << "zmq_comm_recv(" << name << ") : reallocating buffer from " << len << " to "
                          << len_recv << " bytes.";
+            data = (char*)realloc(data, len_recv);
+            if (data == nullptr) {
                 ygglog_error << "zmq_comm_recv(" << name << ") : failed to realloc buffer.";
                 return -1;
             }
@@ -835,12 +835,12 @@ long ZMQComm::recv(char** data, const size_t &len, bool allow_realloc) {
             return -((int)(len_recv - 1));
         }
     }
-    strcpy(*data, "");
+    strcpy(data, "");
     for (auto& m: msgs) {
-        strncat(*data, m.data<char>(), m.size());
+        strncat(data, m.data<char>(), m.size());
     }
 
-    (*data)[len_recv-1] = '\0';
+    data[len_recv-1] = '\0';
     ret = (int)len_recv - 1;
     /*
     if (strlen(*data) != ret) {
@@ -850,7 +850,7 @@ long ZMQComm::recv(char** data, const size_t &len, bool allow_realloc) {
     }
     */
     // Check reply
-    ret = check_reply_recv(*data, ret);
+    ret = check_reply_recv(data, ret);
     if (ret < 0) {
         ygglog_error << "zmq_comm_recv(" << name << ") : failed to check for reply socket.";
         return ret;

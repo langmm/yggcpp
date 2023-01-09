@@ -267,7 +267,7 @@ int IPCComm::send_large(const char *data, const size_t &len) {
   message if message was received.
  */
  // TODO: Handle long messages
-long IPCComm::recv(char** data, const size_t& len, bool allow_realloc) {
+long IPCComm::recv(char* data, const size_t& len, bool allow_realloc) {
     ygglog_debug << "ipc_comm_recv(" << name << ")";
     msgbuf_t t;
     t.mtype = 1;
@@ -276,7 +276,7 @@ long IPCComm::recv(char** data, const size_t& len, bool allow_realloc) {
     while (true) {
         ret = msgrcv(handle[0], &t, YGG_MSG_MAX, 0, IPC_NOWAIT);
         if (ret == -1 && errno == ENOMSG) {
-            ygglog_debug("ipc_comm_recv(%s): no input, sleep", name.c_str());
+            ygglog_debug << "ipc_comm_recv(" << name << "): no input, sleep";
             usleep(YGG_SLEEP_TIME);
         } else {
             ygglog_debug << "ipc_comm_recv(" << name << "): received input: " << strlen(t.data) << " bytes, ret="
@@ -292,10 +292,10 @@ long IPCComm::recv(char** data, const size_t& len, bool allow_realloc) {
     len_recv = ret + 1;
     if (len_recv > (int)len) {
         if (allow_realloc) {
-            (*data) = (char*)realloc(*data, len_recv);
-            if (*data == nullptr) {
             ygglog_debug << "ipc_comm_recv(" << name << "): reallocating buffer from " << len << " to "
                          << len_recv << " bytes.";
+            data = (char*)realloc(data, len_recv);
+            if (data == nullptr) {
                 ygglog_error << "ipc_comm_recv(" << name << "): failed to realloc buffer.";
                 return -1;
             }
@@ -305,8 +305,8 @@ long IPCComm::recv(char** data, const size_t& len, bool allow_realloc) {
             return -(len_recv - 1);
         }
     }
-    memcpy(*data, t.data, len_recv);
-    (*data)[len_recv - 1] = '\0';
+    memcpy(data, t.data, len_recv);
+    data[len_recv - 1] = '\0';
     ret = len_recv - 1;
     ygglog_debug << "ipc_comm_recv(" << name << "): returns " << ret << " bytes";
     return ret;

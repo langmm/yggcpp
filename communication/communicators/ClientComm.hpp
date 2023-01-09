@@ -34,9 +34,9 @@ public:
 
     int send(const char *data, const size_t &len) override;
 
-    long recv(char **data, const size_t &len, bool allow_realloc) override;
     int send(const dtype_t* dtype) override;
     long recv(dtype_t* dtype) override;
+    long recv(char *data, const size_t &len, bool allow_realloc) override;
 
 private:
     COMM_BASE *comm;

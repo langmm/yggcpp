@@ -114,7 +114,7 @@ public:
     int send(const char *data, const size_t &len) override;
     int send(const dtype_t* dtype) override;
     long recv(dtype_t* dtype) override;
-    long recv(char **data, const size_t &len, bool allow_realloc) override;
+    long recv(char *data, const size_t &len, bool allow_realloc) override;
 
     //void open() override;
     //void close() override;

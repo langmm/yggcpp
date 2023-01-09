@@ -195,7 +195,7 @@ int ServerComm::send(const char* data, const size_t &len){
     return ret;
 }
 
-long ServerComm::recv(char** data, const size_t &len, bool allow_realloc){
+long ServerComm::recv(char* data, const size_t &len, bool allow_realloc){
     ygglog_debug << "server_comm_recv(" << name << ")";
     if (base_handle == nullptr) {
         ygglog_error << "server_comm_recv(" << name << "): no request comm registered";
@@ -206,23 +206,23 @@ long ServerComm::recv(char** data, const size_t &len, bool allow_realloc){
         return ret;
     }
     // Return EOF
-    if (is_eof(*data)) {
+    if (is_eof(data)) {
         base_handle->const_flags |= COMM_EOF_RECV;
         return ret;
     }
     // Initialize new comm from received address
-    auto head = comm_head_t(*data, len);
+    auto head = CommHead(data, len);
     if (!(head.flags & HEAD_FLAG_VALID)) {
         ygglog_error << "server_comm_recv(" << name << "): Error parsing header.";
         return -1;
     }
     // Return EOF
-    if (is_eof((*data) + head.bodybeg)) {
+    if (is_eof(data + head.bodybeg)) {
         base_handle->const_flags |= COMM_EOF_RECV;
         return ret;
     }
     // On client sign off, do a second recv
-    if (strcmp((*data) + head.bodybeg, YGG_CLIENT_EOF) == 0) {
+    if (strcmp(data + head.bodybeg, YGG_CLIENT_EOF) == 0) {
         return this->recv(data, len, allow_realloc);
     }
     // If there is not a response address
