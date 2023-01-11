@@ -118,7 +118,7 @@ int IPCComm::remove_comm(bool close_comm) {
   @brief Create a new channel.
   @returns int -1 if the address could not be created.
 */
-int IPCComm::new_address() {
+bool IPCComm::new_address() {
     int ret;
     // TODO: small chance of reusing same number
     int key = 0;
@@ -141,7 +141,7 @@ int IPCComm::new_address() {
     } else {
         ret = check_channels();
         if (ret < 0)
-            return ret;
+            return false;
     }
     address->address(std::to_string(key));
     int *fid = new int;
@@ -149,11 +149,11 @@ int IPCComm::new_address() {
     if (fid[0] < 0) {
         ygglog_error << "new_ipc_address: msgget(" << key << ", " << IPC_CREAT << " | 0777) ret(" << fid[0]
                      << "), errno(" << errno << "): " << strerror(errno);
-        return -1;
+        return false;
     }
     handle = fid;
     add_channel();
-    return 0;
+    return true;
 }
 
 /*!

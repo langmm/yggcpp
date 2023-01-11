@@ -55,8 +55,7 @@ public:
     virtual int comm_nmsg() const = 0;
 
     COMM_TYPE getType() const { return type; }
-
-    bool valid() const { return _valid; }
+    bool valid() {return flags & COMM_FLAG_VALID;}
 
 protected:
     friend ServerComm;
@@ -86,7 +85,6 @@ protected:
     int index_in_register; //!< Index of the comm in the comm register.
     time_t *last_send; //!< Clock output at time of last send.
     int thread_id; //!< ID for the thread that created the comm.
-    bool _valid;
 };
 
 /*!

@@ -119,7 +119,7 @@ public:
     int comm_nmsg() const override;
 
 protected:
-    virtual int new_address();
+    virtual bool new_address();
     void init() override;
 
 private:

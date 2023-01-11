@@ -48,7 +48,7 @@ public:
     long recv(char *data, const size_t &len, bool allow_realloc) override;
 
 protected:
-    virtual int new_address();
+    virtual bool new_address();
     void init() override;
 
 private:

@@ -135,7 +135,7 @@ int ClientComm::pop_response(const std::string& req_id, char* rdata,const size_t
     return static_cast<int>(ret);
 }
 
-int ClientComm::new_address() {
+bool ClientComm::new_address() {
 #ifdef _OPENMP
 #pragma omp critical (client)
     {

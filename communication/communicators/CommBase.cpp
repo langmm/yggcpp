@@ -5,7 +5,7 @@ using namespace communication::utils;
 
 
 Comm_t::Comm_t(Address *address, DIRECTION dirn, const COMM_TYPE &t, int flgs) :
-        address(address), type(t), _valid(false), direction(dirn), flags(flgs) {
+        address(address), type(t), direction(dirn), flags(flgs) {
     name = "";
 
     flags |= COMM_FLAG_VALID;
@@ -94,7 +94,6 @@ Comm_t::Comm_t(const std::string &name, DIRECTION direction, const COMM_TYPE &t)
     index_in_register = comm->index_in_register;
     *last_send = *(comm->last_send);
     thread_id = comm->thread_id;
-    _valid = comm->_valid;
 }*/
 
 Comm_t::~Comm_t() {

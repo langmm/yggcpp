@@ -72,9 +72,17 @@ void ZMQComm::init() {
     if (!(flags & COMM_FLAG_VALID))
         return;
     if (address == nullptr || !address->valid()) {
-        _valid = new_address();
+        if (new_address()) {
+            flags |= COMM_FLAG_VALID;
+        } else {
+            flags &= ~COMM_FLAG_VALID;
+        }
     } else {
-        _valid = connect_to_existing();
+        if (connect_to_existing()) {
+            flags |= COMM_FLAG_VALID;
+        } else {
+            flags &= ~COMM_FLAG_VALID;
+        }
     }
 }
 
@@ -457,7 +465,7 @@ int ZMQComm::check_reply_recv(const char* data, const size_t &len) {
   @param[in] comm comm_t * Comm structure initialized with new_comm_base.
   @returns int -1 if the address could not be created.
 */
-int ZMQComm::new_address() {
+bool ZMQComm::new_address() {
     // TODO: Get protocol/host from input
     std::string protocol = "tcp";
     std::string host = "localhost";
@@ -515,7 +523,7 @@ int ZMQComm::new_address() {
     }
     if (handle == nullptr) {
         ygglog_error << "create_new: Could not initialize empty socket.";
-        return -1;
+        return false;
     }
     //void* libzmq_socket = handle.handle();
     try {
@@ -523,7 +531,7 @@ int ZMQComm::new_address() {
     } catch (zmq::error_t &err) {
         ygglog_error << "create_new: Could not bind socket to address = " << adr->address() << " : "
                      << err.what();
-        return -1;
+        return false;
     }
     // Add port to address
     int port = -1;
@@ -553,7 +561,7 @@ int ZMQComm::new_address() {
 
     // Init reply
     init_zmq_reply();
-    return 0;
+    return true;
 }
 
 

@@ -24,7 +24,7 @@ public:
 
     int pop_response(const std::string &req_id, char *rdata, const size_t &rlen, const int allow_realloc);
 
-    int new_address() override;
+    bool new_address() override;
 
     //int init_comm();
 
