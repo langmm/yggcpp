@@ -11,8 +11,8 @@ static char prefix_char = '#';
 
 /*! @brief C-friendly definition of rapidjson::Document. */
 typedef struct dtype_t {
-    void *schema; //!< Pointer to rapidjson::Value for validation.
-    void *metadata; //!< Pointer ot rapidjson::Document containing additional metadata.
+    void *schema = nullptr; //!< Pointer to rapidjson::Value for validation.
+    void *metadata = nullptr; //!< Pointer ot rapidjson::Document containing additional metadata.
 } dtype_t;
 
 /*! @brief C-friendly wrapper for rapidjson::Document. */
