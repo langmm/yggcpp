@@ -14,7 +14,7 @@ void free_comm(comm_t* comm);
 
 void close_comm(comm_t* comm);
 
-comm_t* open_comm(const char* address, DIRECTION dir, const COMM_TYPE &t);
+comm_t* open_comm(char* address, DIRECTION dir, const COMM_TYPE &t);
 comm_t* ini_comm(const char* name, DIRECTION dir, const COMM_TYPE &t);
 //int comm_send(comm_t* comm, const char *data, const size_t &len);
 //int comm_recv(comm_t* comm, char **data, const size_t &len, bool allow_realloc);

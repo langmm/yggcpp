@@ -1,5 +1,5 @@
 #include "comm_t.hpp"
-#include "comms.hpp"
+#include "CommBase.hpp"
 #include "utils/logging.hpp"
 
 void free_comm(comm_t* comm) {
@@ -16,13 +16,17 @@ void close_comm(comm_t* comm) {
     free_comm(comm);
 }
 
-comm_t* open_comm(const char* address, DIRECTION dir, const COMM_TYPE &t) {
+comm_t* open_comm(char* address, const DIRECTION dir, const COMM_TYPE &t) {
     auto ret = (comm_t*)malloc(sizeof(comm_t));
     if (ret == nullptr) {
         ygglog_error << "new_comm_base: Failed to malloc comm.";
         return ret;
     }
-    switch (t) {
+    std::string name = "";
+    ret->comm = (void*) communication::communicator::new_Comm_t(dir, t, name, address);
+    return ret;
+
+    /*switch (t) {
         case IPC_COMM:
             ret->comm = (void*) new communication::communicator::IPCComm("", new communication::utils::Address(address), dir);
             break;
@@ -41,7 +45,7 @@ comm_t* open_comm(const char* address, DIRECTION dir, const COMM_TYPE &t) {
         default:
             ret->comm = NULL;
             break;
-    }
+    }*/
     return ret;
 }
 
@@ -51,7 +55,8 @@ comm_t* ini_comm(const char* name, DIRECTION dir, const COMM_TYPE &t) {
         ygglog_error << "new_comm_base: Failed to malloc comm.";
         return ret;
     }
-    switch (t) {
+    ret->comm = (void*) communication::communicator::new_Comm_t(dir, t, name);
+    /*switch (t) {
         case IPC_COMM:
             ret->comm = (void*) new communication::communicator::IPCComm(name, nullptr, dir);
             break;
@@ -70,9 +75,10 @@ comm_t* ini_comm(const char* name, DIRECTION dir, const COMM_TYPE &t) {
         default:
             ret->comm = NULL;
             break;
-    }
+    }*/
     return ret;
 }
+
 
 int comm_send(comm_t* comm, const dtype_t* dtype) {
     if (comm == NULL)
