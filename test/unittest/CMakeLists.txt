@@ -8,7 +8,8 @@ include(CheckCXXCompilerFlag)
 
 set(UNITTEST_SOURCES
         testutils.cpp
-        unittest.cpp)
+        unittest.cpp
+        commbasetest.cpp)
 
 find_program(CCACH_FOUND ccache)
 if(CCACHE_FOUND)
