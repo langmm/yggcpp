@@ -33,13 +33,16 @@ public:
     //explicit MPIComm(const Comm_t* comm);
     ~MPIComm() override;
 
-    int send(const char *data, const size_t &len) override;
-
-    long recv(char *data, const size_t &len, bool allow_realloc) override;
-
     int comm_nmsg() const override;
 
     int mpi_comm_source_id() const;
+    using Comm_t::send;
+    using Comm_t::recv;
+
+protected:
+    int send(const char *data, const size_t &len) override;
+
+    long recv(char *data, const size_t &len, bool allow_realloc) override;
 
 private:
     std::vector<utils::Address *> addresses;

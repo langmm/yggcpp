@@ -1,5 +1,6 @@
 #pragma once
 
+
 #include "utils/enums.hpp"
 #include "utils/Address.hpp"
 #include "utils/logging.hpp"
@@ -10,8 +11,6 @@
 //#include "datatypes/YggObj.hpp"
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
-
-//#define __cplusplus
 
 /*! @brief Bit flags. */
 #define COMM_FLAG_VALID   0x00000001  //!< Set if the comm is initialized
@@ -46,10 +45,7 @@ class Comm_t {
 public:
     virtual ~Comm_t();
 
-    virtual int send(const char *data, const size_t &len) = 0;
     int send(const dtype_t* dtype);
-
-    virtual long recv(char *data, const size_t &len, bool allow_realloc) = 0;
     long recv(dtype_t* dtype);
 
     virtual int comm_nmsg() const = 0;
@@ -60,6 +56,9 @@ public:
 protected:
     friend ServerComm;
     friend ClientComm;
+
+    virtual int send(const char *data, const size_t &len) = 0;
+    virtual long recv(char *data, const size_t &len, bool allow_realloc) = 0;
 
     //Comm_t(const Comm_t* comm, COMM_TYPE type);
     Comm_t(utils::Address *address, DIRECTION direction, const COMM_TYPE &t, int flgs = 0);
@@ -87,6 +86,7 @@ protected:
     int thread_id; //!< ID for the thread that created the comm.
 };
 
+Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name="", char* address=nullptr);
 /*!
       @brief Communication structure.
      */
@@ -95,6 +95,14 @@ class CommBase : public Comm_t {
 public:
     CommBase() = delete;
 
+    int comm_nmsg() const override {
+        utils::ygglog_throw_error("Comm_nmsg of base class called, must be overridden");
+        return -1;
+    }
+    using Comm_t::send;
+    using Comm_t::recv;
+
+protected:
     int send(const char *data, const size_t &len) override {
         utils::ygglog_throw_error("Send of base class called, must be overridden");
         return -1;
@@ -105,12 +113,6 @@ public:
         return -1;
     }
 
-    int comm_nmsg() const override {
-        utils::ygglog_throw_error("Comm_nmsg of base class called, must be overridden");
-        return -1;
-    }
-
-protected:
     CommBase(utils::Address *address, DIRECTION direction, const COMM_TYPE &t);
 
     //CommBase(Comm_t* comm, const COMM_TYPE &type);

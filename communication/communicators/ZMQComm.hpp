@@ -111,16 +111,18 @@ public:
     //explicit ZMQComm(Comm_t* comm);
     ~ZMQComm() override;
 
-    int send(const char *data, const size_t &len) override;
-    long recv(char *data, const size_t &len, bool allow_realloc) override;
 
     //void open() override;
     //void close() override;
     int comm_nmsg() const override;
+    using Comm_t::send;
+    using Comm_t::recv;
 
 protected:
     virtual bool new_address();
     void init() override;
+    int send(const char *data, const size_t &len) override;
+    long recv(char *data, const size_t &len, bool allow_realloc) override;
 
 private:
     friend class ClientComm;
