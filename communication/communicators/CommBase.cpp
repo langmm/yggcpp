@@ -65,6 +65,8 @@ Comm_t::Comm_t(const std::string &name, DIRECTION direction, const COMM_TYPE &t)
         this->name = full_name;
         if (addr != nullptr) {
             this->address->address(addr);
+            if (this->address->valid())
+                flags |= COMM_FLAG_VALID;
         }
         this->name = name;
     } else {
@@ -119,11 +121,7 @@ bool Comm_t::check_size(const size_t &len) const {
     return true;
 }
 
-struct comm_t {
-    void* comm;
-};
-
-int free_comm(comm_t* x) {
+/*int free_comm(comm_t* x) {
     auto temp = static_cast<Comm_t*>(x->comm);
     if (temp != nullptr) {
         delete temp;
@@ -131,12 +129,12 @@ int free_comm(comm_t* x) {
         free(x);
     }
     return 0;
-}
+}*/
 //comm_t* empty_comm() {
 //    comm_t* comm;
 //
 //}
-Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name="", char* address=nullptr) {
+Comm_t* communication::communicator::new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, char* address) {
     switch(type) {
         case NULL_COMM:
             break;
@@ -154,7 +152,7 @@ Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string 
     }
     return nullptr;
 }
-comm_t* new_comm(char* address, const DIRECTION dir, const COMM_TYPE type) {
+/*comm_t* new_comm(char* address, const DIRECTION dir, const COMM_TYPE type) {
     auto comm = (comm_t*)malloc(sizeof(comm_t));
     comm->comm = new_Comm_t(dir, type, "", address);
     return comm;
@@ -163,7 +161,7 @@ comm_t* init_comm(const char* name, const DIRECTION dir, const COMM_TYPE type) {
     auto comm = (comm_t*)malloc(sizeof(comm_t));
     comm->comm = new_Comm_t(dir, type, name);
     return comm;
-}
+}*/
 
 int Comm_t::send(const dtype_t *dtype) {
     rapidjson::Document *doc = static_cast<rapidjson::Document*>(dtype->schema);
@@ -174,11 +172,12 @@ int Comm_t::send(const dtype_t *dtype) {
 }
 
 long Comm_t::recv(dtype_t *dtype) {
-    char* data = (char*)malloc(sizeof(char) * YGG_MSG_MAX);
+    char *data = (char *) malloc(sizeof(char) * YGG_MSG_MAX);
     long size = recv(data, YGG_MSG_MAX, true);
     if (dtype->schema == nullptr)
-        dtype->schema = (void*)new rapidjson::Document();
-    static_cast<rapidjson::Document*>(dtype->schema)->Parse(data);
+        dtype->schema = (void *) new rapidjson::Document();
+    static_cast<rapidjson::Document *>(dtype->schema)->Parse(data);
+    free(data);
     return size;
 }
 
