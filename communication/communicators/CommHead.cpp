@@ -74,7 +74,7 @@ int split_head_body(const char *buf, const size_t buf_siz,
 }
 
 
-CommHead::CommHead(utils::Address* adr, const std::string &id): address(adr), id(id){
+CommHead::CommHead(utils::Address* adr, const std::string id): address(adr), id(id){
     // Parameters set during read
     bodysiz = 0;
     bodybeg = 0;

@@ -9,7 +9,6 @@ using namespace communication::utils;
 unsigned IPCComm::_yggChannelsUsed = 0;
 int IPCComm::_yggChannelNames[_yggTrackChannels];
 bool IPCComm::_ipc_rand_seeded = false;
-
 #ifdef _YGGIPC
 
 IPCComm::~IPCComm() {
@@ -50,10 +49,7 @@ int IPCComm::check_channels() {
         }
     }
     // Fail if > _yggTrackChannels channels used
-    if ((!error_code) && (IPCComm::_yggChannelsUsed >= _yggTrackChannels)) {
-        ygglog_error << "Too many channels in use, max: " << _yggTrackChannels;
-        error_code = -1;
-    }
+
 #ifdef _OPENMP
     }
 #endif
@@ -70,7 +66,10 @@ void IPCComm::add_channel() {
   {
 #endif
   // printf("add_channel(%s): %d, %s\n", comm->name, _yggChannelsUsed, comm->address);
-    IPCComm::_yggChannelNames[IPCComm::_yggChannelsUsed++] = address->key();
+        if (IPCComm::_yggChannelsUsed++ >= _yggTrackChannels) {
+            ygglog_error << "Too many channels in use, max: " << _yggTrackChannels;
+        }
+    IPCComm::_yggChannelNames[IPCComm::_yggChannelsUsed] = address->key();
 #ifdef _OPENMP
   }
 #endif
@@ -143,7 +142,13 @@ bool IPCComm::new_address() {
         if (ret < 0)
             return false;
     }
-    address->address(std::to_string(key));
+    //std::string temp = std::to_string(key);
+    //temp = "HELLO";
+    if (address == nullptr) {
+        address = new utils::Address(std::to_string(key));
+    } else {
+        address->address(std::to_string(key));
+    }
     int *fid = new int;
     fid[0] = msgget(key, (IPC_CREAT | 0777));
     if (fid[0] < 0) {
@@ -152,7 +157,6 @@ bool IPCComm::new_address() {
         return false;
     }
     handle = fid;
-    add_channel();
     return true;
 }
 
@@ -185,7 +189,7 @@ int IPCComm::comm_nmsg() const {
  */
 int IPCComm::send(const char* data, const size_t &len) {
     ygglog_debug << "ipc_comm_send(" << name << "): " << len << " bytes";
-    if (!check_size(len))
+    if (check_size(len))
         return send_normal(data, len);
     return send_large(data, len);
 }
@@ -317,9 +321,10 @@ long IPCComm::recv(char* data, const size_t& len, bool allow_realloc) {
 
 void IPCComm::init() {
     if (address == nullptr)
-        new_address();
+        if (!new_address())
+            throw std::runtime_error("No valid address generated");
     if (name.empty()) {
-        this->name = "tempinitIPC." + this->address->address();
+        this->name = "tempnewIPC." + this->address->address();
     } else {
         this->name = name;
         if (check_channels() < 0)
@@ -334,6 +339,7 @@ void IPCComm::init() {
 
 IPCComm::IPCComm(const std::string &name, Address *address, DIRECTION direction) :
         CommBase(address, direction, IPC_COMM) {
+    this->name = name;
     init();
 }
 
