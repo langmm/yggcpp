@@ -53,10 +53,16 @@ public:
     COMM_TYPE getType() const { return type; }
     bool valid() {return flags & COMM_FLAG_VALID;}
 
+#ifdef YGG_TEST
+    std::string getName() {return name;}
+#endif
 protected:
     friend ServerComm;
     friend ClientComm;
 
+    int send(const std::string message) {
+        return send(message.c_str(), message.size());
+    }
     virtual int send(const char *data, const size_t &len) = 0;
     virtual long recv(char *data, const size_t &len, bool allow_realloc) = 0;
 

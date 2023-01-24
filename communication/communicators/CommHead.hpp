@@ -28,7 +28,7 @@ const std::map<fields, std::string> string_fields = {{ADDRESS,          "address
 
 class CommHead {
 public:
-    explicit CommHead(utils::Address *adr = nullptr, const std::string &id = "");
+    explicit CommHead(utils::Address *adr = nullptr, const std::string id = "");
 
     CommHead(const char *buf, const size_t &buf_siz);
 

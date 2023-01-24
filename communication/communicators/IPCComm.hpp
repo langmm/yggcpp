@@ -16,6 +16,8 @@
 /*! @brief Maximum number of channels. */
 #define _yggTrackChannels 256
 
+static std::string blank = "";
+
 namespace communication {
 namespace communicator {
 /*!
@@ -29,7 +31,7 @@ typedef struct msgbuf_t {
 //class ServerComm;
 class IPCComm : public CommBase<int, int> {
 public:
-    explicit IPCComm(const std::string &name = "", utils::Address *address = new utils::Address(),
+    explicit IPCComm(const std::string &name = blank, utils::Address *address = new utils::Address(),
                      DIRECTION direction = NONE);
 
     //explicit IPCComm(Comm_t* comm);
@@ -45,7 +47,9 @@ public:
     using Comm_t::send;
     using Comm_t::recv;
 
+#ifndef YGG_TEST
 protected:
+#endif
     virtual bool new_address();
     void init() override;
     int send(const char *data, const size_t &len) override;
