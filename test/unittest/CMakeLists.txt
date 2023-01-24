@@ -9,7 +9,10 @@ include(CheckCXXCompilerFlag)
 set(UNITTEST_SOURCES
         testutils.cpp
         unittest.cpp
-        commbasetest.cpp)
+        commbasetest.cpp
+        #commheadtest.cpp
+        #clientcommtest.cpp
+        ipccommtest.cpp)
 
 find_program(CCACH_FOUND ccache)
 if(CCACHE_FOUND)
