@@ -35,3 +35,5 @@
 cmake-build*
 .idea/*
 CMakeLists.txt.user
+test/unittest/tests/communicators/clientcommtest.orig
+test/unittest/tests/communicators/commheadtest.orig

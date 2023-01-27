@@ -2,6 +2,7 @@
 #include "utils/Address.hpp"
 #include "communicators/IPCComm.hpp"
 #include "../../elf_hook.h"
+#include "../../mock.hpp"
 #include <dlfcn.h>
 
 #define LIBRARY_ADDRESS_BY_HANDLE(dlhandle) ((NULL == dlhandle) ? NULL :  (void*)*(size_t const*)(dlhandle))
@@ -14,33 +15,9 @@
 
 using namespace communication;
 using namespace communication::communicator;
-int RETVAL = 0;
-int SENDCOUNT = 0;
-namespace communication {
-namespace mock {
-
-int msgsnd(int a, const void *b, size_t c, int d) {
-    //std::cout << "HERE";
-    //msgsnd(a, b, c, d);
-    SENDCOUNT++;
-    return RETVAL;
-}
-
-int msgctl(int h, int flag, msqid_ds *buf) {
-    buf->msg_qnum = 10000;
-    buf->msg_qbytes = 1000;
-    RETVAL++;
-    return RETVAL + 1;
-}
-
-int msgget(key_t a, int b) {
-    return -1;
-}
-
-}
-}
+using namespace communication::mock;
 TEST(IPCComm, constructor) {
-    IPCComm ipc();
+    IPCComm ipc;
     std::string name = "";
     IPCComm ipc2(name, nullptr, SEND);
     EXPECT_TRUE(ipc2.getName().find("tempnewIPC") != std::string::npos);
@@ -145,4 +122,37 @@ TEST(IPCComm, sendLarge) {
     EXPECT_EQ(ipc.send(longmsg), -1);
 
     ELFREVERT(msgsnd, original_func);
+    dlclose(handle);
+
+}
+
+TEST(IPCComm, recv) {
+    std::string name = "SendTester";
+    void *handle = dlopen(SUBLIB, RTLD_LAZY);
+    void *original_func = nullptr;
+    void* original_func2 = nullptr;
+    RETVAL = 0;
+    original_func = ELFHOOK(msgrcv);
+    EXPECT_NE(original_func, ((void*) 0));
+    IPCComm ipc(name, new utils::Address("13579"), RECV);
+    char* data = (char*)malloc(sizeof(char));
+    size_t len = 1;
+    long res = ipc.recv(data, len, false);
+    EXPECT_EQ(res, -11);
+    original_func2 = ELFHOOK(realloc);
+    res = ipc.recv(data, len, true);
+    EXPECT_EQ(res, -1);
+    ELFREVERT(realloc, original_func2);
+    res = ipc.recv(data, len, true);
+    EXPECT_EQ(res, 11);
+    res = ipc.recv(data, len, true);
+    EXPECT_EQ(res, 11);
+    RETVAL = -1;
+    res = ipc.recv(data, len, true);
+    EXPECT_EQ(res, -1);
+
+    ELFREVERT(msgrcv, original_func);
+    free(data);
+    dlclose(handle);
+    int i = 7;
 }
