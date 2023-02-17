@@ -8,7 +8,6 @@ if (POLICY CMP0135)
     cmake_policy(SET CMP0135 NEW)
 endif()
 
-set(CMAKE_INSTALL_PREFIX /home/friedel/devel/yggtests)
 
 project(YggInterfaceCPP VERSION 0.1.0.0)
 set(CMAKE_CXX_STANDARD 14)
@@ -27,6 +26,7 @@ if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
 endif("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
 
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${PROJECT_SOURCE_DIR}/cmake")
+set(CMAKE_INSTALL_PREFIX /home/friedel/devel/yggtests)
 
 #file(GLOB_RECURSE SOURCES "communication/**/*.cpp")
 file(GLOB SOURCES "communication/utils/*.cpp" "communication/communicators/*.cpp")
@@ -47,7 +47,7 @@ if(ENABLE_ZMQ)
     EXTERNALPROJECT_ADD(
             yggLibzmq
             URL https://github.com/zeromq/libzmq/archive/refs/tags/v4.3.4.tar.gz
-            CMAKE_ARGS -DCMAKE_PREFIX_PATH=${CMAKE_INSTALL_PREFIX} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} -DBUILD_TESTS=0 -DENABLE_DRAFTS=1 -DWITH_DOCS=0 -DZMQ_BUILD_TESTS=0
+            CMAKE_ARGS -DCMAKE_PREFIX_PATH=${CMAKE_INSTALL_PREFIX} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} -DBUILD_TESTS=0 -DENABLE_DRAFTS=1 -DWITH_DOCS=0 -DZMQ_BUILD_TESTS=0 -DZMQ_OUTPUT_BASENAME=yggzmq
     )
     EXTERNALPROJECT_GET_PROPERTY(yggLibzmq install_dir)
     set(LIB_ZMQ_INSTALL_DIR install_dir)
@@ -65,9 +65,9 @@ if(ENABLE_ZMQ)
     include_directories(${CMAKE_INSTALL_PREFIX}/include/libzmq
             ${CMAKE_INSTALL_PREFIX}/include/cppzmq
             ${CMAKE_INSTALL_PREFIX}/include)
-    target_link_libraries(YggInterface ${CMAKE_INSTALL_PREFIX}/lib/libzmq.so)
-
-    message("libzmq found ${libzmq_LIBRARIES}  ${libzmq_INCLUDE_DIRS}")
+    add_library(zmqlib SHARED IMPORTED)
+    set_target_properties(zmqlib PROPERTIES IMPORTED_LOCATION ${CMAKE_INSTALL_PREFIX}/lib/libyggzmq.so)
+    target_link_libraries(YggInterface zmqlib)
 else (ENABLE_ZMQ)
     message("No zmq support will be built." )
 endif (ENABLE_ZMQ)
