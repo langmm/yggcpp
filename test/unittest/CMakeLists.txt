@@ -12,7 +12,8 @@ set(UNITTEST_SOURCES
         commbasetest.cpp
         #commheadtest.cpp
         #clientcommtest.cpp
-        ipccommtest.cpp)
+        ipccommtest.cpp
+        zmqcommtest.cpp)
 
 find_program(CCACH_FOUND ccache)
 if(CCACHE_FOUND)

@@ -17,11 +17,16 @@ const std::chrono::milliseconds short_timeout{10};
 #ifdef _OPENMP
 zmq::context_t ygg_sock_t::ygg_s_process_ctx = zmq::context_t();
 bool ygg_sock_t::ctx_valid = true;
+std::vector<ygg_sock_t*> ygg_sock_t::activeSockets = {};
 
-void ygg_sock_t::shutdown() {
+void ygg_sock_t::ctx_shutdown() {
 #pragma omp critical (zmq)
     {
         if (ctx_valid) {
+            // force all sockets to be closed, otherwise the context close will hang
+            for (auto sock : ygg_sock_t::activeSockets) {
+                sock->close();
+            }
             ygg_s_process_ctx.shutdown();
             ygg_s_process_ctx.close();
             ctx_valid = false;
@@ -53,11 +58,19 @@ ygg_sock_t::ygg_sock_t(int type) : zmq::socket_t(get_context(), type), tag(0xcaf
 #endif // _OPENMP
     set(zmq::sockopt::linger, 0);
     set(zmq::sockopt::immediate, 1);
+    ygg_sock_t::activeSockets.push_back(this);
 }
 
 //#ifdef _OPENMP
 //}
 //#endif
+
+void ygg_sock_t::close() {
+    ygg_sock_t::activeSockets.erase(std::remove(ygg_sock_t::activeSockets.begin(),
+                                                ygg_sock_t::activeSockets.end(),
+                                                this), ygg_sock_t::activeSockets.end());
+    zmq::socket_t::close();
+}
 
 ygg_sock_t::~ygg_sock_t() {
 #ifdef _OPENMP
@@ -91,7 +104,7 @@ void ZMQComm::init() {
   @param[in] comm comm_t * Comm structure initialized with init_comm_base.
   @returns int -1 if the comm could not be initialized.
  */
-ZMQComm::ZMQComm(const std::string &name, Address *address, const DIRECTION direction) :
+ZMQComm::ZMQComm(const std::string name, Address *address, const DIRECTION direction) :
         CommBase(address, direction, ZMQ_COMM) {
     init();
 }
@@ -473,7 +486,7 @@ bool ZMQComm::new_address() {
     msgBufSize = 100;
     if (host == "localhost")
         host = "127.0.0.1";
-    if (protocol == "inproc" || protocol == "ipc") {
+    /*if (protocol == "inproc" || protocol == "ipc") {
         // TODO: small chance of reusing same number
         int key = 0;
 #ifdef _OPENMP
@@ -491,23 +504,42 @@ bool ZMQComm::new_address() {
         if (name.empty())
             name = "tempnewZMQ-" + std::to_string(key);
         adr->address(protocol + "://" + name);
-    } else {
+    } else {*/
 #ifdef _OPENMP
+    std::string except_msg = "";
 #pragma omp critical (zmqport)
         {
 #endif
             if (_last_port_set == 0) {
-                ygglog_debug << "model_index = %s" << getenv("YGG_MODEL_INDEX");
-                _last_port = 49152 + 1000 * atoi(getenv("YGG_MODEL_INDEX"));
-                _last_port_set = 1;
-                ygglog_debug << "_last_port = " << _last_port;
+                const char *model_index = getenv("YGG_MODEL_INDEX");
+                if (model_index == nullptr) {
+
+#ifdef _OPENMP
+                    except_msg = "Environment variable 'YGG_MODEL_INDEX' is not defined. Connot create ZMQComm.";
+                    _last_port = -1;
+                } else {
+
+#else
+                    throw std::runtime_error("Environment variable 'YGG_MODEL_INDEX' is not defined. Connot create ZMQComm.");
+                }
+#endif
+
+                    ygglog_debug << "model_index = %s" << model_index;
+                    _last_port = 49152 + 1000 * atoi(model_index);
+                    _last_port_set = 1;
+                    ygglog_debug << "_last_port = " << _last_port;
+#ifdef _OPENMP
+                }
+#endif
             }
             adr->address( protocol + "://" + host + ":" +std::to_string(_last_port + 1));
 #ifdef _OPENMP
         }
+    if (!except_msg.empty())
+        throw std::runtime_error(except_msg);
 #endif
         /* strcat(address, ":!"); // For random port */
-    }
+
     // Bind
     if (handle != nullptr) {
         delete handle;

@@ -10,6 +10,12 @@
 #endif
 #include <vector>
 namespace communication {
+#ifdef YGG_TEST
+namespace testing {
+class ygg_sock_tester;
+class ZMQComm_tester;
+}
+#endif
 namespace communicator {
 //class ClientComm;
 static unsigned _zmq_rand_seeded = 0;
@@ -36,20 +42,24 @@ public:
 
     static zmq::context_t &get_context();
 
-    static void shutdown();
+    static void ctx_shutdown();
 
 #else
 
 #endif /*ZMQINSTALLED*/
-
+    void close();
     ~ygg_sock_t();
 
 #ifdef _OPENMP
     uint32_t tag;
     int type;
 private:
+#ifdef YGG_TEST
+    friend class testing::ygg_sock_tester;
+#endif
     static zmq::context_t ygg_s_process_ctx;
     static bool ctx_valid;
+    static std::vector<ygg_sock_t*> activeSockets;
 #endif
 };
 
@@ -105,7 +115,7 @@ typedef struct zmq_reply_t {
 
 class ZMQComm : public CommBase<ygg_sock_t, zmq_reply_t> {
 public:
-    explicit ZMQComm(const std::string &name = "", utils::Address *address = new utils::Address(),
+    explicit ZMQComm(const std::string name = "", utils::Address *address = new utils::Address(),
                      DIRECTION direction = NONE);
 
     //explicit ZMQComm(Comm_t* comm);
@@ -127,6 +137,10 @@ protected:
 private:
     friend class ClientComm;
     friend class ServerComm;
+#ifdef YGG_TEST
+    friend class testing::ZMQComm_tester;
+#endif
+
     ygg_sock_t *sock;
 
     std::string set_reply_send();
