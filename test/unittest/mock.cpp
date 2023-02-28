@@ -9,6 +9,7 @@ namespace mock {
 int RETVAL = 0;
 int SENDCOUNT = 0;
 
+
 int msgsnd(int a, const void *b, size_t c, int d) {
     //std::cout << "HERE";
     //msgsnd(a, b, c, d);
@@ -40,8 +41,53 @@ ssize_t msgrcv(int a, void* rbuf, size_t msz, long mtype, int flags) {
 void* realloc(void* ptr, size_t size) {
     return nullptr;
 }
+namespace zmq {
+void message_tD() {
+        return;
+}
+namespace message_t {
+std::string to_string() {
+    return "Hello";
 }
 }
+namespace poller_t {
+size_t wait_all(std::vector<::zmq::poller_event<> > &events, const std::chrono::milliseconds timeout) {
+    return 2;
+}
+
+}
+namespace detail {
+namespace socket_base {
+
+::zmq::detail::trivial_optional<size_t> send(::zmq::message_t &msg, ::zmq::send_flags flags) {
+    ::zmq::detail::trivial_optional<size_t> ret(0);
+    return ret;
+}
+
+::zmq::detail::trivial_optional<size_t> recv(::zmq::message_t &msg,
+                                             ::zmq::recv_flags flags) {
+    ::zmq::detail::trivial_optional<size_t> ret(0);
+    return ret;
+}
+
+std::string get() {
+    return "127.0.0.1:8888";
+}
+
+template<class OutputIt>
+::zmq::detail::trivial_optional<size_t> recv_multipart(::zmq::socket_ref s, OutputIt out,
+                                                       ::zmq::recv_flags flags) {
+    ::zmq::detail::trivial_optional<size_t> ret(1);
+    return ret;
+
+}
+}
+}
+}
+
+}
+}
+
 
 /*int communication::mock::mock_method_return_value = 0;
 
