@@ -27,7 +27,7 @@ TEST(IPCComm, constructor) {
 
     void *handle = dlopen(SUBLIB, RTLD_LAZY);
     void *original_func = nullptr;
-    if (handle == NULL)
+    if (!handle)
         EXPECT_TRUE(false);
     original_func = ELFHOOK(msgget)
     EXPECT_NE(original_func, ((void*)0));
@@ -51,7 +51,7 @@ TEST(IPCComm, send) {
     void *original_func = nullptr;
     void *original_func2 = nullptr;
     //void *sym = dlsym(handle, "msgsnd");
-    if (handle == NULL)
+    if (!handle)
         EXPECT_TRUE(false);
     std::string data = "abcdef12345";
     utils::Address *adr2 = new utils::Address("12345678");
