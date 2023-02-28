@@ -128,7 +128,9 @@ public:
     using Comm_t::send;
     using Comm_t::recv;
 
+#ifndef YGG_TEST
 protected:
+#endif
     virtual bool new_address();
     void init() override;
     int send(const char *data, const size_t &len) override;

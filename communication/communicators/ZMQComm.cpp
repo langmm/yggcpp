@@ -357,9 +357,11 @@ std::string ZMQComm::set_reply_send() {
                 ygglog_error << "set_reply_send(" << name << ") : Could not bind socket to address = "
                              << address << " : " << err.what();
             }
+            /// This is broken, the socket was just created, so it cannot have a last endpoint
             address = reply->sockets[0]->get(zmq::sockopt::last_endpoint);
             std::vector<std::string> parts;
             boost::split(parts, address, boost::is_any_of(":"));
+            std::vector<std::string> mtemp = parts;
             _last_port = std::stoi(parts.back());
 #ifdef _OPENMP
         }
@@ -684,6 +686,8 @@ int ZMQComm::send(const char* data, const size_t &len) {
     int ret;
     size_t msgsiz;
     size_t prev = 0;
+    ///////// TODO
+    //set_reply_send();
     while (prev < len) {
         if ((len - prev) > YGG_MSG_MAX)
             msgsiz = YGG_MSG_MAX;
