@@ -1,7 +1,7 @@
 #include "../../unittest.hpp"
 #include "utils/Address.hpp"
 #include "communicators/IPCComm.hpp"
-#include "../../elf_hook.h"
+#include "../../elf_hook.hpp"
 #include "../../mock.hpp"
 #include <dlfcn.h>
 

@@ -1,12 +1,17 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
 #include <dlfcn.h>
 #include <elf.h>
 #include <fcntl.h>
 #include <sys/mman.h>
 #include <unistd.h>
-#include <errno.h>
+#include <cerrno>
+#include <vector>
+#include <atomic>
+#include <boost/algorithm/string.hpp>
+#include <boost/regex.hpp>
+#include <regex>
+#include "elf_hook.hpp"
 //rename standart types for convenience
 #if defined __x86_64 || defined __aarch64__
     #define Elf_Ehdr Elf64_Ehdr
@@ -25,6 +30,7 @@
     #define REL_DYN ".rel.dyn"
     #define REL_PLT ".rel.plt"
 #endif
+
 
 //==================================================================================================
 static int read_header(int d, Elf_Ehdr **header)
@@ -255,7 +261,7 @@ static int section_by_name(int d, char const *section_name, Elf_Shdr **section)
     return 0;
 }
 //--------------------------------------------------------------------------------------------------
-static int symbol_by_name(int d, Elf_Shdr *section, char const *name, Elf_Sym **symbol, size_t *index)
+static int symbol_by_name(int d, Elf_Shdr *section, const std::string& name, Elf_Sym **symbol, std::atomic_size_t *index)
 {
     Elf_Shdr *strings_section = NULL;
     char const *strings = NULL;
@@ -274,23 +280,82 @@ static int symbol_by_name(int d, Elf_Shdr *section, char const *name, Elf_Sym **
 
     amount = section->sh_size / sizeof(Elf_Sym);
     volatile size_t q;
-    for (i = 0; i < amount; ++i) {
-        if (!strcmp(name, &strings[symbols[i].st_name])) {
-            *symbol = (Elf_Sym *) malloc(sizeof(Elf_Sym));
 
-            if (NULL == *symbol) {
-                free(strings_section);
-                free((void *) strings);
-                free(symbols);
+    int idx = -1;
+    std::vector<std::string> args;
+    std::string repname = name;
+    if (size_t start = repname.find("|"); start != std::string::npos) {
+        std::string a = repname.substr(start + 1);
+        repname.resize(start);
+        boost::split(args, a, boost::is_any_of("|"));
+    }
+    if (repname.find("::") != std::string::npos) {
+        repname = std::regex_replace(repname, std::regex("<(\\S+)>"), "\\D+\\d{1,2}$1\\D{1,2}");
+        //std::vector<std::string> symbolNames(amount);
+        //std::vector<std::string> parts;
+        //boost::algorithm::split_regex(parts, name, token);
+        std::string regexstr = "\\S+" + std::regex_replace(repname, std::regex("::"), "\\d{1,2}");
+        //for(i = 1; i < parts.size(); i++) {
+        //    regexstr += "\\d{1,2}" + parts[i];
+        //}
+        regexstr += "(?:[A-Z]|\\d)";
+        boost::regex regex{regexstr};
 
-                return errno;
+        for (i = 0; i < amount; i++) {
+            std::string sname = &strings[symbols[i].st_name];
+            boost::smatch smatch;
+            if (boost::regex_search(sname, smatch, regex)) {
+                if (!args.empty()) {
+                    std::string match = smatch[0];
+                    size_t start = sname.find(match) + match.size();
+                    bool ok = true;
+                    for (auto s: args) {
+                        if (sname.find(s, start) != std::string::npos) {
+                            start += s.size();
+                            continue;
+                        } else {
+                            ok = false;
+                            break;
+                        }
+                    }
+                    if (!ok)
+                        continue;
+                }
+                const char *temp = &strings[symbols[i].st_name];
+                std::string nae(temp);
+                Elf64_Word xx = symbols[i].st_name;
+                size_t yy = sizeof(&strings);
+
+                idx = i;
+                break;
             }
-
-            memcpy(*symbol, symbols + i, sizeof(Elf_Sym));
-            *index = i;
-            q = i;
-            break;
         }
+    } else {
+        for (i = 0; i < amount; ++i) {
+            const char *temp = &strings[symbols[i].st_name];
+            std::string nae(temp);
+            Elf64_Word xx = symbols[i].st_name;
+            size_t yy = sizeof(&strings);
+            if (!strcmp(name.c_str(), &strings[symbols[i].st_name])) {
+                idx = i;
+                break;
+            }
+        }
+    }
+    if (idx >= 0) {
+        *symbol = (Elf_Sym *) malloc(sizeof(Elf_Sym));
+
+        if (NULL == *symbol) {
+            free(strings_section);
+            free((void *) strings);
+            free(symbols);
+
+            return errno;
+        }
+
+        memcpy(*symbol, symbols + idx, sizeof(Elf_Sym));
+        *index = idx;
+        q = idx;
     }
     free(strings_section);
     free((void *)strings);
@@ -364,7 +429,7 @@ int get_module_base_address(char const *module_filename, void *handle, void **ba
 }
 //--------------------------------------------------------------------------------------------------
 
-void *elf_hook(char const *module_filename, void const *module_address, char const *name, void const *substitution)
+void *elf_hook(char const *module_filename, void const *module_address, const std::string& name, void const *substitution)
 {
     static size_t pagesize;
 
@@ -382,7 +447,7 @@ void *elf_hook(char const *module_filename, void const *module_address, char con
     *rel_plt_table = NULL,  //array with ".rel.plt" entries
     *rel_dyn_table = NULL;  //array with ".rel.dyn" entries
 
-    volatile size_t
+    std::atomic_size_t
     i,
     name_index,  //index of symbol named "name" in ".dyn.sym"
     rel_plt_amount,  // amount of ".rel.plt" entries
@@ -390,7 +455,7 @@ void *elf_hook(char const *module_filename, void const *module_address, char con
     *name_address = NULL;  //address of relocation for symbol named "name"
 
     void *original = NULL;  //address of the symbol being substituted
-    if (NULL == module_address || NULL == name || NULL == substitution)
+    if (NULL == module_address || name.empty() || NULL == substitution)
         return original;
 
     if (!pagesize)
@@ -448,7 +513,7 @@ void *elf_hook(char const *module_filename, void const *module_address, char con
     for (i = 0; i < rel_dyn_amount; ++i)  //lookup the ".rel.dyn" table
         if (ELF_R_SYM(rel_dyn_table[i].r_info) == name_index)  //if we found the symbol to substitute in ".rel.dyn"
         {
-            name_address = (size_t *) (((size_t) module_address) +
+            name_address = (std::atomic_size_t *) (((size_t) module_address) +
                                        rel_dyn_table[i].r_offset);  //get the relocation address (address of a relative CALL (0xE8) instruction's argument)
 
             if (!original)
