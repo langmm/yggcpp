@@ -1,4 +1,5 @@
 #include "Address.hpp"
+#include <algorithm>
 
 using namespace communication::utils;
 
@@ -15,6 +16,7 @@ Address::Address(Address *adr) : Address(adr->address()){}
 
 void Address::address(const std::string &addr) {
     _address = addr;
+    _address.erase(std::remove_if(_address.begin(), _address.end(), ::isspace), _address.end());
     if (_address.size() > COMM_ADDRESS_SIZE)
         _address.resize(COMM_ADDRESS_SIZE);
 
