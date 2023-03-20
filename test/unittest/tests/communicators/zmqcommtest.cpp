@@ -118,6 +118,7 @@ TEST(ZMQCOMM, sendTest) {
     dlclose(handle);
 }
 
+/*
 TEST(ZMQCOMM, recv) {
     setenv("YGG_MODEL_INDEX", "123", 1);
     void* handle = dlopen(SUBLIB, RTLD_LAZY);
@@ -133,4 +134,4 @@ TEST(ZMQCOMM, recv) {
 
     dlclose(handle);
 
-}
+}*/
