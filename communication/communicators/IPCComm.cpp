@@ -135,6 +135,12 @@ bool IPCComm::new_address() {
     while (key == 0) {
         key = std::rand();
     }
+    if (address == nullptr) {
+        address = new utils::Address(std::to_string(key));
+    } else {
+        address->address(std::to_string(key));
+    }
+
     if (name.empty()) {
         name = "tempnewIPC." + std::to_string(key);
     } else {
@@ -144,11 +150,6 @@ bool IPCComm::new_address() {
     }
     //std::string temp = std::to_string(key);
     //temp = "HELLO";
-    if (address == nullptr) {
-        address = new utils::Address(std::to_string(key));
-    } else {
-        address->address(std::to_string(key));
-    }
     int *fid = new int;
     fid[0] = msgget(key, (IPC_CREAT | 0777));
     if (fid[0] < 0) {
