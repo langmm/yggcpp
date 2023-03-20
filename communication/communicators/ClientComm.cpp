@@ -7,9 +7,8 @@ using namespace communication::datatypes;
 
 unsigned ClientComm::_client_rand_seeded = 0;
 
-ClientComm::ClientComm(const std::string &name, Address *address, DIRECTION direction) :
-        COMM_BASE(name, address, direction) {
-    comm = nullptr;
+ClientComm::ClientComm(const std::string &name, Address *address) :
+        COMM_BASE(name, address, SEND) {
     request_id.clear();
     data.clear();
     len.clear();
@@ -20,7 +19,7 @@ ClientComm::ClientComm(const std::string &name, Address *address, DIRECTION dire
     {
 #endif
         if (!(_client_rand_seeded)) {
-            srand(ptr2seed(comm));
+            srand(ptr2seed(this));
             _client_rand_seeded = 1;
         }
 #ifdef _OPENMP
@@ -32,21 +31,10 @@ ClientComm::ClientComm(const std::string &name, Address *address, DIRECTION dire
 
     // Called to initialize/create client comm
 
-    if (this->direction != NONE) {
-        // TODO: fix
-        //dtype_out = create_dtype_format(this->direction, 0, false);
+    if (name.empty()) {
+        this->name = "client_request." + this->address->address();
     }
-    if (this->name.empty()) {
-        base_handle = new COMM_BASE("", this->address, SEND);
-        base_handle->name = "client_request." + this->address->address();
-    } else {
-        base_handle = new COMM_BASE(this->name, nullptr, SEND);
-    }
-    base_handle->flags |= COMM_FLAG_CLIENT;
-    base_handle->init();
-    this->address->address(base_handle->address->address());
-
-    this->direction = SEND;
+    flags |= COMM_FLAG_CLIENT;
     flags |= COMM_ALWAYS_SEND_HEADER;
 }
 
@@ -90,6 +78,10 @@ int ClientComm::add_response(const std::string& req_id, const char* rdata, const
         ygglog_error << "add_response: idx = " << idx;
         return idx;
     }
+    if (data[idx] == nullptr)
+        data[idx] = (char*)malloc(sizeof(char) * (rlen + 1));
+    else
+        data[idx] = (char*)realloc(data[idx], sizeof(char) * (rlen + 1));
     memcpy(data[idx], rdata, rlen);
     data[idx][rlen] = '\0';
     len[idx] = rlen;
@@ -141,33 +133,25 @@ bool ClientComm::new_address() {
     {
 #endif
         if (!(_client_rand_seeded)) {
-            srand(ptr2seed(comm));
+            srand(ptr2seed(this));
             _client_rand_seeded = 1;
         }
 #ifdef _OPENMP
     }
 #endif
-    comm->type = _default_comm;
-    return comm->new_address();
-
+    type = _default_comm;
+    return COMM_BASE::new_address();
 }
 
 
 int ClientComm::comm_nmsg() const  {
-    return base_handle->comm_nmsg();
+    return COMM_BASE::comm_nmsg();
 }
 
 communication::datatypes::CommHead ClientComm::response_header(datatypes::CommHead head) {
     // Initialize new comm
-    if (comm == nullptr) {
-        comm = new COMM_BASE("", nullptr, RECV);
-        comm->flags |= COMM_FLAG_CLIENT_RESPONSE;
-        //int ret = comm->new_address();
-        comm->const_flags |= COMM_EOF_SENT | COMM_EOF_RECV;
-        ygglog_debug << "client_response_header(" << name << "): Created response comm";
-    }
     // Add address & request ID to header
-    head.response_address->address(comm->address->address());
+    head.response_address->address(address->address());
     head.request_id = std::to_string(rand());
     if (add_request(head.request_id) < 0) {
         ygglog_error << "client_response_header(" << name << "): Failed to add request";
@@ -187,23 +171,15 @@ communication::datatypes::CommHead ClientComm::response_header(datatypes::CommHe
 int ClientComm::send(const char* rdata, const size_t &rlen) {
     int ret;
     ygglog_debug << "client_comm_send(" << name << "): " << rlen << " bytes";
-    if (base_handle == nullptr) {
-        ygglog_error <<"client_comm_send(" << name << "): no request comm registered";
-        return -1;
-    }
-    ret = base_handle->send(rdata, rlen);
+    ret = COMM_BASE::send(rdata, rlen);
     if (is_eof(rdata)) {
-        base_handle->const_flags |= COMM_EOF_SENT;
+        const_flags |= COMM_EOF_SENT;
     }
     return ret;
 }
 
 long ClientComm::recv(char* rdata, const size_t &rlen, bool allow_realloc)  {
     ygglog_debug << "client_comm_recv(" << name << ")";
-    if (comm == nullptr) {
-        ygglog_error << "client_comm_recv(" << name << "): no response struct set up";
-        return -1;
-    }
     if (request_id.empty()) {
         ygglog_error << "client_comm_recv(" << name << "): no response comm registered";
         return -1;
@@ -211,7 +187,7 @@ long ClientComm::recv(char* rdata, const size_t &rlen, bool allow_realloc)  {
     std::string req_id = request_id[0];
     long ret = 0;
     while (has_response(req_id) < 0) {
-        ret = comm->recv(rdata, rlen, allow_realloc);
+        ret = COMM_BASE::recv(rdata, rlen, allow_realloc);
         if (ret < 0) {
             ygglog_error << "client_comm_recv(" << name << "): default_comm_recv returned " << ret;
             return ret;

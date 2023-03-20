@@ -8,7 +8,7 @@ namespace communicator {
 
 class ClientComm : public COMM_BASE {
 public:
-    explicit ClientComm(const std::string &name = "", utils::Address *address = nullptr, DIRECTION direction = NONE);
+    explicit ClientComm(const std::string &name = "", utils::Address *address = nullptr);
 
     ~ClientComm() override;
 
@@ -40,13 +40,11 @@ protected:
     long recv(char *data, const size_t &len, bool allow_realloc) override;
 
 private:
-    COMM_BASE *comm;
     size_t nreq;
     std::vector<std::string> request_id;
     std::vector<char *> data;
     std::vector<size_t> len;
     static unsigned _client_rand_seeded;
-    COMM_BASE *base_handle;
 };
 
 }
