@@ -46,6 +46,8 @@ MPIComm::MPIComm(const std::string &name, utils::Address *address, const DIRECTI
 
     //if (!(comm->flags & COMM_FLAG_VALID))
     //    return -1;
+    if (address == nullptr)
+        throw std::runtime_error("No address specified for MPIComm constructor");
     if (name.empty()) {
         this->name = "tempinitMPI." + address->address();
     }
@@ -61,6 +63,13 @@ MPIComm::MPIComm(const std::string &name, utils::Address *address, const DIRECTI
     std::vector<std::string> adrs;
     boost::split(adrs, address->address(), boost::is_any_of(","));
     handle->nproc += static_cast<int>(adrs.size());
+    addresses.push_back(address);
+    if (adrs.size() > 1) {
+        addresses[0]->address(adrs[0]);
+        for (size_t i = 1; i < adrs.size(); i++) {
+            addresses.push_back(new communication::utils::Address(adrs[i]));
+        }
+    }
 
     size_t ibeg, iend;
 
@@ -68,7 +77,7 @@ MPIComm::MPIComm(const std::string &name, utils::Address *address, const DIRECTI
         ibeg = a.find("[");
         iend = a.find("]");
         if (ibeg != std::string::npos) {
-            handle->procs.push_back(stoi(a.substr(ibeg, iend-ibeg)));
+            handle->procs.push_back(stoi(a.substr(ibeg+1, iend-ibeg-1)));
         } else {
             handle->procs.push_back(stoi(a));
         }
@@ -107,7 +116,8 @@ int MPIComm::mpi_comm_source_id() const {
         ygglog_error << "mpi_comm_source_id(" << name << "): Request canceled for tag = " << handle->tag;
         return -1;
     }
-    if (int src = status.Get_source() > 0) {
+    int src = status.Get_source();
+    if (src > 0) {
         for (size_t i = 0; i < handle->nproc; i++) {
             if (handle->procs[i] == src) {
                 return src;
@@ -130,7 +140,7 @@ int MPIComm::comm_nmsg() const {
 }
 
 int MPIComm::send(const char *data, const size_t &len) {
-    int ret = -1;
+    int ret = 0;
     ygglog_debug << "mpi_comm_send(" << name << "): " << len << " bytes";
     if (!check_size(len))
         return -1;

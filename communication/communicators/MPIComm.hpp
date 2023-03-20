@@ -43,8 +43,9 @@ protected:
     int send(const char *data, const size_t &len) override;
 
     long recv(char *data, const size_t &len, bool allow_realloc) override;
-
+#ifndef YGG_TEST
 private:
+#endif
     std::vector<utils::Address *> addresses;
 };
 
