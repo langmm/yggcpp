@@ -18,7 +18,7 @@ include(FetchContent)
 FetchContent_Declare(
         RapidJSON_ygg
         GIT_REPOSITORY https://github.com/astro-friedel/rapidjson_ygg.git
-        GIT_TAG 11179034d8fce7216d01f5183102ce9bfb044401
+        GIT_TAG 8b0d744b33273855b3e384338e1cf96208af0a6c
 )
 
 if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
@@ -26,7 +26,7 @@ if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
 endif("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
 
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${PROJECT_SOURCE_DIR}/cmake")
-set(CMAKE_INSTALL_PREFIX /home/friedel/devel/yggtests)
+set(CMAKE_INSTALL_PREFIX devel)
 
 #file(GLOB_RECURSE SOURCES "communication/**/*.cpp")
 file(GLOB SOURCES "communication/utils/*.cpp" "communication/communicators/*.cpp")
