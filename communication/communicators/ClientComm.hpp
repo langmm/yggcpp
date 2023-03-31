@@ -2,7 +2,7 @@
 
 #include "DefaultComm.hpp"
 #include "CommHead.hpp"
-
+#ifdef COMM_BASE
 namespace communication {
 namespace communicator {
 
@@ -30,7 +30,7 @@ public:
 
     int comm_nmsg() const override;
 
-    datatypes::CommHead response_header(datatypes::CommHead head);
+    void response_header(datatypes::CommHead &head);
     using Comm_t::send;
     using Comm_t::recv;
 
@@ -39,7 +39,9 @@ protected:
 
     long recv(char *data, const size_t &len, bool allow_realloc) override;
 
+#ifndef YGG_TEST
 private:
+#endif
     size_t nreq;
     std::vector<std::string> request_id;
     std::vector<char *> data;
@@ -49,3 +51,5 @@ private:
 
 }
 } // communication
+
+#endif

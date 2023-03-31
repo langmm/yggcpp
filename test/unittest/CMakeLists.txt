@@ -11,7 +11,8 @@ set(UNITTEST_SOURCES
         unittest.cpp
         commbasetest.cpp
         #commheadtest.cpp
-        #clientcommtest.cpp
+        clientcommtest.cpp
+        servercommtest.cpp
         ipccommtest.cpp
         zmqcommtest.cpp)
 
@@ -56,7 +57,6 @@ include(GoogleTest)
 file(GLOB files "${CMAKE_CURRENT_SOURCE_DIR}/unittest/tests/communicators/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/unittest/tests/utils/*.cpp")
 foreach(ffname ${files})
     get_filename_component(fname ${ffname} NAME_WE)
-    message("ZMQ  ${YGG_ZMQ_LIBS}")
     add_executable(unittest_${fname} ${CMAKE_CURRENT_SOURCE_DIR}/unittest/unittest.cpp ${CMAKE_CURRENT_SOURCE_DIR}/unittest/elf_hook.cpp ${CMAKE_CURRENT_SOURCE_DIR}/unittest/mock.cpp ${ffname})
     target_link_libraries(unittest_${fname} ${TEST_LIBRARIES} YggInterface gomp dl ${PYTHON_LIBRARIES} Python3::NumPy ${YGG_ZMQ_LIBS})
     add_test(NAME unittest_${fname}

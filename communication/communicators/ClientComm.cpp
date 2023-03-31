@@ -1,6 +1,8 @@
 #include "ClientComm.hpp"
 #include "utils/tools.hpp"
 
+#ifdef COMM_BASE
+
 using namespace communication::communicator;
 using namespace communication::utils;
 using namespace communication::datatypes;
@@ -148,7 +150,7 @@ int ClientComm::comm_nmsg() const  {
     return COMM_BASE::comm_nmsg();
 }
 
-communication::datatypes::CommHead ClientComm::response_header(datatypes::CommHead head) {
+void ClientComm::response_header(datatypes::CommHead &head) {
     // Initialize new comm
     // Add address & request ID to header
     head.response_address->address(address->address());
@@ -156,16 +158,16 @@ communication::datatypes::CommHead ClientComm::response_header(datatypes::CommHe
     if (add_request(head.request_id) < 0) {
         ygglog_error << "client_response_header(" << name << "): Failed to add request";
         head.flags = head.flags & ~HEAD_FLAG_VALID;
-        return head;
+        return;
     }
     if (has_request(head.request_id) < 0) {
         ygglog_error << "client_response_header(" << name << "): Failed to add request";
         head.flags = head.flags & ~HEAD_FLAG_VALID;
-        return head;
+        return;
     }
     ygglog_debug << "client_response_header(" << name << "): response_address = " << head.response_address
                  << ", request_id = " << head.request_id;
-    return head;
+    return;
 }
 
 int ClientComm::send(const char* rdata, const size_t &rlen) {
@@ -216,3 +218,4 @@ long ClientComm::recv(char* rdata, const size_t &rlen, bool allow_realloc)  {
     return ret;
 }
 
+#endif

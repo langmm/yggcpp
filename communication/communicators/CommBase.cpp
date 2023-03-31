@@ -143,7 +143,7 @@ Comm_t* communication::communicator::new_Comm_t(const DIRECTION dir, const COMM_
         case ZMQ_COMM:
             return new ZMQComm(name, (address == nullptr) ? nullptr : new Address(address), dir);
         case SERVER_COMM:
-            return new ServerComm(name, (address == nullptr) ? nullptr : new Address(address), dir);
+            return new ServerComm(name, (address == nullptr) ? nullptr : new Address(address));
         case CLIENT_COMM:
             return new ClientComm(name, (address == nullptr) ? nullptr : new Address(address));
         case MPI_COMM:

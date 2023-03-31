@@ -3,12 +3,14 @@
 #include "CommHead.hpp"
 #include "utils/tools.hpp"
 
+#ifdef COMM_BASE
+
 using namespace communication::communicator;
 using namespace communication::utils;
 using namespace communication::datatypes;
 
-ServerComm::ServerComm(const std::string &name, Address *address, DIRECTION direction) :
-        COMM_BASE(name, address, direction){
+ServerComm::ServerComm(const std::string &name, Address *address) :
+        COMM_BASE(name, address, RECV){
     comms.clear();
     response_id.clear();
     request_id.clear();
@@ -21,17 +23,9 @@ ServerComm::ServerComm(const std::string &name, Address *address, DIRECTION dire
     //DataType *dtype_in = create_dtype_format(this->direction, 0, false);
 
     if (this->name.empty()) {
-        base_handle = new COMM_BASE("", this->address, RECV);
-        base_handle->name = "server_request." + this->address->address();
-    } else {
-        base_handle = new COMM_BASE(this->name, nullptr, RECV);
+        this->name = "server_request." + this->address->address();
     }
-    base_handle->flags |= COMM_FLAG_SERVER;
-    base_handle->init();
-    this->address->address(base_handle->address->address());
-    // printf("init_server_comm: name = %s, type=%d, address = %s\n",
-    // 	 handle->name, handle->type, handle->address);
-    this->direction = RECV;
+    flags |= COMM_FLAG_SERVER;
     flags |= COMM_ALWAYS_SEND_HEADER;
 }
 
@@ -39,8 +33,6 @@ ServerComm::~ServerComm(){
     for (auto c : comms) {
         delete c;
     }
-    if (base_handle != nullptr)
-        delete base_handle;
     comms.clear();
     response_id.clear();
     request_id.clear();
@@ -164,7 +156,7 @@ int ServerComm::remove_request(size_t idx){
 }
 
 int ServerComm::comm_nmsg() const {
-    return base_handle->comm_nmsg();
+    return COMM_BASE::comm_nmsg();
 }
 CommHead ServerComm::response_header(CommHead &head){
     if (request_id.empty()) {
@@ -198,17 +190,13 @@ int ServerComm::send(const char* data, const size_t &len){
 
 long ServerComm::recv(char* data, const size_t &len, bool allow_realloc){
     ygglog_debug << "server_comm_recv(" << name << ")";
-    if (base_handle == nullptr) {
-        ygglog_error << "server_comm_recv(" << name << "): no request comm registered";
-        return -1;
-    }
-    long ret = base_handle->recv(data, len, allow_realloc);
+    long ret = COMM_BASE::recv(data, len, allow_realloc);
     if (ret < 0) {
         return ret;
     }
     // Return EOF
     if (is_eof(data)) {
-        base_handle->const_flags |= COMM_EOF_RECV;
+        const_flags |= COMM_EOF_RECV;
         return ret;
     }
     // Initialize new comm from received address
@@ -219,7 +207,7 @@ long ServerComm::recv(char* data, const size_t &len, bool allow_realloc){
     }
     // Return EOF
     if (is_eof(data + head.bodybeg)) {
-        base_handle->const_flags |= COMM_EOF_RECV;
+        const_flags |= COMM_EOF_RECV;
         return ret;
     }
     // On client sign off, do a second recv
@@ -236,3 +224,5 @@ long ServerComm::recv(char* data, const size_t &len, bool allow_realloc){
         return -1;
     return ret;
 }
+
+#endif

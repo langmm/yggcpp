@@ -1,6 +1,7 @@
 #pragma once
 #include <sys/msg.h>
 #include "zmq.hpp"
+#include <mpi.h>
 
 #define LIBRARY_ADDRESS_BY_HANDLE(dlhandle) ((NULL == dlhandle) ? NULL :  (void*)*(size_t const*)(dlhandle))
 #define SUBLIB "/home/friedel/crops_in_silico/yggcpp/cmake-build-release/libYggInterface.so"
@@ -15,7 +16,7 @@
 #define ELFHOOK_ARGS(x, a) elf_hook(SUBLIB, LIBRARY_ADDRESS_BY_HANDLE(handle), std::string(#x) + "|" + std::string(#a), \
     (void*)communication::mock::x);
 
-#define ELFREVERT_ARGS(x, a, y) y = elf_hook(SUBLIB, LIBRARY_ADDRESS_BY_HANDLE(handle), #x + "|" + #a, \
+#define ELFREVERT_ARGS(x, a, y) y = elf_hook(SUBLIB, LIBRARY_ADDRESS_BY_HANDLE(handle), std::string(#x) + "|" + std::string(#a), \
     y);
 namespace communication {
 namespace mock {
@@ -24,6 +25,8 @@ namespace mock {
 
 extern int RETVAL;
 extern int SENDCOUNT;
+extern int MPISTATUS;
+extern bool MPICANCEL;
 
 int msgsnd(int a, const void* b, size_t c, int d);
 
