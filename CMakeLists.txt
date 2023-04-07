@@ -28,11 +28,48 @@ endif("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${PROJECT_SOURCE_DIR}/cmake")
 set(CMAKE_INSTALL_PREFIX /home/friedel/devel/yggtests)
 
-#file(GLOB_RECURSE SOURCES "communication/**/*.cpp")
 file(GLOB SOURCES "communication/utils/*.cpp" "communication/communicators/*.cpp")
 add_library(YggInterface SHARED ${SOURCES})
 
-option(YGG_BUILD_TESTS "Build tests" ON)
+option(BUILD_PYTHON_LIBRARY "Build the Yggdrasil Python interface library" ON)
+#########################################
+if(BUILD_PYTHON_LIBRARY)
+    if(POLICY CMP0094)  # https://cmake.org/cmake/help/latest/policy/CMP0094.html
+        cmake_policy(SET CMP0094 NEW)  # FindPython should return the first matching Python
+    endif()
+    add_definitions(-DWITH_PYTHON)
+    find_package(PythonInterp 3)
+    find_package(PythonLibs 3 REQUIRED)
+    find_package(Boost REQUIRED COMPONENTS python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR} log)
+
+    #find_package(Python3 COMPONENTS Interpreter Development NumPy REQUIRED)
+    #include_directories(${Python_INCLUDE_DIRS})
+    #include_directories(${Python3_NumPy_INCLUDE_DIRS})
+    #set(YGG_PYTHON_ENV "DATADIR=${CMAKE_SOURCE_DIR}/test;YGG_PYTHON_EXEC=${Python3_EXECUTABLE}")
+
+    # There is an issue with embedding Python on Windows in conda environments
+    # https://github.com/ContinuumIO/anaconda-issues/issues/11374
+    #if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    #    set(YGG_PYTHON_ENV "${YGG_PYTHON_ENV};PYTHONHOME=${Python3_RUNTIME_LIBRARY_DIRS}")
+    #endif()
+
+    #target_link_libraries(YggInterface ${PYTHON_LIBRARIES} Python3::NumPy)
+
+
+    file(GLOB_RECURSE PYSOURCES ${CMAKE_SOURCE_DIR}/communication/python/*.cpp)
+    add_library(pyygg MODULE ${SOURCES} ${PYSOURCES})
+    target_include_directories(pyygg PRIVATE ${PYTHON_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/communication/python)
+    target_link_libraries(pyygg boost_python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR})
+    message("PYTHON")
+
+else()
+    find_package(Boost REQUIRED COMPONENTS log)
+endif()
+##############################
+
+#file(GLOB_RECURSE SOURCES "communication/**/*.cpp")
+
+option(YGG_BUILD_TESTS "Build tests" OFF)
 option(YGG_BUILD_THIRDPARTY_GTEST "Use gtest installation in 'thirdpart/gtest' by default if available" ON)
 
 set(YGG_BUILD_FLAGS "")
@@ -68,11 +105,13 @@ if(ENABLE_ZMQ)
     add_library(zmqlib SHARED IMPORTED)
     set_target_properties(zmqlib PROPERTIES IMPORTED_LOCATION ${CMAKE_INSTALL_PREFIX}/lib/libyggzmq.so)
     target_link_libraries(YggInterface zmqlib)
+    if(BUILD_PYTHON_LIBRARY)
+        target_link_libraries(pyygg zmqlib)
+    endif()
 else (ENABLE_ZMQ)
     message("No zmq support will be built." )
 endif (ENABLE_ZMQ)
 
-find_package(Boost REQUIRED COMPONENTS log)
 include_directories(${Boost_INCLUDE_DIRS})
 add_definitions(-DBOOST_LOG_DYN_LINK)
 #if(Boost_date_time_FOUND)
@@ -85,15 +124,24 @@ add_definitions(-D_YGGIPC)
 find_package(OpenMP)
 if (OpenMP_CXX_FOUND)
     add_definitions(-D_OPENMP -DMPIINSTALLED)
-    message("MPI found")
+    message("OMP found")
     target_link_libraries(YggInterface OpenMP::OpenMP_CXX)
+    if(BUILD_PYTHON_LIBRARY)
+        target_link_libraries(pyygg OpenMP::OpenMP_CXX)
+    endif()
 else()
     message("NO OpenMP")
 endif()
 
 find_package(MPI)
 if(MPI_CXX_FOUND)
+    message("MPI_FOUND")
+    include_directories(MPI_CXX_INCLUDE_DIRS)
     target_link_libraries(YggInterface MPI::MPI_CXX)
+    if(BUILD_PYTHON_LIBRARY)
+        target_link_libraries(pyygg MPI::MPI_CXX)
+    endif()
+
 ENDIF()
 
 #get_cmake_property(_variableNames VARIABLES)
@@ -102,19 +150,6 @@ ENDIF()
 #    message(STATUS "${_variableName}=${${_variableName}}")
 #endforeach()
 
-
-find_package(Python3 COMPONENTS Interpreter Development NumPy REQUIRED)
-include_directories(${Python_INCLUDE_DIRS})
-include_directories(${Python3_NumPy_INCLUDE_DIRS})
-set(YGG_PYTHON_ENV "DATADIR=${CMAKE_SOURCE_DIR}/test;YGG_PYTHON_EXEC=${Python3_EXECUTABLE}")
-
-# There is an issue with embedding Python on Windows in conda environments
-# https://github.com/ContinuumIO/anaconda-issues/issues/11374
-if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    set(YGG_PYTHON_ENV "${YGG_PYTHON_ENV};PYTHONHOME=${Python3_RUNTIME_LIBRARY_DIRS}")
-endif()
-
-target_link_libraries(YggInterface ${PYTHON_LIBRARIES} Python3::NumPy)
 target_link_libraries(YggInterface ${Boost_LOG_LIBRARY})
 if (Boost_DATE_TIME_FOUND)
     target_link_libraries(YggInterface ${Boost_DATE_TIME_LIBRARY})
