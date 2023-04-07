@@ -24,8 +24,8 @@ void ygg_sock_t::ctx_shutdown() {
     {
         if (ctx_valid) {
             // force all sockets to be closed, otherwise the context close will hang
-            for (auto sock : ygg_sock_t::activeSockets) {
-                sock->close();
+	    for (int i = ygg_sock_t::activeSockets.size() - 1; i >= 0; i--) {
+	        ygg_sock_t::activeSockets[i]->close();
             }
             ygg_s_process_ctx.shutdown();
             ygg_s_process_ctx.close();

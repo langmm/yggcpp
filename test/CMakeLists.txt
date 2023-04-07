@@ -57,3 +57,7 @@ if(TEST_LIBRARIES)
     add_definitions(-DYGG_TEST)
 
 endif()
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+   add_definitions(-DELF_AVAILABLE)
+endif()

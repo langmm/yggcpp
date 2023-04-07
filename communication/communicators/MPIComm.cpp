@@ -10,21 +10,56 @@ using namespace communication::utils;
 
 mpi_registry_t &mpi_registry_t::Clone() const {
     MPI_Comm ncomm;
-    MPI_Comm_dup( (MPI_Comm)this->mpi_comm, &ncomm);
+    MPI_Comm_dup( this->comm, &ncomm);
     auto *clone = new mpi_registry_t(ncomm);
     return *clone;
+}
+
+void mpi_registry_t::CheckReturn(int code, std::string method, int rank) const {
+  if (code == MPI_SUCCESS)
+    return;
+  else if (code == MPI_ERR_COMM)
+    ygglog_error << method << "(" << tag << "): Invalid communicator" << std::endl;
+  else if (code == MPI_ERR_TAG)
+    ygglog_error << method << "(" << tag << "): Invalid tag" << std::endl;
+  else if (code == MPI_ERR_RANK)
+    ygglog_error << method << "(" << tag << "): Invalid rank '" <<
+      rank << "'" << std::endl;
+  else if (code == MPI_ERR_TYPE)
+    ygglog_error << method << "(" << tag << "): Invalid datatype" << std::endl;
+  else if (code == MPI_ERR_COUNT)
+    ygglog_error << method << "(" << tag << "): Invalid count" << std::endl;
+}
+
+int mpi_registry_t::Probe(int source, MPI_Status *status) const {
+  int out = MPI_Probe(source, tag, comm, status);
+  CheckReturn(out, "Probe", source);
+  if (status->MPI_ERROR) {
+    ygglog_error << "Probe(" << tag << "): Error in status: " << status->MPI_ERROR << std::endl;
+  }
+  return out;
+}
+
+int mpi_registry_t::Send(const void *buf, int count, MPI_Datatype datatype, int dest) const {
+  int out = MPI_Send(buf, count, datatype, dest, tag, comm);
+  CheckReturn(out, "Send", dest);
+  return out;
+}
+
+int mpi_registry_t::Recv(void *buf, int count, MPI_Datatype datatype, int source,
+			 MPI_Status *status) const {
+  int out = MPI_Recv(buf, count, datatype, source, tag, comm, status);
+  CheckReturn(out, "Recv", source);
+  return out;
 }
 
 /*MPIComm::MPIComm(const Comm_t *comm) : CommBase(comm, MPI_COMM) {
     if (handle == nullptr) {
         handle = new mpi_registry_t(MPI_COMM_WORLD);
-        handle->nproc = 0;
         handle->procs.clear();
         handle->tag = 0;
-        handle->nproc = 1;
         std::vector<std::string> adrs;
         //boost::split(adrs, address, boost::is_any_of(","));
-        handle->nproc += static_cast<int>(adrs.size());
 
         size_t ibeg, iend;
 
@@ -56,13 +91,10 @@ MPIComm::MPIComm(const std::string &name, utils::Address *address, const DIRECTI
         ygglog_error << "init_mpi_comm: Could not alloc MPI registry.";
         return;
     }
-    handle->nproc = 0;
     handle->procs.clear();
     handle->tag = 0;
-    handle->nproc = 1;
     std::vector<std::string> adrs;
     boost::split(adrs, address->address(), boost::is_any_of(","));
-    handle->nproc += static_cast<int>(adrs.size());
     addresses.push_back(address);
     if (adrs.size() > 1) {
         addresses[0]->address(adrs[0]);
@@ -98,27 +130,24 @@ int MPIComm::mpi_comm_source_id() const {
         return -1;
     }
     //mpi_registry_t* reg = (mpi_registry_t*)(x->handle);
-    MPI::Status status;
-    int address = MPI::ANY_SOURCE;
-    handle->Probe(address, handle->tag, status);
-    //if (MPI_Probe(address, handle->tag, handle->comm, &status) != MPI::SUCCESS) {
-    //    ygglog_error("mpi_comm_source_id(%s): Error in probe for tag = %d",
-    //                 name.c_str(), handle->tag);
-    //    return -1;
-    //}
-    if (status.Get_error()) {
+    MPI_Status status;
+    int address = MPI_ANY_SOURCE;
+    if (handle->Probe(address, &status) != MPI_SUCCESS) {
+      ygglog_error << "mpi_comm_source_id(" << name << "): Error in probe";
+      return -1;
+    }
+    if (status.MPI_ERROR) {
         ygglog_error << "mpi_comm_source_id(" << name << "): Error in status for tag = " << handle->tag
-                     << ": " << status.Get_error();
+                     << ": " << status.MPI_ERROR;
         return -1;
     }
-
-    if (status.Is_cancelled()) {
+    if (status._cancelled) {
         ygglog_error << "mpi_comm_source_id(" << name << "): Request canceled for tag = " << handle->tag;
         return -1;
     }
-    int src = status.Get_source();
+    int src = status.MPI_SOURCE;
     if (src > 0) {
-        for (size_t i = 0; i < handle->nproc; i++) {
+        for (size_t i = 0; i < handle->procs.size(); i++) {
             if (handle->procs[i] == src) {
                 return src;
             }
@@ -149,14 +178,14 @@ int MPIComm::send(const char *data, const size_t &len) {
         return -1;
     }
     int len_int = (int)(len);
-    int adr = static_cast<int>(handle->procs[handle->tag % handle->nproc]);
-    handle->Send(&len_int, 1, MPI_INT, adr, handle->tag);
+    int adr = static_cast<int>(handle->procs[handle->tag % handle->procs.size()]);
+    handle->Send(&len_int, 1, MPI_INT, adr);
     //if (MPI_Send(&len_int, 1, MPI_INT, adr, handle->tag, handle)) {
     //    ygglog_error("mpi_comm_send(%s): Error sending message size for tag = %d.",
     //                 name.c_str(), handle->tag);
     //    return -1;
     //}
-    handle->Send(data, len_int, MPI_CHAR, adr, handle->tag);
+    handle->Send(data, len_int, MPI_CHAR, adr);
     //if (MPI_Send(data, len_int, MPI_CHAR, address, handle->tag, handle->comm)) {
     //    ygglog_error("mpi_comm_send(%s): Error sending message for tag = %d.",
     //                 name.c_str(), handle->tag);
@@ -169,16 +198,16 @@ int MPIComm::send(const char *data, const size_t &len) {
 
 long MPIComm::recv(char* data, const size_t &len, bool allow_realloc) {
     ygglog_debug << "mpi_comm_recv(" <<  name << ")";
-    MPI::Status status;
+    MPI_Status status;
     int adr = mpi_comm_source_id();
-    handle->Probe(adr, handle->tag, status);
-    if (status.Get_error()) {
+    handle->Probe(adr, &status);
+    if (status.MPI_ERROR) {
         ygglog_error << "mpi_comm_nmsg(" << name << "): Error in probe for tag = " << handle->tag;
         return -1;
     }
     int len_recv = 0;
-    handle->Recv(&len_recv, 1, MPI_INT, adr, handle->tag, status);
-    if (status.Get_error()) {
+    handle->Recv(&len_recv, 1, MPI_INT, adr, &status);
+    if (status.MPI_ERROR) {
         ygglog_error << "mpi_comm_recv(" << name << "): Error receiving message size for tag = " << handle->tag;
         return -1;
     }
@@ -196,8 +225,8 @@ long MPIComm::recv(char* data, const size_t &len, bool allow_realloc) {
             return -len_recv;
         }
     }
-    handle->Recv(data, len_recv, MPI_CHAR, adr, handle->tag, status);
-    if (status.Get_error()) {
+    handle->Recv(data, len_recv, MPI_CHAR, adr, &status);
+    if (status.MPI_ERROR) {
         // TODO: Check status?
         ygglog_error << "mpi_comm_recv(" << name << "): Error receiving message for tag = " << handle->tag;
         return -1;

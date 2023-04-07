@@ -80,6 +80,7 @@ TEST(ZMQCOMM, cunstructor) {
 }
 
 TEST(ZMQCOMM, sendTest) {
+#ifdef ELF_AVAILABLE
     setenv("YGG_MODEL_INDEX", "123", 1);
     void* handle = dlopen(SUBLIB, RTLD_LAZY);
     void* original_func = nullptr;
@@ -116,10 +117,12 @@ TEST(ZMQCOMM, sendTest) {
     ELFREVERT(zmq::message_tD, original_func4);
     ELFREVERT(zmq::message_t::to_string, original_func5);
     dlclose(handle);
+#endif // ELF_AVAILABLE
 }
 
 /*
 TEST(ZMQCOMM, recv) {
+#ifdef ELF_AVAILABLE
     setenv("YGG_MODEL_INDEX", "123", 1);
     void* handle = dlopen(SUBLIB, RTLD_LAZY);
     void* original_func = nullptr;
@@ -133,5 +136,5 @@ TEST(ZMQCOMM, recv) {
     zmq.recv(data, len, true);
 
     dlclose(handle);
-
+#endif // ELF_AVAILABLE
 }*/
