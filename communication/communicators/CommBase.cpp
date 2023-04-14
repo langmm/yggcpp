@@ -60,8 +60,15 @@ Comm_t::Comm_t(const std::string &name, DIRECTION direction, const COMM_TYPE &t)
             }
             addr = getenv(temp_name.c_str());
         }
+	if (model_name == nullptr)
+	  model_name = "";
         ygglog_debug << "init_comm_base: model_name = " << model_name << ", full_name = " << full_name
-                     << ", address = " << addr;
+		     << ", address = ";
+	if (addr == nullptr)
+	  ygglog_debug << "NULL";
+	else
+	  ygglog_debug << addr;
+	ygglog_debug << std::endl;
         this->name = full_name;
         if (addr != nullptr) {
             this->address->address(addr);

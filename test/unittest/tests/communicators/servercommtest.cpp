@@ -85,6 +85,7 @@ TEST(SeverComm, send) {
     std::string newadr = "23456";
     sc.add_comm(newadr);
     EXPECT_EQ(sc.send(msg.c_str(), msg.size()), -1);
+#ifdef ELF_AVAILABLE
 #if COMM_BASE == IPC_COMM
     void *handle = dlopen(SUBLIB, RTLD_LAZY);
     void *original_func = nullptr;
@@ -97,10 +98,11 @@ TEST(SeverComm, send) {
 
 #elif COMM_BASE == ZMQ_COMM
 #endif
-
+#endif // ELF_AVAILABLE
 }
 
 TEST(ServerComm, recv) {
+#ifdef ELF_AVAILABLE
 #if COMM_BASE == IPC_COMM
     std::string name = "MyComm";
     char* data = (char*)malloc(sizeof(char));
@@ -123,7 +125,7 @@ TEST(ServerComm, recv) {
 
 #elif COMM_BASE == ZMQ_COMM
 #endif
-
+#endif // ELF_AVAILABLE
 }
 
 #endif

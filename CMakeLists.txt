@@ -18,7 +18,7 @@ include(FetchContent)
 FetchContent_Declare(
         RapidJSON_ygg
         GIT_REPOSITORY https://github.com/astro-friedel/rapidjson_ygg.git
-        GIT_TAG 11179034d8fce7216d01f5183102ce9bfb044401
+        GIT_TAG 8b0d744b33273855b3e384338e1cf96208af0a6c
 )
 
 if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
@@ -71,6 +71,8 @@ endif()
 
 option(YGG_BUILD_TESTS "Build tests" OFF)
 option(YGG_BUILD_THIRDPARTY_GTEST "Use gtest installation in 'thirdpart/gtest' by default if available" ON)
+option(YGG_BUILD_ASAN "Build with address sanitizer (gcc/clang)" ON)
+option(YGG_BUILD_UBSAN "Build with undefined behavior sanitizer (gcc/clang)" ON)
 
 set(YGG_BUILD_FLAGS "")
 option(ENABLE_ZMQ "Enable zeromq" ON)
@@ -103,7 +105,11 @@ if(ENABLE_ZMQ)
             ${CMAKE_INSTALL_PREFIX}/include/cppzmq
             ${CMAKE_INSTALL_PREFIX}/include)
     add_library(zmqlib SHARED IMPORTED)
-    set_target_properties(zmqlib PROPERTIES IMPORTED_LOCATION ${CMAKE_INSTALL_PREFIX}/lib/libyggzmq.so)
+    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|ARMClang")
+       set_target_properties(zmqlib PROPERTIES IMPORTED_LOCATION ${CMAKE_INSTALL_PREFIX}/lib/libyggzmq.dylib)
+    else (CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|ARMClang")
+       set_target_properties(zmqlib PROPERTIES IMPORTED_LOCATION ${CMAKE_INSTALL_PREFIX}/lib/libyggzmq.so)
+    endif (CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|ARMClang")
     target_link_libraries(YggInterface zmqlib)
     if(BUILD_PYTHON_LIBRARY)
         target_link_libraries(pyygg zmqlib)
@@ -221,3 +227,21 @@ set(CMAKE_CXX_FLAGS_DEBUG "-g -DNDEBUG -DYGG_DEBUG${BUILD_FLAGS}${YGG_BUILD_FLAG
 set(CMAKE_CXX_FLAGS_RELEASE "-g -DNDEBUG -DYGG_DEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS} -fpermissive")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -DNDEBUG -DYGG_DEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS} -fpermissive")
 
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+   if (YGG_BUILD_ASAN)
+      add_compile_options(-fsanitize=address)
+      add_link_options(-fsanitize=address)
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
+   endif()
+   if (YGG_BUILD_UBSAN)
+      if (CMAKE_CXX_COMPILER_ID STREQUAL "AppleClang")
+      	 add_compile_options(-fsanitize=undefined-trap -fsanitize-undefined-trap-on-error)
+         add_link_options(-fsanitize=undefined-trap -fsanitize-undefined-trap-on-error)
+         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined-trap -fsanitize-undefined-trap-on-error")
+      else ()
+      	 add_compile_options(-fsanitize=undefined)
+	 add_link_options(-fsanitize=undefined)
+	 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined")
+      endif ()
+   endif ()
+endif ()

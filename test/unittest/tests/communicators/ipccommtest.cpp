@@ -25,6 +25,7 @@ TEST(IPCComm, constructor) {
     utils::Address *adr3 = new utils::Address("this.is.a.test");
     EXPECT_THROW(IPCComm ipc5(name, adr3, SEND), std::runtime_error);
 
+#ifdef ELF_AVAILABLE
     void *handle = dlopen(SUBLIB, RTLD_LAZY);
     void *original_func = nullptr;
     if (!handle)
@@ -36,6 +37,7 @@ TEST(IPCComm, constructor) {
 
     ELFREVERT(msgget, original_func)
     dlclose(handle);
+#endif // ELF_AVAILABLE
 
 }
 
@@ -47,6 +49,7 @@ TEST(IPCComm, send) {
     IPCComm ipc(name, nullptr, RECV);
     int res = ipc.send(message.c_str(), message.size());
     EXPECT_EQ(res, 0);
+#ifdef ELF_AVAILABLE
     void *handle = dlopen(SUBLIB, RTLD_LAZY);
     void *original_func = nullptr;
     void *original_func2 = nullptr;
@@ -71,6 +74,7 @@ TEST(IPCComm, send) {
     ELFREVERT(msgsnd, original_func)
     ELFREVERT(msgctl, original_func2)
     dlclose(handle);
+#endif // ELF_AVAILABLE
 }
 
 
@@ -78,11 +82,12 @@ TEST(IPCComm, commnmsg) {
     std::string name = "Comm_nsg_test";
     IPCComm ipc(name, new utils::Address("9876"), SEND);
     int res = ipc.comm_nmsg();
+    EXPECT_EQ(res, 0);
 
+#ifdef ELF_AVAILABLE
     void *handle = dlopen(SUBLIB, RTLD_LAZY);
     void *original_func = nullptr;
 
-    EXPECT_EQ(res, 0);
     ELFHOOK(msgctl);
     RETVAL = -2;
     res = ipc.comm_nmsg();
@@ -91,9 +96,11 @@ TEST(IPCComm, commnmsg) {
     EXPECT_EQ(res, 0);
     ELFREVERT(msgctl, original_func)
     dlclose(handle);
+#endif // ELF_AVAILABLE
 }
 
 TEST(IPCComm, sendLarge) {
+#ifdef ELF_AVAILABLE
     RETVAL = 0;
     SENDCOUNT = 0;
     std::string name = "SendTester";
@@ -116,10 +123,11 @@ TEST(IPCComm, sendLarge) {
 
     ELFREVERT(msgsnd, original_func);
     dlclose(handle);
-
+#endif // ELF_AVAILABLE
 }
 
 TEST(IPCComm, recv) {
+#ifdef ELF_AVAILABLE
     std::string name = "SendTester";
     void *handle = dlopen(SUBLIB, RTLD_LAZY);
     void *original_func = nullptr;
@@ -148,4 +156,5 @@ TEST(IPCComm, recv) {
     free(data);
     dlclose(handle);
     int i = 7;
+#endif // ELF_AVAILABLE
 }

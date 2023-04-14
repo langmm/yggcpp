@@ -83,6 +83,7 @@ TEST(ClientComm, recv) {
     std::string res1 = "This is a response";
     cc.add_request(rq);
     cc.add_response(rs, res1.c_str(), res1.size());
+#ifdef ELF_AVAILABLE
 #if COMM_BASE == IPC_COMM
     void *handle = dlopen(SUBLIB, RTLD_LAZY);
     void *original_func = nullptr;
@@ -94,11 +95,12 @@ TEST(ClientComm, recv) {
     EXPECT_EQ(cc.recv(data, len, true), res1.size());
 
     ELFREVERT(msgrcv, original_func);
-    free(data);
+    // free(data);
     dlclose(handle);
 
 #elif COMM_BASE == ZMQ_COMM
 #endif
+#endif // ELF_AVAILABLE
 }
 
 #endif

@@ -34,34 +34,34 @@ public:
 class mpi_registry_mock : public communication::communicator::mpi_registry_t {
 public:
     mpi_registry_mock(MPI_Comm comm) : communication::communicator::mpi_registry_t(comm) {
-        nproc = 3;
         procs = {51000, 50000};
         MPISTATUS = 0;
         MPICANCEL = false;
         MPIPROC = 0;
     }
-    void Probe(int source, int tag, ::MPI::Status &status) const override {
-        status.Set_cancelled(MPICANCEL);
-        status.Set_error(MPISTATUS);
+    int Probe(int source, MPI_Status *status) const override {
+        status->_cancelled = MPICANCEL;
+	status->MPI_ERROR = MPISTATUS;
         if (MPIPROC > 0)
-            status.Set_source(MPIPROC);
-
+	    status->MPI_SOURCE = MPIPROC;
+	return MPISTATUS;
     }
 
-    void Send(const void* buf, int count, const MPI::Datatype &dt, int dest, int tag) const override {
-
+    int Send(const void* buf, int count, MPI_Datatype dt, int dest) const override {
+        return MPISTATUS;
     }
 
-    void Recv(void* buf, int count, const MPI::Datatype &dt, int source, int tag, MPI::Status& status) const override {
-        status.Set_cancelled(MPICANCEL);
-        status.Set_error(MPISTATUS);
+    int Recv(void* buf, int count, MPI_Datatype dt, int source, MPI_Status* status) const override {
+        status->_cancelled = MPICANCEL;
+        status->MPI_ERROR = MPISTATUS;
         char* cmsg = const_cast<char*>(msg.c_str());
         int sz = msg.size();
-        if(dt == MPI::Datatype(MPI_INT)) {
+        if(dt == MPI_Datatype(MPI_INT)) {
             memcpy(buf, &sz, sizeof(int));
         } else {
             memcpy(buf, cmsg, sizeof(char) * sz);
         }
+	return MPISTATUS;
     }
     static int MPISTATUS;
     static bool MPICANCEL;
@@ -185,8 +185,8 @@ TEST(MPICOMM, regclone) {
     if (!stat)
         MPI_Init(nullptr, nullptr);
     mpi_registry_t mpir(MPI_COMM_WORLD);
-    mpir.nproc = 2;
+    mpir.procs.push_back(1);
     mpi_registry_t mpir2 = mpir.Clone();
-    EXPECT_NE(mpir.nproc, mpir2.nproc);
+    EXPECT_NE(mpir.procs, mpir2.procs);
 }
 #endif
