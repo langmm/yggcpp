@@ -20,7 +20,6 @@ namespace {
 #define COMPLEX_UNIT_TEST(type, typenm, comparator, real, img) { \
 complex_ ## type ## _t cmplx;                                    \
 complex_ ## type ## _t ncmplx;                                   \
-typenm r1, i1;                                                   \
 cmplx.re = real;                                                 \
 cmplx.im = img;                                                  \
 std::stringstream ss;                                            \
@@ -31,7 +30,7 @@ EXPECT_ ## comparator ## _EQ(cmplx.im, ncmplx.im);               \
 }
 
 TEST(Value, Complex) {
-    COMPLEX_UNIT_TEST(float, float, FLOAT, 1.2, 6.4)
+    COMPLEX_UNIT_TEST(float, float, FLOAT, 1.2f, 6.4f)
     COMPLEX_UNIT_TEST(double, double, DOUBLE, 1.64452778, 9.28667775882)
     COMPLEX_UNIT_TEST(long_double, long double, DOUBLE, 162.2235992765, -84.22876639)
 }
@@ -91,7 +90,7 @@ TEST(LOGGING, fulltest) {
     BEGIN_CAPTURE(buffer)
     ygglog_error << "An error occurred at " << 5;
     std::string temp = buffer.str();
-    auto loc = temp.find("at");
+    long loc = static_cast<long>(temp.find("at"));
     EXPECT_EQ(std::count(temp.begin() + loc, temp.end(),'5'), 1);
     EXPECT_EQ(temp.find("ERROR"), 0);
     buffer.str(std::string());
@@ -147,16 +146,17 @@ TEST(TOOLS, joinParse) {
     ss.str(std::string());
     ss.clear();
 
-    std::vector<SUBTYPE> svals = {T_FLOAT, T_UINT, T_INT, T_COMPLEX, T_BYTES, T_UNICODE, T_UINT, T_INT};
-    join(svals, ss);
-    temp = ss.str();
-    EXPECT_EQ(std::count(temp.begin(), temp.end(), DELIMITER), svals.size() - 1);
-    std::vector<SUBTYPE> sretval;
-    parse(sretval, svals.size(), ss);
-    EXPECT_EQ(svals, sretval);
+    // Enum parse unused outside of this test
+    // std::vector<SUBTYPE> svals = {T_FLOAT, T_UINT, T_INT, T_COMPLEX, T_BYTES, T_UNICODE, T_UINT, T_INT};
+    // join(svals, ss);
+    // temp = ss.str();
+    // EXPECT_EQ(std::count(temp.begin(), temp.end(), DELIMITER), svals.size() - 1);
+    // std::vector<SUBTYPE> sretval;
+    // parse(sretval, svals.size(), ss);
+    // EXPECT_EQ(svals, sretval);
 
-    ss.str(std::string());
-    ss.clear();
+    // ss.str(std::string());
+    // ss.clear();
 
     std::vector<std::string> strvals = {"hello", "goodbye", "this is a , test"};
     join(strvals, ss);
@@ -170,14 +170,15 @@ TEST(TOOLS, joinParse) {
     ss.str(std::string());
     ss.clear();
 
-    std::vector<VTYPE> vvals = {T_ARRAY1D};
-    join(vvals, ss);
-    temp = ss.str();
-    EXPECT_EQ(std::count(temp.begin(), temp.end(), DELIMITER), 0);
-    std::vector<VTYPE> vret;
-    EXPECT_ANY_THROW(parse(vret, vvals.size() + 1, ss));
-    ss.str(std::string());
-    ss.clear();
+    // Enum parse unused outside of this test
+    // std::vector<VTYPE> vvals = {T_ARRAY1D};
+    // join(vvals, ss);
+    // temp = ss.str();
+    // EXPECT_EQ(std::count(temp.begin(), temp.end(), DELIMITER), 0);
+    // std::vector<VTYPE> vret;
+    // EXPECT_ANY_THROW(parse(vret, vvals.size() + 1, ss));
+    // ss.str(std::string());
+    // ss.clear();
 
     join(strvals, ss);
     temp = ss.str();
@@ -188,22 +189,24 @@ TEST(TOOLS, joinParse) {
 
 TEST(REGEX, findmatch) {
     std::string input = "This is the text to match";
-    size_t res, start, sind, eind;
-    res = find_match(" to", input, sind, eind);
-    EXPECT_EQ(sind, 16);
-    EXPECT_EQ(eind, 19);
-    EXPECT_EQ(res, 1);
+    size_t res, sind = 0, eind = 0;
+    // This find_match unused outside of this test
+    // res = find_match(" to", input, sind, eind);
+    // EXPECT_EQ(sind, 16);
+    // EXPECT_EQ(eind, 19);
+    // EXPECT_EQ(res, 1);
     sind = 0;
-    res = find_match(" to", input, eind, sind, eind);
+    eind = 19;
+    res = find_match(std::regex(" to"), input, eind, sind, eind);
     EXPECT_EQ(sind, 0);
     EXPECT_EQ(res, 0);
 }
 
 TEST(REGEX, countmatches) {
     std::string input = "This is the line of text to be matched";
-    EXPECT_EQ(count_matches(" t", input), 3);
-    EXPECT_EQ(count_matches(" to", input), 1);
-    EXPECT_EQ(count_matches(" a", input), 0);
+    EXPECT_EQ(count_matches(std::regex(" t"), input), 3);
+    EXPECT_EQ(count_matches(std::regex(" to"), input), 1);
+    EXPECT_EQ(count_matches(std::regex(" a"), input), 0);
 }
 
 TEST(REGEX, findmatches) {
@@ -213,7 +216,7 @@ TEST(REGEX, findmatches) {
     EXPECT_EQ(3, sind.size());
     EXPECT_EQ(eind.size(), sind.size());
     EXPECT_EQ(sind[0], 7);
-    for (auto i = 0; i < 3; i++) {
+    for (size_t i = 0; i < 3; i++) {
         EXPECT_EQ(sind[i] + 2, eind[i]);
     }
     EXPECT_EQ(find_matches("bob", input, sind, eind), 0);
@@ -222,27 +225,27 @@ TEST(REGEX, findmatches) {
 
 TEST(REGEX, replacenosub) {
     std::string input = "This is the line of text to be matched";
-    EXPECT_EQ(count_matches(" t", input), 3);
-    EXPECT_EQ(count_matches(" QQ", input), 0);
+    EXPECT_EQ(count_matches(std::regex(" t"), input), 3);
+    EXPECT_EQ(count_matches(std::regex(" QQ"), input), 0);
     EXPECT_EQ(regex_replace(input, " t", " QQ", 1), 1);
-    EXPECT_EQ(count_matches(" t", input), 2);
-    EXPECT_EQ(count_matches(" QQ", input), 1);
+    EXPECT_EQ(count_matches(std::regex(" t"), input), 2);
+    EXPECT_EQ(count_matches(std::regex(" QQ"), input), 1);
     EXPECT_EQ(regex_replace(input, " t", " QQ"), 2);
-    EXPECT_EQ(count_matches(" t", input), 0);
-    EXPECT_EQ(count_matches(" QQ", input), 3);
+    EXPECT_EQ(count_matches(std::regex(" t"), input), 0);
+    EXPECT_EQ(count_matches(std::regex(" QQ"), input), 3);
     input = "This is the line of text to be matched";
-    EXPECT_EQ(count_matches(" t", input), 3);
-    EXPECT_EQ(count_matches(" QQ", input), 0);
+    EXPECT_EQ(count_matches(std::regex(" t"), input), 3);
+    EXPECT_EQ(count_matches(std::regex(" QQ"), input), 0);
     EXPECT_EQ(regex_replace(input, " t", " QQ", 6), 3);
-    EXPECT_EQ(count_matches(" t", input), 0);
-    EXPECT_EQ(count_matches(" QQ", input), 3);
+    EXPECT_EQ(count_matches(std::regex(" t"), input), 0);
+    EXPECT_EQ(count_matches(std::regex(" QQ"), input), 3);
     input = "This is the line of text to be matched";
     const size_t size = input.size();
-    EXPECT_EQ(count_matches(" t", input), 3);
-    EXPECT_EQ(count_matches(" q-", input), 0);
+    EXPECT_EQ(count_matches(std::regex(" t"), input), 3);
+    EXPECT_EQ(count_matches(std::regex(" q-"), input), 0);
     EXPECT_EQ(regex_replace(input, " (t)([^ ]*)", " q-$2"), 3);
     EXPECT_EQ(input.size(), size + 3);
-    EXPECT_EQ(count_matches(" t", input), 0);
-    EXPECT_EQ(count_matches(" q-", input), 3);
+    EXPECT_EQ(count_matches(std::regex(" t"), input), 0);
+    EXPECT_EQ(count_matches(std::regex(" q-"), input), 3);
 }
 }

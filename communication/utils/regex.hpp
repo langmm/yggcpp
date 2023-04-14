@@ -9,22 +9,25 @@ namespace utils {
 
 size_t find_match(const std::regex &regex, const std::string &to_match,
                const size_t& start, size_t &sind, size_t &eind);
-static
-size_t find_match(const std::regex &regex, const std::string &to_match,
-               size_t &sind, size_t &eind) {
-    return find_match(regex, to_match, 0, sind, eind);
-}
-static
-size_t find_match(const std::string &regex_text, const std::string &to_match,
-               const size_t& start, size_t &sind, size_t &eind) {
-    std::regex regex(regex_text, std::regex::extended);
-    return find_match(regex, to_match, start, sind, eind);
-}
-static
-size_t find_match(const std::string &regex_text, const std::string &to_match,
-               size_t &sind, size_t &eind) {
-    return find_match(regex_text, to_match, 0, sind, eind);
-}
+// Currently unused
+// static
+// size_t find_match(const std::regex &regex, const std::string &to_match,
+//                size_t &sind, size_t &eind) {
+//     return find_match(regex, to_match, 0, sind, eind);
+// }
+// static
+// size_t find_match(const std::string &regex_text, const std::string &to_match,
+//                const size_t& start, size_t &sind, size_t &eind) {
+//     std::regex regex(regex_text, std::regex::extended);
+//     return find_match(regex, to_match, start, sind, eind);
+// }
+// static
+// size_t find_match(const std::string &regex_text, const std::string &to_match,
+//                size_t &sind, size_t &eind) {
+//     return find_match(regex_text, to_match, 0, sind, eind);
+// }
+int find_match_c(const char *regex_text, const char *to_match,
+		 size_t *sind, size_t *eind);
 
 
 /*!
@@ -38,11 +41,12 @@ size_t find_match(const std::string &regex_text, const std::string &to_match,
 */
 size_t count_matches(const std::regex &re, const std::string &to_match);
 
-static
-size_t count_matches(const std::string &regex_text, const std::string &to_match) {
-    std::regex re(regex_text);
-    return count_matches(re,to_match);
-}
+// Currently unused
+// static
+// size_t count_matches(const std::string &regex_text, const std::string &to_match) {
+//     std::regex re(regex_text);
+//     return count_matches(re,to_match);
+// }
 
 
 size_t find_matches(const std::string &regex_text, const std::string &to_match,
@@ -55,6 +59,18 @@ size_t regex_replace(std::string &buf, const std::string &re, const std::string 
                       const size_t &nreplace=0) {
     std::regex regex(re, std::regex::extended);
     return regex_replace(buf, regex, rp, nreplace);
+}
+static inline
+int regex_replace_c(char *buf, const size_t len_buf,
+		    const char *re, const char *rp,
+		    const size_t nreplace) {
+  std::string buff_s(buf);
+  int out = (int)(regex_replace(buff_s, re, rp, nreplace));
+  if ((buff_s.size() + 1) > len_buf)
+    return -1;
+  strncpy(buf, buff_s.c_str(), buff_s.size());
+  buf[buff_s.size()] = '\0';
+  return out;
 }
 
 const std::string sre_fmt = "%[^\t\n ]+[\t\n ]";

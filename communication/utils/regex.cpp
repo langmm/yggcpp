@@ -30,6 +30,13 @@ size_t find_match(const std::regex &regex, const std::string &to_match,
     return n_match;
 }
 
+int find_match_c(const char *regex_text, const char *to_match,
+		 size_t *sind, size_t *eind) {
+  std::regex re(regex_text, std::regex::extended);
+  std::string str(to_match);
+  return (int)(find_match(re, str, 0, *sind, *eind));
+}
+  
 size_t count_matches(const std::regex &re, const std::string &to_match) {
     // Loop until string done
     std::smatch sm;

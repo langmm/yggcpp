@@ -15,6 +15,7 @@ namespace communicator {
 class mpi_registry_t {
 public:
     explicit mpi_registry_t(MPI_Comm comm0) : comm(comm0), tag(0) {}
+    virtual ~mpi_registry_t();
 
     MPI_Comm comm;
     std::vector<size_t> procs; //!< IDs for partner processes.
@@ -29,15 +30,16 @@ private:
 };
 
 
-class MPIComm : public CommBase<mpi_registry_t, int> {
+class MPIComm : public CommBase<mpi_registry_t> {
 #else
     class MPIComm : public CommBase<void,void> {};
 #endif
 public:
     MPIComm(const std::string &name, utils::Address *address, const DIRECTION direction);
+    MPIComm(const std::string &name, const DIRECTION direction);
 
     //explicit MPIComm(const Comm_t* comm);
-    ~MPIComm() override;
+    // ~MPIComm() override;
 
     int comm_nmsg() const override;
 
@@ -46,9 +48,10 @@ public:
     using Comm_t::recv;
 
 protected:
-    int send(const char *data, const size_t &len) override;
+    void init() override;
+    int send_single(const char *data, const size_t &len) override;
 
-    long recv(char *data, const size_t &len, bool allow_realloc) override;
+    long recv_single(char*& data, const size_t &len, bool allow_realloc) override;
 #ifndef YGG_TEST
 private:
 #endif

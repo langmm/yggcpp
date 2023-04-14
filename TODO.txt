@@ -1,0 +1,9 @@
+* Migrate to use of ZeroMQ lib with CMake FindPackage
+* Add tests for YggIterface.hpp
+* Add YggIterface.h C interface with tests
+* Update handling of dtype in C
+* Get tests working on GHA
+* Add tests for RequestList
+* Add tests for Header/Metadata
+* Split serialization.hpp into files for easier maintenance
+* Strip out unused code

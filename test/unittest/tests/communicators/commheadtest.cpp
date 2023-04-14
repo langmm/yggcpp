@@ -1,12 +1,11 @@
 #include "../../unittest.hpp"
-#include "utils/Address.hpp"
-#include "communicators/CommHead.hpp"
+#include "utils/serialization.hpp"
 
-using namespace communication;
-using namespace communication::datatypes;
+using namespace communication::utils;
 
-TEST(CommHead, Constructor) {
-    utils::Address *adr = new utils::Address("this.is.a.test");
-    CommHead cha(adr);
-    EXPECT_EQ(cha.flags, HEAD_FLAG_VALID);
+// TODO: Add tests for HEADER
+
+TEST(Header, Constructor) {
+  Header cha;
+  EXPECT_EQ(cha.flags, HEAD_FLAG_VALID);
 }

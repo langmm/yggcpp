@@ -4,6 +4,7 @@
 #include <algorithm>
 #include "templates.hpp"
 #include "complex_type.hpp"
+#include "constants.hpp"
 
 #ifdef _MSC_VER
 #ifndef _CRT_SECURE_NO_WARNINGS
@@ -22,8 +23,6 @@
 #include <cstdarg>
 #include <cerrno>
 #include <ctime>
-
-#define COMMBUFFSIZ 2000
 
 #ifndef print_complex
 #define print_complex(x) printf("%lf+%lfj\n", (double)creal(x), (double)cimag(x))
@@ -77,33 +76,28 @@
 
 #define STRBUFF 100
 
-/*! @brief Maximum message size. */
-#ifdef IPCDEF
-#define YGG_MSG_MAX 2048
-#else
-#define YGG_MSG_MAX 1048576
-#endif
-/*! @brief End of file message. */
-#define YGG_MSG_EOF "EOF!!!"
-/*! @brief End of client message. */
-#define YGG_CLIENT_EOF "YGG_END_CLIENT"
-/*! @brief Resonable size for buffer. */
-#define YGG_MSG_BUF 2048
-/*! @brief Sleep time in micro-seconds */
-#define YGG_SLEEP_TIME ((int)250000)
-/*! @brief Size for buffers to contain names of Python objects. */
-#define PYTHON_NAME_SIZE 1000
-
 /*! @brief Define old style names for compatibility. */
-#define PSI_MSG_MAX YGG_MSG_MAX
-#define PSI_MSG_BUF YGG_MSG_BUF
-#define PSI_MSG_EOF YGG_MSG_EOF
 #ifdef PSI_DEBUG
 #define YGG_DEBUG PSI_DEBUG
 #endif
 #include "complex_type.hpp"
 
 #define DELIMITER ','
+
+
+#define YGGCPP_BEGIN_VAR_ARGS(name, first_arg, nargs, realloc)	\
+  rapidjson::VarArgList name(nargs, realloc);			\
+  va_start(name.va, first_arg)
+#define YGGCPP_END_VAR_ARGS(name)		\
+  if (name.get_nargs() != 0)			\
+    ygglog_error << name.get_nargs() << " arguments unused" << std::endl
+#define YGGC_BEGIN_VAR_ARGS(name, first_arg, nargs, realloc)	\
+  rapidjson::VarArgList name(&nargs, realloc, true);		\
+  va_start(name.va, first_arg)
+#define YGGC_END_VAR_ARGS(name)		\
+  if (name.get_nargs() != 0)			\
+    ygglog_error << name.get_nargs() << " arguments unused" << std::endl
+
 
 #include "logging.hpp"
 
@@ -114,7 +108,7 @@ template<typename T, std::enable_if_t<!std::is_floating_point<T>::value &&
                                       !std::is_same<T, uint8_t>::value &&
                                       !std::is_same<T, int8_t>::value, bool> = true>
 void _join(const std::vector<T>& values, std::ostream& out, const char delim=DELIMITER) {
-    for (auto i = 0; i < values.size()-1; i++)
+    for (size_t i = 0; i < values.size()-1; i++)
         out << values[i] << delim;
     out << values[values.size()-1];
 }
@@ -122,7 +116,7 @@ void _join(const std::vector<T>& values, std::ostream& out, const char delim=DEL
 template<typename T, std::enable_if_t<std::is_same<T, uint8_t>::value ||
                                       std::is_same<T, int8_t>::value, bool> = true>
 auto _join(const std::vector<T>& values, std::ostream& out, const char delim=DELIMITER){
-    for (auto i = 0; i < values.size()-1; i++) {
+    for (size_t i = 0; i < values.size()-1; i++) {
         out << +values[i] << delim;
     }
     out << +values[values.size()-1];
@@ -133,7 +127,7 @@ template<typename T, std::enable_if_t<std::is_floating_point<T>::value, bool> = 
 auto _join(const std::vector<T>& values, std::ostream& out, const char delim=DELIMITER) {
     out.setf(std::ios::fixed);
     out.precision(std::numeric_limits<T>::digits10);
-    for (auto i = 0; i < values.size()-1; i++)
+    for (size_t i = 0; i < values.size()-1; i++)
         out << values[i] << delim;
     out << values[values.size()-1];
 }
@@ -146,12 +140,12 @@ auto join(const std::vector<T>& values, std::ostream& out) -> EnableWithEnum<T> 
 
 inline
 size_t find_spacer(const std::vector<std::string> &values, const size_t start=0) {
-    int i;
-    int count;
+    size_t i;
+    size_t count;
     for (i = 0; i < REPLACE_SPACE.size(); i++) {
         count = 0;
         for (auto word : values) {
-            if (word.find(REPLACE_SPACE[i]) == std::string::npos) {
+	    if (word.find(REPLACE_SPACE[i], start) == std::string::npos) {
                 count ++;
             }
         }
@@ -184,7 +178,7 @@ auto parse(std::vector<T>& values, const size_t count, std::istream &input) -> E
     input >> std::ws;
     char c;
     T v;
-    for (auto i = 0; i < count - 1; i++) {
+    for (size_t i = 0; i < count - 1; i++) {
         if (input.eof())
             throw std::length_error("Invalid length found, expected " + std::to_string(count) + " but found " + std::to_string(i));
         input >> v;
@@ -210,7 +204,7 @@ auto parse(std::vector<T>& values, const size_t count, std::istream &input) {
     input >> std::ws;
     char c;
     int v;
-    for (auto i = 0; i < count - 1; i++) {
+    for (size_t i = 0; i < count - 1; i++) {
         if (input.eof())
             throw std::length_error("Invalid length found, expected " + std::to_string(count) + " but found " + std::to_string(i));
         input >> v;
@@ -237,7 +231,7 @@ auto parse(std::vector<T>& values, const size_t count, std::istream &input) -> E
     input >> spacer1;
     input >> spacer2;
     input >> std::ws;
-    for (auto i = 0; i < count - 1; i++) {
+    for (size_t i = 0; i < count - 1; i++) {
         if (input.eof())
             throw std::length_error("Invalid length found, expected " + std::to_string(count) + " but found " + std::to_string(i));
         input.getline(temp, 1000, spacer2);
@@ -320,7 +314,7 @@ size_t strlen4(char *strarg) {
         return 0; //strarg is NULL pointer
     char *str = strarg;
     for (; *str; str += 4); // empty body
-    return (str - strarg);
+    return (size_t)(str - strarg);
 }
 
 /*!

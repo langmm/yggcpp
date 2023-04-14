@@ -5,6 +5,7 @@
 #include "../../elf_hook.hpp"
 #include "../../mock.hpp"
 #include <dlfcn.h>
+#include "commtest.hpp"
 
 #if defined(MPIINSTALLED) && defined(MPI_COMM_WORLD)
 
@@ -19,16 +20,10 @@ namespace testing {
 
 class MPIComm_tester : public MPIComm {
 public:
-    MPIComm_tester(const std::string &name, utils::Address *address, const DIRECTION direction) :
-            MPIComm(name, address, direction) {}
-
+    TESTER_METHODS(MPIComm)
     std::vector<utils::Address*> getAddresses() {return addresses;}
     mpi_registry_t* getHandle() {return handle;}
     void setHandle(mpi_registry_t* h) { handle = h;}
-    int send(const char *data, const size_t &len) {return MPIComm::send(data, len);}
-    long recv(char* data, const size_t &len, bool allow_realloc) {
-        return MPIComm::recv(data, len, allow_realloc);
-    }
 };
 
 class mpi_registry_mock : public communication::communicator::mpi_registry_t {
@@ -39,7 +34,7 @@ public:
         MPICANCEL = false;
         MPIPROC = 0;
     }
-    int Probe(int source, MPI_Status *status) const override {
+    int Probe(int, MPI_Status *status) const override {
         status->_cancelled = MPICANCEL;
 	status->MPI_ERROR = MPISTATUS;
         if (MPIPROC > 0)
@@ -47,19 +42,19 @@ public:
 	return MPISTATUS;
     }
 
-    int Send(const void* buf, int count, MPI_Datatype dt, int dest) const override {
+    int Send(const void*, int, MPI_Datatype, int) const override {
         return MPISTATUS;
     }
 
-    int Recv(void* buf, int count, MPI_Datatype dt, int source, MPI_Status* status) const override {
+    int Recv(void* buf, int, MPI_Datatype dt, int, MPI_Status* status) const override {
         status->_cancelled = MPICANCEL;
         status->MPI_ERROR = MPISTATUS;
         char* cmsg = const_cast<char*>(msg.c_str());
-        int sz = msg.size();
+        int sz = static_cast<int>(msg.size());
         if(dt == MPI_Datatype(MPI_INT)) {
             memcpy(buf, &sz, sizeof(int));
         } else {
-            memcpy(buf, cmsg, sizeof(char) * sz);
+	    memcpy(buf, cmsg, sizeof(char) * static_cast<size_t>(sz));
         }
 	return MPISTATUS;
     }
@@ -73,24 +68,22 @@ bool mpi_registry_mock::MPICANCEL = false;
 int mpi_registry_mock::MPIPROC = 0;
 }
 }
-TEST(MPICOMM, constructor) {
+TEST(MPIComm, constructor) {
     std::string name = "TestMPIComm";
     EXPECT_THROW(MPIComm mpic(name, nullptr, SEND), std::runtime_error);
-    utils::Address adr("50000,51000");
-    communication::testing::MPIComm_tester mpic(name, &adr, SEND);
+    communication::testing::MPIComm_tester mpic(name, new utils::Address("50000,51000"), SEND);
     EXPECT_EQ(mpic.getAddresses().size(), 2);
     name = "";
-    MPIComm mpic2(name, &adr, SEND);
+    MPIComm mpic2(name, new utils::Address("50000,51000"), SEND);
     EXPECT_NE(mpic2.getName().find("tempinitMPI"), std::string::npos);
-    utils::Address adr2("[50000], 51000");
-    communication::testing::MPIComm_tester mpic3(name, &adr2, RECV);
+    communication::testing::MPIComm_tester mpic3(name, new utils::Address("[50000], 51000"), RECV);
     std::vector<utils::Address*> adrlist = mpic3.getAddresses();
     EXPECT_EQ(adrlist.size(), 2);
     EXPECT_EQ(adrlist[0]->address(), "[50000]");
     EXPECT_EQ(adrlist[1]->address(), "51000");
 }
 
-TEST(MPICOMM, sourceID) {
+TEST(MPIComm, sourceID) {
     int stat;
     MPI_Initialized(&stat);
     if (!stat)
@@ -125,7 +118,7 @@ TEST(MPICOMM, sourceID) {
     //MPI_Finalize();
 }
 
-TEST(MPICOMM, commnmsg) {
+TEST(MPIComm, commnmsg) {
     int stat;
     MPI_Initialized(&stat);
     if (!stat)
@@ -144,7 +137,7 @@ TEST(MPICOMM, commnmsg) {
     //MPI_Finalize();
 }
 
-TEST(MPICOMM, send) {
+TEST(MPIComm, send) {
     int stat;
     MPI_Initialized(&stat);
     if (!stat)
@@ -156,11 +149,11 @@ TEST(MPICOMM, send) {
 
     EXPECT_EQ(mpic.send("hello", 6), -1);
     mpic.setHandle(&mock_handle);
-    EXPECT_EQ(mpic.send("Hello", 6), 0);
+    EXPECT_GT(mpic.send("Hello", 6), 0);
     mpic.setHandle(tempmpi);
 }
 
-TEST(MPICOMM, recv) {
+TEST(MPIComm, recv) {
     int stat;
     MPI_Initialized(&stat);
     if (!stat)
@@ -171,7 +164,7 @@ TEST(MPICOMM, recv) {
     mpic.setHandle(&mock_handle);
     char* data = (char*)malloc(sizeof(char) * 1);
     size_t len = 1;
-    EXPECT_EQ(mpic.recv(data, len, false), -msg.size());
+    EXPECT_EQ(mpic.recv(data, len, false), -((long)msg.size()));
     communication::testing::mpi_registry_mock::MPISTATUS = 2;
     EXPECT_EQ(mpic.recv(data, len, true), -1);
     communication::testing::mpi_registry_mock::MPISTATUS = 0;
@@ -179,7 +172,7 @@ TEST(MPICOMM, recv) {
     mpic.setHandle(tempmpi);
 }
 
-TEST(MPICOMM, regclone) {
+TEST(MPIComm, regclone) {
     int stat;
     MPI_Initialized(&stat);
     if (!stat)
