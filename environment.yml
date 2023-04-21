@@ -10,3 +10,5 @@ dependencies:
   - pyyaml
   - zeromq
   - boost
+  - cmocka
+  - lcov
