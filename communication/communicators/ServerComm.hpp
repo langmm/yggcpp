@@ -8,9 +8,6 @@
 #ifdef COMM_BASE
 namespace communication {
 namespace communicator {
-#ifdef _OPENMP
-#pragma omp threadprivate(_default_comm)
-#endif
 
 // @brief Structure for storing requests
 class ServerComm : public COMM_BASE {

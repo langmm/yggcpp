@@ -37,7 +37,7 @@ jobs:
       - name: Install dependencies on Mac
         if: matrix.os == 'macos-latest'
         run: |
-          brew install zmq libomp llvm boost cmocka lcov
+          brew install zmq libomp llvm boost cmocka lcov gnutls
       - name: Install dependencies on Windows
         if: matrix.os == 'windows-latest'
         run: |
@@ -119,13 +119,13 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Debug -DYGG_ENABLE_COVERAGE=ON
+          cmake .. -DCMAKE_BUILD_TYPE=Debug -DYGG_ENABLE_COVERAGE=ON -DCMAKE_INSTALL_PREFIX=../devel
       - name: Configure
         if: matrix.os != 'windows-latest'
         run: |
           mkdir build
           cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Debug -DYGG_ENABLE_COVERAGE=ON
+          cmake .. -DCMAKE_BUILD_TYPE=Debug -DYGG_ENABLE_COVERAGE=ON -DCMAKE_INSTALL_PREFIX=../devel
       - name: Build
         run: |
           cd build

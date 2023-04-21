@@ -13,7 +13,6 @@
 #endif
 
 #ifdef _OPENMP
-
 #include <omp.h>
 #endif
 
@@ -48,7 +47,6 @@
 
 #endif
 #ifdef _MSC_VER
-#include "windows_stdint.h"  // Use local copy for MSVC support
 // Prevent windows.h from including winsock.h
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -378,5 +376,3 @@ int is_eof(const char *buf) {
 
 }
 }
-
-#endif

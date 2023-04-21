@@ -123,7 +123,7 @@ public:
       @param[in] data Message.
       @returns int Values >= 0 indicate success.
      */
-    template<>
+    // template<>
     int sendVar(const rapidjson::Document& data) {
       return send(1, &data);
     }
@@ -133,7 +133,7 @@ public:
       @return Integer specifying if the receive was succesful. Values >= 0
         indicate success.
     */
-    template<>
+    // template<>
     int sendVar(const rapidjson::Ply& data) {
       return send(1, &data);
     }
@@ -143,7 +143,7 @@ public:
       @return Integer specifying if the receive was succesful. Values >= 0
       indicate success.
     */
-    template<>
+    // template<>
     int sendVar(const rapidjson::ObjWavefront& data) {
       return send(1, &data);
     }

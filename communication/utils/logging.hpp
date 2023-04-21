@@ -13,8 +13,8 @@ std::string _getLogPretex();
 void ygglog_throw_error(const std::string& msg);
 void init_logger();
 void _set_error();
-static int _ygg_error_flag = 0;
-static bool _loginit = false;
+extern int _ygg_error_flag;
+extern bool _loginit;
 
 #ifdef YGG_TEST
 #define ygglog_error std::cout << "ERROR: " << communication::utils::_getLogPretex()

@@ -4,22 +4,11 @@
 extern "C" {
 #endif
 
-static char prefix_char = '#';
-#ifdef _OPENMP
-#pragma omp threadprivate(prefix_char)
-#endif
-
 /*! @brief C-friendly definition of rapidjson::Document. */
 typedef struct dtype_t {
     void *schema = nullptr; //!< Pointer to rapidjson::Value for validation.
     void *metadata = nullptr; //!< Pointer ot rapidjson::Document containing additional metadata.
 } dtype_t;
-
-/*! @brief C-friendly wrapper for rapidjson::Document. */
-//typedef struct generic_t {
-//    char prefix; //!< Prefix character for limited verification.
-//    void *obj; //!< Pointer to rapidjson::Document class.
-//} generic_t;
 
 /*!
   @brief Skip datatype arguments.

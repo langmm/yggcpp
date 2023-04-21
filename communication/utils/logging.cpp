@@ -4,6 +4,10 @@
 #include <boost/log/core.hpp>
 #include <boost/log/expressions.hpp>
 #endif
+
+int communication::utils::_ygg_error_flag = 0;
+bool communication::utils::_loginit = false;
+
 std::string communication::utils::_getLogPretex() {
     if (!communication::utils::_loginit)
         communication::utils::init_logger();
