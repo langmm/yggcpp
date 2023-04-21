@@ -46,14 +46,6 @@
 
 //#endif
 
-// Platform specific
-#ifdef _WIN32
-#include "regex/regex_win32.h"
-#include "getline_win32.h"
-#else
-
-//#include "regex_posix.h"
-
 #endif
 #ifdef _MSC_VER
 #include "windows_stdint.h"  // Use local copy for MSVC support

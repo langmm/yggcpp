@@ -51,7 +51,6 @@ endif()
 include(GoogleTest)
 file(GLOB files "${CMAKE_CURRENT_SOURCE_DIR}/unittest/tests/communicators/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/unittest/tests/utils/*.cpp")
 add_executable(unittest ${CMAKE_CURRENT_SOURCE_DIR}/unittest/unittest.cpp ${CMAKE_CURRENT_SOURCE_DIR}/unittest/elf_hook.cpp ${CMAKE_CURRENT_SOURCE_DIR}/unittest/mock.cpp ${files})
-message("TEST_LIBRARIES = ${TEST_LIBRARIES}")
 target_link_libraries(unittest ${TEST_LIBRARIES} YggInterface gomp dl ${Python3_LIBRARIES} Python3::NumPy ${YGG_ZMQ_LIBS})
 target_include_directories(unittest PRIVATE ${RAPIDJSON_INCLUDE_DIRS})
 # add_test(NAME unittest
@@ -89,7 +88,6 @@ add_definitions(-DYGG_TEST)
 set(CMAKE_CXX_FLAGS_DEBUG "-g -DYGG_DEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS}")
 set(CMAKE_CXX_FLAGS_RELEASE "-g -DYGG_DEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS}")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -DYGG_DEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS}")
-#message(STATUS "YGG_PYTHON_ENV = ${YGG_PYTHON_ENV}")
 
 #set_tests_properties(unittest PROPERTIES
 #        ENVIRONMENT

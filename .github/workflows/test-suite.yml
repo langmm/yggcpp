@@ -41,7 +41,8 @@ jobs:
       - name: Install dependencies on Windows
         if: matrix.os == 'windows-latest'
         run: |
-          choco install zeromq boost
+          vcpkg.exe install zeromq --triplet x64-windows
+          vcpkg.exe install boost --triplet x64-windows
       - name: Setup Python
         uses: actions/setup-python@v2
       - name: Fix Python path on mac
@@ -57,15 +58,17 @@ jobs:
       - name: Configure
         if: matrix.os == 'windows-latest'
         run: |
+          mkdir devel
           mkdir build
           cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Debug -DPython3_ROOT_DIR=$env:pythonLocation
+          cmake .. -DCMAKE_BUILD_TYPE=Debug -DPython3_ROOT_DIR=$env:pythonLocation -DCMAKE_INSTALL_PREFIX=../devel
       - name: Configure
         if: matrix.os != 'windows-latest'
         run: |
+          mkdir devel
           mkdir build
           cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Debug -DPython3_ROOT_DIR=${pythonLocation}
+          cmake .. -DCMAKE_BUILD_TYPE=Debug -DPython3_ROOT_DIR=${pythonLocation} -DCMAKE_INSTALL_PREFIX=../devel
       - name: Build
         run: |
           cd build

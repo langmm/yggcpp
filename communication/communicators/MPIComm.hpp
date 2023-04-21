@@ -32,7 +32,7 @@ private:
 
 class MPIComm : public CommBase<mpi_registry_t> {
 #else
-    class MPIComm : public CommBase<void,void> {};
+class MPIComm : public CommBase<void> {
 #endif
 public:
     MPIComm(const std::string &name, utils::Address *address, const DIRECTION direction);
