@@ -21,11 +21,6 @@ jobs:
         uses: actions/checkout@v2
         with:
           submodules: true
-      # - name: Patch gtest
-      #   run: |
-      #     cd thirdparty/gtest
-      #     git apply ../gtest.patch
-      #     cd ../..
       - name: Install dependencies on Ubuntu
         if: matrix.os == 'ubuntu-latest'
         run: |
