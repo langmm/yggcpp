@@ -6,7 +6,7 @@ using namespace communication::utils;
 
 Comm_t::Comm_t(Address *address, DIRECTION dirn, const COMM_TYPE &t, int flgs) :
   type(t), name(), address(address), direction(dirn), flags(flgs),
-  maxMsgSize(0), msgBufSize(0), index_in_register(-1), last_send(nullptr),
+  maxMsgSize(0), msgBufSize(0), index_in_register(-1),
   thread_id(-1), metadata() {
 
     flags |= COMM_FLAG_VALID;
@@ -88,8 +88,6 @@ Comm_t::~Comm_t() {
     if (index_in_register >= 0)
       Comm_t::registry[index_in_register] = NULL;
     ygglog_debug << "~CommBase: Started" << std::endl;
-    if (last_send != nullptr)
-        delete last_send;
     if (address != nullptr)
         delete address;
     ygglog_debug << "~CommBase: Finished" << std::endl;

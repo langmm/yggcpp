@@ -297,6 +297,8 @@ if (OpenMP_CXX_FOUND)
     if(BUILD_PYTHON_LIBRARY)
         target_link_libraries(pyygg OpenMP::OpenMP_CXX)
     endif()
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 else()
     message(STATUS "NO OpenMP")
 endif()
@@ -442,7 +444,10 @@ else (ENABLE_ZMQ)
 endif (ENABLE_ZMQ)
 
 if (ZeroMQ_FOUND)
-    set(ZeroMQ_LIBRARY zmq) # To prevent linking against .dll
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+        string(REPLACE .dll .lib ZeroMQ_LIBRARY ZeroMQ_LIBRARY)
+        # set(ZeroMQ_LIBRARY zmq) # To prevent linking against .dll
+    endif()
     message(STATUS "ZeroMQ found ZeroMQ_INCLUDE_DIR = ${ZeroMQ_INCLUDE_DIR}, ZeroMQ_LIBRARY = ${ZeroMQ_LIBRARY}")
     add_definitions(-DZMQINSTALLED -DZMQ_BUILD_DRAFT_API)
 

@@ -46,6 +46,9 @@ class RequestList;
 typedef struct comm_t comm_t;
 
 class Comm_t {
+private:
+  Comm_t(const Comm_t& other) = delete;
+  Comm_t& operator=(const Comm_t&) = delete;
 public:
     virtual ~Comm_t();
 
@@ -287,7 +290,6 @@ protected:
     size_t maxMsgSize; //!< The maximum message size.
     size_t msgBufSize; //!< The size that should be reserved in messages.
     int index_in_register; //!< Index of the comm in the comm register.
-    time_t *last_send; //!< Clock output at time of last send.
     int thread_id; //!< ID for the thread that created the comm.
     Metadata metadata;
 
@@ -301,6 +303,9 @@ Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string 
      */
 template<typename H>
 class CommBase : public Comm_t {
+private:
+  CommBase(const CommBase& other) = delete;
+  CommBase& operator=(const CommBase&) = delete;
 public:
     CommBase() = delete;
 

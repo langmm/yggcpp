@@ -102,6 +102,9 @@ std::string document2string(ValueT& rhs, const char* indent="") {
 }
 
 class Metadata {
+private:
+  Metadata(const Metadata& other) = delete;
+  Metadata& operator=(const Metadata&) = delete;
  public:
   Metadata() :
     metadata(rapidjson::kObjectType), schema(NULL) {}
@@ -676,6 +679,9 @@ class Metadata {
 };
 
 class Header : public Metadata {
+private:
+  Header(const Header& other) = delete;
+  Header& operator=(const Header&) = delete;
 public:
   Header() :
     data_(NULL), data(NULL), size_data(0), size_buff(0), size_curr(0),
@@ -689,7 +695,7 @@ public:
     return (flags & HEAD_FLAG_VALID);
   }
   void invalidate() {
-    flags &= ~HEAD_FLAG_VALID;
+    flags &= static_cast<uint16_t>(~HEAD_FLAG_VALID);
   }
 
   /*!
@@ -750,7 +756,7 @@ public:
       if (GetMetaBoolOptional("in_data", false))
 	flags |= HEAD_META_IN_DATA;
       else
-	flags &= ~HEAD_META_IN_DATA;
+	flags &= static_cast<uint16_t>(~HEAD_META_IN_DATA);
     }
     // Check for flags
     char* data_chk = data[0];
@@ -763,7 +769,7 @@ public:
     if (size_curr < size_data)
       flags |= HEAD_FLAG_MULTIPART;
     else
-      flags &= ~HEAD_FLAG_MULTIPART;
+      flags &= static_cast<uint16_t>(~HEAD_FLAG_MULTIPART);
     if ((!(flags & HEAD_TEMPORARY)) && ((size_data + 1) > size_buff)) {
       if (allow_realloc) {
 	char *t_data = (char*)realloc(*data, size_data + 1);
