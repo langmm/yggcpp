@@ -146,8 +146,8 @@ void ZMQSocket::init(int type0, utils::Address* address,
     if (host == "localhost")
       host = "127.0.0.1";
     std::string address;
-#ifdef _OPENMP
     std::string except_msg = "";
+#ifdef _OPENMP
 #pragma omp critical (zmqport)
     {
 #endif

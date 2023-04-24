@@ -1,5 +1,8 @@
 #include "MPIComm.hpp"
 #include <boost/algorithm/string.hpp>
+#ifdef MPIINSTALLED
+#include <mpi.h>
+#endif /*MPIINSTALLED*/
 
 using namespace communication::communicator;
 using namespace communication::utils;
@@ -150,7 +153,9 @@ int MPIComm::mpi_comm_source_id() const {
                      << ": " << status.MPI_ERROR << std::endl;
         return -1;
     }
-    if (status._cancelled) {
+    int flag;
+    MPI_Test_cancelled(&status, &flag);
+    if (flag) {
         ygglog_error << "mpi_comm_source_id(" << name << "): Request canceled for tag = " << handle->tag << std::endl;
         return -1;
     }

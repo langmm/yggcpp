@@ -30,7 +30,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libc6-dbg gdb valgrind libboost-log-dev lcov libcmocka-dev
+          sudo apt-get install -y libc6-dbg gdb valgrind libboost-log-dev libboost-python-dev lcov libcmocka-dev 
           sudo apt upgrade --fix-missing
           valgrind --version
           # sudo apt autoremove -y
@@ -38,11 +38,12 @@ jobs:
       - name: Install dependencies on Mac
         if: matrix.os == 'macos-latest'
         run: |
-          brew install zmq libomp llvm boost cmocka lcov gnutls open-mpi
+          brew install zmq libomp llvm boost boost-python3 cmocka lcov gnutls open-mpi
       - name: Install dependencies on Windows
         if: matrix.os == 'windows-latest'
         run: |
           vcpkg.exe install boost --triplet x64-windows
+          vcpkg.exe install boost-python --triplet x64-windows
       - name: Install ZeroMQ and MPI dependencies on Ubuntu
         if: matrix.os == 'ubuntu-latest' && matrix.install-zmq
         run: |
