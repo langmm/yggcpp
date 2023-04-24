@@ -1,0 +1,144 @@
+name: Test of package installation & execution
+'on':
+  push:
+    branches-ignore:
+     - gh-pages
+    tags:
+     - '*'
+  schedule:
+  - cron: 0 10 * * 1
+jobs:
+  build_pip:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-install: [pip]
+      fail-fast: false
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      # - name: Patch gtest
+      #   run: |
+      #     cd thirdparty/gtest
+      #     git apply ../gtest.patch
+      #     cd ../..
+      - name: Install dependencies on Ubuntu
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libc6-dbg gdb valgrind libboost-log-dev libgomp1 libczmq-dev lcov libzmq3-dev libcmocka-dev
+          sudo apt upgrade --fix-missing
+          valgrind --version
+          # sudo apt autoremove -y
+          # sudo apt autoclean -y
+      - name: Install dependencies on Mac
+        if: matrix.os == 'macos-latest'
+        run: |
+          brew install zmq libomp llvm boost cmocka lcov gnutls
+      - name: Install dependencies on Windows
+        if: matrix.os == 'windows-latest'
+        run: |
+          vcpkg.exe install zeromq --triplet x64-windows
+          vcpkg.exe install boost --triplet x64-windows
+      - name: Setup Python
+        uses: actions/setup-python@v2
+      - name: Fix Python path on mac
+        if: matrix.os == 'macos-latest'
+        run: |
+          tee -a ~/.profile <<<'export PATH="${pythonLocation}/bin:${PATH}"'
+      - name: Install Python dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Check for numpy
+        run: |
+          python -c "import sys; print(sys.executable)"
+          python -c "import numpy; print(numpy.get_include())"
+      - name: Configure
+        if: matrix.os == 'windows-latest'
+        run: |
+          mkdir devel
+          mkdir build
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Debug -DPython3_ROOT_DIR=$env:pythonLocation -DCMAKE_INSTALL_PREFIX=../devel -DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake
+      - name: Configure
+        if: matrix.os != 'windows-latest'
+        run: |
+          mkdir devel
+          mkdir build
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Debug -DPython3_ROOT_DIR=${pythonLocation} -DCMAKE_INSTALL_PREFIX=../devel
+      - name: Build
+        run: |
+          cd build
+          cmake --build . --config Debug
+      - name: Test
+        run: |
+          cd build
+          ctest -C Debug --output-on-failure --verbose
+  build_conda:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-install: [conda]
+      fail-fast: false
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+      - name: Patch gtest
+        run: |
+          cd thirdparty/gtest
+          git apply ../gtest.patch
+          cd ../..
+      - name: Set up MSVC Compiler on windows
+        uses: ilammy/msvc-dev-cmd@v1
+        if: matrix.os == 'windows-latest'
+        with:
+          toolset: 14.0
+      - name: Set up miniconda test environment
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          activate-environment: yggdrasil
+          environment-file: environment.yml
+          auto-update-conda: true
+          channels: conda-forge
+          channel-priority: strict
+      - name: Check for numpy
+        run: |
+          python -c "import sys; print(sys.executable)"
+          python -c "import numpy; print(numpy.get_include())"
+      - name: Configure
+        if: matrix.os == 'windows-latest'
+        run: |
+          mkdir build
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Debug -DYGG_ENABLE_COVERAGE=ON -DCMAKE_INSTALL_PREFIX=../devel
+      - name: Configure
+        if: matrix.os != 'windows-latest'
+        run: |
+          mkdir build
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Debug -DYGG_ENABLE_COVERAGE=ON -DCMAKE_INSTALL_PREFIX=../devel
+      - name: Build
+        run: |
+          cd build
+          cmake --build . --config Debug
+      - name: Test
+        run: |
+          cd build
+          ctest -C Debug --output-on-failure --verbose
+      - name: Upload coverage report
+        uses: codecov/codecov-action@v1
+        with:
+          name: ${{ matrix.os }}-${{ matrix.python-install }}
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: build/coverage/coverage.info
+          # directory: build/Testing/CoverageInfo
+          functionalities: gcov

@@ -1,20 +1,15 @@
 include(CheckCXXCompilerFlag)
 
-#set(UNITTEST_SOURCES
-#        testutils.cpp
-#        unittest.cpp
-#        valuetest.cpp
-#        arraytest.cpp)
-
-set(UNITTEST_SOURCES
-        testutils.cpp
-        unittest.cpp
-        commbasetest.cpp
-        #commheadtest.cpp
-        clientcommtest.cpp
-        servercommtest.cpp
-        ipccommtest.cpp
-        zmqcommtest.cpp)
+# Unused
+# set(UNITTEST_SOURCES
+#         testutils.cpp
+#         unittest.cpp
+#         commbasetest.cpp
+#         #commheadtest.cpp
+#         clientcommtest.cpp
+#         servercommtest.cpp
+#         ipccommtest.cpp
+#         zmqcommtest.cpp)
 
 find_program(CCACH_FOUND ccache)
 if(CCACHE_FOUND)
@@ -55,28 +50,54 @@ endif()
 
 include(GoogleTest)
 file(GLOB files "${CMAKE_CURRENT_SOURCE_DIR}/unittest/tests/communicators/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/unittest/tests/utils/*.cpp")
-foreach(ffname ${files})
-    get_filename_component(fname ${ffname} NAME_WE)
-    add_executable(unittest_${fname} ${CMAKE_CURRENT_SOURCE_DIR}/unittest/unittest.cpp ${CMAKE_CURRENT_SOURCE_DIR}/unittest/elf_hook.cpp ${CMAKE_CURRENT_SOURCE_DIR}/unittest/mock.cpp ${ffname})
-    target_link_libraries(unittest_${fname} ${TEST_LIBRARIES} YggInterface gomp dl ${YGG_ZMQ_LIBS})
-    add_test(NAME unittest_${fname}
-            COMMAND ${CMAKE_BINARY_DIR}/test/unittest_${fname}
-            WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-    gtest_discover_tests(unittest_${fname})
-endforeach()
+
+add_executable(unittest ${CMAKE_CURRENT_SOURCE_DIR}/unittest/unittest.cpp ${CMAKE_CURRENT_SOURCE_DIR}/unittest/elf_hook.cpp ${CMAKE_CURRENT_SOURCE_DIR}/unittest/mock.cpp ${files})
+target_link_libraries(unittest ${TEST_LIBRARIES} YggInterface gomp dl ${Python3_LIBRARIES} Python3::NumPy ${ZeroMQ_LIBRARY})
+target_include_directories(unittest PRIVATE ${RAPIDJSON_INCLUDE_DIRS})
+# add_test(NAME unittest
+#          COMMAND ${CMAKE_BINARY_DIR}/test/unittest
+#         WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+# set_tests_properties(unittest PROPERTIES
+#                      ENVIRONMENT
+#                      "${RAPIDJSON_PYTHON_ENV}")
+gtest_discover_tests(unittest PROPERTIES
+                     ENVIRONMENT
+                     "${RAPIDJSON_PYTHON_ENV}")
+
+# foreach(ffname ${files})
+#     get_filename_component(fname ${ffname} NAME_WE)
+#     add_executable(unittest_${fname} ${CMAKE_CURRENT_SOURCE_DIR}/unittest/unittest.cpp ${CMAKE_CURRENT_SOURCE_DIR}/unittest/elf_hook.cpp ${CMAKE_CURRENT_SOURCE_DIR}/unittest/mock.cpp ${ffname})
+#     target_link_libraries(unittest_${fname} ${TEST_LIBRARIES} YggInterface gomp dl ${Python3_LIBRARIES} Python3::NumPy ${ZeroMQ_LIBRARY})
+#     target_include_directories(unittest_${fname} PRIVATE ${RAPIDJSON_INCLUDE_DIRS})
+#     add_test(NAME unittest_${fname}
+#             COMMAND ${CMAKE_BINARY_DIR}/test/unittest_${fname}
+#             WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+#     set_tests_properties(unittest_${fname} PROPERTIES
+#                          ENVIRONMENT
+#                          "${RAPIDJSON_PYTHON_ENV}")
+#     gtest_discover_tests(unittest_${fname})
+# endforeach()
+#foreach(ffname ${files})
+#    get_filename_component(fname ${ffname} NAME_WE)
+#    add_executable(unittest_${fname} ${CMAKE_CURRENT_SOURCE_DIR}/unittest/unittest.cpp ${CMAKE_CURRENT_SOURCE_DIR}/unittest/elf_hook.cpp ${CMAKE_CURRENT_SOURCE_DIR}/unittest/mock.cpp ${ffname})
+#    target_link_libraries(unittest_${fname} ${TEST_LIBRARIES} YggInterface gomp dl ${YGG_ZMQ_LIBS})
+#    add_test(NAME unittest_${fname}
+#            COMMAND ${CMAKE_BINARY_DIR}/test/unittest_${fname}
+#            WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+#    gtest_discover_tests(unittest_${fname})
+#endforeach()
 
 #add_dependencies(tests unittest)
 add_definitions(-DYGG_TEST)
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|ARMClang")
-    add_custom_command(TARGET unittest POST_BUILD
-            COMMAND dsymutil unittest
-            WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
-            COMMENT "Creating debug symbols...")
-endif(CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|ARMClang")
+# if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|ARMClang")
+#     add_custom_command(TARGET unittest POST_BUILD
+#             COMMAND dsymutil unittest
+#             WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+#             COMMENT "Creating debug symbols...")
+# endif(CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|ARMClang")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -DYGG_DEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS}")
 set(CMAKE_CXX_FLAGS_RELEASE "-g -DYGG_DEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS}")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -DYGG_DEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS}")
-#message(STATUS "YGG_PYTHON_ENV = ${YGG_PYTHON_ENV}")
 
 #set_tests_properties(unittest PROPERTIES
 #        ENVIRONMENT
@@ -86,8 +107,8 @@ set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -DYGG_DEBUG${BUILD_FLAGS}${YGG_BUILD_FLAG
 option(YGG_SKIP_VALGRIND_TESTS "Disable valgrind tests" OFF)
 if(NOT MSVC)
     find_program(VALGRIND_FOUND valgrind)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DYGG_DONT_IMPORT_NUMPY")
     if((NOT YGG_SKIP_VALGRIND_TESTS) AND VALGRIND_FOUND)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DRAPIDJSON_DONT_IMPORT_NUMPY")
         # Not running SIMD.* unit test cases for Valgrind
         add_test(NAME valgrind_unittest
                 COMMAND valgrind --suppressions=${CMAKE_SOURCE_DIR}/test/valgrind.supp --suppressions=${CMAKE_SOURCE_DIR}/test/valgrind-python.supp --leak-check=full --error-exitcode=1 --track-origins=yes --dsymutil=no --keep-debuginfo=yes --read-var-info=yes ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/unittest --gtest_filter=-SIMD.*

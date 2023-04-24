@@ -3,8 +3,7 @@
 #include "CommBase.hpp"
 
 #ifdef ZMQINSTALLED
-#include <zmq.hpp>
-#include <zmq_addon.hpp>
+#include <zmq.h>
 #else
 
 #endif
@@ -12,111 +11,97 @@
 namespace communication {
 #ifdef YGG_TEST
 namespace testing {
-class ygg_sock_tester;
-class ZMQComm_tester;
+class ZMQSocket_tester;
 }
 #endif
 namespace communicator {
 //class ClientComm;
-static unsigned _zmq_rand_seeded = 0;
-static unsigned _last_port_set = 0;
-static int _last_port = 49152;
-/* static double _wait_send_t = 0;  // 0.0001; */
-static char _reply_msg[100] = "YGG_REPLY";
-static char _purge_msg[100] = "YGG_PURGE";
-static int _zmq_sleeptime = 10000;
+extern unsigned _zmq_rand_seeded;
+extern unsigned _last_port_set;
+extern int _last_port;
+/* extern double _wait_send_t; */
+extern char _reply_msg[100];
+extern char _purge_msg[100];
+extern int _zmq_sleeptime;
 #ifdef _OPENMP
 #pragma omp threadprivate(_reply_msg, _purge_msg, _zmq_sleeptime)
 #endif
 
-#ifdef ZMQINSTALLED
-
-class ygg_sock_t : public zmq::socket_t {
-#else
-    class ygg_sock_t {
-#endif
+class ZMQContext {
 public:
-    explicit ygg_sock_t(int type);
+  ZMQContext();
+  static void destroy();
+  void* ctx;
+  static void* ygg_s_process_ctx;
+};
+  
 
-#ifdef ZMQINSTALLED
+class ZMQSocket {
+public:
+  ZMQSocket();
+  ZMQSocket(int type0, utils::Address* address = NULL,
+	    int linger = 0, int immediate = 1,
+	    int sndtimeo = -1);
+  ZMQSocket(int type0, std::string address,
+	    int linger = 0, int immediate = 1,
+	    int sndtimeo = -1);
+  void init(int type0, utils::Address* address = NULL,
+	    int linger = 0, int immediate = 1,
+	    int sndtimeo = -1);
+  void init(int type0, std::string address,
+	    int linger = 0, int immediate = 1,
+	    int sndtimeo = -1);
+  int poll(int method, int tout);
+  int send(const std::string msg);
+  template<typename T>
+  int set(int member, const T& data);
+  int recv(std::string& msg, int tout=0, bool for_identity=false);
+  ~ZMQSocket();
 
-    static zmq::context_t &get_context();
-
-    static void ctx_shutdown();
-
-#else
-
-#endif /*ZMQINSTALLED*/
-    void close();
-    ~ygg_sock_t();
-
-#ifdef _OPENMP
-    uint32_t tag;
-    int type;
+  void *handle;               //  The libzmq socket handle
+  std::string endpoint;       //  Last bound endpoint, if any
+  int type;                   //  Socket type
+  ZMQContext ctx;             //  Context used to create the socket
 private:
+  static int _last_port;
+  static int _last_port_set;
 #ifdef YGG_TEST
-    friend class testing::ygg_sock_tester;
-#endif
-    static zmq::context_t ygg_s_process_ctx;
-    static bool ctx_valid;
-    static std::vector<ygg_sock_t*> activeSockets;
+public:
+  friend class testing::ZMQSocket_tester;
+  static void resetPort() { _last_port_set = 0; }
 #endif
 };
-
-/*void ygg_zsock_destroy(zsock_t **self_p) {
-    // Recreation of czmq zsock_destroy that is OMP aware
-    if (*self_p) {
-        auto *self = (ygg_zsock_t*)(*self_p);
-        self->tag = 0xDeadBeef;
-        zmq_close (self->handle);
-        freen (self->endpoint);
-        freen (self->cache);
-        freen (self);
-        *self_p = nullptr;
-    }
-};
-#else
-#define ygg_zsock_destroy zsock_destroy
-#endif
-*/
 
 /*!
   @brief Struct to store info for reply.
 */
-typedef struct zmq_reply_t {
-    ~zmq_reply_t() {
-        clear();
-    }
+class ZMQReply {
+public:
+  ZMQReply(DIRECTION dir);
+  void clear();
+  int create(std::string& endpoint);
+  int find(std::string endpoint);
+  int set(std::string endpoint = "");
+  bool recv(std::string msg_send="");
+  bool recv_stage1(std::string msg_send="");
+  bool recv_stage2(std::string msg_send="");
+  bool send();
+  bool send_stage1(std::string& msg_data);
+  bool send_stage2(const std::string msg_data);
 
-    size_t nsockets() const {
-        return sockets.size();
-    }
+  std::vector<ZMQSocket> sockets;
+  int n_msg;
+  int n_rep;
+  DIRECTION direction;
+  int last_idx;
+};
 
-    void clear() {
-        for (auto it: sockets) {
-            if (it != nullptr)
-                delete it;
-        }
-        for (auto it: addresses) {
-            if (it != nullptr)
-                delete it;
-        }
-        sockets.clear();
-        addresses.clear();
-        n_msg = 0;
-        n_rep = 0;
-    }
-
-    std::vector<ygg_sock_t *> sockets;
-    std::vector<utils::Address *> addresses;
-    int n_msg = 0;
-    int n_rep = 0;
-} zmq_reply_t;
-
-class ZMQComm : public CommBase<ygg_sock_t, zmq_reply_t> {
+class ZMQComm : public CommBase<ZMQSocket> {
 public:
     explicit ZMQComm(const std::string name = "", utils::Address *address = new utils::Address(),
                      DIRECTION direction = NONE);
+    explicit ZMQComm(const std::string name,
+		     DIRECTION direction);
 
     //explicit ZMQComm(Comm_t* comm);
     ~ZMQComm() override;
@@ -128,49 +113,31 @@ public:
     using Comm_t::send;
     using Comm_t::recv;
 
-#ifndef YGG_TEST
+#ifdef YGG_TEST
+    ZMQReply& getReply() { return reply; }
+    bool afterSendRecv(Comm_t* sComm, Comm_t* rComm) override;
+#else
 protected:
 #endif
-    virtual bool new_address();
     void init() override;
-    int send(const char *data, const size_t &len) override;
-    long recv(char *data, const size_t &len, bool allow_realloc) override;
+    bool init_handle();
+    int send_single(const char *data, const size_t &len) override;
+    long recv_single(char*& data, const size_t &len, bool allow_realloc) override;
+    virtual bool do_reply_recv();
+    virtual bool do_reply_send();
+    bool create_header_send(Header& header, const char* data, const size_t &len) override;
+    bool create_header_recv(Header& header, char*& data, const size_t &len,
+			    size_t msg_len, int allow_realloc,
+			    int temp) override;
+    Comm_t* create_worker_recv(Header& head) override;
 
 private:
     friend class ClientComm;
     friend class ServerComm;
-#ifdef YGG_TEST
-    friend class testing::ZMQComm_tester;
-#endif
 
-    ygg_sock_t *sock;
-
-    std::string set_reply_send();
-
-    int find_reply_socket(utils::Address *address = nullptr);
-
-    int check_reply_recv(const char *data, const size_t &len);
-
-    static void check_reply_send(const char *data);
-
-    int do_reply_recv(const int &isock, const char *msg);
-
-    void init_reply();
-
-    int set_reply_recv(utils::Address *adr);
-
-    int do_reply_send();
-
-    void init_zmq_reply();
-
+    ZMQReply reply;
     void destroy();
 
-    //bool create_new();
-    bool connect_to_existing();
-
-    int recv_time_limit(zmq::multipart_t &msg);
-
-    int send(zmq::multipart_t &msgs);
 };
 
 }

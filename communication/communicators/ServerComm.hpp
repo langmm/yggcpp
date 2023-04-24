@@ -2,59 +2,37 @@
 
 #include <vector>
 #include "DefaultComm.hpp"
-#include "CommHead.hpp"
 #include "CommBase.hpp"
+#include "Requests.hpp"
 
 #ifdef COMM_BASE
 namespace communication {
 namespace communicator {
-#ifdef _OPENMP
-#pragma omp threadprivate(_default_comm)
-#endif
 
 // @brief Structure for storing requests
 class ServerComm : public COMM_BASE {
 public:
     explicit ServerComm(const std::string &name = "", utils::Address *address = nullptr);
+    explicit ServerComm(const std::string name);
 
-    ~ServerComm() override;
-
-    int has_request(const std::string &req_id) const;
-
-    int has_response(const std::string &resp_id) const;
-
-    int has_comm(const ::std::string &resp_address) const;
-
-    int has_comm(const utils::Address *resp_address) const;
-
-    int add_comm(::std::string &address);
-
-    int add_comm(utils::Address *address);
-
-    Comm_t *get_comm(const int idx = -1) const;
-
-    int add_request(const std::string &req_id, utils::Address *response_address);
-
-    int remove_request(size_t idx);
-
-    int comm_nmsg() const override;
-
-    datatypes::CommHead response_header(datatypes::CommHead &head);
     using Comm_t::send;
     using Comm_t::recv;
+    using COMM_BASE::comm_nmsg;
 
 protected:
-    int send(const char *data, const size_t &len) override;
-
-    long recv(char *data, const size_t &len, bool allow_realloc) override;
+    void init() override;
+    int update_datatype(const rapidjson::Value& new_schema,
+			const DIRECTION dir=NONE) override;
+    bool create_header_send(Header& header, const char* data, const size_t &len) override;
+    bool create_header_recv(Header& header, char*& data, const size_t &len,
+			    size_t msg_len, int allow_realloc,
+			    int temp) override;
+    int send_single(const char *data, const size_t &len) override;
 
 #ifndef YGG_TEST
     private:
 #endif
-    ::std::vector<Comm_t *> comms; //!< Array of response comms.
-    ::std::vector<std::string> response_id; //!< Response ids.
-    ::std::vector<std::string> request_id; //!< Request ids.
-    ::std::vector<size_t> comm_idx; //!< Index of comm associated w/ a request
+    RequestList requests;
 };
 
 }

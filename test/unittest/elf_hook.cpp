@@ -1,3 +1,4 @@
+#ifdef ELF_AVAILABLE
 #include <cstdlib>
 #include <cstring>
 #include <dlfcn.h>
@@ -543,3 +544,4 @@ void *elf_hook(char const *module_filename, void const *module_address, const st
 }
 
 //==================================================================================================
+#endif // ELF_AVAILABLE

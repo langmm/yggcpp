@@ -4,6 +4,10 @@
 #include <boost/log/core.hpp>
 #include <boost/log/expressions.hpp>
 #endif
+
+int communication::utils::_ygg_error_flag = 0;
+bool communication::utils::_loginit = false;
+
 std::string communication::utils::_getLogPretex() {
     if (!communication::utils::_loginit)
         communication::utils::init_logger();
@@ -27,7 +31,32 @@ void communication::utils::init_logger() {
     communication::utils::_loginit = true;
 }
 
+void communication::utils::_set_error() {
+  communication::utils::_ygg_error_flag = 1;
+}
+
 void communication::utils::ygglog_throw_error(const std::string& msg) {
-    ygglog_error << msg;
+    ygglog_error << msg << std::endl;
     throw std::exception();
+}
+
+std::string communication::utils::string_format(const std::string fmt, ...) {
+  int size = ((int)fmt.size()) * 2 + 50;   // Use a rubric appropriate for your code
+  std::string str;
+  va_list ap;
+  while (1) {     // Maximum two passes on a POSIX system...
+    str.resize(size);
+    va_start(ap, fmt);
+    int n = vsnprintf((char *)str.data(), size, fmt.c_str(), ap);
+    va_end(ap);
+    if (n > -1 && n < size) {  // Everything worked
+      str.resize(n);
+      return str;
+    }
+    if (n > -1)  // Needed size returned
+      size = n + 1;   // For null char
+    else
+      size *= 2;      // Guess at a larger size (OS specific)
+  }
+  return str;
 }

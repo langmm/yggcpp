@@ -1,7 +1,7 @@
 #pragma once
 
 #include "DefaultComm.hpp"
-#include "CommHead.hpp"
+#include "Requests.hpp"
 #ifdef COMM_BASE
 namespace communication {
 namespace communicator {
@@ -9,44 +9,36 @@ namespace communicator {
 class ClientComm : public COMM_BASE {
 public:
     explicit ClientComm(const std::string &name = "", utils::Address *address = nullptr);
+    explicit ClientComm(const std::string name);
 
-    ~ClientComm() override;
+    // ~ClientComm() override;
 
-    int has_request(const std::string &req_id);
-
-    int has_response(const std::string &req_id);
-
-    int add_request(const std::string &req_id);
-
-    int add_response(const std::string &req_id, const char *rdata, const size_t &rlen);
-
-    int remove_request(const std::string &req_id);
-
-    int pop_response(const std::string &req_id, char *rdata, const size_t &rlen, const int allow_realloc);
-
-    bool new_address() override;
+    // bool new_address() override;
 
     //int init_comm();
 
-    int comm_nmsg() const override;
-
-    void response_header(datatypes::CommHead &head);
     using Comm_t::send;
     using Comm_t::recv;
+    using COMM_BASE::comm_nmsg;
 
 protected:
-    int send(const char *data, const size_t &len) override;
-
-    long recv(char *data, const size_t &len, bool allow_realloc) override;
+    void init() override;
+    int update_datatype(const rapidjson::Value& new_schema,
+			const DIRECTION dir=NONE) override;
+    bool create_header_send(Header& header, const char* data, const size_t &len) override;
+    bool create_header_recv(Header& header, char*& data, const size_t &len,
+			    size_t msg_len, int allow_realloc,
+			    int temp) override;
+    long recv_single(char*& data, const size_t &len,
+		     bool allow_realloc) override;
+    // void addResponseSchema(const rapidjson::Document& schema);
+    // void addResponseFormat(const std::string& fmt);
 
 #ifndef YGG_TEST
 private:
 #endif
-    size_t nreq;
-    std::vector<std::string> request_id;
-    std::vector<char *> data;
-    std::vector<size_t> len;
     static unsigned _client_rand_seeded;
+    RequestList requests;
 };
 
 }

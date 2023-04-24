@@ -16,6 +16,8 @@ else()
     FetchContent_MakeAvailable(cmocka_ygg)
 endif()
 
+include_directories(SYSTEM ${Python3_INCLUDE_DIRS} ${Python3_NumPy_INCLUDE_DIRS} ${RAPIDJSON_INCLUDE_DIRS})
+
 if(GTESTSRC_FOUND)
 
     if (WIN32 AND (NOT CYGWIN) AND (NOT MINGW))
@@ -28,7 +30,7 @@ if(GTESTSRC_FOUND)
     endif()
     include_directories(SYSTEM ${GTEST_INCLUDE_DIR})
 
-    set(TEST_LIBRARIES gtest gtest_main ${Python3_LIBRARIES})
+    set(TEST_LIBRARIES gtest gtest_main ${Python3_LIBRARIES} Python3::NumPy)
 
 endif()
 
@@ -56,4 +58,8 @@ if(TEST_LIBRARIES)
     #add_subdirectory(unittest)
     add_definitions(-DYGG_TEST)
 
+endif()
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+   add_definitions(-DELF_AVAILABLE)
 endif()
