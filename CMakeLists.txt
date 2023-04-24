@@ -234,13 +234,55 @@ endif("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
 
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${PROJECT_SOURCE_DIR}/cmake")
 
-#file(GLOB_RECURSE SOURCES "communication/**/*.cpp")
 file(GLOB SOURCES "communication/utils/*.cpp" "communication/communicators/*.cpp")
 add_library(YggInterface SHARED ${SOURCES})
+
 
 add_definitions(-DRAPIDJSON_YGGDRASIL)
 add_definitions(-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION)
 add_definitions(-D_USE_MATH_DEFINES)
+
+option(BUILD_PYTHON_LIBRARY "Build the Yggdrasil Python interface library" ON)
+#########################################
+if(BUILD_PYTHON_LIBRARY)
+    if(POLICY CMP0094)  # https://cmake.org/cmake/help/latest/policy/CMP0094.html
+        cmake_policy(SET CMP0094 NEW)  # FindPython should return the first matching Python
+    endif()
+    add_definitions(-DWITH_PYTHON)
+    find_package(PythonInterp 3)
+    find_package(PythonLibs 3 REQUIRED)
+    find_package(Boost REQUIRED COMPONENTS python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR} log)
+
+    #find_package(Python3 COMPONENTS Interpreter Development NumPy REQUIRED)
+    #include_directories(${Python_INCLUDE_DIRS})
+    #include_directories(${Python3_NumPy_INCLUDE_DIRS})
+    #set(YGG_PYTHON_ENV "DATADIR=${CMAKE_SOURCE_DIR}/test;YGG_PYTHON_EXEC=${Python3_EXECUTABLE}")
+
+    # There is an issue with embedding Python on Windows in conda environments
+    # https://github.com/ContinuumIO/anaconda-issues/issues/11374
+    #if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    #    set(YGG_PYTHON_ENV "${YGG_PYTHON_ENV};PYTHONHOME=${Python3_RUNTIME_LIBRARY_DIRS}")
+    #endif()
+
+    #target_link_libraries(YggInterface ${PYTHON_LIBRARIES} Python3::NumPy)
+
+
+    file(GLOB_RECURSE PYSOURCES ${CMAKE_SOURCE_DIR}/communication/python/*.cpp)
+    add_library(pyygg MODULE ${SOURCES} ${PYSOURCES})
+    target_include_directories(pyygg PRIVATE ${PYTHON_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/communication/python)
+    target_link_libraries(pyygg boost_python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR})
+    message("PYTHON")
+
+else()
+    find_package(Boost REQUIRED COMPONENTS log)
+endif()
+##############################
+
+#file(GLOB_RECURSE SOURCES "communication/**/*.cpp")
+
+option(YGG_BUILD_TESTS "Build tests" OFF)
+option(YGG_BUILD_THIRDPARTY_GTEST "Use gtest installation in 'thirdpart/gtest' by default if available" ON)
+
 
 set(YGG_BUILD_FLAGS "")
 
@@ -252,6 +294,9 @@ find_package(OpenMP)
 if (OpenMP_CXX_FOUND)
     message(STATUS "OpenMP found")
     target_link_libraries(YggInterface OpenMP::OpenMP_CXX)
+    if(BUILD_PYTHON_LIBRARY)
+        target_link_libraries(pyygg OpenMP::OpenMP_CXX)
+    endif()
 else()
     message(STATUS "NO OpenMP")
 endif()
@@ -264,7 +309,11 @@ find_package(MPI)
 if(MPI_FOUND)
     message(STATUS "MPI found")
     add_definitions(-DMPIINSTALLED)
+    include_directories(MPI_CXX_INCLUDE_DIRS)
     target_link_libraries(YggInterface MPI::MPI_CXX)
+    if(BUILD_PYTHON_LIBRARY)
+        target_link_libraries(pyygg MPI::MPI_CXX)
+    endif()
 else()
     message(STATUS "NO MPI")
 ENDIF()
@@ -386,12 +435,20 @@ else (ENABLE_ZMQ)
     message(STATUS "No zmq support will be built." )
 endif (ENABLE_ZMQ)
 
+
+##########
+# ZeroMQ #
+##########
+
 if (ZeroMQ_FOUND)
     message(STATUS "ZeroMQ found ZeroMQ_INCLUDE_DIR = ${ZeroMQ_INCLUDE_DIR}")
     add_definitions(-DZMQINSTALLED -DZMQ_BUILD_DRAFT_API)
 
     include_directories(${ZeroMQ_INCLUDE_DIR})
     target_link_libraries(YggInterface ${ZeroMQ_LIBRARY})
+    if(BUILD_PYTHON_LIBRARY)
+        target_link_libraries(pyygg ${ZeroMQ_LIBRARY})
+    endif()
 else()
     message(STATUS "NO ZeroMQ")
 endif()

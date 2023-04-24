@@ -50,6 +50,7 @@ endif()
 
 include(GoogleTest)
 file(GLOB files "${CMAKE_CURRENT_SOURCE_DIR}/unittest/tests/communicators/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/unittest/tests/utils/*.cpp")
+
 add_executable(unittest ${CMAKE_CURRENT_SOURCE_DIR}/unittest/unittest.cpp ${CMAKE_CURRENT_SOURCE_DIR}/unittest/elf_hook.cpp ${CMAKE_CURRENT_SOURCE_DIR}/unittest/mock.cpp ${files})
 target_link_libraries(unittest ${TEST_LIBRARIES} YggInterface gomp dl ${Python3_LIBRARIES} Python3::NumPy ${ZeroMQ_LIBRARY})
 target_include_directories(unittest PRIVATE ${RAPIDJSON_INCLUDE_DIRS})
@@ -76,6 +77,15 @@ gtest_discover_tests(unittest PROPERTIES
 #                          "${RAPIDJSON_PYTHON_ENV}")
 #     gtest_discover_tests(unittest_${fname})
 # endforeach()
+#foreach(ffname ${files})
+#    get_filename_component(fname ${ffname} NAME_WE)
+#    add_executable(unittest_${fname} ${CMAKE_CURRENT_SOURCE_DIR}/unittest/unittest.cpp ${CMAKE_CURRENT_SOURCE_DIR}/unittest/elf_hook.cpp ${CMAKE_CURRENT_SOURCE_DIR}/unittest/mock.cpp ${ffname})
+#    target_link_libraries(unittest_${fname} ${TEST_LIBRARIES} YggInterface gomp dl ${YGG_ZMQ_LIBS})
+#    add_test(NAME unittest_${fname}
+#            COMMAND ${CMAKE_BINARY_DIR}/test/unittest_${fname}
+#            WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+#    gtest_discover_tests(unittest_${fname})
+#endforeach()
 
 #add_dependencies(tests unittest)
 add_definitions(-DYGG_TEST)

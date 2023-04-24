@@ -28,6 +28,9 @@ public:
         return out;
     }
 
+#ifdef WITH_PYTHON
+    std::string print() {return _address;}
+#endif
 private:
     std::string _address = "";
     int _key;
