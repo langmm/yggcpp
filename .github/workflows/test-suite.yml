@@ -16,6 +16,9 @@ jobs:
         python-install: [pip]
         install-zmq: [true, false]
       fail-fast: false
+      exclude:
+        os: windows-latest
+        install-zmq: false
     steps:
       - name: Check out repository code
         uses: actions/checkout@v2
@@ -33,7 +36,7 @@ jobs:
       - name: Install dependencies on Mac
         if: matrix.os == 'macos-latest'
         run: |
-          brew install zmq libomp llvm boost boost-python3 cmocka lcov gnutls open-mpi
+          brew install llvm boost boost-python3 cmocka lcov gnutls
       - name: Install dependencies on Windows
         if: matrix.os == 'windows-latest'
         run: |
@@ -51,7 +54,7 @@ jobs:
       - name: Install ZeroMQ and MPI dependencies on Mac
         if: matrix.os == 'macos-latest' && matrix.install-zmq
         run: |
-          brew install zmq libomp open-mpi
+          brew install zeromq libomp open-mpi
       - name: Install ZeroMQ and MPI dependencies on Windows
         if: matrix.os == 'windows-latest' && matrix.install-zmq
         run: |
