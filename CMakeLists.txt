@@ -442,6 +442,7 @@ else (ENABLE_ZMQ)
 endif (ENABLE_ZMQ)
 
 if (ZeroMQ_FOUND)
+    set(ZeroMQ_LIBRARY zmq) # To prevent linking against .dll
     message(STATUS "ZeroMQ found ZeroMQ_INCLUDE_DIR = ${ZeroMQ_INCLUDE_DIR}, ZeroMQ_LIBRARY = ${ZeroMQ_LIBRARY}")
     add_definitions(-DZMQINSTALLED -DZMQ_BUILD_DRAFT_API)
 
@@ -480,6 +481,7 @@ endif()
 
 if(CONDA_PREFIX)
     add_link_options("-L${CONDA_PREFIX}/lib")
+    include_directories(${CONDA_PREFIX}/include)
 endif(CONDA_PREFIX)
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")

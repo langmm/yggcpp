@@ -14,3 +14,4 @@ dependencies:
   - lcov
   - cmake
   - openmpi
+  - openmp

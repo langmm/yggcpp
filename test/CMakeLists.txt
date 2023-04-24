@@ -16,7 +16,14 @@ else()
     FetchContent_MakeAvailable(cmocka_ygg)
 endif()
 
-include_directories(SYSTEM ${Python3_INCLUDE_DIRS} ${Python3_NumPy_INCLUDE_DIRS} ${RAPIDJSON_INCLUDE_DIRS})
+include_directories(SYSTEM ${RAPIDJSON_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
+
+if (NOT YGGDRASIL_DISABLE_PYTHON_C_API)
+    include_directories(SYSTEM ${Python3_INCLUDE_DIRS} ${Python3_NumPy_INCLUDE_DIRS})
+endif()
+if (ZeroMQ_FOUND)
+    include_directories(SYSTEM ${ZeroMQ_INCLUDE_DIR})
+endif()
 
 if(GTESTSRC_FOUND)
 

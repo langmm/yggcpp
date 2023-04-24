@@ -77,7 +77,7 @@ jobs:
           mkdir devel
           mkdir build
           cd build
-          Start-Process cmake -ArgumentList ".. -DCMAKE_BUILD_TYPE=Debug -DPython3_ROOT_DIR=$env:pythonLocation -DCMAKE_INSTALL_PREFIX=..\\devel -DCMAKE_TOOLCHAIN_FILE=${env:VCPKG_INSTALLATION_ROOT}\\scripts\\buildsystems\\vcpkg.cmake -DBUILD_PYTHON_LIBRARY=OFF" -NoNewWindow
+          cmake .. -DCMAKE_BUILD_TYPE=Debug -DPython3_ROOT_DIR=$env:pythonLocation -DCMAKE_INSTALL_PREFIX=../devel -DBUILD_PYTHON_LIBRARY=OFF
       - name: Configure
         if: matrix.os != 'windows-latest'
         run: |
@@ -126,6 +126,10 @@ jobs:
           auto-update-conda: true
           channels: conda-forge
           channel-priority: strict
+      - name: Install LLVM on mac for OpenMP
+        if: matrix.os == 'macos-latest'
+        run: |
+          conda install llvm -y
       - name: Check for numpy
         run: |
           python -c "import sys; print(sys.executable)"
