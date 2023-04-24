@@ -60,7 +60,7 @@ TEST(IPCComm, send) {
     utils::Address *adr2 = new utils::Address("12345678");
     IPCComm_tester ipc2(data, adr2, SEND);
     // Replace msgsnd so that send fails and checks queue status
-    ELF_BEGIN_F_RET(msgsnd, -1)
+    ELF_BEGIN_F_RET(msgsnd, -1);
     res = ipc2.send(data.c_str(), data.size());
     EXPECT_EQ(SENDCOUNT, 1);
     EXPECT_EQ(res, RETVAL);
