@@ -1,7 +1,11 @@
 #pragma once
 #include <sys/msg.h>
+#ifdef ZMQCPPINSTALLED
 #include "zmq.hpp"
+#endif // ZMQCPPINSTALLED
+#ifdef MPIINSTALLED
 #include <mpi.h>
+#endif // MPIINSTALLED
 
 #define LIBRARY_ADDRESS_BY_HANDLE(dlhandle) ((NULL == dlhandle) ? NULL :  (void*)*(size_t const*)(dlhandle))
 #define SUBLIB "/home/friedel/crops_in_silico/yggcpp/cmake-build-release/libYggInterface.so"
@@ -41,6 +45,7 @@ void* realloc(void* ptr, size_t size);
 namespace boost {
 
 }
+#ifdef ZMQCPPINSTALLED
 namespace zmq {
 void message_tD();
 namespace message_t {
@@ -64,5 +69,6 @@ template<class OutputIt>
 }
 }
 }
+#endif // ZMQCPPINSTALLED
 }
 }

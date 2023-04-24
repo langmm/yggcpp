@@ -298,41 +298,69 @@ add_definitions(-D_USE_MATH_DEFINES)
 
 set(YGG_BUILD_FLAGS "")
 option(ENABLE_ZMQ "Enable zeromq" ON)
-#find cppzmq wrapper, installed by make of cppzmq
 ########################################################################
 # LIBZMQ dependency
 ########################################################################
 if(ENABLE_ZMQ)
-    include(ExternalProject)
+    find_package(ZeroMQ)
 
-    EXTERNALPROJECT_ADD(
-            yggLibzmq
-            URL https://github.com/zeromq/libzmq/archive/refs/tags/v4.3.4.tar.gz
-            CMAKE_ARGS -DCMAKE_PREFIX_PATH=${CMAKE_INSTALL_PREFIX} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} -DBUILD_TESTS=0 -DENABLE_DRAFTS=1 -DWITH_DOCS=0 -DZMQ_BUILD_TESTS=0 -DZMQ_OUTPUT_BASENAME=yggzmq
-    )
-    EXTERNALPROJECT_GET_PROPERTY(yggLibzmq install_dir)
-    set(LIB_ZMQ_INSTALL_DIR install_dir)
+    if (NOT ZeroMQ_FOUND)
 
-    EXTERNALPROJECT_ADD(
-            yggcppzmq
-            DEPENDS yggLibzmq
-            URL https://github.com/zeromq/cppzmq/archive/refs/tags/v4.9.0.zip
-            CMAKE_ARGS -DCMAKE_PREFIX_PATH=${LIB_ZMQ_INSTALL_DIR} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} -DCPPZMQ_BUILD_TESTS=0 -DCATCH_INSTALL_DOCS=0 -DCATCH_BUILD_TESTING=0 -DENABLE_DRAFTS=1
-    )
+        ## load in pkg-config support
+        find_package(PkgConfig)
+        ## use pkg-config to get hints for 0mq locations
+        pkg_check_modules(PC_ZeroMQ QUIET zmq)
 
-    add_dependencies(YggInterface yggLibzmq yggcppzmq)
-    add_definitions(-DZMQINSTALLED -DZMQ_BUILD_DRAFT_API)
+        if (CONDA_PREFIX)
+            set(PC_ZeroMQ_INCLUDE_DIRS "${CONDA_PREFIX} ${PC_ZeroMQ_INCLUDE_DIRS}")
+          set(PC_ZeroMQ_LIBRARY_DIRS "${CONDA_PREFIX} ${PC_ZeroMQ_LIBRARY_DIRS}")
+        endif (CONDA_PREFIX)
 
-    include_directories(${CMAKE_INSTALL_PREFIX}/include/libzmq
-            ${CMAKE_INSTALL_PREFIX}/include/cppzmq
-            ${CMAKE_INSTALL_PREFIX}/include)
-    add_library(zmqlib SHARED IMPORTED)
-    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|ARMClang")
-       set_target_properties(zmqlib PROPERTIES IMPORTED_LOCATION ${CMAKE_INSTALL_PREFIX}/lib/libyggzmq.dylib)
-    else (CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|ARMClang")
-       set_target_properties(zmqlib PROPERTIES IMPORTED_LOCATION ${CMAKE_INSTALL_PREFIX}/lib/libyggzmq.so)
-    endif (CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|ARMClang")
-    target_link_libraries(YggInterface zmqlib)
+        ## use the hint from above to find where 'zmq.h' is located
+        find_path(ZeroMQ_INCLUDE_DIR
+            NAMES zmq.h
+            PATHS ${PC_ZeroMQ_INCLUDE_DIRS}
+            )
+
+        ## use the hint from above to find the location of libzmq
+        find_library(ZeroMQ_LIBRARY
+            NAMES zmq
+            PATHS ${PC_ZeroMQ_LIBRARY_DIRS}
+            )
+
+        set(ZeroMQ_FOUND 1)
+    endif()
+
+    # include(ExternalProject)
+
+    # EXTERNALPROJECT_ADD(
+    #         yggLibzmq
+    #         URL https://github.com/zeromq/libzmq/archive/refs/tags/v4.3.4.tar.gz
+    #         CMAKE_ARGS -DCMAKE_PREFIX_PATH=${CMAKE_INSTALL_PREFIX} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} -DBUILD_TESTS=0 -DENABLE_DRAFTS=1 -DWITH_DOCS=0 -DZMQ_BUILD_TESTS=0 -DZMQ_OUTPUT_BASENAME=yggzmq
+    # )
+    # EXTERNALPROJECT_GET_PROPERTY(yggLibzmq install_dir)
+    # set(LIB_ZMQ_INSTALL_DIR install_dir)
+
+    # EXTERNALPROJECT_ADD(
+    #         yggcppzmq
+    #         DEPENDS yggLibzmq
+    #         URL https://github.com/zeromq/cppzmq/archive/refs/tags/v4.9.0.zip
+    #         CMAKE_ARGS -DCMAKE_PREFIX_PATH=${LIB_ZMQ_INSTALL_DIR} -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX} -DCPPZMQ_BUILD_TESTS=0 -DCATCH_INSTALL_DOCS=0 -DCATCH_BUILD_TESTING=0 -DENABLE_DRAFTS=1
+    # )
+
+    # add_dependencies(YggInterface yggLibzmq yggcppzmq)
+    # add_definitions(-DZMQINSTALLED -DZMQCPPINSTALLED -DZMQ_BUILD_DRAFT_API)
+
+    # include_directories(${CMAKE_INSTALL_PREFIX}/include/libzmq
+    #         ${CMAKE_INSTALL_PREFIX}/include/cppzmq
+    #         ${CMAKE_INSTALL_PREFIX}/include)
+    # add_library(zmqlib SHARED IMPORTED)
+    # if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|ARMClang")
+    #    set_target_properties(zmqlib PROPERTIES IMPORTED_LOCATION ${CMAKE_INSTALL_PREFIX}/lib/libyggzmq.dylib)
+    # else (CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|ARMClang")
+    #    set_target_properties(zmqlib PROPERTIES IMPORTED_LOCATION ${CMAKE_INSTALL_PREFIX}/lib/libyggzmq.so)
+    # endif (CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|ARMClang")
+    # target_link_libraries(YggInterface zmqlib)
 else (ENABLE_ZMQ)
     message("No zmq support will be built." )
 endif (ENABLE_ZMQ)
@@ -401,9 +429,16 @@ message("Rapidjson found ${RAPIDJSON_INCLUDE_DIRS}")
 # ZeroMQ #
 ##########
 
-if (libzmq_FOUND)
-    target_link_libraries(YggInterface ${libzmq_LIBRARIES})
+if (ZeroMQ_FOUND)
+    message("ZeroMQ found ZeroMQ_INCLUDE_DIR = ${ZeroMQ_INCLUDE_DIR} ZeroMQ_LIBRARY = ${ZeroMQ_LIBRARY}")
+    add_definitions(-DZMQINSTALLED -DZMQ_BUILD_DRAFT_API)
+
+    include_directories(${ZeroMQ_INCLUDE_DIR})
+    target_link_libraries(YggInterface ${ZeroMQ_LIBRARY})
 endif()
+# if (libzmq_FOUND)
+#     target_link_libraries(YggInterface ${libzmq_LIBRARIES})
+# endif()
 
 if(CONDA_PREFIX)
     add_link_options("-L${CONDA_PREFIX}/lib")

@@ -41,6 +41,7 @@ ssize_t msgrcv(int, void* rbuf, size_t, long, int) {
 void* realloc(void*, size_t) {
     return nullptr;
 }
+#ifdef ZMQCPPINSTALLED
 namespace zmq {
 void message_tD() {
         return;
@@ -84,6 +85,7 @@ template<class OutputIt>
 }
 }
 }
+#endif // ZMQCPPINSTALLED
 
 }
 }

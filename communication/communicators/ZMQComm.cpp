@@ -1,10 +1,17 @@
 #include "ZMQComm.hpp"
 
+unsigned communication::communicator::_zmq_rand_seeded = 0;
+unsigned communication::communicator::_last_port_set = 0;
+int communication::communicator::_last_port = 49152;
+/* double communication::communicator::_wait_send_t = 0;  // 0.0001; */
+char communication::communicator::_reply_msg[100] = "YGG_REPLY";
+char communication::communicator::_purge_msg[100] = "YGG_PURGE";
+int communication::communicator::_zmq_sleeptime = 10000;
+
+
 #ifdef ZMQINSTALLED
 using namespace communication::communicator;
 using namespace communication::utils;
-#include <zmq.hpp>
-#include <zmq_addon.hpp>
 #include <boost/algorithm/string.hpp>
 #include "utils/tools.hpp"
 #include "utils/logging.hpp"
@@ -13,7 +20,6 @@ using namespace communication::utils;
 // const std::chrono::milliseconds short_timeout{10};
 #define timeout 1000
 #define short_timeout 10
-
 
 ////////////////
 // ZMQContext //
@@ -784,108 +790,5 @@ bool ZMQComm::afterSendRecv(Comm_t* sComm, Comm_t* rComm) {
 #endif // YGG_TEST
 // Definitions in the case where ZMQ libraries not installed
 #else /*ZMQINSTALLED*/
-
-/*!
-  @brief Print error message about ZMQ library not being installed.
- */
-static inline
-void ygg_zsys_shutdown() {
-  ygglog_error << "Compiler flag 'ZMQINSTALLED' not defined so ZMQ bindings are disabled." << std::endl;
-};
-
-/*!
-  @brief Print error message about ZMQ library not being installed.
- */
-static inline
-void* ygg_zsys_init() {
-  ygglog_error << "Compiler flag 'ZMQINSTALLED' not defined so ZMQ bindings are disabled." << std::endl;
-  return nullptr;
-};
-
-/*!
-  @brief Print error message about ZMQ library not being installed.
- */
-static inline
-void zmq_install_error() {
-  ygglog_error << "Compiler flag 'ZMQINSTALLED' not defined so ZMQ bindings are disabled." << std::endl;
-};
-
-/*!
-  @brief Perform deallocation for ZMQ communication.
-  @param[in] x comm_t Pointer to communication to deallocate.
-  @returns int 1 if there is and error, 0 otherwise.
-*/
-static inline
-int free_zmq_comm(comm_t *x) {
-  zmq_install_error();
-  return 1;
-};
-
-/*!
-  @brief Create a new socket.
-  @param[in] comm comm_t * Comm structure initialized with new_comm_base.
-  @returns int -1 if the address could not be created.
-*/
-static inline
-int new_zmq_address(comm_t *comm) {
-  zmq_install_error();
-  return -1;
-};
-
-/*!
-  @brief Initialize a ZeroMQ communication.
-  @param[in] comm comm_t * Comm structure initialized with init_comm_base.
-  @returns int -1 if the comm could not be initialized.
- */
-static inline
-int init_zmq_comm(comm_t *comm) {
-  zmq_install_error();
-  return -1;
-};
-
-/*!
-  @brief Get number of messages in the comm.
-  @param[in] x comm_t* Communicator to check.
-  @returns int Number of messages. -1 indicates an error.
- */
-static inline
-int zmq_comm_nmsg(const comm_t* x) {
-  zmq_install_error();
-  return -1;
-};
-
-/*!
-  @brief Send a message to the comm.
-  Send a message smaller than YGG_MSG_MAX bytes to an output comm. If the
-  message is larger, it will not be sent.
-  @param[in] x comm_t* structure that comm should be sent to.
-  @param[in] data character pointer to message that should be sent.
-  @param[in] len size_t length of message to be sent.
-  @returns int 0 if send succesfull, -1 if send unsuccessful.
- */
-static inline
-int zmq_comm_send(const comm_t* x, const char *data, const size_t len) {
-  zmq_install_error();
-  return -1;
-};
-
-/*!
-  @brief Receive a message from an input comm.
-  Receive a message smaller than YGG_MSG_MAX bytes from an input comm.
-  @param[in] x comm_t* structure that message should be sent to.
-  @param[out] data char ** pointer to allocated buffer where the message
-  should be saved. This should be a malloc'd buffer if allow_realloc is 1.
-  @param[in] len const size_t length of the allocated message buffer in bytes.
-  @param[in] allow_realloc const int If 1, the buffer will be realloced if it
-  is not large enought. Otherwise an error will be returned.
-  @returns int -1 if message could not be received. Length of the received
-  message if message was received.
- */
-static inline
-int zmq_comm_recv(const comm_t* x, char **data, const size_t len,
-		  const int allow_realloc) {
-  zmq_install_error();
-  return -1;
-};
 
 #endif /*ZMQINSTALLED*/

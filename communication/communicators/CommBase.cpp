@@ -211,10 +211,7 @@ int Comm_t::send(const char *data, const size_t &len) {
     ygglog_error << "CommBase(" << name << ")::send(const char *data, const size_t &len): Failed to create header" << std::endl;
     return -1;
   }
-  if (head.format(data, len, size_max) < 0) {
-    ygglog_error << "CommBase(" << name << ")::send(const char *data, const size_t &len): Error formatting message" << std::endl;
-    return -1;
-  }
+  head.format(data, len, size_max);
   Comm_t* xmulti = NULL;
   if (head.flags & HEAD_FLAG_MULTIPART) {
     xmulti = create_worker_send(head);
@@ -222,10 +219,11 @@ int Comm_t::send(const char *data, const size_t &len) {
       ygglog_error << "CommBase(" << name << ")::send(const char *data, const size_t &len): Error creating worker" << std::endl;
       return -1;
     }
-    if (head.format(data, len, size_max, no_type) < 0) {
-      ygglog_error << "CommBase(" << name << ")::send(const char *data, const size_t &len): Error formatting updated header" << std::endl;
+    try {
+      head.format(data, len, size_max, no_type);
+    } catch (std::exception& err) {
       delete xmulti;
-      return -1;
+      throw err;
     }
   }
   size_t prev = 0, msgsiz = head.size_curr;

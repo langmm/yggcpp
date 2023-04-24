@@ -16,13 +16,13 @@ class ZMQSocket_tester;
 #endif
 namespace communicator {
 //class ClientComm;
-static unsigned _zmq_rand_seeded = 0;
-static unsigned _last_port_set = 0;
-static int _last_port = 49152;
-/* static double _wait_send_t = 0;  // 0.0001; */
-static char _reply_msg[100] = "YGG_REPLY";
-static char _purge_msg[100] = "YGG_PURGE";
-static int _zmq_sleeptime = 10000;
+extern unsigned _zmq_rand_seeded;
+extern unsigned _last_port_set;
+extern int _last_port;
+/* extern double _wait_send_t; */
+extern char _reply_msg[100];
+extern char _purge_msg[100];
+extern int _zmq_sleeptime;
 #ifdef _OPENMP
 #pragma omp threadprivate(_reply_msg, _purge_msg, _zmq_sleeptime)
 #endif
