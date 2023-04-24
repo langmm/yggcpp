@@ -20,12 +20,18 @@ extern unsigned _zmq_rand_seeded;
 extern unsigned _last_port_set;
 extern int _last_port;
 /* extern double _wait_send_t; */
+#if defined(_MSC_VER) && defined(_OPENMP)
+extern __declspec(thread) char _reply_msg[100];
+extern __declspec(thread) char _purge_msg[100];
+extern __declspec(thread) int _zmq_sleeptime;
+#else // _MSC_VER
 extern char _reply_msg[100];
 extern char _purge_msg[100];
 extern int _zmq_sleeptime;
 #ifdef _OPENMP
 #pragma omp threadprivate(_reply_msg, _purge_msg, _zmq_sleeptime)
 #endif
+#endif // _MSC_VER
 
 class ZMQContext {
 public:

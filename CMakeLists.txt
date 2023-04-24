@@ -441,11 +441,6 @@ else (ENABLE_ZMQ)
     message(STATUS "No zmq support will be built." )
 endif (ENABLE_ZMQ)
 
-
-##########
-# ZeroMQ #
-##########
-
 if (ZeroMQ_FOUND)
     message(STATUS "ZeroMQ found ZeroMQ_INCLUDE_DIR = ${ZeroMQ_INCLUDE_DIR}")
     add_definitions(-DZMQINSTALLED -DZMQ_BUILD_DRAFT_API)

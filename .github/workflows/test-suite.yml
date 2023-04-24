@@ -79,7 +79,7 @@ jobs:
           mkdir devel
           mkdir build
           cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Debug -DPython3_ROOT_DIR=$env:pythonLocation -DCMAKE_INSTALL_PREFIX=../devel -DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake -DBUILD_PYTHON_LIBRARY=OFF
+          cmake .. -DCMAKE_BUILD_TYPE=Debug -DPython3_ROOT_DIR=$env:pythonLocation -DCMAKE_INSTALL_PREFIX=..\devel -DCMAKE_TOOLCHAIN_FILE=${env:VCPKG_INSTALLATION_ROOT}\scripts\buildsystems\vcpkg.cmake -DBUILD_PYTHON_LIBRARY=OFF
       - name: Configure
         if: matrix.os != 'windows-latest'
         run: |

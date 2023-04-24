@@ -13,4 +13,4 @@ dependencies:
   - cmocka
   - lcov
   - cmake
-  - mpi
+  - openmpi

@@ -56,7 +56,7 @@ namespace communicator {
     }
     int hasComm(const std::string& response_address) const {
       for (size_t i = 0; i < comms.size(); i++) {
-	if (comms[i] and *(comms[i]->address) == response_address)
+	if (comms[i] && *(comms[i]->address) == response_address)
 	  return (int)i;
       }
       return -1;

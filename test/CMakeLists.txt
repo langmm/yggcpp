@@ -35,7 +35,7 @@ if(GTESTSRC_FOUND)
 endif()
 
 if(TEST_LIBRARIES)
-    option(YGG_ENABLE_COVERAGE "Enable coverage reporting" ON)
+    option(YGG_ENABLE_COVERAGE "Enable coverage reporting" OFF)
     if(YGG_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang|ARMClang")
         message("COVERAGE ON")
         set(CMAKE_CXX_FLAGS "-g -O0 --coverage -fprofile-arcs -ftest-coverage -fprofile-filter-files=\"${CMAKE_SOURCE_DIR}/communication/*\" -fpermissive")

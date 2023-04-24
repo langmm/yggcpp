@@ -45,7 +45,7 @@ bool ServerComm::create_header_send(Header& header, const char* data, const size
   Comm_t* response_comm = requests.activeComm();
   if (response_comm == NULL) {
     ygglog_error << "ServerComm(" << name << ")::create_header_send: Failed to get response comm" << std::endl;
-    return -1;
+    return false;
   }
   bool out = response_comm->create_header_send(header, data, len);
   if ((!out) || header.flags & HEAD_FLAG_EOF)

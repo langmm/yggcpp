@@ -56,29 +56,6 @@ int mpi_registry_t::Recv(void *buf, int count, MPI_Datatype datatype, int source
   return out;
 }
 
-/*MPIComm::MPIComm(const Comm_t *comm) : CommBase(comm, MPI_COMM) {
-    if (handle == nullptr) {
-        handle = new mpi_registry_t(MPI_COMM_WORLD);
-        handle->procs.clear();
-        handle->tag = 0;
-        std::vector<std::string> adrs;
-        //boost::split(adrs, address, boost::is_any_of(","));
-
-        size_t ibeg, iend;
-
-        for (const auto &a : adrs) {
-            ibeg = a.find("[");
-            iend = a.find("]");
-            if (ibeg != std::string::npos) {
-                handle->procs.push_back(stoi(a.substr(ibeg, iend-ibeg)));
-            } else {
-                handle->procs.push_back(stoi(a));
-            }
-        }
-
-    }
-}*/
-
 MPIComm::MPIComm(const std::string &name, utils::Address *address, const DIRECTION direction) :
         CommBase(address, direction, MPI_COMM) {
     this->name = name;
@@ -128,11 +105,11 @@ void MPIComm::init() {
     }
 }
 
-// MPIComm::~MPIComm() {
-//     if (handle != nullptr)
-//         delete handle;
-//     handle = nullptr;
-// }
+MPIComm::~MPIComm() {
+  for (size_t i = 1; i < addresses.size(); i++)
+    delete addresses[i];
+  addresses.clear();
+}
 
 int MPIComm::mpi_comm_source_id() const {
     if (direction == SEND)
@@ -251,115 +228,45 @@ long MPIComm::recv_single(char*& data, const size_t &len, bool allow_realloc) {
  */
 static inline
 void mpi_install_error() {
-  ygglog_error("Compiler flag 'MPIINSTALLED' not defined so MPI bindings are disabled.");
+  ygglog_throw_error("Compiler flag 'MPIINSTALLED' not defined so MPI bindings are disabled.");
 }
 
-/*!
-  @brief Perform deallocation for basic communication.
-  @param[in] x comm_t* Pointer to communication to deallocate.
-  @returns int 1 if there is an error, 0 otherwise.
-*/
-static inline
-int free_mpi_comm(comm_t *x) {
-  // Prevent C4100 warning on windows by referencing param
-#ifdef _WIN32
-  UNUSED(x);
-#endif
+
+MPIComm::MPIComm(const std::string &, utils::Address *address, const DIRECTION direction) :
+        CommBase(address, direction, MPI_COMM) {
   mpi_install_error();
-  return 1;
+}
+MPIComm::MPIComm(const std::string &name, const DIRECTION direction) :
+        CommBase(name, direction, MPI_COMM) {
+  mpi_install_error();
 }
 
-/*!
-  @brief Create a new channel.
-  @param[in] comm comm_t * Comm structure initialized with new_comm_base.
-  @returns int -1 if the address could not be created.
-*/
-static inline
-int new_mpi_address(comm_t *comm) {
-  // Prevent C4100 warning on windows by referencing param
-#ifdef _WIN32
-  UNUSED(comm);
-#endif
+void MPIComm::init() {
+  mpi_install_error();
+}
+
+MPIComm::~MPIComm() {
+  // No error as constructor should have raised one
+}
+
+int MPIComm::mpi_comm_source_id() const {
   mpi_install_error();
   return -1;
 }
 
-/*!
-  @brief Initialize a sysv_mpi communication.
-  @param[in] comm comm_t * Comm structure initialized with init_comm_base.
-  @returns int -1 if the comm could not be initialized.
- */
-static inline
-int init_mpi_comm(comm_t *comm) {
-  // Prevent C4100 warning on windows by referencing param
-#ifdef _WIN32
-  UNUSED(comm);
-#endif
+int MPIComm::comm_nmsg() const {
   mpi_install_error();
   return -1;
 }
 
-/*!
-  @brief Get number of messages in the comm.
-  @param[in] x comm_t Communicator to check.
-  @returns int Number of messages. -1 indicates an error.
- */
-static inline
-int mpi_comm_nmsg(const comm_t *x) {
-  // Prevent C4100 warning on windows by referencing param
-#ifdef _WIN32
-  UNUSED(x);
-#endif
+int MPIComm::send_single(const char *, const size_t &) {
   mpi_install_error();
   return -1;
 }
 
-/*!
-  @brief Send a message to the comm.
-  Send a message smaller than YGG_MSG_MAX bytes to an output comm. If the
-  message is larger, it will not be sent.
-  @param[in] x comm_t* structure that comm should be sent to.
-  @param[in] data character pointer to message that should be sent.
-  @param[in] len size_t length of message to be sent.
-  @returns int 0 if send succesfull, -1 if send unsuccessful.
- */
-static inline
-int mpi_comm_send(const comm_t *x, const char *data, const size_t len) {
-  // Prevent C4100 warning on windows by referencing param
-#ifdef _WIN32
-  UNUSED(x);
-  UNUSED(data);
-  UNUSED(len);
-#endif
+long MPIComm::recv_single(char*&, const size_t &, bool) {
   mpi_install_error();
   return -1;
 }
-
-/*!
-  @brief Receive a message from an input comm.
-  Receive a message smaller than YGG_MSG_MAX bytes from an input comm.
-  @param[in] x comm_t* structure that message should be sent to.
-  @param[out] data char ** pointer to allocated buffer where the message
-  should be saved. This should be a malloc'd buffer if allow_realloc is 1.
-  @param[in] len const size_t length of the allocated message buffer in bytes.
-  @param[in] allow_realloc const int If 1, the buffer will be realloced if it
-  is not large enought. Otherwise an error will be returned.
-  @returns int -1 if message could not be received. Length of the received
-  message if message was received.
- */
-static inline
-int mpi_comm_recv(const comm_t *x, char **data, const size_t len,
-		  const int allow_realloc) {
-  // Prevent C4100 warning on windows by referencing param
-#ifdef _WIN32
-  UNUSED(x);
-  UNUSED(data);
-  UNUSED(len);
-  UNUSED(allow_realloc);
-#endif
-  mpi_install_error();
-  return -1;
-}
-
 
 #endif

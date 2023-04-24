@@ -29,17 +29,19 @@ private:
   void CheckReturn(int code, std::string method, int rank=0) const ;
 };
 
-
-class MPIComm : public CommBase<mpi_registry_t> {
 #else
-class MPIComm : public CommBase<void> {
+class mpi_registry_t {
+public:
+  mpi_registry_t() {}
+};
 #endif
+  
+class MPIComm : public CommBase<mpi_registry_t> {
 public:
     MPIComm(const std::string &name, utils::Address *address, const DIRECTION direction);
     MPIComm(const std::string &name, const DIRECTION direction);
 
-    //explicit MPIComm(const Comm_t* comm);
-    // ~MPIComm() override;
+    ~MPIComm() override;
 
     int comm_nmsg() const override;
 

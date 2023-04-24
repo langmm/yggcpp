@@ -109,10 +109,6 @@ void Comm_t::addFormat(const std::string format_str, bool as_array) {
 }
 
 bool Comm_t::check_size(const size_t &len) const {
-    // Prevent C4100 warning on windows by referencing param
-#ifdef _WIN32
-    UNUSED(data);
-#endif
     // Make sure you aren't sending a message that is too big
     if (len > YGG_MSG_MAX) {
         ygglog_error << "comm_base_send(" << name << "): message too large for single packet (YGG_MSG_MAX="

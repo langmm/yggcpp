@@ -303,14 +303,11 @@ IPCComm::IPCComm(const std::string &name, DIRECTION direction) :
  */
 static inline
 void ipc_install_error() {
-  ygglog_error << "Compiler flag 'IPCINSTALLED' not defined so IPC bindings are disabled." << std::endl;
+  ygglog_throw_error("Compiler flag 'IPCINSTALLED' not defined so IPC bindings are disabled.");
 };
 
-//IPCComm::IPCComm() {
-//ipc_install_error();
-//}
 IPCComm::~IPCComm() {
-    ipc_install_error();
+  // No error as constructor should have raised one
 }
 
 int IPCComm::check_channels() {
@@ -329,7 +326,7 @@ int IPCComm::remove_comm(bool) {
 
 bool IPCComm::new_address() {
     ipc_install_error();
-    return -1;
+    return false;
 }
 
 int IPCComm::comm_nmsg() const {
@@ -353,6 +350,11 @@ void IPCComm::init() {
 
 IPCComm::IPCComm(const std::string &, utils::Address *address, DIRECTION direction) :
         CommBase(address, direction, IPC_COMM) {
+    ipc_install_error();
+}
+
+IPCComm::IPCComm(const std::string &name, DIRECTION direction) :
+        CommBase(name, direction, IPC_COMM) {
     ipc_install_error();
 }
 

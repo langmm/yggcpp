@@ -51,7 +51,7 @@ int ClientComm::update_datatype(const rapidjson::Value& new_schema,
 bool ClientComm::create_header_send(Header& header, const char* data, const size_t &len) {
   ygglog_debug << "ClientComm(" << name << ")::create_header_send: begin" << std::endl;
   bool out = COMM_BASE::create_header_send(header, data, len);
-  if ((!out) or header.flags & HEAD_FLAG_EOF)
+  if ((!out) || header.flags & HEAD_FLAG_EOF)
     return out;
   if (requests.addRequestClient(header) < 0) {
     ygglog_error << "ClientComm::create_header_send(" << name << "): Failed to add request" << std::endl;
