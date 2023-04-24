@@ -15,10 +15,10 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python-install: [pip]
         install-zmq: [true, false]
+        exclude:
+          os: windows-latest
+          install-zmq: false
       fail-fast: false
-      exclude:
-        os: windows-latest
-        install-zmq: false
     steps:
       - name: Check out repository code
         uses: actions/checkout@v2
