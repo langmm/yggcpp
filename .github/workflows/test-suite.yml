@@ -16,8 +16,8 @@ jobs:
         python-install: [pip]
         install-zmq: [true, false]
         exclude:
-          os: windows-latest
-          install-zmq: false
+          - os: windows-latest
+            install-zmq: false
       fail-fast: false
     steps:
       - name: Check out repository code
