@@ -9,7 +9,7 @@
 #include <cerrno>
 #include <vector>
 #include <atomic>
-#include <boost/algorithm/string.hpp>
+// #include <boost/algorithm/string.hpp>
 #include <boost/regex.hpp>
 #include <regex>
 #include "elf_hook.hpp"
@@ -356,7 +356,7 @@ static int symbol_by_name(int d, Elf_Shdr *section, const std::string& name, Elf
         }
 
         memcpy(*symbol, symbols + idx, sizeof(Elf_Sym));
-        *index = static_cast<std::atomic_size_t>(idx);
+        *index = static_cast<size_t>(idx);
         // q = static_cast<size_t>(idx);
     }
     free(strings_section);

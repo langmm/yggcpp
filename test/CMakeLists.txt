@@ -30,8 +30,17 @@ if(GTESTSRC_FOUND)
     endif()
     include_directories(SYSTEM ${GTEST_INCLUDE_DIR})
 
-    set(TEST_LIBRARIES gtest gtest_main ${Python3_LIBRARIES} Python3::NumPy)
+    set(TEST_LIBRARIES gtest gtest_main ${Boost_LOG_LIBRARY} ${Boost_REGEX_LIBRARY})
 
+    if (NOT YGGDRASIL_DISABLE_PYTHON_C_API)
+        set(TEST_LIBRARIES ${TEST_LIBRARIES} ${Python3_LIBRARIES} Python3::NumPy ${Python3_NumPy_LIBRARIES})
+    endif()
+    if (ZeroMQ_FOUND)
+        set(TEST_LIBRARIES ${TEST_LIBRARIES} ${ZeroMQ_LIBRARY})
+    endif()
+    if (OpenMP_CXX_FOUND)
+        set(TEST_LIBRARIES ${TEST_LIBRARIES} OpenMP::OpenMP_CXX)
+    endif()
 endif()
 
 if(TEST_LIBRARIES)

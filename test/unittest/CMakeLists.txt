@@ -1,16 +1,5 @@
 include(CheckCXXCompilerFlag)
 
-# Unused
-# set(UNITTEST_SOURCES
-#         testutils.cpp
-#         unittest.cpp
-#         commbasetest.cpp
-#         #commheadtest.cpp
-#         clientcommtest.cpp
-#         servercommtest.cpp
-#         ipccommtest.cpp
-#         zmqcommtest.cpp)
-
 find_program(CCACH_FOUND ccache)
 if(CCACHE_FOUND)
     set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
@@ -52,59 +41,21 @@ include(GoogleTest)
 file(GLOB files "${CMAKE_CURRENT_SOURCE_DIR}/unittest/tests/communicators/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/unittest/tests/utils/*.cpp")
 
 add_executable(unittest ${CMAKE_CURRENT_SOURCE_DIR}/unittest/unittest.cpp ${CMAKE_CURRENT_SOURCE_DIR}/unittest/elf_hook.cpp ${CMAKE_CURRENT_SOURCE_DIR}/unittest/mock.cpp ${files})
-target_link_libraries(unittest ${TEST_LIBRARIES} YggInterface dl ${Python3_LIBRARIES} Python3::NumPy)
-if (ZeroMQ_FOUND)
-    target_link_libraries(unittest ${ZeroMQ_LIBRARY})
-endif()
-if (OpenMP_CXX_FOUND)
-    target_link_libraries(unittest OpenMP::OpenMP_CXX)
-endif()
+target_link_libraries(unittest ${TEST_LIBRARIES} YggInterface dl)
 target_include_directories(unittest PRIVATE ${Boost_INCLUDE_DIRS})
-target_link_libraries(unittest ${Boost_LOG_LIBRARY} ${Boost_REGEX_LIBRARY})
 target_include_directories(unittest PRIVATE ${RAPIDJSON_INCLUDE_DIRS})
-# add_test(NAME unittest
-#          COMMAND ${CMAKE_BINARY_DIR}/test/unittest
-#         WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-# set_tests_properties(unittest PROPERTIES
-#                      ENVIRONMENT
-#                      "${RAPIDJSON_PYTHON_ENV}")
+# if (ZeroMQ_FOUND)
+#     target_link_libraries(unittest ${ZeroMQ_LIBRARY})
+# endif()
+# if (OpenMP_CXX_FOUND)
+#     target_link_libraries(unittest OpenMP::OpenMP_CXX)
+# endif()
+# target_link_libraries(unittest ${Boost_LOG_LIBRARY} ${Boost_REGEX_LIBRARY})
 gtest_discover_tests(unittest PROPERTIES
                      ENVIRONMENT
                      "${RAPIDJSON_PYTHON_ENV}")
 
-# foreach(ffname ${files})
-#     get_filename_component(fname ${ffname} NAME_WE)
-#     add_executable(unittest_${fname} ${CMAKE_CURRENT_SOURCE_DIR}/unittest/unittest.cpp ${CMAKE_CURRENT_SOURCE_DIR}/unittest/elf_hook.cpp ${CMAKE_CURRENT_SOURCE_DIR}/unittest/mock.cpp ${ffname})
-#     target_link_libraries(unittest_${fname} ${TEST_LIBRARIES} YggInterface dl ${Python3_LIBRARIES} Python3::NumPy)
-#     if (ZeroMQ_FOUND)
-#         target_link_libraries(unittest_${fname} ${ZeroMQ_LIBRARY})
-#     endif()
-#     if (OpenMP_CXX_FOUND)
-#         target_link_libraries(unittest_${fname} OpenMP::OpenMP_CXX)
-#     endif()
-#     target_include_directories(unittest_${fname} PRIVATE ${RAPIDJSON_INCLUDE_DIRS})
-#     add_test(NAME unittest_${fname}
-#             COMMAND ${CMAKE_BINARY_DIR}/test/unittest_${fname}
-#             WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-#     set_tests_properties(unittest_${fname} PROPERTIES
-#                          ENVIRONMENT
-#                          "${RAPIDJSON_PYTHON_ENV}")
-#     gtest_discover_tests(unittest_${fname})
-# endforeach()
-#foreach(ffname ${files})
-#    get_filename_component(fname ${ffname} NAME_WE)
-#    add_executable(unittest_${fname} ${CMAKE_CURRENT_SOURCE_DIR}/unittest/unittest.cpp ${CMAKE_CURRENT_SOURCE_DIR}/unittest/elf_hook.cpp ${CMAKE_CURRENT_SOURCE_DIR}/unittest/mock.cpp ${ffname})
-#    target_link_libraries(unittest_${fname} ${TEST_LIBRARIES} YggInterface dl ${YGG_ZMQ_LIBS})
-#    add_test(NAME unittest_${fname}
-#            COMMAND ${CMAKE_BINARY_DIR}/test/unittest_${fname}
-#            WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-#    if (OpenMP_CXX_FOUND)
-#        target_link_libraries(unittest_${fname} OpenMP::OpenMP_CXX)
-#    endif()
-#    gtest_discover_tests(unittest_${fname})
-#endforeach()
 
-#add_dependencies(tests unittest)
 add_definitions(-DYGG_TEST)
 # if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|ARMClang")
 #     add_custom_command(TARGET unittest POST_BUILD

@@ -74,7 +74,7 @@ jobs:
           mkdir devel
           mkdir build
           cd build
-          Start-Process cmake -ArgumentList "cmake .. -DCMAKE_BUILD_TYPE=Debug -DPython3_ROOT_DIR=$env:pythonLocation -DCMAKE_INSTALL_PREFIX=..\\devel -DCMAKE_TOOLCHAIN_FILE=${env:VCPKG_INSTALLATION_ROOT}\\scripts\\buildsystems\\vcpkg.cmake -DBUILD_PYTHON_LIBRARY=OFF" -NoNewWindow
+          Start-Process cmake -ArgumentList ".. -DCMAKE_BUILD_TYPE=Debug -DPython3_ROOT_DIR=$env:pythonLocation -DCMAKE_INSTALL_PREFIX=..\\devel -DCMAKE_TOOLCHAIN_FILE=${env:VCPKG_INSTALLATION_ROOT}\\scripts\\buildsystems\\vcpkg.cmake -DBUILD_PYTHON_LIBRARY=OFF" -NoNewWindow
       - name: Configure
         if: matrix.os != 'windows-latest'
         run: |

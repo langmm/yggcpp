@@ -442,7 +442,7 @@ else (ENABLE_ZMQ)
 endif (ENABLE_ZMQ)
 
 if (ZeroMQ_FOUND)
-    message(STATUS "ZeroMQ found ZeroMQ_INCLUDE_DIR = ${ZeroMQ_INCLUDE_DIR}")
+    message(STATUS "ZeroMQ found ZeroMQ_INCLUDE_DIR = ${ZeroMQ_INCLUDE_DIR}, ZeroMQ_LIBRARY = ${ZeroMQ_LIBRARY}")
     add_definitions(-DZMQINSTALLED -DZMQ_BUILD_DRAFT_API)
 
     include_directories(${ZeroMQ_INCLUDE_DIR})
@@ -497,6 +497,7 @@ endif ()
 #########
 
 if(YGG_BUILD_TESTS)
+    add_definitions(-DYGG_TEST)
     if(MSVC11)
         # required for VS2012 due to missing support for variadic templates
         add_definitions(-D_VARIADIC_MAX=10)
@@ -504,7 +505,6 @@ if(YGG_BUILD_TESTS)
     add_subdirectory(test)
     include(CTest)
 
-    add_definitions(-DYGG_TEST)
     # if(YGG_ENABLE_COVERAGE)
     #     target_link_libraries(YggInterface gcov)
     #     # find required tools
