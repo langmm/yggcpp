@@ -5,7 +5,7 @@ find_package(GTestSrc)
 
 find_package(cmocka)
 if(cmocka_FOUND)
-    message("CMOCKA")
+    message(STATUS "Found CMOCKA")
 else()
     include(FetchContent)
     FetchContent_Declare(

@@ -8,3 +8,4 @@
 * Split serialization.hpp into files for easier maintenance
 * Strip out unused code
 * Set _ygg_error_flag on error
+* Add client/server signon to prevent dropping messages

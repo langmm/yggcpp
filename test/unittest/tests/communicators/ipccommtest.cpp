@@ -16,6 +16,8 @@ public:
   TESTER_METHODS(IPCComm)
 };
 
+#ifdef IPCINSTALLED
+
 COMM_SERI_TEST(IPCComm)
 
 TEST(IPCComm, constructor) {
@@ -42,7 +44,6 @@ TEST(IPCComm, constructor) {
     ELF_END_F(msgget);
     ELF_END;
 #endif // ELF_AVAILABLE
-
 }
 
 TEST(IPCComm, send) {
@@ -150,3 +151,14 @@ TEST(IPCComm, recv) {
     int i = 7;
 #endif // ELF_AVAILABLE
 }
+
+#else // IPCINSTALLED
+
+// TEST(IPCComm, constructor) {
+//     EXPECT_THROW(IPCComm_tester ipc, std::exception);
+//     std::string name = "";
+//     EXPECT_THROW(IPCComm_tester ipc2(name, nullptr, SEND), std::exception);
+// }
+
+#endif // IPCINSTALLED
+

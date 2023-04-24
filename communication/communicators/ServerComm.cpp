@@ -36,14 +36,20 @@ int ServerComm::update_datatype(const rapidjson::Value& new_schema,
 }
 
 bool ServerComm::create_header_send(Header& header, const char* data, const size_t &len) {
-  bool out = COMM_BASE::create_header_send(header, data, len);
-  if ((!out) || header.flags & HEAD_FLAG_EOF)
-    return out;
+  header.initMeta();
   if (requests.addResponseServer(header, data, len) < 0) {
-    ygglog_error << "create_header_send(" << name << "): Failed to add response" << std::endl;
+    ygglog_error << "ServerComm(" << name << ")::create_header_send: Failed to add response" << std::endl;
     header.invalidate();
     return false;
   }
+  Comm_t* response_comm = requests.activeComm();
+  if (response_comm == NULL) {
+    ygglog_error << "ServerComm(" << name << ")::create_header_send: Failed to get response comm" << std::endl;
+    return -1;
+  }
+  bool out = response_comm->create_header_send(header, data, len);
+  if ((!out) || header.flags & HEAD_FLAG_EOF)
+    return out;
   // This gives the server access to the ID of the message last received
   // if (!header.SetMetaString("id", address)) {
   //   header.invalidate();
@@ -61,7 +67,7 @@ bool ServerComm::create_header_recv(Header& header, char*& data,
   if ((!out) || header.flags & HEAD_FLAG_EOF)
     return out;
   if (requests.addRequestServer(header) < 0) {
-    ygglog_error << "create_header_recv(" << name << "): Failed to add request" << std::endl;
+    ygglog_error << "ServerComm(" << name << ")::create_header_recv: Failed to add request" << std::endl;
     header.invalidate();
     return false;
   }
@@ -69,14 +75,14 @@ bool ServerComm::create_header_recv(Header& header, char*& data,
 }
 
 int ServerComm::send_single(const char* data, const size_t &len){
-    ygglog_debug << "server_comm_send(" << name << "): " << len << " bytes";
+    ygglog_debug << "ServerComm(" << name << ")::send_single: " << len << " bytes";
     Comm_t* response_comm = requests.activeComm();
     if (response_comm == NULL) {
-        ygglog_error << "server_comm_send(" << name << "): Failed to get response comm" << std::endl;
+        ygglog_error << "ServerComm(" << name << ")::send_single: Failed to get response comm" << std::endl;
         return -1;
     }
     int ret = response_comm->send_single(data, len);
-    ygglog_debug << "server_comm_send(" << name << "): Sent " << len << " bytes" << std::endl;
+    ygglog_debug << "ServerComm(" << name << ")::send_single: Sent " << len << " bytes" << std::endl;
     if (requests.popRequestServer() < 0)
         return -1;
     return ret;

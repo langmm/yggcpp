@@ -11,12 +11,6 @@ public:
     explicit ClientComm(const std::string &name = "", utils::Address *address = nullptr);
     explicit ClientComm(const std::string name);
 
-    // ~ClientComm() override;
-
-    // bool new_address() override;
-
-    //int init_comm();
-
     using Comm_t::send;
     using Comm_t::recv;
     using COMM_BASE::comm_nmsg;
@@ -31,8 +25,6 @@ protected:
 			    int temp) override;
     long recv_single(char*& data, const size_t &len,
 		     bool allow_realloc) override;
-    // void addResponseSchema(const rapidjson::Document& schema);
-    // void addResponseFormat(const std::string& fmt);
 
 #ifndef YGG_TEST
 private:

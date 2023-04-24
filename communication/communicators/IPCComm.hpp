@@ -1,15 +1,15 @@
 #pragma once
 
-#ifdef _YGGIPC
 #include "utils/tools.hpp"
 
-
+#ifdef IPCINSTALLED
 #include <fcntl.h>           /* For O_* constants */
 #include <sys/stat.h>        /* For mode constants */
 #include <sys/msg.h>
 #include <sys/types.h>
 #include <sys/sem.h>
 #include <sys/shm.h>
+#endif // IPCINSTALLED
 
 #include "CommBase.hpp"
 
@@ -25,6 +25,7 @@ typedef struct msgbuf_t {
     long mtype; //!< Message buffer type
     char data[2048]; //!< Buffer for the message
 } msgbuf_t;
+  
 //class ClientComm;
 //class ServerComm;
 class IPCComm : public CommBase<int> {
@@ -65,12 +66,7 @@ private:
     static unsigned _yggChannelsUsed;
     static bool _ipc_rand_seeded;
 
-    int send_normal(const char *data, const size_t &len);
-
-    int send_large(const char *data, const size_t &len);
 };
 
 }
 }
-
-#endif

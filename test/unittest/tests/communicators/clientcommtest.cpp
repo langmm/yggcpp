@@ -43,10 +43,11 @@ public:
 
 TEST(ClientComm, constructor) {
     std::string name = "MyComm";
+    setenv("YGG_MODEL_INDEX", "1", 1);
     ClientComm cc(name, nullptr);
+    unsetenv("YGG_MODEL_INDEX");
     ClientComm cc1("", nullptr);
-    ClientComm cc2("", new utils::Address("12345"));
-    // EXPECT_TRUE(cc2.new_address());
+    // ClientComm cc2("", new utils::Address("12345"));
 }
 
 // TODO: migrate to tests for RequestList class
@@ -93,7 +94,9 @@ TEST(ClientComm, constructor) {
 
 TEST(ClientComm, recv) {
     std::string name = "MyComm";
+    setenv("YGG_MODEL_INDEX", "1", 1);
     communication::testing::ClientComm_tester cc(name, nullptr);
+    unsetenv("YGG_MODEL_INDEX");
     char* data = (char*)malloc(sizeof(char));
     size_t len = 1;
     EXPECT_EQ(cc.recv(data, len, false), -1);

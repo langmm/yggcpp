@@ -1,5 +1,4 @@
 #include "MPIComm.hpp"
-#include <mpi.h>
 #include <boost/algorithm/string.hpp>
 
 using namespace communication::communicator;

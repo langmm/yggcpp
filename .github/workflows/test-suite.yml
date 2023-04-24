@@ -14,6 +14,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python-install: [pip]
+        install-zmq: [true, false]
       fail-fast: false
     steps:
       - name: Check out repository code
@@ -29,7 +30,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libc6-dbg gdb valgrind libboost-log-dev libgomp1 libczmq-dev lcov libzmq3-dev libcmocka-dev
+          sudo apt-get install -y libc6-dbg gdb valgrind libboost-log-dev lcov libcmocka-dev
           sudo apt upgrade --fix-missing
           valgrind --version
           # sudo apt autoremove -y
@@ -37,12 +38,28 @@ jobs:
       - name: Install dependencies on Mac
         if: matrix.os == 'macos-latest'
         run: |
-          brew install zmq libomp llvm boost cmocka lcov gnutls
+          brew install zmq libomp llvm boost cmocka lcov gnutls open-mpi
       - name: Install dependencies on Windows
         if: matrix.os == 'windows-latest'
         run: |
-          vcpkg.exe install zeromq --triplet x64-windows
           vcpkg.exe install boost --triplet x64-windows
+      - name: Install ZeroMQ and MPI dependencies on Ubuntu
+        if: matrix.os == 'ubuntu-latest' && matrix.install-zmq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libzmq3-dev libgomp1 mpich
+          sudo apt upgrade --fix-missing
+          valgrind --version
+          # sudo apt autoremove -y
+          # sudo apt autoclean -y
+      - name: Install ZeroMQ and MPI dependencies on Mac
+        if: matrix.os == 'macos-latest' && matrix.install-zmq
+        run: |
+          brew install zmq libomp open-mpi
+      - name: Install ZeroMQ and MPI dependencies on Windows
+        if: matrix.os == 'windows-latest' && matrix.install-zmq
+        run: |
+          vcpkg.exe install zeromq --triplet x64-windows
       - name: Setup Python
         uses: actions/setup-python@v2
       - name: Fix Python path on mac
