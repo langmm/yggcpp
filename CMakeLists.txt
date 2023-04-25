@@ -264,9 +264,6 @@ if(BUILD_PYTHON_LIBRARY)
     #    set(YGG_PYTHON_ENV "${YGG_PYTHON_ENV};PYTHONHOME=${Python3_RUNTIME_LIBRARY_DIRS}")
     #endif()
 
-    #target_link_libraries(YggInterface ${PYTHON_LIBRARIES} Python3::NumPy)
-
-
     file(GLOB_RECURSE PYSOURCES ${CMAKE_SOURCE_DIR}/communication/python/*.cpp)
     add_library(pyygg MODULE ${SOURCES} ${PYSOURCES})
     target_include_directories(pyygg PRIVATE ${PYTHON_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/communication/python)
@@ -286,120 +283,13 @@ option(YGG_BUILD_THIRDPARTY_GTEST "Use gtest installation in 'thirdpart/gtest' b
 
 set(YGG_BUILD_FLAGS "")
 
-##########
-# OpenMP #
-##########
+#########################################
+# DEPENDENCIES
+#########################################
 
-find_package(OpenMP)
-if (OpenMP_CXX_FOUND)
-    message(STATUS "OpenMP found")
-    target_link_libraries(YggInterface OpenMP::OpenMP_CXX)
-    if(BUILD_PYTHON_LIBRARY)
-        target_link_libraries(pyygg OpenMP::OpenMP_CXX)
-    endif()
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-else()
-    message(STATUS "NO OpenMP")
-endif()
-
-#######
-# MPI #
-#######
-
-find_package(MPI)
-if(MPI_FOUND)
-    message(STATUS "MPI found")
-    add_definitions(-DMPIINSTALLED)
-    include_directories(${MPI_INCLUDE_PATH})
-    target_link_libraries(YggInterface ${MPI_C_LIBRARIES} MPI::MPI_CXX)
-    if(BUILD_PYTHON_LIBRARY)
-        target_link_libraries(pyygg ${MPI_C_LIBRARIES} MPI::MPI_CXX)
-    endif()
-    # include_directories(MPI_CXX_INCLUDE_DIRS)
-    # target_link_libraries(YggInterface MPI::MPI_CXX)
-    # if(BUILD_PYTHON_LIBRARY)
-    #     target_link_libraries(pyygg MPI::MPI_CXX)
-    # endif()
-else()
-    message(STATUS "NO MPI")
-ENDIF()
-
-##########
-# Python #
-##########
-
-option(YGGDRASIL_DISABLE_PYTHON_C_API "Disable the Python C API" OFF)
-if(YGGDRASIL_DISABLE_PYTHON_C_API)
-    add_definitions(-DYGGDRASIL_DISABLE_PYTHON_C_API)
-else()
-    # needed on GitHub Actions CI: actions/setup-python does not touch registry/frameworks on Windows/macOS
-    # this mirrors PythonInterp behavior which did not consult registry/frameworks first
-    if (NOT DEFINED Python_FIND_REGISTRY)
-        set(Python_FIND_REGISTRY "LAST")
-    endif ()
-    if (NOT DEFINED Python_FIND_FRAMEWORK)
-        set(Python_FIND_FRAMEWORK "LAST")
-    endif ()
-
-    message(STATUS "Python executable is ${Python3_EXECUTABLE}")
-    if(NOT Python3_ROOT_DIR)
-        set(CONDA_PREFIX "$ENV{CONDA_PREFIX}")
-        if(CONDA_PREFIX)
-            message(STATUS "CONDA_PREFIX = ${CONDA_PREFIX}")
-            set(Python3_ROOT_DIR "${CONDA_PREFIX}")
-        else()
-            if(Python3_EXECUTABLE)
-                exec_program(${Python3_EXECUTABLE}
-	                     ARGS "-c \"import sysconfig; print(sysconfig.get_config_var('base'))\""
-		             OUTPUT_VARIABLE PYTHON_ROOT
-		             RETURN_VALUE ROOT_NOT_FOUND)
-                if(ROOT_NOT_FOUND)
-     	            message(FATAL_ERROR "Python root not found")
-                endif()
-	        set(Python3_ROOT_DIR "${RETURN_VALUE}")
-            endif()
-         endif()
-    endif()
-    if(Python3_ROOT_DIR)
-        message(STATUS "Python root directory is ${Python3_ROOT_DIR}")
-    endif()
-    find_package(Python3 COMPONENTS Interpreter Development NumPy REQUIRED)
-    if(NOT Python3_NumPy_FOUND)
-        message(FATAL_ERROR "NumPy headers not found")
-    endif()
-    if(NOT Python3_FOUND)
-        message(FATAL_ERROR "Python libraries not found")
-    endif()
-
-    # Set environment variables required for embedding Python
-    set(RAPIDJSON_PYTHON_ENV "DATADIR=${CMAKE_SOURCE_DIR}/test;YGG_PYTHON_EXEC=${Python3_EXECUTABLE}")
-
-    # There is an issue with embedding Python on Windows in conda environments
-    # https://github.com/ContinuumIO/anaconda-issues/issues/11374
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-        set(RAPIDJSON_PYTHON_ENV "${RAPIDJSON_PYTHON_ENV};PYTHONHOME=${Python3_RUNTIME_LIBRARY_DIRS}")
-    endif()
-    
-    target_link_libraries(YggInterface ${Python3_LIBRARIES} Python3::NumPy)
-    target_link_libraries(YggInterface ${Python3_NumPy_LIBRARIES})
-    include_directories(${Python3_INCLUDE_DIRS} ${Python3_NumPy_INCLUDE_DIRS})
-endif()
-
-#########
-# Boost #
-#########
-
-find_package(Boost REQUIRED COMPONENTS log regex)
-include_directories(${Boost_INCLUDE_DIRS})
-add_definitions(-DBOOST_LOG_DYN_LINK)
-message(STATUS "Boost found Boost_INCLUDE_DIRS = ${Boost_INCLUDE_DIRS}")
-
-target_link_libraries(YggInterface ${Boost_LOG_LIBRARY} ${Boost_REGEX_LIBRARY})
-if (Boost_DATE_TIME_FOUND)
-    target_link_libraries(YggInterface ${Boost_DATE_TIME_LIBRARY})
-else()
-    add_definitions(-DBOOST_DATE_TIME_NO_LIB)
+set(CONDA_PREFIX "$ENV{CONDA_PREFIX}")
+if(CONDA_PREFIX)
+    message(STATUS "CONDA_PREFIX = ${CONDA_PREFIX}")
 endif()
 
 #############
@@ -407,7 +297,7 @@ endif()
 #############
 
 set(RAPIDJSON_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/communication/rapidjson/include")
-include_directories(${RAPIDJSON_INCLUDE_DIRS})
+set(DEPS_INCLUDE_DIRS ${DEPS_INCLUDE_DIRS} ${RAPIDJSON_INCLUDE_DIRS})
 message(STATUS "Rapidjson found ${RAPIDJSON_INCLUDE_DIRS}")
 
 ##########
@@ -416,7 +306,7 @@ message(STATUS "Rapidjson found ${RAPIDJSON_INCLUDE_DIRS}")
 
 option(ENABLE_ZMQ "Enable zeromq" ON)
 if(ENABLE_ZMQ)
-    if (CONDA_PREFIX AND NOT (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC"))
+    if (CONDA_PREFIX)  # AND NOT (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC"))
         find_package(ZeroMQ REQUIRED)
     else()
         # Only conda version has CMake config
@@ -455,24 +345,129 @@ else (ENABLE_ZMQ)
 endif (ENABLE_ZMQ)
 
 if (ZeroMQ_FOUND)
-    # if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    #     find_library(ZeroMQ_LIBRARY
-    #         NAMES zmq
-    #         PATHS get_filename_component(DIRECTORY ${ZeroMQ_LIBRARY} ABSOLUTE
-    #         )
-    #     # string(REPLACE .dll .lib ZeroMQ_LIBRARY ${ZeroMQ_LIBRARY})
-    #     # set(ZeroMQ_LIBRARY zmq) # To prevent linking against .dll
-    # endif()
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+        string(FIND ${ZeroMQ_LIBRARY} ".dll" ZeroMQ_DLL_POS)
+        if (ZeroMQ_DLL_POS != -1)
+            message(STATUS "Existing ZeroMQ_LIBRARY = ${ZeroMQ_LIBRARY}")
+            get_filename_component(ZeroMQ_BIN_DIR ${ZeroMQ_LIBRARY} DIRECTORY)
+            get_filename_component(ZeroMQ_PREFIX_DIR ${ZeroMQ_BIN_DIR} DIRECTORY)
+            message(STATUS "ZeroMQ_PREFIX_DIR = ${ZeroMQ_PREFIX_DIR}")
+            find_library(ZeroMQ_LIBRARY
+                NAMES zmq
+                PATHS ${ZeroMQ_PREFIX_DIR}
+                )
+            # string(REPLACE .dll .lib ZeroMQ_LIBRARY ${ZeroMQ_LIBRARY})
+            # set(ZeroMQ_LIBRARY zmq) # To prevent linking against .dll
+        endif()
+    endif()
     message(STATUS "ZeroMQ found ZeroMQ_INCLUDE_DIR = ${ZeroMQ_INCLUDE_DIR}, ZeroMQ_LIBRARY = ${ZeroMQ_LIBRARY}")
     add_definitions(-DZMQINSTALLED -DZMQ_BUILD_DRAFT_API)
-
-    include_directories(${ZeroMQ_INCLUDE_DIR})
-    target_link_libraries(YggInterface ${ZeroMQ_LIBRARY})
-    if(BUILD_PYTHON_LIBRARY)
-        target_link_libraries(pyygg ${ZeroMQ_LIBRARY})
-    endif()
+    set(DEPS_LIBRARIES ${DEPS_LIBRARIES} ${ZeroMQ_LIBRARY})
+    set(DEPS_INCLUDE_DIRS ${DEPS_INCLUDE_DIRS} ${ZeroMQ_INCLUDE_DIR})
 else()
     message(STATUS "NO ZeroMQ")
+endif()
+
+##########
+# OpenMP #
+##########
+
+find_package(OpenMP)
+if (OpenMP_CXX_FOUND)
+    message(STATUS "OpenMP found")
+    set(DEPS_LIBRARIES ${DEPS_LIBRARIES} OpenMP::OpenMP_CXX)
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+else()
+    message(STATUS "NO OpenMP")
+endif()
+
+#######
+# MPI #
+#######
+
+find_package(MPI)
+if(MPI_FOUND)
+    message(STATUS "MPI found")
+    add_definitions(-DMPIINSTALLED)
+    set(DEPS_LIBRARIES ${DEPS_LIBRARIES} ${MPI_C_LIBRARIES} MPI::MPI_CXX)
+    set(DEPS_INCLUDE_DIRS ${DEPS_INCLUDE_DIRS} ${MPI_INCLUDE_PATH})
+    # set(DEPS_INCLUDE_DIRS ${DEPS_INCLUDE_DIRS} ${MPI_CXX_INCLUDE_DIRS})
+else()
+    message(STATUS "NO MPI")
+ENDIF()
+
+##########
+# Python #
+##########
+
+option(YGGDRASIL_DISABLE_PYTHON_C_API "Disable the Python C API" OFF)
+if(YGGDRASIL_DISABLE_PYTHON_C_API)
+    add_definitions(-DYGGDRASIL_DISABLE_PYTHON_C_API)
+else()
+    # needed on GitHub Actions CI: actions/setup-python does not touch registry/frameworks on Windows/macOS
+    # this mirrors PythonInterp behavior which did not consult registry/frameworks first
+    if (NOT DEFINED Python_FIND_REGISTRY)
+        set(Python_FIND_REGISTRY "LAST")
+    endif ()
+    if (NOT DEFINED Python_FIND_FRAMEWORK)
+        set(Python_FIND_FRAMEWORK "LAST")
+    endif ()
+
+    message(STATUS "Python executable is ${Python3_EXECUTABLE}")
+    if(NOT Python3_ROOT_DIR)
+        if(CONDA_PREFIX)
+            set(Python3_ROOT_DIR "${CONDA_PREFIX}")
+        else()
+            if(Python3_EXECUTABLE)
+                exec_program(${Python3_EXECUTABLE}
+	                     ARGS "-c \"import sysconfig; print(sysconfig.get_config_var('base'))\""
+		             OUTPUT_VARIABLE PYTHON_ROOT
+		             RETURN_VALUE ROOT_NOT_FOUND)
+                if(ROOT_NOT_FOUND)
+     	            message(FATAL_ERROR "Python root not found")
+                endif()
+	        set(Python3_ROOT_DIR "${RETURN_VALUE}")
+            endif()
+         endif()
+    endif()
+    if(Python3_ROOT_DIR)
+        message(STATUS "Python root directory is ${Python3_ROOT_DIR}")
+    endif()
+    find_package(Python3 COMPONENTS Interpreter Development NumPy REQUIRED)
+    if(NOT Python3_NumPy_FOUND)
+        message(FATAL_ERROR "NumPy headers not found")
+    endif()
+    if(NOT Python3_FOUND)
+        message(FATAL_ERROR "Python libraries not found")
+    endif()
+
+    # Set environment variables required for embedding Python
+    set(RAPIDJSON_PYTHON_ENV "DATADIR=${CMAKE_SOURCE_DIR}/test;YGG_PYTHON_EXEC=${Python3_EXECUTABLE}")
+
+    # There is an issue with embedding Python on Windows in conda environments
+    # https://github.com/ContinuumIO/anaconda-issues/issues/11374
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+        set(RAPIDJSON_PYTHON_ENV "${RAPIDJSON_PYTHON_ENV};PYTHONHOME=${Python3_RUNTIME_LIBRARY_DIRS}")
+    endif()
+    
+    set(DEPS_LIBRARIES ${DEPS_LIBRARIES} ${Python3_LIBRARIES} Python3::NumPy ${Python3_NumPy_LIBRARIES})
+    set(DEPS_INCLUDE_DIRS ${DEPS_INCLUDE_DIRS} ${Python3_INCLUDE_DIRS} ${Python3_NumPy_INCLUDE_DIRS})
+endif()
+
+#########
+# Boost #
+#########
+
+find_package(Boost REQUIRED COMPONENTS log regex)
+add_definitions(-DBOOST_LOG_DYN_LINK)
+message(STATUS "Boost found Boost_INCLUDE_DIRS = ${Boost_INCLUDE_DIRS}")
+set(DEPS_LIBRARIES ${DEPS_LIBRARIES} ${Boost_LOG_LIBRARY} ${Boost_REGEX_LIBRARY})
+set(DEPS_INCLUDE_DIRS ${DEPS_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
+if (Boost_DATE_TIME_FOUND)
+    set(DEPS_LIBRARIES ${DEPS_LIBRARIES} ${Boost_DATE_TIME_LIBRARY})
+else()
+    add_definitions(-DBOOST_DATE_TIME_NO_LIB)
 endif()
 
 ##################
@@ -494,6 +489,14 @@ if (UNIX OR CYGWIN)
     add_definitions(-DIPCINSTALLED)
 endif()
 
+####################
+# Add dependencies #
+####################
+target_link_libraries(YggInterface ${DEPS_LIBRARIES})
+include_directories(${DEPS_INCLUDE_DIRS})
+if(BUILD_PYTHON_LIBRARY)
+    target_link_libraries(pyygg ${DEPS_LIBRARIES})
+endif()
 
 ###################
 # Version options #
@@ -503,9 +506,11 @@ if(CONDA_PREFIX)
     if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
         add_link_options("-L${CONDA_PREFIX}/Library/lib")
         include_directories(${CONDA_PREFIX}/Library/include)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${CONDA_PREFIX}/Library/include")
     else()
         add_link_options("-L${CONDA_PREFIX}/lib")
         include_directories(${CONDA_PREFIX}/include)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${CONDA_PREFIX}/include")
     endif()
 endif(CONDA_PREFIX)
 
@@ -524,6 +529,14 @@ endif ()
 #########
 
 if(YGG_BUILD_TESTS)
+    set(SUBLIBFILE ${CMAKE_BINARY_DIR}/library_path.txt)
+    add_custom_command(
+        OUTPUT ${SUBLIBFILE}
+        COMMAND echo "$<TARGET_FILE:YggInterface>" > "${SUBLIBFILE}"
+       DEPENDS YggInterface
+       VERBATIM)
+    add_custom_target(make_sublib ALL DEPENDS ${SUBLIBFILE})
+
     add_definitions(-DYGG_TEST)
     if(MSVC11)
         # required for VS2012 due to missing support for variadic templates

@@ -117,24 +117,31 @@ void ZMQSocket::init(int type0, std::string address,
 void ZMQSocket::init(int type0, utils::Address* address,
 		     int linger, int immediate, int sndtimeo) {
   type = type0;
+  std::string except_msg;
 #ifdef _OPENMP
 #pragma omp critical (zmq)
   {
 #endif // _OPENMP
     handle = zmq_socket (ctx.ctx, type);
     // ZMQ_SNDTIMEO
-    if (linger != -1 && set(ZMQ_LINGER, linger) < 0) {
-      ygglog_throw_error_c("ZMQSocket::init: Error setting ZMQ_LINGER to %d", linger);
-    }
-    if (immediate != 0 && set(ZMQ_IMMEDIATE, immediate) < 0) {
-      ygglog_throw_error_c("ZMQSocket::init: Error setting ZMQ_IMMEDIATE to %d", immediate);
-    }
-    if (sndtimeo != -1 && set(ZMQ_SNDTIMEO, sndtimeo) < 0) {
-      ygglog_throw_error_c("ZMQSocket::init: Error setting ZMQ_SNDTIMEO to %d", sndtimeo);
+    if (handle != NULL) {
+      if (linger != -1 && set(ZMQ_LINGER, linger) < 0) {
+	except_msg = "ZMQSocket::init: Error setting ZMQ_LINGER to" + std::to_string(linger);
+      }
+      if (except_msg.empty() && immediate != 0 &&
+	  set(ZMQ_IMMEDIATE, immediate) < 0) {
+	except_msg = "ZMQSocket::init: Error setting ZMQ_IMMEDIATE to " + std::to_string(immediate);
+      }
+      if (except_msg.empty() && sndtimeo != -1 &&
+	  set(ZMQ_SNDTIMEO, sndtimeo) < 0) {
+	except_msg = "ZMQSocket::init: Error setting ZMQ_SNDTIMEO to " + std::to_string(sndtimeo);
+      }
     }
 #ifdef _OPENMP
   }
 #endif // _OPENMP
+  if (!except_msg.empty())
+    throw std::runtime_error(except_msg);
   if (handle == NULL)
     ygglog_throw_error("ZMQSocket::init: Error creating new socket.");
   if (address && !address->address().empty()) {
@@ -148,7 +155,6 @@ void ZMQSocket::init(int type0, utils::Address* address,
     if (host == "localhost")
       host = "127.0.0.1";
     std::string address;
-    std::string except_msg = "";
 #ifdef _OPENMP
 #pragma omp critical (zmqport)
     {

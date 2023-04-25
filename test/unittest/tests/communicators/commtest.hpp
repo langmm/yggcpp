@@ -36,24 +36,6 @@
 		      " \"subtype\": \"uint\","				\
 		      " \"precision\": 1}")
 
-#define ELF_BEGIN					\
-  void *handle = dlopen(SUBLIB, RTLD_LAZY);		\
-  if (!handle) {					\
-    EXPECT_TRUE(false);					\
-  }
-#define ELF_END					\
-  dlclose(handle)
-  
-#define ELF_BEGIN_F(func)				\
-  void *original_func_ ## func = nullptr;		\
-  original_func_ ## func = ELFHOOK(func);		\
-  EXPECT_NE(original_func_ ## func, ((void*)0))
-#define ELF_BEGIN_F_RET(func, ret)			\
-  RETVAL = ret;						\
-  ELF_BEGIN_F(func)
-#define ELF_END_F(func)				\
-  ELFREVERT(func, original_func_ ## func)
-
 #ifdef ELF_AVAILABLE
 #if COMM_BASE == IPC_COMM
 #define ELF_SEND(ret)				\

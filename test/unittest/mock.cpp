@@ -1,15 +1,30 @@
 #include <cstdlib>
 #include <iostream>
-#include <sys/msg.h>
 #include "mock.hpp"
 #include "communicators/IPCComm.hpp"
+
+#ifdef SUBLIBFILE
+bool sublib_read = false;
+char sublib_contents[256] = "";
+void init_sublib_contents() {
+  if (!sublib_read) {
+    FILE *fp = fopen(SUBLIBFILE_STR(SUBLIBFILE), "r");
+    fgets(sublib_contents, 256, fp);
+    fclose(fp);
+    sublib_read = true;
+  }
+}
+#else
+void init_sublib_contents() {}
+#endif
 
 namespace communication {
 namespace mock {
 int RETVAL = 0;
 int SENDCOUNT = 0;
+std::string RETMSG = "";
 
-
+#ifdef IPCINSTALLED
 int msgsnd(int, const void *, size_t, int) {
     //std::cout << "HERE";
     //msgsnd(a, b, c, d);
@@ -37,10 +52,12 @@ ssize_t msgrcv(int, void* rbuf, size_t, long, int) {
         return RETVAL;
     return (ssize_t)(msg.size());
 }
+#endif // IPCINSTALLED
 
 void* realloc(void*, size_t) {
     return nullptr;
 }
+  
 #ifdef ZMQCPPINSTALLED
 namespace zmq {
 void message_tD() {
@@ -85,7 +102,64 @@ template<class OutputIt>
 }
 }
 }
+
 #endif // ZMQCPPINSTALLED
+  
+#ifdef ZMQINSTALLED
+
+  int zmq_sendmsg (void *, zmq_msg_t *msg, int) {
+    if (RETVAL < 0)
+      return RETVAL;
+    RETVAL--;
+    return static_cast<int>(zmq_msg_size(msg));
+  }
+  int zmq_recvmsg (void *, zmq_msg_t *msg, int) {
+    std::string msgS = "Hello world";
+    memcpy(zmq_msg_data(msg), msgS.c_str(), msgS.size());
+    if (RETVAL < 0)
+        return RETVAL;
+    return 0;
+  }
+  int zmq_poller_wait_all (void *, zmq_poller_event_t *, int n_events, long) {
+    if (RETVAL < 0)
+      return RETVAL;
+    return n_events;
+  }
+  int zmq_errno (void) {
+    return RETVAL;
+  }
+  // Only testing for errors
+  int zmq_ctx_term (void *) {
+    return -1;
+  }
+  void *zmq_socket (void *, int) {
+    return NULL;
+  }
+  int zmq_connect (void *, const char *) {
+    return -1;
+  }
+  int zmq_bind (void *, const char *) {
+    return -1;
+  }
+  int zmq_msg_init (zmq_msg_t *) {
+    return -1;
+  }
+  int zmq_msg_init_size (zmq_msg_t *, size_t) {
+    return -1;
+  }
+  int zmq_setsockopt (void *, int, const void *, size_t) {
+    return -1;
+  }
+  int zmq_getsockopt (void *, int, void * option_value, size_t *option_len) {
+    if (RETMSG.empty() || (RETMSG.size() + 1) > option_len[0])
+      return -1;
+    memcpy(option_value, RETMSG.c_str(), RETMSG.size());
+    char term = '\0';
+    memcpy(((char*)option_value) + RETMSG.size(), &term, sizeof(char));
+    return 0;
+  }
+  
+#endif // ZMQINSTALLED
 
 }
 }

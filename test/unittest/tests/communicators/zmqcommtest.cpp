@@ -42,6 +42,8 @@ public:
 
 COMM_SERI_TEST(ZMQComm)
 
+// TODO: Socket tests?
+
 // TEST(yggSockT, yggSockTest) {
 //     ZMQSocket ygs(ZMQ_REQ);
 //     EXPECT_EQ(communication::testing::ZMQSocket_tester::activeCount(), 1);
@@ -73,75 +75,106 @@ TEST(ZMQComm, constructor) {
     name = "";
     setenv("YGG_MODEL_INDEX", "123", 1);
     ZMQComm_tester zmqc(name, nullptr, SEND);
-    // std::string adr = zmqc.getAdr();
-    // EXPECT_TRUE(zmqc.getNewAddress());
-    // std::string adr2 = zmqc.getAdr();
-    // EXPECT_NE(adr, adr2);
     EXPECT_EQ(zmqc.comm_nmsg(), 0);
     auto *adrs = new utils::Address();
     ZMQComm_tester zmqr(name, adrs, RECV);
     EXPECT_EQ(zmqr.comm_nmsg(), 0);
-}
-
-TEST(ZMQComm, sendTest) {
 #ifdef ELF_AVAILABLE
-    setenv("YGG_MODEL_INDEX", "123", 1);
-    void* handle = dlopen(SUBLIB, RTLD_LAZY);
-    void* original_func = nullptr;
-    void* original_func2 = nullptr;
-    void* original_func3 = nullptr;
-    void* original_func4 = nullptr;
-    void* original_func5 = nullptr;
-    void* original_func6 = nullptr;
-    if (!handle)
-        EXPECT_TRUE(false);
-    original_func = ELFHOOK(zmq::detail::socket_base::send);
-    original_func2 = ELFHOOK_PARAM(zmq::poller_t<no_user_data>::wait_all, zmq::poller_t::wait_all);
-    original_func3 = ELFHOOK(zmq::detail::socket_base::recv);
-    original_func4 = ELFHOOK(zmq::message_tD);
-    original_func5 = ELFHOOK(zmq::message_t::to_string);
-    //original_func6 = ELFHOOK_ARGS(zmq::detail::socket_base::get, sockopt|mutable_buffer);
-    EXPECT_NE(original_func, ((void*)0));
-    EXPECT_NE(original_func2, ((void*)0));
-    EXPECT_NE(original_func3, ((void*)0));
-    EXPECT_NE(original_func4, ((void*)0));
-    EXPECT_NE(original_func5, ((void*)0));
-    std::string name = "TestZMQSend";
-    ZMQComm_tester zmq(name, nullptr, SEND);
-    zmq.setReply();
-    //zmq.set_reply_send();
-    std::string mmsg = "This is a test message";
-    EXPECT_GT(zmq.send(mmsg.c_str(), mmsg.size()), 0);
-
-    std::string long_msg(YGG_MSG_MAX * 3 + 20, 'A');
-    EXPECT_GT(zmq.send(long_msg.c_str(), long_msg.size()), 0);
-    ELFREVERT(zmq::detail::socket_base::send, original_func);
-    ELFREVERT(zmq::poller_t<no_user_data>::wait_all, original_func2);
-    ELFREVERT(zmq::detail::socket_base::recv, original_func3);
-    ELFREVERT(zmq::message_tD, original_func4);
-    ELFREVERT(zmq::message_t::to_string, original_func5);
-    dlclose(handle);
+    ELF_BEGIN;
+    // Failure to create socket
+    ELF_BEGIN_F(zmq_socket);
+    EXPECT_THROW(ZMQComm zmqc(name, nullptr, SEND), std::runtime_error);
+    ELF_END_F(zmq_socket);
+    // Failure to set socket options
+    ELF_BEGIN_F(zmq_setsockopt);
+    EXPECT_THROW(ZMQComm zmqc(name, nullptr, SEND), std::runtime_error);
+    ELF_END_F(zmq_setsockopt);
+    // Failure to connect
+    ELF_BEGIN_F(zmq_connect);
+    EXPECT_THROW(ZMQComm zmqc("", new utils::Address("1.2.3.4"), RECV),
+		 std::runtime_error);
+    ELF_END_F(zmq_connect);
+    // Advance port on bind to existing
+    RETVAL = EADDRINUSE;
+    ELF_BEGIN_F(zmq_bind);
+    ELF_BEGIN_F(zmq_errno);
+    ZMQComm_tester zmqc(name, nullptr, SEND);
+    // Failure to bind
+    RETVAL = EADDRINUSE + 1;
+    EXPECT_THROW(ZMQComm zmqc(name, nullptr, SEND), std::runtime_error);
+    ELF_END_F(zmq_bind);
+    ELF_END_F(zmq_errno);
+    // Failure to get socket options
+    ELF_BEGIN_F(zmq_getsockopt);
+    RETMSG = "";
+    EXPECT_THROW(ZMQComm zmqc(name, nullptr, SEND), std::runtime_error);
+    // Failure to get endpoint
+    RETMSG = "invalid";
+    EXPECT_THROW(ZMQComm zmqc(name, nullptr, SEND), std::runtime_error);
+    ELF_END_F(zmq_getsockopt);
+    ELF_END;
 #endif // ELF_AVAILABLE
 }
 
-/*
+TEST(ZMQComm, send) {
+#ifdef ELF_AVAILABLE
+    setenv("YGG_MODEL_INDEX", "123", 1);
+    std::string name = "TestZMQSend";
+    std::string mmsg = "This is a test message";
+    ZMQComm_tester zmq(name, nullptr, SEND);
+    zmq.setReply();
+    ELF_BEGIN;
+    // Failure to create message
+    ELF_BEGIN_F(zmq_msg_init_size);
+    EXPECT_EQ(zmq.send(mmsg.c_str(), mmsg.size()), -1);
+    ELF_END_F(zmq_msg_init_size);
+    // Failure to send
+    RETVAL = -1;
+    ELF_BEGIN_F(zmq_sendmsg);
+    EXPECT_EQ(zmq.send(mmsg.c_str(), mmsg.size()), -1);
+    ELF_END_F(zmq_sendmsg);
+    // Successful send
+    RETVAL = 0;
+    ELF_BEGIN_F(zmq_sendmsg);
+    EXPECT_GT(zmq.send(mmsg.c_str(), mmsg.size()), 0);
+    std::string long_msg(YGG_MSG_MAX * 3 + 20, 'A');
+    EXPECT_GT(zmq.send(long_msg.c_str(), long_msg.size()), 0);
+    ELF_END_F(zmq_sendmsg);
+    // These are only needed if the tester dosn't by pass do_reply
+    // ELF_BEGIN_F(zmq_recvmsg);
+    // ELF_BEGIN_F(zmq_poller_wait_all);
+    // ELF_END_F(zmq_recvmsg);
+    // ELF_END_F(zmq_poller_wait_all);
+    ELF_END;
+#endif // ELF_AVAILABLE
+}
+
 TEST(ZMQComm, recv) {
 #ifdef ELF_AVAILABLE
     setenv("YGG_MODEL_INDEX", "123", 1);
-    void* handle = dlopen(SUBLIB, RTLD_LAZY);
-    void* original_func = nullptr;
-    void* original_func2 = nullptr;
     std::string name = "TestZMQSend";
-    ZMQComm_tester zmq(name, nullptr, SEND);
-    char* data;
-    size_t len=0;
-    original_func = ELFHOOK_PARAM(zmq::poller_t<no_user_data>::wait_all, zmq::poller_t::wait_all);
-    original_func2 = ELFHOOK(zmq::detail::socket_base::recv);
-    zmq.recv(data, len, true);
-
-    dlclose(handle);
+    ZMQComm_tester zmq(name, nullptr, RECV);
+    ELF_BEGIN;
+    char* data = NULL;
+    size_t len = 0;
+    // Successful recv
+    RETVAL = 1;
+    ELF_BEGIN_F(zmq_poller_wait_all);
+    ELF_BEGIN_F(zmq_recvmsg);
+    EXPECT_GE(zmq.recv(data, len, true), 0);
+    EXPECT_EQ(strcmp(data, "Hello world"), 0);
+    free(data);
+    // Fail receive on poll
+    RETVAL = -1;
+    EXPECT_EQ(zmq.recv(data, len, true), -1);
+    // Fail receive on receiving message
+    RETVAL = 0;
+    EXPECT_EQ(zmq.recv(data, len, true), -1);
+    ELF_END_F(zmq_poller_wait_all);
+    ELF_END_F(zmq_recvmsg);
+    ELF_END;
 #endif // ELF_AVAILABLE
-}*/
+}
 
 #else // ZMQINSTALLED
 
