@@ -445,7 +445,7 @@ endif (ENABLE_ZMQ)
 
 if (ZeroMQ_FOUND)
     if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-        string(REPLACE .dll .lib ZeroMQ_LIBRARY ZeroMQ_LIBRARY)
+        string(REPLACE .dll .lib ZeroMQ_LIBRARY ${ZeroMQ_LIBRARY})
         # set(ZeroMQ_LIBRARY zmq) # To prevent linking against .dll
     endif()
     message(STATUS "ZeroMQ found ZeroMQ_INCLUDE_DIR = ${ZeroMQ_INCLUDE_DIR}, ZeroMQ_LIBRARY = ${ZeroMQ_LIBRARY}")
