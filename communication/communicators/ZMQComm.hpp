@@ -4,9 +4,8 @@
 
 #ifdef ZMQINSTALLED
 #include <zmq.h>
-#else
-
 #endif
+
 #include <vector>
 namespace communication {
 #ifdef YGG_TEST
@@ -17,8 +16,6 @@ class ZMQSocket_tester;
 namespace communicator {
 //class ClientComm;
 extern unsigned _zmq_rand_seeded;
-extern unsigned _last_port_set;
-extern int _last_port;
 /* extern double _wait_send_t; */
 #if defined(_MSC_VER) && defined(_OPENMP)
 extern __declspec(thread) char _reply_msg[100];
@@ -36,6 +33,8 @@ extern int _zmq_sleeptime;
 class ZMQContext {
 public:
   ZMQContext();
+  ZMQContext(const ZMQContext& rhs);
+  ZMQContext& operator=(const ZMQContext& rhs);
   static void destroy();
   void* ctx;
   static void* ygg_s_process_ctx;
@@ -43,6 +42,8 @@ public:
   
 
 class ZMQSocket {
+private:
+  ZMQSocket& operator=(const ZMQSocket& rhs) = delete;
 public:
   ZMQSocket();
   ZMQSocket(int type0, utils::Address* address = NULL,
@@ -51,6 +52,7 @@ public:
   ZMQSocket(int type0, std::string address,
 	    int linger = 0, int immediate = 1,
 	    int sndtimeo = -1);
+  ZMQSocket(const ZMQSocket& rhs);
   void init(int type0, utils::Address* address = NULL,
 	    int linger = 0, int immediate = 1,
 	    int sndtimeo = -1);
@@ -105,16 +107,13 @@ public:
 class ZMQComm : public CommBase<ZMQSocket> {
 public:
     explicit ZMQComm(const std::string name = "", utils::Address *address = new utils::Address(),
-                     DIRECTION direction = NONE);
+                     const DIRECTION direction = NONE);
     explicit ZMQComm(const std::string name,
-		     DIRECTION direction);
+		     const DIRECTION direction);
 
-    //explicit ZMQComm(Comm_t* comm);
     ~ZMQComm() override;
 
 
-    //void open() override;
-    //void close() override;
     int comm_nmsg() const override;
     using Comm_t::send;
     using Comm_t::recv;

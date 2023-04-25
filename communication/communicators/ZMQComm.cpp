@@ -1,20 +1,17 @@
 #include "ZMQComm.hpp"
+#include "utils/tools.hpp"
+#include "utils/logging.hpp"
 
-unsigned communication::communicator::_zmq_rand_seeded = 0;
-unsigned communication::communicator::_last_port_set = 0;
-int communication::communicator::_last_port = 49152;
 /* double communication::communicator::_wait_send_t = 0;  // 0.0001; */
 char communication::communicator::_reply_msg[100] = "YGG_REPLY";
 char communication::communicator::_purge_msg[100] = "YGG_PURGE";
 int communication::communicator::_zmq_sleeptime = 10000;
 
-
-#ifdef ZMQINSTALLED
 using namespace communication::communicator;
 using namespace communication::utils;
+
+#ifdef ZMQINSTALLED
 #include <boost/algorithm/string.hpp>
-#include "utils/tools.hpp"
-#include "utils/logging.hpp"
 
 // const std::chrono::milliseconds timeout{1000};
 // const std::chrono::milliseconds short_timeout{10};
@@ -53,6 +50,12 @@ ZMQContext::ZMQContext() : ctx(NULL) {
     ygglog_throw_error("ZMQContext: ZMQ context is NULL.");
   }
 }
+ZMQContext::ZMQContext(const ZMQContext& rhs) : ctx(rhs.ctx) {}
+ZMQContext& ZMQContext::operator=(const ZMQContext& rhs) {
+  ctx = rhs.ctx;
+  return *this;
+}
+
 void ZMQContext::destroy() {
 #ifdef _OPENMP
 #pragma omp critical (zmq)
@@ -90,6 +93,9 @@ ZMQSocket::ZMQSocket(int type0, std::string address,
   handle(NULL), endpoint(), type(type0), ctx() {
   init(type0, address, linger, immediate, sndtimeo);
 }
+ZMQSocket::ZMQSocket(const ZMQSocket& rhs) :
+  handle(NULL), endpoint(), type(rhs.type), ctx() {}
+
 template<typename T>
 int ZMQSocket::set(int member, const T& data) {
   if (zmq_setsockopt(handle, member, &data, sizeof(data)) != 0) {
@@ -473,6 +479,10 @@ bool ZMQReply::send_stage2(const std::string msg_data) {
 //     zmq::socket_t::close();
 // }
 
+/////////////
+// ZMQComm //
+/////////////
+
 void ZMQComm::init() {
   maxMsgSize = 1048576;
   msgBufSize = 100;
@@ -516,7 +526,8 @@ bool ZMQComm::init_handle() {
   @param[in] comm comm_t * Comm structure initialized with init_comm_base.
   @returns int -1 if the comm could not be initialized.
  */
-ZMQComm::ZMQComm(const std::string name, Address *address, const DIRECTION direction) :
+ZMQComm::ZMQComm(const std::string name, utils::Address *address,
+		 const DIRECTION direction) :
   CommBase(address, direction, ZMQ_COMM), reply(direction) {
   this->name = name;
   init();
@@ -787,67 +798,214 @@ void zmq_install_error() {
   ygglog_throw_error("Compiler flag 'ZMQINSTALLED' not defined so ZMQ bindings are disabled.");
 };
 
+////////////////
+// ZMQContext //
+////////////////
+
+void* ZMQContext::ygg_s_process_ctx = NULL;
+
+ZMQContext::ZMQContext() : ctx(NULL) {
+  zmq_install_error();
+}
+ZMQContext::ZMQContext(const ZMQContext& rhs) : ctx(rhs.ctx) {
+  zmq_install_error();
+}
+
+void ZMQContext::destroy() {
+  zmq_install_error();
+}
+
+
+///////////////
+// ZMQSocket //
+///////////////
+
+int ZMQSocket::_last_port = 0;
+int ZMQSocket::_last_port_set = 0;
+
+ZMQSocket::ZMQSocket() :
+  handle(NULL), endpoint(), type(0), ctx() {
+  zmq_install_error();
+}
+ZMQSocket::ZMQSocket(int type0, utils::Address*,
+		     int, int, int) :
+  handle(NULL), endpoint(), type(type0), ctx() {
+  zmq_install_error();
+}
+ZMQSocket::ZMQSocket(int type0, std::string,
+		     int, int, int) :
+  handle(NULL), endpoint(), type(type0), ctx() {
+  zmq_install_error();
+}
+ZMQSocket::ZMQSocket(const ZMQSocket& rhs) :
+  handle(NULL), endpoint(), type(rhs.type), ctx() {
+  zmq_install_error();
+}
+
+template<typename T>
+int ZMQSocket::set(int, const T&) {
+  zmq_install_error();
+  return -1;
+}
+void ZMQSocket::init(int, std::string,
+		     int, int, int) {
+  zmq_install_error();
+}
+void ZMQSocket::init(int, utils::Address*,
+		     int, int, int) {
+  zmq_install_error();
+}
+
+int ZMQSocket::poll(int, int) {
+  zmq_install_error();
+  return -1;
+}
+
+int ZMQSocket::send(const std::string) {
+  zmq_install_error();
+  return -1;
+}
+
+int ZMQSocket::recv(std::string&, int, bool) {
+  zmq_install_error();
+  return -1;
+}
+
+ZMQSocket::~ZMQSocket() {
+  // No error as constructor should have raised one
+}
+
+//////////////
+// ZMQReply //
+//////////////
+
+ZMQReply::ZMQReply(DIRECTION dir) :
+  sockets(), n_msg(0), n_rep(0), direction(dir), last_idx(-1) {
+  zmq_install_error();
+}
+
+void ZMQReply::clear() {
+  zmq_install_error();
+}
+
+int ZMQReply::create(std::string&) {
+  zmq_install_error();
+  return -1;
+}
+
+int ZMQReply::find(std::string) {
+  zmq_install_error();
+  return -1;
+}
+
+int ZMQReply::set(std::string) {
+  zmq_install_error();
+  return -1;
+}
+bool ZMQReply::recv(std::string) {
+  zmq_install_error();
+  return false;
+}
+bool ZMQReply::recv_stage1(std::string) {
+  zmq_install_error();
+  return false;
+}
+bool ZMQReply::recv_stage2(std::string) {
+  zmq_install_error();
+  return false;
+}
+
+bool ZMQReply::send() {
+  zmq_install_error();
+  return false;
+}
+bool ZMQReply::send_stage1(std::string&) {
+  zmq_install_error();
+  return false;
+}
+bool ZMQReply::send_stage2(const std::string) {
+  zmq_install_error();
+  return false;
+}
+
+/////////////
+// ZMQComm //
+/////////////
+
 ZMQComm::~ZMQComm() {
   // No error as constructor should have raised one
 }
 
 int ZMQComm::comm_nmsg() const {
-    zmq_install_error();
-    return -1;
+  zmq_install_error();
+  return -1;
 }
 
 int ZMQComm::send_single(const char *, const size_t &) {
-    zmq_install_error();
-    return -1;
+  zmq_install_error();
+  return -1;
 }
 
 long ZMQComm::recv_single(char *&, const size_t &, bool) {
-    zmq_install_error();
-    return -1;
+  zmq_install_error();
+  return -1;
 }
 
 void ZMQComm::init() {
-    zmq_install_error();
+  zmq_install_error();
 }
 
 bool ZMQComm::init_handle() {
-    zmq_install_error();
-    return false;
+  zmq_install_error();
+  return false;
 }
 
 bool ZMQComm::do_reply_recv() {
-    zmq_install_error();
-    return false;
+  zmq_install_error();
+  return false;
 }
 
 bool ZMQComm::do_reply_send() {
-    zmq_install_error();
-    return false;
+  zmq_install_error();
+  return false;
 }
 
 bool ZMQComm::create_header_send(Header&, const char*, const size_t&) {
-    zmq_install_error();
-    return false;
+  zmq_install_error();
+  return false;
 }
 
 bool ZMQComm::create_header_recv(Header&, char*&, const size_t&,
 				 size_t, int, int) {
-    zmq_install_error();
-    return false;
+  zmq_install_error();
+  return false;
+}
+
+Comm_t* ZMQComm::create_worker_recv(Header&) {
+  zmq_install_error();
+  return NULL;
 }
 
 void ZMQComm::destroy() {
-    zmq_install_error();
+  zmq_install_error();
 }
 
-ZMQComm::ZMQComm(const std::string &, utils::Address *address, DIRECTION direction) :
-        CommBase(address, direction, ZMQ_COMM) {
-    zmq_install_error();
+ZMQComm::ZMQComm(const std::string, utils::Address *address,
+		 const DIRECTION direction) :
+  CommBase(address, direction, ZMQ_COMM), reply(direction) {
+  zmq_install_error();
 }
 
-ZMQComm::ZMQComm(const std::string &name, DIRECTION direction) :
-        CommBase(name, direction, ZMQ_COMM) {
-    zmq_install_error();
+ZMQComm::ZMQComm(const std::string name, const DIRECTION direction) :
+  CommBase(name, direction, ZMQ_COMM), reply(direction) {
+  zmq_install_error();
 }
+
+#ifdef YGG_TEST
+bool ZMQComm::afterSendRecv(Comm_t*, Comm_t*) {
+  zmq_install_error();
+  return false;
+}
+#endif
 
 #endif /*ZMQINSTALLED*/

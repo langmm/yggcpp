@@ -74,17 +74,15 @@ jobs:
       - name: Configure
         if: matrix.os == 'windows-latest'
         run: |
-          mkdir devel
           mkdir build
           cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Debug -DPython3_ROOT_DIR=$env:pythonLocation -DCMAKE_INSTALL_PREFIX=../devel -DBUILD_PYTHON_LIBRARY=OFF
+          cmake .. -DCMAKE_BUILD_TYPE=Debug -DPython3_ROOT_DIR=$env:pythonLocation -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/_install -DBUILD_PYTHON_LIBRARY=OFF
       - name: Configure
         if: matrix.os != 'windows-latest'
         run: |
-          mkdir devel
           mkdir build
           cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Debug -DPython3_ROOT_DIR=${pythonLocation} -DCMAKE_INSTALL_PREFIX=../devel -DBUILD_PYTHON_LIBRARY=OFF
+          cmake .. -DCMAKE_BUILD_TYPE=Debug -DPython3_ROOT_DIR=${pythonLocation} -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/_install -DBUILD_PYTHON_LIBRARY=OFF "-DCMAKE_TOOLCHAIN_FILE=${Env:VCPKG_INSTALLATION_ROOT}\scripts\buildsystems\vcpkg.cmake"
       - name: Build
         run: |
           cd build

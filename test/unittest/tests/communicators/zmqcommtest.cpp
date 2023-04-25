@@ -38,6 +38,8 @@ public:
     }
 };
 
+#ifdef ZMQINSTALLED
+
 COMM_SERI_TEST(ZMQComm)
 
 // TEST(yggSockT, yggSockTest) {
@@ -140,3 +142,13 @@ TEST(ZMQComm, recv) {
     dlclose(handle);
 #endif // ELF_AVAILABLE
 }*/
+
+#else // ZMQINSTALLED
+
+TEST(ZMQComm, constructor) {
+    EXPECT_THROW(ZMQComm_tester zmq, std::exception);
+    std::string name = "";
+    EXPECT_THROW(ZMQComm_tester zmq2(name, nullptr, SEND), std::exception);
+}
+
+#endif // ZMQINSTALLED
