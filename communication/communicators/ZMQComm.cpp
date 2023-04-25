@@ -203,6 +203,7 @@ void ZMQSocket::init(int type0, utils::Address* address,
 	    except_msg = "ZMQSocket::init: Error finding port in endpoint: " + endpoint;
 	  } else {
 	    _last_port = stoi(endpoint.substr(idx_port + 1));
+	    ygglog_debug << "ZMQSocket::init: last_port = " << _last_port << std::endl;
 	  }
 	}
       }
@@ -1010,13 +1011,14 @@ void ZMQComm::destroy() {
 }
 
 ZMQComm::ZMQComm(const std::string, utils::Address *address,
-		 const DIRECTION direction) :
-  CommBase(address, direction, ZMQ_COMM), reply(direction) {
+		 const DIRECTION direction, int flgs) :
+  CommBase(address, direction, ZMQ_COMM, flgs), reply(direction) {
   zmq_install_error();
 }
 
-ZMQComm::ZMQComm(const std::string name, const DIRECTION direction) :
-  CommBase(name, direction, ZMQ_COMM), reply(direction) {
+ZMQComm::ZMQComm(const std::string name, const DIRECTION direction,
+		 int flgs) :
+  CommBase(name, direction, ZMQ_COMM, flgs), reply(direction) {
   zmq_install_error();
 }
 

@@ -1,17 +1,4 @@
 #ifdef ELF_AVAILABLE
-#include <cstdlib>
-#include <cstring>
-#include <dlfcn.h>
-#include <elf.h>
-#include <fcntl.h>
-#include <sys/mman.h>
-#include <unistd.h>
-#include <cerrno>
-#include <vector>
-#include <atomic>
-#include <boost/algorithm/string.hpp>
-#include <boost/regex.hpp>
-#include <regex>
 #include "elf_hook.hpp"
 //rename standart types for convenience
 #if defined __x86_64 || defined __aarch64__

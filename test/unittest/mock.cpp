@@ -8,7 +8,12 @@ bool sublib_read = false;
 char sublib_contents[256] = "";
 void init_sublib_contents() {
   if (!sublib_read) {
-    FILE *fp = fopen(SUBLIBFILE_STR(SUBLIBFILE), "r");
+    std::string fname = SUBLIBFILE_STR(SUBLIBFILE);
+    std::cerr << "SUBLIB = " << fname << std::endl;
+    FILE *fp = fopen(fname.c_str(), "r");
+    if (fp == NULL) {
+      throw std::exception("Failed to open file");
+    }
     fgets(sublib_contents, 256, fp);
     fclose(fp);
     sublib_read = true;

@@ -6,7 +6,7 @@
 #include "zmq.hpp"
 #endif // ZMQCPPINSTALLED
 #ifdef ZMQINSTALLED
-#include "zmq.h"
+#include <zmq.h>
 #endif // ZMQINSTALLED
 #ifdef MPIINSTALLED
 #include <mpi.h>
