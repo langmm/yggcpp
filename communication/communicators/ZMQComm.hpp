@@ -15,7 +15,6 @@ class ZMQSocket_tester;
 #endif
 namespace communicator {
 //class ClientComm;
-extern unsigned _zmq_rand_seeded;
 /* extern double _wait_send_t; */
 #if defined(_MSC_VER) && defined(_OPENMP)
 extern __declspec(thread) char _reply_msg[100];
