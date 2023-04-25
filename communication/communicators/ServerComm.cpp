@@ -7,16 +7,21 @@
 using namespace communication::communicator;
 using namespace communication::utils;
 
-ServerComm::ServerComm(const std::string &name, Address *address) :
-  COMM_BASE(name, address, RECV), requests(SEND) {
+ServerComm::ServerComm(const std::string &name, Address *address,
+		       int flgs) :
+  COMM_BASE(name, address, RECV,
+	    flgs | COMM_FLAG_SERVER | COMM_ALWAYS_SEND_HEADER),
+  requests(SEND) {
   // Called to create temp comm for send/recv
   if (name.empty() && address != nullptr && address->valid())
     return;
   init();
 }
 
-ServerComm::ServerComm(const std::string name) :
-  COMM_BASE(name, RECV), requests(SEND) {
+ServerComm::ServerComm(const std::string name, int flgs) :
+  COMM_BASE(name, RECV,
+	    flgs | COMM_FLAG_SERVER | COMM_ALWAYS_SEND_HEADER),
+  requests(SEND) {
   init();
 }
 
@@ -24,8 +29,6 @@ void ServerComm::init() {
   if (this->name.empty()) {
     this->name = "server_request." + this->address->address();
   }
-  flags |= COMM_FLAG_SERVER;
-  flags |= COMM_ALWAYS_SEND_HEADER;
 }
 int ServerComm::update_datatype(const rapidjson::Value& new_schema,
 				const DIRECTION dir) {

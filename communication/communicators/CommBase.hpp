@@ -273,7 +273,7 @@ protected:
     //Comm_t(const Comm_t* comm, COMM_TYPE type);
     Comm_t(utils::Address *address, DIRECTION direction, const COMM_TYPE &t, int flgs = 0);
 
-    explicit Comm_t(const std::string &name, DIRECTION direction = NONE, const COMM_TYPE &t = NULL_COMM);
+    explicit Comm_t(const std::string &name, DIRECTION direction = NONE, const COMM_TYPE &t = NULL_COMM, int flgs = 0);
 
     bool check_size(const size_t &len) const;
 
@@ -327,10 +327,9 @@ protected:
         return -1;
     }
 
-    CommBase(utils::Address *address, DIRECTION direction, const COMM_TYPE &t);
+    CommBase(utils::Address *address, DIRECTION direction, const COMM_TYPE &t, int flags = 0);
 
-    //CommBase(Comm_t* comm, const COMM_TYPE &type);
-    explicit CommBase(const std::string &name, DIRECTION direction = NONE, const COMM_TYPE &t = NULL_COMM);
+    explicit CommBase(const std::string &name, DIRECTION direction = NONE, const COMM_TYPE &t = NULL_COMM, int flags = 0);
 
     void init() override {
         utils::ygglog_throw_error("init of base class called, must be overridden");
@@ -344,12 +343,12 @@ protected:
 };
 
 template<typename H>
-CommBase<H>::CommBase(utils::Address *address, DIRECTION direction, const COMM_TYPE &t) :
-  Comm_t(address, direction, t, 0), handle(nullptr) {}
+CommBase<H>::CommBase(utils::Address *address, DIRECTION direction, const COMM_TYPE &t, int flags) :
+  Comm_t(address, direction, t, flags), handle(nullptr) {}
 
 template<typename H>
-CommBase<H>::CommBase(const std::string &name, DIRECTION direction, const COMM_TYPE &t) :
-  Comm_t(name, direction, t), handle(nullptr) {}
+CommBase<H>::CommBase(const std::string &name, DIRECTION direction, const COMM_TYPE &t, int flags) :
+  Comm_t(name, direction, t, flags), handle(nullptr) {}
 
 template<typename H>
 void CommBase<H>::reset() {

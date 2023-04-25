@@ -61,14 +61,19 @@ namespace communicator {
       }
       return -1;
     }
-    int addRequestClient(Header& header) {
-      ygglog_debug << "addRequestClient: begin" << std::endl;
+    int initClientResponse() {
       if (comms.size() == 0) {
 	if (addComm() < 0) {
-	  ygglog_error << "addRequestClient: Error creating response comm." << std::endl;
+	  ygglog_error << "initClientResponse: Error creating response comm." << std::endl;
 	  return -1;
 	}
       }
+      return 0;
+    }
+    int addRequestClient(Header& header) {
+      ygglog_debug << "addRequestClient: begin" << std::endl;
+      if (initClientResponse() < 0)
+	return -1;
       std::string request_id;
       if (!header.SetMetaID("request_id", request_id)) {
 	ygglog_error << "addRequestClient: Error adding request_id" << std::endl;

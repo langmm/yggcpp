@@ -120,11 +120,19 @@ template<class OutputIt>
         return RETVAL;
     return 0;
   }
+#ifdef ZMQ_HAVE_POLLER
   int zmq_poller_wait_all (void *, zmq_poller_event_t *, int n_events, long) {
     if (RETVAL < 0)
       return RETVAL;
     return n_events;
   }
+#else // ZMQ_HAVE_POLLER
+  int zmq_poll (zmq_pollitem_t *, int nitems, long) {
+    if (RETVAL < 0)
+      return RETVAL;
+    return nitems;
+  }
+#endif // ZMQ_HAVE_POLLER
   int zmq_errno (void) {
     return RETVAL;
   }

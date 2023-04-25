@@ -8,8 +8,10 @@ namespace communicator {
 
 class ClientComm : public COMM_BASE {
 public:
-    explicit ClientComm(const std::string &name = "", utils::Address *address = nullptr);
-    explicit ClientComm(const std::string name);
+    explicit ClientComm(const std::string &name = "",
+			utils::Address *address = nullptr,
+			int flgs = 0);
+    explicit ClientComm(const std::string name, int flgs = 0);
 
     using Comm_t::send;
     using Comm_t::recv;

@@ -21,8 +21,8 @@ Comm_t::Comm_t(Address *address, DIRECTION dirn, const COMM_TYPE &t, int flgs) :
     Comm_t::register_comm(this);
 }
 
-Comm_t::Comm_t(const std::string &name, DIRECTION direction, const COMM_TYPE &t) :
-        Comm_t(new Address(), direction, t) {
+Comm_t::Comm_t(const std::string &name, DIRECTION direction, const COMM_TYPE &t, int flgs) :
+  Comm_t(new Address(), direction, t, flgs) {
     std::string full_name;
     if (!name.empty()) {
         full_name = name;

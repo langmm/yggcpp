@@ -8,16 +8,21 @@ using namespace communication::utils;
 
 unsigned ClientComm::_client_rand_seeded = 0;
 
-ClientComm::ClientComm(const std::string &name, Address *address) :
-  COMM_BASE(name, address, SEND), requests(RECV) {
+ClientComm::ClientComm(const std::string &name, Address *address,
+		       int flgs) :
+  COMM_BASE(name, address, SEND,
+	    flgs | COMM_FLAG_CLIENT | COMM_ALWAYS_SEND_HEADER),
+  requests(RECV) {
   // Called to create temp comm for send/recv
   if (name.empty() && address != nullptr && address->valid())
       return;
   init();
 }
 
-ClientComm::ClientComm(const std::string name) :
-  COMM_BASE(name, SEND), requests(RECV) {
+ClientComm::ClientComm(const std::string name, int flgs) :
+  COMM_BASE(name, SEND,
+	    flgs | COMM_FLAG_CLIENT | COMM_ALWAYS_SEND_HEADER),
+  requests(RECV) {
   init();
 }
 
@@ -36,9 +41,15 @@ void ClientComm::init() {
     if (name.empty()) {
         this->name = "client_request." + this->address->address();
     }
-    flags |= COMM_FLAG_CLIENT;
-    flags |= COMM_ALWAYS_SEND_HEADER;
 }
+
+// int ClientComm::wait_for_server() {
+//   if (initClientResponse() < 0)
+//     return -1;
+//   while (!server_listening) {
+    
+//   }
+// }
 
 int ClientComm::update_datatype(const rapidjson::Value& new_schema,
 				const DIRECTION dir) {

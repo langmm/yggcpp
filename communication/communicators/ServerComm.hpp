@@ -12,8 +12,10 @@ namespace communicator {
 // @brief Structure for storing requests
 class ServerComm : public COMM_BASE {
 public:
-    explicit ServerComm(const std::string &name = "", utils::Address *address = nullptr);
-    explicit ServerComm(const std::string name);
+    explicit ServerComm(const std::string &name = "",
+			utils::Address *address = nullptr,
+			int flgs = 0);
+    explicit ServerComm(const std::string name, int flgs = 0);
 
     using Comm_t::send;
     using Comm_t::recv;

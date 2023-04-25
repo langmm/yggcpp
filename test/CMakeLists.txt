@@ -31,9 +31,14 @@ if(GTESTSRC_FOUND)
     set(TEST_LIBRARIES gtest gtest_main)
 endif()
 
-set(TEST_LIBRARIES ${TEST_LIBRARIES} YggInterface ${DEPS_LIBRARIES} dl)
+set(TEST_LIBRARIES ${TEST_LIBRARIES} YggInterface ${DEPS_LIB_NAMES} ${DEPS_LIBRARIES} dl)
 set(TEST_INCLUDE_DIRS ${DEPS_INCLUDE_DIRS})
-include_directories(SYSTEM ${TEST_INCLUDE_DIRS})
+# include_directories(SYSTEM ${TEST_INCLUDE_DIRS})
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+   add_definitions(-DELF_AVAILABLE)
+   add_definitions("-DSUBLIBFILE=${SUBLIBFILE}")
+endif()
 
 if(GTESTSRC_FOUND)
     option(YGG_ENABLE_COVERAGE "Enable coverage reporting" OFF)
@@ -61,7 +66,3 @@ if(GTESTSRC_FOUND)
 
 endif()
 
-if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-   add_definitions(-DELF_AVAILABLE)
-   add_definitions("-DSUBLIBFILE=${SUBLIBFILE}")
-endif()

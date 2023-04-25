@@ -216,6 +216,7 @@ void ZMQSocket::init(int type0, utils::Address* address,
 
 int ZMQSocket::poll(int method, int tout) {
   int out = 0;
+#ifdef ZMQ_HAVE_POLLER
   void* poller = zmq_poller_new();
   zmq_poller_event_t events [1];
   if (zmq_poller_add(poller, handle, NULL, method) != 0) {
@@ -234,6 +235,16 @@ int ZMQSocket::poll(int method, int tout) {
     }
   }
   zmq_poller_destroy (&poller);
+#else // ZMQ_HAVE_POLLER
+  zmq_pollitem_t items[1];
+  items[0].socket = handle;
+  items[0].events = method;
+  out = zmq_poll(items, 1, tout);
+  if (out < 0) {
+    ygglog_error << "ZMQSocket: Error in poller" << std::endl;
+    return -1;
+  }
+#endif // ZMQ_HAVE_POLLER
   return out;
 }
 
@@ -533,13 +544,14 @@ bool ZMQComm::init_handle() {
   @returns int -1 if the comm could not be initialized.
  */
 ZMQComm::ZMQComm(const std::string name, utils::Address *address,
-		 const DIRECTION direction) :
-  CommBase(address, direction, ZMQ_COMM), reply(direction) {
+		 const DIRECTION direction, int flgs) :
+  CommBase(address, direction, ZMQ_COMM, flgs), reply(direction) {
   this->name = name;
   init();
 }
-ZMQComm::ZMQComm(const std::string name, const DIRECTION direction) :
-  CommBase(name, direction, ZMQ_COMM), reply(direction) {
+ZMQComm::ZMQComm(const std::string name, const DIRECTION direction,
+		 int flgs) :
+  CommBase(name, direction, ZMQ_COMM, flgs), reply(direction) {
   init();
 }
 
@@ -641,7 +653,8 @@ bool ZMQComm::do_reply_send() {
   @returns int -1 if message could not be received. Length of the received
   message if message was received.
  */
-long ZMQComm::recv_single(char*& data, const size_t &len, bool allow_realloc) {
+long ZMQComm::recv_single(char*& data, const size_t &len,
+			  bool allow_realloc) {
     long ret = -1;
     ygglog_debug << "ZMQComm(" << name << ")::recv_single " << std::endl;
     if (handle == nullptr) {

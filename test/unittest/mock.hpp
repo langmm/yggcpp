@@ -112,7 +112,11 @@ template<class OutputIt>
 #ifdef ZMQINSTALLED
   int zmq_sendmsg (void *, zmq_msg_t *msg, int);
   int zmq_recvmsg (void *, zmq_msg_t *msg, int);
+#ifdef ZMQ_HAVE_POLLER  
   int zmq_poller_wait_all (void *, zmq_poller_event_t *, int, long);
+#else // ZMQ_HAVE_POLLER
+  int zmq_poll (zmq_pollitem_t *, int nitems, long);
+#endif // ZMQ_HAVE_POLLER
   int zmq_errno (void);
   // Only testing for errors
   int zmq_ctx_term (void *);

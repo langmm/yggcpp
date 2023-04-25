@@ -286,13 +286,15 @@ void IPCComm::init() {
     }
 }
 
-IPCComm::IPCComm(const std::string &name, Address *address, DIRECTION direction) :
-        CommBase(address, direction, IPC_COMM) {
+IPCComm::IPCComm(const std::string &name, Address *address,
+		 DIRECTION direction, int flgs) :
+  CommBase(address, direction, IPC_COMM, flgs) {
     this->name = name;
     init();
 }
-IPCComm::IPCComm(const std::string &name, DIRECTION direction) :
-        CommBase(name, direction, IPC_COMM) {
+IPCComm::IPCComm(const std::string &name, DIRECTION direction,
+		 int flgs) :
+  CommBase(name, direction, IPC_COMM, flgs) {
     init();
 }
 

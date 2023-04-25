@@ -56,13 +56,15 @@ int mpi_registry_t::Recv(void *buf, int count, MPI_Datatype datatype, int source
   return out;
 }
 
-MPIComm::MPIComm(const std::string &name, utils::Address *address, const DIRECTION direction) :
-        CommBase(address, direction, MPI_COMM) {
+MPIComm::MPIComm(const std::string &name, utils::Address *address,
+		 const DIRECTION direction, int flgs) :
+  CommBase(address, direction, MPI_COMM, flgs) {
     this->name = name;
     init();
 }
-MPIComm::MPIComm(const std::string &name, const DIRECTION direction) :
-        CommBase(name, direction, MPI_COMM) {
+MPIComm::MPIComm(const std::string &name, const DIRECTION direction,
+		 int flgs) :
+  CommBase(name, direction, MPI_COMM, flgs) {
     init();
 }
 
