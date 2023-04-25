@@ -15,6 +15,11 @@ std::streambuf* prevbuf = std::cout.rdbuf(B.rdbuf());
 
 #define END_CAPTURE std::cout.rdbuf(prevbuf);
 
+#ifndef EXPECT_LONG_DOUBLE_EQ
+#define EXPECT_LONG_DOUBLE_EQ(lhs, rhs)		\
+  EXPECT_DOUBLE_EQ(static_cast<double>(lhs), static_cast<double>(rhs))
+#endif
+
 using namespace communication::utils;
 namespace {
 #define COMPLEX_UNIT_TEST(type, typenm, comparator, real, img) { \
@@ -32,7 +37,7 @@ EXPECT_ ## comparator ## _EQ(cmplx.im, ncmplx.im);               \
 TEST(Value, Complex) {
     COMPLEX_UNIT_TEST(float, float, FLOAT, 1.2f, 6.4f)
     COMPLEX_UNIT_TEST(double, double, DOUBLE, 1.64452778, 9.28667775882)
-    COMPLEX_UNIT_TEST(long_double, long double, DOUBLE, 162.2235992765, -84.22876639)
+    COMPLEX_UNIT_TEST(long_double, long double, LONG_DOUBLE, 162.2235992765, -84.22876639)
 }
 
 TEST(ADDRESS, Init) {

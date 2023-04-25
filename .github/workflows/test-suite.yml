@@ -137,13 +137,13 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Debug -DYGG_ENABLE_COVERAGE=ON -DCMAKE_INSTALL_PREFIX=../devel -DBUILD_PYTHON_LIBRARY=OFF
+          cmake .. -DCMAKE_BUILD_TYPE=Debug -DYGG_ENABLE_COVERAGE=ON -DCMAKE_INSTALL_PREFIX=../devel "-DCMAKE_PREFIX_PATH=${Env:CONDA_PREFIX}" -DBUILD_PYTHON_LIBRARY=OFF
       - name: Configure
         if: matrix.os != 'windows-latest'
         run: |
           mkdir build
           cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Debug -DYGG_ENABLE_COVERAGE=ON -DCMAKE_INSTALL_PREFIX=../devel -DBUILD_PYTHON_LIBRARY=OFF
+          cmake .. -DCMAKE_BUILD_TYPE=Debug -DYGG_ENABLE_COVERAGE=ON -DCMAKE_INSTALL_PREFIX=../devel -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DBUILD_PYTHON_LIBRARY=OFF
       - name: Build
         run: |
           cd build

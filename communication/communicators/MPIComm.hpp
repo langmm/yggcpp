@@ -14,7 +14,8 @@ namespace communicator {
 
 class mpi_registry_t {
 public:
-    explicit mpi_registry_t(MPI_Comm comm0) : comm(comm0), tag(0) {}
+    explicit mpi_registry_t(MPI_Comm comm0) :
+      comm(comm0), procs(), tag(0) {}
     virtual ~mpi_registry_t();
 
     MPI_Comm comm;

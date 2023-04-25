@@ -43,6 +43,8 @@ file(GLOB files "${CMAKE_CURRENT_SOURCE_DIR}/unittest/tests/communicators/*.cpp"
 add_executable(unittest ${CMAKE_CURRENT_SOURCE_DIR}/unittest/unittest.cpp ${CMAKE_CURRENT_SOURCE_DIR}/unittest/elf_hook.cpp ${CMAKE_CURRENT_SOURCE_DIR}/unittest/mock.cpp ${files})
 target_link_libraries(unittest ${TEST_LIBRARIES})
 target_include_directories(unittest PRIVATE ${TEST_INCLUDE_DIRS})
+message(STATUS "TEST_LIBRARIES = ${TEST_LIBRARIES}")
+message(STATUS "TEST_INCLUDE_DIRS = ${TEST_INCLUDE_DIRS}")
 # target_include_directories(unittest PRIVATE ${Boost_INCLUDE_DIRS})
 # target_include_directories(unittest PRIVATE ${RAPIDJSON_INCLUDE_DIRS})
 # if(CONDA_PREFIX)

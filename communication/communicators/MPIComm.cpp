@@ -233,11 +233,11 @@ void mpi_install_error() {
 
 
 MPIComm::MPIComm(const std::string &, utils::Address *address, const DIRECTION direction) :
-        CommBase(address, direction, MPI_COMM) {
+  CommBase(address, direction, MPI_COMM), addresses() {
   mpi_install_error();
 }
 MPIComm::MPIComm(const std::string &name, const DIRECTION direction) :
-        CommBase(name, direction, MPI_COMM) {
+  CommBase(name, direction, MPI_COMM), addresses() {
   mpi_install_error();
 }
 

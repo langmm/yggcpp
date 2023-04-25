@@ -16,15 +16,6 @@ else()
     FetchContent_MakeAvailable(cmocka_ygg)
 endif()
 
-include_directories(SYSTEM ${RAPIDJSON_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
-
-if (NOT YGGDRASIL_DISABLE_PYTHON_C_API)
-    include_directories(SYSTEM ${Python3_INCLUDE_DIRS} ${Python3_NumPy_INCLUDE_DIRS})
-endif()
-if (ZeroMQ_FOUND)
-    include_directories(SYSTEM ${ZeroMQ_INCLUDE_DIR})
-endif()
-
 if(GTESTSRC_FOUND)
 
     if (WIN32 AND (NOT CYGWIN) AND (NOT MINGW))
@@ -43,7 +34,7 @@ endif()
 set(TEST_LIBRARIES ${TEST_LIBRARIES} YggInterface ${Boost_LOG_LIBRARY} ${Boost_REGEX_LIBRARY} dl)
 set(TEST_INCLUDE_DIRS ${Boost_INCLUDE_DIRS} ${RAPIDJSON_INCLUDE_DIRS})
 if (CONDA_PREFIX)
-    set(TEST_INCLUDE_DIRS "${TEST_INCLUDE_DIRS} ${CONDA_PREFIX}/include")
+    set(TEST_INCLUDE_DIRS ${TEST_INCLUDE_DIRS} ${CONDA_PREFIX}/include)
 endif()
 if (NOT YGGDRASIL_DISABLE_PYTHON_C_API)
     set(TEST_LIBRARIES ${TEST_LIBRARIES} ${Python3_LIBRARIES} Python3::NumPy ${Python3_NumPy_LIBRARIES})
@@ -56,6 +47,8 @@ endif()
 if (OpenMP_CXX_FOUND)
     set(TEST_LIBRARIES ${TEST_LIBRARIES} OpenMP::OpenMP_CXX)
 endif()
+
+include_directories(SYSTEM ${TEST_LIBRARIES})
 
 if(GTESTSRC_FOUND)
     option(YGG_ENABLE_COVERAGE "Enable coverage reporting" OFF)

@@ -35,7 +35,7 @@ public:
         MPIPROC = 0;
     }
     int Probe(int, MPI_Status *status) const override {
-        status->_cancelled = MPICANCEL;
+        MPI_Status_set_cancelled(status, MPICANCEL);
 	status->MPI_ERROR = MPISTATUS;
         if (MPIPROC > 0)
 	    status->MPI_SOURCE = MPIPROC;
@@ -47,7 +47,7 @@ public:
     }
 
     int Recv(void* buf, int, MPI_Datatype dt, int, MPI_Status* status) const override {
-        status->_cancelled = MPICANCEL;
+        MPI_Status_set_cancelled(status, MPICANCEL);
         status->MPI_ERROR = MPISTATUS;
         char* cmsg = const_cast<char*>(msg.c_str());
         int sz = static_cast<int>(msg.size());

@@ -393,6 +393,7 @@ endif()
 find_package(Boost REQUIRED COMPONENTS log regex)
 include_directories(${Boost_INCLUDE_DIRS})
 add_definitions(-DBOOST_LOG_DYN_LINK)
+message(STATUS "Boost found Boost_INCLUDE_DIRS = ${Boost_INCLUDE_DIRS}")
 
 target_link_libraries(YggInterface ${Boost_LOG_LIBRARY} ${Boost_REGEX_LIBRARY})
 if (Boost_DATE_TIME_FOUND)
@@ -424,15 +425,15 @@ if(ENABLE_ZMQ)
         ## use pkg-config to get hints for 0mq locations
         pkg_check_modules(PC_ZeroMQ QUIET zmq)
 
-        if (CONDA_PREFIX)
-            if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-                set(PC_ZeroMQ_INCLUDE_DIRS "${CONDA_PREFIX}/Library/include ${PC_ZeroMQ_INCLUDE_DIRS}")
-                set(PC_ZeroMQ_LIBRARY_DIRS "${CONDA_PREFIX}/Library/lib ${CONDA_PREFIX}/Library/bin ${PC_ZeroMQ_LIBRARY_DIRS}")
-            else()
-                set(PC_ZeroMQ_INCLUDE_DIRS "${CONDA_PREFIX}/include ${PC_ZeroMQ_INCLUDE_DIRS}")
-                set(PC_ZeroMQ_LIBRARY_DIRS "${CONDA_PREFIX}/lib ${PC_ZeroMQ_LIBRARY_DIRS}")
-            endif()
-        endif()
+        # if (CONDA_PREFIX)
+        #     if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+        #         set(PC_ZeroMQ_INCLUDE_DIRS "${CONDA_PREFIX}/Library/include ${PC_ZeroMQ_INCLUDE_DIRS}")
+        #         set(PC_ZeroMQ_LIBRARY_DIRS "${CONDA_PREFIX}/Library/lib ${CONDA_PREFIX}/Library/bin ${PC_ZeroMQ_LIBRARY_DIRS}")
+        #     else()
+        #         set(PC_ZeroMQ_INCLUDE_DIRS "${CONDA_PREFIX}/include ${PC_ZeroMQ_INCLUDE_DIRS}")
+        #         set(PC_ZeroMQ_LIBRARY_DIRS "${CONDA_PREFIX}/lib ${PC_ZeroMQ_LIBRARY_DIRS}")
+        #     endif()
+        # endif()
 
         ## use the hint from above to find where 'zmq.h' is located
         find_path(ZeroMQ_INCLUDE_DIR
@@ -499,8 +500,13 @@ endif()
 ###################
 
 if(CONDA_PREFIX)
-    add_link_options("-L${CONDA_PREFIX}/lib")
-    include_directories(${CONDA_PREFIX}/include)
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+        add_link_options("-L${CONDA_PREFIX}/Library/lib")
+        include_directories(${CONDA_PREFIX}/Library/include)
+    else()
+        add_link_options("-L${CONDA_PREFIX}/lib")
+        include_directories(${CONDA_PREFIX}/include)
+    endif()
 endif(CONDA_PREFIX)
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
