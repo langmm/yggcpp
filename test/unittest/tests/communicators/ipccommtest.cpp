@@ -84,7 +84,6 @@ TEST(IPCComm, commnmsg) {
 
 #ifdef ELF_AVAILABLE
     ELF_BEGIN;
-    void *original_func = nullptr;
     // Replace msgctl to test failure in comm_nmsg
     ELF_BEGIN_F_RET(msgctl, -2);
     res = ipc.comm_nmsg();
@@ -148,7 +147,6 @@ TEST(IPCComm, recv) {
     ELF_END_F(msgrcv);
     free(data);
     ELF_END;
-    int i = 7;
 #endif // ELF_AVAILABLE
 }
 

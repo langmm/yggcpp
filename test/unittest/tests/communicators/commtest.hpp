@@ -38,8 +38,9 @@
 
 #define ELF_BEGIN					\
   void *handle = dlopen(SUBLIB, RTLD_LAZY);		\
-  if (!handle)						\
-    EXPECT_TRUE(false)
+  if (!handle) {					\
+    EXPECT_TRUE(false);					\
+  }
 #define ELF_END					\
   dlclose(handle)
   
@@ -63,7 +64,7 @@
   ELF_BEGIN_F_RET(msgrcv, ret)
 #define ELF_RECV_REVERT				\
   ELF_END_F(msgrcv)
-#else if COMM_BASE == ZMQ_COMM
+#elif COMM_BASE == ZMQ_COMM
 #define ELF_SEND(ret)				\
   ELF_BEGIN_F_RET(zmq_sendmsg, ret)
 #define ELF_SEND_REVERT				\
