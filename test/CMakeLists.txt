@@ -48,7 +48,7 @@ if (OpenMP_CXX_FOUND)
     set(TEST_LIBRARIES ${TEST_LIBRARIES} OpenMP::OpenMP_CXX)
 endif()
 
-include_directories(SYSTEM ${TEST_LIBRARIES})
+include_directories(SYSTEM ${TEST_INCLUDE_DIRS})
 
 if(GTESTSRC_FOUND)
     option(YGG_ENABLE_COVERAGE "Enable coverage reporting" OFF)
