@@ -36,7 +36,7 @@ set(TEST_INCLUDE_DIRS ${DEPS_INCLUDE_DIRS})
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
    add_definitions(-DELF_AVAILABLE)
-   add_definitions(-DSUBLIBFILE="\\\"${SUBLIBFILE}"\\\")
+   add_definitions(-DSUBLIBFILE="\\\"${SUBLIBFILE}\\\"")
 endif()
 
 if(GTESTSRC_FOUND)
