@@ -12,7 +12,8 @@ void init_sublib_contents() {
     std::cerr << "SUBLIB = " << fname << std::endl;
     FILE *fp = fopen(fname.c_str(), "r");
     if (fp == NULL) {
-      throw std::exception("Failed to open file");
+      std::cerr << "Failed to open file " << fname << std::endl;
+      throw std::exception();
     }
     fgets(sublib_contents, 256, fp);
     fclose(fp);
