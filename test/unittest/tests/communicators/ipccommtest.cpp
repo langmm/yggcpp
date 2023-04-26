@@ -36,11 +36,15 @@ TEST(IPCComm, constructor) {
     EXPECT_THROW(IPCComm_tester ipc5(name, adr3, SEND), std::runtime_error);
 
 #ifdef ELF_AVAILABLE
-    ELF_BEGIN;
-    ELF_BEGIN_F(msgget);
     name = "";
+    ELF_BEGIN;
+    std::cerr << "HERE0" << std::endl;
+    ELF_BEGIN_F(msgget);
+    std::cerr << "HERE1" << std::endl;
     EXPECT_THROW(IPCComm_tester ipc5(name, nullptr, SEND), std::runtime_error);
+    std::cerr << "HERE2" << std::endl;
     ELF_END_F(msgget);
+    std::cerr << "HERE3" << std::endl;
     ELF_END;
 #endif // ELF_AVAILABLE
 }

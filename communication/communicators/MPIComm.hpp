@@ -58,6 +58,8 @@ protected:
 		    const Header& header) override;
 
     long recv_single(char*& data, const size_t &len, bool allow_realloc) override;
+    Comm_t* create_worker(utils::Address* address,
+			  const DIRECTION, int flgs) override;
 #ifndef YGG_TEST
 private:
 #endif

@@ -267,7 +267,7 @@ long IPCComm::recv_single(char*& data, const size_t& len, bool allow_realloc) {
 
 void IPCComm::init() {
     maxMsgSize = 2048;
-    if (address == nullptr)
+    if (address == nullptr || address->address().empty())
         if (!new_address())
             throw std::runtime_error("No valid address generated");
     if (name.empty()) {
@@ -284,6 +284,7 @@ void IPCComm::init() {
       fid[0] = msgget(qkey, 0600);
       handle = fid;
     }
+    ygglog_debug << "IPCComm(" << name << ")::init: address = " << this->address->address() << std::endl;
 }
 
 IPCComm::IPCComm(const std::string &name, Address *address,
@@ -296,6 +297,11 @@ IPCComm::IPCComm(const std::string &name, DIRECTION direction,
 		 int flgs) :
   CommBase(name, direction, IPC_COMM, flgs) {
     init();
+}
+
+Comm_t* IPCComm::create_worker(utils::Address* address,
+			       const DIRECTION dir, int flgs) {
+  return new IPCComm("", address, dir, flgs);
 }
 
 #else /*IPCINSTALLED*/
@@ -362,5 +368,9 @@ IPCComm::IPCComm(const std::string &name, DIRECTION direction,
     ipc_install_error();
 }
 
+Comm_t* IPCComm::create_worker(utils::Address*, const DIRECTION, int) {
+  ipc_install_error();
+  return NULL;
+}
 
 #endif /*IPCINSTALLED*/

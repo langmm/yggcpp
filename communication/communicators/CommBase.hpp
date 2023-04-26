@@ -264,8 +264,8 @@ protected:
     virtual bool create_header_recv(Header& header, char*& data, const size_t &len,
 				    size_t msg_len, int allow_realloc,
 				    int temp);
-    virtual Comm_t* create_worker(utils::Address* address, const DIRECTION);
-    // Comm_t* create_worker_wrap(utils::Address* address, const DIRECTION);
+    virtual Comm_t* create_worker(utils::Address* address,
+				  const DIRECTION, int flgs) = 0;
     virtual Comm_t* create_worker_send(Header& head);
     virtual Comm_t* create_worker_recv(Header& head);
     virtual int send_single(const char *data, const size_t &len, const Header& header) = 0;
@@ -334,6 +334,11 @@ protected:
 
     void init() override {
         utils::ygglog_throw_error("init of base class called, must be overridden");
+    }
+    Comm_t* create_worker(utils::Address*, const DIRECTION,
+			  int) override {
+      utils::ygglog_throw_error("create_worker of base class called, must be overridden");
+      return NULL;
     }
 
     void reset() override;

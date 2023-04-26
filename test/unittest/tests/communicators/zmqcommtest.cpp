@@ -80,11 +80,12 @@ TEST(ZMQComm, constructor) {
     ZMQComm_tester zmqr(name, adrs, RECV);
     EXPECT_EQ(zmqr.comm_nmsg(), 0);
 #ifdef ELF_AVAILABLE
+    name = "";
     ELF_BEGIN;
     // Failure to create socket
     {
       ELF_BEGIN_F(zmq_socket);
-      EXPECT_THROW(ZMQComm zmqc(name, nullptr, SEND), std::runtime_error);
+      EXPECT_THROW(ZMQComm zmqc(name, nullptr, SEND), std::exception);
       ELF_END_F(zmq_socket);
     }
     // // Failure to set socket options

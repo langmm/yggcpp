@@ -153,15 +153,10 @@ bool Comm_t::create_header_recv(Header& header, char*& data,
   return true;
 }
 
-Comm_t* Comm_t::create_worker(utils::Address* address,
-			      const DIRECTION dir) {
-  Comm_t* out = new COMM_BASE("", address, dir);
-  out->flags |= COMM_EOF_SENT | COMM_EOF_RECV | COMM_FLAG_WORKER;
-  return out;
-}
-
 Comm_t* Comm_t::create_worker_send(Header& head) {
-  Comm_t* out = create_worker(NULL, SEND);
+  Comm_t* out = create_worker(NULL, SEND,
+			      COMM_EOF_SENT | COMM_EOF_RECV |
+			      COMM_FLAG_WORKER);
   if (out == NULL) {
     ygglog_error << "create_worker_send(" << name << "): Error creating worker" << std::endl;
     return NULL;
@@ -183,7 +178,9 @@ Comm_t* Comm_t::create_worker_recv(Header& head) {
     return NULL;
   }
   utils::Address* adr = new utils::Address(address);
-  Comm_t* out = create_worker(adr, RECV);
+  Comm_t* out = create_worker(adr, RECV,
+			      COMM_EOF_SENT | COMM_EOF_RECV |
+			      COMM_FLAG_WORKER);
   if (out == NULL) {
     ygglog_error << "CommBase(" << name << ")::create_worker_recv: Error creating worker" << std::endl;
     return NULL;

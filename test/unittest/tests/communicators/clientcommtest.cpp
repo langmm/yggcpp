@@ -121,7 +121,7 @@ TEST(ClientComm, send) {
     setenv("YGG_MODEL_INDEX", "1", 1);
     communication::testing::ClientComm_tester cc(name, nullptr);
     std::string msg = "This is a test message";
-    cc.addSignon();
+    EXPECT_TRUE(cc.addSignon());
     EXPECT_GE(cc.send(msg.c_str(), msg.size()), 0);
 }
 
@@ -135,8 +135,8 @@ TEST(ClientComm, recv) {
     EXPECT_EQ(cc.recv(data, len, false), -1);
     std::string req1 = "This is a response";
     std::string res1 = req1;
-    cc.addRequest(res1);
-    cc.addResponse(res1);
+    EXPECT_TRUE(cc.addRequest(res1));
+    EXPECT_TRUE(cc.addResponse(res1));
     EXPECT_EQ(cc.recv(data, len, false), -1);
     EXPECT_GE(cc.recv(data, len, true), req1.size());
     EXPECT_EQ(req1, std::string(data));

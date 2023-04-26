@@ -769,6 +769,10 @@ bool ZMQComm::create_header_recv(Header& header, char*& data,
   return true;
 }
 
+Comm_t* ZMQComm::create_worker(utils::Address* address,
+			       const DIRECTION dir, int flgs) {
+  return new ZMQComm("", address, dir, flgs);
+}
 Comm_t* ZMQComm::create_worker_recv(Header& head) {
   ZMQComm* out = dynamic_cast<ZMQComm*>(Comm_t::create_worker_recv(head));
   if (!out)
@@ -1007,6 +1011,11 @@ bool ZMQComm::create_header_recv(Header&, char*&, const size_t&,
 				 size_t, int, int) {
   zmq_install_error();
   return false;
+}
+
+Comm_t* ZMQComm::create_worker(utils::Address*, const DIRECTION, int) {
+  zmq_install_error();
+  return NULL;
 }
 
 Comm_t* ZMQComm::create_worker_recv(Header&) {

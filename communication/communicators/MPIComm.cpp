@@ -223,6 +223,11 @@ long MPIComm::recv_single(char*& data, const size_t &len, bool allow_realloc) {
     return ret;
 }
 
+Comm_t* MPIComm::create_worker(utils::Address* address,
+			       const DIRECTION dir, int flgs) {
+  return new MPIComm("", address, dir, flgs);
+}
+
 // Definitions in the case where MPI libraries not installed
 #else /*MPIINSTALLED*/
 
@@ -274,4 +279,8 @@ long MPIComm::recv_single(char*&, const size_t &, bool) {
   return -1;
 }
 
+Comm_t* MPIComm::create_worker(utils::Address*, const DIRECTION, int) {
+  mpi_install_error();
+  return -1;
+}
 #endif

@@ -26,6 +26,10 @@ protected:
         data = const_cast<char*>(msg.c_str());
         return static_cast<long>(msg.size());
     }
+    Comm_t* create_worker(utils::Address* address,
+			  const DIRECTION dir, int flgs) override {
+      return new Comm_tTest(address, dir, this->type, flgs);
+    }
     void init() override {}
     void reset() override {}
 };
