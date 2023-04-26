@@ -5,6 +5,11 @@ seri_dir = os.path.expanduser(
     os.path.join('~', 'yggdrasil', 'yggdrasil', 'languages', 'C'))
 files = [
     {'path': os.path.join('datatypes', 'serialization.h'),
+     'cpp': (
+         "// Import arrays once\n"
+         "// #define RAPIDJSON_FORCE_IMPORT_ARRAY\n"
+         "#include \"serialization.hpp\"\n"
+         "void** rapidjson_ARRAY_API = NULL;\n"),
      'replacements': [
          ('#include "../regex/regex_win32.h"',
           '#include "regex.hpp"'),
@@ -47,4 +52,4 @@ for f in files:
     with open(dst, 'w') as fd:
         fd.write(contents)
     with open(dst_cpp, 'w') as fd:
-        fd.write('')
+        fd.write(f.get('cpp', ''))

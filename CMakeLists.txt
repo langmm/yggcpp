@@ -226,12 +226,11 @@ include(FetchContent)
 #       COMPONENT dev)
 # ENDIF()
 
+set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${PROJECT_SOURCE_DIR}/cmake")
+
 if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
     message(FATAL_ERROR "In-source build prohibited.")
 endif("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
-
-set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${PROJECT_SOURCE_DIR}/cmake")
-
 
 
 add_definitions(-DRAPIDJSON_YGGDRASIL)
@@ -344,7 +343,6 @@ if (OpenMP_CXX_FOUND)
     message(STATUS "OpenMP found")
     set(DEPS_LIBRARIES ${DEPS_LIBRARIES} ${OpenMP_CXX_LIBRARIES})
     set(DEPS_LIB_NAMES ${DEPS_LIB_NAMES} ${OpenMP_CXX_LIB_NAMES})
-    # set(DEPS_LIBRARIES ${DEPS_LIBRARIES} OpenMP::OpenMP_CXX)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 else()
@@ -382,26 +380,38 @@ else()
     if (NOT DEFINED Python_FIND_FRAMEWORK)
         set(Python_FIND_FRAMEWORK "LAST")
     endif ()
-
-    message(STATUS "Python executable is ${Python3_EXECUTABLE}")
-    if(NOT Python3_ROOT_DIR)
-        if(CONDA_PREFIX)
-            set(Python3_ROOT_DIR "${CONDA_PREFIX}")
-        else()
-            if(Python3_EXECUTABLE)
-                exec_program(${Python3_EXECUTABLE}
-	                     ARGS "-c \"import sysconfig; print(sysconfig.get_config_var('base'))\""
-		             OUTPUT_VARIABLE PYTHON_ROOT
-		             RETURN_VALUE ROOT_NOT_FOUND)
-                if(ROOT_NOT_FOUND)
-     	            message(FATAL_ERROR "Python root not found")
+    if(Python3_EXECUTABLE)
+        message(STATUS "Python executable is ${Python3_EXECUTABLE}")
+    else()
+        if(NOT Python3_ROOT_DIR)
+            if(CONDA_PREFIX)
+                set(Python3_ROOT_DIR "${CONDA_PREFIX}")
+            else()
+                if(Python3_EXECUTABLE)
+                    exec_program(${Python3_EXECUTABLE}
+	                         ARGS "-c \"import sysconfig; print(sysconfig.get_config_var('base'))\""
+		                 OUTPUT_VARIABLE PYTHON_ROOT
+		                 RETURN_VALUE ROOT_NOT_FOUND)
+                    if(ROOT_NOT_FOUND)
+                        message(FATAL_ERROR "Python root not found")
+                    endif()
+	            set(Python3_ROOT_DIR "${RETURN_VALUE}")
                 endif()
-	        set(Python3_ROOT_DIR "${RETURN_VALUE}")
             endif()
-         endif()
+        endif()
+    endif()
+    if(Python3_EXECUTABLE OR Python3_ROOT_DIR)
+        # Force use of specified installation, should be enabled by
+	# default for CMP0094=NEW and CMake >= 3.15
+        if(NOT Python_FIND_STRATEGY)
+            set(Python_FIND_STRATEGY LOCATION)
+        endif()
     endif()
     if(Python3_ROOT_DIR)
         message(STATUS "Python root directory is ${Python3_ROOT_DIR}")
+        if (NOT Python3_ROOT)
+            set(Python3_ROOT ${Python3_ROOT_DIR})
+        endif()
     endif()
     find_package(Python3 COMPONENTS Interpreter Development NumPy REQUIRED)
     if(NOT Python3_NumPy_FOUND)

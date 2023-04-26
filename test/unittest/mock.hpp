@@ -38,9 +38,12 @@ extern char sublib_contents[256];
     y);
 #define ELF_BEGIN					\
   init_sublib_contents();				\
+  std::cerr << "SUBLIB: " << SUBLIB << std::endl;	\
   void *handle = dlopen(SUBLIB, RTLD_LAZY);		\
   if (!handle) {					\
+    std::cerr << "ERROR in dlopen" << std::endl;	\
     EXPECT_TRUE(false);					\
+    throw std::exception();				\
   }
 #define ELF_END					\
   dlclose(handle)
