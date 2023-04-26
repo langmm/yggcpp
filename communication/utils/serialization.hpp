@@ -698,14 +698,28 @@ public:
     flags &= static_cast<uint16_t>(~HEAD_FLAG_VALID);
   }
 
+  void setMessageFlags(const char* data, const size_t len) {
+    if (len == 0)
+      return;
+    if (strcmp(data, YGG_MSG_EOF) == 0)
+      flags |= HEAD_FLAG_EOF;
+    else if (strcmp(data, YGG_CLIENT_EOF) == 0)
+      flags |= HEAD_FLAG_CLIENT_EOF;
+    else if (strncmp(data, YGG_CLIENT_SIGNON, YGG_CLIENT_SIGNON_LEN) == 0)
+      flags |= HEAD_FLAG_CLIENT_SIGNON;
+    else if (strncmp(data, YGG_SERVER_SIGNON, YGG_SERVER_SIGNON_LEN) == 0)
+      flags |= HEAD_FLAG_SERVER_SIGNON;
+  }
+
   /*!
     @brief Set parameters for sending a message.
     @param[in] metadata0 Pointer to metadata object
   */
-  void for_send(Metadata* metadata0) {
+  void for_send(Metadata* metadata0, const char* data, const size_t len) {
     // flags |= (HEAD_FLAG_ALLOW_REALLOC | HEAD_FLAG_OWNSDATA);
     if (metadata0 != NULL)
       fromMetadata(*metadata0);
+    setMessageFlags(data, len);
     initMeta();
     SetMetaID("id");
     char model[100] = "";
@@ -762,10 +776,7 @@ public:
     char* data_chk = data[0];
     if (flags & HEAD_TEMPORARY)
       data_chk += size_head;
-    if (strcmp(data_chk, YGG_MSG_EOF) == 0)
-      flags |= HEAD_FLAG_EOF;
-    else if (strcmp(data_chk, YGG_CLIENT_EOF) == 0)
-      flags |= HEAD_FLAG_CLIENT_EOF;
+    setMessageFlags(data_chk, size_curr);
     if (size_curr < size_data)
       flags |= HEAD_FLAG_MULTIPART;
     else

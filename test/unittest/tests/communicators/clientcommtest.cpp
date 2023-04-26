@@ -19,6 +19,7 @@ public:
       ClientComm(name, address), server_requests(SEND) {}
   bool addRequest(std::string& msg) {
     Header header;
+    this->requests.signon_complete = true;
     if (!this->create_header_send(header, msg.c_str(), msg.size()))
       return false;
     size_t len = header.format(msg.c_str(), msg.size(), 0);
@@ -29,7 +30,7 @@ public:
   }
   bool addResponse(std::string& msg) {
     Header header;
-    header.for_send(NULL);
+    header.for_send(NULL, "", 0);
     if (server_requests.addResponseServer(header, msg.c_str(), msg.size()) < 0)
       return false;
     if (this->requests.addResponseClient(header, msg.c_str(), msg.size()) < 0)
@@ -40,6 +41,8 @@ public:
 };
 }
 }
+
+// TODO: Tests for signon
 
 TEST(ClientComm, constructor) {
     std::string name = "MyComm";

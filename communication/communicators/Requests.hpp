@@ -10,7 +10,8 @@ namespace communicator {
   class Request {
   public:
     Request() :
-      response_id(), request_id(), data(), comm_idx(0), complete(false) {}
+      response_id(), request_id(), data(), comm_idx(0), complete(false),
+      is_signon(false) {}
     int setData(const char* str, size_t len) {
       if (complete) {
 	ygglog_error << "setData: request already complete" << std::endl;
@@ -25,13 +26,14 @@ namespace communicator {
     std::string data;
     size_t comm_idx;
     bool complete;
+    bool is_signon;
   };
 
   class RequestList {
   public:
     RequestList(DIRECTION dir) :
       comms(), requests(), response_dir(dir), response_metadata(),
-      active_comm(-1) {}
+      active_comm(-1), signon_complete(false) {}
     ~RequestList() {
       for (size_t i = 0; i < comms.size(); i++) {
 	if (comms[i] != NULL) {
@@ -74,26 +76,57 @@ namespace communicator {
       ygglog_debug << "addRequestClient: begin" << std::endl;
       if (initClientResponse() < 0)
 	return -1;
+      bool is_signon = (header.flags & HEAD_FLAG_CLIENT_SIGNON);
+      int existing_idx = -1;
       std::string request_id;
-      if (!header.SetMetaID("request_id", request_id)) {
-	ygglog_error << "addRequestClient: Error adding request_id" << std::endl;
+      if (is_signon) {
+	for (size_t i = 0; i < requests.size(); i++) {
+	  if (requests[i].is_signon) {
+	    request_id = requests[i].request_id;
+	    existing_idx = static_cast<int>(i);
+	    break;
+	  }
+	}
+      }
+      if (request_id.empty()) {
+	if (!header.SetMetaID("request_id", request_id)) {
+	  ygglog_error << "addRequestClient: Error adding request_id"
+		       << std::endl;
+	  return -1;
+	}
+	ygglog_debug << "addRequestClient: request_id = "
+		     << request_id << std::endl;
+	if (hasRequest(request_id) >= 0) {
+	  ygglog_error
+	    << "addRequestClient: Client already has request with id '"
+	    << request_id << "'" << std::endl;
+	  return -1;
+	}
+      } else {
+	if (!header.SetMetaString("request_id", request_id)) {
+	  ygglog_error << "addRequestClient: Error adding request_id"
+		       << std::endl;
+	  return -1;
+	}
+      }
+      if (!header.SetMetaString("response_address",
+				comms[0]->address->address())) {
+	ygglog_error <<
+	  "addRequestClient: Error adding response_address" << std::endl;
 	return -1;
       }
-      ygglog_debug << "addRequestClient: request_id = " << request_id << std::endl;
-      if (hasRequest(request_id) >= 0) {
-	ygglog_error << "addRequestClient: Client already has request with id '" << request_id << "'" << std::endl;
-	return -1;
+      if (existing_idx < 0) {
+	size_t idx = requests.size();
+	requests.resize(requests.size() + 1);
+	requests[idx].request_id = request_id;
+	requests[idx].comm_idx = 0;
+	requests[idx].is_signon = is_signon;
+	existing_idx = static_cast<int>(idx);
       }
-      if (!header.SetMetaString("response_address", comms[0]->address->address())) {
-	ygglog_error << "addRequestClient: Error adding response_address" << std::endl;
-	return -1;
-      }
-      size_t idx = requests.size();
-      requests.resize(requests.size() + 1);
-      requests[idx].request_id = request_id;
-      requests[idx].comm_idx = 0;
-      ygglog_debug << "addRequestClient: response_address = " << comms[0]->address << ", request_id = " << request_id << std::endl;
-      return static_cast<int>(idx);
+      ygglog_debug << "addRequestClient: response_address = "
+		   << comms[0]->address << ", request_id = "
+		   << request_id << std::endl;
+      return existing_idx;
     }
     int addRequestServer(Header& header) {
       ygglog_debug << "addRequestServer: begin" << std::endl;
@@ -117,6 +150,7 @@ namespace communicator {
       requests[idx].request_id = request_id;
       requests[idx].response_id = response_id;
       requests[idx].comm_idx = static_cast<size_t>(comm_idx);
+      requests[idx].is_signon = (header.flags & HEAD_FLAG_CLIENT_SIGNON);
       return static_cast<int>(idx);
     }
     int addResponseServer(Header& header, const char* data, const size_t len) {
@@ -133,6 +167,8 @@ namespace communicator {
 	return -1;
       }
       active_comm = 0;
+      if (header.flags & HEAD_FLAG_SERVER_SIGNON)
+	signon_complete = true;
       return 0;
     }
     int addResponseClient(Header& header, const char* data, const size_t len) {
@@ -147,6 +183,8 @@ namespace communicator {
 	ygglog_error << "addResponseClient: Error setting data" << std::endl;
 	return -1;
       }
+      if (header.flags & HEAD_FLAG_SERVER_SIGNON)
+	signon_complete = true;
       return 0;
     }
     Comm_t* getComm(const std::string& request_id) {
@@ -234,6 +272,7 @@ namespace communicator {
     DIRECTION response_dir;
     Metadata response_metadata;
     int active_comm;
+    bool signon_complete;
   };
 }
 }

@@ -135,8 +135,9 @@ Comm_t* communication::communicator::new_Comm_t(const DIRECTION dir, const COMM_
     return nullptr;
 }
 
-bool Comm_t::create_header_send(Header& header, const char*, const size_t &) {
-  header.for_send(&metadata);
+bool Comm_t::create_header_send(Header& header, const char* data,
+				const size_t &len) {
+  header.for_send(&metadata, data, len);
   if (!header.isValid())
     return false;
   return true;

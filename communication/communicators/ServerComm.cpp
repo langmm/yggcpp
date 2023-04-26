@@ -30,6 +30,18 @@ void ServerComm::init() {
     this->name = "server_request." + this->address->address();
   }
 }
+
+bool ServerComm::signon(const Header& header) {
+  if (!(header.flags & HEAD_FLAG_CLIENT_SIGNON))
+    return true;
+  ygglog_debug << "ServerComm(" << name << ")::signon: begin" << std::endl;
+  if (send_single(YGG_SERVER_SIGNON, YGG_SERVER_SIGNON_LEN) < 0) {
+    ygglog_error << "ServerComm(" << name << ")::signon: Error in sending sign-on" << std::endl;
+    return false;
+  }
+  return requests.signon_complete;
+}
+
 int ServerComm::update_datatype(const rapidjson::Value& new_schema,
 				const DIRECTION dir) {
   if (dir == RECV)

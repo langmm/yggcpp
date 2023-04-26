@@ -20,7 +20,7 @@ public:
       ServerComm(name, address), client_requests(RECV) {}
     bool addRequest() {
       Header header;
-      header.for_send(NULL);
+      header.for_send(NULL, NULL, 0);
       if (client_requests.addRequestClient(header) < 0)
 	return false;
       if (this->requests.addRequestServer(header) < 0)

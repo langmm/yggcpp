@@ -19,6 +19,7 @@ public:
 
 protected:
     void init() override;
+    virtual bool signon(const Header& header);
     int update_datatype(const rapidjson::Value& new_schema,
 			const DIRECTION dir=NONE) override;
     bool create_header_send(Header& header, const char* data, const size_t &len) override;
