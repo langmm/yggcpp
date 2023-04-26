@@ -1,4 +1,3 @@
-* Migrate to use of ZeroMQ lib with CMake FindPackage
 * Add tests for YggIterface.hpp
 * Add YggIterface.h C interface with tests
 * Update handling of dtype in C
@@ -8,6 +7,3 @@
 * Split serialization.hpp into files for easier maintenance
 * Strip out unused code
 * Set _ygg_error_flag on error
-* Add client/server signon at CommBase level to prevent dropping messages
-* ELF tests for zmq reply
-* ELF tests for client signon
