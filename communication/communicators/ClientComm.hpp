@@ -17,7 +17,9 @@ public:
     using Comm_t::recv;
     using COMM_BASE::comm_nmsg;
 
+#ifndef YGG_TEST
 protected:
+#endif
     void init() override;
     virtual bool signon(const Header& header);
     int update_datatype(const rapidjson::Value& new_schema,

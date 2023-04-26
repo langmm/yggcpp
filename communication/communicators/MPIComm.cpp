@@ -161,7 +161,8 @@ int MPIComm::comm_nmsg() const {
     return nmsg;
 }
 
-int MPIComm::send_single(const char *data, const size_t &len) {
+int MPIComm::send_single(const char *data, const size_t &len,
+			 const Header&) {
     ygglog_debug << "MPIComm(" << name << ")::send_single: " << len << " bytes" << std::endl;
     if (!check_size(len)) {
       ygglog_error << "MPIComm(" << name << ")::send_single: Message too large" << std::endl;

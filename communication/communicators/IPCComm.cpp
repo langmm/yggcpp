@@ -192,7 +192,7 @@ int IPCComm::comm_nmsg() const {
   @param[in] data character pointer to message that should be sent.
   @returns int 0 if send succesfull, -1 if send unsuccessful.
  */
-int IPCComm::send_single(const char* data, const size_t &len) {
+int IPCComm::send_single(const char* data, const size_t &len, const Header&) {
     ygglog_debug << "IPCComm(" << name << ")::send_single: " << len << " bytes" << std::endl;
     if (!check_size(len)) {
       ygglog_error << "IPCComm(" << name << ")::send_single: Message too large" << std::endl;
@@ -336,7 +336,7 @@ int IPCComm::comm_nmsg() const {
     return -1;
 }
 
-int IPCComm::send_single(const char *, const size_t &) {
+int IPCComm::send_single(const char *, const size_t &, const Header&) {
     ipc_install_error();
     return -1;
 }

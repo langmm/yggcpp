@@ -4,7 +4,6 @@
 #include "communicators/ZMQComm.hpp"
 #include "../../elf_hook.hpp"
 #include "../../mock.hpp"
-#include <dlfcn.h>
 #include "commtest.hpp"
 
 using namespace communication;

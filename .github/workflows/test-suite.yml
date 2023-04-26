@@ -76,7 +76,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Debug "-DPython3_ROOT_DIR=${Env:pythonLocation}" -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/_install "-DCMAKE_TOOLCHAIN_FILE=${Env:VCPKG_INSTALLATION_ROOT}\scripts\buildsystems\vcpkg.cmake" -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DBUILD_PYTHON_LIBRARY=OFF
+          cmake .. -DCMAKE_BUILD_TYPE=Debug "-DPython3_ROOT_DIR=${Env:pythonLocation}" "-DPython3_EXECUTABLE=${Env:pythonLocation}/python.exe" -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/_install "-DCMAKE_TOOLCHAIN_FILE=${Env:VCPKG_INSTALLATION_ROOT}\scripts\buildsystems\vcpkg.cmake" -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DBUILD_PYTHON_LIBRARY=OFF
       - name: Configure
         if: matrix.os != 'windows-latest'
         run: |

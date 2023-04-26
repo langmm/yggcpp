@@ -1,9 +1,9 @@
 #include "../../unittest.hpp"
 #include "utils/Address.hpp"
 #include "communicators/ClientComm.hpp"
+#include "communicators/ServerComm.hpp"
 #include "../../elf_hook.hpp"
 #include "../../mock.hpp"
-#include <dlfcn.h>
 
 #ifdef COMM_BASE
 
@@ -15,34 +15,52 @@ namespace communication {
 namespace testing {
 class ClientComm_tester : public ClientComm {
 public:
-    ClientComm_tester(const std::string &name = "", utils::Address *address = nullptr) :
-      ClientComm(name, address), server_requests(SEND) {}
-  bool addRequest(std::string& msg) {
+  ClientComm_tester(const std::string &name = "", utils::Address *address = nullptr) :
+    ClientComm(name, address), server_comm(NULL) {
+    server_comm = new ServerComm("", new utils::Address(this->address->address()));
+  }
+  ~ClientComm_tester() {
+    delete server_comm;
+  }
+  bool addSignon() {
+    std::string msg_cli = YGG_CLIENT_SIGNON;
+    if (!addRequest(msg_cli, true))
+      return false;
+    std::string msg_srv = YGG_SERVER_SIGNON;
+    if (server_comm->send(msg_srv.c_str(), msg_srv.size()) < 0)
+      return false;
+    return true;
+  }
+  bool addRequest(std::string& msg, bool skip_signon=false) {
+    if (!skip_signon) {
+      if (!addSignon())
+	return false;
+    }
     Header header;
-    this->requests.signon_complete = true;
     if (!this->create_header_send(header, msg.c_str(), msg.size()))
       return false;
     size_t len = header.format(msg.c_str(), msg.size(), 0);
     msg.assign(header.data[0], len);
-    if (server_requests.addRequestServer(header) < 0)
+    if (server_comm->requests.addRequestServer(header) < 0)
       return false;
     return true;
   }
-  bool addResponse(std::string& msg) {
+  bool addResponse(std::string& msg, bool skip_client=false) {
     Header header;
-    header.for_send(NULL, "", 0);
-    if (server_requests.addResponseServer(header, msg.c_str(), msg.size()) < 0)
+    if (!server_comm->create_header_send(header, msg.c_str(), msg.size()))
       return false;
-    if (this->requests.addResponseClient(header, msg.c_str(), msg.size()) < 0)
-      return false;
+    if (!skip_client) {
+      char* data = const_cast<char*>(msg.c_str());
+      if (!this->create_header_recv(header, data,
+				    msg.size(), msg.size(), false, true))
+	return false;
+    }
     return true;
   }
-  RequestList server_requests;
+  ServerComm* server_comm;
 };
 }
 }
-
-// TODO: Tests for signon
 
 TEST(ClientComm, constructor) {
     std::string name = "MyComm";
@@ -94,6 +112,15 @@ TEST(ClientComm, constructor) {
 //     EXPECT_EQ(cc.pop_response(rs1, data, mlen, false), -res1.size());
 //     EXPECT_EQ(cc.pop_response(rs1, data, mlen, true), res1.size());
 // }
+
+TEST(ClientComm, send) {
+    std::string name = "MyComm";
+    setenv("YGG_MODEL_INDEX", "1", 1);
+    communication::testing::ClientComm_tester cc(name, nullptr);
+    std::string msg = "This is a test message";
+    cc.addSignon();
+    EXPECT_GE(cc.send(msg.c_str(), msg.size()), 0);
+}
 
 TEST(ClientComm, recv) {
     std::string name = "MyComm";

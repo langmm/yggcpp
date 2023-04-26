@@ -3,7 +3,6 @@
 #include "communicators/IPCComm.hpp"
 #include "../../elf_hook.hpp"
 #include "../../mock.hpp"
-#include <dlfcn.h>
 #include "commtest.hpp"
 
 
@@ -49,12 +48,11 @@ TEST(IPCComm, constructor) {
 TEST(IPCComm, send) {
     std::string message = "Hello world";
     std::string name = "";
-    SENDCOUNT = 0;
-
     IPCComm_tester ipc(name, nullptr, RECV);
     int res = ipc.send(message.c_str(), message.size());
     EXPECT_GT(res, 0);
 #ifdef ELF_AVAILABLE
+    SENDCOUNT = 0;
     ELF_BEGIN;
     std::string data = "abcdef12345";
     utils::Address *adr2 = new utils::Address("12345678");
@@ -104,11 +102,11 @@ TEST(IPCComm, sendLarge) {
     // Replace msgsnd to test failure on long message?
     ELF_BEGIN_F_RET(msgsnd, 0);
     IPCComm_tester ipc(name, new utils::Address("2468"), SEND);
-    std::string msg(ipc.maxMsgSize - 1, 'A');
+    std::string msg(ipc.getMaxMsgSize() - 1, 'A');
     EXPECT_GT(ipc.send(msg), 0);
     EXPECT_EQ(SENDCOUNT, 2);
     SENDCOUNT = 0;
-    std::string longmsg(ipc.maxMsgSize * 3 + 20, 'B');
+    std::string longmsg(ipc.getMaxMsgSize() * 3 + 20, 'B');
     EXPECT_EQ(ipc.send(longmsg), 0);
     EXPECT_EQ(SENDCOUNT, 5);
 

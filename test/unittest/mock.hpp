@@ -60,6 +60,9 @@ extern char sublib_contents[256];
 
 namespace communication {
 namespace mock {
+  
+#ifdef ELF_AVAILABLE
+
 //extern int mock_method_return_value;
 //void setValue(const int val);
 
@@ -131,7 +134,6 @@ template<class OutputIt>
   int zmq_getsockopt (void *, int, void * option_value, size_t *option_len);
 #endif // ZMQINSTALLED
   
+#endif // ELF_AVAILABLE
 }
 }
-
-

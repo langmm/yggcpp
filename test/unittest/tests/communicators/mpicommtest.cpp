@@ -4,7 +4,6 @@
 #include "communicators/MPIComm.hpp"
 #include "../../elf_hook.hpp"
 #include "../../mock.hpp"
-#include <dlfcn.h>
 #include "commtest.hpp"
 
 #if defined(MPIINSTALLED) && defined(MPI_COMM_WORLD)

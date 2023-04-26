@@ -218,6 +218,7 @@ public:
     std::string getAddress() {return address->address();}
     DIRECTION getDirection() {return direction;}
     virtual bool afterSendRecv(Comm_t*, Comm_t*) { return true; }
+    size_t getMaxMsgSize() { return maxMsgSize; }
 #endif
     void addSchema(const Metadata& s);
     void addSchema(const rapidjson::Value& s, bool isMetadata = false);
@@ -267,7 +268,7 @@ protected:
     // Comm_t* create_worker_wrap(utils::Address* address, const DIRECTION);
     virtual Comm_t* create_worker_send(Header& head);
     virtual Comm_t* create_worker_recv(Header& head);
-    virtual int send_single(const char *data, const size_t &len) = 0;
+    virtual int send_single(const char *data, const size_t &len, const Header& header) = 0;
     virtual long recv_single(char*& data, const size_t &len, bool allow_realloc) = 0;
 
     //Comm_t(const Comm_t* comm, COMM_TYPE type);
@@ -317,7 +318,7 @@ public:
     using Comm_t::recv;
 
 protected:
-    int send_single(const char *, const size_t &) override {
+    int send_single(const char *, const size_t &, const Header&) override {
         utils::ygglog_throw_error("Send of base class called, must be overridden");
         return -1;
     }

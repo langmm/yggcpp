@@ -50,16 +50,17 @@ bool ClientComm::signon(const Header& header) {
   if (requests.initClientResponse() < 0)
     return false;
   while (!requests.signon_complete) {
-    if (send_single(YGG_CLIENT_SIGNON, YGG_CLIENT_SIGNON_LEN) < 0) {
+    if (send(YGG_CLIENT_SIGNON, YGG_CLIENT_SIGNON_LEN) < 0) {
       ygglog_error << "ClientComm(" << name << ")::signon: Error in sending sign-on" << std::endl;
       return false;
     }
     if (requests.activeComm()->comm_nmsg() > 0) {
       char* data = NULL;
-      if (recv_single(data, 0, true) < 0) {
+      if (recv(data, 0, true) < 0) {
         ygglog_error << "ClientComm(" << name << ")::signon: Error in receiving sign-on" << std::endl;
         return false;
       }
+      delete data;
       break;
     } else {
       sleep(YGG_SLEEP_TIME);
@@ -121,7 +122,7 @@ long ClientComm::recv_single(char*& rdata, const size_t &rlen, bool allow_reallo
       ygglog_error << "ClientComm(" << name << ")::recv_single: Error getting response comm" << std::endl;
       return -1;
     }
-    std::string req_id = requests.requests[0].request_id;
+    std::string req_id = requests.activeRequestClient();
     size_t buff_len = rlen;
     long ret = 0;
     while (!requests.isComplete(req_id)) {

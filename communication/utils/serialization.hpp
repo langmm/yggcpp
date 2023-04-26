@@ -715,11 +715,12 @@ public:
     @brief Set parameters for sending a message.
     @param[in] metadata0 Pointer to metadata object
   */
-  void for_send(Metadata* metadata0, const char* data, const size_t len) {
+  void for_send(Metadata* metadata0, const char* msg, const size_t len) {
     // flags |= (HEAD_FLAG_ALLOW_REALLOC | HEAD_FLAG_OWNSDATA);
-    if (metadata0 != NULL)
+    setMessageFlags(msg, len);
+    if (metadata0 != NULL && !(flags & (HEAD_FLAG_CLIENT_SIGNON |
+					HEAD_FLAG_SERVER_SIGNON)))
       fromMetadata(*metadata0);
-    setMessageFlags(data, len);
     initMeta();
     SetMetaID("id");
     char model[100] = "";

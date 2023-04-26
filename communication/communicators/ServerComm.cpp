@@ -35,7 +35,7 @@ bool ServerComm::signon(const Header& header) {
   if (!(header.flags & HEAD_FLAG_CLIENT_SIGNON))
     return true;
   ygglog_debug << "ServerComm(" << name << ")::signon: begin" << std::endl;
-  if (send_single(YGG_SERVER_SIGNON, YGG_SERVER_SIGNON_LEN) < 0) {
+  if (send(YGG_SERVER_SIGNON, YGG_SERVER_SIGNON_LEN) < 0) {
     ygglog_error << "ServerComm(" << name << ")::signon: Error in sending sign-on" << std::endl;
     return false;
   }
@@ -52,6 +52,7 @@ int ServerComm::update_datatype(const rapidjson::Value& new_schema,
 
 bool ServerComm::create_header_send(Header& header, const char* data, const size_t &len) {
   header.initMeta();
+  header.setMessageFlags(data, len);
   if (requests.addResponseServer(header, data, len) < 0) {
     ygglog_error << "ServerComm(" << name << ")::create_header_send: Failed to add response" << std::endl;
     header.invalidate();
@@ -89,14 +90,15 @@ bool ServerComm::create_header_recv(Header& header, char*& data,
   return true;
 }
 
-int ServerComm::send_single(const char* data, const size_t &len){
-    ygglog_debug << "ServerComm(" << name << ")::send_single: " << len << " bytes";
+int ServerComm::send_single(const char* data, const size_t &len,
+			    const Header& header) {
+    ygglog_debug << "ServerComm(" << name << ")::send_single: " << len << " bytes" << std::endl;
     Comm_t* response_comm = requests.activeComm();
     if (response_comm == NULL) {
         ygglog_error << "ServerComm(" << name << ")::send_single: Failed to get response comm" << std::endl;
         return -1;
     }
-    int ret = response_comm->send_single(data, len);
+    int ret = response_comm->send_single(data, len, header);
     ygglog_debug << "ServerComm(" << name << ")::send_single: Sent " << len << " bytes" << std::endl;
     if (requests.popRequestServer() < 0)
         return -1;

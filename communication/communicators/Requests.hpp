@@ -123,8 +123,8 @@ namespace communicator {
 	requests[idx].is_signon = is_signon;
 	existing_idx = static_cast<int>(idx);
       }
-      ygglog_debug << "addRequestClient: response_address = "
-		   << comms[0]->address << ", request_id = "
+      ygglog_debug << "addRequestClient: done response_address = "
+		   << comms[0]->address->address() << ", request_id = "
 		   << request_id << std::endl;
       return existing_idx;
     }
@@ -144,16 +144,20 @@ namespace communicator {
       while (hasResponse(response_id) >= 0) {
 	response_id += std::to_string(rand());
       }
-      ygglog_debug << "addRequestServer: Response id = " << response_id << std::endl;
       size_t idx = requests.size();
       requests.resize(requests.size() + 1);
       requests[idx].request_id = request_id;
       requests[idx].response_id = response_id;
       requests[idx].comm_idx = static_cast<size_t>(comm_idx);
       requests[idx].is_signon = (header.flags & HEAD_FLAG_CLIENT_SIGNON);
+      ygglog_debug << "addRequestServer: done response_address = "
+		   << comms[requests[idx].comm_idx]->address->address()
+		   << ", request_id = " << request_id
+		   << ", response_id = " << response_id << std::endl;
       return static_cast<int>(idx);
     }
     int addResponseServer(Header& header, const char* data, const size_t len) {
+      ygglog_debug << "addResponseServer: begin" << std::endl;
       if (requests.size() == 0) {
 	ygglog_error << "addResponseServer: Server does not have any unprocessed requests" << std::endl;
 	return -1;
@@ -169,6 +173,8 @@ namespace communicator {
       active_comm = 0;
       if (header.flags & HEAD_FLAG_SERVER_SIGNON)
 	signon_complete = true;
+      ygglog_debug << "addResponseServer: done (signon_complete = " <<
+	signon_complete << ")" << std::endl;
       return 0;
     }
     int addResponseClient(Header& header, const char* data, const size_t len) {
@@ -185,6 +191,8 @@ namespace communicator {
       }
       if (header.flags & HEAD_FLAG_SERVER_SIGNON)
 	signon_complete = true;
+      ygglog_debug << "addResponseClient: done (signon_complete = " <<
+	signon_complete << ")" << std::endl;
       return 0;
     }
     Comm_t* getComm(const std::string& request_id) {
@@ -199,6 +207,17 @@ namespace communicator {
 	return NULL;
       }
       return comms[requests[0].comm_idx];
+    }
+    std::string activeRequestClient() {
+      if (!signon_complete) {
+	return requests[0].request_id;
+      }
+      for (size_t i = 0; i < requests.size(); i++) {
+	if (!requests[i].is_signon)
+	  return requests[i].request_id;
+      }
+      ygglog_throw_error("activeRequestClient: No active requests");
+      return "";
     }
     int popRequestServer() {
       if (requests.empty() || comms.empty()) {

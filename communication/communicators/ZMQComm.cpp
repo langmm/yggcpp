@@ -149,6 +149,7 @@ void ZMQSocket::init(int type0, utils::Address* address,
     if (zmq_connect(handle, endpoint.c_str()) != 0) {
       ygglog_throw_error("ZMQSocket::init: Error connecting to endpoint '" + endpoint + "'");
     }
+    ygglog_debug << "ZMQSocket::init: Connected to endpoint '" << endpoint << "'" << std::endl;
   } else {
     const std::string protocol = "tcp";
     std::string host = "localhost";
@@ -518,7 +519,7 @@ bool ZMQComm::init_handle() {
     delete handle;
     handle = nullptr;
   }
-  if (flags & COMM_FLAG_CLIENT_RESPONSE) {
+  if (flags & COMM_FLAG_CLIENT) {
     handle = new ZMQSocket(ZMQ_ROUTER, address);
   } else if (flags & (COMM_FLAG_SERVER | COMM_ALLOW_MULTIPLE_COMMS)) {
     handle = new ZMQSocket(ZMQ_DEALER, address);
@@ -613,27 +614,28 @@ int ZMQComm::comm_nmsg() const {
   @param[in] len size_t length of message to be sent.
   @returns int 0 if send succesfull, -1 if send unsuccessful.
  */
-int ZMQComm::send_single(const char* data, const size_t &len) {
+int ZMQComm::send_single(const char* data, const size_t &len, const Header& header) {
     ygglog_debug << "ZMQComm(" << name << ")::send_single: " << len << " bytes" << std::endl;
   if (!check_size(len)) {
     ygglog_error << "ZMQComm(" << name << ")::send_single: Message too large" << std::endl;
     return -1;
   }
   std::string msg(data, len);
-  std::cerr << "send_single: " << data;
   int ret = handle->send(msg);
   if (ret < 0) {
     ygglog_error << "ZMQComm(" << name << ")::send_single: Error in ZMQSocket::send" << std::endl;
     return -1;
   }
   // Reply
-  if (!do_reply_send()) {
-    ygglog_error << "ZMQComm(" << name << ")::send_single: Error in do_reply_send" << std::endl;
+  if (!do_reply_send(header)) {
+      ygglog_error << "ZMQComm(" << name << ")::send_single: Error in do_reply_send" << std::endl;
   }
   ygglog_debug << "ZMQComm(" << name << ")::send_single: returning " << ret << std::endl;
   return ret;
 }
-bool ZMQComm::do_reply_send() {
+bool ZMQComm::do_reply_send(const Header& header) {
+  if (header.flags & (HEAD_FLAG_CLIENT_SIGNON | HEAD_FLAG_SERVER_SIGNON))
+    return true;
 #ifdef YGG_TEST
   // Exit early to prevent deadlock when running from the same thread
   return true;
@@ -708,14 +710,16 @@ long ZMQComm::recv_single(char*& data, const size_t &len,
       ygglog_error << "ZMQComm(" << name << ")::recv_single: Invalid header." << std::endl;
       return -1;
     }
-    if (!do_reply_recv()) {
+    if (!do_reply_recv(head)) {
       ygglog_error << "ZMQComm(" << name << ")::recv_single: Error in do_reply_recv" << std::endl;
       return -1;
     }
     ygglog_debug << "ZMQComm(" << name << ")::recv_single: returns " << ret << " bytes" << std::endl;
     return ret;
 }
-bool ZMQComm::do_reply_recv() {
+bool ZMQComm::do_reply_recv(const Header& header) {
+  if (header.flags & (HEAD_FLAG_CLIENT_SIGNON | HEAD_FLAG_SERVER_SIGNON))
+    return true;
 #ifdef YGG_TEST
     // Exit early to prevent deadlock when running from the same thread
     return true;
@@ -727,15 +731,18 @@ bool ZMQComm::do_reply_recv() {
 bool ZMQComm::create_header_send(Header& header, const char* data, const size_t &len) {
   if (!Comm_t::create_header_send(header, data, len))
     return false;
-  std::string reply_address;
-  if (reply.create(reply_address) < 0) {
-    ygglog_error << "ZMQComm(" << this->name << ")::create_header_send: Error during creation of reply socket" << std::endl;
+  if (!(header.flags & (HEAD_FLAG_CLIENT_SIGNON |
+			HEAD_FLAG_SERVER_SIGNON))) {
+    std::string reply_address;
+    if (reply.create(reply_address) < 0) {
+      ygglog_error << "ZMQComm(" << this->name << ")::create_header_send: Error during creation of reply socket" << std::endl;
+      return false;
+    }
+    ygglog_debug << "ZMQComm(" << this->name << ")::create_header_send: zmq_reply = " << reply_address << std::endl;
+    if (!header.SetMetaString("zmq_reply", reply_address)) {
+      ygglog_debug << "ZMQComm(" << this->name << ")::create_header_send: Failed to set zmq_reply" << std::endl;
     return false;
-  }
-  std::cerr << "create_header_send: zmq_reply = " << reply_address << std::endl;
-  if (!header.SetMetaString("zmq_reply", reply_address)) {
-    ygglog_debug << "ZMQComm(" << this->name << ")::create_header_send: Failed to set zmq_reply" << std::endl;
-    return false;
+    }
   }
   return true;
 }
@@ -744,10 +751,11 @@ bool ZMQComm::create_header_recv(Header& header, char*& data,
 				 const size_t &len,
 				 size_t msg_len, int allow_realloc,
 				 int temp) {
-  std::cerr << "create_header_recv: " << data << std::endl;
   bool out = Comm_t::create_header_recv(header, data, len, msg_len,
 					allow_realloc, temp);
-  if (temp && out) {
+  if (temp && out &&
+      (!(header.flags & (HEAD_FLAG_CLIENT_SIGNON |
+			 HEAD_FLAG_SERVER_SIGNON)))) {
     std::string adr;
     if ((flags & COMM_FLAG_WORKER) && (reply.sockets.size() == 1)) {
       adr = reply.sockets[0].endpoint;
@@ -961,7 +969,7 @@ int ZMQComm::comm_nmsg() const {
   return -1;
 }
 
-int ZMQComm::send_single(const char *, const size_t &) {
+int ZMQComm::send_single(const char *, const size_t &, const Header&) {
   zmq_install_error();
   return -1;
 }
@@ -980,12 +988,12 @@ bool ZMQComm::init_handle() {
   return false;
 }
 
-bool ZMQComm::do_reply_recv() {
+bool ZMQComm::do_reply_recv(const Header&) {
   zmq_install_error();
   return false;
 }
 
-bool ZMQComm::do_reply_send() {
+bool ZMQComm::do_reply_send(const Header&) {
   zmq_install_error();
   return false;
 }

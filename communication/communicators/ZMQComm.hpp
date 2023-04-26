@@ -126,10 +126,10 @@ protected:
 #endif
     void init() override;
     bool init_handle();
-    int send_single(const char *data, const size_t &len) override;
+    int send_single(const char *data, const size_t &len, const Header& header) override;
     long recv_single(char*& data, const size_t &len, bool allow_realloc) override;
-    virtual bool do_reply_recv();
-    virtual bool do_reply_send();
+    virtual bool do_reply_recv(const Header& header);
+    virtual bool do_reply_send(const Header& header);
     bool create_header_send(Header& header, const char* data, const size_t &len) override;
     bool create_header_recv(Header& header, char*& data, const size_t &len,
 			    size_t msg_len, int allow_realloc,

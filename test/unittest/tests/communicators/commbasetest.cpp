@@ -18,7 +18,9 @@ public:
     using Comm_t::send;
     using Comm_t::recv;
 protected:
-    int send_single(const char*, const size_t &) override {return 0;}
+    int send_single(const char*, const size_t &, const Header&) override {
+      return 0;
+    }
     long recv_single(char*& data, const size_t &, bool) override {
         const std::string msg = "{ \"hello\" : \"world\" }";
         data = const_cast<char*>(msg.c_str());

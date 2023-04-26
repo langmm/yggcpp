@@ -196,12 +196,12 @@ int Comm_t::send(const char *data, const size_t &len) {
   ygglog_debug << "CommBase(" << name << ")::send(const char *data, const size_t &len): begin sending " << len << " bytes" << std::endl;
   size_t size_max = maxMsgSize - msgBufSize;
   int no_type = (is_eof(data) || (flags & COMM_FLAGS_USED));
+  Header head;
   if ((size_max == 0 || len <= size_max) &&
       (!(flags & COMM_ALWAYS_SEND_HEADER)) && no_type) {
     ygglog_debug << "CommBase(" << name << ")::send(const char *data, const size_t &len): Sending data in single message. " << is_eof(data) << ", " << (flags & COMM_FLAGS_USED) << std::endl;
-    return send_single(data, len);
+    return send_single(data, len, head);
   }
-  Header head;
   if (!create_header_send(head, data, len)) {
     ygglog_error << "CommBase(" << name << ")::send(const char *data, const size_t &len): Failed to create header" << std::endl;
     return -1;
@@ -227,7 +227,7 @@ int Comm_t::send(const char *data, const size_t &len) {
     msgsiz = size_max;
     prev += size_max;
   }
-  if (send_single(head.data[0], msgsiz) < 0) {
+  if (send_single(head.data[0], msgsiz, head) < 0) {
     ygglog_error << "CommBase(" << name << ")::send(const char *data, const size_t &len): Failed to send header." << std::endl;
     if (xmulti)
       delete xmulti;
@@ -242,7 +242,7 @@ int Comm_t::send(const char *data, const size_t &len) {
     msgsiz = head.size_curr - prev;
     if (msgsiz > size_max_multi)
       msgsiz = size_max_multi;
-    if (xmulti->send_single(head.data[0] + prev, msgsiz) < 0) {
+    if (xmulti->send_single(head.data[0] + prev, msgsiz, head) < 0) {
       ygglog_error << "CommBase(" << name << ")::send(const char *data, const size_t &len): send interupted at " << prev << " of " << head.size_curr << " bytes" << std::endl;
       delete xmulti;
       return -1;

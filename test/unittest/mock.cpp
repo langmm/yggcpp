@@ -26,6 +26,9 @@ void init_sublib_contents() {}
 
 namespace communication {
 namespace mock {
+
+#ifdef ELF_AVAILABLE
+
 int RETVAL = 0;
 int SENDCOUNT = 0;
 std::string RETMSG = "";
@@ -175,34 +178,7 @@ template<class OutputIt>
   
 #endif // ZMQINSTALLED
 
+#endif // ELF_AVAILABLE
+  
 }
 }
-
-
-/*int communication::mock::mock_method_return_value = 0;
-
-void communication::mock::setValue(const int val) {
-    mock_method_return_value = val;
-}
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-int __wrap_msgsnd(int id, const void* data, size_t len, int flags) {
-    std::cout << std::endl << "Mock Called" << std::endl;
-    return communication::mock::mock_method_return_value;
-}
-
-int __wrap_msgctl(int id, int flg,  msqid_ds *buf) {
-    if (buf == nullptr)
-        return 0;
-    buf->msg_qnum = 5;
-    return communication::mock::mock_method_return_value;
-}
-int __wrap_msgget(key_t key, int flags) {
-    //__real_msgget(key, flags);
-    return communication::mock::mock_method_return_value;
-}
-#ifdef __cplusplus
-}
-#endif*/
