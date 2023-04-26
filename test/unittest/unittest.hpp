@@ -96,3 +96,26 @@ public:
     rapidjson::finalize_python("test");         \
   }
 #endif // YGGDRASIL_DISABLE_PYTHON_C_API
+
+// Add setenv/unsetenv
+#ifdef _MSC_VER
+int setenv(const char *name, const char *value, int overwrite) {
+  if (overwrite or getenv(name) == NULL) {
+    size_t len = strlen(name) + strlen(value);
+    char* tmp = (char*)malloc(len * sizeof(char));
+    tmp[0] = '\0';
+    strcat(tmp, name);
+    strcat(tmp, "=");
+    strcat(tmp, value);
+    if (tmp == NULL)
+      return -1;
+    int out = _putenv(tmp);
+    free(tmp);
+    return out;
+  }
+  return 0;
+}
+int unsetenv(const char *name) {
+  return setenv(name, "", true);
+}
+#endif // _MSC_VER

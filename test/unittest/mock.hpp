@@ -36,14 +36,14 @@ extern char sublib_contents[256];
 
 #define ELFREVERT_ARGS(x, a, y) y = elf_hook(SUBLIB, LIBRARY_ADDRESS_BY_HANDLE(handle), std::string(#x) + "|" + std::string(#a), \
     y);
-#define ELF_BEGIN					\
-  init_sublib_contents();				\
-  std::cerr << "SUBLIB: " << SUBLIB << std::endl;	\
-  void *handle = dlopen(SUBLIB, RTLD_LAZY);		\
-  if (!handle) {					\
-    std::cerr << "ERROR in dlopen" << std::endl;	\
-    EXPECT_TRUE(false);					\
-    throw std::exception();				\
+#define ELF_BEGIN						\
+  init_sublib_contents();					\
+  std::cerr << "SUBLIB: " << SUBLIB << std::endl;		\
+  void *handle = dlopen(SUBLIB, RTLD_LAZY);			\
+  if (!handle) {						\
+    std::cerr << "ERROR in dlopen: " << dlerror() << std::endl;	\
+    EXPECT_TRUE(false);						\
+    throw std::exception();					\
   }
 #define ELF_END					\
   dlclose(handle)

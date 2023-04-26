@@ -9,10 +9,9 @@ char sublib_contents[256] = "";
 void init_sublib_contents() {
   if (!sublib_read) {
     std::string fname = SUBLIBFILE;
-    std::cerr << "SUBLIB = " << fname << std::endl;
     FILE *fp = fopen(fname.c_str(), "r");
     if (fp == NULL) {
-      std::cerr << "Failed to open file " << fname << std::endl;
+      std::cerr << "Failed to open SUBLIB file " << fname << std::endl;
       throw std::exception();
     }
     fgets(sublib_contents, 256, fp);
