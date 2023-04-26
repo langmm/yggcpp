@@ -15,6 +15,7 @@ void init_sublib_contents() {
       throw std::exception();
     }
     fgets(sublib_contents, 256, fp);
+    sublib_contents[strcspn(sublib_contents, "\n")] = 0;
     fclose(fp);
     sublib_read = true;
   }
