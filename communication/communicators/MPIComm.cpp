@@ -264,7 +264,7 @@ int MPIComm::comm_nmsg() const {
   return -1;
 }
 
-int MPIComm::send_single(const char *, const size_t &) {
+int MPIComm::send_single(const char *, const size_t &, const Header&) {
   mpi_install_error();
   return -1;
 }

@@ -14,6 +14,9 @@ using namespace communication::mock;
 namespace communication {
 namespace testing {
 class ClientComm_tester : public ClientComm {
+private:
+  ClientComm_tester(const ClientComm_tester&) = delete;
+  ClientComm_tester& operator=(const ClientComm_tester&) = delete;
 public:
   ClientComm_tester(const std::string &name = "", utils::Address *address = nullptr) :
     ClientComm(name, address), server_comm(NULL) {
