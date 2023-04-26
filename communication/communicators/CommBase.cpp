@@ -209,6 +209,7 @@ int Comm_t::send(const char *data, const size_t &len) {
   head.format(data, len, size_max);
   Comm_t* xmulti = NULL;
   if (head.flags & HEAD_FLAG_MULTIPART) {
+    ygglog_debug << "CommBase(" << name << ")::send(const char *data, const size_t &len): Sending message in multiple parts" << std::endl;
     xmulti = create_worker_send(head);
     if (!xmulti) {
       ygglog_error << "CommBase(" << name << ")::send(const char *data, const size_t &len): Error creating worker" << std::endl;

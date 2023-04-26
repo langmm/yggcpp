@@ -698,16 +698,16 @@ public:
     flags &= static_cast<uint16_t>(~HEAD_FLAG_VALID);
   }
 
-  void setMessageFlags(const char* data, const size_t len) {
-    if (len == 0)
+  void setMessageFlags(const char* msg, const size_t msg_len) {
+    if (msg_len == 0)
       return;
-    if (strcmp(data, YGG_MSG_EOF) == 0)
+    if (strcmp(msg, YGG_MSG_EOF) == 0)
       flags |= HEAD_FLAG_EOF;
-    else if (strcmp(data, YGG_CLIENT_EOF) == 0)
+    else if (strcmp(msg, YGG_CLIENT_EOF) == 0)
       flags |= HEAD_FLAG_CLIENT_EOF;
-    else if (strncmp(data, YGG_CLIENT_SIGNON, YGG_CLIENT_SIGNON_LEN) == 0)
+    else if (strncmp(msg, YGG_CLIENT_SIGNON, YGG_CLIENT_SIGNON_LEN) == 0)
       flags |= HEAD_FLAG_CLIENT_SIGNON;
-    else if (strncmp(data, YGG_SERVER_SIGNON, YGG_SERVER_SIGNON_LEN) == 0)
+    else if (strncmp(msg, YGG_SERVER_SIGNON, YGG_SERVER_SIGNON_LEN) == 0)
       flags |= HEAD_FLAG_SERVER_SIGNON;
   }
 

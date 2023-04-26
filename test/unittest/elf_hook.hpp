@@ -2,7 +2,6 @@
 #include <string>
 #include <cstdlib>
 #include <cstring>
-#include <unistd.h>
 #include <cerrno>
 #include <vector>
 #include <atomic>
@@ -20,6 +19,7 @@
 #include <dlfcn.h>
 #include <fcntl.h>
 #include <sys/mman.h>
+#include <unistd.h>
 
 int get_module_base_address(char const *module_filename, void *handle, void **base);
 void *elf_hook(char const *library_filename, void const *library_address, const std::string &name, void const *substitution_address);

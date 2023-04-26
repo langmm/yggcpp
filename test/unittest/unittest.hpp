@@ -100,7 +100,7 @@ public:
 // Add setenv/unsetenv
 #ifdef _MSC_VER
 int setenv(const char *name, const char *value, int overwrite) {
-  if (overwrite or getenv(name) == NULL) {
+  if (overwrite || getenv(name) == NULL) {
     size_t len = strlen(name) + strlen(value);
     char* tmp = (char*)malloc(len * sizeof(char));
     tmp[0] = '\0';
