@@ -17,7 +17,6 @@
 void init_sublib_contents();
 
 #ifdef SUBLIBFILE
-#define SUBLIBFILE_STR(x) #x
 extern bool sublib_read;
 extern char sublib_contents[256];
 #define SUBLIB sublib_contents

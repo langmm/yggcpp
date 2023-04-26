@@ -265,42 +265,46 @@ message(STATUS "Rapidjson found ${RAPIDJSON_INCLUDE_DIRS}")
 
 option(ENABLE_ZMQ "Enable zeromq" ON)
 if(ENABLE_ZMQ)
-    # if (CONDA_PREFIX OR (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC"))
+    find_package(ZeroMQ)
+    if (NOT ZeroMQ_FOUND)
+        # Only conda version has CMake config
+        ## load in pkg-config support
+        find_package(PkgConfig)
+        ## use pkg-config to get hints for 0mq locations
+        pkg_check_modules(PC_ZeroMQ QUIET zmq)
+
+        # if (CONDA_PREFIX)
+        #     if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+        #         set(PC_ZeroMQ_INCLUDE_DIRS "${CONDA_PREFIX}/Library/include ${PC_ZeroMQ_INCLUDE_DIRS}")
+        #         set(PC_ZeroMQ_LIBRARY_DIRS "${CONDA_PREFIX}/Library/lib ${CONDA_PREFIX}/Library/bin ${PC_ZeroMQ_LIBRARY_DIRS}")
+        #     else()
+        #         set(PC_ZeroMQ_INCLUDE_DIRS "${CONDA_PREFIX}/include ${PC_ZeroMQ_INCLUDE_DIRS}")
+        #         set(PC_ZeroMQ_LIBRARY_DIRS "${CONDA_PREFIX}/lib ${PC_ZeroMQ_LIBRARY_DIRS}")
+        #     endif()
+        # endif()
+
+        ## use the hint from above to find where 'zmq.h' is located
+        find_path(ZeroMQ_INCLUDE_DIR
+            NAMES zmq.h
+            PATHS ${PC_ZeroMQ_INCLUDE_DIRS}
+            )
+
+        ## use the hint from above to find the location of libzmq
+        find_library(ZeroMQ_LIBRARY_NEW
+            NAMES zmq
+            PATHS ${PC_ZeroMQ_LIBRARY_DIRS}
+            )
+        set(ZeroMQ_LIBRARY ${ZeroMQ_LIBRARY_NEW})
+        message(STATUS "PkgConfig ZeroMQ_INCLUDE_DIR = ${ZeroMQ_INCLUDE_DIR}")
+	message(STATUS "PkgConfig ZeroMQ_LIBRARY = ${ZeroMQ_LIBRARY}")
+	if ((NOT ZeroMQ_INCLUDE_DIR STREQUAL ZeroMQ_INCLUDE_DIR-NOTFOUND) AND (NOT ZeroMQ_LIBRARY STREQUAL ZeroMQ_LIBRARY-NOTFOUND))
+            set(ZeroMQ_FOUND 1)
+	endif()
+    endif()
+    # Force error
+    if (NOT ZeroMQ_FOUND)
         find_package(ZeroMQ REQUIRED)
-    # else()
-    #     # Only conda version has CMake config
-    #     ## load in pkg-config support
-    #     find_package(PkgConfig)
-    #     ## use pkg-config to get hints for 0mq locations
-    #     pkg_check_modules(PC_ZeroMQ QUIET zmq)
-
-    #     # if (CONDA_PREFIX)
-    #     #     if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    #     #         set(PC_ZeroMQ_INCLUDE_DIRS "${CONDA_PREFIX}/Library/include ${PC_ZeroMQ_INCLUDE_DIRS}")
-    #     #         set(PC_ZeroMQ_LIBRARY_DIRS "${CONDA_PREFIX}/Library/lib ${CONDA_PREFIX}/Library/bin ${PC_ZeroMQ_LIBRARY_DIRS}")
-    #     #     else()
-    #     #         set(PC_ZeroMQ_INCLUDE_DIRS "${CONDA_PREFIX}/include ${PC_ZeroMQ_INCLUDE_DIRS}")
-    #     #         set(PC_ZeroMQ_LIBRARY_DIRS "${CONDA_PREFIX}/lib ${PC_ZeroMQ_LIBRARY_DIRS}")
-    #     #     endif()
-    #     # endif()
-
-    #     ## use the hint from above to find where 'zmq.h' is located
-    #     find_path(ZeroMQ_INCLUDE_DIR
-    #         NAMES zmq.h
-    #         PATHS ${PC_ZeroMQ_INCLUDE_DIRS}
-    #         )
-
-    #     ## use the hint from above to find the location of libzmq
-    #     find_library(ZeroMQ_LIBRARY
-    #         NAMES zmq
-    #         PATHS ${PC_ZeroMQ_LIBRARY_DIRS}
-    #         )
-    #     message(STATUS "PkgConfig ZeroMQ_INCLUDE_DIR = ${ZeroMQ_INCLUDE_DIR}")
-    # 	message(STATUS "PkgConfig ZeroMQ_LIBRARY = ${ZeroMQ_LIBRARY}")
-    # 	if ((NOT ZeroMQ_INCLUDE_DIR STREQUAL ZeroMQ_INCLUDE_DIR-NOTFOUND) AND (NOT ZeroMQ_LIBRARY STREQUAL ZeroMQ_LIBRARY-NOTFOUND))
-    #         set(ZeroMQ_FOUND 1)
-    # 	endif()
-    # endif()
+    endif()
 else (ENABLE_ZMQ)
     message(STATUS "No zmq support will be built." )
 endif (ENABLE_ZMQ)

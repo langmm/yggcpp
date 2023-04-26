@@ -37,6 +37,7 @@ public:
     int Probe(int, MPI_Status *status) const override {
         MPI_Status_set_cancelled(status, MPICANCEL);
 	status->MPI_ERROR = MPISTATUS;
+	status->MPI_SOURCE = 0;
         if (MPIPROC > 0)
 	    status->MPI_SOURCE = MPIPROC;
 	return MPISTATUS;
