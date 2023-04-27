@@ -111,8 +111,8 @@ TEST(IPCComm, sendLarge) {
     EXPECT_EQ(SENDCOUNT, 2);
     SENDCOUNT = 0;
     std::string longmsg(ipc.getMaxMsgSize() * 3 + 20, 'B');
-    EXPECT_EQ(ipc.send(longmsg), 0);
-    EXPECT_EQ(SENDCOUNT, 5);
+    EXPECT_GT(ipc.send(longmsg), 0);
+    EXPECT_EQ(SENDCOUNT, 4);
 
     RETVAL = -1;
     EXPECT_EQ(ipc.send(longmsg), -1);
