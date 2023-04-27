@@ -75,7 +75,7 @@ private:
 #ifdef YGG_TEST
 public:
   friend class testing::ZMQSocket_tester;
-  static void resetPort() { _last_port_set = 0; }
+  static void resetPort();
 #endif
 };
 

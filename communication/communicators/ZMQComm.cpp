@@ -307,6 +307,12 @@ ZMQSocket::~ZMQSocket() {
   handle = NULL;
 }
 
+#ifdef YGG_TEST
+void ZMQSocket::resetPort() {
+  ZMQSocket::_last_port_set = 0;
+}
+#endif // YGG_TEST
+
 //////////////
 // ZMQReply //
 //////////////
@@ -1043,6 +1049,9 @@ ZMQComm::ZMQComm(const std::string name, const DIRECTION direction,
 bool ZMQComm::afterSendRecv(Comm_t*, Comm_t*) {
   zmq_install_error();
   return false;
+}
+void ZMQSocket::resetPort() {
+  zmq_install_error();
 }
 #endif
 

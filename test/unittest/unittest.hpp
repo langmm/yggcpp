@@ -99,6 +99,7 @@ public:
 
 // Add setenv/unsetenv
 #ifdef _MSC_VER
+static inline
 int setenv(const char *name, const char *value, int overwrite) {
   if (overwrite || getenv(name) == NULL) {
     size_t len = strlen(name) + strlen(value);
@@ -115,6 +116,7 @@ int setenv(const char *name, const char *value, int overwrite) {
   }
   return 0;
 }
+static inline
 int unsetenv(const char *name) {
   return setenv(name, "", true);
 }

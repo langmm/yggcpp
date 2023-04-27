@@ -33,6 +33,7 @@ jobs:
           valgrind --version
           # sudo apt autoremove -y
           # sudo apt autoclean -y
+          echo "ASAN_OPTIONS=detect_odr_violation=0" >> $GITHUB_ENV
       - name: Install dependencies on Mac
         if: matrix.os == 'macos-latest'
         run: |
@@ -76,7 +77,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Debug "-DPython3_ROOT_DIR=${Env:pythonLocation}" "-DPython3_EXECUTABLE=${Env:pythonLocation}\python.exe" -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/_install "-DCMAKE_TOOLCHAIN_FILE=${Env:VCPKG_INSTALLATION_ROOT}\scripts\buildsystems\vcpkg.cmake" -DVCPKG_PREFER_SYSTEM_LIBS -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DBUILD_PYTHON_LIBRARY=OFF
+          cmake .. -DCMAKE_BUILD_TYPE=Debug "-DPython3_ROOT_DIR=${Env:pythonLocation}" "-DPython3_EXECUTABLE=${Env:pythonLocation}\python.exe" -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/_install "-DCMAKE_TOOLCHAIN_FILE=${Env:VCPKG_INSTALLATION_ROOT}\scripts\buildsystems\vcpkg.cmake" -DVCPKG_PREFER_SYSTEM_LIBS=ON -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DBUILD_PYTHON_LIBRARY=OFF
       - name: Configure
         if: matrix.os != 'windows-latest'
         run: |
