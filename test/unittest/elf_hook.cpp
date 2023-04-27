@@ -484,19 +484,27 @@ void *elf_hook(char const *module_filename, void const *module_address, const st
     free(symbol);
 
     std::cerr << "elf_hook: " << jtest++ << std::endl;
-    rel_plt_table = (Elf64_Rela *)(((size_t)module_address) + rel_plt->sh_addr);  //init the ".rel.plt" array
-    std::cerr << "elf_hook: " << jtest++ << std::endl;
-    rel_plt_amount = rel_plt->sh_size / sizeof(Elf_Rel);  //and get its size
+    // HERE
+    if (rel_ply) {
+      rel_plt_table = (Elf64_Rela *)(((size_t)module_address) + rel_plt->sh_addr);  //init the ".rel.plt" array
+      rel_plt_amount = rel_plt->sh_size / sizeof(Elf_Rel);  //and get its size
+    } else {
+      rel_plt_amount = 0;
+    }
 
     std::cerr << "elf_hook: " << jtest++ << std::endl;
-    rel_dyn_table = (Elf_Rel *)(((size_t)module_address) + rel_dyn->sh_addr);  //init the ".rel.dyn" array
+    if (rel_dyn) {
+      rel_dyn_table = (Elf_Rel *)(((size_t)module_address) + rel_dyn->sh_addr);  //init the ".rel.dyn" array
+      rel_dyn_amount = rel_dyn->sh_size / sizeof(Elf_Rel);  //and get its size
+    } else {
+      rel_dyn_amount = 0;
+    }
     std::cerr << "elf_hook: " << jtest++ << std::endl;
-    rel_dyn_amount = rel_dyn->sh_size / sizeof(Elf_Rel);  //and get its size
 //release the data used
     std::cerr << "elf_hook: " << jtest++ << std::endl;
-    free(rel_plt);
+    if (rel_plt) free(rel_plt);
     std::cerr << "elf_hook: " << jtest++ << std::endl;
-    free(rel_dyn);
+    if (rel_dyn) free(rel_dyn);
 //and descriptor
     std::cerr << "elf_hook: " << jtest++ << std::endl;
     close(descriptor);

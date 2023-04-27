@@ -56,6 +56,7 @@ gtest_discover_tests(unittest PROPERTIES
 
 
 add_definitions(-DYGG_TEST)
+# This is required for running tests with valgrind
 # if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|ARMClang")
 #     add_custom_command(TARGET unittest POST_BUILD
 #             COMMAND dsymutil unittest
@@ -78,19 +79,11 @@ if(NOT MSVC)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DRAPIDJSON_DONT_IMPORT_NUMPY")
         # Not running SIMD.* unit test cases for Valgrind
         add_test(NAME valgrind_unittest
-                COMMAND valgrind --suppressions=${CMAKE_SOURCE_DIR}/test/valgrind.supp --suppressions=${CMAKE_SOURCE_DIR}/test/valgrind-python.supp --leak-check=full --error-exitcode=1 --track-origins=yes --dsymutil=no --keep-debuginfo=yes --read-var-info=yes ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/unittest --gtest_filter=-SIMD.*
-                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
+                 COMMAND valgrind --suppressions=${CMAKE_SOURCE_DIR}/test/valgrind.supp --suppressions=${CMAKE_SOURCE_DIR}/test/valgrind-python.supp --leak-check=full --error-exitcode=1 --track-origins=yes --dsymutil=no --keep-debuginfo=yes --read-var-info=yes ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/unittest --gtest_filter=-SIMD.*)
+                 # WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
         set_tests_properties(valgrind_unittest PROPERTIES
                 ENVIRONMENT
                 "${YGG_PYTHON_ENV}")
     endif((NOT YGG_SKIP_VALGRIND_TESTS) AND VALGRIND_FOUND)
 
-    #if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    #    add_test(NAME symbol_check
-    #            COMMAND sh -c "objdump -t -C libnamespacetest.a | grep rapidjson ; test $? -ne 0"
-    #            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-    #endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
-
 endif(NOT MSVC)
-#include(GoogleTest)
-#gtest_discover_tests(GeneratorTest)

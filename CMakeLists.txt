@@ -40,6 +40,7 @@ endif()
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 option(YGG_BUILD_TESTS "Build tests" ON)
 option(YGG_BUILD_THIRDPARTY_GTEST "Use gtest installation in 'thirdpart/gtest' by default if available" ON)

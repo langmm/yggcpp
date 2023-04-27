@@ -41,14 +41,13 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: |
           vcpkg.exe install boost --triplet x64-windows
-          vcpkg.exe install boost-python --triplet x64-windows
+          # vcpkg.exe install boost-python --triplet x64-windows
       - name: Install ZeroMQ and MPI dependencies on Ubuntu
         if: matrix.os == 'ubuntu-latest' && matrix.install-zmq
         run: |
           sudo apt-get update
           sudo apt-get install -y libzmq3-dev libgomp1 mpich
           sudo apt upgrade --fix-missing
-          valgrind --version
           # sudo apt autoremove -y
           # sudo apt autoclean -y
       - name: Install ZeroMQ and MPI dependencies on Mac
@@ -84,7 +83,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Debug -DPython3_ROOT_DIR=${pythonLocation} -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/_install -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DBUILD_PYTHON_LIBRARY=OFF
+          cmake .. -DCMAKE_BUILD_TYPE=Debug -DPython3_ROOT_DIR=${pythonLocation} -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/_install -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DYGG_BUILD_ASAN=ON -DYGG_BUILD_UBSAN=ON -DBUILD_PYTHON_LIBRARY=OFF
       - name: Build
         run: |
           cd build
@@ -145,7 +144,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Debug -DYGG_ENABLE_COVERAGE=ON -DCMAKE_INSTALL_PREFIX=../devel -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DBUILD_PYTHON_LIBRARY=OFF
+          cmake .. -DCMAKE_BUILD_TYPE=Debug -DYGG_ENABLE_COVERAGE=ON -DCMAKE_INSTALL_PREFIX=../devel -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DYGG_BUILD_ASAN=ON -DYGG_BUILD_UBSAN=ON -DBUILD_PYTHON_LIBRARY=OFF
       - name: Build
         run: |
           cd build
