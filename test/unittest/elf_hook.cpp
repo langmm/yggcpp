@@ -1,5 +1,6 @@
 #ifdef ELF_AVAILABLE
 #include "elf_hook.hpp"
+#include <iostream>
 //rename standart types for convenience
 #if defined __x86_64 || defined __aarch64__
     #define Elf_Ehdr Elf64_Ehdr
