@@ -234,7 +234,7 @@ private:
       }
     }
     if (units && strlen(units) > 0) {
-      SetSchemaString(units, units, subSchema);
+      SetSchemaString("units", units, subSchema);
     }
     if (subSchema == NULL)
       _init(use_generic);
@@ -242,7 +242,7 @@ private:
   void fromFormat(const std::string& format_str,
 		  bool as_array = false, bool use_generic = false) {
     initSchema();
-    metadata["serialize"].AddMember(
+    metadata["serializer"].AddMember(
       rapidjson::Value("format_str", 10, GetAllocator()).Move(),
       rapidjson::Value(format_str.c_str(),
 		       (rapidjson::SizeType)(format_str.size()),
@@ -346,7 +346,7 @@ private:
       }
       ygglog_debug_c("isubtype = %s, iprecision = %lu, ifmt = %s",
 		   isubtype, iprecision, ifmt);
-      rapidjson::Value item;
+      rapidjson::Value item(rapidjson::kObjectType);
       SetString("type", element_type, item);
       _fromNDArray(isubtype, iprecision, 0, NULL, NULL, false, &item);
       items.PushBack(item, GetAllocator());
@@ -383,6 +383,9 @@ private:
       ygglog_throw_error_c("Metadata::fromMetadata: __meta__ is not an object.");
     _init(use_generic);
   }
+  void fromMetadata(const std::string& head, bool use_generic = false) {
+    return fromMetadata(head.c_str(), head.size(), use_generic);
+  }
   void fromEncode(const rapidjson::Value& document,
 		  bool use_generic = false) {
     rapidjson::SchemaEncoder encoder(true);
@@ -411,10 +414,12 @@ private:
     return (schema && schema->HasMember("type"));
   }
   bool hasSubtype() const {
-    if (strcmp(typeName(), "scalar") != 0) {
-      return false;
+    if (strcmp(typeName(), "scalar") == 0 ||
+	strcmp(typeName(), "ndarray") == 0 ||
+	strcmp(typeName(), "1darray") == 0) {
+      return schema->HasMember("subtype");
     }
-    return schema->HasMember("subtype");
+    return false;
   }
   const char* typeName() const {
     if (!hasType())
@@ -496,6 +501,9 @@ private:
   }
   bool SetValue(const std::string name, rapidjson::Value& x,
 		rapidjson::Value& subSchema) {
+    if (!subSchema.IsObject()) {
+      ygglog_throw_error_c("Metadata::SetValue: subSchema is not an object");
+    }
     if (subSchema.HasMember(name.c_str())) {
       subSchema[name.c_str()].Swap(x);
     } else {
@@ -511,9 +519,11 @@ private:
   type_out Get ## method(const std::string name,			\
 			 rapidjson::Value& subSchema) {			\
     if (!(subSchema.HasMember(name.c_str())))				\
-      ygglog_throw_error_c("Get%s: No %s information in the schema.", #method, name.c_str()); \
+      ygglog_throw_error_c("Get%s: No %s information in the schema.",	\
+			 #method, name.c_str());			\
     if (!(subSchema[name.c_str()].Is ## method()))			\
-      ygglog_throw_error_c("Get%s: %s is not %s.", #method, name.c_str(), #type_in); \
+      ygglog_throw_error_c("Get%s: %s is not %s.", #method,		\
+			 name.c_str(), #type_in);			\
     return subSchema[name.c_str()].Get ## method();			\
   }									\
   type_out Get ## method ## Optional(const std::string name,		\
@@ -522,10 +532,12 @@ private:
     if (!(subSchema.HasMember(name.c_str())))				\
       return defV;							\
     if (!(subSchema[name.c_str()].Is ## method()))			\
-      ygglog_throw_error_c("GetMeta%s: %s is not %s.", #method, name.c_str(), #type_in); \
+      ygglog_throw_error_c("GetMeta%s: %s is not %s.",			\
+			 #method, name.c_str(), #type_in);		\
     return subSchema[name.c_str()].Get ## method();			\
-				 }					\
-				 bool Set ## method(const std::string name, type_in x, rapidjson::Value& subSchema) { \
+  }									\
+  bool Set ## method(const std::string name, type_in x,			\
+		     rapidjson::Value& subSchema) {			\
     rapidjson::Value x_val setargs;					\
     if (subSchema.HasMember(name.c_str())) {				\
       subSchema[name.c_str()].Swap(x_val);				\
@@ -760,6 +772,9 @@ public:
     } else {
       fromMetadata(head, headsiz);
       size_head = headsiz + 2*strlen(MSG_HEAD_SEP);
+      if (size_head > msg_siz) {
+	ygglog_throw_error_c("Header::for_recv: Header (%ld) is larger than message (%ld)", size_head, msg_siz);
+      }
       // size_t bodysiz = msg_siz - size_head;
       if (!(flags & HEAD_TEMPORARY)) {
 	size_curr -= size_head;

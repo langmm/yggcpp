@@ -484,8 +484,7 @@ void *elf_hook(char const *module_filename, void const *module_address, const st
     free(symbol);
 
     std::cerr << "elf_hook: " << jtest++ << std::endl;
-    // HERE
-    if (rel_ply) {
+    if (rel_plt) {
       rel_plt_table = (Elf64_Rela *)(((size_t)module_address) + rel_plt->sh_addr);  //init the ".rel.plt" array
       rel_plt_amount = rel_plt->sh_size / sizeof(Elf_Rel);  //and get its size
     } else {

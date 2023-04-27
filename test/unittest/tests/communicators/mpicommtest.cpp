@@ -21,7 +21,7 @@ class MPIComm_tester : public MPIComm {
 public:
     TESTER_METHODS(MPIComm)
     std::vector<utils::Address*> getAddresses() {return addresses;}
-    mpi_registry_t* getHandle() {return handle;}
+    mpi_registry_t* getHandle() { return handle; }
     void setHandle(mpi_registry_t* h) { handle = h;}
 };
 

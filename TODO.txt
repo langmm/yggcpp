@@ -4,6 +4,8 @@
 * Get tests working on GHA
 * Add tests for RequestList
 * Add tests for Header/Metadata
-* Split serialization.hpp into files for easier maintenance
 * Strip out unused code
 * Set _ygg_error_flag on error
+* Initialize python/zeromq
+* Clean up communicators on exit
+* Split serialization.hpp into files for easier maintenance
