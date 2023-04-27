@@ -162,6 +162,7 @@ namespace communicator {
 	ygglog_error << "addResponseServer: Server does not have any unprocessed requests" << std::endl;
 	return -1;
       }
+      ygglog_debug << "addResponseServer: request_id = " << requests[0].request_id << std::endl;
       if (!header.SetMetaString("request_id", requests[0].request_id)) {
 	ygglog_error << "addResponseServer: Error seting request_id" << std::endl;
 	return -1;
@@ -244,11 +245,12 @@ namespace communicator {
 	  ygglog_error << "RequestList::popRequestClient: Response exceeds size of provided buffer" << std::endl;
 	  return -1;
 	}
-	data = (char*)realloc(data, requests[(size_t)idx].data.size() + 1);
-	if (data == NULL) {
+	char* data_t = (char*)realloc(data, requests[(size_t)idx].data.size() + 1);
+	if (data_t == NULL) {
 	  ygglog_error << "RequestList::popRequestClient: Error reallocating buffer" << std::endl;
 	  return -1;
 	}
+	data = data_t;
 	memcpy(data, requests[(size_t)idx].data.c_str(), requests[(size_t)idx].data.size() + 1);
 	data[requests[(size_t)idx].data.size()] = '\0';
       }

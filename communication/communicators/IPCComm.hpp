@@ -51,7 +51,6 @@ public:
 #ifndef YGG_TEST
 protected:
 #endif
-    virtual bool new_address();
     void init() override;
     int send_single(const char *data, const size_t &len,
 		    const Header& header) override;

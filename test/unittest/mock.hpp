@@ -43,8 +43,7 @@ extern char sublib_contents[256];
     std::cerr << "ERROR in dlopen: " << dlerror() << std::endl;	\
     EXPECT_TRUE(false);						\
     throw std::exception();					\
-  }								\
-  std::cerr << "SUBLIB: " << SUBLIB << std::endl
+  }
 #define ELF_END					\
   dlclose(handle)
   

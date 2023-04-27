@@ -30,7 +30,7 @@ TEST(IPCComm, constructor) {
 
     utils::Address *adr2 = new utils::Address("12345");
     name = "TestName";
-    IPCComm_tester ipc4(name, adr2, SEND);
+    EXPECT_THROW(IPCComm_tester ipc4(name, adr2, RECV), std::runtime_error);
 
     utils::Address *adr3 = new utils::Address("this.is.a.test");
     EXPECT_THROW(IPCComm_tester ipc5(name, adr3, SEND), std::runtime_error);
@@ -38,13 +38,12 @@ TEST(IPCComm, constructor) {
 #ifdef ELF_AVAILABLE
     name = "";
     ELF_BEGIN;
-    std::cerr << "HERE0" << std::endl;
     ELF_BEGIN_F(msgget);
-    std::cerr << "HERE1" << std::endl;
+    RETVAL = 0;
+    IPCComm_tester ipc4(name, adr2, RECV);
+    RETVAL = -1;
     EXPECT_THROW(IPCComm_tester ipc5(name, nullptr, SEND), std::runtime_error);
-    std::cerr << "HERE2" << std::endl;
     ELF_END_F(msgget);
-    std::cerr << "HERE3" << std::endl;
     ELF_END;
 #endif // ELF_AVAILABLE
 }
@@ -80,7 +79,7 @@ TEST(IPCComm, send) {
 
 TEST(IPCComm, commnmsg) {
     std::string name = "Comm_nsg_test";
-    IPCComm_tester ipc(name, new utils::Address("9876"), SEND);
+    IPCComm_tester ipc(name, NULL, SEND);
     int res = ipc.comm_nmsg();
     EXPECT_EQ(res, 0);
 

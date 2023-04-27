@@ -118,54 +118,6 @@ int IPCComm::remove_comm(bool close_comm) {
 }
 
 /*!
-  @brief Create a new channel.
-  @returns int -1 if the address could not be created.
-*/
-bool IPCComm::new_address() {
-    int ret;
-    // TODO: small chance of reusing same number
-    int key = 0;
-#ifdef _OPENMP
-#pragma omp critical (ipc)
-  {
-#endif
-    if (!_ipc_rand_seeded) {
-        srand(ptr2seed(this));
-        _ipc_rand_seeded = true;
-    }
-#ifdef _OPENMP
-    }
-#endif
-    while (key == 0) {
-        key = std::rand();
-    }
-    if (address == nullptr) {
-        address = new utils::Address(std::to_string(key));
-    } else {
-        address->address(std::to_string(key));
-    }
-
-    if (name.empty()) {
-        name = "tempnewIPC." + std::to_string(key);
-    } else {
-        ret = check_channels();
-        if (ret < 0)
-            return false;
-    }
-    //std::string temp = std::to_string(key);
-    //temp = "HELLO";
-    int *fid = new int;
-    fid[0] = msgget(key, (IPC_CREAT | 0777));
-    if (fid[0] < 0) {
-        ygglog_error << "new_ipc_address: msgget(" << key << ", " << IPC_CREAT << " | 0777) ret(" << fid[0]
-                     << "), errno(" << errno << "): " << strerror(errno) << std::endl;
-        return false;
-    }
-    handle = fid;
-    return true;
-}
-
-/*!
   @brief Get number of messages in the comm.
   @returns int Number of messages. -1 indicates an error.
  */
@@ -267,9 +219,31 @@ long IPCComm::recv_single(char*& data, const size_t& len, bool allow_realloc) {
 
 void IPCComm::init() {
     maxMsgSize = 2048;
-    if (address == nullptr || address->address().empty())
-        if (!new_address())
-            throw std::runtime_error("No valid address generated");
+    int key = 0;
+    bool created = (address == nullptr || address->address().empty());
+    if (created) {
+#ifdef _OPENMP
+#pragma omp critical (ipc)
+      {
+#endif
+	if (!_ipc_rand_seeded) {
+	  srand(ptr2seed(this));
+	  _ipc_rand_seeded = true;
+	}
+#ifdef _OPENMP
+      }
+#endif
+      while (key == 0) {
+        key = std::rand();
+      }
+      if (address == nullptr) {
+        address = new utils::Address(std::to_string(key));
+      } else {
+        address->address(std::to_string(key));
+      }
+    } else {
+      key = this->address->key();
+    }
     if (name.empty()) {
         this->name = "tempnewIPC." + this->address->address();
     } else {
@@ -278,11 +252,17 @@ void IPCComm::init() {
             throw std::runtime_error("Check channels failed");
     }
     add_channel();
-    if (!handle) {
-      int qkey = this->address->key();
-      int *fid = new int;
-      fid[0] = msgget(qkey, 0600);
-      handle = fid;
+    int *fid = new int;
+    if (created)
+      fid[0] = msgget(key, (IPC_CREAT | 0777));
+    else
+      fid[0] = msgget(key, 0600);
+    handle = fid;
+    if (fid[0] < 0) {
+        ygglog_error << "IPCComm::init: msgget(" << key << ") "
+		     << "ret(" << fid[0] << "), errno(" << errno << "): "
+		     << strerror(errno) << std::endl;
+	throw std::runtime_error("IPCComm::init: Error in msgget");
     }
     ygglog_debug << "IPCComm(" << name << ")::init: address = " << this->address->address() << std::endl;
 }
@@ -330,11 +310,6 @@ void IPCComm::add_channel() {
 int IPCComm::remove_comm(bool) {
     ipc_install_error();
     return -1;
-}
-
-bool IPCComm::new_address() {
-    ipc_install_error();
-    return false;
 }
 
 int IPCComm::comm_nmsg() const {

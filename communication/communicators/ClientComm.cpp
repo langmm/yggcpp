@@ -60,7 +60,7 @@ bool ClientComm::signon(const Header& header) {
         ygglog_error << "ClientComm(" << name << ")::signon: Error in receiving sign-on" << std::endl;
         return false;
       }
-      delete data;
+      free(data);
       break;
     } else {
       sleep(YGG_SLEEP_TIME);

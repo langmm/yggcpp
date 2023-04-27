@@ -662,7 +662,11 @@ private:
       ygglog_throw_error_c("Metadata::serialize: Error serializing document.");
     if ((size_t)(buffer.GetLength() + 1) > buf_siz[0]) {
       buf_siz[0] = (size_t)(buffer.GetLength() + 1);
-      buf[0] = (char*)realloc(buf[0], buf_siz[0]);
+      char* buf_t = (char*)realloc(buf[0], buf_siz[0]);
+      if (buf_t == NULL) {
+	ygglog_throw_error_c("Metadata::serialize: Error in realloc");
+      }
+      buf[0] = buf_t;
     }
     memcpy(buf[0], buffer.GetString(), (size_t)(buffer.GetLength()));
     buf[0][(size_t)(buffer.GetLength())] = '\0';
@@ -894,7 +898,11 @@ public:
     }
     if ((size_new + 1) > size_buff) {
       size_buff = size_new + 1;
-      data[0] = (char*)realloc(data[0], size_buff);
+      char* data_t = (char*)realloc(data[0], size_buff);
+      if (!data_t) {
+	ygglog_throw_error_c("Header::format: Error in realloc");
+      }
+      data[0] = data_t;
     }
     int ret;
     if (GetMetaBoolOptional("in_data", false)) {

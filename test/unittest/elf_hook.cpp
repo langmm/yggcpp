@@ -446,23 +446,18 @@ void *elf_hook(char const *module_filename, void const *module_address, const st
 
     void *original = NULL;  //address of the symbol being substituted
     size_t jtest = 0;
-    std::cerr << "elf_hook: " << jtest++ << std::endl;
     if (NULL == module_address || name.empty() || NULL == substitution)
         return original;
 
-    std::cerr << "elf_hook: " << jtest++ << std::endl;
     if (!pagesize)
         pagesize = static_cast<size_t>(sysconf(_SC_PAGESIZE));
 
-    std::cerr << "elf_hook: " << jtest++ << std::endl;
     descriptor = open(module_filename, O_RDONLY);
 
-    std::cerr << "elf_hook: " << jtest++ << std::endl;
     if (descriptor < 0)
         return original;
 
 
-    std::cerr << "elf_hook: " << jtest++ << std::endl;
     if (
         section_by_type(descriptor, SHT_DYNSYM, &dynsym) ||  //get ".dynsym" section
         symbol_by_name(descriptor, dynsym, name, &symbol, &name_index) ||  //actually, we need only the index of symbol named "name" in the ".dynsym" table
@@ -478,12 +473,9 @@ void *elf_hook(char const *module_filename, void const *module_address, const st
         return original;
     }
 //release the data used
-    std::cerr << "elf_hook: " << jtest++ << std::endl;
     free(dynsym);
-    std::cerr << "elf_hook: " << jtest++ << std::endl;
     free(symbol);
 
-    std::cerr << "elf_hook: " << jtest++ << std::endl;
     if (rel_plt) {
       rel_plt_table = (Elf64_Rela *)(((size_t)module_address) + rel_plt->sh_addr);  //init the ".rel.plt" array
       rel_plt_amount = rel_plt->sh_size / sizeof(Elf_Rel);  //and get its size
@@ -491,24 +483,18 @@ void *elf_hook(char const *module_filename, void const *module_address, const st
       rel_plt_amount = 0;
     }
 
-    std::cerr << "elf_hook: " << jtest++ << std::endl;
     if (rel_dyn) {
       rel_dyn_table = (Elf_Rel *)(((size_t)module_address) + rel_dyn->sh_addr);  //init the ".rel.dyn" array
       rel_dyn_amount = rel_dyn->sh_size / sizeof(Elf_Rel);  //and get its size
     } else {
       rel_dyn_amount = 0;
     }
-    std::cerr << "elf_hook: " << jtest++ << std::endl;
 //release the data used
-    std::cerr << "elf_hook: " << jtest++ << std::endl;
     if (rel_plt) free(rel_plt);
-    std::cerr << "elf_hook: " << jtest++ << std::endl;
     if (rel_dyn) free(rel_dyn);
 //and descriptor
-    std::cerr << "elf_hook: " << jtest++ << std::endl;
     close(descriptor);
 //now we've got ".rel.plt" (needed for PIC) table and ".rel.dyn" (for non-PIC) table and the symbol's index
-    std::cerr << "elf_hook: " << jtest++ << std::endl;
     for (i = 0; i < rel_plt_amount; ++i)  //lookup the ".rel.plt" table
         if (ELF64_R_SYM(rel_plt_table[i].r_info) == name_index)  //if we found the symbol to substitute in ".rel.plt"
         {
@@ -520,11 +506,9 @@ void *elf_hook(char const *module_filename, void const *module_address, const st
             break;  //the target symbol appears in ".rel.plt" only once
         }
 
-    std::cerr << "elf_hook: " << jtest++ << std::endl;
     if (original)
         return original;
 //we will get here only with 32-bit non-PIC module
-    std::cerr << "elf_hook: " << jtest++ << std::endl;
     for (i = 0; i < rel_dyn_amount; ++i)  //lookup the ".rel.dyn" table
         if (ELF_R_SYM(rel_dyn_table[i].r_info) == name_index)  //if we found the symbol to substitute in ".rel.dyn"
         {
@@ -554,7 +538,6 @@ void *elf_hook(char const *module_filename, void const *module_address, const st
         }
 
 
-    std::cerr << "elf_hook: " << jtest++ << std::endl;
     return original;
 }
 

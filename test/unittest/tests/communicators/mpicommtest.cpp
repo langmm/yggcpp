@@ -170,6 +170,7 @@ TEST(MPIComm, recv) {
     communication::testing::mpi_registry_mock::MPISTATUS = 0;
     EXPECT_EQ(mpic.recv(data, len, true), msg.size());
     mpic.setHandle(tempmpi);
+    free(data);
 }
 
 TEST(MPIComm, regclone) {

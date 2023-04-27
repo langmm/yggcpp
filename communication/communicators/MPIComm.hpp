@@ -21,7 +21,7 @@ public:
     MPI_Comm comm;
     std::vector<size_t> procs; //!< IDs for partner processes.
     int tag; //!< Tag for next message.
-    mpi_registry_t &Clone() const;
+    mpi_registry_t Clone() const;
     virtual int Probe(int source, MPI_Status *status) const;
     virtual int Send(const void *buf, int count, MPI_Datatype datatype, int dest) const;
     virtual int Recv(void *buf, int count, MPI_Datatype datatype, int source,

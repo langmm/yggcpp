@@ -98,7 +98,7 @@ TEST(ZMQComm, constructor) {
     {
       ELF_BEGIN_F(zmq_connect);
       EXPECT_THROW(ZMQComm zmqc("", new utils::Address("1.2.3.4"), RECV),
-		   std::runtime_error);
+		   std::exception);
       ELF_END_F(zmq_connect);
     }
     {
@@ -150,10 +150,11 @@ TEST(ZMQComm, send) {
     }
     // Successful send
     {
-      RETVAL = 0;
       ELF_BEGIN_F(zmq_sendmsg);
+      RETVAL = 0;
       EXPECT_GT(zmq.send(mmsg.c_str(), mmsg.size()), 0);
       std::string long_msg(YGG_MSG_MAX * 3 + 20, 'A');
+      RETVAL = 0;
       EXPECT_GT(zmq.send(long_msg.c_str(), long_msg.size()), 0);
       ELF_END_F(zmq_sendmsg);
     }

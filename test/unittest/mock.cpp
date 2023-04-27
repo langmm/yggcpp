@@ -51,7 +51,7 @@ int msgctl(int, int, msqid_ds *buf) {
 }
 
 int msgget(key_t, int) {
-    return -1;
+    return RETVAL;
 }
 
 ssize_t msgrcv(int, void* rbuf, size_t, long, int) {

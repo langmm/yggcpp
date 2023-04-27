@@ -11,11 +11,10 @@ using namespace communication::utils;
 
 mpi_registry_t::~mpi_registry_t() {}
 
-mpi_registry_t &mpi_registry_t::Clone() const {
+mpi_registry_t mpi_registry_t::Clone() const {
     MPI_Comm ncomm;
     MPI_Comm_dup( this->comm, &ncomm);
-    auto *clone = new mpi_registry_t(ncomm);
-    return *clone;
+    return mpi_registry_t(ncomm);
 }
 
 void mpi_registry_t::CheckReturn(int code, std::string method, int rank) const {
