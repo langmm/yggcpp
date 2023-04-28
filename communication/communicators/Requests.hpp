@@ -130,8 +130,8 @@ namespace communicator {
     }
     int addRequestServer(Header& header) {
       ygglog_debug << "addRequestServer: begin" << std::endl;
-      std::string request_id = header.GetMetaString("request_id");
-      std::string response_address = header.GetMetaString("response_address");
+      std::string request_id(header.GetMetaString("request_id"));
+      std::string response_address(header.GetMetaString("response_address"));
       int comm_idx = hasComm(response_address);
       if (comm_idx < 0) {
 	comm_idx = addComm(response_address);
@@ -150,7 +150,8 @@ namespace communicator {
       requests[idx].response_id = response_id;
       requests[idx].comm_idx = static_cast<size_t>(comm_idx);
       requests[idx].is_signon = (header.flags & HEAD_FLAG_CLIENT_SIGNON);
-      ygglog_debug << "addRequestServer: done response_address = "
+      ygglog_debug << "addRequestServer: done idx = " << idx
+		   << ", response_address = "
 		   << comms[requests[idx].comm_idx]->address->address()
 		   << ", request_id = " << request_id
 		   << ", response_id = " << response_id << std::endl;
@@ -180,7 +181,7 @@ namespace communicator {
     }
     int addResponseClient(Header& header, const char* data, const size_t len) {
       ygglog_debug << "addResponseClient: begin" << std::endl;
-      std::string request_id = header.GetMetaString("request_id");
+      std::string request_id(header.GetMetaString("request_id"));
       int idx = hasRequest(request_id);
       if (idx < 0) {
 	ygglog_error << "addResponseClient: Client does not have a request with id '" << request_id << "'" << std::endl;
@@ -271,7 +272,7 @@ namespace communicator {
       if (response_dir == RECV)
 	x->flags |= COMM_FLAG_CLIENT_RESPONSE;
       else
-	x->flags |= COMM_ALLOW_MULTIPLE_COMMS;
+	x->flags |= COMM_FLAG_SERVER_RESPONSE;
       comms.push_back(x);
       idx = (int)(comms.size() - 1);
       return idx;

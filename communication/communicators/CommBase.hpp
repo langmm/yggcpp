@@ -18,11 +18,12 @@
 #define COMM_FLAG_CLIENT  0x00000010  //!< Set if the comm is a client
 #define COMM_FLAG_SERVER  0x00000020  //!< Set if the comm is a server
 #define COMM_FLAG_CLIENT_RESPONSE 0x00000040 //!< Set if the comm is a client response comm
-#define COMM_ALWAYS_SEND_HEADER   0x00000080 //!< Set if the comm should always include a header in messages
-#define COMM_ALLOW_MULTIPLE_COMMS 0x00000100 //!< Set if the comm should connect in a way that allow multiple connections
-#define COMM_FLAGS_USED   0x00000200  //!< Set if the comm has been used
-#define COMM_EOF_SENT     0x00000400  //!< Set if EOF has been sent
-#define COMM_EOF_RECV     0x00000800  //!< Set if EOF has been received
+#define COMM_FLAG_SERVER_RESPONSE 0x00000080 //!< Set if the comm is a server response comm
+#define COMM_ALWAYS_SEND_HEADER   0x00000100 //!< Set if the comm should always include a header in messages
+#define COMM_ALLOW_MULTIPLE_COMMS 0x00000200 //!< Set if the comm should connect in a way that allow multiple connections
+#define COMM_FLAGS_USED   0x00000400  //!< Set if the comm has been used
+#define COMM_EOF_SENT     0x00000800  //!< Set if EOF has been sent
+#define COMM_EOF_RECV     0x00001000  //!< Set if EOF has been received
 
 /*! @brief Set if the comm is the receiving comm for a client/server request connection */
 #define COMM_FLAG_RPC     COMM_FLAG_SERVER | COMM_FLAG_CLIENT

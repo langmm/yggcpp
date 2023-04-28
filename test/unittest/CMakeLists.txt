@@ -50,7 +50,7 @@ target_link_libraries(unittest ${TEST_LIBRARIES})
 target_include_directories(unittest PRIVATE ${TEST_INCLUDE_DIRS})
 message(STATUS "TEST_LIBRARIES = ${TEST_LIBRARIES}")
 message(STATUS "TEST_INCLUDE_DIRS = ${TEST_INCLUDE_DIRS}")
-gtest_discover_tests(unittest)
+gtest_discover_tests(unittest DISCOVERY_MODE PRE_TEST)
 # gtest_discover_tests(unittest PROPERTIES
 #                      ENVIRONMENT
 #                      "${RAPIDJSON_PYTHON_ENV}")

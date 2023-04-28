@@ -525,9 +525,10 @@ bool ZMQComm::init_handle() {
     delete handle;
     handle = nullptr;
   }
-  if (flags & COMM_FLAG_CLIENT) {
+  if (flags & (COMM_FLAG_CLIENT | COMM_FLAG_SERVER_RESPONSE)) {
     handle = new ZMQSocket(ZMQ_ROUTER, address);
-  } else if (flags & (COMM_FLAG_SERVER | COMM_ALLOW_MULTIPLE_COMMS)) {
+  } else if (flags & (COMM_FLAG_SERVER | COMM_FLAG_CLIENT_RESPONSE |
+		      COMM_ALLOW_MULTIPLE_COMMS)) {
     handle = new ZMQSocket(ZMQ_DEALER, address);
   } else {
     handle = new ZMQSocket(ZMQ_PAIR, address);
@@ -675,35 +676,6 @@ long ZMQComm::recv_single(char*& data, const size_t &len,
     if ((ret = handle->recv(msg)) < 0)
         return ret;
     
-    // Check for server signon and respond
-    while (msg.compare(0, 23, "ZMQ_SERVER_SIGNING_ON::") == 0) {
-      ygglog_debug << "ZMQComm(" << name << ")::recv_single: Received sign-on" << std::endl;
-      std::string client_address = msg.substr(23);
-
-      // create a DEALER socket and connect to address
-      ZMQSocket* client_socket = NULL;
-      try {
-	client_socket = new ZMQSocket(ZMQ_DEALER, client_address,
-				      _zmq_sleeptime, 1,
-				      _zmq_sleeptime);
-      } catch (...) {
-	ygglog_error << "ZMQComm(" << name << ")::recv_single: "
-		     << "Could not initalize the client side of the proxy socket to confirm signon" << std::endl;
-	return -1;
-      }
-      if (client_socket->send(msg) < 0) {
-	ygglog_error << "ZMQComm(" << name << ")::recv_single: Error sending response message." << std::endl;
-	delete client_socket;
-	return -1;
-      }
-      delete client_socket;
-      
-      if ((ret = handle->recv(msg)) < 0) {
-	ygglog_debug << "ZMQComm(" << name << ")::recv_single: did not receive" << std::endl;
-	return ret;
-      }
-    }
-
     ret = this->copyData(data, len, msg.c_str(), msg.size(), allow_realloc);
     if (ret < 0) {
       ygglog_error << "ZMQComm(" << name << ")::recv_single: Error copying data" << std::endl;

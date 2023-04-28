@@ -77,7 +77,8 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Debug "-DPython3_ROOT_DIR=${Env:pythonLocation}" "-DPython3_EXECUTABLE=${Env:pythonLocation}\python.exe" -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/_install "-DCMAKE_TOOLCHAIN_FILE=${Env:VCPKG_INSTALLATION_ROOT}\scripts\buildsystems\vcpkg.cmake" -DVCPKG_PREFER_SYSTEM_LIBS=ON -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DBUILD_PYTHON_LIBRARY=OFF
+          cmake .. -DCMAKE_BUILD_TYPE=Debug "-DPython3_ROOT_DIR=${Env:pythonLocation}" "-DPython3_EXECUTABLE=${Env:pythonLocation}\python.exe" -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/_install "-DCMAKE_PREFIX_PATH=${Env:VCPKG_INSTALLATION_ROOT}\installed\x64-windows" -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DBUILD_PYTHON_LIBRARY=OFF
+          # cmake .. -DCMAKE_BUILD_TYPE=Debug "-DPython3_ROOT_DIR=${Env:pythonLocation}" "-DPython3_EXECUTABLE=${Env:pythonLocation}\python.exe" -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/_install "-DCMAKE_TOOLCHAIN_FILE=${Env:VCPKG_INSTALLATION_ROOT}\scripts\buildsystems\vcpkg.cmake" -DVCPKG_PREFER_SYSTEM_LIBS=ON -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DBUILD_PYTHON_LIBRARY=OFF
       - name: Configure
         if: matrix.os != 'windows-latest'
         run: |
@@ -133,14 +134,20 @@ jobs:
         run: |
           python -c "import sys; print(sys.executable)"
           python -c "import numpy; print(numpy.get_include())"
-      - name: Configure
+      - name: Configure windows
         if: matrix.os == 'windows-latest'
         run: |
           mkdir build
           cd build
           cmake .. -DCMAKE_BUILD_TYPE=Debug -DYGG_ENABLE_COVERAGE=ON -DCMAKE_INSTALL_PREFIX=../devel "-DCMAKE_PREFIX_PATH=${Env:CONDA_PREFIX}" -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DBUILD_PYTHON_LIBRARY=OFF
-      - name: Configure
-        if: matrix.os != 'windows-latest'
+      - name: Configure linux
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          mkdir build
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Debug -DYGG_ENABLE_COVERAGE=ON -DCMAKE_INSTALL_PREFIX=../devel -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DBUILD_PYTHON_LIBRARY=OFF
+      - name: Configure mac
+        if: matrix.os == 'macos-latest'
         run: |
           mkdir build
           cd build

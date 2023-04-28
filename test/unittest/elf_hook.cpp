@@ -445,7 +445,6 @@ void *elf_hook(char const *module_filename, void const *module_address, const st
     *name_address = NULL;  //address of relocation for symbol named "name"
 
     void *original = NULL;  //address of the symbol being substituted
-    size_t jtest = 0;
     if (NULL == module_address || name.empty() || NULL == substitution)
         return original;
 
