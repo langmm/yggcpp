@@ -80,7 +80,7 @@ endif()
 
 if (WIN32)
     add_custom_command(
-        TARGET ${PROJECT_NAME}
+        TARGET unittest
         POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:unittest> $<TARGET_FILE_DIR:unittest>
         COMMAND_EXPAND_LISTS

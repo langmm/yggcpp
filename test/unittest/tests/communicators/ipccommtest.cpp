@@ -38,9 +38,10 @@ TEST(IPCComm, constructor) {
 #ifdef ELF_AVAILABLE
     name = "";
     ELF_BEGIN;
-    ELF_BEGIN_F(msgget);
+    ELF_BEGIN_F(msgget); // To allow connection to non-existed queue
     RETVAL = 0;
-    IPCComm_tester ipc4(name, adr2, RECV);
+    utils::Address *adr4 = new utils::Address("12345");
+    IPCComm_tester ipc4(name, adr4, RECV);
     RETVAL = -1;
     EXPECT_THROW(IPCComm_tester ipc5(name, nullptr, SEND), std::runtime_error);
     ELF_END_F(msgget);
@@ -57,6 +58,7 @@ TEST(IPCComm, send) {
 #ifdef ELF_AVAILABLE
     SENDCOUNT = 0;
     ELF_BEGIN;
+    ELF_BEGIN_F(msgget);
     std::string data = "abcdef12345";
     utils::Address *adr2 = new utils::Address("12345678");
     IPCComm_tester ipc2(data, adr2, SEND);
@@ -72,6 +74,7 @@ TEST(IPCComm, send) {
     // Restore
     ELF_END_F(msgsnd);
     ELF_END_F(msgctl);
+    ELF_END_F(msgget);
     ELF_END;
 #endif // ELF_AVAILABLE
 }
@@ -102,6 +105,7 @@ TEST(IPCComm, sendLarge) {
     SENDCOUNT = 0;
     std::string name = "SendTester";
     ELF_BEGIN;
+    ELF_BEGIN_F(msgget); // To allow connection to non-existed queue
     // Replace msgsnd to test failure on long message?
     ELF_BEGIN_F_RET(msgsnd, 0);
     IPCComm_tester ipc(name, new utils::Address("2468"), SEND);
@@ -117,6 +121,7 @@ TEST(IPCComm, sendLarge) {
     EXPECT_EQ(ipc.send(longmsg), -1);
 
     ELF_END_F(msgsnd);
+    ELF_END_F(msgget);
     ELF_END;
 #endif // ELF_AVAILABLE
 }
@@ -125,6 +130,7 @@ TEST(IPCComm, recv) {
 #ifdef ELF_AVAILABLE
     std::string name = "SendTester";
     ELF_BEGIN;
+    ELF_BEGIN_F(msgget); // To allow connection to non-existed queue
     // Replace msgrcv to test different size messages
     ELF_BEGIN_F_RET(msgrcv, 0);
     IPCComm_tester ipc(name, new utils::Address("13579"), RECV);
@@ -147,6 +153,7 @@ TEST(IPCComm, recv) {
     EXPECT_EQ(res, -1);
     ELF_END_F(msgrcv);
     free(data);
+    ELF_END_F(msgget);
     ELF_END;
 #endif // ELF_AVAILABLE
 }

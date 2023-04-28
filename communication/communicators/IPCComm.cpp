@@ -251,13 +251,13 @@ void IPCComm::init() {
         if (check_channels() < 0)
             throw std::runtime_error("Check channels failed");
     }
-    add_channel();
     int *fid = new int;
     if (created)
       fid[0] = msgget(key, (IPC_CREAT | 0777));
     else
       fid[0] = msgget(key, 0600);
     handle = fid;
+    add_channel();
     if (fid[0] < 0) {
         ygglog_error << "IPCComm::init: msgget(" << key << ") "
 		     << "ret(" << fid[0] << "), errno(" << errno << "): "
