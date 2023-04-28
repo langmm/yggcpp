@@ -9,9 +9,24 @@
 
 namespace communication {
 namespace utils {
+
+/**
+ * Get the prefix string for log messages
+ * @return
+ */
 std::string _getLogPretex();
+
+/**
+ * Reports an error to the log, the raises the error as an exception
+ * @param msg
+ */
 void ygglog_throw_error(const std::string& msg);
+
+/**
+ * Initialize the logger
+ */
 void init_logger();
+
 static int _ygg_error_flag = 0;
 static bool _loginit = false;
 

@@ -6,14 +6,25 @@
 #include <istream>
 extern "C" {
 #endif
-
+/**
+ * Enum for communicator types
+ */
 enum COMM_TYPE {
-    NULL_COMM, IPC_COMM, ZMQ_COMM,
-    SERVER_COMM, CLIENT_COMM,
-    MPI_COMM
+    NULL_COMM,   //!< No type
+    IPC_COMM,    //!< IPC based communicator
+    ZMQ_COMM,    //!< ZeroMQ based communicator
+    SERVER_COMM, //!< Server communicator
+    CLIENT_COMM, //!< Client communicator
+    MPI_COMM     //!< MPI based communicator
 };
+
+/**
+ * Communicator direction
+ */
 enum DIRECTION {
-    SEND, NONE, RECV
+    SEND,  //!< Sending communicator
+    NONE,  //!< No direction
+    RECV   //!< Receiving communicator
 };
 
 enum DTYPE {

@@ -23,10 +23,6 @@ IPCComm::~IPCComm() {
     }
 }
 
-/*!
-  @brief Check if an IPC channel can be initialized.
-  @returns int -1 if the channel can't be initialized.
- */
 int IPCComm::check_channels() {
     // Fail if name is empty
     if (name.empty()) {
@@ -75,13 +71,6 @@ void IPCComm::add_channel() {
 #endif
 }
 
-/*!
-  @brief Remove a channel.
-  @param[in] close_comm int If 1, the queue will be closed, otherwise it will
-  just be removed from the register and it is assumed that another process
-  will close it.
-  @returns int -1 if removal not successful.
-*/
 
 int IPCComm::remove_comm(bool close_comm) {
     int ret;
@@ -113,10 +102,6 @@ int IPCComm::remove_comm(bool close_comm) {
     return ret;
 }
 
-/*!
-  @brief Create a new channel.
-  @returns int -1 if the address could not be created.
-*/
 bool IPCComm::new_address() {
     int ret;
     // TODO: small chance of reusing same number
@@ -161,10 +146,6 @@ bool IPCComm::new_address() {
     return true;
 }
 
-/*!
-  @brief Get number of messages in the comm.
-  @returns int Number of messages. -1 indicates an error.
- */
 int IPCComm::comm_nmsg() const {
     struct msqid_ds buf;
     if (handle == nullptr) {
@@ -181,13 +162,6 @@ int IPCComm::comm_nmsg() const {
     return ret;
 }
 
-/*!
-  @brief Send a message to the comm.
-  Send a message smaller than YGG_MSG_MAX bytes to an output comm. If the
-  message is larger, it will not be sent.
-  @param[in] data character pointer to message that should be sent.
-  @returns int 0 if send succesfull, -1 if send unsuccessful.
- */
 int IPCComm::send(const char* data, const size_t &len) {
     ygglog_debug << "ipc_comm_send(" << name << "): " << len << " bytes";
     if (check_size(len))
@@ -226,15 +200,6 @@ int IPCComm::send_normal(const char *data, const size_t &len) {
     return ret;
 }
 
-/*!
-  @brief Send a large message to an output comm.
-  Send a message larger than YGG_MSG_MAX bytes to an output comm by breaking
-  it up between several smaller messages and sending initial message with the
-  size of the message that should be expected. Must be partnered with
-  ipc_comm_recv_nolimit for communication to make sense.
-  @param[in] data character pointer to message that should be sent.
-  @returns int 0 if send succesfull, -1 if send unsuccessful.
- */
 int IPCComm::send_large(const char *data, const size_t &len) {
     int ret;
     size_t msgsiz = 0;
@@ -266,14 +231,6 @@ int IPCComm::send_large(const char *data, const size_t &len) {
     return ret;
 }
 
-/*!
-  @brief Receive a message from an input comm.
-  Receive a message smaller than YGG_MSG_MAX bytes from an input comm.
-  @param[out] data char ** pointer to allocated buffer where the message
-  should be saved.
-  @returns int -1 if message could not be received. Length of the received
-  message if message was received.
- */
  // TODO: Handle long messages
 long IPCComm::recv(char* data, const size_t& len, bool allow_realloc) {
     ygglog_debug << "ipc_comm_recv(" << name << ")";

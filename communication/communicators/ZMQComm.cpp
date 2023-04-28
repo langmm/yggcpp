@@ -99,11 +99,6 @@ void ZMQComm::init() {
     }
 }
 
-/*!
-  @brief Initialize a ZeroMQ communication.
-  @param[in] comm comm_t * Comm structure initialized with init_comm_base.
-  @returns int -1 if the comm could not be initialized.
- */
 ZMQComm::ZMQComm(const std::string name, Address *address, const DIRECTION direction) :
         CommBase(address, direction, ZMQ_COMM) {
     init();
@@ -122,9 +117,6 @@ void ZMQComm::init_reply() {
     reply->n_rep = 0;
 }
 
-/*!
-  @brief Add empty reply structure information to comm.
- */
 
 void ZMQComm::init_zmq_reply() {
     if (reply == nullptr)
@@ -134,12 +126,6 @@ void ZMQComm::init_zmq_reply() {
     }
 }
 
-/*!
-  @brief Locate matching reply socket.
-  @param[in] comm comm_t* Comm that should be checked for matching reply socket.
-  @param[in] address char* Address that should be matched against.
-  @returns int Index of matched socket, -1 if no match, -2 if error.
- */
 int ZMQComm::find_reply_socket(Address *address) {
     Address* adr;
     if (address == nullptr)
@@ -159,11 +145,6 @@ int ZMQComm::find_reply_socket(Address *address) {
     return -1;
 }
 
-/*!
-  @brief Request confirmation from receiving socket.
-  @param[in] comm comm_t* Comm structure to do reply for.
-  @returns int 0 if successful, -2 on EOF, -1 otherwise.
- */
 
 int ZMQComm::do_reply_send() {
     // Get reply
@@ -252,13 +233,6 @@ int ZMQComm::do_reply_send() {
     return ret;
 }
 
-/*!
-  @brief Send confirmation to sending socket.
-  @param[in] comm comm_t* Comm structure to do reply for.
-  @param[in] isock int Index of socket that reply should be done for.
-  @param[in] msg char* Mesage to send/recv.
-  @returns int 0 if successfule, -1 otherwise.
- */
 int ZMQComm::do_reply_recv(const int &isock, const char* msg) {
     // Get reply
     if (reply->sockets.size() <= isock) {
@@ -316,11 +290,6 @@ int ZMQComm::do_reply_recv(const int &isock, const char* msg) {
     return 0;
 }
 
-/*!
-  @brief Add reply socket information to a send comm.
-  @param[in] comm comm_t* Comm that confirmation is for.
-  @returns char* Reply socket address.
-*/
 std::string ZMQComm::set_reply_send() {
     std::string out;
 
@@ -375,11 +344,6 @@ std::string ZMQComm::set_reply_send() {
     return reply->addresses[0]->address();
 }
 
-/*!
-  @brief Add reply socket information to a recv comm.
-  @param[in] comm comm_t* Comm that confirmation is for.
-  @returns int Index of the reply socket.
-*/
 int ZMQComm::set_reply_recv(Address* adr) {
     int out = -1;
     // Get reply
@@ -414,27 +378,12 @@ int ZMQComm::set_reply_recv(Address* adr) {
     return isock;
 }
 
-/*!
-  @brief Add information about reply socket to outgoing message.
-  @param[in] comm comm_t* Comm that confirmation is for.
-  @param[in] data char* Message that reply info should be added to.
-  @param[in] len int Length of the outgoing message.
-  @returns char* Message with reply information added.
- */
 void ZMQComm::check_reply_send(const char* data) {
     //return data;
     return;
 }
 
 
-/*!
-  @brief Get reply information from message.
-  @param[in] comm comm_* Comm structure for incoming message.
-  @param[in, out] data char* Received message containing reply info that will be
-  removed on return.
-  @param[in] len size_t Length of received message.
-  @returns int Length of message without the reply info. -1 if there is an error.
- */
 int ZMQComm::check_reply_recv(const char* data, const size_t &len) {
     int new_len = (int)len;
     int ret;
@@ -475,11 +424,6 @@ int ZMQComm::check_reply_recv(const char* data, const size_t &len) {
     return new_len;
 }
 
-/*!
-  @brief Create a new socket.
-  @param[in] comm comm_t * Comm structure initialized with new_comm_base.
-  @returns int -1 if the address could not be created.
-*/
 bool ZMQComm::new_address() {
     // TODO: Get protocol/host from input
     std::string protocol = "tcp";
@@ -642,10 +586,6 @@ void ZMQComm::destroy() {
     //TODO: THERE IS MORE TO DELETE?
 }
 
-/*!
-  @brief Get number of messages in the comm.
-  @returns int Number of messages. -1 indicates an error.
- */
 int ZMQComm::comm_nmsg() const {
     int out = 0;
     if (direction == RECV) {
@@ -674,14 +614,6 @@ int ZMQComm::comm_nmsg() const {
     return out;
 }
 
-/*!
-  @brief Send a message to the comm.
-  Send a message smaller than YGG_MSG_MAX bytes to an output comm. If the
-  message is larger, it will not be sent.
-  @param[in] data character pointer to message that should be sent.
-  @param[in] len size_t length of message to be sent.
-  @returns int 0 if send succesfull, -1 if send unsuccessful.
- */
 int ZMQComm::send(const char* data, const size_t &len) {
     int ret;
     size_t msgsiz;
@@ -791,18 +723,6 @@ int ZMQComm::recv_time_limit(zmq::multipart_t &msgs) {
 
     return 0;
 }
-/*!
-  @brief Receive a message from an input comm.
-  Receive a message smaller than YGG_MSG_MAX bytes from an input comm.
-  @param[in] x comm_t* structure that message should be sent to.
-  @param[out] data char ** pointer to allocated buffer where the message
-  should be saved. This should be a malloc'd buffer if allow_realloc is 1.
-  @param[in] len const size_t length of the allocated message buffer in bytes.
-  @param[in] allow_realloc const int If 1, the buffer will be realloced if it
-  is not large enought. Otherwise an error will be returned.
-  @returns int -1 if message could not be received. Length of the received
-  message if message was received.
- */
 long ZMQComm::recv(char* data, const size_t &len, bool allow_realloc) {
     long ret = -1;
     zmq::multipart_t msgs;
