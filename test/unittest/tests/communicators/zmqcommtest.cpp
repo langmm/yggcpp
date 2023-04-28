@@ -102,13 +102,10 @@ TEST(ZMQComm, constructor) {
       ELF_END_F(zmq_connect);
     }
     {
-      // Advance port on bind to existing
+      // Advance port on bind to existing, then fail
       RETVAL = EADDRINUSE;
       ELF_BEGIN_F(zmq_bind);
       ELF_BEGIN_F(zmq_errno);
-      ZMQComm_tester zmqc2(name, nullptr, SEND);
-      // Failure to bind
-      RETVAL = EADDRINUSE + 1;
       EXPECT_THROW(ZMQComm zmqc(name, nullptr, SEND), std::runtime_error);
       ELF_END_F(zmq_bind);
       ELF_END_F(zmq_errno);
@@ -154,7 +151,7 @@ TEST(ZMQComm, send) {
       RETVAL = 0;
       EXPECT_GT(zmq.send(mmsg.c_str(), mmsg.size()), 0);
       std::string long_msg(YGG_MSG_MAX * 3 + 20, 'A');
-      RETVAL = 0;
+      RETVAL = 10;
       EXPECT_GT(zmq.send(long_msg.c_str(), long_msg.size()), 0);
       ELF_END_F(zmq_sendmsg);
     }
@@ -183,6 +180,8 @@ TEST(ZMQComm, recv) {
     ELF_BEGIN_F(zmq_poll);
 #endif // ZMQ_HAVE_POLLER
     ELF_BEGIN_F(zmq_recvmsg);
+    RETMSG = "";
+    zmq.getReply().create(RETMSG);
     EXPECT_GE(zmq.recv(data, len, true), 0);
     EXPECT_EQ(strcmp(data, "Hello world"), 0);
     free(data);

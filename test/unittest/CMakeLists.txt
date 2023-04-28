@@ -78,6 +78,14 @@ endif()
 #        ENVIRONMENT
 #        "${RAPIDJSON_PYTHON_ENV}")
 
+if (WIN32)
+    add_custom_command(
+        TARGET ${PROJECT_NAME}
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:unittest> $<TARGET_FILE_DIR:unittest>
+        COMMAND_EXPAND_LISTS
+    )
+endif ()
 
 option(YGG_SKIP_VALGRIND_TESTS "Disable valgrind tests" OFF)
 if(NOT MSVC)
