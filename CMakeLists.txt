@@ -61,6 +61,8 @@ if(BUILD_PYTHON_LIBRARY)
     target_include_directories(pyygg PRIVATE ${PYTHON_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/communication/python)
     target_link_libraries(pyygg boost_python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR})
     message("PYTHON")
+    target_include_directories(YggInterface PRIVATE ${PYTHON_INCLUDE_DIRS})
+    target_link_libraries(YggInterface ${PYTHON_LIBRARIES})
 
 else()
     find_package(Boost REQUIRED COMPONENTS log)

@@ -13,23 +13,26 @@
 #include "rapidjson/writer.h"
 
 /*! @brief Bit flags. */
-#define COMM_FLAG_VALID   0x00000001  //!< Set if the comm is initialized
-#define COMM_FLAG_GLOBAL  0x00000002  //!< Set if the comm is global
-#define COMM_FLAG_FILE    0x00000004  //!< Set if the comm connects to a file
-#define COMM_FLAG_WORKER  0x00000008  //!< Set if the comm is a work comm
-#define COMM_FLAG_CLIENT  0x00000010  //!< Set if the comm is a client
-#define COMM_FLAG_SERVER  0x00000020  //!< Set if the comm is a server
-#define COMM_FLAG_CLIENT_RESPONSE 0x00000040 //!< Set if the comm is a client response comm
-#define COMM_ALWAYS_SEND_HEADER   0x00000080 //!< Set if the comm should always include a header in messages
-#define COMM_ALLOW_MULTIPLE_COMMS 0x00000100 //!< Set if the comm should connect in a way that allow multiple connections
+enum CommFlags {
+    COMM_FLAG_VALID = 0x00000001,  //!< Set if the comm is initialized
+    COMM_FLAG_GLOBAL = 0x00000002,  //!< Set if the comm is global
+    COMM_FLAG_FILE  = 0x00000004,  //!< Set if the comm connects to a file
+    COMM_FLAG_WORKER = 0x00000008,  //!< Set if the comm is a work comm
+    COMM_FLAG_CLIENT = 0x00000010,  //!< Set if the comm is a client
+    COMM_FLAG_SERVER = 0x00000020,  //!< Set if the comm is a server
+    COMM_FLAG_CLIENT_RESPONSE= 0x00000040, //!< Set if the comm is a client response comm
+    COMM_ALWAYS_SEND_HEADER = 0x00000080, //!< Set if the comm should always include a header in messages
+    COMM_ALLOW_MULTIPLE_COMMS = 0x00000100 //!< Set if the comm should connect in a way that allow multiple connections
+};
 
 /*! @brief Bit flags that can be set for const comm */
-#define COMM_FLAGS_USED   0x00000001  //!< Set if the comm has been used
-#define COMM_EOF_SENT     0x00000002  //!< Set if EOF has been sent
-#define COMM_EOF_RECV     0x00000004  //!< Set if EOF has been received
-
+enum CommConstFlags {
+    COMM_FLAGS_USED = 0x00000001,  //!< Set if the comm has been used
+    COMM_EOF_SENT   = 0x00000002,  //!< Set if EOF has been sent
+    COMM_EOF_RECV   = 0x00000004  //!< Set if EOF has been received
+};
 /*! @brief Set if the comm is the receiving comm for a client/server request connection */
-#define COMM_FLAG_RPC     COMM_FLAG_SERVER | COMM_FLAG_CLIENT
+const int COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
 #define COMM_NAME_SIZE 100
 #define COMM_DIR_SIZE 100
 
