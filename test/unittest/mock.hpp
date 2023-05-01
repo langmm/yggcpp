@@ -134,7 +134,7 @@ template<class OutputIt>
   int zmq_connect (void *, const char *);
   int zmq_bind (void *, const char *);
   int zmq_msg_init (zmq_msg_t *);
-  int zmq_msg_init_size (zmq_msg_t *, size_t);
+  int alt_zmq_msg_init_size (zmq_msg_t *, size_t);
   int zmq_setsockopt (void *, int, const void *, size_t);
   int zmq_getsockopt (void *, int, void * option_value, size_t *option_len);
 #endif // ZMQINSTALLED

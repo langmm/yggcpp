@@ -14,7 +14,7 @@ namespace communicator {
       is_signon(false) {}
     Request(const std::string& req_id, const std::string& res_id,
 	    const size_t cidx, bool is_son = false) :
-      request_id(req_id), response_id(res_id), comm_idx(cidx),
+      request_id(req_id), response_id(res_id), data(), comm_idx(cidx),
       complete(false), is_signon(is_son) {}
     int setData(const char* str, size_t len) {
       if (complete) {

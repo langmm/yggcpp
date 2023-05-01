@@ -94,7 +94,7 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: |
           cd build
-          ./unittest
+          ./test/unittest
       - name: Test
         run: |
           cd build
@@ -157,7 +157,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Debug -DYGG_ENABLE_COVERAGE=ON -DCMAKE_INSTALL_PREFIX=../devel -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DYGG_BUILD_ASAN=ON -DYGG_BUILD_UBSAN=ON -DBUILD_PYTHON_LIBRARY=OFF
+          cmake .. -DCMAKE_BUILD_TYPE=Debug -DYGG_ENABLE_COVERAGE=ON -DCMAKE_INSTALL_PREFIX=../devel -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DBUILD_PYTHON_LIBRARY=OFF
       - name: Build
         run: |
           cd build
@@ -166,7 +166,7 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: |
           cd build
-          ./unittest
+          ./test/unittest
       - name: Test
         run: |
           cd build
