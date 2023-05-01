@@ -256,14 +256,16 @@ void IPCComm::init() {
       fid[0] = msgget(key, (IPC_CREAT | 0777));
     else
       fid[0] = msgget(key, 0600);
-    handle = fid;
-    add_channel();
     if (fid[0] < 0) {
         ygglog_error << "IPCComm::init: msgget(" << key << ") "
+		     << "created(" << created << "), "
 		     << "ret(" << fid[0] << "), errno(" << errno << "): "
 		     << strerror(errno) << std::endl;
+        delete fid;
 	throw std::runtime_error("IPCComm::init: Error in msgget");
     }
+    handle = fid;
+    add_channel();
     ygglog_debug << "IPCComm(" << name << ")::init: address = " << this->address->address() << std::endl;
 }
 

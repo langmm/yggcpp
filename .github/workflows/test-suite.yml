@@ -93,7 +93,7 @@ jobs:
       - name: Test
         run: |
           cd build
-          ctest -C Debug --output-on-failure --verbose
+          ctest -C Debug --output-on-failure -VV
   build_conda:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -146,7 +146,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Debug -DYGG_ENABLE_COVERAGE=ON -DCMAKE_INSTALL_PREFIX=../devel -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DBUILD_PYTHON_LIBRARY=OFF
+          cmake .. -DCMAKE_BUILD_TYPE=Debug -DYGG_ENABLE_COVERAGE=ON -DCMAKE_INSTALL_PREFIX=../devel -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DYGG_BUILD_ASAN=ON -DYGG_BUILD_UBSAN=ON -DYGGDRASIL_DISABLE_PYTHON_C_API=ON -DBUILD_PYTHON_LIBRARY=OFF
       - name: Configure mac
         if: matrix.os == 'macos-latest'
         run: |

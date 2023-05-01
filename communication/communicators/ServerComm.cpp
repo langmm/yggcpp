@@ -100,8 +100,10 @@ int ServerComm::send_single(const char* data, const size_t &len,
     }
     int ret = response_comm->send_single(data, len, header);
     ygglog_debug << "ServerComm(" << name << ")::send_single: Sent " << len << " bytes" << std::endl;
-    if (requests.popRequestServer() < 0)
+    if (ret >= 0) {
+      if (requests.popRequestServer() < 0)
         return -1;
+    }
     return ret;
 }
 

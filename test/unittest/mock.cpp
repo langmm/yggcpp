@@ -126,6 +126,8 @@ template<class OutputIt>
     std::string msgS =
       "YGG_MSG_HEAD{\"__meta__\": {\"zmq_reply\": \"" + RETMSG +
       "\", \"size\": 11, \"id\": \"1\"}}YGG_MSG_HEADHello world";
+    if (zmq_msg_init_size (msg, msgS.size()) != 0)
+      return -1;
     memcpy(zmq_msg_data(msg), msgS.c_str(), msgS.size());
     if (RETVAL < 0)
         return RETVAL;

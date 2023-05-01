@@ -78,7 +78,7 @@ endif()
 #        ENVIRONMENT
 #        "${RAPIDJSON_PYTHON_ENV}")
 
-if (WIN32)
+if (WIN32 AND NOT CONDA_PREFIX)
     add_custom_command(
         TARGET unittest
         POST_BUILD

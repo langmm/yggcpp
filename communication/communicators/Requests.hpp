@@ -155,8 +155,9 @@ namespace communicator {
       ygglog_debug << "addRequestServer: done idx = " << idx
 		   << ", response_address = "
 		   << comms[requests[idx].comm_idx]->address->address()
-		   << ", request_id = " << request_id
-		   << ", response_id = " << response_id << std::endl;
+		   << ", request_id = " << requests[idx].request_id
+		   << ", response_id = " << requests[idx].response_id
+		   << std::endl;
       return static_cast<int>(idx);
     }
     int addResponseServer(Header& header, const char* data, const size_t len) {

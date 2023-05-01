@@ -154,16 +154,20 @@ bool Comm_t::create_header_recv(Header& header, char*& data,
 }
 
 Comm_t* Comm_t::create_worker_send(Header& head) {
-  Comm_t* out = create_worker(NULL, SEND,
-			      COMM_EOF_SENT | COMM_EOF_RECV |
-			      COMM_FLAG_WORKER);
+  Comm_t* out = NULL;
+  try {
+    out = create_worker(NULL, SEND,
+			COMM_EOF_SENT | COMM_EOF_RECV |
+			COMM_FLAG_WORKER);
+  } catch (...) {
+  }
   if (out == NULL) {
-    ygglog_error << "create_worker_send(" << name << "): Error creating worker" << std::endl;
+    ygglog_error << "CommBase(" << name << ")::create_worker_send: Error creating worker" << std::endl;
     return NULL;
   }
   out->flags |= COMM_EOF_SENT | COMM_EOF_RECV | COMM_FLAG_WORKER;
   if (!head.SetMetaString("address", out->address->address())) {
-    ygglog_error << "create_worker_send(" << name << "): Error setting address" << std::endl;
+    ygglog_error << "CommBase(" << name << ")::create_worker_send: Error setting address" << std::endl;
     delete out;
     return NULL;
   }
@@ -178,9 +182,13 @@ Comm_t* Comm_t::create_worker_recv(Header& head) {
     return NULL;
   }
   utils::Address* adr = new utils::Address(address);
-  Comm_t* out = create_worker(adr, RECV,
-			      COMM_EOF_SENT | COMM_EOF_RECV |
-			      COMM_FLAG_WORKER);
+  Comm_t* out = NULL;
+  try {
+    out = create_worker(adr, RECV,
+			COMM_EOF_SENT | COMM_EOF_RECV |
+			COMM_FLAG_WORKER);
+  } catch (...) {
+  }
   if (out == NULL) {
     ygglog_error << "CommBase(" << name << ")::create_worker_recv: Error creating worker" << std::endl;
     return NULL;

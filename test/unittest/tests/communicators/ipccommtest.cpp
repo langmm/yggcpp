@@ -106,7 +106,7 @@ TEST(IPCComm, sendLarge) {
     std::string name = "SendTester";
     ELF_BEGIN;
     ELF_BEGIN_F(msgget); // To allow connection to non-existed queue
-    // Replace msgsnd to test failure on long message?
+    // Replace msgsnd to test sending long message
     ELF_BEGIN_F_RET(msgsnd, 0);
     IPCComm_tester ipc(name, new utils::Address("2468"), SEND);
     std::string msg(ipc.getMaxMsgSize() - 1, 'A');
@@ -117,11 +117,15 @@ TEST(IPCComm, sendLarge) {
     EXPECT_GT(ipc.send(longmsg), 0);
     EXPECT_EQ(SENDCOUNT, 4);
 
+    // Failure on creation of temp communicator
     RETVAL = -1;
     EXPECT_EQ(ipc.send(longmsg), -1);
 
-    ELF_END_F(msgsnd);
+    // Failure on send
     ELF_END_F(msgget);
+    EXPECT_EQ(ipc.send(longmsg), -1);
+
+    ELF_END_F(msgsnd);
     ELF_END;
 #endif // ELF_AVAILABLE
 }

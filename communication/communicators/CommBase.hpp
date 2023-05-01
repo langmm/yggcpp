@@ -246,11 +246,12 @@ protected:
 	  ygglog_error << "CommBase(" << name << ")::copyData: Size of message (" << src_len << " + 1 bytes) exceeds buffer size (" << dst_len << " bytes) and the buffer cannot be reallocated." << std::endl;
 	  return -((long)src_len);
 	}
-	dst = (char*)realloc(dst, src_len + 1);
-	if (dst == nullptr) {
+	char* tmp = (char*)realloc(dst, src_len + 1);
+	if (tmp == nullptr) {
 	  ygglog_error << "CommBase(" << name << ")::copyData: Error reallocating buffer" << std::endl;
 	  return -1;
 	}
+	dst = tmp;
       }
       if (src) {
 	memcpy(dst, src, src_len);
