@@ -167,7 +167,7 @@ template<class OutputIt>
   int zmq_msg_init (zmq_msg_t *) {
     return -1;
   }
-  int zmq_msg_init_size (zmq_msg_t *, size_t) {
+  int alt_zmq_msg_init_size (zmq_msg_t *, size_t) {
     return -1;
   }
   int zmq_setsockopt (void *, int, const void *, size_t) {

@@ -90,6 +90,11 @@ jobs:
         run: |
           cd build
           cmake --build . --config Debug
+      - name: Run test directly
+        if: matrix.os == 'windows-latest'
+        run: |
+          cd build
+          ./unittest
       - name: Test
         run: |
           cd build
@@ -157,6 +162,11 @@ jobs:
         run: |
           cd build
           cmake --build . --config Debug
+      - name: Run test directly
+        if: matrix.os == 'windows-latest'
+        run: |
+          cd build
+          ./unittest
       - name: Test
         run: |
           cd build

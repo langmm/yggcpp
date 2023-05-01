@@ -134,7 +134,7 @@ TEST(ZMQComm, send) {
     ELF_BEGIN;
     // Failure to create message
     {
-      ELF_BEGIN_F(zmq_msg_init_size);
+      ELF_BEGIN_ALT_F(zmq_msg_init_size);
       EXPECT_EQ(zmq.send(mmsg.c_str(), mmsg.size()), -1);
       ELF_END_F(zmq_msg_init_size);
     }

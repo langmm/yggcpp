@@ -10,8 +10,12 @@ namespace communicator {
   class Request {
   public:
     Request() :
-      response_id(), request_id(), data(), comm_idx(0), complete(false),
+      request_id(), response_id(), data(), comm_idx(0), complete(false),
       is_signon(false) {}
+    Request(const std::string& req_id, const std::string& res_id,
+	    const size_t cidx, bool is_son = false) :
+      request_id(req_id), response_id(res_id), comm_idx(cidx),
+      complete(false), is_signon(is_son) {}
     int setData(const char* str, size_t len) {
       if (complete) {
 	ygglog_error << "setData: request already complete" << std::endl;
@@ -21,8 +25,8 @@ namespace communicator {
       complete = true;
       return 0;
     }
-    std::string response_id;
     std::string request_id;
+    std::string response_id;
     std::string data;
     size_t comm_idx;
     bool complete;
@@ -119,10 +123,11 @@ namespace communicator {
       }
       if (existing_idx < 0) {
 	size_t idx = requests.size();
-	requests.resize(requests.size() + 1);
-	requests[idx].request_id = request_id;
-	requests[idx].comm_idx = 0;
-	requests[idx].is_signon = is_signon;
+	requests.emplace_back(request_id, "", 0, is_signon);
+	// requests.resize(requests.size() + 1);
+	// requests[idx].request_id = request_id;
+	// requests[idx].comm_idx = 0;
+	// requests[idx].is_signon = is_signon;
 	existing_idx = static_cast<int>(idx);
       }
       ygglog_debug << "addRequestClient: done response_address = "
@@ -147,11 +152,14 @@ namespace communicator {
 	response_id += std::to_string(rand());
       }
       size_t idx = requests.size();
-      requests.resize(requests.size() + 1);
-      requests[idx].request_id = request_id;
-      requests[idx].response_id = response_id;
-      requests[idx].comm_idx = static_cast<size_t>(comm_idx);
-      requests[idx].is_signon = (header.flags & HEAD_FLAG_CLIENT_SIGNON);
+      requests.emplace_back(request_id, response_id,
+			    static_cast<size_t>(comm_idx),
+			    (header.flags & HEAD_FLAG_CLIENT_SIGNON));
+      // requests.resize(requests.size() + 1);
+      // requests[idx].request_id = request_id;
+      // requests[idx].response_id = response_id;
+      // requests[idx].comm_idx = static_cast<size_t>(comm_idx);
+      // requests[idx].is_signon = (header.flags & HEAD_FLAG_CLIENT_SIGNON);
       ygglog_debug << "addRequestServer: done idx = " << idx
 		   << ", response_address = "
 		   << comms[requests[idx].comm_idx]->address->address()

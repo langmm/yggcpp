@@ -26,6 +26,8 @@ extern char sublib_contents[256];
 
 #define ELFHOOK(x) elf_hook(SUBLIB, LIBRARY_ADDRESS_BY_HANDLE(handle), #x, \
     (void*)communication::mock::x);
+#define ELFHOOK_ALT(x) elf_hook(SUBLIB, LIBRARY_ADDRESS_BY_HANDLE(handle), #x, \
+    (void*)communication::mock::alt_ ## x);
 
 #define ELFHOOK_PARAM(x, y) elf_hook(SUBLIB, LIBRARY_ADDRESS_BY_HANDLE(handle), #x, \
     (void*)communication::mock::y);
@@ -50,6 +52,10 @@ extern char sublib_contents[256];
 #define ELF_BEGIN_F(func)				\
   void *original_func_ ## func = nullptr;		\
   original_func_ ## func = ELFHOOK(func);		\
+  EXPECT_NE(original_func_ ## func, ((void*)0))
+#define ELF_BEGIN_ALT_F(func)				\
+  void *original_func_ ## func = nullptr;		\
+  original_func_ ## func = ELFHOOK_ALT(func);		\
   EXPECT_NE(original_func_ ## func, ((void*)0))
 #define ELF_BEGIN_F_RET(func, ret)			\
   RETVAL = ret;						\
