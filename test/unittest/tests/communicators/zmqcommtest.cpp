@@ -184,13 +184,13 @@ TEST(ZMQComm, recv) {
     zmq.getReply().create(RETMSG);
     EXPECT_GE(zmq.recv(data, len, true), 0);
     EXPECT_EQ(strcmp(data, "Hello world"), 0);
-    free(data);
     // Fail receive on poll
     RETVAL = -1;
     EXPECT_EQ(zmq.recv(data, len, true), -1);
     // Fail receive on receiving message
     RETVAL = 0;
     EXPECT_EQ(zmq.recv(data, len, true), -1);
+    free(data);
 #ifdef ZMQ_HAVE_POLLER
     ELF_END_F(zmq_poller_wait_all);
 #else // ZMQ_HAVE_POLLER
