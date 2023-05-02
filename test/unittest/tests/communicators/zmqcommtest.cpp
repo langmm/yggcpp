@@ -165,10 +165,11 @@ TEST(ZMQComm, send) {
 }
 
 TEST(ZMQComm, recv) {
-#ifdef ELF_AVAILABLE
     setenv("YGG_MODEL_INDEX", "123", 1);
     std::string name = "TestZMQSend";
-    ZMQComm_tester zmq(name, nullptr, RECV);
+    ZMQComm_tester zmq_recv(name, nullptr, RECV);
+    ZMQComm_tester zmq_send(name, nullptr, SEND);
+#ifdef ELF_AVAILABLE
     ELF_BEGIN;
     char* data = NULL;
     size_t len = 0;
@@ -181,15 +182,15 @@ TEST(ZMQComm, recv) {
 #endif // ZMQ_HAVE_POLLER
     ELF_BEGIN_F(zmq_recvmsg);
     RETMSG = "";
-    zmq.getReply().create(RETMSG);
-    EXPECT_GE(zmq.recv(data, len, true), 0);
+    EXPECT_GE(zmq_send.getReply().create(RETMSG), 0);
+    EXPECT_GE(zmq_recv.recv(data, len, true), 0);
     EXPECT_EQ(strcmp(data, "Hello world"), 0);
     // Fail receive on poll
     RETVAL = -1;
-    EXPECT_EQ(zmq.recv(data, len, true), -1);
+    EXPECT_EQ(zmq_recv.recv(data, len, true), -1);
     // Fail receive on receiving message
     RETVAL = 0;
-    EXPECT_EQ(zmq.recv(data, len, true), -1);
+    EXPECT_EQ(zmq_recv.recv(data, len, true), -1);
     free(data);
 #ifdef ZMQ_HAVE_POLLER
     ELF_END_F(zmq_poller_wait_all);
