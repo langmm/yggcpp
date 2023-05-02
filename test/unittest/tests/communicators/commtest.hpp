@@ -26,7 +26,7 @@
     EXPECT_GE(rComm.recvVar(data_recv), 0);				\
     EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));			\
     EXPECT_EQ(data_send, data_recv);					\
-    unsetenv("YGG_MODEL_INDEX");					\
+    /* unsetenv("YGG_MODEL_INDEX"); */					\
   }
 #define COMM_SERI_TEST(cls)						\
   COMM_SERI_TEST_TYPE(cls, double, 1.5, "{\"type\": \"number\"}")	\

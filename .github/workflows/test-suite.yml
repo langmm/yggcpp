@@ -17,7 +17,7 @@ jobs:
         install-zmq: [true, false]
         install-mpi: [true, false]
         with-coverage: [true]
-        with-asan: [true, false]
+        with-asan: [false]
         with-elf: [false]
         exclude:
           - os: windows-latest
@@ -30,12 +30,16 @@ jobs:
             install-mpi: false
           - python-install: conda
             with-asan: true
-          - with-asan: true
-            install-mpi: true
-          - with-asan: false
+          - install-zmq: true
             install-mpi: false
-          - with-asan: false
-            install-zmq: false
+          - install-zmq: false
+            install-mpi: true
+          # - with-asan: true
+          #   install-mpi: true
+          # - with-asan: false
+          #   install-mpi: false
+          # - with-asan: false
+          #   install-zmq: false
         include:
           - os: ubuntu-latest
             python-install: pip
@@ -44,10 +48,21 @@ jobs:
             with-coverage: true
             with-asan: false
             with-elf: true
+          - os: ubuntu-latest
+            python-install: pip
+            install-zmq: true
+            install-mpi: false
+            with-coverage: true
+            with-asan: true
+            with-elf: true
+          - os: macos-latest
+            python-install: pip
+            install-zmq: true
+            install-mpi: false
+            with-coverage: true
+            with-asan: true
+            with-elf: true
       fail-fast: false
-    defaults:
-      run:
-        shell: bash -l {0}
     steps:
       - name: Check out repository code
         uses: actions/checkout@v2
@@ -144,32 +159,41 @@ jobs:
       # SET CONFIG FLAGS
       ###################################
       - name: Global config flags
+        shell: bash -l {0}
         run: |
           echo "CONFIG_FLAGS=-DCMAKE_BUILD_TYPE=Debug -DBUILD_PYTHON_LIBRARY=OFF -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/_install -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON" >> "$GITHUB_ENV"
+          echo "TEST_FLAGS=-C Debug --output-on-failure -VV" >> "$GITHUB_ENV"
       - name: Coverage config flags
         if: matrix.with-coverage == true
+        shell: bash -l {0}
         run: |
           echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DYGG_ENABLE_COVERAGE=ON" >> "$GITHUB_ENV"
       - name: ASAN config flags
         if: matrix.with-asan == true
+        shell: bash -l {0}
         run: |
           echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DYGG_BUILD_ASAN=ON -DYGG_BUILD_UBSAN=ON" >> "$GITHUB_ENV"
           echo "ASAN_OPTIONS=detect_odr_violation=0:detect_container_overflow=0" >> $GITHUB_ENV
+          echo "TEST_FLAGS=${{ env.TEST_FLAGS }} -E valgrind*" >> "$GITHUB_ENV"
       - name: ELF config flags
         if: matrix.with-elf == false
+        shell: bash -l {0}
         run: |
           echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DYGG_ENABLE_ELF=OFF" >> "$GITHUB_ENV"
 
       - name: Pip config flags
         if: matrix.python-install == 'pip'
+        shell: bash -l {0}
         run: |
           echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DPython3_ROOT_DIR=${{ env.pythonLocation }}" >> "$GITHUB_ENV"
       - name: Conda config flags
         if: matrix.python-install == 'conda'
+        shell: bash -l {0}
         run: |
-          echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DCMAKE_PREFIX_PATH=$CONDA_PREFIX" >> "$GITHUB_ENV"
+          echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DCMAKE_PREFIX_PATH=${CONDA_PREFIX}" >> "$GITHUB_ENV"
       - name: Pip config flags on Windows
         if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
+        shell: bash -l {0}
         run: |
           echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} \"-DCMAKE_PREFIX_PATH=${VCPKG_INSTALLATION_ROOT}\installed\x64-windows\"" >> "$GITHUB_ENV"
           # echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} \"-DPython3_EXECUTABLE=${{ env.pythonLocation }}\python.exe\" \"-DCMAKE_PREFIX_PATH=${VCPKG_INSTALLATION_ROOT}\installed\x64-windows\"" >> "$GITHUB_ENV"
@@ -177,7 +201,14 @@ jobs:
       ###################################
       # Check
       ###################################
-      - name: Check for numpy
+      - name: Check for numpy (CONDA)
+        if: matrix.python-install == 'conda'
+        shell: bash -l {0}
+        run: |
+          python -c "import sys; print(sys.executable)"
+          python -c "import numpy; print(numpy.get_include())"
+      - name: Check for numpy (PIP)
+        if: matrix.python-install == 'pip'
         run: |
           python -c "import sys; print(sys.executable)"
           python -c "import numpy; print(numpy.get_include())"
@@ -185,7 +216,15 @@ jobs:
       ###################################
       # Configure
       ###################################
-      - name: Configure
+      - name: Configure (CONDA)
+        if: matrix.python-install == 'conda'
+        shell: bash -l {0}
+        run: |
+          mkdir build
+          cd build
+          cmake .. ${{ env.CONFIG_FLAGS }}
+      - name: Configure (PIP)
+        if: matrix.python-install == 'pip'
         run: |
           mkdir build
           cd build
@@ -194,7 +233,14 @@ jobs:
       ###################################
       # Build
       ###################################
-      - name: Build
+      - name: Build (CONDA)
+        if: matrix.python-install == 'conda'
+        shell: bash -l {0}
+        run: |
+          cd build
+          cmake --build . --config Debug
+      - name: Build (PIP)
+        if: matrix.python-install == 'pip'
         run: |
           cd build
           cmake --build . --config Debug
@@ -202,15 +248,31 @@ jobs:
       ###################################
       # Test
       ###################################
-      - name: Run test directly
-        if: matrix.os == 'windows-latest'
+      - name: Run test directly (CONDA)
+        if: matrix.os == 'windows-latest' && matrix.python-install == 'conda'
+        shell: bash -l {0}
         run: |
           cd build
+          ls test
           .\\test\\unittest.exe
-      - name: Test
+      - name: Run test directly (PIP)
+        if: matrix.os == 'windows-latest' && matrix.python-install == 'pip'
         run: |
           cd build
-          ctest -C Debug --output-on-failure -VV
+          ls test
+          .\\test\\unittest.exe
+      - name: Test (CONDA)
+        if: matrix.python-install == 'conda'
+        shell: bash -l {0}
+        run: |
+          cd build
+          ctest ${{ env.TEST_FLAGS }}
+      - name: Test (PIP)
+        if: matrix.python-install == 'pip'
+        shell: bash -l {0}
+        run: |
+          cd build
+          ctest ${{ env.TEST_FLAGS }}
       
       ###################################
       # Coverage

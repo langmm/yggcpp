@@ -137,12 +137,14 @@ template<class OutputIt>
   int zmq_poller_wait_all (void *, zmq_poller_event_t *, int n_events, long) {
     if (RETVAL < 0)
       return RETVAL;
+    RETVAL--;
     return n_events;
   }
 #else // ZMQ_HAVE_POLLER
   int zmq_poll (zmq_pollitem_t *, int nitems, long) {
     if (RETVAL < 0)
       return RETVAL;
+    RETVAL--;
     return nitems;
   }
 #endif // ZMQ_HAVE_POLLER
@@ -174,11 +176,15 @@ template<class OutputIt>
     return -1;
   }
   int zmq_getsockopt (void *, int, void * option_value, size_t *option_len) {
-    if (RETMSG.empty() || (RETMSG.size() + 1) > option_len[0])
+    if (RETMSG.empty() || (RETMSG.size() + 2) > option_len[0])
       return -1;
     memcpy(option_value, RETMSG.c_str(), RETMSG.size());
-    char term = '\0';
-    memcpy(((char*)option_value) + RETMSG.size(), &term, sizeof(char));
+    ((char*)option_value)[RETMSG.size()] = '\n';
+    for (size_t i = RETMSG.size() + 1; i < option_len[0]; i++)
+      ((char*)option_value)[i] = '\0';
+    // char term = '\0';
+    // memcpy(((char*)option_value) + RETMSG.size(), &term, sizeof(char));
+    option_len[0] = RETMSG.size() + 2;
     return 0;
   }
   
