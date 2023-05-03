@@ -39,12 +39,17 @@ namespace communicator {
       comms(), requests(), response_dir(dir), response_metadata(),
       active_comm(-1), signon_complete(false) {}
     ~RequestList() {
+      destroy();
+    }
+    void destroy() {
       for (size_t i = 0; i < comms.size(); i++) {
 	if (comms[i] != NULL) {
-	  delete comms[i];
+	  COMM_BASE* x = dynamic_cast<COMM_BASE*>(comms[i]);
+	  delete x;
 	  comms[i] = NULL;
 	}
       }
+      comms.resize(0);
     }
     int hasRequest(const std::string& request_id) const {
       for (size_t i = 0; i < requests.size(); i++) {
@@ -276,13 +281,13 @@ namespace communicator {
       }
       utils::Address* response_adr = new utils::Address(response_address);
       Comm_t* x = new COMM_BASE("", response_adr, response_dir);
+      comms.push_back(x);
       x->addSchema(response_metadata);
       x->flags |= COMM_EOF_SENT | COMM_EOF_RECV;
       if (response_dir == RECV)
 	x->flags |= COMM_FLAG_CLIENT_RESPONSE;
       else
 	x->flags |= COMM_FLAG_SERVER_RESPONSE;
-      comms.push_back(x);
       idx = (int)(comms.size() - 1);
       return idx;
     }

@@ -222,10 +222,7 @@ long MPIComm::recv_single(char*& data, const size_t &len, bool allow_realloc) {
     return ret;
 }
 
-Comm_t* MPIComm::create_worker(utils::Address* address,
-			       const DIRECTION dir, int flgs) {
-  return new MPIComm("", address, dir, flgs);
-}
+WORKER_METHOD_DEFS(MPIComm)
 
 // Definitions in the case where MPI libraries not installed
 #else /*MPIINSTALLED*/

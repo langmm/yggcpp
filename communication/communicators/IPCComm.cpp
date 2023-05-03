@@ -283,10 +283,7 @@ IPCComm::IPCComm(const std::string &name, DIRECTION direction,
     init();
 }
 
-Comm_t* IPCComm::create_worker(utils::Address* address,
-			       const DIRECTION dir, int flgs) {
-  return new IPCComm("", address, dir, flgs);
-}
+WORKER_METHOD_DEFS(IPCComm)
 
 #else /*IPCINSTALLED*/
 

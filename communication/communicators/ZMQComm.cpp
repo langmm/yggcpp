@@ -592,7 +592,6 @@ void ZMQComm::destroy() {
     }
     ygglog_debug << "ZMQComm(" << name << ")::destroy: finished" << std::endl;
 
-    //TODO: THERE IS MORE TO DELETE?
 }
 
 /*!
@@ -747,10 +746,8 @@ bool ZMQComm::create_header_recv(Header& header, char*& data,
   return true;
 }
 
-Comm_t* ZMQComm::create_worker(utils::Address* address,
-			       const DIRECTION dir, int flgs) {
-  return new ZMQComm("", address, dir, flgs);
-}
+WORKER_METHOD_DEFS(ZMQComm)
+
 Comm_t* ZMQComm::create_worker_recv(Header& head) {
   ZMQComm* out = dynamic_cast<ZMQComm*>(Comm_t::create_worker_recv(head));
   if (!out)

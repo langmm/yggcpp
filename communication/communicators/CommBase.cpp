@@ -327,7 +327,7 @@ long Comm_t::recv(char*& data, const size_t &len, bool allow_realloc = false) {
     ygglog_debug << "CommBase(" << name << ")::recv(char*& data, const size_t &len, bool allow_realloc): " << head.size_curr << " of " << head.size_data << "bytes received." << std::endl;
   }
   if (xmulti)
-    delete xmulti;
+    destroy_worker(xmulti);
   if (ret > 0) {
     head.finalize_recv();
     if (!head.hasType()) {

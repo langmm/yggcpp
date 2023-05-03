@@ -30,6 +30,22 @@
 #define COMM_NAME_SIZE 100
 #define COMM_DIR_SIZE 100
 
+#define WORKER_METHOD_DECS(cls)					\
+  Comm_t* create_worker(utils::Address* address,		\
+			const DIRECTION, int flgs) override;	\
+  void destroy_worker(Comm_t*& worker) override
+#define WORKER_METHOD_DEFS(cls)					\
+  Comm_t* cls::create_worker(utils::Address* address,		\
+			     const DIRECTION dir, int flgs) {	\
+    return new cls("", address, dir, flgs);			\
+  }								\
+  void cls::destroy_worker(Comm_t*& worker) {			\
+    cls* x = dynamic_cast<cls*>(worker);			\
+    delete x;							\
+    worker = NULL;						\
+  }
+
+
 
 namespace communication {
 
@@ -283,6 +299,7 @@ protected:
 				    int temp);
     virtual Comm_t* create_worker(utils::Address* address,
 				  const DIRECTION, int flgs) = 0;
+    virtual void destroy_worker(Comm_t*& worker) = 0;
     virtual Comm_t* create_worker_send(Header& head);
     virtual Comm_t* create_worker_recv(Header& head);
     virtual int send_single(const char *data, const size_t &len, const Header& header) = 0;
@@ -352,6 +369,9 @@ protected:
 
     void init() override {
         utils::ygglog_throw_error("init of base class called, must be overridden");
+    }
+    void destroy_worker(Comm_t*&) override {
+      utils::ygglog_throw_error("destroy_worker of base class called, must be overridden");
     }
     Comm_t* create_worker(utils::Address*, const DIRECTION,
 			  int) override {

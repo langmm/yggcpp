@@ -3,7 +3,6 @@
 * Update handling of dtype in C
 * Get tests working on GHA
 * Add tests for RequestList
-* Add tests for Header/Metadata
 * Strip out unused code
 * Set _ygg_error_flag on error
 * Initialize python/zeromq

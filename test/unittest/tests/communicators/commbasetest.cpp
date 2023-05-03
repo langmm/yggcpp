@@ -30,6 +30,11 @@ protected:
 			  const DIRECTION dir, int flgs) override {
       return new Comm_tTest(adr, dir, this->type, flgs);
     }
+    void destroy_worker(Comm_t*& worker) override {
+      Comm_tTest* x = dynamic_cast<Comm_tTest*>(worker);
+      delete x;
+      worker = NULL;
+    }
     void init() override {}
     void reset() override {}
 };

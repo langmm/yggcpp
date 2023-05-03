@@ -135,8 +135,7 @@ protected:
     bool create_header_recv(Header& header, char*& data, const size_t &len,
 			    size_t msg_len, int allow_realloc,
 			    int temp) override;
-    Comm_t* create_worker(utils::Address* address,
-			  const DIRECTION, int flgs) override;
+    WORKER_METHOD_DECS(ZMQComm);
     Comm_t* create_worker_recv(Header& head) override;
 
 private:

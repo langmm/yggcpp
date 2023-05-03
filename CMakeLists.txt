@@ -40,7 +40,7 @@ endif()
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+# set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 option(YGG_BUILD_TESTS "Build tests" ON)
 option(YGG_BUILD_THIRDPARTY_GTEST "Use gtest installation in 'thirdpart/gtest' by default if available" ON)
@@ -239,6 +239,14 @@ add_definitions(-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION)
 add_definitions(-D_USE_MATH_DEFINES)
 
 set(RAPIDJSON_PYTHON_ENV "YGG_MODEL_INDEX=123")
+if(CMAKE_PREFIX_PATH AND WIN32)
+  if(EXISTS ${CMAKE_PREFIX_PATH}/Library)
+    set(DLL_PATH "${CMAKE_PREFIX_PATH}/Library/bin")
+  else()
+    set(DLL_PATH "${CMAKE_PREFIX_PATH}/bin")
+  endif()
+  set(RAPIDJSON_PYTHON_ENV "${RAPIDJSON_PYTHON_ENV};PATH=${PATH}\\\;${DLL_PATH}")
+endif()
 
 set(YGG_BUILD_FLAGS "")
 
@@ -510,6 +518,9 @@ include_directories(communication)
 include_directories(${DEPS_INCLUDE_DIRS})
 file(GLOB SOURCES "communication/utils/*.cpp" "communication/communicators/*.cpp")
 add_library(YggInterface SHARED ${SOURCES})
+if (WIN32)
+    set_target_properties(YggInterface PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+endif()
 target_link_libraries(YggInterface ${DEPS_LIB_NAMES} ${DEPS_LIBRARIES})
 target_include_directories(YggInterface PUBLIC ${DEPS_INCLUDE_DIRS})
 
