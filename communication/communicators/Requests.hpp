@@ -37,9 +37,7 @@ namespace communicator {
   public:
     RequestList(DIRECTION dir) :
       comms(), requests(), response_dir(dir), response_metadata(),
-      active_comm(-1), signon_complete(false) {
-      requests.reserve(10);
-    }
+      active_comm(-1), signon_complete(false) {}
     ~RequestList() {
       for (size_t i = 0; i < comms.size(); i++) {
 	if (comms[i] != NULL) {

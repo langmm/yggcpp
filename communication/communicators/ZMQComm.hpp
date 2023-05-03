@@ -63,6 +63,7 @@ public:
   template<typename T>
   int set(int member, const T& data);
   int recv(std::string& msg, bool for_identity=false);
+  void destroy();
   ~ZMQSocket();
 
   void *handle;               //  The libzmq socket handle

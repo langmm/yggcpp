@@ -143,11 +143,13 @@ void ZMQSocket::init(int type0, utils::Address* address,
   if (handle == NULL)
     ygglog_throw_error("ZMQSocket::init: Error creating new socket.");
   if (!except_msg.empty()) {
+    destroy();
     throw std::runtime_error(except_msg);
   }
   if (address && !address->address().empty()) {
     endpoint = address->address();
     if (zmq_connect(handle, endpoint.c_str()) != 0) {
+      destroy();
       ygglog_throw_error("ZMQSocket::init: Error connecting to endpoint '" + endpoint + "'");
     }
     ygglog_debug << "ZMQSocket::init: Connected to endpoint '" << endpoint << "'" << std::endl;
@@ -212,8 +214,10 @@ void ZMQSocket::init(int type0, utils::Address* address,
 #ifdef _OPENMP
     }
 #endif
-    if (!except_msg.empty())
+    if (!except_msg.empty()) {
+      destroy();
       throw std::runtime_error(except_msg);
+    }
   }
 }
 
@@ -291,10 +295,14 @@ int ZMQSocket::recv(std::string& msg, bool for_identity) {
   return msg.size();
 }
 
-ZMQSocket::~ZMQSocket() {
+void ZMQSocket::destroy() {
   if (handle != NULL)
     zmq_close(handle);
   handle = NULL;
+}
+
+ZMQSocket::~ZMQSocket() {
+  destroy();
 }
 
 #ifdef YGG_TEST

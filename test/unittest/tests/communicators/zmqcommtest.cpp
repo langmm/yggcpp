@@ -80,6 +80,7 @@ TEST(ZMQComm, constructor) {
     ELF_BEGIN;
     // Failure when YGG_MODEL_INDEX not set
     {
+      ZMQSocket::resetPort();
       std::string alt_name = "TestZMQComm";
       ELF_BEGIN_ALT_F(getenv);
       EXPECT_THROW(ZMQComm zmqc(alt_name, nullptr, SEND), std::runtime_error);

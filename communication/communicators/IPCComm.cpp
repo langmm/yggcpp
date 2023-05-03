@@ -171,7 +171,7 @@ int IPCComm::send_single(const char* data, const size_t &len, const Header&) {
 	        ygglog_debug << "IPCComm(" << name << ")::send_single: msgsnd, queue full, sleep" << std::endl;
                 usleep(YGG_SLEEP_TIME);
             } else {
-	        ygglog_error << "IPCComm(" << name << ")::send_single: msgsend(" << handle[0] << ", " << &t << ", " << len
+	        ygglog_error << "IPCComm(" << name << ")::send_single: msgsnd(" << handle[0] << ", " << &t << ", " << len
                              << ", IPC_NOWAIT) ret(" << ret << "), errno(" << errno << "): " << strerror(errno) << std::endl;
                 ret = -1;
                 break;
@@ -196,7 +196,7 @@ long IPCComm::recv_single(char*& data, const size_t& len, bool allow_realloc) {
     t.data[0] = '\0';
     long ret = -1;
     while (true) {
-        ret = msgrcv(handle[0], &t, YGG_MSG_MAX, 0, IPC_NOWAIT);
+        ret = msgrcv(handle[0], &t, maxMsgSize, 0, IPC_NOWAIT);
         if (ret == -1 && errno == ENOMSG) {
 	    ygglog_debug << "IPCComm(" << name << ")::recv_single: no input, sleep" << std::endl;
             usleep(YGG_SLEEP_TIME);
@@ -206,7 +206,7 @@ long IPCComm::recv_single(char*& data, const size_t& len, bool allow_realloc) {
         }
     }
     if (ret <= 0) {
-        ygglog_debug << "IPCComm(" << name << ")::recv_single: msgrecv(" << handle << ", " << &t << ", " << YGG_MSG_MAX << ", 0, IPC_NOWAIT): "
+        ygglog_debug << "IPCComm(" << name << ")::recv_single: msgrecv(" << handle << ", " << &t << ", " << maxMsgSize << ", 0, IPC_NOWAIT): "
                      << strerror(errno) << std::endl;
         return -1;
     }

@@ -56,24 +56,24 @@ TEST(IPCComm, send) {
     int res = ipc.send(message.c_str(), message.size());
     EXPECT_GT(res, 0);
 #ifdef ELF_AVAILABLE
-    SENDCOUNT = 0;
     ELF_BEGIN;
     ELF_BEGIN_F(msgget);
     std::string data = "abcdef12345";
     utils::Address *adr2 = new utils::Address("12345678");
     IPCComm_tester ipc2(data, adr2, SEND);
-    // Replace msgsnd so that send fails and checks queue status
+    // Replace msgsnd and msgctl so that send fails, but msgctl succeeds
+    SENDCOUNT = 0;
     RETVAL = -1;
     RETVAL_INC_SEND = 1;
     ELF_BEGIN_F(msgsnd);
+    ELF_BEGIN_F(msgctl);
     res = ipc2.send(data.c_str(), data.size());
-    EXPECT_EQ(SENDCOUNT, 1);
     EXPECT_GE(res, 0);
-    // Replace msgctl so that when queue status is checked, it fails
+    EXPECT_EQ(SENDCOUNT, 1);
+    // Failure on msgctl
     RETVAL = -1;
     RETVAL_INC_SEND = 0;
     RETVAL_INC_POLL = 0;
-    ELF_BEGIN_F(msgctl);
     res = ipc2.send(data.c_str(), data.size());
     EXPECT_EQ(res, -1);
     // Restore
@@ -99,7 +99,7 @@ TEST(IPCComm, commnmsg) {
     ELF_BEGIN_F(msgctl);
     res = ipc.comm_nmsg();
     EXPECT_EQ(res, 10000);
-    RETVAL = 1;
+    RETVAL = -1;
     res = ipc.comm_nmsg();
     EXPECT_EQ(res, 0);
     ELF_END_F(msgctl);
