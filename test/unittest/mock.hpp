@@ -80,7 +80,7 @@ extern int MPISTATUS;
 extern bool MPICANCEL;
 extern std::string RETMSG;
 
-char *getenv(const char *name);
+char *alt_getenv(const char *name);
 
 #ifdef IPCINSTALLED
 int msgsnd(int a, const void* b, size_t c, int d);

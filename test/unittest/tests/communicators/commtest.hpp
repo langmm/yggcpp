@@ -16,8 +16,9 @@
     cls ## _tester sComm(SEND);						\
     sComm.addSchema(schema);						\
     std::string name = "test_name";					\
-    std::string name_env = name + "_IN=" + sComm.getAddress();		\
-    putenv(const_cast<char*>(name_env.c_str()));			\
+    std::string key_env = name + "_IN";					\
+    std::string val_env = sComm.getAddress();				\
+    setenv(key_env.c_str(), val_env.c_str(), 1);			\
     cls ## _tester rComm(name, RECV);					\
     type data_send = value;						\
     type data_recv;							\

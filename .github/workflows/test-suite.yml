@@ -19,7 +19,7 @@ jobs:
         with-coverage: [true]
         with-asan: [false]
         with-elf: [false]
-        with-valgrind: [true]
+        with-valgrind: [false]
         exclude:
           - os: windows-latest
             install-zmq: false
@@ -69,6 +69,22 @@ jobs:
             with-asan: true
             with-elf: true
             with-valgrind: false
+          - os: ubuntu-latest
+            python-install: pip
+            install-zmq: true
+            install-mpi: false
+            with-coverage: true
+            with-asan: false
+            with-elf: false
+            with-valgrind: true
+          - os: macos-latest
+            python-install: pip
+            install-zmq: true
+            install-mpi: false
+            with-coverage: true
+            with-asan: false
+            with-elf: false
+            with-valgrind: true
       fail-fast: false
     steps:
       - name: Check out repository code
@@ -271,15 +287,15 @@ jobs:
         if: matrix.os == 'windows-latest' && matrix.python-install == 'conda'
         shell: bash -l {0}
         run: |
-          cd build
-          ls test/Debug
-          ./test/Debug/unittest.exe
+          cd build/test/Debug
+          ls
+          ./unittest.exe
       - name: Run test directly (PIP)
         if: matrix.os == 'windows-latest' && matrix.python-install == 'pip'
         run: |
-          cd build
-          ls test\\Debug
-          .\\test\\Debug\\unittest.exe
+          cd build\\test\\Debug
+          ls
+          .\\unittest.exe
       - name: Test (CONDA)
         if: matrix.python-install == 'conda'
         shell: bash -l {0}
