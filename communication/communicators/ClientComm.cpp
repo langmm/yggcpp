@@ -16,7 +16,7 @@ ClientComm::ClientComm(const std::string &name, Address *address) :
     len.clear();
 
     ygglog_debug << "init_client_comm: Creating a client comm";
-#ifdef _OPENMP
+#ifdef HAVE_OPENMP
 #pragma omp critical (client)
     {
 #endif
@@ -24,7 +24,7 @@ ClientComm::ClientComm(const std::string &name, Address *address) :
             srand(ptr2seed(this));
             _client_rand_seeded = 1;
         }
-#ifdef _OPENMP
+#ifdef HAVE_OPENMP
     }
 #endif
     // Called to create temp comm for send/recv
@@ -130,7 +130,7 @@ int ClientComm::pop_response(const std::string& req_id, char* rdata,const size_t
 }
 
 bool ClientComm::new_address() {
-#ifdef _OPENMP
+#ifdef HAVE_OPENMP
 #pragma omp critical (client)
     {
 #endif
@@ -138,7 +138,7 @@ bool ClientComm::new_address() {
             srand(ptr2seed(this));
             _client_rand_seeded = 1;
         }
-#ifdef _OPENMP
+#ifdef HAVE_OPENMP
     }
 #endif
     type = _default_comm;

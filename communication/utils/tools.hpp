@@ -2,7 +2,6 @@
 #ifdef __cplusplus
 #include <vector>
 #include <algorithm>
-#include "templates.hpp"
 #include "complex_type.hpp"
 
 #ifdef _MSC_VER
@@ -11,7 +10,7 @@
 #endif
 #endif
 
-#ifdef _OPENMP
+#ifdef HAVE_OPENMP
 
 #include <omp.h>
 #endif
@@ -110,146 +109,6 @@
 namespace communication {
 namespace utils {
 
-template<typename T, std::enable_if_t<!std::is_floating_point<T>::value &&
-                                      !std::is_same<T, uint8_t>::value &&
-                                      !std::is_same<T, int8_t>::value, bool> = true>
-void _join(const std::vector<T>& values, std::ostream& out, const char delim=DELIMITER) {
-    for (auto i = 0; i < values.size()-1; i++)
-        out << values[i] << delim;
-    out << values[values.size()-1];
-}
-
-template<typename T, std::enable_if_t<std::is_same<T, uint8_t>::value ||
-                                      std::is_same<T, int8_t>::value, bool> = true>
-auto _join(const std::vector<T>& values, std::ostream& out, const char delim=DELIMITER){
-    for (auto i = 0; i < values.size()-1; i++) {
-        out << +values[i] << delim;
-    }
-    out << +values[values.size()-1];
-}
-
-
-template<typename T, std::enable_if_t<std::is_floating_point<T>::value, bool> = true>
-auto _join(const std::vector<T>& values, std::ostream& out, const char delim=DELIMITER) {
-    out.setf(std::ios::fixed);
-    out.precision(std::numeric_limits<T>::digits10);
-    for (auto i = 0; i < values.size()-1; i++)
-        out << values[i] << delim;
-    out << values[values.size()-1];
-}
-
-template<typename T>
-inline
-auto join(const std::vector<T>& values, std::ostream& out) -> EnableWithEnum<T> {
-    _join(values, out);
-}
-
-inline
-size_t find_spacer(const std::vector<std::string> &values, const size_t start=0) {
-    int i;
-    int count;
-    for (i = 0; i < REPLACE_SPACE.size(); i++) {
-        count = 0;
-        for (auto word : values) {
-            if (word.find(REPLACE_SPACE[i]) == std::string::npos) {
-                count ++;
-            }
-        }
-        if (count == values.size())
-            return i;
-    }
-    return i + 1;
-}
-
-template<typename T>
-inline
-auto join(const std::vector<T>& values, std::ostream& out) -> EnableForString<T> {
-    size_t spacer = find_spacer(values);
-    std::vector<std::string> temp(values);
-    for (auto &word : temp) {
-        std::replace(word.begin(), word.end(), ' ', REPLACE_SPACE[spacer]);
-    }
-    out << REPLACE_SPACE[spacer] << " ";
-    spacer = find_spacer(temp, spacer + 1);
-    out << REPLACE_SPACE[spacer] << " ";
-    _join(temp, out, REPLACE_SPACE[spacer]);
-}
-
-
-template<typename T, std::enable_if_t<!std::is_same<T, uint8_t>::value &&
-                                      !std::is_same<T, int8_t>::value, bool> = true>
-auto parse(std::vector<T>& values, const size_t count, std::istream &input) -> EnableWithEnum<T> {
-    values.clear();
-    values.reserve(count);
-    input >> std::ws;
-    char c;
-    T v;
-    for (auto i = 0; i < count - 1; i++) {
-        if (input.eof())
-            throw std::length_error("Invalid length found, expected " + std::to_string(count) + " but found " + std::to_string(i));
-        input >> v;
-        values.push_back(v);
-        input >> c;
-    }
-    if (input.eof())
-        throw std::length_error("Invalid length found, expected " + std::to_string(count) + " but found " + std::to_string(count - 1));
-    input >> v;
-    values.push_back(v);
-    if (input.eof())
-        return;
-    if (!std::isspace(input.peek())) {
-        throw std::length_error("Invalid length found, expected " + std::to_string(count) + " but found more");
-    }
-}
-
-template<typename T, std::enable_if_t<std::is_same<T, uint8_t>::value ||
-                                      std::is_same<T, int8_t>::value, bool> = true>
-auto parse(std::vector<T>& values, const size_t count, std::istream &input) {
-    values.clear();
-    values.reserve(count);
-    input >> std::ws;
-    char c;
-    int v;
-    for (auto i = 0; i < count - 1; i++) {
-        if (input.eof())
-            throw std::length_error("Invalid length found, expected " + std::to_string(count) + " but found " + std::to_string(i));
-        input >> v;
-        values.push_back(static_cast<T>(v));
-        input >> c;
-    }
-    if (input.eof())
-        throw std::length_error("Invalid length found, expected " + std::to_string(count) + " but found " + std::to_string(count - 1));
-    input >> v;
-    values.push_back(static_cast<T>(v));
-    if (input.eof())
-        return;
-    if (!std::isspace(input.peek())) {
-        throw std::length_error("Invalid length found, expected " + std::to_string(count) + " but found more");
-    }
-}
-
-template<typename T>
-auto parse(std::vector<T>& values, const size_t count, std::istream &input) -> EnableForString<T> {
-    values.clear();
-    char temp[1000];
-    values.reserve(count);
-    char spacer1, spacer2;
-    input >> spacer1;
-    input >> spacer2;
-    input >> std::ws;
-    for (auto i = 0; i < count - 1; i++) {
-        if (input.eof())
-            throw std::length_error("Invalid length found, expected " + std::to_string(count) + " but found " + std::to_string(i));
-        input.getline(temp, 1000, spacer2);
-        values.push_back(temp);
-    }
-    if (input.eof())
-        throw std::length_error("Invalid length found, expected " + std::to_string(count) + " but found " + std::to_string(count - 1));
-    input.getline(temp, 1000);
-    values.push_back(temp);
-    for (auto &word : values)
-        std::replace(word.begin(), word.end(), spacer1, ' ');
-}
 
 /*! @brief Define macros to allow counts of variables. */
 // https://codecraft.co/2014/11/25/variadic-macros-tricks/
@@ -269,7 +128,7 @@ auto parse(std::vector<T>& values, const size_t count, std::istream &input) -> E
 /*! @brief Memory to allow thread association to be set via macro. */
 static int global_thread_id = -1;
 #define ASSOCIATED_WITH_THREAD(COMM, THREAD) global_thread_id = THREAD; COMM; global_thread_id = -1;
-#ifdef _OPENMP
+#ifdef HAVE_OPENMP
 #pragma omp threadprivate(global_thread_id)
 #endif
 
@@ -294,7 +153,7 @@ int get_thread_id() {
     int out = 0;
     if (global_thread_id >= 0)
         return global_thread_id;
-#ifdef _OPENMP
+#ifdef HAVE_OPENMP
     if (omp_in_parallel())
         out = omp_get_thread_num();
 /* #elif defined pthread_self */

@@ -25,7 +25,7 @@ namespace utils {
 static inline
 int init_numpy_API() {
     int out = 0;
-#ifdef _OPENMP
+#ifdef HAVE_OPENMP
 #pragma omp critical (numpy)
     {
 #endif
@@ -35,7 +35,7 @@ int init_numpy_API() {
                 out = -2;
             }
         }
-#ifdef _OPENMP
+#ifdef HAVE_OPENMP
     }
 #endif
     return out;
@@ -49,7 +49,7 @@ int init_numpy_API() {
 static inline
 int init_python_API() {
     int out = 0;
-#ifdef _OPENMP
+#ifdef HAVE_OPENMP
 #pragma omp critical (python)
     {
 #endif
@@ -74,7 +74,7 @@ int init_python_API() {
         if (out >= 0) {
             out = init_numpy_API();
         }
-#ifdef _OPENMP
+#ifdef HAVE_OPENMP
     }
 #endif
     return out;

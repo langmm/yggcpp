@@ -28,19 +28,20 @@ endif("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${PROJECT_SOURCE_DIR}/cmake")
 set(CMAKE_INSTALL_PREFIX /home/friedel/devel/yggtests)
 
-file(GLOB SOURCES "communication/utils/*.cpp" "communication/communicators/*.cpp")
+file(GLOB SOURCES "communication/**/*.cpp")
 add_library(YggInterface SHARED ${SOURCES})
 
 option(BUILD_PYTHON_LIBRARY "Build the Yggdrasil Python interface library" ON)
 #########################################
+find_package(PythonInterp 3)
+find_package(PythonLibs 3 REQUIRED)
+find_package(Boost REQUIRED COMPONENTS python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR} log)
+
 if(BUILD_PYTHON_LIBRARY)
     if(POLICY CMP0094)  # https://cmake.org/cmake/help/latest/policy/CMP0094.html
         cmake_policy(SET CMP0094 NEW)  # FindPython should return the first matching Python
     endif()
     add_definitions(-DWITH_PYTHON)
-    find_package(PythonInterp 3)
-    find_package(PythonLibs 3 REQUIRED)
-    find_package(Boost REQUIRED COMPONENTS python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR} log)
 
     #find_package(Python3 COMPONENTS Interpreter Development NumPy REQUIRED)
     #include_directories(${Python_INCLUDE_DIRS})
@@ -61,13 +62,13 @@ if(BUILD_PYTHON_LIBRARY)
     target_include_directories(pyygg PRIVATE ${PYTHON_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/communication/python)
     target_link_libraries(pyygg boost_python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR})
     message("PYTHON")
-    target_include_directories(YggInterface PRIVATE ${PYTHON_INCLUDE_DIRS})
-    target_link_libraries(YggInterface ${PYTHON_LIBRARIES})
 
 else()
     find_package(Boost REQUIRED COMPONENTS log)
 endif()
 ##############################
+target_include_directories(YggInterface PRIVATE ${PYTHON_INCLUDE_DIRS})
+target_link_libraries(YggInterface ${PYTHON_LIBRARIES} boost_python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR})
 
 #file(GLOB_RECURSE SOURCES "communication/**/*.cpp")
 
@@ -125,7 +126,7 @@ add_definitions(-D_YGGIPC)
 
 find_package(OpenMP)
 if (OpenMP_CXX_FOUND)
-    add_definitions(-D_OPENMP -DMPIINSTALLED)
+    add_definitions(-DHAVE_OPENMP -DMPIINSTALLED)
     message("OMP found")
     target_link_libraries(YggInterface OpenMP::OpenMP_CXX)
     if(BUILD_PYTHON_LIBRARY)

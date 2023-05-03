@@ -5,7 +5,7 @@ extern "C" {
 #endif
 
 static char prefix_char = '#';
-#ifdef _OPENMP
+#ifdef HAVE_OPENMP
 #pragma omp threadprivate(prefix_char)
 #endif
 
