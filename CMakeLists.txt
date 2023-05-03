@@ -238,7 +238,7 @@ add_definitions(-DRAPIDJSON_YGGDRASIL)
 add_definitions(-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION)
 add_definitions(-D_USE_MATH_DEFINES)
 
-
+set(RAPIDJSON_PYTHON_ENV "YGG_MODEL_INDEX=123")
 
 set(YGG_BUILD_FLAGS "")
 
@@ -432,7 +432,7 @@ else()
     endif()
 
     # Set environment variables required for embedding Python
-    set(RAPIDJSON_PYTHON_ENV "YGG_MODEL_INDEX=123;DATADIR=${CMAKE_SOURCE_DIR}/test;YGG_PYTHON_EXEC=${Python3_EXECUTABLE}")
+    set(RAPIDJSON_PYTHON_ENV "${RAPIDJSON_PYTHON_ENV};DATADIR=${CMAKE_SOURCE_DIR}/test;YGG_PYTHON_EXEC=${Python3_EXECUTABLE}")
 
     # There is an issue with embedding Python on Windows in conda environments
     # https://github.com/ContinuumIO/anaconda-issues/issues/11374

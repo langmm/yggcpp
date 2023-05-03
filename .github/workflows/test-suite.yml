@@ -300,7 +300,7 @@ jobs:
         if: matrix.with-coverage == true
         uses: codecov/codecov-action@v3
         with:
-          name: ${{ matrix.os }}-${{ matrix.python-install }}
+          name: ${{ matrix.os }}-${{ matrix.python-install }}-${{ matrix.install-zmq }}-${{ matrix.install-mpi }}-${{ matrix.with-coverage }}-${{ matrix.with-asan }}-${{ matrix.with-elf }}-${{ matrix.with-valgrind }}
           token: ${{ secrets.CODECOV_TOKEN }}
           file: build/coverage/coverage.info
           # directory: build/Testing/CoverageInfo
