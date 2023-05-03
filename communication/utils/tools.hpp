@@ -10,7 +10,7 @@
 #endif
 #endif
 
-#ifdef _OPENMP
+#ifdef HAVE_OPENMP
 
 #include <omp.h>
 #endif
@@ -128,7 +128,7 @@ namespace utils {
 /*! @brief Memory to allow thread association to be set via macro. */
 static int global_thread_id = -1;
 #define ASSOCIATED_WITH_THREAD(COMM, THREAD) global_thread_id = THREAD; COMM; global_thread_id = -1;
-#ifdef _OPENMP
+#ifdef HAVE_OPENMP
 #pragma omp threadprivate(global_thread_id)
 #endif
 
@@ -153,7 +153,7 @@ int get_thread_id() {
     int out = 0;
     if (global_thread_id >= 0)
         return global_thread_id;
-#ifdef _OPENMP
+#ifdef HAVE_OPENMP
     if (omp_in_parallel())
         out = omp_get_thread_num();
 /* #elif defined pthread_self */

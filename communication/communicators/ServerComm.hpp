@@ -8,7 +8,7 @@
 #ifdef COMM_BASE
 namespace communication {
 namespace communicator {
-#ifdef _OPENMP
+#ifdef HAVE_OPENMP
 #pragma omp threadprivate(_default_comm)
 #endif
 

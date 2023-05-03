@@ -126,7 +126,7 @@ add_definitions(-D_YGGIPC)
 
 find_package(OpenMP)
 if (OpenMP_CXX_FOUND)
-    add_definitions(-D_OPENMP -DMPIINSTALLED)
+    add_definitions(-DHAVE_OPENMP -DMPIINSTALLED)
     message("OMP found")
     target_link_libraries(YggInterface OpenMP::OpenMP_CXX)
     if(BUILD_PYTHON_LIBRARY)

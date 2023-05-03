@@ -25,7 +25,7 @@ static int _last_port = 49152;
 static char _reply_msg[100] = "YGG_REPLY";
 static char _purge_msg[100] = "YGG_PURGE";
 static int _zmq_sleeptime = 10000;
-#ifdef _OPENMP
+#ifdef HAVE_OPENMP
 #pragma omp threadprivate(_reply_msg, _purge_msg, _zmq_sleeptime)
 #endif
 
@@ -53,7 +53,7 @@ public:
     void close();
     ~ygg_sock_t();
 
-#ifdef _OPENMP
+#ifdef HAVE_OPENMP
     uint32_t tag;
     int type;
 private:

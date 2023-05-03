@@ -14,7 +14,7 @@ using namespace communication::utils;
 
 const std::chrono::milliseconds timeout{1000};
 const std::chrono::milliseconds short_timeout{10};
-#ifdef _OPENMP
+#ifdef HAVE_OPENMP
 zmq::context_t ygg_sock_t::ygg_s_process_ctx = zmq::context_t();
 bool ygg_sock_t::ctx_valid = true;
 std::vector<ygg_sock_t*> ygg_sock_t::activeSockets = {};
@@ -45,7 +45,7 @@ zmq::context_t &ygg_sock_t::get_context() {
 // TODO??  #pragma omp critical (zmq)
 
 ygg_sock_t::ygg_sock_t(int type) : zmq::socket_t(get_context(), type), tag(0xcafe0004), type(type) {
-#else // _OPENMP
+#else // HAVE_OPENMP
     zmq::context_t &ygg_sock_t::get_context() {
         zqm::context ctx;
         return ctx;
@@ -55,13 +55,13 @@ ygg_sock_t::ygg_sock_t(int type) : zmq::socket_t(get_context(), type), tag(0xcaf
 
     }
     ygg_sock_t::ygg_sock_t(int type) : zmq::socket_t(get_context(), type) {
-#endif // _OPENMP
+#endif // HAVE_OPENMP
     set(zmq::sockopt::linger, 0);
     set(zmq::sockopt::immediate, 1);
     ygg_sock_t::activeSockets.push_back(this);
 }
 
-//#ifdef _OPENMP
+//#ifdef HAVE_OPENMP
 //}
 //#endif
 
@@ -73,7 +73,7 @@ void ygg_sock_t::close() {
 }
 
 ygg_sock_t::~ygg_sock_t() {
-#ifdef _OPENMP
+#ifdef HAVE_OPENMP
     // Recreation of czmq zsock_destroy that is OMP aware
     tag = 0xDeadBeef;
 #else
@@ -309,7 +309,7 @@ std::string ZMQComm::set_reply_send() {
         if (host == "localhost")
             host = "127.0.0.1";
         std::string address;
-#ifdef _OPENMP
+#ifdef HAVE_OPENMP
 #pragma omp critical (zmqport)
         {
 #endif
@@ -332,7 +332,7 @@ std::string ZMQComm::set_reply_send() {
             boost::split(parts, address, boost::is_any_of(":"));
             std::vector<std::string> mtemp = parts;
             _last_port = std::stoi(parts.back());
-#ifdef _OPENMP
+#ifdef HAVE_OPENMP
         }
 #endif
         //sprintf(address, "%s://%s:%d", protocol, host, port);
@@ -435,7 +435,7 @@ bool ZMQComm::new_address() {
     /*if (protocol == "inproc" || protocol == "ipc") {
         // TODO: small chance of reusing same number
         int key = 0;
-#ifdef _OPENMP
+#ifdef HAVE_OPENMP
 #pragma omp critical (zmqport)
         {
 #endif
@@ -443,7 +443,7 @@ bool ZMQComm::new_address() {
                 srand(ptr2seed(this));
                 _zmq_rand_seeded = 1;
             }
-#ifdef _OPENMP
+#ifdef HAVE_OPENMP
         }
 #endif
         while (key == 0) key = rand();
@@ -451,7 +451,7 @@ bool ZMQComm::new_address() {
             name = "tempnewZMQ-" + std::to_string(key);
         adr->address(protocol + "://" + name);
     } else {*/
-#ifdef _OPENMP
+#ifdef HAVE_OPENMP
     std::string except_msg = "";
 #pragma omp critical (zmqport)
         {
@@ -460,7 +460,7 @@ bool ZMQComm::new_address() {
                 const char *model_index = getenv("YGG_MODEL_INDEX");
                 if (model_index == nullptr) {
 
-#ifdef _OPENMP
+#ifdef HAVE_OPENMP
                     except_msg = "Environment variable 'YGG_MODEL_INDEX' is not defined. Connot create ZMQComm.";
                     _last_port = -1;
                 } else {
@@ -474,12 +474,12 @@ bool ZMQComm::new_address() {
                     _last_port = 49152 + 1000 * atoi(model_index);
                     _last_port_set = 1;
                     ygglog_debug << "_last_port = " << _last_port;
-#ifdef _OPENMP
+#ifdef HAVE_OPENMP
                 }
 #endif
             }
             adr->address( protocol + "://" + host + ":" +std::to_string(_last_port + 1));
-#ifdef _OPENMP
+#ifdef HAVE_OPENMP
         }
     if (!except_msg.empty())
         throw std::runtime_error(except_msg);
@@ -513,7 +513,7 @@ bool ZMQComm::new_address() {
     }
     // Add port to address
     int port = -1;
-#ifdef _OPENMP
+#ifdef HAVE_OPENMP
 #pragma omp critical (zmqport)
     {
 #endif
@@ -527,7 +527,7 @@ bool ZMQComm::new_address() {
             _last_port = port;
             //adr->address(protocol + "://" +  host + ":" + std::to_string(port));
         }
-#ifdef _OPENMP
+#ifdef HAVE_OPENMP
     }
 #endif
     if (address != nullptr)
