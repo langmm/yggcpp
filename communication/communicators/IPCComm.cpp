@@ -199,8 +199,7 @@ long IPCComm::recv_single(char*& data, const size_t& len, bool allow_realloc) {
 	    ygglog_debug << "IPCComm(" << name << ")::recv_single: no input, sleep" << std::endl;
             usleep(YGG_SLEEP_TIME);
         } else {
-            ygglog_debug << "IPCComm(" << name << ")::recv_single: received input: " << strlen(t.data) << " bytes, ret="
-                         << ret << std::endl;
+	    ygglog_debug << "IPCComm(" << name << ")::recv_single: received input: " << ret << " bytes" << std::endl;
             break;
         }
     }

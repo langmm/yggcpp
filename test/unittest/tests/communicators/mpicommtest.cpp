@@ -164,6 +164,7 @@ TEST(MPIComm, recv) {
     mpic.setHandle(&mock_handle);
     char* data = (char*)malloc(sizeof(char) * 1);
     size_t len = 1;
+    mpic.set_timeout_recv(1);
     EXPECT_EQ(mpic.recv(data, len, false), -((long)msg.size()));
     communication::testing::mpi_registry_mock::MPISTATUS = 2;
     EXPECT_EQ(mpic.recv(data, len, true), -1);
@@ -182,5 +183,6 @@ TEST(MPIComm, regclone) {
     mpir.procs.push_back(1);
     mpi_registry_t mpir2 = mpir.Clone();
     EXPECT_NE(mpir.procs, mpir2.procs);
+    MPI_Finalize();
 }
 #endif

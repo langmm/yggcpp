@@ -26,6 +26,19 @@ ClientComm::ClientComm(const std::string name, int flgs) :
   init();
 }
 
+void ClientComm::set_timeout_recv(int new_timeout) {
+  COMM_BASE::set_timeout_recv(new_timeout);
+  if (requests.initClientResponse() < 0) {
+    ygglog_throw_error("ClientComm(" + name + ")::set_timeout_recv: Error initializing response comm");
+  }
+  Comm_t* active_comm = requests.comms[0];
+  active_comm->set_timeout_recv(new_timeout);
+}
+int ClientComm::wait_for_recv(const int) {
+  // Handle wait in recv_single for response comm
+  return 1;
+}
+
 void ClientComm::init() {
 #ifdef _OPENMP
 #pragma omp critical (client)
@@ -127,6 +140,10 @@ long ClientComm::recv_single(char*& rdata, const size_t &rlen, bool allow_reallo
     long ret = 0;
     while (!requests.isComplete(req_id)) {
         ygglog_debug << "ClientComm(" << name << ")::recv_single: Waiting for response to request " << req_id << std::endl;
+	if (response_comm->wait_for_recv(this->timeout_recv) < 0) {
+	  ygglog_debug << "ClientComm(" << name << ")::recv_single: Error in wait for message" << std::endl;
+	  return -1;
+	}
         ret = response_comm->recv_single(rdata, buff_len, allow_realloc);
         if (ret < 0) {
 	    ygglog_error << "ClientComm(" << name << ")::recv_single: response recv_single returned " << ret << std::endl;

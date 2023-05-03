@@ -83,6 +83,21 @@ public:
      */
     virtual int send(const char *data, const size_t &len);
     /*!
+      @brief Set the time limit for receiving messages.
+      @param[in] new_timeout New time limit in micro-seconds. -1 will
+        cause receive calls to block until a message is available.
+     */
+    virtual void set_timeout_recv(int new_timeout);
+    /*!
+      @brief Wait until a message is available to be received or a time
+        limit is reached.
+      @param[in] tout Time (in micro-seconds) that should be waited. If -1
+        the process will wait forever.
+      @return Number of messages available for receive. -1 if an error
+        occurred.
+     */
+    virtual int wait_for_recv(const int tout = YGG_MAX_TIME);
+    /*!
       @brief Receive a string message from the communicator.
       @param[out] data Allocated buffer where the message should be saved.
       @param[in] len Length of the allocated message buffer in bytes.
@@ -295,6 +310,7 @@ protected:
     int index_in_register; //!< Index of the comm in the comm register.
     int thread_id; //!< ID for the thread that created the comm.
     Metadata metadata;
+    int timeout_recv; //!< Time to wait for messages during receive.
 
     static std::vector<Comm_t*> registry;
     static void register_comm(Comm_t* x);

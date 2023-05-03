@@ -263,20 +263,9 @@ int ZMQSocket::send(const std::string msg) {
   return msg.size();
 }
 
-int ZMQSocket::recv(std::string& msg, int tout, bool for_identity) {
-  // TODO: Rely on ZMQ poll timeout rather than clock?
-  clock_t start = clock();
-  while ((((double)(clock() - start))/CLOCKS_PER_SEC) < tout && !for_identity) {
-    int nmsg = poll(ZMQ_POLLIN, 0);
-    if (nmsg < 0) return -1;
-    else if (nmsg > 0) break;
-    else {
-      ygglog_debug << "ZMQSocket::recv: No messages, sleep " << YGG_SLEEP_TIME << std::endl;
-      usleep(YGG_SLEEP_TIME);
-    }
-  }
+int ZMQSocket::recv(std::string& msg, bool for_identity) {
   if (type == ZMQ_ROUTER && !for_identity) {
-    if (recv(msg, 0, true) < 0) {
+    if (recv(msg, true) < 0) {
       ygglog_error << "ZMQSocket::recv: Error receiving identity." << std::endl;
       return -1;
     }
@@ -434,7 +423,8 @@ bool ZMQReply::send_stage1(std::string& msg_data) {
     return false;
   }
   ZMQSocket* sock = &(sockets[0]);
-  if (sock->recv(msg_data, timeout) < 0) {
+  sock->poll(ZMQ_POLLIN, timeout);
+  if (sock->recv(msg_data) < 0) {
     ygglog_error << "ZMQReply::send_stage1: Error receiving reply" << std::endl;
     return false;
   }

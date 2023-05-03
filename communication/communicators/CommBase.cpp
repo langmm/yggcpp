@@ -7,7 +7,7 @@ using namespace communication::utils;
 Comm_t::Comm_t(Address *address, DIRECTION dirn, const COMM_TYPE &t, int flgs) :
   type(t), name(), address(address), direction(dirn), flags(flgs),
   maxMsgSize(0), msgBufSize(0), index_in_register(-1),
-  thread_id(-1), metadata() {
+  thread_id(-1), metadata(), timeout_recv(YGG_MAX_TIME) {
 
     flags |= COMM_FLAG_VALID;
     if (direction == NONE)
@@ -260,8 +260,31 @@ int Comm_t::send(const char *data, const size_t &len) {
   ygglog_debug << "CommBase(" << name << ")::send(const char *data, const size_t &len): returns 1" << std::endl;
   return head.size_curr;
 }
+void Comm_t::set_timeout_recv(int new_timeout) {
+  timeout_recv = new_timeout;
+}
+int Comm_t::wait_for_recv(const int tout) {
+  clock_t start = clock();
+  while (tout < 0 ||
+	 (((double)(clock() - start))*1000000/CLOCKS_PER_SEC) < tout) {
+    int nmsg = comm_nmsg();
+    if (nmsg < 0) {
+      ygglog_error << "CommBase(" << name << ")::wait_for_recv: Error in checking for messages" << std::endl;
+      return -1;
+    } else if (nmsg > 0) {
+      return nmsg;
+    }
+    ygglog_error << "CommBase(" << name << ")::wait_for_recv: No messages, sleep " << YGG_SLEEP_TIME << std::endl;
+    usleep(YGG_SLEEP_TIME);
+  }
+  return 0;
+}
 long Comm_t::recv(char*& data, const size_t &len, bool allow_realloc = false) {
   ygglog_debug << "CommBase(" << name << ")::recv(char*& data, const size_t &len, bool allow_realloc): begin" << std::endl;
+  if (wait_for_recv(timeout_recv) < 0) {
+    ygglog_error << "CommBase(" << name << ")::recv: No messages waiting" << std::endl;
+    return -1;
+  }
   long ret = recv_single(data, len, allow_realloc);
   if (ret < 0) {
     ygglog_error << "CommBase(" << name << ")::recv(char*& data, const size_t &len, bool allow_realloc): Failed to receive header" << std::endl;
@@ -290,6 +313,10 @@ long Comm_t::recv(char*& data, const size_t &len, bool allow_realloc = false) {
   size_t msgsiz = 0;
   while (head.size_curr < head.size_data) {
     msgsiz = head.size_data - head.size_curr + 1;
+    if (xmulti->wait_for_recv(timeout_recv) < 0) {
+      ygglog_error << "CommBase(" << name << ")::recv: No messages waiting in work comm" << std::endl;
+      return -1;
+    }
     ret = xmulti->recv_single(pos, msgsiz, false);
     if (ret < 0) {
       ygglog_error << "CommBase(" << name << ")::recv(char*& data, const size_t &len, bool allow_realloc): Receive interrupted at " << head.size_curr << " of " << head.size_data << "bytes." << std::endl;

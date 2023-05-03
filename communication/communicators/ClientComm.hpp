@@ -13,6 +13,9 @@ public:
 			int flgs = 0);
     explicit ClientComm(const std::string name, int flgs = 0);
 
+    void set_timeout_recv(int new_timeout) override;
+    int wait_for_recv(const int tout = YGG_MAX_TIME) override;
+
     using Comm_t::send;
     using Comm_t::recv;
     using COMM_BASE::comm_nmsg;

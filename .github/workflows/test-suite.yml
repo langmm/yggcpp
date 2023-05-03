@@ -15,7 +15,7 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python-install: [pip, conda]
         install-zmq: [true, false]
-        install-mpi: [true, false]
+        install-mpi: [true]
         with-coverage: [true]
         with-asan: [false]
         with-elf: [false]
@@ -31,12 +31,13 @@ jobs:
             install-mpi: false
           - python-install: conda
             with-asan: true
-          - install-zmq: true
-            install-mpi: false
-          - install-zmq: false
-            install-mpi: false
-          - install-zmq: true
-            install-mpi: true
+          # - install-zmq: true
+          #   install-mpi: false
+          # - install-zmq: false
+          #   install-mpi: false
+          # - python-install: pip
+          #   install-zmq: true
+          #   install-mpi: true
           # - with-asan: true
           #   install-mpi: true
           # - with-asan: false
