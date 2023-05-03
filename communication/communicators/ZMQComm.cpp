@@ -140,10 +140,11 @@ void ZMQSocket::init(int type0, utils::Address* address,
 #ifdef _OPENMP
   }
 #endif // _OPENMP
-  if (!except_msg.empty())
-    throw std::runtime_error(except_msg);
   if (handle == NULL)
     ygglog_throw_error("ZMQSocket::init: Error creating new socket.");
+  if (!except_msg.empty()) {
+    throw std::runtime_error(except_msg);
+  }
   if (address && !address->address().empty()) {
     endpoint = address->address();
     if (zmq_connect(handle, endpoint.c_str()) != 0) {
@@ -397,7 +398,8 @@ bool ZMQReply::recv_stage2(std::string msg_send) {
     ", begin" << std::endl;
   // Receive
   std::string msg_recv;
-  if (sock->recv(msg_recv, timeout) < 0) {
+  sock->poll(ZMQ_POLLIN, timeout);
+  if (sock->recv(msg_recv) < 0) {
     ygglog_error << "ZMQReply::recv_stage2: Error receiving reponse" << std::endl;
     return false;
   }
@@ -866,7 +868,7 @@ int ZMQSocket::send(const std::string) {
   return -1;
 }
 
-int ZMQSocket::recv(std::string&, int, bool) {
+int ZMQSocket::recv(std::string&, bool) {
   zmq_install_error();
   return -1;
 }
