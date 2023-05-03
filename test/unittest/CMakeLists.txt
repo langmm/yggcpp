@@ -1,16 +1,9 @@
 include(CheckCXXCompilerFlag)
 
-#set(UNITTEST_SOURCES
-#        testutils.cpp
-#        unittest.cpp
-#        valuetest.cpp
-#        arraytest.cpp)
-
 set(UNITTEST_SOURCES
         testutils.cpp
         unittest.cpp
         commbasetest.cpp
-        #commheadtest.cpp
         clientcommtest.cpp
         servercommtest.cpp
         ipccommtest.cpp
@@ -58,7 +51,8 @@ file(GLOB files "${CMAKE_CURRENT_SOURCE_DIR}/unittest/tests/communicators/*.cpp"
 foreach(ffname ${files})
     get_filename_component(fname ${ffname} NAME_WE)
     add_executable(unittest_${fname} ${CMAKE_CURRENT_SOURCE_DIR}/unittest/unittest.cpp ${CMAKE_CURRENT_SOURCE_DIR}/unittest/elf_hook.cpp ${CMAKE_CURRENT_SOURCE_DIR}/unittest/mock.cpp ${ffname})
-    target_link_libraries(unittest_${fname} ${TEST_LIBRARIES} YggInterface gomp dl ${YGG_ZMQ_LIBS})
+    target_include_directories(unittest_${fname} PRIVATE ${PYTHON_INCLUDE_DIRS})
+    target_link_libraries(unittest_${fname} ${TEST_LIBRARIES} YggInterface gomp dl ${YGG_ZMQ_LIBS} ${PYTHON_LIBRARIES})
     add_test(NAME unittest_${fname}
             COMMAND ${CMAKE_BINARY_DIR}/test/unittest_${fname}
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
