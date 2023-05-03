@@ -63,14 +63,19 @@ TEST(IPCComm, send) {
     utils::Address *adr2 = new utils::Address("12345678");
     IPCComm_tester ipc2(data, adr2, SEND);
     // Replace msgsnd so that send fails and checks queue status
-    ELF_BEGIN_F_RET(msgsnd, -1);
+    RETVAL = -1;
+    RETVAL_INC_SEND = 1;
+    ELF_BEGIN_F(msgsnd);
     res = ipc2.send(data.c_str(), data.size());
     EXPECT_EQ(SENDCOUNT, 1);
-    EXPECT_EQ(res, RETVAL);
+    EXPECT_GE(res, 0);
     // Replace msgctl so that when queue status is checked, it fails
-    ELF_BEGIN_F_RET(msgctl, -2);
+    RETVAL = -1;
+    RETVAL_INC_SEND = 0;
+    RETVAL_INC_POLL = 0;
+    ELF_BEGIN_F(msgctl);
     res = ipc2.send(data.c_str(), data.size());
-    EXPECT_EQ(res, RETVAL-1);
+    EXPECT_EQ(res, -1);
     // Restore
     ELF_END_F(msgsnd);
     ELF_END_F(msgctl);
@@ -89,9 +94,12 @@ TEST(IPCComm, commnmsg) {
 #ifdef ELF_AVAILABLE
     ELF_BEGIN;
     // Replace msgctl to test failure in comm_nmsg
-    ELF_BEGIN_F_RET(msgctl, -2);
+    RETVAL = 0;
+    RETVAL_INC_POLL = 0;
+    ELF_BEGIN_F(msgctl);
     res = ipc.comm_nmsg();
     EXPECT_EQ(res, 10000);
+    RETVAL = 1;
     res = ipc.comm_nmsg();
     EXPECT_EQ(res, 0);
     ELF_END_F(msgctl);
@@ -135,11 +143,16 @@ TEST(IPCComm, recv) {
     std::string name = "SendTester";
     ELF_BEGIN;
     ELF_BEGIN_F(msgget); // To allow connection to non-existed queue
-    // Replace msgrcv to test different size messages
-    ELF_BEGIN_F_RET(msgrcv, 0);
+    RETVAL = 0;
     IPCComm_tester ipc(name, new utils::Address("13579"), RECV);
+    // Replace msgrcv to test different size messages
+    ELF_BEGIN_F(msgctl);
+    ELF_BEGIN_F(msgrcv);
     char* data = (char*)malloc(sizeof(char));
     size_t len = 1;
+    RETVAL = 0;
+    RETVAL_INC_POLL = 0;
+    RETVAL_INC_RECV = 0;
     long res = ipc.recv(data, len, false);
     EXPECT_EQ(res, -11);
     // Replace realloc to test failure to realloc
@@ -150,14 +163,15 @@ TEST(IPCComm, recv) {
     // Test successful receive
     res = ipc.recv(data, len, true);
     EXPECT_EQ(res, 11);
-    res = ipc.recv(data, len, true);
-    EXPECT_EQ(res, 11);
-    RETVAL = -1;
+    // Test failure in receive
+    RETVAL = 0;
+    RETVAL_INC_POLL = -2;
     res = ipc.recv(data, len, true);
     EXPECT_EQ(res, -1);
     ELF_END_F(msgrcv);
     free(data);
     ELF_END_F(msgget);
+    ELF_END_F(msgctl);
     ELF_END;
 #endif // ELF_AVAILABLE
 }

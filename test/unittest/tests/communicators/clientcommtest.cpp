@@ -142,7 +142,10 @@ TEST(ClientComm, recv) {
     EXPECT_EQ(req1, std::string(data));
 #ifdef ELF_RECV
     ELF_BEGIN;
-    ELF_RECV(-2);
+    ELF_RECV(0);
+    RETVAL = 0;
+    RETVAL_INC_POLL = 0;
+    RETVAL_INC_RECV = 0;
     EXPECT_EQ(cc.recv(data, len, false), -res1.size());
     EXPECT_EQ(cc.recv(data, len, true), res1.size());
     ELF_RECV_REVERT;

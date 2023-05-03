@@ -72,7 +72,7 @@ jobs:
       fail-fast: false
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           submodules: true
 
@@ -131,7 +131,7 @@ jobs:
 
       - name: Setup Python
         if: matrix.python-install == 'pip'
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
       - name: Fix Python path on mac
         if: matrix.os == 'macos-latest' && matrix.python-install == 'pip'
         run: |
@@ -187,11 +187,16 @@ jobs:
         shell: bash -l {0}
         run: |
           echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DYGG_ENABLE_ELF=OFF" >> "$GITHUB_ENV"
-      - name: Valgrind config flags
+      - name: Valgrind on config flags
+        if: matrix.with-valgrind == true
+        shell: bash -l {0}
+        run: |
+          echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DYGG_ENABLE_INSTRUMENTATION_OPT=OFF -DYGGDRASIL_DISABLE_PYTHON_C_API=ON" >> "$GITHUB_ENV"
+      - name: Valgrind off config flags
         if: matrix.with-valgrind == false
         shell: bash -l {0}
         run: |
-          echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DYGG_SKIP_VALGRIND_TESTS=ON -DYGG_ENABLE_INSTRUMENTATION_OPT=OFF -DYGGDRASIL_DISABLE_PYTHON_C_API=ON" >> "$GITHUB_ENV"
+          echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DYGG_SKIP_VALGRIND_TESTS=ON" >> "$GITHUB_ENV"
 
       - name: Pip config flags
         if: matrix.python-install == 'pip'
@@ -291,7 +296,7 @@ jobs:
       ###################################
       - name: Upload coverage report
         if: matrix.with-coverage == true
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v3
         with:
           name: ${{ matrix.os }}-${{ matrix.python-install }}
           token: ${{ secrets.CODECOV_TOKEN }}

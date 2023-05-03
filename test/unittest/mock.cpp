@@ -30,15 +30,20 @@ namespace mock {
 #ifdef ELF_AVAILABLE
 
 int RETVAL = 0;
+int RETVAL_INC_SEND = 0;
+int RETVAL_INC_RECV = 0;
+int RETVAL_INC_POLL = 0;
 int SENDCOUNT = 0;
 std::string RETMSG = "";
 
 #ifdef IPCINSTALLED
 int msgsnd(int, const void *, size_t, int) {
-    //std::cout << "HERE";
-    //msgsnd(a, b, c, d);
+    int out = RETVAL;
+    RETVAL += RETVAL_INC_SEND;
+    if (out < 0)
+      return out;
     SENDCOUNT++;
-    return RETVAL;
+    return 0;
 }
 
 int msgctl(int, int, msqid_ds *buf) {
@@ -46,8 +51,11 @@ int msgctl(int, int, msqid_ds *buf) {
         return 0;
     buf->msg_qnum = 10000;
     buf->msg_qbytes = 1000;
-    RETVAL++;
-    return RETVAL + 1;
+    int out = RETVAL;
+    RETVAL += RETVAL_INC_POLL;
+    if (out < 0)
+      return out;
+    return 0;
 }
 
 int msgget(key_t, int) {
@@ -57,8 +65,10 @@ int msgget(key_t, int) {
 ssize_t msgrcv(int, void* rbuf, size_t, long, int) {
     std::string msg = "Hello world";
     memcpy(static_cast<communicator::msgbuf_t*>(rbuf)->data, msg.c_str(), msg.size());
-    if (RETVAL < 0)
-        return RETVAL;
+    int ret = RETVAL;
+    RETVAL += RETVAL_INC_RECV;
+    if (ret < 0)
+      return ret;
     return (ssize_t)(msg.size());
 }
 #endif // IPCINSTALLED
@@ -117,15 +127,18 @@ template<class OutputIt>
 #ifdef ZMQINSTALLED
 
   int zmq_sendmsg (void *, zmq_msg_t *msg, int) {
-    if (RETVAL < 0)
-      return RETVAL;
-    RETVAL--;
+    int out = RETVAL;
+    RETVAL += RETVAL_INC_SEND;
+    if (out < 0)
+      return out;
     return static_cast<int>(zmq_msg_size(msg));
   }
   int zmq_recvmsg (void *, zmq_msg_t *msg, int) {
     std::cerr << "zmq_recvmsg: RETVAL = " << RETVAL << std::endl;
-    if (RETVAL < 0)
-        return RETVAL;
+    int out = RETVAL;
+    RETVAL += RETVAL_INC_RECV;
+    if (out < 0)
+      return out;
     std::string msgS =
       "YGG_MSG_HEAD{\"__meta__\": {\"zmq_reply\": \"" + RETMSG +
       "\", \"size\": 11, \"id\": \"1\"}}YGG_MSG_HEADHello world";
@@ -137,17 +150,19 @@ template<class OutputIt>
 #ifdef ZMQ_HAVE_POLLER
   int zmq_poller_wait_all (void *, zmq_poller_event_t *, int n_events, long) {
     std::cerr << "zmq_poller_wait_all: RETVAL = " << RETVAL << std::endl;
-    if (RETVAL < 0)
-      return RETVAL;
-    RETVAL--;
+    int out = RETVAL;
+    RETVAL += RETVAL_INC_POLL;
+    if (out < 0)
+      return out;
     return n_events;
   }
 #else // ZMQ_HAVE_POLLER
   int zmq_poll (zmq_pollitem_t *, int nitems, long) {
     std::cerr << "zmq_poll: RETVAL = " << RETVAL << std::endl;
-    if (RETVAL < 0)
-      return RETVAL;
-    RETVAL--;
+    int out = RETVAL;
+    RETVAL += RETVAL_INC_POLL;
+    if (out < 0)
+      return out;
     return nitems;
   }
 #endif // ZMQ_HAVE_POLLER

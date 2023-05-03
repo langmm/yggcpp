@@ -100,6 +100,7 @@ TEST(ServerComm, send) {
     sc.addRequest();
     EXPECT_GE(sc.send(msg.c_str(), msg.size()), 0);
 #ifdef ELF_SEND
+    // Failure due to absence of request
     ELF_BEGIN;
     ELF_SEND(5);
     EXPECT_EQ(sc.send(msg.c_str(), msg.size()), -1);

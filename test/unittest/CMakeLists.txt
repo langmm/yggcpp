@@ -58,12 +58,12 @@ gtest_discover_tests(unittest DISCOVERY_MODE PRE_TEST)
 
 add_definitions(-DYGG_TEST)
 # This is required for running tests with valgrind
-# if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|ARMClang")
-#     add_custom_command(TARGET unittest POST_BUILD
-#             COMMAND dsymutil unittest
-#             WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
-#             COMMENT "Creating debug symbols...")
-# endif(CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|ARMClang")
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|ARMClang")
+    add_custom_command(TARGET unittest POST_BUILD
+            COMMAND dsymutil unittest
+            WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+            COMMENT "Creating debug symbols...")
+endif(CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|ARMClang")
 if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
    set(CMAKE_CXX_FLAGS_DEBUG "/Zi -DYGG_DEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS}")
    set(CMAKE_CXX_FLAGS_RELEASE "/Zi -DYGG_DEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS}")

@@ -157,8 +157,10 @@ int IPCComm::send_single(const char* data, const size_t &len, const Header&) {
     while (true) {
         ret = msgsnd(handle[0], &t, len, IPC_NOWAIT);
         ygglog_debug << "IPCComm(" << name << ")::send_single: msgsnd returned " << ret << std::endl;
-        if (ret == 0)
+        if (ret == 0) {
+	    ret = static_cast<int>(len);
             break;
+	}
         if ((ret == -1) && (errno == EAGAIN)) {
 	    ygglog_debug << "IPCComm(" << name << ")::send_single: msgsnd, sleep" << std::endl;
             usleep(YGG_SLEEP_TIME);

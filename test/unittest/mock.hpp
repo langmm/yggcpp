@@ -72,6 +72,9 @@ namespace mock {
 //void setValue(const int val);
 
 extern int RETVAL;
+extern int RETVAL_INC_SEND;
+extern int RETVAL_INC_RECV;
+extern int RETVAL_INC_POLL;
 extern int SENDCOUNT;
 extern int MPISTATUS;
 extern bool MPICANCEL;

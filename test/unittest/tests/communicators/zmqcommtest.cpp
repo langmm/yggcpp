@@ -174,13 +174,15 @@ TEST(ZMQComm, recv) {
     char* data = NULL;
     size_t len = 0;
     // Successful recv
-    RETVAL = 1;
 #ifdef ZMQ_HAVE_POLLER
     ELF_BEGIN_F(zmq_poller_wait_all);
 #else // ZMQ_HAVE_POLLER
     ELF_BEGIN_F(zmq_poll);
 #endif // ZMQ_HAVE_POLLER
     ELF_BEGIN_F(zmq_recvmsg);
+    RETVAL = 0;
+    RETVAL_INC_POLL = 0;
+    RETVAL_INC_RECV = 0;
     RETMSG = "";
     EXPECT_GE(zmq_send.getReply().create(RETMSG), 0);
     EXPECT_GE(zmq_recv.recv(data, len, true), 0);
@@ -190,6 +192,7 @@ TEST(ZMQComm, recv) {
     EXPECT_EQ(zmq_recv.recv(data, len, true), -1);
     // Fail receive on receiving message
     RETVAL = 0;
+    RETVAL_INC_POLL = -1;
     EXPECT_EQ(zmq_recv.recv(data, len, true), -1);
     free(data);
 #ifdef ZMQ_HAVE_POLLER

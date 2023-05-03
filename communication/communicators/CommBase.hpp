@@ -96,7 +96,7 @@ public:
       @return Number of messages available for receive. -1 if an error
         occurred.
      */
-    virtual int wait_for_recv(const int tout = YGG_MAX_TIME);
+    virtual int wait_for_recv(const int tout);
     /*!
       @brief Receive a string message from the communicator.
       @param[out] data Allocated buffer where the message should be saved.
