@@ -123,18 +123,20 @@ template<class OutputIt>
     return static_cast<int>(zmq_msg_size(msg));
   }
   int zmq_recvmsg (void *, zmq_msg_t *msg, int) {
+    std::cerr << "zmq_recvmsg: RETVAL = " << RETVAL << std::endl;
+    if (RETVAL < 0)
+        return RETVAL;
     std::string msgS =
       "YGG_MSG_HEAD{\"__meta__\": {\"zmq_reply\": \"" + RETMSG +
       "\", \"size\": 11, \"id\": \"1\"}}YGG_MSG_HEADHello world";
     if (zmq_msg_init_size (msg, msgS.size()) != 0)
       return -1;
     memcpy(zmq_msg_data(msg), msgS.c_str(), msgS.size());
-    if (RETVAL < 0)
-        return RETVAL;
     return 0;
   }
 #ifdef ZMQ_HAVE_POLLER
   int zmq_poller_wait_all (void *, zmq_poller_event_t *, int n_events, long) {
+    std::cerr << "zmq_poller_wait_all: RETVAL = " << RETVAL << std::endl;
     if (RETVAL < 0)
       return RETVAL;
     RETVAL--;
@@ -142,6 +144,7 @@ template<class OutputIt>
   }
 #else // ZMQ_HAVE_POLLER
   int zmq_poll (zmq_pollitem_t *, int nitems, long) {
+    std::cerr << "zmq_poll: RETVAL = " << RETVAL << std::endl;
     if (RETVAL < 0)
       return RETVAL;
     RETVAL--;

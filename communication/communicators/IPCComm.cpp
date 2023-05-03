@@ -191,6 +191,7 @@ long IPCComm::recv_single(char*& data, const size_t& len, bool allow_realloc) {
     ygglog_debug << "IPCComm(" << name << ")::recv_single:" << std::endl;
     msgbuf_t t;
     t.mtype = 1;
+    t.data[0] = '\0';
     long ret = -1;
     while (true) {
         ret = msgrcv(handle[0], &t, YGG_MSG_MAX, 0, IPC_NOWAIT);
