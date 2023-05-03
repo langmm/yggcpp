@@ -13,7 +13,6 @@
 
 #define COMM_SERI_TEST_TYPE(cls, type, value, schema)			\
   TEST(cls, type) {							\
-    setenv("YGG_MODEL_INDEX", "1", 1);					\
     cls ## _tester sComm(SEND);						\
     sComm.addSchema(schema);						\
     std::string name = "test_name";					\
@@ -26,7 +25,6 @@
     EXPECT_GE(rComm.recvVar(data_recv), 0);				\
     EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));			\
     EXPECT_EQ(data_send, data_recv);					\
-    /* unsetenv("YGG_MODEL_INDEX"); */					\
   }
 #define COMM_SERI_TEST(cls)						\
   COMM_SERI_TEST_TYPE(cls, double, 1.5, "{\"type\": \"number\"}")	\

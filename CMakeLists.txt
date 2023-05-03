@@ -432,7 +432,7 @@ else()
     endif()
 
     # Set environment variables required for embedding Python
-    set(RAPIDJSON_PYTHON_ENV "DATADIR=${CMAKE_SOURCE_DIR}/test;YGG_PYTHON_EXEC=${Python3_EXECUTABLE}")
+    set(RAPIDJSON_PYTHON_ENV "YGG_MODEL_INDEX=123;DATADIR=${CMAKE_SOURCE_DIR}/test;YGG_PYTHON_EXEC=${Python3_EXECUTABLE}")
 
     # There is an issue with embedding Python on Windows in conda environments
     # https://github.com/ContinuumIO/anaconda-issues/issues/11374

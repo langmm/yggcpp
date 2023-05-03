@@ -132,6 +132,8 @@ jobs:
       - name: Setup Python
         if: matrix.python-install == 'pip'
         uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
       - name: Fix Python path on mac
         if: matrix.os == 'macos-latest' && matrix.python-install == 'pip'
         run: |

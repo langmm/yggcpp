@@ -36,6 +36,10 @@ int RETVAL_INC_POLL = 0;
 int SENDCOUNT = 0;
 std::string RETMSG = "";
 
+char *alt_getenv(const char *name) {
+  return NULL;
+}
+  
 #ifdef IPCINSTALLED
 int msgsnd(int, const void *, size_t, int) {
     int out = RETVAL;

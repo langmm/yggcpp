@@ -33,16 +33,12 @@ public:
 
 #define SERVER_SERI_TEST_TYPE(type, value, schema)	\
   TEST(ServerComm, type) {				\
-    setenv("YGG_MODEL_INDEX", "1", 1);			\
     ServerComm_tester client("client_server");		\
-    unsetenv("YGG_MODEL_INDEX");			\
   }
 
 TEST(ServerComm, constructor) {
     std::string name = "MyComm";
-    setenv("YGG_MODEL_INDEX", "1", 1);
     ServerComm sc(name, nullptr);
-    unsetenv("YGG_MODEL_INDEX");
     ServerComm sc1("", nullptr);
     // ServerComm sc2("", new utils::Address("12345"));
 }
@@ -93,9 +89,7 @@ TEST(ServerComm, constructor) {
 TEST(ServerComm, send) {
     std::string msg = "my message";
     std::string name = "MyComm";
-    setenv("YGG_MODEL_INDEX", "1", 1);
     communication::testing::ServerComm_tester sc(name, nullptr);
-    unsetenv("YGG_MODEL_INDEX");
     EXPECT_EQ(sc.send(msg.c_str(), msg.size()), -1);
     sc.addRequest();
     EXPECT_GE(sc.send(msg.c_str(), msg.size()), 0);
@@ -115,9 +109,7 @@ TEST(ServerComm, recv) {
     char* data = (char*)malloc(sizeof(char));
     size_t len = 1;
 
-    setenv("YGG_MODEL_INDEX", "1", 1);
     communication::testing::ServerComm_tester sc(name, nullptr);
-    unsetenv("YGG_MODEL_INDEX");
 
     ELF_BEGIN;
     ELF_RECV(0);

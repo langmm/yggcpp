@@ -68,12 +68,8 @@ COMM_SERI_TEST(ZMQComm)
 // }
 
 TEST(ZMQComm, constructor) {
-    std::string name = "TestZMQComm";
+    std::string name = "";
     ZMQSocket::resetPort();
-    unsetenv("YGG_MODEL_INDEX");
-    EXPECT_THROW(ZMQComm zmqc(name, nullptr, SEND), std::runtime_error);
-    name = "";
-    setenv("YGG_MODEL_INDEX", "123", 1);
     ZMQComm_tester zmqc(name, nullptr, SEND);
     EXPECT_EQ(zmqc.comm_nmsg(), 0);
     auto *adrs = new utils::Address();
@@ -82,6 +78,13 @@ TEST(ZMQComm, constructor) {
 #ifdef ELF_AVAILABLE
     name = "";
     ELF_BEGIN;
+    // Failure when YGG_MODEL_INDEX not set
+    {
+      std::string alt_name = "TestZMQComm";
+      ELF_BEGIN_ALT_F(getenv);
+      EXPECT_THROW(ZMQComm zmqc(alt_name, nullptr, SEND), std::runtime_error);
+      ELF_END_F(getenv);
+    }
     // Failure to create socket
     {
       ELF_BEGIN_F(zmq_socket);
@@ -126,7 +129,6 @@ TEST(ZMQComm, constructor) {
 
 TEST(ZMQComm, send) {
 #ifdef ELF_AVAILABLE
-    setenv("YGG_MODEL_INDEX", "123", 1);
     std::string name = "TestZMQSend";
     std::string mmsg = "This is a test message";
     ZMQComm_tester zmq(name, nullptr, SEND);
@@ -165,7 +167,6 @@ TEST(ZMQComm, send) {
 }
 
 TEST(ZMQComm, recv) {
-    setenv("YGG_MODEL_INDEX", "123", 1);
     std::string name = "TestZMQSend";
     ZMQComm_tester zmq_recv(name, nullptr, RECV);
     ZMQComm_tester zmq_send(name, nullptr, SEND);
