@@ -171,7 +171,7 @@ void ZMQSocket::init(int type0, utils::Address* address,
 	  ygglog_debug << "ZMQSocket::init: model_index = " << model_index << std::endl;
 	  _last_port = 49152 + 1000 * static_cast<int>(strtol(model_index, nullptr, 0));
 	  _last_port_set = 1;
-	  ygglog_debug << "ZMQSocket::init: _last_port = " << _last_port << std::endl;
+	  ygglog_debug << "ZMQSocket::init: last_port = " << _last_port << std::endl;
 	}
       }
       if (except_msg.empty()) {
@@ -980,10 +980,6 @@ WORKER_METHOD_DUMMY(ZMQComm, zmq)
 Comm_t* ZMQComm::create_worker_recv(Header&) {
   zmq_install_error();
   return NULL;
-}
-
-void ZMQComm::destroy() {
-  zmq_install_error();
 }
 
 ZMQComm::ZMQComm(const std::string, utils::Address *address,
