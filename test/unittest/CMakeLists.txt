@@ -77,6 +77,19 @@ endif()
 #        ENVIRONMENT
 #        "${RAPIDJSON_PYTHON_ENV}")
 
+if (WIN32)
+  add_custom_command(
+        TARGET unittest
+        POST_BUILD
+        COMMAND echo "$<TARGET_RUNTIME_DLLS:unittest>"
+    )
+  add_custom_command(
+        TARGET unittest
+        POST_BUILD
+        COMMAND dumpbin /dependents $<TARGET_FILE:YggInterface>
+        COMMAND_EXPAND_LISTS
+    )
+endif()
 if (WIN32 AND NOT CONDA_PREFIX)
     add_custom_command(
         TARGET unittest
