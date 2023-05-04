@@ -238,34 +238,12 @@ add_definitions(-DRAPIDJSON_YGGDRASIL)
 add_definitions(-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION)
 add_definitions(-D_USE_MATH_DEFINES)
 
-option(BUILD_PYTHON_LIBRARY "Build the Yggdrasil Python interface library" ON)
-#########################################
-find_package(PythonInterp 3)
-find_package(PythonLibs 3 REQUIRED)
-find_package(Boost REQUIRED COMPONENTS python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR} log)
-
-if(BUILD_PYTHON_LIBRARY)
-    if(POLICY CMP0094)  # https://cmake.org/cmake/help/latest/policy/CMP0094.html
-        cmake_policy(SET CMP0094 NEW)  # FindPython should return the first matching Python
-    endif()
-    add_definitions(-DWITH_PYTHON)
-
-    #find_package(Python3 COMPONENTS Interpreter Development NumPy REQUIRED)
-    #include_directories(${Python_INCLUDE_DIRS})
-    #include_directories(${Python3_NumPy_INCLUDE_DIRS})
-    #set(YGG_PYTHON_ENV "DATADIR=${CMAKE_SOURCE_DIR}/test;YGG_PYTHON_EXEC=${Python3_EXECUTABLE}")
 set(YGG_BUILD_FLAGS "")
 
-    # There is an issue with embedding Python on Windows in conda environments
-    # https://github.com/ContinuumIO/anaconda-issues/issues/11374
-    #if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    #    set(YGG_PYTHON_ENV "${YGG_PYTHON_ENV};PYTHONHOME=${Python3_RUNTIME_LIBRARY_DIRS}")
-    #endif()
 #########################################
 # DEPENDENCIES
 #########################################
 
-    #target_link_libraries(YggInterface ${PYTHON_LIBRARIES} Python3::NumPy)
 set(CONDA_PREFIX "$ENV{CONDA_PREFIX}")
 if(CONDA_PREFIX)
     message(STATUS "CONDA_PREFIX = ${CONDA_PREFIX}")
@@ -275,23 +253,11 @@ endif()
 # Rapidjson #
 #############
 
-    file(GLOB_RECURSE PYSOURCES ${CMAKE_SOURCE_DIR}/communication/python/*.cpp)
-    add_library(pyygg MODULE ${SOURCES} ${PYSOURCES})
-    target_include_directories(pyygg PRIVATE ${PYTHON_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/communication/python)
-    target_link_libraries(pyygg boost_python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR})
-    message("PYTHON")
 set(RAPIDJSON_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/communication/rapidjson/include")
 set(DEPS_INCLUDE_DIRS ${DEPS_INCLUDE_DIRS} ${RAPIDJSON_INCLUDE_DIRS})
 message(STATUS "Rapidjson found ${RAPIDJSON_INCLUDE_DIRS}")
 
-else()
-    find_package(Boost REQUIRED COMPONENTS log)
-endif()
 ##############################
-target_include_directories(YggInterface PRIVATE ${PYTHON_INCLUDE_DIRS})
-target_link_libraries(YggInterface ${PYTHON_LIBRARIES} boost_python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR})
-
-#file(GLOB_RECURSE SOURCES "communication/**/*.cpp")
 
 option(YGG_BUILD_TESTS "Build tests" OFF)
 option(YGG_BUILD_THIRDPARTY_GTEST "Use gtest installation in 'thirdpart/gtest' by default if available" ON)
@@ -484,8 +450,11 @@ endif()
 #########
 # Boost #
 #########
-
-find_package(Boost REQUIRED COMPONENTS log regex)
+if(YGGDRASIL_DISABLE_PYTHON_C_API)
+    find_package(Boost REQUIRED COMPONENTS log regex)
+else()
+    find_package(Boost REQUIRED COMPONENTS log regex python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR})
+endif()
 add_definitions(-DBOOST_LOG_DYN_LINK)
 message(STATUS "Boost found Boost_INCLUDE_DIRS = ${Boost_INCLUDE_DIRS}")
 set(DEPS_LIBRARIES ${DEPS_LIBRARIES} ${Boost_LIBRARIES})
@@ -552,6 +521,17 @@ endif()
 target_link_libraries(YggInterface ${DEPS_LIB_NAMES} ${DEPS_LIBRARIES})
 target_include_directories(YggInterface PUBLIC ${DEPS_INCLUDE_DIRS})
 
+#########################
+# Create Python Library #
+#########################
+if(NOT YGGDRASIL_DISABLE_PYTHON_C_API)
+    add_definitions(-DWITH_PYTHON)
+    file(GLOB_RECURSE PYSOURCES ${CMAKE_SOURCE_DIR}/communication/python/*.cpp)
+    add_library(pyygg MODULE ${PYSOURCES})
+    target_include_directories(pyygg PRIVATE ${Python3_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/communication/python ${DEPS_INCLUDE_DIRS})
+    target_link_libraries(pyygg boost_python${Python3_VERSION_MAJOR}${Python3_VERSION_MINOR} ${DEPS_LIBRARIES} YggInterface)
+    message(STATUS "Building Python bindings=Yes")
+endif()
 ##################
 # Coverage       #
 ##################
@@ -585,43 +565,6 @@ if(YGG_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang|A
     # set(YGG_BUILD_FLAGS "${YGG_BUILD_FLAGS} --coverage -fno-inline -fno-inline-small-functions -fno-default-inline -fpermissive")
 endif(YGG_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang|ARMClang")
 
-    
-##################
-# Python library #
-##################
-
-option(BUILD_PYTHON_LIBRARY "Build the Yggdrasil Python interface library" ON)
-#########################################
-if(BUILD_PYTHON_LIBRARY)
-    if(POLICY CMP0094)  # https://cmake.org/cmake/help/latest/policy/CMP0094.html
-        cmake_policy(SET CMP0094 NEW)  # FindPython should return the first matching Python
-    endif()
-    add_definitions(-DWITH_PYTHON)
-    find_package(PythonInterp 3)
-    find_package(PythonLibs 3 REQUIRED)
-    find_package(Boost REQUIRED COMPONENTS python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR} log)
-
-    #find_package(Python3 COMPONENTS Interpreter Development NumPy REQUIRED)
-    #include_directories(${Python_INCLUDE_DIRS})
-    #include_directories(${Python3_NumPy_INCLUDE_DIRS})
-    #set(YGG_PYTHON_ENV "DATADIR=${CMAKE_SOURCE_DIR}/test;YGG_PYTHON_EXEC=${Python3_EXECUTABLE}")
-
-    # There is an issue with embedding Python on Windows in conda environments
-    # https://github.com/ContinuumIO/anaconda-issues/issues/11374
-    #if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    #    set(YGG_PYTHON_ENV "${YGG_PYTHON_ENV};PYTHONHOME=${Python3_RUNTIME_LIBRARY_DIRS}")
-    #endif()
-
-    file(GLOB_RECURSE PYSOURCES ${CMAKE_SOURCE_DIR}/communication/python/*.cpp)
-    add_library(pyygg MODULE ${SOURCES} ${PYSOURCES})
-    target_include_directories(pyygg PRIVATE ${PYTHON_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/communication/python)
-    target_link_libraries(pyygg boost_python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR} ${DEPS_LIB_NAMES}) # ${DEPS_LIBRARIES})
-    message("PYTHON")
-
-else()
-    find_package(Boost REQUIRED COMPONENTS log)
-endif()
-##############################
 
 #########
 # Tests #
