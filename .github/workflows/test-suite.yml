@@ -234,6 +234,26 @@ jobs:
           # echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} \"-DPython3_EXECUTABLE=${{ env.pythonLocation }}\python.exe\" \"-DCMAKE_PREFIX_PATH=${VCPKG_INSTALLATION_ROOT}\installed\x64-windows\"" >> "$GITHUB_ENV"
      
       ###################################
+      # Add paths for Windows dlls
+      ###################################
+      - name: Vcpkg library paths on Windows
+        if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
+        shell: bash -l {0}
+        run: |
+          echo "DLL_DIRECTORY=${VCPKG_INSTALLATION_ROOT}\\installed\\x64-windows\\bin" >> "$GITHUB_ENV"
+      - name: Conda library paths on Windows
+        if: matrix.python-install == 'conda' && matrix.os == 'windows-latest'
+        shell: bash -l {0}
+        run: |
+          echo "DLL_DIRECTORY=${CONDA_PREFIX}\\Library\\bin" >> "$GITHUB_ENV"
+      - name: Add libraries to PATH on Windows
+        if: matrix.os == 'windows-latest'
+        shell: bash -l {0}
+        run: |
+          ls ${DLL_DIRECTORY}
+          echo "PATH=${PATH};${DLL_DIRECTORY}" >> "$GITHUB_ENV"
+      
+      ###################################
       # Check
       ###################################
       - name: Check for numpy (CONDA)
