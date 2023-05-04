@@ -44,6 +44,15 @@
     delete x;							\
     worker = NULL;						\
   }
+#define WORKER_METHOD_DUMMY(cls, abbr)				\
+  Comm_t* cls::create_worker(utils::Address*,			\
+				 const DIRECTION, int) {	\
+    abbr ## _install_error();					\
+    return NULL;						\
+  }								\
+  void cls::destroy_worker(Comm_t*&) {				\
+    abbr ## _install_error();					\
+  }
 
 
 

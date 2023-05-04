@@ -988,10 +988,7 @@ bool ZMQComm::create_header_recv(Header&, char*&, const size_t&,
   return false;
 }
 
-Comm_t* ZMQComm::create_worker(utils::Address*, const DIRECTION, int) {
-  zmq_install_error();
-  return NULL;
-}
+WORKER_METHOD_DUMMY(ZMQComm, zmq)
 
 Comm_t* ZMQComm::create_worker_recv(Header&) {
   zmq_install_error();

@@ -275,8 +275,6 @@ long MPIComm::recv_single(char*&, const size_t &, bool) {
   return -1;
 }
 
-Comm_t* MPIComm::create_worker(utils::Address*, const DIRECTION, int) {
-  mpi_install_error();
-  return NULL;
-}
+WORKER_METHOD_DUMMY(MPIComm, mpi)
+
 #endif

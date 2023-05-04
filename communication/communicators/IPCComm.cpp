@@ -344,9 +344,6 @@ IPCComm::IPCComm(const std::string &name, DIRECTION direction,
     ipc_install_error();
 }
 
-Comm_t* IPCComm::create_worker(utils::Address*, const DIRECTION, int) {
-  ipc_install_error();
-  return NULL;
-}
+WORKER_METHOD_DUMMY(IPCComm, ipc)
 
 #endif /*IPCINSTALLED*/
