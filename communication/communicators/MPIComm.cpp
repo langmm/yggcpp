@@ -1,69 +1,96 @@
 #include "MPIComm.hpp"
-#include <mpi.h>
 #include <boost/algorithm/string.hpp>
+#ifdef MPIINSTALLED
+#include <mpi.h>
+#endif /*MPIINSTALLED*/
 
 using namespace communication::communicator;
 using namespace communication::utils;
-//using namespace communication::datatypes;
 
 #if defined(MPIINSTALLED) && defined(MPI_COMM_WORLD)
 
-mpi_registry_t &mpi_registry_t::Clone() const {
-    MPI_Comm ncomm;
-    MPI_Comm_dup( (MPI_Comm)this->mpi_comm, &ncomm);
-    auto *clone = new mpi_registry_t(ncomm);
-    return *clone;
+mpi_registry_t::mpi_registry_t(const mpi_registry_t& rhs) :
+  comm(0), procs(), tag(0) {
+  MPI_Comm_dup( rhs.comm, &(this->comm));
 }
 
-/*MPIComm::MPIComm(const Comm_t *comm) : CommBase(comm, MPI_COMM) {
-    if (handle == nullptr) {
-        handle = new mpi_registry_t(MPI_COMM_WORLD);
-        handle->nproc = 0;
-        handle->procs.clear();
-        handle->tag = 0;
-        handle->nproc = 1;
-        std::vector<std::string> adrs;
-        //boost::split(adrs, address, boost::is_any_of(","));
-        handle->nproc += static_cast<int>(adrs.size());
+mpi_registry_t::~mpi_registry_t() {}
 
-        size_t ibeg, iend;
+mpi_registry_t& mpi_registry_t::operator=(const mpi_registry_t& rhs) {
+  this->~mpi_registry_t();
+  new (this) mpi_registry_t(rhs);
+  return *this;
+}
 
-        for (const auto &a : adrs) {
-            ibeg = a.find("[");
-            iend = a.find("]");
-            if (ibeg != std::string::npos) {
-                handle->procs.push_back(stoi(a.substr(ibeg, iend-ibeg)));
-            } else {
-                handle->procs.push_back(stoi(a));
-            }
-        }
+void mpi_registry_t::CheckReturn(int code, std::string method, int rank) const {
+  if (code == MPI_SUCCESS)
+    return;
+  else if (code == MPI_ERR_COMM)
+    ygglog_error << method << "(" << tag << "): Invalid communicator" << std::endl;
+  else if (code == MPI_ERR_TAG)
+    ygglog_error << method << "(" << tag << "): Invalid tag" << std::endl;
+  else if (code == MPI_ERR_RANK)
+    ygglog_error << method << "(" << tag << "): Invalid rank '" <<
+      rank << "'" << std::endl;
+  else if (code == MPI_ERR_TYPE)
+    ygglog_error << method << "(" << tag << "): Invalid datatype" << std::endl;
+  else if (code == MPI_ERR_COUNT)
+    ygglog_error << method << "(" << tag << "): Invalid count" << std::endl;
+}
 
-    }
-}*/
+int mpi_registry_t::Probe(int source, MPI_Status *status) const {
+  int out = MPI_Probe(source, tag, comm, status);
+  CheckReturn(out, "Probe", source);
+  if (status->MPI_ERROR) {
+    ygglog_error << "Probe(" << tag << "): Error in status: " << status->MPI_ERROR << std::endl;
+  }
+  return out;
+}
 
-MPIComm::MPIComm(const std::string &name, utils::Address *address, const DIRECTION direction) :
-        CommBase(nullptr, direction, MPI_COMM) {
+int mpi_registry_t::Send(const void *buf, int count, MPI_Datatype datatype, int dest) const {
+  int out = MPI_Send(buf, count, datatype, dest, tag, comm);
+  CheckReturn(out, "Send", dest);
+  return out;
+}
 
+int mpi_registry_t::Recv(void *buf, int count, MPI_Datatype datatype, int source,
+			 MPI_Status *status) const {
+  int out = MPI_Recv(buf, count, datatype, source, tag, comm, status);
+  CheckReturn(out, "Recv", source);
+  return out;
+}
+
+MPIComm::MPIComm(const std::string &name, utils::Address *address,
+		 const DIRECTION direction, int flgs) :
+  CommBase(address, direction, MPI_COMM, flgs) {
+    this->name = name;
+    init();
+}
+MPIComm::MPIComm(const std::string &name, const DIRECTION direction,
+		 int flgs) :
+  CommBase(name, direction, MPI_COMM, flgs) {
+    init();
+}
+
+void MPIComm::init() {
     //if (!(comm->flags & COMM_FLAG_VALID))
     //    return -1;
-    if (address == nullptr)
+    maxMsgSize = 2147483647;
+    if (this->address == nullptr)
         throw std::runtime_error("No address specified for MPIComm constructor");
-    if (name.empty()) {
+    if (this->name.empty()) {
         this->name = "tempinitMPI." + address->address();
     }
     handle = new mpi_registry_t(MPI_COMM_WORLD);
     if (handle == nullptr) {
-        ygglog_error << "init_mpi_comm: Could not alloc MPI registry.";
+        ygglog_error << "init_mpi_comm: Could not alloc MPI registry." << std::endl;
         return;
     }
-    handle->nproc = 0;
     handle->procs.clear();
     handle->tag = 0;
-    handle->nproc = 1;
     std::vector<std::string> adrs;
-    boost::split(adrs, address->address(), boost::is_any_of(","));
-    handle->nproc += static_cast<int>(adrs.size());
-    addresses.push_back(address);
+    boost::split(adrs, this->address->address(), boost::is_any_of(","));
+    addresses.push_back(this->address);
     if (adrs.size() > 1) {
         addresses[0]->address(adrs[0]);
         for (size_t i = 1; i < adrs.size(); i++) {
@@ -85,41 +112,40 @@ MPIComm::MPIComm(const std::string &name, utils::Address *address, const DIRECTI
 }
 
 MPIComm::~MPIComm() {
-    if (handle != nullptr)
-        delete handle;
-    handle = nullptr;
+  for (size_t i = 1; i < addresses.size(); i++)
+    delete addresses[i];
+  addresses.clear();
 }
 
 int MPIComm::mpi_comm_source_id() const {
     if (direction == SEND)
         return 0;
     if (handle == nullptr) {
-        ygglog_error << "mpi_comm_source_id(" << name << "): Queue handle is NULL.";
+        ygglog_error << "mpi_comm_source_id(" << name << "): Queue handle is NULL." << std::endl;
         return -1;
     }
     //mpi_registry_t* reg = (mpi_registry_t*)(x->handle);
-    MPI::Status status;
-    int address = MPI::ANY_SOURCE;
-    handle->Probe(address, handle->tag, status);
-    //if (MPI_Probe(address, handle->tag, handle->comm, &status) != MPI::SUCCESS) {
-    //    ygglog_error("mpi_comm_source_id(%s): Error in probe for tag = %d",
-    //                 name.c_str(), handle->tag);
-    //    return -1;
-    //}
-    if (status.Get_error()) {
+    MPI_Status status;
+    int address = MPI_ANY_SOURCE;
+    if (handle->Probe(address, &status) != MPI_SUCCESS) {
+      ygglog_error << "mpi_comm_source_id(" << name << "): Error in probe" << std::endl;
+      return -1;
+    }
+    if (status.MPI_ERROR) {
         ygglog_error << "mpi_comm_source_id(" << name << "): Error in status for tag = " << handle->tag
-                     << ": " << status.Get_error();
+                     << ": " << status.MPI_ERROR << std::endl;
         return -1;
     }
-
-    if (status.Is_cancelled()) {
-        ygglog_error << "mpi_comm_source_id(" << name << "): Request canceled for tag = " << handle->tag;
+    int flag;
+    MPI_Test_cancelled(&status, &flag);
+    if (flag) {
+        ygglog_error << "mpi_comm_source_id(" << name << "): Request canceled for tag = " << handle->tag << std::endl;
         return -1;
     }
-    int src = status.Get_source();
+    int src = status.MPI_SOURCE;
     if (src > 0) {
-        for (size_t i = 0; i < handle->nproc; i++) {
-            if (handle->procs[i] == src) {
+        for (size_t i = 0; i < handle->procs.size(); i++) {
+	    if (handle->procs[i] == (size_t)src) {
                 return src;
             }
         }
@@ -131,7 +157,7 @@ int MPIComm::comm_nmsg() const {
     int src = mpi_comm_source_id();
     int nmsg = 0;
     if (src < 0) {
-        ygglog_error << "mpi_comm_nmsg(" << name << "): Error checking messages.";
+        ygglog_error << "MPIComm(" << name << ")::comm_nmsg: Error checking messages." << std::endl;
         return -1;
     } else if (src > 0) {
         nmsg = 1;
@@ -139,73 +165,69 @@ int MPIComm::comm_nmsg() const {
     return nmsg;
 }
 
-int MPIComm::send(const char *data, const size_t &len) {
-    int ret = 0;
-    ygglog_debug << "mpi_comm_send(" << name << "): " << len << " bytes";
-    if (!check_size(len))
-        return -1;
+int MPIComm::send_single(const char *data, const size_t &len,
+			 const Header&) {
+    ygglog_debug << "MPIComm(" << name << ")::send_single: " << len << " bytes" << std::endl;
+    if (!check_size(len)) {
+      ygglog_error << "MPIComm(" << name << ")::send_single: Message too large" << std::endl;
+      return -1;
+    }
     if (handle == nullptr) {
-        ygglog_error << "mpi_comm_send(" << name << "): Queue handle is NULL.";
+        ygglog_error << "MPIComm(" << name << ")::send_single: Queue handle is NULL." << std::endl;
         return -1;
     }
-    int len_int = (int)(len);
-    int adr = static_cast<int>(handle->procs[handle->tag % handle->nproc]);
-    handle->Send(&len_int, 1, MPI_INT, adr, handle->tag);
-    //if (MPI_Send(&len_int, 1, MPI_INT, adr, handle->tag, handle)) {
+    int ret = (int)(len);
+    int adr = static_cast<int>(handle->procs[handle->tag % handle->procs.size()]);
+    handle->Send(&ret, 1, MPI_INT, adr);
+    //if (MPI_Send(&ret, 1, MPI_INT, adr, handle->tag, handle)) {
     //    ygglog_error("mpi_comm_send(%s): Error sending message size for tag = %d.",
     //                 name.c_str(), handle->tag);
     //    return -1;
     //}
-    handle->Send(data, len_int, MPI_CHAR, adr, handle->tag);
-    //if (MPI_Send(data, len_int, MPI_CHAR, address, handle->tag, handle->comm)) {
+    handle->Send(data, ret, MPI_CHAR, adr);
+    //if (MPI_Send(data, ret, MPI_CHAR, address, handle->tag, handle->comm)) {
     //    ygglog_error("mpi_comm_send(%s): Error sending message for tag = %d.",
     //                 name.c_str(), handle->tag);
     //    return -1;
     //}
-    ygglog_debug << "mpi_comm_send(" << name << "): returning " <<  ret;
+    ygglog_debug << "MPIComm(" << name << ")::send_single: returning " <<  ret << std::endl;
     handle->tag++;
     return ret;
 }
 
-long MPIComm::recv(char* data, const size_t &len, bool allow_realloc) {
-    ygglog_debug << "mpi_comm_recv(" <<  name << ")";
-    MPI::Status status;
+long MPIComm::recv_single(char*& data, const size_t &len, bool allow_realloc) {
+    ygglog_debug << "MPIComm(" << name << ")::recv_single" << std::endl;
+    MPI_Status status;
     int adr = mpi_comm_source_id();
-    handle->Probe(adr, handle->tag, status);
-    if (status.Get_error()) {
-        ygglog_error << "mpi_comm_nmsg(" << name << "): Error in probe for tag = " << handle->tag;
+    handle->Probe(adr, &status);
+    if (status.MPI_ERROR) {
+        ygglog_error << "MPIComm(" << name << ")::recv_single: Error in probe for tag = " << handle->tag << std::endl;
         return -1;
     }
-    int len_recv = 0;
-    handle->Recv(&len_recv, 1, MPI_INT, adr, handle->tag, status);
-    if (status.Get_error()) {
-        ygglog_error << "mpi_comm_recv(" << name << "): Error receiving message size for tag = " << handle->tag;
+    int ret = 0;
+    handle->Recv(&ret, 1, MPI_INT, adr, &status);
+    if (status.MPI_ERROR) {
+        ygglog_error << "MPIComm(" << name << ")::recv_single: Error receiving message size for tag = " << handle->tag << std::endl;
         return -1;
     }
-    if (len_recv > len) {
-        if (allow_realloc) {
-            ygglog_debug << "mpi_comm_recv(" << name << "): reallocating buffer from " << len << " to " << len_recv << " bytes.";
-            data = (char*)realloc(data, len_recv);
-            if (data == nullptr) {
-                ygglog_error << "mpi_comm_recv(" << name << "): failed to realloc buffer.";
-                return -1;
-            }
-        } else {
-            ygglog_error << "mpi_comm_recv(" << name << "): buffer (" << len << " bytes) is not large enough for message ("
-                         << len_recv << " bytes)";
-            return -len_recv;
-        }
+    ret = this->copyData(data, len, NULL, ret, allow_realloc);
+    if (ret < 0) {
+      ygglog_error << "MPIComm(" << name << ")::recv_single: Error reallocating data" << std::endl;
+      return ret;
     }
-    handle->Recv(data, len_recv, MPI_CHAR, adr, handle->tag, status);
-    if (status.Get_error()) {
+    handle->Recv(data, ret, MPI_CHAR, adr, &status);
+    if (status.MPI_ERROR) {
         // TODO: Check status?
-        ygglog_error << "mpi_comm_recv(" << name << "): Error receiving message for tag = " << handle->tag;
+        ygglog_error << "MPIComm(" << name << ")::recv_single: Error receiving message for tag = " << handle->tag << std::endl;
         return -1;
     }
-    ygglog_debug << "mpi_comm_recv(" << name << "): returns " << len_recv << " bytes";
+    data[ret] = '\0';
+    ygglog_debug << "MPIComm(" << name << ")::recv_single: returns " << ret << " bytes" << std::endl;
     handle->tag++;
-    return len_recv;
+    return ret;
 }
+
+WORKER_METHOD_DEFS(MPIComm)
 
 // Definitions in the case where MPI libraries not installed
 #else /*MPIINSTALLED*/
@@ -215,115 +237,49 @@ long MPIComm::recv(char* data, const size_t &len, bool allow_realloc) {
  */
 static inline
 void mpi_install_error() {
-  ygglog_error("Compiler flag 'MPIINSTALLED' not defined so MPI bindings are disabled.");
+  ygglog_throw_error("Compiler flag 'MPIINSTALLED' not defined so MPI bindings are disabled.");
 }
 
-/*!
-  @brief Perform deallocation for basic communication.
-  @param[in] x comm_t* Pointer to communication to deallocate.
-  @returns int 1 if there is an error, 0 otherwise.
-*/
-static inline
-int free_mpi_comm(comm_t *x) {
-  // Prevent C4100 warning on windows by referencing param
-#ifdef _WIN32
-  UNUSED(x);
-#endif
+
+MPIComm::MPIComm(const std::string &, utils::Address *address,
+		 const DIRECTION direction, int flgs) :
+  CommBase(address, direction, MPI_COMM, flgs), addresses() {
   mpi_install_error();
-  return 1;
+}
+MPIComm::MPIComm(const std::string &name, const DIRECTION direction,
+		 int flgs) :
+  CommBase(name, direction, MPI_COMM, flgs), addresses() {
+  mpi_install_error();
 }
 
-/*!
-  @brief Create a new channel.
-  @param[in] comm comm_t * Comm structure initialized with new_comm_base.
-  @returns int -1 if the address could not be created.
-*/
-static inline
-int new_mpi_address(comm_t *comm) {
-  // Prevent C4100 warning on windows by referencing param
-#ifdef _WIN32
-  UNUSED(comm);
-#endif
+void MPIComm::init() {
+  mpi_install_error();
+}
+
+MPIComm::~MPIComm() {
+  // No error as constructor should have raised one
+}
+
+int MPIComm::mpi_comm_source_id() const {
   mpi_install_error();
   return -1;
 }
 
-/*!
-  @brief Initialize a sysv_mpi communication.
-  @param[in] comm comm_t * Comm structure initialized with init_comm_base.
-  @returns int -1 if the comm could not be initialized.
- */
-static inline
-int init_mpi_comm(comm_t *comm) {
-  // Prevent C4100 warning on windows by referencing param
-#ifdef _WIN32
-  UNUSED(comm);
-#endif
+int MPIComm::comm_nmsg() const {
   mpi_install_error();
   return -1;
 }
 
-/*!
-  @brief Get number of messages in the comm.
-  @param[in] x comm_t Communicator to check.
-  @returns int Number of messages. -1 indicates an error.
- */
-static inline
-int mpi_comm_nmsg(const comm_t *x) {
-  // Prevent C4100 warning on windows by referencing param
-#ifdef _WIN32
-  UNUSED(x);
-#endif
+int MPIComm::send_single(const char *, const size_t &, const Header&) {
   mpi_install_error();
   return -1;
 }
 
-/*!
-  @brief Send a message to the comm.
-  Send a message smaller than YGG_MSG_MAX bytes to an output comm. If the
-  message is larger, it will not be sent.
-  @param[in] x comm_t* structure that comm should be sent to.
-  @param[in] data character pointer to message that should be sent.
-  @param[in] len size_t length of message to be sent.
-  @returns int 0 if send succesfull, -1 if send unsuccessful.
- */
-static inline
-int mpi_comm_send(const comm_t *x, const char *data, const size_t len) {
-  // Prevent C4100 warning on windows by referencing param
-#ifdef _WIN32
-  UNUSED(x);
-  UNUSED(data);
-  UNUSED(len);
-#endif
+long MPIComm::recv_single(char*&, const size_t &, bool) {
   mpi_install_error();
   return -1;
 }
 
-/*!
-  @brief Receive a message from an input comm.
-  Receive a message smaller than YGG_MSG_MAX bytes from an input comm.
-  @param[in] x comm_t* structure that message should be sent to.
-  @param[out] data char ** pointer to allocated buffer where the message
-  should be saved. This should be a malloc'd buffer if allow_realloc is 1.
-  @param[in] len const size_t length of the allocated message buffer in bytes.
-  @param[in] allow_realloc const int If 1, the buffer will be realloced if it
-  is not large enought. Otherwise an error will be returned.
-  @returns int -1 if message could not be received. Length of the received
-  message if message was received.
- */
-static inline
-int mpi_comm_recv(const comm_t *x, char **data, const size_t len,
-		  const int allow_realloc) {
-  // Prevent C4100 warning on windows by referencing param
-#ifdef _WIN32
-  UNUSED(x);
-  UNUSED(data);
-  UNUSED(len);
-  UNUSED(allow_realloc);
-#endif
-  mpi_install_error();
-  return -1;
-}
-
+WORKER_METHOD_DUMMY(MPIComm, mpi)
 
 #endif

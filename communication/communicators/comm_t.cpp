@@ -1,6 +1,7 @@
 #include "comm_t.hpp"
 #include "CommBase.hpp"
 #include "utils/logging.hpp"
+#include "utils/tools.hpp"
 
 void free_comm(comm_t* comm) {
     if (comm == nullptr)
@@ -80,25 +81,42 @@ comm_t* ini_comm(const char* name, DIRECTION dir, const COMM_TYPE &t) {
 }
 
 
-int comm_send(comm_t* comm, const dtype_t* dtype) {
-    if (comm == NULL)
-        return -1;
-    if (comm->comm == nullptr) {
-        //communication::utils::ygglog_err("Communicator is null");
-        return -1;
-    }
-    return static_cast<communication::communicator::Comm_t*>(comm->comm)->send(dtype);
+int comm_send(comm_t* comm, const char *data, const size_t len) {
+  if (comm == NULL || comm->comm == nullptr)
+    return -1;
+  return static_cast<communication::communicator::Comm_t*>(comm->comm)->send(data, len);
 }
-
-long comm_recv(comm_t* comm, dtype_t* dtype) {
-    if (comm == NULL)
-        return -1;
-
-    return static_cast<communication::communicator::Comm_t*>(comm->comm)->recv(dtype);
+long comm_recv(comm_t* comm, char *data, const size_t len) {
+  if (comm == NULL || comm->comm == nullptr)
+    return -1;
+  return static_cast<communication::communicator::Comm_t*>(comm->comm)->recv(data, len, false);
+}
+long comm_recv_realloc(comm_t* comm, char **data, const size_t len) {
+  if (comm == NULL || comm->comm == nullptr)
+    return -1;
+  return static_cast<communication::communicator::Comm_t*>(comm->comm)->recv(data[0], len, true);
+}
+int ncommSend(comm_t *comm, size_t nargs, ...) {
+  if (comm == NULL || comm->comm == nullptr)
+    return -1;
+  YGGC_BEGIN_VAR_ARGS(ap, nargs, nargs, false);
+  ygglog_debug << "ncommSend: nargs = " << nargs << std::endl;
+  int ret = static_cast<communication::communicator::Comm_t*>(comm->comm)->vSend(ap);
+  YGGC_END_VAR_ARGS(ap);
+  return ret;
+}
+long ncommRecv(comm_t *comm, const int allow_realloc, size_t nargs, ...) {
+  if (comm == NULL || comm->comm == nullptr)
+    return -1;
+  YGGC_BEGIN_VAR_ARGS(ap, nargs, nargs, allow_realloc);
+  ygglog_debug << "ncommRecv: nargs = " << nargs << std::endl;
+  long ret = static_cast<communication::communicator::Comm_t*>(comm->comm)->vRecv(ap);
+  YGGC_END_VAR_ARGS(ap);
+  return ret;
 }
 
 int comm_nmsg(comm_t* comm) {
-    if (comm == NULL)
+    if (comm == NULL || comm->comm == nullptr)
         return -1;
     return static_cast<communication::communicator::Comm_t*>(comm->comm)->comm_nmsg();
 }

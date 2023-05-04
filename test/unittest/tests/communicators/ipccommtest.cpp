@@ -3,149 +3,186 @@
 #include "communicators/IPCComm.hpp"
 #include "../../elf_hook.hpp"
 #include "../../mock.hpp"
-#include <dlfcn.h>
+#include "commtest.hpp"
 
 
 using namespace communication;
 using namespace communication::communicator;
 using namespace communication::mock;
+
+class IPCComm_tester : public IPCComm {
+public:
+  TESTER_METHODS(IPCComm)
+};
+
+#ifdef IPCINSTALLED
+
+COMM_SERI_TEST(IPCComm)
+
 TEST(IPCComm, constructor) {
-    IPCComm ipc;
+    IPCComm_tester ipc;
     std::string name = "";
-    IPCComm ipc2(name, nullptr, SEND);
+    IPCComm_tester ipc2(name, nullptr, SEND);
     EXPECT_TRUE(ipc2.getName().find("tempnewIPC") != std::string::npos);
 
     utils::Address *adr = new utils::Address("this.is.a.test");
-    IPCComm ipc3(name, adr, RECV);
+    IPCComm_tester ipc3(name, adr, RECV);
 
     utils::Address *adr2 = new utils::Address("12345");
     name = "TestName";
-    IPCComm ipc4(name, adr2, SEND);
+    EXPECT_THROW(IPCComm_tester ipc4(name, adr2, RECV), std::runtime_error);
 
     utils::Address *adr3 = new utils::Address("this.is.a.test");
-    EXPECT_THROW(IPCComm ipc5(name, adr3, SEND), std::runtime_error);
+    EXPECT_THROW(IPCComm_tester ipc5(name, adr3, SEND), std::runtime_error);
 
-    void *handle = dlopen(SUBLIB, RTLD_LAZY);
-    void *original_func = nullptr;
-    if (!handle)
-        EXPECT_TRUE(false);
-    original_func = ELFHOOK(msgget)
-    EXPECT_NE(original_func, ((void*)0));
+#ifdef ELF_AVAILABLE
     name = "";
-    EXPECT_THROW(IPCComm ipc5(name, nullptr, SEND), std::runtime_error);
-
-    ELFREVERT(msgget, original_func)
-    dlclose(handle);
-
+    ELF_BEGIN;
+    ELF_BEGIN_F(msgget); // To allow connection to non-existed queue
+    RETVAL = 0;
+    utils::Address *adr4 = new utils::Address("12345");
+    IPCComm_tester ipc4(name, adr4, RECV);
+    RETVAL = -1;
+    EXPECT_THROW(IPCComm_tester ipc5(name, nullptr, SEND), std::runtime_error);
+    ELF_END_F(msgget);
+    ELF_END;
+#endif // ELF_AVAILABLE
 }
 
 TEST(IPCComm, send) {
     std::string message = "Hello world";
     std::string name = "";
-    SENDCOUNT = 0;
-
-    IPCComm ipc(name, nullptr, RECV);
+    IPCComm_tester ipc(name, nullptr, RECV);
     int res = ipc.send(message.c_str(), message.size());
-    EXPECT_EQ(res, 0);
-    void *handle = dlopen(SUBLIB, RTLD_LAZY);
-    void *original_func = nullptr;
-    void *original_func2 = nullptr;
-    //void *sym = dlsym(handle, "msgsnd");
-    if (!handle)
-        EXPECT_TRUE(false);
+    EXPECT_GT(res, 0);
+#ifdef ELF_AVAILABLE
+    ELF_BEGIN;
+    ELF_BEGIN_F(msgget);
     std::string data = "abcdef12345";
     utils::Address *adr2 = new utils::Address("12345678");
-    IPCComm ipc2(data, adr2, SEND);
+    IPCComm_tester ipc2(data, adr2, SEND);
+    // Replace msgsnd and msgctl so that send fails, but msgctl succeeds
+    SENDCOUNT = 0;
     RETVAL = -1;
-    original_func = ELFHOOK(msgsnd)
-    EXPECT_NE(original_func, ((void*)0));
-
+    RETVAL_INC_SEND = 1;
+    ELF_BEGIN_F(msgsnd);
+    ELF_BEGIN_F(msgctl);
     res = ipc2.send(data.c_str(), data.size());
+    EXPECT_GE(res, 0);
     EXPECT_EQ(SENDCOUNT, 1);
-    EXPECT_EQ(res, RETVAL);
-    RETVAL = -2;
-    original_func2 = ELFHOOK(msgctl)
-    EXPECT_NE(original_func2, ((void*)0));
+    // Failure on msgctl
+    RETVAL = -1;
+    RETVAL_INC_SEND = 0;
+    RETVAL_INC_POLL = 0;
     res = ipc2.send(data.c_str(), data.size());
-    EXPECT_EQ(res, RETVAL-1);
-    ELFREVERT(msgsnd, original_func)
-    ELFREVERT(msgctl, original_func2)
-    dlclose(handle);
+    EXPECT_EQ(res, -1);
+    // Restore
+    ELF_END_F(msgsnd);
+    ELF_END_F(msgctl);
+    ELF_END_F(msgget);
+    ELF_END;
+#endif // ELF_AVAILABLE
 }
 
 
 TEST(IPCComm, commnmsg) {
     std::string name = "Comm_nsg_test";
-    IPCComm ipc(name, new utils::Address("9876"), SEND);
+    IPCComm_tester ipc(name, NULL, SEND);
     int res = ipc.comm_nmsg();
-
-    void *handle = dlopen(SUBLIB, RTLD_LAZY);
-    void *original_func = nullptr;
-
     EXPECT_EQ(res, 0);
-    ELFHOOK(msgctl);
-    RETVAL = -2;
+
+#ifdef ELF_AVAILABLE
+    ELF_BEGIN;
+    // Replace msgctl to test failure in comm_nmsg
+    RETVAL = 0;
+    RETVAL_INC_POLL = 0;
+    ELF_BEGIN_F(msgctl);
     res = ipc.comm_nmsg();
     EXPECT_EQ(res, 10000);
+    RETVAL = -1;
     res = ipc.comm_nmsg();
     EXPECT_EQ(res, 0);
-    ELFREVERT(msgctl, original_func)
-    dlclose(handle);
+    ELF_END_F(msgctl);
+    ELF_END;
+#endif // ELF_AVAILABLE
 }
 
 TEST(IPCComm, sendLarge) {
+#ifdef ELF_AVAILABLE
     RETVAL = 0;
     SENDCOUNT = 0;
     std::string name = "SendTester";
-    void *handle = dlopen(SUBLIB, RTLD_LAZY);
-    void *original_func = nullptr;
-
-    original_func = ELFHOOK(msgsnd);
-    EXPECT_NE(original_func, ((void*) 0));
-    IPCComm ipc(name, new utils::Address("2468"), SEND);
-    std::string msg(YGG_MSG_MAX - 1, 'A');
-    EXPECT_EQ(ipc.send(msg), 0);
-    EXPECT_EQ(SENDCOUNT, 1);
+    ELF_BEGIN;
+    ELF_BEGIN_F(msgget); // To allow connection to non-existed queue
+    // Replace msgsnd to test sending long message
+    ELF_BEGIN_F_RET(msgsnd, 0);
+    IPCComm_tester ipc(name, new utils::Address("2468"), SEND);
+    std::string msg(ipc.getMaxMsgSize() - 1, 'A');
+    EXPECT_GT(ipc.send(msg), 0);
+    EXPECT_EQ(SENDCOUNT, 2);
     SENDCOUNT = 0;
-    std::string longmsg(YGG_MSG_MAX * 3 + 20, 'B');
-    EXPECT_EQ(ipc.send(longmsg), 0);
-    EXPECT_EQ(SENDCOUNT, 5);
+    std::string longmsg(ipc.getMaxMsgSize() * 3 + 20, 'B');
+    EXPECT_GT(ipc.send(longmsg), 0);
+    EXPECT_EQ(SENDCOUNT, 4);
 
+    // Failure on creation of temp communicator
     RETVAL = -1;
     EXPECT_EQ(ipc.send(longmsg), -1);
 
-    ELFREVERT(msgsnd, original_func);
-    dlclose(handle);
+    // Failure on send
+    ELF_END_F(msgget);
+    EXPECT_EQ(ipc.send(longmsg), -1);
 
+    ELF_END_F(msgsnd);
+    ELF_END;
+#endif // ELF_AVAILABLE
 }
 
 TEST(IPCComm, recv) {
+#ifdef ELF_AVAILABLE
     std::string name = "SendTester";
-    void *handle = dlopen(SUBLIB, RTLD_LAZY);
-    void *original_func = nullptr;
-    void* original_func2 = nullptr;
+    ELF_BEGIN;
+    ELF_BEGIN_F(msgget); // To allow connection to non-existed queue
     RETVAL = 0;
-    original_func = ELFHOOK(msgrcv);
-    EXPECT_NE(original_func, ((void*) 0));
-    IPCComm ipc(name, new utils::Address("13579"), RECV);
+    IPCComm_tester ipc(name, new utils::Address("13579"), RECV);
+    // Replace msgrcv to test different size messages
+    ELF_BEGIN_F(msgctl);
+    ELF_BEGIN_F(msgrcv);
     char* data = (char*)malloc(sizeof(char));
     size_t len = 1;
+    RETVAL = 0;
+    RETVAL_INC_POLL = 0;
+    RETVAL_INC_RECV = 0;
     long res = ipc.recv(data, len, false);
     EXPECT_EQ(res, -11);
-    original_func2 = ELFHOOK(realloc);
+    // Replace realloc to test failure to realloc
+    ELF_BEGIN_F(realloc);
     res = ipc.recv(data, len, true);
     EXPECT_EQ(res, -1);
-    ELFREVERT(realloc, original_func2);
+    ELF_END_F(realloc);
+    // Test successful receive
     res = ipc.recv(data, len, true);
     EXPECT_EQ(res, 11);
-    res = ipc.recv(data, len, true);
-    EXPECT_EQ(res, 11);
-    RETVAL = -1;
+    // Test failure in receive
+    RETVAL = 0;
+    RETVAL_INC_POLL = -2;
     res = ipc.recv(data, len, true);
     EXPECT_EQ(res, -1);
-
-    ELFREVERT(msgrcv, original_func);
+    ELF_END_F(msgrcv);
     free(data);
-    dlclose(handle);
-    int i = 7;
+    ELF_END_F(msgget);
+    ELF_END_F(msgctl);
+    ELF_END;
+#endif // ELF_AVAILABLE
 }
+
+#else // IPCINSTALLED
+
+TEST(IPCComm, constructor) {
+    EXPECT_THROW(IPCComm_tester ipc, std::exception);
+    std::string name = "";
+    EXPECT_THROW(IPCComm_tester ipc2(name, nullptr, SEND), std::exception);
+}
+
+#endif // IPCINSTALLED
+

@@ -1,14 +1,5 @@
 include(CheckCXXCompilerFlag)
 
-set(UNITTEST_SOURCES
-        testutils.cpp
-        unittest.cpp
-        commbasetest.cpp
-        clientcommtest.cpp
-        servercommtest.cpp
-        ipccommtest.cpp
-        zmqcommtest.cpp)
-
 find_program(CCACH_FOUND ccache)
 if(CCACHE_FOUND)
     set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
@@ -48,55 +39,85 @@ endif()
 
 include(GoogleTest)
 file(GLOB files "${CMAKE_CURRENT_SOURCE_DIR}/unittest/tests/communicators/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/unittest/tests/utils/*.cpp")
-foreach(ffname ${files})
-    get_filename_component(fname ${ffname} NAME_WE)
-    add_executable(unittest_${fname} ${CMAKE_CURRENT_SOURCE_DIR}/unittest/unittest.cpp ${CMAKE_CURRENT_SOURCE_DIR}/unittest/elf_hook.cpp ${CMAKE_CURRENT_SOURCE_DIR}/unittest/mock.cpp ${ffname})
-    target_include_directories(unittest_${fname} PRIVATE ${PYTHON_INCLUDE_DIRS})
-    target_link_libraries(unittest_${fname} ${TEST_LIBRARIES} YggInterface gomp dl ${YGG_ZMQ_LIBS} ${PYTHON_LIBRARIES})
-    add_test(NAME unittest_${fname}
-            COMMAND ${CMAKE_BINARY_DIR}/test/unittest_${fname}
-            WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-    gtest_discover_tests(unittest_${fname})
-endforeach()
 
-#add_dependencies(tests unittest)
+include_directories(${TEST_INCLUDE_DIRS})
+if(CONDA_PREFIX)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${CONDA_INCLUDE}")
+    include_directories(SYSTEM ${CONDA_INCLUDE})
+endif()
+add_executable(unittest ${CMAKE_CURRENT_SOURCE_DIR}/unittest/unittest.cpp ${CMAKE_CURRENT_SOURCE_DIR}/unittest/elf_hook.cpp ${CMAKE_CURRENT_SOURCE_DIR}/unittest/mock.cpp ${files})
+target_link_libraries(unittest ${TEST_LIBRARIES})
+target_include_directories(unittest PRIVATE ${TEST_INCLUDE_DIRS})
+message(STATUS "TEST_LIBRARIES = ${TEST_LIBRARIES}")
+message(STATUS "TEST_INCLUDE_DIRS = ${TEST_INCLUDE_DIRS}")
+gtest_discover_tests(unittest DISCOVERY_MODE PRE_TEST
+                     PROPERTIES ENVIRONMENT
+                     "${RAPIDJSON_PYTHON_ENV}")
+
+
 add_definitions(-DYGG_TEST)
+# This is required for running tests with valgrind
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|ARMClang")
     add_custom_command(TARGET unittest POST_BUILD
             COMMAND dsymutil unittest
             WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
             COMMENT "Creating debug symbols...")
 endif(CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|ARMClang")
-set(CMAKE_CXX_FLAGS_DEBUG "-g -DYGG_DEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS}")
-set(CMAKE_CXX_FLAGS_RELEASE "-g -DYGG_DEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS}")
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -DYGG_DEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS}")
-#message(STATUS "YGG_PYTHON_ENV = ${YGG_PYTHON_ENV}")
+if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+   set(CMAKE_CXX_FLAGS_DEBUG "/Zi -DYGG_DEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS}")
+   set(CMAKE_CXX_FLAGS_RELEASE "/Zi -DYGG_DEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS}")
+   set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/Zi -DYGG_DEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS}")
+else ()
+   set(CMAKE_CXX_FLAGS_DEBUG "-g ${CMAKE_CXX_FLAGS_DEBUG}")
+   set(CMAKE_CXX_FLAGS_RELEASE "-g ${CMAKE_CXX_FLAGS_DEBUG}")
+   set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+endif()
 
 #set_tests_properties(unittest PROPERTIES
 #        ENVIRONMENT
-#        "${YGG_PYTHON_ENV}")
+#        "${RAPIDJSON_PYTHON_ENV}")
 
+if (WIN32)
+    add_custom_command(
+        TARGET unittest
+        POST_BUILD
+        COMMAND echo "$<TARGET_RUNTIME_DLLS:unittest>"
+    )
+    add_custom_command(
+        TARGET unittest
+        POST_BUILD
+        COMMAND dumpbin /dependents $<TARGET_FILE:YggInterface>
+        COMMAND_EXPAND_LISTS
+    )
+    if (CONDA_PREFIX)
+        add_custom_command(
+            TARGET unittest
+            POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:YggInterface> $<TARGET_FILE_DIR:unittest>
+            COMMAND_EXPAND_LISTS
+        )
+    else()
+        add_custom_command(
+            TARGET unittest
+            POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:unittest> $<TARGET_FILE_DIR:unittest>
+            COMMAND_EXPAND_LISTS
+        )
+    endif()
+endif ()
 
 option(YGG_SKIP_VALGRIND_TESTS "Disable valgrind tests" OFF)
 if(NOT MSVC)
     find_program(VALGRIND_FOUND valgrind)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DYGG_DONT_IMPORT_NUMPY")
     if((NOT YGG_SKIP_VALGRIND_TESTS) AND VALGRIND_FOUND)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DRAPIDJSON_DONT_IMPORT_NUMPY")
         # Not running SIMD.* unit test cases for Valgrind
         add_test(NAME valgrind_unittest
-                COMMAND valgrind --suppressions=${CMAKE_SOURCE_DIR}/test/valgrind.supp --suppressions=${CMAKE_SOURCE_DIR}/test/valgrind-python.supp --leak-check=full --error-exitcode=1 --track-origins=yes --dsymutil=no --keep-debuginfo=yes --read-var-info=yes ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/unittest --gtest_filter=-SIMD.*
-                WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
+                 COMMAND valgrind --suppressions=${CMAKE_SOURCE_DIR}/test/valgrind.supp --suppressions=${CMAKE_SOURCE_DIR}/test/valgrind-python.supp --leak-check=full --error-exitcode=1 --track-origins=yes --dsymutil=no --keep-debuginfo=yes --read-var-info=yes ${CMAKE_BINARY_DIR}/test/unittest --gtest_filter=-SIMD.*
+                 WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/test)
         set_tests_properties(valgrind_unittest PROPERTIES
                 ENVIRONMENT
-                "${YGG_PYTHON_ENV}")
+                "${RAPIDJSON_PYTHON_ENV}")
     endif((NOT YGG_SKIP_VALGRIND_TESTS) AND VALGRIND_FOUND)
 
-    #if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    #    add_test(NAME symbol_check
-    #            COMMAND sh -c "objdump -t -C libnamespacetest.a | grep rapidjson ; test $? -ne 0"
-    #            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-    #endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
-
 endif(NOT MSVC)
-#include(GoogleTest)
-#gtest_discover_tests(GeneratorTest)

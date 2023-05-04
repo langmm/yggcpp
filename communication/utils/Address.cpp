@@ -8,7 +8,9 @@ Address::Address(const std::string &adr) {
 }
 
 Address::Address(const char *adr) {
-    std::string sadr(adr);
+    std::string sadr;
+    if (adr != NULL)
+	sadr.assign(adr);
     address(sadr);
 }
 

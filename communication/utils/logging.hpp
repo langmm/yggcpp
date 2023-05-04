@@ -26,9 +26,9 @@ void ygglog_throw_error(const std::string& msg);
  * Initialize the logger
  */
 void init_logger();
-
-static int _ygg_error_flag = 0;
-static bool _loginit = false;
+void _set_error();
+extern int _ygg_error_flag;
+extern bool _loginit;
 
 #ifdef YGG_TEST
 #define ygglog_error std::cout << "ERROR: " << communication::utils::_getLogPretex()
@@ -60,5 +60,13 @@ static bool _loginit = false;
 #endif // DOXYGEN_SHOULD_SKIP_THIS
 #endif // YGG_TEST
 
+std::string string_format(const std::string fmt, ...);
+  
+#define ygglog_error_c(...) ygglog_error << string_format(__VA_ARGS__) << std::endl
+#define ygglog_debug_c(...) ygglog_debug << string_format(__VA_ARGS__) << std::endl
+#define ygglog_info_c(...) ygglog_info << string_format(__VA_ARGS__) << std::endl
+#define ygglog_throw_error_c(...) ygglog_throw_error(string_format(__VA_ARGS__))
+  
 }
 }
+

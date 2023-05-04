@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <ostream>
 
 #define COMM_ADDRESS_SIZE 500
 

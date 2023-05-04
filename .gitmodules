@@ -1,0 +1,4 @@
+[submodule "communication/rapidjson"]
+	path = communication/rapidjson
+	url = https://github.com/cropsinsilico/rapidjson
+	branch = yggdrasil
