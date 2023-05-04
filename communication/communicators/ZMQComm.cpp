@@ -564,12 +564,7 @@ ZMQComm::ZMQComm(const std::string name, const DIRECTION direction,
 }
 
 ZMQComm::~ZMQComm() {
-    destroy();
-}
-
-void ZMQComm::destroy() {
-    // Drain input
-    if (direction == RECV && flags & COMM_FLAG_VALID
+    if (direction == RECV && flags & this->is_open()
         && (!(flags & COMM_EOF_RECV))) {
         if (utils::_ygg_error_flag == 0) {
 	    size_t data_len = 0;
@@ -584,13 +579,6 @@ void ZMQComm::destroy() {
 	      free(data);
         }
     }
-    // if (handle != nullptr) {
-    //     delete handle;
-    //     ygglog_debug << "ZMQComm(" << name << ")::destroy: Destroying socket " << address->address() << std::endl;
-    //     handle = nullptr;
-    // }
-    ygglog_debug << "ZMQComm(" << name << ")::destroy: finished" << std::endl;
-
 }
 
 /*!

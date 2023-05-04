@@ -143,7 +143,6 @@ private:
     friend class ServerComm;
 
     ZMQReply reply;
-    void destroy();
 
 };
 

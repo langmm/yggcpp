@@ -9,11 +9,13 @@ using namespace communication::communicator;
 class Comm_tTest: public Comm_t {
 public:
     Comm_tTest(utils::Address *address, DIRECTION dirn, const COMM_TYPE &t, int flgs = 0) :
-            Comm_t(address, dirn, t, flgs) {}
+      Comm_t(address, dirn, t, flgs), _closed(false) {}
     Comm_tTest(const std::string &name, DIRECTION direction, const COMM_TYPE &t) :
-            Comm_t(name, direction, t) {}
+      Comm_t(name, direction, t), _closed(false) {}
     int comm_nmsg() const override {return 1;}
     int get_flags() const {return flags;}
+    void close() override { _closed = true; }
+    bool is_closed() const override { return _closed; }
     bool check(const size_t &len) const {return check_size(len);}
     using Comm_t::send;
     using Comm_t::recv;
@@ -37,6 +39,8 @@ protected:
     }
     void init() override {}
     void reset() override {}
+
+    bool _closed;
 };
 
 TEST(Commt, Constructors) {

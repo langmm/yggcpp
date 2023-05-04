@@ -26,6 +26,9 @@
     EXPECT_GE(rComm.recvVar(data_recv), 0);				\
     EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));			\
     EXPECT_EQ(data_send, data_recv);					\
+    EXPECT_GE(sComm.send_eof(), 0);					\
+    EXPECT_EQ(rComm.recvVar(data_recv), -2);				\
+    EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));			\
   }
 #define COMM_SERI_TEST(cls)						\
   COMM_SERI_TEST_TYPE(cls, double, 1.5, "{\"type\": \"number\"}")	\
@@ -33,7 +36,9 @@
   COMM_SERI_TEST_TYPE(cls, uint8_t, 3u,					\
 		      "{\"type\": \"scalar\","				\
 		      " \"subtype\": \"uint\","				\
-		      " \"precision\": 1}")
+		      " \"precision\": 1}")				\
+  COMM_SERI_TEST_TYPE(cls, bool, true, "{\"type\": \"boolean\"}")
+
 
 #ifdef ELF_AVAILABLE
 #if COMM_BASE == IPC_COMM

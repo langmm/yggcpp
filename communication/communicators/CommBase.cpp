@@ -199,13 +199,22 @@ Comm_t* Comm_t::create_worker_recv(Header& head) {
 
 int Comm_t::send(const char *data, const size_t &len) {
   ygglog_debug << "CommBase(" << name << ")::send(const char *data, const size_t &len): begin sending " << len << " bytes" << std::endl;
+  if (is_closed()) {
+    ygglog_error << "CommBase(" << name << ")::send: Communicator closed." << std::endl;
+    return -1;
+  }
   size_t size_max = maxMsgSize - msgBufSize;
-  int no_type = (is_eof(data) || (flags & COMM_FLAGS_USED));
   Header head;
+  head.setMessageFlags(data, len);
+  int no_type = ((head.flags & HEAD_FLAG_EOF) ||
+		 (flags & COMM_FLAGS_USED));
   if ((size_max == 0 || len <= size_max) &&
       (!(flags & COMM_ALWAYS_SEND_HEADER)) && no_type) {
     ygglog_debug << "CommBase(" << name << ")::send(const char *data, const size_t &len): Sending data in single message. " << is_eof(data) << ", " << (flags & COMM_FLAGS_USED) << std::endl;
-    return send_single(data, len, head);
+    int out = send_single(data, len, head);
+    if (out >= 0)
+      setFlags(head, SEND);
+    return out;
   }
   if (!create_header_send(head, data, len)) {
     ygglog_error << "CommBase(" << name << ")::send(const char *data, const size_t &len): Failed to create header" << std::endl;
@@ -256,8 +265,8 @@ int Comm_t::send(const char *data, const size_t &len) {
     ygglog_debug << "CommBase(" << name << ")::send(const char *data, const size_t &len): " << prev << " of " << head.size_curr << " bytes sent" << std::endl;
   }
   destroy_worker(xmulti);
-  flags |= COMM_FLAGS_USED;
   ygglog_debug << "CommBase(" << name << ")::send(const char *data, const size_t &len): returns 1" << std::endl;
+  setFlags(head, SEND);
   return head.size_curr;
 }
 void Comm_t::set_timeout_recv(int new_timeout) {
@@ -281,6 +290,10 @@ int Comm_t::wait_for_recv(const int tout) {
 }
 long Comm_t::recv(char*& data, const size_t &len, bool allow_realloc = false) {
   ygglog_debug << "CommBase(" << name << ")::recv(char*& data, const size_t &len, bool allow_realloc): begin" << std::endl;
+  if (is_closed()) {
+    ygglog_error << "CommBase(" << name << ")::recv: Communicator closed." << std::endl;
+    return -1;
+  }
   if (wait_for_recv(timeout_recv) < 0) {
     ygglog_error << "CommBase(" << name << ")::recv: No messages waiting" << std::endl;
     return -1;
@@ -297,7 +310,7 @@ long Comm_t::recv(char*& data, const size_t &len, bool allow_realloc = false) {
   }
   if (head.flags & HEAD_FLAG_EOF) {
     ygglog_debug << "CommBase(" << name << ")::recv(char*& data, const size_t &len, bool allow_realloc): EOF received" << std::endl;
-    flags |= COMM_EOF_RECV;
+    setFlags(head, RECV);
     return -2;
   }
   Comm_t* xmulti = NULL;
@@ -342,7 +355,7 @@ long Comm_t::recv(char*& data, const size_t &len, bool allow_realloc = false) {
   if (ret >= 0) {
     ygglog_debug << "CommBase(" << name << ")::recv(char*& data, const size_t &len, bool allow_realloc): " << head.size_curr << " bytes completed" << std::endl;
     ret = head.size_curr;
-    flags |= COMM_FLAGS_USED;
+    setFlags(head, RECV);
   }
   return ret;
 }

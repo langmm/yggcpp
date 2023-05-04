@@ -87,6 +87,13 @@ public:
         return send(data.c_str(), data.size());
     }
     /*!
+      @brief Send a message indicating that the communicator is closing.
+      @returns int Values >= 0 indicate success.
+     */
+     int send_eof() {
+       return send(YGG_MSG_EOF);
+     }
+    /*!
       @brief Receive a string message from the communicator.
       @param[out] data String to store message in.
       @returns int -1 if message could not be received. Length of the
@@ -244,6 +251,25 @@ public:
     virtual int comm_nmsg() const = 0;
 
     /*!
+      @brief Close the communicator.
+     */
+    virtual void close() = 0;
+
+    /*!
+      @brief Check if the communicator is closed.
+      @return true if the communicator is closed, false otherwise.
+     */
+    virtual bool is_closed() const = 0;
+
+    /*!
+      @brief Check if the communicator is open.
+      @return true if the communicator is open, false otherwise.
+     */
+    virtual bool is_open() const {
+      return (!is_closed());
+    }
+
+    /*!
       @brief Get the type code for the communicator.
       @returns Type code.
      */
@@ -277,6 +303,16 @@ protected:
     friend IPCComm;
     friend ZMQComm;
     friend RequestList;
+
+    void setFlags(const Header& head, DIRECTION dir) {
+      flags |= COMM_FLAGS_USED;
+      if (head.flags & HEAD_FLAG_EOF) {
+	if (dir == SEND)
+	  flags |= COMM_EOF_SENT;
+	else
+	  flags |= COMM_EOF_RECV;
+      }
+    }
 
     long copyData(char*& dst, const size_t dst_len,
 		  const char* src, const size_t src_len,
@@ -358,6 +394,8 @@ public:
         utils::ygglog_throw_error("Comm_nmsg of base class called, must be overridden");
         return -1;
     }
+    void close() override;
+    bool is_closed() const override;
     using Comm_t::send;
     using Comm_t::recv;
 
@@ -404,16 +442,29 @@ CommBase<H>::CommBase(const std::string &name, DIRECTION direction, const COMM_T
   Comm_t(name, direction, t, flags), handle(nullptr) {}
 
 template<typename H>
+void CommBase<H>::close() {
+  if (handle != nullptr) {
+    delete handle;
+    handle = nullptr;
+  }
+}
+
+template<typename H>
+bool CommBase<H>::is_closed() const {
+  return (handle == nullptr || !(flags & COMM_FLAG_VALID));
+}
+
+template<typename H>
 void CommBase<H>::reset() {
-    if (handle != nullptr)
-        delete handle;
+  if (handle != nullptr)
+    delete handle;
 }
 
 template<typename H>
 CommBase<H>::~CommBase() {
     ygglog_debug << "~CommBase: Started" << std::endl;
-    if (handle != nullptr)
-        delete handle;
+    if (!is_closed())
+      close();
     ygglog_debug << "~CommBase: Finished" << std::endl;
 }
 

@@ -53,7 +53,7 @@ jobs:
             python-install: pip
             install-zmq: true
             install-mpi: true
-            with-coverage: true
+            with-coverage: false
             with-asan: false
             with-elf: true
             with-valgrind: false
@@ -61,7 +61,7 @@ jobs:
             python-install: pip
             install-zmq: true
             install-mpi: false
-            with-coverage: true
+            with-coverage: false
             with-asan: true
             with-elf: true
             with-valgrind: false
@@ -69,7 +69,7 @@ jobs:
             python-install: pip
             install-zmq: true
             install-mpi: false
-            with-coverage: true
+            with-coverage: false
             with-asan: true
             with-elf: true
             with-valgrind: false
@@ -77,7 +77,7 @@ jobs:
             python-install: pip
             install-zmq: true
             install-mpi: false
-            with-coverage: true
+            with-coverage: false
             with-asan: false
             with-elf: false
             with-valgrind: true
@@ -85,7 +85,7 @@ jobs:
             python-install: pip
             install-zmq: true
             install-mpi: false
-            with-coverage: true
+            with-coverage: false
             with-asan: false
             with-elf: false
             with-valgrind: true

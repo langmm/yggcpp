@@ -135,6 +135,10 @@ long ClientComm::recv_single(char*& rdata, const size_t &rlen, bool allow_reallo
       ygglog_error << "ClientComm(" << name << ")::recv_single: Error getting response comm" << std::endl;
       return -1;
     }
+    if (response_comm->is_closed()) {
+      ygglog_error << "ClientComm(" << name << ")::recv_single: Response comm is closed" << std::endl;
+      return -1;
+    }
     std::string req_id = requests.activeRequestClient();
     size_t buff_len = rlen;
     long ret = 0;

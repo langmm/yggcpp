@@ -63,6 +63,10 @@ bool ServerComm::create_header_send(Header& header, const char* data, const size
     ygglog_error << "ServerComm(" << name << ")::create_header_send: Failed to get response comm" << std::endl;
     return false;
   }
+  if (response_comm->is_closed()) {
+    ygglog_error << "ServerComm(" << name << ")::create_header_send: Response comm is closed" << std::endl;
+    return -1;
+  }
   bool out = response_comm->create_header_send(header, data, len);
   if ((!out) || header.flags & HEAD_FLAG_EOF)
     return out;
