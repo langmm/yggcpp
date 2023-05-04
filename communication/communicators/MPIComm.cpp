@@ -10,7 +10,7 @@ using namespace communication::utils;
 #if defined(MPIINSTALLED) && defined(MPI_COMM_WORLD)
 
 mpi_registry_t::mpi_registry_t(const mpi_registry_t& rhs) :
-  comm(NULL), procs(), tag(0) {
+  comm(0), procs(), tag(0) {
   MPI_Comm_dup( rhs.comm, &(this->comm));
 }
 

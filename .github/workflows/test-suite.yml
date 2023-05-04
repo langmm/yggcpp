@@ -16,11 +16,15 @@ jobs:
         python-install: [pip, conda]
         install-zmq: [true, false]
         install-mpi: [true]
-        with-coverage: [true]
+        with-coverage: [false, true]
         with-asan: [false]
         with-elf: [false]
         with-valgrind: [false]
         exclude:
+          - python-install: conda
+            with-coverage: false
+          - python-install: pip
+            with-coverage: true
           - os: windows-latest
             install-zmq: false
           - os: windows-latest
