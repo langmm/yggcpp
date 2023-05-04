@@ -525,6 +525,40 @@ target_link_libraries(YggInterface ${DEPS_LIB_NAMES} ${DEPS_LIBRARIES})
 target_include_directories(YggInterface PUBLIC ${DEPS_INCLUDE_DIRS})
 
 ##################
+# Coverage       #
+##################
+
+option(YGG_ENABLE_COVERAGE "Enable coverage reporting" OFF)
+if(YGG_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang|ARMClang")
+    message(STATUS "COVERAGE ON")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 --coverage -fno-inline -fprofile-arcs -ftest-coverage -fprofile-filter-files=\"${CMAKE_SOURCE_DIR}/communication/*\" -fpermissive")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0 --coverage -fno-inline -fprofile-arcs -ftest-coverage -fprofile-filter-files=\"${CMAKE_SOURCE_DIR}/communication/*\" -fpermissive")
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|ARMClang")
+        set(CTEST_COVERAGE_COMMAND "llvm-cov")
+        set(CTEST_COVERAGE_EXTRA_FLAGS "gcov")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
+    else()
+        target_link_libraries(YggInterface gcov)
+        set(CTEST_COVERAGE_COMMAND "gcov")
+        set(CTEST_COVERAGE_EXTRA_FLAGS "")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-inline-small-functions -fno-default-inline")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-inline-small-functions -fno-default-inline")
+    endif()
+    # find required tools
+    # find_program(LCOV lcov REQUIRED)
+    # find_program(GENHTML genhtml REQUIRED)
+    # add_custom_target(coverage
+    #         # gather data
+    #         COMMAND ${LCOV} --rc lcov_branch_coverage=1 --exclude '/usr/*' --exclude '/opt/*' --directory . --capture --output-file coverage.info
+    #         # generate report
+    #         COMMAND ${GENHTML} --rc genhtml_branch_coverage=1 --demangle-cpp -o coverage coverage.info
+    #         WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+    # set(YGG_BUILD_FLAGS "${YGG_BUILD_FLAGS} --coverage -fno-inline -fno-inline-small-functions -fno-default-inline -fpermissive")
+endif(YGG_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang|ARMClang")
+
+    
+##################
 # Python library #
 ##################
 
@@ -584,18 +618,5 @@ if(YGG_BUILD_TESTS)
     add_subdirectory(test)
     include(CTest)
 
-    # if(YGG_ENABLE_COVERAGE)
-    #     target_link_libraries(YggInterface gcov)
-    #     # find required tools
-    #     find_program(LCOV lcov REQUIRED)
-    #     find_program(GENHTML genhtml REQUIRED)
-    #     add_custom_target(coverage
-    #             # gather data
-    #             COMMAND ${LCOV} --rc lcov_branch_coverage=1 --exclude '/usr/*' --exclude '/opt/*' --directory . --capture --output-file coverage.info
-    #             # generate report
-    #             COMMAND ${GENHTML} --rc genhtml_branch_coverage=1 --demangle-cpp -o coverage coverage.info
-    #             WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-    #     set(YGG_BUILD_FLAGS "${YGG_BUILD_FLAGS} --coverage -fno-inline -fno-inline-small-functions -fno-default-inline -fpermissive")
-    # endif(YGG_ENABLE_COVERAGE)
 endif()
 
