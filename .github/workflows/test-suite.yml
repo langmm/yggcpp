@@ -245,7 +245,7 @@ jobs:
         if: matrix.python-install == 'conda' && matrix.os == 'windows-latest'
         shell: bash -l {0}
         run: |
-          echo "DLL_DIRECTORY=${CONDA_PREFIX}\\Library\\bin" >> "$GITHUB_ENV"
+          echo "DLL_DIRECTORY=${CONDA_PREFIX}\\Library\\lib" >> "$GITHUB_ENV"
       - name: Add libraries to PATH on Windows
         if: matrix.os == 'windows-latest'
         shell: bash -l {0}

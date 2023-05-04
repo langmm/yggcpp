@@ -9,12 +9,17 @@ using namespace communication::utils;
 
 #if defined(MPIINSTALLED) && defined(MPI_COMM_WORLD)
 
+mpi_registry_t::mpi_registry_t(const mpi_registry_t& rhs) :
+  comm(NULL), procs(), tag(0) {
+  MPI_Comm_dup( rhs.comm, &(this->comm));
+}
+
 mpi_registry_t::~mpi_registry_t() {}
 
-mpi_registry_t mpi_registry_t::Clone() const {
-    MPI_Comm ncomm;
-    MPI_Comm_dup( this->comm, &ncomm);
-    return mpi_registry_t(ncomm);
+mpi_registry_t& mpi_registry_t::operator=(const mpi_registry_t& rhs) {
+  this->~mpi_registry_t();
+  new (this) mpi_registry_t(rhs);
+  return *this;
 }
 
 void mpi_registry_t::CheckReturn(int code, std::string method, int rank) const {

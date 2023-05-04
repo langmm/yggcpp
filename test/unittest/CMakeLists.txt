@@ -91,12 +91,21 @@ if (WIN32)
     )
 endif()
 if (WIN32 AND NOT CONDA_PREFIX)
-    add_custom_command(
-        TARGET unittest
-        POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:unittest> $<TARGET_FILE_DIR:unittest>
-        COMMAND_EXPAND_LISTS
-    )
+    if (CONDA_PREFIX)
+        add_custom_command(
+            TARGET unittest
+            POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:YggInterface> $<TARGET_FILE_DIR:unittest>
+            COMMAND_EXPAND_LISTS
+        )
+    else()
+        add_custom_command(
+            TARGET unittest
+            POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:unittest> $<TARGET_FILE_DIR:unittest>
+            COMMAND_EXPAND_LISTS
+        )
+    endif()
 endif ()
 
 option(YGG_SKIP_VALGRIND_TESTS "Disable valgrind tests" OFF)

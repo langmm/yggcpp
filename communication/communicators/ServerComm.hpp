@@ -16,6 +16,7 @@ public:
 			utils::Address *address = nullptr,
 			int flgs = 0);
     explicit ServerComm(const std::string name, int flgs = 0);
+    ~ServerComm() override {}
 
     using Comm_t::send;
     using Comm_t::recv;

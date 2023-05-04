@@ -123,7 +123,6 @@ void ZMQSocket::init(int type0, utils::Address* address,
   {
 #endif // _OPENMP
     handle = zmq_socket (ctx.ctx, type);
-    // ZMQ_SNDTIMEO
     if (handle != NULL) {
       if (linger != -1 && set(ZMQ_LINGER, linger) < 0) {
 	except_msg = "ZMQSocket::init: Error setting ZMQ_LINGER to" + std::to_string(linger);

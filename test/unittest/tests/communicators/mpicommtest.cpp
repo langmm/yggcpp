@@ -181,7 +181,7 @@ TEST(MPIComm, regclone) {
         MPI_Init(nullptr, nullptr);
     mpi_registry_t mpir(MPI_COMM_WORLD);
     mpir.procs.push_back(1);
-    mpi_registry_t mpir2 = mpir.Clone();
+    mpi_registry_t mpir2(mpir);
     EXPECT_NE(mpir.procs, mpir2.procs);
     MPI_Finalize();
 }

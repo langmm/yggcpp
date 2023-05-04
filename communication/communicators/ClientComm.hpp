@@ -12,6 +12,7 @@ public:
 			utils::Address *address = nullptr,
 			int flgs = 0);
     explicit ClientComm(const std::string name, int flgs = 0);
+    ~ClientComm() override {}
 
     void set_timeout_recv(int new_timeout) override;
     int wait_for_recv(const int tout) override;

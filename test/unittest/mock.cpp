@@ -36,7 +36,7 @@ int RETVAL_INC_POLL = 0;
 int SENDCOUNT = 0;
 std::string RETMSG = "";
 
-char *alt_getenv(const char *name) {
+char *alt_getenv(const char *) {
   return NULL;
 }
   
