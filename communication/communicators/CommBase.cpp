@@ -168,7 +168,7 @@ Comm_t* Comm_t::create_worker_send(Header& head) {
   out->flags |= COMM_EOF_SENT | COMM_EOF_RECV | COMM_FLAG_WORKER;
   if (!head.SetMetaString("address", out->address->address())) {
     ygglog_error << "CommBase(" << name << ")::create_worker_send: Error setting address" << std::endl;
-    delete out;
+    destroy_worker(out);
     return NULL;
   }
   return out;
@@ -223,7 +223,7 @@ int Comm_t::send(const char *data, const size_t &len) {
     try {
       head.format(data, len, size_max, no_type);
     } catch (std::exception& err) {
-      delete xmulti;
+      destroy_worker(xmulti);
       throw err;
     }
   }
@@ -235,7 +235,7 @@ int Comm_t::send(const char *data, const size_t &len) {
   if (send_single(head.data[0], msgsiz, head) < 0) {
     ygglog_error << "CommBase(" << name << ")::send(const char *data, const size_t &len): Failed to send header." << std::endl;
     if (xmulti)
-      delete xmulti;
+      destroy_worker(xmulti);
     return -1;
   }
   if (!(head.flags & HEAD_FLAG_MULTIPART)) {
@@ -249,13 +249,13 @@ int Comm_t::send(const char *data, const size_t &len) {
       msgsiz = size_max_multi;
     if (xmulti->send_single(head.data[0] + prev, msgsiz, head) < 0) {
       ygglog_error << "CommBase(" << name << ")::send(const char *data, const size_t &len): send interupted at " << prev << " of " << head.size_curr << " bytes" << std::endl;
-      delete xmulti;
+      destroy_worker(xmulti);
       return -1;
     }
     prev += msgsiz;
     ygglog_debug << "CommBase(" << name << ")::send(const char *data, const size_t &len): " << prev << " of " << head.size_curr << " bytes sent" << std::endl;
   }
-  delete xmulti;
+  destroy_worker(xmulti);
   flags |= COMM_FLAGS_USED;
   ygglog_debug << "CommBase(" << name << ")::send(const char *data, const size_t &len): returns 1" << std::endl;
   return head.size_curr;

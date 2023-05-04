@@ -585,11 +585,11 @@ void ZMQComm::destroy() {
 	      free(data);
         }
     }
-    if (handle != nullptr) {
-        delete handle;
-        ygglog_debug << "ZMQComm(" << name << ")::destroy: Destroying socket " << address->address() << std::endl;
-        handle = nullptr;
-    }
+    // if (handle != nullptr) {
+    //     delete handle;
+    //     ygglog_debug << "ZMQComm(" << name << ")::destroy: Destroying socket " << address->address() << std::endl;
+    //     handle = nullptr;
+    // }
     ygglog_debug << "ZMQComm(" << name << ")::destroy: finished" << std::endl;
 
 }
