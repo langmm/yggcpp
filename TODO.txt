@@ -11,3 +11,4 @@
 * Coverage
 * Track clients in server
 * In Server only mark EOF as received after all clients send EOF
+* For clients have a send worker for each server?

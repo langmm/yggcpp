@@ -78,7 +78,7 @@ ssize_t msgrcv(int, void* rbuf, size_t, long, int) {
 #endif // IPCINSTALLED
 
 void* realloc(void*, size_t) {
-    return nullptr;
+  return NULL;
 }
   
 #ifdef ZMQCPPINSTALLED

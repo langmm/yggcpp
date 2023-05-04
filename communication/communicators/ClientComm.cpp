@@ -14,7 +14,7 @@ ClientComm::ClientComm(const std::string &name, Address *address,
 	    flgs | COMM_FLAG_CLIENT | COMM_ALWAYS_SEND_HEADER),
   requests(RECV) {
   // Called to create temp comm for send/recv
-  if (name.empty() && address != nullptr && address->valid())
+  if (name.empty() && address && address->valid())
       return;
   init();
 }
@@ -69,11 +69,13 @@ bool ClientComm::signon(const Header& header) {
     }
     if (requests.activeComm()->comm_nmsg() > 0) {
       char* data = NULL;
-      if (recv(data, 0, true) < 0) {
+      int ret = recv(data, 0, true);
+      if (data != NULL)
+	free(data);
+      if (ret < 0) {
         ygglog_error << "ClientComm(" << name << ")::signon: Error in receiving sign-on" << std::endl;
         return false;
       }
-      free(data);
       break;
     } else {
       sleep(YGG_SLEEP_TIME);

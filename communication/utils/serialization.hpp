@@ -834,7 +834,7 @@ public:
     }
   }
 
-  void formatBuffer(rapidjson::StringBuffer& buffer, bool metaOnly=true) {
+  void formatBuffer(rapidjson::StringBuffer& buffer, bool metaOnly=false) {
     buffer.Clear();
     if (empty()) {
       ygglog_debug_c("Header::formatBuffer: Empty metadata");
@@ -955,7 +955,9 @@ public:
     if (type_doc.HasParseError())
       ygglog_throw_error_c("Header::finalize_recv: Error parsing datatype in data");
     fromSchema(type_doc);
-    data[0] += eind;
+    size_curr -= eind;
+    memmove(data[0], data[0] + eind, size_curr);
+    (*data)[size_curr] = '\0';
   }
   
   char* data_;

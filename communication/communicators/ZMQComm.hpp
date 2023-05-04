@@ -136,6 +136,7 @@ protected:
 			    size_t msg_len, int allow_realloc,
 			    int temp) override;
     WORKER_METHOD_DECS(ZMQComm);
+    Comm_t* create_worker_send(Header& head) override;
     Comm_t* create_worker_recv(Header& head) override;
 
 private:

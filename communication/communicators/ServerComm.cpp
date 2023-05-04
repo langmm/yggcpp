@@ -13,7 +13,7 @@ ServerComm::ServerComm(const std::string &name, Address *address,
 	    flgs | COMM_FLAG_SERVER | COMM_ALWAYS_SEND_HEADER),
   requests(SEND) {
   // Called to create temp comm for send/recv
-  if (name.empty() && address != nullptr && address->valid())
+  if (name.empty() && address && address->valid())
     return;
   init();
 }
@@ -65,7 +65,7 @@ bool ServerComm::create_header_send(Header& header, const char* data, const size
   }
   if (response_comm->is_closed()) {
     ygglog_error << "ServerComm(" << name << ")::create_header_send: Response comm is closed" << std::endl;
-    return -1;
+    return false;
   }
   bool out = response_comm->create_header_send(header, data, len);
   if ((!out) || header.flags & HEAD_FLAG_EOF)

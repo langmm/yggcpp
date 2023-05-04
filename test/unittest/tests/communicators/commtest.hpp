@@ -37,7 +37,34 @@
 		      "{\"type\": \"scalar\","				\
 		      " \"subtype\": \"uint\","				\
 		      " \"precision\": 1}")				\
-  COMM_SERI_TEST_TYPE(cls, bool, true, "{\"type\": \"boolean\"}")
+  COMM_SERI_TEST_TYPE(cls, bool, true, "{\"type\": \"boolean\"}")	\
+  TEST(cls, Large) {							\
+    cls ## _tester sComm(SEND);						\
+    std::string name = "test_name";					\
+    std::string key_env = name + "_IN";					\
+    std::string val_env = sComm.getAddress();				\
+    setenv(key_env.c_str(), val_env.c_str(), 1);			\
+    cls ## _tester rComm(name, RECV);					\
+    if (sComm.getMaxMsgSize() > 0) {					\
+      /* Add worker in advance so that send is successful */		\
+      Comm_t* sComm_worker = sComm.getWorkers().get(&sComm, SEND);	\
+      rComm.getWorkers().get(&rComm, RECV, new utils::Address(sComm_worker->getAddress())); \
+      std::string bigMsg(sComm.getMaxMsgSize(), 'A');			\
+      std::string data_send = "\"Test message\"";			\
+      std::string data_recv;						\
+      std::string schema("{\"serializer\": {\"datatype\": {\"type\": \"string\"}}, \"userData\": \""); \
+      schema += bigMsg;							\
+      schema += "\"}";							\
+      sComm.addSchema(schema, true);					\
+      EXPECT_GE(sComm.send(data_send), 0);				\
+      EXPECT_GE(rComm.recv(data_recv), 0);				\
+      EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));			\
+      EXPECT_EQ(data_send, data_recv);					\
+      EXPECT_GE(sComm.send_eof(), 0);					\
+      EXPECT_EQ(rComm.recv(data_recv), -2);				\
+      EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));			\
+    }									\
+  }
 
 
 #ifdef ELF_AVAILABLE

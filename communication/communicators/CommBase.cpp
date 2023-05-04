@@ -7,7 +7,7 @@ using namespace communication::utils;
 Comm_t::Comm_t(Address *address, DIRECTION dirn, const COMM_TYPE &t, int flgs) :
   type(t), name(), address(address), direction(dirn), flags(flgs),
   maxMsgSize(0), msgBufSize(0), index_in_register(-1),
-  thread_id(-1), metadata(), timeout_recv(YGG_MAX_TIME) {
+  thread_id(-1), metadata(), timeout_recv(YGG_MAX_TIME), workers() {
 
     flags |= COMM_FLAG_VALID;
     if (direction == NONE)
@@ -15,7 +15,7 @@ Comm_t::Comm_t(Address *address, DIRECTION dirn, const COMM_TYPE &t, int flgs) :
 
     thread_id = get_thread_id();
     char *allow_threading = getenv("YGG_THREADING");
-    if (allow_threading != nullptr)
+    if (allow_threading)
         flags |= COMM_ALLOW_MULTIPLE_COMMS;
 
     Comm_t::register_comm(this);
@@ -37,7 +37,7 @@ Comm_t::Comm_t(const std::string &name, DIRECTION direction, const COMM_TYPE &t,
         }
         char *model_name = getenv("YGG_MODEL_NAME");
         char *addr = std::getenv(full_name.c_str());
-        if (addr == nullptr && model_name != nullptr) {
+        if ((!addr) && model_name) {
             std::string prefix(model_name);
             prefix += ":";
             if (prefix.size() > COMM_NAME_SIZE)
@@ -48,7 +48,7 @@ Comm_t::Comm_t(const std::string &name, DIRECTION direction, const COMM_TYPE &t,
                 addr = std::getenv(full_name.c_str());
             }
         }
-        if (addr == nullptr) {
+	if (!addr) {
             std::string temp_name(full_name);
             size_t loc;
             while ((loc = temp_name.find(":")) != std::string::npos) {
@@ -58,15 +58,15 @@ Comm_t::Comm_t(const std::string &name, DIRECTION direction, const COMM_TYPE &t,
         }
 	std::string model_name_str = "null";
 	std::string addr_str = "null";
-	if (model_name != nullptr)
+	if (model_name)
 	  model_name_str.assign(model_name);
-	if (addr != nullptr)
+	if (addr)
 	  addr_str.assign(addr_str);
 	ygglog_debug << "CommBase: model_name = " <<
 	  model_name_str << ", address = " << addr_str << std::endl;
 	ygglog_debug << std::endl;
         this->name = full_name;
-        if (addr != nullptr) {
+        if (addr) {
             this->address->address(addr);
             if (this->address->valid())
                 flags |= COMM_FLAG_VALID;
@@ -88,7 +88,7 @@ Comm_t::~Comm_t() {
     if (index_in_register >= 0)
       Comm_t::registry[index_in_register] = NULL;
     ygglog_debug << "~CommBase: Started" << std::endl;
-    if (address != nullptr)
+    if (address)
         delete address;
     ygglog_debug << "~CommBase: Finished" << std::endl;
 }
@@ -99,8 +99,8 @@ void Comm_t::addSchema(const Metadata& s) {
 void Comm_t::addSchema(const rapidjson::Value& s, bool isMetadata) {
   metadata.fromSchema(s, isMetadata);
 }
-void Comm_t::addSchema(const std::string schemaStr) {
-  metadata.fromSchema(schemaStr);
+void Comm_t::addSchema(const std::string schemaStr, bool isMetadata) {
+  metadata.fromSchema(schemaStr, isMetadata);
 }
 void Comm_t::addFormat(const std::string format_str, bool as_array) {
   metadata.fromFormat(format_str, as_array);
@@ -121,16 +121,16 @@ Comm_t* communication::communicator::new_Comm_t(const DIRECTION dir, const COMM_
         case NULL_COMM:
             break;
         case IPC_COMM:
-            return new IPCComm(name, (address == nullptr) ? nullptr : new Address(address), dir);
+            return new IPCComm(name, (address) ? nullptr : new Address(address), dir);
         case ZMQ_COMM:
-            return new ZMQComm(name, (address == nullptr) ? nullptr : new Address(address), dir);
+            return new ZMQComm(name, (address) ? nullptr : new Address(address), dir);
         case SERVER_COMM:
-            return new ServerComm(name, (address == nullptr) ? nullptr : new Address(address));
+            return new ServerComm(name, (address) ? nullptr : new Address(address));
         case CLIENT_COMM:
-            return new ClientComm(name, (address == nullptr) ? nullptr : new Address(address));
+            return new ClientComm(name, (address) ? nullptr : new Address(address));
         case MPI_COMM:
             //std::string adr;
-            return new MPIComm(name, (address == nullptr) ? nullptr : new Address(address), dir);
+            return new MPIComm(name, (address) ? nullptr : new Address(address), dir);
     }
     return nullptr;
 }
@@ -154,24 +154,16 @@ bool Comm_t::create_header_recv(Header& header, char*& data,
 }
 
 Comm_t* Comm_t::create_worker_send(Header& head) {
-  Comm_t* out = NULL;
-  try {
-    out = create_worker(NULL, SEND,
-			COMM_EOF_SENT | COMM_EOF_RECV |
-			COMM_FLAG_WORKER);
-  } catch (...) {
-  }
-  if (out == NULL) {
+  Comm_t* worker = workers.get(this, SEND);
+  if (!(worker && worker->address)) {
     ygglog_error << "CommBase(" << name << ")::create_worker_send: Error creating worker" << std::endl;
     return NULL;
   }
-  out->flags |= COMM_EOF_SENT | COMM_EOF_RECV | COMM_FLAG_WORKER;
-  if (!head.SetMetaString("address", out->address->address())) {
+  if (!head.SetMetaString("address", worker->address->address())) {
     ygglog_error << "CommBase(" << name << ")::create_worker_send: Error setting address" << std::endl;
-    destroy_worker(out);
     return NULL;
   }
-  return out;
+  return worker;
 }
 
 Comm_t* Comm_t::create_worker_recv(Header& head) {
@@ -182,18 +174,11 @@ Comm_t* Comm_t::create_worker_recv(Header& head) {
     return NULL;
   }
   utils::Address* adr = new utils::Address(address);
-  Comm_t* out = NULL;
-  try {
-    out = create_worker(adr, RECV,
-			COMM_EOF_SENT | COMM_EOF_RECV |
-			COMM_FLAG_WORKER);
-  } catch (...) {
-  }
+  Comm_t* out = workers.get(this, RECV, adr);
   if (out == NULL) {
     ygglog_error << "CommBase(" << name << ")::create_worker_recv: Error creating worker" << std::endl;
     return NULL;
   }
-  out->flags |= COMM_EOF_SENT | COMM_EOF_RECV | COMM_FLAG_WORKER;
   return out;
 }
 
@@ -232,7 +217,6 @@ int Comm_t::send(const char *data, const size_t &len) {
     try {
       head.format(data, len, size_max, no_type);
     } catch (std::exception& err) {
-      destroy_worker(xmulti);
       throw err;
     }
   }
@@ -243,8 +227,6 @@ int Comm_t::send(const char *data, const size_t &len) {
   }
   if (send_single(head.data[0], msgsiz, head) < 0) {
     ygglog_error << "CommBase(" << name << ")::send(const char *data, const size_t &len): Failed to send header." << std::endl;
-    if (xmulti)
-      destroy_worker(xmulti);
     return -1;
   }
   if (!(head.flags & HEAD_FLAG_MULTIPART)) {
@@ -258,13 +240,11 @@ int Comm_t::send(const char *data, const size_t &len) {
       msgsiz = size_max_multi;
     if (xmulti->send_single(head.data[0] + prev, msgsiz, head) < 0) {
       ygglog_error << "CommBase(" << name << ")::send(const char *data, const size_t &len): send interupted at " << prev << " of " << head.size_curr << " bytes" << std::endl;
-      destroy_worker(xmulti);
       return -1;
     }
     prev += msgsiz;
     ygglog_debug << "CommBase(" << name << ")::send(const char *data, const size_t &len): " << prev << " of " << head.size_curr << " bytes sent" << std::endl;
   }
-  destroy_worker(xmulti);
   ygglog_debug << "CommBase(" << name << ")::send(const char *data, const size_t &len): returns 1" << std::endl;
   setFlags(head, SEND);
   return head.size_curr;
@@ -332,15 +312,14 @@ long Comm_t::recv(char*& data, const size_t &len, bool allow_realloc = false) {
     }
     ret = xmulti->recv_single(pos, msgsiz, false);
     if (ret < 0) {
-      ygglog_error << "CommBase(" << name << ")::recv(char*& data, const size_t &len, bool allow_realloc): Receive interrupted at " << head.size_curr << " of " << head.size_data << "bytes." << std::endl;
+      ygglog_error << "CommBase(" << name << ")::recv(char*& data, const size_t &len, bool allow_realloc): Receive interrupted at " << head.size_curr << " of " << head.size_data << " bytes." << std::endl;
       break;
     }
     head.size_curr += ret;
     pos += ret;
-    ygglog_debug << "CommBase(" << name << ")::recv(char*& data, const size_t &len, bool allow_realloc): " << head.size_curr << " of " << head.size_data << "bytes received." << std::endl;
+    ygglog_debug << "CommBase(" << name << ")::recv(char*& data, const size_t &len, bool allow_realloc): " << head.size_curr << " of " << head.size_data << " bytes received." << std::endl;
   }
-  if (xmulti)
-    destroy_worker(xmulti);
+  workers.remove_worker(xmulti);
   if (ret > 0) {
     head.finalize_recv();
     if (!head.hasType()) {
@@ -419,15 +398,17 @@ long Comm_t::vRecv(rapidjson::VarArgList& ap) {
   size_t buf_siz = 0;
   long ret = recv(buf, buf_siz, true);
   if (ret < 0) {
+    if (buf != NULL)
+      free(buf);
     ygglog_error << "CommBase(" << name << ")::vRecv: Error in recv" << std::endl;
     return ret;
   }
   ret = deserialize(buf, ap);
+  free(buf);
   if (ret < 0) {
     ygglog_error << "CommBase(" << name << ")::vRecv: Error deserializing message" << std::endl;
     return ret;
   }
-  free(buf);
   ygglog_debug << "CommBase(" << name << ")::vRecv: returns " << ret << std::endl;
   return ret;
 }

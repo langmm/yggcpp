@@ -76,13 +76,13 @@ void MPIComm::init() {
     //if (!(comm->flags & COMM_FLAG_VALID))
     //    return -1;
     maxMsgSize = 2147483647;
-    if (this->address == nullptr)
+    if (!this->address)
         throw std::runtime_error("No address specified for MPIComm constructor");
     if (this->name.empty()) {
         this->name = "tempinitMPI." + address->address();
     }
     handle = new mpi_registry_t(MPI_COMM_WORLD);
-    if (handle == nullptr) {
+    if (!handle) {
         ygglog_error << "init_mpi_comm: Could not alloc MPI registry." << std::endl;
         return;
     }
@@ -120,7 +120,7 @@ MPIComm::~MPIComm() {
 int MPIComm::mpi_comm_source_id() const {
     if (direction == SEND)
         return 0;
-    if (handle == nullptr) {
+    if (!handle) {
         ygglog_error << "mpi_comm_source_id(" << name << "): Queue handle is NULL." << std::endl;
         return -1;
     }
@@ -172,7 +172,7 @@ int MPIComm::send_single(const char *data, const size_t &len,
       ygglog_error << "MPIComm(" << name << ")::send_single: Message too large" << std::endl;
       return -1;
     }
-    if (handle == nullptr) {
+    if (!handle) {
         ygglog_error << "MPIComm(" << name << ")::send_single: Queue handle is NULL." << std::endl;
         return -1;
     }
