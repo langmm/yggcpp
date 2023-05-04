@@ -40,7 +40,7 @@ int ClientComm::wait_for_recv(const int) {
 }
 
 void ClientComm::init() {
-#ifdef HAVE_OPENMP
+#ifdef _OPENMP
 #pragma omp critical (client)
     {
 #endif
@@ -48,7 +48,7 @@ void ClientComm::init() {
             srand(ptr2seed(this));
             _client_rand_seeded = 1;
         }
-#ifdef HAVE_OPENMP
+#ifdef _OPENMP
     }
 #endif
     if (name.empty()) {

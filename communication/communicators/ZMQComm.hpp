@@ -24,7 +24,7 @@ extern __declspec(thread) int _zmq_sleeptime;
 extern char _reply_msg[100];
 extern char _purge_msg[100];
 extern int _zmq_sleeptime;
-#ifdef HAVE_OPENMP
+#ifdef _OPENMP
 #pragma omp threadprivate(_reply_msg, _purge_msg, _zmq_sleeptime)
 #endif
 #endif // _MSC_VER

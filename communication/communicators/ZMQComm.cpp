@@ -45,7 +45,7 @@ ZMQContext::ZMQContext() : ctx(NULL) {
       ctx = ZMQContext::ygg_s_process_ctx;
     }
   }
-#endif // HAVE_OPENMP
+#endif // _OPENMP
   if (ctx == NULL) {
     ygglog_throw_error("ZMQContext: ZMQ context is NULL.");
   }
@@ -67,7 +67,7 @@ void ZMQContext::destroy() {
       }
       ZMQContext::ygg_s_process_ctx = NULL;
     }
-#ifdef HAVE_OPENMP
+#ifdef _OPENMP
   }
 #endif // _OPENMP
 }

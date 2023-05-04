@@ -36,7 +36,7 @@ int IPCComm::check_channels() {
     // Fail if trying to re-use the same channel twice
     unsigned i;
     int error_code = 0;
-#ifdef HAVE_OPENMP
+#ifdef _OPENMP
 #pragma omp critical (ipc)
   {
 #endif
@@ -50,7 +50,7 @@ int IPCComm::check_channels() {
     }
     // Fail if > _yggTrackChannels channels used
 
-#ifdef HAVE_OPENMP
+#ifdef _OPENMP
     }
 #endif
   return error_code;
@@ -61,7 +61,7 @@ int IPCComm::check_channels() {
 */
 
 void IPCComm::add_channel() {
-#ifdef HAVE_OPENMP
+#ifdef _OPENMP
 #pragma omp critical (ipc)
   {
 #endif
@@ -70,7 +70,7 @@ void IPCComm::add_channel() {
 	    ygglog_error << "Too many channels in use, max: " << _yggTrackChannels << std::endl;
         }
     IPCComm::_yggChannelNames[IPCComm::_yggChannelsUsed] = address->key();
-#ifdef HAVE_OPENMP
+#ifdef _OPENMP
   }
 #endif
 }
@@ -84,7 +84,7 @@ int IPCComm::remove_comm(bool close_comm) {
     ret = -1;
     unsigned i;
     int ich = address->key();
-#ifdef HAVE_OPENMP
+#ifdef _OPENMP
 #pragma omp critical (ipc)
   {
 #endif
@@ -100,7 +100,7 @@ int IPCComm::remove_comm(bool close_comm) {
     if (ret < 0) {
         ygglog_error << "remove_comm(" << name << "): Could not locate comm in register." << std::endl;
     }
-#ifdef HAVE_OPENMP
+#ifdef _OPENMP
     }
 #endif
     return ret;

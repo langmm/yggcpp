@@ -42,6 +42,8 @@ comm_t* open_comm(char* address, DIRECTION dir, const COMM_TYPE &t);
  * @return comm_t struct containing the requested communicator
  */
 comm_t* ini_comm(const char* name, DIRECTION dir, const COMM_TYPE &t);
+
+/**
  * Send a message with the given communicator
  * @param comm The communicator to use
  * @param dtype The message to send

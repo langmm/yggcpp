@@ -25,9 +25,9 @@ namespace python {
         int send(const char *data, const size_t &len) {
             return this->get_override("send")(data, len);
         }
-        long recv(char *data, const size_t &len, bool allow_realloc) {
-            return this->get_override("recv")(data, len, allow_realloc);
-        }
+        //long recv(char *data, const size_t &len, bool allow_realloc) {
+        //    return this->get_override("recv")(data, len, allow_realloc);
+        //}
     };
     void exportUtils();
     void exportCommunicators();
