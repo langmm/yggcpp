@@ -220,7 +220,7 @@ long IPCComm::recv_single(char*& data, const size_t& len, bool allow_realloc) {
 }
 
 void IPCComm::init() {
-    maxMsgSize = 2048;
+    updateMaxMsgSize(2048);
     int key = 0;
     bool created = ((!address) || address->address().empty());
     if (created) {

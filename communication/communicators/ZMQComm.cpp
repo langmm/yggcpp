@@ -511,7 +511,7 @@ bool ZMQReply::send_stage2(const std::string msg_data) {
 /////////////
 
 void ZMQComm::init() {
-  maxMsgSize = 1048576;
+  updateMaxMsgSize(1048576);
   msgBufSize = 100;
   if (!(flags & COMM_FLAG_VALID))
     return;
@@ -994,6 +994,11 @@ bool ZMQComm::create_header_recv(Header&, char*&, const size_t&,
 }
 
 WORKER_METHOD_DUMMY(ZMQComm, zmq)
+
+Comm_t* ZMQComm::create_worker_send(Header&) {
+  zmq_install_error();
+  return NULL;
+}
 
 Comm_t* ZMQComm::create_worker_recv(Header&) {
   zmq_install_error();

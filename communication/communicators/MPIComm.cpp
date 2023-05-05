@@ -75,7 +75,7 @@ MPIComm::MPIComm(const std::string &name, const DIRECTION direction,
 void MPIComm::init() {
     //if (!(comm->flags & COMM_FLAG_VALID))
     //    return -1;
-    maxMsgSize = 2147483647;
+    updateMaxMsgSize(2147483647);
     if (!this->address)
         throw std::runtime_error("No address specified for MPIComm constructor");
     if (this->name.empty()) {

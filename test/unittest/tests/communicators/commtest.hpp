@@ -60,9 +60,12 @@
       EXPECT_GE(rComm.recv(data_recv), 0);				\
       EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));			\
       EXPECT_EQ(data_send, data_recv);					\
-      EXPECT_GE(sComm.send_eof(), 0);					\
-      EXPECT_EQ(rComm.recv(data_recv), -2);				\
-      EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));			\
+      /* Error when sending message that can't fit in buffer */		\
+      sComm.getFlags() |= COMM_ALWAYS_SEND_HEADER;			\
+      Metadata& metadata = sComm.getMetadata();				\
+      metadata.initMeta();						\
+      metadata.SetMetaString("invalid", bigMsg);			\
+      EXPECT_THROW(sComm.send(data_send), std::exception);		\
     }									\
   }
 

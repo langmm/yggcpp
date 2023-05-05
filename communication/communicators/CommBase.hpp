@@ -30,6 +30,14 @@
 #define COMM_NAME_SIZE 100
 #define COMM_DIR_SIZE 100
 
+// Bug in gnu std::regex that dosn't allow for matching large messages
+// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=86164
+#ifdef __GNUC__
+#define COMM_BASE_MAX_MSG_SIZE 2048
+#else
+#define COMM_BASE_MAX_MSG_SIZE
+#endif
+
 #define WORKER_METHOD_DECS(cls)					\
   Comm_t* create_worker(utils::Address* address,		\
 			const DIRECTION, int flgs) override
@@ -95,7 +103,7 @@ public:
       size_t len = 0;
       long out = recv(str, len, true);
       if (out >= 0) {
-	std::cerr << "HERE: " << str << std::endl;
+	std::cerr << "HERE: " << str << ", " << out << std::endl;
 	data.assign(str, static_cast<size_t>(out));
 	free(str);
       }
@@ -283,6 +291,8 @@ public:
     }
     DIRECTION getDirection() { return direction; }
     WorkerList& getWorkers() { return workers; }
+    Metadata& getMetadata() { return metadata; }
+    int& getFlags() { return flags; }
     virtual bool afterSendRecv(Comm_t*, Comm_t*) { return true; }
     size_t getMaxMsgSize() { return maxMsgSize; }
 #endif
@@ -304,6 +314,11 @@ protected:
     friend RequestList;
     friend Worker;
     friend WorkerList;
+
+    void updateMaxMsgSize(size_t new_size) {
+      if (maxMsgSize == 0 || new_size < maxMsgSize)
+	maxMsgSize = new_size;
+    }
 
     void setFlags(const Header& head, DIRECTION dir) {
       flags |= COMM_FLAGS_USED;

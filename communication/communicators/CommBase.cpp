@@ -6,7 +6,7 @@ using namespace communication::utils;
 
 Comm_t::Comm_t(Address *address, DIRECTION dirn, const COMM_TYPE &t, int flgs) :
   type(t), name(), address(address), direction(dirn), flags(flgs),
-  maxMsgSize(0), msgBufSize(0), index_in_register(-1),
+  maxMsgSize(COMM_BASE_MAX_MSG_SIZE), msgBufSize(0), index_in_register(-1),
   thread_id(-1), metadata(), timeout_recv(YGG_MAX_TIME), workers() {
 
     flags |= COMM_FLAG_VALID;
