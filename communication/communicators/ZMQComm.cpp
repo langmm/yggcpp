@@ -527,14 +527,15 @@ bool ZMQComm::init_handle() {
     delete handle;
     handle = nullptr;
   }
-  if (flags & (COMM_FLAG_CLIENT | COMM_FLAG_SERVER_RESPONSE)) {
-    handle = new ZMQSocket(ZMQ_ROUTER, address);
-  } else if (flags & (COMM_FLAG_SERVER | COMM_FLAG_CLIENT_RESPONSE |
-		      COMM_ALLOW_MULTIPLE_COMMS)) {
-    handle = new ZMQSocket(ZMQ_DEALER, address);
-  } else {
-    handle = new ZMQSocket(ZMQ_PAIR, address);
-  }
+  // TODO: Handle multiple comms
+  // if (flags & (COMM_FLAG_CLIENT | COMM_FLAG_SERVER_RESPONSE)) {
+  //   handle = new ZMQSocket(ZMQ_ROUTER, address);
+  // } else if (flags & (COMM_FLAG_SERVER | COMM_FLAG_CLIENT_RESPONSE |
+  // 		      COMM_ALLOW_MULTIPLE_COMMS)) {
+  //   handle = new ZMQSocket(ZMQ_DEALER, address);
+  // } else {
+  handle = new ZMQSocket(ZMQ_PAIR, address);
+  // }
   if (!handle) {
     ygglog_error << "create_new: Could not initialize empty socket." << std::endl;
     return false;
@@ -567,7 +568,7 @@ ZMQComm::ZMQComm(const std::string name, const DIRECTION direction,
 }
 
 ZMQComm::~ZMQComm() {
-    if ((direction == RECV) && (flags & this->is_open())
+    if ((direction == RECV) && ((flags & this->is_open()) > 0)
         && (!(flags & COMM_EOF_RECV))) {
         if (utils::_ygg_error_flag == 0) {
 	    size_t data_len = 0;

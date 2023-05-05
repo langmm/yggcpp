@@ -38,7 +38,7 @@
 		      " \"subtype\": \"uint\","				\
 		      " \"precision\": 1}")				\
   COMM_SERI_TEST_TYPE(cls, bool, true, "{\"type\": \"boolean\"}")	\
-  TEST(cls, Large) {							\
+  TEST(cls, large) {							\
     cls ## _tester sComm(SEND);						\
     std::string name = "test_name";					\
     std::string key_env = name + "_IN";					\

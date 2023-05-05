@@ -51,7 +51,7 @@ public:
 #ifndef YGG_TEST
 protected:
 #endif
-    void init() override;
+    void init();
     int send_single(const char *data, const size_t &len,
 		    const Header& header) override;
 
