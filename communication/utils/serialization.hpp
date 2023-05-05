@@ -622,6 +622,16 @@ private:
       id.assign(id_str);
     return out;
   }
+  int deserialize(const char* buf, size_t nargs, int allow_realloc, ...) {
+    rapidjson::VarArgList va(nargs, allow_realloc);
+    va_start(va.va, allow_realloc);
+    int out = deserialize(buf, va);
+    if (out >= 0 && va.get_nargs() != 0) {
+      ygglog_error_c("Metadata::deserialize: %ld of the arguments were not used", va.get_nargs());
+      return -1;
+    }
+    return out;
+  }
   int deserialize(const char* buf, rapidjson::VarArgList& ap) {
     if (!hasType())
       ygglog_throw_error_c("Metadata::deserialize: No datatype");
@@ -646,6 +656,16 @@ private:
       ygglog_throw_error_c("Metadata::deserialize_args: Error setting arguments from JSON document");
     }
     return (int)(nargs_orig - ap.get_nargs());
+  }
+  int serialize(char **buf, size_t *buf_siz, size_t nargs, ...) {
+    rapidjson::VarArgList va(nargs);
+    va_start(va.va, nargs);
+    int out = serialize(buf, buf_siz, va);
+    if (out >= 0 && va.get_nargs() != 0) {
+      ygglog_error_c("Metadata::serialize: %ld of the arguments were not used", va.get_nargs());
+      return -1;
+    }
+    return out;
   }
   int serialize(char **buf, size_t *buf_siz,
 		rapidjson::VarArgList& ap) {
@@ -814,7 +834,7 @@ public:
     }
   }
 
-  void formatBuffer(rapidjson::StringBuffer& buffer, bool metaOnly=true) {
+  void formatBuffer(rapidjson::StringBuffer& buffer, bool metaOnly=false) {
     buffer.Clear();
     if (empty()) {
       ygglog_debug_c("Header::formatBuffer: Empty metadata");
@@ -935,7 +955,9 @@ public:
     if (type_doc.HasParseError())
       ygglog_throw_error_c("Header::finalize_recv: Error parsing datatype in data");
     fromSchema(type_doc);
-    data[0] += eind;
+    size_curr -= eind;
+    memmove(data[0], data[0] + eind, size_curr);
+    (*data)[size_curr] = '\0';
   }
   
   char* data_;

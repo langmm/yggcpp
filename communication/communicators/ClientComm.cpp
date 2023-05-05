@@ -13,9 +13,9 @@ ClientComm::ClientComm(const std::string &name, Address *address,
   COMM_BASE(name, address, SEND,
 	    flgs | COMM_FLAG_CLIENT | COMM_ALWAYS_SEND_HEADER),
   requests(RECV) {
-    // Called to create temp comm for send/recv
-    if (name.empty() && address != nullptr && address->valid())
-        return;
+  // Called to create temp comm for send/recv
+  if (name.empty() && address && address->valid())
+      return;
   init();
     }
 
@@ -69,11 +69,13 @@ bool ClientComm::signon(const Header& header) {
     }
     if (requests.activeComm()->comm_nmsg() > 0) {
       char* data = NULL;
-      if (recv(data, 0, true) < 0) {
+      int ret = recv(data, 0, true);
+      if (data != NULL)
+	free(data);
+      if (ret < 0) {
         ygglog_error << "ClientComm(" << name << ")::signon: Error in receiving sign-on" << std::endl;
         return false;
       }
-      free(data);
       break;
     } else {
       sleep(YGG_SLEEP_TIME);
@@ -134,6 +136,10 @@ long ClientComm::recv_single(char*& rdata, const size_t &rlen, bool allow_reallo
     if (response_comm == NULL) {
       ygglog_error << "ClientComm(" << name << ")::recv_single: Error getting response comm" << std::endl;
         return -1;
+    }
+    if (response_comm->is_closed()) {
+      ygglog_error << "ClientComm(" << name << ")::recv_single: Response comm is closed" << std::endl;
+      return -1;
     }
     std::string req_id = requests.activeRequestClient();
     size_t buff_len = rlen;

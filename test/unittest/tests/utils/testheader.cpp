@@ -3,12 +3,15 @@
 #include <cstdlib>
 #include "../../unittest.hpp"
 #include "utils/serialization.hpp"
+#include "../../elf_hook.hpp"
+#include "../../mock.hpp"
 
 TEST(Metadata, Utilities) {
   Metadata metadata;
   EXPECT_TRUE(metadata.empty());
   EXPECT_FALSE(metadata.hasType());
   EXPECT_FALSE(metadata.hasSubtype());
+  EXPECT_EQ(strcmp(metadata.subtypeName(), ""), 0);
   metadata.setGeneric();
   EXPECT_TRUE(metadata.isGeneric());
   EXPECT_FALSE(metadata.empty());
@@ -228,6 +231,100 @@ TEST(Metadata, fromFormat) {
     y.fromFormat(formatStr, true);
     EXPECT_EQ(x.metadata, y.metadata);
   }
+  {
+    // Additional types
+    std::string fmt = "%hhi\t%hi\t%lli\t%l64i\t%li\t%i\t%hhu\t%hu\t%llu\t%l64u\t%lu\t%u\n";
+    Metadata x;
+    x.fromSchema("{"
+		 "  \"type\": \"array\","
+		 "  \"items\": ["
+		 "    {"
+		 "      \"type\": \"scalar\","
+		 "      \"subtype\": \"int\","
+		 "      \"precision\": 1"
+		 "    },"
+		 "    {"
+		 "      \"type\": \"scalar\","
+		 "      \"subtype\": \"int\","
+		 "      \"precision\": 2"
+		 "    },"
+		 "    {"
+		 "      \"type\": \"scalar\","
+		 "      \"subtype\": \"int\","
+		 "      \"precision\": 8"
+		 "    },"
+		 "    {"
+		 "      \"type\": \"scalar\","
+		 "      \"subtype\": \"int\","
+		 "      \"precision\": 8"
+		 "    },"
+		 "    {"
+		 "      \"type\": \"scalar\","
+		 "      \"subtype\": \"int\","
+		 "      \"precision\": 8"
+		 "    },"
+		 "    {"
+		 "      \"type\": \"scalar\","
+		 "      \"subtype\": \"int\","
+		 "      \"precision\": 4"
+		 "    },"
+		 "    {"
+		 "      \"type\": \"scalar\","
+		 "      \"subtype\": \"uint\","
+		 "      \"precision\": 1"
+		 "    },"
+		 "    {"
+		 "      \"type\": \"scalar\","
+		 "      \"subtype\": \"uint\","
+		 "      \"precision\": 2"
+		 "    },"
+		 "    {"
+		 "      \"type\": \"scalar\","
+		 "      \"subtype\": \"uint\","
+		 "      \"precision\": 8"
+		 "    },"
+		 "    {"
+		 "      \"type\": \"scalar\","
+		 "      \"subtype\": \"uint\","
+		 "      \"precision\": 8"
+		 "    },"
+		 "    {"
+		 "      \"type\": \"scalar\","
+		 "      \"subtype\": \"uint\","
+		 "      \"precision\": 8"
+		 "    },"
+		 "    {"
+		 "      \"type\": \"scalar\","
+		 "      \"subtype\": \"uint\","
+		 "      \"precision\": 4"
+		 "    }"
+		 "  ]"
+		 "}");
+    x.SetString("format_str", fmt, x.metadata["serializer"]);
+    Metadata y;
+    y.fromFormat(fmt);
+    EXPECT_EQ(x.metadata, y.metadata);
+  }
+  {
+    // Singular
+    std::string fmt = "%d\n";
+    Metadata x;
+    x.fromSchema("{"
+		 "  \"type\": \"array\","
+		 "  \"allowSingular\": true,"
+		 "  \"items\": ["
+		 "    {"
+		 "      \"type\": \"scalar\","
+		 "      \"subtype\": \"int\","
+		 "      \"precision\": 4"
+		 "    }"
+		 "  ]"
+		 "}");
+    x.SetString("format_str", fmt, x.metadata["serializer"]);
+    Metadata y;
+    y.fromFormat(fmt);
+    EXPECT_EQ(x.metadata, y.metadata);
+  }
 }
 
 TEST(Metadata, fromMetadata) {
@@ -252,7 +349,44 @@ TEST(Metadata, fromEncode) {
   EXPECT_EQ(x.metadata, y.metadata);
 }
 
+TEST(Metadata, deserialize_errors) {
+  rapidjson::VarArgList va;
+  Metadata x;
+  EXPECT_THROW(x.deserialize("", va), std::exception);
+  x.fromSchema("{\"type\": \"boolean\"}");
+  EXPECT_THROW(x.deserialize("{invalid:}", va), std::exception);
+  EXPECT_THROW(x.deserialize("\"string\"", va), std::exception);
+  EXPECT_THROW(x.deserialize("true", va), std::exception);
+  bool dst = false;
+  bool* dst_ptr = &dst;
+  EXPECT_EQ(x.deserialize("true", 1, false, dst_ptr), 1);
+  EXPECT_EQ(dst, true);
+}
+
+TEST(Metadata, serialize_errors) {
+  rapidjson::VarArgList va;
+  Metadata x;
+  char* buf = NULL;
+  size_t len = 0;
+  EXPECT_THROW(x.serialize(&buf, &len, va), std::exception);
+  x.fromSchema("{\"type\": \"boolean\"}");
+  EXPECT_THROW(x.serialize(&buf, &len, va), std::exception);
+  EXPECT_EQ(x.serialize(&buf, &len, 1, true), 4);
+  free(buf);
+  buf = NULL;
+  len = 0;
+#ifdef ELF_AVAILABLE
+  ELF_BEGIN;
+  ELF_BEGIN_F(realloc);
+  EXPECT_THROW(x.serialize(&buf, &len, 1, true), std::exception);
+  ELF_END_F(realloc);
+  ELF_END;
+#endif // ELF_AVAILABLE
+}
+
 TEST(Header, for_send) {
+  setenv("YGG_MODEL_NAME", "TEST_MODEL", 1);
+  setenv("YGG_MODEL_COPY", "1", 1);
   Metadata schema;
   schema.fromSchema("{\"type\": \"string\"}");
   std::string msg = "This is a test message";
@@ -267,5 +401,7 @@ TEST(Header, for_send) {
 		       header_send.size_curr, true);
   EXPECT_EQ(header_recv.size_data, msg.size());
   EXPECT_EQ(strcmp(header_recv.data[0], msg.c_str()), 0);
+  unsetenv("YGG_MODEL_NAME");
+  unsetenv("YGG_MODEL_COPY");
 }
 

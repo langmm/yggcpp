@@ -5,8 +5,8 @@
 #include "utils/enums.hpp"
 #include "utils/Address.hpp"
 #include "utils/logging.hpp"
-#include "utils/logging.hpp"
 #include "utils/serialization.hpp"
+#include "Workers.hpp"
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
 
@@ -32,28 +32,27 @@ const int COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
 #define COMM_NAME_SIZE 100
 #define COMM_DIR_SIZE 100
 
+// Bug in gnu std::regex that dosn't allow for matching large messages
+// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=86164
+#ifdef __GNUC__
+#define COMM_BASE_MAX_MSG_SIZE 2048
+#else
+#define COMM_BASE_MAX_MSG_SIZE
+#endif
+
 #define WORKER_METHOD_DECS(cls)					\
   Comm_t* create_worker(utils::Address* address,		\
-			const DIRECTION, int flgs) override;	\
-  void destroy_worker(Comm_t*& worker) override
+			const DIRECTION, int flgs) override
 #define WORKER_METHOD_DEFS(cls)					\
   Comm_t* cls::create_worker(utils::Address* address,		\
 			     const DIRECTION dir, int flgs) {	\
-    return new cls("", address, dir, flgs);			\
-  }								\
-  void cls::destroy_worker(Comm_t*& worker) {			\
-    cls* x = dynamic_cast<cls*>(worker);			\
-    delete x;							\
-    worker = NULL;						\
+    return new cls("", address, dir, flgs | COMM_FLAG_WORKER);	\
   }
 #define WORKER_METHOD_DUMMY(cls, abbr)				\
   Comm_t* cls::create_worker(utils::Address*,			\
-				 const DIRECTION, int) {	\
+			     const DIRECTION, int) {		\
     abbr ## _install_error();					\
     return NULL;						\
-  }								\
-  void cls::destroy_worker(Comm_t*&) {				\
-    abbr ## _install_error();					\
   }
 
 
@@ -93,6 +92,13 @@ public:
         return send(data.c_str(), data.size());
     }
     /*!
+      @brief Send a message indicating that the communicator is closing.
+      @returns int Values >= 0 indicate success.
+     */
+     int send_eof() {
+       return send(YGG_MSG_EOF);
+     }
+    /*!
       @brief Receive a string message from the communicator.
       @param[out] data String to store message in.
       @returns int -1 if message could not be received. Length of the
@@ -102,8 +108,11 @@ public:
       char* str = NULL;
       size_t len = 0;
       long out = recv(str, len, true);
-      if (out >= 0)
-	data.assign(str, len);
+      if (out >= 0) {
+	std::cerr << "HERE: " << str << ", " << out << std::endl;
+	data.assign(str, static_cast<size_t>(out));
+	free(str);
+      }
       return out;
     }
     /*!
@@ -250,6 +259,25 @@ public:
     virtual int comm_nmsg() const = 0;
 
     /*!
+      @brief Close the communicator.
+     */
+    virtual void close() = 0;
+
+    /*!
+      @brief Check if the communicator is closed.
+      @return true if the communicator is closed, false otherwise.
+     */
+    virtual bool is_closed() const = 0;
+
+    /*!
+      @brief Check if the communicator is open.
+      @return true if the communicator is open, false otherwise.
+     */
+    virtual bool is_open() const {
+      return (!is_closed());
+    }
+
+    /*!
       @brief Get the type code for the communicator.
       @returns Type code.
      */
@@ -261,15 +289,22 @@ public:
     bool valid() {return flags & COMM_FLAG_VALID;}
 
 #ifdef YGG_TEST
-    std::string getName() {return name;}
-    std::string getAddress() {return address->address();}
-    DIRECTION getDirection() {return direction;}
+    std::string getName() { return name; }
+    std::string getAddress() {
+      if (address)
+	return address->address();
+      return "";
+    }
+    DIRECTION getDirection() { return direction; }
+    WorkerList& getWorkers() { return workers; }
+    Metadata& getMetadata() { return metadata; }
+    int& getFlags() { return flags; }
     virtual bool afterSendRecv(Comm_t*, Comm_t*) { return true; }
     size_t getMaxMsgSize() { return maxMsgSize; }
 #endif
     void addSchema(const Metadata& s);
     void addSchema(const rapidjson::Value& s, bool isMetadata = false);
-    void addSchema(const std::string schemaStr);
+    void addSchema(const std::string schemaStr, bool isMetadata = false);
     void addFormat(const std::string format_str, bool as_array = false);
 
 private:
@@ -283,6 +318,23 @@ protected:
     friend IPCComm;
     friend ZMQComm;
     friend RequestList;
+    friend Worker;
+    friend WorkerList;
+
+    void updateMaxMsgSize(size_t new_size) {
+      if (maxMsgSize == 0 || new_size < maxMsgSize)
+	maxMsgSize = new_size;
+    }
+
+    void setFlags(const Header& head, DIRECTION dir) {
+      flags |= COMM_FLAGS_USED;
+      if (head.flags & HEAD_FLAG_EOF) {
+	if (dir == SEND)
+	  flags |= COMM_EOF_SENT;
+	else
+	  flags |= COMM_EOF_RECV;
+      }
+    }
 
     long copyData(char*& dst, const size_t dst_len,
 		  const char* src, const size_t src_len,
@@ -293,7 +345,7 @@ protected:
 	  return -((long)src_len);
 	}
 	char* tmp = (char*)realloc(dst, src_len + 1);
-	if (tmp == nullptr) {
+	if (tmp == NULL) {
 	  ygglog_error << "CommBase(" << name << ")::copyData: Error reallocating buffer" << std::endl;
 	  return -1;
 	}
@@ -314,7 +366,6 @@ protected:
 				    int temp);
     virtual Comm_t* create_worker(utils::Address* address,
 				  const DIRECTION, int flgs) = 0;
-    virtual void destroy_worker(Comm_t*& worker) = 0;
     virtual Comm_t* create_worker_send(Header& head);
     virtual Comm_t* create_worker_recv(Header& head);
     virtual int send_single(const char *data, const size_t &len, const Header& header) = 0;
@@ -368,6 +419,7 @@ protected:
     int thread_id; //!< ID for the thread that created the comm.
     Metadata metadata;
     int timeout_recv; //!< Time to wait for messages during receive.
+    WorkerList workers; //!< Communicator to use for sending large messages.
 
     static std::vector<Comm_t*> registry;
     static void register_comm(Comm_t* x);
@@ -403,6 +455,8 @@ public:
         utils::ygglog_throw_error("Comm_nmsg of base class called, must be overridden");
         return -1;
     }
+    void close() override;
+    bool is_closed() const override;
     using Comm_t::send;
     using Comm_t::recv;
 
@@ -445,9 +499,6 @@ protected:
     void init() override {
         utils::ygglog_throw_error("init of base class called, must be overridden");
     }
-    void destroy_worker(Comm_t*&) override {
-      utils::ygglog_throw_error("destroy_worker of base class called, must be overridden");
-    }
     Comm_t* create_worker(utils::Address*, const DIRECTION,
 			  int) override {
       utils::ygglog_throw_error("create_worker of base class called, must be overridden");
@@ -476,16 +527,29 @@ CommBase<H>::CommBase(const std::string &name, DIRECTION direction, const COMM_T
   Comm_t(name, direction, t, flags), handle(nullptr) {}
 
 template<typename H>
+void CommBase<H>::close() {
+  if (handle) {
+    delete handle;
+    handle = nullptr;
+  }
+}
+
+template<typename H>
+bool CommBase<H>::is_closed() const {
+  return ((!handle) || !(flags & COMM_FLAG_VALID));
+}
+
+template<typename H>
 void CommBase<H>::reset() {
-    if (handle != nullptr)
-        delete handle;
+  if (handle)
+    delete handle;
 }
 
 template<typename H>
 CommBase<H>::~CommBase() {
     ygglog_debug << "~CommBase: Started" << std::endl;
-    if (handle != nullptr)
-        delete handle;
+    if (!is_closed())
+      close();
     ygglog_debug << "~CommBase: Finished" << std::endl;
 }
 

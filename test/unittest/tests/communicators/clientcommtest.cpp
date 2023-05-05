@@ -22,7 +22,7 @@ public:
     ClientComm(name, address), server_comm(NULL) {
     server_comm = new ServerComm("", new utils::Address(this->address->address()));
   }
-  ~ClientComm_tester() {
+  ~ClientComm_tester() override {
     delete server_comm;
   }
   bool addSignon() {

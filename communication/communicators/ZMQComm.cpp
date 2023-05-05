@@ -164,14 +164,14 @@ void ZMQSocket::init(int type0, utils::Address* address,
 #endif
       if (_last_port_set == 0) {
 	const char *model_index = getenv("YGG_MODEL_INDEX");
-	if (model_index == nullptr) {
+	if (model_index == NULL) {
 	  except_msg = "Environment variable 'YGG_MODEL_INDEX' is not defined. Connot create ZMQComm.";
 	  _last_port = -1;
 	} else {
 	  ygglog_debug << "ZMQSocket::init: model_index = " << model_index << std::endl;
 	  _last_port = 49152 + 1000 * static_cast<int>(strtol(model_index, nullptr, 0));
 	  _last_port_set = 1;
-	  ygglog_debug << "ZMQSocket::init: _last_port = " << _last_port << std::endl;
+	  ygglog_debug << "ZMQSocket::init: last_port = " << _last_port << std::endl;
 	}
       }
       if (except_msg.empty()) {
@@ -259,10 +259,12 @@ int ZMQSocket::send(const std::string msg) {
   if (zmq_msg_init_size (&part, msg.size()) != 0)
     return -1;
   memcpy(zmq_msg_data(&part), msg.c_str(), msg.size());
+  ygglog_debug << "ZMQSocket::send: Sending " << msg.size() << " bytes" << std::endl;
   if (zmq_sendmsg (handle, &part, 0) != (int)(msg.size())) {
     zmq_msg_close (&part);
     return -1;
   }
+  ygglog_debug << "ZMQSocket::send: Sent " << msg.size() << " bytes" << std::endl;
   zmq_msg_close (&part);
   return msg.size();
 }
@@ -277,6 +279,7 @@ int ZMQSocket::recv(std::string& msg, bool for_identity) {
   msg = "";
   int more = 1;
   size_t more_size = sizeof(more);
+  ygglog_debug << "ZMQSocket::recv: Receiving message" << std::endl;
   do {
     zmq_msg_t part;
     if (zmq_msg_init (&part) != 0)
@@ -508,7 +511,7 @@ bool ZMQReply::send_stage2(const std::string msg_data) {
 /////////////
 
 void ZMQComm::init() {
-  maxMsgSize = 1048576;
+  updateMaxMsgSize(1048576);
   msgBufSize = 100;
   if (!(flags & COMM_FLAG_VALID))
     return;
@@ -520,7 +523,7 @@ void ZMQComm::init() {
 }
 
 bool ZMQComm::init_handle() {
-  if (handle != nullptr) {
+  if (handle) {
     delete handle;
     handle = nullptr;
   }
@@ -532,11 +535,11 @@ bool ZMQComm::init_handle() {
   } else {
     handle = new ZMQSocket(ZMQ_PAIR, address);
   }
-  if (handle == nullptr) {
+  if (!handle) {
     ygglog_error << "create_new: Could not initialize empty socket." << std::endl;
     return false;
   }
-  if (address == nullptr)
+  if (!address)
     address = new utils::Address(handle->endpoint);
   else
     address->address(handle->endpoint);
@@ -564,12 +567,7 @@ ZMQComm::ZMQComm(const std::string name, const DIRECTION direction,
 }
 
 ZMQComm::~ZMQComm() {
-    destroy();
-}
-
-void ZMQComm::destroy() {
-    // Drain input
-    if (direction == RECV && flags & COMM_FLAG_VALID
+    if ((direction == RECV) && (flags & this->is_open())
         && (!(flags & COMM_EOF_RECV))) {
         if (utils::_ygg_error_flag == 0) {
 	    size_t data_len = 0;
@@ -584,19 +582,12 @@ void ZMQComm::destroy() {
 	      free(data);
         }
     }
-    // if (handle != nullptr) {
-    //     delete handle;
-    //     ygglog_debug << "ZMQComm(" << name << ")::destroy: Destroying socket " << address->address() << std::endl;
-    //     handle = nullptr;
-    // }
-    ygglog_debug << "ZMQComm(" << name << ")::destroy: finished" << std::endl;
-
 }
 
 int ZMQComm::comm_nmsg() const {
     int out = 0;
     if (direction == RECV) {
-        if (handle != nullptr) {
+        if (handle) {
 	    return handle->poll(ZMQ_POLLIN, short_timeout);
         }
     } else {
@@ -641,7 +632,7 @@ long ZMQComm::recv_single(char*& data, const size_t &len,
 			  bool allow_realloc) {
     long ret = -1;
     ygglog_debug << "ZMQComm(" << name << ")::recv_single " << std::endl;
-    if (handle == nullptr) {
+    if (!handle) {
         ygglog_error << "ZMQComm(" << name << ")::recv_single: socket handle is nullptr" << std::endl;
         return ret;
     }
@@ -723,6 +714,23 @@ bool ZMQComm::create_header_recv(Header& header, char*& data,
 
 WORKER_METHOD_DEFS(ZMQComm)
 
+Comm_t* ZMQComm::create_worker_send(Header& head) {
+  ZMQComm* out = dynamic_cast<ZMQComm*>(Comm_t::create_worker_send(head));
+  if (!out)
+    return out;
+  std::string reply_address;
+  if (out->reply.create(reply_address) < 0) {
+    ygglog_error << "ZMQComm(" << this->name << ")::create_worker_send: Error during creation of worker reply socket" << std::endl;
+    return NULL;
+  }
+  ygglog_debug << "ZMQComm(" << this->name << ")::create_worker_send: zmq_reply_worker = " << reply_address << std::endl;
+  if (!head.SetMetaString("zmq_reply_worker", reply_address)) {
+    ygglog_debug << "ZMQComm(" << this->name << ")::create_worker_send: Failed to set zmq_reply_worker" << std::endl;
+    return NULL;
+  }
+  return out;
+}
+
 Comm_t* ZMQComm::create_worker_recv(Header& head) {
   ZMQComm* out = dynamic_cast<ZMQComm*>(Comm_t::create_worker_recv(head));
   if (!out)
@@ -730,12 +738,10 @@ Comm_t* ZMQComm::create_worker_recv(Header& head) {
   const char* zmq_reply_worker = head.GetMetaString("zmq_reply_worker");
   if (zmq_reply_worker == NULL) {
     ygglog_error << "ZMQComm(" << name << ")::create_worker_recv: Error getting address" << std::endl;
-    delete out;
     return NULL;
   }
   if (out->reply.set(std::string(zmq_reply_worker)) < 0) {
     ygglog_error << "ZMQComm(" << name << ")::create_worker_recv: Failed to set worker reply address." << std::endl;
-    delete out;
     return NULL;
   }
   return out;
@@ -965,13 +971,14 @@ bool ZMQComm::create_header_recv(Header&, char*&, const size_t&,
 
 WORKER_METHOD_DUMMY(ZMQComm, zmq)
 
-Comm_t* ZMQComm::create_worker_recv(Header&) {
+Comm_t* ZMQComm::create_worker_send(Header&) {
   zmq_install_error();
   return NULL;
 }
 
-void ZMQComm::destroy() {
+Comm_t* ZMQComm::create_worker_recv(Header&) {
   zmq_install_error();
+  return NULL;
 }
 
 ZMQComm::ZMQComm(const std::string, utils::Address *address,

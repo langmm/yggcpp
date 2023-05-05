@@ -12,7 +12,7 @@ bool IPCComm::_ipc_rand_seeded = false;
 #ifdef IPCINSTALLED
 
 IPCComm::~IPCComm() {
-    if (handle != nullptr) {
+    if (handle) {
         if (direction == RECV) {
             remove_comm(true);
         } else {
@@ -112,7 +112,7 @@ int IPCComm::remove_comm(bool close_comm) {
  */
 int IPCComm::comm_nmsg() const {
     struct msqid_ds buf;
-    if (handle == nullptr) {
+    if (!handle) {
         ygglog_error << "ipc_comm_nmsg: Queue handle is NULL." << std::endl;
         return -1;
     }
@@ -209,9 +209,9 @@ long IPCComm::recv_single(char*& data, const size_t& len, bool allow_realloc) {
 }
 
 void IPCComm::init() {
-    maxMsgSize = 2048;
+    updateMaxMsgSize(2048);
     int key = 0;
-    bool created = (address == nullptr || address->address().empty());
+    bool created = ((!address) || address->address().empty());
     if (created) {
 #ifdef _OPENMP
 #pragma omp critical (ipc)
@@ -227,7 +227,7 @@ void IPCComm::init() {
       while (key == 0) {
         key = std::rand();
       }
-      if (address == nullptr) {
+      if (!address) {
         address = new utils::Address(std::to_string(key));
       } else {
         address->address(std::to_string(key));

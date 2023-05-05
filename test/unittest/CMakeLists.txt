@@ -51,7 +51,7 @@ target_include_directories(unittest PRIVATE ${TEST_INCLUDE_DIRS})
 message(STATUS "TEST_LIBRARIES = ${TEST_LIBRARIES}")
 message(STATUS "TEST_INCLUDE_DIRS = ${TEST_INCLUDE_DIRS}")
 gtest_discover_tests(unittest DISCOVERY_MODE PRE_TEST
-                     PROPERTIES ENVIRONMENT
+                     PROPERTIES TIMEOUT 20 ENVIRONMENT
                      "${RAPIDJSON_PYTHON_ENV}")
 
 
