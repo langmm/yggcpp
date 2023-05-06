@@ -38,9 +38,9 @@ TEST(IPCComm, constructor) {
     ELF_BEGIN_F(msgget); // To allow connection to non-existed queue
     RETVAL = 0;
     utils::Address *adr3 = new utils::Address("12345");
-    IPCComm_tester ipc3(name, adr3, RECV);
+    IPCComm_tester ipc5(name, adr3, RECV);
     RETVAL = -1;
-    EXPECT_THROW(IPCComm_tester ipc4(name, nullptr, SEND), std::runtime_error);
+    EXPECT_THROW(IPCComm_tester ipc6(name, nullptr, SEND), std::runtime_error);
     ELF_END_F(msgget);
     ELF_END;
 #endif // ELF_AVAILABLE

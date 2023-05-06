@@ -78,8 +78,8 @@ public:
 
 TEST(ClientComm, constructor) {
     std::string name = "MyComm";
-    ClientComm cc(name, nullptr);
-    ClientComm cc1("", nullptr);
+    communication::testing::ClientComm_tester cc(name, nullptr);
+    communication::testing::ClientComm_tester cc1("", nullptr);
     // ClientComm cc2("", new utils::Address("12345"));
 }
 
