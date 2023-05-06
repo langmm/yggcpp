@@ -50,10 +50,15 @@ target_link_libraries(unittest ${TEST_LIBRARIES})
 target_include_directories(unittest PRIVATE ${TEST_INCLUDE_DIRS})
 message(STATUS "TEST_LIBRARIES = ${TEST_LIBRARIES}")
 message(STATUS "TEST_INCLUDE_DIRS = ${TEST_INCLUDE_DIRS}")
-gtest_discover_tests(unittest DISCOVERY_MODE PRE_TEST
-                     PROPERTIES TIMEOUT 20 ENVIRONMENT
-                     "${RAPIDJSON_PYTHON_ENV}")
-
+if (WIN32)
+    gtest_discover_tests(unittest DISCOVERY_MODE PRE_TEST
+                         PROPERTIES ENVIRONMENT
+                         "${RAPIDJSON_PYTHON_ENV}")
+else()
+    gtest_discover_tests(unittest DISCOVERY_MODE PRE_TEST
+                         PROPERTIES TIMEOUT 20 ENVIRONMENT
+                         "${RAPIDJSON_PYTHON_ENV}")
+endif()
 
 add_definitions(-DYGG_TEST)
 # This is required for running tests with valgrind
