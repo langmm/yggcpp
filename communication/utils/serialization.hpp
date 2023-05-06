@@ -701,7 +701,7 @@ private:
     if ((size_t)(buffer.GetLength() + 1) > buf_siz[0]) {
       buf_siz[0] = (size_t)(buffer.GetLength() + 1);
       char* buf_t = (char*)realloc(buf[0], buf_siz[0]);
-      if (buf_t == NULL) {
+      if (!buf_t) {
 	ygglog_throw_error_c("Metadata::serialize: Error in realloc");
       }
       buf[0] = buf_t;
@@ -984,6 +984,7 @@ public:
       ygglog_throw_error_c("Header::finalize_recv: Error parsing datatype in data");
     fromSchema(type_doc);
     size_curr -= eind;
+    size_data -= eind;
     memmove(data[0], data[0] + eind, size_curr);
     (*data)[size_curr] = '\0';
   }

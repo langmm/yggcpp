@@ -326,6 +326,13 @@ namespace communicator {
       idx = (int)(comms.size() - 1);
       return idx;
     }
+    bool signonSent() const {
+      for (size_t i = 0; i < requests.size(); i++) {
+	if (requests[i].is_signon)
+	  return true;
+      }
+      return false;
+    }
     bool isComplete(const std::string& request_id) const {
       int idx = hasRequest(request_id);
       if (idx < 0)

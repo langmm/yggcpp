@@ -568,8 +568,8 @@ ZMQComm::ZMQComm(const std::string name, const DIRECTION direction,
 }
 
 ZMQComm::~ZMQComm() {
-    if ((direction == RECV) && ((flags & this->is_open()) > 0)
-        && (!(flags & COMM_EOF_RECV))) {
+    if ((direction == RECV) && this->is_open() &&
+        (!(flags & COMM_EOF_RECV))) {
         if (utils::_ygg_error_flag == 0) {
 	    size_t data_len = 0;
             char *data = NULL;

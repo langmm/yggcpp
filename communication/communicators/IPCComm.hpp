@@ -38,7 +38,7 @@ public:
     //explicit IPCComm(Comm_t* comm);
     ~IPCComm() override;
 
-    int check_channels();
+    int check_key(int key);
 
     void add_channel();
 

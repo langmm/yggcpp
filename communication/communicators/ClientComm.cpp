@@ -63,10 +63,17 @@ bool ClientComm::signon(const Header& header) {
     return false;
   ygglog_debug << "ClientComm(" << name << ")::signon: begin" << std::endl;
   while (!requests.signon_complete) {
+#ifdef YGG_TEST
+    // Prevent sending extra SIGNON during testing
+    if (!requests.signonSent()) {
+#endif // YGG_TEST
     if (send(YGG_CLIENT_SIGNON, YGG_CLIENT_SIGNON_LEN) < 0) {
       ygglog_error << "ClientComm(" << name << ")::signon: Error in sending sign-on" << std::endl;
       return false;
     }
+#ifdef YGG_TEST
+    }
+#endif // YGG_TEST
     if (requests.activeComm()->comm_nmsg() > 0) {
       char* data = NULL;
       int ret = recv(data, 0, true);
@@ -141,7 +148,7 @@ bool ClientComm::create_header_recv(Header& header, char*& data, const size_t &l
   Comm_t* response_comm = requests.activeComm();
   if (response_comm == NULL) {
     ygglog_error << "ClientComm(" << name << ")::create_header_recv: Error getting response comm" << std::endl;
-    return -1;
+    return false;
   }
   if (response_comm->is_closed()) {
     ygglog_error << "ClientComm(" << name << ")::create_header_recv: Response comm is closed" << std::endl;

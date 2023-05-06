@@ -103,7 +103,6 @@ public:
       size_t len = 0;
       long out = recv(str, len, true);
       if (out >= 0) {
-	std::cerr << "HERE: " << str << ", " << out << std::endl;
 	data.assign(str, static_cast<size_t>(out));
 	free(str);
       }

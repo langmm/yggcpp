@@ -340,7 +340,7 @@ long Comm_t::recv(char*& data, const size_t &len, bool allow_realloc = false) {
   }
   if (ret >= 0) {
     ygglog_debug << "CommBase(" << name << ")::recv: Received " << head.size_curr << " bytes from " << address->address() << std::endl;
-    ret = head.size_curr;
+    ret = head.size_data;
     setFlags(head, RECV);
   }
   return ret;
