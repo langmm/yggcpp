@@ -78,7 +78,7 @@ public:
 protected:
     void init() override;
     int send_single(const char *data, const size_t &len,
-		    const Header& header) override;
+		    const utils::Header& header) override;
 
     long recv_single(char*& data, const size_t &len, bool allow_realloc) override;
     WORKER_METHOD_DECS(MPIComm);

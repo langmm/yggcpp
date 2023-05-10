@@ -27,7 +27,7 @@ public:
     /**
      * Destructor
      */
-    ~ClientComm() override;
+    ~ClientComm() override {}
     void set_timeout_recv(int new_timeout) override;
     int wait_for_recv(const int tout) override;
 
@@ -39,11 +39,11 @@ public:
 protected:
 #endif
     void init() override;
-    virtual bool signon(const Header& header);
+    virtual bool signon(const utils::Header& header);
     int update_datatype(const rapidjson::Value& new_schema,
 			const DIRECTION dir=NONE) override;
-    bool create_header_send(Header& header, const char* data, const size_t &len) override;
-    bool create_header_recv(Header& header, char*& data, const size_t &len,
+    bool create_header_send(utils::Header& header, const char* data, const size_t &len) override;
+    bool create_header_recv(utils::Header& header, char*& data, const size_t &len,
 			    size_t msg_len, int allow_realloc,
 			    int temp) override;
     long recv_single(char*& data, const size_t &len,

@@ -36,7 +36,7 @@ public:
      * @param address The address for the communicator, if not given one will be generated
      * @param direction Enuerated direction for this instance
      */
-    explicit IPCComm(const std::string &name = blank, utils::Address *address = new utils::Address(),
+    explicit IPCComm(const std::string &name = utils::blank, utils::Address *address = new utils::Address(),
                      DIRECTION direction = NONE, int flgs = 0);
     explicit IPCComm(const std::string &name,
 		     DIRECTION direction, int flgs = 0);
@@ -85,7 +85,7 @@ protected:
      * @return THe status
      */
     int send_single(const char *data, const size_t &len,
-		    const Header& header) override;
+		    const utils::Header& header) override;
 
     /**
      * Receiving function

@@ -141,17 +141,17 @@ protected:
 #endif
     void init() override;
     bool init_handle();
-    int send_single(const char *data, const size_t &len, const Header& header) override;
+    int send_single(const char *data, const size_t &len, const utils::Header& header) override;
     long recv_single(char*& data, const size_t &len, bool allow_realloc) override;
-    virtual bool do_reply_recv(const Header& header);
-    virtual bool do_reply_send(const Header& header);
-    bool create_header_send(Header& header, const char* data, const size_t &len) override;
-    bool create_header_recv(Header& header, char*& data, const size_t &len,
+    virtual bool do_reply_recv(const utils::Header& header);
+    virtual bool do_reply_send(const utils::Header& header);
+    bool create_header_send(utils::Header& header, const char* data, const size_t &len) override;
+    bool create_header_recv(utils::Header& header, char*& data, const size_t &len,
 			    size_t msg_len, int allow_realloc,
 			    int temp) override;
     WORKER_METHOD_DECS(ZMQComm);
-    Comm_t* create_worker_send(Header& head) override;
-    Comm_t* create_worker_recv(Header& head) override;
+    Comm_t* create_worker_send(utils::Header& head) override;
+    Comm_t* create_worker_recv(utils::Header& head) override;
 
 private:
     friend class ClientComm;

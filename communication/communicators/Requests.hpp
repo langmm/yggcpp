@@ -81,7 +81,7 @@ namespace communicator {
       }
       return 0;
     }
-    int addRequestClient(Header& header) {
+    int addRequestClient(utils::Header& header) {
       ygglog_debug << "addRequestClient: begin" << std::endl;
       if (initClientResponse() < 0)
 	return -1;
@@ -138,7 +138,7 @@ namespace communicator {
 		   << request_id << std::endl;
       return existing_idx;
     }
-    int addRequestServer(Header& header) {
+    int addRequestServer(utils::Header& header) {
       ygglog_debug << "addRequestServer: begin" << std::endl;
       std::string request_id(header.GetMetaString("request_id"));
       std::string response_address(header.GetMetaString("response_address"));
@@ -171,7 +171,7 @@ namespace communicator {
 		   << std::endl;
       return static_cast<int>(idx);
     }
-    int addResponseServer(Header& header, const char* data, const size_t len) {
+    int addResponseServer(utils::Header& header, const char* data, const size_t len) {
       ygglog_debug << "addResponseServer: begin" << std::endl;
       if (requests.size() == 0) {
 	ygglog_error << "addResponseServer: Server does not have any unprocessed requests" << std::endl;
@@ -193,7 +193,7 @@ namespace communicator {
 	signon_complete << ")" << std::endl;
       return 0;
     }
-    int addResponseClient(Header& header, const char* data, const size_t len) {
+    int addResponseClient(utils::Header& header, const char* data, const size_t len) {
       ygglog_debug << "addResponseClient: begin" << std::endl;
       std::string request_id(header.GetMetaString("request_id"));
       int idx = hasRequest(request_id);
@@ -232,7 +232,7 @@ namespace communicator {
 	if (!requests[i].is_signon)
 	  return requests[i].request_id;
       }
-      ygglog_throw_error("activeRequestClient: No active requests");
+        utils::ygglog_throw_error("activeRequestClient: No active requests");
       return "";
     }
     int popRequestServer() {
@@ -306,7 +306,7 @@ namespace communicator {
     std::vector<Comm_t*> comms;
     std::vector<Request> requests;
     DIRECTION response_dir;
-    Metadata response_metadata;
+      utils::Metadata response_metadata;
     int active_comm;
     bool signon_complete;
   };

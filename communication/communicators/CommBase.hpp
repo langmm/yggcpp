@@ -19,12 +19,12 @@ enum CommFlags {
     COMM_FLAG_CLIENT = 0x00000010,  //!< Set if the comm is a client
     COMM_FLAG_SERVER = 0x00000020,  //!< Set if the comm is a server
     COMM_FLAG_CLIENT_RESPONSE= 0x00000040, //!< Set if the comm is a client response comm
-#define COMM_FLAG_SERVER_RESPONSE 0x00000080 //!< Set if the comm is a server response comm
-#define COMM_ALWAYS_SEND_HEADER   0x00000100 //!< Set if the comm should always include a header in messages
-#define COMM_ALLOW_MULTIPLE_COMMS 0x00000200 //!< Set if the comm should connect in a way that allow multiple connections
-#define COMM_FLAGS_USED   0x00000400  //!< Set if the comm has been used
-#define COMM_EOF_SENT     0x00000800  //!< Set if EOF has been sent
-#define COMM_EOF_RECV     0x00001000  //!< Set if EOF has been received
+    COMM_FLAG_SERVER_RESPONSE = 0x00000080, //!< Set if the comm is a server response comm
+    COMM_ALWAYS_SEND_HEADER = 0x00000100, //!< Set if the comm should always include a header in messages
+    COMM_ALLOW_MULTIPLE_COMMS = 0x00000200, //!< Set if the comm should connect in a way that allow multiple connections
+    COMM_FLAGS_USED = 0x00000400,  //!< Set if the comm has been used
+    COMM_EOF_SENT = 0x00000800,  //!< Set if EOF has been sent
+    COMM_EOF_RECV = 0x00001000  //!< Set if EOF has been received
 };
 
 /*! @brief Set if the comm is the receiving comm for a client/server request connection */
@@ -32,7 +32,7 @@ const int COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
 #define COMM_NAME_SIZE 100
 #define COMM_DIR_SIZE 100
 
-// Bug in gnu std::regex that dosn't allow for matching large messages
+// Bug in gnu std::regex that doesn't allow for matching large messages
 // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=86164
 #ifdef __GNUC__
 #define COMM_BASE_MAX_MSG_SIZE 2048
@@ -77,10 +77,9 @@ typedef struct comm_t comm_t;
  * for passing communicators around. Should only be instantiated by the CommBase<> class.
  */
 class Comm_t {
-private:
-  Comm_t(const Comm_t& other) = delete;
-  Comm_t& operator=(const Comm_t&) = delete;
 public:
+    Comm_t(const Comm_t& other) = delete;
+    Comm_t& operator=(const Comm_t&) = delete;
     virtual ~Comm_t();
 
     /*!
@@ -88,7 +87,7 @@ public:
       @param[in] data Message.
       @returns int Values >= 0 indicate success.
      */
-    int send(const std::string data) {
+    int send(const std::string& data) {
         return send(data.c_str(), data.size());
     }
     /*!
@@ -297,12 +296,12 @@ public:
     }
     DIRECTION getDirection() { return direction; }
     WorkerList& getWorkers() { return workers; }
-    Metadata& getMetadata() { return metadata; }
+    utils::Metadata& getMetadata() { return metadata; }
     int& getFlags() { return flags; }
     virtual bool afterSendRecv(Comm_t*, Comm_t*) { return true; }
     size_t getMaxMsgSize() { return maxMsgSize; }
 #endif
-    void addSchema(const Metadata& s);
+    void addSchema(const utils::Metadata& s);
     void addSchema(const rapidjson::Value& s, bool isMetadata = false);
     void addSchema(const std::string schemaStr, bool isMetadata = false);
     void addFormat(const std::string format_str, bool as_array = false);
@@ -326,7 +325,7 @@ protected:
 	maxMsgSize = new_size;
     }
 
-    void setFlags(const Header& head, DIRECTION dir) {
+    void setFlags(const utils::Header& head, DIRECTION dir) {
       flags |= COMM_FLAGS_USED;
       if (head.flags & HEAD_FLAG_EOF) {
 	if (dir == SEND)
@@ -360,15 +359,15 @@ protected:
 
     virtual int update_datatype(const rapidjson::Value& new_schema,
 				const DIRECTION dir=NONE);
-    virtual bool create_header_send(Header& header, const char* data, const size_t &len);
-    virtual bool create_header_recv(Header& header, char*& data, const size_t &len,
+    virtual bool create_header_send(utils::Header& header, const char* data, const size_t &len);
+    virtual bool create_header_recv(utils::Header& header, char*& data, const size_t &len,
 				    size_t msg_len, int allow_realloc,
 				    int temp);
     virtual Comm_t* create_worker(utils::Address* address,
 				  const DIRECTION, int flgs) = 0;
-    virtual Comm_t* create_worker_send(Header& head);
-    virtual Comm_t* create_worker_recv(Header& head);
-    virtual int send_single(const char *data, const size_t &len, const Header& header) = 0;
+    virtual Comm_t* create_worker_send(utils::Header& head);
+    virtual Comm_t* create_worker_recv(utils::Header& head);
+    virtual int send_single(const char *data, const size_t &len, const utils::Header& header) = 0;
     virtual long recv_single(char*& data, const size_t &len, bool allow_realloc) = 0;
 
     //Comm_t(const Comm_t* comm, COMM_TYPE type);
@@ -417,7 +416,7 @@ protected:
     size_t msgBufSize; //!< The size that should be reserved in messages.
     int index_in_register; //!< Index of the comm in the comm register.
     int thread_id; //!< ID for the thread that created the comm.
-    Metadata metadata;
+    utils::Metadata metadata;
     int timeout_recv; //!< Time to wait for messages during receive.
     WorkerList workers; //!< Communicator to use for sending large messages.
 
@@ -464,7 +463,7 @@ protected:
     /**
      * Not used, must be overloaded by a child class
      */
-    int send_single(const char *, const size_t &, const Header&) override {
+    int send_single(const char *, const size_t &, const utils::Header&) override {
         utils::ygglog_throw_error("Send of base class called, must be overridden");
         return -1;
     }
