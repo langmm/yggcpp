@@ -7,8 +7,8 @@ namespace bp = boost::python;
 namespace communication {
 
 void python::exportCommunicators() {
-    bp::object modModule(bp::handle<>(bp::borrowed(PyImport_AddModule("pyYggComm.communicators"))));
-    bp::scope().attr("module") = modModule;
+    bp::object modModule(bp::handle<>(bp::borrowed(PyImport_AddModule("pyYggdrasil.communicators"))));
+    bp::scope().attr("communicators") = modModule;
     bp::scope modScope = modModule;
 
     bp::class_<CommWrap, boost::noncopyable>("Comm_t", bp::init<utils::Address*, DIRECTION, const COMM_TYPE, int>())

@@ -8,8 +8,8 @@ void (utils::Address::*setaddress)(const std::string &) = &utils::Address::addre
 const std::string &(utils::Address::*getaddress)() const = &utils::Address::address;
 
 void python::exportUtils() {
-    bp::object modModule(bp::handle<>(bp::borrowed(PyImport_AddModule("pyYggComm.utils"))));
-    bp::scope().attr("module") = modModule;
+    bp::object modModule(bp::handle<>(bp::borrowed(PyImport_AddModule("pyYggdrasil.utils"))));
+    bp::scope().attr("utils") = modModule;
     bp::scope modScope = modModule;
     bp::class_<utils::Address>("Address", bp::init<std::string>())
             .def(bp::init<utils::Address *>())

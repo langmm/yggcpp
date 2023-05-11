@@ -3,9 +3,9 @@
 using namespace communication;
 namespace bp = boost::python;
 
-BOOST_PYTHON_MODULE(libpyygg) {
+BOOST_PYTHON_MODULE(pyYggdrasil) {
     bp::object package = bp::scope();
-    package.attr("__path__") = "libpyygg";
+    package.attr("__path__") = "pyYggdrasil";
 
     python::exportUtils();
     python::exportCommunicators();
