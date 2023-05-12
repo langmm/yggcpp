@@ -18,7 +18,7 @@ public:
     ServerComm_tester(const std::string &name = "", utils::Address *address = nullptr) :
       ServerComm(name, address), client_requests(RECV) {}
     bool addRequest() {
-      Header header;
+      utils::Header header;
       header.for_send(NULL, NULL, 0);
       if (client_requests.addRequestClient(header) < 0)
 	return false;

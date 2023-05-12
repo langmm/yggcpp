@@ -62,7 +62,7 @@
       EXPECT_EQ(data_send, data_recv);					\
       /* Error when sending message that can't fit in buffer */		\
       sComm.getFlags() |= COMM_ALWAYS_SEND_HEADER;			\
-      Metadata& metadata = sComm.getMetadata();				\
+      utils::Metadata& metadata = sComm.getMetadata();				\
       metadata.initMeta();						\
       metadata.SetMetaString("invalid", bigMsg);			\
       EXPECT_THROW(sComm.send(data_send), std::exception);		\

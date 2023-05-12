@@ -7,7 +7,7 @@
 #include "../../mock.hpp"
 
 TEST(Metadata, Utilities) {
-  Metadata metadata;
+  communication::utils::Metadata metadata;
   EXPECT_TRUE(metadata.empty());
   EXPECT_FALSE(metadata.hasType());
   EXPECT_FALSE(metadata.hasSubtype());
@@ -18,7 +18,7 @@ TEST(Metadata, Utilities) {
 }
 
 TEST(Metadata, SetAndGet) {
-  Metadata metadata;
+    communication::utils::Metadata metadata;
   EXPECT_THROW(metadata.getMeta(), std::exception);
   EXPECT_THROW(metadata.getSchema(), std::exception);
   // Get errors on missing parent
@@ -120,32 +120,32 @@ TEST(Metadata, SetAndGet) {
 }
 
 TEST(Metadata, fromSchema) {
-  Metadata x;
+    communication::utils::Metadata x;
   x.setGeneric();
   EXPECT_TRUE(x.isGeneric());
   x.fromSchema("{\"type\": \"integer\"}");
   EXPECT_TRUE(x.isGeneric());
-  Metadata y;
+    communication::utils::Metadata y;
   y.fromSchema(x.metadata, true);
   EXPECT_EQ(x.metadata, y.metadata);
   y.fromSchema(x.getSchema());
-  Metadata z;
+    communication::utils::Metadata z;
   z.fromSchema("{\"type\": \"string\"}");
   EXPECT_THROW(y.fromSchema(z.getSchema()), std::exception);
-  Metadata q;
+    communication::utils::Metadata q;
   q.fromType("string");
   EXPECT_EQ(z.metadata, q.metadata);
 }
 
 TEST(Metadata, fromScalar) {
-  Metadata x;
+    communication::utils::Metadata x;
   x.fromSchema("{"
 	       "  \"type\": \"scalar\","
 	       "  \"subtype\": \"float\","
 	       "  \"precision\": 4,"
 	       "  \"units\": \"cm\""
 	       "}");
-  Metadata y;
+    communication::utils::Metadata y;
   y.fromScalar("float", 4, "cm");
   EXPECT_EQ(x.metadata, y.metadata);
   std::cerr << x.metadata << std::endl;
@@ -155,7 +155,7 @@ TEST(Metadata, fromScalar) {
   EXPECT_EQ(strcmp(y.subtypeName(), "float"), 0);
 }
 TEST(Metadata, fromNDArray) {
-  Metadata x;
+    communication::utils::Metadata x;
   x.fromSchema("{"
 	       "  \"type\": \"ndarray\","
 	       "  \"subtype\": \"float\","
@@ -163,7 +163,7 @@ TEST(Metadata, fromNDArray) {
 	       "  \"shape\": [2, 3],"
 	       "  \"units\": \"cm\""
 	       "}");
-  Metadata y;
+    communication::utils::Metadata y;
   size_t shape[2] = { 2, 3 };
   y.fromNDArray("float", 4, 2, shape, "cm");
   EXPECT_EQ(x.metadata, y.metadata);
@@ -177,7 +177,7 @@ TEST(Metadata, fromFormat) {
   std::string formatStr = "%f\t%d\t%5s\n";
   {
     // Scalar
-    Metadata x;
+      communication::utils::Metadata x;
     x.fromSchema("{"
 		 "  \"type\": \"array\","
 		 "  \"items\": ["
@@ -199,13 +199,13 @@ TEST(Metadata, fromFormat) {
 		 "  ]"
 		 "}");
     x.SetString("format_str", formatStr, x.metadata["serializer"]);
-    Metadata y;
+      communication::utils::Metadata y;
     y.fromFormat(formatStr);
     EXPECT_EQ(x.metadata, y.metadata);
   }
   {
     // Arrays
-    Metadata x;
+      communication::utils::Metadata x;
     x.fromSchema("{"
 		 "  \"type\": \"array\","
 		 "  \"items\": ["
@@ -227,14 +227,14 @@ TEST(Metadata, fromFormat) {
 		 "  ]"
 		 "}");
     x.SetString("format_str", formatStr, x.metadata["serializer"]);
-    Metadata y;
+      communication::utils::Metadata y;
     y.fromFormat(formatStr, true);
     EXPECT_EQ(x.metadata, y.metadata);
   }
   {
     // Additional types
     std::string fmt = "%hhi\t%hi\t%lli\t%l64i\t%li\t%i\t%hhu\t%hu\t%llu\t%l64u\t%lu\t%u\n";
-    Metadata x;
+      communication::utils::Metadata x;
     x.fromSchema("{"
 		 "  \"type\": \"array\","
 		 "  \"items\": ["
@@ -301,14 +301,14 @@ TEST(Metadata, fromFormat) {
 		 "  ]"
 		 "}");
     x.SetString("format_str", fmt, x.metadata["serializer"]);
-    Metadata y;
+      communication::utils::Metadata y;
     y.fromFormat(fmt);
     EXPECT_EQ(x.metadata, y.metadata);
   }
   {
     // Singular
     std::string fmt = "%d\n";
-    Metadata x;
+      communication::utils::Metadata x;
     x.fromSchema("{"
 		 "  \"type\": \"array\","
 		 "  \"allowSingular\": true,"
@@ -321,37 +321,37 @@ TEST(Metadata, fromFormat) {
 		 "  ]"
 		 "}");
     x.SetString("format_str", fmt, x.metadata["serializer"]);
-    Metadata y;
+      communication::utils::Metadata y;
     y.fromFormat(fmt);
     EXPECT_EQ(x.metadata, y.metadata);
   }
 }
 
 TEST(Metadata, fromMetadata) {
-  Metadata x;
+    communication::utils::Metadata x;
   EXPECT_THROW(x.fromMetadata("{"), std::exception);
   EXPECT_THROW(x.fromMetadata("\"hello\""), std::exception);
   EXPECT_THROW(x.fromMetadata("{}"), std::exception);
   EXPECT_THROW(x.fromMetadata("{\"__meta__\": \"hello\"}"),
 	       std::exception);
   x.fromMetadata("{\"__meta__\": {}}");
-  Metadata y;
+    communication::utils::Metadata y;
   y.fromMetadata(x);
   EXPECT_EQ(x.metadata, y.metadata);
 }
 
 TEST(Metadata, fromEncode) {
   rapidjson::Value v(true);
-  Metadata x;
+    communication::utils::Metadata x;
   x.fromSchema("{\"type\": \"boolean\"}");
-  Metadata y;
+    communication::utils::Metadata y;
   y.fromEncode(v);
   EXPECT_EQ(x.metadata, y.metadata);
 }
 
 TEST(Metadata, deserialize_errors) {
   rapidjson::VarArgList va;
-  Metadata x;
+    communication::utils::Metadata x;
   EXPECT_THROW(x.deserialize("", va), std::exception);
   x.fromSchema("{\"type\": \"boolean\"}");
   EXPECT_THROW(x.deserialize("{invalid:}", va), std::exception);
@@ -365,7 +365,7 @@ TEST(Metadata, deserialize_errors) {
 
 TEST(Metadata, serialize_errors) {
   rapidjson::VarArgList va;
-  Metadata x;
+    communication::utils::Metadata x;
   char* buf = NULL;
   size_t len = 0;
   EXPECT_THROW(x.serialize(&buf, &len, va), std::exception);
@@ -389,13 +389,13 @@ TEST(Metadata, serialize_errors) {
 TEST(Header, for_send) {
   setenv("YGG_MODEL_NAME", "TEST_MODEL", 1);
   setenv("YGG_MODEL_COPY", "1", 1);
-  Metadata schema;
+    communication::utils::Metadata schema;
   schema.fromSchema("{\"type\": \"string\"}");
   std::string msg = "This is a test message";
-  Header header_send;
+    communication::utils::Header header_send;
   header_send.for_send(&schema, msg.c_str(), msg.size());
   header_send.format(msg.c_str(), msg.size(), 2048);
-  Header header_recv;
+    communication::utils::Header header_recv;
   EXPECT_THROW(header_recv.for_recv(header_send.data,
 				    header_send.size_curr,
 				    1, false), std::exception);

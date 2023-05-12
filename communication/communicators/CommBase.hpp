@@ -42,15 +42,15 @@ const int COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
 
 #define WORKER_METHOD_DECS(cls)					\
   Comm_t* create_worker(utils::Address* address,		\
-			const DIRECTION, int flgs) override
+			const DIRECTION&, int flgs) override
 #define WORKER_METHOD_DEFS(cls)					\
   Comm_t* cls::create_worker(utils::Address* address,		\
-			     const DIRECTION dir, int flgs) {	\
+			     const DIRECTION& dir, int flgs) {	\
     return new cls("", address, dir, flgs | COMM_FLAG_WORKER);	\
   }
 #define WORKER_METHOD_DUMMY(cls, abbr)				\
   Comm_t* cls::create_worker(utils::Address*,			\
-			     const DIRECTION, int) {		\
+			     const DIRECTION&, int) {		\
     abbr ## _install_error();					\
     return NULL;						\
   }
@@ -134,7 +134,7 @@ public:
       @return Number of messages available for receive. -1 if an error
         occurred.
      */
-    virtual int wait_for_recv(const int tout);
+    virtual int wait_for_recv(const int& tout);
     /*!
       @brief Receive a string message from the communicator.
       @param[out] data Allocated buffer where the message should be saved.
@@ -284,7 +284,7 @@ public:
       @brief Determine if the communicator is valid.
       @return true if it is valid, false otherwise.
      */
-    bool valid() {return flags & COMM_FLAG_VALID;}
+    bool valid() const {return flags & COMM_FLAG_VALID;}
 
 #ifdef YGG_TEST
     std::string getName() { return name; }
@@ -298,12 +298,12 @@ public:
     utils::Metadata& getMetadata() { return metadata; }
     int& getFlags() { return flags; }
     virtual bool afterSendRecv(Comm_t*, Comm_t*) { return true; }
-    size_t getMaxMsgSize() { return maxMsgSize; }
+    size_t getMaxMsgSize() const { return maxMsgSize; }
 #endif
     void addSchema(const utils::Metadata& s);
     void addSchema(const rapidjson::Value& s, bool isMetadata = false);
-    void addSchema(const std::string schemaStr, bool isMetadata = false);
-    void addFormat(const std::string format_str, bool as_array = false);
+    void addSchema(const std::string& schemaStr, bool isMetadata = false);
+    void addFormat(const std::string& format_str, bool as_array = false);
 
 private:
     int deserialize(const char* buf, rapidjson::VarArgList& ap);
@@ -357,13 +357,13 @@ protected:
     }
 
     virtual int update_datatype(const rapidjson::Value& new_schema,
-				const DIRECTION dir=NONE);
+				const DIRECTION& dir);
     virtual bool create_header_send(utils::Header& header, const char* data, const size_t &len);
     virtual bool create_header_recv(utils::Header& header, char*& data, const size_t &len,
 				    size_t msg_len, int allow_realloc,
 				    int temp);
     virtual Comm_t* create_worker(utils::Address* address,
-				  const DIRECTION, int flgs) = 0;
+				  const DIRECTION&, int flgs) = 0;
     virtual Comm_t* create_worker_send(utils::Header& head);
     virtual Comm_t* create_worker_recv(utils::Header& head);
     virtual int send_single(const char *data, const size_t &len, const utils::Header& header) = 0;
@@ -423,7 +423,7 @@ protected:
  * @param address The initial address of the communicator.
  * @return
  */
-Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name="", char* address=nullptr);
+Comm_t* new_Comm_t(const DIRECTION& dir, const COMM_TYPE& type, const std::string &name="", char* address=nullptr);
 
 /**
  * Templated base class for all communicators
@@ -431,10 +431,9 @@ Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string 
  */
 template<typename H>
 class CommBase : public Comm_t {
-private:
-  CommBase(const CommBase& other) = delete;
-  CommBase& operator=(const CommBase&) = delete;
 public:
+    CommBase(const CommBase& other) = delete;
+    CommBase& operator=(const CommBase&) = delete;
     CommBase() = delete;
 
     /**
@@ -483,7 +482,7 @@ protected:
      */
     explicit CommBase(const std::string &name, DIRECTION direction = NONE, const COMM_TYPE &t = NULL_COMM, int flags = 0);
 
-    Comm_t* create_worker(utils::Address*, const DIRECTION,
+    Comm_t* create_worker(utils::Address*, const DIRECTION&,
 			  int) override {
       utils::ygglog_throw_error("create_worker of base class called, must be overridden");
       return NULL;

@@ -24,7 +24,7 @@ void python::exportCommunicators() {
             .def("recv", strrecv);
 
     bp::class_<communicator::IPCComm, bp::bases<CommWrap>, boost::noncopyable>("IPCComm", bp::init<const std::string&, utils::Address*, DIRECTION>()[bp::with_custodian_and_ward_postcall<0,2>()])
-            .def("check_channels", &communicator::IPCComm::check_channels)
+            //.def("check_channels", &communicator::IPCComm::check_channels)
             .def("add_channel", &communicator::IPCComm::add_channel)
             .def("remove_comm", &communicator::IPCComm::remove_comm)
             .def("comm_nmsg", &communicator::IPCComm::comm_nmsg);

@@ -17,7 +17,7 @@ namespace python {
         int comm_nmsg() const override {
             return this->get_override("comm_nmsg")();
         }
-        void init() override{
+        void init() {
             this->get_override("init")();
         }
         void reset() override{
@@ -32,7 +32,7 @@ namespace python {
         bool is_closed() const override{
             return this->get_override("is_closed")();
         }
-        communicator::Comm_t* create_worker(utils::Address* adr, const DIRECTION dirn, int flgs) override {
+        communicator::Comm_t* create_worker(utils::Address* adr, const DIRECTION& dirn, int flgs) override {
             return this->get_override("create_worker")(adr, dirn, flgs);
         }
         int send_single(const char* data, const size_t &len, const utils::Header& header) override {

@@ -39,7 +39,7 @@ public:
       if (!addSignon())
 	return false;
     }
-    Header header;
+    utils::Header header;
     if (!this->create_header_send(header, msg.c_str(), msg.size()))
       return false;
     size_t len = header.format(msg.c_str(), msg.size(), 0);
@@ -52,7 +52,7 @@ public:
     return (server_comm->send(msg) >= 0);
   }
   bool addResponse(std::string& msg, bool skip_client=false) {
-    Header header;
+    utils::Header header;
     if (!server_comm->create_header_send(header, msg.c_str(), msg.size()))
       return false;
     if (!skip_client) {
