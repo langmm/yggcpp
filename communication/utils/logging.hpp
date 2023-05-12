@@ -42,7 +42,9 @@ extern bool _loginit;
 #define ygglog_info BOOST_LOG_TRIVIAL(info) << communication::utils::_getLogPretex()
 #define ygglog_debug BOOST_LOG_TRIVIAL(debug) << communication::utils::_getLogPretex()
 
+#ifndef YGG_DEBUG
 #define YGG_DEBUG 10
+#endif
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 #ifdef YGG_DEBUG
 #if YGG_DEBUG <= 10
@@ -58,6 +60,7 @@ extern bool _loginit;
 #define loggingLevel boost::log::trivial::error
 #endif
 #endif // DOXYGEN_SHOULD_SKIP_THIS
+
 #endif // YGG_TEST
 
 std::string string_format(const std::string fmt, ...);
