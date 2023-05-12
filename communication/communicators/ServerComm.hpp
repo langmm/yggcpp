@@ -38,7 +38,7 @@ public:
 #ifndef YGG_TEST
 protected:
 #endif
-    void init() override;
+    void init();
     virtual bool signon(const utils::Header& header);
     int update_datatype(const rapidjson::Value& new_schema,
 			const DIRECTION dir=NONE) override;

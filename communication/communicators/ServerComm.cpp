@@ -51,13 +51,6 @@ int ServerComm::update_datatype(const rapidjson::Value& new_schema,
 }
 
 bool ServerComm::create_header_send(Header& header, const char* data, const size_t &len) {
-  header.initMeta();
-  header.setMessageFlags(data, len);
-  if (requests.addResponseServer(header, data, len) < 0) {
-    ygglog_error << "ServerComm(" << name << ")::create_header_send: Failed to add response" << std::endl;
-    header.invalidate();
-    return false;
-  }
   Comm_t* response_comm = requests.activeComm();
   if (response_comm == NULL) {
     ygglog_error << "ServerComm(" << name << ")::create_header_send: Failed to get response comm" << std::endl;
@@ -70,6 +63,11 @@ bool ServerComm::create_header_send(Header& header, const char* data, const size
   bool out = response_comm->create_header_send(header, data, len);
   if ((!out) || header.flags & HEAD_FLAG_EOF)
     return out;
+  if (requests.addResponseServer(header, data, len) < 0) {
+    ygglog_error << "ServerComm(" << name << ")::create_header_send: Failed to add response" << std::endl;
+    header.invalidate();
+    return false;
+  }
   // This gives the server access to the ID of the message last received
   // if (!header.SetMetaString("id", address)) {
   //   header.invalidate();
@@ -84,12 +82,25 @@ bool ServerComm::create_header_recv(Header& header, char*& data,
 				    int temp) {
   bool out = COMM_BASE::create_header_recv(header, data, len,
 					   msg_len, allow_realloc, temp);
-  if ((!out) || header.flags & HEAD_FLAG_EOF)
+  if (!out)
     return out;
+  if (header.flags & HEAD_FLAG_EOF) {
+    if (temp || requests.partnerSignoff(header))
+      return out;
+    header.flags |= HEAD_FLAG_REPEAT;
+    return true;
+  }
   if (requests.addRequestServer(header) < 0) {
     ygglog_error << "ServerComm(" << name << ")::create_header_recv: Failed to add request" << std::endl;
     header.invalidate();
     return false;
+  }
+  if (header.flags & HEAD_FLAG_CLIENT_SIGNON) {
+    if (!signon(header)) {
+      header.invalidate();
+      return false;
+    }
+    header.flags |= HEAD_FLAG_REPEAT;
   }
   return true;
 }

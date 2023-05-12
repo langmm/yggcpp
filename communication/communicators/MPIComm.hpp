@@ -76,7 +76,7 @@ public:
     using Comm_t::recv;
 
 protected:
-    void init() override;
+    void init();
     int send_single(const char *data, const size_t &len,
 		    const utils::Header& header) override;
 

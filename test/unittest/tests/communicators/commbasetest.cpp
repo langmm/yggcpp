@@ -32,7 +32,6 @@ protected:
 			  const DIRECTION dir, int flgs) override {
       return new Comm_tTest(adr, dir, this->type, flgs);
     }
-    void init() override {}
     void reset() override {}
 
     bool _closed;

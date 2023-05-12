@@ -47,11 +47,7 @@ public:
      */
     ~IPCComm() override;
 
-    /**
-     * Check if an IPC channel can be created
-     * @return
-     */
-    int check_channels();
+    int check_key(int key);
 
     /**
      * Add a new channel to the list of channels
@@ -77,13 +73,7 @@ public:
 #ifndef YGG_TEST
 protected:
 #endif
-    void init() override;
-    /**
-     * Sending function
-     * @param data The message to send
-     * @param len The length of data
-     * @return THe status
-     */
+    void init();
     int send_single(const char *data, const size_t &len,
 		    const utils::Header& header) override;
 

@@ -44,6 +44,10 @@ protected:
 			const DIRECTION dir=NONE) override;
     bool create_header_send(utils::Header& header, const char* data, const size_t &len) override;
     bool create_header_recv(utils::Header& header, char*& data, const size_t &len,
+    Comm_t* create_worker_send(Header& head) override;
+    Comm_t* create_worker_recv(Header& head) override;
+    bool create_header_send(Header& header, const char* data, const size_t &len) override;
+    bool create_header_recv(Header& header, char*& data, const size_t &len,
 			    size_t msg_len, int allow_realloc,
 			    int temp) override;
     long recv_single(char*& data, const size_t &len,

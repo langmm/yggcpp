@@ -108,7 +108,9 @@ class Metadata {
   Metadata(const Metadata& other) = delete;
   Metadata() :
     metadata(rapidjson::kObjectType), schema(nullptr) {}
+    virtual ~Metadata() {}
   void _init(bool use_generic = false);
+  virtual void reset();
   void fromSchema(const rapidjson::Value& new_schema,
 		  bool isMetadata = false, bool use_generic = false);
   void Normalize();
@@ -146,12 +148,13 @@ class Metadata {
   bool addItem(const Metadata& other);
   bool addMember(const std::string& name, const Metadata& other);
   rapidjson::Value& getMeta();
+  const rapidjson::Value& getMeta() const;
   rapidjson::Value& getSchema();
   bool SetValue(const std::string& name, rapidjson::Value& x,
 		rapidjson::Value& subSchema);
 #define GET_SET_METHOD_(type_in, type_out, method, setargs)		\
   type_out Get ## method(const std::string& name,			\
-			 rapidjson::Value& subSchema) {			\
+			 const rapidjson::Value& subSchema) const {	\
     if (!(subSchema.HasMember(name.c_str())))				\
       ygglog_throw_error_c("Get%s: No %s information in the schema.",	\
 			 #method, name.c_str());			\
@@ -161,12 +164,13 @@ class Metadata {
     return subSchema[name.c_str()].Get ## method();			\
   }									\
   type_out Get ## method ## Optional(const std::string& name,		\
-    type_out defV,							\
-    rapidjson::Value& subSchema) {					\
+				     type_out defV,			\
+				     const rapidjson::Value& subSchema	\
+				     ) const {				\
     if (!(subSchema.HasMember(name.c_str())))				\
       return defV;							\
     if (!(subSchema[name.c_str()].Is ## method()))			\
-      ygglog_throw_error_c("GetMeta%s: %s is not %s.",			\
+      ygglog_throw_error_c("Get%sOptional: %s is not %s.",		\
 			 #method, name.c_str(), #type_in);		\
     return subSchema[name.c_str()].Get ## method();			\
   }									\
@@ -185,9 +189,12 @@ class Metadata {
     return true;							\
   }									\
   type_out GetMeta ## method(const std::string& name) {			\
+  type_out GetMeta ## method(const std::string name) const {		\
     return Get ## method(name, getMeta());				\
   }									\
   type_out GetMeta ## method ## Optional(const std::string& name, type_out defV) { \
+  type_out GetMeta ## method ## Optional(const std::string name,	\
+					 type_out defV) const {		\
     if (!(metadata.IsObject() && metadata.HasMember("__meta__")))	\
       return defV;							\
     return Get ## method ## Optional(name, defV, getMeta());		\
@@ -197,6 +204,9 @@ class Metadata {
   }									\
   type_out GetSchema ## method(const std::string& name,			\
 			       rapidjson::Value* subSchema = nullptr) {	\
+  type_out GetSchema ## method(const std::string name,			\
+			       rapidjson::Value* subSchema = NULL	\
+			       ) const {				\
     if (subSchema == NULL)						\
       return Get ## method(name, getSchema());				\
     return Get ## method(name, *subSchema);				\
@@ -204,6 +214,7 @@ class Metadata {
   type_out GetSchema ## method ## Optional(const std::string& name,	\
 					   type_out defV,		\
 					   rapidjson::Value* subSchema = nullptr) { \
+					   rapidjson::Value* subSchema = NULL) const { \
     if (subSchema == NULL) {						\
       if (schema == NULL)						\
 	return defV;							\
@@ -251,9 +262,19 @@ public:
   Header() :
     data_(nullptr), data(nullptr), size_data(0), size_buff(0), size_curr(0),
     size_head(0), flags(HEAD_FLAG_VALID) {}
-  ~Header() {
+  ~Header() override {
     if ((flags & HEAD_FLAG_OWNSDATA) && data_)
       free(data_);
+  }
+  void reset() override {
+    Metadata::reset();
+    data_ = NULL;
+    data = NULL;
+    size_data = 0;
+    size_buff = 0;
+    size_curr = 0;
+    size_head = 0;
+    flags = HEAD_FLAG_VALID;
   }
 
   bool isValid() const;

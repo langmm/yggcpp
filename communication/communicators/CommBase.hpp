@@ -108,7 +108,6 @@ public:
       size_t len = 0;
       long out = recv(str, len, true);
       if (out >= 0) {
-	std::cerr << "HERE: " << str << ", " << out << std::endl;
 	data.assign(str, static_cast<size_t>(out));
 	free(str);
       }
@@ -396,14 +395,6 @@ protected:
      */
     bool check_size(const size_t &len) const;
 
-    /**
-     * Virtualized initialization function
-     */
-    virtual void init() = 0;
-
-    /**
-     * Virtualized reset function
-     */
     virtual void reset() = 0;
 
     COMM_TYPE type; //!< Comm type.
@@ -492,12 +483,6 @@ protected:
      */
     explicit CommBase(const std::string &name, DIRECTION direction = NONE, const COMM_TYPE &t = NULL_COMM, int flags = 0);
 
-    /**
-     * Not used, must be overridden by child class
-     */
-    void init() override {
-        utils::ygglog_throw_error("init of base class called, must be overridden");
-    }
     Comm_t* create_worker(utils::Address*, const DIRECTION,
 			  int) override {
       utils::ygglog_throw_error("create_worker of base class called, must be overridden");
@@ -547,8 +532,7 @@ void CommBase<H>::reset() {
 template<typename H>
 CommBase<H>::~CommBase() {
     ygglog_debug << "~CommBase: Started" << std::endl;
-    if (!is_closed())
-      close();
+    close();
     ygglog_debug << "~CommBase: Finished" << std::endl;
 }
 

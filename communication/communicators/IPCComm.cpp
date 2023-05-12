@@ -27,12 +27,11 @@ IPCComm::~IPCComm() {
     }
 }
 
-int IPCComm::check_channels() {
-    // Fail if name is empty
-    if (name.empty()) {
-        ygglog_error << "Cannot create channel with empty name." << std::endl;
-        return -1;
-    }
+/*!
+  @brief Check if an IPC channel is in use
+  @returns int <0 if the channel is already in use
+ */
+int IPCComm::check_key(int key) {
     // Fail if trying to re-use the same channel twice
     unsigned i;
     int error_code = 0;
@@ -41,10 +40,8 @@ int IPCComm::check_channels() {
   {
 #endif
     for (i = 0; i < _yggChannelsUsed; i++ ) {
-        if (IPCComm::_yggChannelNames[i] == address->key()) {
-            ygglog_error << "Attempt to re-use channel: name=" << name << ", key="
-                         << address << ", i=" << i << std::endl;
-            error_code = -1;
+        if (IPCComm::_yggChannelNames[i] == key) {
+	    error_code = -static_cast<int>(i);
             break;
         }
     }
@@ -75,6 +72,13 @@ void IPCComm::add_channel() {
 #endif
 }
 
+/*!
+  @brief Remove a channel.
+  @param[in] close_comm int If 1, the queue will be closed, otherwise it will
+  just be removed from the register and it is assumed that another process
+  will close it.
+  @returns int -1 if removal not successful.
+*/
 
 int IPCComm::remove_comm(bool close_comm) {
     int ret;
@@ -218,13 +222,13 @@ void IPCComm::init() {
       {
 #endif
 	if (!_ipc_rand_seeded) {
-	  srand(ptr2seed(this));
+	  std::srand(ptr2seed(this));
 	  _ipc_rand_seeded = true;
 	}
 #ifdef _OPENMP
       }
 #endif
-      while (key == 0) {
+      while (key == 0 || check_key(key) < 0) {
         key = std::rand();
       }
       if (!address) {
@@ -239,8 +243,6 @@ void IPCComm::init() {
         this->name = "tempnewIPC." + this->address->address();
     } else {
         this->name = name;
-        if (check_channels() < 0)
-            throw std::runtime_error("Check channels failed");
     }
     int *fid = new int;
     if (created)
@@ -257,7 +259,7 @@ void IPCComm::init() {
     }
     handle = fid;
     add_channel();
-    ygglog_debug << "IPCComm(" << name << ")::init: address = " << this->address->address() << std::endl;
+    ygglog_debug << "IPCComm(" << name << ")::init: address = " << this->address->address() << ", created = " << created << std::endl;
 }
 
 IPCComm::IPCComm(const std::string &name, Address *address,
@@ -288,7 +290,7 @@ IPCComm::~IPCComm() {
   // No error as constructor should have raised one
 }
 
-int IPCComm::check_channels() {
+int IPCComm::check_key(int) {
     ipc_install_error();
     return -1;
 }

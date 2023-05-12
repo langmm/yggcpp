@@ -22,6 +22,7 @@ namespace communicator {
     bool matches(DIRECTION dir, utils::Address* adr = nullptr);
     ~Worker();
     Comm_t* comm;
+    std::string request;
   };
   class WorkerList {
   private:
@@ -34,8 +35,11 @@ namespace communicator {
     void remove_worker(Comm_t*& worker);
     Comm_t* find_worker(DIRECTION dir, utils::Address* adr = nullptr,
 			size_t* idx = nullptr);
+    int find_worker(Comm_t* worker);
     Comm_t* get(Comm_t* parent, DIRECTION dir,
 		utils::Address* adr = nullptr);
+    bool setRequest(Comm_t* worker, std::string request);
+    bool setResponse(std::string request);
     std::vector<Worker> workers;
   };
 }
