@@ -394,7 +394,12 @@ void Metadata::_init(bool use_generic) {
             ygglog_throw_error_c("getMeta: No __meta__ in metadata");
         return metadata["__meta__"];
     }
-    rapidjson::Value& Metadata::getSchema() {
+const rapidjson::Value& Metadata::getMeta() const {
+    if (!(metadata.IsObject() && metadata.HasMember("__meta__")))
+        ygglog_throw_error_c("getMeta: No __meta__ in metadata");
+    return metadata["__meta__"];
+}
+    rapidjson::Value& Metadata::getSchema() const {
         if (schema == NULL)
             ygglog_throw_error_c("getSchema: No datatype in metadata");
         return *schema;
@@ -525,6 +530,10 @@ void Metadata::_init(bool use_generic) {
         metadata.SetObject();
         schema = NULL;
     }
+    void Metadata::reset() {
+    schema = NULL;
+    metadata.SetNull();
+}
     void Metadata::_update_schema() {
         if (metadata.HasMember("serializer") &&
             metadata["serializer"].IsObject() &&
@@ -752,6 +761,17 @@ void Metadata::_init(bool use_generic) {
         return size_curr;
     }
 
+    void Header::reset() {
+        Metadata::reset();
+        data_ = NULL;
+        data = NULL;
+        size_data = 0;
+        size_buff = 0;
+        size_curr = 0;
+        size_head = 0;
+        flags = HEAD_FLAG_VALID;
+    }
+
     void Header::finalize_recv() {
         if (!GetMetaBoolOptional("in_data", false))
             return;
@@ -765,6 +785,7 @@ void Metadata::_init(bool use_generic) {
             ygglog_throw_error_c("Header::finalize_recv: Error parsing datatype in data");
         fromSchema(type_doc);
         size_curr -= eind;
+        size_data -= eind;
         memmove(data[0], data[0] + eind, size_curr);
         (*data)[size_curr] = '\0';
     }

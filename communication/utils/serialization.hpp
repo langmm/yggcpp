@@ -108,7 +108,7 @@ class Metadata {
   Metadata(const Metadata& other) = delete;
   Metadata() :
     metadata(rapidjson::kObjectType), schema(nullptr) {}
-    virtual ~Metadata() {}
+    virtual ~Metadata() = default;
   void _init(bool use_generic = false);
   virtual void reset();
   void fromSchema(const rapidjson::Value& new_schema,
@@ -149,7 +149,7 @@ class Metadata {
   bool addMember(const std::string& name, const Metadata& other);
   rapidjson::Value& getMeta();
   const rapidjson::Value& getMeta() const;
-  rapidjson::Value& getSchema();
+  rapidjson::Value& getSchema() const;
   bool SetValue(const std::string& name, rapidjson::Value& x,
 		rapidjson::Value& subSchema);
 #define GET_SET_METHOD_(type_in, type_out, method, setargs)		\
@@ -188,12 +188,10 @@ class Metadata {
     }									\
     return true;							\
   }									\
-  type_out GetMeta ## method(const std::string& name) {			\
-  type_out GetMeta ## method(const std::string name) const {		\
+  type_out GetMeta ## method(const std::string& name) const {			\
     return Get ## method(name, getMeta());				\
   }									\
-  type_out GetMeta ## method ## Optional(const std::string& name, type_out defV) { \
-  type_out GetMeta ## method ## Optional(const std::string name,	\
+  type_out GetMeta ## method ## Optional(const std::string& name,	\
 					 type_out defV) const {		\
     if (!(metadata.IsObject() && metadata.HasMember("__meta__")))	\
       return defV;							\
@@ -203,18 +201,14 @@ class Metadata {
     return Set ## method(name, x, getMeta());				\
   }									\
   type_out GetSchema ## method(const std::string& name,			\
-			       rapidjson::Value* subSchema = nullptr) {	\
-  type_out GetSchema ## method(const std::string name,			\
-			       rapidjson::Value* subSchema = NULL	\
-			       ) const {				\
+			       rapidjson::Value* subSchema = nullptr) const {	\
     if (subSchema == NULL)						\
       return Get ## method(name, getSchema());				\
     return Get ## method(name, *subSchema);				\
   }									\
   type_out GetSchema ## method ## Optional(const std::string& name,	\
 					   type_out defV,		\
-					   rapidjson::Value* subSchema = nullptr) { \
-					   rapidjson::Value* subSchema = NULL) const { \
+					   rapidjson::Value* subSchema = nullptr) const { \
     if (subSchema == NULL) {						\
       if (schema == NULL)						\
 	return defV;							\
@@ -266,16 +260,7 @@ public:
     if ((flags & HEAD_FLAG_OWNSDATA) && data_)
       free(data_);
   }
-  void reset() override {
-    Metadata::reset();
-    data_ = NULL;
-    data = NULL;
-    size_data = 0;
-    size_buff = 0;
-    size_curr = 0;
-    size_head = 0;
-    flags = HEAD_FLAG_VALID;
-  }
+  void reset() override;
 
   bool isValid() const;
   void invalidate();
