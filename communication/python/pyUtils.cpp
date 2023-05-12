@@ -21,8 +21,8 @@ const std::string &(utils::Address::*getaddress)() const = &utils::Address::addr
 //void (utils::Metadata::*fromSchemaString)(const std::string&, bool) = &utils::Metadata::fromSchema;
 
 void python::exportUtils() {
-    bp::object modModule(bp::handle<>(bp::borrowed(PyImport_AddModule("pyYggComm.utils"))));
-    bp::scope().attr("module") = modModule;
+    bp::object modModule(bp::handle<>(bp::borrowed(PyImport_AddModule("pyYggdrasil.utils"))));
+    bp::scope().attr("utils") = modModule;
     bp::scope modScope = modModule;
     /*bp::class_<utils::Metadata, boost::noncopyable>("Metadata", bp::init<>())
             .def("_init", &utils::Metadata::_init)

@@ -3,9 +3,13 @@
 using namespace communication;
 namespace bp = boost::python;
 
-BOOST_PYTHON_MODULE(libpyygg) {
+//bp::object python::CommWrap::send_va(bp::tuple args) {
+
+//}
+
+BOOST_PYTHON_MODULE(pyYggdrasil) {
     bp::object package = bp::scope();
-    package.attr("__path__") = "libpyygg";
+    package.attr("__path__") = "pyYggdrasil";
 
     bp::enum_<DIRECTION>("DIRECTION")
             .value("SEND", SEND)
