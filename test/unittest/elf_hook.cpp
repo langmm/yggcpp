@@ -1,17 +1,6 @@
-#include <cstdlib>
-#include <cstring>
-#include <dlfcn.h>
-#include <elf.h>
-#include <fcntl.h>
-#include <sys/mman.h>
-#include <unistd.h>
-#include <cerrno>
-#include <vector>
-#include <atomic>
-#include <boost/algorithm/string.hpp>
-#include <boost/regex.hpp>
-#include <regex>
+#ifdef ELF_AVAILABLE
 #include "elf_hook.hpp"
+#include <iostream>
 //rename standart types for convenience
 #if defined __x86_64 || defined __aarch64__
     #define Elf_Ehdr Elf64_Ehdr
@@ -72,7 +61,7 @@ static int read_section_table(int d, Elf_Ehdr const *header, Elf_Shdr **table)
         return errno;
     }
 
-    if (lseek(d, header->e_shoff, SEEK_SET) < 0)
+    if (lseek(d, static_cast<long>(header->e_shoff), SEEK_SET) < 0)
     {
         free(*table);
 
@@ -100,7 +89,7 @@ static int read_string_table(int d, Elf_Shdr const *section, char const **string
         return errno;
     }
 
-    if (lseek(d, section->sh_offset, SEEK_SET) < 0)
+    if (lseek(d, static_cast<long>(section->sh_offset), SEEK_SET) < 0)
     {
         free((void *)*strings);
 
@@ -128,7 +117,7 @@ static int read_symbol_table(int d, Elf_Shdr const *section, Elf_Sym **table)
         return errno;
     }
 
-    if (lseek(d, section->sh_offset, SEEK_SET) < 0)
+    if (lseek(d, static_cast<long>(section->sh_offset), SEEK_SET) < 0)
     {
         free(*table);
 
@@ -279,12 +268,13 @@ static int symbol_by_name(int d, Elf_Shdr *section, const std::string& name, Elf
         return errno;
 
     amount = section->sh_size / sizeof(Elf_Sym);
-    volatile size_t q;
+    // volatile size_t q;
 
     int idx = -1;
     std::vector<std::string> args;
     std::string repname = name;
-    if (size_t start = repname.find("|"); start != std::string::npos) {
+    size_t start = repname.find("|");
+    if (start != std::string::npos) {
         std::string a = repname.substr(start + 1);
         repname.resize(start);
         boost::split(args, a, boost::is_any_of("|"));
@@ -323,10 +313,10 @@ static int symbol_by_name(int d, Elf_Shdr *section, const std::string& name, Elf
                 }
                 const char *temp = &strings[symbols[i].st_name];
                 std::string nae(temp);
-                Elf64_Word xx = symbols[i].st_name;
-                size_t yy = sizeof(&strings);
+                // Elf64_Word xx = symbols[i].st_name;
+                // size_t yy = sizeof(&strings);
 
-                idx = i;
+                idx = static_cast<int>(i);
                 break;
             }
         }
@@ -334,10 +324,10 @@ static int symbol_by_name(int d, Elf_Shdr *section, const std::string& name, Elf
         for (i = 0; i < amount; ++i) {
             const char *temp = &strings[symbols[i].st_name];
             std::string nae(temp);
-            Elf64_Word xx = symbols[i].st_name;
-            size_t yy = sizeof(&strings);
+            // Elf64_Word xx = symbols[i].st_name;
+            // size_t yy = sizeof(&strings);
             if (!strcmp(name.c_str(), &strings[symbols[i].st_name])) {
-                idx = i;
+	        idx = static_cast<int>(i);
                 break;
             }
         }
@@ -354,8 +344,8 @@ static int symbol_by_name(int d, Elf_Shdr *section, const std::string& name, Elf
         }
 
         memcpy(*symbol, symbols + idx, sizeof(Elf_Sym));
-        *index = idx;
-        q = idx;
+        *index = static_cast<size_t>(idx);
+        // q = static_cast<size_t>(idx);
     }
     free(strings_section);
     free((void *)strings);
@@ -459,7 +449,7 @@ void *elf_hook(char const *module_filename, void const *module_address, const st
         return original;
 
     if (!pagesize)
-        pagesize = sysconf(_SC_PAGESIZE);
+        pagesize = static_cast<size_t>(sysconf(_SC_PAGESIZE));
 
     descriptor = open(module_filename, O_RDONLY);
 
@@ -485,14 +475,22 @@ void *elf_hook(char const *module_filename, void const *module_address, const st
     free(dynsym);
     free(symbol);
 
-    rel_plt_table = (Elf64_Rela *)(((size_t)module_address) + rel_plt->sh_addr);  //init the ".rel.plt" array
-    rel_plt_amount = rel_plt->sh_size / sizeof(Elf_Rel);  //and get its size
+    if (rel_plt) {
+      rel_plt_table = (Elf64_Rela *)(((size_t)module_address) + rel_plt->sh_addr);  //init the ".rel.plt" array
+      rel_plt_amount = rel_plt->sh_size / sizeof(Elf_Rel);  //and get its size
+    } else {
+      rel_plt_amount = 0;
+    }
 
-    rel_dyn_table = (Elf_Rel *)(((size_t)module_address) + rel_dyn->sh_addr);  //init the ".rel.dyn" array
-    rel_dyn_amount = rel_dyn->sh_size / sizeof(Elf_Rel);  //and get its size
+    if (rel_dyn) {
+      rel_dyn_table = (Elf_Rel *)(((size_t)module_address) + rel_dyn->sh_addr);  //init the ".rel.dyn" array
+      rel_dyn_amount = rel_dyn->sh_size / sizeof(Elf_Rel);  //and get its size
+    } else {
+      rel_dyn_amount = 0;
+    }
 //release the data used
-    free(rel_plt);
-    free(rel_dyn);
+    if (rel_plt) free(rel_plt);
+    if (rel_dyn) free(rel_dyn);
 //and descriptor
     close(descriptor);
 //now we've got ".rel.plt" (needed for PIC) table and ".rel.dyn" (for non-PIC) table and the symbol's index
@@ -543,3 +541,4 @@ void *elf_hook(char const *module_filename, void const *module_address, const st
 }
 
 //==================================================================================================
+#endif // ELF_AVAILABLE

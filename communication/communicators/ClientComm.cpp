@@ -5,18 +5,42 @@
 
 using namespace communication::communicator;
 using namespace communication::utils;
-using namespace communication::datatypes;
 
 unsigned ClientComm::_client_rand_seeded = 0;
 
-ClientComm::ClientComm(const std::string &name, Address *address) :
-        COMM_BASE(name, address, SEND) {
-    request_id.clear();
-    data.clear();
-    len.clear();
+ClientComm::ClientComm(const std::string &name, Address *address,
+                       int flgs) :
+        COMM_BASE(name, address, SEND,
+                  flgs | COMM_FLAG_CLIENT | COMM_ALWAYS_SEND_HEADER),
+        requests(RECV) {
+    // Called to create temp comm for send/recv
+    if (name.empty() && address && address->valid())
+        return;
+    init();
+}
 
-    ygglog_debug << "init_client_comm: Creating a client comm";
-#ifdef HAVE_OPENMP
+ClientComm::ClientComm(const std::string& name, int flgs) :
+        COMM_BASE(name, SEND,
+                  flgs | COMM_FLAG_CLIENT | COMM_ALWAYS_SEND_HEADER),
+        requests(RECV) {
+    init();
+}
+
+void ClientComm::set_timeout_recv(int new_timeout) {
+    COMM_BASE::set_timeout_recv(new_timeout);
+    if (requests.initClientResponse() < 0) {
+        ygglog_throw_error("ClientComm(" + name + ")::set_timeout_recv: Error initializing response comm");
+    }
+    Comm_t* active_comm = requests.comms[0];
+    active_comm->set_timeout_recv(new_timeout);
+}
+int ClientComm::wait_for_recv(const int&) {
+    // Handle wait in recv_single for response comm
+    return 1;
+}
+
+void ClientComm::init() {
+#ifdef _OPENMP
 #pragma omp critical (client)
     {
 #endif
@@ -24,197 +48,170 @@ ClientComm::ClientComm(const std::string &name, Address *address) :
             srand(ptr2seed(this));
             _client_rand_seeded = 1;
         }
-#ifdef HAVE_OPENMP
+#ifdef _OPENMP
     }
 #endif
-    // Called to create temp comm for send/recv
-    if (name.empty() && address != nullptr && address->valid())
-        return;
-
-    // Called to initialize/create client comm
-
     if (name.empty()) {
         this->name = "client_request." + this->address->address();
     }
-    flags |= COMM_FLAG_CLIENT;
-    flags |= COMM_ALWAYS_SEND_HEADER;
 }
 
-ClientComm::~ClientComm() {
-    request_id.clear();
-    for (auto d : data) {
-        if (d != nullptr)
-            free(d);
-    }
-    data.clear();
-    len.clear();
-}
-
-int ClientComm::has_request(const std::string &req_id) {
-    for (size_t i = 0; i < request_id.size(); i++) {
-        if (request_id[i] == req_id)
-            return (int)i;
-    }
-    return -1;
-}
-
-int ClientComm::has_response(const std::string &req_id) {
-    int idx = has_request(req_id);
-    if (idx < 0)
-        return idx;
-    if (data[idx] != nullptr)
-        return idx;
-    return -1;
-}
-
-int ClientComm::add_request(const std::string& req_id) {
-    request_id.push_back(req_id);
-    data.push_back(nullptr);
-    len.push_back(0);
-    return 0;
-}
-
-int ClientComm::add_response(const std::string& req_id, const char* rdata, const size_t &rlen) {
-    int idx = has_request(req_id);
-    if (idx < 0) {
-        ygglog_error << "add_response: idx = " << idx;
-        return idx;
-    }
-    if (data[idx] == nullptr)
-        data[idx] = (char*)malloc(sizeof(char) * (rlen + 1));
-    else
-        data[idx] = (char*)realloc(data[idx], sizeof(char) * (rlen + 1));
-    memcpy(data[idx], rdata, rlen);
-    data[idx][rlen] = '\0';
-    len[idx] = rlen;
-    return 0;
-}
-
-int ClientComm::remove_request(const std::string& req_id) {
-    int idx = has_request(req_id);
-    if (idx < 0)
-        return 0;
-    if (data[idx] != nullptr)
-        free(data[idx]);
-    request_id.erase(request_id.begin() + idx);
-    data.erase(data.begin() + idx);
-    len.erase(len.begin() + idx);
-    return 0;
-}
-
-int ClientComm::pop_response(const std::string& req_id, char* rdata,const size_t &rlen, const int allow_realloc) {
-    int idx = has_response(req_id);
-    if (idx < 0)
-        return -1;
-    size_t ret = len[idx];
-    if ((ret + 1) > rlen) {
-        if (allow_realloc) {
-            ygglog_debug << "client_pop_response: reallocating buffer from " << rlen << " to "
-            << ret + 1 << " bytes.";
-            rdata = (char*)realloc(rdata, ret + 1);
-            if (rdata == nullptr) {
-                ygglog_error << "client_pop_response: failed to realloc buffer.";
-                return -1;
+bool ClientComm::signon(const Header& header) {
+    if (header.flags & HEAD_FLAG_CLIENT_SIGNON)
+        return true;
+    if (requests.initClientResponse() < 0)
+        return false;
+    ygglog_debug << "ClientComm(" << name << ")::signon: begin" << std::endl;
+    while (!requests.signon_complete) {
+#ifdef YGG_TEST
+        // Prevent sending extra SIGNON during testing
+        if (!requests.signonSent()) {
+#endif // YGG_TEST
+            if (send(YGG_CLIENT_SIGNON, YGG_CLIENT_SIGNON_LEN) < 0) {
+                ygglog_error << "ClientComm(" << name << ")::signon: Error in sending sign-on" << std::endl;
+                return false;
             }
+#ifdef YGG_TEST
+        }
+#endif // YGG_TEST
+        if (requests.activeComm()->comm_nmsg() > 0) {
+            char* data = NULL;
+            int ret = recv(data, 0, true);
+            if (data != NULL)
+                free(data);
+            if (ret < 0) {
+                ygglog_error << "ClientComm(" << name << ")::signon: Error in receiving sign-on" << std::endl;
+                return false;
+            }
+            break;
         } else {
-            ygglog_error << "client_pop_response: buffer (" << rlen << " bytes) is not large enough for message ("
-                         << ret + 1 << " bytes)";
-            return -((int)(ret));
+            sleep(YGG_SLEEP_TIME);
         }
     }
-    memcpy(rdata, data[idx], ret);
-    rdata[ret] = '\0';
-    if (remove_request(req_id) < 0)
-        return -1;
-    return static_cast<int>(ret);
+    return requests.signon_complete;
 }
 
-bool ClientComm::new_address() {
-#ifdef HAVE_OPENMP
-#pragma omp critical (client)
-    {
-#endif
-        if (!(_client_rand_seeded)) {
-            srand(ptr2seed(this));
-            _client_rand_seeded = 1;
+int ClientComm::update_datatype(const rapidjson::Value& new_schema,
+                                const DIRECTION& dir) {
+    if (dir == SEND)
+        return COMM_BASE::update_datatype(new_schema, dir);
+    requests.addResponseSchema(new_schema);
+    return 1;
+}
+
+Comm_t* ClientComm::create_worker_send(Header& head) {
+    ygglog_debug << "ClientComm(" << name << ")::create_worker_send: begin" << std::endl;
+    Comm_t* out = COMM_BASE::create_worker_send(head);
+    std::string request_id(head.GetMetaString("request_id"));
+    if (!workers.setRequest(out, request_id)) {
+        ygglog_error << "ClientComm(" << name << ")::create_worker_send: Failed to set request on worker" << std::endl;
+        return nullptr;
+    }
+    ygglog_debug << "ClientComm(" << name << ")::create_worker_send: done" << std::endl;
+    return out;
+}
+
+Comm_t* ClientComm::create_worker_recv(Header& head) {
+    ygglog_debug << "ClientComm(" << name << ")::create_worker_recv: begin" << std::endl;
+    std::string request_id(head.GetMetaString("request_id"));
+    if (!workers.setResponse(request_id)) {
+        ygglog_error << "ClientComm(" << name << ")::create_worker_recv: Failed to clear request on worker (request_id = " << request_id << ")" << std::endl;
+        return nullptr;
+    }
+    Comm_t* out = COMM_BASE::create_worker_recv(head);
+    ygglog_debug << "ClientComm(" << name << ")::create_worker_recv: done" << std::endl;
+    return out;
+}
+
+bool ClientComm::create_header_send(Header& header, const char* data, const size_t &len) {
+    ygglog_debug << "ClientComm(" << name << ")::create_header_send: begin" << std::endl;
+    bool out = COMM_BASE::create_header_send(header, data, len);
+    if ((!out) || header.flags & HEAD_FLAG_EOF)
+        return out;
+    if (!signon(header)) {
+        ygglog_error << "ClientComm(" << name << ")::create_header_send: Error in signon" << std::endl;
+        return false;
+    }
+    if (requests.addRequestClient(header) < 0) {
+        ygglog_error << "ClientComm(" << name << ")::create_header_send: Failed to add request" << std::endl;
+        header.invalidate();
+        return false;
+    }
+    ygglog_debug << "ClientComm(" << name << ")::create_header_send: done" << std::endl;
+    return true;
+}
+
+bool ClientComm::create_header_recv(Header& header, char*& data, const size_t &len,
+                                    size_t msg_len, int allow_realloc,
+                                    int temp) {
+    ygglog_debug << "ClientComm(" << name << ")::create_header_recv: begin" << std::endl;
+    Comm_t* response_comm = requests.activeComm();
+    if (response_comm == NULL) {
+        ygglog_error << "ClientComm(" << name << ")::create_header_recv: Error getting response comm" << std::endl;
+        return false;
+    }
+    if (response_comm->is_closed()) {
+        ygglog_error << "ClientComm(" << name << ")::create_header_recv: Response comm is closed" << std::endl;
+        return false;
+    }
+    bool out = response_comm->create_header_recv(header, data, len, msg_len,
+                                                 allow_realloc, temp);
+    if ((!out) || header.flags & HEAD_FLAG_EOF)
+        return out;
+    if (temp) {
+        // Only add response the first time as the data returned may be from
+        // a cached response
+        if (requests.addResponseClient(header, data, len) < 0) {
+            ygglog_error << "ClientComm(" << name << ")::create_header_recv: Failed to add response" << std::endl;
+            header.invalidate();
+            return false;
         }
-#ifdef HAVE_OPENMP
+    } else {
+        if (requests.popRequestClient(header) < 0) {
+            ygglog_error << "ClientComm(" << name << ")::create_header_recv: Failed to remove request" << std::endl;
+            return false;
+        }
     }
-#endif
-    type = _default_comm;
-    return COMM_BASE::new_address();
+    return true;
 }
 
-
-int ClientComm::comm_nmsg() const  {
-    return COMM_BASE::comm_nmsg();
-}
-
-void ClientComm::response_header(datatypes::CommHead &head) {
-    // Initialize new comm
-    // Add address & request ID to header
-    head.response_address->address(address->address());
-    head.request_id = std::to_string(rand());
-    if (add_request(head.request_id) < 0) {
-        ygglog_error << "client_response_header(" << name << "): Failed to add request";
-        head.flags = head.flags & ~HEAD_FLAG_VALID;
-        return;
-    }
-    if (has_request(head.request_id) < 0) {
-        ygglog_error << "client_response_header(" << name << "): Failed to add request";
-        head.flags = head.flags & ~HEAD_FLAG_VALID;
-        return;
-    }
-    ygglog_debug << "client_response_header(" << name << "): response_address = " << head.response_address
-                 << ", request_id = " << head.request_id;
-    return;
-}
-
-int ClientComm::send(const char* rdata, const size_t &rlen) {
-    int ret;
-    ygglog_debug << "client_comm_send(" << name << "): " << rlen << " bytes";
-    ret = COMM_BASE::send(rdata, rlen);
-    if (is_eof(rdata)) {
-        const_flags |= COMM_EOF_SENT;
-    }
-    return ret;
-}
-
-long ClientComm::recv(char* rdata, const size_t &rlen, bool allow_realloc)  {
-    ygglog_debug << "client_comm_recv(" << name << ")";
-    if (request_id.empty()) {
-        ygglog_error << "client_comm_recv(" << name << "): no response comm registered";
+long ClientComm::recv_single(char*& rdata, const size_t &rlen, bool allow_realloc)  {
+    ygglog_debug << "ClientComm(" << name << ")::recv_single" << std::endl;
+    Comm_t* response_comm = requests.activeComm();
+    if (response_comm == NULL) {
+        ygglog_error << "ClientComm(" << name << ")::recv_single: Error getting response comm" << std::endl;
         return -1;
     }
-    std::string req_id = request_id[0];
-    long ret = 0;
-    while (has_response(req_id) < 0) {
-        ret = COMM_BASE::recv(rdata, rlen, allow_realloc);
+    if (response_comm->is_closed()) {
+        ygglog_error << "ClientComm(" << name << ")::recv_single: Response comm is closed" << std::endl;
+        return -1;
+    }
+    std::string req_id = requests.activeRequestClient();
+    size_t buff_len = rlen;
+    long ret;
+    while (!requests.isComplete(req_id)) {
+        ygglog_debug << "ClientComm(" << name << ")::recv_single: Waiting for response to request " << req_id << std::endl;
+        if (response_comm->wait_for_recv(this->timeout_recv) < 0) {
+            ygglog_debug << "ClientComm(" << name << ")::recv_single: Error in wait for message" << std::endl;
+            return -1;
+        }
+        ret = response_comm->recv_single(rdata, buff_len, allow_realloc);
         if (ret < 0) {
-            ygglog_error << "client_comm_recv(" << name << "): default_comm_recv returned " << ret;
+            ygglog_error << "ClientComm(" << name << ")::recv_single: response recv_single returned " << ret << std::endl;
             return ret;
         }
-        auto head = datatypes::CommHead(rdata, rlen);
-        if (!(head.flags & HEAD_FLAG_VALID)) {
-            ygglog_error << "client_comm_recv(" << name << "): Invalid header.";
-            return -1;
+        if (ret > (int)buff_len) {
+            buff_len = ret;
         }
-        if (head.request_id == req_id) {
-            ygglog_debug << "client_comm_recv(" << name << "): default_comm_recv returned " << ret;
-            if (remove_request(req_id) < 0) {
-                ygglog_error << "client_comm_recv(" << name << "): Failed to remove request " << req_id;
-                return -1;
-            }
-            return ret;
-        }
-        if (add_response(head.request_id, rdata, ret) < 0) {
-            ygglog_error << "client_comm_recv(" << name << "): Failed to add response " << head.request_id;
+        Header header;
+        if (!create_header_recv(header, rdata, buff_len, ret, allow_realloc, true)) {
+            ygglog_error << "ClientComm(" << name << ")::recv_single: Invalid header." << std::endl;
             return -1;
         }
     }
-    ret = pop_response(req_id, rdata, rlen, allow_realloc);
+    ret = requests.getRequestClient(req_id, rdata, rlen, allow_realloc);
     // Close response comm and decrement count of response comms
-    ygglog_debug << "client_comm_recv(" << name << "): client_pop_response returned %d";
+    ygglog_debug << "ClientComm(" << name << ")::recv_single: client_pop_response returned " << ret << std::endl;;
     return ret;
 }
 

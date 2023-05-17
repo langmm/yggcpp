@@ -82,19 +82,20 @@ const std::map<const SUBTYPE, const std::string> mapsub {{T_INT, "int"},
                                                          {T_BYTES, "bytes"},
                                                          {T_UNICODE, "unicode"}};
 
-static
-std::istream& operator>>(std::istream& in, SUBTYPE& type) {
-    int t;
-    in >> t;
-    type = static_cast<SUBTYPE>(t);
-    return in;
-}
-static
-std::istream& operator>>(std::istream& in, VTYPE& type) {
-    int t;
-    in >> t;
-    type = static_cast<VTYPE>(t);
-    return in;
-}
+// Currently unused
+// static
+// std::istream& operator>>(std::istream& in, SUBTYPE& type) {
+//     int t;
+//     in >> t;
+//     type = static_cast<SUBTYPE>(t);
+//     return in;
+// }
+// static
+// std::istream& operator>>(std::istream& in, VTYPE& type) {
+//     int t;
+//     in >> t;
+//     type = static_cast<VTYPE>(t);
+//     return in;
+// }
 
 #endif

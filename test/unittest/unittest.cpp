@@ -1,5 +1,7 @@
+#define RAPIDJSON_FORCE_IMPORT_ARRAY
 #include <iostream>
 #include "unittest.hpp"
+#include "rapidjson/pyrj.h"
 
 #ifdef __clang__
 #pragma GCC diagnostic push
@@ -19,9 +21,7 @@ int main(int argc, char **argv) {
 
     std::cout << "YGG v" << "0.1.0" << std::endl;
 
-//#ifdef RAPIDJSON_YGGDRASIL
-//    INIT_PYTHON();
-//#endif // RAPIDJSON_YGGDRASIL
+   INIT_PYTHON();
 
 #ifdef _MSC_VER
     _CrtMemState memoryState = { 0 };
@@ -38,9 +38,7 @@ int main(int argc, char **argv) {
     _CrtMemDumpAllObjectsSince(&memoryState);
 #endif
 
-//#ifdef RAPIDJSON_YGGDRASIL
-//    FINALIZE_PYTHON();
-//#endif // RAPIDJSON_YGGDRASIL
+   FINALIZE_PYTHON();
 
     return ret;
 }

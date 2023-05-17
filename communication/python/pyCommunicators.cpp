@@ -6,19 +6,25 @@
 namespace bp = boost::python;
 namespace communication {
 
+int (communicator::Comm_t::*strsend)(const std::string&) = &communicator::Comm_t::send;
+long (communicator::Comm_t::*strrecv)(std::string&) = &communicator::Comm_t::recv;
+
 void python::exportCommunicators() {
     bp::object modModule(bp::handle<>(bp::borrowed(PyImport_AddModule("pyYggdrasil.communicators"))));
     bp::scope().attr("communicators") = modModule;
     bp::scope modScope = modModule;
 
-    bp::class_<CommWrap, boost::noncopyable>("Comm_t", bp::init<utils::Address*, DIRECTION, const COMM_TYPE, int>())
-            .def(bp::init<const std::string&, DIRECTION, const COMM_TYPE>())
+    bp::class_<CommWrap, boost::noncopyable>("Comm_t", bp::init<utils::Address*, DIRECTION, const COMM_TYPE&, int>())
+            .def(bp::init<const std::string&, DIRECTION, const COMM_TYPE&, int>())
             .def("comm_nmsg", bp::pure_virtual(&communicator::Comm_t::comm_nmsg))
             .def("getType", &communicator::Comm_t::getType)
-            .def("valid", &communicator::Comm_t::valid);
+            .def("valid", &communicator::Comm_t::valid)
+            .def("send", strsend)
+            .def("send_eof", &communicator::Comm_t::send_eof)
+            .def("recv", strrecv);
 
     bp::class_<communicator::IPCComm, bp::bases<CommWrap>, boost::noncopyable>("IPCComm", bp::init<const std::string&, utils::Address*, DIRECTION>()[bp::with_custodian_and_ward_postcall<0,2>()])
-            .def("check_channels", &communicator::IPCComm::check_channels)
+            //.def("check_channels", &communicator::IPCComm::check_channels)
             .def("add_channel", &communicator::IPCComm::add_channel)
             .def("remove_comm", &communicator::IPCComm::remove_comm)
             .def("comm_nmsg", &communicator::IPCComm::comm_nmsg);
@@ -30,32 +36,14 @@ void python::exportCommunicators() {
     bp::class_<communicator::ZMQComm, bp::bases<CommWrap>, boost::noncopyable>("ZMQComm", bp::init<const std::string&, utils::Address*, DIRECTION>()[bp::with_custodian_and_ward_postcall<0,2>()])
             .def("comm_nmsg", &communicator::MPIComm::comm_nmsg);
 
-    bp::class_<communicator::ClientComm, bp::bases<CommWrap,communicator::COMM_BASE>, boost::noncopyable>("ClientComm", bp::init<const std::string&, utils::Address*>()[bp::with_custodian_and_ward_postcall<0,2>()])
-            .def("has_request", &communicator::ClientComm::has_request)
-            .def("has_response", &communicator::ClientComm::has_response)
-            .def("add_request", &communicator::ClientComm::add_request)
-            .def("add_response", &communicator::ClientComm::add_response)
-            .def("remove_request", &communicator::ClientComm::remove_request)
-            .def("pop_response", &communicator::ClientComm::pop_response)
-            .def("new_address", &communicator::ClientComm::new_address)
+    bp::class_<communicator::ClientComm, bp::bases<communicator::COMM_BASE>, boost::noncopyable>("ClientComm", bp::init<const std::string&, utils::Address*, int>()[bp::with_custodian_and_ward_postcall<0,2>()])
+            .def(bp::init<const std::string, int>())
+            .def("set_timeout_recv", &communicator::ClientComm::set_timeout_recv)
+            .def("wait_for_recv", &communicator::ClientComm::wait_for_recv)
             .def("comm_nmsg", &communicator::ClientComm::comm_nmsg);
 
-    int (communicator::ServerComm::*hc1)(const std::string&) const = &communicator::ServerComm::has_comm;
-    int (communicator::ServerComm::*hc2)(const utils::Address*) const = &communicator::ServerComm::has_comm;
-    int (communicator::ServerComm::*ac1)(std::string&) = &communicator::ServerComm::add_comm;
-    int (communicator::ServerComm::*ac2)(utils::Address*) = &communicator::ServerComm::add_comm;
-
-
-    bp::class_<communicator::ServerComm, bp::bases<CommWrap,communicator::COMM_BASE>, boost::noncopyable>("ClientComm", bp::init<const std::string&, utils::Address*>()[bp::with_custodian_and_ward_postcall<0,2>()])
-            .def("has_request", &communicator::ServerComm::has_request)
-            .def("has_response", &communicator::ServerComm::has_response)
-            .def("add_request", &communicator::ServerComm::add_request)
-            .def("remove_request", &communicator::ServerComm::remove_request)
-            .def("get_comm", &communicator::ServerComm::get_comm, bp::return_value_policy<bp::reference_existing_object>())
-            .def("has_comm", hc1)
-            .def("has_comm", hc2)
-            .def("add_comm", ac1)
-            .def("add_comm", ac2)
+    bp::class_<communicator::ServerComm, bp::bases<communicator::COMM_BASE>, boost::noncopyable>("ServerComm", bp::init<const std::string&, utils::Address*, int>()[bp::with_custodian_and_ward_postcall<0,2>()])
+            .def(bp::init<const std::string, int>())
             .def("comm_nmsg", &communicator::ServerComm::comm_nmsg);
 
 }

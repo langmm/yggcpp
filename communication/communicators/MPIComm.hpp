@@ -14,23 +14,34 @@ namespace communicator {
 /**
  * Wrapper for a MPI communicator.
  */
-class mpi_registry_t : public MPI::Comm {
+class mpi_registry_t {
 public:
-    explicit mpi_registry_t(MPI_Comm comm) : Comm(comm), nproc(0), tag(0) {}
+    explicit mpi_registry_t(MPI_Comm comm0) :
+      comm(comm0), procs(), tag(0) {}
+    mpi_registry_t(const mpi_registry_t& rhs);
+    virtual ~mpi_registry_t();
+      
+    mpi_registry_t& operator=(const mpi_registry_t& rhs);
 
-    int nproc; //!< Number of processes in procs.
+    MPI_Comm comm;
     std::vector<size_t> procs; //!< IDs for partner processes.
     int tag; //!< Tag for next message.
-    mpi_registry_t &Clone() const override;
+    virtual int Probe(int source, MPI_Status *status) const;
+    virtual int Send(const void *buf, int count, MPI_Datatype datatype, int dest) const;
+    virtual int Recv(void *buf, int count, MPI_Datatype datatype, int source,
+		     MPI_Status *status) const;
+private:
+  void CheckReturn(int code, std::string method, int rank=0) const ;
 };
 
-/**
- * Class for MPI communicators
- */
-class MPIComm : public CommBase<mpi_registry_t, int> {
 #else
-    class MPIComm : public CommBase<void,void> {};
+class mpi_registry_t {
+public:
+  mpi_registry_t() {}
+};
 #endif
+  
+class MPIComm : public CommBase<mpi_registry_t> {
 public:
     /**
      * Constructor
@@ -39,7 +50,10 @@ public:
      *                then an address will be created.
      * @param direction Enumerated direction for the communicator
      */
-    MPIComm(const std::string &name, utils::Address *address, const DIRECTION direction);
+    MPIComm(const std::string &name, utils::Address *address,
+	    const DIRECTION direction, int flgs = 0);
+    MPIComm(const std::string &name, const DIRECTION direction,
+	    int flgs = 0);
 
     //explicit MPIComm(const Comm_t* comm);
     /**
@@ -62,22 +76,12 @@ public:
     using Comm_t::recv;
 
 protected:
-    /**
-     * Sending function
-     * @param data The message to send
-     * @param len The length of data
-     * @return THe status
-     */
-    int send(const char *data, const size_t &len) override;
+    void init();
+    int send_single(const char *data, const size_t &len,
+		    const utils::Header& header) override;
 
-    /**
-     * Receiving function
-     * @param data The contents of the message withh be placed here
-     * @param len The initial length of data
-     * @param allow_realloc Whether data can be reallocated if it is too small to hold the message.
-     * @return The length of data after the message was copied.
-     */
-    long recv(char *data, const size_t &len, bool allow_realloc) override;
+    long recv_single(char*& data, const size_t &len, bool allow_realloc) override;
+    WORKER_METHOD_DECS(MPIComm);
 #ifndef YGG_TEST
 private:
 #endif

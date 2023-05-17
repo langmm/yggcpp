@@ -3,6 +3,7 @@
 #include <vector>
 #include <algorithm>
 #include "complex_type.hpp"
+#include "constants.hpp"
 
 #ifdef _MSC_VER
 #ifndef _CRT_SECURE_NO_WARNINGS
@@ -10,7 +11,7 @@
 #endif
 #endif
 
-#ifdef HAVE_OPENMP
+#ifdef _OPENMP
 
 #include <omp.h>
 #endif
@@ -21,8 +22,6 @@
 #include <cstdarg>
 #include <cerrno>
 #include <ctime>
-
-#define COMMBUFFSIZ 2000
 
 #ifndef print_complex
 #define print_complex(x) printf("%lf+%lfj\n", (double)creal(x), (double)cimag(x))
@@ -46,17 +45,8 @@
 
 //#endif
 
-// Platform specific
-#ifdef _WIN32
-#include "regex/regex_win32.h"
-#include "getline_win32.h"
-#else
-
-//#include "regex_posix.h"
-
 #endif
 #ifdef _MSC_VER
-#include "windows_stdint.h"  // Use local copy for MSVC support
 // Prevent windows.h from including winsock.h
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
@@ -76,33 +66,28 @@
 
 #define STRBUFF 100
 
-/*! @brief Maximum message size. */
-#ifdef IPCDEF
-#define YGG_MSG_MAX 2048
-#else
-#define YGG_MSG_MAX 1048576
-#endif
-/*! @brief End of file message. */
-#define YGG_MSG_EOF "EOF!!!"
-/*! @brief End of client message. */
-#define YGG_CLIENT_EOF "YGG_END_CLIENT"
-/*! @brief Resonable size for buffer. */
-#define YGG_MSG_BUF 2048
-/*! @brief Sleep time in micro-seconds */
-#define YGG_SLEEP_TIME ((int)250000)
-/*! @brief Size for buffers to contain names of Python objects. */
-#define PYTHON_NAME_SIZE 1000
-
 /*! @brief Define old style names for compatibility. */
-#define PSI_MSG_MAX YGG_MSG_MAX
-#define PSI_MSG_BUF YGG_MSG_BUF
-#define PSI_MSG_EOF YGG_MSG_EOF
 #ifdef PSI_DEBUG
 #define YGG_DEBUG PSI_DEBUG
 #endif
 #include "complex_type.hpp"
 
 #define DELIMITER ','
+
+
+#define YGGCPP_BEGIN_VAR_ARGS(name, first_arg, nargs, realloc)	\
+  rapidjson::VarArgList name(nargs, realloc);			\
+  va_start(name.va, first_arg)
+#define YGGCPP_END_VAR_ARGS(name)		\
+  if (name.get_nargs() != 0)			\
+    ygglog_error << name.get_nargs() << " arguments unused" << std::endl
+#define YGGC_BEGIN_VAR_ARGS(name, first_arg, nargs, realloc)	\
+  rapidjson::VarArgList name(&nargs, realloc, true);		\
+  va_start(name.va, first_arg)
+#define YGGC_END_VAR_ARGS(name)		\
+  if (name.get_nargs() != 0)			\
+    ygglog_error << name.get_nargs() << " arguments unused" << std::endl
+
 
 #include "logging.hpp"
 
@@ -128,7 +113,7 @@ namespace utils {
 /*! @brief Memory to allow thread association to be set via macro. */
 static int global_thread_id = -1;
 #define ASSOCIATED_WITH_THREAD(COMM, THREAD) global_thread_id = THREAD; COMM; global_thread_id = -1;
-#ifdef HAVE_OPENMP
+#ifdef _OPENMP
 #pragma omp threadprivate(global_thread_id)
 #endif
 
@@ -153,7 +138,7 @@ int get_thread_id() {
     int out = 0;
     if (global_thread_id >= 0)
         return global_thread_id;
-#ifdef HAVE_OPENMP
+#ifdef _OPENMP
     if (omp_in_parallel())
         out = omp_get_thread_num();
 /* #elif defined pthread_self */
@@ -179,7 +164,7 @@ size_t strlen4(char *strarg) {
         return 0; //strarg is NULL pointer
     char *str = strarg;
     for (; *str; str += 4); // empty body
-    return (str - strarg);
+    return (size_t)(str - strarg);
 }
 
 /*!
@@ -251,5 +236,3 @@ int is_eof(const char *buf) {
 
 }
 }
-
-#endif

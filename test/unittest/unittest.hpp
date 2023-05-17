@@ -71,3 +71,53 @@ public:
 #define YGG_ASSERT_THROWS
 #endif
 #endif
+
+
+#ifdef YGGDRASIL_DISABLE_PYTHON_C_API
+#define INIT_PYTHON()
+#define FINALIZE_PYTHON()
+#else // YGGDRASIL_DISABLE_PYTHON_C_API
+#define INIT_PYTHON()                                                   \
+  {                                                                     \
+    rapidjson::initialize_python("test");				\
+  }
+/*
+    PyObject* path = PySys_GetObject("path");				\
+    RAPIDJSON_ASSERT(path);						\
+    const char* datadir = std::getenv("DATADIR");			\
+    RAPIDJSON_ASSERT(datadir);                                          \
+    PyObject* example_dir = PyUnicode_FromString(datadir);              \
+    RAPIDJSON_ASSERT(example_dir);                                      \
+    PyList_Append(path, example_dir);                                   \
+    Py_DECREF(example_dir);                                             \
+*/
+#define FINALIZE_PYTHON()                       \
+  {                                             \
+    rapidjson::finalize_python("test");         \
+  }
+#endif // YGGDRASIL_DISABLE_PYTHON_C_API
+
+// Add setenv/unsetenv
+#ifdef _MSC_VER
+static inline
+int setenv(const char *name, const char *value, int overwrite) {
+  if (overwrite || getenv(name) == NULL) {
+    size_t len = strlen(name) + strlen(value);
+    char* tmp = (char*)malloc(len * sizeof(char));
+    tmp[0] = '\0';
+    strcat(tmp, name);
+    strcat(tmp, "=");
+    strcat(tmp, value);
+    if (tmp == NULL)
+      return -1;
+    int out = _putenv(tmp);
+    free(tmp);
+    return out;
+  }
+  return 0;
+}
+static inline
+int unsetenv(const char *name) {
+  return setenv(name, "", true);
+}
+#endif // _MSC_VER

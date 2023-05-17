@@ -1,0 +1,13 @@
+* Add tests for YggIterface.hpp
+* Add YggIterface.h C interface with tests
+* Update handling of dtype in C
+* Get tests working on GHA
+* Add tests for RequestList
+* Strip out unused code
+* Set _ygg_error_flag on error
+* Initialize python/zeromq
+* Clean up communicators on exit
+* Split serialization.hpp into files for easier maintenance
+* Coverage
+* Move address away from pointer?
+* Fix handling of multiple connections in ZMQ socket (restricted to ZMQ_PAIR to simplify testing)

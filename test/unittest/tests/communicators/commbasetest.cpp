@@ -9,23 +9,32 @@ using namespace communication::communicator;
 class Comm_tTest: public Comm_t {
 public:
     Comm_tTest(utils::Address *address, DIRECTION dirn, const COMM_TYPE &t, int flgs = 0) :
-            Comm_t(address, dirn, t, flgs) {}
+      Comm_t(address, dirn, t, flgs), _closed(false) {}
     Comm_tTest(const std::string &name, DIRECTION direction, const COMM_TYPE &t) :
-            Comm_t(name, direction, t) {}
+      Comm_t(name, direction, t), _closed(false) {}
     int comm_nmsg() const override {return 1;}
     int get_flags() const {return flags;}
+    void close() override { _closed = true; }
+    bool is_closed() const override { return _closed; }
     bool check(const size_t &len) const {return check_size(len);}
     using Comm_t::send;
     using Comm_t::recv;
 protected:
-    int send(const char* data, const size_t &len) override {return 0;}
-    long recv(char* data, const size_t &len, bool allow_realloc) override {
+    int send_single(const char*, const size_t &, const utils::Header&) override {
+      return 0;
+    }
+    long recv_single(char*& data, const size_t &, bool) override {
         const std::string msg = "{ \"hello\" : \"world\" }";
         data = const_cast<char*>(msg.c_str());
-        return msg.size();
+        return static_cast<long>(msg.size());
     }
-    void init() override {}
+    Comm_t* create_worker(utils::Address* adr,
+                          const DIRECTION& dir, int flgs) override {
+      return new Comm_tTest(adr, dir, this->type, flgs);
+    }
     void reset() override {}
+
+    bool _closed;
 };
 
 TEST(Commt, Constructors) {
@@ -85,21 +94,4 @@ TEST(Commt, checksize) {
     EXPECT_TRUE(ctest.check(10));
     EXPECT_TRUE(ctest.check(YGG_MSG_MAX));
     EXPECT_FALSE(ctest.check(YGG_MSG_MAX + 1));
-}
-
-TEST(Commt, send) {
-    rapidjson::Document *doc = new rapidjson::Document();
-    dtype_t dt;
-    dt.schema = (void*)doc;
-    Comm_tTest ctest("testname", SEND, NULL_COMM);
-    EXPECT_EQ(0, ctest.send(&dt));
-    delete doc;
-}
-
-TEST(Commt, recv) {
-    dtype_t dt;
-    Comm_tTest ctest("testname", RECV, NULL_COMM);
-    ctest.recv(&dt);
-    ctest.recv(&dt);
-    delete static_cast<rapidjson::Document*>(dt.schema);
 }
