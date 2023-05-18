@@ -455,8 +455,6 @@ TEST(Metadata, serialize_errors) {
 }
 
 TEST(Header, for_send) {
-  setenv("YGG_MODEL_NAME", "TEST_MODEL", 1);
-  setenv("YGG_MODEL_COPY", "1", 1);
   Metadata schema;
   schema.fromSchema("{\"type\": \"string\"}");
   std::string msg = "This is a test message";
@@ -471,7 +469,5 @@ TEST(Header, for_send) {
 		       header_send.size_curr, true);
   EXPECT_EQ(header_recv.size_data, msg.size());
   EXPECT_EQ(strcmp(header_recv.data[0], msg.c_str()), 0);
-  unsetenv("YGG_MODEL_NAME");
-  unsetenv("YGG_MODEL_COPY");
 }
 
