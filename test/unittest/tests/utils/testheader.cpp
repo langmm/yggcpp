@@ -442,8 +442,8 @@ TEST(Metadata, serialize_errors) {
   EXPECT_EQ(x.serialize(&buf, &len, 1, true), 4);
   EXPECT_EQ(strcmp(buf, "true"), 0);
   EXPECT_EQ(len, 5);
-  free(buf);
-  buf = NULL;
+  // free(buf);
+  // buf = NULL;
   len = 0;
 #ifdef ELF_AVAILABLE
   ELF_BEGIN;
