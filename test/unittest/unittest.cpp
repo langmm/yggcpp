@@ -2,6 +2,7 @@
 #include <iostream>
 #include "unittest.hpp"
 #include "rapidjson/pyrj.h"
+#include "communicators/ZMQComm.hpp"
 
 #ifdef __clang__
 #pragma GCC diagnostic push
@@ -21,7 +22,8 @@ int main(int argc, char **argv) {
 
     std::cout << "YGG v" << "0.1.0" << std::endl;
 
-   INIT_PYTHON();
+    INIT_PYTHON();
+    INIT_ZMQ();
 
 #ifdef _MSC_VER
     _CrtMemState memoryState = { 0 };
@@ -38,7 +40,8 @@ int main(int argc, char **argv) {
     _CrtMemDumpAllObjectsSince(&memoryState);
 #endif
 
-   FINALIZE_PYTHON();
+    FINALIZE_PYTHON();
+    FINALIZE_ZMQ();
 
     return ret;
 }
