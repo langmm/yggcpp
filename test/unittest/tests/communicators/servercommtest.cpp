@@ -31,10 +31,10 @@ public:
 }
 }
 
-// #define SERVER_SERI_TEST_TYPE(type, value, schema)	\
-//   TEST(ServerComm, type) {				\
-//     ServerComm_tester client("client_server");		\
-//   }
+#define SERVER_SERI_TEST_TYPE(type, value, schema)	\
+  TEST(ServerComm, type) {				\
+    ServerComm_tester client("client_server");		\
+  }
 
 // TEST(ServerComm, constructor) {
 //     std::string name = "MyComm";
