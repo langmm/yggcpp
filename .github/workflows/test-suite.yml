@@ -114,7 +114,7 @@ jobs:
         if: matrix.os == 'windows-latest' && matrix.python-install == 'pip'
         run: |
           vcpkg.exe install cmocka --triplet x64-windows
-          # vcpkg.exe install boost --triplet x64-windows
+          vcpkg.exe install boost --triplet x64-windows
           # vcpkg.exe install boost-python --triplet x64-windows
 
       # ZeroMQ dependencies
@@ -244,7 +244,6 @@ jobs:
         if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
         # shell: bash -l {0}
         run: |
-          # echo "DLL_DIRECTORY=${VCPKG_INSTALLATION_ROOT}\\installed\\x64-windows\\bin" >> "$GITHUB_ENV"
           Add-Content $env:GITHUB_PATH "${env:VCPKG_INSTALLATION_ROOT}\installed\x64-windows\bin"
       - name: Conda library paths on Windows
         if: matrix.python-install == 'conda' && matrix.os == 'windows-latest'
@@ -252,16 +251,6 @@ jobs:
         run: |
           DLL_DIRECTORY="${CONDA_PREFIX}/Library/lib"
           echo "${DLL_DIRECTORY}" >> $GITHUB_PATH
-          # echo "DLL_DIRECTORY=${DLL_DIRECTORY}" >> "$GITHUB_ENV"
-      # - name: Add libraries to PATH on Windows
-      #   if: matrix.os == 'windows-latest'
-      #   shell: bash -l {0}
-      #   run: |
-      #     ls ${DLL_DIRECTORY}
-      #     echo "OLD DLL_DIRECTORY=${DLL_DIRECTORY}"
-      #     DLL_DIRECTORY="${DLL_DIRECTORY/C:\\//c/}"
-      #     echo "NEW DLL_DIRECTORY=${DLL_DIRECTORY}"
-      #     echo "PATH=${PATH}:${DLL_DIRECTORY}" >> "$GITHUB_ENV"
       
       ###################################
       # Check
@@ -351,37 +340,3 @@ jobs:
           file: build/coverage/coverage.info
           # directory: build/Testing/CoverageInfo
           functionalities: gcov
-      
-      # OLD PIP
-      # - name: Configure
-      #   if: matrix.os == 'windows-latest'
-      #   run: |
-      #     mkdir build
-      #     cd build
-      #     cmake .. -DCMAKE_BUILD_TYPE=Debug -DYGG_ENABLE_COVERAGE=ON "-DPython3_ROOT_DIR=${Env:pythonLocation}" "-DPython3_EXECUTABLE=${Env:pythonLocation}\python.exe" -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/_install "-DCMAKE_PREFIX_PATH=${Env:VCPKG_INSTALLATION_ROOT}\installed\x64-windows" -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DBUILD_PYTHON_LIBRARY=OFF
-      # - name: Configure
-      #   if: matrix.os != 'windows-latest'
-      #   run: |
-      #     mkdir build
-      #     cd build
-      #     cmake .. -DCMAKE_BUILD_TYPE=Debug -DYGG_ENABLE_COVERAGE=ON -DPython3_ROOT_DIR=${pythonLocation} -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/_install -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DYGG_BUILD_ASAN=ON -DYGG_BUILD_UBSAN=ON -DBUILD_PYTHON_LIBRARY=OFF
-      
-      # OLD CONDA
-      # - name: Configure windows
-      #   if: matrix.os == 'windows-latest'
-      #   run: |
-      #     mkdir build
-      #     cd build
-      #     cmake .. -DCMAKE_BUILD_TYPE=Debug -DYGG_ENABLE_COVERAGE=ON -DCMAKE_INSTALL_PREFIX=../devel "-DCMAKE_PREFIX_PATH=${Env:CONDA_PREFIX}" -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DBUILD_PYTHON_LIBRARY=OFF
-      # - name: Configure linux
-      #   if: matrix.os == 'ubuntu-latest'
-      #   run: |
-      #     mkdir build
-      #     cd build
-      #     cmake .. -DCMAKE_BUILD_TYPE=Debug -DYGG_ENABLE_COVERAGE=ON -DCMAKE_INSTALL_PREFIX=../devel -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DYGG_ENABLE_ELF=OFF -DBUILD_PYTHON_LIBRARY=OFF
-      # - name: Configure mac
-      #   if: matrix.os == 'macos-latest'
-      #   run: |
-      #     mkdir build
-      #     cd build
-      #     cmake .. -DCMAKE_BUILD_TYPE=Debug -DYGG_ENABLE_COVERAGE=ON -DCMAKE_INSTALL_PREFIX=../devel -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DBUILD_PYTHON_LIBRARY=OFF
