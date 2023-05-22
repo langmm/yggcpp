@@ -229,24 +229,129 @@ public:
                     (x.c_str(), (rapidjson::SizeType)(x.size()),
                             metadata.GetAllocator()));
 #undef GET_SET_METHOD_
-    bool SetMetaValue(const std::string& name, rapidjson::Value& x);
-    bool SetSchemaValue(const std::string& name, rapidjson::Value& x,
-                        rapidjson::Value* subSchema = nullptr);
-    bool SetSchemaMetadata(const std::string& name,
-                           const Metadata& other);
-    bool SetMetaID(const std::string& name, const char** id=nullptr);
-    bool SetMetaID(const std::string& name, std::string& id);
-    int deserialize(const char* buf, size_t nargs, int allow_realloc, ...);
-    int deserialize(const char* buf, rapidjson::VarArgList& ap);
-    int serialize(char **buf, size_t *buf_siz, size_t nargs, ...);
-    int serialize(char **buf, size_t *buf_siz,
-                  rapidjson::VarArgList& ap);
-    void Display(const char* indent="") const;
-    rapidjson::Document metadata;
-    rapidjson::Value* schema;
-private:
-    void _reset();
-    void _update_schema();
+  bool SetMetaValue(const std::string name, rapidjson::Value& x) {
+    return SetValue(name, x, getMeta());
+  }
+  bool SetSchemaValue(const std::string name, rapidjson::Value& x,
+		      rapidjson::Value* subSchema = NULL) {
+    if (subSchema == NULL)
+      return SetValue(name, x, getSchema());
+    return SetValue(name, x, *subSchema);
+  }
+  bool SetSchemaMetadata(const std::string name,
+			 const Metadata& other) {
+    if (other.schema == NULL)
+      ygglog_throw_error_c("SetSchemaMetadata: Value has not datatype");
+    rapidjson::Value x;
+    x.CopyFrom(*(other.schema), GetAllocator(), true);
+    return SetSchemaValue(name, x);
+  }
+  bool SetMetaID(const std::string name, const char** id=NULL) {
+    char new_id[100];
+    snprintf(new_id, 100, "%d", rand());
+    bool out = SetMetaString(name, new_id);
+    if (out && id)
+      id[0] = GetMetaString(name);
+    return out;
+  }
+  bool SetMetaID(const std::string name, std::string& id) {
+    const char* id_str;
+    bool out = SetMetaID(name, &id_str);
+    if (out)
+      id.assign(id_str);
+    return out;
+  }
+  int deserialize(const char* buf, size_t nargs, int allow_realloc, ...) {
+    rapidjson::VarArgList va(nargs, allow_realloc);
+    va_start(va.va, allow_realloc);
+    int out = deserialize(buf, va);
+    if (out >= 0 && va.get_nargs() != 0) {
+      ygglog_error_c("Metadata::deserialize: %ld of the arguments were not used", va.get_nargs());
+      return -1;
+    }
+    return out;
+  }
+  int deserialize(const char* buf, rapidjson::VarArgList& ap) {
+    if (!hasType())
+      ygglog_throw_error_c("Metadata::deserialize: No datatype");
+    size_t nargs_orig = ap.get_nargs();
+    rapidjson::Document d;
+    rapidjson::StringStream s(buf);
+    d.ParseStream(s);
+    if (d.HasParseError())
+      ygglog_throw_error_c("Metadata::deserialize: Error parsing JSON");
+    // TODO: Initialize schema?
+    // if (schema.IsNull()) {
+    //   schema = encode_schema(d);
+    // } else {
+    rapidjson::StringBuffer sb;
+    if (!d.Normalize(*schema, &sb)) {
+      std::string d_str = document2string(d);
+      std::string s_str = document2string(*schema);
+      ygglog_throw_error_c("Metadata::deserialize: Error normalizing document:\n%s\ndocument=%s\nschema=%s\nmessage=%s...", sb.GetString(), d_str.c_str(), s_str.c_str(), buf);
+    }
+    // }
+    if (!d.SetVarArgs(*schema, ap)) {
+      ygglog_throw_error_c("Metadata::deserialize_args: Error setting arguments from JSON document");
+    }
+    return (int)(nargs_orig - ap.get_nargs());
+  }
+  int serialize(char **buf, size_t *buf_siz, size_t nargs, ...) {
+    rapidjson::VarArgList va(nargs);
+    va_start(va.va, nargs);
+    int out = serialize(buf, buf_siz, va);
+    if (out >= 0 && va.get_nargs() != 0) {
+      ygglog_error_c("Metadata::serialize: %ld of the arguments were not used", va.get_nargs());
+      return -1;
+    }
+    return out;
+  }
+  int serialize(char **buf, size_t *buf_siz,
+		rapidjson::VarArgList& ap) {
+    if (!hasType())
+      ygglog_throw_error_c("Metadata::serialize: No datatype");
+    rapidjson::Document d;
+    if (!d.GetVarArgs(*schema, ap)) {
+      std::string s_str = document2string(*schema);
+      ygglog_throw_error_c("Metadata::serialize: Error creating JSON document from arguments for schema = %s", s_str.c_str());
+    }
+    rapidjson::StringBuffer buffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    if (!d.Accept(writer))
+      ygglog_throw_error_c("Metadata::serialize: Error serializing document.");
+    if ((size_t)(buffer.GetLength() + 1) > buf_siz[0]) {
+      buf_siz[0] = (size_t)(buffer.GetLength() + 1);
+      char* buf_t = (char*)realloc(buf[0], buf_siz[0]);
+      if (!buf_t) {
+	ygglog_throw_error_c("Metadata::serialize: Error in realloc");
+      }
+      std::cerr << "serialize: successful realloc to " << buf_siz[0] << std::endl;
+      buf[0] = buf_t;
+    }
+    memcpy(buf[0], buffer.GetString(), (size_t)(buffer.GetLength()));
+    buf[0][(size_t)(buffer.GetLength())] = '\0';
+    return static_cast<int>(buffer.GetLength());
+  }
+  void Display(const char* indent="") const {
+    std::cout << document2string(metadata, indent) << std::endl;
+  }
+  rapidjson::Document metadata;
+  rapidjson::Value* schema;
+ private:
+  void _reset() {
+    metadata.SetObject();
+    schema = NULL;
+  }
+  void _update_schema() {
+    if (metadata.HasMember("serializer") &&
+	metadata["serializer"].IsObject() &&
+	metadata["serializer"].HasMember("datatype") &&
+	metadata["serializer"]["datatype"].IsObject()) {
+      schema = &(metadata["serializer"]["datatype"]);
+    } else {
+      schema = NULL;
+    }
+  }
 };
 
 class Header : public Metadata {

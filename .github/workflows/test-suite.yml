@@ -256,8 +256,8 @@ jobs:
         run: |
           ls ${DLL_DIRECTORY}
           echo "DLL_DIRECTORY=${DLL_DIRECTORY}"
-          DLL_DIRECTORY="${DLL_DIRECTORY//:\\\\///}"
-          echo "PATH=${PATH}:${DLL_DIRECTORY//\\\\///}" >> "$GITHUB_ENV"
+          DLL_DIRECTORY="${DLL_DIRECTORY//:\\///}"
+          echo "PATH=${PATH}:${DLL_DIRECTORY//\\///}" >> "$GITHUB_ENV"
       
       ###################################
       # Check
