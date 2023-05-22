@@ -49,14 +49,13 @@ public:
         destroy();
     }
     void destroy() {
-        for (size_t i = 0; i < comms.size(); i++) {
-            if (comms[i] != NULL) {
-                COMM_BASE* x = dynamic_cast<COMM_BASE*>(comms[i]);
-                delete x;
-                comms[i] = NULL;
-            }
-        }
-        comms.resize(0);
+      for (size_t i = 0; i < comms.size(); i++) {
+	if (comms[i] != NULL) {
+	  delete comms[i];
+	  comms[i] = NULL;
+	}
+      }
+      comms.resize(0);
     }
     int hasRequest(const std::string& request_id) const {
         for (size_t i = 0; i < requests.size(); i++) {
