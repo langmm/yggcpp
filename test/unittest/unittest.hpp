@@ -97,6 +97,18 @@ public:
   }
 #endif // YGGDRASIL_DISABLE_PYTHON_C_API
 
+
+// TODO: Perform destroy during exit automatically
+#ifdef ZMQINSTALLED
+#define INIT_ZMQ()				\
+  communication::communicator::ZMQContext ctx
+#define FINALIZE_ZMQ()				\
+  ctx.destroy()
+#else // ZMQINSTALLED
+#define INIT_ZMQ()
+#define FINALIZE_ZMQ()
+#endif // ZMQINSTALLED  
+
 // Add setenv/unsetenv
 #ifdef _MSC_VER
 int setenv(const char *name, const char *value, int overwrite);
