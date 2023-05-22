@@ -38,6 +38,10 @@ Worker::~Worker() {
 }
 
 
+WorkerList::~WorkerList() {
+  workers.clear();
+}
+
 Comm_t* WorkerList::add_worker(Comm_t* parent, DIRECTION dir,
 			   Address* adr) {
   ygglog_debug << "WorkerList::add_worker: Adding worker" << std::endl;

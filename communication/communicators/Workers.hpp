@@ -30,6 +30,7 @@ namespace communicator {
     WorkerList& operator=(const WorkerList& rhs) = delete;
   public:
     WorkerList() : workers() {}
+    ~WorkerList();
     Comm_t* add_worker(Comm_t* parent, DIRECTION dir,
 		       utils::Address* adr = nullptr);
     void remove_worker(Comm_t*& worker);
