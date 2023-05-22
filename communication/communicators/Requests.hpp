@@ -51,8 +51,7 @@ namespace communicator {
     void destroy() {
       for (size_t i = 0; i < comms.size(); i++) {
 	if (comms[i] != NULL) {
-	  COMM_BASE* x = dynamic_cast<COMM_BASE*>(comms[i]);
-	  delete x;
+	  delete comms[i];
 	  comms[i] = NULL;
 	}
       }
