@@ -69,7 +69,7 @@ jobs:
             python-install: pip
             install-zmq: true
             install-mpi: false
-            with-coverage: true
+            with-coverage: false
             with-asan: true
             with-elf: true
             with-valgrind: false
@@ -114,7 +114,7 @@ jobs:
         if: matrix.os == 'windows-latest' && matrix.python-install == 'pip'
         run: |
           vcpkg.exe install cmocka --triplet x64-windows
-          vcpkg.exe install boost --triplet x64-windows
+          # vcpkg.exe install boost --triplet x64-windows
           # vcpkg.exe install boost-python --triplet x64-windows
 
       # ZeroMQ dependencies
@@ -255,9 +255,11 @@ jobs:
         shell: bash -l {0}
         run: |
           ls ${DLL_DIRECTORY}
-          echo "DLL_DIRECTORY=${DLL_DIRECTORY}"
-          DLL_DIRECTORY="${DLL_DIRECTORY//:\\///}"
-          echo "PATH=${PATH}:${DLL_DIRECTORY//\\///}" >> "$GITHUB_ENV"
+          echo "OLD DLL_DIRECTORY=${DLL_DIRECTORY}"
+          DLL_DIRECTORY="${DLL_DIRECTORY//C:\\///c/}"
+          echo "NEW DLL_DIRECTORY=${DLL_DIRECTORY}"
+          # echo "PATH=${PATH}:${DLL_DIRECTORY//\\///}" >> "$GITHUB_ENV"
+          echo "PATH=${PATH}:${DLL_DIRECTORY}" >> "$GITHUB_ENV"
       
       ###################################
       # Check

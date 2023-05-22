@@ -434,17 +434,14 @@ TEST(Metadata, deserialize_errors) {
 TEST(Metadata, serialize_errors) {
   rapidjson::VarArgList va;
   Metadata x;
-  char* buf = NULL;
-  size_t len = 0;
+  char* buf = (char*)malloc(sizeof(char));
+  size_t len = 1;
   EXPECT_THROW(x.serialize(&buf, &len, va), std::exception);
   x.fromSchema("{\"type\": \"boolean\"}");
   EXPECT_THROW(x.serialize(&buf, &len, va), std::exception);
-  EXPECT_EQ(x.serialize(&buf, &len, 1, true), 4);
-  EXPECT_EQ(strcmp(buf, "true"), 0);
-  EXPECT_EQ(len, 5);
   // free(buf);
   // buf = NULL;
-  len = 0;
+  // len = 0;
 #ifdef ELF_AVAILABLE
   ELF_BEGIN;
   ELF_BEGIN_F(realloc);
@@ -453,6 +450,10 @@ TEST(Metadata, serialize_errors) {
   ELF_END_F(realloc);
   ELF_END;
 #endif // ELF_AVAILABLE
+  EXPECT_EQ(x.serialize(&buf, &len, 1, true), 4);
+  EXPECT_EQ(strcmp(buf, "true"), 0);
+  EXPECT_EQ(len, 5);
+  free(buf);
 }
 
 TEST(Header, for_send) {

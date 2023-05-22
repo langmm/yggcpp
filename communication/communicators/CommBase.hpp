@@ -463,8 +463,10 @@ bool CommBase<H>::is_closed() const {
 
 template<typename H>
 void CommBase<H>::reset() {
-  if (handle)
+  if (handle) {
     delete handle;
+    handle = nullptr;
+  }
 }
 
 template<typename H>
