@@ -46,9 +46,7 @@ int main(int argc, char **argv) {
 // Add setenv/unsetenv
 #ifdef _MSC_VER
 int setenv(const char *name, const char *value, int overwrite) {
-  std::cerr << "BEGIN SETENV" << std::endl;
   if (overwrite || getenv(name) == NULL) {
-    std::cerr << "SETENV: AFTER GETENV" << std::endl;
     size_t len = strlen(name) + strlen(value);
     char* tmp = (char*)malloc(len * sizeof(char));
     if (tmp == NULL)
@@ -57,10 +55,8 @@ int setenv(const char *name, const char *value, int overwrite) {
     strcat(tmp, name);
     strcat(tmp, "=");
     strcat(tmp, value);
-    std::cerr << "SETENV: " << tmp << std::endl;
     int out = _putenv(tmp);
     // free(tmp);
-    std::cerr << "AFTER _PUTENV" << std::endl;
     return out;
   }
   return 0;
