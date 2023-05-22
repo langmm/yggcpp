@@ -704,6 +704,7 @@ private:
       if (!buf_t) {
 	ygglog_throw_error_c("Metadata::serialize: Error in realloc");
       }
+      std::cerr << "serialize: successful realloc to " << buf_siz[0] << std::endl;
       buf[0] = buf_t;
     }
     memcpy(buf[0], buffer.GetString(), (size_t)(buffer.GetLength()));
