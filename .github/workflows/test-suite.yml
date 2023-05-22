@@ -242,9 +242,10 @@ jobs:
       ###################################
       - name: Vcpkg library paths on Windows
         if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
-        # shell: bash -l {0}
+        shell: bash -l {0}
         run: |
-          Add-Content $env:GITHUB_PATH "${env:VCPKG_INSTALLATION_ROOT}\installed\x64-windows\bin"
+          echo "${VCPKG_INSTALLATION_ROOT}\installed\x64-windows\bin" >> $GITHUB_PATH
+          # Add-Content $env:GITHUB_PATH "${env:VCPKG_INSTALLATION_ROOT}\installed\x64-windows\bin"
       - name: Conda library paths on Windows
         if: matrix.python-install == 'conda' && matrix.os == 'windows-latest'
         shell: bash -l {0}
@@ -326,6 +327,7 @@ jobs:
         shell: bash -l {0}
         run: |
           cd build
+          echo "PATH=${PATH}"
           ctest ${{ env.TEST_FLAGS }}
       
       ###################################

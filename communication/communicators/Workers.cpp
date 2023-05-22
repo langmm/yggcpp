@@ -32,8 +32,10 @@ bool Worker::matches(DIRECTION dir, Address* adr) {
 }
 Worker::~Worker() {
   if (comm) {
+    ygglog_debug << "~Worker: deleting comm" << std::endl;
     delete comm;
     comm = nullptr;
+    ygglog_debug << "~Worker: deleted comm" << std::endl;
   }
 }
 

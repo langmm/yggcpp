@@ -51,8 +51,10 @@ namespace communicator {
     void destroy() {
       for (size_t i = 0; i < comms.size(); i++) {
 	if (comms[i] != NULL) {
+	  std::cerr << "~RequestList: deleting comm" << std::endl;
 	  delete comms[i];
 	  comms[i] = NULL;
+	  std::cerr << "~RequestList: deleted comm" << std::endl;
 	}
       }
       comms.resize(0);
