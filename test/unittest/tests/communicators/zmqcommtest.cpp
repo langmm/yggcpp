@@ -40,93 +40,93 @@ public:
 
 #ifdef ZMQINSTALLED
 
-// COMM_SERI_TEST(ZMQComm)
+COMM_SERI_TEST(ZMQComm)
 
-// // TODO: Socket tests?
+// TODO: Socket tests?
 
-// // TEST(yggSockT, yggSockTest) {
-// //     ZMQSocket ygs(ZMQ_REQ);
-// //     EXPECT_EQ(communication::testing::ZMQSocket_tester::activeCount(), 1);
-// //     ygs.close();
-// //     EXPECT_EQ(communication::testing::ZMQSocket_tester::activeCount(), 0);
-// //     ZMQSocket::ctx_shutdown();
-// //     EXPECT_FALSE(communication::testing::ZMQSocket_tester::getValid());
-// //     ZMQSocket::ctx_shutdown();
+// TEST(yggSockT, yggSockTest) {
+//     ZMQSocket ygs(ZMQ_REQ);
+//     EXPECT_EQ(communication::testing::ZMQSocket_tester::activeCount(), 1);
+//     ygs.close();
+//     EXPECT_EQ(communication::testing::ZMQSocket_tester::activeCount(), 0);
+//     ZMQSocket::ctx_shutdown();
+//     EXPECT_FALSE(communication::testing::ZMQSocket_tester::getValid());
+//     ZMQSocket::ctx_shutdown();
 
-// //     ZMQSocket::get_context();
-// //     //int x = 2;
-// //     ZMQSocket ygs1(ZMQ_REQ);
-// //     ZMQSocket ygs2(ZMQ_REQ);
-// //     EXPECT_EQ(communication::testing::ZMQSocket_tester::activeCount(), 2);
-// //     ZMQSocket::ctx_shutdown();
-// //     EXPECT_EQ(communication::testing::ZMQSocket_tester::activeCount(), 0);
+//     ZMQSocket::get_context();
+//     //int x = 2;
+//     ZMQSocket ygs1(ZMQ_REQ);
+//     ZMQSocket ygs2(ZMQ_REQ);
+//     EXPECT_EQ(communication::testing::ZMQSocket_tester::activeCount(), 2);
+//     ZMQSocket::ctx_shutdown();
+//     EXPECT_EQ(communication::testing::ZMQSocket_tester::activeCount(), 0);
 
-// //     //communication::testing::ZMQSocket_tester ygs2(ZMQ_REQ);
-// //     //ygs2.setValid(false);
+//     //communication::testing::ZMQSocket_tester ygs2(ZMQ_REQ);
+//     //ygs2.setValid(false);
 
 
-// // }
-
-// TEST(ZMQComm, constructor) {
-//     std::string name = "";
-//     ZMQSocket::resetPort();
-//     ZMQComm_tester zmqc(name, nullptr, SEND);
-//     EXPECT_EQ(zmqc.comm_nmsg(), 0);
-//     auto *adrs = new utils::Address();
-//     ZMQComm_tester zmqr(name, adrs, RECV);
-//     EXPECT_EQ(zmqr.comm_nmsg(), 0);
-// #ifdef ELF_AVAILABLE
-//     name = "";
-//     ELF_BEGIN;
-//     // Failure when YGG_MODEL_INDEX not set
-//     {
-//       ZMQSocket::resetPort();
-//       std::string alt_name = "TestZMQComm";
-//       ELF_BEGIN_ALT_F(getenv);
-//       EXPECT_THROW(ZMQComm zmqc(alt_name, nullptr, SEND), std::runtime_error);
-//       ELF_END_F(getenv);
-//     }
-//     // Failure to create socket
-//     {
-//       ELF_BEGIN_F(zmq_socket);
-//       EXPECT_THROW(ZMQComm zmqc(name, nullptr, SEND), std::exception);
-//       ELF_END_F(zmq_socket);
-//     }
-//     // Failure to set socket options
-//     {
-//       ELF_BEGIN_F(zmq_setsockopt);
-//       EXPECT_THROW(ZMQComm zmqc(name, nullptr, SEND), std::runtime_error);
-//       ELF_END_F(zmq_setsockopt);
-//     }
-//     // Failure to connect
-//     {
-//       ELF_BEGIN_F(zmq_connect);
-//       EXPECT_THROW(ZMQComm zmqc("", new utils::Address("1.2.3.4"), RECV),
-// 		   std::exception);
-//       ELF_END_F(zmq_connect);
-//     }
-//     {
-//       // Advance port on bind to existing, then fail
-//       RETVAL = EADDRINUSE;
-//       ELF_BEGIN_F(zmq_bind);
-//       ELF_BEGIN_F(zmq_errno);
-//       EXPECT_THROW(ZMQComm zmqc(name, nullptr, SEND), std::runtime_error);
-//       ELF_END_F(zmq_bind);
-//       ELF_END_F(zmq_errno);
-//     }
-//     {
-//       // Failure to get socket options
-//       ELF_BEGIN_F(zmq_getsockopt);
-//       RETMSG = "";
-//       EXPECT_THROW(ZMQComm zmqc(name, nullptr, SEND), std::runtime_error);
-//       // Failure to get endpoint
-//       RETMSG = "invalid";
-//       EXPECT_THROW(ZMQComm zmqc(name, nullptr, SEND), std::runtime_error);
-//       ELF_END_F(zmq_getsockopt);
-//     }
-//     ELF_END;
-// #endif // ELF_AVAILABLE
 // }
+
+TEST(ZMQComm, constructor) {
+    std::string name = "";
+    ZMQSocket::resetPort();
+    ZMQComm_tester zmqc(name, nullptr, SEND);
+    EXPECT_EQ(zmqc.comm_nmsg(), 0);
+    auto *adrs = new utils::Address();
+    ZMQComm_tester zmqr(name, adrs, RECV);
+    EXPECT_EQ(zmqr.comm_nmsg(), 0);
+#ifdef ELF_AVAILABLE
+    name = "";
+    ELF_BEGIN;
+    // Failure when YGG_MODEL_INDEX not set
+    {
+      ZMQSocket::resetPort();
+      std::string alt_name = "TestZMQComm";
+      ELF_BEGIN_ALT_F(getenv);
+      EXPECT_THROW(ZMQComm zmqc(alt_name, nullptr, SEND), std::runtime_error);
+      ELF_END_F(getenv);
+    }
+    // Failure to create socket
+    {
+      ELF_BEGIN_F(zmq_socket);
+      EXPECT_THROW(ZMQComm zmqc(name, nullptr, SEND), std::exception);
+      ELF_END_F(zmq_socket);
+    }
+    // Failure to set socket options
+    {
+      ELF_BEGIN_F(zmq_setsockopt);
+      EXPECT_THROW(ZMQComm zmqc(name, nullptr, SEND), std::runtime_error);
+      ELF_END_F(zmq_setsockopt);
+    }
+    // Failure to connect
+    {
+      ELF_BEGIN_F(zmq_connect);
+      EXPECT_THROW(ZMQComm zmqc("", new utils::Address("1.2.3.4"), RECV),
+		   std::exception);
+      ELF_END_F(zmq_connect);
+    }
+    {
+      // Advance port on bind to existing, then fail
+      RETVAL = EADDRINUSE;
+      ELF_BEGIN_F(zmq_bind);
+      ELF_BEGIN_F(zmq_errno);
+      EXPECT_THROW(ZMQComm zmqc(name, nullptr, SEND), std::runtime_error);
+      ELF_END_F(zmq_bind);
+      ELF_END_F(zmq_errno);
+    }
+    {
+      // Failure to get socket options
+      ELF_BEGIN_F(zmq_getsockopt);
+      RETMSG = "";
+      EXPECT_THROW(ZMQComm zmqc(name, nullptr, SEND), std::runtime_error);
+      // Failure to get endpoint
+      RETMSG = "invalid";
+      EXPECT_THROW(ZMQComm zmqc(name, nullptr, SEND), std::runtime_error);
+      ELF_END_F(zmq_getsockopt);
+    }
+    ELF_END;
+#endif // ELF_AVAILABLE
+}
 
 TEST(ZMQComm, send) {
 #ifdef ELF_AVAILABLE
