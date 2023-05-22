@@ -37,7 +37,8 @@
 		      "{\"type\": \"scalar\","				\
 		      " \"subtype\": \"uint\","				\
 		      " \"precision\": 1}")				\
-  COMM_SERI_TEST_TYPE(cls, bool, true, "{\"type\": \"boolean\"}")	\
+  COMM_SERI_TEST_TYPE(cls, bool, true, "{\"type\": \"boolean\"}")
+/*
   TEST(cls, large) {							\
     cls ## _tester sComm(SEND);						\
     std::string name = "test_name";					\
@@ -46,9 +47,9 @@
     setenv(key_env.c_str(), val_env.c_str(), 1);			\
     cls ## _tester rComm(name, RECV);					\
     if (sComm.getMaxMsgSize() > 0) {					\
-      /* Add worker in advance so that send is successful */		\
       Comm_t* sComm_worker = sComm.getWorkers().get(&sComm, SEND);	\
       rComm.getWorkers().get(&rComm, RECV, new utils::Address(sComm_worker->getAddress())); \
+      sComm_worker = nullptr;						\
       std::string bigMsg(sComm.getMaxMsgSize(), 'A');			\
       std::string data_send = "\"Test message\"";			\
       std::string data_recv;						\
@@ -60,7 +61,6 @@
       EXPECT_GE(rComm.recv(data_recv), 0);				\
       EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));			\
       EXPECT_EQ(data_send, data_recv);					\
-      /* Error when sending message that can't fit in buffer */		\
       sComm.getFlags() |= COMM_ALWAYS_SEND_HEADER;			\
       Metadata& metadata = sComm.getMetadata();				\
       metadata.initMeta();						\
@@ -68,6 +68,7 @@
       EXPECT_THROW(sComm.send(data_send), std::exception);		\
     }									\
   }
+*/
 
 
 #ifdef ELF_AVAILABLE

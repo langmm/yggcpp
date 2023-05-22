@@ -85,8 +85,8 @@ Comm_t::Comm_t(const std::string &name, DIRECTION direction, const COMM_TYPE &t,
 }
 
 Comm_t::~Comm_t() {
-    if (index_in_register >= 0)
-      Comm_t::registry[index_in_register] = NULL;
+    // if (index_in_register >= 0)
+    //   Comm_t::registry[index_in_register] = NULL;
     ygglog_debug << "~CommBase: Started" << std::endl;
     if (address)
         delete address;
@@ -466,8 +466,8 @@ int Comm_t::vSend(rapidjson::VarArgList& ap) {
 
 std::vector<Comm_t*> Comm_t::registry;
 
-void Comm_t::register_comm(Comm_t* x) {
+void Comm_t::register_comm(Comm_t*) {
   // TODO: init python, numpy, zmq
-  x->index_in_register = Comm_t::registry.size();
-  Comm_t::registry.push_back(x);
+  // x->index_in_register = Comm_t::registry.size();
+  // Comm_t::registry.push_back(x);
 }
