@@ -568,6 +568,7 @@ ZMQComm::ZMQComm(const std::string name, const DIRECTION direction,
 }
 
 ZMQComm::~ZMQComm() {
+    ygglog_debug << "~ZMQComm: Started" << std::endl;
     if ((direction == RECV) && this->is_open() &&
         (!(flags & COMM_EOF_RECV))) {
         if (utils::_ygg_error_flag == 0) {
@@ -583,6 +584,7 @@ ZMQComm::~ZMQComm() {
 	      free(data);
         }
     }
+    ygglog_debug << "~ZMQComm: Finished" << std::endl;
 }
 
 int ZMQComm::comm_nmsg() const {

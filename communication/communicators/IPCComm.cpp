@@ -12,6 +12,7 @@ bool IPCComm::_ipc_rand_seeded = false;
 #ifdef IPCINSTALLED
 
 IPCComm::~IPCComm() {
+    ygglog_debug << "~IPCComm: Started" << std::endl;
     if (handle) {
         if (direction == RECV) {
             remove_comm(true);
@@ -25,6 +26,7 @@ IPCComm::~IPCComm() {
         delete handle;
         handle = nullptr;
     }
+    ygglog_debug << "~IPCComm: Finished" << std::endl;
 }
 
 /*!

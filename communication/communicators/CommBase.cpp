@@ -87,10 +87,10 @@ Comm_t::Comm_t(const std::string &name, DIRECTION direction, const COMM_TYPE &t,
 Comm_t::~Comm_t() {
     // if (index_in_register >= 0)
     //   Comm_t::registry[index_in_register] = NULL;
-    ygglog_debug << "~CommBase: Started" << std::endl;
+    ygglog_debug << "~Comm_t: Started" << std::endl;
     if (address)
         delete address;
-    ygglog_debug << "~CommBase: Finished" << std::endl;
+    ygglog_debug << "~Comm_t: Finished" << std::endl;
 }
 
 void Comm_t::addSchema(const Metadata& s) {
