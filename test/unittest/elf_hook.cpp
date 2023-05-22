@@ -445,8 +445,10 @@ void *elf_hook(char const *module_filename, void const *module_address, const st
     *name_address = NULL;  //address of relocation for symbol named "name"
 
     void *original = NULL;  //address of the symbol being substituted
-    if (NULL == module_address || name.empty() || NULL == substitution)
+    if (NULL == module_address || name.empty() || NULL == substitution) {
+        std::cerr << "elf_hook ERROR in args" << std::endl;
         return original;
+    }
 
     if (!pagesize)
         pagesize = static_cast<size_t>(sysconf(_SC_PAGESIZE));
@@ -464,6 +466,7 @@ void *elf_hook(char const *module_filename, void const *module_address, const st
         section_by_name(descriptor, REL_DYN, &rel_dyn)  //get ".rel.dyn" (for 32-bit) or ".rela.dyn" (for 64-bit) section
        )
     {  //if something went wrong
+        std::cerr << "elf_hook ERROR in locating symbol" << std::endl;
         free(dynsym);
         free(rel_plt);
         free(rel_dyn);
@@ -479,6 +482,7 @@ void *elf_hook(char const *module_filename, void const *module_address, const st
       rel_plt_table = (Elf64_Rela *)(((size_t)module_address) + rel_plt->sh_addr);  //init the ".rel.plt" array
       rel_plt_amount = rel_plt->sh_size / sizeof(Elf_Rel);  //and get its size
     } else {
+      std::cerr << "elf_hook rel_plt is NULL" << std::endl;
       rel_plt_amount = 0;
     }
 
@@ -486,6 +490,7 @@ void *elf_hook(char const *module_filename, void const *module_address, const st
       rel_dyn_table = (Elf_Rel *)(((size_t)module_address) + rel_dyn->sh_addr);  //init the ".rel.dyn" array
       rel_dyn_amount = rel_dyn->sh_size / sizeof(Elf_Rel);  //and get its size
     } else {
+      std::cerr << "elf_hook rel_dyn is NULL" << std::endl;
       rel_dyn_amount = 0;
     }
 //release the data used
@@ -505,12 +510,15 @@ void *elf_hook(char const *module_filename, void const *module_address, const st
             break;  //the target symbol appears in ".rel.plt" only once
         }
 
-    if (original)
+    if (original) {
+        std::cerr << "elf_hook Function found in rel.plt" << std::endl;
         return original;
+    }
 //we will get here only with 32-bit non-PIC module
     for (i = 0; i < rel_dyn_amount; ++i)  //lookup the ".rel.dyn" table
         if (ELF_R_SYM(rel_dyn_table[i].r_info) == name_index)  //if we found the symbol to substitute in ".rel.dyn"
         {
+	    std::cerr << "elf_hook function found in rel.dyn" << std::endl;
             name_address = (std::atomic_size_t *) (((size_t) module_address) +
                                        rel_dyn_table[i].r_offset);  //get the relocation address (address of a relative CALL (0xE8) instruction's argument)
 
@@ -521,6 +529,7 @@ void *elf_hook(char const *module_filename, void const *module_address, const st
             if (mprotect((void *) (((size_t) name_address) & (((size_t) -1) ^ (pagesize - 1))), pagesize,
                          PROT_READ | PROT_WRITE) < 0)  //mark a memory page that contains the relocation as writable
             {
+	        std::cerr << "elf_hook ERROR in mprotect 1" << std::endl;
                 return NULL;
             }
 
@@ -532,11 +541,13 @@ void *elf_hook(char const *module_filename, void const *module_address, const st
             {
                 *name_address = (size_t) original - (size_t) name_address -
                                 sizeof(size_t);  //if something went wrong then restore the original function address
+		std::cerr << "elf_hook ERROR in mprotect 2" << std::endl;
                 return NULL;
             }
         }
 
-
+    if (!original)
+      std::cerr << "elf_hook ERROR returning NULL" << std::endl;
     return original;
 }
 
