@@ -11,7 +11,6 @@ using namespace communication::communicator;
 using namespace communication::utils;
 
 #ifdef ZMQINSTALLED
-#include <boost/algorithm/string.hpp>
 
 // const std::chrono::milliseconds timeout{1000};
 // const std::chrono::milliseconds short_timeout{10};
@@ -571,7 +570,7 @@ ZMQComm::~ZMQComm() {
     ygglog_debug << "~ZMQComm: Started" << std::endl;
     if ((direction == RECV) && this->is_open() &&
         (!(flags & COMM_EOF_RECV))) {
-        if (utils::_ygg_error_flag == 0) {
+      if (utils::YggdrasilLogger::_ygg_error_flag == 0) {
 	    size_t data_len = 0;
             char *data = NULL;
             while (comm_nmsg() > 0) {

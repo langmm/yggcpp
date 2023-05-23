@@ -36,7 +36,7 @@ int find_match_c(const char *regex_text, const char *to_match,
   std::string str(to_match);
   return (int)(find_match(re, str, 0, *sind, *eind));
 }
-  
+
 size_t count_matches(const std::regex &re, const std::string &to_match) {
     // Loop until string done
     std::smatch sm;
@@ -92,5 +92,23 @@ size_t regex_replace(std::string &buf, const std::regex &re, const std::string &
     return nrep;
 }
 
+std::vector<std::string> split(const std::string &x,
+			       const std::string& substr) {
+  size_t pos = 0, last_pos = 0;
+  std::vector<std::string> out;
+  while (true) {
+    last_pos = pos;
+    pos = x.find(substr, pos);
+    if (pos == std::string::npos) {
+      out.push_back(x.substr(last_pos));
+      break;
+    }
+    out.push_back(x.substr(last_pos, pos - last_pos));
+    pos += substr.size();
+  }
+  return out;
+}
+  
+  
 }
 }

@@ -100,5 +100,9 @@ const std::regex RE_UINT("%([[:digit:]]*)[uoxX]", std::regex::extended);
 //const std::regex RE_STRLEN("%(\\.)?([[:digit:]]*)s(.*)", std::regex::extended);
 //const std::regex (, std::regex::extended);
 //const std::regex (, std::regex::extended);
+
+std::vector<std::string> split(const std::string &x,
+			       const std::string& substr);
+  
 }
 }

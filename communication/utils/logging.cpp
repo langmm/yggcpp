@@ -1,46 +1,50 @@
 #include "logging.hpp"
 #include "tools.hpp"
-#ifndef YGG_TEST
-#include <boost/log/core.hpp>
-#include <boost/log/expressions.hpp>
+
+namespace communication {
+namespace utils {
+  
+int YggdrasilLogger::_ygg_error_flag = 0;
+YggdrasilLogger::YggdrasilLogger(std::string nme, size_t lvl, bool is_err) :
+  name(nme), level(lvl), is_error(is_err), ss() {
+}
+YggdrasilLogger::~YggdrasilLogger() {
+  std::string out = ss.str();
+  if (eval() && !out.empty()) {
+    std::cout << name << ": " << _getLogPretex() << out;
+  }
+}
+YggdrasilLogger::YggdrasilLogger(const YggdrasilLogger& other) :
+  name(other.name), level(other.level), is_error(other.is_error), ss() {}
+bool YggdrasilLogger::eval() {
+  if (is_error)
+    YggdrasilLogger::_ygg_error_flag = 1;
+#ifdef YGG_DEBUG
+  if (YGG_DEBUG <= level)
+      return true;
 #endif
-
-int communication::utils::_ygg_error_flag = 0;
-bool communication::utils::_loginit = false;
-
-std::string communication::utils::_getLogPretex() {
-    if (!communication::utils::_loginit)
-        communication::utils::init_logger();
-    std::string out = std::to_string(ygg_getpid()) + ":" + std::to_string(get_thread_id()) + " ";
-    char *model_name = getenv("YGG_MODEL_NAME");
-    if (model_name != nullptr) {
-        out += model_name;
-        char *model_copy = getenv("YGG_MODEL_COPY");
-        if (model_copy != nullptr) {
-            out += "_copy" + std::string(model_copy);
-        }
-        out += " ";
+  return is_error;
+}
+std::string YggdrasilLogger::_getLogPretex() {
+  std::string out = std::to_string(ygg_getpid()) + ":" + std::to_string(get_thread_id()) + " ";
+  char *model_name = getenv("YGG_MODEL_NAME");
+  if (model_name != nullptr) {
+    out += model_name;
+    char *model_copy = getenv("YGG_MODEL_COPY");
+    if (model_copy != nullptr) {
+      out += "_copy" + std::string(model_copy);
     }
-    return out;
+    out += " ";
+  }
+  return out;
 }
 
-void communication::utils::init_logger() {
-#ifndef YGG_TEST
-    boost::log::core::get()->set_filter(boost::log::trivial::severity >= loggingLevel);
-#endif
-    communication::utils::_loginit = true;
+void ygglog_throw_error(const std::string& msg) {
+  ygglog_error << msg << std::endl;
+  throw std::exception();
 }
 
-void communication::utils::_set_error() {
-  communication::utils::_ygg_error_flag = 1;
-}
-
-void communication::utils::ygglog_throw_error(const std::string& msg) {
-    ygglog_error << msg << std::endl;
-    throw std::exception();
-}
-
-std::string communication::utils::string_format(const std::string fmt, ...) {
+std::string string_format(const std::string fmt, ...) {
   int size = ((int)fmt.size()) * 2 + 50;   // Use a rubric appropriate for your code
   std::string str;
   va_list ap;
@@ -60,3 +64,5 @@ std::string communication::utils::string_format(const std::string fmt, ...) {
   }
   return str;
 }
+
+}}
