@@ -35,26 +35,13 @@ jobs:
             install-mpi: false
           - python-install: conda
             with-asan: true
-          # - install-zmq: true
-          #   install-mpi: false
-          # - install-zmq: false
-          #   install-mpi: false
-          # - python-install: pip
-          #   install-zmq: true
-          #   install-mpi: true
-          # - with-asan: true
-          #   install-mpi: true
-          # - with-asan: false
-          #   install-mpi: false
-          # - with-asan: false
-          #   install-zmq: false
         include:
           - os: ubuntu-latest
             python-install: pip
             install-zmq: true
             install-mpi: true
             with-coverage: true
-            with-asan: false
+            with-asan: true
             with-elf: true
             with-valgrind: false
           - os: ubuntu-latest
