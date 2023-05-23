@@ -194,6 +194,8 @@ Comm_t* communication::communicator::new_Comm_t(const DIRECTION& dir, const COMM
     switch(type) {
         case NULL_COMM:
             break;
+        case DEFAULT_COMM:
+	    return new COMM_BASE(name, (address) ? nullptr : new Address(address), dir);
         case IPC_COMM:
             return new IPCComm(name, (address) ? nullptr : new Address(address), dir);
         case ZMQ_COMM:

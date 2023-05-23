@@ -1,7 +1,6 @@
 #pragma once
 
-#include "DefaultComm.hpp"
-#include "Requests.hpp"
+#include "RPCComm.hpp"
 #ifdef COMM_BASE
 namespace communication {
 namespace communicator {
@@ -11,7 +10,7 @@ namespace communicator {
  * is determined at compile time based on available packages. It will be either
  * an IPCComm or ZMQComm
  */
-class ClientComm : public COMM_BASE {
+class ClientComm : public RPCComm {
 public:
     /**
      * Constructor
@@ -22,7 +21,7 @@ public:
     explicit ClientComm(const std::string &name = "",
 			utils::Address *address = nullptr,
 			int flgs = 0);
-    explicit ClientComm(const std::string& name, int flgs = 0);
+    explicit ClientComm(const std::string name, int flgs = 0);
 
     /**
      * Destructor
@@ -31,9 +30,9 @@ public:
     void set_timeout_recv(int new_timeout) override;
     int wait_for_recv(const int& tout) override;
 
-    using Comm_t::send;
-    using Comm_t::recv;
-    using COMM_BASE::comm_nmsg;
+    using RPCComm::send;
+    using RPCComm::recv;
+    using RPCComm::comm_nmsg;
 
 #ifndef YGG_TEST
 protected:
@@ -55,7 +54,6 @@ protected:
 private:
 #endif
     static unsigned _client_rand_seeded;
-    RequestList requests;
 };
 
 }

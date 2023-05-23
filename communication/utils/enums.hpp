@@ -11,6 +11,7 @@ extern "C" {
  */
 enum COMM_TYPE {
     NULL_COMM,   //!< No type
+    DEFAULT_COMM,//!< Default communicator
     IPC_COMM,    //!< IPC based communicator
     ZMQ_COMM,    //!< ZeroMQ based communicator
     SERVER_COMM, //!< Server communicator

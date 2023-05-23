@@ -9,21 +9,21 @@ using namespace communication::utils;
 unsigned ClientComm::_client_rand_seeded = 0;
 
 ClientComm::ClientComm(const std::string &name, Address *address,
-                       int flgs) :
-        COMM_BASE(name, address, SEND,
-                  flgs | COMM_FLAG_CLIENT | COMM_ALWAYS_SEND_HEADER),
-        requests(RECV) {
-    // Called to create temp comm for send/recv
-    if (name.empty() && address && address->valid())
-        return;
-    init();
+		       int flgs) :
+  RPCComm(name, address,
+	  flgs | COMM_FLAG_CLIENT | COMM_ALWAYS_SEND_HEADER,
+	  SEND, RECV) {
+  // Called to create temp comm for send/recv
+  if (name.empty() && address && address->valid())
+      return;
+  init();
 }
 
-ClientComm::ClientComm(const std::string& name, int flgs) :
-        COMM_BASE(name, SEND,
-                  flgs | COMM_FLAG_CLIENT | COMM_ALWAYS_SEND_HEADER),
-        requests(RECV) {
-    init();
+ClientComm::ClientComm(const std::string name, int flgs) :
+  RPCComm(name,
+	  flgs | COMM_FLAG_CLIENT | COMM_ALWAYS_SEND_HEADER,
+	  SEND, RECV) {
+  init();
 }
 
 void ClientComm::set_timeout_recv(int new_timeout) {
