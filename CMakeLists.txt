@@ -457,14 +457,14 @@ endif()
 # Boost #
 #########
 
-find_package(Boost REQUIRED COMPONENTS log regex)
-add_definitions(-DBOOST_LOG_DYN_LINK)
-message(STATUS "Boost found Boost_INCLUDE_DIRS = ${Boost_INCLUDE_DIRS}")
-set(DEPS_LIBRARIES ${DEPS_LIBRARIES} ${Boost_LIBRARIES})
-set(DEPS_INCLUDE_DIRS ${DEPS_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
-if (NOT Boost_DATE_TIME_FOUND)
-    add_definitions(-DBOOST_DATE_TIME_NO_LIB)
-endif()
+# find_package(Boost REQUIRED COMPONENTS log regex)
+# add_definitions(-DBOOST_LOG_DYN_LINK)
+# message(STATUS "Boost found Boost_INCLUDE_DIRS = ${Boost_INCLUDE_DIRS}")
+# set(DEPS_LIBRARIES ${DEPS_LIBRARIES} ${Boost_LIBRARIES})
+# set(DEPS_INCLUDE_DIRS ${DEPS_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
+# if (NOT Boost_DATE_TIME_FOUND)
+#     add_definitions(-DBOOST_DATE_TIME_NO_LIB)
+# endif()
 
 ##################
 # IPC dependency #
@@ -590,8 +590,8 @@ if(BUILD_PYTHON_LIBRARY)
     target_link_libraries(pyygg boost_python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR} ${DEPS_LIB_NAMES}) # ${DEPS_LIBRARIES})
     message("PYTHON")
 
-else()
-    find_package(Boost REQUIRED COMPONENTS log)
+# else()
+#     find_package(Boost REQUIRED COMPONENTS log)
 endif()
 ##############################
 
