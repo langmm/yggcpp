@@ -1,26 +1,23 @@
 #pragma once
 
 #include <vector>
-#include "DefaultComm.hpp"
-#include "CommBase.hpp"
-#include "Requests.hpp"
+#include "RPCComm.hpp"
 
 #ifdef COMM_BASE
 namespace communication {
 namespace communicator {
 
 // @brief Structure for storing requests
-class ServerComm : public COMM_BASE {
+class ServerComm : public RPCComm {
 public:
     explicit ServerComm(const std::string &name = "",
 			utils::Address *address = nullptr,
 			int flgs = 0);
     explicit ServerComm(const std::string name, int flgs = 0);
-    ~ServerComm() override {}
 
-    using Comm_t::send;
-    using Comm_t::recv;
-    using COMM_BASE::comm_nmsg;
+    using RPCComm::send;
+    using RPCComm::recv;
+    using RPCComm::comm_nmsg;
 
 #ifndef YGG_TEST
 protected:
@@ -36,10 +33,6 @@ protected:
     int send_single(const char *data, const size_t &len,
 		    const Header& header) override;
 
-#ifndef YGG_TEST
-private:
-#endif
-    RequestList requests;
 };
 
 }

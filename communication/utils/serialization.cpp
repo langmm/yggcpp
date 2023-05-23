@@ -598,9 +598,9 @@ int Metadata::serialize(char **buf, size_t *buf_siz,
     buf_siz[0] = (size_t)(buffer.GetLength() + 1);
     char* buf_t = (char*)realloc(buf[0], buf_siz[0]);
     if (buf_t == NULL) {
-      ygglog_throw_error_c("Metadata::serialize: Error in realloc");
+      ygglog_error << "Metadata::serialize: Error in realloc" << std::endl;
+      throw std::exception();
     }
-    std::cerr << "serialize: successful realloc to " << buf_siz[0] << std::endl;
     buf[0] = buf_t;
   }
   memcpy(buf[0], buffer.GetString(), (size_t)(buffer.GetLength()));

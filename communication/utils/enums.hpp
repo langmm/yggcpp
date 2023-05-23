@@ -8,7 +8,7 @@ extern "C" {
 #endif
 
 enum COMM_TYPE {
-    NULL_COMM, IPC_COMM, ZMQ_COMM,
+    NULL_COMM, DEFAULT_COMM, IPC_COMM, ZMQ_COMM,
     SERVER_COMM, CLIENT_COMM,
     MPI_COMM
 };

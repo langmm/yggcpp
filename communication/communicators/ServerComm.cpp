@@ -1,5 +1,4 @@
 #include "ServerComm.hpp"
-#include "DefaultComm.hpp"
 #include "utils/tools.hpp"
 
 #ifdef COMM_BASE
@@ -9,9 +8,9 @@ using namespace communication::utils;
 
 ServerComm::ServerComm(const std::string &name, Address *address,
 		       int flgs) :
-  COMM_BASE(name, address, RECV,
-	    flgs | COMM_FLAG_SERVER | COMM_ALWAYS_SEND_HEADER),
-  requests(SEND) {
+  RPCComm(name, address,
+	  flgs | COMM_FLAG_SERVER | COMM_ALWAYS_SEND_HEADER,
+	  RECV, SEND) {
   // Called to create temp comm for send/recv
   if (name.empty() && address && address->valid())
     return;
@@ -19,9 +18,9 @@ ServerComm::ServerComm(const std::string &name, Address *address,
 }
 
 ServerComm::ServerComm(const std::string name, int flgs) :
-  COMM_BASE(name, RECV,
-	    flgs | COMM_FLAG_SERVER | COMM_ALWAYS_SEND_HEADER),
-  requests(SEND) {
+  RPCComm(name,
+	  flgs | COMM_FLAG_SERVER | COMM_ALWAYS_SEND_HEADER,
+	  RECV, SEND) {
   init();
 }
 

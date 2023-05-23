@@ -445,7 +445,6 @@ TEST(Metadata, serialize_errors) {
 #ifdef ELF_AVAILABLE
   ELF_BEGIN;
   ELF_BEGIN_F(realloc);
-  std::cerr << "BEFORE EXPECTED ERROR: " << len << std::endl;
   EXPECT_THROW(x.serialize(&buf, &len, 1, true), std::exception);
   ELF_END_F(realloc);
   ELF_END;
