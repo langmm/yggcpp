@@ -277,24 +277,21 @@ static int symbol_by_name(int d, Elf_Shdr *section, const std::string& name, Elf
     if (start != std::string::npos) {
         std::string a = repname.substr(start + 1);
         repname.resize(start);
-        boost::split(args, a, boost::is_any_of("|"));
+	std::istringstream astream(a);
+	std::string s;
+	while (getline(astream, s, '|'))
+	  args.push_back(s);
     }
     if (repname.find("::") != std::string::npos) {
         repname = std::regex_replace(repname, std::regex("<(\\S+)>"), "\\D+\\d{1,2}$1\\D{1,2}");
-        //std::vector<std::string> symbolNames(amount);
-        //std::vector<std::string> parts;
-        //boost::algorithm::split_regex(parts, name, token);
         std::string regexstr = "\\S+" + std::regex_replace(repname, std::regex("::"), "\\d{1,2}");
-        //for(i = 1; i < parts.size(); i++) {
-        //    regexstr += "\\d{1,2}" + parts[i];
-        //}
         regexstr += "(?:[A-Z]|\\d)";
-        boost::regex regex{regexstr};
+        std::regex regex(regexstr);
 
         for (i = 0; i < amount; i++) {
             std::string sname = &strings[symbols[i].st_name];
-            boost::smatch smatch;
-            if (boost::regex_search(sname, smatch, regex)) {
+            std::smatch smatch;
+            if (std::regex_search(sname, smatch, regex)) {
                 if (!args.empty()) {
                     std::string match = smatch[0];
                     size_t start = sname.find(match) + match.size();

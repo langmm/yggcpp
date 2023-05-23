@@ -5,8 +5,6 @@
 #include <cerrno>
 #include <vector>
 #include <atomic>
-#include <boost/algorithm/string.hpp>
-#include <boost/regex.hpp>
 #include <regex>
 
 //#ifdef __cplusplus

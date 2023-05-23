@@ -95,9 +95,6 @@ ssize_t msgrcv(int a, void* buf, size_t msz, long mtype, int flags);
 
 void* realloc(void* ptr, size_t size);
 
-namespace boost {
-
-}
 #ifdef ZMQCPPINSTALLED
 namespace zmq {
 void message_tD();
