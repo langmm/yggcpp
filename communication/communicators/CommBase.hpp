@@ -65,6 +65,7 @@ const int COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
 namespace communication {
 
 namespace communicator {
+
 class ServerComm;
 
 class ClientComm;
@@ -310,6 +311,8 @@ public:
     void addSchema(const std::string& schemaStr, bool isMetadata = false);
     void addFormat(const std::string& format_str, bool as_array = false);
 
+    static void _ygg_cleanup();
+
 private:
     int deserialize(const char* buf, rapidjson::VarArgList& ap);
     int serialize(char*& buf, size_t& buf_siz,
@@ -324,6 +327,10 @@ protected:
     friend Worker;
     friend WorkerList;
 
+    static int _ygg_initialized;
+    static int _ygg_finalized;
+    static void _ygg_init();
+  
     void updateMaxMsgSize(size_t new_size) {
       if (maxMsgSize == 0 || new_size < maxMsgSize)
 	maxMsgSize = new_size;

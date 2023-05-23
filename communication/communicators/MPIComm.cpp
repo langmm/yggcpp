@@ -1,5 +1,4 @@
 #include "MPIComm.hpp"
-#include <boost/algorithm/string.hpp>
 #ifdef MPIINSTALLED
 #include <mpi.h>
 #endif /*MPIINSTALLED*/
@@ -88,8 +87,7 @@ void MPIComm::init() {
     }
     handle->procs.clear();
     handle->tag = 0;
-    std::vector<std::string> adrs;
-    boost::split(adrs, this->address->address(), boost::is_any_of(","));
+    std::vector<std::string> adrs = communication::utils::split(this->address->address(), ",");
     addresses.push_back(this->address);
     if (adrs.size() > 1) {
         addresses[0]->address(adrs[0]);

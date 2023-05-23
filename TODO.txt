@@ -2,16 +2,10 @@
 * Add YggIterface.h C interface with tests
 * Update handling of dtype in C
 * Get tests working on GHA
-  * Fix path on windows from DLL_DIRECTORY
   * Fix Metadata.serialize_errors that dosn't throw an error on linux for replaced realloc
-  * Fix (or ignore) possibly lost bytes in ZMQComm (ln 125)
 * Improve coverage and strip out unused code
 * Add tests for RequestList
-* Set _ygg_error_flag on error so that exit code can be set accordingly
-* Initialize python/zeromq
-* Clean up communicators on exit
 * Move address away from pointer?
 * Automated documentation using doxygen
 * Fill in missing docs
 * Fix handling of multiple connections in ZMQ socket (restricted to ZMQ_PAIR to simplify testing)
-* Split serialization.hpp into files for easier maintenance (this should be the last thing done)

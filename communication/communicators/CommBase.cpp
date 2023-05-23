@@ -3,11 +3,78 @@
 using namespace communication::communicator;
 using namespace communication::utils;
 
+void _cleanup_wrapper() {
+  Comm_t::_ygg_cleanup();
+}
+
+void Comm_t::_ygg_init() {
+#ifdef _OPENMP
+#pragma omp critical (init)
+  {
+#endif
+    if (Comm_t::_ygg_initialized)
+      return;
+    ygglog_debug << "_ygg_init: Begin initialization" << std::endl;
+#if defined(ZMQINSTALLED)
+    ZMQContext* ctx = new ZMQContext();
+    delete ctx;
+#endif
+#ifndef YGGDRASIL_DISABLE_PYTHON_C_API
+    rapidjson::initialize_python("_ygg_init");
+#endif // YGGDRASIL_DISABLE_PYTHON_C_API
+    ygglog_debug << "_ygg_init: Registering cleanup" << std::endl;
+    std::atexit(_cleanup_wrapper);
+    Comm_t::_ygg_initialized = 1;
+#ifdef _OPENMP
+  }
+#endif
+}
+void Comm_t::_ygg_cleanup() {
+#ifdef _OPENMP
+#pragma omp critical (clean)
+  {
+#endif
+    if (!Comm_t::_ygg_finalized) {
+      ygglog_debug << "_ygg_cleanup: Begin cleanup" << std::endl;
+      for (size_t i = 0; i < Comm_t::registry.size(); i++) {
+	if (Comm_t::registry[i])
+	  delete Comm_t::registry[i];
+      }
+#ifdef _OPENMP
+#pragma omp critical (comms)
+      {
+#endif
+	Comm_t::registry.clear();
+#if defined(ZMQINSTALLED)
+	ZMQContext::destroy();
+#endif
+#ifndef YGGDRASIL_DISABLE_PYTHON_C_API
+	rapidjson::finalize_python("_ygg_cleanup");
+#endif // YGGDRASIL_DISABLE_PYTHON_C_API
+#ifdef _OPENMP
+      }
+#endif
+      Comm_t::_ygg_finalized = 1;
+      ygglog_debug << "_ygg_cleanup: Cleanup complete" << std::endl;
+    }
+#ifdef _OPENMP
+  }
+#endif
+#ifndef YGG_TEST
+  if (YggLogger::_ygg_error_flag) {
+    _exit(YggLogger::_ygg_error_flag);
+  }
+#endif // YGG_TEST
+}
+
+int Comm_t::_ygg_initialized = 0;
+int Comm_t::_ygg_finalized = 0;
 
 Comm_t::Comm_t(Address *address, DIRECTION dirn, const COMM_TYPE &t, int flgs) :
-        type(t), name(), address(address), direction(dirn), flags(flgs),
-        maxMsgSize(COMM_BASE_MAX_MSG_SIZE), msgBufSize(0), index_in_register(-1),
-        thread_id(-1), metadata(), timeout_recv(YGG_MAX_TIME), workers() {
+  type(t), name(), address(address), direction(dirn), flags(flgs),
+  maxMsgSize(COMM_BASE_MAX_MSG_SIZE), msgBufSize(0), index_in_register(-1),
+  thread_id(-1), metadata(), timeout_recv(YGG_MAX_TIME), workers() {
+    _ygg_init();
 
     flags |= COMM_FLAG_VALID;
     if (direction == NONE)
@@ -85,8 +152,15 @@ Comm_t::Comm_t(const std::string &name, DIRECTION direction, const COMM_TYPE &t,
 }
 
 Comm_t::~Comm_t() {
-    // if (index_in_register >= 0)
-    //   Comm_t::registry[index_in_register] = NULL;
+#ifdef _OPENMP
+#pragma omp critical (comms)
+  {
+#endif
+    if (index_in_register >= 0)
+      Comm_t::registry[index_in_register] = NULL;
+#ifdef _OPENMP
+  }
+#endif
     ygglog_debug << "~Comm_t: Started" << std::endl;
     if (address)
         delete address;
@@ -466,8 +540,15 @@ int Comm_t::vSend(rapidjson::VarArgList& ap) {
 
 std::vector<Comm_t*> Comm_t::registry;
 
-void Comm_t::register_comm(Comm_t*) {
+void Comm_t::register_comm(Comm_t* x) {
   // TODO: init python, numpy, zmq
-  // x->index_in_register = Comm_t::registry.size();
-  // Comm_t::registry.push_back(x);
+#ifdef _OPENMP
+#pragma omp critical (comms)
+  {
+#endif
+  x->index_in_register = Comm_t::registry.size();
+  Comm_t::registry.push_back(x);
+#ifdef _OPENMP
+  }
+#endif
 }
