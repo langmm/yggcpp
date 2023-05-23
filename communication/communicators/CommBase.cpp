@@ -12,19 +12,19 @@ void Comm_t::_ygg_init() {
 #pragma omp critical (init)
   {
 #endif
-    if (Comm_t::_ygg_initialized)
-      return;
-    ygglog_debug << "_ygg_init: Begin initialization" << std::endl;
+    if (!Comm_t::_ygg_initialized) {
+      ygglog_debug << "_ygg_init: Begin initialization" << std::endl;
 #if defined(ZMQINSTALLED)
-    ZMQContext* ctx = new ZMQContext();
-    delete ctx;
+      ZMQContext* ctx = new ZMQContext();
+      delete ctx;
 #endif
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
-    rapidjson::initialize_python("_ygg_init");
+      rapidjson::initialize_python("_ygg_init");
 #endif // YGGDRASIL_DISABLE_PYTHON_C_API
-    ygglog_debug << "_ygg_init: Registering cleanup" << std::endl;
-    std::atexit(_cleanup_wrapper);
-    Comm_t::_ygg_initialized = 1;
+      ygglog_debug << "_ygg_init: Registering cleanup" << std::endl;
+      std::atexit(_cleanup_wrapper);
+      Comm_t::_ygg_initialized = 1;
+    }
 #ifdef _OPENMP
   }
 #endif
