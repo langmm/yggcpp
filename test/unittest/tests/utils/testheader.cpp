@@ -439,20 +439,22 @@ TEST(Metadata, serialize_errors) {
   EXPECT_THROW(x.serialize(&buf, &len, va), std::exception);
   x.fromSchema("{\"type\": \"boolean\"}");
   EXPECT_THROW(x.serialize(&buf, &len, va), std::exception);
-  // free(buf);
-  // buf = NULL;
-  // len = 0;
-#ifdef ELF_AVAILABLE
-  ELF_BEGIN;
-  ELF_BEGIN_F(realloc);
-  EXPECT_THROW(x.serialize(&buf, &len, 1, true), std::exception);
-  ELF_END_F(realloc);
-  ELF_END;
-#endif // ELF_AVAILABLE
   EXPECT_EQ(x.serialize(&buf, &len, 1, true), 4);
   EXPECT_EQ(strcmp(buf, "true"), 0);
   EXPECT_EQ(len, 5);
   free(buf);
+  free(buf);
+  buf = NULL;
+  len = 0;
+#ifdef ELF_AVAILABLE
+  ELF_BEGIN;
+  ELF_BEGIN_F(realloc);
+  EXPECT_THROW(x.serialize(&buf, &len, 1, true), std::exception);
+  std::cerr << "After realloc test" << std::endl;
+  ELF_END_F(realloc);
+  ELF_END;
+  std::cerr << "After realloc restored" << std::endl;
+#endif // ELF_AVAILABLE
 }
 
 TEST(Header, for_send) {
