@@ -443,7 +443,6 @@ TEST(Metadata, serialize_errors) {
   EXPECT_EQ(strcmp(buf, "true"), 0);
   EXPECT_EQ(len, 5);
   free(buf);
-  free(buf);
   buf = NULL;
   len = 0;
 #ifdef ELF_AVAILABLE
