@@ -114,6 +114,13 @@ private:
 		  bool isMetadata = false, bool use_generic = false);
   void Normalize();
   void fromSchema(const std::string schemaStr, bool use_generic = false);
+  template<typename T>
+  void fromData(const T& data) {
+    rapidjson::Document d;
+    d.Set(data, d.GetAllocator());
+    fromData(d, true);
+  }
+  void fromData(const rapidjson::Document& data, bool indirect=false);
   void fromType(const std::string type, bool use_generic=false,
 		bool dont_init = false);
   void fromScalar(const std::string subtype, size_t precision,
@@ -136,6 +143,7 @@ private:
   rapidjson::Document::AllocatorType& GetAllocator();
   bool isGeneric() const;
   void setGeneric();
+  bool isFormatArray() const;
   bool empty() const;
   bool hasType() const;
   bool hasSubtype() const;

@@ -51,10 +51,8 @@ namespace communicator {
     void destroy() {
       for (size_t i = 0; i < comms.size(); i++) {
 	if (comms[i] != NULL) {
-	  std::cerr << "~RequestList: deleting comm" << std::endl;
 	  delete comms[i];
 	  comms[i] = NULL;
-	  std::cerr << "~RequestList: deleted comm" << std::endl;
 	}
       }
       comms.resize(0);
@@ -340,6 +338,9 @@ namespace communicator {
 	return false;
       return requests[(size_t)idx].complete;
     }
+    void addResponseSchema(const std::string& s) {
+      response_metadata.fromSchema(s);
+    }
     void addResponseSchema(const rapidjson::Value& s) {
       response_metadata.fromSchema(s);
     }
@@ -350,9 +351,8 @@ namespace communicator {
       if (header.flags & HEAD_FLAG_EOF) {
 	std::string partner_model(header.GetMetaString("model"));
 	int idx = hasPartner(partner_model);
-	if (idx > 0) {
+	if (idx >= 0)
 	  partners[static_cast<size_t>(idx)].signed_off = true;
-	}
 	for (size_t i = 0; i < partners.size(); i++) {
 	  if (!partners[i].signed_off)
 	    return false;

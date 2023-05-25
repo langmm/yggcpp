@@ -20,11 +20,15 @@ public:
   using Comm_t::recv;
   using COMM_BASE::comm_nmsg;
   
-  void addResponseFormat(std::string& fmt);
+  void addResponseSchema(const std::string& s);
+  void addResponseSchema(const rapidjson::Value& s);
+  void addResponseFormat(const std::string& fmt);
   
 #ifndef YGG_TEST
 protected:
 #endif
+  
+  Metadata& get_metadata(const DIRECTION dir) override;
   RequestList requests;
 };
   

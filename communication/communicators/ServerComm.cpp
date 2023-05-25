@@ -41,14 +41,6 @@ bool ServerComm::signon(const Header& header) {
   return requests.signon_complete;
 }
 
-int ServerComm::update_datatype(const rapidjson::Value& new_schema,
-				const DIRECTION dir) {
-  if (dir == RECV)
-    return COMM_BASE::update_datatype(new_schema, dir);
-  requests.addResponseSchema(new_schema);
-  return 1;
-}
-
 bool ServerComm::create_header_send(Header& header, const char* data, const size_t &len) {
   Comm_t* response_comm = requests.activeComm();
   if (response_comm == NULL) {
