@@ -34,8 +34,6 @@ protected:
 #endif
     void init();
     virtual bool signon(const utils::Header& header);
-    int update_datatype(const rapidjson::Value& new_schema,
-			const DIRECTION& dir=NONE) override;
     bool create_header_send(utils::Header& header, const char* data, const size_t &len) override;
     bool create_header_recv(utils::Header& header, char*& data, const size_t &len,
 			    size_t msg_len, int allow_realloc,

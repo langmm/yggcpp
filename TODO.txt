@@ -1,10 +1,5 @@
-* Add tests for YggIterface.hpp
 * Add YggIterface.h C interface with tests
-* Update handling of dtype in C
-* Get tests working on GHA
-  * Fix Metadata.serialize_errors that dosn't throw an error on linux for replaced realloc
 * Improve coverage and strip out unused code
-* Add tests for RequestList
 * Move address away from pointer?
 * Automated documentation using doxygen
 * Fill in missing docs

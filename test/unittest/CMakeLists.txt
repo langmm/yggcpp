@@ -1,14 +1,5 @@
 include(CheckCXXCompilerFlag)
 
-find_program(CCACH_FOUND ccache)
-if(CCACHE_FOUND)
-    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
-    set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
-    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Qunused-arguments -fcolor-diagnostics")
-    endif()
-endif(CCACHE_FOUND)
-
 set_property(DIRECTORY PROPERTY COMPILE_OPTIONS ${EXTRA_CXX_FLAGS})
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     # If the user is running a newer version of Clang that includes the
@@ -34,8 +25,6 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /WX")
     endif()
 endif()
-
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DRAPIDJSON_HAS_STDSTRING=1")
 
 include(GoogleTest)
 file(GLOB files "${CMAKE_CURRENT_SOURCE_DIR}/unittest/tests/communicators/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/unittest/tests/utils/*.cpp")

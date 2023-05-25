@@ -1,8 +1,8 @@
 #pragma once
-#include "communicators/DefaultComm.hpp"
+#include "communicators/comms.hpp"
 
 
-using namespace communication::communicators;
+using namespace communication::communicator;
 
 /*!
   @brief Input communicator that can be used to receive messages from
@@ -179,7 +179,7 @@ public:
       'server' set to 'true'.
   */
   YggRpcServer(const char *name) :
-    ServerComm(name) {}
+    ServerComm(name, 0) {}
   /*!
     @brief Constructor for YggRpcServer.
     @param[in] name Name of server input channel. This should be named in
@@ -192,7 +192,7 @@ public:
    */
   YggRpcServer(const char *name, const char *inFormat,
 	       const char *outFormat) :
-    ServerComm(name) {
+    ServerComm(name, 0) {
     this->addFormat(inFormat);
     this->requests.addResponseFormat(outFormat);
   }
@@ -209,7 +209,7 @@ public:
    */
   YggRpcServer(const std::string name, const std::string inFormat,
 	       const std::string outFormat) :
-    ServerComm(name) {
+    ServerComm(name, 0) {
     this->addFormat(inFormat);
     this->requests.addResponseFormat(outFormat);
   }
@@ -226,7 +226,7 @@ public:
    */
   YggRpcServer(const std::string name, const rapidjson::Document& inType,
 	       const rapidjson::Document& outType) :
-    ServerComm(name, inType, outType) {
+    ServerComm(name, 0) {
     this->addSchema(inType);
     this->requests.addResponseSchema(outType);
   }
@@ -248,7 +248,15 @@ public:
       names specified in the YAML.
   */
   YggRpcClient(const char *name) :
-    ClientComm(name) {}
+    ClientComm(name, 0) {}
+  /*!
+    @brief Constructor for YggRpcClient.
+    @param[in] name Name of client input channel. This should be of the
+      format '{server model name}_{client model name}' with the model
+      names specified in the YAML.
+  */
+  YggRpcClient(const std::string name) :
+    ClientComm(name, 0) {}
   /*!
     @brief Constructor for YggRpcClient.
     @param[in] name Name of client input channel. This should be of the
@@ -261,9 +269,9 @@ public:
    */
   YggRpcClient(const char *name, const char *outFormat,
 	       const char *inFormat) :
-    ClientComm(name) {
-    this->addFormat(outFormat);
-    this->requests.addResponseFormat(inFormat);
+    ClientComm(name, 0) {
+    this->addFormat(std::string(outFormat));
+    this->requests.addResponseFormat(std::string(inFormat));
   }
     
 
@@ -279,7 +287,7 @@ public:
    */
   YggRpcClient(const std::string name, const std::string outFormat,
 	       const std::string inFormat) :
-    ClientComm(name) {
+    ClientComm(name, 0) {
     this->addFormat(outFormat);
     this->requests.addResponseFormat(inFormat);
   }
@@ -296,7 +304,7 @@ public:
    */
   YggRpcClient(const std::string name, const rapidjson::Document& outType,
 	       const rapidjson::Document& inType) :
-    ClientComm(name) {
+    ClientComm(name, 0) {
     this->addSchema(outType);
     this->requests.addResponseSchema(inType);
   }
@@ -335,21 +343,15 @@ public:
       "  ]"
       "}");
     if (t_units.size() > 0) {
-      (*this->schema)["items"][0].AddMember(
+      (*(this->metadata.schema))["items"][0].AddMember(
 	 rapidjson::Value("units", 5,
-			  this->schema->GetAllocator()).Move(),
-	 rapidjson::Value(t_units.c_str(), t_units.size(),
-			  this->schema->GetAllocator()).Move(),
-	 this->schema->GetAllocator());
+			  this->metadata.GetAllocator()).Move(),
+	 rapidjson::Value(t_units.c_str(),
+			  static_cast<rapidjson::SizeType>(t_units.size()),
+			  this->metadata.GetAllocator()).Move(),
+	 this->metadata.GetAllocator());
     }
-    this->response_schema.SetObject();
-    this->response_schema.AddMember(
-       rapidjson::Value("type", 4,
-			this->response_schema.GetAllocator()).Move(),
-       rapidjson::Value("object", 6,
-			this->response_schema.GetAllocator()).Move(),
-       this->response_schema.GetAllocator());
-    }
+    this->addResponseSchema("{ \"type\": \"object\" }");
   }
   
   /*!
@@ -425,13 +427,14 @@ public:
 
   /*!
     @brief Receive a single line from an associated file or queue.
-    @param[out] line character pointer to allocate memory where the
-      received line should be stored.
-    @param[in] n size_t Size of the allocated memory block in bytes.
-    @returns int Number of bytes read/received. Negative values indicate
+    @param[out] line Pointer to allocate memory where the received
+      should be stored.
+    @param[in] n Size of the allocated memory block in bytes.
+    @returns Number of bytes read/received. Negative values indicate
       that there was either an error or the EOF message was received.
    */
-  int recv_line(char *line, const size_t n) { return recv(line, n); }
+  long recv_line(char *line, const size_t n)
+  { return this->recv(line, n, false); }
   
 };
 
@@ -539,7 +542,7 @@ public:
       model output the in YAML for the model calling it.
    */
   YggAsciiArrayInput(const char *name) :
-    YggInput(name, "", true) {}
+    YggInput(name) {}
 
   /*!
     @brief Constructor for YggAsciiArrayInput.
@@ -547,7 +550,7 @@ public:
       model output the in YAML for the model calling it.
    */
   YggAsciiArrayInput(const std::string name) :
-    YggInput(name, "", true) {}
+    YggInput(name) {}
 
 };
 

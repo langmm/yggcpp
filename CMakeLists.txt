@@ -235,6 +235,7 @@ endif("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
 
 
 add_definitions(-DRAPIDJSON_YGGDRASIL)
+add_definitions(-DRAPIDJSON_HAS_STDSTRING)
 add_definitions(-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION)
 add_definitions(-D_USE_MATH_DEFINES)
 
@@ -504,9 +505,9 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
    set(CMAKE_CXX_FLAGS_RELEASE "/Zi -DNDEBUG -DYGG_DEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS}")
    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/Zi -DNDEBUG -DYGG_DEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS}")
 else ()
-   set(CMAKE_CXX_FLAGS_DEBUG "-g -DNDEBUG -DYGG_DEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS} -fpermissive")
-   set(CMAKE_CXX_FLAGS_RELEASE "-g -DNDEBUG -DYGG_DEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS} -fpermissive")
-   set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -DNDEBUG -DYGG_DEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS} -fpermissive")
+   set(CMAKE_CXX_FLAGS_DEBUG "-g -DNDEBUG -DYGG_DEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS} ")
+   set(CMAKE_CXX_FLAGS_RELEASE "-g -DNDEBUG -DYGG_DEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS} ")
+   set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -DNDEBUG -DYGG_DEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS} ")
 endif ()
 
 ####################
@@ -517,7 +518,7 @@ message(STATUS "DEPS_INCLUDE_DIRS = ${DEPS_INCLUDE_DIRS}")
 message(STATUS "DEPS_LIBRARIES = ${DEPS_LIB_NAMES};${DEPS_LIBRARIES}")
 include_directories(communication)
 include_directories(${DEPS_INCLUDE_DIRS})
-file(GLOB SOURCES "communication/utils/*.cpp" "communication/communicators/*.cpp")
+file(GLOB SOURCES "communication/*.cpp" "communication/utils/*.cpp" "communication/communicators/*.cpp")
 add_library(YggInterface SHARED ${SOURCES})
 if (WIN32)
     set_target_properties(YggInterface PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
@@ -550,8 +551,8 @@ endif()
 option(YGG_ENABLE_COVERAGE "Enable coverage reporting" OFF)
 if(YGG_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang|ARMClang")
     message(STATUS "COVERAGE ON")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 --coverage -fno-inline -fprofile-arcs -ftest-coverage -fprofile-filter-files=\"${CMAKE_SOURCE_DIR}/communication/*\" -fpermissive")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0 --coverage -fno-inline -fprofile-arcs -ftest-coverage -fprofile-filter-files=\"${CMAKE_SOURCE_DIR}/communication/*\" -fpermissive")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 --coverage -fno-inline -fprofile-arcs -ftest-coverage -fprofile-filter-files=\"${CMAKE_SOURCE_DIR}/communication/*\" ")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0 --coverage -fno-inline -fprofile-arcs -ftest-coverage -fprofile-filter-files=\"${CMAKE_SOURCE_DIR}/communication/*\" ")
     if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|ARMClang")
         set(CTEST_COVERAGE_COMMAND "llvm-cov")
         set(CTEST_COVERAGE_EXTRA_FLAGS "gcov")
@@ -573,7 +574,7 @@ if(YGG_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang|A
     #         # generate report
     #         COMMAND ${GENHTML} --rc genhtml_branch_coverage=1 --demangle-cpp -o coverage coverage.info
     #         WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-    # set(YGG_BUILD_FLAGS "${YGG_BUILD_FLAGS} --coverage -fno-inline -fno-inline-small-functions -fno-default-inline -fpermissive")
+    # set(YGG_BUILD_FLAGS "${YGG_BUILD_FLAGS} --coverage -fno-inline -fno-inline-small-functions -fno-default-inline ")
 endif(YGG_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang|ARMClang")
 
 ##################

@@ -14,6 +14,7 @@
 #include "Workers.hpp"
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
+#include "rapidjson/schema.h"
 
 /*! @brief Bit flags. */
 enum CommFlags {
@@ -144,6 +145,23 @@ public:
     /*!
       @brief Receive a string message from the communicator.
       @param[out] data Allocated buffer where the message should be saved.
+      @returns int -1 if message could not be received. Length of the
+        received message if message was received.
+    */
+    template<size_t N>
+    long recv(char(& data)[N]) {
+      size_t len = N;
+      if (len <= 0) {
+	ygglog_error << "CommBase(" << name << ")::recv: Buffer is size 0" << std::endl;
+	return -1;
+      }
+      char* ptr = &(data[0]);
+      return recv(ptr, len, false);
+    }
+  
+    /*!
+      @brief Receive a raw string message from the communicator.
+      @param[out] data Allocated buffer where the message should be saved.
       @param[in] len Length of the allocated message buffer in bytes.
       @param[in] allow_realloc If true, data will be reallocated if the
         message is larger than len. If false, an error will be raised if
@@ -151,62 +169,97 @@ public:
       @returns int -1 if message could not be received. Length of the
         received message if message was received.
     */
-    virtual long recv(char*& data, const size_t &len, bool allow_realloc);
+    virtual long recv(char*& data, const size_t &len,
+		      bool allow_realloc=false);
 
     /*!
       @brief Send an object through the communicator.
-      @tparam T1 Type of object being sent.
-      @param[in] data T1 object.
+      @tparam T Type of object being sent.
+      @param[in] data Object to send.
       @return Integer specifying if the receive was succesful. Values >= 0
         indicate success.
     */
-    template<typename T1>
-    int sendVar(const T1 data) {
-        ygglog_debug << "CommBase(" << name << ")::send(const T1& data)" << std::endl;
-        return send(1, data);
+    template<typename T>
+    int sendVar(const T data) {
+      ygglog_debug << "CommBase(" << name << ")::sendVar(const T& data)" << std::endl;
+      if (!checkType(data, SEND))
+	return -1;
+      return send(1, data);
     }
     /*!
-      @brief Receive an object from the communicator.
-      @tparam T1 Type of object being received.
-      @param[out] data T1 bject to receive message into.
-      @return Integer specifying if the receive was succesful. Values >= 0
-        indicate success.
-    */
-    template<typename T1>
-    long recvVar(T1& data) {
-        ygglog_debug << "CommBase(" << name << ")::recv(T1& data)" << std::endl;
-        return recv(1, &data);
-    }
-  
+      @brief Send a C++ string through the communicator.
+      @param[in] data Message.
+      @returns int Values >= 0 indicate success.
+     */
+    int sendVar(const std::string& data);
     /*!
       @brief Send a rapidjson document through the communicator.
       @param[in] data Message.
       @returns int Values >= 0 indicate success.
      */
-    // template<>
-    int sendVar(const rapidjson::Document& data) {
-        return send(1, &data);
-    }
+    int sendVar(const rapidjson::Document& data);
     /*!
       @brief Send a Ply object through the communicator.
       @param[in] data Ply object.
       @return Integer specifying if the receive was succesful. Values >= 0
         indicate success.
     */
-    // template<>
-    int sendVar(const rapidjson::Ply& data) {
-        return send(1, &data);
-    }
+    int sendVar(const rapidjson::Ply& data);
     /*!
       @brief Send a ObjWavefront object through the communicator.
       @param[in] data ObjWavefront object.
-      @return Integer specifying if the receive was succesful. Values >= 0
-      indicate success.
+      @return Integer specifying if the receive was succesful.
+        Values >= 0 indicate success.
     */
-    // template<>
-    int sendVar(const rapidjson::ObjWavefront& data) {
-        return send(1, &data);
+    int sendVar(const rapidjson::ObjWavefront& data);
+
+    /*!
+      @brief Receive an object from the communicator.
+      @tparam T Type of object being received.
+      @param[out] data Object to receive message into.
+      @return Integer specifying if the receive was succesful.
+        Values >= 0 indicate success.
+    */
+    template<typename T>
+    long recvVar(T& data) {
+      ygglog_debug << "CommBase(" << name << ")::recvVar(T& data)" << std::endl;
+      if (!checkType(data, RECV))
+	return -1;
+      return recv(1, &data);
     }
+    /*!
+      @brief Receive a rapidjson::Document object from the communicator.
+      @param[out] data Object to receive message into.
+      @return Integer specifying if the receive was succesful.
+        Values >= 0 indicate success.
+    */
+    long recvVar(rapidjson::Document& data) {
+      ygglog_debug << "CommBase(" << name << ")::recvVar(rapidjson::Document& data)" << std::endl;
+      if ((!data.IsNull()) && (!checkType(data, RECV)))
+	return -1;
+      return recv(1, &data);
+    }
+    /*!
+      @brief Receive a string object from the communicator.
+      @param[out] data Object to receive message into.
+      @return Integer specifying if the receive was succesful. Values >= 0
+        indicate success.
+    */
+    long recvVar(std::string& data) {
+      ygglog_debug << "CommBase(" << name << ")::recvVar(std::string& data)" << std::endl;
+      if (!checkType(data, RECV))
+	return -1;
+      char* str = NULL;
+      size_t len = 0;
+      long out = recvRealloc(2, &str, &len);
+      if (out >= 0) {
+	data.assign(str, static_cast<size_t>(len));
+	free(str);
+      }
+      return out;
+    }
+  
+    // TODO: Versions of sendVar/recvVar with multiples?
 
     /*!
       @brief Receive and parse a message into the provided arguments.
@@ -240,9 +293,37 @@ public:
     int send(const int nargs, ...);
 
     /*!
+      @brief Send a request and receive a response from the provided
+        arguments containing data for both the request and response,
+	reallocating variables for the response as necessary.
+      @param[in] nargs Number of arguments being passed.
+      @param[in] ... mixed arguments that request will be constructed
+        from and response will be received into based on the datatypes
+	associated with the communicator. Arguments that will be
+	populated with data from the response should be pointers to
+	memory addresses that can be reallocated.
+      @return Integer specifying if the receive was succesful.
+        Values >= 0 indicate success.
+    */
+    long call(const int nargs, ...);
+    /*!
+      @brief Send a request and receive a response from the provided
+        arguments containing data for both the request and response.
+      @param[in] nargs Number of arguments being passed.
+      @param[in] ... mixed arguments that request will be constructed
+        from and response will be received into based on the datatypes
+	associated with the communicator. Arguments that will be
+	populated with data from the response should be pointers to
+	memory that has already been allocated.
+      @return Integer specifying if the receive was succesful.
+        Values >= 0 indicate success.
+    */
+    long callRealloc(const int nargs, ...);
+  
+    /*!
       @brief Receive a message into a list of variable arguments.
       @param[in,out] ap Variable argument list that message will be
-          received into.
+        received into.
       @return Integer specifying if the receive was succesful.
         Values >= 0 indicate success.
      */
@@ -250,12 +331,23 @@ public:
     /*!
       @brief Send a message containing a list of variable arguments.
       @param[in] ap Variable argument list that message will be
-          constructed from.
+        constructed from.
       @return Integer specifying if the send was succesful.
         Values >= 0 indicate success.
      */
     int vSend(rapidjson::VarArgList& ap);
-  
+
+    /*!
+      @brief Send a request and receive a response from a list of
+        variable arguments containing data for both the request and
+        response.
+      @param[in] ap Variable argument list that request will be
+        constructed from and response will be receieved into.
+      @return Integer specifying if the receive was succesful.
+        Values >= 0 indicate success.
+    */
+    virtual long vCall(rapidjson::VarArgList& ap);
+      
     /*!
       @brief Get the number of messages in the communicator.
       @return Number of messages.
@@ -310,6 +402,7 @@ public:
     void addSchema(const rapidjson::Value& s, bool isMetadata = false);
     void addSchema(const std::string& schemaStr, bool isMetadata = false);
     void addFormat(const std::string& format_str, bool as_array = false);
+    void copySchema(const Comm_t* other);
 
     static void _ygg_cleanup();
 
@@ -368,8 +461,15 @@ protected:
       return (long)src_len;
     }
 
-    virtual int update_datatype(const rapidjson::Value& new_schema,
-				const DIRECTION& dir);
+    virtual Metadata& get_metadata(const DIRECTION dir);
+    int update_datatype(const rapidjson::Value& new_schema,
+			const DIRECTION dir);
+    template<typename T>
+    bool checkType(const T& data, const DIRECTION dir) {
+      Metadata& meta = get_metadata(dir);
+      meta.fromData(data);
+      return true;
+    }
     virtual bool create_header_send(utils::Header& header, const char* data, const size_t &len);
     virtual bool create_header_recv(utils::Header& header, char*& data, const size_t &len,
 				    size_t msg_len, int allow_realloc,

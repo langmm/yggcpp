@@ -91,14 +91,6 @@ bool ClientComm::signon(const Header& header) {
     return requests.signon_complete;
 }
 
-int ClientComm::update_datatype(const rapidjson::Value& new_schema,
-                                const DIRECTION& dir) {
-    if (dir == SEND)
-        return COMM_BASE::update_datatype(new_schema, dir);
-    requests.addResponseSchema(new_schema);
-    return 1;
-}
-
 Comm_t* ClientComm::create_worker_send(Header& head) {
     ygglog_debug << "ClientComm(" << name << ")::create_worker_send: begin" << std::endl;
     Comm_t* out = COMM_BASE::create_worker_send(head);

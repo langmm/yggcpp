@@ -3,6 +3,8 @@
 #include "serialization.hpp"
 void** rapidjson_ARRAY_API = NULL;
 
+using namespace communication::utils;
+
 Metadata::Metadata() :
   metadata(rapidjson::kObjectType), schema(NULL) {}
 void Metadata::_init(bool use_generic) {
@@ -90,6 +92,15 @@ void Metadata::fromSchema(const std::string schemaStr, bool use_generic) {
       setGeneric();
   }
 }
+void Metadata::fromData(const rapidjson::Document& data, bool indirect) {
+  rapidjson::SchemaEncoder encoder(true);
+  if (!data.Accept(encoder))
+    ygglog_throw_error_c("Metadata::fromData: Error encoding object's schema");
+  bool has_type = hasType();
+  fromSchema(encoder.GetSchema());
+  if ((!has_type) && indirect)
+    SetSchemaBool("allowWrapped", true);
+}
 void Metadata::fromType(const std::string type, bool use_generic,
 			bool dont_init) {
   initSchema();
@@ -151,6 +162,7 @@ void Metadata::fromFormat(const std::string& format_str,
       GetAllocator());
   SetSchemaString("type", "array");
   rapidjson::Value items(rapidjson::kArrayType);
+  ygglog_debug << "Metadata::fromFormat: " << format_str << std::endl;
   // Loop over string
   int mres;
   size_t sind, eind, beg = 0, end;
@@ -303,6 +315,10 @@ bool Metadata::isGeneric() const {
 	  (schema->HasMember("use_generic") &&
 	   (*schema)["use_generic"].IsBool() &&
 	   (*schema)["use_generic"].GetBool()));
+}
+bool Metadata::isFormatArray() const {
+  return (metadata.HasMember("serializer") &&
+	  metadata["serializer"].HasMember("format_str"));
 }
 void Metadata::setGeneric() {
   initSchema();
@@ -555,19 +571,18 @@ int Metadata::deserialize(const char* buf, rapidjson::VarArgList& ap) {
   d.ParseStream(s);
   if (d.HasParseError())
     ygglog_throw_error_c("Metadata::deserialize: Error parsing JSON");
-  // TODO: Initialize schema?
-  // if (schema.IsNull()) {
-  //   schema = encode_schema(d);
-  // } else {
-  rapidjson::StringBuffer sb;
-  if (!d.Normalize(*schema, &sb)) {
-    std::string d_str = document2string(d);
-    std::string s_str = document2string(*schema);
-    ygglog_throw_error_c("Metadata::deserialize: Error normalizing document:\n%s\ndocument=%s\nschema=%s\nmessage=%s...", sb.GetString(), d_str.c_str(), s_str.c_str(), buf);
+  if (!hasType()) {
+    fromData(d);
+  } else {
+    rapidjson::StringBuffer sb;
+    if (!d.Normalize(*schema, &sb)) {
+      std::string d_str = document2string(d);
+      std::string s_str = document2string(*schema);
+      ygglog_throw_error_c("Metadata::deserialize: Error normalizing document:\n%s\ndocument=%s\nschema=%s\nmessage=%s...", sb.GetString(), d_str.c_str(), s_str.c_str(), buf);
+    }
   }
-  // }
   if (!d.SetVarArgs(*schema, ap)) {
-    ygglog_throw_error_c("Metadata::deserialize_args: Error setting arguments from JSON document");
+    ygglog_throw_error_c("Metadata::deserialize: Error setting arguments from JSON document");
   }
   return (int)(nargs_orig - ap.get_nargs());
 }

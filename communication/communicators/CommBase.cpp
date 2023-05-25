@@ -179,6 +179,10 @@ void Comm_t::addSchema(const std::string& schemaStr, bool isMetadata) {
 void Comm_t::addFormat(const std::string& format_str, bool as_array) {
     metadata.fromFormat(format_str, as_array);
 }
+void Comm_t::copySchema(const Comm_t* other) {
+  if (other->metadata.hasType())
+    metadata.fromMetadata(other->metadata);
+}
 
 bool Comm_t::check_size(const size_t &len) const {
     // Make sure you aren't sending a message that is too big
@@ -344,8 +348,20 @@ int Comm_t::wait_for_recv(const int& tout) {
     }
     return 0;
 }
-long Comm_t::recv(char*& data, const size_t &len, bool allow_realloc = false) {
+long Comm_t::recv(char*& data, const size_t &len,
+		  bool allow_realloc) {
     ygglog_debug << "CommBase(" << name << ")::recv: Receiving from " << address->address() << std::endl;
+    if (!allow_realloc) {
+      char* tmp = NULL;
+      size_t tmp_len = 0;
+      long ret = recv(tmp, tmp_len, true);
+      if (ret >= 0) {
+	ret = copyData(data, len, tmp, ret, false);
+	if (tmp)
+	  free(tmp);
+      }
+      return ret;
+    }
     Header head;
     long ret = -1;
     while (true) {
@@ -424,18 +440,20 @@ long Comm_t::recv(char*& data, const size_t &len, bool allow_realloc = false) {
 
 
 long Comm_t::recv(const int nargs, ...) {
-    size_t nargs_copy = (size_t)nargs;
-    YGGCPP_BEGIN_VAR_ARGS(ap, nargs, nargs_copy, false);
-    long ret = vRecv(ap);
+  size_t nargs_copy = (size_t)nargs;
+  YGGCPP_BEGIN_VAR_ARGS(ap, nargs, nargs_copy, false);
+  long ret = vRecv(ap);
+  if (ret != -2)
     YGGCPP_END_VAR_ARGS(ap);
-    return ret;
+  return ret;
 }
 long Comm_t::recvRealloc(const int nargs, ...) {
-    size_t nargs_copy = (size_t)nargs;
-    YGGCPP_BEGIN_VAR_ARGS(ap, nargs, nargs_copy, true);
-    long ret = vRecv(ap);
+  size_t nargs_copy = (size_t)nargs;
+  YGGCPP_BEGIN_VAR_ARGS(ap, nargs, nargs_copy, true);
+  long ret = vRecv(ap);
+  if (ret != -2)
     YGGCPP_END_VAR_ARGS(ap);
-    return ret;
+  return ret;
 }
 int Comm_t::send(const int nargs, ...) {
     size_t nargs_copy = (size_t)nargs;
@@ -445,11 +463,50 @@ int Comm_t::send(const int nargs, ...) {
     return ret;
 }
 
+long Comm_t::call(const int nargs, ...) {
+  size_t nargs_copy = (size_t)nargs;
+  YGGCPP_BEGIN_VAR_ARGS(ap, nargs, nargs_copy, false);
+  long ret = vCall(ap);
+  YGGCPP_END_VAR_ARGS(ap);
+  return ret;
+}
+long Comm_t::callRealloc(const int nargs, ...) {
+  size_t nargs_copy = (size_t)nargs;
+  YGGCPP_BEGIN_VAR_ARGS(ap, nargs, nargs_copy, true);
+  long ret = vCall(ap);
+  YGGCPP_END_VAR_ARGS(ap);
+  return ret;
+}
 
+int Comm_t::sendVar(const std::string& data) {
+  if (!checkType(data, SEND))
+    return -1;
+  return send(2, data.c_str(), data.size());
+}
+int Comm_t::sendVar(const rapidjson::Document& data) {
+  if (!checkType(data, SEND))
+    return -1;
+  return send(1, &data);
+}
+int Comm_t::sendVar(const rapidjson::Ply& data) {
+  if (!checkType(data, SEND))
+    return -1;
+  return send(1, &data);
+}
+int Comm_t::sendVar(const rapidjson::ObjWavefront& data) {
+  if (!checkType(data, SEND))
+    return -1;
+  return send(1, &data);
+}
+
+Metadata& Comm_t::get_metadata(const DIRECTION) {
+  return metadata;
+}
 int Comm_t::update_datatype(const rapidjson::Value& new_schema,
-                            const DIRECTION&) {
-    metadata.fromSchema(new_schema);
-    return 1;
+			    const DIRECTION dir) {
+  Metadata& meta = get_metadata(dir);
+  meta.fromSchema(new_schema);
+  return 1;
 }
 
 int Comm_t::deserialize(const char* buf, rapidjson::VarArgList& ap) {
@@ -483,7 +540,8 @@ long Comm_t::vRecv(rapidjson::VarArgList& ap) {
     if (ret < 0) {
         if (buf != NULL)
             free(buf);
-        ygglog_error << "CommBase(" << name << ")::vRecv: Error in recv" << std::endl;
+	if (ret != -2)
+	    ygglog_error << "CommBase(" << name << ")::vRecv: Error in recv" << std::endl;
         return ret;
     }
     ret = deserialize(buf, ap);
@@ -539,6 +597,46 @@ int Comm_t::vSend(rapidjson::VarArgList& ap) {
     ygglog_debug << "CommBase(" << name << ")::vSend: returns " << ret << std::endl;
     return ret;
 }
+long Comm_t::vCall(rapidjson::VarArgList& ap) {
+  if (type != CLIENT_COMM) {
+    ygglog_error << "CommBase(" << name << ")::vCall: Communicator is not a client." << std::endl;
+    return -1;
+  }
+  size_t send_nargs = 0;
+  rapidjson::Document tmp;
+  if (!metadata.hasType()) {
+    send_nargs = 0;
+  } else {
+    send_nargs = tmp.CountVarArgs(*metadata.schema, false);
+  }
+  rapidjson::VarArgList op(ap);
+  size_t recv_nargs = ap.get_nargs() - send_nargs;
+  ap.nargs = &send_nargs;
+  int sret = vSend(ap);
+  if (sret < 0) {
+    ygglog_error << "CommBase(" << name << ")::vCall: Error in vSend" << std::endl;
+    return -1;
+  }
+  ygglog_debug << "CommBase(" << name << ")::vCall: Used " << sret << " arguments in send" << std::endl;
+  if (!tmp.SkipVarArgs(*(metadata.schema), op, false)) {
+    ygglog_error << "CommBase(" << name << ")::vCall: Error skipping arguments" << std::endl;
+    return -1;
+  }
+  ygglog_debug << "CommBase(" << name << ")::vCall: " << op.get_nargs() << " arguments remaining for receive" << std::endl;
+  if (op.get_nargs() != recv_nargs) {
+    ygglog_error << "CommBase(" << name << ")::vCall: Number of arguments after skip (" << op.get_nargs() << ") doesn't match the number expected (" << recv_nargs << std::endl;
+    return -1;
+  }
+  long rret = vRecv(op);
+  if (rret < 0) {
+    ygglog_error << "CommBase(" << name << ")::vCall: Error in vRecv" << std::endl;
+  }
+  ygglog_debug << "CommBase(" << name << ")::vCall: " << op.get_nargs() << " arguments after receive" << std::endl;
+  YGGCPP_END_VAR_ARGS(op);
+  return rret;
+  
+}
+
 
 std::vector<Comm_t*> Comm_t::registry;
 
