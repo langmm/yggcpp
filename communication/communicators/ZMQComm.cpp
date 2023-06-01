@@ -1,4 +1,5 @@
 #include "ZMQComm.hpp"
+#include "DefaultComm.hpp"
 #include "utils/tools.hpp"
 #include "utils/logging.hpp"
 
@@ -775,6 +776,10 @@ Comm_t* ZMQComm::create_worker_recv(Header& head) {
 
 #ifdef YGG_TEST
 bool ZMQComm::afterSendRecv(Comm_t* sComm, Comm_t* rComm) {
+  if (sComm->getType() != ZMQ_COMM || rComm->getType() != ZMQ_COMM) {
+    ygglog_error << "ZMQComm::afterSendRecv: One or both communicators are not ZMQ communicators" << std::endl;
+    return false;
+  }
   ZMQComm* sComm_z = dynamic_cast<ZMQComm*>(sComm);
   ZMQComm* rComm_z = dynamic_cast<ZMQComm*>(rComm);
   if (rComm_z->getReply().sockets.size() != 1) {

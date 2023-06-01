@@ -44,7 +44,7 @@ namespace communicator {
   public:
     RequestList(DIRECTION dir) :
       comms(), requests(), partners(), response_dir(dir),
-      response_metadata(), active_comm(-1), signon_complete(false) {}
+      response_metadata(), signon_complete(false) {}
     ~RequestList() {
       destroy();
     }
@@ -198,7 +198,6 @@ namespace communicator {
 	ygglog_error << "addResponseServer: Error setting data" << std::endl;
 	return -1;
       }
-      active_comm = 0;
       if (header.flags & HEAD_FLAG_SERVER_SIGNON)
 	signon_complete = true;
       ygglog_debug << "addResponseServer: done (signon_complete = " <<
@@ -244,6 +243,15 @@ namespace communicator {
 	return NULL;
       }
       return comms[requests[0].comm_idx];
+    }
+    Comm_t* lastComm() {
+      if (comms.empty()) {
+	ygglog_error << "lastComm: No communicators" << std::endl;
+	return NULL;
+      }
+      if (!requests.empty())
+	return activeComm();
+      return comms[comms.size() - 1];
     }
     std::string activeRequestClient() {
       if (!signon_complete) {
@@ -338,14 +346,16 @@ namespace communicator {
 	return false;
       return requests[(size_t)idx].complete;
     }
-    void addResponseSchema(const std::string& s) {
-      response_metadata.fromSchema(s);
+    void addResponseSchema(const std::string& s, bool use_generic=false) {
+      response_metadata.fromSchema(s, use_generic);
     }
-    void addResponseSchema(const rapidjson::Value& s) {
-      response_metadata.fromSchema(s);
+    void addResponseSchema(const rapidjson::Value& s,
+			   bool use_generic=false) {
+      response_metadata.fromSchema(s, use_generic);
     }
-    void addResponseFormat(const std::string& format_str) {
-      response_metadata.fromFormat(format_str);
+    void addResponseFormat(const std::string& format_str,
+			   bool use_generic=false) {
+      response_metadata.fromFormat(format_str, use_generic);
     }
     bool partnerSignoff(const Header& header) {
       if (header.flags & HEAD_FLAG_EOF) {
@@ -365,7 +375,6 @@ namespace communicator {
     std::vector<Partner> partners;
     DIRECTION response_dir;
     Metadata response_metadata;
-    int active_comm;
     bool signon_complete;
   };
 }

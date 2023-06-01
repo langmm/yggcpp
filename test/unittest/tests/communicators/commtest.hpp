@@ -11,6 +11,40 @@
   EXPECT_GE(rComm.recv_method recv_args, -2);				\
   EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm))
 
+#define DO_SEND_RECV_REQUEST(init_data, comp_data, send_method, send_args, recv_method, recv_args) \
+  std::cerr << "REQUEST BEGIN" << std::endl;				\
+  init_data;								\
+  EXPECT_GE(sComm.send_method send_args, 0);				\
+  EXPECT_GE(rComm.recv_method recv_args, 0);				\
+  EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));			\
+  comp_data;								\
+  std::cerr << "REQUEST END" << std::endl
+  
+#define DO_SEND_RECV_RESPONSE(init_data, comp_data, send_method, send_args, recv_method, recv_args) \
+  std::cerr << "RESPONSE BEGIN" << std::endl;				\
+  init_data;								\
+  EXPECT_GE(rComm.send_method send_args, 0);				\
+  EXPECT_GE(sComm.recv_method recv_args, 0);				\
+  EXPECT_TRUE(rComm.afterSendRecv(&rComm, &sComm));			\
+  comp_data;								\
+  EXPECT_GE(sComm.send_eof(), 0);					\
+  EXPECT_GE(rComm.recv_method recv_args, -2);				\
+  EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));			\
+  std::cerr << "RESPONSE END" << std::endl
+
+#define DO_RPC_SIGNON							\
+  {									\
+    std::string msg_cli = YGG_CLIENT_SIGNON;				\
+    Header header;							\
+    EXPECT_TRUE(sComm.create_header_send(header, msg_cli.c_str(), msg_cli.size())); \
+    size_t len = header.format(msg_cli.c_str(), msg_cli.size(), 0);	\
+    msg_cli.assign(header.data[0], len);				\
+    EXPECT_GE(rComm.requests.addRequestServer(header), 0);		\
+    std::string msg_srv = YGG_SERVER_SIGNON;				\
+    EXPECT_GE(rComm.send(msg_srv.c_str(), msg_srv.size()), 0);		\
+  }
+
+
 #define INIT_DATA_SINGLE(type, value)		\
   type data_send = value;			\
   type data_recv
@@ -117,15 +151,16 @@
     for (size_t i = 0; i < n_send; i++) {	\
       EXPECT_EQ(a_send[i], a_recv[i]);		\
       EXPECT_EQ(b_send[i], b_recv[i]);		\
-      cmp_c;					\
+      cmp_c					\
     }						\
   }
 #define COMP_TABLE_C				\
   std::cerr << &(c_send[i * nc_send]) << " == " << &(c_recv[i * nc_send]) << std::endl;	\
-  EXPECT_EQ(strncmp(&(c_send[i * nc_send]), &(c_recv[i * nc_send]), nc_send), 0)
+  EXPECT_EQ(strncmp(&(c_send[i * nc_send]), &(c_recv[i * nc_send]), nc_send), 0);
 #define COMP_TABLE_C_REALLOC						\
-  if (c_recv != NULL)							\
-    EXPECT_EQ(strncmp(&(c_send[i * nc_send]), c_recv + (i * nc_send), nc_send), 0)
+  if (c_recv != NULL) {							\
+    EXPECT_EQ(strncmp(&(c_send[i * nc_send]), c_recv + (i * nc_send), nc_send), 0); \
+  }
 #define COMP_DATA_TABLE				\
   COMP_DATA_TABLE_BASE(COMP_TABLE_C)
 #define COMP_DATA_TABLE_REALLOC			\
@@ -155,6 +190,17 @@
     init_cls;								\
     DO_SEND_RECV_BASE(init_data, comp_data, send_method, recv_method,	\
 		      send_args, recv_args);				\
+  }
+#define TEST_SEND_RECV_RPC(group, name, init_cls, init_data, comp_data, send_method, send_args, recv_method, recv_args)	\
+  TEST(group, name) {							\
+    init_cls;								\
+    DO_RPC_SIGNON;							\
+    {									\
+      DO_SEND_RECV_REQUEST(init_data, comp_data, send_method, send_args, recv_method, recv_args); \
+    }									\
+    {									\
+      DO_SEND_RECV_RESPONSE(init_data, comp_data, send_method, send_args, recv_method, recv_args); \
+    }									\
   }
 
 #define TESTER_METHODS(cls)						\

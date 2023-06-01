@@ -20,12 +20,15 @@ public:
   using Comm_t::recv;
   using COMM_BASE::comm_nmsg;
   
-  void addResponseSchema(const std::string& s);
-  void addResponseSchema(const rapidjson::Value& s);
-  void addResponseFormat(const std::string& fmt);
+  void addResponseSchema(const std::string& s, bool use_generic=false);
+  void addResponseSchema(const rapidjson::Value& s,
+			 bool use_generic=false);
+  void addResponseFormat(const std::string& fmt, bool use_generic=false);
   
 #ifndef YGG_TEST
 protected:
+#else
+  bool afterSendRecv(Comm_t* sComm, Comm_t* rComm) override;
 #endif
   
   Metadata& get_metadata(const DIRECTION dir) override;
