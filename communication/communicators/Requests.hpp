@@ -43,8 +43,8 @@ public:
 class RequestList {
 public:
     RequestList(DIRECTION dir) :
-            comms(), requests(), partners(), response_dir(dir),
-            response_metadata(), active_comm(-1), signon_complete(false) {}
+      comms(), requests(), partners(), response_dir(dir),
+      response_metadata(), signon_complete(false) {}
     ~RequestList() {
         destroy();
     }
@@ -182,28 +182,27 @@ public:
                      << std::endl;
         return static_cast<int>(idx);
     }
-    int addResponseServer(utils::Header& header, const char* data, const size_t len) {
-        ygglog_debug << "addResponseServer: begin" << std::endl;
-        if (requests.size() == 0) {
-            ygglog_error << "addResponseServer: Server does not have any unprocessed requests" << std::endl;
-            return -1;
-        }
-        ygglog_debug << "addResponseServer: request_id = " << requests[0].request_id << std::endl;
-        header.initMeta();
-        if (!header.SetMetaString("request_id", requests[0].request_id)) {
-            ygglog_error << "addResponseServer: Error seting request_id" << std::endl;
-            return -1;
-        }
-        if (requests[0].setData(data, len) < 0) {
-            ygglog_error << "addResponseServer: Error setting data" << std::endl;
-            return -1;
-        }
-        active_comm = 0;
-        if (header.flags & HEAD_FLAG_SERVER_SIGNON)
-            signon_complete = true;
-        ygglog_debug << "addResponseServer: done (signon_complete = " <<
-                     signon_complete << ")" << std::endl;
-        return 0;
+    int addResponseServer(Header& header, const char* data, const size_t len) {
+      ygglog_debug << "addResponseServer: begin" << std::endl;
+      if (requests.size() == 0) {
+	ygglog_error << "addResponseServer: Server does not have any unprocessed requests" << std::endl;
+	return -1;
+      }
+      ygglog_debug << "addResponseServer: request_id = " << requests[0].request_id << std::endl;
+      header.initMeta();
+      if (!header.SetMetaString("request_id", requests[0].request_id)) {
+	ygglog_error << "addResponseServer: Error seting request_id" << std::endl;
+	return -1;
+      }
+      if (requests[0].setData(data, len) < 0) {
+	ygglog_error << "addResponseServer: Error setting data" << std::endl;
+	return -1;
+      }
+      if (header.flags & HEAD_FLAG_SERVER_SIGNON)
+	signon_complete = true;
+      ygglog_debug << "addResponseServer: done (signon_complete = " <<
+	signon_complete << ")" << std::endl;
+      return 0;
     }
     int addResponseClient(utils::Header& header, const char* data, const size_t len) {
         ygglog_debug << "addResponseClient: begin" << std::endl;
@@ -244,6 +243,15 @@ public:
             return NULL;
         }
         return comms[requests[0].comm_idx];
+    }
+    Comm_t* lastComm() {
+      if (comms.empty()) {
+	ygglog_error << "lastComm: No communicators" << std::endl;
+	return NULL;
+      }
+      if (!requests.empty())
+	return activeComm();
+      return comms[comms.size() - 1];
     }
     std::string activeRequestClient() {
         if (!signon_complete) {
@@ -338,14 +346,16 @@ public:
             return false;
         return requests[(size_t)idx].complete;
     }
-    void addResponseSchema(const std::string& s) {
-      response_metadata.fromSchema(s);
+    void addResponseSchema(const std::string& s, bool use_generic=false) {
+      response_metadata.fromSchema(s, use_generic);
     }
-    void addResponseSchema(const rapidjson::Value& s) {
-        response_metadata.fromSchema(s);
+    void addResponseSchema(const rapidjson::Value& s,
+			   bool use_generic=false) {
+      response_metadata.fromSchema(s, use_generic);
     }
-    void addResponseFormat(const std::string& format_str) {
-        response_metadata.fromFormat(format_str);
+    void addResponseFormat(const std::string& format_str,
+			   bool use_generic=false) {
+      response_metadata.fromFormat(format_str, use_generic);
     }
     bool partnerSignoff(const utils::Header& header) {
       if (header.flags & HEAD_FLAG_EOF) {

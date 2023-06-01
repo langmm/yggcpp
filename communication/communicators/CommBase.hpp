@@ -67,6 +67,8 @@ namespace communication {
 
 namespace communicator {
 
+class RPCComm;
+
 class ServerComm;
 
 class ClientComm;
@@ -412,6 +414,7 @@ private:
 		  rapidjson::VarArgList& ap);
 
 protected:
+    friend RPCComm;
     friend ServerComm;
     friend ClientComm;
     friend IPCComm;

@@ -2,22 +2,36 @@
 #include "YggInterface.hpp"
 #include "commtest.hpp"
 
+#define INIT_INPUT_BASE(cls, cls_args, alt, alt_args)	\
+  alt sComm alt_args;					\
+  setenv("input_IN", sComm.getAddress().c_str(), 1);	\
+  cls rComm cls_args
+#define INIT_OUTPUT_BASE(cls, cls_args, alt, alt_args)	\
+  alt rComm alt_args;					\
+  setenv("output_OUT", rComm.getAddress().c_str(), 1);	\
+  cls sComm cls_args
 #define INIT_INPUT_NOARGS(cls)				\
-  COMM_BASE sComm("", nullptr, SEND);			\
-  setenv("input_IN", sComm.getAddress().c_str(), 1);	\
-  cls ## Input rComm("input")
-#define INIT_OUTPUT_NOARGS(cls)				\
-  COMM_BASE rComm("", nullptr, RECV);			\
-  setenv("output_OUT", rComm.getAddress().c_str(), 1);	\
-  cls ## Output sComm("output")
-#define INIT_INPUT(cls, ...)				\
-  COMM_BASE sComm("", nullptr, SEND);			\
-  setenv("input_IN", sComm.getAddress().c_str(), 1);	\
-  cls ## Input rComm("input", __VA_ARGS__)
-#define INIT_OUTPUT(cls, ...)				\
-  COMM_BASE rComm("", nullptr, RECV);			\
-  setenv("output_OUT", rComm.getAddress().c_str(), 1);	\
-  cls ## Output sComm("output", __VA_ARGS__)
+  INIT_INPUT_BASE(cls ## Input, ("input"), COMM_BASE,	\
+		  ("", nullptr, SEND))
+#define INIT_OUTPUT_NOARGS(cls)					\
+  INIT_OUTPUT_BASE(cls ## Output, ("output"), COMM_BASE,	\
+		   ("", nullptr, RECV))
+#define INIT_INPUT(cls, ...)						\
+  INIT_INPUT_BASE(cls ## Input, ("input", __VA_ARGS__), COMM_BASE,	\
+		  ("", nullptr, SEND))
+#define INIT_OUTPUT(cls, ...)						\
+  INIT_OUTPUT_BASE(cls ## Output, ("output", __VA_ARGS__), COMM_BASE,	\
+		   ("", nullptr, RECV))
+#define INIT_INPUT_RPC_NOARGS(cls)				\
+  INIT_INPUT_BASE(cls, ("input"), ClientComm, ("", nullptr))
+#define INIT_OUTPUT_RPC_NOARGS(cls)				\
+  INIT_OUTPUT_BASE(cls, ("output"), ServerComm, ("", nullptr))
+#define INIT_INPUT_RPC(cls, ...)			   \
+  INIT_INPUT_BASE(cls, ("input", __VA_ARGS__), ClientComm, \
+		  ("", nullptr))
+#define INIT_OUTPUT_RPC(cls, ...)				\
+  INIT_OUTPUT_BASE(cls, ("output", __VA_ARGS__), ServerComm,	\
+		   ("", nullptr))
 #define TRANSFER_INPUT_TYPE(init)		\
   sComm.copySchema(&rComm);			\
   init
@@ -25,10 +39,17 @@
   rapidjson::Document s;			\
   s.Parse(schema);				\
   init;						\
-  TRANSFER_INPUT_TYPE()
+  TRANSFER_INPUT_TYPE(EXPECT_TRUE(s.IsObject()))
 #define INIT_FORMAT(init, format_str, as_array)	\
   init;						\
   sComm.addFormat(format_str, as_array)
+#define INIT_SCHEMA_RPC(init, schema1, schema2)	\
+  rapidjson::Document s1;			\
+  rapidjson::Document s2;			\
+  s1.Parse(schema1);				\
+  s2.Parse(schema2);				\
+  init;						\
+  TRANSFER_INPUT_TYPE(EXPECT_TRUE(s1.IsObject()))
 
 #define INTERFACE_TEST(name, cls, init_data, comp_data, send_method, send_args, recv_method, recv_args, ...) \
   TEST_SEND_RECV(YggInterface, name ## _input,				\
@@ -97,9 +118,93 @@ INTERFACE_TEST_SCHEMA(Schema, Ygg,
 		      sendVar, (data_send), recvVar, (data_recv),
 		      "{\"type\": \"number\"}")
 
-// TODO:
-//  - test client/server
-//  - test timesync
+// Client
+TEST_SEND_RECV_RPC(YggInterface, YggRpcServer,
+		   INIT_INPUT_RPC_NOARGS(YggRpcServer),
+		   INIT_DATA_SINGLE(std::string,
+				    "This is a test message"),
+		   COMP_DATA_SINGLE,
+		   send, (data_send), recv, (data_recv))
+TEST_SEND_RECV_RPC(YggInterface, YggRpcClient,
+		   INIT_OUTPUT_RPC_NOARGS(YggRpcClient),
+		   INIT_DATA_SINGLE(std::string,
+				    "This is a test message"),
+		   COMP_DATA_SINGLE,
+		   send, (data_send), recv, (data_recv))
+TEST_SEND_RECV_RPC(YggInterface, YggRpcServer_format,
+		   INIT_INPUT_RPC(YggRpcServer, "%lf", "%lf"),
+		   INIT_DATA_SINGLE(double, 1.5),
+		   COMP_DATA_SINGLE,
+		   sendVar, (data_send), recvVar, (data_recv))
+TEST_SEND_RECV_RPC(YggInterface, YggRpcClient_format,
+		   INIT_OUTPUT_RPC(YggRpcClient, "%lf", "%lf"),
+		   INIT_DATA_SINGLE(double, 1.5),
+		   COMP_DATA_SINGLE,
+		   sendVar, (data_send), recvVar, (data_recv))
+TEST_SEND_RECV_RPC(YggInterface, YggRpcServer_schema,
+                   INIT_SCHEMA_RPC(INIT_INPUT_RPC(YggRpcServer, s1, s2),
+                                   "{\"type\": \"integer\"}",
+                                   "{\"type\": \"integer\"}"),
+                   INIT_DATA_SINGLE(int, 5),
+                   COMP_DATA_SINGLE,
+                   sendVar, (data_send), recvVar, (data_recv))
+TEST_SEND_RECV_RPC(YggInterface, YggRpcClient_schema,
+                   INIT_SCHEMA_RPC(INIT_OUTPUT_RPC(YggRpcClient, s1, s2),
+                                   "{\"type\": \"integer\"}",
+                                   "{\"type\": \"integer\"}"),
+                   INIT_DATA_SINGLE(int, 5),
+                   COMP_DATA_SINGLE,
+                   sendVar, (data_send), recvVar, (data_recv))
+
+// Timesync
+TEST(YggInterface, YggTimesync) {
+  INIT_OUTPUT_RPC_NOARGS(YggTimesync);
+  rComm.addResponseSchema("{\"type\": \"object\"}");
+  DO_RPC_SIGNON;
+  {
+    double t_send = 1.5;
+    double t_recv;
+    DO_SEND_RECV_REQUEST(INIT_DATA_SCHEMA("{\"type\": \"object\", "
+					  "\"properties\": {\"a\": "
+					  "{\"type\": \"integer\"}}}"),
+			 COMP_DATA_SINGLE,
+			 send, (2, t_send, &data_send),
+			 recv, (2, &t_recv, &data_recv));
+    EXPECT_EQ(t_send, t_recv);
+  }
+  {
+    DO_SEND_RECV_RESPONSE(INIT_DATA_SCHEMA("{\"type\": \"object\", "
+					   "\"properties\": {\"a\": "
+					   "{\"type\": \"integer\"}}}"),
+			  COMP_DATA_SINGLE,
+			  send, (1, &data_send),
+			  recv, (1, &data_recv));
+  }
+}
+TEST(YggInterface, YggTimesync_units) {
+  INIT_OUTPUT_RPC(YggTimesync, "s");
+  rComm.addResponseSchema("{\"type\": \"object\"}");
+  DO_RPC_SIGNON;
+  {
+    double t_send = 1.5;
+    double t_recv;
+    DO_SEND_RECV_REQUEST(INIT_DATA_SCHEMA("{\"type\": \"object\", "
+					  "\"properties\": {\"a\": "
+					  "{\"type\": \"integer\"}}}"),
+			 COMP_DATA_SINGLE,
+			 send, (2, t_send, &data_send),
+			 recv, (2, &t_recv, &data_recv));
+    EXPECT_EQ(t_send, t_recv);
+  }
+  {
+    DO_SEND_RECV_RESPONSE(INIT_DATA_SCHEMA("{\"type\": \"object\", "
+					   "\"properties\": {\"a\": "
+					   "{\"type\": \"integer\"}}}"),
+			  COMP_DATA_SINGLE,
+			  send, (1, &data_send),
+			  recv, (1, &data_recv));
+  }
+}
 
 // AsciiFile
 TEST_SEND_RECV(YggInterface, AsciiFile_input,

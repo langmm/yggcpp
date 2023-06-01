@@ -216,11 +216,11 @@ Comm_t* communication::communicator::new_Comm_t(const DIRECTION& dir, const COMM
 }
 
 bool Comm_t::create_header_send(Header& header, const char* data,
-                                const size_t &len) {
-    header.for_send(&metadata, data, len);
-    if (!header.isValid())
-        return false;
-    return true;
+				const size_t &len) {
+  header.for_send(&get_metadata(SEND), data, len);
+  if (!header.isValid())
+    return false;
+  return true;
 }
 
 bool Comm_t::create_header_recv(Header& header, char*& data,
@@ -510,26 +510,28 @@ int Comm_t::update_datatype(const rapidjson::Value& new_schema,
 }
 
 int Comm_t::deserialize(const char* buf, rapidjson::VarArgList& ap) {
-    if (!metadata.hasType()) {
-        ygglog_error << "CommBase(" << name << ")::deserialize: No datatype" << std::endl;
-        return -1;
-    }
-    ygglog_debug << "CommBase(" << name << ")::deserialize: begin" << std::endl;
-    int ret = metadata.deserialize(buf, ap);
-    ygglog_debug << "CommBase(" << name << ")::deserialize: returns " << ret << std::endl;
-    return ret;
+  Metadata& meta = get_metadata(RECV);
+  if (!meta.hasType()) {
+    ygglog_error << "CommBase(" << name << ")::deserialize: No datatype" << std::endl;
+    return -1;
+  }
+  ygglog_debug << "CommBase(" << name << ")::deserialize: begin" << std::endl;
+  int ret = meta.deserialize(buf, ap);
+  ygglog_debug << "CommBase(" << name << ")::deserialize: returns " << ret << std::endl;
+  return ret;
 }
 
 int Comm_t::serialize(char*& buf, size_t& buf_siz,
-                      rapidjson::VarArgList& ap) {
-    if (!metadata.hasType()) {
-        ygglog_error << "CommBase(" << name << ")::serialize: No datatype" << std::endl;
-        return -1;
-    }
-    ygglog_debug << "CommBase(" << name << ")::serialize: begin" << std::endl;
-    int ret = metadata.serialize(&buf, &buf_siz, ap);
-    ygglog_debug << "CommBase(" << name << ")::serialize: returns " << ret << std::endl;
-    return ret;
+		      rapidjson::VarArgList& ap) {
+  Metadata& meta = get_metadata(SEND);
+  if (!meta.hasType()) {
+    ygglog_error << "CommBase(" << name << ")::serialize: No datatype" << std::endl;
+    return -1;
+  }
+  ygglog_debug << "CommBase(" << name << ")::serialize: begin" << std::endl;
+  int ret = meta.serialize(&buf, &buf_siz, ap);
+  ygglog_debug << "CommBase(" << name << ")::serialize: returns " << ret << std::endl;
+  return ret;
 }
 
 long Comm_t::vRecv(rapidjson::VarArgList& ap) {
@@ -554,48 +556,49 @@ long Comm_t::vRecv(rapidjson::VarArgList& ap) {
     return ret;
 }
 int Comm_t::vSend(rapidjson::VarArgList& ap) {
-    ygglog_debug << "CommBase(" << name << ")::vSend: begin" << std::endl;
-    // If type not set, but comm expecting generic, get the schema from the
-    // provided generic argument
-    if (metadata.isGeneric() && !metadata.hasType()) {
-        rapidjson::Document tmp;
-        if (!tmp.GetVarArgs(*metadata.schema, ap)) {
-            ygglog_error << "CommBase(" << name << ")::vSend: Error getting generic argument." << std::endl;
-            return -1;
-        }
-        rapidjson::SchemaEncoder encoder(true);
-        rapidjson::Document new_schema;
-        if (!tmp.Accept(encoder)) {
-            ygglog_error << "CommBase(" << name << ")::vSend: Error encoding schema."
-                         << std::endl;
-            return -1;
-        }
-        if (!encoder.Accept(new_schema)) {
-            ygglog_error << "CommBase(" << name << ")::vSend: Error getting encoded schema." << std::endl;
-            return -1;
-        }
-        new_schema.FinalizeFromStack();
-        if (!update_datatype(new_schema, SEND)) {
-            ygglog_error << "CommBase(" << name << ")::vSend: Error updating dtype from generic" << std::endl;
-            return -1;
-        }
+  ygglog_debug << "CommBase(" << name << ")::vSend: begin" << std::endl;
+  // If type not set, but comm expecting generic, get the schema from the
+  // provided generic argument
+  Metadata& meta = get_metadata(SEND);
+  if (meta.isGeneric() && !meta.hasType()) {
+    rapidjson::Document tmp;
+    if (!tmp.GetVarArgs(*meta.schema, ap)) {
+      ygglog_error << "CommBase(" << name << ")::vSend: Error getting generic argument." << std::endl;
+      return -1;
     }
-    size_t nargs_orig = ap.get_nargs();
-    char* buf = NULL;
-    size_t buf_siz = 0;
-    int ret = serialize(buf, buf_siz, ap);
-    if (ret < 0) {
-        ygglog_error << "CommBase(" << name << ")::vSend: serialization error" << std::endl;
-        if (buf)
-            free(buf);
-        return ret;
+    rapidjson::SchemaEncoder encoder(true);
+    rapidjson::Document new_schema;
+    if (!tmp.Accept(encoder)) {
+      ygglog_error << "CommBase(" << name << ")::vSend: Error encoding schema."
+		   << std::endl;
+      return -1;
     }
-    ret = send(buf, ret);
-    free(buf);
-    if (ret >= 0)
-        ret = (int)(nargs_orig - ap.get_nargs());
-    ygglog_debug << "CommBase(" << name << ")::vSend: returns " << ret << std::endl;
+    if (!encoder.Accept(new_schema)) {
+      ygglog_error << "CommBase(" << name << ")::vSend: Error getting encoded schema." << std::endl;
+      return -1;
+    }
+    new_schema.FinalizeFromStack();
+    if (!update_datatype(new_schema, SEND)) {
+      ygglog_error << "CommBase(" << name << ")::vSend: Error updating dtype from generic" << std::endl;
+      return -1;
+    }
+  }
+  size_t nargs_orig = ap.get_nargs();
+  char* buf = NULL;
+  size_t buf_siz = 0;
+  int ret = serialize(buf, buf_siz, ap);
+  if (ret < 0) {
+    ygglog_error << "CommBase(" << name << ")::vSend: serialization error" << std::endl;
+    if (buf)
+      free(buf);
     return ret;
+  }
+  ret = send(buf, ret);
+  free(buf);
+  if (ret >= 0)
+    ret = (int)(nargs_orig - ap.get_nargs());
+  ygglog_debug << "CommBase(" << name << ")::vSend: returns " << ret << std::endl;
+  return ret;
 }
 long Comm_t::vCall(rapidjson::VarArgList& ap) {
   if (type != CLIENT_COMM) {
@@ -604,10 +607,11 @@ long Comm_t::vCall(rapidjson::VarArgList& ap) {
   }
   size_t send_nargs = 0;
   rapidjson::Document tmp;
-  if (!metadata.hasType()) {
+  Metadata& meta_send = get_metadata(SEND);
+  if (!meta_send.hasType()) {
     send_nargs = 0;
   } else {
-    send_nargs = tmp.CountVarArgs(*metadata.schema, false);
+    send_nargs = tmp.CountVarArgs(*meta_send.schema, false);
   }
   rapidjson::VarArgList op(ap);
   size_t recv_nargs = ap.get_nargs() - send_nargs;
@@ -618,7 +622,7 @@ long Comm_t::vCall(rapidjson::VarArgList& ap) {
     return -1;
   }
   ygglog_debug << "CommBase(" << name << ")::vCall: Used " << sret << " arguments in send" << std::endl;
-  if (!tmp.SkipVarArgs(*(metadata.schema), op, false)) {
+  if (!tmp.SkipVarArgs(*(meta_send.schema), op, false)) {
     ygglog_error << "CommBase(" << name << ")::vCall: Error skipping arguments" << std::endl;
     return -1;
   }

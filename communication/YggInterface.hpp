@@ -351,7 +351,7 @@ public:
 			  this->metadata.GetAllocator()).Move(),
 	 this->metadata.GetAllocator());
     }
-    this->addResponseSchema("{ \"type\": \"object\" }");
+    this->addResponseSchema("{ \"type\": \"object\" }", true);
   }
   
   /*!
