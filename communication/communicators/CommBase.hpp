@@ -106,8 +106,9 @@ public:
       char* str = NULL;
       size_t len = 0;
       long out = recv(str, len, true);
-      if (out >= 0) {
-	data.assign(str, static_cast<size_t>(out));
+      if (out >= 0 || out == -2) {
+	if (out >= 0)
+	  data.assign(str, static_cast<size_t>(out));
 	free(str);
       }
       return out;
@@ -244,8 +245,9 @@ public:
       char* str = NULL;
       size_t len = 0;
       long out = recvRealloc(2, &str, &len);
-      if (out >= 0) {
-	data.assign(str, static_cast<size_t>(len));
+      if (out >= 0 || out == -2) {
+	if (out >= 0)
+	  data.assign(str, static_cast<size_t>(len));
 	free(str);
       }
       return out;

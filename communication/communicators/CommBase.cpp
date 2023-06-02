@@ -357,8 +357,9 @@ long Comm_t::recv(char*& data, const size_t &len,
     char* tmp = NULL;
     size_t tmp_len = 0;
     long ret = recv(tmp, tmp_len, true);
-    if (ret >= 0) {
-      ret = copyData(data, len, tmp, ret, false);
+    if (ret >= 0 || ret == -2) {
+      if (ret >= 0)
+	ret = copyData(data, len, tmp, ret, false);
       if (tmp)
 	free(tmp);
     }
