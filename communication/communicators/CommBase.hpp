@@ -462,12 +462,12 @@ protected:
 			const DIRECTION dir);
     template<typename T>
     void zeroData(const T* data,
-		  RAPIDJSON_ENABLEIF((YGGDRASIL_IS_ANY_SCALAR(T)))) {
+		  RAPIDJSON_ENABLEIF((internal::OrExpr<YGGDRASIL_IS_ANY_SCALAR(T), internal::IsSame<T, bool> >))) {
       memset(const_cast<T*>(data), 0, sizeof(T));
     }
     template<typename T>
     void zeroData(const T*,
-		  RAPIDJSON_DISABLEIF((YGGDRASIL_IS_ANY_SCALAR(T)))) {}
+		  RAPIDJSON_DISABLEIF((internal::OrExpr<YGGDRASIL_IS_ANY_SCALAR(T), internal::IsSame<T, bool> >))) {}
     template<typename T>
     bool checkType(const T& data, const DIRECTION dir) {
       Metadata& meta = get_metadata(dir);
