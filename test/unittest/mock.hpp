@@ -62,6 +62,17 @@ extern char sublib_contents[256];
   ELF_BEGIN_F(func)
 #define ELF_END_F(func)				\
   ELFREVERT(func, original_func_ ## func)
+#define ELF_BEGIN_ORIG_F(func)						\
+  void *original_func_ ## func = nullptr;				\
+  void *dummy_func_ ## func = nullptr;					\
+  original_func_ ## func = ELFHOOK(func);				\
+  EXPECT_NE(original_func_ ## func, ((void*)0));			\
+  dummy_func_ ## func = ELFREVERT(func ## _orig,			\
+				  original_func_ ## func);		\
+  EXPECT_NE(dummy_func_ ## func, ((void*)0))
+#define ELF_END_ORIG_F(func)				\
+  ELFREVERT(func ## _orig, dummy_func_ ## func);	\
+  ELFREVERT(func, *original_func_ ## func)
 
 namespace communication {
 namespace mock {

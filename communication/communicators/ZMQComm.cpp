@@ -685,10 +685,7 @@ bool ZMQComm::create_header_send(Header& header, const char* data, const size_t 
       return false;
     }
     ygglog_debug << "ZMQComm(" << this->name << ")::create_header_send: zmq_reply = " << reply_address << std::endl;
-    if (!header.SetMetaString("zmq_reply", reply_address)) {
-      ygglog_debug << "ZMQComm(" << this->name << ")::create_header_send: Failed to set zmq_reply" << std::endl;
-    return false;
-    }
+    header.SetMetaString("zmq_reply", reply_address);
   }
   return true;
 }
@@ -727,10 +724,7 @@ Comm_t* ZMQComm::create_worker_send(Header& head) {
     return NULL;
   }
   ygglog_debug << "ZMQComm(" << this->name << ")::create_worker_send: zmq_reply_worker = " << reply_address << std::endl;
-  if (!head.SetMetaString("zmq_reply_worker", reply_address)) {
-    ygglog_debug << "ZMQComm(" << this->name << ")::create_worker_send: Failed to set zmq_reply_worker" << std::endl;
-    return NULL;
-  }
+  head.SetMetaString("zmq_reply_worker", reply_address);
   return out;
 }
 

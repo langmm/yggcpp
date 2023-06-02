@@ -483,7 +483,11 @@ protected:
       Metadata& meta = get_metadata(dir);
       if (dir == RECV)
 	zeroData(&data);
-      meta.fromData(data);
+      try {
+	meta.fromData(data);
+      } catch (...) {
+	return false;
+      }
       return true;
     }
     virtual bool create_header_send(utils::Header& header, const char* data, const size_t &len);

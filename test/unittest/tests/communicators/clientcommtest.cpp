@@ -35,6 +35,15 @@ public:
       return false;
     return true;
   }
+  bool addStashedRequest(std::string& msg, bool skip_signon=false) {
+    while (server_comm->requests.requests.size() > 0) {
+      server_comm->requests.stashRequest();
+    }
+    if (!addRequest(msg, skip_signon))
+      return false;
+    this->requests.stashRequest();
+    return true;
+  }
   bool addRequest(std::string& msg, bool skip_signon=false) {
     if (!skip_signon) {
       if (!addSignon())
@@ -155,6 +164,45 @@ TEST(ClientComm, recvLarge) {
     EXPECT_EQ(cc.recv(res_recv), res_send.size());
     EXPECT_EQ(res_recv, res_send);
     EXPECT_TRUE(cc.getWorkers().workers[0].request.empty());
+}
+
+TEST(ClientComm, call) {
+  std::string name = "MyComm";
+  communication::testing::ClientComm_tester cc(name, nullptr);
+  cc.addSchema("{\"type\": \"string\"}");
+  std::string req_send = "REQUEST";
+  std::string res_send = "RESPONSE";
+  std::string req_recv = req_send;
+  char* res_recv = NULL;
+  size_t res_recv_len = 0;
+  // First message
+  std::string req_recv_fmt = "\"" + req_recv + "\"";
+  cc.addStashedRequest(req_recv_fmt);
+  EXPECT_GE(cc.server_comm->sendVar(res_send), 0);
+  EXPECT_EQ(cc.callRealloc(4, req_send.c_str(), req_send.size(),
+			   &res_recv, &res_recv_len), 2);
+  EXPECT_EQ(res_send.size(), res_recv_len);
+  EXPECT_EQ(strcmp(res_send.c_str(), res_recv), 0);
+  EXPECT_EQ(cc.server_comm->recvVar(req_recv), 2);
+  EXPECT_EQ(req_recv, req_send);
+  // Second message
+  req_send = "REQUEST1";
+  res_send = "RESPONSE2";
+  req_recv = req_send;
+  req_recv_fmt = "\"" + req_recv + "\"";
+  res_recv_len = res_send.size() + 1;
+  res_recv = (char*)realloc(res_recv, res_recv_len * sizeof(char));
+  EXPECT_TRUE(res_recv);
+  memset(res_recv, '\0', res_recv_len * sizeof(char));
+  cc.addStashedRequest(req_recv_fmt, true);
+  EXPECT_GE(cc.server_comm->sendVar(res_send), 0);
+  EXPECT_EQ(cc.call(4, req_send.c_str(), req_send.size(),
+		    res_recv, &res_recv_len), 2);
+  EXPECT_EQ(res_send.size(), res_recv_len);
+  EXPECT_EQ(strcmp(res_send.c_str(), res_recv), 0);
+  EXPECT_EQ(cc.server_comm->recvVar(req_recv), 2);
+  EXPECT_EQ(req_recv, req_send);
+  free(res_recv);
 }
 
 #endif

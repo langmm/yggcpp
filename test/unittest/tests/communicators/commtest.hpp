@@ -12,16 +12,13 @@
   EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm))
 
 #define DO_SEND_RECV_REQUEST(init_data, comp_data, send_method, send_args, recv_method, recv_args) \
-  std::cerr << "REQUEST BEGIN" << std::endl;				\
   init_data;								\
   EXPECT_GE(sComm.send_method send_args, 0);				\
   EXPECT_GE(rComm.recv_method recv_args, 0);				\
   EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));			\
-  comp_data;								\
-  std::cerr << "REQUEST END" << std::endl
+  comp_data
   
 #define DO_SEND_RECV_RESPONSE(init_data, comp_data, send_method, send_args, recv_method, recv_args) \
-  std::cerr << "RESPONSE BEGIN" << std::endl;				\
   init_data;								\
   EXPECT_GE(rComm.send_method send_args, 0);				\
   EXPECT_GE(sComm.recv_method recv_args, 0);				\
@@ -29,8 +26,7 @@
   comp_data;								\
   EXPECT_GE(sComm.send_eof(), 0);					\
   EXPECT_GE(rComm.recv_method recv_args, -2);				\
-  EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));			\
-  std::cerr << "RESPONSE END" << std::endl
+  EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm))
 
 #define DO_RPC_SIGNON							\
   {									\
@@ -156,7 +152,6 @@
     }						\
   }
 #define COMP_TABLE_C				\
-  std::cerr << &(c_send[i * nc_send]) << " == " << &(c_recv[i * nc_send]) << std::endl;	\
   EXPECT_EQ(strncmp(&(c_send[i * nc_send]), &(c_recv[i * nc_send]), nc_send), 0);
 #define COMP_TABLE_C_REALLOC						\
   if (c_recv != NULL) {							\
@@ -226,6 +221,8 @@
     setenv(key_env.c_str(), val_env.c_str(), 1);			\
     cls ## _tester rComm(name, RECV);					\
     DO_SEND_RECV(sendVar, recvVar, type, value);			\
+    rComm.close();							\
+    EXPECT_EQ(rComm.recvVar(data_recv), -1);				\
   }
 #define COMM_SERI_TEST(cls)						\
   COMM_SERI_TEST_TYPE(cls, double, 1.5, "{\"type\": \"number\"}")	\
@@ -254,6 +251,7 @@
       schema += bigMsg;							\
       schema += "\"}";							\
       sComm.addSchema(schema, true);					\
+      EXPECT_EQ(rComm.wait_for_recv(100), 0);				\
       EXPECT_GE(sComm.send(data_send), 0);				\
       EXPECT_GE(rComm.recv(data_recv), 0);				\
       EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));			\
