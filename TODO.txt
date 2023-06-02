@@ -4,3 +4,4 @@
 * Automated documentation using doxygen
 * Fill in missing docs
 * Fix handling of multiple connections in ZMQ socket (restricted to ZMQ_PAIR to simplify testing)
+* Use rapidjson allocator to malloc/realloc returned data so that data is cleaned up on exit

@@ -165,6 +165,8 @@
   COMP_DATA_TABLE_BASE(COMP_TABLE_C)
 #define COMP_DATA_TABLE_REALLOC			\
   COMP_DATA_TABLE_BASE(COMP_TABLE_C_REALLOC);	\
+  free(a_recv);					\
+  free(b_recv);					\
   free(c_recv)
 
 #define SEND_NARGS_TRIPLE			\

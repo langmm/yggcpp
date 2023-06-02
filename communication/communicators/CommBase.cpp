@@ -350,92 +350,93 @@ int Comm_t::wait_for_recv(const int& tout) {
 }
 long Comm_t::recv(char*& data, const size_t &len,
 		  bool allow_realloc) {
-    ygglog_debug << "CommBase(" << name << ")::recv: Receiving from " << address->address() << std::endl;
-    if (!allow_realloc) {
-      char* tmp = NULL;
-      size_t tmp_len = 0;
-      long ret = recv(tmp, tmp_len, true);
-      if (ret >= 0) {
+  ygglog_debug << "CommBase(" << name << ")::recv: Receiving from " << address->address() << std::endl;
+  Header head;
+  long ret = -1;
+  if (!allow_realloc) {
+    char* tmp = NULL;
+    size_t tmp_len = 0;
+    long ret = recv(tmp, tmp_len, true);
+    if (ret >= 0 || ret == -2) {
+      if (ret >= 0)
 	ret = copyData(data, len, tmp, ret, false);
-	if (tmp)
-	  free(tmp);
-      }
-      return ret;
-    }
-    Header head;
-    long ret = -1;
-    while (true) {
-        if (is_closed()) {
-            ygglog_error << "CommBase(" << name << ")::recv: Communicator closed." << std::endl;
-            return -1;
-        }
-        if (wait_for_recv(timeout_recv) < 0) {
-            ygglog_error << "CommBase(" << name << ")::recv: No messages waiting" << std::endl;
-            return -1;
-        }
-        ret = recv_single(data, len, allow_realloc);
-        if (ret < 0) {
-            ygglog_error << "CommBase(" << name << ")::recv: Failed to receive header" << std::endl;
-            return ret;
-        }
-        if (!create_header_recv(head, data, len, ret, allow_realloc, 0)) {
-            ygglog_error << "CommBase(" << name << ")::recv: Failed to create header" << std::endl;
-            return -1;
-        }
-        if (!(head.flags & HEAD_FLAG_REPEAT))
-            break;
-        head.reset();
-    }
-    if (head.flags & HEAD_FLAG_EOF) {
-        ygglog_debug << "CommBase(" << name << ")::recv: EOF received" << std::endl;
-        setFlags(head, RECV);
-        return -2;
-    }
-    Comm_t* xmulti = NULL;
-    if (head.flags & HEAD_FLAG_MULTIPART) {
-        ygglog_debug << "CommBase(" << name << ")::recv(char*& data, const size_t &len, bool allow_realloc): Message is multipart" << std::endl;
-        xmulti = create_worker_recv(head);
-        if (xmulti == NULL) {
-            ygglog_error << "CommBase(" << name << ")::recv: Failed to create worker communicator" << std::endl;
-            return -1;
-        }
-    }
-    char *pos = data + head.size_curr;
-    size_t msgsiz = 0;
-    while (head.size_curr < head.size_data) {
-        msgsiz = head.size_data - head.size_curr + 1;
-        if (xmulti->wait_for_recv(timeout_recv) < 0) {
-            ygglog_error << "CommBase(" << name << ")::recv: No messages waiting in work comm" << std::endl;
-            return -1;
-        }
-        ret = xmulti->recv_single(pos, msgsiz, false);
-        if (ret < 0) {
-            ygglog_error << "CommBase(" << name << ")::recv: Receive interrupted at " << head.size_curr << " of " << head.size_data << " bytes." << std::endl;
-            break;
-        }
-        head.size_curr += ret;
-        pos += ret;
-        ygglog_debug << "CommBase(" << name << ")::recv: " << head.size_curr << " of " << head.size_data << " bytes received." << std::endl;
-    }
-    if (xmulti)
-        workers.remove_worker(xmulti);
-    if (ret > 0) {
-        head.finalize_recv();
-        if (!head.hasType()) {
-            ygglog_debug << "CommBase(" << name << ")::recv: No type information in message header" << std::endl;
-        } else if (!update_datatype(head.schema[0], RECV)) {
-            ygglog_error << "CommBase(" << name << ")::recv: Error updating datatype." << std::endl;
-            return -1;
-        }
-    } else {
-        std::cerr << "ret iz zero? " << ret << std::endl;
-    }
-    if (ret >= 0) {
-        ygglog_debug << "CommBase(" << name << ")::recv: Received " << head.size_curr << " bytes from " << address->address() << std::endl;
-        ret = head.size_data;
-        setFlags(head, RECV);
+      if (tmp)
+	free(tmp);
     }
     return ret;
+  }
+  while (true) {
+    if (is_closed()) {
+      ygglog_error << "CommBase(" << name << ")::recv: Communicator closed." << std::endl;
+      return -1;
+    }
+    if (wait_for_recv(timeout_recv) < 0) {
+      ygglog_error << "CommBase(" << name << ")::recv: No messages waiting" << std::endl;
+      return -1;
+    }
+    ret = recv_single(data, len, allow_realloc);
+    if (ret < 0) {
+      ygglog_error << "CommBase(" << name << ")::recv: Failed to receive header" << std::endl;
+      return ret;
+    }
+    if (!create_header_recv(head, data, len, ret, allow_realloc, 0)) {
+      ygglog_error << "CommBase(" << name << ")::recv: Failed to create header" << std::endl;
+      return -1;
+    }
+    if (!(head.flags & HEAD_FLAG_REPEAT))
+      break;
+    head.reset();
+  }
+  if (head.flags & HEAD_FLAG_EOF) {
+    ygglog_debug << "CommBase(" << name << ")::recv: EOF received" << std::endl;
+    setFlags(head, RECV);
+    return -2;
+  }
+  Comm_t* xmulti = NULL;
+  if (head.flags & HEAD_FLAG_MULTIPART) {
+    ygglog_debug << "CommBase(" << name << ")::recv(char*& data, const size_t &len, bool allow_realloc): Message is multipart" << std::endl;
+    xmulti = create_worker_recv(head);
+    if (xmulti == NULL) {
+      ygglog_error << "CommBase(" << name << ")::recv: Failed to create worker communicator" << std::endl;
+      return -1;
+    }
+  }
+  char *pos = data + head.size_curr;
+  size_t msgsiz = 0;
+  while (head.size_curr < head.size_data) {
+    msgsiz = head.size_data - head.size_curr + 1;
+    if (xmulti->wait_for_recv(timeout_recv) < 0) {
+      ygglog_error << "CommBase(" << name << ")::recv: No messages waiting in work comm" << std::endl;
+      return -1;
+    }
+    ret = xmulti->recv_single(pos, msgsiz, false);
+    if (ret < 0) {
+      ygglog_error << "CommBase(" << name << ")::recv: Receive interrupted at " << head.size_curr << " of " << head.size_data << " bytes." << std::endl;
+      break;
+    }
+    head.size_curr += ret;
+    pos += ret;
+    ygglog_debug << "CommBase(" << name << ")::recv: " << head.size_curr << " of " << head.size_data << " bytes received." << std::endl;
+  }
+  if (xmulti)
+    workers.remove_worker(xmulti);
+  if (ret > 0) {
+    head.finalize_recv();
+    if (!head.hasType()) {
+      ygglog_debug << "CommBase(" << name << ")::recv: No type information in message header" << std::endl;
+    } else if (!update_datatype(head.schema[0], RECV)) {
+      ygglog_error << "CommBase(" << name << ")::recv: Error updating datatype." << std::endl;
+      return -1;
+    }
+  } else {
+    std::cerr << "ret iz zero? " << ret << std::endl;
+  }
+  if (ret >= 0) {
+    ygglog_debug << "CommBase(" << name << ")::recv: Received " << head.size_curr << " bytes from " << address->address() << std::endl;
+    ret = head.size_data;
+    setFlags(head, RECV);
+  }
+  return ret;
 }
 
 
