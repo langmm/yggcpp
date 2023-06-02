@@ -51,19 +51,16 @@ bool ServerComm::create_header_send(Header& header, const char* data, const size
     ygglog_error << "ServerComm(" << name << ")::create_header_send: Response comm is closed" << std::endl;
     return false;
   }
+  requests.transferSchemaTo(response_comm);
   bool out = response_comm->create_header_send(header, data, len);
   if ((!out) || header.flags & HEAD_FLAG_EOF)
     return out;
   if (requests.addResponseServer(header, data, len) < 0) {
     ygglog_error << "ServerComm(" << name << ")::create_header_send: Failed to add response" << std::endl;
-    header.invalidate();
     return false;
   }
   // This gives the server access to the ID of the message last received
-  // if (!header.SetMetaString("id", address)) {
-  //   header.invalidate();
-  //   return 0;
-  // }
+  // header.SetMetaString("id", address);
   return true;
 }
 
@@ -83,12 +80,10 @@ bool ServerComm::create_header_recv(Header& header, char*& data,
   }
   if (requests.addRequestServer(header) < 0) {
     ygglog_error << "ServerComm(" << name << ")::create_header_recv: Failed to add request" << std::endl;
-    header.invalidate();
     return false;
   }
   if (header.flags & HEAD_FLAG_CLIENT_SIGNON) {
     if (!signon(header)) {
-      header.invalidate();
       return false;
     }
     header.flags |= HEAD_FLAG_REPEAT;

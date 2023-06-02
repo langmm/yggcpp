@@ -12,6 +12,7 @@ void Metadata::_init(bool use_generic) {
   _update_schema();
   if (use_generic)
     setGeneric();
+  ygglog_debug << "Metadata::init: metadata = " << metadata << std::endl;
 }
 void Metadata::reset() {
   schema = NULL;
@@ -426,7 +427,7 @@ const rapidjson::Value& Metadata::getSchema() const {
     ygglog_throw_error_c("getSchema: No datatype in metadata");
   return *schema;
 }
-bool Metadata::SetValue(const std::string name, rapidjson::Value& x,
+void Metadata::SetValue(const std::string name, rapidjson::Value& x,
 			rapidjson::Value& subSchema) {
   if (!subSchema.IsObject()) {
     ygglog_throw_error_c("Metadata::SetValue: subSchema is not an object");
@@ -440,7 +441,6 @@ bool Metadata::SetValue(const std::string name, rapidjson::Value& x,
 			 GetAllocator()).Move(),
 	x, GetAllocator());
   }
-  return true;
 }
 #define GET_SET_METHOD_(type_in, type_out, method, setargs)		\
   type_out Metadata::Get ## method(const std::string name,		\
@@ -464,7 +464,7 @@ bool Metadata::SetValue(const std::string name, rapidjson::Value& x,
 			 #method, name.c_str(), #type_in);		\
     return subSchema[name.c_str()].Get ## method();			\
   }									\
-  bool Metadata::Set ## method(const std::string name, type_in x,	\
+  void Metadata::Set ## method(const std::string name, type_in x,	\
 			       rapidjson::Value& subSchema) {		\
     rapidjson::Value x_val setargs;					\
     if (subSchema.HasMember(name.c_str())) {				\
@@ -476,7 +476,6 @@ bool Metadata::SetValue(const std::string name, rapidjson::Value& x,
 			 metadata.GetAllocator()).Move(),		\
 	x_val, metadata.GetAllocator());				\
     }									\
-    return true;							\
   }									\
   type_out Metadata::GetMeta ## method(const std::string name) const {	\
     return Get ## method(name, getMeta());				\
@@ -487,8 +486,8 @@ bool Metadata::SetValue(const std::string name, rapidjson::Value& x,
       return defV;							\
     return Get ## method ## Optional(name, defV, getMeta());		\
   }									\
-  bool Metadata::SetMeta ## method(const std::string name, type_in x) {	\
-    return Set ## method(name, x, getMeta());				\
+  void Metadata::SetMeta ## method(const std::string name, type_in x) {	\
+    Set ## method(name, x, getMeta());					\
   }									\
   type_out Metadata::GetSchema ## method(const std::string name,	\
 					 rapidjson::Value* subSchema	\
@@ -507,11 +506,12 @@ bool Metadata::SetValue(const std::string name, rapidjson::Value& x,
     }									\
     return Get ## method ## Optional(name, defV, *subSchema);		\
   }									\
-  bool Metadata::SetSchema ## method(const std::string name, type_in x,	\
+  void Metadata::SetSchema ## method(const std::string name, type_in x,	\
 				     rapidjson::Value* subSchema) {	\
     if (subSchema == NULL)						\
-      return Set ## method(name, x, getSchema());			\
-    return Set ## method(name, x, *subSchema);				\
+      Set ## method(name, x, getSchema());				\
+    else								\
+      Set ## method(name, x, *subSchema);				\
   }
 GET_SET_METHOD_(int, int, Int, (x));
 GET_SET_METHOD_(uint64_t, uint64_t, Uint, (x));
@@ -520,37 +520,35 @@ GET_SET_METHOD_(const std::string&, const char*, String,
 		(x.c_str(), (rapidjson::SizeType)(x.size()),
 		 metadata.GetAllocator()));
 #undef GET_SET_METHOD_
-bool Metadata::SetMetaValue(const std::string name, rapidjson::Value& x) {
-  return SetValue(name, x, getMeta());
+void Metadata::SetMetaValue(const std::string name, rapidjson::Value& x) {
+  SetValue(name, x, getMeta());
 }
-bool Metadata::SetSchemaValue(const std::string name, rapidjson::Value& x,
+void Metadata::SetSchemaValue(const std::string name, rapidjson::Value& x,
 			      rapidjson::Value* subSchema) {
   if (subSchema == NULL)
-    return SetValue(name, x, getSchema());
-  return SetValue(name, x, *subSchema);
+    SetValue(name, x, getSchema());
+  else
+    SetValue(name, x, *subSchema);
 }
-bool Metadata::SetSchemaMetadata(const std::string name,
+void Metadata::SetSchemaMetadata(const std::string name,
 				 const Metadata& other) {
   if (other.schema == NULL)
     ygglog_throw_error_c("SetSchemaMetadata: Value has not datatype");
   rapidjson::Value x;
   x.CopyFrom(*(other.schema), GetAllocator(), true);
-  return SetSchemaValue(name, x);
+  SetSchemaValue(name, x);
 }
-bool Metadata::SetMetaID(const std::string name, const char** id) {
+void Metadata::SetMetaID(const std::string name, const char** id) {
   char new_id[100];
   snprintf(new_id, 100, "%d", rand());
-  bool out = SetMetaString(name, new_id);
-  if (out && id)
+  SetMetaString(name, new_id);
+  if (id)
     id[0] = GetMetaString(name);
-  return out;
 }
-bool Metadata::SetMetaID(const std::string name, std::string& id) {
+void Metadata::SetMetaID(const std::string name, std::string& id) {
   const char* id_str;
-  bool out = SetMetaID(name, &id_str);
-  if (out)
-    id.assign(id_str);
-  return out;
+  SetMetaID(name, &id_str);
+  id.assign(id_str);
 }
 int Metadata::deserialize(const char* buf, size_t nargs, int allow_realloc, ...) {
   rapidjson::VarArgList va(nargs, allow_realloc);
@@ -656,12 +654,6 @@ void Header::reset() {
   size_curr = 0;
   size_head = 0;
   flags = HEAD_FLAG_VALID;
-}
-bool Header::isValid() {
-  return (flags & HEAD_FLAG_VALID);
-}
-void Header::invalidate() {
-  flags &= static_cast<uint16_t>(~HEAD_FLAG_VALID);
 }
 
 void Header::setMessageFlags(const char* msg, const size_t msg_len) {

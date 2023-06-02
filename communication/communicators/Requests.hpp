@@ -44,7 +44,8 @@ namespace communicator {
   public:
     RequestList(DIRECTION dir) :
       comms(), requests(), partners(), response_dir(dir),
-      response_metadata(), signon_complete(false) {}
+      response_metadata(), signon_complete(false),
+      stashed_request() {}
     ~RequestList() {
       destroy();
     }
@@ -94,13 +95,19 @@ namespace communicator {
       }
       return 0;
     }
-    int addRequestClient(Header& header) {
+    int stashRequest() {
+      if (!requests.empty()) {
+	stashed_request = requests[0].request_id;
+	requests.erase(requests.begin());
+      }
+      return 1;
+    }
+    int addRequestClient(Header& header, std::string request_id="") {
       ygglog_debug << "addRequestClient: begin" << std::endl;
       if (initClientResponse() < 0)
 	return -1;
       bool is_signon = (header.flags & HEAD_FLAG_CLIENT_SIGNON);
       int existing_idx = -1;
-      std::string request_id;
       if (is_signon) {
 	for (size_t i = 0; i < requests.size(); i++) {
 	  if (requests[i].is_signon) {
@@ -111,34 +118,28 @@ namespace communicator {
 	}
       }
       if (request_id.empty()) {
-	if (!header.SetMetaID("request_id", request_id)) {
-	  ygglog_error << "addRequestClient: Error adding request_id"
-		       << std::endl;
-	  return -1;
+	if (!stashed_request.empty()) {
+	  request_id = stashed_request;
+	  stashed_request.clear();
+	  header.SetMetaString("request_id", request_id);
+	} else {
+	  header.SetMetaID("request_id", request_id);
 	}
 	ygglog_debug << "addRequestClient: request_id = "
 		     << request_id << std::endl;
+      } else {
+	header.SetMetaString("request_id", request_id);
+      }
+      header.SetMetaString("response_address",
+			   comms[0]->address->address());
+      if (existing_idx < 0) {
+	size_t idx = requests.size();
 	if (hasRequest(request_id) >= 0) {
 	  ygglog_error
 	    << "addRequestClient: Client already has request with id '"
 	    << request_id << "'" << std::endl;
 	  return -1;
 	}
-      } else {
-	if (!header.SetMetaString("request_id", request_id)) {
-	  ygglog_error << "addRequestClient: Error adding request_id"
-		       << std::endl;
-	  return -1;
-	}
-      }
-      if (!header.SetMetaString("response_address",
-				comms[0]->address->address())) {
-	ygglog_error <<
-	  "addRequestClient: Error adding response_address" << std::endl;
-	return -1;
-      }
-      if (existing_idx < 0) {
-	size_t idx = requests.size();
 	requests.emplace_back(request_id, "", 0, is_signon);
 	// requests.resize(requests.size() + 1);
 	// requests[idx].request_id = request_id;
@@ -190,10 +191,7 @@ namespace communicator {
       }
       ygglog_debug << "addResponseServer: request_id = " << requests[0].request_id << std::endl;
       header.initMeta();
-      if (!header.SetMetaString("request_id", requests[0].request_id)) {
-	ygglog_error << "addResponseServer: Error seting request_id" << std::endl;
-	return -1;
-      }
+      header.SetMetaString("request_id", requests[0].request_id);
       if (requests[0].setData(data, len) < 0) {
 	ygglog_error << "addResponseServer: Error setting data" << std::endl;
 	return -1;
@@ -370,12 +368,19 @@ namespace communicator {
       }
       return true;
     }
+    void transferSchemaTo(Comm_t* comm) {
+      comm->get_metadata(response_dir).fromMetadata(response_metadata);
+    }
+    void transferSchemaFrom(Comm_t* comm) {
+      response_metadata.fromMetadata(comm->get_metadata(response_dir));
+    }
     std::vector<Comm_t*> comms;
     std::vector<Request> requests;
     std::vector<Partner> partners;
     DIRECTION response_dir;
     Metadata response_metadata;
     bool signon_complete;
+    std::string stashed_request;
   };
 }
 }

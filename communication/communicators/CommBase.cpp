@@ -143,7 +143,8 @@ Comm_t::Comm_t(const std::string &name, DIRECTION direction, const COMM_TYPE &t,
         flags &= ~COMM_FLAG_VALID;
     }
 
-    if (!this->address->valid() && t != SERVER_COMM && t != CLIENT_COMM) {
+    if ((!this->address->valid()) &&
+	(!(flags & (COMM_FLAG_CLIENT | COMM_FLAG_SERVER)))) {
         ygglog_error << "CommBase: " << full_name << " not registered as environment variable.\n" << std::endl;
         flags &= ~COMM_FLAG_VALID;
     }
@@ -218,8 +219,6 @@ Comm_t* communication::communicator::new_Comm_t(const DIRECTION dir, const COMM_
 bool Comm_t::create_header_send(Header& header, const char* data,
 				const size_t &len) {
   header.for_send(&get_metadata(SEND), data, len);
-  if (!header.isValid())
-    return false;
   return true;
 }
 
@@ -228,20 +227,13 @@ bool Comm_t::create_header_recv(Header& header, char*& data,
 				size_t msg_len, int allow_realloc,
 				int temp) {
   header.for_recv(&data, len, msg_len, allow_realloc, temp);
-  if (!header.isValid())
-    return false;
   return true;
 }
 
 Comm_t* Comm_t::create_worker_send(Header& head) {
   Comm_t* worker = workers.get(this, SEND);
-  if (!(worker && worker->address)) {
-    ygglog_error << "CommBase(" << name << ")::create_worker_send: Error creating worker" << std::endl;
-    return NULL;
-  }
-  if (!head.SetMetaString("address", worker->address->address())) {
-    ygglog_error << "CommBase(" << name << ")::create_worker_send: Error setting address" << std::endl;
-    return NULL;
+  if (worker && worker->address) {
+    head.SetMetaString("address", worker->address->address());
   }
   return worker;
 }
@@ -249,17 +241,8 @@ Comm_t* Comm_t::create_worker_send(Header& head) {
 Comm_t* Comm_t::create_worker_recv(Header& head) {
   ygglog_debug << "CommBase(" << name << ")::create_worker_recv: begin" << std::endl;
   const char* address = head.GetMetaString("address");
-  if (address == NULL) {
-    ygglog_error << "CommBase(" << name << ")::create_worker_recv: Error getting address" << std::endl;
-    return NULL;
-  }
   utils::Address* adr = new utils::Address(address);
-  Comm_t* out = workers.get(this, RECV, adr);
-  if (out == NULL) {
-    ygglog_error << "CommBase(" << name << ")::create_worker_recv: Error creating worker" << std::endl;
-    return NULL;
-  }
-  return out;
+  return workers.get(this, RECV, adr);
 }
 
 int Comm_t::send(const char *data, const size_t &len) {
@@ -602,7 +585,7 @@ int Comm_t::vSend(rapidjson::VarArgList& ap) {
   return ret;
 }
 long Comm_t::vCall(rapidjson::VarArgList& ap) {
-  if (type != CLIENT_COMM) {
+  if (!(flags & COMM_FLAG_CLIENT)) {
     ygglog_error << "CommBase(" << name << ")::vCall: Communicator is not a client." << std::endl;
     return -1;
   }

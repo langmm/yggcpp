@@ -126,7 +126,6 @@ bool ClientComm::create_header_send(Header& header, const char* data, const size
   }
   if (requests.addRequestClient(header) < 0) {
     ygglog_error << "ClientComm(" << name << ")::create_header_send: Failed to add request" << std::endl;
-    header.invalidate();
     return false;
   }
   ygglog_debug << "ClientComm(" << name << ")::create_header_send: done" << std::endl;
@@ -155,9 +154,9 @@ bool ClientComm::create_header_recv(Header& header, char*& data, const size_t &l
     // a cached response
     if (requests.addResponseClient(header, data, len) < 0) {
       ygglog_error << "ClientComm(" << name << ")::create_header_recv: Failed to add response" << std::endl;
-      header.invalidate();
       return false;
     }
+    requests.transferSchemaFrom(response_comm);
   } else {
     if (requests.popRequestClient(header) < 0) {
       ygglog_error << "ClientComm(" << name << ")::create_header_recv: Failed to remove request" << std::endl;

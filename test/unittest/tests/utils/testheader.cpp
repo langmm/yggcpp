@@ -48,20 +48,38 @@ TEST(Metadata, SetAndGet) {
   metadata.initMeta();
   metadata.initSchema();
   // Set
-  EXPECT_TRUE(metadata.SetMetaInt("test_int", 1));
-  EXPECT_TRUE(metadata.SetMetaUint("test_uint", 1u));
-  EXPECT_TRUE(metadata.SetMetaBool("test_bool", true));
-  EXPECT_TRUE(metadata.SetMetaString("test_string", "a"));
-  EXPECT_TRUE(metadata.SetMetaValue("test_value", a));
+#define TEST_SET_METHOD(base, name, type, value)		\
+  {								\
+    type x = value;						\
+    metadata.Set ## base ## name("test_" #name, x);		\
+    EXPECT_EQ(metadata.Get ## base ## name("test_" #name), x);	\
+  }
+#define TEST_SET_METHOD_STRING(base)					\
+  {									\
+    std::string x = "a";						\
+    metadata.Set ## base ## String("test_String", x);			\
+    EXPECT_EQ(strcmp(metadata.Get ## base ## String("test_String"), x.c_str()), 0); \
+}
+#define TEST_SET_METHOD_VALUE(base)			\
+  {							\
+    metadata.Set ## base ## Value("test_value", b);	\
+  }
+  TEST_SET_METHOD(Meta, Int, int, 1);
+  TEST_SET_METHOD(Meta, Uint, unsigned, 1u);
+  TEST_SET_METHOD(Meta, Bool, bool, true);
+  TEST_SET_METHOD_STRING(Meta);
+  TEST_SET_METHOD_VALUE(Meta);
   const char* id1 = NULL;
   std::string id2 = "";
-  EXPECT_TRUE(metadata.SetMetaID("test_id1", &id1));
-  EXPECT_TRUE(metadata.SetMetaID("test_id2", id2));
-  EXPECT_TRUE(metadata.SetSchemaInt("test_int", 1));
-  EXPECT_TRUE(metadata.SetSchemaUint("test_uint", 1u));
-  EXPECT_TRUE(metadata.SetSchemaBool("test_bool", true));
-  EXPECT_TRUE(metadata.SetSchemaString("test_string", "a"));
-  EXPECT_TRUE(metadata.SetSchemaValue("test_value", b));
+  metadata.SetMetaID("test_id1", &id1);
+  metadata.SetMetaID("test_id2", id2);
+  EXPECT_EQ(strcmp(metadata.GetMetaString("test_id1"), id1), 0);
+  EXPECT_EQ(strcmp(metadata.GetMetaString("test_id2"), id2.c_str()), 0);
+  TEST_SET_METHOD(Schema, Int, int, 1);
+  TEST_SET_METHOD(Schema, Uint, unsigned, 1u);
+  TEST_SET_METHOD(Schema, Bool, bool, true);
+  TEST_SET_METHOD_STRING(Schema);
+  TEST_SET_METHOD_VALUE(Schema);
   // Get errors on missing var
   EXPECT_THROW(metadata.GetMetaInt("invalid"), std::exception);
   EXPECT_THROW(metadata.GetMetaUint("invalid"), std::exception);
@@ -72,42 +90,31 @@ TEST(Metadata, SetAndGet) {
   EXPECT_THROW(metadata.GetSchemaBool("invalid"), std::exception);
   EXPECT_THROW(metadata.GetSchemaString("invalid"), std::exception);
   // Get error on wrong type
-  EXPECT_THROW(metadata.GetMetaInt("test_string"), std::exception);
-  EXPECT_THROW(metadata.GetMetaUint("test_string"), std::exception);
-  EXPECT_THROW(metadata.GetMetaBool("test_string"), std::exception);
-  EXPECT_THROW(metadata.GetMetaString("test_bool"), std::exception);
-  EXPECT_THROW(metadata.GetSchemaInt("test_string"), std::exception);
-  EXPECT_THROW(metadata.GetSchemaUint("test_string"), std::exception);
-  EXPECT_THROW(metadata.GetSchemaBool("test_string"), std::exception);
-  EXPECT_THROW(metadata.GetSchemaString("test_bool"), std::exception);
+  EXPECT_THROW(metadata.GetMetaInt("test_String"), std::exception);
+  EXPECT_THROW(metadata.GetMetaUint("test_String"), std::exception);
+  EXPECT_THROW(metadata.GetMetaBool("test_String"), std::exception);
+  EXPECT_THROW(metadata.GetMetaString("test_Bool"), std::exception);
+  EXPECT_THROW(metadata.GetSchemaInt("test_String"), std::exception);
+  EXPECT_THROW(metadata.GetSchemaUint("test_String"), std::exception);
+  EXPECT_THROW(metadata.GetSchemaBool("test_String"), std::exception);
+  EXPECT_THROW(metadata.GetSchemaString("test_Bool"), std::exception);
   // Get error on wrong type with optional
-  EXPECT_THROW(metadata.GetMetaIntOptional("test_string", 1),
+  EXPECT_THROW(metadata.GetMetaIntOptional("test_String", 1),
 	       std::exception);
-  EXPECT_THROW(metadata.GetMetaUintOptional("test_string", 1u),
+  EXPECT_THROW(metadata.GetMetaUintOptional("test_String", 1u),
 	       std::exception);
-  EXPECT_THROW(metadata.GetMetaBoolOptional("test_string", true),
+  EXPECT_THROW(metadata.GetMetaBoolOptional("test_String", true),
 	       std::exception);
-  EXPECT_THROW(metadata.GetMetaStringOptional("test_bool", "a"),
+  EXPECT_THROW(metadata.GetMetaStringOptional("test_Bool", "a"),
 	       std::exception);
-  EXPECT_THROW(metadata.GetSchemaIntOptional("test_string", 1),
+  EXPECT_THROW(metadata.GetSchemaIntOptional("test_String", 1),
 	       std::exception);
-  EXPECT_THROW(metadata.GetSchemaUintOptional("test_string", 1u),
+  EXPECT_THROW(metadata.GetSchemaUintOptional("test_String", 1u),
 	       std::exception);
-  EXPECT_THROW(metadata.GetSchemaBoolOptional("test_string", true),
+  EXPECT_THROW(metadata.GetSchemaBoolOptional("test_String", true),
 	       std::exception);
-  EXPECT_THROW(metadata.GetSchemaStringOptional("test_bool", "a"),
+  EXPECT_THROW(metadata.GetSchemaStringOptional("test_Bool", "a"),
 	       std::exception);
-  // Get
-  EXPECT_EQ(metadata.GetMetaInt("test_int"), 1);
-  EXPECT_EQ(metadata.GetMetaUint("test_uint"), 1u);
-  EXPECT_EQ(metadata.GetMetaBool("test_bool"), true);
-  EXPECT_EQ(strcmp(metadata.GetMetaString("test_string"), "a"), 0);
-  EXPECT_EQ(strcmp(metadata.GetMetaString("test_id1"), id1), 0);
-  EXPECT_EQ(strcmp(metadata.GetMetaString("test_id2"), id2.c_str()), 0);
-  EXPECT_EQ(metadata.GetSchemaInt("test_int"), 1);
-  EXPECT_EQ(metadata.GetSchemaUint("test_uint"), 1u);
-  EXPECT_EQ(metadata.GetSchemaBool("test_bool"), true);
-  EXPECT_EQ(strcmp(metadata.GetSchemaString("test_string"), "a"), 0);
   // Get optional
   EXPECT_EQ(metadata.GetMetaIntOptional("invalid", 1), 1);
   EXPECT_EQ(metadata.GetMetaUintOptional("invalid", 1u), 1u);

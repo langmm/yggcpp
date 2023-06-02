@@ -157,7 +157,7 @@ private:
   const rapidjson::Value& getMeta() const;
   rapidjson::Value& getSchema();
   const rapidjson::Value& getSchema() const;
-  bool SetValue(const std::string name, rapidjson::Value& x,
+  void SetValue(const std::string name, rapidjson::Value& x,
 		rapidjson::Value& subSchema);
 #define GET_SET_METHOD_(type_in, type_out, method, setargs)		\
   type_out Get ## method(const std::string name,			\
@@ -166,19 +166,19 @@ private:
 				     type_out defV,			\
 				     const rapidjson::Value& subSchema	\
 				     ) const;				\
-  bool Set ## method(const std::string name, type_in x,			\
+  void Set ## method(const std::string name, type_in x,			\
 		     rapidjson::Value& subSchema);			\
   type_out GetMeta ## method(const std::string name) const;		\
   type_out GetMeta ## method ## Optional(const std::string name,	\
 					 type_out defV) const;		\
-  bool SetMeta ## method(const std::string name, type_in x);		\
+  void SetMeta ## method(const std::string name, type_in x);		\
   type_out GetSchema ## method(const std::string name,			\
 			       rapidjson::Value* subSchema = NULL	\
 			       ) const;					\
   type_out GetSchema ## method ## Optional(const std::string name,	\
 					   type_out defV,		\
 					   rapidjson::Value* subSchema = NULL) const; \
-  bool SetSchema ## method(const std::string name, type_in x,		\
+  void SetSchema ## method(const std::string name, type_in x,		\
 			   rapidjson::Value* subSchema = NULL)
   GET_SET_METHOD_(int, int, Int, (x));
   GET_SET_METHOD_(uint64_t, uint64_t, Uint, (x));
@@ -187,13 +187,13 @@ private:
 		  (x.c_str(), (rapidjson::SizeType)(x.size()),
 		   metadata.GetAllocator()));
 #undef GET_SET_METHOD_
-  bool SetMetaValue(const std::string name, rapidjson::Value& x);
-  bool SetSchemaValue(const std::string name, rapidjson::Value& x,
+  void SetMetaValue(const std::string name, rapidjson::Value& x);
+  void SetSchemaValue(const std::string name, rapidjson::Value& x,
 		      rapidjson::Value* subSchema = NULL);
-  bool SetSchemaMetadata(const std::string name,
+  void SetSchemaMetadata(const std::string name,
 			 const Metadata& other);
-  bool SetMetaID(const std::string name, const char** id=NULL);
-  bool SetMetaID(const std::string name, std::string& id);
+  void SetMetaID(const std::string name, const char** id=NULL);
+  void SetMetaID(const std::string name, std::string& id);
   int deserialize(const char* buf, size_t nargs, int allow_realloc, ...);
   int deserialize(const char* buf, rapidjson::VarArgList& ap);
   int serialize(char **buf, size_t *buf_siz, size_t nargs, ...);
@@ -215,9 +215,6 @@ public:
   Header();
   ~Header() override;
   void reset() override;
-
-  bool isValid();
-  void invalidate();
 
   void setMessageFlags(const char* msg, const size_t msg_len);
 
