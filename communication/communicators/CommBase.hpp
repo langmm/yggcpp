@@ -55,6 +55,7 @@
   }
 
 
+using namespace rapidjson;
 
 namespace communication {
 
@@ -460,8 +461,18 @@ protected:
     int update_datatype(const rapidjson::Value& new_schema,
 			const DIRECTION dir);
     template<typename T>
+    void zeroData(const T* data,
+		  RAPIDJSON_ENABLEIF((YGGDRASIL_IS_ANY_SCALAR(T)))) {
+      memset(const_cast<T*>(data), 0, sizeof(T));
+    }
+    template<typename T>
+    void zeroData(const T*,
+		  RAPIDJSON_DISABLEIF((YGGDRASIL_IS_ANY_SCALAR(T)))) {}
+    template<typename T>
     bool checkType(const T& data, const DIRECTION dir) {
       Metadata& meta = get_metadata(dir);
+      if (dir == RECV)
+	zeroData(&data);
       meta.fromData(data);
       return true;
     }

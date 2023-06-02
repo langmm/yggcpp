@@ -86,6 +86,7 @@
   b_send[1] = 1.0;					\
   b_send[2] = 2.0;					\
   char c_send[30];					\
+  memset(c_send, 0, 30);				\
   strcpy(&(c_send[0]), "one");				\
   strcpy(&(c_send[10]), "two");				\
   strcpy(&(c_send[20]), "three");			\
