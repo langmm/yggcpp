@@ -599,7 +599,7 @@ long Comm_t::vCall(rapidjson::VarArgList& ap) {
   }
   rapidjson::VarArgList op(ap);
   size_t recv_nargs = ap.get_nargs() - send_nargs;
-  ap.nargs = &send_nargs;
+  ap.set_nargs(send_nargs);
   int sret = vSend(ap);
   if (sret < 0) {
     ygglog_error << "CommBase(" << name << ")::vCall: Error in vSend" << std::endl;
