@@ -170,8 +170,8 @@ TEST(ClientComm, call) {
   std::string name = "MyComm";
   communication::testing::ClientComm_tester cc(name, nullptr);
   cc.addSchema("{\"type\": \"string\"}");
-  std::string req_send = "REQUEST";
-  std::string res_send = "RESPONSE";
+  std::string req_send = "REQUEST1";
+  std::string res_send = "RESPONSE1";
   std::string req_recv = req_send;
   char* res_recv = NULL;
   size_t res_recv_len = 0;
@@ -186,14 +186,11 @@ TEST(ClientComm, call) {
   EXPECT_EQ(cc.server_comm->recvVar(req_recv), 2);
   EXPECT_EQ(req_recv, req_send);
   // Second message
-  req_send = "REQUEST1";
+  req_send = "REQUEST2";
   res_send = "RESPONSE2";
   req_recv = req_send;
   req_recv_fmt = "\"" + req_recv + "\"";
   res_recv_len = res_send.size() + 1;
-  res_recv = (char*)realloc(res_recv, res_recv_len * sizeof(char));
-  EXPECT_TRUE(res_recv);
-  memset(res_recv, '\0', res_recv_len * sizeof(char));
   cc.addStashedRequest(req_recv_fmt, true);
   EXPECT_GE(cc.server_comm->sendVar(res_send), 0);
   EXPECT_EQ(cc.call(4, req_send.c_str(), req_send.size(),
