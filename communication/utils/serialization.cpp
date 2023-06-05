@@ -12,7 +12,7 @@ void Metadata::_init(bool use_generic) {
   _update_schema();
   if (use_generic)
     setGeneric();
-  ygglog_debug << "Metadata::init: metadata = " << metadata << std::endl;
+  // ygglog_debug << "Metadata::init: metadata = " << metadata << std::endl;
 }
 void Metadata::reset() {
   schema = NULL;
