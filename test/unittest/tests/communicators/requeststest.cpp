@@ -1,6 +1,8 @@
 #include "../../unittest.hpp"
 #include "communicators/Requests.hpp"
 #include "utils/serialization.hpp"
+#include "../../elf_hook.hpp"
+#include "../../mock.hpp"
 
 using namespace communication::communicator;
 using namespace communication::utils;
