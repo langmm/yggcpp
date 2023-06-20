@@ -14,7 +14,7 @@ RPCComm::RPCComm(const std::string name, int flgs,
   COMM_BASE(name, dir, flgs), requests(req_dir) {}
 
 Metadata& RPCComm::get_metadata(const DIRECTION dir) {
-  if (dir == this->direction or dir == NONE)
+  if (dir == this->direction || dir == NONE)
     return this->metadata;
   return requests.response_metadata;
 }
