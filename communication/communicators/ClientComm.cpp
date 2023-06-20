@@ -27,12 +27,10 @@ ClientComm::ClientComm(const std::string name, int flgs) :
 }
 
 void ClientComm::set_timeout_recv(int new_timeout) {
-    COMM_BASE::set_timeout_recv(new_timeout);
-    if (requests.initClientResponse() < 0) {
-        ygglog_throw_error("ClientComm(" + name + ")::set_timeout_recv: Error initializing response comm");
-    }
-    Comm_t* active_comm = requests.comms[0];
-    active_comm->set_timeout_recv(new_timeout);
+  COMM_BASE::set_timeout_recv(new_timeout);
+  requests.initClientResponse();
+  Comm_t* active_comm = requests.comms[0];
+  active_comm->set_timeout_recv(new_timeout);
 }
 int ClientComm::wait_for_recv(const int&) {
     // Handle wait in recv_single for response comm
@@ -136,13 +134,9 @@ bool ClientComm::create_header_recv(Header& header, char*& data, const size_t &l
 				    size_t msg_len, int allow_realloc,
 				    int temp) {
   ygglog_debug << "ClientComm(" << name << ")::create_header_recv: begin" << std::endl;
-  Comm_t* response_comm = requests.activeComm();
+  Comm_t* response_comm = requests.activeComm(true);
   if (response_comm == NULL) {
     ygglog_error << "ClientComm(" << name << ")::create_header_recv: Error getting response comm" << std::endl;
-    return false;
-  }
-  if (response_comm->is_closed()) {
-    ygglog_error << "ClientComm(" << name << ")::create_header_recv: Response comm is closed" << std::endl;
     return false;
   }
   bool out = response_comm->create_header_recv(header, data, len, msg_len,
@@ -168,13 +162,9 @@ bool ClientComm::create_header_recv(Header& header, char*& data, const size_t &l
 
 long ClientComm::recv_single(char*& rdata, const size_t &rlen, bool allow_realloc)  {
     ygglog_debug << "ClientComm(" << name << ")::recv_single" << std::endl;
-    Comm_t* response_comm = requests.activeComm();
+    Comm_t* response_comm = requests.activeComm(true);
     if (response_comm == NULL) {
         ygglog_error << "ClientComm(" << name << ")::recv_single: Error getting response comm" << std::endl;
-        return -1;
-    }
-    if (response_comm->is_closed()) {
-        ygglog_error << "ClientComm(" << name << ")::recv_single: Response comm is closed" << std::endl;
         return -1;
     }
     std::string req_id = requests.activeRequestClient();

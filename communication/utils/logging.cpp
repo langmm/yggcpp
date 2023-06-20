@@ -14,16 +14,15 @@ YggdrasilLogger::~YggdrasilLogger() {
     std::cout << name << ": " << _getLogPretex() << out;
   }
 }
-YggdrasilLogger::YggdrasilLogger(const YggdrasilLogger& other) :
-  name(other.name), level(other.level), is_error(other.is_error), ss() {}
 bool YggdrasilLogger::eval() {
+  bool out = is_error;
   if (is_error)
     YggdrasilLogger::_ygg_error_flag = 1;
 #ifdef YGG_DEBUG
   if (YGG_DEBUG <= level)
-      return true;
+    out = true;
 #endif
-  return is_error;
+  return out;
 }
 std::string YggdrasilLogger::_getLogPretex() {
   std::string out = std::to_string(ygg_getpid()) + ":" + std::to_string(get_thread_id()) + " ";

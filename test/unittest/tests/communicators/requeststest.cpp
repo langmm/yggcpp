@@ -12,7 +12,11 @@ TEST(RequestList, Empty) {
   EXPECT_EQ(req.hasPartner("invalid"), -1);
   EXPECT_EQ(req.hasComm("invalid"), -1);
   EXPECT_EQ(req.popRequestServer(), -1);
+  EXPECT_FALSE(req.lastComm());
+  EXPECT_THROW(req.activeRequestClient(), std::exception);
+  // EXPECT_EQ(req.activeRequestClient(), "");
   EXPECT_FALSE(req.isComplete("invalid"));
+  EXPECT_FALSE(req.signonSent());
   Header header;
   header.initMeta();
   header.SetMetaString("request_id", "invalid");
@@ -31,6 +35,7 @@ TEST(RequestList, Request) {
   char* data = NULL;
   // Client
   EXPECT_EQ(client.addRequestClient(header), 0);
+  EXPECT_EQ(client.addRequestClient(header, header.GetMetaString("request_id")), -1);
   EXPECT_EQ(client.hasRequest(header.GetMetaString("request_id")), 0);
   EXPECT_EQ(client.hasComm(header.GetMetaString("response_address")), 0);
   EXPECT_EQ(client.addRequestClient(header), 1);
@@ -61,8 +66,21 @@ TEST(RequestList, Response) {
   EXPECT_EQ(client.addRequestClient(header), 0);
   EXPECT_EQ(server.addRequestServer(header), 0);
   EXPECT_EQ(server.addResponseServer(header, "test", 4), 0);
+  EXPECT_EQ(server.addResponseServer(header, "test", 4), -1);
   EXPECT_EQ(client.addResponseClient(header, "test", 4), 0);
+  EXPECT_EQ(client.addResponseClient(header, "test", 4), -1);
   EXPECT_TRUE(client.isComplete(header.GetMetaString("request_id")));
+  char* data = NULL;
+  EXPECT_EQ(client.getRequestClient(header.GetMetaString("request_id"),
+				    data, 0, false), -1);
+#ifdef ELF_AVAILABLE
+  ELF_BEGIN;
+  ELF_BEGIN_F(realloc);
+  EXPECT_EQ(client.getRequestClient(header.GetMetaString("request_id"),
+				    data, 0, true), -1);
+  ELF_END_F(realloc);
+  ELF_END;
+#endif // ELF_AVAILABLE
   EXPECT_EQ(server.popRequestServer(), 1);
   EXPECT_EQ(server.hasRequest(header.GetMetaString("request_id")), -1);
   EXPECT_EQ(client.popRequestClient(header), 1);

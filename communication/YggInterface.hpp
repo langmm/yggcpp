@@ -194,7 +194,7 @@ public:
 	       const char *outFormat) :
     ServerComm(name, 0) {
     this->addFormat(inFormat);
-    this->requests.addResponseFormat(outFormat);
+    this->addResponseFormat(outFormat);
   }
 
   /*!
@@ -211,7 +211,7 @@ public:
 	       const std::string outFormat) :
     ServerComm(name, 0) {
     this->addFormat(inFormat);
-    this->requests.addResponseFormat(outFormat);
+    this->addResponseFormat(outFormat);
   }
 
   /*!
@@ -228,7 +228,7 @@ public:
 	       const rapidjson::Document& outType) :
     ServerComm(name, 0) {
     this->addSchema(inType);
-    this->requests.addResponseSchema(outType);
+    this->addResponseSchema(outType);
   }
 
 };
@@ -271,7 +271,7 @@ public:
 	       const char *inFormat) :
     ClientComm(name, 0) {
     this->addFormat(std::string(outFormat));
-    this->requests.addResponseFormat(std::string(inFormat));
+    this->addResponseFormat(std::string(inFormat));
   }
     
 
@@ -289,7 +289,7 @@ public:
 	       const std::string inFormat) :
     ClientComm(name, 0) {
     this->addFormat(outFormat);
-    this->requests.addResponseFormat(inFormat);
+    this->addResponseFormat(inFormat);
   }
 
   /*!
@@ -306,7 +306,7 @@ public:
 	       const rapidjson::Document& inType) :
     ClientComm(name, 0) {
     this->addSchema(outType);
-    this->requests.addResponseSchema(inType);
+    this->addResponseSchema(inType);
   }
   
 };

@@ -50,3 +50,10 @@ TEST(DefaultCommu, seriErrors) {
   EXPECT_GE(sComm.send("hello", 5), 0);
   EXPECT_EQ(rComm.recv(2, &a, &b), -1);
 }
+
+TEST(DefaultCommu, workerErrors) {
+  DefaultComm sComm("", nullptr, SEND);
+  EXPECT_FALSE(sComm.getWorkers().setRequest(nullptr, "invalid"));
+  EXPECT_FALSE(sComm.getWorkers().setResponse("invalid"));
+  EXPECT_EQ(sComm.getWorkers().get(nullptr, RECV, new utils::Address(sComm.getAddress().c_str())), nullptr);
+}

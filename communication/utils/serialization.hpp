@@ -64,42 +64,35 @@ int split_head_body(const char *buf,
     // strcat(re_head, ".*");
     ret = find_match_c(re_head, buf, &sind, &eind);
 #endif
-    if (ret < 0) {
-        //sind_head = 0;
-        //eind_head = 0;
-        ygglog_throw_error_c("split_head_body: Could not find header in '%.1000s'", buf);
-    } else if (ret == 0) {
-        //sind_head = 0;
-        //eind_head = 0;
-        headsiz[0] = 0;
-        ygglog_debug_c("split_head_body: No header in '%.1000s...'", buf);
-    } else {
-        sind_head = sind + strlen(MSG_HEAD_SEP);
-        eind_head = eind - strlen(MSG_HEAD_SEP);
-        headsiz[0] = (eind_head - sind_head);
-        head[0] = buf + strlen(MSG_HEAD_SEP);
-    }
-    // char* temp = (char*)realloc(*head, *headsiz + 1);
-    // if (temp == NULL) {
-    //   ygglog_throw_error_c("split_head_body: Failed to reallocate header.");
-    // }
-    // *head = temp;
-    // memcpy(*head, buf + sind_head, *headsiz);
-    // (*head)[*headsiz] = '\0';
-    return 0;
+  if (ret == 0) {
+    sind_head = 0;
+    eind_head = 0;
+    headsiz[0] = 0;
+    ygglog_debug_c("split_head_body: No header in '%.1000s...'", buf);
+  } else {
+    sind_head = sind + strlen(MSG_HEAD_SEP);
+    eind_head = eind - strlen(MSG_HEAD_SEP);
+    headsiz[0] = (eind_head - sind_head);
+    head[0] = buf + strlen(MSG_HEAD_SEP);
+  }
+  // char* temp = (char*)realloc(*head, *headsiz + 1);
+  // if (temp == NULL) {
+  //   ygglog_throw_error_c("split_head_body: Failed to reallocate header.");
+  // }
+  // *head = temp;
+  // memcpy(*head, buf + sind_head, *headsiz);
+  // (*head)[*headsiz] = '\0';
+  return 0;
 };
 
 
 template <typename ValueT>
 std::string document2string(ValueT& rhs, const char* indent="") {
-    rapidjson::StringBuffer sb;
-    rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(sb, nullptr, strlen(indent));
-    writer.SetYggdrasilMode(true);
-    if (!rhs.Accept(writer)) {
-        ygglog_error_c("document2string: Error in Accept(writer)");
-        return "";
-    }
-    return sb.GetString();
+  rapidjson::StringBuffer sb;
+  rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(sb, 0, strlen(indent));
+  writer.SetYggdrasilMode(true);
+  rhs.Accept(writer);
+  return std::string(sb.GetString());
 }
 
 class Metadata {

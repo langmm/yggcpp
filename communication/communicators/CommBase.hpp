@@ -155,10 +155,6 @@ public:
     template<size_t N>
     long recv(char(& data)[N]) {
       size_t len = N;
-      if (len <= 0) {
-	ygglog_error << "CommBase(" << name << ")::recv: Buffer is size 0" << std::endl;
-	return -1;
-      }
       char* ptr = &(data[0]);
       return recv(ptr, len, false);
     }
@@ -492,8 +488,9 @@ protected:
     }
     virtual bool create_header_send(utils::Header& header, const char* data, const size_t &len);
     virtual bool create_header_recv(utils::Header& header, char*& data, const size_t &len,
-				    size_t msg_len, int allow_realloc,
-				    int temp);
+    rapidjson::Value& getSchema(const DIRECTION dir=NONE) {
+      return get_metadata(dir).getSchema();
+    }
     virtual Comm_t* create_worker(utils::Address* address,
 				  const DIRECTION&, int flgs) VIRT_END;
     virtual Comm_t* create_worker_send(utils::Header& head);

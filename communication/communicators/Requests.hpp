@@ -87,13 +87,10 @@ public:
         return -1;
     }
     int initClientResponse() {
-        if (comms.size() == 0) {
-            if (addComm() < 0) {
-                ygglog_error << "initClientResponse: Error creating response comm." << std::endl;
-                return -1;
-            }
-        }
-        return 0;
+      if (comms.size() == 0) {
+	addComm();
+      }
+      return 0;
     }
     int stashRequest() {
       if (!requests.empty()) {
@@ -104,8 +101,7 @@ public:
     }
     int addRequestClient(utils::Header& header, std::string request_id="") {
       ygglog_debug << "addRequestClient: begin" << std::endl;
-      if (initClientResponse() < 0)
-	return -1;
+      initClientResponse();
       bool is_signon = (header.flags & HEAD_FLAG_CLIENT_SIGNON);
       int existing_idx = -1;
       if (is_signon) {
@@ -152,36 +148,32 @@ public:
 		   << request_id << std::endl;
       return existing_idx;
     }
-    int addRequestServer(utils::Header& header) {
-        ygglog_debug << "addRequestServer: begin" << std::endl;
-        std::string request_id(header.GetMetaString("request_id"));
-        std::string response_address(header.GetMetaString("response_address"));
-        std::string partner_model(header.GetMetaString("model"));
-        int comm_idx = hasComm(response_address);
-        if (comm_idx < 0) {
-            comm_idx = addComm(response_address);
-            if (comm_idx < 0) {
-                ygglog_error << "addRequestServer: Error creating response comm" << std::endl;
-                return -1;
-            }
-        }
-        std::string response_id = request_id;
-        while (hasResponse(response_id) >= 0) {
-            response_id += std::to_string(rand());
-        }
-        size_t idx = requests.size();
-        if (hasPartner(partner_model) < 0)
-            partners.emplace_back(partner_model);
-        requests.emplace_back(request_id, response_id,
-                              static_cast<size_t>(comm_idx),
-                              (header.flags & HEAD_FLAG_CLIENT_SIGNON));
-        ygglog_debug << "addRequestServer: done idx = " << idx
-                     << ", response_address = "
-                     << comms[requests[idx].comm_idx]->address->address()
-                     << ", request_id = " << requests[idx].request_id
-                     << ", response_id = " << requests[idx].response_id
-                     << std::endl;
-        return static_cast<int>(idx);
+    int addRequestServer(Header& header) {
+      ygglog_debug << "addRequestServer: begin" << std::endl;
+      std::string request_id(header.GetMetaString("request_id"));
+      std::string response_address(header.GetMetaString("response_address"));
+      std::string partner_model(header.GetMetaString("model"));
+      int comm_idx = hasComm(response_address);
+      if (comm_idx < 0) {
+	comm_idx = addComm(response_address);
+      }
+      std::string response_id = request_id;
+      while (hasResponse(response_id) >= 0) {
+	response_id += std::to_string(rand());
+      }
+      size_t idx = requests.size();
+      if (hasPartner(partner_model) < 0)
+	partners.emplace_back(partner_model);
+      requests.emplace_back(request_id, response_id,
+			    static_cast<size_t>(comm_idx),
+			    (header.flags & HEAD_FLAG_CLIENT_SIGNON));
+      ygglog_debug << "addRequestServer: done idx = " << idx
+		   << ", response_address = "
+		   << comms[requests[idx].comm_idx]->address->address()
+		   << ", request_id = " << requests[idx].request_id
+		   << ", response_id = " << requests[idx].response_id
+		   << std::endl;
+      return static_cast<int>(idx);
     }
     int addResponseServer(Header& header, const char* data, const size_t len) {
       ygglog_debug << "addResponseServer: begin" << std::endl;
@@ -235,12 +227,15 @@ public:
             return NULL;
         return comms[static_cast<size_t>(idx)];
     }
-    Comm_t* activeComm() {
-        if (requests.empty() || comms.empty()) {
-            ygglog_error << "activeComm: No pending requests" << std::endl;
-            return NULL;
-        }
-        return comms[requests[0].comm_idx];
+    Comm_t* activeComm(bool require_open = false) {
+      if (requests.empty() || comms.empty()) {
+	ygglog_error << "activeComm: No pending requests" << std::endl;
+	return NULL;
+      }
+      Comm_t* out = comms[requests[0].comm_idx];
+      if (require_open && out->is_closed())
+	return NULL;
+      return out;
     }
     Comm_t* lastComm() {
       if (comms.empty()) {
@@ -252,15 +247,15 @@ public:
       return comms[comms.size() - 1];
     }
     std::string activeRequestClient() {
-        if (!signon_complete) {
-            return requests[0].request_id;
-        }
-        for (size_t i = 0; i < requests.size(); i++) {
-            if (!requests[i].is_signon)
-                return requests[i].request_id;
-        }
-        utils::ygglog_throw_error("activeRequestClient: No active requests");
-        return "";
+      if ((!signon_complete) && requests.size() > 0) {
+	return requests[0].request_id;
+      }
+      for (size_t i = 0; i < requests.size(); i++) {
+	if (!requests[i].is_signon)
+	  return requests[i].request_id;
+      }
+      ygglog_throw_error("activeRequestClient: No active requests");
+      return "";
     }
     int popRequestServer() {
         if (requests.empty() || comms.empty()) {
