@@ -15,7 +15,6 @@ namespace utils {
   class YggdrasilLogger {
   public:
     YggdrasilLogger(std::string nme, size_t lvl, bool is_err=false);
-    YggdrasilLogger(const YggdrasilLogger& other);
     ~YggdrasilLogger();
     std::string name;
     size_t level;

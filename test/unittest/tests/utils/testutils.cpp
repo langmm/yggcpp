@@ -253,4 +253,10 @@ TEST(REGEX, replacenosub) {
     EXPECT_EQ(count_matches(std::regex(" t"), input), 0);
     EXPECT_EQ(count_matches(std::regex(" q-"), input), 3);
 }
+
+TEST(REGEX, regex_replace_c) {
+  char input[6] = "hello";
+  EXPECT_EQ(regex_replace_c(input, 5, "l", "llll", 0), -1);
+}
+  
 }

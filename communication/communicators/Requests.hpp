@@ -88,10 +88,7 @@ namespace communicator {
     }
     int initClientResponse() {
       if (comms.size() == 0) {
-	if (addComm() < 0) {
-	  ygglog_error << "initClientResponse: Error creating response comm." << std::endl;
-	  return -1;
-	}
+	addComm();
       }
       return 0;
     }
@@ -104,8 +101,7 @@ namespace communicator {
     }
     int addRequestClient(Header& header, std::string request_id="") {
       ygglog_debug << "addRequestClient: begin" << std::endl;
-      if (initClientResponse() < 0)
-	return -1;
+      initClientResponse();
       bool is_signon = (header.flags & HEAD_FLAG_CLIENT_SIGNON);
       int existing_idx = -1;
       if (is_signon) {
@@ -160,10 +156,6 @@ namespace communicator {
       int comm_idx = hasComm(response_address);
       if (comm_idx < 0) {
 	comm_idx = addComm(response_address);
-	if (comm_idx < 0) {
-	  ygglog_error << "addRequestServer: Error creating response comm" << std::endl;
-	  return -1;
-	}
       }
       std::string response_id = request_id;
       while (hasResponse(response_id) >= 0) {
@@ -235,12 +227,15 @@ namespace communicator {
 	return NULL;
       return comms[static_cast<size_t>(idx)];
     }
-    Comm_t* activeComm() {
+    Comm_t* activeComm(bool require_open = false) {
       if (requests.empty() || comms.empty()) {
 	ygglog_error << "activeComm: No pending requests" << std::endl;
 	return NULL;
       }
-      return comms[requests[0].comm_idx];
+      Comm_t* out = comms[requests[0].comm_idx];
+      if (require_open && out->is_closed())
+	return NULL;
+      return out;
     }
     Comm_t* lastComm() {
       if (comms.empty()) {
@@ -252,7 +247,7 @@ namespace communicator {
       return comms[comms.size() - 1];
     }
     std::string activeRequestClient() {
-      if (!signon_complete) {
+      if ((!signon_complete) && requests.size() > 0) {
 	return requests[0].request_id;
       }
       for (size_t i = 0; i < requests.size(); i++) {

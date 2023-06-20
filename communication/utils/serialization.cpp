@@ -303,9 +303,7 @@ void Metadata::fromMetadata(const std::string& head, bool use_generic) {
 void Metadata::fromEncode(const rapidjson::Value& document,
 			  bool use_generic) {
   rapidjson::SchemaEncoder encoder(true);
-  if (!document.Accept(encoder)) {
-    ygglog_throw_error_c("Metadata::fromEncode: Error in schema encoding.");
-  }
+  document.Accept(encoder);
   fromSchema(encoder.GetSchema(), false, use_generic);
 }
 rapidjson::Document::AllocatorType& Metadata::GetAllocator() {
@@ -605,8 +603,7 @@ int Metadata::serialize(char **buf, size_t *buf_siz,
   }
   rapidjson::StringBuffer buffer;
   rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-  if (!d.Accept(writer))
-    ygglog_throw_error_c("Metadata::serialize: Error serializing document.");
+  d.Accept(writer);
   if ((size_t)(buffer.GetLength() + 1) > buf_siz[0]) {
     buf_siz[0] = (size_t)(buffer.GetLength() + 1);
     char* buf_t = (char*)realloc(buf[0], buf_siz[0]);

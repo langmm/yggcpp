@@ -7,11 +7,13 @@ using namespace communication::utils;
 Worker::Worker(Comm_t* parent, DIRECTION dir, Address* adr) :
   comm(nullptr), request() {
   try {
-    comm = parent->create_worker(adr, dir,
-				 COMM_EOF_SENT | COMM_EOF_RECV |
-				 COMM_FLAG_WORKER);
+    if (parent) {
+      comm = parent->create_worker(adr, dir,
+				   COMM_EOF_SENT | COMM_EOF_RECV |
+				   COMM_FLAG_WORKER);
+    }
   } catch (...) {
-    comm = nullptr;
+    // Do nothing
   }
 }
 Worker::Worker(Worker&& rhs) : comm(rhs.comm), request(rhs.request) {
@@ -46,6 +48,10 @@ WorkerList::~WorkerList() {
 
 Comm_t* WorkerList::add_worker(Comm_t* parent, DIRECTION dir,
 			   Address* adr) {
+  if (!parent) {
+    ygglog_error << "WorkerList::add_worker: No parent provided" << std::endl;
+    return nullptr;
+  }
   ygglog_debug << "WorkerList::add_worker: Adding worker" << std::endl;
   workers.emplace_back(parent, dir, adr);
   return workers.back().comm;

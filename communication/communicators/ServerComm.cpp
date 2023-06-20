@@ -42,13 +42,9 @@ bool ServerComm::signon(const Header& header) {
 }
 
 bool ServerComm::create_header_send(Header& header, const char* data, const size_t &len) {
-  Comm_t* response_comm = requests.activeComm();
+  Comm_t* response_comm = requests.activeComm(true);
   if (response_comm == NULL) {
     ygglog_error << "ServerComm(" << name << ")::create_header_send: Failed to get response comm" << std::endl;
-    return false;
-  }
-  if (response_comm->is_closed()) {
-    ygglog_error << "ServerComm(" << name << ")::create_header_send: Response comm is closed" << std::endl;
     return false;
   }
   requests.transferSchemaTo(response_comm);
@@ -94,7 +90,7 @@ bool ServerComm::create_header_recv(Header& header, char*& data,
 int ServerComm::send_single(const char* data, const size_t &len,
 			    const Header& header) {
     ygglog_debug << "ServerComm(" << name << ")::send_single: " << len << " bytes" << std::endl;
-    Comm_t* response_comm = requests.activeComm();
+    Comm_t* response_comm = requests.activeComm(true);
     if (response_comm == NULL) {
         ygglog_error << "ServerComm(" << name << ")::send_single: Failed to get response comm" << std::endl;
         return -1;

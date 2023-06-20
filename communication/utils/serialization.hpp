@@ -63,11 +63,7 @@ int split_head_body(const char *buf,
   // strcat(re_head, ".*");
   ret = find_match_c(re_head, buf, &sind, &eind);
 #endif
-  if (ret < 0) {
-    sind_head = 0;
-    eind_head = 0;
-    ygglog_throw_error_c("split_head_body: Could not find header in '%.1000s'", buf);
-  } else if (ret == 0) {
+  if (ret == 0) {
     sind_head = 0;
     eind_head = 0;
     headsiz[0] = 0;
@@ -94,10 +90,7 @@ std::string document2string(ValueT& rhs, const char* indent="") {
   rapidjson::StringBuffer sb;
   rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(sb, 0, strlen(indent));
   writer.SetYggdrasilMode(true);
-  if (!rhs.Accept(writer)) {
-    ygglog_error_c("document2string: Error in Accept(writer)");
-    return std::string("");
-  }
+  rhs.Accept(writer);
   return std::string(sb.GetString());
 }
 

@@ -141,10 +141,6 @@ int IPCComm::comm_nmsg() const {
  */
 int IPCComm::send_single(const char* data, const size_t &len, const Header&) {
     ygglog_debug << "IPCComm(" << name << ")::send_single: " << len << " bytes" << std::endl;
-    if (!check_size(len)) {
-      ygglog_error << "IPCComm(" << name << ")::send_single: Message too large" << std::endl;
-      return -1;
-    }
     int ret = -1;
     msgbuf_t t;
     t.mtype = 1;

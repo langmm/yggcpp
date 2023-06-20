@@ -29,6 +29,7 @@ public:
 protected:
 #else
   bool afterSendRecv(Comm_t* sComm, Comm_t* rComm) override;
+  RequestList& getRequests() { return requests; }
 #endif
   
   Metadata& get_metadata(const DIRECTION dir) override;
