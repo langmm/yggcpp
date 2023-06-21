@@ -67,6 +67,12 @@ TEST(IPCComm, send) {
     res = ipc2.send(data.c_str(), data.size());
     EXPECT_GE(res, 0);
     EXPECT_EQ(SENDCOUNT, 1);
+    // Failure on msgctl
+    RETVAL = -1;
+    RETVAL_INC_SEND = 0;
+    RETVAL_INC_POLL = 0;
+    res = ipc2.send(data.c_str(), data.size());
+    EXPECT_EQ(res, -1);
     // Failure on msgsnd after EAGAIN
     RETVAL = -1;
     RETVAL_INC_SEND = -1;
@@ -74,12 +80,7 @@ TEST(IPCComm, send) {
     res = ipc2.send(data.c_str(), data.size());
     EXPECT_EQ(res, -1);
     EXPECT_EQ(SENDCOUNT, 1);
-    // Failure on msgctl
-    RETVAL = -1;
-    RETVAL_INC_SEND = 0;
-    RETVAL_INC_POLL = 0;
-    res = ipc2.send(data.c_str(), data.size());
-    EXPECT_EQ(res, -1);
+    errno = 0;
     // Restore
     ELF_END_F(msgsnd);
     ELF_END_F(msgctl);

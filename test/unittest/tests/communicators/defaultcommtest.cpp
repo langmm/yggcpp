@@ -55,5 +55,7 @@ TEST(DefaultCommu, workerErrors) {
   DefaultComm sComm("", nullptr, SEND);
   EXPECT_FALSE(sComm.getWorkers().setRequest(nullptr, "invalid"));
   EXPECT_FALSE(sComm.getWorkers().setResponse("invalid"));
-  EXPECT_EQ(sComm.getWorkers().get(nullptr, RECV, new utils::Address(sComm.getAddress().c_str())), nullptr);
+  utils::Address* addr = new utils::Address(sComm.getAddress().c_str());
+  EXPECT_EQ(sComm.getWorkers().get(nullptr, RECV, addr), nullptr);
+  delete addr;
 }
