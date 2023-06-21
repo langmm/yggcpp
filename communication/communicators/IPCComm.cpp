@@ -13,7 +13,7 @@ bool IPCComm::_ipc_rand_seeded = false;
 
 IPCComm::~IPCComm() {
     ygglog_debug << "~IPCComm: Started" << std::endl;
-    if (handle) {
+    if (handle && !global_comm) {
         if (direction == RECV) {
             remove_comm(true);
         } else {
@@ -23,8 +23,6 @@ IPCComm::~IPCComm() {
             remove_comm(false);
 #endif // YGG_TEST
         }
-        delete handle;
-        handle = nullptr;
     }
     ygglog_debug << "~IPCComm: Finished" << std::endl;
 }
@@ -117,6 +115,8 @@ int IPCComm::remove_comm(bool close_comm) {
   @returns int Number of messages. -1 indicates an error.
  */
 int IPCComm::comm_nmsg() const {
+    if (global_comm)
+      return global_comm->comm_nmsg();
     struct msqid_ds buf;
     if (!handle) {
         ygglog_error << "ipc_comm_nmsg: Queue handle is NULL." << std::endl;
@@ -139,7 +139,9 @@ int IPCComm::comm_nmsg() const {
   @param[in] data character pointer to message that should be sent.
   @returns int 0 if send succesfull, -1 if send unsuccessful.
  */
-int IPCComm::send_single(const char* data, const size_t &len, const Header&) {
+int IPCComm::send_single(const char* data, const size_t &len, const Header& head) {
+    if (global_comm)
+      return global_comm->send_single(data, len, head);
     ygglog_debug << "IPCComm(" << name << ")::send_single: " << len << " bytes" << std::endl;
     int ret = -1;
     msgbuf_t t;
@@ -181,6 +183,8 @@ int IPCComm::send_single(const char* data, const size_t &len, const Header&) {
     message if message was received.
  */
 long IPCComm::recv_single(char*& data, const size_t& len, bool allow_realloc) {
+    if (global_comm)
+      return global_comm->recv_single(data, len, allow_realloc);
     ygglog_debug << "IPCComm(" << name << ")::recv_single:" << std::endl;
     msgbuf_t t;
     t.mtype = 1;
@@ -262,13 +266,8 @@ void IPCComm::init() {
 
 IPCComm::IPCComm(const std::string &name, Address *address,
 		 DIRECTION direction, int flgs) :
-  CommBase(address, direction, IPC_COMM, flgs) {
-    this->name = name;
-    init();
-}
-IPCComm::IPCComm(const std::string &name, DIRECTION direction,
-		 int flgs) :
-  CommBase(name, direction, IPC_COMM, flgs) {
+  CommBase(name, address, direction, IPC_COMM, flgs) {
+  if (!global_comm)
     init();
 }
 

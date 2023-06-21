@@ -112,12 +112,13 @@ public:
      * @param address The address to associate with the communicator, if address is nullptr
      *                then an address will be created.
      * @param direction Enumerated direction for communicator
+     * @param flgs Bitwise flags describing the communicator
      */
-    explicit ZMQComm(const std::string name = "", utils::Address *address = new utils::Address(),
+    explicit ZMQComm(const std::string name = "",
+		     utils::Address *address = new utils::Address(),
                      const DIRECTION direction = NONE,
 		     int flgs = 0);
-    explicit ZMQComm(const std::string name,
-		     const DIRECTION direction, int flgs = 0);
+    ADD_CONSTRUCTORS(ZMQComm)
 
     /**
      * Destructor

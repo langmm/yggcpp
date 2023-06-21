@@ -666,8 +666,8 @@ dtype_t create_dtype_pyobj(const char* type, const bool use_generic);
   @returns Type structure/class.
  */
 dtype_t create_dtype_pyinst(const char* class_name,
-			    dtype_t* args_dtype,
-			    dtype_t* kwargs_dtype,
+			    dtype_t args_dtype,
+			    dtype_t kwargs_dtype,
 			    const bool use_generic);
 
   

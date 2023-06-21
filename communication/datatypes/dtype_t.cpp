@@ -20,6 +20,58 @@
     return ret;								\
   }
 
+// C++ functions
+rapidjson::Document::AllocatorType& generic_allocator(generic_t& x) {
+  if (x.obj == NULL)
+    ygglog_throw_error_c("generic_allocator: Not initialized");
+  return ((rapidjson::Document*)(x.obj))->GetAllocator();
+};
+
+rapidjson::Document::AllocatorType& generic_ref_allocator(generic_ref_t& x) {
+  if (x.obj == NULL)
+    ygglog_throw_error_c("generic_ref_allocator: Not initialized");
+  return *((rapidjson::Document::AllocatorType*)(x.allocator));
+};
+
+rapidjson::Document::AllocatorType& dtype_allocator(dtype_t& x) {
+  rapidjson::Document* s = NULL;
+  if (x.metadata != NULL)
+    return ((Metadata*)x.metadata)->GetAllocator();
+  else
+    ygglog_throw_error_c("dtype_allocator: Not initialized");
+  return s->GetAllocator();
+};
+
+ply_t Ply2ply(rapidjson::Ply& x) {
+  ply_t out = init_ply();
+  set_ply(&out, (void*)(&x), 1);
+  return out;
+};
+
+rapidjson::Ply ply2Ply(ply_t x) {
+  if (x.obj == NULL) {
+    return rapidjson::Ply();
+  } else {
+    rapidjson::Ply* obj = (rapidjson::Ply*)(x.obj);
+    return rapidjson::Ply(*obj);
+  }
+};
+
+obj_t ObjWavefront2obj(rapidjson::ObjWavefront& x) {
+  obj_t out = init_obj();
+  set_obj(&out, (void*)(&x), 1);
+  return out;
+};
+
+rapidjson::ObjWavefront obj2ObjWavefront(obj_t x) {
+  if (x.obj == NULL) {
+    return rapidjson::ObjWavefront();
+  } else {
+    rapidjson::ObjWavefront* obj = (rapidjson::ObjWavefront*)(x.obj);
+    return rapidjson::ObjWavefront(*obj);
+  }
+};
+
 // C exposed functions
 extern "C" {
 
@@ -70,7 +122,7 @@ extern "C" {
     return out;
   }
 
-  int is_generic_init(generic_t x) {
+  int is_generic_init(generic_t) {
     return true;
   }
   
@@ -107,7 +159,10 @@ extern "C" {
       if (src.obj == NULL) {
 	ygglog_throw_error_c("copy_generic: Generic object class is NULL.");
       }
-      dst->obj = (void*)copy_document((rapidjson::Value*)(src.obj));
+      rapidjson::Document* doc = new rapidjson::Document();
+      doc->CopyFrom(*((rapidjson::Value*)(src.obj)),
+		    doc->GetAllocator(), true);
+      dst->obj = (void*)doc;
     } catch(...) {
       ygglog_error_c("copy_generic_into: C++ exception thrown.");
       destroy_generic(dst);
@@ -125,7 +180,9 @@ extern "C" {
   void display_generic(generic_t x) {
     try {
       if (is_generic_init(x)) {
-	display_document((rapidjson::Document*)(x.obj));
+	if (!x.obj)
+	  ygglog_throw_error_c("display_generic: Object is NULL.");
+	std::cout << *((rapidjson::Document*)(x.obj)) << std::endl;
       }
     } catch (...) {
       ygglog_error_c("display_generic: C++ exception thrown.");
@@ -142,8 +199,9 @@ extern "C" {
 	ygglog_throw_error_c("generic_ref_get_item: Object is NULL.");
       }
       rapidjson::Value* x_obj = (rapidjson::Value*)(x.obj);
-      std::string typeS(type);
-      document_check_type(x_obj, typeS);
+      if (!x_obj->IsType(type)) {
+	ygglog_throw_error_c("generic_ref_get_item: Object is not of type \'%s\'", type);
+      }
       bool requires_freeing = false;
       out = x_obj->GetDataPtr(requires_freeing);
     } catch (...) {
@@ -163,8 +221,9 @@ extern "C" {
 	ygglog_throw_error_c("generic_ref_get_item_nbytes: Object is NULL.");
       }
       rapidjson::Value* x_obj = (rapidjson::Value*)(x.obj);
-      std::string typeS(type);
-      document_check_type(x_obj, typeS);
+      if (!x_obj->IsType(type)) {
+	ygglog_throw_error_c("generic_ref_get_item_nbytes: Object is not of type \'%s\'", type);
+      }
       out = x_obj->GetNBytes();
     } catch (...) {
       ygglog_error_c("generic_ref_get_item_nbytes: C++ exception thrown.");
@@ -194,7 +253,7 @@ extern "C" {
 #define GEOMETRY_(name, rjtype)					\
       if (typeS == std::string(#name)) {			\
 	rapidjson::rjtype* tmp = (rapidjson::rjtype*)value;	\
-	x_obj->Set ## rjtype(*tmp);				\
+	x_obj->Set ## rjtype(*tmp, generic_allocator(x));	\
       }
       CASE_(null, SetNull())
       else CASE_(boolean, SetBool(((bool*)value)[0]))
@@ -212,7 +271,7 @@ extern "C" {
       }
       else if (typeS == std::string("class") ||
 	       typeS == std::string("function")) {
-	python_t tmp = init_python();
+	python_t tmp;
 	tmp.obj = (PyObject*)value;
 	if (generic_set_python_class(x, tmp) != GENERIC_SUCCESS_)
 	  return GENERIC_ERROR_;
@@ -232,9 +291,13 @@ extern "C" {
   }
   void* generic_ref_get_scalar(generic_ref_t x, const char *subtype, const size_t precision) {
     try {
-      std::string typeS("scalar");
-      std::string subtypeS(subtype);
-      document_check_yggtype((rapidjson::Value*)(x.obj), typeS, subtypeS, precision);
+      if (x.obj == NULL) {
+	ygglog_throw_error_c("generic_ref_get_scalar: Object is NULL.");
+      }
+      rapidjson::Value* x_obj = (rapidjson::Value*)(x.obj);
+      if (!(x_obj->IsType("scalar") && x_obj->IsSubType(subtype, static_cast<rapidjson::SizeType>(precision)))) {
+	ygglog_throw_error_c("generic_ref_get_scalar: Object is not a scalar of subtype \'%s\' with precision %ld", subtype, precision);
+      }
     } catch(...) {
       ygglog_error_c("generic_ref_get_scalar: C++ exception thrown");
       return NULL;
@@ -248,16 +311,19 @@ extern "C" {
   size_t generic_ref_get_1darray(generic_ref_t x, const char *subtype, const size_t precision, void** data) {
     size_t new_length = 0;
     try {
-      std::string typeS("1darray");
-      std::string subtypeS(subtype);
-      document_check_yggtype((rapidjson::Value*)(x.obj), typeS, subtypeS, precision);
+      if (x.obj == NULL) {
+	ygglog_throw_error_c("generic_ref_get_1darray: Object is NULL.");
+      }
+      rapidjson::Value* x_obj = (rapidjson::Value*)(x.obj);
+      if (!(x_obj->IsType("1darray") && x_obj->IsSubType(subtype, static_cast<rapidjson::SizeType>(precision)))) {
+	ygglog_throw_error_c("generic_ref_get_1darray: Object is not an array of subtype \'%s\' with precision %ld", subtype, precision);
+      }
       void* new_data = generic_ref_get_item(x, "1darray");
       if (new_data == NULL)
 	return 0;
       size_t nbytes = generic_ref_get_item_nbytes(x, "1darray");
       if (nbytes == 0)
 	return 0;
-      rapidjson::Value* x_obj = (rapidjson::Value*)(x.obj);
       new_length = (size_t)(x_obj->GetNElements());
       data[0] = (void*)realloc(data[0], nbytes);
       if (data[0] == NULL) {
@@ -277,16 +343,19 @@ extern "C" {
   size_t generic_ref_get_ndarray(generic_ref_t x, const char *subtype, const size_t precision, void** data, size_t** shape) {
     size_t new_ndim = 0;
     try {
-      std::string typeS("ndarray");
-      std::string subtypeS(subtype);
-      document_check_yggtype((rapidjson::Value*)(x.obj), typeS, subtypeS, precision);
+      if (x.obj == NULL) {
+	ygglog_throw_error_c("generic_ref_get_ndarray: Object is NULL.");
+      }
+      rapidjson::Value* x_obj = (rapidjson::Value*)(x.obj);
+      if (!(x_obj->IsType("ndarray") && x_obj->IsSubType(subtype, static_cast<rapidjson::SizeType>(precision)))) {
+	ygglog_throw_error_c("generic_ref_get_ndarray: Object is not an array of subtype \'%s\' with precision %ld", subtype, precision);
+      }
       void* new_data = generic_ref_get_item(x, "ndarray");
       if (new_data == NULL)
 	return 0;
       size_t nbytes = generic_ref_get_item_nbytes(x, "ndarray");
       if (nbytes == 0)
 	return 0;
-      rapidjson::Value* x_obj = (rapidjson::Value*)(x.obj);
       data[0] = (void*)realloc(data[0], nbytes);
       if (data[0] == NULL) {
 	ygglog_throw_error_c("generic_ref_get_ndarray: Failed to reallocate array.");
@@ -849,9 +918,9 @@ extern "C" {
       ygglog_error_c("Generic object is NULL");				\
       return out;							\
     }									\
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);		\
+    rapidjson::Value* d = (rapidjson::Value*)(x.obj);			\
     if (!isMethod) {							\
-      display_document(d);						\
+      std::cout << *d << std::endl;					\
       ygglog_error_c("Generic object is not " #name);			\
       return out;							\
     }									\
@@ -908,7 +977,7 @@ extern "C" {
 #define STD_UNITS_(name, type, method, defV)				\
   STD_UNITS_BASE_(name, type, d->Is ## method(), out = d->Get ## method(), d->Set ## method(value), defV)
 #define GEOMETRY_(name, rjtype)						\
-  STD_JSON_BASE_(name, name ## _t, d->Is ## rjtype(), rapidjson::rjtype* tmp = new rapidjson::rjtype(); d->Get ## rjtype(*tmp); out = rjtype ## 2 ## name(*tmp); delete tmp, d->Set ## rjtype(name ## 2 ## rjtype(value)), init_ ## name())
+  STD_JSON_BASE_(name, name ## _t, d->Is ## rjtype(), rapidjson::rjtype* tmp = new rapidjson::rjtype(); d->Get ## rjtype(*tmp); out = rjtype ## 2 ## name(*tmp); delete tmp, d->Set ## rjtype(name ## 2 ## rjtype(value), generic_allocator(x)), init_ ## name())
 #define ARRAY_(name, type, rjtype)					\
   size_t generic_ref_get_1darray_ ## name(generic_ref_t x, type** data) {	\
     if (x.obj == NULL || data == NULL) {				\
@@ -957,8 +1026,9 @@ extern "C" {
       ygglog_error_c("Generic object is not initialized");		\
       return GENERIC_ERROR_;						\
     }									\
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);		\
-    d->Set1DArray((rjtype*)value, (rapidjson::SizeType)length, units);	\
+    rapidjson::Value* d = (rapidjson::Value*)(x.obj);			\
+    d->Set1DArray((rjtype*)value, (rapidjson::SizeType)length, units,	\
+		  generic_allocator(x));				\
     return GENERIC_SUCCESS_;						\
   }									\
   int generic_set_ndarray_ ## name(generic_t x, type* value, const size_t ndim, const size_t* shape, const char* units) { \
@@ -971,7 +1041,7 @@ extern "C" {
     for (size_t i = 0; i < ndim; i++) {					\
       rjshape[i] = (rapidjson::SizeType)(shape[i]);			\
     }									\
-    d->SetNDArray((rjtype*)value, rjshape, (rapidjson::SizeType)ndim, units); \
+    d->SetNDArray((rjtype*)value, rjshape, (rapidjson::SizeType)ndim, units, generic_allocator(x)); \
     generic_allocator(x).Free(rjshape);					\
     return GENERIC_SUCCESS_;						\
   }									\
@@ -980,10 +1050,10 @@ extern "C" {
   NESTED_SET_(1darray_ ## name, (value, length, units), type* value, const size_t length, const char* units) \
   NESTED_SET_(ndarray_ ## name, (data, ndim, shape, units), type* data, const size_t ndim, const size_t* shape, const char* units)
 #define SCALAR_(name, type, defV)		\
-  STD_UNITS_BASE_(name, type, d->IsScalar<type>(), out = (type)(d->GetScalar<type>()), d->SetScalar(value, units), defV) \
+  STD_UNITS_BASE_(name, type, d->IsScalar<type>(), out = (type)(d->GetScalar<type>()), d->SetScalar(value, units, generic_allocator(x)), defV) \
   ARRAY_(name, type, type)
 #define COMPLEX_(name, type, subtype, defV)				\
-  STD_UNITS_BASE_(name, type, d->IsScalar<std::complex<subtype>>(), std::complex<subtype> tmp = d->GetScalar<std::complex<subtype>>(); out.re = tmp.real(); out.im = tmp.imag(), d->SetScalar(std::complex<subtype>(value.re, value.im), units), type({defV, defV})) \
+  STD_UNITS_BASE_(name, type, d->IsScalar<std::complex<subtype>>(), std::complex<subtype> tmp = d->GetScalar<std::complex<subtype>>(); out.re = tmp.real(); out.im = tmp.imag(), d->SetScalar(std::complex<subtype>(value.re, value.im), units, generic_allocator(x)), type({defV, defV})) \
   ARRAY_(name, type, std::complex<subtype>)
 #define __COMPLEX_(name, type, subtype, defV)				\
   type generic_ref_get_ ## name(generic_ref_t x) {			\
@@ -1015,18 +1085,18 @@ extern "C" {
     }									\
     rapidjson::Value* d = (rapidjson::Value*)(x.obj);		\
     std::complex<subtype> tmp(value.re, value.im);			\
-    d->SetScalar(tmp, units);						\
+    d->SetScalar(tmp, units, generic_allocator(x));			\
     return GENERIC_SUCCESS_;						\
   }									\
   NESTED_GET_NOARGS_(name, type, {defV, defV})				\
   NESTED_SET_(name, (value, units), type value, const char* units)	\
   ARRAY_(name, type, std::complex<subtype>)
 #define PYTHON_(name, method)						\
-  STD_JSON_BASE_(name, python_t, d->Is ## method(), out.obj = d->GetPythonObjectRaw(), d->SetPythonObjectRaw(value.obj), init_python())
+  STD_JSON_BASE_(name, python_t, d->Is ## method(), out.obj = d->GetPythonObjectRaw(), d->SetPythonObjectRaw(value.obj, generic_allocator(x)), {NULL})
   
   STD_JSON_(bool, bool, Bool, false);
   STD_JSON_(integer, int, Int, 0);
-  STD_JSON_BASE_(null, void*, d->IsNull(), out = NULL, d->SetNull(), NULL);
+  STD_JSON_BASE_(null, void*, d->IsNull(), out = NULL, d->SetNull(); UNUSED(value), NULL);
   STD_JSON_(number, double, Double, 0.0);
   STD_JSON_BASE_(string, const char*, d->IsString(), out = d->GetString(), d->SetString(value, STRLEN_RJ(value), generic_allocator(x)), 0);
   STD_JSON_NESTED_(object);
@@ -1181,7 +1251,7 @@ extern "C" {
   }
 
   python_t copy_python(python_t x) {
-    python_t out = init_python();
+    python_t out;
     if (x.obj != NULL) {
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
       Py_INCREF(x.obj);
@@ -1239,7 +1309,7 @@ extern "C" {
     } _END_CPP(dtype_subtype, "");
   }
 
-  const size_t dtype_precision(const dtype_t* type_struct) {
+  size_t dtype_precision(const dtype_t type_struct) {
     _BEGIN_CPP {
       _GET_METADATA(metadata, type_struct, 0);
       return metadata->GetSchemaUint("precision");
@@ -1249,8 +1319,7 @@ extern "C" {
   int set_dtype_name(dtype_t dtype, const char* name) {
     _BEGIN_CPP {
       _GET_METADATA(metadata, dtype, -1);
-      if (!metadata->SetSchemaString("type", name))
-	return -1;
+      metadata->SetSchemaString("type", name);
       return 0;
     } _END_CPP(set_dtype_name, -1);
   }
@@ -1355,7 +1424,7 @@ extern "C" {
     dtype_t out = create_dtype(NULL, false);
     _BEGIN_CPP {
       _GET_METADATA(metadata, out, out);
-      metadata->fromNDArray(subtype, precision, ndim, shape,
+      metadata->fromNDArray(subtype, precision, 1, &length,
 			    units, use_generic);
       return out;
     } _END_CPP_CLEANUP(create_dtype_1darray, out, destroy_dtype(&out));
@@ -1458,10 +1527,10 @@ extern "C" {
   dtype_t create_dtype_pyobj(const char* type, const bool use_generic) {
     return create_dtype_default(type, use_generic);
   }
-  dtype_t create_dtype_pyinst(const char* class_name,
-			       dtype_t args_dtype,
-			       dtype_t kwargs_dtype,
-			       const bool use_generic) {
+  dtype_t create_dtype_pyinst(const char*, // class_name,
+			      dtype_t args_dtype,
+			      dtype_t kwargs_dtype,
+			      const bool use_generic) {
     dtype_t out = create_dtype(NULL, false);
     _BEGIN_CPP {
       _GET_METADATA(metadata, out, out);

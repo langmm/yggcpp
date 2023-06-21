@@ -283,3 +283,21 @@ INTERFACE_TEST_NOARGS(JSONObject, YggJSONObject,
 					  "{\"type\": \"integer\"}}}")),
 		      COMP_DATA_SINGLE,
 		      sendVar, (data_send), recvVar, (data_recv))
+
+#undef INTERFACE_TEST_SCHEMA
+#undef INTERFACE_TEST_NOARGS
+#undef INTERFACE_TEST
+#undef INIT_SCHEMA_RPC
+#undef INIT_FORMAT
+#undef INIT_SCHEMA
+#undef TRANSFER_INPUT_TYPE
+#undef INIT_OUTPUT_RPC
+#undef INIT_INPUT_RPC
+#undef INIT_OUTPUT_RPC_NOARGS
+#undef INIT_INPUT_RPC_NOARGS
+#undef INIT_OUTPUT
+#undef INIT_INPUT
+#undef INIT_OUTPUT_NOARGS
+#undef INIT_INPUT_NOARGS
+#undef INIT_OUTPUT_BASE
+#undef INIT_INPUT_BASE

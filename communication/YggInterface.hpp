@@ -1,6 +1,13 @@
 #pragma once
 #include "communicators/comms.hpp"
 
+/*! @brief Memory to keep track of global scope comms. */
+// #ifdef _OPENMP
+// #define WITH_GLOBAL_SCOPE(COMM) global_scope_comm = 1; COMM
+// #else
+#define WITH_GLOBAL_SCOPE(COMM) global_scope_comm = 1; COMM; global_scope_comm = 0
+// #endif
+
 
 using namespace communication::communicator;
 
@@ -17,7 +24,7 @@ public:
       model input the in YAML for the model calling it.
    */
   YggInput(const char *name) :
-    COMM_BASE(name, RECV) {}
+    COMM_BASE(name, RECV, COMM_FLAG_INTERFACE) {}
   
   /*!
     @brief Constructor for YggInput w/ C++ std::string.
@@ -25,7 +32,7 @@ public:
       model input the in YAML for the model calling it.
    */
   YggInput(const std::string name) :
-    COMM_BASE(name, RECV) {}
+    COMM_BASE(name, RECV, COMM_FLAG_INTERFACE) {}
 
   /*!
     @brief Constructor for YggInput with format.
@@ -37,7 +44,7 @@ public:
       in the table.
    */
   YggInput(const char *name, const char *fmt, bool as_array = false) :
-    COMM_BASE(name, RECV) {
+    COMM_BASE(name, RECV, COMM_FLAG_INTERFACE) {
     this->addFormat(fmt, as_array);
   }
 
@@ -52,7 +59,7 @@ public:
    */
   YggInput(const std::string name, const std::string fmt,
 	   bool as_array = false) :
-    COMM_BASE(name, RECV) {
+    COMM_BASE(name, RECV, COMM_FLAG_INTERFACE) {
     this->addFormat(fmt, as_array);
   }    
 
@@ -64,7 +71,7 @@ public:
       of data expected by the communicator.
    */
   YggInput(const char *name, const rapidjson::Document& schema) :
-    COMM_BASE(name, RECV) {
+    COMM_BASE(name, RECV, COMM_FLAG_INTERFACE) {
     this->addSchema(schema);
   }
 
@@ -76,7 +83,7 @@ public:
       of data expected by the communicator.
    */
   YggInput(const std::string name, const rapidjson::Document& schema) :
-    COMM_BASE(name, RECV) {
+    COMM_BASE(name, RECV, COMM_FLAG_INTERFACE) {
     this->addSchema(schema);
   }
 
@@ -96,7 +103,7 @@ public:
       model output the in YAML for the model calling it.
    */
   YggOutput(const char *name) :
-    COMM_BASE(name, SEND) {}
+    COMM_BASE(name, SEND, COMM_FLAG_INTERFACE) {}
   
   /*!
     @brief Constructor for YggOutput.
@@ -104,7 +111,7 @@ public:
       model output the in YAML for the model calling it.
    */
   YggOutput(const std::string name) :
-    COMM_BASE(name, SEND) {}
+    COMM_BASE(name, SEND, COMM_FLAG_INTERFACE) {}
   
   /*!
     @brief Constructor for YggOutput with format.
@@ -117,7 +124,7 @@ public:
       in the table.
    */
   YggOutput(const char *name, const char *fmt, bool as_array=false) :
-    COMM_BASE(name, SEND) {
+    COMM_BASE(name, SEND, COMM_FLAG_INTERFACE) {
     this->addFormat(fmt, as_array);
   }
 
@@ -133,7 +140,7 @@ public:
    */
   YggOutput(const std::string name, const std::string fmt,
 	    bool as_array=false) :
-    COMM_BASE(name, SEND) {
+    COMM_BASE(name, SEND, COMM_FLAG_INTERFACE) {
     this->addFormat(fmt, as_array);
   }
     
@@ -146,7 +153,7 @@ public:
       of data expected by the communicator.
    */
   YggOutput(const char *name, rapidjson::Document& schema) :
-    COMM_BASE(name, SEND) {
+    COMM_BASE(name, SEND, COMM_FLAG_INTERFACE) {
     this->addSchema(schema);
   }
 
@@ -158,7 +165,7 @@ public:
       of data expected by the communicator.
    */
   YggOutput(const std::string name, rapidjson::Document& schema) :
-    COMM_BASE(name, SEND) {
+    COMM_BASE(name, SEND, COMM_FLAG_INTERFACE) {
     this->addSchema(schema);
   }
 
@@ -179,7 +186,7 @@ public:
       'server' set to 'true'.
   */
   YggRpcServer(const char *name) :
-    ServerComm(name, 0) {}
+    ServerComm(name, COMM_FLAG_INTERFACE) {}
   /*!
     @brief Constructor for YggRpcServer.
     @param[in] name Name of server input channel. This should be named in
@@ -192,7 +199,7 @@ public:
    */
   YggRpcServer(const char *name, const char *inFormat,
 	       const char *outFormat) :
-    ServerComm(name, 0) {
+    ServerComm(name, COMM_FLAG_INTERFACE) {
     this->addFormat(inFormat);
     this->addResponseFormat(outFormat);
   }
@@ -209,7 +216,7 @@ public:
    */
   YggRpcServer(const std::string name, const std::string inFormat,
 	       const std::string outFormat) :
-    ServerComm(name, 0) {
+    ServerComm(name, COMM_FLAG_INTERFACE) {
     this->addFormat(inFormat);
     this->addResponseFormat(outFormat);
   }
@@ -226,7 +233,7 @@ public:
    */
   YggRpcServer(const std::string name, const rapidjson::Document& inType,
 	       const rapidjson::Document& outType) :
-    ServerComm(name, 0) {
+    ServerComm(name, COMM_FLAG_INTERFACE) {
     this->addSchema(inType);
     this->addResponseSchema(outType);
   }
@@ -248,7 +255,7 @@ public:
       names specified in the YAML.
   */
   YggRpcClient(const char *name) :
-    ClientComm(name, 0) {}
+    ClientComm(name, COMM_FLAG_INTERFACE) {}
   /*!
     @brief Constructor for YggRpcClient.
     @param[in] name Name of client input channel. This should be of the
@@ -256,7 +263,7 @@ public:
       names specified in the YAML.
   */
   YggRpcClient(const std::string name) :
-    ClientComm(name, 0) {}
+    ClientComm(name, COMM_FLAG_INTERFACE) {}
   /*!
     @brief Constructor for YggRpcClient.
     @param[in] name Name of client input channel. This should be of the
@@ -269,7 +276,7 @@ public:
    */
   YggRpcClient(const char *name, const char *outFormat,
 	       const char *inFormat) :
-    ClientComm(name, 0) {
+    ClientComm(name, COMM_FLAG_INTERFACE) {
     this->addFormat(std::string(outFormat));
     this->addResponseFormat(std::string(inFormat));
   }
@@ -287,7 +294,7 @@ public:
    */
   YggRpcClient(const std::string name, const std::string outFormat,
 	       const std::string inFormat) :
-    ClientComm(name, 0) {
+    ClientComm(name, COMM_FLAG_INTERFACE) {
     this->addFormat(outFormat);
     this->addResponseFormat(inFormat);
   }
@@ -304,7 +311,7 @@ public:
    */
   YggRpcClient(const std::string name, const rapidjson::Document& outType,
 	       const rapidjson::Document& inType) :
-    ClientComm(name, 0) {
+    ClientComm(name, COMM_FLAG_INTERFACE) {
     this->addSchema(outType);
     this->addResponseSchema(inType);
   }

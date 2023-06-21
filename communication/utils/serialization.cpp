@@ -187,13 +187,11 @@ void Metadata::fromFormat(const std::string& format_str,
   while (beg < format_str.size()) {
     char isubtype[FMT_LEN] = "";
     mres = find_match_c(re_fmt, format_str.c_str() + beg, &sind, &eind);
-    if (mres < 0) {
-      ygglog_throw_error_c("Metadata::fromFormat: find_match returned %d", mres);
-    } else if (mres == 0) {
+    if (mres == 0) {
       // Make sure its not just a format string with no newline
       mres = find_match_c(re_fmt_eof, format_str.c_str() + beg,
 			  &sind, &eind);
-      if (mres <= 0) {
+      if (mres == 0) {
 	beg++;
 	continue;
       }
@@ -552,14 +550,14 @@ void Metadata::SetSchemaValue(const std::string name, rapidjson::Value& x,
   else
     SetValue(name, x, *subSchema);
 }
-// void Metadata::SetSchemaMetadata(const std::string name,
-// 				 const Metadata& other) {
-//   if (other.schema == NULL)
-//     ygglog_throw_error_c("SetSchemaMetadata: Value has not datatype");
-//   rapidjson::Value x;
-//   x.CopyFrom(*(other.schema), GetAllocator(), true);
-//   SetSchemaValue(name, x);
-// }
+void Metadata::SetSchemaMetadata(const std::string name,
+				 const Metadata& other) {
+  if (other.schema == NULL)
+    ygglog_throw_error_c("SetSchemaMetadata: Value has not datatype");
+  rapidjson::Value x;
+  x.CopyFrom(*(other.schema), GetAllocator(), true);
+  SetSchemaValue(name, x);
+}
 void Metadata::SetMetaID(const std::string name, const char** id) {
   char new_id[100];
   snprintf(new_id, 100, "%d", rand());

@@ -8,33 +8,34 @@ using namespace communication::utils;
 
 unsigned ClientComm::_client_rand_seeded = 0;
 
-ClientComm::ClientComm(const std::string &name, Address *address,
+ClientComm::ClientComm(const std::string &nme, Address *addr,
 		       int flgs) :
-  RPCComm(name, address,
+  RPCComm(nme, addr,
 	  flgs | COMM_FLAG_CLIENT | COMM_ALWAYS_SEND_HEADER,
 	  SEND, RECV) {
   // Called to create temp comm for send/recv
   if (name.empty() && address && address->valid())
       return;
-  init();
-}
-
-ClientComm::ClientComm(const std::string name, int flgs) :
-  RPCComm(name,
-	  flgs | COMM_FLAG_CLIENT | COMM_ALWAYS_SEND_HEADER,
-	  SEND, RECV) {
-  init();
+  if (!global_comm)
+    init();
 }
 
 void ClientComm::set_timeout_recv(int new_timeout) {
+  if (global_comm) {
+    global_comm->set_timeout_recv(new_timeout);
+    return;
+  }
   COMM_BASE::set_timeout_recv(new_timeout);
   requests.initClientResponse();
   Comm_t* active_comm = requests.comms[0];
   active_comm->set_timeout_recv(new_timeout);
 }
-int ClientComm::wait_for_recv(const int&) {
-    // Handle wait in recv_single for response comm
-    return 1;
+int ClientComm::wait_for_recv(const int tout) {
+  if (global_comm) {
+    return global_comm->wait_for_recv(tout);
+  }
+  // Handle wait in recv_single for response comm
+  return 1;
 }
 
 void ClientComm::init() {
@@ -55,65 +56,73 @@ void ClientComm::init() {
 }
 
 bool ClientComm::signon(const Header& header) {
-    if (header.flags & HEAD_FLAG_CLIENT_SIGNON)
-        return true;
-    if (requests.initClientResponse() < 0)
-        return false;
-    ygglog_debug << "ClientComm(" << name << ")::signon: begin" << std::endl;
-    while (!requests.signon_complete) {
+  if (global_comm)
+    return dynamic_cast<ClientComm*>(global_comm)->signon(header);
+  if (header.flags & HEAD_FLAG_CLIENT_SIGNON)
+    return true;
+  if (requests.initClientResponse() < 0)
+    return false;
+  ygglog_debug << "ClientComm(" << name << ")::signon: begin" << std::endl;
+  while (!requests.signon_complete) {
 #ifdef YGG_TEST
-        // Prevent sending extra SIGNON during testing
-        if (!requests.signonSent()) {
+    // Prevent sending extra SIGNON during testing
+    if (!requests.signonSent()) {
 #endif // YGG_TEST
-            if (send(YGG_CLIENT_SIGNON, YGG_CLIENT_SIGNON_LEN) < 0) {
-                ygglog_error << "ClientComm(" << name << ")::signon: Error in sending sign-on" << std::endl;
-                return false;
-            }
-#ifdef YGG_TEST
-        }
-#endif // YGG_TEST
-        if (requests.activeComm()->comm_nmsg() > 0) {
-            char* data = NULL;
-            int ret = recv(data, 0, true);
-            if (data != NULL)
-                free(data);
-            if (ret < 0) {
-                ygglog_error << "ClientComm(" << name << ")::signon: Error in receiving sign-on" << std::endl;
-                return false;
-            }
-            break;
-        } else {
-            sleep(YGG_SLEEP_TIME);
-        }
+    if (send(YGG_CLIENT_SIGNON, YGG_CLIENT_SIGNON_LEN) < 0) {
+      ygglog_error << "ClientComm(" << name << ")::signon: Error in sending sign-on" << std::endl;
+      return false;
     }
-    return requests.signon_complete;
+#ifdef YGG_TEST
+    }
+#endif // YGG_TEST
+    if (requests.activeComm()->comm_nmsg() > 0) {
+      char* data = NULL;
+      int ret = recv(data, 0, true);
+      if (data != NULL)
+	free(data);
+      if (ret < 0) {
+        ygglog_error << "ClientComm(" << name << ")::signon: Error in receiving sign-on" << std::endl;
+	return false;
+      }
+      break;
+    } else {
+      sleep(YGG_SLEEP_TIME);
+    }
+  }
+  return requests.signon_complete;
 }
 
 Comm_t* ClientComm::create_worker_send(Header& head) {
-    ygglog_debug << "ClientComm(" << name << ")::create_worker_send: begin" << std::endl;
-    Comm_t* out = COMM_BASE::create_worker_send(head);
-    std::string request_id(head.GetMetaString("request_id"));
-    if (!workers.setRequest(out, request_id)) {
-        ygglog_error << "ClientComm(" << name << ")::create_worker_send: Failed to set request on worker" << std::endl;
-        return nullptr;
-    }
-    ygglog_debug << "ClientComm(" << name << ")::create_worker_send: done" << std::endl;
-    return out;
+  if (global_comm)
+    return global_comm->create_worker_send(head);
+  ygglog_debug << "ClientComm(" << name << ")::create_worker_send: begin" << std::endl;
+  Comm_t* out = COMM_BASE::create_worker_send(head);
+  std::string request_id(head.GetMetaString("request_id"));
+  if (!workers.setRequest(out, request_id)) {
+    ygglog_error << "ClientComm(" << name << ")::create_worker_send: Failed to set request on worker" << std::endl;
+    return nullptr;
+  }
+  ygglog_debug << "ClientComm(" << name << ")::create_worker_send: done" << std::endl;
+  return out;
 }
 
 Comm_t* ClientComm::create_worker_recv(Header& head) {
-    ygglog_debug << "ClientComm(" << name << ")::create_worker_recv: begin" << std::endl;
-    std::string request_id(head.GetMetaString("request_id"));
-    if (!workers.setResponse(request_id)) {
-        ygglog_error << "ClientComm(" << name << ")::create_worker_recv: Failed to clear request on worker (request_id = " << request_id << ")" << std::endl;
-        return nullptr;
-    }
-    Comm_t* out = COMM_BASE::create_worker_recv(head);
-    ygglog_debug << "ClientComm(" << name << ")::create_worker_recv: done" << std::endl;
-    return out;
+  if (global_comm)
+    return global_comm->create_worker_recv(head);
+  ygglog_debug << "ClientComm(" << name << ")::create_worker_recv: begin" << std::endl;
+  std::string request_id(head.GetMetaString("request_id"));
+  if (!workers.setResponse(request_id)) {
+    ygglog_error << "ClientComm(" << name << ")::create_worker_recv: Failed to clear request on worker (request_id = " << request_id << ")" << std::endl;
+    return nullptr;
+  }
+  Comm_t* out = COMM_BASE::create_worker_recv(head);
+  ygglog_debug << "ClientComm(" << name << ")::create_worker_recv: done" << std::endl;
+  return out;
 }
 
 bool ClientComm::create_header_send(Header& header, const char* data, const size_t &len) {
+  if (global_comm)
+    return global_comm->create_header_send(header, data, len);
   ygglog_debug << "ClientComm(" << name << ")::create_header_send: begin" << std::endl;
   bool out = COMM_BASE::create_header_send(header, data, len);
   if ((!out) || header.flags & HEAD_FLAG_EOF)
@@ -133,6 +142,9 @@ bool ClientComm::create_header_send(Header& header, const char* data, const size
 bool ClientComm::create_header_recv(Header& header, char*& data, const size_t &len,
 				    size_t msg_len, int allow_realloc,
 				    int temp) {
+  if (global_comm)
+    return global_comm->create_header_recv(header, data, len, msg_len,
+					   allow_realloc, temp);
   ygglog_debug << "ClientComm(" << name << ")::create_header_recv: begin" << std::endl;
   Comm_t* response_comm = requests.activeComm(true);
   if (response_comm == NULL) {
@@ -161,6 +173,8 @@ bool ClientComm::create_header_recv(Header& header, char*& data, const size_t &l
 }
 
 long ClientComm::recv_single(char*& rdata, const size_t &rlen, bool allow_realloc)  {
+    if (global_comm)
+      return global_comm->recv_single(rdata, rlen, allow_realloc);
     ygglog_debug << "ClientComm(" << name << ")::recv_single" << std::endl;
     Comm_t* response_comm = requests.activeComm(true);
     if (response_comm == NULL) {

@@ -35,11 +35,12 @@ public:
      * @param name The name for the communicator, if not given one will be generated
      * @param address The address for the communicator, if not given one will be generated
      * @param direction Enuerated direction for this instance
+     * @param flags Bitwise flags describing the communicator
      */
-    explicit IPCComm(const std::string &name = utils::blank, utils::Address *address = new utils::Address(),
+    explicit IPCComm(const std::string &name = blank,
+		     utils::Address *address = new utils::Address(),
                      DIRECTION direction = NONE, int flgs = 0);
-    explicit IPCComm(const std::string &name,
-		     DIRECTION direction, int flgs = 0);
+    ADD_CONSTRUCTORS(IPCComm)
 
     //explicit IPCComm(Comm_t* comm);
     /**

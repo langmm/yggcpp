@@ -1,4 +1,4 @@
-* Add YggIterface.h C interface with tests
+* Add additional C interface with tests
 * Improve coverage and strip out unused code
 * Move address away from pointer?
 * Automated documentation using doxygen

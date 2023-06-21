@@ -13,8 +13,6 @@ class RPCComm : public COMM_BASE {
 public:
   explicit RPCComm(const std::string &name, utils::Address *address,
 		   int flgs, DIRECTION dir, DIRECTION req_dir);
-  explicit RPCComm(const std::string name, int flgs,
-		   DIRECTION dir, DIRECTION req_dir);
 
   using Comm_t::send;
   using Comm_t::recv;
@@ -22,6 +20,8 @@ public:
   
   void addResponseSchema(const std::string& s, bool use_generic=false);
   void addResponseSchema(const rapidjson::Value& s,
+			 bool use_generic=false);
+  void addResponseSchema(const Metadata& metadata,
 			 bool use_generic=false);
   void addResponseFormat(const std::string& fmt, bool use_generic=false);
   
@@ -32,7 +32,7 @@ protected:
   RequestList& getRequests() { return requests; }
 #endif
   
-  Metadata& get_metadata(const DIRECTION dir) override;
+  Metadata& get_metadata(const DIRECTION dir=NONE) override;
   RequestList requests;
 };
   
