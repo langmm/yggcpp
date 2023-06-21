@@ -28,7 +28,8 @@ void close_comm(comm_t* comm);
 comm_t open_comm(char* address, DIRECTION dir, const COMM_TYPE &t);
 comm_t init_comm(const char* name, DIRECTION dir, const COMM_TYPE &t,
 		 dtype_t datatype);
-int set_response_datatype(comm_t comm, const char *fmt);
+int set_response_format(comm_t comm, const char *fmt);
+int set_response_datatype(comm_t x, dtype_t datatype);
 int comm_send(comm_t comm, const char *data, const size_t len);
 int comm_send_eof(comm_t comm);
 long comm_recv(comm_t comm, char *data, const size_t len);
@@ -47,6 +48,11 @@ long ncommCall(comm_t x, const int allow_realloc, size_t nargs, ...);
 #define commRecvRealloc commRecvHeap
 #define commCall commCallStack
 #define commCallRealloc commCallHeap
+
+comm_t get_global_scope_comm(const char *name, const DIRECTION dir,
+			     const COMM_TYPE &t);
+void global_scope_comm_on();
+void global_scope_comm_off();
 
 #ifdef __cplusplus
 }

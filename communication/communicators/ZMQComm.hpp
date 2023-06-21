@@ -106,11 +106,11 @@ public:
 
 class ZMQComm : public CommBase<ZMQSocket> {
 public:
-    explicit ZMQComm(const std::string name = "", utils::Address *address = new utils::Address(),
+    explicit ZMQComm(const std::string name = "",
+		     utils::Address *address = new utils::Address(),
                      const DIRECTION direction = NONE,
 		     int flgs = 0);
-    explicit ZMQComm(const std::string name,
-		     const DIRECTION direction, int flgs = 0);
+    ADD_CONSTRUCTORS(ZMQComm)
 
     ~ZMQComm() override;
 

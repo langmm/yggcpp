@@ -187,8 +187,8 @@ private:
   void SetMetaValue(const std::string name, rapidjson::Value& x);
   void SetSchemaValue(const std::string name, rapidjson::Value& x,
 		      rapidjson::Value* subSchema = NULL);
-  // void SetSchemaMetadata(const std::string name,
-  // 			 const Metadata& other);
+  void SetSchemaMetadata(const std::string name,
+			 const Metadata& other);
   void SetMetaID(const std::string name, const char** id=NULL);
   void SetMetaID(const std::string name, std::string& id);
   int deserialize(const char* buf, size_t nargs, int allow_realloc, ...);

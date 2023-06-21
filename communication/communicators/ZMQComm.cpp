@@ -550,27 +550,18 @@ bool ZMQComm::init_handle() {
     flags |= COMM_ALWAYS_SEND_HEADER;
   return true;
 }
-/*!
-  @brief Initialize a ZeroMQ communication.
-  @param[in] comm comm_t * Comm structure initialized with init_comm_base.
-  @returns int -1 if the comm could not be initialized.
- */
+
 ZMQComm::ZMQComm(const std::string name, utils::Address *address,
 		 const DIRECTION direction, int flgs) :
-  CommBase(address, direction, ZMQ_COMM, flgs), reply(direction) {
-  this->name = name;
-  init();
-}
-ZMQComm::ZMQComm(const std::string name, const DIRECTION direction,
-		 int flgs) :
-  CommBase(name, direction, ZMQ_COMM, flgs), reply(direction) {
-  init();
+  CommBase(name, address, direction, ZMQ_COMM, flgs), reply(direction) {
+  if (!global_comm)
+    init();
 }
 
 ZMQComm::~ZMQComm() {
     ygglog_debug << "~ZMQComm: Started" << std::endl;
     if ((direction == RECV) && this->is_open() &&
-        (!(flags & COMM_EOF_RECV))) {
+	(!global_comm) && (!(flags & COMM_EOF_RECV))) {
       if (utils::YggdrasilLogger::_ygg_error_flag == 0) {
 	    size_t data_len = 0;
             char *data = NULL;
@@ -592,6 +583,8 @@ ZMQComm::~ZMQComm() {
   @returns int Number of messages. -1 indicates an error.
  */
 int ZMQComm::comm_nmsg() const {
+    if (global_comm)
+      return global_comm->comm_nmsg();
     int out = 0;
     if (direction == RECV) {
         if (handle) {
@@ -614,6 +607,8 @@ int ZMQComm::comm_nmsg() const {
   @returns int 0 if send succesfull, -1 if send unsuccessful.
  */
 int ZMQComm::send_single(const char* data, const size_t &len, const Header& header) {
+    if (global_comm)
+      return global_comm->send_single(data, len, header);
     ygglog_debug << "ZMQComm(" << name << ")::send_single: " << len << " bytes" << std::endl;
   if (!check_size(len)) {
     ygglog_error << "ZMQComm(" << name << ")::send_single: Message too large" << std::endl;
@@ -657,6 +652,8 @@ bool ZMQComm::do_reply_send(const Header& header) {
  */
 long ZMQComm::recv_single(char*& data, const size_t &len,
 			  bool allow_realloc) {
+    if (global_comm)
+      return global_comm->recv_single(data, len, allow_realloc);
     long ret = -1;
     ygglog_debug << "ZMQComm(" << name << ")::recv_single " << std::endl;
     if (!handle) {
@@ -688,6 +685,8 @@ long ZMQComm::recv_single(char*& data, const size_t &len,
     return ret;
 }
 bool ZMQComm::do_reply_recv(const Header& header) {
+  if (global_comm)
+    return dynamic_cast<ZMQComm*>(global_comm)->do_reply_recv(header);
   if (header.flags & (HEAD_FLAG_CLIENT_SIGNON | HEAD_FLAG_SERVER_SIGNON))
     return true;
 #ifdef YGG_TEST
@@ -699,6 +698,8 @@ bool ZMQComm::do_reply_recv(const Header& header) {
 }
 
 bool ZMQComm::create_header_send(Header& header, const char* data, const size_t &len) {
+  if (global_comm)
+    return global_comm->create_header_send(header, data, len);
   if (!Comm_t::create_header_send(header, data, len))
     return false;
   if (!(header.flags & (HEAD_FLAG_CLIENT_SIGNON |
@@ -718,6 +719,9 @@ bool ZMQComm::create_header_recv(Header& header, char*& data,
 				 const size_t &len,
 				 size_t msg_len, int allow_realloc,
 				 int temp) {
+  if (global_comm)
+    return global_comm->create_header_recv(header, data, len, msg_len,
+					   allow_realloc, temp);
   bool out = Comm_t::create_header_recv(header, data, len, msg_len,
 					allow_realloc, temp);
   if (temp && out &&
@@ -739,6 +743,8 @@ bool ZMQComm::create_header_recv(Header& header, char*& data,
 WORKER_METHOD_DEFS(ZMQComm)
 
 Comm_t* ZMQComm::create_worker_send(Header& head) {
+  if (global_comm)
+    return global_comm->create_worker_send(head);
   ZMQComm* out = dynamic_cast<ZMQComm*>(Comm_t::create_worker_send(head));
   if (!out)
     return out;
@@ -753,6 +759,8 @@ Comm_t* ZMQComm::create_worker_send(Header& head) {
 }
 
 Comm_t* ZMQComm::create_worker_recv(Header& head) {
+  if (global_comm)
+    return global_comm->create_worker_recv(head);
   ZMQComm* out = dynamic_cast<ZMQComm*>(Comm_t::create_worker_recv(head));
   if (!out)
     return out;
@@ -770,6 +778,10 @@ Comm_t* ZMQComm::create_worker_recv(Header& head) {
 
 #ifdef YGG_TEST
 bool ZMQComm::afterSendRecv(Comm_t* sComm, Comm_t* rComm) {
+  if (sComm->global_comm)
+    sComm = sComm->global_comm;
+  if (rComm->global_comm)
+    rComm = rComm->global_comm;
   if (sComm->getType() != ZMQ_COMM || rComm->getType() != ZMQ_COMM) {
     ygglog_error << "ZMQComm::afterSendRecv: One or both communicators are not ZMQ communicators" << std::endl;
     return false;

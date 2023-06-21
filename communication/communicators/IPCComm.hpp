@@ -30,10 +30,10 @@ typedef struct msgbuf_t {
 //class ServerComm;
 class IPCComm : public CommBase<int> {
 public:
-    explicit IPCComm(const std::string &name = blank, utils::Address *address = new utils::Address(),
+    explicit IPCComm(const std::string &name = blank,
+		     utils::Address *address = new utils::Address(),
                      DIRECTION direction = NONE, int flgs = 0);
-    explicit IPCComm(const std::string &name,
-		     DIRECTION direction, int flgs = 0);
+    ADD_CONSTRUCTORS(IPCComm)
 
     //explicit IPCComm(Comm_t* comm);
     ~IPCComm() override;

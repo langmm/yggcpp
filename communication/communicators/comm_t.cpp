@@ -11,7 +11,8 @@ void free_comm(comm_t* comm) {
         return;
     if (comm->comm != nullptr) {
         auto c = static_cast<communication::communicator::Comm_t *>(comm->comm);
-        delete c;
+	if (!c->global())
+	  delete c;
         comm->comm = nullptr;
     }
 }
@@ -35,7 +36,7 @@ comm_t init_comm(const char* name, DIRECTION dir, const COMM_TYPE &t,
 		 dtype_t datatype) {
   comm_t ret;
   try {
-    ret.comm = (void*) communication::communicator::new_Comm_t(dir, t, name);
+    ret.comm = (void*) communication::communicator::new_Comm_t(dir, t, name, (char*)NULL, COMM_FLAG_INTERFACE);
     if (datatype.metadata) {
       Metadata* metadata = static_cast<Metadata*>(datatype.metadata);
       datatype.metadata = NULL;
@@ -48,7 +49,7 @@ comm_t init_comm(const char* name, DIRECTION dir, const COMM_TYPE &t,
   return ret;
 }
 
-int set_response_datatype(comm_t comm, const char *fmt) {
+int set_response_format(comm_t comm, const char *fmt) {
   if (!comm.comm)
     return 0;
   try {
@@ -60,6 +61,20 @@ int set_response_datatype(comm_t comm, const char *fmt) {
   return 1;
 }
 
+int set_response_datatype(comm_t x, dtype_t datatype) {
+  if (!x.comm) return 0;
+  try {
+    if (datatype.metadata) {
+      Metadata* metadata = static_cast<Metadata*>(datatype.metadata);
+      datatype.metadata = NULL;
+      static_cast<communication::communicator::RPCComm*>(x.comm)->addResponseSchema(*metadata);
+      delete metadata;
+    }
+  } catch (...) {
+    return 0;
+  }
+  return 1;
+}
 
 int comm_send(comm_t comm, const char *data, const size_t len) {
   if (!comm.comm)
@@ -145,6 +160,29 @@ int comm_nmsg(comm_t comm) {
     } catch (...) {
       return -1;
     }
+}
+
+/*!
+  @brief Retrieve a registered global comm if it exists.
+  @param[in] name Name that comm might be registered under.
+  @param[in] dir Direction for comm.
+  @param[in] t Communicator type.
+  @returns Registered comm. Member comm willl be NULL if one does not
+    exist with the specified name.
+ */
+  comm_t get_global_scope_comm(const char *name, const DIRECTION dir,
+			       const COMM_TYPE &t) {
+  comm_t out;
+  out.comm = (void*)(communication::communicator::Comm_t::find_registered_comm(name, dir, t));
+  return out;
+};
+void global_scope_comm_on() {
+  communication::communicator::global_scope_comm = 1;
+}
+void global_scope_comm_off() {
+// #ifndef _OPENMP
+  communication::communicator::global_scope_comm = 0;
+// #endif
 }
 
 }

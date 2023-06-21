@@ -25,6 +25,7 @@
 #define COMM_FLAGS_USED   0x00000400  //!< Set if the comm has been used
 #define COMM_EOF_SENT     0x00000800  //!< Set if EOF has been sent
 #define COMM_EOF_RECV     0x00001000  //!< Set if EOF has been received
+#define COMM_FLAG_INTERFACE 0x00002000 //!< Set if communicator is an interface communicator
 
 /*! @brief Set if the comm is the receiving comm for a client/server request connection */
 #define COMM_FLAG_RPC     COMM_FLAG_SERVER | COMM_FLAG_CLIENT
@@ -54,12 +55,38 @@
     return NULL;						\
   }
 
+#define ADD_CONSTRUCTORS(cls)			\
+  explicit cls(const std::string nme,		\
+	       const DIRECTION dirn,		\
+	       int flgs = 0) :			\
+    cls(nme, nullptr, dirn, flgs) {}		\
+  explicit cls(utils::Address *addr,		\
+	       const DIRECTION dirn,		\
+	       int flgs = 0) :			\
+    cls("", addr, dirn, flgs) {}
+#define ADD_CONSTRUCTORS_RPC(cls)		\
+  explicit cls(const std::string nme,		\
+	       int flgs = 0) :			\
+    cls(nme, nullptr, flgs) {}			\
+  explicit cls(utils::Address *addr,		\
+	       int flgs = 0) :			\
+    cls("", addr, flgs) {}
+
 
 using namespace rapidjson;
 
 namespace communication {
 
 namespace communicator {
+
+#if defined(_MSC_VER) && defined(_OPENMP)
+extern __declspec(thread) int global_scope_comm;
+#else // _MSC_VER
+extern int global_scope_comm;
+#ifdef _OPENMP
+#pragma omp threadprivate(global_scope_comm)
+#endif
+#endif // _MSC_VER
 
 class RPCComm;
 
@@ -373,7 +400,12 @@ public:
       @brief Determine if the communicator is valid.
       @return true if it is valid, false otherwise.
      */
-    bool valid() {return flags & COMM_FLAG_VALID;}
+    bool valid() { return flags & COMM_FLAG_VALID; }
+    /*!
+      @brief Determine if the communicator is global.
+      @return true if it is global, false otherwise.
+     */
+    bool global() { return flags & COMM_FLAG_GLOBAL; }
 
 #ifdef YGG_TEST
     std::string getName() { return name; }
@@ -417,11 +449,19 @@ protected:
     static void _ygg_init();
   
     void updateMaxMsgSize(size_t new_size) {
+      if (global_comm) {
+	global_comm->updateMaxMsgSize(new_size);
+	return;
+      }
       if (maxMsgSize == 0 || new_size < maxMsgSize)
 	maxMsgSize = new_size;
     }
 
     void setFlags(const Header& head, DIRECTION dir) {
+      if (global_comm) {
+	global_comm->setFlags(head, dir);
+	return;
+      }
       flags |= COMM_FLAGS_USED;
       if (head.flags & HEAD_FLAG_EOF) {
 	if (dir == SEND)
@@ -429,6 +469,57 @@ protected:
 	else
 	  flags |= COMM_EOF_RECV;
       }
+    }
+
+    static utils::Address* addressFromEnv(const std::string& name,
+					  DIRECTION direction) {
+      utils::Address* out = new utils::Address();
+      if (name.empty())
+	return out;
+      std::string full_name;
+      full_name = name;
+      if (full_name.size() > COMM_NAME_SIZE)
+	full_name.resize(COMM_NAME_SIZE);
+      if (direction != NONE) {
+	if (direction == SEND) {
+	  full_name += "_OUT";
+	} else if (direction == RECV) {
+	  full_name += "_IN";
+	}
+      }
+      char *model_name = getenv("YGG_MODEL_NAME");
+      char *addr = std::getenv(full_name.c_str());
+      if ((!addr) && model_name) {
+	std::string prefix(model_name);
+	prefix += ":";
+	if (prefix.size() > COMM_NAME_SIZE)
+	  prefix.resize(COMM_NAME_SIZE);
+	if (full_name.rfind(prefix, 0) != 0) {
+	  prefix += full_name;
+	  full_name = prefix;
+	  addr = std::getenv(full_name.c_str());
+	}
+      }
+      if (!addr) {
+	std::string temp_name(full_name);
+	size_t loc;
+	while ((loc = temp_name.find(":")) != std::string::npos) {
+	  temp_name.replace(loc, 1, "__COLON__");
+	}
+	addr = getenv(temp_name.c_str());
+      }
+      std::string model_name_str = "null";
+      std::string addr_str = "null";
+      if (model_name)
+	model_name_str.assign(model_name);
+      if (addr)
+	addr_str.assign(addr_str);
+      ygglog_debug << "CommBase::addressFromEnv: model_name = " <<
+	model_name_str << ", address = " << addr_str << std::endl;
+      ygglog_debug << std::endl;
+      if (addr)
+	out->address(addr);
+      return out;
     }
 
     long copyData(char*& dst, const size_t dst_len,
@@ -453,7 +544,7 @@ protected:
       return (long)src_len;
     }
 
-    virtual Metadata& get_metadata(const DIRECTION dir);
+    virtual Metadata& get_metadata(const DIRECTION dir=NONE);
     int update_datatype(const rapidjson::Value& new_schema,
 			const DIRECTION dir);
     template<typename T>
@@ -490,10 +581,10 @@ protected:
     virtual int send_single(const char *data, const size_t &len, const Header& header) = 0;
     virtual long recv_single(char*& data, const size_t &len, bool allow_realloc) = 0;
 
-    //Comm_t(const Comm_t* comm, COMM_TYPE type);
-    Comm_t(utils::Address *address, DIRECTION direction, const COMM_TYPE &t, int flgs = 0);
-
-    explicit Comm_t(const std::string &name, DIRECTION direction = NONE, const COMM_TYPE &t = NULL_COMM, int flgs = 0);
+    explicit Comm_t(const std::string &name,
+		    utils::Address *address = nullptr,
+		    DIRECTION direction = NONE,
+		    const COMM_TYPE &t = NULL_COMM, int flgs = 0);
 
     bool check_size(const size_t &len) const;
 
@@ -512,12 +603,19 @@ protected:
     Metadata metadata;
     int timeout_recv; //!< Time to wait for messages during receive.
     WorkerList workers; //!< Communicator to use for sending large messages.
+    Comm_t* global_comm; // !< Pointer to global comm that this comm shadows.
 
     static std::vector<Comm_t*> registry;
+    bool get_global_scope_comm();
+public:
     static void register_comm(Comm_t* x);
+    static Comm_t* find_registered_comm(const std::string& name,
+					const DIRECTION dir,
+					const COMM_TYPE type);
 };
 
-Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name="", char* address=nullptr);
+  Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name="", char* address=nullptr, int flags=0);
+  Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, utils::Address* address, int flags=0);
 /*!
       @brief Communication structure.
      */
@@ -549,9 +647,7 @@ protected:
         return -1;
     }
 
-    CommBase(utils::Address *address, DIRECTION direction, const COMM_TYPE &t, int flags = 0);
-
-    explicit CommBase(const std::string &name, DIRECTION direction = NONE, const COMM_TYPE &t = NULL_COMM, int flags = 0);
+    CommBase(const std::string &name, utils::Address *address = nullptr, DIRECTION direction = NONE, const COMM_TYPE &t = NULL_COMM, int flags = 0);
 
     Comm_t* create_worker(utils::Address*, const DIRECTION,
 			  int) override {
@@ -567,17 +663,18 @@ protected:
 };
 
 template<typename H>
-CommBase<H>::CommBase(utils::Address *address, DIRECTION direction, const COMM_TYPE &t, int flags) :
-  Comm_t(address, direction, t, flags), handle(nullptr) {}
-
-template<typename H>
-CommBase<H>::CommBase(const std::string &name, DIRECTION direction, const COMM_TYPE &t, int flags) :
-  Comm_t(name, direction, t, flags), handle(nullptr) {}
+CommBase<H>::CommBase(const std::string &nme, utils::Address *addr,
+		      DIRECTION dirn, const COMM_TYPE &t, int flgs) :
+  Comm_t(nme, addr, dirn, t, flgs), handle(nullptr) {
+  if (global_comm)
+    handle = dynamic_cast<CommBase<H>*>(global_comm)->handle;
+}
 
 template<typename H>
 void CommBase<H>::close() {
   if (handle) {
-    delete handle;
+    if (!global_comm)
+      delete handle;
     handle = nullptr;
   }
 }
@@ -589,10 +686,7 @@ bool CommBase<H>::is_closed() const {
 
 template<typename H>
 void CommBase<H>::reset() {
-  if (handle) {
-    delete handle;
-    handle = nullptr;
-  }
+  close();
 }
 
 template<typename H>

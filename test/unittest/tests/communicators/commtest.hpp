@@ -1,22 +1,23 @@
 #include <thread>
 #include <cstdlib>
 
-#define DO_SEND_RECV_BASE(init_data, comp_data, send_method, recv_method, send_args, recv_args) \
-  init_data;								\
-  EXPECT_GE(sComm.send_method send_args, 0);				\
-  EXPECT_GE(rComm.recv_method recv_args, 0);				\
-  EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));			\
-  comp_data;								\
-  EXPECT_GE(sComm.send_eof(), 0);					\
-  EXPECT_GE(rComm.recv_method recv_args, -2);				\
-  EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm))
-
-#define DO_SEND_RECV_REQUEST(init_data, comp_data, send_method, send_args, recv_method, recv_args) \
+#define DO_SEND_RECV_EXCHANGE(init_data, comp_data, send_method, send_args, recv_method, recv_args) \
   init_data;								\
   EXPECT_GE(sComm.send_method send_args, 0);				\
   EXPECT_GE(rComm.recv_method recv_args, 0);				\
   EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));			\
   comp_data
+#define DO_SEND_RECV_EOF(recv_method, recv_args)	\
+  EXPECT_GE(sComm.send_eof(), 0);					\
+  EXPECT_GE(rComm.recv_method recv_args, -2);				\
+  EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm))
+
+#define DO_SEND_RECV_BASE(init_data, comp_data, send_method, recv_method, send_args, recv_args) \
+  DO_SEND_RECV_EXCHANGE(init_data, comp_data, send_method, send_args, recv_method, recv_args); \
+  DO_SEND_RECV_EOF(recv_method, recv_args)
+
+#define DO_SEND_RECV_REQUEST(init_data, comp_data, send_method, send_args, recv_method, recv_args) \
+  DO_SEND_RECV_EXCHANGE(init_data, comp_data, send_method, send_args, recv_method, recv_args)
   
 #define DO_SEND_RECV_RESPONSE(init_data, comp_data, send_method, send_args, recv_method, recv_args) \
   init_data;								\
@@ -232,6 +233,33 @@
 		      " \"subtype\": \"uint\","				\
 		      " \"precision\": 1}")				\
   COMM_SERI_TEST_TYPE(cls, bool, true, "{\"type\": \"boolean\"}")	\
+  TEST(cls, global) {							\
+    std::string name = "test_name";					\
+    global_scope_comm = 1;						\
+    {									\
+      cls ## _tester sComm(name, nullptr, SEND);			\
+      sComm.addSchema("{\"type\": \"number\"}");			\
+      std::string key_env = name + "_IN";				\
+      std::string val_env = sComm.getAddress();				\
+      setenv(key_env.c_str(), val_env.c_str(), 1);			\
+      cls ## _tester rComm(name, RECV);					\
+      DO_SEND_RECV_EXCHANGE(INIT_DATA_SINGLE(double, 1.5),		\
+			    COMP_DATA_SINGLE,				\
+			    sendVar, (data_send),			\
+			    recvVar, (data_recv));			\
+    }									\
+    {									\
+      cls ## _tester sComm(name, nullptr, SEND);			\
+      cls ## _tester rComm(name, RECV);					\
+      DO_SEND_RECV_EXCHANGE(INIT_DATA_SINGLE(double, 1.5),		\
+			    COMP_DATA_SINGLE,				\
+			    sendVar, (data_send),			\
+			    recvVar, (data_recv));			\
+      DO_SEND_RECV_EOF(recvVar, (data_recv));				\
+    }									\
+    global_scope_comm = 0;						\
+    Comm_t::_ygg_cleanup();						\
+  }									\
   TEST(cls, large) {							\
     cls ## _tester sComm(SEND);						\
     std::string name = "test_name";					\

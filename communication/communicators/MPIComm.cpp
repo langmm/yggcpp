@@ -61,21 +61,14 @@ int mpi_registry_t::Recv(void *buf, int count, MPI_Datatype datatype, int source
 
 MPIComm::MPIComm(const std::string &name, utils::Address *address,
 		 const DIRECTION direction, int flgs) :
-  CommBase(address, direction, MPI_COMM, flgs) {
-    this->name = name;
-    init();
-}
-MPIComm::MPIComm(const std::string &name, const DIRECTION direction,
-		 int flgs) :
-  CommBase(name, direction, MPI_COMM, flgs) {
+  CommBase(name, address, direction, MPI_COMM, flgs) {
+  if (!global_comm)
     init();
 }
 
 void MPIComm::init() {
-    //if (!(comm->flags & COMM_FLAG_VALID))
-    //    return -1;
     updateMaxMsgSize(2147483647);
-    if (!this->address)
+    if (!(this->address && this->address->valid()))
         throw std::runtime_error("No address specified for MPIComm constructor");
     if (this->name.empty()) {
         this->name = "tempinitMPI." + address->address();
@@ -152,6 +145,8 @@ int MPIComm::mpi_comm_source_id() const {
 }
 
 int MPIComm::comm_nmsg() const {
+    if (global_comm)
+      return global_comm->comm_nmsg();
     int src = mpi_comm_source_id();
     int nmsg = 0;
     if (src < 0) {
@@ -164,7 +159,9 @@ int MPIComm::comm_nmsg() const {
 }
 
 int MPIComm::send_single(const char *data, const size_t &len,
-			 const Header&) {
+			 const Header& head) {
+    if (global_comm)
+      return dynamic_cast<MPIComm*>(global_comm)->send_single(data, len, head);
     ygglog_debug << "MPIComm(" << name << ")::send_single: " << len << " bytes" << std::endl;
     if (!check_size(len)) {
       ygglog_error << "MPIComm(" << name << ")::send_single: Message too large" << std::endl;
@@ -194,6 +191,8 @@ int MPIComm::send_single(const char *data, const size_t &len,
 }
 
 long MPIComm::recv_single(char*& data, const size_t &len, bool allow_realloc) {
+    if (global_comm)
+      return static_cast<MPIComm*>(global_comm)->recv_single(data, len, allow_realloc);
     ygglog_debug << "MPIComm(" << name << ")::recv_single" << std::endl;
     MPI_Status status;
     int adr = mpi_comm_source_id();

@@ -1,5 +1,11 @@
 #include "comms.hpp"
 
+// #ifdef _OPENMP
+// int communication::communicator::global_scope_comm = 1;
+// #else
+int communication::communicator::global_scope_comm = 0;
+// #endif
+
 using namespace communication::communicator;
 using namespace communication::utils;
 
@@ -37,8 +43,9 @@ void Comm_t::_ygg_cleanup() {
     if (!Comm_t::_ygg_finalized) {
       ygglog_debug << "_ygg_cleanup: Begin cleanup" << std::endl;
       for (size_t i = 0; i < Comm_t::registry.size(); i++) {
-	if (Comm_t::registry[i])
+	if (Comm_t::registry[i]) {
 	  delete Comm_t::registry[i];
+	}
       }
 #ifdef _OPENMP
 #pragma omp critical (comms)
@@ -54,7 +61,9 @@ void Comm_t::_ygg_cleanup() {
 #ifdef _OPENMP
       }
 #endif
+#ifndef YGG_TEST
       Comm_t::_ygg_finalized = 1;
+#endif // YGG_TEST
       ygglog_debug << "_ygg_cleanup: Cleanup complete" << std::endl;
     }
 #ifdef _OPENMP
@@ -70,86 +79,40 @@ void Comm_t::_ygg_cleanup() {
 int Comm_t::_ygg_initialized = 0;
 int Comm_t::_ygg_finalized = 0;
 
-Comm_t::Comm_t(Address *address, DIRECTION dirn, const COMM_TYPE &t, int flgs) :
-  type(t), name(), address(address), direction(dirn), flags(flgs),
-  maxMsgSize(COMM_BASE_MAX_MSG_SIZE), msgBufSize(0), index_in_register(-1),
-  thread_id(-1), metadata(), timeout_recv(YGG_MAX_TIME), workers() {
-    _ygg_init();
+Comm_t::Comm_t(const std::string &nme, utils::Address *addr,
+	       DIRECTION dirn, const COMM_TYPE &t, int flgs) :
+  type(t), name(nme), address(addr), direction(dirn), flags(flgs),
+  maxMsgSize(COMM_BASE_MAX_MSG_SIZE), msgBufSize(0),
+  index_in_register(-1), thread_id(-1), metadata(),
+  timeout_recv(YGG_MAX_TIME), workers(), global_comm(nullptr) {
 
-    flags |= COMM_FLAG_VALID;
-    if (direction == NONE)
-        flags &= ~COMM_FLAG_VALID;
+  _ygg_init();
 
-    thread_id = get_thread_id();
-    char *allow_threading = getenv("YGG_THREADING");
-    if (allow_threading)
-        flags |= COMM_ALLOW_MULTIPLE_COMMS;
-
-    Comm_t::register_comm(this);
-}
-
-Comm_t::Comm_t(const std::string &name, DIRECTION direction, const COMM_TYPE &t, int flgs) :
-  Comm_t(new Address(), direction, t, flgs) {
-    std::string full_name;
-    if (!name.empty()) {
-        full_name = name;
-        if (full_name.size() > COMM_NAME_SIZE)
-            full_name.resize(COMM_NAME_SIZE);
-        if (direction != NONE) {
-            if (direction == SEND) {
-                full_name += "_OUT";
-            } else if (direction == RECV) {
-                full_name += "_IN";
-            }
-        }
-        char *model_name = getenv("YGG_MODEL_NAME");
-        char *addr = std::getenv(full_name.c_str());
-        if ((!addr) && model_name) {
-            std::string prefix(model_name);
-            prefix += ":";
-            if (prefix.size() > COMM_NAME_SIZE)
-                prefix.resize(COMM_NAME_SIZE);
-            if (full_name.rfind(prefix, 0) != 0) {
-                prefix += full_name;
-                full_name = prefix;
-                addr = std::getenv(full_name.c_str());
-            }
-        }
-	if (!addr) {
-            std::string temp_name(full_name);
-            size_t loc;
-            while ((loc = temp_name.find(":")) != std::string::npos) {
-                temp_name.replace(loc, 1, "__COLON__");
-            }
-            addr = getenv(temp_name.c_str());
-        }
-	std::string model_name_str = "null";
-	std::string addr_str = "null";
-	if (model_name)
-	  model_name_str.assign(model_name);
-	if (addr)
-	  addr_str.assign(addr_str);
-	ygglog_debug << "CommBase: model_name = " <<
-	  model_name_str << ", address = " << addr_str << std::endl;
-	ygglog_debug << std::endl;
-        this->name = full_name;
-        if (addr) {
-            this->address->address(addr);
-            if (this->address->valid())
-                flags |= COMM_FLAG_VALID;
-        }
-        this->name = name;
-    } else {
-        flags &= ~COMM_FLAG_VALID;
-    }
-
-    if ((!this->address->valid()) &&
+  flags |= COMM_FLAG_VALID;
+  if (direction == NONE)
+    flags &= ~COMM_FLAG_VALID;
+  
+  thread_id = get_thread_id();
+  char *allow_threading = getenv("YGG_THREADING");
+  if (allow_threading)
+    flags |= COMM_ALLOW_MULTIPLE_COMMS;
+  
+  get_global_scope_comm();
+  
+  Comm_t::register_comm(this);
+  
+  if (!(address && address->valid())) {
+    if (address)
+      delete address;
+    address = addressFromEnv(name, direction);
+    if ((flags & COMM_FLAG_INTERFACE) &&
+	(!address->valid()) &&
 	(!(flags & (COMM_FLAG_CLIENT | COMM_FLAG_SERVER)))) {
-        ygglog_error << "CommBase: " << full_name << " not registered as environment variable.\n" << std::endl;
-        flags &= ~COMM_FLAG_VALID;
+      ygglog_error << "CommBase: " << name << " not registered as environment variable.\n" << std::endl;
+      flags &= ~COMM_FLAG_VALID;
     }
-    ygglog_debug << "CommBase(" << name << "): Done" << std::endl;
-
+  }
+  ygglog_debug << "CommBase(" << name << "): Done" << std::endl;
 }
 
 Comm_t::~Comm_t() {
@@ -168,21 +131,40 @@ Comm_t::~Comm_t() {
     ygglog_debug << "~Comm_t: Finished" << std::endl;
 }
 
+bool Comm_t::get_global_scope_comm() {
+  if (name.empty() || (!global_scope_comm) ||
+      (flags & (COMM_FLAG_GLOBAL | COMM_FLAG_WORKER |
+		COMM_FLAG_CLIENT_RESPONSE |
+		COMM_FLAG_SERVER_RESPONSE)))
+    return false;
+  ygglog_debug << "CommBase: " << name << " (dir=" << direction << ") is a global communicator" << std::endl;
+  global_comm = Comm_t::find_registered_comm(name, direction, type);
+  if (!global_comm) {
+    global_comm = new_Comm_t(direction, type, name, address,
+			     flags | COMM_FLAG_GLOBAL);
+  }
+  if (!address)
+    address = new utils::Address();
+  address->address(global_comm->address->address());
+  flags = global_comm->flags & ~COMM_FLAG_GLOBAL;
+  return true;
+}
+  
 void Comm_t::addSchema(const Metadata& s) {
-  metadata.fromMetadata(s);
+  get_metadata().fromMetadata(s);
 }
 void Comm_t::addSchema(const rapidjson::Value& s, bool isMetadata) {
-  metadata.fromSchema(s, isMetadata);
+  get_metadata().fromSchema(s, isMetadata);
 }
 void Comm_t::addSchema(const std::string schemaStr, bool isMetadata) {
-  metadata.fromSchema(schemaStr, isMetadata);
+  get_metadata().fromSchema(schemaStr, isMetadata);
 }
 void Comm_t::addFormat(const std::string format_str, bool as_array) {
-  metadata.fromFormat(format_str, as_array);
+  get_metadata().fromFormat(format_str, as_array);
 }
 void Comm_t::copySchema(const Comm_t* other) {
   if (other->metadata.hasType())
-    metadata.fromMetadata(other->metadata);
+    get_metadata().fromMetadata(other->metadata);
 }
 
 bool Comm_t::check_size(const size_t &len) const {
@@ -194,30 +176,34 @@ bool Comm_t::check_size(const size_t &len) const {
     }
     return true;
 }
-
-Comm_t* communication::communicator::new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, char* address) {
-    switch(type) {
-        case NULL_COMM:
-            break;
-        case DEFAULT_COMM:
-	    return new COMM_BASE(name, (address) ? nullptr : new Address(address), dir);
-        case IPC_COMM:
-            return new IPCComm(name, (address) ? nullptr : new Address(address), dir);
-        case ZMQ_COMM:
-            return new ZMQComm(name, (address) ? nullptr : new Address(address), dir);
-        case SERVER_COMM:
-            return new ServerComm(name, (address) ? nullptr : new Address(address));
-        case CLIENT_COMM:
-            return new ClientComm(name, (address) ? nullptr : new Address(address));
-        case MPI_COMM:
-            //std::string adr;
-            return new MPIComm(name, (address) ? nullptr : new Address(address), dir);
-    }
-    return nullptr;
+Comm_t* communication::communicator::new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, char* address, int flags) {
+  Address* addr = (address) ? nullptr : new Address(address);
+  return communication::communicator::new_Comm_t(dir, type, name, addr, flags);
+}
+Comm_t* communication::communicator::new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, Address* addr, int flags) {
+  switch(type) {
+  case NULL_COMM:
+    break;
+  case DEFAULT_COMM:
+    return new COMM_BASE(name, addr, dir, flags);
+  case IPC_COMM:
+    return new IPCComm(name, addr, dir, flags);
+  case ZMQ_COMM:
+    return new ZMQComm(name, addr, dir, flags);
+  case MPI_COMM:
+    return new MPIComm(name, addr, dir, flags);
+  case SERVER_COMM:
+    return new ServerComm(name, addr, flags);
+  case CLIENT_COMM:
+    return new ClientComm(name, addr, flags);
+  }
+  return nullptr;
 }
 
 bool Comm_t::create_header_send(Header& header, const char* data,
 				const size_t &len) {
+  if (global_comm)
+    return global_comm->create_header_send(header, data, len);
   header.for_send(&get_metadata(SEND), data, len);
   return true;
 }
@@ -226,11 +212,16 @@ bool Comm_t::create_header_recv(Header& header, char*& data,
 				const size_t &len,
 				size_t msg_len, int allow_realloc,
 				int temp) {
+  if (global_comm)
+    return global_comm->create_header_recv(header, data, len, msg_len,
+					   allow_realloc, temp);
   header.for_recv(&data, len, msg_len, allow_realloc, temp);
   return true;
 }
 
 Comm_t* Comm_t::create_worker_send(Header& head) {
+  if (global_comm)
+    return global_comm->create_worker_send(head);
   Comm_t* worker = workers.get(this, SEND);
   if (worker && worker->address) {
     head.SetMetaString("address", worker->address->address());
@@ -239,6 +230,8 @@ Comm_t* Comm_t::create_worker_send(Header& head) {
 }
 
 Comm_t* Comm_t::create_worker_recv(Header& head) {
+  if (global_comm)
+    return global_comm->create_worker_recv(head);
   ygglog_debug << "CommBase(" << name << ")::create_worker_recv: begin" << std::endl;
   const char* address = head.GetMetaString("address");
   utils::Address* adr = new utils::Address(address);
@@ -246,6 +239,8 @@ Comm_t* Comm_t::create_worker_recv(Header& head) {
 }
 
 int Comm_t::send(const char *data, const size_t &len) {
+  if (global_comm)
+    return global_comm->send(data, len);
   ygglog_debug << "CommBase(" << name << ")::send: Sending " << len << " bytes to " << address->address() << std::endl;
   if (is_closed()) {
     ygglog_error << "CommBase(" << name << ")::send: Communicator closed." << std::endl;
@@ -313,9 +308,15 @@ int Comm_t::send(const char *data, const size_t &len) {
   return head.size_curr;
 }
 void Comm_t::set_timeout_recv(int new_timeout) {
+  if (global_comm) {
+    global_comm->set_timeout_recv(new_timeout);
+    return;
+  }
   timeout_recv = new_timeout;
 }
 int Comm_t::wait_for_recv(const int tout) {
+  if (global_comm)
+    return global_comm->wait_for_recv(tout);
   clock_t start = clock();
   while (tout < 0 ||
 	 (((double)(clock() - start))*1000000/CLOCKS_PER_SEC) < tout) {
@@ -333,6 +334,9 @@ int Comm_t::wait_for_recv(const int tout) {
 }
 long Comm_t::recv(char*& data, const size_t &len,
 		  bool allow_realloc) {
+  if (global_comm) {
+    return global_comm->recv(data, len, allow_realloc);
+  }
   ygglog_debug << "CommBase(" << name << ")::recv: Receiving from " << address->address() << std::endl;
   Header head;
   long ret = -1;
@@ -483,7 +487,9 @@ int Comm_t::sendVar(const rapidjson::ObjWavefront& data) {
   return send(1, &data);
 }
 
-Metadata& Comm_t::get_metadata(const DIRECTION) {
+Metadata& Comm_t::get_metadata(const DIRECTION dir) {
+  if (global_comm)
+    return global_comm->get_metadata(dir);
   return metadata;
 }
 int Comm_t::update_datatype(const rapidjson::Value& new_schema,
@@ -639,4 +645,32 @@ void Comm_t::register_comm(Comm_t* x) {
 #ifdef _OPENMP
   }
 #endif
+}
+
+Comm_t* Comm_t::find_registered_comm(const std::string& name,
+				     const DIRECTION dir,
+				     const COMM_TYPE type) {
+  Comm_t* out = NULL;
+  if (name.empty())
+    return out;
+#ifdef _OPENMP
+#pragma omp critical (comms)
+  {
+#endif
+    if (global_scope_comm) {
+      for (std::vector<Comm_t*>::iterator it = Comm_t::registry.begin();
+	   it != Comm_t::registry.end(); it++) {
+	if (*it && (*it)->global() &&
+	    ((*it)->name == name) &&
+	    ((*it)->direction == dir) &&
+	    ((*it)->type == type)) {
+	  out = *it;
+	  break;
+	}
+      }
+    }
+#ifdef _OPENMP
+  }
+#endif
+  return out;
 }

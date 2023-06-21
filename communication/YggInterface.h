@@ -2,10 +2,12 @@
 #ifndef YGGINTERFACE_H_
 #define YGGINTERFACE_H_
 
-// TODO: create_dtype_... methods
+#include "utils/logging.hpp"
+#include "communicators/comm_t.hpp"
+#include "datatypes/dtype_t.h"
 
-#include "comm_t.hpp"
-#include "dtype_t.h"
+// TODO: Allow use of ygglog_error as function in C
+using namespace communication::utils;
 
 #ifdef __cplusplus /* If this is a C++ compiler, use C linkage */
 extern "C" {
@@ -20,6 +22,9 @@ extern "C" {
 /*! @brief Initialize a comm object. */
 #define yggComm init_comm
 
+/*! @brief Memory to keep track of global scope comms. */
+#define WITH_GLOBAL_SCOPE(COMM) global_scope_comm_on(); COMM; global_scope_comm_off()
+  
 // Forward declaration of server interface to allow replacemnt
 static inline
 comm_t yggRpcServerType_global(const char *name, dtype_t inType, dtype_t outType);
@@ -75,12 +80,16 @@ yggOutput_t yggOutputType(const char *name, dtype_t datatype) {
   if (YGG_SERVER_OUTPUT) {
     const char* YGG_MODEL_NAME = getenv("YGG_MODEL_NAME");
     if (strcmp(name, YGG_SERVER_OUTPUT) == 0) {
-      return yggRpcServerType_global(YGG_MODEL_NAME, NULL, datatype);
+      return yggRpcServerType_global(YGG_MODEL_NAME,
+				     create_dtype_empty(false),
+				     datatype);
     } else {
       char alt_name[100];
       snprintf(alt_name, 100, "%s:%s", YGG_MODEL_NAME, name);
       if (strcmp(alt_name, YGG_SERVER_OUTPUT) == 0) {
-	return yggRpcServerType_global(YGG_MODEL_NAME, NULL, datatype);
+	return yggRpcServerType_global(YGG_MODEL_NAME,
+				       create_dtype_empty(false),
+				       datatype);
       }
     }
   }
@@ -102,12 +111,14 @@ yggInput_t yggInputType(const char *name, dtype_t datatype) {
   if (YGG_SERVER_INPUT) {
     const char* YGG_MODEL_NAME = getenv("YGG_MODEL_NAME");
     if (strcmp(name, YGG_SERVER_INPUT) == 0) {
-      return yggRpcServerType_global(YGG_MODEL_NAME, datatype, NULL);
+      return yggRpcServerType_global(YGG_MODEL_NAME, datatype,
+				     create_dtype_empty(false));
     } else {
       char alt_name[100];
       snprintf(alt_name, 100, "%s:%s", YGG_MODEL_NAME, name);
       if (strcmp(alt_name, YGG_SERVER_INPUT) == 0) {
-	return yggRpcServerType_global(YGG_MODEL_NAME, datatype, NULL);
+	return yggRpcServerType_global(YGG_MODEL_NAME, datatype,
+				       create_dtype_empty(false));
       }
     }
   }
@@ -126,10 +137,10 @@ yggInput_t yggInputType(const char *name, dtype_t datatype) {
  */
 static inline
 yggOutput_t yggOutputFmt(const char *name, const char *fmtString){
-  dtype_t datatype = formatstr2datatype(fmtString, 0);
+  dtype_t datatype = create_dtype_format(fmtString, 0, false);
   comm_t out = yggOutputType(name, datatype);
-  if ((fmtString != NULL) && (datatype.dtype == NULL)) {
-    ygglog_error("yggOutputFmt: Failed to create type from format_str.");
+  if ((fmtString != NULL) && (datatype.metadata == NULL)) {
+    ygglog_error_c("yggOutputFmt: Failed to create type from format_str.");
   }
   return out;
 };
@@ -146,10 +157,10 @@ yggOutput_t yggOutputFmt(const char *name, const char *fmtString){
  */
 static inline
 yggInput_t yggInputFmt(const char *name, const char *fmtString){
-  dtype_t datatype = formatstr2datatype(fmtString, 0);
+  dtype_t datatype = create_dtype_format(fmtString, 0, false);
   comm_t out = yggInputType(name, datatype);
-  if ((fmtString != NULL) && (datatype.dtype == NULL)) {
-    ygglog_error("yggInputFmt: Failed to create type from format_str.");
+  if ((fmtString != NULL) && (datatype.metadata == NULL)) {
+    ygglog_error_c("yggInputFmt: Failed to create type from format_str.");
   }
   return out;
 };
@@ -207,16 +218,15 @@ int ygg_send_eof(const yggOutput_t yggQ) {
 /*!
   @brief Receive a message from an input queue.
     Receive a message smaller than YGG_MSG_MAX bytes from an input queue.
-  @param[in] yggQ yggOutput_t structure that message should be sent to.
-  @param[out] data character pointer to allocated buffer where the message
+  @param[in] yggQ Communicator that message should be sent to.
+  @param[out] data Pointer to allocated buffer where the message
     should be saved.
-  @param[in] len const size_t length of the allocated message buffer in
-    bytes.
-  @returns int -1 if message could not be received. Length of the received
+  @param[in] len Length of the allocated message buffer in bytes.
+  @returns -1 if message could not be received. Length of the received
     message if message was received.
  */
 static inline
-int ygg_recv(yggInput_t yggQ, char *data, const size_t len) {
+long ygg_recv(yggInput_t yggQ, char *data, const size_t len) {
   return comm_recv(yggQ, data, len);
 };
 
@@ -249,19 +259,18 @@ int ygg_send_nolimit_eof(const yggOutput_t yggQ) {
 /*!
   @brief Receive a large message from an input queue.
     Receive a message larger than YGG_MSG_MAX bytes from an input queue by
-    receiving it in parts. This expects the first message to be the size of
-    the total message.
-  @param[in] yggQ yggOutput_t structure that message should be sent to.
-  @param[out] data character pointer to pointer for allocated buffer where
-    the message should be stored. A pointer to a pointer is used so that the 
+    receiving it in parts. This expects the first message to be the size
+    of the total message.
+  @param[in] yggQ Communicator that message should be sent to.
+  @param[out] data Pointer to pointer for allocated buffer where the
+    message should be stored. A pointer to a pointer is used so that the 
     buffer may be reallocated as necessary for the incoming message.
-  @param[in] len size_t length of the initial allocated message buffer in 
-    bytes.
-  @returns int -1 if message could not be received. Length of the received
+  @param[in] len Length of the initial allocated message buffer in bytes.
+  @returns -1 if message could not be received. Length of the received
     message if message was received.
  */
 static inline
-int ygg_recv_nolimit(yggInput_t yggQ, char **data, const size_t len) {
+long ygg_recv_nolimit(yggInput_t yggQ, char **data, const size_t len) {
   return comm_recv_realloc(yggQ, data, len);
 };
 
@@ -428,10 +437,9 @@ int ygg_recv_nolimit(yggInput_t yggQ, char **data, const size_t len) {
  */
 static inline
 comm_t yggRpcClient(const char *name, const char *outFormat, const char *inFormat) {
-  dtype_t outType = formatstr2datatype(outFormat, 0);
-  dtype_t inType = formatstr2datatype(inFormat, 0);
+  dtype_t outType = create_dtype_format(outFormat, 0, false);
   comm_t ret = init_comm(name, SEND, CLIENT_COMM, outType);
-  if (ret.comm && inFormat && !set_response_datatype(ret, inType)) {
+  if (ret.comm && inFormat && !set_response_format(ret, inFormat)) {
     free_comm(&ret);
   }
   return ret;
@@ -449,10 +457,9 @@ comm_t yggRpcClient(const char *name, const char *outFormat, const char *inForma
  */
 static inline
 comm_t yggRpcServer(const char *name, const char *inFormat, const char *outFormat){
-  dtype_t inType = formatstr2datatype(inFormat, 0);
-  dtype_t outType = formatstr2datatype(outFormat, 0);
-  comm_t ret = init_comm(name, RECV, SERVER_COMM, intType);
-  if (ret.comm && outFormat && !set_response_datatype(ret, outType)) {
+  dtype_t inType = create_dtype_format(inFormat, 0, false);
+  comm_t ret = init_comm(name, RECV, SERVER_COMM, inType);
+  if (ret.comm && outFormat && !set_response_format(ret, outFormat)) {
     free_comm(&ret);
   }
   return ret;
@@ -471,10 +478,10 @@ comm_t yggRpcServer(const char *name, const char *inFormat, const char *outForma
 static inline
 comm_t yggRpcClientType(const char *name, dtype_t outType, dtype_t inType) {
   // Allow for any type if provided is NULL
-  if (outType.dtype == NULL) {
+  if (outType.metadata == NULL) {
     outType = create_dtype_empty(true);
   }
-  if (inType.dtype == NULL) {
+  if (inType.metadata == NULL) {
     inType = create_dtype_empty(true);
   }
   comm_t ret = init_comm(name, SEND, CLIENT_COMM, outType);
@@ -497,10 +504,10 @@ comm_t yggRpcClientType(const char *name, dtype_t outType, dtype_t inType) {
 static inline
 comm_t yggRpcServerType(const char *name, dtype_t inType, dtype_t outType) {
   // Allow for any type if provided is NULL
-  if (inType.dtype == NULL) {
+  if (inType.metadata == NULL) {
     inType = create_dtype_empty(true);
   }
-  if (outType.dtype == NULL) {
+  if (outType.metadata == NULL) {
     outType = create_dtype_empty(true);
   }
   comm_t ret = init_comm(name, RECV, SERVER_COMM, inType);
@@ -525,8 +532,8 @@ comm_t yggRpcServerType(const char *name, dtype_t inType, dtype_t outType) {
 static inline
 comm_t yggRpcServerType_global(const char *name, dtype_t inType,
 			       dtype_t outType) {
-  comm_t out = NULL;
-  WITH_GLOBAL_SCOPE(out = get_global_scope_comm(name));
+  comm_t out;
+  WITH_GLOBAL_SCOPE(out = get_global_scope_comm(name, RECV, SERVER_COMM));
   if (out.comm == NULL) {
     WITH_GLOBAL_SCOPE(out = yggRpcServerType(name, inType, outType));
     return out;
@@ -544,14 +551,17 @@ comm_t yggRpcServerType_global(const char *name, dtype_t inType,
  */
 static inline
 comm_t yggTimesync(const char *name, const char *t_units) {
-  dtype_t dtype_out = json2datatype(
-    "{\"type\": \"array\", \"items\": ["
-    "  {\"type\": \"scalar\", \"subtype\": \"float\","
-    "   \"precision\": 8, \"units\": \"%s\"},"
-    "  {\"type\": \"object\"}"
-    "]}", 0, t_units);
-  dtype_t dtype_in = json2datatype(
-    "{\"type\": \"object\"}", 1);
+  char schema[256];
+  dtype_t dtype_out;
+  if (snprintf(schema, 256, 
+	       "{\"type\": \"array\", \"items\": ["
+	       "  {\"type\": \"scalar\", \"subtype\": \"float\","
+	       "   \"precision\": 8, \"units\": \"%s\"},"
+	       "  {\"type\": \"object\"}"
+	       "]}", t_units) < 256)
+    dtype_out = create_dtype_from_schema(schema, false);
+  dtype_t dtype_in = create_dtype_from_schema(
+    "{\"type\": \"object\"}", true);
   return yggRpcClientType(name, dtype_out, dtype_in);
 };
 
@@ -636,31 +646,6 @@ comm_t yggTimesync(const char *name, const char *t_units) {
     length of the received message if the message was received and parsed.
  */
 #define rpcRecvRealloc commRecvRealloc
-
-/*!
-  @brief Send request to an RPC server from the client and wait for a 
-    response. Format arguments using the output queue format string, send 
-    the message to the output queue, receive a response from the input queue,
-    and assign arguments from the message using the input queue format 
-    string to parse it.
-  @param[in] rpc yggRpc_t structure with RPC information.
-  @param[in,out] ap va_list mixed arguments that include those that should be
-    formatted using the output format string, followed by those that should 
-    be assigned parameters extracted using the input format string. These 
-    that will be assigned should be pointers to memory that has already been 
-    allocated.
-  @return integer specifying if the receive was succesful. Values >= 0 
-    indicate success.
- */
-static inline
-int vrpcCallBase(yggRpc_t rpc, va_list_t ap) {
-  return comm_call(rpc, ap);
-};
-
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-#define vrpcCall(rpc, ap) vrpcCallBase(rpc, ap)
-#define vrpcCallRealloc(rpc, ap) vrpcCallBase(rpc, ap)
-#endif // DOXYGEN_SHOULD_SKIP_THIS
 
 /*!
   @brief Send request to an RPC server from the client and wait for a 
@@ -823,10 +808,10 @@ comm_t yggAsciiTableInput(const char *name) {
  */
 static inline
 comm_t yggAsciiArrayOutput(const char *name, const char *format_str) {
-  dtype_t datatype = formatstr2datatype(format_str, 1);
+  dtype_t datatype = create_dtype_format(format_str, 1, false);
   comm_t out = yggOutputType(name, datatype);
-  if ((format_str != NULL) && (datatype.dtype == NULL)) {
-    ygglog_error("yggAsciiArrayOutput: Failed to create type from format_str.");
+  if ((format_str != NULL) && (datatype.metadata == NULL)) {
+    ygglog_error_c("yggAsciiArrayOutput: Failed to create type from format_str.");
   }
   return out;
 };
@@ -976,7 +961,7 @@ comm_t yggObjOutput(const char *name) {
  */
 static inline
 comm_t yggObjInput(const char *name) {
-  return init_comm(name, RECV, DEFAULT_COMM, NULL);
+  return init_comm(name, RECV, DEFAULT_COMM, create_dtype_empty(false));
 };
 
 

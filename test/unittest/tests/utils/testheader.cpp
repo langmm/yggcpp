@@ -16,6 +16,8 @@ TEST(Metadata, Utilities) {
   EXPECT_TRUE(metadata.isGeneric());
   EXPECT_FALSE(metadata.empty());
   metadata.Display();
+  EXPECT_TRUE(metadata == metadata);
+  EXPECT_FALSE(metadata != metadata);
 }
 
 TEST(Metadata, SetAndGet) {
@@ -225,6 +227,43 @@ TEST(Metadata, fromNDArray) {
   EXPECT_TRUE(y.hasSubtype());
   EXPECT_EQ(strcmp(y.typeName(), "ndarray"), 0);
   EXPECT_EQ(strcmp(y.subtypeName(), "float"), 0);
+  // No shape
+  x.reset();
+  y.reset();
+  x.fromSchema("{"
+	       "  \"type\": \"ndarray\","
+	       "  \"subtype\": \"float\","
+	       "  \"precision\": 4,"
+	       "  \"ndim\": 2,"
+	       "  \"units\": \"cm\""
+	       "}");
+  y.fromNDArray("float", 4, 2, NULL, "cm");
+  EXPECT_EQ(x, y);
+  // Bytes
+  x.reset();
+  y.reset();
+  x.fromSchema("{"
+	       "  \"type\": \"ndarray\","
+	       "  \"subtype\": \"string\","
+	       "  \"precision\": 4,"
+	       "  \"shape\": [2, 3],"
+	       "  \"units\": \"cm\""
+	       "}");
+  y.fromNDArray("bytes", 4, 2, shape, "cm");
+  EXPECT_EQ(x, y);
+  // Unicode
+  x.reset();
+  y.reset();
+  x.fromSchema("{"
+	       "  \"type\": \"ndarray\","
+	       "  \"subtype\": \"string\","
+	       "  \"precision\": 4,"
+	       "  \"shape\": [2, 3],"
+	       "  \"units\": \"cm\","
+	       "  \"encoding\": \"UTF8\""
+	       "}");
+  y.fromNDArray("unicode", 4, 2, shape, "cm");
+  EXPECT_EQ(x, y);
 }
 
 TEST(Metadata, fromFormat) {
@@ -284,10 +323,11 @@ TEST(Metadata, fromFormat) {
     Metadata y;
     y.fromFormat(formatStr, true);
     EXPECT_EQ(x.metadata, y.metadata);
+    EXPECT_TRUE(y.isFormatArray());
   }
   {
     // Additional types
-    std::string fmt = "%hhi\t%hi\t%lli\t%l64i\t%li\t%i\t%hhu\t%hu\t%llu\t%l64u\t%lu\t%u\n";
+    std::string fmt = "%hhi\t%hi\t%lli\t%l64i\t%li\t%i\t%hhu\t%hu\t%llu\t%l64u\t%lu\t%u\t%f%+fj\n";
     Metadata x;
 #ifdef _MSC_VER
     x.fromSchema("{"
@@ -352,6 +392,11 @@ TEST(Metadata, fromFormat) {
 		 "      \"type\": \"scalar\","
 		 "      \"subtype\": \"uint\","
 		 "      \"precision\": 4"
+		 "    },"
+		 "    {"
+		 "      \"type\": \"scalar\","
+		 "      \"subtype\": \"complex\","
+		 "      \"precision\": 16"
 		 "    }"
 		 "  ]"
 		 "}");
@@ -418,6 +463,11 @@ TEST(Metadata, fromFormat) {
 		 "      \"type\": \"scalar\","
 		 "      \"subtype\": \"uint\","
 		 "      \"precision\": 4"
+		 "    },"
+		 "    {"
+		 "      \"type\": \"scalar\","
+		 "      \"subtype\": \"complex\","
+		 "      \"precision\": 16"
 		 "    }"
 		 "  ]"
 		 "}");
@@ -446,6 +496,11 @@ TEST(Metadata, fromFormat) {
     Metadata y;
     y.fromFormat(fmt);
     EXPECT_EQ(x.metadata, y.metadata);
+  }
+  {
+    // Error
+    Metadata x;
+    EXPECT_THROW(x.fromFormat("%m"), std::exception);
   }
 }
 
@@ -523,6 +578,9 @@ TEST(Header, Utilities) {
   header.formatBuffer(buf);
   EXPECT_EQ(buf.GetLength(), 0);
   EXPECT_EQ(header.format("", 0, 0, false), 0);
+  EXPECT_TRUE(header == header);
+  EXPECT_FALSE(header != header);
+  header.reset();
 }
 
 TEST(Header, for_send) {

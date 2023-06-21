@@ -9,9 +9,9 @@ using namespace communication::communicator;
 class Comm_tTest: public Comm_t {
 public:
     Comm_tTest(utils::Address *address, DIRECTION dirn, const COMM_TYPE &t, int flgs = 0) :
-      Comm_t(address, dirn, t, flgs), _closed(false) {}
+      Comm_t("", address, dirn, t, flgs), _closed(false) {}
     Comm_tTest(const std::string &name, DIRECTION direction, const COMM_TYPE &t) :
-      Comm_t(name, direction, t), _closed(false) {}
+      Comm_t(name, nullptr, direction, t, COMM_FLAG_INTERFACE), _closed(false) {}
     int comm_nmsg() const override {return 1;}
     int get_flags() const {return flags;}
     void close() override { _closed = true; }
@@ -73,11 +73,12 @@ TEST(Commt, Constructors) {
     EXPECT_FALSE(ctest->valid());
     delete ctest;
     std::string testname = "tester101";
-    setenv(testname.c_str(), "this.is.a.test", true);
-    ctest = new Comm_tTest(testname, NONE, NULL_COMM);
+    std::string testname_env = testname + "_IN";
+    setenv(testname_env.c_str(), "this.is.a.test", true);
+    ctest = new Comm_tTest(testname, RECV, NULL_COMM);
     EXPECT_TRUE(ctest->valid());
     delete ctest;
-    unsetenv(testname.c_str());
+    unsetenv(testname_env.c_str());
     setenv("YGG_MODEL_NAME", testname.c_str(), true);
 
     ctest = new Comm_tTest(testname, NONE, NULL_COMM);

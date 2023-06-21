@@ -346,6 +346,10 @@ namespace communicator {
 			   bool use_generic=false) {
       response_metadata.fromSchema(s, use_generic);
     }
+    void addResponseSchema(const Metadata& metadata,
+			   bool use_generic=false) {
+      response_metadata.fromMetadata(metadata, use_generic);
+    }
     void addResponseFormat(const std::string& format_str,
 			   bool use_generic=false) {
       response_metadata.fromFormat(format_str, use_generic);
