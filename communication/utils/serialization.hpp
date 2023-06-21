@@ -101,6 +101,8 @@ private:
  public:
   Metadata();
   virtual ~Metadata() {}
+  bool operator==(const Metadata& rhs) const;
+  bool operator!=(const Metadata& rhs) const;
   void _init(bool use_generic = false);
   virtual void reset();
   void fromSchema(const rapidjson::Value& new_schema,
@@ -144,8 +146,10 @@ private:
   const char* subtypeName() const;
   void initSchema();
   void initMeta();
-  bool addItem(const Metadata& other);
-  bool addMember(const std::string name, const Metadata& other);
+  bool addItem(const Metadata& other,
+	       rapidjson::Value* subSchema=nullptr);
+  bool addMember(const std::string name, const Metadata& other,
+		 rapidjson::Value* subSchema=nullptr);
   rapidjson::Value& getMeta();
   const rapidjson::Value& getMeta() const;
   rapidjson::Value& getSchema();
@@ -183,8 +187,8 @@ private:
   void SetMetaValue(const std::string name, rapidjson::Value& x);
   void SetSchemaValue(const std::string name, rapidjson::Value& x,
 		      rapidjson::Value* subSchema = NULL);
-  void SetSchemaMetadata(const std::string name,
-			 const Metadata& other);
+  // void SetSchemaMetadata(const std::string name,
+  // 			 const Metadata& other);
   void SetMetaID(const std::string name, const char** id=NULL);
   void SetMetaID(const std::string name, std::string& id);
   int deserialize(const char* buf, size_t nargs, int allow_realloc, ...);
@@ -196,7 +200,6 @@ private:
   rapidjson::Document metadata;
   rapidjson::Value* schema;
  private:
-  void _reset();
   void _update_schema();
 };
 
@@ -207,6 +210,8 @@ private:
 public:
   Header();
   ~Header() override;
+  bool operator==(const Header& rhs) const;
+  bool operator!=(const Header& rhs) const;
   void reset() override;
 
   void setMessageFlags(const char* msg, const size_t msg_len);

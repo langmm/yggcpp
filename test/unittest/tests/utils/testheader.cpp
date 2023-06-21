@@ -15,6 +15,7 @@ TEST(Metadata, Utilities) {
   metadata.setGeneric();
   EXPECT_TRUE(metadata.isGeneric());
   EXPECT_FALSE(metadata.empty());
+  metadata.Display();
 }
 
 TEST(Metadata, SetAndGet) {
@@ -124,6 +125,52 @@ TEST(Metadata, SetAndGet) {
   EXPECT_EQ(metadata.GetSchemaUintOptional("invalid", 1u), 1u);
   EXPECT_EQ(metadata.GetSchemaBoolOptional("invalid", true), true);
   EXPECT_EQ(strcmp(metadata.GetSchemaStringOptional("invalid", "a"), "a"), 0);
+  EXPECT_THROW(metadata.SetValue("test_value", a,
+				 metadata.getMeta()["test_id1"]),
+	       std::exception);
+  EXPECT_TRUE(metadata.GetMetaBool("test_value"));
+  rapidjson::Value c(false);
+  metadata.SetValue("test_value", c, metadata.getMeta());
+  EXPECT_FALSE(metadata.GetMetaBool("test_value"));
+}
+
+TEST(Metadata, components) {
+  Metadata x;
+  Metadata y;
+  Metadata z;
+  // Array
+  z.fromSchema("{\"type\": \"array\", "
+	       "\"items\": [{\"type\": \"integer\"}]}", true);
+  EXPECT_THROW(x.addItem(y), std::exception);
+  y.fromSchema("{\"type\": \"integer\"}");
+  EXPECT_THROW(x.addItem(y), std::exception);
+  x.fromSchema("{\"type\": \"array\"}");
+  x.addItem(y);
+  x.Display();
+  z.Display();
+  EXPECT_EQ(x, z);
+  x.reset();
+  x.fromSchema("{\"type\": \"array\", "
+	       "\"items\": {\"type\": \"integer\"}}");
+  EXPECT_THROW(x.addItem(y), std::exception);
+  // Object
+  x.reset();
+  y.reset();
+  z.reset();
+  z.fromSchema("{\"type\": \"object\", "
+	       "\"properties\": {\"a\": {\"type\": \"integer\"}}}");
+  EXPECT_THROW(x.addMember("a", y), std::exception);
+  y.fromSchema("{\"type\": \"integer\"}");
+  EXPECT_THROW(x.addMember("a", y), std::exception);
+  x.fromSchema("{\"type\": \"object\"}");
+  x.addMember("a", y);
+  EXPECT_EQ(x, z);
+  x.addMember("a", y);
+  EXPECT_EQ(x, z);
+  // x.reset();
+  // x.fromSchema("{\"type\": \"object\", "
+  // 	       "\"properties\": [{\"a\": {\"type\": \"integer\"}}]}");
+  // EXPECT_THROW(x.addMember("a", y), std::exception);
 }
 
 TEST(Metadata, fromSchema) {
@@ -428,11 +475,14 @@ TEST(Metadata, deserialize_errors) {
   rapidjson::VarArgList va;
   Metadata x;
   EXPECT_THROW(x.deserialize("", va), std::exception);
+  bool dst = false, dst2 = false;
+  EXPECT_EQ(x.deserialize("true", 1, false, &dst), 1);
+  EXPECT_EQ(dst, true);
+  EXPECT_EQ(x.deserialize("true", 2, false, &dst, &dst2), -1);
   x.fromSchema("{\"type\": \"boolean\"}");
   EXPECT_THROW(x.deserialize("{invalid:}", va), std::exception);
   EXPECT_THROW(x.deserialize("\"string\"", va), std::exception);
   EXPECT_THROW(x.deserialize("true", va), std::exception);
-  bool dst = false;
   bool* dst_ptr = &dst;
   EXPECT_EQ(x.deserialize("true", 1, false, dst_ptr), 1);
   EXPECT_EQ(dst, true);
@@ -446,6 +496,10 @@ TEST(Metadata, serialize_errors) {
   EXPECT_THROW(x.serialize(&buf, &len, va), std::exception);
   x.fromSchema("{\"type\": \"boolean\"}");
   EXPECT_THROW(x.serialize(&buf, &len, va), std::exception);
+  EXPECT_EQ(x.serialize(&buf, &len, 2, true, false), -1);
+  free(buf);
+  buf = NULL;
+  len = 0;
   EXPECT_EQ(x.serialize(&buf, &len, 1, true), 4);
   EXPECT_EQ(strcmp(buf, "true"), 0);
   EXPECT_EQ(len, 5);
@@ -463,6 +517,14 @@ TEST(Metadata, serialize_errors) {
 // #endif // ELF_AVAILABLE
 }
 
+TEST(Header, Utilities) {
+  Header header;
+  rapidjson::StringBuffer buf;
+  header.formatBuffer(buf);
+  EXPECT_EQ(buf.GetLength(), 0);
+  EXPECT_EQ(header.format("", 0, 0, false), 0);
+}
+
 TEST(Header, for_send) {
   Metadata schema;
   schema.fromSchema("{\"type\": \"string\"}");
@@ -478,5 +540,17 @@ TEST(Header, for_send) {
 		       header_send.size_curr, true);
   EXPECT_EQ(header_recv.size_data, msg.size());
   EXPECT_EQ(strcmp(header_recv.data[0], msg.c_str()), 0);
+  // Header equality
+  std::string msg2 = msg + "2";
+  Header header_send2;
+  header_send2.for_send(&schema, msg.c_str(), msg.size());
+  header_send2.fromMetadata(header_send);
+  header_send2.format(msg.c_str(), msg.size(), 2048);
+  Header header_recv2;
+  header_recv2.for_recv(header_send2.data, header_send2.size_curr,
+			header_send2.size_curr, true);
+  EXPECT_EQ(header_send, header_send2);
+  EXPECT_EQ(header_recv, header_recv2);
+  EXPECT_NE(header_recv, header_send);
 }
 
