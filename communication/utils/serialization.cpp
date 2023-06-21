@@ -14,9 +14,15 @@ void Metadata::_init(bool use_generic) {
     setGeneric();
   // ygglog_debug << "Metadata::init: metadata = " << metadata << std::endl;
 }
+bool Metadata::operator==(const Metadata& rhs) const {
+  return (metadata == rhs.metadata);
+}
+bool Metadata::operator!=(const Metadata& rhs) const {
+  return (!(*this == rhs));
+}
 void Metadata::reset() {
   schema = NULL;
-  metadata.SetNull();
+  metadata.SetObject();
 }
 void Metadata::fromSchema(const rapidjson::Value& new_schema,
 			  bool isMetadata, bool use_generic) {
@@ -369,35 +375,53 @@ void Metadata::initMeta() {
 		       meta, metadata.GetAllocator());
   }
 }
-bool Metadata::addItem(const Metadata& other) {
-  if (!(schema &&
-	schema->HasMember("items") &&
-	(*schema)["items"].IsArray())) {
-    ygglog_throw_error_c("Metadata::addItem: schema does not have items");
-  }
-  if (!other.schema) {
+bool Metadata::addItem(const Metadata& other,
+		       rapidjson::Value* subSchema) {
+  if (!subSchema)
+    subSchema = schema;
+  if (!other.schema)
     ygglog_throw_error_c("Metadata::addItem: item does not have schema");
-  }
+  if (!(subSchema && subSchema->IsObject() &&
+	subSchema->HasMember("type") &&
+	(*subSchema)["type"] == rapidjson::Document::GetArrayString()))
+    ygglog_throw_error_c("Metadata::addItem: schema is not for an array.");
+  if (!subSchema->HasMember("items"))
+    subSchema->AddMember("items",
+			 rapidjson::Value(rapidjson::kArrayType).Move(),
+			 GetAllocator());
+  if (!(subSchema &&
+	subSchema->HasMember("items") &&
+	(*subSchema)["items"].IsArray()))
+    ygglog_throw_error_c("Metadata::addItem: schema does not have items array");
   rapidjson::Value item;
   item.CopyFrom(*(other.schema), GetAllocator(), true);
-  (*schema)["items"].PushBack(item, GetAllocator());
+  (*subSchema)["items"].PushBack(item, GetAllocator());
   return true;
 }
-bool Metadata::addMember(const std::string name, const Metadata& other) {
-  if (!(schema &&
-	schema->HasMember("properties") &&
-	(*schema)["properties"].IsObject())) {
-    ygglog_throw_error_c("Metadata::addMember: schema does not have properties");
-  }
-  if (!other.schema) {
+bool Metadata::addMember(const std::string name, const Metadata& other,
+			 rapidjson::Value* subSchema) {
+  if (!subSchema)
+    subSchema = schema;
+  if (!other.schema)
     ygglog_throw_error_c("Metadata::addMember: member does not have schema");
-  }
+  if (!(subSchema && subSchema->IsObject() &&
+	subSchema->HasMember("type") &&
+	(*subSchema)["type"] == rapidjson::Document::GetObjectString()))
+    ygglog_throw_error_c("Metadata::addMember: schema is not for an object.");
+  if (!subSchema->HasMember("properties"))
+    subSchema->AddMember("properties",
+			 rapidjson::Value(rapidjson::kObjectType).Move(),
+			 GetAllocator());
+  // if (!(subSchema &&
+  // 	subSchema->HasMember("properties") &&
+  // 	(*subSchema)["properties"].IsObject()))
+  //   ygglog_throw_error_c("Metadata::addMember: schema does not have properties");
   rapidjson::Value item;
   item.CopyFrom(*(other.schema), GetAllocator(), true);
-  if ((*schema)["properties"].HasMember(name.c_str())) {
-    (*schema)["properties"][name.c_str()].Swap(item);
+  if ((*subSchema)["properties"].HasMember(name.c_str())) {
+    (*subSchema)["properties"][name.c_str()].Swap(item);
   } else {
-    (*schema)["properties"].AddMember(
+    (*subSchema)["properties"].AddMember(
 	 rapidjson::Value(name.c_str(),
 			  (rapidjson::SizeType)(name.size()),
 			  GetAllocator()).Move(),
@@ -528,14 +552,14 @@ void Metadata::SetSchemaValue(const std::string name, rapidjson::Value& x,
   else
     SetValue(name, x, *subSchema);
 }
-void Metadata::SetSchemaMetadata(const std::string name,
-				 const Metadata& other) {
-  if (other.schema == NULL)
-    ygglog_throw_error_c("SetSchemaMetadata: Value has not datatype");
-  rapidjson::Value x;
-  x.CopyFrom(*(other.schema), GetAllocator(), true);
-  SetSchemaValue(name, x);
-}
+// void Metadata::SetSchemaMetadata(const std::string name,
+// 				 const Metadata& other) {
+//   if (other.schema == NULL)
+//     ygglog_throw_error_c("SetSchemaMetadata: Value has not datatype");
+//   rapidjson::Value x;
+//   x.CopyFrom(*(other.schema), GetAllocator(), true);
+//   SetSchemaValue(name, x);
+// }
 void Metadata::SetMetaID(const std::string name, const char** id) {
   char new_id[100];
   snprintf(new_id, 100, "%d", rand());
@@ -559,8 +583,6 @@ int Metadata::deserialize(const char* buf, size_t nargs, int allow_realloc, ...)
   return out;
 }
 int Metadata::deserialize(const char* buf, rapidjson::VarArgList& ap) {
-  if (!hasType())
-    ygglog_throw_error_c("Metadata::deserialize: No datatype");
   size_t nargs_orig = ap.get_nargs();
   rapidjson::Document d;
   rapidjson::StringStream s(buf);
@@ -620,10 +642,6 @@ int Metadata::serialize(char **buf, size_t *buf_siz,
 void Metadata::Display(const char* indent) const {
   std::cout << document2string(metadata, indent) << std::endl;
 }
-void Metadata::_reset() {
-  metadata.SetObject();
-  schema = NULL;
-}
 void Metadata::_update_schema() {
   if (metadata.HasMember("serializer") &&
       metadata["serializer"].IsObject() &&
@@ -641,6 +659,24 @@ Header::Header() :
 Header::~Header() {
   if ((flags & HEAD_FLAG_OWNSDATA) && data_)
     free(data_);
+}
+bool Header::operator==(const Header& rhs) const {
+  if (!Metadata::operator==(rhs))
+    return false;
+  if (!(size_data == rhs.size_data &&
+	size_buff == rhs.size_buff &&
+	size_curr == rhs.size_curr &&
+	size_head == rhs.size_head &&
+	flags == rhs.flags))
+    return false;
+  if ((!data) || (!rhs.data))
+    return (data == rhs.data);
+  if ((!data[0]) || (!rhs.data[0]))
+    return (data[0] == rhs.data[0]);
+  return (strcmp(data[0], rhs.data[0]) == 0);
+}
+bool Header::operator!=(const Header& rhs) const {
+  return (!(*this == rhs));
 }
 void Header::reset() {
   Metadata::reset();
@@ -793,14 +829,14 @@ size_t Header::format(const char* buf, size_t buf_siz,
   }
   data = &data_;
   size_data = buf_siz;
+  if (buf_siz == 0 && empty()) {
+    ygglog_debug_c("Header::format: Empty header");
+    return 0;
+  }
   SetMetaUint("size", buf_siz);
   rapidjson::StringBuffer buffer;
   formatBuffer(buffer, metaOnly);
   rapidjson::StringBuffer buffer_body;
-  if (buffer.GetLength() == 0) {
-    ygglog_debug_c("Header::format: Empty header");
-    return 0;
-  }
   size_t size_sep = strlen(MSG_HEAD_SEP);
   size_t size_new = static_cast<size_t>(buffer.GetLength()) + 2 * size_sep;
   if (size_max > 0 && size_new > size_max) {
@@ -854,17 +890,16 @@ void Header::finalize_recv() {
   if (!GetMetaBoolOptional("in_data", false))
     return;
   size_t sind, eind;
-  int ret = find_match_c(MSG_HEAD_SEP, *data, &sind, &eind);
-  if (ret < 0)
-    ygglog_throw_error_c("Header::finalize_recv: Error locating head separation tag.");
-  rapidjson::Document type_doc;
-  type_doc.Parse(*data, sind);
-  if (type_doc.HasParseError())
-    ygglog_throw_error_c("Header::finalize_recv: Error parsing datatype in data");
-  fromSchema(type_doc);
-  size_curr -= eind;
-  size_data -= eind;
-  memmove(data[0], data[0] + eind, size_curr);
-  (*data)[size_curr] = '\0';
+  if (find_match_c(MSG_HEAD_SEP, *data, &sind, &eind) > 0) {
+    rapidjson::Document type_doc;
+    type_doc.Parse(*data, sind);
+    if (type_doc.HasParseError())
+      ygglog_throw_error_c("Header::finalize_recv: Error parsing datatype in data");
+    fromSchema(type_doc);
+    size_curr -= eind;
+    size_data -= eind;
+    memmove(data[0], data[0] + eind, size_curr);
+    (*data)[size_curr] = '\0';
+  }
 }
 
