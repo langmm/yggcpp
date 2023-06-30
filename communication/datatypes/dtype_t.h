@@ -130,6 +130,13 @@ int copy_generic_into(generic_t* dst, generic_t src);
  */
 generic_t copy_generic(generic_t src);
 
+/*!
+  @brief Compare two generic objects.
+  @param[in] a First object for comparison.
+  @param[in] b Second object for comparison.
+  @returns true if the two objects are equivalent, false otherwise.
+ */
+bool compare_generic(generic_t a, generic_t b);
 
 /*!
   @brief Display information about the generic type.

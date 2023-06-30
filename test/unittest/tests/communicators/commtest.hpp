@@ -128,7 +128,19 @@
   rapidjson::SchemaValidator validator(s);			\
   validator.GenerateData(data_send);				\
   rapidjson::Document data_recv
-  
+
+#define INIT_DATA_SCHEMA_C(schema)					\
+  rapidjson::Document sd;						\
+  rapidjson::Document* data_send_doc = new rapidjson::Document();	\
+  rapidjson::Document* data_recv_doc = new rapidjson::Document();	\
+  sd.Parse(schema);							\
+  rapidjson::SchemaDocument s(sd);					\
+  rapidjson::SchemaValidator validator(s);				\
+  validator.GenerateData(*data_send_doc);				\
+  generic_t data_send = init_generic();					\
+  data_send.obj = (void*)data_send_doc;					\
+  generic_t data_recv = init_generic();					\
+  data_recv.obj = (void*)data_recv_doc
 
 #define COMP_DATA_SINGLE			\
   EXPECT_EQ(data_send, data_recv)
