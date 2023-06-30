@@ -58,6 +58,15 @@ using namespace communication::communicator;
   INTERFACE_TEST_BASE(name, init_cls_in, init_cls_out, init_data, comp_data, send_method, send_args, send, send_args_cpp, recv_method, recv_args, recv, recv_args_cpp)
 #define INTERFACE_TEST_REALLOC(name, init_cls_in, init_cls_out, init_data, comp_data, send_method, send_args, send_args_cpp, recv_method, recv_args, recv_args_cpp) \
   INTERFACE_TEST_BASE(name, init_cls_in, init_cls_out, init_data, comp_data, send_method, send_args, send, send_args_cpp, recv_method, recv_args, recvRealloc, recv_args_cpp)
+#define INTERFACE_TEST_SCHEMA(name, schema)				\
+  INTERFACE_TEST_BASE(name,						\
+		      INIT_INPUT_NOARGS(name),				\
+		      INIT_OUTPUT_NOARGS(name),				\
+		      INIT_DATA_SCHEMA_C(schema),			\
+		      compare_generic(data_send, data_recv);		\
+		      delete data_send_doc; delete data_recv_doc,	\
+		      yggSend, (data_send), sendVar, (*data_send_doc),	\
+		      yggRecv, (&data_recv), recvVar, (*data_recv_doc))
 
 INTERFACE_TEST(Base,
 	       INIT_INPUT_BASE(yggInput, ("input"), COMM_BASE,
@@ -123,3 +132,7 @@ INTERFACE_TEST_REALLOC(
   INIT_DATA_TABLE_REALLOC, COMP_DATA_TABLE_REALLOC,
   yggSend, (n_send, a_send, b_send, c_send), SEND_NARGS_TABLE,
   yggRecvRealloc, (&n_recv, &a_recv, &b_recv, &c_recv), RECV_NARGS_TABLE_REALLOC)
+
+  /*
+INTERFACE_TEST_SCHEMA(Ply, "{\"type\": \"ply\"}")
+  */		 

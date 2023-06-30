@@ -177,6 +177,13 @@ extern "C" {
     return out;
   }
 
+  bool compare_generic(generic_t a, generic_t b) {
+    if (!(a.obj && b.obj))
+      return false;
+    return ((*((rapidjson::Document*)(a.obj))) ==
+	    (*((rapidjson::Document*)(b.obj))));
+  }
+  
   void display_generic(generic_t x) {
     try {
       if (is_generic_init(x)) {

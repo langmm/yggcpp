@@ -892,7 +892,7 @@ comm_t yggPlyOutput(const char *name) {
  */
 static inline
 comm_t yggPlyInput(const char *name) {
-  return init_comm(name, RECV, DEFAULT_COMM, create_dtype_empty(false));
+  return init_comm(name, RECV, DEFAULT_COMM, create_dtype_ply(false));
 };
 
 
@@ -961,7 +961,7 @@ comm_t yggObjOutput(const char *name) {
  */
 static inline
 comm_t yggObjInput(const char *name) {
-  return init_comm(name, RECV, DEFAULT_COMM, create_dtype_empty(false));
+  return init_comm(name, RECV, DEFAULT_COMM, create_dtype_obj(false));
 };
 
 
