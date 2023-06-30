@@ -320,15 +320,9 @@ void IPCComm::init() {
     ipc_install_error();
 }
 
-IPCComm::IPCComm(const std::string &, utils::Address *address,
+IPCComm::IPCComm(const std::string &name, utils::Address *address,
 		 DIRECTION direction, int flgs) :
-  CommBase(address, direction, IPC_COMM, flgs) {
-    ipc_install_error();
-}
-
-IPCComm::IPCComm(const std::string &name, DIRECTION direction,
-		 int flgs) :
-  CommBase(name, direction, IPC_COMM, flgs) {
+  CommBase(name, address, direction, IPC_COMM, flgs) {
     ipc_install_error();
 }
 

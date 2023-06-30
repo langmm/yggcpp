@@ -10,12 +10,12 @@
   try
 #define _END_CPP(name, ret)						\
   catch (...) {								\
-    ygglog_error << name << ": C++ exception thrown." << std::endl;	\
+    ygglog_error << #name << ": C++ exception thrown." << std::endl;	\
     return ret;								\
   }
 #define _END_CPP_CLEANUP(name, ret, cleanup)	\
   catch (...) {								\
-    ygglog_error << name << ": C++ exception thrown." << std::endl;	\
+    ygglog_error << #name << ": C++ exception thrown." << std::endl;	\
     cleanup;								\
     return ret;								\
   }
@@ -514,10 +514,10 @@ extern "C" {
     return out;
   }
   // TODO: Cleanup temporary item created during setting
-#define NESTED_BASICS_(base, idx, idxType)					\
+#define NESTED_BASICS_(base, idx, idxType)				\
   void* generic_ ## base ## _get_item(generic_t x, idxType idx, const char *type) { \
     try {								\
-      generic_ref_t tmp;						\
+      generic_ref_t tmp = init_generic_ref(x);				\
       if (get_generic_ ## base ## _ref(x, idx, &tmp) != GENERIC_SUCCESS_) { \
 	return NULL;							\
       }									\
@@ -529,7 +529,7 @@ extern "C" {
   }									\
   int generic_ ## base ## _get_item_nbytes(generic_t x, idxType idx, const char *type) { \
     try {								\
-      generic_ref_t tmp;						\
+      generic_ref_t tmp = init_generic_ref(x);				\
       if (get_generic_ ## base ## _ref(x, idx, &tmp) != GENERIC_SUCCESS_) { \
 	return 0;							\
       }									\
@@ -541,7 +541,7 @@ extern "C" {
   }									\
   void* generic_ ## base ## _get_scalar(generic_t x, idxType idx, const char *subtype, const size_t precision) { \
     try {								\
-      generic_ref_t tmp;						\
+      generic_ref_t tmp = init_generic_ref(x);				\
       if (get_generic_ ## base ## _ref(x, idx, &tmp) != GENERIC_SUCCESS_) { \
 	return NULL;							\
       }									\
@@ -553,7 +553,7 @@ extern "C" {
   }									\
   size_t generic_ ## base ## _get_1darray(generic_t x, idxType idx, const char *subtype, const size_t precision, void** data) { \
     try {								\
-      generic_ref_t tmp;						\
+      generic_ref_t tmp = init_generic_ref(x);				\
       if (get_generic_ ## base ## _ref(x, idx, &tmp) != GENERIC_SUCCESS_) { \
 	return 0;							\
       }									\
@@ -565,7 +565,7 @@ extern "C" {
   }									\
   size_t generic_ ## base ## _get_ndarray(generic_t x, idxType idx, const char *subtype, const size_t precision, void** data, size_t** shape) { \
     try {								\
-      generic_ref_t tmp;							\
+      generic_ref_t tmp = init_generic_ref(x);				\
       if (get_generic_ ## base ## _ref(x, idx, &tmp) != GENERIC_SUCCESS_) { \
 	return 0;							\
       }									\
@@ -577,7 +577,7 @@ extern "C" {
   }									\
   int generic_ ## base ## _set_item(generic_t x, idxType idx, const char *type, void* value) { \
     try {								\
-      generic_t tmp;							\
+      generic_t tmp = init_generic();					\
       if (generic_set_item(tmp, type, value) != GENERIC_SUCCESS_) {	\
         return GENERIC_ERROR_;						\
       }									\
@@ -751,7 +751,7 @@ extern "C" {
   }
   int get_generic_array(generic_t arr, const size_t i, generic_t *x) {
     int out = GENERIC_SUCCESS_;
-    generic_ref_t tmp;
+    generic_ref_t tmp = init_generic_ref(arr);
     if (get_generic_array_ref(arr, i, &tmp) != GENERIC_SUCCESS_)
       return GENERIC_ERROR_;
     try {
@@ -833,7 +833,7 @@ extern "C" {
   }
   int get_generic_object(generic_t arr, const char* k, generic_t *x) {
     int out = GENERIC_SUCCESS_;
-    generic_ref_t tmp;
+    generic_ref_t tmp = init_generic_ref(arr);
     if (get_generic_object_ref(arr, k, &tmp) != GENERIC_SUCCESS_)
       return GENERIC_ERROR_;
     try {
@@ -866,7 +866,7 @@ extern "C" {
   type generic_ ## base ## _get_ ## name(generic_t x, idxType idx, __VA_ARGS__) { \
     generic_ref_t item;							\
     type out = defV;							\
-    if (get_generic_ ## base ## _ref(x, (idxType)idx, &item) != GENERIC_SUCCESS_) { \
+    if (get_generic_ ## base ## _ref(x, idx, &item) != GENERIC_SUCCESS_) { \
       return out;							\
     }									\
     out = generic_ref_get_ ## name(item, UNPACK_MACRO args);		\
@@ -876,7 +876,7 @@ extern "C" {
   type generic_ ## base ## _get_ ## name(generic_t x, idxType idx) {	\
     generic_ref_t item;							\
     type out = defV;							\
-    if (get_generic_ ## base ## _ref(x, (idxType)idx, &item) != GENERIC_SUCCESS_) { \
+    if (get_generic_ ## base ## _ref(x, idx, &item) != GENERIC_SUCCESS_) { \
       return out;							\
     }									\
     out = generic_ref_get_ ## name(item);				\

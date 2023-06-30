@@ -1020,13 +1020,7 @@ Comm_t* ZMQComm::create_worker_recv(Header&) {
 
 ZMQComm::ZMQComm(const std::string, utils::Address *address,
 		 const DIRECTION direction, int flgs) :
-  CommBase(address, direction, ZMQ_COMM, flgs), reply(direction) {
-  zmq_install_error();
-}
-
-ZMQComm::ZMQComm(const std::string name, const DIRECTION direction,
-		 int flgs) :
-  CommBase(name, direction, ZMQ_COMM, flgs), reply(direction) {
+  CommBase(name, address, direction, ZMQ_COMM, flgs), reply(direction) {
   zmq_install_error();
 }
 
