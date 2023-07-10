@@ -276,8 +276,7 @@
       metadata.SetMetaString("invalid", bigMsg);			\
       EXPECT_THROW(sComm.send(data_send), std::exception);		\
     }									\
-  }
-/*
+  }									\
   TEST(cls, global) {							\
     std::string name = "test_name";					\
     global_scope_comm = 1;						\
@@ -305,8 +304,6 @@
     global_scope_comm = 0;						\
     Comm_t::_ygg_cleanup();						\
   }
-
-*/
 
 #ifdef ELF_AVAILABLE
 #if COMM_BASE == IPC_COMM
