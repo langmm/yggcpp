@@ -558,6 +558,8 @@ ZMQComm::ZMQComm(const std::string name, utils::Address *address,
     init();
 }
 
+ADD_CONSTRUCTORS_DEF(ZMQComm)
+
 ZMQComm::~ZMQComm() {
     ygglog_debug << "~ZMQComm: Started" << std::endl;
     if ((direction == RECV) && this->is_open() &&
@@ -999,6 +1001,8 @@ ZMQComm::ZMQComm(const std::string name, utils::Address *address,
   CommBase(name, address, direction, ZMQ_COMM, flgs), reply(direction) {
   zmq_install_error();
 }
+
+ADD_CONSTRUCTORS_DEF(ZMQComm)
 
 #ifdef YGG_TEST
 bool ZMQComm::afterSendRecv(Comm_t*, Comm_t*) {

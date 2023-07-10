@@ -20,6 +20,8 @@ ClientComm::ClientComm(const std::string nme, Address *addr,
     init();
 }
 
+ADD_CONSTRUCTORS_RPC_DEF(ClientComm)
+
 void ClientComm::set_timeout_recv(int new_timeout) {
   if (global_comm) {
     global_comm->set_timeout_recv(new_timeout);
