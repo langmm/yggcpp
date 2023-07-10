@@ -88,6 +88,9 @@ extern int global_scope_comm;
 #endif
 #endif // _MSC_VER
 
+void global_scope_comm_on();
+void global_scope_comm_off();
+
 class RPCComm;
 
 class ServerComm;
@@ -647,7 +650,7 @@ protected:
         return -1;
     }
 
-    CommBase(const std::string &name, utils::Address *address = nullptr, DIRECTION direction = NONE, const COMM_TYPE &t = NULL_COMM, int flags = 0);
+    explicit CommBase(const std::string &name, utils::Address *address = nullptr, DIRECTION direction = NONE, const COMM_TYPE &t = NULL_COMM, int flags = 0);
 
     Comm_t* create_worker(utils::Address*, const DIRECTION,
 			  int) override {

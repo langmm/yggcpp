@@ -59,7 +59,7 @@ int mpi_registry_t::Recv(void *buf, int count, MPI_Datatype datatype, int source
   return out;
 }
 
-MPIComm::MPIComm(const std::string &name, utils::Address *address,
+MPIComm::MPIComm(const std::string name, utils::Address *address,
 		 const DIRECTION direction, int flgs) :
   CommBase(name, address, direction, MPI_COMM, flgs) {
   if (!global_comm)
@@ -238,7 +238,7 @@ void mpi_install_error() {
 }
 
 
-MPIComm::MPIComm(const std::string &name, utils::Address *address,
+MPIComm::MPIComm(const std::string name, utils::Address *address,
 		 const DIRECTION direction, int flgs) :
   CommBase(name, address, direction, MPI_COMM, flgs), addresses() {
   mpi_install_error();

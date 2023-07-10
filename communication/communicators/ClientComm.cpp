@@ -8,7 +8,7 @@ using namespace communication::utils;
 
 unsigned ClientComm::_client_rand_seeded = 0;
 
-ClientComm::ClientComm(const std::string &nme, Address *addr,
+ClientComm::ClientComm(const std::string nme, Address *addr,
 		       int flgs) :
   RPCComm(nme, addr,
 	  flgs | COMM_FLAG_CLIENT | COMM_ALWAYS_SEND_HEADER,

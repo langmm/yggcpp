@@ -170,19 +170,18 @@ int comm_nmsg(comm_t comm) {
   @returns Registered comm. Member comm willl be NULL if one does not
     exist with the specified name.
  */
-  comm_t get_global_scope_comm(const char *name, const DIRECTION dir,
-			       const COMM_TYPE &t) {
+comm_t get_global_scope_comm(const char *name, const DIRECTION dir,
+			     const COMM_TYPE &t) {
   comm_t out;
   out.comm = (void*)(communication::communicator::Comm_t::find_registered_comm(name, dir, t));
   return out;
-};
-void global_scope_comm_on() {
-  communication::communicator::global_scope_comm = 1;
 }
-void global_scope_comm_off() {
-// #ifndef _OPENMP
-  communication::communicator::global_scope_comm = 0;
-// #endif
+  
+void global_scope_comm_on_c() {
+  communication::communicator::global_scope_comm_on();
+}
+void global_scope_comm_off_c() {
+  communication::communicator::global_scope_comm_off();
 }
 
 }

@@ -10,7 +10,7 @@ namespace communicator {
 // @brief Structure for storing requests
 class ServerComm : public RPCComm {
 public:
-    explicit ServerComm(const std::string &name = "",
+    explicit ServerComm(const std::string name = "",
 			utils::Address *address = nullptr,
 			int flgs = 0);
     ADD_CONSTRUCTORS_RPC(ServerComm)

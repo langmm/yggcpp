@@ -7,7 +7,7 @@ namespace communicator {
 
 class ClientComm : public RPCComm {
 public:
-    explicit ClientComm(const std::string &name = "",
+    explicit ClientComm(const std::string name = "",
 			utils::Address *address = nullptr,
 			int flgs = 0);
     ADD_CONSTRUCTORS_RPC(ClientComm)

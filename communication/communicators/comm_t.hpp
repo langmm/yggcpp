@@ -51,8 +51,8 @@ long ncommCall(comm_t x, const int allow_realloc, size_t nargs, ...);
 
 comm_t get_global_scope_comm(const char *name, const DIRECTION dir,
 			     const COMM_TYPE &t);
-void global_scope_comm_on();
-void global_scope_comm_off();
+void global_scope_comm_on_c();
+void global_scope_comm_off_c();
 
 #ifdef __cplusplus
 }

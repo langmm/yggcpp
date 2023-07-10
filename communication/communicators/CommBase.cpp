@@ -13,6 +13,15 @@ void _cleanup_wrapper() {
   Comm_t::_ygg_cleanup();
 }
 
+void global_scope_comm_on() {
+  global_scope_comm = 1;
+}
+void global_scope_comm_off() {
+  // #ifndef _OPENMP
+  global_scope_comm = 0;
+  // #endif
+}
+
 void Comm_t::_ygg_init() {
 #ifdef _OPENMP
 #pragma omp critical (init)
