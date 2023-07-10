@@ -481,6 +481,7 @@ int Comm_t::sendVar(const std::string& data) {
   return send(2, data.c_str(), data.size());
 }
 int Comm_t::sendVar(const rapidjson::Document& data) {
+  get_metadata(SEND).setGeneric();
   if (!checkType(data, SEND))
     return -1;
   return send(1, &data);
@@ -561,7 +562,10 @@ int Comm_t::vSend(rapidjson::VarArgList& ap) {
   Metadata& meta = get_metadata(SEND);
   if (meta.isGeneric() && !meta.hasType()) {
     rapidjson::Document tmp;
-    if (!tmp.GetVarArgs(*meta.schema, ap)) {
+    Metadata tmp_meta;
+    tmp_meta.fromType("any", true);
+    rapidjson::VarArgList tmp_ap(ap);
+    if (!tmp.GetVarArgs(*tmp_meta.schema, tmp_ap)) {
       ygglog_error << "CommBase(" << name << ")::vSend: Error getting generic argument." << std::endl;
       return -1;
     }

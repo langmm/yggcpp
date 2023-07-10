@@ -58,13 +58,23 @@ using namespace communication::communicator;
   INTERFACE_TEST_BASE(name, init_cls_in, init_cls_out, init_data, comp_data, send_method, send_args, send, send_args_cpp, recv_method, recv_args, recv, recv_args_cpp)
 #define INTERFACE_TEST_REALLOC(name, init_cls_in, init_cls_out, init_data, comp_data, send_method, send_args, send_args_cpp, recv_method, recv_args, recv_args_cpp) \
   INTERFACE_TEST_BASE(name, init_cls_in, init_cls_out, init_data, comp_data, send_method, send_args, send, send_args_cpp, recv_method, recv_args, recvRealloc, recv_args_cpp)
+#define INTERFACE_TEST_GEOM(name, cpp_name, c_name)			\
+  INTERFACE_TEST_BASE(name,						\
+		      INIT_INPUT_NOARGS(name),				\
+		      INIT_OUTPUT_NOARGS(name),				\
+		      INIT_DATA_GEOM_C(cpp_name, c_name),		\
+		      COMP_DATA_GEOM_C(cpp_name),			\
+		      yggSend, (data_send),				\
+		      sendVar, (*((rapidjson::cpp_name*)(data_send.obj))), \
+		      yggRecv, (&data_recv),				\
+		      recvVar, (*((rapidjson::cpp_name*)(data_recv.obj))))
 #define INTERFACE_TEST_SCHEMA(name, schema)				\
   INTERFACE_TEST_BASE(name,						\
 		      INIT_INPUT_NOARGS(name),				\
 		      INIT_OUTPUT_NOARGS(name),				\
 		      INIT_DATA_SCHEMA_C(schema),			\
-		      compare_generic(data_send, data_recv);		\
-		      delete data_send_doc; delete data_recv_doc,	\
+		      compare_generic(data_send, data_recv),		\
+		      /* delete data_send_doc; delete data_recv_doc, */	\
 		      yggSend, (data_send), sendVar, (*data_send_doc),	\
 		      yggRecv, (&data_recv), recvVar, (*data_recv_doc))
 
@@ -133,6 +143,28 @@ INTERFACE_TEST_REALLOC(
   yggSend, (n_send, a_send, b_send, c_send), SEND_NARGS_TABLE,
   yggRecvRealloc, (&n_recv, &a_recv, &b_recv, &c_recv), RECV_NARGS_TABLE_REALLOC)
 
-  /*
-INTERFACE_TEST_SCHEMA(Ply, "{\"type\": \"ply\"}")
-  */		 
+INTERFACE_TEST_GEOM(Ply, Ply, ply)
+INTERFACE_TEST_GEOM(Obj, ObjWavefront, obj)
+INTERFACE_TEST_SCHEMA(Generic, "{\"type\": \"ply\"}")
+INTERFACE_TEST_SCHEMA(Any, "{\"type\": \"ply\"}")
+INTERFACE_TEST_SCHEMA(JSONArray, "{\"type\": \"array\", \"items\": [{\"type\": \"integer\"}, {\"type\": \"string\"}]}")
+INTERFACE_TEST_SCHEMA(JSONObject, "{\"type\": \"object\", \"properties\": {\"a\": {\"type\": \"integer\"}, \"b\": {\"type\": \"string\"}}}")
+
+
+// TODO: RPC
+
+
+#undef INTERFACE_TEST_SCHEMA
+#undef INTERFACE_TEST_GEOM
+#undef INTERFACE_TEST_REALLOC
+#undef INTERFACE_TEST
+#undef INTERFACE_TEST_BASE
+#undef DO_SEND_RECV_OUTPUT
+#undef DO_SEND_RECV_INPUT
+#undef DO_SEND_RECV_BASE_C
+#undef INIT_OUTPUT
+#undef INIT_INPUT
+#undef INIT_OUTPUT_NOARGS
+#undef INIT_INPUT_NOARGS
+#undef INIT_OUTPUT_BASE
+#undef INIT_INPUT_BASE
