@@ -119,6 +119,21 @@
   validator.GenerateData(result);				\
   rapidjson::ObjWavefront data_send = result.GetObjWavefront();	\
   rapidjson::ObjWavefront data_recv
+#define INIT_DATA_GEOM_C(name, c_name)				\
+  rapidjson::Document sd;					\
+  rapidjson::Document result;					\
+  sd.Parse("{\"type\": \"" #c_name "\"}");			\
+  rapidjson::SchemaDocument s(sd);				\
+  rapidjson::SchemaValidator validator(s);			\
+  validator.GenerateData(result);				\
+  c_name ## _t data_send = init_ ## c_name();			\
+  c_name ## _t data_recv = init_ ## c_name();			\
+  rapidjson::name* data_send_x = new rapidjson::name();		\
+  rapidjson::name* data_recv_x = new rapidjson::name();		\
+  result.Get(*data_send_x);					\
+  data_send.obj = (void*)data_send_x;				\
+  data_recv.obj = (void*)data_recv_x
+
 
 #define INIT_DATA_SCHEMA(schema)				\
   rapidjson::Document sd;					\
@@ -177,6 +192,10 @@
   free(a_recv);					\
   free(b_recv);					\
   free(c_recv)
+
+#define COMP_DATA_GEOM_C(name)				\
+  EXPECT_EQ((*((rapidjson::name*)(data_send.obj))),	\
+	    (*((rapidjson::name*)(data_recv.obj))))
 
 #define SEND_NARGS_TRIPLE			\
   (4, a_send, b_send, c_send, nc_send)
@@ -279,7 +298,7 @@
   }									\
   TEST(cls, global) {							\
     std::string name = "test_name";					\
-    global_scope_comm = 1;						\
+    global_scope_comm_on();						\
     {									\
       cls ## _tester sComm(name, nullptr, SEND);			\
       sComm.addSchema("{\"type\": \"number\"}");			\
@@ -301,7 +320,7 @@
 			    recvVar, (data_recv));			\
       DO_SEND_RECV_EOF(recvVar, (data_recv));				\
     }									\
-    global_scope_comm = 0;						\
+    global_scope_comm_off();						\
     Comm_t::_ygg_cleanup();						\
   }
 
