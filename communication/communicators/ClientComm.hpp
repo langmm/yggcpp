@@ -17,8 +17,9 @@ public:
      * @param name The name of the communicator
      * @param address The address to associate with the communicator, if address is nullptr
      *                then an address will be created.
+     * @param flgs Bitwise flags describing the communicator
      */
-    explicit ClientComm(const std::string &name = "",
+    explicit ClientComm(const std::string name = "",
 			utils::Address *address = nullptr,
 			int flgs = 0);
     ADD_CONSTRUCTORS_RPC(ClientComm)

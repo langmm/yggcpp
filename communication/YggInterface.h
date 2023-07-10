@@ -23,7 +23,7 @@ extern "C" {
 #define yggComm init_comm
 
 /*! @brief Memory to keep track of global scope comms. */
-#define WITH_GLOBAL_SCOPE(COMM) global_scope_comm_on(); COMM; global_scope_comm_off()
+#define WITH_GLOBAL_SCOPE(COMM) global_scope_comm_on_c(); COMM; global_scope_comm_off_c()
   
 // Forward declaration of server interface to allow replacemnt
 static inline

@@ -2,11 +2,7 @@
 #include "communicators/comms.hpp"
 
 /*! @brief Memory to keep track of global scope comms. */
-// #ifdef _OPENMP
-// #define WITH_GLOBAL_SCOPE(COMM) global_scope_comm = 1; COMM
-// #else
-#define WITH_GLOBAL_SCOPE(COMM) global_scope_comm = 1; COMM; global_scope_comm = 0
-// #endif
+#define WITH_GLOBAL_SCOPE(COMM) global_scope_comm_on(); COMM; global_scope_comm_off()
 
 
 using namespace communication::communicator;

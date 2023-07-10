@@ -49,8 +49,9 @@ public:
      * @param address The address to associate with the communicator, if address is nullptr
      *                then an address will be created.
      * @param direction Enumerated direction for the communicator
+     * @param flags Bitwise flags describing the communicator
      */
-    MPIComm(const std::string &name, utils::Address *address,
+    MPIComm(const std::string name, utils::Address *address,
 	    const DIRECTION direction, int flgs = 0);
     ADD_CONSTRUCTORS(MPIComm)
 

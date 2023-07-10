@@ -6,7 +6,7 @@
 using namespace communication::communicator;
 using namespace communication::utils;
 
-ServerComm::ServerComm(const std::string &nme, Address *addr,
+ServerComm::ServerComm(const std::string nme, Address *addr,
 		       int flgs) :
   RPCComm(nme, addr,
 	  flgs | COMM_FLAG_SERVER | COMM_ALWAYS_SEND_HEADER,

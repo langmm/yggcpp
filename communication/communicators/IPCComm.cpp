@@ -264,7 +264,7 @@ void IPCComm::init() {
     ygglog_debug << "IPCComm(" << name << ")::init: address = " << this->address->address() << ", created = " << created << std::endl;
 }
 
-IPCComm::IPCComm(const std::string &name, Address *address,
+IPCComm::IPCComm(const std::string name, Address *address,
 		 DIRECTION direction, int flgs) :
   CommBase(name, address, direction, IPC_COMM, flgs) {
   if (!global_comm)
@@ -320,7 +320,7 @@ void IPCComm::init() {
     ipc_install_error();
 }
 
-IPCComm::IPCComm(const std::string &name, utils::Address *address,
+IPCComm::IPCComm(const std::string name, utils::Address *address,
 		 DIRECTION direction, int flgs) :
   CommBase(name, address, direction, IPC_COMM, flgs) {
     ipc_install_error();
