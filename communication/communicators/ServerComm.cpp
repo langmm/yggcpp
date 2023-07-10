@@ -18,6 +18,8 @@ ServerComm::ServerComm(const std::string nme, Address *addr,
     init();
 }
 
+ADD_CONSTRUCTORS_RPC_DEF(ServerComm)
+
 void ServerComm::init() {
   if (this->name.empty()) {
     this->name = "server_request." + this->address->address();

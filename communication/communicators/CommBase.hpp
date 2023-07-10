@@ -40,6 +40,34 @@
 #define COMM_BASE_MAX_MSG_SIZE
 #endif
 
+#define ADD_CONSTRUCTORS(cls)			\
+  explicit cls(const std::string nme,		\
+	       const DIRECTION dirn,		\
+	       int flgs = 0);			\
+  explicit cls(utils::Address *addr,		\
+	       const DIRECTION dirn,		\
+	       int flgs = 0);
+#define ADD_CONSTRUCTORS_DEF(cls)		\
+  cls::cls(const std::string nme,		\
+	   const DIRECTION dirn,		\
+	   int flgs) :				\
+    cls(nme, nullptr, dirn, flgs) {}		\
+  cls::cls(utils::Address *addr,		\
+	   const DIRECTION dirn,		\
+	   int flgs) :				\
+    cls("", addr, dirn, flgs) {}
+#define ADD_CONSTRUCTORS_RPC(cls)		\
+  explicit cls(const std::string nme,		\
+	       int flgs = 0);			\
+  explicit cls(utils::Address *addr,		\
+	       int flgs = 0);
+#define ADD_CONSTRUCTORS_RPC_DEF(cls)		\
+  cls::cls(const std::string nme,		\
+	   int flgs) :				\
+    cls(nme, nullptr, flgs) {}			\
+  cls::cls(utils::Address *addr,		\
+	   int flgs) :				\
+    cls("", addr, flgs) {}
 #define WORKER_METHOD_DECS(cls)					\
   Comm_t* create_worker(utils::Address* address,		\
 			const DIRECTION, int flgs) override
@@ -55,22 +83,6 @@
     return NULL;						\
   }
 
-#define ADD_CONSTRUCTORS(cls)			\
-  explicit cls(const std::string nme,		\
-	       const DIRECTION dirn,		\
-	       int flgs = 0) :			\
-    cls(nme, nullptr, dirn, flgs) {}		\
-  explicit cls(utils::Address *addr,		\
-	       const DIRECTION dirn,		\
-	       int flgs = 0) :			\
-    cls("", addr, dirn, flgs) {}
-#define ADD_CONSTRUCTORS_RPC(cls)		\
-  explicit cls(const std::string nme,		\
-	       int flgs = 0) :			\
-    cls(nme, nullptr, flgs) {}			\
-  explicit cls(utils::Address *addr,		\
-	       int flgs = 0) :			\
-    cls("", addr, flgs) {}
 
 
 using namespace rapidjson;

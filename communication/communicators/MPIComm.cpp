@@ -66,6 +66,8 @@ MPIComm::MPIComm(const std::string name, utils::Address *address,
     init();
 }
 
+ADD_CONSTRUCTORS_DEF(MPIComm)
+
 void MPIComm::init() {
     updateMaxMsgSize(2147483647);
     if (!(this->address && this->address->valid()))
@@ -243,6 +245,8 @@ MPIComm::MPIComm(const std::string name, utils::Address *address,
   CommBase(name, address, direction, MPI_COMM, flgs), addresses() {
   mpi_install_error();
 }
+
+ADD_CONSTRUCTORS_DEF(MPIComm)
 
 void MPIComm::init() {
   mpi_install_error();

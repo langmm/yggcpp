@@ -271,6 +271,7 @@ IPCComm::IPCComm(const std::string name, Address *address,
     init();
 }
 
+ADD_CONSTRUCTORS_DEF(IPCComm)
 WORKER_METHOD_DEFS(IPCComm)
 
 #else /*IPCINSTALLED*/
@@ -326,6 +327,7 @@ IPCComm::IPCComm(const std::string name, utils::Address *address,
     ipc_install_error();
 }
 
+ADD_CONSTRUCTORS_DEF(IPCComm)
 WORKER_METHOD_DUMMY(IPCComm, ipc)
 
 #endif /*IPCINSTALLED*/
