@@ -5,6 +5,8 @@
 TEST(dtype, GenericContainer) {
   generic_t x_arr = init_generic_array();
   generic_t x_obj = init_generic_map();
+  EXPECT_TRUE(is_generic_init(x_arr));
+  EXPECT_TRUE(is_generic_init(x_obj));
 #define ADD_ITEM(idx, schema)						\
   {									\
     generic_t v = init_generic_json(schema);				\
@@ -33,9 +35,15 @@ TEST(dtype, GenericContainer) {
     destroy_generic(&v);						\
     EXPECT_EQ(generic_array_get_size(x_arr), idx + 1);			\
     EXPECT_EQ(generic_map_get_size(x_obj), idx + 1);			\
+    EXPECT_EQ(generic_map_has_key(x_obj, #idx), 1);			\
+    char** keys = NULL;							\
+    EXPECT_EQ(generic_map_get_keys(x_obj, &keys), idx + 1);		\
+    EXPECT_EQ(strcmp(keys[idx], #idx), 0);				\
   }
   ADD_ITEM(0, "1")
+  ADD_ITEM(0, "2")
 #undef ADD_ITEM
   destroy_generic(&x_arr);
   destroy_generic(&x_obj);
 }
+

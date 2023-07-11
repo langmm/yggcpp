@@ -260,7 +260,7 @@ size_t generic_map_get_size(generic_t x);
   @param[in] key char* Key to check for.
   @returns int 1 if the key is present, 0 otherwise.
  */
-int generic_map_has_key(generic_t x, char* key);
+int generic_map_has_key(generic_t x, const char* key);
 
 /*!
   @brief Get the keys in a map object.
