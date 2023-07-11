@@ -122,6 +122,13 @@ extern "C" {
     return out;
   }
 
+  generic_t init_generic_json(const char* json) {
+    generic_t out = init_generic();
+    out.obj = (void*)(new rapidjson::Document());
+    generic_set_json(out, json);
+    return out;
+  }
+
   int is_generic_init(generic_t) {
     return true;
   }
@@ -292,6 +299,24 @@ extern "C" {
 #undef GEOMETRY_
     } catch(...) {
       ygglog_error_c("generic_set_item: C++ exception thrown");
+      return GENERIC_ERROR_;
+    }
+    return out;
+  }
+  int generic_set_json(generic_t x, const char *json) {
+    int out = GENERIC_SUCCESS_;
+    try {
+      if (!(is_generic_init(x))) {
+	ygglog_throw_error_c("generic_set_json: Object not initialized.");
+      }
+      if (x.obj == NULL) {
+	ygglog_throw_error_c("generic_set_json: Object is NULL.");
+      }
+      rapidjson::Document* x_obj = (rapidjson::Document*)(x.obj);
+      x_obj->SetNull();
+      x_obj->Parse(json);
+    } catch(...) {
+      ygglog_error_c("generic_set_json: C++ exception thrown");
       return GENERIC_ERROR_;
     }
     return out;
@@ -1750,35 +1775,6 @@ extern "C" {
       return 1;
     }
     return 0;
-  }
-  
-  va_list_t init_va_list(size_t *nargs, int allow_realloc,
-			 int for_c) {
-    va_list_t out;
-    rapidjson::VarArgList* out_va = new rapidjson::VarArgList(nargs, allow_realloc, for_c);
-    out.va = (void*)out_va;
-    return out;
-  }
-
-  va_list_t init_va_ptrs(const size_t nptrs, void** ptrs, int allow_realloc,
-			 int for_fortran) {
-    va_list_t out;
-    rapidjson::VarArgList* va = new rapidjson::VarArgList(nptrs, ptrs, allow_realloc, for_fortran);
-    out.va = (void*)va;
-    return out;
-  }
-  
-  void end_va_list(va_list_t *ap) {
-    if (!ap)
-      return;
-    rapidjson::VarArgList* va = (rapidjson::VarArgList*)(ap->va);
-    if (va) {
-      size_t nargs = va->get_nargs();
-      if (nargs != 0)
-	ygglog_error_c("%d arguments unused", (int)nargs);
-      delete va;
-      ap->va = NULL;
-    }
   }
   
 }

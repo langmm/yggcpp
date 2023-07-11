@@ -152,6 +152,47 @@ long ncommCall(comm_t comm, const int allow_realloc, size_t nargs, ...) {
   }
 }
 
+int pcommSend(const comm_t comm, size_t nargs,
+	      void** ptrs, int for_fortran) {
+  if (!comm.comm)
+    return -1;
+  try {
+    rapidjson::VarArgList ap(nargs, ptrs, false, for_fortran);
+    ygglog_debug << "pcommSend: nargs = " << nargs << std::endl;
+    int ret = static_cast<communication::communicator::Comm_t*>(comm.comm)->vSend(ap);
+    YGGC_END_VAR_ARGS(ap);
+    return ret;
+  } catch (...) {
+    return -1;
+  }
+}
+long pcommRecv(comm_t comm, const int allow_realloc, size_t nargs, void** ptrs, int for_fortran) {
+  if (!comm.comm)
+    return -1;
+  try {
+    rapidjson::VarArgList ap(nargs, ptrs, allow_realloc, for_fortran);
+    ygglog_debug << "pcommRecv: nargs = " << nargs << std::endl;
+    long ret = static_cast<communication::communicator::Comm_t*>(comm.comm)->vRecv(ap);
+    YGGC_END_VAR_ARGS(ap);
+    return ret;
+  } catch (...) {
+    return -1;
+  }
+}
+long pcommCall(comm_t comm, const int allow_realloc, size_t nargs, void** ptrs, int for_fortran) {
+  if (!comm.comm)
+    return -1;
+  try {
+    rapidjson::VarArgList ap(nargs, ptrs, allow_realloc, for_fortran);
+    ygglog_debug << "pcommCall: nargs = " << nargs << std::endl;
+    long ret = static_cast<communication::communicator::Comm_t*>(comm.comm)->vCall(ap);
+    YGGC_END_VAR_ARGS(ap);
+    return ret;
+  } catch (...) {
+    return -1;
+  }
+}
+  
 int comm_nmsg(comm_t comm) {
     if (!comm.comm)
         return -1;

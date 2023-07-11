@@ -354,10 +354,6 @@ long ygg_recv_nolimit(yggInput_t yggQ, char **data, const size_t len) {
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 /*! @brief Definitions for symmetry, but there is no difference. */
-#define vyggSend vcommSend
-#define vyggRecv vcommRecv
-#define vyggSend_nolimit vcommSend
-#define vyggRecv_nolimit vcommRecv
 #define yggSend_nolimit commSend
 #define yggRecv_nolimit commRecv
 #endif // DOXYGEN_SHOULD_SKIP_THIS
@@ -565,45 +561,6 @@ comm_t yggTimesync(const char *name, const char *t_units) {
   return yggRpcClientType(name, dtype_out, dtype_in);
 };
 
-/*!
-  @brief Format and send a message to an RPC output queue.
-    Format provided arguments list using the output queue format string and
-    then sends it to the output queue under the assumption that it is larger
-    than the maximum message size.
-  @param[in] rpc yggRpc_t structure with RPC information.
-  @param[in] ap va_list variable list of arguments for formatting.
-  @return integer specifying if the send was succesful. Values >= 0 indicate
-    success.
- */
-#define vrpcSend vcommSend
-
-/*!
-  @brief Receive a message from a comm into variables in a variable argument
-    list. If received message data will exceed the bounds of provided 
-    variables, an error will be returned.
-  @param[in] rpc RPC comm structure that message should be sent to.
-  @param[out] ap Variable list of arguments that should be assigned
-    parameters extracted using the associated data type. Since these will 
-    be assigned, they should be pointers to memory that has already been
-    allocated (heap or stack).
-  @return integer specifying if the receive was succesful. Values >= 0
-    indicate success.
-*/
-#define vrpcRecv(rpc, ap) vcommRecv(rpc, ap)
-
-/*!
-  @brief Receive a message from a comm into variables in a variable argument
-    list. If received message data will exceed the bounds of provided 
-    variables, the variables will be reallocated.
-  @param[in] rpc RPC comm structure that message should be sent to.
-  @param[out] ap Variable list of arguments that should be assigned
-    parameters extracted using the associated data type. Since these will 
-    be assigned and possibly reallocated, they should be pointers to memory 
-    addresses that can be reallocated (heap).
-  @return integer specifying if the receive was succesful. Values >= 0
-    indicate success.
-*/
-#define vrpcRecvRealloc(rpc, ap) vcommRecv(rpc, ap)
 
 /*!
   @brief Format and send a message to an RPC output queue.
