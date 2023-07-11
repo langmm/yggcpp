@@ -425,7 +425,6 @@ int generic_set_ndarray(generic_t x, void* data, const char *subtype,
   
   
 /*!
->>>>>>> topic/timesync
   @brief Destroy a structure containing a Python object.
   @param[in] x python_t* Pointer to Python object structure that should be freed.
 */
