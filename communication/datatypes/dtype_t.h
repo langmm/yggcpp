@@ -87,6 +87,12 @@ generic_t init_generic_array();
  */
 generic_t init_generic_map();
 
+/*!
+  @brief Initialize a generic object from a JSON string.
+  @returns generic_t New generic object structure wrapping a
+    rapidjson::Document instance.
+ */
+generic_t init_generic_json(const char* json);
 
 /*!
   @brief Determine if a generic structure is initialized.
@@ -269,6 +275,8 @@ size_t generic_map_get_keys(generic_t x, char*** keys);
 void* generic_ref_get_item(generic_ref_t x, const char *type);
 void* generic_get_item(generic_t x, const char *type);
 int generic_set_item(generic_t x, const char *type, void* value);
+
+int generic_set_json(generic_t x, const char *json);
   
 #define NESTED_BASE_SET_(base, idx, idxType, name, ...)			\
   int generic_ ## base ## _set_ ## name(generic_t x, idxType idx, __VA_ARGS__)
@@ -866,47 +874,6 @@ int nelements_ply(ply_t p, const char* name);
   @returns int 0 if successful, other values indicate errors.
  */
 int init_python_API();
-
-/*!
-  @brief Initialize a variable argument list from an existing va_list.
-  @param[in] nargs Pointer to argument count.
-  @param[in] allow_realloc If int, arguments in va will be reallocated
-    as necessary to receiving message contents.
-  @param[in] for_c If 1, the arguments are treated as coming from C with
-    C++ classes wrapped in structures.
-  @returns va_list_t New variable argument list structure.
- */
-va_list_t init_va_list(size_t *nargs, int allow_realloc, int for_c);
-
-/*! Initialize a variable argument list from an array of pointers.
-  @param[in] nptrs Number of pointers.
-  @param[in] ptrs Array of pointers.
-  @param[in] allow_realloc If int, arguments in va will be reallocated
-    as necessary to receiving message contents.
-  @param[in] for_fortran If 1, it is assumed that the passed pointers are
-    passed from the fortran interface.
-  @returns va_list_t New variable argument list structure.
-*/
-va_list_t init_va_ptrs(const size_t nptrs, void** ptrs,
-		       int allow_realloc, int for_fortran);
-
-/*! Get pointer to va_list.
-  @param[in] ap Variable argument list.
-  @returns Pointer to variable argument list.
- */
-va_list* get_va_list(va_list_t ap);
-  
-
-/*! Finalize a variable argument list.
-  @param[in] ap va_list_t Variable argument list.
-*/
-void end_va_list(va_list_t *ap);
-
-/*!
-  @brief Clear argument list.
-  @param[in, out] ap Variable argument list to clear.
-*/
-void clear_va_list(va_list_t *ap);
 
 
 #ifdef __cplusplus

@@ -85,6 +85,9 @@ int comm_nmsg(comm_t comm);
 int ncommSend(const comm_t x, size_t nargs, ...);
 long ncommRecv(comm_t x, const int allow_realloc, size_t nargs, ...);
 long ncommCall(comm_t x, const int allow_realloc, size_t nargs, ...);
+int pcommSend(const comm_t comm, size_t nargs, void** ptrs, int for_fortran);
+long pcommRecv(comm_t comm, const int allow_realloc, size_t nargs, void** ptrs, int for_fortran);
+long pcommCall(comm_t comm, const int allow_realloc, size_t nargs, void** ptrs, int for_fortran);
 #define commSend(x, ...) ncommSend(x, COUNT_VARARGS(__VA_ARGS__), __VA_ARGS__)
 #define commRecvStack(x, ...) ncommRecv(x, 0, COUNT_VARARGS(__VA_ARGS__), __VA_ARGS__)
 #define commRecvHeap(x, ...) ncommRecv(x, 1, COUNT_VARARGS(__VA_ARGS__), __VA_ARGS__)

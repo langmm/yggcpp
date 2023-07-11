@@ -77,7 +77,6 @@ using namespace communication::communicator;
 		      INIT_OUTPUT_NOARGS(name),				\
 		      INIT_DATA_SCHEMA_C(schema),			\
 		      compare_generic(data_send, data_recv),		\
-		      /* delete data_send_doc; delete data_recv_doc, */	\
 		      yggSend, (data_send), sendVar, (*data_send_doc),	\
 		      yggRecv, (&data_recv), recvVar, (*data_recv_doc),	\
 		      destroy_generic(&data_send); destroy_generic(&data_recv))
