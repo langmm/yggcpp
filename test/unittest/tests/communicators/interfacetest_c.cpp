@@ -41,23 +41,25 @@ using namespace communication::communicator;
   DO_SEND_RECV_BASE_C(init_data, comp_data, sComm.send_method send_args, recv_method(rComm, UNPACK_MACRO recv_args), sComm.send_eof(), sComm.afterSendRecv(&sComm, (Comm_t*)(rComm.comm)), ygg_free(&rComm))
 #define DO_SEND_RECV_OUTPUT(init_data, comp_data, send_method, send_args, recv_method, recv_args) \
   DO_SEND_RECV_BASE_C(init_data, comp_data, send_method(sComm, UNPACK_MACRO send_args), rComm.recv_method recv_args, ygg_send_eof(sComm), rComm.afterSendRecv((Comm_t*)(sComm.comm), &rComm), ygg_free(&sComm))
-#define INTERFACE_TEST_BASE(name, init_cls_in, init_cls_out, init_data, comp_data, send_method, send_args, send_method_cpp, send_args_cpp, recv_method, recv_args, recv_method_cpp, recv_args_cpp) \
+#define INTERFACE_TEST_BASE(name, init_cls_in, init_cls_out, init_data, comp_data, send_method, send_args, send_method_cpp, send_args_cpp, recv_method, recv_args, recv_method_cpp, recv_args_cpp, cleanup) \
   TEST(YggInterface_C, name ## _input) {				\
     init_cls_in;							\
     DO_SEND_RECV_INPUT(init_data, comp_data,				\
 		       send_method_cpp, send_args_cpp,			\
 		       recv_method, recv_args);				\
+    cleanup;								\
   }									\
   TEST(YggInterface_C, name ## _output) {				\
     init_cls_out;							\
     DO_SEND_RECV_OUTPUT(init_data, comp_data,				\
 			send_method, send_args,				\
 			recv_method_cpp, recv_args_cpp);		\
+    cleanup;								\
   }
 #define INTERFACE_TEST(name, init_cls_in, init_cls_out, init_data, comp_data, send_method, send_args, send_args_cpp, recv_method, recv_args, recv_args_cpp) \
-  INTERFACE_TEST_BASE(name, init_cls_in, init_cls_out, init_data, comp_data, send_method, send_args, send, send_args_cpp, recv_method, recv_args, recv, recv_args_cpp)
+  INTERFACE_TEST_BASE(name, init_cls_in, init_cls_out, init_data, comp_data, send_method, send_args, send, send_args_cpp, recv_method, recv_args, recv, recv_args_cpp, )
 #define INTERFACE_TEST_REALLOC(name, init_cls_in, init_cls_out, init_data, comp_data, send_method, send_args, send_args_cpp, recv_method, recv_args, recv_args_cpp) \
-  INTERFACE_TEST_BASE(name, init_cls_in, init_cls_out, init_data, comp_data, send_method, send_args, send, send_args_cpp, recv_method, recv_args, recvRealloc, recv_args_cpp)
+  INTERFACE_TEST_BASE(name, init_cls_in, init_cls_out, init_data, comp_data, send_method, send_args, send, send_args_cpp, recv_method, recv_args, recvRealloc, recv_args_cpp, )
 #define INTERFACE_TEST_GEOM(name, cpp_name, c_name)			\
   INTERFACE_TEST_BASE(name,						\
 		      INIT_INPUT_NOARGS(name),				\
@@ -67,7 +69,8 @@ using namespace communication::communicator;
 		      yggSend, (data_send),				\
 		      sendVar, (*((rapidjson::cpp_name*)(data_send.obj))), \
 		      yggRecv, (&data_recv),				\
-		      recvVar, (*((rapidjson::cpp_name*)(data_recv.obj))))
+		      recvVar, (*((rapidjson::cpp_name*)(data_recv.obj))), \
+		      free_ ## c_name(&data_send); free_ ## c_name(&data_recv))
 #define INTERFACE_TEST_SCHEMA(name, schema)				\
   INTERFACE_TEST_BASE(name,						\
 		      INIT_INPUT_NOARGS(name),				\
@@ -76,7 +79,8 @@ using namespace communication::communicator;
 		      compare_generic(data_send, data_recv),		\
 		      /* delete data_send_doc; delete data_recv_doc, */	\
 		      yggSend, (data_send), sendVar, (*data_send_doc),	\
-		      yggRecv, (&data_recv), recvVar, (*data_recv_doc))
+		      yggRecv, (&data_recv), recvVar, (*data_recv_doc),	\
+		      destroy_generic(&data_send); destroy_generic(&data_recv))
 
 INTERFACE_TEST(Base,
 	       INIT_INPUT_BASE(yggInput, ("input"), COMM_BASE,
