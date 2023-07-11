@@ -494,6 +494,17 @@ const char* dtype_subtype(const dtype_t type_class);
 */
 size_t dtype_precision(const dtype_t type_class);
 
+
+/*!
+  @brief Set the type name in the datatype structure.
+  @param[in,out] dtype Datatype structure to update. It must have
+    been initialized.
+  @param[in] name Type name to set in dtype.
+  @returns 0 on success, -1 if there is an error.
+ */
+int set_dtype_name(dtype_t dtype, const char* name);
+
+  
 /*!
   @brief Initialize a datatype structure including setting the type string.
   @param[in] dtype Type structure/class.
@@ -768,6 +779,20 @@ int destroy_dtype(dtype_t* dtype);
 */
 dtype_t copy_dtype(const dtype_t dtype);
 
+/*!
+  @brief Determine if a type structure indicates that generic objects
+    should be used.
+  @param[in] dtype Wrapper struct for C++ Metadata.
+  @returns 1 if generic objects will be used, 0 if not, -1 for errors.
+*/
+int dtype_uses_generic(dtype_t dtype);
+
+/*!
+  @brief Display a datatype.
+  @param[in] dtype Datatype structure to display.
+  @param[in] indent Indentation that should be used on each line.
+ */
+void display_dtype(const dtype_t dtype, const char* indent="");
 
 /*!
   @brief Wrapper for updating a type object with information from another.
