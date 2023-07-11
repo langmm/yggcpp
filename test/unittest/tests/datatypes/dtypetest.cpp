@@ -223,6 +223,8 @@ TEST(generic_t, scalar) {
   EXPECT_TRUE(data);
   EXPECT_EQ(generic_set_scalar(x, data, "float", 8, "cm"), 0);
   EXPECT_TRUE(compare_generic(x, v));
+  destroy_generic(&v);
+  destroy_generic(&x);
 }
 
 TEST(generic_t, 1darray) {
@@ -235,6 +237,8 @@ TEST(generic_t, 1darray) {
   EXPECT_TRUE(data);
   EXPECT_EQ(generic_set_1darray(x, data, "float", 8, 3, "cm"), 0);
   EXPECT_TRUE(compare_generic(x, v));
+  destroy_generic(&v);
+  destroy_generic(&x);
 }
 
 TEST(generic_t, ndarray) {
@@ -249,10 +253,60 @@ TEST(generic_t, ndarray) {
   EXPECT_TRUE(shape);
   EXPECT_EQ(generic_set_ndarray(x, data, "float", 8, 2, shape, "cm"), 0);
   EXPECT_TRUE(compare_generic(x, v));
+  destroy_generic(&v);
+  destroy_generic(&x);
 }
 
+TEST(dtype_t, utils) {
+  dtype_t x, y;
+  x.metadata = NULL;
+  EXPECT_EQ(is_empty_dtype(x), 1);
+  EXPECT_EQ(is_dtype_format_array(x), -1);
+  EXPECT_EQ(dtype_uses_generic(x), 0);
+  EXPECT_EQ(set_dtype_name(x, "integer"), -1);
+  EXPECT_EQ(strcmp(dtype_name(x), ""), 0);
+  EXPECT_EQ(strcmp(dtype_subtype(x), ""), 0);
+  EXPECT_EQ(dtype_precision(x), 0);
+  x = complete_dtype(x, true);
+  EXPECT_EQ(is_empty_dtype(x), 1);
+  EXPECT_EQ(is_dtype_format_array(x), 0);
+  EXPECT_EQ(dtype_uses_generic(x), 1);
+  EXPECT_EQ(set_dtype_name(x, "integer"), 0);
+  display_dtype(x);
+  EXPECT_EQ(strcmp(dtype_name(x), "integer"), 0);
+  EXPECT_EQ(strcmp(dtype_subtype(x), ""), 0);
+  EXPECT_EQ(dtype_precision(x), 0);
+  y = copy_dtype(x);
+  EXPECT_EQ(destroy_dtype(&x), 0);
+  EXPECT_EQ(destroy_dtype(&y), 0);
+}
+
+#define DO_GEOM(name)							\
+  TEST(generic_t, name) {						\
+    generic_t v = init_generic_generate("{\"type\": \"" #name "\"}");	\
+    generic_t x = init_generic_null();					\
+    name ## _t data = generic_get_ ## name(v);				\
+    EXPECT_EQ(generic_set_ ## name(x, data), 0);			\
+    EXPECT_TRUE(compare_generic(v, x));					\
+    name ## _t copy = copy_ ## name(data);				\
+    display_ ## name(data);						\
+    display_ ## name ## _indent(data, "  ");				\
+    EXPECT_GT(nelements_ ## name(data, "vertex"), 0);			\
+    name ## _t raw = init_ ## name();					\
+    void* raw_obj = generic_get_item(v, #name);				\
+    EXPECT_TRUE(raw_obj);						\
+    set_ ## name(&raw, raw_obj, 1);					\
+    free_ ## name(&copy);						\
+    free_ ## name(&data);						\
+    free_ ## name(&raw);						\
+    destroy_generic(&v);						\
+    destroy_generic(&x);						\
+  }
+
+DO_GEOM(ply)
+DO_GEOM(obj)
+
 // TODO:
-// - generic (ply, obj, any, schema, python, object, array)
+// - generic (any, schema, python, object, array)
 // - Python (destroy_python, copy_python, display_python, init_python_API)
-// - dtype (is_empty_dtype, is_dtype_format_array, dtype_name, dtype_subtype, dtype_precision, set_dtype_name, complete_dtype, destroy_dtype, create_dtype_direct, create_dtype_scalar, create_dtype_1darray, create_dtype_ndarray_arr, copy_dtype, dtype_uses_generic, display_dtype)
-// - geom (set_obj, free_obj, copy_obj, display_obj, nelements_obj, set_ply, free_ply, copy_ply, display_ply, nelements_ply)
+// - dtype (create_dtype_direct, create_dtype_scalar, create_dtype_1darray, create_dtype_ndarray_arr)

@@ -1558,7 +1558,7 @@ extern "C" {
     } _END_CPP(dtype_uses_generic, -1);
   }
 
-  void display_dtype(const dtype_t dtype, const char* indent="") {
+  void display_dtype(const dtype_t dtype, const char* indent) {
     _BEGIN_CPP {
       _GET_METADATA(metadata, dtype,);
       metadata->Display(indent);
