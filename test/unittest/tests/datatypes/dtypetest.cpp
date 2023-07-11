@@ -296,6 +296,42 @@ TEST(dtype_t, utils) {
   EXPECT_EQ(destroy_dtype(&y), 0);
 }
 
+TEST(dtype_t, create) {
+  {
+    dtype_t x = create_dtype_direct(false);
+    EXPECT_EQ(strcmp(dtype_name(x), "string"), 0);
+    destroy_dtype(&x);
+  }
+  {
+    dtype_t x = create_dtype_scalar("float", 8, "cm", false);
+    EXPECT_EQ(strcmp(dtype_name(x), "scalar"), 0);
+    EXPECT_EQ(strcmp(dtype_subtype(x), "float"), 0);
+    EXPECT_EQ(dtype_precision(x), 8);
+    destroy_dtype(&x);
+  }
+  {
+    dtype_t x = create_dtype_1darray("float", 8, 3, "cm", false);
+    display_dtype(x);
+    EXPECT_EQ(strcmp(dtype_name(x), "ndarray"), 0);
+    EXPECT_EQ(strcmp(dtype_subtype(x), "float"), 0);
+    EXPECT_EQ(dtype_precision(x), 8);
+    destroy_dtype(&x);
+  }
+  {
+    int64_t shape[2] = {2, 3};
+    dtype_t x = create_dtype_ndarray_arr("float", 8, 2, shape, "cm", false);
+    EXPECT_EQ(strcmp(dtype_name(x), "ndarray"), 0);
+    EXPECT_EQ(strcmp(dtype_subtype(x), "float"), 0);
+    EXPECT_EQ(dtype_precision(x), 8);
+    destroy_dtype(&x);
+  }
+  {
+    dtype_t x = create_dtype_json_array(5, NULL, false);
+    EXPECT_FALSE(x.metadata);
+    EXPECT_TRUE(is_empty_dtype(x));
+  }
+}
+
 #define DO_GEOM(name)							\
   TEST(generic_t, name) {						\
     generic_t v = init_generic_generate("{\"type\": \"" #name "\"}");	\
@@ -310,18 +346,45 @@ TEST(dtype_t, utils) {
     name ## _t raw = init_ ## name();					\
     void* raw_obj = generic_get_item(v, #name);				\
     EXPECT_TRUE(raw_obj);						\
+    set_ ## name(NULL, raw_obj, 0);					\
+    set_ ## name(&raw, NULL, 1);					\
     set_ ## name(&raw, raw_obj, 1);					\
     free_ ## name(&copy);						\
     free_ ## name(&data);						\
     free_ ## name(&raw);						\
     destroy_generic(&v);						\
     destroy_generic(&x);						\
+    name ## _t empty;							\
+    empty.obj = NULL;							\
+    display_ ## name(empty);						\
+    EXPECT_EQ(nelements_ ## name(empty, "vertex"), -1);			\
   }
-
 DO_GEOM(ply)
 DO_GEOM(obj)
+#undef DO_GEOM
+
+#define DO_PYTHON(name)							\
+  TEST(generic_t, name) {						\
+    generic_t v = init_generic_generate("{\"type\": \"" #name "\"}");	\
+    generic_t x = init_generic_null();					\
+    python_t data = generic_get_python_ ## name(v);			\
+    EXPECT_EQ(generic_set_python_ ## name(x, data), 0);			\
+    display_generic(v);							\
+    display_generic(x);							\
+    EXPECT_TRUE(compare_generic(v, x));					\
+    python_t copy = copy_python(data);					\
+    display_python(data);						\
+    destroy_python(&data);						\
+    destroy_python(&copy);						\
+    destroy_generic(&v);						\
+    destroy_generic(&x);						\
+  }
+DO_PYTHON(class)
+// TODO: DO_PYTHON(function)
+// DO_PYTHON(instance)
+#undef DO_PYTHON
 
 // TODO:
 // - generic (any, schema, python, object, array)
-// - Python (destroy_python, copy_python, display_python, init_python_API)
+// - Python (init_python_API)
 // - dtype (create_dtype_direct, create_dtype_scalar, create_dtype_1darray, create_dtype_ndarray_arr)

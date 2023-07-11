@@ -763,21 +763,15 @@ extern "C" {
     return out;
   }
   int get_generic_array(generic_t arr, const size_t i, generic_t *x) {
-    int out = GENERIC_SUCCESS_;
     generic_ref_t tmp = init_generic_ref(arr);
     if (get_generic_array_ref(arr, i, &tmp) != GENERIC_SUCCESS_)
       return GENERIC_ERROR_;
-    try {
-      x[0] = init_generic();
-      rapidjson::Value* src = (rapidjson::Value*)(tmp.obj);
-      rapidjson::Document* cpy = new rapidjson::Document();
-      cpy->CopyFrom(*src, cpy->GetAllocator(), true);
-      x[0].obj = (void*)cpy;
-    } catch (...) {
-      ygglog_error_c("get_generic_array: C++ exception thrown.");
-      out = GENERIC_ERROR_;
-    }
-    return out;
+    x[0] = init_generic();
+    rapidjson::Value* src = (rapidjson::Value*)(tmp.obj);
+    rapidjson::Document* cpy = new rapidjson::Document();
+    cpy->CopyFrom(*src, cpy->GetAllocator(), true);
+    x[0].obj = (void*)cpy;
+    return GENERIC_SUCCESS_;
   }
 
   int set_generic_object(generic_t arr, const char* k, generic_t x) {
@@ -832,21 +826,15 @@ extern "C" {
     return out;
   }
   int get_generic_object(generic_t arr, const char* k, generic_t *x) {
-    int out = GENERIC_SUCCESS_;
     generic_ref_t tmp = init_generic_ref(arr);
     if (get_generic_object_ref(arr, k, &tmp) != GENERIC_SUCCESS_)
       return GENERIC_ERROR_;
-    try {
-      x[0] = init_generic();
-      rapidjson::Value* src = (rapidjson::Value*)(tmp.obj);
-      rapidjson::Document* cpy = new rapidjson::Document();
-      cpy->CopyFrom(*src, cpy->GetAllocator(), true);
-      x[0].obj = (void*)cpy;
-    } catch (...) {
-      ygglog_error_c("get_generic_object: C++ exception thrown.");
-      out = GENERIC_ERROR_;
-    }
-    return out;
+    x[0] = init_generic();
+    rapidjson::Value* src = (rapidjson::Value*)(tmp.obj);
+    rapidjson::Document* cpy = new rapidjson::Document();
+    cpy->CopyFrom(*src, cpy->GetAllocator(), true);
+    x[0].obj = (void*)cpy;
+    return GENERIC_SUCCESS_;
   }
 
 #define NESTED_BASE_SET_(base, idx, idxType, name, args, ...)	\
@@ -1435,14 +1423,10 @@ extern "C" {
 				   const char* units,
 				   const bool use_generic) {
     size_t *shape_ptr = (size_t*)malloc(ndim*sizeof(size_t));
-    // size_t shape_size_t[ndim];
     size_t i;
     for (i = 0; i < ndim; i++) {
       shape_ptr[i] = (size_t)shape[i];
-      // shape_size_t[i] = (size_t)shape[i];
     }
-    // size_t* shape_ptr = shape_size_t;
-    // const size_t* shape_ptr = shape;
     dtype_t out = create_dtype_ndarray(subtype, precision, ndim,
 				       shape_ptr, units, use_generic);
     free(shape_ptr);
@@ -1575,14 +1559,14 @@ extern "C" {
   }
 
   void set_obj(obj_t* x, void* obj, int copy) {
-    if (obj != NULL) {
+    if (x == NULL)
+      return;
+    if (copy && obj != NULL) {
       rapidjson::ObjWavefront* objw = (rapidjson::ObjWavefront*)obj;
-      if (copy) {
-	rapidjson::ObjWavefront* cpy = new rapidjson::ObjWavefront(*objw);
-	x->obj = cpy;
-      } else {
-	x->obj = objw;
-      }
+      rapidjson::ObjWavefront* cpy = new rapidjson::ObjWavefront(*objw);
+      x->obj = cpy;
+    } else {
+      x->obj = obj;
     }
   }
 
@@ -1629,14 +1613,9 @@ extern "C" {
       ygglog_error_c("nelements_obj: ObjWavefront object is NULL.");
       return -1;
     }
-    try {
-      rapidjson::ObjWavefront* obj = (rapidjson::ObjWavefront*)(p.obj);
-      size_t N = obj->count_elements(std::string(name));
-      return static_cast<int>(N);
-    } catch (...) {
-      ygglog_error_c("nelements_obj: Error getting number of '%s' elements", name);
-      return -1;
-    }
+    rapidjson::ObjWavefront* obj = (rapidjson::ObjWavefront*)(p.obj);
+    size_t N = obj->count_elements(std::string(name));
+    return static_cast<int>(N);
   }
 
   ////////////////////////////////////////////
@@ -1652,15 +1631,12 @@ extern "C" {
   void set_ply(ply_t* x, void* obj, int copy) {
     if (x == NULL)
       return;
-    if (obj != NULL) {
+    if (copy && obj != NULL) {
       rapidjson::Ply* objw = (rapidjson::Ply*)obj;
-      if (copy) {
-	rapidjson::Ply* cpy = new rapidjson::Ply(*objw);
-	x->obj = cpy;
-      } else {
-	x->obj = objw;
-      }
-      std::map<std::string,size_t> counts = objw->element_counts();
+      rapidjson::Ply* cpy = new rapidjson::Ply(*objw);
+      x->obj = cpy;
+    } else {
+      x->obj = obj;
     }
   }
 
@@ -1708,14 +1684,9 @@ extern "C" {
       ygglog_error_c("nelements_ply: Ply object is NULL.");
       return -1;
     }
-    try {
-      rapidjson::Ply* ply = (rapidjson::Ply*)(p.obj);
-      size_t N = ply->count_elements(std::string(name));
-      return static_cast<int>(N);
-    } catch (...) {
-      ygglog_error_c("nelements_ply: Error getting number of '%s' elements", name);
-      return -1;
-    }
+    rapidjson::Ply* ply = (rapidjson::Ply*)(p.obj);
+    size_t N = ply->count_elements(std::string(name));
+    return static_cast<int>(N);
   }
   
   int init_python_API() {
