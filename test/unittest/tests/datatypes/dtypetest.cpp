@@ -7,6 +7,14 @@ TEST(generic_t, Container) {
   generic_t x_obj = init_generic_map();
   EXPECT_TRUE(is_generic_init(x_arr));
   EXPECT_TRUE(is_generic_init(x_obj));
+  {
+    generic_t v;
+    generic_ref_t v_ref;
+    EXPECT_EQ(get_generic_array(x_arr, 0, &v), -1);
+    EXPECT_EQ(get_generic_array_ref(x_arr, 0, &v_ref), -1);
+    EXPECT_EQ(get_generic_map(x_obj, "x", &v), -1);
+    EXPECT_EQ(get_generic_map_ref(x_obj, "x", &v_ref), -1);
+  }
 #define ADD_ITEM(idx, schema)						\
   {									\
     generic_t v = init_generic_json(schema);				\
@@ -53,18 +61,44 @@ TEST(generic_t, ContainerErrors) {
   {
     // Empty object
     generic_t x = init_generic();
+    generic_t v = init_generic();
+    generic_t w = init_generic();
+    generic_ref_t w_ref;
     EXPECT_EQ(generic_array_get_size(x), 0);
     EXPECT_EQ(generic_map_get_size(x), 0);
     EXPECT_EQ(generic_map_has_key(x, "x"), 0);
     EXPECT_EQ(generic_map_get_keys(x, &keys), 0);
+    EXPECT_EQ(set_generic_array(x, 0, v), -1);
+    EXPECT_EQ(set_generic_map(x, "x", v), -1);
+    EXPECT_EQ(add_generic_array(x, v), -1);
+    EXPECT_EQ(get_generic_array(x, 0, &w), -1);
+    EXPECT_EQ(get_generic_array_ref(x, 0, &w_ref), -1);
+    EXPECT_EQ(get_generic_map(x, "x", &w), -1);
+    EXPECT_EQ(get_generic_map_ref(x, "x", &w_ref), -1);
   }
   {
     // NULL object
     generic_t x = init_generic_null();
+    generic_t v = init_generic();
+    generic_t w = init_generic();
+    generic_ref_t w_ref;
     EXPECT_EQ(generic_array_get_size(x), 0);
     EXPECT_EQ(generic_map_get_size(x), 0);
     EXPECT_EQ(generic_map_has_key(x, "x"), 0);
     EXPECT_EQ(generic_map_get_keys(x, &keys), 0);
+    EXPECT_EQ(set_generic_array(x, 0, v), -1);
+    EXPECT_EQ(set_generic_map(x, "x", v), -1);
+    EXPECT_EQ(add_generic_array(x, v), -1);
+    v = init_generic_null();
+    EXPECT_EQ(set_generic_array(x, 0, v), -1);
+    EXPECT_EQ(set_generic_map(x, "x", v), -1);
+    EXPECT_EQ(add_generic_array(x, v), -1);
+    EXPECT_EQ(get_generic_array(x, 0, &w), -1);
+    EXPECT_EQ(get_generic_array_ref(x, 0, &w_ref), -1);
+    EXPECT_EQ(get_generic_map(x, "x", &w), -1);
+    EXPECT_EQ(get_generic_map_ref(x, "x", &w_ref), -1);
+    destroy_generic(&x);
+    destroy_generic(&v);
   }
 }
 

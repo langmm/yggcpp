@@ -1,6 +1,7 @@
 #pragma once
 #include <regex>
 #include <cstdio>
+#include <cstring>
 #include <iostream>
 #define FMT_LEN 100
 
