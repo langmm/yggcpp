@@ -68,7 +68,15 @@ typedef struct ply_t {
   @returns generic_t New generic object structure.
  */
 generic_t init_generic();
-  
+
+/*!
+  @brief Initialize an empty generic reference object.
+  @param[in] parent Generic object that will be the parent of the
+    returned reference object.
+  @returns New generic reference object structure.
+ */
+generic_ref_t init_generic_ref(generic_t parent);
+
 /*!
   @brief Initialize an empty generic object with a null JSON document
   @returns generic_t New generic object structure.
@@ -77,23 +85,35 @@ generic_t init_generic_null();
   
 /*!
   @brief Initialize an empty array of mixed types with generic wrappers.
-  @returns generic_t New generic object structure containing an empty array.
+  @returns generic_t New generic object structure containing an empty
+    array.
 */
 generic_t init_generic_array();
 
 /*!
-  @brief Initialize an empty map (JSON object) of mixed types with generic wrappers.
-  @returns generic_t New generic object structure contaiing an empty map (JSON object).
+  @brief Initialize an empty map (JSON object) of mixed types with
+    generic wrappers.
+  @returns New generic object structure contaiing an empty map (JSON
+    object).
  */
 generic_t init_generic_map();
 
 /*!
   @brief Initialize a generic object from a JSON string.
-  @returns generic_t New generic object structure wrapping a
-    rapidjson::Document instance.
+  @param[in] json JSON encoded string.
+  @returns New generic object structure wrapping a rapidjson::Document
+    instance.
  */
 generic_t init_generic_json(const char* json);
 
+/*!
+  @brief Initialize a generic object from a JSON string.
+  @param[in] schema JSON encoded schema describing object to generate.
+  @returns New generic object structure wrapping a rapidjson::Document
+    instance.
+ */
+generic_t init_generic_generate(const char* schema);
+  
 /*!
   @brief Determine if a generic structure is initialized.
   @param[in] x Generic structure to test.
@@ -280,9 +300,26 @@ size_t generic_map_get_keys(generic_t x, char*** keys);
 
 void* generic_ref_get_item(generic_ref_t x, const char *type);
 void* generic_get_item(generic_t x, const char *type);
+int generic_ref_get_item_nbytes(generic_ref_t x, const char *type);
+int generic_get_item_nbytes(generic_t x, const char *type);
 int generic_set_item(generic_t x, const char *type, void* value);
 
 int generic_set_json(generic_t x, const char *json);
+void* generic_ref_get_scalar(generic_ref_t x, const char *subtype, const size_t precision);
+void* generic_get_scalar(generic_t x, const char *subtype, const size_t precision);
+size_t generic_ref_get_1darray(generic_ref_t x, const char *subtype, const size_t precision, void** data);
+size_t generic_get_1darray(generic_t x, const char *subtype, const size_t precision, void** data);
+size_t generic_ref_get_ndarray(generic_ref_t x, const char *subtype, const size_t precision, void** data, size_t** shape);
+size_t generic_get_ndarray(generic_t x, const char *subtype, const size_t precision, void** data, size_t** shape);
+int generic_set_scalar(generic_t x, void* value, const char *subtype,
+		       const size_t precision, const char *units);
+int generic_set_1darray(generic_t x, void* value, const char *subtype,
+			const size_t precision, const size_t length,
+			const char* units);
+int generic_set_ndarray(generic_t x, void* data, const char *subtype,
+			const size_t precision, const size_t ndim,
+			const size_t* shape, const char* units);
+
   
 #define NESTED_BASE_SET_(base, idx, idxType, name, ...)			\
   int generic_ ## base ## _set_ ## name(generic_t x, idxType idx, __VA_ARGS__)

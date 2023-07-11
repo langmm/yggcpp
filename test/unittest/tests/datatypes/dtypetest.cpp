@@ -61,6 +61,7 @@ TEST(generic_t, ContainerErrors) {
   {
     // Empty object
     generic_t x = init_generic();
+    generic_ref_t x_ref = init_generic_ref(x);
     generic_t v = init_generic();
     generic_t w = init_generic();
     generic_ref_t w_ref;
@@ -75,10 +76,18 @@ TEST(generic_t, ContainerErrors) {
     EXPECT_EQ(get_generic_array_ref(x, 0, &w_ref), -1);
     EXPECT_EQ(get_generic_map(x, "x", &w), -1);
     EXPECT_EQ(get_generic_map_ref(x, "x", &w_ref), -1);
+    EXPECT_FALSE(generic_get_item(x, "string"));
+    EXPECT_EQ(generic_get_item_nbytes(x, "string"), -1);
+    EXPECT_FALSE(generic_ref_get_item(x_ref, "string"));
+    EXPECT_EQ(generic_ref_get_item_nbytes(x_ref, "string"), -1);
+    EXPECT_EQ(generic_set_item(x, "null", NULL), -1);
+    EXPECT_EQ(generic_set_json(x, "1"), -1);
+    display_generic(x);
   }
   {
     // NULL object
     generic_t x = init_generic_null();
+    generic_ref_t x_ref = init_generic_ref(x);
     generic_t v = init_generic();
     generic_t w = init_generic();
     generic_ref_t w_ref;
@@ -97,6 +106,11 @@ TEST(generic_t, ContainerErrors) {
     EXPECT_EQ(get_generic_array_ref(x, 0, &w_ref), -1);
     EXPECT_EQ(get_generic_map(x, "x", &w), -1);
     EXPECT_EQ(get_generic_map_ref(x, "x", &w_ref), -1);
+    EXPECT_FALSE(generic_get_item(x, "string"));
+    EXPECT_EQ(generic_get_item_nbytes(x, "string"), -1);
+    EXPECT_FALSE(generic_ref_get_item(x_ref, "string"));
+    EXPECT_EQ(generic_ref_get_item_nbytes(x_ref, "string"), -1);
+    EXPECT_EQ(generic_set_item(x, "invalid", NULL), -1);
     destroy_generic(&x);
     destroy_generic(&v);
   }
@@ -119,6 +133,18 @@ STANDARD_TEST(integer, int, 5)
 STANDARD_TEST(null, void*, NULL)
 STANDARD_TEST(number, double, 5.5)
 #undef STANDARD_TEST
+
+TEST(generic_t, string) {
+  generic_t x_arr = init_generic_array();
+  generic_t x_obj = init_generic_map();
+  const char* data = "hello";
+  EXPECT_EQ(generic_array_set_string(x_arr, 0, data), 0);
+  EXPECT_EQ(strcmp(generic_array_get_string(x_arr, 0), data), 0);
+  EXPECT_EQ(generic_map_set_string(x_obj, "x", data), 0);
+  EXPECT_EQ(strcmp(generic_map_get_string(x_obj, "x"), data), 0);
+  destroy_generic(&x_arr);
+  destroy_generic(&x_obj);
+}
   
 #define SCALAR_TEST(name, type, value)					\
   TEST(generic_t, name) {						\
@@ -163,7 +189,70 @@ COMPLEX_TEST(complex_long_double, complex_long_double_t, 3.3l)
 #undef SCALAR_TEST
 #undef COMPLEX_TEST
 
+TEST(generic_t, data) {
+#define DO_TYPE(type)							\
+  {									\
+    generic_t v = init_generic_generate("{\"type\": \"" #type "\"}");	\
+    generic_t x = init_generic_null();					\
+    EXPECT_GT(generic_get_item_nbytes(v, #type), 0);			\
+    void* data = generic_get_item(v, #type);				\
+    EXPECT_TRUE(data);							\
+    EXPECT_EQ(generic_set_item(x, #type, data), 0);			\
+    EXPECT_TRUE(compare_generic(x, v));					\
+    destroy_generic(&v);						\
+    destroy_generic(&x);						\
+  }
+  DO_TYPE(null)
+  DO_TYPE(boolean)
+  DO_TYPE(number)
+  DO_TYPE(integer)
+  DO_TYPE(string)
+  DO_TYPE(object)
+    // DO_TYPE(class)
+  DO_TYPE(obj)
+  DO_TYPE(ply)
+#undef DO_TYPE
+}
+
+TEST(generic_t, scalar) {
+  generic_t v = init_generic_generate("{\"type\": \"scalar\", \"subtype\": \"float\", \"precision\": 8, \"units\": \"cm\"}");
+  generic_t x = init_generic_null();
+  EXPECT_FALSE(generic_get_scalar(v, "int", 8));
+  EXPECT_FALSE(generic_get_scalar(v, "float", 2));
+  void* data = generic_get_scalar(v, "float", 8);
+  EXPECT_TRUE(data);
+  EXPECT_EQ(generic_set_scalar(x, data, "float", 8, "cm"), 0);
+  EXPECT_TRUE(compare_generic(x, v));
+}
+
+TEST(generic_t, 1darray) {
+  generic_t v = init_generic_generate("{\"type\": \"1darray\", \"subtype\": \"float\", \"precision\": 8, \"units\": \"cm\", \"length\": 3}");
+  generic_t x = init_generic_null();
+  void* data = NULL;
+  EXPECT_EQ(generic_get_1darray(v, "int", 8, &data), 0);
+  EXPECT_EQ(generic_get_1darray(v, "float", 2, &data), 0);
+  EXPECT_EQ(generic_get_1darray(v, "float", 8, &data), 3);
+  EXPECT_TRUE(data);
+  EXPECT_EQ(generic_set_1darray(x, data, "float", 8, 3, "cm"), 0);
+  EXPECT_TRUE(compare_generic(x, v));
+}
+
+TEST(generic_t, ndarray) {
+  generic_t v = init_generic_generate("{\"type\": \"ndarray\", \"subtype\": \"float\", \"precision\": 8, \"units\": \"cm\", \"shape\": [2, 3]}");
+  generic_t x = init_generic_null();
+  void* data = NULL;
+  size_t* shape = NULL;
+  EXPECT_EQ(generic_get_ndarray(v, "int", 8, &data, &shape), 0);
+  EXPECT_EQ(generic_get_ndarray(v, "float", 2, &data, &shape), 0);
+  EXPECT_EQ(generic_get_ndarray(v, "float", 8, &data, &shape), 2);
+  EXPECT_TRUE(data);
+  EXPECT_TRUE(shape);
+  EXPECT_EQ(generic_set_ndarray(x, data, "float", 8, 2, shape, "cm"), 0);
+  EXPECT_TRUE(compare_generic(x, v));
+}
+
 // TODO:
+// - generic (ply, obj, any, schema, python, object, array)
 // - Python (destroy_python, copy_python, display_python, init_python_API)
 // - dtype (is_empty_dtype, is_dtype_format_array, dtype_name, dtype_subtype, dtype_precision, set_dtype_name, complete_dtype, destroy_dtype, create_dtype_direct, create_dtype_scalar, create_dtype_1darray, create_dtype_ndarray_arr, copy_dtype, dtype_uses_generic, display_dtype)
 // - geom (set_obj, free_obj, copy_obj, display_obj, nelements_obj, set_ply, free_ply, copy_ply, display_ply, nelements_ply)

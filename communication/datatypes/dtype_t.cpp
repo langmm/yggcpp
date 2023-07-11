@@ -131,6 +131,18 @@ extern "C" {
     return out;
   }
 
+  generic_t init_generic_generate(const char* schema) {
+    generic_t out = init_generic();
+    rapidjson::Document sd;
+    sd.Parse(schema);
+    rapidjson::SchemaDocument s(sd);
+    rapidjson::SchemaValidator validator(s);
+    rapidjson::Document* x = new rapidjson::Document();
+    validator.GenerateData(*x);
+    out.obj = (void*)x;
+    return out;
+  }
+
   int is_generic_init(generic_t x) {
     return (x.obj != NULL);
   }
@@ -248,7 +260,7 @@ extern "C" {
     return generic_ref_get_item_nbytes(x_ref, type);
   }
   int generic_set_item(generic_t x, const char *type, void* value) {
-    int out = GENERIC_ERROR_;
+    int out = GENERIC_SUCCESS_;
     try {
       if (!is_generic_init(x)) {
 	ygglog_throw_error_c("generic_set_item: Object is NULL.");
@@ -269,7 +281,7 @@ extern "C" {
       else CASE_(number, SetDouble(((double*)value)[0]))
       else CASE_(integer, SetInt(((int*)value)[0]))
       else CASE_(string, SetString(((char*)value), STRLEN_RJ((char*)value),
-				   generic_allocator(x))) // Shouuld this be cast to char**?
+				   generic_allocator(x))) // Should this be cast to char**?
       else if (typeS == std::string("any") ||
 	       typeS == std::string("instance") ||
 	       typeS == std::string("schema") ||
@@ -388,7 +400,7 @@ extern "C" {
       const rapidjson::Value& rjshape = x_obj->GetShape();
       new_ndim = (size_t)(rjshape.Size());
       size_t i = 0;
-      shape[0] = (size_t*)realloc(shape[0], new_ndim);
+      shape[0] = (size_t*)realloc(shape[0], new_ndim * sizeof(size_t));
       if (shape[0] == NULL) {
 	ygglog_throw_error_c("generic_ref_get_ndarray: Failed to reallocate shape.");
       }
@@ -474,7 +486,7 @@ extern "C" {
 		       schema.GetAllocator());
       schema.AddMember(rapidjson::Document::GetShapeString(), rjshape,
 		       schema.GetAllocator());
-      x_obj->SetYggdrasilString((char*)value, precision,
+      x_obj->SetYggdrasilString((char*)value, precision * length,
 				generic_allocator(x),
 				schema);
       out = GENERIC_SUCCESS_;
@@ -485,8 +497,8 @@ extern "C" {
     return out;
   }
   int generic_set_ndarray(generic_t x, void* data, const char *subtype,
-			  const size_t precision, const size_t ndim, const size_t* shape,
-			  const char* units) {
+			  const size_t precision, const size_t ndim,
+			  const size_t* shape, const char* units) {
     int out = GENERIC_ERROR_;
     try {
       if (!is_generic_init(x)) {
@@ -512,13 +524,17 @@ extern "C" {
 			 schema.GetAllocator());
       }
       rapidjson::Value rjshape(rapidjson::kArrayType);
+      size_t length = 0;
+      if (ndim > 0)
+	length = 1;
       for (size_t i = 0; i < ndim; i++) {
 	rjshape.PushBack(rapidjson::Value((unsigned)(shape[i])).Move(),
 			 schema.GetAllocator());
+	length *= shape[i];
       }
       schema.AddMember(rapidjson::Document::GetShapeString(), rjshape,
 		       schema.GetAllocator());
-      x_obj->SetYggdrasilString((char*)data, precision,
+      x_obj->SetYggdrasilString((char*)data, precision * length,
 				generic_allocator(x),
 				schema);
       out = GENERIC_SUCCESS_;
@@ -528,7 +544,6 @@ extern "C" {
     }
     return out;
   }
-  // TODO: Cleanup temporary item created during setting
 #define NESTED_BASICS_(base, idx, idxType)				\
   void* generic_ ## base ## _get_item(generic_t x, idxType idx, const char *type) { \
     try {								\
