@@ -50,9 +50,12 @@ TEST(generic_t, Container) {
   }
   ADD_ITEM(0, "1")
   ADD_ITEM(0, "2")
+  generic_t v_fin = init_generic_json("1");
+  EXPECT_EQ(add_generic_array(x_arr, v_fin), 0);
 #undef ADD_ITEM
   destroy_generic(&x_arr);
   destroy_generic(&x_obj);
+  destroy_generic(&v_fin);
 }
 
 
@@ -80,8 +83,17 @@ TEST(generic_t, ContainerErrors) {
     EXPECT_EQ(generic_get_item_nbytes(x, "string"), -1);
     EXPECT_FALSE(generic_ref_get_item(x_ref, "string"));
     EXPECT_EQ(generic_ref_get_item_nbytes(x_ref, "string"), -1);
+    EXPECT_FALSE(generic_ref_get_scalar(x_ref, "float", 8));
+    void* data = NULL;
+    size_t* shape = NULL;
+    EXPECT_EQ(generic_ref_get_1darray(x_ref, "float", 0, &data), 0);
+    EXPECT_EQ(generic_ref_get_ndarray(x_ref, "float", 0, &data, &shape), 0);
+    EXPECT_EQ(generic_set_1darray(x, NULL, "float", 0, 0, "cm"), -1);
+    EXPECT_EQ(generic_set_ndarray(x, NULL, "float", 0, 0, shape, "cm"), -1);
     EXPECT_EQ(generic_set_item(x, "null", NULL), -1);
     EXPECT_EQ(generic_set_json(x, "1"), -1);
+    EXPECT_EQ(copy_generic_into(NULL, x), -1);
+    EXPECT_EQ(copy_generic_into(&v, x), -1);
     display_generic(x);
   }
   {
@@ -199,8 +211,11 @@ TEST(generic_t, data) {
     EXPECT_TRUE(data);							\
     EXPECT_EQ(generic_set_item(x, #type, data), 0);			\
     EXPECT_TRUE(compare_generic(x, v));					\
+    generic_t v_cpy = copy_generic(v);					\
+    EXPECT_TRUE(compare_generic(v, v_cpy));				\
     destroy_generic(&v);						\
     destroy_generic(&x);						\
+    destroy_generic(&v_cpy);						\
   }
   DO_TYPE(null)
   DO_TYPE(boolean)
@@ -208,7 +223,7 @@ TEST(generic_t, data) {
   DO_TYPE(integer)
   DO_TYPE(string)
   DO_TYPE(object)
-    // DO_TYPE(class)
+    // TODO: DO_TYPE(class)
   DO_TYPE(obj)
   DO_TYPE(ply)
 #undef DO_TYPE

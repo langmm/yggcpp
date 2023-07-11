@@ -226,8 +226,7 @@ extern "C" {
       if (!x_obj->IsType(type)) {
 	ygglog_throw_error_c("generic_ref_get_item: Object is not of type \'%s\'", type);
       }
-      bool requires_freeing = false;
-      out = x_obj->GetDataPtr(requires_freeing);
+      out = x_obj->GetDataPtr(generic_ref_allocator(x));
     } catch (...) {
       ygglog_error_c("generic_ref_get_item: C++ exception thrown.");
       out = NULL;
