@@ -136,16 +136,14 @@ extern "C" {
   int destroy_generic(generic_t* x) {
     int ret = 0;
     if (x != NULL) {
-      if (is_generic_init(*x)) {
-	if (x->obj != NULL) {
-	  try {
-	    rapidjson::Document* obj = (rapidjson::Document*)(x->obj);
-	    delete obj;
-	    x->obj = NULL;
-	  } catch (...) {
-	    ygglog_error_c("destroy_generic: C++ exception thrown in destructor for rapidjson::Document.");
-	    ret = -1;
-	  }
+      if (x->obj != NULL) {
+	try {
+	  rapidjson::Document* obj = (rapidjson::Document*)(x->obj);
+	  delete obj;
+	  x->obj = NULL;
+	} catch (...) {
+	  ygglog_error_c("destroy_generic: C++ exception thrown in destructor for rapidjson::Document.");
+	  ret = -1;
 	}
       }
     }
@@ -157,12 +155,8 @@ extern "C" {
       if (!dst) {
 	ygglog_throw_error_c("copy_generic_into: Destination is empty.");
       }
-      if (is_generic_init(*dst))
-	destroy_generic(dst);
+      destroy_generic(dst);
       dst[0] = init_generic();
-      if (!(is_generic_init(src))) {
-	ygglog_throw_error_c("copy_generic_into: Source object not initialized.");
-      }
       if (src.obj == NULL) {
 	ygglog_throw_error_c("copy_generic: Generic object class is NULL.");
       }
@@ -193,11 +187,9 @@ extern "C" {
   
   void display_generic(generic_t x) {
     try {
-      if (is_generic_init(x)) {
-	if (!x.obj)
-	  ygglog_throw_error_c("display_generic: Object is NULL.");
-	std::cout << *((rapidjson::Document*)(x.obj)) << std::endl;
-      }
+      if (!x.obj)
+	ygglog_throw_error_c("display_generic: Object is NULL.");
+      std::cout << *((rapidjson::Document*)(x.obj)) << std::endl;
     } catch (...) {
       ygglog_error_c("display_generic: C++ exception thrown.");
     }
@@ -252,9 +244,6 @@ extern "C" {
   int generic_set_item(generic_t x, const char *type, void* value) {
     int out = GENERIC_ERROR_;
     try {
-      if (!(is_generic_init(x))) {
-	ygglog_throw_error_c("generic_set_item: Object not initialized.");
-      }
       if (x.obj == NULL) {
 	ygglog_throw_error_c("generic_set_item: Object is NULL.");
       }
@@ -306,9 +295,6 @@ extern "C" {
   int generic_set_json(generic_t x, const char *json) {
     int out = GENERIC_SUCCESS_;
     try {
-      if (!(is_generic_init(x))) {
-	ygglog_throw_error_c("generic_set_json: Object not initialized.");
-      }
       if (x.obj == NULL) {
 	ygglog_throw_error_c("generic_set_json: Object is NULL.");
       }
@@ -418,9 +404,6 @@ extern "C" {
 			 const size_t precision, const char *units) {
     int out = GENERIC_ERROR_;
     try {
-      if (!(is_generic_init(x))) {
-	ygglog_throw_error_c("generic_set_scalar: Object not initialized.");
-      }
       if (x.obj == NULL) {
 	ygglog_throw_error_c("generic_set_scalar: Object is NULL.");
       }
@@ -458,9 +441,6 @@ extern "C" {
 			  const char* units) {
     int out = GENERIC_ERROR_;
     try {
-      if (!(is_generic_init(x))) {
-	ygglog_throw_error_c("generic_set_1darray: Object not initialized.");
-      }
       if (x.obj == NULL) {
 	ygglog_throw_error_c("generic_set_1darray: Object is NULL.");
       }
@@ -503,9 +483,6 @@ extern "C" {
 			  const char* units) {
     int out = GENERIC_ERROR_;
     try {
-      if (!(is_generic_init(x))) {
-	ygglog_throw_error_c("generic_set_ndarray: Object not initialized.");
-      }
       if (x.obj == NULL) {
 	ygglog_throw_error_c("generic_set_ndarray: Object is NULL.");
       }
@@ -695,12 +672,6 @@ extern "C" {
   int add_generic_array(generic_t arr, generic_t x) {
     int out = GENERIC_SUCCESS_;
     try {
-      if (!(is_generic_init(arr))) {
-	ygglog_throw_error_c("add_generic_array: Array is not a generic object.");
-      }
-      if (!(is_generic_init(x))) {
-	ygglog_throw_error_c("add_generic_array: New element is not a generic object.");
-      }
       if (arr.obj == NULL) {
 	ygglog_throw_error_c("add_generic_array: Array is NULL.");
       }
@@ -724,12 +695,6 @@ extern "C" {
   int set_generic_array(generic_t arr, const size_t i, generic_t x) {
     int out = GENERIC_SUCCESS_;
     try {
-      if (!(is_generic_init(arr))) {
-	ygglog_throw_error_c("set_generic_array: Array is not a generic object.");
-      }
-      if (!(is_generic_init(x))) {
-	ygglog_throw_error_c("set_generic_array: New element is not a generic object.");
-      }
       if (arr.obj == NULL) {
 	ygglog_throw_error_c("set_generic_array: Array is NULL.");
       }
@@ -760,9 +725,6 @@ extern "C" {
     int out = GENERIC_SUCCESS_;
     x[0] = init_generic_ref(arr);
     try {
-      if (!(is_generic_init(arr))) {
-	ygglog_throw_error_c("get_generic_array_ref: Array is not a generic object.");
-      }
       if (arr.obj == NULL) {
 	ygglog_throw_error_c("get_generic_array_ref: Array is NULL.");
       }
@@ -805,12 +767,6 @@ extern "C" {
   int set_generic_object(generic_t arr, const char* k, generic_t x) {
     int out = GENERIC_SUCCESS_;
     try {
-      if (!(is_generic_init(arr))) {
-	ygglog_throw_error_c("set_generic_object: Object is not a generic object.");
-      }
-      if (!(is_generic_init(x))) {
-	ygglog_throw_error_c("set_generic_object: New element is not a generic object.");
-      }
       if (arr.obj == NULL) {
 	ygglog_throw_error_c("set_generic_object: Object is NULL.");
       }
@@ -842,9 +798,6 @@ extern "C" {
     int out = 0;
     x[0] = init_generic_ref(arr);
     try {
-      if (!(is_generic_init(arr))) {
-	ygglog_throw_error_c("get_generic_object_ref: Object is not a generic object.");
-      }
       if (arr.obj == NULL) {
 	ygglog_throw_error_c("get_generic_object_ref: Object is NULL.");
       }
@@ -964,7 +917,7 @@ extern "C" {
     return generic_ref_get_ ## name(x_ref);				\
   }									\
   int generic_set_ ## name(generic_t x, type value) {			\
-    if (!is_generic_init(x)) {						\
+    if (x.obj == NULL) {						\
       ygglog_error_c("Generic object is not initialized");		\
       return GENERIC_ERROR_;						\
     }									\
@@ -994,7 +947,7 @@ extern "C" {
     return generic_ref_get_ ## name(x_ref);				\
   }									\
   int generic_set_ ## name(generic_t x, type value, const char* units) { \
-    if (!is_generic_init(x)) {						\
+    if (x.obj == NULL) {						\
       ygglog_error_c("Generic object is not initialized");		\
       return GENERIC_ERROR_;						\
     }									\
@@ -1054,7 +1007,7 @@ extern "C" {
     return generic_ref_get_ndarray_ ## name(x_ref, data, shape);	\
   }									\
   int generic_set_1darray_ ## name(generic_t x, type* value, const size_t length, const char* units) { \
-    if (!is_generic_init(x)) {						\
+    if (x.obj == NULL) {						\
       ygglog_error_c("Generic object is not initialized");		\
       return GENERIC_ERROR_;						\
     }									\
@@ -1064,7 +1017,7 @@ extern "C" {
     return GENERIC_SUCCESS_;						\
   }									\
   int generic_set_ndarray_ ## name(generic_t x, type* value, const size_t ndim, const size_t* shape, const char* units) { \
-    if (!is_generic_init(x)) {						\
+    if (x.obj == NULL) {						\
       ygglog_error_c("Generic object is not initialized");		\
       return GENERIC_ERROR_;						\
     }									\
@@ -1111,7 +1064,7 @@ extern "C" {
     return generic_ref_get_ ## name(x_ref);				\
   }									\
   int generic_set_ ## name(generic_t x, type value, const char* units) { \
-    if (!is_generic_init(x)) {						\
+    if (x.obj == NULL) {						\
       ygglog_error_c("Generic object is not initialized");		\
       return GENERIC_ERROR_;						\
     }									\
@@ -1185,9 +1138,6 @@ extern "C" {
   size_t generic_array_get_size(generic_t x) {
     size_t out = 0;
     try {
-      if (!(is_generic_init(x))) {
-	ygglog_throw_error_c("generic_array_get_size: Object not initialized.");
-      }
       if (x.obj == NULL) {
 	ygglog_throw_error_c("generic_array_get_size: Object is NULL.");
       }
@@ -1206,9 +1156,6 @@ extern "C" {
   size_t generic_map_get_size(generic_t x) {
     size_t out = 0;
     try {
-      if (!(is_generic_init(x))) {
-	ygglog_throw_error_c("generic_map_get_size: Object not initialized.");
-      }
       if (x.obj == NULL) {
 	ygglog_throw_error_c("generic_map_get_size: Object is NULL.");
       }
@@ -1222,12 +1169,9 @@ extern "C" {
     }
     return out;
   }
-  int generic_map_has_key(generic_t x, char* key) {
+  int generic_map_has_key(generic_t x, const char* key) {
     int out = 0;
     try {
-      if (!(is_generic_init(x))) {
-	ygglog_throw_error_c("generic_map_has_key: Object not initialized.");
-      }
       if (x.obj == NULL) {
 	ygglog_throw_error_c("generic_map_has_key: Object is NULL.");
       }
@@ -1246,9 +1190,6 @@ extern "C" {
   size_t generic_map_get_keys(generic_t x, char*** keys) {
     size_t out = 0;
     try {
-      if (!(is_generic_init(x))) {
-	ygglog_throw_error_c("generic_map_get_keys: Object not initialized.");
-      }
       if (x.obj == NULL) {
 	ygglog_throw_error_c("generic_map_get_keys: Object is NULL.");
       }
