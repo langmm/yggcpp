@@ -96,11 +96,17 @@ generic_t init_generic_json(const char* json);
 
 /*!
   @brief Determine if a generic structure is initialized.
-  @param[in] x generic_t Generic structure to test.
-  @returns int 1 if the structure is initialized, 0 otherwise.
+  @param[in] x Generic structure to test.
+  @returns 1 if the structure is initialized, 0 otherwise.
  */
 int is_generic_init(generic_t x);
 
+/*!
+  @brief Determine if a generic reference structure is initialized.
+  @param[in] x Generic reference structure to test.
+  @returns 1 if the structure is initialized, 0 otherwise.
+ */
+int is_generic_ref_init(generic_ref_t x);
 
 /*!
   @brief Create a generic object from the provided information.
