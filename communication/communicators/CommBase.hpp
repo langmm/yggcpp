@@ -512,19 +512,7 @@ protected:
 	  full_name += "_IN";
 	}
       }
-      char *model_name = getenv("YGG_MODEL_NAME");
       char *addr = std::getenv(full_name.c_str());
-      if ((!addr) && model_name) {
-	std::string prefix(model_name);
-	prefix += ":";
-	if (prefix.size() > COMM_NAME_SIZE)
-	  prefix.resize(COMM_NAME_SIZE);
-	if (full_name.rfind(prefix, 0) != 0) {
-	  prefix += full_name;
-	  full_name = prefix;
-	  addr = std::getenv(full_name.c_str());
-	}
-      }
       if (!addr) {
 	std::string temp_name(full_name);
 	size_t loc;
@@ -533,14 +521,11 @@ protected:
 	}
 	addr = getenv(temp_name.c_str());
       }
-      std::string model_name_str = "null";
       std::string addr_str = "null";
-      if (model_name)
-	model_name_str.assign(model_name);
       if (addr)
 	addr_str.assign(addr_str);
-      ygglog_debug << "CommBase::addressFromEnv: model_name = " <<
-	model_name_str << ", address = " << addr_str << std::endl;
+      ygglog_debug << "CommBase::addressFromEnv: full_name = " <<
+	full_name << ", address = " << addr_str << std::endl;
       ygglog_debug << std::endl;
       if (addr)
 	out->address(addr);

@@ -105,7 +105,16 @@ Comm_t::Comm_t(const std::string &nme, utils::Address *addr,
   char *allow_threading = getenv("YGG_THREADING");
   if (allow_threading)
     flags |= COMM_ALLOW_MULTIPLE_COMMS;
-  
+  char *model_name = std::getenv("YGG_MODEL_NAME");
+  if (model_name) {
+    std::string prefix(model_name);
+    prefix += ":";
+    if (name.rfind(prefix, 0) != 0) {
+      prefix += name;
+      name = prefix;
+    }
+  }
+
   get_global_scope_comm();
   
   Comm_t::register_comm(this);
@@ -141,21 +150,42 @@ Comm_t::~Comm_t() {
 }
 
 bool Comm_t::get_global_scope_comm() {
+  COMM_TYPE global_type = type;
+  std::string global_name = name;
+  bool is_server = false;
+  if (type != SERVER_COMM && type != CLIENT_COMM && !name.empty()) {
+    char* server_var = NULL;
+    if (direction == RECV) {
+      server_var = std::getenv("YGG_SERVER_INPUT");
+    } else if (direction == SEND) {
+      server_var = std::getenv("YGG_SERVER_OUTPUT");
+    }
+    if (server_var && name == std::string(server_var)) {
+      is_server = true;
+      global_type = SERVER_COMM;
+      global_name = std::getenv("YGG_MODEL_NAME");
+      global_scope_comm = 1;
+    }
+  }
   if (name.empty() || (!global_scope_comm) ||
       (flags & (COMM_FLAG_GLOBAL | COMM_FLAG_WORKER |
 		COMM_FLAG_CLIENT_RESPONSE |
 		COMM_FLAG_SERVER_RESPONSE)))
     return false;
-  ygglog_debug << "CommBase: " << name << " (dir=" << direction << ") is a global communicator" << std::endl;
-  global_comm = Comm_t::find_registered_comm(name, direction, type);
+  ygglog_debug << "CommBase: " << global_name << " (dir=" << direction
+	       << ") is a global communicator" << std::endl;
+  global_comm = Comm_t::find_registered_comm(global_name, direction,
+					     global_type);
   if (!global_comm) {
-    global_comm = new_Comm_t(direction, type, name, address,
-			     flags | COMM_FLAG_GLOBAL);
+    global_comm = new_Comm_t(direction, global_type, global_name,
+			     address, flags | COMM_FLAG_GLOBAL);
   }
   if (!address)
     address = new utils::Address();
   address->address(global_comm->address->address());
   flags = global_comm->flags & ~COMM_FLAG_GLOBAL;
+  if (is_server)
+    global_scope_comm = 0;
   return true;
 }
   
@@ -179,8 +209,9 @@ void Comm_t::copySchema(const Comm_t* other) {
 bool Comm_t::check_size(const size_t &len) const {
     // Make sure you aren't sending a message that is too big
     if (len > YGG_MSG_MAX) {
-        ygglog_error << "comm_base_send(" << name << "): message too large for single packet (YGG_MSG_MAX="
-                     << YGG_MSG_MAX << ", len=" << len << ")" << std::endl;
+        ygglog_error << "comm_base_send(" << name <<
+	  "): message too large for single packet (YGG_MSG_MAX=" <<
+	  YGG_MSG_MAX << ", len=" << len << ")" << std::endl;
         return false;
     }
     return true;

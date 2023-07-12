@@ -226,7 +226,8 @@ extern "C" {
       if (!x_obj->IsType(type)) {
 	ygglog_throw_error_c("generic_ref_get_item: Object is not of type \'%s\'", type);
       }
-      out = x_obj->GetDataPtr(generic_ref_allocator(x));
+      bool requires_freeing = false;
+      out = x_obj->GetDataPtr(requires_freeing);
     } catch (...) {
       ygglog_error_c("generic_ref_get_item: C++ exception thrown.");
       out = NULL;
@@ -265,44 +266,9 @@ extern "C" {
 	ygglog_throw_error_c("generic_set_item: Object is NULL.");
       }
       rapidjson::Value* x_obj = (rapidjson::Value*)(x.obj);
-      std::string typeS(type);
-#define CASE_(name, method)			\
-      if (typeS == std::string(#name)) {	\
-	x_obj->method;				\
+      if (!x_obj->SetDataPtr(type, value, generic_allocator(x))) {
+	ygglog_throw_error_c("generic_set_item: Error setting data pointer");
       }
-#define GEOMETRY_(name, rjtype)					\
-      if (typeS == std::string(#name)) {			\
-	rapidjson::rjtype* tmp = (rapidjson::rjtype*)value;	\
-	x_obj->Set ## rjtype(*tmp, generic_allocator(x));	\
-      }
-      CASE_(null, SetNull())
-      else CASE_(boolean, SetBool(((bool*)value)[0]))
-      else CASE_(number, SetDouble(((double*)value)[0]))
-      else CASE_(integer, SetInt(((int*)value)[0]))
-      else CASE_(string, SetString(((char*)value), STRLEN_RJ((char*)value),
-				   generic_allocator(x))) // Should this be cast to char**?
-      else if (typeS == std::string("any") ||
-	       typeS == std::string("instance") ||
-	       typeS == std::string("schema") ||
-	       typeS == std::string("array") ||
-	       typeS == std::string("object")) {
-	x_obj->CopyFrom(((rapidjson::Value*)value)[0],
-			generic_allocator(x), true);
-      }
-      else if (typeS == std::string("class") ||
-	       typeS == std::string("function")) {
-	python_t tmp;
-	tmp.obj = (PyObject*)value;
-	if (generic_set_python_class(x, tmp) != GENERIC_SUCCESS_)
-	  return GENERIC_ERROR_;
-      }
-      else GEOMETRY_(obj, ObjWavefront)
-      else GEOMETRY_(ply, Ply)
-      else {
-	ygglog_throw_error_c("generic_set_item: Unsupported type '%s'", type);
-      }
-#undef CASE_
-#undef GEOMETRY_
     } catch(...) {
       ygglog_error_c("generic_set_item: C++ exception thrown");
       return GENERIC_ERROR_;
@@ -360,7 +326,7 @@ extern "C" {
       if (nbytes == 0)
 	return 0;
       new_length = (size_t)(x_obj->GetNElements());
-      data[0] = (void*)realloc(data[0], nbytes);
+      data[0] = generic_ref_allocator(x).Realloc(data[0], 0, nbytes);
       if (data[0] == NULL) {
 	ygglog_throw_error_c("generic_ref_get_1darray: Failed to reallocate array.");
       }
@@ -391,7 +357,7 @@ extern "C" {
       size_t nbytes = generic_ref_get_item_nbytes(x, "ndarray");
       if (nbytes == 0)
 	return 0;
-      data[0] = (void*)realloc(data[0], nbytes);
+      data[0] = generic_ref_allocator(x).Realloc(data[0], 0, nbytes);
       if (data[0] == NULL) {
 	ygglog_throw_error_c("generic_ref_get_ndarray: Failed to reallocate array.");
       }
@@ -399,7 +365,8 @@ extern "C" {
       const rapidjson::Value& rjshape = x_obj->GetShape();
       new_ndim = (size_t)(rjshape.Size());
       size_t i = 0;
-      shape[0] = (size_t*)realloc(shape[0], new_ndim * sizeof(size_t));
+      shape[0] = (size_t*)(generic_ref_allocator(x).Realloc(shape[0], 0,
+							    new_ndim * sizeof(size_t)));
       if (shape[0] == NULL) {
 	ygglog_throw_error_c("generic_ref_get_ndarray: Failed to reallocate shape.");
       }
