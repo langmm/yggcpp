@@ -74,6 +74,19 @@
 
 #define DELIMITER ','
 
+#define _BEGIN_CPP				\
+  try
+#define _END_CPP(name, ret)						\
+  catch (...) {								\
+    ygglog_error << #name << ": C++ exception thrown." << std::endl;	\
+    return ret;								\
+  }
+#define _END_CPP_CLEANUP(name, ret, cleanup)	\
+  catch (...) {								\
+    ygglog_error << #name << ": C++ exception thrown." << std::endl;	\
+    cleanup;								\
+    return ret;								\
+  }
 
 #define YGGCPP_BEGIN_VAR_ARGS(name, first_arg, nargs, realloc)	\
   rapidjson::VarArgList name(nargs, realloc);			\
