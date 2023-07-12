@@ -76,23 +76,6 @@ comm_t yggRpcServerType_global(const char *name, dtype_t inType, dtype_t outType
  */
 static inline
 yggOutput_t yggOutputType(const char *name, dtype_t datatype) {
-  const char* YGG_SERVER_OUTPUT = getenv("YGG_SERVER_OUTPUT");
-  if (YGG_SERVER_OUTPUT) {
-    const char* YGG_MODEL_NAME = getenv("YGG_MODEL_NAME");
-    if (strcmp(name, YGG_SERVER_OUTPUT) == 0) {
-      return yggRpcServerType_global(YGG_MODEL_NAME,
-				     create_dtype_empty(false),
-				     datatype);
-    } else {
-      char alt_name[100];
-      snprintf(alt_name, 100, "%s:%s", YGG_MODEL_NAME, name);
-      if (strcmp(alt_name, YGG_SERVER_OUTPUT) == 0) {
-	return yggRpcServerType_global(YGG_MODEL_NAME,
-				       create_dtype_empty(false),
-				       datatype);
-      }
-    }
-  }
   return init_comm(name, SEND, DEFAULT_COMM, datatype);
 };
 
@@ -107,21 +90,6 @@ yggOutput_t yggOutputType(const char *name, dtype_t datatype) {
  */
 static inline
 yggInput_t yggInputType(const char *name, dtype_t datatype) {
-  const char* YGG_SERVER_INPUT = getenv("YGG_SERVER_INPUT");
-  if (YGG_SERVER_INPUT) {
-    const char* YGG_MODEL_NAME = getenv("YGG_MODEL_NAME");
-    if (strcmp(name, YGG_SERVER_INPUT) == 0) {
-      return yggRpcServerType_global(YGG_MODEL_NAME, datatype,
-				     create_dtype_empty(false));
-    } else {
-      char alt_name[100];
-      snprintf(alt_name, 100, "%s:%s", YGG_MODEL_NAME, name);
-      if (strcmp(alt_name, YGG_SERVER_INPUT) == 0) {
-	return yggRpcServerType_global(YGG_MODEL_NAME, datatype,
-				       create_dtype_empty(false));
-      }
-    }
-  }
   return init_comm(name, RECV, DEFAULT_COMM, datatype);
 };
   
