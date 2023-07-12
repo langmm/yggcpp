@@ -11,8 +11,7 @@ void free_comm(comm_t* comm) {
         return;
     if (comm->comm != nullptr) {
         auto c = static_cast<communication::communicator::Comm_t *>(comm->comm);
-	if (!c->global())
-	  delete c;
+	delete c;
         comm->comm = nullptr;
     }
 }
@@ -203,21 +202,6 @@ int comm_nmsg(comm_t comm) {
     }
 }
 
-/*!
-  @brief Retrieve a registered global comm if it exists.
-  @param[in] name Name that comm might be registered under.
-  @param[in] dir Direction for comm.
-  @param[in] t Communicator type.
-  @returns Registered comm. Member comm willl be NULL if one does not
-    exist with the specified name.
- */
-comm_t get_global_scope_comm(const char *name, const DIRECTION dir,
-			     const COMM_TYPE &t) {
-  comm_t out;
-  out.comm = (void*)(communication::communicator::Comm_t::find_registered_comm(name, dir, t));
-  return out;
-}
-  
 void global_scope_comm_on_c() {
   communication::communicator::global_scope_comm_on();
 }

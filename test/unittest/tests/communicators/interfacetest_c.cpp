@@ -1,6 +1,6 @@
 #include "../../unittest.hpp"
 #include "YggInterface.h"
-#include "communicators/DefaultComm.hpp"
+#include "communicators/comms.hpp"
 #include "commtest.hpp"
 
 using namespace communication::communicator;
@@ -154,8 +154,79 @@ INTERFACE_TEST_SCHEMA(JSONArray, "{\"type\": \"array\", \"items\": [{\"type\": \
 INTERFACE_TEST_SCHEMA(JSONObject, "{\"type\": \"object\", \"properties\": {\"a\": {\"type\": \"integer\"}, \"b\": {\"type\": \"string\"}}}")
 
 
-// TODO: RPC
+TEST(YggInterface_C, RPC_input) {
+  ClientComm sComm("", nullptr);
+  setenv("input_IN", sComm.getAddress().c_str(), 1);
+  comm_t rComm_c = yggRpcServer("input", "%s", "%s");
+  ServerComm& rComm = *((ServerComm*)(rComm_c.comm));
+  DO_RPC_SIGNON;
+  // Request
+  const char* req_send = "This is a request message";
+  char* req_recv = NULL;
+  size_t req_len = strlen(req_send);
+  EXPECT_GE(sComm.send(req_send, req_len), 0);
+  EXPECT_EQ(ygg_recv_nolimit(rComm_c, &req_recv, 0), req_len);
+  EXPECT_TRUE(req_recv);
+  EXPECT_EQ(strcmp(req_send, req_recv), 0);
+  EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));
+  free(req_recv);
+  req_recv = NULL;
+  // Response
+  const char* res_send = "This is a response message";
+  char* res_recv = NULL;
+  size_t res_len = strlen(res_send);
+  EXPECT_GE(ygg_send(rComm_c, res_send, res_len), 0);
+  EXPECT_EQ(sComm.recv(res_recv, 0, true), res_len);
+  EXPECT_TRUE(res_recv);
+  EXPECT_EQ(strcmp(res_send, res_recv), 0);
+  EXPECT_TRUE(rComm.afterSendRecv(&rComm, &sComm));
+  free(res_recv);
+  res_recv = NULL;
+  // EOF
+  EXPECT_GE(sComm.send_eof(), 0);
+  EXPECT_EQ(ygg_recv_nolimit(rComm_c, &req_recv, 0), -2);
+  EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));
+  close_comm(&rComm_c);
+}
 
+TEST(YggInterface_C, RPC_output) {
+  ServerComm rComm("", nullptr);
+  setenv("output_OUT", rComm.getAddress().c_str(), 1);
+  comm_t sComm_c = yggRpcClient("output", "%s", "%s");
+  ClientComm& sComm = *((ClientComm*)(sComm_c.comm));
+  DO_RPC_SIGNON;
+  // Stash request
+  std::string req_send = "This is a request message";
+  std::string req_recv = "";
+  std::string msg = "\"" + req_send + "\"";
+  {
+    Header header;
+    EXPECT_TRUE(sComm.create_header_send(header, msg.c_str(), msg.size()));
+    size_t len = header.format(msg.c_str(), msg.size(), 0);
+    msg.assign(header.data[0], len);
+    EXPECT_GE(rComm.getRequests().addRequestServer(header), 0);
+    sComm.getRequests().stashRequest();
+  }
+  // Pre-send response
+  std::string res_send = "This is a response message";
+  char* res_recv = NULL;
+  size_t res_recv_len = 0;
+  EXPECT_GE(rComm.sendVar(res_send), 0);
+  // Call
+  EXPECT_EQ(rpcCallRealloc(sComm_c,
+			   req_send.c_str(), req_send.size(),
+			   &res_recv, &res_recv_len), 2);
+  EXPECT_EQ(res_send.size(), res_recv_len);
+  EXPECT_EQ(strcmp(res_send.c_str(), res_recv), 0);
+  // Server request
+  EXPECT_GE(rComm.recvVar(req_recv), 0);
+  EXPECT_EQ(req_recv, req_send);
+  // Cleanup
+  free(res_recv);
+  close_comm(&sComm_c);
+}
+
+// TODO: global test
 
 #undef INTERFACE_TEST_SCHEMA
 #undef INTERFACE_TEST_GEOM

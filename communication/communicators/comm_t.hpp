@@ -52,8 +52,6 @@ long pcommCall(comm_t comm, const int allow_realloc, size_t nargs, void** ptrs, 
 #define commCall commCallStack
 #define commCallRealloc commCallHeap
 
-comm_t get_global_scope_comm(const char *name, const DIRECTION dir,
-			     const COMM_TYPE &t);
 void global_scope_comm_on_c();
 void global_scope_comm_off_c();
 
