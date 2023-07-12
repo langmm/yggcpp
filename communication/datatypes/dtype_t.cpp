@@ -1,24 +1,12 @@
 #include "dtype_t.hpp"
 #include "utils/serialization.hpp"
+#include "utils/tools.hpp"
 
 #define _GET_METADATA(name, in, err)		\
   if (in.metadata == NULL) {			\
     return err;					\
   }						\
   Metadata* name = ((Metadata*)(in.metadata))
-#define _BEGIN_CPP				\
-  try
-#define _END_CPP(name, ret)						\
-  catch (...) {								\
-    ygglog_error << #name << ": C++ exception thrown." << std::endl;	\
-    return ret;								\
-  }
-#define _END_CPP_CLEANUP(name, ret, cleanup)	\
-  catch (...) {								\
-    ygglog_error << #name << ": C++ exception thrown." << std::endl;	\
-    cleanup;								\
-    return ret;								\
-  }
 
 // C++ functions
 rapidjson::Document::AllocatorType& generic_allocator(generic_t& x) {

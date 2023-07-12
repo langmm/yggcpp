@@ -154,7 +154,7 @@ INTERFACE_TEST_SCHEMA(JSONArray, "{\"type\": \"array\", \"items\": [{\"type\": \
 INTERFACE_TEST_SCHEMA(JSONObject, "{\"type\": \"object\", \"properties\": {\"a\": {\"type\": \"integer\"}, \"b\": {\"type\": \"string\"}}}")
 
 
-TEST(YggInterface_C, RPC_input) {
+TEST(YggInterface_C, Server) {
   ClientComm sComm("", nullptr);
   setenv("input_IN", sComm.getAddress().c_str(), 1);
   comm_t rComm_c = yggRpcServer("input", "%s", "%s");
@@ -187,9 +187,11 @@ TEST(YggInterface_C, RPC_input) {
   EXPECT_EQ(ygg_recv_nolimit(rComm_c, &req_recv, 0), -2);
   EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));
   close_comm(&rComm_c);
+  free(req_recv);
+  req_recv = NULL;
 }
 
-TEST(YggInterface_C, RPC_output) {
+TEST(YggInterface_C, Client) {
   ServerComm rComm("", nullptr);
   setenv("output_OUT", rComm.getAddress().c_str(), 1);
   comm_t sComm_c = yggRpcClient("output", "%s", "%s");
@@ -225,6 +227,147 @@ TEST(YggInterface_C, RPC_output) {
   free(res_recv);
   close_comm(&sComm_c);
 }
+
+TEST(YggInterface_C, ServerAny) {
+  dtype_t dtype_req = {0};
+  dtype_t dtype_res = {0};
+  INIT_DATA_SCHEMA_C("{\"type\": \"array\", \"items\": [{\"type\": \"integer\"}]}");
+  ClientComm sComm("", nullptr);
+  setenv("input_IN", sComm.getAddress().c_str(), 1);
+  comm_t rComm_c = yggRpcServerType("input", dtype_req, dtype_res);
+  ServerComm& rComm = *((ServerComm*)(rComm_c.comm));
+  DO_RPC_SIGNON;
+  // Request
+  EXPECT_GE(sComm.sendVar(*data_send_doc), 0);
+  EXPECT_GE(yggRecv(rComm_c, &data_recv), 0);
+  EXPECT_TRUE(compare_generic(data_recv, data_send));
+  EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));
+  data_recv_doc->SetNull();
+  // Response
+  EXPECT_GE(yggSend(rComm_c, data_send), 0);
+  EXPECT_GE(sComm.recvVar(*data_recv_doc), 0);
+  EXPECT_TRUE(compare_generic(data_recv, data_send));
+  EXPECT_TRUE(rComm.afterSendRecv(&rComm, &sComm));
+  data_recv_doc->SetNull();
+  // EOF
+  EXPECT_GE(sComm.send_eof(), 0);
+  EXPECT_EQ(yggRecv(rComm_c, &data_recv), -2);
+  EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));
+  // Cleanup
+  close_comm(&rComm_c);
+  destroy_generic(&data_send);
+  destroy_generic(&data_recv);
+}
+
+TEST(YggInterface_C, ClientAny) {
+  dtype_t dtype_req = {0};
+  dtype_t dtype_res = {0};
+  INIT_DATA_SCHEMA_C("{\"type\": \"array\", \"items\": [{\"type\": \"integer\"}]}");
+  ServerComm rComm("", nullptr);
+  setenv("output_OUT", rComm.getAddress().c_str(), 1);
+  comm_t sComm_c = yggRpcClientType("output", dtype_req, dtype_res);
+  ClientComm& sComm = *((ClientComm*)(sComm_c.comm));
+  DO_RPC_SIGNON;
+  // Request
+  EXPECT_GE(yggSend(sComm_c, data_send), 0);
+  EXPECT_GE(rComm.recvVar(*data_recv_doc), 0);
+  EXPECT_TRUE(compare_generic(data_recv, data_send));
+  EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));
+  data_recv_doc->SetNull();
+  // Response
+  EXPECT_GE(rComm.sendVar(*data_send_doc), 0);
+  EXPECT_GE(yggRecv(sComm_c, &data_recv), 0);
+  EXPECT_TRUE(compare_generic(data_recv, data_send));
+  EXPECT_TRUE(rComm.afterSendRecv(&rComm, &sComm));
+  data_recv_doc->SetNull();
+  // EOF
+  EXPECT_GE(ygg_send_eof(sComm_c), 0);
+  EXPECT_EQ(rComm.recvVar(*data_recv_doc), -2);
+  EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));
+  // Cleanup
+  close_comm(&sComm_c);
+  destroy_generic(&data_send);
+  destroy_generic(&data_recv);
+}
+
+TEST(YggInterface_C, ClientPointers) {
+  ServerComm rComm("", nullptr);
+  setenv("output_OUT", rComm.getAddress().c_str(), 1);
+  comm_t sComm_c = yggRpcClient("output", "%s", "%s");
+  ClientComm& sComm = *((ClientComm*)(sComm_c.comm));
+  DO_RPC_SIGNON;
+  // Stash request
+  std::string req_send = "This is a request message";
+  std::string req_recv = "";
+  std::string msg = "\"" + req_send + "\"";
+  {
+    Header header;
+    EXPECT_TRUE(sComm.create_header_send(header, msg.c_str(), msg.size()));
+    size_t len = header.format(msg.c_str(), msg.size(), 0);
+    msg.assign(header.data[0], len);
+    EXPECT_GE(rComm.getRequests().addRequestServer(header), 0);
+    sComm.getRequests().stashRequest();
+  }
+  // Pre-send response
+  std::string res_send = "This is a response message";
+  size_t req_send_len = req_send.size();
+  size_t res_recv_len = 0;
+  EXPECT_GE(rComm.sendVar(res_send), 0);
+  // Call
+  void** ptrs = (void**)malloc(4 * sizeof(void*));
+  ptrs[0] = (void*)(req_send.c_str());
+  ptrs[1] = (void*)(&req_send_len);
+  ptrs[2] = NULL;
+  ptrs[3] = (void*)(&res_recv_len);
+  EXPECT_EQ(pcommCall(sComm_c, 1, 4, ptrs, 0), 2);
+  EXPECT_EQ(res_send.size(), res_recv_len);
+  EXPECT_EQ(strcmp(res_send.c_str(), (char*)(ptrs[2])), 0);
+  // Server request
+  EXPECT_GE(rComm.recvVar(req_recv), 0);
+  EXPECT_EQ(req_recv, req_send);
+  // Cleanup
+  free(ptrs[2]);
+  free(ptrs);
+  close_comm(&sComm_c);
+}
+
+TEST(comm_t, Errors) {
+  comm_t tmp;
+  tmp.comm = NULL;
+  EXPECT_EQ(set_response_format(tmp, "%s"), 0);
+  dtype_t tmp_dtype;
+  tmp_dtype.metadata = NULL;
+  EXPECT_EQ(set_response_datatype(tmp, tmp_dtype), 0);
+  EXPECT_EQ(comm_send(tmp, NULL, 0), -1);
+  EXPECT_EQ(comm_send_eof(tmp), -1);
+  EXPECT_EQ(comm_recv(tmp, NULL, 0), -1);
+  EXPECT_EQ(comm_recv_realloc(tmp, NULL, 0), -1);
+  EXPECT_EQ(ncommSend(tmp, 1, 1), -1);
+  EXPECT_EQ(ncommRecv(tmp, 0, 1, NULL), -1);
+  EXPECT_EQ(ncommCall(tmp, 0, 2, 1, NULL), -1);
+  EXPECT_EQ(pcommSend(tmp, 0, NULL, 0), -1);
+  EXPECT_EQ(pcommRecv(tmp, 0, 0, NULL, 0), -1);
+  EXPECT_EQ(pcommCall(tmp, 0, 0, NULL, 0), -1);
+  EXPECT_EQ(comm_nmsg(tmp), -1);
+}
+
+#define INIT_DATA_PTRS				\
+  INIT_DATA_SINGLE(double, 1.5);		\
+  void* p_send = &data_send;			\
+  void* p_recv = &data_recv;			\
+  void** pp_send = &p_send;			\
+  void** pp_recv = &p_recv
+
+INTERFACE_TEST_BASE(
+  Pointers,
+  INIT_INPUT_BASE(yggInput, ("input"), COMM_BASE,
+		  ("", nullptr, SEND)),
+  INIT_OUTPUT_BASE(yggOutputFmt, ("output", "%lf"), COMM_BASE,
+		   ("", nullptr, RECV)),
+  INIT_DATA_PTRS, COMP_DATA_SINGLE,
+  pcommSend, (1, pp_send, 0), sendVar, (data_send),
+  pcommRecv, (0, 1, pp_recv, 0), recvVar, (data_recv),
+  pp_send = NULL; pp_recv = NULL; free(pp_send); free(pp_recv))
 
 // TODO: global test
 
