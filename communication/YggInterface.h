@@ -25,10 +25,6 @@ extern "C" {
 /*! @brief Memory to keep track of global scope comms. */
 #define WITH_GLOBAL_SCOPE(COMM) global_scope_comm_on_c(); COMM; global_scope_comm_off_c()
   
-// Forward declaration of server interface to allow replacemnt
-static inline
-comm_t yggRpcServerType_global(const char *name, dtype_t inType, dtype_t outType);
-
 //==============================================================================
 /*!
   Basic IO 
@@ -209,20 +205,14 @@ long ygg_recv(yggInput_t yggQ, char *data, const size_t len) {
   @param[in] len size_t length of message to be sent.
   @returns int 0 if send succesfull, -1 if send unsuccessful.
  */
-static inline
-int ygg_send_nolimit(const yggOutput_t yggQ, const char *data, const size_t len) {
-  return ygg_send(yggQ, data, len);
-};
+#define ygg_send_nolimit ygg_send
 
 /*!
   @brief Send EOF message to the output queue.
   @param[in] yggQ yggOutput_t structure that message should be sent to.
   @returns int 0 if send successfull, -1 if unsuccessful.
 */
-static inline
-int ygg_send_nolimit_eof(const yggOutput_t yggQ) {
-  return comm_send_eof(yggQ);
-};
+#define ygg_send_nolimit_eof comm_send_eof
 
 /*!
   @brief Receive a large message from an input queue.
@@ -390,46 +380,6 @@ long ygg_recv_nolimit(yggInput_t yggQ, char **data, const size_t len) {
 #define yggRpc_t comm_t
 
 /*!
-  @brief Constructor for client side RPC structure.
-    Creates an instance of yggRpc_t with provided information.  
-  @param[in] name constant character pointer to name for queues.
-  @param[in] outFormat character pointer to format that should be used for
-    formatting output.
-  @param[in] inFormat character pointer to format that should be used for
-    parsing input.
-  @return yggRpc_t structure with provided info.
- */
-static inline
-comm_t yggRpcClient(const char *name, const char *outFormat, const char *inFormat) {
-  dtype_t outType = create_dtype_format(outFormat, 0, false);
-  comm_t ret = init_comm(name, SEND, CLIENT_COMM, outType);
-  if (ret.comm && inFormat && !set_response_format(ret, inFormat)) {
-    free_comm(&ret);
-  }
-  return ret;
-};
-
-/*!
-  @brief Constructor for server side RPC structure.
-    Creates an instance of yggRpc_t with provided information.  
-  @param[in] name constant character pointer to name for queues.
-  @param[in] inFormat character pointer to format that should be used for
-    parsing input.
-  @param[in] outFormat character pointer to format that should be used for
-    formatting output.
-  @return yggRpc_t structure with provided info.
- */
-static inline
-comm_t yggRpcServer(const char *name, const char *inFormat, const char *outFormat){
-  dtype_t inType = create_dtype_format(inFormat, 0, false);
-  comm_t ret = init_comm(name, RECV, SERVER_COMM, inType);
-  if (ret.comm && outFormat && !set_response_format(ret, outFormat)) {
-    free_comm(&ret);
-  }
-  return ret;
-};
-
-/*!
   @brief Constructor for client side RPC structure w/ explicit type info.
     Creates an instance of yggRpc_t with provided information.  
   @param[in] name constant character pointer to name for queues.
@@ -482,6 +432,40 @@ comm_t yggRpcServerType(const char *name, dtype_t inType, dtype_t outType) {
 };
 
 /*!
+  @brief Constructor for client side RPC structure.
+    Creates an instance of yggRpc_t with provided information.  
+  @param[in] name constant character pointer to name for queues.
+  @param[in] outFormat character pointer to format that should be used for
+    formatting output.
+  @param[in] inFormat character pointer to format that should be used for
+    parsing input.
+  @return yggRpc_t structure with provided info.
+ */
+static inline
+comm_t yggRpcClient(const char *name, const char *outFormat, const char *inFormat) {
+  dtype_t outType = create_dtype_format(outFormat, 0, false);
+  dtype_t inType = create_dtype_format(inFormat, 0, false);
+  return yggRpcClientType(name, outType, inType);
+};
+
+/*!
+  @brief Constructor for server side RPC structure.
+    Creates an instance of yggRpc_t with provided information.  
+  @param[in] name constant character pointer to name for queues.
+  @param[in] inFormat character pointer to format that should be used for
+    parsing input.
+  @param[in] outFormat character pointer to format that should be used for
+    formatting output.
+  @return yggRpc_t structure with provided info.
+ */
+static inline
+comm_t yggRpcServer(const char *name, const char *inFormat, const char *outFormat){
+  dtype_t inType = create_dtype_format(inFormat, 0, false);
+  dtype_t outType = create_dtype_format(outFormat, 0, false);
+  return yggRpcServerType(name, inType, outType);
+};
+
+/*!
   @brief Constructor for server side RPC structure w/ explicit type info.
     Creates an instance of yggRpc_t with provided information after first
     checking for a pre-existing global comm of the same name. If one
@@ -497,11 +481,7 @@ static inline
 comm_t yggRpcServerType_global(const char *name, dtype_t inType,
 			       dtype_t outType) {
   comm_t out;
-  WITH_GLOBAL_SCOPE(out = get_global_scope_comm(name, RECV, SERVER_COMM));
-  if (out.comm == NULL) {
-    WITH_GLOBAL_SCOPE(out = yggRpcServerType(name, inType, outType));
-    return out;
-  }
+  WITH_GLOBAL_SCOPE(out = yggRpcServerType(name, inType, outType));
   return out;
 };
 
