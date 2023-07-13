@@ -38,6 +38,7 @@ protected:
 };
 
 TEST(Commt, Constructors) {
+    unsetenv("YGG_MODEL_NAME");
     utils::Address *adr = new utils::Address("this.is.a.test");
     Comm_tTest *ctest = new Comm_tTest(adr, SEND, NULL_COMM);
     EXPECT_EQ(ctest->getType(), NULL_COMM);
