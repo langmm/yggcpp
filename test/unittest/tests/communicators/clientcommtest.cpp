@@ -4,7 +4,6 @@
 #include "communicators/ServerComm.hpp"
 #include "../../elf_hook.hpp"
 #include "../../mock.hpp"
-#include "commtest.hpp"
 
 #ifdef COMM_BASE
 
@@ -214,7 +213,16 @@ TEST(ClientComm, global) {
     global_scope_comm_on();
     {
       ClientComm sComm(name, nullptr);
-      DO_RPC_SIGNON;
+      {
+	std::string msg_cli = YGG_CLIENT_SIGNON;
+	Header header;
+	EXPECT_TRUE(sComm.create_header_send(header, msg_cli.c_str(), msg_cli.size()));
+	size_t len = header.format(msg_cli.c_str(), msg_cli.size(), 0);
+	msg_cli.assign(header.data[0], len);
+	EXPECT_GE(rComm.getRequests().addRequestServer(header), 0);
+	std::string msg_srv = YGG_SERVER_SIGNON;
+	EXPECT_GE(rComm.send(msg_srv.c_str(), msg_srv.size()), 0);
+      }
       std::string req_send = "REQUEST";
       std::string res_send = "RESPONSE";
       std::string req_recv;
@@ -226,25 +234,21 @@ TEST(ClientComm, global) {
       EXPECT_EQ(sComm.recv(res_recv), res_send.size());
       EXPECT_EQ(res_recv, res_send);
     }
-    std::cerr << "second request" << std::endl;
     {
       ClientComm sComm(name, nullptr);
       std::string req_send = "REQUEST";
       std::string res_send = "RESPONSE";
       std::string req_recv;
       std::string res_recv;
-      std::cerr << "request" << std::endl;
       EXPECT_GE(sComm.send(req_send), 0);
       EXPECT_EQ(rComm.recv(req_recv), req_send.size());
       EXPECT_EQ(req_recv, req_send);
-      std::cerr << "response" << std::endl;
       EXPECT_GE(rComm.send(res_send), 0);
       EXPECT_EQ(sComm.recv(res_recv), res_send.size());
       EXPECT_EQ(res_recv, res_send);
     }
     global_scope_comm_off();
   }
-  std::cerr << "Before cleanup" << std::endl;
   Comm_t::_ygg_cleanup();
 }
 
