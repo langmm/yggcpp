@@ -659,7 +659,7 @@ dtype_t create_dtype_json_array(const size_t nitems, dtype_t* items,
     objects will be expected to be generic_t instances.
   @returns Type structure/class.
 */
-dtype_t create_dtype_json_object(const size_t nitems, char** keys,
+dtype_t create_dtype_json_object(const size_t nitems, const char** keys,
 				 dtype_t* values, const bool use_generic);
 
 /*!

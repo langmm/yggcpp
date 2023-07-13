@@ -329,6 +329,43 @@ TEST(dtype_t, create) {
     dtype_t x = create_dtype_json_array(5, NULL, false);
     EXPECT_FALSE(x.metadata);
     EXPECT_TRUE(is_empty_dtype(x));
+    dtype_t item;
+    item.metadata = NULL;
+    x = create_dtype_json_array(1, &item, false);
+    EXPECT_FALSE(x.metadata);
+    EXPECT_TRUE(is_empty_dtype(x));
+    item = create_dtype_from_schema("{\"type\": \"integer\"}", false);
+    x = create_dtype_json_array(1, &item, false);
+    EXPECT_TRUE(x.metadata);
+    EXPECT_FALSE(is_empty_dtype(x));
+    EXPECT_FALSE(item.metadata);
+    EXPECT_TRUE(is_empty_dtype(item));
+    destroy_dtype(&x);
+  }
+  {
+    dtype_t x = create_dtype_json_object(5, NULL, NULL, false);
+    EXPECT_FALSE(x.metadata);
+    EXPECT_TRUE(is_empty_dtype(x));
+    const char* key = "a";
+    dtype_t item;
+    item.metadata = NULL;
+    x = create_dtype_json_object(1, &key, &item, false);
+    EXPECT_FALSE(x.metadata);
+    EXPECT_TRUE(is_empty_dtype(x));
+    item = create_dtype_from_schema("{\"type\": \"integer\"}", false);
+    x = create_dtype_json_object(1, &key, &item, false);
+    EXPECT_TRUE(x.metadata);
+    EXPECT_FALSE(is_empty_dtype(x));
+    EXPECT_FALSE(item.metadata);
+    EXPECT_TRUE(is_empty_dtype(item));
+    destroy_dtype(&x);
+  }
+  {
+    dtype_t x = create_dtype_pyobj("instance", false);
+    EXPECT_TRUE(x.metadata);
+    EXPECT_FALSE(is_empty_dtype(x));
+    EXPECT_EQ(strcmp(dtype_name(x), "instance"), 0);
+    destroy_dtype(&x);
   }
 }
 
@@ -343,15 +380,18 @@ TEST(dtype_t, create) {
     display_ ## name(data);						\
     display_ ## name ## _indent(data, "  ");				\
     EXPECT_GT(nelements_ ## name(data, "vertex"), 0);			\
-    name ## _t raw = init_ ## name();					\
+    name ## _t raw1 = init_ ## name();					\
+    name ## _t raw2 = init_ ## name();					\
     void* raw_obj = generic_get_item(v, #name);				\
     EXPECT_TRUE(raw_obj);						\
     set_ ## name(NULL, raw_obj, 0);					\
-    set_ ## name(&raw, NULL, 1);					\
-    set_ ## name(&raw, raw_obj, 0);					\
+    set_ ## name(&raw1, NULL, 1);					\
+    set_ ## name(&raw1, raw_obj, 1);					\
+    set_ ## name(&raw2, raw_obj, 0);					\
     free_ ## name(&copy);						\
     free_ ## name(&data);						\
-    free_ ## name(&raw);						\
+    free_ ## name(&raw1);						\
+    free_ ## name(&raw2);						\
     destroy_generic(&v);						\
     destroy_generic(&x);						\
     name ## _t empty;							\
@@ -363,11 +403,15 @@ DO_GEOM(ply)
 DO_GEOM(obj)
 #undef DO_GEOM
 
+#ifndef YGGDRASIL_DISABLE_PYTHON_C_API
 #define DO_PYTHON(name)							\
   TEST(generic_t, name) {						\
     generic_t v = init_generic_generate("{\"type\": \"" #name "\"}");	\
     generic_t x = init_generic_null();					\
-    python_t data = generic_get_python_ ## name(v);			\
+    python_t data;							\
+    data.obj = NULL;							\
+    display_python(data);						\
+    data = generic_get_python_ ## name(v);				\
     EXPECT_EQ(generic_set_python_ ## name(x, data), 0);			\
     display_generic(v);							\
     display_generic(x);							\
@@ -383,8 +427,9 @@ DO_PYTHON(class)
 // TODO: DO_PYTHON(function)
 // DO_PYTHON(instance)
 #undef DO_PYTHON
+#endif // YGGDRASIL_DISABLE_PYTHON_C_API
 
 // TODO:
 // - generic (any, schema, python, object, array)
 // - Python (init_python_API)
-// - dtype (create_dtype_direct, create_dtype_scalar, create_dtype_1darray, create_dtype_ndarray_arr)
+// - dtype (is_dtype_format_array)
