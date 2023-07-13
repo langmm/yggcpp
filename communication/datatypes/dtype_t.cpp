@@ -1215,13 +1215,10 @@ extern "C" {
   }
   
   int is_dtype_format_array(dtype_t type_struct) {
-    try {
+    _BEGIN_CPP {
       _GET_METADATA(metadata, type_struct, -1);
       return static_cast<int>(metadata->isFormatArray());
-    } catch(...) {
-      ygglog_error_c("is_dtype_format_array: C++ exception thrown.");
-      return -1;
-    }
+    } _END_CPP(is_dtype_format_array, -1);
     return 1;
   }
 
@@ -1411,7 +1408,7 @@ extern "C" {
     } _END_CPP_CLEANUP(create_dtype_json_array, out,
 		       destroy_dtype(&out));
   }
-  dtype_t create_dtype_json_object(const size_t nitems, char** keys,
+  dtype_t create_dtype_json_object(const size_t nitems, const char** keys,
 				   dtype_t* values,
 				   const bool use_generic=true) {
     dtype_t out = create_dtype(NULL, false);

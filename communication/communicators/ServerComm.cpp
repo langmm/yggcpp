@@ -78,7 +78,7 @@ bool ServerComm::create_header_recv(Header& header, char*& data,
     header.flags |= HEAD_FLAG_REPEAT;
     return true;
   }
-  if (temp && requests.addRequestServer(header) < 0) {
+  if ((!temp) && requests.addRequestServer(header) < 0) {
     ygglog_error << "ServerComm(" << name << ")::create_header_recv: Failed to add request" << std::endl;
     return false;
   }
