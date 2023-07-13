@@ -4,6 +4,7 @@
 #include "communicators/ServerComm.hpp"
 #include "../../elf_hook.hpp"
 #include "../../mock.hpp"
+#include "commtest.hpp"
 
 #ifdef COMM_BASE
 
@@ -203,44 +204,48 @@ TEST(ClientComm, call) {
   free(res_recv);
 }
 
-/*
 TEST(ClientComm, global) {
-  std::string name = "MyComm";
-  global_scope_comm_on();
+  std::string name = "test_name";
   {
-    communication::testing::ClientComm_tester cc(name, nullptr);
-    std::string req_send = "REQUEST";
-    std::string res_send = "RESPONSE";
-    std::string req_recv;
-    std::string res_recv;
-    EXPECT_TRUE(cc.addSignon());
-    EXPECT_GE(cc.send(req_send), 0);
-    EXPECT_EQ(cc.server_comm->recv(req_recv), req_send.size());
-    EXPECT_EQ(req_recv, req_send);
-    EXPECT_GE(cc.server_comm->send(res_send), 0);
-    EXPECT_EQ(cc.recv(res_recv), res_send.size());
-    EXPECT_EQ(res_recv, res_send);
+    ServerComm rComm(name, nullptr);
+    std::string key_env = name + "_OUT";
+    std::string val_env = rComm.getAddress();
+    setenv(key_env.c_str(), val_env.c_str(), 1);
+    global_scope_comm_on();
+    {
+      ClientComm sComm(name, nullptr);
+      DO_RPC_SIGNON;
+      std::string req_send = "REQUEST";
+      std::string res_send = "RESPONSE";
+      std::string req_recv;
+      std::string res_recv;
+      EXPECT_GE(sComm.send(req_send), 0);
+      EXPECT_EQ(rComm.recv(req_recv), req_send.size());
+      EXPECT_EQ(req_recv, req_send);
+      EXPECT_GE(rComm.send(res_send), 0);
+      EXPECT_EQ(sComm.recv(res_recv), res_send.size());
+      EXPECT_EQ(res_recv, res_send);
+    }
+    std::cerr << "second request" << std::endl;
+    {
+      ClientComm sComm(name, nullptr);
+      std::string req_send = "REQUEST";
+      std::string res_send = "RESPONSE";
+      std::string req_recv;
+      std::string res_recv;
+      std::cerr << "request" << std::endl;
+      EXPECT_GE(sComm.send(req_send), 0);
+      EXPECT_EQ(rComm.recv(req_recv), req_send.size());
+      EXPECT_EQ(req_recv, req_send);
+      std::cerr << "response" << std::endl;
+      EXPECT_GE(rComm.send(res_send), 0);
+      EXPECT_EQ(sComm.recv(res_recv), res_send.size());
+      EXPECT_EQ(res_recv, res_send);
+    }
+    global_scope_comm_off();
   }
-  std::cerr << "second request" << std::endl;
-  {
-    communication::testing::ClientComm_tester cc(name, nullptr);
-    std::string req_send = "REQUEST";
-    std::string res_send = "RESPONSE";
-    std::string req_recv;
-    std::string res_recv;
-    std::cerr << "request" << std::endl;
-    EXPECT_GE(cc.send(req_send), 0);
-    EXPECT_EQ(cc.server_comm->recv(req_recv), req_send.size());
-    EXPECT_EQ(req_recv, req_send);
-    std::cerr << "response" << std::endl;
-    EXPECT_GE(cc.server_comm->send(res_send), 0);
-    EXPECT_EQ(cc.recv(res_recv), res_send.size());
-    EXPECT_EQ(res_recv, res_send);
-  }
-  global_scope_comm_off();
   std::cerr << "Before cleanup" << std::endl;
   Comm_t::_ygg_cleanup();
 }
-*/
 
 #endif
