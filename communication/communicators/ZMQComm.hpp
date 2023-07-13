@@ -109,8 +109,8 @@ public:
     explicit ZMQComm(const std::string name = "",
 		     utils::Address *address = new utils::Address(),
                      const DIRECTION direction = NONE,
-		     int flgs = 0);
-    ADD_CONSTRUCTORS(ZMQComm)
+		     int flgs = 0, const COMM_TYPE type = ZMQ_COMM);
+    ADD_CONSTRUCTORS(ZMQComm, ZMQ_COMM)
 
     ~ZMQComm() override;
 

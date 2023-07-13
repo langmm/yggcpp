@@ -36,7 +36,7 @@
     EXPECT_TRUE(sComm.create_header_send(header, msg_cli.c_str(), msg_cli.size())); \
     size_t len = header.format(msg_cli.c_str(), msg_cli.size(), 0);	\
     msg_cli.assign(header.data[0], len);				\
-    EXPECT_GE(rComm.requests.addRequestServer(header), 0);		\
+    EXPECT_GE(rComm.getRequests().addRequestServer(header), 0);		\
     std::string msg_srv = YGG_SERVER_SIGNON;				\
     EXPECT_GE(rComm.send(msg_srv.c_str(), msg_srv.size()), 0);		\
   }

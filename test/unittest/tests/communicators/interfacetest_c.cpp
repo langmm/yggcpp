@@ -369,7 +369,61 @@ INTERFACE_TEST_BASE(
   pcommRecv, (0, 1, pp_recv, 0), recvVar, (data_recv),
   pp_send = NULL; pp_recv = NULL; free(pp_send); free(pp_recv))
 
-// TODO: global test
+TEST(YggInterface_C, GlobalServer) {
+  {
+    std::string name = "test_name";
+    ClientComm sComm(name, nullptr);
+    std::string key_env = name + "_IN";
+    std::string val_env = sComm.getAddress();
+    setenv(key_env.c_str(), val_env.c_str(), 1);
+    {
+      dtype_t dtype_req = create_dtype_from_schema("{\"type\": \"integer\"}", false);
+      dtype_t dtype_res = create_dtype_from_schema("{\"type\": \"integer\"}", false);
+      comm_t rComm_c = yggRpcServerType_global("test_name", dtype_req, dtype_res);
+      ServerComm& rComm = *((ServerComm*)(rComm_c.comm));
+      DO_RPC_SIGNON;
+      // Request
+      int req_send = 1, req_recv = 0;
+      EXPECT_GE(sComm.sendVar(req_send), 0);
+      EXPECT_GE(yggRecv(rComm_c, &req_recv), 0);
+      EXPECT_EQ(req_recv, req_send);
+      EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));
+      // Response
+      int res_send = 2, res_recv = 0;
+      EXPECT_GE(yggSend(rComm_c, res_send), 0);
+      EXPECT_GE(sComm.recvVar(res_recv), 0);
+      EXPECT_EQ(res_recv, res_send);
+      EXPECT_TRUE(rComm.afterSendRecv(&rComm, &sComm));
+      close_comm(&rComm_c);
+    }
+    {
+      dtype_t dtype_req = create_dtype_from_schema("{\"type\": \"integer\"}", false);
+      dtype_t dtype_res = create_dtype_from_schema("{\"type\": \"integer\"}", false);
+      comm_t rComm_c = yggRpcServerType_global(name.c_str(), dtype_req, dtype_res);
+      ServerComm& rComm = *((ServerComm*)(rComm_c.comm));
+      // Request
+      std::cout << "Client ";
+      sComm.getRequests().Display();
+      std::cout << "Server ";
+      rComm.getRequests().Display();
+      int req_send = 1, req_recv = 0;
+      EXPECT_GE(sComm.sendVar(req_send), 0);
+      EXPECT_GE(yggRecv(rComm_c, &req_recv), 0);
+      EXPECT_EQ(req_recv, req_send);
+      EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));
+      // Response
+      int res_send = 2, res_recv = 0;
+      EXPECT_GE(yggSend(rComm_c, res_send), 0);
+      EXPECT_GE(sComm.recvVar(res_recv), 0);
+      EXPECT_EQ(res_recv, res_send);
+      EXPECT_TRUE(rComm.afterSendRecv(&rComm, &sComm));
+      close_comm(&rComm_c);
+    }
+  }
+  Comm_t::_ygg_cleanup();
+}
+
+// TODO: piecemeal server
 
 #undef INTERFACE_TEST_SCHEMA
 #undef INTERFACE_TEST_GEOM

@@ -7,10 +7,10 @@ using namespace communication::communicator;
 using namespace communication::utils;
 
 ServerComm::ServerComm(const std::string nme, Address *addr,
-		       int flgs) :
+		       int flgs, const COMM_TYPE type) :
   RPCComm(nme, addr,
 	  flgs | COMM_FLAG_SERVER | COMM_ALWAYS_SEND_HEADER,
-	  RECV, SEND) {
+	  RECV, SEND, type) {
   // Called to create temp comm for send/recv
   if (name.empty() && address && address->valid())
     return;
@@ -67,6 +67,7 @@ bool ServerComm::create_header_recv(Header& header, char*& data,
   if (global_comm)
     return global_comm->create_header_recv(header, data, len, msg_len,
 					   allow_realloc, temp);
+  ygglog_debug << "ServerComm(" << name << ")::create_header_recv: begin (temp = " << temp << ")" << std::endl;
   bool out = COMM_BASE::create_header_recv(header, data, len,
 					   msg_len, allow_realloc, temp);
   if (!out)
@@ -77,7 +78,7 @@ bool ServerComm::create_header_recv(Header& header, char*& data,
     header.flags |= HEAD_FLAG_REPEAT;
     return true;
   }
-  if (requests.addRequestServer(header) < 0) {
+  if (temp && requests.addRequestServer(header) < 0) {
     ygglog_error << "ServerComm(" << name << ")::create_header_recv: Failed to add request" << std::endl;
     return false;
   }

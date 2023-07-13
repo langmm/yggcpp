@@ -7,8 +7,9 @@ using namespace communication::communicator;
 using namespace communication::utils;
 
 RPCComm::RPCComm(const std::string &name, Address *address,
-		 int flgs, DIRECTION dir, DIRECTION req_dir) :
-  COMM_BASE(name, address, dir, flgs), requests(req_dir) {}
+		 int flgs, DIRECTION dir, DIRECTION req_dir,
+		 const COMM_TYPE type) :
+  COMM_BASE(name, address, dir, flgs, type), requests(req_dir) {}
 
 Metadata& RPCComm::get_metadata(const DIRECTION dir) {
   if (global_comm)
@@ -19,7 +20,7 @@ Metadata& RPCComm::get_metadata(const DIRECTION dir) {
 }
 void RPCComm::addResponseSchema(const std::string& s, bool use_generic) {
   if (global_comm) {
-    dynamic_cast<RPCComm*>(global_comm)->addResponseSchema(s, use_generic);
+    (dynamic_cast<RPCComm*>(global_comm))->addResponseSchema(s, use_generic);
     return;
   }
   requests.addResponseSchema(s, use_generic);
@@ -27,7 +28,7 @@ void RPCComm::addResponseSchema(const std::string& s, bool use_generic) {
 void RPCComm::addResponseSchema(const rapidjson::Value& s,
 				bool use_generic) {
   if (global_comm) {
-    dynamic_cast<RPCComm*>(global_comm)->addResponseSchema(s, use_generic);
+    (dynamic_cast<RPCComm*>(global_comm))->addResponseSchema(s, use_generic);
     return;
   }
   requests.addResponseSchema(s, use_generic);
@@ -35,7 +36,7 @@ void RPCComm::addResponseSchema(const rapidjson::Value& s,
 void RPCComm::addResponseSchema(const Metadata& metadata,
 				bool use_generic) {
   if (global_comm) {
-    dynamic_cast<RPCComm*>(global_comm)->addResponseSchema(metadata, use_generic);
+    (dynamic_cast<RPCComm*>(global_comm))->addResponseSchema(metadata, use_generic);
     return;
   }
   requests.addResponseSchema(metadata, use_generic);
@@ -43,7 +44,7 @@ void RPCComm::addResponseSchema(const Metadata& metadata,
 void RPCComm::addResponseFormat(const std::string& fmt,
 				bool use_generic) {
   if (global_comm) {
-    dynamic_cast<RPCComm*>(global_comm)->addResponseFormat(fmt, use_generic);
+    (dynamic_cast<RPCComm*>(global_comm))->addResponseFormat(fmt, use_generic);
     return;
   }
   requests.addResponseFormat(fmt, use_generic);

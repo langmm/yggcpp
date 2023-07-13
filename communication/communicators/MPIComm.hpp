@@ -42,8 +42,9 @@ public:
 class MPIComm : public CommBase<mpi_registry_t> {
 public:
     MPIComm(const std::string name, utils::Address *address,
-	    const DIRECTION direction, int flgs = 0);
-    ADD_CONSTRUCTORS(MPIComm)
+	    const DIRECTION direction, int flgs = 0,
+	    const COMM_TYPE type = MPI_COMM);
+    ADD_CONSTRUCTORS(MPIComm, MPI_COMM)
 
     ~MPIComm() override;
 

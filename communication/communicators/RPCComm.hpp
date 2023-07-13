@@ -12,7 +12,8 @@ namespace communicator {
 class RPCComm : public COMM_BASE {
 public:
   explicit RPCComm(const std::string &name, utils::Address *address,
-		   int flgs, DIRECTION dir, DIRECTION req_dir);
+		   int flgs, DIRECTION dir, DIRECTION req_dir,
+		   const COMM_TYPE type);
 
   using Comm_t::send;
   using Comm_t::recv;
@@ -29,7 +30,11 @@ public:
 protected:
 #else
   bool afterSendRecv(Comm_t* sComm, Comm_t* rComm) override;
-  RequestList& getRequests() { return requests; }
+  RequestList& getRequests() {
+    if (global_comm)
+      return (dynamic_cast<RPCComm*>(global_comm))->getRequests();
+    return requests;
+  }
 #endif
   
   Metadata& get_metadata(const DIRECTION dir=NONE) override;
