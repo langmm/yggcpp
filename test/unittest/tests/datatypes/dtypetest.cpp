@@ -348,7 +348,7 @@ TEST(dtype_t, create) {
     EXPECT_TRUE(raw_obj);						\
     set_ ## name(NULL, raw_obj, 0);					\
     set_ ## name(&raw, NULL, 1);					\
-    set_ ## name(&raw, raw_obj, 1);					\
+    set_ ## name(&raw, raw_obj, 0);					\
     free_ ## name(&copy);						\
     free_ ## name(&data);						\
     free_ ## name(&raw);						\
