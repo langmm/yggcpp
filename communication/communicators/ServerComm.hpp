@@ -23,8 +23,8 @@ public:
      */
     explicit ServerComm(const std::string name = "",
 			utils::Address *address = nullptr,
-			int flgs = 0);
-    ADD_CONSTRUCTORS_RPC(ServerComm)
+			int flgs = 0, const COMM_TYPE type = SERVER_COMM);
+    ADD_CONSTRUCTORS_RPC(ServerComm, SERVER_COMM)
 
     using RPCComm::send;
     using RPCComm::recv;

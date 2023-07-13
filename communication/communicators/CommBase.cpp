@@ -50,10 +50,12 @@ void Comm_t::_ygg_cleanup() {
   {
 #endif
     if (!Comm_t::_ygg_finalized) {
-      ygglog_debug << "_ygg_cleanup: Begin cleanup" << std::endl;
+      ygglog_debug << "_ygg_cleanup: Begin cleanup of " << Comm_t::registry.size() << " communicators" << std::endl;
       for (size_t i = 0; i < Comm_t::registry.size(); i++) {
 	if (Comm_t::registry[i]) {
-	  delete Comm_t::registry[i];
+	  if (Comm_t::registry[i]->flags & COMM_FLAG_DELETE) {
+	    delete Comm_t::registry[i];
+	  }
 	}
       }
 #ifdef _OPENMP
@@ -62,6 +64,7 @@ void Comm_t::_ygg_cleanup() {
 #endif
 	Comm_t::registry.clear();
 #if defined(ZMQINSTALLED)
+	// This hangs if there are ZMQ sockets that didn't get cleaned up
 	ZMQContext::destroy();
 #endif
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
@@ -150,10 +153,11 @@ Comm_t::~Comm_t() {
 }
 
 bool Comm_t::get_global_scope_comm() {
-  COMM_TYPE global_type = type;
+  COMM_TYPE global_type = getType();
   std::string global_name = name;
   bool is_server = false;
-  if (type != SERVER_COMM && type != CLIENT_COMM && !name.empty()) {
+  if (global_type != SERVER_COMM && global_type != CLIENT_COMM &&
+      !name.empty()) {
     char* server_var = NULL;
     if (direction == RECV) {
       server_var = std::getenv("YGG_SERVER_INPUT");
@@ -163,7 +167,9 @@ bool Comm_t::get_global_scope_comm() {
     if (server_var && name == std::string(server_var)) {
       is_server = true;
       global_type = SERVER_COMM;
-      global_name = std::getenv("YGG_MODEL_NAME");
+      const char* model_name = std::getenv("YGG_MODEL_NAME");
+      if (model_name)
+	global_name.assign(model_name);
       global_scope_comm = 1;
     }
   }
@@ -177,8 +183,18 @@ bool Comm_t::get_global_scope_comm() {
   global_comm = Comm_t::find_registered_comm(global_name, direction,
 					     global_type);
   if (!global_comm) {
+    ygglog_debug << "CommBase: Creating global comm \"" << global_name
+		 << "\"" << std::endl;
+    utils::Address* global_address = new utils::Address();
+    if (address)
+      global_address->address(address->address());
     global_comm = new_Comm_t(direction, global_type, global_name,
-			     address, flags | COMM_FLAG_GLOBAL);
+			     global_address, flags | COMM_FLAG_GLOBAL);
+    ygglog_debug << "CommBase: Created global comm \"" << global_name
+		 << "\"" << std::endl;
+  } else {
+    ygglog_debug << "CommBase: Found global comm \"" << global_name
+		 << "\"" << std::endl;
   }
   if (!address)
     address = new utils::Address();
@@ -222,6 +238,7 @@ Comm_t* communication::communicator::new_Comm_t(const DIRECTION dir, const COMM_
   return communication::communicator::new_Comm_t(dir, type, name, addr, flags);
 }
 Comm_t* communication::communicator::new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, Address* addr, int flags) {
+  flags |= COMM_FLAG_DELETE;
   switch(type) {
   case NULL_COMM:
     break;
@@ -375,9 +392,8 @@ int Comm_t::wait_for_recv(const int tout) {
 }
 long Comm_t::recv(char*& data, const size_t &len,
 		  bool allow_realloc) {
-  if (global_comm) {
+  if (global_comm)
     return global_comm->recv(data, len, allow_realloc);
-  }
   ygglog_debug << "CommBase(" << name << ")::recv: Receiving from " << address->address() << std::endl;
   Header head;
   long ret = -1;

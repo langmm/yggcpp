@@ -552,8 +552,9 @@ bool ZMQComm::init_handle() {
 }
 
 ZMQComm::ZMQComm(const std::string name, utils::Address *address,
-		 const DIRECTION direction, int flgs) :
-  CommBase(name, address, direction, ZMQ_COMM, flgs), reply(direction) {
+		 const DIRECTION direction, int flgs,
+		 const COMM_TYPE type) :
+  CommBase(name, address, direction, type, flgs), reply(direction) {
   if (!global_comm)
     init();
 }
@@ -760,7 +761,10 @@ bool ZMQComm::afterSendRecv(Comm_t* sComm, Comm_t* rComm) {
     sComm = sComm->global_comm;
   if (rComm->global_comm)
     rComm = rComm->global_comm;
-  if (sComm->getType() != ZMQ_COMM || rComm->getType() != ZMQ_COMM) {
+  if ((sComm->getType() != ZMQ_COMM && sComm->getType() != SERVER_COMM &&
+       sComm->getType() != CLIENT_COMM) || 
+      (rComm->getType() != ZMQ_COMM && rComm->getType() != SERVER_COMM &&
+       rComm->getType() != CLIENT_COMM)) {
     ygglog_error << "ZMQComm::afterSendRecv: One or both communicators are not ZMQ communicators" << std::endl;
     return false;
   }
@@ -997,8 +1001,9 @@ Comm_t* ZMQComm::create_worker_recv(Header&) {
 }
 
 ZMQComm::ZMQComm(const std::string name, utils::Address *address,
-		 const DIRECTION direction, int flgs) :
-  CommBase(name, address, direction, ZMQ_COMM, flgs), reply(direction) {
+		 const DIRECTION direction, int flgs,
+		 const COMM_TYPE type) :
+  CommBase(name, address, direction, type, flgs), reply(direction) {
   zmq_install_error();
 }
 

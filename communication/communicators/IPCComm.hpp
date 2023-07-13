@@ -39,10 +39,10 @@ public:
      */
     explicit IPCComm(const std::string name = "",
 		     utils::Address *address = new utils::Address(),
-                     DIRECTION direction = NONE, int flgs = 0);
-    ADD_CONSTRUCTORS(IPCComm)
+                     DIRECTION direction = NONE, int flgs = 0,
+		     const COMM_TYPE type = IPC_COMM);
+    ADD_CONSTRUCTORS(IPCComm, IPC_COMM)
 
-    //explicit IPCComm(Comm_t* comm);
     /**
      * Destructor
      */

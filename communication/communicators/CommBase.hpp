@@ -31,7 +31,8 @@ enum CommFlags {
     COMM_FLAGS_USED = 0x00000400,  //!< Set if the comm has been used
     COMM_EOF_SENT   = 0x00000800,  //!< Set if EOF has been sent
     COMM_EOF_RECV   = 0x00001000,  //!< Set if EOF has been received
-    COMM_FLAG_INTERFACE = 0x00002000 //!< Set if communicator is an interface communicator
+    COMM_FLAG_INTERFACE = 0x00002000,       //!< Set if communicator is an interface communicator
+    COMM_FLAG_DELETE    = 0x00004000        //!< Set if the communicator needs to be deleted
 };
 
 /*! @brief Set if the comm is the receiving comm for a client/server request connection */
@@ -47,34 +48,34 @@ const int COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
 #define COMM_BASE_MAX_MSG_SIZE
 #endif
 
-#define ADD_CONSTRUCTORS(cls)			\
-  explicit cls(const std::string nme,		\
-	       const DIRECTION dirn,		\
-	       int flgs = 0);			\
-  explicit cls(utils::Address *addr,		\
-	       const DIRECTION dirn,		\
-	       int flgs = 0);
+#define ADD_CONSTRUCTORS(cls, defT)				\
+  explicit cls(const std::string nme,				\
+	       const DIRECTION dirn,				\
+	       int flgs = 0, const COMM_TYPE type = defT);	\
+  explicit cls(utils::Address *addr,				\
+	       const DIRECTION dirn,				\
+	       int flgs = 0, const COMM_TYPE type = defT);
 #define ADD_CONSTRUCTORS_DEF(cls)		\
   cls::cls(const std::string nme,		\
 	   const DIRECTION dirn,		\
-	   int flgs) :				\
-    cls(nme, nullptr, dirn, flgs) {}		\
+	   int flgs, const COMM_TYPE type) :	\
+    cls(nme, nullptr, dirn, flgs, type) {}	\
   cls::cls(utils::Address *addr,		\
 	   const DIRECTION dirn,		\
-	   int flgs) :				\
-    cls("", addr, dirn, flgs) {}
-#define ADD_CONSTRUCTORS_RPC(cls)		\
-  explicit cls(const std::string nme,		\
-	       int flgs = 0);			\
-  explicit cls(utils::Address *addr,		\
-	       int flgs = 0);
+	   int flgs, const COMM_TYPE type) :	\
+    cls("", addr, dirn, flgs, type) {}
+#define ADD_CONSTRUCTORS_RPC(cls, defT)				\
+  explicit cls(const std::string nme,				\
+	       int flgs = 0, const COMM_TYPE type = defT);	\
+  explicit cls(utils::Address *addr,				\
+	       int flgs = 0, const COMM_TYPE type = defT);
 #define ADD_CONSTRUCTORS_RPC_DEF(cls)		\
   cls::cls(const std::string nme,		\
-	   int flgs) :				\
-    cls(nme, nullptr, flgs) {}			\
+	   int flgs, const COMM_TYPE type) :	\
+    cls(nme, nullptr, flgs, type) {}		\
   cls::cls(utils::Address *addr,		\
-	   int flgs) :				\
-    cls("", addr, flgs) {}
+	   int flgs, const COMM_TYPE type) :	\
+    cls("", addr, flgs, type) {}
 #define WORKER_METHOD_DECS(cls)					\
   Comm_t* create_worker(utils::Address* address,		\
 			const DIRECTION&, int flgs) override

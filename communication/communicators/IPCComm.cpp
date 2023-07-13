@@ -265,8 +265,9 @@ void IPCComm::init() {
 }
 
 IPCComm::IPCComm(const std::string name, Address *address,
-		 DIRECTION direction, int flgs) :
-  CommBase(name, address, direction, IPC_COMM, flgs) {
+		 DIRECTION direction, int flgs,
+		 const COMM_TYPE type) :
+  CommBase(name, address, direction, type, flgs) {
   if (!global_comm)
     init();
 }
@@ -322,8 +323,9 @@ void IPCComm::init() {
 }
 
 IPCComm::IPCComm(const std::string name, utils::Address *address,
-		 DIRECTION direction, int flgs) :
-  CommBase(name, address, direction, IPC_COMM, flgs) {
+		 DIRECTION direction, int flgs,
+		 const COMM_TYPE type) :
+  CommBase(name, address, direction, type, flgs) {
     ipc_install_error();
 }
 

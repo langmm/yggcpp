@@ -21,8 +21,8 @@ public:
      */
     explicit ClientComm(const std::string name = "",
 			utils::Address *address = nullptr,
-			int flgs = 0);
-    ADD_CONSTRUCTORS_RPC(ClientComm)
+			int flgs = 0, const COMM_TYPE type = CLIENT_COMM);
+    ADD_CONSTRUCTORS_RPC(ClientComm, CLIENT_COMM)
 
     /**
      * Destructor

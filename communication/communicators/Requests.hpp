@@ -373,6 +373,12 @@ public:
     void transferSchemaFrom(Comm_t* comm) {
       response_metadata.fromMetadata(comm->get_metadata(response_dir));
     }
+    void Display() {
+      std::cout << requests.size() << " Requests:" << std::endl;
+      for (size_t i = 0; i < requests.size(); i++) {
+	std::cout << "  " << requests[i].request_id << ": " << requests[i].complete << std::endl;
+      }
+    }
     std::vector<Comm_t*> comms;
     std::vector<Request> requests;
     std::vector<Partner> partners;

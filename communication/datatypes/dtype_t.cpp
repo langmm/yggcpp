@@ -1032,7 +1032,7 @@ extern "C" {
   NESTED_SET_(name, (value, units), type value, const char* units)	\
   ARRAY_(name, type, std::complex<subtype>)
 #define PYTHON_(name, method)						\
-  STD_JSON_BASE_(name, python_t, d->Is ## method(), out.obj = d->GetPythonObjectRaw(), d->SetPythonObjectRaw(value.obj, generic_allocator(x)), {NULL})
+  STD_JSON_BASE_(name, python_t, d->Is ## method(), out.obj = d->GetPythonObjectRaw(), d->SetPythonObjectRaw(value.obj, generic_allocator(x)), {0})
   
   STD_JSON_(bool, bool, Bool, false);
   STD_JSON_(integer, int, Int, 0);

@@ -9,10 +9,10 @@ using namespace communication::utils;
 unsigned ClientComm::_client_rand_seeded = 0;
 
 ClientComm::ClientComm(const std::string nme, Address *addr,
-		       int flgs) :
+		       int flgs, const COMM_TYPE type) :
   RPCComm(nme, addr,
 	  flgs | COMM_FLAG_CLIENT | COMM_ALWAYS_SEND_HEADER,
-	  SEND, RECV) {
+	  SEND, RECV, type) {
   // Called to create temp comm for send/recv
   if (name.empty() && address && address->valid())
       return;
@@ -147,7 +147,7 @@ bool ClientComm::create_header_recv(Header& header, char*& data, const size_t &l
   if (global_comm)
     return global_comm->create_header_recv(header, data, len, msg_len,
 					   allow_realloc, temp);
-  ygglog_debug << "ClientComm(" << name << ")::create_header_recv: begin" << std::endl;
+  ygglog_debug << "ClientComm(" << name << ")::create_header_recv: begin (temp = " << temp << ")" << std::endl;
   Comm_t* response_comm = requests.activeComm(true);
   if (response_comm == NULL) {
     ygglog_error << "ClientComm(" << name << ")::create_header_recv: Error getting response comm" << std::endl;
