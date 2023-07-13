@@ -14,9 +14,7 @@ ClientComm::ClientComm(const std::string nme, Address *addr,
 	  flgs | COMM_FLAG_CLIENT | COMM_ALWAYS_SEND_HEADER,
 	  SEND, RECV, type) {
   // Called to create temp comm for send/recv
-  if (name.empty() && address && address->valid())
-      return;
-  if (!global_comm)
+  if (!(global_comm || (name.empty() && address && address->valid())))
     init();
 }
 
