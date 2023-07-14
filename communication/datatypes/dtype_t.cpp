@@ -21,14 +21,14 @@ rapidjson::Document::AllocatorType& generic_ref_allocator(generic_ref_t& x) {
   return *((rapidjson::Document::AllocatorType*)(x.allocator));
 };
 
-rapidjson::Document::AllocatorType& dtype_allocator(dtype_t& x) {
-  rapidjson::Document* s = NULL;
-  if (x.metadata != NULL)
-    return ((Metadata*)x.metadata)->GetAllocator();
-  else
-    ygglog_throw_error_c("dtype_allocator: Not initialized");
-  return s->GetAllocator();
-};
+// rapidjson::Document::AllocatorType& dtype_allocator(dtype_t& x) {
+//   rapidjson::Document* s = NULL;
+//   if (x.metadata != NULL)
+//     return ((Metadata*)x.metadata)->GetAllocator();
+//   else
+//     ygglog_throw_error_c("dtype_allocator: Not initialized");
+//   return s->GetAllocator();
+// };
 
 ply_t Ply2ply(rapidjson::Ply& x) {
   ply_t out = init_ply();

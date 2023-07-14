@@ -41,6 +41,8 @@
 #define COMM_BASE_MAX_MSG_SIZE
 #endif
 
+#define UNINSTALLED_ERROR(name)					\
+  ygglog_throw_error("Compiler flag '" #name "INSTALLED' not defined so " #name " bindings are disabled")
 #define ADD_CONSTRUCTORS(cls, defT)				\
   explicit cls(const std::string nme,				\
 	       const DIRECTION dirn,				\

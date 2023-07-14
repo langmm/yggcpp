@@ -145,6 +145,28 @@ STANDARD_TEST(integer, int, 5)
 STANDARD_TEST(null, void*, NULL)
 STANDARD_TEST(number, double, 5.5)
 #undef STANDARD_TEST
+#define NESTED_TEST(name, schema)					\
+  TEST(generic_t, name) {						\
+    generic_t x_arr = init_generic_array();				\
+    generic_t x_obj = init_generic_map();				\
+    generic_t data = init_generic_generate(schema);			\
+    EXPECT_EQ(generic_array_set_ ## name(x_arr, 0, data), 0);		\
+    generic_t x_arr_res = generic_array_get_ ## name(x_arr, 0);		\
+    EXPECT_TRUE(compare_generic(x_arr_res, data));			\
+    EXPECT_EQ(generic_map_set_ ## name(x_obj, "x", data), 0);		\
+    generic_t x_obj_res = generic_map_get_ ## name(x_obj, "x");		\
+    EXPECT_TRUE(compare_generic(x_obj_res, data));			\
+    destroy_generic(&x_arr);						\
+    destroy_generic(&x_obj);						\
+    destroy_generic(&data);						\
+    destroy_generic(&x_arr_res);					\
+    destroy_generic(&x_obj_res);					\
+  }
+NESTED_TEST(object, "{\"type\": \"object\"}")
+NESTED_TEST(array, "{\"type\": \"array\"}")
+NESTED_TEST(any, "{\"type\": \"integer\"}")
+NESTED_TEST(schema, "{\"type\": \"schema\"}")
+#undef NESTED_TEST
 
 TEST(generic_t, string) {
   generic_t x_arr = init_generic_array();
@@ -240,6 +262,7 @@ TEST(generic_t, scalar) {
   EXPECT_TRUE(compare_generic(x, v));
   destroy_generic(&v);
   destroy_generic(&x);
+  EXPECT_EQ(generic_set_scalar(x, NULL, "float", 8, "cm"), -1);
 }
 
 TEST(generic_t, 1darray) {

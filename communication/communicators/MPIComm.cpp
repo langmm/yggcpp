@@ -59,6 +59,8 @@ int mpi_registry_t::Recv(void *buf, int count, MPI_Datatype datatype, int source
   return out;
 }
 
+#endif
+
 MPIComm::MPIComm(const std::string name, utils::Address *address,
 		 const DIRECTION direction, int flgs,
 		 const COMM_TYPE type) :
@@ -112,6 +114,7 @@ MPIComm::~MPIComm() {
 }
 
 int MPIComm::mpi_comm_source_id() const {
+#if defined(MPIINSTALLED) && defined(MPI_COMM_WORLD)  
     if (direction == SEND)
         return 0;
     if (!handle) {
@@ -145,6 +148,9 @@ int MPIComm::mpi_comm_source_id() const {
         }
     }
     return 0;
+#else
+    return -1;
+#endif
 }
 
 int MPIComm::comm_nmsg() const {
@@ -161,21 +167,14 @@ int MPIComm::comm_nmsg() const {
     return nmsg;
 }
 
+#if defined(MPIINSTALLED) && defined(MPI_COMM_WORLD)
 int MPIComm::send_single(const char *data, const size_t &len,
-			 const Header& head) {
+			 const Header&) {
     // Should never be called with global comm
     // if (global_comm)
     //   return dynamic_cast<MPIComm*>(global_comm)->send_single(data, len, head);
-    assert(!global_comm);
+    assert((!global_comm) && handle);
     ygglog_debug << "MPIComm(" << name << ")::send_single: " << len << " bytes" << std::endl;
-    if (!check_size(len)) {
-      ygglog_error << "MPIComm(" << name << ")::send_single: Message too large" << std::endl;
-      return -1;
-    }
-    if (!handle) {
-        ygglog_error << "MPIComm(" << name << ")::send_single: Queue handle is NULL." << std::endl;
-        return -1;
-    }
     int ret = (int)(len);
     int adr = static_cast<int>(handle->procs[handle->tag % handle->procs.size()]);
     handle->Send(&ret, 1, MPI_INT, adr);
@@ -231,57 +230,6 @@ long MPIComm::recv_single(char*& data, const size_t &len, bool allow_realloc) {
     return ret;
 }
 
-WORKER_METHOD_DEFS(MPIComm)
-
-// Definitions in the case where MPI libraries not installed
-#else /*MPIINSTALLED*/
-
-/*!
-  @brief Print error message about MPI library not being installed.
- */
-static inline
-void mpi_install_error() {
-  ygglog_throw_error("Compiler flag 'MPIINSTALLED' not defined so MPI bindings are disabled.");
-}
-
-
-MPIComm::MPIComm(const std::string name, utils::Address *address,
-		 const DIRECTION direction, int flgs,
-		 const COMM_TYPE type) :
-  CommBase(name, address, direction, type, flgs), addresses() {
-  mpi_install_error();
-}
-
-ADD_CONSTRUCTORS_DEF(MPIComm)
-
-void MPIComm::init() {
-  mpi_install_error();
-}
-
-MPIComm::~MPIComm() {
-  // No error as constructor should have raised one
-}
-
-int MPIComm::mpi_comm_source_id() const {
-  mpi_install_error();
-  return -1;
-}
-
-int MPIComm::comm_nmsg() const {
-  mpi_install_error();
-  return -1;
-}
-
-int MPIComm::send_single(const char *, const size_t &, const Header&) {
-  mpi_install_error();
-  return -1;
-}
-
-long MPIComm::recv_single(char*&, const size_t &, bool) {
-  mpi_install_error();
-  return -1;
-}
-
-WORKER_METHOD_DUMMY(MPIComm, mpi)
-
 #endif
+
+WORKER_METHOD_DEFS(MPIComm)

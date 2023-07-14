@@ -23,13 +23,6 @@ typedef struct generic_ref_t {
   void *allocator; //!< Pointer to rapidjson Allocator used to allocated obj.
 } generic_ref_t;
 
-/*! @brief Structure used to wrap va_list and allow pointer passing.
-  @param va va_list Wrapped variable argument list.
-*/
-typedef struct va_list_t {
-  void* va;
-} va_list_t;
-
 /*! @brief Structure used to wrap Python objects. */
 typedef struct python_t {
   PyObject *obj; //!< Python object.
