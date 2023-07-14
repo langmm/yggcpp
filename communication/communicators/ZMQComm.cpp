@@ -84,6 +84,8 @@ int ZMQSocket::_last_port_set = 0;
 
 ZMQSocket::ZMQSocket() :
   handle(NULL), endpoint(), type(0), ctx() {}
+ZMQSocket::ZMQSocket(const ZMQSocket& rhs) :
+  handle(NULL), endpoint(), type(rhs.type), ctx() {}
 ZMQSocket::ZMQSocket(int type0, utils::Address* address,
 		     int linger, int immediate, int sndtimeo) :
   handle(NULL), endpoint(), type(type0), ctx() {

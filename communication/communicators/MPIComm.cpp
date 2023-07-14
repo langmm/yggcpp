@@ -71,6 +71,8 @@ MPIComm::MPIComm(const std::string name, utils::Address *address,
 
 ADD_CONSTRUCTORS_DEF(MPIComm)
 
+#if defined(MPIINSTALLED) && defined(MPI_COMM_WORLD)
+
 void MPIComm::init() {
     updateMaxMsgSize(2147483647);
     if (!(this->address && this->address->valid()))
@@ -167,7 +169,6 @@ int MPIComm::comm_nmsg() const {
     return nmsg;
 }
 
-#if defined(MPIINSTALLED) && defined(MPI_COMM_WORLD)
 int MPIComm::send_single(const char *data, const size_t &len,
 			 const Header&) {
     // Should never be called with global comm
@@ -230,6 +231,6 @@ long MPIComm::recv_single(char*& data, const size_t &len, bool allow_realloc) {
     return ret;
 }
 
-#endif
-
 WORKER_METHOD_DEFS(MPIComm)
+
+#endif
