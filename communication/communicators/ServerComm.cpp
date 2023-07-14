@@ -12,9 +12,7 @@ ServerComm::ServerComm(const std::string nme, Address *addr,
 	  flgs | COMM_FLAG_SERVER | COMM_ALWAYS_SEND_HEADER,
 	  RECV, SEND, type) {
   // Called to create temp comm for send/recv
-  if (name.empty() && address && address->valid())
-    return;
-  if (!global_comm)
+  if (!(global_comm || (name.empty() && address && address->valid())))
     init();
 }
 
@@ -93,8 +91,10 @@ bool ServerComm::create_header_recv(Header& header, char*& data,
 
 int ServerComm::send_single(const char* data, const size_t &len,
 			    const Header& header) {
-    if (global_comm)
-      return global_comm->send_single(data, len, header);
+    // Should never be called with global comm
+    // if (global_comm)
+    //   return global_comm->send_single(data, len, header);
+    assert(!global_comm);
     ygglog_debug << "ServerComm(" << name << ")::send_single: " << len << " bytes" << std::endl;
     Comm_t* response_comm = requests.activeComm(true);
     if (response_comm == NULL) {
@@ -103,10 +103,8 @@ int ServerComm::send_single(const char* data, const size_t &len,
     }
     int ret = response_comm->send_single(data, len, header);
     ygglog_debug << "ServerComm(" << name << ")::send_single: Sent " << len << " bytes" << std::endl;
-    if (ret >= 0) {
-        if (requests.popRequestServer() < 0)
-            return -1;
-    }
+    if ((ret >= 0) && (requests.popRequestServer() < 0))
+      return -1;
     return ret;
 }
 
