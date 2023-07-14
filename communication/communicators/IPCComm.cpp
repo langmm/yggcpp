@@ -140,8 +140,10 @@ int IPCComm::comm_nmsg() const {
   @returns int 0 if send succesfull, -1 if send unsuccessful.
  */
 int IPCComm::send_single(const char* data, const size_t &len, const Header& head) {
-    if (global_comm)
-      return global_comm->send_single(data, len, head);
+    // Should never be called with global comm
+    // if (global_comm)
+    //   return global_comm->send_single(data, len, head);
+    assert(!global_comm);
     ygglog_debug << "IPCComm(" << name << ")::send_single: " << len << " bytes" << std::endl;
     int ret = -1;
     msgbuf_t t;
@@ -183,8 +185,10 @@ int IPCComm::send_single(const char* data, const size_t &len, const Header& head
     message if message was received.
  */
 long IPCComm::recv_single(char*& data, const size_t& len, bool allow_realloc) {
-    if (global_comm)
-      return global_comm->recv_single(data, len, allow_realloc);
+    // Should never be called with global comm
+    // if (global_comm)
+    //   return global_comm->recv_single(data, len, allow_realloc);
+    assert(!global_comm);
     ygglog_debug << "IPCComm(" << name << ")::recv_single:" << std::endl;
     msgbuf_t t;
     t.mtype = 1;

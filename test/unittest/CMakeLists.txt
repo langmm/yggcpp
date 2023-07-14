@@ -109,9 +109,9 @@ if(NOT MSVC)
         add_test(NAME valgrind_unittest
                  COMMAND valgrind --suppressions=${CMAKE_SOURCE_DIR}/test/valgrind.supp --suppressions=${CMAKE_SOURCE_DIR}/test/valgrind-python.supp --leak-check=full --error-exitcode=1 --track-origins=yes --dsymutil=no --keep-debuginfo=yes --read-var-info=yes ${CMAKE_BINARY_DIR}/test/unittest --gtest_filter=-SIMD.*
                  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/test)
-        set_tests_properties(valgrind_unittest PROPERTIES
-                ENVIRONMENT
-                "${RAPIDJSON_PYTHON_ENV}")
+        # set_tests_properties(valgrind_unittest PROPERTIES
+        #         ENVIRONMENT
+        #         "${RAPIDJSON_PYTHON_ENV}")
     endif((NOT YGG_SKIP_VALGRIND_TESTS) AND VALGRIND_FOUND)
 
 endif(NOT MSVC)
