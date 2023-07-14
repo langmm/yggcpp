@@ -259,8 +259,10 @@ Comm_t* communication::communicator::new_Comm_t(const DIRECTION dir, const COMM_
 
 bool Comm_t::create_header_send(Header& header, const char* data,
 				const size_t &len) {
-  if (global_comm)
-    return global_comm->create_header_send(header, data, len);
+  // Should never be called with global comm
+  // if (global_comm)
+  //   return global_comm->create_header_send(header, data, len);
+  assert(!global_comm);
   header.for_send(&get_metadata(SEND), data, len);
   return true;
 }
@@ -269,16 +271,20 @@ bool Comm_t::create_header_recv(Header& header, char*& data,
 				const size_t &len,
 				size_t msg_len, int allow_realloc,
 				int temp) {
-  if (global_comm)
-    return global_comm->create_header_recv(header, data, len, msg_len,
-					   allow_realloc, temp);
+  // Should never be called with global comm
+  // if (global_comm)
+  //   return global_comm->create_header_recv(header, data, len, msg_len,
+  // 					   allow_realloc, temp);
+  assert(!global_comm);
   header.for_recv(&data, len, msg_len, allow_realloc, temp);
   return true;
 }
 
 Comm_t* Comm_t::create_worker_send(Header& head) {
-  if (global_comm)
-    return global_comm->create_worker_send(head);
+  // Should never be called with global comm
+  // if (global_comm)
+  //   return global_comm->create_worker_send(head);
+  assert(!global_comm);
   Comm_t* worker = workers.get(this, SEND);
   if (worker && worker->address) {
     head.SetMetaString("address", worker->address->address());
@@ -287,8 +293,10 @@ Comm_t* Comm_t::create_worker_send(Header& head) {
 }
 
 Comm_t* Comm_t::create_worker_recv(Header& head) {
-  if (global_comm)
-    return global_comm->create_worker_recv(head);
+  // Should never be called with global comm
+  // if (global_comm)
+  //   return global_comm->create_worker_recv(head);
+  assert(!global_comm);
   ygglog_debug << "CommBase(" << name << ")::create_worker_recv: begin" << std::endl;
   const char* address = head.GetMetaString("address");
   utils::Address* adr = new utils::Address(address);
@@ -463,6 +471,7 @@ long Comm_t::recv(char*& data, const size_t &len,
   }
   if (xmulti)
     workers.remove_worker(xmulti);
+  if (ret < 0) return ret;
   if (ret > 0) {
     head.finalize_recv();
     if (!head.hasType()) {
@@ -471,14 +480,10 @@ long Comm_t::recv(char*& data, const size_t &len,
       ygglog_error << "CommBase(" << name << ")::recv: Error updating datatype." << std::endl;
       return -1;
     }
-  } else {
-    std::cerr << "ret iz zero? " << ret << std::endl;
   }
-  if (ret >= 0) {
-    ygglog_debug << "CommBase(" << name << ")::recv: Received " << head.size_curr << " bytes from " << address->address() << std::endl;
-    ret = head.size_data;
-    setFlags(head, RECV);
-  }
+  ygglog_debug << "CommBase(" << name << ")::recv: Received " << head.size_curr << " bytes from " << address->address() << std::endl;
+  ret = head.size_data;
+  setFlags(head, RECV);
   return ret;
 }
 

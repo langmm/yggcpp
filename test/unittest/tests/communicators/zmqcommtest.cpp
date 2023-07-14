@@ -207,6 +207,13 @@ TEST(ZMQComm, recv) {
 #endif // ELF_AVAILABLE
 }
 
+TEST(ZMQComm, errors) {
+  ZMQComm comm("", nullptr, SEND);
+  std::string msg;
+  comm.getReply().clear();
+  EXPECT_FALSE(comm.getReply().recv_stage2(msg));
+}
+
 #else // ZMQINSTALLED
 
 TEST(ZMQComm, constructor) {
