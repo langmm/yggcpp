@@ -48,10 +48,6 @@ public:
   ZMQSocket(int type0, utils::Address* address = NULL,
 	    int linger = 0, int immediate = 1,
 	    int sndtimeo = -1);
-  ZMQSocket(int type0, std::string address,
-	    int linger = 0, int immediate = 1,
-	    int sndtimeo = -1);
-  ZMQSocket(const ZMQSocket& rhs);
   void init(int type0, utils::Address* address = NULL,
 	    int linger = 0, int immediate = 1,
 	    int sndtimeo = -1);

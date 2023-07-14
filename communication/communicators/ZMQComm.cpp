@@ -88,13 +88,6 @@ ZMQSocket::ZMQSocket(int type0, utils::Address* address,
   handle(NULL), endpoint(), type(type0), ctx() {
   init(type0, address, linger, immediate, sndtimeo);
 }
-ZMQSocket::ZMQSocket(int type0, std::string address,
-		     int linger, int immediate, int sndtimeo) :
-  handle(NULL), endpoint(), type(type0), ctx() {
-  init(type0, address, linger, immediate, sndtimeo);
-}
-ZMQSocket::ZMQSocket(const ZMQSocket& rhs) :
-  handle(NULL), endpoint(), type(rhs.type), ctx() {}
 
 template<typename T>
 int ZMQSocket::set(int member, const T& data) {
@@ -124,17 +117,15 @@ void ZMQSocket::init(int type0, utils::Address* address,
 #endif // _OPENMP
     handle = zmq_socket (ctx.ctx, type);
     if (handle != NULL) {
-      if (linger != -1 && set(ZMQ_LINGER, linger) < 0) {
-	except_msg = "ZMQSocket::init: Error setting ZMQ_LINGER to" + std::to_string(linger);
+#define DO_SET(flag, var, def)					\
+      if (except_msg.empty() && var != def &&			\
+	  set(flag, var) < 0) {					\
+	except_msg = "ZMQSocket::init: Error setting " #flag " to " + std::to_string(var); \
       }
-      if (except_msg.empty() && immediate != 0 &&
-	  set(ZMQ_IMMEDIATE, immediate) < 0) {
-	except_msg = "ZMQSocket::init: Error setting ZMQ_IMMEDIATE to " + std::to_string(immediate);
-      }
-      if (except_msg.empty() && sndtimeo != -1 &&
-	  set(ZMQ_SNDTIMEO, sndtimeo) < 0) {
-	except_msg = "ZMQSocket::init: Error setting ZMQ_SNDTIMEO to " + std::to_string(sndtimeo);
-      }
+      DO_SET(ZMQ_LINGER, linger, -1);
+      DO_SET(ZMQ_IMMEDIATE, immediate, 0);
+      DO_SET(ZMQ_SNDTIMEO, sndtimeo, -1);
+#undef DO_SET
     }
 #ifdef _OPENMP
   }
@@ -353,16 +344,10 @@ int ZMQReply::set(std::string endpoint) {
     out = sockets.size();
     sockets.resize(out + 1);
     if (endpoint.empty()) {
-      if (direction != SEND) {
-	ygglog_error << "ZMQReply::set: Only send should bind to reply socket" << std::endl;
-	return -1;
-      }
+      assert(direction == SEND);
       sockets[out].init(ZMQ_REP, "", 0, 1, _zmq_sleeptime);
     } else {
-      if (direction != RECV) {
-	ygglog_error << "ZMQReply::set: Only recv should bind to reply socket" << std::endl;
-	return -1;
-      }
+      assert(direction == RECV);
       sockets[out].init(ZMQ_REQ, endpoint, 0, 1, _zmq_sleeptime);
     }
   }
@@ -372,9 +357,14 @@ int ZMQReply::set(std::string endpoint) {
 bool ZMQReply::recv(std::string msg_send) {
   if (msg_send.empty())
     msg_send.assign(_reply_msg);
+#ifdef YGG_TEST
+  // Exit early to prevent deadlock when running from the same thread
+  return true;
+#else // YGG_TEST
   if (!recv_stage1(msg_send))
     return false;
   return recv_stage2(msg_send);
+#endif // YGG_TEST
 }
 bool ZMQReply::recv_stage1(std::string msg_send) {
   if (msg_send.empty())
@@ -411,10 +401,6 @@ bool ZMQReply::recv_stage2(std::string msg_send) {
   sock->poll(ZMQ_POLLIN, timeout);
   if (sock->recv(msg_recv) < 0) {
     ygglog_error << "ZMQReply::recv_stage2: Error receiving reponse" << std::endl;
-    return false;
-  }
-  if (msg_recv.empty()) {
-    ygglog_error << "ZMQReply::recv_stage2: did not receive" << std::endl;
     return false;
   }
   n_rep++;
@@ -513,11 +499,7 @@ bool ZMQReply::send_stage2(const std::string msg_data) {
 void ZMQComm::init() {
   updateMaxMsgSize(1048576);
   msgBufSize = 100;
-  if (!(flags & COMM_FLAG_VALID))
-    return;
-  if (init_handle()) {
-    flags |= COMM_FLAG_VALID;
-  } else {
+  if ((flags & COMM_FLAG_VALID) && (!init_handle())) {
     flags &= ~COMM_FLAG_VALID;
   }
 }
@@ -536,14 +518,7 @@ bool ZMQComm::init_handle() {
   // } else {
   handle = new ZMQSocket(ZMQ_PAIR, address);
   // }
-  if (!handle) {
-    ygglog_error << "create_new: Could not initialize empty socket." << std::endl;
-    return false;
-  }
-  if (!address)
-    address = new utils::Address(handle->endpoint);
-  else
-    address->address(handle->endpoint);
+  address->address(handle->endpoint);
   if (this->name.empty())
     this->name = "tempnewZMQ-" + handle->endpoint.substr(handle->endpoint.find_last_of(':') + 1);
   if (direction == SEND)
@@ -598,13 +573,11 @@ int ZMQComm::comm_nmsg() const {
 }
 
 int ZMQComm::send_single(const char* data, const size_t &len, const Header& header) {
-    if (global_comm)
-      return global_comm->send_single(data, len, header);
-    ygglog_debug << "ZMQComm(" << name << ")::send_single: " << len << " bytes" << std::endl;
-  if (!check_size(len)) {
-    ygglog_error << "ZMQComm(" << name << ")::send_single: Message too large" << std::endl;
-    return -1;
-  }
+  // Should never be called with global comm
+  // if (global_comm)
+  //   return global_comm->send_single(data, len, header);
+  assert(!global_comm);
+  ygglog_debug << "ZMQComm(" << name << ")::send_single: " << len << " bytes" << std::endl;
   std::string msg(data, len);
   int ret = handle->send(msg);
   if (ret < 0) {
@@ -631,8 +604,10 @@ bool ZMQComm::do_reply_send(const Header& header) {
 
 long ZMQComm::recv_single(char*& data, const size_t &len,
 			  bool allow_realloc) {
-    if (global_comm)
-      return global_comm->recv_single(data, len, allow_realloc);
+    // Should never be called with global comm
+    // if (global_comm)
+    //   return global_comm->recv_single(data, len, allow_realloc);
+    assert(!global_comm);
     long ret = -1;
     ygglog_debug << "ZMQComm(" << name << ")::recv_single " << std::endl;
     if (!handle) {
@@ -664,21 +639,20 @@ long ZMQComm::recv_single(char*& data, const size_t &len,
     return ret;
 }
 bool ZMQComm::do_reply_recv(const Header& header) {
-  if (global_comm)
-    return dynamic_cast<ZMQComm*>(global_comm)->do_reply_recv(header);
+  // Should never be called with global comm
+  // if (global_comm)
+  //   return dynamic_cast<ZMQComm*>(global_comm)->do_reply_recv(header);
+  assert(!global_comm);
   if (header.flags & (HEAD_FLAG_CLIENT_SIGNON | HEAD_FLAG_SERVER_SIGNON))
     return true;
-#ifdef YGG_TEST
-    // Exit early to prevent deadlock when running from the same thread
-    return true;
-#else // YGG_TEST
-    return reply.recv();
-#endif // YGG_TEST
+  return reply.recv();
 }
 
 bool ZMQComm::create_header_send(Header& header, const char* data, const size_t &len) {
-  if (global_comm)
-    return global_comm->create_header_send(header, data, len);
+  // Should never be called with global comm
+  // if (global_comm)
+  //   return global_comm->create_header_send(header, data, len);
+  assert(!global_comm);
   if (!Comm_t::create_header_send(header, data, len))
     return false;
   if (!(header.flags & (HEAD_FLAG_CLIENT_SIGNON |
@@ -698,9 +672,11 @@ bool ZMQComm::create_header_recv(Header& header, char*& data,
 				 const size_t &len,
 				 size_t msg_len, int allow_realloc,
 				 int temp) {
-  if (global_comm)
-    return global_comm->create_header_recv(header, data, len, msg_len,
-					   allow_realloc, temp);
+  // Should never be called with global comm
+  // if (global_comm)
+  //   return global_comm->create_header_recv(header, data, len, msg_len,
+  // 					   allow_realloc, temp);
+  assert(!global_comm);
   bool out = Comm_t::create_header_recv(header, data, len, msg_len,
 					allow_realloc, temp);
   if (temp && out &&
@@ -722,8 +698,10 @@ bool ZMQComm::create_header_recv(Header& header, char*& data,
 WORKER_METHOD_DEFS(ZMQComm)
 
 Comm_t* ZMQComm::create_worker_send(Header& head) {
-  if (global_comm)
-    return global_comm->create_worker_send(head);
+  // Should never be called with global comm
+  // if (global_comm)
+  //   return global_comm->create_worker_send(head);
+  assert(!global_comm);
   ZMQComm* out = dynamic_cast<ZMQComm*>(Comm_t::create_worker_send(head));
   if (!out)
     return out;
@@ -738,8 +716,10 @@ Comm_t* ZMQComm::create_worker_send(Header& head) {
 }
 
 Comm_t* ZMQComm::create_worker_recv(Header& head) {
-  if (global_comm)
-    return global_comm->create_worker_recv(head);
+  // Should never be called with global comm
+  // if (global_comm)
+  //   return global_comm->create_worker_recv(head);
+  assert(!global_comm);
   ZMQComm* out = dynamic_cast<ZMQComm*>(Comm_t::create_worker_recv(head));
   if (!out)
     return out;
@@ -837,15 +817,6 @@ ZMQSocket::ZMQSocket() :
 ZMQSocket::ZMQSocket(int type0, utils::Address*,
 		     int, int, int) :
   handle(NULL), endpoint(), type(type0), ctx() {
-  zmq_install_error();
-}
-ZMQSocket::ZMQSocket(int type0, std::string,
-		     int, int, int) :
-  handle(NULL), endpoint(), type(type0), ctx() {
-  zmq_install_error();
-}
-ZMQSocket::ZMQSocket(const ZMQSocket& rhs) :
-  handle(NULL), endpoint(), type(rhs.type), ctx() {
   zmq_install_error();
 }
 
