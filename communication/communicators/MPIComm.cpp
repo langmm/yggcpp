@@ -163,8 +163,10 @@ int MPIComm::comm_nmsg() const {
 
 int MPIComm::send_single(const char *data, const size_t &len,
 			 const Header& head) {
-    if (global_comm)
-      return dynamic_cast<MPIComm*>(global_comm)->send_single(data, len, head);
+    // Should never be called with global comm
+    // if (global_comm)
+    //   return dynamic_cast<MPIComm*>(global_comm)->send_single(data, len, head);
+    assert(!global_comm);
     ygglog_debug << "MPIComm(" << name << ")::send_single: " << len << " bytes" << std::endl;
     if (!check_size(len)) {
       ygglog_error << "MPIComm(" << name << ")::send_single: Message too large" << std::endl;
@@ -194,8 +196,10 @@ int MPIComm::send_single(const char *data, const size_t &len,
 }
 
 long MPIComm::recv_single(char*& data, const size_t &len, bool allow_realloc) {
-    if (global_comm)
-      return static_cast<MPIComm*>(global_comm)->recv_single(data, len, allow_realloc);
+    // Should never be called with global comm
+    // if (global_comm)
+    //   return static_cast<MPIComm*>(global_comm)->recv_single(data, len, allow_realloc);
+    assert(!global_comm);
     ygglog_debug << "MPIComm(" << name << ")::recv_single" << std::endl;
     MPI_Status status;
     int adr = mpi_comm_source_id();
