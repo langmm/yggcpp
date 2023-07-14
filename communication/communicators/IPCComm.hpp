@@ -30,8 +30,8 @@ class IPCComm : public CommBase<int> {
 public:
     explicit IPCComm(const std::string name = "",
 		     utils::Address *address = new utils::Address(),
-                     DIRECTION direction = NONE, int flgs = 0,
-		     const COMM_TYPE type = IPC_COMM);
+                     const DIRECTION direction = NONE,
+		     int flgs = 0, const COMM_TYPE type = IPC_COMM);
     ADD_CONSTRUCTORS(IPCComm, IPC_COMM)
 
 #ifdef IPCINSTALLED

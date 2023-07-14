@@ -41,9 +41,10 @@ public:
   
 class MPIComm : public CommBase<mpi_registry_t> {
 public:
-    MPIComm(const std::string name, utils::Address *address,
-	    const DIRECTION direction, int flgs = 0,
-	    const COMM_TYPE type = MPI_COMM);
+    MPIComm(const std::string name = "",
+	    utils::Address *address = new utils::Address(),
+	    const DIRECTION direction = NONE,
+	    int flgs = 0, const COMM_TYPE type = MPI_COMM);
     ADD_CONSTRUCTORS(MPIComm, MPI_COMM)
 
 #if defined(MPIINSTALLED) && defined(MPI_COMM_WORLD)
