@@ -210,9 +210,10 @@ TEST(ClientComm, global) {
     std::string key_env = name + "_OUT";
     std::string val_env = rComm.getAddress();
     setenv(key_env.c_str(), val_env.c_str(), 1);
-    global_scope_comm_on();
     {
+      global_scope_comm_on();
       ClientComm sComm(name, nullptr);
+      global_scope_comm_off();
       {
 	std::string msg_cli = YGG_CLIENT_SIGNON;
 	Header header;
@@ -235,7 +236,9 @@ TEST(ClientComm, global) {
       EXPECT_EQ(res_recv, res_send);
     }
     {
+      global_scope_comm_on();
       ClientComm sComm(name, nullptr);
+      global_scope_comm_off();
       std::string req_send = "REQUEST";
       std::string res_send = "RESPONSE";
       std::string req_recv;
@@ -247,7 +250,6 @@ TEST(ClientComm, global) {
       EXPECT_EQ(sComm.recv(res_recv), res_send.size());
       EXPECT_EQ(res_recv, res_send);
     }
-    global_scope_comm_off();
   }
   Comm_t::_ygg_cleanup();
 }
