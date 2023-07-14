@@ -26,8 +26,6 @@ typedef struct msgbuf_t {
     char data[2048]; //!< Buffer for the message
 } msgbuf_t;
   
-//class ClientComm;
-//class ServerComm;
 class IPCComm : public CommBase<int> {
 public:
     /**
@@ -42,6 +40,8 @@ public:
                      DIRECTION direction = NONE, int flgs = 0,
 		     const COMM_TYPE type = IPC_COMM);
     ADD_CONSTRUCTORS(IPCComm, IPC_COMM)
+
+#ifdef IPCINSTALLED
 
     /**
      * Destructor
@@ -87,6 +87,9 @@ protected:
      */
     long recv_single(char*& data, const size_t &len, bool allow_realloc) override;
     WORKER_METHOD_DECS(IPCComm);
+#else // IPCINSTALLED
+    void init() { UNINSTALLED_ERROR(IPC); }
+#endif // IPCINSTALLED
 
 private:
     friend class ClientComm;

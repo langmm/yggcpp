@@ -10,6 +10,8 @@ using namespace communication;
 using namespace communication::communicator;
 using namespace communication::mock;
 
+#ifdef ZMQINSTALLED
+
 namespace communication {
 namespace testing {
 class ZMQSocket_tester : public ZMQSocket {
@@ -37,8 +39,6 @@ public:
       this->getReply().create(adr);
     }
 };
-
-#ifdef ZMQINSTALLED
 
 COMM_SERI_TEST(ZMQComm)
 
@@ -217,9 +217,9 @@ TEST(ZMQComm, errors) {
 #else // ZMQINSTALLED
 
 TEST(ZMQComm, constructor) {
-    EXPECT_THROW(ZMQComm_tester zmq, std::exception);
+    EXPECT_THROW(ZMQComm zmq, std::exception);
     std::string name = "";
-    EXPECT_THROW(ZMQComm_tester zmq2(name, nullptr, SEND), std::exception);
+    EXPECT_THROW(ZMQComm zmq2(name, nullptr, SEND), std::exception);
 }
 
 #endif // ZMQINSTALLED

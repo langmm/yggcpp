@@ -56,7 +56,7 @@ public:
 	    const COMM_TYPE type = MPI_COMM);
     ADD_CONSTRUCTORS(MPIComm, MPI_COMM)
 
-    //explicit MPIComm(const Comm_t* comm);
+#if defined(MPIINSTALLED) && defined(MPI_COMM_WORLD)
     /**
      * Destructor
      */
@@ -83,10 +83,17 @@ protected:
 
     long recv_single(char*& data, const size_t &len, bool allow_realloc) override;
     WORKER_METHOD_DECS(MPIComm);
-#ifndef YGG_TEST
-private:
+#else // MPIINSTALLED
+    void init() { UNINSTALLED_ERROR(MPI); }
+#endif // MPIINSTALLED
+  
+#ifdef YGG_TEST
+public:
+    std::vector<utils::Address *>& getAddresses() { return addresses; }
 #endif
-    std::vector<utils::Address *> addresses;  //!< associated addresses
+  
+private:
+    std::vector<utils::Address *> addresses;
 };
 
 }

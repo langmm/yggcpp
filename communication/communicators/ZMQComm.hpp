@@ -34,7 +34,12 @@ public:
   ZMQContext();
   ZMQContext(const ZMQContext& rhs);
   ZMQContext& operator=(const ZMQContext& rhs);
+#ifdef ZMQINSTALLED
+  void init();
   static void destroy();
+#else
+  void init() { UNINSTALLED_ERROR(ZMQ); }
+#endif
   void* ctx;
   static void* ygg_s_process_ctx;
 };
@@ -48,10 +53,11 @@ public:
   ZMQSocket(int type0, utils::Address* address = NULL,
 	    int linger = 0, int immediate = 1,
 	    int sndtimeo = -1);
-  void init(int type0, utils::Address* address = NULL,
+  void init(int type0, std::string address,
 	    int linger = 0, int immediate = 1,
 	    int sndtimeo = -1);
-  void init(int type0, std::string address,
+#ifdef ZMQINSTALLED
+  void init(int type0, utils::Address* address = NULL,
 	    int linger = 0, int immediate = 1,
 	    int sndtimeo = -1);
   int poll(int method, int tout);
@@ -60,6 +66,12 @@ public:
   int set(int member, const T& data);
   int recv(std::string& msg, bool for_identity=false);
   void destroy();
+#else
+  void init(int, utils::Address* = NULL, int = 0, int = 1, int = -1) {
+    UNINSTALLED_ERROR(ZMQ);
+  }
+  void destroy() {}
+#endif
   ~ZMQSocket();
 
   void *handle;               //  The libzmq socket handle
@@ -82,6 +94,7 @@ public:
 class ZMQReply {
 public:
   ZMQReply(DIRECTION dir);
+#ifdef ZMQINSTALLED
   void clear();
   int create(std::string& endpoint);
   int find(std::string endpoint);
@@ -92,6 +105,7 @@ public:
   bool send();
   bool send_stage1(std::string& msg_data);
   bool send_stage2(const std::string msg_data);
+#endif // ZMQINSTALLED
 
   std::vector<ZMQSocket> sockets;
   int n_msg;
@@ -116,11 +130,11 @@ public:
 		     int flgs = 0, const COMM_TYPE type = ZMQ_COMM);
     ADD_CONSTRUCTORS(ZMQComm, ZMQ_COMM)
 
+#ifdef ZMQINSTALLED
     /**
      * Destructor
      */
     ~ZMQComm() override;
-
 
     /**
      * The number of messages in the queue
@@ -130,10 +144,7 @@ public:
     using Comm_t::send;
     using Comm_t::recv;
 
-#ifdef YGG_TEST
-    ZMQReply& getReply() { return reply; }
-    bool afterSendRecv(Comm_t* sComm, Comm_t* rComm) override;
-#else
+#ifndef YGG_TEST
 protected:
 #endif
     void init();
@@ -149,7 +160,18 @@ protected:
     WORKER_METHOD_DECS(ZMQComm);
     Comm_t* create_worker_send(utils::Header& head) override;
     Comm_t* create_worker_recv(utils::Header& head) override;
+#ifdef YGG_TEST
+    bool afterSendRecv(Comm_t* sComm, Comm_t* rComm) override;
+#endif
+#else
+    void init() { UNINSTALLED_ERROR(ZMQ); }
+#endif
 
+#ifdef YGG_TEST
+public:
+    ZMQReply& getReply() { return reply; }
+#endif
+  
 private:
     friend class ClientComm;
     friend class ServerComm;

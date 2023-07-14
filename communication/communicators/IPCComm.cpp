@@ -9,7 +9,67 @@ unsigned IPCComm::_yggChannelsUsed = 0;
 int IPCComm::_yggChannelNames[_yggTrackChannels];
 bool IPCComm::_ipc_rand_seeded = false;
 
+IPCComm::IPCComm(const std::string name, Address *address,
+		 DIRECTION direction, int flgs,
+		 const COMM_TYPE type) :
+  CommBase(name, address, direction, type, flgs) {
+  if (!global_comm)
+    init();
+}
+
+ADD_CONSTRUCTORS_DEF(IPCComm)
+
 #ifdef IPCINSTALLED
+
+void IPCComm::init() {
+    updateMaxMsgSize(2048);
+    int key = 0;
+    bool created = ((!address) || address->address().empty());
+    if (created) {
+#ifdef _OPENMP
+#pragma omp critical (ipc)
+      {
+#endif
+	if (!_ipc_rand_seeded) {
+	  std::srand(ptr2seed(this));
+	  _ipc_rand_seeded = true;
+	}
+#ifdef _OPENMP
+      }
+#endif
+      while (key == 0 || check_key(key) < 0) {
+        key = std::rand();
+      }
+      if (!address) {
+        address = new utils::Address(std::to_string(key));
+      } else {
+        address->address(std::to_string(key));
+      }
+    } else {
+      key = this->address->key();
+    }
+    if (name.empty()) {
+        this->name = "tempnewIPC." + this->address->address();
+    } else {
+        this->name = name;
+    }
+    int *fid = new int;
+    if (created)
+      fid[0] = msgget(key, (IPC_CREAT | 0777));
+    else
+      fid[0] = msgget(key, 0600);
+    if (fid[0] < 0) {
+        ygglog_error << "IPCComm::init: msgget(" << key << ") "
+		     << "created(" << created << "), "
+		     << "ret(" << fid[0] << "), errno(" << errno << "): "
+		     << strerror(errno) << std::endl;
+        delete fid;
+	throw std::runtime_error("IPCComm::init: Error in msgget");
+    }
+    handle = fid;
+    add_channel();
+    ygglog_debug << "IPCComm(" << name << ")::init: address = " << this->address->address() << ", created = " << created << std::endl;
+}
 
 IPCComm::~IPCComm() {
     ygglog_debug << "~IPCComm: Started" << std::endl;
@@ -139,7 +199,7 @@ int IPCComm::comm_nmsg() const {
   @param[in] data character pointer to message that should be sent.
   @returns int 0 if send succesfull, -1 if send unsuccessful.
  */
-int IPCComm::send_single(const char* data, const size_t &len, const Header& head) {
+int IPCComm::send_single(const char* data, const size_t &len, const Header&) {
     // Should never be called with global comm
     // if (global_comm)
     //   return global_comm->send_single(data, len, head);
@@ -218,122 +278,6 @@ long IPCComm::recv_single(char*& data, const size_t& len, bool allow_realloc) {
     return ret;
 }
 
-void IPCComm::init() {
-    updateMaxMsgSize(2048);
-    int key = 0;
-    bool created = ((!address) || address->address().empty());
-    if (created) {
-#ifdef _OPENMP
-#pragma omp critical (ipc)
-      {
-#endif
-	if (!_ipc_rand_seeded) {
-	  std::srand(ptr2seed(this));
-	  _ipc_rand_seeded = true;
-	}
-#ifdef _OPENMP
-      }
-#endif
-      while (key == 0 || check_key(key) < 0) {
-        key = std::rand();
-      }
-      if (!address) {
-        address = new utils::Address(std::to_string(key));
-      } else {
-        address->address(std::to_string(key));
-      }
-    } else {
-      key = this->address->key();
-    }
-    if (name.empty()) {
-        this->name = "tempnewIPC." + this->address->address();
-    } else {
-        this->name = name;
-    }
-    int *fid = new int;
-    if (created)
-      fid[0] = msgget(key, (IPC_CREAT | 0777));
-    else
-      fid[0] = msgget(key, 0600);
-    if (fid[0] < 0) {
-        ygglog_error << "IPCComm::init: msgget(" << key << ") "
-		     << "created(" << created << "), "
-		     << "ret(" << fid[0] << "), errno(" << errno << "): "
-		     << strerror(errno) << std::endl;
-        delete fid;
-	throw std::runtime_error("IPCComm::init: Error in msgget");
-    }
-    handle = fid;
-    add_channel();
-    ygglog_debug << "IPCComm(" << name << ")::init: address = " << this->address->address() << ", created = " << created << std::endl;
-}
-
-IPCComm::IPCComm(const std::string name, Address *address,
-		 DIRECTION direction, int flgs,
-		 const COMM_TYPE type) :
-  CommBase(name, address, direction, type, flgs) {
-  if (!global_comm)
-    init();
-}
-
-ADD_CONSTRUCTORS_DEF(IPCComm)
 WORKER_METHOD_DEFS(IPCComm)
-
-#else /*IPCINSTALLED*/
-
-/*!
-  @brief Print error message about IPC library not being installed.
- */
-static inline
-void ipc_install_error() {
-  ygglog_throw_error("Compiler flag 'IPCINSTALLED' not defined so IPC bindings are disabled.");
-};
-
-IPCComm::~IPCComm() {
-  // No error as constructor should have raised one
-}
-
-int IPCComm::check_key(int) {
-    ipc_install_error();
-    return -1;
-}
-
-void IPCComm::add_channel() {
-    ipc_install_error();
-}
-
-int IPCComm::remove_comm(bool) {
-    ipc_install_error();
-    return -1;
-}
-
-int IPCComm::comm_nmsg() const {
-    ipc_install_error();
-    return -1;
-}
-
-int IPCComm::send_single(const char *, const size_t &, const Header&) {
-    ipc_install_error();
-    return -1;
-}
-
-long IPCComm::recv_single(char *&, const size_t &, bool) {
-    ipc_install_error();
-    return -1;
-}
-
-void IPCComm::init() {
-    ipc_install_error();
-}
-
-IPCComm::IPCComm(const std::string name, utils::Address *address,
-		 DIRECTION direction, int flgs,
-		 const COMM_TYPE type) :
-  CommBase(name, address, direction, type, flgs) {
-    ipc_install_error();
-}
-
-ADD_CONSTRUCTORS_DEF(IPCComm)
-WORKER_METHOD_DUMMY(IPCComm, ipc)
 
 #endif /*IPCINSTALLED*/

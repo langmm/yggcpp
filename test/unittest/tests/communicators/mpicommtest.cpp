@@ -20,7 +20,6 @@ namespace testing {
 class MPIComm_tester : public MPIComm {
 public:
     TESTER_METHODS(MPIComm)
-    std::vector<utils::Address*> getAddresses() {return addresses;}
     mpi_registry_t* getHandle() { return handle; }
     void setHandle(mpi_registry_t* h) { handle = h;}
 };
@@ -185,4 +184,13 @@ TEST(MPIComm, regclone) {
     EXPECT_NE(mpir.procs, mpir2.procs);
     MPI_Finalize();
 }
-#endif
+
+#else // MPIINSTALLED
+
+TEST(MPIComm, errors) {
+  EXPECT_THROW(MPIComm_tester mpi, std::exception);
+  std::string name = "";
+  EXPECT_THROW(MPIComm_tester mpi2(name, nullptr, SEND), std::exception);
+}
+
+#endif // MPIINSTALLED
