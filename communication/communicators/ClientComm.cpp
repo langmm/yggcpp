@@ -93,8 +93,10 @@ bool ClientComm::signon(const Header& header) {
 }
 
 Comm_t* ClientComm::create_worker_send(Header& head) {
-  if (global_comm)
-    return global_comm->create_worker_send(head);
+  // Should never be called with global comm
+  // if (global_comm)
+  //   return global_comm->create_worker_send(head);
+  assert(!global_comm);
   ygglog_debug << "ClientComm(" << name << ")::create_worker_send: begin" << std::endl;
   Comm_t* out = COMM_BASE::create_worker_send(head);
   std::string request_id(head.GetMetaString("request_id"));
@@ -107,8 +109,10 @@ Comm_t* ClientComm::create_worker_send(Header& head) {
 }
 
 Comm_t* ClientComm::create_worker_recv(Header& head) {
-  if (global_comm)
-    return global_comm->create_worker_recv(head);
+  // Should never be called with global comm
+  // if (global_comm)
+  //   return global_comm->create_worker_recv(head);
+  assert(!global_comm);
   ygglog_debug << "ClientComm(" << name << ")::create_worker_recv: begin" << std::endl;
   std::string request_id(head.GetMetaString("request_id"));
   if (!workers.setResponse(request_id)) {
@@ -142,9 +146,11 @@ bool ClientComm::create_header_send(Header& header, const char* data, const size
 bool ClientComm::create_header_recv(Header& header, char*& data, const size_t &len,
 				    size_t msg_len, int allow_realloc,
 				    int temp) {
-  if (global_comm)
-    return global_comm->create_header_recv(header, data, len, msg_len,
-					   allow_realloc, temp);
+  // Should never be called with global comm
+  // if (global_comm)
+  //   return global_comm->create_header_recv(header, data, len, msg_len,
+  // 					   allow_realloc, temp);
+  assert(!global_comm);
   ygglog_debug << "ClientComm(" << name << ")::create_header_recv: begin (temp = " << temp << ")" << std::endl;
   Comm_t* response_comm = requests.activeComm(true);
   if (response_comm == NULL) {
@@ -173,8 +179,10 @@ bool ClientComm::create_header_recv(Header& header, char*& data, const size_t &l
 }
 
 long ClientComm::recv_single(char*& rdata, const size_t &rlen, bool allow_realloc)  {
-    if (global_comm)
-      return global_comm->recv_single(rdata, rlen, allow_realloc);
+    // Should never be called with global comm
+    // if (global_comm)
+    //   return global_comm->recv_single(rdata, rlen, allow_realloc);
+    assert(!global_comm);
     ygglog_debug << "ClientComm(" << name << ")::recv_single" << std::endl;
     Comm_t* response_comm = requests.activeComm(true);
     if (response_comm == NULL) {

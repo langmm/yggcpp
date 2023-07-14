@@ -155,31 +155,44 @@ TEST_SEND_RECV_RPC(YggInterface, YggRpcClient_schema,
                    INIT_DATA_SINGLE(int, 5),
                    COMP_DATA_SINGLE,
                    sendVar, (data_send), recvVar, (data_recv))
+TEST_SEND_RECV_RPC_GLOBAL(
+  YggInterface, YggRpcClient_schema,
+  INIT_SCHEMA_RPC(INIT_OUTPUT_RPC(YggRpcClient, s1, s2),
+		  "{\"type\": \"integer\"}",
+		  "{\"type\": \"integer\"}"),
+  INIT_DATA_SINGLE(int, 5),
+  COMP_DATA_SINGLE,
+  sendVar, (data_send), recvVar, (data_recv))
 
 // Timesync
 TEST(YggInterface, YggTimesync) {
-  INIT_OUTPUT_RPC_NOARGS(YggTimesync);
-  rComm.addResponseSchema("{\"type\": \"object\"}");
-  DO_RPC_SIGNON;
   {
-    double t_send = 1.5;
-    double t_recv;
-    DO_SEND_RECV_REQUEST(INIT_DATA_SCHEMA("{\"type\": \"object\", "
-					  "\"properties\": {\"a\": "
-					  "{\"type\": \"integer\"}}}"),
-			 COMP_DATA_SINGLE,
-			 send, (2, t_send, &data_send),
-			 recv, (2, &t_recv, &data_recv));
-    EXPECT_EQ(t_send, t_recv);
+    global_scope_comm_on();
+    INIT_OUTPUT_RPC_NOARGS(YggTimesync);
+    global_scope_comm_off();
+    rComm.addResponseSchema("{\"type\": \"object\"}");
+    DO_RPC_SIGNON;
+    {
+      double t_send = 1.5;
+      double t_recv;
+      DO_SEND_RECV_REQUEST(INIT_DATA_SCHEMA("{\"type\": \"object\", "
+					    "\"properties\": {\"a\": "
+					    "{\"type\": \"integer\"}}}"),
+			   COMP_DATA_SINGLE,
+			   send, (2, t_send, &data_send),
+			   recv, (2, &t_recv, &data_recv));
+      EXPECT_EQ(t_send, t_recv);
+    }
+    {
+      DO_SEND_RECV_RESPONSE(INIT_DATA_SCHEMA("{\"type\": \"object\", "
+					     "\"properties\": {\"a\": "
+					     "{\"type\": \"integer\"}}}"),
+			    COMP_DATA_SINGLE,
+			    send, (1, &data_send),
+			    recv, (1, &data_recv));
+    }
   }
-  {
-    DO_SEND_RECV_RESPONSE(INIT_DATA_SCHEMA("{\"type\": \"object\", "
-					   "\"properties\": {\"a\": "
-					   "{\"type\": \"integer\"}}}"),
-			  COMP_DATA_SINGLE,
-			  send, (1, &data_send),
-			  recv, (1, &data_recv));
-  }
+  Comm_t::_ygg_cleanup();
 }
 TEST(YggInterface, YggTimesync_units) {
   INIT_OUTPUT_RPC(YggTimesync, "s");

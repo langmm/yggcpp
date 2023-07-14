@@ -233,6 +233,22 @@
       DO_SEND_RECV_RESPONSE(init_data, comp_data, send_method, send_args, recv_method, recv_args); \
     }									\
   }
+#define TEST_SEND_RECV_RPC_GLOBAL(group, name, init_cls, init_data, comp_data, send_method, send_args, recv_method, recv_args) \
+  TEST(group, name ## Global) {						\
+    {									\
+      global_scope_comm_on();						\
+      init_cls;								\
+      global_scope_comm_off();						\
+      DO_RPC_SIGNON;							\
+      {									\
+	DO_SEND_RECV_REQUEST(init_data, comp_data, send_method, send_args, recv_method, recv_args); \
+      }									\
+      {									\
+	DO_SEND_RECV_RESPONSE(init_data, comp_data, send_method, send_args, recv_method, recv_args); \
+      }									\
+    }									\
+    Comm_t::_ygg_cleanup();						\
+  }
 
 #define TESTER_METHODS(cls)						\
   cls ## _tester(const std::string name = "",				\

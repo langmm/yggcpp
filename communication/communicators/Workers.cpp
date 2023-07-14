@@ -22,10 +22,7 @@ Worker::Worker(Worker&& rhs) : comm(rhs.comm), request(rhs.request) {
 }
 Worker& Worker::operator=(Worker&& rhs) {
   this->~Worker();
-  this->comm = rhs.comm;
-  this->request = rhs.request;
-  rhs.comm = nullptr;
-  rhs.request = "";
+  new (this) Worker(std::move(rhs));
   return *this;
 }
 bool Worker::matches(DIRECTION dir, Address* adr) {
