@@ -269,6 +269,7 @@
     std::string val_env = sComm.getAddress();				\
     setenv(key_env.c_str(), val_env.c_str(), 1);			\
     cls ## _tester rComm(name, RECV);					\
+    unsetenv(key_env.c_str());						\
     DO_SEND_RECV(sendVar, recvVar, type, value);			\
     rComm.close();							\
     EXPECT_EQ(rComm.recvVar(data_recv), -1);				\
@@ -288,6 +289,7 @@
     std::string val_env = sComm.getAddress();				\
     setenv(key_env.c_str(), val_env.c_str(), 1);			\
     cls ## _tester rComm(name, RECV);					\
+    unsetenv(key_env.c_str());						\
     if (sComm.getMaxMsgSize() > 0) {					\
       /* Add worker in advance so that send is successful */		\
       Comm_t* sComm_worker = sComm.getWorkers().get(&sComm, SEND);	\
@@ -323,6 +325,7 @@
       std::string val_env = sComm.getAddress();				\
       setenv(key_env.c_str(), val_env.c_str(), 1);			\
       cls ## _tester rComm(name, RECV);					\
+      unsetenv(key_env.c_str());					\
       DO_SEND_RECV_EXCHANGE(INIT_DATA_SINGLE(double, 1.5),		\
 			    COMP_DATA_SINGLE,				\
 			    sendVar, (data_send),			\
