@@ -44,7 +44,7 @@ WorkerList::~WorkerList() {
 }
 
 Comm_t* WorkerList::add_worker(Comm_t* parent, DIRECTION dir,
-			   Address* adr) {
+			       Address* adr) {
   if (!parent) {
     ygglog_error << "WorkerList::add_worker: No parent provided" << std::endl;
     return nullptr;

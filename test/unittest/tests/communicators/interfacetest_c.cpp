@@ -380,75 +380,57 @@ TEST(YggInterface_C, GlobalServer) {
   {
     std::string name = "test_name";
     ClientComm sComm(name, nullptr);
-    // sComm.set_timeout_recv(1);
+    sComm.set_timeout_recv(1);
     std::string key_env = name + "_IN";
     std::string val_env = sComm.getAddress();
     setenv(key_env.c_str(), val_env.c_str(), 1);
     {
-      std::cerr << "FIRST EXCHANGE" << std::endl;
       dtype_t dtype_req = create_dtype_from_schema("{\"type\": \"integer\"}", false);
       dtype_t dtype_res = create_dtype_from_schema("{\"type\": \"integer\"}", false);
       comm_t rComm_c = yggRpcServerType_global("test_name", dtype_req, dtype_res);
       ServerComm& rComm = *((ServerComm*)(rComm_c.comm));
-      // rComm.set_timeout_recv(1);
+      rComm.set_timeout_recv(1);
       DO_RPC_SIGNON;
       // Request
-      std::cerr << "FIRST REQUEST" << std::endl;
       int req_send = 1, req_recv = 0;
-      std::cerr << "FIRST REQUEST: SEND" << std::endl;
       EXPECT_GE(sComm.sendVar(req_send), 0);
-      std::cerr << "FIRST REQUEST: RECV" << std::endl;
       EXPECT_GE(yggRecv(rComm_c, &req_recv), 0);
       EXPECT_EQ(req_recv, req_send);
-      // EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));
+      EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));
       // Response
-      std::cerr << "FIRST RESPONSE" << std::endl;
       int res_send = 2, res_recv = 0;
-      std::cerr << "FIRST RESPONSE: SEND" << std::endl;
       EXPECT_GE(yggSend(rComm_c, res_send), 0);
-      std::cerr << "FIRST RESPONSE: RECV" << std::endl;
       EXPECT_GE(sComm.recvVar(res_recv), 0);
       EXPECT_EQ(res_recv, res_send);
-      // EXPECT_TRUE(rComm.afterSendRecv(&rComm, &sComm));
+      EXPECT_TRUE(rComm.afterSendRecv(&rComm, &sComm));
       close_comm(&rComm_c);
     }
     {
-      std::cerr << "SECOND EXCHANGE" << std::endl;
       dtype_t dtype_req = create_dtype_from_schema("{\"type\": \"integer\"}", false);
       dtype_t dtype_res = create_dtype_from_schema("{\"type\": \"integer\"}", false);
       comm_t rComm_c = yggRpcServerType_global(name.c_str(), dtype_req, dtype_res);
       ServerComm& rComm = *((ServerComm*)(rComm_c.comm));
       // Request
-      std::cerr << "SECOND REQUEST" << std::endl;
       std::cout << "Client ";
       sComm.getRequests().Display();
       std::cout << "Server ";
       rComm.getRequests().Display();
       int req_send = 1, req_recv = 0;
-      std::cerr << "SECOND REQUEST: SEND" << std::endl;
       EXPECT_GE(sComm.sendVar(req_send), 0);
-      std::cerr << "SECOND REQUEST: RECV" << std::endl;
       EXPECT_GE(yggRecv(rComm_c, &req_recv), 0);
       EXPECT_EQ(req_recv, req_send);
-      std::cerr << "SECOND REQUEST: AFTER SEND/RECV" << std::endl;
       EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));
       // Response
-      std::cerr << "SECOND RESPONSE" << std::endl;
       int res_send = 2, res_recv = 0;
-      std::cerr << "SECOND RESPONSE: SEND" << std::endl;
       EXPECT_GE(yggSend(rComm_c, res_send), 0);
-      std::cerr << "SECOND RESPONSE: RECV" << std::endl;
       EXPECT_GE(sComm.recvVar(res_recv), 0);
       EXPECT_EQ(res_recv, res_send);
-      std::cerr << "SECOND RESPONSE: AFTER SEND/RECV" << std::endl;
       EXPECT_TRUE(rComm.afterSendRecv(&rComm, &sComm));
       close_comm(&rComm_c);
     }
     unsetenv(key_env.c_str());
   }
-  std::cerr << "BEFORE CLEANUP" << std::endl;
   Comm_t::_ygg_cleanup();
-  std::cerr << "AFTER CLEANUP" << std::endl;
 }
 
 // TODO: piecemeal server

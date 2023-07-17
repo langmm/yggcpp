@@ -212,7 +212,6 @@ TEST(ClientComm, global) {
     std::string val_env = rComm.getAddress();
     setenv(key_env.c_str(), val_env.c_str(), 1);
     {
-      std::cerr << "FIRST EXCHANGE" << std::endl;
       global_scope_comm_on();
       ClientComm sComm(name, nullptr);
       sComm.set_timeout_recv(1);
@@ -231,18 +230,15 @@ TEST(ClientComm, global) {
       std::string res_send = "RESPONSE";
       std::string req_recv;
       std::string res_recv;
-      std::cerr << "FIRST REQUEST" << std::endl;
       EXPECT_GE(sComm.send(req_send), 0);
       EXPECT_GT(rComm.comm_nmsg(), 0);
       EXPECT_EQ(rComm.recv(req_recv), req_send.size());
       EXPECT_EQ(req_recv, req_send);
-      std::cerr << "FIRST RESPONSE" << std::endl;
       EXPECT_GE(rComm.send(res_send), 0);
       EXPECT_EQ(sComm.recv(res_recv), res_send.size());
       EXPECT_EQ(res_recv, res_send);
     }
     {
-      std::cerr << "SECOND EXCHANGE" << std::endl;
       global_scope_comm_on();
       ClientComm sComm(name, nullptr);
       global_scope_comm_off();
@@ -250,12 +246,10 @@ TEST(ClientComm, global) {
       std::string res_send = "RESPONSE";
       std::string req_recv;
       std::string res_recv;
-      std::cerr << "SECOND REQUEST" << std::endl;
       EXPECT_GE(sComm.send(req_send), 0);
       EXPECT_GT(rComm.comm_nmsg(), 0);
       EXPECT_EQ(rComm.recv(req_recv), req_send.size());
       EXPECT_EQ(req_recv, req_send);
-      std::cerr << "SECOND RESPONSE" << std::endl;
       EXPECT_GE(rComm.send(res_send), 0);
       EXPECT_EQ(sComm.recv(res_recv), res_send.size());
       EXPECT_EQ(res_recv, res_send);
