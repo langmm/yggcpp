@@ -5,11 +5,13 @@
 #define INIT_INPUT_BASE(cls, cls_args, alt, alt_args)	\
   alt sComm alt_args;					\
   setenv("input_IN", sComm.getAddress().c_str(), 1);	\
-  cls rComm cls_args
+  cls rComm cls_args;					\
+  unsetenv("input_IN")
 #define INIT_OUTPUT_BASE(cls, cls_args, alt, alt_args)	\
   alt rComm alt_args;					\
   setenv("output_OUT", rComm.getAddress().c_str(), 1);	\
-  cls sComm cls_args
+  cls sComm cls_args;					\
+  unsetenv("output_OUT")
 #define INIT_INPUT_NOARGS(cls)				\
   INIT_INPUT_BASE(cls ## Input, ("input"), COMM_BASE,	\
 		  ("", nullptr, SEND))

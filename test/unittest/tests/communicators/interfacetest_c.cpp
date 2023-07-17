@@ -8,11 +8,13 @@ using namespace communication::communicator;
 #define INIT_INPUT_BASE(cls, cls_args, alt, alt_args)	\
   alt sComm alt_args;					\
   setenv("input_IN", sComm.getAddress().c_str(), 1);	\
-  comm_t rComm = cls cls_args
+  comm_t rComm = cls cls_args;				\
+  unsetenv("input_IN")
 #define INIT_OUTPUT_BASE(cls, cls_args, alt, alt_args)		\
   alt rComm alt_args;						\
   setenv("output_OUT", rComm.getAddress().c_str(), 1);		\
-  comm_t sComm = cls cls_args
+  comm_t sComm = cls cls_args;					\
+  unsetenv("output_OUT")
 #define INIT_INPUT_NOARGS(cls)					\
   INIT_INPUT_BASE(ygg ## cls ## Input, ("input"), COMM_BASE,	\
 		  ("", nullptr, SEND))
@@ -158,6 +160,7 @@ TEST(YggInterface_C, Server) {
   ClientComm sComm("", nullptr);
   setenv("input_IN", sComm.getAddress().c_str(), 1);
   comm_t rComm_c = yggRpcServer("input", "%s", "%s");
+  unsetenv("input_IN");
   ServerComm& rComm = *((ServerComm*)(rComm_c.comm));
   DO_RPC_SIGNON;
   // Request
@@ -195,6 +198,7 @@ TEST(YggInterface_C, Client) {
   ServerComm rComm("", nullptr);
   setenv("output_OUT", rComm.getAddress().c_str(), 1);
   comm_t sComm_c = yggRpcClient("output", "%s", "%s");
+  unsetenv("output_OUT");
   ClientComm& sComm = *((ClientComm*)(sComm_c.comm));
   DO_RPC_SIGNON;
   // Stash request
@@ -235,6 +239,7 @@ TEST(YggInterface_C, ServerAny) {
   ClientComm sComm("", nullptr);
   setenv("input_IN", sComm.getAddress().c_str(), 1);
   comm_t rComm_c = yggRpcServerType("input", dtype_req, dtype_res);
+  unsetenv("input_IN");
   ServerComm& rComm = *((ServerComm*)(rComm_c.comm));
   DO_RPC_SIGNON;
   // Request
@@ -266,6 +271,7 @@ TEST(YggInterface_C, ClientAny) {
   ServerComm rComm("", nullptr);
   setenv("output_OUT", rComm.getAddress().c_str(), 1);
   comm_t sComm_c = yggRpcClientType("output", dtype_req, dtype_res);
+  unsetenv("output_OUT");
   ClientComm& sComm = *((ClientComm*)(sComm_c.comm));
   DO_RPC_SIGNON;
   // Request
@@ -294,6 +300,7 @@ TEST(YggInterface_C, ClientPointers) {
   ServerComm rComm("", nullptr);
   setenv("output_OUT", rComm.getAddress().c_str(), 1);
   comm_t sComm_c = yggRpcClient("output", "%s", "%s");
+  unsetenv("output_OUT");
   ClientComm& sComm = *((ClientComm*)(sComm_c.comm));
   DO_RPC_SIGNON;
   // Stash request
@@ -437,6 +444,7 @@ TEST(YggInterface_C, GlobalServer) {
       EXPECT_TRUE(rComm.afterSendRecv(&rComm, &sComm));
       close_comm(&rComm_c);
     }
+    unsetenv(key_env.c_str());
   }
   std::cerr << "BEFORE CLEANUP" << std::endl;
   Comm_t::_ygg_cleanup();

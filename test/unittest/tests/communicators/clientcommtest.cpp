@@ -260,6 +260,7 @@ TEST(ClientComm, global) {
       EXPECT_EQ(sComm.recv(res_recv), res_send.size());
       EXPECT_EQ(res_recv, res_send);
     }
+    unsetenv(key_env.c_str());
   }
   Comm_t::_ygg_cleanup();
 }
