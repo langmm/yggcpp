@@ -32,9 +32,18 @@ protected:
                           const DIRECTION& dir, int flgs) override {
       return new Comm_tTest(adr, dir, this->type, flgs);
     }
-    void reset() override {}
 
     bool _closed;
+};
+
+class EmptyComm : public CommBase<int> {
+public:
+    EmptyComm() :
+      CommBase("", nullptr, SEND, ZMQ_COMM, 0) {
+      handle = new int();
+      updateMaxMsgSize(1000);
+    }
+    int wait_for_recv(const int) override { return 0; }
 };
 
 TEST(Commt, Constructors) {
@@ -96,4 +105,15 @@ TEST(Commt, checksize) {
     EXPECT_TRUE(ctest.check(10));
     EXPECT_TRUE(ctest.check(YGG_MSG_MAX));
     EXPECT_FALSE(ctest.check(YGG_MSG_MAX + 1));
+}
+
+TEST(CommBase, MissingOverrides) {
+  EmptyComm x;
+  x.addSchema("{\"type\": \"any\"}");
+  EXPECT_THROW(x.comm_nmsg(), std::exception);
+  EXPECT_THROW(x.sendVar(0), std::exception);
+  int var = 0;
+  EXPECT_THROW(x.recvVar(var), std::exception);
+  std::string msg(1050, 'a');
+  EXPECT_EQ(x.sendVar(msg), -1);
 }

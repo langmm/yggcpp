@@ -377,18 +377,21 @@ TEST(YggInterface_C, GlobalServer) {
     std::string val_env = sComm.getAddress();
     setenv(key_env.c_str(), val_env.c_str(), 1);
     {
+      std::cerr << "FIRST EXCHANGE" << std::endl;
       dtype_t dtype_req = create_dtype_from_schema("{\"type\": \"integer\"}", false);
       dtype_t dtype_res = create_dtype_from_schema("{\"type\": \"integer\"}", false);
       comm_t rComm_c = yggRpcServerType_global("test_name", dtype_req, dtype_res);
       ServerComm& rComm = *((ServerComm*)(rComm_c.comm));
       DO_RPC_SIGNON;
       // Request
+      std::cerr << "FIRST REQUEST" << std::endl;
       int req_send = 1, req_recv = 0;
       EXPECT_GE(sComm.sendVar(req_send), 0);
       EXPECT_GE(yggRecv(rComm_c, &req_recv), 0);
       EXPECT_EQ(req_recv, req_send);
       EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));
       // Response
+      std::cerr << "FIRST RESPONSE" << std::endl;
       int res_send = 2, res_recv = 0;
       EXPECT_GE(yggSend(rComm_c, res_send), 0);
       EXPECT_GE(sComm.recvVar(res_recv), 0);
@@ -397,11 +400,13 @@ TEST(YggInterface_C, GlobalServer) {
       close_comm(&rComm_c);
     }
     {
+      std::cerr << "SECOND EXCHANGE" << std::endl;
       dtype_t dtype_req = create_dtype_from_schema("{\"type\": \"integer\"}", false);
       dtype_t dtype_res = create_dtype_from_schema("{\"type\": \"integer\"}", false);
       comm_t rComm_c = yggRpcServerType_global(name.c_str(), dtype_req, dtype_res);
       ServerComm& rComm = *((ServerComm*)(rComm_c.comm));
       // Request
+      std::cerr << "SECOND REQUEST" << std::endl;
       std::cout << "Client ";
       sComm.getRequests().Display();
       std::cout << "Server ";
@@ -412,6 +417,7 @@ TEST(YggInterface_C, GlobalServer) {
       EXPECT_EQ(req_recv, req_send);
       EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));
       // Response
+      std::cerr << "SECOND RESPONSE" << std::endl;
       int res_send = 2, res_recv = 0;
       EXPECT_GE(yggSend(rComm_c, res_send), 0);
       EXPECT_GE(sComm.recvVar(res_recv), 0);

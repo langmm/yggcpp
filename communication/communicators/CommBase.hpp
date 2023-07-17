@@ -221,15 +221,34 @@ public:
       @brief Send an object through the communicator.
       @tparam T Type of object being sent.
       @param[in] data Object to send.
-      @return Integer specifying if the receive was succesful. Values >= 0
-        indicate success.
+      @return Integer specifying if the receive was succesful.
+        Values >= 0 indicate success.
     */
     template<typename T>
     int sendVar(const T data) {
-      ygglog_debug << "CommBase(" << name << ")::sendVar(const T& data)" << std::endl;
+      ygglog_debug << "CommBase(" << name <<
+	")::sendVar(const T& data)" << std::endl;
       if (!checkType(data, SEND))
 	return -1;
+      if (getMetadata().isGeneric())
+	return sendVarAsGeneric(data);
       return send(1, data);
+    }
+    /*!
+      @brief Send an object through the communicator as a rapidjson
+        Document.
+      @tparam T Type of object being sent.
+      @param[in] data Object to send.
+      @return Integer specifying if the receive was succesful.
+        Values >= 0 indicate success.
+    */
+    template<typename T>
+    int sendVarAsGeneric(const T data) {
+      ygglog_debug << "CommBase(" << name <<
+	")::sendVarAsGeneric" << std::endl;
+      rapidjson::Document doc;
+      doc.Set(data, doc.GetAllocator());
+      return sendVar(doc);
     }
     /*!
       @brief Send a C++ string through the communicator.
@@ -270,7 +289,27 @@ public:
       ygglog_debug << "CommBase(" << name << ")::recvVar(T& data)" << std::endl;
       if (!checkType(data, RECV))
 	return -1;
+      if (getMetadata().isGeneric())
+	return recvVarAsGeneric(data);
       return recv(1, &data);
+    }
+    /*!
+      @brief Receive an object from the communicator that expects generic
+        objects.
+      @tparam T Type of object being received.
+      @param[out] data Object to receive message into.
+      @return Integer specifying if the receive was succesful.
+        Values >= 0 indicate success.
+    */
+    template<typename T>
+    long recvVarAsGeneric(T& data) {
+      ygglog_debug << "CommBase(" << name << ")::recvVarAsGeneric" << std::endl;
+      rapidjson::Document doc;
+      long out = recvVar(doc);
+      if (out >= 0) {
+	data = doc.Get<T>();
+      }
+      return out;
     }
     /*!
       @brief Receive a rapidjson::Document object from the communicator.
@@ -619,8 +658,6 @@ protected:
      */
     bool check_size(const size_t &len) const;
 
-    virtual void reset() VIRT_END;
-
     COMM_TYPE type; //!< Comm type.
     //void *other; //!< Pointer to additional information for the comm.
     std::string name; //!< Comm name.
@@ -715,11 +752,6 @@ protected:
     }
 
     /**
-     * reset the communicator
-     */
-    void reset() override;
-
-    /**
      * Destructor
      */
     ~CommBase() override;
@@ -747,11 +779,6 @@ void CommBase<H>::close() {
 template<typename H>
 bool CommBase<H>::is_closed() const {
   return ((!handle) || !(flags & COMM_FLAG_VALID));
-}
-
-template<typename H>
-void CommBase<H>::reset() {
-  close();
 }
 
 template<typename H>

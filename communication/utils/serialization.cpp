@@ -315,9 +315,10 @@ rapidjson::Document::AllocatorType& Metadata::GetAllocator() {
 }
 bool Metadata::isGeneric() const {
   return (schema &&
-	  (schema->HasMember("use_generic") &&
+	  ((schema->HasMember("use_generic") &&
 	   (*schema)["use_generic"].IsBool() &&
-	   (*schema)["use_generic"].GetBool()));
+	   (*schema)["use_generic"].GetBool()) ||
+	   strcmp(typeName(), "any") == 0));
 }
 bool Metadata::isFormatArray() const {
   return (metadata.HasMember("serializer") &&

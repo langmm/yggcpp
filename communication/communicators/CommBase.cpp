@@ -529,6 +529,8 @@ long Comm_t::callRealloc(const int nargs, ...) {
 }
 
 int Comm_t::sendVar(const std::string& data) {
+  if (getMetadata().isGeneric())
+    return sendVarAsGeneric(data);
   if (!checkType(data, SEND))
     return -1;
   return send(2, data.c_str(), data.size());
@@ -540,11 +542,15 @@ int Comm_t::sendVar(const rapidjson::Document& data) {
   return send(1, &data);
 }
 int Comm_t::sendVar(const rapidjson::Ply& data) {
+  if (getMetadata().isGeneric())
+    return sendVarAsGeneric(data);
   if (!checkType(data, SEND))
     return -1;
   return send(1, &data);
 }
 int Comm_t::sendVar(const rapidjson::ObjWavefront& data) {
+  if (getMetadata().isGeneric())
+    return sendVarAsGeneric(data);
   if (!checkType(data, SEND))
     return -1;
   return send(1, &data);
