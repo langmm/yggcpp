@@ -655,7 +655,7 @@ int Comm_t::vSend(rapidjson::VarArgList& ap) {
     return ret;
   }
   ret = send(buf, ret);
-  free(buf);
+  getMetadata().GetAllocator().Free(buf);
   if (ret >= 0)
     ret = (int)(nargs_orig - ap.get_nargs());
   ygglog_debug << "CommBase(" << name << ")::vSend: returns " << ret << std::endl;
