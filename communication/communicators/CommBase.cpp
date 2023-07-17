@@ -541,17 +541,17 @@ int Comm_t::sendVar(const rapidjson::Document& data) {
   return send(1, &data);
 }
 int Comm_t::sendVar(const rapidjson::Ply& data) {
-  if (getMetadata().isGeneric())
-    return sendVarAsGeneric(data);
   if (!checkType(data, SEND))
     return -1;
+  if (getMetadata().isGeneric())
+    return sendVarAsGeneric(data);
   return send(1, &data);
 }
 int Comm_t::sendVar(const rapidjson::ObjWavefront& data) {
-  if (getMetadata().isGeneric())
-    return sendVarAsGeneric(data);
   if (!checkType(data, SEND))
     return -1;
+  if (getMetadata().isGeneric())
+    return sendVarAsGeneric(data);
   return send(1, &data);
 }
 
@@ -629,15 +629,8 @@ int Comm_t::vSend(rapidjson::VarArgList& ap) {
     }
     rapidjson::SchemaEncoder encoder(true);
     rapidjson::Document new_schema;
-    if (!tmp.Accept(encoder)) {
-      ygglog_error << "CommBase(" << name << ")::vSend: Error encoding schema."
-		   << std::endl;
-      return -1;
-    }
-    if (!encoder.Accept(new_schema)) {
-      ygglog_error << "CommBase(" << name << ")::vSend: Error getting encoded schema." << std::endl;
-      return -1;
-    }
+    tmp.Accept(encoder);
+    encoder.Accept(new_schema);
     new_schema.FinalizeFromStack();
     if (!update_datatype(new_schema, SEND)) {
       ygglog_error << "CommBase(" << name << ")::vSend: Error updating dtype from generic" << std::endl;
@@ -650,8 +643,6 @@ int Comm_t::vSend(rapidjson::VarArgList& ap) {
   int ret = serialize(buf, buf_siz, ap);
   if (ret < 0) {
     ygglog_error << "CommBase(" << name << ")::vSend: serialization error" << std::endl;
-    if (buf)
-      free(buf);
     return ret;
   }
   ret = send(buf, ret);
