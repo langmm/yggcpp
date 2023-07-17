@@ -207,6 +207,7 @@ TEST(ClientComm, global) {
   std::string name = "test_name";
   {
     ServerComm rComm(name, nullptr);
+    rComm.set_timeout_recv(1);
     std::string key_env = name + "_OUT";
     std::string val_env = rComm.getAddress();
     setenv(key_env.c_str(), val_env.c_str(), 1);
@@ -214,6 +215,7 @@ TEST(ClientComm, global) {
       std::cerr << "FIRST EXCHANGE" << std::endl;
       global_scope_comm_on();
       ClientComm sComm(name, nullptr);
+      sComm.set_timeout_recv(1);
       global_scope_comm_off();
       {
 	std::string msg_cli = YGG_CLIENT_SIGNON;
