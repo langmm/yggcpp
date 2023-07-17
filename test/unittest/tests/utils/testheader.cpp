@@ -546,19 +546,19 @@ TEST(Metadata, deserialize_errors) {
 TEST(Metadata, serialize_errors) {
   rapidjson::VarArgList va;
   communication::utils::Metadata x;
-  char* buf = (char*)malloc(sizeof(char));
+  char* buf = (char*)(x.GetAllocator().Malloc(sizeof(char)));
   size_t len = 1;
   EXPECT_THROW(x.serialize(&buf, &len, va), std::exception);
   x.fromSchema("{\"type\": \"boolean\"}");
   EXPECT_THROW(x.serialize(&buf, &len, va), std::exception);
   EXPECT_EQ(x.serialize(&buf, &len, 2, true, false), -1);
-  free(buf);
+  x.GetAllocator().Free(buf);
   buf = NULL;
   len = 0;
   EXPECT_EQ(x.serialize(&buf, &len, 1, true), 4);
   EXPECT_EQ(strcmp(buf, "true"), 0);
   EXPECT_EQ(len, 5);
-  free(buf);
+  x.GetAllocator().Free(buf);
   buf = NULL;
   len = 0;
   // Cannot isolate this use of realloc as rapidjson also uses
