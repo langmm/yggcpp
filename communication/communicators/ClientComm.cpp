@@ -126,18 +126,14 @@ bool ClientComm::create_header_send(Header& header, const char* data, const size
     return global_comm->create_header_send(header, data, len);
   ygglog_debug << "ClientComm(" << name << ")::create_header_send: begin" << std::endl;
   bool out = COMM_BASE::create_header_send(header, data, len);
-  if ((!out) || header.flags & HEAD_FLAG_EOF)
-    return out;
-  if (!signon(header)) {
-    ygglog_error << "ClientComm(" << name << ")::create_header_send: Error in signon" << std::endl;
-    return false;
+  if (out && !(header.flags & HEAD_FLAG_EOF)) {
+    out = signon(header);
+    if (out)
+      out = (requests.addRequestClient(header) >= 0);
   }
-  if (requests.addRequestClient(header) < 0) {
-    ygglog_error << "ClientComm(" << name << ")::create_header_send: Failed to add request" << std::endl;
-    return false;
-  }
-  ygglog_debug << "ClientComm(" << name << ")::create_header_send: done" << std::endl;
-  return true;
+  if (out)
+    ygglog_debug << "ClientComm(" << name << ")::create_header_send: done" << std::endl;
+  return out;
 }
 
 bool ClientComm::create_header_recv(Header& header, char*& data, const size_t &len,
@@ -156,23 +152,17 @@ bool ClientComm::create_header_recv(Header& header, char*& data, const size_t &l
   }
   bool out = response_comm->create_header_recv(header, data, len, msg_len,
 					       allow_realloc, temp);
-  if ((!out) || header.flags & HEAD_FLAG_EOF)
-    return out;
-  if (temp) {
-    // Only add response the first time as the data returned may be from
-    // a cached response
-    if (requests.addResponseClient(header, data, len) < 0) {
-      ygglog_error << "ClientComm(" << name << ")::create_header_recv: Failed to add response" << std::endl;
-      return false;
-    }
-    requests.transferSchemaFrom(response_comm);
-  } else {
-    if (requests.popRequestClient(header) < 0) {
-      ygglog_error << "ClientComm(" << name << ")::create_header_recv: Failed to remove request" << std::endl;
-      return false;
+  if (out && !(header.flags & HEAD_FLAG_EOF)) {
+    if (temp) {
+      // Only add response the first time as the data returned may be
+      // from a cached response
+      out = (requests.addResponseClient(header, data, len) >= 0);
+      requests.transferSchemaFrom(response_comm);
+    } else {
+      out = (requests.popRequestClient(header) >= 0);
     }
   }
-  return true;
+  return out;
 }
 
 long ClientComm::recv_single(char*& rdata, const size_t &rlen, bool allow_realloc)  {

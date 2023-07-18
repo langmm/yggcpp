@@ -61,14 +61,15 @@ int set_response_format(comm_t comm, const char *fmt) {
 
 int set_response_datatype(comm_t x, dtype_t datatype) {
   _BEGIN_CPP {
-    if (!x.comm)
-      ygglog_throw_error_c("set_response_datatype: Comm is not initialized");
     if (datatype.metadata) {
       Metadata* metadata = static_cast<Metadata*>(datatype.metadata);
       datatype.metadata = NULL;
-      static_cast<communication::communicator::RPCComm*>(x.comm)->addResponseSchema(*metadata);
+      if (x.comm)
+	static_cast<communication::communicator::RPCComm*>(x.comm)->addResponseSchema(*metadata);
       delete metadata;
     }
+    if (!x.comm)
+      ygglog_throw_error_c("set_response_datatype: Comm is not initialized");
   } _END_CPP(set_response_datatype, 0);
   return 1;
 }
