@@ -169,6 +169,12 @@ TEST(IPCComm, recv) {
     // Test successful receive
     res = ipc.recv(data, len, true);
     EXPECT_EQ(res, 11);
+    // Test failure in receive
+    RETVAL = 0;
+    RETVAL_INC_POLL = -2;
+    RETVAL_INC_RECV = 0;
+    res = ipc.recv(data, len, true);
+    EXPECT_EQ(res, -1);
     // Retry in msgrcv
     RETVAL = 0;
     RETVAL_INC_POLL = -1;
@@ -178,12 +184,7 @@ TEST(IPCComm, recv) {
     EXPECT_EQ(ipc.recv(data, len, true), 11);
     std::cerr << "AFTER RETRY (len = " << len << ")" << std::endl;
     errno = 0;
-    // Test failure in receive
-    RETVAL = 0;
-    RETVAL_INC_POLL = -2;
-    RETVAL_INC_RECV = 0;
-    res = ipc.recv(data, len, true);
-    EXPECT_EQ(res, -1);
+    // Restore methods
     ELF_END_F(msgrcv);
     free(data);
     ELF_END_F(msgget);

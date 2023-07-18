@@ -423,7 +423,7 @@ long Comm_t::recv(char*& data, const size_t &len,
       ygglog_error << "CommBase(" << name << ")::recv: Communicator closed." << std::endl;
       return -1;
     }
-    if (wait_for_recv(timeout_recv) < 0) {
+    if (wait_for_recv(timeout_recv) <= 0) {
       ygglog_error << "CommBase(" << name << ")::recv: No messages waiting" << std::endl;
       return -1;
     }
