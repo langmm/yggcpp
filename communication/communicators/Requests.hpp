@@ -17,12 +17,12 @@ public:
 class Request {
 public:
     Request() :
-            request_id(), response_id(), data(), comm_idx(0), complete(false),
-            is_signon(false) {}
-    Request(const std::string& req_id, const std::string& res_id,
-            const size_t cidx, bool is_son = false) :
-            request_id(req_id), response_id(res_id), data(), comm_idx(cidx),
-            complete(false), is_signon(is_son) {}
+      request_id(), data(), comm_idx(0), complete(false),
+      is_signon(false) {}
+    Request(const std::string& req_id,
+	    const size_t cidx, bool is_son = false) :
+      request_id(req_id), data(), comm_idx(cidx),
+      complete(false), is_signon(is_son) {}
     int setData(const char* str, size_t len) {
         if (complete) {
             ygglog_error << "setData: request already complete" << std::endl;
@@ -33,7 +33,6 @@ public:
         return 0;
     }
     std::string request_id;
-    std::string response_id;
     std::string data;
     size_t comm_idx;
     bool complete;
@@ -61,13 +60,6 @@ public:
     int hasRequest(const std::string& request_id) const {
         for (size_t i = 0; i < requests.size(); i++) {
             if (requests[i].request_id == request_id)
-                return (int)i;
-        }
-        return -1;
-    }
-    int hasResponse(const std::string& response_id) const {
-        for (size_t i = 0; i < requests.size(); i++) {
-            if (requests[i].response_id == response_id)
                 return (int)i;
         }
         return -1;
@@ -136,7 +128,7 @@ public:
 	    << request_id << "'" << std::endl;
 	  return -1;
 	}
-	requests.emplace_back(request_id, "", 0, is_signon);
+	requests.emplace_back(request_id, 0, is_signon);
 	// requests.resize(requests.size() + 1);
 	// requests[idx].request_id = request_id;
 	// requests[idx].comm_idx = 0;
@@ -153,25 +145,17 @@ public:
       std::string request_id(header.GetMetaString("request_id"));
       std::string response_address(header.GetMetaString("response_address"));
       std::string partner_model(header.GetMetaString("model"));
-      int comm_idx = hasComm(response_address);
-      if (comm_idx < 0) {
-	comm_idx = addComm(response_address);
-      }
-      std::string response_id = request_id;
-      while (hasResponse(response_id) >= 0) {
-	response_id += std::to_string(rand());
-      }
+      int comm_idx = addComm(response_address);
       size_t idx = requests.size();
       if (hasPartner(partner_model) < 0)
 	partners.emplace_back(partner_model);
-      requests.emplace_back(request_id, response_id,
+      requests.emplace_back(request_id,
 			    static_cast<size_t>(comm_idx),
 			    (header.flags & HEAD_FLAG_CLIENT_SIGNON));
       ygglog_debug << "addRequestServer: done idx = " << idx
 		   << ", response_address = "
 		   << comms[requests[idx].comm_idx]->address->address()
 		   << ", request_id = " << requests[idx].request_id
-		   << ", response_id = " << requests[idx].response_id
 		   << std::endl;
       return static_cast<int>(idx);
     }
@@ -194,32 +178,26 @@ public:
 	signon_complete << ")" << std::endl;
       return 0;
     }
-    int addResponseClient(utils::Header& header, const char* data, const size_t len) {
-        ygglog_debug << "addResponseClient: begin" << std::endl;
-        std::string request_id(header.GetMetaString("request_id"));
-        std::string partner_model(header.GetMetaString("model"));
-        int idx = hasRequest(request_id);
-        if (idx < 0) {
-#ifdef YGG_TEST
-            // Allow duplicate on test where server sends signon response
-            //   before client sends request
-            if (header.flags & HEAD_FLAG_SERVER_SIGNON)
-                return 0;
-#endif // YGG_TEST
-            ygglog_error << "addResponseClient: Client does not have a request with id '" << request_id << "'" << std::endl;
-            return -1;
-        }
-        if (requests[static_cast<size_t>(idx)].setData(data, len) < 0) {
-            ygglog_error << "addResponseClient: Error setting data" << std::endl;
-            return -1;
-        }
-        if (hasPartner(partner_model) < 0)
-            partners.emplace_back(partner_model);
-        if (header.flags & HEAD_FLAG_SERVER_SIGNON)
-            signon_complete = true;
-        ygglog_debug << "addResponseClient: done (signon_complete = " <<
-                     signon_complete << ")" << std::endl;
-        return 0;
+    int addResponseClient(Header& header, const char* data, const size_t len) {
+      ygglog_debug << "addResponseClient: begin" << std::endl;
+      std::string request_id(header.GetMetaString("request_id"));
+      std::string partner_model(header.GetMetaString("model"));
+      int idx = hasRequest(request_id);
+      if (idx < 0) {
+	ygglog_error << "addResponseClient: Client does not have a request with id '" << request_id << "'" << std::endl;
+	return -1;
+      }
+      if (requests[static_cast<size_t>(idx)].setData(data, len) < 0) {
+	ygglog_error << "addResponseClient: Error setting data" << std::endl;
+	return -1;
+      }
+      if (hasPartner(partner_model) < 0)
+	partners.emplace_back(partner_model);
+      if (header.flags & HEAD_FLAG_SERVER_SIGNON)
+	signon_complete = true;
+      ygglog_debug << "addResponseClient: done (signon_complete = " <<
+	signon_complete << ")" << std::endl;
+      return 0;
     }
     Comm_t* getComm(const std::string& request_id) {
         int idx = hasRequest(request_id);
@@ -280,32 +258,23 @@ public:
         return 1;
     }
     int getRequestClient(const std::string& request_id,
-                         char*& data, const size_t len, bool allow_realloc) {
-        int idx = hasRequest(request_id);
-        if (idx < 0) {
-            ygglog_error << "RequestList::getRequestClient: No pending request with id '" << request_id << "'" << std::endl;
-            return -1;
-        }
-        if (!requests[(size_t)idx].complete) {
-            ygglog_error << "RequestList::getRequestClient: Request '" << request_id << "' does not have response" << std::endl;
-            return -1;
-        }
-        size_t ret = requests[(size_t)idx].data.size();
-        if ((requests[(size_t)idx].data.size() + 1) > len) {
-            if (!allow_realloc) {
-                ygglog_error << "RequestList::getRequestClient: Response exceeds size of provided buffer" << std::endl;
-                return -1;
-            }
-            char* data_t = (char*)realloc(data, requests[(size_t)idx].data.size() + 1);
-            if (data_t == NULL) {
-                ygglog_error << "RequestList::getRequestClient: Error reallocating buffer" << std::endl;
-                return -1;
-            }
-            data = data_t;
-            memcpy(data, requests[(size_t)idx].data.c_str(), requests[(size_t)idx].data.size() + 1);
-            data[requests[(size_t)idx].data.size()] = '\0';
-        }
-        return static_cast<int>(ret);
+			 char*& data, const size_t len,
+			 bool allow_realloc) {
+      int idx = hasRequest(request_id);
+      if (idx < 0) {
+	ygglog_error <<
+	  "RequestList::getRequestClient: No pending request with id '" <<
+	  request_id << "'" << std::endl;
+	return -1;
+      }
+      if (!requests[(size_t)idx].complete) {
+	ygglog_error << "RequestList::getRequestClient: Request '" <<
+	  request_id << "' does not have response" << std::endl;
+	return -1;
+      }
+      return static_cast<int>(Comm_t::copyData(
+        data, len, requests[(size_t)idx].data.c_str(),
+	requests[(size_t)idx].data.size(), allow_realloc));
     }
     int addComm(std::string response_address = "") {
         int idx;
@@ -376,7 +345,8 @@ public:
     void Display() {
       std::cout << requests.size() << " Requests:" << std::endl;
       for (size_t i = 0; i < requests.size(); i++) {
-	std::cout << "  " << requests[i].request_id << ": " << requests[i].complete << std::endl;
+	std::cout << "  " << requests[i].request_id << ": " <<
+	  requests[i].complete << std::endl;
       }
     }
     std::vector<Comm_t*> comms;
