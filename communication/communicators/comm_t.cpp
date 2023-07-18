@@ -7,9 +7,7 @@
 extern "C" {
   
 void free_comm(comm_t* comm) {
-    if (comm == nullptr)
-        return;
-    if (comm->comm != nullptr) {
+    if (comm && comm->comm) {
         auto c = static_cast<communication::communicator::Comm_t *>(comm->comm);
 	delete c;
         comm->comm = nullptr;
@@ -20,20 +18,22 @@ void close_comm(comm_t* comm) {
     free_comm(comm);
 }
 
-comm_t open_comm(char* address, const DIRECTION dir, const COMM_TYPE &t) {
-    comm_t ret;
-    std::string name = "";
-    _BEGIN_CPP {
-      ret.comm = (void*) communication::communicator::new_Comm_t(dir, t, name, address);
-    } _END_CPP_CLEANUP(open_comm, ret, ret.comm = NULL);
-    return ret;
-}
+// comm_t open_comm(char* address, const DIRECTION dir, const COMM_TYPE &t) {
+//     comm_t ret;
+//     std::string name = "";
+//     _BEGIN_CPP {
+//       ret.comm = (void*) communication::communicator::new_Comm_t(dir, t, name, address);
+//     } _END_CPP_CLEANUP(open_comm, ret, ret.comm = NULL);
+//     return ret;
+// }
 
 comm_t init_comm(const char* name, DIRECTION dir, const COMM_TYPE &t,
 		 dtype_t datatype) {
   comm_t ret;
   _BEGIN_CPP {
     ret.comm = (void*) communication::communicator::new_Comm_t(dir, t, name, (char*)NULL, COMM_FLAG_INTERFACE);
+    if (!(ret.comm))
+      ygglog_throw_error_c("init_comm(%s): Error initializing comm", name);
     if (datatype.metadata) {
       Metadata* metadata = static_cast<Metadata*>(datatype.metadata);
       datatype.metadata = NULL;
@@ -48,6 +48,9 @@ int set_response_format(comm_t comm, const char *fmt) {
   _BEGIN_CPP {
     if (!comm.comm)
       ygglog_throw_error_c("set_response_format: Comm is not initialized");
+    COMM_TYPE ctype = static_cast<communication::communicator::Comm_t*>(comm.comm)->getType();
+    if (ctype != SERVER_COMM && ctype != CLIENT_COMM)
+      ygglog_throw_error_c("set_response_format: Comm is not RPC server or client");
     std::string format_str(fmt);
     static_cast<communication::communicator::RPCComm*>(comm.comm)->addResponseFormat(format_str);
   } _END_CPP(set_response_format, 0);

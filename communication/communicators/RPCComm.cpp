@@ -59,11 +59,8 @@ bool RPCComm::afterSendRecv(Comm_t* sComm, Comm_t* rComm) {
   if ((sComm->flags & COMM_FLAG_CLIENT) &&
       (rComm->flags & COMM_FLAG_SERVER))
     return COMM_BASE::afterSendRecv(sComm, rComm);
-  else if (!((sComm->flags & COMM_FLAG_SERVER) &&
-	     (rComm->flags & COMM_FLAG_CLIENT))) {
-    ygglog_error << "RPCComm::afterSendRecv: Provided communicator types do not match a response message pattern" << std::endl;
-    return false;
-  }
+  assert((sComm->flags & COMM_FLAG_SERVER) &&
+	 (rComm->flags & COMM_FLAG_CLIENT));
   Comm_t* sComm_res = dynamic_cast<RPCComm*>(sComm)->requests.lastComm();
   Comm_t* rComm_res = dynamic_cast<RPCComm*>(rComm)->requests.lastComm();
   if (!(sComm_res && rComm_res))

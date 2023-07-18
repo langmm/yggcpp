@@ -20,11 +20,11 @@ Worker::Worker(Worker&& rhs) : comm(rhs.comm), request(rhs.request) {
   rhs.comm = nullptr;
   rhs.request = "";
 }
-Worker& Worker::operator=(Worker&& rhs) {
+Worker& Worker::operator=(Worker&& rhs) { // GCOVR_EXCL_START
   this->~Worker();
   new (this) Worker(std::move(rhs));
   return *this;
-}
+} // GCOVR_EXCL_STOP
 bool Worker::matches(DIRECTION dir, Address* adr) {
   return (request.empty() && comm && comm->direction == dir &&
 	  ((!adr) || (adr->address() == comm->address->address())));
