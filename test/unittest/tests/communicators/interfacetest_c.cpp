@@ -9,6 +9,7 @@ using namespace communication::communicator;
   alt sComm alt_args;					\
   setenv("input_IN", sComm.getAddress().c_str(), 1);	\
   comm_t rComm = cls cls_args;				\
+  EXPECT_EQ(set_response_format(rComm, "%s"), 0);	\
   unsetenv("input_IN")
 #define INIT_OUTPUT_BASE(cls, cls_args, alt, alt_args)		\
   alt rComm alt_args;						\
@@ -168,6 +169,7 @@ TEST(YggInterface_C, Server) {
   char* req_recv = NULL;
   size_t req_len = strlen(req_send);
   EXPECT_GE(sComm.send(req_send, req_len), 0);
+  EXPECT_GT(comm_nmsg(rComm_c), 0);
   EXPECT_EQ(ygg_recv_nolimit(rComm_c, &req_recv, 0), req_len);
   EXPECT_TRUE(req_recv);
   EXPECT_EQ(strcmp(req_send, req_recv), 0);
@@ -300,6 +302,7 @@ TEST(YggInterface_C, ClientPointers) {
   ServerComm rComm("", nullptr);
   setenv("output_OUT", rComm.getAddress().c_str(), 1);
   comm_t sComm_c = yggRpcClient("output", "%s", "%s");
+  EXPECT_EQ(set_response_format(sComm_c, "%s"), 1);
   unsetenv("output_OUT");
   ClientComm& sComm = *((ClientComm*)(sComm_c.comm));
   DO_RPC_SIGNON;
@@ -356,6 +359,29 @@ TEST(comm_t, Errors) {
   EXPECT_EQ(pcommRecv(tmp, 0, 0, NULL, 0), -1);
   EXPECT_EQ(pcommCall(tmp, 0, 0, NULL, 0), -1);
   EXPECT_EQ(comm_nmsg(tmp), -1);
+  tmp = init_comm("", SEND, NULL_COMM, tmp_dtype);
+  EXPECT_FALSE(tmp.comm);
+  {
+    COMM_BASE alt("", nullptr, RECV);
+    setenv("output_OUT", alt.getAddress().c_str(), 1);
+    tmp = yggOutputFmt("output", "%j");
+    EXPECT_FALSE(tmp.comm);
+    unsetenv("output_OUT");
+  }
+  {
+    COMM_BASE alt("", nullptr, SEND);
+    setenv("input_IN", alt.getAddress().c_str(), 1);
+    tmp = yggInputFmt("input", "%j");
+    EXPECT_FALSE(tmp.comm);
+    unsetenv("input_IN");
+  }
+  {
+    COMM_BASE alt("", nullptr, RECV);
+    setenv("output_OUT", alt.getAddress().c_str(), 1);
+    tmp = yggAsciiArrayOutput("output", "%j");
+    EXPECT_FALSE(tmp.comm);
+    unsetenv("output_OUT");
+  }
 }
 
 #define INIT_DATA_PTRS				\

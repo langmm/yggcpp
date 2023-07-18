@@ -5,6 +5,8 @@
   init_data;								\
   EXPECT_GE(sComm.send_method send_args, 0);				\
   EXPECT_GT(rComm.comm_nmsg(), 0);					\
+  EXPECT_GT(rComm.wait_for_recv(1000000), 0);				\
+  rComm.set_timeout_recv(1000000);					\
   EXPECT_GE(rComm.recv_method recv_args, 0);				\
   EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));			\
   comp_data
@@ -307,6 +309,7 @@
       EXPECT_GE(rComm.recv(data_recv), 0);				\
       EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));			\
       EXPECT_EQ(data_send, data_recv);					\
+      EXPECT_EQ(rComm.call(2, data_send.c_str(), data_recv.c_str()), -1); \
       /* Error when sending message that can't fit in buffer */		\
       sComm.getFlags() |= COMM_ALWAYS_SEND_HEADER;			\
       utils::Metadata& metadata = sComm.getMetadata();				\
@@ -314,6 +317,23 @@
       metadata.SetMetaString("invalid", bigMsg);			\
       EXPECT_THROW(sComm.send(data_send), std::exception);		\
     }									\
+  }									\
+  TEST(cls, incompatible) {						\
+    cls ## _tester sComm(SEND);						\
+    std::string name = "test_name";					\
+    std::string key_env = name + "_IN";					\
+    std::string val_env = sComm.getAddress();				\
+    setenv(key_env.c_str(), val_env.c_str(), 1);			\
+    cls ## _tester rComm(name, RECV);					\
+    unsetenv(key_env.c_str());						\
+    sComm.addSchema("{\"type\": \"boolean\"}");				\
+    rComm.addSchema("{\"type\": \"integer\"}");				\
+    /* Invalid send */							\
+    EXPECT_EQ(sComm.sendVar(1), -1);					\
+    /* Invalid recv */							\
+    bool dst = false;							\
+    EXPECT_GT(sComm.sendVar(true), 0);					\
+    EXPECT_EQ(rComm.recvVar(dst), -1);					\
   }									\
   TEST(cls, global) {							\
     std::string name = "test_name";					\

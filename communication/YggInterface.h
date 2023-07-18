@@ -105,6 +105,7 @@ yggOutput_t yggOutputFmt(const char *name, const char *fmtString){
   comm_t out = yggOutputType(name, datatype);
   if ((fmtString != NULL) && (datatype.metadata == NULL)) {
     ygglog_error_c("yggOutputFmt: Failed to create type from format_str.");
+    free_comm(&out);
   }
   return out;
 };
@@ -125,6 +126,7 @@ yggInput_t yggInputFmt(const char *name, const char *fmtString){
   comm_t out = yggInputType(name, datatype);
   if ((fmtString != NULL) && (datatype.metadata == NULL)) {
     ygglog_error_c("yggInputFmt: Failed to create type from format_str.");
+    free_comm(&out);
   }
   return out;
 };
@@ -717,6 +719,7 @@ comm_t yggAsciiArrayOutput(const char *name, const char *format_str) {
   comm_t out = yggOutputType(name, datatype);
   if ((format_str != NULL) && (datatype.metadata == NULL)) {
     ygglog_error_c("yggAsciiArrayOutput: Failed to create type from format_str.");
+    free_comm(&out);
   }
   return out;
 };

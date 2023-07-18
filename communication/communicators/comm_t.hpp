@@ -43,7 +43,7 @@ void close_comm(comm_t* comm);
  * @param t The enumerated communicator type to create
  * @return comm_t struct containing the requested communicator
  */
-comm_t open_comm(char* address, DIRECTION dir, const COMM_TYPE &t);
+// comm_t open_comm(char* address, DIRECTION dir, const COMM_TYPE &t);
   
 /**
  * Initialize a new communicator

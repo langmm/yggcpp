@@ -52,7 +52,7 @@ if(GTESTSRC_FOUND)
             message(STATUS "gcovr found")
             file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/coverage)
             add_test(NAME coverage
-                     COMMAND sh -c "gcovr ${CMAKE_BINARY_DIR} --gcov-executable=\"${CTEST_COVERAGE_COMMAND} ${CTEST_COVERAGE_EXTRA_FLAGS}\" --exclude-lines-by-pattern=\".*RAPIDJSON_ASSERT.*\" --exclude-lines-by-pattern=\".*GCOVR_EXCL_LINE.*\" --exclude-lines-by-pattern=\".*GCOVR_EXCL_STOP.*\" --coveralls ${CMAKE_BINARY_DIR}/coverage/coverage.info --html-details ${CMAKE_BINARY_DIR}/coverage/coverage.html"
+                     COMMAND sh -c "gcovr ${CMAKE_BINARY_DIR} --gcov-executable=\"${CTEST_COVERAGE_COMMAND} ${CTEST_COVERAGE_EXTRA_FLAGS}\" --coveralls ${CMAKE_BINARY_DIR}/coverage/coverage.info --html-details ${CMAKE_BINARY_DIR}/coverage/coverage.html"
                      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
             set_tests_properties(coverage PROPERTIES DEPENDS "unittest")
         endif(GCOVR_FOUND)
