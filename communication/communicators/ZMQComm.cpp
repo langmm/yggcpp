@@ -520,16 +520,11 @@ ADD_CONSTRUCTORS_DEF(ZMQComm)
 void ZMQComm::init() {
   updateMaxMsgSize(1048576);
   msgBufSize = 100;
-  if ((flags & COMM_FLAG_VALID) && (!init_handle())) {
-    flags &= ~COMM_FLAG_VALID;
-  }
+  init_handle();
 }
 
-bool ZMQComm::init_handle() {
-  if (handle) {
-    delete handle;
-    handle = nullptr;
-  }
+void ZMQComm::init_handle() {
+  assert(!handle);
   // TODO: Handle multiple comms
   // if (flags & (COMM_FLAG_CLIENT | COMM_FLAG_SERVER_RESPONSE)) {
   //   handle = new ZMQSocket(ZMQ_ROUTER, address);
@@ -544,7 +539,6 @@ bool ZMQComm::init_handle() {
     this->name = "tempnewZMQ-" + handle->endpoint.substr(handle->endpoint.find_last_of(':') + 1);
   if (direction == SEND)
     flags |= COMM_ALWAYS_SEND_HEADER;
-  return true;
 }
 
 ZMQComm::~ZMQComm() {
@@ -575,7 +569,7 @@ int ZMQComm::comm_nmsg() const {
         if (handle) {
 	    return handle->poll(ZMQ_POLLIN, short_timeout);
         }
-    } else {
+    } else { // GCOVR_EXCL_LINE
       ygglog_debug << "ZMQComm(" << name << ")::comm_nmsg: nmsg = " << reply.n_msg << ", nrep = "
 		   << reply.n_rep << std::endl;
       out = reply.n_msg - reply.n_rep;
@@ -744,7 +738,7 @@ Comm_t* ZMQComm::create_worker_recv(Header& head) {
 
 #ifdef YGG_TEST
 bool ZMQComm::afterSendRecv(Comm_t* sComm, Comm_t* rComm) {
-  if (sComm->global_comm)
+  if (sComm->global_comm) // // GCOVR_EXCL_START
     sComm = sComm->global_comm;
   if (rComm->global_comm)
     rComm = rComm->global_comm;
@@ -778,7 +772,7 @@ bool ZMQComm::afterSendRecv(Comm_t* sComm, Comm_t* rComm) {
     ygglog_error << "ZMQComm::afterSendRecv: Error in recv_stage2" << std::endl;
     return false;
   }
-  return true;
+  return true; // GCOVR_EXCL_STOP
 }
 #endif // YGG_TEST
 #endif // ZMQINSTALLED
