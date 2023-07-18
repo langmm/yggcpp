@@ -15,11 +15,9 @@ ServerComm::ServerComm(const std::string nme, Address *addr,
 ADD_CONSTRUCTORS_RPC_DEF(ServerComm)
 
 bool ServerComm::signon(const Header& header) {
-  if (global_comm)
-    return dynamic_cast<ServerComm*>(global_comm)->signon(header);
-  if (!(header.flags & HEAD_FLAG_CLIENT_SIGNON))
-    return true;
-  ygglog_debug << "ServerComm(" << name << ")::signon: begin" << std::endl;
+  assert(header.flags & HEAD_FLAG_CLIENT_SIGNON);
+  ygglog_debug << "ServerComm(" << name << ")::signon: begin (" <<
+    (header.flags & HEAD_FLAG_CLIENT_SIGNON) << ")" << std::endl;
   if (send(YGG_SERVER_SIGNON, YGG_SERVER_SIGNON_LEN) < 0) {
     ygglog_error << "ServerComm(" << name << ")::signon: Error in sending sign-on" << std::endl;
     return false;
@@ -29,9 +27,10 @@ bool ServerComm::signon(const Header& header) {
 }
 
 bool ServerComm::create_header_send(Header& header, const char* data, const size_t &len) {
-  if (global_comm)
-    return global_comm->create_header_send(header, data, len);
-  Comm_t* response_comm = requests.activeComm(true);
+  assert(!global_comm);
+  // if (global_comm)
+  //   return global_comm->create_header_send(header, data, len);
+  Comm_t* response_comm = requests.activeComm();
   if (response_comm == NULL) {
     ygglog_error << "ServerComm(" << name << ")::create_header_send: Failed to get response comm" << std::endl;
     return false;
@@ -89,7 +88,7 @@ int ServerComm::send_single(const char* data, const size_t &len,
     //   return global_comm->send_single(data, len, header);
     assert(!global_comm);
     ygglog_debug << "ServerComm(" << name << ")::send_single: " << len << " bytes" << std::endl;
-    Comm_t* response_comm = requests.activeComm(true);
+    Comm_t* response_comm = requests.activeComm();
     if (response_comm == NULL) {
         ygglog_error << "ServerComm(" << name << ")::send_single: Failed to get response comm" << std::endl;
         return -1;

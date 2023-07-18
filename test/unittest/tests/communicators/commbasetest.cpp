@@ -38,12 +38,17 @@ protected:
 
 class EmptyComm : public CommBase<int> {
 public:
-    EmptyComm() :
-      CommBase("", nullptr, SEND, ZMQ_COMM, 0) {
-      handle = new int();
-      updateMaxMsgSize(1000);
-    }
-    int wait_for_recv(const int) override { return 0; }
+  EmptyComm() :
+    CommBase("", nullptr, SEND, ZMQ_COMM, 0), nmsg_(-1) {
+    handle = new int();
+    updateMaxMsgSize(1000);
+  }
+  int wait_for_recv(const int) override { return 0; }
+  int comm_nmsg() const override {
+    if (nmsg_ >= 0) return nmsg_;
+    return CommBase::comm_nmsg();
+  }
+  int nmsg_;
 };
 
 TEST(Commt, Constructors) {
@@ -113,6 +118,8 @@ TEST(CommBase, MissingOverrides) {
   EXPECT_EQ(x.comm_nmsg(), -1);
   EXPECT_EQ(x.sendVar(0), -1);
   int var = 0;
+  EXPECT_EQ(x.recvVar(var), -1);
+  x.nmsg_ = 1;
   EXPECT_EQ(x.recvVar(var), -1);
   std::string msg(1050, 'a');
   EXPECT_EQ(x.sendVar(msg), -1);

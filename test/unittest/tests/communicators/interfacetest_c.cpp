@@ -361,6 +361,10 @@ TEST(comm_t, Errors) {
   EXPECT_EQ(comm_nmsg(tmp), -1);
   tmp = init_comm("", SEND, NULL_COMM, tmp_dtype);
   EXPECT_FALSE(tmp.comm);
+  tmp = yggRpcClientType("invalid", tmp_dtype, tmp_dtype);
+  EXPECT_FALSE(tmp.comm);
+  tmp = yggRpcServerType("invalid", tmp_dtype, tmp_dtype);
+  EXPECT_FALSE(tmp.comm);
   {
     COMM_BASE alt("", nullptr, RECV);
     setenv("output_OUT", alt.getAddress().c_str(), 1);

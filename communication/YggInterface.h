@@ -108,7 +108,7 @@ yggOutput_t yggOutputFmt(const char *name, const char *fmtString){
     free_comm(&out);
   }
   return out;
-};
+}; // GCOVR_EXCL_LINE
 
 /*!
   @brief Constructor for yggInput_t structure with format.
@@ -129,7 +129,7 @@ yggInput_t yggInputFmt(const char *name, const char *fmtString){
     free_comm(&out);
   }
   return out;
-};
+}; // GCOVR_EXCL_LINE
 
 /*!
   @brief Constructor for yggOutput_t output structure.
@@ -401,7 +401,7 @@ comm_t yggRpcClientType(const char *name, dtype_t outType, dtype_t inType) {
     inType = create_dtype_empty(true);
   }
   comm_t ret = init_comm(name, SEND, CLIENT_COMM, outType);
-  if (ret.comm && !set_response_datatype(ret, inType)) {
+  if (!set_response_datatype(ret, inType)) {
     free_comm(&ret);
   }
   return ret;
@@ -427,7 +427,7 @@ comm_t yggRpcServerType(const char *name, dtype_t inType, dtype_t outType) {
     outType = create_dtype_empty(true);
   }
   comm_t ret = init_comm(name, RECV, SERVER_COMM, inType);
-  if (ret.comm && !set_response_datatype(ret, outType)) {
+  if (!set_response_datatype(ret, outType)) {
     free_comm(&ret);
   }
   return ret;
@@ -722,7 +722,7 @@ comm_t yggAsciiArrayOutput(const char *name, const char *format_str) {
     free_comm(&out);
   }
   return out;
-};
+}; // GCOVR_EXCL_LINE
 
 /*!
   @brief Constructor for AsciiTable input comm with array input.

@@ -216,6 +216,7 @@ TEST(ClientComm, global) {
       ClientComm sComm(name, nullptr);
       sComm.set_timeout_recv(1000);
       global_scope_comm_off();
+      sComm.addResponseFormat("%s");
       {
 	std::string msg_cli = YGG_CLIENT_SIGNON;
 	Header header;

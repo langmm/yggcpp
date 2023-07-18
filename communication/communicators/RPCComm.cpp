@@ -63,8 +63,7 @@ bool RPCComm::afterSendRecv(Comm_t* sComm, Comm_t* rComm) {
 	 (rComm->flags & COMM_FLAG_CLIENT));
   Comm_t* sComm_res = dynamic_cast<RPCComm*>(sComm)->requests.lastComm();
   Comm_t* rComm_res = dynamic_cast<RPCComm*>(rComm)->requests.lastComm();
-  if (!(sComm_res && rComm_res))
-    return false;
+  assert(sComm_res && rComm_res);
   return sComm_res->afterSendRecv(sComm_res, rComm_res);
 }
 #endif

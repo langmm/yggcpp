@@ -40,6 +40,8 @@ comm_t init_comm(const char* name, DIRECTION dir, const COMM_TYPE &t,
       static_cast<communication::communicator::Comm_t*>(ret.comm)->addSchema(*metadata);
       delete metadata;
     }
+    if (!((static_cast<communication::communicator::Comm_t*>(ret.comm))->getFlags() & COMM_FLAG_VALID))
+      free_comm(&ret);
   } _END_CPP_CLEANUP(init_comm, ret, ret.comm = NULL);
   return ret;
 }
