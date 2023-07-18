@@ -176,7 +176,7 @@ TEST(ClientComm, call) {
   char* res_recv = NULL;
   size_t res_recv_len = 0;
   // First message
-  cc.set_timeout_recv(100000);
+  cc.set_timeout_recv(1000);
   std::string req_recv_fmt = "\"" + req_recv + "\"";
   cc.addStashedRequest(req_recv_fmt);
   EXPECT_GE(cc.server_comm->sendVar(res_send), 0);
@@ -207,14 +207,14 @@ TEST(ClientComm, global) {
   std::string name = "test_name";
   {
     ServerComm rComm(name, nullptr);
-    rComm.set_timeout_recv(100000);
+    rComm.set_timeout_recv(1000);
     std::string key_env = name + "_OUT";
     std::string val_env = rComm.getAddress();
     setenv(key_env.c_str(), val_env.c_str(), 1);
     {
       global_scope_comm_on();
       ClientComm sComm(name, nullptr);
-      sComm.set_timeout_recv(100000);
+      sComm.set_timeout_recv(1000);
       global_scope_comm_off();
       {
 	std::string msg_cli = YGG_CLIENT_SIGNON;

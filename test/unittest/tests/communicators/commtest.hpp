@@ -4,9 +4,9 @@
 #define DO_SEND_RECV_EXCHANGE(init_data, comp_data, send_method, send_args, recv_method, recv_args) \
   init_data;								\
   EXPECT_GE(sComm.send_method send_args, 0);				\
-  EXPECT_GT(rComm.wait_for_recv(1000000), 0);				\
+  EXPECT_GT(rComm.wait_for_recv(1000), 0);				\
   EXPECT_GT(rComm.comm_nmsg(), 0);					\
-  rComm.set_timeout_recv(1000000);					\
+  rComm.set_timeout_recv(1000);						\
   EXPECT_GE(rComm.recv_method recv_args, 0);				\
   EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));			\
   comp_data
