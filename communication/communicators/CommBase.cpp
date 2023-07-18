@@ -240,6 +240,7 @@ Comm_t* communication::communicator::new_Comm_t(const DIRECTION dir, const COMM_
   flags |= COMM_FLAG_DELETE;
   switch(type) {
   case NULL_COMM:
+    delete addr;
     break;
   case DEFAULT_COMM:
     return new COMM_BASE(name, addr, dir, flags);

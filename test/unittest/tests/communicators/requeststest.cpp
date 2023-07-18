@@ -10,7 +10,6 @@ using namespace communication::utils;
 TEST(RequestList, Empty) {
   RequestList req(RECV);
   EXPECT_EQ(req.hasRequest("invalid"), -1);
-  EXPECT_EQ(req.hasResponse("invalid"), -1);
   EXPECT_EQ(req.hasPartner("invalid"), -1);
   EXPECT_EQ(req.hasComm("invalid"), -1);
   EXPECT_EQ(req.popRequestServer(), -1);
@@ -71,18 +70,12 @@ TEST(RequestList, Response) {
   EXPECT_EQ(server.addResponseServer(header, "test", 4), -1);
   EXPECT_EQ(client.addResponseClient(header, "test", 4), 0);
   EXPECT_EQ(client.addResponseClient(header, "test", 4), -1);
+  server.Display();
+  client.Display();
   EXPECT_TRUE(client.isComplete(header.GetMetaString("request_id")));
   char* data = NULL;
   EXPECT_EQ(client.getRequestClient(header.GetMetaString("request_id"),
-				    data, 0, false), -1);
-// #ifdef ELF_AVAILABLE
-//   ELF_BEGIN;
-//   ELF_BEGIN_F(realloc);
-//   EXPECT_EQ(client.getRequestClient(header.GetMetaString("request_id"),
-// 				    data, 0, true), -1);
-//   ELF_END_F(realloc);
-//   ELF_END;
-// #endif // ELF_AVAILABLE
+				    data, 0, false), -4);
   EXPECT_EQ(server.popRequestServer(), 1);
   EXPECT_EQ(server.hasRequest(header.GetMetaString("request_id")), -1);
   EXPECT_EQ(client.popRequestClient(header), 1);

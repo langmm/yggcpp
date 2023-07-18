@@ -564,17 +564,20 @@ protected:
       return out;
     }
 
-    long copyData(char*& dst, const size_t dst_len,
-		  const char* src, const size_t src_len,
-		  bool allow_realloc) {
+    static long copyData(char*& dst, const size_t dst_len,
+			 const char* src, const size_t src_len,
+			 bool allow_realloc) {
       if ((src_len + 1) > dst_len) {
 	if (!allow_realloc) {
-	  ygglog_error << "CommBase(" << name << ")::copyData: Size of message (" << src_len << " + 1 bytes) exceeds buffer size (" << dst_len << " bytes) and the buffer cannot be reallocated." << std::endl;
+	  ygglog_error << "CommBase::copyData: Size of message (" <<
+	    src_len << " + 1 bytes) exceeds buffer size (" << dst_len <<
+	    " bytes) and the buffer cannot be reallocated." << std::endl;
 	  return -((long)src_len);
 	}
 	char* tmp = (char*)realloc(dst, src_len + 1);
 	if (tmp == NULL) {
-	  ygglog_error << "CommBase(" << name << ")::copyData: Error reallocating buffer" << std::endl;
+	  ygglog_error <<
+	    "CommBase::copyData: Error reallocating buffer" << std::endl;
 	  return -1;
 	}
 	dst = tmp;
