@@ -272,7 +272,7 @@ namespace communicator {
 	  request_id << "' does not have response" << std::endl;
 	return -1;
       }
-      return static_cast<int>(Comm_t::copyData(
+      return static_cast<int>(comms[requests[(size_t)idx].comm_idx]->copyData(
         data, len, requests[(size_t)idx].data.c_str(),
 	requests[(size_t)idx].data.size(), allow_realloc));
     }

@@ -24,6 +24,7 @@ bool ServerComm::signon(const Header& header) {
     ygglog_error << "ServerComm(" << name << ")::signon: Error in sending sign-on" << std::endl;
     return false;
   }
+  ygglog_debug << "ServerComm(" << name << ")::signon: sent" << std::endl;
   return requests.signon_complete;
 }
 
@@ -66,15 +67,17 @@ bool ServerComm::create_header_recv(Header& header, char*& data,
     header.flags |= HEAD_FLAG_REPEAT;
     return true;
   }
-  if ((!temp) && requests.addRequestServer(header) < 0) {
-    ygglog_error << "ServerComm(" << name << ")::create_header_recv: Failed to add request" << std::endl;
-    return false;
-  }
-  if (header.flags & HEAD_FLAG_CLIENT_SIGNON) {
-    if (!signon(header)) {
+  if (!temp) {
+    if (requests.addRequestServer(header) < 0) {
+      ygglog_error << "ServerComm(" << name << ")::create_header_recv: Failed to add request" << std::endl;
       return false;
     }
-    header.flags |= HEAD_FLAG_REPEAT;
+    if (header.flags & HEAD_FLAG_CLIENT_SIGNON) {
+      if (!signon(header)) {
+	return false;
+      }
+      header.flags |= HEAD_FLAG_REPEAT;
+    }
   }
   return true;
 }

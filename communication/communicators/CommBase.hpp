@@ -556,9 +556,9 @@ protected:
       return out;
     }
 
-    static long copyData(char*& dst, const size_t dst_len,
-			 const char* src, const size_t src_len,
-			 bool allow_realloc) {
+    long copyData(char*& dst, const size_t dst_len,
+		  const char* src, const size_t src_len,
+		  bool allow_realloc) {
       if ((src_len + 1) > dst_len) {
 	if (!allow_realloc) {
 	  ygglog_error << "CommBase::copyData: Size of message (" <<

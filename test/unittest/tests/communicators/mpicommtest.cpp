@@ -163,7 +163,7 @@ TEST(MPIComm, recv) {
     mpic.setHandle(&mock_handle);
     char* data = (char*)malloc(sizeof(char) * 1);
     size_t len = 1;
-    mpic.set_timeout_recv(100000);
+    mpic.set_timeout_recv(1000);
     communication::testing::mpi_registry_mock::MPIPROC = 50000;
     EXPECT_EQ(mpic.recv(data, len, false), -((long)msg.size()));
     communication::testing::mpi_registry_mock::MPISTATUS = 2;
