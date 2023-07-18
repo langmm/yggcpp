@@ -36,6 +36,7 @@ TEST(RequestList, Request) {
   char* data = NULL;
   // Client
   EXPECT_EQ(client.addRequestClient(header), 0);
+  std::string req_id(header.GetMetaString("request_id"));
   EXPECT_EQ(client.addRequestClient(header, header.GetMetaString("request_id")), -1);
   EXPECT_EQ(client.hasRequest(header.GetMetaString("request_id")), 0);
   EXPECT_EQ(client.hasComm(header.GetMetaString("response_address")), 0);
@@ -52,6 +53,11 @@ TEST(RequestList, Request) {
   EXPECT_EQ(server.hasRequest(header.GetMetaString("request_id")), -1);
   EXPECT_EQ(client.popRequestClient(header), -1);
   EXPECT_EQ(client.getRequestClient(header.GetMetaString("request_id"), data, 0, false), -1);
+  client.requests.clear();
+  EXPECT_EQ(client.hasRequest(header.GetMetaString("request_id")), -1);
+  EXPECT_TRUE(client.requests.empty());
+  EXPECT_FALSE(client.comms.empty());
+  EXPECT_TRUE(client.lastComm());
 }
 
 TEST(RequestList, Response) {

@@ -149,7 +149,7 @@ bool ClientComm::create_header_recv(Header& header, char*& data, const size_t &l
   // 					   allow_realloc, temp);
   assert(!global_comm);
   ygglog_debug << "ClientComm(" << name << ")::create_header_recv: begin (temp = " << temp << ")" << std::endl;
-  Comm_t* response_comm = requests.activeComm(true);
+  Comm_t* response_comm = requests.activeComm();
   if (response_comm == NULL) {
     ygglog_error << "ClientComm(" << name << ")::create_header_recv: Error getting response comm" << std::endl;
     return false;
@@ -181,7 +181,7 @@ long ClientComm::recv_single(char*& rdata, const size_t &rlen, bool allow_reallo
     //   return global_comm->recv_single(rdata, rlen, allow_realloc);
     assert(!global_comm);
     ygglog_debug << "ClientComm(" << name << ")::recv_single" << std::endl;
-    Comm_t* response_comm = requests.activeComm(true);
+    Comm_t* response_comm = requests.activeComm();
     if (response_comm == NULL) {
         ygglog_error << "ClientComm(" << name << ")::recv_single: Error getting response comm" << std::endl;
         return -1;

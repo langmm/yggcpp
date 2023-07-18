@@ -722,7 +722,7 @@ protected:
     Comm_t* create_worker(utils::Address*, const DIRECTION&,
 			  int) override {
       utils::ygglog_throw_error("create_worker of base class called, must be overridden");
-      return NULL;
+      return NULL; // GCOVR_EXCL_LINE
     }
 
     /**

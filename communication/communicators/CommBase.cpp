@@ -147,14 +147,12 @@ Comm_t::Comm_t(const std::string &nme, utils::Address *addr,
   get_global_scope_comm();
   
   Comm_t::register_comm(this);
-  
+
   if (!(address && address->valid())) {
     if (address)
       delete address;
     address = addressFromEnv(name, direction);
-    if ((flags & COMM_FLAG_INTERFACE) &&
-	(!address->valid()) &&
-	(!(flags & (COMM_FLAG_CLIENT | COMM_FLAG_SERVER)))) {
+    if ((flags & COMM_FLAG_INTERFACE) && (!address->valid())) {
       ygglog_error << "CommBase: " << name << " not registered as environment variable.\n" << std::endl;
       flags &= ~COMM_FLAG_VALID;
     }

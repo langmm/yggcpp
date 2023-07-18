@@ -205,15 +205,12 @@ public:
             return NULL;
         return comms[static_cast<size_t>(idx)];
     }
-    Comm_t* activeComm(bool require_open = false) {
+    Comm_t* activeComm() {
       if (requests.empty() || comms.empty()) {
 	ygglog_error << "activeComm: No pending requests" << std::endl;
 	return NULL;
       }
-      Comm_t* out = comms[requests[0].comm_idx];
-      if (require_open && out->is_closed())
-	return NULL;
-      return out;
+      return comms[requests[0].comm_idx];
     }
     Comm_t* lastComm() {
       if (comms.empty()) {
@@ -233,7 +230,7 @@ public:
 	  return requests[i].request_id;
       }
       ygglog_throw_error("activeRequestClient: No active requests");
-      return "";
+      return ""; // GCOVR_EXCL_LINE
     }
     int popRequestServer() {
         if (requests.empty() || comms.empty()) {
