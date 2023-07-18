@@ -110,10 +110,10 @@ TEST(Commt, checksize) {
 TEST(CommBase, MissingOverrides) {
   EmptyComm x;
   x.addSchema("{\"type\": \"any\"}");
-  EXPECT_THROW(x.comm_nmsg(), std::exception);
-  EXPECT_THROW(x.sendVar(0), std::exception);
+  EXPECT_EQ(x.comm_nmsg(), -1);
+  EXPECT_EQ(x.sendVar(0), -1);
   int var = 0;
-  EXPECT_THROW(x.recvVar(var), std::exception);
+  EXPECT_EQ(x.recvVar(var), -1);
   std::string msg(1050, 'a');
   EXPECT_EQ(x.sendVar(msg), -1);
 }

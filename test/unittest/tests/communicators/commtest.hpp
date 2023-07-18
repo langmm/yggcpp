@@ -4,8 +4,8 @@
 #define DO_SEND_RECV_EXCHANGE(init_data, comp_data, send_method, send_args, recv_method, recv_args) \
   init_data;								\
   EXPECT_GE(sComm.send_method send_args, 0);				\
-  EXPECT_GT(rComm.comm_nmsg(), 0);					\
   EXPECT_GT(rComm.wait_for_recv(1000000), 0);				\
+  EXPECT_GT(rComm.comm_nmsg(), 0);					\
   rComm.set_timeout_recv(1000000);					\
   EXPECT_GE(rComm.recv_method recv_args, 0);				\
   EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));			\
@@ -284,6 +284,20 @@
 		      " \"subtype\": \"uint\","				\
 		      " \"precision\": 1}")				\
   COMM_SERI_TEST_TYPE(cls, bool, true, "{\"type\": \"boolean\"}")	\
+  TEST(cls, generic) {							\
+    cls ## _tester sComm(SEND);						\
+    sComm.addSchema("{\"type\": \"any\"}");				\
+    std::string name = "test_name";					\
+    std::string key_env = name + "_IN";					\
+    std::string val_env = sComm.getAddress();				\
+    setenv(key_env.c_str(), val_env.c_str(), 1);			\
+    cls ## _tester rComm(name, RECV);					\
+    rComm.addSchema("{\"type\": \"any\"}");				\
+    unsetenv(key_env.c_str());						\
+    DO_SEND_RECV(sendVarAsGeneric, recvVarAsGeneric, int, 32);		\
+    rComm.close();							\
+    EXPECT_EQ(rComm.recvVarAsGeneric(data_recv), -1);			\
+  }									\
   TEST(cls, large) {							\
     cls ## _tester sComm(SEND);						\
     std::string name = "test_name";					\

@@ -33,7 +33,6 @@ public:
 #ifndef YGG_TEST
 protected:
 #endif
-    void init();
     virtual bool signon(const utils::Header& header);
     bool create_header_send(utils::Header& header, const char* data, const size_t &len) override;
     bool create_header_recv(utils::Header& header, char*& data, const size_t &len,

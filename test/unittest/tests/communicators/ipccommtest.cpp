@@ -155,6 +155,7 @@ TEST(IPCComm, recv) {
     ELF_BEGIN_F(msgrcv);
     char* data = (char*)malloc(sizeof(char));
     size_t len = 1;
+    // Failure to realloc
     RETVAL = 0;
     RETVAL_INC_POLL = 0;
     RETVAL_INC_RECV = 0;
@@ -168,9 +169,19 @@ TEST(IPCComm, recv) {
     // Test successful receive
     res = ipc.recv(data, len, true);
     EXPECT_EQ(res, 11);
+    // Retry in msgrcv
+    RETVAL = 0;
+    RETVAL_INC_POLL = -1;
+    RETVAL_INC_RECV = 1;
+    errno = ENOMSG;
+    std::cerr << "BEFORE RETRY (len = " << len << ")" << std::endl;
+    EXPECT_EQ(ipc.recv(data, len, true), 11);
+    std::cerr << "AFTER RETRY (len = " << len << ")" << std::endl;
+    errno = 0;
     // Test failure in receive
     RETVAL = 0;
     RETVAL_INC_POLL = -2;
+    RETVAL_INC_RECV = 0;
     res = ipc.recv(data, len, true);
     EXPECT_EQ(res, -1);
     ELF_END_F(msgrcv);
