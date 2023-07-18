@@ -101,8 +101,7 @@ void Metadata::fromSchema(const std::string schemaStr, bool use_generic) {
 }
 void Metadata::fromData(const rapidjson::Document& data, bool indirect) {
   rapidjson::SchemaEncoder encoder(true);
-  if (!data.Accept(encoder))
-    ygglog_throw_error_c("Metadata::fromData: Error encoding object's schema");
+  data.Accept(encoder);
   bool has_type = hasType();
   fromSchema(encoder.GetSchema());
   if ((!has_type) && indirect)

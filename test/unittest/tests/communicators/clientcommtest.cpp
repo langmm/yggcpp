@@ -175,6 +175,8 @@ TEST(ClientComm, call) {
   std::string req_recv = req_send;
   char* res_recv = NULL;
   size_t res_recv_len = 0;
+  // Error before response
+  EXPECT_EQ(cc.recvRealloc(2, &res_recv, &res_recv_len), -1);
   // First message
   cc.set_timeout_recv(1000);
   std::string req_recv_fmt = "\"" + req_recv + "\"";

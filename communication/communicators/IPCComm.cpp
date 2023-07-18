@@ -178,10 +178,7 @@ int IPCComm::comm_nmsg() const {
     if (global_comm)
       return global_comm->comm_nmsg();
     struct msqid_ds buf;
-    if (!handle) {
-        ygglog_error << "ipc_comm_nmsg: Queue handle is NULL." << std::endl;
-        return -1;
-    }
+    assert(handle);
 
     int rc = msgctl(handle[0], IPC_STAT, &buf);
     if (rc != 0) {
@@ -219,13 +216,13 @@ int IPCComm::send_single(const char* data, const size_t &len, const Header&) {
         if ((ret == -1) && (errno == EAGAIN)) {
 	    ygglog_debug << "IPCComm(" << name << ")::send_single: msgsnd, sleep" << std::endl;
             usleep(YGG_SLEEP_TIME);
-        } else {
+        } else { // GCOVR_EXCL_LINE
             struct msqid_ds buf;
             int rtrn = msgctl(handle[0], IPC_STAT, &buf);
             if ((rtrn == 0) && ((buf.msg_qnum + len) > buf.msg_qbytes)) {
 	        ygglog_debug << "IPCComm(" << name << ")::send_single: msgsnd, queue full, sleep" << std::endl;
                 usleep(YGG_SLEEP_TIME);
-            } else {
+            } else { // GCOVR_EXCL_LINE
 	        ygglog_error << "IPCComm(" << name << ")::send_single: msgsnd(" << handle[0] << ", " << &t << ", " << len
                              << ", IPC_NOWAIT) ret(" << ret << "), errno(" << errno << "): " << strerror(errno) << std::endl;
                 ret = -1;
@@ -259,7 +256,7 @@ long IPCComm::recv_single(char*& data, const size_t& len, bool allow_realloc) {
         if (ret == -1 && errno == ENOMSG) {
 	    ygglog_debug << "IPCComm(" << name << ")::recv_single: no input, sleep" << std::endl;
             usleep(YGG_SLEEP_TIME);
-        } else {
+        } else { // GCOVR_EXCL_LINE
 	    ygglog_debug << "IPCComm(" << name << ")::recv_single: received input: " << ret << " bytes" << std::endl;
             break;
         }
