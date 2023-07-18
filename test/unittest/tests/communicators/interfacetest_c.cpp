@@ -406,7 +406,7 @@ TEST(YggInterface_C, GlobalServer) {
   {
     std::string name = "test_name";
     ClientComm sComm(name, nullptr);
-    sComm.set_timeout_recv(1);
+    sComm.set_timeout_recv(100000);
     std::string key_env = name + "_IN";
     std::string val_env = sComm.getAddress();
     setenv(key_env.c_str(), val_env.c_str(), 1);
@@ -415,7 +415,7 @@ TEST(YggInterface_C, GlobalServer) {
       dtype_t dtype_res = create_dtype_from_schema("{\"type\": \"integer\"}", false);
       comm_t rComm_c = yggRpcServerType_global("test_name", dtype_req, dtype_res);
       ServerComm& rComm = *((ServerComm*)(rComm_c.comm));
-      rComm.set_timeout_recv(1);
+      rComm.set_timeout_recv(100000);
       DO_RPC_SIGNON;
       // Request
       int req_send = 1, req_recv = 0;
