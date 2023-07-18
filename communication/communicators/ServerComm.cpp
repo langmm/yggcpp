@@ -10,19 +10,9 @@ ServerComm::ServerComm(const std::string nme, Address *addr,
 		       int flgs, const COMM_TYPE type) :
   RPCComm(nme, addr,
 	  flgs | COMM_FLAG_SERVER | COMM_ALWAYS_SEND_HEADER,
-	  RECV, SEND, type) {
-  // Called to create temp comm for send/recv
-  if (!(global_comm || (name.empty() && address && address->valid())))
-    init();
-}
+	  RECV, SEND, type) {}
 
 ADD_CONSTRUCTORS_RPC_DEF(ServerComm)
-
-void ServerComm::init() {
-  if (this->name.empty()) {
-    this->name = "server_request." + this->address->address();
-  }
-}
 
 bool ServerComm::signon(const Header& header) {
   if (global_comm)

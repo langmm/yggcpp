@@ -506,19 +506,11 @@ protected:
     static void _ygg_init();
   
     void updateMaxMsgSize(size_t new_size) {
-      if (global_comm) {
-	global_comm->updateMaxMsgSize(new_size);
-	return;
-      }
       if (maxMsgSize == 0 || new_size < maxMsgSize)
 	maxMsgSize = new_size;
     }
 
     void setFlags(const Header& head, DIRECTION dir) {
-      if (global_comm) {
-	global_comm->setFlags(head, dir);
-	return;
-      }
       flags |= COMM_FLAGS_USED;
       if (head.flags & HEAD_FLAG_EOF) {
 	if (dir == SEND)
@@ -671,8 +663,8 @@ public:
     CommBase() = delete;
 
     int comm_nmsg() const override {
-        utils::ygglog_throw_error("Comm_nmsg of base class called, must be overridden");
-        return -1;
+      ygglog_error << "Comm_nmsg of base class called, must be overridden" << std::endl;
+      return -1;
     }
     void close() override;
     bool is_closed() const override;
@@ -681,13 +673,13 @@ public:
 
 protected:
     int send_single(const char *, const size_t &, const Header&) override {
-        utils::ygglog_throw_error("Send of base class called, must be overridden");
-        return -1;
+      ygglog_error << "Send of base class called, must be overridden" << std::endl;
+      return -1;
     }
 
     long recv_single(char*&, const size_t &, bool) override {
-        utils::ygglog_throw_error("Recv of base class called, must be overridden");
-        return -1;
+      ygglog_error << "Recv of base class called, must be overridden" << std::endl;
+      return -1;
     }
 
     explicit CommBase(const std::string &name, utils::Address *address = nullptr, DIRECTION direction = NONE, const COMM_TYPE &t = NULL_COMM, int flags = 0);

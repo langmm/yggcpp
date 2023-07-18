@@ -22,7 +22,6 @@ public:
 #ifndef YGG_TEST
 protected:
 #endif
-    void init();
     virtual bool signon(const Header& header);
     bool create_header_send(Header& header, const char* data, const size_t &len) override;
     bool create_header_recv(Header& header, char*& data, const size_t &len,
