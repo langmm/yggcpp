@@ -230,8 +230,7 @@ TEST(ZMQComm, recv) {
     RETVAL_INC_POLL = 0;
     RETVAL_INC_RECV = 0;
     ELF_BEGIN_F(realloc);
-    res = zmq_recv.recv(data, len, true);
-    EXPECT_EQ(res, -1);
+    EXPECT_EQ(zmq_recv.recv(data, len, true), -1);
     ELF_END_F(realloc);
     free(data);
 #ifdef ZMQ_HAVE_POLLER
