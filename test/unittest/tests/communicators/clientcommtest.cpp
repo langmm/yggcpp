@@ -202,6 +202,17 @@ TEST(ClientComm, call) {
   EXPECT_EQ(strcmp(res_send.c_str(), res_recv), 0);
   EXPECT_EQ(cc.server_comm->recvVar(req_recv), 2);
   EXPECT_EQ(req_recv, req_send);
+  // Failed message due to incorrect number of arguments
+  EXPECT_EQ(cc.call(1, req_send.c_str()), -1);
+  // Failed message due to failed send
+#ifdef ELF_AVAILABLE
+  ELF_BEGIN;
+  ELF_REPLACE_SEND;
+  EXPECT_EQ(cc.call(4, req_send.c_str(), req_send.size(),
+		    res_recv, &res_recv_len), -1);
+  ELF_RESTORE_SEND;
+  ELF_END;
+#endif // ELF_AVAILABLE
   free(res_recv);
 }
 

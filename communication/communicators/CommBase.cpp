@@ -698,35 +698,34 @@ long Comm_t::vCall(rapidjson::VarArgList& ap) {
   size_t send_nargs = 0;
   rapidjson::Document tmp;
   Metadata& meta_send = get_metadata(SEND);
-  if (!meta_send.hasType()) {
-    send_nargs = 0;
-  } else {
+  if (meta_send.hasType()) {
     send_nargs = tmp.CountVarArgs(*meta_send.schema, false);
   }
-  rapidjson::VarArgList op(ap);
+  if (ap.get_nargs() < send_nargs) {
+    ygglog_error << "CommBase(" << name << ")::vCall: Not enough arguments for send" << std::endl;
+    return -1;
+  }
   size_t recv_nargs = ap.get_nargs() - send_nargs;
   ap.set_nargs(send_nargs);
   int sret = vSend(ap);
   if (sret < 0) {
-    ygglog_error << "CommBase(" << name << ")::vCall: Error in vSend" << std::endl;
+    ygglog_error << "CommBase(" << name << ")::vCall: Error in vSend"
+		 << std::endl;
     return -1;
   }
-  ygglog_debug << "CommBase(" << name << ")::vCall: Used " << sret << " arguments in send" << std::endl;
-  if (!tmp.SkipVarArgs(*(meta_send.schema), op, false)) {
-    ygglog_error << "CommBase(" << name << ")::vCall: Error skipping arguments" << std::endl;
-    return -1;
-  }
-  ygglog_debug << "CommBase(" << name << ")::vCall: " << op.get_nargs() << " arguments remaining for receive" << std::endl;
-  if (op.get_nargs() != recv_nargs) {
-    ygglog_error << "CommBase(" << name << ")::vCall: Number of arguments after skip (" << op.get_nargs() << ") doesn't match the number expected (" << recv_nargs << std::endl;
-    return -1;
-  }
-  long rret = vRecv(op);
+  ygglog_debug << "CommBase(" << name << ")::vCall: Used " << sret
+	       << " arguments in send" << std::endl;
+  ap.set_nargs(recv_nargs);
+  ygglog_debug << "CommBase(" << name << ")::vCall: " << ap.get_nargs()
+	       << " arguments remaining for receive" << std::endl;
+  long rret = vRecv(ap);
   if (rret < 0) {
-    ygglog_error << "CommBase(" << name << ")::vCall: Error in vRecv" << std::endl;
+    ygglog_error << "CommBase(" << name << ")::vCall: Error in vRecv"
+		 << std::endl;
   }
-  ygglog_debug << "CommBase(" << name << ")::vCall: " << op.get_nargs() << " arguments after receive" << std::endl;
-  YGGCPP_END_VAR_ARGS(op);
+  ygglog_debug << "CommBase(" << name << ")::vCall: " << ap.get_nargs()
+	       << " arguments after receive" << std::endl;
+  YGGCPP_END_VAR_ARGS(ap);
   return rret;
   
 }
