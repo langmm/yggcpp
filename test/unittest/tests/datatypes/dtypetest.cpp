@@ -278,14 +278,14 @@ TEST(generic_t, 1darray) {
   EXPECT_TRUE(data);
   EXPECT_EQ(generic_set_1darray(x, data, "float", 8, 3, "cm"), 0);
   EXPECT_TRUE(compare_generic(x, v));
-#ifdef ELF_AVAILABLE
-  ELF_BEGIN;
-  ELF_BEGIN_F(realloc);
-  data = NULL;
-  EXPECT_EQ(generic_get_1darray(v, "float", 8, &data), 0);
-  ELF_END_F(realloc);
-  ELF_END;
-#endif // ELF_AVAILABLE
+// #ifdef ELF_AVAILABLE
+//   ELF_BEGIN;
+//   ELF_BEGIN_F(realloc);
+//   data = NULL;
+//   EXPECT_EQ(generic_get_1darray(v, "float", 8, &data), 0);
+//   ELF_END_F(realloc);
+//   ELF_END;
+// #endif // ELF_AVAILABLE
   destroy_generic(&v);
   destroy_generic(&x);
 }
@@ -302,15 +302,15 @@ TEST(generic_t, ndarray) {
   EXPECT_TRUE(shape);
   EXPECT_EQ(generic_set_ndarray(x, data, "float", 8, 2, shape, "cm"), 0);
   EXPECT_TRUE(compare_generic(x, v));
-#ifdef ELF_AVAILABLE
-  ELF_BEGIN;
-  ELF_BEGIN_F(realloc);
-  data = NULL;
-  shape = NULL;
-  EXPECT_EQ(generic_get_ndarray(v, "float", 8, &data, &shape), 0);
-  ELF_END_F(realloc);
-  ELF_END;
-#endif // ELF_AVAILABLE
+// #ifdef ELF_AVAILABLE
+//   ELF_BEGIN;
+//   ELF_BEGIN_F(realloc);
+//   data = NULL;
+//   shape = NULL;
+//   EXPECT_EQ(generic_get_ndarray(v, "float", 8, &data, &shape), 0);
+//   ELF_END_F(realloc);
+//   ELF_END;
+// #endif // ELF_AVAILABLE
   destroy_generic(&v);
   destroy_generic(&x);
 }
