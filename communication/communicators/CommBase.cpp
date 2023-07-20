@@ -514,9 +514,8 @@ long Comm_t::recv(char*& data, const size_t &len,
     head.finalize_recv();
     if (!head.hasType()) {
       ygglog_debug << "CommBase(" << name << ")::recv: No type information in message header" << std::endl;
-    } else if (!update_datatype(head.schema[0], RECV)) {
-      ygglog_error << "CommBase(" << name << ")::recv: Error updating datatype." << std::endl;
-      return -1;
+    } else {
+      update_datatype(head.schema[0], RECV);
     }
   }
   ygglog_debug << "CommBase(" << name << ")::recv: Received " << head.size_curr << " bytes from " << address->address() << std::endl;
@@ -670,10 +669,7 @@ int Comm_t::vSend(rapidjson::VarArgList& ap) {
     tmp.Accept(encoder);
     encoder.Accept(new_schema);
     new_schema.FinalizeFromStack();
-    if (!update_datatype(new_schema, SEND)) {
-      ygglog_error << "CommBase(" << name << ")::vSend: Error updating dtype from generic" << std::endl;
-      return -1;
-    }
+    update_datatype(new_schema, SEND);
   }
   size_t nargs_orig = ap.get_nargs();
   char* buf = NULL;
@@ -719,12 +715,10 @@ long Comm_t::vCall(rapidjson::VarArgList& ap) {
   ygglog_debug << "CommBase(" << name << ")::vCall: " << ap.get_nargs()
 	       << " arguments remaining for receive" << std::endl;
   long rret = vRecv(ap);
-  if (rret < 0) {
-    ygglog_error << "CommBase(" << name << ")::vCall: Error in vRecv"
-		 << std::endl;
+  if (rret >= 0) {
+    ygglog_debug << "CommBase(" << name << ")::vCall: " << ap.get_nargs()
+		 << " arguments after receive" << std::endl;
   }
-  ygglog_debug << "CommBase(" << name << ")::vCall: " << ap.get_nargs()
-	       << " arguments after receive" << std::endl;
   YGGCPP_END_VAR_ARGS(ap);
   return rret;
   
@@ -750,8 +744,7 @@ Comm_t* Comm_t::find_registered_comm(const std::string& name,
 				     const DIRECTION dir,
 				     const COMM_TYPE type) {
   Comm_t* out = NULL;
-  if (name.empty())
-    return out;
+  assert(!name.empty());
 #ifdef _OPENMP
 #pragma omp critical (comms)
   {
