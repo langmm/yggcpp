@@ -91,6 +91,38 @@ extern int MPISTATUS;
 extern bool MPICANCEL;
 extern std::string RETMSG;
 
+#ifdef ZMQINSTALLED
+#define ELF_REPLACE_RECV			\
+  RETVAL = -1;					\
+  RETVAL_INC_POLL = 0;				\
+  RETVAL_INC_RECV = 0;				\
+  ELF_BEGIN_F(zmq_recvmsg)
+#define ELF_RESTORE_RECV			\
+  ELF_END_F(zmq_recvmsg)
+#define ELF_REPLACE_SEND			\
+  RETVAL = -1;					\
+  RETVAL_INC_POLL = 0;				\
+  RETVAL_INC_SEND = 0;				\
+  ELF_BEGIN_F(zmq_sendmsg)
+#define ELF_RESTORE_SEND			\
+  ELF_END_F(zmq_sendmsg)
+#else if defined(IPCINSTALLED)
+#define ELF_REPLACE_RECV			\
+  RETVAL = -1;					\
+  RETVAL_INC_POLL = 0;				\
+  RETVAL_INC_RECV = 0;				\
+  ELF_BEGIN_F(msgrcv)
+#define ELF_RESTORE_RECV			\
+  ELF_END_F(msgrcv)
+#define ELF_REPLACE_SEND			\
+  RETVAL = -1;					\
+  RETVAL_INC_POLL = 0;				\
+  RETVAL_INC_SEND = 0;				\
+  ELF_BEGIN_F(msgsnd)
+#define ELF_RESTORE_SEND			\
+  ELF_END_F(msgsnd)
+#endif
+
 char *alt_getenv(const char *name);
 
 #ifdef IPCINSTALLED
