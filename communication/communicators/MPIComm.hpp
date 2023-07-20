@@ -30,11 +30,24 @@ public:
     virtual int Recv(void *buf, int count, MPI_Datatype datatype, int source,
 		     MPI_Status *status) const;
 #else
-    mpi_registry_t() {}
+    mpi_registry_t() : tag(0) {}
+    int tag; //!< Tag for next message.
 #endif
 protected:
   void CheckReturn(int code, std::string method, int rank=0) const ;
 };
+
+#if !defined(MPIINSTALLED) && !defined(MPI_COMM_WORLD)
+enum MPI_STATUS_FLAG {
+  MPI_SUCCESS,
+  MPI_ERR_BUFFER,
+  MPI_ERR_COUNT,
+  MPI_ERR_TYPE,
+  MPI_ERR_TAG,
+  MPI_ERR_COMM,
+  MPI_ERR_RANK
+};
+#endif
 
 class MPIComm : public CommBase<mpi_registry_t> {
 public:
