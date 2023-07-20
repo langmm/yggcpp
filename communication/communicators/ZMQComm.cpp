@@ -163,7 +163,7 @@ void ZMQSocket::init(int type0, utils::Address* address,
 	if (model_index == NULL) {
 	  except_msg = "Environment variable 'YGG_MODEL_INDEX' is not defined. Connot create ZMQComm.";
 	  _last_port = -1;
-	} else {
+	} else { // GCOVR_EXCL_LINE
 	  ygglog_debug << "ZMQSocket::init: model_index = " << model_index << std::endl;
 	  _last_port = 49152 + 1000 * static_cast<int>(strtol(model_index, nullptr, 0));
 	  _last_port_set = 1;
@@ -183,7 +183,7 @@ void ZMQSocket::init(int type0, utils::Address* address,
 	    err = zmq_errno();
 	    if (err != EADDRINUSE) {
 	      except_msg = "ZMQSocket::init: Error binding to address: " + endpoint;
-	    } else {
+	    } else { // GCOVR_EXCL_LINE
 	      port++;
 	    }
 	  }
@@ -200,7 +200,7 @@ void ZMQSocket::init(int type0, utils::Address* address,
 	  size_t idx_port = endpoint.find_last_of(':');
 	  if (idx_port == std::string::npos) {
 	    except_msg = "ZMQSocket::init: Error finding port in endpoint: " + endpoint;
-	  } else {
+	  } else { // GCOVR_EXCL_LINE
 	    _last_port = stoi(endpoint.substr(idx_port + 1));
 	    ygglog_debug << "ZMQSocket::init: last_port = " << _last_port << std::endl;
 	  }
@@ -659,10 +659,7 @@ bool ZMQComm::create_header_send(Header& header, const char* data, const size_t 
   if (!(header.flags & (HEAD_FLAG_CLIENT_SIGNON |
 			HEAD_FLAG_SERVER_SIGNON))) {
     std::string reply_address;
-    if (reply.create(reply_address) < 0) {
-      ygglog_error << "ZMQComm(" << this->name << ")::create_header_send: Error during creation of reply socket" << std::endl;
-      return false;
-    }
+    reply.create(reply_address);
     ygglog_debug << "ZMQComm(" << this->name << ")::create_header_send: zmq_reply = " << reply_address << std::endl;
     header.SetMetaString("zmq_reply", reply_address);
   }
@@ -690,8 +687,7 @@ bool ZMQComm::create_header_recv(Header& header, char*& data,
       const char* address_c = header.GetMetaString("zmq_reply");
       adr.assign(address_c);
     }
-    if (reply.set(adr) < 0)
-      return false;
+    reply.set(adr);
   }
   return true;
 }
@@ -704,15 +700,12 @@ Comm_t* ZMQComm::create_worker_send(Header& head) {
   //   return global_comm->create_worker_send(head);
   assert(!global_comm);
   ZMQComm* out = dynamic_cast<ZMQComm*>(Comm_t::create_worker_send(head));
-  if (!out)
-    return out;
-  std::string reply_address;
-  if (out->reply.create(reply_address) < 0) {
-    ygglog_error << "ZMQComm(" << this->name << ")::create_worker_send: Error during creation of worker reply socket" << std::endl;
-    return NULL;
+  if (out) {
+    std::string reply_address;
+    out->reply.create(reply_address);
+    ygglog_debug << "ZMQComm(" << this->name << ")::create_worker_send: zmq_reply_worker = " << reply_address << std::endl;
+    head.SetMetaString("zmq_reply_worker", reply_address);
   }
-  ygglog_debug << "ZMQComm(" << this->name << ")::create_worker_send: zmq_reply_worker = " << reply_address << std::endl;
-  head.SetMetaString("zmq_reply_worker", reply_address);
   return out;
 }
 
@@ -722,16 +715,9 @@ Comm_t* ZMQComm::create_worker_recv(Header& head) {
   //   return global_comm->create_worker_recv(head);
   assert(!global_comm);
   ZMQComm* out = dynamic_cast<ZMQComm*>(Comm_t::create_worker_recv(head));
-  if (!out)
-    return out;
-  const char* zmq_reply_worker = head.GetMetaString("zmq_reply_worker");
-  if (zmq_reply_worker == NULL) {
-    ygglog_error << "ZMQComm(" << name << ")::create_worker_recv: Error getting address" << std::endl;
-    return NULL;
-  }
-  if (out->reply.set(std::string(zmq_reply_worker)) < 0) {
-    ygglog_error << "ZMQComm(" << name << ")::create_worker_recv: Failed to set worker reply address." << std::endl;
-    return NULL;
+  if (out) {
+    const char* zmq_reply_worker = head.GetMetaString("zmq_reply_worker");
+    out->reply.set(std::string(zmq_reply_worker));
   }
   return out;
 }

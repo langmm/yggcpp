@@ -7,6 +7,11 @@
     return err;					\
   }						\
   Metadata* name = ((Metadata*)(in.metadata))
+#define _GET_METADATA_THROW(name, in)				\
+  if (in.metadata == NULL) {					\
+    ygglog_throw_error_c(#name ": Metadata not initialized");	\
+  }								\
+  Metadata* name = ((Metadata*)(in.metadata))
 
 // C++ functions
 rapidjson::Document::AllocatorType& generic_allocator(generic_t& x) {
@@ -308,11 +313,8 @@ extern "C" {
 	ygglog_throw_error_c("generic_ref_get_1darray: Object is not an array of subtype \'%s\' with precision %ld", subtype, precision);
       }
       void* new_data = generic_ref_get_item(x, "1darray");
-      if (new_data == NULL)
-	return 0;
+      assert(new_data);
       size_t nbytes = generic_ref_get_item_nbytes(x, "1darray");
-      if (nbytes == 0)
-	return 0;
       new_length = (size_t)(x_obj->GetNElements());
       data[0] = generic_ref_allocator(x).Realloc(data[0], 0, nbytes);
       if (data[0] == NULL) {
@@ -340,11 +342,8 @@ extern "C" {
 	ygglog_throw_error_c("generic_ref_get_ndarray: Object is not an array of subtype \'%s\' with precision %ld", subtype, precision);
       }
       void* new_data = generic_ref_get_item(x, "ndarray");
-      if (new_data == NULL)
-	return 0;
+      assert(new_data);
       size_t nbytes = generic_ref_get_item_nbytes(x, "ndarray");
-      if (nbytes == 0)
-	return 0;
       data[0] = generic_ref_allocator(x).Realloc(data[0], 0, nbytes);
       if (data[0] == NULL) {
 	ygglog_throw_error_c("generic_ref_get_ndarray: Failed to reallocate array.");
@@ -1216,7 +1215,7 @@ extern "C" {
   
   int is_dtype_format_array(dtype_t type_struct) {
     _BEGIN_CPP {
-      _GET_METADATA(metadata, type_struct, -1);
+      _GET_METADATA_THROW(metadata, type_struct);
       return static_cast<int>(metadata->isFormatArray());
     } _END_CPP(is_dtype_format_array, -1);
     return 1;
@@ -1229,7 +1228,7 @@ extern "C" {
 
   const char* dtype_subtype(const dtype_t type_struct) {
     _BEGIN_CPP {
-      _GET_METADATA(metadata, type_struct, "");
+      _GET_METADATA_THROW(metadata, type_struct);
       return metadata->subtypeName();
     } _END_CPP(dtype_subtype, "");
   }
@@ -1243,7 +1242,7 @@ extern "C" {
 
   int set_dtype_name(dtype_t dtype, const char* name) {
     _BEGIN_CPP {
-      _GET_METADATA(metadata, dtype, -1);
+      _GET_METADATA_THROW(metadata, dtype);
       metadata->SetSchemaString("type", name);
       return 0;
     } _END_CPP(set_dtype_name, -1);
@@ -1269,7 +1268,7 @@ extern "C" {
       if (!dtype.metadata)
 	dtype.metadata = (void*)(new Metadata());
       if (use_generic) {
-	_GET_METADATA(metadata, dtype, dtype);
+	_GET_METADATA_THROW(metadata, dtype);
 	metadata->setGeneric();
       }
       return dtype;
@@ -1315,7 +1314,7 @@ extern "C" {
   dtype_t create_dtype_default(const char* type, const bool use_generic) {
     dtype_t out = create_dtype(NULL, false);
     _BEGIN_CPP {
-      _GET_METADATA(metadata, out, out);
+      _GET_METADATA_THROW(metadata, out);
       metadata->fromType(type, use_generic);
       return out;
     } _END_CPP_CLEANUP(create_dtype_default, out, destroy_dtype(&out));
@@ -1325,7 +1324,7 @@ extern "C" {
 			      const char* units, const bool use_generic) {
     dtype_t out = create_dtype(NULL, false);
     _BEGIN_CPP {
-      _GET_METADATA(metadata, out, out);
+      _GET_METADATA_THROW(metadata, out);
       metadata->fromScalar(subtype, precision, units, use_generic);
       return out;
     } _END_CPP_CLEANUP(create_dtype_scalar, out, destroy_dtype(&out));
@@ -1348,7 +1347,7 @@ extern "C" {
 			       const bool use_generic) {
     dtype_t out = create_dtype(NULL, false);
     _BEGIN_CPP {
-      _GET_METADATA(metadata, out, out);
+      _GET_METADATA_THROW(metadata, out);
       metadata->fromNDArray(subtype, precision, 1, &length,
 			    units, use_generic);
       return out;
@@ -1362,7 +1361,7 @@ extern "C" {
 			       const bool use_generic) {
     dtype_t out = create_dtype(NULL, false);
     _BEGIN_CPP {
-      _GET_METADATA(metadata, out, out);
+      _GET_METADATA_THROW(metadata, out);
       metadata->fromNDArray(subtype, precision, ndim, shape,
 			    units, use_generic);
       return out;
@@ -1479,8 +1478,8 @@ extern "C" {
   dtype_t copy_dtype(const dtype_t dtype) {
     dtype_t out = create_dtype(NULL, false);
     _BEGIN_CPP {
-      _GET_METADATA(metadata_src, dtype, out);
-      _GET_METADATA(metadata_dst, out, out);
+      _GET_METADATA_THROW(metadata_src, dtype);
+      _GET_METADATA_THROW(metadata_dst, out);
       metadata_dst->fromMetadata(*metadata_src);
       return out;
     } _END_CPP_CLEANUP(copy_dtype, out, destroy_dtype(&out));
@@ -1543,16 +1542,8 @@ extern "C" {
       printf("%sNULL\n", indent);
     } else {
       rapidjson::ObjWavefront* obj = (rapidjson::ObjWavefront*)(p.obj);
-      std::string s = obj->as_string();
       std::string s_indent(indent);
-      size_t orig_size = s.size(), j = 0;
-      for (size_t i = 0; i < orig_size; i++) {
-	if (s[j] == '\n') {
-	  s.insert(j + 1, s_indent);
-	  j += s_indent.size();
-	}
-	j++;
-      }
+      std::string s = obj->as_string(s_indent);
       printf("%s%s\n", indent, s.c_str());
     }
   }
@@ -1613,16 +1604,8 @@ extern "C" {
       printf("%sNULL\n", indent);
     } else {
       rapidjson::Ply* obj = (rapidjson::Ply*)(p.obj);
-      std::string s = obj->as_string();
       std::string s_indent(indent);
-      size_t orig_size = s.size(), j = 0;
-      for (size_t i = 0; i < orig_size; i++) {
-	if (s[j] == '\n') {
-	  s.insert(j + 1, s_indent);
-	  j += s_indent.size();
-	}
-	j++;
-      }
+      std::string s = obj->as_string(s_indent);
       printf("%s%s\n", indent, s.c_str());
     }
   }

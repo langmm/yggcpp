@@ -47,6 +47,7 @@ TEST(generic_t, Container) {
     char** keys = NULL;							\
     EXPECT_EQ(generic_map_get_keys(x_obj, &keys), idx + 1);		\
     EXPECT_EQ(strcmp(keys[idx], #idx), 0);				\
+    EXPECT_FALSE(compare_generic(v, v));				\
   }
   ADD_ITEM(0, "1")
   ADD_ITEM(0, "2")
@@ -275,6 +276,13 @@ TEST(generic_t, 1darray) {
   EXPECT_TRUE(data);
   EXPECT_EQ(generic_set_1darray(x, data, "float", 8, 3, "cm"), 0);
   EXPECT_TRUE(compare_generic(x, v));
+#ifdef ELF_AVAILABLE
+  ELF_BEGIN;
+  ELF_BEGIN_F(realloc);
+  EXPECT_EQ(generic_get_1darray(v, "float", 8, &data), 0);
+  ELF_END_F(realloc);
+  ELF_END;
+#endif // ELF_AVAILABLE
   destroy_generic(&v);
   destroy_generic(&x);
 }
@@ -291,6 +299,13 @@ TEST(generic_t, ndarray) {
   EXPECT_TRUE(shape);
   EXPECT_EQ(generic_set_ndarray(x, data, "float", 8, 2, shape, "cm"), 0);
   EXPECT_TRUE(compare_generic(x, v));
+#ifdef ELF_AVAILABLE
+  ELF_BEGIN;
+  ELF_BEGIN_F(realloc);
+  EXPECT_EQ(generic_get_ndarray(v, "float", 8, &data, &shape), 0);
+  ELF_END_F(realloc);
+  ELF_END;
+#endif // ELF_AVAILABLE
   destroy_generic(&v);
   destroy_generic(&x);
 }
@@ -429,6 +444,7 @@ DO_GEOM(obj)
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
 #define DO_PYTHON(name)							\
   TEST(generic_t, name) {						\
+    init_python_API();							\
     generic_t v = init_generic_generate("{\"type\": \"" #name "\"}");	\
     generic_t x = init_generic_null();					\
     python_t data;							\
@@ -447,7 +463,8 @@ DO_GEOM(obj)
     destroy_generic(&x);						\
   }
 DO_PYTHON(class)
-// TODO: DO_PYTHON(function)
+// TODO: Fix these
+// DO_PYTHON(function)
 // DO_PYTHON(instance)
 #undef DO_PYTHON
 #endif // YGGDRASIL_DISABLE_PYTHON_C_API
