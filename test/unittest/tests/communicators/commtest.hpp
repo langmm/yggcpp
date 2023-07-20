@@ -262,8 +262,9 @@
   cls ## _tester(const std::string name, DIRECTION dir) :		\
   cls(name, dir) {}
 
-#define COMM_SERI_TEST_TYPE(cls, type, value, schema)			\
+#define COMM_SERI_TEST_TYPE(cls, type, value, schema, init)		\
   TEST(cls, type) {							\
+    init;								\
     cls ## _tester sComm(SEND);						\
     sComm.addSchema(schema);						\
     std::string name = "test_name";					\
@@ -277,6 +278,7 @@
     EXPECT_EQ(rComm.recvVar(data_recv), -1);				\
   }									\
   TEST(cls, type ## _AsGeneric) {					\
+    init;								\
     cls ## _tester sComm(SEND);						\
     sComm.addSchema(schema);						\
     std::string name = "test_name";					\
@@ -291,8 +293,9 @@
     rComm.close();							\
     EXPECT_EQ(rComm.recvVar(data_recv), -1);				\
   }
-#define COMM_SERI_TEST_GEOM(cls, type, init_data, schema)		\
+#define COMM_SERI_TEST_GEOM(cls, type, init_data, schema, init)		\
   TEST(cls, type) {							\
+    init;								\
     cls ## _tester sComm(SEND);						\
     sComm.addSchema(schema);						\
     std::string name = "test_name";					\
@@ -309,18 +312,21 @@
     rComm.close();							\
     EXPECT_EQ(rComm.recvVar(data_recv), -1);				\
   }
-#define COMM_SERI_TEST(cls)						\
-  COMM_SERI_TEST_TYPE(cls, double, 1.5, "{\"type\": \"number\"}")	\
-  COMM_SERI_TEST_TYPE(cls, int, 32, "{\"type\": \"integer\"}")		\
+
+#define COMM_SERI_TEST_BASE(cls, init)					\
+  COMM_SERI_TEST_TYPE(cls, double, 1.5, "{\"type\": \"number\"}", init)	\
+  COMM_SERI_TEST_TYPE(cls, int, 32, "{\"type\": \"integer\"}", init)	\
   COMM_SERI_TEST_TYPE(cls, uint8_t, 3u,					\
 		      "{\"type\": \"scalar\","				\
 		      " \"subtype\": \"uint\","				\
-		      " \"precision\": 1}")				\
-  COMM_SERI_TEST_TYPE(cls, bool, true, "{\"type\": \"boolean\"}")	\
-  COMM_SERI_TEST_GEOM(cls, Ply, INIT_DATA_PLY, "{\"type\": \"ply\"}")	\
+		      " \"precision\": 1}", init)			\
+  COMM_SERI_TEST_TYPE(cls, bool, true, "{\"type\": \"boolean\"}", init)	\
+  COMM_SERI_TEST_GEOM(cls, Ply, INIT_DATA_PLY,				\
+		      "{\"type\": \"ply\"}", init)			\
   COMM_SERI_TEST_GEOM(cls, ObjWavefront, INIT_DATA_OBJ,			\
-		      "{\"type\": \"obj\"}")				\
+		      "{\"type\": \"obj\"}", init)			\
   TEST(cls, generic) {							\
+    init;								\
     cls ## _tester sComm(SEND);						\
     sComm.addSchema("{\"type\": \"any\"}");				\
     std::string name = "test_name";					\
@@ -334,6 +340,26 @@
     rComm.close();							\
     EXPECT_EQ(rComm.recvVarAsGeneric(data_recv), -1);			\
   }									\
+  TEST(cls, incompatible) {						\
+    init;								\
+    cls ## _tester sComm(SEND);						\
+    std::string name = "test_name";					\
+    std::string key_env = name + "_IN";					\
+    std::string val_env = sComm.getAddress();				\
+    setenv(key_env.c_str(), val_env.c_str(), 1);			\
+    cls ## _tester rComm(name, RECV);					\
+    unsetenv(key_env.c_str());						\
+    sComm.addSchema("{\"type\": \"boolean\"}");				\
+    rComm.addSchema("{\"type\": \"integer\"}");				\
+    /* Invalid send */							\
+    EXPECT_EQ(sComm.sendVar(1), -1);					\
+    /* Invalid recv */							\
+    bool dst = false;							\
+    EXPECT_GT(sComm.sendVar(true), 0);					\
+    EXPECT_EQ(rComm.recvVar(dst), -1);					\
+  }
+#define COMM_SERI_TEST(cls)						\
+  COMM_SERI_TEST_BASE(cls,)						\
   TEST(cls, large) {							\
     cls ## _tester sComm(SEND);						\
     std::string name = "test_name";					\
@@ -369,23 +395,6 @@
       metadata.SetMetaString("invalid", bigMsg);			\
       EXPECT_THROW(sComm.send(data_send), std::exception);		\
     }									\
-  }									\
-  TEST(cls, incompatible) {						\
-    cls ## _tester sComm(SEND);						\
-    std::string name = "test_name";					\
-    std::string key_env = name + "_IN";					\
-    std::string val_env = sComm.getAddress();				\
-    setenv(key_env.c_str(), val_env.c_str(), 1);			\
-    cls ## _tester rComm(name, RECV);					\
-    unsetenv(key_env.c_str());						\
-    sComm.addSchema("{\"type\": \"boolean\"}");				\
-    rComm.addSchema("{\"type\": \"integer\"}");				\
-    /* Invalid send */							\
-    EXPECT_EQ(sComm.sendVar(1), -1);					\
-    /* Invalid recv */							\
-    bool dst = false;							\
-    EXPECT_GT(sComm.sendVar(true), 0);					\
-    EXPECT_EQ(rComm.recvVar(dst), -1);					\
   }									\
   TEST(cls, global) {							\
     std::string name = "test_name";					\

@@ -75,8 +75,18 @@ ADD_CONSTRUCTORS_DEF(MPIComm)
 
 void MPIComm::init() {
     updateMaxMsgSize(2147483647);
-    if (!(this->address && this->address->valid()))
+    assert(!handle);
+    if (!(this->address && this->address->valid())) {
+#ifdef YGG_TEST
+        if (!address) {
+	  address = new utils::Address(std::to_string(0));
+	} else {
+	  address->address(std::to_string(0));
+	}
+#else // YGG_TEST
         throw std::runtime_error("No address specified for MPIComm constructor");
+#endif // YGG_TEST
+    }
     if (this->name.empty()) {
         this->name = "tempinitMPI." + address->address();
     }
