@@ -35,6 +35,11 @@ protected:
       return (dynamic_cast<RPCComm*>(global_comm))->getRequests();
     return requests;
   }
+  // std::string getResponseAddress() {
+  //   if (global_comm)
+  //     return (dynamic_cast<RPCComm*>(global_comm))->getResponseAddress();
+  //   return requests.lastComm()->getAddress();
+  // }
 #endif
   
   Metadata& get_metadata(const DIRECTION dir=NONE) override;

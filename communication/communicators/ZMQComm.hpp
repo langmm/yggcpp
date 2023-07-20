@@ -115,6 +115,7 @@ public:
   int last_idx;
 #ifdef YGG_TEST
   static bool return_val;
+  static void set_return_val(bool new_val);
 #endif // YGG_TEST
 };
 

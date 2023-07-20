@@ -179,6 +179,7 @@ Comm_t::~Comm_t() {
 bool Comm_t::get_global_scope_comm() {
   COMM_TYPE global_type = getType();
   std::string global_name = name;
+  DIRECTION global_direction = direction;
   bool is_server = false;
   if (global_type != SERVER_COMM && global_type != CLIENT_COMM &&
       !name.empty()) {
@@ -189,9 +190,18 @@ bool Comm_t::get_global_scope_comm() {
       server_var = std::getenv("YGG_SERVER_OUTPUT");
     }
     if (server_var && name == std::string(server_var)) {
+      ygglog_debug << "CommBase: " << name <<
+	" is piecemeal server (server_var = " << server_var <<
+	")" << std::endl;
       is_server = true;
       global_type = SERVER_COMM;
-      const char* model_name = std::getenv("YGG_MODEL_NAME");
+      char* model_name = std::getenv("YGG_MODEL_NAME");
+      if (global_direction == SEND) {
+	global_direction = RECV;
+	if (!model_name)
+	  model_name = std::getenv("YGG_SERVER_INPUT");
+      }
+      assert(model_name);
       if (model_name)
 	global_name.assign(model_name);
       global_scope_comm = 1;
@@ -202,9 +212,11 @@ bool Comm_t::get_global_scope_comm() {
 		COMM_FLAG_CLIENT_RESPONSE |
 		COMM_FLAG_SERVER_RESPONSE)))
     return false;
-  ygglog_debug << "CommBase: " << global_name << " (dir=" << direction
-	       << ") is a global communicator" << std::endl;
-  global_comm = Comm_t::find_registered_comm(global_name, direction,
+  ygglog_debug << "CommBase: " << global_name << " (dir="
+	       << global_direction << ") is a global communicator"
+	       << std::endl;
+  global_comm = Comm_t::find_registered_comm(global_name,
+					     global_direction,
 					     global_type);
   if (!global_comm) {
     ygglog_debug << "CommBase: Creating global comm \"" << global_name
@@ -212,7 +224,7 @@ bool Comm_t::get_global_scope_comm() {
     utils::Address* global_address = new utils::Address();
     if (address)
       global_address->address(address->address());
-    global_comm = new_Comm_t(direction, global_type, global_name,
+    global_comm = new_Comm_t(global_direction, global_type, global_name,
 			     global_address, flags | COMM_FLAG_GLOBAL);
     ygglog_debug << "CommBase: Created global comm \"" << global_name
 		 << "\"" << std::endl;

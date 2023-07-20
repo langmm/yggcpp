@@ -299,6 +299,61 @@ INTERFACE_TEST_NOARGS(JSONObject, YggJSONObject,
 		      COMP_DATA_SINGLE,
 		      sendVar, (data_send), recvVar, (data_recv))
 
+TEST(YggInterface, GlobalServerPiecemeal) {
+  {
+    std::string name = "test_name";
+    ClientComm sComm(name, nullptr);
+    sComm.set_timeout_recv(1000);
+    std::string name_req = name + "_input";
+    std::string name_res = name + "_output";
+    std::string ikey_env = name_req + "_IN";
+    std::string ival_env = sComm.getAddress();
+    setenv(ikey_env.c_str(), ival_env.c_str(), 1);
+    setenv("YGG_SERVER_INPUT", name_req.c_str(), 1);
+    setenv("YGG_SERVER_OUTPUT", name_res.c_str(), 1);
+    {
+      YggInput rComm_req(name_req);
+      YggOutput rComm_res(name_res);
+      ServerComm& rComm = *(dynamic_cast<ServerComm*>(rComm_req.getGlobalComm()));
+      rComm_req.set_timeout_recv(1000);
+      DO_RPC_SIGNON;
+      // Request
+      int req_send = 1, req_recv = 0;
+      EXPECT_GE(sComm.sendVar(req_send), 0);
+      EXPECT_GE(rComm_req.recvVar(req_recv), 0);
+      EXPECT_EQ(req_recv, req_send);
+      EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));
+      // Response
+      int res_send = 2, res_recv = 0;
+      EXPECT_GE(rComm_res.sendVar(res_send), 0);
+      EXPECT_GE(sComm.recvVar(res_recv), 0);
+      EXPECT_EQ(res_recv, res_send);
+      EXPECT_TRUE(rComm.afterSendRecv(&rComm, &sComm));
+    }
+    {
+      YggInput rComm_req(name_req);
+      YggOutput rComm_res(name_res);
+      ServerComm& rComm = *(dynamic_cast<ServerComm*>(rComm_req.getGlobalComm()));
+      // Request
+      int req_send = 1, req_recv = 0;
+      EXPECT_GE(sComm.sendVar(req_send), 0);
+      EXPECT_GE(rComm_req.recvVar(req_recv), 0);
+      EXPECT_EQ(req_recv, req_send);
+      EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));
+      // Response
+      int res_send = 2, res_recv = 0;
+      EXPECT_GE(rComm_res.sendVar(res_send), 0);
+      EXPECT_GE(sComm.recvVar(res_recv), 0);
+      EXPECT_EQ(res_recv, res_send);
+      EXPECT_TRUE(rComm.afterSendRecv(&rComm, &sComm));
+    }
+    unsetenv(ikey_env.c_str());
+    unsetenv("YGG_SERVER_INPUT");
+    unsetenv("YGG_SERVER_OUTPUT");
+  }
+  Comm_t::_ygg_cleanup();
+}
+
 #undef INTERFACE_TEST_SCHEMA
 #undef INTERFACE_TEST_NOARGS
 #undef INTERFACE_TEST
