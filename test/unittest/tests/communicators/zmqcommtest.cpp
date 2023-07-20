@@ -128,6 +128,25 @@ TEST(ZMQComm, constructor) {
 #endif // ELF_AVAILABLE
 }
 
+TEST(ZMQComm, exchange) {
+  std::string name = "TestZMQ";
+  ZMQComm sComm(name, nullptr, SEND);
+  ZMQComm rComm(name, new utils::Address(sComm.getAddress()), RECV);
+  std::string msg_send = "This is a test message";
+  std::string msg_recv;
+  EXPECT_GT(sComm.sendVar(msg_send), 0);
+  EXPECT_GT(rComm.recvVar(msg_recv), 0);
+  EXPECT_EQ(msg_send, msg_recv);
+  // Error in reply
+  EXPECT_GT(sComm.sendVar(msg_send), 0);
+  ZMQReply::return_val = false;
+  EXPECT_EQ(rComm.recvVar(msg_recv), -1);
+  EXPECT_EQ(sComm.sendVar(msg_send), -1);
+  ZMQReply::return_val = true;
+  EXPECT_GT(rComm.recvVar(msg_recv), 0);
+  EXPECT_EQ(msg_send, msg_recv);
+}
+
 TEST(ZMQComm, send) {
 #ifdef ELF_AVAILABLE
     std::string name = "TestZMQSend";

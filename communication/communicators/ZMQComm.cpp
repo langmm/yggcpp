@@ -314,6 +314,10 @@ void ZMQSocket::resetPort() {
 // ZMQReply //
 //////////////
 
+#ifdef YGG_TEST
+bool ZMQReply::return_val = true;
+#endif // YGG_TEST
+
 ZMQReply::ZMQReply(DIRECTION dir) :
   sockets(), n_msg(0), n_rep(0), direction(dir), last_idx(-1) {}
 
@@ -367,7 +371,7 @@ bool ZMQReply::recv(std::string msg_send) {
     msg_send.assign(_reply_msg);
 #ifdef YGG_TEST
   // Exit early to prevent deadlock when running from the same thread
-  return true;
+  return return_val;
 #else // YGG_TEST
   if (!recv_stage1(msg_send))
     return false;
@@ -418,10 +422,14 @@ bool ZMQReply::recv_stage2(std::string msg_send) {
 }
 
 bool ZMQReply::send() {
+#ifdef YGG_TEST
+  return return_val;
+#else // YGG_TEST
   std::string msg_data;
   if (!send_stage1(msg_data))
     return false;
   return send_stage2(msg_data);
+#endif // YGG_TEST
 }
 bool ZMQReply::send_stage1(std::string& msg_data) {
   if (sockets.size() == 0) {
@@ -603,7 +611,8 @@ int ZMQComm::send_single(const char* data, const size_t &len, const Header& head
   }
   // Reply
   if (!do_reply_send(header)) {
-      ygglog_error << "ZMQComm(" << name << ")::send_single: Error in do_reply_send" << std::endl;
+    ygglog_error << "ZMQComm(" << name << ")::send_single: Error in do_reply_send" << std::endl;
+    return -1;
   }
   ygglog_debug << "ZMQComm(" << name << ")::send_single: returning " << ret << std::endl;
   return ret;
@@ -611,12 +620,7 @@ int ZMQComm::send_single(const char* data, const size_t &len, const Header& head
 bool ZMQComm::do_reply_send(const Header& header) {
   if (header.flags & (HEAD_FLAG_CLIENT_SIGNON | HEAD_FLAG_SERVER_SIGNON))
     return true;
-#ifdef YGG_TEST
-  // Exit early to prevent deadlock when running from the same thread
-  return true;
-#else //YGG_TEST
   return reply.send();
-#endif // YGG_TEST
 }
 
 /*!

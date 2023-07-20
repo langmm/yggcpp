@@ -113,6 +113,9 @@ public:
   int n_rep;
   DIRECTION direction;
   int last_idx;
+#ifdef YGG_TEST
+  static bool return_val;
+#endif // YGG_TEST
 };
 
 class ZMQComm : public CommBase<ZMQSocket> {
