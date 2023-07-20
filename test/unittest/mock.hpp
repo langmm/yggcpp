@@ -106,7 +106,8 @@ extern std::string RETMSG;
   ELF_BEGIN_F(zmq_sendmsg)
 #define ELF_RESTORE_SEND			\
   ELF_END_F(zmq_sendmsg)
-#else if defined(IPCINSTALLED)
+#else
+#ifdef IPCINSTALLED
 #define ELF_REPLACE_RECV			\
   RETVAL = -1;					\
   RETVAL_INC_POLL = 0;				\
@@ -121,6 +122,7 @@ extern std::string RETMSG;
   ELF_BEGIN_F(msgsnd)
 #define ELF_RESTORE_SEND			\
   ELF_END_F(msgsnd)
+#endif
 #endif
 
 char *alt_getenv(const char *name);
