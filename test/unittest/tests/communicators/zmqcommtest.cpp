@@ -182,6 +182,15 @@ TEST(ZMQComm, recv) {
     ELF_BEGIN_F(zmq_poll);
 #endif // ZMQ_HAVE_POLLER
     ELF_BEGIN_F(zmq_recvmsg);
+    // Fail on zmq_getsockopt to check if there is more to the message
+    ELF_BEGIN_F(zmq_getsockopt);
+    RETVAL = 0;
+    RETVAL_INC_POLL = 0;
+    RETVAL_INC_RECV = -1;
+    RETMSG = "";
+    EXPECT_GE(zmq_recv.recv(data, len, true), -1);
+    ELF_END_F(zmq_getsockopt);
+    // Sucessful receive
     RETVAL = 0;
     RETVAL_INC_POLL = 0;
     RETVAL_INC_RECV = 0;
@@ -191,11 +200,20 @@ TEST(ZMQComm, recv) {
     EXPECT_EQ(strcmp(data, "Hello world"), 0);
     // Fail receive on poll
     RETVAL = -1;
+    RETVAL_INC_RECV = 0;
     EXPECT_EQ(zmq_recv.recv(data, len, true), -1);
     // Fail receive on receiving message
     RETVAL = 0;
     RETVAL_INC_POLL = -1;
     EXPECT_EQ(zmq_recv.recv(data, len, true), -1);
+    // Fail receive on realloc
+    RETVAL = 0;
+    RETVAL_INC_POLL = 0;
+    RETVAL_INC_RECV = 0;
+    ELF_BEGIN_F(realloc);
+    res = zmq_recv.recv(data, len, true);
+    EXPECT_EQ(res, -1);
+    ELF_END_F(realloc);
     free(data);
 #ifdef ZMQ_HAVE_POLLER
     ELF_END_F(zmq_poller_wait_all);
