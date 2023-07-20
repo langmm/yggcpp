@@ -24,6 +24,16 @@ public:
     void setHandle(mpi_registry_t* h) { handle = h;}
 };
 
+#define DO_MPI_MOCK_OUT(method)				\
+  int out = MPISTATUS;					\
+  std::cerr << #method << ": COUNT = " << COUNT <<	\
+    ", MPISTATUS = " << MPISTATUS << std::endl;		\
+  if (COUNT_ALT >= 0 && COUNT >= COUNT_ALT)		\
+    MPISTATUS = MPISTATUS_ALT;				\
+  COUNT++;						\
+  CheckReturn(out, #method);				\
+  return out
+
 class mpi_registry_mock : public communication::communicator::mpi_registry_t {
 public:
     mpi_registry_mock(MPI_Comm comm) : communication::communicator::mpi_registry_t(comm) {
@@ -31,6 +41,9 @@ public:
         MPISTATUS = 0;
         MPICANCEL = false;
         MPIPROC = 0;
+	COUNT = 0;
+	COUNT_ALT = -1;
+	MPISTATUS_ALT = 0;
     }
     int Probe(int, MPI_Status *status) const override {
         MPI_Status_set_cancelled(status, MPICANCEL);
@@ -38,11 +51,11 @@ public:
 	status->MPI_SOURCE = 0;
         if (MPIPROC > 0)
 	    status->MPI_SOURCE = MPIPROC;
-	return MPISTATUS;
+	DO_MPI_MOCK_OUT(Probe);
     }
 
     int Send(const void*, int, MPI_Datatype, int) const override {
-        return MPISTATUS;
+        DO_MPI_MOCK_OUT(Send);
     }
 
     int Recv(void* buf, int, MPI_Datatype dt, int, MPI_Status* status) const override {
@@ -55,16 +68,22 @@ public:
         } else {
 	    memcpy(buf, cmsg, sizeof(char) * static_cast<size_t>(sz));
         }
-	return MPISTATUS;
+	DO_MPI_MOCK_OUT(Recv);
     }
     static int MPISTATUS;
     static bool MPICANCEL;
     static int MPIPROC;
+    static int COUNT;
+    static int COUNT_ALT;
+    static int MPISTATUS_ALT;
 };
 
 int mpi_registry_mock::MPISTATUS = 0;
 bool mpi_registry_mock::MPICANCEL = false;
 int mpi_registry_mock::MPIPROC = 0;
+int mpi_registry_mock::COUNT = 0;
+int mpi_registry_mock::COUNT_ALT = 0;
+int mpi_registry_mock::MPISTATUS_ALT = 0;
 }
 }
 TEST(MPIComm, constructor) {
@@ -149,6 +168,13 @@ TEST(MPIComm, send) {
     EXPECT_EQ(mpic.send("hello", 6), -1);
     mpic.setHandle(&mock_handle);
     EXPECT_GT(mpic.send("Hello", 6), 0);
+    communication::testing::mpi_registry_mock::MPISTATUS = 2;
+    EXPECT_EQ(mpic.send("Hello", 6), -1);
+    communication::testing::mpi_registry_mock::MPISTATUS = 0;
+    communication::testing::mpi_registry_mock::MPISTATUS_ALT = 2;
+    communication::testing::mpi_registry_mock::COUNT = 0;
+    communication::testing::mpi_registry_mock::COUNT_ALT = 0;
+    EXPECT_EQ(mpic.send("Hello", 6), -1);
     mpic.setHandle(tempmpi);
 }
 
@@ -170,6 +196,25 @@ TEST(MPIComm, recv) {
     EXPECT_EQ(mpic.recv(data, len, true), -1);
     communication::testing::mpi_registry_mock::MPISTATUS = 0;
     EXPECT_EQ(mpic.recv(data, len, true), msg.size());
+    communication::testing::mpi_registry_mock::MPISTATUS = 0;
+    communication::testing::mpi_registry_mock::MPISTATUS_ALT = MPI_ERR_COMM;
+    communication::testing::mpi_registry_mock::COUNT = 0;
+    communication::testing::mpi_registry_mock::COUNT_ALT = 1;
+    EXPECT_EQ(mpic.recv(data, len, true), -1);
+    communication::testing::mpi_registry_mock::MPISTATUS = 0;
+    communication::testing::mpi_registry_mock::MPISTATUS_ALT = MPI_ERR_TAG;
+    communication::testing::mpi_registry_mock::COUNT = 0;
+    communication::testing::mpi_registry_mock::COUNT_ALT = 2;
+    EXPECT_EQ(mpic.recv(data, len, true), -1);
+    communication::testing::mpi_registry_mock::MPISTATUS = 0;
+    communication::testing::mpi_registry_mock::MPISTATUS_ALT = MPI_ERR_RANK;
+    communication::testing::mpi_registry_mock::COUNT = 0;
+    communication::testing::mpi_registry_mock::COUNT_ALT = 3;
+    EXPECT_EQ(mpic.recv(data, len, true), -1);
+    communication::testing::mpi_registry_mock::MPISTATUS = MPI_ERR_TYPE;
+    communication::testing::mpi_registry_mock::COUNT = 0;
+    communication::testing::mpi_registry_mock::COUNT_ALT = -1;
+    EXPECT_EQ(mpic.recv(data, len, true), -1);
     mpic.setHandle(tempmpi);
     free(data);
 }
@@ -185,6 +230,8 @@ TEST(MPIComm, regclone) {
     EXPECT_NE(mpir.procs, mpir2.procs);
     MPI_Finalize();
 }
+
+// TODO: Add tests for global and workers
 
 #else // MPIINSTALLED
 
