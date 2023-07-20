@@ -275,6 +275,39 @@
     DO_SEND_RECV(sendVar, recvVar, type, value);			\
     rComm.close();							\
     EXPECT_EQ(rComm.recvVar(data_recv), -1);				\
+  }									\
+  TEST(cls, type ## _AsGeneric) {					\
+    cls ## _tester sComm(SEND);						\
+    sComm.addSchema(schema);						\
+    std::string name = "test_name";					\
+    std::string key_env = name + "_IN";					\
+    std::string val_env = sComm.getAddress();				\
+    setenv(key_env.c_str(), val_env.c_str(), 1);			\
+    cls ## _tester rComm(name, RECV);					\
+    unsetenv(key_env.c_str());						\
+    sComm.getMetadata().setGeneric();					\
+    rComm.getMetadata().setGeneric();					\
+    DO_SEND_RECV(sendVar, recvVar, type, value);			\
+    rComm.close();							\
+    EXPECT_EQ(rComm.recvVar(data_recv), -1);				\
+  }
+#define COMM_SERI_TEST_GEOM(cls, type, init_data, schema)		\
+  TEST(cls, type) {							\
+    cls ## _tester sComm(SEND);						\
+    sComm.addSchema(schema);						\
+    std::string name = "test_name";					\
+    std::string key_env = name + "_IN";					\
+    std::string val_env = sComm.getAddress();				\
+    setenv(key_env.c_str(), val_env.c_str(), 1);			\
+    cls ## _tester rComm(name, RECV);					\
+    unsetenv(key_env.c_str());						\
+    sComm.getMetadata().setGeneric();					\
+    rComm.getMetadata().setGeneric();					\
+    DO_SEND_RECV_EXCHANGE(init_data, COMP_DATA_SINGLE,			\
+			  sendVar, (data_send),				\
+			  recvVar, (data_recv));			\
+    rComm.close();							\
+    EXPECT_EQ(rComm.recvVar(data_recv), -1);				\
   }
 #define COMM_SERI_TEST(cls)						\
   COMM_SERI_TEST_TYPE(cls, double, 1.5, "{\"type\": \"number\"}")	\
@@ -284,6 +317,9 @@
 		      " \"subtype\": \"uint\","				\
 		      " \"precision\": 1}")				\
   COMM_SERI_TEST_TYPE(cls, bool, true, "{\"type\": \"boolean\"}")	\
+  COMM_SERI_TEST_GEOM(cls, Ply, INIT_DATA_PLY, "{\"type\": \"ply\"}")	\
+  COMM_SERI_TEST_GEOM(cls, ObjWavefront, INIT_DATA_OBJ,			\
+		      "{\"type\": \"obj\"}")				\
   TEST(cls, generic) {							\
     cls ## _tester sComm(SEND);						\
     sComm.addSchema("{\"type\": \"any\"}");				\
