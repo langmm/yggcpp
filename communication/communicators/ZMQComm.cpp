@@ -316,6 +316,9 @@ void ZMQSocket::resetPort() {
 
 #ifdef YGG_TEST
 bool ZMQReply::return_val = true;
+void ZMQReply::set_return_val(bool new_val) {
+  ZMQReply::return_val = new_val;
+}
 #endif // YGG_TEST
 
 ZMQReply::ZMQReply(DIRECTION dir) :

@@ -477,6 +477,7 @@ public:
     int& getFlags() { return flags; }
     virtual bool afterSendRecv(Comm_t*, Comm_t*) { return true; }
     size_t getMaxMsgSize() { return maxMsgSize; }
+    Comm_t* getGlobalComm() { return global_comm; }
 #endif
     void addSchema(const Metadata& s);
     void addSchema(const rapidjson::Value& s, bool isMetadata = false);

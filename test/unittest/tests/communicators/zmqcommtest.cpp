@@ -139,10 +139,10 @@ TEST(ZMQComm, exchange) {
   EXPECT_EQ(msg_send, msg_recv);
   // Error in reply
   EXPECT_GT(sComm.sendVar(msg_send), 0);
-  ZMQReply::return_val = false;
+  ZMQReply::set_return_val(false);
   EXPECT_EQ(rComm.recvVar(msg_recv), -1);
   EXPECT_EQ(sComm.sendVar(msg_send), -1);
-  ZMQReply::return_val = true;
+  ZMQReply::set_return_val(true);
   EXPECT_GT(rComm.recvVar(msg_recv), 0);
   EXPECT_EQ(msg_send, msg_recv);
 }

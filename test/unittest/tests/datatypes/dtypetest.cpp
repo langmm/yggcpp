@@ -1,5 +1,7 @@
 #include "../../unittest.hpp"
 #include "datatypes/dtype_t.h"
+#include "../../elf_hook.hpp"
+#include "../../mock.hpp"
 
 
 TEST(generic_t, Container) {

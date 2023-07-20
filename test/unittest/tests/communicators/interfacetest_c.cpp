@@ -463,8 +463,6 @@ TEST(YggInterface_C, GlobalServer) {
   Comm_t::_ygg_cleanup();
 }
 
-// TODO: piecemeal server
-
 #undef INTERFACE_TEST_SCHEMA
 #undef INTERFACE_TEST_GEOM
 #undef INTERFACE_TEST_REALLOC
