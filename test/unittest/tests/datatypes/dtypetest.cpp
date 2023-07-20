@@ -281,6 +281,7 @@ TEST(generic_t, 1darray) {
 #ifdef ELF_AVAILABLE
   ELF_BEGIN;
   ELF_BEGIN_F(realloc);
+  data = NULL;
   EXPECT_EQ(generic_get_1darray(v, "float", 8, &data), 0);
   ELF_END_F(realloc);
   ELF_END;
@@ -304,6 +305,8 @@ TEST(generic_t, ndarray) {
 #ifdef ELF_AVAILABLE
   ELF_BEGIN;
   ELF_BEGIN_F(realloc);
+  data = NULL;
+  shape = NULL;
   EXPECT_EQ(generic_get_ndarray(v, "float", 8, &data, &shape), 0);
   ELF_END_F(realloc);
   ELF_END;
