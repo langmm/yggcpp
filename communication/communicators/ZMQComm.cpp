@@ -23,11 +23,11 @@ using namespace communication::utils;
 void* ZMQContext::ygg_s_process_ctx = NULL;
 
 ZMQContext::ZMQContext() : ctx(NULL) { init(); }
-ZMQContext::ZMQContext(const ZMQContext& rhs) : ctx(rhs.ctx) {}
-ZMQContext& ZMQContext::operator=(const ZMQContext& rhs) {
-  ctx = rhs.ctx;
-  return *this;
-}
+// ZMQContext::ZMQContext(const ZMQContext& rhs) : ctx(rhs.ctx) {}
+// ZMQContext& ZMQContext::operator=(const ZMQContext& rhs) {
+//   ctx = rhs.ctx;
+//   return *this;
+// }
 
 #ifdef ZMQINSTALLED
 void ZMQContext::init() {
@@ -121,7 +121,9 @@ void ZMQSocket::init(int type0, utils::Address* address,
   {
 #endif // _OPENMP
     handle = zmq_socket (ctx.ctx, type);
-    if (handle != NULL) {
+    if (handle == NULL) {
+      except_msg = "ZMQSocket::init: Error creating new socket.";
+    } else {
 #define DO_SET(flag, var, def)					\
       if (except_msg.empty() && var != def &&			\
 	  set(flag, var) < 0) {					\
@@ -135,8 +137,6 @@ void ZMQSocket::init(int type0, utils::Address* address,
 #ifdef _OPENMP
   }
 #endif // _OPENMP
-  if (handle == NULL)
-    ygglog_throw_error("ZMQSocket::init: Error creating new socket.");
   if (!except_msg.empty()) {
     destroy();
     throw std::runtime_error(except_msg);
@@ -198,12 +198,9 @@ void ZMQSocket::init(int type0, utils::Address* address,
 	  endpoint.assign(endpoint_c, endpoint_len - 1); // Remove newline char
 	  ygglog_debug << "ZMQSocket::init: Bound to endpoint '" << endpoint << "'" << std::endl;
 	  size_t idx_port = endpoint.find_last_of(':');
-	  if (idx_port == std::string::npos) {
-	    except_msg = "ZMQSocket::init: Error finding port in endpoint: " + endpoint;
-	  } else { // GCOVR_EXCL_LINE
-	    _last_port = stoi(endpoint.substr(idx_port + 1));
-	    ygglog_debug << "ZMQSocket::init: last_port = " << _last_port << std::endl;
-	  }
+	  assert(idx_port != std::string::npos);
+	  _last_port = stoi(endpoint.substr(idx_port + 1));
+	  ygglog_debug << "ZMQSocket::init: last_port = " << _last_port << std::endl;
 	}
       }
 #ifdef _OPENMP

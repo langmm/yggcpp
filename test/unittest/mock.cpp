@@ -234,6 +234,7 @@ template<class OutputIt>
     status->MPI_ERROR = RETVAL;
     status->MPI_SOURCE = 0;
     DO_ELF_RECV(2);
+    return MPI_SUCCESS;
   }
 #endif
   
