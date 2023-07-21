@@ -505,10 +505,17 @@ DO_GEOM(ply)
 DO_GEOM(obj)
 #undef DO_GEOM
 
+TEST(dtype, PythonInit) {
+#ifdef YGGDRASIL_DISABLE_PYTHON_C_API
+  EXPECT_EQ(init_python_API(), 1);
+#else
+  EXPECT_EQ(init_python_API(), 0);
+#endif
+}
+
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
 #define DO_PYTHON(name)							\
   TEST(generic_t, name) {						\
-    init_python_API();							\
     generic_t v = init_generic_generate("{\"type\": \"" #name "\"}");	\
     generic_t x = init_generic_null();					\
     python_t data;							\
