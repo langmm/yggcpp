@@ -4,6 +4,7 @@
 #include "communicators/ServerComm.hpp"
 #include "../../elf_hook.hpp"
 #include "../../mock.hpp"
+#include "commtest.hpp"
 
 #ifdef COMM_BASE
 
@@ -131,9 +132,6 @@ TEST(ClientComm, recv) {
     size_t len = 0;
     ELF_BEGIN;
     ELF_RECV(0);
-    RETVAL = 0;
-    RETVAL_INC_POLL = 0;
-    RETVAL_INC_RECV = 0;
     cc.addRequest(res);
     cc.addResponse(res);
     EXPECT_EQ(cc.recv(data, len, false), -res.size());

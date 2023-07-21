@@ -87,44 +87,94 @@ extern int RETVAL_INC_SEND;
 extern int RETVAL_INC_RECV;
 extern int RETVAL_INC_POLL;
 extern int SENDCOUNT;
-extern int MPISTATUS;
-extern bool MPICANCEL;
+// extern int MPISTATUS;
+// extern bool MPICANCEL;
 extern std::string RETMSG;
 
 #ifdef ZMQINSTALLED
-#define ELF_REPLACE_RECV			\
+#define ELF_REPLACE_RECV_ZMQ			\
   RETVAL = -1;					\
   RETVAL_INC_POLL = 0;				\
   RETVAL_INC_RECV = 0;				\
   ELF_BEGIN_F(zmq_recvmsg)
-#define ELF_RESTORE_RECV			\
+#define ELF_RESTORE_RECV_ZMQ			\
   ELF_END_F(zmq_recvmsg)
-#define ELF_REPLACE_SEND			\
+#define ELF_REPLACE_SEND_ZMQ			\
+  SENDCOUNT = 0;				\
   RETVAL = -1;					\
   RETVAL_INC_POLL = 0;				\
   RETVAL_INC_SEND = 0;				\
   ELF_BEGIN_F(zmq_sendmsg)
-#define ELF_RESTORE_SEND			\
+#define ELF_RESTORE_SEND_ZMQ			\
   ELF_END_F(zmq_sendmsg)
+#ifdef ZMQ_HAVE_POLLER
+#define ELF_REPLACE_NMSG_ZMQ			\
+  ELF_BEGIN_F(zmq_poller_wait_all)
+#define ELF_RESTORE_NMSG_ZMQ			\
+  ELF_END_F(zmq_poller_wait_all)
 #else
+#define ELF_REPLACE_NMSG_ZMQ			\
+  ELF_BEGIN_F(zmq_poll)
+#define ELF_RESTORE_NMSG_ZMQ			\
+  ELF_END_F(zmq_poll)
+#endif
+#endif
+
 #ifdef IPCINSTALLED
-#define ELF_REPLACE_RECV			\
+#define ELF_REPLACE_RECV_IPC			\
   RETVAL = -1;					\
   RETVAL_INC_POLL = 0;				\
   RETVAL_INC_RECV = 0;				\
   ELF_BEGIN_F(msgrcv)
-#define ELF_RESTORE_RECV			\
+#define ELF_RESTORE_RECV_IPC			\
   ELF_END_F(msgrcv)
-#define ELF_REPLACE_SEND			\
+#define ELF_REPLACE_SEND_IPC			\
+  SENDCOUNT = 0;				\
   RETVAL = -1;					\
   RETVAL_INC_POLL = 0;				\
   RETVAL_INC_SEND = 0;				\
   ELF_BEGIN_F(msgsnd)
-#define ELF_RESTORE_SEND			\
+#define ELF_RESTORE_SEND_IPC			\
   ELF_END_F(msgsnd)
+#define ELF_REPLACE_NMSG_IPC			\
+  ELF_BEGIN_F(msgctl)
+#define ELF_RESTORE_NMSG_IPC			\
+  ELF_END_F(msgctl)
 #endif
+  
+#if defined(MPIINSTALLED) && defined(MPI_COMM_WORLD)
+#define ELF_REPLACE_RECV_MPI			\
+  RETVAL = -1;					\
+  RETVAL_INC_POLL = 0;				\
+  RETVAL_INC_RECV = 0;				\
+  ELF_BEGIN_F(MPI_Recv)
+#define ELF_RESTORE_RECV_MPI			\
+  ELF_END_F(MPI_Recv)
+#define ELF_REPLACE_SEND_MPI			\
+  SENDCOUNT = 0;				\
+  RETVAL = -1;					\
+  RETVAL_INC_POLL = 0;				\
+  RETVAL_INC_SEND = 0;				\
+  ELF_BEGIN_F(MPI_Send)
+#define ELF_RESTORE_SEND_MPI			\
+  ELF_END_F(MPI_Send)
+#define ELF_REPLACE_NMSG_MPI			\
+  ELF_BEGIN_F(MPI_Probe)
+#define ELF_RESTORE_NMSG_MPI			\
+  ELF_END_F(MPI_Probe)
 #endif
 
+#define ELF_SET_SUCCESS				\
+  RETVAL = 0;					\
+  RETVAL_INC_POLL = 0;				\
+  RETVAL_INC_SEND = 0;				\
+  RETVAL_INC_RECV = 0
+#define ELF_SET_FAILURE				\
+  RETVAL = -1;					\
+  RETVAL_INC_POLL = 0;				\
+  RETVAL_INC_SEND = 0;				\
+  RETVAL_INC_RECV = 0
+  
 char *alt_getenv(const char *name);
 
 #ifdef IPCINSTALLED
@@ -186,6 +236,14 @@ template<class OutputIt>
   int zmq_setsockopt (void *, int, const void *, size_t);
   int zmq_getsockopt (void *, int, void * option_value, size_t *option_len);
 #endif // ZMQINSTALLED
+
+#if defined(MPIINSTALLED) && defined(MPI_COMM_WORLD)
+  int MPI_Probe(int source, int tag, MPI_Comm comm, MPI_Status *status);
+  int MPI_Send(const void *buf, int count, MPI_Datatype datatype,
+	       int dest, int tag, MPI_Comm comm);
+  int MPI_Recv(void *buf, int count, MPI_Datatype datatype, int source,
+	       int tag, MPI_Comm comm, MPI_Status * status);
+#endif
   
 #endif // ELF_AVAILABLE
 }

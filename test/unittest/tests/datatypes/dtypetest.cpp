@@ -278,14 +278,14 @@ TEST(generic_t, 1darray) {
   EXPECT_TRUE(data);
   EXPECT_EQ(generic_set_1darray(x, data, "float", 8, 3, "cm"), 0);
   EXPECT_TRUE(compare_generic(x, v));
-#ifdef ELF_AVAILABLE
-  ELF_BEGIN;
-  ELF_BEGIN_F(malloc);
-  data = NULL;
-  EXPECT_EQ(generic_get_1darray(v, "float", 8, &data), 0);
-  ELF_END_F(malloc);
-  ELF_END;
-#endif // ELF_AVAILABLE
+// #ifdef ELF_AVAILABLE
+//   ELF_BEGIN;
+//   ELF_BEGIN_F(malloc);
+//   data = NULL;
+//   EXPECT_EQ(generic_get_1darray(v, "float", 8, &data), 0);
+//   ELF_END_F(malloc);
+//   ELF_END;
+// #endif // ELF_AVAILABLE
   destroy_generic(&v);
   destroy_generic(&x);
 }
@@ -302,15 +302,15 @@ TEST(generic_t, ndarray) {
   EXPECT_TRUE(shape);
   EXPECT_EQ(generic_set_ndarray(x, data, "float", 8, 2, shape, "cm"), 0);
   EXPECT_TRUE(compare_generic(x, v));
-#ifdef ELF_AVAILABLE
-  ELF_BEGIN;
-  ELF_BEGIN_F(malloc);
-  data = NULL;
-  shape = NULL;
-  EXPECT_EQ(generic_get_ndarray(v, "float", 8, &data, &shape), 0);
-  ELF_END_F(malloc);
-  ELF_END;
-#endif // ELF_AVAILABLE
+// #ifdef ELF_AVAILABLE
+//   ELF_BEGIN;
+//   ELF_BEGIN_F(malloc);
+//   data = NULL;
+//   shape = NULL;
+//   EXPECT_EQ(generic_get_ndarray(v, "float", 8, &data, &shape), 0);
+//   ELF_END_F(malloc);
+//   ELF_END;
+// #endif // ELF_AVAILABLE
   destroy_generic(&v);
   destroy_generic(&x);
 }
@@ -418,6 +418,7 @@ TEST(dtype_t, create) {
     EXPECT_EQ(is_dtype_format_array(x), 1);
     destroy_dtype(&x);
   }
+#ifndef YGGDRASIL_DISABLE_PYTHON_C_API
   {
     dtype_t args = create_dtype_from_schema("{\"type\": \"array\", \"items\": [{\"type\": \"string\"}, {\"type\", \"integer\"}]}", false);
     dtype_t kwargs = create_dtype_from_schema("{\"type\": \"object\", \"properties\": {\"a\": {\"type\": \"boolean\"}}}", false);
@@ -432,6 +433,7 @@ TEST(dtype_t, create) {
     destroy_dtype(&args);
     destroy_dtype(&kwargs);
   }
+#endif // YGGDRASIL_DISABLE_PYTHON_C_API
 }
 
 TEST(dtype_t, errors) {

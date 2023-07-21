@@ -157,8 +157,10 @@ TEST(MPIComm, sourceID) {
     mpi_registry_mock::MPIPROC = 50000;
     EXPECT_EQ(mpic2.mpi_comm_source_id(), 50000);
 
-    // mpic2.setHandle(nullptr);
-    // EXPECT_EQ(mpic2.mpi_comm_source_id(), -1);
+    mpi_registry_mock* h = (mpi_registry_mock*)(mpic2.getHandle());
+    mpic2.setHandle(nullptr);
+    EXPECT_EQ(mpic2.mpi_comm_source_id(), -1);
+    mpic2.setHandle(h);
 
     //MPI_Finalize();
 }
@@ -188,8 +190,19 @@ TEST(MPIComm, send) {
     mpi_registry_mock::COUNT = 0;
     mpi_registry_mock::COUNT_ALT = 0;
     EXPECT_EQ(mpic.send("Hello", 6), -1);
-    // mpic.restore();
-    // EXPECT_EQ(mpic.send("hello", 6), -1);
+    mpi_registry_mock* h = (mpi_registry_mock*)(mpic.getHandle());
+    mpic.setHandle(nullptr);
+    EXPECT_EQ(mpic.send("hello", 6), -1);
+    mpic.setHandle(h);
+    mpic.restore();
+#ifdef ELF_AVAILABLE
+    ELF_BEGIN;
+    ELF_REPLACE_SEND_MPI;
+    // Error in MPI_Send
+    EXPECT_EQ(mpic.send("Hello", 6), -1);
+    ELF_RESTORE_SEND_MPI;
+    ELF_END;
+#endif // ELF_AVAILABLE
 }
 
 TEST(MPIComm, recv) {
@@ -224,9 +237,26 @@ TEST(MPIComm, recv) {
     mpi_registry_mock::COUNT_ALT = -1;
     EXPECT_EQ(mpic.recv(data, len, true), -1);
     free(data);
+    data = NULL;
+    len = 0;
+    mpic.restore();
+#ifdef ELF_AVAILABLE
+    ELF_BEGIN;
+    ELF_REPLACE_RECV_MPI;
+    ELF_REPLACE_NMSG_MPI;
+    // Error in MPI_Probe
+    EXPECT_EQ(mpic.recv(data, len, true), -1);
+    // Error in MPI_Recv
+    RETVAL = 1;
+    RETVAL_INC_POLL = -1;
+    EXPECT_EQ(mpic.recv(data, len, true), -1);
+    ELF_RESTORE_RECV_MPI;
+    ELF_RESTORE_NMSG_MPI;
+    ELF_END;
+#endif // ELF_AVAILABLE
 }
 
-// TODO: Add tests for global, workers, and large message
+// TODO: Add tests for workers, and large message
 
 #else // MPIINSTALLED
 

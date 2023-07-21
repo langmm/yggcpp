@@ -4,6 +4,7 @@
 #include "communicators/ClientComm.hpp"
 #include "../../elf_hook.hpp"
 #include "../../mock.hpp"
+#include "commtest.hpp"
 
 #ifdef COMM_BASE
 

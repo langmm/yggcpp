@@ -426,47 +426,42 @@
     }									\
   }
 
+#define ELF_SEND_T(type, ret)			\
+  ELF_REPLACE_SEND_ ## type;			\
+  RETVAL = ret
+#define ELF_SEND_REVERT_T(type)			\
+  ELF_RESTORE_SEND_ ## type
+#define ELF_RECV_T(type, ret)			\
+  ELF_REPLACE_NMSG_ ## type;			\
+  ELF_REPLACE_RECV_ ## type;			\
+  RETVAL = ret
+#define ELF_RECV_REVERT_T(type)			\
+  ELF_RESTORE_NMSG_ ## type;			\
+  ELF_RESTORE_RECV_ ## type
+
 #ifdef ELF_AVAILABLE
 #if COMM_BASE == IPC_COMM
-#define ELF_SEND(ret)				\
-  ELF_BEGIN_F_RET(msgsnd, ret);			\
-  RETVAL_INC_SEND = 0;				\
-  RETVAL_INC_POLL = 0
-#define ELF_SEND_REVERT				\
-  ELF_END_F(msgsnd)
-#define ELF_RECV(ret)				\
-  ELF_BEGIN_F_RET(msgrcv, ret);			\
-  RETVAL_INC_RECV = 0;				\
-  RETVAL_INC_POLL = 0
-#define ELF_RECV_REVERT				\
-  ELF_END_F(msgrcv)
+#define ELF_REPLACE_RECV ELF_REPLACE_RECV_IPC
+#define ELF_RESTORE_RECV ELF_RESTORE_RECV_IPC
+#define ELF_REPLACE_SEND ELF_REPLACE_SEND_IPC
+#define ELF_RESTORE_SEND ELF_RESTORE_SEND_IPC
+#define ELF_REPLACE_NMSG ELF_REPLACE_NMSG_IPC
+#define ELF_RESTORE_NMSG ELF_RESTORE_NMSG_IPC
+#define ELF_SEND(ret) ELF_SEND_T(IPC, ret)
+#define ELF_SEND_REVERT ELF_SEND_REVERT_T(IPC)
+#define ELF_RECV(ret) ELF_RECV_T(IPC, ret)
+#define ELF_RECV_REVERT ELF_RECV_REVERT_T(IPC)
 #elif COMM_BASE == ZMQ_COMM
-#define ELF_SEND(ret)				\
-  ELF_BEGIN_F_RET(zmq_sendmsg, ret);		\
-  RETVAL_INC_SEND = 0;				\
-  RETVAL_INC_POLL = 0
-#define ELF_SEND_REVERT				\
-  ELF_END_F(zmq_sendmsg)
-
-#ifdef ZMQ_HAVE_POLLER
-#define ELF_RECV(ret)				\
-  ELF_BEGIN_F_RET(zmq_recvmsg, ret);		\
-  ELF_BEGIN_F(zmq_poller_wait_all);		\
-  RETVAL_INC_RECV = 0;				\
-  RETVAL_INC_POLL = 0
-#define ELF_RECV_REVERT				\
-  ELF_END_F(zmq_recvmsg);			\
-  ELF_END_F(zmq_poller_wait_all)
-#else // ZMQ_HAVE_POLLER
-#define ELF_RECV(ret)				\
-  ELF_BEGIN_F_RET(zmq_recvmsg, ret);		\
-  ELF_BEGIN_F(zmq_poll);			\
-  RETVAL_INC_RECV = 0;				\
-  RETVAL_INC_POLL = 0
-#define ELF_RECV_REVERT				\
-  ELF_END_F(zmq_recvmsg);			\
-  ELF_END_F(zmq_poll)
-#endif // ZMQ_HAVE_POLLER
-
+#define ELF_REPLACE_RECV ELF_REPLACE_RECV_ZMQ
+#define ELF_RESTORE_RECV ELF_RESTORE_RECV_ZMQ
+#define ELF_REPLACE_SEND ELF_REPLACE_SEND_ZMQ
+#define ELF_RESTORE_SEND ELF_RESTORE_SEND_ZMQ
+#define ELF_REPLACE_NMSG ELF_REPLACE_NMSG_ZMQ
+#define ELF_RESTORE_NMSG ELF_RESTORE_NMSG_ZMQ
+#define ELF_SEND(ret) ELF_SEND_T(ZMQ, ret)
+#define ELF_SEND_REVERT ELF_SEND_REVERT_T(ZMQ)
+#define ELF_RECV(ret) ELF_RECV_T(ZMQ, ret)
+#define ELF_RECV_REVERT ELF_RECV_REVERT_T(ZMQ)
 #endif
+
 #endif // ELF_AVAILABLE
