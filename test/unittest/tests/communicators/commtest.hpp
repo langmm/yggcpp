@@ -357,6 +357,35 @@
     bool dst = false;							\
     EXPECT_GT(sComm.sendVar(true), 0);					\
     EXPECT_EQ(rComm.recvVar(dst), -1);					\
+  }									\
+  TEST(cls, global) {							\
+    init;								\
+    std::string name = "test_name";					\
+    global_scope_comm_on();						\
+    {									\
+      cls ## _tester sComm(name, nullptr, SEND);			\
+      sComm.addSchema("{\"type\": \"number\"}");			\
+      std::string key_env = name + "_IN";				\
+      std::string val_env = sComm.getAddress();				\
+      setenv(key_env.c_str(), val_env.c_str(), 1);			\
+      cls ## _tester rComm(name, RECV);					\
+      unsetenv(key_env.c_str());					\
+      DO_SEND_RECV_EXCHANGE(INIT_DATA_SINGLE(double, 1.5),		\
+			    COMP_DATA_SINGLE,				\
+			    sendVar, (data_send),			\
+			    recvVar, (data_recv));			\
+    }									\
+    {									\
+      cls ## _tester sComm(name, nullptr, SEND);			\
+      cls ## _tester rComm(name, RECV);					\
+      DO_SEND_RECV_EXCHANGE(INIT_DATA_SINGLE(double, 1.5),		\
+			    COMP_DATA_SINGLE,				\
+			    sendVar, (data_send),			\
+			    recvVar, (data_recv));			\
+      DO_SEND_RECV_EOF(recvVar, (data_recv));				\
+    }									\
+    global_scope_comm_off();						\
+    Comm_t::_ygg_cleanup();						\
   }
 #define COMM_SERI_TEST(cls)						\
   COMM_SERI_TEST_BASE(cls,)						\
@@ -395,34 +424,6 @@
       metadata.SetMetaString("invalid", bigMsg);			\
       EXPECT_THROW(sComm.send(data_send), std::exception);		\
     }									\
-  }									\
-  TEST(cls, global) {							\
-    std::string name = "test_name";					\
-    global_scope_comm_on();						\
-    {									\
-      cls ## _tester sComm(name, nullptr, SEND);			\
-      sComm.addSchema("{\"type\": \"number\"}");			\
-      std::string key_env = name + "_IN";				\
-      std::string val_env = sComm.getAddress();				\
-      setenv(key_env.c_str(), val_env.c_str(), 1);			\
-      cls ## _tester rComm(name, RECV);					\
-      unsetenv(key_env.c_str());					\
-      DO_SEND_RECV_EXCHANGE(INIT_DATA_SINGLE(double, 1.5),		\
-			    COMP_DATA_SINGLE,				\
-			    sendVar, (data_send),			\
-			    recvVar, (data_recv));			\
-    }									\
-    {									\
-      cls ## _tester sComm(name, nullptr, SEND);			\
-      cls ## _tester rComm(name, RECV);					\
-      DO_SEND_RECV_EXCHANGE(INIT_DATA_SINGLE(double, 1.5),		\
-			    COMP_DATA_SINGLE,				\
-			    sendVar, (data_send),			\
-			    recvVar, (data_recv));			\
-      DO_SEND_RECV_EOF(recvVar, (data_recv));				\
-    }									\
-    global_scope_comm_off();						\
-    Comm_t::_ygg_cleanup();						\
   }
 
 #ifdef ELF_AVAILABLE

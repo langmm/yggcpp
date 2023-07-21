@@ -8,18 +8,7 @@ using namespace communication::utils;
 
 #if defined(MPIINSTALLED) && defined(MPI_COMM_WORLD)
 
-mpi_registry_t::mpi_registry_t(const mpi_registry_t& rhs) :
-  comm(0), procs(), tag(0) {
-  MPI_Comm_dup( rhs.comm, &(this->comm));
-}
-
 mpi_registry_t::~mpi_registry_t() {}
-
-mpi_registry_t& mpi_registry_t::operator=(const mpi_registry_t& rhs) {
-  this->~mpi_registry_t();
-  new (this) mpi_registry_t(rhs);
-  return *this;
-}
 
 int mpi_registry_t::Probe(int source, MPI_Status *status) const {
   int out = MPI_Probe(source, tag, comm, status);
