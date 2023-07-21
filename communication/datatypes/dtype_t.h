@@ -716,7 +716,9 @@ dtype_t create_dtype_pyobj(const char* type, const bool use_generic);
 
 /*!
   @brief Construct a type object for Python object instances.
-  @param[in] class_name Python class name.
+  @param[in] class_name Python class name that instance should be a
+    subclass of. If NULL or an empty string, no class constraints will
+    be placed on the instance.
   @param[in] args_dtype Datatype describing the arguments creating the
     instance. The datatype will be consumed and does not need to be freed.
   @param[in] kwargs_dtype Datatype describing the keyword arguments
@@ -727,8 +729,8 @@ dtype_t create_dtype_pyobj(const char* type, const bool use_generic);
   @returns Type structure/class.
  */
 dtype_t create_dtype_pyinst(const char* class_name,
-			    dtype_t args_dtype,
-			    dtype_t kwargs_dtype,
+			    dtype_t* args_dtype,
+			    dtype_t* kwargs_dtype,
 			    const bool use_generic);
 
   

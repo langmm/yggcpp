@@ -18,13 +18,13 @@ rapidjson::Document::AllocatorType& generic_allocator(generic_t& x) {
   if (!is_generic_init(x))
     ygglog_throw_error_c("generic_allocator: Not initialized");
   return ((rapidjson::Document*)(x.obj))->GetAllocator();
-};
+}; // GCOVR_EXCL_LINE
 
 rapidjson::Document::AllocatorType& generic_ref_allocator(generic_ref_t& x) {
   if (!is_generic_ref_init(x))
     ygglog_throw_error_c("generic_ref_allocator: Not initialized");
   return *((rapidjson::Document::AllocatorType*)(x.allocator));
-};
+}; // GCOVR_EXCL_LINE
 
 // rapidjson::Document::AllocatorType& dtype_allocator(dtype_t& x) {
 //   rapidjson::Document* s = NULL;
@@ -1264,15 +1264,13 @@ extern "C" {
   }
 
   dtype_t complete_dtype(dtype_t dtype, const bool use_generic) {
-    _BEGIN_CPP {
-      if (!dtype.metadata)
-	dtype.metadata = (void*)(new Metadata());
-      if (use_generic) {
-	_GET_METADATA_THROW(metadata, dtype);
-	metadata->setGeneric();
-      }
-      return dtype;
-    } _END_CPP(complete_dtype, dtype);
+    if (!dtype.metadata)
+      dtype.metadata = (void*)(new Metadata());
+    if (use_generic) {
+      _GET_METADATA(metadata, dtype, dtype);
+      metadata->setGeneric();
+    }
+    return dtype;
   }
 
   int destroy_dtype(dtype_t *dtype) {
@@ -1447,24 +1445,28 @@ extern "C" {
   dtype_t create_dtype_pyobj(const char* type, const bool use_generic) {
     return create_dtype_default(type, use_generic);
   }
-  dtype_t create_dtype_pyinst(const char*, // class_name,
-			      dtype_t args_dtype,
-			      dtype_t kwargs_dtype,
+  dtype_t create_dtype_pyinst(const char* class_name,
+			      dtype_t* args_dtype,
+			      dtype_t* kwargs_dtype,
 			      const bool use_generic) {
     dtype_t out = create_dtype(NULL, false);
     _BEGIN_CPP {
       _GET_METADATA(metadata, out, out);
       metadata->fromType("instance", use_generic);
-      if (!is_empty_dtype(args_dtype)) {
+      if (class_name && strlen(class_name) > 0) {
+	metadata->SetSchemaString("class", class_name);
+      }
+      if (args_dtype && !is_empty_dtype(*args_dtype)) {
 	metadata->SetSchemaMetadata("args",
-				    *((Metadata*)(args_dtype.metadata)));
-	destroy_dtype(&args_dtype);
+				    *((Metadata*)(args_dtype->metadata)));
+	destroy_dtype(args_dtype);
       }
-      if (!is_empty_dtype(kwargs_dtype)) {
+      if (kwargs_dtype && !is_empty_dtype(*kwargs_dtype)) {
 	metadata->SetSchemaMetadata("kwargs",
-				    *((Metadata*)(kwargs_dtype.metadata)));
-	destroy_dtype(&kwargs_dtype);
+				    *((Metadata*)(kwargs_dtype->metadata)));
+	destroy_dtype(kwargs_dtype);
       }
+      metadata->_init(use_generic);
       return out;
     } _END_CPP_CLEANUP(create_dtype_pyinst, out, destroy_dtype(&out));
   }

@@ -553,7 +553,7 @@ void Metadata::SetSchemaValue(const std::string name, rapidjson::Value& x,
 void Metadata::SetSchemaMetadata(const std::string name,
 				 const Metadata& other) {
   if (other.schema == NULL)
-    ygglog_throw_error_c("SetSchemaMetadata: Value has not datatype");
+    ygglog_throw_error_c("SetSchemaMetadata: Value has no datatype");
   rapidjson::Value x;
   x.CopyFrom(*(other.schema), GetAllocator(), true);
   SetSchemaValue(name, x);

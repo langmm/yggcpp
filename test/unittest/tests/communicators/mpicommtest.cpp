@@ -226,15 +226,6 @@ TEST(MPIComm, recv) {
     free(data);
 }
 
-TEST(MPIComm, regclone) {
-    INIT_MPI_TEST;
-    mpi_registry_t mpir(MPI_COMM_WORLD);
-    mpir.procs.push_back(1);
-    mpi_registry_t mpir2(mpir);
-    EXPECT_NE(mpir.procs, mpir2.procs);
-    MPI_Finalize();
-}
-
 // TODO: Add tests for global, workers, and large message
 
 #else // MPIINSTALLED

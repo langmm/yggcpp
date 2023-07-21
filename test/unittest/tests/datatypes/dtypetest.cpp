@@ -278,14 +278,14 @@ TEST(generic_t, 1darray) {
   EXPECT_TRUE(data);
   EXPECT_EQ(generic_set_1darray(x, data, "float", 8, 3, "cm"), 0);
   EXPECT_TRUE(compare_generic(x, v));
-// #ifdef ELF_AVAILABLE
-//   ELF_BEGIN;
-//   ELF_BEGIN_F(realloc);
-//   data = NULL;
-//   EXPECT_EQ(generic_get_1darray(v, "float", 8, &data), 0);
-//   ELF_END_F(realloc);
-//   ELF_END;
-// #endif // ELF_AVAILABLE
+#ifdef ELF_AVAILABLE
+  ELF_BEGIN;
+  ELF_BEGIN_F(malloc);
+  data = NULL;
+  EXPECT_EQ(generic_get_1darray(v, "float", 8, &data), 0);
+  ELF_END_F(malloc);
+  ELF_END;
+#endif // ELF_AVAILABLE
   destroy_generic(&v);
   destroy_generic(&x);
 }
@@ -302,15 +302,15 @@ TEST(generic_t, ndarray) {
   EXPECT_TRUE(shape);
   EXPECT_EQ(generic_set_ndarray(x, data, "float", 8, 2, shape, "cm"), 0);
   EXPECT_TRUE(compare_generic(x, v));
-// #ifdef ELF_AVAILABLE
-//   ELF_BEGIN;
-//   ELF_BEGIN_F(realloc);
-//   data = NULL;
-//   shape = NULL;
-//   EXPECT_EQ(generic_get_ndarray(v, "float", 8, &data, &shape), 0);
-//   ELF_END_F(realloc);
-//   ELF_END;
-// #endif // ELF_AVAILABLE
+#ifdef ELF_AVAILABLE
+  ELF_BEGIN;
+  ELF_BEGIN_F(malloc);
+  data = NULL;
+  shape = NULL;
+  EXPECT_EQ(generic_get_ndarray(v, "float", 8, &data, &shape), 0);
+  ELF_END_F(malloc);
+  ELF_END;
+#endif // ELF_AVAILABLE
   destroy_generic(&v);
   destroy_generic(&x);
 }
@@ -409,6 +409,63 @@ TEST(dtype_t, create) {
     EXPECT_FALSE(is_empty_dtype(x));
     EXPECT_EQ(strcmp(dtype_name(x), "instance"), 0);
     destroy_dtype(&x);
+  }
+  {
+    dtype_t x = create_dtype_format("%d\t%f\n", true, false);
+    EXPECT_TRUE(x.metadata);
+    EXPECT_FALSE(is_empty_dtype(x));
+    EXPECT_EQ(strcmp(dtype_name(x), "array"), 0);
+    EXPECT_EQ(is_dtype_format_array(x), 1);
+    destroy_dtype(&x);
+  }
+  {
+    dtype_t args = create_dtype_from_schema("{\"type\": \"array\", \"items\": [{\"type\": \"string\"}, {\"type\", \"integer\"}]}", false);
+    dtype_t kwargs = create_dtype_from_schema("{\"type\": \"object\", \"properties\": {\"a\": {\"type\": \"boolean\"}}}", false);
+    dtype_t x = create_dtype_pyinst("collections:OrderedDict",
+				    &args, &kwargs, false);
+    EXPECT_TRUE(x.metadata);
+    EXPECT_FALSE(is_empty_dtype(x));
+    EXPECT_EQ(strcmp(dtype_name(x), "instance"), 0);
+    EXPECT_TRUE(is_empty_dtype(args));
+    EXPECT_TRUE(is_empty_dtype(kwargs));
+    destroy_dtype(&x);
+    destroy_dtype(&args);
+    destroy_dtype(&kwargs);
+  }
+}
+
+TEST(dtype_t, errors) {
+  {
+    dtype_t x = create_dtype_default("invalid", false);
+    EXPECT_FALSE(x.metadata);
+    EXPECT_TRUE(is_empty_dtype(x));
+  }
+  {
+    dtype_t x = create_dtype_scalar("invalid", 5, "cm", false);
+    EXPECT_FALSE(x.metadata);
+    EXPECT_TRUE(is_empty_dtype(x));
+  }
+  {
+    dtype_t x = create_dtype_1darray("invalid", 5, 1, "cm", false);
+    EXPECT_FALSE(x.metadata);
+    EXPECT_TRUE(is_empty_dtype(x));
+  }
+  {
+    size_t shape = 5;
+    dtype_t x = create_dtype_ndarray("invalid", 5, 1, &shape,
+				     "cm", false);
+    EXPECT_FALSE(x.metadata);
+    EXPECT_TRUE(is_empty_dtype(x));
+  }
+  {
+    dtype_t args = create_dtype_from_schema("{\"type\": \"boolean\"}", false);
+    dtype_t x = create_dtype_pyinst("collections:OrderedDict",
+				    &args, NULL, false);
+    EXPECT_FALSE(x.metadata);
+    EXPECT_TRUE(is_empty_dtype(x));
+    EXPECT_TRUE(is_empty_dtype(args));
+    destroy_dtype(&x);
+    destroy_dtype(&args);
   }
 }
 

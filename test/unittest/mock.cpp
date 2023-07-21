@@ -81,6 +81,11 @@ void* realloc(void*, size_t) {
   std::cerr << "MOCK REALLOC" << std::endl;
   return NULL;
 }
+
+void* malloc(size_t) {
+  std::cerr << "MOCK MALLOC" << std::endl;
+  return NULL;
+}
   
 #ifdef ZMQCPPINSTALLED
 namespace zmq {
