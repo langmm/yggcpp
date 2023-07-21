@@ -732,6 +732,19 @@ protected:
     ~CommBase() override;
 
     H *handle; //!< Pointer to handle for comm.
+
+#ifdef YGG_TEST
+    H* getHandle() {
+      if (global_comm)
+	return dynamic_cast<CommBase<H>*>(global_comm)->getHandle();
+      return handle;
+    }
+    void setHandle(H* h) {
+      if (global_comm)
+	dynamic_cast<CommBase<H>*>(global_comm)->setHandle(h);
+      handle = h;
+    }
+#endif // YGG_TEST
 };
 
 template<typename H>

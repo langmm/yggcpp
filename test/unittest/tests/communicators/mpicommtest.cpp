@@ -1,7 +1,7 @@
 #include "../../unittest.hpp"
 #include "utils/Address.hpp"
 #include "utils/tools.hpp"
-#include "communicators/MPIComm.hpp"
+#include "communicators/comms.hpp"
 #include "../../elf_hook.hpp"
 #include "../../mock.hpp"
 #include "commtest.hpp"
@@ -89,20 +89,22 @@ public:
     MPIComm("", nullptr, dir), tmp(0) { init(); }
   MPIComm_tester(const std::string name, DIRECTION dir) :
     MPIComm(name, dir), tmp(0) { init(); }
+private:
+  MPIComm_tester(const MPIComm_tester&) = delete;
+  MPIComm_tester& operator=(const MPIComm_tester&) = delete;
+public:
   ~MPIComm_tester() {
     restore();
   }
-  mpi_registry_t* getHandle() { return handle; }
-  void setHandle(mpi_registry_t* h) { handle = h;}
   void init() {
-    // TODO: Update handle for global comm
-    tmp = handle;
-    handle = new mpi_registry_mock(MPI_COMM_WORLD);
+    tmp = getHandle();
+    setHandle(new mpi_registry_mock(MPI_COMM_WORLD));
   }
   void restore() {
     if (tmp) {
-      delete handle;
-      handle = tmp;
+      mpi_registry_t* h = getHandle();
+      setHandle(tmp);
+      delete h;
       tmp = nullptr;
     }
   }
