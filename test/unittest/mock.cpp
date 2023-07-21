@@ -219,7 +219,7 @@ template<class OutputIt>
   int MPI_Probe(int, int, MPI_Comm, MPI_Status * status) {
     // MPI_Status_set_cancelled(status, MPICANCEL);
     status->MPI_ERROR = RETVAL;
-    statis->MPI_SOURCE = 0;
+    status->MPI_SOURCE = 0;
     DO_ELF_POLL(2);
     return MPI_SUCCESS;
   }
@@ -232,7 +232,7 @@ template<class OutputIt>
 	       int, MPI_Comm, MPI_Status * status) {
     // MPI_Status_set_cancelled(status, MPICANCEL);
     status->MPI_ERROR = RETVAL;
-    statis->MPI_SOURCE = 0;
+    status->MPI_SOURCE = 0;
     DO_ELF_RECV(2);
   }
 #endif
