@@ -69,7 +69,7 @@ void MPIComm::init() {
 #ifdef YGG_TEST
         if (!address) {
 	  address = new utils::Address(std::to_string(0));
-	} else {
+	} else { // GCOVR_EXCL_LINE
 	  address->address(std::to_string(0));
 	}
 #else // YGG_TEST

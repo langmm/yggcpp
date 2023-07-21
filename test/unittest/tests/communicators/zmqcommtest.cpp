@@ -160,22 +160,17 @@ TEST(ZMQComm, send) {
       EXPECT_EQ(zmq.send(mmsg.c_str(), mmsg.size()), -1);
       ELF_END_F(zmq_msg_init_size);
     }
-    // Failure to send
     {
-      RETVAL = -1;
-      ELF_BEGIN_F(zmq_sendmsg);
+      // Failure to send
+      ELF_REPLACE_SEND_ZMQ;
       EXPECT_EQ(zmq.send(mmsg.c_str(), mmsg.size()), -1);
-      ELF_END_F(zmq_sendmsg);
-    }
-    // Successful send
-    {
-      ELF_BEGIN_F(zmq_sendmsg);
+      // Successful send
       RETVAL = 0;
       EXPECT_GT(zmq.send(mmsg.c_str(), mmsg.size()), 0);
       std::string long_msg(YGG_MSG_MAX * 3 + 20, 'A');
       RETVAL = 10;
       EXPECT_GT(zmq.send(long_msg.c_str(), long_msg.size()), 0);
-      ELF_END_F(zmq_sendmsg);
+      ELF_RESTORE_SEND_ZMQ;
     }
     // These are only needed if the tester dosn't by pass do_reply
     // ELF_BEGIN_F(zmq_recvmsg);
@@ -195,12 +190,8 @@ TEST(ZMQComm, recv) {
     char* data = NULL;
     size_t len = 0;
     // Successful recv
-#ifdef ZMQ_HAVE_POLLER
-    ELF_BEGIN_F(zmq_poller_wait_all);
-#else // ZMQ_HAVE_POLLER
-    ELF_BEGIN_F(zmq_poll);
-#endif // ZMQ_HAVE_POLLER
-    ELF_BEGIN_F(zmq_recvmsg);
+    ELF_REPLACE_RECV_ZMQ;
+    ELF_REPLACE_NMSG_ZMQ;
     // Fail on zmq_getsockopt to check if there is more to the message
     ELF_BEGIN_F(zmq_getsockopt);
     RETVAL = 0;
@@ -233,12 +224,8 @@ TEST(ZMQComm, recv) {
     EXPECT_EQ(zmq_recv.recv(data, len, true), -1);
     ELF_END_F(realloc);
     free(data);
-#ifdef ZMQ_HAVE_POLLER
-    ELF_END_F(zmq_poller_wait_all);
-#else // ZMQ_HAVE_POLLER
-    ELF_END_F(zmq_poll);
-#endif // ZMQ_HAVE_POLLER
-    ELF_END_F(zmq_recvmsg);
+    ELF_RESTORE_RECV_ZMQ;
+    ELF_RESTORE_NMSG_ZMQ;
     ELF_END;
 #endif // ELF_AVAILABLE
 }

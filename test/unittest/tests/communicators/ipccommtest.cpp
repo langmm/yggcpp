@@ -59,11 +59,11 @@ TEST(IPCComm, send) {
     utils::Address *adr2 = new utils::Address("12345678");
     IPCComm_tester ipc2(data, adr2, SEND);
     // Replace msgsnd and msgctl so that send fails, but msgctl succeeds
+    ELF_REPLACE_SEND_IPC;
+    ELF_REPLACE_NMSG_IPC;
     SENDCOUNT = 0;
     RETVAL = -1;
     RETVAL_INC_SEND = 1;
-    ELF_BEGIN_F(msgsnd);
-    ELF_BEGIN_F(msgctl);
     res = ipc2.send(data.c_str(), data.size());
     EXPECT_GE(res, 0);
     EXPECT_EQ(SENDCOUNT, 1);
@@ -82,8 +82,8 @@ TEST(IPCComm, send) {
     EXPECT_EQ(SENDCOUNT, 1);
     errno = 0;
     // Restore
-    ELF_END_F(msgsnd);
-    ELF_END_F(msgctl);
+    ELF_RESTORE_SEND_IPC;
+    ELF_RESTORE_NMSG_IPC;
     ELF_END_F(msgget);
     ELF_END;
 #endif // ELF_AVAILABLE
@@ -99,28 +99,26 @@ TEST(IPCComm, commnmsg) {
 #ifdef ELF_AVAILABLE
     ELF_BEGIN;
     // Replace msgctl to test failure in comm_nmsg
-    RETVAL = 0;
-    RETVAL_INC_POLL = 0;
-    ELF_BEGIN_F(msgctl);
+    ELF_REPLACE_NMSG_IPC;
+    ELF_SET_SUCCESS;
     res = ipc.comm_nmsg();
     EXPECT_EQ(res, 10000);
-    RETVAL = -1;
+    ELF_SET_FAILURE;
     res = ipc.comm_nmsg();
     EXPECT_EQ(res, 0);
-    ELF_END_F(msgctl);
+    ELF_RESTORE_NMSG_IPC;
     ELF_END;
 #endif // ELF_AVAILABLE
 }
 
 TEST(IPCComm, sendLarge) {
 #ifdef ELF_AVAILABLE
-    RETVAL = 0;
-    SENDCOUNT = 0;
     std::string name = "SendTester";
     ELF_BEGIN;
     ELF_BEGIN_F(msgget); // To allow connection to non-existed queue
     // Replace msgsnd to test sending long message
-    ELF_BEGIN_F_RET(msgsnd, 0);
+    ELF_REPLACE_SEND_IPC;
+    ELF_SET_SUCCESS;
     IPCComm_tester ipc(name, new utils::Address("2468"), SEND);
     std::string msg(ipc.getMaxMsgSize() - 1, 'A');
     EXPECT_GT(ipc.send(msg), 0);
@@ -131,14 +129,14 @@ TEST(IPCComm, sendLarge) {
     EXPECT_EQ(SENDCOUNT, 4);
 
     // Failure on creation of temp communicator
-    RETVAL = -1;
+    ELF_SET_FAILURE;
     EXPECT_EQ(ipc.send(longmsg), -1);
 
     // Failure on send
     ELF_END_F(msgget);
     EXPECT_EQ(ipc.send(longmsg), -1);
 
-    ELF_END_F(msgsnd);
+    ELF_RESTORE_SEND_IPC;
     ELF_END;
 #endif // ELF_AVAILABLE
 }
@@ -148,17 +146,14 @@ TEST(IPCComm, recv) {
     std::string name = "SendTester";
     ELF_BEGIN;
     ELF_BEGIN_F(msgget); // To allow connection to non-existed queue
-    RETVAL = 0;
+    ELF_SET_SUCCESS;
     IPCComm_tester ipc(name, new utils::Address("13579"), RECV);
     // Replace msgrcv to test different size messages
-    ELF_BEGIN_F(msgctl);
-    ELF_BEGIN_F(msgrcv);
+    ELF_REPLACE_RECV_IPC;
+    ELF_REPLACE_NMSG_IPC;
     char* data = (char*)malloc(sizeof(char));
     size_t len = 1;
     // Failure to realloc
-    RETVAL = 0;
-    RETVAL_INC_POLL = 0;
-    RETVAL_INC_RECV = 0;
     long res = ipc.recv(data, len, false);
     EXPECT_EQ(res, -11);
     // Replace realloc to test failure to realloc
@@ -180,15 +175,13 @@ TEST(IPCComm, recv) {
     RETVAL_INC_POLL = -1;
     RETVAL_INC_RECV = 1;
     errno = ENOMSG;
-    std::cerr << "BEFORE RETRY (len = " << len << ")" << std::endl;
     EXPECT_EQ(ipc.recv(data, len, true), 11);
-    std::cerr << "AFTER RETRY (len = " << len << ")" << std::endl;
     errno = 0;
-    // Restore methods
-    ELF_END_F(msgrcv);
     free(data);
+    // Restore methods
     ELF_END_F(msgget);
-    ELF_END_F(msgctl);
+    ELF_RESTORE_RECV_IPC;
+    ELF_RESTORE_NMSG_IPC;
     ELF_END;
 #endif // ELF_AVAILABLE
 }

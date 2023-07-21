@@ -734,6 +734,7 @@ protected:
     H *handle; //!< Pointer to handle for comm.
 
 #ifdef YGG_TEST
+public:
     H* getHandle() {
       if (global_comm)
 	return dynamic_cast<CommBase<H>*>(global_comm)->getHandle();
