@@ -10,6 +10,15 @@ using namespace communication;
 using namespace communication::communicator;
 using namespace communication::mock;
 
+// TODO:
+// - ELF error in
+//   - zmq_connect (return -1)
+//   - zmq_socket (return NULL)
+//   - zmq_bind (return -1 first time, 0 second),
+//       zmq_errno set to EADDRINUSE the first time
+//   - zmq_poll return -1
+//   - zmq_msg_init_size return -1
+
 #ifdef ZMQINSTALLED
 
 namespace communication {

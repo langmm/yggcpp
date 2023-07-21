@@ -32,8 +32,10 @@ extern int _zmq_sleeptime;
 class ZMQContext {
 public:
   ZMQContext();
-  ZMQContext(const ZMQContext& rhs);
-  ZMQContext& operator=(const ZMQContext& rhs);
+private:
+  ZMQContext(const ZMQContext& rhs) = delete;
+  ZMQContext& operator=(const ZMQContext& rhs) = delete;
+public:
 #ifdef ZMQINSTALLED
   void init();
   static void destroy();

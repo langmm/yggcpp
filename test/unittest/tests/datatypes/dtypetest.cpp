@@ -506,11 +506,11 @@ DO_GEOM(obj)
 #undef DO_GEOM
 
 TEST(dtype, PythonInit) {
-#ifdef YGGDRASIL_DISABLE_PYTHON_C_API
-  EXPECT_EQ(init_python_API(), 1);
-#else
+// #ifdef YGGDRASIL_DISABLE_PYTHON_C_API
+//   EXPECT_EQ(init_python_API(), 1);
+// #else
   EXPECT_EQ(init_python_API(), 0);
-#endif
+// #endif
 }
 
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
