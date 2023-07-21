@@ -189,7 +189,7 @@ ssize_t msgrcv(int a, void* buf, size_t msz, long mtype, int flags);
   
 
 void* realloc(void* ptr, size_t size);
-void* malloc(size_t size);
+// void* malloc(size_t size);
 
 #ifdef ZMQCPPINSTALLED
 namespace zmq {
