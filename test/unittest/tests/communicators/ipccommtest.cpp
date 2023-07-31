@@ -149,8 +149,7 @@ TEST(IPCComm, recv) {
     ELF_SET_SUCCESS;
     IPCComm_tester ipc(name, new utils::Address("13579"), RECV);
     // Replace msgrcv to test different size messages
-    ELF_REPLACE_RECV_IPC;
-    ELF_REPLACE_NMSG_IPC;
+    ELF_RECV_T(IPC, 0);
     char* data = (char*)malloc(sizeof(char));
     size_t len = 1;
     // Failure to realloc
