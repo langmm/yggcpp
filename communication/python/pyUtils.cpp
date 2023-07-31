@@ -1,119 +1,119 @@
-#include <boost/python.hpp>
-#include <boost/python/enum.hpp>
-#include "utils/Address.hpp"
-//#include "utils/serialization.hpp"
-#include "python/pyYggComm.hpp"
+#include "pyUtils.hpp"
 
-namespace bp = boost::python;
-namespace communication {
-void (utils::Address::*setaddress)(const std::string &) = &utils::Address::address;
-const std::string &(utils::Address::*getaddress)() const = &utils::Address::address;
-//void (utils::Metadata::*fromMetadataCopy)(const utils::Metadata&, bool) = &utils::Metadata::fromMetadata;
-//void (utils::Metadata::*fromMetadataChar)(const char*, const size_t&, bool) = &utils::Metadata::fromMetadata;
-//void (utils::Metadata::*fromMetadataString)(const std::string&, bool) = &utils::Metadata::fromMetadata;
-//bool (utils::Metadata::*SetMetaIDChar)(const std::string&, const char**) = &utils::Metadata::SetMetaID;
-//bool (utils::Metadata::*SetMetaIDStr)(const std::string&, std::string&) = &utils::Metadata::SetMetaID;
-////int (utils::Metadata::*deserializeArgs)(const char*, size_t, int, ...) = &utils::Metadata::deserialize;
-//int (utils::Metadata::*deserializeJson)(const char*, rapidjson::VarArgList&) = &utils::Metadata::deserialize;
-////int (utils::Metadata::*serializeArgs)(char**, size_t*, size_t, ...) = &utils::Metadata::serialize;
-//int (utils::Metadata::*serializeJson)(char**, size_t*, rapidjson::VarArgList&) = &utils::Metadata::serialize;
-//void (utils::Metadata::*fromSchemaJson)(const rapidjson::Value&, bool, bool) = &utils::Metadata::fromSchema;
-//void (utils::Metadata::*fromSchemaString)(const std::string&, bool) = &utils::Metadata::fromSchema;
+#include "structmember.h"
+#include "utils/enums.hpp"
 
-void python::exportUtils() {
-    bp::object modModule(bp::handle<>(bp::borrowed(PyImport_AddModule("pyYggdrasil.utils"))));
-    bp::scope().attr("utils") = modModule;
-    bp::scope modScope = modModule;
-    /*bp::class_<utils::Metadata, boost::noncopyable>("Metadata", bp::init<>())
-            .def("_init", &utils::Metadata::_init)
-            .def("fromSchema", fromSchemaJson)
-            .def("Normalize", &utils::Metadata::Normalize)
-            .def("fromSchema", fromSchemaString)
-            .def("fromType", &utils::Metadata::fromType)
-            .def("fromScalar", &utils::Metadata::fromScalar)
-            .def("fromNDArray", &utils::Metadata::fromNDArray)
-            .def("_fromNDArray", &utils::Metadata::_fromNDArray)
-            .def("fromFormat", &utils::Metadata::fromFormat)
+void Address_dealloc(pyAddress* self) {
+    delete self->address;
+    Py_TYPE(self)->tp_free((PyObject*) self);
+}
 
-            .def("fromMetadata", fromMetadataCopy)
-            .def("fromMetadata", fromMetadataChar)
-            .def("fromMetadata", fromMetadataString)
-
-            .def("fromEncode", &utils::Metadata::fromEncode)
-            //.def("GetAllocator", &utils::Metadata::GetAllocator, bp::return_value_policy<bp::copy_const_reference>())
-            .def("isGeneric", &utils::Metadata::isGeneric)
-            .def("setGeneric", &utils::Metadata::setGeneric)
-            .def("empty", &utils::Metadata::empty)
-            .def("hasType", &utils::Metadata::hasType)
-            .def("hasSubtype", &utils::Metadata::hasSubtype)
-            .def("typeName", &utils::Metadata::typeName)
-            .def("subtypeName", &utils::Metadata::subtypeName)
-            .def("initSchema", &utils::Metadata::initSchema)
-            .def("initMeta", &utils::Metadata::initMeta)
-            .def("addItem", &utils::Metadata::addItem)
-            .def("addMember", &utils::Metadata::addMember)
-            //.def("getMeta", &utils::Metadata::getMeta, bp::return_value_policy<bp::copy_const_reference>())
-            //.def("getSchema", &utils::Metadata::getSchema, bp::return_value_policy<bp::copy_const_reference>())
-            .def("SetValue", &utils::Metadata::SetValue)
-            .def("GetInt", &utils::Metadata::GetInt)
-            .def("GetIntOptional", &utils::Metadata::GetIntOptional)
-            .def("SetInt", &utils::Metadata::SetInt)
-            .def("GetMetaInt", &utils::Metadata::GetMetaInt)
-            .def("GetMetaIntOptional", &utils::Metadata::GetMetaIntOptional)
-            .def("SetMetaInt", &utils::Metadata::SetMetaInt)
-            .def("GetSchemaIntOptional", &utils::Metadata::GetSchemaIntOptional)
-            .def("SetSchemaInt", &utils::Metadata::SetSchemaInt)
-            .def("GetUint", &utils::Metadata::GetUint)
-            .def("GetUintOptional", &utils::Metadata::GetUintOptional)
-            .def("SetUint", &utils::Metadata::SetUint)
-            .def("GetMetaUint", &utils::Metadata::GetMetaUint)
-            .def("GetMetaUintOptional", &utils::Metadata::GetMetaUintOptional)
-            .def("SetMetaUint", &utils::Metadata::SetMetaUint)
-            .def("GetSchemaUintOptional", &utils::Metadata::GetSchemaUintOptional)
-            .def("SetSchemaUint", &utils::Metadata::SetSchemaUint)
-            .def("GetBool", &utils::Metadata::GetBool)
-            .def("GetBoolOptional", &utils::Metadata::GetBoolOptional)
-            .def("SetBool", &utils::Metadata::SetBool)
-            .def("GetMetaBool", &utils::Metadata::GetMetaBool)
-            .def("GetMetaBoolOptional", &utils::Metadata::GetMetaBoolOptional)
-            .def("SetMetaBool", &utils::Metadata::SetMetaBool)
-            .def("GetSchemaBoolOptional", &utils::Metadata::GetSchemaBoolOptional)
-            .def("SetSchemaBool", &utils::Metadata::SetSchemaBool)
-            .def("GetString", &utils::Metadata::GetString)
-            .def("GetStringOptional", &utils::Metadata::GetStringOptional)
-            .def("SetString", &utils::Metadata::SetString)
-            .def("GetMetaString", &utils::Metadata::GetMetaString)
-            .def("GetMetaStringOptional", &utils::Metadata::GetMetaStringOptional)
-            .def("SetMetaString", &utils::Metadata::SetMetaString)
-            .def("GetSchemaStringOptional", &utils::Metadata::GetSchemaStringOptional)
-            .def("SetSchemaString", &utils::Metadata::SetSchemaString)
-            .def("SetMetaValue", &utils::Metadata::SetMetaValue)
-            .def("SetSchemaValue", &utils::Metadata::SetSchemaValue)
-            .def("SetSchemaMetadata", &utils::Metadata::SetSchemaMetadata)
-            .def("SetMetaID", SetMetaIDChar)
-            .def("SetMetaID", SetMetaIDStr)
-            //.def("deserialize", deserializeArgs)
-            .def("deserialize", deserializeJson)
-            //.def("serialize", serializeArgs)
-            .def("serialize", serializeJson)
-            .def("Display", &utils::Metadata::Display);
-
-    bp::class_<utils::Header, bp::bases<utils::Metadata>, boost::noncopyable>("Header", bp::init<>())
-            .def("isValid", &utils::Header::isValid)
-            .def("invalidate", &utils::Header::invalidate)
-            .def("setMessageFlags", &utils::Header::setMessageFlags)
-            .def("for_send", &utils::Header::for_send)
-            .def("for_recv", &utils::Header::for_recv)
-            .def("formatBuffer", &utils::Header::formatBuffer)
-            .def("format", &utils::Header::format)
-            .def("finalize_recv", &utils::Header::finalize_recv);
-*/
-    bp::class_<utils::Address>("Address", bp::init<std::string>())
-            .def(bp::init<utils::Address *>())
-            .def("__str__", &utils::Address::print)
-            .def("address", setaddress)
-            .def("address", getaddress, bp::return_value_policy<bp::copy_const_reference>())
-            .def("key", &utils::Address::key)
-            .def("valid", &utils::Address::valid);
+int Address_init(pyAddress* self, PyObject* args, PyObject* kwds) {
+    (void)kwds;
+    PyObject *cpadr = NULL;
+    char* adr = NULL;
+    int adr_size;
+    self->address = NULL;
+    if(!PyArg_ParseTuple(args,"|z#O", &adr, &adr_size, &cpadr)) {
+        PyErr_SetString(PyExc_TypeError, "Either an address, or another Address object must be given1.");
+        return -1;
     }
+    if(adr == NULL && cpadr == NULL){
+        PyErr_SetString(PyExc_TypeError, "Either an address, or another Address object must be given2.");
+        return -1;
+
+    }
+    else if (adr != NULL && cpadr != NULL) {
+        PyErr_SetString(PyExc_TypeError, "Either an address, or another Address object must be given3.");
+        return -1;
+    }
+    if (cpadr != NULL && Py_IS_TYPE(&cpadr, &AddressType)) {
+        pyAddress* temp = (pyAddress *)(cpadr);
+        self->address = new communication::utils::Address(temp->address);
+        Py_XDECREF(temp);
+    } else if (adr != NULL){
+        PySys_WriteStdout("X");
+        PySys_WriteStdout("_ %i _", adr_size);
+        PySys_WriteStdout("= %s =", adr);
+
+        self->address = new communication::utils::Address(adr);
+    } else {
+        PyErr_SetString(PyExc_TypeError, "Either an address, or another Address object must be given4.");
+        return -1;
+    }
+    return 0;
+}
+PyObject* Address_new(PyTypeObject *type, PyObject* args, PyObject* kwds) {
+    (void)args;
+    (void)kwds;
+    pyAddress *self;
+    self = (pyAddress*)type->tp_alloc(type, 0);
+    self->address = NULL;
+
+    return (PyObject*)self;
+}
+
+PyObject* Address_str(pyAddress* self) {
+    return PyUnicode_FromFormat("%s", self->address->print().c_str());
+}
+
+PyObject* Address_address(pyAddress* self, PyObject* arg) {
+    char* adr = NULL;
+    int adr_size;
+    PySys_WriteStdout("= %s =\n", (char*)arg);
+
+    if(!PyArg_ParseTuple(arg, "|z#", &adr, &adr_size)) {
+        PyErr_SetString(PyExc_TypeError, "Invalid argument given.");
+        return NULL;
+    }
+    PySys_WriteStdout("X");
+    if (adr) {
+        PySys_WriteStdout("X");
+        PySys_WriteStdout("_ %i _\n", adr_size);
+        PySys_WriteStdout("= %s =\n", (char*)arg);
+        self->address->address((char*)adr);
+        return NULL;
+    } else {
+        return PyUnicode_FromFormat("%s", self->address->address().c_str());
+    }
+}
+
+PyObject* Address_key(pyAddress* self) {
+    return PyLong_FromLong(self->address->key());
+}
+
+PyObject* Address_valid(pyAddress* self) {
+    if (self->address->valid())
+        Py_RETURN_TRUE;
+    Py_RETURN_FALSE;
+}
+
+
+void register_enums(PyObject* module) {
+    PyObject* enum_module = PyImport_ImportModule("enum");
+    if(enum_module == NULL) {
+        return;
+    }
+    PyObject* comm_types = PyDict_New();
+    PyDict_SetItemString(comm_types, "NULL_COMM", PyLong_FromLong(COMM_TYPE::NULL_COMM));
+    PyDict_SetItemString(comm_types, "IPC_COMM", PyLong_FromLong(COMM_TYPE::IPC_COMM));
+    PyDict_SetItemString(comm_types, "ZMQ_COMM", PyLong_FromLong(COMM_TYPE::ZMQ_COMM));
+    PyDict_SetItemString(comm_types, "SERVER_COMM", PyLong_FromLong(COMM_TYPE::SERVER_COMM));
+    PyDict_SetItemString(comm_types, "CLIENT_COMM", PyLong_FromLong(COMM_TYPE::CLIENT_COMM));
+    PyDict_SetItemString(comm_types, "MPI_COMM", PyLong_FromLong(COMM_TYPE::MPI_COMM));
+
+    COMMTYPE = PyObject_CallMethod(enum_module, "IntEnum", "sO", "COMM_TYPE", comm_types);
+    Py_CLEAR(comm_types);
+    if(PyModule_AddObject(module, "COMM_TYPE", COMMTYPE) < 0)
+        Py_CLEAR(COMMTYPE);
+
+    PyObject* direction_types = PyDict_New();
+    PyDict_SetItemString(direction_types, "SEND", PyLong_FromLong(DIRECTION::SEND));
+    PyDict_SetItemString(direction_types, "NONE", PyLong_FromLong(DIRECTION::NONE));
+    PyDict_SetItemString(direction_types, "RECV", PyLong_FromLong(DIRECTION::RECV));
+
+    DIRECTION_TYPE = PyObject_CallMethod(enum_module, "IntEnum", "sO", "DIRECTION", direction_types);
+    Py_CLEAR(direction_types);
+    if(PyModule_AddObject(module, "DIRECTION", DIRECTION_TYPE) < 0)
+        Py_CLEAR(DIRECTION_TYPE);
 }

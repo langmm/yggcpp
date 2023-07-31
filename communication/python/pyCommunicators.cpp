@@ -1,5 +1,5 @@
 #include <boost/python.hpp>
-#include "python/pyYggComm.hpp"
+#include "python/pyYggCommBase.hpp"
 #include "communicators/comms.hpp"
 #include "communicators/DefaultComm.hpp"
 

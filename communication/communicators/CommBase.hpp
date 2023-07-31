@@ -1,5 +1,10 @@
 #pragma once
 
+#ifdef WITH_PYTHON
+#define VIRT_END
+#else
+#define VIRT_END = 0
+#endif
 
 #include "utils/tools.hpp"
 #include "utils/enums.hpp"
@@ -95,7 +100,7 @@ public:
       @returns int Values >= 0 indicate success.
      */
      int send_eof() {
-       return send(YGG_MSG_EOF);
+        return send(YGG_MSG_EOF);
      }
     /*!
       @brief Receive a string message from the communicator.
@@ -104,14 +109,14 @@ public:
         received message if message was received.
      */
     long recv(std::string& data) {
-      char* str = NULL;
-      size_t len = 0;
-      long out = recv(str, len, true);
-      if (out >= 0) {
-	data.assign(str, static_cast<size_t>(out));
-	free(str);
-      }
-      return out;
+        char* str = NULL;
+        size_t len = 0;
+        long out = recv(str, len, true);
+        if (out >= 0) {
+            data.assign(str, static_cast<size_t>(out));
+            free(str);
+        }
+        return out;
     }
     /*!
       @brief Send a string message through the communicator.
@@ -156,8 +161,8 @@ public:
     */
     template<typename T1>
     int sendVar(const T1 data) {
-      ygglog_debug << "CommBase(" << name << ")::send(const T1& data)" << std::endl;
-      return send(1, data);
+        ygglog_debug << "CommBase(" << name << ")::send(const T1& data)" << std::endl;
+        return send(1, data);
     }
     /*!
       @brief Receive an object from the communicator.
@@ -168,8 +173,8 @@ public:
     */
     template<typename T1>
     long recvVar(T1& data) {
-      ygglog_debug << "CommBase(" << name << ")::recv(T1& data)" << std::endl;
-      return recv(1, &data);
+        ygglog_debug << "CommBase(" << name << ")::recv(T1& data)" << std::endl;
+        return recv(1, &data);
     }
   
     /*!
@@ -179,7 +184,7 @@ public:
      */
     // template<>
     int sendVar(const rapidjson::Document& data) {
-      return send(1, &data);
+        return send(1, &data);
     }
     /*!
       @brief Send a Ply object through the communicator.
@@ -189,7 +194,7 @@ public:
     */
     // template<>
     int sendVar(const rapidjson::Ply& data) {
-      return send(1, &data);
+        return send(1, &data);
     }
     /*!
       @brief Send a ObjWavefront object through the communicator.
@@ -199,7 +204,7 @@ public:
     */
     // template<>
     int sendVar(const rapidjson::ObjWavefront& data) {
-      return send(1, &data);
+        return send(1, &data);
     }
 
     /*!
@@ -254,25 +259,25 @@ public:
       @brief Get the number of messages in the communicator.
       @return Number of messages.
      */
-    virtual int comm_nmsg() const = 0;
+    virtual int comm_nmsg() const VIRT_END;
 
     /*!
       @brief Close the communicator.
      */
-    virtual void close() = 0;
+    virtual void close() VIRT_END;
 
     /*!
       @brief Check if the communicator is closed.
       @return true if the communicator is closed, false otherwise.
      */
-    virtual bool is_closed() const = 0;
+    virtual bool is_closed() const VIRT_END;
 
     /*!
       @brief Check if the communicator is open.
       @return true if the communicator is open, false otherwise.
      */
     virtual bool is_open() const {
-      return (!is_closed());
+        return (!is_closed());
     }
 
     /*!
@@ -363,11 +368,11 @@ protected:
 				    size_t msg_len, int allow_realloc,
 				    int temp);
     virtual Comm_t* create_worker(utils::Address* address,
-				  const DIRECTION&, int flgs) = 0;
+				  const DIRECTION&, int flgs) VIRT_END;
     virtual Comm_t* create_worker_send(utils::Header& head);
     virtual Comm_t* create_worker_recv(utils::Header& head);
-    virtual int send_single(const char *data, const size_t &len, const utils::Header& header) = 0;
-    virtual long recv_single(char*& data, const size_t &len, bool allow_realloc) = 0;
+    virtual int send_single(const char *data, const size_t &len, const utils::Header& header) VIRT_END;
+    virtual long recv_single(char*& data, const size_t &len, bool allow_realloc) VIRT_END;
 
     //Comm_t(const Comm_t* comm, COMM_TYPE type);
     /**
@@ -378,6 +383,9 @@ protected:
      * @param flgs Initial bitwise flags
      * @see utils::Address()
      */
+#ifdef WITH_PYTHON
+public:
+#endif
     Comm_t(utils::Address *address, DIRECTION direction, const COMM_TYPE &t, int flgs = 0);
 
     /**
@@ -387,6 +395,9 @@ protected:
      * @param t Enumerated communicator type
      */
     explicit Comm_t(const std::string &name, DIRECTION direction = NONE, const COMM_TYPE &t = NULL_COMM, int flgs = 0);
+#ifdef WITH_PYTHON
+protected:
+#endif
 
     /**
      * Checks the size of the message to see if it exceeds the maximum allowable size as define by YGG_MSG_MAX
@@ -395,7 +406,7 @@ protected:
      */
     bool check_size(const size_t &len) const;
 
-    virtual void reset() = 0;
+    virtual void reset() VIRT_END;
 
     COMM_TYPE type; //!< Comm type.
     //void *other; //!< Pointer to additional information for the comm.
