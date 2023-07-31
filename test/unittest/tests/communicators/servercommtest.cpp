@@ -70,7 +70,11 @@ TEST(ServerComm, recv) {
 
     ELF_BEGIN;
     ELF_RECV(0);
-    EXPECT_LT(sc.recv(data, len, false), -1);
+    RETMSG_META = "\"request_id\": \"12345\"";
+    ELF_META(sc);
+    EXPECT_EQ(sc.recv(data, len, false), -RETMSG.size());
+    EXPECT_EQ(sc.recv(data, len, true), RETMSG.size());
+    EXPECT_EQ(strcmp(data, RETMSG.c_str()), 0);
     ELF_RECV_REVERT;
     ELF_END;
     free(data);

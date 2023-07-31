@@ -242,16 +242,14 @@ TEST(MPIComm, recv) {
     mpic.restore();
 #ifdef ELF_AVAILABLE
     ELF_BEGIN;
-    ELF_REPLACE_RECV_MPI;
-    ELF_REPLACE_NMSG_MPI;
+    ELF_RECV_T(MPI, -1);
     // Error in MPI_Probe
     EXPECT_EQ(mpic.recv(data, len, true), -1);
     // Error in MPI_Recv
     RETVAL = 1;
     RETVAL_INC_POLL = -1;
     EXPECT_EQ(mpic.recv(data, len, true), -1);
-    ELF_RESTORE_RECV_MPI;
-    ELF_RESTORE_NMSG_MPI;
+    ELF_RECV_REVERT_T(MPI);
     ELF_END;
 #endif // ELF_AVAILABLE
 }

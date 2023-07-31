@@ -198,9 +198,12 @@ TEST(ZMQComm, recv) {
     ELF_BEGIN;
     char* data = NULL;
     size_t len = 0;
-    // Successful recv
-    ELF_REPLACE_RECV_ZMQ;
-    ELF_REPLACE_NMSG_ZMQ;
+    // Replace recv
+    ELF_RECV_T(ZMQ, 0);
+    ELF_META_ZMQ(zmq_send);
+    // Sucessful receive
+    EXPECT_GE(zmq_recv.recv(data, len, true), 0);
+    EXPECT_EQ(strcmp(data, RETMSG.c_str()), 0);
     // Fail on zmq_getsockopt to check if there is more to the message
     ELF_BEGIN_F(zmq_getsockopt);
     RETVAL = 0;
@@ -209,14 +212,6 @@ TEST(ZMQComm, recv) {
     RETMSG = "";
     EXPECT_GE(zmq_recv.recv(data, len, true), -1);
     ELF_END_F(zmq_getsockopt);
-    // Sucessful receive
-    RETVAL = 0;
-    RETVAL_INC_POLL = 0;
-    RETVAL_INC_RECV = 0;
-    RETMSG = "";
-    EXPECT_GE(zmq_send.getReply().create(RETMSG), 0);
-    EXPECT_GE(zmq_recv.recv(data, len, true), 0);
-    EXPECT_EQ(strcmp(data, "Hello world"), 0);
     // Fail receive on poll
     RETVAL = -1;
     RETVAL_INC_RECV = 0;
@@ -233,8 +228,7 @@ TEST(ZMQComm, recv) {
     EXPECT_EQ(zmq_recv.recv(data, len, true), -1);
     ELF_END_F(realloc);
     free(data);
-    ELF_RESTORE_RECV_ZMQ;
-    ELF_RESTORE_NMSG_ZMQ;
+    ELF_RECV_REVERT_T(ZMQ);
     ELF_END;
 #endif // ELF_AVAILABLE
 }
