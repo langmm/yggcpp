@@ -40,7 +40,7 @@ std::string RETMSG_META = "";
 std::string _mock_message() {
   if (RETMSG.empty())
     return RETMSG;
-  std::string out = "YGG_MSG_HEAD{\"__meta__\": {\"id\": \"1\", \"size\": " + std::to_string(RETMSG.size());
+  std::string out = "YGG_MSG_HEAD{\"__meta__\": {\"id\": \"1\", \"model\": \"model\", \"size\": " + std::to_string(RETMSG.size());
   if (!RETMSG_META.empty())
     out += ", " + RETMSG_META;
   out += "}}YGG_MSG_HEAD" + RETMSG;
