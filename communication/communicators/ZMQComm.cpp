@@ -199,8 +199,13 @@ void ZMQSocket::init(int type0, utils::Address* address,
 	  ygglog_debug << "ZMQSocket::init: Bound to endpoint '" << endpoint << "'" << std::endl;
 	  size_t idx_port = endpoint.find_last_of(':');
 	  assert(idx_port != std::string::npos);
-	  _last_port = stoi(endpoint.substr(idx_port + 1));
-	  ygglog_debug << "ZMQSocket::init: last_port = " << _last_port << std::endl;
+	  if (idx_port == std::string::npos) {
+	    except_msg = "ZMQSocket::init: Error getting port from endpoing";
+	  } else {
+	    ygglog_debug << "ZMQSocket::init: last_port = " << endpoint.substr(idx_port + 1) << ", idx_port = " << idx_port << std::endl;
+	    _last_port = stoi(endpoint.substr(idx_port + 1));
+	    ygglog_debug << "ZMQSocket::init: last_port = " << _last_port << std::endl;
+	  }
 	}
       }
 #ifdef _OPENMP
