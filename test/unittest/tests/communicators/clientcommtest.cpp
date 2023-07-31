@@ -136,7 +136,9 @@ TEST(ClientComm, recv) {
     RETMSG_META = "\"request_id\": \"" +
       cc.getRequests().requests[0].request_id + "\"";
     ELF_META(cc);
-    EXPECT_EQ(cc.recv(data, len, false), -RETMSG.size());
+    std::cerr << "META: " << communication::mock::_mock_message() << std::endl;
+    std::cerr << "HERE: " << RETMSG.size() << ", " << RETMSG << std::endl;
+    EXPECT_EQ(cc.recv(data, len, false), -static_cast<long>(RETMSG.size()));
     EXPECT_EQ(cc.recv(data, len, true), RETMSG.size());
     EXPECT_EQ(strcmp(data, RETMSG.c_str()), 0);
     ELF_RECV_REVERT;
