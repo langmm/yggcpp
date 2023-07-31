@@ -436,6 +436,8 @@
 #define ELF_RECV_T(type, ret)			\
   ELF_REPLACE_NMSG_ ## type;			\
   ELF_REPLACE_RECV_ ## type;			\
+  RETMSG = "Hello world";			\
+  RETMSG_META = "";				\
   RETVAL = ret
 #define ELF_RECV_REVERT_T(type)			\
   ELF_RESTORE_NMSG_ ## type;			\
@@ -452,6 +454,7 @@
 #define ELF_SEND_REVERT ELF_SEND_REVERT_T(IPC)
 #define ELF_RECV(ret) ELF_RECV_T(IPC, ret)
 #define ELF_RECV_REVERT ELF_RECV_REVERT_T(IPC)
+#define ELF_META(comm) ELF_META_IPC(comm)
 #else
 #define ELF_REPLACE_RECV ELF_REPLACE_RECV_ZMQ
 #define ELF_RESTORE_RECV ELF_RESTORE_RECV_ZMQ
@@ -463,6 +466,7 @@
 #define ELF_SEND_REVERT ELF_SEND_REVERT_T(ZMQ)
 #define ELF_RECV(ret) ELF_RECV_T(ZMQ, ret)
 #define ELF_RECV_REVERT ELF_RECV_REVERT_T(ZMQ)
+#define ELF_META(comm) ELF_META_ZMQ(comm)
 #endif
 
 #endif // ELF_AVAILABLE

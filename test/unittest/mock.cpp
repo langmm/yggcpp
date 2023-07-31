@@ -35,9 +35,18 @@ int RETVAL_INC_RECV = 0;
 int RETVAL_INC_POLL = 0;
 int SENDCOUNT = 0;
 std::string RETMSG = "";
-// int MPISTATUS = 0;
-// bool MPICANCEL = false;
+std::string RETMSG_META = "";
 
+std::string _mock_message() {
+  if (RETMSG.empty())
+    return RETMSG;
+  std::string out = "YGG_MSG_HEAD{\"__meta__\": {\"id\": \"1\", \"size\": " + std::to_string(RETMSG.size());
+  if (!RETMSG_META.empty())
+    out += ", " + RETMSG_META;
+  out += "}}YGG_MSG_HEAD" + RETMSG;
+  return out;
+}
+  
 char *alt_getenv(const char *) {
   return NULL;
 }
@@ -57,7 +66,8 @@ char *alt_getenv(const char *) {
   int out = RETVAL;				\
   RETVAL += RETVAL_INC_RECV;			\
   if (out < 0)					\
-    return err
+    return err;					\
+  std::string msgS = _mock_message()
   
 #ifdef IPCINSTALLED
 int msgsnd(int, const void *, size_t, int) {
@@ -80,9 +90,8 @@ int msgget(key_t, int) {
 
 ssize_t msgrcv(int, void* rbuf, size_t, long, int) {
   DO_ELF_RECV(out);
-  std::string msg = "Hello world";
-  memcpy(static_cast<communicator::msgbuf_t*>(rbuf)->data, msg.c_str(), msg.size());
-  return (ssize_t)(msg.size());
+  memcpy(static_cast<communicator::msgbuf_t*>(rbuf)->data, msgS.c_str(), msgS.size());
+  return (ssize_t)(msgS.size());
 }
 #endif // IPCINSTALLED
 
@@ -150,11 +159,9 @@ template<class OutputIt>
     return static_cast<int>(zmq_msg_size(msg));
   }
   int zmq_recvmsg (void *, zmq_msg_t *msg, int) {
-    std::cerr << "zmq_recvmsg: RETVAL = " << RETVAL << std::endl;
     DO_ELF_RECV(out);
-    std::string msgS =
-      "YGG_MSG_HEAD{\"__meta__\": {\"zmq_reply\": \"" + RETMSG +
-      "\", \"size\": 11, \"id\": \"1\"}}YGG_MSG_HEADHello world";
+    // "YGG_MSG_HEAD{\"__meta__\": {\"zmq_reply\": \"" + RETMSG_REPLY +
+    // "\", \"size\": 11, \"id\": \"1\"}}YGG_MSG_HEAD" + RETMSG;
     if (zmq_msg_init_size (msg, msgS.size()) != 0)
       return -1;
     memcpy(zmq_msg_data(msg), msgS.c_str(), msgS.size());
@@ -162,13 +169,11 @@ template<class OutputIt>
   }
 #ifdef ZMQ_HAVE_POLLER
   int zmq_poller_wait_all (void *, zmq_poller_event_t *, int n_events, long) {
-    std::cerr << "zmq_poller_wait_all: RETVAL = " << RETVAL << std::endl;
     DO_ELF_POLL(out);
     return n_events;
   }
 #else // ZMQ_HAVE_POLLER
   int zmq_poll (zmq_pollitem_t *, int nitems, long) {
-    std::cerr << "zmq_poll: RETVAL = " << RETVAL << std::endl;
     DO_ELF_POLL(out);
     return nitems;
   }
@@ -228,12 +233,22 @@ template<class OutputIt>
     DO_ELF_SEND(2);
     return MPI_SUCCESS;
   }
-  int MPI_Recv(void *, int, MPI_Datatype, int,
+  int MPI_Recv(void * buf, int count, MPI_Datatype datatype, int,
 	       int, MPI_Comm, MPI_Status * status) {
     // MPI_Status_set_cancelled(status, MPICANCEL);
     status->MPI_ERROR = RETVAL;
     status->MPI_SOURCE = 0;
     DO_ELF_RECV(2);
+    
+    int size = static_cast<int>(msgS.size());
+    if (datatype == MPI_INT && count == 1) {
+      memcpy(buf, &size, sizeof(int));
+    } else if (datatype == MPI_CHAR && count >= size) {
+      memcpy(buf, msgS.c_str(), msgS.size() * sizeof(char));
+    } else {
+      status->MPI_ERROR = MPI_ERR_COUNT;
+      return MPI_ERR_COUNT;
+    }
     return MPI_SUCCESS;
   }
 #endif

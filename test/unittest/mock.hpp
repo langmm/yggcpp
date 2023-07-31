@@ -76,7 +76,7 @@ extern char sublib_contents[256];
 
 namespace communication {
 namespace mock {
-  
+
 #ifdef ELF_AVAILABLE
 
 //extern int mock_method_return_value;
@@ -87,10 +87,11 @@ extern int RETVAL_INC_SEND;
 extern int RETVAL_INC_RECV;
 extern int RETVAL_INC_POLL;
 extern int SENDCOUNT;
-// extern int MPISTATUS;
-// extern bool MPICANCEL;
 extern std::string RETMSG;
+extern std::string RETMSG_META;
 
+std::string _mock_message();
+  
 #ifdef ZMQINSTALLED
 #define ELF_REPLACE_RECV_ZMQ			\
   RETVAL = -1;					\
@@ -107,6 +108,14 @@ extern std::string RETMSG;
   ELF_BEGIN_F(zmq_sendmsg)
 #define ELF_RESTORE_SEND_ZMQ			\
   ELF_END_F(zmq_sendmsg)
+#define ELF_META_ZMQ(comm)					\
+  {								\
+    std::string meta_reply_zmq = "";				\
+    EXPECT_GE(comm.getReply().create(meta_reply_zmq), 0);	\
+    if (!RETMSG_META.empty())					\
+      RETMSG_META += ", ";					\
+    RETMSG_META += "\"zmq_reply\": \"" + meta_reply_zmq + "\"";	\
+  }
 #ifdef ZMQ_HAVE_POLLER
 #define ELF_REPLACE_NMSG_ZMQ			\
   ELF_BEGIN_F(zmq_poller_wait_all)
@@ -140,6 +149,7 @@ extern std::string RETMSG;
   ELF_BEGIN_F(msgctl)
 #define ELF_RESTORE_NMSG_IPC			\
   ELF_END_F(msgctl)
+#define ELF_META_IPC(comm)
 #endif
   
 #if defined(MPIINSTALLED) && defined(MPI_COMM_WORLD)
@@ -162,6 +172,7 @@ extern std::string RETMSG;
   ELF_BEGIN_F(MPI_Probe)
 #define ELF_RESTORE_NMSG_MPI			\
   ELF_END_F(MPI_Probe)
+#define ELF_META_MPI(comm)
 #endif
 
 #define ELF_SET_SUCCESS				\

@@ -126,17 +126,19 @@ TEST(ClientComm, recv) {
     EXPECT_EQ(cc.recv(res_recv), res_send.size());
     EXPECT_EQ(res_recv, res_send);
 #ifdef ELF_RECV
-    std::string req = "Hello world";
-    std::string res = req;
-    char* data = NULL;
-    size_t len = 0;
     ELF_BEGIN;
     ELF_RECV(0);
-    cc.addRequest(res);
-    cc.addResponse(res);
-    EXPECT_EQ(cc.recv(data, len, false), -req.size());
-    EXPECT_EQ(cc.recv(data, len, true), req.size());
-    EXPECT_EQ(strcmp(data, req.c_str()), 0);
+    std::string req = "REQUEST";
+    char* data = NULL;
+    size_t len = 0;
+    cc.addRequest(req);
+    // cc.addResponse(req);
+    RETMSG_META = "\"request_id\": \"" +
+      cc.getRequests().requests[0].request_id + "\"";
+    ELF_META(cc);
+    EXPECT_EQ(cc.recv(data, len, false), -RETMSG.size());
+    EXPECT_EQ(cc.recv(data, len, true), RETMSG.size());
+    EXPECT_EQ(strcmp(data, RETMSG.c_str()), 0);
     ELF_RECV_REVERT;
     ELF_END;
     free(data);

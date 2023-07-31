@@ -154,7 +154,7 @@ TEST(IPCComm, recv) {
     size_t len = 1;
     // Failure to realloc
     long res = ipc.recv(data, len, false);
-    EXPECT_EQ(res, -11);
+    EXPECT_EQ(res, -RETMSG.size());
     // Replace realloc to test failure to realloc
     ELF_BEGIN_F(realloc);
     res = ipc.recv(data, len, true);
@@ -162,7 +162,7 @@ TEST(IPCComm, recv) {
     ELF_END_F(realloc);
     // Test successful receive
     res = ipc.recv(data, len, true);
-    EXPECT_EQ(res, 11);
+    EXPECT_EQ(res, RETMSG.size());
     // Test failure in receive
     RETVAL = 0;
     RETVAL_INC_POLL = -2;
@@ -174,13 +174,12 @@ TEST(IPCComm, recv) {
     RETVAL_INC_POLL = -1;
     RETVAL_INC_RECV = 1;
     errno = ENOMSG;
-    EXPECT_EQ(ipc.recv(data, len, true), 11);
+    EXPECT_EQ(ipc.recv(data, len, true), RETMSG.size());
     errno = 0;
     free(data);
     // Restore methods
     ELF_END_F(msgget);
-    ELF_RESTORE_RECV_IPC;
-    ELF_RESTORE_NMSG_IPC;
+    ELF_RECV_REVERT_T(IPC);
     ELF_END;
 #endif // ELF_AVAILABLE
 }
