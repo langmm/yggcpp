@@ -134,9 +134,8 @@ TEST(ClientComm, recv) {
     ELF_RECV(0);
     cc.addRequest(res);
     cc.addResponse(res);
-    std::cerr << "HERE: " << res.size() << ", " << res << std::endl;
-    EXPECT_EQ(cc.recv(data, len, false), -res.size());
-    EXPECT_EQ(cc.recv(data, len, true), res.size());
+    EXPECT_EQ(cc.recv(data, len, false), -req.size());
+    EXPECT_EQ(cc.recv(data, len, true), req.size());
     EXPECT_EQ(strcmp(data, req.c_str()), 0);
     ELF_RECV_REVERT;
     ELF_END;
