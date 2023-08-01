@@ -181,8 +181,8 @@ long ClientComm::recv_single(char*& rdata, const size_t &rlen, bool allow_reallo
     long ret = 0;
     while (!requests.isComplete(req_id)) {
         ygglog_debug << "ClientComm(" << name << ")::recv_single: Waiting for response to request " << req_id << std::endl;
-	if (response_comm->wait_for_recv(this->timeout_recv) < 0) {
-	  ygglog_debug << "ClientComm(" << name << ")::recv_single: Error in wait for message" << std::endl;
+	if (response_comm->wait_for_recv(this->timeout_recv) <= 0) {
+	  ygglog_debug << "ClientComm(" << name << ")::recv_single: No messages waiting" << std::endl;
 	  return -1;
 	}
         ret = response_comm->recv_single(rdata, buff_len, allow_realloc);

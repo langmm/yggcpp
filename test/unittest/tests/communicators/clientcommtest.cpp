@@ -119,29 +119,46 @@ TEST(ClientComm, recv) {
     std::string req_recv;
     std::string res_recv;
     EXPECT_TRUE(cc.addSignon());
+    // Successful exchange
     EXPECT_GE(cc.send(req_send), 0);
     EXPECT_EQ(cc.server_comm->recv(req_recv), req_send.size());
     EXPECT_EQ(req_recv, req_send);
     EXPECT_GE(cc.server_comm->send(res_send), 0);
     EXPECT_EQ(cc.recv(res_recv), res_send.size());
     EXPECT_EQ(res_recv, res_send);
+    // Failure due to timeout
+    std::string req = "REQUEST";
+    cc.set_timeout_recv(100);
+    cc.addRequest(req, true);
+    EXPECT_EQ(cc.recv(res_recv), -1);
 #ifdef ELF_RECV
     ELF_BEGIN;
     ELF_RECV(0);
-    std::string req = "REQUEST";
     char* data = NULL;
     size_t len = 0;
-    cc.addRequest(req, true);
-    // cc.addResponse(req);
+    // Successful
     size_t request_idx = cc.getRequests().requests.size() - 1;
     RETMSG_META = "\"request_id\": \"" +
       cc.getRequests().requests[request_idx].request_id + "\"";
     ELF_META(cc);
-    std::cerr << "META: " << communication::mock::_mock_message() << std::endl;
-    std::cerr << "HERE: " << RETMSG.size() << ", " << RETMSG << std::endl;
     EXPECT_EQ(cc.recv(data, len, false), -static_cast<long>(RETMSG.size()));
     EXPECT_EQ(cc.recv(data, len, true), RETMSG.size());
     EXPECT_EQ(strcmp(data, RETMSG.c_str()), 0);
+    // Failure in response recv
+    req = "REQUEST";
+    cc.addRequest(req, true);
+    request_idx = cc.getRequests().requests.size() - 1;
+    RETMSG_META = "\"request_id\": \"" +
+      cc.getRequests().requests[request_idx].request_id + "\"";
+    ELF_META(cc);
+    RETVAL = 1;
+    RETVAL_INC_POLL = -1;
+    EXPECT_EQ(cc.recv(data, len, false), -1);
+    // Failure in parsing header
+    RETMSG_META = "}";
+    std::cerr << "META: " << communication::mock::_mock_message() << std::endl;
+    std::cerr << "HERE: " << RETMSG.size() << ", " << RETMSG << std::endl;
+    EXPECT_THROW(cc.recv(data, len, false), std::exception);
     ELF_RECV_REVERT;
     ELF_END;
     free(data);
