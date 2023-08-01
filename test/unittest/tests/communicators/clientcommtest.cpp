@@ -151,7 +151,7 @@ TEST(ClientComm, recv) {
     RETMSG_META = "\"request_id\": \"" +
       cc.getRequests().requests[request_idx].request_id + "\"";
     ELF_META(cc);
-    RETVAL = 1;
+    RETVAL = 0;
     RETVAL_INC_POLL = -1;
     EXPECT_EQ(cc.recv(data, len, true), -1);
     // Failure in parsing header
