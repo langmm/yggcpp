@@ -663,16 +663,15 @@ bool ZMQComm::create_header_send(Header& header, const char* data, const size_t 
   // if (global_comm)
   //   return global_comm->create_header_send(header, data, len);
   assert(!global_comm);
-  if (!Comm_t::create_header_send(header, data, len))
-    return false;
-  if (!(header.flags & (HEAD_FLAG_CLIENT_SIGNON |
-			HEAD_FLAG_SERVER_SIGNON))) {
+  bool out = Comm_t::create_header_send(header, data, len);
+  if (out && !(header.flags & (HEAD_FLAG_CLIENT_SIGNON |
+			       HEAD_FLAG_SERVER_SIGNON))) {
     std::string reply_address;
     reply.create(reply_address);
     ygglog_debug << "ZMQComm(" << this->name << ")::create_header_send: zmq_reply = " << reply_address << std::endl;
     header.SetMetaString("zmq_reply", reply_address);
   }
-  return true;
+  return out;
 }
 
 bool ZMQComm::create_header_recv(Header& header, char*& data,

@@ -146,6 +146,7 @@ TEST(ZMQComm, exchange) {
   EXPECT_GT(sComm.sendVar(msg_send), 0);
   EXPECT_GT(rComm.recvVar(msg_recv), 0);
   EXPECT_EQ(msg_send, msg_recv);
+  EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));
   // Error in reply
   EXPECT_GT(sComm.sendVar(msg_send), 0);
   ZMQReply::set_return_val(false);
@@ -154,6 +155,30 @@ TEST(ZMQComm, exchange) {
   ZMQReply::set_return_val(true);
   EXPECT_GT(rComm.recvVar(msg_recv), 0);
   EXPECT_EQ(msg_send, msg_recv);
+#ifdef ELF_AVAILABLE
+  std::string msg_reply;
+  ELF_BEGIN;
+  // Failure in recv_stage1 send
+  ELF_SEND_T(ZMQ, -1);
+  EXPECT_FALSE(sComm.afterSendRecv(&sComm, &rComm));
+  ELF_SEND_REVERT_T(ZMQ);
+  // Failure in send_stage1 recv
+  ELF_RECV_T(ZMQ, -1);
+  EXPECT_FALSE(sComm.afterSendRecv(&sComm, &rComm));
+  ELF_RECV_REVERT_T(ZMQ);
+  // Failure in send_stage2 send
+  EXPECT_TRUE(sComm.getReply().send_stage1(msg_reply));
+  ELF_SEND_T(ZMQ, -1);
+  EXPECT_FALSE(sComm.getReply().send_stage2(msg_reply));
+  ELF_SEND_REVERT_T(ZMQ);
+  // Failure in recv_stage2 recv
+  EXPECT_TRUE(sComm.getReply().send_stage2(msg_reply));
+  ELF_RECV_T(ZMQ, -1);
+  EXPECT_FALSE(rComm.getReply().recv_stage2());
+  ELF_RECV_REVERT_T(ZMQ);
+  EXPECT_TRUE(rComm.getReply().recv_stage2());
+  ELF_END;
+#endif // ELF_AVAILABLE
 }
 
 TEST(ZMQComm, send) {
@@ -227,6 +252,13 @@ TEST(ZMQComm, recv) {
     ELF_BEGIN_F(realloc);
     EXPECT_EQ(zmq_recv.recv(data, len, true), -1);
     ELF_END_F(realloc);
+    // Fail on invalid header
+    RETVAL = 0;
+    RETVAL_INC_POLL = 0;
+    RETVAL_INC_RECV = 0;
+    RETMSG_META = "}";
+    EXPECT_EQ(zmq_recv.recv(data, len, true), -1);
+    // Cleanup
     free(data);
     ELF_RECV_REVERT_T(ZMQ);
     ELF_END;
@@ -237,7 +269,10 @@ TEST(ZMQComm, errors) {
   ZMQComm comm("", nullptr, SEND);
   std::string msg;
   comm.getReply().clear();
+  EXPECT_FALSE(comm.getReply().recv_stage1(msg));
   EXPECT_FALSE(comm.getReply().recv_stage2(msg));
+  EXPECT_FALSE(comm.getReply().send_stage1(msg));
+  EXPECT_FALSE(comm.getReply().send_stage2(msg));
 }
 
 #else // ZMQINSTALLED
