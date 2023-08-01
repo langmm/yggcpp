@@ -533,10 +533,6 @@ ADD_CONSTRUCTORS_DEF(ZMQComm)
 void ZMQComm::init() {
   updateMaxMsgSize(1048576);
   msgBufSize = 100;
-  init_handle();
-}
-
-void ZMQComm::init_handle() {
   assert(!handle);
   // TODO: Handle multiple comms
   // if (flags & (COMM_FLAG_CLIENT | COMM_FLAG_SERVER_RESPONSE)) {

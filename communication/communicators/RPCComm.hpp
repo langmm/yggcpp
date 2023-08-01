@@ -22,7 +22,7 @@ public:
   void addResponseSchema(const std::string& s, bool use_generic=false);
   void addResponseSchema(const rapidjson::Value& s,
 			 bool use_generic=false);
-  void addResponseSchema(const Metadata& metadata,
+  void addResponseSchema(const utils::Metadata& metadata,
 			 bool use_generic=false);
   void addResponseFormat(const std::string& fmt, bool use_generic=false);
   
@@ -42,7 +42,7 @@ protected:
   // }
 #endif
   
-  Metadata& get_metadata(const DIRECTION dir=NONE) override;
+  utils::Metadata& get_metadata(const DIRECTION dir=NONE) override;
   RequestList requests;
 };
   

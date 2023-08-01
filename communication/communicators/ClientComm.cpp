@@ -30,7 +30,7 @@ void ClientComm::set_timeout_recv(int new_timeout) {
   Comm_t* active_comm = requests.comms[0];
   active_comm->set_timeout_recv(new_timeout);
 }
-int ClientComm::wait_for_recv(const int) {
+int ClientComm::wait_for_recv(const int&) {
   // Handle wait in recv_single for response comm
   return 1;
 }

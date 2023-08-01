@@ -571,7 +571,7 @@ protected:
 		  const char* src, const size_t src_len,
 		  bool allow_realloc);
 
-    virtual Metadata& get_metadata(const DIRECTION dir=NONE);
+    virtual utils::Metadata& get_metadata(const DIRECTION dir=NONE);
     int update_datatype(const rapidjson::Value& new_schema,
 			const DIRECTION dir);
     template<typename T>
@@ -584,7 +584,7 @@ protected:
 		  RAPIDJSON_DISABLEIF((internal::OrExpr<YGGDRASIL_IS_ANY_SCALAR(T), internal::IsSame<T, bool> >))) {}
     template<typename T>
     bool checkType(const T& data, const DIRECTION dir) {
-      Metadata& meta = get_metadata(dir);
+      utils::Metadata& meta = get_metadata(dir);
       if (dir == RECV)
 	zeroData(&data);
       try {
@@ -596,6 +596,8 @@ protected:
     }
     virtual bool create_header_send(utils::Header& header, const char* data, const size_t &len);
     virtual bool create_header_recv(utils::Header& header, char*& data, const size_t &len,
+				    size_t msg_len, int allow_realloc,
+				    int temp);
     rapidjson::Value& getSchema(const DIRECTION dir=NONE) {
       return get_metadata(dir).getSchema();
     }

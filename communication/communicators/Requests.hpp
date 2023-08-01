@@ -140,7 +140,7 @@ public:
 		   << request_id << std::endl;
       return existing_idx;
     }
-    int addRequestServer(Header& header) {
+    int addRequestServer(utils::Header& header) {
       ygglog_debug << "addRequestServer: begin" << std::endl;
       std::string request_id(header.GetMetaString("request_id"));
       std::string response_address(header.GetMetaString("response_address"));
@@ -159,7 +159,7 @@ public:
 		   << std::endl;
       return static_cast<int>(idx);
     }
-    int addResponseServer(Header& header, const char* data, const size_t len) {
+    int addResponseServer(utils::Header& header, const char* data, const size_t len) {
       ygglog_debug << "addResponseServer: begin" << std::endl;
       if (requests.size() == 0) {
 	ygglog_error << "addResponseServer: Server does not have any unprocessed requests" << std::endl;
@@ -178,7 +178,7 @@ public:
 	signon_complete << ")" << std::endl;
       return 0;
     }
-    int addResponseClient(Header& header, const char* data, const size_t len) {
+    int addResponseClient(utils::Header& header, const char* data, const size_t len) {
       ygglog_debug << "addResponseClient: begin" << std::endl;
       std::string request_id(header.GetMetaString("request_id"));
       std::string partner_model(header.GetMetaString("model"));
@@ -229,7 +229,7 @@ public:
 	if (!requests[i].is_signon)
 	  return requests[i].request_id;
       }
-      ygglog_throw_error("activeRequestClient: No active requests");
+      utils::ygglog_throw_error("activeRequestClient: No active requests");
       return ""; // GCOVR_EXCL_LINE
     }
     int popRequestServer() {
@@ -312,7 +312,7 @@ public:
 			   bool use_generic=false) {
       response_metadata.fromSchema(s, use_generic);
     }
-    void addResponseSchema(const Metadata& metadata,
+    void addResponseSchema(const utils::Metadata& metadata,
 			   bool use_generic=false) {
       response_metadata.fromMetadata(metadata, use_generic);
     }

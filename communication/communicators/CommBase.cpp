@@ -247,10 +247,10 @@ void Comm_t::addSchema(const Metadata& s) {
 void Comm_t::addSchema(const rapidjson::Value& s, bool isMetadata) {
   get_metadata().fromSchema(s, isMetadata);
 }
-void Comm_t::addSchema(const std::string schemaStr, bool isMetadata) {
+void Comm_t::addSchema(const std::string& schemaStr, bool isMetadata) {
   get_metadata().fromSchema(schemaStr, isMetadata);
 }
-void Comm_t::addFormat(const std::string format_str, bool as_array) {
+void Comm_t::addFormat(const std::string& format_str, bool as_array) {
   get_metadata().fromFormat(format_str, as_array);
 }
 void Comm_t::copySchema(const Comm_t* other) {
@@ -417,7 +417,7 @@ void Comm_t::set_timeout_recv(int new_timeout) {
   }
   timeout_recv = new_timeout;
 }
-int Comm_t::wait_for_recv(const int tout) {
+int Comm_t::wait_for_recv(const int& tout) {
   if (global_comm)
     return global_comm->wait_for_recv(tout);
   clock_t start = clock();

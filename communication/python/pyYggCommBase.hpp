@@ -7,6 +7,12 @@
 #include "communicators/CommBase.hpp"
 #include "pyUtils.hpp"
 
+// TODO:
+// Static properties:
+// - address
+// - communicator type
+
+
 typedef struct {
     PyObject_HEAD
     communication::communicator::Comm_t *comm;
@@ -23,26 +29,28 @@ static PyObject* Comm_t_send_eof(pyComm_t* self);
 static PyObject* Comm_t_set_timeout_recv(pyComm_t* self, PyObject* arg);
 static PyObject* Comm_t_wait_for_recv(pyComm_t* self, PyObject* arg);
 static PyObject* Comm_t_is_open(pyComm_t* self);
-static PyObject* Comm_t_getType(pyComm_t* self);
+// static PyObject* Comm_t_getType(pyComm_t* self);
 
 
-static PyObject* Comm_t_sendVar(pyComm_t* self, PyObject* arg);
-static PyObject* Comm_t_vRecv(pyComm_t* self, PyObject* arg);
-static PyObject* Comm_t_vSend(pyComm_t* self, PyObject* arg);
-static PyObject* Comm_t_addSchema(pyComm_t* self, PyObject* arg);
-static PyObject* Comm_t_addFormat(pyComm_t* self, PyObject* arg);
+// static PyObject* Comm_t_sendVar(pyComm_t* self, PyObject* arg);
+// static PyObject* Comm_t_vRecv(pyComm_t* self, PyObject* arg);
+// static PyObject* Comm_t_vSend(pyComm_t* self, PyObject* arg);
 
-static PyObject* Comm_t_sendVar(pyComm_t* self, PyObject* arg);
+// MAYBE
+// static PyObject* Comm_t_addSchema(pyComm_t* self, PyObject* arg);
+// static PyObject* Comm_t_addFormat(pyComm_t* self, PyObject* arg);
 
-static PyObject* Comm_t_recVar(pyComm_t* self, PyObject* arg);
+// static PyObject* Comm_t_sendVar(pyComm_t* self, PyObject* arg);
+
+// static PyObject* Comm_t_recVar(pyComm_t* self, PyObject* arg);
 
 static PyObject* Comm_t_comm_nmsg(pyComm_t* self);
 static PyObject* Comm_t_close(pyComm_t* self);
 static PyObject* Comm_t_is_closed(pyComm_t* self);
-static PyObject* Comm_t_create_worker(pyComm_t* self, PyObject* arg);
-static PyObject* Comm_t_send_single(pyComm_t* self, PyObject* arg);
-static PyObject* Comm_t_recv_single(pyComm_t* self, PyObject* arg);
-static PyObject* Comm_t_recv(pyComm_t* self, PyObject* arg);
+// static PyObject* Comm_t_create_worker(pyComm_t* self, PyObject* arg);
+// static PyObject* Comm_t_send_single(pyComm_t* self, PyObject* arg);
+// static PyObject* Comm_t_recv_single(pyComm_t* self, PyObject* arg);
+// static PyObject* Comm_t_recv(pyComm_t* self, PyObject* arg);
 static PyObject* Comm_t_str(pyComm_t* self);
 
 static PyMethodDef Comm_t_methods[] = {
@@ -50,9 +58,9 @@ static PyMethodDef Comm_t_methods[] = {
         {"send", (PyCFunction) Comm_t_send, METH_VARARGS, ""},
         {"close", (PyCFunction) Comm_t_close, METH_NOARGS, ""},
         {"is_closed", (PyCFunction) Comm_t_is_closed, METH_NOARGS, ""},
-        {"create_worker", (PyCFunction) Comm_t_create_worker, METH_VARARGS, ""},
-        {"send_single", (PyCFunction) Comm_t_send_single, METH_VARARGS, ""},
-        {"recv_single", (PyCFunction) Comm_t_recv_single, METH_VARARGS, ""},
+        // {"create_worker", (PyCFunction) Comm_t_create_worker, METH_VARARGS, ""},
+        // {"send_single", (PyCFunction) Comm_t_send_single, METH_VARARGS, ""},
+        // {"recv_single", (PyCFunction) Comm_t_recv_single, METH_VARARGS, ""},
         {"recv", (PyCFunction) Comm_t_recv, METH_VARARGS, ""},
         {"send_eof", (PyCFunction) Comm_t_send_eof, METH_NOARGS, ""},
         {"set_timeout_recv", (PyCFunction) Comm_t_set_timeout_recv, METH_VARARGS, ""},
@@ -150,11 +158,7 @@ static int Comm_t_init(pyComm_t* self, PyObject* args, PyObject* kwds) {
         PyErr_SetString(PyExc_TypeError, "");
         return -1;
     }
-    if(adr != NULL) {
-        self->comm = new communication::communicator::Comm_t((communication::utils::Address*)adr, (DIRECTION)dirn, (COMM_TYPE)commtype, flags);
-    } else {
-        self->comm = new communication::communicator::Comm_t(name, (DIRECTION)dirn, (COMM_TYPE)commtype, flags);
-    }
+    self->comm = new communication::communicator::Comm_t(name, (communication::utils::Address*)adr, (DIRECTION)dirn, (COMM_TYPE)commtype, flags);
     return 0;
 }
 
@@ -171,27 +175,38 @@ PyObject* Comm_t_comm_nmsg(pyComm_t* self) {
     return PyLong_FromLong(self->comm->comm_nmsg());
 }
 
-PyObject* Comm_t_sendVar(pyComm_t* self, PyObject* arg) {
-    Py_ssize_t psize = PyTuple_Size(arg);
-    if(psize == 1) {
-        return PyLong_FromLong(self->comm->send(1, ));
-    } else if (psize == 2) {
-
-    } else {
-        ///////
-    }
-}
-
-PyObject* Comm_t_recVar(pyComm_t* self, PyObject* arg) {
-
-}
-
 PyObject* Comm_t_send(pyComm_t* self, PyObject* arg) {
-
-    //int send(const char *data, const size_t &len)
-    //int send(const int nargs, ...);
-
+    rapidjson::Document doc;
+    doc.SetPythonObjectRaw(arg, doc.GetAllocator());
+    if (self->comm->sendVar(doc) < 0)
+      Py_RETURN_FALSE;
+    Py_RETURN_TRUE;
 }
+
+PyObject* Comm_t_recv(pyComm_t* self, PyObject*) {
+    rapidjson::Document doc;
+    long flag = self->comm->recvVar(doc);
+    PyObject* pyFlag;
+    PyObject* res;
+    if (flag < 0) {
+      Py_INCREF(Py_False);
+      pyFlag = Py_False;
+      Py_INCREF(Py_None);
+      res = Py_None;
+    } else {
+      Py_INCREF(Py_True);
+      pyFlag = Py_True;
+      res = doc.GetPythonObjectRaw();
+    }
+    return PyTuple_Pack(2, pyFlag, res);
+}
+
+// PyObject* Comm_t_send(pyComm_t* self, PyObject* arg) {
+
+//     //int send(const char *data, const size_t &len)
+//     //int send(const int nargs, ...);
+
+// }
 
 PyObject* Comm_t_close(pyComm_t* self) {
     self->comm->close();
@@ -205,19 +220,19 @@ PyObject* Comm_t_is_closed(pyComm_t* self) {
 
 }
 
-PyObject* Comm_t_create_worker(pyComm_t* self, PyObject* arg) {
-}
+// PyObject* Comm_t_create_worker(pyComm_t* self, PyObject* arg) {
+// }
 
-PyObject* Comm_t_send_single(pyComm_t* self, PyObject* arg) {
-}
+// PyObject* Comm_t_send_single(pyComm_t* self, PyObject* arg) {
+// }
 
-PyObject* Comm_t_recv_single(pyComm_t* self, PyObject* arg) {
-}
+// PyObject* Comm_t_recv_single(pyComm_t* self, PyObject* arg) {
+// }
 
-PyObject* Comm_t_recv(pyComm_t* self, PyObject* arg) {
-}
+// PyObject* Comm_t_recv(pyComm_t* self, PyObject* arg) {
+// }
 
-PyObject* Comm_t_str(pyComm_t* self) {
+PyObject* Comm_t_str(pyComm_t*) {
     return PyUnicode_FromFormat("%s", "Comm_t");
 }
 
@@ -241,7 +256,7 @@ PyObject* Comm_t_wait_for_recv(pyComm_t* self, PyObject* arg) {
         PyErr_SetString(PyExc_TypeError, "Invalid argument given.");
         return NULL;
     }
-    int wt = self->comm-> wait_for_recv(tout);
+    int wt = self->comm->wait_for_recv(tout);
     return PyLong_FromLong(wt);
 }
 
@@ -251,25 +266,25 @@ PyObject* Comm_t_is_open(pyComm_t* self) {
     Py_RETURN_FALSE;
 }
 
-PyObject* Comm_t_getType(pyComm_t* self) {
-    COMM_TYPE ct = self->comm->getType();
-    return PyLong_FromLong(ct);
-}
+// PyObject* Comm_t_getType(pyComm_t* self) {
+//     COMM_TYPE ct = self->comm->getType();
+//     return PyLong_FromLong(ct);
+// }
 
 
-long recv(char*& data, const size_t &len, bool allow_realloc)
-long recv(const int nargs, ...);
-long recv(std::string& data)
+// long recv(char*& data, const size_t &len, bool allow_realloc)
+// long recv(const int nargs, ...);
+// long recv(std::string& data)
 
 
-int sendVar(const rapidjson::Document& data)
-int sendVar(const rapidjson::Ply& data)
-int sendVar(const rapidjson::ObjWavefront& data)
+// int sendVar(const rapidjson::Document& data)
+// int sendVar(const rapidjson::Ply& data)
+// int sendVar(const rapidjson::ObjWavefront& data)
 
-long vRecv(rapidjson::VarArgList& ap);
-int vSend(rapidjson::VarArgList& ap);
+// long vRecv(rapidjson::VarArgList& ap);
+// int vSend(rapidjson::VarArgList& ap);
 
-void addSchema(const utils::Metadata& s);
-void addSchema(const rapidjson::Value& s, bool isMetadata = false);
-void addSchema(const std::string& schemaStr, bool isMetadata = false);
-void addFormat(const std::string& format_str, bool as_array = false);
+// void addSchema(const utils::Metadata& s);
+// void addSchema(const rapidjson::Value& s, bool isMetadata = false);
+// void addSchema(const std::string& schemaStr, bool isMetadata = false);
+// void addFormat(const std::string& format_str, bool as_array = false);

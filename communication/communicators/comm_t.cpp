@@ -35,7 +35,7 @@ comm_t init_comm(const char* name, DIRECTION dir, const COMM_TYPE &t,
     if (!(ret.comm))
       ygglog_throw_error_c("init_comm(%s): Error initializing comm", name);
     if (datatype.metadata) {
-      Metadata* metadata = static_cast<Metadata*>(datatype.metadata);
+      communication::utils::Metadata* metadata = static_cast<communication::utils::Metadata*>(datatype.metadata);
       datatype.metadata = NULL;
       static_cast<communication::communicator::Comm_t*>(ret.comm)->addSchema(*metadata);
       delete metadata;
@@ -62,7 +62,7 @@ int set_response_format(comm_t comm, const char *fmt) {
 int set_response_datatype(comm_t x, dtype_t datatype) {
   _BEGIN_CPP {
     if (datatype.metadata) {
-      Metadata* metadata = static_cast<Metadata*>(datatype.metadata);
+      communication::utils::Metadata* metadata = static_cast<communication::utils::Metadata*>(datatype.metadata);
       datatype.metadata = NULL;
       if (x.comm)
 	static_cast<communication::communicator::RPCComm*>(x.comm)->addResponseSchema(*metadata);

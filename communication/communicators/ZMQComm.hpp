@@ -155,7 +155,6 @@ public:
 protected:
 #endif
     void init();
-    bool init_handle();
     int send_single(const char *data, const size_t &len, const utils::Header& header) override;
     long recv_single(char*& data, const size_t &len, bool allow_realloc) override;
     virtual bool do_reply_recv(const utils::Header& header);
