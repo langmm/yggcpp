@@ -457,6 +457,13 @@ long Comm_t::recv(char*& data, const size_t &len,
     }
     return ret;
   }
+  if (!cache.empty()) {
+    ret = copyData(data, len, cache.begin()->c_str(),
+		   cache.begin()->size(), allow_realloc);
+    if (ret >= 0)
+      cache.erase(cache.begin());
+    return ret;
+  }
   while (true) {
     if (is_closed()) {
       ygglog_error << "CommBase(" << name << ")::recv: Communicator closed." << std::endl;
@@ -466,14 +473,7 @@ long Comm_t::recv(char*& data, const size_t &len,
       ygglog_error << "CommBase(" << name << ")::recv: No messages waiting" << std::endl;
       return -1;
     }
-    if (!cache.empty()) {
-      ret = copyData(data, len, cache.begin()->c_str(),
-		     cache.begin()->size(), allow_realloc);
-      if (ret >= 0)
-	cache.erase(cache.begin());
-    } else {
-      ret = recv_single(data, len, allow_realloc);
-    }
+    ret = recv_single(data, len, allow_realloc);
     if (ret < 0) {
       ygglog_error << "CommBase(" << name << ")::recv: Failed to receive header" << std::endl;
       return ret;
