@@ -647,6 +647,7 @@ protected:
     int timeout_recv; //!< Time to wait for messages during receive.
     WorkerList workers; //!< Communicator to use for sending large messages.
     Comm_t* global_comm; // !< Pointer to global comm that this comm shadows.
+    std::vector<std::string> cache; // !< Cache of messages received.
 
     static std::vector<Comm_t*> registry;
     bool get_global_scope_comm();

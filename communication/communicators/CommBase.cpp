@@ -447,8 +447,12 @@ long Comm_t::recv(char*& data, const size_t &len,
     size_t tmp_len = 0;
     long ret = recv(tmp, tmp_len, true);
     if (ret >= 0 || ret == -2) {
-      if (ret >= 0)
-	ret = copyData(data, len, tmp, ret, false);
+      if (ret >= 0) {
+	tmp_len = static_cast<size_t>(ret);
+	ret = copyData(data, len, tmp, tmp_len, false);
+      }
+      if (ret < 0)
+	cache.emplace_back(tmp, tmp_len);
       if (tmp)
 	free(tmp);
     }
@@ -463,7 +467,14 @@ long Comm_t::recv(char*& data, const size_t &len,
       ygglog_error << "CommBase(" << name << ")::recv: No messages waiting" << std::endl;
       return -1;
     }
-    ret = recv_single(data, len, allow_realloc);
+    if (!cache.empty()) {
+      ret = copyData(data, len, cache.begin()->c_str(),
+		     cache.begin()->size(), allow_realloc);
+      if (ret >= 0)
+	cache.erase(cache.begin());
+    } else {
+      ret = recv_single(data, len, allow_realloc);
+    }
     if (ret < 0) {
       ygglog_error << "CommBase(" << name << ")::recv: Failed to receive header" << std::endl;
       return ret;
