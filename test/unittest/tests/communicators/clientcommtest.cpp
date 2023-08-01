@@ -153,12 +153,12 @@ TEST(ClientComm, recv) {
     ELF_META(cc);
     RETVAL = 1;
     RETVAL_INC_POLL = -1;
-    EXPECT_EQ(cc.recv(data, len, false), -1);
+    EXPECT_EQ(cc.recv(data, len, true), -1);
     // Failure in parsing header
     RETMSG_META = "}";
     std::cerr << "META: " << communication::mock::_mock_message() << std::endl;
     std::cerr << "HERE: " << RETMSG.size() << ", " << RETMSG << std::endl;
-    EXPECT_THROW(cc.recv(data, len, false), std::exception);
+    EXPECT_THROW(cc.recv(data, len, true), std::exception);
     ELF_RECV_REVERT;
     ELF_END;
     free(data);
