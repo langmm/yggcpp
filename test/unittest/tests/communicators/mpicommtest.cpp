@@ -213,6 +213,7 @@ TEST(MPIComm, recv) {
     mpic.set_timeout_recv(1000);
     mpi_registry_mock::MPIPROC = 50000;
     EXPECT_EQ(mpic.recv(data, len, false), -((long)mpi_registry_mock::msg.size()));
+    EXPECT_EQ(mpic.recv(data, len, true), mpi_registry_mock::msg.size());
     mpi_registry_mock::MPISTATUS = 2;
     EXPECT_EQ(mpic.recv(data, len, true), -1);
     mpi_registry_mock::MPISTATUS = 0;

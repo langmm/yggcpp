@@ -153,22 +153,19 @@ TEST(IPCComm, recv) {
     char* data = (char*)malloc(sizeof(char));
     size_t len = 1;
     // Failure to realloc
-    long res = ipc.recv(data, len, false);
-    EXPECT_EQ(res, -RETMSG.size());
+    EXPECT_EQ(ipc.recv(data, len, false), -RETMSG.size());
+    EXPECT_EQ(ipc.recv(data, len, true), RETMSG.size());
     // Replace realloc to test failure to realloc
     ELF_BEGIN_F(realloc);
-    res = ipc.recv(data, len, true);
-    EXPECT_EQ(res, -1);
+    EXPECT_EQ(ipc.recv(data, len, true), -1);
     ELF_END_F(realloc);
     // Test successful receive
-    res = ipc.recv(data, len, true);
-    EXPECT_EQ(res, RETMSG.size());
+    EXPECT_EQ(ipc.recv(data, len, true), RETMSG.size());
     // Test failure in receive
     RETVAL = 0;
     RETVAL_INC_POLL = -2;
     RETVAL_INC_RECV = 0;
-    res = ipc.recv(data, len, true);
-    EXPECT_EQ(res, -1);
+    EXPECT_EQ(ipc.recv(data, len, true), -1);
     // Retry in msgrcv
     RETVAL = 0;
     RETVAL_INC_POLL = -1;
