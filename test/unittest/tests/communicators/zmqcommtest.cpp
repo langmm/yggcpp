@@ -159,24 +159,32 @@ TEST(ZMQComm, exchange) {
   std::string msg_reply;
   ELF_BEGIN;
   // Failure in recv_stage1 send
-  ELF_SEND_T(ZMQ, -1);
-  EXPECT_FALSE(sComm.afterSendRecv(&sComm, &rComm));
-  ELF_SEND_REVERT_T(ZMQ);
+  {
+    ELF_SEND_T(ZMQ, -1);
+    EXPECT_FALSE(sComm.afterSendRecv(&sComm, &rComm));
+    ELF_SEND_REVERT_T(ZMQ);
+  }
   // Failure in send_stage1 recv
-  ELF_RECV_T(ZMQ, -1);
-  EXPECT_FALSE(sComm.afterSendRecv(&sComm, &rComm));
-  ELF_RECV_REVERT_T(ZMQ);
+  {
+    ELF_RECV_T(ZMQ, -1);
+    EXPECT_FALSE(sComm.afterSendRecv(&sComm, &rComm));
+    ELF_RECV_REVERT_T(ZMQ);
+  }
   // Failure in send_stage2 send
-  EXPECT_TRUE(sComm.getReply().send_stage1(msg_reply));
-  ELF_SEND_T(ZMQ, -1);
-  EXPECT_FALSE(sComm.getReply().send_stage2(msg_reply));
-  ELF_SEND_REVERT_T(ZMQ);
+  {
+    EXPECT_TRUE(sComm.getReply().send_stage1(msg_reply));
+    ELF_SEND_T(ZMQ, -1);
+    EXPECT_FALSE(sComm.getReply().send_stage2(msg_reply));
+    ELF_SEND_REVERT_T(ZMQ);
+  }
   // Failure in recv_stage2 recv
-  EXPECT_TRUE(sComm.getReply().send_stage2(msg_reply));
-  ELF_RECV_T(ZMQ, -1);
-  EXPECT_FALSE(rComm.getReply().recv_stage2());
-  ELF_RECV_REVERT_T(ZMQ);
-  EXPECT_TRUE(rComm.getReply().recv_stage2());
+  {
+    EXPECT_TRUE(sComm.getReply().send_stage2(msg_reply));
+    ELF_RECV_T(ZMQ, -1);
+    EXPECT_FALSE(rComm.getReply().recv_stage2());
+    ELF_RECV_REVERT_T(ZMQ);
+    EXPECT_TRUE(rComm.getReply().recv_stage2());
+  }
   ELF_END;
 #endif // ELF_AVAILABLE
 }
