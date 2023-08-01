@@ -131,10 +131,11 @@ TEST(ClientComm, recv) {
     std::string req = "REQUEST";
     char* data = NULL;
     size_t len = 0;
-    cc.addRequest(req);
+    cc.addRequest(req, true);
     // cc.addResponse(req);
+    size_t request_idx = cc.getRequests().requests.size() - 1;
     RETMSG_META = "\"request_id\": \"" +
-      cc.getRequests().requests[0].request_id + "\"";
+      cc.getRequests().requests[request_idx].request_id + "\"";
     ELF_META(cc);
     std::cerr << "META: " << communication::mock::_mock_message() << std::endl;
     std::cerr << "HERE: " << RETMSG.size() << ", " << RETMSG << std::endl;
