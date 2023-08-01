@@ -155,6 +155,8 @@ TEST(ClientComm, recv) {
     RETVAL_INC_POLL = -1;
     EXPECT_EQ(cc.recv(data, len, true), -1);
     // Failure in parsing header
+    RETVAL = 0;
+    RETVAL_INC_POLL = 0;
     RETMSG_META = "}";
     std::cerr << "META: " << communication::mock::_mock_message() << std::endl;
     std::cerr << "HERE: " << RETMSG.size() << ", " << RETMSG << std::endl;
