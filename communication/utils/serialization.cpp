@@ -1,9 +1,11 @@
 // Import arrays once
 // #define RAPIDJSON_FORCE_IMPORT_ARRAY
 #include "serialization.hpp"
-extern "C" {
-  void** rapidjson_ARRAY_API = NULL;
-}
+// Required so that symbol declared by numpy/arrayobject.h is defined
+// during compilation of the dynamic library
+// extern "C" {
+//   void** rapidjson_ARRAY_API = NULL;
+// }
 using namespace communication::utils;
 
 Metadata::Metadata() :
