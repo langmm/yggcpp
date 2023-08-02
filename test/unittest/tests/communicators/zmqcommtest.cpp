@@ -264,7 +264,7 @@ TEST(ZMQComm, recv) {
     RETVAL = 0;
     RETVAL_INC_POLL = 0;
     RETVAL_INC_RECV = 0;
-    RETMSG_META = "}";
+    RETMSG_META = "";
     EXPECT_EQ(zmq_recv.recv(data, len, true), -1);
     // Cleanup
     free(data);

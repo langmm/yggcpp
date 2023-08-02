@@ -157,7 +157,7 @@ TEST(ClientComm, recv) {
     // Failure in parsing header
     RETVAL = 0;
     RETVAL_INC_POLL = 0;
-    RETMSG_META = "}";
+    RETMSG_META = "";
     EXPECT_EQ(cc.recv(data, len, true), -1);
     ELF_RECV_REVERT;
     ELF_END;
