@@ -250,8 +250,9 @@ COMPLEX_TEST(complex_long_double, complex_long_double_t, 3.3l)
     EXPECT_GT(generic_array_get_item_nbytes(vc, 0, #type), 0);		\
     void* data = generic_array_get_item(vc, 0, #type);			\
     EXPECT_TRUE(data);							\
-    if (data)								\
+    if (data) {								\
       EXPECT_EQ(generic_set_item(x, #type, data), 0);			\
+    }									\
     EXPECT_TRUE(compare_generic(x, v));					\
     destroy_generic(&v);						\
     destroy_generic(&x);						\
@@ -266,8 +267,9 @@ COMPLEX_TEST(complex_long_double, complex_long_double_t, 3.3l)
     EXPECT_GT(generic_map_get_item_nbytes(vc, "a", #type), 0);		\
     void* data = generic_map_get_item(vc, "a", #type);			\
     EXPECT_TRUE(data);							\
-    if (data)								\
+    if (data) {								\
       EXPECT_EQ(generic_set_item(x, #type, data), 0);			\
+    }									\
     EXPECT_TRUE(compare_generic(x, v));					\
     destroy_generic(&v);						\
     destroy_generic(&x);						\
@@ -554,6 +556,7 @@ TEST(dtype, PythonInit) {
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
 #define DO_PYTHON(name)							\
   TEST(generic_t, name) {						\
+    EXPECT_TRUE(rapidjson_ARRAY_API);					\
     generic_t v = init_generic_generate("{\"type\": \"" #name "\"}");	\
     generic_t x = init_generic_null();					\
     python_t data;							\

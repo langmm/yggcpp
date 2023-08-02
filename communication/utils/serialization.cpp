@@ -1,10 +1,9 @@
 // Import arrays once
 // #define RAPIDJSON_FORCE_IMPORT_ARRAY
 #include "serialization.hpp"
-#ifndef rapidjson_ARRAY_API
-void** rapidjson_ARRAY_API = NULL;
-#endif
-
+extern "C" {
+  void** rapidjson_ARRAY_API = NULL;
+}
 using namespace communication::utils;
 
 Metadata::Metadata() :
