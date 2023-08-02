@@ -3,9 +3,9 @@
 #include "serialization.hpp"
 // Required so that symbol declared by numpy/arrayobject.h is defined
 // during compilation of the dynamic library
-// extern "C" {
-//   void** rapidjson_ARRAY_API = NULL;
-// }
+extern "C" {
+  void** rapidjson_ARRAY_API = NULL;
+}
 using namespace communication::utils;
 
 Metadata::Metadata() :
