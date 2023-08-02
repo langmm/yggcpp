@@ -335,9 +335,13 @@ Comm_t* Comm_t::create_worker_recv(Header& head) {
   //   return global_comm->create_worker_recv(head);
   assert(!global_comm);
   ygglog_debug << "CommBase(" << name << ")::create_worker_recv: begin" << std::endl;
-  const char* address = head.GetMetaString("address");
-  utils::Address* adr = new utils::Address(address);
-  return workers.get(this, RECV, adr);
+  try {
+    const char* address = head.GetMetaString("address");
+    utils::Address* adr = new utils::Address(address);
+    return workers.get(this, RECV, adr);
+  } catch (...) {
+    return nullptr;
+  }
 }
 
 int Comm_t::send(const char *data, const size_t &len) {

@@ -158,9 +158,7 @@ TEST(ClientComm, recv) {
     RETVAL = 0;
     RETVAL_INC_POLL = 0;
     RETMSG_META = "}";
-    std::cerr << "META: " << communication::mock::_mock_message() << std::endl;
-    std::cerr << "HERE: " << RETMSG.size() << ", " << RETMSG << std::endl;
-    EXPECT_THROW(cc.recv(data, len, true), std::exception);
+    EXPECT_EQ(cc.recv(data, len, true), -1);
     ELF_RECV_REVERT;
     ELF_END;
     free(data);

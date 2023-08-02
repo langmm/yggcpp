@@ -29,23 +29,8 @@
 
 #include <cmath> // Required to prevent error when using mingw on windows
 
-//#ifdef _DEBUG
-//#undef _DEBUG
-//#include <Python.h>
-//#include <numpy/arrayobject.h>
-//#include <numpy/ndarrayobject.h>
-//#include <numpy/npy_common.h>
-//#define _DEBUG
-//#else
-
-//#include <Python.h>
-//#include <numpy/arrayobject.h>
-//#include <numpy/ndarrayobject.h>
-//#include <numpy/npy_common.h>
-
-//#endif
-
 #endif
+
 #ifdef _MSC_VER
 // Prevent windows.h from including winsock.h
 #ifndef WIN32_LEAN_AND_MEAN

@@ -265,7 +265,7 @@ TEST(ZMQComm, recv) {
     RETVAL_INC_POLL = 0;
     RETVAL_INC_RECV = 0;
     RETMSG_META = "}";
-    EXPECT_THROW(zmq_recv.recv(data, len, true), std::exception);
+    EXPECT_EQ(zmq_recv.recv(data, len, true), -1);
     // Cleanup
     free(data);
     ELF_RECV_REVERT_T(ZMQ);

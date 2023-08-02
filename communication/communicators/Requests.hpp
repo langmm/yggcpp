@@ -142,22 +142,26 @@ namespace communicator {
     }
     int addRequestServer(Header& header) {
       ygglog_debug << "addRequestServer: begin" << std::endl;
-      std::string request_id(header.GetMetaString("request_id"));
-      std::string response_address(header.GetMetaString("response_address"));
-      std::string partner_model(header.GetMetaString("model"));
-      int comm_idx = addComm(response_address);
-      size_t idx = requests.size();
-      if (hasPartner(partner_model) < 0)
-	partners.emplace_back(partner_model);
-      requests.emplace_back(request_id,
-			    static_cast<size_t>(comm_idx),
-			    (header.flags & HEAD_FLAG_CLIENT_SIGNON));
-      ygglog_debug << "addRequestServer: done idx = " << idx
-		   << ", response_address = "
-		   << comms[requests[idx].comm_idx]->address->address()
-		   << ", request_id = " << requests[idx].request_id
-		   << std::endl;
-      return static_cast<int>(idx);
+      try {
+	std::string request_id(header.GetMetaString("request_id"));
+	std::string response_address(header.GetMetaString("response_address"));
+	std::string partner_model(header.GetMetaString("model"));
+	int comm_idx = addComm(response_address);
+	size_t idx = requests.size();
+	if (hasPartner(partner_model) < 0)
+	  partners.emplace_back(partner_model);
+	requests.emplace_back(request_id,
+			      static_cast<size_t>(comm_idx),
+			      (header.flags & HEAD_FLAG_CLIENT_SIGNON));
+	ygglog_debug << "addRequestServer: done idx = " << idx
+		     << ", response_address = "
+		     << comms[requests[idx].comm_idx]->address->address()
+		     << ", request_id = " << requests[idx].request_id
+		     << std::endl;
+	return static_cast<int>(idx);
+      } catch (...) {
+	return -1;
+      } 
     }
     int addResponseServer(Header& header, const char* data, const size_t len) {
       ygglog_debug << "addResponseServer: begin" << std::endl;
@@ -180,24 +184,28 @@ namespace communicator {
     }
     int addResponseClient(Header& header, const char* data, const size_t len) {
       ygglog_debug << "addResponseClient: begin" << std::endl;
-      std::string request_id(header.GetMetaString("request_id"));
-      std::string partner_model(header.GetMetaString("model"));
-      int idx = hasRequest(request_id);
-      if (idx < 0) {
-	ygglog_error << "addResponseClient: Client does not have a request with id '" << request_id << "'" << std::endl;
+      try {
+	std::string request_id(header.GetMetaString("request_id"));
+	std::string partner_model(header.GetMetaString("model"));
+	int idx = hasRequest(request_id);
+	if (idx < 0) {
+	  ygglog_error << "addResponseClient: Client does not have a request with id '" << request_id << "'" << std::endl;
+	  return -1;
+	}
+	if (requests[static_cast<size_t>(idx)].setData(data, len) < 0) {
+	  ygglog_error << "addResponseClient: Error setting data" << std::endl;
+	  return -1;
+	}
+	if (hasPartner(partner_model) < 0)
+	  partners.emplace_back(partner_model);
+	if (header.flags & HEAD_FLAG_SERVER_SIGNON)
+	  signon_complete = true;
+	ygglog_debug << "addResponseClient: done (signon_complete = " <<
+	  signon_complete << ")" << std::endl;
+	return 0;
+      } catch (...) {
 	return -1;
       }
-      if (requests[static_cast<size_t>(idx)].setData(data, len) < 0) {
-	ygglog_error << "addResponseClient: Error setting data" << std::endl;
-	return -1;
-      }
-      if (hasPartner(partner_model) < 0)
-	partners.emplace_back(partner_model);
-      if (header.flags & HEAD_FLAG_SERVER_SIGNON)
-	signon_complete = true;
-      ygglog_debug << "addResponseClient: done (signon_complete = " <<
-	signon_complete << ")" << std::endl;
-      return 0;
     }
     Comm_t* getComm(const std::string& request_id) {
       int idx = hasRequest(request_id);
@@ -241,18 +249,22 @@ namespace communicator {
       return 1;
     }
     int popRequestClient(Header& header) {
-      std::string request_id(header.GetMetaString("request_id"));
-      int idx = hasRequest(request_id);
-      if (idx < 0) {
-	ygglog_error << "RequestList::popRequestClient: No pending request with id '" << request_id << "'" << std::endl;
+      try {
+	std::string request_id(header.GetMetaString("request_id"));
+	int idx = hasRequest(request_id);
+	if (idx < 0) {
+	  ygglog_error << "RequestList::popRequestClient: No pending request with id '" << request_id << "'" << std::endl;
+	  return -1;
+	}
+	if (!requests[(size_t)idx].complete) {
+	  ygglog_error << "RequestList::popRequestClient: Request '" << request_id << "' does not have response" << std::endl;
+	  return -1;
+	}
+	requests.erase(requests.begin() + idx);
+	return 1;
+      } catch (...) {
 	return -1;
       }
-      if (!requests[(size_t)idx].complete) {
-	ygglog_error << "RequestList::popRequestClient: Request '" << request_id << "' does not have response" << std::endl;
-	return -1;
-      }
-      requests.erase(requests.begin() + idx);
-      return 1;
     }
     int getRequestClient(const std::string& request_id,
 			 char*& data, const size_t len,
@@ -321,17 +333,21 @@ namespace communicator {
       response_metadata.fromFormat(format_str, use_generic);
     }
     bool partnerSignoff(const Header& header) {
-      if (header.flags & HEAD_FLAG_EOF) {
-	std::string partner_model(header.GetMetaString("model"));
-	int idx = hasPartner(partner_model);
-	if (idx >= 0)
-	  partners[static_cast<size_t>(idx)].signed_off = true;
-	for (size_t i = 0; i < partners.size(); i++) {
-	  if (!partners[i].signed_off)
-	    return false;
+      try {
+	if (header.flags & HEAD_FLAG_EOF) {
+	  std::string partner_model(header.GetMetaString("model"));
+	  int idx = hasPartner(partner_model);
+	  if (idx >= 0)
+	    partners[static_cast<size_t>(idx)].signed_off = true;
+	  for (size_t i = 0; i < partners.size(); i++) {
+	    if (!partners[i].signed_off)
+	      return false;
+	  }
 	}
+	return true;
+      } catch (...) {
+	return false;
       }
-      return true;
     }
     void transferSchemaTo(Comm_t* comm) {
       comm->get_metadata(response_dir).fromMetadata(response_metadata);

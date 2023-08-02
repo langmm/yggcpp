@@ -716,8 +716,12 @@ bool ZMQComm::create_header_recv(Header& header, char*& data,
     if ((flags & COMM_FLAG_WORKER) && (reply.sockets.size() == 1)) {
       adr = reply.sockets[0].endpoint;
     } else {
-      const char* address_c = header.GetMetaString("zmq_reply");
-      adr.assign(address_c);
+      try {
+	const char* address_c = header.GetMetaString("zmq_reply");
+	adr.assign(address_c);
+      } catch (...) {
+	return false;
+      }
     }
     reply.set(adr);
   }
@@ -748,8 +752,12 @@ Comm_t* ZMQComm::create_worker_recv(Header& head) {
   assert(!global_comm);
   ZMQComm* out = dynamic_cast<ZMQComm*>(Comm_t::create_worker_recv(head));
   if (out) {
-    const char* zmq_reply_worker = head.GetMetaString("zmq_reply_worker");
-    out->reply.set(std::string(zmq_reply_worker));
+    try {
+      const char* zmq_reply_worker = head.GetMetaString("zmq_reply_worker");
+      out->reply.set(std::string(zmq_reply_worker));
+    } catch (...) {
+      return nullptr;
+    }
   }
   return out;
 }

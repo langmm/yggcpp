@@ -1,7 +1,6 @@
 #define RAPIDJSON_FORCE_IMPORT_ARRAY
 #include <iostream>
 #include "unittest.hpp"
-#include "rapidjson/pyrj.h"
 #include "communicators/ZMQComm.hpp"
 
 #ifdef __clang__

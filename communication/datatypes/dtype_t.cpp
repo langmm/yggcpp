@@ -1218,7 +1218,6 @@ extern "C" {
       _GET_METADATA_THROW(metadata, type_struct);
       return static_cast<int>(metadata->isFormatArray());
     } _END_CPP(is_dtype_format_array, -1);
-    return 1;
   }
 
   const char* dtype_name(const dtype_t type_struct) {

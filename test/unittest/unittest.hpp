@@ -73,6 +73,8 @@ public:
 #endif
 
 
+#include "rapidjson/pyrj.h"
+
 #ifdef YGGDRASIL_DISABLE_PYTHON_C_API
 #define INIT_PYTHON()
 #define FINALIZE_PYTHON()

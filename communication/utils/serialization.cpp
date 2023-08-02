@@ -1,7 +1,9 @@
 // Import arrays once
 // #define RAPIDJSON_FORCE_IMPORT_ARRAY
 #include "serialization.hpp"
+#ifndef rapidjson_ARRAY_API
 void** rapidjson_ARRAY_API = NULL;
+#endif
 
 using namespace communication::utils;
 
@@ -875,9 +877,10 @@ size_t Header::format(const char* buf, size_t buf_siz,
     ret = snprintf(data[0], size_buff, "%s%s%s", MSG_HEAD_SEP,
 		   buffer.GetString(), MSG_HEAD_SEP);
   }
-  if (((size_t)(ret) + buf_siz) > size_buff)
-    ygglog_throw_error_c("Header::format: Message size (%d) exceeds buffer size (%lu): '%s%s%s'.",
-			 ret, size_buff, MSG_HEAD_SEP, buffer.GetString(), MSG_HEAD_SEP);
+  assert(((size_t)(ret) + buf_siz) <= size_buff);
+  // if (((size_t)(ret) + buf_siz) > size_buff)
+  //   ygglog_throw_error_c("Header::format: Message size (%d) exceeds buffer size (%lu): '%s%s%s'.",
+  // 			 ret, size_buff, MSG_HEAD_SEP, buffer.GetString(), MSG_HEAD_SEP);
   size_curr = static_cast<size_t>(ret);
   memcpy(data[0] + size_curr, buf, buf_siz);
   size_curr += buf_siz;

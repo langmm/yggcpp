@@ -226,9 +226,8 @@ COMPLEX_TEST(complex_long_double, complex_long_double_t, 3.3l)
 #undef SCALAR_TEST
 #undef COMPLEX_TEST
 
-TEST(generic_t, data) {
 #define DO_TYPE(type)							\
-  {									\
+  TEST(generic_t, data_ ## type) {					\
     generic_t v = init_generic_generate("{\"type\": \"" #type "\"}");	\
     generic_t x = init_generic_null();					\
     EXPECT_GT(generic_get_item_nbytes(v, #type), 0);			\
@@ -241,18 +240,49 @@ TEST(generic_t, data) {
     destroy_generic(&v);						\
     destroy_generic(&x);						\
     destroy_generic(&v_cpy);						\
+  }									\
+  TEST(generic_t, data_array_ ## type) {				\
+    generic_t vc = init_generic_generate(				\
+      "{\"type\": \"array\", \"items\": [{\"type\": \"" #type "\"}]}"); \
+    generic_t x = init_generic_null();					\
+    generic_t v;							\
+    get_generic_array(vc, 0, &v);					\
+    EXPECT_GT(generic_array_get_item_nbytes(vc, 0, #type), 0);		\
+    void* data = generic_array_get_item(vc, 0, #type);			\
+    EXPECT_TRUE(data);							\
+    if (data)								\
+      EXPECT_EQ(generic_set_item(x, #type, data), 0);			\
+    EXPECT_TRUE(compare_generic(x, v));					\
+    destroy_generic(&v);						\
+    destroy_generic(&x);						\
+    destroy_generic(&vc);						\
+  }									\
+  TEST(generic_t, data_map_ ## type) {					\
+    generic_t vc = init_generic_generate(				\
+      "{\"type\": \"object\", \"properties\": {\"a\": {\"type\": \"" #type "\"}}}"); \
+    generic_t x = init_generic_null();					\
+    generic_t v;							\
+    get_generic_map(vc, "a", &v);					\
+    EXPECT_GT(generic_map_get_item_nbytes(vc, "a", #type), 0);		\
+    void* data = generic_map_get_item(vc, "a", #type);			\
+    EXPECT_TRUE(data);							\
+    if (data)								\
+      EXPECT_EQ(generic_set_item(x, #type, data), 0);			\
+    EXPECT_TRUE(compare_generic(x, v));					\
+    destroy_generic(&v);						\
+    destroy_generic(&x);						\
+    destroy_generic(&vc);						\
   }
-  DO_TYPE(null)
-  DO_TYPE(boolean)
-  DO_TYPE(number)
-  DO_TYPE(integer)
-  DO_TYPE(string)
-  DO_TYPE(object)
-    // TODO: DO_TYPE(class)
-  DO_TYPE(obj)
-  DO_TYPE(ply)
+DO_TYPE(null)
+DO_TYPE(boolean)
+DO_TYPE(number)
+DO_TYPE(integer)
+DO_TYPE(string)
+DO_TYPE(object)
+// TODO: DO_TYPE(class)
+DO_TYPE(obj)
+DO_TYPE(ply)
 #undef DO_TYPE
-}
 
 TEST(generic_t, scalar) {
   generic_t v = init_generic_generate("{\"type\": \"scalar\", \"subtype\": \"float\", \"precision\": 8, \"units\": \"cm\"}");
@@ -418,6 +448,14 @@ TEST(dtype_t, create) {
     EXPECT_EQ(is_dtype_format_array(x), 1);
     destroy_dtype(&x);
   }
+  {
+    dtype_t x = create_dtype_ascii_table("%d\t%f\n", true, false);
+    EXPECT_TRUE(x.metadata);
+    EXPECT_FALSE(is_empty_dtype(x));
+    EXPECT_EQ(strcmp(dtype_name(x), "array"), 0);
+    EXPECT_EQ(is_dtype_format_array(x), 1);
+    destroy_dtype(&x);
+  }
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
   {
     dtype_t args = create_dtype_from_schema("{\"type\": \"array\", \"items\": [{\"type\": \"string\"}, {\"type\", \"integer\"}]}", false);
@@ -534,13 +572,7 @@ TEST(dtype, PythonInit) {
     destroy_generic(&x);						\
   }
 DO_PYTHON(class)
-// TODO: Fix these
-// DO_PYTHON(function)
-// DO_PYTHON(instance)
+DO_PYTHON(function)
+DO_PYTHON(instance)
 #undef DO_PYTHON
 #endif // YGGDRASIL_DISABLE_PYTHON_C_API
-
-// TODO:
-// - generic (any, schema, python, object, array)
-// - Python (init_python_API)
-// - dtype (is_dtype_format_array)

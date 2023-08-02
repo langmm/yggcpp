@@ -24,6 +24,7 @@ TEST(Metadata, SetAndGet) {
   Metadata metadata;
   EXPECT_THROW(metadata.getMeta(), std::exception);
   EXPECT_THROW(metadata.getSchema(), std::exception);
+  EXPECT_THROW(metadata.SetSchemaMetadata("invalid", metadata), std::exception);
   // Get errors on missing parent
   EXPECT_THROW(metadata.GetMetaInt("test_int"), std::exception);
   EXPECT_THROW(metadata.GetMetaUint("test_uint"), std::exception);
@@ -46,7 +47,6 @@ TEST(Metadata, SetAndGet) {
   EXPECT_THROW(metadata.SetSchemaBool("test_bool", true), std::exception);
   EXPECT_THROW(metadata.SetSchemaString("test_string", "a"), std::exception);
   EXPECT_THROW(metadata.SetSchemaValue("test_value", b), std::exception);
-;
   // Init
   metadata.initMeta();
   metadata.initSchema();
@@ -62,7 +62,7 @@ TEST(Metadata, SetAndGet) {
     std::string x = "a";						\
     metadata.Set ## base ## String("test_String", x);			\
     EXPECT_EQ(strcmp(metadata.Get ## base ## String("test_String"), x.c_str()), 0); \
-}
+  }
 #define TEST_SET_METHOD_VALUE(base)			\
   {							\
     metadata.Set ## base ## Value("test_value", b);	\
@@ -83,6 +83,8 @@ TEST(Metadata, SetAndGet) {
   TEST_SET_METHOD(Schema, Bool, bool, true);
   TEST_SET_METHOD_STRING(Schema);
   TEST_SET_METHOD_VALUE(Schema);
+  rapidjson::Value* x_root = &metadata.getSchema();
+  metadata.SetSchemaValue("test_value2", b, x_root);
   // Get errors on missing var
   EXPECT_THROW(metadata.GetMetaInt("invalid"), std::exception);
   EXPECT_THROW(metadata.GetMetaUint("invalid"), std::exception);
@@ -580,6 +582,13 @@ TEST(Header, Utilities) {
   EXPECT_EQ(header.format("", 0, 0, false), 0);
   EXPECT_TRUE(header == header);
   EXPECT_FALSE(header != header);
+  Header header2;
+  header2.fromType("integer", false, false);
+  EXPECT_FALSE(header == header2);
+  EXPECT_TRUE(header != header2);
+  header.fromType("integer", false, false);
+  EXPECT_FALSE(header == header2);
+  EXPECT_TRUE(header != header2);
   header.reset();
 }
 
@@ -587,6 +596,8 @@ TEST(Header, for_send) {
   Metadata schema;
   schema.fromSchema("{\"type\": \"string\"}");
   std::string msg = "This is a test message";
+  setenv("YGG_MODEL_NAME", "model", 1);
+  setenv("YGG_MODEL_COPY", "1", 1);
   Header header_send;
   header_send.for_send(&schema, msg.c_str(), msg.size());
   header_send.format(msg.c_str(), msg.size(), 2048);
@@ -610,5 +621,17 @@ TEST(Header, for_send) {
   EXPECT_EQ(header_send, header_send2);
   EXPECT_EQ(header_recv, header_recv2);
   EXPECT_NE(header_recv, header_send);
+  // Received message larger than buffer
+  std::string msg3(2048, 'a');
+  Header header_send3;
+  header_send3.for_send(&schema, msg3.c_str(), msg3.size());
+  header_send3.format(msg3.c_str(), msg3.size(), 204800);
+  Header header_recv3;
+  EXPECT_THROW(header_recv3.for_recv(header_send3.data,
+				     header_send3.size_curr - 1000,
+				     header_send3.size_curr - 1000,
+				     false), std::exception);
+  unsetenv("YGG_MODEL_NAME");
+  unsetenv("YGG_MODEL_COPY");
 }
 
