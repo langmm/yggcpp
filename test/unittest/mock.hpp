@@ -83,6 +83,7 @@ namespace mock {
 //void setValue(const int val);
 
 extern int RETVAL;
+extern int RETVAL_CREATE;
 extern int RETVAL_INC_SEND;
 extern int RETVAL_INC_RECV;
 extern int RETVAL_INC_POLL;
@@ -117,6 +118,10 @@ std::string _mock_message();
       RETMSG_META += ", ";					\
     RETMSG_META += "\"zmq_reply\": \"" + meta_reply_zmq + "\"";	\
   }
+#define ELF_REPLACE_CREATE_ZMQ			\
+  ELF_BEGIN_F(zmq_socket)
+#define ELF_RESTORE_CREATE_ZMQ			\
+  ELF_END_F(zmq_socket)
 #ifdef ZMQ_HAVE_POLLER
 #define ELF_REPLACE_NMSG_ZMQ			\
   ELF_BEGIN_F(zmq_poller_wait_all)

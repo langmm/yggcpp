@@ -96,16 +96,14 @@ Comm_t* ClientComm::create_worker_send(Header& head) {
   assert(!global_comm);
   ygglog_debug << "ClientComm(" << name << ")::create_worker_send: begin" << std::endl;
   Comm_t* out = COMM_BASE::create_worker_send(head);
-  try {
-    std::string request_id(head.GetMetaString("request_id"));
-    if (!workers.setRequest(out, request_id)) {
-      ygglog_error << "ClientComm(" << name << ")::create_worker_send: Failed to set request on worker" << std::endl;
-      return nullptr;
-    }
-    ygglog_debug << "ClientComm(" << name << ")::create_worker_send: done" << std::endl;
-  } catch (...) {
+  // create_worker_send only called after create_header_send ensuring
+  //   request_id is present
+  std::string request_id(head.GetMetaString("request_id"));
+  if (!workers.setRequest(out, request_id)) {
+    ygglog_error << "ClientComm(" << name << ")::create_worker_send: Failed to set request on worker" << std::endl;
     return nullptr;
   }
+  ygglog_debug << "ClientComm(" << name << ")::create_worker_send: done" << std::endl;
   return out;
 }
 
@@ -115,13 +113,11 @@ Comm_t* ClientComm::create_worker_recv(Header& head) {
   //   return global_comm->create_worker_recv(head);
   assert(!global_comm);
   ygglog_debug << "ClientComm(" << name << ")::create_worker_recv: begin" << std::endl;
-  try {
-    std::string request_id(head.GetMetaString("request_id"));
-    if (!workers.setResponse(request_id)) {
-      ygglog_error << "ClientComm(" << name << ")::create_worker_recv: Failed to clear request on worker (request_id = " << request_id << ")" << std::endl;
-      return nullptr;
-    }
-  } catch (...) {
+  // create_worker_recv only called after create_header_recv, ensuring
+  //   request_id is present
+  std::string request_id(head.GetMetaString("request_id"));
+  if (!workers.setResponse(request_id)) {
+    ygglog_error << "ClientComm(" << name << ")::create_worker_recv: Failed to clear request on worker (request_id = " << request_id << ")" << std::endl;
     return nullptr;
   }
   Comm_t* out = COMM_BASE::create_worker_recv(head);
@@ -154,10 +150,12 @@ bool ClientComm::create_header_recv(Header& header, char*& data, const size_t &l
   assert(!global_comm);
   ygglog_debug << "ClientComm(" << name << ")::create_header_recv: begin (temp = " << temp << ")" << std::endl;
   Comm_t* response_comm = requests.activeComm();
-  if (response_comm == NULL) {
-    ygglog_error << "ClientComm(" << name << ")::create_header_recv: Error getting response comm" << std::endl;
-    return false;
-  }
+  // create_header_recv only called after request confirmed
+  assert(response_comm);
+  // if (response_comm == NULL) {
+  //   ygglog_error << "ClientComm(" << name << ")::create_header_recv: Error getting response comm" << std::endl;
+  //   return false;
+  // }
   bool out = response_comm->create_header_recv(header, data, len, msg_len,
 					       allow_realloc, temp);
   if (out && !(header.flags & HEAD_FLAG_EOF)) {

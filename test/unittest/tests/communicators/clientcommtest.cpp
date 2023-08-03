@@ -109,6 +109,15 @@ TEST(ClientComm, sendLarge) {
     EXPECT_TRUE(cc.addSignon());
     EXPECT_GE(cc.send(msg.c_str(), msg.size()), 0);
     EXPECT_FALSE(cc.getWorkers().workers[0].request.empty());
+#ifdef ELF_AVAILABLE
+    // Failure in create_worker_send
+    cc.getWorkers().workers.clear();
+    ELF_BEGIN;
+    ELF_CREATE(0);
+    EXPECT_EQ(cc.send(msg.c_str(), msg.size()), -1);
+    ELF_CREATE_REVERT;
+    ELF_END;
+#endif // ELF_AVAILABLE
 }
 
 TEST(ClientComm, recv) {

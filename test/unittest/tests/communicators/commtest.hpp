@@ -443,6 +443,11 @@
 #define ELF_RECV_REVERT_T(type)			\
   ELF_RESTORE_NMSG_ ## type;			\
   ELF_RESTORE_RECV_ ## type
+#define ELF_CREATE_T(type, ret)			\
+  ELF_REPLACE_CREATE_ ## type;			\
+  RETVAL_CREATE = ret
+#define ELF_CREATE_REVERT_T(type)		\
+  ELF_RESTORE_CREATE_ ## type
 
 #ifdef IPCDEF
 #define ELF_REPLACE_RECV ELF_REPLACE_RECV_IPC
@@ -456,6 +461,7 @@
 #define ELF_RECV(ret) ELF_RECV_T(IPC, ret)
 #define ELF_RECV_REVERT ELF_RECV_REVERT_T(IPC)
 #define ELF_META(comm) ELF_META_IPC(comm)
+#define ELF_CREATE(ret) ELF_CREATE_T(IPC, ret)
 #else
 #define ELF_REPLACE_RECV ELF_REPLACE_RECV_ZMQ
 #define ELF_RESTORE_RECV ELF_RESTORE_RECV_ZMQ
@@ -468,6 +474,7 @@
 #define ELF_RECV(ret) ELF_RECV_T(ZMQ, ret)
 #define ELF_RECV_REVERT ELF_RECV_REVERT_T(ZMQ)
 #define ELF_META(comm) ELF_META_ZMQ(comm)
+#define ELF_CREATE(ret) ELF_CREATE_T(ZMQ, ret)
 #endif
 
 #endif // ELF_AVAILABLE

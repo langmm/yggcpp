@@ -30,6 +30,7 @@ namespace mock {
 #ifdef ELF_AVAILABLE
 
 int RETVAL = 0;
+int RETVAL_CREATE = 0;
 int RETVAL_INC_SEND = 0;
 int RETVAL_INC_RECV = 0;
 int RETVAL_INC_POLL = 0;
@@ -91,7 +92,7 @@ int msgctl(int, int, msqid_ds *buf) {
 }
 
 int msgget(key_t, int) {
-  return RETVAL;
+  return RETVAL_CREATE;
 }
 
 ssize_t msgrcv(int, void* rbuf, size_t, long, int) {
@@ -194,6 +195,7 @@ template<class OutputIt>
     return -1;
   }
   void *zmq_socket (void *, int) {
+    assert(RETVAL_CREATE < 0);
     return NULL;
   }
   int zmq_connect (void *, const char *) {

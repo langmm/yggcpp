@@ -35,13 +35,12 @@ TEST(IPCComm, constructor) {
 #ifdef ELF_AVAILABLE
     name = "";
     ELF_BEGIN;
-    ELF_BEGIN_F(msgget); // To allow connection to non-existed queue
-    RETVAL = 0;
+    ELF_CREATE_T(IPC, 0); // To allow connection to non-existed queue
     utils::Address *adr3 = new utils::Address("12345");
     IPCComm_tester ipc5(name, adr3, RECV);
     RETVAL = -1;
     EXPECT_THROW(IPCComm_tester ipc6(name, nullptr, SEND), std::runtime_error);
-    ELF_END_F(msgget);
+    ELF_CREATE_REVERT_T(IPC);
     ELF_END;
 #endif // ELF_AVAILABLE
 }
@@ -54,7 +53,7 @@ TEST(IPCComm, send) {
     EXPECT_GT(res, 0);
 #ifdef ELF_AVAILABLE
     ELF_BEGIN;
-    ELF_BEGIN_F(msgget);
+    ELF_CREATE_T(IPC, 0);
     std::string data = "abcdef12345";
     utils::Address *adr2 = new utils::Address("12345678");
     IPCComm_tester ipc2(data, adr2, SEND);
@@ -84,7 +83,7 @@ TEST(IPCComm, send) {
     // Restore
     ELF_RESTORE_SEND_IPC;
     ELF_RESTORE_NMSG_IPC;
-    ELF_END_F(msgget);
+    ELF_CREATE_REVERT_T(IPC);
     ELF_END;
 #endif // ELF_AVAILABLE
 }
@@ -115,7 +114,7 @@ TEST(IPCComm, sendLarge) {
 #ifdef ELF_AVAILABLE
     std::string name = "SendTester";
     ELF_BEGIN;
-    ELF_BEGIN_F(msgget); // To allow connection to non-existed queue
+    ELF_CREATE_T(IPC, 0); // To allow connection to non-existed queue
     // Replace msgsnd to test sending long message
     ELF_REPLACE_SEND_IPC;
     ELF_SET_SUCCESS;
@@ -133,7 +132,7 @@ TEST(IPCComm, sendLarge) {
     EXPECT_EQ(ipc.send(longmsg), -1);
 
     // Failure on send
-    ELF_END_F(msgget);
+    ELF_CREATE_REVERT_T(IPC);
     EXPECT_EQ(ipc.send(longmsg), -1);
 
     // Failure on send in multipart
@@ -150,7 +149,7 @@ TEST(IPCComm, recv) {
 #ifdef ELF_AVAILABLE
     std::string name = "SendTester";
     ELF_BEGIN;
-    ELF_BEGIN_F(msgget); // To allow connection to non-existed queue
+    ELF_CREATE_T(IPC, 0); // To allow connection to non-existed queue
     ELF_SET_SUCCESS;
     IPCComm_tester ipc(name, new utils::Address("13579"), RECV);
     // Replace msgrcv to test different size messages
@@ -198,7 +197,7 @@ TEST(IPCComm, recv) {
     EXPECT_EQ(ipc.recv(data, len, true), -1);
     // Restore methods
     free(data);
-    ELF_END_F(msgget);
+    ELF_CREATE_REVERT_T(IPC);
     ELF_RECV_REVERT_T(IPC);
     ELF_END;
 #endif // ELF_AVAILABLE
