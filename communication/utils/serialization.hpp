@@ -1,5 +1,4 @@
-#ifndef YGGDRASIL_SERIALIZATION_H_
-#define YGGDRASIL_SERIALIZATION_H_
+#pragma once
 
 // Platform specific
 #ifdef _WIN32
@@ -16,7 +15,7 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/schema.h"
 #include "rapidjson/va_list.h"
-#include <string.h>
+#include <cstring>
 
 
 #include "logging.hpp"
@@ -25,7 +24,9 @@
   static_cast<rapidjson::SizeType>(strlen(var))
 
 
-using namespace communication::utils;
+namespace communication {
+namespace utils {
+
 /*!
   @brief Split header and body of message.
   @param[in] buf const char* Message that should be split.
@@ -37,14 +38,14 @@ using namespace communication::utils;
 */
 static inline
 int split_head_body(const char *buf,
-		    const char **head, size_t *headsiz) {
-  // Split buffer into head and body
-  int ret;
-  size_t sind, eind, sind_head, eind_head;
-  sind = 0;
-  eind = 0;
+                    const char **head, size_t *headsiz) {
+    // Split buffer into head and body
+    int ret;
+    size_t sind, eind, sind_head, eind_head;
+    sind = 0;
+    eind = 0;
 #ifdef _WIN32
-  // Windows regex of newline is buggy
+    // Windows regex of newline is buggy
   size_t sind1, eind1, sind2, eind2;
   char re_head_tag[COMMBUFFSIZ + 1];
   snprintf(re_head_tag, COMMBUFFSIZ, "(%s)", MSG_HEAD_SEP);
@@ -56,12 +57,12 @@ int split_head_body(const char *buf,
       eind = eind1 + eind2;
   }
 #else
-  // Extract just header
-  char re_head[COMMBUFFSIZ] = MSG_HEAD_SEP;
-  strcat(re_head, "(.*)");
-  strcat(re_head, MSG_HEAD_SEP);
-  // strcat(re_head, ".*");
-  ret = find_match_c(re_head, buf, &sind, &eind);
+    // Extract just header
+    char re_head[COMMBUFFSIZ] = MSG_HEAD_SEP;
+    strcat(re_head, "(.*)");
+    strcat(re_head, MSG_HEAD_SEP);
+    // strcat(re_head, ".*");
+    ret = find_match_c(re_head, buf, &sind, &eind);
 #endif
   if (ret == 0) {
     sind_head = 0;
@@ -204,9 +205,6 @@ private:
 };
 
 class Header : public Metadata {
-private:
-  Header(const Header& other) = delete;
-  Header& operator=(const Header&) = delete;
 public:
   Header();
   ~Header() override;
@@ -246,9 +244,10 @@ public:
   uint16_t flags;
 };
 
+}
+}
 
 
-#endif /* YGGDRASIL_SERIALIZATION_H_ */
 // Local Variables:
 // mode: c++
 // End:

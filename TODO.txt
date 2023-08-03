@@ -1,5 +1,6 @@
-* Improve coverage and strip out unused code
 * Move address away from pointer?
+* Re-structure so that C++, C, Python, and Fortran interfaces each have their own directory
+* Re-structure so that top namespace in C++ is yggdrasil
 * Automated documentation using doxygen
 * Fill in missing docs
 * Fix handling of multiple connections in ZMQ socket (restricted to ZMQ_PAIR to simplify testing)

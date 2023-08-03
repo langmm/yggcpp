@@ -50,7 +50,7 @@ public:
       if (!addSignon())
 	return false;
     }
-    Header header;
+    utils::Header header;
     if (!this->create_header_send(header, msg.c_str(), msg.size()))
       return false;
     size_t len = header.format(msg.c_str(), msg.size(), 0);
@@ -63,7 +63,7 @@ public:
     return (server_comm->send(msg) >= 0);
   }
   bool addResponse(std::string& msg, bool skip_client=false) {
-    Header header;
+    utils::Header header;
     if (!server_comm->create_header_send(header, msg.c_str(), msg.size()))
       return false;
     if (!skip_client) {
@@ -261,7 +261,7 @@ TEST(ClientComm, global) {
       sComm.addResponseFormat("%s");
       {
 	std::string msg_cli = YGG_CLIENT_SIGNON;
-	Header header;
+	utils::Header header;
 	EXPECT_TRUE(sComm.create_header_send(header, msg_cli.c_str(), msg_cli.size()));
 	size_t len = header.format(msg_cli.c_str(), msg_cli.size(), 0);
 	msg_cli.assign(header.data[0], len);

@@ -35,7 +35,7 @@
 #define DO_RPC_SIGNON							\
   {									\
     std::string msg_cli = YGG_CLIENT_SIGNON;				\
-    Header header;							\
+    communication::utils::Header header;				\
     EXPECT_TRUE(sComm.create_header_send(header, msg_cli.c_str(), msg_cli.size())); \
     size_t len = header.format(msg_cli.c_str(), msg_cli.size(), 0);	\
     msg_cli.assign(header.data[0], len);				\
@@ -419,7 +419,7 @@
       EXPECT_EQ(rComm.call(2, data_send.c_str(), data_recv.c_str()), -1); \
       /* Error when sending message that can't fit in buffer */		\
       sComm.getFlags() |= COMM_ALWAYS_SEND_HEADER;			\
-      Metadata& metadata = sComm.getMetadata();				\
+      utils::Metadata& metadata = sComm.getMetadata();				\
       metadata.initMeta();						\
       metadata.SetMetaString("invalid", bigMsg);			\
       EXPECT_THROW(sComm.send(data_send), std::exception);		\

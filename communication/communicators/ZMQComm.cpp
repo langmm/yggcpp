@@ -533,10 +533,6 @@ ADD_CONSTRUCTORS_DEF(ZMQComm)
 void ZMQComm::init() {
   updateMaxMsgSize(1048576);
   msgBufSize = 100;
-  init_handle();
-}
-
-void ZMQComm::init_handle() {
   assert(!handle);
   // TODO: Handle multiple comms
   // if (flags & (COMM_FLAG_CLIENT | COMM_FLAG_SERVER_RESPONSE)) {
@@ -574,10 +570,6 @@ ZMQComm::~ZMQComm() {
     ygglog_debug << "~ZMQComm: Finished" << std::endl;
 }
 
-/*!
-  @brief Get number of messages in the comm.
-  @returns int Number of messages. -1 indicates an error.
- */
 int ZMQComm::comm_nmsg() const {
     if (global_comm)
       return global_comm->comm_nmsg();
@@ -594,14 +586,6 @@ int ZMQComm::comm_nmsg() const {
     return out;
 }
 
-/*!
-  @brief Send a message to the comm.
-  Send a message smaller than YGG_MSG_MAX bytes to an output comm. If the
-  message is larger, it will not be sent.
-  @param[in] data character pointer to message that should be sent.
-  @param[in] len size_t length of message to be sent.
-  @returns int 0 if send succesfull, -1 if send unsuccessful.
- */
 int ZMQComm::send_single(const char* data, const size_t &len, const Header& header) {
   // Should never be called with global comm
   // if (global_comm)
@@ -628,18 +612,6 @@ bool ZMQComm::do_reply_send(const Header& header) {
   return reply.send();
 }
 
-/*!
-  @brief Receive a message from an input comm.
-  Receive a message smaller than YGG_MSG_MAX bytes from an input comm.
-  @param[in] x comm_t* structure that message should be sent to.
-  @param[out] data char ** pointer to allocated buffer where the message
-  should be saved. This should be a malloc'd buffer if allow_realloc is 1.
-  @param[in] len const size_t length of the allocated message buffer in bytes.
-  @param[in] allow_realloc const int If 1, the buffer will be realloced if it
-  is not large enought. Otherwise an error will be returned.
-  @returns int -1 if message could not be received. Length of the received
-  message if message was received.
- */
 long ZMQComm::recv_single(char*& data, const size_t &len,
 			  bool allow_realloc) {
     // Should never be called with global comm

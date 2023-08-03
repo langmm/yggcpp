@@ -42,7 +42,7 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
-option(YGG_BUILD_TESTS "Build tests" ON)
+option(YGG_BUILD_TESTS "Build tests" OFF)
 option(YGG_BUILD_THIRDPARTY_GTEST "Use gtest installation in 'thirdpart/gtest' by default if available" ON)
 option(YGG_BUILD_ASAN "Build with address sanitizer (gcc/clang)" OFF)
 option(YGG_BUILD_UBSAN "Build with undefined behavior sanitizer (gcc/clang)" OFF)
@@ -261,6 +261,8 @@ set(RAPIDJSON_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/communication/rapidjson/include"
 set(DEPS_INCLUDE_DIRS ${DEPS_INCLUDE_DIRS} ${RAPIDJSON_INCLUDE_DIRS})
 message(STATUS "Rapidjson found ${RAPIDJSON_INCLUDE_DIRS}")
 
+##############################
+
 ##########
 # ZeroMQ #
 ##########
@@ -450,7 +452,6 @@ endif()
 #########
 # Boost #
 #########
-
 # find_package(Boost REQUIRED COMPONENTS log regex)
 # add_definitions(-DBOOST_LOG_DYN_LINK)
 # message(STATUS "Boost found Boost_INCLUDE_DIRS = ${Boost_INCLUDE_DIRS}")
@@ -518,6 +519,28 @@ endif()
 target_link_libraries(YggInterface ${DEPS_LIB_NAMES} ${DEPS_LIBRARIES})
 target_include_directories(YggInterface PUBLIC ${DEPS_INCLUDE_DIRS})
 
+#########################
+# Create Python Library #
+#########################
+
+option(BUILD_PYTHON_LIBRARY "Build the Yggdrasil Python interface library" OFF)
+if(BUILD_PYTHON_LIBRARY AND NOT YGGDRASIL_DISABLE_PYTHON_C_API)
+    add_definitions(-DWITH_PYTHON)
+    file(GLOB_RECURSE PYSOURCES ${CMAKE_SOURCE_DIR}/communication/python/*.cpp)
+    # set(PYSOURCES ${CMAKE_SOURCE_DIR}/communication/python/pyUtils.cpp
+    #         ${CMAKE_SOURCE_DIR}/communication/python/pyUtils.hpp
+    #         ${CMAKE_SOURCE_DIR}/communication/python/pyYggdrasil.cpp
+    #         ${CMAKE_SOURCE_DIR}/communication/python/pyYggCommBase.hpp
+    #         ${CMAKE_SOURCE_DIR}/communication/python/pyYggCommBase.cpp
+    #         ${CMAKE_SOURCE_DIR}/communication/python/pyIPCComm.hpp
+    #         ${CMAKE_SOURCE_DIR}/communication/python/pyMacros.hpp)
+    add_library(pyYggdrasil MODULE ${PYSOURCES})
+    target_include_directories(pyYggdrasil PUBLIC ${CMAKE_SOURCE_DIR}/communication/python ${DEPS_INCLUDE_DIRS})
+    target_link_libraries(pyYggdrasil ${DEPS_LIB_NAMES} ${DEPS_LIBRARIES} YggInterface)
+    set_target_properties(pyYggdrasil PROPERTIES PREFIX "")
+    message(STATUS "Building Python bindings=Yes")
+endif()
+
 ##################
 # Coverage       #
 ##################
@@ -551,51 +574,12 @@ if(YGG_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang|A
     # set(YGG_BUILD_FLAGS "${YGG_BUILD_FLAGS} --coverage -fno-inline -fno-inline-small-functions -fno-default-inline ")
 endif(YGG_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang|ARMClang")
 
-    
-##################
-# Python library #
-##################
-
-option(BUILD_PYTHON_LIBRARY "Build the Yggdrasil Python interface library" ON)
-#########################################
-if(BUILD_PYTHON_LIBRARY)
-    if(POLICY CMP0094)  # https://cmake.org/cmake/help/latest/policy/CMP0094.html
-        cmake_policy(SET CMP0094 NEW)  # FindPython should return the first matching Python
-    endif()
-    add_definitions(-DWITH_PYTHON)
-    find_package(PythonInterp 3)
-    find_package(PythonLibs 3 REQUIRED)
-    find_package(Boost REQUIRED COMPONENTS python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR} log)
-
-    #find_package(Python3 COMPONENTS Interpreter Development NumPy REQUIRED)
-    #include_directories(${Python_INCLUDE_DIRS})
-    #include_directories(${Python3_NumPy_INCLUDE_DIRS})
-    #set(YGG_PYTHON_ENV "DATADIR=${CMAKE_SOURCE_DIR}/test;YGG_PYTHON_EXEC=${Python3_EXECUTABLE}")
-
-    # There is an issue with embedding Python on Windows in conda environments
-    # https://github.com/ContinuumIO/anaconda-issues/issues/11374
-    #if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    #    set(YGG_PYTHON_ENV "${YGG_PYTHON_ENV};PYTHONHOME=${Python3_RUNTIME_LIBRARY_DIRS}")
-    #endif()
-
-    file(GLOB_RECURSE PYSOURCES ${CMAKE_SOURCE_DIR}/communication/python/*.cpp)
-    add_library(pyygg MODULE ${SOURCES} ${PYSOURCES})
-    target_include_directories(pyygg PRIVATE ${PYTHON_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/communication/python)
-    target_link_libraries(pyygg boost_python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR} ${DEPS_LIB_NAMES}) # ${DEPS_LIBRARIES})
-    message("PYTHON")
-
-# else()
-#     find_package(Boost REQUIRED COMPONENTS log)
-endif()
-##############################
-
 #########
 # Tests #
 #########
 
-option(YGG_BUILD_TESTS "Build tests" OFF)
-option(YGG_BUILD_THIRDPARTY_GTEST "Use gtest installation in 'thirdpart/gtest' by default if available" ON)
 if(YGG_BUILD_TESTS)
+    message("TESTING ON")
     set(SUBLIBFILE ${CMAKE_BINARY_DIR}/library_path.txt)
     add_custom_command(
         OUTPUT ${SUBLIBFILE}

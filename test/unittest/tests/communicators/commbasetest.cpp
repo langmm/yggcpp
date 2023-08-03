@@ -20,7 +20,7 @@ public:
     using Comm_t::send;
     using Comm_t::recv;
 protected:
-    int send_single(const char*, const size_t &, const Header&) override {
+    int send_single(const char*, const size_t &, const utils::Header&) override {
       return 0;
     }
     long recv_single(char*& data, const size_t &, bool) override {
@@ -29,7 +29,7 @@ protected:
         return static_cast<long>(msg.size());
     }
     Comm_t* create_worker(utils::Address* adr,
-			  const DIRECTION dir, int flgs) override {
+                          const DIRECTION& dir, int flgs) override {
       return new Comm_tTest(adr, dir, this->type, flgs);
     }
 
@@ -43,7 +43,7 @@ public:
     handle = new int();
     updateMaxMsgSize(1000);
   }
-  int wait_for_recv(const int) override { return 0; }
+  int wait_for_recv(const int&) override { return 0; }
   int comm_nmsg() const override {
     if (nmsg_ >= 0) return nmsg_;
     return CommBase::comm_nmsg();

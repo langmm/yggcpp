@@ -33,20 +33,28 @@ namespace utils {
     static int _ygg_error_flag;
 
   private:
+    /**
+     * Get the prefix string for log messages
+     * @return
+     */
     std::string _getLogPretex();
   };
   
+  /**
+   * Reports an error to the log, the raises the error as an exception
+   * @param msg
+   */
   void ygglog_throw_error(const std::string& msg);
   std::string string_format(const std::string fmt, ...);
   
 }
 }
 
-#define ygglog_error YggdrasilLogger("ERROR", 40, true)
-#define ygglog_info YggdrasilLogger("INFO", 20)
-#define ygglog_debug YggdrasilLogger("DEBUG", 10)
+#define ygglog_error communication::utils::YggdrasilLogger("ERROR", 40, true)
+#define ygglog_info communication::utils::YggdrasilLogger("INFO", 20)
+#define ygglog_debug communication::utils::YggdrasilLogger("DEBUG", 10)
 
-#define ygglog_error_c(...) ygglog_error << string_format(__VA_ARGS__) << std::endl
-#define ygglog_debug_c(...) ygglog_debug << string_format(__VA_ARGS__) << std::endl
-#define ygglog_info_c(...) ygglog_info << string_format(__VA_ARGS__) << std::endl
-#define ygglog_throw_error_c(...) ygglog_throw_error(string_format(__VA_ARGS__))
+#define ygglog_error_c(...) ygglog_error << communication::utils::string_format(__VA_ARGS__) << std::endl
+#define ygglog_debug_c(...) ygglog_debug << communication::utils::string_format(__VA_ARGS__) << std::endl
+#define ygglog_info_c(...) ygglog_info << communication::utils::string_format(__VA_ARGS__) << std::endl
+#define ygglog_throw_error_c(...) communication::utils::ygglog_throw_error(communication::utils::string_format(__VA_ARGS__))

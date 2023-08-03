@@ -123,6 +123,14 @@ public:
 
 class ZMQComm : public CommBase<ZMQSocket> {
 public:
+    /**
+     * Constructor
+     * @param name The name of the communicator
+     * @param address The address to associate with the communicator, if address is nullptr
+     *                then an address will be created.
+     * @param direction Enumerated direction for communicator
+     * @param flgs Bitwise flags describing the communicator
+     */
     explicit ZMQComm(const std::string name = "",
 		     utils::Address *address = new utils::Address(),
                      const DIRECTION direction = NONE,
@@ -130,8 +138,15 @@ public:
     ADD_CONSTRUCTORS(ZMQComm, ZMQ_COMM)
 
 #ifdef ZMQINSTALLED
+    /**
+     * Destructor
+     */
     ~ZMQComm() override;
 
+    /**
+     * The number of messages in the queue
+     * @return The number of messages
+     */
     int comm_nmsg() const override;
     using Comm_t::send;
     using Comm_t::recv;
@@ -140,18 +155,17 @@ public:
 protected:
 #endif
     void init();
-    void init_handle();
-    int send_single(const char *data, const size_t &len, const Header& header) override;
+    int send_single(const char *data, const size_t &len, const utils::Header& header) override;
     long recv_single(char*& data, const size_t &len, bool allow_realloc) override;
-    virtual bool do_reply_recv(const Header& header);
-    virtual bool do_reply_send(const Header& header);
-    bool create_header_send(Header& header, const char* data, const size_t &len) override;
-    bool create_header_recv(Header& header, char*& data, const size_t &len,
+    virtual bool do_reply_recv(const utils::Header& header);
+    virtual bool do_reply_send(const utils::Header& header);
+    bool create_header_send(utils::Header& header, const char* data, const size_t &len) override;
+    bool create_header_recv(utils::Header& header, char*& data, const size_t &len,
 			    size_t msg_len, int allow_realloc,
 			    int temp) override;
     WORKER_METHOD_DECS(ZMQComm);
-    Comm_t* create_worker_send(Header& head) override;
-    Comm_t* create_worker_recv(Header& head) override;
+    Comm_t* create_worker_send(utils::Header& head) override;
+    Comm_t* create_worker_recv(utils::Header& head) override;
 #ifdef YGG_TEST
     bool afterSendRecv(Comm_t* sComm, Comm_t* rComm) override;
 #endif

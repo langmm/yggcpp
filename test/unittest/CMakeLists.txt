@@ -53,7 +53,6 @@ else()
 endif()
 
 
-
 add_definitions(-DYGG_TEST)
 # This is required for running tests with valgrind
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|ARMClang")
@@ -118,7 +117,8 @@ if(NOT MSVC)
                  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/test)
         set_tests_properties(valgrind_unittest PROPERTIES
                 ENVIRONMENT
-                "${RAPIDJSON_PYTHON_ENV}")
+		"YGG_MODEL_INDEX=123")
+                # "${RAPIDJSON_PYTHON_ENV}")
     endif((NOT YGG_SKIP_VALGRIND_TESTS) AND VALGRIND_FOUND)
 
 endif(NOT MSVC)

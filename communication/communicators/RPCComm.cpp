@@ -11,7 +11,7 @@ RPCComm::RPCComm(const std::string &name, Address *address,
 		 const COMM_TYPE type) :
   COMM_BASE(name, address, dir, flgs, type), requests(req_dir) {}
 
-Metadata& RPCComm::get_metadata(const DIRECTION dir) {
+communication::utils::Metadata& RPCComm::get_metadata(const DIRECTION dir) {
   if (global_comm)
     return global_comm->get_metadata(dir);
   if (dir == this->direction || dir == NONE)
@@ -33,7 +33,7 @@ void RPCComm::addResponseSchema(const rapidjson::Value& s,
   }
   requests.addResponseSchema(s, use_generic);
 }
-void RPCComm::addResponseSchema(const Metadata& metadata,
+void RPCComm::addResponseSchema(const communication::utils::Metadata& metadata,
 				bool use_generic) {
   if (global_comm) {
     (dynamic_cast<RPCComm*>(global_comm))->addResponseSchema(metadata, use_generic);

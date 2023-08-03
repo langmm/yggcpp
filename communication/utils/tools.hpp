@@ -2,7 +2,6 @@
 #ifdef __cplusplus
 #include <vector>
 #include <algorithm>
-#include "templates.hpp"
 #include "complex_type.hpp"
 #include "constants.hpp"
 
@@ -13,6 +12,7 @@
 #endif
 
 #ifdef _OPENMP
+
 #include <omp.h>
 #endif
 

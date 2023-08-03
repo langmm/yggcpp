@@ -30,7 +30,7 @@ void ClientComm::set_timeout_recv(int new_timeout) {
   Comm_t* active_comm = requests.comms[0];
   active_comm->set_timeout_recv(new_timeout);
 }
-int ClientComm::wait_for_recv(const int) {
+int ClientComm::wait_for_recv(const int&) {
   // Handle wait in recv_single for response comm
   return 1;
 }
@@ -79,7 +79,7 @@ bool ClientComm::signon(const Header& header) {
 	free(data);
       if (ret < 0) {
         ygglog_error << "ClientComm(" << name << ")::signon: Error in receiving sign-on" << std::endl;
-        return false;
+	return false;
       }
       break;
     } else {
@@ -179,12 +179,12 @@ long ClientComm::recv_single(char*& rdata, const size_t &rlen, bool allow_reallo
     ygglog_debug << "ClientComm(" << name << ")::recv_single" << std::endl;
     Comm_t* response_comm = requests.activeComm();
     if (response_comm == NULL) {
-      ygglog_error << "ClientComm(" << name << ")::recv_single: Error getting response comm" << std::endl;
-      return -1;
+        ygglog_error << "ClientComm(" << name << ")::recv_single: Error getting response comm" << std::endl;
+        return -1;
     }
     std::string req_id = requests.activeRequestClient();
     size_t buff_len = rlen;
-    long ret = 0;
+    long ret;
     while (!requests.isComplete(req_id)) {
         ygglog_debug << "ClientComm(" << name << ")::recv_single: Waiting for response to request " << req_id << std::endl;
 	if (response_comm->wait_for_recv(this->timeout_recv) <= 0) {
@@ -193,15 +193,15 @@ long ClientComm::recv_single(char*& rdata, const size_t &rlen, bool allow_reallo
 	}
         ret = response_comm->recv_single(rdata, buff_len, allow_realloc);
         if (ret < 0) {
-	    ygglog_error << "ClientComm(" << name << ")::recv_single: response recv_single returned " << ret << std::endl;
+            ygglog_error << "ClientComm(" << name << ")::recv_single: response recv_single returned " << ret << std::endl;
             return ret;
         }
-	if (ret > (int)buff_len) {
-	  buff_len = ret;
-	}
-	Header header;
-	if (!create_header_recv(header, rdata, buff_len, ret, allow_realloc, true)) {
-	    ygglog_error << "ClientComm(" << name << ")::recv_single: Invalid header." << std::endl;
+        if (ret > (int)buff_len) {
+            buff_len = ret;
+        }
+        Header header;
+        if (!create_header_recv(header, rdata, buff_len, ret, allow_realloc, true)) {
+            ygglog_error << "ClientComm(" << name << ")::recv_single: Invalid header." << std::endl;
             return -1;
         }
     }

@@ -1,5 +1,10 @@
 #pragma once
 
+#ifdef WITH_PYTHON
+#define VIRT_END
+#else
+#define VIRT_END = 0
+#endif
 
 #include "utils/tools.hpp"
 #include "utils/enums.hpp"
@@ -12,28 +17,30 @@
 #include "rapidjson/schema.h"
 
 /*! @brief Bit flags. */
-#define COMM_FLAG_VALID   0x00000001  //!< Set if the comm is initialized
-#define COMM_FLAG_GLOBAL  0x00000002  //!< Set if the comm is global
-#define COMM_FLAG_FILE    0x00000004  //!< Set if the comm connects to a file
-#define COMM_FLAG_WORKER  0x00000008  //!< Set if the comm is a work comm
-#define COMM_FLAG_CLIENT  0x00000010  //!< Set if the comm is a client
-#define COMM_FLAG_SERVER  0x00000020  //!< Set if the comm is a server
-#define COMM_FLAG_CLIENT_RESPONSE 0x00000040 //!< Set if the comm is a client response comm
-#define COMM_FLAG_SERVER_RESPONSE 0x00000080 //!< Set if the comm is a server response comm
-#define COMM_ALWAYS_SEND_HEADER   0x00000100 //!< Set if the comm should always include a header in messages
-#define COMM_ALLOW_MULTIPLE_COMMS 0x00000200 //!< Set if the comm should connect in a way that allow multiple connections
-#define COMM_FLAGS_USED   0x00000400  //!< Set if the comm has been used
-#define COMM_EOF_SENT     0x00000800  //!< Set if EOF has been sent
-#define COMM_EOF_RECV     0x00001000  //!< Set if EOF has been received
-#define COMM_FLAG_INTERFACE 0x00002000 //!< Set if communicator is an interface communicator
-#define COMM_FLAG_DELETE  0x00004000  //!< Set if the communicator needs to be deleted
+enum CommFlags {
+    COMM_FLAG_VALID  = 0x00000001,  //!< Set if the comm is initialized
+    COMM_FLAG_GLOBAL = 0x00000002,  //!< Set if the comm is global
+    COMM_FLAG_FILE   = 0x00000004,  //!< Set if the comm connects to a file
+    COMM_FLAG_WORKER = 0x00000008,  //!< Set if the comm is a work comm
+    COMM_FLAG_CLIENT = 0x00000010,  //!< Set if the comm is a client
+    COMM_FLAG_SERVER = 0x00000020,  //!< Set if the comm is a server
+    COMM_FLAG_CLIENT_RESPONSE = 0x00000040, //!< Set if the comm is a client response comm
+    COMM_FLAG_SERVER_RESPONSE = 0x00000080, //!< Set if the comm is a server response comm
+    COMM_ALWAYS_SEND_HEADER   = 0x00000100, //!< Set if the comm should always include a header in messages
+    COMM_ALLOW_MULTIPLE_COMMS = 0x00000200, //!< Set if the comm should connect in a way that allow multiple connections
+    COMM_FLAGS_USED = 0x00000400,  //!< Set if the comm has been used
+    COMM_EOF_SENT   = 0x00000800,  //!< Set if EOF has been sent
+    COMM_EOF_RECV   = 0x00001000,  //!< Set if EOF has been received
+    COMM_FLAG_INTERFACE = 0x00002000,       //!< Set if communicator is an interface communicator
+    COMM_FLAG_DELETE    = 0x00004000        //!< Set if the communicator needs to be deleted
+};
 
 /*! @brief Set if the comm is the receiving comm for a client/server request connection */
-#define COMM_FLAG_RPC     COMM_FLAG_SERVER | COMM_FLAG_CLIENT
+const int COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
 #define COMM_NAME_SIZE 100
 #define COMM_DIR_SIZE 100
 
-// Bug in gnu std::regex that dosn't allow for matching large messages
+// Bug in gnu std::regex that doesn't allow for matching large messages
 // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=86164
 #ifdef __GNUC__
 #define COMM_BASE_MAX_MSG_SIZE 2048
@@ -73,15 +80,15 @@
     cls("", addr, flgs, type) {}
 #define WORKER_METHOD_DECS(cls)					\
   Comm_t* create_worker(utils::Address* address,		\
-			const DIRECTION, int flgs) override
+			const DIRECTION&, int flgs) override
 #define WORKER_METHOD_DEFS(cls)					\
   Comm_t* cls::create_worker(utils::Address* address,		\
-			     const DIRECTION dir, int flgs) {	\
+			     const DIRECTION& dir, int flgs) {	\
     return new cls("", address, dir, flgs | COMM_FLAG_WORKER);	\
   }
 #define WORKER_METHOD_DUMMY(cls, abbr)				\
   Comm_t* cls::create_worker(utils::Address*,			\
-			     const DIRECTION, int) {		\
+			     const DIRECTION&, int) {		\
     abbr ## _install_error();					\
     return NULL;						\
   }
@@ -120,11 +127,14 @@ class RequestList;
 
 typedef struct comm_t comm_t;
 
+/**
+ * Abstract base class for all communicators. Cannot be instantiated directly, but is used as a generalized hook
+ * for passing communicators around. Should only be instantiated by the CommBase<> class.
+ */
 class Comm_t {
-private:
-  Comm_t(const Comm_t& other) = delete;
-  Comm_t& operator=(const Comm_t&) = delete;
 public:
+    Comm_t(const Comm_t& other) = delete;
+    Comm_t& operator=(const Comm_t&) = delete;
     virtual ~Comm_t();
 
     /*!
@@ -132,7 +142,7 @@ public:
       @param[in] data Message.
       @returns int Values >= 0 indicate success.
      */
-    int send(const std::string data) {
+    int send(const std::string& data) {
         return send(data.c_str(), data.size());
     }
     /*!
@@ -140,7 +150,7 @@ public:
       @returns int Values >= 0 indicate success.
      */
      int send_eof() {
-       return send(YGG_MSG_EOF);
+        return send(YGG_MSG_EOF);
      }
     /*!
       @brief Receive a string message from the communicator.
@@ -180,7 +190,7 @@ public:
       @return Number of messages available for receive. -1 if an error
         occurred.
      */
-    virtual int wait_for_recv(const int tout);
+    virtual int wait_for_recv(const int& tout);
     /*!
       @brief Receive a string message from the communicator.
       @param[out] data Allocated buffer where the message should be saved.
@@ -427,25 +437,25 @@ public:
       @brief Get the number of messages in the communicator.
       @return Number of messages.
      */
-    virtual int comm_nmsg() const = 0;
+    virtual int comm_nmsg() const VIRT_END;
 
     /*!
       @brief Close the communicator.
      */
-    virtual void close() = 0;
+    virtual void close() VIRT_END;
 
     /*!
       @brief Check if the communicator is closed.
       @return true if the communicator is closed, false otherwise.
      */
-    virtual bool is_closed() const = 0;
+    virtual bool is_closed() const VIRT_END;
 
     /*!
       @brief Check if the communicator is open.
       @return true if the communicator is open, false otherwise.
      */
     virtual bool is_open() const {
-      return (!is_closed());
+        return (!is_closed());
     }
 
     /*!
@@ -473,16 +483,16 @@ public:
     }
     DIRECTION getDirection() { return direction; }
     WorkerList& getWorkers() { return workers; }
-    Metadata& getMetadata() { return metadata; }
+    utils::Metadata& getMetadata() { return metadata; }
     int& getFlags() { return flags; }
     virtual bool afterSendRecv(Comm_t*, Comm_t*) { return true; }
-    size_t getMaxMsgSize() { return maxMsgSize; }
+    size_t getMaxMsgSize() const { return maxMsgSize; }
     Comm_t* getGlobalComm() { return global_comm; }
 #endif
-    void addSchema(const Metadata& s);
+    void addSchema(const utils::Metadata& s);
     void addSchema(const rapidjson::Value& s, bool isMetadata = false);
-    void addSchema(const std::string schemaStr, bool isMetadata = false);
-    void addFormat(const std::string format_str, bool as_array = false);
+    void addSchema(const std::string& schemaStr, bool isMetadata = false);
+    void addFormat(const std::string& format_str, bool as_array = false);
     void copySchema(const Comm_t* other);
 
     static void _ygg_cleanup();
@@ -511,7 +521,7 @@ protected:
 	maxMsgSize = new_size;
     }
 
-    void setFlags(const Header& head, DIRECTION dir) {
+    void setFlags(const utils::Header& head, DIRECTION dir) {
       flags |= COMM_FLAGS_USED;
       if (head.flags & HEAD_FLAG_EOF) {
 	if (dir == SEND)
@@ -561,7 +571,7 @@ protected:
 		  const char* src, const size_t src_len,
 		  bool allow_realloc);
 
-    virtual Metadata& get_metadata(const DIRECTION dir=NONE);
+    virtual utils::Metadata& get_metadata(const DIRECTION dir=NONE);
     int update_datatype(const rapidjson::Value& new_schema,
 			const DIRECTION dir);
     template<typename T>
@@ -574,7 +584,7 @@ protected:
 		  RAPIDJSON_DISABLEIF((internal::OrExpr<YGGDRASIL_IS_ANY_SCALAR(T), internal::IsSame<T, bool> >))) {}
     template<typename T>
     bool checkType(const T& data, const DIRECTION dir) {
-      Metadata& meta = get_metadata(dir);
+      utils::Metadata& meta = get_metadata(dir);
       if (dir == RECV)
 	zeroData(&data);
       try {
@@ -584,25 +594,45 @@ protected:
       }
       return true;
     }
+    virtual bool create_header_send(utils::Header& header, const char* data, const size_t &len);
+    virtual bool create_header_recv(utils::Header& header, char*& data, const size_t &len,
+				    size_t msg_len, int allow_realloc,
+				    int temp);
     rapidjson::Value& getSchema(const DIRECTION dir=NONE) {
       return get_metadata(dir).getSchema();
     }
-    virtual bool create_header_send(Header& header, const char* data, const size_t &len);
-    virtual bool create_header_recv(Header& header, char*& data, const size_t &len,
-				    size_t msg_len, int allow_realloc,
-				    int temp);
     virtual Comm_t* create_worker(utils::Address* address,
-				  const DIRECTION, int flgs) = 0;
-    virtual Comm_t* create_worker_send(Header& head);
-    virtual Comm_t* create_worker_recv(Header& head);
-    virtual int send_single(const char *data, const size_t &len, const Header& header) = 0;
-    virtual long recv_single(char*& data, const size_t &len, bool allow_realloc) = 0;
+				  const DIRECTION&, int flgs) VIRT_END;
+    virtual Comm_t* create_worker_send(utils::Header& head);
+    virtual Comm_t* create_worker_recv(utils::Header& head);
+    virtual int send_single(const char *data, const size_t &len, const utils::Header& header) VIRT_END;
+    virtual long recv_single(char*& data, const size_t &len, bool allow_realloc) VIRT_END;
 
+    /**
+     * Constructor, which can only be instantiated by a child class
+     * @param name The name of communicator
+     * @param address The address to associate with this communicator.
+     * @param direction Whether this instance is a sender or receiver
+     * @param t Enumerated communicator type
+     * @param flgs Initial bitwise flags
+     * @see utils::Address()
+     */
+#ifdef WITH_PYTHON
+public:
+#endif
     explicit Comm_t(const std::string &name,
 		    utils::Address *address = nullptr,
 		    DIRECTION direction = NONE,
 		    const COMM_TYPE &t = NULL_COMM, int flgs = 0);
+#ifdef WITH_PYTHON
+protected:
+#endif
 
+    /**
+     * Checks the size of the message to see if it exceeds the maximum allowable size as define by YGG_MSG_MAX
+     * @param len The length of the message to check
+     * @return bool Whether the message is smaller than YGG_MSG_MAX (true), false otherwise
+     */
     bool check_size(const size_t &len) const;
 
     COMM_TYPE type; //!< Comm type.
@@ -615,7 +645,7 @@ protected:
     size_t msgBufSize; //!< The size that should be reserved in messages.
     int index_in_register; //!< Index of the comm in the comm register.
     int thread_id; //!< ID for the thread that created the comm.
-    Metadata metadata;
+    utils::Metadata metadata;
     int timeout_recv; //!< Time to wait for messages during receive.
     WorkerList workers; //!< Communicator to use for sending large messages.
     Comm_t* global_comm; // !< Pointer to global comm that this comm shadows.
@@ -630,19 +660,33 @@ public:
 					const COMM_TYPE type);
 };
 
-  Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name="", char* address=nullptr, int flags=0);
-  Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, utils::Address* address, int flags=0);
-/*!
-      @brief Communication structure.
-     */
+/**
+ * Creates a new communicator of the specified type
+ * @param dir The direction for the communicator
+ * @param type The enumerated type of communicator to create
+ * @param name The name of the communicator
+ * @param address The initial address of the communicator.
+ * @param flags Bitwise flags describing the communicator
+ * @return
+ */
+Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name="", char* address=nullptr, int flags=0);
+Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, utils::Address* address, int flags=0);
+
+/**
+ * Templated base class for all communicators
+ * @tparam H Handle type for the communicator
+ */
 template<typename H>
 class CommBase : public Comm_t {
-private:
-  CommBase(const CommBase& other) = delete;
-  CommBase& operator=(const CommBase&) = delete;
 public:
+    CommBase(const CommBase& other) = delete;
+    CommBase& operator=(const CommBase&) = delete;
     CommBase() = delete;
 
+    /**
+     * Returns the number of messages in the queue
+     * @return The number of messages in the queue
+     */
     int comm_nmsg() const override {
       ygglog_error << "Comm_nmsg of base class called, must be overridden" << std::endl;
       return -1;
@@ -653,24 +697,41 @@ public:
     using Comm_t::recv;
 
 protected:
-    int send_single(const char *, const size_t &, const Header&) override {
+    /**
+     * Not used, must be overloaded by a child class
+     */
+    int send_single(const char *, const size_t &, const utils::Header&) override {
       ygglog_error << "Send of base class called, must be overridden" << std::endl;
       return -1;
     }
 
+    /**
+     * Not used, must be overloaded by child class
+     */
     long recv_single(char*&, const size_t &, bool) override {
       ygglog_error << "Recv of base class called, must be overridden" << std::endl;
       return -1;
     }
 
+    /**
+     * Constructor
+     * @param name The name of the communicator
+     * @param address The initial address for the communicator
+     * @param direction The enumerated direction of the communicator
+     * @param t The enumerated type of the communicator
+     * @param flags Bitwise flags describing the communicator
+     */
     explicit CommBase(const std::string &name, utils::Address *address = nullptr, DIRECTION direction = NONE, const COMM_TYPE &t = NULL_COMM, int flags = 0);
 
-    Comm_t* create_worker(utils::Address*, const DIRECTION,
+    Comm_t* create_worker(utils::Address*, const DIRECTION&,
 			  int) override {
       utils::ygglog_throw_error("create_worker of base class called, must be overridden");
       return NULL; // GCOVR_EXCL_LINE
     }
 
+    /**
+     * Destructor
+     */
     ~CommBase() override;
 
     H *handle; //!< Pointer to handle for comm.

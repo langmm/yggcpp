@@ -247,10 +247,10 @@ void Comm_t::addSchema(const Metadata& s) {
 void Comm_t::addSchema(const rapidjson::Value& s, bool isMetadata) {
   get_metadata().fromSchema(s, isMetadata);
 }
-void Comm_t::addSchema(const std::string schemaStr, bool isMetadata) {
+void Comm_t::addSchema(const std::string& schemaStr, bool isMetadata) {
   get_metadata().fromSchema(schemaStr, isMetadata);
 }
-void Comm_t::addFormat(const std::string format_str, bool as_array) {
+void Comm_t::addFormat(const std::string& format_str, bool as_array) {
   get_metadata().fromFormat(format_str, as_array);
 }
 void Comm_t::copySchema(const Comm_t* other) {
@@ -268,6 +268,7 @@ bool Comm_t::check_size(const size_t &len) const {
     }
     return true;
 }
+
 Comm_t* communication::communicator::new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, char* address, int flags) {
   Address* addr = (address) ? nullptr : new Address(address);
   return communication::communicator::new_Comm_t(dir, type, name, addr, flags);
@@ -424,7 +425,7 @@ void Comm_t::set_timeout_recv(int new_timeout) {
   }
   timeout_recv = new_timeout;
 }
-int Comm_t::wait_for_recv(const int tout) {
+int Comm_t::wait_for_recv(const int& tout) {
   if (global_comm)
     return global_comm->wait_for_recv(tout);
   clock_t start = clock();
@@ -560,11 +561,11 @@ long Comm_t::recvRealloc(const int nargs, ...) {
   return ret;
 }
 int Comm_t::send(const int nargs, ...) {
-  size_t nargs_copy = (size_t)nargs;
-  YGGCPP_BEGIN_VAR_ARGS(ap, nargs, nargs_copy, false);
-  int ret = vSend(ap);
-  YGGCPP_END_VAR_ARGS(ap);
-  return ret;
+    size_t nargs_copy = (size_t)nargs;
+    YGGCPP_BEGIN_VAR_ARGS(ap, nargs, nargs_copy, false);
+    int ret = vSend(ap);
+    YGGCPP_END_VAR_ARGS(ap);
+    return ret;
 }
 
 long Comm_t::call(const int nargs, ...) {
@@ -648,25 +649,25 @@ int Comm_t::serialize(char*& buf, size_t& buf_siz,
 }
 
 long Comm_t::vRecv(rapidjson::VarArgList& ap) {
-  ygglog_debug << "CommBase(" << name << ")::vRecv: begin" << std::endl;
-  char* buf = NULL;
-  size_t buf_siz = 0;
-  long ret = recv(buf, buf_siz, true);
-  if (ret < 0) {
-    if (buf != NULL)
-      free(buf);
-    if (ret != -2)
-      ygglog_error << "CommBase(" << name << ")::vRecv: Error in recv" << std::endl;
+    ygglog_debug << "CommBase(" << name << ")::vRecv: begin" << std::endl;
+    char* buf = NULL;
+    size_t buf_siz = 0;
+    long ret = recv(buf, buf_siz, true);
+    if (ret < 0) {
+        if (buf != NULL)
+            free(buf);
+	if (ret != -2)
+	    ygglog_error << "CommBase(" << name << ")::vRecv: Error in recv" << std::endl;
+        return ret;
+    }
+    ret = deserialize(buf, ap);
+    free(buf);
+    if (ret < 0) {
+        ygglog_error << "CommBase(" << name << ")::vRecv: Error deserializing message" << std::endl;
+        return ret;
+    }
+    ygglog_debug << "CommBase(" << name << ")::vRecv: returns " << ret << std::endl;
     return ret;
-  }
-  ret = deserialize(buf, ap);
-  free(buf);
-  if (ret < 0) {
-    ygglog_error << "CommBase(" << name << ")::vRecv: Error deserializing message" << std::endl;
-    return ret;
-  }
-  ygglog_debug << "CommBase(" << name << ")::vRecv: returns " << ret << std::endl;
-  return ret;
 }
 int Comm_t::vSend(rapidjson::VarArgList& ap) {
   ygglog_debug << "CommBase(" << name << ")::vSend: begin" << std::endl;

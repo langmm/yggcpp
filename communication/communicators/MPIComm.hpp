@@ -9,6 +9,9 @@
 namespace communication {
 namespace communicator {
 
+/**
+ * Wrapper for a MPI communicator.
+ */
 class mpi_registry_t {
 public:
 #if defined(MPIINSTALLED) && defined(MPI_COMM_WORLD)
@@ -48,6 +51,14 @@ enum MPI_STATUS_FLAG {
 
 class MPIComm : public CommBase<mpi_registry_t> {
 public:
+    /**
+     * Constructor
+     * @param name The name of the communicator
+     * @param address The address to associate with the communicator, if address is nullptr
+     *                then an address will be created.
+     * @param direction Enumerated direction for the communicator
+     * @param flags Bitwise flags describing the communicator
+     */
     MPIComm(const std::string name = "",
 	    utils::Address *address = new utils::Address(),
 	    const DIRECTION direction = NONE,
@@ -55,10 +66,21 @@ public:
     ADD_CONSTRUCTORS(MPIComm, MPI_COMM)
 
 #if defined(MPIINSTALLED) && defined(MPI_COMM_WORLD)
+    /**
+     * Destructor
+     */
     ~MPIComm() override;
 
+    /**
+     * The number of messages in the queue
+     * @return The number of messages
+     */
     int comm_nmsg() const override;
 
+    /**
+     * Get the communicator source id
+     * @return
+     */
     int mpi_comm_source_id() const;
     using Comm_t::send;
     using Comm_t::recv;
@@ -66,7 +88,7 @@ public:
 protected:
     void init();
     int send_single(const char *data, const size_t &len,
-		    const Header& header) override;
+		    const utils::Header& header) override;
 
     long recv_single(char*& data, const size_t &len, bool allow_realloc) override;
     WORKER_METHOD_DECS(MPIComm);

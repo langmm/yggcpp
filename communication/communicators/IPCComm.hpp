@@ -28,6 +28,13 @@ typedef struct msgbuf_t {
   
 class IPCComm : public CommBase<int> {
 public:
+    /**
+     * Constructor for an IPC based communicator
+     * @param name The name for the communicator, if not given one will be generated
+     * @param address The address for the communicator, if not given one will be generated
+     * @param direction Enuerated direction for this instance
+     * @param flags Bitwise flags describing the communicator
+     */
     explicit IPCComm(const std::string name = "",
 		     utils::Address *address = new utils::Address(),
                      const DIRECTION direction = NONE,
@@ -36,14 +43,30 @@ public:
 
 #ifdef IPCINSTALLED
 
+    /**
+     * Destructor
+     */
     ~IPCComm() override;
 
     int check_key(int key);
 
+    /**
+     * Add a new channel to the list of channels
+     * @return
+     */
     void add_channel();
 
+    /**
+     * Remove the given ipc queue
+     * @param close_comm If 1, close the queue, otherwise remove the given comm from the register
+     * @return -1 on error
+     */
     int remove_comm(bool close_comm);
 
+    /**
+     * The number of messages in the queue
+     * @return The number of messages
+     */
     int comm_nmsg() const override;
     using Comm_t::send;
     using Comm_t::recv;
@@ -53,8 +76,15 @@ protected:
 #endif
     void init();
     int send_single(const char *data, const size_t &len,
-		    const Header& header) override;
+		    const utils::Header& header) override;
 
+    /**
+     * Receiving function
+     * @param data The contents of the message withh be placed here
+     * @param len The initial length of data
+     * @param allow_realloc Whether data can be reallocated if it is too small to hold the message.
+     * @return The length of data after the message was copied.
+     */
     long recv_single(char*& data, const size_t &len, bool allow_realloc) override;
     WORKER_METHOD_DECS(IPCComm);
 #else // IPCINSTALLED
