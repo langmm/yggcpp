@@ -156,6 +156,10 @@ std::string _mock_message();
 #define ELF_RESTORE_NMSG_IPC			\
   ELF_END_F(msgctl)
 #define ELF_META_IPC(comm)
+#define ELF_REPLACE_CREATE_IPC			\
+  ELF_BEGIN_F(msgget)
+#define ELF_RESTORE_CREATE_IPC			\
+  ELF_END_F(msgget)
 #endif
   
 #if defined(MPIINSTALLED) && defined(MPI_COMM_WORLD)
