@@ -90,7 +90,7 @@ TEST(ZMQComm, constructor) {
     {
       ELF_CREATE_T(ZMQ, -1);
       EXPECT_THROW(ZMQComm zmqc(name, nullptr, SEND), std::exception);
-      ELF_CREATE_RESTORE_T(ZMQ);
+      ELF_CREATE_REVERT_T(ZMQ);
     }
     // Failure to set socket options
     {
