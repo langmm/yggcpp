@@ -225,8 +225,6 @@ namespace communicator {
 	ygglog_error << "lastComm: No communicators" << std::endl;
 	return NULL;
       }
-      if (!requests.empty())
-	return activeComm();
       return comms[comms.size() - 1];
     }
     std::string activeRequestClient() {
@@ -249,22 +247,19 @@ namespace communicator {
       return 1;
     }
     int popRequestClient(Header& header) {
-      try {
-	std::string request_id(header.GetMetaString("request_id"));
-	int idx = hasRequest(request_id);
-	if (idx < 0) {
-	  ygglog_error << "RequestList::popRequestClient: No pending request with id '" << request_id << "'" << std::endl;
-	  return -1;
-	}
-	if (!requests[(size_t)idx].complete) {
-	  ygglog_error << "RequestList::popRequestClient: Request '" << request_id << "' does not have response" << std::endl;
-	  return -1;
-	}
-	requests.erase(requests.begin() + idx);
-	return 1;
-      } catch (...) {
+      // Should never fail as it will be called on pre-parsed header
+      std::string request_id(header.GetMetaString("request_id"));
+      int idx = hasRequest(request_id);
+      if (idx < 0) {
+	ygglog_error << "RequestList::popRequestClient: No pending request with id '" << request_id << "'" << std::endl;
 	return -1;
       }
+      if (!requests[(size_t)idx].complete) {
+	ygglog_error << "RequestList::popRequestClient: Request '" << request_id << "' does not have response" << std::endl;
+	return -1;
+      }
+      requests.erase(requests.begin() + idx);
+      return 1;
     }
     int getRequestClient(const std::string& request_id,
 			 char*& data, const size_t len,
@@ -333,21 +328,17 @@ namespace communicator {
       response_metadata.fromFormat(format_str, use_generic);
     }
     bool partnerSignoff(const Header& header) {
-      try {
-	if (header.flags & HEAD_FLAG_EOF) {
-	  std::string partner_model(header.GetMetaString("model"));
-	  int idx = hasPartner(partner_model);
-	  if (idx >= 0)
-	    partners[static_cast<size_t>(idx)].signed_off = true;
-	  for (size_t i = 0; i < partners.size(); i++) {
-	    if (!partners[i].signed_off)
-	      return false;
-	  }
+      if (header.flags & HEAD_FLAG_EOF) {
+	std::string partner_model(header.GetMetaString("model"));
+	int idx = hasPartner(partner_model);
+	if (idx >= 0)
+	  partners[static_cast<size_t>(idx)].signed_off = true;
+	for (size_t i = 0; i < partners.size(); i++) {
+	  if (!partners[i].signed_off)
+	    return false;
 	}
-	return true;
-      } catch (...) {
-	return false;
       }
+      return true;
     }
     void transferSchemaTo(Comm_t* comm) {
       comm->get_metadata(response_dir).fromMetadata(response_metadata);

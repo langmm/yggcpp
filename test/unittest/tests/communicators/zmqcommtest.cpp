@@ -214,11 +214,6 @@ TEST(ZMQComm, send) {
       EXPECT_GT(zmq.send(long_msg.c_str(), long_msg.size()), 0);
       ELF_RESTORE_SEND_ZMQ;
     }
-    // These are only needed if the tester dosn't by pass do_reply
-    // ELF_BEGIN_F(zmq_recvmsg);
-    // ELF_BEGIN_F(zmq_poller_wait_all);
-    // ELF_END_F(zmq_recvmsg);
-    // ELF_END_F(zmq_poller_wait_all);
     ELF_END;
 #endif // ELF_AVAILABLE
 }

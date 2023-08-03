@@ -136,6 +136,11 @@ TEST(IPCComm, sendLarge) {
     ELF_END_F(msgget);
     EXPECT_EQ(ipc.send(longmsg), -1);
 
+    // Failure on send in multipart
+    RETVAL = 1;
+    RETVAL_INC_SEND = -1;
+    EXPECT_EQ(ipc.send(longmsg), -1);
+
     ELF_RESTORE_SEND_IPC;
     ELF_END;
 #endif // ELF_AVAILABLE
@@ -173,8 +178,26 @@ TEST(IPCComm, recv) {
     errno = ENOMSG;
     EXPECT_EQ(ipc.recv(data, len, true), RETMSG.size());
     errno = 0;
-    free(data);
+    // Failure in for_recv due to missing size
+    RETVAL = 0;
+    RETVAL_INC_POLL = 0;
+    RETVAL_INC_RECV = 0;
+    RETMSG_META_DEFAULT = "\"id\": \"1\"";
+    EXPECT_EQ(ipc.recv(data, len, true), -1);
+    // Failure in create_worker_recv due to missing address
+    RETMSG_META_DEFAULT += ", \"size\": 10000";
+    EXPECT_EQ(ipc.recv(data, len, true), -1);
+    // Failure in wait_for_recv on worker
+    RETMSG_META_DEFAULT += ", \"address\": \"13580\"";
+    RETVAL = 1;
+    RETVAL_INC_POLL = -1;
+    RETVAL_INC_RECV = -1;
+    EXPECT_EQ(ipc.recv(data, len, true), -1);
+    // Failure in recv on worker
+    RETVAL = 2;
+    EXPECT_EQ(ipc.recv(data, len, true), -1);
     // Restore methods
+    free(data);
     ELF_END_F(msgget);
     ELF_RECV_REVERT_T(IPC);
     ELF_END;

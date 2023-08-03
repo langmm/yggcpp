@@ -89,6 +89,7 @@ extern int RETVAL_INC_POLL;
 extern int SENDCOUNT;
 extern std::string RETMSG;
 extern std::string RETMSG_META;
+extern std::string RETMSG_META_DEFAULT;
 
 std::string _mock_message();
   

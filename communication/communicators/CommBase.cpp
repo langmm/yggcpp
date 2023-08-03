@@ -313,7 +313,11 @@ bool Comm_t::create_header_recv(Header& header, char*& data,
   //   return global_comm->create_header_recv(header, data, len, msg_len,
   // 					   allow_realloc, temp);
   assert(!global_comm);
-  header.for_recv(&data, len, msg_len, allow_realloc, temp);
+  try {
+    header.for_recv(&data, len, msg_len, allow_realloc, temp);
+  } catch (...) {
+    return false;
+  }
   return true;
 }
 

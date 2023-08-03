@@ -438,6 +438,7 @@
   ELF_REPLACE_RECV_ ## type;			\
   RETMSG = "Hello world";			\
   RETMSG_META = "";				\
+  RETMSG_META_DEFAULT = "";			\
   RETVAL = ret
 #define ELF_RECV_REVERT_T(type)			\
   ELF_RESTORE_NMSG_ ## type;			\
