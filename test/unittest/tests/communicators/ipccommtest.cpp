@@ -38,7 +38,7 @@ TEST(IPCComm, constructor) {
     ELF_CREATE_T(IPC, 0); // To allow connection to non-existed queue
     utils::Address *adr3 = new utils::Address("12345");
     IPCComm_tester ipc5(name, adr3, RECV);
-    RETVAL = -1;
+    RETVAL_CREATE = -1;
     EXPECT_THROW(IPCComm_tester ipc6(name, nullptr, SEND), std::runtime_error);
     ELF_CREATE_REVERT_T(IPC);
     ELF_END;
@@ -193,7 +193,9 @@ TEST(IPCComm, recv) {
     RETVAL_INC_RECV = -1;
     EXPECT_EQ(ipc.recv(data, len, true), -1);
     // Failure in recv on worker
-    RETVAL = 2;
+    RETVAL = 0;
+    RETVAL_INC_POLL = 0;
+    RETVAL_INC_RECV = -1;
     EXPECT_EQ(ipc.recv(data, len, true), -1);
     // Restore methods
     free(data);
