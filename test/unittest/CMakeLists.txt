@@ -41,13 +41,18 @@ message(STATUS "TEST_LIBRARIES = ${TEST_LIBRARIES}")
 message(STATUS "TEST_INCLUDE_DIRS = ${TEST_INCLUDE_DIRS}")
 if (WIN32)
     gtest_discover_tests(unittest DISCOVERY_MODE PRE_TEST
-                         PROPERTIES ENVIRONMENT
-                         "${RAPIDJSON_PYTHON_ENV}")
+                         TEST_LIST ygg_test_list
+			 PROPERTIES
+			 ENVIRONMENT "${RAPIDJSON_PYTHON_ENV}"
+			 ENVIRONMENT "${RAPIDJSON_PYTHON_ENV2}")
 else()
     gtest_discover_tests(unittest DISCOVERY_MODE PRE_TEST
-                         PROPERTIES TIMEOUT 20 ENVIRONMENT
-                         "${RAPIDJSON_PYTHON_ENV}")
+                         TEST_LIST ygg_test_list
+                         PROPERTIES TIMEOUT 20
+			 ENVIRONMENT "${RAPIDJSON_PYTHON_ENV}")
 endif()
+
+
 
 add_definitions(-DYGG_TEST)
 # This is required for running tests with valgrind
@@ -67,9 +72,11 @@ else ()
    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
 endif()
 
-#set_tests_properties(unittest PROPERTIES
-#        ENVIRONMENT
-#        "${RAPIDJSON_PYTHON_ENV}")
+message(STATUS "RAPIDJSON_PYTHON_ENV = ${RAPIDJSON_PYTHON_ENV}")
+message(STATUS "ygg_test_list = ${ygg_test_list}")
+set_tests_properties(${ygg_test_list} PROPERTIES
+       ENVIRONMENT
+       "${RAPIDJSON_PYTHON_ENV}")
 
 if (WIN32)
     add_custom_command(
@@ -111,8 +118,7 @@ if(NOT MSVC)
                  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/test)
         set_tests_properties(valgrind_unittest PROPERTIES
                 ENVIRONMENT
-		"YGG_MODEL_INDEX=123")
-                # "${RAPIDJSON_PYTHON_ENV}")
+                "${RAPIDJSON_PYTHON_ENV}")
     endif((NOT YGG_SKIP_VALGRIND_TESTS) AND VALGRIND_FOUND)
 
 endif(NOT MSVC)

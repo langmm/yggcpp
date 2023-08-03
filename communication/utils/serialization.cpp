@@ -2,7 +2,7 @@
 // #define RAPIDJSON_FORCE_IMPORT_ARRAY
 #include "serialization.hpp"
 // Required so that symbol declared by numpy/arrayobject.h is defined
-// during compilation of the dynamic library
+// during compilation of the dynamic library with MSVC
 extern "C" {
   void** rapidjson_ARRAY_API = NULL;
 }
