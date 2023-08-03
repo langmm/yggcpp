@@ -512,7 +512,7 @@ long Comm_t::recv(char*& data, const size_t &len,
   size_t msgsiz = 0;
   while (head.size_curr < head.size_data) {
     msgsiz = head.size_data - head.size_curr + 1;
-    if (xmulti->wait_for_recv(timeout_recv) < 0) {
+    if (xmulti->wait_for_recv(timeout_recv) <= 0) {
       ygglog_error << "CommBase(" << name << ")::recv: No messages waiting in work comm" << std::endl;
       return -1;
     }

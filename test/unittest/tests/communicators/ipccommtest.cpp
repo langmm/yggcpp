@@ -191,11 +191,13 @@ TEST(IPCComm, recv) {
     RETVAL = 1;
     RETVAL_INC_POLL = -1;
     RETVAL_INC_RECV = -1;
+    ipc.set_timeout_recv(1000);
     EXPECT_EQ(ipc.recv(data, len, true), -1);
     // Failure in recv on worker
     RETVAL = 0;
     RETVAL_INC_POLL = 0;
     RETVAL_INC_RECV = -1;
+    ipc.set_timeout_recv(YGG_MAX_TIME);
     EXPECT_EQ(ipc.recv(data, len, true), -1);
     // Restore methods
     free(data);
