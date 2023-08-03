@@ -15,14 +15,16 @@
 
 // C++ functions
 rapidjson::Document::AllocatorType& generic_allocator(generic_t& x) {
-  if (!is_generic_init(x))
-    ygglog_throw_error_c("generic_allocator: Not initialized");
+  assert(is_generic_init(x));
+  // if (!is_generic_init(x))
+  //   ygglog_throw_error_c("generic_allocator: Not initialized");
   return ((rapidjson::Document*)(x.obj))->GetAllocator();
 }; // GCOVR_EXCL_LINE
 
 rapidjson::Document::AllocatorType& generic_ref_allocator(generic_ref_t& x) {
-  if (!is_generic_ref_init(x))
-    ygglog_throw_error_c("generic_ref_allocator: Not initialized");
+  assert(is_generic_ref_init(x));
+  // if (!is_generic_ref_init(x))
+  //   ygglog_throw_error_c("generic_ref_allocator: Not initialized");
   return *((rapidjson::Document::AllocatorType*)(x.allocator));
 }; // GCOVR_EXCL_LINE
 

@@ -203,10 +203,15 @@ int msgget(key_t a, int b);
 
 ssize_t msgrcv(int a, void* buf, size_t msz, long mtype, int flags);
 #endif // IPCINSTALLED
-  
 
 void* realloc(void* ptr, size_t size);
 // void* malloc(size_t size);
+
+// namespace rapidjson {
+// namespace MemoryPoolAllocator {
+//   void* Realloc(void* originalPtr, size_t originalSize, size_t newSize);
+// }
+// }
 
 #ifdef ZMQCPPINSTALLED
 namespace zmq {

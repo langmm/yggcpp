@@ -369,6 +369,9 @@ TEST(dtype_t, utils) {
   y = copy_dtype(x);
   EXPECT_EQ(destroy_dtype(&x), 0);
   EXPECT_EQ(destroy_dtype(&y), 0);
+  y = copy_dtype(x);
+  EXPECT_EQ(is_empty_dtype(x), 1);
+  EXPECT_EQ(is_empty_dtype(y), 1);
 }
 
 TEST(dtype_t, create) {

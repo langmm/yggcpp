@@ -247,9 +247,13 @@ TEST(MPIComm, recv) {
     // Error in MPI_Probe
     EXPECT_EQ(mpic.recv(data, len, true), -1);
     // Error in MPI_Recv
-    RETVAL = 1;
+    RETVAL = 2;
     RETVAL_INC_POLL = -1;
     EXPECT_EQ(mpic.recv(data, len, true), -1);
+    // Error in realloc
+    RETVAL = 0;
+    RETVAL_INC_POLL = 0;
+    EXPECT_EQ(mpic.recv(data, len, false), -1);
     ELF_RECV_REVERT_T(MPI);
     ELF_END;
 #endif // ELF_AVAILABLE

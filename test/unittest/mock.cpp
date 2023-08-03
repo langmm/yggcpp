@@ -112,6 +112,15 @@ void* realloc(void*, size_t) {
 //   return NULL;
 // }
   
+// namespace rapidjson {
+// namespace MemoryPoolAllocator {
+//   void* Realloc(void*, size_t, size_t) {
+//     std::cerr << "MOCK RAPIDJSON REALLOC" << std::endl;
+//     return NULL;
+//   }
+// }
+// }
+  
 #ifdef ZMQCPPINSTALLED
 namespace zmq {
 void message_tD() {
