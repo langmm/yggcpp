@@ -437,7 +437,7 @@ int Comm_t::wait_for_recv(const int tout) {
     } else if (nmsg > 0) {
       return nmsg;
     }
-    ygglog_error << "CommBase(" << name << ")::wait_for_recv: No messages, sleep " << YGG_SLEEP_TIME << std::endl;
+    ygglog_debug << "CommBase(" << name << ")::wait_for_recv: No messages, sleep " << YGG_SLEEP_TIME << std::endl;
     usleep(YGG_SLEEP_TIME);
   }
   return 0;
