@@ -523,7 +523,7 @@ target_include_directories(YggInterface PUBLIC ${DEPS_INCLUDE_DIRS})
 # Create Python Library #
 #########################
 
-option(BUILD_PYTHON_LIBRARY "Build the Yggdrasil Python interface library" OFF)
+option(BUILD_PYTHON_LIBRARY "Build the Yggdrasil Python interface library" ON)
 if(BUILD_PYTHON_LIBRARY AND NOT YGGDRASIL_DISABLE_PYTHON_C_API)
     add_definitions(-DWITH_PYTHON)
     file(GLOB_RECURSE PYSOURCES ${CMAKE_SOURCE_DIR}/communication/python/*.cpp)

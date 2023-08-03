@@ -1,10 +1,10 @@
 #pragma once
 
-#ifdef WITH_PYTHON
-#define VIRT_END
-#else
+// #ifdef WITH_PYTHON
+// #define VIRT_END
+// #else
 #define VIRT_END = 0
-#endif
+// #endif
 
 #include "utils/tools.hpp"
 #include "utils/enums.hpp"

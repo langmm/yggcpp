@@ -584,7 +584,7 @@ long Comm_t::callRealloc(const int nargs, ...) {
 }
 
 int Comm_t::sendVar(const std::string& data) {
-  if (getMetadata().isGeneric())
+  if (get_metadata(SEND).isGeneric())
     return sendVarAsGeneric(data);
   if (!checkType(data, SEND))
     return -1;
@@ -599,14 +599,14 @@ int Comm_t::sendVar(const rapidjson::Document& data) {
 int Comm_t::sendVar(const rapidjson::Ply& data) {
   if (!checkType(data, SEND))
     return -1;
-  if (getMetadata().isGeneric())
+  if (get_metadata(SEND).isGeneric())
     return sendVarAsGeneric(data);
   return send(1, &data);
 }
 int Comm_t::sendVar(const rapidjson::ObjWavefront& data) {
   if (!checkType(data, SEND))
     return -1;
-  if (getMetadata().isGeneric())
+  if (get_metadata(SEND).isGeneric())
     return sendVarAsGeneric(data);
   return send(1, &data);
 }
@@ -699,7 +699,7 @@ int Comm_t::vSend(rapidjson::VarArgList& ap) {
     return ret;
   }
   ret = send(buf, ret);
-  getMetadata().GetAllocator().Free(buf);
+  get_metadata(SEND).GetAllocator().Free(buf);
   if (ret >= 0)
     ret = (int)(nargs_orig - ap.get_nargs());
   ygglog_debug << "CommBase(" << name << ")::vSend: returns " << ret << std::endl;

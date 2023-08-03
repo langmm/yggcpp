@@ -1,5 +1,3 @@
-#pragma once
-
 #ifndef PY_SSIZE_T_CLEAN
 #define PY_SSIZE_T_CLEAN
 #endif
@@ -158,7 +156,10 @@ static int Comm_t_init(pyComm_t* self, PyObject* args, PyObject* kwds) {
         PyErr_SetString(PyExc_TypeError, "");
         return -1;
     }
-    self->comm = new communication::communicator::Comm_t(name, (communication::utils::Address*)adr, (DIRECTION)dirn, (COMM_TYPE)commtype, flags);
+    self->comm = communication::communicator::new_Comm_t(
+		       (DIRECTION)dirn, (COMM_TYPE)commtype,
+		       name, (communication::utils::Address*)adr,
+		       flags);
     return 0;
 }
 

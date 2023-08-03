@@ -3,7 +3,7 @@
 #endif
 #include <Python.h>
 #include "pyUtils.hpp"
-#include "pyYggCommBase.hpp"
+#include "pyYggCommBase.cpp"
 
 static PyMethodDef functions[] = {
   {NULL, NULL, 0, NULL} /* sentinel */
@@ -11,7 +11,7 @@ static PyMethodDef functions[] = {
 
 static struct PyModuleDef pyYggModule {
   PyModuleDef_HEAD_INIT, /* m_base */
-  "YggInterface",        /* m_name */
+  "pyYggdrasil",        /* m_name */
   PyDoc_STR("Python interface for Yggdrasil"),
   0,                     /* m_size */
   functions,             /* m_methods */
