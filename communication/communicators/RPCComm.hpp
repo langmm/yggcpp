@@ -25,6 +25,8 @@ public:
   void addResponseSchema(const utils::Metadata& metadata,
 			 bool use_generic=false);
   void addResponseFormat(const std::string& fmt, bool use_generic=false);
+  // \copydoc Comm_t::getMetadata
+  utils::Metadata& getMetadata(const DIRECTION dir=NONE) override;
   
 #ifndef YGG_TEST
 protected:
@@ -42,7 +44,6 @@ protected:
   // }
 #endif
   
-  utils::Metadata& get_metadata(const DIRECTION dir=NONE) override;
   RequestList requests;
 };
   

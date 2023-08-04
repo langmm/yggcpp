@@ -473,6 +473,12 @@ public:
       @return true if it is global, false otherwise.
      */
     bool global() { return flags & COMM_FLAG_GLOBAL; }
+    /*!
+      @brief Get the Metadata object containing header information about
+        the comm including datatype.
+      @return Metadata.
+     */
+    virtual utils::Metadata& getMetadata(const DIRECTION dir=NONE);
 
 #ifdef YGG_TEST
     std::string getName() { return name; }
@@ -483,7 +489,6 @@ public:
     }
     DIRECTION getDirection() { return direction; }
     WorkerList& getWorkers() { return workers; }
-    utils::Metadata& getMetadata() { return metadata; }
     int& getFlags() { return flags; }
     virtual bool afterSendRecv(Comm_t*, Comm_t*) { return true; }
     size_t getMaxMsgSize() const { return maxMsgSize; }
@@ -571,7 +576,6 @@ protected:
 		  const char* src, const size_t src_len,
 		  bool allow_realloc);
 
-    virtual utils::Metadata& get_metadata(const DIRECTION dir=NONE);
     int update_datatype(const rapidjson::Value& new_schema,
 			const DIRECTION dir);
     template<typename T>
@@ -584,7 +588,7 @@ protected:
 		  RAPIDJSON_DISABLEIF((internal::OrExpr<YGGDRASIL_IS_ANY_SCALAR(T), internal::IsSame<T, bool> >))) {}
     template<typename T>
     bool checkType(const T& data, const DIRECTION dir) {
-      utils::Metadata& meta = get_metadata(dir);
+      utils::Metadata& meta = getMetadata(dir);
       if (dir == RECV)
 	zeroData(&data);
       try {
@@ -599,7 +603,7 @@ protected:
 				    size_t msg_len, int allow_realloc,
 				    int temp);
     rapidjson::Value& getSchema(const DIRECTION dir=NONE) {
-      return get_metadata(dir).getSchema();
+      return getMetadata(dir).getSchema();
     }
     virtual Comm_t* create_worker(utils::Address* address,
 				  const DIRECTION&, int flgs) VIRT_END;

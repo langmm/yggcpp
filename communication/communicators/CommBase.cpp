@@ -242,20 +242,20 @@ bool Comm_t::get_global_scope_comm() {
 }
   
 void Comm_t::addSchema(const Metadata& s) {
-  get_metadata().fromMetadata(s);
+  getMetadata().fromMetadata(s);
 }
 void Comm_t::addSchema(const rapidjson::Value& s, bool isMetadata) {
-  get_metadata().fromSchema(s, isMetadata);
+  getMetadata().fromSchema(s, isMetadata);
 }
 void Comm_t::addSchema(const std::string& schemaStr, bool isMetadata) {
-  get_metadata().fromSchema(schemaStr, isMetadata);
+  getMetadata().fromSchema(schemaStr, isMetadata);
 }
 void Comm_t::addFormat(const std::string& format_str, bool as_array) {
-  get_metadata().fromFormat(format_str, as_array);
+  getMetadata().fromFormat(format_str, as_array);
 }
 void Comm_t::copySchema(const Comm_t* other) {
   if (other->metadata.hasType())
-    get_metadata().fromMetadata(other->metadata);
+    getMetadata().fromMetadata(other->metadata);
 }
 
 bool Comm_t::check_size(const size_t &len) const {
@@ -301,7 +301,7 @@ bool Comm_t::create_header_send(Header& header, const char* data,
   // if (global_comm)
   //   return global_comm->create_header_send(header, data, len);
   assert(!global_comm);
-  header.for_send(&get_metadata(SEND), data, len);
+  header.for_send(&getMetadata(SEND), data, len);
   return true;
 }
 
@@ -584,14 +584,14 @@ long Comm_t::callRealloc(const int nargs, ...) {
 }
 
 int Comm_t::sendVar(const std::string& data) {
-  if (get_metadata(SEND).isGeneric())
+  if (getMetadata(SEND).isGeneric())
     return sendVarAsGeneric(data);
   if (!checkType(data, SEND))
     return -1;
   return send(2, data.c_str(), data.size());
 }
 int Comm_t::sendVar(const rapidjson::Document& data) {
-  get_metadata(SEND).setGeneric();
+  getMetadata(SEND).setGeneric();
   if (!checkType(data, SEND))
     return -1;
   return send(1, &data);
@@ -599,32 +599,32 @@ int Comm_t::sendVar(const rapidjson::Document& data) {
 int Comm_t::sendVar(const rapidjson::Ply& data) {
   if (!checkType(data, SEND))
     return -1;
-  if (get_metadata(SEND).isGeneric())
+  if (getMetadata(SEND).isGeneric())
     return sendVarAsGeneric(data);
   return send(1, &data);
 }
 int Comm_t::sendVar(const rapidjson::ObjWavefront& data) {
   if (!checkType(data, SEND))
     return -1;
-  if (get_metadata(SEND).isGeneric())
+  if (getMetadata(SEND).isGeneric())
     return sendVarAsGeneric(data);
   return send(1, &data);
 }
 
-Metadata& Comm_t::get_metadata(const DIRECTION dir) {
+Metadata& Comm_t::getMetadata(const DIRECTION dir) {
   if (global_comm)
-    return global_comm->get_metadata(dir);
+    return global_comm->getMetadata(dir);
   return metadata;
 }
 int Comm_t::update_datatype(const rapidjson::Value& new_schema,
 			    const DIRECTION dir) {
-  Metadata& meta = get_metadata(dir);
+  Metadata& meta = getMetadata(dir);
   meta.fromSchema(new_schema);
   return 1;
 }
 
 int Comm_t::deserialize(const char* buf, rapidjson::VarArgList& ap) {
-  Metadata& meta = get_metadata(RECV);
+  Metadata& meta = getMetadata(RECV);
   if (!meta.hasType()) {
     ygglog_error << "CommBase(" << name << ")::deserialize: No datatype" << std::endl;
     return -1;
@@ -637,7 +637,7 @@ int Comm_t::deserialize(const char* buf, rapidjson::VarArgList& ap) {
 
 int Comm_t::serialize(char*& buf, size_t& buf_siz,
 		      rapidjson::VarArgList& ap) {
-  Metadata& meta = get_metadata(SEND);
+  Metadata& meta = getMetadata(SEND);
   if (!meta.hasType()) {
     ygglog_error << "CommBase(" << name << ")::serialize: No datatype" << std::endl;
     return -1;
@@ -673,7 +673,7 @@ int Comm_t::vSend(rapidjson::VarArgList& ap) {
   ygglog_debug << "CommBase(" << name << ")::vSend: begin" << std::endl;
   // If type not set, but comm expecting generic, get the schema from the
   // provided generic argument
-  Metadata& meta = get_metadata(SEND);
+  Metadata& meta = getMetadata(SEND);
   if (meta.isGeneric() && !meta.hasType()) {
     rapidjson::Document tmp;
     Metadata tmp_meta;
@@ -699,7 +699,7 @@ int Comm_t::vSend(rapidjson::VarArgList& ap) {
     return ret;
   }
   ret = send(buf, ret);
-  get_metadata(SEND).GetAllocator().Free(buf);
+  getMetadata(SEND).GetAllocator().Free(buf);
   if (ret >= 0)
     ret = (int)(nargs_orig - ap.get_nargs());
   ygglog_debug << "CommBase(" << name << ")::vSend: returns " << ret << std::endl;
@@ -712,7 +712,7 @@ long Comm_t::vCall(rapidjson::VarArgList& ap) {
   }
   size_t send_nargs = 0;
   rapidjson::Document tmp;
-  Metadata& meta_send = get_metadata(SEND);
+  Metadata& meta_send = getMetadata(SEND);
   if (meta_send.hasType()) {
     send_nargs = tmp.CountVarArgs(*meta_send.schema, false);
   }

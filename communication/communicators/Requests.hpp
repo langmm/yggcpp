@@ -340,10 +340,10 @@ public:
       return true;
     }
     void transferSchemaTo(Comm_t* comm) {
-      comm->get_metadata(response_dir).fromMetadata(response_metadata);
+      comm->getMetadata(response_dir).fromMetadata(response_metadata);
     }
     void transferSchemaFrom(Comm_t* comm) {
-      response_metadata.fromMetadata(comm->get_metadata(response_dir));
+      response_metadata.fromMetadata(comm->getMetadata(response_dir));
     }
     void Display() {
       std::cout << requests.size() << " Requests:" << std::endl;

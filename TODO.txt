@@ -5,4 +5,14 @@
 * Fill in missing docs
 * Fix handling of multiple connections in ZMQ socket (restricted to ZMQ_PAIR to simplify testing)
 * Use rapidjson allocator to malloc/realloc returned data so that data is cleaned up on exit
+* Add Python tests
+* Add async communicator
 * Add Fortran interface
+* Add RabbitMQ communicator
+* Python Wrappers for:
+  * call
+  * more descriptive str & repr
+  * metadata property that calls get_metadata on get and addSchema with isMetadata=true on set)
+  * update_datatype that accepts dictionary
+  * update_metadata that accepts dictionary (wraps addSchema with isMetadata=true)
+  

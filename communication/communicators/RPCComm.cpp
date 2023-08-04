@@ -11,9 +11,9 @@ RPCComm::RPCComm(const std::string &name, Address *address,
 		 const COMM_TYPE type) :
   COMM_BASE(name, address, dir, flgs, type), requests(req_dir) {}
 
-communication::utils::Metadata& RPCComm::get_metadata(const DIRECTION dir) {
+communication::utils::Metadata& RPCComm::getMetadata(const DIRECTION dir) {
   if (global_comm)
-    return global_comm->get_metadata(dir);
+    return global_comm->getMetadata(dir);
   if (dir == this->direction || dir == NONE)
     return this->metadata;
   return requests.response_metadata;
