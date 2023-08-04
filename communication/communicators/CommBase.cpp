@@ -108,8 +108,8 @@ void Comm_t::_ygg_cleanup() {
   }
 #endif
 #ifndef YGG_TEST
-  if (YggLogger::_ygg_error_flag) {
-    _exit(YggLogger::_ygg_error_flag);
+  if (utils::YggdrasilLogger::_ygg_error_flag) {
+    _exit(utils::YggdrasilLogger::_ygg_error_flag);
   }
 #endif // YGG_TEST
 }

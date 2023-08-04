@@ -49,7 +49,7 @@ const int COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
 #endif
 
 #define UNINSTALLED_ERROR(name)					\
-  ygglog_throw_error("Compiler flag '" #name "INSTALLED' not defined so " #name " bindings are disabled")
+  utils::ygglog_throw_error("Compiler flag '" #name "INSTALLED' not defined so " #name " bindings are disabled")
 #define ADD_CONSTRUCTORS(cls, defT)				\
   explicit cls(const std::string nme,				\
 	       const DIRECTION dirn,				\
@@ -479,6 +479,11 @@ public:
       @return Metadata.
      */
     virtual utils::Metadata& getMetadata(const DIRECTION dir=NONE);
+    /*!
+      @brief Get the bitwise flags associated with the communicator.
+      @returns flags.
+     */
+    int& getFlags() { return flags; }
 
 #ifdef YGG_TEST
     std::string getName() { return name; }
@@ -489,7 +494,6 @@ public:
     }
     DIRECTION getDirection() { return direction; }
     WorkerList& getWorkers() { return workers; }
-    int& getFlags() { return flags; }
     virtual bool afterSendRecv(Comm_t*, Comm_t*) { return true; }
     size_t getMaxMsgSize() const { return maxMsgSize; }
     Comm_t* getGlobalComm() { return global_comm; }

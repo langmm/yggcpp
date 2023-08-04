@@ -526,7 +526,8 @@ target_include_directories(YggInterface PUBLIC ${DEPS_INCLUDE_DIRS})
 option(BUILD_PYTHON_LIBRARY "Build the Yggdrasil Python interface library" ON)
 if(BUILD_PYTHON_LIBRARY AND NOT YGGDRASIL_DISABLE_PYTHON_C_API)
     add_definitions(-DWITH_PYTHON)
-    file(GLOB_RECURSE PYSOURCES ${CMAKE_SOURCE_DIR}/communication/python/*.cpp)
+    # file(GLOB_RECURSE PYSOURCES ${CMAKE_SOURCE_DIR}/communication/python/*.cpp)
+    set(PYSOURCES ${CMAKE_SOURCE_DIR}/communication/python/pyYggdrasil.cpp)
     # set(PYSOURCES ${CMAKE_SOURCE_DIR}/communication/python/pyUtils.cpp
     #         ${CMAKE_SOURCE_DIR}/communication/python/pyUtils.hpp
     #         ${CMAKE_SOURCE_DIR}/communication/python/pyYggdrasil.cpp
@@ -537,7 +538,10 @@ if(BUILD_PYTHON_LIBRARY AND NOT YGGDRASIL_DISABLE_PYTHON_C_API)
     add_library(pyYggdrasil MODULE ${PYSOURCES})
     target_include_directories(pyYggdrasil PUBLIC ${CMAKE_SOURCE_DIR}/communication/python ${DEPS_INCLUDE_DIRS})
     target_link_libraries(pyYggdrasil ${DEPS_LIB_NAMES} ${DEPS_LIBRARIES} YggInterface)
-    set_target_properties(pyYggdrasil PROPERTIES PREFIX "")
+    set_target_properties(pyYggdrasil PROPERTIES
+                           PREFIX ""
+			   OUTPUT_NAME "pyYggdrasil"
+			   LINKER_LANGUAGE C)
     message(STATUS "Building Python bindings=Yes")
 endif()
 

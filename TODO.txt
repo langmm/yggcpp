@@ -12,7 +12,5 @@
 * Python Wrappers for:
   * call
   * more descriptive str & repr
-  * metadata property that calls get_metadata on get and addSchema with isMetadata=true on set)
-  * update_datatype that accepts dictionary
-  * update_metadata that accepts dictionary (wraps addSchema with isMetadata=true)
+
   
