@@ -8,7 +8,7 @@ name: Test of package installation & execution
   schedule:
   - cron: 0 10 * * 1
 jobs:
-  build_pip:
+  build_cpp:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -90,19 +90,17 @@ jobs:
         if: matrix.os == 'ubuntu-latest' && matrix.python-install == 'pip'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libc6-dbg gdb valgrind lcov libcmocka-dev # libboost-log-dev libboost-python-dev
+          sudo apt-get install -y libc6-dbg gdb valgrind lcov libcmocka-dev
           sudo apt upgrade --fix-missing
           valgrind --version
       - name: Install dependencies on Mac
         if: matrix.os == 'macos-latest' && matrix.python-install == 'pip'
         run: |
-          brew install llvm cmocka lcov gnutls # boost boost-python3
+          brew install llvm cmocka lcov gnutls
       - name: Install dependencies on Windows
         if: matrix.os == 'windows-latest' && matrix.python-install == 'pip'
         run: |
           vcpkg.exe install cmocka --triplet x64-windows
-          # vcpkg.exe install boost --triplet x64-windows
-          # vcpkg.exe install boost-python --triplet x64-windows
 
       # ZeroMQ dependencies
       - name: Install ZeroMQ
@@ -147,7 +145,9 @@ jobs:
           tee -a ~/.profile <<<'export PATH="${pythonLocation}/bin:${PATH}"'
       - name: Install Python dependencies
         if: matrix.python-install == 'pip'
-        run: python -m pip install -r requirements.txt
+        run: |
+          python -m pip install -r requirements.txt
+          python -m pip install -r requirements-test.txt
 
       ###################################
       # CONDA SETUP
@@ -177,7 +177,7 @@ jobs:
       - name: Global config flags
         shell: bash -l {0}
         run: |
-          echo "CONFIG_FLAGS=-DCMAKE_BUILD_TYPE=Debug -DBUILD_PYTHON_LIBRARY=OFF -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/_install -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON" >> "$GITHUB_ENV"
+          echo "CONFIG_FLAGS=-DYGG_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DBUILD_PYTHON_LIBRARY=OFF -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/_install -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON" >> "$GITHUB_ENV"
           echo "TEST_FLAGS=-C Debug --output-on-failure -VV" >> "$GITHUB_ENV"
       - name: Coverage config flags
         if: matrix.with-coverage == true
@@ -276,50 +276,62 @@ jobs:
           cmake .. ${{ env.CONFIG_FLAGS }}
       
       ###################################
-      # Build
+      # Build CPP & C
       ###################################
-      - name: Build (CONDA)
+      - name: Build C++ & C (CONDA)
         if: matrix.python-install == 'conda'
         shell: bash -l {0}
         run: |
           cd build
           cmake --build . --config Debug
-      - name: Build (PIP)
+      - name: Build C++ & C (PIP)
         if: matrix.python-install == 'pip'
         run: |
           cd build
           cmake --build . --config Debug
       
       ###################################
-      # Test
+      # Build Python
       ###################################
-      # - name: Run test directly (CONDA)
-      #   if: matrix.os == 'windows-latest' && matrix.python-install == 'conda'
-      #   shell: bash -l {0}
-      #   run: |
-      #     cd build/test/Debug
-      #     ls
-      #     ./unittest.exe
-      # - name: Run test directly (PIP)
-      #   if: matrix.os == 'windows-latest' && matrix.python-install == 'pip'
-      #   run: |
-      #     cd build\\test\\Debug
-      #     ls
-      #     .\\unittest.exe
-      - name: Test (CONDA)
+      - name: Build Python (CONDA)
+        if: matrix.python-install == 'conda'
+        shell: bash -l {0}
+        run: |
+          pip install .
+      - name: Build Python (PIP)
+        if: matrix.python-install == 'pip'
+        run: |
+          pip install .
+	  
+      ###################################
+      # Test CPP & C
+      ###################################
+      - name: Test C++ & C Interfaces (CONDA)
         if: matrix.python-install == 'conda'
         shell: bash -l {0}
         run: |
           cd build
           ctest ${{ env.TEST_FLAGS }}
-      - name: Test (PIP)
+      - name: Test C++ & C Interfaces (PIP)
         if: matrix.python-install == 'pip'
-        # shell: bash -l {0}
         run: |
           cd build
           # echo "PATH=${PATH}"
           ctest ${{ env.TEST_FLAGS }}
-      
+
+      ###################################
+      # Test Python
+      ###################################
+      - name: Test Python Interfaces (CONDA)
+        if: matrix.python-install == 'conda' && matrix.with-asan == false && matrix.with-elf == false && matrix.with-valgrind == false
+        shell: bash -l {0}
+        run: |
+          pytest test
+      - name: Test Python Interfaces (PIP)
+        if: matrix.python-install == 'pip' && matrix.with-asan == false && matrix.with-elf == false && matrix.with-valgrind == false
+        run: |
+          pytest test
+
       ###################################
       # Coverage
       ###################################

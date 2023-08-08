@@ -1,6 +1,7 @@
 enable_testing()
 
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${PROJECT_SOURCE_DIR}/cmake")
+set(RAPIDJSON_BUILD_THIRDPARTY_GTEST ${YGG_BUILD_THIRDPARTY_GTEST})
 find_package(GTestSrc)
 
 find_package(cmocka)
@@ -17,6 +18,10 @@ else()
 endif()
 
 if(GTESTSRC_FOUND)
+    message(STATUS "Found GTestSrc")
+    message(STATUS "GTEST_SOURCE_DIR = ${GTEST_SOURCE_DIR}")
+    message(STATUS "GTEST_INCLUDE_DIR = ${GTEST_INCLUDE_DIR}")
+    message(STATUS "GTEST_LIBRARY = ${GTEST_LIBRARY}")
 
     if (WIN32 AND (NOT CYGWIN) AND (NOT MINGW))
         set(gtest_disable_pthreads ON)
@@ -24,11 +29,13 @@ if(GTESTSRC_FOUND)
     endif()
 
     IF(GTEST_SOURCE_DIR)
-        add_subdirectory(${GTEST_SOURCE_DIR} ${CMAKE_BINARY_DIR}/googletest)
+        add_subdirectory(${GTEST_SOURCE_DIR}/../ ${CMAKE_BINARY_DIR}/googletest)
+        set(TEST_LIBRARIES gtest gtest_main)
+    else()
+        set(TEST_LIBRARIES ${GTEST_LIBRARY})
     endif()
     include_directories(SYSTEM ${GTEST_INCLUDE_DIR})
 
-    set(TEST_LIBRARIES gtest gtest_main)
 endif()
 
 set(TEST_LIBRARIES ${TEST_LIBRARIES} YggInterface ${DEPS_LIB_NAMES} ${DEPS_LIBRARIES})

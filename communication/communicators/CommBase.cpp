@@ -270,7 +270,11 @@ bool Comm_t::check_size(const size_t &len) const {
 }
 
 Comm_t* communication::communicator::new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, char* address, int flags) {
-  Address* addr = (address) ? nullptr : new Address(address);
+  Address* addr = nullptr;
+  if (address)
+    addr = new Address(address);
+  else
+    addr = new Address();
   return communication::communicator::new_Comm_t(dir, type, name, addr, flags);
 }
 Comm_t* communication::communicator::new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, Address* addr, int flags) {

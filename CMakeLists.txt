@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-set(CMAKE_VERBOSE_MAKEFILE True)
+set(CMAKE_VERBOSE_MAKEFILE ON)
 if (POLICY CMP0048)
     cmake_policy(SET CMP0048 NEW)
 endif (POLICY CMP0048)
@@ -14,7 +14,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
    endif()
 endif()
 
-SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules)
+SET(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules")
 
 set(LIB_MAJOR_VERSION "0")
 set(LIB_MINOR_VERSION "1")
@@ -22,12 +22,13 @@ set(LIB_PATCH_VERSION "0")
 set(LIB_VERSION_STRING "${LIB_MAJOR_VERSION}.${LIB_MINOR_VERSION}.${LIB_PATCH_VERSION}")
 
 if (CMAKE_VERSION VERSION_LESS 3.0)
-    PROJECT(YggInterfaceCPP CXX)
+    PROJECT(YggInterfaceCPP)
 else()
     cmake_policy(SET CMP0048 NEW)
-    PROJECT(YggInterfaceCPP VERSION "${LIB_VERSION_STRING}" LANGUAGES CXX)
+    PROJECT(YggInterfaceCPP VERSION "${LIB_VERSION_STRING}")
 endif()
 
+include(GNUInstallDirs)
 
 if(POLICY CMP0094)  # https://cmake.org/cmake/help/latest/policy/CMP0094.html
     cmake_policy(SET CMP0094 NEW)  # FindPython should return the first matching Python
@@ -40,7 +41,6 @@ endif()
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-# set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 
 option(YGG_BUILD_TESTS "Build tests" OFF)
 option(YGG_BUILD_THIRDPARTY_GTEST "Use gtest installation in 'thirdpart/gtest' by default if available" ON)
@@ -48,8 +48,7 @@ option(YGG_BUILD_ASAN "Build with address sanitizer (gcc/clang)" OFF)
 option(YGG_BUILD_UBSAN "Build with undefined behavior sanitizer (gcc/clang)" OFF)
 option(YGG_ENABLE_INSTRUMENTATION_OPT "Build yggdrasil with -march or -mcpu options" ON)
 
-# option(YGG_BUILD_THIRDPARTY_GTEST
-#     "Use gtest installation in `thirdparty/gtest` by default if available" OFF)
+message(STATUS "CMAKE_CXX_FLAGS = ${CMAKE_CXX_FLAGS}")
 
 find_program(CCACHE_FOUND ccache)
 if(CCACHE_FOUND)
@@ -174,58 +173,6 @@ SET(CMAKE_INSTALL_DIR "${_CMAKE_INSTALL_DIR}" CACHE PATH "The directory cmake fi
 ADD_DEFINITIONS(-D_CRT_SECURE_NO_WARNINGS)
 include(FetchContent)
 
-# pkg-config
-# IF (UNIX OR CYGWIN)
-#   CONFIGURE_FILE (${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}.pc.in
-#                   ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc
-#                   @ONLY)
-#   INSTALL (FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc
-#       DESTINATION "${LIB_INSTALL_DIR}/pkgconfig"
-#       COMPONENT pkgconfig)
-# ENDIF()
-
-# install(DIRECTORY include/rapidjson
-#     DESTINATION "${INCLUDE_INSTALL_DIR}"
-#     COMPONENT dev)
-
-################################################################################
-# # Export package for use from the build tree
-# EXPORT( PACKAGE ${PROJECT_NAME} )
-
-# # Create the RapidJSONConfig.cmake file for other cmake projects.
-# # ... for the build tree
-# SET( CONFIG_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-# SET( CONFIG_DIR ${CMAKE_CURRENT_BINARY_DIR})
-# SET( ${PROJECT_NAME}_INCLUDE_DIR "\${${PROJECT_NAME}_SOURCE_DIR}/include" )
-
-# CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}Config.cmake.in
-#     ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake @ONLY )
-# CONFIGURE_FILE(${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}ConfigVersion.cmake.in
-#     ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake @ONLY)
-
-# # ... for the install tree
-# SET( CMAKECONFIG_INSTALL_DIR ${LIB_INSTALL_DIR}/cmake/${PROJECT_NAME} )
-# FILE( RELATIVE_PATH REL_INCLUDE_DIR
-#     "${CMAKECONFIG_INSTALL_DIR}"
-#     "${CMAKE_INSTALL_PREFIX}/include" )
-
-# SET( ${PROJECT_NAME}_INCLUDE_DIR "\${${PROJECT_NAME}_CMAKE_DIR}/${REL_INCLUDE_DIR}" )
-# SET( CONFIG_SOURCE_DIR )
-# SET( CONFIG_DIR )
-# CONFIGURE_FILE( ${CMAKE_CURRENT_SOURCE_DIR}/${PROJECT_NAME}Config.cmake.in
-#     ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/${PROJECT_NAME}Config.cmake @ONLY )
-
-# INSTALL(FILES "${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/${PROJECT_NAME}Config.cmake"
-#         DESTINATION ${CMAKECONFIG_INSTALL_DIR} )
-
-# # Install files
-# IF(CMAKE_INSTALL_DIR)
-#   INSTALL(FILES
-#       ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
-#       ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
-#       DESTINATION "${CMAKE_INSTALL_DIR}"
-#       COMPONENT dev)
-# ENDIF()
 
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${PROJECT_SOURCE_DIR}/cmake")
 
@@ -240,7 +187,6 @@ add_definitions(-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION)
 add_definitions(-D_USE_MATH_DEFINES)
 
 set(RAPIDJSON_PYTHON_ENV "YGG_MODEL_INDEX=123")
-# set(RAPIDJSON_PYTHON_ENV "YGG_MODEL_INDEX=123;YGG_MODEL_NAME=TEST_MODEL;YGG_MODEL_COPY=1")
 
 set(YGG_BUILD_FLAGS "")
 
@@ -257,7 +203,9 @@ endif()
 # Rapidjson #
 #############
 
-set(RAPIDJSON_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/communication/rapidjson/include")
+if(NOT RAPIDJSON_INCLUDE_DIRS)
+    set(RAPIDJSON_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/communication/rapidjson/include")
+endif()
 set(DEPS_INCLUDE_DIRS ${DEPS_INCLUDE_DIRS} ${RAPIDJSON_INCLUDE_DIRS})
 message(STATUS "Rapidjson found ${RAPIDJSON_INCLUDE_DIRS}")
 
@@ -350,6 +298,10 @@ if (OpenMP_CXX_FOUND)
     set(DEPS_LIB_NAMES ${DEPS_LIB_NAMES} ${OpenMP_CXX_LIB_NAMES})
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    message(STATUS "OpenMP_CXX_LIBRARIES = ${OpenMP_CXX_LIBRARIES}")
+    message(STATUS "OpenMP_CXX_LIB_NAMES = ${OpenMP_CXX_LIB_NAMES}")
+    message(STATUS "OpenMP_C_FLAGS = ${OpenMP_C_FLAGS}")
+    message(STATUS "OpenMP_CXX_FLAGS = ${OpenMP_CXX_FLAGS}")
 else()
     message(STATUS "NO OpenMP")
 endif()
@@ -374,6 +326,8 @@ ENDIF()
 ##########
 
 option(YGGDRASIL_DISABLE_PYTHON_C_API "Disable the Python C API" OFF)
+set(DEPS_LIBRARIES_NO_PYTHON ${DEPS_LIBRARIES})
+set(DEPS_LIB_NAMES_NO_PYTHON ${DEPS_LIB_NAMES})
 if(YGGDRASIL_DISABLE_PYTHON_C_API)
     add_definitions(-DYGGDRASIL_DISABLE_PYTHON_C_API)
 else()
@@ -446,20 +400,10 @@ else()
     
     set(DEPS_LIBRARIES ${DEPS_LIBRARIES} ${Python3_LIBRARIES})
     set(DEPS_LIB_NAMES ${DEPS_LIB_NAMES} Python3::NumPy)
+    set(DEPS_LIBRARIES_PYTHON ${Python3_LIBRARIES})
+    set(DEPS_LIB_NAMES_PYTHON Python3::NumPy)
     set(DEPS_INCLUDE_DIRS ${DEPS_INCLUDE_DIRS} ${Python3_INCLUDE_DIRS} ${Python3_NumPy_INCLUDE_DIRS})
 endif()
-
-#########
-# Boost #
-#########
-# find_package(Boost REQUIRED COMPONENTS log regex)
-# add_definitions(-DBOOST_LOG_DYN_LINK)
-# message(STATUS "Boost found Boost_INCLUDE_DIRS = ${Boost_INCLUDE_DIRS}")
-# set(DEPS_LIBRARIES ${DEPS_LIBRARIES} ${Boost_LIBRARIES})
-# set(DEPS_INCLUDE_DIRS ${DEPS_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
-# if (NOT Boost_DATE_TIME_FOUND)
-#     add_definitions(-DBOOST_DATE_TIME_NO_LIB)
-# endif()
 
 ##################
 # IPC dependency #
@@ -503,46 +447,110 @@ else ()
    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -DNDEBUG -DYGG_DEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS} ")
 endif ()
 
+
+set(DEPS_INCLUDE_DIRS ${DEPS_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/communication)
+message(STATUS "DEPS_INCLUDE_DIRS = ${DEPS_INCLUDE_DIRS}")
+message(STATUS "DEPS_LIBRARIES = ${DEPS_LIB_NAMES};${DEPS_LIBRARIES}")
+
 ####################
 # Create library   #
 ####################
 
-message(STATUS "DEPS_INCLUDE_DIRS = ${DEPS_INCLUDE_DIRS}")
-message(STATUS "DEPS_LIBRARIES = ${DEPS_LIB_NAMES};${DEPS_LIBRARIES}")
-include_directories(communication)
-include_directories(${DEPS_INCLUDE_DIRS})
-file(GLOB SOURCES "communication/*.cpp" "communication/utils/*.cpp" "communication/communicators/*.cpp" "communication/datatypes/dtype_t.cpp")
-add_library(YggInterface SHARED ${SOURCES})
-if (WIN32)
-    set_target_properties(YggInterface PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+option(BUILD_CPP_LIBRARY "Build the Yggdrasil C++ interface library" ON)
+if(SKBUILD)
+  set(BUILD_CPP_LIBRARY ON)
 endif()
-target_link_libraries(YggInterface ${DEPS_LIB_NAMES} ${DEPS_LIBRARIES})
-target_include_directories(YggInterface PUBLIC ${DEPS_INCLUDE_DIRS})
+if(BUILD_CPP_LIBRARY)
+    if(SKBUILD)
+        set(YGG_TARGET_GPP YggInterface_py)
+    else()
+        set(YGG_TARGET_GPP YggInterface)
+    endif()
+    message(STATUS "YGG_TARGET_GPP = ${YGG_TARGET_GPP}")
+    file(GLOB SOURCES "communication/*.cpp" "communication/utils/*.cpp" "communication/communicators/*.cpp" "communication/datatypes/dtype_t.cpp")
+    add_library(${YGG_TARGET_GPP} SHARED ${SOURCES})
+    if (WIN32)
+       set_target_properties(${YGG_TARGET_GPP}
+           PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+    endif()
+    if(SKBUILD AND NOT YGGDRASIL_DISABLE_PYTHON_C_API)
+        find_package(PythonExtensions REQUIRED)
+	message(STATUS "PYTHON_LIBRARIES = ${PYTHON_LIBRARIES}")
+        target_link_libraries(
+	    ${YGG_TARGET_GPP}
+	    ${DEPS_LIB_NAMES_NO_PYTHON}
+	    ${DEPS_LIBRARIES_NO_PYTHON})
+     	target_compile_options(${YGG_TARGET_GPP} PUBLIC
+     	    -DRAPIDJSON_YGGDRASIL_PYTHON
+	    -DWITH_PYTHON)
+    else()
+        target_link_libraries(
+	    ${YGG_TARGET_GPP}
+	    ${DEPS_LIB_NAMES}
+	    ${DEPS_LIBRARIES})
+    endif()
+    target_include_directories(
+        ${YGG_TARGET_GPP} PUBLIC
+    	${DEPS_INCLUDE_DIRS})
+    if(SKBUILD)
+        # Force python_extension_module to link to Python libraries
+	# to allow dynamic lookup
+        set(CMAKE_CROSSCOMPILING ON)
+        find_package(PythonExtensions REQUIRED)
+        python_extension_module(${YGG_TARGET_GPP})
+	set(CMAKE_CROSSCOMPILING OFF)
+    endif()
+    install(
+        TARGETS ${YGG_TARGET_GPP}
+        EXPORT ${YGG_TARGET_GPP}Targets
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()
 
 #########################
 # Create Python Library #
 #########################
 
-option(BUILD_PYTHON_LIBRARY "Build the Yggdrasil Python interface library" ON)
+option(BUILD_PYTHON_LIBRARY "Build the Yggdrasil Python interface library" OFF)
+if(SKBUILD)
+    set(BUILD_PYTHON_LIBRARY ON)
+endif(SKBUILD)
 if(BUILD_PYTHON_LIBRARY AND NOT YGGDRASIL_DISABLE_PYTHON_C_API)
-    add_definitions(-DWITH_PYTHON)
-    # file(GLOB_RECURSE PYSOURCES ${CMAKE_SOURCE_DIR}/communication/python/*.cpp)
-    set(PYSOURCES ${CMAKE_SOURCE_DIR}/communication/python/pyYggdrasil.cpp)
-    # set(PYSOURCES ${CMAKE_SOURCE_DIR}/communication/python/pyUtils.cpp
-    #         ${CMAKE_SOURCE_DIR}/communication/python/pyUtils.hpp
-    #         ${CMAKE_SOURCE_DIR}/communication/python/pyYggdrasil.cpp
-    #         ${CMAKE_SOURCE_DIR}/communication/python/pyYggCommBase.hpp
-    #         ${CMAKE_SOURCE_DIR}/communication/python/pyYggCommBase.cpp
-    #         ${CMAKE_SOURCE_DIR}/communication/python/pyIPCComm.hpp
-    #         ${CMAKE_SOURCE_DIR}/communication/python/pyMacros.hpp)
-    add_library(pyYggdrasil MODULE ${PYSOURCES})
-    target_include_directories(pyYggdrasil PUBLIC ${CMAKE_SOURCE_DIR}/communication/python ${DEPS_INCLUDE_DIRS})
-    target_link_libraries(pyYggdrasil ${DEPS_LIB_NAMES} ${DEPS_LIBRARIES} YggInterface)
-    set_target_properties(pyYggdrasil PROPERTIES
-                           PREFIX ""
-			   OUTPUT_NAME "pyYggdrasil"
-			   LINKER_LANGUAGE C)
+    set(YGG_TARGET_PY pyYggdrasil)
+    message(STATUS "YGG_TARGET_PY = ${YGG_TARGET_PY}")
     message(STATUS "Building Python bindings=Yes")
+    set(PYSOURCES
+        ${CMAKE_SOURCE_DIR}/communication/pyYggdrasil/pyYggdrasil.cpp)
+    
+    add_library(${YGG_TARGET_PY} MODULE ${PYSOURCES})
+    target_include_directories(
+          ${YGG_TARGET_PY} PUBLIC
+          ${DEPS_INCLUDE_DIRS})
+    target_link_libraries(
+          ${YGG_TARGET_PY} ${YGG_TARGET_GPP}
+	  ${DEPS_LIB_NAMES_NO_PYTHON}
+	  ${DEPS_LIBRARIES_NO_PYTHON})
+    target_compile_options(${YGG_TARGET_PY} PUBLIC
+	  -DRAPIDJSON_YGGDRASIL_PYTHON
+	  -DWITH_PYTHON)
+    if(SKBUILD)
+    	find_package(PythonExtensions REQUIRED)
+    	python_extension_module(${YGG_TARGET_PY})
+	install(TARGETS ${YGG_TARGET_PY} LIBRARY DESTINATION .)
+	if(APPLE)
+            set_target_properties(
+	         ${YGG_TARGET_PY} PROPERTIES INSTALL_RPATH
+		 "@loader_path/${CMAKE_INSTALL_LIBDIR}")
+        else()
+	    set_target_properties(
+	         ${YGG_TARGET_PY} PROPERTIES INSTALL_RPATH
+	         "$ORIGIN/${CMAKE_INSTALL_LIBDIR}")
+        endif()
+    else()
+        target_link_libraries(
+	    ${YGG_TARGET_PY}
+	    ${DEPS_LIB_NAMES_PYTHON}
+	    ${DEPS_LIBRARIES_PYTHON})
+    endif(SKBUILD)
 endif()
 
 ##################

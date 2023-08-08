@@ -161,8 +161,10 @@ void ZMQSocket::init(int type0, utils::Address* address,
       if (_last_port_set == 0) {
 	const char *model_index = getenv("YGG_MODEL_INDEX");
 	if (model_index == NULL) {
-	  except_msg = "Environment variable 'YGG_MODEL_INDEX' is not defined. Connot create ZMQComm.";
-	  _last_port = -1;
+	  // except_msg = "Environment variable 'YGG_MODEL_INDEX' is not defined. Connot create ZMQComm.";
+	  // _last_port = -1;
+	  _last_port = 49152;
+	  _last_port_set = 1;
 	} else { // GCOVR_EXCL_LINE
 	  ygglog_debug << "ZMQSocket::init: model_index = " << model_index << std::endl;
 	  _last_port = 49152 + 1000 * static_cast<int>(strtol(model_index, nullptr, 0));

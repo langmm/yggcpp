@@ -3,7 +3,6 @@
 #endif
 #include <Python.h>
 #include "communicators/CommBase.hpp"
-#include "pyUtils.hpp"
 
 // TODO:
 // Static properties:
@@ -522,39 +521,49 @@ static void Comm_t_dealloc(pyComm_t* self) {
 }
 
 static int Comm_t_init(pyComm_t* self, PyObject* args, PyObject* kwds) {
-    (void)kwds;
-    PyObject* adr = NULL;
+    char* adr = NULL;
     char* name = NULL;
-    int name_size;
-    int dirn = -1;
-    int commtype = -1;
+    int dirn = DIRECTION::SEND;
+    int commtype = COMM_TYPE::DEFAULT_COMM;
     int flags = 0;
+    static char const* kwlist[] = {
+      "name",
+	"address",
+	"direction",
+	"commtype",
+	"flags",
+	NULL
+    };
     self->comm = NULL;
 
-    if(!PyArg_ParseTuple(args, "|z#Oiii", &name, &name_size, &adr, &dirn, &commtype, &flags)) {
-        PyErr_SetString(PyExc_TypeError, "Invalid arguments");
-        return -1;
-    }
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ssi$ii",
+				     (char**) kwlist,
+				     &name, &adr, &dirn,
+				     &commtype, &flags))
+      return -1;
     if(adr == NULL and name == NULL) {
-        PyErr_SetString(PyExc_TypeError, "");
+        PyErr_SetString(PyExc_TypeError, "Neither name nor address provided");
         return -1;
     }
     if(dirn < 0 || dirn > DIRECTION::RECV) {
-        PyErr_SetString(PyExc_TypeError, "");
+        PyErr_SetString(PyExc_TypeError, "Invalid direction");
         return -1;
     }
     if(commtype < 0 || commtype > COMM_TYPE::MPI_COMM) {
-        PyErr_SetString(PyExc_TypeError, "");
+        PyErr_SetString(PyExc_TypeError, "Invalid commtype");
         return -1;
     }
     if(flags < 0) {
-        PyErr_SetString(PyExc_TypeError, "");
+        PyErr_SetString(PyExc_TypeError, "Invalid flags value");
         return -1;
     }
     self->comm = communication::communicator::new_Comm_t(
 		       (DIRECTION)dirn, (COMM_TYPE)commtype,
-		       name, (communication::utils::Address*)adr,
-		       flags);
+		       name, adr, flags);
+    if (!self->comm) {
+      PyErr_SetString(PyExc_TypeError, "Error initializing comm");
+      return -1;
+    }
     return 0;
 }
 

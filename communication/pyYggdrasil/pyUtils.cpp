@@ -1,5 +1,5 @@
-#include "pyUtils.hpp"
 
+#include <Python.h>
 #include "structmember.h"
 #include "utils/enums.hpp"
 
@@ -88,8 +88,10 @@
 //     Py_RETURN_FALSE;
 // }
 
+static PyObject* COMMTYPE;
+static PyObject* DIRECTION_TYPE;
 
-void register_enums(PyObject* module) {
+static void register_enums(PyObject* module) {
     PyObject* enum_module = PyImport_ImportModule("enum");
     if(enum_module == NULL) {
         return;
