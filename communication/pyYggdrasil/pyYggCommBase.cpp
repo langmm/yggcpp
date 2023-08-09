@@ -13,23 +13,23 @@ typedef struct {
 // Forward Declarations
 //////////////////////////////////////////////////////////////
 
-static void Comm_t_dealloc(pyComm_t* self);
-static int Comm_t_init(pyComm_t* self, PyObject* args, PyObject* kwds);
+static void Comm_t_dealloc(PyObject* self);
+static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds);
 static PyObject* Comm_t_new(PyTypeObject *type, PyObject* args, PyObject* kwds);
-static PyObject* Comm_t_send(pyComm_t* self, PyObject* arg);
-static PyObject* Comm_t_recv(pyComm_t* self, PyObject* arg);
-static PyObject* Comm_t_send_eof(pyComm_t* self);
-static PyObject* Comm_t_set_timeout_recv(pyComm_t* self, PyObject* arg);
-static PyObject* Comm_t_wait_for_recv(pyComm_t* self, PyObject* arg);
-static PyObject* Comm_t_is_open(pyComm_t* self);
-// static PyObject* Comm_t_getType(pyComm_t* self);
-static PyObject* Comm_t_comm_nmsg(pyComm_t* self);
-static PyObject* Comm_t_close(pyComm_t* self);
-static PyObject* Comm_t_is_closed(pyComm_t* self);
-// static PyObject* Comm_t_create_worker(pyComm_t* self, PyObject* arg);
-// static PyObject* Comm_t_send_single(pyComm_t* self, PyObject* arg);
-// static PyObject* Comm_t_recv_single(pyComm_t* self, PyObject* arg);
-static PyObject* Comm_t_str(pyComm_t* self);
+static PyObject* Comm_t_send(PyObject* self, PyObject* arg);
+static PyObject* Comm_t_recv(PyObject* self, PyObject* arg);
+static PyObject* Comm_t_send_eof(PyObject* self);
+static PyObject* Comm_t_set_timeout_recv(PyObject* self, PyObject* arg);
+static PyObject* Comm_t_wait_for_recv(PyObject* self, PyObject* arg);
+static PyObject* Comm_t_is_open(PyObject* self);
+// static PyObject* Comm_t_getType(PyObject* self);
+static PyObject* Comm_t_comm_nmsg(PyObject* self);
+static PyObject* Comm_t_close(PyObject* self);
+static PyObject* Comm_t_is_closed(PyObject* self);
+// static PyObject* Comm_t_create_worker(PyObject* self, PyObject* arg);
+// static PyObject* Comm_t_send_single(PyObject* self, PyObject* arg);
+// static PyObject* Comm_t_recv_single(PyObject* self, PyObject* arg);
+static PyObject* Comm_t_str(PyObject* self);
 // TODO: Replace this with a class so updating the returned dict updates
 //   the C++ class?
 static PyObject* Comm_t_name_get(PyObject* self, void*);
@@ -217,7 +217,7 @@ Py_ssize_t commMeta_size(PyObject* self) {
     size = static_cast<long>(v->MemberCount());
   } else {
     PyErr_SetString(PyExc_TypeError, "rapidjson instance is not an array or object");
-    return NULL;
+    return 0;
   }
   return static_cast<Py_ssize_t>(size);
 }
@@ -455,7 +455,7 @@ static PyGetSetDef Comm_t_properties[] = {
   {"timeout_recv", Comm_t_timeout_recv_get, Comm_t_timeout_recv_set,
    "The time waited during a receive call for an incoming message.",
    NULL},
-  {NULL} /* Sentinel */
+  {NULL, NULL, NULL, NULL, NULL} /* Sentinel */
 };
 
 static PyTypeObject Comm_tType = {
@@ -512,12 +512,14 @@ static PyTypeObject Comm_tType = {
 };
 
 
-static void Comm_t_dealloc(pyComm_t* self) {
-    delete self->comm;
-    Py_TYPE(self)->tp_free((PyObject*) self);
+static void Comm_t_dealloc(PyObject* self) {
+    pyComm_t* s = (pyComm_t*)self;
+    delete s->comm;
+    Py_TYPE(self)->tp_free(self);
 }
 
-static int Comm_t_init(pyComm_t* self, PyObject* args, PyObject* kwds) {
+static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds) {
+    pyComm_t* s = (pyComm_t*)self;
     char* adr = NULL;
     char* name = NULL;
     int dirn = DIRECTION::SEND;
@@ -531,7 +533,7 @@ static int Comm_t_init(pyComm_t* self, PyObject* args, PyObject* kwds) {
 	"flags",
 	NULL
     };
-    self->comm = NULL;
+    s->comm = NULL;
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ssi$ii",
 				     (char**) kwlist,
@@ -555,13 +557,13 @@ static int Comm_t_init(pyComm_t* self, PyObject* args, PyObject* kwds) {
         return -1;
     }
     try {
-      self->comm = communication::communicator::new_Comm_t(
+      s->comm = communication::communicator::new_Comm_t(
 		       (DIRECTION)dirn, (COMM_TYPE)commtype,
 		       name, adr, flags);
     } catch (...) {
-      self->comm = NULL;
+      s->comm = NULL;
     }
-    if (!self->comm) {
+    if (!s->comm) {
       PyErr_SetString(PyExc_TypeError, "Error initializing comm");
       return -1;
     }
@@ -577,11 +579,12 @@ static PyObject* Comm_t_new(PyTypeObject *type, PyObject* args, PyObject* kwds) 
     return (PyObject*)self;
 }
 
-PyObject* Comm_t_comm_nmsg(pyComm_t* self) {
-    return PyLong_FromLong(self->comm->comm_nmsg());
+PyObject* Comm_t_comm_nmsg(PyObject* self) {
+  return PyLong_FromLong(((pyComm_t*)self)->comm->comm_nmsg());
 }
 
-PyObject* Comm_t_send(pyComm_t* self, PyObject* arg) {
+PyObject* Comm_t_send(PyObject* self, PyObject* arg) {
+    pyComm_t* s = (pyComm_t*)self;
     rapidjson::Document doc;
     if (PyTuple_Size(arg) == 1) {
       PyObject* arg0 = PyTuple_GetItem(arg, 0);
@@ -592,14 +595,15 @@ PyObject* Comm_t_send(pyComm_t* self, PyObject* arg) {
     } else {
       doc.SetPythonObjectRaw(arg, doc.GetAllocator());
     }
-    if (self->comm->sendVar(doc) < 0)
+    if (s->comm->sendVar(doc) < 0)
       Py_RETURN_FALSE;
     Py_RETURN_TRUE;
 }
 
-PyObject* Comm_t_recv(pyComm_t* self, PyObject*) {
+PyObject* Comm_t_recv(PyObject* self, PyObject*) {
+    pyComm_t* s = (pyComm_t*)self;
     rapidjson::Document doc;
-    long flag = self->comm->recvVar(doc);
+    long flag = s->comm->recvVar(doc);
     PyObject* pyFlag;
     PyObject* res;
     if (flag < 0) {
@@ -615,68 +619,68 @@ PyObject* Comm_t_recv(pyComm_t* self, PyObject*) {
     return PyTuple_Pack(2, pyFlag, res);
 }
 
-PyObject* Comm_t_close(pyComm_t* self) {
-    self->comm->close();
-    return NULL;
+PyObject* Comm_t_close(PyObject* self) {
+    ((pyComm_t*)self)->comm->close();
+    Py_RETURN_NONE;
 }
 
-PyObject* Comm_t_is_closed(pyComm_t* self) {
-    if (self->comm->is_closed())
+PyObject* Comm_t_is_closed(PyObject* self) {
+    if (((pyComm_t*)self)->comm->is_closed())
         Py_RETURN_TRUE;
     Py_RETURN_FALSE;
 
 }
 
-// PyObject* Comm_t_create_worker(pyComm_t* self, PyObject* arg) {
+// PyObject* Comm_t_create_worker(PyObject* self, PyObject* arg) {
 // }
 
-// PyObject* Comm_t_send_single(pyComm_t* self, PyObject* arg) {
+// PyObject* Comm_t_send_single(PyObject* self, PyObject* arg) {
 // }
 
-// PyObject* Comm_t_recv_single(pyComm_t* self, PyObject* arg) {
+// PyObject* Comm_t_recv_single(PyObject* self, PyObject* arg) {
 // }
 
-// PyObject* Comm_t_recv(pyComm_t* self, PyObject* arg) {
-// }
-
-PyObject* Comm_t_str(pyComm_t* self) {
+PyObject* Comm_t_str(PyObject* self) {
+  pyComm_t* s = (pyComm_t*)self;
   const char* dirStr = "NONE";
-  if (self->comm->getDirection() == DIRECTION::RECV)
+  if (s->comm->getDirection() == DIRECTION::RECV)
     dirStr = "RECV";
-  else if (self->comm->getDirection() == DIRECTION::SEND)
+  else if (s->comm->getDirection() == DIRECTION::SEND)
     dirStr = "SEND";
   return PyUnicode_FromFormat("Comm_t(%s, %s, %s)",
-			      self->comm->getName().c_str(),
-			      self->comm->getAddress().c_str(),
+			      s->comm->getName().c_str(),
+			      s->comm->getAddress().c_str(),
 			      dirStr);
 }
 
-PyObject* Comm_t_send_eof(pyComm_t* self) {
-    return PyLong_FromLong(self->comm->send_eof());
+PyObject* Comm_t_send_eof(PyObject* self) {
+  return PyLong_FromLong(((pyComm_t*)self)->comm->send_eof());
 }
 
-PyObject* Comm_t_set_timeout_recv(pyComm_t* self, PyObject* arg) {
+PyObject* Comm_t_set_timeout_recv(PyObject* self, PyObject* arg) {
+    pyComm_t* s = (pyComm_t*)self;
     int new_timeout;
     if(!PyArg_ParseTuple(arg, "i", &new_timeout)) {
         PyErr_SetString(PyExc_TypeError, "Invalid argument given.");
         return NULL;
     }
-    self->comm->set_timeout_recv(new_timeout);
+    s->comm->set_timeout_recv(new_timeout);
     return NULL;
 }
 
-PyObject* Comm_t_wait_for_recv(pyComm_t* self, PyObject* arg) {
+PyObject* Comm_t_wait_for_recv(PyObject* self, PyObject* arg) {
+    pyComm_t* s = (pyComm_t*)self;
     int tout;
     if(!PyArg_ParseTuple(arg, "i", &tout)) {
         PyErr_SetString(PyExc_TypeError, "Invalid argument given.");
         return NULL;
     }
-    int wt = self->comm->wait_for_recv(tout);
+    int wt = s->comm->wait_for_recv(tout);
     return PyLong_FromLong(wt);
 }
 
-PyObject* Comm_t_is_open(pyComm_t* self) {
-    if(self->comm->is_open())
+PyObject* Comm_t_is_open(PyObject* self) {
+    if(((pyComm_t*)self)->comm->is_open())
         Py_RETURN_TRUE;
     Py_RETURN_FALSE;
 }
