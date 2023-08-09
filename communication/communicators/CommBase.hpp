@@ -1,10 +1,5 @@
 #pragma once
-
-// #ifdef WITH_PYTHON
-// #define VIRT_END
-// #else
 #define VIRT_END = 0
-// #endif
 
 #include "utils/tools.hpp"
 #include "utils/enums.hpp"
@@ -484,15 +479,32 @@ public:
       @returns flags.
      */
     int& getFlags() { return flags; }
-
-#ifdef YGG_TEST
-    std::string getName() { return name; }
-    std::string getAddress() {
+    /*!
+      @brief Get the communicator's name.
+      @returns name.
+     */
+    const std::string& getName() const { return name; }
+    /*!
+      @brief Get the communicator's address.
+      @returns Address.
+     */
+    std::string getAddress() const {
       if (address)
 	return address->address();
       return "";
     }
-    DIRECTION getDirection() { return direction; }
+    /*!
+      @brief Get the communicator's direction.
+      @returns Direction.
+     */
+    DIRECTION getDirection() const { return direction; }
+    /*!
+      @brief Get the communicator's type.
+      @returns Communicator type.
+     */
+    COMM_TYPE getCommType() const { return type; }
+  
+#ifdef YGG_TEST
     WorkerList& getWorkers() { return workers; }
     virtual bool afterSendRecv(Comm_t*, Comm_t*) { return true; }
     size_t getMaxMsgSize() const { return maxMsgSize; }
@@ -625,16 +637,10 @@ protected:
      * @param flgs Initial bitwise flags
      * @see utils::Address()
      */
-#ifdef WITH_PYTHON
-public:
-#endif
     explicit Comm_t(const std::string &name,
 		    utils::Address *address = nullptr,
 		    DIRECTION direction = NONE,
 		    const COMM_TYPE &t = NULL_COMM, int flgs = 0);
-#ifdef WITH_PYTHON
-protected:
-#endif
 
     /**
      * Checks the size of the message to see if it exceeds the maximum allowable size as define by YGG_MSG_MAX

@@ -6,11 +6,12 @@
 * Fix handling of multiple connections in ZMQ socket (restricted to ZMQ_PAIR to simplify testing)
 * Use rapidjson allocator to malloc/realloc returned data so that data is cleaned up on exit
 * Add Python tests
+  * send/recv (must be async for ZMQ)
+  * call (must be async)
 * Add async communicator
 * Add Fortran interface
 * Add RabbitMQ communicator
 * Python Wrappers for:
   * call
-  * more descriptive str & repr
 
   

@@ -66,13 +66,6 @@ public:
         return out;
     }
 
-#ifdef WITH_PYTHON
-    /**
-     * Print the address to the screen from python.
-     * @return
-     */
-    std::string print() {return _address;}
-#endif
 private:
     std::string _address = "";  // the address
     int _key;                   // the unique key

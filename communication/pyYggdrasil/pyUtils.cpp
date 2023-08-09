@@ -54,7 +54,7 @@
 // }
 
 // PyObject* Address_str(pyAddress* self) {
-//     return PyUnicode_FromFormat("%s", self->address->print().c_str());
+//     return PyUnicode_FromFormat("%s", self->address->address().c_str());
 // }
 
 // PyObject* Address_address(pyAddress* self, PyObject* arg) {
@@ -98,6 +98,7 @@ static void register_enums(PyObject* module) {
     }
     PyObject* comm_types = PyDict_New();
     PyDict_SetItemString(comm_types, "NULL_COMM", PyLong_FromLong(COMM_TYPE::NULL_COMM));
+    PyDict_SetItemString(comm_types, "DEFAULT_COMM", PyLong_FromLong(COMM_TYPE::DEFAULT_COMM));
     PyDict_SetItemString(comm_types, "IPC_COMM", PyLong_FromLong(COMM_TYPE::IPC_COMM));
     PyDict_SetItemString(comm_types, "ZMQ_COMM", PyLong_FromLong(COMM_TYPE::ZMQ_COMM));
     PyDict_SetItemString(comm_types, "SERVER_COMM", PyLong_FromLong(COMM_TYPE::SERVER_COMM));

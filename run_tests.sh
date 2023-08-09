@@ -54,8 +54,9 @@ else
     cd communication/pyYggdrasil
     export PYTHONFAULTHANDLER=1
     python-crash -m pytest -sv ../../test/
-    # Copy test commands to test_script.py
-    # lldb python test_script.py
+    # Copy test commands to test/script.py
+    # cp ../../test/script.py ./
+    # lldb python script.py  # r to run
     cd ../../
 fi
 

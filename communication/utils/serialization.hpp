@@ -205,6 +205,9 @@ private:
 };
 
 class Header : public Metadata {
+private:
+  Header(const Header& other) = delete;
+  Header& operator=(const Header&) = delete;
 public:
   Header();
   ~Header() override;

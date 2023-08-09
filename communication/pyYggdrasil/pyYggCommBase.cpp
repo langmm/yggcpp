@@ -4,12 +4,6 @@
 #include <Python.h>
 #include "communicators/CommBase.hpp"
 
-// TODO:
-// Static properties:
-// - address
-// - communicator type
-
-
 typedef struct {
     PyObject_HEAD
     communication::communicator::Comm_t *comm;
@@ -38,13 +32,16 @@ static PyObject* Comm_t_is_closed(pyComm_t* self);
 static PyObject* Comm_t_str(pyComm_t* self);
 // TODO: Replace this with a class so updating the returned dict updates
 //   the C++ class?
+static PyObject* Comm_t_name_get(PyObject* self, void*);
+static PyObject* Comm_t_address_get(PyObject* self, void*);
+static PyObject* Comm_t_direction_get(PyObject* self, void*);
+static PyObject* Comm_t_commtype_get(PyObject* self, void*);
 static PyObject* Comm_t_metadata_get(PyObject* self, void*);
 static int Comm_t_metadata_set(PyObject* self, PyObject* value, void* closure);
 static PyObject* Comm_t_datatype_get(PyObject* self, void*);
 static int Comm_t_datatype_set(PyObject* self, PyObject* value, void* closure);
 
 static PyObject* commMeta_new(PyTypeObject *type, PyObject* args, PyObject* kwds);
-static int commMeta_init(PyObject* self, PyObject* args, PyObject* kwds);
 static void commMeta_dealloc(PyObject* self);
 static PyObject* commMeta_str(PyObject* self);
 static PyObject* commMeta_repr(PyObject* self);
@@ -97,14 +94,14 @@ static PyMethodDef commMeta_methods[] = {
 
 static PyTypeObject commMetaType = {
         PyVarObject_HEAD_INIT(NULL, 0)
-        "pyYggdrasil.CommMeta",     /* tp_name */
-        sizeof(commMeta),           /* tp_basicsize */
-        0,                          /* tp_itemsize */
+        "pyYggdrasil.CommMeta",    /* tp_name */
+        sizeof(commMeta),          /* tp_basicsize */
+        0,                         /* tp_itemsize */
         (destructor)commMeta_dealloc, /* tp_dealloc */
-        0,                         /* tp_vectorcall_offset */
-        0,                         /* tp_getattr */
-        0,                         /* tp_setattr */
-        0,                         /* tp_reserved */
+	0,                         /* tp_print */
+	0,                         /* tp_getattr */
+	0,                         /* tp_setattr */
+	0,                         /* tp_compare */
         commMeta_repr,             /* tp_repr */
         0,                         /* tp_as_number */
         &commMeta_seq,             /* tp_as_sequence */
@@ -124,37 +121,20 @@ static PyTypeObject commMetaType = {
         0,                         /* tp_iter */
         0,                         /* tp_iternext */
         commMeta_methods,          /* tp_methods */
-        0,                         /* tp_members */
-        0,                         /* tp_getset */
-        0,                         /* tp_base */
-        0,                         /* tp_dict */
-        0,                         /* tp_descr_get */
-        0,                         /* tp_descr_set */
-        0,                         /* tp_dictoffset */
-        (initproc)commMeta_init,   /* tp_init */
-        0,                         /* tp_alloc */
-        commMeta_new,              /* tp_new */
-        0,                         /* tp_free */
-        NULL,                      /* tp_is_gc */
-        NULL,                      /* tp_bases */
-        NULL,                      /* tp_mro */
-        NULL,                      /* tp_cache */
-        NULL,                      /* tp_subclasses */
-        NULL,                      /* tp_weaklist */
-        0,                         /* tp_del */
-        0,                         /* tp_version_tag */
-        0,                         /* tp_finalize */
-        0                          /* tp_vectorcall */
-
+	0,                         /* tp_members */
+	0,                         /* tp_getset */
+	0,                         /* tp_base */
+	0,                         /* tp_dict */
+	0,                         /* tp_descr_get */
+	0,                         /* tp_descr_set */
+	0,                         /* tp_dictoffset */
+	0,                         /* tp_init */
+	0,                         /* tp_alloc */
+	commMeta_new,              /* tp_new */
+	PyObject_Del,              /* tp_free */
 };
 
-PyObject* commMeta_new(PyTypeObject *type, PyObject*, PyObject*) {
-  return type->tp_alloc(type, 0);
-}
-int commMeta_init(PyObject* self, PyObject* args, PyObject* kwds) {
-  commMeta* s = (commMeta*)self;
-  s->comm = NULL;
-  s->v = NULL;
+PyObject* commMeta_new(PyTypeObject *type, PyObject* args, PyObject* kwds) {
   PyObject* commPy = NULL;
   int for_datatype = -1;
   static char const* kwlist[] = {
@@ -165,24 +145,28 @@ int commMeta_init(PyObject* self, PyObject* args, PyObject* kwds) {
   if (!PyArg_ParseTupleAndKeywords(args, kwds, "O|$p",
 				   (char**) kwlist,
 				   &commPy, &for_datatype))
-    return -1;
+    return NULL;
+  commMeta* s = (commMeta*) type->tp_alloc(type, 0);
+  s->comm = NULL;
+  s->v = NULL;
   pyComm_t* comm = (pyComm_t*)commPy;
   if (for_datatype < 0) for_datatype = 0;
   rapidjson::Value* v = NULL;
+  
   try {
     if (for_datatype)
       v = &(comm->comm->getMetadata().getSchema());
     else
-      v = &(comm->comm->getMetadata().getMeta());
+      v = &(comm->comm->getMetadata().metadata);
   } catch (...) {
     // TODO: More specific error
     PyErr_SetString(PyExc_KeyError, "schema");
-    return -1;
+    return NULL;
   }
   Py_INCREF(commPy);
   s->comm = commPy;
   s->v = (void*)v;
-  return 0;
+  return (PyObject*)s;
 }
 void commMeta_dealloc(PyObject* self) {
   commMeta* s = (commMeta*)self;
@@ -452,6 +436,14 @@ static PyMethodDef Comm_t_methods[] = {
 };
 
 static PyGetSetDef Comm_t_properties[] = {
+  {"name", Comm_t_name_get, NULL,
+   "The communicator's name", NULL},
+  {"address", Comm_t_address_get, NULL,
+   "The communicator's address", NULL},
+  {"direction", Comm_t_direction_get, NULL,
+   "The communicator's direction", NULL},
+  {"commtype", Comm_t_commtype_get, NULL,
+   "The communicator's commtype", NULL},
   {"metadata", Comm_t_metadata_get, Comm_t_metadata_set,
    "The metadata associated with the communicator that will be sent in "
    "message headers", NULL},
@@ -630,8 +622,16 @@ PyObject* Comm_t_is_closed(pyComm_t* self) {
 // PyObject* Comm_t_recv(pyComm_t* self, PyObject* arg) {
 // }
 
-PyObject* Comm_t_str(pyComm_t*) {
-    return PyUnicode_FromFormat("%s", "Comm_t");
+PyObject* Comm_t_str(pyComm_t* self) {
+  const char* dirStr = "NONE";
+  if (self->comm->getDirection() == DIRECTION::RECV)
+    dirStr = "RECV";
+  else if (self->comm->getDirection() == DIRECTION::SEND)
+    dirStr = "SEND";
+  return PyUnicode_FromFormat("Comm_t(%s, %s, %s)",
+			      self->comm->getName().c_str(),
+			      self->comm->getAddress().c_str(),
+			      dirStr);
 }
 
 PyObject* Comm_t_send_eof(pyComm_t* self) {
@@ -669,7 +669,32 @@ PyObject* Comm_t_is_open(pyComm_t* self) {
 //     return PyLong_FromLong(ct);
 // }
 
+static PyObject* Comm_t_name_get(PyObject* self, void*) {
+  pyComm_t* s = (pyComm_t*)self;
+  return PyUnicode_FromString(s->comm->getName().c_str());
+}
+static PyObject* Comm_t_address_get(PyObject* self, void*) {
+  pyComm_t* s = (pyComm_t*)self;
+  return PyUnicode_FromString(s->comm->getAddress().c_str());
+}
+static PyObject* Comm_t_direction_get(PyObject* self, void*) {
+  pyComm_t* s = (pyComm_t*)self;
+  return PyLong_FromLong(s->comm->getDirection());
+  // Return string?
+  // char* dirStr = "NONE";
+  // if (s->comm->getDirection() == DIRECTION::RECV)
+  //   dirStr = "RECV";
+  // else if (s->comm->getDirection() == DIRECTION::SEND)
+  //   dirStr = "SEND";
+  // return PyUnicode_FromString(dirStr);
+}
+static PyObject* Comm_t_commtype_get(PyObject* self, void*) {
+  pyComm_t* s = (pyComm_t*)self;
+  return PyLong_FromLong(s->comm->getCommType());
+}
+
 PyObject* Comm_t_metadata_get(PyObject* self, void*) {
+  // Uneditable version
   // communication::utils::Metadata& metadata = ((pyComm_t*)self)->comm->getMetadata();
   // PyObject* out = metadata.getMeta().GetPythonObjectRaw();
   // if (out == NULL) {
@@ -704,6 +729,7 @@ int Comm_t_metadata_set(PyObject* self, PyObject* value, void*) {
 }
 
 PyObject* Comm_t_datatype_get(PyObject* self, void*) {
+  // Uneditable version
   // communication::utils::Metadata& metadata = ((pyComm_t*)self)->comm->getMetadata();
   // PyObject* out = metadata.getSchema().GetPythonObjectRaw();
   // if (out == NULL) {

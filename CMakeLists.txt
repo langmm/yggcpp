@@ -3,6 +3,9 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 if (POLICY CMP0048)
     cmake_policy(SET CMP0048 NEW)
 endif (POLICY CMP0048)
+# if (POLICY CMP0148)
+#     cmake_policy(SET CMP0148 NEW)
+# endif (POLICY CMP0148)
 if (POLICY CMP0135)
     cmake_policy(SET CMP0135 NEW)
 endif()
@@ -481,8 +484,7 @@ if(BUILD_CPP_LIBRARY)
 	    ${DEPS_LIB_NAMES_NO_PYTHON}
 	    ${DEPS_LIBRARIES_NO_PYTHON})
      	target_compile_options(${YGG_TARGET_GPP} PUBLIC
-     	    -DRAPIDJSON_YGGDRASIL_PYTHON
-	    -DWITH_PYTHON)
+     	    -DRAPIDJSON_YGGDRASIL_PYTHON)
     else()
         target_link_libraries(
 	    ${YGG_TARGET_GPP}
@@ -514,8 +516,13 @@ option(BUILD_PYTHON_LIBRARY "Build the Yggdrasil Python interface library" OFF)
 if(SKBUILD)
     set(BUILD_PYTHON_LIBRARY ON)
 endif(SKBUILD)
+option(YGG_PYTHON_LIBRARY_WRAP "Build the Yggdrasil Python interface library by wrapping the C++ module" ON)
 if(BUILD_PYTHON_LIBRARY AND NOT YGGDRASIL_DISABLE_PYTHON_C_API)
-    set(YGG_TARGET_PY pyYggdrasil)
+    if(YGG_PYTHON_LIBRARY_WRAP)
+        set(YGG_TARGET_PY _pyYggdrasil)
+    else()
+        set(YGG_TARGET_PY pyYggdrasil)
+    endif()
     message(STATUS "YGG_TARGET_PY = ${YGG_TARGET_PY}")
     message(STATUS "Building Python bindings=Yes")
     set(PYSOURCES
@@ -530,8 +537,11 @@ if(BUILD_PYTHON_LIBRARY AND NOT YGGDRASIL_DISABLE_PYTHON_C_API)
 	  ${DEPS_LIB_NAMES_NO_PYTHON}
 	  ${DEPS_LIBRARIES_NO_PYTHON})
     target_compile_options(${YGG_TARGET_PY} PUBLIC
-	  -DRAPIDJSON_YGGDRASIL_PYTHON
-	  -DWITH_PYTHON)
+	  -DRAPIDJSON_YGGDRASIL_PYTHON)
+    if(YGG_PYTHON_LIBRARY_WRAP)
+        target_compile_options(${YGG_TARGET_PY} PRIVATE
+              -DYGG_PYTHON_LIBRARY_WRAP)
+    endif()
     if(SKBUILD)
     	find_package(PythonExtensions REQUIRED)
     	python_extension_module(${YGG_TARGET_PY})

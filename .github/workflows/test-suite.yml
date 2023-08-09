@@ -297,11 +297,11 @@ jobs:
         if: matrix.python-install == 'conda'
         shell: bash -l {0}
         run: |
-          pip install .
+          pip install . -v
       - name: Build Python (PIP)
         if: matrix.python-install == 'pip'
         run: |
-          pip install .
+          pip install . -v
 
       ###################################
       # Test CPP & C
