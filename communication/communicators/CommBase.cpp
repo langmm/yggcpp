@@ -429,6 +429,12 @@ void Comm_t::set_timeout_recv(int new_timeout) {
   }
   timeout_recv = new_timeout;
 }
+int Comm_t::get_timeout_recv() {
+  if (global_comm) {
+    return global_comm->get_timeout_recv();
+  }
+  return timeout_recv;
+}
 int Comm_t::wait_for_recv(const int& tout) {
   if (global_comm)
     return global_comm->wait_for_recv(tout);

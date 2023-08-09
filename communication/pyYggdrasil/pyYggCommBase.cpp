@@ -40,6 +40,8 @@ static PyObject* Comm_t_metadata_get(PyObject* self, void*);
 static int Comm_t_metadata_set(PyObject* self, PyObject* value, void* closure);
 static PyObject* Comm_t_datatype_get(PyObject* self, void*);
 static int Comm_t_datatype_set(PyObject* self, PyObject* value, void* closure);
+static PyObject* Comm_t_timeout_recv_get(PyObject* self, void*);
+static int Comm_t_timeout_recv_set(PyObject* self, PyObject* value, void* closure);
 
 static PyObject* commMeta_new(PyTypeObject *type, PyObject* args, PyObject* kwds);
 static void commMeta_dealloc(PyObject* self);
@@ -159,8 +161,8 @@ PyObject* commMeta_new(PyTypeObject *type, PyObject* args, PyObject* kwds) {
     else
       v = &(comm->comm->getMetadata().metadata);
   } catch (...) {
-    // TODO: More specific error
-    PyErr_SetString(PyExc_KeyError, "schema");
+    PyErr_SetString(PyExc_KeyError,
+		    "The communicator does not have a datatype");
     return NULL;
   }
   Py_INCREF(commPy);
@@ -450,6 +452,9 @@ static PyGetSetDef Comm_t_properties[] = {
   {"datatype", Comm_t_datatype_get, Comm_t_datatype_set,
    "The datatype associated with the communicator that will be sent in "
    "message headers and used to validate messages", NULL},
+  {"timeout_recv", Comm_t_timeout_recv_get, Comm_t_timeout_recv_set,
+   "The time waited during a receive call for an incoming message.",
+   NULL},
   {NULL} /* Sentinel */
 };
 
@@ -549,9 +554,13 @@ static int Comm_t_init(pyComm_t* self, PyObject* args, PyObject* kwds) {
         PyErr_SetString(PyExc_TypeError, "Invalid flags value");
         return -1;
     }
-    self->comm = communication::communicator::new_Comm_t(
+    try {
+      self->comm = communication::communicator::new_Comm_t(
 		       (DIRECTION)dirn, (COMM_TYPE)commtype,
 		       name, adr, flags);
+    } catch (...) {
+      self->comm = NULL;
+    }
     if (!self->comm) {
       PyErr_SetString(PyExc_TypeError, "Error initializing comm");
       return -1;
@@ -574,7 +583,15 @@ PyObject* Comm_t_comm_nmsg(pyComm_t* self) {
 
 PyObject* Comm_t_send(pyComm_t* self, PyObject* arg) {
     rapidjson::Document doc;
-    doc.SetPythonObjectRaw(arg, doc.GetAllocator());
+    if (PyTuple_Size(arg) == 1) {
+      PyObject* arg0 = PyTuple_GetItem(arg, 0);
+      if (arg0 == NULL) {
+	Py_RETURN_FALSE;
+      }
+      doc.SetPythonObjectRaw(arg0, doc.GetAllocator());
+    } else {
+      doc.SetPythonObjectRaw(arg, doc.GetAllocator());
+    }
     if (self->comm->sendVar(doc) < 0)
       Py_RETURN_FALSE;
     Py_RETURN_TRUE;
@@ -771,5 +788,19 @@ int Comm_t_datatype_set(PyObject* self, PyObject* value, void*) {
     PyErr_SetString(PyExc_TypeError, "Error updating datatype");
     return -1;
   }
+  return 0;
+}
+
+static PyObject* Comm_t_timeout_recv_get(PyObject* self, void*) {
+  pyComm_t* s = (pyComm_t*)self;
+  return PyLong_FromLong(s->comm->get_timeout_recv());
+}
+static int Comm_t_timeout_recv_set(PyObject* self, PyObject* value, void*) {
+  if (!PyLong_Check(value)) {
+    PyErr_SetString(PyExc_TypeError, "Timeout must be an integer");
+    return -1;
+  }
+  pyComm_t* s = (pyComm_t*)self;
+  s->comm->set_timeout_recv(PyLong_AsLong(value));
   return 0;
 }

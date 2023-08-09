@@ -27,6 +27,7 @@ public:
   void addResponseFormat(const std::string& fmt, bool use_generic=false);
   // \copydoc Comm_t::getMetadata
   utils::Metadata& getMetadata(const DIRECTION dir=NONE) override;
+  static bool isInstalled() { return COMM_BASE::isInstalled(); }
   
 #ifndef YGG_TEST
 protected:

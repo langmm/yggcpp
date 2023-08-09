@@ -43,15 +43,33 @@ const int COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
 #define COMM_BASE_MAX_MSG_SIZE
 #endif
 
+#define IPC_INSTALLED_FLAG 0
+#define ZMQ_INSTALLED_FLAG 0
+#define MPI_INSTALLED_FLAG 0
+
+#ifdef IPCINSTALLED
+#undef IPC_INSTALLED_FLAG
+#define IPC_INSTALLED_FLAG 1
+#endif
+#ifdef ZMQINSTALLED
+#undef ZMQ_INSTALLED_FLAG
+#define ZMQ_INSTALLED_FLAG 1
+#endif
+#if defined(MPIINSTALLED) && defined(MPI_COMM_WORLD)
+#undef MPI_INSTALLED_FLAG
+#define MPI_INSTALLED_FLAG 1
+#endif
+
 #define UNINSTALLED_ERROR(name)					\
   utils::ygglog_throw_error("Compiler flag '" #name "INSTALLED' not defined so " #name " bindings are disabled")
-#define ADD_CONSTRUCTORS(cls, defT)				\
-  explicit cls(const std::string nme,				\
-	       const DIRECTION dirn,				\
-	       int flgs = 0, const COMM_TYPE type = defT);	\
-  explicit cls(utils::Address *addr,				\
-	       const DIRECTION dirn,				\
-	       int flgs = 0, const COMM_TYPE type = defT);
+#define ADD_CONSTRUCTORS(T)						\
+  explicit T ## Comm(const std::string nme,				\
+		     const DIRECTION dirn,				\
+		     int flgs = 0, const COMM_TYPE type = T ## _COMM);	\
+  explicit T ## Comm(utils::Address *addr,				\
+		     const DIRECTION dirn,				\
+		     int flgs = 0, const COMM_TYPE type = T ## _COMM);	\
+  static bool isInstalled() { return T ## _INSTALLED_FLAG; }
 #define ADD_CONSTRUCTORS_DEF(cls)		\
   cls::cls(const std::string nme,		\
 	   const DIRECTION dirn,		\
@@ -177,6 +195,11 @@ public:
         cause receive calls to block until a message is available.
      */
     virtual void set_timeout_recv(int new_timeout);
+    /*!
+      @brief Get the time limit for receiving messages.
+      @returns Timeout in micro-seconds.
+     */
+    virtual int get_timeout_recv();
     /*!
       @brief Wait until a message is available to be received or a time
         limit is reached.
@@ -503,6 +526,12 @@ public:
       @returns Communicator type.
      */
     COMM_TYPE getCommType() const { return type; }
+
+    /*!
+      @brief Determine if the communicator is fully installed.
+      @returns true if it is installed, false otherwise.
+    */
+    static bool isInstalled() { return false; }
   
 #ifdef YGG_TEST
     WorkerList& getWorkers() { return workers; }

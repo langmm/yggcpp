@@ -29,6 +29,7 @@ public:
      */
     ~ClientComm() override = default;
     void set_timeout_recv(int new_timeout) override;
+    int get_timeout_recv() override;
     int wait_for_recv(const int& tout) override;
 
     using RPCComm::send;

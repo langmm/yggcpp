@@ -135,7 +135,7 @@ public:
 		     utils::Address *address = new utils::Address(),
                      const DIRECTION direction = NONE,
 		     int flgs = 0, const COMM_TYPE type = ZMQ_COMM);
-    ADD_CONSTRUCTORS(ZMQComm, ZMQ_COMM)
+    ADD_CONSTRUCTORS(ZMQ)
 
 #ifdef ZMQINSTALLED
     /**

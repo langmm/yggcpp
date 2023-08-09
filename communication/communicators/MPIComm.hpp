@@ -63,7 +63,7 @@ public:
 	    utils::Address *address = new utils::Address(),
 	    const DIRECTION direction = NONE,
 	    int flgs = 0, const COMM_TYPE type = MPI_COMM);
-    ADD_CONSTRUCTORS(MPIComm, MPI_COMM)
+    ADD_CONSTRUCTORS(MPI)
 
 #if defined(MPIINSTALLED) && defined(MPI_COMM_WORLD)
     /**

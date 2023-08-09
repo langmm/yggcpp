@@ -391,8 +391,7 @@ bool ZMQReply::recv_stage1(std::string msg_send) {
   if (last_idx < 0)
     return false;
   ZMQSocket* sock = &(sockets[last_idx]);
-  ygglog_debug << "ZMQReply::recv_stage1: address = " << sock->endpoint <<
-    ", begin" << std::endl;
+  ygglog_debug << "ZMQReply::recv_stage1: Sending handshake to confirm message was received (address = " << sock->endpoint << ")" << std::endl;
   // Send
   if (sock->send(msg_send) < 0) {
     ygglog_error << "ZMQReply::recv_stage1: Error sending confirmation." << std::endl;
@@ -413,8 +412,7 @@ bool ZMQReply::recv_stage2(std::string msg_send) {
   if (last_idx < 0)
     return false;
   ZMQSocket* sock = &(sockets[last_idx]);
-  ygglog_debug << "ZMQReply::recv_stage2: address = " << sock->endpoint <<
-    ", begin" << std::endl;
+  ygglog_debug << "ZMQReply::recv_stage2: Receiving acknowledgement of handshake (address = " << sock->endpoint << ")" << std::endl;
   // Receive
   std::string msg_recv;
   sock->poll(ZMQ_POLLIN, timeout);
@@ -423,7 +421,8 @@ bool ZMQReply::recv_stage2(std::string msg_send) {
     return false;
   }
   n_rep++;
-  ygglog_debug << "ZMQReply::recv_stage2: address=" << sock->endpoint << ", end" << std::endl;
+  ygglog_debug << "ZMQReply::recv_stage2: Handshake complete (address = "
+	       << sock->endpoint << ")" << std::endl;
   last_idx = -1;
   return true;
 }
@@ -444,6 +443,7 @@ bool ZMQReply::send_stage1(std::string& msg_data) {
     return false;
   }
   ZMQSocket* sock = &(sockets[0]);
+  ygglog_debug << "ZMQReply::send_stage1: Receiving handshake to confirm message was received (address = " << sock->endpoint << ")" << std::endl;
   sock->poll(ZMQ_POLLIN, timeout);
   if (sock->recv(msg_data) < 0) {
     ygglog_error << "ZMQReply::send_stage1: Error receiving reply" << std::endl;
@@ -464,6 +464,7 @@ bool ZMQReply::send_stage2(const std::string msg_data) {
     ygglog_error << "ZMQReply::send_stage2: Reply socket was not initialized." << std::endl;
     return false;
   }
+  ygglog_debug << "ZMQReply::send_stage2: Sending acknowledgement of handshake" << std::endl;
   ZMQSocket* sock = &(sockets[0]);
   sock->poll(ZMQ_POLLOUT, timeout);
   if (sock->send(msg_data) < 0) {
@@ -479,8 +480,8 @@ bool ZMQReply::send_stage2(const std::string msg_data) {
   // } else {
   n_rep++;
   // }
-  ygglog_debug << "ZMQReply::send_stage2: address=" << sock->endpoint
-	       << ", end" << std::endl;
+  ygglog_debug << "ZMQReply::send_stage2: Handshake complete (address = "
+	       << sock->endpoint << ")" << std::endl;
   return true;
 }
 
@@ -611,7 +612,8 @@ int ZMQComm::send_single(const char* data, const size_t &len, const Header& head
 bool ZMQComm::do_reply_send(const Header& header) {
   if (header.flags & (HEAD_FLAG_CLIENT_SIGNON | HEAD_FLAG_SERVER_SIGNON))
     return true;
-  return reply.send();
+  bool out = reply.send();
+  return out;
 }
 
 long ZMQComm::recv_single(char*& data, const size_t &len,

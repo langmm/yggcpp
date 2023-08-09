@@ -74,7 +74,7 @@ void IPCComm::init() {
 IPCComm::~IPCComm() {
     ygglog_debug << "~IPCComm: Started" << std::endl;
     if (handle && !global_comm) {
-        if (direction == RECV) {
+        if ((direction == RECV) || (!(flags & COMM_FLAG_INTERFACE))) {
             remove_comm(true);
         } else {
 #ifdef YGG_TEST

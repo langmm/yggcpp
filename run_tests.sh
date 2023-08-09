@@ -3,6 +3,7 @@ set -e
 DO_PYTHON=""
 WITH_ASAN=""
 ASAN_FLAGS=""
+DONT_BUILD=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -12,6 +13,10 @@ while [[ $# -gt 0 ]]; do
 	    ;;
 	--with-asan )
 	    WITH_ASAN="TRUE"
+	    shift # past argument with no value
+	    ;;
+	--dont-build )
+	    DONT_BUILD="TRUE"
 	    shift # past argument with no value
 	    ;;
 	*)
@@ -32,22 +37,24 @@ if [ -z "$DO_PYTHON" ]; then
     make test ARGS="--stop-on-failure"
     cd ../
 else
-    if [ -d "_skbuild" ]; then
-	rm -rf "_skbuild"
+    if [ -n "$DONT_BUILD"]; then
+	if [ -d "_skbuild" ]; then
+	    rm -rf "_skbuild"
+	fi
+	if [ -f "communication/pyYggdrasil/pyYggdrasil.cpython-39-darwin.so" ]; then
+	    rm "communication/pyYggdrasil/pyYggdrasil.cpython-39-darwin.so"
+	fi
+	if [ -f "communication/pyYggdrasil/lib/libYggInterface_py.dylib" ]; then
+	    rm "communication/pyYggdrasil/lib/libYggInterface_py.dylib"
+	fi
+	
+	if [ -n "$WITH_ASAN" ]; then
+	    export ASAN_OPTIONS=symbolize=1
+	    export ASAN_SYMBOLIZER_PATH=$(which llvm-symbolizer)
+	    ASAN_FLAGS="--with-asan"
+	fi
+	python setup.py build_ext --inplace --rj-include-dir=../rapidjson/include/ $ASAN_FLAGS
     fi
-    if [ -f "communication/pyYggdrasil/pyYggdrasil.cpython-39-darwin.so" ]; then
-	rm "communication/pyYggdrasil/pyYggdrasil.cpython-39-darwin.so"
-    fi
-    if [ -f "communication/pyYggdrasil/lib/libYggInterface_py.dylib" ]; then
-	rm "communication/pyYggdrasil/lib/libYggInterface_py.dylib"
-    fi
-
-    if [ -n "$WITH_ASAN" ]; then
-	export ASAN_OPTIONS=symbolize=1
-	export ASAN_SYMBOLIZER_PATH=$(which llvm-symbolizer)
-	ASAN_FLAGS="--with-asan"
-    fi
-    python setup.py build_ext --inplace --rj-include-dir=../rapidjson/include/ $ASAN_FLAGS
     if [ -n "$WITH_ASAN" ]; then
 	export DYLD_INSERT_LIBRARIES=$(clang -print-file-name=libclang_rt.asan_osx_dynamic.dylib)
     fi

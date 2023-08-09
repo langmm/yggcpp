@@ -13,5 +13,5 @@
 * Add RabbitMQ communicator
 * Python Wrappers for:
   * call
-
-  
+* Add test to verify that IPC queues are cleaned up
+* Fix tests so that Ctrl+C interupts threads and communication send/recv calls

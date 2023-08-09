@@ -39,7 +39,7 @@ public:
 		     utils::Address *address = new utils::Address(),
                      const DIRECTION direction = NONE,
 		     int flgs = 0, const COMM_TYPE type = IPC_COMM);
-    ADD_CONSTRUCTORS(IPCComm, IPC_COMM)
+    ADD_CONSTRUCTORS(IPC)
 
 #ifdef IPCINSTALLED
 
