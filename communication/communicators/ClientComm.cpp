@@ -83,6 +83,7 @@ bool ClientComm::signon(const Header& header) {
       }
       break;
     } else {
+      ygglog_debug << "ClientComm(" << name << ")::signon: No response to signon (address = " << requests.activeComm()->address->address() << "), sleeping" << std::endl;
       sleep(YGG_SLEEP_TIME);
     }
   }

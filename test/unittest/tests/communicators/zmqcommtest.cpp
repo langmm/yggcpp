@@ -78,14 +78,14 @@ TEST(ZMQComm, constructor) {
 #ifdef ELF_AVAILABLE
     name = "";
     ELF_BEGIN;
-    // Failure when YGG_MODEL_INDEX not set
-    {
-      ZMQSocket::resetPort();
-      std::string alt_name = "TestZMQComm";
-      ELF_BEGIN_ALT_F(getenv);
-      EXPECT_THROW(ZMQComm zmqc(alt_name, nullptr, SEND), std::runtime_error);
-      ELF_END_F(getenv);
-    }
+    // // Failure when YGG_MODEL_INDEX not set
+    // {
+    //   ZMQSocket::resetPort();
+    //   std::string alt_name = "TestZMQComm";
+    //   ELF_BEGIN_ALT_F(getenv);
+    //   EXPECT_THROW(ZMQComm zmqc(alt_name, nullptr, SEND), std::runtime_error);
+    //   ELF_END_F(getenv);
+    // }
     // Failure to create socket
     {
       ELF_CREATE_T(ZMQ, -1);

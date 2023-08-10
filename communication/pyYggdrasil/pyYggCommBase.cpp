@@ -22,7 +22,6 @@ static PyObject* Comm_t_send_eof(PyObject* self, PyObject* arg);
 static PyObject* Comm_t_call(PyObject* self, PyObject* arg);
 static PyObject* Comm_t_set_timeout_recv(PyObject* self, PyObject* arg);
 static PyObject* Comm_t_wait_for_recv(PyObject* self, PyObject* arg);
-static PyObject* Comm_t_comm_nmsg(PyObject* self, PyObject* arg);
 static PyObject* Comm_t_close(PyObject* self, PyObject* arg);
 // static PyObject* Comm_t_create_worker(PyObject* self, PyObject* arg);
 // static PyObject* Comm_t_send_single(PyObject* self, PyObject* arg);
@@ -43,6 +42,7 @@ static int Comm_t_timeout_recv_set(PyObject* self, PyObject* value, void* closur
 static PyObject* Comm_t_maxMsgSize_get(PyObject* self, void*);
 static PyObject* Comm_t_is_open_get(PyObject* self, void*);
 static PyObject* Comm_t_is_closed_get(PyObject* self, void*);
+static PyObject* Comm_t_n_msg_get(PyObject* self, void*);
 
 static PyObject* commMeta_new(PyTypeObject *type, PyObject* args, PyObject* kwds);
 static void commMeta_dealloc(PyObject* self);
@@ -86,8 +86,10 @@ static PySequenceMethods commMeta_seq {
   NULL, NULL
 };
 
+#ifdef __GNUC__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wcast-function-type"
+#endif
 static PyMethodDef commMeta_methods[] = {
   {"update", (PyCFunction)commMeta_update, METH_VARARGS | METH_KEYWORDS,
    "update([other]) or update(**kwargs):\n"
@@ -98,7 +100,9 @@ static PyMethodDef commMeta_methods[] = {
    " Add an element to the end of the underlying array."},
   {NULL, NULL, 0, ""}  /* Sentinel */
 };
+#ifdef __GNUC__
 #pragma GCC diagnostic pop
+#endif
 
 static PyTypeObject commMetaType = {
         PyVarObject_HEAD_INIT(NULL, 0)
@@ -438,7 +442,6 @@ PyObject* commMeta_richcompare(PyObject *self, PyObject *other, int op) {
 //////////////////////////////////////////////////////////////
 
 static PyMethodDef Comm_t_methods[] = {
-        {"n_msg", (PyCFunction) Comm_t_comm_nmsg, METH_NOARGS, ""},
         {"send", (PyCFunction) Comm_t_send, METH_VARARGS, ""},
         {"close", (PyCFunction) Comm_t_close, METH_NOARGS, ""},
         // {"create_worker", (PyCFunction) Comm_t_create_worker, METH_VARARGS, ""},
@@ -478,6 +481,9 @@ static PyGetSetDef Comm_t_properties[] = {
    "True if the communicator is open, False otherwise.", NULL},
   {"is_closed", Comm_t_is_closed_get, NULL,
    "True if the communicator is closed, False otherwise.", NULL},
+  {"n_msg", Comm_t_n_msg_get, NULL,
+   "Number of messages that available to be received or are in the "
+   "process of being sent.", NULL},
   {NULL, NULL, NULL, NULL, NULL} /* Sentinel */
 };
 
@@ -600,10 +606,6 @@ static PyObject* Comm_t_new(PyTypeObject *type, PyObject* args, PyObject* kwds) 
     self = (pyComm_t*)type->tp_alloc(type, 0);
 
     return (PyObject*)self;
-}
-
-PyObject* Comm_t_comm_nmsg(PyObject* self, PyObject*) {
-  return PyLong_FromLong(((pyComm_t*)self)->comm->comm_nmsg());
 }
 
 PyObject* Comm_t_send(PyObject* self, PyObject* arg) {
@@ -880,6 +882,10 @@ static PyObject* Comm_t_is_closed_get(PyObject* self, void*) {
   }
   Py_RETURN_FALSE;
 }
+static PyObject* Comm_t_n_msg_get(PyObject* self, void*) {
+  return PyLong_FromLong(((pyComm_t*)self)->comm->comm_nmsg());
+}
+
 
 PyDoc_STRVAR(is_comm_installed_docstring,
 	     "is_comm_installed(commtype)\n"
