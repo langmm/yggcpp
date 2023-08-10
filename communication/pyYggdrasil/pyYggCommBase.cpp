@@ -19,6 +19,7 @@ static PyObject* Comm_t_new(PyTypeObject *type, PyObject* args, PyObject* kwds);
 static PyObject* Comm_t_send(PyObject* self, PyObject* arg);
 static PyObject* Comm_t_recv(PyObject* self, PyObject* arg);
 static PyObject* Comm_t_send_eof(PyObject* self);
+static PyObject* Comm_t_call(PyObject* self, PyObject* arg);
 static PyObject* Comm_t_set_timeout_recv(PyObject* self, PyObject* arg);
 static PyObject* Comm_t_wait_for_recv(PyObject* self, PyObject* arg);
 static PyObject* Comm_t_is_open(PyObject* self);
@@ -433,6 +434,7 @@ static PyMethodDef Comm_t_methods[] = {
         // {"recv_single", (PyCFunction) Comm_t_recv_single, METH_VARARGS, ""},
         {"recv", (PyCFunction) Comm_t_recv, METH_VARARGS, ""},
         {"send_eof", (PyCFunction) Comm_t_send_eof, METH_NOARGS, ""},
+	{"call", (PyCFunction) Comm_t_call, METH_VARARGS, ""},
         {"set_timeout_recv", (PyCFunction) Comm_t_set_timeout_recv, METH_VARARGS, ""},
         {"wait_for_recv", (PyCFunction) Comm_t_wait_for_recv, METH_VARARGS, ""},
         {"is_open", (PyCFunction) Comm_t_is_open, METH_NOARGS, ""},
@@ -586,7 +588,6 @@ PyObject* Comm_t_comm_nmsg(PyObject* self) {
 }
 
 PyObject* Comm_t_send(PyObject* self, PyObject* arg) {
-    int out = -1;
     pyComm_t* s = (pyComm_t*)self;
     rapidjson::Document doc;
     if (PyTuple_Size(arg) == 1) {
@@ -598,6 +599,7 @@ PyObject* Comm_t_send(PyObject* self, PyObject* arg) {
     } else {
       doc.SetPythonObjectRaw(arg, doc.GetAllocator());
     }
+    int out = -1;
     Py_BEGIN_ALLOW_THREADS
     out = s->comm->sendVar(doc);
     Py_END_ALLOW_THREADS
@@ -666,6 +668,38 @@ PyObject* Comm_t_str(PyObject* self) {
 
 PyObject* Comm_t_send_eof(PyObject* self) {
   return PyLong_FromLong(((pyComm_t*)self)->comm->send_eof());
+}
+
+static PyObject* Comm_t_call(PyObject* self, PyObject* arg) {
+  pyComm_t* s = (pyComm_t*)self;
+  rapidjson::Document doc_send, doc_recv;
+  if (PyTuple_Size(arg) == 1) {
+    PyObject* arg0 = PyTuple_GetItem(arg, 0);
+    if (arg0 == NULL) {
+      return NULL;
+    }
+    doc_send.SetPythonObjectRaw(arg0, doc_send.GetAllocator());
+  } else {
+    doc_send.SetPythonObjectRaw(arg, doc_send.GetAllocator());
+  }
+  int flag = -1;
+  Py_BEGIN_ALLOW_THREADS
+  flag = s->comm->callVar(doc_send, doc_recv);
+  Py_END_ALLOW_THREADS
+  PyObject* pyFlag;
+  PyObject* res;
+  if (flag < 0) {
+    Py_INCREF(Py_False);
+    pyFlag = Py_False;
+    Py_INCREF(Py_None);
+    res = Py_None;
+  } else {
+    Py_INCREF(Py_True);
+    pyFlag = Py_True;
+    res = doc_recv.GetPythonObjectRaw();
+  }
+  PyObject* out = PyTuple_Pack(2, pyFlag, res);
+  return out;
 }
 
 PyObject* Comm_t_set_timeout_recv(PyObject* self, PyObject* arg) {

@@ -10,7 +10,6 @@ _commtypes = [
 
 
 class TestComm_t_Installed:
-
     r"""Tests for when a commtype is installed."""
 
     @pytest.fixture(scope="class", params=_commtypes)
@@ -107,24 +106,6 @@ class TestComm_t_Installed:
         assert not result_recv_thread[0][0]
         assert result_recv_thread[0][1] is None
 
-    # def test_send_recv(self, comm_send, do_recv):
-    #     msg = "Hello world"
-    #     result_send = False
-    #     result_recv_thread = [None]
-    #     thread = Thread(target=do_recv, daemon=True,
-    #                     args=(10000, result_recv_thread))
-    #     thread.start()
-    #     try:
-    #         result_send = comm_send.send(msg)
-    #         assert result_send
-    #     finally:
-    #         thread.join(timeout=1)
-    #     assert comm_send.datatype['type'] == 'string'
-    #     assert result_send
-    #     assert result_recv_thread[0] is not None
-    #     assert result_recv_thread[0][0]
-    #     assert result_recv_thread[0][1] == msg
-
     def test_send_recv(self, comm_recv, do_send):
         msg = "Hello world"
         result_send_thread = [False]
@@ -144,9 +125,11 @@ class TestComm_t_Installed:
         assert result_recv[0]
         assert result_recv[1] == msg
 
+    def test_call(self, comm_send):
+        assert comm_send.call("Hello") == (False, None)
+
 
 class TestComm_t_NotInstalled:
-
     r"""Tests for when a commtype is not installed."""
 
     @pytest.fixture(scope="class", params=_commtypes)
@@ -164,3 +147,60 @@ class TestComm_t_NotInstalled:
     def test_error_on_create(self, commtype):
         with pytest.raises(TypeError):
             pyYggdrasil.CommBase("test", commtype=commtype)
+
+
+class TestRPC:
+    r"""Tests for RPC client/server connection pattern."""
+
+    @pytest.fixture
+    def server(self):
+        return pyYggdrasil.CommBase(
+            "test", commtype=pyYggdrasil.COMM_TYPE.SERVER_COMM)
+
+    @pytest.fixture
+    def create_comm_partner(self):
+        def create_comm_partner_wrapped(comm):
+            if comm.commtype == pyYggdrasil.COMM_TYPE.SERVER_COMM:
+                partner_commtype = pyYggdrasil.COMM_TYPE.CLIENT_COMM
+            else:
+                partner_commtype = pyYggdrasil.COMM_TYPE.SERVER_COMM
+            return pyYggdrasil.CommBase(
+                "test", comm.address, commtype=partner_commtype,
+                flags=0x00002000)
+        return create_comm_partner_wrapped
+
+    @pytest.fixture
+    def do_call(self, server, create_comm_partner):
+
+        def do_call_wrapped(msg, result_call_thread):
+            client = create_comm_partner(server)
+            client.timeout_recv = 100000
+            result_call_thread[0] = client.call(msg)
+
+        return do_call_wrapped
+
+    def test_call(self, server, do_call):
+        req = "REQUEST"
+        res = "RESPONSE"
+        result_call_thread = [None]
+        result_recv = (False, None)
+        result_send = False
+        thread = Thread(target=do_call, daemon=True,
+                        args=(req, result_call_thread))
+        thread.start()
+        try:
+            server.timeout_recv = 100000
+            # Request
+            result_recv = server.recv()
+            assert result_recv
+            assert result_recv[0]
+            assert result_recv[1] == req
+            # Response
+            result_send = server.send(res)
+            assert result_send
+        finally:
+            thread.join(timeout=1)
+        assert server.datatype['type'] == 'string'
+        assert result_call_thread[0] is not None
+        assert result_call_thread[0][0]
+        assert result_call_thread[0][1] == res

@@ -441,12 +441,24 @@ public:
     int vSend(rapidjson::VarArgList& ap);
 
     /*!
+      @brief Send a request and receive a response in the forms of
+        rapidjson Documents.
+      @param[in] sendData rapidjson document containing the request data.
+      @param[out] recvData rapidjson document that the response data
+        should be stored in.
+      @return Integer specifying if the send and receive were succesful.
+        Values >= 0 indicate success.
+    */
+    long callVar(const rapidjson::Document& sendData,
+		 rapidjson::Document& recvData);
+  
+    /*!
       @brief Send a request and receive a response from a list of
         variable arguments containing data for both the request and
         response.
       @param[in] ap Variable argument list that request will be
         constructed from and response will be receieved into.
-      @return Integer specifying if the receive was succesful.
+      @return Integer specifying if the send and receive were succesful.
         Values >= 0 indicate success.
     */
     virtual long vCall(rapidjson::VarArgList& ap);

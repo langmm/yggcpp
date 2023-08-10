@@ -734,6 +734,18 @@ int Comm_t::vSend(rapidjson::VarArgList& ap) {
   ygglog_debug << "CommBase(" << name << ")::vSend: returns " << ret << std::endl;
   return ret;
 }
+long Comm_t::callVar(const rapidjson::Document& sendData,
+		     rapidjson::Document& recvData) {
+  if (!(flags & COMM_FLAG_CLIENT)) {
+    ygglog_error << "CommBase(" << name << ")::callVar: Communicator is not a client." << std::endl;
+    return -1;
+  }
+  if (sendVar(sendData) < 0) {
+    ygglog_error << "CommBase(" << name << ")::callVar: Error in send." << std::endl;
+    return -1;
+  }
+  return recvVar(recvData);
+}
 long Comm_t::vCall(rapidjson::VarArgList& ap) {
   if (!(flags & COMM_FLAG_CLIENT)) {
     ygglog_error << "CommBase(" << name << ")::vCall: Communicator is not a client." << std::endl;
