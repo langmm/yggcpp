@@ -298,6 +298,25 @@ Comm_t* communication::communicator::new_Comm_t(const DIRECTION dir, const COMM_
   }
   return nullptr;
 }
+bool communication::communicator::is_commtype_installed(const COMM_TYPE type) {
+  switch(type) {
+  case NULL_COMM:
+    break;
+  case DEFAULT_COMM:
+    return COMM_BASE::isInstalled();
+  case IPC_COMM:
+    return IPCComm::isInstalled();
+  case ZMQ_COMM:
+    return ZMQComm::isInstalled();
+  case MPI_COMM:
+    return MPIComm::isInstalled();
+  case SERVER_COMM:
+    return ServerComm::isInstalled();
+  case CLIENT_COMM:
+    return ClientComm::isInstalled();
+  }
+  return false;
+}
 
 bool Comm_t::create_header_send(Header& header, const char* data,
 				const size_t &len) {

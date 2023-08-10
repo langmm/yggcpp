@@ -41,6 +41,8 @@ static struct PyModuleDef_Slot slots[] = {
 };
 
 static PyMethodDef functions[] = {
+  {"is_comm_installed", (PyCFunction) is_comm_installed,
+   METH_VARARGS, is_comm_installed_docstring},
   {NULL, NULL, 0, NULL} /* sentinel */
 };
 

@@ -141,11 +141,11 @@ void IPCComm::add_channel() {
 */
 
 int IPCComm::remove_comm(bool close_comm) {
-    int ret;
+    int ret = 0;
     if (close_comm) {
         msgctl(handle[0], IPC_RMID, nullptr);
     }
-    ret = -1;
+    // ret = -1;
     unsigned i;
     int ich = address->key();
 #ifdef _OPENMP
@@ -161,9 +161,11 @@ int IPCComm::remove_comm(bool close_comm) {
             break;
         }
     }
-    if (ret < 0) {
-        ygglog_error << "remove_comm(" << name << "): Could not locate comm in register." << std::endl;
-    }
+    // This likely occurs when both the send & receive comms are called
+    //   from the same process
+    // if (ret < 0) {
+    //     ygglog_debug << "remove_comm(" << name << "): Could not locate comm in register." << std::endl;
+    // }
 #ifdef _OPENMP
     }
 #endif

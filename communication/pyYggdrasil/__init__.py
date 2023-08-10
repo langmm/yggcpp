@@ -3,4 +3,5 @@ from ._pyYggdrasil import (
     CommMeta,  # noqa: F401
     DIRECTION,  # noqa: F401
     COMM_TYPE,  # noqa: F401
+    is_comm_installed,  # noqa: F401
 )

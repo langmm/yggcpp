@@ -716,6 +716,13 @@ Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string 
 Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, utils::Address* address, int flags=0);
 
 /**
+ * Determine if a communicator type is installed.
+ * @param commtype The communicator type to check.
+ * @return true if the communicator type is installed, false otherwise.
+ */
+bool is_commtype_installed(const COMM_TYPE type);
+
+/**
  * Templated base class for all communicators
  * @tparam H Handle type for the communicator
  */

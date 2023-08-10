@@ -55,6 +55,8 @@ static PyObject* commMeta_update(PyObject* self, PyObject* args, PyObject* kwarg
 static PyObject* commMeta_append(PyObject* self, PyObject* args);
 static PyObject* commMeta_richcompare(PyObject *self, PyObject *other, int op);
 
+static PyObject* is_comm_installed(PyObject* self, PyObject* args);
+
 
 //////////////////////////////////////////////////////////////
 // Wrapper to update communicator metadata
@@ -584,26 +586,34 @@ PyObject* Comm_t_comm_nmsg(PyObject* self) {
 }
 
 PyObject* Comm_t_send(PyObject* self, PyObject* arg) {
+    int out = -1;
     pyComm_t* s = (pyComm_t*)self;
     rapidjson::Document doc;
     if (PyTuple_Size(arg) == 1) {
       PyObject* arg0 = PyTuple_GetItem(arg, 0);
       if (arg0 == NULL) {
-	Py_RETURN_FALSE;
+	return NULL;
       }
       doc.SetPythonObjectRaw(arg0, doc.GetAllocator());
     } else {
       doc.SetPythonObjectRaw(arg, doc.GetAllocator());
     }
-    if (s->comm->sendVar(doc) < 0)
+    Py_BEGIN_ALLOW_THREADS
+    out = s->comm->sendVar(doc);
+    Py_END_ALLOW_THREADS
+    if (out < 0) {
       Py_RETURN_FALSE;
+    }
     Py_RETURN_TRUE;
 }
 
 PyObject* Comm_t_recv(PyObject* self, PyObject*) {
     pyComm_t* s = (pyComm_t*)self;
     rapidjson::Document doc;
-    long flag = s->comm->recvVar(doc);
+    long flag = -1;
+    Py_BEGIN_ALLOW_THREADS
+    flag = s->comm->recvVar(doc);
+    Py_END_ALLOW_THREADS
     PyObject* pyFlag;
     PyObject* res;
     if (flag < 0) {
@@ -616,7 +626,8 @@ PyObject* Comm_t_recv(PyObject* self, PyObject*) {
       pyFlag = Py_True;
       res = doc.GetPythonObjectRaw();
     }
-    return PyTuple_Pack(2, pyFlag, res);
+    PyObject* out = PyTuple_Pack(2, pyFlag, res);
+    return out;
 }
 
 PyObject* Comm_t_close(PyObject* self) {
@@ -675,7 +686,10 @@ PyObject* Comm_t_wait_for_recv(PyObject* self, PyObject* arg) {
         PyErr_SetString(PyExc_TypeError, "Invalid argument given.");
         return NULL;
     }
-    int wt = s->comm->wait_for_recv(tout);
+    int wt = -1;
+    Py_BEGIN_ALLOW_THREADS
+    wt = s->comm->wait_for_recv(tout);
+    Py_END_ALLOW_THREADS
     return PyLong_FromLong(wt);
 }
 
@@ -807,4 +821,24 @@ static int Comm_t_timeout_recv_set(PyObject* self, PyObject* value, void*) {
   pyComm_t* s = (pyComm_t*)self;
   s->comm->set_timeout_recv(PyLong_AsLong(value));
   return 0;
+}
+
+PyDoc_STRVAR(is_comm_installed_docstring,
+	     "is_comm_installed(commtype)\n"
+	     "\n"
+	     "Check if a communicator type is installed.");
+
+static PyObject* is_comm_installed(PyObject*, PyObject* args) {
+  int commtype = 0;
+  if (!PyArg_ParseTuple(args, "i", &commtype)) {
+    return NULL;
+  }
+  if(commtype < 0 || commtype > COMM_TYPE::MPI_COMM) {
+    PyErr_SetString(PyExc_TypeError, "Invalid commtype");
+    return NULL;
+  }
+  if (communication::communicator::is_commtype_installed((COMM_TYPE)commtype)) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
 }

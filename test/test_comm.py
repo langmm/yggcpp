@@ -2,19 +2,25 @@ import pytest
 import pyYggdrasil
 from threading import Thread
 
+_commtypes = [
+    pyYggdrasil.COMM_TYPE.IPC_COMM,
+    pyYggdrasil.COMM_TYPE.ZMQ_COMM,
+    pyYggdrasil.COMM_TYPE.MPI_COMM,
+]
 
-# TODO: Parameterize for IPC, ZMQ, MPI
 
-class TestComm_t:
+class TestComm_t_Installed:
 
-    @pytest.fixture(scope="class")
-    def commtype(self):
-        return pyYggdrasil.COMM_TYPE.IPC_COMM
+    r"""Tests for when a commtype is installed."""
 
-    @pytest.fixture(autouse=True)
-    def require_installed(commtype):
-        # TODO: Add Python method for checking if a comm is installed
-        pass
+    @pytest.fixture(scope="class", params=_commtypes)
+    def commtype(self, request):
+        return request.param
+
+    @pytest.fixture(scope="class", autouse=True)
+    def require_installed(self, commtype):
+        if not pyYggdrasil.is_comm_installed(commtype):
+            pytest.skip(f"Communicator type {commtype} is not installed")
 
     @pytest.fixture
     def comm_send(self, commtype, require_installed):
@@ -60,6 +66,9 @@ class TestComm_t:
 
         return do_send_wrapped
 
+    def test_is_comm_installed(self, commtype):
+        assert pyYggdrasil.is_comm_installed(commtype)
+
     def test_str(self, comm_send):
         print(str(comm_send))
         print(repr(comm_send))
@@ -90,7 +99,7 @@ class TestComm_t:
 
     def test_send_recv_error(self, do_recv):
         result_recv_thread = [None]
-        thread = Thread(target=do_recv,
+        thread = Thread(target=do_recv, daemon=True,
                         args=(100, result_recv_thread))
         thread.start()
         thread.join(1)
@@ -102,7 +111,7 @@ class TestComm_t:
     #     msg = "Hello world"
     #     result_send = False
     #     result_recv_thread = [None]
-    #     thread = Thread(target=do_recv,
+    #     thread = Thread(target=do_recv, daemon=True,
     #                     args=(10000, result_recv_thread))
     #     thread.start()
     #     try:
@@ -120,11 +129,11 @@ class TestComm_t:
         msg = "Hello world"
         result_send_thread = [False]
         result_recv = (False, None)
-        thread = Thread(target=do_send,
+        thread = Thread(target=do_send, daemon=True,
                         args=(msg, result_send_thread))
         thread.start()
         try:
-            comm_recv.timeout_recv = 10000
+            comm_recv.timeout_recv = 100000
             result_recv = comm_recv.recv()
             assert result_recv
         finally:
@@ -134,3 +143,24 @@ class TestComm_t:
         assert result_send_thread[0]
         assert result_recv[0]
         assert result_recv[1] == msg
+
+
+class TestComm_t_NotInstalled:
+
+    r"""Tests for when a commtype is not installed."""
+
+    @pytest.fixture(scope="class", params=_commtypes)
+    def commtype(self, request):
+        return request.param
+
+    @pytest.fixture(autouse=True)
+    def require_not_installed(self, commtype):
+        if pyYggdrasil.is_comm_installed(commtype):
+            pytest.skip(f"Communicator type {commtype} is installed")
+
+    def test_is_comm_installed(self, commtype):
+        assert not pyYggdrasil.is_comm_installed(commtype)
+
+    def test_error_on_create(self, commtype):
+        with pytest.raises(TypeError):
+            pyYggdrasil.CommBase("test", commtype=commtype)
