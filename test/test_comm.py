@@ -41,7 +41,7 @@ class TestComm_t_Installed:
                 partner_dir = pyYggdrasil.DIRECTION.RECV
             return pyYggdrasil.CommBase(
                 "test", comm.address, partner_dir, commtype=comm.commtype,
-                flags=0x00002000)
+                flags=0x00004000)
         return create_comm_partner_wrapped
 
     @pytest.fixture
@@ -64,6 +64,29 @@ class TestComm_t_Installed:
             result_send_thread[0] = comm_send.send(msg)
 
         return do_send_wrapped
+
+    @pytest.fixture
+    def do_send_recv(self, comm_recv, do_send):
+
+        def do_send_recv_wrapped(msg):
+            result_send_thread = [False]
+            result_recv = (False, None)
+            thread = Thread(target=do_send, daemon=True,
+                            args=(msg, result_send_thread))
+            thread.start()
+            try:
+                comm_recv.timeout_recv = 100000
+                result_recv = comm_recv.recv()
+                assert result_recv
+            finally:
+                thread.join(timeout=1)
+            assert comm_recv.datatype['type'] == 'string'
+            assert result_send_thread[0] is not None
+            assert result_send_thread[0]
+            assert result_recv[0]
+            assert result_recv[1] == msg
+
+        return do_send_recv_wrapped
 
     def test_is_comm_installed(self, commtype):
         assert pyYggdrasil.is_comm_installed(commtype)
@@ -106,24 +129,13 @@ class TestComm_t_Installed:
         assert not result_recv_thread[0][0]
         assert result_recv_thread[0][1] is None
 
-    def test_send_recv(self, comm_recv, do_send):
-        msg = "Hello world"
-        result_send_thread = [False]
-        result_recv = (False, None)
-        thread = Thread(target=do_send, daemon=True,
-                        args=(msg, result_send_thread))
-        thread.start()
-        try:
-            comm_recv.timeout_recv = 100000
-            result_recv = comm_recv.recv()
-            assert result_recv
-        finally:
-            thread.join(timeout=1)
-        assert comm_recv.datatype['type'] == 'string'
-        assert result_send_thread[0] is not None
-        assert result_send_thread[0]
-        assert result_recv[0]
-        assert result_recv[1] == msg
+    def test_send_recv(self, do_send_recv):
+        do_send_recv("Hello world")
+
+    def test_send_recv_long(self, comm_recv, do_send_recv):
+        if comm_recv.maxMsgSize == 0:
+            pytest.skip("Communicator does not have a maxMsgSize")
+        do_send_recv("Hello world" + comm_recv.maxMsgSize * "0")
 
     def test_call(self, comm_send):
         assert comm_send.call("Hello") == (False, None)
@@ -155,18 +167,20 @@ class TestRPC:
     @pytest.fixture
     def server(self):
         return pyYggdrasil.CommBase(
-            "test", commtype=pyYggdrasil.COMM_TYPE.SERVER_COMM)
+            "test_server", commtype=pyYggdrasil.COMM_TYPE.SERVER_COMM)
 
     @pytest.fixture
     def create_comm_partner(self):
         def create_comm_partner_wrapped(comm):
             if comm.commtype == pyYggdrasil.COMM_TYPE.SERVER_COMM:
+                partner_name = "client"
                 partner_commtype = pyYggdrasil.COMM_TYPE.CLIENT_COMM
             else:
+                partner_name = "server"
                 partner_commtype = pyYggdrasil.COMM_TYPE.SERVER_COMM
             return pyYggdrasil.CommBase(
-                "test", comm.address, commtype=partner_commtype,
-                flags=0x00002000)
+                "test_" + partner_name, comm.address,
+                commtype=partner_commtype, flags=0x00002000)
         return create_comm_partner_wrapped
 
     @pytest.fixture
@@ -179,28 +193,40 @@ class TestRPC:
 
         return do_call_wrapped
 
-    def test_call(self, server, do_call):
-        req = "REQUEST"
-        res = "RESPONSE"
-        result_call_thread = [None]
-        result_recv = (False, None)
-        result_send = False
-        thread = Thread(target=do_call, daemon=True,
-                        args=(req, result_call_thread))
-        thread.start()
-        try:
-            server.timeout_recv = 100000
-            # Request
-            result_recv = server.recv()
-            assert result_recv
-            assert result_recv[0]
-            assert result_recv[1] == req
-            # Response
-            result_send = server.send(res)
-            assert result_send
-        finally:
-            thread.join(timeout=1)
-        assert server.datatype['type'] == 'string'
-        assert result_call_thread[0] is not None
-        assert result_call_thread[0][0]
-        assert result_call_thread[0][1] == res
+    @pytest.fixture
+    def do_rpc(self, server, do_call):
+
+        def do_rpc_wrapped(req, res):
+            result_call_thread = [None]
+            result_recv = (False, None)
+            result_send = False
+            thread = Thread(target=do_call, daemon=True,
+                            args=(req, result_call_thread))
+            thread.start()
+            try:
+                server.timeout_recv = 100000
+                # Request
+                result_recv = server.recv()
+                assert result_recv
+                assert result_recv[0]
+                assert result_recv[1] == req
+                # Response
+                result_send = server.send(res)
+                assert result_send
+            finally:
+                thread.join(timeout=1)
+            assert server.datatype['type'] == 'string'
+            assert result_call_thread[0] is not None
+            assert result_call_thread[0][0]
+            assert result_call_thread[0][1] == res
+
+        return do_rpc_wrapped
+
+    def test_call(self, do_rpc):
+        do_rpc("REQUEST", "RESPONSE")
+
+    def test_call_long(self, server, do_rpc):
+        if server.maxMsgSize == 0:
+            pytest.skip("Communicator does not have a maxMsgSize")
+        do_rpc("REQUEST" + server.maxMsgSize * "0",
+               "RESPONSE" + server.maxMsgSize * "0")

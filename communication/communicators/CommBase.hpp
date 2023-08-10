@@ -23,11 +23,12 @@ enum CommFlags {
     COMM_FLAG_SERVER_RESPONSE = 0x00000080, //!< Set if the comm is a server response comm
     COMM_ALWAYS_SEND_HEADER   = 0x00000100, //!< Set if the comm should always include a header in messages
     COMM_ALLOW_MULTIPLE_COMMS = 0x00000200, //!< Set if the comm should connect in a way that allow multiple connections
-    COMM_FLAGS_USED = 0x00000400,  //!< Set if the comm has been used
-    COMM_EOF_SENT   = 0x00000800,  //!< Set if EOF has been sent
-    COMM_EOF_RECV   = 0x00001000,  //!< Set if EOF has been received
-    COMM_FLAG_INTERFACE = 0x00002000,       //!< Set if communicator is an interface communicator
-    COMM_FLAG_DELETE    = 0x00004000        //!< Set if the communicator needs to be deleted
+    COMM_FLAGS_USED_SENT = 0x00000400,  //!< Set if the comm has been used
+    COMM_FLAGS_USED_RECV = 0x00000800,  //!< Set if the comm has been used
+    COMM_EOF_SENT   = 0x00001000,  //!< Set if EOF has been sent
+    COMM_EOF_RECV   = 0x00002000,  //!< Set if EOF has been received
+    COMM_FLAG_INTERFACE = 0x00004000,       //!< Set if communicator is an interface communicator
+    COMM_FLAG_DELETE    = 0x00008000        //!< Set if the communicator needs to be deleted
 };
 
 /*! @brief Set if the comm is the receiving comm for a client/server request connection */
@@ -529,7 +530,12 @@ public:
       @returns Communicator type.
      */
     COMM_TYPE getCommType() const { return type; }
-
+    /*!
+      @brief Get the maximum size (in bytes) for individual messages.
+        Messages larger than this size will be split into multiple parts.
+      @returns Maximum message size.
+    */
+    size_t getMaxMsgSize() const { return maxMsgSize; }
     /*!
       @brief Determine if the communicator is fully installed.
       @returns true if it is installed, false otherwise.
@@ -539,7 +545,6 @@ public:
 #ifdef YGG_TEST
     WorkerList& getWorkers() { return workers; }
     virtual bool afterSendRecv(Comm_t*, Comm_t*) { return true; }
-    size_t getMaxMsgSize() const { return maxMsgSize; }
     Comm_t* getGlobalComm() { return global_comm; }
 #endif
     void addSchema(const utils::Metadata& s);
@@ -575,7 +580,10 @@ protected:
     }
 
     void setFlags(const utils::Header& head, DIRECTION dir) {
-      flags |= COMM_FLAGS_USED;
+      if (dir == SEND)
+	flags |= COMM_FLAGS_USED_SENT;
+      else
+	flags |= COMM_FLAGS_USED_RECV;
       if (head.flags & HEAD_FLAG_EOF) {
 	if (dir == SEND)
 	  flags |= COMM_EOF_SENT;

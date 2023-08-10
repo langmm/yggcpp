@@ -222,6 +222,7 @@ jobs:
         shell: bash -l {0}
         run: |
           echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} \"-DCMAKE_PREFIX_PATH=${VCPKG_INSTALLATION_ROOT}\installed\x64-windows\"" >> "$GITHUB_ENV"
+          echo "PYTHON_CONFIG_FLAGS=${{ env.PYTHON_CONFIG_FLAGS }} \"-DCMAKE_PREFIX_PATH=${VCPKG_INSTALLATION_ROOT}\installed\x64-windows\"" >> "$GITHUB_ENV"
           # echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} \"-DPython3_EXECUTABLE=${{ env.pythonLocation }}\python.exe\" \"-DCMAKE_PREFIX_PATH=${VCPKG_INSTALLATION_ROOT}\installed\x64-windows\"" >> "$GITHUB_ENV"
      
       ###################################
@@ -297,11 +298,11 @@ jobs:
         if: matrix.python-install == 'conda'
         shell: bash -l {0}
         run: |
-          pip install . -v
+          pip install . -v ${{ env.PYTHON_CONFIG_FLAGS }}
       - name: Build Python (PIP)
         if: matrix.python-install == 'pip'
         run: |
-          pip install . -v
+          pip install . -v ${{ env.PYTHON_CONFIG_FLAGS }}
 
       ###################################
       # Test CPP & C

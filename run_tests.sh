@@ -60,7 +60,7 @@ else
     fi
     cd communication/pyYggdrasil
     export PYTHONFAULTHANDLER=1
-    python -m pytest -sv ../../test/
+    python -m pytest -svx ../../test/
     # Copy test commands to test/script.py
     # cp ../../test/script.py ./
     # lldb python script.py  # r to run

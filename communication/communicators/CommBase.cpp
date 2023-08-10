@@ -93,9 +93,12 @@ void Comm_t::_ygg_cleanup() {
     }
   }
 #ifndef YGG_TEST
+#ifndef RAPIDJSON_YGGDRASIL_PYTHON
   if (utils::YggdrasilLogger::_ygg_error_flag) {
+    ygglog_debug << "_ygg_cleanup: Error code set" << std::endl;
     _exit(utils::YggdrasilLogger::_ygg_error_flag);
   }
+#endif // RAPIDJSON_YGGDRASIL_PYTHON
 #endif // YGG_TEST
 }
 
@@ -364,10 +367,10 @@ int Comm_t::send(const char *data, const size_t &len) {
   Header head;
   head.setMessageFlags(data, len);
   int no_type = ((head.flags & HEAD_FLAG_EOF) ||
-		 (flags & COMM_FLAGS_USED));
+		 (flags & COMM_FLAGS_USED_SENT));
   if ((size_max == 0 || len <= size_max) &&
       (!(flags & COMM_ALWAYS_SEND_HEADER)) && no_type) {
-    ygglog_debug << "CommBase(" << name << ")::send: Sending data in single message. " << is_eof(data) << ", " << (flags & COMM_FLAGS_USED) << std::endl;
+    ygglog_debug << "CommBase(" << name << ")::send: Sending data in single message. " << is_eof(data) << ", " << (flags & COMM_FLAGS_USED_SENT) << std::endl;
     int out = send_single(data, len, head);
     if (out >= 0)
       setFlags(head, SEND);

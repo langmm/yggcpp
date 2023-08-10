@@ -69,15 +69,14 @@ void IPCComm::init() {
 IPCComm::~IPCComm() {
     ygglog_debug << "~IPCComm: Started" << std::endl;
     if (handle && !global_comm) {
-        if ((direction == RECV) || (!(flags & COMM_FLAG_INTERFACE))) {
-            remove_comm(true);
-        } else {
 #ifdef YGG_TEST
-            remove_comm(true);
-#else // YGG_TEST
-            remove_comm(false);
-#endif // YGG_TEST
-        }
+      bool close_comm = true;
+#else
+      bool close_comm = ((direction == RECV) ||
+			 (!(flags & (COMM_FLAG_INTERFACE |
+				     COMM_FLAG_WORKER))));
+#endif
+      remove_comm(close_comm);
     }
     ygglog_debug << "~IPCComm: Finished" << std::endl;
 }
@@ -128,6 +127,7 @@ void IPCComm::add_channel() {
 int IPCComm::remove_comm(bool close_comm) {
     int ret = 0;
     if (close_comm) {
+        ygglog_debug << "IPCComm(" << name << ")::Closing queue: " << handle[0] << std::endl;
         msgctl(handle[0], IPC_RMID, nullptr);
     }
     // ret = -1;
