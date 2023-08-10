@@ -41,20 +41,15 @@ int ClientComm::wait_for_recv(const int&) {
 }
 
 void ClientComm::init() {
-#ifdef _OPENMP
-#pragma omp critical (client)
-    {
-#endif
-        if (!(_client_rand_seeded)) {
-            srand(ptr2seed(this));
-            _client_rand_seeded = 1;
-        }
-#ifdef _OPENMP
+  YGG_THREAD_SAFE_BEGIN(client) {
+    if (!(_client_rand_seeded)) {
+      srand(ptr2seed(this));
+      _client_rand_seeded = 1;
     }
-#endif
-    if (name.empty()) {
-        this->name = "client_request." + this->address->address();
-    }
+  }
+  if (name.empty()) {
+    this->name = "client_request." + this->address->address();
+  }
 }
 
 bool ClientComm::signon(const Header& header) {

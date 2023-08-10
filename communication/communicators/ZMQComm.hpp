@@ -14,20 +14,10 @@ class ZMQSocket_tester;
 }
 #endif
 namespace communicator {
-//class ClientComm;
-/* extern double _wait_send_t; */
-#if defined(_MSC_VER) && defined(_OPENMP)
-extern __declspec(thread) char _reply_msg[100];
-extern __declspec(thread) char _purge_msg[100];
-extern __declspec(thread) int _zmq_sleeptime;
-#else // _MSC_VER
-extern char _reply_msg[100];
-extern char _purge_msg[100];
-extern int _zmq_sleeptime;
-#ifdef _OPENMP
-#pragma omp threadprivate(_reply_msg, _purge_msg, _zmq_sleeptime)
-#endif
-#endif // _MSC_VER
+  
+YGG_THREAD_GLOBAL_VAR(char, _reply_msg, [100])
+YGG_THREAD_GLOBAL_VAR(char, _purge_msg, [100])
+YGG_THREAD_GLOBAL_VAR(int, _zmq_sleeptime, )
 
 class ZMQContext {
 public:

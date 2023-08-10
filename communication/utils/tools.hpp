@@ -12,7 +12,6 @@
 #endif
 
 #ifdef _OPENMP
-
 #include <omp.h>
 #endif
 
@@ -247,6 +246,7 @@ namespace utils {
 #define COUNT_VARARGS(...) _GET_NTH_ARG("ignored", ##__VA_ARGS__, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0)
 #endif
 #define UNUSED(arg) ((void)&(arg))
+#define STRINGIFY(x) #x
 
 /*! @brief Memory to allow thread association to be set via macro. */
 static int global_thread_id = -1;
@@ -254,6 +254,31 @@ static int global_thread_id = -1;
 #ifdef _OPENMP
 #pragma omp threadprivate(global_thread_id)
 #endif
+
+/*! @brief Macro to define global vars to be used across thread */
+#if defined(_MSC_VER) && defined(_OPENMP)
+#define YGG_THREAD_GLOBAL_VAR(T, name, args) \
+  extern __declspec(thread) T name args;
+#else // _MSC_VER
+#ifdef _OPENMP
+#define YGG_THREAD_GLOBAL_VAR(T, name, args) \
+  extern T name args;			     \
+  _Pragma(STRINGIFY(omp threadprivate(name)))
+#else // _OPENMP
+#define YGG_THREAD_GLOBAL_VAR(T, name, args) \
+  extern T name args;
+#endif // _OPENMP
+#endif // _MSC_VER
+
+/*! @brief Macro to open section that should be synchronized across
+  threads, typically where thread global variables are acessed. */
+#ifdef _OPENMP
+#define YGG_THREADING_ACTIVE 1
+#define YGG_THREAD_SAFE_BEGIN(name)		\
+  _Pragma(STRINGIFY(omp critical (name)))
+#else // _OPENMP
+#define YGG_THREAD_SAFE_BEGIN(name)
+#endif // _OPENMP
 
 /*!
   @brief Get an unsigned long seed from the least significant 32bits of a pointer.
@@ -283,6 +308,9 @@ int get_thread_id() {
 /*   // TODO: Finalize/test support for pthread */
 /*   out = pthread_self(); */
 #endif
+#ifdef RAPIDJSON_YGGDRASIL_PYTHON
+    // TODO: Check for Python thread
+#endif // RAPIDJSON_YGGDRASIL_PYTHON
     return out;
 }
 

@@ -26,17 +26,12 @@ void IPCComm::init() {
     int key = 0;
     bool created = ((!address) || address->address().empty());
     if (created) {
-#ifdef _OPENMP
-#pragma omp critical (ipc)
-      {
-#endif
+      YGG_THREAD_SAFE_BEGIN(ipc) {
 	if (!_ipc_rand_seeded) {
 	  std::srand(ptr2seed(this));
 	  _ipc_rand_seeded = true;
 	}
-#ifdef _OPENMP
       }
-#endif
       while (key == 0 || check_key(key) < 0) {
         key = std::rand();
       }
@@ -95,10 +90,7 @@ int IPCComm::check_key(int key) {
     // Fail if trying to re-use the same channel twice
     unsigned i;
     int error_code = 0;
-#ifdef _OPENMP
-#pragma omp critical (ipc)
-  {
-#endif
+    YGG_THREAD_SAFE_BEGIN(ipc) {
     for (i = 0; i < _yggChannelsUsed; i++ ) {
         if (IPCComm::_yggChannelNames[i] == key) {
 	    error_code = -static_cast<int>(i);
@@ -107,10 +99,8 @@ int IPCComm::check_key(int key) {
     }
     // Fail if > _yggTrackChannels channels used
 
-#ifdef _OPENMP
     }
-#endif
-  return error_code;
+    return error_code;
 }
 
 /*!
@@ -118,18 +108,13 @@ int IPCComm::check_key(int key) {
 */
 
 void IPCComm::add_channel() {
-#ifdef _OPENMP
-#pragma omp critical (ipc)
-  {
-#endif
+  YGG_THREAD_SAFE_BEGIN(ipc) {
   // printf("add_channel(%s): %d, %s\n", comm->name, _yggChannelsUsed, comm->address);
-        if (IPCComm::_yggChannelsUsed++ >= _yggTrackChannels) {
-	    ygglog_error << "Too many channels in use, max: " << _yggTrackChannels << std::endl;
-        }
+    if (IPCComm::_yggChannelsUsed++ >= _yggTrackChannels) {
+      ygglog_error << "Too many channels in use, max: " << _yggTrackChannels << std::endl;
+    }
     IPCComm::_yggChannelNames[IPCComm::_yggChannelsUsed] = address->key();
-#ifdef _OPENMP
   }
-#endif
 }
 
 /*!
@@ -148,27 +133,22 @@ int IPCComm::remove_comm(bool close_comm) {
     // ret = -1;
     unsigned i;
     int ich = address->key();
-#ifdef _OPENMP
-#pragma omp critical (ipc)
-  {
-#endif
-    for (i = 0; i < IPCComm::_yggChannelsUsed; i++) {
+    YGG_THREAD_SAFE_BEGIN(ipc) {
+      for (i = 0; i < IPCComm::_yggChannelsUsed; i++) {
         if (ich == IPCComm::_yggChannelNames[i]) {
-            memmove(IPCComm::_yggChannelNames + i, IPCComm::_yggChannelNames + i + 1,
-                    (_yggTrackChannels - (i + 1))*sizeof(int));
-            IPCComm::_yggChannelsUsed--;
-            ret = 0;
-            break;
+	  memmove(IPCComm::_yggChannelNames + i, IPCComm::_yggChannelNames + i + 1,
+		  (_yggTrackChannels - (i + 1))*sizeof(int));
+	  IPCComm::_yggChannelsUsed--;
+	  ret = 0;
+	  break;
         }
+      }
+      // This likely occurs when both the send & receive comms are called
+      //   from the same process
+      // if (ret < 0) {
+      //     ygglog_debug << "remove_comm(" << name << "): Could not locate comm in register." << std::endl;
+      // }
     }
-    // This likely occurs when both the send & receive comms are called
-    //   from the same process
-    // if (ret < 0) {
-    //     ygglog_debug << "remove_comm(" << name << "): Could not locate comm in register." << std::endl;
-    // }
-#ifdef _OPENMP
-    }
-#endif
     return ret;
 }
 

@@ -23,10 +23,7 @@ void communication::communicator::global_scope_comm_off() {
 }
 
 void Comm_t::_ygg_init() {
-#ifdef _OPENMP
-#pragma omp critical (init)
-  {
-#endif
+  YGG_THREAD_SAFE_BEGIN(init) {
     if (!Comm_t::_ygg_initialized) {
       ygglog_debug << "_ygg_init: Begin initialization" << std::endl;
 #if defined(ZMQINSTALLED)
@@ -40,9 +37,7 @@ void Comm_t::_ygg_init() {
       std::atexit(_cleanup_wrapper);
       Comm_t::_ygg_initialized = 1;
     }
-#ifdef _OPENMP
   }
-#endif
 }
 
 long Comm_t::copyData(char*& dst, const size_t dst_len,
@@ -71,10 +66,7 @@ long Comm_t::copyData(char*& dst, const size_t dst_len,
 }
 
 void Comm_t::_ygg_cleanup() {
-#ifdef _OPENMP
-#pragma omp critical (clean)
-  {
-#endif
+  YGG_THREAD_SAFE_BEGIN(clean) {
     if (!Comm_t::_ygg_finalized) {
       ygglog_debug << "_ygg_cleanup: Begin cleanup of " << Comm_t::registry.size() << " communicators" << std::endl;
       for (size_t i = 0; i < Comm_t::registry.size(); i++) {
@@ -84,10 +76,7 @@ void Comm_t::_ygg_cleanup() {
 	  }
 	}
       }
-#ifdef _OPENMP
-#pragma omp critical (comms)
-      {
-#endif
+      YGG_THREAD_SAFE_BEGIN(comms) {
 	Comm_t::registry.clear();
 #if defined(ZMQINSTALLED)
 	// This hangs if there are ZMQ sockets that didn't get cleaned up
@@ -96,17 +85,13 @@ void Comm_t::_ygg_cleanup() {
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
 	rapidjson::finalize_python("_ygg_cleanup");
 #endif // YGGDRASIL_DISABLE_PYTHON_C_API
-#ifdef _OPENMP
       }
-#endif
 #ifndef YGG_TEST
       Comm_t::_ygg_finalized = 1;
 #endif // YGG_TEST
       ygglog_debug << "_ygg_cleanup: Cleanup complete" << std::endl;
     }
-#ifdef _OPENMP
   }
-#endif
 #ifndef YGG_TEST
   if (utils::YggdrasilLogger::_ygg_error_flag) {
     _exit(utils::YggdrasilLogger::_ygg_error_flag);
@@ -161,19 +146,14 @@ Comm_t::Comm_t(const std::string &nme, utils::Address *addr,
 }
 
 Comm_t::~Comm_t() {
-#ifdef _OPENMP
-#pragma omp critical (comms)
-  {
-#endif
+  YGG_THREAD_SAFE_BEGIN(comms) {
     if (index_in_register >= 0)
       Comm_t::registry[index_in_register] = NULL;
-#ifdef _OPENMP
   }
-#endif
-    ygglog_debug << "~Comm_t: Started" << std::endl;
-    if (address)
-        delete address;
-    ygglog_debug << "~Comm_t: Finished" << std::endl;
+  ygglog_debug << "~Comm_t: Started" << std::endl;
+  if (address)
+    delete address;
+  ygglog_debug << "~Comm_t: Finished" << std::endl;
 }
 
 bool Comm_t::get_global_scope_comm() {
@@ -788,16 +768,10 @@ long Comm_t::vCall(rapidjson::VarArgList& ap) {
 std::vector<Comm_t*> Comm_t::registry;
 
 void Comm_t::register_comm(Comm_t* x) {
-  // TODO: init python, numpy, zmq
-#ifdef _OPENMP
-#pragma omp critical (comms)
-  {
-#endif
-  x->index_in_register = Comm_t::registry.size();
-  Comm_t::registry.push_back(x);
-#ifdef _OPENMP
+  YGG_THREAD_SAFE_BEGIN(comms) {
+    x->index_in_register = Comm_t::registry.size();
+    Comm_t::registry.push_back(x);
   }
-#endif
 }
 
 Comm_t* Comm_t::find_registered_comm(const std::string& name,
@@ -805,10 +779,7 @@ Comm_t* Comm_t::find_registered_comm(const std::string& name,
 				     const COMM_TYPE type) {
   Comm_t* out = NULL;
   assert(!name.empty());
-#ifdef _OPENMP
-#pragma omp critical (comms)
-  {
-#endif
+  YGG_THREAD_SAFE_BEGIN(comms) {
     if (global_scope_comm) {
       for (std::vector<Comm_t*>::iterator it = Comm_t::registry.begin();
 	   it != Comm_t::registry.end(); it++) {
@@ -821,8 +792,6 @@ Comm_t* Comm_t::find_registered_comm(const std::string& name,
 	}
       }
     }
-#ifdef _OPENMP
   }
-#endif
   return out;
 }

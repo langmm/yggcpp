@@ -106,22 +106,13 @@ const int COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
     return NULL;						\
   }
 
-
-
 using namespace rapidjson;
 
 namespace communication {
 
 namespace communicator {
 
-#if defined(_MSC_VER) && defined(_OPENMP)
-extern __declspec(thread) int global_scope_comm;
-#else // _MSC_VER
-extern int global_scope_comm;
-#ifdef _OPENMP
-#pragma omp threadprivate(global_scope_comm)
-#endif
-#endif // _MSC_VER
+YGG_THREAD_GLOBAL_VAR(int, global_scope_comm, )
 
 void global_scope_comm_on();
 void global_scope_comm_off();

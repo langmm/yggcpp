@@ -31,15 +31,11 @@ ZMQContext::ZMQContext() : ctx(NULL) { init(); }
 
 #ifdef ZMQINSTALLED
 void ZMQContext::init() {
-#ifdef _OPENMP
-#pragma omp critical (zmq)
-  {
+  YGG_THREAD_SAFE_BEGIN(zmq) {
     if (ZMQContext::ygg_s_process_ctx == NULL) {
       if (get_thread_id() == 0) {
 	ygglog_debug << "ZMQContext::init: Creating ZMQ context." << std::endl;
-#endif // _OPENMP
 	ctx = zmq_ctx_new();
-#ifdef _OPENMP
       } else {
 	ygglog_throw_error("ZMQContext::init: Can only initialize the "
 			   "zeromq context on the main thread. Call "
@@ -51,26 +47,20 @@ void ZMQContext::init() {
       ctx = ZMQContext::ygg_s_process_ctx;
     }
   }
-#endif // _OPENMP
   if (ctx == NULL) {
     ygglog_throw_error("ZMQContext::init: ZMQ context is NULL.");
   }
 }
 
 void ZMQContext::destroy() {
-#ifdef _OPENMP
-#pragma omp critical (zmq)
-  {
-#endif // _OPENMP
+  YGG_THREAD_SAFE_BEGIN(zmq) {
     if (ZMQContext::ygg_s_process_ctx != NULL) {
       if (zmq_ctx_term(ZMQContext::ygg_s_process_ctx) != 0) {
 	ygglog_error << "ZMQContext::destroy: Error terminating context with zmq_ctx_term" << std::endl;
       }
       ZMQContext::ygg_s_process_ctx = NULL;
     }
-#ifdef _OPENMP
   }
-#endif // _OPENMP
 }
 #endif // ZMQINSTALLED
 
@@ -116,10 +106,7 @@ void ZMQSocket::init(int type0, utils::Address* address,
 		     int linger, int immediate, int sndtimeo) {
   type = type0;
   std::string except_msg;
-#ifdef _OPENMP
-#pragma omp critical (zmq)
-  {
-#endif // _OPENMP
+  YGG_THREAD_SAFE_BEGIN(zmq) {
     handle = zmq_socket (ctx.ctx, type);
     if (handle == NULL) {
       except_msg = "ZMQSocket::init: Error creating new socket.";
@@ -134,9 +121,7 @@ void ZMQSocket::init(int type0, utils::Address* address,
       DO_SET(ZMQ_SNDTIMEO, sndtimeo, -1);
 #undef DO_SET
     }
-#ifdef _OPENMP
   }
-#endif // _OPENMP
   if (!except_msg.empty()) {
     destroy();
     throw std::runtime_error(except_msg);
@@ -154,10 +139,7 @@ void ZMQSocket::init(int type0, utils::Address* address,
     if (host == "localhost")
       host = "127.0.0.1";
     std::string address;
-#ifdef _OPENMP
-#pragma omp critical (zmqport)
-    {
-#endif
+    YGG_THREAD_SAFE_BEGIN(zmqport) {
       if (_last_port_set == 0) {
 	const char *model_index = getenv("YGG_MODEL_INDEX");
 	if (model_index == NULL) {
@@ -210,9 +192,7 @@ void ZMQSocket::init(int type0, utils::Address* address,
 	  }
 	}
       }
-#ifdef _OPENMP
     }
-#endif
     if (!except_msg.empty()) {
       destroy();
       throw std::runtime_error(except_msg);
