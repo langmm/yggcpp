@@ -4,12 +4,9 @@
 * Automated documentation using doxygen
 * Fill in missing docs
 * Fix handling of multiple connections in ZMQ socket (restricted to ZMQ_PAIR to simplify testing)
-* Use rapidjson allocator to malloc/realloc returned data so that data is cleaned up on exit
 * Add async communicator
 * Add Fortran interface
 * Add RabbitMQ communicator
-* Add test to verify that IPC queues are cleaned up
+* Add test fixture to verify that IPC queues are cleaned up
 * Make sure send/recv/call/wait can be interuppted by Ctrl+C
-* Make is_open & is_closed properties for backwards compat
-* Add enum for communicator flags
 * Allow for string direction/commtype for backwards compat

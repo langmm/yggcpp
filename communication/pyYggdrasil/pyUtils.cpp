@@ -90,6 +90,7 @@
 
 static PyObject* COMMTYPE;
 static PyObject* DIRECTION_TYPE;
+static PyObject* FLAG_TYPE;
 
 static void register_enums(PyObject* module) {
     PyObject* enum_module = PyImport_ImportModule("enum");
@@ -119,4 +120,29 @@ static void register_enums(PyObject* module) {
     Py_CLEAR(direction_types);
     if(PyModule_AddObject(module, "DIRECTION", DIRECTION_TYPE) < 0)
         Py_CLEAR(DIRECTION_TYPE);
+
+    PyObject* flag_types = PyDict_New();
+#define add_flag(name)					\
+    PyDict_SetItemString(flag_types, #name, PyLong_FromLong(CommFlags::name))
+    add_flag(COMM_FLAG_VALID);
+    add_flag(COMM_FLAG_GLOBAL);
+    add_flag(COMM_FLAG_WORKER);
+    add_flag(COMM_FLAG_CLIENT);
+    add_flag(COMM_FLAG_SERVER);
+    add_flag(COMM_FLAG_CLIENT_RESPONSE);
+    add_flag(COMM_FLAG_SERVER_RESPONSE);
+    add_flag(COMM_ALWAYS_SEND_HEADER);
+    add_flag(COMM_ALLOW_MULTIPLE_COMMS);
+    add_flag(COMM_FLAGS_USED_SENT);
+    add_flag(COMM_FLAGS_USED_RECV);
+    add_flag(COMM_EOF_SENT);
+    add_flag(COMM_EOF_RECV);
+    add_flag(COMM_FLAG_INTERFACE);
+    // add_flag(COMM_FLAG_DELETE); Not needed by python
+#undef add_flag
+
+    FLAG_TYPE = PyObject_CallMethod(enum_module, "IntEnum", "sO", "COMM_FLAGS", flag_types);
+    Py_CLEAR(flag_types);
+    if(PyModule_AddObject(module, "COMM_FLAGS", FLAG_TYPE) < 0)
+      Py_CLEAR(FLAG_TYPE);
 }

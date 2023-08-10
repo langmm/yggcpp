@@ -41,7 +41,7 @@ class TestComm_t_Installed:
                 partner_dir = pyYggdrasil.DIRECTION.RECV
             return pyYggdrasil.CommBase(
                 "test", comm.address, partner_dir, commtype=comm.commtype,
-                flags=0x00004000)
+                flags=pyYggdrasil.COMM_FLAGS.COMM_FLAG_INTERFACE)
         return create_comm_partner_wrapped
 
     @pytest.fixture
@@ -100,6 +100,11 @@ class TestComm_t_Installed:
         assert comm_send.address
         assert comm_send.direction == pyYggdrasil.DIRECTION.SEND
         assert comm_send.commtype
+
+    def test_open_close(self, comm_send):
+        assert comm_send.is_open
+        comm_send.close()
+        assert comm_send.is_closed
 
     def test_metadata(self, comm_send):
         assert not comm_send.metadata

@@ -22,10 +22,8 @@ static PyObject* Comm_t_send_eof(PyObject* self, PyObject* arg);
 static PyObject* Comm_t_call(PyObject* self, PyObject* arg);
 static PyObject* Comm_t_set_timeout_recv(PyObject* self, PyObject* arg);
 static PyObject* Comm_t_wait_for_recv(PyObject* self, PyObject* arg);
-static PyObject* Comm_t_is_open(PyObject* self, PyObject* arg);
 static PyObject* Comm_t_comm_nmsg(PyObject* self, PyObject* arg);
 static PyObject* Comm_t_close(PyObject* self, PyObject* arg);
-static PyObject* Comm_t_is_closed(PyObject* self, PyObject* arg);
 // static PyObject* Comm_t_create_worker(PyObject* self, PyObject* arg);
 // static PyObject* Comm_t_send_single(PyObject* self, PyObject* arg);
 // static PyObject* Comm_t_recv_single(PyObject* self, PyObject* arg);
@@ -43,6 +41,8 @@ static int Comm_t_datatype_set(PyObject* self, PyObject* value, void* closure);
 static PyObject* Comm_t_timeout_recv_get(PyObject* self, void*);
 static int Comm_t_timeout_recv_set(PyObject* self, PyObject* value, void* closure);
 static PyObject* Comm_t_maxMsgSize_get(PyObject* self, void*);
+static PyObject* Comm_t_is_open_get(PyObject* self, void*);
+static PyObject* Comm_t_is_closed_get(PyObject* self, void*);
 
 static PyObject* commMeta_new(PyTypeObject *type, PyObject* args, PyObject* kwds);
 static void commMeta_dealloc(PyObject* self);
@@ -86,6 +86,8 @@ static PySequenceMethods commMeta_seq {
   NULL, NULL
 };
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-function-type"
 static PyMethodDef commMeta_methods[] = {
   {"update", (PyCFunction)commMeta_update, METH_VARARGS | METH_KEYWORDS,
    "update([other]) or update(**kwargs):\n"
@@ -96,6 +98,7 @@ static PyMethodDef commMeta_methods[] = {
    " Add an element to the end of the underlying array."},
   {NULL, NULL, 0, ""}  /* Sentinel */
 };
+#pragma GCC diagnostic pop
 
 static PyTypeObject commMetaType = {
         PyVarObject_HEAD_INIT(NULL, 0)
@@ -137,6 +140,16 @@ static PyTypeObject commMetaType = {
 	0,                         /* tp_alloc */
 	commMeta_new,              /* tp_new */
 	PyObject_Del,              /* tp_free */
+        NULL,                      /* tp_is_gc */
+        NULL,                      /* tp_bases */
+        NULL,                      /* tp_mro */
+        NULL,                      /* tp_cache */
+        NULL,                      /* tp_subclasses */
+        NULL,                      /* tp_weaklist */
+        0,                         /* tp_del */
+        0,                         /* tp_version_tag */
+        0,                         /* tp_finalize */
+        0                          /* tp_vectorcall */
 };
 
 PyObject* commMeta_new(PyTypeObject *type, PyObject* args, PyObject* kwds) {
@@ -428,7 +441,6 @@ static PyMethodDef Comm_t_methods[] = {
         {"n_msg", (PyCFunction) Comm_t_comm_nmsg, METH_NOARGS, ""},
         {"send", (PyCFunction) Comm_t_send, METH_VARARGS, ""},
         {"close", (PyCFunction) Comm_t_close, METH_NOARGS, ""},
-        {"is_closed", (PyCFunction) Comm_t_is_closed, METH_NOARGS, ""},
         // {"create_worker", (PyCFunction) Comm_t_create_worker, METH_VARARGS, ""},
         // {"send_single", (PyCFunction) Comm_t_send_single, METH_VARARGS, ""},
         // {"recv_single", (PyCFunction) Comm_t_recv_single, METH_VARARGS, ""},
@@ -437,7 +449,6 @@ static PyMethodDef Comm_t_methods[] = {
 	{"call", (PyCFunction) Comm_t_call, METH_VARARGS, ""},
         {"set_timeout_recv", (PyCFunction) Comm_t_set_timeout_recv, METH_VARARGS, ""},
         {"wait_for_recv", (PyCFunction) Comm_t_wait_for_recv, METH_VARARGS, ""},
-        {"is_open", (PyCFunction) Comm_t_is_open, METH_NOARGS, ""},
         {NULL, NULL, 0, ""}  /* Sentinel */
 };
 
@@ -463,59 +474,63 @@ static PyGetSetDef Comm_t_properties[] = {
    "The maximum size for individual messages sent through the communicator."
    " Messages larger than this size will be broken into multiple parts.",
    NULL},
+  {"is_open", Comm_t_is_open_get, NULL,
+   "True if the communicator is open, False otherwise.", NULL},
+  {"is_closed", Comm_t_is_closed_get, NULL,
+   "True if the communicator is closed, False otherwise.", NULL},
   {NULL, NULL, NULL, NULL, NULL} /* Sentinel */
 };
 
 static PyTypeObject Comm_tType = {
         PyVarObject_HEAD_INIT(NULL, 0)
-        "pyYggdrasil.Comm_t",     /* tp_name */
-        sizeof(pyComm_t),         /* tp_basicsize */
+        "pyYggdrasil.Comm_t",      /* tp_name */
+        sizeof(pyComm_t),          /* tp_basicsize */
         0,                         /* tp_itemsize */
         (destructor)Comm_t_dealloc, /* tp_dealloc */
         0,                         /* tp_vectorcall_offset */
         0,                         /* tp_getattr */
         0,                         /* tp_setattr */
         0,                         /* tp_reserved */
-        (reprfunc)Comm_t_str,     /* tp_repr */
+        (reprfunc)Comm_t_str,      /* tp_repr */
         0,                         /* tp_as_number */
         0,                         /* tp_as_sequence */
         0,                         /* tp_as_mapping */
         0,                         /* tp_hash  */
         0,                         /* tp_call */
-        (reprfunc)Comm_t_str,     /* tp_str */
+        (reprfunc)Comm_t_str,      /* tp_str */
         0,                         /* tp_getattro */
         0,                         /* tp_setattro */
         0,                         /* tp_as_buffer */
         Py_TPFLAGS_DEFAULT,        /* tp_flags */
-        "Comm_t object",          /* tp_doc */
+        "Comm_t object",           /* tp_doc */
         0,                         /* tp_traverse */
         0,                         /* tp_clear */
         0,                         /* tp_richcompare */
         0,                         /* tp_weaklistoffset */
         0,                         /* tp_iter */
         0,                         /* tp_iternext */
-        Comm_t_methods,           /* tp_methods */
+        Comm_t_methods,            /* tp_methods */
         0,                         /* tp_members */
-        Comm_t_properties,        /* tp_getset */
+        Comm_t_properties,         /* tp_getset */
         0,                         /* tp_base */
         0,                         /* tp_dict */
         0,                         /* tp_descr_get */
         0,                         /* tp_descr_set */
         0,                         /* tp_dictoffset */
-        (initproc)Comm_t_init,    /* tp_init */
+        (initproc)Comm_t_init,     /* tp_init */
         0,                         /* tp_alloc */
-        Comm_t_new,               /* tp_new */
+        Comm_t_new,                /* tp_new */
         0,                         /* tp_free */
         NULL,                      /* tp_is_gc */
         NULL,                      /* tp_bases */
         NULL,                      /* tp_mro */
         NULL,                      /* tp_cache */
         NULL,                      /* tp_subclasses */
-        NULL,                      /*tp_weaklist */
+        NULL,                      /* tp_weaklist */
         0,                         /* tp_del */
         0,                         /* tp_version_tag */
         0,                         /* tp_finalize */
-        0                          /*tp_vectorcall */
+        0                          /* tp_vectorcall */
 
 };
 
@@ -641,13 +656,6 @@ PyObject* Comm_t_close(PyObject* self, PyObject*) {
     Py_RETURN_NONE;
 }
 
-PyObject* Comm_t_is_closed(PyObject* self, PyObject*) {
-    if (((pyComm_t*)self)->comm->is_closed())
-        Py_RETURN_TRUE;
-    Py_RETURN_FALSE;
-
-}
-
 // PyObject* Comm_t_create_worker(PyObject* self, PyObject* arg) {
 // }
 
@@ -729,12 +737,6 @@ PyObject* Comm_t_wait_for_recv(PyObject* self, PyObject* arg) {
     wt = s->comm->wait_for_recv(tout);
     Py_END_ALLOW_THREADS
     return PyLong_FromLong(wt);
-}
-
-PyObject* Comm_t_is_open(PyObject* self, PyObject*) {
-    if(((pyComm_t*)self)->comm->is_open())
-        Py_RETURN_TRUE;
-    Py_RETURN_FALSE;
 }
 
 // PyObject* Comm_t_getType(pyComm_t* self) {
@@ -863,6 +865,20 @@ static int Comm_t_timeout_recv_set(PyObject* self, PyObject* value, void*) {
 static PyObject* Comm_t_maxMsgSize_get(PyObject* self, void*) {
   pyComm_t* s = (pyComm_t*)self;
   return PyLong_FromLong(static_cast<int>(s->comm->getMaxMsgSize()));
+}
+static PyObject* Comm_t_is_open_get(PyObject* self, void*) {
+  pyComm_t* s = (pyComm_t*)self;
+  if (s->comm->is_open()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+}
+static PyObject* Comm_t_is_closed_get(PyObject* self, void*) {
+  pyComm_t* s = (pyComm_t*)self;
+  if (s->comm->is_closed()) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
 }
 
 PyDoc_STRVAR(is_comm_installed_docstring,
