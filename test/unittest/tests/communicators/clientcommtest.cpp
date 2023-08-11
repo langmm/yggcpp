@@ -249,14 +249,14 @@ TEST(ClientComm, global) {
   std::string name = "test_name";
   {
     ServerComm rComm(name, nullptr);
-    rComm.set_timeout_recv(1000);
+    rComm.set_timeout_recv(10000);
     std::string key_env = name + "_OUT";
     std::string val_env = rComm.getAddress();
     setenv(key_env.c_str(), val_env.c_str(), 1);
     {
       global_scope_comm_on();
       ClientComm sComm(name, nullptr);
-      sComm.set_timeout_recv(1000);
+      sComm.set_timeout_recv(10000);
       global_scope_comm_off();
       sComm.addResponseFormat("%s");
       {

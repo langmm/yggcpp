@@ -479,8 +479,6 @@ if(BUILD_CPP_LIBRARY)
 	    set(YGG_CPP_LINK_KEYWORD PUBLIC)
 	else()
             add_library(${YGG_TARGET_CPP} SHARED ${SOURCES})
-            find_package(PythonExtensions REQUIRED)
-	    message(STATUS "PYTHON_LIBRARIES = ${PYTHON_LIBRARIES}")
 	endif()
         target_link_libraries(
 	    ${YGG_TARGET_CPP} ${YGG_CPP_LINK_KEYWORD}
@@ -488,16 +486,19 @@ if(BUILD_CPP_LIBRARY)
 	    ${DEPS_LIBRARIES_NO_PYTHON})
      	target_compile_options(${YGG_TARGET_CPP} PUBLIC
      	    -DRAPIDJSON_YGGDRASIL_PYTHON)
+        if (WIN32)
+            set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+        endif()
     else()
         add_library(${YGG_TARGET_CPP} SHARED ${SOURCES})
         target_link_libraries(
 	    ${YGG_TARGET_CPP} PUBLIC
 	    ${DEPS_LIB_NAMES}
 	    ${DEPS_LIBRARIES})
-    endif()
-    if (WIN32)
-       set_target_properties(${YGG_TARGET_CPP}
-           PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+        if (WIN32)
+            set_target_properties(${YGG_TARGET_CPP}
+                PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+        endif()
     endif()
     target_include_directories(
         ${YGG_TARGET_CPP} PUBLIC
