@@ -5,6 +5,8 @@ WITH_ASAN=""
 ASAN_FLAGS=""
 DONT_BUILD=""
 NO_CORE=""
+USING_IPC=""
+CMAKE_FLAGS="-DRAPIDJSON_INCLUDE_DIRS=../rapidjson/include/"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -14,6 +16,7 @@ while [[ $# -gt 0 ]]; do
 	    ;;
 	--with-asan )
 	    WITH_ASAN="TRUE"
+	    CMAKE_FLAGS="${CMAKE_FLAGS} -DYGG_BUILD_ASAN=ON -DYGG_BUILD_UBSAN=ON"
 	    shift # past argument with no value
 	    ;;
 	--dont-build )
@@ -24,20 +27,21 @@ while [[ $# -gt 0 ]]; do
 	    NO_CORE="TRUE"
 	    shift # past argument with no value
 	    ;;
+	--using-ipc )
+	    CMAKE_FLAGS="${CMAKE_FLAGS} -DUSING_IPC=1"
+	    shift # past argument with no value
+	    ;;
 	*)
 	    ;;
     esac
 done
 	    
 if [ -z "$DO_PYTHON" ]; then
-    if [ -n "$WITH_ASAN" ]; then
-	ASAN_FLAGS="-DYGG_BUILD_ASAN=ON -DYGG_BUILD_UBSAN=ON"
-    fi
     if [ ! -d "build" ]; then
 	mkdir build
     fi
     cd build
-    cmake .. -DCMAKE_INSTALL_PREFIX=../devel -DYGG_ENABLE_COVERAGE=OFF -DYGG_SKIP_VALGRIND_TESTS=ON -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DRAPIDJSON_INCLUDE_DIRS=/Users/langmm/rapidjson/include -DYGG_BUILD_TESTS=ON -DBUILD_PYTHON_LIBRARY=OFF $ASAN_FLAGS
+    cmake .. -DCMAKE_INSTALL_PREFIX=../devel -DYGG_ENABLE_COVERAGE=OFF -DYGG_SKIP_VALGRIND_TESTS=ON -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DRAPIDJSON_INCLUDE_DIRS=/Users/langmm/rapidjson/include -DYGG_BUILD_TESTS=ON -DBUILD_PYTHON_LIBRARY=OFF $CMAKE_FLAGS
     make
     make test ARGS="--stop-on-failure"
     cd ../
@@ -62,10 +66,11 @@ else
 		ASAN_FLAGS="--config-settings=cmake.define.YGG_BUILD_ASAN:BOOL=ON --config-settings=cmake.define.YGG_BUILD_UBSAN:BOOL=ON"
 	    fi
 	fi
+	export CMAKE_ARGS=${CMAKE_FLAGS}
 	if [ -n "$NO_CORE" ]; then
-	    python setup.py build_ext --inplace --rj-include-dir=../rapidjson/include/ $ASAN_FLAGS
+	    python setup.py build_ext --inplace # --rj-include-dir=../rapidjson/include/
 	else
-	    pip install . -v --config-settings=cmake.define.RAPIDJSON_INCLUDE_DIRS=../rapidjson/include/ $ASAN_FLAGS
+	    pip install . -v # --config-settings=cmake.define.RAPIDJSON_INCLUDE_DIRS=../rapidjson/include/ $ASAN_FLAGS
 	fi
     fi
     if [ -n "$WITH_ASAN" ]; then

@@ -24,7 +24,7 @@ public:
       request_id(req_id), data(), comm_idx(cidx),
       complete(false), is_signon(is_son) {}
     int setData(const char* str, size_t len) {
-        if (complete) {
+        if (complete && !is_signon) {
             ygglog_error << "setData: request already complete" << std::endl;
             return -1;
         }
