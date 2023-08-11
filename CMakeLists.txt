@@ -604,7 +604,7 @@ if(YGG_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang|A
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
     else()
-        target_link_libraries(YggInterface gcov)
+        target_link_libraries(YggInterface PRIVATE gcov)
         set(CTEST_COVERAGE_COMMAND "gcov")
         set(CTEST_COVERAGE_EXTRA_FLAGS "")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-inline-small-functions -fno-default-inline")
