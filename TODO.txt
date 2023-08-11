@@ -1,10 +1,10 @@
 * Move address away from pointer?
-* Re-structure so that C++, C, Python, and Fortran interfaces each have their own directory
+* Re-structure so that C++, C, Python, and Fortran interfaces each have their own directory and CMakeLists.txt
 * Re-structure so that top namespace in C++ is YggInterface
 * Automated documentation using doxygen
 * Fill in missing docs
 * Fix handling of multiple connections in ZMQ socket (restricted to ZMQ_PAIR to simplify testing)
-* Add async communicator
+* Add threaded async communicator that wraps a base communicator of any type
 * Add Fortran interface
 * Add RabbitMQ communicator
 * Add test fixture to verify that IPC queues are cleaned up
