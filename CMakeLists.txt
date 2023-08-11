@@ -490,15 +490,15 @@ if(BUILD_CPP_LIBRARY)
      	target_compile_options(${YGG_TARGET_CPP} PUBLIC
      	    -DRAPIDJSON_YGGDRASIL_PYTHON)
     else()
-        if (WIN32)
-            set_target_properties(${YGG_TARGET_CPP}
-                PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
-        endif()
         add_library(${YGG_TARGET_CPP} SHARED ${SOURCES})
         target_link_libraries(
 	    ${YGG_TARGET_CPP} PUBLIC
 	    ${DEPS_LIB_NAMES}
 	    ${DEPS_LIBRARIES})
+        if (WIN32)
+            set_target_properties(${YGG_TARGET_CPP}
+                PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+        endif()
     endif()
     target_include_directories(
         ${YGG_TARGET_CPP} PUBLIC
