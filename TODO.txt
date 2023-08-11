@@ -11,3 +11,4 @@
 * Make sure send/recv/call/wait can be interuppted by Ctrl+C
 * Allow for server/client to dynamically use different base communicators?
 * Allow for datatype to be passed as a argument to the constructor
+* Fix Python install on Windows (YggInterface_py is not being located)
