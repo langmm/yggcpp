@@ -1180,7 +1180,7 @@ extern "C" {
   }
 
   python_t copy_python(python_t x) {
-    python_t out;
+    python_t out = { NULL };
     if (x.obj != NULL) {
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
       Py_INCREF(x.obj);
