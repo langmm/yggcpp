@@ -257,6 +257,11 @@ public:
             ygglog_error << "RequestList::popRequestClient: Request '" << request_id << "' does not have response" << std::endl;
             return -1;
         }
+	if (requests[(size_t)idx].is_signon) {
+	    // Don't remove signon request
+	    return 1;
+	}
+	ygglog_debug << "RequestList::popRequestClient: Removing request '" << request_id << "'" << std::endl;
         requests.erase(requests.begin() + idx);
         return 1;
     }

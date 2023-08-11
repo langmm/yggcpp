@@ -551,6 +551,8 @@ static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds) {
     pyComm_t* s = (pyComm_t*)self;
     char* adr = NULL;
     char* name = NULL;
+    PyObject* dirnPy = NULL;
+    PyObject* commtypePy = NULL;
     int dirn = DIRECTION::SEND;
     int commtype = COMM_TYPE::DEFAULT_COMM;
     int flags = 0;
@@ -564,12 +566,60 @@ static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds) {
     };
     s->comm = NULL;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ssi$ii",
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ssO$Oi",
 				     (char**) kwlist,
-				     &name, &adr, &dirn,
-				     &commtype, &flags))
+				     &name, &adr, &dirnPy,
+				     &commtypePy, &flags))
       return -1;
-    if(adr == NULL and name == NULL) {
+
+#define CHECK_ENUM_STR(src, dst, base, str, num)	\
+    if ((strcmp(src, #str) == 0) ||			\
+	(strcmp(src, #num) == 0)) {			\
+      dst = base::num;					\
+    }
+
+    if (dirnPy != NULL) {
+      if (PyLong_Check(dirnPy)) {
+	dirn = PyLong_AsLong(dirnPy);
+      } else if (PyUnicode_Check(dirnPy)) {
+	const char* dirnStr = PyUnicode_AsUTF8(dirnPy);
+	if (!dirnStr)
+	  return -1;
+	CHECK_ENUM_STR(dirnStr, dirn, DIRECTION, recv, RECV)
+	else CHECK_ENUM_STR(dirnStr, dirn, DIRECTION, send, SEND)
+	else {
+	  PyErr_SetString(PyExc_TypeError, "Invalid direction");
+	  return -1;
+	}
+      } else {
+	PyErr_SetString(PyExc_TypeError, "direction must be a string or an integer.");
+	return -1;
+      }
+    }
+    if (commtypePy != NULL) {
+      if (PyLong_Check(commtypePy)) {
+	commtype = PyLong_AsLong(commtypePy);
+      } else if (PyUnicode_Check(commtypePy)) {
+	const char* commtypeStr = PyUnicode_AsUTF8(commtypePy);
+	if (!commtypeStr)
+	  return -1;
+	CHECK_ENUM_STR(commtypeStr, commtype, COMM_TYPE, default, DEFAULT_COMM)
+	else CHECK_ENUM_STR(commtypeStr, commtype, COMM_TYPE, ipc, IPC_COMM)
+	else CHECK_ENUM_STR(commtypeStr, commtype, COMM_TYPE, zmq, ZMQ_COMM)
+	else CHECK_ENUM_STR(commtypeStr, commtype, COMM_TYPE, mpi, MPI_COMM)
+	else CHECK_ENUM_STR(commtypeStr, commtype, COMM_TYPE, server, SERVER_COMM)
+	else CHECK_ENUM_STR(commtypeStr, commtype, COMM_TYPE, client, CLIENT_COMM)
+	else {
+	  PyErr_SetString(PyExc_TypeError, "Invalid commtype");
+	  return -1;
+	}
+      } else {
+	PyErr_SetString(PyExc_TypeError, "commtype must be a string or an integer.");
+	return -1;
+      }
+    }
+    
+    if(adr == NULL && name == NULL) {
         PyErr_SetString(PyExc_TypeError, "Neither name nor address provided");
         return -1;
     }

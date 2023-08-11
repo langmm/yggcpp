@@ -9,4 +9,4 @@
 * Add RabbitMQ communicator
 * Add test fixture to verify that IPC queues are cleaned up
 * Make sure send/recv/call/wait can be interuppted by Ctrl+C
-* Allow for string direction/commtype for backwards compat
+* Allow for server/client to dynamically use different base communicators?

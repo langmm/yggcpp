@@ -8,6 +8,13 @@ _commtypes = [
     pyYggdrasil.COMM_TYPE.MPI_COMM,
 ]
 
+_commtype_map = {
+    'ipc': pyYggdrasil.COMM_TYPE.IPC_COMM,
+    'zmq': pyYggdrasil.COMM_TYPE.ZMQ_COMM,
+    'mpi': pyYggdrasil.COMM_TYPE.MPI_COMM,
+}
+_commtype_map_inv = {v: k for k, v in _commtype_map.items()}
+
 
 class TestComm_t_Installed:
     r"""Tests for when a commtype is installed."""
@@ -15,6 +22,10 @@ class TestComm_t_Installed:
     @pytest.fixture(scope="class", params=_commtypes)
     def commtype(self, request):
         return request.param
+
+    @pytest.fixture(scope="class")
+    def commtype_str(self, commtype):
+        return _commtype_map_inv[commtype]
 
     @pytest.fixture(scope="class", autouse=True)
     def require_installed(self, commtype):
@@ -93,6 +104,16 @@ class TestComm_t_Installed:
 
     def test_is_comm_installed(self, commtype):
         assert pyYggdrasil.is_comm_installed(commtype)
+
+    def test_str_arguments(self, commtype, commtype_str):
+        comm_send = pyYggdrasil.CommBase(
+            "test", commtype=commtype_str, direction="send")
+        assert comm_send.commtype == commtype
+        assert comm_send.direction == pyYggdrasil.DIRECTION.SEND
+        comm_recv = pyYggdrasil.CommBase(
+            "test", commtype=commtype_str, direction="recv")
+        assert comm_recv.commtype == commtype
+        assert comm_recv.direction == pyYggdrasil.DIRECTION.RECV
 
     def test_str(self, comm_send):
         print(str(comm_send))
