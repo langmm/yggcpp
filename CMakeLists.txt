@@ -465,47 +465,43 @@ if(SKBUILD)
 endif()
 if(BUILD_CPP_LIBRARY)
     if(SKBUILD)
-        set(YGG_TARGET_GPP YggInterface_py)
+        set(YGG_TARGET_CPP YggInterface_py)
     else()
-        set(YGG_TARGET_GPP YggInterface)
+        set(YGG_TARGET_CPP YggInterface)
     endif()
-    message(STATUS "YGG_TARGET_GPP = ${YGG_TARGET_GPP}")
+    message(STATUS "YGG_TARGET_CPP = ${YGG_TARGET_CPP}")
     file(GLOB SOURCES "communication/*.cpp" "communication/utils/*.cpp" "communication/communicators/*.cpp" "communication/datatypes/dtype_t.cpp")
-    add_library(${YGG_TARGET_GPP} SHARED ${SOURCES})
-    if (WIN32)
-       set_target_properties(${YGG_TARGET_GPP}
-           PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
-    endif()
     if(SKBUILD AND NOT YGGDRASIL_DISABLE_PYTHON_C_API)
-        find_package(PythonExtensions REQUIRED)
-	message(STATUS "PYTHON_LIBRARIES = ${PYTHON_LIBRARIES}")
+        message(STATUS "SKBUILD_PROJECT_NAME = ${SKBUILD_PROJECT_NAME}")
+	message(STATUS "SKBUILD_PLATLIB_DIR = ${SKBUILD_PLATLIB_DIR}")
+	if(SKBUILD STREQUAL "2")
+  	    Python3_add_library(${YGG_TARGET_CPP} SHARED ${SOURCES})
+	    set(YGG_CPP_LINK_KEYWORD PUBLIC)
+	else()
+            add_library(${YGG_TARGET_CPP} SHARED ${SOURCES})
+            find_package(PythonExtensions REQUIRED)
+	    message(STATUS "PYTHON_LIBRARIES = ${PYTHON_LIBRARIES}")
+	endif()
         target_link_libraries(
-	    ${YGG_TARGET_GPP}
+	    ${YGG_TARGET_CPP} ${YGG_CPP_LINK_KEYWORD}
 	    ${DEPS_LIB_NAMES_NO_PYTHON}
 	    ${DEPS_LIBRARIES_NO_PYTHON})
-     	target_compile_options(${YGG_TARGET_GPP} PUBLIC
+     	target_compile_options(${YGG_TARGET_CPP} PUBLIC
      	    -DRAPIDJSON_YGGDRASIL_PYTHON)
     else()
+        add_library(${YGG_TARGET_CPP} SHARED ${SOURCES})
         target_link_libraries(
-	    ${YGG_TARGET_GPP}
+	    ${YGG_TARGET_CPP} PUBLIC
 	    ${DEPS_LIB_NAMES}
 	    ${DEPS_LIBRARIES})
     endif()
-    target_include_directories(
-        ${YGG_TARGET_GPP} PUBLIC
-    	${DEPS_INCLUDE_DIRS})
-    if(SKBUILD)
-        # Force python_extension_module to link to Python libraries
-	# to allow dynamic lookup
-        set(CMAKE_CROSSCOMPILING ON)
-        find_package(PythonExtensions REQUIRED)
-        python_extension_module(${YGG_TARGET_GPP})
-	set(CMAKE_CROSSCOMPILING OFF)
+    if (WIN32)
+       set_target_properties(${YGG_TARGET_CPP}
+           PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
     endif()
-    install(
-        TARGETS ${YGG_TARGET_GPP}
-        EXPORT ${YGG_TARGET_GPP}Targets
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
+    target_include_directories(
+        ${YGG_TARGET_CPP} PUBLIC
+    	${DEPS_INCLUDE_DIRS})
 endif()
 
 #########################
@@ -527,13 +523,16 @@ if(BUILD_PYTHON_LIBRARY AND NOT YGGDRASIL_DISABLE_PYTHON_C_API)
     message(STATUS "Building Python bindings=Yes")
     set(PYSOURCES
         ${CMAKE_SOURCE_DIR}/communication/pyYggdrasil/pyYggdrasil.cpp)
-    
-    add_library(${YGG_TARGET_PY} MODULE ${PYSOURCES})
+    if (SKBUILD STREQUAL "2")
+        Python3_add_library(${YGG_TARGET_PY} MODULE ${PYSOURCES})
+    else()
+        add_library(${YGG_TARGET_PY} MODULE ${PYSOURCES})
+    endif()
     target_include_directories(
           ${YGG_TARGET_PY} PUBLIC
           ${DEPS_INCLUDE_DIRS})
     target_link_libraries(
-          ${YGG_TARGET_PY} ${YGG_TARGET_GPP}
+          ${YGG_TARGET_PY} ${YGG_CPP_LINK_KEYWORD} ${YGG_TARGET_CPP}
 	  ${DEPS_LIB_NAMES_NO_PYTHON}
 	  ${DEPS_LIBRARIES_NO_PYTHON})
     target_compile_options(${YGG_TARGET_PY} PUBLIC
@@ -543,9 +542,36 @@ if(BUILD_PYTHON_LIBRARY AND NOT YGGDRASIL_DISABLE_PYTHON_C_API)
               -DYGG_PYTHON_LIBRARY_WRAP)
     endif()
     if(SKBUILD)
-    	find_package(PythonExtensions REQUIRED)
-    	python_extension_module(${YGG_TARGET_PY})
-	install(TARGETS ${YGG_TARGET_PY} LIBRARY DESTINATION .)
+        message(STATUS "SKBUILD = ${SKBUILD}")
+        if(SKBUILD STREQUAL "2")
+	    set(YGG_CPP_LIBRARY_DEST pyYggdrasil/${CMAKE_INSTALL_LIBDIR})
+	else()
+    	    find_package(PythonExtensions REQUIRED)
+	    # Add C++ library as Python extension
+            # Force python_extension_module to link to Python libraries
+	    # to allow dynamic lookup
+            set(CMAKE_CROSSCOMPILING ON)
+            python_extension_module(${YGG_TARGET_CPP})
+	    set(CMAKE_CROSSCOMPILING OFF)
+	    # Add Python extension
+    	    python_extension_module(${YGG_TARGET_PY})
+	    set(YGG_CPP_LIBRARY_DEST ${CMAKE_INSTALL_LIBDIR})
+	endif()
+	if(NOT Python_INSTALL_DIR)
+	    if(SKBUILD STREQUAL "2")
+	        set(Python_INSTALL_DIR pyYggdrasil)
+	    else()
+  	        set(Python_INSTALL_DIR ".")
+	    endif()
+	endif()
+        install(TARGETS ${YGG_TARGET_CPP}
+    	        LIBRARY DESTINATION ${YGG_CPP_LIBRARY_DEST}
+	      	PUBLIC_HEADER DESTINATION ${YGG_CPP_LIBRARY_DEST})
+	install(TARGETS ${YGG_TARGET_PY}
+	        LIBRARY DESTINATION ${Python_INSTALL_DIR})
+        install(FILES
+	        ${CMAKE_SOURCE_DIR}/communication/pyYggdrasil/__init__.py
+		DESTINATION ${Python_INSTALL_DIR})
 	if(APPLE)
             set_target_properties(
 	         ${YGG_TARGET_PY} PROPERTIES INSTALL_RPATH
@@ -557,7 +583,7 @@ if(BUILD_PYTHON_LIBRARY AND NOT YGGDRASIL_DISABLE_PYTHON_C_API)
         endif()
     else()
         target_link_libraries(
-	    ${YGG_TARGET_PY}
+	    ${YGG_TARGET_PY} PRIVATE
 	    ${DEPS_LIB_NAMES_PYTHON}
 	    ${DEPS_LIBRARIES_PYTHON})
     endif(SKBUILD)

@@ -4,6 +4,7 @@ DO_PYTHON=""
 WITH_ASAN=""
 ASAN_FLAGS=""
 DONT_BUILD=""
+NO_CORE=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -17,6 +18,10 @@ while [[ $# -gt 0 ]]; do
 	    ;;
 	--dont-build )
 	    DONT_BUILD="TRUE"
+	    shift # past argument with no value
+	    ;;
+	--without-core )
+	    NO_CORE="TRUE"
 	    shift # past argument with no value
 	    ;;
 	*)
@@ -51,20 +56,35 @@ else
 	if [ -n "$WITH_ASAN" ]; then
 	    export ASAN_OPTIONS=symbolize=1
 	    export ASAN_SYMBOLIZER_PATH=$(which llvm-symbolizer)
-	    ASAN_FLAGS="--with-asan"
+	    if [ -n "$NO_CORE" ]; then
+		ASAN_FLAGS="--with-asan"
+	    else
+		ASAN_FLAGS="--config-settings=cmake.define.YGG_BUILD_ASAN:BOOL=ON --config-settings=cmake.define.YGG_BUILD_UBSAN:BOOL=ON"
+	    fi
 	fi
-	python setup.py build_ext --inplace --rj-include-dir=../rapidjson/include/ $ASAN_FLAGS
+	if [ -n "$NO_CORE" ]; then
+	    python setup.py build_ext --inplace --rj-include-dir=../rapidjson/include/ $ASAN_FLAGS
+	else
+	    pip install . -v --config-settings=cmake.define.RAPIDJSON_INCLUDE_DIRS=../rapidjson/include/ $ASAN_FLAGS
+	fi
     fi
     if [ -n "$WITH_ASAN" ]; then
 	export DYLD_INSERT_LIBRARIES=$(clang -print-file-name=libclang_rt.asan_osx_dynamic.dylib)
     fi
-    cd communication/pyYggdrasil
+    if [ -n "$NO_CORE" ]; then
+	cd communication/pyYggdrasil
+	export TEST_DIR=../../test
+    else
+	export TEST_DIR=test
+    fi
     export PYTHONFAULTHANDLER=1
-    python -m pytest -svx ../../test/
+    python -m pytest -svx $TEST_DIR
     # Copy test commands to test/script.py
-    # cp ../../test/script.py ./
+    # cp $TEST_DIR/script.py ./
     # lldb python script.py  # r to run
-    cd ../../
+    if [ -n "$NO_CORE" ]; then
+	cd ../../
+    fi
 fi
 
 
