@@ -576,8 +576,14 @@ if(BUILD_PYTHON_LIBRARY AND NOT YGGDRASIL_DISABLE_PYTHON_C_API)
     	            LIBRARY DESTINATION ${YGG_CPP_LIBRARY_DEST}
 	      	    PUBLIC_HEADER DESTINATION ${YGG_CPP_LIBRARY_DEST})
 	# endif()
-	install(TARGETS ${YGG_TARGET_PY}
-	        LIBRARY DESTINATION ${Python_INSTALL_DIR})
+	if(WIN32)
+	    install(TARGETS ${YGG_TARGET_PY}
+	            LIBRARY DESTINATION ${Python_INSTALL_DIR}
+		    RUNTIME DESTINATION ${Python_INSTALL_DIR})
+	else()
+  	    install(TARGETS ${YGG_TARGET_PY}
+	            LIBRARY DESTINATION ${Python_INSTALL_DIR})
+	endif()
         install(FILES
 	        ${CMAKE_SOURCE_DIR}/communication/pyYggdrasil/__init__.py
 		DESTINATION ${Python_INSTALL_DIR})
