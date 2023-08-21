@@ -1,5 +1,6 @@
 #include <thread>
 #include <cstdlib>
+#include "communicators/AsyncComm.hpp"
 
 #define DO_SEND_RECV_EXCHANGE(init_data, comp_data, send_method, send_args, recv_method, recv_args) \
   init_data;								\
@@ -387,8 +388,27 @@
     global_scope_comm_off();						\
     Comm_t::_ygg_cleanup();						\
   }
+#define COMM_SERI_TEST_ASYNC(cls)					\
+  TEST(cls, async) {							\
+    std::string name = "test_name";					\
+    COMM_TYPE typ = cls::defaultCommType();				\
+    AsyncComm sComm(name, nullptr, SEND, COMM_FLAG_ASYNC, typ);		\
+    sComm.addSchema("{\"type\": \"number\"}");				\
+    std::string key_env = name + "_IN";					\
+    std::string val_env = sComm.getAddress();				\
+    std::cerr << "Address = " << val_env << std::endl;			\
+    setenv(key_env.c_str(), val_env.c_str(), 1);			\
+    AsyncComm rComm(name, RECV, COMM_FLAG_ASYNC, typ);			\
+    unsetenv(key_env.c_str());						\
+    DO_SEND_RECV_EXCHANGE(INIT_DATA_SINGLE(double, 1.5),		\
+			  COMP_DATA_SINGLE,				\
+			  sendVar, (data_send),				\
+			  recvVar, (data_recv));			\
+  }
+
 #define COMM_SERI_TEST(cls)						\
   COMM_SERI_TEST_BASE(cls,)						\
+  COMM_SERI_TEST_ASYNC(cls)						\
   TEST(cls, large) {							\
     cls ## _tester sComm(SEND);						\
     std::string name = "test_name";					\

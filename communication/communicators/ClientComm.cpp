@@ -46,7 +46,7 @@ void ClientComm::init() {
       srand(ptr2seed(this));
       _client_rand_seeded = 1;
     }
-  }
+  } YGG_THREAD_SAFE_END;
   if (name.empty()) {
     this->name = "client_request." + this->address->address();
   }

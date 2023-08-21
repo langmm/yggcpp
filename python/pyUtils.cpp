@@ -139,6 +139,7 @@ static void register_enums(PyObject* module) {
     add_flag(COMM_EOF_RECV);
     add_flag(COMM_FLAG_INTERFACE);
     // add_flag(COMM_FLAG_DELETE); Not needed by python
+    add_flag(COMM_FLAG_ASYNC);
 #undef add_flag
 
     FLAG_TYPE = PyObject_CallMethod(enum_module, "IntEnum", "sO", "COMM_FLAGS", flag_types);

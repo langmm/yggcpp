@@ -4,7 +4,8 @@
 * Automated documentation using doxygen
 * Fill in missing docs
 * Fix handling of multiple connections in ZMQ socket (restricted to ZMQ_PAIR to simplify testing)
-* Add threaded async communicator that wraps a base communicator of any type
+* Add tests for global async
+* Add tests for async client/server
 * Add Fortran interface
 * Add RabbitMQ communicator
 * Add test fixture to verify that IPC queues are cleaned up

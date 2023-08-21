@@ -10,6 +10,8 @@
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/schema.h"
+#include <thread>
+#include <chrono>
 
 /*! @brief Set if the comm is the receiving comm for a client/server request connection */
 const int COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
@@ -50,7 +52,8 @@ const int COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
   explicit T ## Comm(utils::Address *addr,				\
 		     const DIRECTION dirn,				\
 		     int flgs = 0, const COMM_TYPE type = T ## _COMM);	\
-  static bool isInstalled() { return T ## _INSTALLED_FLAG; }
+  static bool isInstalled() { return T ## _INSTALLED_FLAG; }		\
+  static COMM_TYPE defaultCommType() { return T ## _COMM; }
 #define ADD_CONSTRUCTORS_DEF(cls)		\
   cls::cls(const std::string nme,		\
 	   const DIRECTION dirn,		\
@@ -97,6 +100,9 @@ YGG_THREAD_GLOBAL_VAR(int, global_scope_comm, )
 
 void global_scope_comm_on();
 void global_scope_comm_off();
+
+class AsyncComm;
+class AsyncBacklog;
 
 class RPCComm;
 
@@ -541,6 +547,8 @@ private:
 		  rapidjson::VarArgList& ap);
 
 protected:
+    friend AsyncComm;
+    friend AsyncBacklog;
     friend RPCComm;
     friend ServerComm;
     friend ClientComm;

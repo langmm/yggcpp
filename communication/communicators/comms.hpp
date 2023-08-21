@@ -7,3 +7,4 @@
 #include "RPCComm.hpp"
 #include "ServerComm.hpp"
 #include "ZMQComm.hpp"
+#include "AsyncComm.hpp"

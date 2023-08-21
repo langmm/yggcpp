@@ -44,7 +44,8 @@ enum CommFlags {
     COMM_EOF_SENT   = 0x00000800,  //!< Set if EOF has been sent
     COMM_EOF_RECV   = 0x00001000,  //!< Set if EOF has been received
     COMM_FLAG_INTERFACE = 0x00002000,       //!< Set if communicator is an interface communicator
-    COMM_FLAG_DELETE    = 0x00004000        //!< Set if the communicator needs to be deleted
+    COMM_FLAG_DELETE    = 0x00004000,       //!< Set if the communicator needs to be deleted
+    COMM_FLAG_ASYNC     = 0x00008000        //!< Set if the communicator is asynchronous
 };
 
   

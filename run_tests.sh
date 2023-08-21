@@ -83,12 +83,12 @@ else
     fi
     export PYTHONFAULTHANDLER=1
     if [ -n "$WITH_LLDB" ]; then
-	python -m pytest -svx $TEST_DIR
-    else
 	# Copy test commands to test/script.py
 	cp $TEST_DIR/script.py ./
 	lldb python script.py  # r to run
 	rm script.py
+    else
+	python -m pytest -svx $TEST_DIR
     fi
     if [ -n "$NO_CORE" ]; then
 	cd ../../

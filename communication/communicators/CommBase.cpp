@@ -37,7 +37,7 @@ void Comm_t::_ygg_init() {
       std::atexit(_cleanup_wrapper);
       Comm_t::_ygg_initialized = 1;
     }
-  }
+  } YGG_THREAD_SAFE_END;
 }
 
 long Comm_t::copyData(char*& dst, const size_t dst_len,
@@ -85,13 +85,13 @@ void Comm_t::_ygg_cleanup() {
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
 	rapidjson::finalize_python("_ygg_cleanup");
 #endif // YGGDRASIL_DISABLE_PYTHON_C_API
-      }
+      } YGG_THREAD_SAFE_END;
 #ifndef YGG_TEST
       Comm_t::_ygg_finalized = 1;
 #endif // YGG_TEST
       ygglog_debug << "_ygg_cleanup: Cleanup complete" << std::endl;
     }
-  }
+  } YGG_THREAD_SAFE_END;
 #ifndef YGG_TEST
 #ifndef RAPIDJSON_YGGDRASIL_PYTHON
   if (utils::YggdrasilLogger::_ygg_error_flag) {
@@ -152,7 +152,7 @@ Comm_t::~Comm_t() {
   YGG_THREAD_SAFE_BEGIN(comms) {
     if (index_in_register >= 0)
       Comm_t::registry[index_in_register] = NULL;
-  }
+  } YGG_THREAD_SAFE_END;
   ygglog_debug << "~Comm_t: Started" << std::endl;
   if (address)
     delete address;
@@ -262,6 +262,9 @@ Comm_t* communication::communicator::new_Comm_t(const DIRECTION dir, const COMM_
 }
 Comm_t* communication::communicator::new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, Address* addr, int flags) {
   flags |= COMM_FLAG_DELETE;
+  if (flags & COMM_FLAG_ASYNC) {
+    return new AsyncComm(name, addr, dir, flags, type);
+  }
   switch(type) {
   case NULL_COMM:
     delete addr;
@@ -451,7 +454,7 @@ int Comm_t::wait_for_recv(const int& tout) {
       return nmsg;
     }
     ygglog_debug << "CommBase(" << name << ")::wait_for_recv: No messages, sleep " << YGG_SLEEP_TIME << std::endl;
-    usleep(YGG_SLEEP_TIME);
+    std::this_thread::sleep_for(std::chrono::microseconds(YGG_SLEEP_TIME));
   }
   return 0;
 }
@@ -774,7 +777,7 @@ void Comm_t::register_comm(Comm_t* x) {
   YGG_THREAD_SAFE_BEGIN(comms) {
     x->index_in_register = Comm_t::registry.size();
     Comm_t::registry.push_back(x);
-  }
+  } YGG_THREAD_SAFE_END;
 }
 
 Comm_t* Comm_t::find_registered_comm(const std::string& name,
@@ -795,6 +798,6 @@ Comm_t* Comm_t::find_registered_comm(const std::string& name,
 	}
       }
     }
-  }
+  } YGG_THREAD_SAFE_END;
   return out;
 }

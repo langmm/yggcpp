@@ -31,7 +31,7 @@ void IPCComm::init() {
 	  std::srand(ptr2seed(this));
 	  _ipc_rand_seeded = true;
 	}
-      }
+      } YGG_THREAD_SAFE_END;
       while (key == 0 || check_key(key) < 0) {
         key = std::rand();
       }
@@ -98,7 +98,7 @@ int IPCComm::check_key(int key) {
     }
     // Fail if > _yggTrackChannels channels used
 
-    }
+    } YGG_THREAD_SAFE_END;
     return error_code;
 }
 
@@ -113,7 +113,7 @@ void IPCComm::add_channel() {
       ygglog_error << "Too many channels in use, max: " << _yggTrackChannels << std::endl;
     }
     IPCComm::_yggChannelNames[IPCComm::_yggChannelsUsed] = address->key();
-  }
+  } YGG_THREAD_SAFE_END;
 }
 
 /*!
@@ -148,7 +148,7 @@ int IPCComm::remove_comm(bool close_comm) {
       // if (ret < 0) {
       //     ygglog_debug << "remove_comm(" << name << "): Could not locate comm in register." << std::endl;
       // }
-    }
+    } YGG_THREAD_SAFE_END;
     return ret;
 }
 

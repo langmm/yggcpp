@@ -21,6 +21,8 @@
 #include <cstdarg>
 #include <cerrno>
 #include <ctime>
+#include <thread>
+#include <chrono>
 
 #ifndef print_complex
 #define print_complex(x) printf("%lf+%lfj\n", (double)creal(x), (double)cimag(x))
@@ -270,15 +272,31 @@ static int global_thread_id = -1;
 #endif // _OPENMP
 #endif // _MSC_VER
 
+#define YGG_THREAD_MUTEX(name)				\
+  extern std::mutex name ## _mutex;
+  YGG_THREAD_MUTEX(init)
+  YGG_THREAD_MUTEX(clean)
+  YGG_THREAD_MUTEX(client)
+  YGG_THREAD_MUTEX(comms)
+  YGG_THREAD_MUTEX(ipc)
+  YGG_THREAD_MUTEX(zmq)
+  YGG_THREAD_MUTEX(zmqport)
+#undef YGG_THREAD_MUTEX
+
 /*! @brief Macro to open section that should be synchronized across
   threads, typically where thread global variables are acessed. */
 #ifdef _OPENMP
 #define YGG_THREADING_ACTIVE 1
 #define YGG_THREAD_SAFE_BEGIN(name)		\
-  _Pragma(STRINGIFY(omp critical (name)))
+  _Pragma(STRINGIFY(omp critical (name))) {	\
+    const std::lock_guard<std::mutex> name ## _lock(communication::utils::name ## _mutex);
 #else // _OPENMP
-#define YGG_THREAD_SAFE_BEGIN(name)
+#define YGG_THREAD_SAFE_BEGIN(name)		\
+  {						\
+    const std::lock_guard<std::mutex> name ## _lock(communication::utils::name ## _mutex);
 #endif // _OPENMP
+#define YGG_THREAD_SAFE_END			\
+  }
 
 /*!
   @brief Get an unsigned long seed from the least significant 32bits of a pointer.

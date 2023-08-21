@@ -46,7 +46,7 @@ void ZMQContext::init() {
     } else {
       ctx = ZMQContext::ygg_s_process_ctx;
     }
-  }
+  } YGG_THREAD_SAFE_END;
   if (ctx == NULL) {
     ygglog_throw_error("ZMQContext::init: ZMQ context is NULL.");
   }
@@ -55,12 +55,13 @@ void ZMQContext::init() {
 void ZMQContext::destroy() {
   YGG_THREAD_SAFE_BEGIN(zmq) {
     if (ZMQContext::ygg_s_process_ctx != NULL) {
+      zmq_ctx_shutdown(ZMQContext::ygg_s_process_ctx);
       if (zmq_ctx_term(ZMQContext::ygg_s_process_ctx) != 0) {
 	ygglog_error << "ZMQContext::destroy: Error terminating context with zmq_ctx_term" << std::endl;
       }
       ZMQContext::ygg_s_process_ctx = NULL;
     }
-  }
+  } YGG_THREAD_SAFE_END;
 }
 #endif // ZMQINSTALLED
 
@@ -121,7 +122,7 @@ void ZMQSocket::init(int type0, utils::Address* address,
       DO_SET(ZMQ_SNDTIMEO, sndtimeo, -1);
 #undef DO_SET
     }
-  }
+  } YGG_THREAD_SAFE_END;
   if (!except_msg.empty()) {
     destroy();
     throw std::runtime_error(except_msg);
@@ -192,7 +193,7 @@ void ZMQSocket::init(int type0, utils::Address* address,
 	  }
 	}
       }
-    }
+    } YGG_THREAD_SAFE_END;
     if (!except_msg.empty()) {
       destroy();
       throw std::runtime_error(except_msg);
@@ -452,7 +453,7 @@ bool ZMQReply::send_stage2(const std::string msg_data) {
     return false;
   }
   // Sleep briefly to ensure receive is complete
-  usleep(100);
+  std::this_thread::sleep_for(std::chrono::microseconds(100));
   // Check for purge or EOF
   // if (is_purge) {
   //   ygglog_debug << "ZMQReply::send_stage2: PURGE received" << std::endl;
