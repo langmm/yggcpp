@@ -327,11 +327,11 @@ jobs:
         if: matrix.python-install == 'conda' && matrix.with-asan == false && matrix.with-elf == false && matrix.with-valgrind == false
         shell: bash -l {0}
         run: |
-          pytest test
+          pytest python/test
       - name: Test Python Interfaces (PIP)
         if: matrix.python-install == 'pip' && matrix.with-asan == false && matrix.with-elf == false && matrix.with-valgrind == false
         run: |
-          pytest test
+          pytest python/test
 
       ###################################
       # Coverage
