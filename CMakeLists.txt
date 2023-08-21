@@ -497,6 +497,10 @@ if(BUILD_CPP_LIBRARY)
 	    ${YGG_TARGET_CPP} PUBLIC
 	    ${DEPS_LIB_NAMES}
 	    ${DEPS_LIBRARIES})
+	if (WIN32)
+	    set_target_properties(${YGG_TARGET_CPP}
+	        PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+	endif()
     endif()
     target_include_directories(
         ${YGG_TARGET_CPP} PUBLIC
