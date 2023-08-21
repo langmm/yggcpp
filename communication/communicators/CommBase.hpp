@@ -10,8 +10,6 @@
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/schema.h"
-#include <thread>
-#include <chrono>
 
 /*! @brief Set if the comm is the receiving comm for a client/server request connection */
 const int COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
