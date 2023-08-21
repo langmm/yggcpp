@@ -46,4 +46,5 @@ Repository = "https://github.com/astro-friedel/yggcpp"
 
 
 [tool.scikit-build]
-wheel.packages = ['communication/pyYggdrasil']
+wheel.packages = ['python/pyYggdrasil']
+wheel.install-dir = "pyYggdrasil"

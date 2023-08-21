@@ -31,7 +31,12 @@ else()
     PROJECT(YggInterfaceCPP VERSION "${LIB_VERSION_STRING}")
 endif()
 
-include(GNUInstallDirs)
+if (UNIX)
+    include(GNUInstallDirs)
+endif()
+if (SKBUILD AND WIN32)
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+endif()
 
 if(POLICY CMP0094)  # https://cmake.org/cmake/help/latest/policy/CMP0094.html
     cmake_policy(SET CMP0094 NEW)  # FindPython should return the first matching Python
@@ -472,9 +477,6 @@ if(BUILD_CPP_LIBRARY)
     message(STATUS "YGG_TARGET_CPP = ${YGG_TARGET_CPP}")
     file(GLOB SOURCES "communication/*.cpp" "communication/utils/*.cpp" "communication/communicators/*.cpp" "communication/datatypes/dtype_t.cpp")
     if(SKBUILD AND NOT YGGDRASIL_DISABLE_PYTHON_C_API)
-        if (WIN32)
-            set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
-        endif()
         message(STATUS "SKBUILD_PROJECT_NAME = ${SKBUILD_PROJECT_NAME}")
 	message(STATUS "SKBUILD_PLATLIB_DIR = ${SKBUILD_PLATLIB_DIR}")
 	if(SKBUILD STREQUAL "2")
@@ -495,10 +497,6 @@ if(BUILD_CPP_LIBRARY)
 	    ${YGG_TARGET_CPP} PUBLIC
 	    ${DEPS_LIB_NAMES}
 	    ${DEPS_LIBRARIES})
-        if (WIN32)
-            set_target_properties(${YGG_TARGET_CPP}
-                PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
-        endif()
     endif()
     target_include_directories(
         ${YGG_TARGET_CPP} PUBLIC
@@ -515,93 +513,7 @@ if(SKBUILD)
 endif(SKBUILD)
 option(YGG_PYTHON_LIBRARY_WRAP "Build the Yggdrasil Python interface library by wrapping the C++ module" ON)
 if(BUILD_PYTHON_LIBRARY AND NOT YGGDRASIL_DISABLE_PYTHON_C_API)
-    if(YGG_PYTHON_LIBRARY_WRAP)
-        set(YGG_TARGET_PY _pyYggdrasil)
-    else()
-        set(YGG_TARGET_PY pyYggdrasil)
-    endif()
-    message(STATUS "YGG_TARGET_PY = ${YGG_TARGET_PY}")
-    message(STATUS "Building Python bindings=Yes")
-    set(PYSOURCES
-        ${CMAKE_SOURCE_DIR}/communication/pyYggdrasil/pyYggdrasil.cpp)
-    if (SKBUILD STREQUAL "2")
-        Python3_add_library(${YGG_TARGET_PY} MODULE ${PYSOURCES})
-    else()
-        add_library(${YGG_TARGET_PY} MODULE ${PYSOURCES})
-    endif()
-    target_include_directories(
-          ${YGG_TARGET_PY} PUBLIC
-          ${DEPS_INCLUDE_DIRS})
-    target_link_libraries(
-          ${YGG_TARGET_PY} ${YGG_CPP_LINK_KEYWORD} ${YGG_TARGET_CPP}
-	  ${DEPS_LIB_NAMES_NO_PYTHON}
-	  ${DEPS_LIBRARIES_NO_PYTHON})
-    target_compile_options(${YGG_TARGET_PY} PUBLIC
-	  -DRAPIDJSON_YGGDRASIL_PYTHON)
-    if(YGG_PYTHON_LIBRARY_WRAP)
-        target_compile_options(${YGG_TARGET_PY} PRIVATE
-              -DYGG_PYTHON_LIBRARY_WRAP)
-    endif()
-    if(SKBUILD)
-        message(STATUS "SKBUILD = ${SKBUILD}")
-        if(SKBUILD STREQUAL "2")
-	    set(YGG_CPP_LIBRARY_DEST pyYggdrasil/${CMAKE_INSTALL_LIBDIR})
-	else()
-    	    find_package(PythonExtensions REQUIRED)
-	    # Add C++ library as Python extension
-            # Force python_extension_module to link to Python libraries
-	    # to allow dynamic lookup
-            set(CMAKE_CROSSCOMPILING ON)
-            python_extension_module(${YGG_TARGET_CPP})
-	    set(CMAKE_CROSSCOMPILING OFF)
-	    # Add Python extension
-    	    python_extension_module(${YGG_TARGET_PY})
-	    set(YGG_CPP_LIBRARY_DEST ${CMAKE_INSTALL_LIBDIR})
-	endif()
-	message(STATUS "YGG_CPP_LIBRARY_DEST = ${YGG_CPP_LIBRARY_DEST}")
-	if(NOT Python_INSTALL_DIR)
-	    if(SKBUILD STREQUAL "2")
-	        set(Python_INSTALL_DIR pyYggdrasil)
-	    else()
-  	        set(Python_INSTALL_DIR ".")
-	    endif()
-	endif()
-	# if(WIN32)
-        #     install(TARGETS ${YGG_TARGET_CPP}
-    	#             LIBRARY DESTINATION ${YGG_CPP_LIBRARY_DEST}
-	#       	    PUBLIC_HEADER DESTINATION ${YGG_CPP_LIBRARY_DEST}
-	# 	    RUNTIME DESTINATION ${YGG_CPP_LIBRARY_DEST})
-	# else()
-            install(TARGETS ${YGG_TARGET_CPP}
-    	            LIBRARY DESTINATION ${YGG_CPP_LIBRARY_DEST}
-	      	    PUBLIC_HEADER DESTINATION ${YGG_CPP_LIBRARY_DEST})
-	# endif()
-	if(WIN32)
-	    install(TARGETS ${YGG_TARGET_PY}
-	            LIBRARY DESTINATION ${Python_INSTALL_DIR}
-		    RUNTIME DESTINATION ${Python_INSTALL_DIR})
-	else()
-  	    install(TARGETS ${YGG_TARGET_PY}
-	            LIBRARY DESTINATION ${Python_INSTALL_DIR})
-	endif()
-        install(FILES
-	        ${CMAKE_SOURCE_DIR}/communication/pyYggdrasil/__init__.py
-		DESTINATION ${Python_INSTALL_DIR})
-	if(APPLE)
-            set_target_properties(
-	         ${YGG_TARGET_PY} PROPERTIES INSTALL_RPATH
-		 "@loader_path/${CMAKE_INSTALL_LIBDIR}")
-        else()
-	    set_target_properties(
-	         ${YGG_TARGET_PY} PROPERTIES INSTALL_RPATH
-	         "$ORIGIN/${CMAKE_INSTALL_LIBDIR}")
-        endif()
-    else()
-        target_link_libraries(
-	    ${YGG_TARGET_PY} PRIVATE
-	    ${DEPS_LIB_NAMES_PYTHON}
-	    ${DEPS_LIBRARIES_PYTHON})
-    endif(SKBUILD)
+    add_subdirectory(python)
 endif()
 
 ##################
