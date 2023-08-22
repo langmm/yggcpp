@@ -480,6 +480,11 @@ public:
      */
     bool global() { return flags & COMM_FLAG_GLOBAL; }
     /*!
+      @brief Determine if the communicator is async.
+      @return true if it is async, false otherwise.
+     */
+    bool async() { return flags & COMM_FLAG_ASYNC; }
+    /*!
       @brief Get the Metadata object containing header information about
         the comm including datatype.
       @return Metadata.
@@ -556,10 +561,12 @@ protected:
     friend Worker;
     friend WorkerList;
 
+public:
     static int _ygg_initialized;
     static int _ygg_finalized;
     static void _ygg_init();
-  
+
+protected:
     void updateMaxMsgSize(size_t new_size) {
       if (maxMsgSize == 0 || new_size < maxMsgSize)
 	maxMsgSize = new_size;

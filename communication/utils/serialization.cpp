@@ -21,6 +21,29 @@ void Metadata::_init(bool use_generic) {
     setGeneric();
   // ygglog_debug << "Metadata::init: metadata = " << metadata << std::endl;
 }
+// Metadata::Metadata(Metadata& rhs) :
+//   metadata(rapidjson::kObjectType), schema(NULL) {
+//   *this = rhs;
+//   metadata = rhs.metadata;
+//   _update_schema();
+//   rhs._update_schema();
+// }
+#if RAPIDJSON_HAS_CXX11_RVALUE_REFS
+Metadata::Metadata(Metadata&& rhs) :
+  metadata(std::move(rhs.metadata)), schema(NULL) {
+  _update_schema();
+  rhs._update_schema();
+}
+Metadata& Metadata::operator=(Metadata&& rhs) {
+  return *this = rhs.Move();
+}
+#endif // RAPIDJSON_HAS_CXX11_RVALUE_REFS
+Metadata& Metadata::operator=(Metadata& rhs) {
+  metadata = std::move(rhs.metadata);
+  _update_schema();
+  rhs._update_schema();
+  return *this;
+}
 bool Metadata::operator==(const Metadata& rhs) const {
   return (metadata == rhs.metadata);
 }
@@ -663,8 +686,54 @@ Header::Header() :
   data_(NULL), data(NULL), size_data(0), size_buff(0), size_curr(0),
   size_head(0), flags(HEAD_FLAG_VALID) {}
 Header::~Header() {
+  Destroy();
+}
+#if RAPIDJSON_HAS_CXX11_RVALUE_REFS
+Header::Header(Header&& rhs) :
+  Metadata(std::forward<Metadata>(rhs)),
+  data_(rhs.data_), data(rhs.data), size_data(rhs.size_data),
+  size_buff(rhs.size_buff), size_curr(rhs.size_curr),
+  size_head(rhs.size_head), flags(rhs.flags) {
+  rhs.data_ = NULL; // Prevent freeing moved pointer
+  rhs.Destroy();
+}
+Header& Header::operator=(Header&& rhs) {
+  return *this = rhs.Move();
+  // Metadata::operator=(std::forward<Metadata>(rhs));
+  // Destroy();
+  // RawAssign(rhs);
+  // rhs.data_ = NULL; // Prevent freeing moved pointer
+  // rhs.Destroy();
+  // return *this;
+}
+#endif // RAPIDJSON_HAS_CXX11_RVALUE_REFS
+void Header::Destroy() {
   if ((flags & HEAD_FLAG_OWNSDATA) && data_)
     free(data_);
+  data_ = NULL;
+  data = NULL;
+  size_data = 0;
+  size_buff = 0;
+  size_curr = 0;
+  size_head = 0;
+  flags = HEAD_FLAG_VALID;
+}
+void Header::RawAssign(const Header& rhs) {
+  data_ = rhs.data_;
+  data = rhs.data;
+  size_data = rhs.size_data;
+  size_buff = rhs.size_buff;
+  size_curr = rhs.size_curr;
+  size_head = rhs.size_head;
+  flags = rhs.flags;
+}
+Header& Header::operator=(Header& rhs) {
+  Metadata::operator=(std::forward<Metadata>(rhs));
+  Destroy();
+  RawAssign(rhs);
+  rhs.data_ = NULL; // prevent freeing moved pointer
+  rhs.Destroy();
+  return *this;
 }
 bool Header::operator==(const Header& rhs) const {
   if (!Metadata::operator==(rhs))

@@ -21,7 +21,7 @@
 #define YGG_MSG_BUF 2048
 /*! @brief Sleep time in micro-seconds */
 // #define YGG_SLEEP_TIME ((int)250000)
-#define YGG_SLEEP_TIME ((int)2500)
+#define YGG_SLEEP_TIME ((int)250)
 /*! @brief Maximum time to wait for any operation in micro-seconds */
 #define YGG_MAX_TIME ((int)54000000000) // 15 minutes
 /*! @brief Size for buffers to contain names of Python objects. */

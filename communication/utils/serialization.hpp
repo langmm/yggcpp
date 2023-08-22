@@ -99,11 +99,22 @@ class Metadata {
 private:
   Metadata(const Metadata& other) = delete;
   Metadata& operator=(const Metadata&) = delete;
- public:
+public:
   Metadata();
   virtual ~Metadata() {}
+  // Metadata(Metadata& rhs);
+#if RAPIDJSON_HAS_CXX11_RVALUE_REFS
+  Metadata(Metadata&& rhs);
+  Metadata& operator=(Metadata&& rhs);
+#endif // RAPIDJSON_HAS_CXX11_RVALUE_REFS
+  Metadata& operator=(Metadata& rhs);
   bool operator==(const Metadata& rhs) const;
   bool operator!=(const Metadata& rhs) const;
+  Metadata& Move() { return *this; }
+  void CopyFrom(const Metadata& rhs) {
+    metadata.CopyFrom(rhs.metadata, GetAllocator(), true);
+    _update_schema();
+  }
   void _init(bool use_generic = false);
   virtual void reset();
   void fromSchema(const rapidjson::Value& new_schema,
@@ -206,13 +217,29 @@ private:
 
 class Header : public Metadata {
 private:
-  Header(const Header& other) = delete;
-  Header& operator=(const Header&) = delete;
 public:
   Header();
   ~Header() override;
+#if RAPIDJSON_HAS_CXX11_RVALUE_REFS
+  Header(Header&& rhs);
+  Header& operator=(Header&& rhs);
+#endif // RAPIDJSON_HAS_CXX11_RVALUE_REFS
+  Header& operator=(Header& rhs);
   bool operator==(const Header& rhs) const;
   bool operator!=(const Header& rhs) const;
+  void Destroy();
+  void RawAssign(const Header& rhs);
+  Header& Move() { return *this; }
+  void CopyFrom(const Header& rhs) {
+    Destroy();
+    Metadata::CopyFrom(rhs);
+    RawAssign(rhs);
+    if ((rhs.flags & HEAD_FLAG_OWNSDATA) && rhs.data_) {
+      data_ = (char*)malloc(size_buff);
+      memcpy(data_, rhs.data_, size_buff);
+      data = &data_;
+    }
+  }
   void reset() override;
 
   void setMessageFlags(const char* msg, const size_t msg_len);

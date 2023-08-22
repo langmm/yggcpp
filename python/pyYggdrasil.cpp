@@ -46,6 +46,10 @@ static PyMethodDef functions[] = {
   {NULL, NULL, 0, NULL} /* sentinel */
 };
 
+static void pyYggModule_free(void*) {
+  communication::communicator::Comm_t::_ygg_cleanup();
+};
+
 static struct PyModuleDef pyYggModule {
   PyModuleDef_HEAD_INIT, /* m_base */
   YGG_MODULE_NAME,       /* m_name */
@@ -55,7 +59,7 @@ static struct PyModuleDef pyYggModule {
   slots,                 /* m_slots */
   NULL,                  /* m_traverse */
   NULL,                  /* m_clear */
-  NULL                   /* m_free */
+  pyYggModule_free       /* m_free */
 };
 
 #ifdef YGG_PYTHON_LIBRARY_WRAP
@@ -68,5 +72,6 @@ PyInit_pyYggdrasil() {
     import_array();
     // import_umath();
     PyObject* m = PyModuleDef_Init(&pyYggModule);
+    communication::communicator::Comm_t::_ygg_init();
     return m;
 }

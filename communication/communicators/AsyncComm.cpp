@@ -4,29 +4,6 @@
 using namespace communication::communicator;
 using namespace communication::utils;
 
-//////////////
-// AsyncMsg //
-//////////////
-
-AsyncMsg::AsyncMsg(const char* data, const size_t &len) :
-  msg(data, len), head() {}
-AsyncMsg::AsyncMsg(const char* data, const size_t &len,
-		   const utils::Header& header) :
-  msg(data, len), head() {
-  head.fromMetadata(header);
-  head.flags = header.flags;
-}
-AsyncMsg::AsyncMsg(const AsyncMsg&& rhs) :
-  msg(rhs.msg), head() {
-  head.fromMetadata(rhs.head);
-  head.flags = rhs.head.flags;
-}
-AsyncMsg& AsyncMsg::operator=(AsyncMsg&& rhs) {
-  this->~AsyncMsg();
-  new (this) AsyncMsg(std::move(rhs));
-  return *this;
-}
-
 //////////////////
 // AsyncBacklog //
 //////////////////
@@ -49,7 +26,7 @@ bool AsyncBacklog::on_thread(Comm_t* parent) {
   DIRECTION direction = parent->getDirection();
   {
     const std::lock_guard<std::mutex> comm_lock(comm_mutex);
-    int flgs_comm = parent->getFlags() & ~COMM_FLAG_ASYNC;
+    int flgs_comm = (parent->getFlags() & ~COMM_FLAG_ASYNC) | COMM_FLAG_ASYNC_WRAPPED;
     comm = new_Comm_t(direction,
 		      parent->getCommType(),
 		      parent->getName(),

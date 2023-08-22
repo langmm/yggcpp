@@ -41,10 +41,21 @@ public:
 
 class RequestList {
 public:
-    RequestList(DIRECTION dir) :
-      comms(), requests(), partners(), response_dir(dir),
+    RequestList(DIRECTION dir, int flags = 0) :
+      comms(), requests(), partners(),
+      response_dir(dir), response_flags(flags),
       response_metadata(), signon_complete(false),
-      stashed_request() {}
+      stashed_request() {
+      response_flags |= COMM_EOF_SENT | COMM_EOF_RECV;
+      if (response_dir == RECV)
+	response_flags |= COMM_FLAG_CLIENT_RESPONSE;
+      else
+	response_flags |= COMM_FLAG_SERVER_RESPONSE;
+      if (response_flags & COMM_FLAG_ASYNC_WRAPPED) {
+	response_flags &= ~COMM_FLAG_ASYNC_WRAPPED;
+	response_flags |= COMM_FLAG_ASYNC;
+      }
+    }
     ~RequestList() {
         destroy();
     }
@@ -292,14 +303,11 @@ public:
                 return idx;
         }
         utils::Address* response_adr = new utils::Address(response_address);
-        Comm_t* x = new COMM_BASE("", response_adr, response_dir);
+	COMM_TYPE response_type = DEFAULT_COMM;
+	Comm_t* x = new_Comm_t(response_dir, response_type, "",
+			       response_adr, response_flags);
         comms.push_back(x);
         x->addSchema(response_metadata);
-        x->flags |= COMM_EOF_SENT | COMM_EOF_RECV;
-        if (response_dir == RECV)
-            x->flags |= COMM_FLAG_CLIENT_RESPONSE;
-        else
-            x->flags |= COMM_FLAG_SERVER_RESPONSE;
         idx = (int)(comms.size() - 1);
         return idx;
     }
@@ -361,6 +369,7 @@ public:
     std::vector<Request> requests;
     std::vector<Partner> partners;
     DIRECTION response_dir;
+    int response_flags;
     utils::Metadata response_metadata;
     bool signon_complete;
     std::string stashed_request;

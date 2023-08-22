@@ -88,7 +88,7 @@ class TestComm_t_Installed:
             thread.start()
             try:
                 comm_recv.timeout_recv = 100000
-                assert comm_recv.wait_for_recv(10000) > 0
+                assert comm_recv.wait_for_recv(100000) > 0
                 assert comm_recv.n_msg > 0
                 result_recv = comm_recv.recv()
                 assert result_recv

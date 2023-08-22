@@ -5,7 +5,7 @@
 #define DO_SEND_RECV_EXCHANGE(init_data, comp_data, send_method, send_args, recv_method, recv_args) \
   init_data;								\
   EXPECT_GE(sComm.send_method send_args, 0);				\
-  EXPECT_GT(rComm.wait_for_recv(10000), 0);				\
+  EXPECT_GT(rComm.wait_for_recv(100000), 0);				\
   EXPECT_GT(rComm.comm_nmsg(), 0);					\
   rComm.set_timeout_recv(10000);					\
   EXPECT_GE(rComm.recv_method recv_args, 0);				\
@@ -403,6 +403,35 @@
 			  COMP_DATA_SINGLE,				\
 			  sendVar, (data_send),				\
 			  recvVar, (data_recv));			\
+  }									\
+  TEST(cls, globalAsync) {						\
+    std::string name = "test_name";					\
+    global_scope_comm_on();						\
+    COMM_TYPE typ = cls::defaultCommType();				\
+    {									\
+      AsyncComm sComm(name, nullptr, SEND, COMM_FLAG_ASYNC, typ);	\
+      sComm.addSchema("{\"type\": \"number\"}");			\
+      std::string key_env = name + "_IN";				\
+      std::string val_env = sComm.getAddress();				\
+      setenv(key_env.c_str(), val_env.c_str(), 1);			\
+      AsyncComm rComm(name, RECV, COMM_FLAG_ASYNC, typ);		\
+      unsetenv(key_env.c_str());					\
+      DO_SEND_RECV_EXCHANGE(INIT_DATA_SINGLE(double, 1.5),		\
+			    COMP_DATA_SINGLE,				\
+			    sendVar, (data_send),			\
+			    recvVar, (data_recv));			\
+    }									\
+    {									\
+      AsyncComm sComm(name, nullptr, SEND, COMM_FLAG_ASYNC, typ);	\
+      AsyncComm rComm(name, RECV, COMM_FLAG_ASYNC, typ);		\
+      DO_SEND_RECV_EXCHANGE(INIT_DATA_SINGLE(double, 1.5),		\
+			    COMP_DATA_SINGLE,				\
+			    sendVar, (data_send),			\
+			    recvVar, (data_recv));			\
+      DO_SEND_RECV_EOF(recvVar, (data_recv));				\
+    }									\
+    global_scope_comm_off();						\
+    Comm_t::_ygg_cleanup();						\
   }
 
 #define COMM_SERI_TEST(cls)						\

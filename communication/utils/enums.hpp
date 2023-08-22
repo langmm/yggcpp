@@ -30,22 +30,23 @@ enum DIRECTION {
 
 /*! @brief Bit flags. */
 enum CommFlags {
-    COMM_FLAG_VALID  = 0x00000001,  //!< Set if the comm is initialized
-    COMM_FLAG_GLOBAL = 0x00000002,  //!< Set if the comm is global
-    COMM_FLAG_WORKER = 0x00000004,  //!< Set if the comm is a work comm
-    COMM_FLAG_CLIENT = 0x00000008,  //!< Set if the comm is a client
-    COMM_FLAG_SERVER = 0x00000010,  //!< Set if the comm is a server
-    COMM_FLAG_CLIENT_RESPONSE = 0x00000020, //!< Set if the comm is a client response comm
-    COMM_FLAG_SERVER_RESPONSE = 0x00000040, //!< Set if the comm is a server response comm
-    COMM_ALWAYS_SEND_HEADER   = 0x00000080, //!< Set if the comm should always include a header in messages
-    COMM_ALLOW_MULTIPLE_COMMS = 0x00000100, //!< Set if the comm should connect in a way that allow multiple connections
-    COMM_FLAGS_USED_SENT = 0x00000200,  //!< Set if the comm has been used
-    COMM_FLAGS_USED_RECV = 0x00000400,  //!< Set if the comm has been used
-    COMM_EOF_SENT   = 0x00000800,  //!< Set if EOF has been sent
-    COMM_EOF_RECV   = 0x00001000,  //!< Set if EOF has been received
-    COMM_FLAG_INTERFACE = 0x00002000,       //!< Set if communicator is an interface communicator
-    COMM_FLAG_DELETE    = 0x00004000,       //!< Set if the communicator needs to be deleted
-    COMM_FLAG_ASYNC     = 0x00008000        //!< Set if the communicator is asynchronous
+    COMM_FLAG_VALID           = 0x00000001, //!< Comm is initialized
+    COMM_FLAG_GLOBAL          = 0x00000002, //!< Comm is global
+    COMM_FLAG_WORKER          = 0x00000004, //!< Comm is a worker
+    COMM_FLAG_CLIENT          = 0x00000008, //!< Comm is a client
+    COMM_FLAG_SERVER          = 0x00000010, //!< Comm is a server
+    COMM_FLAG_CLIENT_RESPONSE = 0x00000020, //!< Comm is a client response
+    COMM_FLAG_SERVER_RESPONSE = 0x00000040, //!< Comm is a server response
+    COMM_ALWAYS_SEND_HEADER   = 0x00000080, //!< Comm should always include a header in messages
+    COMM_ALLOW_MULTIPLE_COMMS = 0x00000100, //!< Comm should connect in a way that allow multiple connections
+    COMM_FLAGS_USED_SENT      = 0x00000200, //!< Comm has been used for send
+    COMM_FLAGS_USED_RECV      = 0x00000400, //!< Comm has been used for receive
+    COMM_EOF_SENT             = 0x00000800, //!< EOF has been sent
+    COMM_EOF_RECV             = 0x00001000, //!< EOF has been received
+    COMM_FLAG_INTERFACE       = 0x00002000, //!< Comm is an interface comm
+    COMM_FLAG_DELETE          = 0x00004000, //!< Comm needs to be deleted
+    COMM_FLAG_ASYNC           = 0x00008000, //!< Comm is asynchronous
+    COMM_FLAG_ASYNC_WRAPPED   = 0x00010000  //!< Comm is wrapped by an asynchronous comm
 };
 
   

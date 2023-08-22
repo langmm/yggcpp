@@ -1,15 +1,13 @@
 * Move address away from pointer?
-* Re-structure so that C++, C, Python, and Fortran interfaces each have their own directory and CMakeLists.txt
 * Re-structure so that top namespace in C++ is YggInterface
+* Move C interface into it's own directory and CMakeLists.txt with tests
 * Automated documentation using doxygen
 * Fill in missing docs
 * Fix handling of multiple connections in ZMQ socket (restricted to ZMQ_PAIR to simplify testing)
-* Add tests for global async
-* Add tests for async client/server
 * Add Fortran interface
-* Add RabbitMQ communicator
+* Add RabbitMQ communicator (low priority)
 * Add test fixture to verify that IPC queues are cleaned up
-* Make sure send/recv/call/wait can be interuppted by Ctrl+C
+* Add test to verify that send/recv/call/wait can be interuppted by Ctrl+C
 * Allow for server/client to dynamically use different base communicators?
-* Allow for datatype to be passed as a argument to the constructor
+* Allow for datatype to be passed as a argument to the constructors in C++ and Python
 * Fix Python install on Windows (YggInterface_py is not being located)

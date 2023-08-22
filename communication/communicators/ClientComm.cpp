@@ -172,7 +172,8 @@ bool ClientComm::create_header_recv(Header& header, char*& data, const size_t &l
   return out;
 }
 
-long ClientComm::recv_single(char*& rdata, const size_t &rlen, bool allow_realloc)  {
+long ClientComm::recv_single(char*& rdata, const size_t &rlen,
+			     bool allow_realloc)  {
     // Should never be called with global comm
     // if (global_comm)
     //   return global_comm->recv_single(rdata, rlen, allow_realloc);

@@ -9,7 +9,8 @@ using namespace communication::utils;
 RPCComm::RPCComm(const std::string &name, Address *address,
 		 int flgs, DIRECTION dir, DIRECTION req_dir,
 		 const COMM_TYPE type) :
-  COMM_BASE(name, address, dir, flgs, type), requests(req_dir) {}
+  COMM_BASE(name, address, dir, flgs, type),
+  requests(req_dir, flgs & COMM_FLAG_ASYNC_WRAPPED) {}
 
 communication::utils::Metadata& RPCComm::getMetadata(const DIRECTION dir) {
   if (global_comm)

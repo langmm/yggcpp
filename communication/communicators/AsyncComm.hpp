@@ -1,20 +1,11 @@
 #pragma once
 
 #include "CommBase.hpp"
+#include "utils/Message.hpp"
+#include <atomic>
 
 namespace communication {
   namespace communicator {
-
-    class AsyncMsg {
-    public:
-      AsyncMsg(const char* data, const size_t &len);
-      AsyncMsg(const char* data, const size_t &len,
-	       const utils::Header& header);
-      AsyncMsg(const AsyncMsg&& rhs);
-      AsyncMsg& operator=(AsyncMsg&& rhs);
-      std::string msg;
-      utils::Header head;
-    };
 
     class AsyncBacklog {
     public:
@@ -27,7 +18,7 @@ namespace communication {
       std::mutex comm_mutex;
       std::atomic_bool opened;
       std::atomic_bool closing;
-      std::vector<AsyncMsg> backlog;
+      std::vector<utils::Message> backlog;
       std::thread backlog_thread;
     };
 
