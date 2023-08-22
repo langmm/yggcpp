@@ -32,23 +32,21 @@ AsyncMsg& AsyncMsg::operator=(AsyncMsg&& rhs) {
 //////////////////
 
 AsyncBacklog::AsyncBacklog(Comm_t* parent) :
-  comm(nullptr), comm_mutex(), opened(), closing(), backlog(),
+  comm(nullptr), comm_mutex(), opened(false), closing(false), backlog(),
   backlog_thread(&AsyncBacklog::on_thread, this, parent) {
-  while (!(opened.test() || closing.test())) {
+  while (!(opened.load() || closing.load())) {
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
   }
 }
 
 AsyncBacklog::~AsyncBacklog() {
-  closing.test_and_set();
+  closing.store(true);
   backlog_thread.join();
 }
 
 bool AsyncBacklog::on_thread(Comm_t* parent) {
   bool out = true;
   DIRECTION direction = parent->getDirection();
-  opened.clear();
-  closing.clear();
   {
     const std::lock_guard<std::mutex> comm_lock(comm_mutex);
     int flgs_comm = parent->getFlags() & ~COMM_FLAG_ASYNC;
@@ -59,10 +57,10 @@ bool AsyncBacklog::on_thread(Comm_t* parent) {
 		      flgs_comm);
     parent->updateMaxMsgSize(comm->getMaxMsgSize());
     parent->address->address(comm->getAddress());
-    opened.test_and_set();
+    opened.store(true);
   }
   if (direction == SEND) {
-    while (!closing.test()) {
+    while (!closing.load()) {
       int ret = send();
       if (ret == 0) {
 	std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -72,7 +70,7 @@ bool AsyncBacklog::on_thread(Comm_t* parent) {
       }
     }
   } else if (direction == RECV) {
-    while (!closing.test()) {
+    while (!closing.load()) {
       long ret = recv();
       if (ret == 0) {
 	std::this_thread::sleep_for(std::chrono::milliseconds(10));

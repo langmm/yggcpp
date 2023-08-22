@@ -396,7 +396,6 @@
     sComm.addSchema("{\"type\": \"number\"}");				\
     std::string key_env = name + "_IN";					\
     std::string val_env = sComm.getAddress();				\
-    std::cerr << "Address = " << val_env << std::endl;			\
     setenv(key_env.c_str(), val_env.c_str(), 1);			\
     AsyncComm rComm(name, RECV, COMM_FLAG_ASYNC, typ);			\
     unsetenv(key_env.c_str());						\

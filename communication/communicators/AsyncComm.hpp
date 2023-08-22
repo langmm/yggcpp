@@ -25,8 +25,8 @@ namespace communication {
       long recv();
       Comm_t* comm;
       std::mutex comm_mutex;
-      std::atomic_flag opened;
-      std::atomic_flag closing;
+      std::atomic_bool opened;
+      std::atomic_bool closing;
       std::vector<AsyncMsg> backlog;
       std::thread backlog_thread;
     };
