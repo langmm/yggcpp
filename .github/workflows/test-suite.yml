@@ -328,6 +328,11 @@ jobs:
         shell: bash -l {0}
         run: |
           pytest python/test
+      - name: Check for Python Interfaces (PIP)
+        if: matrix.python-install == 'pip' && matrix.with-asan == false && matrix.with-elf == false && matrix.with-valgrind == false
+        shell: bash -l {0}
+        run: |
+          ls $(python -c 'import site; print(site.getsitepackages()[0])')/pyYggdrasil
       - name: Test Python Interfaces (PIP)
         if: matrix.python-install == 'pip' && matrix.with-asan == false && matrix.with-elf == false && matrix.with-valgrind == false
         run: |

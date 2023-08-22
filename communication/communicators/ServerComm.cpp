@@ -101,5 +101,20 @@ int ServerComm::send_single(const char* data, const size_t &len,
     return ret;
 }
 
+// long ServerComm::recv_single(char*& data, const size_t &len,
+// 			     bool allow_realloc) {
+//   assert(!global_comm);
+//   ygglog_debug << "ServerComm(" << name << ")::recv_single" << std::endl;
+//   long ret = COMM_BASE::recv_single(data, len, allow_realloc);
+//   if (ret >= 0) {
+//     Header header;
+//     if (!create_header_recv(header, data, len, ret, allow_realloc, true))
+//       return -1;
+//     if ((header.flags & HEAD_FLAG_CLIENT_SIGNON) && !signon(header))
+//       return -1;
+//   }
+//   return ret;
+// }
+
 
 #endif

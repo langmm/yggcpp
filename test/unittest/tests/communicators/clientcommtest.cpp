@@ -235,7 +235,9 @@ TEST(ClientComm, call) {
   EXPECT_EQ(cc.callRealloc(4, req_send.c_str(), req_send.size(),
 			   &res_recv, &res_recv_len), 2);
   EXPECT_EQ(res_send.size(), res_recv_len);
-  EXPECT_EQ(strcmp(res_send.c_str(), res_recv), 0);
+  if (res_recv) {
+    EXPECT_EQ(strcmp(res_send.c_str(), res_recv), 0);
+  }
   EXPECT_EQ(cc.server_comm->recvVar(req_recv), 2);
   EXPECT_EQ(req_recv, req_send);
   // Second message
@@ -249,7 +251,9 @@ TEST(ClientComm, call) {
   EXPECT_EQ(cc.call(4, req_send.c_str(), req_send.size(),
 		    res_recv, &res_recv_len), 2);
   EXPECT_EQ(res_send.size(), res_recv_len);
-  EXPECT_EQ(strcmp(res_send.c_str(), res_recv), 0);
+  if (res_recv) {
+    EXPECT_EQ(strcmp(res_send.c_str(), res_recv), 0);
+  }
   EXPECT_EQ(cc.server_comm->recvVar(req_recv), 2);
   EXPECT_EQ(req_recv, req_send);
   // Failed message due to incorrect number of arguments

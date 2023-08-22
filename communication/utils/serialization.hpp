@@ -217,6 +217,8 @@ public:
 
 class Header : public Metadata {
 private:
+  Header(const Header&) = delete;
+  Header& operator=(const Header&) = delete;
 public:
   Header();
   ~Header() override;

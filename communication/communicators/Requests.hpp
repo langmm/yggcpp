@@ -59,6 +59,16 @@ public:
     ~RequestList() {
         destroy();
     }
+    void initClientSignon() {
+      if (requests.empty()) {
+	ygglog_debug << "initClientSignon: begin" << std::endl;
+	utils::Header header;
+	header.initMeta();
+	header.flags |= HEAD_FLAG_CLIENT_SIGNON;
+	addRequestClient(header);
+	ygglog_debug << "initClientSignon: complete" << std::endl;
+      }
+    }
     void destroy() {
       for (size_t i = 0; i < comms.size(); i++) {
 	if (comms[i] != NULL) {
@@ -96,9 +106,14 @@ public:
       return 0;
     }
     int stashRequest() {
-      if (!requests.empty()) {
-	stashed_request = requests[0].request_id;
-	requests.erase(requests.begin());
+      for (std::vector<Request>::iterator it = requests.begin();
+	   it != requests.end(); it++) {
+	if (!it->is_signon) {
+	  stashed_request = it->request_id;
+	  requests.erase(it);
+	  ygglog_debug << "stashRequest: Stashing " << stashed_request << std::endl;
+	  break;
+	}
       }
       return 1;
     }
@@ -106,6 +121,8 @@ public:
       ygglog_debug << "addRequestClient: begin" << std::endl;
       initClientResponse();
       bool is_signon = (header.flags & HEAD_FLAG_CLIENT_SIGNON);
+      ygglog_debug << "addRequestClient: is_signon = " <<
+	is_signon << std::endl;
       int existing_idx = -1;
       if (is_signon) {
 	for (size_t i = 0; i < requests.size(); i++) {
@@ -115,6 +132,9 @@ public:
 	    break;
 	  }
 	}
+      } else if (requests.empty()) {
+	// Ensure signon is first request
+	initClientSignon();
       }
       if (request_id.empty()) {
 	if (!stashed_request.empty()) {
@@ -239,11 +259,9 @@ public:
       return comms[comms.size() - 1];
     }
     std::string activeRequestClient() {
-      if ((!signon_complete) && requests.size() > 0) {
-	return requests[0].request_id;
-      }
       for (size_t i = 0; i < requests.size(); i++) {
-	if (!requests[i].is_signon)
+	if ((requests[i].is_signon && !signon_complete) ||
+	    (signon_complete && !requests[i].is_signon))
 	  return requests[i].request_id;
       }
       utils::ygglog_throw_error("activeRequestClient: No active requests");
@@ -314,7 +332,8 @@ public:
     bool signonSent() const {
         for (size_t i = 0; i < requests.size(); i++) {
             if (requests[i].is_signon)
-                return true;
+	      return (comms[requests[i].comm_idx]->flags &
+		      COMM_FLAGS_USED_SENT);
         }
         return false;
     }

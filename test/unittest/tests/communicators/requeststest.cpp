@@ -35,13 +35,13 @@ TEST(RequestList, Request) {
   header.SetMetaString("model", "model");
   char* data = NULL;
   // Client
-  EXPECT_EQ(client.addRequestClient(header), 0);
+  EXPECT_EQ(client.addRequestClient(header), 1);
   std::string req_id(header.GetMetaString("request_id"));
   EXPECT_EQ(client.addRequestClient(header, header.GetMetaString("request_id")), -1);
-  EXPECT_EQ(client.hasRequest(header.GetMetaString("request_id")), 0);
-  EXPECT_EQ(client.hasComm(header.GetMetaString("response_address")), 0);
-  EXPECT_EQ(client.addRequestClient(header), 1);
   EXPECT_EQ(client.hasRequest(header.GetMetaString("request_id")), 1);
+  EXPECT_EQ(client.hasComm(header.GetMetaString("response_address")), 0);
+  EXPECT_EQ(client.addRequestClient(header), 2);
+  EXPECT_EQ(client.hasRequest(header.GetMetaString("request_id")), 2);
   EXPECT_EQ(client.hasComm(header.GetMetaString("response_address")), 0);
   // Server
   EXPECT_EQ(server.addRequestServer(header), 0);
@@ -70,7 +70,7 @@ TEST(RequestList, Response) {
   header.SetMetaID("request_id", request_id);
   EXPECT_EQ(server.addResponseServer(header, NULL, 0), -1);
   EXPECT_EQ(client.addResponseClient(header, NULL, 0), -1);
-  EXPECT_EQ(client.addRequestClient(header), 0);
+  EXPECT_EQ(client.addRequestClient(header), 1);
   EXPECT_EQ(server.addRequestServer(header), 0);
   EXPECT_EQ(server.addResponseServer(header, "test", 4), 0);
   EXPECT_EQ(server.addResponseServer(header, "test", 4), -1);
@@ -99,7 +99,7 @@ TEST(RequestList, Signon) {
   EXPECT_EQ(client.addRequestClient(header), 0);
   EXPECT_EQ(client.hasRequest(header.GetMetaString("request_id")), 0);
   EXPECT_EQ(client.hasComm(header.GetMetaString("response_address")), 0);
-  EXPECT_TRUE(client.signonSent());
+  EXPECT_FALSE(client.signonSent()); // Send not called
   EXPECT_EQ(server.addRequestServer(header), 0);
   EXPECT_EQ(server.addResponseServer(header, "test", 4), 0);
   EXPECT_EQ(client.addResponseClient(header, "test", 4), 0);

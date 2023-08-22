@@ -136,6 +136,8 @@ int AsyncComm::send_single(const char* data, const size_t &len,
   //   return global_comm->send_single(data, len, header);
   const std::lock_guard<std::mutex> lock(handle->comm_mutex);
   assert((!global_comm) && handle);
+  if (type == SERVER_COMM)
+    return handle->comm->send_single(data, len, header);
   ygglog_debug << "AsyncComm(" << name << ")::send_single: " << len << " bytes" << std::endl;
   handle->backlog.emplace_back(data, len, header);
   return 1;
@@ -148,6 +150,8 @@ long AsyncComm::recv_single(char*& data, const size_t &len,
   //   return global_comm->recv_single(data, len, allow_realloc);
   const std::lock_guard<std::mutex> lock(handle->comm_mutex);
   assert((!global_comm) && handle);
+  if (type == CLIENT_COMM)
+    return handle->comm->recv_single(data, len, allow_realloc);
   long ret = -1;
   ygglog_debug << "AsyncComm(" << name << ")::recv_single " << std::endl;
   if (handle->backlog.size() == 0) {

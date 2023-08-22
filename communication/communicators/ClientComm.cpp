@@ -52,6 +52,8 @@ void ClientComm::init() {
   }
 }
 
+
+
 bool ClientComm::signon(const Header& header) {
   if (global_comm)
     return dynamic_cast<ClientComm*>(global_comm)->signon(header);
@@ -65,6 +67,7 @@ bool ClientComm::signon(const Header& header) {
     // Prevent sending extra SIGNON during testing
     if (!requests.signonSent()) {
 #endif // YGG_TEST
+    ygglog_debug << "ClientComm(" << name << ")::signon: Sending signon" << std::endl;
     if (send(YGG_CLIENT_SIGNON, YGG_CLIENT_SIGNON_LEN) < 0) {
       ygglog_error << "ClientComm(" << name << ")::signon: Error in sending sign-on" << std::endl;
       return false;
@@ -81,6 +84,7 @@ bool ClientComm::signon(const Header& header) {
         ygglog_error << "ClientComm(" << name << ")::signon: Error in receiving sign-on" << std::endl;
 	return false;
       }
+      ygglog_debug << "ClientComm(" << name << ")::signon: Received response to signon" << std::endl;
       break;
     } else {
       ygglog_debug << "ClientComm(" << name << ")::signon: No response to signon (address = " << requests.activeComm()->address->address() << "), sleeping" << std::endl;
@@ -153,10 +157,6 @@ bool ClientComm::create_header_recv(Header& header, char*& data, const size_t &l
   Comm_t* response_comm = requests.activeComm();
   // create_header_recv only called after request confirmed
   assert(response_comm);
-  // if (response_comm == NULL) {
-  //   ygglog_error << "ClientComm(" << name << ")::create_header_recv: Error getting response comm" << std::endl;
-  //   return false;
-  // }
   bool out = response_comm->create_header_recv(header, data, len, msg_len,
 					       allow_realloc, temp);
   if (out && !(header.flags & HEAD_FLAG_EOF)) {
@@ -171,6 +171,17 @@ bool ClientComm::create_header_recv(Header& header, char*& data, const size_t &l
   }
   return out;
 }
+
+// int ClientComm::send_single(const char *data, const size_t &len,
+// 			    const utils::Header& header)  {
+//   assert(!global_comm);
+//   ygglog_debug << "ClientComm(" << name << ")::send_single" << std::endl;
+//   if (!(header.flags & HEAD_FLAG_EOF)) {
+//     if (!signon(header))
+//       return -1;
+//   }
+//   return COMM_BASE::send_single(data, len, header);
+// }
 
 long ClientComm::recv_single(char*& rdata, const size_t &rlen,
 			     bool allow_realloc)  {

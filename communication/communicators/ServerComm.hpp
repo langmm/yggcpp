@@ -40,6 +40,8 @@ protected:
 			    int temp) override;
     int send_single(const char *data, const size_t &len,
 		    const utils::Header& header) override;
+    // long recv_single(char*& data, const size_t &len,
+    // 		     bool allow_realloc) override;
 
 };
 

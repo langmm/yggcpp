@@ -47,6 +47,8 @@ protected:
     bool create_header_recv(utils::Header& header, char*& data, const size_t &len,
 			    size_t msg_len, int allow_realloc,
 			    int temp) override;
+    // int send_single(const char *data, const size_t &len,
+    // 		    const utils::Header& header) override;
     long recv_single(char*& data, const size_t &len,
 		     bool allow_realloc) override;
 
