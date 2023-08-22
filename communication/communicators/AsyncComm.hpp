@@ -8,6 +8,9 @@ namespace communication {
   namespace communicator {
 
     class AsyncBacklog {
+    private:
+      AsyncBacklog(const AsyncBacklog&) = delete;
+      AsyncBacklog& operator=(const AsyncBacklog&) = delete;
     public:
       AsyncBacklog(Comm_t* parent);
       ~AsyncBacklog();
@@ -46,13 +49,16 @@ namespace communication {
       explicit AsyncComm(utils::Address *addr,
 			 const DIRECTION dirn, int flgs = 0,
 			 const COMM_TYPE type = DEFAULT_COMM);
+
+      // \copydoc Comm_t::defaultCommType
       static COMM_TYPE defaultCommType() { return DEFAULT_COMM; }
       
-      /**
-       * The number of messages in the queue
-       * @return The number of messages
-       */
+      // \copydoc Comm_t::comm_nmsg
       int comm_nmsg() const override;
+      
+      // \copydoc Comm_t::getMetadata
+      utils::Metadata& getMetadata(const DIRECTION dir=NONE) override;
+      
       using Comm_t::send;
       using Comm_t::recv;
       

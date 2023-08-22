@@ -59,16 +59,16 @@ public:
     ~RequestList() {
         destroy();
     }
-    void initClientSignon() {
-      if (requests.empty()) {
-	ygglog_debug << "initClientSignon: begin" << std::endl;
-	utils::Header header;
-	header.initMeta();
-	header.flags |= HEAD_FLAG_CLIENT_SIGNON;
-	addRequestClient(header);
-	ygglog_debug << "initClientSignon: complete" << std::endl;
-      }
-    }
+    // void initClientSignon() {
+    //   if (requests.empty()) {
+    // 	ygglog_debug << "initClientSignon: begin" << std::endl;
+    // 	utils::Header header;
+    // 	header.initMeta();
+    // 	header.flags |= HEAD_FLAG_CLIENT_SIGNON;
+    // 	addRequestClient(header);
+    // 	ygglog_debug << "initClientSignon: complete" << std::endl;
+    //   }
+    // }
     void destroy() {
       for (size_t i = 0; i < comms.size(); i++) {
 	if (comms[i] != NULL) {
@@ -106,6 +106,10 @@ public:
       return 0;
     }
     int stashRequest() {
+      // if (!requests.empty()) {
+      // 	stashed_request = requests[0].request_id;
+      // 	requests.erase(requests.begin());
+      // }
       for (std::vector<Request>::iterator it = requests.begin();
 	   it != requests.end(); it++) {
 	if (!it->is_signon) {
@@ -132,9 +136,9 @@ public:
 	    break;
 	  }
 	}
-      } else if (requests.empty()) {
-	// Ensure signon is first request
-	initClientSignon();
+      // } else if (requests.empty()) {
+      // 	// Ensure signon is first request
+      // 	initClientSignon();
       }
       if (request_id.empty()) {
 	if (!stashed_request.empty()) {
@@ -332,8 +336,9 @@ public:
     bool signonSent() const {
         for (size_t i = 0; i < requests.size(); i++) {
             if (requests[i].is_signon)
-	      return (comms[requests[i].comm_idx]->flags &
-		      COMM_FLAGS_USED_SENT);
+	        return true;
+	        // return (comms[requests[i].comm_idx]->flags &
+		//         COMM_FLAGS_USED_SENT);
         }
         return false;
     }

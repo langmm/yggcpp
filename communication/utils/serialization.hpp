@@ -97,7 +97,7 @@ std::string document2string(ValueT& rhs, const char* indent="") {
 
 class Metadata {
 private:
-  Metadata(const Metadata& other) = delete;
+  Metadata(const Metadata&) = delete;
   Metadata& operator=(const Metadata&) = delete;
 public:
   Metadata();

@@ -332,7 +332,9 @@ jobs:
         if: matrix.python-install == 'pip' && matrix.with-asan == false && matrix.with-elf == false && matrix.with-valgrind == false
         shell: bash -l {0}
         run: |
-          ls $(python -c 'import site; print(site.getsitepackages()[0])')/pyYggdrasil
+          python -m site
+          python -c 'import site; print(site.getsitepackages())'
+          ls $(python -c 'import os; import site; print(os.path.join(site.getsitepackages()[0], "pyYggdrasil"))')
       - name: Test Python Interfaces (PIP)
         if: matrix.python-install == 'pip' && matrix.with-asan == false && matrix.with-elf == false && matrix.with-valgrind == false
         run: |

@@ -161,6 +161,20 @@ class TestComm_t_Installed:
     def test_send_recv(self, do_send_recv):
         do_send_recv("Hello world")
 
+    def test_send_recv_async(self, commtype, require_installed):
+        comm_recv = pyYggdrasil.CommBase(
+            "test", commtype=commtype,
+            direction=pyYggdrasil.DIRECTION.RECV,
+            flags=pyYggdrasil.COMM_FLAGS.COMM_FLAG_ASYNC)
+        comm_send = pyYggdrasil.CommBase(
+            "test", comm_recv.address, commtype=commtype,
+            direction=pyYggdrasil.DIRECTION.SEND,
+            flags=(pyYggdrasil.COMM_FLAGS.COMM_FLAG_INTERFACE |
+                   pyYggdrasil.COMM_FLAGS.COMM_FLAG_ASYNC))
+        msg = "Test Message"
+        assert comm_send.send(msg)
+        assert comm_recv.recv() == (True, msg)
+
     def test_send_recv_long(self, comm_recv, do_send_recv):
         if comm_recv.maxMsgSize == 0:
             pytest.skip("Communicator does not have a maxMsgSize")

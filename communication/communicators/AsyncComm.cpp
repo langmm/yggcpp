@@ -119,6 +119,13 @@ AsyncComm::AsyncComm(utils::Address *addr,
 		     int flgs, const COMM_TYPE type) :
   AsyncComm("", addr, dirn, flgs, type) {}
 
+communication::utils::Metadata& AsyncComm::getMetadata(const DIRECTION dir) {
+  if (global_comm)
+    return global_comm->getMetadata(dir);
+  const std::lock_guard<std::mutex> lock(handle->comm_mutex);
+  return handle->comm->getMetadata(dir);
+}
+
 int AsyncComm::comm_nmsg() const {
   if (global_comm)
     return global_comm->comm_nmsg();
