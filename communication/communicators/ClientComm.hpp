@@ -40,15 +40,15 @@ public:
 protected:
 #endif
     void init();
-    virtual bool signon(const utils::Header& header);
+  virtual bool signon(const utils::Header& header, bool in_async=false);
     Comm_t* create_worker_send(utils::Header& head) override;
     Comm_t* create_worker_recv(utils::Header& head) override;
     bool create_header_send(utils::Header& header, const char* data, const size_t &len) override;
     bool create_header_recv(utils::Header& header, char*& data, const size_t &len,
 			    size_t msg_len, int allow_realloc,
 			    int temp) override;
-    // int send_single(const char *data, const size_t &len,
-    // 		    const utils::Header& header) override;
+    int send_single(const char *data, const size_t &len,
+		    const utils::Header& header) override;
     long recv_single(char*& data, const size_t &len,
 		     bool allow_realloc) override;
 

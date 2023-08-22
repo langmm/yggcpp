@@ -14,10 +14,12 @@ ServerComm::ServerComm(const std::string nme, Address *addr,
 
 ADD_CONSTRUCTORS_RPC_DEF(ServerComm)
 
-bool ServerComm::signon(const Header& header) {
+bool ServerComm::signon(const Header& header, bool in_async) {
   assert(header.flags & HEAD_FLAG_CLIENT_SIGNON);
   ygglog_debug << "ServerComm(" << name << ")::signon: begin (" <<
     (header.flags & HEAD_FLAG_CLIENT_SIGNON) << ")" << std::endl;
+  if ((flags & COMM_FLAG_ASYNC_WRAPPED) && !in_async)
+    return true;
   if (send(YGG_SERVER_SIGNON, YGG_SERVER_SIGNON_LEN) < 0) {
     ygglog_error << "ServerComm(" << name << ")::signon: Error in sending sign-on" << std::endl;
     return false;
@@ -101,20 +103,25 @@ int ServerComm::send_single(const char* data, const size_t &len,
     return ret;
 }
 
-// long ServerComm::recv_single(char*& data, const size_t &len,
-// 			     bool allow_realloc) {
-//   assert(!global_comm);
-//   ygglog_debug << "ServerComm(" << name << ")::recv_single" << std::endl;
-//   long ret = COMM_BASE::recv_single(data, len, allow_realloc);
-//   if (ret >= 0) {
-//     Header header;
-//     if (!create_header_recv(header, data, len, ret, allow_realloc, true))
-//       return -1;
-//     if ((header.flags & HEAD_FLAG_CLIENT_SIGNON) && !signon(header))
-//       return -1;
-//   }
-//   return ret;
-// }
+long ServerComm::recv_single(char*& data, const size_t &len,
+			     bool allow_realloc) {
+  assert(!global_comm);
+  ygglog_debug << "ServerComm(" << name << ")::recv_single" << std::endl;
+  long ret = COMM_BASE::recv_single(data, len, allow_realloc);
+  if (ret >= 0 && (flags & COMM_FLAG_ASYNC_WRAPPED)) {
+    Header header;
+    if (!create_header_recv(header, data, len, ret, allow_realloc, true))
+      return -1;
+    // try {
+    //   header.for_recv(&data, len, ret, allow_realloc, true);
+    // } catch (...) {
+    //   return -1;
+    // }
+    if ((header.flags & HEAD_FLAG_CLIENT_SIGNON) && !signon(header, true))
+      return -1;
+  }
+  return ret;
+}
 
 
 #endif

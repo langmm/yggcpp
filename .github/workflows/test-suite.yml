@@ -136,6 +136,7 @@ jobs:
 
       - name: Setup Python
         if: matrix.python-install == 'pip'
+        id: pysetup
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
@@ -332,9 +333,11 @@ jobs:
         if: matrix.python-install == 'pip' && matrix.with-asan == false && matrix.with-elf == false && matrix.with-valgrind == false
         shell: bash -l {0}
         run: |
-          python -m site
-          python -c 'import site; print(site.getsitepackages())'
-          ls $(python -c 'import os; import site; print(os.path.join(site.getsitepackages()[0], "pyYggdrasil"))')
+          PYTHON_EXEC=${{ steps.pysetup.outputs.python-path }}
+          ${PYTHON_EXEC} -m site
+          ${PYTHON_EXEC} -c 'import site; print(site.getsitepackages())'
+          ls $(${PYTHON_EXEC} -c 'import site; print(site.getsitepackages()[0])')
+          ls $(${PYTHON_EXEC} -c 'import os; import site; print(os.path.join(site.getsitepackages()[0], "pyYggdrasil"))')
       - name: Test Python Interfaces (PIP)
         if: matrix.python-install == 'pip' && matrix.with-asan == false && matrix.with-elf == false && matrix.with-valgrind == false
         run: |

@@ -54,13 +54,15 @@ void ClientComm::init() {
 
 
 
-bool ClientComm::signon(const Header& header) {
+bool ClientComm::signon(const Header& header, bool in_async) {
   if (global_comm)
     return dynamic_cast<ClientComm*>(global_comm)->signon(header);
   if (header.flags & HEAD_FLAG_CLIENT_SIGNON)
     return true;
   if (requests.initClientResponse() < 0)
     return false;
+  // if ((flags & COMM_FLAG_ASYNC_WRAPPED) && !in_async)
+  //   return true;
   ygglog_debug << "ClientComm(" << name << ")::signon: begin" << std::endl;
   while (!requests.signon_complete) {
 #ifdef YGG_TEST
@@ -75,6 +77,8 @@ bool ClientComm::signon(const Header& header) {
 #ifdef YGG_TEST
     }
 #endif // YGG_TEST
+    if ((flags & COMM_FLAG_ASYNC_WRAPPED) && !in_async)
+      return true;
     if (requests.activeComm()->comm_nmsg() > 0) {
       char* data = NULL;
       int ret = recv(data, 0, true);
@@ -172,16 +176,16 @@ bool ClientComm::create_header_recv(Header& header, char*& data, const size_t &l
   return out;
 }
 
-// int ClientComm::send_single(const char *data, const size_t &len,
-// 			    const utils::Header& header)  {
-//   assert(!global_comm);
-//   ygglog_debug << "ClientComm(" << name << ")::send_single" << std::endl;
-//   if (!(header.flags & HEAD_FLAG_EOF)) {
-//     if (!signon(header))
-//       return -1;
-//   }
-//   return COMM_BASE::send_single(data, len, header);
-// }
+int ClientComm::send_single(const char *data, const size_t &len,
+			    const utils::Header& header)  {
+  assert(!global_comm);
+  ygglog_debug << "ClientComm(" << name << ")::send_single" << std::endl;
+  if ((flags & COMM_FLAG_ASYNC_WRAPPED) &&
+      (!(header.flags & HEAD_FLAG_EOF)) &&
+      (!signon(header, true)))
+    return -1;
+  return COMM_BASE::send_single(data, len, header);
+}
 
 long ClientComm::recv_single(char*& rdata, const size_t &rlen,
 			     bool allow_realloc)  {

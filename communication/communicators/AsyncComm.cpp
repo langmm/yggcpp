@@ -123,7 +123,9 @@ communication::utils::Metadata& AsyncComm::getMetadata(const DIRECTION dir) {
   if (global_comm)
     return global_comm->getMetadata(dir);
   const std::lock_guard<std::mutex> lock(handle->comm_mutex);
-  return handle->comm->getMetadata(dir);
+  if (handle->comm)
+    return handle->comm->getMetadata(dir);
+  return metadata;
 }
 
 int AsyncComm::comm_nmsg() const {
