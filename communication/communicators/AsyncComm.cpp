@@ -63,7 +63,7 @@ bool AsyncBacklog::on_thread(Comm_t* parent) {
     while (!closing.load()) {
       int ret = send();
       if (ret == 0) {
-	std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	std::this_thread::sleep_for(std::chrono::microseconds(YGG_SLEEP_TIME));
       } else if (ret < 0) {
 	out = false;
 	break;
@@ -73,7 +73,7 @@ bool AsyncBacklog::on_thread(Comm_t* parent) {
     while (!closing.load()) {
       long ret = recv();
       if (ret == 0) {
-	std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	std::this_thread::sleep_for(std::chrono::microseconds(YGG_SLEEP_TIME));
       } else if (ret < 0) {
 	out = false;
 	break;
