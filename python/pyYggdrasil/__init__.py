@@ -2,12 +2,11 @@ try:
     from pyYggdrasil import _pyYggdrasil  # noqa: F401
 except ImportError:
     import os
-    print(os.path.dirname(__file__))
-    print(os.listdir(os.path.dirname(__file__)))
-    # os.add_dll_directory(os.path.dirname(__file__))
     import os.path
     import re
-    from ctypes import cdll
+    from ctypes import CDLL
+    if hasattr(os, 'add_dll_directory'):
+        os.add_dll_directory(os.path.dirname(__file__))
 
     bundled_lib = next(
         filter(
@@ -20,8 +19,8 @@ except ImportError:
         raise FileNotFoundError(
             "YggInterface C++ library is not installed and "
             "no bundled version was detected")
-    cdll.LoadLibrary(
-        os.path.join(os.path.dirname(__file__), bundled_lib))
+    CDLL(os.path.join(os.path.dirname(__file__), bundled_lib),
+         winmode=0)
     from pyYggdrasil import _pyYggdrasil  # noqa: F401
 
 
