@@ -91,6 +91,8 @@ long AsyncBacklog::recv() {
       ygglog_debug << "AsyncBacklog::recv: Received message into backlog" << std::endl;
       backlog.emplace_back(data, static_cast<size_t>(out));
     }
+    if (data)
+      free(data);
   }
   return out;
 }
