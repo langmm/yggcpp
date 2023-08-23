@@ -37,18 +37,4 @@
 #define COMMBUFFSIZ 2000
 #define FMT_LEN 100
 
-/*! @brief Bit flags. */
-#define HEAD_FLAG_VALID      0x00000001  //!< Set if the header is valid.
-#define HEAD_FLAG_MULTIPART  0x00000002  //!< Set if the header is for a multipart message
-#define HEAD_META_IN_DATA    0x00000004  //!< Set if the type is stored with the data during serialization
-#define HEAD_AS_ARRAY        0x00000008  //!< Set if messages will be serialized arrays
-#define HEAD_FLAG_OWNSDATA   0x00000010
-#define HEAD_FLAG_ALLOW_REALLOC 0x00000020
-#define HEAD_TEMPORARY       0x00000040
-#define HEAD_FLAG_EOF        0x00000080
-#define HEAD_FLAG_CLIENT_EOF 0x00000100
-#define HEAD_FLAG_CLIENT_SIGNON 0x00000200
-#define HEAD_FLAG_SERVER_SIGNON 0x00000400
-#define HEAD_FLAG_REPEAT 0x00000800
-
 #endif // YGGCONSTANTS_H_

@@ -49,6 +49,21 @@ enum CommFlags {
     COMM_FLAG_ASYNC_WRAPPED   = 0x00010000  //!< Comm is wrapped by an asynchronous comm
 };
 
+/*! @brief Bit flags describing message state. */
+enum HeadFlags {
+  HEAD_FLAG_VALID             = 0x00000001, //!< Message is valid
+  HEAD_FLAG_MULTIPART         = 0x00000002, //!< Message is multipart
+  HEAD_META_IN_DATA           = 0x00000004, //!< Type is stored in message body
+  HEAD_AS_ARRAY               = 0x00000008, //!< Message is an array
+  HEAD_FLAG_OWNSDATA          = 0x00000010, //!< Header needs to free the buffer
+  HEAD_FLAG_ALLOW_REALLOC     = 0x00000020, //!< Message buffer can be reallocated
+  HEAD_TEMPORARY              = 0x00000040, //!< Message is temporary
+  HEAD_FLAG_EOF               = 0x00000080, //!< Message is EOF
+  HEAD_FLAG_CLIENT_EOF        = 0x00000100, //!< Message is client EOF
+  HEAD_FLAG_CLIENT_SIGNON     = 0x00000200, //!< Message is client signon
+  HEAD_FLAG_SERVER_SIGNON     = 0x00000400, //!< Message is server signon
+  HEAD_FLAG_REPEAT            = 0x00000800  //!< Message will be discarded
+};
   
 // enum DTYPE {
 //     T_NULL, T_OBJECT, T_1DARRAY,
