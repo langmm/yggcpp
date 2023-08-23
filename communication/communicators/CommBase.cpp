@@ -456,7 +456,7 @@ int Comm_t::wait_for_recv(const int& tout) {
     ygglog_debug << "CommBase(" << name << ")::wait_for_recv: No messages, sleep " << YGG_SLEEP_TIME << std::endl;
     std::this_thread::sleep_for(std::chrono::microseconds(YGG_SLEEP_TIME));
   }
-  return 0;
+  return comm_nmsg();
 }
 long Comm_t::recv(char*& data, const size_t &len,
 		  bool allow_realloc) {
