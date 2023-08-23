@@ -7,7 +7,7 @@
 #include "regex.hpp"
 #endif
 #include "constants.hpp"
-
+#include "enums.hpp"
 
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
