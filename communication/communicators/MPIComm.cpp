@@ -160,20 +160,17 @@ int MPIComm::comm_nmsg() const {
     return nmsg;
 }
 
-int MPIComm::send_single(const char *data, const size_t &len,
-			 const Header&) {
-    // Should never be called with global comm
-    // if (global_comm)
-    //   return dynamic_cast<MPIComm*>(global_comm)->send_single(data, len, head);
+int MPIComm::send_single(utils::Header& header) {
     assert((!global_comm) && handle);
-    ygglog_debug << "MPIComm(" << name << ")::send_single: " << len << " bytes" << std::endl;
-    int ret = (int)(len);
+    header.on_send();
+    ygglog_debug << "MPIComm(" << name << ")::send_single: " << header.size_msg << " bytes" << std::endl;
+    int ret = (int)(header.size_msg);
     int adr = static_cast<int>(handle->procs[handle->tag % handle->procs.size()]);
     if (handle->Send(&ret, 1, MPI_INT, adr) != MPI_SUCCESS) {
       ygglog_error << "MPIComm(" << name << ")::send_single: Error sending message size for tag = " << handle->tag << std::endl;
       return -1;
     }
-    if (handle->Send(data, ret, MPI_CHAR, adr) != MPI_SUCCESS) {
+    if (handle->Send(header.data_msg(), ret, MPI_CHAR, adr) != MPI_SUCCESS) {
       ygglog_error << "MPIComm(" << name << ")::send_single: Error receiving message for tag = " << handle->tag << std::endl;
       return -1;
     }
@@ -182,10 +179,7 @@ int MPIComm::send_single(const char *data, const size_t &len,
     return ret;
 }
 
-long MPIComm::recv_single(char*& data, const size_t &len, bool allow_realloc) {
-    // Should never be called with global comm
-    // if (global_comm)
-    //   return static_cast<MPIComm*>(global_comm)->recv_single(data, len, allow_realloc);
+long MPIComm::recv_single(utils::Header& header) {
     assert(!global_comm);
     ygglog_debug << "MPIComm(" << name << ")::recv_single" << std::endl;
     MPI_Status status;
@@ -200,17 +194,19 @@ long MPIComm::recv_single(char*& data, const size_t &len, bool allow_realloc) {
         ygglog_error << "MPIComm(" << name << ")::recv_single: Error receiving message size for tag = " << handle->tag << std::endl;
         return -1;
     }
-    ret = this->copyData(data, len, NULL, ret, allow_realloc);
+    ret = header.on_recv(NULL, ret);
     if (ret < 0) {
       ygglog_error << "MPIComm(" << name << ")::recv_single: Error reallocating data" << std::endl;
       return ret;
     }
-    if (handle->Recv(data, ret, MPI_CHAR, adr, &status) != MPI_SUCCESS ||
+    if (handle->Recv(header.data_msg(), ret,
+		     MPI_CHAR, adr, &status) != MPI_SUCCESS ||
 	status.MPI_ERROR) {
         ygglog_error << "MPIComm(" << name << ")::recv_single: Error receiving message for tag = " << handle->tag << std::endl;
         return -1;
     }
-    data[ret] = '\0';
+    header.data_msg()[ret] = '\0';
+    ret = header.on_recv(header.data_msg(), ret);
     ygglog_debug << "MPIComm(" << name << ")::recv_single: returns " << ret << " bytes" << std::endl;
     handle->tag++;
     return ret;

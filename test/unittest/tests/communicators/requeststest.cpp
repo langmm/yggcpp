@@ -21,9 +21,8 @@ TEST(RequestList, Empty) {
   Header header;
   header.initMeta();
   header.SetMetaString("request_id", "invalid");
-  EXPECT_EQ(req.popRequestClient(header), -1);
-  char* data = NULL;
-  EXPECT_EQ(req.getRequestClient("invalid", data, 0, false), -1);
+  // EXPECT_EQ(req.popRequestClient(header), -1);
+  EXPECT_EQ(req.getRequestClient("invalid", header), -1);
   EXPECT_TRUE(req.partnerSignoff(header));
 }
 
@@ -33,7 +32,6 @@ TEST(RequestList, Request) {
   Header header;
   header.initMeta();
   header.SetMetaString("model", "model");
-  char* data = NULL;
   // Client
   EXPECT_EQ(client.addRequestClient(header), 0);
   std::string req_id(header.GetMetaString("request_id"));
@@ -51,8 +49,9 @@ TEST(RequestList, Request) {
   // Pop
   EXPECT_EQ(server.popRequestServer(), 1);
   EXPECT_EQ(server.hasRequest(header.GetMetaString("request_id")), -1);
-  EXPECT_EQ(client.popRequestClient(header), -1);
-  EXPECT_EQ(client.getRequestClient(header.GetMetaString("request_id"), data, 0, false), -1);
+  // EXPECT_EQ(client.popRequestClient(header), -1);
+  EXPECT_EQ(client.getRequestClient(header.GetMetaString("request_id"),
+				    header), -1);
   client.requests.clear();
   EXPECT_EQ(client.hasRequest(header.GetMetaString("request_id")), -1);
   EXPECT_TRUE(client.requests.empty());
@@ -68,24 +67,29 @@ TEST(RequestList, Response) {
   header.SetMetaString("model", "model");
   std::string request_id;
   header.SetMetaID("request_id", request_id);
-  EXPECT_EQ(server.addResponseServer(header, NULL, 0), -1);
-  EXPECT_EQ(client.addResponseClient(header, NULL, 0), -1);
+  EXPECT_EQ(server.addResponseServer(header), -1);
+  EXPECT_EQ(client.addResponseClient(header), -1);
   EXPECT_EQ(client.addRequestClient(header), 0);
   EXPECT_EQ(server.addRequestServer(header), 0);
-  EXPECT_EQ(server.addResponseServer(header, "test", 4), 0);
-  EXPECT_EQ(server.addResponseServer(header, "test", 4), -1);
-  EXPECT_EQ(client.addResponseClient(header, "test", 4), 0);
-  EXPECT_EQ(client.addResponseClient(header, "test", 4), -1);
+  EXPECT_EQ(server.addResponseServer(header), 0);
+  EXPECT_EQ(server.addResponseServer(header), -1);
+  header.Display();
+  Header header2; // Use header copy as addResponseClient consumes header
+  header2.CopyFrom(header);
+  header2.Display();
+  EXPECT_EQ(client.addResponseClient(header2), 0); // copy moved
+  EXPECT_EQ(client.addResponseClient(header), -1);
   server.Display();
   client.Display();
-  EXPECT_TRUE(client.isComplete(header.GetMetaString("request_id")));
-  char* data = NULL;
-  EXPECT_EQ(client.getRequestClient(header.GetMetaString("request_id"),
-				    data, 0, false), -4);
+  request_id.assign(header.GetMetaString("request_id"));
+  EXPECT_TRUE(client.isComplete(request_id));
+  EXPECT_EQ(client.getRequestClient(request_id, header), 1);
+  EXPECT_EQ(client.hasRequest(request_id), 0);
   EXPECT_EQ(server.popRequestServer(), 1);
-  EXPECT_EQ(server.hasRequest(header.GetMetaString("request_id")), -1);
-  EXPECT_EQ(client.popRequestClient(header), 1);
-  EXPECT_EQ(client.hasRequest(header.GetMetaString("request_id")), -1);
+  EXPECT_EQ(server.hasRequest(request_id), -1);
+  EXPECT_EQ(client.getRequestClient(request_id, header, true), 1);
+  // EXPECT_EQ(client.popRequestClient(header), 1);
+  EXPECT_EQ(client.hasRequest(request_id), -1);
 }
 
 TEST(RequestList, Signon) {
@@ -101,8 +105,10 @@ TEST(RequestList, Signon) {
   EXPECT_EQ(client.hasComm(header.GetMetaString("response_address")), 0);
   EXPECT_TRUE(client.signonSent());
   EXPECT_EQ(server.addRequestServer(header), 0);
-  EXPECT_EQ(server.addResponseServer(header, "test", 4), 0);
-  EXPECT_EQ(client.addResponseClient(header, "test", 4), 0);
+  EXPECT_EQ(server.addResponseServer(header), 0);
+  Header header_cpy;
+  header_cpy.CopyFrom(header);
+  EXPECT_EQ(client.addResponseClient(header_cpy), 0);
   // Add a second client
   RequestList client2(RECV);
   Header header2;

@@ -87,10 +87,8 @@ public:
 
 protected:
     void init();
-    int send_single(const char *data, const size_t &len,
-		    const utils::Header& header) override;
-
-    long recv_single(char*& data, const size_t &len, bool allow_realloc) override;
+    int send_single(utils::Header& header) override;
+    long recv_single(utils::Header& header) override;
     WORKER_METHOD_DECS(MPIComm);
 #else // MPIINSTALLED
     void init() { UNINSTALLED_ERROR(MPI); }

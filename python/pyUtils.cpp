@@ -102,9 +102,9 @@ static void register_enums(PyObject* module) {
     PyDict_SetItemString(comm_types, "DEFAULT_COMM", PyLong_FromLong(COMM_TYPE::DEFAULT_COMM));
     PyDict_SetItemString(comm_types, "IPC_COMM", PyLong_FromLong(COMM_TYPE::IPC_COMM));
     PyDict_SetItemString(comm_types, "ZMQ_COMM", PyLong_FromLong(COMM_TYPE::ZMQ_COMM));
+    PyDict_SetItemString(comm_types, "MPI_COMM", PyLong_FromLong(COMM_TYPE::MPI_COMM));
     PyDict_SetItemString(comm_types, "SERVER_COMM", PyLong_FromLong(COMM_TYPE::SERVER_COMM));
     PyDict_SetItemString(comm_types, "CLIENT_COMM", PyLong_FromLong(COMM_TYPE::CLIENT_COMM));
-    PyDict_SetItemString(comm_types, "MPI_COMM", PyLong_FromLong(COMM_TYPE::MPI_COMM));
 
     COMMTYPE = PyObject_CallMethod(enum_module, "IntEnum", "sO", "COMM_TYPE", comm_types);
     Py_CLEAR(comm_types);
@@ -140,6 +140,7 @@ static void register_enums(PyObject* module) {
     add_flag(COMM_FLAG_INTERFACE);
     // add_flag(COMM_FLAG_DELETE); Not needed by python
     add_flag(COMM_FLAG_ASYNC);
+    // add_flag(COMM_FLAG_ASYNC_WRAPPED); Not needed by python
 #undef add_flag
 
     FLAG_TYPE = PyObject_CallMethod(enum_module, "IntEnum", "sO", "COMM_FLAGS", flag_types);

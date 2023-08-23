@@ -627,7 +627,7 @@ static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds) {
         PyErr_SetString(PyExc_TypeError, "Invalid direction");
         return -1;
     }
-    if(commtype < 0 || commtype > COMM_TYPE::MPI_COMM) {
+    if(commtype < 0 || commtype > COMM_TYPE::CLIENT_COMM) {
         PyErr_SetString(PyExc_TypeError, "Invalid commtype");
         return -1;
     }
@@ -947,7 +947,7 @@ static PyObject* is_comm_installed(PyObject*, PyObject* args) {
   if (!PyArg_ParseTuple(args, "i", &commtype)) {
     return NULL;
   }
-  if(commtype < 0 || commtype > COMM_TYPE::MPI_COMM) {
+  if(commtype < 0 || commtype > COMM_TYPE::CLIENT_COMM) {
     PyErr_SetString(PyExc_TypeError, "Invalid commtype");
     return NULL;
   }

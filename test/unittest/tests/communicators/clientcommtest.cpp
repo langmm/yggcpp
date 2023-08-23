@@ -50,11 +50,11 @@ public:
       if (!addSignon())
 	return false;
     }
-    utils::Header header;
-    if (!this->create_header_send(header, msg.c_str(), msg.size()))
+    utils::Header header(msg.c_str(), msg.size(), this);
+    if (!this->create_header_send(header))
       return false;
-    size_t len = header.format(msg.c_str(), msg.size(), 0);
-    msg.assign(header.data[0], len);
+    header.on_send();
+    msg.assign(header.data[0], header.size_curr);
     if (server_comm->requests.addRequestServer(header) < 0)
       return false;
     return true;
@@ -63,14 +63,14 @@ public:
     return (server_comm->send(msg) >= 0);
   }
   bool addResponse(std::string& msg, bool skip_client=false) {
-    utils::Header header;
-    if (!server_comm->create_header_send(header, msg.c_str(), msg.size()))
+    utils::Header header(msg.c_str(), msg.size(), server_comm);
+    if (!server_comm->create_header_send(header))
       return false;
+    header.on_send();
     if (!skip_client) {
-      char* data = const_cast<char*>(msg.c_str());
-      if (!this->create_header_recv(header, data,
-				    msg.size(), msg.size(), false, true))
-	return false;
+      this->requests.addResponseClient(header);
+      // if (!this->create_header_recv(header))
+      // 	return false;
     }
     return true;
   }
@@ -286,10 +286,10 @@ TEST(ClientComm, global) {
       sComm.addResponseFormat("%s");
       {
 	std::string msg_cli = YGG_CLIENT_SIGNON;
-	utils::Header header;
-	EXPECT_TRUE(sComm.create_header_send(header, msg_cli.c_str(), msg_cli.size()));
-	size_t len = header.format(msg_cli.c_str(), msg_cli.size(), 0);
-	msg_cli.assign(header.data[0], len);
+	utils::Header header(msg_cli.c_str(), msg_cli.size(), &sComm);
+	EXPECT_TRUE(sComm.create_header_send(header));
+	header.on_send();
+	msg_cli.assign(header.data[0], header.size_curr);
 	EXPECT_GE(rComm.getRequests().addRequestServer(header), 0);
 	std::string msg_srv = YGG_SERVER_SIGNON;
 	EXPECT_GE(rComm.send(msg_srv.c_str(), msg_srv.size()), 0);

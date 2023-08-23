@@ -629,10 +629,6 @@ protected:
       return out;
     }
 
-    long copyData(char*& dst, const size_t dst_len,
-		  const char* src, const size_t src_len,
-		  bool allow_realloc);
-
     int update_datatype(const rapidjson::Value& new_schema,
 			const DIRECTION dir);
     template<typename T>
@@ -655,10 +651,8 @@ protected:
       }
       return true;
     }
-    virtual bool create_header_send(utils::Header& header, const char* data, const size_t &len);
-    virtual bool create_header_recv(utils::Header& header, char*& data, const size_t &len,
-				    size_t msg_len, int allow_realloc,
-				    int temp);
+    virtual bool create_header_send(utils::Header&) { return true; }
+    virtual bool create_header_recv(utils::Header&) { return true; }
     rapidjson::Value& getSchema(const DIRECTION dir=NONE) {
       return getMetadata(dir).getSchema();
     }
@@ -666,8 +660,18 @@ protected:
 				  const DIRECTION&, int flgs) VIRT_END;
     virtual Comm_t* create_worker_send(utils::Header& head);
     virtual Comm_t* create_worker_recv(utils::Header& head);
-    virtual int send_single(const char *data, const size_t &len, const utils::Header& header) VIRT_END;
-    virtual long recv_single(char*& data, const size_t &len, bool allow_realloc) VIRT_END;
+    /**
+     * Sending function
+     * @param header Instance containing message and header.
+     * @return The length of data sent.
+     */
+    virtual int send_single(utils::Header& header) VIRT_END;
+    /**
+     * Receiving function
+     * @param header Instance to store message and header in.
+     * @return The length of data received.
+     */
+    virtual long recv_single(utils::Header& header) VIRT_END;
 
     /**
      * Constructor, which can only be instantiated by a child class
@@ -762,7 +766,7 @@ protected:
     /**
      * Not used, must be overloaded by a child class
      */
-    int send_single(const char *, const size_t &, const utils::Header&) override {
+    int send_single(utils::Header&) override {
       ygglog_error << "Send of base class called, must be overridden" << std::endl;
       return -1;
     }
@@ -770,7 +774,7 @@ protected:
     /**
      * Not used, must be overloaded by child class
      */
-    long recv_single(char*&, const size_t &, bool) override {
+    long recv_single(utils::Header&) override {
       ygglog_error << "Recv of base class called, must be overridden" << std::endl;
       return -1;
     }
@@ -832,7 +836,7 @@ void CommBase<H>::close() {
 
 template<typename H>
 bool CommBase<H>::is_closed() const {
-  return ((!handle) || !(flags & COMM_FLAG_VALID));
+  return ((!((bool)handle)) || !(flags & COMM_FLAG_VALID));
 }
 
 template<typename H>

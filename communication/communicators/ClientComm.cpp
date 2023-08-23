@@ -134,11 +134,11 @@ Comm_t* ClientComm::create_worker_recv(Header& head) {
   return out;
 }
 
-bool ClientComm::create_header_send(Header& header, const char* data, const size_t &len) {
+bool ClientComm::create_header_send(Header& header) {
   if (global_comm)
-    return global_comm->create_header_send(header, data, len);
+    return global_comm->create_header_send(header);
   ygglog_debug << "ClientComm(" << name << ")::create_header_send: begin" << std::endl;
-  bool out = COMM_BASE::create_header_send(header, data, len);
+  bool out = COMM_BASE::create_header_send(header);
   if (out && !(header.flags & HEAD_FLAG_EOF)) {
     out = signon(header);
     if (out)
@@ -149,49 +149,17 @@ bool ClientComm::create_header_send(Header& header, const char* data, const size
   return out;
 }
 
-bool ClientComm::create_header_recv(Header& header, char*& data, const size_t &len,
-				    size_t msg_len, int allow_realloc,
-				    int temp) {
-  // Should never be called with global comm
-  // if (global_comm)
-  //   return global_comm->create_header_recv(header, data, len, msg_len,
-  // 					   allow_realloc, temp);
-  assert(!global_comm);
-  ygglog_debug << "ClientComm(" << name << ")::create_header_recv: begin (temp = " << temp << ")" << std::endl;
-  Comm_t* response_comm = requests.activeComm();
-  // create_header_recv only called after request confirmed
-  assert(response_comm);
-  bool out = response_comm->create_header_recv(header, data, len, msg_len,
-					       allow_realloc, temp);
-  if (out && !(header.flags & HEAD_FLAG_EOF)) {
-    if (temp) {
-      // Only add response the first time as the data returned may be
-      // from a cached response
-      out = (requests.addResponseClient(header, data, len) >= 0);
-      requests.transferSchemaFrom(response_comm);
-    } else {
-      out = (requests.popRequestClient(header) >= 0);
-    }
-  }
-  return out;
-}
-
-int ClientComm::send_single(const char *data, const size_t &len,
-			    const utils::Header& header)  {
+int ClientComm::send_single(utils::Header& header) {
   assert(!global_comm);
   ygglog_debug << "ClientComm(" << name << ")::send_single" << std::endl;
   if ((flags & COMM_FLAG_ASYNC_WRAPPED) &&
       (!(header.flags & HEAD_FLAG_EOF)) &&
       (!signon(header, true)))
     return -1;
-  return COMM_BASE::send_single(data, len, header);
+  return COMM_BASE::send_single(header);
 }
 
-long ClientComm::recv_single(char*& rdata, const size_t &rlen,
-			     bool allow_realloc)  {
-    // Should never be called with global comm
-    // if (global_comm)
-    //   return global_comm->recv_single(rdata, rlen, allow_realloc);
+long ClientComm::recv_single(utils::Header& header) {
     assert(!global_comm);
     ygglog_debug << "ClientComm(" << name << ")::recv_single" << std::endl;
     Comm_t* response_comm = requests.activeComm();
@@ -200,31 +168,30 @@ long ClientComm::recv_single(char*& rdata, const size_t &rlen,
         return -1;
     }
     std::string req_id = requests.activeRequestClient();
-    size_t buff_len = rlen;
     long ret;
+    utils::Header response_header;
+    // TODO: Timeout
     while (!requests.isComplete(req_id)) {
+        response_header.reset(HEAD_RESET_OWN_DATA);
         ygglog_debug << "ClientComm(" << name << ")::recv_single: Waiting for response to request " << req_id << std::endl;
 	if (response_comm->wait_for_recv(this->timeout_recv) <= 0) {
 	  ygglog_debug << "ClientComm(" << name << ")::recv_single: No messages waiting" << std::endl;
 	  return -1;
 	}
-        ret = response_comm->recv_single(rdata, buff_len, allow_realloc);
+        ret = response_comm->recv_single(response_header);
         if (ret < 0) {
             ygglog_error << "ClientComm(" << name << ")::recv_single: response recv_single returned " << ret << std::endl;
             return ret;
         }
-        if (ret > (int)buff_len) {
-            buff_len = ret;
-        }
-        Header header;
-        if (!create_header_recv(header, rdata, buff_len, ret, allow_realloc, true)) {
-            ygglog_error << "ClientComm(" << name << ")::recv_single: Invalid header." << std::endl;
-            return -1;
-        }
+	if (!(response_header.flags & HEAD_FLAG_EOF)) {
+	  if (requests.addResponseClient(response_header) < 0)
+	    return -1;
+	  requests.transferSchemaFrom(response_comm);
+	}
     }
-    ret = requests.getRequestClient(req_id, rdata, rlen, allow_realloc);
     // Close response comm and decrement count of response comms
-    ygglog_debug << "ClientComm(" << name << ")::recv_single: client_pop_response returned " << ret << std::endl;;
+    ret = requests.getRequestClient(req_id, header, true);
+    ygglog_debug << "ClientComm(" << name << ")::recv_single: getRequestClient returned " << ret << std::endl;;
     return ret;
 }
 

@@ -16,12 +16,20 @@
 #include "rapidjson/schema.h"
 #include "rapidjson/va_list.h"
 #include <cstring>
+#include <stdlib.h>
 
 
 #include "logging.hpp"
 
 #define STRLEN_RJ(var)				\
   static_cast<rapidjson::SizeType>(strlen(var))
+
+
+namespace communication {
+  namespace communicator {
+    class Comm_t;
+  }
+}
 
 
 namespace communication {
@@ -36,64 +44,27 @@ namespace utils {
   should be stored.
   @returns: int 0 if split is successful, -1 if there was an error.
 */
-static inline
 int split_head_body(const char *buf,
-                    const char **head, size_t *headsiz) {
-    // Split buffer into head and body
-    int ret;
-    size_t sind, eind, sind_head, eind_head;
-    sind = 0;
-    eind = 0;
-#ifdef _WIN32
-    // Windows regex of newline is buggy
-  size_t sind1, eind1, sind2, eind2;
-  char re_head_tag[COMMBUFFSIZ + 1];
-  snprintf(re_head_tag, COMMBUFFSIZ, "(%s)", MSG_HEAD_SEP);
-  ret = find_match_c(re_head_tag, buf, &sind1, &eind1);
-  if (ret > 0) {
-    sind = sind1;
-    ret = find_match_c(re_head_tag, buf + eind1, &sind2, &eind2);
-    if (ret > 0)
-      eind = eind1 + eind2;
-  }
-#else
-    // Extract just header
-    char re_head[COMMBUFFSIZ] = MSG_HEAD_SEP;
-    strcat(re_head, "(.*)");
-    strcat(re_head, MSG_HEAD_SEP);
-    // strcat(re_head, ".*");
-    ret = find_match_c(re_head, buf, &sind, &eind);
-#endif
-  if (ret == 0) {
-    sind_head = 0;
-    eind_head = 0;
-    headsiz[0] = 0;
-    ygglog_debug_c("split_head_body: No header in '%.1000s...'", buf);
-  } else {
-    sind_head = sind + strlen(MSG_HEAD_SEP);
-    eind_head = eind - strlen(MSG_HEAD_SEP);
-    headsiz[0] = (eind_head - sind_head);
-    head[0] = buf + strlen(MSG_HEAD_SEP);
-  }
-  // char* temp = (char*)realloc(*head, *headsiz + 1);
-  // if (temp == NULL) {
-  //   ygglog_throw_error_c("split_head_body: Failed to reallocate header.");
-  // }
-  // *head = temp;
-  // memcpy(*head, buf + sind_head, *headsiz);
-  // (*head)[*headsiz] = '\0';
-  return 0;
-};
-
+                    const char **head, size_t *headsiz);
 
 template <typename ValueT>
-std::string document2string(ValueT& rhs, const char* indent="") {
-  rapidjson::StringBuffer sb;
-  rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(sb, 0, strlen(indent));
-  writer.SetYggdrasilMode(true);
-  rhs.Accept(writer);
-  return std::string(sb.GetString());
-}
+std::string document2string(ValueT& rhs, const char* indent="");
+
+/*!
+  @brief Copy data from one buffer to another.
+  @param[in,out] dst Destination buffer that data will be copied into.
+  @param[in] dst_len Size of destination buffer.
+  @param[in] src Source buffer that data will be copied from.
+  @param[in] src_len Size of source buffer.
+  @param[in] allow_realloc If true, dst can be reallocated if it is not
+    large enough to accomodate the data from src.
+  @returns If successful, the size of the data copied will be returned.
+    If not successful, the negative size of the source data will be
+    returned.
+ */
+long copyData(char*& dst, const size_t dst_len,
+	      const char* src, const size_t src_len,
+	      bool allow_realloc);
 
 class Metadata {
 private:
@@ -111,12 +82,13 @@ public:
   bool operator==(const Metadata& rhs) const;
   bool operator!=(const Metadata& rhs) const;
   Metadata& Move() { return *this; }
-  void CopyFrom(const Metadata& rhs) {
+  bool CopyFrom(const Metadata& rhs) {
     metadata.CopyFrom(rhs.metadata, GetAllocator(), true);
     _update_schema();
+    return true;
   }
   void _init(bool use_generic = false);
-  virtual void reset();
+  void reset();
   void fromSchema(const rapidjson::Value& new_schema,
 		  bool isMetadata = false, bool use_generic = false);
   void Normalize();
@@ -220,7 +192,10 @@ private:
   Header(const Header&) = delete;
   Header& operator=(const Header&) = delete;
 public:
-  Header();
+  Header(bool own_data=false);
+  Header(const char* buf, const size_t &len,
+	 communication::communicator::Comm_t* comm);
+  Header(char*& buf, const size_t &len, bool allow_realloc);
   ~Header() override;
 #if RAPIDJSON_HAS_CXX11_RVALUE_REFS
   Header(Header&& rhs);
@@ -229,43 +204,120 @@ public:
   Header& operator=(Header& rhs);
   bool operator==(const Header& rhs) const;
   bool operator!=(const Header& rhs) const;
-  void Destroy();
-  void RawAssign(const Header& rhs);
   Header& Move() { return *this; }
-  void CopyFrom(const Header& rhs) {
-    Destroy();
-    Metadata::CopyFrom(rhs);
-    RawAssign(rhs);
-    if ((rhs.flags & HEAD_FLAG_OWNSDATA) && rhs.data_) {
-      data_ = (char*)malloc(size_buff);
-      memcpy(data_, rhs.data_, size_buff);
-      data = &data_;
-    }
-  }
-  void reset() override;
+  size_t size() const { return size_curr; }
+  const char* c_str() const { return data[0]; }
+  /*!
+    @brief Reset the header, clearing any data/flags.
+    @param[in] mode Method that should be used to reset the header.
+      HEAD_RESET_COMPLETE
+        All parameters should be reset and the buffer should be freed.
+      HEAD_RESET_KEEP_BUFFER
+        All parameters should be reset except those describing the
+	buffer state and the buffer should not be freed.
+      HEAD_RESET_OWN_DATA
+        All parameters should be reset and the buffer should be freed.
+	Parameters will then be set so that the header is responsible
+	for freeing the buffer.
+      HEAD_RESET_DROP_DATA
+        All parameters should be reset, but the buffer will not be freed
+	and its pointer will not be stored.
+   */
+  void reset(HEAD_RESET_MODE mode = HEAD_RESET_COMPLETE);
+  /*!
+    @brief Copy data and header directly from another Header instance.
+    @param[in] rhs Header to copy from.
+    @param[in] keep_buffer If true, the existing buffer will be preserved
+      and data from rhs will be copied into it.
+    @returns true if successful, false otherwise.
+   */
+  bool RawAssign(const Header& rhs, bool keep_buffer=false);
+  /*!
+    @brief Reallocate the buffer as necessary.
+    @param[in] size_new Size to reallocate the buffer to accomodate.
+    @returns Size of allocated buffer on success, -size_new on failure.
+   */
+  long reallocData(const size_t size_new);
+  /*!
+    @brief Copy data into the buffer.
+    @param[in] msg Data to copy.
+    @param[in] msg_Siz Size of data to copy.
+    @returns If successful, the size of the data copied will be returned.
+      If not successful, the negative size of the source data will be
+      returned.
+   */
+  long copyData(const char* msg, const size_t msg_siz);
+  /*!
+    @brief Move parameters from another header into this one.
+    @param[in] rhs Header to move parameters from. It will be reset to
+      the original state except that the buffer will be preserved if it
+      is not transfered to this header (in the case that this header
+      does not own its buffer).
+    @returns true if successful, false otherwise.
+   */
+  bool MoveFrom(Header& rhs);
+  /*!
+    @brief Copy parameters and data from another header.
+    @param[in] rhs Header to copy parameters/data from.
+    @returns true if successful, false otherwise.
+   */
+  bool CopyFrom(const Header& rhs);
 
+  /*!
+    @brief Set flags based on a message's contents.
+    @param[in] msg Message.
+    @param[in] msg_len Message size.
+   */
   void setMessageFlags(const char* msg, const size_t msg_len);
 
   /*!
     @brief Set parameters for sending a message.
     @param[in] metadata0 Pointer to metadata object
+    @param[in] msg Buffer containing message to be sent.
+    @param[in] len Size of message in buffer.
+    @param[in] comm_flags Bit flags describing the communicator that will
+      send the message.
   */
-  void for_send(Metadata* metadata0, const char* msg, const size_t len);
+  void for_send(Metadata* metadata0, const char* msg, const size_t len,
+		int comm_flags);
+  /*!
+    @brief Format data and set flags for the message.
+    @param[in] dont_advance If true, the position in the buffer will
+      not be updated.
+    @returns -1 on error, size of message otherwise.
+   */
+  int on_send(bool dont_advance=false);
   /*!
     @brief Set parameters for receiving a message.
     @param[in] buf Message containing header.
     @param[in] buf_siz Size of buffer containing message.
-    @param[in] msg_siz Size of message in buffer.
     @param[in] allow_realloc If true, the buffer can be resized to
       receive message larger than buf_siz.
    */
-  void for_recv(char** buf, size_t buf_siz, size_t msg_siz,
-		bool allow_realloc, bool temp=false);
+  void for_recv(char*& buf, size_t buf_siz, bool allow_realloc);
+  /*!
+    @brief Copy data and set flags based on received message.
+    @param[in] msg Buffer containing message received.
+    @param[in] msg_siz Size of message in buffer.
+    @returns -1 on error, size of message otherwise.
+   */
+  long on_recv(const char* msg, const size_t& msg_siz);
 
   void formatBuffer(rapidjson::StringBuffer& buffer, bool metaOnly=false);
-  size_t format(const char* buf, size_t buf_siz,
-		size_t size_max, bool metaOnly=false);
+  void Display(const char* indent="") const;
+  size_t format();
   void finalize_recv();
+  char* data_msg() {
+    if (!data) {
+      assert((!data_) && (!offset));
+      return data_;
+    }
+    if (!data[0]) {
+      assert(!offset);
+      return data[0];
+    }
+    return data[0] + static_cast<long>(offset);
+  }
   
   char* data_;
   char** data;
@@ -273,7 +325,11 @@ public:
   size_t size_buff;
   size_t size_curr;
   size_t size_head;
+  size_t size_max;
+  size_t size_msg;
+  size_t size_raw;
   uint16_t flags;
+  size_t offset;
 };
 
 }

@@ -71,9 +71,7 @@ int AsyncBacklog::send() {
   const std::lock_guard<std::mutex> comm_lock(comm_mutex);
   int out = 0;
   if (backlog.size() > 0) {
-    out = comm->send_single(backlog[0].msg.c_str(),
-			    backlog[0].msg.size(),
-			    backlog[0].head);
+    out = comm->send_single(backlog[0]);
     if (out >= 0) {
       ygglog_debug << "AsyncBacklog::send: Sent message from backlog" << std::endl;
       backlog.erase(backlog.begin());
@@ -86,15 +84,12 @@ long AsyncBacklog::recv() {
   const std::lock_guard<std::mutex> comm_lock(comm_mutex);
   long out = 0;
   if (comm->comm_nmsg() > 0) {
-    char* data = NULL;
-    size_t len = 0;
-    out = comm->recv_single(data, len, true);
+    backlog.resize(backlog.size() + 1);
+    backlog[backlog.size() - 1].reset(HEAD_RESET_OWN_DATA);
+    out = comm->recv_single(backlog[backlog.size() - 1]);
     if (out >= 0) {
       ygglog_debug << "AsyncBacklog::recv: Received message into backlog" << std::endl;
-      backlog.emplace_back(data, static_cast<size_t>(out));
     }
-    if (data)
-      free(data);
   }
   return out;
 }
@@ -142,37 +137,31 @@ int AsyncComm::comm_nmsg() const {
   return out;
 }
 
-int AsyncComm::send_single(const char* data, const size_t &len,
-			   const Header& header) {
-  // Should never be called with global comm
-  // if (global_comm)
-  //   return global_comm->send_single(data, len, header);
+int AsyncComm::send_single(Header& header) {
   const std::lock_guard<std::mutex> lock(handle->comm_mutex);
   assert((!global_comm) && handle);
   if (type == SERVER_COMM)
-    return handle->comm->send_single(data, len, header);
-  ygglog_debug << "AsyncComm(" << name << ")::send_single: " << len << " bytes" << std::endl;
-  handle->backlog.emplace_back(data, len, header);
+    return handle->comm->send_single(header);
+  ygglog_debug << "AsyncComm(" << name << ")::send_single: " << header.size_curr - header.offset << " bytes" << std::endl;
+  handle->backlog.resize(handle->backlog.size() + 1);
+  handle->backlog[handle->backlog.size() - 1].reset(HEAD_RESET_OWN_DATA);
+  handle->backlog[handle->backlog.size() - 1].CopyFrom(header);
   return 1;
 }
 
-long AsyncComm::recv_single(char*& data, const size_t &len,
-			    bool allow_realloc) {
-  // Should never be called with global comm
-  // if (global_comm)
-  //   return global_comm->recv_single(data, len, allow_realloc);
+long AsyncComm::recv_single(Header& header) {
   const std::lock_guard<std::mutex> lock(handle->comm_mutex);
   assert((!global_comm) && handle);
   if (type == CLIENT_COMM)
-    return handle->comm->recv_single(data, len, allow_realloc);
+    return handle->comm->recv_single(header);
   long ret = -1;
   ygglog_debug << "AsyncComm(" << name << ")::recv_single " << std::endl;
   if (handle->backlog.size() == 0) {
     ygglog_error << "AsyncComm(" << name << ")::recv_single: Backlog is empty." << std::endl;
     return ret;
   }
-  std::string msg = handle->backlog[0].msg;
-  ret = this->copyData(data, len, msg.c_str(), msg.size(), allow_realloc);
+  ret = header.on_recv(handle->backlog[0].c_str(),
+		       handle->backlog[0].size());
   if (ret < 0) {
     ygglog_error << "AsyncComm(" << name << ")::recv_single: Error copying data" << std::endl;
     return ret;
@@ -182,27 +171,16 @@ long AsyncComm::recv_single(char*& data, const size_t &len,
   return ret;
 }
 
-bool AsyncComm::create_header_send(Header& header, const char* data, const size_t &len) {
-  // Should never be called with global comm
-  // if (global_comm)
-  //   return global_comm->create_header_send(header, data, len);
+bool AsyncComm::create_header_send(Header& header) {
   const std::lock_guard<std::mutex> lock(handle->comm_mutex);
   assert(!global_comm);
-  return handle->comm->create_header_send(header, data, len);
+  return handle->comm->create_header_send(header);
 }
 
-bool AsyncComm::create_header_recv(Header& header, char*& data,
-				   const size_t &len,
-				   size_t msg_len, int allow_realloc,
-				   int temp) {
-  // Should never be called with global comm
-  // if (global_comm)
-  //   return global_comm->create_header_recv(header, data, len, msg_len,
-  // 					   allow_realloc, temp);
+bool AsyncComm::create_header_recv(Header& header) {
   const std::lock_guard<std::mutex> lock(handle->comm_mutex);
   assert(!global_comm);
-  return handle->comm->create_header_recv(header, data, len, msg_len,
-					  allow_realloc, temp);
+  return handle->comm->create_header_recv(header);
 }
 
 Comm_t* AsyncComm::create_worker(utils::Address* address,

@@ -579,7 +579,7 @@ TEST(Header, Utilities) {
   rapidjson::StringBuffer buf;
   header.formatBuffer(buf);
   EXPECT_EQ(buf.GetLength(), 0);
-  EXPECT_EQ(header.format("", 0, 0, false), 0);
+  EXPECT_EQ(header.format(), 0);
   EXPECT_TRUE(header == header);
   EXPECT_FALSE(header != header);
   communication::utils::Header header2;
@@ -599,38 +599,42 @@ TEST(Header, for_send) {
   setenv("YGG_MODEL_NAME", "model", 1);
   setenv("YGG_MODEL_COPY", "1", 1);
   communication::utils::Header header_send;
-  header_send.for_send(&schema, msg.c_str(), msg.size());
-  header_send.format(msg.c_str(), msg.size(), 2048);
+  header_send.for_send(&schema, msg.c_str(), msg.size(), 0);
+  header_send.on_send();
   communication::utils::Header header_recv;
-  EXPECT_THROW(header_recv.for_recv(header_send.data,
-				    header_send.size_curr,
-				    1, false), std::exception);
-  header_recv.for_recv(header_send.data, header_send.size_curr,
-		       header_send.size_curr, true);
+  EXPECT_EQ(header_recv.on_recv(header_send.data[0],
+				header_send.size_curr),
+	    -static_cast<long>(header_send.size_curr));
+  header_recv.flags |= HEAD_BUFFER_MASK;
+  header_recv.data = &(header_recv.data_);
+  EXPECT_EQ(header_recv.on_recv(header_send.data[0],
+				header_send.size_curr),
+	    header_send.size_curr);
   EXPECT_EQ(header_recv.size_data, msg.size());
   EXPECT_EQ(strcmp(header_recv.data[0], msg.c_str()), 0);
   // Header equality
-  std::string msg2 = msg + "2";
   communication::utils::Header header_send2;
-  header_send2.for_send(&schema, msg.c_str(), msg.size());
+  header_send2.for_send(&schema, msg.c_str(), msg.size(), 0);
   header_send2.fromMetadata(header_send);
-  header_send2.format(msg.c_str(), msg.size(), 2048);
-  communication::utils::Header header_recv2;
-  header_recv2.for_recv(header_send2.data, header_send2.size_curr,
-			header_send2.size_curr, true);
+  header_send2.on_send();
+  communication::utils::Header header_recv2(true);
+  EXPECT_EQ(header_recv2.on_recv(header_send2.data[0],
+				 header_send2.size_curr),
+	    header_send2.size_curr);
   EXPECT_EQ(header_send, header_send2);
   EXPECT_EQ(header_recv, header_recv2);
   EXPECT_NE(header_recv, header_send);
   // Received message larger than buffer
   std::string msg3(2048, 'a');
   communication::utils::Header header_send3;
-  header_send3.for_send(&schema, msg3.c_str(), msg3.size());
-  header_send3.format(msg3.c_str(), msg3.size(), 204800);
-  communication::utils::Header header_recv3;
-  EXPECT_THROW(header_recv3.for_recv(header_send3.data,
-				     header_send3.size_curr - 1000,
-				     header_send3.size_curr - 1000,
-				     false), std::exception);
+  header_send3.for_send(&schema, msg3.c_str(), msg3.size(), 0);
+  header_send3.on_send();
+  size_t size_buf3 = header_send3.size_curr - 1000;
+  char* buf3 = (char*)malloc(size_buf3);
+  communication::utils::Header header_recv3(buf3, size_buf3, false);
+  EXPECT_EQ(header_recv3.on_recv(header_send3.data[0], size_buf3 - 1), -1);
+  free(buf3);
+  buf3 = NULL;
   unsetenv("YGG_MODEL_NAME");
   unsetenv("YGG_MODEL_COPY");
 }

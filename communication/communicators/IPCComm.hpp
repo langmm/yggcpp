@@ -75,17 +75,12 @@ public:
 protected:
 #endif
     void init();
-    int send_single(const char *data, const size_t &len,
-		    const utils::Header& header) override;
+    /*! \copydoc Comm_t::send_single */
+    int send_single(utils::Header& header) override;
 
-    /**
-     * Receiving function
-     * @param data The contents of the message withh be placed here
-     * @param len The initial length of data
-     * @param allow_realloc Whether data can be reallocated if it is too small to hold the message.
-     * @return The length of data after the message was copied.
-     */
-    long recv_single(char*& data, const size_t &len, bool allow_realloc) override;
+    /*! \copydoc Comm_t::recv_single */
+    long recv_single(utils::Header& header) override;
+  
     WORKER_METHOD_DECS(IPCComm);
 #else // IPCINSTALLED
     void init() { UNINSTALLED_ERROR(IPC); }

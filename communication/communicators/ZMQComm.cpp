@@ -572,13 +572,11 @@ int ZMQComm::comm_nmsg() const {
     return out;
 }
 
-int ZMQComm::send_single(const char* data, const size_t &len, const Header& header) {
-  // Should never be called with global comm
-  // if (global_comm)
-  //   return global_comm->send_single(data, len, header);
+int ZMQComm::send_single(utils::Header& header) {
   assert(!global_comm);
-  ygglog_debug << "ZMQComm(" << name << ")::send_single: " << len << " bytes" << std::endl;
-  std::string msg(data, len);
+  header.on_send();
+  ygglog_debug << "ZMQComm(" << name << ")::send_single: " << header.size_msg << " bytes" << std::endl;
+  std::string msg(header.data_msg(), header.size_msg);
   int ret = handle->send(msg);
   if (ret < 0) {
     ygglog_error << "ZMQComm(" << name << ")::send_single: Error in ZMQSocket::send" << std::endl;
@@ -592,18 +590,13 @@ int ZMQComm::send_single(const char* data, const size_t &len, const Header& head
   ygglog_debug << "ZMQComm(" << name << ")::send_single: returning " << ret << std::endl;
   return ret;
 }
-bool ZMQComm::do_reply_send(const Header& header) {
+bool ZMQComm::do_reply_send(const utils::Header& header) {
   if (header.flags & (HEAD_FLAG_CLIENT_SIGNON | HEAD_FLAG_SERVER_SIGNON))
     return true;
-  bool out = reply.send();
-  return out;
+  return reply.send();
 }
 
-long ZMQComm::recv_single(char*& data, const size_t &len,
-			  bool allow_realloc) {
-    // Should never be called with global comm
-    // if (global_comm)
-    //   return global_comm->recv_single(data, len, allow_realloc);
+long ZMQComm::recv_single(utils::Header& header) {
     assert((!global_comm) && handle);
     long ret = -1;
     ygglog_debug << "ZMQComm(" << name << ")::recv_single " << std::endl;
@@ -611,26 +604,22 @@ long ZMQComm::recv_single(char*& data, const size_t &len,
     std::string msg;
     if ((ret = handle->recv(msg)) < 0)
         return ret;
-    
-    ret = this->copyData(data, len, msg.c_str(), msg.size(), allow_realloc);
+
+    ret = header.on_recv(msg.c_str(), msg.size());
     if (ret < 0) {
       ygglog_error << "ZMQComm(" << name << ")::recv_single: Error copying data" << std::endl;
       return ret;
     }
     ygglog_debug << "ZMQComm(" << name << ")::recv_single: received " << ret << " bytes" << std::endl;
     // Extract reply address from header
-    Header head;
-    if (!this->create_header_recv(head, data, ret, ret, false, true)) {
-      ygglog_error << "ZMQComm(" << name << ")::recv_single: Invalid header." << std::endl;
-      return -1;
-    }
-    if (!do_reply_recv(head)) {
+    if (!do_reply_recv(header)) {
       ygglog_error << "ZMQComm(" << name << ")::recv_single: Error in do_reply_recv" << std::endl;
       return -1;
     }
     ygglog_debug << "ZMQComm(" << name << ")::recv_single: returns " << ret << " bytes" << std::endl;
     return ret;
 }
+
 bool ZMQComm::do_reply_recv(const Header& header) {
   // Should never be called with global comm
   // if (global_comm)
@@ -638,15 +627,24 @@ bool ZMQComm::do_reply_recv(const Header& header) {
   assert(!global_comm);
   if (header.flags & (HEAD_FLAG_CLIENT_SIGNON | HEAD_FLAG_SERVER_SIGNON))
     return true;
+  std::string adr;
+  if ((flags & COMM_FLAG_WORKER) && (reply.sockets.size() == 1)) {
+    adr = reply.sockets[0].endpoint;
+  } else {
+    try {
+      const char* address_c = header.GetMetaString("zmq_reply");
+      adr.assign(address_c);
+    } catch (...) {
+      return false;
+    }
+  }
+  reply.set(adr);
   return reply.recv();
 }
 
-bool ZMQComm::create_header_send(Header& header, const char* data, const size_t &len) {
-  // Should never be called with global comm
-  // if (global_comm)
-  //   return global_comm->create_header_send(header, data, len);
+bool ZMQComm::create_header_send(Header& header) {
   assert(!global_comm);
-  bool out = Comm_t::create_header_send(header, data, len);
+  bool out = Comm_t::create_header_send(header);
   if (out && !(header.flags & (HEAD_FLAG_CLIENT_SIGNON |
 			       HEAD_FLAG_SERVER_SIGNON))) {
     std::string reply_address;
@@ -655,36 +653,6 @@ bool ZMQComm::create_header_send(Header& header, const char* data, const size_t 
     header.SetMetaString("zmq_reply", reply_address);
   }
   return out;
-}
-
-bool ZMQComm::create_header_recv(Header& header, char*& data,
-				 const size_t &len,
-				 size_t msg_len, int allow_realloc,
-				 int temp) {
-  // Should never be called with global comm
-  // if (global_comm)
-  //   return global_comm->create_header_recv(header, data, len, msg_len,
-  // 					   allow_realloc, temp);
-  assert(!global_comm);
-  bool out = Comm_t::create_header_recv(header, data, len, msg_len,
-					allow_realloc, temp);
-  if (temp && out &&
-      (!(header.flags & (HEAD_FLAG_CLIENT_SIGNON |
-			 HEAD_FLAG_SERVER_SIGNON)))) {
-    std::string adr;
-    if ((flags & COMM_FLAG_WORKER) && (reply.sockets.size() == 1)) {
-      adr = reply.sockets[0].endpoint;
-    } else {
-      try {
-	const char* address_c = header.GetMetaString("zmq_reply");
-	adr.assign(address_c);
-      } catch (...) {
-	return false;
-      }
-    }
-    reply.set(adr);
-  }
-  return true;
 }
 
 WORKER_METHOD_DEFS(ZMQComm)

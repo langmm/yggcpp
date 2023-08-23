@@ -1,6 +1,7 @@
 // Import arrays once
 // #define RAPIDJSON_FORCE_IMPORT_ARRAY
 #include "serialization.hpp"
+#include "../communicators/CommBase.hpp"
 // Required so that symbol declared by numpy/arrayobject.h is defined
 // during compilation of the dynamic library with MSVC
 // #ifndef RAPIDJSON_YGGDRASIL_PYTHON
@@ -11,6 +12,94 @@ extern "C" {
 #endif // RAPIDJSON_FORCE_IMPORT_ARRAY
 // #endif // RAPIDJSON_YGGDRASIL_PYTHON
 using namespace communication::utils;
+
+int communication::utils::split_head_body(const char *buf,
+					  const char **head,
+					  size_t *headsiz) {
+    // Split buffer into head and body
+    int ret;
+    size_t sind, eind, sind_head, eind_head;
+    sind = 0;
+    eind = 0;
+#ifdef _WIN32
+    // Windows regex of newline is buggy
+  size_t sind1, eind1, sind2, eind2;
+  char re_head_tag[COMMBUFFSIZ + 1];
+  snprintf(re_head_tag, COMMBUFFSIZ, "(%s)", MSG_HEAD_SEP);
+  ret = find_match_c(re_head_tag, buf, &sind1, &eind1);
+  if (ret > 0) {
+    sind = sind1;
+    ret = find_match_c(re_head_tag, buf + eind1, &sind2, &eind2);
+    if (ret > 0)
+      eind = eind1 + eind2;
+  }
+#else
+    // Extract just header
+    char re_head[COMMBUFFSIZ] = MSG_HEAD_SEP;
+    strcat(re_head, "(.*)");
+    strcat(re_head, MSG_HEAD_SEP);
+    // strcat(re_head, ".*");
+    ret = find_match_c(re_head, buf, &sind, &eind);
+#endif
+  if (ret == 0) {
+    sind_head = 0;
+    eind_head = 0;
+    headsiz[0] = 0;
+    ygglog_debug_c("split_head_body: No header in '%.1000s...'", buf);
+  } else {
+    sind_head = sind + strlen(MSG_HEAD_SEP);
+    eind_head = eind - strlen(MSG_HEAD_SEP);
+    headsiz[0] = (eind_head - sind_head);
+    head[0] = buf + strlen(MSG_HEAD_SEP);
+  }
+  // char* temp = (char*)realloc(*head, *headsiz + 1);
+  // if (temp == NULL) {
+  //   ygglog_throw_error_c("split_head_body: Failed to reallocate header.");
+  // }
+  // *head = temp;
+  // memcpy(*head, buf + sind_head, *headsiz);
+  // (*head)[*headsiz] = '\0';
+  return 0;
+}
+
+template <typename ValueT>
+std::string communication::utils::document2string(ValueT& rhs,
+						  const char* indent) {
+  rapidjson::StringBuffer sb;
+  rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(sb, 0, strlen(indent));
+  writer.SetYggdrasilMode(true);
+  rhs.Accept(writer);
+  return std::string(sb.GetString());
+}
+
+long communication::utils::copyData(char*& dst, const size_t dst_len,
+				    const char* src, const size_t src_len,
+				    bool allow_realloc) {
+  if ((src_len + 1) > dst_len) {
+    if (!allow_realloc) {
+      ygglog_error << "copyData: Size of message (" <<
+	src_len << " + 1 bytes) exceeds buffer size (" << dst_len <<
+	" bytes) and the buffer cannot be reallocated." << std::endl;
+      return -((long)src_len);
+    }
+    char* tmp = (char*)realloc(dst, src_len + 1);
+    if (tmp == NULL) {
+      ygglog_error <<
+	"CommBase::copyData: Error reallocating buffer" << std::endl;
+      return -1;
+    }
+    dst = tmp;
+  }
+  if (src) {
+    memcpy(dst, src, src_len);
+    dst[src_len] = '\0';
+  }
+  return (long)src_len;
+}
+
+//////////////
+// Metadata //
+//////////////
 
 Metadata::Metadata() :
   metadata(rapidjson::kObjectType), schema(NULL) {}
@@ -682,57 +771,60 @@ void Metadata::_update_schema() {
   }
 }
 
-Header::Header() :
-  data_(NULL), data(NULL), size_data(0), size_buff(0), size_curr(0),
-  size_head(0), flags(HEAD_FLAG_VALID) {}
+////////////
+// Header //
+////////////
+
+Header::Header(bool own_data) :
+  data_(NULL), data(NULL),
+  size_data(0), size_buff(0), size_curr(0),
+  size_head(0), size_max(0), size_msg(0),
+  flags(HEAD_FLAG_VALID), offset(0) {
+  if (own_data) {
+    data = &data_;
+    flags |= HEAD_BUFFER_MASK;
+  }
+}
+Header::Header(const char* buf, const size_t &len,
+	       communication::communicator::Comm_t* comm) :
+  Header() {
+  Metadata* meta = NULL;
+  int comm_flags = 0;
+  if (comm) {
+    size_max = comm->getMaxMsgSize() - comm->getMsgBufSize();
+    meta = &(comm->getMetadata(SEND));
+    comm_flags = comm->getFlags();
+  }
+  for_send(meta, buf, len, comm_flags);
+}
+Header::Header(char*& buf, const size_t &len, bool allow_realloc) :
+  Header() {
+  for_recv(buf, len, allow_realloc);
+}
 Header::~Header() {
-  Destroy();
+  reset();
 }
 #if RAPIDJSON_HAS_CXX11_RVALUE_REFS
 Header::Header(Header&& rhs) :
   Metadata(std::forward<Metadata>(rhs)),
-  data_(rhs.data_), data(rhs.data), size_data(rhs.size_data),
-  size_buff(rhs.size_buff), size_curr(rhs.size_curr),
-  size_head(rhs.size_head), flags(rhs.flags) {
-  rhs.data_ = NULL; // Prevent freeing moved pointer
-  rhs.Destroy();
+  data_(NULL), data(NULL),
+  size_data(0), size_buff(0), size_curr(0),
+  size_head(0), size_max(0), size_msg(0),
+  flags(HEAD_FLAG_VALID), offset(0) {
+  RawAssign(rhs);
+  rhs.reset(HEAD_RESET_DROP_DATA);
 }
 Header& Header::operator=(Header&& rhs) {
   return *this = rhs.Move();
-  // Metadata::operator=(std::forward<Metadata>(rhs));
-  // Destroy();
-  // RawAssign(rhs);
-  // rhs.data_ = NULL; // Prevent freeing moved pointer
-  // rhs.Destroy();
-  // return *this;
 }
 #endif // RAPIDJSON_HAS_CXX11_RVALUE_REFS
-void Header::Destroy() {
-  if ((flags & HEAD_FLAG_OWNSDATA) && data_)
-    free(data_);
-  data_ = NULL;
-  data = NULL;
-  size_data = 0;
-  size_buff = 0;
-  size_curr = 0;
-  size_head = 0;
-  flags = HEAD_FLAG_VALID;
-}
-void Header::RawAssign(const Header& rhs) {
-  data_ = rhs.data_;
-  data = rhs.data;
-  size_data = rhs.size_data;
-  size_buff = rhs.size_buff;
-  size_curr = rhs.size_curr;
-  size_head = rhs.size_head;
-  flags = rhs.flags;
-}
 Header& Header::operator=(Header& rhs) {
+  if (data && !(flags & HEAD_FLAG_OWNSDATA))
+    ygglog_debug << "Header::operator=: Supplied buffer will be displaced by move" << std::endl;
+  reset();
   Metadata::operator=(std::forward<Metadata>(rhs));
-  Destroy();
   RawAssign(rhs);
-  rhs.data_ = NULL; // prevent freeing moved pointer
-  rhs.Destroy();
+  rhs.reset(HEAD_RESET_DROP_DATA);
   return *this;
 }
 bool Header::operator==(const Header& rhs) const {
@@ -742,7 +834,10 @@ bool Header::operator==(const Header& rhs) const {
 	size_buff == rhs.size_buff &&
 	size_curr == rhs.size_curr &&
 	size_head == rhs.size_head &&
-	flags == rhs.flags))
+	size_max == rhs.size_max &&
+	size_msg == rhs.size_msg &&
+	flags == rhs.flags &&
+	offset == rhs.offset))
     return false;
   if ((!data) || (!rhs.data))
     return (data == rhs.data);
@@ -753,15 +848,106 @@ bool Header::operator==(const Header& rhs) const {
 bool Header::operator!=(const Header& rhs) const {
   return (!(*this == rhs));
 }
-void Header::reset() {
+void Header::reset(HEAD_RESET_MODE mode) {
   Metadata::reset();
-  data_ = NULL;
-  data = NULL;
+  int keep_flags = 0;
+  if (mode == HEAD_RESET_KEEP_BUFFER) {
+    keep_flags = (flags & HEAD_BUFFER_MASK);
+  } else {
+    if (mode != HEAD_RESET_DROP_DATA) {
+      if ((flags & HEAD_FLAG_OWNSDATA) && data_) {
+	free(data_);
+      }
+      data_ = NULL;
+      data = NULL;
+    }
+    size_buff = 0;
+    size_max = 0;
+    if (mode == HEAD_RESET_OWN_DATA) {
+      keep_flags = HEAD_BUFFER_MASK;
+      data = &data_;
+    }
+  }
   size_data = 0;
-  size_buff = 0;
   size_curr = 0;
   size_head = 0;
-  flags = HEAD_FLAG_VALID;
+  size_msg = 0;
+  flags = HEAD_FLAG_VALID | keep_flags;
+  offset = 0;
+}
+bool Header::RawAssign(const Header& rhs, bool keep_buffer) {
+  if (keep_buffer) {
+    offset = 0;
+    if (rhs.data && copyData(rhs.data[0], rhs.size_buff) < 0)
+      return false;
+    flags = (flags & HEAD_BUFFER_MASK) | (rhs.flags & ~HEAD_BUFFER_MASK);
+  } else {
+    data = rhs.data;
+    data_ = rhs.data_;
+    size_buff = rhs.size_buff;
+    flags = rhs.flags;
+  }
+  size_data = rhs.size_data;
+  size_curr = rhs.size_curr;
+  size_head = rhs.size_head;
+  size_max = rhs.size_max;
+  size_msg = rhs.size_msg;
+  offset = rhs.offset;
+  return true;
+}
+long Header::reallocData(const size_t size_new) {
+  if ((size_new + 1) <= size_buff)
+    return size_buff;
+  if (!(flags & HEAD_FLAG_ALLOW_REALLOC)) {
+    ygglog_error << "Header::reallocData: Buffer is not large enough and cannot be reallocated" << std::endl;
+    return -1;
+  }
+  size_buff = size_new + 1;
+  char* data_t = (char*)realloc(data[0], size_buff);
+  if (!data_t) {
+    ygglog_error << "Header::reallocData: Error in realloc" << std::endl;
+    return -1;
+  }
+  data[0] = data_t;
+  if (flags & HEAD_FLAG_OWNSDATA)
+    data_ = data_t;
+  return size_buff;
+}
+
+long Header::copyData(const char* msg, const size_t msg_siz) {
+  long ret = 0;
+  char* dst = data_msg();
+  if (msg && dst == msg) {
+    ret = static_cast<long>(msg_siz);
+  } else {
+    bool allow_realloc = ((flags & HEAD_FLAG_ALLOW_REALLOC) &&
+			  (offset == 0));
+    ret = communication::utils::copyData(dst, size_buff - offset,
+					 msg, msg_siz, allow_realloc);
+    if (allow_realloc && ((ret + 1) > static_cast<long>(size_buff))) {
+      data[0] = dst;
+      if (flags & HEAD_FLAG_OWNSDATA)
+	data_ = dst;
+      size_buff = static_cast<size_t>(ret + 1);
+    }
+  }
+  return ret;
+}
+bool Header::MoveFrom(Header& rhs) {
+  if (data && !(flags & HEAD_FLAG_OWNSDATA)) {
+    bool out = CopyFrom(rhs);
+    rhs.reset(HEAD_RESET_COMPLETE); // HEAD_RESET_KEEP_BUFFER); // can be reused
+    return out;
+  }
+  *this = std::move(rhs);
+  return true;
+}
+bool Header::CopyFrom(const Header& rhs) {
+  reset(HEAD_RESET_KEEP_BUFFER);
+  if (!Metadata::CopyFrom(rhs))
+    return false;
+  bool out = RawAssign(rhs, true);
+  return out;
 }
 
 void Header::setMessageFlags(const char* msg, const size_t msg_len) {
@@ -777,9 +963,26 @@ void Header::setMessageFlags(const char* msg, const size_t msg_len) {
     flags |= HEAD_FLAG_SERVER_SIGNON;
 }
 
-void Header::for_send(Metadata* metadata0, const char* msg, const size_t len) {
-  // flags |= (HEAD_FLAG_ALLOW_REALLOC | HEAD_FLAG_OWNSDATA);
+void Header::for_send(Metadata* metadata0, const char* msg,
+		      const size_t len, int comm_flags) {
+  ygglog_debug << "Header::for_send: " << len << " bytes" << std::endl;
+  flags |= HEAD_BUFFER_MASK;
+  size_buff = len + 1;
+  size_data = len;
+  size_curr = len;
+  data_ = (char*)malloc(size_buff);
+  memcpy(data_, msg, size_data);
+  data_[size_data] = '\0';
+  data = &data_;
   setMessageFlags(msg, len);
+  if ((flags & HEAD_FLAG_EOF) || (comm_flags & COMM_FLAGS_USED_SENT)) {
+    flags |= HEAD_FLAG_NO_TYPE;
+    if ((size_max == 0 || len < size_max) &&
+	!(comm_flags & COMM_ALWAYS_SEND_HEADER)) {
+      flags |= HEAD_FLAG_NO_HEAD;
+      return;
+    }
+  }
   if (metadata0 != NULL && !(flags & (HEAD_FLAG_CLIENT_SIGNON |
 				      HEAD_FLAG_SERVER_SIGNON)))
     fromMetadata(*metadata0);
@@ -796,33 +999,53 @@ void Header::for_send(Metadata* metadata0, const char* msg, const size_t len) {
     strcat(model, model_copy);
   }
   SetMetaString("model", model);
+  Display();
 }
-void Header::for_recv(char** buf, size_t buf_siz, size_t msg_siz,
-		      bool allow_realloc, bool temp) {
-  data = buf;
+int Header::on_send(bool dont_advance) {
+  ygglog_debug << "Header::on_send: " << size_curr << std::endl;
+  format();
+  if (!dont_advance) {
+    offset += size_msg;
+  }
+  size_msg = std::min(size_curr - offset, size_max);
+  ygglog_debug << "Header::on_send: size_msg = " << size_msg << std::endl;
+  return size_curr;
+}
+
+void Header::for_recv(char*& buf, size_t buf_siz, bool allow_realloc) {
+  data = &buf;
   size_buff = buf_siz;
-  size_curr = msg_siz;
   if (allow_realloc)
     flags |= HEAD_FLAG_ALLOW_REALLOC;
-  if (temp)
-    flags |= HEAD_TEMPORARY;
+}
+long Header::on_recv(const char* msg, const size_t& msg_siz) {
+  ygglog_debug << "Header::on_recv: " << msg_siz << std::endl;
+  bool no_offset = (offset == 0);
+  long ret = copyData(msg, msg_siz);
+  if (ret >= 0 && msg) {
+    size_curr += msg_siz;
+    offset += msg_siz;
+  }
+  if (ret < 0 || !no_offset || !msg) {
+    return ret;
+  }
   const char *head = NULL;
   size_t headsiz = 0;
-  split_head_body(*buf, &head, &headsiz);
+  split_head_body(*data, &head, &headsiz);
   if (headsiz == 0) {
     size_data = size_curr;
   } else {
     fromMetadata(head, headsiz);
     size_head = headsiz + 2*strlen(MSG_HEAD_SEP);
     if (size_head > msg_siz) {
-      ygglog_throw_error_c("Header::for_recv: Header (%ld) is larger than message (%ld)", size_head, msg_siz);
+      ygglog_error << "Header::on_recv: Header (" << size_head <<
+	") is larger than message (" << msg_siz << ")" << std::endl;
+      return -1;
     }
-    // size_t bodysiz = msg_siz - size_head;
-    if (!(flags & HEAD_TEMPORARY)) {
-      size_curr -= size_head;
-      memmove(data[0], data[0] + size_head, size_curr);
-      (*data)[size_curr] = '\0';
-    }
+    // Move body to front of buffer
+    size_curr -= size_head;
+    memmove(data[0], data[0] + size_head, size_curr);
+    (*data)[size_curr] = '\0';
     // Update parameters from document
     size_data = static_cast<size_t>(GetMetaInt("size"));
     if (GetMetaBoolOptional("in_data", false))
@@ -831,25 +1054,15 @@ void Header::for_recv(char** buf, size_t buf_siz, size_t msg_siz,
       flags &= static_cast<uint16_t>(~HEAD_META_IN_DATA);
   }
   // Check for flags
-  char* data_chk = data[0];
-  if (flags & HEAD_TEMPORARY)
-    data_chk += size_head;
-  setMessageFlags(data_chk, size_curr);
+  setMessageFlags(data[0], size_curr);
   if (size_curr < size_data)
     flags |= HEAD_FLAG_MULTIPART;
   else
     flags &= static_cast<uint16_t>(~HEAD_FLAG_MULTIPART);
-  if ((!(flags & HEAD_TEMPORARY)) && ((size_data + 1) > size_buff)) {
-    if (allow_realloc) {
-      char *t_data = (char*)realloc(*data, size_data + 1);
-      if (t_data == NULL) {
-	ygglog_throw_error_c("Header::for_recv: Failed to realloc buffer");
-      }
-      data[0] = t_data;
-    } else {
-      ygglog_throw_error_c("Header::for_recv: Buffer is not large enough");
-    }
-  }
+  if (reallocData(size_data) < 0)
+    return -1;
+  ygglog_debug << "Header::on_recv: done (size_buff = " << size_buff << ")" << std::endl;
+  return ret;
 }
 
 void Header::formatBuffer(rapidjson::StringBuffer& buffer, bool metaOnly) {
@@ -894,77 +1107,95 @@ void Header::formatBuffer(rapidjson::StringBuffer& buffer, bool metaOnly) {
     // }
   }
 }
-
-size_t Header::format(const char* buf, size_t buf_siz,
-		      size_t size_max, bool metaOnly) {
-  flags |= (HEAD_FLAG_ALLOW_REALLOC | HEAD_FLAG_OWNSDATA);
-  if (strcmp(buf, YGG_MSG_EOF) == 0) {
-    flags |= HEAD_FLAG_EOF;
-    metaOnly = true;
+void Header::Display(const char* indent) const {
+  Metadata::Display(indent);
+  std::cout << indent;
+  std::cout << "DATA_PTR = ";
+  if (data)
+    std::cout << data;
+  else
+    std::cout << "NULL";
+  std::cout << ", DATA = ";
+  if (data && data[0] && size_curr) {
+    // std::string sData(data[0], size_curr);
+    std::cout << data[0];
+  } else {
+    std::cout << "NULL";
   }
+  std::cout << std::endl;
+}
+
+size_t Header::format() {
+  if (flags & HEAD_FLAG_FORMATTED) {
+    return size_curr;
+  } else if (flags & HEAD_FLAG_NO_HEAD) {
+    size_curr = size_data;
+    flags |= HEAD_FLAG_FORMATTED;
+    return size_curr;
+  }
+  flags |= HEAD_BUFFER_MASK;
   data = &data_;
-  size_data = buf_siz;
-  if (buf_siz == 0 && empty()) {
+  if (size_data == 0 && empty()) {
     ygglog_debug_c("Header::format: Empty header");
     return 0;
   }
-  SetMetaUint("size", buf_siz);
-  rapidjson::StringBuffer buffer;
-  formatBuffer(buffer, metaOnly);
+  bool metaOnly = (flags & (HEAD_FLAG_NO_TYPE | HEAD_META_IN_DATA));
+  size_t size_raw = size_data;
   rapidjson::StringBuffer buffer_body;
-  size_t size_sep = strlen(MSG_HEAD_SEP);
-  size_t size_new = static_cast<size_t>(buffer.GetLength()) + 2 * size_sep;
-  if (size_max > 0 && size_new > size_max) {
-    if (metaOnly)
-      ygglog_throw_error_c("Header::format: Extra data already excluded, cannot make header any smaller.");
-    flags |= HEAD_META_IN_DATA;
+  std::string sep(MSG_HEAD_SEP);
+  if (flags & HEAD_META_IN_DATA) {
     SetMetaBool("in_data", true);
     formatBuffer(buffer_body);
-    size_data += size_sep + static_cast<size_t>(buffer_body.GetLength());
-    SetMetaUint("size", size_data);
-    formatBuffer(buffer, true);
-    size_new = ((3 * size_sep) +
-		static_cast<size_t>(buffer.GetLength()) +
-		static_cast<size_t>(buffer_body.GetLength()));
+    size_data += sep.size() + static_cast<size_t>(buffer_body.GetLength());
   }
-  size_new += buf_siz;
+  SetMetaUint("size", size_data);
+  rapidjson::StringBuffer buffer;
+  formatBuffer(buffer, metaOnly);
+  size_t size_head = static_cast<size_t>(buffer.GetLength()) + 2 * sep.size();
+  size_t size_new = size_head + size_data;
   if (size_max > 0 && size_new > size_max &&
       (!(flags & HEAD_FLAG_MULTIPART))) {
     // Early return since comm needs to add to header
     flags |= HEAD_FLAG_MULTIPART;
+    flags &= ~HEAD_FLAG_FORMATTED;
+    if (size_head > size_max) {
+      if (metaOnly)
+	ygglog_throw_error_c("Header::format: Extra data already excluded, cannot make header any smaller.");
+      flags |= HEAD_META_IN_DATA;
+    }
     return 0;
   }
-  if ((size_new + 1) > size_buff) {
-    size_buff = size_new + 1;
-    char* data_t = (char*)realloc(data[0], size_buff);
-    if (!data_t) {
-      ygglog_throw_error_c("Header::format: Error in realloc");
-    }
-    data[0] = data_t;
-  }
-  int ret;
+  if (reallocData(size_new) < 0)
+    return -1;
+  memmove(data[0] + static_cast<long>(size_new - size_raw),
+	  data[0], size_raw);
+  size_curr = 0;
+  memcpy(data[0] + size_curr, sep.c_str(), sep.size());
+  size_curr += sep.size();
+  
+  memcpy(data[0] + size_curr, buffer.GetString(), buffer.GetLength());
+  size_curr += buffer.GetLength();
+  
+  memcpy(data[0] + size_curr, sep.c_str(), sep.size());
+  size_curr += sep.size();
+  
   if (GetMetaBoolOptional("in_data", false)) {
-    ret = snprintf(data[0], size_buff, "%s%s%s%s%s", MSG_HEAD_SEP,
-		   buffer.GetString(), MSG_HEAD_SEP,
-		   buffer_body.GetString(), MSG_HEAD_SEP);
-  } else {
-    ret = snprintf(data[0], size_buff, "%s%s%s", MSG_HEAD_SEP,
-		   buffer.GetString(), MSG_HEAD_SEP);
+    memcpy(data[0] + size_curr, buffer_body.GetString(),
+	   buffer_body.GetLength());
+    size_curr += buffer_body.GetLength();
+    memcpy(data[0] + size_curr, sep.c_str(), sep.size());
+    size_curr += sep.size();
   }
-  assert(((size_t)(ret) + buf_siz) <= size_buff);
-  // if (((size_t)(ret) + buf_siz) > size_buff)
-  //   ygglog_throw_error_c("Header::format: Message size (%d) exceeds buffer size (%lu): '%s%s%s'.",
-  // 			 ret, size_buff, MSG_HEAD_SEP, buffer.GetString(), MSG_HEAD_SEP);
-  size_curr = static_cast<size_t>(ret);
-  memcpy(data[0] + size_curr, buf, buf_siz);
-  size_curr += buf_siz;
+  size_curr += size_raw;
   data[0][size_curr] = '\0';
+  flags |= HEAD_FLAG_FORMATTED;
   return size_curr;
 }
 
 void Header::finalize_recv() {
   if (!GetMetaBoolOptional("in_data", false))
     return;
+  ygglog_debug << "Header::finalize_recv: begin" << std::endl;
   size_t sind, eind;
   if (find_match_c(MSG_HEAD_SEP, *data, &sind, &eind) > 0) {
     rapidjson::Document type_doc;
@@ -977,4 +1208,5 @@ void Header::finalize_recv() {
     memmove(data[0], data[0] + eind, size_curr);
     (*data)[size_curr] = '\0';
   }
+  ygglog_debug << "Header::finalize_recv: end" << std::endl;
 }

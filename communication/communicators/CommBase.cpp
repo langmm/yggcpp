@@ -40,31 +40,6 @@ void Comm_t::_ygg_init() {
   } YGG_THREAD_SAFE_END;
 }
 
-long Comm_t::copyData(char*& dst, const size_t dst_len,
-		      const char* src, const size_t src_len,
-		      bool allow_realloc) {
-  if ((src_len + 1) > dst_len) {
-    if (!allow_realloc) {
-      ygglog_error << "CommBase::copyData: Size of message (" <<
-	src_len << " + 1 bytes) exceeds buffer size (" << dst_len <<
-	" bytes) and the buffer cannot be reallocated." << std::endl;
-      return -((long)src_len);
-    }
-    char* tmp = (char*)realloc(dst, src_len + 1);
-    if (tmp == NULL) {
-      ygglog_error <<
-	"CommBase::copyData: Error reallocating buffer" << std::endl;
-      return -1;
-    }
-    dst = tmp;
-  }
-  if (src) {
-    memcpy(dst, src, src_len);
-    dst[src_len] = '\0';
-  }
-  return (long)src_len;
-}
-
 void Comm_t::_ygg_cleanup() {
   YGG_THREAD_SAFE_BEGIN(clean) {
     if (!Comm_t::_ygg_finalized) {
@@ -94,9 +69,9 @@ void Comm_t::_ygg_cleanup() {
   } YGG_THREAD_SAFE_END;
 #ifndef YGG_TEST
 #ifndef RAPIDJSON_YGGDRASIL_PYTHON
-  if (utils::YggdrasilLogger::_ygg_error_flag) {
+  if (YggdrasilLogger::_ygg_error_flag) {
     ygglog_debug << "_ygg_cleanup: Error code set" << std::endl;
-    _exit(utils::YggdrasilLogger::_ygg_error_flag);
+    _exit(YggdrasilLogger::_ygg_error_flag);
   }
 #endif // RAPIDJSON_YGGDRASIL_PYTHON
 #endif // YGG_TEST
@@ -105,7 +80,7 @@ void Comm_t::_ygg_cleanup() {
 int Comm_t::_ygg_initialized = 0;
 int Comm_t::_ygg_finalized = 0;
 
-Comm_t::Comm_t(const std::string &nme, utils::Address *addr,
+Comm_t::Comm_t(const std::string &nme, Address *addr,
 	       DIRECTION dirn, const COMM_TYPE &t, int flgs) :
   type(t), name(nme), address(addr), direction(dirn), flags(flgs),
   maxMsgSize(COMM_BASE_MAX_MSG_SIZE), msgBufSize(0),
@@ -204,7 +179,7 @@ bool Comm_t::get_global_scope_comm() {
   if (!global_comm) {
     ygglog_debug << "CommBase: Creating global comm \"" << global_name
 		 << "\"" << std::endl;
-    utils::Address* global_address = new utils::Address();
+    Address* global_address = new Address();
     if (address)
       global_address->address(address->address());
     global_comm = new_Comm_t(global_direction, global_type, global_name,
@@ -216,7 +191,7 @@ bool Comm_t::get_global_scope_comm() {
 		 << "\"" << std::endl;
   }
   if (!address)
-    address = new utils::Address();
+    address = new Address();
   address->address(global_comm->address->address());
   flags = global_comm->flags & ~COMM_FLAG_GLOBAL;
   if (is_server)
@@ -304,33 +279,6 @@ bool communication::communicator::is_commtype_installed(const COMM_TYPE type) {
   return false;
 }
 
-bool Comm_t::create_header_send(Header& header, const char* data,
-				const size_t &len) {
-  // Should never be called with global comm
-  // if (global_comm)
-  //   return global_comm->create_header_send(header, data, len);
-  assert(!global_comm);
-  header.for_send(&getMetadata(SEND), data, len);
-  return true;
-}
-
-bool Comm_t::create_header_recv(Header& header, char*& data,
-				const size_t &len,
-				size_t msg_len, int allow_realloc,
-				int temp) {
-  // Should never be called with global comm
-  // if (global_comm)
-  //   return global_comm->create_header_recv(header, data, len, msg_len,
-  // 					   allow_realloc, temp);
-  assert(!global_comm);
-  try {
-    header.for_recv(&data, len, msg_len, allow_realloc, temp);
-  } catch (...) {
-    return false;
-  }
-  return true;
-}
-
 Comm_t* Comm_t::create_worker_send(Header& head) {
   // Should never be called with global comm
   // if (global_comm)
@@ -351,7 +299,7 @@ Comm_t* Comm_t::create_worker_recv(Header& head) {
   ygglog_debug << "CommBase(" << name << ")::create_worker_recv: begin" << std::endl;
   try {
     const char* address = head.GetMetaString("address");
-    utils::Address* adr = new utils::Address(address);
+    Address* adr = new Address(address);
     return workers.get(this, RECV, adr);
   } catch (...) {
     return nullptr;
@@ -366,24 +314,19 @@ int Comm_t::send(const char *data, const size_t &len) {
     ygglog_error << "CommBase(" << name << ")::send: Communicator closed." << std::endl;
     return -1;
   }
-  size_t size_max = maxMsgSize - msgBufSize;
-  Header head;
-  head.setMessageFlags(data, len);
-  int no_type = ((head.flags & HEAD_FLAG_EOF) ||
-		 (flags & COMM_FLAGS_USED_SENT));
-  if ((size_max == 0 || len <= size_max) &&
-      (!(flags & COMM_ALWAYS_SEND_HEADER)) && no_type) {
+  Header head(data, len, this);
+  if (head.flags & HEAD_FLAG_NO_HEAD) {
     ygglog_debug << "CommBase(" << name << ")::send: Sending data in single message. " << is_eof(data) << ", " << (flags & COMM_FLAGS_USED_SENT) << std::endl;
-    int out = send_single(data, len, head);
+    int out = send_single(head);
     if (out >= 0)
       setFlags(head, SEND);
     return out;
   }
-  if (!create_header_send(head, data, len)) {
+  if (!create_header_send(head)) {
     ygglog_error << "CommBase(" << name << ")::send: Failed to create header" << std::endl;
     return -1;
   }
-  head.format(data, len, size_max);
+  head.format();
   Comm_t* xmulti = NULL;
   if (head.flags & HEAD_FLAG_MULTIPART) {
     ygglog_debug << "CommBase(" << name << ")::send: Sending message in multiple parts" << std::endl;
@@ -392,36 +335,21 @@ int Comm_t::send(const char *data, const size_t &len) {
       ygglog_error << "CommBase(" << name << ")::send: Error creating worker" << std::endl;
       return -1;
     }
-    try {
-      head.format(data, len, size_max, no_type);
-    } catch (std::exception& err) {
-      throw err;
-    }
   }
-  size_t prev = 0, msgsiz = head.size_curr;
-  if (head.size_curr > size_max) {
-    msgsiz = size_max;
-    prev += size_max;
-  }
-  if (send_single(head.data[0], msgsiz, head) < 0) {
+  if (send_single(head) < 0) {
     ygglog_error << "CommBase(" << name << ")::send: Failed to send header." << std::endl;
     return -1;
   }
   if (!(head.flags & HEAD_FLAG_MULTIPART)) {
-    ygglog_debug << "CommBase(" << name << ")::send: " << msgsiz << " bytes completed" << std::endl;
-    return msgsiz;
+    ygglog_debug << "CommBase(" << name << ")::send: " << head.size_msg << " bytes completed" << std::endl;
+    return head.size_msg;
   }
-  size_t size_max_multi = xmulti->maxMsgSize - xmulti->msgBufSize;
-  while (prev < head.size_curr) {
-    msgsiz = head.size_curr - prev;
-    if (msgsiz > size_max_multi)
-      msgsiz = size_max_multi;
-    if (xmulti->send_single(head.data[0] + prev, msgsiz, head) < 0) {
-      ygglog_error << "CommBase(" << name << ")::send: send interupted at " << prev << " of " << head.size_curr << " bytes" << std::endl;
+  while ((head.offset + head.size_msg) < head.size_curr) {
+    if (xmulti->send_single(head) < 0) {
+      ygglog_error << "CommBase(" << name << ")::send: send interupted at " << head.offset << " of " << head.size_curr << " bytes" << std::endl;
       return -1;
     }
-    prev += msgsiz;
-    ygglog_debug << "CommBase(" << name << ")::send: " << prev << " of " << head.size_curr << " bytes sent to " << address->address() << std::endl;
+    ygglog_debug << "CommBase(" << name << ")::send: " << head.offset << " of " << head.size_curr << " bytes sent to " << address->address() << std::endl;
   }
   ygglog_debug << "CommBase(" << name << ")::send: returns " << head.size_curr << std::endl;
   setFlags(head, SEND);
@@ -463,7 +391,7 @@ long Comm_t::recv(char*& data, const size_t &len,
   if (global_comm)
     return global_comm->recv(data, len, allow_realloc);
   ygglog_debug << "CommBase(" << name << ")::recv: Receiving from " << address->address() << std::endl;
-  Header head;
+  Header head(data, len, allow_realloc);
   long ret = -1;
   if (!allow_realloc) {
     char* tmp = NULL;
@@ -497,18 +425,14 @@ long Comm_t::recv(char*& data, const size_t &len,
       ygglog_error << "CommBase(" << name << ")::recv: No messages waiting" << std::endl;
       return -1;
     }
-    ret = recv_single(data, len, allow_realloc);
+    ret = recv_single(head);
     if (ret < 0) {
       ygglog_error << "CommBase(" << name << ")::recv: Failed to receive header" << std::endl;
       return ret;
     }
-    if (!create_header_recv(head, data, len, ret, allow_realloc, 0)) {
-      ygglog_error << "CommBase(" << name << ")::recv: Failed to create header" << std::endl;
-      return -1;
-    }
     if (!(head.flags & HEAD_FLAG_REPEAT))
       break;
-    head.reset();
+    head.reset(HEAD_RESET_KEEP_BUFFER);
   }
   if (head.flags & HEAD_FLAG_EOF) {
     ygglog_debug << "CommBase(" << name << ")::recv: EOF received" << std::endl;
@@ -524,21 +448,17 @@ long Comm_t::recv(char*& data, const size_t &len,
       return -1;
     }
   }
-  char *pos = data + head.size_curr;
-  size_t msgsiz = 0;
+  head.offset = head.size_curr;
   while (head.size_curr < head.size_data) {
-    msgsiz = head.size_data - head.size_curr + 1;
     if (xmulti->wait_for_recv(timeout_recv) <= 0) {
       ygglog_error << "CommBase(" << name << ")::recv: No messages waiting in work comm" << std::endl;
       return -1;
     }
-    ret = xmulti->recv_single(pos, msgsiz, false);
+    ret = xmulti->recv_single(head);
     if (ret < 0) {
       ygglog_error << "CommBase(" << name << ")::recv: Receive interrupted at " << head.size_curr << " of " << head.size_data << " bytes." << std::endl;
       break;
     }
-    head.size_curr += ret;
-    pos += ret;
     ygglog_debug << "CommBase(" << name << ")::recv: " << head.size_curr << " of " << head.size_data << " bytes received." << std::endl;
   }
   if (xmulti)

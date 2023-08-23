@@ -171,28 +171,19 @@ int IPCComm::comm_nmsg() const {
     return ret;
 }
 
-/*!
-  @brief Send a message to the comm.
-  Send a message smaller than YGG_MSG_MAX bytes to an output comm. If the
-  message is larger, it will not be sent.
-  @param[in] data character pointer to message that should be sent.
-  @returns int 0 if send succesfull, -1 if send unsuccessful.
- */
-int IPCComm::send_single(const char* data, const size_t &len, const Header&) {
-    // Should never be called with global comm
-    // if (global_comm)
-    //   return global_comm->send_single(data, len, head);
+int IPCComm::send_single(utils::Header& header) {
     assert(!global_comm);
-    ygglog_debug << "IPCComm(" << name << ")::send_single: " << len << " bytes" << std::endl;
+    header.on_send();
+    ygglog_debug << "IPCComm(" << name << ")::send_single: " << header.size_msg << " bytes" << std::endl;
     int ret = -1;
     msgbuf_t t;
     t.mtype = 1;
-    memcpy(t.data, data, len);
+    memcpy(t.data, header.data_msg(), header.size_msg);
     while (true) {
-        ret = msgsnd(handle[0], &t, len, IPC_NOWAIT);
+        ret = msgsnd(handle[0], &t, header.size_msg, IPC_NOWAIT);
         ygglog_debug << "IPCComm(" << name << ")::send_single: msgsnd returned " << ret << std::endl;
         if (ret == 0) {
-	    ret = static_cast<int>(len);
+	    ret = static_cast<int>(header.size_msg);
             break;
 	}
         if ((ret == -1) && (errno == EAGAIN)) {
@@ -201,11 +192,11 @@ int IPCComm::send_single(const char* data, const size_t &len, const Header&) {
         } else { // GCOVR_EXCL_LINE
             struct msqid_ds buf;
             int rtrn = msgctl(handle[0], IPC_STAT, &buf);
-            if ((rtrn == 0) && ((buf.msg_qnum + len) > buf.msg_qbytes)) {
+            if ((rtrn == 0) && ((buf.msg_qnum + header.size_msg) > buf.msg_qbytes)) {
 	        ygglog_debug << "IPCComm(" << name << ")::send_single: msgsnd, queue full, sleep" << std::endl;
 		std::this_thread::sleep_for(std::chrono::microseconds(YGG_SLEEP_TIME));
             } else { // GCOVR_EXCL_LINE
-	        ygglog_error << "IPCComm(" << name << ")::send_single: msgsnd(" << handle[0] << ", " << &t << ", " << len
+	        ygglog_error << "IPCComm(" << name << ")::send_single: msgsnd(" << handle[0] << ", " << &t << ", " << header.size_msg
                              << ", IPC_NOWAIT) ret(" << ret << "), errno(" << errno << "): " << strerror(errno) << std::endl;
                 ret = -1;
                 break;
@@ -215,15 +206,7 @@ int IPCComm::send_single(const char* data, const size_t &len, const Header&) {
     return ret;
 }
 
-/*!
-  @brief Receive a message from an input comm.
-  Receive a message smaller than YGG_MSG_MAX bytes from an input comm.
-  @param[out] data char ** pointer to allocated buffer where the message
-  should be saved.
-  @returns int -1 if message could not be received. Length of the received
-    message if message was received.
- */
-long IPCComm::recv_single(char*& data, const size_t& len, bool allow_realloc) {
+long IPCComm::recv_single(utils::Header& header) {
     // Should never be called with global comm
     // if (global_comm)
     //   return global_comm->recv_single(data, len, allow_realloc);
@@ -248,7 +231,7 @@ long IPCComm::recv_single(char*& data, const size_t& len, bool allow_realloc) {
                      << strerror(errno) << std::endl;
         return -1;
     }
-    ret = this->copyData(data, len, t.data, ret, allow_realloc);
+    ret = header.on_recv(t.data, ret);
     if (ret < 0) {
       ygglog_error << "IPCComm(" << name << ")::recv_single: Error copying data" << std::endl;
       return ret;

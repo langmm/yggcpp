@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CommBase.hpp"
-#include "utils/Message.hpp"
+#include "utils/serialization.hpp"
 #include <atomic>
 
 namespace communication {
@@ -21,7 +21,7 @@ namespace communication {
       std::mutex comm_mutex;
       std::atomic_bool opened;
       std::atomic_bool closing;
-      std::vector<utils::Message> backlog;
+      std::vector<utils::Header> backlog;
       std::thread backlog_thread;
     };
 
@@ -63,15 +63,10 @@ namespace communication {
       using Comm_t::recv;
       
     protected:
-      int send_single(const char *data, const size_t &len,
-		      const utils::Header& header) override;
-      long recv_single(char*& data, const size_t &len,
-		       bool allow_realloc) override;
-      bool create_header_send(utils::Header& header, const char* data,
-			      const size_t &len) override;
-      bool create_header_recv(utils::Header& header, char*& data,
-			      const size_t &len, size_t msg_len,
-			      int allow_realloc, int temp) override;
+      int send_single(utils::Header& header) override;
+      long recv_single(utils::Header& header) override;
+      bool create_header_send(utils::Header& header) override;
+      bool create_header_recv(utils::Header& header) override;
       Comm_t* create_worker(utils::Address* address,
 			    const DIRECTION& dir, int flgs) override;
       

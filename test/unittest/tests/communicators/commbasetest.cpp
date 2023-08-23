@@ -20,13 +20,14 @@ public:
     using Comm_t::send;
     using Comm_t::recv;
 protected:
-    int send_single(const char*, const size_t &, const utils::Header&) override {
+    int send_single(utils::Header&) override {
       return 0;
     }
-    long recv_single(char*& data, const size_t &, bool) override {
-        const std::string msg = "{ \"hello\" : \"world\" }";
-        data = const_cast<char*>(msg.c_str());
-        return static_cast<long>(msg.size());
+    long recv_single(utils::Header&) override {
+      // const std::string msg = "{ \"hello\" : \"world\" }";
+      // data = const_cast<char*>(msg.c_str());
+      // return static_cast<long>(msg.size());
+      return 0;
     }
     Comm_t* create_worker(utils::Address* adr,
                           const DIRECTION& dir, int flgs) override {

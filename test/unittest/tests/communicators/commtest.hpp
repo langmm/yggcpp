@@ -36,9 +36,10 @@
 #define DO_RPC_SIGNON							\
   {									\
     std::string msg_cli = YGG_CLIENT_SIGNON;				\
-    communication::utils::Header header;				\
-    EXPECT_TRUE(sComm.create_header_send(header, msg_cli.c_str(), msg_cli.size())); \
-    size_t len = header.format(msg_cli.c_str(), msg_cli.size(), 0);	\
+    communication::utils::Header header(msg_cli.c_str(),		\
+					msg_cli.size(), &sComm);	\
+    EXPECT_TRUE(sComm.create_header_send(header));			\
+    size_t len = header.format();					\
     msg_cli.assign(header.data[0], len);				\
     EXPECT_GE(rComm.getRequests().addRequestServer(header), 0);		\
     std::string msg_srv = YGG_SERVER_SIGNON;				\
