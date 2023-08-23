@@ -34,6 +34,8 @@ bool AsyncBacklog::on_thread(Comm_t* parent) {
 		      flgs_comm);
     parent->updateMaxMsgSize(comm->getMaxMsgSize());
     parent->address->address(comm->getAddress());
+    parent->updateMsgBufSize(comm->getMsgBufSize());
+    parent->getFlags() |= (comm->getFlags() & ~flgs_comm);
     opened.store(true);
   }
   if (direction == SEND) {

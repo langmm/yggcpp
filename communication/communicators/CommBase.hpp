@@ -526,6 +526,11 @@ public:
     */
     size_t getMaxMsgSize() const { return maxMsgSize; }
     /*!
+      @brief Get the buffer size that should be reserved in messages.
+      @returns Reserved message buffer size.
+    */
+    size_t getMsgBufSize() const { return msgBufSize; }
+    /*!
       @brief Determine if the communicator is fully installed.
       @returns true if it is installed, false otherwise.
     */
@@ -570,6 +575,9 @@ protected:
     void updateMaxMsgSize(size_t new_size) {
       if (maxMsgSize == 0 || new_size < maxMsgSize)
 	maxMsgSize = new_size;
+    }
+    void updateMsgBufSize(size_t new_size) {
+      msgBufSize = new_size;
     }
 
     void setFlags(const utils::Header& head, DIRECTION dir) {
