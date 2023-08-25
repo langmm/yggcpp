@@ -102,6 +102,7 @@ void MPIComm::init() {
             handle->procs.push_back(stoi(a));
         }
     }
+    CommBase::init();
 }
 
 void MPIComm::close() {

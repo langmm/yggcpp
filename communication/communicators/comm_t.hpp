@@ -25,6 +25,11 @@ typedef struct comm_t {
 }comm_t;
 
 /**
+ * Initialize yggdrasil interface.
+ */
+int ygg_init();
+
+/**
  * Delete the underlying communicator
  * @param comm The communicator to delete
  */
@@ -44,6 +49,18 @@ void close_comm(comm_t* comm);
  * @return comm_t struct containing the requested communicator
  */
 // comm_t open_comm(char* address, DIRECTION dir, const COMM_TYPE &t);
+
+/**
+ * Initialize a new communicator without interface flag set
+ * @param name The name for the communicator
+ * @param dir The enumerated direction of the communicator
+ * @param t The enumerated communicator type to create
+ * @param flags Bitwise flags describing properties the communicator
+ *   should have.
+ * @return comm_t struct containing the requested communicator
+ */
+comm_t _init_comm(const char* name, const DIRECTION dir, const COMM_TYPE t,
+		  dtype_t datatype, const int flags);
   
 /**
  * Initialize a new communicator
@@ -52,28 +69,72 @@ void close_comm(comm_t* comm);
  * @param t The enumerated communicator type to create
  * @return comm_t struct containing the requested communicator
  */
-comm_t init_comm(const char* name, DIRECTION dir, const COMM_TYPE &t,
+comm_t init_comm(const char* name, const DIRECTION dir, const COMM_TYPE t,
 		 dtype_t datatype);
 
+/**
+ * Set a communicators datatype based on a C-style format string.
+ * @param comm Communicator
+ * @param fmt C-style format string
+ * @return 1 if successful, 0 otherwise.
+ */
 int set_response_format(comm_t comm, const char *fmt);
+/**
+ * Set a communicators datatype.
+ * @param x Communicator
+ * @param datatype Datatype
+ * @return 1 if successful, 0 otherwise.
+ */
 int set_response_datatype(comm_t x, dtype_t datatype);
 
+/**
+ * Get the datatype associated with a communicator.
+ * @param x Communicator
+ * @return The datatype
+ */
+dtype_t comm_get_datatype(comm_t x);
+  
 /**
  * Send a message with the given communicator
  * @param comm The communicator to use
  * @param dtype The message to send
- * @return The status
+ * @return The status, negative values indicate errors
  */
 int comm_send(comm_t comm, const char *data, const size_t len);
+/**
+ * Send a message with the given communicator indicating that no more
+ * messages will be sent.
+ * @param comm The communicator to use
+ * @return The status, negative values indicate errors
+ */
 int comm_send_eof(comm_t comm);
+
+/**
+ * Determine if a communicator's datatype indicates an table of arrays
+ * @param x The communicator to check.
+ * @return 1 if true, 0 otherwise.
+ */
+int is_comm_format_array_type(comm_t x);
   
 /**
  * Receive a message with the given communicator
  * @param comm The communicator to use
- * @param dtype The structure to put the received message into
- * @return The status
+ * @param data An allocated buffer to put the received message into
+ * @param len The size of the allocated buffer in data
+ * @return On success, the size of the received message will be returned.
+ *   Negative values indicate there was an error.
  */
 long comm_recv(comm_t comm, char *data, const size_t len);
+/**
+ * Receive a message with the given communicator into a buffer allocated
+ * on heap that can be reallocated.
+ * @param comm The communicator to use
+ * @param data Pointer to a buffer on heap to put the received message
+ *   into that can be reallocated.
+ * @param len The size of the allocated buffer in data
+ * @return On success, the size of the received message will be returned.
+ *   Negative values indicate there was an error.
+ */
 long comm_recv_realloc(comm_t comm, char **data, const size_t len);
   
 /**

@@ -415,18 +415,24 @@ int generic_set_ndarray(generic_t x, void* data, const char *subtype,
 #undef NESTED_BASE_GET_NOARGS_
 #undef GENERIC_ERROR_
 #undef GENERIC_SUCCESS_
-  
+
+/*!
+  @brief Initialize a Python wrapper object.
+  @returns Initialized object.
+ */
+python_t init_python();
   
 /*!
   @brief Destroy a structure containing a Python object.
-  @param[in] x python_t* Pointer to Python object structure that should be freed.
+  @param[in] x Pointer to Python object structure that should be freed.
 */
 void destroy_python(python_t *x);
 
 
 /*!
-  @brief Copy a Python object structure (NOTE: this dosn't copy the underlying Python object but does increment the reference count).
-  @param[in] x python_t Structure containing Python object to copy.
+  @brief Copy a Python object structure (NOTE: this dosn't copy the
+    underlying Python object but does increment the reference count).
+  @param[in] x Structure containing Python object to copy.
   @returns python_t Copy of x.
  */
 python_t copy_python(python_t x);
@@ -449,7 +455,7 @@ void destroy_python_function(python_function_t *x);
 /*!
   @brief Determine if a datatype is empty.
   @param[in] Type structure to test.
-  @returns int 1 if dtype is empty, 0 otherwise.
+  @returns 1 if dtype is empty, 0 otherwise.
  */
 int is_empty_dtype(const dtype_t dtype);
 
@@ -457,8 +463,8 @@ int is_empty_dtype(const dtype_t dtype);
 /*!
   @brief Determine if a datatype was created from a format.
   @param[in] type_struct Datatype structure.
-  @returns int 1 if the datatype was created from a format, 0 if it
-  was not, -1 if there is an error.
+  @returns 1 if the datatype was created from a format, 0 if it was not,
+    -1 if there is an error.
  */
 int is_dtype_format_array(const dtype_t type_struct);
   
@@ -466,7 +472,7 @@ int is_dtype_format_array(const dtype_t type_struct);
 /*!
   @brief Get the name of the type from the class.
   @param[in] type_class Type structure/class.
-  @returns const char* Type name.
+  @returns Type name.
 */
 const char* dtype_name(const dtype_t type_class);
 
@@ -474,7 +480,7 @@ const char* dtype_name(const dtype_t type_class);
 /*!
   @brief Get the subtype of the type.
   @param[in] type_class Type structure/class.
-  @returns const char* The subtype of the class, "" if there is an error.
+  @returns The subtype of the class, "" if there is an error.
 */
 const char* dtype_subtype(const dtype_t type_class);
 
@@ -482,7 +488,7 @@ const char* dtype_subtype(const dtype_t type_class);
 /*!
   @brief Get the precision of the type.
   @param[in] type_class Type structure/class.
-  @returns const size_t The precision of the class, 0 if there is an error.
+  @returns The precision of the class, 0 if there is an error.
 */
 size_t dtype_precision(const dtype_t type_class);
 
@@ -502,7 +508,7 @@ int set_dtype_name(dtype_t dtype, const char* name);
   @param[in] dtype Type structure/class.
   @param[in] use_generic If true, serialized/deserialized
     objects will be expected to be generic_t instances.
-  @returns dtype_t Initialized type structure/class.
+  @returns Initialized type structure/class.
 */
 dtype_t complete_dtype(dtype_t dtype, const bool use_generic);
 

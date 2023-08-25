@@ -534,6 +534,7 @@ void ZMQComm::init() {
     this->name = "tempnewZMQ-" + handle->endpoint.substr(handle->endpoint.find_last_of(':') + 1);
   if (direction == SEND)
     flags |= COMM_ALWAYS_SEND_HEADER;
+  CommBase::init();
 }
 
 void ZMQComm::close() {

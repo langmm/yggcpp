@@ -22,7 +22,7 @@ void communication::communicator::global_scope_comm_off() {
   // #endif
 }
 
-void Comm_t::_ygg_init() {
+int Comm_t::_ygg_init() {
   YGG_THREAD_SAFE_BEGIN(init) {
     if (!Comm_t::_ygg_initialized) {
       ygglog_debug << "_ygg_init: Begin initialization" << std::endl;
@@ -38,6 +38,7 @@ void Comm_t::_ygg_init() {
       Comm_t::_ygg_initialized = 1;
     }
   } YGG_THREAD_SAFE_END;
+  return 0;
 }
 
 void Comm_t::_ygg_cleanup() {
@@ -132,6 +133,8 @@ Comm_t::~Comm_t() {
   if (address)
     delete address;
   ygglog_debug << "~Comm_t: Finished" << std::endl;
+  if (flags & COMM_FLAG_SET_OPP_ENV)
+    unsetOppEnv();
 }
 
 bool Comm_t::get_global_scope_comm() {

@@ -10,7 +10,7 @@ if (POLICY CMP0135)
     cmake_policy(SET CMP0135 NEW)
 endif()
 
-if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+if (APPLE)
    if("$ENV{SDKROOT}")
       SET(CMAKE_OSX_SYSROOT "$ENV{SDKROOT}")
       # SET(CMAKE_OSX_SYSROOT /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.9.sdk)
@@ -50,7 +50,17 @@ endif()
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+option(BUILD_CPP_LIBRARY "Build the Yggdrasil C++ interface library" ON)
+option(BUILD_PYTHON_LIBRARY "Build the Yggdrasil Python interface library" OFF)
+option(YGG_PYTHON_LIBRARY_WRAP "Build the Yggdrasil Python interface library by wrapping the C++ module" ON)
+option(BUILD_FORTRAN_LIBRARY "Build the Yggdrasil Fortran interface library" OFF)
+option(ENABLE_ZMQ "Enable zeromq" ON)
+option(USING_IPC "Default to using IPC V queues" OFF)
+option(YGGDRASIL_DISABLE_PYTHON_C_API "Disable the Python C API" OFF)
 option(YGG_BUILD_TESTS "Build tests" OFF)
+option(YGG_BUILD_FORTRAN_TESTS "Build Fortran tests" OFF)
+option(YGG_BUILD_CXX_TESTS "Build C/C++ tests" OFF)
+option(YGG_ENABLE_COVERAGE "Enable coverage reporting" OFF)
 option(YGG_BUILD_THIRDPARTY_GTEST "Use gtest installation in 'thirdpart/gtest' by default if available" ON)
 option(YGG_BUILD_ASAN "Build with address sanitizer (gcc/clang)" OFF)
 option(YGG_BUILD_UBSAN "Build with undefined behavior sanitizer (gcc/clang)" OFF)
@@ -223,7 +233,6 @@ message(STATUS "Rapidjson found ${RAPIDJSON_INCLUDE_DIRS}")
 # ZeroMQ #
 ##########
 
-option(ENABLE_ZMQ "Enable zeromq" ON)
 if(ENABLE_ZMQ)
     find_package(ZeroMQ)
     if (NOT ZeroMQ_FOUND)
@@ -333,7 +342,6 @@ ENDIF()
 # Python #
 ##########
 
-option(YGGDRASIL_DISABLE_PYTHON_C_API "Disable the Python C API" OFF)
 set(DEPS_LIBRARIES_NO_PYTHON ${DEPS_LIBRARIES})
 set(DEPS_LIB_NAMES_NO_PYTHON ${DEPS_LIB_NAMES})
 if(YGGDRASIL_DISABLE_PYTHON_C_API)
@@ -417,7 +425,6 @@ endif()
 # IPC dependency #
 ##################
 
-option(USING_IPC "Default to using IPC V queues" OFF)
 if (NOT ZeroMQ_FOUND)
     set(USING_IPC ON)
 endif()
@@ -464,7 +471,6 @@ message(STATUS "DEPS_LIBRARIES = ${DEPS_LIB_NAMES};${DEPS_LIBRARIES}")
 # Create library   #
 ####################
 
-option(BUILD_CPP_LIBRARY "Build the Yggdrasil C++ interface library" ON)
 if(SKBUILD)
   set(BUILD_CPP_LIBRARY ON)
 endif()
@@ -511,20 +517,26 @@ endif()
 # Create Python Library #
 #########################
 
-option(BUILD_PYTHON_LIBRARY "Build the Yggdrasil Python interface library" OFF)
 if(SKBUILD)
     set(BUILD_PYTHON_LIBRARY ON)
 endif(SKBUILD)
-option(YGG_PYTHON_LIBRARY_WRAP "Build the Yggdrasil Python interface library by wrapping the C++ module" ON)
 if(BUILD_PYTHON_LIBRARY AND NOT YGGDRASIL_DISABLE_PYTHON_C_API)
     add_subdirectory(python)
+endif()
+
+#########################
+# Create Fortran Library #
+#########################
+
+if(BUILD_FORTRAN_LIBRARY)
+    enable_language(Fortran)
+    add_subdirectory(fortran)
 endif()
 
 ##################
 # Coverage       #
 ##################
 
-option(YGG_ENABLE_COVERAGE "Enable coverage reporting" OFF)
 if(YGG_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang|ARMClang")
     message(STATUS "COVERAGE ON")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 --coverage -fno-inline -fprofile-arcs -ftest-coverage -fprofile-filter-files=\"${CMAKE_SOURCE_DIR}/communication/*\" ")
@@ -557,7 +569,11 @@ endif(YGG_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClan
 # Tests #
 #########
 
-if(YGG_BUILD_TESTS)
+if(YGG_BUILD_TESTS OR YGG_BUILD_CXX_TESTS OR YGG_BUILD_FORTRAN_TESTS)
+    include(CTest)
+    add_definitions(-DYGG_TEST)
+endif()
+if(YGG_BUILD_TESTS OR YGG_BUILD_CXX_TESTS)
     message("TESTING ON")
     set(SUBLIBFILE ${CMAKE_BINARY_DIR}/library_path.txt)
     add_custom_command(
@@ -567,13 +583,11 @@ if(YGG_BUILD_TESTS)
        VERBATIM)
     add_custom_target(make_sublib ALL DEPENDS ${SUBLIBFILE})
 
-    add_definitions(-DYGG_TEST)
     if(MSVC11)
         # required for VS2012 due to missing support for variadic templates
         add_definitions(-D_VARIADIC_MAX=10)
     endif(MSVC11)
     add_subdirectory(test)
-    include(CTest)
 
 endif()
 

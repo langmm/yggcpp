@@ -432,6 +432,11 @@ void Metadata::fromEncode(const rapidjson::Value& document,
   document.Accept(encoder);
   fromSchema(encoder.GetSchema(), false, use_generic);
 }
+void Metadata::fromEncode(PyObject* pyobj, bool use_generic) {
+  rapidjson::Value::AllocatorType allocator;
+  rapidjson::Value d(pyobj, allocator);
+  fromEncode(d, use_generic);
+}
 rapidjson::Document::AllocatorType& Metadata::GetAllocator() {
   return metadata.GetAllocator();
 }

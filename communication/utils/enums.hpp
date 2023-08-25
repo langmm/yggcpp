@@ -46,7 +46,8 @@ enum CommFlags {
   COMM_FLAG_INTERFACE       = 0x00002000, //!< Comm is an interface comm
   COMM_FLAG_DELETE          = 0x00004000, //!< Comm needs to be deleted
   COMM_FLAG_ASYNC           = 0x00008000, //!< Comm is asynchronous
-  COMM_FLAG_ASYNC_WRAPPED   = 0x00010000  //!< Comm is wrapped by an asynchronous comm
+  COMM_FLAG_ASYNC_WRAPPED   = 0x00010000, //!< Comm is wrapped by an asynchronous comm
+  COMM_FLAG_SET_OPP_ENV     = 0x00020000  //!< Set environment variables for opposite communicator
 };
   
 /*! @brief Bit flags describing message state. */

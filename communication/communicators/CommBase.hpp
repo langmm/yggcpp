@@ -578,7 +578,7 @@ protected:
 public:
     static int _ygg_initialized;
     static int _ygg_finalized;
-    static void _ygg_init();
+    static int _ygg_init();
 
 protected:
     void updateMaxMsgSize(size_t new_size) {
@@ -602,22 +602,40 @@ protected:
       }
     }
 
+    void init() {
+      if (flags & COMM_FLAG_SET_OPP_ENV)
+	setOppEnv();
+    }
+    static std::string envName(const std::string& name,
+			       DIRECTION dir, bool opp=false) {
+      std::string out = name;
+      if (out.size() > COMM_NAME_SIZE)
+	out.resize(COMM_NAME_SIZE);
+      if (((!opp) && dir == SEND) || (opp && dir == RECV))
+	out += "_OUT";
+      else if (((!opp) && dir == RECV) || (opp && dir == SEND))
+	out += "_IN";
+      return out;
+    }
+    void setOppEnv() {
+      if (address) {
+	std::string opp_name = envName(name, direction, true);
+	ygglog_debug << "CommBase(" << name << ")::setOppEnv: " << opp_name << " = " << getAddress() << std::endl;
+	setenv(opp_name.c_str(), getAddress().c_str(), 1);
+      }
+    }
+    void unsetOppEnv() {
+      ygglog_debug << "CommBase(" << name << ")::unsetOppEnv" << std::endl;
+      std::string opp_name = envName(name, direction, true);
+      unsetenv(opp_name.c_str());
+    }
+
     static utils::Address* addressFromEnv(const std::string& name,
 					  DIRECTION direction) {
       utils::Address* out = new utils::Address();
       if (name.empty())
 	return out;
-      std::string full_name;
-      full_name = name;
-      if (full_name.size() > COMM_NAME_SIZE)
-	full_name.resize(COMM_NAME_SIZE);
-      if (direction != NONE) {
-	if (direction == SEND) {
-	  full_name += "_OUT";
-	} else if (direction == RECV) {
-	  full_name += "_IN";
-	}
-      }
+      std::string full_name = envName(name, direction);
       char *addr = std::getenv(full_name.c_str());
       if (!addr) {
 	std::string temp_name(full_name);

@@ -119,6 +119,7 @@ public:
   void fromMetadata(const std::string& head, bool use_generic = false);
   void fromEncode(const rapidjson::Value& document,
 		  bool use_generic = false);
+  void fromEncode(PyObject* pyobj, bool use_generic = false);
   rapidjson::Document::AllocatorType& GetAllocator();
   bool isGeneric() const;
   void setGeneric();

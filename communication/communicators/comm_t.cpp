@@ -5,6 +5,14 @@
 #include "utils/tools.hpp"
 
 extern "C" {
+
+int ygg_init() {
+  try {
+    return communication::communicator::Comm_t::_ygg_init();
+  } catch (...) {
+    return -1;
+  }
+}
   
 void free_comm(comm_t* comm) {
     if (comm && comm->comm) {
@@ -27,11 +35,11 @@ void close_comm(comm_t* comm) {
 //     return ret;
 // }
 
-comm_t init_comm(const char* name, DIRECTION dir, const COMM_TYPE &t,
-		 dtype_t datatype) {
+comm_t _init_comm(const char* name, const DIRECTION dir, const COMM_TYPE t,
+		  dtype_t datatype, const int flags) {
   comm_t ret;
   _BEGIN_CPP {
-    ret.comm = (void*) communication::communicator::new_Comm_t(dir, t, name, (char*)NULL, COMM_FLAG_INTERFACE);
+    ret.comm = (void*) communication::communicator::new_Comm_t(dir, t, name, (char*)NULL, flags);
     if (!(ret.comm))
       ygglog_throw_error_c("init_comm(%s): Error initializing comm", name);
     if (datatype.metadata) {
@@ -44,6 +52,11 @@ comm_t init_comm(const char* name, DIRECTION dir, const COMM_TYPE &t,
       free_comm(&ret);
   } _END_CPP_CLEANUP(init_comm, ret, ret.comm = NULL);
   return ret;
+}
+comm_t init_comm(const char* name, const DIRECTION dir, const COMM_TYPE t,
+		 dtype_t datatype) {
+  int flags = COMM_FLAG_INTERFACE;
+  return _init_comm(name, dir, t, datatype, flags);
 }
 
 int set_response_format(comm_t comm, const char *fmt) {
@@ -72,6 +85,27 @@ int set_response_datatype(comm_t x, dtype_t datatype) {
       ygglog_throw_error_c("set_response_datatype: Comm is not initialized");
   } _END_CPP(set_response_datatype, 0);
   return 1;
+}
+
+dtype_t comm_get_datatype(comm_t x) {
+  dtype_t out;
+  _BEGIN_CPP {
+    communication::utils::Metadata* metadata = &(static_cast<communication::communicator::Comm_t*>(x.comm)->getMetadata());
+    dtype_t tmp;
+    tmp.metadata = (void*)metadata;
+    out = copy_dtype(tmp);
+  } _END_CPP_CLEANUP(comm_get_datatype, out,
+		     destroy_dtype(&out));
+  return out;
+}
+
+int is_comm_format_array_type(comm_t x) {
+  int out = 0;
+  _BEGIN_CPP {
+    communication::utils::Metadata* metadata = &(static_cast<communication::communicator::Comm_t*>(x.comm)->getMetadata());
+    out = static_cast<int>(metadata->isFormatArray());
+  } _END_CPP(is_comm_format_array_type, 0);
+  return out;
 }
 
 int comm_send(comm_t comm, const char *data, const size_t len) {

@@ -64,6 +64,7 @@ void IPCComm::init() {
     handle = fid;
     add_channel();
     ygglog_debug << "IPCComm(" << name << ")::init: address = " << this->address->address() << ", created = " << created << std::endl;
+    CommBase::init();
 }
 
 void IPCComm::close() {

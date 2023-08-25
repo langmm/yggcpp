@@ -1175,6 +1175,12 @@ extern "C" {
     return out;
   }
 
+  python_t init_python() {
+    python_t out;
+    out.obj = NULL;
+    return out;
+  }
+  
   void destroy_python(python_t *x) {
     if (x != NULL) {
       if (x->obj != NULL) {
@@ -1301,17 +1307,15 @@ extern "C" {
     return out;
   }
 
-  // dtype_t create_dtype_python(PyObject* pyobj, const bool use_generic) {
-  //   rapidjson::Document* obj = NULL;
-  //   try {
-  //     // TODO
-  //     obj = type_from_pyobj(pyobj);
-  //     return create_dtype(obj, use_generic);
-  //   } catch(...) {
-  //     ygglog_error_c("create_dtype_python: C++ exception thrown.");
-  //     return NULL;
-  //   }
-  // }
+  dtype_t create_dtype_python(PyObject* pyobj, const bool use_generic) {
+    dtype_t out = create_dtype(NULL, false);
+    _BEGIN_CPP {
+      _GET_METADATA(metadata, out, out);
+      metadata->fromEncode(pyobj, use_generic);
+    } _END_CPP_CLEANUP(create_dtype_python, out,
+		       destroy_dtype(&out));
+    return out;
+  }
 
   dtype_t create_dtype_direct(const bool use_generic) {
     return create_dtype_default("string", use_generic);
