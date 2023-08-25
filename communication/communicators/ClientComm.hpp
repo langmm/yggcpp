@@ -30,22 +30,19 @@ public:
     ~ClientComm() override = default;
     void set_timeout_recv(int new_timeout) override;
     int get_timeout_recv() override;
-    int wait_for_recv(const int& tout) override;
+    virtual bool signon(const utils::Header& header,
+			Comm_t* async_comm=nullptr);
 
     using RPCComm::send;
     using RPCComm::recv;
-    using RPCComm::comm_nmsg;
 
 #ifndef YGG_TEST
 protected:
 #endif
     void init();
-  virtual bool signon(const utils::Header& header, bool in_async=false);
     Comm_t* create_worker_send(utils::Header& head) override;
     Comm_t* create_worker_recv(utils::Header& head) override;
     bool create_header_send(utils::Header& header) override;
-    /*! \copydoc Comm_t::send_single */
-    int send_single(utils::Header& header) override;
     /*! \copydoc Comm_t::recv_single */
     long recv_single(utils::Header& header) override;
 
@@ -53,6 +50,7 @@ protected:
 private:
 #endif
     static unsigned _client_rand_seeded;
+
 };
 
 }

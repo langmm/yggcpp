@@ -12,7 +12,7 @@ public:
       Comm_t("", address, dirn, t, flgs), _closed(false) {}
     Comm_tTest(const std::string &name, DIRECTION direction, const COMM_TYPE &t) :
       Comm_t(name, nullptr, direction, t, COMM_FLAG_INTERFACE), _closed(false) {}
-    int comm_nmsg() const override {return 1;}
+    int comm_nmsg(DIRECTION=NONE) const override {return 1;}
     int get_flags() const {return flags;}
     void close() override { _closed = true; }
     bool is_closed() const override { return _closed; }
@@ -45,9 +45,9 @@ public:
     updateMaxMsgSize(1000);
   }
   int wait_for_recv(const int&) override { return 0; }
-  int comm_nmsg() const override {
+  int comm_nmsg(DIRECTION dir=NONE) const override {
     if (nmsg_ >= 0) return nmsg_;
-    return CommBase::comm_nmsg();
+    return CommBase::comm_nmsg(dir);
   }
   int nmsg_;
 };

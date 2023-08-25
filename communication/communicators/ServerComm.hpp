@@ -28,12 +28,11 @@ public:
 
     using RPCComm::send;
     using RPCComm::recv;
-    using RPCComm::comm_nmsg;
 
 #ifndef YGG_TEST
 protected:
 #endif
-    virtual bool signon(const utils::Header& header, bool in_async=false);
+    virtual bool signon(const utils::Header& header);
     bool create_header_send(utils::Header& header) override;
     int send_single(utils::Header& header) override;
     long recv_single(utils::Header& header) override;

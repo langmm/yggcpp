@@ -66,8 +66,8 @@ void IPCComm::init() {
     ygglog_debug << "IPCComm(" << name << ")::init: address = " << this->address->address() << ", created = " << created << std::endl;
 }
 
-IPCComm::~IPCComm() {
-    ygglog_debug << "~IPCComm: Started" << std::endl;
+void IPCComm::close() {
+    ygglog_debug << "IPCComm::close: Started" << std::endl;
     if (handle && !global_comm) {
 #ifdef YGG_TEST
       bool close_comm = true;
@@ -78,7 +78,8 @@ IPCComm::~IPCComm() {
 #endif
       remove_comm(close_comm);
     }
-    ygglog_debug << "~IPCComm: Finished" << std::endl;
+    ygglog_debug << "IPCComm::close: Finished" << std::endl;
+    CommBase::close();
 }
 
 /*!
@@ -152,13 +153,13 @@ int IPCComm::remove_comm(bool close_comm) {
     return ret;
 }
 
-/*!
-  @brief Get number of messages in the comm.
-  @returns int Number of messages. -1 indicates an error.
- */
-int IPCComm::comm_nmsg() const {
+int IPCComm::comm_nmsg(DIRECTION dir) const {
     if (global_comm)
-      return global_comm->comm_nmsg();
+      return global_comm->comm_nmsg(dir);
+    if (dir == NONE)
+      dir = direction;
+    if (dir != direction)
+      return 0;
     struct msqid_ds buf;
     assert(handle);
 

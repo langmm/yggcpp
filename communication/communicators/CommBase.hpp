@@ -51,7 +51,15 @@ const int COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
 		     const DIRECTION dirn,				\
 		     int flgs = 0, const COMM_TYPE type = T ## _COMM);	\
   static bool isInstalled() { return T ## _INSTALLED_FLAG; }		\
-  static COMM_TYPE defaultCommType() { return T ## _COMM; }
+  static COMM_TYPE defaultCommType() { return T ## _COMM; }		\
+  ~T ## Comm() {							\
+    ygglog_debug << "~" #T "Comm: Started" << std::endl;		\
+    if (!is_closed()) {							\
+      close();								\
+    }									\
+    ygglog_debug << "~" #T "Comm: Finished" << std::endl;		\
+  }
+
 #define ADD_CONSTRUCTORS_DEF(cls)		\
   cls::cls(const std::string nme,		\
 	   const DIRECTION dirn,		\
@@ -224,7 +232,7 @@ public:
 	")::sendVar(const T& data)" << std::endl;
       if (!checkType(data, SEND))
 	return -1;
-      if (getMetadata().isGeneric())
+      if (getMetadata(SEND).isGeneric())
 	return sendVarAsGeneric(data);
       return send(1, data);
     }
@@ -283,7 +291,7 @@ public:
       ygglog_debug << "CommBase(" << name << ")::recvVar(T& data)" << std::endl;
       if (!checkType(data, RECV))
 	return -1;
-      if (getMetadata().isGeneric())
+      if (getMetadata(RECV).isGeneric())
 	return recvVarAsGeneric(data);
       return recv(1, &data);
     }
@@ -441,9 +449,10 @@ public:
       
     /*!
       @brief Get the number of messages in the communicator.
+      @param[in] dir Direction to check for messages in.
       @return Number of messages.
      */
-    virtual int comm_nmsg() const VIRT_END;
+    virtual int comm_nmsg(DIRECTION dir=NONE) const VIRT_END;
 
     /*!
       @brief Close the communicator.
@@ -652,7 +661,6 @@ protected:
       return true;
     }
     virtual bool create_header_send(utils::Header&) { return true; }
-    virtual bool create_header_recv(utils::Header&) { return true; }
     rapidjson::Value& getSchema(const DIRECTION dir=NONE) {
       return getMetadata(dir).getSchema();
     }
@@ -749,15 +757,14 @@ public:
     CommBase& operator=(const CommBase&) = delete;
     CommBase() = delete;
 
-    /**
-     * Returns the number of messages in the queue
-     * @return The number of messages in the queue
-     */
-    int comm_nmsg() const override {
+    /*! \copydoc Comm_t::comm_nmsg */
+    int comm_nmsg(DIRECTION=NONE) const override {
       ygglog_error << "Comm_nmsg of base class called, must be overridden" << std::endl;
       return -1;
     }
+    /*! \copydoc Comm_t::close */
     void close() override;
+    /*! \copydoc Comm_t::is_closed */
     bool is_closed() const override;
     using Comm_t::send;
     using Comm_t::recv;
@@ -832,6 +839,7 @@ void CommBase<H>::close() {
       delete handle;
     handle = nullptr;
   }
+  workers.workers.clear();
 }
 
 template<typename H>

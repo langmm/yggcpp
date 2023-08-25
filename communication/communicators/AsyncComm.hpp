@@ -21,8 +21,17 @@ namespace communication {
       std::mutex comm_mutex;
       std::atomic_bool opened;
       std::atomic_bool closing;
+      std::atomic_bool locked;
       std::vector<utils::Header> backlog;
       std::thread backlog_thread;
+    };
+    
+    class AsyncLockGuard {
+    public:
+      AsyncLockGuard(AsyncBacklog* backlog, bool dont_lock=false);
+      ~AsyncLockGuard();
+      bool locked;
+      AsyncBacklog* backlog;
     };
 
     /**
@@ -54,7 +63,7 @@ namespace communication {
       static COMM_TYPE defaultCommType() { return DEFAULT_COMM; }
       
       // \copydoc Comm_t::comm_nmsg
-      int comm_nmsg() const override;
+      int comm_nmsg(DIRECTION dir=NONE) const override;
       
       // \copydoc Comm_t::getMetadata
       utils::Metadata& getMetadata(const DIRECTION dir=NONE) override;
@@ -66,7 +75,6 @@ namespace communication {
       int send_single(utils::Header& header) override;
       long recv_single(utils::Header& header) override;
       bool create_header_send(utils::Header& header) override;
-      bool create_header_recv(utils::Header& header) override;
       Comm_t* create_worker(utils::Address* address,
 			    const DIRECTION& dir, int flgs) override;
       

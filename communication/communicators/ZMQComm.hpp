@@ -128,16 +128,12 @@ public:
     ADD_CONSTRUCTORS(ZMQ)
 
 #ifdef ZMQINSTALLED
-    /**
-     * Destructor
-     */
-    ~ZMQComm() override;
+    /*! \copydoc Comm_t::close */
+    void close() override;
 
-    /**
-     * The number of messages in the queue
-     * @return The number of messages
-     */
-    int comm_nmsg() const override;
+    /*! \copydoc Comm_t::comm_nmsg */
+    int comm_nmsg(DIRECTION dir=NONE) const override;
+  
     using Comm_t::send;
     using Comm_t::recv;
 

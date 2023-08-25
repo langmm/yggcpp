@@ -861,6 +861,8 @@ void Header::reset(HEAD_RESET_MODE mode) {
       data_ = NULL;
       data = NULL;
     }
+    data = NULL;
+    data_ = NULL;
     size_buff = 0;
     size_max = 0;
     if (mode == HEAD_RESET_OWN_DATA) {
@@ -878,12 +880,18 @@ void Header::reset(HEAD_RESET_MODE mode) {
 bool Header::RawAssign(const Header& rhs, bool keep_buffer) {
   if (keep_buffer) {
     offset = 0;
-    if (rhs.data && copyData(rhs.data[0], rhs.size_buff) < 0)
+    if (rhs.data && rhs.size_buff &&
+	copyData(rhs.data[0], rhs.size_buff - 1) < 0)
       return false;
     flags = (flags & HEAD_BUFFER_MASK) | (rhs.flags & ~HEAD_BUFFER_MASK);
   } else {
-    data = rhs.data;
-    data_ = rhs.data_;
+    if (rhs.flags & HEAD_FLAG_OWNSDATA) {
+      data_ = rhs.data_;
+      data = &data_;
+    } else {
+      data = rhs.data;
+      data_ = NULL;
+    }
     size_buff = rhs.size_buff;
     flags = rhs.flags;
   }
@@ -946,8 +954,7 @@ bool Header::CopyFrom(const Header& rhs) {
   reset(HEAD_RESET_KEEP_BUFFER);
   if (!Metadata::CopyFrom(rhs))
     return false;
-  bool out = RawAssign(rhs, true);
-  return out;
+  return RawAssign(rhs, true);
 }
 
 void Header::setMessageFlags(const char* msg, const size_t msg_len) {
@@ -999,15 +1006,14 @@ void Header::for_send(Metadata* metadata0, const char* msg,
     strcat(model, model_copy);
   }
   SetMetaString("model", model);
-  Display();
 }
 int Header::on_send(bool dont_advance) {
   ygglog_debug << "Header::on_send: " << size_curr << std::endl;
   format();
-  if (!dont_advance) {
+  if (!((flags & HEAD_FLAG_ASYNC) || dont_advance)) {
     offset += size_msg;
+    size_msg = std::min(size_curr - offset, size_max);
   }
-  size_msg = std::min(size_curr - offset, size_max);
   ygglog_debug << "Header::on_send: size_msg = " << size_msg << std::endl;
   return size_curr;
 }
@@ -1122,6 +1128,7 @@ void Header::Display(const char* indent) const {
   } else {
     std::cout << "NULL";
   }
+  std::cout << ", FLAGS = " << flags;
   std::cout << std::endl;
 }
 
@@ -1139,7 +1146,9 @@ size_t Header::format() {
     ygglog_debug_c("Header::format: Empty header");
     return 0;
   }
-  bool metaOnly = (flags & (HEAD_FLAG_NO_TYPE | HEAD_META_IN_DATA));
+  bool metaOnly = (flags & (HEAD_FLAG_NO_TYPE | HEAD_META_IN_DATA |
+			    HEAD_FLAG_CLIENT_SIGNON |
+			    HEAD_FLAG_SERVER_SIGNON));
   size_t size_raw = size_data;
   rapidjson::StringBuffer buffer_body;
   std::string sep(MSG_HEAD_SEP);

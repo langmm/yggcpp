@@ -174,26 +174,26 @@ TEST(ClientComm, recv) {
 #endif // ELF_RECV
 }
 
-// TEST(ClientComm, async) {
-//     std::string name = "MyComm";
-//     AsyncComm sComm(name, nullptr, SEND, COMM_FLAG_ASYNC, CLIENT_COMM);
-//     std::string key_env = name + "_IN";
-//     std::string val_env = sComm.getAddress();
-//     setenv(key_env.c_str(), val_env.c_str(), 1);
-//     AsyncComm rComm(name, RECV, COMM_FLAG_ASYNC, SERVER_COMM);
-//     unsetenv(key_env.c_str());
-//     std::string req_send = "REQUEST";
-//     std::string res_send = "RESPONSE";
-//     std::string req_recv;
-//     std::string res_recv;
-//     // Successful exchange
-//     EXPECT_GE(sComm.send(req_send), 0);
-//     EXPECT_EQ(rComm.recv(req_recv), req_send.size());
-//     EXPECT_EQ(req_recv, req_send);
-//     EXPECT_GE(rComm.send(res_send), 0);
-//     EXPECT_EQ(sComm.recv(res_recv), res_send.size());
-//     EXPECT_EQ(res_recv, res_send);
-// }
+TEST(ClientComm, async) {
+    std::string name = "MyComm";
+    AsyncComm sComm(name, nullptr, SEND, COMM_FLAG_ASYNC, CLIENT_COMM);
+    std::string key_env = name + "_IN";
+    std::string val_env = sComm.getAddress();
+    setenv(key_env.c_str(), val_env.c_str(), 1);
+    AsyncComm rComm(name, RECV, COMM_FLAG_ASYNC, SERVER_COMM);
+    unsetenv(key_env.c_str());
+    std::string req_send = "REQUEST";
+    std::string res_send = "RESPONSE";
+    std::string req_recv;
+    std::string res_recv;
+    // Successful exchange
+    EXPECT_GE(sComm.send(req_send), 0);
+    EXPECT_EQ(rComm.recv(req_recv), req_send.size());
+    EXPECT_EQ(req_recv, req_send);
+    EXPECT_GE(rComm.send(res_send), 0);
+    EXPECT_EQ(sComm.recv(res_recv), res_send.size());
+    EXPECT_EQ(res_recv, res_send);
+}
 
 TEST(ClientComm, recvLarge) {
     std::string name = "MyComm";

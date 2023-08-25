@@ -35,10 +35,6 @@ int ClientComm::get_timeout_recv() {
   Comm_t* active_comm = requests.comms[0];
   return active_comm->get_timeout_recv();
 }
-int ClientComm::wait_for_recv(const int&) {
-  // Handle wait in recv_single for response comm
-  return 1;
-}
 
 void ClientComm::init() {
   YGG_THREAD_SAFE_BEGIN(client) {
@@ -52,46 +48,54 @@ void ClientComm::init() {
   }
 }
 
-
-
-bool ClientComm::signon(const Header& header, bool in_async) {
+bool ClientComm::signon(const Header& header, Comm_t* async_comm) {
   if (global_comm)
     return dynamic_cast<ClientComm*>(global_comm)->signon(header);
-  if (header.flags & HEAD_FLAG_CLIENT_SIGNON)
+  if (header.flags & (HEAD_FLAG_CLIENT_SIGNON | HEAD_FLAG_EOF))
     return true;
   if (requests.initClientResponse() < 0)
     return false;
-  // if ((flags & COMM_FLAG_ASYNC_WRAPPED) && !in_async)
-  //   return true;
+  if (!async_comm) {
+    if (flags & COMM_FLAG_ASYNC_WRAPPED)
+      return true;
+    async_comm = this;
+  }
   ygglog_debug << "ClientComm(" << name << ")::signon: begin" << std::endl;
-  while (!requests.signon_complete) {
+  clock_t start = clock();
+  int tout = get_timeout_recv();
+  Header tmp(true);
+  while ((!requests.signon_complete) &&
+	 (tout < 0 ||
+	  (((double)(clock() - start))*1000000/CLOCKS_PER_SEC) < tout)) {
 #ifdef YGG_TEST
     // Prevent sending extra SIGNON during testing
     if (!requests.signonSent()) {
 #endif // YGG_TEST
     ygglog_debug << "ClientComm(" << name << ")::signon: Sending signon" << std::endl;
-    if (send(YGG_CLIENT_SIGNON, YGG_CLIENT_SIGNON_LEN) < 0) {
+    if (async_comm->send(YGG_CLIENT_SIGNON, YGG_CLIENT_SIGNON_LEN) < 0) {
       ygglog_error << "ClientComm(" << name << ")::signon: Error in sending sign-on" << std::endl;
       return false;
     }
 #ifdef YGG_TEST
     }
 #endif // YGG_TEST
-    if ((flags & COMM_FLAG_ASYNC_WRAPPED) && !in_async)
+    if ((flags & COMM_FLAG_ASYNC_WRAPPED) && (async_comm != this))
       return true;
-    if (requests.activeComm()->comm_nmsg() > 0) {
-      char* data = NULL;
-      int ret = recv(data, 0, true);
-      if (data != NULL)
-	free(data);
-      if (ret < 0) {
+    if (requests.activeComm()->comm_nmsg(RECV) > 0) {
+      long ret = recv_single(tmp);
+      if (ret < 0 || !(tmp.flags & HEAD_FLAG_SERVER_SIGNON)) {
         ygglog_error << "ClientComm(" << name << ")::signon: Error in receiving sign-on" << std::endl;
 	return false;
       }
+      setFlags(tmp, RECV);
+      tmp.reset(HEAD_RESET_KEEP_BUFFER);
       ygglog_debug << "ClientComm(" << name << ")::signon: Received response to signon" << std::endl;
       break;
     } else {
       ygglog_debug << "ClientComm(" << name << ")::signon: No response to signon (address = " << requests.activeComm()->address->address() << "), sleeping" << std::endl;
+      // Sleep outside lock on async
+      if (flags & COMM_FLAG_ASYNC_WRAPPED)
+	return true;
       std::this_thread::sleep_for(std::chrono::microseconds(YGG_SLEEP_TIME));
     }
   }
@@ -149,16 +153,6 @@ bool ClientComm::create_header_send(Header& header) {
   return out;
 }
 
-int ClientComm::send_single(utils::Header& header) {
-  assert(!global_comm);
-  ygglog_debug << "ClientComm(" << name << ")::send_single" << std::endl;
-  if ((flags & COMM_FLAG_ASYNC_WRAPPED) &&
-      (!(header.flags & HEAD_FLAG_EOF)) &&
-      (!signon(header, true)))
-    return -1;
-  return COMM_BASE::send_single(header);
-}
-
 long ClientComm::recv_single(utils::Header& header) {
     assert(!global_comm);
     ygglog_debug << "ClientComm(" << name << ")::recv_single" << std::endl;
@@ -191,7 +185,10 @@ long ClientComm::recv_single(utils::Header& header) {
     }
     // Close response comm and decrement count of response comms
     ret = requests.getRequestClient(req_id, header, true);
-    ygglog_debug << "ClientComm(" << name << ")::recv_single: getRequestClient returned " << ret << std::endl;;
+    ygglog_debug << "ClientComm(" << name << ")::recv_single: getRequestClient returned " << ret << std::endl;
+    if (header.flags & HEAD_FLAG_SERVER_SIGNON) {
+      header.flags |= HEAD_FLAG_REPEAT;
+    }
     return ret;
 }
 

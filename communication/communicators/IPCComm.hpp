@@ -43,12 +43,10 @@ public:
 
 #ifdef IPCINSTALLED
 
-    /**
-     * Destructor
-     */
-    ~IPCComm() override;
-
     int check_key(int key);
+
+    /*! \copydoc Comm_t::close */
+    void close() override;
 
     /**
      * Add a new channel to the list of channels
@@ -67,7 +65,7 @@ public:
      * The number of messages in the queue
      * @return The number of messages
      */
-    int comm_nmsg() const override;
+    int comm_nmsg(DIRECTION dir=NONE) const override;
     using Comm_t::send;
     using Comm_t::recv;
 

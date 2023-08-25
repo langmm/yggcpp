@@ -12,6 +12,25 @@ RPCComm::RPCComm(const std::string &name, Address *address,
   COMM_BASE(name, address, dir, flgs, type),
   requests(req_dir, flgs & COMM_FLAG_ASYNC_WRAPPED) {}
 
+void RPCComm::close() {
+  requests.destroy();
+  COMM_BASE::close();
+}
+
+int RPCComm::comm_nmsg(DIRECTION dir) const {
+  if (global_comm)
+    return global_comm->comm_nmsg(dir);
+  if (dir == NONE)
+    dir = direction;
+  if (dir == direction)
+    return COMM_BASE::comm_nmsg(dir);
+  if (requests.requests.empty() || requests.comms.empty()) {
+    ygglog_error << "RPCComm(" << name << ")::comm_nmsg: No pending requests" << std::endl;
+    return -1;
+  }
+  return requests.comms[requests.requests[0].comm_idx]->comm_nmsg(dir);
+}
+
 communication::utils::Metadata& RPCComm::getMetadata(const DIRECTION dir) {
   if (global_comm)
     return global_comm->getMetadata(dir);

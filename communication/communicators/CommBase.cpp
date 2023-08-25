@@ -309,6 +309,10 @@ Comm_t* Comm_t::create_worker_recv(Header& head) {
 int Comm_t::send(const char *data, const size_t &len) {
   if (global_comm)
     return global_comm->send(data, len);
+  if (direction != SEND && type != SERVER_COMM) {
+    ygglog_debug << "CommBase(" << name << ")::send: Attempt to send though a communicator set up to receive" << std::endl;
+    return -1;
+  }
   ygglog_debug << "CommBase(" << name << ")::send: Sending " << len << " bytes to " << address->address() << std::endl;
   if (is_closed()) {
     ygglog_error << "CommBase(" << name << ")::send: Communicator closed." << std::endl;
@@ -374,7 +378,7 @@ int Comm_t::wait_for_recv(const int& tout) {
   clock_t start = clock();
   while (tout < 0 ||
 	 (((double)(clock() - start))*1000000/CLOCKS_PER_SEC) < tout) {
-    int nmsg = comm_nmsg();
+    int nmsg = comm_nmsg(RECV);
     if (nmsg < 0) {
       ygglog_error << "CommBase(" << name << ")::wait_for_recv: Error in checking for messages" << std::endl;
       return -1;
@@ -384,13 +388,17 @@ int Comm_t::wait_for_recv(const int& tout) {
     ygglog_debug << "CommBase(" << name << ")::wait_for_recv: No messages, sleep " << YGG_SLEEP_TIME << std::endl;
     std::this_thread::sleep_for(std::chrono::microseconds(YGG_SLEEP_TIME));
   }
-  return comm_nmsg();
+  return comm_nmsg(RECV);
 }
 long Comm_t::recv(char*& data, const size_t &len,
 		  bool allow_realloc) {
   if (global_comm)
     return global_comm->recv(data, len, allow_realloc);
   ygglog_debug << "CommBase(" << name << ")::recv: Receiving from " << address->address() << std::endl;
+  if (direction != RECV && type != CLIENT_COMM) {
+    ygglog_debug << "CommBase(" << name << ")::recv: Attempt to receive from communicator set up to send" << std::endl;
+    return -1;
+  }
   Header head(data, len, allow_realloc);
   long ret = -1;
   if (!allow_realloc) {

@@ -536,14 +536,14 @@ void ZMQComm::init() {
     flags |= COMM_ALWAYS_SEND_HEADER;
 }
 
-ZMQComm::~ZMQComm() {
-    ygglog_debug << "~ZMQComm: Started" << std::endl;
+void ZMQComm::close() {
+    ygglog_debug << "ZMQComm::close: Started" << std::endl;
     if ((direction == RECV) && this->is_open() &&
 	(!global_comm) && (!(flags & COMM_EOF_RECV))) {
       if (utils::YggdrasilLogger::_ygg_error_flag == 0) {
 	    size_t data_len = 0;
             char *data = NULL;
-            while (comm_nmsg() > 0) {
+            while (comm_nmsg(RECV) > 0) {
                 if (long ret = recv(data, data_len, true) >= 0) {
 		  if (ret > (long)data_len)
 		    data_len = ret;
@@ -553,14 +553,19 @@ ZMQComm::~ZMQComm() {
 	      free(data);
         }
     }
-    ygglog_debug << "~ZMQComm: Finished" << std::endl;
+    ygglog_debug << "ZMQComm::close: Finished" << std::endl;
+    CommBase::close();
 }
 
-int ZMQComm::comm_nmsg() const {
+int ZMQComm::comm_nmsg(DIRECTION dir) const {
     if (global_comm)
-      return global_comm->comm_nmsg();
+      return global_comm->comm_nmsg(dir);
+    if (dir == NONE)
+      dir = direction;
+    if (dir != direction)
+      return 0;
     int out = 0;
-    if (direction == RECV) {
+    if (dir == RECV) {
         if (handle) {
 	    return handle->poll(ZMQ_POLLIN, short_timeout);
         }

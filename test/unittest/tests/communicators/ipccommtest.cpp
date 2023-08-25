@@ -48,9 +48,12 @@ TEST(IPCComm, constructor) {
 TEST(IPCComm, send) {
     std::string message = "Hello world";
     std::string name = "";
-    IPCComm_tester ipc(name, nullptr, RECV);
-    int res = ipc.send(message.c_str(), message.size());
-    EXPECT_GT(res, 0);
+    std::string msg_recv;
+    IPCComm_tester ipc_r(name, nullptr, RECV);
+    EXPECT_EQ(ipc_r.send(message.c_str(), message.size()), -1);
+    IPCComm_tester ipc(name, nullptr, SEND);
+    EXPECT_EQ(ipc.recv(msg_recv), -1);
+    EXPECT_GT(ipc.send(message.c_str(), message.size()), 0);
 #ifdef ELF_AVAILABLE
     ELF_BEGIN;
     ELF_CREATE_T(IPC, 0);
@@ -63,21 +66,18 @@ TEST(IPCComm, send) {
     SENDCOUNT = 0;
     RETVAL = -1;
     RETVAL_INC_SEND = 1;
-    res = ipc2.send(data.c_str(), data.size());
-    EXPECT_GE(res, 0);
+    EXPECT_GE(ipc2.send(data.c_str(), data.size()), 0);
     EXPECT_EQ(SENDCOUNT, 1);
     // Failure on msgctl
     RETVAL = -1;
     RETVAL_INC_SEND = 0;
     RETVAL_INC_POLL = 0;
-    res = ipc2.send(data.c_str(), data.size());
-    EXPECT_EQ(res, -1);
+    EXPECT_EQ(ipc2.send(data.c_str(), data.size()), -1);
     // Failure on msgsnd after EAGAIN
     RETVAL = -1;
     RETVAL_INC_SEND = -1;
     errno = EAGAIN;
-    res = ipc2.send(data.c_str(), data.size());
-    EXPECT_EQ(res, -1);
+    EXPECT_EQ(ipc2.send(data.c_str(), data.size()), -1);
     EXPECT_EQ(SENDCOUNT, 1);
     errno = 0;
     // Restore

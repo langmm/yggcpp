@@ -17,7 +17,10 @@ public:
 
   using Comm_t::send;
   using Comm_t::recv;
-  using COMM_BASE::comm_nmsg;
+  /*! \copydoc Comm_t::comm_nmsg */
+  int comm_nmsg(DIRECTION dir=NONE) const override;
+
+  void close() override;
   
   void addResponseSchema(const std::string& s, bool use_generic=false);
   void addResponseSchema(const rapidjson::Value& s,
@@ -27,6 +30,7 @@ public:
   void addResponseFormat(const std::string& fmt, bool use_generic=false);
   // \copydoc Comm_t::getMetadata
   utils::Metadata& getMetadata(const DIRECTION dir=NONE) override;
+  bool signonComplete() const { return requests.signon_complete; }
   static bool isInstalled() { return COMM_BASE::isInstalled(); }
   
 #ifndef YGG_TEST

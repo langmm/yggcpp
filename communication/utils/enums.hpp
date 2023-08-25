@@ -65,7 +65,8 @@ enum HeadFlags {
   HEAD_FLAG_REPEAT          = 0x00000800, //!< Message will be discarded
   HEAD_FLAG_FORMATTED       = 0x00001000, //!< Message is formatted
   HEAD_FLAG_NO_TYPE         = 0x00002000, //!< No type info in message
-  HEAD_FLAG_NO_HEAD         = 0x00004000  //!< No header in message
+  HEAD_FLAG_NO_HEAD         = 0x00004000, //!< No header in message
+  HEAD_FLAG_ASYNC           = 0x00008000  //!< Header formated by async
 };
 const int HEAD_BUFFER_MASK = (HEAD_FLAG_ALLOW_REALLOC |
 			      HEAD_FLAG_OWNSDATA);

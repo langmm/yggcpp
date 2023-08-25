@@ -1,4 +1,5 @@
 #include "AsyncComm.hpp"
+#include "ClientComm.hpp"
 #include "utils/logging.hpp"
 
 using namespace communication::communicator;
@@ -8,8 +9,12 @@ using namespace communication::utils;
 // AsyncBacklog //
 //////////////////
 
+// TODO: Preserve backlog buffers?
+// TODO: Check for handle->comm before use?
+
 AsyncBacklog::AsyncBacklog(Comm_t* parent) :
-  comm(nullptr), comm_mutex(), opened(false), closing(false), backlog(),
+  comm(nullptr), comm_mutex(),
+  opened(false), closing(false), locked(false), backlog(),
   backlog_thread(&AsyncBacklog::on_thread, this, parent) {
   while (!(opened.load() || closing.load())) {
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -17,8 +22,10 @@ AsyncBacklog::AsyncBacklog(Comm_t* parent) :
 }
 
 AsyncBacklog::~AsyncBacklog() {
+  ygglog_debug << "~AsyncBacklog: begin" << std::endl;
   closing.store(true);
   backlog_thread.join();
+  ygglog_debug << "~AsyncBacklog: end" << std::endl;
 }
 
 bool AsyncBacklog::on_thread(Comm_t* parent) {
@@ -71,6 +78,15 @@ int AsyncBacklog::send() {
   const std::lock_guard<std::mutex> comm_lock(comm_mutex);
   int out = 0;
   if (backlog.size() > 0) {
+    if (comm->getType() == CLIENT_COMM) {
+      ClientComm* cli = dynamic_cast<ClientComm*>(comm);
+      if (!cli->signon(backlog[0], comm))
+	return -1;
+      // Sleep outside lock
+      if ((!(backlog[0].flags & (HEAD_FLAG_CLIENT_SIGNON | HEAD_FLAG_EOF)))
+	  && !cli->signonComplete())
+	return out;
+    }
     out = comm->send_single(backlog[0]);
     if (out >= 0) {
       ygglog_debug << "AsyncBacklog::send: Sent message from backlog" << std::endl;
@@ -84,14 +100,36 @@ long AsyncBacklog::recv() {
   const std::lock_guard<std::mutex> comm_lock(comm_mutex);
   long out = 0;
   if (comm->comm_nmsg() > 0) {
-    backlog.resize(backlog.size() + 1);
-    backlog[backlog.size() - 1].reset(HEAD_RESET_OWN_DATA);
+    backlog.emplace_back(true);
     out = comm->recv_single(backlog[backlog.size() - 1]);
     if (out >= 0) {
-      ygglog_debug << "AsyncBacklog::recv: Received message into backlog" << std::endl;
+      if (backlog[backlog.size() - 1].flags & HEAD_FLAG_REPEAT) {
+	backlog.resize(backlog.size() - 1);
+      } else {
+	ygglog_debug << "AsyncBacklog::recv: Received message into backlog" << std::endl;
+      }
     }
   }
   return out;
+}
+
+////////////////////
+// AsyncLockGuard //
+////////////////////
+
+AsyncLockGuard::AsyncLockGuard(AsyncBacklog* bcklog, bool dont_lock) :
+  locked(false), backlog(bcklog) {
+  if (!(dont_lock || backlog->locked.load())) {
+    locked = true;
+    backlog->comm_mutex.lock();
+    backlog->locked.store(true);
+  }
+}
+AsyncLockGuard::~AsyncLockGuard() {
+  if (locked) {
+    backlog->locked.store(false);
+    backlog->comm_mutex.unlock();
+  }
 }
 
 
@@ -104,6 +142,10 @@ AsyncComm::AsyncComm(const std::string name,
 		     const DIRECTION direction,
 		     int flgs, const COMM_TYPE type) :
   CommBase(name, address, direction, type, flgs | COMM_FLAG_ASYNC) {
+  if (type == SERVER_COMM)
+    this->direction = RECV;
+  else if (type == CLIENT_COMM)
+    this->direction = SEND;
   if (!global_comm) {
     handle = new AsyncBacklog(this);
   }
@@ -121,66 +163,72 @@ AsyncComm::AsyncComm(utils::Address *addr,
 communication::utils::Metadata& AsyncComm::getMetadata(const DIRECTION dir) {
   if (global_comm)
     return global_comm->getMetadata(dir);
-  const std::lock_guard<std::mutex> lock(handle->comm_mutex);
+  const AsyncLockGuard lock(handle);
   if (handle->comm)
     return handle->comm->getMetadata(dir);
   return metadata;
 }
 
-int AsyncComm::comm_nmsg() const {
+int AsyncComm::comm_nmsg(DIRECTION dir) const {
   if (global_comm)
-    return global_comm->comm_nmsg();
-  const std::lock_guard<std::mutex> lock(handle->comm_mutex);
-  int out = static_cast<int>(handle->backlog.size());
-  // if (handle->comm)
-  //   out += handle->comm->comm_nmsg();
-  return out;
+    return global_comm->comm_nmsg(dir);
+  const AsyncLockGuard lock(handle);
+  if (dir == NONE)
+    dir = direction;
+  if ((type == CLIENT_COMM && dir == RECV) ||
+      (type == SERVER_COMM && dir == SEND))
+    return handle->comm->comm_nmsg(dir);
+  return static_cast<int>(handle->backlog.size());
 }
 
 int AsyncComm::send_single(Header& header) {
-  const std::lock_guard<std::mutex> lock(handle->comm_mutex);
-  assert((!global_comm) && handle);
-  if (type == SERVER_COMM)
+  const AsyncLockGuard lock(handle);
+  assert((!global_comm) && handle && handle->comm);
+  if (type == SERVER_COMM) {
     return handle->comm->send_single(header);
-  ygglog_debug << "AsyncComm(" << name << ")::send_single: " << header.size_curr - header.offset << " bytes" << std::endl;
-  handle->backlog.resize(handle->backlog.size() + 1);
-  handle->backlog[handle->backlog.size() - 1].reset(HEAD_RESET_OWN_DATA);
-  handle->backlog[handle->backlog.size() - 1].CopyFrom(header);
-  return 1;
+  }
+  header.on_send();
+  ygglog_debug << "AsyncComm(" << name << ")::send_single: " << header.size_msg << " bytes" << std::endl;
+  handle->backlog.emplace_back(true);
+  if (!handle->backlog[handle->backlog.size() - 1].CopyFrom(header))
+    return -1;
+  handle->backlog[handle->backlog.size() - 1].flags |= HEAD_FLAG_ASYNC;
+  return static_cast<int>(header.size_msg);
 }
 
 long AsyncComm::recv_single(Header& header) {
-  const std::lock_guard<std::mutex> lock(handle->comm_mutex);
+  const AsyncLockGuard lock(handle);
   assert((!global_comm) && handle);
-  if (type == CLIENT_COMM)
+  if (type == CLIENT_COMM) {
+    if (!handle->comm)
+      return -1;
     return handle->comm->recv_single(header);
+  }
   long ret = -1;
   ygglog_debug << "AsyncComm(" << name << ")::recv_single " << std::endl;
   if (handle->backlog.size() == 0) {
     ygglog_error << "AsyncComm(" << name << ")::recv_single: Backlog is empty." << std::endl;
     return ret;
   }
-  ret = header.on_recv(handle->backlog[0].c_str(),
-		       handle->backlog[0].size());
-  if (ret < 0) {
+  if (!header.MoveFrom(handle->backlog[0])) {
     ygglog_error << "AsyncComm(" << name << ")::recv_single: Error copying data" << std::endl;
     return ret;
   }
+  ret = static_cast<long>(header.size_data);
   handle->backlog.erase(handle->backlog.begin());
   ygglog_debug << "AsyncComm(" << name << ")::recv_single: returns " << ret << " bytes" << std::endl;
   return ret;
 }
 
 bool AsyncComm::create_header_send(Header& header) {
-  const std::lock_guard<std::mutex> lock(handle->comm_mutex);
+  const AsyncLockGuard lock(handle);
   assert(!global_comm);
+  if (type == CLIENT_COMM &&
+      !(header.flags & (HEAD_FLAG_EOF | HEAD_FLAG_CLIENT_SIGNON))) {
+    if (!dynamic_cast<ClientComm*>(handle->comm)->signon(header, this))
+      return false;
+  }
   return handle->comm->create_header_send(header);
-}
-
-bool AsyncComm::create_header_recv(Header& header) {
-  const std::lock_guard<std::mutex> lock(handle->comm_mutex);
-  assert(!global_comm);
-  return handle->comm->create_header_recv(header);
 }
 
 Comm_t* AsyncComm::create_worker(utils::Address* address,

@@ -104,10 +104,11 @@ void MPIComm::init() {
     }
 }
 
-MPIComm::~MPIComm() {
+void MPIComm::close() {
   for (size_t i = 1; i < addresses.size(); i++)
     delete addresses[i];
   addresses.clear();
+  CommBase::close();
 }
 
 int MPIComm::mpi_comm_source_id() const {
@@ -146,9 +147,13 @@ int MPIComm::mpi_comm_source_id() const {
 #endif
 }
 
-int MPIComm::comm_nmsg() const {
+int MPIComm::comm_nmsg(DIRECTION dir) const {
     if (global_comm)
-      return global_comm->comm_nmsg();
+      return global_comm->comm_nmsg(dir);
+    if (dir == NONE)
+      dir = direction;
+    if (dir != direction)
+      return 0;
     int src = mpi_comm_source_id();
     int nmsg = 0;
     if (src < 0) {

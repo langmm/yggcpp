@@ -34,14 +34,18 @@ class TestComm_t_Installed:
 
     @pytest.fixture
     def comm_send(self, commtype, require_installed):
-        return pyYggdrasil.CommBase(
+        out = pyYggdrasil.CommBase(
             "test", commtype=commtype)
+        yield out
+        out.close()
 
     @pytest.fixture
     def comm_recv(self, commtype, require_installed):
-        return pyYggdrasil.CommBase(
+        out = pyYggdrasil.CommBase(
             "test", commtype=commtype,
             direction=pyYggdrasil.DIRECTION.RECV)
+        yield out
+        out.close()
 
     @pytest.fixture
     def create_comm_partner(self):
@@ -214,37 +218,39 @@ class TestRPC:
 
     @pytest.fixture
     def create_comm_partner(self):
-        def create_comm_partner_wrapped(comm):
+        def create_comm_partner_wrapped(comm, flags=0):
             if comm.commtype == pyYggdrasil.COMM_TYPE.SERVER_COMM:
                 partner_name = "client"
                 partner_commtype = pyYggdrasil.COMM_TYPE.CLIENT_COMM
             else:
                 partner_name = "server"
                 partner_commtype = pyYggdrasil.COMM_TYPE.SERVER_COMM
+            flags |= pyYggdrasil.COMM_FLAGS.COMM_FLAG_INTERFACE
             return pyYggdrasil.CommBase(
                 "test_" + partner_name, comm.address,
-                commtype=partner_commtype, flags=0x00002000)
+                commtype=partner_commtype, flags=flags)
         return create_comm_partner_wrapped
 
     @pytest.fixture
-    def do_call(self, server, create_comm_partner):
+    def do_call(self, create_comm_partner):
 
-        def do_call_wrapped(msg, result_call_thread):
-            client = create_comm_partner(server)
+        def do_call_wrapped(server, msg, result_call_thread, **kwargs):
+            client = create_comm_partner(server, **kwargs)
             client.timeout_recv = 100000
             result_call_thread[0] = client.call(msg)
 
         return do_call_wrapped
 
     @pytest.fixture
-    def do_rpc(self, server, do_call):
+    def do_rpc(self, do_call):
 
-        def do_rpc_wrapped(req, res):
+        def do_rpc_wrapped(server, req, res, **kwargs):
             result_call_thread = [None]
             result_recv = (False, None)
             result_send = False
             thread = Thread(target=do_call, daemon=True,
-                            args=(req, result_call_thread))
+                            args=(server, req, result_call_thread),
+                            kwargs=kwargs)
             thread.start()
             try:
                 server.timeout_recv = 100000
@@ -265,11 +271,38 @@ class TestRPC:
 
         return do_rpc_wrapped
 
-    def test_call(self, do_rpc):
-        do_rpc("REQUEST", "RESPONSE")
+    def test_call(self, server, do_rpc):
+        do_rpc(server, "REQUEST", "RESPONSE")
 
     def test_call_long(self, server, do_rpc):
         if server.maxMsgSize == 0:
             pytest.skip("Communicator does not have a maxMsgSize")
-        do_rpc("REQUEST" + server.maxMsgSize * "0",
+        do_rpc(server,
+               "REQUEST" + server.maxMsgSize * "0",
                "RESPONSE" + server.maxMsgSize * "0")
+
+    def test_send_recv_async(self):
+        server = pyYggdrasil.CommBase(
+            "test_server",
+            commtype=pyYggdrasil.COMM_TYPE.SERVER_COMM,
+            flags=pyYggdrasil.COMM_FLAGS.COMM_FLAG_ASYNC)
+        client = pyYggdrasil.CommBase(
+            "test_client", server.address,
+            commtype=pyYggdrasil.COMM_TYPE.CLIENT_COMM,
+            flags=pyYggdrasil.COMM_FLAGS.COMM_FLAG_ASYNC)
+        req = "REQUEST"
+        res = "RESPONSE"
+        server.timeout_recv = 100000
+        client.timeout_recv = 100000
+        assert client.send(req)
+        assert server.recv() == (True, req)
+        assert server.send(res)
+        assert client.recv() == (True, res)
+
+    def test_call_async(self, do_rpc):
+        server = pyYggdrasil.CommBase(
+            "test_server",
+            commtype=pyYggdrasil.COMM_TYPE.SERVER_COMM,
+            flags=pyYggdrasil.COMM_FLAGS.COMM_FLAG_ASYNC)
+        do_rpc(server, "REQUEST", "RESPONSE",
+               flags=pyYggdrasil.COMM_FLAGS.COMM_FLAG_ASYNC)

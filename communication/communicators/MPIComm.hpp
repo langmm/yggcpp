@@ -66,16 +66,10 @@ public:
     ADD_CONSTRUCTORS(MPI)
 
 #if defined(MPIINSTALLED) && defined(MPI_COMM_WORLD)
-    /**
-     * Destructor
-     */
-    ~MPIComm() override;
-
-    /**
-     * The number of messages in the queue
-     * @return The number of messages
-     */
-    int comm_nmsg() const override;
+    /*! \copydoc Comm_t::close */
+    void close() override;
+    /*! \copydoc Comm_t::comm_nmsg */
+    int comm_nmsg(DIRECTION dir=NONE) const override;
 
     /**
      * Get the communicator source id

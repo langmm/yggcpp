@@ -14,12 +14,10 @@ ServerComm::ServerComm(const std::string nme, Address *addr,
 
 ADD_CONSTRUCTORS_RPC_DEF(ServerComm)
 
-bool ServerComm::signon(const Header& header, bool in_async) {
+bool ServerComm::signon(const Header& header) {
   assert(header.flags & HEAD_FLAG_CLIENT_SIGNON);
   ygglog_debug << "ServerComm(" << name << ")::signon: begin (" <<
     (header.flags & HEAD_FLAG_CLIENT_SIGNON) << ")" << std::endl;
-  if ((flags & COMM_FLAG_ASYNC_WRAPPED) && !in_async)
-    return true;
   if (send(YGG_SERVER_SIGNON, YGG_SERVER_SIGNON_LEN) < 0) {
     ygglog_error << "ServerComm(" << name << ")::signon: Error in sending sign-on" << std::endl;
     return false;
