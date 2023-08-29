@@ -196,7 +196,7 @@ jobs:
         if: matrix.with-asan == true && matrix.os == 'macos-latest'
         shell: bash -l {0}
         run: |
-          echo "DYLD_INSERT_LIBRARIES=$(clang -print-file-name=libclang_rt.asan_osx_dynamic.dylib)" >> "$GITHUB_ENV
+          echo "DYLD_INSERT_LIBRARIES=$(clang -print-file-name=libclang_rt.asan_osx_dynamic.dylib)" >> "$GITHUB_ENV"
       - name: ELF config flags
         if: matrix.with-elf == false
         shell: bash -l {0}

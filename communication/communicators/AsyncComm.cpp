@@ -160,15 +160,6 @@ AsyncComm::AsyncComm(utils::Address *addr,
 		     int flgs, const COMM_TYPE type) :
   AsyncComm("", addr, dirn, flgs, type) {}
 
-communication::utils::Metadata& AsyncComm::getMetadata(const DIRECTION dir) {
-  if (global_comm)
-    return global_comm->getMetadata(dir);
-  const AsyncLockGuard lock(handle);
-  if (handle->comm)
-    return handle->comm->getMetadata(dir);
-  return metadata;
-}
-
 int AsyncComm::comm_nmsg(DIRECTION dir) const {
   if (global_comm)
     return global_comm->comm_nmsg(dir);
@@ -179,6 +170,35 @@ int AsyncComm::comm_nmsg(DIRECTION dir) const {
       (type == SERVER_COMM && dir == SEND))
     return handle->comm->comm_nmsg(dir);
   return static_cast<int>(handle->backlog.size());
+}
+
+communication::utils::Metadata& AsyncComm::getMetadata(const DIRECTION dir) {
+  if (global_comm)
+    return global_comm->getMetadata(dir);
+  const AsyncLockGuard lock(handle);
+  if (handle->comm)
+    return handle->comm->getMetadata(dir);
+  return metadata;
+}
+
+void AsyncComm::set_timeout_recv(int new_timeout) {
+  if (global_comm) {
+    global_comm->set_timeout_recv(new_timeout);
+    return;
+  }
+  const AsyncLockGuard lock(handle);
+  if (handle->comm)
+    handle->comm->set_timeout_recv(new_timeout);
+  CommBase::set_timeout_recv(new_timeout);
+}
+int AsyncComm::get_timeout_recv() {
+  if (global_comm) {
+    return global_comm->get_timeout_recv();
+  }
+  const AsyncLockGuard lock(handle);
+  if (handle->comm)
+    return handle->comm->get_timeout_recv();
+  return CommBase::get_timeout_recv();
 }
 
 int AsyncComm::send_single(Header& header) {

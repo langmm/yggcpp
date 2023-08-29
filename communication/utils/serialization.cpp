@@ -1053,11 +1053,15 @@ long Header::on_recv(const char* msg, const size_t& msg_siz) {
     memmove(data[0], data[0] + size_head, size_curr);
     (*data)[size_curr] = '\0';
     // Update parameters from document
-    size_data = static_cast<size_t>(GetMetaInt("size"));
-    if (GetMetaBoolOptional("in_data", false))
-      flags |= HEAD_META_IN_DATA;
-    else
-      flags &= static_cast<uint16_t>(~HEAD_META_IN_DATA);
+    try {
+      size_data = static_cast<size_t>(GetMetaInt("size"));
+      if (GetMetaBoolOptional("in_data", false))
+	flags |= HEAD_META_IN_DATA;
+      else
+	flags &= static_cast<uint16_t>(~HEAD_META_IN_DATA);
+    } catch (...) {
+      return -1;
+    }
   }
   // Check for flags
   setMessageFlags(data[0], size_curr);
