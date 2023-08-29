@@ -248,12 +248,12 @@ class TestRPC:
             result_call_thread = [None]
             result_recv = (False, None)
             result_send = False
+            server.timeout_recv = 100000
             thread = Thread(target=do_call, daemon=True,
                             args=(server, req, result_call_thread),
                             kwargs=kwargs)
             thread.start()
             try:
-                server.timeout_recv = 100000
                 # Request
                 result_recv = server.recv()
                 assert result_recv

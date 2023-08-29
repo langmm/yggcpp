@@ -29,7 +29,7 @@ public:
 			 bool use_generic=false);
   void addResponseFormat(const std::string& fmt, bool use_generic=false);
   // \copydoc Comm_t::getMetadata
-  utils::Metadata& getMetadata(const DIRECTION dir=NONE) override;
+  communication::utils::Metadata& getMetadata(const DIRECTION dir=NONE) override;
   bool signonComplete() const { return requests.signon_complete; }
   static bool isInstalled() { return COMM_BASE::isInstalled(); }
   

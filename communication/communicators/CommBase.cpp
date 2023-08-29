@@ -554,20 +554,20 @@ int Comm_t::sendVar(const rapidjson::ObjWavefront& data) {
   return send(1, &data);
 }
 
-Metadata& Comm_t::getMetadata(const DIRECTION dir) {
+communication::utils::Metadata& Comm_t::getMetadata(const DIRECTION dir) {
   if (global_comm)
     return global_comm->getMetadata(dir);
   return metadata;
 }
 int Comm_t::update_datatype(const rapidjson::Value& new_schema,
 			    const DIRECTION dir) {
-  Metadata& meta = getMetadata(dir);
+  communication::utils::Metadata& meta = getMetadata(dir);
   meta.fromSchema(new_schema);
   return 1;
 }
 
 int Comm_t::deserialize(const char* buf, rapidjson::VarArgList& ap) {
-  Metadata& meta = getMetadata(RECV);
+  communication::utils::Metadata& meta = getMetadata(RECV);
   if (!meta.hasType()) {
     ygglog_error << "CommBase(" << name << ")::deserialize: No datatype" << std::endl;
     return -1;
@@ -580,7 +580,7 @@ int Comm_t::deserialize(const char* buf, rapidjson::VarArgList& ap) {
 
 int Comm_t::serialize(char*& buf, size_t& buf_siz,
 		      rapidjson::VarArgList& ap) {
-  Metadata& meta = getMetadata(SEND);
+  communication::utils::Metadata& meta = getMetadata(SEND);
   if (!meta.hasType()) {
     ygglog_error << "CommBase(" << name << ")::serialize: No datatype" << std::endl;
     return -1;
@@ -616,7 +616,7 @@ int Comm_t::vSend(rapidjson::VarArgList& ap) {
   ygglog_debug << "CommBase(" << name << ")::vSend: begin" << std::endl;
   // If type not set, but comm expecting generic, get the schema from the
   // provided generic argument
-  Metadata& meta = getMetadata(SEND);
+  communication::utils::Metadata& meta = getMetadata(SEND);
   if (meta.isGeneric() && !meta.hasType()) {
     rapidjson::Document tmp;
     Metadata tmp_meta;
@@ -667,7 +667,7 @@ long Comm_t::vCall(rapidjson::VarArgList& ap) {
   }
   size_t send_nargs = 0;
   rapidjson::Document tmp;
-  Metadata& meta_send = getMetadata(SEND);
+  communication::utils::Metadata& meta_send = getMetadata(SEND);
   if (meta_send.hasType()) {
     send_nargs = tmp.CountVarArgs(*meta_send.schema, false);
   }

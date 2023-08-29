@@ -498,7 +498,7 @@ public:
         the comm including datatype.
       @return Metadata.
      */
-    virtual utils::Metadata& getMetadata(const DIRECTION dir=NONE);
+    virtual communication::utils::Metadata& getMetadata(const DIRECTION dir=NONE);
     /*!
       @brief Get the bitwise flags associated with the communicator.
       @returns flags.
@@ -650,7 +650,7 @@ protected:
 		  RAPIDJSON_DISABLEIF((internal::OrExpr<YGGDRASIL_IS_ANY_SCALAR(T), internal::IsSame<T, bool> >))) {}
     template<typename T>
     bool checkType(const T& data, const DIRECTION dir) {
-      utils::Metadata& meta = getMetadata(dir);
+      communication::utils::Metadata& meta = getMetadata(dir);
       if (dir == RECV)
 	zeroData(&data);
       try {
