@@ -300,6 +300,10 @@ jobs:
       ###################################
       # Build Python
       ###################################
+      - name: Set CMAKE_ARGS for Python build
+        shell: bash -l {0}
+        run: |
+          echo "CMAKE_ARGS=${{ env.CONFIG_FLAGS }}" >> "$GITHUB_ENV"
       - name: Build Python (CONDA)
         if: matrix.python-install == 'conda'
         shell: bash -l {0}
@@ -329,10 +333,6 @@ jobs:
       ###################################
       # Test Python
       ###################################
-      - name: Set CMAKE_ARGS for Python tests
-        shell: bash -l {0}
-        run: |
-          echo "CMAKE_ARGS=${{ env.CONFIG_FLAGS }}" >> "$GITHUB_ENV"
       - name: Test Python Interfaces (CONDA)
         # if: matrix.python-install == 'conda' && matrix.with-asan == false && matrix.with-elf == false && matrix.with-valgrind == false
         if: matrix.python-install == 'conda' && matrix.with-elf == false && matrix.with-valgrind == false
