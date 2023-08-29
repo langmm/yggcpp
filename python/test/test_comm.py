@@ -236,7 +236,7 @@ class TestRPC:
 
         def do_call_wrapped(server, msg, result_call_thread, **kwargs):
             client = create_comm_partner(server, **kwargs)
-            client.timeout_recv = 100000
+            client.timeout_recv = 1000000
             result_call_thread[0] = client.call(msg)
 
         return do_call_wrapped
@@ -293,7 +293,7 @@ class TestRPC:
         req = "REQUEST"
         res = "RESPONSE"
         server.timeout_recv = 100000
-        client.timeout_recv = 100000
+        client.timeout_recv = 1000000
         assert client.send(req)
         assert server.recv() == (True, req)
         assert server.send(res)

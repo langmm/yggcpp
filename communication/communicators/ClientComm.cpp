@@ -61,9 +61,9 @@ bool ClientComm::signon(const Header& header, Comm_t* async_comm) {
     async_comm = this;
   }
   ygglog_debug << "ClientComm(" << name << ")::signon: begin" << std::endl;
+  Header tmp(true);
   clock_t start = clock();
   int tout = get_timeout_recv();
-  Header tmp(true);
   while ((!requests.signon_complete) &&
 	 (tout < 0 ||
 	  (((double)(clock() - start))*1000000/CLOCKS_PER_SEC) < tout)) {
@@ -98,6 +98,9 @@ bool ClientComm::signon(const Header& header, Comm_t* async_comm) {
 	return true;
       std::this_thread::sleep_for(std::chrono::microseconds(YGG_SLEEP_TIME));
     }
+  }
+  if (!requests.signon_complete) {
+    ygglog_error << "ClientComm(" << name << ")::signon: No response to signon" << std::endl;
   }
   return requests.signon_complete;
 }
@@ -164,23 +167,28 @@ long ClientComm::recv_single(utils::Header& header) {
     std::string req_id = requests.activeRequestClient();
     long ret;
     utils::Header response_header;
-    // TODO: Timeout
-    while (!requests.isComplete(req_id)) {
+    clock_t start = clock();
+    int tout = get_timeout_recv();
+    while ((!requests.isComplete(req_id)) &&
+	   (tout < 0 ||
+	    (((double)(clock() - start))*1000000/CLOCKS_PER_SEC) < tout)) {
         response_header.reset(HEAD_RESET_OWN_DATA);
         ygglog_debug << "ClientComm(" << name << ")::recv_single: Waiting for response to request " << req_id << std::endl;
-	if (response_comm->wait_for_recv(this->timeout_recv) <= 0) {
-	  ygglog_debug << "ClientComm(" << name << ")::recv_single: No messages waiting" << std::endl;
-	  return -1;
-	}
-        ret = response_comm->recv_single(response_header);
-        if (ret < 0) {
+	if (response_comm->comm_nmsg(RECV) > 0) {
+	  ret = response_comm->recv_single(response_header);
+	  if (ret < 0) {
             ygglog_error << "ClientComm(" << name << ")::recv_single: response recv_single returned " << ret << std::endl;
             return ret;
-        }
-	if (!(response_header.flags & HEAD_FLAG_EOF)) {
-	  if (requests.addResponseClient(response_header) < 0)
-	    return -1;
-	  requests.transferSchemaFrom(response_comm);
+	  }
+	  if (!(response_header.flags & HEAD_FLAG_EOF)) {
+	    if (requests.addResponseClient(response_header) < 0)
+	      return -1;
+	    requests.transferSchemaFrom(response_comm);
+	  }
+	} else {
+	  ygglog_debug << "ClientComm(" << name << ")::recv_single: No response to oldest request (address = " << response_comm->address->address() << "), sleeping" << std::endl;
+	  std::this_thread::sleep_for(std::chrono::microseconds(YGG_SLEEP_TIME));
+	  
 	}
     }
     // Close response comm and decrement count of response comms

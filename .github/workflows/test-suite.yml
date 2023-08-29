@@ -192,6 +192,11 @@ jobs:
           echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DYGG_BUILD_ASAN=ON -DYGG_BUILD_UBSAN=ON -DYGGDRASIL_DISABLE_PYTHON_C_API=ON" >> "$GITHUB_ENV"
           echo "ASAN_OPTIONS=detect_odr_violation=0:detect_container_overflow=0" >> $GITHUB_ENV
           echo "TEST_FLAGS=${{ env.TEST_FLAGS }} -E valgrind*" >> "$GITHUB_ENV"
+      - name: ASAN dynamic library
+        if: matrix.with-asan == true && matrix.os == 'macos-latest'
+        shell: bash -l {0}
+        run: |
+          echo "DYLD_INSERT_LIBRARIES=$(clang -print-file-name=libclang_rt.asan_osx_dynamic.dylib)" >> "$GITHUB_ENV
       - name: ELF config flags
         if: matrix.with-elf == false
         shell: bash -l {0}
@@ -324,22 +329,29 @@ jobs:
       ###################################
       # Test Python
       ###################################
+      - name: Set CMAKE_ARGS for Python tests
+        shell: bash -l {0}
+        run: |
+          echo "CMAKE_ARGS=${{ env.CONFIG_FLAGS }}" >> "$GITHUB_ENV"
       - name: Test Python Interfaces (CONDA)
-        if: matrix.python-install == 'conda' && matrix.with-asan == false && matrix.with-elf == false && matrix.with-valgrind == false
+        # if: matrix.python-install == 'conda' && matrix.with-asan == false && matrix.with-elf == false && matrix.with-valgrind == false
+        if: matrix.python-install == 'conda' && matrix.with-elf == false && matrix.with-valgrind == false
         shell: bash -l {0}
         run: |
           pytest -sv python/test
-      - name: Check for Python Interfaces (PIP)
-        if: matrix.python-install == 'pip' && matrix.with-asan == false && matrix.with-elf == false && matrix.with-valgrind == false
-        shell: bash -l {0}
-        run: |
-          PYTHON_EXEC=${{ steps.pysetup.outputs.python-path }}
-          ${PYTHON_EXEC} -m site
-          ${PYTHON_EXEC} -c 'import site; print(site.getsitepackages())'
-          ls $(${PYTHON_EXEC} -c 'import site; print(site.getsitepackages()[0])')
-          ls $(${PYTHON_EXEC} -c 'import os; import site; print(os.path.join(site.getsitepackages()[0], "pyYggdrasil"))')
+      # - name: Check for Python Interfaces (PIP)
+      #   # if: matrix.python-install == 'pip' && matrix.with-asan == false && matrix.with-elf == false && matrix.with-valgrind == false
+      #   if: matrix.python-install == 'pip' && matrix.with-elf == false && matrix.with-valgrind == false
+      #   shell: bash -l {0}
+      #   run: |
+      #     PYTHON_EXEC=${{ steps.pysetup.outputs.python-path }}
+      #     ${PYTHON_EXEC} -m site
+      #     ${PYTHON_EXEC} -c 'import site; print(site.getsitepackages())'
+      #     ls $(${PYTHON_EXEC} -c 'import site; print(site.getsitepackages()[0])')
+      #     ls $(${PYTHON_EXEC} -c 'import os; import site; print(os.path.join(site.getsitepackages()[0], "pyYggdrasil"))')
       - name: Test Python Interfaces (PIP)
-        if: matrix.python-install == 'pip' && matrix.with-asan == false && matrix.with-elf == false && matrix.with-valgrind == false
+        # if: matrix.python-install == 'pip' && matrix.with-asan == false && matrix.with-elf == false && matrix.with-valgrind == false
+        if: matrix.python-install == 'pip' && matrix.with-elf == false && matrix.with-valgrind == false
         run: |
           pytest -sv python/test
 
