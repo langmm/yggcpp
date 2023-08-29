@@ -27,6 +27,9 @@ namespace communication {
     };
     
     class AsyncLockGuard {
+    private:
+      AsyncLockGuard(const AsyncLockGuard&) = delete;
+      AsyncLockGuard& operator=(const AsyncLockGuard&) = delete;
     public:
       AsyncLockGuard(AsyncBacklog* backlog, bool dont_lock=false);
       ~AsyncLockGuard();
