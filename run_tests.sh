@@ -82,10 +82,7 @@ else
     fi
     export PYTHONFAULTHANDLER=1
     if [ -n "$WITH_LLDB" ]; then
-	# Copy test commands to test/script.py
-	cp $TEST_DIR/script.py ./
-	lldb python script.py  # r to run
-	rm script.py
+	lldb -o 'run' -o 'quit' -- $(which python) -m pytest -svx $TEST_DIR
     else
 	python -m pytest -svx $TEST_DIR
     fi
