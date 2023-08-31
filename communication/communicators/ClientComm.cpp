@@ -64,6 +64,8 @@ bool ClientComm::signon(const Header& header, Comm_t* async_comm) {
   Header tmp(true);
   int tout = get_timeout_recv();
   int nloop = 0;
+  if (requests.signonSent())
+    nloop = 1;
   clock_t start = clock();
   while ((!requests.signon_complete) &&
 	 (tout < 0 ||
