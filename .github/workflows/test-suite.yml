@@ -339,7 +339,6 @@ jobs:
       # Test Python
       ###################################
       - name: Test Python Interfaces (CONDA)
-        # if: matrix.python-install == 'conda' && matrix.with-asan == false && matrix.with-elf == false && matrix.with-valgrind == false
         if: matrix.python-install == 'conda' && matrix.with-elf == false && matrix.with-valgrind == false
         shell: bash -l {0}
         run: |
@@ -354,16 +353,15 @@ jobs:
       #     ${PYTHON_EXEC} -c 'import site; print(site.getsitepackages())'
       #     ls $(${PYTHON_EXEC} -c 'import site; print(site.getsitepackages()[0])')
       #     ls $(${PYTHON_EXEC} -c 'import os; import site; print(os.path.join(site.getsitepackages()[0], "pyYggdrasil"))')
-      - name: Test Python Interfaces w/ LLDB (PIP)
-        if: matrix.python-install == 'pip' && matrix.with-elf == false && matrix.with-valgrind == false && matrix.os == 'macos-latest'
-        run: |
-          lldb -o 'run' -o 'quit' -- $(which python) -m pytest -svx python/test
-      - name: Test Python Interfaces w/ GDB (PIP)
-        if: matrix.python-install == 'pip' && matrix.with-elf == false && matrix.with-valgrind == false && matrix.os == 'ubuntu-latest'
-        run: |
-          gdb --batch -x gdb_commands.txt --args $(which python) -m pytest -svx python/test
+      # - name: Test Python Interfaces w/ LLDB (PIP)
+      #   if: matrix.python-install == 'pip' && matrix.with-elf == false && matrix.with-valgrind == false && matrix.os == 'macos-latest'
+      #   run: |
+      #     lldb -o 'run' -o 'quit' -- $(which python) -m pytest -svx python/test
+      # - name: Test Python Interfaces w/ GDB (PIP)
+      #   if: matrix.python-install == 'pip' && matrix.with-elf == false && matrix.with-valgrind == false && matrix.os == 'ubuntu-latest'
+      #   run: |
+      #     gdb --batch -x gdb_commands.txt --args $(which python) -m pytest -svx python/test
       - name: Test Python Interfaces (PIP)
-        # if: matrix.python-install == 'pip' && matrix.with-asan == false && matrix.with-elf == false && matrix.with-valgrind == false
         if: matrix.python-install == 'pip' && matrix.with-elf == false && matrix.with-valgrind == false
         run: |
           pytest -sv python/test

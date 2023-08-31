@@ -213,8 +213,10 @@ class TestRPC:
 
     @pytest.fixture
     def server(self):
-        return pyYggdrasil.CommBase(
+        out = pyYggdrasil.CommBase(
             "test_server", commtype=pyYggdrasil.COMM_TYPE.SERVER_COMM)
+        yield out
+        out.close()
 
     @pytest.fixture
     def create_comm_partner(self):
@@ -238,6 +240,7 @@ class TestRPC:
             client = create_comm_partner(server, **kwargs)
             client.timeout_recv = 1000000
             result_call_thread[0] = client.call(msg)
+            client.close()
 
         return do_call_wrapped
 
@@ -298,6 +301,8 @@ class TestRPC:
         assert server.recv() == (True, req)
         assert server.send(res)
         assert client.recv() == (True, res)
+        client.close()
+        server.close()
 
     def test_call_async(self, do_rpc):
         server = pyYggdrasil.CommBase(
@@ -306,3 +311,4 @@ class TestRPC:
             flags=pyYggdrasil.COMM_FLAGS.COMM_FLAG_ASYNC)
         do_rpc(server, "REQUEST", "RESPONSE",
                flags=pyYggdrasil.COMM_FLAGS.COMM_FLAG_ASYNC)
+        server.close()
