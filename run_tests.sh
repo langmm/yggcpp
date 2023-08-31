@@ -4,7 +4,7 @@ DO_PYTHON=""
 WITH_ASAN=""
 DONT_BUILD=""
 NO_CORE=""
-CMAKE_FLAGS="-DRAPIDJSON_INCLUDE_DIRS=../rapidjson/include/"
+CMAKE_FLAGS="" # -DRAPIDJSON_INCLUDE_DIRS=/Users/langmm/rapidjson/include"
 WITH_LLDB=""
 
 while [[ $# -gt 0 ]]; do
@@ -44,7 +44,7 @@ if [ -z "$DO_PYTHON" ]; then
 	mkdir build
     fi
     cd build
-    cmake .. -DCMAKE_INSTALL_PREFIX=../devel -DYGG_ENABLE_COVERAGE=OFF -DYGG_SKIP_VALGRIND_TESTS=ON -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DRAPIDJSON_INCLUDE_DIRS=/Users/langmm/rapidjson/include -DYGG_BUILD_TESTS=ON -DBUILD_PYTHON_LIBRARY=OFF $CMAKE_FLAGS
+    cmake .. -DCMAKE_INSTALL_PREFIX=../devel -DYGG_ENABLE_COVERAGE=OFF -DYGG_SKIP_VALGRIND_TESTS=ON -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DYGG_BUILD_TESTS=ON -DBUILD_PYTHON_LIBRARY=OFF $CMAKE_FLAGS
     make
     make test ARGS="--stop-on-failure"
     cd ../
@@ -66,9 +66,9 @@ else
 	fi
 	export CMAKE_ARGS=${CMAKE_FLAGS}
 	if [ -n "$NO_CORE" ]; then
-	    python setup.py build_ext --inplace
+	    python3 setup.py build_ext --inplace
 	else
-	    pip install . -v
+	    pip3 install . -v
 	fi
     fi
     if [ -n "$WITH_ASAN" ]; then
@@ -82,9 +82,9 @@ else
     fi
     export PYTHONFAULTHANDLER=1
     if [ -n "$WITH_LLDB" ]; then
-	lldb -o 'run' -o 'quit' -- $(which python) -m pytest -svx $TEST_DIR
+	lldb -o 'run' -o 'quit' -- $(which python3) -m pytest -svx $TEST_DIR
     else
-	python -m pytest -svx $TEST_DIR
+	python3 -m pytest -svx $TEST_DIR
     fi
     if [ -n "$NO_CORE" ]; then
 	cd ../../

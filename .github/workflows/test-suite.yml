@@ -358,6 +358,10 @@ jobs:
         if: matrix.python-install == 'pip' && matrix.with-elf == false && matrix.with-valgrind == false && matrix.os == 'macos-latest'
         run: |
           lldb -o 'run' -o 'quit' -- $(which python) -m pytest -svx python/test
+      - name: Test Python Interfaces w/ GDB (PIP)
+        if: matrix.python-install == 'pip' && matrix.with-elf == false && matrix.with-valgrind == false && matrix.os == 'ubuntu-latest'
+        run: |
+          gdb --batch -x gdb_commands.txt --args $(which python) -m pytest -svx python/test
       - name: Test Python Interfaces (PIP)
         # if: matrix.python-install == 'pip' && matrix.with-asan == false && matrix.with-elf == false && matrix.with-valgrind == false
         if: matrix.python-install == 'pip' && matrix.with-elf == false && matrix.with-valgrind == false
