@@ -62,13 +62,13 @@ bool ClientComm::signon(const Header& header, Comm_t* async_comm) {
   }
   ygglog_debug << "ClientComm(" << name << ")::signon: begin" << std::endl;
   Header tmp(true);
-  clock_t start = clock();
   int tout = get_timeout_recv();
   int nloop = 0;
+  clock_t start = clock();
   while ((!requests.signon_complete) &&
 	 (tout < 0 ||
 	  (((double)(clock() - start))*1000000/CLOCKS_PER_SEC) < tout)) {
-    if ((nloop % 2) == 0) {
+    if ((nloop % 3) == 0) {
       ygglog_debug << "ClientComm(" << name << ")::signon: Sending signon" << std::endl;
       if (async_comm->send(YGG_CLIENT_SIGNON, YGG_CLIENT_SIGNON_LEN) < 0) {
 	ygglog_error << "ClientComm(" << name << ")::signon: Error in sending sign-on" << std::endl;
