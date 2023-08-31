@@ -119,7 +119,8 @@ void Metadata::_init(bool use_generic) {
 // }
 #if RAPIDJSON_HAS_CXX11_RVALUE_REFS
 Metadata::Metadata(Metadata&& rhs) :
-  metadata(std::move(rhs.metadata)), schema(NULL) {
+  metadata(), schema(NULL) {
+  metadata.Swap(rhs.metadata);
   _update_schema();
   rhs._update_schema();
 }
@@ -128,7 +129,7 @@ Metadata& Metadata::operator=(Metadata&& rhs) {
 }
 #endif // RAPIDJSON_HAS_CXX11_RVALUE_REFS
 Metadata& Metadata::operator=(Metadata& rhs) {
-  metadata = std::move(rhs.metadata);
+  metadata.Swap(rhs.metadata);
   _update_schema();
   rhs._update_schema();
   return *this;
@@ -204,6 +205,9 @@ void Metadata::Normalize() {
 void Metadata::fromSchema(const std::string schemaStr, bool use_generic) {
   rapidjson::Document d;
   d.Parse(schemaStr.c_str());
+  if (d.HasParseError()) {
+    ygglog_throw_error_c("Metadata::fromSchema: Error parsing string: %s", schemaStr.c_str());
+  }
   fromSchema(d, false, use_generic);
   if (hasType()) {
     typename rapidjson::Value::MemberIterator it = schema->FindMember(rapidjson::Document::GetTypeString());

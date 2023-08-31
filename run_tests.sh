@@ -4,7 +4,7 @@ DO_PYTHON=""
 WITH_ASAN=""
 DONT_BUILD=""
 NO_CORE=""
-CMAKE_FLAGS="" # -DRAPIDJSON_INCLUDE_DIRS=/Users/langmm/rapidjson/include"
+CMAKE_FLAGS="-DRAPIDJSON_INCLUDE_DIRS=/Users/langmm/rapidjson/include"
 WITH_LLDB=""
 
 while [[ $# -gt 0 ]]; do
@@ -46,7 +46,11 @@ if [ -z "$DO_PYTHON" ]; then
     cd build
     cmake .. -DCMAKE_INSTALL_PREFIX=../devel -DYGG_ENABLE_COVERAGE=OFF -DYGG_SKIP_VALGRIND_TESTS=ON -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DYGG_BUILD_TESTS=ON -DBUILD_PYTHON_LIBRARY=OFF $CMAKE_FLAGS
     make
-    make test ARGS="--stop-on-failure"
+    if [ -n "$WITH_LLDB" ]; then
+	lldb -o 'run' -o 'quit' -- test/unittest
+    else
+	make test ARGS="--stop-on-failure"
+    fi
     cd ../
 else
     if [ -n "$DONT_BUILD"]; then

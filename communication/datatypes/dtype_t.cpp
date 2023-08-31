@@ -130,6 +130,10 @@ extern "C" {
     generic_t out = init_generic();
     rapidjson::Document sd;
     sd.Parse(schema);
+    if (sd.HasParseError()) {
+      destroy_generic(&out);
+      return out;
+    }
     rapidjson::SchemaDocument s(sd);
     rapidjson::SchemaValidator validator(s);
     rapidjson::Document* x = new rapidjson::Document();
@@ -279,6 +283,9 @@ extern "C" {
       rapidjson::Document* x_obj = (rapidjson::Document*)(x.obj);
       x_obj->SetNull();
       x_obj->Parse(json);
+      if (x_obj->HasParseError()) {
+	ygglog_throw_error_c("generic_set_json: Error parsing string %s", json);
+      }
     } catch(...) {
       ygglog_error_c("generic_set_json: C++ exception thrown");
       return GENERIC_ERROR_;
