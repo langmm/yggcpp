@@ -491,6 +491,31 @@ module YggInterface
      module procedure yggpython2yggpython
      module procedure yggpyfunc2yggpython
   end interface yggpython
+  
+  !> @brief Constructor for an input comm.
+  !>   Create a yggcomm structure for an input channel based on a provided 
+  !>   name that is used to locate a particular comm address stored in an 
+  !>   environment variable.
+  !> @param[in] name Name of the channel.
+  !> @param[in] datatype Data structure containing type information.
+  !> @returns Input comm structure.
+  interface ygg_input
+     module procedure ygg_input
+     module procedure ygg_input_type
+     module procedure ygg_input_fmt
+  end interface ygg_input
+  !> @brief Constructor for an output comm.
+  !>   Create a yggcomm structure for an output channel based on a provided 
+  !>   name that is used to locate a particular comm address stored in an
+  !>   environment variable.
+  !> @param[in] name Name of the channel.
+  !> @param[in] datatype Data structure containing type information.
+  !> @returns Output comm structure.
+  interface ygg_output
+     module procedure ygg_output
+     module procedure ygg_output_type
+     module procedure ygg_output_fmt
+  end interface ygg_output
   !> @brief Send one or more variables.
   !> @param[in] ygg_q Output/RPC/Timesync comm.
   !> @param[in] args One or more variables to send.
@@ -499,6 +524,11 @@ module YggInterface
      module procedure ygg_send_var_sing
      module procedure ygg_send_var_mult
   end interface ygg_send_var
+  interface ygg_send
+     module procedure ygg_send
+     module procedure ygg_send_var_sing
+     module procedure ygg_send_var_mult
+  end interface ygg_send
   !> @brief Receive data into one or more variables that cannot be resized.
   !> @param[in] ygg_q Output/RPC/Timesync comm.
   !> @param[in,out] args One or more variables to receive into.
@@ -507,6 +537,11 @@ module YggInterface
      module procedure ygg_recv_var_sing
      module procedure ygg_recv_var_mult
   end interface ygg_recv_var
+  interface ygg_recv
+     module procedure ygg_recv
+     module procedure ygg_recv_var_sing
+     module procedure ygg_recv_var_mult
+  end interface ygg_recv
   !> @brief Receive data into one or more variables that can be resized.
   !> @param[in] ygg_q Output/RPC/Timesync comm.
   !> @param[in,out] args One or more variables to receive into.
@@ -515,6 +550,11 @@ module YggInterface
      module procedure ygg_recv_var_realloc_sing
      module procedure ygg_recv_var_realloc_mult
   end interface ygg_recv_var_realloc
+  interface ygg_recv_realloc
+     module procedure ygg_recv_nolimit
+     module procedure ygg_recv_var_realloc_sing
+     module procedure ygg_recv_var_realloc_mult
+  end interface ygg_recv_realloc
   !> @brief Send a request and receive a response into one or more variables
   !>   that cannot be resized.
   !> @param[in] ygg_q RPC/Timesync comm.
@@ -1344,13 +1384,15 @@ contains
     character(len=len_trim(name)+1) :: c_name
     integer, intent(in) :: dir, t, flags
     integer(kind=c_int) :: c_dir, c_t, c_flags
-    type(yggdtype), intent(in) :: datatype
+    type(yggdtype), target :: datatype
+    type(c_ptr) :: c_datatype
     type(yggcomm) :: channel
     c_name = trim(name)//c_null_char
     c_dir = dir
     c_t = t
     c_flags = flags
-    channel = init_comm_c(c_name, c_dir, c_t, datatype, c_flags)
+    c_datatype = c_loc(datatype)
+    channel = init_comm_c(c_name, c_dir, c_t, c_datatype, c_flags)
   end function init_comm
   
   !> @brief Constructor for an output comm.
@@ -1394,11 +1436,13 @@ contains
   function ygg_output_type(name, datatype) result(channel)
     implicit none
     character(len=*), intent(in) :: name
-    type(yggdtype) :: datatype
+    type(yggdtype), target :: datatype
+    type(c_ptr) :: c_datatype
     character(len=len_trim(name)+1) :: c_name
     type(yggcomm) :: channel
     c_name = trim(name)//c_null_char
-    channel = ygg_output_type_c(c_name, datatype)
+    c_datatype = c_loc(datatype)
+    channel = ygg_output_type_c(c_name, c_datatype)
   end function ygg_output_type
   
   !> @brief Constructor for an input comm that will receive a specific data 
@@ -1412,11 +1456,13 @@ contains
   function ygg_input_type(name, datatype) result(channel)
     implicit none
     character(len=*), intent(in) :: name
-    type(yggdtype) :: datatype
+    type(yggdtype), target :: datatype
+    type(c_ptr) :: c_datatype
     character(len=len_trim(name)+1) :: c_name
     type(yggcomm) :: channel
     c_name = trim(name)//c_null_char
-    channel = ygg_input_type_c(c_name, datatype)
+    c_datatype = c_loc(datatype)
+    channel = ygg_input_type_c(c_name, c_datatype)
   end function ygg_input_type
   
   !> @brief Constructor for an output comm with a type specified via a 
@@ -1828,19 +1874,19 @@ contains
   function ygg_rpc_client_type(name, out_type_in, in_type_in) result(channel)
     implicit none
     character(len=*), intent(in) :: name
-    type(yggdtype), optional :: out_type_in
-    type(yggdtype), optional :: in_type_in
+    type(yggdtype), target, optional :: out_type_in
+    type(yggdtype), target, optional :: in_type_in
     type(c_ptr) :: c_out_type
     type(c_ptr) :: c_in_type
     character(len=len_trim(name)+1) :: c_name
     type(yggcomm) :: channel
     if (present(out_type_in)) then
-       c_out_type = out_type_in%ptr
+       c_out_type = c_loc(out_type_in) ! %ptr
     else
        c_out_type = c_null_ptr
     end if
     if (present(in_type_in)) then
-       c_in_type = in_type_in%ptr
+       c_in_type = c_loc(in_type_in) ! %ptr
     else
        c_in_type = c_null_ptr
     end if
@@ -1862,19 +1908,19 @@ contains
   function ygg_rpc_server_type(name, in_type_in, out_type_in) result(channel)
     implicit none
     character(len=*), intent(in) :: name
-    type(yggdtype), optional :: in_type_in
-    type(yggdtype), optional :: out_type_in
+    type(yggdtype), target, optional :: in_type_in
+    type(yggdtype), target, optional :: out_type_in
     type(c_ptr) :: c_in_type
     type(c_ptr) :: c_out_type
     character(len=len_trim(name)+1) :: c_name
     type(yggcomm) :: channel
     if (present(in_type_in)) then
-       c_in_type = in_type_in%ptr
+       c_in_type = c_loc(in_type_in) ! %ptr
     else
        c_in_type = c_null_ptr
     end if
     if (present(out_type_in)) then
-       c_out_type = out_type_in%ptr
+       c_out_type = c_loc(out_type_in) ! %ptr
     else
        c_out_type = c_null_ptr
     end if
@@ -1901,7 +1947,16 @@ contains
     channel = ygg_timesync_c(c_name, c_units)
   end function ygg_timesync
 
-  ! Method for constructing data types
+  ! Methods for constructing/manipulating data types
+  
+  !> @brief Print a datatype to the stdout buffer.
+  !> @param[in] datatype Datatype to display.
+  subroutine display_dtype(datatype)
+    implicit none
+    type(yggdtype), intent(in) :: datatype
+    call display_dtype_c(datatype)
+  end subroutine display_dtype
+
   ! BEGIN DOXYGEN_SHOULD_SKIP_THIS
   function is_dtype_format_array(type_struct) result(out)
     implicit none
@@ -2173,13 +2228,14 @@ contains
        result(out)
     implicit none
     character(len=*), intent(in) :: format_str
-    integer, intent(in) :: as_array
+    logical, intent(in) :: as_array
     logical, intent(in) :: use_generic
     type(yggdtype) :: out
     character(len=len_trim(format_str)+1) :: c_format_str
     c_format_str = trim(format_str)//c_null_char
     call fix_format_str(c_format_str)
-    out = create_dtype_format_c(c_format_str, as_array, logical(use_generic, kind=1))
+    out = create_dtype_format_c(c_format_str, &
+         logical(as_array, kind=1), logical(use_generic, kind=1))
   end function create_dtype_format
 
   !> @brief Create a data type for handling Python objects.
@@ -2938,6 +2994,13 @@ contains
     type(yggply) :: out
     out = init_ply_c()
   end function init_ply
+  !> @brief Generate a ply mesh instance.
+  !> @returns A ply mesh.
+  function generate_ply() result (out)
+    implicit none
+    type(yggply) :: out
+    out = generate_ply_c()
+  end function generate_ply
   !> @brief Set the wrapped ply mesh instance.
   !> @param[in] p The ply mesh to modify.
   !> @param[in] ply The rapidjson::Ply instance to insert.
@@ -3008,6 +3071,16 @@ contains
     c_name = name//c_null_char
     out = nelements_ply_c(p, c_name)
   end function nelements_ply
+  !> @brief Compare two ply meshes for equality.
+  !> @param[in] a First structure for comparison.
+  !> @param[in] b Second structure for comparison.
+  !> @returns .true. if a and b are equal, .false. otherwise.
+  function compare_ply(a, b) result(out)
+    implicit none
+    type(yggply), intent(in) :: a, b
+    logical(kind=1) :: out
+    out = compare_ply_c(a, b)
+  end function compare_ply
   
   ! Obj interface
   !> @brief Initialize an obj mesh instance.
@@ -3017,6 +3090,13 @@ contains
     type(yggobj) :: out
     out = init_obj_c()
   end function init_obj
+  !> @brief Generate a obj mesh instance.
+  !> @returns A obj mesh.
+  function generate_obj() result (out)
+    implicit none
+    type(yggobj) :: out
+    out = generate_obj_c()
+  end function generate_obj
   !> @brief Set the wrapped obj mesh instance.
   !> @param[in] p The obj mesh to modify.
   !> @param[in] obj The rapidjson::ObjWavefront instance to insert.
@@ -3088,6 +3168,16 @@ contains
     c_name = name//c_null_char
     out = nelements_obj_c(p, c_name)
   end function nelements_obj
+  !> @brief Compare two obj meshes for equality.
+  !> @param[in] a First structure for comparison.
+  !> @param[in] b Second structure for comparison.
+  !> @returns .true. if a and b are equal, .false. otherwise.
+  function compare_obj(a, b) result(out)
+    implicit none
+    type(yggobj), intent(in) :: a, b
+    logical(kind=1) :: out
+    out = compare_obj_c(a, b)
+  end function compare_obj
 
   ! Generic interface
   !> @brief Initialize a generic object.
@@ -3111,6 +3201,18 @@ contains
     type(ygggeneric) :: out
     out = init_generic_map_c()
   end function init_generic_map
+  !> @brief Intialize a generic object with contents generated based on
+  !>   the provided JSON schema.
+  !> @param[in] schema JSON schema describing the object to generate.
+  !> @returns A new generic object.
+  function init_generic_generate(schema) result(out)
+    implicit none
+    character(len=*), intent(in) :: schema
+    character(len=len_trim(schema)+1) :: c_schema
+    type(ygggeneric) :: out
+    c_schema = trim(schema)//c_null_char
+    out = init_generic_generate_c(c_schema)
+  end function init_generic_generate
   !> @brief Create a generic object from a type and some data.
   !> @param[in] type_class The data type associated with the data pointer.
   !> @param[in] data A pointer to data of an arbitrary type defined by type_class.
@@ -3175,6 +3277,16 @@ contains
     type(ygggeneric) :: out
     out = copy_generic_c(src)
   end function copy_generic
+  !> @brief Compare two generic objects
+  !> @param[in] a First generic object for comparison
+  !> @param[in] b Second generic object for comparison
+  !> @returns .true. if a and b are equivalent, .false. otherwise.
+  function compare_generic(a, b) result(out)
+    implicit none
+    type(ygggeneric), intent(in) :: a, b
+    logical(kind=1) :: out
+    out = compare_generic_c(a, b)
+  end function compare_generic
   !> @brief Display a generic object.
   !> @param[in] x A generic object to display.
   subroutine display_generic(x)

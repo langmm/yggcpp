@@ -22,11 +22,11 @@ void unset_global_comm();
 // Methods for initializing channels
 int is_comm_format_array_type_f(const comm_t x);
 comm_t _init_comm_f(const char *name, const int dir, const int t,
-		    dtype_t datatype, const int flags);
+		    void* datatype, const int flags);
 comm_t ygg_output_f(const char *name);
 comm_t ygg_input_f(const char *name);
-comm_t yggOutputType_f(const char *name, dtype_t datatype);
-comm_t yggInputType_f(const char *name, dtype_t datatype);
+comm_t yggOutputType_f(const char *name, void* datatype);
+comm_t yggInputType_f(const char *name, void* datatype);
 comm_t yggOutputFmt_f(const char *name, const char *fmt);
 comm_t yggInputFmt_f(const char *name, const char *fmt);
 comm_t yggAsciiTableOutput_f(const char *name, const char *format_str);
@@ -49,10 +49,11 @@ comm_t yggRpcClient_f(const char *name, const char *out_fmt,
 		      const char *in_fmt);
 comm_t yggRpcServer_f(const char *name, const char *in_fmt,
 		      const char *out_fmt);
-comm_t yggRpcClientType_f(const char *name, dtype_t outType, dtype_t inType);
-comm_t yggRpcServerType_f(const char *name, dtype_t inType, dtype_t outType);
+comm_t yggRpcClientType_f(const char *name, void* outType, void* inType);
+comm_t yggRpcServerType_f(const char *name, void* inType, void* outType);
 comm_t yggTimesync_f(const char *name, const char *t_units);
 // Method for constructing data types
+void display_dtype_f(const dtype_t);
 int is_dtype_format_array_f(dtype_t type_struct);
 dtype_t create_dtype_from_schema_f(const char* schema, const bool use_generic);
 dtype_t create_dtype_empty_f(const bool use_generic);
@@ -73,7 +74,8 @@ dtype_t create_dtype_json_object_f(const size_t nitems, void* keys,
 				   void* values, const bool use_generic);
 dtype_t create_dtype_ply_f(const bool use_generic);
 dtype_t create_dtype_obj_f(const bool use_generic);
-dtype_t create_dtype_format_f(const char *format_str, const int as_array,
+dtype_t create_dtype_format_f(const char *format_str,
+			      const bool as_array,
 			      const bool use_generic);
 dtype_t create_dtype_pyobj_f(const char* type, const bool use_generic);
 dtype_t create_dtype_schema_f(const bool use_generic);
@@ -89,30 +91,29 @@ int rpc_recv_f(comm_t yggQ, int nargs, void *args);
 int rpc_recv_realloc_f(comm_t yggQ, int nargs, void *args);
 int rpc_call_f(comm_t yggQ, int nargs, void *args);
 int rpc_call_realloc_f(comm_t yggQ, int nargs, void *args);
-// Ply interface
-ply_t init_ply_f();
-void set_ply_f(void* x, void* obj, int copy);
-void free_ply_f(void* p);
-ply_t copy_ply_f(ply_t p);
-void display_ply_indent_f(ply_t p, const char *indent);
-void display_ply_f(ply_t p);
-int nelements_ply_f(ply_t p, const char* name);
-// Obj interface
-obj_t init_obj_f();
-void set_obj_f(void* x, void* obj, int copy);
-void free_obj_f(void* p);
-obj_t copy_obj_f(obj_t p);
-void display_obj_indent_f(obj_t p, const char *indent);
-void display_obj_f(obj_t p);
-int nelements_obj_f(obj_t p, const char* name);
+#define GEOM_INTERFACE(name)						\
+  name ## _t init_ ## name ## _f();					\
+  name ## _t generate_ ## name ## _f();					\
+  void free_ ## name ## _f(void *p);					\
+  void set_ ## name ## _f(void* x, void* obj, int copy);		\
+  name ## _t copy_ ## name ## _f(name ## _t src);			\
+  void display_ ## name ## _indent_f(name ## _t p, const char* indent);	\
+  void display_ ## name ## _f(name ## _t p);				\
+  int nelements_ ## name ## _f(name ## _t p, const char* name);		\
+  bool compare_ ## name ## _f(const name ## _t a, const name ## _t b);
+GEOM_INTERFACE(ply)
+GEOM_INTERFACE(obj)
+#undef GEOM_INTERFACE
 // Generic interface
 generic_t init_generic_f();
 generic_t init_generic_array_f();
 generic_t init_generic_map_f();
+generic_t init_generic_generate_f(const char* schema);
 /* generic_t create_generic_f(void* type_class, void* data, size_t nbytes); */
 int free_generic_f(void* x);
 int copy_generic_into_f(void* dst, generic_t src);
 generic_t copy_generic_f(generic_t src);
+bool compare_generic_f(generic_t a, generic_t b);
 int is_generic_init_f(generic_t x);
 void display_generic_f(generic_t x);
 int add_generic_array_f(generic_t arr, generic_t x);

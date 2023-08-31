@@ -52,18 +52,18 @@
 
      function init_comm_c(name, dir, t, datatype, flags) &
           result(channel) bind(c, name="_init_comm_f")
-       use, intrinsic :: iso_c_binding, only: c_char, c_int
-       import :: yggcomm, yggdtype
+       use, intrinsic :: iso_c_binding, only: c_char, c_int, c_ptr
+       import :: yggcomm
        implicit none
        character(kind=c_char), dimension(*), intent(in) :: name
        integer(kind=c_int), value, intent(in) :: dir, t, flags
-       type(yggdtype), value, intent(in) :: datatype
+       type(c_ptr), value, intent(in) :: datatype
        type(yggcomm) :: channel
      end function init_comm_c
      
      function ygg_output_c(name) result(channel) &
           bind(c, name="ygg_output_f")
-       use, intrinsic :: iso_c_binding, only: c_ptr, c_char
+       use, intrinsic :: iso_c_binding, only: c_char
        import :: yggcomm
        implicit none
        character(kind=c_char), dimension(*), intent(in) :: name
@@ -72,7 +72,7 @@
   
      function ygg_input_c(name) result(channel) &
           bind(c, name="ygg_input_f")
-       use, intrinsic :: iso_c_binding, only: c_ptr, c_char
+       use, intrinsic :: iso_c_binding, only: c_char
        import :: yggcomm
        implicit none
        character(kind=c_char), dimension(*), intent(in) :: name
@@ -82,26 +82,26 @@
      function ygg_output_type_c(name, datatype) result(channel) &
           bind(c, name="yggOutputType_f")
        use, intrinsic :: iso_c_binding, only: c_ptr, c_char
-       import :: yggcomm, yggdtype
+       import :: yggcomm
        implicit none
        character(kind=c_char), dimension(*), intent(in) :: name
-       type(yggdtype), value, intent(in) :: datatype
+       type(c_ptr), value, intent(in) :: datatype
        type(yggcomm) :: channel
      end function ygg_output_type_c
      
      function ygg_input_type_c(name, datatype) result(channel) &
           bind(c, name="yggInputType_f")
        use, intrinsic :: iso_c_binding, only: c_ptr, c_char
-       import :: yggcomm, yggdtype
+       import :: yggcomm
        implicit none
        character(kind=c_char), dimension(*), intent(in) :: name
-       type(yggdtype), value, intent(in) :: datatype
+       type(c_ptr), value, intent(in) :: datatype
        type(yggcomm) :: channel
      end function ygg_input_type_c
      
      function ygg_output_fmt_c(name, fmt) result(channel) &
           bind(c, name="yggOutputFmt_f")
-       use, intrinsic :: iso_c_binding, only: c_ptr, c_char
+       use, intrinsic :: iso_c_binding, only: c_char
        import :: yggcomm
        implicit none
        character(kind=c_char), dimension(*), intent(in) :: name
@@ -111,7 +111,7 @@
   
      function ygg_input_fmt_c(name, fmt) result(channel) &
           bind(c, name="yggInputFmt_f")
-       use, intrinsic :: iso_c_binding, only: c_ptr, c_char
+       use, intrinsic :: iso_c_binding, only: c_char
        import :: yggcomm
        implicit none
        character(kind=c_char), dimension(*), intent(in) :: name
@@ -121,7 +121,7 @@
   
      function ygg_ascii_table_output_c(name, format_str) &
           result(channel) bind(c, name="yggAsciiTableOutput_f")
-       use, intrinsic :: iso_c_binding, only: c_ptr, c_char
+       use, intrinsic :: iso_c_binding, only: c_char
        import :: yggcomm
        implicit none
        character(kind=c_char), dimension(*), intent(in) :: name
@@ -131,7 +131,7 @@
   
      function ygg_ascii_table_input_c(name) result(channel) &
           bind(c, name="yggAsciiTableInput_f")
-       use, intrinsic :: iso_c_binding, only: c_ptr, c_char
+       use, intrinsic :: iso_c_binding, only: c_char
        import :: yggcomm
        implicit none
        character(kind=c_char), dimension(*), intent(in) :: name
@@ -140,7 +140,7 @@
   
      function ygg_ascii_array_output_c(name, format_str) &
           result(channel) bind(c, name="yggAsciiArrayOutput_f")
-       use, intrinsic :: iso_c_binding, only: c_ptr, c_char
+       use, intrinsic :: iso_c_binding, only: c_char
        import :: yggcomm
        implicit none
        character(kind=c_char), dimension(*), intent(in) :: name
@@ -150,7 +150,7 @@
   
      function ygg_ascii_array_input_c(name) result(channel) &
           bind(c, name="yggAsciiArrayInput_f")
-       use, intrinsic :: iso_c_binding, only: c_ptr, c_char
+       use, intrinsic :: iso_c_binding, only: c_char
        import :: yggcomm
        implicit none
        character(kind=c_char), dimension(*), intent(in) :: name
@@ -159,7 +159,7 @@
   
      function ygg_ply_output_c(name) result(channel) &
           bind(c, name="yggPlyOutput_f")
-       use, intrinsic :: iso_c_binding, only: c_ptr, c_char
+       use, intrinsic :: iso_c_binding, only: c_char
        import :: yggcomm
        implicit none
        character(kind=c_char), dimension(*), intent(in) :: name
@@ -168,7 +168,7 @@
   
      function ygg_ply_input_c(name) result(channel) &
           bind(c, name="yggPlyInput_f")
-       use, intrinsic :: iso_c_binding, only: c_ptr, c_char
+       use, intrinsic :: iso_c_binding, only: c_char
        import :: yggcomm
        implicit none
        character(kind=c_char), dimension(*), intent(in) :: name
@@ -177,7 +177,7 @@
   
      function ygg_obj_output_c(name) result(channel) &
           bind(c, name="yggObjOutput_f")
-       use, intrinsic :: iso_c_binding, only: c_ptr, c_char
+       use, intrinsic :: iso_c_binding, only: c_char
        import :: yggcomm
        implicit none
        character(kind=c_char), dimension(*), intent(in) :: name
@@ -186,7 +186,7 @@
   
      function ygg_obj_input_c(name) result(channel) &
           bind(c, name="yggObjInput_f")
-       use, intrinsic :: iso_c_binding, only: c_ptr, c_char
+       use, intrinsic :: iso_c_binding, only: c_char
        import :: yggcomm
        implicit none
        character(kind=c_char), dimension(*), intent(in) :: name
@@ -195,7 +195,7 @@
 
      function ygg_generic_output_c(name) result(channel) &
           bind(c, name="yggGenericOutput_f")
-       use, intrinsic :: iso_c_binding, only: c_ptr, c_char
+       use, intrinsic :: iso_c_binding, only: c_char
        import :: yggcomm
        implicit none
        character(kind=c_char), dimension(*), intent(in) :: name
@@ -204,7 +204,7 @@
   
      function ygg_generic_input_c(name) result(channel) &
           bind(c, name="yggGenericInput_f")
-       use, intrinsic :: iso_c_binding, only: c_ptr, c_char
+       use, intrinsic :: iso_c_binding, only: c_char
        import :: yggcomm
        implicit none
        character(kind=c_char), dimension(*), intent(in) :: name
@@ -213,7 +213,7 @@
   
      function ygg_any_output_c(name) result(channel) &
           bind(c, name="yggAnyOutput_f")
-       use, intrinsic :: iso_c_binding, only: c_ptr, c_char
+       use, intrinsic :: iso_c_binding, only: c_char
        import :: yggcomm
        implicit none
        character(kind=c_char), dimension(*), intent(in) :: name
@@ -222,7 +222,7 @@
   
      function ygg_any_input_c(name) result(channel) &
           bind(c, name="yggAnyInput_f")
-       use, intrinsic :: iso_c_binding, only: c_ptr, c_char
+       use, intrinsic :: iso_c_binding, only: c_char
        import :: yggcomm
        implicit none
        character(kind=c_char), dimension(*), intent(in) :: name
@@ -231,7 +231,7 @@
   
      function ygg_json_array_output_c(name) result(channel) &
           bind(c, name="yggJSONArrayOutput_f")
-       use, intrinsic :: iso_c_binding, only: c_ptr, c_char
+       use, intrinsic :: iso_c_binding, only: c_char
        import :: yggcomm
        implicit none
        character(kind=c_char), dimension(*), intent(in) :: name
@@ -240,7 +240,7 @@
   
      function ygg_json_array_input_c(name) result(channel) &
           bind(c, name="yggJSONArrayInput_f")
-       use, intrinsic :: iso_c_binding, only: c_ptr, c_char
+       use, intrinsic :: iso_c_binding, only: c_char
        import :: yggcomm
        implicit none
        character(kind=c_char), dimension(*), intent(in) :: name
@@ -249,7 +249,7 @@
   
      function ygg_json_object_output_c(name) result(channel) &
           bind(c, name="yggJSONObjectOutput_f")
-       use, intrinsic :: iso_c_binding, only: c_ptr, c_char
+       use, intrinsic :: iso_c_binding, only: c_char
        import :: yggcomm
        implicit none
        character(kind=c_char), dimension(*), intent(in) :: name
@@ -258,7 +258,7 @@
   
      function ygg_json_object_input_c(name) result(channel) &
           bind(c, name="yggJSONObjectInput_f")
-       use, intrinsic :: iso_c_binding, only: c_ptr, c_char
+       use, intrinsic :: iso_c_binding, only: c_char
        import :: yggcomm
        implicit none
        character(kind=c_char), dimension(*), intent(in) :: name
@@ -267,7 +267,7 @@
 
      function ygg_rpc_client_c(name, out_fmt, in_fmt) result(channel) &
           bind(c, name="yggRpcClient_f")
-       use, intrinsic :: iso_c_binding, only: c_ptr, c_char
+       use, intrinsic :: iso_c_binding, only: c_char
        import :: yggcomm
        implicit none
        character(kind=c_char), dimension(*), intent(in) :: name
@@ -278,7 +278,7 @@
 
      function ygg_rpc_server_c(name, in_fmt, out_fmt) result(channel) &
           bind(c, name="yggRpcServer_f")
-       use, intrinsic :: iso_c_binding, only: c_ptr, c_char
+       use, intrinsic :: iso_c_binding, only: c_char
        import :: yggcomm
        implicit none
        character(kind=c_char), dimension(*), intent(in) :: name
@@ -311,7 +311,7 @@
 
      function ygg_timesync_c(name, t_units) result(channel) &
           bind(c, name="yggTimesync_f")
-       use, intrinsic :: iso_c_binding, only: c_ptr, c_char
+       use, intrinsic :: iso_c_binding, only: c_char
        import :: yggcomm
        implicit none
        character(kind=c_char), dimension(*), intent(in) :: name
@@ -320,9 +320,15 @@
      end function ygg_timesync_c
 
      ! Method for constructing data types
+     subroutine display_dtype_c(datatype) &
+          bind(c, name="display_dtype_f")
+       import :: yggdtype
+       implicit none
+       type(yggdtype), value, intent(in) :: datatype
+     end subroutine display_dtype_c
      function is_dtype_format_array_c(type_struct) result(out) &
           bind(c, name="is_dtype_format_array_f")
-       use, intrinsic :: iso_c_binding, only: c_ptr, c_int
+       use, intrinsic :: iso_c_binding, only: c_int
        import :: yggdtype
        implicit none
        type(yggdtype), value, intent(in) :: type_struct
@@ -331,7 +337,7 @@
      
      function create_dtype_from_schema_c(schema, use_generic) &
           result(out) bind(c, name="create_dtype_from_schema_f")
-       use, intrinsic :: iso_c_binding, only: c_ptr, c_bool, c_char
+       use, intrinsic :: iso_c_binding, only: c_bool, c_char
        import :: yggdtype
        implicit none
        character(kind=c_char), dimension(*), intent(in) :: schema
@@ -341,7 +347,7 @@
 
      function create_dtype_empty_c(use_generic) result(out) &
           bind(c, name="create_dtype_empty_f")
-       use, intrinsic :: iso_c_binding, only: c_ptr, c_bool
+       use, intrinsic :: iso_c_binding, only: c_bool
        import :: yggdtype
        implicit none
        logical(kind=c_bool), value, intent(in) :: use_generic
@@ -360,7 +366,7 @@
 
      function create_dtype_direct_c(use_generic) result(out) &
           bind(c, name="create_dtype_direct_f")
-       use, intrinsic :: iso_c_binding, only: c_ptr, c_bool
+       use, intrinsic :: iso_c_binding, only: c_bool
        import :: yggdtype
        implicit none
        logical(kind=c_bool), value, intent(in) :: use_generic
@@ -369,7 +375,7 @@
 
      function create_dtype_default_c(type, use_generic) result(out) &
           bind(c, name="create_dtype_default_f")
-       use, intrinsic :: iso_c_binding, only: c_ptr, c_bool, c_char
+       use, intrinsic :: iso_c_binding, only: c_bool, c_char
        import :: yggdtype
        implicit none
        character(kind=c_char), dimension(*), intent(in) :: type
@@ -380,7 +386,7 @@
      function create_dtype_scalar_c(subtype, precision, units, &
           use_generic) result(out) &
           bind(c, name="create_dtype_scalar_f")
-       use, intrinsic :: iso_c_binding, only: c_ptr, c_bool, c_char, c_size_t
+       use, intrinsic :: iso_c_binding, only: c_bool, c_char, c_size_t
        import :: yggdtype
        implicit none
        character(kind=c_char), dimension(*), intent(in) :: subtype
@@ -393,7 +399,7 @@
      function create_dtype_1darray_c(subtype, precision, length, &
           units, use_generic) result(out) &
           bind(c, name="create_dtype_1darray_f")
-       use, intrinsic :: iso_c_binding, only: c_ptr, c_bool, c_char, c_size_t
+       use, intrinsic :: iso_c_binding, only: c_bool, c_char, c_size_t
        import :: yggdtype
        implicit none
        character(kind=c_char), dimension(*), intent(in) :: subtype
@@ -407,7 +413,8 @@
      function create_dtype_ndarray_c(subtype, precision, ndim, &
           shape, units, use_generic) result(out) &
           bind(c, name="create_dtype_ndarray_f")
-       use, intrinsic :: iso_c_binding, only: c_ptr, c_bool, c_char, c_size_t
+       use, intrinsic :: iso_c_binding, only: c_ptr, c_bool, c_char, &
+            c_size_t
        import :: yggdtype
        implicit none
        character(kind=c_char), dimension(*), intent(in) :: subtype
@@ -445,7 +452,7 @@
 
      function create_dtype_ply_c(use_generic) result(out) &
           bind(c, name="create_dtype_ply_f")
-       use, intrinsic :: iso_c_binding, only: c_ptr, c_bool
+       use, intrinsic :: iso_c_binding, only: c_bool
        import :: yggdtype
        implicit none
        logical(kind=c_bool), value, intent(in) :: use_generic
@@ -454,7 +461,7 @@
   
      function create_dtype_obj_c(use_generic) result(out) &
           bind(c, name="create_dtype_obj_f")
-       use, intrinsic :: iso_c_binding, only: c_ptr, c_bool
+       use, intrinsic :: iso_c_binding, only: c_bool
        import :: yggdtype
        implicit none
        logical(kind=c_bool), value, intent(in) :: use_generic
@@ -463,18 +470,18 @@
 
      function create_dtype_format_c(format_str, as_array, use_generic) &
           result(out) bind(c, name="create_dtype_format_f")
-       use, intrinsic :: iso_c_binding, only: c_ptr, c_bool, c_char, c_int
+       use, intrinsic :: iso_c_binding, only: c_bool, c_char, c_int
        import :: yggdtype
        implicit none
        character(kind=c_char), dimension(*), intent(in) :: format_str
-       integer(kind=c_int), value, intent(in) :: as_array
+       logical(kind=c_bool), value, intent(in) :: as_array
        logical(kind=c_bool), value, intent(in) :: use_generic
        type(yggdtype) :: out
      end function create_dtype_format_c
 
      function create_dtype_pyobj_c(type, use_generic) result(out) &
           bind(c, name="create_dtype_pyobj_f")
-       use, intrinsic :: iso_c_binding, only: c_ptr, c_bool, c_char
+       use, intrinsic :: iso_c_binding, only: c_bool, c_char
        import :: yggdtype
        implicit none
        character(kind=c_char), dimension(*), intent(in) :: type
@@ -484,7 +491,7 @@
 
      function create_dtype_schema_c(use_generic) result(out) &
           bind(c, name="create_dtype_schema_f")
-       use, intrinsic :: iso_c_binding, only: c_ptr, c_bool
+       use, intrinsic :: iso_c_binding, only: c_bool
        import :: yggdtype
        implicit none
        logical(kind=c_bool), value, intent(in) :: use_generic
@@ -493,7 +500,7 @@
   
      function create_dtype_any_c(use_generic) result(out) &
           bind(c, name="create_dtype_any_f")
-       use, intrinsic :: iso_c_binding, only: c_ptr, c_bool
+       use, intrinsic :: iso_c_binding, only: c_bool
        import :: yggdtype
        implicit none
        logical(kind=c_bool), value, intent(in) :: use_generic
@@ -503,8 +510,7 @@
      ! Methods for sending/receiving
      function ygg_send_c(ygg_q, data, data_len) result (flag) &
           bind(c, name="ygg_send_f")
-       use, intrinsic :: iso_c_binding, only: c_ptr, c_char, &
-            c_int
+       use, intrinsic :: iso_c_binding, only: c_char, c_int
        import :: yggcomm
        implicit none
        type(yggcomm), value, intent(in) :: ygg_q
@@ -515,8 +521,7 @@
   
      function ygg_recv_c(ygg_q, data, data_len) result (flag) &
           bind(c, name="ygg_recv_f")
-       use, intrinsic :: iso_c_binding, only: c_ptr, c_char, &
-            c_int
+       use, intrinsic :: iso_c_binding, only: c_char, c_int
        import :: yggcomm
        implicit none
        type(yggcomm), value :: ygg_q
@@ -579,13 +584,18 @@
        type(c_ptr), value :: args
        integer(kind=c_int) :: flag
      end function ygg_rpc_call_realloc_c
-     
+
      ! Ply interface
      function init_ply_c() result(out) bind(c, name="init_ply_f")
        import :: yggply
        implicit none
        type(yggply) :: out
      end function init_ply_c
+     function generate_ply_c() result(out) bind(c, name="generate_ply_f")
+       import :: yggply
+       implicit none
+       type(yggply) :: out
+     end function generate_ply_c
      subroutine set_ply_c(x, obj, copy) bind(c, name="set_ply_f")
        use, intrinsic :: iso_c_binding, only: c_ptr, c_int
        implicit none
@@ -624,6 +634,13 @@
        character(kind=c_char), dimension(*), intent(in) :: name
        integer(kind=c_int) :: out
      end function nelements_ply_c
+     function compare_ply_c(a, b) result(out) bind(c, name="compare_ply_f")
+       use, intrinsic :: iso_c_binding, only: c_bool
+       import :: yggply
+       implicit none
+       type(yggply), value, intent(in) :: a, b
+       logical(kind=c_bool) :: out
+     end function compare_ply_c
 
      ! Obj interface
      function init_obj_c() result(out) bind(c, name="init_obj_f")
@@ -631,6 +648,11 @@
        implicit none
        type(yggobj) :: out
      end function init_obj_c
+     function generate_obj_c() result(out) bind(c, name="generate_obj_f")
+       import :: yggobj
+       implicit none
+       type(yggobj) :: out
+     end function generate_obj_c
      subroutine set_obj_c(x, obj, copy) bind(c, name="set_obj_f")
        use, intrinsic :: iso_c_binding, only: c_ptr, c_int
        implicit none
@@ -669,6 +691,13 @@
        character(kind=c_char), dimension(*), intent(in) :: name
        integer(kind=c_int) :: out
      end function nelements_obj_c
+     function compare_obj_c(a, b) result(out) bind(c, name="compare_obj_f")
+       use, intrinsic :: iso_c_binding, only: c_bool
+       import :: yggobj
+       implicit none
+       type(yggobj), value, intent(in) :: a, b
+       logical(kind=c_bool) :: out
+     end function compare_obj_c
 
      ! Generic interface
      function init_generic_c() result(out) &
@@ -689,6 +718,14 @@
        implicit none
        type(ygggeneric) :: out
      end function init_generic_map_c
+     function init_generic_generate_c(schema) result(out) &
+          bind(c, name="init_generic_generate_f")
+       use, intrinsic :: iso_c_binding, only: c_char
+       import :: ygggeneric
+       implicit none
+       character(kind=c_char), dimension(*), intent(in) :: schema
+       type(ygggeneric) :: out
+     end function init_generic_generate_c
      ! function create_generic_c(type_class, data, nbytes) result(out) &
      !      bind(c, name="create_generic_f")
      !   use, intrinsic :: iso_c_binding, only: c_size_t, c_ptr
@@ -731,6 +768,14 @@
        type(ygggeneric), value, intent(in) :: src
        type(ygggeneric) :: out
      end function copy_generic_c
+     function compare_generic_c(a, b) result(out) &
+          bind(c, name="compare_generic_f")
+       use, intrinsic :: iso_c_binding, only: c_bool
+       import :: ygggeneric
+       implicit none
+       type(ygggeneric), value, intent(in) :: a, b
+       logical(kind=c_bool) :: out
+     end function compare_generic_c
      subroutine display_generic_c(x) bind(c, name="display_generic_f")
        import :: ygggeneric
        implicit none

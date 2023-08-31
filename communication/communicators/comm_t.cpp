@@ -36,15 +36,15 @@ void close_comm(comm_t* comm) {
 // }
 
 comm_t _init_comm(const char* name, const DIRECTION dir, const COMM_TYPE t,
-		  dtype_t datatype, const int flags) {
+		  dtype_t* datatype, const int flags) {
   comm_t ret;
   _BEGIN_CPP {
     ret.comm = (void*) communication::communicator::new_Comm_t(dir, t, name, (char*)NULL, flags);
     if (!(ret.comm))
       ygglog_throw_error_c("init_comm(%s): Error initializing comm", name);
-    if (datatype.metadata) {
-      communication::utils::Metadata* metadata = static_cast<communication::utils::Metadata*>(datatype.metadata);
-      datatype.metadata = NULL;
+    if (datatype && datatype->metadata) {
+      communication::utils::Metadata* metadata = static_cast<communication::utils::Metadata*>(datatype->metadata);
+      datatype->metadata = NULL;
       static_cast<communication::communicator::Comm_t*>(ret.comm)->addSchema(*metadata);
       delete metadata;
     }
@@ -54,7 +54,7 @@ comm_t _init_comm(const char* name, const DIRECTION dir, const COMM_TYPE t,
   return ret;
 }
 comm_t init_comm(const char* name, const DIRECTION dir, const COMM_TYPE t,
-		 dtype_t datatype) {
+		 dtype_t* datatype) {
   int flags = COMM_FLAG_INTERFACE;
   return _init_comm(name, dir, t, datatype, flags);
 }
@@ -72,17 +72,19 @@ int set_response_format(comm_t comm, const char *fmt) {
   return 1;
 }
 
-int set_response_datatype(comm_t x, dtype_t datatype) {
+int set_response_datatype(comm_t x, dtype_t* datatype) {
   _BEGIN_CPP {
-    if (datatype.metadata) {
-      communication::utils::Metadata* metadata = static_cast<communication::utils::Metadata*>(datatype.metadata);
-      datatype.metadata = NULL;
-      if (x.comm)
-	static_cast<communication::communicator::RPCComm*>(x.comm)->addResponseSchema(*metadata);
-      delete metadata;
+    if (datatype) {
+      if (datatype->metadata) {
+	communication::utils::Metadata* metadata = static_cast<communication::utils::Metadata*>(datatype->metadata);
+	datatype->metadata = NULL;
+	if (x.comm)
+	  static_cast<communication::communicator::RPCComm*>(x.comm)->addResponseSchema(*metadata);
+	delete metadata;
+      }
+      if (!x.comm)
+	ygglog_throw_error_c("set_response_datatype: Comm is not initialized");
     }
-    if (!x.comm)
-      ygglog_throw_error_c("set_response_datatype: Comm is not initialized");
   } _END_CPP(set_response_datatype, 0);
   return 1;
 }
@@ -104,7 +106,7 @@ int is_comm_format_array_type(comm_t x) {
   _BEGIN_CPP {
     communication::utils::Metadata* metadata = &(static_cast<communication::communicator::Comm_t*>(x.comm)->getMetadata());
     out = static_cast<int>(metadata->isFormatArray());
-  } _END_CPP(is_comm_format_array_type, 0);
+  } _END_CPP(is_comm_format_array_type, -1);
   return out;
 }
 

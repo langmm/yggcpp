@@ -69,11 +69,12 @@ extern "C" {
     and a structure definining the datatype of outgoing messages for the
     queue.
   @param[in] name constant character pointer to name of queue.
-  @param[in] datatype Data structure containing type informaiton.
+  @param[in] datatype Pointer to data structure containing type
+    information. The data contained in the datatype will be consumed.
   @returns yggOutput_t output queue structure.
  */
 static inline
-yggOutput_t yggOutputType(const char *name, dtype_t datatype) {
+yggOutput_t yggOutputType(const char *name, dtype_t* datatype) {
   return init_comm(name, SEND, DEFAULT_COMM, datatype);
 };
 
@@ -83,11 +84,12 @@ yggOutput_t yggOutputType(const char *name, dtype_t datatype) {
     locate a particular comm address stored in the environment variable name
     and a structure defining the expected datatype of received messages.
   @param[in] name constant character pointer to name of queue.
-  @param[in] datatype Data structure containing type informaiton.
+  @param[in] datatype Pointer to data structure containing type
+    information. The data contained in the datatype will be consumed.
   @returns yggInput_t input queue structure.
  */
 static inline
-yggInput_t yggInputType(const char *name, dtype_t datatype) {
+yggInput_t yggInputType(const char *name, dtype_t* datatype) {
   return init_comm(name, RECV, DEFAULT_COMM, datatype);
 };
   
@@ -103,11 +105,13 @@ yggInput_t yggInputType(const char *name, dtype_t datatype) {
  */
 static inline
 yggOutput_t yggOutputFmt(const char *name, const char *fmtString){
+  comm_t out;
   dtype_t datatype = create_dtype_format(fmtString, 0, false);
-  comm_t out = yggOutputType(name, datatype);
   if ((fmtString != NULL) && (datatype.metadata == NULL)) {
     ygglog_error_c("yggOutputFmt: Failed to create type from format_str.");
     free_comm(&out);
+  } else {
+    out = yggOutputType(name, &datatype);
   }
   return out;
 }; // GCOVR_EXCL_LINE
@@ -125,10 +129,12 @@ yggOutput_t yggOutputFmt(const char *name, const char *fmtString){
 static inline
 yggInput_t yggInputFmt(const char *name, const char *fmtString){
   dtype_t datatype = create_dtype_format(fmtString, 0, false);
-  comm_t out = yggInputType(name, datatype);
+  comm_t out;
   if ((fmtString != NULL) && (datatype.metadata == NULL)) {
     ygglog_error_c("yggInputFmt: Failed to create type from format_str.");
     free_comm(&out);
+  } else {
+    out = yggInputType(name, &datatype);
   }
   return out;
 }; // GCOVR_EXCL_LINE
@@ -143,7 +149,7 @@ yggInput_t yggInputFmt(const char *name, const char *fmtString){
 static inline
 yggOutput_t yggOutput(const char *name) {
   dtype_t datatype = create_dtype_empty(false);
-  return yggOutputType(name, datatype);
+  return yggOutputType(name, &datatype);
 };
 
 /*!
@@ -156,7 +162,7 @@ yggOutput_t yggOutput(const char *name) {
 static inline
 yggInput_t yggInput(const char *name) {
   dtype_t datatype = create_dtype_empty(false);
-  return yggInputType(name, datatype);
+  return yggInputType(name, &datatype);
 };
 
 /*!
@@ -394,13 +400,16 @@ long ygg_recv_nolimit(yggInput_t yggQ, char **data, const size_t len) {
   @return yggRpc_t structure with provided info.
  */
 static inline
-comm_t yggRpcClientType(const char *name, dtype_t outType, dtype_t inType) {
+comm_t yggRpcClientType(const char *name, dtype_t* outType, dtype_t* inType) {
   // Allow for any type if provided is NULL
-  if (outType.metadata == NULL) {
-    outType = create_dtype_empty(true);
+  dtype_t tmp_i, tmp_o;
+  if (!(inType && inType->metadata)) {
+    tmp_i = create_dtype_empty(true);
+    inType = &tmp_i;
   }
-  if (inType.metadata == NULL) {
-    inType = create_dtype_empty(true);
+  if (!(outType && outType->metadata)) {
+    tmp_o = create_dtype_empty(true);
+    outType = &tmp_o;
   }
   comm_t ret = init_comm(name, SEND, CLIENT_COMM, outType);
   if (!set_response_datatype(ret, inType)) {
@@ -420,13 +429,16 @@ comm_t yggRpcClientType(const char *name, dtype_t outType, dtype_t inType) {
   @return yggRpc_t structure with provided info.
  */
 static inline
-comm_t yggRpcServerType(const char *name, dtype_t inType, dtype_t outType) {
+comm_t yggRpcServerType(const char *name, dtype_t* inType, dtype_t* outType) {
   // Allow for any type if provided is NULL
-  if (inType.metadata == NULL) {
-    inType = create_dtype_empty(true);
+  dtype_t tmp_i, tmp_o;
+  if (!(inType && inType->metadata)) {
+    tmp_i = create_dtype_empty(true);
+    inType = &tmp_i;
   }
-  if (outType.metadata == NULL) {
-    outType = create_dtype_empty(true);
+  if (!(outType && outType->metadata)) {
+    tmp_o = create_dtype_empty(true);
+    outType = &tmp_o;
   }
   comm_t ret = init_comm(name, RECV, SERVER_COMM, inType);
   if (!set_response_datatype(ret, outType)) {
@@ -449,7 +461,7 @@ static inline
 comm_t yggRpcClient(const char *name, const char *outFormat, const char *inFormat) {
   dtype_t outType = create_dtype_format(outFormat, 0, false);
   dtype_t inType = create_dtype_format(inFormat, 0, false);
-  return yggRpcClientType(name, outType, inType);
+  return yggRpcClientType(name, &outType, &inType);
 };
 
 /*!
@@ -466,7 +478,7 @@ static inline
 comm_t yggRpcServer(const char *name, const char *inFormat, const char *outFormat){
   dtype_t inType = create_dtype_format(inFormat, 0, false);
   dtype_t outType = create_dtype_format(outFormat, 0, false);
-  return yggRpcServerType(name, inType, outType);
+  return yggRpcServerType(name, &inType, &outType);
 };
 
 /*!
@@ -482,8 +494,8 @@ comm_t yggRpcServer(const char *name, const char *inFormat, const char *outForma
   @return yggRpc_t structure with provided info.
  */
 static inline
-comm_t yggRpcServerType_global(const char *name, dtype_t inType,
-			       dtype_t outType) {
+comm_t yggRpcServerType_global(const char *name, dtype_t* inType,
+			       dtype_t* outType) {
   comm_t out;
   WITH_GLOBAL_SCOPE(out = yggRpcServerType(name, inType, outType));
   return out;
@@ -500,7 +512,7 @@ comm_t yggRpcServerType_global(const char *name, dtype_t inType,
 static inline
 comm_t yggTimesync(const char *name, const char *t_units) {
   char schema[256];
-  dtype_t dtype_out;
+  dtype_t dtype_out = {0};
   if (snprintf(schema, 256, 
 	       "{\"type\": \"array\", \"items\": ["
 	       "  {\"type\": \"scalar\", \"subtype\": \"float\","
@@ -510,7 +522,7 @@ comm_t yggTimesync(const char *name, const char *t_units) {
     dtype_out = create_dtype_from_schema(schema, false);
   dtype_t dtype_in = create_dtype_from_schema(
     "{\"type\": \"object\"}", true);
-  return yggRpcClientType(name, dtype_out, dtype_in);
+  return yggRpcClientType(name, &dtype_out, &dtype_in);
 };
 
 
@@ -718,10 +730,12 @@ comm_t yggAsciiTableInput(const char *name) {
 static inline
 comm_t yggAsciiArrayOutput(const char *name, const char *format_str) {
   dtype_t datatype = create_dtype_format(format_str, 1, false);
-  comm_t out = yggOutputType(name, datatype);
+  comm_t out;
   if ((format_str != NULL) && (datatype.metadata == NULL)) {
     ygglog_error_c("yggAsciiArrayOutput: Failed to create type from format_str.");
     free_comm(&out);
+  } else {
+    out = yggOutputType(name, &datatype);
   }
   return out;
 }; // GCOVR_EXCL_LINE
@@ -792,7 +806,8 @@ comm_t yggAsciiArrayInput(const char *name) {
  */
 static inline
 comm_t yggPlyOutput(const char *name) {
-  return init_comm(name, SEND, DEFAULT_COMM, create_dtype_ply(false));
+  dtype_t datatype = create_dtype_ply(false);
+  return init_comm(name, SEND, DEFAULT_COMM, &datatype);
 };
 
 /*!
@@ -802,7 +817,8 @@ comm_t yggPlyOutput(const char *name) {
  */
 static inline
 comm_t yggPlyInput(const char *name) {
-  return init_comm(name, RECV, DEFAULT_COMM, create_dtype_ply(false));
+  dtype_t datatype = create_dtype_ply(false);
+  return init_comm(name, RECV, DEFAULT_COMM, &datatype);
 };
 
 
@@ -861,7 +877,8 @@ comm_t yggPlyInput(const char *name) {
  */
 static inline
 comm_t yggObjOutput(const char *name) {
-  return init_comm(name, SEND, DEFAULT_COMM, create_dtype_obj(false));
+  dtype_t datatype = create_dtype_obj(false);
+  return init_comm(name, SEND, DEFAULT_COMM, &datatype);
 };
 
 /*!
@@ -871,7 +888,8 @@ comm_t yggObjOutput(const char *name) {
  */
 static inline
 comm_t yggObjInput(const char *name) {
-  return init_comm(name, RECV, DEFAULT_COMM, create_dtype_obj(false));
+  dtype_t datatype = create_dtype_obj(false);
+  return init_comm(name, RECV, DEFAULT_COMM, &datatype);
 };
 
 
@@ -924,7 +942,8 @@ comm_t yggObjInput(const char *name) {
  */
 static inline
 comm_t yggGenericOutput(const char *name) {
-  return init_comm(name, SEND, DEFAULT_COMM, create_dtype_empty(true));
+  dtype_t datatype = create_dtype_empty(true);
+  return init_comm(name, SEND, DEFAULT_COMM, &datatype);
 };
 
 /*!
@@ -934,7 +953,8 @@ comm_t yggGenericOutput(const char *name) {
  */
 static inline
 comm_t yggGenericInput(const char *name) {
-  return init_comm(name, RECV, DEFAULT_COMM, create_dtype_empty(true));
+  dtype_t datatype = create_dtype_empty(true);
+  return init_comm(name, RECV, DEFAULT_COMM, &datatype);
 };
 
   
@@ -987,7 +1007,8 @@ comm_t yggGenericInput(const char *name) {
  */
 static inline
 comm_t yggAnyOutput(const char *name) {
-  return init_comm(name, SEND, DEFAULT_COMM, create_dtype_any(true));
+  dtype_t datatype = create_dtype_any(true);
+  return init_comm(name, SEND, DEFAULT_COMM, &datatype);
 };
 
 /*!
@@ -997,7 +1018,8 @@ comm_t yggAnyOutput(const char *name) {
  */
 static inline
 comm_t yggAnyInput(const char *name) {
-  return init_comm(name, RECV, DEFAULT_COMM, create_dtype_any(true));
+  dtype_t datatype = create_dtype_any(true);
+  return init_comm(name, RECV, DEFAULT_COMM, &datatype);
 };
 
   
@@ -1050,7 +1072,8 @@ comm_t yggAnyInput(const char *name) {
  */
 static inline
 comm_t yggJSONArrayOutput(const char *name) {
-  return init_comm(name, SEND, DEFAULT_COMM, create_dtype_json_array(0, NULL, true));
+  dtype_t datatype = create_dtype_json_array(0, NULL, true);
+  return init_comm(name, SEND, DEFAULT_COMM, &datatype);
 };
 
 /*!
@@ -1060,7 +1083,8 @@ comm_t yggJSONArrayOutput(const char *name) {
  */
 static inline
 comm_t yggJSONArrayInput(const char *name) {
-  return init_comm(name, RECV, DEFAULT_COMM, create_dtype_json_array(0, NULL, true));
+  dtype_t datatype = create_dtype_json_array(0, NULL, true);
+  return init_comm(name, RECV, DEFAULT_COMM, &datatype);
 };
 
 /*! @brief An alias for yggJSONArrayOutput. */
@@ -1118,8 +1142,9 @@ comm_t yggJSONArrayInput(const char *name) {
  */
 static inline
 comm_t yggJSONObjectOutput(const char *name) {
-  return init_comm(name, SEND, DEFAULT_COMM,
-		   create_dtype_json_object(0, NULL, NULL, true));
+  dtype_t datatype = create_dtype_json_object(0, NULL, NULL, true);
+  return init_comm(name, SEND, DEFAULT_COMM, &datatype);
+  
 };
 
 /*!
@@ -1129,8 +1154,8 @@ comm_t yggJSONObjectOutput(const char *name) {
  */
 static inline
 comm_t yggJSONObjectInput(const char *name) {
-  return init_comm(name, RECV, DEFAULT_COMM,
-		   create_dtype_json_object(0, NULL, NULL, true));
+  dtype_t datatype = create_dtype_json_object(0, NULL, NULL, true);
+  return init_comm(name, RECV, DEFAULT_COMM, &datatype);
 };
 
 /*! @brief An alias for yggJSONObjectOutput. */

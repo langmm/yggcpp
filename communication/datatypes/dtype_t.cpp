@@ -1175,6 +1175,18 @@ extern "C" {
     return out;
   }
 
+  int init_python_API() {
+    try {
+#ifndef YGGDRASIL_DISABLE_PYTHON_C_API
+      rapidjson::init_python_API();
+#endif // YGGDRASIL_DISABLE_PYTHON_C_API
+    } catch(...) {
+      ygglog_error_c("init_python_API: C++ exception thrown.");
+      return 1;
+    }
+    return 0;
+  }
+  
   python_t init_python() {
     python_t out;
     out.obj = NULL;
@@ -1341,7 +1353,7 @@ extern "C" {
   }
 
   dtype_t create_dtype_format(const char *format_str,
-			      const int as_array = 0,
+			      const bool as_array = false,
 			      const bool use_generic = false) {
     dtype_t out = create_dtype(NULL, false);
     _BEGIN_CPP {
@@ -1450,7 +1462,7 @@ extern "C" {
     return create_dtype_default("obj", use_generic);
   }
   dtype_t create_dtype_ascii_table(const char *format_str,
-				   const int as_array,
+				   const bool as_array,
 				   const bool use_generic) {
     return create_dtype_format(format_str, as_array, use_generic);
   }
@@ -1512,142 +1524,95 @@ extern "C" {
       metadata->Display(indent);
     } _END_CPP(display_dtype, );
   }
+  
+#define GEOM_INTERFACE(name, cpp_type)					\
+  name ## _t init_ ## name() {						\
+    name ## _t x;							\
+    x.obj = NULL;							\
+    return x;								\
+  }									\
+  name ## _t generate_ ## name() {					\
+    name ## _t x;							\
+    x.obj = NULL;							\
+    rapidjson::Document sd;						\
+    sd.Parse("{\"type\": \"" #name "\"}");				\
+    rapidjson::SchemaDocument s(sd);					\
+    rapidjson::SchemaValidator validator(s);				\
+    rapidjson::Document xx;						\
+    validator.GenerateData(xx);						\
+    rapidjson::cpp_type* obj = new rapidjson::cpp_type();		\
+    xx.Get ## cpp_type(*obj);						\
+    x.obj = (void*)obj;							\
+    return x;								\
+  }									\
+  void free_ ## name(name ## _t *p) {					\
+    if (p != NULL) {							\
+      if (p->obj != NULL) {						\
+	rapidjson::cpp_type* obj = (rapidjson::cpp_type*)(p->obj);	\
+	p->obj = NULL;							\
+	delete obj;							\
+      }									\
+    }									\
+  }									\
+  void set_ ## name(name ## _t* x, void* obj, int copy) {		\
+    if (x == NULL)							\
+      return;								\
+    if (copy && obj != NULL) {						\
+      rapidjson::cpp_type* objw = (rapidjson::cpp_type*)obj;		\
+      rapidjson::cpp_type* cpy = new rapidjson::cpp_type(*objw);	\
+      x->obj = cpy;							\
+    } else {								\
+      x->obj = obj;							\
+    }									\
+  }									\
+  name ## _t copy_ ## name(name ## _t src) {				\
+    name ## _t out = init_ ## name();					\
+    set_ ## name(&out, src.obj, 1);					\
+    return out;								\
+  }									\
+  void display_ ## name ## _indent(name ## _t p, const char* indent) {	\
+    if (p.obj == NULL) {						\
+      printf("%sNULL\n", indent);					\
+    } else {								\
+      rapidjson::cpp_type* obj = (rapidjson::cpp_type*)(p.obj);		\
+      std::string s_indent(indent);					\
+      std::string s = obj->as_string(s_indent);				\
+      printf("%s%s\n", indent, s.c_str());				\
+    }									\
+  }									\
+  void display_ ## name(name ## _t p) {					\
+    return display_ ## name ## _indent(p, "");				\
+  }									\
+  int nelements_ ## name(name ## _t p, const char* name) {		\
+    if (p.obj == NULL) {							\
+      ygglog_error << "nelements_" << #name << ": " << #cpp_type << " object is NULL." << std::endl; \
+      return -1;							\
+    }									\
+    rapidjson::cpp_type* p_obj = (rapidjson::cpp_type*)(p.obj);		\
+    size_t N = p_obj->count_elements(std::string(name));		\
+    return static_cast<int>(N);						\
+  }									\
+  bool compare_ ## name(const name ## _t a, const name ## _t b) {	\
+    if (a.obj == NULL || b.obj == NULL)					\
+      return (a.obj == b.obj);						\
+    rapidjson::cpp_type* a_obj = (rapidjson::cpp_type*)(a.obj);		\
+    rapidjson::cpp_type* b_obj = (rapidjson::cpp_type*)(b.obj);		\
+    return ((*a_obj) == (*b_obj));					\
+  }
 
   ////////////////////////////////////////////
   // OBJWAVEFRONT OBJECT WRAPPER
   ////////////////////////////////////////////
 
-  obj_t init_obj() {
-    obj_t x;
-    x.obj = NULL;
-    return x;
-  }
-
-  void set_obj(obj_t* x, void* obj, int copy) {
-    if (x == NULL)
-      return;
-    if (copy && obj != NULL) {
-      rapidjson::ObjWavefront* objw = (rapidjson::ObjWavefront*)obj;
-      rapidjson::ObjWavefront* cpy = new rapidjson::ObjWavefront(*objw);
-      x->obj = cpy;
-    } else {
-      x->obj = obj;
-    }
-  }
-
-  void free_obj(obj_t *p) {
-    if (p != NULL) {
-      if (p->obj != NULL) {
-	rapidjson::ObjWavefront* obj = (rapidjson::ObjWavefront*)(p->obj);
-	p->obj = NULL;
-	delete obj;
-      }
-    }
-  }
-
-  obj_t copy_obj(obj_t src) {
-    obj_t out = init_obj();
-    set_obj(&out, src.obj, 1);
-    return out;
-  }
-
-  void display_obj_indent(obj_t p, const char* indent) {
-    if (p.obj == NULL) {
-      printf("%sNULL\n", indent);
-    } else {
-      rapidjson::ObjWavefront* obj = (rapidjson::ObjWavefront*)(p.obj);
-      std::string s_indent(indent);
-      std::string s = obj->as_string(s_indent);
-      printf("%s%s\n", indent, s.c_str());
-    }
-  }
-  void display_obj(obj_t p) {
-    return display_obj_indent(p, "");
-  }
-
-  int nelements_obj(obj_t p, const char* name) {
-    if (p.obj == NULL) {
-      ygglog_error_c("nelements_obj: ObjWavefront object is NULL.");
-      return -1;
-    }
-    rapidjson::ObjWavefront* obj = (rapidjson::ObjWavefront*)(p.obj);
-    size_t N = obj->count_elements(std::string(name));
-    return static_cast<int>(N);
-  }
+  GEOM_INTERFACE(obj, ObjWavefront)
 
   ////////////////////////////////////////////
   // PLY OBJECT WRAPPER
   ////////////////////////////////////////////
 
-  ply_t init_ply() {
-    ply_t x;
-    x.obj = NULL;
-    return x;
-  }
+  GEOM_INTERFACE(ply, Ply)
 
-  void set_ply(ply_t* x, void* obj, int copy) {
-    if (x == NULL)
-      return;
-    if (copy && obj != NULL) {
-      rapidjson::Ply* objw = (rapidjson::Ply*)obj;
-      rapidjson::Ply* cpy = new rapidjson::Ply(*objw);
-      x->obj = cpy;
-    } else {
-      x->obj = obj;
-    }
-  }
+#undef GEOM_INTERFACE
 
-  void free_ply(ply_t *p) {
-    if (p != NULL) {
-      if (p->obj != NULL) {
-	rapidjson::Ply* obj = (rapidjson::Ply*)(p->obj);
-	p->obj = NULL;
-	delete obj;
-      }
-    }
-  }
+} // extern C
 
-  ply_t copy_ply(ply_t src) {
-    ply_t out = init_ply();
-    set_ply(&out, src.obj, 1);
-    return out;
-  }
-
-  void display_ply_indent(ply_t p, const char* indent) {
-    if (p.obj == NULL) {
-      printf("%sNULL\n", indent);
-    } else {
-      rapidjson::Ply* obj = (rapidjson::Ply*)(p.obj);
-      std::string s_indent(indent);
-      std::string s = obj->as_string(s_indent);
-      printf("%s%s\n", indent, s.c_str());
-    }
-  }
-
-  void display_ply(ply_t p) {
-    return display_ply_indent(p, "");
-  }
-
-  int nelements_ply(ply_t p, const char* name) {
-    if (p.obj == NULL) {
-      ygglog_error_c("nelements_ply: Ply object is NULL.");
-      return -1;
-    }
-    rapidjson::Ply* ply = (rapidjson::Ply*)(p.obj);
-    size_t N = ply->count_elements(std::string(name));
-    return static_cast<int>(N);
-  }
-  
-  int init_python_API() {
-    try {
-#ifndef YGGDRASIL_DISABLE_PYTHON_C_API
-      rapidjson::init_python_API();
-#endif // YGGDRASIL_DISABLE_PYTHON_C_API
-    } catch(...) {
-      ygglog_error_c("init_python_API: C++ exception thrown.");
-      return 1;
-    }
-    return 0;
-  }
-  
-}

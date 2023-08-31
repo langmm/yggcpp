@@ -417,6 +417,12 @@ int generic_set_ndarray(generic_t x, void* data, const char *subtype,
 #undef GENERIC_SUCCESS_
 
 /*!
+  @brief Initialize Python if it is not initialized.
+  @returns int 0 if successful, other values indicate errors.
+ */
+int init_python_API();
+  
+/*!
   @brief Initialize a Python wrapper object.
   @returns Initialized object.
  */
@@ -684,14 +690,14 @@ dtype_t create_dtype_obj(const bool use_generic);
   @param[in] format_str C-style format string that will be used to
     determine the type of elements in arrays that will be
     serialized/deserialized using the resulting type.
-  @param[in] as_array If 1, the types will be arrays. Otherwise they will
-    be scalars.
+  @param[in] as_array If true, the types will be arrays. Otherwise they
+    will be scalars.
   @param[in] use_generic If true, serialized/deserialized
     objects will be expected to be generic_t instances.
   @returns Type structure/class.
 */
 dtype_t create_dtype_ascii_table(const char *format_str,
-				 const int as_array,
+				 const bool as_array,
 				 const bool use_generic);
 
 
@@ -700,13 +706,13 @@ dtype_t create_dtype_ascii_table(const char *format_str,
   @param[in] format_str C-style format string that will be used to
     determine the type of elements in arrays that will be
     serialized/deserialized using the resulting type.
-  @param[in] as_array If 1, the types will be arrays. Otherwise they will
-    be scalars.
+  @param[in] as_array If true, the types will be arrays. Otherwise they
+    will be scalars.
   @param[in] use_generic If true, serialized/deserialized
     objects will be expected to be generic_t instances.
   @returns Type structure/class.
 */
-dtype_t create_dtype_format(const char *format_str, const int as_array,
+dtype_t create_dtype_format(const char *format_str, const bool as_array,
 			    const bool use_generic);
 
   
@@ -835,114 +841,124 @@ void display_dtype(const dtype_t dtype, const char* indent);
 #define display_json_array display_generic
 #define display_schema display_generic
 
+#define GEOM_INTERFACE(name)						\
+  name ## _t init_ ## name();						\
+  name ## _t generate_ ## name();					\
+  void free_ ## name(name ## _t *p);					\
+  void set_ ## name(name ## _t* x, void* obj, int copy);		\
+  name ## _t copy_ ## name(name ## _t src);				\
+  void display_ ## name ## _indent(name ## _t p, const char* indent);	\
+  void display_ ## name(name ## _t p);					\
+  int nelements_ ## name(name ## _t p, const char* name);		\
+  bool compare_ ## name(const name ## _t a, const name ## _t b);
+
 // ObjWavefront wrapped methods
 
-/*!
-  @brief Initialize empty obj structure.
-  @returns obj_t Obj structure.
-*/
-obj_t init_obj();
+  GEOM_INTERFACE(obj)
 
 /*!
+  @fn init_obj
+  @brief Initialize empty obj structure.
+  @returns obj_t Obj structure.
+
+  @fn generate_obj
+  @brief Create a obj structure with generated data.
+  @returns obj_t Obj structure.
+
+  @fn set_obj
   @brief Set parameters from a rapidjson::ObjWavefront object.
   @param[in,out] x Structure to modify.
   @param[in] obj rapidjson::ObjWavefront object to copy.
   @param[in] copy If 1, the provided object will be copied, otherwise the
-    pointer will be added to the structured directly and it will be freed on
-    destruction.
-*/
-void set_obj(obj_t* x, void* obj, int copy);
-  
-/*!
+    pointer will be added to the structured directly and it will be freed
+    on destruction.
+
+  @fn free_obj
   @brief Free obj structure.
   @param[in] p *obj_t Pointer to obj structure.
-*/
-void free_obj(obj_t *p);
 
-/*!
+  @fn copy_obj
   @brief Copy an obj structure.
   @param[in] src obj_t Obj structure that should be copied.
   @returns Copy of obj structure.
-*/
-obj_t copy_obj(obj_t src);
 
-/*!
+  @fn display_obj_indent
   @brief Display the information contained by an Obj struct.
   @param[in] p obj_t Obj structure.
   @param[in] indent const char* Indentation that should be added to each line.
- */
-void display_obj_indent(obj_t p, const char* indent);
 
-/*!
+  @fn display_obj
   @brief Display the information contained by an Obj struct.
   @param[in] p obj_t Obj structure.
- */
-void display_obj(obj_t p);
 
-/*!
+  @fn nelements_obj
   @brief Get the number of elements of a certain type in the structure.
   @param[in] p obj_t ObjWavefront structure.
   @param[in] name Name of element type to count.
+  @returns Number of elements of the specified type.
+
+  @fn compare_obj
+  @brief Compare two obj structures for equality.
+  @param[in] a First structure for comparison.
+  @param[in] b Second structure for comparison.
+  @returns true if a and b are equal, false otherwise.
+  
 */
-int nelements_obj(obj_t p, const char* name);
   
 // Ply wrapped methods
 
-/*!
-  @brief Initialize empty ply structure.
-  @returns ply_t Ply structure.
- */
-ply_t init_ply();
+  GEOM_INTERFACE(ply)
 
 /*!
+  @fn init_ply
+  @brief Initialize empty ply structure.
+  @returns ply_t Ply structure.
+
+  @fn generate_ply
+  @brief Create a ply structure with generated data.
+  @returns ply_t Ply structure.
+
+  @fn set_ply
   @brief Set parameters from a rapidjson::Ply object.
   @param[in,out] x Structure to modify.
   @param[in] obj rapidjson::Ply object to copy.
   @param[in] copy If 1, the provided object will be copied, otherwise the
-    pointer will be added to the structured directly and it will be freed on
-    destruction.
-*/
-void set_ply(ply_t* x, void* obj, int copy);
-  
-/*!
+    pointer will be added to the structured directly and it will be freed
+    on destruction.
+
+  @fn free_ply
   @brief Free ply structure.
   @param[in] p *ply_t Pointer to ply structure.
- */
-void free_ply(ply_t *p);
 
-/*!
+  @fn copy_ply
   @brief Copy a ply structure.
   @param[in] src ply_t Ply structure that should be copied.
   @returns Copy of ply structure.
-*/
-ply_t copy_ply(ply_t src);
 
-/*!
+  @fn display_ply_indent
   @brief Display the information contained by a Ply struct.
   @param[in] p ply_t Ply structure.
   @param[in] indent const char* Indentation that should be added to each line.
- */
-void display_ply_indent(ply_t p, const char* indent);
 
-/*!
+  @fn display_ply
   @brief Display the information contained by a Ply struct.
   @param[in] p ply_t Ply structure.
- */
-void display_ply(ply_t p);
 
-/*!
+  @fn nelements_ply
   @brief Get the number of elements of a certain type in the structure.
   @param[in] p ply_t Ply structure.
   @param[in] name Name of element type to count.
-*/
-int nelements_ply(ply_t p, const char* name);
-  
-/*!
-  @brief Initialize Python if it is not initialized.
-  @returns int 0 if successful, other values indicate errors.
- */
-int init_python_API();
+  @returns Number of elements of the specified type.
 
+  @fn compare_obj
+  @brief Compare two obj structures for equality.
+  @param[in] a First structure for comparison.
+  @param[in] b Second structure for comparison.
+  @returns true if a and b are equal, false otherwise.
+  
+*/
+
+#undef GEOM_INTERFACE
 
 #ifdef __cplusplus
 }

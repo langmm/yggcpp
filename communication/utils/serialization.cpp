@@ -448,6 +448,8 @@ bool Metadata::isGeneric() const {
 	   strcmp(typeName(), "any") == 0));
 }
 bool Metadata::isFormatArray() const {
+  if (!(metadata.IsObject() && metadata.MemberCount() > 0))
+    return -1;
   return (metadata.HasMember("serializer") &&
 	  metadata["serializer"].HasMember("format_str"));
 }

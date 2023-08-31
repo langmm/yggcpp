@@ -95,14 +95,16 @@ INTERFACE_TEST(Base,
 
 INTERFACE_TEST(
   Type,
+  dtype_t datatype = create_dtype_from_schema("{\"type\": \"number\"}", false);
   INIT_INPUT_BASE(
     yggInputType,
-    ("input", create_dtype_from_schema("{\"type\": \"number\"}", false)),
+    ("input", &datatype),
     COMM_BASE,
     ("", nullptr, SEND)); sComm.addSchema("{\"type\": \"number\"}"),
+  dtype_t datatype = create_dtype_from_schema("{\"type\": \"number\"}", false);
   INIT_OUTPUT_BASE(
     yggOutputType,
-    ("output", create_dtype_from_schema("{\"type\": \"number\"}", false)),
+    ("output", &datatype),
     COMM_BASE,
     ("", nullptr, RECV)),
   INIT_DATA_SINGLE(double, 1.5), COMP_DATA_SINGLE,
@@ -235,12 +237,10 @@ TEST(YggInterface_C, Client) {
 }
 
 TEST(YggInterface_C, ServerAny) {
-  dtype_t dtype_req = {0};
-  dtype_t dtype_res = {0};
   INIT_DATA_SCHEMA_C("{\"type\": \"array\", \"items\": [{\"type\": \"integer\"}]}");
   ClientComm sComm("", nullptr);
   setenv("input_IN", sComm.getAddress().c_str(), 1);
-  comm_t rComm_c = yggRpcServerType("input", dtype_req, dtype_res);
+  comm_t rComm_c = yggRpcServerType("input", NULL, NULL);
   unsetenv("input_IN");
   ServerComm& rComm = *((ServerComm*)(rComm_c.comm));
   DO_RPC_SIGNON;
@@ -267,12 +267,10 @@ TEST(YggInterface_C, ServerAny) {
 }
 
 TEST(YggInterface_C, ClientAny) {
-  dtype_t dtype_req = {0};
-  dtype_t dtype_res = {0};
   INIT_DATA_SCHEMA_C("{\"type\": \"array\", \"items\": [{\"type\": \"integer\"}]}");
   ServerComm rComm("", nullptr);
   setenv("output_OUT", rComm.getAddress().c_str(), 1);
-  comm_t sComm_c = yggRpcClientType("output", dtype_req, dtype_res);
+  comm_t sComm_c = yggRpcClientType("output", NULL, NULL);
   unsetenv("output_OUT");
   ClientComm& sComm = *((ClientComm*)(sComm_c.comm));
   DO_RPC_SIGNON;
@@ -347,7 +345,7 @@ TEST(comm_t, Errors) {
   EXPECT_EQ(set_response_format(tmp, "%s"), 0);
   dtype_t tmp_dtype;
   tmp_dtype.metadata = NULL;
-  EXPECT_EQ(set_response_datatype(tmp, tmp_dtype), 0);
+  EXPECT_EQ(set_response_datatype(tmp, &tmp_dtype), 0);
   EXPECT_EQ(comm_send(tmp, NULL, 0), -1);
   EXPECT_EQ(comm_send_eof(tmp), -1);
   EXPECT_EQ(comm_recv(tmp, NULL, 0), -1);
@@ -359,11 +357,11 @@ TEST(comm_t, Errors) {
   EXPECT_EQ(pcommRecv(tmp, 0, 0, NULL, 0), -1);
   EXPECT_EQ(pcommCall(tmp, 0, 0, NULL, 0), -1);
   EXPECT_EQ(comm_nmsg(tmp), -1);
-  tmp = init_comm("", SEND, NULL_COMM, tmp_dtype);
+  tmp = init_comm("", SEND, NULL_COMM, &tmp_dtype);
   EXPECT_FALSE(tmp.comm);
-  tmp = yggRpcClientType("invalid", tmp_dtype, tmp_dtype);
+  tmp = yggRpcClientType("invalid", &tmp_dtype, &tmp_dtype);
   EXPECT_FALSE(tmp.comm);
-  tmp = yggRpcServerType("invalid", tmp_dtype, tmp_dtype);
+  tmp = yggRpcServerType("invalid", &tmp_dtype, &tmp_dtype);
   EXPECT_FALSE(tmp.comm);
   {
     COMM_BASE alt("", nullptr, RECV);
@@ -417,7 +415,7 @@ TEST(YggInterface_C, GlobalServer) {
     {
       dtype_t dtype_req = create_dtype_from_schema("{\"type\": \"integer\"}", false);
       dtype_t dtype_res = create_dtype_from_schema("{\"type\": \"integer\"}", false);
-      comm_t rComm_c = yggRpcServerType_global("test_name", dtype_req, dtype_res);
+      comm_t rComm_c = yggRpcServerType_global("test_name", &dtype_req, &dtype_res);
       ServerComm& rComm = *((ServerComm*)(rComm_c.comm));
       rComm.set_timeout_recv(1000);
       DO_RPC_SIGNON;
@@ -438,7 +436,7 @@ TEST(YggInterface_C, GlobalServer) {
     {
       dtype_t dtype_req = create_dtype_from_schema("{\"type\": \"integer\"}", false);
       dtype_t dtype_res = create_dtype_from_schema("{\"type\": \"integer\"}", false);
-      comm_t rComm_c = yggRpcServerType_global(name.c_str(), dtype_req, dtype_res);
+      comm_t rComm_c = yggRpcServerType_global(name.c_str(), &dtype_req, &dtype_res);
       ServerComm& rComm = *((ServerComm*)(rComm_c.comm));
       // Request
       std::cout << "Client ";

@@ -37,9 +37,9 @@ int is_comm_format_array_type_f(const comm_t x) {
 }
 
 comm_t _init_comm_f(const char *name, const int dir, const int t,
-		    dtype_t datatype, const int flags) {
+		    void* datatype, const int flags) {
   return _init_comm(name, static_cast<DIRECTION>(dir),
-		    static_cast<COMM_TYPE>(t), datatype, flags);
+		    static_cast<COMM_TYPE>(t), (dtype_t*)datatype, flags);
 }
 
 comm_t ygg_output_f(const char *name) {
@@ -50,12 +50,12 @@ comm_t ygg_input_f(const char *name) {
   return yggInput(name);
 }
 
-comm_t yggOutputType_f(const char *name, dtype_t datatype) {
-  return yggOutputType(name, datatype);
+comm_t yggOutputType_f(const char *name, void* datatype) {
+  return yggOutputType(name, (dtype_t*)datatype);
 }
 
-comm_t yggInputType_f(const char *name, dtype_t datatype) {
-  return yggInputType(name, datatype);
+comm_t yggInputType_f(const char *name, void* datatype) {
+  return yggInputType(name, (dtype_t*)datatype);
 }
 
 comm_t yggOutputFmt_f(const char *name, const char *fmt) {
@@ -140,11 +140,11 @@ comm_t yggRpcServer_f(const char *name, const char *in_fmt,
   return yggRpcServer(name, in_fmt, out_fmt);
 }
 
-comm_t yggRpcClientType_f(const char *name, dtype_t outType, dtype_t inType) {
-  return yggRpcClientType(name, outType, inType);
+comm_t yggRpcClientType_f(const char *name, void* outType, void* inType) {
+  return yggRpcClientType(name, (dtype_t*)outType, (dtype_t*)inType);
 }
-comm_t yggRpcServerType_f(const char *name, dtype_t inType, dtype_t outType) {
-  return yggRpcServerType(name, inType, outType);
+comm_t yggRpcServerType_f(const char *name, void* inType, void* outType) {
+  return yggRpcServerType(name, (dtype_t*)inType, (dtype_t*)outType);
 }
 
 comm_t yggTimesync_f(const char *name, const char *t_units) {
@@ -152,6 +152,9 @@ comm_t yggTimesync_f(const char *name, const char *t_units) {
 }
 
 // Method for constructing data types
+void display_dtype_f(const dtype_t datatype) {
+  return display_dtype(datatype, "");
+}
 int is_dtype_format_array_f(dtype_t type_struct) {
   return is_dtype_format_array(type_struct);
 }
@@ -215,8 +218,9 @@ dtype_t create_dtype_obj_f(const bool use_generic) {
   return create_dtype_obj(use_generic);
 }
 
-dtype_t create_dtype_format_f(const char *format_str, const int as_array,
-			    const bool use_generic) {
+dtype_t create_dtype_format_f(const char *format_str,
+			      const bool as_array,
+			      const bool use_generic) {
   return create_dtype_format(format_str, as_array, use_generic);
 }
 
@@ -293,75 +297,37 @@ int rpc_call_realloc_f(comm_t yggQ, int nargs, void *args) {
   return pcommCall(yggQ, 1, nargs, (void**)args, 1);
 }
 
-// Ply interface
-ply_t init_ply_f() {
-  return init_ply();
-}
-
-void set_ply_f(void* x, void* obj, int copy) {
-  ply_t* c_x = (ply_t*)x;
-  if (c_x != NULL)
-    set_ply(c_x, obj, copy);
-}
-
-void free_ply_f(void* p) {
-  ply_t* c_p = (ply_t*)p;
-  if (c_p != NULL) {
-    free_ply(c_p);
+#define GEOM_INTERFACE(name)						\
+  name ## _t init_ ## name ## _f() {					\
+    return init_ ## name();						\
+  }									\
+  name ## _t generate_ ## name ## _f() {				\
+    return generate_ ## name();						\
+  }									\
+  void free_ ## name ## _f(void *p) {					\
+    free_ ## name((name ## _t*)p);					\
+  }									\
+  void set_ ## name ## _f(void* x, void* obj, int copy) {		\
+    set_ ## name((name ## _t*)x, obj, copy);				\
+  }									\
+  name ## _t copy_ ## name ## _f(name ## _t src) {			\
+    return copy_ ## name(src);						\
+  }									\
+  void display_ ## name ## _indent_f(name ## _t p, const char* indent) { \
+    display_ ## name ## _indent(p, indent);				\
+  }									\
+  void display_ ## name ## _f(name ## _t p) {				\
+    display_ ## name(p);						\
+  }									\
+  int nelements_ ## name ## _f(name ## _t p, const char* name) {	\
+    return nelements_ ## name(p, name);					\
+  }									\
+  bool compare_ ## name ## _f(const name ## _t a, const name ## _t b) {	\
+    return compare_ ## name(a, b);					\
   }
-}
-
-ply_t copy_ply_f(ply_t p) {
-  return copy_ply(p);
-}
-
-void display_ply_indent_f(ply_t p, const char *indent) {
-  display_ply_indent(p, indent);
-}
-
-void display_ply_f(ply_t p) {
-  display_ply(p);
-}
-
-int nelements_ply_f(ply_t p, const char* name) {
-  return nelements_ply(p, name);
-}
-
-
-// Obj interface
-obj_t init_obj_f() {
-  return init_obj();
-}
-
-void set_obj_f(void* x, void* obj, int copy) {
-  obj_t* c_x = (obj_t*)x;
-  if (c_x != NULL)
-    set_obj(c_x, obj, copy);
-}
-
-void free_obj_f(void* p) {
-  obj_t* c_p = (obj_t*)p;
-  if (c_p != NULL) {
-    free_obj(c_p);
-  }
-}
-
-obj_t copy_obj_f(obj_t p) {
-  return copy_obj(p);
-}
-
-void display_obj_indent_f(obj_t p, const char *indent) {
-  display_obj_indent(p, indent);
-}
-
-void display_obj_f(obj_t p) {
-  display_obj(p);
-}
-
-int nelements_obj_f(obj_t p, const char* name) {
-  return nelements_obj(p, name);
-}
-
+GEOM_INTERFACE(ply)
+GEOM_INTERFACE(obj)
+#undef GEOM_INTERFACE
 
 // Generic interface
 generic_t init_generic_f() {
@@ -374,6 +340,10 @@ generic_t init_generic_array_f() {
 
 generic_t init_generic_map_f() {
   return init_generic_map();
+}
+
+generic_t init_generic_generate_f(const char* schema) {
+  return init_generic_generate(schema);
 }
 
 /* generic_t create_generic_f(void* type_class, void* data, size_t nbytes) { */
@@ -390,6 +360,10 @@ int copy_generic_into_f(void* dst, generic_t src) {
 
 generic_t copy_generic_f(generic_t src) {
   return copy_generic(src);
+}
+
+bool compare_generic_f(generic_t a, generic_t b) {
+  return compare_generic(a, b);
 }
 
 int is_generic_init_f(generic_t x) {

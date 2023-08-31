@@ -55,22 +55,26 @@ void close_comm(comm_t* comm);
  * @param name The name for the communicator
  * @param dir The enumerated direction of the communicator
  * @param t The enumerated communicator type to create
+ * @param datatype Pointer to datatype that will be moved into the
+ *   created communicator.
  * @param flags Bitwise flags describing properties the communicator
  *   should have.
  * @return comm_t struct containing the requested communicator
  */
 comm_t _init_comm(const char* name, const DIRECTION dir, const COMM_TYPE t,
-		  dtype_t datatype, const int flags);
+		  dtype_t* datatype, const int flags);
   
 /**
  * Initialize a new communicator
  * @param name The name for the communicator
  * @param dir The enumerated direction of the communicator
  * @param t The enumerated communicator type to create
+ * @param datatype Pointer to datatype that will be moved into the
+ *   created communicator.
  * @return comm_t struct containing the requested communicator
  */
 comm_t init_comm(const char* name, const DIRECTION dir, const COMM_TYPE t,
-		 dtype_t datatype);
+		 dtype_t* datatype);
 
 /**
  * Set a communicators datatype based on a C-style format string.
@@ -82,10 +86,11 @@ int set_response_format(comm_t comm, const char *fmt);
 /**
  * Set a communicators datatype.
  * @param x Communicator
- * @param datatype Datatype
+ * @param datatype Pointer to datatype. The underlying data will be
+ *   consumed.
  * @return 1 if successful, 0 otherwise.
  */
-int set_response_datatype(comm_t x, dtype_t datatype);
+int set_response_datatype(comm_t x, dtype_t* datatype);
 
 /**
  * Get the datatype associated with a communicator.

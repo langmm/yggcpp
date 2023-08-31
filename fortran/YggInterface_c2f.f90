@@ -341,7 +341,8 @@ subroutine yggptr_c2f_array_character(x)
      xarr_character => item
      do i = 1, x%len
         do j = 1, x%prec
-           xarr_character(i)(j:j) = x%data_character_unit(i)
+           xarr_character(i)(j:j) = x%data_character_unit(&
+                (i - 1) * x%prec + j)
         end do
         do j = (x%prec + 1), len(xarr_character(i))
            xarr_character(i)(j:j) = ' '
