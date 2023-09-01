@@ -5,6 +5,7 @@ dependencies:
   - numpy
   - c-compiler
   - cxx-compiler
+  - fortran-compiler
   - gcovr < 5.1.0
   - Jinja2 < 3.1.0
   - pyyaml

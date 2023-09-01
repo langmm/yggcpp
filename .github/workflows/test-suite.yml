@@ -90,17 +90,18 @@ jobs:
         if: matrix.os == 'ubuntu-latest' && matrix.python-install == 'pip'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libc6-dbg gdb valgrind lcov libcmocka-dev
+          sudo apt-get install -y libc6-dbg gdb valgrind lcov libcmocka-dev gfortran
           sudo apt upgrade --fix-missing
           valgrind --version
       - name: Install dependencies on Mac
         if: matrix.os == 'macos-latest' && matrix.python-install == 'pip'
         run: |
-          brew install llvm cmocka lcov gnutls
+          brew install llvm cmocka lcov gnutls gfortran
       - name: Install dependencies on Windows
         if: matrix.os == 'windows-latest' && matrix.python-install == 'pip'
         run: |
           vcpkg.exe install cmocka --triplet x64-windows
+          vcpkg.exe install gfortran --triplet x64-windows
 
       # ZeroMQ dependencies
       - name: Install ZeroMQ

@@ -510,23 +510,23 @@
      ! Methods for sending/receiving
      function ygg_send_c(ygg_q, data, data_len) result (flag) &
           bind(c, name="ygg_send_f")
-       use, intrinsic :: iso_c_binding, only: c_char, c_int
+       use, intrinsic :: iso_c_binding, only: c_char, c_int, c_size_t
        import :: yggcomm
        implicit none
        type(yggcomm), value, intent(in) :: ygg_q
        character(kind=c_char), dimension(*), intent(in) :: data
-       integer(kind=c_int), value, intent(in) :: data_len
+       integer(kind=c_size_t), value, intent(in) :: data_len
        integer(kind=c_int) :: flag
      end function ygg_send_c
   
      function ygg_recv_c(ygg_q, data, data_len) result (flag) &
           bind(c, name="ygg_recv_f")
-       use, intrinsic :: iso_c_binding, only: c_char, c_int
+       use, intrinsic :: iso_c_binding, only: c_char, c_int, c_size_t
        import :: yggcomm
        implicit none
        type(yggcomm), value :: ygg_q
        character(kind=c_char), dimension(*) :: data
-       integer(kind=c_int), value, intent(in) :: data_len
+       integer(kind=c_size_t), value, intent(in) :: data_len
        integer(kind=c_int) :: flag
      end function ygg_recv_c
 

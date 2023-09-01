@@ -2287,7 +2287,7 @@ contains
     character(len=*), intent(in) :: data
     character(len=len(data)+1) :: c_data
     integer, intent(in) :: data_len
-    integer(kind=c_int) :: c_data_len
+    integer(kind=c_size_t) :: c_data_len
     logical :: flag
     integer(kind=c_int) :: c_flag
     c_data = data//c_null_char
@@ -2313,7 +2313,7 @@ contains
     character(len=*) :: data
     character(len=len(data)+1) :: c_data
     integer :: data_len
-    integer(kind=c_int) :: c_data_len
+    integer(kind=c_size_t) :: c_data_len
     logical :: flag
     integer(kind=c_int) :: c_flag
     c_data = data//c_null_char
