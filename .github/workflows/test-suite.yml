@@ -93,15 +93,17 @@ jobs:
           sudo apt-get install -y libc6-dbg gdb valgrind lcov libcmocka-dev gfortran
           sudo apt upgrade --fix-missing
           valgrind --version
+          echo "FC=$(which gfortran)" >> "$GITHUB_ENV"
       - name: Install dependencies on Mac
         if: matrix.os == 'macos-latest' && matrix.python-install == 'pip'
         run: |
           brew install llvm cmocka lcov gnutls gfortran
+          echo "FC=$(which gfortran)" >> "$GITHUB_ENV"
       - name: Install dependencies on Windows
         if: matrix.os == 'windows-latest' && matrix.python-install == 'pip'
         run: |
           vcpkg.exe install cmocka --triplet x64-windows
-          vcpkg.exe install gfortran --triplet x64-windows
+          choco install mingw
 
       # ZeroMQ dependencies
       - name: Install ZeroMQ
@@ -321,15 +323,15 @@ jobs:
           pip install . -v ${{ env.PYTHON_CONFIG_FLAGS }}
 
       ###################################
-      # Test CPP & C
+      # Test CPP, C, & Fortran
       ###################################
-      - name: Test C++ & C Interfaces (CONDA)
+      - name: Test C++, C, & Fortran Interfaces (CONDA)
         if: matrix.python-install == 'conda'
         shell: bash -l {0}
         run: |
           cd build
           ctest ${{ env.TEST_FLAGS }}
-      - name: Test C++ & C Interfaces (PIP)
+      - name: Test C++, C, & Fortran Interfaces (PIP)
         if: matrix.python-install == 'pip'
         run: |
           cd build
