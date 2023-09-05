@@ -22,12 +22,12 @@ public:
 
   void close() override;
   
-  void addResponseSchema(const std::string& s, bool use_generic=false);
-  void addResponseSchema(const rapidjson::Value& s,
+  bool addResponseSchema(const std::string& s, bool use_generic=false);
+  bool addResponseSchema(const rapidjson::Value& s,
 			 bool use_generic=false);
-  void addResponseSchema(const utils::Metadata& metadata,
+  bool addResponseSchema(const utils::Metadata& metadata,
 			 bool use_generic=false);
-  void addResponseFormat(const std::string& fmt, bool use_generic=false);
+  bool addResponseFormat(const std::string& fmt, bool use_generic=false);
   // \copydoc Comm_t::getMetadata
   communication::utils::Metadata& getMetadata(const DIRECTION dir=NONE) override;
   bool signonComplete() const { return requests.signon_complete; }

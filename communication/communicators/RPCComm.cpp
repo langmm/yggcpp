@@ -38,36 +38,32 @@ communication::utils::Metadata& RPCComm::getMetadata(const DIRECTION dir) {
     return this->metadata;
   return requests.response_metadata;
 }
-void RPCComm::addResponseSchema(const std::string& s, bool use_generic) {
+bool RPCComm::addResponseSchema(const std::string& s, bool use_generic) {
   if (global_comm) {
-    (dynamic_cast<RPCComm*>(global_comm))->addResponseSchema(s, use_generic);
-    return;
+    return (dynamic_cast<RPCComm*>(global_comm))->addResponseSchema(s, use_generic);
   }
-  requests.addResponseSchema(s, use_generic);
+  return requests.addResponseSchema(s, use_generic);
 }
-void RPCComm::addResponseSchema(const rapidjson::Value& s,
+bool RPCComm::addResponseSchema(const rapidjson::Value& s,
 				bool use_generic) {
   if (global_comm) {
-    (dynamic_cast<RPCComm*>(global_comm))->addResponseSchema(s, use_generic);
-    return;
+    return (dynamic_cast<RPCComm*>(global_comm))->addResponseSchema(s, use_generic);
   }
-  requests.addResponseSchema(s, use_generic);
+  return requests.addResponseSchema(s, use_generic);
 }
-void RPCComm::addResponseSchema(const communication::utils::Metadata& metadata,
+bool RPCComm::addResponseSchema(const communication::utils::Metadata& metadata,
 				bool use_generic) {
   if (global_comm) {
-    (dynamic_cast<RPCComm*>(global_comm))->addResponseSchema(metadata, use_generic);
-    return;
+    return (dynamic_cast<RPCComm*>(global_comm))->addResponseSchema(metadata, use_generic);
   }
-  requests.addResponseSchema(metadata, use_generic);
+  return requests.addResponseSchema(metadata, use_generic);
 }
-void RPCComm::addResponseFormat(const std::string& fmt,
+bool RPCComm::addResponseFormat(const std::string& fmt,
 				bool use_generic) {
   if (global_comm) {
-    (dynamic_cast<RPCComm*>(global_comm))->addResponseFormat(fmt, use_generic);
-    return;
+    return (dynamic_cast<RPCComm*>(global_comm))->addResponseFormat(fmt, use_generic);
   }
-  requests.addResponseFormat(fmt, use_generic);
+  return requests.addResponseFormat(fmt, use_generic);
 }
 
 #ifdef YGG_TEST

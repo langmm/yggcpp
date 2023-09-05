@@ -72,7 +72,8 @@ int set_response_format(comm_t comm, const char *fmt) {
     if (ctype != SERVER_COMM && ctype != CLIENT_COMM)
       ygglog_throw_error_c("set_response_format: Comm is not RPC server or client");
     std::string format_str(fmt);
-    static_cast<communication::communicator::RPCComm*>(comm.comm)->addResponseFormat(format_str);
+    if (!static_cast<communication::communicator::RPCComm*>(comm.comm)->addResponseFormat(format_str))
+      return 0;
   } _END_CPP(set_response_format, 0);
   return 1;
 }
@@ -82,9 +83,11 @@ int set_response_datatype(comm_t x, dtype_t* datatype) {
     if (datatype) {
       if (datatype->metadata) {
 	communication::utils::Metadata* metadata = static_cast<communication::utils::Metadata*>(datatype->metadata);
+	if (x.comm) {
+	  if (!static_cast<communication::communicator::RPCComm*>(x.comm)->addResponseSchema(*metadata))
+	    return 0;
+	}
 	datatype->metadata = NULL;
-	if (x.comm)
-	  static_cast<communication::communicator::RPCComm*>(x.comm)->addResponseSchema(*metadata);
 	delete metadata;
       }
       if (!x.comm)

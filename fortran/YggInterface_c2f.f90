@@ -339,6 +339,7 @@ subroutine yggptr_c2f_array_character(x)
   write(*,*) "yggptr_c2f_array_character"
   select type(item=>x%item_array)
   type is (character(*))
+     write(*,*) "yggptr_c2f_array_character", x%data_character_unit
      ! xarr_character => item
      do i = 1, x%len
         do j = 1, x%prec
