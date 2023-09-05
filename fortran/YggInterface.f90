@@ -1034,7 +1034,7 @@ module YggInterface
   end type yggptr_map
   !> @brief Wrapper for a C generic object.
   type, bind(c) :: ygggeneric
-     type(c_ptr) :: obj !< Pointer to C generic object
+     type(c_ptr) :: obj = c_null_ptr !< Pointer to C generic object
   end type ygggeneric
   !> @brief Wrapper for C NULL object.
   type :: yggnull
@@ -1045,35 +1045,35 @@ module YggInterface
   end type yggnull
   !> @brief Wrapper for an array of generic objects (stored in a generic object).
   type, bind(c) :: yggarr
-     type(c_ptr) :: obj !< Pointer to wrapped array.
+     type(c_ptr) :: obj = c_null_ptr !< Pointer to wrapped array.
   end type yggarr
   !> @brief Wrapper for a mapping of generic objects (stored in a generic object).
   type, bind(c) :: yggmap
-     type(c_ptr) :: obj !< Pointer to wrapped mapping.
+     type(c_ptr) :: obj = c_null_ptr !< Pointer to wrapped mapping.
   end type yggmap
   !> @brief Wrapper for a schema (stored in a generic object).
   type, bind(c) :: yggschema
-     type(c_ptr) :: obj !< Pointer to wrapped schema.
+     type(c_ptr) :: obj = c_null_ptr !< Pointer to wrapped schema.
   end type yggschema
   !> @brief  Wrapper for a Python instance (stored in a generic object).
   type, bind(c) :: yggpyinst
-     type(c_ptr) :: obj !< Pointer to wrapped Python instance.
+     type(c_ptr) :: obj = c_null_ptr !< Pointer to wrapped Python instance.
   end type yggpyinst
   !> @brief Wrapper for a Python function.
   type, bind(c) :: yggpyfunc
-     type(c_ptr) :: obj !< Pointer to wrapped Python instance.
+     type(c_ptr) :: obj = c_null_ptr !< Pointer to wrapped Python instance.
   end type yggpyfunc
   !> @brief Wrapper for a Python object.
   type, bind(c) :: yggpython
-     type(c_ptr) :: obj !< Pointer to wrapped Python instance.
+     type(c_ptr) :: obj = c_null_ptr !< Pointer to wrapped Python instance.
   end type yggpython
   !> @brief Ply structure.
   type, bind(c) :: yggply
-     type(c_ptr) :: obj !< Pointer to wrapped rapidjson::Ply instance.
+     type(c_ptr) :: obj = c_null_ptr !< Pointer to wrapped rapidjson::Ply instance.
   end type yggply
   !> @brief Obj structure.
   type, bind(c) :: yggobj
-     type(c_ptr) :: obj !< Pointer to wrapped rapidjson::ObjWavefront instance.
+     type(c_ptr) :: obj = c_null_ptr !< Pointer to wrapped rapidjson::ObjWavefront instance.
   end type yggobj
   !> @brief Wrapper for a 1 byte unsigned integer.
   type ygguint1

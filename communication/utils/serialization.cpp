@@ -825,7 +825,7 @@ int Metadata::deserialize(const char* buf, rapidjson::VarArgList& ap) {
       return -1;
     }
   }
-  ygglog_debug << "Metadata::deserialize: before SetVarArgs" << std::endl;
+  ygglog_debug << "Metadata::deserialize: before SetVarArgs: " << *schema << std::endl;
   if (!d.SetVarArgs(*schema, ap)) {
     ygglog_error << "Metadata::deserialize: Error setting arguments from JSON document" << std::endl;
     return -1;
