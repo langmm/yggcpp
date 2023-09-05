@@ -175,12 +175,11 @@ PyObject* commMeta_new(PyTypeObject *type, PyObject* args, PyObject* kwds) {
   if (for_datatype < 0) for_datatype = 0;
   rapidjson::Value* v = NULL;
   
-  try {
-    if (for_datatype)
-      v = &(comm->comm->getMetadata().getSchema());
-    else
-      v = &(comm->comm->getMetadata().metadata);
-  } catch (...) {
+  if (for_datatype)
+    v = comm->comm->getMetadata().getSchema();
+  else
+    v = &(comm->comm->getMetadata().metadata);
+  if (!v) {
     PyErr_SetString(PyExc_KeyError,
 		    "The communicator does not have a datatype");
     return NULL;
@@ -846,9 +845,7 @@ int Comm_t_metadata_set(PyObject* self, PyObject* value, void*) {
     PyErr_SetString(PyExc_TypeError, "Error converting provided dictionary to a rapidjson Object");
     return -1;
   }
-  try {
-    ((pyComm_t*)self)->comm->addSchema(doc, true);
-  } catch (...) {
+  if (!((pyComm_t*)self)->comm->addSchema(doc, true)) {
     PyErr_SetString(PyExc_TypeError, "Error updating metadata");
     return -1;
   }
@@ -858,7 +855,7 @@ int Comm_t_metadata_set(PyObject* self, PyObject* value, void*) {
 PyObject* Comm_t_datatype_get(PyObject* self, void*) {
   // Uneditable version
   // communication::utils::Metadata& metadata = ((pyComm_t*)self)->comm->getMetadata();
-  // PyObject* out = metadata.getSchema().GetPythonObjectRaw();
+  // PyObject* out = metadata.getSchema()->GetPythonObjectRaw();
   // if (out == NULL) {
   //   PyErr_SetString(PyExc_TypeError, "Error converting datatype to a Python object");
   // }
@@ -892,9 +889,7 @@ int Comm_t_datatype_set(PyObject* self, PyObject* value, void*) {
     PyErr_SetString(PyExc_TypeError, "Error converting provided dictionary to a rapidjson Object");
     return -1;
   }
-  try {
-    ((pyComm_t*)self)->comm->addSchema(doc, false);
-  } catch (...) {
+  if (!((pyComm_t*)self)->comm->addSchema(doc, false)) {
     PyErr_SetString(PyExc_TypeError, "Error updating datatype");
     return -1;
   }
