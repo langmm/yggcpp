@@ -333,7 +333,12 @@ int Comm_t::send(const char *data, const size_t &len) {
     ygglog_error << "CommBase(" << name << ")::send: Failed to create header" << std::endl;
     return -1;
   }
-  head.format();
+  std::cerr << "Before format" << std::endl;
+  if (head.format() < 0) {
+    ygglog_error << "CommBase(" << name << ")::send: Error formatting message with header." << std::endl;
+    return -1;
+  }
+  std::cerr << "After format" << std::endl;
   Comm_t* xmulti = NULL;
   if (head.flags & HEAD_FLAG_MULTIPART) {
     ygglog_debug << "CommBase(" << name << ")::send: Sending message in multiple parts" << std::endl;
@@ -476,7 +481,10 @@ long Comm_t::recv(char*& data, const size_t &len,
     workers.remove_worker(xmulti);
   if (ret < 0) return ret;
   if (ret > 0) {
-    head.finalize_recv();
+    if (!head.finalize_recv()) {
+      ygglog_error << "CommBase(" << name << ")::recv: finalize_recv failed." << std::endl;
+      return -1;
+    }
     if (!head.hasType()) {
       ygglog_debug << "CommBase(" << name << ")::recv: No type information in message header" << std::endl;
     } else {
@@ -565,7 +573,11 @@ communication::utils::Metadata& Comm_t::getMetadata(const DIRECTION dir) {
 int Comm_t::update_datatype(const rapidjson::Value& new_schema,
 			    const DIRECTION dir) {
   communication::utils::Metadata& meta = getMetadata(dir);
-  meta.fromSchema(new_schema);
+  try {
+    meta.fromSchema(new_schema);
+  } catch (...) {
+    return -1;
+  }
   return 1;
 }
 
@@ -639,7 +651,9 @@ int Comm_t::vSend(rapidjson::VarArgList& ap) {
   size_t nargs_orig = ap.get_nargs();
   char* buf = NULL;
   size_t buf_siz = 0;
+  std::cerr << "Before serialize" << std::endl;
   int ret = serialize(buf, buf_siz, ap);
+  std::cerr << "After serialize: " << ret << std::endl;
   if (ret < 0) {
     ygglog_error << "CommBase(" << name << ")::vSend: serialization error" << std::endl;
     return ret;

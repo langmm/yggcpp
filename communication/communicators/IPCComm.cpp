@@ -175,7 +175,8 @@ int IPCComm::comm_nmsg(DIRECTION dir) const {
 
 int IPCComm::send_single(utils::Header& header) {
     assert(!global_comm);
-    header.on_send();
+    if (header.on_send() < 0)
+      return -1;
     ygglog_debug << "IPCComm(" << name << ")::send_single: " << header.size_msg << " bytes" << std::endl;
     int ret = -1;
     msgbuf_t t;

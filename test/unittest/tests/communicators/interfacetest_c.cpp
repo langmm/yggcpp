@@ -212,8 +212,8 @@ TEST(YggInterface_C, Client) {
   {
     Header header(msg.c_str(), msg.size(), &sComm);
     EXPECT_TRUE(sComm.create_header_send(header));
-    size_t len = header.format();
-    msg.assign(header.data[0], len);
+    int len = header.format();
+    msg.assign(header.data[0], static_cast<size_t>(len));
     EXPECT_GE(rComm.getRequests().addRequestServer(header), 0);
     sComm.getRequests().stashRequest();
   }
@@ -311,8 +311,8 @@ TEST(YggInterface_C, ClientPointers) {
   {
     Header header(msg.c_str(), msg.size(), &sComm);
     EXPECT_TRUE(sComm.create_header_send(header));
-    size_t len = header.format();
-    msg.assign(header.data[0], len);
+    int len = header.format();
+    msg.assign(header.data[0], static_cast<size_t>(len));
     EXPECT_GE(rComm.getRequests().addRequestServer(header), 0);
     sComm.getRequests().stashRequest();
   }

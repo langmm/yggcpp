@@ -715,8 +715,11 @@ int Metadata::deserialize(const char* buf, rapidjson::VarArgList& ap) {
   rapidjson::Document d;
   rapidjson::StringStream s(buf);
   d.ParseStream(s);
-  if (d.HasParseError())
-    ygglog_throw_error_c("Metadata::deserialize: Error parsing JSON");
+  if (d.HasParseError()) {
+    ygglog_error << "Metadata::deserialize: Error parsing JSON" << std::endl;
+    return -1;
+  }
+  ygglog_debug << "Metadata::deserialize: " << d << std::endl;
   if (!hasType()) {
     fromData(d);
   } else {
@@ -724,11 +727,14 @@ int Metadata::deserialize(const char* buf, rapidjson::VarArgList& ap) {
     if (!d.Normalize(*schema, &sb)) {
       std::string d_str = document2string(d);
       std::string s_str = document2string(*schema);
-      ygglog_throw_error_c("Metadata::deserialize: Error normalizing document:\n%s\ndocument=%s\nschema=%s\nmessage=%s...", sb.GetString(), d_str.c_str(), s_str.c_str(), buf);
+      ygglog_error << "Metadata::deserialize: Error normalizing document:" << std::endl << sb.GetString() << std::endl << "document=" << d_str << std::endl << "schema=" << s_str << std::endl << "message=" << buf << "..." << std::endl;
+      return -1;
     }
   }
+  ygglog_debug << "Metadata::deserialize: before SetVarArgs" << std::endl;
   if (!d.SetVarArgs(*schema, ap)) {
-    ygglog_throw_error_c("Metadata::deserialize: Error setting arguments from JSON document");
+    ygglog_error << "Metadata::deserialize: Error setting arguments from JSON document" << std::endl;
+    return -1;
   }
   return (int)(nargs_orig - ap.get_nargs());
 }
@@ -737,19 +743,22 @@ int Metadata::serialize(char **buf, size_t *buf_siz, size_t nargs, ...) {
   va_start(va.va, nargs);
   int out = serialize(buf, buf_siz, va);
   if (out >= 0 && va.get_nargs() != 0) {
-    ygglog_error_c("Metadata::serialize: %ld of the arguments were not used", va.get_nargs());
+    ygglog_error << "Metadata::serialize: " << va.get_nargs() << " of the arguments were not used" << std::endl;
     return -1;
   }
   return out;
 }
 int Metadata::serialize(char **buf, size_t *buf_siz,
 			rapidjson::VarArgList& ap) {
-  if (!hasType())
-    ygglog_throw_error_c("Metadata::serialize: No datatype");
+  if (!hasType()) {
+    ygglog_error << "Metadata::serialize: No datatype" << std::endl;
+    return -1;
+  }
   rapidjson::Document d;
   if (!d.GetVarArgs(*schema, ap)) {
     std::string s_str = document2string(*schema);
-    ygglog_throw_error_c("Metadata::serialize: Error creating JSON document from arguments for schema = %s", s_str.c_str());
+    ygglog_error << "Metadata::serialize: Error creating JSON document from arguments for schema =" << s_str << std::endl;
+    return -1;
   }
   rapidjson::StringBuffer buffer;
   rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
@@ -759,7 +768,7 @@ int Metadata::serialize(char **buf, size_t *buf_siz,
 						 (size_t)(buffer.GetLength() + 1)));
     if (buf_t == NULL) {
       ygglog_error << "Metadata::serialize: Error in realloc" << std::endl;
-      throw std::exception();
+      return -1;
     }
     buf_siz[0] = (size_t)(buffer.GetLength() + 1);
     buf[0] = buf_t;
@@ -1020,7 +1029,8 @@ void Header::for_send(Metadata* metadata0, const char* msg,
 }
 int Header::on_send(bool dont_advance) {
   ygglog_debug << "Header::on_send: " << size_curr << std::endl;
-  format();
+  if (format() < 0)
+    return -1;
   if (!((flags & HEAD_FLAG_ASYNC) || dont_advance)) {
     offset += size_msg;
     size_msg = std::min(size_curr - offset, size_max);
@@ -1147,7 +1157,7 @@ void Header::Display(const char* indent) const {
   std::cout << std::endl;
 }
 
-size_t Header::format() {
+int Header::format() {
   if (flags & HEAD_FLAG_FORMATTED) {
     return size_curr;
   } else if (flags & HEAD_FLAG_NO_HEAD) {
@@ -1183,8 +1193,10 @@ size_t Header::format() {
     flags |= HEAD_FLAG_MULTIPART;
     flags &= ~HEAD_FLAG_FORMATTED;
     if (size_head > size_max) {
-      if (metaOnly)
-	ygglog_throw_error_c("Header::format: Extra data already excluded, cannot make header any smaller.");
+      if (metaOnly) {
+	ygglog_error << "Header::format: Extra data already excluded, cannot make header any smaller." << std::endl;
+	return -1;
+      }
       flags |= HEAD_META_IN_DATA;
     }
     return 0;
@@ -1216,16 +1228,18 @@ size_t Header::format() {
   return size_curr;
 }
 
-void Header::finalize_recv() {
+bool Header::finalize_recv() {
   if (!GetMetaBoolOptional("in_data", false))
-    return;
+    return true;
   ygglog_debug << "Header::finalize_recv: begin" << std::endl;
   size_t sind, eind;
   if (find_match_c(MSG_HEAD_SEP, *data, &sind, &eind) > 0) {
     rapidjson::Document type_doc;
     type_doc.Parse(*data, sind);
-    if (type_doc.HasParseError())
-      ygglog_throw_error_c("Header::finalize_recv: Error parsing datatype in data");
+    if (type_doc.HasParseError()) {
+      ygglog_error << "Header::finalize_recv: Error parsing datatype in data" << std::endl;
+      return false;
+    }
     fromSchema(type_doc);
     size_curr -= eind;
     size_data -= eind;
@@ -1233,4 +1247,5 @@ void Header::finalize_recv() {
     (*data)[size_curr] = '\0';
   }
   ygglog_debug << "Header::finalize_recv: end" << std::endl;
+  return true;
 }

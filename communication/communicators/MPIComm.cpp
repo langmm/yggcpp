@@ -168,7 +168,8 @@ int MPIComm::comm_nmsg(DIRECTION dir) const {
 
 int MPIComm::send_single(utils::Header& header) {
     assert((!global_comm) && handle);
-    header.on_send();
+    if (header.on_send() < 0)
+      return -1;
     ygglog_debug << "MPIComm(" << name << ")::send_single: " << header.size_msg << " bytes" << std::endl;
     int ret = (int)(header.size_msg);
     int adr = static_cast<int>(handle->procs[handle->tag % handle->procs.size()]);

@@ -531,15 +531,15 @@ TEST(Metadata, fromEncode) {
 TEST(Metadata, deserialize_errors) {
   rapidjson::VarArgList va;
   communication::utils::Metadata x;
-  EXPECT_THROW(x.deserialize("", va), std::exception);
+  EXPECT_EQ(x.deserialize("", va), -1);
   bool dst = false, dst2 = false;
   EXPECT_EQ(x.deserialize("true", 1, false, &dst), 1);
   EXPECT_EQ(dst, true);
   EXPECT_EQ(x.deserialize("true", 2, false, &dst, &dst2), -1);
   x.fromSchema("{\"type\": \"boolean\"}");
-  EXPECT_THROW(x.deserialize("{invalid:}", va), std::exception);
-  EXPECT_THROW(x.deserialize("\"string\"", va), std::exception);
-  EXPECT_THROW(x.deserialize("true", va), std::exception);
+  EXPECT_EQ(x.deserialize("{invalid:}", va), -1);
+  EXPECT_EQ(x.deserialize("\"string\"", va), -1);
+  EXPECT_EQ(x.deserialize("true", va), -1);
   bool* dst_ptr = &dst;
   EXPECT_EQ(x.deserialize("true", 1, false, dst_ptr), 1);
   EXPECT_EQ(dst, true);
@@ -550,9 +550,9 @@ TEST(Metadata, serialize_errors) {
   communication::utils::Metadata x;
   char* buf = (char*)(x.GetAllocator().Malloc(sizeof(char)));
   size_t len = 1;
-  EXPECT_THROW(x.serialize(&buf, &len, va), std::exception);
+  EXPECT_EQ(x.serialize(&buf, &len, va), -1);
   x.fromSchema("{\"type\": \"boolean\"}");
-  EXPECT_THROW(x.serialize(&buf, &len, va), std::exception);
+  EXPECT_EQ(x.serialize(&buf, &len, va), -1);
   EXPECT_EQ(x.serialize(&buf, &len, 2, true, false), -1);
   x.GetAllocator().Free(buf);
   buf = NULL;

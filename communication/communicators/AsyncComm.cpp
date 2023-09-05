@@ -207,7 +207,8 @@ int AsyncComm::send_single(Header& header) {
   if (type == SERVER_COMM) {
     return handle->comm->send_single(header);
   }
-  header.on_send();
+  if (header.on_send() < 0)
+    return -1;
   ygglog_debug << "AsyncComm(" << name << ")::send_single: " << header.size_msg << " bytes" << std::endl;
   handle->backlog.emplace_back(true);
   if (!handle->backlog[handle->backlog.size() - 1].CopyFrom(header))

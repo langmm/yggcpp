@@ -580,7 +580,8 @@ int ZMQComm::comm_nmsg(DIRECTION dir) const {
 
 int ZMQComm::send_single(utils::Header& header) {
   assert(!global_comm);
-  header.on_send();
+  if (header.on_send() < 0)
+    return -1;
   ygglog_debug << "ZMQComm(" << name << ")::send_single: " << header.size_msg << " bytes" << std::endl;
   std::string msg(header.data_msg(), header.size_msg);
   int ret = handle->send(msg);

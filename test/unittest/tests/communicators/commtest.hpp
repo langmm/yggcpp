@@ -39,8 +39,8 @@
     communication::utils::Header header(msg_cli.c_str(),		\
 					msg_cli.size(), &sComm);	\
     EXPECT_TRUE(sComm.create_header_send(header));			\
-    size_t len = header.format();					\
-    msg_cli.assign(header.data[0], len);				\
+    int len = header.format();						\
+    msg_cli.assign(header.data[0], static_cast<size_t>(len));		\
     EXPECT_GE(rComm.getRequests().addRequestServer(header), 0);		\
     std::string msg_srv = YGG_SERVER_SIGNON;				\
     EXPECT_GE(rComm.send(msg_srv.c_str(), msg_srv.size()), 0);		\
@@ -439,6 +439,7 @@
   COMM_SERI_TEST_BASE(cls,)						\
   COMM_SERI_TEST_ASYNC(cls)						\
   TEST(cls, large) {							\
+    int j = 0;								\
     cls ## _tester sComm(SEND);						\
     std::string name = "test_name";					\
     std::string key_env = name + "_IN";					\
@@ -446,6 +447,7 @@
     setenv(key_env.c_str(), val_env.c_str(), 1);			\
     cls ## _tester rComm(name, RECV);					\
     unsetenv(key_env.c_str());						\
+    std::cerr << "HERE: " << j++ << std::endl;				\
     if (sComm.getMaxMsgSize() > 0) {					\
       /* Add worker in advance so that send is successful */		\
       Comm_t* sComm_worker = sComm.getWorkers().get(&sComm, SEND);	\
@@ -461,17 +463,25 @@
       schema += "\"}";							\
       sComm.addSchema(schema, true);					\
       EXPECT_EQ(rComm.wait_for_recv(100), 0);				\
+      std::cerr << "HERE: " << j++ << std::endl;			\
       EXPECT_GE(sComm.send(data_send), 0);				\
+      std::cerr << "HERE: " << j++ << std::endl;			\
       EXPECT_GE(rComm.recv(data_recv), 0);				\
+      std::cerr << "HERE: " << j++ << std::endl;			\
       EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));			\
       EXPECT_EQ(data_send, data_recv);					\
+      std::cerr << "HERE: " << j++ << std::endl;			\
       EXPECT_EQ(rComm.call(2, data_send.c_str(), data_recv.c_str()), -1); \
+      std::cerr << "HERE: " << j++ << std::endl;			\
       /* Error when sending message that can't fit in buffer */		\
       sComm.getFlags() |= COMM_ALWAYS_SEND_HEADER;			\
       utils::Metadata& metadata = sComm.getMetadata();			\
+      std::cerr << "HERE: " << j++ << std::endl;			\
       metadata.initMeta();						\
       metadata.SetMetaString("invalid", bigMsg);			\
-      EXPECT_THROW(sComm.send(data_send), std::exception);		\
+      std::cerr << "HERE: " << j++ << std::endl;			\
+      EXPECT_EQ(sComm.send(data_send), -1);				\
+      std::cerr << "HERE: " << j++ << std::endl;			\
     }									\
   }
 

@@ -306,8 +306,8 @@ public:
 
   void formatBuffer(rapidjson::StringBuffer& buffer, bool metaOnly=false);
   void Display(const char* indent="") const;
-  size_t format();
-  void finalize_recv();
+  int format();
+  bool finalize_recv();
   char* data_msg() {
     if (!data) {
       assert((!data_) && (!offset));
