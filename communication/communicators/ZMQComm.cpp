@@ -639,7 +639,9 @@ bool ZMQComm::do_reply_recv(const Header& header) {
     adr = reply.sockets[0].endpoint;
   } else {
     try {
-      const char* address_c = header.GetMetaString("zmq_reply");
+      const char* address_c;
+      if (!header.GetMetaString("zmq_reply", address_c))
+	return false;
       adr.assign(address_c);
     } catch (...) {
       return false;
@@ -657,7 +659,8 @@ bool ZMQComm::create_header_send(Header& header) {
     std::string reply_address;
     reply.create(reply_address);
     ygglog_debug << "ZMQComm(" << this->name << ")::create_header_send: zmq_reply = " << reply_address << std::endl;
-    header.SetMetaString("zmq_reply", reply_address);
+    if (!header.SetMetaString("zmq_reply", reply_address))
+      return false;
   }
   return out;
 }
@@ -674,7 +677,8 @@ Comm_t* ZMQComm::create_worker_send(Header& head) {
     std::string reply_address;
     out->reply.create(reply_address);
     ygglog_debug << "ZMQComm(" << this->name << ")::create_worker_send: zmq_reply_worker = " << reply_address << std::endl;
-    head.SetMetaString("zmq_reply_worker", reply_address);
+    if (!head.SetMetaString("zmq_reply_worker", reply_address))
+      return nullptr;
   }
   return out;
 }
@@ -687,7 +691,9 @@ Comm_t* ZMQComm::create_worker_recv(Header& head) {
   ZMQComm* out = dynamic_cast<ZMQComm*>(Comm_t::create_worker_recv(head));
   if (out) {
     try {
-      const char* zmq_reply_worker = head.GetMetaString("zmq_reply_worker");
+      const char* zmq_reply_worker;
+      if (!head.GetMetaString("zmq_reply_worker", zmq_reply_worker))
+	return nullptr;
       out->reply.set(std::string(zmq_reply_worker));
     } catch (...) {
       return nullptr;

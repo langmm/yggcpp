@@ -1260,16 +1260,20 @@ extern "C" {
   }
 
   size_t dtype_precision(const dtype_t type_struct) {
+    uint64_t out = 0;
     _BEGIN_CPP {
       _GET_METADATA(metadata, type_struct, 0);
-      return metadata->GetSchemaUint("precision");
+      if (!metadata->GetSchemaUint("precision", out))
+	out = 0;
     } _END_CPP(dtype_precision, 0);
+    return static_cast<size_t>(out);
   };
 
   int set_dtype_name(dtype_t dtype, const char* name) {
     _BEGIN_CPP {
       _GET_METADATA_THROW(metadata, dtype);
-      metadata->SetSchemaString("type", name);
+      if (!metadata->SetSchemaString("type", name))
+	return -1;
       return 0;
     } _END_CPP(set_dtype_name, -1);
   }
@@ -1280,8 +1284,10 @@ extern "C" {
     if (!meta)
       meta = new communication::utils::Metadata();
     out.metadata = (void*)meta;
-    if (use_generic)
-      meta->setGeneric();
+    if (use_generic) {
+      if (!meta->setGeneric())
+	destroy_dtype(&out);
+    }
     return out;
   }
 
@@ -1294,7 +1300,8 @@ extern "C" {
       dtype.metadata = (void*)(new communication::utils::Metadata());
     if (use_generic) {
       _GET_METADATA(metadata, dtype, dtype);
-      metadata->setGeneric();
+      if (!metadata->setGeneric())
+	destroy_dtype(&dtype);
     }
     return dtype;
   }
@@ -1313,7 +1320,9 @@ extern "C" {
     dtype_t out = create_dtype(NULL, false);
     _BEGIN_CPP {
       _GET_METADATA(metadata, out, out);
-      metadata->fromSchema(schema, use_generic);
+      if (!metadata->fromSchema(schema, use_generic)) {
+	destroy_dtype(&out);
+      }
     } _END_CPP_CLEANUP(create_dtype_from_schema, out,
 		       destroy_dtype(&out));
     return out;
@@ -1323,7 +1332,8 @@ extern "C" {
     dtype_t out = create_dtype(NULL, false);
     _BEGIN_CPP {
       _GET_METADATA(metadata, out, out);
-      metadata->fromEncode(pyobj, use_generic);
+      if (!metadata->fromEncode(pyobj, use_generic))
+	destroy_dtype(&out);
     } _END_CPP_CLEANUP(create_dtype_python, out,
 		       destroy_dtype(&out));
     return out;
@@ -1337,7 +1347,8 @@ extern "C" {
     dtype_t out = create_dtype(NULL, false);
     _BEGIN_CPP {
       _GET_METADATA_THROW(metadata, out);
-      metadata->fromType(type, use_generic);
+      if (!metadata->fromType(type, use_generic))
+	destroy_dtype(&out);
       return out;
     } _END_CPP_CLEANUP(create_dtype_default, out, destroy_dtype(&out));
   }
@@ -1347,7 +1358,8 @@ extern "C" {
     dtype_t out = create_dtype(NULL, false);
     _BEGIN_CPP {
       _GET_METADATA_THROW(metadata, out);
-      metadata->fromScalar(subtype, precision, units, use_generic);
+      if (!metadata->fromScalar(subtype, precision, units, use_generic))
+	destroy_dtype(&out);
       return out;
     } _END_CPP_CLEANUP(create_dtype_scalar, out, destroy_dtype(&out));
   }
@@ -1358,7 +1370,8 @@ extern "C" {
     dtype_t out = create_dtype(NULL, false);
     _BEGIN_CPP {
       _GET_METADATA(metadata, out, out);
-      metadata->fromFormat(format_str, as_array, use_generic);
+      if (!metadata->fromFormat(format_str, as_array, use_generic))
+	destroy_dtype(&out);
       return out;
     } _END_CPP_CLEANUP(create_dtype_format, out, destroy_dtype(&out));
   }
@@ -1370,8 +1383,9 @@ extern "C" {
     dtype_t out = create_dtype(NULL, false);
     _BEGIN_CPP {
       _GET_METADATA_THROW(metadata, out);
-      metadata->fromNDArray(subtype, precision, 1, &length,
-			    units, use_generic);
+      if (!metadata->fromNDArray(subtype, precision, 1, &length,
+				 units, use_generic))
+	destroy_dtype(&out);
       return out;
     } _END_CPP_CLEANUP(create_dtype_1darray, out, destroy_dtype(&out));
   }
@@ -1384,8 +1398,9 @@ extern "C" {
     dtype_t out = create_dtype(NULL, false);
     _BEGIN_CPP {
       _GET_METADATA_THROW(metadata, out);
-      metadata->fromNDArray(subtype, precision, ndim, shape,
-			    units, use_generic);
+      if (!metadata->fromNDArray(subtype, precision, ndim, shape,
+				 units, use_generic))
+	destroy_dtype(&out);
       return out;
     } _END_CPP_CLEANUP(create_dtype_ndarray, out, destroy_dtype(&out));
   }
@@ -1413,13 +1428,21 @@ extern "C" {
 	ygglog_throw_error_c("create_dtype_json_array: %d items expected, but the items parameter is NULL.", nitems);
       }
       _GET_METADATA(metadata, out, out);
-      metadata->fromType("array", (use_generic || nitems == 0));
+      if (!metadata->fromType("array", (use_generic || nitems == 0))) {
+	destroy_dtype(&out);
+	return out;
+      }
       if (nitems > 0) {
-	metadata->SetSchemaValue(
-	  "items", rapidjson::Value(rapidjson::kArrayType).Move());
+	if (!metadata->SetSchemaValue(
+	      "items", rapidjson::Value(rapidjson::kArrayType).Move())) {
+	  destroy_dtype(&out);
+	  return out;
+	}
 	for (size_t i = 0; i < nitems; i++) {
 	  if (items[i].metadata == NULL) {
-	    ygglog_throw_error_c("create_dtype_json_array: Item metadata %d is NULL", i);
+	    ygglog_error << "create_dtype_json_array: Item metadata " << i << " is NULL" << std::endl;
+	    destroy_dtype(&out);
+	    return out;
 	  }
 	  metadata->addItem(*((communication::utils::Metadata*)(items[i].metadata)));
 	  destroy_dtype(&(items[i]));
@@ -1435,16 +1458,26 @@ extern "C" {
     dtype_t out = create_dtype(NULL, false);
     _BEGIN_CPP {
       if ((nitems > 0) && ((keys == NULL) || (values == NULL))) {
-	ygglog_throw_error_c("create_dtype_json_object: %d items expected, but the keys and/or values parameter is NULL.", nitems);
+	ygglog_error << "create_dtype_json_object: " << nitems << " items expected, but the keys and/or values parameter is NULL." << std::endl;
+	destroy_dtype(&out);
+	return out;
       }
       _GET_METADATA(metadata, out, out);
-      metadata->fromType("object", use_generic);
+      if (!metadata->fromType("object", use_generic)) {
+	destroy_dtype(&out);
+	return out;
+      }
       if (nitems > 0) {
-	metadata->SetSchemaValue(
-	  "properties", rapidjson::Value(rapidjson::kObjectType).Move());
+	if (!metadata->SetSchemaValue(
+	       "properties", rapidjson::Value(rapidjson::kObjectType).Move())) {
+	  destroy_dtype(&out);
+	  return out;
+	}
 	for (size_t i = 0; i < nitems; i++) {
 	  if (values[i].metadata == NULL) {
-	    ygglog_throw_error_c("create_dtype_json_array: Value metadata %d is NULL", i);
+	    ygglog_error << "create_dtype_json_array: Value metadata " << i << " is NULL" << std::endl;
+	    destroy_dtype(&out);
+	    return out;
 	  }
 	  metadata->addMember(keys[i],
 			      *((communication::utils::Metadata*)(values[i].metadata)));
@@ -1476,21 +1509,35 @@ extern "C" {
     dtype_t out = create_dtype(NULL, false);
     _BEGIN_CPP {
       _GET_METADATA(metadata, out, out);
-      metadata->fromType("instance", use_generic);
+      if (!metadata->fromType("instance", use_generic)) {
+	destroy_dtype(&out);
+	return out;
+      }
       if (class_name && strlen(class_name) > 0) {
-	metadata->SetSchemaString("class", class_name);
+	if (!metadata->SetSchemaString("class", class_name)) {
+	  destroy_dtype(&out);
+	  return out;
+	}
       }
       if (args_dtype && !is_empty_dtype(*args_dtype)) {
-	metadata->SetSchemaMetadata("args",
-				    *((communication::utils::Metadata*)(args_dtype->metadata)));
+	if (!metadata->SetSchemaMetadata("args",
+					 *((communication::utils::Metadata*)(args_dtype->metadata)))) {
+	  destroy_dtype(&out);
+	  return out;
+	}
 	destroy_dtype(args_dtype);
       }
       if (kwargs_dtype && !is_empty_dtype(*kwargs_dtype)) {
-	metadata->SetSchemaMetadata("kwargs",
-				    *((communication::utils::Metadata*)(kwargs_dtype->metadata)));
+	if (!metadata->SetSchemaMetadata("kwargs",
+					 *((communication::utils::Metadata*)(kwargs_dtype->metadata)))) {
+	  destroy_dtype(&out);
+	  return out;
+	}
 	destroy_dtype(kwargs_dtype);
       }
-      metadata->_init(use_generic);
+      if (!metadata->_init(use_generic)) {
+	destroy_dtype(&out);
+      }
       return out;
     } _END_CPP_CLEANUP(create_dtype_pyinst, out, destroy_dtype(&out));
   }
@@ -1506,7 +1553,8 @@ extern "C" {
     _BEGIN_CPP {
       _GET_METADATA_THROW(metadata_src, dtype);
       _GET_METADATA_THROW(metadata_dst, out);
-      metadata_dst->fromMetadata(*metadata_src);
+      if (!metadata_dst->fromMetadata(*metadata_src))
+	destroy_dtype(&out);
       return out;
     } _END_CPP_CLEANUP(copy_dtype, out, destroy_dtype(&out));
   }

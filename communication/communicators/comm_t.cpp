@@ -40,12 +40,17 @@ comm_t _init_comm(const char* name, const DIRECTION dir, const COMM_TYPE t,
   comm_t ret;
   _BEGIN_CPP {
     ret.comm = (void*) communication::communicator::new_Comm_t(dir, t, name, (char*)NULL, flags);
-    if (!(ret.comm))
-      ygglog_throw_error_c("init_comm(%s): Error initializing comm", name);
+    if (!(ret.comm)) {
+      ygglog_error << "init_comm(" << name << "): Error initializing comm" << std::endl;
+      return ret;
+    }
     if (datatype && datatype->metadata) {
       communication::utils::Metadata* metadata = static_cast<communication::utils::Metadata*>(datatype->metadata);
+      if (!static_cast<communication::communicator::Comm_t*>(ret.comm)->addSchema(*metadata)) {
+	free_comm(&ret);
+	return ret;
+      }
       datatype->metadata = NULL;
-      static_cast<communication::communicator::Comm_t*>(ret.comm)->addSchema(*metadata);
       delete metadata;
     }
     if (!((static_cast<communication::communicator::Comm_t*>(ret.comm))->getFlags() & COMM_FLAG_VALID))

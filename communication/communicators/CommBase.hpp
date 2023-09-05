@@ -496,9 +496,16 @@ public:
     /*!
       @brief Get the Metadata object containing header information about
         the comm including datatype.
+      @param[in] dir Direction to get metadata for.
       @return Metadata.
      */
     virtual communication::utils::Metadata& getMetadata(const DIRECTION dir=NONE);
+    /*!
+      @brief Determine if the communicator has metadata defined.
+      @param[in] dir Direction to get metadata for.
+      @return true if the communicator has metadata, false otherwise.
+     */
+    // virtual bool hasMetadata(const DIRECTION dir=NONE);
     /*!
       @brief Get the bitwise flags associated with the communicator.
       @returns flags.
@@ -550,11 +557,11 @@ public:
     virtual bool afterSendRecv(Comm_t*, Comm_t*) { return true; }
     Comm_t* getGlobalComm() { return global_comm; }
 #endif
-    void addSchema(const utils::Metadata& s);
-    void addSchema(const rapidjson::Value& s, bool isMetadata = false);
-    void addSchema(const std::string& schemaStr, bool isMetadata = false);
-    void addFormat(const std::string& format_str, bool as_array = false);
-    void copySchema(const Comm_t* other);
+    bool addSchema(const utils::Metadata& s);
+    bool addSchema(const rapidjson::Value& s, bool isMetadata = false);
+    bool addSchema(const std::string& schemaStr, bool isMetadata = false);
+    bool addFormat(const std::string& format_str, bool as_array = false);
+    bool copySchema(const Comm_t* other);
 
     static void _ygg_cleanup();
 
@@ -671,15 +678,10 @@ protected:
       communication::utils::Metadata& meta = getMetadata(dir);
       if (dir == RECV)
 	zeroData(&data);
-      try {
-	meta.fromData(data);
-      } catch (...) {
-	return false;
-      }
-      return true;
+      return meta.fromData(data);
     }
     virtual bool create_header_send(utils::Header&) { return true; }
-    rapidjson::Value& getSchema(const DIRECTION dir=NONE) {
+    rapidjson::Value* getSchema(const DIRECTION dir=NONE) {
       return getMetadata(dir).getSchema();
     }
     virtual Comm_t* create_worker(utils::Address* address,

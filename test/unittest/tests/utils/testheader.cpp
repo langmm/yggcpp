@@ -22,120 +22,133 @@ TEST(Metadata, Utilities) {
 
 TEST(Metadata, SetAndGet) {
   communication::utils::Metadata metadata;
-  EXPECT_THROW(metadata.getMeta(), std::exception);
-  EXPECT_THROW(metadata.getSchema(), std::exception);
-  EXPECT_THROW(metadata.SetSchemaMetadata("invalid", metadata), std::exception);
+  EXPECT_EQ(metadata.getMeta(), nullptr);
+  EXPECT_EQ(metadata.getSchema(), nullptr);
+  EXPECT_FALSE(metadata.SetSchemaMetadata("invalid", metadata));
   // Get errors on missing parent
-  EXPECT_THROW(metadata.GetMetaInt("test_int"), std::exception);
-  EXPECT_THROW(metadata.GetMetaUint("test_uint"), std::exception);
-  EXPECT_THROW(metadata.GetMetaBool("test_bool"), std::exception);
-  EXPECT_THROW(metadata.GetMetaString("test_string"), std::exception);
-  EXPECT_THROW(metadata.GetSchemaInt("test_int"), std::exception);
-  EXPECT_THROW(metadata.GetSchemaUint("test_uint"), std::exception);
-  EXPECT_THROW(metadata.GetSchemaBool("test_bool"), std::exception);
-  EXPECT_THROW(metadata.GetSchemaString("test_string"), std::exception);
+  int out_int;
+  uint64_t out_uint;
+  bool out_bool;
+  const char* out_string;
+  EXPECT_FALSE(metadata.GetMetaInt("test_int", out_int));
+  EXPECT_FALSE(metadata.GetMetaUint("test_uint", out_uint));
+  EXPECT_FALSE(metadata.GetMetaBool("test_bool", out_bool));
+  EXPECT_FALSE(metadata.GetMetaString("test_string", out_string));
+  EXPECT_FALSE(metadata.GetSchemaInt("test_int", out_int));
+  EXPECT_FALSE(metadata.GetSchemaUint("test_uint", out_uint));
+  EXPECT_FALSE(metadata.GetSchemaBool("test_bool", out_bool));
+  EXPECT_FALSE(metadata.GetSchemaString("test_string", out_string));
   // Set errors
   rapidjson::Value a(true);
   rapidjson::Value b(true);
-  EXPECT_THROW(metadata.SetMetaInt("test_int", 1), std::exception);
-  EXPECT_THROW(metadata.SetMetaUint("test_uint", 1u), std::exception);
-  EXPECT_THROW(metadata.SetMetaBool("test_bool", true), std::exception);
-  EXPECT_THROW(metadata.SetMetaString("test_string", "a"), std::exception);
-  EXPECT_THROW(metadata.SetMetaValue("test_value", a), std::exception);
-  EXPECT_THROW(metadata.SetSchemaInt("test_int", 1), std::exception);
-  EXPECT_THROW(metadata.SetSchemaUint("test_uint", 1u), std::exception);
-  EXPECT_THROW(metadata.SetSchemaBool("test_bool", true), std::exception);
-  EXPECT_THROW(metadata.SetSchemaString("test_string", "a"), std::exception);
-  EXPECT_THROW(metadata.SetSchemaValue("test_value", b), std::exception);
+  EXPECT_FALSE(metadata.SetMetaInt("test_int", 1));
+  EXPECT_FALSE(metadata.SetMetaUint("test_uint", 1u));
+  EXPECT_FALSE(metadata.SetMetaBool("test_bool", true));
+  EXPECT_FALSE(metadata.SetMetaString("test_string", "a"));
+  EXPECT_FALSE(metadata.SetMetaValue("test_value", a));
+  EXPECT_FALSE(metadata.SetSchemaInt("test_int", 1));
+  EXPECT_FALSE(metadata.SetSchemaUint("test_uint", 1u));
+  EXPECT_FALSE(metadata.SetSchemaBool("test_bool", true));
+  EXPECT_FALSE(metadata.SetSchemaString("test_string", "a"));
+  EXPECT_FALSE(metadata.SetSchemaValue("test_value", b));
   // Init
   metadata.initMeta();
   metadata.initSchema();
   // Set
-#define TEST_SET_METHOD(base, name, type, value)		\
-  {								\
-    type x = value;						\
-    metadata.Set ## base ## name("test_" #name, x);		\
-    EXPECT_EQ(metadata.Get ## base ## name("test_" #name), x);	\
+#define TEST_SET_METHOD(base, name, type, value)			\
+  {									\
+    type x = value, y;							\
+    EXPECT_TRUE(metadata.Set ## base ## name("test_" #name, x));	\
+    EXPECT_TRUE(metadata.Get ## base ## name("test_" #name, y));	\
+    EXPECT_EQ(x, y);							\
   }
 #define TEST_SET_METHOD_STRING(base)					\
   {									\
     std::string x = "a";						\
-    metadata.Set ## base ## String("test_String", x);			\
-    EXPECT_EQ(strcmp(metadata.Get ## base ## String("test_String"), x.c_str()), 0); \
+    const char* y = nullptr;						\
+    EXPECT_TRUE(metadata.Set ## base ## String("test_String", x));	\
+    EXPECT_TRUE(metadata.Get ## base ## String("test_String", y));	\
+    EXPECT_EQ(strcmp(y, x.c_str()), 0);					\
   }
-#define TEST_SET_METHOD_VALUE(base)			\
-  {							\
-    metadata.Set ## base ## Value("test_value", b);	\
+#define TEST_SET_METHOD_VALUE(base)					\
+  {									\
+    EXPECT_TRUE(metadata.Set ## base ## Value("test_value", b));	\
   }
   TEST_SET_METHOD(Meta, Int, int, 1);
   TEST_SET_METHOD(Meta, Uint, unsigned, 1u);
   TEST_SET_METHOD(Meta, Bool, bool, true);
+  TEST_SET_METHOD(Meta, String, std::string, "hello");
   TEST_SET_METHOD_STRING(Meta);
   TEST_SET_METHOD_VALUE(Meta);
   const char* id1 = NULL;
-  std::string id2 = "";
-  metadata.SetMetaID("test_id1", &id1);
-  metadata.SetMetaID("test_id2", id2);
-  EXPECT_EQ(strcmp(metadata.GetMetaString("test_id1"), id1), 0);
-  EXPECT_EQ(strcmp(metadata.GetMetaString("test_id2"), id2.c_str()), 0);
+  const char* id1_out = NULL;
+  std::string id2 = "", id2_out;
+  EXPECT_TRUE(metadata.SetMetaID("test_id1", &id1));
+  EXPECT_TRUE(metadata.SetMetaID("test_id2", id2));
+  EXPECT_TRUE(metadata.GetMetaString("test_id1", id1_out));
+  EXPECT_EQ(strcmp(id1_out, id1), 0);
+  EXPECT_TRUE(metadata.GetMetaString("test_id2", id2_out));
+  EXPECT_EQ(id2_out, id2);
   TEST_SET_METHOD(Schema, Int, int, 1);
   TEST_SET_METHOD(Schema, Uint, unsigned, 1u);
   TEST_SET_METHOD(Schema, Bool, bool, true);
+  TEST_SET_METHOD(Schema, String, std::string, "hello");
   TEST_SET_METHOD_STRING(Schema);
   TEST_SET_METHOD_VALUE(Schema);
-  rapidjson::Value* x_root = &metadata.getSchema();
-  metadata.SetSchemaValue("test_value2", b, x_root);
+  rapidjson::Value* x_root = metadata.getSchema();
+  EXPECT_TRUE(metadata.SetSchemaValue("test_value2", b, x_root));
   // Get errors on missing var
-  EXPECT_THROW(metadata.GetMetaInt("invalid"), std::exception);
-  EXPECT_THROW(metadata.GetMetaUint("invalid"), std::exception);
-  EXPECT_THROW(metadata.GetMetaBool("invalid"), std::exception);
-  EXPECT_THROW(metadata.GetMetaString("invalid"), std::exception);
-  EXPECT_THROW(metadata.GetSchemaInt("invalid"), std::exception);
-  EXPECT_THROW(metadata.GetSchemaUint("invalid"), std::exception);
-  EXPECT_THROW(metadata.GetSchemaBool("invalid"), std::exception);
-  EXPECT_THROW(metadata.GetSchemaString("invalid"), std::exception);
+  EXPECT_FALSE(metadata.GetMetaInt("invalid", out_int));
+  EXPECT_FALSE(metadata.GetMetaUint("invalid", out_uint));
+  EXPECT_FALSE(metadata.GetMetaBool("invalid", out_bool));
+  EXPECT_FALSE(metadata.GetMetaString("invalid", out_string));
+  EXPECT_FALSE(metadata.GetSchemaInt("invalid", out_int));
+  EXPECT_FALSE(metadata.GetSchemaUint("invalid", out_uint));
+  EXPECT_FALSE(metadata.GetSchemaBool("invalid", out_bool));
+  EXPECT_FALSE(metadata.GetSchemaString("invalid", out_string));
   // Get error on wrong type
-  EXPECT_THROW(metadata.GetMetaInt("test_String"), std::exception);
-  EXPECT_THROW(metadata.GetMetaUint("test_String"), std::exception);
-  EXPECT_THROW(metadata.GetMetaBool("test_String"), std::exception);
-  EXPECT_THROW(metadata.GetMetaString("test_Bool"), std::exception);
-  EXPECT_THROW(metadata.GetSchemaInt("test_String"), std::exception);
-  EXPECT_THROW(metadata.GetSchemaUint("test_String"), std::exception);
-  EXPECT_THROW(metadata.GetSchemaBool("test_String"), std::exception);
-  EXPECT_THROW(metadata.GetSchemaString("test_Bool"), std::exception);
+  EXPECT_FALSE(metadata.GetMetaInt("test_String", out_int));
+  EXPECT_FALSE(metadata.GetMetaUint("test_String", out_uint));
+  EXPECT_FALSE(metadata.GetMetaBool("test_String", out_bool));
+  EXPECT_FALSE(metadata.GetMetaString("test_Bool", out_string));
+  EXPECT_FALSE(metadata.GetSchemaInt("test_String", out_int));
+  EXPECT_FALSE(metadata.GetSchemaUint("test_String", out_uint));
+  EXPECT_FALSE(metadata.GetSchemaBool("test_String", out_bool));
+  EXPECT_FALSE(metadata.GetSchemaString("test_Bool", out_string));
   // Get error on wrong type with optional
-  EXPECT_THROW(metadata.GetMetaIntOptional("test_String", 1),
-	       std::exception);
-  EXPECT_THROW(metadata.GetMetaUintOptional("test_String", 1u),
-	       std::exception);
-  EXPECT_THROW(metadata.GetMetaBoolOptional("test_String", true),
-	       std::exception);
-  EXPECT_THROW(metadata.GetMetaStringOptional("test_Bool", "a"),
-	       std::exception);
-  EXPECT_THROW(metadata.GetSchemaIntOptional("test_String", 1),
-	       std::exception);
-  EXPECT_THROW(metadata.GetSchemaUintOptional("test_String", 1u),
-	       std::exception);
-  EXPECT_THROW(metadata.GetSchemaBoolOptional("test_String", true),
-	       std::exception);
-  EXPECT_THROW(metadata.GetSchemaStringOptional("test_Bool", "a"),
-	       std::exception);
+  EXPECT_FALSE(metadata.GetMetaIntOptional("test_String", out_int, 1));
+  EXPECT_FALSE(metadata.GetMetaUintOptional("test_String", out_uint, 1u));
+  EXPECT_FALSE(metadata.GetMetaBoolOptional("test_String", out_bool, true));
+  EXPECT_FALSE(metadata.GetMetaStringOptional("test_Bool", out_string, "a"));
+  EXPECT_FALSE(metadata.GetSchemaIntOptional("test_String", out_int, 1));
+  EXPECT_FALSE(metadata.GetSchemaUintOptional("test_String", out_uint, 1u));
+  EXPECT_FALSE(metadata.GetSchemaBoolOptional("test_String", out_bool, true));
+  EXPECT_FALSE(metadata.GetSchemaStringOptional("test_Bool", out_string, "a"));
   // Get optional
-  EXPECT_EQ(metadata.GetMetaIntOptional("invalid", 1), 1);
-  EXPECT_EQ(metadata.GetMetaUintOptional("invalid", 1u), 1u);
-  EXPECT_EQ(metadata.GetMetaBoolOptional("invalid", true), true);
-  EXPECT_EQ(strcmp(metadata.GetMetaStringOptional("invalid", "a"), "a"), 0);
-  EXPECT_EQ(metadata.GetSchemaIntOptional("invalid", 1), 1);
-  EXPECT_EQ(metadata.GetSchemaUintOptional("invalid", 1u), 1u);
-  EXPECT_EQ(metadata.GetSchemaBoolOptional("invalid", true), true);
-  EXPECT_EQ(strcmp(metadata.GetSchemaStringOptional("invalid", "a"), "a"), 0);
-  EXPECT_THROW(metadata.SetValue("test_value", a,
-				 metadata.getMeta()["test_id1"]),
-	       std::exception);
-  EXPECT_TRUE(metadata.GetMetaBool("test_value"));
+  EXPECT_TRUE(metadata.GetMetaIntOptional("invalid", out_int, 1));
+  EXPECT_EQ(out_int, 1);
+  EXPECT_TRUE(metadata.GetMetaUintOptional("invalid", out_uint, 1u));
+  EXPECT_EQ(out_uint, 1u);
+  EXPECT_TRUE(metadata.GetMetaBoolOptional("invalid", out_bool, true));
+  EXPECT_EQ(out_bool, true);
+  EXPECT_TRUE(metadata.GetMetaStringOptional("invalid", out_string, "a"));
+  EXPECT_EQ(strcmp(out_string, "a"), 0);
+  EXPECT_TRUE(metadata.GetSchemaIntOptional("invalid", out_int, 1));
+  EXPECT_EQ(out_int, 1);
+  EXPECT_TRUE(metadata.GetSchemaUintOptional("invalid", out_uint, 1u));
+  EXPECT_EQ(out_uint, 1u);
+  EXPECT_TRUE(metadata.GetSchemaBoolOptional("invalid", out_bool, true));
+  EXPECT_EQ(out_bool, true);
+  EXPECT_TRUE(metadata.GetSchemaStringOptional("invalid", out_string, "a"));
+  EXPECT_EQ(strcmp(out_string, "a"), 0);
+  EXPECT_FALSE(metadata.SetValue("test_value", a,
+				 (*metadata.getMeta())["test_id1"]));
+  EXPECT_TRUE(metadata.GetMetaBool("test_value", out_bool));
+  EXPECT_TRUE(out_bool);
   rapidjson::Value c(false);
-  metadata.SetValue("test_value", c, metadata.getMeta());
-  EXPECT_FALSE(metadata.GetMetaBool("test_value"));
+  EXPECT_TRUE(metadata.SetValue("test_value", c, *metadata.getMeta()));
+  EXPECT_TRUE(metadata.GetMetaBool("test_value", out_bool));
+  EXPECT_FALSE(out_bool);
 }
 
 TEST(Metadata, components) {
@@ -145,66 +158,67 @@ TEST(Metadata, components) {
   // Array
   z.fromSchema("{\"type\": \"array\", "
 	       "\"items\": [{\"type\": \"integer\"}]}", true);
-  EXPECT_THROW(x.addItem(y), std::exception);
-  y.fromSchema("{\"type\": \"integer\"}");
-  EXPECT_THROW(x.addItem(y), std::exception);
-  x.fromSchema("{\"type\": \"array\"}");
-  x.addItem(y);
+  EXPECT_FALSE(x.addItem(y));
+  EXPECT_TRUE(y.fromSchema("{\"type\": \"integer\"}"));
+  EXPECT_FALSE(x.addItem(y));
+  EXPECT_TRUE(x.fromSchema("{\"type\": \"array\"}"));
+  EXPECT_TRUE(x.addItem(y));
   x.Display();
   z.Display();
   EXPECT_EQ(x, z);
   x.reset();
-  x.fromSchema("{\"type\": \"array\", "
-	       "\"items\": {\"type\": \"integer\"}}");
-  EXPECT_THROW(x.addItem(y), std::exception);
+  EXPECT_TRUE(x.fromSchema("{\"type\": \"array\", "
+			   "\"items\": {\"type\": \"integer\"}}"));
+  EXPECT_FALSE(x.addItem(y));
   // Object
   x.reset();
   y.reset();
   z.reset();
-  z.fromSchema("{\"type\": \"object\", "
-	       "\"properties\": {\"a\": {\"type\": \"integer\"}}}");
-  EXPECT_THROW(x.addMember("a", y), std::exception);
-  y.fromSchema("{\"type\": \"integer\"}");
-  EXPECT_THROW(x.addMember("a", y), std::exception);
-  x.fromSchema("{\"type\": \"object\"}");
-  x.addMember("a", y);
+  EXPECT_TRUE(z.fromSchema("{\"type\": \"object\", "
+			   "\"properties\": {\"a\": {\"type\": \"integer\"}}}"));
+  EXPECT_FALSE(x.addMember("a", y));
+  EXPECT_TRUE(y.fromSchema("{\"type\": \"integer\"}"));
+  EXPECT_FALSE(x.addMember("a", y));
+  EXPECT_TRUE(x.fromSchema("{\"type\": \"object\"}"));
+  EXPECT_TRUE(x.addMember("a", y));
   EXPECT_EQ(x, z);
-  x.addMember("a", y);
+  EXPECT_TRUE(x.addMember("a", y));
   EXPECT_EQ(x, z);
   // x.reset();
-  // x.fromSchema("{\"type\": \"object\", "
-  // 	       "\"properties\": [{\"a\": {\"type\": \"integer\"}}]}");
-  // EXPECT_THROW(x.addMember("a", y), std::exception);
+  // EXPECT_TRUE(x.fromSchema("{\"type\": \"object\", "
+  // 	       "\"properties\": [{\"a\": {\"type\": \"integer\"}}]}"));
+  // EXPECT_FALSE(x.addMember("a", y));
 }
 
 TEST(Metadata, fromSchema) {
   communication::utils::Metadata x;
-  x.setGeneric();
+  EXPECT_TRUE(x.setGeneric());
   EXPECT_TRUE(x.isGeneric());
-  x.fromSchema("{\"type\": \"integer\"}");
+  EXPECT_TRUE(x.fromSchema("{\"type\": \"integer\"}"));
   EXPECT_TRUE(x.isGeneric());
   communication::utils::Metadata y;
-  y.fromSchema(x.metadata, true);
+  EXPECT_TRUE(y.fromSchema(x.metadata, true));
   EXPECT_EQ(x.metadata, y.metadata);
-  y.fromSchema(x.getSchema());
+  EXPECT_TRUE(y.fromSchema(*(x.getSchema())));
   communication::utils::Metadata z;
-  z.fromSchema("{\"type\": \"string\"}");
-  EXPECT_THROW(y.fromSchema(z.getSchema()), std::exception);
+  EXPECT_TRUE(z.fromSchema("{\"type\": \"string\"}"));
+  EXPECT_FALSE(y.fromSchema(*(z.getSchema())));
   communication::utils::Metadata q;
-  q.fromType("string");
+  EXPECT_TRUE(q.fromType("string"));
   EXPECT_EQ(z.metadata, q.metadata);
 }
 
 TEST(Metadata, fromScalar) {
   communication::utils::Metadata x;
-  x.fromSchema("{"
+  EXPECT_TRUE(x.fromSchema(
+	       "{"
 	       "  \"type\": \"scalar\","
 	       "  \"subtype\": \"float\","
 	       "  \"precision\": 4,"
 	       "  \"units\": \"cm\""
-	       "}");
+	       "}"));
   communication::utils::Metadata y;
-  y.fromScalar("float", 4, "cm");
+  EXPECT_TRUE(y.fromScalar("float", 4, "cm"));
   EXPECT_EQ(x.metadata, y.metadata);
   std::cerr << x.metadata << std::endl;
   EXPECT_TRUE(y.hasType());
@@ -214,16 +228,17 @@ TEST(Metadata, fromScalar) {
 }
 TEST(Metadata, fromNDArray) {
   communication::utils::Metadata x;
-  x.fromSchema("{"
+  EXPECT_TRUE(x.fromSchema(
+	       "{"
 	       "  \"type\": \"ndarray\","
 	       "  \"subtype\": \"float\","
 	       "  \"precision\": 4,"
 	       "  \"shape\": [2, 3],"
 	       "  \"units\": \"cm\""
-	       "}");
+	       "}"));
   communication::utils::Metadata y;
   size_t shape[2] = { 2, 3 };
-  y.fromNDArray("float", 4, 2, shape, "cm");
+  EXPECT_TRUE(y.fromNDArray("float", 4, 2, shape, "cm"));
   EXPECT_EQ(x.metadata, y.metadata);
   EXPECT_TRUE(y.hasType());
   EXPECT_TRUE(y.hasSubtype());
@@ -232,39 +247,42 @@ TEST(Metadata, fromNDArray) {
   // No shape
   x.reset();
   y.reset();
-  x.fromSchema("{"
+  EXPECT_TRUE(x.fromSchema(
+	       "{"
 	       "  \"type\": \"ndarray\","
 	       "  \"subtype\": \"float\","
 	       "  \"precision\": 4,"
 	       "  \"ndim\": 2,"
 	       "  \"units\": \"cm\""
-	       "}");
-  y.fromNDArray("float", 4, 2, NULL, "cm");
+	       "}"));
+  EXPECT_TRUE(y.fromNDArray("float", 4, 2, NULL, "cm"));
   EXPECT_EQ(x, y);
   // Bytes
   x.reset();
   y.reset();
-  x.fromSchema("{"
+  EXPECT_TRUE(x.fromSchema(
+	       "{"
 	       "  \"type\": \"ndarray\","
 	       "  \"subtype\": \"string\","
 	       "  \"precision\": 4,"
 	       "  \"shape\": [2, 3],"
 	       "  \"units\": \"cm\""
-	       "}");
-  y.fromNDArray("bytes", 4, 2, shape, "cm");
+	       "}"));
+  EXPECT_TRUE(y.fromNDArray("bytes", 4, 2, shape, "cm"));
   EXPECT_EQ(x, y);
   // Unicode
   x.reset();
   y.reset();
-  x.fromSchema("{"
+  EXPECT_TRUE(x.fromSchema(
+	       "{"
 	       "  \"type\": \"ndarray\","
 	       "  \"subtype\": \"string\","
 	       "  \"precision\": 4,"
 	       "  \"shape\": [2, 3],"
 	       "  \"units\": \"cm\","
 	       "  \"encoding\": \"UTF8\""
-	       "}");
-  y.fromNDArray("unicode", 4, 2, shape, "cm");
+	       "}"));
+  EXPECT_TRUE(y.fromNDArray("unicode", 4, 2, shape, "cm"));
   EXPECT_EQ(x, y);
 }
 
@@ -273,7 +291,8 @@ TEST(Metadata, fromFormat) {
   {
     // Scalar
     communication::utils::Metadata x;
-    x.fromSchema("{"
+    EXPECT_TRUE(x.fromSchema(
+		 "{"
 		 "  \"type\": \"array\","
 		 "  \"items\": ["
 		 "    {"
@@ -292,16 +311,17 @@ TEST(Metadata, fromFormat) {
 		 "      \"precision\": 5"
 		 "    }"
 		 "  ]"
-		 "}");
+		 "}"));
     x.SetString("format_str", formatStr, x.metadata["serializer"]);
     communication::utils::Metadata y;
-    y.fromFormat(formatStr);
+    EXPECT_TRUE(y.fromFormat(formatStr));
     EXPECT_EQ(x.metadata, y.metadata);
   }
   {
     // Arrays
     communication::utils::Metadata x;
-    x.fromSchema("{"
+    EXPECT_TRUE(x.fromSchema(
+		 "{"
 		 "  \"type\": \"array\","
 		 "  \"items\": ["
 		 "    {"
@@ -320,10 +340,10 @@ TEST(Metadata, fromFormat) {
 		 "      \"precision\": 5"
 		 "    }"
 		 "  ]"
-		 "}");
+		 "}"));
     x.SetString("format_str", formatStr, x.metadata["serializer"]);
     communication::utils::Metadata y;
-    y.fromFormat(formatStr, true);
+    EXPECT_TRUE(y.fromFormat(formatStr, true));
     EXPECT_EQ(x.metadata, y.metadata);
     EXPECT_TRUE(y.isFormatArray());
   }
@@ -332,7 +352,8 @@ TEST(Metadata, fromFormat) {
     std::string fmt = "%hhi\t%hi\t%lli\t%l64i\t%li\t%i\t%hhu\t%hu\t%llu\t%l64u\t%lu\t%u\t%f%+fj\n";
     communication::utils::Metadata x;
 #ifdef _MSC_VER
-    x.fromSchema("{"
+    EXPECT_TRUE(x.fromSchema(
+	         "{"
 		 "  \"type\": \"array\","
 		 "  \"items\": ["
 		 "    {"
@@ -401,9 +422,10 @@ TEST(Metadata, fromFormat) {
 		 "      \"precision\": 16"
 		 "    }"
 		 "  ]"
-		 "}");
+		 "}"));
 #else // _MSC_VER
-    x.fromSchema("{"
+    EXPECT_TRUE(x.fromSchema(
+	         "{"
 		 "  \"type\": \"array\","
 		 "  \"items\": ["
 		 "    {"
@@ -472,18 +494,19 @@ TEST(Metadata, fromFormat) {
 		 "      \"precision\": 16"
 		 "    }"
 		 "  ]"
-		 "}");
+		 "}"));
 #endif // _MSC_VER
     x.SetString("format_str", fmt, x.metadata["serializer"]);
     communication::utils::Metadata y;
-    y.fromFormat(fmt);
+    EXPECT_TRUE(y.fromFormat(fmt));
     EXPECT_EQ(x.metadata, y.metadata);
   }
   {
     // Singular
     std::string fmt = "%d\n";
     communication::utils::Metadata x;
-    x.fromSchema("{"
+    EXPECT_TRUE(x.fromSchema(
+		 "{"
 		 "  \"type\": \"array\","
 		 "  \"allowSingular\": true,"
 		 "  \"items\": ["
@@ -493,29 +516,28 @@ TEST(Metadata, fromFormat) {
 		 "      \"precision\": 4"
 		 "    }"
 		 "  ]"
-		 "}");
+		 "}"));
     x.SetString("format_str", fmt, x.metadata["serializer"]);
     communication::utils::Metadata y;
-    y.fromFormat(fmt);
+    EXPECT_TRUE(y.fromFormat(fmt));
     EXPECT_EQ(x.metadata, y.metadata);
   }
   {
     // Error
     communication::utils::Metadata x;
-    EXPECT_THROW(x.fromFormat("%m"), std::exception);
+    EXPECT_FALSE(x.fromFormat("%m"));
   }
 }
 
 TEST(Metadata, fromMetadata) {
   communication::utils::Metadata x;
-  EXPECT_THROW(x.fromMetadata("{"), std::exception);
-  EXPECT_THROW(x.fromMetadata("\"hello\""), std::exception);
-  EXPECT_THROW(x.fromMetadata("{}"), std::exception);
-  EXPECT_THROW(x.fromMetadata("{\"__meta__\": \"hello\"}"),
-	       std::exception);
-  x.fromMetadata("{\"__meta__\": {}}");
+  EXPECT_FALSE(x.fromMetadata("{"));
+  EXPECT_FALSE(x.fromMetadata("\"hello\""));
+  EXPECT_FALSE(x.fromMetadata("{}"));
+  EXPECT_FALSE(x.fromMetadata("{\"__meta__\": \"hello\"}"));
+  EXPECT_TRUE(x.fromMetadata("{\"__meta__\": {}}"));
   communication::utils::Metadata y;
-  y.fromMetadata(x);
+  EXPECT_TRUE(y.fromMetadata(x));
   EXPECT_EQ(x.metadata, y.metadata);
 }
 
@@ -536,7 +558,7 @@ TEST(Metadata, deserialize_errors) {
   EXPECT_EQ(x.deserialize("true", 1, false, &dst), 1);
   EXPECT_EQ(dst, true);
   EXPECT_EQ(x.deserialize("true", 2, false, &dst, &dst2), -1);
-  x.fromSchema("{\"type\": \"boolean\"}");
+  EXPECT_TRUE(x.fromSchema("{\"type\": \"boolean\"}"));
   EXPECT_EQ(x.deserialize("{invalid:}", va), -1);
   EXPECT_EQ(x.deserialize("\"string\"", va), -1);
   EXPECT_EQ(x.deserialize("true", va), -1);
@@ -551,7 +573,7 @@ TEST(Metadata, serialize_errors) {
   char* buf = (char*)(x.GetAllocator().Malloc(sizeof(char)));
   size_t len = 1;
   EXPECT_EQ(x.serialize(&buf, &len, va), -1);
-  x.fromSchema("{\"type\": \"boolean\"}");
+  EXPECT_TRUE(x.fromSchema("{\"type\": \"boolean\"}"));
   EXPECT_EQ(x.serialize(&buf, &len, va), -1);
   EXPECT_EQ(x.serialize(&buf, &len, 2, true, false), -1);
   x.GetAllocator().Free(buf);
@@ -568,7 +590,7 @@ TEST(Metadata, serialize_errors) {
 // #ifdef ELF_AVAILABLE
 //   ELF_BEGIN;
 //   ELF_BEGIN_F(realloc);
-//   EXPECT_THROW(x.serialize(&buf, &len, 1, true), std::exception);
+//   EXPECT_EQ(x.serialize(&buf, &len, 1, true), -1);
 //   ELF_END_F(realloc);
 //   ELF_END;
 // #endif // ELF_AVAILABLE
@@ -577,16 +599,16 @@ TEST(Metadata, serialize_errors) {
 TEST(Header, Utilities) {
   communication::utils::Header header;
   rapidjson::StringBuffer buf;
-  header.formatBuffer(buf);
+  EXPECT_TRUE(header.formatBuffer(buf));
   EXPECT_EQ(buf.GetLength(), 0);
   EXPECT_EQ(header.format(), 0);
   EXPECT_TRUE(header == header);
   EXPECT_FALSE(header != header);
   communication::utils::Header header2;
-  header2.fromType("integer", false, false);
+  EXPECT_TRUE(header2.fromType("integer", false, false));
   EXPECT_FALSE(header == header2);
   EXPECT_TRUE(header != header2);
-  header.fromType("integer", false, false);
+  EXPECT_TRUE(header.fromType("integer", false, false));
   EXPECT_FALSE(header == header2);
   EXPECT_TRUE(header != header2);
   header.reset();
@@ -594,13 +616,13 @@ TEST(Header, Utilities) {
 
 TEST(Header, for_send) {
   communication::utils::Metadata schema;
-  schema.fromSchema("{\"type\": \"string\"}");
+  EXPECT_TRUE(schema.fromSchema("{\"type\": \"string\"}"));
   std::string msg = "This is a test message";
   setenv("YGG_MODEL_NAME", "model", 1);
   setenv("YGG_MODEL_COPY", "1", 1);
   communication::utils::Header header_send;
-  header_send.for_send(&schema, msg.c_str(), msg.size(), 0);
-  header_send.on_send();
+  EXPECT_TRUE(header_send.for_send(&schema, msg.c_str(), msg.size(), 0));
+  EXPECT_TRUE(header_send.on_send());
   communication::utils::Header header_recv;
   EXPECT_EQ(header_recv.on_recv(header_send.data[0],
 				header_send.size_curr),
@@ -614,9 +636,9 @@ TEST(Header, for_send) {
   EXPECT_EQ(strcmp(header_recv.data[0], msg.c_str()), 0);
   // Header equality
   communication::utils::Header header_send2;
-  header_send2.for_send(&schema, msg.c_str(), msg.size(), 0);
-  header_send2.fromMetadata(header_send);
-  header_send2.on_send();
+  EXPECT_TRUE(header_send2.for_send(&schema, msg.c_str(), msg.size(), 0));
+  EXPECT_TRUE(header_send2.fromMetadata(header_send));
+  EXPECT_TRUE(header_send2.on_send());
   communication::utils::Header header_recv2(true);
   EXPECT_EQ(header_recv2.on_recv(header_send2.data[0],
 				 header_send2.size_curr),
@@ -627,8 +649,8 @@ TEST(Header, for_send) {
   // Received message larger than buffer
   std::string msg3(2048, 'a');
   communication::utils::Header header_send3;
-  header_send3.for_send(&schema, msg3.c_str(), msg3.size(), 0);
-  header_send3.on_send();
+  EXPECT_TRUE(header_send3.for_send(&schema, msg3.c_str(), msg3.size(), 0));
+  EXPECT_TRUE(header_send3.on_send());
   size_t size_buf3 = header_send3.size_curr - 1000;
   char* buf3 = (char*)malloc(size_buf3);
   communication::utils::Header header_recv3(buf3, size_buf3, false);

@@ -12,7 +12,7 @@ using namespace communication::mock;
 
 TEST(DefaultCommu, checkTypeErrors) {
   DefaultComm x("", nullptr, SEND);
-  x.addSchema("{\"type\": \"boolean\"}");
+  EXPECT_TRUE(x.addSchema("{\"type\": \"boolean\"}"));
   {
     double data = 5.0;
     EXPECT_EQ(x.sendVar(data), -1);

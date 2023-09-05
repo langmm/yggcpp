@@ -87,42 +87,42 @@ public:
     _update_schema();
     return true;
   }
-  void _init(bool use_generic = false);
+  bool _init(bool use_generic = false);
   void reset();
-  void fromSchema(const rapidjson::Value& new_schema,
+  bool fromSchema(const rapidjson::Value& new_schema,
 		  bool isMetadata = false, bool use_generic = false);
-  void Normalize();
-  void fromSchema(const std::string schemaStr, bool use_generic = false);
+  bool Normalize();
+  bool fromSchema(const std::string schemaStr, bool use_generic = false);
   template<typename T>
-  void fromData(const T& data) {
+  bool fromData(const T& data) {
     rapidjson::Document d;
     d.Set(data, d.GetAllocator());
-    fromData(d, true);
+    return fromData(d, true);
   }
-  void fromData(const rapidjson::Document& data, bool indirect=false);
-  void fromType(const std::string type, bool use_generic=false,
+  bool fromData(const rapidjson::Document& data, bool indirect=false);
+  bool fromType(const std::string type, bool use_generic=false,
 		bool dont_init = false);
-  void fromScalar(const std::string subtype, size_t precision,
+  bool fromScalar(const std::string subtype, size_t precision,
 		  const char* units=NULL, bool use_generic=false);
-  void fromNDArray(const std::string subtype, size_t precision,
+  bool fromNDArray(const std::string subtype, size_t precision,
 		   const size_t ndim=0, const size_t* shape=NULL,
 		   const char* units=NULL, bool use_generic=false);
-  void _fromNDArray(const std::string subtype, size_t precision,
+  bool _fromNDArray(const std::string subtype, size_t precision,
 		    const size_t ndim=0, const size_t* shape=NULL,
 		    const char* units=NULL, bool use_generic=false,
 		    rapidjson::Value* subSchema = NULL);
-  void fromFormat(const std::string& format_str,
+  bool fromFormat(const std::string& format_str,
 		  bool as_array = false, bool use_generic = false);
-  void fromMetadata(const Metadata& other, bool use_generic = false);
-  void fromMetadata(const char* head, const size_t headsiz,
+  bool fromMetadata(const Metadata& other, bool use_generic = false);
+  bool fromMetadata(const char* head, const size_t headsiz,
 		    bool use_generic = false);
-  void fromMetadata(const std::string& head, bool use_generic = false);
-  void fromEncode(const rapidjson::Value& document,
+  bool fromMetadata(const std::string& head, bool use_generic = false);
+  bool fromEncode(const rapidjson::Value& document,
 		  bool use_generic = false);
-  void fromEncode(PyObject* pyobj, bool use_generic = false);
+  bool fromEncode(PyObject* pyobj, bool use_generic = false);
   rapidjson::Document::AllocatorType& GetAllocator();
   bool isGeneric() const;
-  void setGeneric();
+  bool setGeneric();
   bool isFormatArray() const;
   bool empty() const;
   bool hasType() const;
@@ -135,47 +135,64 @@ public:
 	       rapidjson::Value* subSchema=nullptr);
   bool addMember(const std::string name, const Metadata& other,
 		 rapidjson::Value* subSchema=nullptr);
-  rapidjson::Value& getMeta();
-  const rapidjson::Value& getMeta() const;
-  rapidjson::Value& getSchema();
-  const rapidjson::Value& getSchema() const;
-  void SetValue(const std::string name, rapidjson::Value& x,
+  rapidjson::Value* getMeta();
+  const rapidjson::Value* getMeta() const;
+  rapidjson::Value* getSchema();
+  const rapidjson::Value* getSchema() const;
+  bool SetValue(const std::string name, rapidjson::Value& x,
 		rapidjson::Value& subSchema);
-#define GET_SET_METHOD_(type_in, type_out, method, setargs)		\
-  type_out Get ## method(const std::string name,			\
-			 const rapidjson::Value& subSchema) const;	\
-  type_out Get ## method ## Optional(const std::string name,		\
-				     type_out defV,			\
-				     const rapidjson::Value& subSchema	\
+#define GET_METHOD_(type_out, method)					\
+  bool Get ## method(const std::string name,				\
+		     type_out& out,					\
+		     const rapidjson::Value& subSchema			\
+		     ) const;						\
+  bool Get ## method ## Optional(const std::string name,		\
+				 type_out& out,				\
+				 type_out defV,				\
+				 const rapidjson::Value& subSchema	\
+				 ) const;				\
+  bool GetMeta ## method(const std::string name,			\
+			     type_out& out) const;			\
+  bool GetMeta ## method ## Optional(const std::string name,		\
+				     type_out& out,			\
+				     type_out defV			\
 				     ) const;				\
-  void Set ## method(const std::string name, type_in x,			\
+  bool GetSchema ## method(const std::string name,			\
+			   type_out& out,				\
+			   const rapidjson::Value* subSchema = NULL	\
+			   ) const;					\
+  bool GetSchema ## method ## Optional(const std::string name,		\
+				       type_out& out,			\
+				       type_out defV,			\
+				       const rapidjson::Value* subSchema = NULL) const
+#define SET_METHOD_(type_in, method, setargs)				\
+  bool Set ## method(const std::string name, type_in x,			\
 		     rapidjson::Value& subSchema);			\
-  type_out GetMeta ## method(const std::string name) const;		\
-  type_out GetMeta ## method ## Optional(const std::string name,	\
-					 type_out defV) const;		\
-  void SetMeta ## method(const std::string name, type_in x);		\
-  type_out GetSchema ## method(const std::string name,			\
-			       rapidjson::Value* subSchema = NULL	\
-			       ) const;					\
-  type_out GetSchema ## method ## Optional(const std::string name,	\
-					   type_out defV,		\
-					   rapidjson::Value* subSchema = NULL) const; \
-  void SetSchema ## method(const std::string name, type_in x,		\
+  bool SetMeta ## method(const std::string name, type_in x);		\
+  bool SetSchema ## method(const std::string name, type_in x,		\
 			   rapidjson::Value* subSchema = NULL)
+#define GET_SET_METHOD_(type_in, type_out, method, setargs)		\
+  GET_METHOD_(type_out, method);					\
+  SET_METHOD_(type_in, method, setargs)
   GET_SET_METHOD_(int, int, Int, (x));
   GET_SET_METHOD_(uint64_t, uint64_t, Uint, (x));
   GET_SET_METHOD_(bool, bool, Bool, (x));
   GET_SET_METHOD_(const std::string&, const char*, String,
 		  (x.c_str(), (rapidjson::SizeType)(x.size()),
 		   metadata.GetAllocator()));
+  GET_METHOD_(unsigned, Uint);
+  GET_METHOD_(int32_t, Uint);
+  GET_METHOD_(std::string, String);
 #undef GET_SET_METHOD_
-  void SetMetaValue(const std::string name, rapidjson::Value& x);
-  void SetSchemaValue(const std::string name, rapidjson::Value& x,
+#undef GET_METHOD_
+#undef SET_METHOD_
+  bool SetMetaValue(const std::string name, rapidjson::Value& x);
+  bool SetSchemaValue(const std::string name, rapidjson::Value& x,
 		      rapidjson::Value* subSchema = NULL);
-  void SetSchemaMetadata(const std::string name,
+  bool SetSchemaMetadata(const std::string name,
 			 const Metadata& other);
-  void SetMetaID(const std::string name, const char** id=NULL);
-  void SetMetaID(const std::string name, std::string& id);
+  bool SetMetaID(const std::string name, const char** id=NULL);
+  bool SetMetaID(const std::string name, std::string& id);
   int deserialize(const char* buf, size_t nargs, int allow_realloc, ...);
   int deserialize(const char* buf, rapidjson::VarArgList& ap);
   int serialize(char **buf, size_t *buf_siz, size_t nargs, ...);
@@ -278,8 +295,9 @@ public:
     @param[in] len Size of message in buffer.
     @param[in] comm_flags Bit flags describing the communicator that will
       send the message.
+    @returns true on success, false on failure.
   */
-  void for_send(Metadata* metadata0, const char* msg, const size_t len,
+  bool for_send(Metadata* metadata0, const char* msg, const size_t len,
 		int comm_flags);
   /*!
     @brief Format data and set flags for the message.
@@ -304,7 +322,7 @@ public:
    */
   long on_recv(const char* msg, const size_t& msg_siz);
 
-  void formatBuffer(rapidjson::StringBuffer& buffer, bool metaOnly=false);
+  bool formatBuffer(rapidjson::StringBuffer& buffer, bool metaOnly=false);
   void Display(const char* indent="") const;
   int format();
   bool finalize_recv();

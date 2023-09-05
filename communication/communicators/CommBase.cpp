@@ -202,21 +202,23 @@ bool Comm_t::get_global_scope_comm() {
   return true;
 }
   
-void Comm_t::addSchema(const Metadata& s) {
-  getMetadata().fromMetadata(s);
+bool Comm_t::addSchema(const Metadata& s) {
+  return getMetadata().fromMetadata(s);
 }
-void Comm_t::addSchema(const rapidjson::Value& s, bool isMetadata) {
-  getMetadata().fromSchema(s, isMetadata);
+bool Comm_t::addSchema(const rapidjson::Value& s, bool isMetadata) {
+  return getMetadata().fromSchema(s, isMetadata);
 }
-void Comm_t::addSchema(const std::string& schemaStr, bool isMetadata) {
-  getMetadata().fromSchema(schemaStr, isMetadata);
+bool Comm_t::addSchema(const std::string& schemaStr, bool isMetadata) {
+  return getMetadata().fromSchema(schemaStr, isMetadata);
 }
-void Comm_t::addFormat(const std::string& format_str, bool as_array) {
-  getMetadata().fromFormat(format_str, as_array);
+bool Comm_t::addFormat(const std::string& format_str, bool as_array) {
+  return getMetadata().fromFormat(format_str, as_array);
 }
-void Comm_t::copySchema(const Comm_t* other) {
-  if (other->metadata.hasType())
-    getMetadata().fromMetadata(other->metadata);
+bool Comm_t::copySchema(const Comm_t* other) {
+  if (other->metadata.hasType()) {
+    return getMetadata().fromMetadata(other->metadata);
+  }
+  return true;
 }
 
 bool Comm_t::check_size(const size_t &len) const {
@@ -289,7 +291,8 @@ Comm_t* Comm_t::create_worker_send(Header& head) {
   assert(!global_comm);
   Comm_t* worker = workers.get(this, SEND);
   if (worker && worker->address) {
-    head.SetMetaString("address", worker->address->address());
+    if (!head.SetMetaString("address", worker->address->address()))
+      return nullptr;
   }
   return worker;
 }
@@ -301,7 +304,9 @@ Comm_t* Comm_t::create_worker_recv(Header& head) {
   assert(!global_comm);
   ygglog_debug << "CommBase(" << name << ")::create_worker_recv: begin" << std::endl;
   try {
-    const char* address = head.GetMetaString("address");
+    const char* address;
+    if (!head.GetMetaString("address", address))
+      return nullptr;
     Address* adr = new Address(address);
     return workers.get(this, RECV, adr);
   } catch (...) {
@@ -333,12 +338,10 @@ int Comm_t::send(const char *data, const size_t &len) {
     ygglog_error << "CommBase(" << name << ")::send: Failed to create header" << std::endl;
     return -1;
   }
-  std::cerr << "Before format" << std::endl;
   if (head.format() < 0) {
     ygglog_error << "CommBase(" << name << ")::send: Error formatting message with header." << std::endl;
     return -1;
   }
-  std::cerr << "After format" << std::endl;
   Comm_t* xmulti = NULL;
   if (head.flags & HEAD_FLAG_MULTIPART) {
     ygglog_debug << "CommBase(" << name << ")::send: Sending message in multiple parts" << std::endl;
@@ -570,14 +573,16 @@ communication::utils::Metadata& Comm_t::getMetadata(const DIRECTION dir) {
     return global_comm->getMetadata(dir);
   return metadata;
 }
+// bool Comm_t::hasMetadata(const DIRECTION dir) {
+//   if (global_comm)
+//     return global_comm->getMetadata(dir);
+  
+// }
 int Comm_t::update_datatype(const rapidjson::Value& new_schema,
 			    const DIRECTION dir) {
   communication::utils::Metadata& meta = getMetadata(dir);
-  try {
-    meta.fromSchema(new_schema);
-  } catch (...) {
+  if (!meta.fromSchema(new_schema))
     return -1;
-  }
   return 1;
 }
 
@@ -651,9 +656,7 @@ int Comm_t::vSend(rapidjson::VarArgList& ap) {
   size_t nargs_orig = ap.get_nargs();
   char* buf = NULL;
   size_t buf_siz = 0;
-  std::cerr << "Before serialize" << std::endl;
   int ret = serialize(buf, buf_siz, ap);
-  std::cerr << "After serialize: " << ret << std::endl;
   if (ret < 0) {
     ygglog_error << "CommBase(" << name << ")::vSend: serialization error" << std::endl;
     return ret;

@@ -35,7 +35,8 @@ bool ServerComm::create_header_send(utils::Header& header) {
     ygglog_error << "ServerComm(" << name << ")::create_header_send: Failed to get response comm" << std::endl;
     return false;
   }
-  requests.transferSchemaTo(response_comm);
+  if (!requests.transferSchemaTo(response_comm))
+    return false;
   bool out = response_comm->create_header_send(header);
   if ((!out) || header.flags & HEAD_FLAG_EOF)
     return out;
@@ -43,8 +44,6 @@ bool ServerComm::create_header_send(utils::Header& header) {
     ygglog_error << "ServerComm(" << name << ")::create_header_send: Failed to add response" << std::endl;
     return false;
   }
-  // This gives the server access to the ID of the message last received
-  // header.SetMetaString("id", address);
   return true;
 }
 

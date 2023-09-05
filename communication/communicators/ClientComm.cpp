@@ -113,7 +113,9 @@ Comm_t* ClientComm::create_worker_send(Header& head) {
   Comm_t* out = COMM_BASE::create_worker_send(head);
   // create_worker_send only called after create_header_send ensuring
   //   request_id is present
-  std::string request_id(head.GetMetaString("request_id"));
+  std::string request_id;
+  if (!head.GetMetaString("request_id", request_id))
+    return nullptr;
   if (!workers.setRequest(out, request_id)) {
     ygglog_error << "ClientComm(" << name << ")::create_worker_send: Failed to set request on worker" << std::endl;
     return nullptr;
@@ -130,7 +132,9 @@ Comm_t* ClientComm::create_worker_recv(Header& head) {
   ygglog_debug << "ClientComm(" << name << ")::create_worker_recv: begin" << std::endl;
   // create_worker_recv only called after create_header_recv, ensuring
   //   request_id is present
-  std::string request_id(head.GetMetaString("request_id"));
+  std::string request_id;
+  if (!head.GetMetaString("request_id", request_id))
+    return nullptr;
   if (!workers.setResponse(request_id)) {
     ygglog_error << "ClientComm(" << name << ")::create_worker_recv: Failed to clear request on worker (request_id = " << request_id << ")" << std::endl;
     return nullptr;
@@ -182,7 +186,8 @@ long ClientComm::recv_single(utils::Header& header) {
 	  if (!(response_header.flags & HEAD_FLAG_EOF)) {
 	    if (requests.addResponseClient(response_header) < 0)
 	      return -1;
-	    requests.transferSchemaFrom(response_comm);
+	    if (!requests.transferSchemaFrom(response_comm))
+	      return -1;
 	  }
 	} else {
 	  ygglog_debug << "ClientComm(" << name << ")::recv_single: No response to oldest request (address = " << response_comm->address->address() << "), sleeping" << std::endl;
