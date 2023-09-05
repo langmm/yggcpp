@@ -181,7 +181,7 @@ jobs:
       - name: Global config flags
         shell: bash -l {0}
         run: |
-          echo "CONFIG_FLAGS=-DYGG_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DBUILD_FORTRAN_LIBRARY=ON -DBUILD_PYTHON_LIBRARY=OFF -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/_install -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON" >> "$GITHUB_ENV"
+          echo "CONFIG_FLAGS=-DYGG_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DBUILD_PYTHON_LIBRARY=OFF -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/_install -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON" >> "$GITHUB_ENV"
           echo "TEST_FLAGS=-C Debug --output-on-failure -VV" >> "$GITHUB_ENV"
           echo "PYTHON_CMAKE_ARGS=" >> "$GITHUB_ENV"
       - name: Coverage config flags
@@ -197,6 +197,11 @@ jobs:
           echo "PYTHON_CMAKE_ARGS=${{ env.PYTHON_CMAKE_ARGS }} -DYGG_BUILD_ASAN=ON -DYGG_BUILD_UBSAN=ON" >> "$GITHUB_ENV"
           echo "ASAN_OPTIONS=detect_odr_violation=0:detect_container_overflow=0" >> $GITHUB_ENV
           echo "TEST_FLAGS=${{ env.TEST_FLAGS }} -E valgrind*" >> "$GITHUB_ENV"
+      - name: Fortran config flags
+        if: matrix.with-asan == false
+        shell: bash -l {0}
+        run: |
+          echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DBUILD_FORTRAN_LIBRARY=ON" >> "$GITHUB_ENV"
       - name: ASAN dynamic library
         if: matrix.with-asan == true && matrix.os == 'macos-latest'
         shell: bash -l {0}

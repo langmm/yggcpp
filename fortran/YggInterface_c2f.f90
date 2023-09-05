@@ -334,18 +334,20 @@ end subroutine yggptr_c2f_scalar_character
 subroutine yggptr_c2f_array_character(x)
   implicit none
   type(yggptr) :: x
-  character, dimension(:), pointer :: xarr_character
+  ! character, dimension(:), pointer :: xarr_character
   integer(kind=8) :: i, j
+  write(*,*) "yggptr_c2f_array_character"
   select type(item=>x%item_array)
   type is (character(*))
-     xarr_character => item
+     ! xarr_character => item
      do i = 1, x%len
         do j = 1, x%prec
-           xarr_character(i)(j:j) = x%data_character_unit(&
+           item(i)(j:j) = x%data_character_unit(&
                 (i - 1) * x%prec + j)
         end do
-        do j = (x%prec + 1), len(xarr_character(i))
-           xarr_character(i)(j:j) = ' '
+        write(*,*) "yggptr_c2f_array_character", i, len(item(i))
+        do j = (x%prec + 1), len(item(i))
+           item(i)(j:j) = ' '
         end do
      end do
      deallocate(x%data_character_unit)
