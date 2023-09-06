@@ -261,6 +261,8 @@ Comm_t* communication::communicator::new_Comm_t(const DIRECTION dir, const COMM_
     return new ServerComm(name, addr, flags);
   case CLIENT_COMM:
     return new ClientComm(name, addr, flags);
+  case FILE_COMM:
+    return new FileComm(name, addr, dir, flags);
   }
   return nullptr;
 }
@@ -280,6 +282,8 @@ bool communication::communicator::is_commtype_installed(const COMM_TYPE type) {
     return ServerComm::isInstalled();
   case CLIENT_COMM:
     return ClientComm::isInstalled();
+  case FILE_COMM:
+    return FileComm::isInstalled();
   }
   return false;
 }

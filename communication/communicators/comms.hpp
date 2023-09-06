@@ -8,3 +8,4 @@
 #include "ServerComm.hpp"
 #include "ZMQComm.hpp"
 #include "AsyncComm.hpp"
+#include "FileComm.hpp"

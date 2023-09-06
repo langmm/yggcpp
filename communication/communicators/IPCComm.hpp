@@ -43,16 +43,8 @@ public:
 
 #ifdef IPCINSTALLED
 
-    int check_key(int key);
-
     /*! \copydoc Comm_t::close */
     void close() override;
-
-    /**
-     * Add a new channel to the list of channels
-     * @return
-     */
-    void add_channel();
 
     /**
      * Remove the given ipc queue
@@ -87,12 +79,8 @@ protected:
 private:
     friend class ClientComm;
     friend class ServerComm;
-    /*! @brief Names of channels in use. */
-    static int _yggChannelNames[_yggTrackChannels];
-    /*! @brief Number of channels in use. */
-    static unsigned _yggChannelsUsed;
-    static bool _ipc_rand_seeded;
-
+    ADD_KEY_TRACKER_DECS;
+  
 };
 
 }

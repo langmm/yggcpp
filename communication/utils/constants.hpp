@@ -36,5 +36,6 @@
 /*! @brief Size of COMM buffer. */
 #define COMMBUFFSIZ 2000
 #define FMT_LEN 100
+#define MAX_KEYS_ALLOWED 256
 
 #endif // YGGCONSTANTS_H_

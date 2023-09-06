@@ -43,22 +43,25 @@ const int COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
 
 #define UNINSTALLED_ERROR(name)					\
   utils::ygglog_throw_error("Compiler flag '" #name "INSTALLED' not defined so " #name " bindings are disabled")
-#define ADD_CONSTRUCTORS(T)						\
-  explicit T ## Comm(const std::string nme,				\
-		     const DIRECTION dirn,				\
-		     int flgs = 0, const COMM_TYPE type = T ## _COMM);	\
-  explicit T ## Comm(utils::Address *addr,				\
-		     const DIRECTION dirn,				\
-		     int flgs = 0, const COMM_TYPE type = T ## _COMM);	\
-  static bool isInstalled() { return T ## _INSTALLED_FLAG; }		\
-  static COMM_TYPE defaultCommType() { return T ## _COMM; }		\
-  ~T ## Comm() {							\
-    ygglog_debug << "~" #T "Comm: Started" << std::endl;		\
+
+#define ADD_CONSTRUCTORS_BASE(cls, typ, flag)				\
+  explicit cls(const std::string nme,					\
+	       const DIRECTION dirn,					\
+	       int flgs = 0, const COMM_TYPE type = typ);		\
+  explicit cls(utils::Address *addr,					\
+	       const DIRECTION dirn,					\
+	       int flgs = 0, const COMM_TYPE type = typ);		\
+  static bool isInstalled() { return flag; }				\
+  static COMM_TYPE defaultCommType() { return typ; }			\
+  ~cls() {								\
+    ygglog_debug << "~" #cls ": Started" << std::endl;			\
     if (!is_closed()) {							\
       close();								\
     }									\
-    ygglog_debug << "~" #T "Comm: Finished" << std::endl;		\
+    ygglog_debug << "~" #cls ": Finished" << std::endl;			\
   }
+#define ADD_CONSTRUCTORS(T)			\
+  ADD_CONSTRUCTORS_BASE(T ## Comm, T ## _COMM, T ## _INSTALLED_FLAG)
 
 #define ADD_CONSTRUCTORS_DEF(cls)		\
   cls::cls(const std::string nme,		\
@@ -95,6 +98,69 @@ const int COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
     abbr ## _install_error();					\
     return NULL;						\
   }
+#define ADD_KEY_TRACKER_DECS			\
+  private:					\
+  int check_key(int key);			\
+  int track_key(int key);			\
+  int untrack_key(int key);			\
+  static int _keysUsed[MAX_KEYS_ALLOWED];	\
+  static unsigned _NkeysUsed;			\
+  static bool _rand_seeded
+#define ADD_KEY_TRACKER_DEFS(cls)					\
+  int cls::_keysUsed[MAX_KEYS_ALLOWED];					\
+  unsigned cls::_NkeysUsed = 0;						\
+  bool cls::_rand_seeded = false;					\
+  int cls::check_key(int key) {						\
+    unsigned i;								\
+    int error_code = 0;							\
+    YGG_THREAD_SAFE_BEGIN(cls) {					\
+      for (i = 0; i < cls::_NkeysUsed; i++ ) {				\
+	if (cls::_keysUsed[i] == key) {					\
+	  error_code = -static_cast<int>(i);				\
+	  break;							\
+	}								\
+      }									\
+      /* Fail if > _yggTrackChannels channels used */			\
+    } YGG_THREAD_SAFE_END;						\
+    return error_code;							\
+  }									\
+  int cls::track_key(int key) {						\
+    YGG_THREAD_SAFE_BEGIN(cls) {					\
+      if (cls::_NkeysUsed++ >= MAX_KEYS_ALLOWED) {			\
+	ygglog_error << "Too many channels in use, max: " << MAX_KEYS_ALLOWED << std::endl; \
+	return -1;							\
+      }									\
+      cls::_keysUsed[cls::_NkeysUsed] = key;				\
+    } YGG_THREAD_SAFE_END;						\
+    return 0;								\
+  }									\
+  int cls::untrack_key(int key) {					\
+    int ret = 0; /* -1; */						\
+    unsigned i;								\
+    YGG_THREAD_SAFE_BEGIN(cls) {					\
+      for (i = 0; i < cls::_NkeysUsed; i++) {				\
+	if (key == cls::_keysUsed[i]) {					\
+	  memmove(cls::_keysUsed + i, cls::_keysUsed + i + 1,		\
+		  (MAX_KEYS_ALLOWED - (i + 1))*sizeof(int));		\
+	  cls::_NkeysUsed--;						\
+	  ret = 0;							\
+	  break;							\
+	}								\
+      }									\
+    } YGG_THREAD_SAFE_END;						\
+    return ret;								\
+  }
+#define CREATE_KEY(cls)				\
+  YGG_THREAD_SAFE_BEGIN(cls) {			\
+    if (!cls::_rand_seeded) {			\
+      std::srand(ptr2seed(this));		\
+      cls::_rand_seeded = true;			\
+    }						\
+  } YGG_THREAD_SAFE_END;			\
+  while (key == 0 || check_key(key) < 0) {	\
+    key = std::rand();				\
+  }
+
 
 using namespace rapidjson;
 

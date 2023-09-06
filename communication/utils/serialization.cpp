@@ -1132,7 +1132,9 @@ int Header::on_send(bool dont_advance) {
     return -1;
   if (!((flags & HEAD_FLAG_ASYNC) || dont_advance)) {
     offset += size_msg;
-    size_msg = std::min(size_curr - offset, size_max);
+    size_msg = size_curr - offset;
+    if (size_max > 0)
+      size_msg = std::min(size_msg, size_max);
   }
   ygglog_debug << "Header::on_send: size_msg = " << size_msg << std::endl;
   return size_curr;

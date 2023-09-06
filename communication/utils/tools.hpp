@@ -279,7 +279,7 @@ static int global_thread_id = -1;
   YGG_THREAD_MUTEX(clean)
   YGG_THREAD_MUTEX(client)
   YGG_THREAD_MUTEX(comms)
-  YGG_THREAD_MUTEX(ipc)
+  YGG_THREAD_MUTEX(IPCComm)
   YGG_THREAD_MUTEX(zmq)
   YGG_THREAD_MUTEX(zmqport)
 #undef YGG_THREAD_MUTEX

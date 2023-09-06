@@ -5,10 +5,6 @@
 using namespace communication::communicator;
 using namespace communication::utils;
 
-unsigned IPCComm::_yggChannelsUsed = 0;
-int IPCComm::_yggChannelNames[_yggTrackChannels];
-bool IPCComm::_ipc_rand_seeded = false;
-
 IPCComm::IPCComm(const std::string name, Address *address,
 		 DIRECTION direction, int flgs,
 		 const COMM_TYPE type) :
@@ -26,15 +22,7 @@ void IPCComm::init() {
     int key = 0;
     bool created = ((!address) || address->address().empty());
     if (created) {
-      YGG_THREAD_SAFE_BEGIN(ipc) {
-	if (!_ipc_rand_seeded) {
-	  std::srand(ptr2seed(this));
-	  _ipc_rand_seeded = true;
-	}
-      } YGG_THREAD_SAFE_END;
-      while (key == 0 || check_key(key) < 0) {
-        key = std::rand();
-      }
+      CREATE_KEY(IPCComm);
       if (!address) {
         address = new utils::Address(std::to_string(key));
       } else {
@@ -62,7 +50,7 @@ void IPCComm::init() {
 	throw std::runtime_error("IPCComm::init: Error in msgget");
     }
     handle = fid;
-    add_channel();
+    track_key(address->key());
     ygglog_debug << "IPCComm(" << name << ")::init: address = " << this->address->address() << ", created = " << created << std::endl;
     CommBase::init();
 }
@@ -83,40 +71,7 @@ void IPCComm::close() {
     CommBase::close();
 }
 
-/*!
-  @brief Check if an IPC channel is in use
-  @returns int <0 if the channel is already in use
- */
-int IPCComm::check_key(int key) {
-    // Fail if trying to re-use the same channel twice
-    unsigned i;
-    int error_code = 0;
-    YGG_THREAD_SAFE_BEGIN(ipc) {
-    for (i = 0; i < _yggChannelsUsed; i++ ) {
-        if (IPCComm::_yggChannelNames[i] == key) {
-	    error_code = -static_cast<int>(i);
-            break;
-        }
-    }
-    // Fail if > _yggTrackChannels channels used
-
-    } YGG_THREAD_SAFE_END;
-    return error_code;
-}
-
-/*!
-  @brief Add a new channel to the list of existing channels.
-*/
-
-void IPCComm::add_channel() {
-  YGG_THREAD_SAFE_BEGIN(ipc) {
-  // printf("add_channel(%s): %d, %s\n", comm->name, _yggChannelsUsed, comm->address);
-    if (IPCComm::_yggChannelsUsed++ >= _yggTrackChannels) {
-      ygglog_error << "Too many channels in use, max: " << _yggTrackChannels << std::endl;
-    }
-    IPCComm::_yggChannelNames[IPCComm::_yggChannelsUsed] = address->key();
-  } YGG_THREAD_SAFE_END;
-}
+ADD_KEY_TRACKER_DEFS(IPCComm)
 
 /*!
   @brief Remove a channel.
@@ -127,31 +82,11 @@ void IPCComm::add_channel() {
 */
 
 int IPCComm::remove_comm(bool close_comm) {
-    int ret = 0;
     if (close_comm) {
         ygglog_debug << "IPCComm(" << name << ")::Closing queue: " << handle[0] << std::endl;
         msgctl(handle[0], IPC_RMID, nullptr);
     }
-    // ret = -1;
-    unsigned i;
-    int ich = address->key();
-    YGG_THREAD_SAFE_BEGIN(ipc) {
-      for (i = 0; i < IPCComm::_yggChannelsUsed; i++) {
-        if (ich == IPCComm::_yggChannelNames[i]) {
-	  memmove(IPCComm::_yggChannelNames + i, IPCComm::_yggChannelNames + i + 1,
-		  (_yggTrackChannels - (i + 1))*sizeof(int));
-	  IPCComm::_yggChannelsUsed--;
-	  ret = 0;
-	  break;
-        }
-      }
-      // This likely occurs when both the send & receive comms are called
-      //   from the same process
-      // if (ret < 0) {
-      //     ygglog_debug << "remove_comm(" << name << "): Could not locate comm in register." << std::endl;
-      // }
-    } YGG_THREAD_SAFE_END;
-    return ret;
+    return untrack_key(address->key());
 }
 
 int IPCComm::comm_nmsg(DIRECTION dir) const {
