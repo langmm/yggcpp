@@ -125,14 +125,16 @@ const int COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
     return error_code;							\
   }									\
   int cls::track_key(int key) {						\
+    int ret = 0;							\
     YGG_THREAD_SAFE_BEGIN(cls) {					\
       if (cls::_NkeysUsed++ >= MAX_KEYS_ALLOWED) {			\
 	ygglog_error << "Too many channels in use, max: " << MAX_KEYS_ALLOWED << std::endl; \
-	return -1;							\
+	ret = -1;							\
+      } else {								\
+	cls::_keysUsed[cls::_NkeysUsed] = key;				\
       }									\
-      cls::_keysUsed[cls::_NkeysUsed] = key;				\
     } YGG_THREAD_SAFE_END;						\
-    return 0;								\
+    return ret;								\
   }									\
   int cls::untrack_key(int key) {					\
     int ret = 0; /* -1; */						\
