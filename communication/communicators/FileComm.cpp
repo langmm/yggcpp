@@ -74,6 +74,8 @@ void FileComm::refresh() const {
   // handle->close();
   // handle->open(this->address->address().c_str(), mode);
   // handle->seekg(pos, handle->beg);
+  if (handle->eof() && !handle->fail())
+    handle->clear();
 }
 
 int FileComm::comm_nmsg(DIRECTION dir) const {
@@ -85,11 +87,13 @@ int FileComm::comm_nmsg(DIRECTION dir) const {
     return 0;
   refresh();
   int out = -1;
-  if (handle->good()) {
+  if (!handle->fail()) {
+    if (handle->eof() && !handle->fail())
+      handle->clear();
     if (handle->peek() == EOF) {
       handle->clear();
       out = 0;
-    } else if (handle->good()) {
+    } else if (!handle->fail()) {
       out = 1;
     }
   }
@@ -115,7 +119,7 @@ long FileComm::recv_single(utils::Header& header) {
   assert(!global_comm);
   ygglog_debug << "FileComm(" << name << ")::recv_single:" << std::endl;
   refresh();
-  if (!handle->good())
+  if (handle->fail())
     return -1;
   int start = handle->tellg();
   handle->seekg(0, handle->end);
@@ -130,6 +134,8 @@ long FileComm::recv_single(utils::Header& header) {
     handle->getline(header.data_msg(), ret);
   else
     handle->get(header.data_msg(), ret);
+  if (handle->eof() && !handle->fail())
+    handle->clear();
   ret = handle->gcount();
   ret = header.on_recv(header.data_msg(), ret);
   ygglog_debug << "FileComm(" << name << ")::recv_single: returns " << ret << " bytes" << std::endl;

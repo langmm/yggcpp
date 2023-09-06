@@ -13,3 +13,4 @@
 * Expand C & Fortran interfaces for ply/obj to match Python
 * Automate fortran wrapping of C interface?
 * Change how ply & obj are stored to be generic geometry structure?
+* Add method for reserving addresses and generating new addresses if a reserved one is used
