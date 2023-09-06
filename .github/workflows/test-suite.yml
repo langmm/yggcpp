@@ -212,7 +212,7 @@ jobs:
         if: matrix.with-asan == false && matrix.os == 'windows-latest'
         shell: bash -l {0}
         run: |
-          echo 'CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -G"MinGW Makefiles"' >> "$GITHUB_ENV"
+          echo 'CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -G\"MinGW Makefiles\"' >> $GITHUB_ENV
           # echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DCMAKE_Fortran_COMPILER=$(which gfortran)" >> "$GITHUB_ENV"
       - name: ASAN dynamic library
         if: matrix.with-asan == true && matrix.os == 'macos-latest'
