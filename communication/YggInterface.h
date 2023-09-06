@@ -106,10 +106,10 @@ yggInput_t yggInputType(const char *name, dtype_t* datatype) {
 static inline
 yggOutput_t yggOutputFmt(const char *name, const char *fmtString){
   comm_t out;
+  out.comm = NULL;
   dtype_t datatype = create_dtype_format(fmtString, 0, false);
   if ((fmtString != NULL) && (datatype.metadata == NULL)) {
     ygglog_error_c("yggOutputFmt: Failed to create type from format_str.");
-    free_comm(&out);
   } else {
     out = yggOutputType(name, &datatype);
   }
@@ -130,9 +130,9 @@ static inline
 yggInput_t yggInputFmt(const char *name, const char *fmtString){
   dtype_t datatype = create_dtype_format(fmtString, 0, false);
   comm_t out;
+  out.comm = NULL;
   if ((fmtString != NULL) && (datatype.metadata == NULL)) {
     ygglog_error_c("yggInputFmt: Failed to create type from format_str.");
-    free_comm(&out);
   } else {
     out = yggInputType(name, &datatype);
   }
@@ -731,9 +731,9 @@ static inline
 comm_t yggAsciiArrayOutput(const char *name, const char *format_str) {
   dtype_t datatype = create_dtype_format(format_str, 1, false);
   comm_t out;
+  out.comm = NULL;
   if ((format_str != NULL) && (datatype.metadata == NULL)) {
     ygglog_error_c("yggAsciiArrayOutput: Failed to create type from format_str.");
-    free_comm(&out);
   } else {
     out = yggOutputType(name, &datatype);
   }

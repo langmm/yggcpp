@@ -105,7 +105,7 @@ jobs:
           vcpkg.exe install cmocka --triplet x64-windows
           choco install mingw
       - name: Set flags for dependencies on Windows
-        if: matrix.os == 'windows-latest' && matrix.python-install == 'pip'
+        if: matrix.os == 'windows-latest' # && matrix.python-install == 'pip'
         shell: bash -l {0}
         run: |
           echo "FC=$(which gfortran)" >> "$GITHUB_ENV"
@@ -207,6 +207,11 @@ jobs:
         shell: bash -l {0}
         run: |
           echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DBUILD_FORTRAN_LIBRARY=ON" >> "$GITHUB_ENV"
+      - name: Fortran config flags on Windows
+        if: matrix.with-asan == false && matrix.os == 'windows-latest'
+        shell: bash -l {0}
+        run: |
+          echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DCMAKE_Fortran_COMPILER=gfortran" >> "$GITHUB_ENV"
       - name: ASAN dynamic library
         if: matrix.with-asan == true && matrix.os == 'macos-latest'
         shell: bash -l {0}
