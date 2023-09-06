@@ -108,7 +108,8 @@ jobs:
         if: matrix.os == 'windows-latest' # && matrix.python-install == 'pip'
         shell: bash -l {0}
         run: |
-          echo "FC=$(which gfortran)" >> "$GITHUB_ENV"
+          # echo "FC=$(which gfortran)" >> "$GITHUB_ENV"
+          echo "FC=gfortran" >> "$GITHUB_ENV"
 
       # ZeroMQ dependencies
       - name: Install ZeroMQ
@@ -207,11 +208,11 @@ jobs:
         shell: bash -l {0}
         run: |
           echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DBUILD_FORTRAN_LIBRARY=ON" >> "$GITHUB_ENV"
-      - name: Fortran config flags on Windows
-        if: matrix.with-asan == false && matrix.os == 'windows-latest'
-        shell: bash -l {0}
-        run: |
-          echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DCMAKE_Fortran_COMPILER=$(which gfortran)" >> "$GITHUB_ENV"
+      # - name: Fortran config flags on Windows
+      #   if: matrix.with-asan == false && matrix.os == 'windows-latest'
+      #   shell: bash -l {0}
+      #   run: |
+      #     echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DCMAKE_Fortran_COMPILER=$(which gfortran)" >> "$GITHUB_ENV"
       - name: ASAN dynamic library
         if: matrix.with-asan == true && matrix.os == 'macos-latest'
         shell: bash -l {0}
