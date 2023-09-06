@@ -341,15 +341,16 @@ subroutine yggptr_c2f_array_character(x)
   type is (character(*))
      write(*,*) "yggptr_c2f_array_character", x%data_character_unit
      ! xarr_character => item
+     item = transfer(x%data_character_unit, item)
      do i = 1, x%len
-        do j = 1, x%prec
-           item(i)(j:j) = x%data_character_unit(&
-                (i - 1) * x%prec + j)
-        end do
-        write(*,*) "yggptr_c2f_array_character", i, len(item(i))
-        do j = (x%prec + 1), len(item(i))
-           item(i)(j:j) = ' '
-        end do
+        ! do j = 1, x%prec
+        !    item(i)(j:j) = x%data_character_unit(&
+        !         (i - 1) * x%prec + j)
+        ! end do
+        ! do j = (x%prec + 1), len(item(i))
+        !    item(i)(j:j) = ' '
+        ! end do
+        write(*,*) "yggptr_c2f_array_character", i, len(item(i)), item(i)
      end do
      deallocate(x%data_character_unit)
   class default

@@ -339,7 +339,7 @@ TEST(YggInterface_C, ClientPointers) {
   close_comm(&sComm_c);
 }
 
-TEST(comm_t, Errors) {
+TEST(comm_t, ErrorsEmpty) {
   comm_t tmp;
   tmp.comm = NULL;
   EXPECT_EQ(set_response_format(tmp, "%s"), 0);
@@ -357,30 +357,36 @@ TEST(comm_t, Errors) {
   EXPECT_EQ(pcommRecv(tmp, 0, 0, NULL, 0), -1);
   EXPECT_EQ(pcommCall(tmp, 0, 0, NULL, 0), -1);
   EXPECT_EQ(comm_nmsg(tmp), -1);
-  tmp = init_comm("", SEND, NULL_COMM, &tmp_dtype);
+}
+TEST(comm_t, ErrorsInit) {
+  dtype_t tmp_dtype;
+  tmp_dtype.metadata = NULL;
+  comm_t tmp = init_comm("", SEND, NULL_COMM, &tmp_dtype);
   EXPECT_FALSE(tmp.comm);
   tmp = yggRpcClientType("invalid", &tmp_dtype, &tmp_dtype);
   EXPECT_FALSE(tmp.comm);
   tmp = yggRpcServerType("invalid", &tmp_dtype, &tmp_dtype);
   EXPECT_FALSE(tmp.comm);
+}
+TEST(comm_t, ErrorsFormat) {
   {
     COMM_BASE alt("", nullptr, RECV);
     setenv("output_OUT", alt.getAddress().c_str(), 1);
-    tmp = yggOutputFmt("output", "%j");
+    comm_t tmp = yggOutputFmt("output", "%j");
     EXPECT_FALSE(tmp.comm);
     unsetenv("output_OUT");
   }
   {
     COMM_BASE alt("", nullptr, SEND);
     setenv("input_IN", alt.getAddress().c_str(), 1);
-    tmp = yggInputFmt("input", "%j");
+    comm_t tmp = yggInputFmt("input", "%j");
     EXPECT_FALSE(tmp.comm);
     unsetenv("input_IN");
   }
   {
     COMM_BASE alt("", nullptr, RECV);
     setenv("output_OUT", alt.getAddress().c_str(), 1);
-    tmp = yggAsciiArrayOutput("output", "%j");
+    comm_t tmp = yggAsciiArrayOutput("output", "%j");
     EXPECT_FALSE(tmp.comm);
     unsetenv("output_OUT");
   }
