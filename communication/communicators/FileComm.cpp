@@ -7,7 +7,8 @@ using namespace communication::utils;
 FileComm::FileComm(const std::string name, Address *address,
 		     DIRECTION direction, int flgs,
 		     const COMM_TYPE type) :
-  CommBase(name, address, direction, type, flgs), mode(0) {
+  CommBase(name, address, direction, type, flgs),
+  mode(std::fstream::in | std::fstream::out) {
   if (!global_comm)
     init();
 }

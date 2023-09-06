@@ -109,7 +109,7 @@ jobs:
         shell: bash -l {0}
         run: |
           # echo "FC=$(which gfortran)" >> "$GITHUB_ENV"
-          echo "FC=gfortran" >> "$GITHUB_ENV"
+          echo "FC=gfortran.exe" >> "$GITHUB_ENV"
 
       # ZeroMQ dependencies
       - name: Install ZeroMQ
