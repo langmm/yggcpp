@@ -5,7 +5,6 @@
 * Fill in missing docs
 * Fix handling of multiple connections in ZMQ socket (restricted to ZMQ_PAIR to simplify testing)
 * Add RabbitMQ communicator (low priority)
-* Add test fixture to verify that IPC queues are cleaned up
 * Add test to verify that send/recv/call/wait can be interuppted by Ctrl+C
 * Allow for server/client to dynamically use different base communicators?
 * Allow for datatype to be passed as a argument to the constructors in C++ and Python
