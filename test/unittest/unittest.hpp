@@ -110,9 +110,3 @@ public:
 #define INIT_ZMQ()
 #define FINALIZE_ZMQ()
 #endif // ZMQINSTALLED  
-
-// Add setenv/unsetenv
-#ifdef _MSC_VER
-int setenv(const char *name, const char *value, int overwrite);
-int unsetenv(const char *name);
-#endif // _MSC_VER

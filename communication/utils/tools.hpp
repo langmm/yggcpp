@@ -91,6 +91,30 @@
 
 #include "logging.hpp"
 
+#ifdef _MSC_VER
+static inline
+int setenv(const char *name, const char *value, int overwrite) {
+  if (overwrite || getenv(name) == NULL) {
+    size_t len = strlen(name) + strlen(value);
+    char* tmp = (char*)malloc(len * sizeof(char));
+    if (tmp == NULL)
+      return -1;
+    tmp[0] = '\0';
+    strcat(tmp, name);
+    strcat(tmp, "=");
+    strcat(tmp, value);
+    int out = _putenv(tmp);
+    // free(tmp);
+    return out;
+  }
+  return 0;
+}
+static inline
+int unsetenv(const char *name) {
+  return setenv(name, "", true);
+}
+#endif // _MSC_VER
+
 namespace communication {
 namespace utils {
 
