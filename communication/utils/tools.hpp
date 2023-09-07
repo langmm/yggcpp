@@ -91,7 +91,7 @@
 
 #include "logging.hpp"
 
-#ifdef _MSC_VER
+#ifdef _WIN32  // _MSC_VER
 static inline
 int setenv(const char *name, const char *value, int overwrite) {
   if (overwrite || getenv(name) == NULL) {
@@ -113,7 +113,7 @@ static inline
 int unsetenv(const char *name) {
   return setenv(name, "", true);
 }
-#endif // _MSC_VER
+#endif // _WIN32 _MSC_VER
 
 namespace communication {
 namespace utils {
