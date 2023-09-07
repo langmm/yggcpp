@@ -250,17 +250,12 @@ int ZMQSocket::send(const std::string msg) {
   return msg.size();
 }
 
-int ZMQSocket::recv(std::string& msg, bool for_identity) {
-  if (type == ZMQ_ROUTER && !for_identity) {
-    if (recv(msg, true) < 0) {
-      ygglog_error << "ZMQSocket::recv: Error receiving identity." << std::endl;
-      return -1;
-    }
-  }
+int ZMQSocket::recv(std::string& msg) {
   msg = "";
   int more = 1;
   size_t more_size = sizeof(more);
   ygglog_debug << "ZMQSocket::recv: Receiving message" << std::endl;
+  bool identity = (type == ZMQ_ROUTER);
   do {
     zmq_msg_t part;
     if (zmq_msg_init (&part) != 0)
@@ -269,10 +264,12 @@ int ZMQSocket::recv(std::string& msg, bool for_identity) {
       zmq_msg_close (&part);
       return -1;
     }
-    msg += std::string((const char*)zmq_msg_data(&part), zmq_msg_size(&part));
+    if (!identity)
+      msg += std::string((const char*)zmq_msg_data(&part), zmq_msg_size(&part));
     zmq_msg_close (&part);
     if (zmq_getsockopt (handle, ZMQ_RCVMORE, &more, &more_size) != 0)
       return -1;
+    identity = false;
   } while (more);
   ygglog_debug << "ZMQSocket::recv: Received " << msg.size() << " bytes" << std::endl;
   return msg.size();
@@ -520,15 +517,15 @@ void ZMQComm::init() {
   updateMaxMsgSize(1048576);
   msgBufSize = 100;
   assert(!handle);
-  // TODO: Handle multiple comms
-  // if (flags & (COMM_FLAG_CLIENT | COMM_FLAG_SERVER_RESPONSE)) {
-  //   handle = new ZMQSocket(ZMQ_ROUTER, address);
-  // } else if (flags & (COMM_FLAG_SERVER | COMM_FLAG_CLIENT_RESPONSE |
-  // 		      COMM_ALLOW_MULTIPLE_COMMS)) {
-  //   handle = new ZMQSocket(ZMQ_DEALER, address);
-  // } else {
-  handle = new ZMQSocket(ZMQ_PAIR, address);
-  // }
+  int socket_type = ZMQ_PAIR;
+  if (flags & COMM_ALLOW_MULTIPLE_COMMS) {
+    if (direction == RECV && !(address && address->valid())) {
+      socket_type = ZMQ_ROUTER;
+    } else {
+      socket_type = ZMQ_DEALER;
+    }
+  }
+  handle = new ZMQSocket(socket_type, address);
   address->address(handle->endpoint);
   if (this->name.empty())
     this->name = "tempnewZMQ-" + handle->endpoint.substr(handle->endpoint.find_last_of(':') + 1);

@@ -103,7 +103,8 @@ long communication::utils::copyData(char*& dst, const size_t dst_len,
 //////////////
 
 Metadata::Metadata() :
-  metadata(rapidjson::kObjectType), schema(NULL) {}
+  metadata(rapidjson::kObjectType), schema(NULL),
+  filters(), transforms(), skip_last(false) {}
 bool Metadata::_init(bool use_generic) {
   if (!Normalize())
     return false;
@@ -114,7 +115,8 @@ bool Metadata::_init(bool use_generic) {
   return true;
 }
 // Metadata::Metadata(Metadata& rhs) :
-//   metadata(rapidjson::kObjectType), schema(NULL) {
+//   metadata(rapidjson::kObjectType), schema(NULL),
+//   filters(), transforms(), skip_last(false) {
 //   *this = rhs;
 //   metadata = rhs.metadata;
 //   _update_schema();
@@ -122,8 +124,12 @@ bool Metadata::_init(bool use_generic) {
 // }
 #if RAPIDJSON_HAS_CXX11_RVALUE_REFS
 Metadata::Metadata(Metadata&& rhs) :
-  metadata(), schema(NULL) {
+  metadata(), schema(NULL), filters(), transforms(), skip_last(false) {
   metadata.Swap(rhs.metadata);
+  filters.swap(rhs.filters);
+  transforms.swap(rhs.transforms);
+  skip_last = rhs.skip_last;
+  rhs.skip_last = false;
   _update_schema();
   rhs._update_schema();
 }
@@ -133,12 +139,18 @@ Metadata& Metadata::operator=(Metadata&& rhs) {
 #endif // RAPIDJSON_HAS_CXX11_RVALUE_REFS
 Metadata& Metadata::operator=(Metadata& rhs) {
   metadata.Swap(rhs.metadata);
+  filters.swap(rhs.filters);
+  transforms.swap(rhs.transforms);
+  skip_last = rhs.skip_last;
+  rhs.skip_last = false;
   _update_schema();
   rhs._update_schema();
   return *this;
 }
 bool Metadata::operator==(const Metadata& rhs) const {
-  return (metadata == rhs.metadata);
+  return ((metadata == rhs.metadata) &&
+	  (filters == rhs.filters) &&
+	  (transforms == rhs.transforms));
 }
 bool Metadata::operator!=(const Metadata& rhs) const {
   return (!(*this == rhs));
@@ -146,6 +158,9 @@ bool Metadata::operator!=(const Metadata& rhs) const {
 void Metadata::reset() {
   schema = NULL;
   metadata.SetObject();
+  filters.clear();
+  transforms.clear();
+  skip_last = false;
 }
 bool Metadata::fromSchema(const rapidjson::Value& new_schema,
 			  bool isMetadata, bool use_generic) {
@@ -425,6 +440,11 @@ bool Metadata::fromFormat(const std::string& format_str,
 }
 bool Metadata::fromMetadata(const Metadata& other, bool use_generic) {
   metadata.CopyFrom(other.metadata, GetAllocator(), true);
+  filters.clear();
+  filters.insert(filters.begin(), other.filters.begin(), other.filters.end());
+  transforms.clear();
+  transforms.insert(transforms.begin(), other.transforms.begin(), other.transforms.end());
+  skip_last = other.skip_last;
   return _init(use_generic);
 }
 bool Metadata::fromMetadata(const char* head, const size_t headsiz,
@@ -461,6 +481,20 @@ bool Metadata::fromEncode(PyObject* pyobj, bool use_generic) {
   rapidjson::Value::AllocatorType allocator;
   rapidjson::Value d(pyobj, allocator);
   return fromEncode(d, use_generic);
+}
+void Metadata::addFilter(filterFunc new_filter) {
+  filters.push_back(new_filter);
+}
+void Metadata::addTransform(transformFunc new_transform) {
+  transforms.push_back(new_transform);
+}
+void Metadata::setFilters(std::vector<filterFunc>& new_filters) {
+  filters.clear();
+  filters.insert(filters.begin(), new_filters.begin(), new_filters.end());
+}
+void Metadata::setTransforms(std::vector<transformFunc>& new_transforms) {
+  transforms.clear();
+  transforms.insert(transforms.begin(), new_transforms.begin(), new_transforms.end());
 }
 rapidjson::Document::AllocatorType& Metadata::GetAllocator() {
   return metadata.GetAllocator();
@@ -794,6 +828,29 @@ bool Metadata::SetMetaID(const std::string name, std::string& id) {
   id.assign(id_str);
   return true;
 }
+bool Metadata::checkFilter() {
+  bool out = skip_last;
+  skip_last = false;
+  return out;
+}
+bool Metadata::filter(rapidjson::Document& msg) {
+  for (std::vector<filterFunc>::iterator it = filters.begin();
+       it != filters.end(); it++) {
+    if ((*it)(msg)) {
+      skip_last = true;
+      break;
+    }
+  }
+  return skip_last;
+}
+bool Metadata::transform(rapidjson::Document& msg) {
+  for (std::vector<transformFunc>::iterator it = transforms.begin();
+       it != transforms.end(); it++) {
+    if (!(*it)(msg))
+      return false;
+  }
+  return true;
+}
 int Metadata::deserialize(const char* buf, size_t nargs, int allow_realloc, ...) {
   rapidjson::VarArgList va(nargs, allow_realloc);
   va_start(va.va, allow_realloc);
@@ -813,7 +870,14 @@ int Metadata::deserialize(const char* buf, rapidjson::VarArgList& ap) {
     ygglog_error << "Metadata::deserialize: Error parsing JSON" << std::endl;
     return -1;
   }
-  ygglog_debug << "Metadata::deserialize: " << d << std::endl;
+  ygglog_debug << "Metadata::deserialize: Before transformations " << d << std::endl;
+  if (!transform(d)) {
+    ygglog_error << "Metadata::deserialize: Error applying transformations" << std::endl;
+    return -1;
+  }
+  if (filter(d)) // Early exit prevents consuming ap
+    return 0;
+  ygglog_debug << "Metadata::deserialize: After transformations " << d << std::endl;
   if (!hasType()) {
     fromData(d);
   } else {
@@ -854,6 +918,13 @@ int Metadata::serialize(char **buf, size_t *buf_siz,
     ygglog_error << "Metadata::serialize: Error creating JSON document from arguments for schema =" << s_str << std::endl;
     return -1;
   }
+  ygglog_debug << "Metadata::serialize: Before transformations " << d << std::endl;
+  if (!transform(d)) {
+    ygglog_error << "Metadata::serialize: Error applying transformations" << std::endl;
+    return -1;
+  }
+  filter(d);
+  ygglog_debug << "Metadata::serialize: After transformations " << d << std::endl;
   rapidjson::StringBuffer buffer;
   rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
   d.Accept(writer);

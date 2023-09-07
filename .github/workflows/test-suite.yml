@@ -195,7 +195,7 @@ jobs:
           echo "TEST_FLAGS=-C Debug --output-on-failure -VV" >> "$GITHUB_ENV"
           echo "PYTHON_CMAKE_ARGS=" >> "$GITHUB_ENV"
       - name: Coverage config flags
-        if: matrix.with-coverage == true
+        if: matrix.with-coverage == true && matrix.os != 'windows-latest'
         shell: bash -l {0}
         run: |
           echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DYGG_ENABLE_COVERAGE=ON" >> "$GITHUB_ENV"
@@ -393,7 +393,7 @@ jobs:
       # Coverage
       ###################################
       - name: Upload coverage report
-        if: matrix.with-coverage == true
+        if: matrix.with-coverage == true && matrix.os != 'windows-latest'
         uses: codecov/codecov-action@v3
         with:
           name: ${{ matrix.os }}-${{ matrix.python-install }}-${{ matrix.install-zmq }}-${{ matrix.install-mpi }}-${{ matrix.with-coverage }}-${{ matrix.with-asan }}-${{ matrix.with-elf }}-${{ matrix.with-valgrind }}

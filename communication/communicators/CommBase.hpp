@@ -389,6 +389,7 @@ public:
     */
     long recvVar(rapidjson::Document& data) {
       ygglog_debug << "CommBase(" << name << ")::recvVar(rapidjson::Document& data)" << std::endl;
+      getMetadata(RECV).setGeneric();
       if ((!data.IsNull()) && (!checkType(data, RECV)))
 	return -1;
       return recv(1, &data);

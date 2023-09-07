@@ -59,3 +59,69 @@ TEST(DefaultCommu, workerErrors) {
   EXPECT_EQ(sComm.getWorkers().get(nullptr, RECV, addr), nullptr);
   delete addr;
 }
+
+TEST(DefaultCommu, filter_recv) {
+  DefaultComm sComm("", nullptr, SEND);
+  DefaultComm rComm("", new utils::Address(sComm.getAddress()), RECV);
+  rComm.getMetadata().addFilter(example_filter);
+  EXPECT_GT(sComm.sendVar(0), 0);
+  EXPECT_GT(sComm.sendVar(1), 0);
+  EXPECT_GT(sComm.sendVar(2), 0);
+  EXPECT_GT(sComm.send_eof(), 0);
+  int result = -1;
+  EXPECT_GT(rComm.recvVar(result), 0);
+  EXPECT_EQ(result, 0);
+  EXPECT_GT(rComm.recvVar(result), 0);
+  EXPECT_EQ(result, 2);
+  EXPECT_EQ(rComm.recvVar(result), -2);
+}
+TEST(DefaultCommu, filter_send) {
+  DefaultComm sComm("", nullptr, SEND);
+  DefaultComm rComm("", new utils::Address(sComm.getAddress()), RECV);
+  sComm.getMetadata().addFilter(example_filter);
+  EXPECT_GT(sComm.sendVar(0), 0);
+  EXPECT_GT(sComm.sendVar(1), 0);
+  EXPECT_GT(sComm.sendVar(2), 0);
+  EXPECT_GT(sComm.send_eof(), 0);
+  int result = -1;
+  EXPECT_GT(rComm.recvVar(result), 0);
+  EXPECT_EQ(result, 0);
+  EXPECT_GT(rComm.recvVar(result), 0);
+  EXPECT_EQ(result, 2);
+  EXPECT_EQ(rComm.recvVar(result), -2);
+}
+
+TEST(DefaultCommu, transform_recv) {
+  DefaultComm sComm("", nullptr, SEND);
+  DefaultComm rComm("", new utils::Address(sComm.getAddress()), RECV);
+  rComm.getMetadata().addTransform(&example_transform);
+  EXPECT_GT(sComm.sendVar(0), 0);
+  EXPECT_GT(sComm.sendVar(1), 0);
+  EXPECT_GT(sComm.sendVar(2), 0);
+  EXPECT_GT(sComm.send_eof(), 0);
+  std::string result = "";
+  EXPECT_GT(rComm.recvVar(result), 0);
+  EXPECT_EQ(result, "0");
+  EXPECT_GT(rComm.recvVar(result), 0);
+  EXPECT_EQ(result, "1");
+  EXPECT_GT(rComm.recvVar(result), 0);
+  EXPECT_EQ(result, "2");
+  EXPECT_EQ(rComm.recvVar(result), -2);
+}
+TEST(DefaultCommu, transform_send) {
+  DefaultComm sComm("", nullptr, SEND);
+  DefaultComm rComm("", new utils::Address(sComm.getAddress()), RECV);
+  sComm.getMetadata().addTransform(&example_transform);
+  EXPECT_GT(sComm.sendVar(0), 0);
+  EXPECT_GT(sComm.sendVar(1), 0);
+  EXPECT_GT(sComm.sendVar(2), 0);
+  EXPECT_GT(sComm.send_eof(), 0);
+  std::string result = "";
+  EXPECT_GT(rComm.recvVar(result), 0);
+  EXPECT_EQ(result, "0");
+  EXPECT_GT(rComm.recvVar(result), 0);
+  EXPECT_EQ(result, "1");
+  EXPECT_GT(rComm.recvVar(result), 0);
+  EXPECT_EQ(result, "2");
+  EXPECT_EQ(rComm.recvVar(result), -2);
+}

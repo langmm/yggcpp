@@ -66,6 +66,7 @@ bool AsyncBacklog::on_thread(Comm_t* parent) {
       }
     }
   }
+  closing.store(true);
   {
     const std::lock_guard<std::mutex> comm_lock(comm_mutex);
     delete comm;
@@ -166,6 +167,10 @@ int AsyncComm::comm_nmsg(DIRECTION dir) const {
   const AsyncLockGuard lock(handle);
   if (dir == NONE)
     dir = direction;
+  if (handle->closing.load()) {
+    ygglog_error << "AsyncComm(" << name << ")::comm_nmsg: Thread is closing" << std::endl;
+    return -1;
+  }
   if ((type == CLIENT_COMM && dir == RECV) ||
       (type == SERVER_COMM && dir == SEND))
     return handle->comm->comm_nmsg(dir);
@@ -203,7 +208,11 @@ int AsyncComm::get_timeout_recv() {
 
 int AsyncComm::send_single(Header& header) {
   const AsyncLockGuard lock(handle);
-  assert((!global_comm) && handle && handle->comm);
+  assert((!global_comm) && handle);
+  if (handle->closing.load()) {
+    ygglog_error << "AsyncComm(" << name << ")::send_single: Thread is closing" << std::endl;
+    return -1;
+  }
   if (type == SERVER_COMM) {
     return handle->comm->send_single(header);
   }
@@ -220,9 +229,11 @@ int AsyncComm::send_single(Header& header) {
 long AsyncComm::recv_single(Header& header) {
   const AsyncLockGuard lock(handle);
   assert((!global_comm) && handle);
+  if (handle->closing.load()) {
+    ygglog_error << "AsyncComm(" << name << ")::recv_single: Thread is closing" << std::endl;
+    return -1;
+  }
   if (type == CLIENT_COMM) {
-    if (!handle->comm)
-      return -1;
     return handle->comm->recv_single(header);
   }
   long ret = -1;
@@ -244,6 +255,10 @@ long AsyncComm::recv_single(Header& header) {
 bool AsyncComm::create_header_send(Header& header) {
   const AsyncLockGuard lock(handle);
   assert(!global_comm);
+  if (handle->closing.load()) {
+    ygglog_error << "AsyncComm(" << name << ")::create_header_send: Thread is closing" << std::endl;
+    return false;
+  }
   if (type == CLIENT_COMM &&
       !(header.flags & (HEAD_FLAG_EOF | HEAD_FLAG_CLIENT_SIGNON))) {
     if (!dynamic_cast<ClientComm*>(handle->comm)->signon(header, this))

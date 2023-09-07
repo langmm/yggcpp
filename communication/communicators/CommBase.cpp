@@ -633,6 +633,10 @@ long Comm_t::vRecv(rapidjson::VarArgList& ap) {
         ygglog_error << "CommBase(" << name << ")::vRecv: Error deserializing message" << std::endl;
         return ret;
     }
+    if (getMetadata(RECV).checkFilter()) {
+      ygglog_error << "CommBase(" << name << ")::vRecv: Skipping filtered message." << std::endl;
+      return vRecv(ap);
+    }
     ygglog_debug << "CommBase(" << name << ")::vRecv: returns " << ret << std::endl;
     return ret;
 }
@@ -665,7 +669,11 @@ int Comm_t::vSend(rapidjson::VarArgList& ap) {
     ygglog_error << "CommBase(" << name << ")::vSend: serialization error" << std::endl;
     return ret;
   }
-  ret = send(buf, ret);
+  if (getMetadata(SEND).checkFilter()) {
+    ygglog_debug << "CommBase(" << name << ")::vSend: Skipping filtered message" << std::endl;
+  } else {
+    ret = send(buf, ret);
+  }
   getMetadata(SEND).GetAllocator().Free(buf);
   if (ret >= 0)
     ret = (int)(nargs_orig - ap.get_nargs());

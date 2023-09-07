@@ -1,6 +1,21 @@
 #include <thread>
 #include <cstdlib>
 #include "communicators/AsyncComm.hpp"
+#include "communicators/Proxy.hpp"
+
+static inline
+bool example_filter(const rapidjson::Document& msg) {
+  return (msg.GetInt() == 1);
+}
+
+static inline
+bool example_transform(rapidjson::Document& msg) {
+  std::string msg_str = std::to_string(msg.GetInt());
+  msg.SetString(msg_str.c_str(),
+		static_cast<rapidjson::SizeType>(msg_str.size()),
+		msg.GetAllocator());
+  return true;
+}
 
 #define DO_SEND_RECV_EXCHANGE(init_data, comp_data, send_method, send_args, recv_method, recv_args) \
   init_data;								\
@@ -438,6 +453,26 @@
 #define COMM_SERI_TEST(cls)						\
   COMM_SERI_TEST_BASE(cls,)						\
   COMM_SERI_TEST_ASYNC(cls)						\
+  TEST(cls, proxy) {							\
+    std::string a_name = "test_a", b_name = "test_b";			\
+    Proxy proxy(a_name, b_name,						\
+		COMM_ALLOW_MULTIPLE_COMMS, COMM_ALLOW_MULTIPLE_COMMS,	\
+		cls::defaultCommType(), cls::defaultCommType());	\
+    std::string key_env = a_name + "_OUT";				\
+    std::string val_env = proxy.getAddress(RECV);			\
+    setenv(key_env.c_str(), val_env.c_str(), 1);			\
+    cls sComm(a_name, nullptr, SEND, COMM_ALLOW_MULTIPLE_COMMS);	\
+    unsetenv(key_env.c_str());						\
+    key_env = b_name + "_IN";						\
+    val_env = proxy.getAddress(SEND);					\
+    setenv(key_env.c_str(), val_env.c_str(), 1);			\
+    cls rComm(b_name, nullptr, RECV, COMM_ALLOW_MULTIPLE_COMMS);	\
+    unsetenv(key_env.c_str());						\
+    EXPECT_GE(sComm.sendVar(25.0), 0);					\
+    double dest = -1.0;							\
+    EXPECT_GE(rComm.recvVar(dest), 0);					\
+    EXPECT_EQ(dest, 25.0);						\
+  }									\
   TEST(cls, large) {							\
     cls ## _tester sComm(SEND);						\
     std::string name = "test_name";					\

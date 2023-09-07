@@ -1,5 +1,6 @@
 #include "../../unittest.hpp"
 #include "utils/serialization.hpp"
+#include "utils/tools.hpp"
 #include "../../elf_hook.hpp"
 #include "../../mock.hpp"
 // #include <sstream>

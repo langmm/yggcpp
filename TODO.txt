@@ -3,7 +3,6 @@
 * Move C++ interface into src directory
 * Automated documentation using doxygen
 * Fill in missing docs
-* Fix handling of multiple connections in ZMQ socket (restricted to ZMQ_PAIR to simplify testing)
 * Add RabbitMQ communicator (low priority)
 * Add test to verify that send/recv/call/wait can be interuppted by Ctrl+C
 * Allow for server/client to dynamically use different base communicators?
@@ -13,4 +12,8 @@
 * Expand C & Fortran interfaces for ply/obj to match Python
 * Automate fortran wrapping of C interface?
 * Change how ply & obj are stored to be generic geometry structure?
-* Add method for reserving addresses and generating new addresses if a reserved one is used
+* Add method for reserving addresses and generating new addresses if a reserved one is used so that proxy is not needed for every connection
+* Refactor so that serialize/deserialize operate on rapidjson::Document and only specialied send/recv calls ApplyVarArgs
+* Determine how async should be handled by the C/C++ interface (allow flags to be passed?)
+* Add templated methods for sending/receiving multiple variables of different types
+* Ensure send/recv of bytes gets passed through serialize/deserialize

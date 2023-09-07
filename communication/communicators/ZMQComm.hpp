@@ -57,7 +57,7 @@ public:
   int send(const std::string msg);
   template<typename T>
   int set(int member, const T& data);
-  int recv(std::string& msg, bool for_identity=false);
+  int recv(std::string& msg);
   void destroy();
 #else
   void init(int, utils::Address* = NULL, int = 0, int = 1, int = -1) {

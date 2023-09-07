@@ -35,6 +35,9 @@ namespace communication {
 namespace communication {
 namespace utils {
 
+typedef bool (*filterFunc)(const rapidjson::Document&);
+typedef bool (*transformFunc)(rapidjson::Document&);
+  
 /*!
   @brief Split header and body of message.
   @param[in] buf const char* Message that should be split.
@@ -120,6 +123,10 @@ public:
   bool fromEncode(const rapidjson::Value& document,
 		  bool use_generic = false);
   bool fromEncode(PyObject* pyobj, bool use_generic = false);
+  void addFilter(filterFunc new_filter);
+  void addTransform(transformFunc new_transform);
+  void setFilters(std::vector<filterFunc>& new_filters);
+  void setTransforms(std::vector<transformFunc>& new_transforms);
   rapidjson::Document::AllocatorType& GetAllocator();
   bool isGeneric() const;
   bool setGeneric();
@@ -193,6 +200,9 @@ public:
 			 const Metadata& other);
   bool SetMetaID(const std::string name, const char** id=NULL);
   bool SetMetaID(const std::string name, std::string& id);
+  bool checkFilter();
+  bool filter(rapidjson::Document& msg);
+  bool transform(rapidjson::Document& msg);
   int deserialize(const char* buf, size_t nargs, int allow_realloc, ...);
   int deserialize(const char* buf, rapidjson::VarArgList& ap);
   int serialize(char **buf, size_t *buf_siz, size_t nargs, ...);
@@ -201,6 +211,9 @@ public:
   void Display(const char* indent="") const;
   rapidjson::Document metadata;
   rapidjson::Value* schema;
+  std::vector<filterFunc> filters;
+  std::vector<transformFunc> transforms;
+  bool skip_last;
  private:
   void _update_schema();
 };
