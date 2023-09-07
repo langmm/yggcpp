@@ -7,6 +7,9 @@ namespace communication {
   namespace communicator {
 
     class Proxy {
+    private:
+      Proxy(const Proxy&) = delete;
+      Proxy& operator=(const Proxy&) = delete;
     public:
       Proxy(const std::string iname, const std::string oname,
 	    int iflgs = 0, int oflgs = 0,
