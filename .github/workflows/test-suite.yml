@@ -180,6 +180,10 @@ jobs:
         if: matrix.os == 'macos-latest' && matrix.python-install == 'conda'
         run: |
           conda install llvm -y
+      - name: Install MinGW on windows for Fortran
+        if: matrix.os == 'windows-latest' && matrix.python-install == 'conda'
+        run: |
+          conda install m2w64-gcc-fortran m2w64-toolchain_win-64 -y
 
       ###################################
       # SET CONFIG FLAGS

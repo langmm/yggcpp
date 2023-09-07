@@ -14,11 +14,11 @@ message(STATUS "TEST_INCLUDE_DIRS = ${TEST_INCLUDE_DIRS}")
 
 function (mangle_fortran_name CNAME FNAME)
     set (TMP)
-    if (WIN32)
-        string (TOUPPER "${FNAME}" TMP)
-    else ()
+    # if (WIN32)
+    #     string (TOUPPER "${FNAME}" TMP)
+    # else ()
         string (TOLOWER "${FNAME}_" TMP)
-    endif ()
+    # endif ()
     set (${CNAME} ${TMP} PARENT_SCOPE)
 endfunction ()
 
@@ -62,4 +62,5 @@ endfunction ()
 
 
 file(GLOB files "*.f90")
+message(STATUS "files = ${files}")
 add_fortran_test_executable (fortran_testsuite ${files})
