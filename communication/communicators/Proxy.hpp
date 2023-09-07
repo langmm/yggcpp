@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CommBase.hpp"
+#include <atomic>
 
 namespace communication {
   namespace communicator {
