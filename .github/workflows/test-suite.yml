@@ -183,7 +183,7 @@ jobs:
       - name: Install MinGW on windows for Fortran
         if: matrix.os == 'windows-latest' && matrix.python-install == 'conda'
         run: |
-          conda install m2w64-gcc-fortran m2w64-toolchain_win-64 -y
+          conda install m2w64-gcc m2w64-gcc-fortran m2w64-toolchain_win-64 -y
 
       ###################################
       # SET CONFIG FLAGS
@@ -259,7 +259,6 @@ jobs:
         shell: bash -l {0}
         run: |
           echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -G\"MinGW Makefiles\"" >> $GITHUB_ENV
-          # echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DCMAKE_Fortran_COMPILER=$(which gfortran)" >> "$GITHUB_ENV"
      
       ###################################
       # Add paths for Windows dlls

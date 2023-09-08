@@ -77,7 +77,7 @@ set_tests_properties(${ygg_test_list} PROPERTIES
        ENVIRONMENT
        "${RAPIDJSON_PYTHON_ENV}")
 
-if (WIN32)
+if (MSVC)
     add_custom_command(
         TARGET unittest
         POST_BUILD
