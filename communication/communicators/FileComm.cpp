@@ -19,11 +19,17 @@ void FileComm::init() {
   updateMaxMsgSize(0);
   bool created = ((!address) || address->address().empty());
   if (created) {
+#ifdef _MSC_VER
+    char key[L_tmpnam] = "yggXXXXXX";
+    _mktemp(key);
+    if (errno != 0) {
+#else
     char key[L_tmpnam] = "yggXXXXXX";
     int fd = mkstemp(key);
     if (fd >= 0) {
       ::close(fd);
     } else {
+#endif
       ygglog_error << "FileComm::init: Error generating temporary file name." << std::endl;
       throw std::runtime_error("FileComm::init: Error in std::mkstemp");
     }

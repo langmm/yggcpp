@@ -506,7 +506,7 @@ bool Metadata::isGeneric() const {
 	   (*schema)["use_generic"].GetBool()) ||
 	   strcmp(typeName(), "any") == 0));
 }
-bool Metadata::isFormatArray() const {
+int Metadata::isFormatArray() const {
   if (!(metadata.IsObject() && metadata.MemberCount() > 0))
     return -1;
   return (metadata.HasMember("serializer") &&

@@ -17,3 +17,4 @@
 * Determine how async should be handled by the C/C++ interface (allow flags to be passed?)
 * Add templated methods for sending/receiving multiple variables of different types
 * Ensure send/recv of bytes gets passed through serialize/deserialize
+* Lock thread when getMetadata is used to prevent underlying data from being freed during use

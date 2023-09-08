@@ -9,6 +9,7 @@
 #endif
 /*! @brief End of file message. */
 #define YGG_MSG_EOF "EOF!!!"
+#define YGG_MSG_EOF_LEN 6
 /*! @brief End of client message. */
 #define YGG_CLIENT_EOF "YGG_END_CLIENT"
 /*! @brief Client signing on. */

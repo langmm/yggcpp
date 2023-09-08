@@ -130,7 +130,7 @@ public:
   rapidjson::Document::AllocatorType& GetAllocator();
   bool isGeneric() const;
   bool setGeneric();
-  bool isFormatArray() const;
+  int isFormatArray() const;
   bool empty() const;
   bool hasType() const;
   bool hasSubtype() const;
