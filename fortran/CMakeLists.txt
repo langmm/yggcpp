@@ -1,6 +1,8 @@
-include(FortranCInterface)
-FortranCInterface_VERIFY()
-FortranCInterface_VERIFY(CXX)
+if (NOT DONT_CHECK_FORTRAN_C_COMPAT)
+   include(FortranCInterface)
+   FortranCInterface_VERIFY()
+   FortranCInterface_VERIFY(CXX)
+endif()
 
 add_library(YggInterface_fortran SHARED)
 add_library(YggInterface::fortran ALIAS YggInterface_fortran)
