@@ -32,7 +32,7 @@ public:
     if (!addRequest(msg_cli, true))
       return false;
     std::string msg_srv = YGG_SERVER_SIGNON;
-    if (server_comm->send(msg_srv.c_str(), msg_srv.size()) < 0)
+    if (server_comm->send_raw(msg_srv.c_str(), msg_srv.size()) < 0)
       return false;
     return true;
   }
@@ -238,7 +238,7 @@ TEST(ClientComm, call) {
   if (res_recv) {
     EXPECT_EQ(strcmp(res_send.c_str(), res_recv), 0);
   }
-  EXPECT_EQ(cc.server_comm->recvVar(req_recv), 2);
+  EXPECT_EQ(cc.server_comm->recvVar(req_recv), 8);
   EXPECT_EQ(req_recv, req_send);
   // Second message
   req_send = "REQUEST2";
@@ -254,7 +254,7 @@ TEST(ClientComm, call) {
   if (res_recv) {
     EXPECT_EQ(strcmp(res_send.c_str(), res_recv), 0);
   }
-  EXPECT_EQ(cc.server_comm->recvVar(req_recv), 2);
+  EXPECT_EQ(cc.server_comm->recvVar(req_recv), 8);
   EXPECT_EQ(req_recv, req_send);
   // Failed message due to incorrect number of arguments
   EXPECT_EQ(cc.call(1, req_send.c_str()), -1);
@@ -292,7 +292,7 @@ TEST(ClientComm, global) {
 	msg_cli.assign(header.data[0], header.size_curr);
 	EXPECT_GE(rComm.getRequests().addRequestServer(header), 0);
 	std::string msg_srv = YGG_SERVER_SIGNON;
-	EXPECT_GE(rComm.send(msg_srv.c_str(), msg_srv.size()), 0);
+	EXPECT_GE(rComm.send_raw(msg_srv.c_str(), msg_srv.size()), 0);
       }
       std::string req_send = "REQUEST";
       std::string res_send = "RESPONSE";

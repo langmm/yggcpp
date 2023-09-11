@@ -93,7 +93,7 @@ TEST(ServerComm, signon) {
   std::string msg_send = "Hello world";
   std::string msg_recv;
   EXPECT_GE(cc.getRequests().initClientResponse(), 0);
-  EXPECT_GE(cc.send(YGG_CLIENT_SIGNON, YGG_CLIENT_SIGNON_LEN), 0);
+  EXPECT_GE(cc.send_raw(YGG_CLIENT_SIGNON, YGG_CLIENT_SIGNON_LEN), 0);
   sc.wait_for_recv(1000);
   sc.set_timeout_recv(1000);
   EXPECT_EQ(sc.recvVar(msg_recv), -1);

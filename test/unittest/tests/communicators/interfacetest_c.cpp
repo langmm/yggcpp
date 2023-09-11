@@ -117,7 +117,7 @@ INTERFACE_TEST(
     yggInputFmt,
     ("input", "%d\t%lf\t%5s"),
     COMM_BASE,
-    ("", nullptr, SEND)); sComm.addFormat("%d\t%lf\t%5s"),
+    ("", nullptr, SEND)); EXPECT_TRUE(sComm.addFormat("%d\t%lf\t%5s")),
   INIT_OUTPUT_BASE(
     yggOutputFmt,
     ("output", "%d\t%lf\t%5s"),
@@ -253,6 +253,8 @@ TEST(YggInterface_C, ServerAny) {
   // Response
   EXPECT_GE(yggSend(rComm_c, data_send), 0);
   EXPECT_GE(sComm.recvVar(*data_recv_doc), 0);
+  display_generic(data_send);
+  display_generic(data_recv);
   EXPECT_TRUE(compare_generic(data_recv, data_send));
   EXPECT_TRUE(rComm.afterSendRecv(&rComm, &sComm));
   data_recv_doc->SetNull();

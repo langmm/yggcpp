@@ -46,7 +46,6 @@ TEST(DefaultCommu, seriErrors) {
   DefaultComm rComm("", new utils::Address(sComm.getAddress().c_str()), RECV);
   int a, b;
   EXPECT_EQ(sComm.send(2, 1, 1), -1);
-  // EXPECT_EQ(rComm.recv(2, &a, &b), -1);
   EXPECT_GE(sComm.send("hello", 5), 0);
   EXPECT_EQ(rComm.recv(2, &a, &b), -1);
 }
@@ -80,7 +79,7 @@ TEST(DefaultCommu, filter_send) {
   DefaultComm rComm("", new utils::Address(sComm.getAddress()), RECV);
   sComm.getMetadata().addFilter(example_filter);
   EXPECT_GT(sComm.sendVar(0), 0);
-  EXPECT_GT(sComm.sendVar(1), 0);
+  EXPECT_EQ(sComm.sendVar(1), 0);
   EXPECT_GT(sComm.sendVar(2), 0);
   EXPECT_GT(sComm.send_eof(), 0);
   int result = -1;

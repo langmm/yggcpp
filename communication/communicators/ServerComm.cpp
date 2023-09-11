@@ -18,7 +18,7 @@ bool ServerComm::signon(const Header& header) {
   assert(header.flags & HEAD_FLAG_CLIENT_SIGNON);
   ygglog_debug << "ServerComm(" << name << ")::signon: begin (" <<
     (header.flags & HEAD_FLAG_CLIENT_SIGNON) << ")" << std::endl;
-  if (send(YGG_SERVER_SIGNON, YGG_SERVER_SIGNON_LEN) < 0) {
+  if (send_raw(YGG_SERVER_SIGNON, YGG_SERVER_SIGNON_LEN) < 0) {
     ygglog_error << "ServerComm(" << name << ")::signon: Error in sending sign-on" << std::endl;
     return false;
   }

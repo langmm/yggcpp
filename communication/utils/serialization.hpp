@@ -55,6 +55,7 @@ std::string document2string(ValueT& rhs, const char* indent="");
 
 /*!
   @brief Copy data from one buffer to another.
+  @tparam T Type of data in the buffers.
   @param[in,out] dst Destination buffer that data will be copied into.
   @param[in] dst_len Size of destination buffer.
   @param[in] src Source buffer that data will be copied from.
@@ -65,8 +66,9 @@ std::string document2string(ValueT& rhs, const char* indent="");
     If not successful, the negative size of the source data will be
     returned.
  */
-long copyData(char*& dst, const size_t dst_len,
-	      const char* src, const size_t src_len,
+template <typename T>
+long copyData(T*& dst, const size_t dst_len,
+	      const T* src, const size_t src_len,
 	      bool allow_realloc);
 
 class Metadata {
@@ -75,7 +77,9 @@ private:
   Metadata& operator=(const Metadata&) = delete;
 public:
   Metadata();
-  virtual ~Metadata() {}
+  virtual ~Metadata() {
+    if (raw_schema) resetRawSchema();
+  }
   // Metadata(Metadata& rhs);
 #if RAPIDJSON_HAS_CXX11_RVALUE_REFS
   Metadata(Metadata&& rhs);
@@ -87,10 +91,18 @@ public:
   Metadata& Move() { return *this; }
   bool CopyFrom(const Metadata& rhs) {
     metadata.CopyFrom(rhs.metadata, GetAllocator(), true);
+    if (rhs.raw_schema) {
+      if (!raw_schema) {
+	raw_schema = new Metadata();
+	if (!raw_schema->CopyFrom(*(rhs.raw_schema)))
+	  return false;
+      }
+    }
     _update_schema();
     return true;
   }
   bool _init(bool use_generic = false);
+  void resetRawSchema();
   void reset();
   bool fromSchema(const rapidjson::Value& new_schema,
 		  bool isMetadata = false, bool use_generic = false);
@@ -100,9 +112,14 @@ public:
   bool fromData(const T& data) {
     rapidjson::Document d;
     d.Set(data, d.GetAllocator());
-    return fromData(d, true);
+    bool has_type = hasType();
+    bool out = fromData(d);
+    if (out && !has_type)
+      out = setAllowWrapped();
+    return out;
   }
-  bool fromData(const rapidjson::Document& data, bool indirect=false);
+  bool fromData(const rapidjson::Document& data,
+		bool before_transforms=false);
   bool fromType(const std::string type, bool use_generic=false,
 		bool dont_init = false);
   bool fromScalar(const std::string subtype, size_t precision,
@@ -130,6 +147,7 @@ public:
   rapidjson::Document::AllocatorType& GetAllocator();
   bool isGeneric() const;
   bool setGeneric();
+  bool setAllowWrapped();
   int isFormatArray() const;
   bool empty() const;
   bool hasType() const;
@@ -201,16 +219,24 @@ public:
   bool SetMetaID(const std::string name, const char** id=NULL);
   bool SetMetaID(const std::string name, std::string& id);
   bool checkFilter();
-  bool filter(rapidjson::Document& msg);
+  bool filter(const rapidjson::Document& msg);
   bool transform(rapidjson::Document& msg);
+  int deserialize_args(const rapidjson::Document& data,
+		       rapidjson::VarArgList& ap);
+  int deserialize(const char* buf, rapidjson::Document& data);
   int deserialize(const char* buf, size_t nargs, int allow_realloc, ...);
   int deserialize(const char* buf, rapidjson::VarArgList& ap);
+  int serialize_args(rapidjson::Document& data,
+		     rapidjson::VarArgList& ap);
+  int serialize(char **buf, size_t *buf_siz,
+		const rapidjson::Document& data);
   int serialize(char **buf, size_t *buf_siz, size_t nargs, ...);
   int serialize(char **buf, size_t *buf_siz,
 		rapidjson::VarArgList& ap);
   void Display(const char* indent="") const;
   rapidjson::Document metadata;
   rapidjson::Value* schema;
+  Metadata* raw_schema;
   std::vector<filterFunc> filters;
   std::vector<transformFunc> transforms;
   bool skip_last;

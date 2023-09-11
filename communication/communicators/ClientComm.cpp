@@ -72,7 +72,7 @@ bool ClientComm::signon(const Header& header, Comm_t* async_comm) {
 	  (((double)(clock() - start))*1000000/CLOCKS_PER_SEC) < tout)) {
     if ((nloop % 3) == 0) {
       ygglog_debug << "ClientComm(" << name << ")::signon: Sending signon" << std::endl;
-      if (async_comm->send(YGG_CLIENT_SIGNON, YGG_CLIENT_SIGNON_LEN) < 0) {
+      if (async_comm->send_raw(YGG_CLIENT_SIGNON, YGG_CLIENT_SIGNON_LEN) < 0) {
 	ygglog_error << "ClientComm(" << name << ")::signon: Error in sending sign-on" << std::endl;
 	return false;
       }

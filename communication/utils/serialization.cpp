@@ -73,8 +73,9 @@ std::string communication::utils::document2string(ValueT& rhs,
   return std::string(sb.GetString());
 }
 
-long communication::utils::copyData(char*& dst, const size_t dst_len,
-				    const char* src, const size_t src_len,
+template <typename T>
+long communication::utils::copyData(T*& dst, const size_t dst_len,
+				    const T* src, const size_t src_len,
 				    bool allow_realloc) {
   if ((src_len + 1) > dst_len) {
     if (!allow_realloc) {
@@ -83,7 +84,7 @@ long communication::utils::copyData(char*& dst, const size_t dst_len,
 	" bytes) and the buffer cannot be reallocated." << std::endl;
       return -((long)src_len);
     }
-    char* tmp = (char*)realloc(dst, src_len + 1);
+    T* tmp = (T*)realloc(dst, src_len + 1);
     if (tmp == NULL) {
       ygglog_error <<
 	"CommBase::copyData: Error reallocating buffer" << std::endl;
@@ -93,7 +94,7 @@ long communication::utils::copyData(char*& dst, const size_t dst_len,
   }
   if (src) {
     memcpy(dst, src, src_len);
-    dst[src_len] = '\0';
+    ((char*)dst)[src_len] = '\0';
   }
   return (long)src_len;
 }
@@ -103,7 +104,7 @@ long communication::utils::copyData(char*& dst, const size_t dst_len,
 //////////////
 
 Metadata::Metadata() :
-  metadata(rapidjson::kObjectType), schema(NULL),
+  metadata(rapidjson::kObjectType), schema(NULL), raw_schema(NULL),
   filters(), transforms(), skip_last(false) {}
 bool Metadata::_init(bool use_generic) {
   if (!Normalize())
@@ -124,8 +125,10 @@ bool Metadata::_init(bool use_generic) {
 // }
 #if RAPIDJSON_HAS_CXX11_RVALUE_REFS
 Metadata::Metadata(Metadata&& rhs) :
-  metadata(), schema(NULL), filters(), transforms(), skip_last(false) {
+  metadata(), schema(NULL), raw_schema(NULL),
+  filters(), transforms(), skip_last(false) {
   metadata.Swap(rhs.metadata);
+  std::swap(raw_schema, rhs.raw_schema);
   filters.swap(rhs.filters);
   transforms.swap(rhs.transforms);
   skip_last = rhs.skip_last;
@@ -139,6 +142,7 @@ Metadata& Metadata::operator=(Metadata&& rhs) {
 #endif // RAPIDJSON_HAS_CXX11_RVALUE_REFS
 Metadata& Metadata::operator=(Metadata& rhs) {
   metadata.Swap(rhs.metadata);
+  std::swap(raw_schema, rhs.raw_schema);
   filters.swap(rhs.filters);
   transforms.swap(rhs.transforms);
   skip_last = rhs.skip_last;
@@ -155,9 +159,16 @@ bool Metadata::operator==(const Metadata& rhs) const {
 bool Metadata::operator!=(const Metadata& rhs) const {
   return (!(*this == rhs));
 }
+void Metadata::resetRawSchema() {
+  if (raw_schema) {
+    delete raw_schema;
+    raw_schema = NULL;
+  }
+}
 void Metadata::reset() {
   schema = NULL;
   metadata.SetObject();
+  resetRawSchema();
   filters.clear();
   transforms.clear();
   skip_last = false;
@@ -177,15 +188,12 @@ bool Metadata::fromSchema(const rapidjson::Value& new_schema,
     rapidjson::SchemaDocument sd_old(*schema);
     rapidjson::SchemaNormalizer n(sd_old);
     if (!n.Compare(new_schema)) {
-      std::string s_old_str = document2string(*schema);
-      std::string s_new_str = document2string(new_schema);
       rapidjson::Value err;
       n.GetErrorMsg(err, metadata.GetAllocator());
-      std::string err_str = document2string(err);
       ygglog_debug << "Schemas incompatible:" << std::endl <<
-	"old:" << std::endl << s_old_str << std::endl <<
-	"new:" << std::endl << s_new_str << std::endl <<
-	"error:" << std::endl << err_str << std::endl;
+	"old:" << std::endl << *schema << std::endl <<
+	"new:" << std::endl << new_schema << std::endl <<
+	"error:" << std::endl << err << std::endl;
       return false;
     }
   }
@@ -214,7 +222,9 @@ bool Metadata::Normalize() {
        s.GetAllocator());
   rapidjson::StringBuffer sb;
   if (!metadata.Normalize(s, &sb)) {
-    ygglog_error << "Metdata::Normalize: Failed to normalize schema:" << std::endl << document2string(metadata) << std::endl << "error =" << std::endl << sb.GetString() << std::endl;
+    ygglog_error << "Metadata::Normalize: Failed to normalize schema:" <<
+      std::endl << metadata << std::endl << "error =" << std::endl <<
+      sb.GetString() << std::endl;
     return false;
   }
   return true;
@@ -224,7 +234,8 @@ bool Metadata::fromSchema(const std::string schemaStr, bool use_generic) {
   rapidjson::Document d;
   d.Parse(schemaStr.c_str());
   if (d.HasParseError()) {
-    ygglog_error << "Metadata::fromSchema: Error parsing string: " << schemaStr << std::endl;
+    ygglog_error << "Metadata::fromSchema: Error parsing string: " <<
+      schemaStr << std::endl;
     return false;
   }
   if (!fromSchema(d, false, use_generic))
@@ -243,15 +254,18 @@ bool Metadata::fromSchema(const std::string schemaStr, bool use_generic) {
   }
   return true;
 }
-bool Metadata::fromData(const rapidjson::Document& data, bool indirect) {
-  rapidjson::SchemaEncoder encoder(true);
-  data.Accept(encoder);
-  bool has_type = hasType();
-  if (!fromSchema(encoder.GetSchema()))
+bool Metadata::fromData(const rapidjson::Document& data,
+			bool before_transforms) {
+  if (before_transforms) {
+    if (!raw_schema) {
+      raw_schema = new Metadata();
+    }
+    return raw_schema->fromData(data);
+  }
+  rapidjson::SchemaEncoder encoder(!hasType());
+  if (!data.Accept(encoder))
     return false;
-  if ((!has_type) && indirect)
-    return SetSchemaBool("allowWrapped", true);
-  return true;
+  return fromSchema(encoder.GetSchema());
 }
 bool Metadata::fromType(const std::string type, bool use_generic,
 			bool dont_init) {
@@ -515,6 +529,10 @@ int Metadata::isFormatArray() const {
 bool Metadata::setGeneric() {
   initSchema();
   return SetSchemaBool("use_generic", true);
+}
+bool Metadata::setAllowWrapped() {
+  initSchema();
+  return SetSchemaBool("allowWrapped", true);
 }
 bool Metadata::empty() const {
   return ((!metadata.IsObject()) || (metadata.MemberCount() == 0));
@@ -833,7 +851,7 @@ bool Metadata::checkFilter() {
   skip_last = false;
   return out;
 }
-bool Metadata::filter(rapidjson::Document& msg) {
+bool Metadata::filter(const rapidjson::Document& msg) {
   for (std::vector<filterFunc>::iterator it = filters.begin();
        it != filters.end(); it++) {
     if ((*it)(msg)) {
@@ -851,6 +869,68 @@ bool Metadata::transform(rapidjson::Document& msg) {
   }
   return true;
 }
+int Metadata::deserialize_args(const rapidjson::Document& data,
+			       rapidjson::VarArgList& ap) {
+  size_t nargs_orig = ap.get_nargs();
+  ygglog_debug << "Metadata::deserialize_args: data = " << data <<
+    ", schema = " << *schema << std::endl;
+  if (!data.SetVarArgs(*schema, ap)) {
+    ygglog_error << "Metadata::deserialize_args: Error setting arguments from JSON document" << std::endl;
+    return -1;
+  }
+  return (int)(nargs_orig - ap.get_nargs());
+}
+int Metadata::deserialize(const char* buf, rapidjson::Document& d) {
+  // Order is: deserialize, set pre-transform schema, transform data,
+  //   set schema/normalize data, filter
+  rapidjson::StringStream s(buf);
+  d.ParseStream(s);
+  if (d.HasParseError()) {
+    ygglog_error << "Metadata::deserialize: Error parsing JSON" << std::endl;
+    return -1;
+  }
+  bool has_raw_schema = (raw_schema != NULL);
+  if (transforms.size() > 0) {
+    ygglog_debug << "Metadata::deserialize: Before transformations " << d << std::endl;
+    if (!fromData(d, true)) {
+      ygglog_error << "Metadata::deserialize: Error updating pre-transformation schema" << std::endl;
+      return -1;
+    }
+    if (!transform(d)) {
+      ygglog_error << "Metadata::deserialize: Error applying transformations" << std::endl;
+      if (!has_raw_schema)
+	resetRawSchema();
+      return -1;
+    }
+    ygglog_debug << "Metadata::deserialize: After transformations " << d << std::endl;
+  }
+  bool hasT = hasType();
+  if (!hasT) {
+    if (!fromData(d)) {
+      if (!has_raw_schema)
+	resetRawSchema();
+      return -1;
+    }
+  } else {
+    rapidjson::StringBuffer sb;
+    if (!d.Normalize(*schema, &sb)) {
+      ygglog_error <<
+	"Metadata::deserialize: Error normalizing document:" <<
+	std::endl << sb.GetString() <<
+	std::endl << "document=" << d <<
+	std::endl << "schema=" << *schema <<
+	std::endl << "message=" << buf << "..." << std::endl;
+      if (!has_raw_schema)
+	resetRawSchema();
+      return -1;
+    }
+  }
+  if (filter(d)) {
+    ygglog_debug << "Metadata::deserialize: Message filtered" << std::endl;
+    return 0;
+  }
+  return 1;
+}
 int Metadata::deserialize(const char* buf, size_t nargs, int allow_realloc, ...) {
   rapidjson::VarArgList va(nargs, allow_realloc);
   va_start(va.va, allow_realloc);
@@ -864,31 +944,9 @@ int Metadata::deserialize(const char* buf, size_t nargs, int allow_realloc, ...)
 int Metadata::deserialize(const char* buf, rapidjson::VarArgList& ap) {
   size_t nargs_orig = ap.get_nargs();
   rapidjson::Document d;
-  rapidjson::StringStream s(buf);
-  d.ParseStream(s);
-  if (d.HasParseError()) {
-    ygglog_error << "Metadata::deserialize: Error parsing JSON" << std::endl;
-    return -1;
-  }
-  ygglog_debug << "Metadata::deserialize: Before transformations " << d << std::endl;
-  if (!transform(d)) {
-    ygglog_error << "Metadata::deserialize: Error applying transformations" << std::endl;
-    return -1;
-  }
-  if (filter(d)) // Early exit prevents consuming ap
-    return 0;
-  ygglog_debug << "Metadata::deserialize: After transformations " << d << std::endl;
-  if (!hasType()) {
-    fromData(d);
-  } else {
-    rapidjson::StringBuffer sb;
-    if (!d.Normalize(*schema, &sb)) {
-      std::string d_str = document2string(d);
-      std::string s_str = document2string(*schema);
-      ygglog_error << "Metadata::deserialize: Error normalizing document:" << std::endl << sb.GetString() << std::endl << "document=" << d_str << std::endl << "schema=" << s_str << std::endl << "message=" << buf << "..." << std::endl;
-      return -1;
-    }
-  }
+  int ret = deserialize(buf, d);
+  if (ret <= 0)
+    return ret;
   ygglog_debug << "Metadata::deserialize: before SetVarArgs: " << *schema << std::endl;
   if (!d.SetVarArgs(*schema, ap)) {
     ygglog_error << "Metadata::deserialize: Error setting arguments from JSON document" << std::endl;
@@ -896,35 +954,67 @@ int Metadata::deserialize(const char* buf, rapidjson::VarArgList& ap) {
   }
   return (int)(nargs_orig - ap.get_nargs());
 }
-int Metadata::serialize(char **buf, size_t *buf_siz, size_t nargs, ...) {
-  rapidjson::VarArgList va(nargs);
-  va_start(va.va, nargs);
-  int out = serialize(buf, buf_siz, va);
-  if (out >= 0 && va.get_nargs() != 0) {
-    ygglog_error << "Metadata::serialize: " << va.get_nargs() << " of the arguments were not used" << std::endl;
+int Metadata::serialize_args(rapidjson::Document& data,
+			     rapidjson::VarArgList& ap) {
+  Metadata tmp;
+  rapidjson::Value* s = schema;
+  if (!hasType()) {
+    if (isGeneric()) {
+      tmp.fromType("any", true);
+      s = tmp.schema;
+    } else {
+      ygglog_error << "Metadata::serialize_args: No datatype" << std::endl;
+      return -1;
+    }
+  }
+  if (!data.GetVarArgs(*s, ap)) {
+    ygglog_error << "Metadata::serialize_args: Error creating JSON document from arguments for schema =" << *s << std::endl;
     return -1;
   }
-  return out;
+  ygglog_debug << "Metadata::serialize_args: " << data << std::endl;
+  return 1;
 }
 int Metadata::serialize(char **buf, size_t *buf_siz,
-			rapidjson::VarArgList& ap) {
-  if (!hasType()) {
-    ygglog_error << "Metadata::serialize: No datatype" << std::endl;
-    return -1;
-  }
+			const rapidjson::Document& data) {
+  // Order is: set schema/normalize data, transform data,
+  //   set post-transform schema, filter, serialize
   rapidjson::Document d;
-  if (!d.GetVarArgs(*schema, ap)) {
-    std::string s_str = document2string(*schema);
-    ygglog_error << "Metadata::serialize: Error creating JSON document from arguments for schema =" << s_str << std::endl;
-    return -1;
+  d.CopyFrom(data, d.GetAllocator(), true);
+  int hasT = hasType();
+  if (!hasT) {
+    if (!fromData(d)) {
+      return -1;
+    }
+  } else {
+    rapidjson::StringBuffer sb;
+    if (!d.Normalize(*schema, &sb)) {
+      ygglog_error << "Metadata::serialize: Error normalizing document:" <<
+	std::endl << sb.GetString() <<
+	std::endl << "document=" << d <<
+	std::endl << "schema=" << *schema << std::endl;
+      return -1;
+    }
   }
-  ygglog_debug << "Metadata::serialize: Before transformations " << d << std::endl;
-  if (!transform(d)) {
-    ygglog_error << "Metadata::serialize: Error applying transformations" << std::endl;
-    return -1;
+  if (transforms.size() > 0) {
+    ygglog_debug << "Metadata::serialize: Before transformations " << d << std::endl;
+    if (!transform(d)) {
+      ygglog_error << "Metadata::serialize: Error applying transformations" << std::endl;
+      return -1;
+    }
+    ygglog_debug << "Metadata::serialize: After transformations " << d << std::endl;
+    if (!fromData(d, true)) {
+      ygglog_error << "Metadata::serialize: Error updating post-transformation schema" << std::endl;
+      return -1;
+    }
+    if (!raw_schema) {
+      ygglog_error << "Metadata::serialize: Error creating raw_schema" << std::endl;
+      return -1;
+    }
   }
-  filter(d);
-  ygglog_debug << "Metadata::serialize: After transformations " << d << std::endl;
+  if (filter(d)) {
+    ygglog_debug << "Metadata::serialize: Message filtered" << std::endl;
+    return 0;
+  }
   rapidjson::StringBuffer buffer;
   rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
   d.Accept(writer);
@@ -941,6 +1031,23 @@ int Metadata::serialize(char **buf, size_t *buf_siz,
   memcpy(buf[0], buffer.GetString(), (size_t)(buffer.GetLength()));
   buf[0][(size_t)(buffer.GetLength())] = '\0';
   return static_cast<int>(buffer.GetLength());
+}
+int Metadata::serialize(char **buf, size_t *buf_siz, size_t nargs, ...) {
+  rapidjson::VarArgList va(nargs);
+  va_start(va.va, nargs);
+  int out = serialize(buf, buf_siz, va);
+  if (out >= 0 && va.get_nargs() != 0) {
+    ygglog_error << "Metadata::serialize: " << va.get_nargs() << " of the arguments were not used" << std::endl;
+    return -1;
+  }
+  return out;
+}
+int Metadata::serialize(char **buf, size_t *buf_siz,
+			rapidjson::VarArgList& ap) {
+  rapidjson::Document d;
+  if (serialize_args(d, ap) < 0)
+    return -1;
+  return serialize(buf, buf_siz, d);
 }
 void Metadata::Display(const char* indent) const {
   std::cout << document2string(metadata, indent) << std::endl;
@@ -1180,7 +1287,12 @@ bool Header::for_send(Metadata* metadata0, const char* msg,
   }
   if (metadata0 != NULL && !(flags & (HEAD_FLAG_CLIENT_SIGNON |
 				      HEAD_FLAG_SERVER_SIGNON))) {
-    if (!fromMetadata(*metadata0)) return false;
+    if (metadata0->raw_schema && metadata0->schema)
+      metadata0->schema->Swap(*(metadata0->raw_schema->schema));
+    bool out = fromMetadata(*metadata0);
+    if (metadata0->raw_schema && metadata0->schema)
+      metadata0->schema->Swap(*(metadata0->raw_schema->schema));
+    if (!out) return false;
   }
   initMeta();
   if (!SetMetaID("id"))
@@ -1293,32 +1405,29 @@ bool Header::formatBuffer(rapidjson::StringBuffer& buffer, bool metaOnly) {
       metadata["__meta__"].Accept(writer);
       writer.EndObject(1);
     }
-  } else if (in_data) {
-    bool hasMeta = metadata.HasMember("__meta__");
-    rapidjson::Value tmp;
-    if (hasMeta) {
-      tmp.Swap(metadata["__meta__"]);
-      metadata.RemoveMember("__meta__");
-    }
-    metadata.Accept(writer);
-    if (hasMeta) {
-      metadata.AddMember(rapidjson::Value("__meta__", 8).Move(),
-			 tmp, GetAllocator());
-    }
   } else {
-    // rapidjson::Value tmp;
-    // if (noType && !metadata.HasMember("serializer"))
-    // 	noType = false;
-    // if (noType) {
-    // 	tmp.Swap(metadata["serializer"]);
-    // 	metadata.RemoveMember("serializer");
-    // }
-    metadata.Accept(writer);
-    // if (noType) {
-    // 	metadata.AddMember("serializer", tmp, metadata.GetAllocator());
-    // 	if (schema != NULL)
-    // 	  schema = &(metadata["serializer"]["datatype"]);
-    // }
+    bool useGeneric = isGeneric();
+    if (useGeneric) {
+      schema->RemoveMember("use_generic");
+    }
+    if (in_data) {
+      bool hasMeta = metadata.HasMember("__meta__");
+      rapidjson::Value tmp;
+      if (hasMeta) {
+	tmp.Swap(metadata["__meta__"]);
+	metadata.RemoveMember("__meta__");
+      }
+      metadata.Accept(writer);
+      if (hasMeta) {
+	metadata.AddMember(rapidjson::Value("__meta__", 8).Move(),
+			   tmp, GetAllocator());
+      }
+    } else {
+      metadata.Accept(writer);
+    }
+    if (useGeneric) {
+      setGeneric();
+    }
   }
   return true;
 }
@@ -1375,19 +1484,19 @@ int Header::format() {
     return -1;
   size_t size_head = static_cast<size_t>(buffer.GetLength()) + 2 * sep.size();
   size_t size_new = size_head + size_data;
-  if (size_max > 0 && size_new > size_max &&
-      (!(flags & HEAD_FLAG_MULTIPART))) {
-    // Early return since comm needs to add to header
-    flags |= HEAD_FLAG_MULTIPART;
-    flags &= ~HEAD_FLAG_FORMATTED;
-    if (size_head > size_max) {
-      if (metaOnly) {
-	ygglog_error << "Header::format: Extra data already excluded, cannot make header any smaller." << std::endl;
-	return -1;
+  if (size_max > 0) {
+    if (size_new > size_max && (!(flags & HEAD_FLAG_MULTIPART))) {
+      // Early return since comm needs to add to header
+      flags |= HEAD_FLAG_MULTIPART;
+      flags &= ~HEAD_FLAG_FORMATTED;
+      if (size_head > size_max) {
+	flags |= HEAD_META_IN_DATA;
       }
-      flags |= HEAD_META_IN_DATA;
+      return 0;
+    } else if (size_head > size_max) {
+      ygglog_error << "Header::format: Extra data already excluded, cannot make header any smaller." << std::endl;
+      return -1;
     }
-    return 0;
   }
   if (reallocData(size_new) < 0) {
     return -1;

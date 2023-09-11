@@ -58,7 +58,7 @@ bool example_transform(rapidjson::Document& msg) {
     msg_cli.assign(header.data[0], static_cast<size_t>(len));		\
     EXPECT_GE(rComm.getRequests().addRequestServer(header), 0);		\
     std::string msg_srv = YGG_SERVER_SIGNON;				\
-    EXPECT_GE(rComm.send(msg_srv.c_str(), msg_srv.size()), 0);		\
+    EXPECT_GE(rComm.send_raw(msg_srv.c_str(), msg_srv.size()), 0);	\
   }
 
 
@@ -353,9 +353,9 @@ bool example_transform(rapidjson::Document& msg) {
     cls ## _tester rComm(name, RECV);					\
     rComm.addSchema("{\"type\": \"any\"}");				\
     unsetenv(key_env.c_str());						\
-    DO_SEND_RECV(sendVarAsGeneric, recvVarAsGeneric, int, 32);		\
+    DO_SEND_RECV(sendVar, recvVar, int, 32);				\
     rComm.close();							\
-    EXPECT_EQ(rComm.recvVarAsGeneric(data_recv), -1);			\
+    EXPECT_EQ(rComm.recvVar(data_recv), -1);				\
   }									\
   TEST(cls, incompatible) {						\
     init;								\

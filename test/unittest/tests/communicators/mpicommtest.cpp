@@ -32,7 +32,7 @@ public:
 	COUNT = 0;
 	COUNT_ALT = -1;
 	MPISTATUS_ALT = 0;
-	msg = "This is a message";
+	msg = "\"This is a message\"";
     }
     int Probe(int, MPI_Status *status) const override {
         MPI_Status_set_cancelled(status, MPICANCEL);
@@ -77,7 +77,7 @@ int mpi_registry_mock::MPIPROC = 0;
 int mpi_registry_mock::COUNT = 0;
 int mpi_registry_mock::COUNT_ALT = 0;
 int mpi_registry_mock::MPISTATUS_ALT = 0;
-std::string mpi_registry_mock::msg = "This is a message";
+std::string mpi_registry_mock::msg = "\"This is a message\"";
 
 class MPIComm_tester : public MPIComm {
 public:
@@ -212,12 +212,14 @@ TEST(MPIComm, recv) {
     size_t len = 1;
     mpic.set_timeout_recv(1000);
     mpi_registry_mock::MPIPROC = 50000;
-    EXPECT_EQ(mpic.recv(data, len, false), -((long)mpi_registry_mock::msg.size()));
-    EXPECT_EQ(mpic.recv(data, len, true), mpi_registry_mock::msg.size());
+    EXPECT_EQ(mpic.recv(data, len, false), -((long)mpi_registry_mock::msg.size() - 2));
+    EXPECT_EQ(mpic.recv(data, len, true),
+	      mpi_registry_mock::msg.size() - 2);
     mpi_registry_mock::MPISTATUS = 2;
     EXPECT_EQ(mpic.recv(data, len, true), -1);
     mpi_registry_mock::MPISTATUS = 0;
-    EXPECT_EQ(mpic.recv(data, len, true), mpi_registry_mock::msg.size());
+    EXPECT_EQ(mpic.recv(data, len, true),
+	      mpi_registry_mock::msg.size() - 2);
     mpi_registry_mock::MPISTATUS = 0;
     mpi_registry_mock::MPISTATUS_ALT = MPI_ERR_COMM;
     mpi_registry_mock::COUNT = 0;

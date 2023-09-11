@@ -289,9 +289,6 @@ bool communication::communicator::is_commtype_installed(const COMM_TYPE type) {
 }
 
 Comm_t* Comm_t::create_worker_send(Header& head) {
-  // Should never be called with global comm
-  // if (global_comm)
-  //   return global_comm->create_worker_send(head);
   assert(!global_comm);
   Comm_t* worker = workers.get(this, SEND);
   if (worker && worker->address) {
@@ -302,9 +299,6 @@ Comm_t* Comm_t::create_worker_send(Header& head) {
 }
 
 Comm_t* Comm_t::create_worker_recv(Header& head) {
-  // Should never be called with global comm
-  // if (global_comm)
-  //   return global_comm->create_worker_recv(head);
   assert(!global_comm);
   ygglog_debug << "CommBase(" << name << ")::create_worker_recv: begin" << std::endl;
   try {
@@ -318,62 +312,96 @@ Comm_t* Comm_t::create_worker_recv(Header& head) {
   }
 }
 
-int Comm_t::send(const char *data, const size_t &len) {
+//////////////////
+// SEND METHODS //
+//////////////////
+
+int Comm_t::send_raw(const char *data, const size_t &len) {
   if (global_comm)
-    return global_comm->send(data, len);
+    return global_comm->send_raw(data, len);
   if (direction != SEND && type != SERVER_COMM) {
-    ygglog_debug << "CommBase(" << name << ")::send: Attempt to send though a communicator set up to receive" << std::endl;
+    ygglog_debug << "CommBase(" << name << ")::send_raw: Attempt to send though a communicator set up to receive" << std::endl;
     return -1;
   }
-  ygglog_debug << "CommBase(" << name << ")::send: Sending " << len << " bytes to " << address->address() << std::endl;
+  ygglog_debug << "CommBase(" << name << ")::send_raw: Sending " << len << " bytes to " << address->address() << std::endl;
   if (is_closed()) {
-    ygglog_error << "CommBase(" << name << ")::send: Communicator closed." << std::endl;
+    ygglog_error << "CommBase(" << name << ")::send_raw: Communicator closed." << std::endl;
     return -1;
   }
   Header head(data, len, this);
   if (head.flags & HEAD_FLAG_NO_HEAD) {
-    ygglog_debug << "CommBase(" << name << ")::send: Sending data in single message. " << is_eof(data) << ", " << (flags & COMM_FLAGS_USED_SENT) << std::endl;
+    ygglog_debug << "CommBase(" << name << ")::send_raw: Sending data in single message. " << is_eof(data) << ", " << (flags & COMM_FLAGS_USED_SENT) << std::endl;
     int out = send_single(head);
     if (out >= 0)
       setFlags(head, SEND);
     return out;
   }
   if (!create_header_send(head)) {
-    ygglog_error << "CommBase(" << name << ")::send: Failed to create header" << std::endl;
+    ygglog_error << "CommBase(" << name << ")::send_raw: Failed to create header" << std::endl;
     return -1;
   }
   if (head.format() < 0) {
-    ygglog_error << "CommBase(" << name << ")::send: Error formatting message with header." << std::endl;
+    ygglog_error << "CommBase(" << name << ")::send_raw: Error formatting message with header." << std::endl;
     return -1;
   }
   Comm_t* xmulti = NULL;
   if (head.flags & HEAD_FLAG_MULTIPART) {
-    ygglog_debug << "CommBase(" << name << ")::send: Sending message in multiple parts" << std::endl;
+    ygglog_debug << "CommBase(" << name << ")::send_raw: Sending message in multiple parts" << std::endl;
     xmulti = create_worker_send(head);
     if (!xmulti) {
-      ygglog_error << "CommBase(" << name << ")::send: Error creating worker" << std::endl;
+      ygglog_error << "CommBase(" << name << ")::send_raw: Error creating worker" << std::endl;
       return -1;
     }
   }
   if (send_single(head) < 0) {
-    ygglog_error << "CommBase(" << name << ")::send: Failed to send header." << std::endl;
+    ygglog_error << "CommBase(" << name << ")::send_raw: Failed to send header." << std::endl;
     return -1;
   }
   if (!(head.flags & HEAD_FLAG_MULTIPART)) {
-    ygglog_debug << "CommBase(" << name << ")::send: " << head.size_msg << " bytes completed" << std::endl;
+    ygglog_debug << "CommBase(" << name << ")::send_raw: " << head.size_msg << " bytes completed" << std::endl;
     return head.size_msg;
   }
   while ((head.offset + head.size_msg) < head.size_curr) {
     if (xmulti->send_single(head) < 0) {
-      ygglog_error << "CommBase(" << name << ")::send: send interupted at " << head.offset << " of " << head.size_curr << " bytes" << std::endl;
+      ygglog_error << "CommBase(" << name << ")::send_raw: send interupted at " << head.offset << " of " << head.size_curr << " bytes" << std::endl;
       return -1;
     }
-    ygglog_debug << "CommBase(" << name << ")::send: " << head.offset << " of " << head.size_curr << " bytes sent to " << address->address() << std::endl;
+    ygglog_debug << "CommBase(" << name << ")::send_raw: " << head.offset << " of " << head.size_curr << " bytes sent to " << address->address() << std::endl;
   }
-  ygglog_debug << "CommBase(" << name << ")::send: returns " << head.size_curr << std::endl;
+  ygglog_debug << "CommBase(" << name << ")::send_raw: returns " << head.size_curr << std::endl;
   setFlags(head, SEND);
   return head.size_curr;
 }
+int Comm_t::send(const rapidjson::Document& data, bool not_generic) {
+  ygglog_debug << "CommBase(" << name << ")::send: begin" << std::endl;
+  communication::utils::Metadata& meta = getMetadata(SEND);
+  if (!(meta.hasType() || not_generic))
+    meta.setGeneric();
+  char* buf = NULL;
+  size_t buf_siz = 0;
+  int ret = meta.serialize(&buf, &buf_siz, data);
+  if (ret < 0) {
+    ygglog_error << "CommBase(" << name << ")::send: serialization error" << std::endl;
+    return ret;
+  }
+  if (meta.checkFilter()) {
+    ygglog_debug << "CommBase(" << name << ")::send: Skipping filtered message" << std::endl;
+  } else {
+    ret = send_raw(buf, ret);
+  }
+  meta.GetAllocator().Free(buf);
+  ygglog_debug << "CommBase(" << name << ")::send: returns " << ret << std::endl;
+  return ret;
+}
+int Comm_t::send(const char *data, const size_t &len) {
+  std::string data_str(data, len);
+  return sendVar(data_str);
+}
+
+//////////////////
+// RECV METHODS //
+//////////////////
+
 void Comm_t::set_timeout_recv(int new_timeout) {
   if (global_comm) {
     global_comm->set_timeout_recv(new_timeout);
@@ -405,13 +433,13 @@ int Comm_t::wait_for_recv(const int& tout) {
   }
   return comm_nmsg(RECV);
 }
-long Comm_t::recv(char*& data, const size_t &len,
-		  bool allow_realloc) {
+long Comm_t::recv_raw(char*& data, const size_t &len,
+		      bool allow_realloc) {
   if (global_comm)
-    return global_comm->recv(data, len, allow_realloc);
-  ygglog_debug << "CommBase(" << name << ")::recv: Receiving from " << address->address() << std::endl;
+    return global_comm->recv_raw(data, len, allow_realloc);
+  ygglog_debug << "CommBase(" << name << ")::recv_raw: Receiving from " << address->address() << std::endl;
   if (direction != RECV && type != CLIENT_COMM) {
-    ygglog_debug << "CommBase(" << name << ")::recv: Attempt to receive from communicator set up to send" << std::endl;
+    ygglog_debug << "CommBase(" << name << ")::recv_raw: Attempt to receive from communicator set up to send" << std::endl;
     return -1;
   }
   Header head(data, len, allow_realloc);
@@ -419,38 +447,29 @@ long Comm_t::recv(char*& data, const size_t &len,
   if (!allow_realloc) {
     char* tmp = NULL;
     size_t tmp_len = 0;
-    long ret = recv(tmp, tmp_len, true);
+    long ret = recv_raw(tmp, tmp_len, true);
     if (ret >= 0 || ret == -2) {
       if (ret >= 0) {
 	tmp_len = static_cast<size_t>(ret);
 	ret = copyData(data, len, tmp, tmp_len, false);
       }
-      if (ret < 0)
-	cache.emplace_back(tmp, tmp_len);
       if (tmp)
 	free(tmp);
     }
     return ret;
   }
-  if (!cache.empty()) {
-    ret = copyData(data, len, cache.begin()->c_str(),
-		   cache.begin()->size(), allow_realloc);
-    if (ret >= 0)
-      cache.erase(cache.begin());
-    return ret;
-  }
   while (true) {
     if (is_closed()) {
-      ygglog_error << "CommBase(" << name << ")::recv: Communicator closed." << std::endl;
+      ygglog_error << "CommBase(" << name << ")::recv_raw: Communicator closed." << std::endl;
       return -1;
     }
     if (wait_for_recv(timeout_recv) <= 0) {
-      ygglog_error << "CommBase(" << name << ")::recv: No messages waiting" << std::endl;
+      ygglog_error << "CommBase(" << name << ")::recv_raw: No messages waiting" << std::endl;
       return -1;
     }
     ret = recv_single(head);
     if (ret < 0) {
-      ygglog_error << "CommBase(" << name << ")::recv: Failed to receive header" << std::endl;
+      ygglog_error << "CommBase(" << name << ")::recv_raw: Failed to receive header" << std::endl;
       return ret;
     }
     if (!(head.flags & HEAD_FLAG_REPEAT))
@@ -458,52 +477,103 @@ long Comm_t::recv(char*& data, const size_t &len,
     head.reset(HEAD_RESET_KEEP_BUFFER);
   }
   if (head.flags & HEAD_FLAG_EOF) {
-    ygglog_debug << "CommBase(" << name << ")::recv: EOF received" << std::endl;
+    ygglog_debug << "CommBase(" << name << ")::recv_raw: EOF received" << std::endl;
     setFlags(head, RECV);
     return -2;
   }
   Comm_t* xmulti = NULL;
   if (head.flags & HEAD_FLAG_MULTIPART) {
-    ygglog_debug << "CommBase(" << name << ")::recv(char*& data, const size_t &len, bool allow_realloc): Message is multipart" << std::endl;
+    ygglog_debug << "CommBase(" << name << ")::recv_raw(char*& data, const size_t &len, bool allow_realloc): Message is multipart" << std::endl;
     xmulti = create_worker_recv(head);
     if (xmulti == NULL) {
-      ygglog_error << "CommBase(" << name << ")::recv: Failed to create worker communicator" << std::endl;
+      ygglog_error << "CommBase(" << name << ")::recv_raw: Failed to create worker communicator" << std::endl;
       return -1;
     }
   }
   head.offset = head.size_curr;
   while (head.size_curr < head.size_data) {
     if (xmulti->wait_for_recv(timeout_recv) <= 0) {
-      ygglog_error << "CommBase(" << name << ")::recv: No messages waiting in work comm" << std::endl;
+      ygglog_error << "CommBase(" << name << ")::recv_raw: No messages waiting in work comm" << std::endl;
       return -1;
     }
     ret = xmulti->recv_single(head);
     if (ret < 0) {
-      ygglog_error << "CommBase(" << name << ")::recv: Receive interrupted at " << head.size_curr << " of " << head.size_data << " bytes." << std::endl;
+      ygglog_error << "CommBase(" << name << ")::recv_raw: Receive interrupted at " << head.size_curr << " of " << head.size_data << " bytes." << std::endl;
       break;
     }
-    ygglog_debug << "CommBase(" << name << ")::recv: " << head.size_curr << " of " << head.size_data << " bytes received." << std::endl;
+    ygglog_debug << "CommBase(" << name << ")::recv_raw: " << head.size_curr << " of " << head.size_data << " bytes received." << std::endl;
   }
   if (xmulti)
     workers.remove_worker(xmulti);
   if (ret < 0) return ret;
   if (ret > 0) {
     if (!head.finalize_recv()) {
-      ygglog_error << "CommBase(" << name << ")::recv: finalize_recv failed." << std::endl;
+      ygglog_error << "CommBase(" << name << ")::recv_raw: finalize_recv failed." << std::endl;
       return -1;
     }
     if (!head.hasType()) {
-      ygglog_debug << "CommBase(" << name << ")::recv: No type information in message header" << std::endl;
+      ygglog_debug << "CommBase(" << name << ")::recv_raw: No type information in message header" << std::endl;
     } else {
-      update_datatype(head.schema[0], RECV);
+      communication::utils::Metadata& meta = getMetadata(RECV);
+      if ((!meta.hasType()) && (meta.transforms.size() == 0)) {
+	if (!meta.fromSchema(head.schema[0]))
+	  return -1;
+      }
+      // update_datatype(head.schema[0], RECV);
     }
   }
-  ygglog_debug << "CommBase(" << name << ")::recv: Received " << head.size_curr << " bytes from " << address->address() << std::endl;
+  ygglog_debug << "CommBase(" << name << ")::recv_raw: Received " << head.size_curr << " bytes from " << address->address() << std::endl;
   ret = head.size_data;
   setFlags(head, RECV);
   return ret;
 }
+long Comm_t::recv(rapidjson::Document& data, bool not_generic) {
+  ygglog_debug << "CommBase(" << name << ")::recv: begin" << std::endl;
+  communication::utils::Metadata& meta = getMetadata(RECV);
+  char* buf = NULL;
+  size_t buf_siz = 0;
+  long ret = recv_raw(buf, buf_siz, true);
+  if (ret < 0) {
+    if (buf != NULL)
+      free(buf);
+    if (ret != -2)
+      ygglog_error << "CommBase(" << name << ")::recv: Error in recv" << std::endl;
+    return ret;
+  }
+  ret = meta.deserialize(buf, data);
+  free(buf);
+  if (ret < 0) {
+    ygglog_error << "CommBase(" << name << ")::recv: Error deserializing message" << std::endl;
+    return ret;
+  }
+  if (meta.checkFilter()) {
+    ygglog_error << "CommBase(" << name << ")::recv: Skipping filtered message." << std::endl;
+    return recv(data, not_generic);
+  }
+  ygglog_debug << "CommBase(" << name << ")::recv: returns " << ret << std::endl;
+  return ret;
+}
 
+long Comm_t::recv(char*& data, const size_t &len,
+		  bool allow_realloc) {
+  std::string data_str;
+  long out = -1;
+  if (!cache.empty()) {
+    out = copyData(data, len, cache.begin()->c_str(),
+		   cache.begin()->size(), allow_realloc);
+    if (out >= 0)
+      cache.erase(cache.begin());
+    return out;
+  }
+  out = recv(data_str);
+  if (out >= 0) {
+    out = copyData(data, len, data_str.c_str(), data_str.size(),
+		   allow_realloc);
+    if (out < 0)
+      cache.push_back(data_str);
+  }
+  return out;
+}
 
 long Comm_t::recv(const int nargs, ...) {
   size_t nargs_copy = (size_t)nargs;
@@ -544,44 +614,11 @@ long Comm_t::callRealloc(const int nargs, ...) {
   return ret;
 }
 
-int Comm_t::sendVar(const std::string& data) {
-  if (getMetadata(SEND).isGeneric())
-    return sendVarAsGeneric(data);
-  if (!checkType(data, SEND))
-    return -1;
-  return send(2, data.c_str(), data.size());
-}
-int Comm_t::sendVar(const rapidjson::Document& data) {
-  getMetadata(SEND).setGeneric();
-  if (!checkType(data, SEND))
-    return -1;
-  return send(1, &data);
-}
-int Comm_t::sendVar(const rapidjson::Ply& data) {
-  if (!checkType(data, SEND))
-    return -1;
-  if (getMetadata(SEND).isGeneric())
-    return sendVarAsGeneric(data);
-  return send(1, &data);
-}
-int Comm_t::sendVar(const rapidjson::ObjWavefront& data) {
-  if (!checkType(data, SEND))
-    return -1;
-  if (getMetadata(SEND).isGeneric())
-    return sendVarAsGeneric(data);
-  return send(1, &data);
-}
-
 communication::utils::Metadata& Comm_t::getMetadata(const DIRECTION dir) {
   if (global_comm)
     return global_comm->getMetadata(dir);
   return metadata;
 }
-// bool Comm_t::hasMetadata(const DIRECTION dir) {
-//   if (global_comm)
-//     return global_comm->getMetadata(dir);
-  
-// }
 int Comm_t::update_datatype(const rapidjson::Value& new_schema,
 			    const DIRECTION dir) {
   communication::utils::Metadata& meta = getMetadata(dir);
@@ -617,80 +654,52 @@ int Comm_t::serialize(char*& buf, size_t& buf_siz,
 
 long Comm_t::vRecv(rapidjson::VarArgList& ap) {
     ygglog_debug << "CommBase(" << name << ")::vRecv: begin" << std::endl;
-    char* buf = NULL;
-    size_t buf_siz = 0;
-    long ret = recv(buf, buf_siz, true);
+    rapidjson::Document data;
+    size_t nargs_orig = ap.get_nargs();
+    getMetadata(RECV).Display();
+    long ret = recv(data, true);
     if (ret < 0) {
-        if (buf != NULL)
-            free(buf);
 	if (ret != -2)
 	    ygglog_error << "CommBase(" << name << ")::vRecv: Error in recv" << std::endl;
         return ret;
     }
-    ret = deserialize(buf, ap);
-    free(buf);
+    communication::utils::Metadata& meta = getMetadata(RECV);
+    ret = meta.deserialize_args(data, ap);
     if (ret < 0) {
         ygglog_error << "CommBase(" << name << ")::vRecv: Error deserializing message" << std::endl;
         return ret;
     }
-    if (getMetadata(RECV).checkFilter()) {
-      ygglog_error << "CommBase(" << name << ")::vRecv: Skipping filtered message." << std::endl;
-      return vRecv(ap);
-    }
+    if (ret >= 0)
+      ret = (int)(nargs_orig - ap.get_nargs());
     ygglog_debug << "CommBase(" << name << ")::vRecv: returns " << ret << std::endl;
     return ret;
 }
 int Comm_t::vSend(rapidjson::VarArgList& ap) {
   ygglog_debug << "CommBase(" << name << ")::vSend: begin" << std::endl;
-  // If type not set, but comm expecting generic, get the schema from the
-  // provided generic argument
   communication::utils::Metadata& meta = getMetadata(SEND);
-  if (meta.isGeneric() && !meta.hasType()) {
-    rapidjson::Document tmp;
-    Metadata tmp_meta;
-    tmp_meta.fromType("any", true);
-    rapidjson::VarArgList tmp_ap(ap);
-    if (!tmp.GetVarArgs(*tmp_meta.schema, tmp_ap)) {
-      ygglog_error << "CommBase(" << name << ")::vSend: Error getting generic argument." << std::endl;
-      return -1;
-    }
-    rapidjson::SchemaEncoder encoder(true);
-    rapidjson::Document new_schema;
-    tmp.Accept(encoder);
-    encoder.Accept(new_schema);
-    new_schema.FinalizeFromStack();
-    update_datatype(new_schema, SEND);
-  }
+  rapidjson::Document data;
   size_t nargs_orig = ap.get_nargs();
-  char* buf = NULL;
-  size_t buf_siz = 0;
-  int ret = serialize(buf, buf_siz, ap);
-  if (ret < 0) {
-    ygglog_error << "CommBase(" << name << ")::vSend: serialization error" << std::endl;
-    return ret;
+  if (meta.serialize_args(data, ap) < 0) {
+    ygglog_error << "CommBase(" << name << ")::vSend: Error extracting arguments" << std::endl;
+    return -1;
   }
-  if (getMetadata(SEND).checkFilter()) {
-    ygglog_debug << "CommBase(" << name << ")::vSend: Skipping filtered message" << std::endl;
-  } else {
-    ret = send(buf, ret);
-  }
-  getMetadata(SEND).GetAllocator().Free(buf);
+  int ret = send(data, true);
   if (ret >= 0)
     ret = (int)(nargs_orig - ap.get_nargs());
   ygglog_debug << "CommBase(" << name << ")::vSend: returns " << ret << std::endl;
   return ret;
 }
-long Comm_t::callVar(const rapidjson::Document& sendData,
-		     rapidjson::Document& recvData) {
+long Comm_t::call(const rapidjson::Document& sendData,
+		  rapidjson::Document& recvData) {
   if (!(flags & COMM_FLAG_CLIENT)) {
-    ygglog_error << "CommBase(" << name << ")::callVar: Communicator is not a client." << std::endl;
+    ygglog_error << "CommBase(" << name << ")::call: Communicator is not a client." << std::endl;
     return -1;
   }
-  if (sendVar(sendData) < 0) {
-    ygglog_error << "CommBase(" << name << ")::callVar: Error in send." << std::endl;
+  if (send(sendData) < 0) {
+    ygglog_error << "CommBase(" << name << ")::call: Error in send." << std::endl;
     return -1;
   }
-  return recvVar(recvData);
+  return recv(recvData);
 }
 long Comm_t::vCall(rapidjson::VarArgList& ap) {
   if (!(flags & COMM_FLAG_CLIENT)) {

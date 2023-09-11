@@ -202,45 +202,151 @@ public:
     Comm_t& operator=(const Comm_t&) = delete;
     virtual ~Comm_t();
 
-    /*!
-      @brief Send a string message through the communicator.
-      @param[in] data Message.
-      @returns int Values >= 0 indicate success.
-     */
-    int send(const std::string& data) {
-        return send(data.c_str(), data.size());
-    }
+    //////////////////
+    // SEND METHODS //
+    //////////////////
+  
     /*!
       @brief Send a message indicating that the communicator is closing.
       @returns int Values >= 0 indicate success.
      */
      int send_eof() {
-        return send(YGG_MSG_EOF);
+       return send_raw(YGG_MSG_EOF, YGG_MSG_EOF_LEN);
      }
     /*!
-      @brief Receive a string message from the communicator.
-      @param[out] data String to store message in.
-      @returns int -1 if message could not be received. Length of the
-        received message if message was received.
+      @brief Send a string message through the communicator as raw bytes
+        without setting the datatype, performing normalization,
+	transformations, filtering, or calling the rapidjson serializer.
+      @param[in] data Message.
+      @param[in] len Size of data in bytes.
+      @returns int Values >= 0 indicate success.
      */
-    long recv(std::string& data) {
-      char* str = NULL;
-      size_t len = 0;
-      long out = recv(str, len, true);
-      if (out >= 0 || out == -2) {
-	if (out >= 0)
-	  data.assign(str, static_cast<size_t>(out));
-	free(str);
-      }
-      return out;
+    int send_raw(const char *data, const size_t &len);
+    /*!
+      @brief Send a rapidjson document through the communicator.
+      @param[in] data Message.
+      @param[in] not_generic If true, the datatype will not be updated to
+        expect a generic object in all future send calls.
+      @returns int Values >= 0 indicate success.
+     */
+    int send(const rapidjson::Document& data, bool not_generic=false);
+    /*!
+      @brief Send an object through the communicator.
+      @tparam T Type of object being sent.
+      @param[in] data Object to send.
+      @return Integer specifying if the receive was succesful.
+        Values >= 0 indicate success.
+    */
+    template<typename T, typename... Args>
+    int sendVar(const T& data, Args... args) {
+      rapidjson::Document doc(rapidjson::kArrayType);
+      return _sendVA(0, doc, data, args...);
     }
+private:
+#define HANDLE_SEND_BEFORE_			\
+  rapidjson::Value v
+#define HANDLE_SEND_AFTER_			\
+  doc.PushBack(v, doc.GetAllocator());		\
+  i++
+#define HANDLE_SEND_NEXT_			\
+  return _sendVA(i, doc, args...)
+#define HANDLE_SEND_LAST_(single)		\
+  if (doc.Size() == 1) {			\
+    rapidjson::Document tmp;			\
+    tmp.Swap(doc[0]);				\
+    return send(tmp, single);			\
+  }						\
+  return send(doc, single)
+#define HANDLE_SEND_(set, adv, single, ...)			\
+  int _sendVA(int i, rapidjson::Document& doc, __VA_ARGS__) {	\
+    HANDLE_SEND_BEFORE_;					\
+    set;							\
+    HANDLE_SEND_AFTER_;						\
+    adv;							\
+    HANDLE_SEND_LAST_(single);					\
+  }								\
+  template<typename... Args>					\
+  int _sendVA(int i, rapidjson::Document& doc, __VA_ARGS__,	\
+	      Args... args) {					\
+    HANDLE_SEND_BEFORE_;					\
+    set;							\
+    HANDLE_SEND_AFTER_;						\
+    adv;							\
+    HANDLE_SEND_NEXT_;						\
+  }
+#define HANDLE_SEND_TMP_(set, cond, adv, single, ...)		\
+  template<typename T>						\
+  RAPIDJSON_ENABLEIF_RETURN(cond, (int))			\
+  _sendVA(int i, rapidjson::Document& doc, __VA_ARGS__) {	\
+    HANDLE_SEND_BEFORE_;					\
+    set;							\
+    HANDLE_SEND_AFTER_;						\
+    adv;							\
+    HANDLE_SEND_LAST_(single);					\
+  }								\
+  template<typename T, typename... Args>			\
+  RAPIDJSON_ENABLEIF_RETURN(cond, (int))			\
+  _sendVA(int i, rapidjson::Document& doc, __VA_ARGS__,	\
+	  Args... args) {					\
+    HANDLE_SEND_BEFORE_;					\
+    set;							\
+    HANDLE_SEND_AFTER_;						\
+    adv;							\
+    HANDLE_SEND_NEXT_;						\
+  }
+  HANDLE_SEND_TMP_(v.Set(data, doc.GetAllocator()),
+		   (internal::NotExpr<
+		    internal::OrExpr<internal::IsSame<T, char*>,
+		    internal::OrExpr<internal::IsSame<T, char[]>, 
+		    internal::OrExpr<internal::IsSame<T, rapidjson::Document>,
+		    internal::IsPointer<T> > > > >),
+		   , true, const T& data)
+  HANDLE_SEND_(v.SetString(data, static_cast<rapidjson::SizeType>(len),
+			   doc.GetAllocator()),
+	       i++, true, const char*& data, const size_t& len)
+  HANDLE_SEND_(v.CopyFrom(data, doc.GetAllocator(), true),
+	       , false, const rapidjson::Document& data)
+  HANDLE_SEND_TMP_(v.Set1DArray(data,
+				static_cast<rapidjson::SizeType>(len),
+				doc.GetAllocator()),
+		   (internal::AndExpr<internal::IsPointer<T>,
+		    internal::NotExpr<internal::IsSame<T, char*> > >),
+		   i++, true, const T& data, const size_t& len)
+  HANDLE_SEND_TMP_(v.SetNDArray(data, shape,
+				static_cast<rapidjson::SizeType>(ndim),
+				doc.GetAllocator()),
+		   (internal::AndExpr<internal::IsPointer<T>,
+		    internal::NotExpr<internal::IsSame<T, char*> > >),
+		   i += 2, true, const T& data,
+		   const rapidjson::SizeType& ndim,
+		   const size_t*& shape)
+#undef HANDLE_SEND_BEFORE_
+#undef HANDLE_SEND_AFTER_
+#undef HANDLE_SEND_NEXT_
+#undef HANDLE_SEND_LAST_
+#undef HANDLE_SEND_
+#undef HANDLE_SEND_TMP_
+public:
     /*!
       @brief Send a string message through the communicator.
       @param[in] data Message.
       @param[in] len Size of data in bytes.
       @returns int Values >= 0 indicate success.
      */
-    virtual int send(const char *data, const size_t &len);
+    int send(const char *data, const size_t &len);
+    /*!
+      @brief Send a string message through the communicator.
+      @param[in] data Message.
+      @returns int Values >= 0 indicate success.
+     */
+    int send(const std::string& data) {
+      return sendVar(data);
+    }
+
+    //////////////////
+    // RECV METHODS //
+    //////////////////
+  
     /*!
       @brief Set the time limit for receiving messages.
       @param[in] new_timeout New time limit in micro-seconds. -1 will
@@ -262,9 +368,236 @@ public:
      */
     virtual int wait_for_recv(const int& tout);
     /*!
+      @brief Receive a raw string message from the communicator without
+        performing transformations, normalization, filtering, setting the,
+	datatype, or calling the rapidjson deserializer.
+      @param[out] data Allocated buffer where the message should be saved.
+      @param[in] len Length of the allocated message buffer in bytes.
+      @param[in] allow_realloc If true, data will be reallocated if the
+        message is larger than len. If false, an error will be raised if
+	the message is larger than len.
+      @returns -1 if message could not be received. Length of the
+        received message if message was received.
+    */
+    long recv_raw(char*& data, const size_t &len,
+		  bool allow_realloc=false);
+    /*!
+      @brief Receive a message as a rapidjson::Document.
+      @param[out] data rapidjson document to populate with received data.
+      @param[in] not_generic If true, the datatype will not be updated to
+        expect a generic object in all future recv calls.
+      @returns -1 if message could not be received. Length of the
+        received message if message was received.
+    */
+    long recv(rapidjson::Document& data, bool not_generic=false);
+    /*!
+      @brief Receive an object from the communicator.
+      @tparam T Type of object being received.
+      @param[out] data Object to receive message into.
+      @return Integer specifying if the receive was succesful.
+        Values >= 0 indicate success.
+    */
+    template<typename T, typename... Args>
+    long recvVar(T& data, Args... args) {
+      rapidjson::Document doc;
+      long out = recv(doc, true);
+      if (out < 0) return out;
+      return _recvVA(0, false, doc, data, args...);
+    }
+    template<typename T, typename... Args>
+    long recvVarRealloc(T& data, Args... args) {
+      rapidjson::Document doc;
+      long out = recv(doc, true);
+      if (out < 0) return out;
+      return _recvVA(0, true, doc, data, args...);
+    }
+private:
+#define HANDLE_RECV_BEFORE_						\
+  UNUSED(allow_realloc);						\
+  bool was_array = doc.IsArray();					\
+  UNUSED(was_array);							\
+  if (!doc.IsArray()) {							\
+    rapidjson::Value tmp;						\
+    tmp.Swap(doc);							\
+    doc.SetArray();							\
+    doc.PushBack(tmp, doc.GetAllocator());				\
+  }									\
+  if ((!doc.IsArray()) || doc.Size() == 0) {				\
+    ygglog_error << "CommBase(" << name <<				\
+      ")::recvVar(T& data): Received document does not have enough "	\
+      "arguments to fill all passed variables: " << doc << std::endl;	\
+    return -1;								\
+  }									\
+  zeroData(&data)
+#define HANDLE_RECV_AFTER_						\
+  doc.Erase(doc.Begin());						\
+  i++
+#define HANDLE_RECV_CHECK_(check, Tname)				\
+  if (!check) {								\
+    ygglog_error << "CommBase(" << name << ")::recvVar(T& data): " <<	\
+      "Element" << i << " in received document is not the "		\
+      "expected type. type = " << Tname <<				\
+      ", document = " << doc[0] << std::endl;				\
+    return -1;								\
+  }
+  
+#define HANDLE_RECV_NEXT_			\
+  return _recvVA(i, allow_realloc, doc, args...)
+#define HANDLE_RECV_LAST_(after)					\
+  after;								\
+  if (doc.Size() > 0) {							\
+    ygglog_error << "CommBase(" << name <<				\
+      ")::recvVar(T& data): Received document has more members than "	\
+      "the number of passed arguments (" << i << "), remaining "	\
+      "elements: " << doc << std::endl;					\
+    return -1;								\
+  }									\
+  return i
+#define HANDLE_RECV_(check, set, adv, Tname, after, ...)		\
+  long _recvVA(int i, bool allow_realloc, rapidjson::Document& doc,	\
+	       __VA_ARGS__) {						\
+    HANDLE_RECV_BEFORE_;						\
+    HANDLE_RECV_CHECK_(check, Tname);					\
+    set;								\
+    HANDLE_RECV_AFTER_;							\
+    adv;								\
+    HANDLE_RECV_LAST_(after);						\
+    return i;								\
+  }									\
+  template<typename... Args>						\
+  long _recvVA(int i, bool allow_realloc, rapidjson::Document& doc,	\
+	       __VA_ARGS__, Args... args) {				\
+    HANDLE_RECV_BEFORE_;						\
+    HANDLE_RECV_CHECK_(check, Tname);					\
+    set;								\
+    HANDLE_RECV_AFTER_;							\
+    adv;								\
+    HANDLE_RECV_NEXT_;							\
+    return i;								\
+  }
+#define HANDLE_RECV_TMP_(cond, check, set, adv, after, ...)		\
+  template<typename T>							\
+  RAPIDJSON_ENABLEIF_RETURN(cond, (long))				\
+    _recvVA(int i, bool allow_realloc, rapidjson::Document& doc,	\
+	    __VA_ARGS__) {						\
+    HANDLE_RECV_BEFORE_;						\
+    HANDLE_RECV_CHECK_(check, typeid(T).name());			\
+    set;								\
+    HANDLE_RECV_AFTER_;							\
+    adv;								\
+    HANDLE_RECV_LAST_(after);						\
+    return i;								\
+  }									\
+  template<typename T, typename... Args>				\
+  RAPIDJSON_ENABLEIF_RETURN(cond, (long))				\
+    _recvVA(int i, bool allow_realloc, rapidjson::Document& doc,	\
+	    __VA_ARGS__, Args... args) {				\
+    HANDLE_RECV_BEFORE_;						\
+    HANDLE_RECV_CHECK_(check, typeid(T).name());			\
+    set;								\
+    HANDLE_RECV_AFTER_;							\
+    adv;								\
+    HANDLE_RECV_NEXT_;							\
+    return i;								\
+  }
+  // TODO: Handle case of table arrays
+
+  HANDLE_RECV_(doc[0].IsString(),
+	       long ret = utils::copyData(data, len, doc[0].GetString(),
+					  static_cast<size_t>(doc[0].GetStringLength()),
+					  allow_realloc);
+	       if (ret < 0) { return -1; } len = static_cast<size_t>(ret),
+	       i++, "char*",
+	       if (i == 2 && doc.Size() == 0) { return ret; },
+	       char*& data, size_t& len)
+  HANDLE_RECV_(true,
+	       data.CopyFrom(doc[0], data.GetAllocator(), true),
+	       , "rapidjson::Document",
+	       if (i == 1 && (doc.Size() > 0 || was_array)) {
+		 rapidjson::Value tmp;
+		 data.Swap(tmp);
+		 data.SetArray();
+		 data.Reserve(doc.Size() + 1, data.GetAllocator());
+		 data.PushBack(tmp, data.GetAllocator());
+		 while (doc.Size() > 0) {
+		   tmp.CopyFrom(doc[0], data.GetAllocator(), true);
+		   data.PushBack(tmp, data.GetAllocator());
+		   doc.Erase(doc.Begin());
+		 }
+	       }
+	       ,rapidjson::Document& data)
+  HANDLE_RECV_TMP_((internal::NotExpr<
+		    internal::OrExpr<YGGDRASIL_IS_ANY_SCALAR(T),
+		    internal::OrExpr<internal::IsSame<T, char*>,
+		    internal::OrExpr<internal::IsSame<T, char[]>, 
+		    internal::OrExpr<internal::IsSame<T, rapidjson::Document>,
+		    internal::IsPointer<T> > > > > >),
+		   doc[0].Is<T>(), doc[0].Get(data), ,
+		   if (i == 1 && doc.Size() == 0 && doc[0].IsString()) {
+		     return static_cast<long>(doc[0].GetStringLength());
+		   },
+		   T& data)
+  HANDLE_RECV_TMP_((internal::AndExpr<internal::IsPointer<T>,
+		    internal::NotExpr<internal::IsSame<T, char*> > >),
+		   doc[0].Is1DArray<std::remove_pointer_t<T> >(),
+		   long ret = utils::copyData(data, len, doc[0].GetString(),
+					      static_cast<size_t>(doc[0].GetStringLength()),
+					      allow_realloc);
+		   if (ret < 0) { return -1; } len = static_cast<size_t>(doc[0].GetNElements()),
+		   i++, , T& data, size_t& len)
+  HANDLE_RECV_TMP_((internal::AndExpr<internal::IsPointer<T>,
+		    internal::NotExpr<internal::IsSame<T, char*> > >),
+		   doc[0].IsNDArray<std::remove_pointer_t<T> >(),
+		   size_t len = 0;
+		   if (ndim > 0 && shape) {
+		     len = 1;
+		     for (size_t ii = 0; ii < ndim; ii++) {
+		       len *= shape[ii];
+		     }
+		   }
+		   if (utils::copyData(data, len, doc[0].GetString(),
+				       static_cast<size_t>(doc[0].GetStringLength()),
+				       allow_realloc) < 0) { return -1; }
+		   const rapidjson::Value& doc_shape = doc[0].GetShape();
+		   if (utils::copyData(shape, ndim * sizeof(size_t),
+				       (size_t*)NULL,
+				       static_cast<size_t>(doc_shape.Size()) * sizeof(size_t),
+				       allow_realloc) < 0) { return -1; }
+		   ndim = static_cast<size_t>(doc_shape.Size());
+		   for (size_t ii = 0; ii < ndim; ii++) {
+		     shape[ii] = static_cast<size_t>(doc_shape[static_cast<rapidjson::SizeType>(ii)].GetUint());
+		   },
+		   i++, , T& data, size_t& ndim, size_t*& shape)
+  HANDLE_RECV_TMP_((YGGDRASIL_IS_ANY_SCALAR(T)),
+		   doc[0].IsScalar<T>(),
+		   doc[0].GetScalarValue(data),
+		   , , T& data)
+    
+					      
+#undef HANDLE_RECV_BEFORE_
+#undef HANDLE_RECV_AFTER_
+#undef HANDLE_RECV_CHECK_
+#undef HANDLE_RECV_NEXT_
+#undef HANDLE_RECV_LAST_
+#undef HANDLE_RECV_
+#undef HANDLE_RECV_TMP_
+public:
+    /*!
+      @brief Receive a raw string message from the communicator.
+      @param[out] data Allocated buffer where the message should be saved.
+      @param[in] len Length of the allocated message buffer in bytes.
+      @param[in] allow_realloc If true, data will be reallocated if the
+        message is larger than len. If false, an error will be raised if
+	the message is larger than len.
+      @returns -1 if message could not be received. Length of the
+        received message if message was received.
+    */
+    long recv(char*& data, const size_t &len,
+	      bool allow_realloc=false);
+    /*!
       @brief Receive a string message from the communicator.
       @param[out] data Allocated buffer where the message should be saved.
-      @returns int -1 if message could not be received. Length of the
+      @returns -1 if message could not be received. Length of the
         received message if message was received.
     */
     template<size_t N>
@@ -273,150 +606,16 @@ public:
       char* ptr = &(data[0]);
       return recv(ptr, len, false);
     }
-  
     /*!
-      @brief Receive a raw string message from the communicator.
-      @param[out] data Allocated buffer where the message should be saved.
-      @param[in] len Length of the allocated message buffer in bytes.
-      @param[in] allow_realloc If true, data will be reallocated if the
-        message is larger than len. If false, an error will be raised if
-	the message is larger than len.
-      @returns int -1 if message could not be received. Length of the
+      @brief Receive a string message from the communicator.
+      @param[out] data String to store message in.
+      @returns -1 if message could not be received. Length of the
         received message if message was received.
-    */
-    virtual long recv(char*& data, const size_t &len,
-		      bool allow_realloc=false);
-
-    /*!
-      @brief Send an object through the communicator.
-      @tparam T Type of object being sent.
-      @param[in] data Object to send.
-      @return Integer specifying if the receive was succesful.
-        Values >= 0 indicate success.
-    */
-    template<typename T>
-    int sendVar(const T data) {
-      ygglog_debug << "CommBase(" << name <<
-	")::sendVar(const T& data)" << std::endl;
-      if (!checkType(data, SEND))
-	return -1;
-      if (getMetadata(SEND).isGeneric())
-	return sendVarAsGeneric(data);
-      return send(1, data);
-    }
-    /*!
-      @brief Send an object through the communicator as a rapidjson
-        Document.
-      @tparam T Type of object being sent.
-      @param[in] data Object to send.
-      @return Integer specifying if the receive was succesful.
-        Values >= 0 indicate success.
-    */
-    template<typename T>
-    int sendVarAsGeneric(const T data) {
-      ygglog_debug << "CommBase(" << name <<
-	")::sendVarAsGeneric" << std::endl;
-      rapidjson::Document doc;
-      doc.Set(data, doc.GetAllocator());
-      return sendVar(doc);
-    }
-    /*!
-      @brief Send a C++ string through the communicator.
-      @param[in] data Message.
-      @returns int Values >= 0 indicate success.
      */
-    int sendVar(const std::string& data);
-    /*!
-      @brief Send a rapidjson document through the communicator.
-      @param[in] data Message.
-      @returns int Values >= 0 indicate success.
-     */
-    int sendVar(const rapidjson::Document& data);
-    /*!
-      @brief Send a Ply object through the communicator.
-      @param[in] data Ply object.
-      @return Integer specifying if the receive was succesful. Values >= 0
-        indicate success.
-    */
-    int sendVar(const rapidjson::Ply& data);
-    /*!
-      @brief Send a ObjWavefront object through the communicator.
-      @param[in] data ObjWavefront object.
-      @return Integer specifying if the receive was succesful.
-        Values >= 0 indicate success.
-    */
-    int sendVar(const rapidjson::ObjWavefront& data);
-
-    /*!
-      @brief Receive an object from the communicator.
-      @tparam T Type of object being received.
-      @param[out] data Object to receive message into.
-      @return Integer specifying if the receive was succesful.
-        Values >= 0 indicate success.
-    */
-    template<typename T>
-    long recvVar(T& data) {
-      ygglog_debug << "CommBase(" << name << ")::recvVar(T& data)" << std::endl;
-      if (!checkType(data, RECV))
-	return -1;
-      if (getMetadata(RECV).isGeneric())
-	return recvVarAsGeneric(data);
-      return recv(1, &data);
-    }
-    /*!
-      @brief Receive an object from the communicator that expects generic
-        objects.
-      @tparam T Type of object being received.
-      @param[out] data Object to receive message into.
-      @return Integer specifying if the receive was succesful.
-        Values >= 0 indicate success.
-    */
-    template<typename T>
-    long recvVarAsGeneric(T& data) {
-      ygglog_debug << "CommBase(" << name << ")::recvVarAsGeneric" << std::endl;
-      rapidjson::Document doc;
-      long out = recvVar(doc);
-      if (out >= 0) {
-	data = doc.Get<T>();
-      }
-      return out;
-    }
-    /*!
-      @brief Receive a rapidjson::Document object from the communicator.
-      @param[out] data Object to receive message into.
-      @return Integer specifying if the receive was succesful.
-        Values >= 0 indicate success.
-    */
-    long recvVar(rapidjson::Document& data) {
-      ygglog_debug << "CommBase(" << name << ")::recvVar(rapidjson::Document& data)" << std::endl;
-      getMetadata(RECV).setGeneric();
-      if ((!data.IsNull()) && (!checkType(data, RECV)))
-	return -1;
-      return recv(1, &data);
-    }
-    /*!
-      @brief Receive a string object from the communicator.
-      @param[out] data Object to receive message into.
-      @return Integer specifying if the receive was succesful. Values >= 0
-        indicate success.
-    */
-    long recvVar(std::string& data) {
-      ygglog_debug << "CommBase(" << name << ")::recvVar(std::string& data)" << std::endl;
-      if (!checkType(data, RECV))
-	return -1;
-      char* str = NULL;
-      size_t len = 0;
-      long out = recvRealloc(2, &str, &len);
-      if (out >= 0 || out == -2) {
-	if (out >= 0)
-	  data.assign(str, static_cast<size_t>(len));
-	free(str);
-      }
-      return out;
+    long recv(std::string& data) {
+      return recvVar(data);
     }
   
-    // TODO: Versions of sendVar/recvVar with multiples?
-
     /*!
       @brief Receive and parse a message into the provided arguments.
       @param[in] nargs Number of arguments being passed.
@@ -502,8 +701,21 @@ public:
       @return Integer specifying if the send and receive were succesful.
         Values >= 0 indicate success.
     */
+    long call(const rapidjson::Document& sendData,
+	      rapidjson::Document& recvData);
+    /*!
+      @brief Send a request and receive a response in the forms of
+        rapidjson Documents.
+      @param[in] sendData rapidjson document containing the request data.
+      @param[out] recvData rapidjson document that the response data
+        should be stored in.
+      @return Integer specifying if the send and receive were succesful.
+        Values >= 0 indicate success.
+    */
     long callVar(const rapidjson::Document& sendData,
-		 rapidjson::Document& recvData);
+		 rapidjson::Document& recvData) {
+      return call(sendData, recvData);
+    }
   
     /*!
       @brief Send a request and receive a response from a list of
@@ -569,12 +781,6 @@ public:
       @return Metadata.
      */
     virtual communication::utils::Metadata& getMetadata(const DIRECTION dir=NONE);
-    /*!
-      @brief Determine if the communicator has metadata defined.
-      @param[in] dir Direction to get metadata for.
-      @return true if the communicator has metadata, false otherwise.
-     */
-    // virtual bool hasMetadata(const DIRECTION dir=NONE);
     /*!
       @brief Get the bitwise flags associated with the communicator.
       @returns flags.
@@ -747,6 +953,8 @@ protected:
       communication::utils::Metadata& meta = getMetadata(dir);
       if (dir == RECV)
 	zeroData(&data);
+      if (dir == SEND && meta.transforms.size() > 0)
+	return true;
       return meta.fromData(data);
     }
     virtual bool create_header_send(utils::Header&) { return true; }
