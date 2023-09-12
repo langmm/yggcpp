@@ -184,8 +184,8 @@ jobs:
         if: matrix.os == 'windows-latest' && matrix.python-install == 'conda'
         # shell: bash -l {0}
         run: |
-          choco install mingw
-          # conda install m2w64-gcc m2w64-gcc-fortran m2w64-toolchain_win-64 -y
+          # choco install mingw
+          conda install m2w64-gcc m2w64-gcc-fortran m2w64-toolchain_win-64 -y
 
       ###################################
       # SET CONFIG FLAGS
@@ -214,11 +214,11 @@ jobs:
         shell: bash -l {0}
         run: |
           echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DBUILD_FORTRAN_LIBRARY=ON" >> "$GITHUB_ENV"
-      # - name: Fortran config flags on Windows (CONDA)
-      #   if: matrix.with-asan == false && matrix.os == 'windows-latest' && matrix.python-install == 'conda'
-      #   shell: bash -l {0}
-      #   run: |
-      #     echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DCMAKE_Fortran_COMPILER=$(which gfortran).exe -DCMAKE_Fortran_PREPROCESS_SOURCE=ON -DCMAKE_Fortran_COMPILER_WORKS=1 -DDONT_CHECK_FORTRAN_C_COMPAT=ON" >> "$GITHUB_ENV"
+      - name: Fortran config flags on Windows (CONDA)
+        if: matrix.with-asan == false && matrix.os == 'windows-latest' && matrix.python-install == 'conda'
+        shell: bash -l {0}
+        run: |
+          echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DCMAKE_Fortran_COMPILER=$(which gfortran).exe -DCMAKE_Fortran_PREPROCESS_SOURCE=ON -DCMAKE_Fortran_COMPILER_WORKS=1 -DDONT_CHECK_FORTRAN_C_COMPAT=ON" >> "$GITHUB_ENV"
       - name: ASAN dynamic library
         if: matrix.with-asan == true && matrix.os == 'macos-latest'
         shell: bash -l {0}
@@ -262,7 +262,7 @@ jobs:
           echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} \\\"-DCMAKE_PREFIX_PATH=${VCPKG_INSTALLATION_ROOT}\installed\x64-windows\\\"" >> "$GITHUB_ENV"
           echo "PYTHON_CONFIG_FLAGS=${{ env.PYTHON_CONFIG_FLAGS }} --config-settings=cmake.define.CMAKE_PREFIX_PATH=${VCPKG_INSTALLATION_ROOT}\installed\x64-windows --config-settings=cmake.define.Python3_ROOT_DIR=${{ env.pythonLocation }} --config-settings=cmake.define.Python_ROOT_DIR=${{ env.pythonLocation }}" >> "$GITHUB_ENV"
       - name: Fortran config flags on Windows
-        if: matrix.with-asan == false && matrix.os == 'windows-latest' # && matrix.python-install == 'pip'
+        if: matrix.with-asan == false && matrix.os == 'windows-latest' && matrix.python-install == 'pip'
         shell: bash -l {0}
         run: |
           echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -G\"MinGW Makefiles\"" >> $GITHUB_ENV

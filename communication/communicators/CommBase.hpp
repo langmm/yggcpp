@@ -244,6 +244,7 @@ public:
     }
 private:
 #define HANDLE_SEND_BEFORE_			\
+  UNUSED(i);					\
   rapidjson::Value v
 #define HANDLE_SEND_AFTER_			\
   doc.PushBack(v, doc.GetAllocator());		\
@@ -443,8 +444,7 @@ private:
   
 #define HANDLE_RECV_NEXT_			\
   return _recvVA(i, allow_realloc, doc, args...)
-#define HANDLE_RECV_LAST_(after)					\
-  after;								\
+#define HANDLE_RECV_LAST_						\
   if (doc.Size() > 0) {							\
     ygglog_error << "CommBase(" << name <<				\
       ")::recvVar(T& data): Received document has more members than "	\
@@ -461,7 +461,8 @@ private:
     set;								\
     HANDLE_RECV_AFTER_;							\
     adv;								\
-    HANDLE_RECV_LAST_(after);						\
+    after;								\
+    HANDLE_RECV_LAST_;							\
     return i;								\
   }									\
   template<typename... Args>						\
@@ -485,7 +486,8 @@ private:
     set;								\
     HANDLE_RECV_AFTER_;							\
     adv;								\
-    HANDLE_RECV_LAST_(after);						\
+    after;								\
+    HANDLE_RECV_LAST_;							\
     return i;								\
   }									\
   template<typename T, typename... Args>				\
