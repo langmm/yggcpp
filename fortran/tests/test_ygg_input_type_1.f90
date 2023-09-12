@@ -11,13 +11,21 @@ integer function test_ygg_input_type_1() result(r)
   sComm = init_comm("test_name", 0, 1, sDtype, 131072)
   call display_dtype(sDtype)
   rComm = ygg_input("test_name", rDtype)
-  if (c_associated(rComm%comm)) then
-     if (ygg_send(sComm, yggarg(data_send))) then
-        if (ygg_recv(rComm, yggarg(data_recv))) then
-           if (data_recv.EQ.data_send) then
-              r = 0
-           end if
-        end if
-     end if
+  if (.NOT.c_associated(rComm%comm)) then
+     write(*,*) "error in comm init"
+     return
   end if
+  if (.NOT.ygg_send(sComm, yggarg(data_send))) then
+     write(*,*) "send failed"
+     return
+  end if
+  if (.NOT.ygg_recv(rComm, yggarg(data_recv))) then
+     write(*,*) "recv failed"
+     return
+  end if
+  if (data_recv.NE.data_send) then
+     write(*,*) "data not equal", data_send, data_recv
+     return
+  end if
+  r = 0
 end function test_ygg_input_type_1

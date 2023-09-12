@@ -44,10 +44,10 @@ TEST(DefaultCommu, checkTypeErrors) {
 TEST(DefaultCommu, seriErrors) {
   DefaultComm sComm("", nullptr, SEND);
   DefaultComm rComm("", new utils::Address(sComm.getAddress().c_str()), RECV);
-  int a, b;
-  EXPECT_EQ(sComm.send(2, 1, 1), -1);
+  int a = 0, b = 0;
+  EXPECT_EQ(sComm.send(2, 1, 1), -1); // No schema to parse variable arguments
   EXPECT_GE(sComm.send("hello", 5), 0);
-  EXPECT_EQ(rComm.recv(2, &a, &b), -1);
+  EXPECT_EQ(rComm.recvVar(a, b), -1); // Type mismatch
 }
 
 TEST(DefaultCommu, workerErrors) {

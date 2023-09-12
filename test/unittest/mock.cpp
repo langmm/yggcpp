@@ -50,7 +50,7 @@ std::string _mock_message() {
   }
   if (!RETMSG_META.empty())
     out += ", " + RETMSG_META;
-  out += "}}YGG_MSG_HEAD" + RETMSG;
+  out += "}}YGG_MSG_HEAD\"" + RETMSG + "\"";
   return out;
 }
   

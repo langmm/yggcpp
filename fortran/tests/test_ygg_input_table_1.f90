@@ -15,19 +15,31 @@ integer function test_ygg_input_table_1() result(r)
   sDtype = create_dtype_format('%d\t%lf\t%5s', .false., .false.)
   sComm = init_comm("test_name", 0, 1, sDtype, 131072)
   rComm = ygg_ascii_table_input("test_name")
-  if (c_associated(rComm%comm)) then
-     if (ygg_send(sComm, [yggarg(a_send), yggarg(b_send), &
-          yggarg(c_send)])) then
-        if (ygg_recv(rComm, [yggarg(a_recv), yggarg(b_recv), &
-             yggarg(c_recv)])) then
-           if (a_recv.EQ.a_send) then
-              if (b_recv.EQ.b_send) then
-                 if (c_recv.EQ.c_send) then
-                    r = 0
-                 end if
-              end if
-           end if
-        end if
-     end if
+  if (.NOT.c_associated(rComm%comm)) then
+     write(*,*) "error in comm init"
+     return
   end if
+  if (.NOT.ygg_send(sComm, [yggarg(a_send), yggarg(b_send), &
+       yggarg(c_send)])) then
+     write(*,*) "send failed"
+     return
+  end if
+  if (.NOT.ygg_recv(rComm, [yggarg(a_recv), yggarg(b_recv), &
+       yggarg(c_recv)])) then
+     write(*,*) "recv failed"
+     return
+  end if
+  if (a_recv.NE.a_send) then
+     write(*,*) "a not equal", a_send, a_recv
+     return
+  end if
+  if (b_recv.NE.b_send) then
+     write(*,*) "b not equal", b_send, b_recv
+     return
+  end if
+  if (c_recv.NE.c_send) then
+     write(*,*) "c not equal", c_send, c_recv
+     return
+  end if
+  r = 0
 end function test_ygg_input_table_1

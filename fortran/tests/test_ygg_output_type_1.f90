@@ -10,13 +10,21 @@ integer function test_ygg_output_type_1() result(r)
   sDtype = create_dtype_from_schema('{"type": "integer"}', .false.)
   rComm = init_comm("test_name", 2, 1, rDtype, 131072)
   sComm = ygg_output("test_name", sDtype)
-  if (c_associated(rComm%comm)) then
-     if (ygg_send(sComm, yggarg(data_send))) then
-        if (ygg_recv(rComm, yggarg(data_recv))) then
-           if (data_recv.EQ.data_send) then
-              r = 0
-           end if
-        end if
-     end if
+  if (.NOT.c_associated(rComm%comm)) then
+     write(*,*) "error in comm init"
+     return
   end if
+  if (.NOT.ygg_send(sComm, yggarg(data_send))) then
+     write(*,*) "send failed"
+     return
+  end if
+  if (.NOT.ygg_recv(rComm, yggarg(data_recv))) then
+     write(*,*) "recv failed"
+     return
+  end if
+  if (data_recv.NE.data_send) then
+     write(*,*) "data not equal", data_send, data_recv
+     return
+  end if
+  r = 0
 end function test_ygg_output_type_1

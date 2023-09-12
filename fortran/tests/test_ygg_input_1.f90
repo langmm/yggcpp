@@ -16,11 +16,11 @@ integer function test_ygg_input_1() result(r)
      return
   end if
   if (.NOT.ygg_send(sComm, data_send, data_send_len)) then
-     write(*,*) "request send failed"
+     write(*,*) "send failed"
      return
   end if
   if (.NOT.ygg_recv(rComm, data_recv, data_recv_len)) then
-     write(*,*) "request recv failed"
+     write(*,*) "recv failed"
      return
   end if
   if (data_recv_len.NE.data_send_len) then
