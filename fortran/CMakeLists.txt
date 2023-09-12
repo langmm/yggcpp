@@ -14,13 +14,15 @@ set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -cpp")
 #                            ${DEPS_INCLUDE_DIRS})
 # add_library(YggInterface_fortran SHARED YggInterface.f90
 #             "$<TARGET_OBJECTS:c_wrap>")
-add_library(YggInterface_fortran SHARED)
+# add_library(YggInterface_fortran SHARED)
+add_library(YggInterface_fortran SHARED
+            YggInterface.f90 c_wrappers.cpp)
 add_library(YggInterface::fortran ALIAS YggInterface_fortran)
 
 # Configure Fortran wrapper
-target_sources(YggInterface_fortran
-               PUBLIC YggInterface.f90
-               PRIVATE c_wrappers.cpp)
+# target_sources(YggInterface_fortran
+#                PUBLIC YggInterface.f90
+#                PRIVATE c_wrappers.cpp)
 set_target_properties(YggInterface_fortran PROPERTIES
                       VERSION ${PROJECT_VERSION}
                       SOVERSION ${PROJECT_VERSION_MAJOR}
