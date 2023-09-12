@@ -18,15 +18,14 @@ add_library(YggInterface_fortran SHARED)
 add_library(YggInterface::fortran ALIAS YggInterface_fortran)
 
 # Configure Fortran wrapper
-target_sources(PUBLIC YggInterface.f90
+target_sources(YggInterface_fortran
+               PUBLIC YggInterface.f90
                PRIVATE c_wrappers.cpp)
 set_target_properties(YggInterface_fortran PROPERTIES
                       VERSION ${PROJECT_VERSION}
                       SOVERSION ${PROJECT_VERSION_MAJOR}
                       EXPORT_NAME fortran
                       OUTPUT_NAME YggInterface_fortran
-                      PUBLIC_HEADER YggInterface.f90)
-set_target_properties(YggInterface_fortran PROPERTIES
                       PUBLIC_HEADER YggInterface.f90)
 target_include_directories(YggInterface_fortran PUBLIC
                            "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>")
