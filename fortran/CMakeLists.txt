@@ -4,16 +4,23 @@ if (NOT DONT_CHECK_FORTRAN_C_COMPAT)
    FortranCInterface_VERIFY(CXX)
 endif()
 
-add_library(YggInterface_fortran SHARED)
+add_library(c_wrap OBJECT c_wrappers.cpp)
+target_include_directories(c_wrap PUBLIC
+                           "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>")
+target_include_directories(c_wrap PUBLIC
+                           ${DEPS_INCLUDE_DIRS})
+add_library(YggInterface_fortran SHARED YggInterface.f90
+            "$<TARGET_OBJECTS:c_wrap>")
+# add_library(YggInterface_fortran SHARED)
 add_library(YggInterface::fortran ALIAS YggInterface_fortran)
 set(CMAKE_Fortran_STANDARD 2003)
 set(CMAKE_Fortran_STANDARD_REQUIRED ON)
 set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -cpp")
 
 # Configure Fortran wrapper
-target_sources(YggInterface_fortran
-               PUBLIC YggInterface.f90
-               PRIVATE c_wrappers.cpp)
+# target_sources(
+#                PUBLIC YggInterface.f90
+#                PRIVATE c_wrappers.cpp)
 set_target_properties(YggInterface_fortran PROPERTIES
                       VERSION ${PROJECT_VERSION}
                       SOVERSION ${PROJECT_VERSION_MAJOR}

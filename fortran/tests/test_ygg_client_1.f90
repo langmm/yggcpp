@@ -5,7 +5,8 @@ integer function test_ygg_client_1() result(r)
   character(len=20) :: data_recv, data_send
   integer :: data_recv_len, data_send_len
   r = 1
-  rDtype = create_dtype_from_schema('{"type": "string"}', .false.)
+  rDtype = create_dtype_from_schema('{"type": "string", &
+       &"allowWrapped": true}', .false.)
   rComm = init_comm("test_name", 0, 5, rDtype, 163840)
   sComm = ygg_rpc_client("test_name")
   if (.NOT.c_associated(sComm%comm)) then

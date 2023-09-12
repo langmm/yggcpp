@@ -656,7 +656,6 @@ long Comm_t::vRecv(rapidjson::VarArgList& ap) {
     ygglog_debug << "CommBase(" << name << ")::vRecv: begin" << std::endl;
     rapidjson::Document data;
     size_t nargs_orig = ap.get_nargs();
-    getMetadata(RECV).Display();
     long ret = recv(data, true);
     if (ret < 0) {
 	if (ret != -2)
