@@ -184,8 +184,8 @@ jobs:
         if: matrix.os == 'windows-latest' && matrix.python-install == 'conda'
         shell: bash -l {0}
         run: |
-          # choco install mingw
-          conda install m2w64-gcc m2w64-gcc-fortran m2w64-toolchain_win-64 -y
+          choco install mingw
+          # conda install m2w64-gcc m2w64-gcc-fortran m2w64-toolchain_win-64 -y
           gcc -v
 
       ###################################
