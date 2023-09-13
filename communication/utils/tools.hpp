@@ -113,6 +113,11 @@ static inline
 int unsetenv(const char *name) {
   return setenv(name, "", true);
 }
+#include "pthread.h"
+static inline
+bool operator<(const ptw32_handle_t x, const ptw32_handle_t y) {
+  return (x.p < y.p);
+}
 #endif // _WIN32 _MSC_VER
 
 namespace communication {
