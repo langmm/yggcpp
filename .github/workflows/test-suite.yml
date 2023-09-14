@@ -180,6 +180,11 @@ jobs:
         if: matrix.os == 'macos-latest' && matrix.python-install == 'conda'
         run: |
           conda install llvm -y
+      - name: Install compilers using conda on Linux/Mac
+        if: matrix.os != 'windows-latest' && matrix.python-install == 'conda'
+        shell: bash -l {0}
+        run: |
+          conda install c-compiler cxx-compiler fortran-compiler
       - name: Install MinGW on windows for Fortran
         if: matrix.os == 'windows-latest' && matrix.python-install == 'conda'
         shell: bash -l {0}
