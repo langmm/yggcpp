@@ -42,7 +42,7 @@ function (add_fortran_test_executable TARGET)
     create_test_sourcelist (_ main.c ${TEST_FILES_MANGLED})
 
     add_library (${TARGET}_fortran SHARED ${TEST_FILES})
-    # target_link_libraries (${TARGET}_fortran PUBLIC ${FORTRAN_TEST_LIBRARIES})
+    target_link_libraries (${TARGET}_fortran PUBLIC ${FORTRAN_TEST_LIBRARIES})
     target_include_directories(${TARGET}_fortran PUBLIC ${FORTRAN_TEST_INCLUDE_DIRS})
     add_executable (${TARGET} main.c)
     target_link_libraries (${TARGET} ${TARGET}_fortran ${FORTRAN_TEST_LIBRARIES})
