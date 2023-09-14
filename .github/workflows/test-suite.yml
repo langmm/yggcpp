@@ -185,8 +185,11 @@ jobs:
         shell: bash -l {0}
         run: |
           choco install mingw
+          echo "CC=gcc.exe" >> "$GITHUB_ENV"
+          echo "CXX=g++.exe" >> "$GITHUB_ENV"
           # conda install m2w64-gcc m2w64-gcc-fortran m2w64-toolchain_win-64 -y
           gcc -v
+          g++ -v
 
       ###################################
       # SET CONFIG FLAGS
