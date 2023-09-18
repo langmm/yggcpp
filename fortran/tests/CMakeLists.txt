@@ -64,6 +64,30 @@ function (add_fortran_test_executable TARGET)
 	    COMMAND $<TARGET_FILE:${TARGET}> ${TEST_FILE_MANGLED})
         math (EXPR INDEX "${INDEX} + 1")
     endwhile ()
+
+    if (WIN32)
+        add_custom_command(
+            TARGET ${TARGET}
+            POST_BUILD
+            COMMAND echo "$<TARGET_RUNTIME_DLLS:${TARGET}>"
+        )
+        if (CONDA_PREFIX)
+            add_custom_command(
+                TARGET ${TARGET}
+                POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:YggInterface> $<TARGET_FILE_DIR:${TARGET}>
+                COMMAND_EXPAND_LISTS
+            )
+        else()
+            add_custom_command(
+                TARGET ${TARGET}
+                POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:${TARGET}> $<TARGET_FILE_DIR:${TARGET}>
+                COMMAND_EXPAND_LISTS
+            )
+        endif()
+    endif ()
+
 endfunction ()
 
 
