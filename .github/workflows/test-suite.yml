@@ -189,12 +189,18 @@ jobs:
         if: matrix.os == 'windows-latest' && matrix.python-install == 'conda'
         shell: bash -l {0}
         run: |
-          choco install mingw
+          echo "CC=${CC}"
+          echo "CFLAGS=${CFLAGS}"
+          echo "CXX=${CXX}"
+          echo "CXXFLAGS=${CXXFLAGS}"
           echo "CC=gcc.exe" >> "$GITHUB_ENV"
-          echo "CXX=g++.exe" >> "$GITHUB_ENV"
+          echo "CXX=c++.exe" >> "$GITHUB_ENV"
+          echo "CFLAGS=" >> "$GITHUB_ENV"
+          echo "CXXFLAGS=" >> "$GITHUB_ENV"
+          choco install mingw
           # conda install m2w64-gcc m2w64-gcc-fortran m2w64-toolchain_win-64 -y
           gcc -v
-          g++ -v
+          c++ -v
 
       ###################################
       # SET CONFIG FLAGS

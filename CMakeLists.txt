@@ -213,7 +213,7 @@ set(YGG_BUILD_FLAGS "")
 # DEPENDENCIES
 #########################################
 
-set(CONDA_PREFIX "$ENV{CONDA_PREFIX}")
+cmake_path(SET CONDA_PREFIX "$ENV{CONDA_PREFIX}")
 if(CONDA_PREFIX)
     message(STATUS "CONDA_PREFIX = ${CONDA_PREFIX}")
 endif()
@@ -244,7 +244,7 @@ if(ENABLE_ZMQ)
         pkg_check_modules(PC_ZeroMQ QUIET zmq)
 
         if (CONDA_PREFIX)
-            if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+	    if (WIN32)
                 set(PC_ZeroMQ_INCLUDE_DIRS "${CONDA_PREFIX}/Library/include ${PC_ZeroMQ_INCLUDE_DIRS}")
                 set(PC_ZeroMQ_LIBRARY_DIRS "${CONDA_PREFIX}/Library/lib ${CONDA_PREFIX}/Library/bin ${PC_ZeroMQ_LIBRARY_DIRS}")
             else()
@@ -272,7 +272,7 @@ if(ENABLE_ZMQ)
 	endif()
     endif()
     # Force error
-    if ((NOT ZeroMQ_FOUND) AND (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC"))
+    if ((NOT ZeroMQ_FOUND) AND (WIN32))
         find_package(ZeroMQ REQUIRED)
     endif()
 else (ENABLE_ZMQ)
@@ -280,7 +280,7 @@ else (ENABLE_ZMQ)
 endif (ENABLE_ZMQ)
 
 if (ZeroMQ_FOUND)
-    if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    if (WIN32)
         message(STATUS "Existing ZeroMQ_LIBRARY = ${ZeroMQ_LIBRARY}")
         string(FIND ${ZeroMQ_LIBRARY} ".dll" ZeroMQ_DLL_POS)
         if (NOT "${ZeroMQ_DLL_POS}" STREQUAL "-1")
@@ -411,7 +411,7 @@ else()
 
     # There is an issue with embedding Python on Windows in conda environments
     # https://github.com/ContinuumIO/anaconda-issues/issues/11374
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    if(WIN32)
         set(RAPIDJSON_PYTHON_ENV2 "${RAPIDJSON_PYTHON_ENV2};PYTHONHOME=${Python3_RUNTIME_LIBRARY_DIRS}")
     endif()
     
@@ -445,7 +445,7 @@ endif()
 ###################
 
 if(CONDA_PREFIX)
-    if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    IF (WIN32)
         set(CONDA_INCLUDE ${CONDA_PREFIX}/Library/include)
     else()
         set(CONDA_INCLUDE ${CONDA_PREFIX}/include)
