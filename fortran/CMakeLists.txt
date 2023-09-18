@@ -6,41 +6,34 @@ endif()
 set(CMAKE_Fortran_STANDARD 2003)
 set(CMAKE_Fortran_STANDARD_REQUIRED ON)
 set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -cpp")
+set(YGG_TARGET_FORTRAN YggInterface_fortran)
 
-# add_library(c_wrap OBJECT c_wrappers.cpp)
-# target_include_directories(c_wrap PUBLIC
-#                            "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>")
-# target_include_directories(c_wrap PUBLIC
-#                            ${DEPS_INCLUDE_DIRS})
-# add_library(YggInterface_fortran SHARED YggInterface.f90
-#             "$<TARGET_OBJECTS:c_wrap>")
-# add_library(YggInterface_fortran SHARED)
-add_library(YggInterface_fortran SHARED
+add_library(${YGG_TARGET_FORTRAN} SHARED
             YggInterface.f90 c_wrappers.cpp)
-add_library(YggInterface::fortran ALIAS YggInterface_fortran)
+add_library(YggInterface::fortran ALIAS ${YGG_TARGET_FORTRAN})
 
 # Configure Fortran wrapper
-# target_sources(YggInterface_fortran
-#                PUBLIC YggInterface.f90
-#                PRIVATE c_wrappers.cpp)
-set_target_properties(YggInterface_fortran PROPERTIES
+set_target_properties(${YGG_TARGET_FORTRAN} PROPERTIES
                       VERSION ${PROJECT_VERSION}
                       SOVERSION ${PROJECT_VERSION_MAJOR}
-                      EXPORT_NAME fortran
-                      OUTPUT_NAME YggInterface_fortran
+                      OUTPUT_NAME ${YGG_TARGET_FORTRAN}
                       PUBLIC_HEADER YggInterface.f90)
-target_include_directories(YggInterface_fortran PUBLIC
+target_include_directories(${YGG_TARGET_FORTRAN} PUBLIC
                            "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>")
-target_link_libraries(YggInterface_fortran PUBLIC
-		      YggInterface ${DEPS_LIB_NAMES} ${DEPS_LIBRARIES})
-target_include_directories(YggInterface_fortran PUBLIC
+target_link_libraries(${YGG_TARGET_FORTRAN} PUBLIC YggInterface)
+		      # YggInterface ${DEPS_LIB_NAMES} ${DEPS_LIBRARIES})
+target_include_directories(${YGG_TARGET_FORTRAN} PUBLIC
                            ${DEPS_INCLUDE_DIRS})
+if (WIN32)
+    set_target_properties(${YGG_TARGET_FORTRAN}
+        PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+endif()
 
 message(STATUS "CMAKE_INSTALL_INCLUDEDIR = ${CMAKE_INSTALL_INCLUDEDIR}")
 message(STATUS "CMAKE_CURRENT_BINARY_DIR = ${CMAKE_CURRENT_BINARY_DIR}")
 # Install
 if (YGGDRASIL_INSTALL)
-   install(TARGETS YggInterface_fortran
+   install(TARGETS ${YGG_TARGET_FORTRAN}
            EXPORT YggInterfaceTargets-fortran
            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT YggInterface_Runtime NAMELINK_COMPONENT YggInterface_Development
            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT YggInterface_Development

@@ -6,8 +6,10 @@ enable_testing ()
 cmake_path(GET CMAKE_CURRENT_BINARY_DIR PARENT_PATH MOD_PATH)
 message(STATUS "MOD_PATH = ${MOD_PATH}")
 
-set(FORTRAN_TEST_LIBRARIES YggInterface_fortran YggInterface ${DEPS_LIB_NAMES} ${DEPS_LIBRARIES})
-set(FORTRAN_TEST_INCLUDE_DIRS ${DEPS_INCLUDE_DIRS} ${MOD_PATH})
+set(FORTRAN_TEST_LIBRARIES ${YGG_TARGET_FORTRAN})
+set(FORTRAN_TEST_INCLUDE_DIRS ${MOD_PATH})
+# set(FORTRAN_TEST_LIBRARIES ${YGG_TARGET_FORTRAN} YggInterface ${DEPS_LIB_NAMES} ${DEPS_LIBRARIES})
+# set(FORTRAN_TEST_INCLUDE_DIRS ${DEPS_INCLUDE_DIRS} ${MOD_PATH})
 
 message(STATUS "FORTRAN_TEST_LIBRARIES = ${FORTRAN_TEST_LIBRARIES}")
 message(STATUS "FORTRAN_TEST_INCLUDE_DIRS = ${FORTRAN_TEST_INCLUDE_DIRS}")
@@ -42,6 +44,10 @@ function (add_fortran_test_executable TARGET)
     create_test_sourcelist (_ main.c ${TEST_FILES_MANGLED})
 
     add_library (${TARGET}_fortran SHARED ${TEST_FILES})
+    if (WIN32)
+        set_target_properties(${TARGET}_fortran
+            PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+    endif()
     target_link_libraries (${TARGET}_fortran PUBLIC ${FORTRAN_TEST_LIBRARIES})
     target_include_directories(${TARGET}_fortran PUBLIC ${FORTRAN_TEST_INCLUDE_DIRS})
     add_executable (${TARGET} main.c)
