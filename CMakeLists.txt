@@ -47,6 +47,9 @@ if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif()
 
+if (WIN32)
+   set(CMAKE_CXX_EXTENSIONS OFF)
+endif()
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -322,6 +325,27 @@ if (OpenMP_CXX_FOUND)
     message(STATUS "OpenMP_CXX_FLAGS = ${OpenMP_CXX_FLAGS}")
 else()
     message(STATUS "NO OpenMP")
+endif()
+
+#############
+# Threading #
+#############
+
+# set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+# set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+find_package(Threads)
+if (Threads_FOUND)
+    add_definitions(-DTHREADSINSTALLED)
+    set(DEPS_LIB_NAMES ${DEPS_LIB_NAMES} Threads::Threads)
+    if (CMAKE_THREAD_LIBS_INIT)
+        set(DEPS_LIB_NAMES ${DEPS_LIB_NAMES} ${CMAKE_THREAD_LIBS_INIT})
+    endif()
+    # if (CMAKE_USE_PTHREADS_INIT)
+    #     set(CMAKE_C_FLAGS ${CMAKE_C_FLAGS} "-pthread")
+    #     set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-pthread")
+    # endif()
+else()
+    message(STATUS "NO Threads")
 endif()
 
 #######
