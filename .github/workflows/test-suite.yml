@@ -168,9 +168,12 @@ jobs:
         if: matrix.os == 'windows-latest' && matrix.python-install == 'conda'
         with:
           toolset: 14.0
-      # - name: Set up MinGW Compiler on windows
-      #   uses: egor-tensin/setup-mingw@v2
-      #   if: matrix.os == 'windows-latest'
+      - name: Set up MinGW Compiler on windows
+        # uses: egor-tensin/setup-mingw@v2
+        if: matrix.os == 'windows-latest'
+        shell: bash -l {0}
+        run: |
+          echo "C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64\bin" >> $GITHUB_PATH
       - name: Set up miniconda test environment
         if: matrix.python-install == 'conda'
         uses: conda-incubator/setup-miniconda@v2
