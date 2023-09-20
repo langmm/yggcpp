@@ -61,6 +61,8 @@ option(DONT_CHECK_FORTRAN_C_COMPAT "Disable verification of Fortran/C/CXX compil
 option(ENABLE_ZMQ "Enable zeromq" ON)
 option(USING_IPC "Default to using IPC V queues" OFF)
 option(YGGDRASIL_DISABLE_PYTHON_C_API "Disable the Python C API" OFF)
+option(ENABLE_OMP "Enable OpenMP" ON)
+option(ENABLE_MPI "Enable MPI" ON)
 option(YGG_BUILD_TESTS "Build tests" OFF)
 option(YGG_BUILD_FORTRAN_TESTS "Build Fortran tests" OFF)
 option(YGG_BUILD_CXX_TESTS "Build C/C++ tests" OFF)
@@ -312,6 +314,7 @@ endif()
 # OpenMP #
 ##########
 
+if (ENABLE_OMP)
 find_package(OpenMP)
 if (OpenMP_CXX_FOUND)
     message(STATUS "OpenMP found")
@@ -325,6 +328,7 @@ if (OpenMP_CXX_FOUND)
     message(STATUS "OpenMP_CXX_FLAGS = ${OpenMP_CXX_FLAGS}")
 else()
     message(STATUS "NO OpenMP")
+endif()
 endif()
 
 #############
@@ -352,6 +356,7 @@ endif()
 # MPI #
 #######
 
+if(ENABLE_MPI)
 find_package(MPI)
 if(MPI_CXX_FOUND)
     message(STATUS "MPI found")
@@ -361,7 +366,8 @@ if(MPI_CXX_FOUND)
     set(DEPS_INCLUDE_DIRS ${DEPS_INCLUDE_DIRS} ${MPI_CXX_INCLUDE_DIRS})
 else()
     message(STATUS "NO MPI")
-ENDIF()
+endif()
+endif()
 
 ##########
 # Python #
