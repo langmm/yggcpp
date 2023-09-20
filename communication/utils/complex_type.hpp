@@ -1,5 +1,6 @@
 #pragma once
 #include <limits>
+#include <vector>
 #include "rapidjson/internal/meta.h"
 
 #ifdef USE_OSR_YGG
