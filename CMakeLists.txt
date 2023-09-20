@@ -50,7 +50,7 @@ endif()
 if (WIN32)
    set(CMAKE_CXX_EXTENSIONS OFF)
 endif()
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(BUILD_CPP_LIBRARY "Build the Yggdrasil C++ interface library" ON)

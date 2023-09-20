@@ -90,6 +90,13 @@ if (WIN32)
             COMMAND dumpbin /dependents $<TARGET_FILE:YggInterface>
             COMMAND_EXPAND_LISTS
         )
+    else()
+        add_custom_command(
+            TARGET unittest
+            POST_BUILD
+            COMMAND objdump -x $<TARGET_FILE:YggInterface> | grep "DLL Name"
+            COMMAND_EXPAND_LISTS
+        )
     endif()
     if (CONDA_PREFIX)
         add_custom_command(
