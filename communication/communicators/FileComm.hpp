@@ -4,6 +4,9 @@
 
 #include <fstream>
 #include <cstdio>
+#ifdef _MSC_VER
+#include <io.h>
+#endif // _MSC_VER
 
 #include "CommBase.hpp"
 

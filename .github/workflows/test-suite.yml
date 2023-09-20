@@ -108,6 +108,8 @@ jobs:
         if: matrix.os == 'windows-latest' # && matrix.python-install == 'pip'
         shell: bash -l {0}
         run: |
+          # echo "CC=gcc.exe" >> "$GITHUB_ENV"
+          # echo "CXX=c++.exe" >> "$GITHUB_ENV"
           echo "FC=gfortran.exe" >> "$GITHUB_ENV"
 
       # ZeroMQ dependencies
@@ -166,6 +168,9 @@ jobs:
         if: matrix.os == 'windows-latest' && matrix.python-install == 'conda'
         with:
           toolset: 14.0
+      # - name: Set up MinGW Compiler on windows
+      #   uses: egor-tensin/setup-mingw@v2
+      #   if: matrix.os == 'windows-latest'
       - name: Set up miniconda test environment
         if: matrix.python-install == 'conda'
         uses: conda-incubator/setup-miniconda@v2
@@ -279,7 +284,7 @@ jobs:
         if: matrix.with-asan == false && matrix.os == 'windows-latest' # && matrix.python-install == 'conda'
         shell: bash -l {0}
         run: |
-          echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -G\"MinGW Makefiles\" -DENABLE_OMP=OFF -DENABLE_MPI=OFF -DENABLE_ZMQ=OFF -DYGGDRASIL_DISABLE_PYTHON_C_API=ON" >> $GITHUB_ENV
+          echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -G\"MinGW Makefiles\" -DENABLE_OMP=OFF -DENABLE_MPI=OFF -DENABLE_ZMQ=OFF -DYGGDRASIL_DISABLE_PYTHON_C_API=ON -DENABLE_THREADS=OFF" >> $GITHUB_ENV
      
       ###################################
       # Add paths for Windows dlls
