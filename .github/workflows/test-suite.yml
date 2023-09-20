@@ -376,11 +376,13 @@ jobs:
         if: matrix.python-install == 'conda'
         shell: bash -l {0}
         run: |
+          echo "$PATH"
           cd build
           ctest ${{ env.TEST_FLAGS }}
       - name: Test C++, C, & Fortran Interfaces (PIP)
         if: matrix.python-install == 'pip'
         run: |
+          echo "$PATH"
           cd build
           ctest ${{ env.TEST_FLAGS }}
 

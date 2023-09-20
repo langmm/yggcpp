@@ -512,7 +512,7 @@ private:
 	       i++, "char*",
 	       if (i == 2 && doc.Size() == 0) { return ret; },
 	       char*& data, size_t& len)
-  HANDLE_RECV_(true,
+  HANDLE_RECV_((i >= 0),
 	       data.CopyFrom(doc[0], data.GetAllocator(), true),
 	       , "rapidjson::Document",
 	       if (i == 1 && (doc.Size() > 0 || was_array)) {
