@@ -541,7 +541,7 @@ private:
 		   T& data)
   HANDLE_RECV_TMP_((internal::AndExpr<internal::IsPointer<T>,
 		    internal::NotExpr<internal::IsSame<T, char*> > >),
-		   doc[0].Is1DArray<std::remove_pointer_t<T> >(),
+		   doc[0].Is1DArray<std::remove_pointer<T>::type >(),
 		   long ret = utils::copyData(data, len, doc[0].GetString(),
 					      static_cast<size_t>(doc[0].GetStringLength()),
 					      allow_realloc);
@@ -549,7 +549,7 @@ private:
 		   i++, , T& data, size_t& len)
   HANDLE_RECV_TMP_((internal::AndExpr<internal::IsPointer<T>,
 		    internal::NotExpr<internal::IsSame<T, char*> > >),
-		   doc[0].IsNDArray<std::remove_pointer_t<T> >(),
+		   doc[0].IsNDArray<std::remove_pointer<T>::type >(),
 		   size_t len = 0;
 		   if (ndim > 0 && shape) {
 		     len = 1;

@@ -1,5 +1,6 @@
 #pragma once
 #include <limits>
+#include "rapidjson/internal/meta.h"
 
 #ifdef USE_OSR_YGG
 #ifdef __cplusplus
@@ -210,20 +211,23 @@ auto operator/(const T&a, const F v) -> EnableForComplex<T, T> {
 }
 
 
-template<typename T, std::enable_if_t<std::is_same<T, complex_float_t>::value, bool> = true>
-bool operator==(const T& a, const T& b) {
+template<typename T>
+RAPIDJSON_ENABLEIF_RETURN((rapidjson::internal::IsSame<T, complex_float_t>), (bool))
+operator==(const T& a, const T& b) {
     return (abs(a.re - b.re) < pow(10, -(std::numeric_limits<float>::digits10 - 1))) &&
            (abs(a.im - b.im) < pow(10, -(std::numeric_limits<float>::digits10 - 1)));
 }
 
-template<typename T, std::enable_if_t<std::is_same<T, complex_double_t>::value, bool> = true>
-bool operator==(const T& a, const T& b) {
+template<typename T>
+RAPIDJSON_ENABLEIF_RETURN((rapidjson::internal::IsSame<T, complex_double_t>), (bool))
+operator==(const T& a, const T& b) {
     return (abs(a.re - b.re) < pow(10, -(std::numeric_limits<double>::digits10 - 1))) &&
            (abs(a.im - b.im) < pow(10, -(std::numeric_limits<double>::digits10 - 1)));
 }
 
-template<typename T, std::enable_if_t<std::is_same<T, complex_long_double_t>::value, bool> = true>
-bool operator==(const T& a, const T& b) {
+template<typename T>
+RAPIDJSON_ENABLEIF_RETURN((rapidjson::internal::IsSame<T, complex_long_double_t>), (bool))
+operator==(const T& a, const T& b) {
     return (abs(a.re - b.re) < pow(10, -(std::numeric_limits<long double>::digits10 - 1))) &&
            (abs(a.im - b.im) < pow(10, -(std::numeric_limits<long double>::digits10 - 1)));
 }
