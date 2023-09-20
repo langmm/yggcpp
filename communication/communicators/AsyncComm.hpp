@@ -2,7 +2,9 @@
 
 #include "CommBase.hpp"
 #include "utils/serialization.hpp"
+#ifdef THREADSINSTALLED
 #include <atomic>
+#endif // THREADSINSTALLED
 
 namespace communication {
   namespace communicator {
@@ -18,12 +20,17 @@ namespace communication {
       int send();
       long recv();
       Comm_t* comm;
+      std::vector<utils::Header> backlog;
+#ifdef THREADSINSTALLED
+      bool is_closing() const { return closing.load(); }
       std::mutex comm_mutex;
       std::atomic_bool opened;
       std::atomic_bool closing;
       std::atomic_bool locked;
-      std::vector<utils::Header> backlog;
       std::thread backlog_thread;
+#else // THREADSINSTALLED
+      bool is_closing() const { return true; }
+#endif // THREADSINSTALLED
     };
     
     class AsyncLockGuard {

@@ -19,5 +19,9 @@
 #endif
 
 #ifndef COMM_BASE
-#error "Neither IPC nor ZMQ were found, at least one is needed"
+// #error "Neither IPC nor ZMQ were found, at least one is needed"
+#include "FileComm.hpp"
+#define COMM_BASE FileComm
+#define COMM_BASE_TYPE FILE_COMM
+#define DefaultComm FileComm
 #endif

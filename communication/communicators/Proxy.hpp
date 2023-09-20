@@ -1,7 +1,9 @@
 #pragma once
 
 #include "CommBase.hpp"
+#ifdef THREADSINSTALLED
 #include <atomic>
+#endif // THREADSINSTALLED
 
 namespace communication {
   namespace communicator {
@@ -18,6 +20,7 @@ namespace communication {
 	    std::vector<communication::utils::filterFunc> fltrs=std::vector<communication::utils::filterFunc>(),
 	    std::vector<communication::utils::transformFunc> tforms=std::vector<communication::utils::transformFunc>());
       ~Proxy();
+#ifdef THREADSINSTALLED
       std::string getAddress(DIRECTION dir);
     private:
       bool on_thread(const std::string iname, const std::string oname,
@@ -32,6 +35,7 @@ namespace communication {
       std::thread backlog_thread;
       std::vector<communication::utils::filterFunc> filters;
       std::vector<communication::utils::transformFunc> transforms;
+#endif // THREADSINSTALLED
     };
 
   }

@@ -174,6 +174,7 @@ TEST(ClientComm, recv) {
 #endif // ELF_RECV
 }
 
+#ifdef THREADSINSTALLED
 TEST(ClientComm, async) {
     std::string name = "MyComm";
     AsyncComm sComm(name, nullptr, SEND, COMM_FLAG_ASYNC, CLIENT_COMM);
@@ -194,6 +195,14 @@ TEST(ClientComm, async) {
     EXPECT_EQ(sComm.recv(res_recv), res_send.size());
     EXPECT_EQ(res_recv, res_send);
 }
+#else // THREADSINSTALLED
+TEST(ClientComm, async) {
+    std::string name = "MyComm";
+    EXPECT_THROW(AsyncComm sComm(name, nullptr, SEND,
+				 COMM_FLAG_ASYNC, CLIENT_COMM),
+		 std::exception);
+}
+#endif // THREADSINSTALLED
 
 TEST(ClientComm, recvLarge) {
     std::string name = "MyComm";

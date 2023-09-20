@@ -4,6 +4,7 @@
 using namespace communication::communicator;
 using namespace communication::utils;
 
+#ifdef THREADSINSTALLED
 Proxy::Proxy(const std::string iname, const std::string oname,
 	     int iflgs, int oflgs,
 	     const COMM_TYPE itype,
@@ -19,13 +20,25 @@ Proxy::Proxy(const std::string iname, const std::string oname,
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
   }
 }
+#else // THREADSINSTALLED
+Proxy::Proxy(const std::string, const std::string,
+	     int, int, const COMM_TYPE, const COMM_TYPE,
+	     std::vector<communication::utils::filterFunc>,
+	     std::vector<communication::utils::transformFunc>) {
+  UNINSTALLED_ERROR(THREADS);
+}
+#endif // THREADSINSTALLED
+
 Proxy::~Proxy() {
   ygglog_debug << "~Proxy: begin" << std::endl;
+#ifdef THREADSINSTALLED
   closing.store(true);
   backlog_thread.join();
+#endif // THREADSINSTALLED
   ygglog_debug << "~Proxy: end" << std::endl;
 }
 
+#ifdef THREADSINSTALLED
 bool Proxy::on_thread(const std::string iname, const std::string oname,
 		      int iflgs, int oflgs,
 		      const COMM_TYPE itype, const COMM_TYPE otype) {
@@ -95,3 +108,5 @@ std::string Proxy::getAddress(DIRECTION dir) {
   }
   return "";
 }
+
+#endif // THREADSINSTALLED

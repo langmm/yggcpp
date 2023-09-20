@@ -450,7 +450,7 @@ bool ZMQReply::send_stage2(const std::string msg_data) {
     return false;
   }
   // Sleep briefly to ensure receive is complete
-  std::this_thread::sleep_for(std::chrono::microseconds(100));
+  THREAD_USLEEP(100);
   // Check for purge or EOF
   // if (is_purge) {
   //   ygglog_debug << "ZMQReply::send_stage2: PURGE received" << std::endl;

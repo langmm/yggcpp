@@ -4,6 +4,7 @@
 
 #include "tools.hpp"
 
+#ifdef THREADSINSTALLED
 #define YGG_THREAD_MUTEX(name)			\
   std::mutex communication::utils::name ## _mutex;
   YGG_THREAD_MUTEX(init)
@@ -14,3 +15,4 @@
   YGG_THREAD_MUTEX(zmq)
   YGG_THREAD_MUTEX(zmqport)
 #undef YGG_THREAD_MUTEX
+#endif // THREADSINSTALLED

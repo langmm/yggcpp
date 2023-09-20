@@ -95,7 +95,7 @@ bool ClientComm::signon(const Header& header, Comm_t* async_comm) {
       // Sleep outside lock on async
       if (flags & COMM_FLAG_ASYNC_WRAPPED)
 	return true;
-      std::this_thread::sleep_for(std::chrono::microseconds(YGG_SLEEP_TIME));
+      THREAD_USLEEP(YGG_SLEEP_TIME);
     }
   }
   if (!requests.signon_complete) {
@@ -191,8 +191,7 @@ long ClientComm::recv_single(utils::Header& header) {
 	  }
 	} else {
 	  ygglog_debug << "ClientComm(" << name << ")::recv_single: No response to oldest request (address = " << response_comm->address->address() << "), sleeping" << std::endl;
-	  std::this_thread::sleep_for(std::chrono::microseconds(YGG_SLEEP_TIME));
-	  
+	  THREAD_USLEEP(YGG_SLEEP_TIME);
 	}
     }
     // Close response comm and decrement count of response comms

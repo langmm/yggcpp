@@ -12,24 +12,38 @@ using namespace communication::utils;
 // TODO: Preserve backlog buffers?
 // TODO: Check for handle->comm before use?
 
+#ifdef THREADSINSTALLED
+
 AsyncBacklog::AsyncBacklog(Comm_t* parent) :
-  comm(nullptr), comm_mutex(),
-  opened(false), closing(false), locked(false), backlog(),
+  comm(nullptr), backlog(), comm_mutex(),
+  opened(false), closing(false), locked(false),
   backlog_thread(&AsyncBacklog::on_thread, this, parent) {
   while (!(opened.load() || closing.load())) {
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
   }
 }
 
+#else // THREADSINSTALLED
+
+AsyncBacklog::AsyncBacklog(Comm_t*) :
+  comm(nullptr), backlog() {
+  UNINSTALLED_ERROR(THREADS);
+}
+
+#endif // THREADSINSTALLED
+
 AsyncBacklog::~AsyncBacklog() {
   ygglog_debug << "~AsyncBacklog: begin" << std::endl;
+#ifdef THREADSINSTALLED
   closing.store(true);
   backlog_thread.join();
+#endif // THREADSINSTALLED
   ygglog_debug << "~AsyncBacklog: end" << std::endl;
 }
 
 bool AsyncBacklog::on_thread(Comm_t* parent) {
   bool out = true;
+#ifdef THREADSINSTALLED
   DIRECTION direction = parent->getDirection();
   {
     const std::lock_guard<std::mutex> comm_lock(comm_mutex);
@@ -72,12 +86,16 @@ bool AsyncBacklog::on_thread(Comm_t* parent) {
     delete comm;
     comm = nullptr;
   }
+#else // THREADSINSTALLED
+  UNUSED(parent);
+#endif // THREADSINSTALLED
   return out;
 }
 
 int AsyncBacklog::send() {
-  const std::lock_guard<std::mutex> comm_lock(comm_mutex);
   int out = 0;
+#ifdef THREADSINSTALLED
+  const std::lock_guard<std::mutex> comm_lock(comm_mutex);
   if (backlog.size() > 0) {
     if (comm->getType() == CLIENT_COMM) {
       ClientComm* cli = dynamic_cast<ClientComm*>(comm);
@@ -94,12 +112,14 @@ int AsyncBacklog::send() {
       backlog.erase(backlog.begin());
     }
   }
+#endif // THREADSINSTALLED
   return out;
 }
 
 long AsyncBacklog::recv() {
-  const std::lock_guard<std::mutex> comm_lock(comm_mutex);
   long out = 0;
+#ifdef THREADSINSTALLED
+  const std::lock_guard<std::mutex> comm_lock(comm_mutex);
   if (comm->comm_nmsg() > 0) {
     backlog.emplace_back(true);
     out = comm->recv_single(backlog[backlog.size() - 1]);
@@ -111,6 +131,7 @@ long AsyncBacklog::recv() {
       }
     }
   }
+#endif // THREADSINSTALLED
   return out;
 }
 
@@ -120,17 +141,23 @@ long AsyncBacklog::recv() {
 
 AsyncLockGuard::AsyncLockGuard(AsyncBacklog* bcklog, bool dont_lock) :
   locked(false), backlog(bcklog) {
+#ifdef THREADSINSTALLED
   if (!(dont_lock || backlog->locked.load())) {
     locked = true;
     backlog->comm_mutex.lock();
     backlog->locked.store(true);
   }
+#else // THREADSINSTALLED
+  UNUSED(dont_lock);
+#endif // THREADSINSTALLED
 }
 AsyncLockGuard::~AsyncLockGuard() {
+#ifdef THREADSINSTALLED
   if (locked) {
     backlog->locked.store(false);
     backlog->comm_mutex.unlock();
   }
+#endif // THREADSINSTALLED
 }
 
 
@@ -167,13 +194,14 @@ int AsyncComm::comm_nmsg(DIRECTION dir) const {
   const AsyncLockGuard lock(handle);
   if (dir == NONE)
     dir = direction;
-  if (handle->closing.load()) {
+  if (handle->is_closing()) {
     ygglog_error << "AsyncComm(" << name << ")::comm_nmsg: Thread is closing" << std::endl;
     return -1;
   }
   if ((type == CLIENT_COMM && dir == RECV) ||
-      (type == SERVER_COMM && dir == SEND))
+      (type == SERVER_COMM && dir == SEND)) {
     return handle->comm->comm_nmsg(dir);
+  }
   return static_cast<int>(handle->backlog.size());
 }
 
@@ -209,7 +237,7 @@ int AsyncComm::get_timeout_recv() {
 int AsyncComm::send_single(Header& header) {
   const AsyncLockGuard lock(handle);
   assert((!global_comm) && handle);
-  if (handle->closing.load()) {
+  if (handle->is_closing()) {
     ygglog_error << "AsyncComm(" << name << ")::send_single: Thread is closing" << std::endl;
     return -1;
   }
@@ -229,7 +257,7 @@ int AsyncComm::send_single(Header& header) {
 long AsyncComm::recv_single(Header& header) {
   const AsyncLockGuard lock(handle);
   assert((!global_comm) && handle);
-  if (handle->closing.load()) {
+  if (handle->is_closing()) {
     ygglog_error << "AsyncComm(" << name << ")::recv_single: Thread is closing" << std::endl;
     return -1;
   }
@@ -255,7 +283,7 @@ long AsyncComm::recv_single(Header& header) {
 bool AsyncComm::create_header_send(Header& header) {
   const AsyncLockGuard lock(handle);
   assert(!global_comm);
-  if (handle->closing.load()) {
+  if (handle->is_closing()) {
     ygglog_error << "AsyncComm(" << name << ")::create_header_send: Thread is closing" << std::endl;
     return false;
   }

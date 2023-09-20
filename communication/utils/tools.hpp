@@ -21,9 +21,11 @@
 #include <cstdarg>
 #include <cerrno>
 #include <ctime>
+#ifdef THREADSINSTALLED
 #include <thread>
 #include <chrono>
 #include <mutex>
+#endif // THREADSINSTALLED
 
 #ifndef print_complex
 #define print_complex(x) printf("%lf+%lfj\n", (double)creal(x), (double)cimag(x))
@@ -113,11 +115,6 @@ static inline
 int unsetenv(const char *name) {
   return setenv(name, "", true);
 }
-// #include "pthread.h"
-// static inline
-// bool operator<(const ptw32_handle_t x, const ptw32_handle_t y) {
-//   return (x.p < y.p);
-// }
 #endif // _WIN32 _MSC_VER
 
 namespace communication {
@@ -280,6 +277,12 @@ namespace utils {
 #define UNUSED(arg) ((void)&(arg))
 #define STRINGIFY(x) #x
 
+#ifdef THREADSINSTALLED
+#define THREAD_USLEEP(x) std::this_thread::sleep_for(std::chrono::microseconds(x))
+#else // THREADSINSTALLED
+#define THREAD_USLEEP(x) usleep(x)
+#endif // THREADSINSTALLED
+
 /*! @brief Memory to allow thread association to be set via macro. */
 static int global_thread_id = -1;
 #define ASSOCIATED_WITH_THREAD(COMM, THREAD) global_thread_id = THREAD; COMM; global_thread_id = -1;
@@ -302,6 +305,7 @@ static int global_thread_id = -1;
 #endif // _OPENMP
 #endif // _MSC_VER
 
+#ifdef THREADSINSTALLED
 #define YGG_THREAD_MUTEX(name)				\
   extern std::mutex name ## _mutex;
   YGG_THREAD_MUTEX(init)
@@ -312,9 +316,11 @@ static int global_thread_id = -1;
   YGG_THREAD_MUTEX(zmq)
   YGG_THREAD_MUTEX(zmqport)
 #undef YGG_THREAD_MUTEX
+#endif // THREADSINSTALLED
 
 /*! @brief Macro to open section that should be synchronized across
   threads, typically where thread global variables are acessed. */
+#ifdef THREADSINSTALLED
 #ifdef _OPENMP
 #define YGG_THREADING_ACTIVE 1
 #define YGG_THREAD_SAFE_BEGIN(name)		\
@@ -325,6 +331,16 @@ static int global_thread_id = -1;
   {						\
     const std::lock_guard<std::mutex> name ## _lock(communication::utils::name ## _mutex);
 #endif // _OPENMP
+#else // THREADSINSTALLED
+#ifdef _OPENMP
+#define YGG_THREADING_ACTIVE 1
+#define YGG_THREAD_SAFE_BEGIN(name)		\
+  _Pragma(STRINGIFY(omp critical (name))) {
+#else // _OPENMP
+#define YGG_THREAD_SAFE_BEGIN(name)		\
+  {
+#endif // _OPENMP
+#endif // THREADSINSTALLED
 #define YGG_THREAD_SAFE_END			\
   }
 

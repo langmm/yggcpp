@@ -126,13 +126,13 @@ int IPCComm::send_single(utils::Header& header) {
 	}
         if ((ret == -1) && (errno == EAGAIN)) {
 	    ygglog_debug << "IPCComm(" << name << ")::send_single: msgsnd, sleep" << std::endl;
-	    std::this_thread::sleep_for(std::chrono::microseconds(YGG_SLEEP_TIME));
+	    THREAD_USLEEP(YGG_SLEEP_TIME);
         } else { // GCOVR_EXCL_LINE
             struct msqid_ds buf;
             int rtrn = msgctl(handle[0], IPC_STAT, &buf);
             if ((rtrn == 0) && ((buf.msg_qnum + header.size_msg) > buf.msg_qbytes)) {
 	        ygglog_debug << "IPCComm(" << name << ")::send_single: msgsnd, queue full, sleep" << std::endl;
-		std::this_thread::sleep_for(std::chrono::microseconds(YGG_SLEEP_TIME));
+		THREAD_USLEEP(YGG_SLEEP_TIME);
             } else { // GCOVR_EXCL_LINE
 	        ygglog_error << "IPCComm(" << name << ")::send_single: msgsnd(" << handle[0] << ", " << &t << ", " << header.size_msg
                              << ", IPC_NOWAIT) ret(" << ret << "), errno(" << errno << "): " << strerror(errno) << std::endl;
@@ -158,7 +158,7 @@ long IPCComm::recv_single(utils::Header& header) {
         ret = msgrcv(handle[0], &t, maxMsgSize, 0, IPC_NOWAIT);
         if (ret == -1 && errno == ENOMSG) {
 	    ygglog_debug << "IPCComm(" << name << ")::recv_single: no input, sleep" << std::endl;
-	    std::this_thread::sleep_for(std::chrono::microseconds(YGG_SLEEP_TIME));
+	    THREAD_USLEEP(YGG_SLEEP_TIME);
         } else { // GCOVR_EXCL_LINE
 	    ygglog_debug << "IPCComm(" << name << ")::recv_single: received input: " << ret << " bytes" << std::endl;
             break;
