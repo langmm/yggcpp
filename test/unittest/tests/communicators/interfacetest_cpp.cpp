@@ -3,9 +3,13 @@
 #include "commtest.hpp"
 
 #define INIT_INPUT_BASE(cls, cls_args, alt, alt_args)	\
+  std::cerr << "before sComm" << std::endl;		\
   alt sComm alt_args;					\
+  std::cerr << "after sComm" << std::endl;		\
   setenv("input_IN", sComm.getAddress().c_str(), 1);	\
+  std::cerr << "before rComm" << std::endl;		\
   cls rComm cls_args;					\
+  std::cerr << "after rComm" << std::endl;		\
   unsetenv("input_IN")
 #define INIT_OUTPUT_BASE(cls, cls_args, alt, alt_args)	\
   alt rComm alt_args;					\
