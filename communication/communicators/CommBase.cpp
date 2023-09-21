@@ -167,7 +167,6 @@ bool Comm_t::get_global_scope_comm() {
 	if (!model_name)
 	  model_name = std::getenv("YGG_SERVER_INPUT");
       }
-      assert(model_name);
       if (model_name)
 	global_name.assign(model_name);
       global_scope_comm = 1;
