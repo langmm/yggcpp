@@ -1,4 +1,6 @@
+#ifdef THREADSINSTALLED
 #include <thread>
+#endif // THREADSINSTALLED
 #include <cstdlib>
 #include "communicators/AsyncComm.hpp"
 #include "communicators/Proxy.hpp"
