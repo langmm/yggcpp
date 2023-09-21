@@ -12,7 +12,7 @@ dependencies:
   - zeromq
   - cmocka
   - lcov
-  - cmake
+  # - cmake
   - openmpi
   - openmp
   - pytest

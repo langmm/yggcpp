@@ -352,7 +352,7 @@ TEST(Metadata, fromFormat) {
     // Additional types
     std::string fmt = "%hhi\t%hi\t%lli\t%l64i\t%li\t%i\t%hhu\t%hu\t%llu\t%l64u\t%lu\t%u\t%f%+fj\n";
     communication::utils::Metadata x;
-#ifdef _MSC_VER
+#ifdef _WIN32
     EXPECT_TRUE(x.fromSchema(
 	         "{"
 		 "  \"type\": \"array\","
@@ -424,7 +424,7 @@ TEST(Metadata, fromFormat) {
 		 "    }"
 		 "  ]"
 		 "}"));
-#else // _MSC_VER
+#else // _WIN32
     EXPECT_TRUE(x.fromSchema(
 	         "{"
 		 "  \"type\": \"array\","
@@ -496,7 +496,7 @@ TEST(Metadata, fromFormat) {
 		 "    }"
 		 "  ]"
 		 "}"));
-#endif // _MSC_VER
+#endif // _WIN32
     x.SetString("format_str", fmt, x.metadata["serializer"]);
     communication::utils::Metadata y;
     EXPECT_TRUE(y.fromFormat(fmt));

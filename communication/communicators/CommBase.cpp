@@ -511,16 +511,21 @@ long Comm_t::recv_raw(char*& data, const size_t &len,
       ygglog_error << "CommBase(" << name << ")::recv_raw: finalize_recv failed." << std::endl;
       return -1;
     }
+    std::cerr << "CommBase(" << name << ")::recv_raw: Before update type" << std::endl;
+    head.Display();
     if (!head.hasType()) {
       ygglog_debug << "CommBase(" << name << ")::recv_raw: No type information in message header" << std::endl;
     } else {
+      std::cerr << "updating type" << std::endl;
       communication::utils::Metadata& meta = getMetadata(RECV);
+      meta.Display();
       if ((!meta.hasType()) && (meta.transforms.size() == 0)) {
 	if (!meta.fromSchema(head.schema[0]))
 	  return -1;
       }
       // update_datatype(head.schema[0], RECV);
     }
+    std::cerr << "CommBase(" << name << ")::recv_raw: After update type" << std::endl;
   }
   ygglog_debug << "CommBase(" << name << ")::recv_raw: Received " << head.size_curr << " bytes from " << address->address() << std::endl;
   ret = head.size_data;

@@ -191,7 +191,7 @@ jobs:
         if: matrix.os != 'windows-latest' && matrix.python-install == 'conda'
         shell: bash -l {0}
         run: |
-          conda install c-compiler cxx-compiler fortran-compiler
+          conda install c-compiler cxx-compiler fortran-compiler cmake
       # - name: Install MinGW on windows for Fortran
       #   if: matrix.os == 'windows-latest' && matrix.python-install == 'conda'
       #   shell: bash -l {0}
