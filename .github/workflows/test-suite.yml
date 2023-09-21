@@ -103,7 +103,6 @@ jobs:
         if: matrix.os == 'windows-latest' && matrix.python-install == 'pip'
         run: |
           vcpkg.exe install cmocka --triplet x64-windows
-          # choco install mingw
       - name: Set flags for dependencies on Windows
         if: matrix.os == 'windows-latest' # && matrix.python-install == 'pip'
         shell: bash -l {0}
@@ -168,12 +167,6 @@ jobs:
         if: matrix.os == 'windows-latest' && matrix.python-install == 'conda'
         with:
           toolset: 14.0
-      # - name: Set up MinGW Compiler on windows
-      #   # uses: egor-tensin/setup-mingw@v2
-      #   if: matrix.os == 'windows-latest'
-      #   shell: bash -l {0}
-      #   run: |
-      #     echo "C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64\bin" >> $GITHUB_PATH
       - name: Set up miniconda test environment
         if: matrix.python-install == 'conda'
         uses: conda-incubator/setup-miniconda@v2
@@ -193,23 +186,23 @@ jobs:
         if: matrix.os != 'windows-latest' && matrix.python-install == 'conda'
         shell: bash -l {0}
         run: |
-          mamba install c-compiler cxx-compiler fortran-compiler cmake
-      # - name: Install MinGW on windows for Fortran
-      #   if: matrix.os == 'windows-latest' && matrix.python-install == 'conda'
-      #   shell: bash -l {0}
-      #   run: |
-      #     # echo "CC=${CC}"
-      #     # echo "CFLAGS=${CFLAGS}"
-      #     # echo "CXX=${CXX}"
-      #     # echo "CXXFLAGS=${CXXFLAGS}"
-      #     # echo "CC=gcc.exe" >> "$GITHUB_ENV"
-      #     # echo "CXX=c++.exe" >> "$GITHUB_ENV"
-      #     # echo "CFLAGS=" >> "$GITHUB_ENV"
-      #     # echo "CXXFLAGS=" >> "$GITHUB_ENV"
-      #     # choco install mingw
-      #     mamba install m2w64-gcc m2w64-gcc-fortran m2w64-toolchain_win-64 libpython -c msys2 -y
-      #     # gcc -v
-      #     # c++ -v
+          mamba install c-compiler cxx-compiler fortran-compiler
+      - name: Install MinGW on windows for Fortran
+        if: matrix.os == 'windows-latest' && matrix.python-install == 'conda'
+        shell: bash -l {0}
+        run: |
+          # echo "CC=${CC}"
+          # echo "CFLAGS=${CFLAGS}"
+          # echo "CXX=${CXX}"
+          # echo "CXXFLAGS=${CXXFLAGS}"
+          # echo "CC=gcc.exe" >> "$GITHUB_ENV"
+          # echo "CXX=c++.exe" >> "$GITHUB_ENV"
+          # echo "CFLAGS=" >> "$GITHUB_ENV"
+          # echo "CXXFLAGS=" >> "$GITHUB_ENV"
+          # choco install mingw
+          mamba install m2w64-gcc m2w64-gcc-fortran m2w64-toolchain_win-64 libpython -c msys2 -y
+          # gcc -v
+          # c++ -v
 
       ###################################
       # SET CONFIG FLAGS
@@ -295,7 +288,7 @@ jobs:
       # Add paths for Windows dlls
       ###################################
       - name: Choco library paths on Windows
-        if: matrix.os == 'windows-latest'
+        if: matrix.os == 'windows-latest' && matrix.python-install == 'pip'
         shell: bash -l {0}
         run: |
           DLL_DIRECTORY="C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64\bin"
@@ -390,6 +383,7 @@ jobs:
         if: matrix.python-install == 'conda'
         shell: bash -l {0}
         run: |
+          mamba list
           echo "$PATH"
           cd build
           ctest ${{ env.TEST_FLAGS }}
