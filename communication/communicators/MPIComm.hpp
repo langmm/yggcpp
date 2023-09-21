@@ -60,8 +60,8 @@ public:
      * @param direction Enumerated direction for the communicator
      * @param flags Bitwise flags describing the communicator
      */
-    MPIComm(const std::string name = "",
-	    utils::Address *address = new utils::Address(),
+    MPIComm(const std::string name,
+	    utils::Address& address,
 	    const DIRECTION direction = NONE,
 	    int flgs = 0, const COMM_TYPE type = MPI_COMM);
     ADD_CONSTRUCTORS(MPI)

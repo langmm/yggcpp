@@ -43,24 +43,26 @@ private:
 public:
   ZMQSocket();
   ZMQSocket(const ZMQSocket& rhs);
-  ZMQSocket(int type0, utils::Address* address = NULL,
+  ZMQSocket(int type0, int linger = 0, int immediate = 1,
+            int sndtimeo = -1);
+  ZMQSocket(int type0, utils::Address& address,
 	    int linger = 0, int immediate = 1,
 	    int sndtimeo = -1);
-  void init(int type0, std::string address,
+  void init(int type0, const std::string& address,
 	    int linger = 0, int immediate = 1,
 	    int sndtimeo = -1);
 #ifdef ZMQINSTALLED
-  void init(int type0, utils::Address* address = NULL,
+  void init(int type0, utils::Address& address,
 	    int linger = 0, int immediate = 1,
 	    int sndtimeo = -1);
   int poll(int method, int tout);
-  int send(const std::string msg);
+  int send(const std::string& msg);
   template<typename T>
   int set(int member, const T& data);
   int recv(std::string& msg, bool for_identity=false);
   void destroy();
 #else
-  void init(int, utils::Address* = NULL, int = 0, int = 1, int = -1) {
+  void init(int, utils::Address&, int = 0, int = 1, int = -1) {
     UNINSTALLED_ERROR(ZMQ);
   }
   void destroy() {}
@@ -121,10 +123,10 @@ public:
      * @param direction Enumerated direction for communicator
      * @param flgs Bitwise flags describing the communicator
      */
-    explicit ZMQComm(const std::string name = "",
-		     utils::Address *address = new utils::Address(),
+    explicit ZMQComm(const std::string name,
+                     utils::Address& address,
                      const DIRECTION direction = NONE,
-		     int flgs = 0, const COMM_TYPE type = ZMQ_COMM);
+                     int flgs = 0, const COMM_TYPE type = ZMQ_COMM);
     ADD_CONSTRUCTORS(ZMQ)
 
 #ifdef ZMQINSTALLED

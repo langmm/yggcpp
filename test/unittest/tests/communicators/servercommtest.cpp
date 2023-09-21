@@ -16,8 +16,11 @@ namespace communication {
 namespace testing {
 class ServerComm_tester : public ServerComm {
 public:
-    ServerComm_tester(const std::string &name = "", utils::Address *address = nullptr) :
+    ServerComm_tester(const std::string &name, utils::Address& address) :
       ServerComm(name, address), client_requests(RECV) {}
+    ServerComm_tester(const std::string &name="") :
+            ServerComm(name), client_requests(RECV) {}
+
     bool addRequest() {
       utils::Header header(NULL, 0, this);
       if (client_requests.addRequestClient(header) < 0)
@@ -38,14 +41,14 @@ public:
 
 TEST(ServerComm, constructor) {
     std::string name = "MyComm";
-    ServerComm sc(name, nullptr);
-    ServerComm sc1("", nullptr);
+    ServerComm sc(name);
+    ServerComm sc1("");
 }
 
 TEST(ServerComm, send) {
     std::string msg = "my message";
     std::string name = "MyComm";
-    communication::testing::ServerComm_tester sc(name, nullptr);
+    communication::testing::ServerComm_tester sc(name);
     EXPECT_EQ(sc.send(msg.c_str(), msg.size()), -1);
     sc.addRequest();
     EXPECT_GE(sc.send(msg.c_str(), msg.size()), 0);
@@ -65,7 +68,7 @@ TEST(ServerComm, recv) {
     char* data = (char*)malloc(sizeof(char));
     size_t len = 1;
 
-    communication::testing::ServerComm_tester sc(name, nullptr);
+    communication::testing::ServerComm_tester sc(name);
 
     ELF_BEGIN;
     ELF_RECV(0);
@@ -87,8 +90,9 @@ TEST(ServerComm, recv) {
 
 TEST(ServerComm, signon) {
   std::string name = "MyComm";
-  ServerComm sc(name, nullptr);
-  ClientComm cc(name, new utils::Address(sc.getAddress()));
+  ServerComm sc(name);
+  utils::Address addr(sc.getAddress());
+  ClientComm cc(name, addr);
   // Send signon then message
   std::string msg_send = "Hello world";
   std::string msg_recv;

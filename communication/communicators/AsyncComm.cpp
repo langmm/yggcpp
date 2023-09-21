@@ -34,13 +34,14 @@ bool AsyncBacklog::on_thread(Comm_t* parent) {
   {
     const std::lock_guard<std::mutex> comm_lock(comm_mutex);
     int flgs_comm = (parent->getFlags() & ~COMM_FLAG_ASYNC) | COMM_FLAG_ASYNC_WRAPPED;
+    Address addr(parent->getAddress());
     comm = new_Comm_t(direction,
 		      parent->getCommType(),
 		      parent->getName(),
-		      new utils::Address(parent->getAddress()),
+		      addr,
 		      flgs_comm);
     parent->updateMaxMsgSize(comm->getMaxMsgSize());
-    parent->address->address(comm->getAddress());
+    parent->address.address(comm->getAddress());
     parent->updateMsgBufSize(comm->getMsgBufSize());
     parent->getFlags() |= (comm->getFlags() & ~flgs_comm);
     opened.store(true);
@@ -138,7 +139,7 @@ AsyncLockGuard::~AsyncLockGuard() {
 ///////////////
 
 AsyncComm::AsyncComm(const std::string name,
-		     utils::Address *address,
+		     utils::Address& address,
 		     const DIRECTION direction,
 		     int flgs, const COMM_TYPE type) :
   CommBase(name, address, direction, type, flgs | COMM_FLAG_ASYNC) {
@@ -153,9 +154,17 @@ AsyncComm::AsyncComm(const std::string name,
 AsyncComm::AsyncComm(const std::string nme,
 		     const DIRECTION dirn,
 		     int flgs, const COMM_TYPE type) :
-  AsyncComm(nme, nullptr, dirn, flgs, type) {}
+        CommBase(nme, dirn, type, flgs | COMM_FLAG_ASYNC) {
+    if (type == SERVER_COMM)
+        this->direction = RECV;
+    else if (type == CLIENT_COMM)
+        this->direction = SEND;
+    if (!global_comm) {
+        handle = new AsyncBacklog(this);
+    }
+}
 
-AsyncComm::AsyncComm(utils::Address *addr,
+AsyncComm::AsyncComm(utils::Address &addr,
 		     const DIRECTION dirn,
 		     int flgs, const COMM_TYPE type) :
   AsyncComm("", addr, dirn, flgs, type) {}
@@ -251,7 +260,7 @@ bool AsyncComm::create_header_send(Header& header) {
   return handle->comm->create_header_send(header);
 }
 
-Comm_t* AsyncComm::create_worker(utils::Address* address,
+Comm_t* AsyncComm::create_worker(utils::Address& address,
 				 const DIRECTION& dir, int flgs) {
   return new AsyncComm("", address, dir, flgs | COMM_FLAG_WORKER, type);
 }

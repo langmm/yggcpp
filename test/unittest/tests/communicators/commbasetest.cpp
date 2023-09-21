@@ -8,10 +8,10 @@ using namespace communication::communicator;
 
 class Comm_tTest: public Comm_t {
 public:
-    Comm_tTest(utils::Address *address, DIRECTION dirn, const COMM_TYPE &t, int flgs = 0) :
+    Comm_tTest(utils::Address& address, DIRECTION dirn, const COMM_TYPE &t, int flgs = 0) :
       Comm_t("", address, dirn, t, flgs), _closed(false) {}
     Comm_tTest(const std::string &name, DIRECTION direction, const COMM_TYPE &t) :
-      Comm_t(name, nullptr, direction, t, COMM_FLAG_INTERFACE), _closed(false) {}
+      Comm_t(name, direction, t, COMM_FLAG_INTERFACE), _closed(false) {}
     int comm_nmsg(DIRECTION=NONE) const override {return 1;}
     int get_flags() const {return flags;}
     void close() override { _closed = true; }
@@ -29,7 +29,7 @@ protected:
       // return static_cast<long>(msg.size());
       return 0;
     }
-    Comm_t* create_worker(utils::Address* adr,
+    Comm_t* create_worker(utils::Address& adr,
                           const DIRECTION& dir, int flgs) override {
       return new Comm_tTest(adr, dir, this->type, flgs);
     }
@@ -40,7 +40,7 @@ protected:
 class EmptyComm : public CommBase<int> {
 public:
   EmptyComm() :
-    CommBase("", nullptr, SEND, ZMQ_COMM, 0), nmsg_(-1) {
+    CommBase("", SEND, ZMQ_COMM, 0), nmsg_(-1) {
     handle = new int();
     updateMaxMsgSize(1000);
   }
@@ -54,7 +54,7 @@ public:
 
 TEST(Commt, Constructors) {
     unsetenv("YGG_MODEL_NAME");
-    utils::Address *adr = new utils::Address("this.is.a.test");
+    utils::Address adr("this.is.a.test");
     Comm_tTest *ctest = new Comm_tTest(adr, SEND, NULL_COMM);
     EXPECT_EQ(ctest->getType(), NULL_COMM);
     EXPECT_TRUE(ctest->valid());

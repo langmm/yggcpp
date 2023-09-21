@@ -50,12 +50,20 @@ void mpi_registry_t::CheckReturn(int code, std::string method, int rank) const {
     ygglog_error << method << "(" << tag << "): Invalid count" << std::endl;
 }
 
-MPIComm::MPIComm(const std::string name, utils::Address *address,
+MPIComm::MPIComm(const std::string name, utils::Address& address,
 		 const DIRECTION direction, int flgs,
 		 const COMM_TYPE type) :
   CommBase(name, address, direction, type, flgs) {
   if (!global_comm)
     init();
+}
+
+MPIComm::MPIComm(const std::string name,
+                 const DIRECTION direction, int flgs,
+                 const COMM_TYPE type) :
+        CommBase(name, direction, type, flgs) {
+    if (!global_comm)
+        init();
 }
 
 ADD_CONSTRUCTORS_DEF(MPIComm)
@@ -65,25 +73,21 @@ ADD_CONSTRUCTORS_DEF(MPIComm)
 void MPIComm::init() {
     updateMaxMsgSize(2147483647);
     assert(!handle);
-    if (!(this->address && this->address->valid())) {
+    if (!this->address.valid()) {
 #ifdef YGG_TEST
-        if (!address) {
-	  address = new utils::Address(std::to_string(0));
-	} else { // GCOVR_EXCL_LINE
-	  address->address(std::to_string(0));
-	}
+	  address.address(std::to_string(0));
 #else // YGG_TEST
         throw std::runtime_error("No address specified for MPIComm constructor");
 #endif // YGG_TEST
     }
     if (this->name.empty()) {
-        this->name = "tempinitMPI." + address->address();
+        this->name = "tempinitMPI." + address.address();
     }
     handle = new mpi_registry_t(MPI_COMM_WORLD);
     handle->procs.clear();
     handle->tag = 0;
-    std::vector<std::string> adrs = communication::utils::split(this->address->address(), ",");
-    addresses.push_back(this->address);
+    std::vector<std::string> adrs = communication::utils::split(this->address.address(), ",");
+    addresses.push_back(&this->address);
     if (adrs.size() > 1) {
         addresses[0]->address(adrs[0]);
         for (size_t i = 1; i < adrs.size(); i++) {

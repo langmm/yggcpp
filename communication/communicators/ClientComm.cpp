@@ -8,14 +8,21 @@ using namespace communication::utils;
 
 unsigned ClientComm::_client_rand_seeded = 0;
 
-ClientComm::ClientComm(const std::string nme, Address *addr,
+ClientComm::ClientComm(const std::string nme, Address& addr,
 		       int flgs, const COMM_TYPE type) :
   RPCComm(nme, addr,
 	  flgs | COMM_FLAG_CLIENT | COMM_ALWAYS_SEND_HEADER,
 	  SEND, RECV, type) {
   // Called to create temp comm for send/recv
-  if (!(global_comm || (name.empty() && address && address->valid())))
+  if (!(global_comm || (name.empty() && address.valid())))
     init();
+}
+
+ClientComm::ClientComm(const std::string nme, int flgs, const COMM_TYPE type) :
+        RPCComm(nme, flgs | COMM_FLAG_CLIENT | COMM_ALWAYS_SEND_HEADER,
+                SEND, RECV, type) {
+    if (!(global_comm || (name.empty() && address.valid())))
+        init();
 }
 
 ADD_CONSTRUCTORS_RPC_DEF(ClientComm)
@@ -44,7 +51,7 @@ void ClientComm::init() {
     }
   } YGG_THREAD_SAFE_END;
   if (name.empty()) {
-    this->name = "client_request." + this->address->address();
+    this->name = "client_request." + this->address.address();
   }
 }
 
@@ -91,7 +98,7 @@ bool ClientComm::signon(const Header& header, Comm_t* async_comm) {
       ygglog_debug << "ClientComm(" << name << ")::signon: Received response to signon" << std::endl;
       break;
     } else {
-      ygglog_debug << "ClientComm(" << name << ")::signon: No response to signon (address = " << requests.activeComm()->address->address() << "), sleeping" << std::endl;
+      ygglog_debug << "ClientComm(" << name << ")::signon: No response to signon (address = " << requests.activeComm()->address.address() << "), sleeping" << std::endl;
       // Sleep outside lock on async
       if (flags & COMM_FLAG_ASYNC_WRAPPED)
 	return true;
@@ -185,7 +192,7 @@ long ClientComm::recv_single(utils::Header& header) {
 	    requests.transferSchemaFrom(response_comm);
 	  }
 	} else {
-	  ygglog_debug << "ClientComm(" << name << ")::recv_single: No response to oldest request (address = " << response_comm->address->address() << "), sleeping" << std::endl;
+	  ygglog_debug << "ClientComm(" << name << ")::recv_single: No response to oldest request (address = " << response_comm->address.address() << "), sleeping" << std::endl;
 	  std::this_thread::sleep_for(std::chrono::microseconds(YGG_SLEEP_TIME));
 	  
 	}

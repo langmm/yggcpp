@@ -77,21 +77,27 @@ ZMQSocket::ZMQSocket() :
   handle(NULL), endpoint(), type(0), ctx() {}
 ZMQSocket::ZMQSocket(const ZMQSocket& rhs) :
   handle(NULL), endpoint(), type(rhs.type), ctx() {}
-ZMQSocket::ZMQSocket(int type0, utils::Address* address,
+ZMQSocket::ZMQSocket(int type0, utils::Address& address,
 		     int linger, int immediate, int sndtimeo) :
   handle(NULL), endpoint(), type(type0), ctx() {
   init(type0, address, linger, immediate, sndtimeo);
 }
+ZMQSocket::ZMQSocket(int type0, int linger, int immediate,
+          int sndtimeo) :
+        handle(NULL), endpoint(), type(type0), ctx() {
+    utils::Address adr;
+    init(type0, adr, linger, immediate, sndtimeo);
+}
 
-void ZMQSocket::init(int type0, std::string address,
+
+void ZMQSocket::init(int type0, const std::string& address,
 		     int linger, int immediate, int sndtimeo) {
-  if (address.empty()) {
-    init(type0, NULL, linger, immediate, sndtimeo);
-  } else {
-    utils::Address address_;
-    address_.address(address);
-    init(type0, &address_, linger, immediate, sndtimeo);
-  }
+//if (address.empty()) {
+  //  init(type0, NULL, linger, immediate, sndtimeo);
+  //} else {
+    utils::Address address_(address);
+    init(type0, address_, linger, immediate, sndtimeo);
+  //}
 }
 
 #ifdef ZMQINSTALLED
@@ -103,7 +109,7 @@ int ZMQSocket::set(int member, const T& data) {
   }
   return 1;
 }
-void ZMQSocket::init(int type0, utils::Address* address,
+void ZMQSocket::init(int type0, utils::Address& addr,
 		     int linger, int immediate, int sndtimeo) {
   type = type0;
   std::string except_msg;
@@ -127,8 +133,8 @@ void ZMQSocket::init(int type0, utils::Address* address,
     destroy();
     throw std::runtime_error(except_msg);
   }
-  if (address && !address->address().empty()) {
-    endpoint = address->address();
+  if (addr.valid() && !addr.address().empty()) {
+    endpoint = addr.address();
     if (zmq_connect(handle, endpoint.c_str()) != 0) {
       destroy();
       ygglog_throw_error("ZMQSocket::init: Error connecting to endpoint '" + endpoint + "'");
@@ -139,7 +145,6 @@ void ZMQSocket::init(int type0, utils::Address* address,
     std::string host = "localhost";
     if (host == "localhost")
       host = "127.0.0.1";
-    std::string address;
     YGG_THREAD_SAFE_BEGIN(zmqport) {
       if (_last_port_set == 0) {
 	const char *model_index = getenv("YGG_MODEL_INDEX");
@@ -235,7 +240,7 @@ int ZMQSocket::poll(int method, int tout) {
   return out;
 }
 
-int ZMQSocket::send(const std::string msg) {
+int ZMQSocket::send(const std::string& msg) {
   zmq_msg_t part;
   if (zmq_msg_init_size (&part, msg.size()) != 0)
     return -1;
@@ -504,12 +509,20 @@ bool ZMQReply::send_stage2(const std::string msg_data) {
 // ZMQComm //
 /////////////
 
-ZMQComm::ZMQComm(const std::string name, utils::Address *address,
+ZMQComm::ZMQComm(const std::string name, utils::Address& address,
 		 const DIRECTION direction, int flgs,
 		 const COMM_TYPE type) :
   CommBase(name, address, direction, type, flgs), reply(direction) {
   if (!global_comm)
     init();
+}
+
+ZMQComm::ZMQComm(const std::string name,
+                 const DIRECTION direction, int flgs,
+                 const COMM_TYPE type) :
+        CommBase(name, direction, type, flgs), reply(direction) {
+    if (!global_comm)
+        init();
 }
 
 ADD_CONSTRUCTORS_DEF(ZMQComm)
@@ -529,7 +542,7 @@ void ZMQComm::init() {
   // } else {
   handle = new ZMQSocket(ZMQ_PAIR, address);
   // }
-  address->address(handle->endpoint);
+  address.address(handle->endpoint);
   if (this->name.empty())
     this->name = "tempnewZMQ-" + handle->endpoint.substr(handle->endpoint.find_last_of(':') + 1);
   if (direction == SEND)

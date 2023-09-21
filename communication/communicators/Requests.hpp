@@ -97,7 +97,7 @@ public:
     }
     int hasComm(const std::string& response_address) const {
         for (size_t i = 0; i < comms.size(); i++) {
-            if (comms[i] && *(comms[i]->address) == response_address)
+            if (comms[i] && comms[i]->address.address() == response_address)
                 return (int)i;
         }
         return -1;
@@ -144,28 +144,29 @@ public:
       // 	initClientSignon();
       }
       if (request_id.empty()) {
-	if (!stashed_request.empty()) {
-	  request_id = stashed_request;
-	  stashed_request.clear();
-	  header.SetMetaString("request_id", request_id);
-	} else {
-	  header.SetMetaID("request_id", request_id);
-	}
-	ygglog_debug << "addRequestClient: request_id = "
-		     << request_id << std::endl;
+          if (!stashed_request.empty()) {
+              request_id = stashed_request;
+              stashed_request.clear();
+              header.SetMetaString("request_id", request_id);
+          } else {
+              header.SetMetaID("request_id", request_id);
+          }
+          ygglog_debug << "addRequestClient: request_id = "
+                       << request_id << std::endl;
       } else {
-	header.SetMetaString("request_id", request_id);
+          header.SetMetaString("request_id", request_id);
       }
-      header.SetMetaString("response_address",
-			   comms[0]->address->address());
-      if (existing_idx < 0) {
-	size_t idx = requests.size();
-	if (hasRequest(request_id) >= 0) {
-	  ygglog_error
-	    << "addRequestClient: Client already has request with id '"
-	    << request_id << "'" << std::endl;
-	  return -1;
-	}
+        header.SetMetaString("response_address",
+			   comms[0]->address.address());
+        if (existing_idx < 0) {
+            size_t idx = requests.size();
+            if (hasRequest(request_id) >= 0) {
+                ygglog_error
+                        << "addRequestClient: Client already has request with id '"
+                        << request_id << "'" << std::endl;
+                return -1;
+            }
+            Request req(request_id, 0, is_signon);
 	requests.emplace_back(request_id, 0, is_signon);
 	// requests.resize(requests.size() + 1);
 	// requests[idx].request_id = request_id;
@@ -174,7 +175,7 @@ public:
 	existing_idx = static_cast<int>(idx);
       }
       ygglog_debug << "addRequestClient: done response_address = "
-		   << comms[0]->address->address() << ", request_id = "
+		   << comms[0]->address.address() << ", request_id = "
 		   << request_id << std::endl;
       return existing_idx;
     }
@@ -193,7 +194,7 @@ public:
 			      (header.flags & HEAD_FLAG_CLIENT_SIGNON));
 	ygglog_debug << "addRequestServer: done idx = " << idx
 		     << ", response_address = "
-		     << comms[requests[idx].comm_idx]->address->address()
+		     << comms[requests[idx].comm_idx]->address.address()
 		     << ", request_id = " << requests[idx].request_id
 		     << std::endl;
 	return static_cast<int>(idx);
@@ -333,7 +334,7 @@ public:
             if (idx >= 0)
                 return idx;
         }
-        utils::Address* response_adr = new utils::Address(response_address);
+        utils::Address response_adr(response_address);
 	COMM_TYPE response_type = DEFAULT_COMM;
 	Comm_t* x = new_Comm_t(response_dir, response_type, "",
 			       response_adr, response_flags);

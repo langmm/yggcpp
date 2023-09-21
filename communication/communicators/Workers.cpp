@@ -4,7 +4,7 @@
 using namespace communication::communicator;
 using namespace communication::utils;
 
-Worker::Worker(Comm_t* parent, DIRECTION dir, Address* adr) :
+Worker::Worker(Comm_t* parent, DIRECTION dir, Address& adr) :
   comm(nullptr), request() {
   try {
     if (parent) {
@@ -25,9 +25,9 @@ Worker& Worker::operator=(Worker&& rhs) { // GCOVR_EXCL_START
   new (this) Worker(std::move(rhs));
   return *this;
 } // GCOVR_EXCL_STOP
-bool Worker::matches(DIRECTION dir, Address* adr) {
+bool Worker::matches(DIRECTION dir, Address& adr) {
   return (request.empty() && comm && comm->direction == dir &&
-	  ((!adr) || (adr->address() == comm->address->address())));
+	  ((!adr.valid()) || (adr.address() == comm->address.address())));
 }
 Worker::~Worker() {
   if (comm) {
@@ -44,7 +44,7 @@ WorkerList::~WorkerList() {
 }
 
 Comm_t* WorkerList::add_worker(Comm_t* parent, DIRECTION dir,
-			       Address* adr) {
+			       Address& adr) {
   if (!parent) {
     ygglog_error << "WorkerList::add_worker: No parent provided" << std::endl;
     return nullptr;
@@ -62,7 +62,7 @@ void WorkerList::remove_worker(Comm_t*& worker) {
   workers.erase(workers.begin() + static_cast<size_t>(idx));
   worker = nullptr;
 }
-Comm_t* WorkerList::find_worker(DIRECTION dir, Address* adr, size_t* idx) {
+Comm_t* WorkerList::find_worker(DIRECTION dir, Address& adr, size_t* idx) {
   for (size_t i = 0; i < workers.size(); i++) {
     if (workers[i].matches(dir, adr)) {
       if (idx)
@@ -81,12 +81,12 @@ int WorkerList::find_worker(Comm_t* worker) {
     return -1;
   return static_cast<int>(idx);
 }
-Comm_t* WorkerList::get(Comm_t* parent, DIRECTION dir, Address* adr) {
+
+Comm_t* WorkerList::get(Comm_t* parent, DIRECTION dir, Address& adr) {
   Comm_t* out = find_worker(dir, adr);
   if (!out) {
     out = add_worker(parent, dir, adr);
-  } else if (adr) {
-    delete out->address;
+  } else if (adr.valid()) {
     out->address = adr;
   }
   if (!out) {
@@ -94,6 +94,16 @@ Comm_t* WorkerList::get(Comm_t* parent, DIRECTION dir, Address* adr) {
   }
   return out;
 }
+
+Comm_t* WorkerList::get(Comm_t* parent, DIRECTION dir) {
+    Address tempAdr;
+    return get(parent, dir, tempAdr);
+}
+Comm_t* WorkerList::get(Comm_t* parent, DIRECTION dir, std::string adr) {
+    Address addrs(adr);
+    return get(parent, dir, addrs);
+}
+
 bool WorkerList::setRequest(Comm_t* worker, std::string request) {
   int idx = find_worker(worker);
   if (idx < 0)
