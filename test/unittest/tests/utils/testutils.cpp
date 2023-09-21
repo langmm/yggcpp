@@ -42,24 +42,24 @@ TEST(Value, Complex) {
 
 TEST(ADDRESS, Init) {
     const std::string astr = "this.is.a.test";
-    // std::string cstr = "this.is.C.test";
+    std::string cstr = "this.is.C.test";
     auto *adr = new Address(astr);
     EXPECT_TRUE(adr->valid());
     EXPECT_EQ(adr->address(), astr);
     EXPECT_EQ(0, adr->key());
 
-    // Address adrc(cstr.c_str());
-    // EXPECT_TRUE(adrc.valid());
-    // EXPECT_EQ(adrc.address(), cstr);
-    // EXPECT_EQ(0, adrc.key());
-    // EXPECT_NE(adrc.address(), adr->address());
+    Address adrc(cstr.c_str());
+    EXPECT_TRUE(adrc.valid());
+    EXPECT_EQ(adrc.address(), cstr);
+    EXPECT_EQ(0, adrc.key());
+    EXPECT_NE(adrc.address(), adr->address());
 
-    // auto* adrcmp = new Address(adr);
-    // EXPECT_TRUE(adrcmp->valid());
-    // EXPECT_EQ(adrcmp->address(), adr->address());
-    // EXPECT_NE(adr, adrcmp);
+    auto* adrcmp = new Address(adr);
+    EXPECT_TRUE(adrcmp->valid());
+    EXPECT_EQ(adrcmp->address(), adr->address());
+    EXPECT_NE(adr, adrcmp);
     delete adr;
-    // delete adrcmp;
+    delete adrcmp;
 }
 
 TEST(ADDRESS, set) {
