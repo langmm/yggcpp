@@ -512,13 +512,13 @@ long Comm_t::recv_raw(char*& data, const size_t &len,
       return -1;
     }
     std::cerr << "CommBase(" << name << ")::recv_raw: Before update type" << std::endl;
-    head.Display();
+    // head.Display();
     if (!head.hasType()) {
       ygglog_debug << "CommBase(" << name << ")::recv_raw: No type information in message header" << std::endl;
     } else {
       std::cerr << "updating type" << std::endl;
       communication::utils::Metadata& meta = getMetadata(RECV);
-      meta.Display();
+      // meta.Display();
       if ((!meta.hasType()) && (meta.transforms.size() == 0)) {
 	if (!meta.fromSchema(head.schema[0]))
 	  return -1;
