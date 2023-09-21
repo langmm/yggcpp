@@ -534,10 +534,10 @@ private:
 		    internal::OrExpr<internal::IsSame<T, char[]>, 
 		    internal::OrExpr<internal::IsSame<T, rapidjson::Document>,
 		    internal::IsPointer<T> > > > > >),
-		   doc[0].Is<T>(), doc[0].Get(data), ,
-		   if (i == 1 && doc.Size() == 0 && doc[0].IsString()) {
+		   doc[0].Is<T>(), doc[0].Get(data);
+		   if (i == 0 && doc.Size() == 1 && doc[0].IsString()) {
 		     return static_cast<long>(doc[0].GetStringLength());
-		   },
+		   }, , ,
 		   T& data)
   HANDLE_RECV_TMP_((internal::AndExpr<internal::IsPointer<T>,
 		    internal::NotExpr<internal::IsSame<T, char*> > >),
