@@ -91,7 +91,8 @@ void MPIComm::init() {
     if (adrs.size() > 1) {
         addresses[0]->address(adrs[0]);
         for (size_t i = 1; i < adrs.size(); i++) {
-            addresses.push_back(new communication::utils::Address(adrs[i]));
+            Address tempadr(adrs[i]);
+            addresses.push_back(&tempadr);
         }
     }
 

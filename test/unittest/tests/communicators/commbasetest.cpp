@@ -61,7 +61,7 @@ TEST(Commt, Constructors) {
     EXPECT_FALSE(ctest->get_flags() & COMM_ALLOW_MULTIPLE_COMMS);
     std::cout << ctest << std::endl;
     delete ctest;
-    adr = new utils::Address("this.is.a.test");
+    //adr = new utils::Address("this.is.a.test");
     ctest = new Comm_tTest(adr, NONE, NULL_COMM);
     EXPECT_EQ(ctest->getType(), NULL_COMM);
     EXPECT_FALSE(ctest->valid());
@@ -69,7 +69,7 @@ TEST(Commt, Constructors) {
     delete ctest;
     const char* ygg = getenv("YGG_THREADING");
     setenv("YGG_THREADING", "TRUE", true);
-    adr = new utils::Address("this.is.a.test");
+    //adr = new utils::Address("this.is.a.test");
     ctest = new Comm_tTest(adr, RECV, NULL_COMM);
     EXPECT_EQ(ctest->getType(), NULL_COMM);
     EXPECT_TRUE(ctest->valid());
