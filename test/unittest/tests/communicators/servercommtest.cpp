@@ -69,11 +69,13 @@ TEST(ServerComm, recv) {
     size_t len = 1;
 
     communication::testing::ServerComm_tester sc(name);
+    utils::Address addr(sc.getAddress());
+    ClientComm cc(name, addr);
 
     ELF_BEGIN;
     ELF_RECV(0);
     RETMSG_META = "\"request_id\": \"12345\", \"response_address\": \"\"";
-    ELF_META(sc);
+    ELF_META(cc);
     // Failure in realloc
     EXPECT_EQ(sc.recv(data, len, false), -RETMSG.size());
     // Success
