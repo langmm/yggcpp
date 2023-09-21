@@ -188,7 +188,6 @@ void ZMQSocket::init(int type0, utils::Address& addr,
 	  endpoint.assign(endpoint_c, endpoint_len - 1); // Remove newline char
 	  ygglog_debug << "ZMQSocket::init: Bound to endpoint '" << endpoint << "'" << std::endl;
 	  size_t idx_port = endpoint.find_last_of(':');
-	  assert(idx_port != std::string::npos);
 	  if (idx_port == std::string::npos) {
 	    except_msg = "ZMQSocket::init: Error getting port from endpoing";
 	  } else {
