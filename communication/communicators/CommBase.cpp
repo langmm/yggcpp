@@ -58,7 +58,9 @@ void Comm_t::_ygg_cleanup() {
 	ZMQContext::destroy();
 #endif
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
+#ifndef YGG_TEST
 	rapidjson::finalize_python("_ygg_cleanup");
+#endif // YGG_TEST
 #endif // YGGDRASIL_DISABLE_PYTHON_C_API
       } YGG_THREAD_SAFE_END;
 #ifndef YGG_TEST
