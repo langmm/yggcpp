@@ -198,8 +198,6 @@ bool Comm_t::get_global_scope_comm() {
     ygglog_debug << "CommBase: Found global comm \"" << global_name
 		 << "\"" << std::endl;
   }
-  if (!address.valid())
-    address = new Address();
   address.address(global_comm->address.address());
   flags = global_comm->flags & ~COMM_FLAG_GLOBAL;
   if (is_server)
