@@ -18,6 +18,7 @@ void free_comm(comm_t* comm) {
     if (comm && comm->comm) {
         auto c = static_cast<communication::communicator::Comm_t *>(comm->comm);
 	delete c;
+	c = nullptr;
         comm->comm = nullptr;
     }
 }

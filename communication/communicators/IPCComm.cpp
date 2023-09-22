@@ -47,6 +47,7 @@ void IPCComm::init() {
 		     << "ret(" << fid[0] << "), errno(" << errno << "): "
 		     << strerror(errno) << std::endl;
         delete fid;
+	fid = nullptr;
 	throw std::runtime_error("IPCComm::init: Error in msgget");
     }
     handle = fid;

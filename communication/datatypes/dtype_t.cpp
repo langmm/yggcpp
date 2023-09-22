@@ -157,6 +157,7 @@ extern "C" {
 	try {
 	  rapidjson::Document* obj = (rapidjson::Document*)(x->obj);
 	  delete obj;
+	  obj = nullptr;
 	  x->obj = NULL;
 	} catch (...) {
 	  ygglog_error_c("destroy_generic: C++ exception thrown in destructor for rapidjson::Document.");
@@ -925,7 +926,7 @@ extern "C" {
 #define STD_UNITS_(name, type, method, defV)				\
   STD_UNITS_BASE_(name, type, d->Is ## method(), out = d->Get ## method(), d->Set ## method(value), defV)
 #define GEOMETRY_(name, rjtype)						\
-  STD_JSON_BASE_(name, name ## _t, d->Is ## rjtype(), rapidjson::rjtype* tmp = new rapidjson::rjtype(); d->Get ## rjtype(*tmp); out = rjtype ## 2 ## name(*tmp); delete tmp, d->Set ## rjtype(name ## 2 ## rjtype(value), generic_allocator(x)), init_ ## name())
+  STD_JSON_BASE_(name, name ## _t, d->Is ## rjtype(), rapidjson::rjtype* tmp = new rapidjson::rjtype(); d->Get ## rjtype(*tmp); out = rjtype ## 2 ## name(*tmp); delete tmp; tmp = nullptr, d->Set ## rjtype(name ## 2 ## rjtype(value), generic_allocator(x)), init_ ## name())
 #define ARRAY_(name, type, rjtype)					\
   size_t generic_ref_get_1darray_ ## name(generic_ref_t x, type** data) {	\
     if ((!is_generic_ref_init(x)) || data == NULL) {			\
@@ -1311,6 +1312,7 @@ extern "C" {
       _GET_METADATA(metadata, (*dtype), 0);
       dtype->metadata = NULL;
       delete metadata;
+      metadata = nullptr;
       return 0;
     } _END_CPP(destroy_dtype, -1);
   }
@@ -1599,6 +1601,7 @@ extern "C" {
 	rapidjson::cpp_type* obj = (rapidjson::cpp_type*)(p->obj);	\
 	p->obj = NULL;							\
 	delete obj;							\
+	obj = nullptr;							\
       }									\
     }									\
   }									\

@@ -29,6 +29,7 @@ int Comm_t::_ygg_init() {
 #if defined(ZMQINSTALLED)
       ZMQContext* ctx = new ZMQContext();
       delete ctx;
+      ctx = nullptr;
 #endif
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
       rapidjson::initialize_python("_ygg_init");
@@ -130,8 +131,10 @@ Comm_t::~Comm_t() {
       Comm_t::registry[index_in_register] = NULL;
   } YGG_THREAD_SAFE_END;
   ygglog_debug << "~Comm_t: Started" << std::endl;
-  if (address)
+  if (address) {
     delete address;
+    address = nullptr;
+  }
   ygglog_debug << "~Comm_t: Finished" << std::endl;
   if (flags & COMM_FLAG_SET_OPP_ENV)
     unsetOppEnv();
@@ -248,6 +251,7 @@ Comm_t* communication::communicator::new_Comm_t(const DIRECTION dir, const COMM_
   switch(type) {
   case NULL_COMM:
     delete addr;
+    addr = nullptr;
     break;
   case DEFAULT_COMM:
     return new COMM_BASE(name, addr, dir, flags);
