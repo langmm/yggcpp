@@ -34,11 +34,14 @@ bool example_transform(rapidjson::Document& msg) {
   EXPECT_GE(rComm.recv_method recv_args, 0);				\
   std::cerr << "after recv" << std::endl;				\
   EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));			\
-  comp_data
+  std::cerr << "afterSendRecv" << std::endl;				\
+  comp_data;								\
+  std::cerr << "after comp_data" << std::endl
 #define DO_SEND_RECV_EOF(recv_method, recv_args)			\
   EXPECT_GE(sComm.send_eof(), 0);					\
   EXPECT_GE(rComm.recv_method recv_args, -2);				\
-  EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm))
+  EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));			\
+  std::cerr << "after eof" << std::endl
 
 #define DO_SEND_RECV_BASE(init_data, comp_data, send_method, recv_method, send_args, recv_args) \
   DO_SEND_RECV_EXCHANGE(init_data, comp_data, send_method, send_args, recv_method, recv_args); \
