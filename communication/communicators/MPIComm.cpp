@@ -87,12 +87,11 @@ void MPIComm::init() {
     handle->procs.clear();
     handle->tag = 0;
     std::vector<std::string> adrs = communication::utils::split(this->address.address(), ",");
-    addresses.push_back(&this->address);
+    addresses.emplace_back(this->address.address());
     if (adrs.size() > 1) {
-        addresses[0]->address(adrs[0]);
+        addresses[0].address(adrs[0]);
         for (size_t i = 1; i < adrs.size(); i++) {
-            Address tempadr(adrs[i]);
-            addresses.push_back(&tempadr);
+	    addresses.emplace_back(adrs[i]);
         }
     }
 
@@ -107,13 +106,6 @@ void MPIComm::init() {
             handle->procs.push_back(stoi(a));
         }
     }
-}
-
-void MPIComm::close() {
-  for (size_t i = 1; i < addresses.size(); i++)
-    delete addresses[i];
-  addresses.clear();
-  CommBase::close();
 }
 
 int MPIComm::mpi_comm_source_id() const {

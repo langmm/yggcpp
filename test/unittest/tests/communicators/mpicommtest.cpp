@@ -131,10 +131,10 @@ TEST(MPIComm, constructor) {
     EXPECT_NE(mpic2.getName().find("tempinitMPI"), std::string::npos);
     utils::Address adr3("[50000], 51000");
     MPIComm_tester mpic3(name, adr3, RECV);
-    std::vector<utils::Address*> adrlist = mpic3.getAddresses();
+    std::vector<utils::Address> adrlist = mpic3.getAddresses();
     EXPECT_EQ(adrlist.size(), 2);
-    EXPECT_EQ(adrlist[0]->address(), "[50000]");
-    EXPECT_EQ(adrlist[1]->address(), "51000");
+    EXPECT_EQ(adrlist[0].address(), "[50000]");
+    EXPECT_EQ(adrlist[1].address(), "51000");
 }
 
 TEST(MPIComm, sourceID) {
