@@ -200,6 +200,7 @@ class Comm_t {
 public:
     Comm_t(const Comm_t& other) = delete;
     Comm_t& operator=(const Comm_t&) = delete;
+    Comm_t() = delete;
     virtual ~Comm_t();
 
     //////////////////

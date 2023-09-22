@@ -215,15 +215,15 @@ auto operator/(const T&a, const F v) -> EnableForComplex<T, T> {
 template<typename T>
 RAPIDJSON_ENABLEIF_RETURN((rapidjson::internal::IsSame<T, complex_float_t>), (bool))
 operator==(const T& a, const T& b) {
-    return (abs(a.re - b.re) < pow(10, -(std::numeric_limits<float>::digits10 - 1))) &&
-           (abs(a.im - b.im) < pow(10, -(std::numeric_limits<float>::digits10 - 1)));
+  return (std::abs(a.re - b.re) < pow(10, -(std::numeric_limits<float>::digits10 - 1))) &&
+    (std::abs(a.im - b.im) < pow(10, -(std::numeric_limits<float>::digits10 - 1)));
 }
 
 template<typename T>
 RAPIDJSON_ENABLEIF_RETURN((rapidjson::internal::IsSame<T, complex_double_t>), (bool))
 operator==(const T& a, const T& b) {
-    return (abs(a.re - b.re) < pow(10, -(std::numeric_limits<double>::digits10 - 1))) &&
-           (abs(a.im - b.im) < pow(10, -(std::numeric_limits<double>::digits10 - 1)));
+  return (std::abs(a.re - b.re) < pow(10, -(std::numeric_limits<double>::digits10 - 1))) &&
+    (std::abs(a.im - b.im) < pow(10, -(std::numeric_limits<double>::digits10 - 1)));
 }
 
 template<typename T>
