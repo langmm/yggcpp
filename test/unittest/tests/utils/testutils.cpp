@@ -54,12 +54,12 @@ TEST(ADDRESS, Init) {
     EXPECT_EQ(0, adrc.key());
     EXPECT_NE(adrc.address(), adr->address());
 
-    // auto* adrcmp = new Address(adr);
-    // EXPECT_TRUE(adrcmp->valid());
-    // EXPECT_EQ(adrcmp->address(), adr->address());
-    // EXPECT_NE(adr, adrcmp);
+    auto* adrcmp = new Address(adr);
+    EXPECT_TRUE(adrcmp->valid());
+    EXPECT_EQ(adrcmp->address(), adr->address());
+    EXPECT_NE(adr, adrcmp);
     delete adr;
-    // delete adrcmp;
+    delete adrcmp;
 }
 
 TEST(ADDRESS, set) {
