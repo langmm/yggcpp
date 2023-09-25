@@ -97,7 +97,7 @@
 static inline
 int setenv(const char *name, const char *value, int overwrite) {
   if (overwrite || getenv(name) == NULL) {
-    size_t len = strlen(name) + strlen(value);
+    size_t len = strlen(name) + strlen(value) + 2;
     char* tmp = (char*)malloc(len * sizeof(char));
     if (tmp == NULL)
       return -1;
