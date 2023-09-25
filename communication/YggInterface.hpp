@@ -346,7 +346,7 @@ public:
       "  ]"
       "}");
     if (t_units.size() > 0) {
-      (*(this->metadata.schema))["items"][0].AddMember(
+      (*(this->metadata.getSchema()))["items"][0].AddMember(
 	 rapidjson::Value("units", 5,
 			  this->metadata.GetAllocator()).Move(),
 	 rapidjson::Value(t_units.c_str(),

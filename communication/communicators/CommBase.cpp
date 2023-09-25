@@ -524,10 +524,10 @@ long Comm_t::recv_raw(char*& data, const size_t &len,
       communication::utils::Metadata& meta = getMetadata(RECV);
       // meta.Display();
       if ((!meta.hasType()) && (meta.transforms.size() == 0)) {
-	if (!meta.fromSchema(head.schema[0]))
+	if (!meta.fromSchema(head.getSchema()[0]))
 	  return -1;
       }
-      // update_datatype(head.schema[0], RECV);
+      // update_datatype(head.getSchema()[0], RECV);
     }
     std::cerr << "CommBase(" << name << ")::recv_raw: After update type" << std::endl;
   }
@@ -538,10 +538,10 @@ long Comm_t::recv_raw(char*& data, const size_t &len,
 }
 long Comm_t::recv(rapidjson::Document& data, bool not_generic) {
   ygglog_debug << "CommBase(" << name << ")::recv: begin" << std::endl;
-  communication::utils::Metadata& meta = getMetadata(RECV);
   char* buf = NULL;
   size_t buf_siz = 0;
   long ret = recv_raw(buf, buf_siz, true);
+  communication::utils::Metadata& meta = getMetadata(RECV);
   if (ret < 0) {
     if (buf != NULL)
       free(buf);
@@ -718,7 +718,7 @@ long Comm_t::vCall(rapidjson::VarArgList& ap) {
   rapidjson::Document tmp;
   communication::utils::Metadata& meta_send = getMetadata(SEND);
   if (meta_send.hasType()) {
-    send_nargs = tmp.CountVarArgs(*meta_send.schema, false);
+    send_nargs = tmp.CountVarArgs(*(meta_send.getSchema()), false);
   }
   if (ap.get_nargs() < send_nargs) {
     ygglog_error << "CommBase(" << name << ")::vCall: Not enough arguments for send" << std::endl;

@@ -98,7 +98,6 @@ public:
 	  return false;
       }
     }
-    _update_schema();
     return true;
   }
   bool _init(bool use_generic = false);
@@ -154,7 +153,7 @@ public:
   bool hasSubtype() const;
   const char* typeName() const;
   const char* subtypeName() const;
-  void initSchema();
+  rapidjson::Value* initSchema();
   void initMeta();
   bool addItem(const Metadata& other,
 	       rapidjson::Value* subSchema=nullptr);
@@ -162,8 +161,8 @@ public:
 		 rapidjson::Value* subSchema=nullptr);
   rapidjson::Value* getMeta();
   const rapidjson::Value* getMeta() const;
-  rapidjson::Value* getSchema();
-  const rapidjson::Value* getSchema() const;
+  rapidjson::Value* getSchema(bool required=false);
+  const rapidjson::Value* getSchema(bool required=false) const;
   bool SetValue(const std::string name, rapidjson::Value& x,
 		rapidjson::Value& subSchema);
 #define GET_METHOD_(type_out, method)					\
@@ -235,13 +234,10 @@ public:
 		rapidjson::VarArgList& ap);
   void Display(const char* indent="") const;
   rapidjson::Document metadata;
-  rapidjson::Value* schema;
   Metadata* raw_schema;
   std::vector<filterFunc> filters;
   std::vector<transformFunc> transforms;
   bool skip_last;
- private:
-  void _update_schema();
 };
 
 class Header : public Metadata {
