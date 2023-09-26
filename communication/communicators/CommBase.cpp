@@ -96,7 +96,7 @@ Comm_t::Comm_t(const std::string &nme, Address *addr,
     flags &= ~COMM_FLAG_VALID;
   
   thread_id = get_thread_id();
-  char *allow_threading = getenv("YGG_THREADING");
+  char *allow_threading = std::getenv("YGG_THREADING");
   if (allow_threading)
     flags |= COMM_ALLOW_MULTIPLE_COMMS;
   char *model_name = std::getenv("YGG_MODEL_NAME");

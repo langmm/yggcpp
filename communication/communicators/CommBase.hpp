@@ -928,11 +928,11 @@ protected:
 	while ((loc = temp_name.find(":")) != std::string::npos) {
 	  temp_name.replace(loc, 1, "__COLON__");
 	}
-	addr = getenv(temp_name.c_str());
+	addr = std::getenv(temp_name.c_str());
       }
       std::string addr_str = "null";
       if (addr)
-	addr_str.assign(addr_str);
+	addr_str.assign(addr);
       ygglog_debug << "CommBase::addressFromEnv: full_name = " <<
 	full_name << ", address = " << addr_str << std::endl;
       ygglog_debug << std::endl;
