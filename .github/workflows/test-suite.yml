@@ -283,7 +283,7 @@ jobs:
         if: matrix.with-asan == false && matrix.os == 'windows-latest' # && matrix.python-install == 'conda'
         shell: bash -l {0}
         run: |
-          echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -G\"MinGW Makefiles\" -DENABLE_OMP=OFF -DENABLE_MPI=OFF -DENABLE_ZMQ=ON -DYGGDRASIL_DISABLE_PYTHON_C_API=ON -DENABLE_THREADS=OFF" >> $GITHUB_ENV
+          echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -G\"MinGW Makefiles\" -DENABLE_OMP=OFF -DENABLE_MPI=OFF -DENABLE_ZMQ=ON -DYGGDRASIL_DISABLE_PYTHON_C_API=OFF -DENABLE_THREADS=OFF" >> $GITHUB_ENV
      
       ###################################
       # Add paths for Windows dlls
@@ -302,7 +302,7 @@ jobs:
       - name: Vcpkg library paths on Windows (Powershell)
         if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
         run: |
-          echo "${VCPKG_ROOT}\installed\x64-windows\debug\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          echo "$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows\debug\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
       - name: Vcpkg library paths on Windows (Bash)
         if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
         shell: bash -l {0}
