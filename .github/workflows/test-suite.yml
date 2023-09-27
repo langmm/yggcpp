@@ -276,8 +276,8 @@ jobs:
         if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
         shell: bash -l {0}
         run: |
-          echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} \\\"-DCMAKE_PREFIX_PATH=${VCPKG_INSTALLATION_ROOT}\installed\x64-windows\\\"" >> "$GITHUB_ENV"
-          echo "PYTHON_CONFIG_FLAGS=${{ env.PYTHON_CONFIG_FLAGS }} --config-settings=cmake.define.CMAKE_PREFIX_PATH=${VCPKG_INSTALLATION_ROOT}\installed\x64-windows --config-settings=cmake.define.Python3_ROOT_DIR=${{ env.pythonLocation }} --config-settings=cmake.define.Python_ROOT_DIR=${{ env.pythonLocation }}" >> "$GITHUB_ENV"
+          echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} \\\"-DCMAKE_PREFIX_PATH=${VCPKG_ROOT}\installed\x64-windows\\\"" >> "$GITHUB_ENV"
+          echo "PYTHON_CONFIG_FLAGS=${{ env.PYTHON_CONFIG_FLAGS }} --config-settings=cmake.define.CMAKE_PREFIX_PATH=${VCPKG_ROOT}\installed\x64-windows --config-settings=cmake.define.Python3_ROOT_DIR=${{ env.pythonLocation }} --config-settings=cmake.define.Python_ROOT_DIR=${{ env.pythonLocation }}" >> "$GITHUB_ENV"
       - name: Fortran config flags on Windows
         if: matrix.with-asan == false && matrix.os == 'windows-latest' # && matrix.python-install == 'conda'
         shell: bash -l {0}
@@ -294,7 +294,7 @@ jobs:
       - name: Vcpkg library paths on Windows (Powershell)
         if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
         run: |
-          echo "${VCPKG_INSTALLATION_ROOT}\installed\x64-windows\debug\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          echo "${VCPKG_ROOT}\installed\x64-windows\debug\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
       - name: Conda library paths on Windows
         if: matrix.python-install == 'conda' && matrix.os == 'windows-latest'
         shell: bash -l {0}
