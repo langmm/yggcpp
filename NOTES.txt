@@ -1,0 +1,2 @@
+Errors including -1073741511, 0xc0000142, 0xc0000135 are likely caused by a dll that is not on PATH, particularly for libraries install via vcpkg
+
