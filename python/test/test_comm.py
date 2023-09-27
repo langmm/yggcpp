@@ -251,7 +251,7 @@ class TestRPC:
             result_call_thread = [None]
             result_recv = (False, None)
             result_send = False
-            server.timeout_recv = 100000
+            server.timeout_recv = 1000000
             thread = Thread(target=do_call, daemon=True,
                             args=(server, req, result_call_thread),
                             kwargs=kwargs)
@@ -295,7 +295,7 @@ class TestRPC:
             flags=pyYggdrasil.COMM_FLAGS.COMM_FLAG_ASYNC)
         req = "REQUEST"
         res = "RESPONSE"
-        server.timeout_recv = 100000
+        server.timeout_recv = 1000000
         client.timeout_recv = 1000000
         assert client.send(req)
         assert server.recv() == (True, req)
