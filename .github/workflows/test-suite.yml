@@ -227,7 +227,7 @@ jobs:
           echo "ASAN_OPTIONS=detect_odr_violation=0:detect_container_overflow=0" >> $GITHUB_ENV
           echo "TEST_FLAGS=${{ env.TEST_FLAGS }} -E valgrind*" >> "$GITHUB_ENV"
       - name: Fortran config flags
-        if: matrix.with-asan == false && matrix.os != 'windows-latest'
+        if: matrix.with-asan == false # && matrix.os != 'windows-latest'
         shell: bash -l {0}
         run: |
           echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DBUILD_FORTRAN_LIBRARY=ON" >> "$GITHUB_ENV"
@@ -283,7 +283,7 @@ jobs:
         if: matrix.with-asan == false && matrix.os == 'windows-latest' # && matrix.python-install == 'conda'
         shell: bash -l {0}
         run: |
-          echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -G\"MinGW Makefiles\" -DENABLE_OMP=OFF -DENABLE_MPI=OFF -DENABLE_ZMQ=ON -DYGGDRASIL_DISABLE_PYTHON_C_API=OFF -DENABLE_THREADS=ON" >> $GITHUB_ENV
+          echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -G\"MinGW Makefiles\" -DENABLE_OMP=OFF -DENABLE_MPI=OFF -DENABLE_ZMQ=ON -DYGGDRASIL_DISABLE_PYTHON_C_API=OFF -DENABLE_THREADS=OFF" >> $GITHUB_ENV
      
       ###################################
       # Add paths for Windows dlls
