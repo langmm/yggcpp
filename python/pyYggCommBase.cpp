@@ -540,7 +540,10 @@ static PyTypeObject Comm_tType = {
         0,                         /* tp_version_tag */
         0,                         /* tp_finalize */
         0                          /* tp_vectorcall */
-
+#if (PY_MAJOR_VERSION > 3 || (PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION >= 12))
+	,
+	0                          /* tp_watched */
+#endif
 };
 
 
