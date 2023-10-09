@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #endif
 #include "utils/enums.hpp"
-#include "datatypes/dtype_t.hpp"
+#include "datatypes/dtype_t.h"
 
 #define CSafe(x, err)						\
   try								\

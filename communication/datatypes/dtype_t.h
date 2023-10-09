@@ -6,6 +6,7 @@
 #include <cstdlib>
 #else
 #include <stdbool.h>
+#include <stdint.h>
 #endif
 
 #ifdef __cplusplus
