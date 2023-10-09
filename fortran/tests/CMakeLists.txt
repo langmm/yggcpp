@@ -71,11 +71,38 @@ function (add_fortran_test_executable TARGET)
             POST_BUILD
             COMMAND echo "$<TARGET_RUNTIME_DLLS:${TARGET}>"
         )
+	if (MSVC)
+            add_custom_command(
+                TARGET ${TARGET}
+                POST_BUILD
+                COMMAND dumpbin /dependents $<TARGET_FILE:${TARGET}>
+                COMMAND_EXPAND_LISTS
+            )
+	else()
+            add_custom_command(
+                TARGET ${TARGET}
+                POST_BUILD
+                COMMAND objdump -x $<TARGET_FILE:${TARGET}> | grep "DLL Name"
+                COMMAND_EXPAND_LISTS
+            )
+	endif()
         if (CONDA_PREFIX)
             add_custom_command(
                 TARGET ${TARGET}
                 POST_BUILD
                 COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:YggInterface> $<TARGET_FILE_DIR:${TARGET}>
+                COMMAND_EXPAND_LISTS
+            )
+            add_custom_command(
+                TARGET ${TARGET}
+                POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:YggInterface_fortran> $<TARGET_FILE_DIR:${TARGET}>
+                COMMAND_EXPAND_LISTS
+            )
+            add_custom_command(
+                TARGET ${TARGET}
+                POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${TARGET}_fortran> $<TARGET_FILE_DIR:${TARGET}>
                 COMMAND_EXPAND_LISTS
             )
         else()
