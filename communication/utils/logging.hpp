@@ -46,6 +46,7 @@ namespace utils {
    */
   void ygglog_throw_error(const std::string& msg);
   std::string string_format(const std::string fmt, ...);
+  std::string string_format_va(const std::string fmt, va_list op);
   
 }
 }
@@ -55,7 +56,4 @@ namespace utils {
 // #define ygglog_debug communication::utils::YggdrasilLogger("DEBUG", 10)
 #define ygglog_debug communication::utils::YggdrasilLogger("DEBUG", 40)
 
-#define ygglog_error_c(...) ygglog_error << communication::utils::string_format(__VA_ARGS__) << std::endl
-#define ygglog_debug_c(...) ygglog_debug << communication::utils::string_format(__VA_ARGS__) << std::endl
-#define ygglog_info_c(...) ygglog_info << communication::utils::string_format(__VA_ARGS__) << std::endl
 #define ygglog_throw_error_c(...) communication::utils::ygglog_throw_error(communication::utils::string_format(__VA_ARGS__))

@@ -1,5 +1,9 @@
 #pragma once
+#ifdef __cplusplus
 #include <cstdlib>
+#else
+#include <stdbool.h>
+#endif
 #include "utils/enums.hpp"
 #include "datatypes/dtype_t.hpp"
 
@@ -10,7 +14,7 @@
     }								\
   catch(...)							\
     {								\
-      ygglog_error << "C++ exception thrown.") << std::endl;	\
+      ygglog_error << "C++ exception thrown." << std::endl;	\
     }
 
 #ifdef __cplusplus
@@ -23,6 +27,12 @@ extern "C" {
 typedef struct comm_t {
     void* comm;
 }comm_t;
+
+  
+// TODO: Allow use of ygglog_error as function in C
+void ygglog_error_c(const char* fmt, ...);
+void ygglog_debug_c(const char* fmt, ...);
+void ygglog_info_c(const char* fmt, ...);
 
 /**
  * Initialize yggdrasil interface.
@@ -66,7 +76,8 @@ void close_comm(comm_t* comm);
  *   should have.
  * @return comm_t struct containing the requested communicator
  */
-comm_t _init_comm(const char* name, const DIRECTION dir, const COMM_TYPE t,
+comm_t _init_comm(const char* name, const enum DIRECTION dir,
+		  const enum COMM_TYPE t,
 		  dtype_t* datatype, const int flags);
   
 /**
@@ -78,7 +89,8 @@ comm_t _init_comm(const char* name, const DIRECTION dir, const COMM_TYPE t,
  *   created communicator.
  * @return comm_t struct containing the requested communicator
  */
-comm_t init_comm(const char* name, const DIRECTION dir, const COMM_TYPE t,
+comm_t init_comm(const char* name, const enum DIRECTION dir,
+		 const enum COMM_TYPE t,
 		 dtype_t* datatype);
 
 /**

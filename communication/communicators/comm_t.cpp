@@ -6,6 +6,28 @@
 
 extern "C" {
 
+void ygglog_error_c(const char* fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  std::string str = communication::utils::string_format_va(fmt, ap);
+  va_end(ap);
+  ygglog_error << str << std::endl;
+}
+void ygglog_debug_c(const char* fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  std::string str = communication::utils::string_format_va(fmt, ap);
+  va_end(ap);
+  ygglog_debug << str << std::endl;
+}
+void ygglog_info_c(const char* fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  std::string str = communication::utils::string_format_va(fmt, ap);
+  va_end(ap);
+  ygglog_info << str << std::endl;
+}
+  
 int ygg_init() {
   try {
     return communication::communicator::Comm_t::_ygg_init();
@@ -44,7 +66,8 @@ void close_comm(comm_t* comm) {
 //     return ret;
 // }
 
-comm_t _init_comm(const char* name, const DIRECTION dir, const COMM_TYPE t,
+comm_t _init_comm(const char* name, const enum DIRECTION dir,
+		  const enum COMM_TYPE t,
 		  dtype_t* datatype, const int flags) {
   comm_t ret;
   _BEGIN_CPP {
@@ -67,7 +90,8 @@ comm_t _init_comm(const char* name, const DIRECTION dir, const COMM_TYPE t,
   } _END_CPP_CLEANUP(init_comm, ret, ret.comm = NULL);
   return ret;
 }
-comm_t init_comm(const char* name, const DIRECTION dir, const COMM_TYPE t,
+comm_t init_comm(const char* name, const enum DIRECTION dir,
+		 const enum COMM_TYPE t,
 		 dtype_t* datatype) {
   int flags = COMM_FLAG_INTERFACE;
   return _init_comm(name, dir, t, datatype, flags);

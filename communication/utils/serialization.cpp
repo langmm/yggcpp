@@ -45,7 +45,8 @@ int communication::utils::split_head_body(const char *buf,
     sind_head = 0;
     eind_head = 0;
     headsiz[0] = 0;
-    ygglog_debug_c("split_head_body: No header in '%.1000s...'", buf);
+    ygglog_debug << "split_head_body: No header in '" <<
+      std::string(buf).substr(0, 1000) << "...'" << std::endl;
   } else {
     sind_head = sind + strlen(MSG_HEAD_SEP);
     eind_head = eind - strlen(MSG_HEAD_SEP);
@@ -422,8 +423,8 @@ bool Metadata::fromFormat(const std::string& format_str,
       ygglog_error << "Metadata::fromFormat: Could not parse format string: " << ifmt << std::endl;
       return false;
     }
-    ygglog_debug_c("isubtype = %s, iprecision = %lu, ifmt = %s",
-		   isubtype, iprecision, ifmt);
+    ygglog_debug << "isubtype = " << isubtype << ", iprecision = " <<
+      iprecision << ", ifmt = " << ifmt << std::endl;
     rapidjson::Value item(rapidjson::kObjectType);
     if (!SetString("type", element_type, item))
       return false;
@@ -948,7 +949,8 @@ int Metadata::deserialize(const char* buf, size_t nargs, int allow_realloc, ...)
   va_start(va.va, allow_realloc);
   int out = deserialize(buf, va);
   if (out >= 0 && va.get_nargs() != 0) {
-    ygglog_error_c("Metadata::deserialize: %ld of the arguments were not used", va.get_nargs());
+    ygglog_error << "Metadata::deserialize: " << va.get_nargs() <<
+      " of the arguments were not used" << std::endl;
     return -1;
   }
   return out;
@@ -1397,7 +1399,7 @@ long Header::on_recv(const char* msg, const size_t& msg_siz) {
 bool Header::formatBuffer(rapidjson::StringBuffer& buffer, bool metaOnly) {
   buffer.Clear();
   if (empty()) {
-    ygglog_debug_c("Header::formatBuffer: Empty metadata");
+    ygglog_debug << "Header::formatBuffer: Empty metadata" << std::endl;
     return true;
   }
   rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
@@ -1467,7 +1469,7 @@ int Header::format() {
   flags |= HEAD_BUFFER_MASK;
   data = &data_;
   if (size_data == 0 && empty()) {
-    ygglog_debug_c("Header::format: Empty header");
+    ygglog_debug << "Header::format: Empty header" << std::endl;
     return 0;
   }
   bool metaOnly = (flags & (HEAD_FLAG_NO_TYPE | HEAD_META_IN_DATA |

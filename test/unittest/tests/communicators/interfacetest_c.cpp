@@ -1,6 +1,7 @@
 #include "../../unittest.hpp"
 #include "YggInterface.h"
 #include "communicators/comms.hpp"
+#include "utils/serialization.hpp"
 #include "commtest.hpp"
 
 using namespace communication::communicator;
@@ -210,7 +211,7 @@ TEST(YggInterface_C, Client) {
   std::string req_recv = "";
   std::string msg = "\"" + req_send + "\"";
   {
-    Header header(msg.c_str(), msg.size(), &sComm);
+    communication::utils::Header header(msg.c_str(), msg.size(), &sComm);
     EXPECT_TRUE(sComm.create_header_send(header));
     int len = header.format();
     msg.assign(header.data[0], static_cast<size_t>(len));
@@ -311,7 +312,7 @@ TEST(YggInterface_C, ClientPointers) {
   std::string req_recv = "";
   std::string msg = "\"" + req_send + "\"";
   {
-    Header header(msg.c_str(), msg.size(), &sComm);
+    communication::utils::Header header(msg.c_str(), msg.size(), &sComm);
     EXPECT_TRUE(sComm.create_header_send(header));
     int len = header.format();
     msg.assign(header.data[0], static_cast<size_t>(len));

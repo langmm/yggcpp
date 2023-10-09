@@ -1,7 +1,9 @@
 #pragma once
+#ifdef __cplusplus
 #include <limits>
 #include <vector>
 #include "rapidjson/internal/meta.h"
+#endif // __cplusplus
 
 #ifdef USE_OSR_YGG
 #ifdef __cplusplus

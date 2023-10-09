@@ -362,7 +362,7 @@ TEST(dtype_t, utils) {
   EXPECT_EQ(is_dtype_format_array(x), 0);
   EXPECT_EQ(dtype_uses_generic(x), 1);
   EXPECT_EQ(set_dtype_name(x, "integer"), 0);
-  display_dtype(x);
+  display_dtype(x, "");
   EXPECT_EQ(strcmp(dtype_name(x), "integer"), 0);
   EXPECT_EQ(strcmp(dtype_subtype(x), ""), 0);
   EXPECT_EQ(dtype_precision(x), 0);
@@ -389,7 +389,7 @@ TEST(dtype_t, create) {
   }
   {
     dtype_t x = create_dtype_1darray("float", 8, 3, "cm", false);
-    display_dtype(x);
+    display_dtype(x, "");
     EXPECT_EQ(strcmp(dtype_name(x), "ndarray"), 0);
     EXPECT_EQ(strcmp(dtype_subtype(x), "float"), 0);
     EXPECT_EQ(dtype_precision(x), 8);

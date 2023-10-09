@@ -1,7 +1,12 @@
 #pragma once
 #include "utils/enums.hpp"
 #include "utils/complex_type.hpp"
-#include "rapidjson/pyrj.h"
+#include "rapidjson/pyrj_c.h"
+#ifdef __cplusplus
+#include <cstdlib>
+#else
+#include <stdbool.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -798,7 +803,7 @@ int dtype_uses_generic(dtype_t dtype);
   @param[in] dtype Datatype structure to display.
   @param[in] indent Indentation that should be used on each line.
  */
-void display_dtype(const dtype_t dtype, const char* indent="");
+void display_dtype(const dtype_t dtype, const char* indent);
 
 /*!
   @brief Wrapper for updating a type object with information from another.
@@ -818,14 +823,6 @@ int update_dtype(dtype_t* dtype1, void* schema2);
 */
 int update_precision_dtype(dtype_t* dtype,
 			   const size_t new_precision);
-
-/*!
-  @brief Wrapper for displaying a data type.
-  @param[in] dtype Wrapper struct for C++ Metadata.
-  @param[in] indent Indentation to add to display output.
-*/
-void display_dtype(const dtype_t dtype, const char* indent);
-
 
 #define free_generic destroy_generic
 #define init_json_object init_generic_map

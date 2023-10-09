@@ -2,14 +2,10 @@
 #ifndef YGGINTERFACE_H_
 #define YGGINTERFACE_H_
 
-#include "utils/logging.hpp"
 #include "communicators/comm_t.hpp"
 #include "datatypes/dtype_t.h"
 #include "utils/constants.hpp"
 #include "utils/enums.hpp"
-
-// TODO: Allow use of ygglog_error as function in C
-using namespace communication::utils;
 
 #ifdef __cplusplus /* If this is a C++ compiler, use C linkage */
 extern "C" {

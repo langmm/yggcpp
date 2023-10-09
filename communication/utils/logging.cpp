@@ -44,12 +44,20 @@ void ygglog_throw_error(const std::string& msg) {
 }
 
 std::string string_format(const std::string fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  std::string str = string_format_va(fmt, ap);
+  va_end(ap);
+  return str;
+}
+
+std::string string_format_va(const std::string fmt, va_list op) {
   int size = ((int)fmt.size()) * 2 + 50;   // Use a rubric appropriate for your code
   std::string str;
   va_list ap;
   while (1) {     // Maximum two passes on a POSIX system...
     str.resize(size);
-    va_start(ap, fmt);
+    va_copy(ap, op);
     int n = vsnprintf((char *)str.data(), size, fmt.c_str(), ap);
     va_end(ap);
     if (n > -1 && n < size) {  // Everything worked
