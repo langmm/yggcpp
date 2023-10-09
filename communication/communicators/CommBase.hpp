@@ -841,7 +841,7 @@ public:
     bool addFormat(const std::string& format_str, bool as_array = false);
     bool copySchema(const Comm_t* other);
 
-    static void _ygg_cleanup();
+    static void _ygg_cleanup(int in_atexit=0);
 
 private:
     int deserialize(const char* buf, rapidjson::VarArgList& ap);
@@ -863,6 +863,7 @@ protected:
 public:
     static int _ygg_initialized;
     static int _ygg_finalized;
+    static int _ygg_atexit;
     static int _ygg_init();
 
 protected:

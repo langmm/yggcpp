@@ -13,6 +13,14 @@ int ygg_init() {
     return -1;
   }
 }
+
+void ygg_exit() {
+  try {
+    communication::communicator::Comm_t::_ygg_cleanup();
+  } catch (...) {
+    _exit(1);
+  }
+}
   
 void free_comm(comm_t* comm) {
     if (comm && comm->comm) {

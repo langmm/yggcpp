@@ -10,7 +10,7 @@ using namespace communication::communicator;
 using namespace communication::utils;
 
 void _cleanup_wrapper() {
-  Comm_t::_ygg_cleanup();
+  Comm_t::_ygg_cleanup(1);
 }
 
 void communication::communicator::global_scope_comm_on() {
@@ -42,8 +42,9 @@ int Comm_t::_ygg_init() {
   return 0;
 }
 
-void Comm_t::_ygg_cleanup() {
+void Comm_t::_ygg_cleanup(int in_atexit) {
   YGG_THREAD_SAFE_BEGIN(clean) {
+    Comm_t::_ygg_atexit = in_atexit;
     if (!Comm_t::_ygg_finalized) {
       ygglog_debug << "_ygg_cleanup: Begin cleanup of " << Comm_t::registry.size() << " communicators" << std::endl;
       for (size_t i = 0; i < Comm_t::registry.size(); i++) {
@@ -81,6 +82,7 @@ void Comm_t::_ygg_cleanup() {
 
 int Comm_t::_ygg_initialized = 0;
 int Comm_t::_ygg_finalized = 0;
+int Comm_t::_ygg_atexit = 0;
 
 Comm_t::Comm_t(const std::string &nme, Address *addr,
 	       DIRECTION dirn, const COMM_TYPE &t, int flgs) :

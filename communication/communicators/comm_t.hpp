@@ -30,6 +30,11 @@ typedef struct comm_t {
 int ygg_init();
 
 /**
+ * Cleanup yggdrasil interface prior to exit.
+ */
+void ygg_exit();
+
+/**
  * Delete the underlying communicator
  * @param comm The communicator to delete
  */

@@ -41,7 +41,13 @@ function (add_fortran_test_executable TARGET)
     set (TEST_FILES ${ARGN})
     mangle_fortran_filename_list (TEST_FILES_MANGLED ${TEST_FILES})
 
-    create_test_sourcelist (_ main.c ${TEST_FILES_MANGLED})
+    # set(CMAKE_TESTDRIVER_BEFORE_TESTMAIN "INIT_TEST();")
+    # set(CMAKE_TESTDRIVER_AFTER_TESTMAIN "FINALIZE_TEST();")
+    # set(CMAKE_TESTDRIVER_AFTER_TESTMAIN "ygg_exit();")
+    set(TARGET_SOURCE main.c)
+    create_test_sourcelist (_ ${TARGET_SOURCE} ${TEST_FILES_MANGLED})
+                            # EXTRA_INCLUDE YggInterface.h)
+                            # EXTRA_INCLUDE unittest.hpp)
 
     add_library (${TARGET}_fortran SHARED ${TEST_FILES})
     if (WIN32)
@@ -50,9 +56,10 @@ function (add_fortran_test_executable TARGET)
     endif()
     target_link_libraries (${TARGET}_fortran PUBLIC ${FORTRAN_TEST_LIBRARIES})
     target_include_directories(${TARGET}_fortran PUBLIC ${FORTRAN_TEST_INCLUDE_DIRS})
-    add_executable (${TARGET} main.c)
+    add_executable (${TARGET} ${TARGET_SOURCE})
     target_link_libraries (${TARGET} ${TARGET}_fortran ${FORTRAN_TEST_LIBRARIES})
     target_include_directories(${TARGET} PRIVATE ${FORTRAN_TEST_INCLUDE_DIRS})
+    # ${CMAKE_CURRENT_SOURCE_DIR})
 
     set (INDEX 0)
     list (LENGTH TEST_FILES LEN)
@@ -62,6 +69,9 @@ function (add_fortran_test_executable TARGET)
 	add_test (
 	    NAME ${TEST_FILE}
 	    COMMAND $<TARGET_FILE:${TARGET}> ${TEST_FILE_MANGLED})
+	set_tests_properties (
+	    ${TEST_FILE}
+	    PROPERTIES ENVIRONMENT "${RAPIDJSON_PYTHON_ENV2}")
         math (EXPR INDEX "${INDEX} + 1")
     endwhile ()
 
