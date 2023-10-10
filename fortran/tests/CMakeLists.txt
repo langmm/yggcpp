@@ -41,13 +41,11 @@ function (add_fortran_test_executable TARGET)
     set (TEST_FILES ${ARGN})
     mangle_fortran_filename_list (TEST_FILES_MANGLED ${TEST_FILES})
 
-    # set(CMAKE_TESTDRIVER_BEFORE_TESTMAIN "INIT_TEST();")
-    # set(CMAKE_TESTDRIVER_AFTER_TESTMAIN "FINALIZE_TEST();")
+    # set(CMAKE_TESTDRIVER_BEFORE_TESTMAIN "ygg_init();")
     set(CMAKE_TESTDRIVER_AFTER_TESTMAIN "ygg_exit();")
     set(TARGET_SOURCE main.c)
     create_test_sourcelist (_ ${TARGET_SOURCE} ${TEST_FILES_MANGLED}
                             EXTRA_INCLUDE YggInterface.h)
-                            # EXTRA_INCLUDE unittest.hpp)
 
     add_library (${TARGET}_fortran SHARED ${TEST_FILES})
     if (WIN32)

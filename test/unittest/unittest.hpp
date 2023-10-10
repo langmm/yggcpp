@@ -79,23 +79,13 @@ public:
 #define INIT_PYTHON()
 #define FINALIZE_PYTHON()
 #else // YGGDRASIL_DISABLE_PYTHON_C_API
-#define INIT_PYTHON()                                                   \
-  {                                                                     \
-    rapidjson::initialize_python("test");				\
+#define INIT_PYTHON()				\
+  {						\
+    rapidjson::initialize_python("test");	\
   }
-/*
-    PyObject* path = PySys_GetObject("path");				\
-    RAPIDJSON_ASSERT(path);						\
-    const char* datadir = std::getenv("DATADIR");			\
-    RAPIDJSON_ASSERT(datadir);                                          \
-    PyObject* example_dir = PyUnicode_FromString(datadir);              \
-    RAPIDJSON_ASSERT(example_dir);                                      \
-    PyList_Append(path, example_dir);                                   \
-    Py_DECREF(example_dir);                                             \
-*/
-#define FINALIZE_PYTHON()                       \
-  {                                             \
-    rapidjson::finalize_python("test");         \
+#define FINALIZE_PYTHON()			 \
+  {						 \
+    rapidjson::finalize_python("test");		 \
   }
 #endif // YGGDRASIL_DISABLE_PYTHON_C_API
 
@@ -104,9 +94,16 @@ public:
 #ifdef ZMQINSTALLED
 #define INIT_ZMQ()				\
   communication::communicator::ZMQContext ctx
-#define FINALIZE_ZMQ()				\
+#define FINALIZE_ZMQ()			\
   ctx.destroy()
 #else // ZMQINSTALLED
 #define INIT_ZMQ()
 #define FINALIZE_ZMQ()
 #endif // ZMQINSTALLED  
+
+class YggEnvironment : public ::testing::Environment {
+public:
+  ~YggEnvironment() override;
+  void SetUp() override;
+  void TearDown() override;
+};

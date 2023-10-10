@@ -30,7 +30,7 @@ void ygglog_info_c(const char* fmt, ...) {
   
 int ygg_init() {
   try {
-    return communication::communicator::Comm_t::_ygg_init();
+    return communication::communicator::ygg_init();
   } catch (...) {
     return -1;
   }
@@ -38,7 +38,7 @@ int ygg_init() {
 
 void ygg_exit() {
   try {
-    communication::communicator::Comm_t::_ygg_cleanup();
+    communication::communicator::ygg_exit();
   } catch (...) {
     _exit(1);
   }

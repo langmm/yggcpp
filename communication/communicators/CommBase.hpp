@@ -174,6 +174,8 @@ YGG_THREAD_GLOBAL_VAR(int, global_scope_comm, )
 
 void global_scope_comm_on();
 void global_scope_comm_off();
+int ygg_init();
+void ygg_exit();
 
 class AsyncComm;
 class AsyncBacklog;

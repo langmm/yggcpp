@@ -21,6 +21,12 @@ void communication::communicator::global_scope_comm_off() {
   global_scope_comm = 0;
   // #endif
 }
+int communication::communicator::ygg_init() {
+  return communication::communicator::Comm_t::_ygg_init();
+}
+void communication::communicator::ygg_exit() {
+  communication::communicator::Comm_t::_ygg_cleanup();
+}
 
 int Comm_t::_ygg_init() {
   YGG_THREAD_SAFE_BEGIN(init) {

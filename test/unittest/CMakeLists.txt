@@ -40,6 +40,9 @@ target_include_directories(unittest PRIVATE ${TEST_INCLUDE_DIRS})
 message(STATUS "TEST_LIBRARIES = ${TEST_LIBRARIES}")
 message(STATUS "TEST_INCLUDE_DIRS = ${TEST_INCLUDE_DIRS}")
 if (WIN32)
+    # There is a bug which prevents these environment variables from
+    # being available during test discovery on windows
+    # https://gitlab.kitware.com/cmake/cmake/-/issues/21453
     gtest_discover_tests(unittest DISCOVERY_MODE PRE_TEST
                          TEST_LIST ygg_test_list
 			 PROPERTIES
