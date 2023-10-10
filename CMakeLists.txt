@@ -448,7 +448,7 @@ else()
     # There is an issue with embedding Python on Windows in conda environments
     # https://github.com/ContinuumIO/anaconda-issues/issues/11374
     if(WIN32)
-        set(RAPIDJSON_PYTHON_ENV2 "${RAPIDJSON_PYTHON_ENV2};PYTHONHOME=${Python3_RUNTIME_LIBRARY_DIRS}")
+        set(RAPIDJSON_PYTHON_ENV2 "PYTHONHOME=${Python3_RUNTIME_LIBRARY_DIRS}")
     endif()
     
     set(DEPS_LIBRARIES ${DEPS_LIBRARIES} ${Python3_LIBRARIES})

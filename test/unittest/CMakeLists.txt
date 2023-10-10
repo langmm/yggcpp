@@ -72,10 +72,11 @@ else ()
 endif()
 
 message(STATUS "RAPIDJSON_PYTHON_ENV = ${RAPIDJSON_PYTHON_ENV}")
-message(STATUS "ygg_test_list = ${ygg_test_list}")
-set_tests_properties(${ygg_test_list} PROPERTIES
-       ENVIRONMENT
-       "${RAPIDJSON_PYTHON_ENV}")
+message(STATUS "RAPIDJSON_PYTHON_ENV2 = ${RAPIDJSON_PYTHON_ENV2}")
+# message(STATUS "ygg_test_list = ${ygg_test_list}")
+# set_tests_properties(${ygg_test_list} PROPERTIES
+#        ENVIRONMENT
+#        "${RAPIDJSON_PYTHON_ENV}")
 
 if (WIN32)
     add_custom_command(
