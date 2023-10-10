@@ -51,10 +51,11 @@ int Comm_t::_ygg_init() {
 }
 
 void Comm_t::_ygg_cleanup(int in_atexit) {
+  ygglog_debug << "_ygg_cleanup: in_atexit = " << in_atexit << std::endl;
   YGG_THREAD_SAFE_BEGIN(clean) {
     Comm_t::_ygg_atexit = in_atexit;
     if (!Comm_t::_ygg_finalized) {
-      ygglog_debug << "_ygg_cleanup: Begin cleanup of " << Comm_t::registry.size() << " communicators" << std::endl;
+      ygglog_debug << "_ygg_cleanup: Begin cleanup of " << Comm_t::registry.size() << " communicators (in_atexit = " << in_atexit << ")" << std::endl;
       for (size_t i = 0; i < Comm_t::registry.size(); i++) {
 	if (Comm_t::registry[i]) {
 	  if (Comm_t::registry[i]->flags & COMM_FLAG_DELETE) {

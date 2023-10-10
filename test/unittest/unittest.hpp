@@ -72,35 +72,6 @@ public:
 #endif
 #endif
 
-
-// #include "rapidjson/pyrj.h"
-
-#ifdef YGGDRASIL_DISABLE_PYTHON_C_API
-#define INIT_PYTHON()
-#define FINALIZE_PYTHON()
-#else // YGGDRASIL_DISABLE_PYTHON_C_API
-#define INIT_PYTHON()				\
-  {						\
-    rapidjson::initialize_python("test");	\
-  }
-#define FINALIZE_PYTHON()			 \
-  {						 \
-    rapidjson::finalize_python("test");		 \
-  }
-#endif // YGGDRASIL_DISABLE_PYTHON_C_API
-
-
-// TODO: Perform destroy during exit automatically
-#ifdef ZMQINSTALLED
-#define INIT_ZMQ()				\
-  communication::communicator::ZMQContext ctx
-#define FINALIZE_ZMQ()			\
-  ctx.destroy()
-#else // ZMQINSTALLED
-#define INIT_ZMQ()
-#define FINALIZE_ZMQ()
-#endif // ZMQINSTALLED  
-
 class YggEnvironment : public ::testing::Environment {
 public:
   ~YggEnvironment() override;

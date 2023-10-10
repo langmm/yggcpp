@@ -55,16 +55,16 @@ void ZMQContext::init() {
 void ZMQContext::destroy() {
   YGG_THREAD_SAFE_BEGIN(zmq) {
     if (ZMQContext::ygg_s_process_ctx != NULL) {
-#ifdef _WIN32
-      if (Comm_t::_ygg_atexit == 0) {
-#endif // _WIN32
+// #ifdef _WIN32
+//       if (Comm_t::_ygg_atexit == 0) {
+// #endif // _WIN32
 	zmq_ctx_shutdown(ZMQContext::ygg_s_process_ctx);
 	if (zmq_ctx_term(ZMQContext::ygg_s_process_ctx) != 0) {
 	  ygglog_error << "ZMQContext::destroy: Error terminating context with zmq_ctx_term" << std::endl;
 	}
-#ifdef _WIN32
-      }
-#endif // _WIN32
+// #ifdef _WIN32
+//       }
+// #endif // _WIN32
       ZMQContext::ygg_s_process_ctx = NULL;
     }
   } YGG_THREAD_SAFE_END;
