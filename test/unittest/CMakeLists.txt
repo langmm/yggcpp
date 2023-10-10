@@ -45,7 +45,7 @@ if (WIN32)
     # https://gitlab.kitware.com/cmake/cmake/-/issues/21453
     gtest_discover_tests(unittest DISCOVERY_MODE PRE_TEST
                          TEST_LIST ygg_test_list
-			 PROPERTIES
+                         PROPERTIES TIMEOUT 20
 			 ENVIRONMENT "${RAPIDJSON_PYTHON_ENV}"
 			 ENVIRONMENT "${RAPIDJSON_PYTHON_ENV2}")
 else()

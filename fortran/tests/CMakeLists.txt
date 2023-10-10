@@ -69,7 +69,8 @@ function (add_fortran_test_executable TARGET)
 	    COMMAND $<TARGET_FILE:${TARGET}> ${TEST_FILE_MANGLED})
 	set_tests_properties (
 	    ${TEST_FILE}
-	    PROPERTIES ENVIRONMENT "${RAPIDJSON_PYTHON_ENV2}")
+	    PROPERTIES TIMEOUT 20
+	    ENVIRONMENT "${RAPIDJSON_PYTHON_ENV2}")
         math (EXPR INDEX "${INDEX} + 1")
     endwhile ()
 
