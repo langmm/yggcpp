@@ -5,11 +5,11 @@
 // Required so that symbol declared by numpy/arrayobject.h is defined
 // during compilation of the dynamic library with MSVC
 // #ifndef RAPIDJSON_YGGDRASIL_PYTHON
-#ifndef RAPIDJSON_FORCE_IMPORT_ARRAY
-extern "C" {
-  void** rapidjson_ARRAY_API = NULL;
-}
-#endif // RAPIDJSON_FORCE_IMPORT_ARRAY
+// #ifndef RAPIDJSON_FORCE_IMPORT_ARRAY
+// extern "C" {
+//   void** rapidjson_ARRAY_API = NULL;
+// }
+// #endif // RAPIDJSON_FORCE_IMPORT_ARRAY
 // #endif // RAPIDJSON_YGGDRASIL_PYTHON
 using namespace communication::utils;
 

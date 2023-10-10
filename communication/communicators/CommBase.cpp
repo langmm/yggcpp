@@ -1,3 +1,5 @@
+#define RAPIDJSON_FORCE_IMPORT_ARRAY
+#include "rapidjson/pyrj_c.h"
 #include "comms.hpp"
 
 // #ifdef _OPENMP

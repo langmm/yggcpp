@@ -1,6 +1,7 @@
-#define RAPIDJSON_FORCE_IMPORT_ARRAY
+// #define RAPIDJSON_FORCE_IMPORT_ARRAY
 #include <iostream>
 #include "unittest.hpp"
+// #include "rapidjson/pyrj.h"
 #include "communicators/ZMQComm.hpp"
 
 #ifdef __clang__
@@ -17,17 +18,17 @@ YggEnvironment::~YggEnvironment() {
 
 void YggEnvironment::SetUp() {
   std::cerr << "SETUP" << std::endl;
-  // communication::communicator::ygg_init();
-  INIT_PYTHON();
-  INIT_ZMQ();
+  communication::communicator::ygg_init();
+  // INIT_PYTHON();
+  // INIT_ZMQ();
 }
 
 void YggEnvironment::TearDown() {
   std::cerr << "TEARDOWN" << std::endl;
-  // communication::communicator::ygg_exit();
-  FINALIZE_PYTHON();
-  INIT_ZMQ();
-  FINALIZE_ZMQ();
+  communication::communicator::ygg_exit();
+  // FINALIZE_PYTHON();
+  // INIT_ZMQ();
+  // FINALIZE_ZMQ();
 }
 
 #ifdef __clang__
