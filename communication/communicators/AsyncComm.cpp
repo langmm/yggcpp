@@ -43,52 +43,56 @@ AsyncBacklog::~AsyncBacklog() {
 
 bool AsyncBacklog::on_thread(Comm_t* parent) {
   bool out = true;
+  try {
 #ifdef THREADSINSTALLED
-  DIRECTION direction = parent->getDirection();
-  {
-    const std::lock_guard<std::mutex> comm_lock(comm_mutex);
-    int flgs_comm = (parent->getFlags() & ~COMM_FLAG_ASYNC) | COMM_FLAG_ASYNC_WRAPPED;
-    comm = new_Comm_t(direction,
-		      parent->getCommType(),
-		      parent->getName(),
-		      new utils::Address(parent->getAddress()),
-		      flgs_comm);
-    parent->updateMaxMsgSize(comm->getMaxMsgSize());
-    parent->address->address(comm->getAddress());
-    parent->updateMsgBufSize(comm->getMsgBufSize());
-    parent->getFlags() |= (comm->getFlags() & ~flgs_comm);
-    opened.store(true);
-  }
-  if (direction == SEND) {
-    while (!closing.load()) {
-      int ret = send();
-      if (ret == 0) {
-	std::this_thread::sleep_for(std::chrono::microseconds(YGG_SLEEP_TIME));
-      } else if (ret < 0) {
-	out = false;
-	break;
+    DIRECTION direction = parent->getDirection();
+    {
+      const std::lock_guard<std::mutex> comm_lock(comm_mutex);
+      int flgs_comm = (parent->getFlags() & ~COMM_FLAG_ASYNC) | COMM_FLAG_ASYNC_WRAPPED;
+      comm = new_Comm_t(direction,
+			parent->getCommType(),
+			parent->getName(),
+			new utils::Address(parent->getAddress()),
+			flgs_comm);
+      parent->updateMaxMsgSize(comm->getMaxMsgSize());
+      parent->address->address(comm->getAddress());
+      parent->updateMsgBufSize(comm->getMsgBufSize());
+      parent->getFlags() |= (comm->getFlags() & ~flgs_comm);
+      opened.store(true);
+    }
+    if (direction == SEND) {
+      while (!closing.load()) {
+	int ret = send();
+	if (ret == 0) {
+	  std::this_thread::sleep_for(std::chrono::microseconds(YGG_SLEEP_TIME));
+	} else if (ret < 0) {
+	  out = false;
+	  break;
+	}
+      }
+    } else if (direction == RECV) {
+      while (!closing.load()) {
+	long ret = recv();
+	if (ret == 0) {
+	  std::this_thread::sleep_for(std::chrono::microseconds(YGG_SLEEP_TIME));
+	} else if (ret < 0) {
+	  out = false;
+	  break;
+	}
       }
     }
-  } else if (direction == RECV) {
-    while (!closing.load()) {
-      long ret = recv();
-      if (ret == 0) {
-	std::this_thread::sleep_for(std::chrono::microseconds(YGG_SLEEP_TIME));
-      } else if (ret < 0) {
-	out = false;
-	break;
-      }
+    closing.store(true);
+    {
+      const std::lock_guard<std::mutex> comm_lock(comm_mutex);
+      delete comm;
+      comm = nullptr;
     }
-  }
-  closing.store(true);
-  {
-    const std::lock_guard<std::mutex> comm_lock(comm_mutex);
-    delete comm;
-    comm = nullptr;
-  }
 #else // THREADSINSTALLED
-  UNUSED(parent);
+    UNUSED(parent);
 #endif // THREADSINSTALLED
+  } catch (...) {
+    out = false;
+  }
   return out;
 }
 
