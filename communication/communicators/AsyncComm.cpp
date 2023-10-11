@@ -36,7 +36,8 @@ AsyncBacklog::~AsyncBacklog() {
   ygglog_debug << "~AsyncBacklog: begin" << std::endl;
 #ifdef THREADSINSTALLED
   closing.store(true);
-  backlog_thread.join();
+  if (backlog_thread.joinable())
+    backlog_thread.join();
   ygglog_debug << "~AsyncBacklog: joinable = " << backlog_thread.joinable() << std::endl;
 #endif // THREADSINSTALLED
   ygglog_debug << "~AsyncBacklog: end" << std::endl;
