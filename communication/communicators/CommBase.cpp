@@ -137,6 +137,7 @@ Comm_t::Comm_t(const std::string &nme, Address *addr,
 }
 
 Comm_t::~Comm_t() {
+  ygglog_debug << "~Comm_t: Unregistering comm" << std::endl;
   YGG_THREAD_SAFE_BEGIN(comms) {
     if (index_in_register >= 0)
       Comm_t::registry[index_in_register] = NULL;

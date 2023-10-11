@@ -11,9 +11,9 @@
 
 #define BEGIN_CAPTURE(B) \
 std::stringstream B;     \
-std::streambuf* prevbuf = std::cout.rdbuf(B.rdbuf());
+std::streambuf* prevbuf = std::cerr.rdbuf(B.rdbuf());
 
-#define END_CAPTURE std::cout.rdbuf(prevbuf);
+#define END_CAPTURE std::cerr.rdbuf(prevbuf);
 
 #ifndef EXPECT_LONG_DOUBLE_EQ
 #define EXPECT_LONG_DOUBLE_EQ(lhs, rhs)		\

@@ -15,15 +15,15 @@ YggEnvironment::~YggEnvironment() {
 }
 
 void YggEnvironment::SetUp() {
-  std::cout << "SETUP" << std::endl;
+  std::cerr << "SETUP" << std::endl;
   communication::communicator::ygg_init();
-  std::cout << "SETUP COMPLETE" << std::endl;
+  std::cerr << "SETUP COMPLETE" << std::endl;
 }
 
 void YggEnvironment::TearDown() {
-  std::cout << "TEARDOWN" << std::endl;
+  std::cerr << "TEARDOWN" << std::endl;
   communication::communicator::ygg_exit();
-  std::cout << "TEARDOWN COMPLETE" << std::endl;
+  std::cerr << "TEARDOWN COMPLETE" << std::endl;
 }
 
 #ifdef __clang__
@@ -32,7 +32,7 @@ void YggEnvironment::TearDown() {
 
 int main(int argc, char **argv) {
     ::testing::InitGoogleTest(&argc, argv);
-    std::cout << "YGG v" << "0.1.0" << std::endl;
+    std::cerr << "YGG v" << "0.1.0" << std::endl;
     ::testing::AddGlobalTestEnvironment(new YggEnvironment);
 
 #ifdef _MSC_VER
@@ -43,9 +43,9 @@ int main(int argc, char **argv) {
     //void *testWhetherMemoryLeakDetectionWorks = malloc(1);
 #endif
 
-    std::cout << "BEFORE" << std::endl;
+    std::cerr << "BEFORE" << std::endl;
     int ret = RUN_ALL_TESTS();
-    std::cout << "AFTER" << std::endl;
+    std::cerr << "AFTER" << std::endl;
 
 #ifdef _MSC_VER
     // Current gtest constantly leak 2 blocks at exit

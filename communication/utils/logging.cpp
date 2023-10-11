@@ -11,7 +11,8 @@ YggdrasilLogger::YggdrasilLogger(std::string nme, size_t lvl, bool is_err) :
 YggdrasilLogger::~YggdrasilLogger() {
   std::string out = ss.str();
   if (eval() && !out.empty()) {
-    std::cout << name << ": " << _getLogPretex() << out;
+    // std::cout << name << ": " << _getLogPretex() << out;
+    std::cerr << name << ": " << _getLogPretex() << out;
   }
 }
 bool YggdrasilLogger::eval() {
