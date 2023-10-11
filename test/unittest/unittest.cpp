@@ -17,11 +17,13 @@ YggEnvironment::~YggEnvironment() {
 void YggEnvironment::SetUp() {
   std::cout << "SETUP" << std::endl;
   communication::communicator::ygg_init();
+  std::cout << "SETUP COMPLETE" << std::endl;
 }
 
 void YggEnvironment::TearDown() {
   std::cout << "TEARDOWN" << std::endl;
   communication::communicator::ygg_exit();
+  std::cout << "TEARDOWN COMPLETE" << std::endl;
 }
 
 #ifdef __clang__
