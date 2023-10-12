@@ -866,6 +866,7 @@ public:
     static int _ygg_initialized;
     static int _ygg_finalized;
     static int _ygg_atexit;
+    static std::string _ygg_main_thread_id;
     static int _ygg_init();
 
 protected:
@@ -1014,7 +1015,7 @@ protected:
     size_t maxMsgSize; //!< The maximum message size.
     size_t msgBufSize; //!< The size that should be reserved in messages.
     int index_in_register; //!< Index of the comm in the comm register.
-    int thread_id; //!< ID for the thread that created the comm.
+    std::string thread_id; //!< ID for the thread that created the comm.
     utils::Metadata metadata;
     int timeout_recv; //!< Time to wait for messages during receive.
     WorkerList workers; //!< Communicator to use for sending large messages.

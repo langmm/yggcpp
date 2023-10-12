@@ -34,6 +34,7 @@ int Comm_t::_ygg_init() {
   YGG_THREAD_SAFE_BEGIN(init) {
     if (!Comm_t::_ygg_initialized) {
       ygglog_debug << "_ygg_init: Begin initialization" << std::endl;
+      communication::communicator::Comm_t::_ygg_main_thread_id = get_thread_id();
 #if defined(ZMQINSTALLED)
       ZMQContext* ctx = new ZMQContext();
       delete ctx;
@@ -92,12 +93,13 @@ void Comm_t::_ygg_cleanup(int in_atexit) {
 int Comm_t::_ygg_initialized = 0;
 int Comm_t::_ygg_finalized = 0;
 int Comm_t::_ygg_atexit = 0;
+std::string Comm_t::_ygg_main_thread_id = "";
 
 Comm_t::Comm_t(const std::string &nme, Address *addr,
 	       DIRECTION dirn, const COMM_TYPE &t, int flgs) :
   type(t), name(nme), address(addr), direction(dirn), flags(flgs),
   maxMsgSize(COMM_BASE_MAX_MSG_SIZE), msgBufSize(0),
-  index_in_register(-1), thread_id(-1), metadata(),
+  index_in_register(-1), thread_id(), metadata(),
   timeout_recv(YGG_MAX_TIME), workers(), global_comm(nullptr) {
 
   _ygg_init();

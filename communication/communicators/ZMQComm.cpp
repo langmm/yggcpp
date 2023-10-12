@@ -33,7 +33,7 @@ ZMQContext::ZMQContext() : ctx(NULL) { init(); }
 void ZMQContext::init() {
   YGG_THREAD_SAFE_BEGIN(zmq) {
     if (ZMQContext::ygg_s_process_ctx == NULL) {
-      if (get_thread_id() == 0) {
+      if (get_thread_id() == communication::communicator::Comm_t::_ygg_main_thread_id) {
 	ygglog_debug << "ZMQContext::init: Creating ZMQ context." << std::endl;
 	ctx = zmq_ctx_new();
       } else {

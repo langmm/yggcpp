@@ -26,7 +26,7 @@ bool YggdrasilLogger::eval() {
   return out;
 }
 std::string YggdrasilLogger::_getLogPretex() {
-  std::string out = std::to_string(ygg_getpid()) + ":" + std::to_string(get_thread_id()) + " ";
+  std::string out = std::to_string(ygg_getpid()) + ":" + get_thread_id() + " ";
   char *model_name = getenv("YGG_MODEL_NAME");
   if (model_name != nullptr) {
     out += model_name;

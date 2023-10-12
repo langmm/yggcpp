@@ -361,21 +361,23 @@ unsigned long ptr2seed(void *ptr) {
   @returns int Thread ID.
  */
 static inline
-int get_thread_id() {
-    int out = 0;
-    if (global_thread_id >= 0)
-        return global_thread_id;
+std::string get_thread_id() {
+  std::string out;
+  if (global_thread_id >= 0)
+    return std::to_string(global_thread_id);
 #ifdef _OPENMP
-    if (omp_in_parallel())
-        out = omp_get_thread_num();
-/* #elif defined pthread_self */
-/*   // TODO: Finalize/test support for pthread */
-/*   out = pthread_self(); */
+  if (omp_in_parallel())
+    return std::to_string(omp_get_thread_num());
 #endif
 #ifdef RAPIDJSON_YGGDRASIL_PYTHON
-    // TODO: Check for Python thread
+  // TODO: Check for Python thread
 #endif // RAPIDJSON_YGGDRASIL_PYTHON
-    return out;
+#ifdef THREADSINSTALLED
+  std::stringstream ss;
+  ss << std::this_thread::get_id();
+  out = ss.str();
+#endif // THREADSINSTALLED
+  return out;
 }
 
 
