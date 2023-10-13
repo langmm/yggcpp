@@ -341,8 +341,8 @@ endif()
 # Threading #
 #############
 
-# set(THREADS_PREFER_PTHREAD_FLAG TRUE)
-# set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 if(ENABLE_THREADS)
 find_package(Threads)
 if (Threads_FOUND)
