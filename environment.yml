@@ -9,7 +9,7 @@ dependencies:
   - gcovr < 5.1.0
   - Jinja2 < 3.1.0
   - pyyaml
-  - zeromq
+  # - zeromq
   - cmocka
   - lcov
   - cmake
