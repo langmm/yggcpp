@@ -29,6 +29,15 @@ enum DIRECTION {
     RECV   //!< Receiving communicator
 };
 
+/**
+ * Cleanup mode
+ */
+enum CLEANUP_MODE {
+  CLEANUP_DEFAULT, //!< Cleanup everything including ZMQ/Python
+  CLEANUP_ATEXIT,  //!< Cleanup during atexit call
+  CLEANUP_COMMS    //!< Only cleanup comms, not ZMQ or Python
+};
+
 /*! @brief Bit flags. */
 enum CommFlags {
   COMM_FLAG_VALID           = 0x00000001, //!< Comm is initialized

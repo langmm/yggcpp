@@ -42,6 +42,7 @@ void ZMQContext::init() {
 			   "ygg_init before the threaded portion of "
 			   "your model.");
       }
+      ygglog_debug << "ZMQContext::init: Created ZMQ context." << std::endl;
       ZMQContext::ygg_s_process_ctx = ctx;
     } else {
       ctx = ZMQContext::ygg_s_process_ctx;
@@ -55,6 +56,7 @@ void ZMQContext::init() {
 void ZMQContext::destroy() {
   YGG_THREAD_SAFE_BEGIN(zmq) {
     if (ZMQContext::ygg_s_process_ctx != NULL) {
+      ygglog_debug << "ZMQContext::destroy: Destroying the ZMQ context" << std::endl;
 // #ifdef _WIN32
 //       if (Comm_t::_ygg_atexit == 0) {
 // #endif // _WIN32

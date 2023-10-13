@@ -12,7 +12,7 @@ using namespace communication::communicator;
 using namespace communication::utils;
 
 void _cleanup_wrapper() {
-  Comm_t::_ygg_cleanup(1);
+  Comm_t::_ygg_cleanup(CLEANUP_ATEXIT);
 }
 
 void communication::communicator::global_scope_comm_on() {
@@ -51,12 +51,13 @@ int Comm_t::_ygg_init() {
   return 0;
 }
 
-void Comm_t::_ygg_cleanup(int in_atexit) {
-  ygglog_debug << "_ygg_cleanup: in_atexit = " << in_atexit << std::endl;
+void Comm_t::_ygg_cleanup(CLEANUP_MODE mode) {
+  ygglog_debug << "_ygg_cleanup: mode = " << mode << std::endl;
   YGG_THREAD_SAFE_BEGIN(clean) {
-    Comm_t::_ygg_atexit = in_atexit;
+    CLEANUP_MODE prev_mode = Comm_t::_ygg_cleanup_mode;
+    Comm_t::_ygg_cleanup_mode = mode;
     if (!Comm_t::_ygg_finalized) {
-      ygglog_debug << "_ygg_cleanup: Begin cleanup of " << Comm_t::registry.size() << " communicators (in_atexit = " << in_atexit << ")" << std::endl;
+      ygglog_debug << "_ygg_cleanup: Begin cleanup of " << Comm_t::registry.size() << " communicators (mode = " << mode << ")" << std::endl;
       for (size_t i = 0; i < Comm_t::registry.size(); i++) {
 	if (Comm_t::registry[i]) {
 	  if (Comm_t::registry[i]->flags & COMM_FLAG_DELETE) {
@@ -66,19 +67,24 @@ void Comm_t::_ygg_cleanup(int in_atexit) {
       }
       YGG_THREAD_SAFE_BEGIN(comms) {
 	Comm_t::registry.clear();
+	if (mode != CLEANUP_COMMS) {
 #if defined(ZMQINSTALLED)
-	// This hangs if there are ZMQ sockets that didn't get cleaned up
-	ZMQContext::destroy();
+	  // This hangs if there are ZMQ sockets that didn't get cleaned up
+	  ZMQContext::destroy();
 #endif
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
-	rapidjson::finalize_python("_ygg_cleanup");
+	  rapidjson::finalize_python("_ygg_cleanup");
 #endif // YGGDRASIL_DISABLE_PYTHON_C_API
+	}
       } YGG_THREAD_SAFE_END;
 #ifndef YGG_TEST
-      Comm_t::_ygg_finalized = 1;
+      if (mode != CLEANUP_COMMS) {
+	Comm_t::_ygg_finalized = 1;
+      }
 #endif // YGG_TEST
       ygglog_debug << "_ygg_cleanup: Cleanup complete" << std::endl;
     }
+    Comm_t::_ygg_cleanup_mode = prev_mode;
   } YGG_THREAD_SAFE_END;
 #ifndef YGG_TEST
 #ifndef RAPIDJSON_YGGDRASIL_PYTHON
@@ -92,7 +98,7 @@ void Comm_t::_ygg_cleanup(int in_atexit) {
 
 int Comm_t::_ygg_initialized = 0;
 int Comm_t::_ygg_finalized = 0;
-int Comm_t::_ygg_atexit = 0;
+CLEANUP_MODE Comm_t::_ygg_cleanup_mode = CLEANUP_DEFAULT;
 std::string Comm_t::_ygg_main_thread_id = "";
 
 Comm_t::Comm_t(const std::string &nme, Address *addr,

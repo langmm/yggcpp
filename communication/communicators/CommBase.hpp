@@ -843,7 +843,7 @@ public:
     bool addFormat(const std::string& format_str, bool as_array = false);
     bool copySchema(const Comm_t* other);
 
-    static void _ygg_cleanup(int in_atexit=0);
+    static void _ygg_cleanup(CLEANUP_MODE mode = CLEANUP_DEFAULT);
 
 private:
     int deserialize(const char* buf, rapidjson::VarArgList& ap);
@@ -865,7 +865,7 @@ protected:
 public:
     static int _ygg_initialized;
     static int _ygg_finalized;
-    static int _ygg_atexit;
+    static CLEANUP_MODE _ygg_cleanup_mode;
     static std::string _ygg_main_thread_id;
     static int _ygg_init();
 
