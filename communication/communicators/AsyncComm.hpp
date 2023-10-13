@@ -16,7 +16,7 @@ namespace communication {
     public:
       AsyncBacklog(Comm_t* parent);
       ~AsyncBacklog();
-      bool on_thread(Comm_t* parent);
+      void on_thread(Comm_t* parent);
       int send();
       long recv();
       Comm_t* comm;
@@ -27,6 +27,8 @@ namespace communication {
       std::atomic_bool opened;
       std::atomic_bool closing;
       std::atomic_bool locked;
+      std::atomic_bool complete;
+      std::atomic_bool result;
       std::thread backlog_thread;
 #else // THREADSINSTALLED
       bool is_closing() const { return true; }

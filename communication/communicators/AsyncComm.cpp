@@ -16,8 +16,8 @@ using namespace communication::utils;
 
 AsyncBacklog::AsyncBacklog(Comm_t* parent) :
   comm(nullptr), backlog(), comm_mutex(),
-  opened(false), closing(false), locked(false),
-  backlog_thread(&AsyncBacklog::on_thread, this, parent) {
+  opened(false), closing(false), locked(false), complete(false),
+  result(false), backlog_thread(&AsyncBacklog::on_thread, this, parent) {
   while (!(opened.load() || closing.load())) {
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
   }
@@ -36,6 +36,7 @@ AsyncBacklog::~AsyncBacklog() {
   ygglog_debug << "~AsyncBacklog: begin" << std::endl;
 #ifdef THREADSINSTALLED
   closing.store(true);
+  while (not complete.load()) { std::this_thread::yield(); }
   if (backlog_thread.joinable())
     backlog_thread.join();
   ygglog_debug << "~AsyncBacklog: joinable = " << backlog_thread.joinable() << std::endl;
@@ -43,7 +44,7 @@ AsyncBacklog::~AsyncBacklog() {
   ygglog_debug << "~AsyncBacklog: end" << std::endl;
 }
 
-bool AsyncBacklog::on_thread(Comm_t* parent) {
+void AsyncBacklog::on_thread(Comm_t* parent) {
   bool out = true;
   try {
 #ifdef THREADSINSTALLED
@@ -95,7 +96,8 @@ bool AsyncBacklog::on_thread(Comm_t* parent) {
   } catch (...) {
     out = false;
   }
-  return out;
+  result.store(out);
+  complete.store(true);
 }
 
 int AsyncBacklog::send() {
