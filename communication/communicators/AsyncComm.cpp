@@ -43,8 +43,8 @@ AsyncBacklog::~AsyncBacklog() {
     if (backlog_thread.joinable())
       backlog_thread.detach();
     ygglog_debug << "~AsyncBacklog: joinable = " << backlog_thread.joinable() << std::endl;
-  } catch (...) {
-    ygglog_error << "~AsyncBacklog: Error joining thread" << std::endl;
+  } catch (const std::system_error& e) {
+    ygglog_error << "~AsyncBacklog: Error joining thread (" << e.code() << "): " << e.what() << std::endl;
   }
 #endif // THREADSINSTALLED
   ygglog_debug << "~AsyncBacklog: end" << std::endl;
