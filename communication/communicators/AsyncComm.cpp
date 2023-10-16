@@ -37,9 +37,15 @@ AsyncBacklog::~AsyncBacklog() {
 #ifdef THREADSINSTALLED
   closing.store(true);
   while (!complete.load()) { std::this_thread::yield(); }
-  if (backlog_thread.joinable())
-    backlog_thread.join();
-  ygglog_debug << "~AsyncBacklog: joinable = " << backlog_thread.joinable() << std::endl;
+  try {
+    if (backlog_thread.joinable())
+      backlog_thread.join();
+    if (backlog_thread.joinable())
+      backlog_thread.detach();
+    ygglog_debug << "~AsyncBacklog: joinable = " << backlog_thread.joinable() << std::endl;
+  } catch (...) {
+    ygglog_error << "~AsyncBacklog: Error joining thread" << std::endl;
+  }
 #endif // THREADSINSTALLED
   ygglog_debug << "~AsyncBacklog: end" << std::endl;
 }
