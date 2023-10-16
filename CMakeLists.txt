@@ -252,7 +252,7 @@ if(ENABLE_ZMQ)
         ## load in pkg-config support
         find_package(PkgConfig)
         ## use pkg-config to get hints for 0mq locations
-        pkg_check_modules(PC_ZeroMQ QUIET zmq)
+        pkg_check_modules(PC_ZeroMQ QUIET zmq libzmq libzmq-static)
 
         if (CONDA_PREFIX)
 	    if (WIN32)
@@ -272,7 +272,7 @@ if(ENABLE_ZMQ)
 
         ## use the hint from above to find the location of libzmq
         find_library(ZeroMQ_LIBRARY_NEW
-            NAMES zmq
+            NAMES zmq libzmq libzmq-static
             PATHS ${PC_ZeroMQ_LIBRARY_DIRS}
             )
         set(ZeroMQ_LIBRARY ${ZeroMQ_LIBRARY_NEW})
@@ -283,9 +283,9 @@ if(ENABLE_ZMQ)
 	endif()
     endif()
     # Force error
-    # if ((NOT ZeroMQ_FOUND) AND (WIN32))
-    #     find_package(ZeroMQ REQUIRED)
-    # endif()
+    if ((NOT ZeroMQ_FOUND) AND (WIN32))
+        find_package(ZeroMQ REQUIRED)
+    endif()
 else (ENABLE_ZMQ)
     message(STATUS "No zmq support will be built." )
 endif (ENABLE_ZMQ)
