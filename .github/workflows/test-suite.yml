@@ -186,7 +186,7 @@ jobs:
         if: matrix.os != 'windows-latest' && matrix.python-install == 'conda'
         shell: bash -l {0}
         run: |
-          mamba install c-compiler cxx-compiler fortran-compiler winpthreads
+          mamba install c-compiler cxx-compiler fortran-compiler
       - name: Install MinGW on windows for Fortran
         if: matrix.os == 'windows-latest' && matrix.python-install == 'conda'
         shell: bash -l {0}
@@ -200,7 +200,7 @@ jobs:
           # echo "CFLAGS=" >> "$GITHUB_ENV"
           # echo "CXXFLAGS=" >> "$GITHUB_ENV"
           # choco install mingw
-          mamba install m2w64-gcc m2w64-gcc-fortran m2w64-toolchain_win-64 libpython -c msys2 -y
+          mamba install m2w64-gcc m2w64-gcc-fortran m2w64-toolchain_win-64 libpython winpthreads -c msys2 -y
           # gcc -v
           # c++ -v
       - name: Install ZeroMQ on windows
