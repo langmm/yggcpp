@@ -306,6 +306,7 @@ jobs:
         shell: bash -l {0}
         run: |
           echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -G\"MinGW Makefiles\" -DENABLE_OMP=OFF -DENABLE_MPI=OFF" >> $GITHUB_ENV
+          echo "PYTHON_CMAKE_ARGS=${{ env.PYTHON_CMAKE_ARGS }} -G\"MinGW Makefiles\"" >> "$GITHUB_ENV"
      
       ###################################
       # Add paths for Windows dlls
