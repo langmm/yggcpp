@@ -1,5 +1,5 @@
 --- gcc-5.3.0/libstdc++-v3/include/std/thread.orig	2016-12-11 16:51:54
-+++ gcc-5.3.0/libstdc++-v3/include/std/thread.new	2023-10-17 13:03:28
++++ gcc-5.3.0/libstdc++-v3/include/std/thread.new	2023-10-17 14:02:18
 @@ -83,9 +83,9 @@
        operator==(thread::id __x, thread::id __y) noexcept
        { return __gthread_equal(__x._M_thread, __y._M_thread); }
@@ -13,7 +13,18 @@
  
        template<class _CharT, class _Traits>
  	friend basic_ostream<_CharT, _Traits>&
-@@ -215,18 +215,18 @@
+@@ -167,7 +167,9 @@
+ 
+     bool
+     joinable() const noexcept
+-    { return !(_M_id == id()); }
++    {
++      std::cerr << "joinable _M_id = " << _M_id << ", id() = " << id() << std::endl;
++      return !(_M_id == id()); }
+ 
+     void
+     join();
+@@ -215,18 +217,18 @@
    operator!=(thread::id __x, thread::id __y) noexcept
    { return !(__x == __y); }
  
@@ -42,7 +53,7 @@
    // DR 889.
    /// std::hash specialization for thread::id.
    template<>
-@@ -245,7 +245,9 @@
+@@ -245,7 +247,9 @@
        if (__id == thread::id())
  	return __out << "thread::id of a non-executing thread";
        else
