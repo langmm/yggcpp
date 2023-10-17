@@ -20,6 +20,7 @@ jobs:
         with-asan: [false]
         with-elf: [false]
         with-valgrind: [false]
+        windows-compiler: [mingw]
         exclude:
           - python-install: conda
             with-coverage: false
@@ -44,6 +45,7 @@ jobs:
             with-asan: false
             with-elf: true
             with-valgrind: false
+            windows-compiler: mingw
           - os: ubuntu-latest
             python-install: pip
             install-zmq: true
@@ -52,6 +54,7 @@ jobs:
             with-asan: false
             with-elf: true
             with-valgrind: false
+            windows-compiler: mingw
           - os: macos-latest
             python-install: pip
             install-zmq: true
@@ -60,6 +63,7 @@ jobs:
             with-asan: true
             with-elf: true
             with-valgrind: false
+            windows-compiler: mingw
           - os: ubuntu-latest
             python-install: pip
             install-zmq: true
@@ -68,6 +72,7 @@ jobs:
             with-asan: false
             with-elf: false
             with-valgrind: true
+            windows-compiler: mingw
           - os: macos-latest
             python-install: pip
             install-zmq: true
@@ -76,6 +81,16 @@ jobs:
             with-asan: false
             with-elf: false
             with-valgrind: true
+            windows-compiler: mingw
+          - os: windows-latest
+            python-install: pip
+            install-zmq: true
+            install-mpi: true
+            with-coverage: false
+            with-asan: false
+            with-elf: false
+            with-valgrind: false
+            windows-compiler: msvc
       fail-fast: false
     steps:
       - name: Check out repository code
@@ -99,12 +114,18 @@ jobs:
         run: |
           brew install llvm cmocka lcov gnutls
           echo "FC=$(which gfortran-12)" >> "$GITHUB_ENV"
-      - name: Set vcpkg triplet on Windows
-        if: matrix.os == 'windows-latest' && matrix.python-install == 'pip'
+      # - name: Set vcpkg triplet on Windows (mingw)
+      #   if: matrix.os == 'windows-latest' && matrix.python-install == 'pip' && matrix.windows-compiler == 'mingw'
+      #   shell: bash -l {0}
+      #   run: |
+      #     # echo "VCPKG_TRIPLET=x64-mingw" >> "$GITHUB_ENV"
+      #     echo "VCPKG_TRIPLET=x64-mingw-static" >> "$GITHUB_ENV"
+      - name: Set vcpkg triplet on Windows (msvc)
+        if: matrix.os == 'windows-latest' && matrix.python-install == 'pip' # && matrix.windows-compiler == 'msvc'
         shell: bash -l {0}
         run: |
-          # echo "VCPKG_TRIPLET=x64-mingw" >> "$GITHUB_ENV"
-          echo "VCPKG_TRIPLET=x64-mingw-static" >> "$GITHUB_ENV"
+          echo "VCPKG_TRIPLET=x64-windows" >> "$GITHUB_ENV"
+          # echo "VCPKG_TRIPLET=x64-windows-static" >> "$GITHUB_ENV"
       - name: Install dependencies on Windows
         if: matrix.os == 'windows-latest' && matrix.python-install == 'pip'
         run: |
@@ -193,27 +214,20 @@ jobs:
         shell: bash -l {0}
         run: |
           mamba install c-compiler cxx-compiler fortran-compiler
-      - name: Install MinGW on windows for Fortran
-        if: matrix.os == 'windows-latest' && matrix.python-install == 'conda'
+      - name: Install MinGW on windows for Fortran (mingw)
+        if: matrix.os == 'windows-latest' && matrix.python-install == 'conda' && matrix.windows-compiler == 'mingw'
         shell: bash -l {0}
         run: |
-          # echo "CC=${CC}"
-          # echo "CFLAGS=${CFLAGS}"
-          # echo "CXX=${CXX}"
-          # echo "CXXFLAGS=${CXXFLAGS}"
-          # echo "CC=gcc.exe" >> "$GITHUB_ENV"
-          # echo "CXX=c++.exe" >> "$GITHUB_ENV"
-          # echo "CFLAGS=" >> "$GITHUB_ENV"
-          # echo "CXXFLAGS=" >> "$GITHUB_ENV"
-          # choco install mingw
           mamba install m2w64-gcc m2w64-gcc-fortran m2w64-toolchain_win-64 libpython -c msys2 -y  # winpthreads
           # gcc -v
           # c++ -v
-      # - name: Install ZeroMQ on windows
-      #   if: matrix.os == 'windows-latest' && matrix.python-install == 'conda' && matrix.install-zmq
-      #   shell: bash -l {0}
-      #   run: |
-      #     mamba install zeromq-static -y
+      - name: Install MinGW on windows for Fortran (msvc)
+        if: matrix.os == 'windows-latest' && matrix.python-install == 'conda' && matrix.windows-compiler == 'msvc'
+        shell: bash -l {0}
+        run: |
+          mamba install m2w64-gcc m2w64-gcc-fortran m2w64-toolchain_win-64 libpython -y
+          # gcc -v
+          # c++ -v
       - name: Install ZeroMQ on unix
         if: matrix.python-install == 'conda' && matrix.install-zmq
         shell: bash -l {0}
@@ -247,11 +261,11 @@ jobs:
         shell: bash -l {0}
         run: |
           echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DBUILD_FORTRAN_LIBRARY=ON" >> "$GITHUB_ENV"
-      # - name: Fortran config flags on Windows (CONDA)
-      #   if: matrix.with-asan == false && matrix.os == 'windows-latest' # && matrix.python-install == 'conda'
-      #   shell: bash -l {0}
-      #   run: |
-      #     echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DCMAKE_Fortran_COMPILER=$(which gfortran).exe -DCMAKE_Fortran_PREPROCESS_SOURCE=ON -DCMAKE_Fortran_COMPILER_WORKS=1 -DDONT_CHECK_FORTRAN_C_COMPAT=ON" >> "$GITHUB_ENV"
+      - name: Fortran config flags on Windows (CONDA)
+        if: matrix.with-asan == false && matrix.os == 'windows-latest' && matrix.windows-compiler == 'msvc' # && matrix.python-install == 'conda'
+        shell: bash -l {0}
+        run: |
+          echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DCMAKE_Fortran_COMPILER=$(which gfortran).exe -DCMAKE_Fortran_PREPROCESS_SOURCE=ON -DCMAKE_Fortran_COMPILER_WORKS=1 -DDONT_CHECK_FORTRAN_C_COMPAT=ON" >> "$GITHUB_ENV"
       - name: ASAN dynamic library
         if: matrix.with-asan == true && matrix.os == 'macos-latest'
         shell: bash -l {0}
@@ -296,27 +310,27 @@ jobs:
           echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} \\\"-DCMAKE_PREFIX_PATH=${VCPKG_INSTALLATION_ROOT}\installed\\${VCPKG_TRIPLET}\\\"" >> "$GITHUB_ENV"
           echo "PYTHON_CONFIG_FLAGS=${{ env.PYTHON_CONFIG_FLAGS }} --config-settings=cmake.define.CMAKE_PREFIX_PATH=\"${VCPKG_INSTALLATION_ROOT}\installed\\${VCPKG_TRIPLET}\" --config-settings=cmake.define.Python3_ROOT_DIR=${{ env.pythonLocation }} --config-settings=cmake.define.Python_ROOT_DIR=${{ env.pythonLocation }}" >> "$GITHUB_ENV"
       - name: Patch conda thread header on Windows
-        if: matrix.with-asan == false && matrix.os == 'windows-latest' && matrix.python-install == 'conda'
+        if: matrix.with-asan == false && matrix.os == 'windows-latest' && matrix.python-install == 'conda' && matrix.windows-compiler == 'mingw'
         shell: bash -l {0}
         run: |
           patch -b C:/Miniconda3/envs/yggdrasil/Library/mingw-w64/include/c++/5.3.0/thread mingw-c++-5-3-thread.patch
         # echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DENABLE_THREADS=OFF" >> $GITHUB_ENV
       - name: Fortran config flags on Windows
-        if: matrix.with-asan == false && matrix.os == 'windows-latest'
+        if: matrix.with-asan == false && matrix.os == 'windows-latest' && matrix.windows-compiler == 'mingw'
         shell: bash -l {0}
         run: |
           echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -G\"MinGW Makefiles\" -DENABLE_OMP=OFF -DENABLE_MPI=OFF" >> $GITHUB_ENV
-          echo "PYTHON_CMAKE_ARGS=${{ env.PYTHON_CMAKE_ARGS }} -G\"MinGW Makefiles\"" >> "$GITHUB_ENV"
+          echo "PYTHON_CMAKE_ARGS=${{ env.PYTHON_CMAKE_ARGS }} -G\\\"MinGW Makefiles\\\"" >> "$GITHUB_ENV"
      
       ###################################
       # Add paths for Windows dlls
       ###################################
       - name: Choco library paths on Windows (Powershell)
-        if: matrix.os == 'windows-latest' && matrix.python-install == 'pip'
+        if: matrix.os == 'windows-latest' && matrix.python-install == 'pip' && matrix.windows-compiler == 'mingw'
         run: |
           echo "C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
       - name: Choco library paths on Windows (Bash)
-        if: matrix.os == 'windows-latest' && matrix.python-install == 'pip'
+        if: matrix.os == 'windows-latest' && matrix.python-install == 'pip' && matrix.windows-compiler == 'mingw'
         shell: bash -l {0}
         run: |
           DLL_DIRECTORY="C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64\bin"
@@ -347,6 +361,10 @@ jobs:
           DLL_DIRECTORY="${CONDA_PREFIX}/Library/bin"
           ls ${DLL_DIRECTORY}
           echo "${DLL_DIRECTORY}" >> $GITHUB_PATH
+      - name: Conda library paths on Windows (mingw)
+        if: matrix.python-install == 'conda' && matrix.os == 'windows-latest' && matrix.windows-compiler == 'mingw'
+        shell: bash -l {0}
+        run: |
           CND_DIRECTORY="${CONDA_PREFIX}/Library"
           echo "ls CND_DIRECTORY=${CND_DIRECTORY}"
           ls ${CND_DIRECTORY}
