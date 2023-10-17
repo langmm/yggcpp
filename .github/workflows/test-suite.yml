@@ -348,11 +348,18 @@ jobs:
           ls ${DLL_DIRECTORY}
           echo "${DLL_DIRECTORY}" >> $GITHUB_PATH
           CND_DIRECTORY="${CONDA_PREFIX}/Library"
+          echo "ls CND_DIRECTORY=${CND_DIRECTORY}"
           ls ${CND_DIRECTORY}
           MIN_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64"
+          echo "ls MIN_DIRECTORY=${MIN_DIRECTORY}"
           ls ${MIN_DIRECTORY}
           MININC_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64/include"
+          echo "ls MININC_DIRECTORY=${MININC_DIRECTORY}"
           ls ${MININC_DIRECTORY}
+          MININC2_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64/include/x86_64-w64-mingw32"
+          echo "ls MININC2_DIRECTORY=${MININC2_DIRECTORY}"
+          ls ${MININC2_DIRECTORY}
+          echo "MINGW_PTHREAD_INCLUDE=${MININC2_DIRECTORY}" >> "$GITHUB_ENV"
       
       ###################################
       # Check
