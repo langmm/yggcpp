@@ -379,10 +379,10 @@ jobs:
           MININC_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64/x86_64-w64-mingw32"
           echo "ls MININC_DIRECTORY=${MININC_DIRECTORY}"
           ls ${MININC_DIRECTORY}
-          # MININC2_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64/x86_64-w64-mingw32/include"
-          # echo "ls MININC2_DIRECTORY=${MININC2_DIRECTORY}"
-          # ls ${MININC2_DIRECTORY}
-          # echo "MINGW_PTHREAD_INCLUDE=${MININC2_DIRECTORY}" >> "$GITHUB_ENV"
+          MININC2_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64/x86_64-w64-mingw32/include"
+          echo "ls MININC2_DIRECTORY=${MININC2_DIRECTORY}"
+          ls ${MININC2_DIRECTORY}
+          echo "MINGW_PTHREAD_INCLUDE=${MININC2_DIRECTORY}" >> "$GITHUB_ENV"
       
       ###################################
       # Check
