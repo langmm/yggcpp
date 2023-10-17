@@ -315,12 +315,17 @@ jobs:
         run: |
           patch -b C:/Miniconda3/envs/yggdrasil/Library/mingw-w64/include/c++/5.3.0/thread mingw-c++-5-3-thread.patch
         # echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DENABLE_THREADS=OFF" >> $GITHUB_ENV
-      - name: Fortran config flags on Windows
+      - name: Fortran config flags on Windows (mingw)
         if: matrix.with-asan == false && matrix.os == 'windows-latest' && matrix.windows-compiler == 'mingw'
         shell: bash -l {0}
         run: |
           echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -G\"MinGW Makefiles\" -DENABLE_OMP=OFF -DENABLE_MPI=OFF" >> $GITHUB_ENV
-          echo "PYTHON_CMAKE_ARGS=${{ env.PYTHON_CMAKE_ARGS }} -G\\\"MinGW Makefiles\\\"" >> "$GITHUB_ENV"
+          echo "PYTHON_CMAKE_ARGS=${{ env.PYTHON_CMAKE_ARGS }} -G\\\\\"MinGW Makefiles\\\\\"" >> "$GITHUB_ENV"
+      - name: Fortran config flags on Windows (msvc)
+        if: matrix.with-asan == false && matrix.os == 'windows-latest' && matrix.windows-compiler == 'msvc'
+        shell: bash -l {0}
+        run: |
+          echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DENABLE_OMP=OFF -DENABLE_MPI=OFF" >> $GITHUB_ENV
      
       ###################################
       # Add paths for Windows dlls
@@ -371,13 +376,13 @@ jobs:
           MIN_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64"
           echo "ls MIN_DIRECTORY=${MIN_DIRECTORY}"
           ls ${MIN_DIRECTORY}
-          MININC_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64/include"
+          MININC_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64/x86_64-w64-mingw32"
           echo "ls MININC_DIRECTORY=${MININC_DIRECTORY}"
           ls ${MININC_DIRECTORY}
-          MININC2_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64/include/x86_64-w64-mingw32"
-          echo "ls MININC2_DIRECTORY=${MININC2_DIRECTORY}"
-          ls ${MININC2_DIRECTORY}
-          echo "MINGW_PTHREAD_INCLUDE=${MININC2_DIRECTORY}" >> "$GITHUB_ENV"
+          # MININC2_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64/x86_64-w64-mingw32/include"
+          # echo "ls MININC2_DIRECTORY=${MININC2_DIRECTORY}"
+          # ls ${MININC2_DIRECTORY}
+          # echo "MINGW_PTHREAD_INCLUDE=${MININC2_DIRECTORY}" >> "$GITHUB_ENV"
       
       ###################################
       # Check
