@@ -137,12 +137,6 @@ jobs:
           # echo "CC=gcc.exe" >> "$GITHUB_ENV"
           # echo "CXX=c++.exe" >> "$GITHUB_ENV"
           echo "FC=gfortran.exe" >> "$GITHUB_ENV"
-      - name: Set flags for dependencies on Windows
-        if: matrix.os == 'windows-latest'
-        run: |
-          echo (Get-Command gfortran).Path
-          $FC = (Get-Command gfortran).Path
-          echo "FC=$FC" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
       # ZeroMQ dependencies
       - name: Install ZeroMQ
         if: matrix.os == 'ubuntu-latest' && matrix.install-zmq && matrix.python-install == 'pip'
@@ -275,7 +269,9 @@ jobs:
       - name: Fortran config flags on Windows (CONDA)
         if: matrix.with-asan == false && matrix.os == 'windows-latest' && matrix.windows-compiler == 'msvc' # && matrix.python-install == 'conda'
         run: |
-          echo "CONFIG_FLAGS=$env:CONFIG_FLAGS -DCMAKE_Fortran_COMPILER=$env:FC" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+          echo (Get-Command gfortran).Path
+          $FC = (Get-Command gfortran).Path
+          echo "CONFIG_FLAGS=$env:CONFIG_FLAGS -DCMAKE_Fortran_COMPILER=$FC" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
       - name: ASAN dynamic library
         if: matrix.with-asan == true && matrix.os == 'macos-latest'
         shell: bash -l {0}
@@ -392,7 +388,7 @@ jobs:
           MINBIN_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64/x86_64-w64-mingw32/bin"
           echo "ls MINBIN_DIRECTORY=${MINBIN_DIRECTORY}"
           ls ${MINBIN_DIRECTORY}
-          echo "MINGW_PTHREAD_INCLUDE=${MIN_DIRECTORY}" >> "$GITHUB_ENV"
+          echo "MINGW_PTHREAD_ROOT=${MIN_DIRECTORY}" >> "$GITHUB_ENV"
       - name: Set CMAKE_GENERATOR for MinGW
         if: matrix.with-asan == false && matrix.os == 'windows-latest' && matrix.windows-compiler == 'mingw'
         shell: bash -l {0}
