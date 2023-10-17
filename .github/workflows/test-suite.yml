@@ -346,6 +346,12 @@ jobs:
           DLL_DIRECTORY="${CONDA_PREFIX}/Library/bin"
           ls ${DLL_DIRECTORY}
           echo "${DLL_DIRECTORY}" >> $GITHUB_PATH
+          CND_DIRECTORY="${CONDA_PREFIX}/Library"
+          ls ${CND_DIRECTORY}
+          MIN_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64"
+          ls ${MIN_DIRECTORY}
+          MININC_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64/include"
+          ls ${MININC_DIRECTORY}
       
       ###################################
       # Check
