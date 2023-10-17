@@ -103,8 +103,8 @@ jobs:
         if: matrix.os == 'windows-latest' && matrix.python-install == 'pip'
         shell: bash -l {0}
         run: |
-          # echo "VCPKG_TRIPLET=x64-windows" >> "$GITHUB_ENV"
-          echo "VCPKG_TRIPLET=x64-windows-static" >> "$GITHUB_ENV"
+          # echo "VCPKG_TRIPLET=x64-mingw" >> "$GITHUB_ENV"
+          echo "VCPKG_TRIPLET=x64-mingw-static" >> "$GITHUB_ENV"
       - name: Install dependencies on Windows
         if: matrix.os == 'windows-latest' && matrix.python-install == 'pip'
         run: |
