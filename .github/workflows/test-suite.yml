@@ -114,14 +114,14 @@ jobs:
         run: |
           brew install llvm cmocka lcov gnutls
           echo "FC=$(which gfortran-12)" >> "$GITHUB_ENV"
-      # - name: Set vcpkg triplet on Windows (mingw)
-      #   if: matrix.os == 'windows-latest' && matrix.python-install == 'pip' && matrix.windows-compiler == 'mingw'
-      #   shell: bash -l {0}
-      #   run: |
-      #     # echo "VCPKG_TRIPLET=x64-mingw" >> "$GITHUB_ENV"
-      #     echo "VCPKG_TRIPLET=x64-mingw-static" >> "$GITHUB_ENV"
+      - name: Set vcpkg triplet on Windows (mingw)
+        if: matrix.os == 'windows-latest' && matrix.python-install == 'pip' && matrix.windows-compiler == 'mingw'
+        shell: bash -l {0}
+        run: |
+          # echo "VCPKG_TRIPLET=x64-mingw" >> "$GITHUB_ENV"
+          echo "VCPKG_TRIPLET=x64-mingw-static" >> "$GITHUB_ENV"
       - name: Set vcpkg triplet on Windows (msvc)
-        if: matrix.os == 'windows-latest' && matrix.python-install == 'pip' # && matrix.windows-compiler == 'msvc'
+        if: matrix.os == 'windows-latest' && matrix.python-install == 'pip' && matrix.windows-compiler == 'msvc'
         shell: bash -l {0}
         run: |
           echo "VCPKG_TRIPLET=x64-windows" >> "$GITHUB_ENV"
