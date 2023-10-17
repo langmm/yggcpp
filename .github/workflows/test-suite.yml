@@ -137,7 +137,12 @@ jobs:
           # echo "CC=gcc.exe" >> "$GITHUB_ENV"
           # echo "CXX=c++.exe" >> "$GITHUB_ENV"
           echo "FC=gfortran.exe" >> "$GITHUB_ENV"
-
+      - name: Set flags for dependencies on Windows
+        if: matrix.os == 'windows-latest'
+        run: |
+          echo (Get-Command gfortran).Path
+          $FC = (Get-Command gfortran).Path
+          echo "FC=$FC" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
       # ZeroMQ dependencies
       - name: Install ZeroMQ
         if: matrix.os == 'ubuntu-latest' && matrix.install-zmq && matrix.python-install == 'pip'
@@ -265,7 +270,12 @@ jobs:
         if: matrix.with-asan == false && matrix.os == 'windows-latest' && matrix.windows-compiler == 'msvc' # && matrix.python-install == 'conda'
         shell: bash -l {0}
         run: |
-          echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DCMAKE_Fortran_COMPILER=$(which gfortran).exe -DCMAKE_Fortran_PREPROCESS_SOURCE=ON -DCMAKE_Fortran_COMPILER_WORKS=1 -DDONT_CHECK_FORTRAN_C_COMPAT=ON" >> "$GITHUB_ENV"
+          # echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DCMAKE_Fortran_COMPILER=$(which gfortran).exe -DCMAKE_Fortran_PREPROCESS_SOURCE=ON -DCMAKE_Fortran_COMPILER_WORKS=1 -DDONT_CHECK_FORTRAN_C_COMPAT=ON" >> "$GITHUB_ENV"
+          echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DCMAKE_Fortran_PREPROCESS_SOURCE=ON -DCMAKE_Fortran_COMPILER_WORKS=1 -DDONT_CHECK_FORTRAN_C_COMPAT=ON" >> "$GITHUB_ENV"
+      - name: Fortran config flags on Windows (CONDA)
+        if: matrix.with-asan == false && matrix.os == 'windows-latest' && matrix.windows-compiler == 'msvc' # && matrix.python-install == 'conda'
+        run: |
+          echo "CONFIG_FLAGS=$env:CONFIG_FLAGS -DCMAKE_Fortran_COMPILER=$env:FC" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
       - name: ASAN dynamic library
         if: matrix.with-asan == true && matrix.os == 'macos-latest'
         shell: bash -l {0}
@@ -315,14 +325,14 @@ jobs:
         run: |
           patch -b C:/Miniconda3/envs/yggdrasil/Library/mingw-w64/include/c++/5.3.0/thread mingw-c++-5-3-thread.patch
         # echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DENABLE_THREADS=OFF" >> $GITHUB_ENV
-      - name: Fortran config flags on Windows (mingw)
-        if: matrix.with-asan == false && matrix.os == 'windows-latest' && matrix.windows-compiler == 'mingw'
-        shell: bash -l {0}
-        run: |
-          echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -G\"MinGW Makefiles\" -DENABLE_OMP=OFF -DENABLE_MPI=OFF" >> $GITHUB_ENV
-          echo "PYTHON_CMAKE_ARGS=${{ env.PYTHON_CMAKE_ARGS }} -G\\\\\"MinGW Makefiles\\\\\"" >> "$GITHUB_ENV"
+      # - name: Fortran config flags on Windows (mingw)
+      #   if: matrix.with-asan == false && matrix.os == 'windows-latest' && matrix.windows-compiler == 'mingw'
+      #   shell: bash -l {0}
+      #   run: |
+      #     echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -G\"MinGW Makefiles\" -DENABLE_OMP=OFF -DENABLE_MPI=OFF" >> $GITHUB_ENV
+      #     echo "PYTHON_CMAKE_ARGS=${{ env.PYTHON_CMAKE_ARGS }} -G\\\\\"MinGW Makefiles\\\\\"" >> "$GITHUB_ENV"
       - name: Fortran config flags on Windows (msvc)
-        if: matrix.with-asan == false && matrix.os == 'windows-latest' && matrix.windows-compiler == 'msvc'
+        if: matrix.with-asan == false && matrix.os == 'windows-latest' # && matrix.windows-compiler == 'msvc'
         shell: bash -l {0}
         run: |
           echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DENABLE_OMP=OFF -DENABLE_MPI=OFF" >> $GITHUB_ENV
@@ -383,6 +393,11 @@ jobs:
           echo "ls MINBIN_DIRECTORY=${MINBIN_DIRECTORY}"
           ls ${MINBIN_DIRECTORY}
           echo "MINGW_PTHREAD_INCLUDE=${MIN_DIRECTORY}" >> "$GITHUB_ENV"
+      - name: Set CMAKE_GENERATOR for MinGW
+        if: matrix.with-asan == false && matrix.os == 'windows-latest' && matrix.windows-compiler == 'mingw'
+        shell: bash -l {0}
+        run: |
+          echo "CMAKE_GENERATOR=\"MinGW Makefiles\"" >> $GITHUB_ENV
       
       ###################################
       # Check
