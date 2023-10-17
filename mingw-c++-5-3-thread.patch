@@ -1,5 +1,5 @@
 --- gcc-5.3.0/libstdc++-v3/include/std/thread.orig	2016-12-11 16:51:54
-+++ gcc-5.3.0/libstdc++-v3/include/std/thread.new	2023-10-17 14:40:16
++++ gcc-5.3.0/libstdc++-v3/include/std/thread.new	2023-10-17 15:27:11
 @@ -41,6 +41,7 @@
  #include <bits/functexcept.h>
  #include <bits/functional_hash.h>
@@ -27,7 +27,7 @@
      joinable() const noexcept
 -    { return !(_M_id == id()); }
 +    {
-+      std::cerr << "joinable _M_id = " << _M_id << ", id() = " << id() << std::endl;
++      std::cerr << "joinable _M_id = " << _M_id << ", id() = " << id() << ", equal(_M_id, id()) = " << (_M_id == id()) << std::endl;
 +      return !(_M_id == id()); }
  
      void
