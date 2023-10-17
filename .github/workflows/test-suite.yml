@@ -99,10 +99,16 @@ jobs:
         run: |
           brew install llvm cmocka lcov gnutls
           echo "FC=$(which gfortran-12)" >> "$GITHUB_ENV"
+      - name: Set vcpkg triplet on Windows
+        if: matrix.os == 'windows-latest' && matrix.python-install == 'pip'
+        shell: bash -l {0}
+        run: |
+          # echo "VCPKG_TRIPLET=x64-windows" >> "$GITHUB_ENV"
+          echo "VCPKG_TRIPLET=x64-windows-static" >> "$GITHUB_ENV"
       - name: Install dependencies on Windows
         if: matrix.os == 'windows-latest' && matrix.python-install == 'pip'
         run: |
-          vcpkg.exe install cmocka --triplet x64-windows-static
+          vcpkg.exe install cmocka --triplet $env:VCPKG_TRIPLET
       - name: Set flags for dependencies on Windows
         if: matrix.os == 'windows-latest' # && matrix.python-install == 'pip'
         shell: bash -l {0}
@@ -125,7 +131,7 @@ jobs:
       - name: Install ZeroMQ
         if: matrix.os == 'windows-latest' && matrix.install-zmq && matrix.python-install == 'pip'
         run: |
-          vcpkg.exe install zeromq --triplet x64-windows-static
+          vcpkg.exe install zeromq --triplet $env:VCPKG_TRIPLET
 
       # MPI dependencies
       - name: Install MPI dependencies on Ubuntu
@@ -141,7 +147,7 @@ jobs:
       # - name: MPI dependencies on Windows
       #   if: matrix.os == 'windows-latest' && matrix.install-mpi && matrix.python-install == 'pip'
       #   run: |
-      #     vcpkg.exe install msmpi --triplet x64-windows-static
+      #     vcpkg.exe install msmpi --triplet $env:VCPKG_TRIPLET
 
       - name: Setup Python
         if: matrix.python-install == 'pip'
@@ -200,16 +206,16 @@ jobs:
           # echo "CFLAGS=" >> "$GITHUB_ENV"
           # echo "CXXFLAGS=" >> "$GITHUB_ENV"
           # choco install mingw
-          mamba install m2w64-gcc m2w64-gcc-fortran m2w64-toolchain_win-64 libpython winpthreads -c msys2 -y
+          mamba install m2w64-gcc m2w64-gcc-fortran m2w64-toolchain_win-64 libpython -c msys2 -y  # winpthreads
           # gcc -v
           # c++ -v
-      - name: Install ZeroMQ on windows
-        if: matrix.os == 'windows-latest' && matrix.python-install == 'conda' && matrix.install-zmq
-        shell: bash -l {0}
-        run: |
-          mamba install zeromq-static -y
+      # - name: Install ZeroMQ on windows
+      #   if: matrix.os == 'windows-latest' && matrix.python-install == 'conda' && matrix.install-zmq
+      #   shell: bash -l {0}
+      #   run: |
+      #     mamba install zeromq-static -y
       - name: Install ZeroMQ on unix
-        if: matrix.os != 'windows-latest' && matrix.python-install == 'conda' && matrix.install-zmq
+        if: matrix.python-install == 'conda' && matrix.install-zmq
         shell: bash -l {0}
         run: |
           mamba install zeromq -y
@@ -287,8 +293,8 @@ jobs:
         if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
         shell: bash -l {0}
         run: |
-          echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} \\\"-DCMAKE_PREFIX_PATH=${VCPKG_INSTALLATION_ROOT}\installed\x64-windows-static\\\"" >> "$GITHUB_ENV"
-          echo "PYTHON_CONFIG_FLAGS=${{ env.PYTHON_CONFIG_FLAGS }} --config-settings=cmake.define.CMAKE_PREFIX_PATH=\"${VCPKG_INSTALLATION_ROOT}\installed\x64-windows-static\" --config-settings=cmake.define.Python3_ROOT_DIR=${{ env.pythonLocation }} --config-settings=cmake.define.Python_ROOT_DIR=${{ env.pythonLocation }}" >> "$GITHUB_ENV"
+          echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} \\\"-DCMAKE_PREFIX_PATH=${VCPKG_INSTALLATION_ROOT}\installed\${VCPKG_TRIPLET}\\\"" >> "$GITHUB_ENV"
+          echo "PYTHON_CONFIG_FLAGS=${{ env.PYTHON_CONFIG_FLAGS }} --config-settings=cmake.define.CMAKE_PREFIX_PATH=\"${VCPKG_INSTALLATION_ROOT}\installed\${VCPKG_TRIPLET}\" --config-settings=cmake.define.Python3_ROOT_DIR=${{ env.pythonLocation }} --config-settings=cmake.define.Python_ROOT_DIR=${{ env.pythonLocation }}" >> "$GITHUB_ENV"
       - name: Patch conda thread header on Windows
         if: matrix.with-asan == false && matrix.os == 'windows-latest' && matrix.python-install == 'conda'
         shell: bash -l {0}
@@ -318,16 +324,16 @@ jobs:
       - name: Vcpkg library paths on Windows (Powershell)
         if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
         run: |
-          echo "$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\debug\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          echo "$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static\debug\lib" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          echo "$env:VCPKG_INSTALLATION_ROOT\installed\$env:VCPKG_TRIPLET\debug\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          echo "$env:VCPKG_INSTALLATION_ROOT\installed\$env:VCPKG_TRIPLET\debug\lib" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
       - name: Vcpkg library paths on Windows (Bash)
         if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
         shell: bash -l {0}
         run: |
-          DLL_DIRECTORY="${VCPKG_INSTALLATION_ROOT}\installed\x64-windows-static\debug\bin"
+          DLL_DIRECTORY="${VCPKG_INSTALLATION_ROOT}\installed\${VCPKG_TRIPLET}\debug\bin"
           ls ${DLL_DIRECTORY}
           echo "${DLL_DIRECTORY}" >> $GITHUB_PATH
-          LIB_DIRECTORY="${VCPKG_INSTALLATION_ROOT}\installed\x64-windows-static\debug\lib"
+          LIB_DIRECTORY="${VCPKG_INSTALLATION_ROOT}\installed\${VCPKG_TRIPLET}\debug\lib"
           ls ${LIB_DIRECTORY}
           echo "${LIB_DIRECTORY}" >> $GITHUB_PATH
       - name: Conda library paths on Windows
