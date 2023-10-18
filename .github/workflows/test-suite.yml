@@ -393,7 +393,7 @@ jobs:
         if: matrix.with-asan == false && matrix.os == 'windows-latest' && matrix.windows-compiler == 'mingw'
         shell: bash -l {0}
         run: |
-          echo "CMAKE_GENERATOR=\"MinGW Makefiles\"" >> $GITHUB_ENV
+          echo "CMAKE_GENERATOR=MinGW Makefiles" >> $GITHUB_ENV
       
       ###################################
       # Check
