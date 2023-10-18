@@ -39,6 +39,10 @@ while [[ $# -gt 0 ]]; do
 	    WITH_LLDB="TRUE"
 	    shift # past argument with no value 
 	    ;;
+	--simple-cfort )
+	    CMAKE_FLAGS="${CMAKE_FLAGS} -DALLOW_UNIFIED_CXXFORTRAN=1"
+	    shift # past argument with no value
+	    ;;
 	*)
 	    ;;
     esac

@@ -92,7 +92,7 @@ function(_setup_native_config_and_build source_dir build_dir)
 endfunction()
 
 function(target_link_external_fortran_objects target project_name)
-    if (ALLOW_SIMPLIFIED AND NOT MSVC)
+    if (ALLOW_UNIFIED_CXXFORTRAN AND NOT MSVC)
         set_source_files_properties(
 	    ${${project_name}_SOURCES} PROPERTIES
 	    COMPILE_FLAGS "-cpp -fPIC"
@@ -153,7 +153,7 @@ function(cmake_precompile_fortran_objects project_name)
   endforeach()
   message(STATUS "SOURCES = ${SOURCES}")
   message(STATUS "OBJECTS = ${OBJECTS}")
-  if (ALLOW_SIMPLIFIED AND NOT MSVC)
+  if (ALLOW_UNIFIED_CXXFORTRAN AND NOT MSVC)
     set(${project_name}_SOURCES ${SOURCES} PARENT_SCOPE)
     return()
   endif()
