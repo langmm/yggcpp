@@ -87,8 +87,10 @@ static PySequenceMethods commMeta_seq {
 };
 
 #ifdef __GNUC__
+#ifndef __MINGW64__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wcast-function-type"
+#endif
 #endif
 static PyMethodDef commMeta_methods[] = {
   {"update", (PyCFunction)commMeta_update, METH_VARARGS | METH_KEYWORDS,
@@ -101,7 +103,9 @@ static PyMethodDef commMeta_methods[] = {
   {NULL, NULL, 0, ""}  /* Sentinel */
 };
 #ifdef __GNUC__
+#ifndef __MINGW64__
 #pragma GCC diagnostic pop
+#endif
 #endif
 
 static PyTypeObject commMetaType = {
