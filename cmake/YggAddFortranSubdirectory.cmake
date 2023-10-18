@@ -92,13 +92,13 @@ function(_setup_native_config_and_build source_dir build_dir)
 endfunction()
 
 function(target_link_external_fortran_objects target project_name)
-    message(STATUS "CMAKE_Fortran_STANDARD_LIBRARIES = ${CMAKE_Fortran_STANDARD_LIBRARIES}")
     if (ALLOW_SIMPLIFIED AND NOT MSVC)
         set_source_files_properties(
 	    ${${project_name}_SOURCES} PROPERTIES
 	    COMPILE_FLAGS "-cpp -fPIC"
 	    Fortran_STANDARD 2003
-	    Fortran_STANDARD_REQUIRED ON)
+	    Fortran_STANDARD_REQUIRED ON
+	    Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
         target_sources(${target} PRIVATE ${${project_name}_SOURCES})
 	return()
     endif()
@@ -114,15 +114,8 @@ function(target_link_external_fortran_objects target project_name)
     set_source_files_properties(
       ${${project_name}_OBJECTS}
       PROPERTIES
-      Fortran_STANDARD 2003
-      Fortran_STANDARD_REQUIRED ON
       EXTERNAL_OBJECT true
       GENERATED true)
-    set_target_properties(
-      ${target}
-      PROPERTIES
-      Fortran_STANDARD 2003
-      Fortran_STANDARD_REQUIRED ON)
     target_link_libraries(${target} PUBLIC ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES})
     target_link_directories(${target} PUBLIC ${CMAKE_Fortran_IMPLICIT_LINK_DIRECTORIES})
     target_sources(${target} PRIVATE "$<TARGET_OBJECTS:${project_name}>")
@@ -160,11 +153,6 @@ function(cmake_precompile_fortran_objects project_name)
   endforeach()
   message(STATUS "SOURCES = ${SOURCES}")
   message(STATUS "OBJECTS = ${OBJECTS}")
-  set_source_files_properties(
-      ${SOURCES} PROPERTIES
-      COMPILE_FLAGS "-cpp -fPIC"
-      Fortran_STANDARD 2003
-      Fortran_STANDARD_REQUIRED ON)
   if (ALLOW_SIMPLIFIED AND NOT MSVC)
     set(${project_name}_SOURCES ${SOURCES} PARENT_SCOPE)
     return()
@@ -180,8 +168,6 @@ function(cmake_precompile_fortran_objects project_name)
   cmake_path(APPEND OBJECT_LIBRARY "${build_dir}" "${CMAKE_STATIC_LIBRARY_PREFIX_Fortran}${project_name}${CMAKE_STATIC_LIBRARY_SUFFIX_Fortran}")
   message(STATUS "OBJECT_LIBRARY = ${OBJECT_LIBRARY}")
   
-  # set(CMAKE_COMMAND_LINE "-DCMAKE_Fortran_OUTPUT_EXTENSION=${CMAKE_C_OUTPUT_EXTENSION}")
-
   # create the external project cmake file
   file(MAKE_DIRECTORY "${source_dir}")
   configure_file(
