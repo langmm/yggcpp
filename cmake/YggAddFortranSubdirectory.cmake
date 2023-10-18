@@ -108,7 +108,7 @@ function(target_link_external_fortran_objects target project_name)
 	# COMMAND ${CMAKE_COMMAND} -E echo "IMPORTED_OBJECTS = $<TARGET_PROPERTY:${project_name},IMPORTED_OBJECTS>"
 	# COMMAND ${CMAKE_COMMAND} -E echo "TARGET_OBJECTS = $<TARGET_OBJECTS:${project_name}>"
 	# COMMAND ${CMAKE_COMMAND} -E echo "OBJECTS = ${${project_name}_OBJECTS}"
-	COMMAND ${CMAKE_COMMAND} -E copy "$<PATH:REMOVE_FILENAME,$<TARGET_OBJECTS:${project_name}>>/*.mod" ${CMAKE_CURRENT_BINARY_DIR}
+	COMMAND ${CMAKE_COMMAND} -E copy "$<PATH:REMOVE_FILENAME,$<TARGET_OBJECTS:${project_name}>>*.mod" ${CMAKE_CURRENT_BINARY_DIR}
 	COMMAND_EXPAND_LISTS
     )
     set_source_files_properties(
@@ -136,6 +136,12 @@ function(cmake_precompile_fortran_objects project_name)
   set(orig_source_dir "${CMAKE_CURRENT_SOURCE_DIR}/${ARGS_SOURCE_DIRECTORY}")
   set(build_dir "${CMAKE_CURRENT_BINARY_DIR}/${project_name}")
   set(source_dir "${build_dir}/src")
+
+  if (NOT DONT_CHECK_FORTRAN_C_COMPAT)
+    include(FortranCInterface)
+    FortranCInterface_VERIFY()
+    FortranCInterface_VERIFY(CXX)
+  endif()
 
   # Get source & object file names
   set(SOURCES)

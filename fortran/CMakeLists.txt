@@ -1,8 +1,3 @@
-if (NOT DONT_CHECK_FORTRAN_C_COMPAT)
-   include(FortranCInterface)
-   FortranCInterface_VERIFY()
-   FortranCInterface_VERIFY(CXX)
-endif()
 set(YGG_TARGET_FORTRAN YggInterface_fortran)
 
 add_library(${YGG_TARGET_FORTRAN} SHARED c_wrappers.cpp)

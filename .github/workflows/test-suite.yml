@@ -131,11 +131,15 @@ jobs:
         run: |
           vcpkg.exe install cmocka --triplet $env:VCPKG_TRIPLET
       - name: Set flags for dependencies on Windows
+        if: matrix.os == 'windows-latest' && matrix.python-install == 'pip' && matrix.windows-compiler == 'mingw'
+        shell: bash -l {0}
+        run: |
+          echo "CC=gcc.exe" >> "$GITHUB_ENV"
+          echo "CXX=c++.exe" >> "$GITHUB_ENV"
+      - name: Set flags for dependencies on Windows
         if: matrix.os == 'windows-latest' # && matrix.python-install == 'pip'
         shell: bash -l {0}
         run: |
-          # echo "CC=gcc.exe" >> "$GITHUB_ENV"
-          # echo "CXX=c++.exe" >> "$GITHUB_ENV"
           echo "FC=gfortran.exe" >> "$GITHUB_ENV"
       # ZeroMQ dependencies
       - name: Install ZeroMQ
