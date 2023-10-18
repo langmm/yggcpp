@@ -1,7 +1,3 @@
-cmake_in_fortran_subdir(YggInterface SOURCES YggInterface.f90)
-message(STATUS "YggInterface_IN_EXTERNAL_FORTRAN = ${YggInterface_IN_EXTERNAL_FORTRAN}")
-if(NOT YggInterface_IN_EXTERNAL_FORTRAN)
-
 if (NOT DONT_CHECK_FORTRAN_C_COMPAT)
    include(FortranCInterface)
    FortranCInterface_VERIFY()
@@ -9,12 +5,11 @@ if (NOT DONT_CHECK_FORTRAN_C_COMPAT)
 endif()
 set(YGG_TARGET_FORTRAN YggInterface_fortran)
 
-add_library(${YGG_TARGET_FORTRAN} SHARED
-            # $<TARGET_OBJECTS:YggInterface_FORTRAN_OBJECTS>
-	    c_wrappers.cpp)
+add_library(${YGG_TARGET_FORTRAN} SHARED c_wrappers.cpp)
 add_library(YggInterface::fortran ALIAS ${YGG_TARGET_FORTRAN})
-target_link_libraries(${YGG_TARGET_FORTRAN} PRIVATE
-                      YggInterface_FORTRAN_OBJECTS)
+
+target_link_external_fortran_objects(
+    ${YGG_TARGET_FORTRAN} YggInterface_FORTRAN_OBJECT_LIBRARY)
 
 # Configure Fortran wrapper
 set_target_properties(${YGG_TARGET_FORTRAN} PROPERTIES
@@ -63,5 +58,4 @@ if(YGG_BUILD_TESTS OR YGG_BUILD_FORTRAN_TESTS)
     add_definitions(-DYGG_TEST)
     add_subdirectory(tests)
     include(CTest)
-endif()
 endif()

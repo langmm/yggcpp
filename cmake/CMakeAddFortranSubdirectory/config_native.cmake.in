@@ -1,0 +1,5 @@
+set(CMAKE_COMMAND_LINE "@ARGS_CMAKE_COMMAND_LINE@")
+execute_process(
+  COMMAND "@CMAKE_COMMAND@"
+  ${CMAKE_COMMAND_LINE}
+  "@source_dir@")

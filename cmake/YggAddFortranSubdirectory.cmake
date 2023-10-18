@@ -80,101 +80,129 @@ function(_setup_mingw_config_and_build source_dir build_dir)
     @ONLY)
 endfunction()
 
-function(_add_fortran_library_link_interface library depend_library)
-  set_target_properties(${library} PROPERTIES
-    IMPORTED_LINK_INTERFACE_LIBRARIES_NOCONFIG "${depend_library}")
+function(_setup_native_config_and_build source_dir build_dir)
+  configure_file(
+    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/CMakeAddFortranSubdirectory/config_native.cmake.in
+    ${build_dir}/config_native.cmake
+    @ONLY)
+  configure_file(
+    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/CMakeAddFortranSubdirectory/build_native.cmake.in
+    ${build_dir}/build_native.cmake
+    @ONLY)
 endfunction()
 
-
-function(cmake_in_fortran_subdir project)
-  set(multiValueArgs SOURCES)
-  set(project_name "${project}_FORTRAN_OBJECTS")
-  set(library_name "${project}_FORTRAN_OBJECTS")
-  set(external_name EXTERNAL_FORTRAN_OBJECT)
-  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-  set(external_flag "${project}_IN_EXTERNAL_FORTRAN")
-  if (${external_name} MATCHES ${project_name})
-    set(${external_flag} ON CACHE BOOL "Flag specifying that the project is in the 'subdir' phase")
-    project(${project_name})
-    add_library(${library_name} STATIC ${ARGS_SOURCES})
-    # add_library(${library_name} OBJECT ${ARGS_SOURCES})
-    set_target_properties(
-        ${library_name} PROPERTIES
-	COMPILE_FLAGS "-cpp -fPIC"
-	Fortran_STANDARD 2003
-	Fortran_STANDARD_REQUIRED ON
-	Fortran_MODULE_DIRECTORY ..)
+function(target_link_external_fortran_objects target project_name)
     add_custom_command(
-        TARGET ${library_name}
-	POST_BUILD
-	COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_OBJECTS:${library_name}> ..
+        TARGET ${target}
+	PRE_LINK
+	# COMMAND ${CMAKE_COMMAND} -E echo "IMPORTED_OBJECTS = $<TARGET_PROPERTY:${project_name},IMPORTED_OBJECTS>"
+	# COMMAND ${CMAKE_COMMAND} -E echo "TARGET_OBJECTS = $<TARGET_OBJECTS:${project_name}>"
+	# COMMAND ${CMAKE_COMMAND} -E echo "OBJECTS = ${${project_name}_OBJECTS}"
+	COMMAND ${CMAKE_COMMAND} -E copy "$<PATH:REMOVE_FILENAME,$<TARGET_OBJECTS:${project_name}>>/*.mod" ${CMAKE_CURRENT_BINARY_DIR}
 	COMMAND_EXPAND_LISTS
     )
-  else()
-    unset(${external_flag} CACHE)
-  endif()
+    set(${project_name}_OBJECTS "$<TARGET_PROPERTY:${project_name},IMPORTED_OBJECTS>" PARENT_SCOPE)
+    message(STATUS "${project_name}_OBJECTS = ${${project_name}_OBJECTS}")
+    SET_SOURCE_FILES_PROPERTIES(
+      ${${project_name}_OBJECTS}
+      PROPERTIES
+      EXTERNAL_OBJECT true
+      GENERATED true)
+    # target_sources(${target} PRIVATE "${${project_name}_OBJECTS}")
+    # target_sources(${target} PRIVATE "$<TARGET_PROPERTY:${project_name},IMPORTED_OBJECTS>")
+    target_sources(${target} PRIVATE "$<TARGET_OBJECTS:${project_name}>")
+    # target_link_libraries(${target} PRIVATE ${project_name})
 endfunction()
 
-function(cmake_add_fortran_subdirectory_objects subdir)
+function(cmake_precompile_fortran_objects project_name)
   # Parse arguments to function
-  set(oneValueArgs PROJECT)
-  set(multiValueArgs CMAKE_COMMAND_LINE)
+  set(oneValueArgs SOURCE_DIRECTORY)
+  set(multiValueArgs SOURCES CMAKE_COMMAND_LINE)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-  set(source_dir "${CMAKE_CURRENT_SOURCE_DIR}/${subdir}")
-  set(project_name "${ARGS_PROJECT}_FORTRAN_OBJECTS")
-  set(external_name EXTERNAL_FORTRAN_OBJECT)
-  set(fo_dir "${subdir}/fo")
-  set(library_dir "${fo_dir}")
-  set(binary_dir "${fo_dir}")
+  set(orig_source_dir "${CMAKE_CURRENT_SOURCE_DIR}/${ARGS_SOURCE_DIRECTORY}")
+  set(build_dir "${CMAKE_CURRENT_BINARY_DIR}/${project_name}")
+  set(source_dir "${build_dir}/src")
 
-  # if we are not using MSVC without fortran support
-  # then just use the usual add_subdirectory to build
-  # the fortran library
-  check_language(Fortran)
-  if(NOT MSVC)
-    # if(NOT (MSVC AND (NOT CMAKE_Fortran_COMPILER)))
-    set(${external_name} ${project_name} CACHE STRING "External project name")
-    add_subdirectory(${subdir} ${fo_dir})
-    unset(${external_name} CACHE)
-    return()
+  # Get source & object file names
+  set(SOURCES)
+  foreach(src IN LISTS ARGS_SOURCES)
+    if(NOT IS_ABSOLUTE "${src}")
+      get_filename_component(src "${orig_source_dir}/${src}" ABSOLUTE)
+    endif()
+    list(APPEND SOURCES ${src})
+  endforeach()
+  set(OBJECTS)
+  foreach(src IN LISTS SOURCES)
+    cmake_path(GET src FILENAME src_base)
+    string(REGEX REPLACE "[.]f90$" ".f90${CMAKE_C_OUTPUT_EXTENSION}" obj_base ${src_base})
+    cmake_path(APPEND obj "${build_dir}" "${obj_base}")
+    list(APPEND OBJECTS ${obj})
+  endforeach()
+  message(STATUS "SOURCES = ${SOURCES}")
+  message(STATUS "OBJECTS = ${OBJECTS}")
+
+  # Determine object library file name
+  if (NOT CMAKE_STATIC_LIBRARY_PREFIX_Fortran)
+    set(CMAKE_STATIC_LIBRARY_PREFIX_Fortran ${CMAKE_STATIC_LIBRARY_PREFIX})
   endif()
-  set(CMAKE_COMMAND_LINE "-D${external_name}=${project_name}")
+  if (NOT CMAKE_STATIC_LIBRARY_SUFFIX_Fortran)
+    set(CMAKE_STATIC_LIBRARY_SUFFIX_Fortran ${CMAKE_STATIC_LIBRARY_SUFFIX})
+  endif()
+  cmake_path(APPEND OBJECT_LIBRARY "${build_dir}" "${CMAKE_STATIC_LIBRARY_PREFIX_Fortran}${project_name}${CMAKE_STATIC_LIBRARY_SUFFIX_Fortran}")
+  message(STATUS "OBJECT_LIBRARY = ${OBJECT_LIBRARY}")
+  
+  # set(CMAKE_COMMAND_LINE "-DCMAKE_Fortran_OUTPUT_EXTENSION=${CMAKE_C_OUTPUT_EXTENSION}")
 
+  # create the external project cmake file
+  file(MAKE_DIRECTORY "${source_dir}")
+  configure_file(
+    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/CMakeAddFortranSubdirectory/external.CMakeLists.in
+    ${source_dir}/CMakeLists.txt
+    @ONLY)
+  
+  # create build and configure wrapper scripts
   # if we have MSVC without Intel fortran then setup
   # external projects to build with mingw fortran
+  check_language(Fortran)
+  # if(NOT (MSVC AND (NOT CMAKE_Fortran_COMPILER)))
+  if (MSVC)
+    # TODO: Only do this if MSVC w/ gfortran
+    _setup_mingw_config_and_build("${source_dir}" "${build_dir}")
+    set(CONFIGURE_COMMAND
+      ${CMAKE_COMMAND} -P ${build_dir}/config_mingw.cmake)
+    set(BUILD_COMMAND
+      ${CMAKE_COMMAND} -P ${build_dir}/build_mingw.cmake)
+  else()
+    _setup_native_config_and_build("${source_dir}" "${build_dir}")
+    set(CONFIGURE_COMMAND
+      ${CMAKE_COMMAND} -P ${build_dir}/config_native.cmake)
+    set(BUILD_COMMAND
+      ${CMAKE_COMMAND} -P ${build_dir}/build_native.cmake)
+  endif()
 
-  # use the same directory that add_subdirectory would have used
-  set(build_dir "${CMAKE_CURRENT_BINARY_DIR}/${subdir}")
-  foreach(dir_var library_dir binary_dir)
-    if(NOT IS_ABSOLUTE "${${dir_var}}")
-      get_filename_component(${dir_var}
-        "${CMAKE_CURRENT_BINARY_DIR}/${${dir_var}}" ABSOLUTE)
-    endif()
-  endforeach()
-  # create build and configure wrapper scripts
-  _setup_mingw_config_and_build("${source_dir}" "${build_dir}")
   # create the external project
-  externalproject_add(${project_name}_build
+  set(external_project_name ${project_name}_build)
+  externalproject_add(${external_project_name}
     SOURCE_DIR ${source_dir}
     BINARY_DIR ${build_dir}
-    CONFIGURE_COMMAND ${CMAKE_COMMAND}
-    -P ${build_dir}/config_mingw.cmake
-    BUILD_COMMAND ${CMAKE_COMMAND}
-    -P ${build_dir}/build_mingw.cmake
+    CONFIGURE_COMMAND ${CONFIGURE_COMMAND}
+    BUILD_COMMAND ${BUILD_COMMAND}
     BUILD_ALWAYS 1
+    BUILD_BYPRODUCTS ${OBJECTS}
     INSTALL_COMMAND ""
     )
 
-  # now setup link libraries for targets
-  set(start FALSE)
-  set(target)
-  # process anything that is left in target and target_libs
-  if(DEFINED target)
-    _add_fortran_library_link_interface(${target} "${target_libs}")
-  endif()
-
-  add_library(${project_name} STATIC IMPORTED)
-  add_dependencies(${project_name} ${project_name}_build)
-  # TODO: set_target_properties(${project_name} PROPERTIES IMPORTED_LOCATION ...)
+  # create import library for other projects to link to
+  SET_SOURCE_FILES_PROPERTIES(
+    ${OBJECTS}
+    PROPERTIES
+    EXTERNAL_OBJECT true
+    GENERATED true)
+  add_library(${project_name} OBJECT IMPORTED)
+  add_dependencies(${project_name} ${external_project_name})
+  set_target_properties(${project_name} PROPERTIES
+                        IMPORTED_LOCATION ${OBJECT_LIBRARY}
+			# INCLUDE_DIRECTORIES ${build_dir}
+			IMPORTED_OBJECTS ${OBJECTS})
 
 endfunction()

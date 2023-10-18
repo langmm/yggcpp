@@ -1,0 +1,17 @@
+project(@project_name@_PROJECT)
+cmake_minimum_required(VERSION @CMAKE_MINIMUM_REQUIRED_VERSION@)
+enable_language(Fortran)
+set(CMAKE_Fortran_OUTPUT_EXTENSION @CMAKE_C_OUTPUT_EXTENSION@)
+add_library(@project_name@ STATIC @SOURCES@)
+set_target_properties(
+        @project_name@ PROPERTIES
+	COMPILE_FLAGS "-cpp -fPIC"
+	Fortran_STANDARD 2003
+	Fortran_STANDARD_REQUIRED ON)
+message(STATUS "project_name = @project_name@, ${CMAKE_CURRENT_BINARY_DIR}")
+add_custom_command(
+        TARGET @project_name@
+	PRE_LINK
+	COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_OBJECTS:@project_name@> ${CMAKE_CURRENT_BINARY_DIR}
+	COMMAND_EXPAND_LISTS
+)
