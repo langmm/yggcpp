@@ -87,7 +87,7 @@ static PySequenceMethods commMeta_seq {
 };
 
 #ifdef __GNUC__
-#ifdef __MINGW64_VERSION_MAJOR > 5
+#if defined(__MINGW64_VERSION_MAJOR) && __MINGW64_VERSION_MAJOR > 5
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wcast-function-type"
 #endif
@@ -103,7 +103,7 @@ static PyMethodDef commMeta_methods[] = {
   {NULL, NULL, 0, ""}  /* Sentinel */
 };
 #ifdef __GNUC__
-#ifdef __MINGW64_VERSION_MAJOR > 5
+#if defined(__MINGW64_VERSION_MAJOR) && __MINGW64_VERSION_MAJOR > 5
 #pragma GCC diagnostic pop
 #endif
 #endif
