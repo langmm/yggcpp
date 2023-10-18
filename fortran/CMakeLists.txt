@@ -10,9 +10,11 @@ endif()
 set(YGG_TARGET_FORTRAN YggInterface_fortran)
 
 add_library(${YGG_TARGET_FORTRAN} SHARED
-            $<TARGET_OBJECTS:YggInterface_FORTRAN_OBJECTS>
+            # $<TARGET_OBJECTS:YggInterface_FORTRAN_OBJECTS>
 	    c_wrappers.cpp)
 add_library(YggInterface::fortran ALIAS ${YGG_TARGET_FORTRAN})
+target_link_libraries(${YGG_TARGET_FORTRAN} PRIVATE
+                      YggInterface_FORTRAN_OBJECTS)
 
 # Configure Fortran wrapper
 set_target_properties(${YGG_TARGET_FORTRAN} PROPERTIES

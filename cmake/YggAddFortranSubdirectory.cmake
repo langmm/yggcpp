@@ -172,4 +172,9 @@ function(cmake_add_fortran_subdirectory_objects subdir)
   if(DEFINED target)
     _add_fortran_library_link_interface(${target} "${target_libs}")
   endif()
+
+  add_library(${project_name} STATIC IMPORTED)
+  add_dependencies(${project_name} ${project_name}_build)
+  # TODO: set_target_properties(${project_name} PROPERTIES IMPORTED_LOCATION ...)
+
 endfunction()
