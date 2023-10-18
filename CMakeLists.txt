@@ -596,12 +596,16 @@ endif()
 #########################
 
 if(BUILD_FORTRAN_LIBRARY)
-    if(CMAKE_Fortran_COMPILER)
+    if(CMAKE_Fortran_COMPILER AND WIN32)
         message(STATUS "CMAKE_Fortran_COMPILER (before) = ${CMAKE_Fortran_COMPILER}")
         cmake_path(SET CMAKE_Fortran_COMPILER NORMALIZE ${CMAKE_Fortran_COMPILER})
         message(STATUS "CMAKE_Fortran_COMPILER (after)  = ${CMAKE_Fortran_COMPILER}")
     endif()
     enable_language(Fortran)
+    include(YggAddFortranSubdirectory)
+    cmake_add_fortran_subdirectory_objects(
+            fortran
+            PROJECT YggInterface)
     add_subdirectory(fortran)
 endif()
 

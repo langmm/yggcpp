@@ -1,15 +1,17 @@
+cmake_in_fortran_subdir(YggInterface SOURCES YggInterface.f90)
+message(STATUS "YggInterface_IN_EXTERNAL_FORTRAN = ${YggInterface_IN_EXTERNAL_FORTRAN}")
+if(NOT YggInterface_IN_EXTERNAL_FORTRAN)
+
 if (NOT DONT_CHECK_FORTRAN_C_COMPAT)
    include(FortranCInterface)
    FortranCInterface_VERIFY()
    FortranCInterface_VERIFY(CXX)
 endif()
-set(CMAKE_Fortran_STANDARD 2003)
-set(CMAKE_Fortran_STANDARD_REQUIRED ON)
-set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -cpp")
 set(YGG_TARGET_FORTRAN YggInterface_fortran)
 
 add_library(${YGG_TARGET_FORTRAN} SHARED
-            YggInterface.f90 c_wrappers.cpp)
+            $<TARGET_OBJECTS:YggInterface_FORTRAN_OBJECTS>
+	    c_wrappers.cpp)
 add_library(YggInterface::fortran ALIAS ${YGG_TARGET_FORTRAN})
 
 # Configure Fortran wrapper
@@ -59,4 +61,5 @@ if(YGG_BUILD_TESTS OR YGG_BUILD_FORTRAN_TESTS)
     add_definitions(-DYGG_TEST)
     add_subdirectory(tests)
     include(CTest)
+endif()
 endif()
