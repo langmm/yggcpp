@@ -18,3 +18,4 @@
 * Add templated methods for sending/receiving multiple variables of different types
 * Ensure send/recv of bytes gets passed through serialize/deserialize
 * Lock thread when getMetadata is used to prevent underlying data from being freed during use
+* Move thread patch to cmake with conditional check for specific version of mingw that conda currently packages (5.3)
