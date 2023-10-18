@@ -96,13 +96,20 @@ function(cmake_in_fortran_subdir project)
   if (${external_name} MATCHES ${project_name})
     set(${external_flag} ON CACHE BOOL "Flag specifying that the project is in the 'subdir' phase")
     project(${project_name})
-    add_library(${library_name} OBJECT ${ARGS_SOURCES})
+    add_library(${library_name} STATIC ${ARGS_SOURCES})
+    # add_library(${library_name} OBJECT ${ARGS_SOURCES})
     set_target_properties(
         ${library_name} PROPERTIES
 	COMPILE_FLAGS "-cpp -fPIC"
 	Fortran_STANDARD 2003
 	Fortran_STANDARD_REQUIRED ON
 	Fortran_MODULE_DIRECTORY ..)
+    add_custom_command(
+        TARGET ${library_name}
+	POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_OBJECTS:${library_name}> ..
+	COMMAND_EXPAND_LISTS
+    )
   else()
     unset(${external_flag} CACHE)
   endif()
