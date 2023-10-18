@@ -99,7 +99,7 @@ function(cmake_in_fortran_subdir project)
     add_library(${library_name} OBJECT ${ARGS_SOURCES})
     set_target_properties(
         ${library_name} PROPERTIES
-	COMPILE_FLAGS -cpp
+	COMPILE_FLAGS "-cpp -fPIC"
 	Fortran_STANDARD 2003
 	Fortran_STANDARD_REQUIRED ON
 	Fortran_MODULE_DIRECTORY ..)
