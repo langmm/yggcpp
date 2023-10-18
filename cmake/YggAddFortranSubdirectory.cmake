@@ -92,6 +92,16 @@ function(_setup_native_config_and_build source_dir build_dir)
 endfunction()
 
 function(target_link_external_fortran_objects target project_name)
+    message(STATUS "CMAKE_Fortran_STANDARD_LIBRARIES = ${CMAKE_Fortran_STANDARD_LIBRARIES}")
+    if (ALLOW_SIMPLIFIED AND NOT MSVC)
+        set_source_files_properties(
+	    ${${project_name}_SOURCES} PROPERTIES
+	    COMPILE_FLAGS "-cpp -fPIC"
+	    Fortran_STANDARD 2003
+	    Fortran_STANDARD_REQUIRED ON)
+        target_sources(${target} PRIVATE ${${project_name}_SOURCES})
+	return()
+    endif()
     add_custom_command(
         TARGET ${target}
 	PRE_LINK
@@ -101,17 +111,21 @@ function(target_link_external_fortran_objects target project_name)
 	COMMAND ${CMAKE_COMMAND} -E copy "$<PATH:REMOVE_FILENAME,$<TARGET_OBJECTS:${project_name}>>/*.mod" ${CMAKE_CURRENT_BINARY_DIR}
 	COMMAND_EXPAND_LISTS
     )
-    set(${project_name}_OBJECTS "$<TARGET_PROPERTY:${project_name},IMPORTED_OBJECTS>" PARENT_SCOPE)
-    message(STATUS "${project_name}_OBJECTS = ${${project_name}_OBJECTS}")
-    SET_SOURCE_FILES_PROPERTIES(
+    set_source_files_properties(
       ${${project_name}_OBJECTS}
       PROPERTIES
+      Fortran_STANDARD 2003
+      Fortran_STANDARD_REQUIRED ON
       EXTERNAL_OBJECT true
       GENERATED true)
-    # target_sources(${target} PRIVATE "${${project_name}_OBJECTS}")
-    # target_sources(${target} PRIVATE "$<TARGET_PROPERTY:${project_name},IMPORTED_OBJECTS>")
+    set_target_properties(
+      ${target}
+      PROPERTIES
+      Fortran_STANDARD 2003
+      Fortran_STANDARD_REQUIRED ON)
+    target_link_libraries(${target} PUBLIC ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES})
+    target_link_directories(${target} PUBLIC ${CMAKE_Fortran_IMPLICIT_LINK_DIRECTORIES})
     target_sources(${target} PRIVATE "$<TARGET_OBJECTS:${project_name}>")
-    # target_link_libraries(${target} PRIVATE ${project_name})
 endfunction()
 
 function(cmake_precompile_fortran_objects project_name)
@@ -140,6 +154,15 @@ function(cmake_precompile_fortran_objects project_name)
   endforeach()
   message(STATUS "SOURCES = ${SOURCES}")
   message(STATUS "OBJECTS = ${OBJECTS}")
+  set_source_files_properties(
+      ${SOURCES} PROPERTIES
+      COMPILE_FLAGS "-cpp -fPIC"
+      Fortran_STANDARD 2003
+      Fortran_STANDARD_REQUIRED ON)
+  if (ALLOW_SIMPLIFIED AND NOT MSVC)
+    set(${project_name}_SOURCES ${SOURCES} PARENT_SCOPE)
+    return()
+  endif()
 
   # Determine object library file name
   if (NOT CMAKE_STATIC_LIBRARY_PREFIX_Fortran)
