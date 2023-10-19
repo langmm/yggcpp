@@ -94,25 +94,29 @@ endfunction()
 function(target_link_external_fortran_objects target project_name)
     if (ALLOW_UNIFIED_CXXFORTRAN AND NOT MSVC)
         set_source_files_properties(
-	    ${${project_name}_SOURCES} PROPERTIES
+	    ${${project_name}_EXT_SRC} PROPERTIES
 	    COMPILE_FLAGS "-cpp -fPIC"
 	    Fortran_STANDARD 2003
 	    Fortran_STANDARD_REQUIRED ON
 	    Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-        target_sources(${target} PRIVATE ${${project_name}_SOURCES})
+        target_sources(${target} PRIVATE ${${project_name}_EXT_SRC})
 	return()
     endif()
+    configure_file(
+      ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/CMakeAddFortranSubdirectory/copy_mod.cmake.in
+      ${CMAKE_CURRENT_BINARY_DIR}/copy_mod.cmake
+      @ONLY)
     add_custom_command(
         TARGET ${target}
 	PRE_LINK
 	# COMMAND ${CMAKE_COMMAND} -E echo "IMPORTED_OBJECTS = $<TARGET_PROPERTY:${project_name},IMPORTED_OBJECTS>"
 	# COMMAND ${CMAKE_COMMAND} -E echo "TARGET_OBJECTS = $<TARGET_OBJECTS:${project_name}>"
-	# COMMAND ${CMAKE_COMMAND} -E echo "OBJECTS = ${${project_name}_OBJECTS}"
-	COMMAND ${CMAKE_COMMAND} -E copy "$<PATH:REMOVE_FILENAME,$<TARGET_OBJECTS:${project_name}>>*.mod" ${CMAKE_CURRENT_BINARY_DIR}
+	# COMMAND ${CMAKE_COMMAND} -E echo "OBJECTS = ${${project_name}_EXT_OBJ}"
+	COMMAND ${CMAKE_COMMAND} -DOBJS=$<TARGET_OBJECTS:${project_name}> -P ${CMAKE_CURRENT_BINARY_DIR}/copy_mod.cmake
 	COMMAND_EXPAND_LISTS
     )
     set_source_files_properties(
-      ${${project_name}_OBJECTS}
+      ${${project_name}_EXT_OBJ}
       PROPERTIES
       EXTERNAL_OBJECT true
       GENERATED true)
@@ -151,10 +155,11 @@ function(cmake_precompile_fortran_objects project_name)
     cmake_path(APPEND obj "${build_dir}" "${obj_base}")
     list(APPEND OBJECTS ${obj})
   endforeach()
-  message(STATUS "SOURCES = ${SOURCES}")
-  message(STATUS "OBJECTS = ${OBJECTS}")
+  set(${project_name}_EXT_SRC ${SOURCES} PARENT_SCOPE)
+  set(${project_name}_EXT_OBJ ${OBJECTS} PARENT_SCOPE)
+  message(STATUS "${project_name}_EXT_SRC = ${${project_name}_EXT_SRC}")
+  message(STATUS "${project_name}_EXT_OBJ = ${${project_name}_EXT_OBJ}")
   if (ALLOW_UNIFIED_CXXFORTRAN AND NOT MSVC)
-    set(${project_name}_SOURCES ${SOURCES} PARENT_SCOPE)
     return()
   endif()
 

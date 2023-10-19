@@ -1,0 +1,10 @@
+if(NOT OBJS)
+  return()
+endif()
+
+cmake_path(REMOVE_FILENAME OBJS OUTPUT_VARIABLE objdir)
+cmake_path(APPEND objdir "*.mod" OUTPUT_VARIABLE modpattern)
+file(GLOB modfiles LIST_DIRECTORIES false ${modpattern})
+message(STATUS "Fortran modules: ${modfiles}")
+file(COPY ${modfiles} DESTINATION ${CMAKE_CURRENT_LIST_DIR})
+message(STATUS "Copied Fortran modules to ${CMAKE_CURRENT_LIST_DIR}")
