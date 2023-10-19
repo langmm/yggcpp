@@ -343,12 +343,14 @@ jobs:
       - name: Choco library paths on Windows (Powershell)
         if: matrix.os == 'windows-latest' && matrix.python-install == 'pip' && matrix.windows-compiler == 'mingw'
         run: |
-          echo "C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          echo "C:\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+        # echo "C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
       - name: Choco library paths on Windows (Bash)
         if: matrix.os == 'windows-latest' && matrix.python-install == 'pip' && matrix.windows-compiler == 'mingw'
         shell: bash -l {0}
         run: |
-          DLL_DIRECTORY="C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64\bin"
+          # DLL_DIRECTORY="C:\ProgramData\chocolatey\lib\mingw\tools\install\mingw64\bin"
+          DLL_DIRECTORY="C:\mingw64\bin"
           ls ${DLL_DIRECTORY}
           echo "${DLL_DIRECTORY}" >> $GITHUB_PATH
       - name: Vcpkg library paths on Windows (Powershell)
