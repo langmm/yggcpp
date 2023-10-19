@@ -141,22 +141,23 @@ function(cmake_precompile_fortran_objects project_name)
   endif()
 
   # Get source & object file names
-  set(SOURCES)
+  set(${project_name}_EXT_SRC)
   foreach(src IN LISTS ARGS_SOURCES)
     if(NOT IS_ABSOLUTE "${src}")
-      get_filename_component(src "${orig_source_dir}/${src}" ABSOLUTE)
+      cmake_path(APPEND orig_source_dir ${src} OUTPUT_VARIABLE src)
+      cmake_path(ABSOLUTE_PATH src NORMALIZE)
     endif()
-    list(APPEND SOURCES ${src})
+    list(APPEND ${project_name}_EXT_SRC ${src})
   endforeach()
-  set(OBJECTS)
-  foreach(src IN LISTS SOURCES)
+  set(${project_name}_EXT_OBJ)
+  foreach(src IN LISTS ${project_name}_EXT_SRC)
     cmake_path(GET src FILENAME src_base)
-    string(REGEX REPLACE "[.]f90$" ".f90${CMAKE_C_OUTPUT_EXTENSION}" obj_base ${src_base})
+    string(REGEX REPLACE "[.]f90$" "${CMAKE_C_OUTPUT_EXTENSION}" obj_base ${src_base})
     cmake_path(APPEND obj "${build_dir}" "${obj_base}")
-    list(APPEND OBJECTS ${obj})
+    list(APPEND ${project_name}_EXT_OBJ ${obj})
   endforeach()
-  set(${project_name}_EXT_SRC ${SOURCES} PARENT_SCOPE)
-  set(${project_name}_EXT_OBJ ${OBJECTS} PARENT_SCOPE)
+  set(${project_name}_EXT_SRC "${${project_name}_EXT_SRC}" PARENT_SCOPE)
+  set(${project_name}_EXT_OBJ "${${project_name}_EXT_OBJ}" PARENT_SCOPE)
   message(STATUS "${project_name}_EXT_SRC = ${${project_name}_EXT_SRC}")
   message(STATUS "${project_name}_EXT_OBJ = ${${project_name}_EXT_OBJ}")
   if (ALLOW_UNIFIED_CXXFORTRAN AND NOT MSVC)
@@ -175,6 +176,7 @@ function(cmake_precompile_fortran_objects project_name)
   
   # create the external project cmake file
   file(MAKE_DIRECTORY "${source_dir}")
+  set(external_sources ${${project_name}_EXT_SRC})
   configure_file(
     ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/CMakeAddFortranSubdirectory/external.CMakeLists.in
     ${source_dir}/CMakeLists.txt
@@ -189,15 +191,15 @@ function(cmake_precompile_fortran_objects project_name)
     # TODO: Only do this if MSVC w/ gfortran
     _setup_mingw_config_and_build("${source_dir}" "${build_dir}")
     set(CONFIGURE_COMMAND
-      ${CMAKE_COMMAND} -P ${build_dir}/config_mingw.cmake)
+      ${CMAKE_COMMAND} -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -P ${build_dir}/config_mingw.cmake)
     set(BUILD_COMMAND
-      ${CMAKE_COMMAND} -P ${build_dir}/build_mingw.cmake)
+      ${CMAKE_COMMAND} -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -P ${build_dir}/build_mingw.cmake)
   else()
     _setup_native_config_and_build("${source_dir}" "${build_dir}")
     set(CONFIGURE_COMMAND
-      ${CMAKE_COMMAND} -P ${build_dir}/config_native.cmake)
+      ${CMAKE_COMMAND} -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -P ${build_dir}/config_native.cmake)
     set(BUILD_COMMAND
-      ${CMAKE_COMMAND} -P ${build_dir}/build_native.cmake)
+      ${CMAKE_COMMAND} -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -P ${build_dir}/build_native.cmake)
   endif()
 
   # create the external project
@@ -208,13 +210,13 @@ function(cmake_precompile_fortran_objects project_name)
     CONFIGURE_COMMAND ${CONFIGURE_COMMAND}
     BUILD_COMMAND ${BUILD_COMMAND}
     BUILD_ALWAYS 1
-    BUILD_BYPRODUCTS ${OBJECTS}
+    BUILD_BYPRODUCTS ${${project_name}_EXT_OBJ}
     INSTALL_COMMAND ""
     )
 
   # create import library for other projects to link to
   SET_SOURCE_FILES_PROPERTIES(
-    ${OBJECTS}
+    ${${project_name}_EXT_OBJ}
     PROPERTIES
     EXTERNAL_OBJECT true
     GENERATED true)
@@ -223,6 +225,6 @@ function(cmake_precompile_fortran_objects project_name)
   set_target_properties(${project_name} PROPERTIES
                         IMPORTED_LOCATION ${OBJECT_LIBRARY}
 			# INCLUDE_DIRECTORIES ${build_dir}
-			IMPORTED_OBJECTS ${OBJECTS})
+			IMPORTED_OBJECTS ${${project_name}_EXT_OBJ})
 
 endfunction()
