@@ -603,8 +603,8 @@ if(BUILD_FORTRAN_LIBRARY)
     endif()
     enable_language(Fortran)
     include(YggAddFortranSubdirectory)
-    cmake_precompile_fortran_objects(
-        YggInterface_FORTRAN_OBJECT_LIBRARY
+    add_fortran_library(
+        YggInterface_FORTRAN_OBJECT_LIBRARY OBJECT
 	SOURCE_DIRECTORY fortran
         SOURCES YggInterface.f90)
     add_subdirectory(fortran)

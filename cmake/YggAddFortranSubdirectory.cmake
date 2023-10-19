@@ -125,20 +125,14 @@ function(target_link_external_fortran_objects target project_name)
     target_sources(${target} PRIVATE "$<TARGET_OBJECTS:${project_name}>")
 endfunction()
 
-function(cmake_precompile_fortran_objects project_name)
+function(add_fortran_library project_name library_type)
   # Parse arguments to function
-  set(oneValueArgs SOURCE_DIRECTORY)
-  set(multiValueArgs SOURCES CMAKE_COMMAND_LINE)
+  set(oneValueArgs SOURCE_DIRECTORY LIBRARY_TYPE)
+  set(multiValueArgs SOURCES LIBRARIES INCLUDES SCMAKE_COMMAND_LINE)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
   set(orig_source_dir "${CMAKE_CURRENT_SOURCE_DIR}/${ARGS_SOURCE_DIRECTORY}")
   set(build_dir "${CMAKE_CURRENT_BINARY_DIR}/${project_name}")
   set(source_dir "${build_dir}/src")
-
-  if (NOT DONT_CHECK_FORTRAN_C_COMPAT)
-    include(FortranCInterface)
-    FortranCInterface_VERIFY()
-    FortranCInterface_VERIFY(CXX)
-  endif()
 
   # Get source & object file names
   set(${project_name}_EXT_SRC)
@@ -161,18 +155,59 @@ function(cmake_precompile_fortran_objects project_name)
   message(STATUS "${project_name}_EXT_SRC = ${${project_name}_EXT_SRC}")
   message(STATUS "${project_name}_EXT_OBJ = ${${project_name}_EXT_OBJ}")
   if (ALLOW_UNIFIED_CXXFORTRAN AND NOT MSVC)
+    include(FortranCInterface)
+    FortranCInterface_VERIFY()
+    FortranCInterface_VERIFY(CXX)
+    if(NOT library_type STREQUAL "OBJECT")
+      add_library(${project_name} ${library_type} ${${project_name}_EXT_SRC})
+      if(ARGS_LIBRARIES)
+        target_link_libraries(${project_name} PUBLIC ${ARGS_LIBRARIES})
+      endif()
+      if(ARGS_INCLUDES)
+        target_include_directories(${project_name} PUBLIC ${ARGS_INCLUDES})
+      endif()
+    endif()
     return()
   endif()
 
+  # Check for targets in libraries
+  set(targets)
+  set(new_libraries)
+  set(ORIG_LIBRARIES ${ARGS_LIBRARIES})
+  message(STATUS "ARGS_LIBRARIES = ${ARGS_LIBRARIES}")
+  foreach(lib IN LISTS ARGS_LIBRARIES)
+    message(STATUS "HERE ${lib}")
+    if (TARGET ${lib})
+      list(APPEND targets ${lib})
+    else()
+      list(APPEND new_libraries ${lib})
+    endif()
+  endforeach()
+  # set(ARGS_LIBRARIES ${new_libraries})
+
   # Determine object library file name
-  if (NOT CMAKE_STATIC_LIBRARY_PREFIX_Fortran)
-    set(CMAKE_STATIC_LIBRARY_PREFIX_Fortran ${CMAKE_STATIC_LIBRARY_PREFIX})
+  set(final_library_type ${library_type})
+  set(final_library_flags "-fPIC")
+  if(library_type STREQUAL "OBJECT")
+    set(final_library_type STATIC)
+    set(final_library_flags "${final_library_flags} -cpp")
   endif()
-  if (NOT CMAKE_STATIC_LIBRARY_SUFFIX_Fortran)
-    set(CMAKE_STATIC_LIBRARY_SUFFIX_Fortran ${CMAKE_STATIC_LIBRARY_SUFFIX})
+  if (NOT CMAKE_${final_library_type}_LIBRARY_PREFIX_Fortran)
+    set(CMAKE_${final_library_type}_LIBRARY_PREFIX_Fortran ${CMAKE_${final_library_type}_LIBRARY_PREFIX})
   endif()
-  cmake_path(APPEND OBJECT_LIBRARY "${build_dir}" "${CMAKE_STATIC_LIBRARY_PREFIX_Fortran}${project_name}${CMAKE_STATIC_LIBRARY_SUFFIX_Fortran}")
-  message(STATUS "OBJECT_LIBRARY = ${OBJECT_LIBRARY}")
+  if (NOT CMAKE_${final_library_type}_LIBRARY_SUFFIX_Fortran)
+    set(CMAKE_${final_library_type}_LIBRARY_SUFFIX_Fortran ${CMAKE_${final_library_type}_LIBRARY_SUFFIX})
+  endif()
+  cmake_path(APPEND FINAL_LIBRARY "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_${final_library_type}_LIBRARY_PREFIX_Fortran}${project_name}${CMAKE_${final_library_type}_LIBRARY_SUFFIX_Fortran}")
+  message(STATUS "FINAL_LIBRARY = ${FINAL_LIBRARY}")
+  
+  set(target_file)
+  if(targets)
+    set(target_file ${source_dir}/targets.txt)
+    file(GENERATE OUTPUT ${target_file}
+         CONTENT "$<TARGET_FILE_DIR:${targets}>")
+  endif()
+  message(STATUS "targets = ${targets}, target_file = ${target_file}")
   
   # create the external project cmake file
   file(MAKE_DIRECTORY "${source_dir}")
@@ -181,7 +216,7 @@ function(cmake_precompile_fortran_objects project_name)
     ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/CMakeAddFortranSubdirectory/external.CMakeLists.in
     ${source_dir}/CMakeLists.txt
     @ONLY)
-  
+
   # create build and configure wrapper scripts
   # if we have MSVC without Intel fortran then setup
   # external projects to build with mingw fortran
@@ -191,15 +226,15 @@ function(cmake_precompile_fortran_objects project_name)
     # TODO: Only do this if MSVC w/ gfortran
     _setup_mingw_config_and_build("${source_dir}" "${build_dir}")
     set(CONFIGURE_COMMAND
-      ${CMAKE_COMMAND} -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -P ${build_dir}/config_mingw.cmake)
+      ${CMAKE_COMMAND} -P ${build_dir}/config_mingw.cmake)
     set(BUILD_COMMAND
-      ${CMAKE_COMMAND} -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -P ${build_dir}/build_mingw.cmake)
+      ${CMAKE_COMMAND} -P ${build_dir}/build_mingw.cmake)
   else()
     _setup_native_config_and_build("${source_dir}" "${build_dir}")
     set(CONFIGURE_COMMAND
-      ${CMAKE_COMMAND} -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -P ${build_dir}/config_native.cmake)
+      ${CMAKE_COMMAND} -P ${build_dir}/config_native.cmake)
     set(BUILD_COMMAND
-      ${CMAKE_COMMAND} -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -P ${build_dir}/build_native.cmake)
+      ${CMAKE_COMMAND} -P ${build_dir}/build_native.cmake)
   endif()
 
   # create the external project
@@ -212,6 +247,7 @@ function(cmake_precompile_fortran_objects project_name)
     BUILD_ALWAYS 1
     BUILD_BYPRODUCTS ${${project_name}_EXT_OBJ}
     INSTALL_COMMAND ""
+    DEPENDS ${targets}
     )
 
   # create import library for other projects to link to
@@ -220,11 +256,16 @@ function(cmake_precompile_fortran_objects project_name)
     PROPERTIES
     EXTERNAL_OBJECT true
     GENERATED true)
-  add_library(${project_name} OBJECT IMPORTED)
+  add_library(${project_name} ${library_type} IMPORTED)
   add_dependencies(${project_name} ${external_project_name})
   set_target_properties(${project_name} PROPERTIES
-                        IMPORTED_LOCATION ${OBJECT_LIBRARY}
-			# INCLUDE_DIRECTORIES ${build_dir}
-			IMPORTED_OBJECTS ${${project_name}_EXT_OBJ})
+                        IMPORTED_LOCATION ${FINAL_LIBRARY}
+			IMPORTED_OBJECTS ${${project_name}_EXT_OBJ}
+			INTERFACE_LINK_DIRECTORIES ${CMAKE_CURRENT_BINARY_DIR})
+  if(ORIG_LIBRARIES)
+    set_target_properties(
+      ${project_name} PROPERTIES
+      IMPORTED_LINK_INTERFACE_LIBRARIES ${ORIG_LIBRARIES})
+  endif()
 
 endfunction()

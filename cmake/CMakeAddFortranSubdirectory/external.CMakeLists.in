@@ -1,15 +1,40 @@
 project(@project_name@_PROJECT)
 cmake_minimum_required(VERSION @CMAKE_MINIMUM_REQUIRED_VERSION@)
 enable_language(Fortran)
+message(STATUS "project_name = @project_name@, ${CMAKE_CURRENT_BINARY_DIR}")
+set(CMAKE_VERBOSE_MAKEFILE @CMAKE_VERBOSE_MAKEFILE@)
 set(CMAKE_Fortran_OUTPUT_EXTENSION @CMAKE_C_OUTPUT_EXTENSION@)
-add_library(@project_name@ STATIC @external_sources@)
+set(libraries @ARGS_LIBRARIES@)
+set(includes @ARGS_INCLUDES@)
+set(target_file @target_file@)
+set(library_type @library_type@)
+if(EXISTS ${target_file})
+  file(READ ${target_file} targets)
+endif()
+add_library(@project_name@ @final_library_type@ @external_sources@)
 set_target_properties(
         @project_name@ PROPERTIES
-	COMPILE_FLAGS "-cpp -fPIC"
+	COMPILE_FLAGS "@final_library_flags@"
 	Fortran_STANDARD 2003
 	Fortran_STANDARD_REQUIRED ON
 	Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-message(STATUS "project_name = @project_name@, ${CMAKE_CURRENT_BINARY_DIR}")
+if(WIN32)
+    set_target_properties(@project_name@
+        PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+endif()
+if(libraries)
+    message(STATUS "Linking libraries ${libraries}")
+    target_link_libraries(@project_name@ PUBLIC ${libraries})
+endif()
+if(targets)
+    message(STATUS "Linking targets ${targets}")
+    target_link_directories(@project_name@ PUBLIC ${targets})
+    # target_link_libraries(@project_name@ PUBLIC ${targets})
+endif()
+if(includes)
+    message(STATUS "Including directories ${includes}")
+    target_include_directories(@project_name@ PUBLIC ${includes})
+endif()
 configure_file(
         @CMAKE_CURRENT_FUNCTION_LIST_DIR@/CMakeAddFortranSubdirectory/copy_obj.cmake.in
 	${CMAKE_CURRENT_BINARY_DIR}/copy_obj.cmake
@@ -17,8 +42,12 @@ configure_file(
 add_custom_command(
         TARGET @project_name@
 	PRE_LINK
-	# COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_OBJECTS:@project_name@> ${CMAKE_CURRENT_BINARY_DIR}
 	COMMAND ${CMAKE_COMMAND} -E echo "OBJS=$<TARGET_OBJECTS:@project_name@>"
 	COMMAND ${CMAKE_COMMAND} -DOBJS=$<TARGET_OBJECTS:@project_name@> -P ${CMAKE_CURRENT_BINARY_DIR}/copy_obj.cmake
-	COMMAND_EXPAND_LISTS
-)
+	COMMAND_EXPAND_LISTS)
+if(NOT library_type STREQUAL "OBJECT")
+    add_custom_command(
+            TARGET @project_name@
+	    POST_BUILD
+	    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:@project_name@>" @CMAKE_CURRENT_BINARY_DIR@)
+endif()
