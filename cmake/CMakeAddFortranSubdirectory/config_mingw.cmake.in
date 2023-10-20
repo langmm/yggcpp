@@ -4,6 +4,7 @@ execute_process(
   COMMAND "@CMAKE_COMMAND@" "-GMinGW Makefiles"
   -DCMAKE_Fortran_COMPILER:PATH=@MINGW_GFORTRAN@
   -DBUILD_SHARED_LIBS=ON
+  -DMSVC_AND_GNU_BUILD=ON
   -DCMAKE_GNUtoMS=ON
   ${CMAKE_COMMAND_LINE}
   "@source_dir@")

@@ -51,7 +51,7 @@ if(NOT library_type STREQUAL "OBJECT")
             TARGET @project_name@
 	    POST_BUILD
 	    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:@project_name@>" @CMAKE_CURRENT_BINARY_DIR@)
-    if (WIN32)
+    if (MSVC_AND_GNU_BUILD AND library_type STREQUAL "SHARED")
       add_custom_command(
               TARGET @project_name@
 	      POST_BUILD

@@ -128,7 +128,7 @@ endfunction()
 function(add_fortran_library project_name library_type)
   # Parse arguments to function
   set(oneValueArgs SOURCE_DIRECTORY LIBRARY_TYPE)
-  set(multiValueArgs SOURCES LIBRARIES INCLUDES SCMAKE_COMMAND_LINE)
+  set(multiValueArgs SOURCES LIBRARIES INCLUDES CMAKE_COMMAND_LINE)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
   set(orig_source_dir "${CMAKE_CURRENT_SOURCE_DIR}/${ARGS_SOURCE_DIRECTORY}")
   set(build_dir "${CMAKE_CURRENT_BINARY_DIR}/${project_name}")
