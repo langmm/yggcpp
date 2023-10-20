@@ -92,7 +92,7 @@ function(_setup_native_config_and_build source_dir build_dir)
 endfunction()
 
 function(target_link_external_fortran_objects target project_name)
-    if (ALLOW_UNIFIED_CXXFORTRAN AND NOT MSVC)
+    if ((NOT FORCE_SPLIT_CXXFORTRAN) AND (NOT MSVC))
         set_source_files_properties(
 	    ${${project_name}_EXT_SRC} PROPERTIES
 	    COMPILE_FLAGS "-cpp -fPIC"
@@ -154,7 +154,7 @@ function(add_fortran_library project_name library_type)
   set(${project_name}_EXT_OBJ "${${project_name}_EXT_OBJ}" PARENT_SCOPE)
   message(STATUS "${project_name}_EXT_SRC = ${${project_name}_EXT_SRC}")
   message(STATUS "${project_name}_EXT_OBJ = ${${project_name}_EXT_OBJ}")
-  if (ALLOW_UNIFIED_CXXFORTRAN AND NOT MSVC)
+  if ((NOT FORCE_SPLIT_CXXFORTRAN) AND (NOT MSVC))
     include(FortranCInterface)
     FortranCInterface_VERIFY()
     FortranCInterface_VERIFY(CXX)
@@ -286,7 +286,7 @@ function(add_fortran_library project_name library_type)
       ${project_name} PROPERTIES
       IMPORTED_LINK_INTERFACE_LIBRARIES ${ORIG_LIBRARIES})
   endif()
-  if(MSVC AND ${library_type} STREQUAL "SHARED")
+  if(WIN32 AND ${library_type} STREQUAL "SHARED")
     set_target_properties(
       ${project_name} PROPERTIES
       IMPORTED_IMPLIB ${FINAL_LIBRARY_IMPLIB})
