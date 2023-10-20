@@ -197,11 +197,25 @@ function(add_fortran_library project_name library_type)
     set(CMAKE_${final_library_type}_LIBRARY_SUFFIX_Fortran ${CMAKE_${final_library_type}_LIBRARY_SUFFIX})
   endif()
   cmake_path(APPEND FINAL_LIBRARY "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_${final_library_type}_LIBRARY_PREFIX_Fortran}${project_name}${CMAKE_${final_library_type}_LIBRARY_SUFFIX_Fortran}")
+  message(STATUS "FINAL_LIBRARY = ${FINAL_LIBRARY}")
+
+  # Determine import library file name
+  if(MSVC AND ${library_type} STREQUAL "SHARED")
+    if (NOT CMAKE_IMPORT_LIBRARY_PREFIX_Fortran)
+      set(CMAKE_IMPORT_LIBRARY_PREFIX_Fortran ${CMAKE_IMPORT_LIBRARY_PREFIX})
+    endif()
+    if (NOT CMAKE_IMPORT_LIBRARY_SUFFIX_Fortran)
+      set(CMAKE_IMPORT_LIBRARY_SUFFIX_Fortran ${CMAKE_IMPORT_LIBRARY_SUFFIX})
+    endif()
+    cmake_path(APPEND FINAL_LIBRARY_IMPLIB "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_IMPORT_LIBRARY_PREFIX_Fortran}${project_name}${CMAKE_IMPORT_LIBRARY_SUFFIX_Fortran}")
+    message(STATUS "FINAL_LIBRARY_IMPLIB = ${FINAL_LIBRARY_IMPLIB}")
+  endif()
   
   set(target_file)
   message(STATUS "targets = ${targets}")
   if(targets)
-    set(target_file ${source_dir}/targets.txt)
+    cmake_path(APPEND target_file ${source_dir}
+               "${project_name}_targets.txt")
     file(GENERATE OUTPUT ${target_file}
          CONTENT "$<TARGET_FILE_DIR:${targets}>")
   endif()
@@ -264,6 +278,11 @@ function(add_fortran_library project_name library_type)
     set_target_properties(
       ${project_name} PROPERTIES
       IMPORTED_LINK_INTERFACE_LIBRARIES ${ORIG_LIBRARIES})
+  endif()
+  if(MSVC AND ${library_type} STREQUAL "SHARED")
+    set_target_properties(
+      ${project_name} PROPERTIES
+      IMPORTED_IMPLIB ${FINAL_LIBRARY_IMPLIB})
   endif()
 
 endfunction()

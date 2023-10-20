@@ -51,4 +51,10 @@ if(NOT library_type STREQUAL "OBJECT")
             TARGET @project_name@
 	    POST_BUILD
 	    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:@project_name@>" @CMAKE_CURRENT_BINARY_DIR@)
+    if (WIN32)
+      add_custom_command(
+              TARGET @project_name@
+	      POST_BUILD
+	      COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_IMPORT_FILE:@project_name@>" @CMAKE_CURRENT_BINARY_DIR@)
+    endif()
 endif()
