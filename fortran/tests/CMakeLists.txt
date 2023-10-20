@@ -55,6 +55,10 @@ function (add_fortran_test_executable TARGET)
     target_include_directories(${TARGET} PRIVATE ${FORTRAN_TEST_INCLUDE_DIRS})
     # ${CMAKE_CURRENT_SOURCE_DIR})
 
+    set (TEST_TIMEOUT 40)
+    if (WIN32)
+      set (TEST_TIMEOUT 100)
+    endif()
     set (INDEX 0)
     list (LENGTH TEST_FILES LEN)
     while (${LEN} GREATER ${INDEX})
@@ -65,7 +69,7 @@ function (add_fortran_test_executable TARGET)
 	    COMMAND $<TARGET_FILE:${TARGET}> ${TEST_FILE_MANGLED})
 	set_tests_properties (
 	    ${TEST_FILE}
-	    PROPERTIES TIMEOUT 40
+	    PROPERTIES TIMEOUT ${TEST_TIMEOUT}
 	    ENVIRONMENT "${RAPIDJSON_PYTHON_ENV2}")
         math (EXPR INDEX "${INDEX} + 1")
     endwhile ()
