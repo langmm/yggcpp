@@ -112,7 +112,7 @@ function(target_link_external_fortran_objects target project_name)
 	# COMMAND ${CMAKE_COMMAND} -E echo "IMPORTED_OBJECTS = $<TARGET_PROPERTY:${project_name},IMPORTED_OBJECTS>"
 	# COMMAND ${CMAKE_COMMAND} -E echo "TARGET_OBJECTS = $<TARGET_OBJECTS:${project_name}>"
 	# COMMAND ${CMAKE_COMMAND} -E echo "OBJECTS = ${${project_name}_EXT_OBJ}"
-	COMMAND ${CMAKE_COMMAND} -DOBJS=$<TARGET_OBJECTS:${project_name}> -P ${CMAKE_CURRENT_BINARY_DIR}/copy_mod.cmake
+	COMMAND ${CMAKE_COMMAND} "-DOBJS=$<JOIN:$<TARGET_OBJECTS:${project_name}>,\;>" -P ${CMAKE_CURRENT_BINARY_DIR}/copy_mod.cmake
 	COMMAND_EXPAND_LISTS
     )
     set_source_files_properties(

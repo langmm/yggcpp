@@ -42,8 +42,9 @@ configure_file(
 add_custom_command(
         TARGET @project_name@
 	PRE_LINK
-	COMMAND ${CMAKE_COMMAND} -E echo "OBJS=$<TARGET_OBJECTS:@project_name@>"
-	COMMAND ${CMAKE_COMMAND} -DOBJS=$<TARGET_OBJECTS:@project_name@> -P ${CMAKE_CURRENT_BINARY_DIR}/copy_obj.cmake
+	COMMAND ${CMAKE_COMMAND} -E echo "OBJS=$<JOIN:$<TARGET_OBJECTS:@project_name@>,\;>"
+	COMMAND ${CMAKE_COMMAND} "-DOBJS=$<JOIN:$<TARGET_OBJECTS:@project_name@>,\;>" -P ${CMAKE_CURRENT_BINARY_DIR}/copy_obj.cmake
+	VERBATIM
 	COMMAND_EXPAND_LISTS)
 if(NOT library_type STREQUAL "OBJECT")
     add_custom_command(
