@@ -216,10 +216,18 @@ function(add_fortran_library project_name library_type)
   if(targets)
     cmake_path(APPEND target_file ${source_dir}
                "${project_name}_targets.txt")
-    file(GENERATE OUTPUT ${target_file}
+    file(GENERATE OUTPUT "${target_file}.$<CONFIG>"
          CONTENT "$<TARGET_FILE_DIR:${targets}>")
+    add_custom_command(
+        COMMAND ${CMAKE_COMMAND} "-E" "copy_if_different" "${target_file}.$<CONFIG>" "${target_file}"
+	VERBATIM
+	PRE_BUILD
+	DEPENDS  "${target_file}.$<CONFIG>"
+	OUTPUT   "${target_file}"
+	COMMENT  "creating ${target_file} file ({event: PRE_BUILD}, {filename: ${target_file}})")
+    message(STATUS "target_file = ${target_file}")
   endif()
-  message(STATUS "target_file = ${target_file}")
+  add_custom_target("generate_target_file_${project_name}" DEPENDS ${target_file})
 
   # create the external project cmake file
   file(MAKE_DIRECTORY "${source_dir}")
@@ -259,8 +267,7 @@ function(add_fortran_library project_name library_type)
     BUILD_ALWAYS 1
     BUILD_BYPRODUCTS ${${project_name}_EXT_OBJ}
     INSTALL_COMMAND ""
-    DEPENDS ${targets}
-    )
+    DEPENDS ${targets} generate_target_file_${project_name})
 
   # create import library for other projects to link to
   SET_SOURCE_FILES_PROPERTIES(
@@ -268,7 +275,7 @@ function(add_fortran_library project_name library_type)
     PROPERTIES
     EXTERNAL_OBJECT true
     GENERATED true)
-  add_library(${project_name} ${library_type} IMPORTED)
+  add_library(${project_name} ${library_type} IMPORTED GLOBAL)
   add_dependencies(${project_name} ${external_project_name})
   set_target_properties(${project_name} PROPERTIES
                         IMPORTED_LOCATION ${FINAL_LIBRARY}
