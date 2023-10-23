@@ -106,6 +106,18 @@ function(target_link_external_fortran_objects target fortran_target)
       ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/CMakeAddFortranSubdirectory/copy_mod.cmake.in
       ${CMAKE_CURRENT_BINARY_DIR}/copy_mod.cmake
       @ONLY)
+    if (WIN32)
+      add_custom_command(
+          TARGET ${target}
+	  PRE_LINK
+	  COMMAND dlltool -z ${${fortran_target}_EXT_DEF} ${${fortran_target}_EXT_OBJ}
+	  COMMAND_EXPAND_LISTS)
+      set_source_files_properties(
+          ${${fortran_target}_EXT_DEF}
+	  PROPERTIES
+	  HEADER_FILE_ONLY true
+	  GENERATED true)
+    endif()
     add_custom_command(
         TARGET ${target}
 	PRE_LINK
@@ -113,8 +125,7 @@ function(target_link_external_fortran_objects target fortran_target)
 	# COMMAND ${CMAKE_COMMAND} -E echo "TARGET_OBJECTS = $<TARGET_OBJECTS:${fortran_target}>"
 	# COMMAND ${CMAKE_COMMAND} -E echo "OBJECTS = ${${fortran_target}_EXT_OBJ}"
 	COMMAND ${CMAKE_COMMAND} "-DOBJS=$<JOIN:$<TARGET_OBJECTS:${fortran_target}>,\;>" -P ${CMAKE_CURRENT_BINARY_DIR}/copy_mod.cmake
-	COMMAND_EXPAND_LISTS
-    )
+	COMMAND_EXPAND_LISTS)
     set_source_files_properties(
       ${${fortran_target}_EXT_OBJ}
       PROPERTIES
@@ -123,15 +134,14 @@ function(target_link_external_fortran_objects target fortran_target)
     target_link_libraries(${target} PUBLIC ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES})
     target_link_directories(${target} PUBLIC ${CMAKE_Fortran_IMPLICIT_LINK_DIRECTORIES})
     target_sources(${target} PRIVATE "$<TARGET_OBJECTS:${fortran_target}>")
-    # if (WIN32)
-    #   set_source_files_properties(
-    #     ${${fortran_target}_EXT_DEF}
-    # 	PROPERTIES
-    # 	EXTERNAL_OBJECT true
-    # 	HEADER_FILE_ONLY true
-    # 	GENERATED true)
-    #   target_sources(${target} PRIVATE ${${fortran_target}_EXT_DEF})
-    # endif()
+    if (WIN32)
+      set_source_files_properties(
+        ${${fortran_target}_EXT_DEF}
+	PROPERTIES
+	HEADER_FILE_ONLY true
+	GENERATED true)
+      target_sources(${target} PRIVATE ${${fortran_target}_EXT_DEF})
+    endif()
 endfunction()
 
 function(add_mixed_fortran_library target_name library_type)
@@ -186,7 +196,7 @@ function(add_external_fortran_library target_name library_type)
     cmake_path(APPEND obj "${build_dir}" "${obj_base}")
     list(APPEND ${target_name}_EXT_OBJ ${obj})
   endforeach()
-  # cmake_path(APPEND ${target_name}_EXT_DEF "${build_dir}" "${target_name}.def")
+  cmake_path(APPEND ${target_name}_EXT_DEF "${build_dir}" "${target_name}.def")
   set(${target_name}_EXT_SRC "${${target_name}_EXT_SRC}" PARENT_SCOPE)
   set(${target_name}_EXT_OBJ "${${target_name}_EXT_OBJ}" PARENT_SCOPE)
   message(STATUS "${target_name}_EXT_SRC = ${${target_name}_EXT_SRC}")
@@ -225,7 +235,7 @@ function(add_external_fortran_library target_name library_type)
   set(final_library_type ${library_type})
   set(final_library_flags "-fPIC")
   if(library_type STREQUAL "OBJECT")
-    set(final_library_type SHARED)
+    set(final_library_type STATIC)
     set(final_library_flags "${final_library_flags} -cpp")
   endif()
   if (NOT CMAKE_${final_library_type}_LIBRARY_PREFIX_Fortran)
