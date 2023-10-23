@@ -13,7 +13,7 @@
 namespace communication {
   namespace communicator {
 
-    class FileComm : public CommBase<std::fstream> {
+    class YGG_API FileComm : public CommBase<std::fstream> {
     public:
       /**
        * Constructor for a file based communicator

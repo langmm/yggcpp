@@ -12,7 +12,7 @@ namespace communicator {
  * is determined at compile time based on available packages. It will be either
  * an IPCComm or ZMQComm
  */
-class ServerComm : public RPCComm {
+class YGG_API ServerComm : public RPCComm {
 public:
     /**
      * Constructor

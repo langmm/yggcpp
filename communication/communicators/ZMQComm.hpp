@@ -111,7 +111,7 @@ public:
 #endif // YGG_TEST
 };
 
-class ZMQComm : public CommBase<ZMQSocket> {
+class YGG_API ZMQComm : public CommBase<ZMQSocket> {
 public:
     /**
      * Constructor

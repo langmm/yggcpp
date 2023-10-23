@@ -9,7 +9,7 @@ namespace communication {
 namespace communicator {
 
 // @brief Structure for storing requests
-class RPCComm : public COMM_BASE {
+class YGG_API RPCComm : public COMM_BASE {
 public:
   explicit RPCComm(const std::string &name, utils::Address *address,
 		   int flgs, DIRECTION dir, DIRECTION req_dir,

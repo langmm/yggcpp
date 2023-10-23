@@ -18,10 +18,10 @@ set_target_properties(
 	Fortran_STANDARD 2003
 	Fortran_STANDARD_REQUIRED ON
 	Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-if(WIN32)
-    set_target_properties(@project_name@
-        PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
-endif()
+# if(WIN32)
+#     set_target_properties(@project_name@
+#         PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+# endif()
 if(libraries)
     message(STATUS "Linking libraries ${libraries}")
     target_link_libraries(@project_name@ PUBLIC ${libraries})

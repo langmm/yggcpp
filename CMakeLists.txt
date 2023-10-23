@@ -34,9 +34,9 @@ endif()
 if (UNIX)
     include(GNUInstallDirs)
 endif()
-if (SKBUILD AND WIN32)
-    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
-endif()
+# if (SKBUILD AND WIN32)
+#     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+# endif()
 
 if(POLICY CMP0094)  # https://cmake.org/cmake/help/latest/policy/CMP0094.html
     cmake_policy(SET CMP0094 NEW)  # FindPython should return the first matching Python
@@ -365,10 +365,10 @@ find_package(Threads)
 if (Threads_FOUND)
     find_file(PTHREAD_H pthread.h)
     message(STATUS "PTHREAD_H = ${PTHREAD_H}")
-    if (NOT PTHREAD_H STREQUAL PTHREAD_H-NOTFOUND)
-        file(READ ${PTHREAD_H} PTHREAD_H_CONTENTS)
-	message(STATUS "PTHREAD_H_CONTENTS = ${PTHREAD_H_CONTENTS}")
-    endif()
+    # if (NOT PTHREAD_H STREQUAL PTHREAD_H-NOTFOUND)
+    #     file(READ ${PTHREAD_H} PTHREAD_H_CONTENTS)
+    # 	message(STATUS "PTHREAD_H_CONTENTS = ${PTHREAD_H_CONTENTS}")
+    # endif()
     add_definitions(-DTHREADSINSTALLED)
     set(DEPS_LIB_NAMES ${DEPS_LIB_NAMES} Threads::Threads)
     if (CMAKE_THREAD_LIBS_INIT)
@@ -570,10 +570,10 @@ if(BUILD_CPP_LIBRARY)
 	    ${YGG_TARGET_CPP} PUBLIC
 	    ${DEPS_LIB_NAMES}
 	    ${DEPS_LIBRARIES})
-	if (WIN32)
-	    set_target_properties(${YGG_TARGET_CPP}
-	        PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
-	endif()
+	# if (WIN32)
+	#     set_target_properties(${YGG_TARGET_CPP}
+	#         PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+	# endif()
     endif()
     target_include_directories(
         ${YGG_TARGET_CPP} PUBLIC

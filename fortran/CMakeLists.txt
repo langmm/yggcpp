@@ -18,10 +18,10 @@ target_link_libraries(${YGG_TARGET_FORTRAN} PUBLIC YggInterface)
 		      # YggInterface ${DEPS_LIB_NAMES} ${DEPS_LIBRARIES})
 target_include_directories(${YGG_TARGET_FORTRAN} PUBLIC
                            ${DEPS_INCLUDE_DIRS})
-if (WIN32)
-    set_target_properties(${YGG_TARGET_FORTRAN}
-        PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
-endif()
+# if (WIN32)
+#     set_target_properties(${YGG_TARGET_FORTRAN}
+#         PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+# endif()
 
 message(STATUS "CMAKE_INSTALL_INCLUDEDIR = ${CMAKE_INSTALL_INCLUDEDIR}")
 message(STATUS "CMAKE_CURRENT_BINARY_DIR = ${CMAKE_CURRENT_BINARY_DIR}")

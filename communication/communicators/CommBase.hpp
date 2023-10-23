@@ -198,7 +198,7 @@ typedef struct comm_t comm_t;
  * Abstract base class for all communicators. Cannot be instantiated directly, but is used as a generalized hook
  * for passing communicators around. Should only be instantiated by the CommBase<> class.
  */
-class Comm_t {
+class YGG_API Comm_t {
 public:
     Comm_t(const Comm_t& other) = delete;
     Comm_t& operator=(const Comm_t&) = delete;
@@ -1040,15 +1040,15 @@ public:
  * @param flags Bitwise flags describing the communicator
  * @return
  */
-Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name="", char* address=nullptr, int flags=0);
-Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, utils::Address* address, int flags=0);
+YGG_API Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name="", char* address=nullptr, int flags=0);
+YGG_API Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, utils::Address* address, int flags=0);
 
 /**
  * Determine if a communicator type is installed.
  * @param commtype The communicator type to check.
  * @return true if the communicator type is installed, false otherwise.
  */
-bool is_commtype_installed(const COMM_TYPE type);
+YGG_API bool is_commtype_installed(const COMM_TYPE type);
 
 /**
  * Templated base class for all communicators

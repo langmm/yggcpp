@@ -26,7 +26,7 @@ typedef struct msgbuf_t {
     char data[2048]; //!< Buffer for the message
 } msgbuf_t;
   
-class IPCComm : public CommBase<int> {
+class YGG_API IPCComm : public CommBase<int> {
 public:
     /**
      * Constructor for an IPC based communicator

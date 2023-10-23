@@ -49,7 +49,7 @@ enum MPI_STATUS_FLAG {
 };
 #endif
 
-class MPIComm : public CommBase<mpi_registry_t> {
+class YGG_API MPIComm : public CommBase<mpi_registry_t> {
 public:
     /**
      * Constructor

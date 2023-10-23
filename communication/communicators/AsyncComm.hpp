@@ -49,7 +49,7 @@ namespace communication {
     /**
      * Asynchonous communication class.
      **/
-    class AsyncComm : public CommBase<AsyncBacklog> {
+    class YGG_API AsyncComm : public CommBase<AsyncBacklog> {
     public:
       /**
        * Constructor
