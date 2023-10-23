@@ -34,9 +34,9 @@ endif()
 if (UNIX)
     include(GNUInstallDirs)
 endif()
-# if (SKBUILD AND WIN32)
-#     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
-# endif()
+if (SKBUILD AND WIN32)
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+endif()
 
 if(POLICY CMP0094)  # https://cmake.org/cmake/help/latest/policy/CMP0094.html
     cmake_policy(SET CMP0094 NEW)  # FindPython should return the first matching Python
@@ -570,10 +570,10 @@ if(BUILD_CPP_LIBRARY)
 	    ${YGG_TARGET_CPP} PUBLIC
 	    ${DEPS_LIB_NAMES}
 	    ${DEPS_LIBRARIES})
-	# if (WIN32)
-	#     set_target_properties(${YGG_TARGET_CPP}
-	#         PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
-	# endif()
+	if (WIN32)
+	    set_target_properties(${YGG_TARGET_CPP}
+	        PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+	endif()
     endif()
     target_include_directories(
         ${YGG_TARGET_CPP} PUBLIC
@@ -602,11 +602,6 @@ if(BUILD_FORTRAN_LIBRARY)
         message(STATUS "CMAKE_Fortran_COMPILER (after)  = ${CMAKE_Fortran_COMPILER}")
     endif()
     enable_language(Fortran)
-    include(YggAddFortranSubdirectory)
-    add_fortran_library(
-        YggInterface_FORTRAN_OBJECT_LIBRARY OBJECT
-	SOURCE_DIRECTORY fortran
-        SOURCES YggInterface.f90)
     add_subdirectory(fortran)
 endif()
 

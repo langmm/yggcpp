@@ -1,10 +1,9 @@
 set(YGG_TARGET_FORTRAN YggInterface_fortran)
 
-add_library(${YGG_TARGET_FORTRAN} SHARED c_wrappers.cpp)
+include(YggAddFortranSubdirectory)
+add_mixed_fortran_library(${YGG_TARGET_FORTRAN} SHARED
+                          c_wrappers.cpp YggInterface.f90)
 add_library(YggInterface::fortran ALIAS ${YGG_TARGET_FORTRAN})
-
-target_link_external_fortran_objects(
-    ${YGG_TARGET_FORTRAN} YggInterface_FORTRAN_OBJECT_LIBRARY)
 
 # Configure Fortran wrapper
 set_target_properties(${YGG_TARGET_FORTRAN} PROPERTIES

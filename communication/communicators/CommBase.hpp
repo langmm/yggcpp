@@ -1,6 +1,5 @@
 #pragma once
 #define VIRT_END = 0
-
 #include "utils/tools.hpp"
 #include "utils/enums.hpp"
 #include "utils/Address.hpp"
@@ -384,7 +383,7 @@ public:
         received message if message was received.
     */
     long recv_raw(char*& data, const size_t &len,
-		  bool allow_realloc=false);
+			  bool allow_realloc=false);
     /*!
       @brief Receive a message as a rapidjson::Document.
       @param[out] data rapidjson document to populate with received data.
@@ -598,7 +597,7 @@ public:
         received message if message was received.
     */
     long recv(char*& data, const size_t &len,
-	      bool allow_realloc=false);
+		      bool allow_realloc=false);
     /*!
       @brief Receive a string message from the communicator.
       @param[out] data Allocated buffer where the message should be saved.
@@ -707,7 +706,7 @@ public:
         Values >= 0 indicate success.
     */
     long call(const rapidjson::Document& sendData,
-	      rapidjson::Document& recvData);
+		      rapidjson::Document& recvData);
     /*!
       @brief Send a request and receive a response in the forms of
         rapidjson Documents.
@@ -718,7 +717,7 @@ public:
         Values >= 0 indicate success.
     */
     long callVar(const rapidjson::Document& sendData,
-		 rapidjson::Document& recvData) {
+			 rapidjson::Document& recvData) {
       return call(sendData, recvData);
     }
   
