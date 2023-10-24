@@ -355,7 +355,7 @@ public:
       @param[in] new_timeout New time limit in micro-seconds. -1 will
         cause receive calls to block until a message is available.
      */
-    virtual void set_timeout_recv(int new_timeout);
+    virtual void set_timeout_recv(int64_t new_timeout);
     /*!
       @brief Get the time limit for receiving messages.
       @returns Timeout in micro-seconds.
@@ -369,7 +369,7 @@ public:
       @return Number of messages available for receive. -1 if an error
         occurred.
      */
-    virtual int wait_for_recv(const int& tout);
+    virtual int wait_for_recv(const int64_t& tout);
     /*!
       @brief Receive a raw string message from the communicator without
         performing transformations, normalization, filtering, setting the,
@@ -1016,7 +1016,7 @@ protected:
     int index_in_register; //!< Index of the comm in the comm register.
     std::string thread_id; //!< ID for the thread that created the comm.
     utils::Metadata metadata;
-    int timeout_recv; //!< Time to wait for messages during receive.
+    int64_t timeout_recv; //!< Time to wait for messages during receive.
     WorkerList workers; //!< Communicator to use for sending large messages.
     Comm_t* global_comm; // !< Pointer to global comm that this comm shadows.
     std::vector<std::string> cache; // !< Cache of messages received.

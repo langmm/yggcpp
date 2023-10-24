@@ -426,7 +426,7 @@ int Comm_t::send(const char *data, const size_t &len) {
 // RECV METHODS //
 //////////////////
 
-void Comm_t::set_timeout_recv(int new_timeout) {
+void Comm_t::set_timeout_recv(int64_t new_timeout) {
   if (global_comm) {
     global_comm->set_timeout_recv(new_timeout);
     return;
@@ -439,7 +439,7 @@ int Comm_t::get_timeout_recv() {
   }
   return timeout_recv;
 }
-int Comm_t::wait_for_recv(const int& tout) {
+int Comm_t::wait_for_recv(const int64_t& tout) {
   if (global_comm)
     return global_comm->wait_for_recv(tout);
   TIMEOUT_LOOP(tout, YGG_SLEEP_TIME) {

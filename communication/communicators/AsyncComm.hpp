@@ -79,7 +79,7 @@ namespace communication {
       // \copydoc Comm_t::getMetadata
       communication::utils::Metadata& getMetadata(const DIRECTION dir=NONE) override;
       // \copydoc Comm_t::set_timeout_recv
-      void set_timeout_recv(int new_timeout) override;
+      void set_timeout_recv(int64_t new_timeout) override;
       // \copydoc Comm_t::get_timeout_recv
       int get_timeout_recv() override;
       

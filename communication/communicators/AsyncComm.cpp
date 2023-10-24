@@ -230,7 +230,7 @@ communication::utils::Metadata& AsyncComm::getMetadata(const DIRECTION dir) {
   return metadata;
 }
 
-void AsyncComm::set_timeout_recv(int new_timeout) {
+void AsyncComm::set_timeout_recv(int64_t new_timeout) {
   if (global_comm) {
     global_comm->set_timeout_recv(new_timeout);
     return;
