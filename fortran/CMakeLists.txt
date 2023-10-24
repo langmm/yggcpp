@@ -2,7 +2,7 @@ set(YGG_TARGET_FORTRAN YggInterface_fortran)
 
 include(YggAddFortranSubdirectory)
 add_mixed_fortran_library(${YGG_TARGET_FORTRAN} SHARED
-                          c_wrappers.cpp YggInterface.f90)
+                          c_wrappers.c YggInterface.f90)
 add_library(YggInterface::fortran ALIAS ${YGG_TARGET_FORTRAN})
 
 # Configure Fortran wrapper

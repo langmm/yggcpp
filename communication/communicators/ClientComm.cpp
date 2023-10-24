@@ -66,10 +66,9 @@ bool ClientComm::signon(const Header& header, Comm_t* async_comm) {
   int nloop = 0;
   if (requests.signonSent())
     nloop = 1;
-  clock_t start = clock();
-  while ((!requests.signon_complete) &&
-	 (tout < 0 ||
-	  (((double)(clock() - start))*1000000/CLOCKS_PER_SEC) < tout)) {
+  TIMEOUT_LOOP(tout, YGG_SLEEP_TIME) {
+    if (requests.signon_complete)
+      break;
     if ((nloop % 3) == 0) {
       ygglog_debug << "ClientComm(" << name << ")::signon: Sending signon" << std::endl;
       if (async_comm->send_raw(YGG_CLIENT_SIGNON, YGG_CLIENT_SIGNON_LEN) < 0) {
@@ -95,7 +94,7 @@ bool ClientComm::signon(const Header& header, Comm_t* async_comm) {
       // Sleep outside lock on async
       if (flags & COMM_FLAG_ASYNC_WRAPPED)
 	return true;
-      THREAD_USLEEP(YGG_SLEEP_TIME);
+      AFTER_TIMEOUT_LOOP(YGG_SLEEP_TIME);
     }
   }
   if (!requests.signon_complete) {
@@ -170,11 +169,10 @@ long ClientComm::recv_single(utils::Header& header) {
     std::string req_id = requests.activeRequestClient();
     long ret;
     utils::Header response_header;
-    clock_t start = clock();
     int tout = get_timeout_recv();
-    while ((!requests.isComplete(req_id)) &&
-	   (tout < 0 ||
-	    (((double)(clock() - start))*1000000/CLOCKS_PER_SEC) < tout)) {
+    TIMEOUT_LOOP(tout, YGG_SLEEP_TIME) {
+        if (requests.isComplete(req_id))
+	  break;
         response_header.reset(HEAD_RESET_OWN_DATA);
         ygglog_debug << "ClientComm(" << name << ")::recv_single: Waiting for response to request " << req_id << std::endl;
 	if (response_comm->comm_nmsg(RECV) > 0) {
@@ -191,7 +189,7 @@ long ClientComm::recv_single(utils::Header& header) {
 	  }
 	} else {
 	  ygglog_debug << "ClientComm(" << name << ")::recv_single: No response to oldest request (address = " << response_comm->address->address() << "), sleeping" << std::endl;
-	  THREAD_USLEEP(YGG_SLEEP_TIME);
+	  AFTER_TIMEOUT_LOOP(YGG_SLEEP_TIME);
 	}
     }
     // Close response comm and decrement count of response comms

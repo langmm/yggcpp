@@ -442,9 +442,7 @@ int Comm_t::get_timeout_recv() {
 int Comm_t::wait_for_recv(const int& tout) {
   if (global_comm)
     return global_comm->wait_for_recv(tout);
-  clock_t start = clock();
-  while (tout < 0 ||
-	 (((double)(clock() - start))*1000000/CLOCKS_PER_SEC) < tout) {
+  TIMEOUT_LOOP(tout, YGG_SLEEP_TIME) {
     int nmsg = comm_nmsg(RECV);
     if (nmsg < 0) {
       ygglog_error << "CommBase(" << name << ")::wait_for_recv: Error in checking for messages" << std::endl;
@@ -452,8 +450,8 @@ int Comm_t::wait_for_recv(const int& tout) {
     } else if (nmsg > 0) {
       return nmsg;
     }
-    ygglog_debug << "CommBase(" << name << ")::wait_for_recv: No messages, sleep " << YGG_SLEEP_TIME << std::endl;
-    THREAD_USLEEP(YGG_SLEEP_TIME);
+    ygglog_debug << "CommBase(" << name << ")::wait_for_recv: No messages, sleep " << YGG_SLEEP_TIME << " (timeout = " << tout << ")" << std::endl;
+    AFTER_TIMEOUT_LOOP(YGG_SLEEP_TIME);
   }
   return comm_nmsg(RECV);
 }
@@ -487,7 +485,7 @@ long Comm_t::recv_raw(char*& data, const size_t &len,
       ygglog_error << "CommBase(" << name << ")::recv_raw: Communicator closed." << std::endl;
       return -1;
     }
-    if (wait_for_recv(timeout_recv) <= 0) {
+    if (wait_for_recv(get_timeout_recv()) <= 0) {
       ygglog_error << "CommBase(" << name << ")::recv_raw: No messages waiting" << std::endl;
       return -1;
     }
@@ -516,7 +514,7 @@ long Comm_t::recv_raw(char*& data, const size_t &len,
   }
   head.offset = head.size_curr;
   while (head.size_curr < head.size_data) {
-    if (xmulti->wait_for_recv(timeout_recv) <= 0) {
+    if (xmulti->wait_for_recv(get_timeout_recv()) <= 0) {
       ygglog_error << "CommBase(" << name << ")::recv_raw: No messages waiting in work comm" << std::endl;
       return -1;
     }

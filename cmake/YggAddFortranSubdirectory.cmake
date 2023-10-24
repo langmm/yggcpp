@@ -178,9 +178,9 @@ function(add_mixed_fortran_library target_name library_type)
   add_external_fortran_library(
       ${fortran_target_name} OBJECT
       SOURCES ${fortran_sources})
-  if(MSVC AND library_type STREQUAL "SHARED")
-    set(library_type STATIC)
-  endif()
+  # if(MSVC AND library_type STREQUAL "SHARED")
+  #   set(library_type STATIC)
+  # endif()
   add_library(${target_name} ${library_type} ${other_sources})
   target_link_external_fortran_objects(
       ${target_name} ${target_name}_FORTRAN_OBJECT_LIBRARY)
