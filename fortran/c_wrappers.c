@@ -154,7 +154,7 @@ comm_t yggTimesync_f(const char *name, const char *t_units) {
 
 // Method for constructing data types
 void display_dtype_f(const dtype_t datatype) {
-  return display_dtype(datatype, "");
+  display_dtype(datatype, "");
 }
 int is_dtype_format_array_f(dtype_t type_struct) {
   return is_dtype_format_array(type_struct);

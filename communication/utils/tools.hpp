@@ -294,7 +294,7 @@ namespace utils {
 #define THREAD_USLEEP(x) usleep(x)
 #endif // THREADSINSTALLED
 #define TIMEOUT_LOOP(TOUT, TSTEP)					\
-  for (int istep = 0; (TOUT < 0 || istep < (TOUT / TSTEP)); istep++,	\
+  for (int istep = 0; (TOUT < 0 || istep < ((TOUT / TSTEP) + 1)); istep++, \
 	 THREAD_USLEEP(TSTEP))
 #define AFTER_TIMEOUT_LOOP(TSTEP)
   /*
