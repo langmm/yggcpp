@@ -342,7 +342,7 @@ subroutine yggptr_c2f_array_character(x)
      write(*,*) "yggptr_c2f_array_character", x%data_character_unit
      ! xarr_character => item
      item = transfer(x%data_character_unit, item)
-     do i = 1, x%len
+     do i = 1, size(item)  ! x%len
         ! do j = 1, x%prec
         !    item(i)(j:j) = x%data_character_unit(&
         !         (i - 1) * x%prec + j)

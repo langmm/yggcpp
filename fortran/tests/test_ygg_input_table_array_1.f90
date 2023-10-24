@@ -36,6 +36,18 @@ integer function test_ygg_input_table_array_1() result(r)
      write(*,*) "recv failed"
      return
   end if
+  if (size(a_send).NE.size(a_recv)) then
+     write(*,*) "a sizes are different", size(a_send), size(a_recv)
+     return
+  end if
+  if (size(b_send).NE.size(b_recv)) then
+     write(*,*) "b sizes are different", size(b_send), size(b_recv)
+     return
+  end if
+  if (size(c_send).NE.size(c_recv)) then
+     write(*,*) "c sizes are different", size(c_send), size(c_recv)
+     return
+  end if
   r = 0
   do i = 1, size(a_send)
      if (a_recv(i).NE.a_send(i)) then
