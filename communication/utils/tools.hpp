@@ -1,14 +1,15 @@
 #pragma once
 
-#if defined(_WINDOWS)
-#if defined(YggInterface_EXPORTS) || defined(YggInterface_py_EXPORTS)
-#   define YGG_API __declspec(dllexport)
-#else
-#   define YGG_API __declspec(dllimport)
-#endif
-#else
-#   define YGG_API
-#endif
+#define YGG_API
+// #if defined(_WINDOWS)
+// #if defined(YggInterface_EXPORTS) || defined(YggInterface_py_EXPORTS)
+// #   define YGG_API __declspec(dllexport)
+// #else
+// #   define YGG_API __declspec(dllimport)
+// #endif
+// #else
+// #   define YGG_API
+// #endif
 
 #ifdef __cplusplus
 #include <vector>

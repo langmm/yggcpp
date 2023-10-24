@@ -7,6 +7,7 @@
 #else
 #include <stdbool.h>
 #include <stdint.h>
+#include <stddef.h>
 #endif
 
 #ifdef __cplusplus

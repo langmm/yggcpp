@@ -136,6 +136,8 @@ function(target_link_external_fortran_objects target fortran_target)
       PROPERTIES
       EXTERNAL_OBJECT true
       GENERATED true)
+    message(STATUS "CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES = ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}")
+    message(STATUS "CMAKE_Fortran_IMPLICIT_LINK_DIRECTORIES = ${CMAKE_Fortran_IMPLICIT_LINK_DIRECTORIES}")
     target_link_libraries(${target} PUBLIC ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES})
     target_link_directories(${target} PUBLIC ${CMAKE_Fortran_IMPLICIT_LINK_DIRECTORIES})
     target_sources(${target} PRIVATE "$<TARGET_OBJECTS:${fortran_target}>")
