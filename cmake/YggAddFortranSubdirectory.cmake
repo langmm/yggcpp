@@ -279,32 +279,22 @@ function(add_external_fortran_library target_name library_type)
     cmake_path(APPEND FINAL_LIBRARY_IMPLIB "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_IMPORT_LIBRARY_PREFIX_Fortran}${target_name}${CMAKE_IMPORT_LIBRARY_SUFFIX_Fortran}")
     message(STATUS "FINAL_LIBRARY_IMPLIB = ${FINAL_LIBRARY_IMPLIB}")
   endif()
-  
-  set(target_file)
-  message(STATUS "targets = ${targets}")
-  if(targets)
-    cmake_path(APPEND target_file ${source_dir}
-               "${target_name}_targets.txt")
-    file(GENERATE OUTPUT "${target_file}.$<CONFIG>"
-         CONTENT "$<TARGET_FILE_DIR:${targets}>")
-    add_custom_command(
-        COMMAND ${CMAKE_COMMAND} "-E" "copy_if_different" "${target_file}.$<CONFIG>" "${target_file}"
-	VERBATIM
-	PRE_BUILD
-	DEPENDS  "${target_file}.$<CONFIG>"
-	OUTPUT   "${target_file}"
-	COMMENT  "creating ${target_file} file ({event: PRE_BUILD}, {filename: ${target_file}})")
-    message(STATUS "target_file = ${target_file}")
-  endif()
-  add_custom_target("generate_target_file_${target_name}" DEPENDS ${target_file})
+
+  include(AddTargetsFromFile)
+  generate_target_file("${target_name}.targets" TARGETS ${targets}
+                       DIRECTORY ${source_dir}
+		       OUTPUT_VAR target_file
+		       CUSTOM_TARGET "generate_target_file_${target_name}")
 
   # create the external project cmake file
   file(MAKE_DIRECTORY "${source_dir}")
   set(external_sources ${${target_name}_EXT_SRC})
+  cmake_path(APPEND external_target_file "${source_dir}" "${target_name}.external_targets")
   configure_file(
     ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/CMakeAddFortranSubdirectory/external.CMakeLists.in
     ${source_dir}/CMakeLists.txt
     @ONLY)
+  list(APPEND EXTERNAL_PRODUCTS ${external_target_file})
 
   # create build and configure wrapper scripts
   # if we have MSVC without Intel fortran then setup
