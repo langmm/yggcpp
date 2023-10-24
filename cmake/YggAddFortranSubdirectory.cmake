@@ -110,12 +110,17 @@ function(target_link_external_fortran_objects target fortran_target)
       add_custom_command(
           TARGET ${target}
 	  PRE_LINK
-	  COMMAND dlltool -z ${${fortran_target}_EXT_DEF} ${${fortran_target}_EXT_OBJ}
+	  COMMAND dlltool --export-all-symbols -z ${${fortran_target}_EXT_DEF} -e ${${fortran_target}_EXT_EXP} ${${fortran_target}_EXT_OBJ}
 	  COMMAND_EXPAND_LISTS)
       set_source_files_properties(
           ${${fortran_target}_EXT_DEF}
 	  PROPERTIES
 	  HEADER_FILE_ONLY true
+	  GENERATED true)
+      set_source_files_properties(
+          ${${fortran_target}_EXT_EXP}
+	  PROPERTIES
+	  EXTERNAL_OBJECT true
 	  GENERATED true)
     endif()
     add_custom_command(
@@ -140,7 +145,14 @@ function(target_link_external_fortran_objects target fortran_target)
 	PROPERTIES
 	HEADER_FILE_ONLY true
 	GENERATED true)
-      target_sources(${target} PRIVATE ${${fortran_target}_EXT_DEF})
+      set_source_files_properties(
+        ${${fortran_target}_EXT_EXP}
+	PROPERTIES
+	EXTERNAL_OBJECT true
+	GENERATED true)
+      target_sources(${target} PRIVATE
+                     ${${fortran_target}_EXT_DEF}
+		     ${${fortran_target}_EXT_EXP})
     endif()
 endfunction()
 
@@ -166,6 +178,9 @@ function(add_mixed_fortran_library target_name library_type)
   add_external_fortran_library(
       ${fortran_target_name} OBJECT
       SOURCES ${fortran_sources})
+  if(MSVC AND library_type STREQUAL "SHARED")
+    set(library_type STATIC)
+  endif()
   add_library(${target_name} ${library_type} ${other_sources})
   target_link_external_fortran_objects(
       ${target_name} ${target_name}_FORTRAN_OBJECT_LIBRARY)
@@ -192,16 +207,20 @@ function(add_external_fortran_library target_name library_type)
   set(${target_name}_EXT_OBJ)
   foreach(src IN LISTS ${target_name}_EXT_SRC)
     cmake_path(GET src FILENAME src_base)
-    string(REGEX REPLACE "[.]f90$" "${CMAKE_C_OUTPUT_EXTENSION}" obj_base ${src_base})
-    cmake_path(APPEND obj "${build_dir}" "${obj_base}")
+    cmake_path(APPEND obj "${build_dir}" "${src_base}${CMAKE_C_OUTPUT_EXTENSION}")
     list(APPEND ${target_name}_EXT_OBJ ${obj})
   endforeach()
   cmake_path(APPEND ${target_name}_EXT_DEF "${build_dir}" "${target_name}.def")
+  cmake_path(APPEND ${target_name}_EXT_EXP "${build_dir}" "${target_name}_exports${CMAKE_C_OUTPUT_EXTENSION}")
   set(${target_name}_EXT_SRC "${${target_name}_EXT_SRC}" PARENT_SCOPE)
   set(${target_name}_EXT_OBJ "${${target_name}_EXT_OBJ}" PARENT_SCOPE)
+  set(${target_name}_EXT_DEF "${${target_name}_EXT_DEF}" PARENT_SCOPE)
+  set(${target_name}_EXT_EXP "${${target_name}_EXT_EXP}" PARENT_SCOPE)
   message(STATUS "${target_name}_EXT_SRC = ${${target_name}_EXT_SRC}")
   message(STATUS "${target_name}_EXT_OBJ = ${${target_name}_EXT_OBJ}")
   message(STATUS "${target_name}_EXT_DEF = ${${target_name}_EXT_DEF}")
+  message(STATUS "${target_name}_EXT_EXP = ${${target_name}_EXT_EXP}")
+  set(EXTERNAL_PRODUCTS "${${target_name}_EXT_OBJ} ${${target_name}_EXT_DEF} ${${target_name}_EXT_EXP}")
   if ((NOT FORCE_SPLIT_CXXFORTRAN) AND (NOT MSVC))
     include(FortranCInterface)
     FortranCInterface_VERIFY()
@@ -313,16 +332,19 @@ function(add_external_fortran_library target_name library_type)
     CONFIGURE_COMMAND ${CONFIGURE_COMMAND}
     BUILD_COMMAND ${BUILD_COMMAND}
     BUILD_ALWAYS 1
-    BUILD_BYPRODUCTS ${${target_name}_EXT_OBJ} ${${target_name}_EXT_DEF}
+    BUILD_BYPRODUCTS ${EXTERNAL_PRODUCTS}
     INSTALL_COMMAND ""
     DEPENDS ${targets} generate_target_file_${target_name})
 
   # create import library for other projects to link to
   SET_SOURCE_FILES_PROPERTIES(
-    ${${target_name}_EXT_OBJ} ${${target_name}_EXT_DEF}
+    ${EXTERNAL_PRODUCTS}
     PROPERTIES
-    EXTERNAL_OBJECT true
     GENERATED true)
+  SET_SOURCE_FILES_PROPERTIES(
+    ${${target_name}_EXT_OBJ}
+    PROPERTIES
+    EXTERNAL_OBJECT true)
   add_library(${target_name} ${library_type} IMPORTED GLOBAL)
   add_dependencies(${target_name} ${external_target_name})
   set_target_properties(${target_name} PROPERTIES
