@@ -419,6 +419,11 @@ jobs:
       ###################################
       # Configure
       ###################################
+      - name: Check cmake (PIP)
+        if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
+        run: |
+          where.exe cmake | Write-Output
+          where.exe ctest | Write-Output
       - name: Configure (CONDA)
         if: matrix.python-install == 'conda'
         shell: bash -l {0}
@@ -432,7 +437,6 @@ jobs:
         run: |
           mkdir build
           cd build
-          where.exe cmake | Write-Output
           cmake .. ${{ env.CONFIG_FLAGS }}
       
       ###################################
@@ -488,7 +492,6 @@ jobs:
         run: |
           echo "PATH=$env:PATH"
           cd build
-          where.exe ctest | Write-Output
           ctest ${{ env.TEST_FLAGS }}
 
       ###################################
