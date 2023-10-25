@@ -8,6 +8,10 @@ int YggdrasilLogger::_ygg_error_flag = 0;
 YggdrasilLogger::YggdrasilLogger(std::string nme, size_t lvl, bool is_err) :
   name(nme), level(lvl), is_error(is_err), ss(), t(std::chrono::system_clock::now()) {
 }
+YggdrasilLogger::YggdrasilLogger(YggdrasilLogger const & rhs) :
+  name(rhs.name), level(rhs.level), is_error(rhs.is_error), ss(rhs.ss.str()), t(rhs.t) {
+  level = 0;
+}
 YggdrasilLogger::~YggdrasilLogger() {
   std::string out = ss.str();
   if (eval() && !out.empty()) {

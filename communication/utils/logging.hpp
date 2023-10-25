@@ -4,7 +4,7 @@
 #include <iomanip>
 #include <sstream>
 #include <chrono>
-#ifdef WIN32
+#ifdef _WIN32
 #define localtime_r(_Time, _Tm) localtime_s(_Tm, _Time)
 #endif
 
@@ -20,6 +20,7 @@ namespace utils {
   class YggdrasilLogger {
   public:
     YggdrasilLogger(std::string nme, size_t lvl, bool is_err=false);
+    YggdrasilLogger(YggdrasilLogger const & rhs);
     ~YggdrasilLogger();
     std::string name;
     size_t level;
@@ -57,9 +58,13 @@ namespace utils {
 }
 }
 
-#define ygglog_error communication::utils::YggdrasilLogger("ERROR", 40, true)
-#define ygglog_info communication::utils::YggdrasilLogger("INFO", 20)
-// #define ygglog_debug communication::utils::YggdrasilLogger("DEBUG", 10)
-#define ygglog_debug communication::utils::YggdrasilLogger("DEBUG", 40)
+#define ygglog_param_error ("ERROR", 40, true)
+#define ygglog_param_info ("INFO", 20)
+// #define ygglog_param_debug ("DEBUG", 10)
+#define ygglog_param_debug ("DEBUG", 40)
+
+#define ygglog_error communication::utils::YggdrasilLogger ygglog_param_error
+#define ygglog_info communication::utils::YggdrasilLogger ygglog_param_info
+#define ygglog_debug communication::utils::YggdrasilLogger ygglog_param_debug
 
 #define ygglog_throw_error_c(...) communication::utils::ygglog_throw_error(communication::utils::string_format(__VA_ARGS__))

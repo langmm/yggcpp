@@ -26,7 +26,7 @@ int RPCComm::comm_nmsg(DIRECTION dir) const {
   if (dir == direction)
     return COMM_BASE::comm_nmsg(dir);
   if (requests.requests.empty() || requests.comms.empty()) {
-    ygglog_error << "RPCComm(" << name << ")::comm_nmsg: No pending requests" << std::endl;
+    log_error() << "::RPCComm:comm_nmsg: No pending requests" << std::endl;
     return -1;
   }
   return requests.comms[requests.requests[0].comm_idx]->comm_nmsg(dir);

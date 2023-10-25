@@ -211,7 +211,7 @@ int AsyncComm::comm_nmsg(DIRECTION dir) const {
   if (dir == NONE)
     dir = direction;
   if (handle->is_closing()) {
-    ygglog_error << "AsyncComm(" << name << ")::comm_nmsg: Thread is closing" << std::endl;
+    log_error() << "comm_nmsg: Thread is closing" << std::endl;
     return -1;
   }
   if ((type == CLIENT_COMM && dir == RECV) ||
@@ -250,11 +250,17 @@ int AsyncComm::get_timeout_recv() {
   return CommBase::get_timeout_recv();
 }
 
+std::string AsyncComm::commClsStr() const {
+  std::string out = CommBase::commClsStr();
+  out += "[ASYNC]";
+  return out;
+}
+
 int AsyncComm::send_single(Header& header) {
   const AsyncLockGuard lock(handle);
   assert((!global_comm) && handle);
   if (handle->is_closing()) {
-    ygglog_error << "AsyncComm(" << name << ")::send_single: Thread is closing" << std::endl;
+    log_error() << "send_single: Thread is closing" << std::endl;
     return -1;
   }
   if (type == SERVER_COMM) {
@@ -262,7 +268,7 @@ int AsyncComm::send_single(Header& header) {
   }
   if (header.on_send() < 0)
     return -1;
-  ygglog_debug << "AsyncComm(" << name << ")::send_single: " << header.size_msg << " bytes" << std::endl;
+  log_debug() << "send_single: " << header.size_msg << " bytes" << std::endl;
   handle->backlog.emplace_back(true);
   if (!handle->backlog[handle->backlog.size() - 1].CopyFrom(header))
     return -1;
@@ -274,25 +280,25 @@ long AsyncComm::recv_single(Header& header) {
   const AsyncLockGuard lock(handle);
   assert((!global_comm) && handle);
   if (handle->is_closing()) {
-    ygglog_error << "AsyncComm(" << name << ")::recv_single: Thread is closing" << std::endl;
+    log_error() << "recv_single: Thread is closing" << std::endl;
     return -1;
   }
   if (type == CLIENT_COMM) {
     return handle->comm->recv_single(header);
   }
   long ret = -1;
-  ygglog_debug << "AsyncComm(" << name << ")::recv_single " << std::endl;
+  log_debug() << "recv_single " << std::endl;
   if (handle->backlog.size() == 0) {
-    ygglog_error << "AsyncComm(" << name << ")::recv_single: Backlog is empty." << std::endl;
+    log_error() << "recv_single: Backlog is empty." << std::endl;
     return ret;
   }
   if (!header.MoveFrom(handle->backlog[0])) {
-    ygglog_error << "AsyncComm(" << name << ")::recv_single: Error copying data" << std::endl;
+    log_error() << "recv_single: Error copying data" << std::endl;
     return ret;
   }
   ret = static_cast<long>(header.size_data);
   handle->backlog.erase(handle->backlog.begin());
-  ygglog_debug << "AsyncComm(" << name << ")::recv_single: returns " << ret << " bytes" << std::endl;
+  log_debug() << "recv_single: returns " << ret << " bytes" << std::endl;
   return ret;
 }
 
@@ -300,7 +306,7 @@ bool AsyncComm::create_header_send(Header& header) {
   const AsyncLockGuard lock(handle);
   assert(!global_comm);
   if (handle->is_closing()) {
-    ygglog_error << "AsyncComm(" << name << ")::create_header_send: Thread is closing" << std::endl;
+    log_error() << "create_header_send: Thread is closing" << std::endl;
     return false;
   }
   if (type == CLIENT_COMM &&

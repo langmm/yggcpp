@@ -16,23 +16,23 @@ ADD_CONSTRUCTORS_RPC_DEF(ServerComm)
 
 bool ServerComm::signon(const Header& header) {
   assert(header.flags & HEAD_FLAG_CLIENT_SIGNON);
-  ygglog_debug << "ServerComm(" << name << ")::signon: begin (" <<
+  log_debug() << "signon: begin (" <<
     (header.flags & HEAD_FLAG_CLIENT_SIGNON) << ")" << std::endl;
   if (send_raw(YGG_SERVER_SIGNON, YGG_SERVER_SIGNON_LEN) < 0) {
-    ygglog_error << "ServerComm(" << name << ")::signon: Error in sending sign-on" << std::endl;
+    log_error() << "signon: Error in sending sign-on" << std::endl;
     return false;
   }
-  ygglog_debug << "ServerComm(" << name << ")::signon: sent" << std::endl;
+  log_debug() << "signon: sent" << std::endl;
   return requests.signon_complete;
 }
 
 bool ServerComm::create_header_send(utils::Header& header) {
-  ygglog_debug << "ServerComm(" << name << ")::create_header_send: begin" << std::endl;
+  log_debug() << "create_header_send: begin" << std::endl;
   assert(!global_comm);
   Comm_t* response_comm = requests.activeComm();
   if (response_comm == NULL) {
     requests.Display();
-    ygglog_error << "ServerComm(" << name << ")::create_header_send: Failed to get response comm" << std::endl;
+    log_error() << "create_header_send: Failed to get response comm" << std::endl;
     return false;
   }
   if (!requests.transferSchemaTo(response_comm))
@@ -41,7 +41,7 @@ bool ServerComm::create_header_send(utils::Header& header) {
   if ((!out) || header.flags & HEAD_FLAG_EOF)
     return out;
   if (requests.addResponseServer(header) < 0) {
-    ygglog_error << "ServerComm(" << name << ")::create_header_send: Failed to add response" << std::endl;
+    log_error() << "create_header_send: Failed to add response" << std::endl;
     return false;
   }
   return true;
@@ -49,14 +49,14 @@ bool ServerComm::create_header_send(utils::Header& header) {
 
 int ServerComm::send_single(utils::Header& header) {
     assert(!global_comm);
-    ygglog_debug << "ServerComm(" << name << ")::send_single" << std::endl;
+    log_debug() << "send_single" << std::endl;
     Comm_t* response_comm = requests.activeComm();
     if (response_comm == NULL) {
-        ygglog_error << "ServerComm(" << name << ")::send_single: Failed to get response comm" << std::endl;
+        log_error() << "send_single: Failed to get response comm" << std::endl;
         return -1;
     }
     int ret = response_comm->send_single(header);
-    ygglog_debug << "ServerComm(" << name << ")::send_single: Sent " << header.size_msg << " bytes" << std::endl;
+    log_debug() << "send_single: Sent " << header.size_msg << " bytes" << std::endl;
     if ((ret >= 0) && (requests.popRequestServer() < 0))
       return -1;
     return ret;
@@ -64,7 +64,7 @@ int ServerComm::send_single(utils::Header& header) {
 
 long ServerComm::recv_single(utils::Header& header) {
   assert(!global_comm);
-  ygglog_debug << "ServerComm(" << name << ")::recv_single" << std::endl;
+  log_debug() << "recv_single" << std::endl;
   long ret = COMM_BASE::recv_single(header);
   if (ret < 0)
     return ret;
@@ -74,7 +74,7 @@ long ServerComm::recv_single(utils::Header& header) {
     return ret;
   }
   if (requests.addRequestServer(header) < 0) {
-    ygglog_error << "ServerComm(" << name << ")::recv_single: Failed to add request" << std::endl;
+    log_error() << "recv_single: Failed to add request" << std::endl;
     return -1;
   }
   if (header.flags & HEAD_FLAG_CLIENT_SIGNON) {

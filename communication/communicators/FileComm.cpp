@@ -30,7 +30,7 @@ void FileComm::init() {
       ::close(fd);
     } else {
 #endif
-      ygglog_error << "FileComm::init: Error generating temporary file name." << std::endl;
+      log_error() << "FileComm::init: Error generating temporary file name." << std::endl;
       throw std::runtime_error("FileComm::init: Error in std::mkstemp");
     }
     if (!address) {
@@ -57,7 +57,7 @@ void FileComm::init() {
 }
 
 void FileComm::close() {
-  ygglog_debug << "FileComm::close: Started" << std::endl;
+  log_debug() << "FileComm::close: Started" << std::endl;
   if (handle && !global_comm) {
     handle->close();
 #ifdef YGG_TEST
@@ -70,7 +70,7 @@ void FileComm::close() {
     if (delete_file)
       std::remove(this->address->address().c_str());
   }
-  ygglog_debug << "FileComm::close: Finished" << std::endl;
+  log_debug() << "FileComm::close: Finished" << std::endl;
   CommBase::close();
 }
 
@@ -110,7 +110,7 @@ int FileComm::send_single(utils::Header& header) {
   assert(!global_comm);
   if (header.on_send() < 0)
     return -1;
-  ygglog_debug << "FileComm(" << name << ")::send_single: " << header.size_msg << " bytes" << std::endl;
+  log_debug() << "send_single: " << header.size_msg << " bytes" << std::endl;
   int out = -1;
   if (handle->good()) {
     handle->write(header.data_msg(), header.size_msg);
@@ -123,7 +123,7 @@ int FileComm::send_single(utils::Header& header) {
 
 long FileComm::recv_single(utils::Header& header) {
   assert(!global_comm);
-  ygglog_debug << "FileComm(" << name << ")::recv_single:" << std::endl;
+  log_debug() << "recv_single:" << std::endl;
   refresh();
   if (handle->fail())
     return -1;
@@ -133,7 +133,7 @@ long FileComm::recv_single(utils::Header& header) {
   handle->seekg(start, handle->beg);
   int ret = header.on_recv(NULL, length - start + 1);
   if (ret < 0) {
-    ygglog_error << "FileComm(" << name << ")::recv_single: Error reallocating data" << std::endl;
+    log_error() << "recv_single: Error reallocating data" << std::endl;
     return ret;
   }
   if (flags & FILE_FLAG_READLINE)
@@ -144,7 +144,7 @@ long FileComm::recv_single(utils::Header& header) {
     handle->clear();
   ret = handle->gcount();
   ret = header.on_recv(header.data_msg(), ret);
-  ygglog_debug << "FileComm(" << name << ")::recv_single: returns " << ret << " bytes" << std::endl;
+  log_debug() << "recv_single: returns " << ret << " bytes" << std::endl;
   return ret;
 }
 

@@ -112,6 +112,22 @@ enum HEAD_RESET_MODE {
 
 #ifdef __cplusplus
 }
+
+const std::map<const DIRECTION, const std::string> DIRECTION_map {
+  {SEND, "SEND"},
+  {NONE, "NONE"},
+  {RECV, "RECV"}};
+
+const std::map<const COMM_TYPE, const std::string> COMM_TYPE_map {
+  {NULL_COMM, "NullComm"},
+  {DEFAULT_COMM, "DefaultComm"},
+  {IPC_COMM, "IPCComm"},
+  {ZMQ_COMM, "ZMQComm"},
+  {MPI_COMM, "MPIComm"},
+  {SERVER_COMM, "ServerComm"},
+  {CLIENT_COMM, "ClientComm"},
+  {FILE_COMM, "FileComm"}};
+
 // const std::map<const std::string, const SUBTYPE> submap {{"int", T_INT},
 //                                                          {"int8_t", T_INT},
 //                                                          {"int16_t", T_INT},

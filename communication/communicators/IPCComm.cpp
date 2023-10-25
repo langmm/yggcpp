@@ -42,22 +42,22 @@ void IPCComm::init() {
     else
       fid[0] = msgget(key, 0600);
     if (fid[0] < 0) {
-        ygglog_error << "IPCComm::init: msgget(" << key << ") "
-		     << "created(" << created << "), "
-		     << "ret(" << fid[0] << "), errno(" << errno << "): "
-		     << strerror(errno) << std::endl;
+      log_error() << "IPCComm::init: msgget(" << key << ") "
+		  << "created(" << created << "), "
+		  << "ret(" << fid[0] << "), errno(" << errno << "): "
+		  << strerror(errno) << std::endl;
         delete fid;
 	fid = nullptr;
 	throw std::runtime_error("IPCComm::init: Error in msgget");
     }
     handle = fid;
     track_key(address->key());
-    ygglog_debug << "IPCComm(" << name << ")::init: address = " << this->address->address() << ", created = " << created << std::endl;
+    log_debug() << "init: address = " << this->address->address() << ", created = " << created << std::endl;
     CommBase::init();
 }
 
 void IPCComm::close() {
-    ygglog_debug << "IPCComm::close: Started" << std::endl;
+    log_debug() << "IPCComm::close: Started" << std::endl;
     if (handle && !global_comm) {
 #ifdef YGG_TEST
       bool close_comm = true;
@@ -68,7 +68,7 @@ void IPCComm::close() {
 #endif
       remove_comm(close_comm);
     }
-    ygglog_debug << "IPCComm::close: Finished" << std::endl;
+    log_debug() << "IPCComm::close: Finished" << std::endl;
     CommBase::close();
 }
 
@@ -84,7 +84,7 @@ ADD_KEY_TRACKER_DEFS(IPCComm)
 
 int IPCComm::remove_comm(bool close_comm) {
     if (close_comm) {
-        ygglog_debug << "IPCComm(" << name << ")::Closing queue: " << handle[0] << std::endl;
+        log_debug() << "Closing queue: " << handle[0] << std::endl;
         msgctl(handle[0], IPC_RMID, nullptr);
     }
     return untrack_key(address->key());
@@ -102,7 +102,7 @@ int IPCComm::comm_nmsg(DIRECTION dir) const {
 
     int rc = msgctl(handle[0], IPC_STAT, &buf);
     if (rc != 0) {
-        /* ygglog_error << "ipc_comm_nmsg: Could not access queue."); */
+        /* log_error() << "comm_nmsg: Could not access queue." << std::endl; */
         return 0;
     }
     int ret = static_cast<int>(buf.msg_qnum);
@@ -113,29 +113,29 @@ int IPCComm::send_single(utils::Header& header) {
     assert(!global_comm);
     if (header.on_send() < 0)
       return -1;
-    ygglog_debug << "IPCComm(" << name << ")::send_single: " << header.size_msg << " bytes" << std::endl;
+    log_debug() << "send_single: " << header.size_msg << " bytes" << std::endl;
     int ret = -1;
     msgbuf_t t;
     t.mtype = 1;
     memcpy(t.data, header.data_msg(), header.size_msg);
     while (true) {
         ret = msgsnd(handle[0], &t, header.size_msg, IPC_NOWAIT);
-        ygglog_debug << "IPCComm(" << name << ")::send_single: msgsnd returned " << ret << std::endl;
+        log_debug() << "send_single: msgsnd returned " << ret << std::endl;
         if (ret == 0) {
 	    ret = static_cast<int>(header.size_msg);
             break;
 	}
         if ((ret == -1) && (errno == EAGAIN)) {
-	    ygglog_debug << "IPCComm(" << name << ")::send_single: msgsnd, sleep" << std::endl;
+	    log_debug() << "send_single: msgsnd, sleep" << std::endl;
 	    THREAD_USLEEP(YGG_SLEEP_TIME);
         } else { // GCOVR_EXCL_LINE
             struct msqid_ds buf;
             int rtrn = msgctl(handle[0], IPC_STAT, &buf);
             if ((rtrn == 0) && ((buf.msg_qnum + header.size_msg) > buf.msg_qbytes)) {
-	        ygglog_debug << "IPCComm(" << name << ")::send_single: msgsnd, queue full, sleep" << std::endl;
+	        log_debug() << "send_single: msgsnd, queue full, sleep" << std::endl;
 		THREAD_USLEEP(YGG_SLEEP_TIME);
             } else { // GCOVR_EXCL_LINE
-	        ygglog_error << "IPCComm(" << name << ")::send_single: msgsnd(" << handle[0] << ", " << &t << ", " << header.size_msg
+	        log_error() << "send_single: msgsnd(" << handle[0] << ", " << &t << ", " << header.size_msg
                              << ", IPC_NOWAIT) ret(" << ret << "), errno(" << errno << "): " << strerror(errno) << std::endl;
                 ret = -1;
                 break;
@@ -150,7 +150,7 @@ long IPCComm::recv_single(utils::Header& header) {
     // if (global_comm)
     //   return global_comm->recv_single(data, len, allow_realloc);
     assert(!global_comm);
-    ygglog_debug << "IPCComm(" << name << ")::recv_single:" << std::endl;
+    log_debug() << "recv_single:" << std::endl;
     msgbuf_t t;
     t.mtype = 1;
     t.data[0] = '\0';
@@ -158,24 +158,24 @@ long IPCComm::recv_single(utils::Header& header) {
     while (true) {
         ret = msgrcv(handle[0], &t, maxMsgSize, 0, IPC_NOWAIT);
         if (ret == -1 && errno == ENOMSG) {
-	    ygglog_debug << "IPCComm(" << name << ")::recv_single: no input, sleep" << std::endl;
+	    log_debug() << "recv_single: no input, sleep" << std::endl;
 	    THREAD_USLEEP(YGG_SLEEP_TIME);
         } else { // GCOVR_EXCL_LINE
-	    ygglog_debug << "IPCComm(" << name << ")::recv_single: received input: " << ret << " bytes" << std::endl;
+	    log_debug() << "recv_single: received input: " << ret << " bytes" << std::endl;
             break;
         }
     }
     if (ret <= 0) {
-        ygglog_debug << "IPCComm(" << name << ")::recv_single: msgrecv(" << handle << ", " << &t << ", " << maxMsgSize << ", 0, IPC_NOWAIT): "
+        log_debug() << "recv_single: msgrecv(" << handle << ", " << &t << ", " << maxMsgSize << ", 0, IPC_NOWAIT): "
                      << strerror(errno) << std::endl;
         return -1;
     }
     ret = header.on_recv(t.data, ret);
     if (ret < 0) {
-      ygglog_error << "IPCComm(" << name << ")::recv_single: Error copying data" << std::endl;
+      log_error() << "recv_single: Error copying data" << std::endl;
       return ret;
     }
-    ygglog_debug << "IPCComm(" << name << ")::recv_single: returns " << ret << " bytes" << std::endl;
+    log_debug() << "recv_single: returns " << ret << " bytes" << std::endl;
     return ret;
 }
 

@@ -543,7 +543,7 @@ void ZMQComm::init() {
 }
 
 void ZMQComm::close() {
-    ygglog_debug << "ZMQComm::close: Started" << std::endl;
+    log_debug() << "ZMQComm::close: Started" << std::endl;
     if ((direction == RECV) && this->is_open() &&
 	(!global_comm) && (!(flags & COMM_EOF_RECV))) {
       if (utils::YggdrasilLogger::_ygg_error_flag == 0) {
@@ -559,7 +559,7 @@ void ZMQComm::close() {
 	      free(data);
         }
     }
-    ygglog_debug << "ZMQComm::close: Finished" << std::endl;
+    log_debug() << "ZMQComm::close: Finished" << std::endl;
     CommBase::close();
 }
 
@@ -576,7 +576,7 @@ int ZMQComm::comm_nmsg(DIRECTION dir) const {
 	    return handle->poll(ZMQ_POLLIN, short_timeout);
         }
     } else { // GCOVR_EXCL_LINE
-      ygglog_debug << "ZMQComm(" << name << ")::comm_nmsg: nmsg = " << reply.n_msg << ", nrep = "
+      log_debug() << "comm_nmsg: nmsg = " << reply.n_msg << ", nrep = "
 		   << reply.n_rep << std::endl;
       out = reply.n_msg - reply.n_rep;
     }
@@ -587,19 +587,19 @@ int ZMQComm::send_single(utils::Header& header) {
   assert(!global_comm);
   if (header.on_send() < 0)
     return -1;
-  ygglog_debug << "ZMQComm(" << name << ")::send_single: " << header.size_msg << " bytes" << std::endl;
+  log_debug() << "send_single: " << header.size_msg << " bytes" << std::endl;
   std::string msg(header.data_msg(), header.size_msg);
   int ret = handle->send(msg);
   if (ret < 0) {
-    ygglog_error << "ZMQComm(" << name << ")::send_single: Error in ZMQSocket::send" << std::endl;
+    log_error() << "send_single: Error in ZMQSocket::send" << std::endl;
     return -1;
   }
   // Reply
   if (!do_reply_send(header)) {
-    ygglog_error << "ZMQComm(" << name << ")::send_single: Error in do_reply_send" << std::endl;
+    log_error() << "send_single: Error in do_reply_send" << std::endl;
     return -1;
   }
-  ygglog_debug << "ZMQComm(" << name << ")::send_single: returning " << ret << std::endl;
+  log_debug() << "send_single: returning " << ret << std::endl;
   return ret;
 }
 bool ZMQComm::do_reply_send(const utils::Header& header) {
@@ -611,7 +611,7 @@ bool ZMQComm::do_reply_send(const utils::Header& header) {
 long ZMQComm::recv_single(utils::Header& header) {
     assert((!global_comm) && handle);
     long ret = -1;
-    ygglog_debug << "ZMQComm(" << name << ")::recv_single " << std::endl;
+    log_debug() << "recv_single " << std::endl;
 
     std::string msg;
     if ((ret = handle->recv(msg)) < 0)
@@ -619,16 +619,16 @@ long ZMQComm::recv_single(utils::Header& header) {
 
     ret = header.on_recv(msg.c_str(), msg.size());
     if (ret < 0) {
-      ygglog_error << "ZMQComm(" << name << ")::recv_single: Error copying data" << std::endl;
+      log_error() << "recv_single: Error copying data" << std::endl;
       return ret;
     }
-    ygglog_debug << "ZMQComm(" << name << ")::recv_single: received " << ret << " bytes" << std::endl;
+    log_debug() << "recv_single: received " << ret << " bytes" << std::endl;
     // Extract reply address from header
     if (!do_reply_recv(header)) {
-      ygglog_error << "ZMQComm(" << name << ")::recv_single: Error in do_reply_recv" << std::endl;
+      log_error() << "recv_single: Error in do_reply_recv" << std::endl;
       return -1;
     }
-    ygglog_debug << "ZMQComm(" << name << ")::recv_single: returns " << ret << " bytes" << std::endl;
+    log_debug() << "recv_single: returns " << ret << " bytes" << std::endl;
     return ret;
 }
 
@@ -663,7 +663,7 @@ bool ZMQComm::create_header_send(Header& header) {
 			       HEAD_FLAG_SERVER_SIGNON))) {
     std::string reply_address;
     reply.create(reply_address);
-    ygglog_debug << "ZMQComm(" << this->name << ")::create_header_send: zmq_reply = " << reply_address << std::endl;
+    log_debug() << "create_header_send: zmq_reply = " << reply_address << std::endl;
     if (!header.SetMetaString("zmq_reply", reply_address))
       return false;
   }
@@ -681,7 +681,7 @@ Comm_t* ZMQComm::create_worker_send(Header& head) {
   if (out) {
     std::string reply_address;
     out->reply.create(reply_address);
-    ygglog_debug << "ZMQComm(" << this->name << ")::create_worker_send: zmq_reply_worker = " << reply_address << std::endl;
+    log_debug() << "create_worker_send: zmq_reply_worker = " << reply_address << std::endl;
     if (!head.SetMetaString("zmq_reply_worker", reply_address))
       return nullptr;
   }
@@ -717,30 +717,30 @@ bool ZMQComm::afterSendRecv(Comm_t* sComm, Comm_t* rComm) {
        sComm->getType() != CLIENT_COMM) || 
       (rComm->getType() != ZMQ_COMM && rComm->getType() != SERVER_COMM &&
        rComm->getType() != CLIENT_COMM)) {
-    ygglog_error << "ZMQComm::afterSendRecv: One or both communicators are not ZMQ communicators" << std::endl;
+    log_error() << "afterSendRecv: One or both communicators are not ZMQ communicators" << std::endl;
     return false;
   }
   ZMQComm* sComm_z = dynamic_cast<ZMQComm*>(sComm);
   ZMQComm* rComm_z = dynamic_cast<ZMQComm*>(rComm);
   if (rComm_z->getReply().sockets.size() != 1) {
-    ygglog_error << "ZMQComm::afterSendRecv: Receive socket not set" << std::endl;
+    log_error() << "afterSendRecv: Receive socket not set" << std::endl;
     return false;
   }
   if (!rComm_z->getReply().recv_stage1()) {
-    ygglog_error << "ZMQComm::afterSendRecv: Error in recv_stage1" << std::endl;
+    log_error() << "afterSendRecv: Error in recv_stage1" << std::endl;
     return false;
   }
   std::string msg;
   if (!sComm_z->getReply().send_stage1(msg)) {
-    ygglog_error << "ZMQComm::afterSendRecv: Error in send_stage1" << std::endl;
+    log_error() << "afterSendRecv: Error in send_stage1" << std::endl;
     return false;
   }
   if (!sComm_z->getReply().send_stage2(msg)) {
-    ygglog_error << "ZMQComm::afterSendRecv: Error in send_stage2" << std::endl;
+    log_error() << "afterSendRecv: Error in send_stage2" << std::endl;
     return false;
   }
   if (!rComm_z->getReply().recv_stage2()) {
-    ygglog_error << "ZMQComm::afterSendRecv: Error in recv_stage2" << std::endl;
+    log_error() << "afterSendRecv: Error in recv_stage2" << std::endl;
     return false;
   }
   return true; // GCOVR_EXCL_STOP

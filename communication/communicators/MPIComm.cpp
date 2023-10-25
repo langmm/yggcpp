@@ -117,7 +117,7 @@ int MPIComm::mpi_comm_source_id() const {
     if (direction == SEND)
         return 0;
     if (!handle) {
-        ygglog_error << "mpi_comm_source_id(" << name << "): Queue handle is NULL." << std::endl;
+        log_error() << "mpi_comm_source_id(" << name << "): Queue handle is NULL." << std::endl;
         return -1;
     }
     //mpi_registry_t* reg = (mpi_registry_t*)(x->handle);
@@ -125,14 +125,14 @@ int MPIComm::mpi_comm_source_id() const {
     int address = MPI_ANY_SOURCE;
     if ((handle->Probe(address, &status) != MPI_SUCCESS) ||
 	status.MPI_ERROR) {
-      ygglog_error << "mpi_comm_source_id(" << name << "): Error in probe" << std::endl;
+      log_error() << "mpi_comm_source_id(" << name << "): Error in probe" << std::endl;
       return -1;
     }
     int flag;
     MPI_Test_cancelled(&status, &flag);
     if (flag) {
-        ygglog_error << "mpi_comm_source_id(" << name << "): Request canceled for tag = " << handle->tag << std::endl;
-        return -1;
+      log_error() << "mpi_comm_source_id(" << name << "): Request canceled for tag = " << handle->tag << std::endl;
+      return -1;
     }
     int src = status.MPI_SOURCE;
     if (src > 0) {
@@ -158,7 +158,7 @@ int MPIComm::comm_nmsg(DIRECTION dir) const {
     int src = mpi_comm_source_id();
     int nmsg = 0;
     if (src < 0) {
-        ygglog_error << "MPIComm(" << name << ")::comm_nmsg: Error checking messages." << std::endl;
+        log_error() << "comm_nmsg: Error checking messages." << std::endl;
         return -1;
     } else if (src > 0) {
         nmsg = 1;
@@ -170,51 +170,51 @@ int MPIComm::send_single(utils::Header& header) {
     assert((!global_comm) && handle);
     if (header.on_send() < 0)
       return -1;
-    ygglog_debug << "MPIComm(" << name << ")::send_single: " << header.size_msg << " bytes" << std::endl;
+    log_debug() << "send_single: " << header.size_msg << " bytes" << std::endl;
     int ret = (int)(header.size_msg);
     int adr = static_cast<int>(handle->procs[handle->tag % handle->procs.size()]);
     if (handle->Send(&ret, 1, MPI_INT, adr) != MPI_SUCCESS) {
-      ygglog_error << "MPIComm(" << name << ")::send_single: Error sending message size for tag = " << handle->tag << std::endl;
+      log_error() << "send_single: Error sending message size for tag = " << handle->tag << std::endl;
       return -1;
     }
     if (handle->Send(header.data_msg(), ret, MPI_CHAR, adr) != MPI_SUCCESS) {
-      ygglog_error << "MPIComm(" << name << ")::send_single: Error receiving message for tag = " << handle->tag << std::endl;
+      log_error() << "send_single: Error receiving message for tag = " << handle->tag << std::endl;
       return -1;
     }
-    ygglog_debug << "MPIComm(" << name << ")::send_single: returning " <<  ret << std::endl;
+    log_debug() << "send_single: returning " <<  ret << std::endl;
     handle->tag++;
     return ret;
 }
 
 long MPIComm::recv_single(utils::Header& header) {
     assert(!global_comm);
-    ygglog_debug << "MPIComm(" << name << ")::recv_single" << std::endl;
+    log_debug() << "recv_single" << std::endl;
     MPI_Status status;
     int adr = mpi_comm_source_id();
     if (handle->Probe(adr, &status) != MPI_SUCCESS || status.MPI_ERROR) {
-        ygglog_error << "MPIComm(" << name << ")::recv_single: Error in probe for tag = " << handle->tag << std::endl;
+        log_error() << "recv_single: Error in probe for tag = " << handle->tag << std::endl;
         return -1;
     }
     int ret = 0;
     if (handle->Recv(&ret, 1, MPI_INT, adr, &status) != MPI_SUCCESS ||
 	status.MPI_ERROR) {
-        ygglog_error << "MPIComm(" << name << ")::recv_single: Error receiving message size for tag = " << handle->tag << std::endl;
+        log_error() << "recv_single: Error receiving message size for tag = " << handle->tag << std::endl;
         return -1;
     }
     ret = header.on_recv(NULL, ret);
     if (ret < 0) {
-      ygglog_error << "MPIComm(" << name << ")::recv_single: Error reallocating data" << std::endl;
+      log_error() << "recv_single: Error reallocating data" << std::endl;
       return ret;
     }
     if (handle->Recv(header.data_msg(), ret,
 		     MPI_CHAR, adr, &status) != MPI_SUCCESS ||
 	status.MPI_ERROR) {
-        ygglog_error << "MPIComm(" << name << ")::recv_single: Error receiving message for tag = " << handle->tag << std::endl;
+        log_error() << "recv_single: Error receiving message for tag = " << handle->tag << std::endl;
         return -1;
     }
     header.data_msg()[ret] = '\0';
     ret = header.on_recv(header.data_msg(), ret);
-    ygglog_debug << "MPIComm(" << name << ")::recv_single: returns " << ret << " bytes" << std::endl;
+    log_debug() << "recv_single: returns " << ret << " bytes" << std::endl;
     handle->tag++;
     return ret;
 }

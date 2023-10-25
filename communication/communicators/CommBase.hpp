@@ -52,12 +52,13 @@ const int COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
 	       int flgs = 0, const COMM_TYPE type = typ);		\
   static bool isInstalled() { return flag; }				\
   static COMM_TYPE defaultCommType() { return typ; }			\
+  std::string commClsStr() const override { return #cls; }		\
   ~cls() {								\
-    ygglog_debug << "~" #cls ": Started" << std::endl;			\
+    log_debug() << "~" #cls ": Started" << std::endl;			\
     if (!is_closed()) {							\
       close();								\
     }									\
-    ygglog_debug << "~" #cls ": Finished" << std::endl;			\
+    log_debug() << "~" #cls ": Finished" << std::endl;			\
   }
 #define ADD_CONSTRUCTORS(T)			\
   ADD_CONSTRUCTORS_BASE(T ## Comm, T ## _COMM, T ## _INSTALLED_FLAG)
@@ -127,7 +128,7 @@ const int COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
     int ret = 0;							\
     YGG_THREAD_SAFE_BEGIN(cls) {					\
       if (cls::_NkeysUsed++ >= MAX_KEYS_ALLOWED) {			\
-	ygglog_error << "Too many channels in use, max: " << MAX_KEYS_ALLOWED << std::endl; \
+	log_error() << "Too many channels in use, max: " << MAX_KEYS_ALLOWED << std::endl; \
 	ret = -1;							\
       } else {								\
 	cls::_keysUsed[cls::_NkeysUsed] = key;				\
@@ -426,8 +427,8 @@ private:
     doc.PushBack(tmp, doc.GetAllocator());				\
   }									\
   if ((!doc.IsArray()) || doc.Size() == 0) {				\
-    ygglog_error << "CommBase(" << name <<				\
-      ")::recvVar(T& data): Received document does not have enough "	\
+    log_error() <<							\
+      "recvVar(T& data): Received document does not have enough "	\
       "arguments to fill all passed variables: " << doc << std::endl;	\
     return -1;								\
   }									\
@@ -437,7 +438,8 @@ private:
   i++
 #define HANDLE_RECV_CHECK_(check, Tname)				\
   if (!check) {								\
-    ygglog_error << "CommBase(" << name << ")::recvVar(T& data): " <<	\
+    log_error() <<							\
+      "recvVar(T& data): " <<						\
       "Element" << i << " in received document is not the "		\
       "expected type. type = " << Tname <<				\
       ", document = " << doc[0] << std::endl;				\
@@ -448,8 +450,8 @@ private:
   return _recvVA(i, allow_realloc, doc, args...)
 #define HANDLE_RECV_LAST_						\
   if (doc.Size() > 0) {							\
-    ygglog_error << "CommBase(" << name <<				\
-      ")::recvVar(T& data): Received document has more members than "	\
+    log_error() <<							\
+      "recvVar(T& data): Received document has more members than "	\
       "the number of passed arguments (" << i << "), remaining "	\
       "elements: " << doc << std::endl;					\
     return -1;								\
@@ -795,6 +797,44 @@ public:
       @returns name.
      */
     const std::string& getName() const { return name; }
+    void throw_error(const std::string msg) const {
+      utils::ygglog_throw_error(logStr() + msg);
+    }
+    communication::utils::YggdrasilLogger log_error() const {
+      communication::utils::YggdrasilLogger out ygglog_param_error;
+      out << logStr() << "::";
+      return out;
+    }
+    communication::utils::YggdrasilLogger log_info() const {
+      communication::utils::YggdrasilLogger out ygglog_param_info;
+      out << logStr() << "::";
+      return out;
+    }
+    communication::utils::YggdrasilLogger log_debug() const {
+      communication::utils::YggdrasilLogger out ygglog_param_debug;
+      out << logStr() << "::";
+      return out;
+    }
+    /*!
+      @brief A string describing the communicator class.
+    */
+    virtual std::string commClsStr() const {
+      std::string out = COMM_TYPE_map.find(getCommType())->second;
+      return out;
+    }
+    /*!
+      @brief A string describing the communicator for use in log messages.
+    */
+    virtual std::string logDesc() const {
+      return DIRECTION_map.find(getDirection())->second;
+    }
+    /*!
+      @brief Get a string describing the communicator.
+     */
+    std::string logStr() const {
+      std::string out = commClsStr() + "(" + name + "-" + logDesc() + ")";
+      return out;
+    }
     /*!
       @brief Get the communicator's address.
       @returns Address.
@@ -908,12 +948,12 @@ protected:
     void setOppEnv() {
       if (address) {
 	std::string opp_name = envName(name, direction, true);
-	ygglog_debug << "CommBase(" << name << ")::setOppEnv: " << opp_name << " = " << getAddress() << std::endl;
+	log_debug() << "setOppEnv: " << opp_name << " = " << getAddress() << std::endl;
 	setenv(opp_name.c_str(), getAddress().c_str(), 1);
       }
     }
     void unsetOppEnv() {
-      ygglog_debug << "CommBase(" << name << ")::unsetOppEnv" << std::endl;
+      log_debug() << "unsetOppEnv" << std::endl;
       std::string opp_name = envName(name, direction, true);
       unsetenv(opp_name.c_str());
     }
@@ -1062,7 +1102,7 @@ public:
 
     /*! \copydoc Comm_t::comm_nmsg */
     int comm_nmsg(DIRECTION=NONE) const override {
-      ygglog_error << "Comm_nmsg of base class called, must be overridden" << std::endl;
+      log_error() << "Comm_nmsg of base class called, must be overridden" << std::endl;
       return -1;
     }
     /*! \copydoc Comm_t::close */
@@ -1077,7 +1117,7 @@ protected:
      * Not used, must be overloaded by a child class
      */
     int send_single(utils::Header&) override {
-      ygglog_error << "Send of base class called, must be overridden" << std::endl;
+      log_error() << "Send of base class called, must be overridden" << std::endl;
       return -1;
     }
 
@@ -1085,7 +1125,7 @@ protected:
      * Not used, must be overloaded by child class
      */
     long recv_single(utils::Header&) override {
-      ygglog_error << "Recv of base class called, must be overridden" << std::endl;
+      log_error() << "Recv of base class called, must be overridden" << std::endl;
       return -1;
     }
 
@@ -1101,7 +1141,7 @@ protected:
 
     Comm_t* create_worker(utils::Address*, const DIRECTION&,
 			  int) override {
-      utils::ygglog_throw_error("create_worker of base class called, must be overridden");
+      throw_error("create_worker of base class called, must be overridden");
       return NULL; // GCOVR_EXCL_LINE
     }
 
@@ -1152,9 +1192,9 @@ bool CommBase<H>::is_closed() const {
 
 template<typename H>
 CommBase<H>::~CommBase() {
-    ygglog_debug << "~CommBase: Started" << std::endl;
+    log_debug() << "~CommBase: Started" << std::endl;
     close();
-    ygglog_debug << "~CommBase: Finished" << std::endl;
+    log_debug() << "~CommBase: Finished" << std::endl;
 }
 
 
