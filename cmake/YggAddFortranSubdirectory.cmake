@@ -206,6 +206,11 @@ function(add_mixed_fortran_library target_name library_type)
   #   set(library_type STATIC)
   # endif()
   add_library(${target_name} ${library_type} ${other_sources})
+  if (MSVC_AND_GNU_BUILD)
+    target_compile_options(
+      ${target_name} PRIVATE
+      -fno-stack-check -fno-stack-protector -mno-stack-arg-probe)
+  endif()
   target_link_external_fortran_objects(
       ${target_name} ${target_name}_FORTRAN_OBJECT_LIBRARY)
 endfunction()
@@ -254,6 +259,7 @@ function(add_external_fortran_library target_name library_type)
     # TODO: Only do this if MSVC w/ gfortran
     set(MSVC_AND_GNU_BUILD ON)
   endif()
+  set(MSVC_AND_GNU_BUILD ${MSVC_AND_GNU_BUILD} PARENT_SCOPE)
   if ((NOT FORCE_SPLIT_CXXFORTRAN) AND (NOT MSVC_AND_GNU_BUILD))
     include(FortranCInterface)
     FortranCInterface_VERIFY()

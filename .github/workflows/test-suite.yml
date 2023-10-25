@@ -425,12 +425,14 @@ jobs:
         run: |
           mkdir build
           cd build
+          which cmake
           cmake .. ${{ env.CONFIG_FLAGS }}
       - name: Configure (PIP)
         if: matrix.python-install == 'pip'
         run: |
           mkdir build
           cd build
+          where.exe cmake | Write-Output
           cmake .. ${{ env.CONFIG_FLAGS }}
       
       ###################################
@@ -475,6 +477,7 @@ jobs:
           mamba list
           echo "PATH=$PATH"
           cd build
+          which ctest
           ctest ${{ env.TEST_FLAGS }}
       - name: Show path (PIP & WINDOWS)
         if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
@@ -485,6 +488,7 @@ jobs:
         run: |
           echo "PATH=$env:PATH"
           cd build
+          where.exe ctest | Write-Output
           ctest ${{ env.TEST_FLAGS }}
 
       ###################################
