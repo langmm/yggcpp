@@ -424,6 +424,7 @@ jobs:
         run: |
           $env:PATH = $env:PATH -replace "C:\\Strawberry\\c\\bin;", ""
           "PATH=$env:PATH" | Out-File -FilePath $env:GITHUB_ENV -Append
+          rmdir /S /Q C:\Strawberry
       - name: Check cmake (PIP)
         if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
         run: |
