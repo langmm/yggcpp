@@ -473,7 +473,7 @@ jobs:
         shell: bash -l {0}
         run: |
           mamba list
-          echo "$PATH"
+          echo "PATH=$PATH"
           cd build
           ctest ${{ env.TEST_FLAGS }}
       - name: Show path (PIP & WINDOWS)
@@ -483,6 +483,7 @@ jobs:
       - name: Test C++, C, & Fortran Interfaces (PIP)
         if: matrix.python-install == 'pip'
         run: |
+          echo "PATH=$env:PATH"
           cd build
           ctest ${{ env.TEST_FLAGS }}
 
