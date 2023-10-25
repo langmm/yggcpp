@@ -13,10 +13,8 @@
 * Automate fortran wrapping of C interface?
 * Change how ply & obj are stored to be generic geometry structure?
 * Add method for reserving addresses and generating new addresses if a reserved one is used so that proxy is not needed for every connection
-* Refactor so that serialize/deserialize operate on rapidjson::Document and only specialied send/recv calls ApplyVarArgs
 * Determine how async should be handled by the C/C++ interface (allow flags to be passed?)
 * Add templated methods for sending/receiving multiple variables of different types
-* Ensure send/recv of bytes gets passed through serialize/deserialize
 * Lock thread when getMetadata is used to prevent underlying data from being freed during use
 * Move thread patch to cmake with conditional check for specific version of mingw that conda currently packages (5.3)
 * Set explicit exports so that CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS doesn't need to be set (causes issues in a split C/Fortran build)

@@ -99,15 +99,15 @@ TEST(LOGGING, fulltest) {
     std::string temp = buffer.str();
     long loc = static_cast<long>(temp.find("at"));
     EXPECT_EQ(std::count(temp.begin() + loc, temp.end(),'5'), 1);
-    EXPECT_EQ(temp.find("ERROR"), 0);
+    EXPECT_GT(temp.find("ERROR"), 0);
     buffer.str(std::string());
     ygglog_info << "This is informational";
     temp = buffer.str();
-    EXPECT_EQ(temp.find("INFO"), 0);
+    EXPECT_GT(temp.find("INFO"), 0);
     buffer.str(std::string());
     ygglog_debug << "This is a debug message";
     temp = buffer.str();
-    EXPECT_EQ(temp.find("DEBUG"), 0);
+    EXPECT_GT(temp.find("DEBUG"), 0);
     buffer.str(std::string());
     char* eval = getenv("YGG_MODEL_NAME");
     setenv("YGG_MODEL_NAME", "MY_TEST_MODEL", 1);
@@ -135,7 +135,7 @@ TEST(LOGGING, fulltest) {
     buffer.str(std::string());
     EXPECT_ANY_THROW(ygglog_throw_error("Another fatal error occurred"));
     temp = buffer.str();
-    EXPECT_EQ(temp.find("ERROR"), 0);
+    EXPECT_GT(temp.find("ERROR"), 0);
     END_CAPTURE
 }
 

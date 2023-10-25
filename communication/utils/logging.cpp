@@ -1,5 +1,6 @@
 #include "logging.hpp"
 #include "tools.hpp"
+#include <time.h>
 
 namespace communication {
 namespace utils {
@@ -11,8 +12,13 @@ YggdrasilLogger::YggdrasilLogger(std::string nme, size_t lvl, bool is_err) :
 YggdrasilLogger::~YggdrasilLogger() {
   std::string out = ss.str();
   if (eval() && !out.empty()) {
-    // std::cout << name << ": " << _getLogPretex() << out;
-    std::cerr << name << ": " << _getLogPretex() << out;
+    time_t     now = time(0);
+    struct tm  tstruct;
+    char       buf[80];
+    tstruct = *localtime(&now);
+    strftime(buf, sizeof(buf), "%X", &tstruct);
+    // std::cout << buf << " " << name << ": " << _getLogPretex() << out;
+    std::cerr << buf << " " << name << ": " << _getLogPretex() << out;
   }
 }
 bool YggdrasilLogger::eval() {
