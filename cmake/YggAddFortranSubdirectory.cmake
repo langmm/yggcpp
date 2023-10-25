@@ -156,8 +156,10 @@ function(target_link_external_fortran_objects target fortran_target)
       PROPERTIES
       EXTERNAL_OBJECT true
       GENERATED true)
-    message(STATUS "CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES = ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}")
-    message(STATUS "CMAKE_Fortran_IMPLICIT_LINK_DIRECTORIES = ${CMAKE_Fortran_IMPLICIT_LINK_DIRECTORIES}")
+    get_target_property(link_lib ${fortran_target} INTERFACE_LINK_LIBRARIES)
+    get_target_property(link_dir ${fortran_target} INTERFACE_LINK_DIRECTORIES)
+    message(STATUS "INTERFACE_LINK_LIBRARIES = ${link_lib}")
+    message(STATUS "INTERFACE_LINK_DIRECTORIES = ${link_dir}")
     target_link_libraries(${target} PUBLIC $<TARGET_PROPERTY:${fortran_target},INTERFACE_LINK_LIBRARIES>)
     target_link_directories(${target} PUBLIC $<TARGET_PROPERTY:${fortran_target},INTERFACE_LINK_DIRECTORIES>)
     target_sources(${target} PRIVATE "$<TARGET_OBJECTS:${fortran_target}>")
