@@ -1,24 +1,27 @@
 #include "logging.hpp"
 #include "tools.hpp"
-#include <time.h>
 
 namespace communication {
 namespace utils {
   
 int YggdrasilLogger::_ygg_error_flag = 0;
 YggdrasilLogger::YggdrasilLogger(std::string nme, size_t lvl, bool is_err) :
-  name(nme), level(lvl), is_error(is_err), ss() {
+  name(nme), level(lvl), is_error(is_err), ss(), t(std::chrono::system_clock::now()) {
 }
 YggdrasilLogger::~YggdrasilLogger() {
   std::string out = ss.str();
   if (eval() && !out.empty()) {
-    time_t     now = time(0);
+    time_t     now = std::chrono::system_clock::to_time_t(t); // time(0);
     struct tm  tstruct;
     char       buf[80];
-    tstruct = *localtime(&now);
+    localtime_r(&now, &tstruct);
+    // tstruct = *localtime(&now);
     strftime(buf, sizeof(buf), "%X", &tstruct);
-    // std::cout << buf << " " << name << ": " << _getLogPretex() << out;
-    std::cerr << buf << " " << name << ": " << _getLogPretex() << out;
+    const std::chrono::duration<double> tse = t.time_since_epoch();
+    std::chrono::seconds::rep milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(tse).count() % 1000;
+    // TODO: Revert to using std::cout after debugging done
+    std::cerr << buf << "." << std::setfill('0') << std::setw(3) <<
+      milliseconds << " " << name << ": " << _getLogPretex() << out;
   }
 }
 bool YggdrasilLogger::eval() {

@@ -1,7 +1,12 @@
 #pragma once
 #include <string>
 #include <iostream>
+#include <iomanip>
 #include <sstream>
+#include <chrono>
+#ifdef WIN32
+#define localtime_r(_Time, _Tm) localtime_s(_Tm, _Time)
+#endif
 
 #ifdef YGG_TEST
 #ifndef YGG_DEBUG
@@ -20,6 +25,7 @@ namespace utils {
     size_t level;
     bool is_error;
     std::stringstream ss;
+    std::chrono::system_clock::time_point t;
     template<typename T>
     YggdrasilLogger& operator << (const T& x) {
       ss << x;
