@@ -14,6 +14,11 @@ ServerComm::ServerComm(const std::string nme, Address *addr,
 
 ADD_CONSTRUCTORS_RPC_DEF(ServerComm)
 
+std::string ServerComm::commClsStr() const {
+  std::string out = "ServerComm";
+  return out;
+}
+
 bool ServerComm::signon(const Header& header) {
   assert(header.flags & HEAD_FLAG_CLIENT_SIGNON);
   log_debug() << "signon: begin (" <<

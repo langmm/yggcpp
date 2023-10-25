@@ -28,6 +28,10 @@ public:
      * Destructor
      */
     ~ClientComm() override = default;
+    
+    // \copydoc Comm_t::commClsStr
+    std::string commClsStr() const override;
+    
     void set_timeout_recv(int64_t new_timeout) override;
     int get_timeout_recv() override;
     virtual bool signon(const utils::Header& header,
