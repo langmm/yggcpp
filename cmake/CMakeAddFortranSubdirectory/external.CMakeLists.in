@@ -3,15 +3,12 @@ cmake_minimum_required(VERSION @CMAKE_MINIMUM_REQUIRED_VERSION@)
 enable_language(Fortran)
 include(@CMAKE_CURRENT_FUNCTION_LIST_DIR@/AddTargetsFromFile.cmake)
 message(STATUS "target_name = @target_name@, ${CMAKE_CURRENT_BINARY_DIR}")
-message(STATUS "EXTERNAL: CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES = ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}")
-message(STATUS "EXTERNAL: CMAKE_Fortran_IMPLICIT_LINK_DIRECTORIES = ${CMAKE_Fortran_IMPLICIT_LINK_DIRECTORIES}")
 set(CMAKE_VERBOSE_MAKEFILE @CMAKE_VERBOSE_MAKEFILE@)
 set(CMAKE_C_OUTPUT_EXTENSION @CMAKE_C_OUTPUT_EXTENSION@)
 set(CMAKE_Fortran_OUTPUT_EXTENSION @CMAKE_C_OUTPUT_EXTENSION@)
 set(libraries @ARGS_LIBRARIES@)
 set(includes @ARGS_INCLUDES@)
 set(library_type @library_type@)
-set(external_target_file @external_target_file@)
 add_library(@target_name@ @final_library_type@ @external_sources@)
 set_target_properties(
         @target_name@ PROPERTIES
@@ -32,12 +29,6 @@ if(includes)
     message(STATUS "Including directories ${includes}")
     target_include_directories(@target_name@ PUBLIC ${includes})
 endif()
-if(external_target_file)
-    generate_target_file(${external_target_file}
-                         EXTRA_LIBRARIES ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}
-			 EXTRA_DIRECTORIES ${CMAKE_Fortran_IMPLICIT_LINK_DIRECTORIES}
-			 CUSTOM_TARGET "external_targets_@target_name@")
-endif()
 configure_file(
         @CMAKE_CURRENT_FUNCTION_LIST_DIR@/CMakeAddFortranSubdirectory/copy_obj.cmake.in
 	${CMAKE_CURRENT_BINARY_DIR}/copy_obj.cmake
@@ -45,7 +36,6 @@ configure_file(
 add_custom_command(
         TARGET @target_name@
 	PRE_LINK
-	DEPENDS "external_targets_@target_name@"
 	COMMAND ${CMAKE_COMMAND} -E echo "OBJS=$<JOIN:$<TARGET_OBJECTS:@target_name@>,\;>"
 	COMMAND ${CMAKE_COMMAND} "-DOBJS=$<JOIN:$<TARGET_OBJECTS:@target_name@>,\;>" -P ${CMAKE_CURRENT_BINARY_DIR}/copy_obj.cmake
 	VERBATIM

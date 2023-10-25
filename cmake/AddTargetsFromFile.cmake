@@ -1,4 +1,5 @@
 function(generate_target_file target_file)
+  set(options NO_CONFIG)
   set(oneValueArgs OUTPUT_VAR DIRECTORY CUSTOM_TARGET)
   set(multiValueArgs TARGETS EXTRA_LIBRARIES EXTRA_DIRECTORIES)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -8,20 +9,33 @@ function(generate_target_file target_file)
   if(ARGS_TARGETS OR ARGS_EXTRA_LIBRARIES OR ARGS_EXTRA_DIRECTORIES)
     message(STATUS "targets = ${ARGS_TARGETS}")
     message(STATUS "target_file = ${target_file}")
-    if(ARGS_TARGETS)
-      file(GENERATE OUTPUT "${target_file}.$<CONFIG>"
-           CONTENT "LIBRARIES;${ARGS_EXTRA_LIBRARIES};DIRECTORIES;${ARGS_EXTRA_DIRECTORIES};LIBRARIES;${ARGS_TARGETS};DIRECTORIES;$<TARGET_FILE_DIR:${ARGS_TARGETS}>")
+    set(CONTENTS "LIBRARIES;${ARGS_EXTRA_LIBRARIES};DIRECTORIES;${ARGS_EXTRA_DIRECTORIES}")
+    if(ARGS_NO_CONFIG)
+      if(ARGS_TARGETS)
+        file(GENERATE OUTPUT "${target_file}"
+             CONTENT "${CONTENTS};LIBRARIES;${ARGS_TARGETS};DIRECTORIES;$<TARGET_FILE_DIR:${ARGS_TARGETS}>")
+      else()
+        file(GENERATE OUTPUT "${target_file}"
+             CONTENT "${CONTENTS}")
+      endif()
     else()
-      file(GENERATE OUTPUT "${target_file}.$<CONFIG>"
-           CONTENT "LIBRARIES;${ARGS_EXTRA_LIBRARIES};DIRECTORIES;${ARGS_EXTRA_DIRECTORIES}")
+      if(ARGS_TARGETS)
+        file(GENERATE OUTPUT "${target_file}.$<CONFIG>"
+             CONTENT "${CONTENTS};LIBRARIES;${ARGS_TARGETS};DIRECTORIES;$<TARGET_FILE_DIR:${ARGS_TARGETS}>")
+      else()
+        file(GENERATE OUTPUT "${target_file}.$<CONFIG>"
+             CONTENT "${CONTENTS}")
+      endif()
     endif()
-    add_custom_command(
+    if(NOT ARGS_NO_CONFIG)
+      add_custom_command(
         COMMAND ${CMAKE_COMMAND} "-E" "copy_if_different" "${target_file}.$<CONFIG>" "${target_file}"
 	VERBATIM
 	PRE_BUILD
 	DEPENDS  "${target_file}.$<CONFIG>"
 	OUTPUT   "${target_file}"
 	COMMENT  "creating ${target_file} file ({event: PRE_BUILD}, {filename: ${target_file}})")
+    endif()
   else()
     set(target_file)
   endif()
@@ -65,10 +79,30 @@ function(target_link_from_file target scope)
   endforeach()
   if(LIBS)
     message(STATUS "Linking libraries ${LIBS}")
-    target_link_libraries(${target} ${scope} ${LIBS})
+    if(scope STREQUAL "IMPORTED")
+      get_target_property(EXISTING_LIBS ${target} IMPORTED_LINK_INTERFACE_LIBRARIES)
+      if(EXISTING_LIBS)
+        list(PREPEND LIBS ${EXISTING_LIBS})
+        message(STATUS "Linking libraries (with existing) ${LIBS}")
+      endif()
+      set_target_properties(${target} PROPERTIES
+                            IMPORTED_LINK_INTERFACE_LIBRARIES "${LIBS}")
+    else()
+      target_link_libraries(${target} ${scope} ${LIBS})
+    endif()
   endif()
   if(DIRS)
-     message(STATUS "Linking directories ${DIRS}")
-     target_link_directories(${target} ${scope} ${DIRS})
+    message(STATUS "Linking directories ${DIRS}")
+    if(scope STREQUAL "IMPORTED")
+      get_target_property(EXISTING_DIRS ${target} INTERFACE_LINK_DIRECTORIES)
+      if(EXISTING_DIRS)
+        list(PREPEND DIRS ${EXISTING_DIRS})
+        message(STATUS "Linking directories (with existing) ${DIRS}")
+      endif()
+      set_target_properties(${target} PROPERTIES
+                            INTERFACE_LINK_DIRECTORIES "${DIRS}")
+    else()
+      target_link_directories(${target} ${scope} ${DIRS})
+    endif()
   endif()
 endfunction()

@@ -1,0 +1,15 @@
+project(@target_name@_FIND_FORTRAN)
+cmake_minimum_required(VERSION @CMAKE_MINIMUM_REQUIRED_VERSION@)
+enable_language(Fortran)
+set(CMAKE_VERBOSE_MAKEFILE @CMAKE_VERBOSE_MAKEFILE@)
+message(STATUS "Finding Fortran implicit libraries & directories")
+message(STATUS "CMAKE_CURRENT_BINARY_DIR = ${CMAKE_CURRENT_BINARY_DIR}")
+message(STATUS "CMAKE_CURRENT_SOURCE_DIR = ${CMAKE_CURRENT_SOURCE_DIR}")
+message(STATUS "TARGET_FILE = @external_target_file@")
+message(STATUS "EXTERNAL: CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES = ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}")
+message(STATUS "EXTERNAL: CMAKE_Fortran_IMPLICIT_LINK_DIRECTORIES = ${CMAKE_Fortran_IMPLICIT_LINK_DIRECTORIES}")
+include(@CMAKE_CURRENT_FUNCTION_LIST_DIR@/AddTargetsFromFile.cmake)
+generate_target_file(
+    @external_target_file@ NO_CONFIG
+    EXTRA_LIBRARIES ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}
+    EXTRA_DIRECTORIES ${CMAKE_Fortran_IMPLICIT_LINK_DIRECTORIES})

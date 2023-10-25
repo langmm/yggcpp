@@ -31,7 +31,7 @@ to on, so that Microsoft ``.lib`` files are created.  Usage is as follows:
 include(CheckLanguage)
 include(ExternalProject)
 
-function(_setup_mingw_config_and_build source_dir build_dir)
+function(_setup_mingw_config_and_build source_dir build_dir tmp_dir)
   # Look for a MinGW gfortran.
   find_program(MINGW_GFORTRAN
     NAMES gfortran
@@ -72,22 +72,42 @@ function(_setup_mingw_config_and_build source_dir build_dir)
   string(REPLACE "\\" "\\\\" MINGW_PATH "${MINGW_PATH}")
   configure_file(
     ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/CMakeAddFortranSubdirectory/config_mingw.cmake.in
-    ${build_dir}/config_mingw.cmake
+    ${build_dir}/external_config.cmake
     @ONLY)
   configure_file(
     ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/CMakeAddFortranSubdirectory/build_mingw.cmake.in
-    ${build_dir}/build_mingw.cmake
+    ${build_dir}/external_build.cmake
+    @ONLY)
+  set(source_dir ${tmp_dir})
+  if (ARGS_CMAKE_COMMAND_LINE)
+    set(ARGS_CMAKE_COMMAND_LINE "${ARGS_CMAKE_COMMAND_LINE} -B ${tmp_dir}")
+  else()
+    set(ARGS_CMAKE_COMMAND_LINE "-B ${tmp_dir}")
+  endif()
+  configure_file(
+    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/CMakeAddFortranSubdirectory/config_mingw.cmake.in
+    ${tmp_dir}/external_find_fortran.cmake
     @ONLY)
 endfunction()
 
-function(_setup_native_config_and_build source_dir build_dir)
+function(_setup_native_config_and_build source_dir build_dir tmp_dir)
   configure_file(
     ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/CMakeAddFortranSubdirectory/config_native.cmake.in
-    ${build_dir}/config_native.cmake
+    ${build_dir}/external_config.cmake
     @ONLY)
   configure_file(
     ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/CMakeAddFortranSubdirectory/build_native.cmake.in
-    ${build_dir}/build_native.cmake
+    ${build_dir}/external_build.cmake
+    @ONLY)
+  set(source_dir ${tmp_dir})
+  if (ARGS_CMAKE_COMMAND_LINE)
+    set(ARGS_CMAKE_COMMAND_LINE "${ARGS_CMAKE_COMMAND_LINE} -B ${tmp_dir}")
+  else()
+    set(ARGS_CMAKE_COMMAND_LINE "-B ${tmp_dir}")
+  endif()
+  configure_file(
+    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/CMakeAddFortranSubdirectory/config_native.cmake.in
+    ${tmp_dir}/external_find_fortran.cmake
     @ONLY)
 endfunction()
 
@@ -196,6 +216,7 @@ function(add_external_fortran_library target_name library_type)
   set(orig_source_dir "${CMAKE_CURRENT_SOURCE_DIR}/${ARGS_SOURCE_DIRECTORY}")
   set(build_dir "${CMAKE_CURRENT_BINARY_DIR}/${target_name}")
   set(source_dir "${build_dir}/src")
+  set(tmp_dir "${build_dir}/find_fortran")
 
   # Get source & object file names
   set(${target_name}_EXT_SRC)
@@ -223,7 +244,15 @@ function(add_external_fortran_library target_name library_type)
   message(STATUS "${target_name}_EXT_DEF = ${${target_name}_EXT_DEF}")
   message(STATUS "${target_name}_EXT_EXP = ${${target_name}_EXT_EXP}")
   set(EXTERNAL_PRODUCTS "${${target_name}_EXT_OBJ} ${${target_name}_EXT_DEF} ${${target_name}_EXT_EXP}")
-  if ((NOT FORCE_SPLIT_CXXFORTRAN) AND (NOT MSVC))
+  # if we have MSVC without Intel fortran then setup
+  # external projects to build with mingw fortran
+  # if(NOT (MSVC AND (NOT CMAKE_Fortran_COMPILER)))
+  set(MSVC_AND_GNU_BUILD)
+  if (MSVC)
+    # TODO: Only do this if MSVC w/ gfortran
+    set(MSVC_AND_GNU_BUILD ON)
+  endif()
+  if ((NOT FORCE_SPLIT_CXXFORTRAN) AND (NOT MSVC_AND_GNU_BUILD))
     include(FortranCInterface)
     FortranCInterface_VERIFY()
     FortranCInterface_VERIFY(CXX)
@@ -288,33 +317,33 @@ function(add_external_fortran_library target_name library_type)
 
   # create the external project cmake file
   file(MAKE_DIRECTORY "${source_dir}")
+  file(MAKE_DIRECTORY "${tmp_dir}")
   set(external_sources ${${target_name}_EXT_SRC})
   cmake_path(APPEND external_target_file "${source_dir}" "${target_name}.external_targets")
   configure_file(
     ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/CMakeAddFortranSubdirectory/external.CMakeLists.in
     ${source_dir}/CMakeLists.txt
     @ONLY)
+  configure_file(
+    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/CMakeAddFortranSubdirectory/find_gfortran.CMakeLists.in
+    ${tmp_dir}/CMakeLists.txt
+    @ONLY)
   list(APPEND EXTERNAL_PRODUCTS ${external_target_file})
 
   # create build and configure wrapper scripts
-  # if we have MSVC without Intel fortran then setup
-  # external projects to build with mingw fortran
   check_language(Fortran)
-  # if(NOT (MSVC AND (NOT CMAKE_Fortran_COMPILER)))
-  if (MSVC)
-    # TODO: Only do this if MSVC w/ gfortran
-    _setup_mingw_config_and_build("${source_dir}" "${build_dir}")
-    set(CONFIGURE_COMMAND
-      ${CMAKE_COMMAND} -P ${build_dir}/config_mingw.cmake)
-    set(BUILD_COMMAND
-      ${CMAKE_COMMAND} -P ${build_dir}/build_mingw.cmake)
+  if(MSVC_AND_GNU_BUILD)
+    _setup_mingw_config_and_build("${source_dir}" "${build_dir}" "${tmp_dir}")
   else()
-    _setup_native_config_and_build("${source_dir}" "${build_dir}")
-    set(CONFIGURE_COMMAND
-      ${CMAKE_COMMAND} -P ${build_dir}/config_native.cmake)
-    set(BUILD_COMMAND
-      ${CMAKE_COMMAND} -P ${build_dir}/build_native.cmake)
+    _setup_native_config_and_build("${source_dir}" "${build_dir}" "${tmp_dir}")
   endif()
+  set(CONFIGURE_COMMAND
+    ${CMAKE_COMMAND} -P ${build_dir}/external_config.cmake)
+  set(BUILD_COMMAND
+    ${CMAKE_COMMAND} -P ${build_dir}/external_build.cmake)
+  # if(MSVC_AND_GNU_BUILD)
+  include(${tmp_dir}/external_find_fortran.cmake)
+  # endif()
 
   # create the external project
   set(external_target_name ${target_name}_build)
@@ -348,6 +377,9 @@ function(add_external_fortran_library target_name library_type)
       ${target_name} PROPERTIES
       IMPORTED_LINK_INTERFACE_LIBRARIES ${ORIG_LIBRARIES})
   endif()
+  # if(MSVC_AND_GNU_BUILD)
+  target_link_from_file(${target_name} IMPORTED ${external_target_file})
+  # endif()
   if(WIN32 AND ${library_type} STREQUAL "SHARED")
     set_target_properties(
       ${target_name} PROPERTIES
