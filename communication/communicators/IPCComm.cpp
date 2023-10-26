@@ -17,6 +17,23 @@ ADD_CONSTRUCTORS_DEF(IPCComm)
 
 #ifdef IPCINSTALLED
 
+int IPCComm::count_queues() {
+  std::shared_ptr<FILE> pipe(popen("ipcs -q", "r"), pclose);
+  int out = 0;
+  char c[2];
+  if (!pipe)
+    YggLogThrowError("ERROR getting ipcs count");
+  while (pipe.get() && !feof(pipe.get())) {
+    if (fgets(c, 2, pipe.get()) != NULL) {
+      if (c[0] == '\n')
+	out++;
+    } else {
+      break;
+    }
+  }
+  return out;
+}
+
 void IPCComm::init() {
     updateMaxMsgSize(2048);
     int key = 0;
@@ -46,9 +63,9 @@ void IPCComm::init() {
 		  << "created(" << created << "), "
 		  << "ret(" << fid[0] << "), errno(" << errno << "): "
 		  << strerror(errno) << std::endl;
-        delete fid;
-	fid = nullptr;
-	throw std::runtime_error("IPCComm::init: Error in msgget");
+      delete fid;
+      fid = nullptr;
+      throw std::runtime_error("IPCComm::init: Error in msgget");
     }
     handle = fid;
     track_key(address->key());

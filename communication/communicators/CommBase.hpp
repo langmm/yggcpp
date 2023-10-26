@@ -54,8 +54,8 @@ const int COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
   static COMM_TYPE defaultCommType() { return typ; }			\
   std::string logClass() const override { return #cls; }		\
   ~cls() {								\
-    log_debug() << "~" #cls ": Started" << std::endl;			\
-    if (!is_closed()) {							\
+    log_debug() << "~" #cls ": Started (closed = " << is_closed() << ")" << std::endl; \
+    if (handle) {							\
       close();								\
     }									\
     log_debug() << "~" #cls ": Finished" << std::endl;			\

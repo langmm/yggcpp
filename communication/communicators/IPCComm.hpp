@@ -46,6 +46,9 @@ public:
     /*! \copydoc Comm_t::close */
     void close() override;
 
+    /*! @brief Get the number of IPC queues that are currently open. */
+    static int count_queues();
+
     /**
      * Remove the given ipc queue
      * @param close_comm If 1, close the queue, otherwise remove the given comm from the register

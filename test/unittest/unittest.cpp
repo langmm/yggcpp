@@ -1,6 +1,7 @@
 #include <iostream>
 #include "unittest.hpp"
 #include "communicators/ZMQComm.hpp"
+#include "communicators/IPCComm.hpp"
 
 #ifdef __clang__
 #pragma GCC diagnostic push
@@ -15,6 +16,9 @@ YggEnvironment::~YggEnvironment() {
 }
 
 void YggEnvironment::SetUp() {
+#ifdef IPCINSTALLED
+  Nipc = communication::communicator::IPCComm::count_queues();
+#endif // IPCINSTALLED
   std::cerr << "SETUP" << std::endl;
   communication::communicator::ygg_init();
   std::cerr << "SETUP COMPLETE" << std::endl;
@@ -24,6 +28,9 @@ void YggEnvironment::TearDown() {
   std::cerr << "TEARDOWN" << std::endl;
   communication::communicator::ygg_exit();
   std::cerr << "TEARDOWN COMPLETE" << std::endl;
+#ifdef IPCINSTALLED
+  EXPECT_EQ(communication::communicator::IPCComm::count_queues(), Nipc);
+#endif // IPCINSTALLED
 }
 
 #ifdef __clang__

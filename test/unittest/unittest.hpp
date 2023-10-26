@@ -77,4 +77,7 @@ public:
   ~YggEnvironment() override;
   void SetUp() override;
   void TearDown() override;
+#ifdef IPCINSTALLED
+  int Nipc;
+#endif // IPCINSTALLED
 };
