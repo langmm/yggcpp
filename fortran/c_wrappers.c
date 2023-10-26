@@ -14,14 +14,13 @@ void ygg_c_free(void *x) {
 }
 
 void ygg_log_info_f(const char* fmt) {
-  ygglog_info_c(fmt);
+  ygglog_info(fmt);
 }
 void ygg_log_debug_f(const char* fmt) {
-  ygglog_debug_c(fmt);
-  /* yggInfo(fmt); */
+  ygglog_debug(fmt);
 }
 void ygg_log_error_f(const char* fmt) {
-  ygglog_error_c(fmt);
+  ygglog_error(fmt);
 }
 
 void set_global_comm_f() {
@@ -248,7 +247,7 @@ int ygg_recv_f(comm_t yggQ, char *data, const size_t len) {
 
 int ygg_send_var_f(const comm_t yggQ, int nargs, void *args) {
   if (args == NULL) {
-    ygglog_error_c("ygg_send_var_f: args pointer is NULL.");
+    ygglog_error("ygg_send_var_f: args pointer is NULL.");
     return -1;
   }
   return pcommSend(yggQ, nargs, (void**)args, 1);
@@ -256,7 +255,7 @@ int ygg_send_var_f(const comm_t yggQ, int nargs, void *args) {
 
 int ygg_recv_var_f(comm_t yggQ, int nargs, void *args) {
   if (args == NULL) {
-    ygglog_error_c("ygg_recv_var_f: args pointer is NULL.");
+    ygglog_error("ygg_recv_var_f: args pointer is NULL.");
     return -1;
   }
   return pcommRecv(yggQ, 0, nargs, (void**)args, 1);
@@ -264,7 +263,7 @@ int ygg_recv_var_f(comm_t yggQ, int nargs, void *args) {
 
 int ygg_recv_var_realloc_f(comm_t yggQ, int nargs, void *args) {
   if (args == NULL) {
-    ygglog_error_c("ygg_recv_var_realloc_f: args pointer is NULL.");
+    ygglog_error("ygg_recv_var_realloc_f: args pointer is NULL.");
     return -1;
   }
   return pcommRecv(yggQ, 1, nargs, (void**)args, 1);
@@ -284,7 +283,7 @@ int rpc_recv_realloc_f(comm_t yggQ, int nargs, void *args) {
 
 int rpc_call_f(comm_t yggQ, int nargs, void *args) {
   if (args == NULL) {
-    ygglog_error_c("rpc_call_f: args pointer is NULL.");
+    ygglog_error("rpc_call_f: args pointer is NULL.");
     return -1;
   }
   return pcommCall(yggQ, 0, nargs, (void**)args, 1);
@@ -292,7 +291,7 @@ int rpc_call_f(comm_t yggQ, int nargs, void *args) {
 
 int rpc_call_realloc_f(comm_t yggQ, int nargs, void *args) {
   if (args == NULL) {
-    ygglog_error_c("rpc_call_realloc_f: args pointer is NULL.");
+    ygglog_error("rpc_call_realloc_f: args pointer is NULL.");
     return -1;
   }
   return pcommCall(yggQ, 1, nargs, (void**)args, 1);
