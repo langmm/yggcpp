@@ -17,6 +17,9 @@ set_target_properties(
 	Fortran_STANDARD_REQUIRED ON
 	Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 if(WIN32)
+    target_compile_options(
+        @target_name@ PRIVATE
+	-fno-stack-check -fno-stack-protector -mno-stack-arg-probe)
     set_target_properties(@target_name@
         PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
 endif()

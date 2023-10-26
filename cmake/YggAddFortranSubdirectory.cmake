@@ -206,13 +206,10 @@ function(add_mixed_fortran_library target library_type)
   #   set(library_type STATIC)
   # endif()
   add_library(${target} ${library_type} ${other_sources})
-  if (MSVC_AND_GNU_BUILD)
-    target_compile_options(
-      ${target} PRIVATE
-      -fno-stack-check -fno-stack-protector -mno-stack-arg-probe)
-  endif()
   target_link_external_fortran_objects(${target} ${fortran_target})
   if (MSVC_AND_GNU_BUILD)
+    set_target_properties(${target} PROPERTIES
+                          IMPORT_SUFFIX ".lib")
     # add_custom_command(
     #   TARGET ${target}
     #   POST_BUILD
