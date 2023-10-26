@@ -1,6 +1,11 @@
 set(YGG_TARGET_FORTRAN YggInterface_fortran)
 
 include(YggAddFortranSubdirectory)
+if (WIN32)
+  set_source_files_properties(
+    YggInterface.f90 PROPERTIES
+    COMPILE_OPTIONS -ffpe-trap=none)
+endif()
 add_mixed_fortran_library(${YGG_TARGET_FORTRAN} SHARED
                           c_wrappers.c YggInterface.f90)
 add_library(YggInterface::fortran ALIAS ${YGG_TARGET_FORTRAN})
