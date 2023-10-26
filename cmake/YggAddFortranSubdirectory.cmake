@@ -208,8 +208,8 @@ function(add_mixed_fortran_library target library_type)
   add_library(${target} ${library_type} ${other_sources})
   target_link_external_fortran_objects(${target} ${fortran_target})
   if (MSVC_AND_GNU_BUILD)
-    set_target_properties(${target} PROPERTIES
-                          IMPORT_SUFFIX ".lib")
+    # set_target_properties(${target} PROPERTIES
+    #                       IMPORT_SUFFIX ".lib")
     # add_custom_command(
     #   TARGET ${target}
     #   POST_BUILD

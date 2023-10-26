@@ -33,7 +33,7 @@ public:
     std::string logClass() const override;
     
     void set_timeout_recv(int64_t new_timeout) override;
-    int get_timeout_recv() override;
+    int64_t get_timeout_recv() override;
     virtual bool signon(const utils::Header& header,
 			Comm_t* async_comm=nullptr);
 

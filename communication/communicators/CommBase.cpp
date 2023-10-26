@@ -433,7 +433,7 @@ void Comm_t::set_timeout_recv(int64_t new_timeout) {
   }
   timeout_recv = new_timeout;
 }
-int Comm_t::get_timeout_recv() {
+int64_t Comm_t::get_timeout_recv() {
   if (global_comm) {
     return global_comm->get_timeout_recv();
   }

@@ -84,7 +84,7 @@ namespace communication {
       // \copydoc Comm_t::set_timeout_recv
       void set_timeout_recv(int64_t new_timeout) override;
       // \copydoc Comm_t::get_timeout_recv
-      int get_timeout_recv() override;
+      int64_t get_timeout_recv() override;
       // \copydoc Comm_t::logClass
       std::string logClass() const override;
       

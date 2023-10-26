@@ -35,7 +35,7 @@ void ClientComm::set_timeout_recv(int64_t new_timeout) {
   Comm_t* active_comm = requests.comms[0];
   active_comm->set_timeout_recv(new_timeout);
 }
-int ClientComm::get_timeout_recv() {
+int64_t ClientComm::get_timeout_recv() {
   requests.initClientResponse();
   Comm_t* active_comm = requests.comms[0];
   return active_comm->get_timeout_recv();
@@ -67,7 +67,7 @@ bool ClientComm::signon(const Header& header, Comm_t* async_comm) {
   }
   log_debug() << "signon: begin" << std::endl;
   Header tmp(true);
-  int tout = get_timeout_recv();
+  int64_t tout = get_timeout_recv();
   int nloop = 0;
   if (requests.signonSent())
     nloop = 1;
@@ -174,7 +174,7 @@ long ClientComm::recv_single(utils::Header& header) {
     std::string req_id = requests.activeRequestClient();
     long ret;
     utils::Header response_header;
-    int tout = get_timeout_recv();
+    int64_t tout = get_timeout_recv();
     TIMEOUT_LOOP(tout, YGG_SLEEP_TIME) {
         if (requests.isComplete(req_id))
 	  break;

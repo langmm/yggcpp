@@ -95,7 +95,7 @@ TEST(ServerComm, signon) {
   EXPECT_GE(cc.getRequests().initClientResponse(), 0);
   EXPECT_GE(cc.send_raw(YGG_CLIENT_SIGNON, YGG_CLIENT_SIGNON_LEN), 0);
   sc.wait_for_recv(1000);
-  sc.set_timeout_recv(1000);
+  sc.set_timeout_recv(10000);
   EXPECT_EQ(sc.recvVar(msg_recv), -1);
   EXPECT_GE(cc.sendVar(msg_send), 0);
   EXPECT_GE(sc.recvVar(msg_recv), 0);

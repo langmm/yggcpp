@@ -241,7 +241,7 @@ void AsyncComm::set_timeout_recv(int64_t new_timeout) {
     handle->comm->set_timeout_recv(new_timeout);
   CommBase::set_timeout_recv(new_timeout);
 }
-int AsyncComm::get_timeout_recv() {
+int64_t AsyncComm::get_timeout_recv() {
   if (global_comm) {
     return global_comm->get_timeout_recv();
   }

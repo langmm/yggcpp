@@ -361,7 +361,7 @@ public:
       @brief Get the time limit for receiving messages.
       @returns Timeout in micro-seconds.
      */
-    virtual int get_timeout_recv();
+    virtual int64_t get_timeout_recv();
     /*!
       @brief Wait until a message is available to be received or a time
         limit is reached.
