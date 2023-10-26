@@ -74,6 +74,7 @@ public:
 
 class YggEnvironment : public ::testing::Environment {
 public:
+  YggEnvironment() : ::testing::Environment(), Nipc(0) {}
   ~YggEnvironment() override;
   void SetUp() override;
   void TearDown() override;

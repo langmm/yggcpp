@@ -218,7 +218,7 @@ function(add_mixed_fortran_library target library_type)
     add_custom_command(
       TARGET ${target}
       POST_BUILD
-      COMMAND LIB /DEF:${${fortran_target}_EXT_DEF} /OUT:$<TARGET_IMPORT_FILE:${target}> $<TARGET_OBJECTS:${target}>
+      COMMAND LIB /DEF:${${fortran_target}_EXT_DEF} /OUT:$<TARGET_IMPORT_FILE:${target}> # $<TARGET_OBJECTS:${target}>
       COMMAND_EXPAND_LISTS)
   endif()
 endfunction()
