@@ -29,8 +29,8 @@ public:
      */
     ~ClientComm() override = default;
     
-    // \copydoc Comm_t::commClsStr
-    std::string commClsStr() const override;
+    // \copydoc Comm_t::logClass
+    std::string logClass() const override;
     
     void set_timeout_recv(int64_t new_timeout) override;
     int get_timeout_recv() override;

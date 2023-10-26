@@ -9,7 +9,7 @@
 namespace communication {
   namespace communicator {
 
-    class AsyncBacklog {
+    class AsyncBacklog : public communication::utils::LogBase {
     private:
       AsyncBacklog(const AsyncBacklog&) = delete;
       AsyncBacklog& operator=(const AsyncBacklog&) = delete;
@@ -19,6 +19,8 @@ namespace communication {
       void on_thread(Comm_t* parent);
       int send();
       long recv();
+      std::string logClass() const override { return "AsyncBacklog"; }
+      std::string logInst() const override { return logInst_; }
       Comm_t* comm;
       std::vector<utils::Header> backlog;
 #ifdef THREADSINSTALLED
@@ -30,6 +32,7 @@ namespace communication {
       std::atomic_bool complete;
       std::atomic_bool result;
       std::thread backlog_thread;
+      std::string logInst_;
 #else // THREADSINSTALLED
       bool is_closing() const { return true; }
 #endif // THREADSINSTALLED
@@ -82,8 +85,8 @@ namespace communication {
       void set_timeout_recv(int64_t new_timeout) override;
       // \copydoc Comm_t::get_timeout_recv
       int get_timeout_recv() override;
-      // \copydoc Comm_t::commClsStr
-      std::string commClsStr() const override;
+      // \copydoc Comm_t::logClass
+      std::string logClass() const override;
       
       using Comm_t::send;
       using Comm_t::recv;

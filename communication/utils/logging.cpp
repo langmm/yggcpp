@@ -52,8 +52,8 @@ std::string YggdrasilLogger::_getLogPretex() {
   return out;
 }
 
-void ygglog_throw_error(const std::string& msg) {
-  ygglog_error << msg << std::endl;
+void YggLogThrowError(const std::string& msg) {
+  YggLogError << msg << std::endl;
   throw std::exception();
 }
 

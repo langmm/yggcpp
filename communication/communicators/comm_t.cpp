@@ -6,26 +6,26 @@
 
 extern "C" {
 
-void ygglog_error_c(const char* fmt, ...) {
+void ygglog_error(const char* fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
   std::string str = communication::utils::string_format_va(fmt, ap);
   va_end(ap);
-  ygglog_error << str << std::endl;
+  YggLogError << str << std::endl;
 }
-void ygglog_debug_c(const char* fmt, ...) {
+void ygglog_debug(const char* fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
   std::string str = communication::utils::string_format_va(fmt, ap);
   va_end(ap);
-  ygglog_debug << str << std::endl;
+  YggLogDebug << str << std::endl;
 }
-void ygglog_info_c(const char* fmt, ...) {
+void ygglog_info(const char* fmt, ...) {
   va_list ap;
   va_start(ap, fmt);
   std::string str = communication::utils::string_format_va(fmt, ap);
   va_end(ap);
-  ygglog_info << str << std::endl;
+  YggLogInfo << str << std::endl;
 }
   
 int ygg_init() {
@@ -73,7 +73,7 @@ comm_t _init_comm(const char* name, const enum DIRECTION dir,
   _BEGIN_CPP {
     ret.comm = (void*) communication::communicator::new_Comm_t(dir, t, name, (char*)NULL, flags);
     if (!(ret.comm)) {
-      ygglog_error << "init_comm(" << name << "): Error initializing comm" << std::endl;
+      YggLogError << "init_comm(" << name << "): Error initializing comm" << std::endl;
       return ret;
     }
     if (datatype && datatype->metadata) {
@@ -100,10 +100,10 @@ comm_t init_comm(const char* name, const enum DIRECTION dir,
 int set_response_format(comm_t comm, const char *fmt) {
   _BEGIN_CPP {
     if (!comm.comm)
-      ygglog_throw_error_c("set_response_format: Comm is not initialized");
+      ygglog_throw_error("set_response_format: Comm is not initialized");
     COMM_TYPE ctype = static_cast<communication::communicator::Comm_t*>(comm.comm)->getType();
     if (ctype != SERVER_COMM && ctype != CLIENT_COMM)
-      ygglog_throw_error_c("set_response_format: Comm is not RPC server or client");
+      ygglog_throw_error("set_response_format: Comm is not RPC server or client");
     std::string format_str(fmt);
     if (!static_cast<communication::communicator::RPCComm*>(comm.comm)->addResponseFormat(format_str))
       return 0;
@@ -124,7 +124,7 @@ int set_response_datatype(comm_t x, dtype_t* datatype) {
 	delete metadata;
       }
       if (!x.comm)
-	ygglog_throw_error_c("set_response_datatype: Comm is not initialized");
+	ygglog_throw_error("set_response_datatype: Comm is not initialized");
     }
   } _END_CPP(set_response_datatype, 0);
   return 1;
@@ -154,37 +154,37 @@ int is_comm_format_array_type(comm_t x) {
 int comm_send(comm_t comm, const char *data, const size_t len) {
   _BEGIN_CPP {
     if (!comm.comm)
-      ygglog_throw_error_c("comm_send: Comm is not initialized");
+      ygglog_throw_error("comm_send: Comm is not initialized");
     return static_cast<communication::communicator::Comm_t*>(comm.comm)->send(data, len);
   } _END_CPP(comm_send, -1);
 }
 int comm_send_eof(comm_t comm) {
   _BEGIN_CPP {
     if (!comm.comm)
-      ygglog_throw_error_c("comm_send_eof: Comm is not initialized");
+      ygglog_throw_error("comm_send_eof: Comm is not initialized");
     return static_cast<communication::communicator::Comm_t*>(comm.comm)->send_eof();
   } _END_CPP(comm_send_eof, -1);
 }
 long comm_recv(comm_t comm, char *data, const size_t len) {
   _BEGIN_CPP {
     if (!comm.comm)
-      ygglog_throw_error_c("comm_recv: Comm is not initialized");
+      ygglog_throw_error("comm_recv: Comm is not initialized");
     return static_cast<communication::communicator::Comm_t*>(comm.comm)->recv(data, len, false);
   } _END_CPP(comm_recv, -1);
 }
 long comm_recv_realloc(comm_t comm, char **data, const size_t len) {
   _BEGIN_CPP {
     if (!comm.comm)
-      ygglog_throw_error_c("comm_recv_realloc: Comm is not initialized");
+      ygglog_throw_error("comm_recv_realloc: Comm is not initialized");
     return static_cast<communication::communicator::Comm_t*>(comm.comm)->recv(data[0], len, true);
   } _END_CPP(comm_recv_realloc, -1);
 }
 int ncommSend(comm_t comm, size_t nargs, ...) {
   _BEGIN_CPP {
     if (!comm.comm)
-      ygglog_throw_error_c("ncommSend: Comm is not initialized");
+      ygglog_throw_error("ncommSend: Comm is not initialized");
     YGGC_BEGIN_VAR_ARGS(ap, nargs, nargs, false);
-    ygglog_debug << "ncommSend: nargs = " << nargs << std::endl;
+    YggLogDebug << "ncommSend: nargs = " << nargs << std::endl;
     int ret = static_cast<communication::communicator::Comm_t*>(comm.comm)->vSend(ap);
     YGGC_END_VAR_ARGS(ap);
     return ret;
@@ -193,9 +193,9 @@ int ncommSend(comm_t comm, size_t nargs, ...) {
 long ncommRecv(comm_t comm, const int allow_realloc, size_t nargs, ...) {
   _BEGIN_CPP {
     if (!comm.comm)
-      ygglog_throw_error_c("ncommRecv: Comm is not initialized");
+      ygglog_throw_error("ncommRecv: Comm is not initialized");
     YGGC_BEGIN_VAR_ARGS(ap, nargs, nargs, allow_realloc);
-    ygglog_debug << "ncommRecv: nargs = " << nargs << std::endl;
+    YggLogDebug << "ncommRecv: nargs = " << nargs << std::endl;
     long ret = static_cast<communication::communicator::Comm_t*>(comm.comm)->vRecv(ap);
     YGGC_END_VAR_ARGS(ap);
     return ret;
@@ -204,9 +204,9 @@ long ncommRecv(comm_t comm, const int allow_realloc, size_t nargs, ...) {
 long ncommCall(comm_t comm, const int allow_realloc, size_t nargs, ...) {
   _BEGIN_CPP {
     if (!comm.comm)
-      ygglog_throw_error_c("ncommCall: Comm is not initialized");
+      ygglog_throw_error("ncommCall: Comm is not initialized");
     YGGC_BEGIN_VAR_ARGS(ap, nargs, nargs, allow_realloc);
-    ygglog_debug << "ncommCall: nargs = " << nargs << std::endl;
+    YggLogDebug << "ncommCall: nargs = " << nargs << std::endl;
     long ret = static_cast<communication::communicator::Comm_t*>(comm.comm)->vCall(ap);
     YGGC_END_VAR_ARGS(ap);
     return ret;
@@ -217,9 +217,9 @@ int pcommSend(const comm_t comm, size_t nargs,
 	      void** ptrs, int for_fortran) {
   _BEGIN_CPP {
     if (!comm.comm)
-      ygglog_throw_error_c("pcommSend: Comm is not initialized");
+      ygglog_throw_error("pcommSend: Comm is not initialized");
     rapidjson::VarArgList ap(nargs, ptrs, false, for_fortran);
-    ygglog_debug << "pcommSend: nargs = " << nargs << std::endl;
+    YggLogDebug << "pcommSend: nargs = " << nargs << std::endl;
     int ret = static_cast<communication::communicator::Comm_t*>(comm.comm)->vSend(ap);
     YGGC_END_VAR_ARGS(ap);
     return ret;
@@ -228,9 +228,9 @@ int pcommSend(const comm_t comm, size_t nargs,
 long pcommRecv(comm_t comm, const int allow_realloc, size_t nargs, void** ptrs, int for_fortran) {
   _BEGIN_CPP {
     if (!comm.comm)
-      ygglog_throw_error_c("pcommRecv: Comm is not initialized");
+      ygglog_throw_error("pcommRecv: Comm is not initialized");
     rapidjson::VarArgList ap(nargs, ptrs, allow_realloc, for_fortran);
-    ygglog_debug << "pcommRecv: nargs = " << nargs << std::endl;
+    YggLogDebug << "pcommRecv: nargs = " << nargs << std::endl;
     long ret = static_cast<communication::communicator::Comm_t*>(comm.comm)->vRecv(ap);
     YGGC_END_VAR_ARGS(ap);
     return ret;
@@ -239,9 +239,9 @@ long pcommRecv(comm_t comm, const int allow_realloc, size_t nargs, void** ptrs, 
 long pcommCall(comm_t comm, const int allow_realloc, size_t nargs, void** ptrs, int for_fortran) {
   _BEGIN_CPP {
     if (!comm.comm)
-      ygglog_throw_error_c("pcommCall: Comm is not initialized");
+      ygglog_throw_error("pcommCall: Comm is not initialized");
     rapidjson::VarArgList ap(nargs, ptrs, allow_realloc, for_fortran);
-    ygglog_debug << "pcommCall: nargs = " << nargs << std::endl;
+    YggLogDebug << "pcommCall: nargs = " << nargs << std::endl;
     long ret = static_cast<communication::communicator::Comm_t*>(comm.comm)->vCall(ap);
     YGGC_END_VAR_ARGS(ap);
     return ret;
@@ -251,7 +251,7 @@ long pcommCall(comm_t comm, const int allow_realloc, size_t nargs, void** ptrs, 
 int comm_nmsg(comm_t comm) {
   _BEGIN_CPP {
     if (!comm.comm)
-      ygglog_throw_error_c("comm_nmsg: Comm is not initialized");
+      ygglog_throw_error("comm_nmsg: Comm is not initialized");
     return static_cast<communication::communicator::Comm_t*>(comm.comm)->comm_nmsg();
   } _END_CPP(comm_nmsg, -1);
 }

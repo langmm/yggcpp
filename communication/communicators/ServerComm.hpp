@@ -29,8 +29,8 @@ public:
     using RPCComm::send;
     using RPCComm::recv;
 
-    // \copydoc Comm_t::commClsStr
-    std::string commClsStr() const override;
+    // \copydoc Comm_t::logClass
+    std::string logClass() const override;
     
 #ifndef YGG_TEST
 protected:

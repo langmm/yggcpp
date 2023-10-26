@@ -11,7 +11,8 @@ RPCComm::RPCComm(const std::string &name, Address *address,
 		 const COMM_TYPE type) :
   COMM_BASE(name, address, dir, flgs, type),
   requests(req_dir, flgs & (COMM_ALLOW_MULTIPLE_COMMS |
-			    COMM_FLAG_ASYNC_WRAPPED)) {}
+			    COMM_FLAG_ASYNC_WRAPPED),
+	   logInst()) {}
 
 void RPCComm::close() {
   requests.destroy();

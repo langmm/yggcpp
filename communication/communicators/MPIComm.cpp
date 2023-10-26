@@ -14,7 +14,7 @@ int mpi_registry_t::Probe(int source, MPI_Status *status) const {
   int out = MPI_Probe(source, tag, comm, status);
   CheckReturn(out, "Probe", source);
   if (status->MPI_ERROR) {
-    ygglog_error << "Probe(" << tag << "): Error in status: " << status->MPI_ERROR << std::endl;
+    YggLogError << "Probe(" << tag << "): Error in status: " << status->MPI_ERROR << std::endl;
   }
   return out;
 }
@@ -38,16 +38,16 @@ void mpi_registry_t::CheckReturn(int code, std::string method, int rank) const {
   if (code == MPI_SUCCESS)
     return;
   else if (code == MPI_ERR_COMM)
-    ygglog_error << method << "(" << tag << "): Invalid communicator" << std::endl;
+    YggLogError << method << "(" << tag << "): Invalid communicator" << std::endl;
   else if (code == MPI_ERR_TAG)
-    ygglog_error << method << "(" << tag << "): Invalid tag" << std::endl;
+    YggLogError << method << "(" << tag << "): Invalid tag" << std::endl;
   else if (code == MPI_ERR_RANK)
-    ygglog_error << method << "(" << tag << "): Invalid rank '" <<
+    YggLogError << method << "(" << tag << "): Invalid rank '" <<
       rank << "'" << std::endl;
   else if (code == MPI_ERR_TYPE)
-    ygglog_error << method << "(" << tag << "): Invalid datatype" << std::endl;
+    YggLogError << method << "(" << tag << "): Invalid datatype" << std::endl;
   else if (code == MPI_ERR_COUNT)
-    ygglog_error << method << "(" << tag << "): Invalid count" << std::endl;
+    YggLogError << method << "(" << tag << "): Invalid count" << std::endl;
 }
 
 MPIComm::MPIComm(const std::string name, utils::Address *address,

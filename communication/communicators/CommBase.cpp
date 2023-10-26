@@ -33,7 +33,7 @@ void communication::communicator::ygg_exit() {
 int Comm_t::_ygg_init() {
   YGG_THREAD_SAFE_BEGIN(init) {
     if (!Comm_t::_ygg_initialized) {
-      ygglog_debug << "_ygg_init: Begin initialization" << std::endl;
+      YggLogDebug << "_ygg_init: Begin initialization" << std::endl;
       communication::communicator::Comm_t::_ygg_main_thread_id = get_thread_id();
 #if defined(ZMQINSTALLED)
       ZMQContext* ctx = new ZMQContext();
@@ -43,7 +43,7 @@ int Comm_t::_ygg_init() {
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
       rapidjson::initialize_python("_ygg_init");
 #endif // YGGDRASIL_DISABLE_PYTHON_C_API
-      ygglog_debug << "_ygg_init: Registering cleanup" << std::endl;
+      YggLogDebug << "_ygg_init: Registering cleanup" << std::endl;
       std::atexit(_cleanup_wrapper);
       Comm_t::_ygg_initialized = 1;
     }
@@ -52,12 +52,12 @@ int Comm_t::_ygg_init() {
 }
 
 void Comm_t::_ygg_cleanup(CLEANUP_MODE mode) {
-  ygglog_debug << "_ygg_cleanup: mode = " << mode << std::endl;
+  YggLogDebug << "_ygg_cleanup: mode = " << mode << std::endl;
   YGG_THREAD_SAFE_BEGIN(clean) {
     CLEANUP_MODE prev_mode = Comm_t::_ygg_cleanup_mode;
     Comm_t::_ygg_cleanup_mode = mode;
     if (!Comm_t::_ygg_finalized) {
-      ygglog_debug << "_ygg_cleanup: Begin cleanup of " << Comm_t::registry.size() << " communicators (mode = " << mode << ")" << std::endl;
+      YggLogDebug << "_ygg_cleanup: Begin cleanup of " << Comm_t::registry.size() << " communicators (mode = " << mode << ")" << std::endl;
       for (size_t i = 0; i < Comm_t::registry.size(); i++) {
 	if (Comm_t::registry[i]) {
 	  if (Comm_t::registry[i]->flags & COMM_FLAG_DELETE) {
@@ -82,14 +82,14 @@ void Comm_t::_ygg_cleanup(CLEANUP_MODE mode) {
 	Comm_t::_ygg_finalized = 1;
       }
 #endif // YGG_TEST
-      ygglog_debug << "_ygg_cleanup: Cleanup complete" << std::endl;
+      YggLogDebug << "_ygg_cleanup: Cleanup complete" << std::endl;
     }
     Comm_t::_ygg_cleanup_mode = prev_mode;
   } YGG_THREAD_SAFE_END;
 #ifndef YGG_TEST
 #ifndef RAPIDJSON_YGGDRASIL_PYTHON
   if (YggdrasilLogger::_ygg_error_flag) {
-    ygglog_debug << "_ygg_cleanup: Error code set" << std::endl;
+    YggLogDebug << "_ygg_cleanup: Error code set" << std::endl;
     _exit(YggdrasilLogger::_ygg_error_flag);
   }
 #endif // RAPIDJSON_YGGDRASIL_PYTHON

@@ -95,30 +95,30 @@ TEST(ADDRESS, operators) {
 
 TEST(LOGGING, fulltest) {
     BEGIN_CAPTURE(buffer)
-    ygglog_error << "An error occurred at " << 5;
+    YggLogError << "An error occurred at " << 5;
     std::string temp = buffer.str();
     long loc = static_cast<long>(temp.find("at"));
     EXPECT_EQ(std::count(temp.begin() + loc, temp.end(),'5'), 1);
     EXPECT_GT(temp.find("ERROR"), 0);
     buffer.str(std::string());
-    ygglog_info << "This is informational";
+    YggLogInfo << "This is informational";
     temp = buffer.str();
     EXPECT_GT(temp.find("INFO"), 0);
     buffer.str(std::string());
-    ygglog_debug << "This is a debug message";
+    YggLogDebug << "This is a debug message";
     temp = buffer.str();
     EXPECT_GT(temp.find("DEBUG"), 0);
     buffer.str(std::string());
     char* eval = getenv("YGG_MODEL_NAME");
     setenv("YGG_MODEL_NAME", "MY_TEST_MODEL", 1);
-    ygglog_info << "Another info message";
+    YggLogInfo << "Another info message";
     temp = buffer.str();
     EXPECT_NE(temp.find("MY_TEST_MODEL"), std::string::npos);
     EXPECT_EQ(temp.find("MY_TEST_COPY"), std::string::npos);
     buffer.str(std::string());
     char* eval2 = getenv("YGG_MODEL_COPY");
     setenv("YGG_MODEL_COPY", "MY_TEST_COPY", 1);
-    ygglog_info << "Another info message";
+    YggLogInfo << "Another info message";
     temp = buffer.str();
     EXPECT_NE(temp.find("MY_TEST_MODEL"), std::string::npos);
     EXPECT_NE(temp.find("MY_TEST_COPY"), std::string::npos);
@@ -133,7 +133,7 @@ TEST(LOGGING, fulltest) {
         unsetenv("MY_TEST_MODEL");
     }
     buffer.str(std::string());
-    EXPECT_ANY_THROW(ygglog_throw_error("Another fatal error occurred"));
+    EXPECT_ANY_THROW(YggLogThrowError("Another fatal error occurred"));
     temp = buffer.str();
     EXPECT_GT(temp.find("ERROR"), 0);
     END_CAPTURE

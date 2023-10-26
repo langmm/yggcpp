@@ -25,7 +25,7 @@ public:
       complete(false), is_signon(is_son) {}
     int setData(utils::Header& header, bool copy=false) {
       if (complete && !is_signon) {
-	ygglog_error << "setData: request already complete" << std::endl;
+	YggLogError << "Request::setData: request already complete" << std::endl;
 	return -1;
       }
       if (copy)
@@ -42,13 +42,13 @@ public:
     bool is_signon;
 };
 
-class RequestList {
+class RequestList : public communication::utils::LogBase {
 public:
-    RequestList(DIRECTION dir, int flags = 0) :
+    RequestList(DIRECTION dir, int flags = 0, std::string logName = "") :
       comms(), requests(), partners(),
       response_dir(dir), response_flags(flags),
       response_metadata(), signon_complete(false),
-      stashed_request() {
+      stashed_request(), logInst_(logName) {
       response_flags |= COMM_EOF_SENT | COMM_EOF_RECV;
       if (response_dir == RECV)
 	response_flags |= COMM_FLAG_CLIENT_RESPONSE;
@@ -62,14 +62,16 @@ public:
     ~RequestList() {
         destroy();
     }
+    std::string logClass() const override { return "RequestList"; }
+    std::string logInst() const override { return logInst_; }
     // void initClientSignon() {
     //   if (requests.empty()) {
-    // 	ygglog_debug << "initClientSignon: begin" << std::endl;
+    // 	log_debug() << "initClientSignon: begin" << std::endl;
     // 	utils::Header header;
     // 	header.initMeta();
     // 	header.flags |= HEAD_FLAG_CLIENT_SIGNON;
     // 	addRequestClient(header);
-    // 	ygglog_debug << "initClientSignon: complete" << std::endl;
+    // 	log_debug() << "initClientSignon: complete" << std::endl;
     //   }
     // }
     void destroy() {
@@ -118,17 +120,17 @@ public:
 	if (!it->is_signon) {
 	  stashed_request = it->request_id;
 	  requests.erase(it);
-	  ygglog_debug << "stashRequest: Stashing " << stashed_request << std::endl;
+	  log_debug() << "stashRequest: Stashing " << stashed_request << std::endl;
 	  break;
 	}
       }
       return 1;
     }
     int addRequestClient(utils::Header& header, std::string request_id="") {
-      ygglog_debug << "addRequestClient: begin" << std::endl;
+      log_debug() << "addRequestClient: begin" << std::endl;
       initClientResponse();
       bool is_signon = (header.flags & HEAD_FLAG_CLIENT_SIGNON);
-      ygglog_debug << "addRequestClient: is_signon = " <<
+      log_debug() << "addRequestClient: is_signon = " <<
 	is_signon << std::endl;
       int existing_idx = -1;
       if (is_signon) {
@@ -153,7 +155,7 @@ public:
 	  if (!header.SetMetaID("request_id", request_id))
 	    return -1;
 	}
-	ygglog_debug << "addRequestClient: request_id = "
+	log_debug() << "addRequestClient: request_id = "
 		     << request_id << std::endl;
       } else {
 	if (!header.SetMetaString("request_id", request_id))
@@ -165,7 +167,7 @@ public:
       if (existing_idx < 0) {
 	size_t idx = requests.size();
 	if (hasRequest(request_id) >= 0) {
-	  ygglog_error
+	  log_error()
 	    << "addRequestClient: Client already has request with id '"
 	    << request_id << "'" << std::endl;
 	  return -1;
@@ -177,13 +179,13 @@ public:
 	// requests[idx].is_signon = is_signon;
 	existing_idx = static_cast<int>(idx);
       }
-      ygglog_debug << "addRequestClient: done response_address = "
+      log_debug() << "addRequestClient: done response_address = "
 		   << comms[0]->address->address() << ", request_id = "
 		   << request_id << std::endl;
       return existing_idx;
     }
     int addRequestServer(utils::Header& header) {
-      ygglog_debug << "addRequestServer: begin" << std::endl;
+      log_debug() << "addRequestServer: begin" << std::endl;
       std::string request_id, response_address, partner_model;
       if (!(header.GetMetaString("request_id", request_id) &&
 	    header.GetMetaString("response_address", response_address) &&
@@ -196,7 +198,7 @@ public:
       requests.emplace_back(request_id,
 			    static_cast<size_t>(comm_idx),
 			    (header.flags & HEAD_FLAG_CLIENT_SIGNON));
-      ygglog_debug << "addRequestServer: done idx = " << idx
+      log_debug() << "addRequestServer: done idx = " << idx
 		   << ", response_address = "
 		   << comms[requests[idx].comm_idx]->address->address()
 		   << ", request_id = " << requests[idx].request_id
@@ -204,27 +206,27 @@ public:
       return static_cast<int>(idx);
     }
     int addResponseServer(utils::Header& header) {
-      ygglog_debug << "addResponseServer: begin" << std::endl;
+      log_debug() << "addResponseServer: begin" << std::endl;
       if (requests.size() == 0) {
-	ygglog_error << "addResponseServer: Server does not have any unprocessed requests" << std::endl;
+	log_error() << "addResponseServer: Server does not have any unprocessed requests" << std::endl;
 	return -1;
       }
-      ygglog_debug << "addResponseServer: request_id = " << requests[0].request_id << std::endl;
+      log_debug() << "addResponseServer: request_id = " << requests[0].request_id << std::endl;
       header.initMeta();
       if (!header.SetMetaString("request_id", requests[0].request_id))
 	return -1;
       if (requests[0].setData(header, true) < 0) {
-	ygglog_error << "addResponseServer: Error setting data" << std::endl;
+	log_error() << "addResponseServer: Error setting data" << std::endl;
 	return -1;
       }
       if (header.flags & HEAD_FLAG_SERVER_SIGNON)
 	signon_complete = true;
-      ygglog_debug << "addResponseServer: done (signon_complete = " <<
+      log_debug() << "addResponseServer: done (signon_complete = " <<
 	signon_complete << ")" << std::endl;
       return 0;
     }
     int addResponseClient(utils::Header& header) {
-      ygglog_debug << "addResponseClient: begin" << std::endl;
+      log_debug() << "addResponseClient: begin" << std::endl;
       std::string request_id, partner_model;
       if (!(header.GetMetaString("model", partner_model) &&
 	    header.GetMetaString("request_id", request_id)))
@@ -233,16 +235,16 @@ public:
 	signon_complete = true;
       int idx = hasRequest(request_id);
       if (idx < 0) {
-	ygglog_error << "addResponseClient: Client does not have a request with id '" << request_id << "'" << std::endl;
+	log_error() << "addResponseClient: Client does not have a request with id '" << request_id << "'" << std::endl;
 	return -1;
       }
       if (requests[static_cast<size_t>(idx)].setData(header) < 0) {
-	ygglog_error << "addResponseClient: Error setting data" << std::endl;
+	log_error() << "addResponseClient: Error setting data" << std::endl;
 	return -1;
       }
       if (hasPartner(partner_model) < 0)
 	partners.emplace_back(partner_model);
-      ygglog_debug << "addResponseClient: done (signon_complete = " <<
+      log_debug() << "addResponseClient: done (signon_complete = " <<
 	signon_complete << ")" << std::endl;
       return 0;
     }
@@ -254,14 +256,14 @@ public:
     }
     Comm_t* activeComm() {
       if (requests.empty() || comms.empty()) {
-	ygglog_error << "activeComm: No pending requests" << std::endl;
+	log_error() << "activeComm: No pending requests" << std::endl;
 	return NULL;
       }
       return comms[requests[0].comm_idx];
     }
     Comm_t* lastComm() {
       if (comms.empty()) {
-	ygglog_error << "lastComm: No communicators" << std::endl;
+	log_error() << "lastComm: No communicators" << std::endl;
 	return NULL;
       }
       return comms[comms.size() - 1];
@@ -272,12 +274,12 @@ public:
 	    (signon_complete && !requests[i].is_signon))
 	  return requests[i].request_id;
       }
-      utils::ygglog_throw_error("activeRequestClient: No active requests");
+      throw_error("activeRequestClient: No active requests");
       return ""; // GCOVR_EXCL_LINE
     }
     int popRequestServer() {
         if (requests.empty() || comms.empty()) {
-            ygglog_error << "RequestList::popRequestServer: No pending requests" << std::endl;
+            log_error() << "popRequestServer: No pending requests" << std::endl;
             return -1;
         }
         requests.erase(requests.begin());
@@ -289,44 +291,44 @@ public:
     //       return -1;
     //     int idx = hasRequest(request_id);
     //     if (idx < 0) {
-    //         ygglog_error << "RequestList::popRequestClient: No pending request with id '" << request_id << "'" << std::endl;
+    //         log_error() << "popRequestClient: No pending request with id '" << request_id << "'" << std::endl;
     //         return -1;
     //     }
     //     if (!requests[(size_t)idx].complete) {
-    //         ygglog_error << "RequestList::popRequestClient: Request '" << request_id << "' does not have response" << std::endl;
+    //         log_error() << "popRequestClient: Request '" << request_id << "' does not have response" << std::endl;
     //         return -1;
     //     }
     // 	if (requests[(size_t)idx].is_signon) {
     // 	    // Don't remove signon request
     // 	    return 1;
     // 	}
-    // 	ygglog_debug << "RequestList::popRequestClient: Removing request '" << request_id << "'" << std::endl;
+    // 	log_debug() << "popRequestClient: Removing request '" << request_id << "'" << std::endl;
     //     requests.erase(requests.begin() + idx);
     //     return 1;
     // }
     int getRequestClient(const std::string& request_id,
 			 utils::Header& header, bool pop=false) {
-      ygglog_debug << "RequestList::getRequestClient: begin" << std::endl;
+      log_debug() << "getRequestClient: begin" << std::endl;
       int idx = hasRequest(request_id);
       if (idx < 0) {
-	ygglog_error <<
-	  "RequestList::getRequestClient: No pending request with id '" <<
+	log_error() <<
+	  "getRequestClient: No pending request with id '" <<
 	  request_id << "'" << std::endl;
 	return -1;
       }
       if (!requests[(size_t)idx].complete) {
-	ygglog_error << "RequestList::getRequestClient: Request '" <<
+	log_error() << "getRequestClient: Request '" <<
 	  request_id << "' does not have response" << std::endl;
 	return -1;
       }
       if (!header.MoveFrom(requests[(size_t)idx].data)) {
-	ygglog_error << "RequestList::getRequestClient: Error moving response header" << std::endl;
+	log_error() << "getRequestClient: Error moving response header" << std::endl;
 	return -1;
       }
       if (pop && !requests[(size_t)idx].is_signon) {
 	requests.erase(requests.begin() + idx);
       }
-      ygglog_debug << "RequestList::getRequestClient: done" << std::endl;
+      log_debug() << "getRequestClient: done" << std::endl;
       return 1;
     }
     int addComm(std::string response_address = "") {
@@ -412,6 +414,7 @@ public:
     utils::Metadata response_metadata;
     bool signon_complete;
     std::string stashed_request;
+    std::string logInst_;
 };
 }
 }

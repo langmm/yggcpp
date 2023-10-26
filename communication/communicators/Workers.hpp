@@ -11,7 +11,7 @@ namespace communicator {
   // Forward declare
   class Comm_t;
 
-  class Worker {
+  class Worker : public communication::utils::LogBase {
   private:
     Worker(const Worker& rhs) = delete;
     Worker& operator=(const Worker& rhs) = delete;
@@ -21,10 +21,12 @@ namespace communicator {
     Worker& operator=(Worker&& rhs);
     bool matches(DIRECTION dir, utils::Address* adr = nullptr);
     ~Worker();
+    std::string logClass() const override { return "Worker"; }
+    std::string logInst() const override;
     Comm_t* comm;
     std::string request;
   };
-  class WorkerList {
+  class WorkerList : public communication::utils::LogBase {
   private:
     WorkerList(const WorkerList& rhs) = delete;
     WorkerList& operator=(const WorkerList& rhs) = delete;
@@ -41,6 +43,7 @@ namespace communicator {
 		utils::Address* adr = nullptr);
     bool setRequest(Comm_t* worker, std::string request);
     bool setResponse(std::string request);
+    std::string logClass() const override { return "WorkerList"; }
     std::vector<Worker> workers;
   };
 }

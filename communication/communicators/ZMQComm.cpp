@@ -34,35 +34,35 @@ void ZMQContext::init() {
   YGG_THREAD_SAFE_BEGIN(zmq) {
     if (ZMQContext::ygg_s_process_ctx == NULL) {
       if (get_thread_id() == communication::communicator::Comm_t::_ygg_main_thread_id) {
-	ygglog_debug << "ZMQContext::init: Creating ZMQ context." << std::endl;
+	log_debug() << "init: Creating ZMQ context." << std::endl;
 	ctx = zmq_ctx_new();
       } else {
-	ygglog_throw_error("ZMQContext::init: Can only initialize the "
-			   "zeromq context on the main thread. Call "
-			   "ygg_init before the threaded portion of "
-			   "your model.");
+	throw_error("ZMQContext::init: Can only initialize the "
+		    "zeromq context on the main thread. Call "
+		    "ygg_init before the threaded portion of "
+		    "your model.");
       }
-      ygglog_debug << "ZMQContext::init: Created ZMQ context." << std::endl;
+      log_debug() << "init: Created ZMQ context." << std::endl;
       ZMQContext::ygg_s_process_ctx = ctx;
     } else {
       ctx = ZMQContext::ygg_s_process_ctx;
     }
   } YGG_THREAD_SAFE_END;
   if (ctx == NULL) {
-    ygglog_throw_error("ZMQContext::init: ZMQ context is NULL.");
+    throw_error("ZMQContext::init: ZMQ context is NULL.");
   }
 }
 
 void ZMQContext::destroy() {
   YGG_THREAD_SAFE_BEGIN(zmq) {
     if (ZMQContext::ygg_s_process_ctx != NULL) {
-      ygglog_debug << "ZMQContext::destroy: Destroying the ZMQ context" << std::endl;
+      YggLogDebug << "ZMQContext::destroy: Destroying the ZMQ context" << std::endl;
 // #ifdef _WIN32
 //       if (Comm_t::_ygg_atexit == 0) {
 // #endif // _WIN32
 	zmq_ctx_shutdown(ZMQContext::ygg_s_process_ctx);
 	if (zmq_ctx_term(ZMQContext::ygg_s_process_ctx) != 0) {
-	  ygglog_error << "ZMQContext::destroy: Error terminating context with zmq_ctx_term" << std::endl;
+	  YggLogError << "ZMQContext::destroy: Error terminating context with zmq_ctx_term" << std::endl;
 	}
 // #ifdef _WIN32
 //       }
@@ -106,7 +106,7 @@ void ZMQSocket::init(int type0, std::string address,
 template<typename T>
 int ZMQSocket::set(int member, const T& data) {
   if (zmq_setsockopt(handle, member, &data, sizeof(data)) != 0) {
-    ygglog_error << "ZMQSocket::set: Error setting " << member << " to " << data << std::endl;
+    log_error() << "set: Error setting " << member << " to " << data << std::endl;
     return -1;
   }
   return 1;
@@ -139,9 +139,9 @@ void ZMQSocket::init(int type0, utils::Address* address,
     endpoint = address->address();
     if (zmq_connect(handle, endpoint.c_str()) != 0) {
       destroy();
-      ygglog_throw_error("ZMQSocket::init: Error connecting to endpoint '" + endpoint + "'");
+      throw_error("init: Error connecting to endpoint '" + endpoint + "'");
     }
-    ygglog_debug << "ZMQSocket::init: Connected to endpoint '" << endpoint << "'" << std::endl;
+    log_verbose() << "init: Connected to endpoint '" << endpoint << "'" << std::endl;
   } else {
     const std::string protocol = "tcp";
     std::string host = "localhost";
@@ -157,10 +157,10 @@ void ZMQSocket::init(int type0, utils::Address* address,
 	  _last_port = 49152;
 	  _last_port_set = 1;
 	} else { // GCOVR_EXCL_LINE
-	  ygglog_debug << "ZMQSocket::init: model_index = " << model_index << std::endl;
+	  log_verbose() << "init: model_index = " << model_index << std::endl;
 	  _last_port = 49152 + 1000 * static_cast<int>(strtol(model_index, nullptr, 0));
 	  _last_port_set = 1;
-	  ygglog_debug << "ZMQSocket::init: last_port = " << _last_port << std::endl;
+	  log_verbose() << "init: last_port = " << _last_port << std::endl;
 	}
       }
       if (except_msg.empty()) {
@@ -189,15 +189,15 @@ void ZMQSocket::init(int type0, utils::Address* address,
 	  except_msg = "ZMQSocket::init: Error getting bound endpoint";
 	} else {
 	  endpoint.assign(endpoint_c, endpoint_len - 1); // Remove newline char
-	  ygglog_debug << "ZMQSocket::init: Bound to endpoint '" << endpoint << "'" << std::endl;
+	  log_verbose() << "init: Bound to endpoint '" << endpoint << "'" << std::endl;
 	  size_t idx_port = endpoint.find_last_of(':');
 	  assert(idx_port != std::string::npos);
 	  if (idx_port == std::string::npos) {
 	    except_msg = "ZMQSocket::init: Error getting port from endpoing";
 	  } else {
-	    ygglog_debug << "ZMQSocket::init: last_port = " << endpoint.substr(idx_port + 1) << ", idx_port = " << idx_port << std::endl;
+	    log_verbose() << "init: last_port = " << endpoint.substr(idx_port + 1) << ", idx_port = " << idx_port << std::endl;
 	    _last_port = stoi(endpoint.substr(idx_port + 1));
-	    ygglog_debug << "ZMQSocket::init: last_port = " << _last_port << std::endl;
+	    log_verbose() << "init: last_port = " << _last_port << std::endl;
 	  }
 	}
       }
@@ -215,7 +215,7 @@ int ZMQSocket::poll(int method, int tout) {
   void* poller = zmq_poller_new();
   zmq_poller_event_t events [1];
   if (zmq_poller_add(poller, handle, NULL, method) != 0) {
-    ygglog_error << "ZMQSocket: Error adding poller" << std::endl;
+    log_error() << "poll: Error adding poller" << std::endl;
     zmq_poller_destroy (&poller);
     return -1;
   }
@@ -225,7 +225,7 @@ int ZMQSocket::poll(int method, int tout) {
     if (zmq_errno() == EAGAIN) {
       out = 0;
     } else {
-      ygglog_error << "ZMQSocket: Error in poller" << std::endl;
+      log_error() << "poll: Error in poller" << std::endl;
       out = -1;
     }
   }
@@ -236,7 +236,7 @@ int ZMQSocket::poll(int method, int tout) {
   items[0].events = method;
   out = zmq_poll(items, 1, tout);
   if (out < 0) {
-    ygglog_error << "ZMQSocket: Error in poller" << std::endl;
+    log_error() << "poll: Error in poller" << std::endl;
     return -1;
   }
 #endif // ZMQ_HAVE_POLLER
@@ -248,12 +248,12 @@ int ZMQSocket::send(const std::string msg) {
   if (zmq_msg_init_size (&part, msg.size()) != 0)
     return -1;
   memcpy(zmq_msg_data(&part), msg.c_str(), msg.size());
-  ygglog_debug << "ZMQSocket::send: Sending " << msg.size() << " bytes" << std::endl;
+  log_verbose() << "send: Sending " << msg.size() << " bytes" << std::endl;
   if (zmq_sendmsg (handle, &part, 0) != (int)(msg.size())) {
     zmq_msg_close (&part);
     return -1;
   }
-  ygglog_debug << "ZMQSocket::send: Sent " << msg.size() << " bytes" << std::endl;
+  log_verbose() << "send: Sent " << msg.size() << " bytes" << std::endl;
   zmq_msg_close (&part);
   return msg.size();
 }
@@ -262,7 +262,7 @@ int ZMQSocket::recv(std::string& msg) {
   msg = "";
   int more = 1;
   size_t more_size = sizeof(more);
-  ygglog_debug << "ZMQSocket::recv: Receiving message" << std::endl;
+  log_verbose() << "recv: Receiving message" << std::endl;
   bool identity = (type == ZMQ_ROUTER);
   do {
     zmq_msg_t part;
@@ -279,7 +279,7 @@ int ZMQSocket::recv(std::string& msg) {
       return -1;
     identity = false;
   } while (more);
-  ygglog_debug << "ZMQSocket::recv: Received " << msg.size() << " bytes" << std::endl;
+  log_verbose() << "recv: Received " << msg.size() << " bytes" << std::endl;
   return msg.size();
 }
 
@@ -377,14 +377,14 @@ bool ZMQReply::recv_stage1(std::string msg_send) {
   if (last_idx < 0)
     return false;
   ZMQSocket* sock = &(sockets[last_idx]);
-  ygglog_debug << "ZMQReply::recv_stage1: Sending handshake to confirm message was received (address = " << sock->endpoint << ")" << std::endl;
+  log_verbose() << "recv_stage1: Sending handshake to confirm message was received (address = " << sock->endpoint << ")" << std::endl;
   // Send
   if (sock->send(msg_send) < 0) {
-    ygglog_error << "ZMQReply::recv_stage1: Error sending confirmation." << std::endl;
+    log_error() << "recv_stage1: Error sending confirmation." << std::endl;
     return false;
   }
   // if (msg_send == YGG_MSG_EOF) {
-  //   ygglog_info << "ZMQReply::recv_stage1: EOF confirmation." << std::endl;
+  //   log_info() << "recv_stage1: EOF confirmation." << std::endl;
   //   n_msg = 0;
   //   n_rep = 0;
   //   sock->set(ZMQ_LINGER, _zmq_sleeptime);
@@ -398,16 +398,16 @@ bool ZMQReply::recv_stage2(std::string msg_send) {
   if (last_idx < 0)
     return false;
   ZMQSocket* sock = &(sockets[last_idx]);
-  ygglog_debug << "ZMQReply::recv_stage2: Receiving acknowledgement of handshake (address = " << sock->endpoint << ")" << std::endl;
+  log_verbose() << "recv_stage2: Receiving acknowledgement of handshake (address = " << sock->endpoint << ")" << std::endl;
   // Receive
   std::string msg_recv;
   sock->poll(ZMQ_POLLIN, timeout);
   if (sock->recv(msg_recv) < 0) {
-    ygglog_error << "ZMQReply::recv_stage2: Error receiving reponse" << std::endl;
+    log_error() << "recv_stage2: Error receiving reponse" << std::endl;
     return false;
   }
   n_rep++;
-  ygglog_debug << "ZMQReply::recv_stage2: Handshake complete (address = "
+  log_verbose() << "recv_stage2: Handshake complete (address = "
 	       << sock->endpoint << ")" << std::endl;
   last_idx = -1;
   return true;
@@ -425,19 +425,19 @@ bool ZMQReply::send() {
 }
 bool ZMQReply::send_stage1(std::string& msg_data) {
   if (sockets.size() == 0) {
-    ygglog_error << "ZMQReply::send_stage1: Reply socket was not initialized." << std::endl;
+    log_error() << "send_stage1: Reply socket was not initialized." << std::endl;
     return false;
   }
   ZMQSocket* sock = &(sockets[0]);
-  ygglog_debug << "ZMQReply::send_stage1: Receiving handshake to confirm message was received (address = " << sock->endpoint << ")" << std::endl;
+  log_verbose() << "send_stage1: Receiving handshake to confirm message was received (address = " << sock->endpoint << ")" << std::endl;
   sock->poll(ZMQ_POLLIN, timeout);
   if (sock->recv(msg_data) < 0) {
-    ygglog_error << "ZMQReply::send_stage1: Error receiving reply" << std::endl;
+    log_error() << "send_stage1: Error receiving reply" << std::endl;
     return false;
   }
   // Check for EOF
   // if (msg_data == YGG_MSG_EOF) {
-  //   ygglog_debug << "ZMQReply::send_stage1: EOF received" << std::endl;
+  //   log_verbose() << "send_stage1: EOF received" << std::endl;
   //   n_msg = 0;
   //   n_rep = 0;
   //   return -2;
@@ -447,29 +447,29 @@ bool ZMQReply::send_stage1(std::string& msg_data) {
 bool ZMQReply::send_stage2(const std::string msg_data) {
   // bool is_purge = (msg_data == _purge_msg);
   if (sockets.size() == 0) {
-    ygglog_error << "ZMQReply::send_stage2: Reply socket was not initialized." << std::endl;
+    log_error() << "send_stage2: Reply socket was not initialized." << std::endl;
     return false;
   }
-  ygglog_debug << "ZMQReply::send_stage2: Sending acknowledgement of handshake" << std::endl;
+  log_verbose() << "send_stage2: Sending acknowledgement of handshake" << std::endl;
   ZMQSocket* sock = &(sockets[0]);
   sock->poll(ZMQ_POLLOUT, timeout);
   if (sock->send(msg_data) < 0) {
-    ygglog_error << "ZMQReply::send_stage2: Error sending reply frame." << std::endl;
+    log_error() << "send_stage2: Error sending reply frame." << std::endl;
     return false;
   }
   // Sleep briefly to ensure receive is complete
   THREAD_USLEEP(100);
   // Check for purge or EOF
   // if (is_purge) {
-  //   ygglog_debug << "ZMQReply::send_stage2: PURGE received" << std::endl;
+  //   log_verbose() << "send_stage2: PURGE received" << std::endl;
   //   n_msg = 0;
   //   n_rep = 0;
   //   return send();
   // } else {
   n_rep++;
   // }
-  ygglog_debug << "ZMQReply::send_stage2: Handshake complete (address = "
-	       << sock->endpoint << ")" << std::endl;
+  log_verbose() << "send_stage2: Handshake complete (address = " <<
+    sock->endpoint << ")" << std::endl;
   return true;
 }
 

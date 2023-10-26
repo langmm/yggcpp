@@ -45,7 +45,7 @@ int communication::utils::split_head_body(const char *buf,
     sind_head = 0;
     eind_head = 0;
     headsiz[0] = 0;
-    ygglog_debug << "split_head_body: No header in '" <<
+    YggLogDebug << "split_head_body: No header in '" <<
       std::string(buf).substr(0, 1000) << "...'" << std::endl;
   } else {
     sind_head = sind + strlen(MSG_HEAD_SEP);
@@ -55,7 +55,7 @@ int communication::utils::split_head_body(const char *buf,
   }
   // char* temp = (char*)realloc(*head, *headsiz + 1);
   // if (temp == NULL) {
-  //   ygglog_error << "split_head_body: Failed to reallocate header." << std::endl;
+  //   YggLogError << "split_head_body: Failed to reallocate header." << std::endl;
   //   return -1;
   // }
   // *head = temp;
@@ -80,15 +80,14 @@ long communication::utils::copyData(T*& dst, const size_t dst_len,
 				    bool allow_realloc) {
   if ((src_len + 1) > dst_len) {
     if (!allow_realloc) {
-      ygglog_error << "copyData: Size of message (" <<
+      YggLogError << "copyData: Size of message (" <<
 	src_len << " + 1 bytes) exceeds buffer size (" << dst_len <<
 	" bytes) and the buffer cannot be reallocated." << std::endl;
       return -((long)src_len);
     }
     T* tmp = (T*)realloc(dst, src_len + 1);
     if (tmp == NULL) {
-      ygglog_error <<
-	"CommBase::copyData: Error reallocating buffer" << std::endl;
+      YggLogError << "copyData: Error reallocating buffer" << std::endl;
       return -1;
     }
     dst = tmp;
@@ -112,7 +111,7 @@ bool Metadata::_init(bool use_generic) {
     return false;
   if (use_generic)
     return setGeneric();
-  // ygglog_debug << "Metadata::init: metadata = " << metadata << std::endl;
+  // log_debug() << "init: metadata = " << metadata << std::endl;
   return true;
 }
 // Metadata::Metadata(Metadata& rhs) :
@@ -153,6 +152,14 @@ bool Metadata::operator==(const Metadata& rhs) const {
 bool Metadata::operator!=(const Metadata& rhs) const {
   return (!(*this == rhs));
 }
+std::string Metadata::logInst() const {
+  std::string out;
+  if (metadata.IsObject() && metadata.HasMember("__meta__") &&
+      metadata["__meta__"].IsObject() &&
+      metadata["__meta__"].HasMember("id"))
+    GetMetaString("id", out);
+  return out;
+}
 void Metadata::resetRawSchema() {
   if (raw_schema) {
     delete raw_schema;
@@ -184,7 +191,7 @@ bool Metadata::fromSchema(const rapidjson::Value& new_schema,
     if (!n.Compare(new_schema)) {
       rapidjson::Value err;
       n.GetErrorMsg(err, metadata.GetAllocator());
-      ygglog_debug << "Schemas incompatible:" << std::endl <<
+      log_debug() << "fromSchema: Schemas incompatible:" << std::endl <<
 	"old:" << std::endl << *schema << std::endl <<
 	"new:" << std::endl << new_schema << std::endl <<
 	"error:" << std::endl << err << std::endl;
@@ -216,7 +223,7 @@ bool Metadata::Normalize() {
        s.GetAllocator());
   rapidjson::StringBuffer sb;
   if (!metadata.Normalize(s, &sb)) {
-    ygglog_error << "Metadata::Normalize: Failed to normalize schema:" <<
+    log_error() << "Normalize: Failed to normalize schema:" <<
       std::endl << metadata << std::endl << "error =" << std::endl <<
       sb.GetString() << std::endl;
     return false;
@@ -228,7 +235,7 @@ bool Metadata::fromSchema(const std::string schemaStr, bool use_generic) {
   rapidjson::Document d;
   d.Parse(schemaStr.c_str());
   if (d.HasParseError()) {
-    ygglog_error << "Metadata::fromSchema: Error parsing string: " <<
+    log_error() << "fromSchema: Error parsing string: " <<
       schemaStr << std::endl;
     return false;
   }
@@ -329,7 +336,7 @@ bool Metadata::fromFormat(const std::string& format_str,
   if (!SetSchemaString("type", "array"))
     return false;
   rapidjson::Value items(rapidjson::kArrayType);
-  ygglog_debug << "Metadata::fromFormat: " << format_str << std::endl;
+  log_debug() << "fromFormat: " << format_str << std::endl;
   // Loop over string
   int mres;
   size_t sind, eind, beg = 0, end;
@@ -420,10 +427,10 @@ bool Metadata::fromFormat(const std::string& format_str,
       strncpy(isubtype, "uint", FMT_LEN);
       iprecision = sizeof(unsigned int);
     } else {
-      ygglog_error << "Metadata::fromFormat: Could not parse format string: " << ifmt << std::endl;
+      log_error() << "fromFormat: Could not parse format string: " << ifmt << std::endl;
       return false;
     }
-    ygglog_debug << "isubtype = " << isubtype << ", iprecision = " <<
+    log_debug() << "fromFormat: isubtype = " << isubtype << ", iprecision = " <<
       iprecision << ", ifmt = " << ifmt << std::endl;
     rapidjson::Value item(rapidjson::kObjectType);
     if (!SetString("type", element_type, item))
@@ -460,19 +467,19 @@ bool Metadata::fromMetadata(const char* head, const size_t headsiz,
 			    bool use_generic) {
   metadata.Parse(head, headsiz);
   if (metadata.HasParseError()) {
-    ygglog_error << "Metadata::fromMetadata: Error parsing header: " << head << std::endl;
+    log_error() << "fromMetadata: Error parsing header: " << head << std::endl;
     return false;
   }
   if (!(metadata.IsObject())) {
-    ygglog_error << "Metadata::fromMetadata: head document must be an object." << std::endl;
+    log_error() << "fromMetadata: head document must be an object." << std::endl;
     return false;
   }
   if (!(metadata.HasMember("__meta__"))) {
-    ygglog_error << "Metadata::fromMetadata: No __meta__ information in the header." << std::endl;
+    log_error() << "fromMetadata: No __meta__ information in the header." << std::endl;
     return false;
   }
   if (!(metadata["__meta__"].IsObject())) {
-    ygglog_error << "Metadata::fromMetadata: __meta__ is not an object." << std::endl;
+    log_error() << "fromMetadata: __meta__ is not an object." << std::endl;
     return false;
   }
   return _init(use_generic);
@@ -585,13 +592,13 @@ bool Metadata::addItem(const Metadata& other,
     subSchema = getSchema(true);
   const rapidjson::Value* other_schema = other.getSchema(true);
   if (!other_schema) {
-    ygglog_error << "Metadata::addItem: item does not have schema" << std::endl;
+    log_error() << "addItem: item does not have schema" << std::endl;
     return false;
   }
   if (!(subSchema && subSchema->IsObject() &&
 	subSchema->HasMember("type") &&
 	(*subSchema)["type"] == rapidjson::Document::GetArrayString())) {
-    ygglog_error << "Metadata::addItem: schema is not for an array." << std::endl;
+    log_error() << "addItem: schema is not for an array." << std::endl;
     return false;
   }
   if (!subSchema->HasMember("items"))
@@ -601,7 +608,7 @@ bool Metadata::addItem(const Metadata& other,
   if (!(subSchema &&
 	subSchema->HasMember("items") &&
 	(*subSchema)["items"].IsArray())) {
-    ygglog_error << "Metadata::addItem: schema does not have items array" << std::endl;
+    log_error() << "addItem: schema does not have items array" << std::endl;
     return false;
   }
   rapidjson::Value item;
@@ -614,13 +621,13 @@ bool Metadata::addMember(const std::string name, const Metadata& other,
   if (!subSchema)
     subSchema = getSchema(true);
   if (!other.getSchema(true)) {
-    ygglog_error << "Metadata::addMember: member does not have schema" << std::endl;
+    log_error() << "addMember: member does not have schema" << std::endl;
     return false;
   }
   if (!(subSchema && subSchema->IsObject() &&
 	subSchema->HasMember("type") &&
 	(*subSchema)["type"] == rapidjson::Document::GetObjectString())) {
-    ygglog_error << "Metadata::addMember: schema is not for an object." << std::endl;
+    log_error() << "addMember: schema is not for an object." << std::endl;
     return false;
   }
   if (!subSchema->HasMember("properties"))
@@ -630,7 +637,7 @@ bool Metadata::addMember(const std::string name, const Metadata& other,
   // if (!(subSchema &&
   // 	subSchema->HasMember("properties") &&
   // 	(*subSchema)["properties"].IsObject())) {
-  //   ygglog_error << "Metadata::addMember: schema does not have properties" << std::endl;
+  //   log_error() << "addMember: schema does not have properties" << std::endl;
   //   return false;
   // }
   rapidjson::Value item;
@@ -648,14 +655,14 @@ bool Metadata::addMember(const std::string name, const Metadata& other,
 }
 rapidjson::Value* Metadata::getMeta() {
   if (!(metadata.IsObject() && metadata.HasMember("__meta__"))) {
-    ygglog_error << "getMeta: No __meta__ in metadata" << std::endl;
+    log_error() << "getMeta: No __meta__ in metadata" << std::endl;
     return nullptr;
   }
   return &(metadata["__meta__"]);
 }
 const rapidjson::Value* Metadata::getMeta() const {
   if (!(metadata.IsObject() && metadata.HasMember("__meta__"))) {
-    ygglog_error << "getMeta: No __meta__ in metadata" << std::endl;
+    log_error() << "getMeta: No __meta__ in metadata" << std::endl;
     return nullptr;
   }
   return &(metadata["__meta__"]);
@@ -668,7 +675,7 @@ rapidjson::Value* Metadata::getSchema(bool required) {
     return &(metadata["serializer"]["datatype"]);
   } else {
     if (required)
-      ygglog_error << "getSchema: No datatype in metadata" << std::endl;
+      log_error() << "getSchema: No datatype in metadata" << std::endl;
     return nullptr;
   }
 }
@@ -680,14 +687,14 @@ const rapidjson::Value* Metadata::getSchema(bool required) const {
     return &(metadata["serializer"]["datatype"]);
   } else {
     if (required)
-      ygglog_error << "getSchema: No datatype in metadata" << std::endl;
+      log_error() << "getSchema: No datatype in metadata" << std::endl;
     return nullptr;
   }
 }
 bool Metadata::SetValue(const std::string name, rapidjson::Value& x,
 			rapidjson::Value& subSchema) {
   if (!subSchema.IsObject()) {
-    ygglog_error << "Metadata::SetValue: subSchema is not an object" << std::endl;
+    log_error() << "SetValue: subSchema is not an object" << std::endl;
     return false;
   }
   if (subSchema.HasMember(name.c_str())) {
@@ -706,11 +713,11 @@ bool Metadata::SetValue(const std::string name, rapidjson::Value& x,
 			       type_out& out,				\
 			       const rapidjson::Value& subSchema) const { \
     if (!(subSchema.HasMember(name.c_str()))) {				\
-      ygglog_error << "Get" << #method << ": No " << name << " information in the schema." << std::endl; \
+      log_error() << "Get" << #method << ": No " << name << " information in the schema." << std::endl; \
       return false;							\
     }									\
     if (!(subSchema[name.c_str()].Is ## method())) {			\
-      ygglog_error << "Get" << #method << ": " << name << " is not " << #type_out << std::endl; \
+      log_error() << "Get" << #method << ": " << name << " is not " << #type_out << std::endl; \
       return false;							\
     }									\
     out = subSchema[name.c_str()].Get ## method();			\
@@ -726,7 +733,7 @@ bool Metadata::SetValue(const std::string name, rapidjson::Value& x,
       return true;							\
     }									\
     if (!(subSchema[name.c_str()].Is ## method())) {			\
-      ygglog_error << "Get" << #method << "Optional: " << name << " is not " << #type_out << std::endl; \
+      log_error() << "Get" << #method << "Optional: " << name << " is not " << #type_out << std::endl; \
       return false;							\
     }									\
     out = subSchema[name.c_str()].Get ## method();			\
@@ -833,7 +840,7 @@ bool Metadata::SetSchemaMetadata(const std::string name,
 				 const Metadata& other) {
   const rapidjson::Value* other_schema = other.getSchema(true);
   if (!other_schema) {
-    ygglog_error << "SetSchemaMetadata: Value has no datatype" << std::endl;
+    log_error() << "SetSchemaMetadata: Value has no datatype" << std::endl;
     return false;
   }
   rapidjson::Value x;
@@ -884,10 +891,10 @@ int Metadata::deserialize_args(const rapidjson::Document& data,
 			       rapidjson::VarArgList& ap) {
   size_t nargs_orig = ap.get_nargs();
   rapidjson::Value* schema = getSchema(true);
-  ygglog_debug << "Metadata::deserialize_args: data = " << data <<
+  log_debug() << "deserialize_args: data = " << data <<
     ", schema = " << *schema << std::endl;
   if (!data.SetVarArgs(*schema, ap)) {
-    ygglog_error << "Metadata::deserialize_args: Error setting arguments from JSON document" << std::endl;
+    log_error() << "deserialize_args: Error setting arguments from JSON document" << std::endl;
     return -1;
   }
   return (int)(nargs_orig - ap.get_nargs());
@@ -898,23 +905,23 @@ int Metadata::deserialize(const char* buf, rapidjson::Document& d) {
   rapidjson::StringStream s(buf);
   d.ParseStream(s);
   if (d.HasParseError()) {
-    ygglog_error << "Metadata::deserialize: Error parsing JSON" << std::endl;
+    log_error() << "deserialize: Error parsing JSON" << std::endl;
     return -1;
   }
   bool has_raw_schema = (raw_schema != NULL);
   if (transforms.size() > 0) {
-    ygglog_debug << "Metadata::deserialize: Before transformations " << d << std::endl;
+    log_debug() << "deserialize: Before transformations " << d << std::endl;
     if (!fromData(d, true)) {
-      ygglog_error << "Metadata::deserialize: Error updating pre-transformation schema" << std::endl;
+      log_error() << "deserialize: Error updating pre-transformation schema" << std::endl;
       return -1;
     }
     if (!transform(d)) {
-      ygglog_error << "Metadata::deserialize: Error applying transformations" << std::endl;
+      log_error() << "deserialize: Error applying transformations" << std::endl;
       if (!has_raw_schema)
 	resetRawSchema();
       return -1;
     }
-    ygglog_debug << "Metadata::deserialize: After transformations " << d << std::endl;
+    log_debug() << "deserialize: After transformations " << d << std::endl;
   }
   bool hasT = hasType();
   if (!hasT) {
@@ -927,8 +934,8 @@ int Metadata::deserialize(const char* buf, rapidjson::Document& d) {
     rapidjson::StringBuffer sb;
     rapidjson::Value* schema = getSchema(true);
     if (!d.Normalize(*schema, &sb)) {
-      ygglog_error <<
-	"Metadata::deserialize: Error normalizing document:" <<
+      log_error() <<
+	"deserialize: Error normalizing document:" <<
 	std::endl << sb.GetString() <<
 	std::endl << "document=" << d <<
 	std::endl << "schema=" << *schema <<
@@ -939,7 +946,7 @@ int Metadata::deserialize(const char* buf, rapidjson::Document& d) {
     }
   }
   if (filter(d)) {
-    ygglog_debug << "Metadata::deserialize: Message filtered" << std::endl;
+    log_debug() << "deserialize: Message filtered" << std::endl;
     return 0;
   }
   return 1;
@@ -949,7 +956,7 @@ int Metadata::deserialize(const char* buf, size_t nargs, int allow_realloc, ...)
   va_start(va.va, allow_realloc);
   int out = deserialize(buf, va);
   if (out >= 0 && va.get_nargs() != 0) {
-    ygglog_error << "Metadata::deserialize: " << va.get_nargs() <<
+    log_error() << "deserialize: " << va.get_nargs() <<
       " of the arguments were not used" << std::endl;
     return -1;
   }
@@ -962,9 +969,9 @@ int Metadata::deserialize(const char* buf, rapidjson::VarArgList& ap) {
   if (ret <= 0)
     return ret;
   rapidjson::Value* schema = getSchema(true);
-  ygglog_debug << "Metadata::deserialize: before SetVarArgs: " << *schema << std::endl;
+  log_debug() << "deserialize: before SetVarArgs: " << *schema << std::endl;
   if (!d.SetVarArgs(*schema, ap)) {
-    ygglog_error << "Metadata::deserialize: Error setting arguments from JSON document" << std::endl;
+    log_error() << "deserialize: Error setting arguments from JSON document" << std::endl;
     return -1;
   }
   return (int)(nargs_orig - ap.get_nargs());
@@ -978,15 +985,15 @@ int Metadata::serialize_args(rapidjson::Document& data,
       tmp.fromType("any", true);
       s = tmp.getSchema();
     } else {
-      ygglog_error << "Metadata::serialize_args: No datatype" << std::endl;
+      log_error() << "serialize_args: No datatype" << std::endl;
       return -1;
     }
   }
   if (!data.GetVarArgs(*s, ap)) {
-    ygglog_error << "Metadata::serialize_args: Error creating JSON document from arguments for schema =" << *s << std::endl;
+    log_error() << "serialize_args: Error creating JSON document from arguments for schema =" << *s << std::endl;
     return -1;
   }
-  ygglog_debug << "Metadata::serialize_args: " << data << std::endl;
+  log_debug() << "serialize_args: " << data << std::endl;
   return 1;
 }
 int Metadata::serialize(char **buf, size_t *buf_siz,
@@ -1004,7 +1011,7 @@ int Metadata::serialize(char **buf, size_t *buf_siz,
     rapidjson::StringBuffer sb;
     rapidjson::Value* schema = getSchema(true);
     if (!d.Normalize(*schema, &sb)) {
-      ygglog_error << "Metadata::serialize: Error normalizing document:" <<
+      log_error() << "serialize: Error normalizing document:" <<
 	std::endl << sb.GetString() <<
 	std::endl << "document=" << d <<
 	std::endl << "schema=" << *schema << std::endl;
@@ -1012,23 +1019,23 @@ int Metadata::serialize(char **buf, size_t *buf_siz,
     }
   }
   if (transforms.size() > 0) {
-    ygglog_debug << "Metadata::serialize: Before transformations " << d << std::endl;
+    log_debug() << "serialize: Before transformations " << d << std::endl;
     if (!transform(d)) {
-      ygglog_error << "Metadata::serialize: Error applying transformations" << std::endl;
+      log_error() << "serialize: Error applying transformations" << std::endl;
       return -1;
     }
-    ygglog_debug << "Metadata::serialize: After transformations " << d << std::endl;
+    log_debug() << "serialize: After transformations " << d << std::endl;
     if (!fromData(d, true)) {
-      ygglog_error << "Metadata::serialize: Error updating post-transformation schema" << std::endl;
+      log_error() << "serialize: Error updating post-transformation schema" << std::endl;
       return -1;
     }
     if (!raw_schema) {
-      ygglog_error << "Metadata::serialize: Error creating raw_schema" << std::endl;
+      log_error() << "serialize: Error creating raw_schema" << std::endl;
       return -1;
     }
   }
   if (filter(d)) {
-    ygglog_debug << "Metadata::serialize: Message filtered" << std::endl;
+    log_debug() << "serialize: Message filtered" << std::endl;
     return 0;
   }
   rapidjson::StringBuffer buffer;
@@ -1038,7 +1045,7 @@ int Metadata::serialize(char **buf, size_t *buf_siz,
     char* buf_t = (char*)(GetAllocator().Realloc(buf[0], buf_siz[0],
 						 (size_t)(buffer.GetLength() + 1)));
     if (buf_t == NULL) {
-      ygglog_error << "Metadata::serialize: Error in realloc" << std::endl;
+      log_error() << "serialize: Error in realloc" << std::endl;
       return -1;
     }
     buf_siz[0] = (size_t)(buffer.GetLength() + 1);
@@ -1053,7 +1060,7 @@ int Metadata::serialize(char **buf, size_t *buf_siz, size_t nargs, ...) {
   va_start(va.va, nargs);
   int out = serialize(buf, buf_siz, va);
   if (out >= 0 && va.get_nargs() != 0) {
-    ygglog_error << "Metadata::serialize: " << va.get_nargs() << " of the arguments were not used" << std::endl;
+    log_error() << "serialize: " << va.get_nargs() << " of the arguments were not used" << std::endl;
     return -1;
   }
   return out;
@@ -1121,7 +1128,7 @@ Header& Header::operator=(Header&& rhs) {
 #endif // RAPIDJSON_HAS_CXX11_RVALUE_REFS
 Header& Header::operator=(Header& rhs) {
   if (data && !(flags & HEAD_FLAG_OWNSDATA))
-    ygglog_debug << "Header::operator=: Supplied buffer will be displaced by move" << std::endl;
+    log_debug() << "operator=: Supplied buffer will be displaced by move" << std::endl;
   reset();
   Metadata::operator=(std::forward<Metadata>(rhs));
   RawAssign(rhs);
@@ -1208,13 +1215,13 @@ long Header::reallocData(const size_t size_new) {
   if ((size_new + 1) <= size_buff)
     return size_buff;
   if (!(flags & HEAD_FLAG_ALLOW_REALLOC)) {
-    ygglog_error << "Header::reallocData: Buffer is not large enough and cannot be reallocated" << std::endl;
+    log_error() << "reallocData: Buffer is not large enough and cannot be reallocated" << std::endl;
     return -1;
   }
   size_buff = size_new + 1;
   char* data_t = (char*)realloc(data[0], size_buff);
   if (!data_t) {
-    ygglog_error << "Header::reallocData: Error in realloc" << std::endl;
+    log_error() << "reallocData: Error in realloc" << std::endl;
     return -1;
   }
   data[0] = data_t;
@@ -1273,7 +1280,7 @@ void Header::setMessageFlags(const char* msg, const size_t msg_len) {
 
 bool Header::for_send(Metadata* metadata0, const char* msg,
 		      const size_t len, int comm_flags) {
-  ygglog_debug << "Header::for_send: " << len << " bytes" << std::endl;
+  log_debug() << "for_send: " << len << " bytes" << std::endl;
   flags |= HEAD_BUFFER_MASK;
   size_buff = len + 1;
   size_data = len;
@@ -1318,7 +1325,7 @@ bool Header::for_send(Metadata* metadata0, const char* msg,
   return SetMetaString("model", model);
 }
 int Header::on_send(bool dont_advance) {
-  ygglog_debug << "Header::on_send: " << size_curr << std::endl;
+  log_debug() << "on_send: " << size_curr << std::endl;
   if (format() < 0)
     return -1;
   if (!((flags & HEAD_FLAG_ASYNC) || dont_advance)) {
@@ -1327,7 +1334,7 @@ int Header::on_send(bool dont_advance) {
     if (size_max > 0)
       size_msg = std::min(size_msg, size_max);
   }
-  ygglog_debug << "Header::on_send: size_msg = " << size_msg << std::endl;
+  log_debug() << "on_send: size_msg = " << size_msg << std::endl;
   return size_curr;
 }
 
@@ -1338,7 +1345,7 @@ void Header::for_recv(char*& buf, size_t buf_siz, bool allow_realloc) {
     flags |= HEAD_FLAG_ALLOW_REALLOC;
 }
 long Header::on_recv(const char* msg, const size_t& msg_siz) {
-  ygglog_debug << "Header::on_recv: " << msg_siz << std::endl;
+  log_debug() << "on_recv: " << msg_siz << std::endl;
   bool no_offset = (offset == 0);
   long ret = copyData(msg, msg_siz);
   if (ret >= 0 && msg) {
@@ -1359,7 +1366,7 @@ long Header::on_recv(const char* msg, const size_t& msg_siz) {
       return -1;
     size_head = headsiz + 2*strlen(MSG_HEAD_SEP);
     if (size_head > msg_siz) {
-      ygglog_error << "Header::on_recv: Header (" << size_head <<
+      log_error() << "on_recv: Header (" << size_head <<
 	") is larger than message (" << msg_siz << ")" << std::endl;
       return -1;
     }
@@ -1392,14 +1399,14 @@ long Header::on_recv(const char* msg, const size_t& msg_siz) {
   if (reallocData(size_data) < 0) {
     return -1;
   }
-  ygglog_debug << "Header::on_recv: done (size_buff = " << size_buff << ")" << std::endl;
+  log_debug() << "on_recv: done (size_buff = " << size_buff << ")" << std::endl;
   return ret;
 }
 
 bool Header::formatBuffer(rapidjson::StringBuffer& buffer, bool metaOnly) {
   buffer.Clear();
   if (empty()) {
-    ygglog_debug << "Header::formatBuffer: Empty metadata" << std::endl;
+    log_debug() << "formatBuffer: Empty metadata" << std::endl;
     return true;
   }
   rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
@@ -1469,7 +1476,7 @@ int Header::format() {
   flags |= HEAD_BUFFER_MASK;
   data = &data_;
   if (size_data == 0 && empty()) {
-    ygglog_debug << "Header::format: Empty header" << std::endl;
+    log_debug() << "format: Empty header" << std::endl;
     return 0;
   }
   bool metaOnly = (flags & (HEAD_FLAG_NO_TYPE | HEAD_META_IN_DATA |
@@ -1502,7 +1509,7 @@ int Header::format() {
       }
       return 0;
     } else if (size_head > size_max) {
-      ygglog_error << "Header::format: Extra data already excluded, cannot make header any smaller." << std::endl;
+      log_error() << "format: Extra data already excluded, cannot make header any smaller." << std::endl;
       return -1;
     }
   }
@@ -1543,13 +1550,13 @@ bool Header::finalize_recv() {
     return false;
   if (!in_data)
     return true;
-  ygglog_debug << "Header::finalize_recv: begin" << std::endl;
+  log_debug() << "finalize_recv: begin" << std::endl;
   size_t sind, eind;
   if (find_match_c(MSG_HEAD_SEP, *data, &sind, &eind) > 0) {
     rapidjson::Document type_doc;
     type_doc.Parse(*data, sind);
     if (type_doc.HasParseError()) {
-      ygglog_error << "Header::finalize_recv: Error parsing datatype in data" << std::endl;
+      log_error() << "finalize_recv: Error parsing datatype in data" << std::endl;
       return false;
     }
     if (!fromSchema(type_doc))
@@ -1559,6 +1566,6 @@ bool Header::finalize_recv() {
     memmove(data[0], data[0] + eind, size_curr);
     (*data)[size_curr] = '\0';
   }
-  ygglog_debug << "Header::finalize_recv: end" << std::endl;
+  log_debug() << "finalize_recv: end" << std::endl;
   return true;
 }

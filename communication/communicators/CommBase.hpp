@@ -41,7 +41,7 @@ const int COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
 #endif
 
 #define UNINSTALLED_ERROR(name)					\
-  utils::ygglog_throw_error("Compiler flag '" #name "INSTALLED' not defined so " #name " bindings are disabled")
+  utils::YggLogThrowError("Compiler flag '" #name "INSTALLED' not defined so " #name " bindings are disabled")
 
 #define ADD_CONSTRUCTORS_BASE(cls, typ, flag)				\
   explicit cls(const std::string nme,					\
@@ -52,7 +52,7 @@ const int COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
 	       int flgs = 0, const COMM_TYPE type = typ);		\
   static bool isInstalled() { return flag; }				\
   static COMM_TYPE defaultCommType() { return typ; }			\
-  std::string commClsStr() const override { return #cls; }		\
+  std::string logClass() const override { return #cls; }		\
   ~cls() {								\
     log_debug() << "~" #cls ": Started" << std::endl;			\
     if (!is_closed()) {							\
@@ -198,7 +198,7 @@ typedef struct comm_t comm_t;
  * Abstract base class for all communicators. Cannot be instantiated directly, but is used as a generalized hook
  * for passing communicators around. Should only be instantiated by the CommBase<> class.
  */
-class YGG_API Comm_t {
+  class YGG_API Comm_t : public communication::utils::LogBase {
 public:
     Comm_t(const Comm_t& other) = delete;
     Comm_t& operator=(const Comm_t&) = delete;
@@ -797,42 +797,18 @@ public:
       @returns name.
      */
     const std::string& getName() const { return name; }
-    void throw_error(const std::string msg) const {
-      utils::ygglog_throw_error(logStr() + msg);
+    //! \copydoc communication::utils::LogBase::logClass
+    std::string logClass() const override {
+      return COMM_TYPE_map.find(getCommType())->second;
     }
-    communication::utils::YggdrasilLogger log_error() const {
-      communication::utils::YggdrasilLogger out ygglog_param_error;
-      out << logStr() << "::";
-      return out;
-    }
-    communication::utils::YggdrasilLogger log_info() const {
-      communication::utils::YggdrasilLogger out ygglog_param_info;
-      out << logStr() << "::";
-      return out;
-    }
-    communication::utils::YggdrasilLogger log_debug() const {
-      communication::utils::YggdrasilLogger out ygglog_param_debug;
-      out << logStr() << "::";
-      return out;
-    }
-    /*!
-      @brief A string describing the communicator class.
-    */
-    virtual std::string commClsStr() const {
-      std::string out = COMM_TYPE_map.find(getCommType())->second;
-      return out;
-    }
-    /*!
-      @brief A string describing the communicator for use in log messages.
-    */
-    virtual std::string logDesc() const {
-      return DIRECTION_map.find(getDirection())->second;
-    }
-    /*!
-      @brief Get a string describing the communicator.
-     */
-    std::string logStr() const {
-      std::string out = commClsStr() + "(" + name + "-" + logDesc() + ")";
+    //! \copydoc communication::utils::LogBase::logInst
+    std::string logInst() const override {
+      std::string out = name + "-" +
+	DIRECTION_map.find(getDirection())->second;
+      if (flags & COMM_FLAG_CLIENT_RESPONSE)
+	out += "-CLIRES";
+      else if (flags & COMM_FLAG_SERVER_RESPONSE)
+	out += "-SRVRES";
       return out;
     }
     /*!
@@ -976,9 +952,9 @@ protected:
       std::string addr_str = "null";
       if (addr)
 	addr_str.assign(addr);
-      ygglog_debug << "CommBase::addressFromEnv: full_name = " <<
+      YggLogDebug << "CommBase::addressFromEnv: full_name = " <<
 	full_name << ", address = " << addr_str << std::endl;
-      ygglog_debug << std::endl;
+      YggLogDebug << std::endl;
       if (addr)
 	out->address(addr);
       return out;

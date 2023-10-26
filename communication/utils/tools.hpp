@@ -79,12 +79,12 @@
   try
 #define _END_CPP(name, ret)						\
   catch (...) {								\
-    ygglog_error << #name << ": C++ exception thrown." << std::endl;	\
+    YggLogError << #name << ": C++ exception thrown." << std::endl;	\
     return ret;								\
   }
 #define _END_CPP_CLEANUP(name, ret, cleanup)	\
   catch (...) {								\
-    ygglog_error << #name << ": C++ exception thrown." << std::endl;	\
+    YggLogError << #name << ": C++ exception thrown." << std::endl;	\
     cleanup;								\
     return ret;								\
   }
@@ -94,13 +94,13 @@
   va_start(name.va, first_arg)
 #define YGGCPP_END_VAR_ARGS(name)		\
   if (name.get_nargs() != 0)			\
-    ygglog_error << name.get_nargs() << " arguments unused" << std::endl
+    YggLogError << name.get_nargs() << " arguments unused" << std::endl
 #define YGGC_BEGIN_VAR_ARGS(name, first_arg, nargs, realloc)	\
   rapidjson::VarArgList name(&nargs, realloc, true);		\
   va_start(name.va, first_arg)
 #define YGGC_END_VAR_ARGS(name)		\
   if (name.get_nargs() != 0)			\
-    ygglog_error << name.get_nargs() << " arguments unused" << std::endl
+    YggLogError << name.get_nargs() << " arguments unused" << std::endl
 
 
 #include "logging.hpp"
@@ -454,7 +454,7 @@ int snprintf_realloc(char **dst, size_t *max_len, size_t *offset,
             max_len[0] = max_len[0] + fmt_len + 1;
             char *temp = (char *) realloc(dst[0], max_len[0]);
             if (temp == nullptr) {
-                ygglog_error("snprintf_realloc: Error reallocating buffer.");
+                YggLogError("snprintf_realloc: Error reallocating buffer.");
                 fmt_len = -1;
                 break;
             }

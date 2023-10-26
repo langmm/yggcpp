@@ -30,9 +30,9 @@ typedef struct comm_t {
 
   
 // TODO: Allow use of ygglog_error as function in C
-void ygglog_error_c(const char* fmt, ...);
-void ygglog_debug_c(const char* fmt, ...);
-void ygglog_info_c(const char* fmt, ...);
+void ygglog_error(const char* fmt, ...);
+void ygglog_debug(const char* fmt, ...);
+void ygglog_info(const char* fmt, ...);
 
 /**
  * Initialize yggdrasil interface.

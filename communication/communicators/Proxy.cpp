@@ -30,12 +30,20 @@ Proxy::Proxy(const std::string, const std::string,
 #endif // THREADSINSTALLED
 
 Proxy::~Proxy() {
-  ygglog_debug << "~Proxy: begin" << std::endl;
+  log_debug() << "~Proxy: begin" << std::endl;
 #ifdef THREADSINSTALLED
   closing.store(true);
   backlog_thread.join();
 #endif // THREADSINSTALLED
-  ygglog_debug << "~Proxy: end" << std::endl;
+  log_debug() << "~Proxy: end" << std::endl;
+}
+
+std::string Proxy::logInst() const {
+  std::string out;
+  if (icomm) out += icomm->getAddress();
+  out += "-2-";
+  if (ocomm) out += ocomm->getAddress();
+  return out;
 }
 
 #ifdef THREADSINSTALLED
@@ -89,7 +97,7 @@ long Proxy::on_message() {
     if (out == -2) {
       out = ocomm->send_eof();
     } else if (out >= 0) {
-      ygglog_debug << "Proxy::on_message: " << msg << std::endl;
+      log_debug() << "on_message: " << msg << std::endl;
       if (!(ocomm->getFlags() & COMM_FLAGS_USED_SENT))
 	ocomm->addSchema(icomm->getMetadata(RECV));
       out = ocomm->sendVar(msg);

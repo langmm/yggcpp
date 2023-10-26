@@ -31,13 +31,18 @@ bool Worker::matches(DIRECTION dir, Address* adr) {
 }
 Worker::~Worker() {
   if (comm) {
-    ygglog_debug << "~Worker: deleting comm" << std::endl;
+    log_debug() << "~Worker: deleting comm" << std::endl;
     delete comm;
     comm = nullptr;
-    ygglog_debug << "~Worker: deleted comm" << std::endl;
+    log_debug() << "~Worker: deleted comm" << std::endl;
   }
 }
-
+std::string Worker::logInst() const {
+  std::string out;
+  if (comm)
+    out = comm->logInst();
+  return out;
+}
 
 WorkerList::~WorkerList() {
   workers.clear();
@@ -46,17 +51,17 @@ WorkerList::~WorkerList() {
 Comm_t* WorkerList::add_worker(Comm_t* parent, DIRECTION dir,
 			       Address* adr) {
   if (!parent) {
-    ygglog_error << "WorkerList::add_worker: No parent provided" << std::endl;
+    log_error() << "add_worker: No parent provided" << std::endl;
     return nullptr;
   }
-  ygglog_debug << "WorkerList::add_worker: Adding worker" << std::endl;
+  log_debug() << "add_worker: Adding worker" << std::endl;
   workers.emplace_back(parent, dir, adr);
   return workers.back().comm;
 }
 void WorkerList::remove_worker(Comm_t*& worker) {
   int idx = find_worker(worker);
   if (idx < 0) {
-    ygglog_error << "WorkerList::remove_worker: No matching worker" << std::endl;
+    log_error() << "remove_worker: No matching worker" << std::endl;
     return;
   }
   workers.erase(workers.begin() + static_cast<size_t>(idx));
@@ -70,7 +75,7 @@ Comm_t* WorkerList::find_worker(DIRECTION dir, Address* adr, size_t* idx) {
       return workers[i].comm;
     }
   }
-  ygglog_debug << "WorkerList::find_worker: Failed to find matching worker" << std::endl;
+  log_debug() << "find_worker: Failed to find matching worker" << std::endl;
   return nullptr;
 }
 int WorkerList::find_worker(Comm_t* worker) {
@@ -90,7 +95,7 @@ Comm_t* WorkerList::get(Comm_t* parent, DIRECTION dir, Address* adr) {
     out->address = adr;
   }
   if (!out) {
-    ygglog_error << "WorkerList::get: Failed to get worker" << std::endl;
+    log_error() << "get: Failed to get worker" << std::endl;
   }
   return out;
 }
@@ -98,15 +103,15 @@ bool WorkerList::setRequest(Comm_t* worker, std::string request) {
   int idx = find_worker(worker);
   if (idx < 0)
     return false;
-  ygglog_debug << "WorkerList::setRequest: worker " << idx << " has request " << request << std::endl;
+  log_debug() << "setRequest: worker " << idx << " has request " << request << std::endl;
   workers[static_cast<size_t>(idx)].request = request;
   return true;
 }
 bool WorkerList::setResponse(std::string request) {
-  ygglog_debug << "WorkerList::setResponse: Looking for worker with request " << request << std::endl;
+  log_debug() << "setResponse: Looking for worker with request " << request << std::endl;
   for (size_t i = 0; i < workers.size(); i++) {
     if (workers[i].request == request) {
-      ygglog_debug << "WorkerList::setResponse: worker " << i << " has response for request " << request << " and is now available" << std::endl;
+      log_debug() << "setResponse: worker " << i << " has response for request " << request << " and is now available" << std::endl;
       workers[i].request = "";
       return true;
     }

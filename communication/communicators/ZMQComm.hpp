@@ -19,7 +19,7 @@ YGG_THREAD_GLOBAL_VAR(char, _reply_msg, [100])
 YGG_THREAD_GLOBAL_VAR(char, _purge_msg, [100])
 YGG_THREAD_GLOBAL_VAR(int, _zmq_sleeptime, )
 
-class ZMQContext {
+class ZMQContext : public communication::utils::LogBase {
 public:
   ZMQContext();
 private:
@@ -32,12 +32,13 @@ public:
 #else
   void init() { UNINSTALLED_ERROR(ZMQ); }
 #endif
+  std::string logClass() const override { return "ZMQContext"; }
   void* ctx;
   static void* ygg_s_process_ctx;
 };
   
 
-class ZMQSocket {
+class ZMQSocket : public communication::utils::LogBase {
 private:
   ZMQSocket& operator=(const ZMQSocket& rhs) = delete;
 public:
@@ -66,7 +67,8 @@ public:
   void destroy() {}
 #endif
   ~ZMQSocket();
-
+  std::string logClass() const override { return "ZMQSocket"; }
+  std::string logInst() const override { return endpoint; }
   void *handle;               //  The libzmq socket handle
   std::string endpoint;       //  Last bound endpoint, if any
   int type;                   //  Socket type
@@ -84,7 +86,7 @@ public:
 /*!
   @brief Struct to store info for reply.
 */
-class ZMQReply {
+class ZMQReply : public communication::utils::LogBase {
 public:
   ZMQReply(DIRECTION dir);
 #ifdef ZMQINSTALLED
@@ -99,7 +101,8 @@ public:
   bool send_stage1(std::string& msg_data);
   bool send_stage2(const std::string msg_data);
 #endif // ZMQINSTALLED
-
+  std::string logClass() const override { return "ZMQReply"; }
+  
   std::vector<ZMQSocket> sockets;
   int n_msg;
   int n_rep;

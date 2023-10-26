@@ -8,7 +8,7 @@
 namespace communication {
   namespace communicator {
 
-    class Proxy {
+    class Proxy : public communication::utils::LogBase {
     private:
       Proxy(const Proxy&) = delete;
       Proxy& operator=(const Proxy&) = delete;
@@ -20,6 +20,8 @@ namespace communication {
 	    std::vector<communication::utils::filterFunc> fltrs=std::vector<communication::utils::filterFunc>(),
 	    std::vector<communication::utils::transformFunc> tforms=std::vector<communication::utils::transformFunc>());
       ~Proxy();
+      std::string logClass() const override { return "Proxy"; }
+      std::string logInst() const override;
 #ifdef THREADSINSTALLED
       std::string getAddress(DIRECTION dir);
     private:

@@ -14,7 +14,7 @@ ServerComm::ServerComm(const std::string nme, Address *addr,
 
 ADD_CONSTRUCTORS_RPC_DEF(ServerComm)
 
-std::string ServerComm::commClsStr() const {
+std::string ServerComm::logClass() const {
   std::string out = "ServerComm";
   return out;
 }

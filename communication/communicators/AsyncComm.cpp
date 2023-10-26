@@ -17,7 +17,8 @@ using namespace communication::utils;
 AsyncBacklog::AsyncBacklog(Comm_t* parent) :
   comm(nullptr), backlog(), comm_mutex(),
   opened(false), closing(false), locked(false), complete(false),
-  result(false), backlog_thread(&AsyncBacklog::on_thread, this, parent) {
+  result(false), backlog_thread(&AsyncBacklog::on_thread, this, parent),
+  logInst_(parent->logInst()) {
   while (!(opened.load() || closing.load())) {
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
   }
@@ -33,22 +34,22 @@ AsyncBacklog::AsyncBacklog(Comm_t*) :
 #endif // THREADSINSTALLED
 
 AsyncBacklog::~AsyncBacklog() {
-  ygglog_debug << "~AsyncBacklog: begin" << std::endl;
+  log_debug() << "~AsyncBacklog: begin" << std::endl;
 #ifdef THREADSINSTALLED
   closing.store(true);
   while (!complete.load()) { std::this_thread::yield(); }
   try {
     if (backlog_thread.joinable())
       backlog_thread.join();
-    ygglog_debug << "~AsyncBacklog: joinable = " << backlog_thread.joinable() << std::endl;
+    log_debug() << "~AsyncBacklog: joinable = " << backlog_thread.joinable() << std::endl;
   } catch (const std::system_error& e) {
-    ygglog_error << "~AsyncBacklog: Error joining thread (" << e.code() << "): " << e.what() << std::endl;
+    log_error() << "~AsyncBacklog: Error joining thread (" << e.code() << "): " << e.what() << std::endl;
   }
   if (!result.load()) {
-    ygglog_error << "~AsyncBacklog: Error on thread" << std::endl;
+    log_error() << "~AsyncBacklog: Error on thread" << std::endl;
   }
 #endif // THREADSINSTALLED
-  ygglog_debug << "~AsyncBacklog: end" << std::endl;
+  log_debug() << "~AsyncBacklog: end" << std::endl;
 }
 
 void AsyncBacklog::on_thread(Comm_t* parent) {
@@ -124,7 +125,7 @@ int AsyncBacklog::send() {
     }
     out = comm->send_single(backlog[0]);
     if (out >= 0) {
-      ygglog_debug << "AsyncBacklog::send: Sent message from backlog" << std::endl;
+      log_debug() << "send: Sent message from backlog" << std::endl;
       backlog.erase(backlog.begin());
     }
   }
@@ -143,7 +144,7 @@ long AsyncBacklog::recv() {
       if (backlog[backlog.size() - 1].flags & HEAD_FLAG_REPEAT) {
 	backlog.resize(backlog.size() - 1);
       } else {
-	ygglog_debug << "AsyncBacklog::recv: Received message into backlog" << std::endl;
+	log_debug() << "recv: Received message into backlog" << std::endl;
       }
     }
   }
@@ -250,8 +251,8 @@ int AsyncComm::get_timeout_recv() {
   return CommBase::get_timeout_recv();
 }
 
-std::string AsyncComm::commClsStr() const {
-  std::string out = CommBase::commClsStr();
+std::string AsyncComm::logClass() const {
+  std::string out = CommBase::logClass();
   out += "[ASYNC]";
   return out;
 }

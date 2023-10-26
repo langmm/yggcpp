@@ -71,7 +71,7 @@ long copyData(T*& dst, const size_t dst_len,
 	      const T* src, const size_t src_len,
 	      bool allow_realloc);
 
-class Metadata {
+class Metadata : public communication::utils::LogBase {
 private:
   Metadata(const Metadata&) = delete;
   Metadata& operator=(const Metadata&) = delete;
@@ -88,6 +88,8 @@ public:
   Metadata& operator=(Metadata& rhs);
   bool operator==(const Metadata& rhs) const;
   bool operator!=(const Metadata& rhs) const;
+  std::string logClass() const override { return "Metadata"; }
+  std::string logInst() const override;
   Metadata& Move() { return *this; }
   bool CopyFrom(const Metadata& rhs) {
     metadata.CopyFrom(rhs.metadata, GetAllocator(), true);
@@ -260,6 +262,7 @@ public:
   Header& Move() { return *this; }
   size_t size() const { return size_curr; }
   const char* c_str() const { return data[0]; }
+  std::string logClass() const override { return "Header"; }
   /*!
     @brief Reset the header, clearing any data/flags.
     @param[in] mode Method that should be used to reset the header.

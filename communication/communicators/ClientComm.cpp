@@ -20,7 +20,7 @@ ClientComm::ClientComm(const std::string nme, Address *addr,
 
 ADD_CONSTRUCTORS_RPC_DEF(ClientComm)
 
-std::string ClientComm::commClsStr() const {
+std::string ClientComm::logClass() const {
   std::string out = "ClientComm";
   return out;
 }
