@@ -74,6 +74,8 @@ public:
 
 class YggEnvironment : public ::testing::Environment {
 public:
+#ifdef IPCINSTALLED
+#endif // IPCINSTALLED
   YggEnvironment() : ::testing::Environment(), Nipc(0) {}
   ~YggEnvironment() override;
   void SetUp() override;
