@@ -180,7 +180,7 @@ function(target_link_external_fortran_objects target fortran_target)
     endif()
 endfunction()
 
-function(add_mixed_fortran_library target_name library_type)
+function(add_mixed_fortran_library target library_type)
   set(multiValueArgs SOURCES)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
   if (ARGS_SOURCES)
@@ -198,21 +198,32 @@ function(add_mixed_fortran_library target_name library_type)
       list(APPEND other_sources ${src})
     endif()
   endforeach()
-  set(fortran_target_name ${target_name}_FORTRAN_OBJECT_LIBRARY)
+  set(fortran_target ${target}_FORTRAN_OBJECT_LIBRARY)
   add_external_fortran_library(
-      ${fortran_target_name} OBJECT
+      ${fortran_target} OBJECT
       SOURCES ${fortran_sources})
   # if(MSVC AND library_type STREQUAL "SHARED")
   #   set(library_type STATIC)
   # endif()
-  add_library(${target_name} ${library_type} ${other_sources})
+  add_library(${target} ${library_type} ${other_sources})
   if (MSVC_AND_GNU_BUILD)
     target_compile_options(
-      ${target_name} PRIVATE
+      ${target} PRIVATE
       -fno-stack-check -fno-stack-protector -mno-stack-arg-probe)
   endif()
-  target_link_external_fortran_objects(
-      ${target_name} ${target_name}_FORTRAN_OBJECT_LIBRARY)
+  target_link_external_fortran_objects(${target} ${fortran_target})
+  if (MSVC_AND_GNU_BUILD)
+    # add_custom_command(
+    #   TARGET ${target}
+    #   POST_BUILD
+    #   COMMAND LIB /DEF:${${fortran_target}_EXT_DEF} $<TARGET_FILE_NAME:${target}>
+    #   COMMAND_EXPAND_LISTS)
+    add_custom_command(
+      TARGET ${target}
+      PRE_LINK
+      COMMAND LIB /DEF:${${fortran_target}_EXT_DEF} /OUT:$<TARGET_IMPORT_FILE:${target}> $<TARGET_OBJECTS:${target}>
+      COMMAND_EXPAND_LISTS)
+  endif()
 endfunction()
 
 function(add_external_fortran_library target_name library_type)
