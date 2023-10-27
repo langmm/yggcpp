@@ -17,7 +17,8 @@ using namespace communication::utils;
 AsyncBacklog::AsyncBacklog(Comm_t* parent) :
   comm(nullptr), backlog(), comm_mutex(),
   opened(false), closing(false), locked(false), complete(false),
-  result(false), backlog_thread(&AsyncBacklog::on_thread, this, parent),
+  result(false), backlog_size(0),
+  backlog_thread(&AsyncBacklog::on_thread, this, parent),
   logInst_(parent->logInst()) {
   while (!(opened.load() || closing.load())) {
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -112,8 +113,8 @@ void AsyncBacklog::on_thread(Comm_t* parent) {
 int AsyncBacklog::send() {
   int out = 0;
 #ifdef THREADSINSTALLED
-  const std::lock_guard<std::mutex> comm_lock(comm_mutex);
-  if (backlog.size() > 0) {
+  if (backlog_size.load() > 0) {
+    const std::lock_guard<std::mutex> comm_lock(comm_mutex);
     if (comm->getType() == CLIENT_COMM) {
       ClientComm* cli = dynamic_cast<ClientComm*>(comm);
       if (!cli->signon(backlog[0], comm))
@@ -127,6 +128,7 @@ int AsyncBacklog::send() {
     if (out >= 0) {
       log_debug() << "send: Sent message from backlog" << std::endl;
       backlog.erase(backlog.begin());
+      backlog_size--;
     }
   }
 #endif // THREADSINSTALLED
@@ -136,8 +138,8 @@ int AsyncBacklog::send() {
 long AsyncBacklog::recv() {
   long out = 0;
 #ifdef THREADSINSTALLED
-  const std::lock_guard<std::mutex> comm_lock(comm_mutex);
   if (comm->comm_nmsg() > 0) {
+    const std::lock_guard<std::mutex> comm_lock(comm_mutex);
     backlog.emplace_back(true);
     out = comm->recv_single(backlog[backlog.size() - 1]);
     if (out >= 0) {
@@ -145,6 +147,7 @@ long AsyncBacklog::recv() {
 	backlog.resize(backlog.size() - 1);
       } else {
 	log_debug() << "recv: Received message into backlog" << std::endl;
+	backlog_size++;
       }
     }
   }
@@ -208,7 +211,6 @@ AsyncComm::AsyncComm(utils::Address *addr,
 int AsyncComm::comm_nmsg(DIRECTION dir) const {
   if (global_comm)
     return global_comm->comm_nmsg(dir);
-  const AsyncLockGuard lock(handle);
   if (dir == NONE)
     dir = direction;
   if (handle->is_closing()) {
@@ -217,9 +219,10 @@ int AsyncComm::comm_nmsg(DIRECTION dir) const {
   }
   if ((type == CLIENT_COMM && dir == RECV) ||
       (type == SERVER_COMM && dir == SEND)) {
+    const AsyncLockGuard lock(handle);
     return handle->comm->comm_nmsg(dir);
   }
-  return static_cast<int>(handle->backlog.size());
+  return static_cast<int>(handle->backlog_size.load());
 }
 
 communication::utils::Metadata& AsyncComm::getMetadata(const DIRECTION dir) {
@@ -274,6 +277,7 @@ int AsyncComm::send_single(Header& header) {
   if (!handle->backlog[handle->backlog.size() - 1].CopyFrom(header))
     return -1;
   handle->backlog[handle->backlog.size() - 1].flags |= HEAD_FLAG_ASYNC;
+  handle->backlog_size++;
   return static_cast<int>(header.size_msg);
 }
 
@@ -299,6 +303,7 @@ long AsyncComm::recv_single(Header& header) {
   }
   ret = static_cast<long>(header.size_data);
   handle->backlog.erase(handle->backlog.begin());
+  handle->backlog_size--;
   log_debug() << "recv_single: returns " << ret << " bytes" << std::endl;
   return ret;
 }

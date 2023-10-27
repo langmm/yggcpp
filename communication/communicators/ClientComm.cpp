@@ -65,7 +65,9 @@ bool ClientComm::signon(const Header& header, Comm_t* async_comm) {
       return true;
     async_comm = this;
   }
-  log_debug() << "signon: begin" << std::endl;
+  bool on_async_thread = ((flags & COMM_FLAG_ASYNC_WRAPPED) &&
+			  (async_comm == this));
+  log_debug() << "signon: begin (async = " << on_async_thread << ")" << std::endl;
   Header tmp(true);
   int64_t tout = get_timeout_recv();
   int nloop = 0;

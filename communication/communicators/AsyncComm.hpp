@@ -31,6 +31,7 @@ namespace communication {
       std::atomic_bool locked;
       std::atomic_bool complete;
       std::atomic_bool result;
+      std::atomic_uint backlog_size;
       std::thread backlog_thread;
       std::string logInst_;
 #else // THREADSINSTALLED
