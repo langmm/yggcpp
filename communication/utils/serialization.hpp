@@ -37,6 +37,11 @@ namespace utils {
 
 typedef bool (*filterFunc)(const rapidjson::Document&);
 typedef bool (*transformFunc)(rapidjson::Document&);
+
+/*!
+  @brief Determine if numpy arrays are enabled.
+ */
+bool numpy_arrays_imported();
   
 /*!
   @brief Split header and body of message.

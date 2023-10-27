@@ -1,5 +1,6 @@
 #include "../../unittest.hpp"
 #include "datatypes/dtype_t.h"
+#include "utils/serialization.hpp"
 #include "../../elf_hook.hpp"
 #include "../../mock.hpp"
 
@@ -559,7 +560,7 @@ TEST(dtype, PythonInit) {
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
 #define DO_PYTHON(name)							\
   TEST(generic_t, name) {						\
-    EXPECT_TRUE(rapidjson_ARRAY_API);					\
+    EXPECT_TRUE(communication::utils::numpy_arrays_imported());		\
     generic_t v = init_generic_generate("{\"type\": \"" #name "\"}");	\
     generic_t x = init_generic_null();					\
     python_t data;							\
