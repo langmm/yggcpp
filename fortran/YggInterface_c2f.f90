@@ -350,7 +350,8 @@ subroutine yggptr_c2f_array_character(x)
         ! do j = (x%prec + 1), len(item(i))
         !    item(i)(j:j) = ' '
         ! end do
-        write(*,*) "yggptr_c2f_array_character", i, len(item(i)), item(i)
+        ! write(*,*) "yggptr_c2f_array_character", i, len(item(i)), item(i)
+        write(*,*) "yggptr_c2f_array_character", i, item(i)
      end do
      deallocate(x%data_character_unit)
   class default
