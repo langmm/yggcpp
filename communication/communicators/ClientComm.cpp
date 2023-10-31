@@ -73,7 +73,7 @@ bool ClientComm::signon(const Header& header, Comm_t* async_comm) {
   int nloop = 0;
   if (requests.signonSent())
     nloop = 1;
-  TIMEOUT_LOOP(tout, YGG_SLEEP_TIME) {
+  for (int i = 0; i < 10; i++, nloop++) {
     if (requests.signon_complete)
       break;
     if ((nloop % 3) == 0) {
@@ -83,10 +83,14 @@ bool ClientComm::signon(const Header& header, Comm_t* async_comm) {
 	return false;
       }
     }
-    nloop++;
     if ((flags & COMM_FLAG_ASYNC_WRAPPED) && (async_comm != this))
       return true;
-    if (requests.activeComm()->comm_nmsg(RECV) > 0) {
+    if ((flags & COMM_FLAG_ASYNC_WRAPPED) &&
+	requests.activeComm()->comm_nmsg(RECV) == 0) {
+      // Sleep outside lock on async
+      return true;
+    }
+    if (requests.activeComm()->wait_for_recv(tout / 10) > 0) {
       long ret = recv_single(tmp);
       if (ret < 0 || !(tmp.flags & HEAD_FLAG_SERVER_SIGNON)) {
         log_error() << "signon: Error in receiving sign-on" << std::endl;
@@ -96,12 +100,11 @@ bool ClientComm::signon(const Header& header, Comm_t* async_comm) {
       tmp.reset(HEAD_RESET_KEEP_BUFFER);
       log_debug() << "signon: Received response to signon" << std::endl;
       break;
+    } else if (requests.activeComm()->comm_nmsg(RECV) < 0) {
+      log_error() << "signon: Error during signon receive" << std::endl;
+      break;
     } else {
       log_debug() << "signon: No response to signon (address = " << requests.activeComm()->address->address() << "), sleeping" << std::endl;
-      // Sleep outside lock on async
-      if (flags & COMM_FLAG_ASYNC_WRAPPED)
-	return true;
-      AFTER_TIMEOUT_LOOP(YGG_SLEEP_TIME);
     }
   }
   if (!requests.signon_complete) {
@@ -177,12 +180,12 @@ long ClientComm::recv_single(utils::Header& header) {
     long ret;
     utils::Header response_header;
     int64_t tout = get_timeout_recv();
-    TIMEOUT_LOOP(tout, YGG_SLEEP_TIME) {
-        if (requests.isComplete(req_id))
-	  break;
-        response_header.reset(HEAD_RESET_OWN_DATA);
-        log_debug() << "recv_single: Waiting for response to request " << req_id << std::endl;
-	if (response_comm->comm_nmsg(RECV) > 0) {
+    for (int i = 0; i < 10; i++) {
+      if (requests.isComplete(req_id))
+	break;
+      response_header.reset(HEAD_RESET_OWN_DATA);
+      log_debug() << "recv_single: Waiting for response to request " << req_id << std::endl;
+      if (response_comm->wait_for_recv(tout / 10) > 0) {
 	  ret = response_comm->recv_single(response_header);
 	  if (ret < 0) {
             log_error() << "recv_single: response recv_single returned " << ret << std::endl;
@@ -194,10 +197,12 @@ long ClientComm::recv_single(utils::Header& header) {
 	    if (!requests.transferSchemaFrom(response_comm))
 	      return -1;
 	  }
-	} else {
-	  log_debug() << "recv_single: No response to oldest request (address = " << response_comm->address->address() << "), sleeping" << std::endl;
-	  AFTER_TIMEOUT_LOOP(YGG_SLEEP_TIME);
-	}
+      } else if (response_comm->comm_nmsg(RECV) < 0) {
+	log_error() << "recv_single: Error during receive" << std::endl;
+	break;
+      } else {
+	log_debug() << "recv_single: No response to oldest request (address = " << response_comm->address->address() << "), sleeping" << std::endl;
+      }
     }
     // Close response comm and decrement count of response comms
     ret = requests.getRequestClient(req_id, header, true);
