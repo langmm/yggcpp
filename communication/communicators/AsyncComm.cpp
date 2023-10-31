@@ -5,30 +5,99 @@
 using namespace communication::communicator;
 using namespace communication::utils;
 
+/////////////////
+// AsyncBuffer //
+/////////////////
+
+#ifdef THREADSINSTALLED
+AsyncBuffer::AsyncBuffer(const std::string logInst) :
+  buffer(), closed(false), m(), cv(), logInst_(logInst) {}
+void AsyncBuffer::close() {
+  {
+    LOCK_BUFFER(close);
+    closed.store(true);
+  }
+  cv.notify_all();
+}
+bool AsyncBuffer::is_closed() const { return closed.load(); }
+#else // THREADSINSTALLED
+AsyncBuffer::AsyncBuffer(const std::string logInst) :
+  buffer(), logInst_(logInst) {}
+void AsyncBuffer::close() {}
+bool AsyncBuffer::is_closed() const { return true; }
+#endif // THREADSINSTALLED
+
+size_t AsyncBuffer::size() {
+  LOCK_BUFFER(size);
+  if (is_closed())
+    return 0;
+  return buffer.size();
+}
+bool AsyncBuffer::append(utils::Header& header, bool for_send) {
+  {
+    LOCK_BUFFER(append);
+    if (is_closed())
+      return false;
+    size_t nprev = buffer.size();
+    buffer.emplace_back(true);
+    if (!buffer[nprev].CopyFrom(header))
+      return false;
+    if (for_send)
+      buffer[nprev].flags |= HEAD_FLAG_ASYNC;
+  }
+#ifdef THREADSINSTALLED
+  log_debug() << "append: Before notify" << std::endl;
+  cv.notify_all();
+  log_debug() << "append: After notify" << std::endl;
+#endif // THREADSINSTALLED
+  return true;
+}
+
+bool AsyncBuffer::get(utils::Header& header) {
+  LOCK_BUFFER(get);
+  if (is_closed())
+    return false;
+  if (buffer.size() == 0)
+    return false;
+  return header.CopyFrom(buffer[0]);
+}
+bool AsyncBuffer::pop() {
+  LOCK_BUFFER(pop);
+  if (is_closed())
+    return false;
+  if (buffer.size() == 0)
+    return false;
+  buffer.erase(buffer.begin());
+  return true;
+}
+bool AsyncBuffer::pop(utils::Header& header) {
+  if (!get(header))
+    return false;
+  return pop();
+}
+
 //////////////////
 // AsyncBacklog //
 //////////////////
 
 // TODO: Preserve backlog buffers?
-// TODO: Check for handle->comm before use?
 
 #ifdef THREADSINSTALLED
 
 AsyncBacklog::AsyncBacklog(Comm_t* parent) :
-  comm(nullptr), backlog(), comm_mutex(),
-  opened(false), closing(false), locked(false), complete(false),
-  result(false), backlog_size(0),
+  comm(nullptr), backlog(parent->logInst()), comm_mutex(),
+  opened(false), locked(false), complete(false), result(false),
   backlog_thread(&AsyncBacklog::on_thread, this, parent),
   logInst_(parent->logInst()) {
-  while (!(opened.load() || closing.load())) {
+  while (!(opened.load() || backlog.is_closed())) {
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
   }
 }
 
 #else // THREADSINSTALLED
 
-AsyncBacklog::AsyncBacklog(Comm_t*) :
-  comm(nullptr), backlog() {
+AsyncBacklog::AsyncBacklog(Comm_t* parent) :
+  comm(nullptr), backlog(parent->logInst()), logInst_(parent->logInst()) {
   UNINSTALLED_ERROR(THREADS);
 }
 
@@ -37,7 +106,7 @@ AsyncBacklog::AsyncBacklog(Comm_t*) :
 AsyncBacklog::~AsyncBacklog() {
   log_debug() << "~AsyncBacklog: begin" << std::endl;
 #ifdef THREADSINSTALLED
-  closing.store(true);
+  backlog.close();
   while (!complete.load()) { std::this_thread::yield(); }
   try {
     if (backlog_thread.joinable())
@@ -73,17 +142,18 @@ void AsyncBacklog::on_thread(Comm_t* parent) {
       opened.store(true);
     }
     if (direction == SEND) {
-      while (!closing.load()) {
+      while (!backlog.is_closed()) {
 	int ret = send();
 	if (ret == 0) {
-	  std::this_thread::sleep_for(std::chrono::microseconds(YGG_SLEEP_TIME));
+	  backlog.wait();
+	  // backlog.wait_for(std::chrono::microseconds(10*YGG_SLEEP_TIME));
 	} else if (ret < 0) {
 	  out = false;
 	  break;
 	}
       }
     } else if (direction == RECV) {
-      while (!closing.load()) {
+      while (!backlog.is_closed()) {
 	long ret = recv();
 	if (ret == 0) {
 	  std::this_thread::sleep_for(std::chrono::microseconds(YGG_SLEEP_TIME));
@@ -93,7 +163,7 @@ void AsyncBacklog::on_thread(Comm_t* parent) {
 	}
       }
     }
-    closing.store(true);
+    backlog.close();
     {
       const std::lock_guard<std::mutex> comm_lock(comm_mutex);
       delete comm;
@@ -103,32 +173,36 @@ void AsyncBacklog::on_thread(Comm_t* parent) {
     UNUSED(parent);
 #endif // THREADSINSTALLED
   } catch (...) {
-    closing.store(true);
+    backlog.close();
     out = false;
   }
+#ifdef THREADSINSTALLED
   result.store(out);
   complete.store(true);
+#else // THREADSINSTALLED
+  UNUSED(out);
+#endif // THREADSINSTALLED
 }
 
 int AsyncBacklog::send() {
   int out = 0;
 #ifdef THREADSINSTALLED
-  if (backlog_size.load() > 0) {
+  utils::Header header(true);
+  if (backlog.get(header)) {
     const std::lock_guard<std::mutex> comm_lock(comm_mutex);
     if (comm->getType() == CLIENT_COMM) {
       ClientComm* cli = dynamic_cast<ClientComm*>(comm);
-      if (!cli->signon(backlog[0], comm))
+      if (!cli->signon(header, comm))
 	return -1;
       // Sleep outside lock
-      if ((!(backlog[0].flags & (HEAD_FLAG_CLIENT_SIGNON | HEAD_FLAG_EOF)))
+      if ((!(header.flags & (HEAD_FLAG_CLIENT_SIGNON | HEAD_FLAG_EOF)))
 	  && !cli->signonComplete())
 	return out;
     }
-    out = comm->send_single(backlog[0]);
+    out = comm->send_single(header);
     if (out >= 0) {
       log_debug() << "send: Sent message from backlog" << std::endl;
-      backlog.erase(backlog.begin());
-      backlog_size--;
+      backlog.pop();
     }
   }
 #endif // THREADSINSTALLED
@@ -138,17 +212,19 @@ int AsyncBacklog::send() {
 long AsyncBacklog::recv() {
   long out = 0;
 #ifdef THREADSINSTALLED
-  if (comm->comm_nmsg() > 0) {
+  bool received = false;
+  utils::Header header(true);
+  {
     const std::lock_guard<std::mutex> comm_lock(comm_mutex);
-    backlog.emplace_back(true);
-    out = comm->recv_single(backlog[backlog.size() - 1]);
-    if (out >= 0) {
-      if (backlog[backlog.size() - 1].flags & HEAD_FLAG_REPEAT) {
-	backlog.resize(backlog.size() - 1);
-      } else {
-	log_debug() << "recv: Received message into backlog" << std::endl;
-	backlog_size++;
-      }
+    if (comm->comm_nmsg() > 0) {
+      out = comm->recv_single(header);
+      received = true;
+    }
+  }
+  if (received && out >= 0) {
+    if (!(header.flags & HEAD_FLAG_REPEAT)) {
+      log_debug() << "recv: Received message into backlog: " << out << std::endl;
+      backlog.append(header);
     }
   }
 #endif // THREADSINSTALLED
@@ -222,8 +298,18 @@ int AsyncComm::comm_nmsg(DIRECTION dir) const {
     const AsyncLockGuard lock(handle);
     return handle->comm->comm_nmsg(dir);
   }
-  return static_cast<int>(handle->backlog_size.load());
+  return static_cast<int>(handle->backlog.size());
 }
+
+#ifdef THREADSINSTALLED
+int AsyncComm::wait_for_recv(const int64_t& tout) {
+  if (global_comm || type == CLIENT_COMM)
+    return CommBase::wait_for_recv(tout);
+  if (!handle->backlog.wait_for(std::chrono::microseconds(tout)))
+    return 0;
+  return comm_nmsg(RECV);
+}
+#endif // THREADSINSTALLED
 
 communication::utils::Metadata& AsyncComm::getMetadata(const DIRECTION dir) {
   if (global_comm)
@@ -261,49 +347,39 @@ std::string AsyncComm::logClass() const {
 }
 
 int AsyncComm::send_single(Header& header) {
-  const AsyncLockGuard lock(handle);
   assert((!global_comm) && handle);
-  if (handle->is_closing()) {
-    log_error() << "send_single: Thread is closing" << std::endl;
-    return -1;
-  }
   if (type == SERVER_COMM) {
+    const AsyncLockGuard lock(handle);
+    if (handle->is_closing()) {
+      log_error() << "send_single: Thread is closing" << std::endl;
+      return -1;
+    }
     return handle->comm->send_single(header);
   }
   if (header.on_send() < 0)
     return -1;
   log_debug() << "send_single: " << header.size_msg << " bytes" << std::endl;
-  handle->backlog.emplace_back(true);
-  if (!handle->backlog[handle->backlog.size() - 1].CopyFrom(header))
-    return -1;
-  handle->backlog[handle->backlog.size() - 1].flags |= HEAD_FLAG_ASYNC;
-  handle->backlog_size++;
+  handle->backlog.append(header, true);
   return static_cast<int>(header.size_msg);
 }
 
 long AsyncComm::recv_single(Header& header) {
-  const AsyncLockGuard lock(handle);
-  assert((!global_comm) && handle);
-  if (handle->is_closing()) {
-    log_error() << "recv_single: Thread is closing" << std::endl;
-    return -1;
-  }
   if (type == CLIENT_COMM) {
+    const AsyncLockGuard lock(handle);
+    assert((!global_comm) && handle);
+    if (handle->is_closing()) {
+      log_error() << "recv_single: Thread is closing" << std::endl;
+      return -1;
+    }
     return handle->comm->recv_single(header);
   }
   long ret = -1;
   log_debug() << "recv_single " << std::endl;
-  if (handle->backlog.size() == 0) {
-    log_error() << "recv_single: Backlog is empty." << std::endl;
-    return ret;
-  }
-  if (!header.MoveFrom(handle->backlog[0])) {
-    log_error() << "recv_single: Error copying data" << std::endl;
+  if (!handle->backlog.pop(header)) {
+    log_error() << "recv_single: Error retrieving from backlog" << std::endl;
     return ret;
   }
   ret = static_cast<long>(header.size_data);
-  handle->backlog.erase(handle->backlog.begin());
-  handle->backlog_size--;
   log_debug() << "recv_single: returns " << ret << " bytes" << std::endl;
   return ret;
 }

@@ -4,10 +4,56 @@
 #include "utils/serialization.hpp"
 #ifdef THREADSINSTALLED
 #include <atomic>
+#define LOCK_BUFFER(name)				\
+  log_debug() << #name << ": Before lock" << std::endl;	\
+  const std::lock_guard<std::mutex> lk(m);		\
+  log_debug() << #name << ": After lock" << std::endl
+#else
+#define LOCK_BUFFER(name)
 #endif // THREADSINSTALLED
 
 namespace communication {
   namespace communicator {
+
+    class AsyncBuffer : public communication::utils::LogBase {
+    public:
+      AsyncBuffer(const std::string logInst);
+      std::string logClass() const override { return "AsyncBuffer"; }
+      std::string logInst() const override { return logInst_; }
+      void close();
+      bool is_closed() const;
+      size_t size();
+      bool append(utils::Header& header, bool for_send=false);
+      bool get(utils::Header& header);
+      bool pop();
+      bool pop(utils::Header& header);
+#ifdef THREADSINSTALLED
+      bool wait() {
+	std::unique_lock<std::mutex> lk(m);
+	AsyncBuffer* this_buffer = this;
+	cv.wait(lk,
+		[this_buffer]{ return (this_buffer->is_closed() ||
+				       this_buffer->buffer.size() > 0); });
+	return (is_closed() || buffer.size() > 0);
+      }
+      template< class Rep, class Period >
+      bool wait_for(const std::chrono::duration<Rep, Period>& rel_time) {
+	std::unique_lock<std::mutex> lk(m);
+	AsyncBuffer* this_buffer = this;
+	return cv.wait_for(lk, rel_time,
+			   [this_buffer]{ return (this_buffer->is_closed() ||
+						  this_buffer->buffer.size() > 0); });
+      }
+#endif // THREADSINSTALLED
+    private:
+      std::vector<utils::Header> buffer;
+#ifdef THREADSINSTALLED
+      std::atomic_bool closed;
+      std::mutex m;
+      std::condition_variable cv;
+#endif // THREADSINSTALLED
+      std::string logInst_;
+    };
 
     class AsyncBacklog : public communication::utils::LogBase {
     private:
@@ -21,22 +67,18 @@ namespace communication {
       long recv();
       std::string logClass() const override { return "AsyncBacklog"; }
       std::string logInst() const override { return logInst_; }
+      bool is_closing() const { return backlog.is_closed(); }
       Comm_t* comm;
-      std::vector<utils::Header> backlog;
+      AsyncBuffer backlog;
 #ifdef THREADSINSTALLED
-      bool is_closing() const { return closing.load(); }
       std::mutex comm_mutex;
       std::atomic_bool opened;
-      std::atomic_bool closing;
       std::atomic_bool locked;
       std::atomic_bool complete;
       std::atomic_bool result;
-      std::atomic_uint backlog_size;
       std::thread backlog_thread;
-      std::string logInst_;
-#else // THREADSINSTALLED
-      bool is_closing() const { return true; }
 #endif // THREADSINSTALLED
+      std::string logInst_;
     };
     
     class AsyncLockGuard {
@@ -80,6 +122,10 @@ namespace communication {
       
       // \copydoc Comm_t::comm_nmsg
       int comm_nmsg(DIRECTION dir=NONE) const override;
+#ifdef THREADSINSTALLED
+      // \copydoc Comm_t::wait_for_recv
+      int wait_for_recv(const int64_t& tout) override;
+#endif // THREADSINSTALLED
       // \copydoc Comm_t::getMetadata
       communication::utils::Metadata& getMetadata(const DIRECTION dir=NONE) override;
       // \copydoc Comm_t::set_timeout_recv
