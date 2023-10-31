@@ -4,10 +4,11 @@
 #include "utils/serialization.hpp"
 #ifdef THREADSINSTALLED
 #include <atomic>
-#define LOCK_BUFFER(name)				\
-  log_debug() << #name << ": Before lock" << std::endl;	\
-  const std::lock_guard<std::mutex> lk(m);		\
-  log_debug() << #name << ": After lock" << std::endl
+#include <condition_variable>
+#define LOCK_BUFFER(name)					\
+  log_verbose() << #name << ": Before lock" << std::endl;	\
+  const std::lock_guard<std::mutex> lk(m);			\
+  log_verbose() << #name << ": After lock" << std::endl
 #else
 #define LOCK_BUFFER(name)
 #endif // THREADSINSTALLED
