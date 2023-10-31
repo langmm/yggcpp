@@ -34,8 +34,8 @@ public:
     
     void set_timeout_recv(int64_t new_timeout) override;
     int64_t get_timeout_recv() override;
-    virtual bool signon(const utils::Header& header,
-			Comm_t* async_comm=nullptr);
+    virtual bool signon();
+    bool send_signon(int nloop, Comm_t* async_comm = nullptr);
 
     using RPCComm::send;
     using RPCComm::recv;

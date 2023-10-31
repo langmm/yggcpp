@@ -442,6 +442,8 @@ int64_t Comm_t::get_timeout_recv() {
 int Comm_t::wait_for_recv(const int64_t& tout) {
   if (global_comm)
     return global_comm->wait_for_recv(tout);
+  log_debug() << "wait_for_recv: timeout = " << tout <<
+    " microseconds" << std::endl;
   TIMEOUT_LOOP(tout, YGG_SLEEP_TIME) {
     int nmsg = comm_nmsg(RECV);
     if (nmsg < 0) {

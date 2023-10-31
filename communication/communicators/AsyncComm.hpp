@@ -5,16 +5,12 @@
 #ifdef THREADSINSTALLED
 #include <atomic>
 #include <condition_variable>
-#define LOCK_BUFFER(name)					\
-  log_verbose() << #name << ": Before lock" << std::endl;	\
-  const std::lock_guard<std::mutex> lk(m);			\
-  log_verbose() << #name << ": After lock" << std::endl
-#else
-#define LOCK_BUFFER(name)
 #endif // THREADSINSTALLED
 
 namespace communication {
   namespace communicator {
+
+    class AsyncBacklog;
 
     class AsyncBuffer : public communication::utils::LogBase {
     public:
@@ -24,26 +20,24 @@ namespace communication {
       void close();
       bool is_closed() const;
       size_t size();
-      bool append(utils::Header& header, bool for_send=false);
-      bool get(utils::Header& header);
-      bool pop();
-      bool pop(utils::Header& header);
+      bool insert(utils::Header& header, size_t idx, bool move=false,
+		  bool dont_notify=false, bool for_send=false);
+      bool append(utils::Header& header, bool move=false,
+		  bool dont_notify=false, bool for_send=false);
+      bool prepend(utils::Header& header, bool move=false,
+		   bool dont_notify=false, bool for_send=false);
+      bool get(utils::Header& header, size_t idx=0,
+	       bool move=false, bool erase=false);
+      bool pop(utils::Header& header, size_t idx=0);
 #ifdef THREADSINSTALLED
-      bool wait() {
-	std::unique_lock<std::mutex> lk(m);
-	AsyncBuffer* this_buffer = this;
-	cv.wait(lk,
-		[this_buffer]{ return (this_buffer->is_closed() ||
-				       this_buffer->buffer.size() > 0); });
-	return (is_closed() || buffer.size() > 0);
-      }
+      bool message_waiting();
+      bool wait();
       template< class Rep, class Period >
       bool wait_for(const std::chrono::duration<Rep, Period>& rel_time) {
 	std::unique_lock<std::mutex> lk(m);
-	AsyncBuffer* this_buffer = this;
-	return cv.wait_for(lk, rel_time,
-			   [this_buffer]{ return (this_buffer->is_closed() ||
-						  this_buffer->buffer.size() > 0); });
+	AsyncBuffer* _this = this;
+	return cv.wait_for(lk, rel_time, [_this]{
+	  return _this->message_waiting(); });
       }
 #endif // THREADSINSTALLED
     private:
@@ -64,6 +58,8 @@ namespace communication {
       AsyncBacklog(Comm_t* parent);
       ~AsyncBacklog();
       void on_thread(Comm_t* parent);
+      int signon_status();
+      bool wait_for_signon();
       int send();
       long recv();
       std::string logClass() const override { return "AsyncBacklog"; }
@@ -77,6 +73,7 @@ namespace communication {
       std::atomic_bool locked;
       std::atomic_bool complete;
       std::atomic_bool result;
+      std::atomic_bool signon_sent;
       std::thread backlog_thread;
 #endif // THREADSINSTALLED
       std::string logInst_;

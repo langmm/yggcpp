@@ -53,10 +53,10 @@ void ClientComm::init() {
   }
 }
 
-bool ClientComm::signon(const Header& header, Comm_t* async_comm) {
+bool ClientComm::send_signon(int nloop, Comm_t* async_comm) {
   if (global_comm)
-    return dynamic_cast<ClientComm*>(global_comm)->signon(header);
-  if (header.flags & (HEAD_FLAG_CLIENT_SIGNON | HEAD_FLAG_EOF))
+    return dynamic_cast<ClientComm*>(global_comm)->send_signon(nloop, async_comm);
+  if (requests.signon_complete)
     return true;
   if (requests.initClientResponse() < 0)
     return false;
@@ -65,51 +65,32 @@ bool ClientComm::signon(const Header& header, Comm_t* async_comm) {
       return true;
     async_comm = this;
   }
-  bool on_async_thread = ((flags & COMM_FLAG_ASYNC_WRAPPED) &&
-			  (async_comm == this));
-  log_debug() << "signon: begin (async = " << on_async_thread << ")" << std::endl;
+  if (((nloop + (int)(requests.signonSent())) % 3) == 0) {
+    log_debug() << "send_signon: Sending signon" << std::endl;
+    if (async_comm->send_raw(YGG_CLIENT_SIGNON, YGG_CLIENT_SIGNON_LEN) < 0) {
+      log_error() << "send_signon: Error in sending sign-on" << std::endl;
+      return false;
+    }
+  }
+  return true;
+}
+
+bool ClientComm::signon() {
+  if (global_comm)
+    return dynamic_cast<ClientComm*>(global_comm)->signon();
+  if (!send_signon(0)) // Will only send if no signon has been sent
+    return false;
+  if (requests.signon_complete)
+    return true;
   Header tmp(true);
-  int64_t tout = get_timeout_recv();
-  int nloop = 0;
-  if (requests.signonSent())
-    nloop = 1;
-  for (int i = 0; i < 10; i++, nloop++) {
-    if (requests.signon_complete)
-      break;
-    if ((nloop % 3) == 0) {
-      log_debug() << "signon: Sending signon" << std::endl;
-      if (async_comm->send_raw(YGG_CLIENT_SIGNON, YGG_CLIENT_SIGNON_LEN) < 0) {
-	log_error() << "signon: Error in sending sign-on" << std::endl;
-	return false;
-      }
-    }
-    if ((flags & COMM_FLAG_ASYNC_WRAPPED) && (async_comm != this))
-      return true;
-    if ((flags & COMM_FLAG_ASYNC_WRAPPED) &&
-	requests.activeComm()->comm_nmsg(RECV) == 0) {
-      // Sleep outside lock on async
-      return true;
-    }
-    if (requests.activeComm()->wait_for_recv(tout / 10) > 0) {
-      long ret = recv_single(tmp);
-      if (ret < 0 || !(tmp.flags & HEAD_FLAG_SERVER_SIGNON)) {
-        log_error() << "signon: Error in receiving sign-on" << std::endl;
-	return false;
-      }
-      setFlags(tmp, RECV);
-      tmp.reset(HEAD_RESET_KEEP_BUFFER);
-      log_debug() << "signon: Received response to signon" << std::endl;
-      break;
-    } else if (requests.activeComm()->comm_nmsg(RECV) < 0) {
-      log_error() << "signon: Error during signon receive" << std::endl;
-      break;
-    } else {
-      log_debug() << "signon: No response to signon (address = " << requests.activeComm()->address->address() << "), sleeping" << std::endl;
-    }
+  tmp.flags |= HEAD_FLAG_SERVER_SIGNON;
+  long ret = recv_single(tmp);
+  if (ret < 0 || !(tmp.flags & HEAD_FLAG_SERVER_SIGNON)) {
+    log_error() << "signon: Error in receiving sign-on" << std::endl;
+    return false;
   }
-  if (!requests.signon_complete) {
-    log_error() << "signon: No response to signon" << std::endl;
-  }
+  setFlags(tmp, RECV);
+  log_debug() << "signon: Received response to signon" << std::endl;
   return requests.signon_complete;
 }
 
@@ -159,7 +140,9 @@ bool ClientComm::create_header_send(Header& header) {
   log_debug() << "create_header_send: begin" << std::endl;
   bool out = COMM_BASE::create_header_send(header);
   if (out && !(header.flags & HEAD_FLAG_EOF)) {
-    out = signon(header);
+    if (!((header.flags & HEAD_FLAG_CLIENT_SIGNON) ||
+	  (flags & COMM_FLAG_ASYNC_WRAPPED)))
+      out = signon();
     if (out)
       out = (requests.addRequestClient(header) >= 0);
   }
@@ -170,25 +153,36 @@ bool ClientComm::create_header_send(Header& header) {
 
 long ClientComm::recv_single(utils::Header& header) {
     assert(!global_comm);
-    log_debug() << "recv_single" << std::endl;
+    bool in_signon = (header.flags & HEAD_FLAG_SERVER_SIGNON);
+    log_debug() << "recv_single" <<
+      " (signon = " << in_signon << ")" << std::endl;
     Comm_t* response_comm = requests.activeComm();
     if (response_comm == NULL) {
-        log_error() << "recv_single: Error getting response comm" << std::endl;
+        log_error() << "recv_single: Error getting response comm" <<
+	  " (signon = " << in_signon << ")" << std::endl;
         return -1;
     }
     std::string req_id = requests.activeRequestClient();
     long ret;
     utils::Header response_header;
     int64_t tout = get_timeout_recv();
+    int nmsg = 0;
     for (int i = 0; i < 10; i++) {
+      log_info() << "recv_single: req " << req_id << " complete = " <<
+	requests.isComplete(req_id) << std::endl;
       if (requests.isComplete(req_id))
 	break;
+      if (in_signon && !send_signon(i))
+	return -1;
       response_header.reset(HEAD_RESET_OWN_DATA);
-      log_debug() << "recv_single: Waiting for response to request " << req_id << std::endl;
-      if (response_comm->wait_for_recv(tout / 10) > 0) {
+      log_debug() << "recv_single: Waiting for response to request " <<
+	req_id << " (signon = " << in_signon << ")" << std::endl;
+      nmsg = response_comm->wait_for_recv(tout / 10);
+      if (nmsg > 0) {
 	  ret = response_comm->recv_single(response_header);
 	  if (ret < 0) {
-            log_error() << "recv_single: response recv_single returned " << ret << std::endl;
+            log_error() << "recv_single: response recv returned " <<
+	      ret << " (signon = " << in_signon << ")" << std::endl;
             return ret;
 	  }
 	  if (!(response_header.flags & HEAD_FLAG_EOF)) {
@@ -197,16 +191,24 @@ long ClientComm::recv_single(utils::Header& header) {
 	    if (!requests.transferSchemaFrom(response_comm))
 	      return -1;
 	  }
-      } else if (response_comm->comm_nmsg(RECV) < 0) {
-	log_error() << "recv_single: Error during receive" << std::endl;
+      } else if (nmsg < 0) {
+	log_error() << "recv_single: Error during receive" <<
+	  " (signon = " << in_signon << ")" << std::endl;
 	break;
       } else {
-	log_debug() << "recv_single: No response to oldest request (address = " << response_comm->address->address() << "), sleeping" << std::endl;
+	log_debug() << "recv_single: No response to oldest request (address = " << response_comm->address->address() << "), sleeping" <<
+	  " (signon = " << in_signon << ")" << std::endl;
       }
     }
     // Close response comm and decrement count of response comms
+    if (in_signon) {
+      if (!requests.isComplete(req_id))
+	return 0;
+      header.flags |= ~HEAD_FLAG_SERVER_SIGNON;
+    }
     ret = requests.getRequestClient(req_id, header, true);
-    log_debug() << "recv_single: getRequestClient returned " << ret << std::endl;
+    log_debug() << "recv_single: getRequestClient returned " << ret <<
+      " (signon = " << in_signon << ")" << std::endl;
     if (header.flags & HEAD_FLAG_SERVER_SIGNON) {
       header.flags |= HEAD_FLAG_REPEAT;
     }

@@ -5,6 +5,15 @@
 using namespace communication::communicator;
 using namespace communication::utils;
 
+#ifdef THREADSINSTALLED
+#define LOCK_BUFFER(name)					\
+  log_verbose() << #name << ": Before lock" << std::endl;	\
+  const std::lock_guard<std::mutex> lk(m);			\
+  log_verbose() << #name << ": After lock" << std::endl
+#else
+#define LOCK_BUFFER(name)
+#endif // THREADSINSTALLED
+
 /////////////////
 // AsyncBuffer //
 /////////////////
@@ -33,48 +42,88 @@ size_t AsyncBuffer::size() {
     return 0;
   return buffer.size();
 }
-bool AsyncBuffer::append(utils::Header& header, bool for_send) {
+bool AsyncBuffer::insert(utils::Header& header, size_t idx,
+			 bool move, bool dont_notify, bool for_send) {
   {
-    LOCK_BUFFER(append);
-    if (is_closed())
+    LOCK_BUFFER(insert);
+    if (idx >= buffer.size()) {
+      idx = buffer.size();
+    }
+    if (is_closed()) {
+      log_error() << "insert[" << idx << "]: " <<
+	"Buffer is closed" <<
+	" (send = " << for_send << ")" << std::endl;
       return false;
-    size_t nprev = buffer.size();
-    buffer.emplace_back(true);
-    if (!buffer[nprev].CopyFrom(header))
+    }
+    if (idx >= buffer.size()) {
+      buffer.emplace_back(true);
+    } else {
+      buffer.emplace(buffer.begin() + idx, true);
+    }
+    bool res = false;
+    if (move)
+      res = buffer[idx].MoveFrom(header);
+    else
+      res = buffer[idx].CopyFrom(header);
+    if (!res) {
+      log_error() << "insert[" << idx << "]: " <<
+	"Error adding message to backlog" <<
+	" (send = " << for_send << ")" << std::endl;
       return false;
+    }
     if (for_send)
-      buffer[nprev].flags |= HEAD_FLAG_ASYNC;
+      buffer[idx].flags |= HEAD_FLAG_ASYNC;
   }
 #ifdef THREADSINSTALLED
-  log_debug() << "append: Before notify" << std::endl;
-  cv.notify_all();
-  log_debug() << "append: After notify" << std::endl;
+  if (!dont_notify) {
+      log_debug() << "insert[" << idx << "]: " <<
+	"Notifying threads of message" <<
+	" (send = " << for_send << ")" << std::endl;
+    cv.notify_all();
+  }
 #endif // THREADSINSTALLED
   return true;
 }
+bool AsyncBuffer::append(utils::Header& header, bool move,
+			 bool dont_notify, bool for_send) {
+  return insert(header, buffer.size() + 10, move, dont_notify, for_send);
+}
+bool AsyncBuffer::prepend(utils::Header& header, bool move,
+			  bool dont_notify, bool for_send) {
+  return insert(header, 0, move, dont_notify, for_send);
+}
 
-bool AsyncBuffer::get(utils::Header& header) {
+bool AsyncBuffer::get(utils::Header& header, size_t idx,
+		      bool move, bool erase) {
   LOCK_BUFFER(get);
   if (is_closed())
     return false;
-  if (buffer.size() == 0)
+  if (idx >= buffer.size())
     return false;
-  return header.CopyFrom(buffer[0]);
+  bool out = false;
+  if (move)
+    out = header.MoveFrom(buffer[idx]);
+  else
+    out = header.CopyFrom(buffer[idx]);
+  if (out && erase)
+    buffer.erase(buffer.begin() + idx);
+  return out;
 }
-bool AsyncBuffer::pop() {
-  LOCK_BUFFER(pop);
-  if (is_closed())
-    return false;
-  if (buffer.size() == 0)
-    return false;
-  buffer.erase(buffer.begin());
+bool AsyncBuffer::pop(utils::Header& header, size_t idx) {
+  return get(header, idx, true, true);
+}
+#ifdef THREADSINSTALLED
+bool AsyncBuffer::message_waiting() {
+  return (is_closed() || buffer.size() > 0);
+}
+bool AsyncBuffer::wait() {
+  std::unique_lock<std::mutex> lk(m);
+  AsyncBuffer* _this = this;
+  cv.wait(lk, [_this]{
+    return _this->message_waiting(); });
   return true;
 }
-bool AsyncBuffer::pop(utils::Header& header) {
-  if (!get(header))
-    return false;
-  return pop();
-}
+#endif // THREADSINSTALLED
 
 //////////////////
 // AsyncBacklog //
@@ -87,6 +136,7 @@ bool AsyncBuffer::pop(utils::Header& header) {
 AsyncBacklog::AsyncBacklog(Comm_t* parent) :
   comm(nullptr), backlog(parent->logInst()), comm_mutex(),
   opened(false), locked(false), complete(false), result(false),
+  signon_sent(false),
   backlog_thread(&AsyncBacklog::on_thread, this, parent),
   logInst_(parent->logInst()) {
   while (!(opened.load() || backlog.is_closed())) {
@@ -184,25 +234,73 @@ void AsyncBacklog::on_thread(Comm_t* parent) {
 #endif // THREADSINSTALLED
 }
 
+int AsyncBacklog::signon_status() {
+  if (is_closing())
+    return SIGNON_ERROR;
+#ifdef THREADSINSTALLED
+  const std::lock_guard<std::mutex> comm_lock(comm_mutex);
+  if (comm->getType() != CLIENT_COMM)
+    return SIGNON_COMPLETE;
+  ClientComm* cli = dynamic_cast<ClientComm*>(comm);
+  RequestList& requests = cli->getRequests();
+  if (!signon_sent.load())
+    return SIGNON_NOT_SENT;
+  if (requests.signon_complete)
+    return SIGNON_COMPLETE;
+  if ((!requests.requests.empty()) &&
+      requests.activeComm()->comm_nmsg(RECV) > 0)
+    return SIGNON_WAITING;
+  return SIGNON_NOT_WAITING;
+#else // SIGNON_NOT_WAITING
+  return SIGNON_ERROR;
+#endif // THREADSINSTALLED
+}
+
+bool AsyncBacklog::wait_for_signon() {
+#ifdef THREADSINSTALLED
+  int status = SIGNON_NOT_SENT;
+  int iloop = 0;
+  while (true) {
+    status = signon_status();
+    if (status == SIGNON_ERROR)
+      return false;
+    if (status == SIGNON_NOT_SENT ||
+	status == SIGNON_COMPLETE)
+      return true;
+    {
+      const std::lock_guard<std::mutex> comm_lock(comm_mutex);
+      ClientComm* cli = dynamic_cast<ClientComm*>(comm);
+      if (status == SIGNON_WAITING)
+	return cli->signon();
+      if (!cli->send_signon(iloop, comm))
+	return false;
+    }
+    std::this_thread::sleep_for(std::chrono::microseconds(10*YGG_SLEEP_TIME));
+    iloop++;
+  }
+#endif // THREADSINSTALLED
+  return true;
+}
+
 int AsyncBacklog::send() {
   int out = 0;
 #ifdef THREADSINSTALLED
+  if (!wait_for_signon()) {
+    log_error() << "send: Error in async client signon" << std::endl;
+    return -1;
+  }
   utils::Header header(true);
-  if (backlog.get(header)) {
+  if (backlog.pop(header)) {
     const std::lock_guard<std::mutex> comm_lock(comm_mutex);
-    if (comm->getType() == CLIENT_COMM) {
-      ClientComm* cli = dynamic_cast<ClientComm*>(comm);
-      if (!cli->signon(header, comm))
-	return -1;
-      // Sleep outside lock
-      if ((!(header.flags & (HEAD_FLAG_CLIENT_SIGNON | HEAD_FLAG_EOF)))
-	  && !cli->signonComplete())
-	return out;
-    }
     out = comm->send_single(header);
     if (out >= 0) {
       log_debug() << "send: Sent message from backlog" << std::endl;
-      backlog.pop();
+      if (header.flags & HEAD_FLAG_CLIENT_SIGNON)
+	signon_sent.store(true);
+    } else {
+      log_debug() << "send: Sending from backlog failed. " <<
+	"Another attempt will be made." << std::endl;
+      backlog.prepend(header, true, true, true);
     }
   }
 #endif // THREADSINSTALLED
@@ -224,7 +322,8 @@ long AsyncBacklog::recv() {
   if (received && out >= 0) {
     if (!(header.flags & HEAD_FLAG_REPEAT)) {
       log_debug() << "recv: Received message into backlog: " << out << std::endl;
-      backlog.append(header);
+      if (!backlog.append(header, true))
+	out = -1;
     }
   }
 #endif // THREADSINSTALLED
@@ -305,6 +404,8 @@ int AsyncComm::comm_nmsg(DIRECTION dir) const {
 int AsyncComm::wait_for_recv(const int64_t& tout) {
   if (global_comm || type == CLIENT_COMM)
     return CommBase::wait_for_recv(tout);
+  log_debug() << "wait_for_recv: timeout = " << tout <<
+    " microseconds" << std::endl;
   if (!handle->backlog.wait_for(std::chrono::microseconds(tout)))
     return 0;
   return comm_nmsg(RECV);
@@ -359,7 +460,8 @@ int AsyncComm::send_single(Header& header) {
   if (header.on_send() < 0)
     return -1;
   log_debug() << "send_single: " << header.size_msg << " bytes" << std::endl;
-  handle->backlog.append(header, true);
+  if (!handle->backlog.append(header, false, false, true))
+    return -1;
   return static_cast<int>(header.size_msg);
 }
 
@@ -393,8 +495,9 @@ bool AsyncComm::create_header_send(Header& header) {
   }
   if (type == CLIENT_COMM &&
       !(header.flags & (HEAD_FLAG_EOF | HEAD_FLAG_CLIENT_SIGNON))) {
-    if (!dynamic_cast<ClientComm*>(handle->comm)->signon(header, this))
+    if (!dynamic_cast<ClientComm*>(handle->comm)->send_signon(0, this))
       return false;
+    log_debug() << "AsyncComm::create_header_send: Sent signon" << std::endl;
   }
   return handle->comm->create_header_send(header);
 }

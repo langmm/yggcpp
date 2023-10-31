@@ -231,20 +231,26 @@ public:
       if (!(header.GetMetaString("model", partner_model) &&
 	    header.GetMetaString("request_id", request_id)))
 	return -1;
-      if (header.flags & HEAD_FLAG_SERVER_SIGNON)
+      if (header.flags & HEAD_FLAG_SERVER_SIGNON) {
+	log_debug() << "addResponseClient[" << request_id <<
+	  "]: signon!" << std::endl;
 	signon_complete = true;
+      }
       int idx = hasRequest(request_id);
       if (idx < 0) {
-	log_error() << "addResponseClient: Client does not have a request with id '" << request_id << "'" << std::endl;
+	log_error() << "addResponseClient[" << request_id <<
+	  "]: Client does not have a request with id '" << request_id << "'" << std::endl;
 	return -1;
       }
       if (requests[static_cast<size_t>(idx)].setData(header) < 0) {
-	log_error() << "addResponseClient: Error setting data" << std::endl;
+	log_error() << "addResponseClient[" << request_id <<
+	  "]: Error setting data" << std::endl;
 	return -1;
       }
       if (hasPartner(partner_model) < 0)
 	partners.emplace_back(partner_model);
-      log_debug() << "addResponseClient: done (signon_complete = " <<
+      log_debug() << "addResponseClient[" << request_id <<
+	"]: done (signon_complete = " <<
 	signon_complete << ")" << std::endl;
       return 0;
     }
