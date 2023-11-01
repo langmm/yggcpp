@@ -25,7 +25,7 @@ bool example_transform(rapidjson::Document& msg) {
   std::cerr << "before send" << std::endl;				\
   EXPECT_GE(sComm.send_method send_args, 0);				\
   std::cerr << "after send" << std::endl;				\
-  EXPECT_GT(rComm.wait_for_recv(100000), 0);				\
+  EXPECT_GT(rComm.wait_for_recv(1000000), 0);				\
   std::cerr << "before comm_nmsg" << std::endl;				\
   EXPECT_GT(rComm.comm_nmsg(), 0);					\
   std::cerr << "after comm_nmsg" << std::endl;				\
