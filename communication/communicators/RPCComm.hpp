@@ -32,16 +32,16 @@ public:
   communication::utils::Metadata& getMetadata(const DIRECTION dir=NONE) override;
   bool signonComplete() const { return requests.signon_complete; }
   static bool isInstalled() { return COMM_BASE::isInstalled(); }
-  
-#ifndef YGG_TEST
-protected:
-#else
-  bool afterSendRecv(Comm_t* sComm, Comm_t* rComm) override;
   RequestList& getRequests() {
     if (global_comm)
       return (dynamic_cast<RPCComm*>(global_comm))->getRequests();
     return requests;
   }
+  
+#ifndef YGG_TEST
+protected:
+#else
+  bool afterSendRecv(Comm_t* sComm, Comm_t* rComm) override;
   // std::string getResponseAddress() {
   //   if (global_comm)
   //     return (dynamic_cast<RPCComm*>(global_comm))->getResponseAddress();
