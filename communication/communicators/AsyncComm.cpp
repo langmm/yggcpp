@@ -177,6 +177,7 @@ void AsyncBacklog::on_thread(Comm_t* parent) {
   try {
 #ifdef THREADSINSTALLED
     DIRECTION direction = parent->getDirection();
+    bool is_client = false;
     {
       const std::lock_guard<std::mutex> comm_lock(comm_mutex);
       int flgs_comm = (parent->getFlags() & ~COMM_FLAG_ASYNC) | COMM_FLAG_ASYNC_WRAPPED;
@@ -190,8 +191,13 @@ void AsyncBacklog::on_thread(Comm_t* parent) {
       parent->updateMsgBufSize(comm->getMsgBufSize());
       parent->getFlags() |= (comm->getFlags() & ~flgs_comm);
       opened.store(true);
+      is_client = (comm->getType() == CLIENT_COMM);
     }
     if (direction == SEND) {
+      // Sleep for a bit on client open to prevent sending too many signon
+      //   messages.
+      if (is_client)
+	std::this_thread::sleep_for(std::chrono::microseconds(10000));
       while (!backlog.is_closed()) {
 	int ret = send();
 	if (ret == 0) {
