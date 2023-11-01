@@ -53,9 +53,10 @@ void ClientComm::init() {
   }
 }
 
-bool ClientComm::send_signon(int nloop, Comm_t* async_comm) {
+bool ClientComm::send_signon(int nloop, int interval,
+			     Comm_t* async_comm) {
   if (global_comm)
-    return dynamic_cast<ClientComm*>(global_comm)->send_signon(nloop, async_comm);
+    return dynamic_cast<ClientComm*>(global_comm)->send_signon(nloop, interval, async_comm);
   if (requests.signon_complete)
     return true;
   if (requests.initClientResponse() < 0)
@@ -65,7 +66,7 @@ bool ClientComm::send_signon(int nloop, Comm_t* async_comm) {
       return true;
     async_comm = this;
   }
-  if (((nloop + (int)(requests.signonSent())) % 3) == 0) {
+  if (((nloop + (int)(requests.signonSent())) % interval) == 0) {
     log_debug() << "send_signon: Sending signon" << std::endl;
     if (async_comm->send_raw(YGG_CLIENT_SIGNON, YGG_CLIENT_SIGNON_LEN) < 0) {
       log_error() << "send_signon: Error in sending sign-on" << std::endl;
@@ -167,12 +168,12 @@ long ClientComm::recv_single(utils::Header& header) {
     utils::Header response_header;
     int64_t tout = get_timeout_recv();
     int nmsg = 0;
-    for (int i = 0; i < 10; i++) {
+    TIMEOUT_LOOP(tout, tout / 10) {
       log_info() << "recv_single: req " << req_id << " complete = " <<
 	requests.isComplete(req_id) << std::endl;
       if (requests.isComplete(req_id))
 	break;
-      if (in_signon && !send_signon(i))
+      if (in_signon && !send_signon(istep))
 	return -1;
       response_header.reset(HEAD_RESET_OWN_DATA);
       log_debug() << "recv_single: Waiting for response to request " <<

@@ -135,13 +135,11 @@ bool AsyncBuffer::wait() {
 
 AsyncBacklog::AsyncBacklog(Comm_t* parent) :
   comm(nullptr), backlog(parent->logInst()), comm_mutex(),
-  opened(false), locked(false), complete(false), result(false),
-  signon_sent(false),
+  locked(false), signon_sent(false),
   backlog_thread(&AsyncBacklog::on_thread, this, parent),
+  status(THREAD_INACTIVE), m_status(), cv_status(),
   logInst_(parent->logInst()) {
-  while (!(opened.load() || backlog.is_closed())) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
-  }
+  wait_for_status(THREAD_STARTED | THREAD_COMPLETE);
 }
 
 #else // THREADSINSTALLED
@@ -157,7 +155,7 @@ AsyncBacklog::~AsyncBacklog() {
   log_debug() << "~AsyncBacklog: begin" << std::endl;
 #ifdef THREADSINSTALLED
   backlog.close();
-  while (!complete.load()) { std::this_thread::yield(); }
+  wait_for_status(THREAD_COMPLETE);
   try {
     if (backlog_thread.joinable())
       backlog_thread.join();
@@ -165,7 +163,7 @@ AsyncBacklog::~AsyncBacklog() {
   } catch (const std::system_error& e) {
     log_error() << "~AsyncBacklog: Error joining thread (" << e.code() << "): " << e.what() << std::endl;
   }
-  if (!result.load()) {
+  if (status.load() & THREAD_ERROR) {
     log_error() << "~AsyncBacklog: Error on thread" << std::endl;
   }
 #endif // THREADSINSTALLED
@@ -177,7 +175,6 @@ void AsyncBacklog::on_thread(Comm_t* parent) {
   try {
 #ifdef THREADSINSTALLED
     DIRECTION direction = parent->getDirection();
-    bool is_client = false;
     {
       const std::lock_guard<std::mutex> comm_lock(comm_mutex);
       int flgs_comm = (parent->getFlags() & ~COMM_FLAG_ASYNC) | COMM_FLAG_ASYNC_WRAPPED;
@@ -190,19 +187,13 @@ void AsyncBacklog::on_thread(Comm_t* parent) {
       parent->address->address(comm->getAddress());
       parent->updateMsgBufSize(comm->getMsgBufSize());
       parent->getFlags() |= (comm->getFlags() & ~flgs_comm);
-      opened.store(true);
-      is_client = (comm->getType() == CLIENT_COMM);
+      set_status(THREAD_STARTED);
     }
     if (direction == SEND) {
-      // Sleep for a bit on client open to prevent sending too many signon
-      //   messages.
-      if (is_client)
-	std::this_thread::sleep_for(std::chrono::microseconds(10000));
       while (!backlog.is_closed()) {
 	int ret = send();
 	if (ret == 0) {
 	  backlog.wait();
-	  // backlog.wait_for(std::chrono::microseconds(10*YGG_SLEEP_TIME));
 	} else if (ret < 0) {
 	  out = false;
 	  break;
@@ -233,12 +224,27 @@ void AsyncBacklog::on_thread(Comm_t* parent) {
     out = false;
   }
 #ifdef THREADSINSTALLED
-  result.store(out);
-  complete.store(true);
+  if (!out)
+    set_status(THREAD_ERROR);
+  set_status(THREAD_COMPLETE);
 #else // THREADSINSTALLED
   UNUSED(out);
 #endif // THREADSINSTALLED
 }
+
+#ifdef THREADSINSTALLED
+void AsyncBacklog::set_status(const int new_status) {
+  status |= new_status;
+  cv_status.notify_all();
+}
+bool AsyncBacklog::wait_for_status(const int new_status) {
+  std::unique_lock<std::mutex> lk(m_status);
+  AsyncBacklog* _this = this;
+  cv_status.wait(lk, [_this, new_status]{
+    return (_this->status.load() & new_status); });
+  return true;
+}
+#endif // THREADSINSTALLED
 
 int AsyncBacklog::signon_status() {
   if (is_closing())
@@ -266,6 +272,7 @@ bool AsyncBacklog::wait_for_signon() {
 #ifdef THREADSINSTALLED
   int status = SIGNON_NOT_SENT;
   int iloop = 0;
+  int interval = 20;
   while (true) {
     status = signon_status();
     if (status == SIGNON_ERROR)
@@ -276,9 +283,13 @@ bool AsyncBacklog::wait_for_signon() {
     {
       const std::lock_guard<std::mutex> comm_lock(comm_mutex);
       ClientComm* cli = dynamic_cast<ClientComm*>(comm);
-      if (status == SIGNON_WAITING)
+      if (status == SIGNON_WAITING) {
+	log_debug() << "wait_for_signon: Sign-on after " <<
+	  iloop << " loops (" << (iloop / interval) + 1 <<
+	  " messages sent)" << std::endl;
 	return cli->signon();
-      if (!cli->send_signon(iloop, comm))
+      }
+      if (!cli->send_signon(iloop, interval, comm))
 	return false;
     }
     std::this_thread::sleep_for(std::chrono::microseconds(10*YGG_SLEEP_TIME));
@@ -301,8 +312,12 @@ int AsyncBacklog::send() {
     out = comm->send_single(header);
     if (out >= 0) {
       log_debug() << "send: Sent message from backlog" << std::endl;
-      if (header.flags & HEAD_FLAG_CLIENT_SIGNON)
+      if (header.flags & HEAD_FLAG_CLIENT_SIGNON) {
 	signon_sent.store(true);
+	// Sleep for a bit on client open to prevent sending too many
+	//   signon messages.
+	// std::this_thread::sleep_for(std::chrono::microseconds(100*YGG_SLEEP_TIME));
+      }
     } else {
       log_debug() << "send: Sending from backlog failed. " <<
 	"Another attempt will be made." << std::endl;
@@ -493,15 +508,22 @@ long AsyncComm::recv_single(Header& header) {
 }
 
 bool AsyncComm::create_header_send(Header& header) {
-  const AsyncLockGuard lock(handle);
   assert(!global_comm);
   if (handle->is_closing()) {
     log_error() << "create_header_send: Thread is closing" << std::endl;
     return false;
   }
+  // Early exit without lock if wrapped class dosn't have a
+  //   create_header_send member
+  if (type == IPC_COMM || type == MPI_COMM || type == FILE_COMM ||
+      (type == DEFAULT_COMM && (COMM_BASE_TYPE == IPC_COMM ||
+				COMM_BASE_TYPE == MPI_COMM ||
+				COMM_BASE_TYPE == FILE_COMM)))
+    return true;
+  const AsyncLockGuard lock(handle);
   if (type == CLIENT_COMM &&
       !(header.flags & (HEAD_FLAG_EOF | HEAD_FLAG_CLIENT_SIGNON))) {
-    if (!dynamic_cast<ClientComm*>(handle->comm)->send_signon(0, this))
+    if (!dynamic_cast<ClientComm*>(handle->comm)->send_signon(0, 3, this))
       return false;
     log_debug() << "AsyncComm::create_header_send: Sent signon" << std::endl;
   }

@@ -35,7 +35,8 @@ public:
     void set_timeout_recv(int64_t new_timeout) override;
     int64_t get_timeout_recv() override;
     virtual bool signon();
-    bool send_signon(int nloop, Comm_t* async_comm = nullptr);
+    bool send_signon(int nloop, int interval=3,
+		     Comm_t* async_comm = nullptr);
 
     using RPCComm::send;
     using RPCComm::recv;

@@ -294,17 +294,15 @@ namespace utils {
 #else // THREADSINSTALLED
 #define THREAD_USLEEP(x) usleep(x)
 #endif // THREADSINSTALLED
-#define TIMEOUT_LOOP(TOUT, TSTEP)					\
-  for (int istep = 0; (TOUT < 0 || istep < ((TOUT / TSTEP) + 1)); istep++)
-#define AFTER_TIMEOUT_LOOP(TSTEP)		\
-  THREAD_USLEEP(TSTEP)
   /*
 #define TIMEOUT_LOOP(TOUT, TSTEP)					\
-  clock_t start = clock();						\
-  for (int istep = 0; (TOUT < 0 || (((double)(clock() - start))*1000000/CLOCKS_PER_SEC) < TOUT); istep++, \
-  THREAD_USLEEP(TSTEP))
-#define AFTER_TIMEOUT_LOOP(TSTEP)
+  for (int istep = 0; (TOUT < 0 || istep < ((TOUT / TSTEP) + 1)); istep++)
   */
+#define TIMEOUT_LOOP(TOUT, TSTEP)		\
+  std::chrono::microseconds timeout_start = std::chrono::system_clock::now().time_since_epoch(); \
+  for (int istep = 0; (TOUT < 0 || (std::chrono::microseconds(std::chrono::system_clock::now().time_since_epoch()) - timeout_start) <= std::chrono::microseconds(TOUT)); istep++)
+#define AFTER_TIMEOUT_LOOP(TSTEP)		\
+  THREAD_USLEEP(TSTEP)
 
 /*! @brief Memory to allow thread association to be set via macro. */
 static int global_thread_id = -1;

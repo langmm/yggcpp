@@ -65,16 +65,20 @@ namespace communication {
       std::string logClass() const override { return "AsyncBacklog"; }
       std::string logInst() const override { return logInst_; }
       bool is_closing() const { return backlog.is_closed(); }
+#ifdef THREADSINSTALLED
+      void set_status(const int new_status);
+      bool wait_for_status(const int new_status);
+#endif // THREADSINSTALLED
       Comm_t* comm;
       AsyncBuffer backlog;
 #ifdef THREADSINSTALLED
       std::mutex comm_mutex;
-      std::atomic_bool opened;
       std::atomic_bool locked;
-      std::atomic_bool complete;
-      std::atomic_bool result;
       std::atomic_bool signon_sent;
       std::thread backlog_thread;
+      std::atomic_int status;
+      std::mutex m_status;
+      std::condition_variable cv_status;
 #endif // THREADSINSTALLED
       std::string logInst_;
     };
