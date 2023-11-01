@@ -18,18 +18,18 @@ using namespace communication::communicator;
   unsetenv("output_OUT")
 #define INIT_INPUT_NOARGS(cls)					\
   INIT_INPUT_BASE(ygg ## cls ## Input, ("input"), COMM_BASE,	\
-		  ("", nullptr, SEND))
+		  ("", SEND))
 #define INIT_OUTPUT_NOARGS(cls)					\
   INIT_OUTPUT_BASE(ygg ## cls ## Output, ("output"), COMM_BASE,	\
-		   ("", nullptr, RECV))
+		   ("", RECV))
 #define INIT_INPUT(cls, ...)						\
   INIT_INPUT_BASE(ygg ## cls ## Input, ("input", __VA_ARGS__),		\
 		  COMM_BASE,						\
-		  ("", nullptr, SEND))
+		  ("", SEND))
 #define INIT_OUTPUT(cls, ...)						\
   INIT_OUTPUT_BASE(ygg ## cls ## Output, ("output", __VA_ARGS__),	\
 		   COMM_BASE,						\
-		   ("", nullptr, RECV))
+		   ("", RECV))
 #define DO_SEND_RECV_BASE_C(init_data, comp_data, send_method, recv_method, send_eof, afterSendRecv, finally) \
   init_data;								\
   EXPECT_GE(send_method, 0);						\
@@ -86,9 +86,9 @@ using namespace communication::communicator;
 
 INTERFACE_TEST(Base,
 	       INIT_INPUT_BASE(yggInput, ("input"), COMM_BASE,
-			       ("", nullptr, SEND)),
+			       ("", SEND)),
 	       INIT_OUTPUT_BASE(yggOutput, ("output"), COMM_BASE,
-				("", nullptr, RECV)),
+				("", RECV)),
 	       INIT_DATA_CHAR, COMP_DATA_CHAR,
 	       ygg_send, (data_send, n_send), (data_send),
 	       ygg_recv, (data_recv, n_recv), (data_recv))
@@ -99,12 +99,12 @@ INTERFACE_TEST(
     yggInputType,
     ("input", create_dtype_from_schema("{\"type\": \"number\"}", false)),
     COMM_BASE,
-    ("", nullptr, SEND)); sComm.addSchema("{\"type\": \"number\"}"),
+    ("", SEND)); sComm.addSchema("{\"type\": \"number\"}"),
   INIT_OUTPUT_BASE(
     yggOutputType,
     ("output", create_dtype_from_schema("{\"type\": \"number\"}", false)),
     COMM_BASE,
-    ("", nullptr, RECV)),
+    ("", RECV)),
   INIT_DATA_SINGLE(double, 1.5), COMP_DATA_SINGLE,
   yggSend, (data_send), (1, data_send),
   yggRecv, (&data_recv), (1, &data_recv))
@@ -115,12 +115,12 @@ INTERFACE_TEST(
     yggInputFmt,
     ("input", "%d\t%lf\t%5s"),
     COMM_BASE,
-    ("", nullptr, SEND)); sComm.addFormat("%d\t%lf\t%5s"),
+    ("", SEND)); sComm.addFormat("%d\t%lf\t%5s"),
   INIT_OUTPUT_BASE(
     yggOutputFmt,
     ("output", "%d\t%lf\t%5s"),
     COMM_BASE,
-    ("", nullptr, RECV)),
+    ("", RECV)),
   INIT_DATA_TRIPLE, COMP_DATA_TRIPLE,
   yggSend, (a_send, b_send, c_send, nc_send), SEND_NARGS_TRIPLE,
   yggRecv, (&a_recv, &b_recv, &c_recv, &nc_recv), RECV_NARGS_TRIPLE)
@@ -158,7 +158,7 @@ INTERFACE_TEST_SCHEMA(JSONObject, "{\"type\": \"object\", \"properties\": {\"a\"
 
 
 TEST(YggInterface_C, Server) {
-  ClientComm sComm("", nullptr);
+  ClientComm sComm("");
   setenv("input_IN", sComm.getAddress().c_str(), 1);
   comm_t rComm_c = yggRpcServer("input", "%s", "%s");
   unsetenv("input_IN");
@@ -197,7 +197,7 @@ TEST(YggInterface_C, Server) {
 }
 
 TEST(YggInterface_C, Client) {
-  ServerComm rComm("", nullptr);
+  ServerComm rComm("");
   setenv("output_OUT", rComm.getAddress().c_str(), 1);
   comm_t sComm_c = yggRpcClient("output", "%s", "%s");
   unsetenv("output_OUT");
@@ -238,7 +238,7 @@ TEST(YggInterface_C, ServerAny) {
   dtype_t dtype_req = {0};
   dtype_t dtype_res = {0};
   INIT_DATA_SCHEMA_C("{\"type\": \"array\", \"items\": [{\"type\": \"integer\"}]}");
-  ClientComm sComm("", nullptr);
+  ClientComm sComm("");
   setenv("input_IN", sComm.getAddress().c_str(), 1);
   comm_t rComm_c = yggRpcServerType("input", dtype_req, dtype_res);
   unsetenv("input_IN");
@@ -270,7 +270,7 @@ TEST(YggInterface_C, ClientAny) {
   dtype_t dtype_req = {0};
   dtype_t dtype_res = {0};
   INIT_DATA_SCHEMA_C("{\"type\": \"array\", \"items\": [{\"type\": \"integer\"}]}");
-  ServerComm rComm("", nullptr);
+  ServerComm rComm("");
   setenv("output_OUT", rComm.getAddress().c_str(), 1);
   comm_t sComm_c = yggRpcClientType("output", dtype_req, dtype_res);
   unsetenv("output_OUT");
@@ -299,7 +299,7 @@ TEST(YggInterface_C, ClientAny) {
 }
 
 TEST(YggInterface_C, ClientPointers) {
-  ServerComm rComm("", nullptr);
+  ServerComm rComm("");
   setenv("output_OUT", rComm.getAddress().c_str(), 1);
   comm_t sComm_c = yggRpcClient("output", "%s", "%s");
   EXPECT_EQ(set_response_format(sComm_c, "%s"), 1);
@@ -366,21 +366,21 @@ TEST(comm_t, Errors) {
   tmp = yggRpcServerType("invalid", tmp_dtype, tmp_dtype);
   EXPECT_FALSE(tmp.comm);
   {
-    COMM_BASE alt("", nullptr, RECV);
+    COMM_BASE alt("", RECV);
     setenv("output_OUT", alt.getAddress().c_str(), 1);
     tmp = yggOutputFmt("output", "%j");
     EXPECT_FALSE(tmp.comm);
     unsetenv("output_OUT");
   }
   {
-    COMM_BASE alt("", nullptr, SEND);
+    COMM_BASE alt("", SEND);
     setenv("input_IN", alt.getAddress().c_str(), 1);
     tmp = yggInputFmt("input", "%j");
     EXPECT_FALSE(tmp.comm);
     unsetenv("input_IN");
   }
   {
-    COMM_BASE alt("", nullptr, RECV);
+    COMM_BASE alt("", RECV);
     setenv("output_OUT", alt.getAddress().c_str(), 1);
     tmp = yggAsciiArrayOutput("output", "%j");
     EXPECT_FALSE(tmp.comm);
@@ -398,9 +398,9 @@ TEST(comm_t, Errors) {
 INTERFACE_TEST_BASE(
   Pointers,
   INIT_INPUT_BASE(yggInput, ("input"), COMM_BASE,
-		  ("", nullptr, SEND)),
+		  ("", SEND)),
   INIT_OUTPUT_BASE(yggOutputFmt, ("output", "%lf"), COMM_BASE,
-		   ("", nullptr, RECV)),
+		   ("", RECV)),
   INIT_DATA_PTRS, COMP_DATA_SINGLE,
   pcommSend, (1, pp_send, 0), sendVar, (data_send),
   pcommRecv, (0, 1, pp_recv, 0), recvVar, (data_recv),
@@ -409,7 +409,7 @@ INTERFACE_TEST_BASE(
 TEST(YggInterface_C, GlobalServer) {
   {
     std::string name = "test_name";
-    ClientComm sComm(name, nullptr);
+    ClientComm sComm(name);
     sComm.set_timeout_recv(1000);
     std::string key_env = name + "_IN";
     std::string val_env = sComm.getAddress();

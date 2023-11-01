@@ -16,10 +16,10 @@ namespace communicator {
     Worker(const Worker& rhs) = delete;
     Worker& operator=(const Worker& rhs) = delete;
   public:
-    Worker(Comm_t* parent, DIRECTION dir, utils::Address* adr = nullptr);
+    Worker(Comm_t* parent, DIRECTION dir, utils::Address& adr);
     Worker(Worker&& rhs);
     Worker& operator=(Worker&& rhs);
-    bool matches(DIRECTION dir, utils::Address* adr = nullptr);
+    bool matches(DIRECTION dir, utils::Address& adr);
     ~Worker();
     Comm_t* comm;
     std::string request;
@@ -32,13 +32,15 @@ namespace communicator {
     WorkerList() : workers() {}
     ~WorkerList();
     Comm_t* add_worker(Comm_t* parent, DIRECTION dir,
-		       utils::Address* adr = nullptr);
+		       utils::Address& adr);
     void remove_worker(Comm_t*& worker);
-    Comm_t* find_worker(DIRECTION dir, utils::Address* adr = nullptr,
+    Comm_t* find_worker(DIRECTION dir, utils::Address& adr,
 			size_t* idx = nullptr);
     int find_worker(Comm_t* worker);
     Comm_t* get(Comm_t* parent, DIRECTION dir,
-		utils::Address* adr = nullptr);
+		utils::Address& adr);
+    Comm_t* get(Comm_t* parent, DIRECTION dir);
+    Comm_t* get(Comm_t* parent, DIRECTION dir, std::string adr);
     bool setRequest(Comm_t* worker, std::string request);
     bool setResponse(std::string request);
     std::vector<Worker> workers;

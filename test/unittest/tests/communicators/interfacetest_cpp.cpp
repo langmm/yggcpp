@@ -14,26 +14,26 @@
   unsetenv("output_OUT")
 #define INIT_INPUT_NOARGS(cls)				\
   INIT_INPUT_BASE(cls ## Input, ("input"), COMM_BASE,	\
-		  ("", nullptr, SEND))
+		  ("", SEND))
 #define INIT_OUTPUT_NOARGS(cls)					\
   INIT_OUTPUT_BASE(cls ## Output, ("output"), COMM_BASE,	\
-		   ("", nullptr, RECV))
+		   ("", RECV))
 #define INIT_INPUT(cls, ...)						\
   INIT_INPUT_BASE(cls ## Input, ("input", __VA_ARGS__), COMM_BASE,	\
-		  ("", nullptr, SEND))
+		  ("", SEND))
 #define INIT_OUTPUT(cls, ...)						\
   INIT_OUTPUT_BASE(cls ## Output, ("output", __VA_ARGS__), COMM_BASE,	\
-		   ("", nullptr, RECV))
+		   ("", RECV))
 #define INIT_INPUT_RPC_NOARGS(cls)				\
-  INIT_INPUT_BASE(cls, ("input"), ClientComm, ("", nullptr))
+  INIT_INPUT_BASE(cls, ("input"), ClientComm, (""))
 #define INIT_OUTPUT_RPC_NOARGS(cls)				\
-  INIT_OUTPUT_BASE(cls, ("output"), ServerComm, ("", nullptr))
+  INIT_OUTPUT_BASE(cls, ("output"), ServerComm, (""))
 #define INIT_INPUT_RPC(cls, ...)			   \
   INIT_INPUT_BASE(cls, ("input", __VA_ARGS__), ClientComm, \
-		  ("", nullptr))
+		  (""))
 #define INIT_OUTPUT_RPC(cls, ...)				\
   INIT_OUTPUT_BASE(cls, ("output", __VA_ARGS__), ServerComm,	\
-		   ("", nullptr))
+		   (""))
 #define TRANSFER_INPUT_TYPE(init)		\
   sComm.copySchema(&rComm);			\
   init
@@ -302,7 +302,7 @@ INTERFACE_TEST_NOARGS(JSONObject, YggJSONObject,
 TEST(YggInterface, GlobalServerPiecemeal) {
   {
     std::string name = "test_name";
-    ClientComm sComm(name, nullptr);
+    ClientComm sComm(name);
     sComm.set_timeout_recv(1000);
     std::string name_req = name + "_input";
     std::string name_res = name + "_output";

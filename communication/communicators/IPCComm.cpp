@@ -9,12 +9,18 @@ unsigned IPCComm::_yggChannelsUsed = 0;
 int IPCComm::_yggChannelNames[_yggTrackChannels];
 bool IPCComm::_ipc_rand_seeded = false;
 
-IPCComm::IPCComm(const std::string name, Address *address,
+IPCComm::IPCComm(const std::string name, Address& address,
 		 DIRECTION direction, int flgs,
 		 const COMM_TYPE type) :
   CommBase(name, address, direction, type, flgs) {
   if (!global_comm)
     init();
+}
+IPCComm::IPCComm(const std::string nme, const DIRECTION dirn,
+                 int flgs, const COMM_TYPE type) :
+        CommBase(nme, dirn, type, flgs) {
+    if (!global_comm)
+        init();
 }
 
 ADD_CONSTRUCTORS_DEF(IPCComm)
@@ -24,7 +30,7 @@ ADD_CONSTRUCTORS_DEF(IPCComm)
 void IPCComm::init() {
     updateMaxMsgSize(2048);
     int key = 0;
-    bool created = ((!address) || address->address().empty());
+    bool created = ((!address.valid()) || address.address().empty());
     if (created) {
       YGG_THREAD_SAFE_BEGIN(ipc) {
 	if (!_ipc_rand_seeded) {
@@ -35,16 +41,12 @@ void IPCComm::init() {
       while (key == 0 || check_key(key) < 0) {
         key = std::rand();
       }
-      if (!address) {
-        address = new utils::Address(std::to_string(key));
-      } else {
-        address->address(std::to_string(key));
-      }
+        address.address(std::to_string(key));
     } else {
-      key = this->address->key();
+      key = this->address.key();
     }
     if (name.empty()) {
-        this->name = "tempnewIPC." + this->address->address();
+        this->name = "tempnewIPC." + this->address.address();
     } else {
         this->name = name;
     }
@@ -63,7 +65,7 @@ void IPCComm::init() {
     }
     handle = fid;
     add_channel();
-    ygglog_debug << "IPCComm(" << name << ")::init: address = " << this->address->address() << ", created = " << created << std::endl;
+    ygglog_debug << "IPCComm(" << name << ")::init: address = " << this->address.address() << ", created = " << created << std::endl;
 }
 
 void IPCComm::close() {
@@ -113,7 +115,7 @@ void IPCComm::add_channel() {
     if (IPCComm::_yggChannelsUsed++ >= _yggTrackChannels) {
       ygglog_error << "Too many channels in use, max: " << _yggTrackChannels << std::endl;
     }
-    IPCComm::_yggChannelNames[IPCComm::_yggChannelsUsed] = address->key();
+    IPCComm::_yggChannelNames[IPCComm::_yggChannelsUsed] = address.key();
   } YGG_THREAD_SAFE_END;
 }
 
@@ -133,7 +135,7 @@ int IPCComm::remove_comm(bool close_comm) {
     }
     // ret = -1;
     unsigned i;
-    int ich = address->key();
+    int ich = address.key();
     YGG_THREAD_SAFE_BEGIN(ipc) {
       for (i = 0; i < IPCComm::_yggChannelsUsed; i++) {
         if (ich == IPCComm::_yggChannelNames[i]) {

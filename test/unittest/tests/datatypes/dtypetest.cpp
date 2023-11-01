@@ -557,9 +557,14 @@ TEST(dtype, PythonInit) {
 }
 
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
+#ifdef RAPIDJSON_DONT_IMPORT_NUMPY
+#define CHECK_ARRAY_API EXPECT_FALSE(rapidjson_ARRAY_API)
+#else // RAPIDJSON_DONT_IMPORT_NUMPY
+#define CHECK_ARRAY_API EXPECT_TRUE(rapidjson_ARRAY_API)
+#endif // RAPIDJSON_DONT_IMPORT_NUMPY
 #define DO_PYTHON(name)							\
   TEST(generic_t, name) {						\
-    EXPECT_TRUE(rapidjson_ARRAY_API);					\
+    CHECK_ARRAY_API;							\
     generic_t v = init_generic_generate("{\"type\": \"" #name "\"}");	\
     generic_t x = init_generic_null();					\
     python_t data;							\

@@ -765,7 +765,8 @@ void Metadata::Display(const char* indent) const {
   std::cout << document2string(metadata, indent) << std::endl;
 }
 void Metadata::_update_schema() {
-  if (metadata.HasMember("serializer") &&
+  if (metadata.IsObject() &&
+      metadata.HasMember("serializer") &&
       metadata["serializer"].IsObject() &&
       metadata["serializer"].HasMember("datatype") &&
       metadata["serializer"]["datatype"].IsObject()) {
