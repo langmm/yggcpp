@@ -150,6 +150,17 @@ bool Metadata::operator==(const Metadata& rhs) const {
 bool Metadata::operator!=(const Metadata& rhs) const {
   return (!(*this == rhs));
 }
+bool Metadata::CopyFrom(const Metadata& rhs) {
+  metadata.CopyFrom(rhs.metadata, GetAllocator(), true);
+  if (rhs.raw_schema) {
+    if (!raw_schema) {
+      raw_schema = new Metadata();
+      if (!raw_schema->CopyFrom(*(rhs.raw_schema)))
+	return false;
+    }
+  }
+  return true;
+}
 std::string Metadata::logInst() const {
   std::string out;
   if (metadata.IsObject() && metadata.HasMember("__meta__") &&

@@ -96,17 +96,7 @@ public:
   std::string logClass() const override { return "Metadata"; }
   std::string logInst() const override;
   Metadata& Move() { return *this; }
-  bool CopyFrom(const Metadata& rhs) {
-    metadata.CopyFrom(rhs.metadata, GetAllocator(), true);
-    if (rhs.raw_schema) {
-      if (!raw_schema) {
-	raw_schema = new Metadata();
-	if (!raw_schema->CopyFrom(*(rhs.raw_schema)))
-	  return false;
-      }
-    }
-    return true;
-  }
+  bool CopyFrom(const Metadata& rhs);
   bool _init(bool use_generic = false);
   void resetRawSchema();
   void reset();
@@ -114,16 +104,16 @@ public:
 		  bool isMetadata = false, bool use_generic = false);
   bool Normalize();
   bool fromSchema(const std::string schemaStr, bool use_generic = false);
-  template<typename T>
-  bool fromData(const T& data) {
-    rapidjson::Document d;
-    d.Set(data, d.GetAllocator());
-    bool has_type = hasType();
-    bool out = fromData(d);
-    if (out && !has_type)
-      out = setAllowWrapped();
-    return out;
-  }
+  // template<typename T>
+  // bool fromData(const T& data) {
+  //   rapidjson::Document d;
+  //   d.Set(data, d.GetAllocator());
+  //   bool has_type = hasType();
+  //   bool out = fromData(d);
+  //   if (out && !has_type)
+  //     out = setAllowWrapped();
+  //   return out;
+  // }
   bool fromData(const rapidjson::Document& data,
 		bool before_transforms=false);
   bool fromType(const std::string type, bool use_generic=false,
