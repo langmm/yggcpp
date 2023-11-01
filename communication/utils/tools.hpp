@@ -299,8 +299,8 @@ namespace utils {
   for (int istep = 0; (TOUT < 0 || istep < ((TOUT / TSTEP) + 1)); istep++)
   */
 #define TIMEOUT_LOOP(TOUT, TSTEP)		\
-  std::chrono::microseconds timeout_start = std::chrono::system_clock::now().time_since_epoch(); \
-  for (int istep = 0; (TOUT < 0 || (std::chrono::microseconds(std::chrono::system_clock::now().time_since_epoch()) - timeout_start) <= std::chrono::microseconds(TOUT)); istep++)
+  std::chrono::time_point<std::chrono::system_clock> timeout_start = std::chrono::system_clock::now(); \
+  for (int istep = 0; (TOUT < 0 || (std::chrono::microseconds(std::chrono::system_clock::now() - timeout_start) <= std::chrono::microseconds(TOUT))); istep++)
 #define AFTER_TIMEOUT_LOOP(TSTEP)		\
   THREAD_USLEEP(TSTEP)
 
