@@ -37,7 +37,7 @@ files = [
 
 
 local_dir = os.path.join(os.path.dirname(__file__),
-                         'communication', 'utils')
+                         'src', 'utils')
 for f in files:
     src = os.path.join(seri_dir, f['path'])
     dst = os.path.join(local_dir, os.path.basename(src))

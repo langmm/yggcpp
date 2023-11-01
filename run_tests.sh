@@ -57,11 +57,11 @@ else
 	if [ -d "_skbuild" ]; then
 	    rm -rf "_skbuild"
 	fi
-	if [ -f "communication/pyYggdrasil/pyYggdrasil.cpython-39-darwin.so" ]; then
-	    rm "communication/pyYggdrasil/pyYggdrasil.cpython-39-darwin.so"
+	if [ -f "src/pyYggdrasil/pyYggdrasil.cpython-39-darwin.so" ]; then
+	    rm "src/pyYggdrasil/pyYggdrasil.cpython-39-darwin.so"
 	fi
-	if [ -f "communication/pyYggdrasil/lib/libYggInterface_py.dylib" ]; then
-	    rm "communication/pyYggdrasil/lib/libYggInterface_py.dylib"
+	if [ -f "src/pyYggdrasil/lib/libYggInterface_py.dylib" ]; then
+	    rm "src/pyYggdrasil/lib/libYggInterface_py.dylib"
 	fi
 	
 	if [ -n "$WITH_ASAN" ]; then
