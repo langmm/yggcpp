@@ -3,8 +3,8 @@
 #include <mpi.h>
 #endif /*MPIINSTALLED*/
 
-using namespace communication::communicator;
-using namespace communication::utils;
+using namespace YggInterface::communicator;
+using namespace YggInterface::utils;
 
 #if defined(MPIINSTALLED) && defined(MPI_COMM_WORLD)
 
@@ -86,7 +86,7 @@ void MPIComm::init() {
     handle = new mpi_registry_t(MPI_COMM_WORLD);
     handle->procs.clear();
     handle->tag = 0;
-    std::vector<std::string> adrs = communication::utils::split(this->address.address(), ",");
+    std::vector<std::string> adrs = YggInterface::utils::split(this->address.address(), ",");
     addresses.emplace_back(this->address.address());
     if (adrs.size() > 1) {
         addresses[0].address(adrs[0]);

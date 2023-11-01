@@ -29,14 +29,14 @@
 //     }
 //     if (cpadr != NULL && Py_IS_TYPE(&cpadr, &AddressType)) {
 //         pyAddress* temp = (pyAddress *)(cpadr);
-//         self->address = new communication::utils::Address(temp->address);
+//         self->address = new YggInterface::utils::Address(temp->address);
 //         Py_XDECREF(temp);
 //     } else if (adr != NULL){
 //         PySys_WriteStdout("X");
 //         PySys_WriteStdout("_ %i _", adr_size);
 //         PySys_WriteStdout("= %s =", adr);
 
-//         self->address = new communication::utils::Address(adr);
+//         self->address = new YggInterface::utils::Address(adr);
 //     } else {
 //         PyErr_SetString(PyExc_TypeError, "Either an address, or another Address object must be given4.");
 //         return -1;

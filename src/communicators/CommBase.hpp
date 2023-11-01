@@ -91,7 +91,7 @@ const int COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
 
 using namespace rapidjson;
 
-namespace communication {
+namespace YggInterface {
 
 namespace communicator {
 
@@ -491,7 +491,7 @@ public:
         the comm including datatype.
       @return Metadata.
      */
-    virtual communication::utils::Metadata& getMetadata(const DIRECTION dir=NONE);
+    virtual YggInterface::utils::Metadata& getMetadata(const DIRECTION dir=NONE);
     /*!
       @brief Get the bitwise flags associated with the communicator.
       @returns flags.
@@ -644,7 +644,7 @@ protected:
 		  RAPIDJSON_DISABLEIF((internal::OrExpr<YGGDRASIL_IS_ANY_SCALAR(T), internal::IsSame<T, bool> >))) {}
     template<typename T>
     bool checkType(const T& data, const DIRECTION dir) {
-      communication::utils::Metadata& meta = getMetadata(dir);
+      YggInterface::utils::Metadata& meta = getMetadata(dir);
       if (dir == RECV)
 	zeroData(&data);
       try {

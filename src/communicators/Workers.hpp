@@ -5,7 +5,7 @@
 #include "utils/Address.hpp"
 #include "utils/logging.hpp"
 
-namespace communication {
+namespace YggInterface {
 namespace communicator {
   
   // Forward declare

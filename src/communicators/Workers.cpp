@@ -1,8 +1,8 @@
 #include "Workers.hpp"
 #include "CommBase.hpp"
 
-using namespace communication::communicator;
-using namespace communication::utils;
+using namespace YggInterface::communicator;
+using namespace YggInterface::utils;
 
 Worker::Worker(Comm_t* parent, DIRECTION dir, Address& adr) :
   comm(nullptr), request() {

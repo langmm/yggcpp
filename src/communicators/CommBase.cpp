@@ -1,22 +1,22 @@
 #include "comms.hpp"
 
 // #ifdef _OPENMP
-// int communication::communicator::global_scope_comm = 1;
+// int YggInterface::communicator::global_scope_comm = 1;
 // #else
-int communication::communicator::global_scope_comm = 0;
+int YggInterface::communicator::global_scope_comm = 0;
 // #endif
 
-using namespace communication::communicator;
-using namespace communication::utils;
+using namespace YggInterface::communicator;
+using namespace YggInterface::utils;
 
 void _cleanup_wrapper() {
   Comm_t::_ygg_cleanup();
 }
 
-void communication::communicator::global_scope_comm_on() {
+void YggInterface::communicator::global_scope_comm_on() {
   global_scope_comm = 1;
 }
-void communication::communicator::global_scope_comm_off() {
+void YggInterface::communicator::global_scope_comm_off() {
   // #ifndef _OPENMP
   global_scope_comm = 0;
   // #endif
@@ -234,19 +234,19 @@ bool Comm_t::check_size(const size_t &len) const {
     return true;
 }
 
-Comm_t* communication::communicator::new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, char* address, int flags) {
+Comm_t* YggInterface::communicator::new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, char* address, int flags) {
   Address addr;
   if (address)
     addr.address(address);
-  return communication::communicator::new_Comm_t(dir, type, name, addr, flags);
+  return YggInterface::communicator::new_Comm_t(dir, type, name, addr, flags);
 }
 
-Comm_t* communication::communicator::new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, int flags) {
+Comm_t* YggInterface::communicator::new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, int flags) {
     Address addr;
-    return communication::communicator::new_Comm_t(dir, type, name, addr, flags);
+    return YggInterface::communicator::new_Comm_t(dir, type, name, addr, flags);
 }
 
-Comm_t* communication::communicator::new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, Address &addr, int flags) {
+Comm_t* YggInterface::communicator::new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, Address &addr, int flags) {
   flags |= COMM_FLAG_DELETE;
   if (flags & COMM_FLAG_ASYNC) {
     return new AsyncComm(name, addr, dir, flags, type);
@@ -269,7 +269,7 @@ Comm_t* communication::communicator::new_Comm_t(const DIRECTION dir, const COMM_
   }
   return nullptr;
 }
-bool communication::communicator::is_commtype_installed(const COMM_TYPE type) {
+bool YggInterface::communicator::is_commtype_installed(const COMM_TYPE type) {
   switch(type) {
   case NULL_COMM:
     break;
@@ -564,20 +564,20 @@ int Comm_t::sendVar(const rapidjson::ObjWavefront& data) {
   return send(1, &data);
 }
 
-communication::utils::Metadata& Comm_t::getMetadata(const DIRECTION dir) {
+YggInterface::utils::Metadata& Comm_t::getMetadata(const DIRECTION dir) {
   if (global_comm)
     return global_comm->getMetadata(dir);
   return metadata;
 }
 int Comm_t::update_datatype(const rapidjson::Value& new_schema,
 			    const DIRECTION dir) {
-  communication::utils::Metadata& meta = getMetadata(dir);
+  YggInterface::utils::Metadata& meta = getMetadata(dir);
   meta.fromSchema(new_schema);
   return 1;
 }
 
 int Comm_t::deserialize(const char* buf, rapidjson::VarArgList& ap) {
-  communication::utils::Metadata& meta = getMetadata(RECV);
+  YggInterface::utils::Metadata& meta = getMetadata(RECV);
   if (!meta.hasType()) {
     ygglog_error << "CommBase(" << name << ")::deserialize: No datatype" << std::endl;
     return -1;
@@ -590,7 +590,7 @@ int Comm_t::deserialize(const char* buf, rapidjson::VarArgList& ap) {
 
 int Comm_t::serialize(char*& buf, size_t& buf_siz,
 		      rapidjson::VarArgList& ap) {
-  communication::utils::Metadata& meta = getMetadata(SEND);
+  YggInterface::utils::Metadata& meta = getMetadata(SEND);
   if (!meta.hasType()) {
     ygglog_error << "CommBase(" << name << ")::serialize: No datatype" << std::endl;
     return -1;
@@ -626,7 +626,7 @@ int Comm_t::vSend(rapidjson::VarArgList& ap) {
   ygglog_debug << "CommBase(" << name << ")::vSend: begin" << std::endl;
   // If type not set, but comm expecting generic, get the schema from the
   // provided generic argument
-  communication::utils::Metadata& meta = getMetadata(SEND);
+  YggInterface::utils::Metadata& meta = getMetadata(SEND);
   if (meta.isGeneric() && !meta.hasType()) {
     rapidjson::Document tmp;
     Metadata tmp_meta;
@@ -677,7 +677,7 @@ long Comm_t::vCall(rapidjson::VarArgList& ap) {
   }
   size_t send_nargs = 0;
   rapidjson::Document tmp;
-  communication::utils::Metadata& meta_send = getMetadata(SEND);
+  YggInterface::utils::Metadata& meta_send = getMetadata(SEND);
   if (meta_send.hasType()) {
     send_nargs = tmp.CountVarArgs(*meta_send.schema, false);
   }

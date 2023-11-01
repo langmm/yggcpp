@@ -12,7 +12,7 @@ static PyObject* DIRECTION_TYPE;
 
 // typedef struct {
 //     PyObject_HEAD
-//     communication::utils::Address *address;
+//     YggInterface::utils::Address *address;
 // }pyAddress;
 
 // void Address_dealloc(pyAddress* self);

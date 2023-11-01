@@ -3,8 +3,8 @@
 
 #ifdef COMM_BASE
 
-using namespace communication::communicator;
-using namespace communication::utils;
+using namespace YggInterface::communicator;
+using namespace YggInterface::utils;
 
 ServerComm::ServerComm(const std::string nme, Address& addr,
 		       int flgs, const COMM_TYPE type) :

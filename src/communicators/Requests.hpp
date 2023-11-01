@@ -5,7 +5,7 @@
 #include "CommBase.hpp"
 
 #ifdef COMM_BASE
-namespace communication {
+namespace YggInterface {
 namespace communicator {
 class Partner {
 public:

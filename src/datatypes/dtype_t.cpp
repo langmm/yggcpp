@@ -6,12 +6,12 @@
   if (in.metadata == NULL) {			\
     return err;					\
   }						\
-  communication::utils::Metadata* name = ((communication::utils::Metadata*)(in.metadata))
+  YggInterface::utils::Metadata* name = ((YggInterface::utils::Metadata*)(in.metadata))
 #define _GET_METADATA_THROW(name, in)				\
   if (in.metadata == NULL) {					\
     ygglog_throw_error_c(#name ": Metadata not initialized");	\
   }								\
-  communication::utils::Metadata* name = ((communication::utils::Metadata*)(in.metadata))
+  YggInterface::utils::Metadata* name = ((YggInterface::utils::Metadata*)(in.metadata))
 
 // C++ functions
 rapidjson::Document::AllocatorType& generic_allocator(generic_t& x) {
@@ -31,7 +31,7 @@ rapidjson::Document::AllocatorType& generic_ref_allocator(generic_ref_t& x) {
 // rapidjson::Document::AllocatorType& dtype_allocator(dtype_t& x) {
 //   rapidjson::Document* s = NULL;
 //   if (x.metadata != NULL)
-//     return ((communication::utils::Metadata*)x.metadata)->GetAllocator();
+//     return ((YggInterface::utils::Metadata*)x.metadata)->GetAllocator();
 //   else
 //     ygglog_throw_error_c("dtype_allocator: Not initialized");
 //   return s->GetAllocator();
@@ -1258,9 +1258,9 @@ extern "C" {
 
   dtype_t create_dtype(void* metadata, const bool use_generic) {
     dtype_t out;
-    communication::utils::Metadata* meta = static_cast<communication::utils::Metadata*>(metadata);
+    YggInterface::utils::Metadata* meta = static_cast<YggInterface::utils::Metadata*>(metadata);
     if (!meta)
-      meta = new communication::utils::Metadata();
+      meta = new YggInterface::utils::Metadata();
     out.metadata = (void*)meta;
     if (use_generic)
       meta->setGeneric();
@@ -1273,7 +1273,7 @@ extern "C" {
 
   dtype_t complete_dtype(dtype_t dtype, const bool use_generic) {
     if (!dtype.metadata)
-      dtype.metadata = (void*)(new communication::utils::Metadata());
+      dtype.metadata = (void*)(new YggInterface::utils::Metadata());
     if (use_generic) {
       _GET_METADATA(metadata, dtype, dtype);
       metadata->setGeneric();
@@ -1405,7 +1405,7 @@ extern "C" {
 	  if (items[i].metadata == NULL) {
 	    ygglog_throw_error_c("create_dtype_json_array: Item metadata %d is NULL", i);
 	  }
-	  metadata->addItem(*((communication::utils::Metadata*)(items[i].metadata)));
+	  metadata->addItem(*((YggInterface::utils::Metadata*)(items[i].metadata)));
 	  destroy_dtype(&(items[i]));
 	}
       }
@@ -1431,7 +1431,7 @@ extern "C" {
 	    ygglog_throw_error_c("create_dtype_json_array: Value metadata %d is NULL", i);
 	  }
 	  metadata->addMember(keys[i],
-			      *((communication::utils::Metadata*)(values[i].metadata)));
+			      *((YggInterface::utils::Metadata*)(values[i].metadata)));
 	  destroy_dtype(&(values[i]));
 	}
       }
@@ -1466,12 +1466,12 @@ extern "C" {
       }
       if (args_dtype && !is_empty_dtype(*args_dtype)) {
 	metadata->SetSchemaMetadata("args",
-				    *((communication::utils::Metadata*)(args_dtype->metadata)));
+				    *((YggInterface::utils::Metadata*)(args_dtype->metadata)));
 	destroy_dtype(args_dtype);
       }
       if (kwargs_dtype && !is_empty_dtype(*kwargs_dtype)) {
 	metadata->SetSchemaMetadata("kwargs",
-				    *((communication::utils::Metadata*)(kwargs_dtype->metadata)));
+				    *((YggInterface::utils::Metadata*)(kwargs_dtype->metadata)));
 	destroy_dtype(kwargs_dtype);
       }
       metadata->_init(use_generic);

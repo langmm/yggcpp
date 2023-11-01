@@ -7,7 +7,7 @@
 #include "CommBase.hpp"
 #include <vector>
 
-namespace communication {
+namespace YggInterface {
 namespace communicator {
 
 /**
@@ -97,5 +97,5 @@ private:
 };
 
 }
-} // communication
+} // YggInterface
 

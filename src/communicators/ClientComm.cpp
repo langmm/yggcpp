@@ -3,8 +3,8 @@
 
 #ifdef COMM_BASE
 
-using namespace communication::communicator;
-using namespace communication::utils;
+using namespace YggInterface::communicator;
+using namespace YggInterface::utils;
 
 unsigned ClientComm::_client_rand_seeded = 0;
 

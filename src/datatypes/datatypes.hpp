@@ -7,7 +7,7 @@
 #ifndef MSG_HEAD_SEP
 #define MSG_HEAD_SEP "YGG_MSG_HEAD"
 #endif
-namespace communication {
+namespace YggInterface {
 namespace datatypes {
 
 class DataType {

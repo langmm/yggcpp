@@ -2,8 +2,8 @@
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
 
-using namespace communication::communicator;
-using namespace communication::utils;
+using namespace YggInterface::communicator;
+using namespace YggInterface::utils;
 
 unsigned IPCComm::_yggChannelsUsed = 0;
 int IPCComm::_yggChannelNames[_yggTrackChannels];

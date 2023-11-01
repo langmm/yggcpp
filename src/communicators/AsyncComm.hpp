@@ -4,7 +4,7 @@
 #include "utils/serialization.hpp"
 #include <atomic>
 
-namespace communication {
+namespace YggInterface {
   namespace communicator {
 
     class AsyncBacklog {
@@ -68,7 +68,7 @@ namespace communication {
       // \copydoc Comm_t::comm_nmsg
       int comm_nmsg(DIRECTION dir=NONE) const override;
       // \copydoc Comm_t::getMetadata
-      communication::utils::Metadata& getMetadata(const DIRECTION dir=NONE) override;
+      YggInterface::utils::Metadata& getMetadata(const DIRECTION dir=NONE) override;
       // \copydoc Comm_t::set_timeout_recv
       void set_timeout_recv(int new_timeout) override;
       // \copydoc Comm_t::get_timeout_recv
@@ -87,4 +87,4 @@ namespace communication {
     };
 
   }
-} // communication
+} // YggInterface

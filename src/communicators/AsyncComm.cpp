@@ -2,8 +2,8 @@
 #include "ClientComm.hpp"
 #include "utils/logging.hpp"
 
-using namespace communication::communicator;
-using namespace communication::utils;
+using namespace YggInterface::communicator;
+using namespace YggInterface::utils;
 
 //////////////////
 // AsyncBacklog //
@@ -181,7 +181,7 @@ int AsyncComm::comm_nmsg(DIRECTION dir) const {
   return static_cast<int>(handle->backlog.size());
 }
 
-communication::utils::Metadata& AsyncComm::getMetadata(const DIRECTION dir) {
+YggInterface::utils::Metadata& AsyncComm::getMetadata(const DIRECTION dir) {
   if (global_comm)
     return global_comm->getMetadata(dir);
   const AsyncLockGuard lock(handle);

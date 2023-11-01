@@ -16,7 +16,7 @@
 /*! @brief Maximum number of channels. */
 #define _yggTrackChannels 256
 
-namespace communication {
+namespace YggInterface {
 namespace communicator {
 /*!
   @brief Message buffer structure.

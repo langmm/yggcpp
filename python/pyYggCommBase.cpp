@@ -6,7 +6,7 @@
 
 typedef struct {
     PyObject_HEAD
-    communication::communicator::Comm_t *comm;
+    YggInterface::communicator::Comm_t *comm;
 } pyComm_t;
 
 //////////////////////////////////////////////////////////////
@@ -636,7 +636,7 @@ static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds) {
         return -1;
     }
     try {
-      s->comm = communication::communicator::new_Comm_t(
+      s->comm = YggInterface::communicator::new_Comm_t(
 		       (DIRECTION)dirn, (COMM_TYPE)commtype,
 		       name, adr, flags);
     } catch (...) {
@@ -822,7 +822,7 @@ static PyObject* Comm_t_commtype_get(PyObject* self, void*) {
 
 PyObject* Comm_t_metadata_get(PyObject* self, void*) {
   // Uneditable version
-  // communication::utils::Metadata& metadata = ((pyComm_t*)self)->comm->getMetadata();
+  // YggInterface::utils::Metadata& metadata = ((pyComm_t*)self)->comm->getMetadata();
   // PyObject* out = metadata.getMeta().GetPythonObjectRaw();
   // if (out == NULL) {
   //   PyErr_SetString(PyExc_TypeError, "Error converting metadata to a Python object");
@@ -857,7 +857,7 @@ int Comm_t_metadata_set(PyObject* self, PyObject* value, void*) {
 
 PyObject* Comm_t_datatype_get(PyObject* self, void*) {
   // Uneditable version
-  // communication::utils::Metadata& metadata = ((pyComm_t*)self)->comm->getMetadata();
+  // YggInterface::utils::Metadata& metadata = ((pyComm_t*)self)->comm->getMetadata();
   // PyObject* out = metadata.getSchema().GetPythonObjectRaw();
   // if (out == NULL) {
   //   PyErr_SetString(PyExc_TypeError, "Error converting datatype to a Python object");
@@ -951,7 +951,7 @@ static PyObject* is_comm_installed(PyObject*, PyObject* args) {
     PyErr_SetString(PyExc_TypeError, "Invalid commtype");
     return NULL;
   }
-  if (communication::communicator::is_commtype_installed((COMM_TYPE)commtype)) {
+  if (YggInterface::communicator::is_commtype_installed((COMM_TYPE)commtype)) {
     Py_RETURN_TRUE;
   }
   Py_RETURN_FALSE;

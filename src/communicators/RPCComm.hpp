@@ -5,7 +5,7 @@
 #include "Requests.hpp"
 
 #ifdef COMM_BASE
-namespace communication {
+namespace YggInterface {
 namespace communicator {
 
 // @brief Structure for storing requests
@@ -31,7 +31,7 @@ public:
 			 bool use_generic=false);
   void addResponseFormat(const std::string& fmt, bool use_generic=false);
   // \copydoc Comm_t::getMetadata
-  communication::utils::Metadata& getMetadata(const DIRECTION dir=NONE) override;
+  YggInterface::utils::Metadata& getMetadata(const DIRECTION dir=NONE) override;
   bool signonComplete() const { return requests.signon_complete; }
   static bool isInstalled() { return COMM_BASE::isInstalled(); }
   
@@ -55,6 +55,6 @@ protected:
 };
   
 }
-} // communication
+} // YggInterface
 
 #endif

@@ -7,7 +7,7 @@
 #endif
 
 #include <vector>
-namespace communication {
+namespace YggInterface {
 #ifdef YGG_TEST
 namespace testing {
 class ZMQSocket_tester;

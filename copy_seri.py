@@ -28,7 +28,7 @@ files = [
      ],
      'insert': [
          ('/*!',  # '\nclass Header {',
-          '\nusing namespace communication::utils;\n'),
+          '\nusing namespace YggInterface::utils;\n'),
          ('#define STRLEN_RJ(var)',
           '#include "logging.hpp"\n\n'),
      ]},

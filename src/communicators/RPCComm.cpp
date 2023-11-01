@@ -3,8 +3,8 @@
 
 #ifdef COMM_BASE
 
-using namespace communication::communicator;
-using namespace communication::utils;
+using namespace YggInterface::communicator;
+using namespace YggInterface::utils;
 
 RPCComm::RPCComm(const std::string &name, Address& address,
 		 int flgs, DIRECTION dir, DIRECTION req_dir,
@@ -37,7 +37,7 @@ int RPCComm::comm_nmsg(DIRECTION dir) const {
   return requests.comms[requests.requests[0].comm_idx]->comm_nmsg(dir);
 }
 
-communication::utils::Metadata& RPCComm::getMetadata(const DIRECTION dir) {
+YggInterface::utils::Metadata& RPCComm::getMetadata(const DIRECTION dir) {
   if (global_comm)
     return global_comm->getMetadata(dir);
   if (dir == this->direction || dir == NONE)
@@ -59,7 +59,7 @@ void RPCComm::addResponseSchema(const rapidjson::Value& s,
   }
   requests.addResponseSchema(s, use_generic);
 }
-void RPCComm::addResponseSchema(const communication::utils::Metadata& metadata,
+void RPCComm::addResponseSchema(const YggInterface::utils::Metadata& metadata,
 				bool use_generic) {
   if (global_comm) {
     (dynamic_cast<RPCComm*>(global_comm))->addResponseSchema(metadata, use_generic);

@@ -4,7 +4,7 @@
 #include "RPCComm.hpp"
 
 #ifdef COMM_BASE
-namespace communication {
+namespace YggInterface {
 namespace communicator {
 
 /**
@@ -40,6 +40,6 @@ protected:
 };
 
 }
-} // communication
+} // YggInterface
 
 #endif

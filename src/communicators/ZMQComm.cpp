@@ -3,13 +3,13 @@
 #include "utils/tools.hpp"
 #include "utils/logging.hpp"
 
-/* double communication::communicator::_wait_send_t = 0;  // 0.0001; */
-char communication::communicator::_reply_msg[100] = "YGG_REPLY";
-char communication::communicator::_purge_msg[100] = "YGG_PURGE";
-int communication::communicator::_zmq_sleeptime = 10000;
+/* double YggInterface::communicator::_wait_send_t = 0;  // 0.0001; */
+char YggInterface::communicator::_reply_msg[100] = "YGG_REPLY";
+char YggInterface::communicator::_purge_msg[100] = "YGG_PURGE";
+int YggInterface::communicator::_zmq_sleeptime = 10000;
 
-using namespace communication::communicator;
-using namespace communication::utils;
+using namespace YggInterface::communicator;
+using namespace YggInterface::utils;
 
 // const std::chrono::milliseconds timeout{1000};
 // const std::chrono::milliseconds short_timeout{10};
