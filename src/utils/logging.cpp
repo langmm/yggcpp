@@ -1,7 +1,7 @@
 #include "logging.hpp"
 #include "tools.hpp"
 
-namespace communication {
+namespace YggInterface {
 namespace utils {
   
 int YggdrasilLogger::_ygg_error_flag = 0;

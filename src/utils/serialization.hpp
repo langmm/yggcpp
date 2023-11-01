@@ -25,14 +25,14 @@
   static_cast<rapidjson::SizeType>(strlen(var))
 
 
-namespace communication {
+namespace YggInterface {
   namespace communicator {
     class Comm_t;
   }
 }
 
 
-namespace communication {
+namespace YggInterface {
 namespace utils {
 
 /*!
@@ -194,7 +194,7 @@ private:
 public:
   Header(bool own_data=false);
   Header(const char* buf, const size_t &len,
-	 communication::communicator::Comm_t* comm);
+	 YggInterface::communicator::Comm_t* comm);
   Header(char*& buf, const size_t &len, bool allow_realloc);
   ~Header() override;
 #if RAPIDJSON_HAS_CXX11_RVALUE_REFS

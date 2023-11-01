@@ -5,7 +5,7 @@
 #define WITH_GLOBAL_SCOPE(COMM) global_scope_comm_on(); COMM; global_scope_comm_off()
 
 
-using namespace communication::communicator;
+using namespace YggInterface::communicator;
 
 /*!
   @brief Input communicator that can be used to receive messages from

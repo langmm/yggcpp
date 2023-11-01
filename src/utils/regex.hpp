@@ -5,7 +5,7 @@
 #include <iostream>
 #define FMT_LEN 100
 
-namespace communication {
+namespace YggInterface {
 namespace utils {
 
 size_t find_match(const std::regex &regex, const std::string &to_match,

@@ -1,7 +1,7 @@
 #include "Address.hpp"
 #include <algorithm>
 
-using namespace communication::utils;
+using namespace YggInterface::utils;
 
 Address::Address(const std::string &adr): _key(-1), _valid(false) {
     address(adr);

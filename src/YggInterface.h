@@ -7,7 +7,7 @@
 #include "datatypes/dtype_t.h"
 
 // TODO: Allow use of ygglog_error as function in C
-using namespace communication::utils;
+using namespace YggInterface::utils;
 
 #ifdef __cplusplus /* If this is a C++ compiler, use C linkage */
 extern "C" {

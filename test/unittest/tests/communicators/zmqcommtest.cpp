@@ -6,13 +6,13 @@
 #include "../../mock.hpp"
 #include "commtest.hpp"
 
-using namespace communication;
-using namespace communication::communicator;
-using namespace communication::mock;
+using namespace YggInterface;
+using namespace YggInterface::communicator;
+using namespace YggInterface::mock;
 
 #ifdef ZMQINSTALLED
 
-namespace communication {
+namespace YggInterface {
 namespace testing {
 class ZMQSocket_tester : public ZMQSocket {
 public:
@@ -34,7 +34,7 @@ public:
     std::string getAdr() { return address.address();}
 
     void setReply() {
-        // this->getReply()->addresses.push_back(new communication::utils::Address("ABCDE"));
+        // this->getReply()->addresses.push_back(new YggInterface::utils::Address("ABCDE"));
       std::string adr;
       this->getReply().create(adr);
     }
@@ -46,22 +46,22 @@ COMM_SERI_TEST(ZMQComm)
 
 // TEST(yggSockT, yggSockTest) {
 //     ZMQSocket ygs(ZMQ_REQ);
-//     EXPECT_EQ(communication::testing::ZMQSocket_tester::activeCount(), 1);
+//     EXPECT_EQ(YggInterface::testing::ZMQSocket_tester::activeCount(), 1);
 //     ygs.close();
-//     EXPECT_EQ(communication::testing::ZMQSocket_tester::activeCount(), 0);
+//     EXPECT_EQ(YggInterface::testing::ZMQSocket_tester::activeCount(), 0);
 //     ZMQSocket::ctx_shutdown();
-//     EXPECT_FALSE(communication::testing::ZMQSocket_tester::getValid());
+//     EXPECT_FALSE(YggInterface::testing::ZMQSocket_tester::getValid());
 //     ZMQSocket::ctx_shutdown();
 
 //     ZMQSocket::get_context();
 //     //int x = 2;
 //     ZMQSocket ygs1(ZMQ_REQ);
 //     ZMQSocket ygs2(ZMQ_REQ);
-//     EXPECT_EQ(communication::testing::ZMQSocket_tester::activeCount(), 2);
+//     EXPECT_EQ(YggInterface::testing::ZMQSocket_tester::activeCount(), 2);
 //     ZMQSocket::ctx_shutdown();
-//     EXPECT_EQ(communication::testing::ZMQSocket_tester::activeCount(), 0);
+//     EXPECT_EQ(YggInterface::testing::ZMQSocket_tester::activeCount(), 0);
 
-//     //communication::testing::ZMQSocket_tester ygs2(ZMQ_REQ);
+//     //YggInterface::testing::ZMQSocket_tester ygs2(ZMQ_REQ);
 //     //ygs2.setValid(false);
 
 

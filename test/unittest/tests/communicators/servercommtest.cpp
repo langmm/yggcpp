@@ -8,11 +8,11 @@
 
 #ifdef COMM_BASE
 
-using namespace communication;
-using namespace communication::communicator;
-using namespace communication::mock;
+using namespace YggInterface;
+using namespace YggInterface::communicator;
+using namespace YggInterface::mock;
 
-namespace communication {
+namespace YggInterface {
 namespace testing {
 class ServerComm_tester : public ServerComm {
 public:
@@ -48,7 +48,7 @@ TEST(ServerComm, constructor) {
 TEST(ServerComm, send) {
     std::string msg = "my message";
     std::string name = "MyComm";
-    communication::testing::ServerComm_tester sc(name);
+    YggInterface::testing::ServerComm_tester sc(name);
     EXPECT_EQ(sc.send(msg.c_str(), msg.size()), -1);
     sc.addRequest();
     EXPECT_GE(sc.send(msg.c_str(), msg.size()), 0);
@@ -68,7 +68,7 @@ TEST(ServerComm, recv) {
     char* data = (char*)malloc(sizeof(char));
     size_t len = 1;
 
-    communication::testing::ServerComm_tester sc(name);
+    YggInterface::testing::ServerComm_tester sc(name);
     utils::Address addr(sc.getAddress());
     ClientComm cc(name, addr);
 

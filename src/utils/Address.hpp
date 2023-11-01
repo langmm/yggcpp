@@ -4,7 +4,7 @@
 
 #define COMM_ADDRESS_SIZE 500
 
-namespace communication {
+namespace YggInterface {
 namespace utils {
 static std::string blank;
 

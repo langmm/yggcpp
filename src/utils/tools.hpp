@@ -91,7 +91,7 @@
 
 #include "logging.hpp"
 
-namespace communication {
+namespace YggInterface {
 namespace utils {
 
 // template<typename T, std::enable_if_t<!std::is_floating_point<T>::value &&
@@ -290,11 +290,11 @@ static int global_thread_id = -1;
 #define YGG_THREADING_ACTIVE 1
 #define YGG_THREAD_SAFE_BEGIN(name)		\
   _Pragma(STRINGIFY(omp critical (name))) {	\
-    const std::lock_guard<std::mutex> name ## _lock(communication::utils::name ## _mutex);
+    const std::lock_guard<std::mutex> name ## _lock(YggInterface::utils::name ## _mutex);
 #else // _OPENMP
 #define YGG_THREAD_SAFE_BEGIN(name)		\
   {						\
-    const std::lock_guard<std::mutex> name ## _lock(communication::utils::name ## _mutex);
+    const std::lock_guard<std::mutex> name ## _lock(YggInterface::utils::name ## _mutex);
 #endif // _OPENMP
 #define YGG_THREAD_SAFE_END			\
   }

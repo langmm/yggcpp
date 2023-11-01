@@ -1,7 +1,7 @@
 #include <memory>
 #include "regex.hpp"
 
-namespace communication {
+namespace YggInterface {
 namespace utils {
 
 /*!

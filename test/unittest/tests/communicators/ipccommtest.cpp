@@ -6,9 +6,9 @@
 #include "commtest.hpp"
 
 
-using namespace communication;
-using namespace communication::communicator;
-using namespace communication::mock;
+using namespace YggInterface;
+using namespace YggInterface::communicator;
+using namespace YggInterface::mock;
 
 class IPCComm_tester : public IPCComm {
 public:

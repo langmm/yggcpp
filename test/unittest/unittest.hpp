@@ -103,7 +103,7 @@ public:
 // TODO: Perform destroy during exit automatically
 #ifdef ZMQINSTALLED
 #define INIT_ZMQ()				\
-  communication::communicator::ZMQContext ctx
+  YggInterface::communicator::ZMQContext ctx
 #define FINALIZE_ZMQ()				\
   ctx.destroy()
 #else // ZMQINSTALLED

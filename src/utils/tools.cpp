@@ -5,7 +5,7 @@
 #include "tools.hpp"
 
 #define YGG_THREAD_MUTEX(name)			\
-  std::mutex communication::utils::name ## _mutex;
+  std::mutex YggInterface::utils::name ## _mutex;
   YGG_THREAD_MUTEX(init)
   YGG_THREAD_MUTEX(clean)
   YGG_THREAD_MUTEX(client)

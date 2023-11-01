@@ -9,7 +9,7 @@
 #endif
 #endif
 
-namespace communication {
+namespace YggInterface {
 namespace utils {
 
   class YggdrasilLogger {
@@ -50,12 +50,12 @@ namespace utils {
 }
 }
 
-#define ygglog_error communication::utils::YggdrasilLogger("ERROR", 40, true)
-#define ygglog_info communication::utils::YggdrasilLogger("INFO", 20)
-// #define ygglog_debug communication::utils::YggdrasilLogger("DEBUG", 10)
-#define ygglog_debug communication::utils::YggdrasilLogger("DEBUG", 40)
+#define ygglog_error YggInterface::utils::YggdrasilLogger("ERROR", 40, true)
+#define ygglog_info YggInterface::utils::YggdrasilLogger("INFO", 20)
+// #define ygglog_debug YggInterface::utils::YggdrasilLogger("DEBUG", 10)
+#define ygglog_debug YggInterface::utils::YggdrasilLogger("DEBUG", 40)
 
-#define ygglog_error_c(...) ygglog_error << communication::utils::string_format(__VA_ARGS__) << std::endl
-#define ygglog_debug_c(...) ygglog_debug << communication::utils::string_format(__VA_ARGS__) << std::endl
-#define ygglog_info_c(...) ygglog_info << communication::utils::string_format(__VA_ARGS__) << std::endl
-#define ygglog_throw_error_c(...) communication::utils::ygglog_throw_error(communication::utils::string_format(__VA_ARGS__))
+#define ygglog_error_c(...) ygglog_error << YggInterface::utils::string_format(__VA_ARGS__) << std::endl
+#define ygglog_debug_c(...) ygglog_debug << YggInterface::utils::string_format(__VA_ARGS__) << std::endl
+#define ygglog_info_c(...) ygglog_info << YggInterface::utils::string_format(__VA_ARGS__) << std::endl
+#define ygglog_throw_error_c(...) YggInterface::utils::ygglog_throw_error(YggInterface::utils::string_format(__VA_ARGS__))

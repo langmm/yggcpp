@@ -11,9 +11,9 @@ extern "C" {
 }
 #endif // RAPIDJSON_FORCE_IMPORT_ARRAY
 // #endif // RAPIDJSON_YGGDRASIL_PYTHON
-using namespace communication::utils;
+using namespace YggInterface::utils;
 
-int communication::utils::split_head_body(const char *buf,
+int YggInterface::utils::split_head_body(const char *buf,
 					  const char **head,
 					  size_t *headsiz) {
     // Split buffer into head and body
@@ -63,7 +63,7 @@ int communication::utils::split_head_body(const char *buf,
 }
 
 template <typename ValueT>
-std::string communication::utils::document2string(ValueT& rhs,
+std::string YggInterface::utils::document2string(ValueT& rhs,
 						  const char* indent) {
   rapidjson::StringBuffer sb;
   rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(sb, 0, strlen(indent));
@@ -72,7 +72,7 @@ std::string communication::utils::document2string(ValueT& rhs,
   return std::string(sb.GetString());
 }
 
-long communication::utils::copyData(char*& dst, const size_t dst_len,
+long YggInterface::utils::copyData(char*& dst, const size_t dst_len,
 				    const char* src, const size_t src_len,
 				    bool allow_realloc) {
   if ((src_len + 1) > dst_len) {
@@ -791,7 +791,7 @@ Header::Header(bool own_data) :
   }
 }
 Header::Header(const char* buf, const size_t &len,
-	       communication::communicator::Comm_t* comm) :
+	       YggInterface::communicator::Comm_t* comm) :
   Header() {
   Metadata* meta = NULL;
   int comm_flags = 0;
@@ -935,7 +935,7 @@ long Header::copyData(const char* msg, const size_t msg_siz) {
   } else {
     bool allow_realloc = ((flags & HEAD_FLAG_ALLOW_REALLOC) &&
 			  (offset == 0));
-    ret = communication::utils::copyData(dst, size_buff - offset,
+    ret = YggInterface::utils::copyData(dst, size_buff - offset,
 					 msg, msg_siz, allow_realloc);
     if (allow_realloc && ((ret + 1) > static_cast<long>(size_buff))) {
       data[0] = dst;

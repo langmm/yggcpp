@@ -1,7 +1,7 @@
 #include "../../unittest.hpp"
 #include "utils/serialization.hpp"
 
-using namespace communication::utils;
+using namespace YggInterface::utils;
 
 // TODO: Add tests for HEADER
 

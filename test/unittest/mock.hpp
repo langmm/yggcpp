@@ -25,16 +25,16 @@ extern char sublib_contents[256];
 #endif
 
 #define ELFHOOK(x) elf_hook(SUBLIB, LIBRARY_ADDRESS_BY_HANDLE(handle), #x, \
-    (void*)communication::mock::x);
+    (void*)YggInterface::mock::x);
 #define ELFHOOK_ALT(x) elf_hook(SUBLIB, LIBRARY_ADDRESS_BY_HANDLE(handle), #x, \
-    (void*)communication::mock::alt_ ## x);
+    (void*)YggInterface::mock::alt_ ## x);
 
 #define ELFHOOK_PARAM(x, y) elf_hook(SUBLIB, LIBRARY_ADDRESS_BY_HANDLE(handle), #x, \
-    (void*)communication::mock::y);
+    (void*)YggInterface::mock::y);
 #define ELFREVERT(x,y) y = elf_hook(SUBLIB, LIBRARY_ADDRESS_BY_HANDLE(handle), #x, y);
 
 #define ELFHOOK_ARGS(x, a) elf_hook(SUBLIB, LIBRARY_ADDRESS_BY_HANDLE(handle), std::string(#x) + "|" + std::string(#a), \
-    (void*)communication::mock::x);
+    (void*)YggInterface::mock::x);
 
 #define ELFREVERT_ARGS(x, a, y) y = elf_hook(SUBLIB, LIBRARY_ADDRESS_BY_HANDLE(handle), std::string(#x) + "|" + std::string(#a), \
     y);
@@ -74,7 +74,7 @@ extern char sublib_contents[256];
   ELFREVERT(func ## _orig, dummy_func_ ## func);	\
   ELFREVERT(func, *original_func_ ## func)
 
-namespace communication {
+namespace YggInterface {
 namespace mock {
 
 #ifdef ELF_AVAILABLE
