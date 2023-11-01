@@ -300,7 +300,7 @@ namespace utils {
   */
 #define TIMEOUT_LOOP(TOUT, TSTEP)		\
   std::chrono::time_point<std::chrono::system_clock> timeout_start = std::chrono::system_clock::now(); \
-  for (int istep = 0; (TOUT < 0 || (std::chrono::microseconds(std::chrono::system_clock::now() - timeout_start) <= std::chrono::microseconds(TOUT))); istep++)
+  for (int istep = 0; istep >= 0 && (TOUT < 0 || (std::chrono::microseconds(std::chrono::system_clock::now() - timeout_start) <= std::chrono::microseconds(TOUT))); istep++)
 #define AFTER_TIMEOUT_LOOP(TSTEP)		\
   THREAD_USLEEP(TSTEP)
 
