@@ -1,4 +1,3 @@
-* Move address away from pointer?
 * Re-structure so that top namespace in C++ is YggInterface
 * Move C++ interface into src directory
 * Automated documentation using doxygen
