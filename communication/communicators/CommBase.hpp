@@ -1,8 +1,8 @@
 #pragma once
 #define VIRT_END = 0
-#if defined(_WINDOWS) && !(defined(YggInterface_EXPORTS) || defined(YggInterface_py_EXPORTS) || defined(RAPIDJSON_FORCE_IMPORT_ARRAY))
-extern __declspec(dllimport) void** rapidjson_ARRAY_API;
-#endif
+// #if defined(_WINDOWS) && !(defined(YggInterface_EXPORTS) || defined(YggInterface_py_EXPORTS) || defined(RAPIDJSON_FORCE_IMPORT_ARRAY))
+// extern __declspec(dllimport) void** rapidjson_ARRAY_API;
+// #endif
 #include "utils/tools.hpp"
 #include "utils/enums.hpp"
 #include "utils/Address.hpp"
