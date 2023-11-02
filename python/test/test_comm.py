@@ -97,7 +97,8 @@ class TestComm_t_Installed:
                 result_recv = comm_recv.recv()
                 assert result_recv
             finally:
-                thread.join(timeout=1)
+                thread.join(timeout=5)
+                assert not thread.is_alive()
             assert comm_recv.datatype['type'] == 'string'
             assert result_send_thread[0] is not None
             assert result_send_thread[0]
@@ -157,7 +158,8 @@ class TestComm_t_Installed:
         thread = Thread(target=do_recv, daemon=True,
                         args=(100, result_recv_thread))
         thread.start()
-        thread.join(1)
+        thread.join(5)
+        assert not thread.is_alive()
         assert result_recv_thread[0] is not None
         assert not result_recv_thread[0][0]
         assert result_recv_thread[0][1] is None
@@ -266,7 +268,8 @@ class TestRPC:
                 result_send = server.send(res)
                 assert result_send
             finally:
-                thread.join(timeout=1)
+                thread.join(timeout=5)
+                assert not thread.is_alive()
             assert server.datatype['type'] == 'string'
             assert result_call_thread[0] is not None
             assert result_call_thread[0][0]
