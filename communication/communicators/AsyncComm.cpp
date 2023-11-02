@@ -137,7 +137,7 @@ AsyncBacklog::AsyncBacklog(Comm_t* parent) :
   comm(nullptr), backlog(parent->logInst()), comm_mutex(),
   locked(false), signon_sent(false),
   backlog_thread(&AsyncBacklog::on_thread, this, parent),
-  status(THREAD_INACTIVE), m_status(), cv_status(),
+  status(THREAD_INACTIVE), cv_status(),
   logInst_(parent->logInst()) {
   wait_for_status(THREAD_STARTED | THREAD_COMPLETE);
 }
@@ -191,6 +191,7 @@ void AsyncBacklog::on_thread(Comm_t* parent) {
     }
     if (direction == SEND) {
       while (!backlog.is_closed()) {
+	cv_status.notify_all(); // Periodically notify
 	int ret = send();
 	if (ret == 0) {
 	  backlog.wait();
@@ -201,6 +202,7 @@ void AsyncBacklog::on_thread(Comm_t* parent) {
       }
     } else if (direction == RECV) {
       while (!backlog.is_closed()) {
+	cv_status.notify_all(); // Periodically notify
 	long ret = recv();
 	if (ret == 0) {
 	  std::this_thread::sleep_for(std::chrono::microseconds(YGG_SLEEP_TIME));
@@ -238,10 +240,12 @@ void AsyncBacklog::set_status(const int new_status) {
   cv_status.notify_all();
 }
 bool AsyncBacklog::wait_for_status(const int new_status) {
-  std::unique_lock<std::mutex> lk(m_status);
-  AsyncBacklog* _this = this;
-  cv_status.wait(lk, [_this, new_status]{
-    return (_this->status.load() & new_status); });
+  if (!(status.load() & new_status)) {
+    std::unique_lock<std::mutex> lk(comm_mutex);
+    AsyncBacklog* _this = this;
+    cv_status.wait(lk, [_this, new_status]{
+      return (_this->status.load() & new_status); });
+  }
   return true;
 }
 #endif // THREADSINSTALLED

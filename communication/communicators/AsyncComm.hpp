@@ -77,7 +77,6 @@ namespace communication {
       std::atomic_bool signon_sent;
       std::thread backlog_thread;
       std::atomic_int status;
-      std::mutex m_status;
       std::condition_variable cv_status;
 #endif // THREADSINSTALLED
       std::string logInst_;
