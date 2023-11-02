@@ -576,6 +576,10 @@ if(BUILD_CPP_LIBRARY)
 	    set_target_properties(${YGG_TARGET_CPP}
 	        PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
 	endif()
+	if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+	    target_link_options(${YGG_TARGET_CPP}
+	        INTERFACE /FORCE:MULTIPLE)
+	endif()
     endif()
     target_include_directories(
         ${YGG_TARGET_CPP} PUBLIC
