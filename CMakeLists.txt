@@ -578,7 +578,9 @@ if(BUILD_CPP_LIBRARY)
 	endif()
 	if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 	    target_link_options(${YGG_TARGET_CPP}
-	        INTERFACE /FORCE:MULTIPLE)
+	        PRIVATE /INCLUDE:rapidjson_ARRAY_API)
+	    # target_link_options(${YGG_TARGET_CPP}
+	    #     INTERFACE /INCLUDE:rapidjson_ARRAY_API)
 	endif()
     endif()
     target_include_directories(
