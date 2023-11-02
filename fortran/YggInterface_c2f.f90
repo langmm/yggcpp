@@ -341,36 +341,30 @@ subroutine yggptr_c2f_array_character(x)
   ! select type(item=>x%item_array)
   ! type is (character(*))
      write(*,*) "yggptr_c2f_array_character", x%data_character_unit
-     ! if ((size(item).GT.0).AND.(len(item).GT.0)) then
-     ! item = transfer(x%data_character_unit, item)
-     ! end if
+     if ((size(item).GT.0).AND.(len(item).GT.0)) then
+     item = transfer(x%data_character_unit, item)
+     end if
      write(*, *) "after transfer"
      write(*, *) size(item), len(item), x%len, x%prec, &
           len(x%data_character_unit), size(x%data_character_unit)
-          ! len(xarr_character, size(xarr_character)
      do i = 1, x%len
-        write(*, *) i, len(item(i))
-        do j = 1, x%prec
-           k = (i - 1) * x%prec + j
-           write(*, *) j
-           write(*, *) x%data_character_unit(k)
-           ! item((i - 1) * x%prec + j) = x%data_character_unit(&
-           !      (i - 1) * x%prec + j)
-           item(i)(j:j) = x%data_character_unit(k)
-           ! xarr_character(k) = x%data_character_unit(k)
-           write(*, *) item(i)(j:j)
-        end do
-        do j = (x%prec + 1), len(item(i))
-           write(*, *) j
-           item(i)(j:j) = ' '
-           write(*, *) item(i)(j:j)
-        end do
-        ! write(*,*) "yggptr_c2f_array_character", i, len(item(i)), item(i)
-        write(*,*) "yggptr_c2f_array_character", i, item(i)
+        ! write(*, *) i, len(item(i))
+        ! do j = 1, x%prec
+        !    k = (i - 1) * x%prec + j
+        !    write(*, *) j
+        !    write(*, *) x%data_character_unit(k)
+        !    item(i)(j:j) = x%data_character_unit(k)
+        !    write(*, *) item(i)(j:j)
+        ! end do
+        ! do j = (x%prec + 1), len(item(i))
+        !    write(*, *) j
+        !    item(i)(j:j) = ' '
+        !    write(*, *) item(i)(j:j)
+        ! end do
+        ! ! write(*,*) "yggptr_c2f_array_character", i, len(item(i)), item(i)
+        write(*,*) "yggptr_c2f_array_character", i, len(item(i)), item(i)
      end do
-     write(*, *) "before deallocate"
      deallocate(x%data_character_unit)
-     write(*, *) "after deallocate"
   ! class default
   !    call ygglog_error("yggptr_c2f_array_character: Unexpected type.")
   !    stop "ERROR"
