@@ -680,6 +680,10 @@ function yggarg_ndarray_init(x, x_shape) result (y)
      y%shape(1) = y%len
   end if
   y%ptr = c_null_ptr
+  select type(x)
+  type is (character(*))
+     write(*, *) "yggarg_ndarray_init", size(x), len(x)
+  end select
 end function yggarg_ndarray_init
 function yggarg_1darray_unsigned1(x, x_shape) result (y)
   type(ygguint1), dimension(:), target :: x

@@ -334,23 +334,30 @@ end subroutine yggptr_c2f_scalar_character
 subroutine yggptr_c2f_array_character(x)
   implicit none
   type(yggptr) :: x
-  integer(kind=8) :: i, j
+  ! character(*), dimension(:), pointer :: xarr_character
+  integer(kind=8) :: i, j, k
   write(*,*) "yggptr_c2f_array_character"
   select type(item=>x%item_array)
   type is (character(*))
+     ! xarr_character => item
      write(*,*) "yggptr_c2f_array_character", x%data_character_unit
+     ! if ((size(item).GT.0).AND.(len(item).GT.0)) then
      ! item = transfer(x%data_character_unit, item)
+     ! end if
      write(*, *) "after transfer"
-     write(*, *) size(item), x%len, x%prec, len(x%data_character_unit), &
-          size(x%data_character_unit)
+     write(*, *) size(item), len(item), x%len, x%prec, &
+          len(x%data_character_unit), size(x%data_character_unit)
+          ! len(xarr_character, size(xarr_character)
      do i = 1, x%len
         write(*, *) i, len(item(i))
         do j = 1, x%prec
+           k = (i - 1) * x%prec + j
            write(*, *) j
-           write(*, *) x%data_character_unit(&
-                (i - 1) * x%prec + j)
-           item(i)(j:j) = x%data_character_unit(&
-                (i - 1) * x%prec + j)
+           write(*, *) x%data_character_unit(k)
+           ! item((i - 1) * x%prec + j) = x%data_character_unit(&
+           !      (i - 1) * x%prec + j)
+           item(i)(j:j) = x%data_character_unit(k)
+           ! xarr_character(k) = x%data_character_unit(k)
            write(*, *) item(i)(j:j)
         end do
         do j = (x%prec + 1), len(item(i))
