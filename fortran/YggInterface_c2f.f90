@@ -342,18 +342,21 @@ subroutine yggptr_c2f_array_character(x)
      write(*,*) "yggptr_c2f_array_character", x%data_character_unit
      ! xarr_character => item
      item = transfer(x%data_character_unit, item)
-     do i = 1, size(item)  ! x%len
-        ! do j = 1, x%prec
-        !    item(i)(j:j) = x%data_character_unit(&
-        !         (i - 1) * x%prec + j)
-        ! end do
-        ! do j = (x%prec + 1), len(item(i))
-        !    item(i)(j:j) = ' '
-        ! end do
-        ! write(*,*) "yggptr_c2f_array_character", i, len(item(i)), item(i)
-        write(*,*) "yggptr_c2f_array_character", i, item(i)
-     end do
+     write(*, *) "after transfer"
+     ! do i = 1, size(item)  ! x%len
+     !    ! do j = 1, x%prec
+     !    !    item(i)(j:j) = x%data_character_unit(&
+     !    !         (i - 1) * x%prec + j)
+     !    ! end do
+     !    ! do j = (x%prec + 1), len(item(i))
+     !    !    item(i)(j:j) = ' '
+     !    ! end do
+     !    ! write(*,*) "yggptr_c2f_array_character", i, len(item(i)), item(i)
+     !    write(*,*) "yggptr_c2f_array_character", i, item(i)
+     ! end do
+     write(*, *) "before deallocate"
      deallocate(x%data_character_unit)
+     write(*, *) "after deallocate"
   class default
      call ygglog_error("yggptr_c2f_array_character: Unexpected type.")
      stop "ERROR"
