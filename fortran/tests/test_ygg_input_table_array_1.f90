@@ -49,18 +49,18 @@ integer function test_ygg_input_table_array_1() result(r)
      return
   end if
   r = 0
-  ! do i = 1, size(a_send)
-  !    if (a_recv(i).NE.a_send(i)) then
-  !       r = 1
-  !       write (*,*) "a not equal", i, a_send(i), a_recv(i)
-  !    end if
-  !    if (b_recv(i).NE.b_send(i)) then
-  !       r = 1
-  !       write (*,*) "b not equal", i, b_send(i), b_recv(i)
-  !    end if
-  !    if ((c_recv(i)).NE.c_send(i)) then
-  !       r = 1
-  !       write (*,*) "c not equal", i, c_send(i), c_recv(i)
-  !    end if
-  ! end do
+  do i = 1, size(a_send)
+     if (a_recv(i).NE.a_send(i)) then
+        r = 1
+        write (*,*) "a not equal", i, a_send(i), a_recv(i)
+     end if
+     if (b_recv(i).NE.b_send(i)) then
+        r = 1
+        write (*,*) "b not equal", i, b_send(i), b_recv(i)
+     end if
+     if ((c_recv(i)).NE.c_send(i)) then
+        r = 1
+        write (*,*) "c not equal", i, c_send(i), c_recv(i)
+     end if
+  end do
 end function test_ygg_input_table_array_1

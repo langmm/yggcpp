@@ -1011,6 +1011,7 @@ module YggInterface
      class(*), dimension(:), pointer :: item_array => null() !< Fortran pointer to 1D array
      class(*), dimension(:, :), pointer :: item_array_2d => null() !< Fortran pointer to 2D array
      class(*), dimension(:, :, :), pointer :: item_array_3d => null() !< Fortran pointer to 3D array
+     character(len=:), dimension(:), pointer :: item_array_char => null() !< Explicit pointer to 1D character array
      character, dimension(:), pointer :: data_character_unit => null() !< Fortran pointer to array of characters
      character(kind=ucs4), dimension(:), &
           pointer :: data_unicode_unit => null() !< Fortran array to array of unicode characters

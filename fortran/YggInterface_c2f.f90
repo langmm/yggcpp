@@ -334,12 +334,12 @@ end subroutine yggptr_c2f_scalar_character
 subroutine yggptr_c2f_array_character(x)
   implicit none
   type(yggptr) :: x
-  ! character(*), dimension(:), pointer :: xarr_character
+  character(len=x%prec), dimension(:), pointer :: item
   integer(kind=8) :: i, j, k
-  write(*,*) "yggptr_c2f_array_character"
-  select type(item=>x%item_array)
-  type is (character(*))
-     ! xarr_character => item
+  write(*,*) "yggptr_c2f_array_character", len(x%item_array_char)
+  item => x%item_array_char
+  ! select type(item=>x%item_array)
+  ! type is (character(*))
      write(*,*) "yggptr_c2f_array_character", x%data_character_unit
      ! if ((size(item).GT.0).AND.(len(item).GT.0)) then
      ! item = transfer(x%data_character_unit, item)
@@ -371,10 +371,10 @@ subroutine yggptr_c2f_array_character(x)
      write(*, *) "before deallocate"
      deallocate(x%data_character_unit)
      write(*, *) "after deallocate"
-  class default
-     call ygglog_error("yggptr_c2f_array_character: Unexpected type.")
-     stop "ERROR"
-  end select
+  ! class default
+  !    call ygglog_error("yggptr_c2f_array_character: Unexpected type.")
+  !    stop "ERROR"
+  ! end select
 end subroutine yggptr_c2f_array_character
 
 

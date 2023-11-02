@@ -907,6 +907,7 @@ function yggarg_1darray_character(x, x_shape) result (y)
   else
      y = yggarg_ndarray_init(x)
   end if
+  y%item_array_char => x
   y%type = "character"
   y%prec = len(xp(1))
   do i = 1, size(xp)
