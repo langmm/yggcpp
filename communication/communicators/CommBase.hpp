@@ -231,6 +231,18 @@ public:
       @returns int Values >= 0 indicate success.
      */
     int send(const rapidjson::Document& data, bool not_generic=false);
+#ifdef WRAP_RAPIDJSON_FOR_DLL
+    /*!
+      @brief Send a rapidjson document through the communicator.
+      @param[in] data Message.
+      @param[in] not_generic If true, the datatype will not be updated to
+        expect a generic object in all future send calls.
+      @returns int Values >= 0 indicate success.
+     */
+    int send(const rapidjson::WDocument& data, bool not_generic=false) {
+      return send(*(data.doc_), not_generic);
+    }
+#endif // WRAP_RAPIDJSON_FOR_DLL
     /*!
       @brief Send an object through the communicator.
       @tparam T Type of object being sent.
@@ -402,7 +414,7 @@ public:
         received message if message was received.
     */
     long recv(rapidjson::WDocument& data, bool not_generic=false) {
-      return recv(doc.doc_, not_generic);
+      return recv(*(data.doc_), not_generic);
     }
 #endif // WRAP_RAPIDJSON_FOR_DLL
     /*!
@@ -527,6 +539,25 @@ private:
 	       i++, "char*",
 	       if (i == 2 && doc.Size() == 0) { return ret; },
 	       char*& data, size_t& len)
+#ifdef WRAP_RAPIDJSON_FOR_DLL
+  HANDLE_RECV_((i >= 0),
+	       WDocument wdata(&data);
+	       wdata.CopyFrom(doc[0], wdata.GetAllocator(), true),
+	       , "rapidjson::Document",
+	       if (i == 1 && (doc.Size() > 0 || was_array)) {
+		 rapidjson::WValue tmp;
+		 wdata.Swap(tmp);
+		 wdata.SetArray();
+		 wdata.Reserve(doc.Size() + 1, wdata.GetAllocator());
+		 wdata.PushBack(tmp, wdata.GetAllocator());
+		 while (doc.Size() > 0) {
+		   tmp.CopyFrom(doc[0], wdata.GetAllocator(), true);
+		   wdata.PushBack(tmp, wdata.GetAllocator());
+		   doc.Erase(doc.Begin());
+		 }
+	       }
+	       ,rapidjson::Document& data)
+#else // WRAP_RAPIDJSON_FOR_DLL
   HANDLE_RECV_((i >= 0),
 	       data.CopyFrom(doc[0], data.GetAllocator(), true),
 	       , "rapidjson::Document",
@@ -543,6 +574,7 @@ private:
 		 }
 	       }
 	       ,rapidjson::Document& data)
+#endif // WRAP_RAPIDJSON_FOR_DLL
   HANDLE_RECV_TMP_((internal::NotExpr<
 		    internal::OrExpr<YGGDRASIL_IS_ANY_SCALAR(T),
 		    internal::OrExpr<internal::IsSame<T, char*>,
@@ -864,7 +896,7 @@ public:
     Comm_t* getGlobalComm() { return global_comm; }
 #endif
     bool addSchema(const utils::Metadata& s);
-    bool addSchema(const rapidjson::WValue& s, bool isMetadata = false);
+    bool addSchema(const rapidjson::Value& s, bool isMetadata = false);
     bool addSchema(const std::string& schemaStr, bool isMetadata = false);
     bool addFormat(const std::string& format_str, bool as_array = false);
     bool copySchema(const Comm_t* other);
@@ -971,7 +1003,7 @@ protected:
       return out;
     }
 
-    int update_datatype(const rapidjson::WValue& new_schema,
+    int update_datatype(const rapidjson::Value& new_schema,
 			const DIRECTION dir);
     template<typename T>
     void zeroData(const T* data,
@@ -991,7 +1023,7 @@ protected:
     //   return meta.fromData(data);
     // }
     virtual bool create_header_send(utils::Header&) { return true; }
-    rapidjson::WValue* getSchema(const DIRECTION dir=NONE) {
+    rapidjson::Value* getSchema(const DIRECTION dir=NONE) {
       return getMetadata(dir).getSchema();
     }
     virtual Comm_t* create_worker(utils::Address* address,

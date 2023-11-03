@@ -1,6 +1,10 @@
 #pragma once
 
+#include <vector>
 #include "rapidjson/rapidjson.h"
+#include "rapidjson/internal/meta.h"
+#include "rapidjson/stringbuffer.h"
+#include "rapidjson/allocators.h"
 
 // #if defined(_WINDOWS) && !(defined(YggInterface_EXPORTS) || defined(YggInterface_py_EXPORTS) || defined(RAPIDJSON_FORCE_IMPORT_ARRAY))
 // #define WRAP_RAPIDJSON_FOR_DLL
@@ -8,25 +12,53 @@
 
 #ifdef WRAP_RAPIDJSON_FOR_DLL
 
+#ifdef _DEBUG
+#undef _DEBUG
+#include "Python.h"
+#define _DEBUG
+#else
+#include "Python.h"
+#endif
+
+
 RAPIDJSON_NAMESPACE_BEGIN
 
 // Forward declarations
-class Value;
-class Document;
+
+template <typename Encoding, typename Allocator>
+class GenericValue;
+template <typename Encoding, typename Allocator, typename StackAllocator>
+class GenericDocument;
+
 class CrtAllocator;
 template <typename BaseAllocator>
 class MemoryPoolAllocator;
 class VarArgList;
-class StringBuffer;
 
 #ifndef RAPIDJSON_DEFAULT_ALLOCATOR
 #define RAPIDJSON_DEFAULT_ALLOCATOR RAPIDJSON_NAMESPACE::MemoryPoolAllocator< RAPIDJSON_NAMESPACE::CrtAllocator >
 #endif
 
+#ifndef RAPIDJSON_DEFAULT_STACK_ALLOCATOR
+#define RAPIDJSON_DEFAULT_STACK_ALLOCATOR RAPIDJSON_NAMESPACE::CrtAllocator
+#endif
+
+typedef GenericValue<UTF8<>, RAPIDJSON_DEFAULT_ALLOCATOR> Value;
+typedef GenericDocument<UTF8<>,  RAPIDJSON_DEFAULT_ALLOCATOR,
+			RAPIDJSON_DEFAULT_STACK_ALLOCATOR> Document;
+
 #define RJV_WRAP_DEC(name, argsT, args, type, mods)	\
   type name argsT mods
 #define RJD_WRAP_DEC(name, argsT, args, type, mods)	\
   RJV_WRAP_DEC(name, argsT, args, type, mods)
+#define RJV_WRAP_DEC_RETV(name, argsT, args, mods)	\
+  RJV_WRAP_DEC(name, argsT, args, WValue, mods)
+#define RJV_WRAP_DEC_RETV_CONST(name, argsT, args, mods)	\
+  RJV_WRAP_DEC(name, argsT, args, const WValue, const mods)
+#define RJD_WRAP_DEC_RETD(name, argsT, args, mods)	\
+  RJV_WRAP_DEC(name, argsT, args, WDocument, mods)
+#define RJD_WRAP_DEC_RETD_CONST(name, argsT, args, mods)	\
+  RJV_WRAP_DEC(name, argsT, args, const WDocument, const mods)
 
 // Helper classes for use in headers
 class WValue {
@@ -36,27 +68,35 @@ public:
   typedef WValue ValueType;
   typedef rapidjson::Value* ValueIterator;
   typedef const rapidjson::Value* ConstValueIterator;
-  WValue();
+  typedef char Ch;
+  WValue(Type type=rapidjson::kNullType);
+  WValue(const rapidjson::Value* val) :
+    WValue(const_cast<rapidjson::Value*>(val)) {}
   WValue(rapidjson::Value* val) :
     val_(val), created_val(false) {}
   WValue(rapidjson::Value& val) : WValue(&val) {}
+  WValue(rapidjson::Document* val);
   ~WValue();
-  bool created_val;
+  WValue& CopyFrom(const rapidjson::Document& rhs,
+		   Allocator& allocator,
+		   bool copyConstStrings = false);
   rapidjson::Value* val_;
-  RJV_WRAP_DEC(CopyFrom, (const WValue& rhs, Allocator& allocator,
+  bool created_val;
+
+  RJV_WRAP_DEC_RETV(CopyFrom, (const WValue& rhs, Allocator& allocator,
 			  bool copyConstStrings = false),
-	       (*(rhs->val_), allocator, copyConstStrings),
-	       rapidjson::Value&, );
-  RJV_WRAP_DEC(Swap, (WValue& rhs), (*(rhs->val_)), rapidjson::Value&, );
-  RJV_WRAP_DEC(PushBack, (WValue& value, Allocator& allocator),
-	       (*(value->val_), allocator), rapidjson::Value&, );
+		    (*(rhs.val_), allocator, copyConstStrings), );
+  RJV_WRAP_DEC_RETV(Swap, (WValue rhs), (*(rhs.val_)), );
+  RJV_WRAP_DEC_RETV(PushBack, (WValue& value, Allocator& allocator),
+		    (*(value.val_), allocator), );
+  RJV_WRAP_DEC(GetUint, (), (), unsigned, const);
   RJV_WRAP_DEC(GetNElements, (), (), SizeType, const);
-  RJV_WRAP_DEC(GetShape, (), (), const rapidjson::Value&, const);
+  RJV_WRAP_DEC_RETV_CONST(GetShape, (), (), );
   // String methods
   RJV_WRAP_DEC(IsString, (), (), bool, const);
-  RJV_WRAP_DEC(SetString, (const Ch* s, SizeType length,
-			   Allocator& allocator),
-	       (s, length, allocator), rapidjson::Value&, );
+  RJV_WRAP_DEC_RETV(SetString, (const Ch* s, SizeType length,
+				Allocator& allocator),
+		    (s, length, allocator), );
   RJV_WRAP_DEC(GetString, (), (), const Ch*, const);
   RJV_WRAP_DEC(GetStringLength, (), (), SizeType, const);
   // Templated methods
@@ -69,45 +109,75 @@ public:
   template <typename T>
   RJV_WRAP_DEC(IsNDArray, (), <T>(), bool, const);
   template<typename T>
-  RJV_WRAP_DEC(Set, (const T& data, AllocatorType& allocator),
-	       (data, allocator), rapidjson::Value&, );
+  RJV_WRAP_DEC_RETV(Set, (const T& data, AllocatorType& allocator),
+		    (data, allocator), );
   template<typename T>
-  RJV_WRAP_DEC(Set1DArray, (const T* x, SizeType len,
-			    Allocator& allocator),
-	       (x, len, allocator), rapidjson::Value&, );
+  RJV_WRAP_DEC_RETV(Set1DArray, (const T* x, SizeType len,
+				 Allocator& allocator),
+		    (x, len, allocator), );
   template<typename T>
-  RJV_WRAP_DEC(SetNDArray, (const T* x, SizeType shape[], SizeType ndim,
-			    Allocator& allocator),
-	       (x, shape, ndim, allocator), rapidjson::Value&, );
+  RJV_WRAP_DEC_RETV(SetNDArray, (const T* x, SizeType shape[],
+				 SizeType ndim, Allocator& allocator),
+		    (x, shape, ndim, allocator), );
   template<typename T>
   RJV_WRAP_DEC(Get, (T& data), (data), void, );
   template<typename T>
   RJV_WRAP_DEC(GetScalarValue, (T& data), (data), void, );
   // Array methods
   RJV_WRAP_DEC(IsArray, (), (), bool, const);
-  RJV_WRAP_DEC(SetArray, (), (), rapidjson::Value&, );
+  RJV_WRAP_DEC_RETV(SetArray, (), (), );
   RJV_WRAP_DEC(Size, (), (), rapidjson::SizeType, const);
   RJV_WRAP_DEC(Empty, (), (), bool, const);
-  RJV_WRAP_DEC(Reserve, (SizeType newCapacity, Allocator &allocator),
-	       (newCapacity, allocator), rapidjson::Value&, );
+  RJV_WRAP_DEC_RETV(Reserve, (SizeType newCapacity,
+			      Allocator &allocator),
+		    (newCapacity, allocator), );
   RJV_WRAP_DEC(Erase, (ConstValueIterator pos), (pos), ValueIterator, );
   RJV_WRAP_DEC(Begin, (), (), ValueIterator, );
   RJV_WRAP_DEC(End, (), (), ValueIterator, );
   RJV_WRAP_DEC(Begin, (), (), ConstValueIterator, const);
   RJV_WRAP_DEC(End, (), (), ConstValueIterator, const);
+  RJV_WRAP_DEC_RETV(operator[], (SizeType index), (index), );
+  RJV_WRAP_DEC_RETV_CONST(operator[], (SizeType index), (index), );
+
+  friend std::ostream & operator << (std::ostream &out, const WValue& p);
 };
+
+std::ostream & operator << (std::ostream &out, const WValue& p);
+
 class WDocument : public WValue {
 public:
-  WDocument();
+  typedef RAPIDJSON_DEFAULT_ALLOCATOR Allocator;
+  typedef RAPIDJSON_DEFAULT_ALLOCATOR AllocatorType;
+  typedef WValue ValueType;
+  WDocument(Type type=rapidjson::kNullType);
   WDocument(rapidjson::Document* doc) :
     WValue(doc), created_doc(false) {}
   WDocument(rapidjson::Document& doc) : WDocument(&doc) {}
-  RJD_WRAP_DEC(Swap, (WDocument& rhs), (*(rhs->doc_)),
-	       rapidjson::Document&, );
+
+  using ValueType::CopyFrom;
+  using ValueType::Swap;
+  
+  WDocument& CopyFrom(const rapidjson::Document& rhs,
+		      Allocator& allocator,
+		      bool copyConstStrings = false);
+  
+  RJD_WRAP_DEC_RETD(CopyFrom, (const WDocument& rhs,
+			       Allocator& allocator,
+			       bool copyConstStrings = false),
+		    (*(rhs.doc_), allocator, copyConstStrings), );
+  RJD_WRAP_DEC_RETD(Swap, (WDocument rhs), (*(rhs.doc_)), );
   RJD_WRAP_DEC(GetAllocator, (), (), Allocator&, );
-  bool created_doc;
+  
   rapidjson::Document* doc_;
+  bool created_doc;
 };
+
+#undef RJV_WRAP_DEC
+#undef RJD_WRAP_DEC
+#undef RJV_WRAP_DEC_RETV
+#undef RJV_WRAP_DEC_RETV_CONST
+#undef RJD_WRAP_DEC_RETD
+#undef RJD_WRAP_DEC_RETD_CONST
 
 RAPIDJSON_NAMESPACE_END
 
@@ -116,7 +186,6 @@ RAPIDJSON_NAMESPACE_END
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/schema.h"
-#include "rapidjson/internal/meta.h"
 
 RAPIDJSON_NAMESPACE_BEGIN
 

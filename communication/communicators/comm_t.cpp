@@ -3,6 +3,7 @@
 #include "comms.hpp"
 #include "utils/logging.hpp"
 #include "utils/tools.hpp"
+#include "rapidjson/va_list.h"
 
 extern "C" {
 

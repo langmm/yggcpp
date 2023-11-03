@@ -221,7 +221,7 @@ public:
   int serialize(char **buf, size_t *buf_siz,
 		rapidjson::VarArgList& ap);
   void Display(const char* indent="") const;
-  rapidjson::Document metadata;
+  rapidjson::WDocument metadata;
   Metadata* raw_schema;
   std::vector<filterFunc> filters;
   std::vector<transformFunc> transforms;
