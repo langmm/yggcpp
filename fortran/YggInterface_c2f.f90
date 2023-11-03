@@ -335,35 +335,22 @@ subroutine yggptr_c2f_array_character(x)
   implicit none
   type(yggptr) :: x
   character(len=x%prec), dimension(:), pointer :: item
-  integer(kind=8) :: i, j, k
-  write(*,*) "yggptr_c2f_array_character", len(x%item_array_char)
+  ! integer(kind=8) :: i, j, k
   item => x%item_array_char
   ! select type(item=>x%item_array)
   ! type is (character(*))
-     write(*,*) "yggptr_c2f_array_character", x%data_character_unit
-     if ((size(item).GT.0).AND.(len(item).GT.0)) then
+  if ((size(item).GT.0).AND.(len(item).GT.0)) then
      item = transfer(x%data_character_unit, item)
-     end if
-     write(*, *) "after transfer"
-     write(*, *) size(item), len(item), x%len, x%prec, &
-          len(x%data_character_unit), size(x%data_character_unit)
-     do i = 1, x%len
-        ! write(*, *) i, len(item(i))
-        ! do j = 1, x%prec
-        !    k = (i - 1) * x%prec + j
-        !    write(*, *) j
-        !    write(*, *) x%data_character_unit(k)
-        !    item(i)(j:j) = x%data_character_unit(k)
-        !    write(*, *) item(i)(j:j)
-        ! end do
-        ! do j = (x%prec + 1), len(item(i))
-        !    write(*, *) j
-        !    item(i)(j:j) = ' '
-        !    write(*, *) item(i)(j:j)
-        ! end do
-        ! ! write(*,*) "yggptr_c2f_array_character", i, len(item(i)), item(i)
-        write(*,*) "yggptr_c2f_array_character", i, len(item(i)), item(i)
-     end do
+  end if
+  ! do i = 1, x%len
+  !    do j = 1, x%prec
+  !       k = (i - 1) * x%prec + j
+  !       item(i)(j:j) = x%data_character_unit(k)
+  !    end do
+  !    do j = (x%prec + 1), len(item(i))
+  !       item(i)(j:j) = ' '
+  !    end do
+  ! end do
      deallocate(x%data_character_unit)
   ! class default
   !    call ygglog_error("yggptr_c2f_array_character: Unexpected type.")
