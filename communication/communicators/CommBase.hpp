@@ -1,17 +1,12 @@
 #pragma once
 #define VIRT_END = 0
-// #if defined(_WINDOWS) && !(defined(YggInterface_EXPORTS) || defined(YggInterface_py_EXPORTS) || defined(RAPIDJSON_FORCE_IMPORT_ARRAY))
-// extern __declspec(dllimport) void** rapidjson_ARRAY_API;
-// #endif
 #include "utils/tools.hpp"
 #include "utils/enums.hpp"
 #include "utils/Address.hpp"
 #include "utils/logging.hpp"
 #include "utils/serialization.hpp"
 #include "Workers.hpp"
-#include "rapidjson/document.h"
-#include "rapidjson/writer.h"
-#include "rapidjson/schema.h"
+#include "utils/rapidjson_wrapper.hpp"
 
 /*! @brief Set if the comm is the receiving comm for a client/server request connection */
 const int COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
@@ -245,13 +240,13 @@ public:
     */
     template<typename T, typename... Args>
     int sendVar(const T& data, Args... args) {
-      rapidjson::Document doc(rapidjson::kArrayType);
+      rapidjson::WDocument doc(rapidjson::kArrayType);
       return _sendVA(0, doc, data, args...);
     }
 private:
 #define HANDLE_SEND_BEFORE_			\
   UNUSED(i);					\
-  rapidjson::Value v
+  rapidjson::WValue v
 #define HANDLE_SEND_AFTER_			\
   doc.PushBack(v, doc.GetAllocator());		\
   i++
@@ -259,13 +254,13 @@ private:
   return _sendVA(i, doc, args...)
 #define HANDLE_SEND_LAST_(single)		\
   if (doc.Size() == 1) {			\
-    rapidjson::Document tmp;			\
+    rapidjson::WDocument tmp;			\
     tmp.Swap(doc[0]);				\
     return send(tmp, single);			\
   }						\
   return send(doc, single)
 #define HANDLE_SEND_(set, adv, single, ...)			\
-  int _sendVA(int i, rapidjson::Document& doc, __VA_ARGS__) {	\
+  int _sendVA(int i, rapidjson::WDocument& doc, __VA_ARGS__) {	\
     HANDLE_SEND_BEFORE_;					\
     set;							\
     HANDLE_SEND_AFTER_;						\
@@ -273,7 +268,7 @@ private:
     HANDLE_SEND_LAST_(single);					\
   }								\
   template<typename... Args>					\
-  int _sendVA(int i, rapidjson::Document& doc, __VA_ARGS__,	\
+  int _sendVA(int i, rapidjson::WDocument& doc, __VA_ARGS__,	\
 	      Args... args) {					\
     HANDLE_SEND_BEFORE_;					\
     set;							\
@@ -284,7 +279,7 @@ private:
 #define HANDLE_SEND_TMP_(set, cond, adv, single, ...)		\
   template<typename T>						\
   RAPIDJSON_ENABLEIF_RETURN(cond, (int))			\
-  _sendVA(int i, rapidjson::Document& doc, __VA_ARGS__) {	\
+  _sendVA(int i, rapidjson::WDocument& doc, __VA_ARGS__) {	\
     HANDLE_SEND_BEFORE_;					\
     set;							\
     HANDLE_SEND_AFTER_;						\
@@ -293,7 +288,7 @@ private:
   }								\
   template<typename T, typename... Args>			\
   RAPIDJSON_ENABLEIF_RETURN(cond, (int))			\
-  _sendVA(int i, rapidjson::Document& doc, __VA_ARGS__,	\
+  _sendVA(int i, rapidjson::WDocument& doc, __VA_ARGS__,	\
 	  Args... args) {					\
     HANDLE_SEND_BEFORE_;					\
     set;							\
@@ -397,6 +392,19 @@ public:
         received message if message was received.
     */
     long recv(rapidjson::Document& data, bool not_generic=false);
+#ifdef WRAP_RAPIDJSON_FOR_DLL
+    /*!
+      @brief Receive a message as a rapidjson::WDocument.
+      @param[out] data rapidjson document to populate with received data.
+      @param[in] not_generic If true, the datatype will not be updated to
+        expect a generic object in all future recv calls.
+      @returns -1 if message could not be received. Length of the
+        received message if message was received.
+    */
+    long recv(rapidjson::WDocument& data, bool not_generic=false) {
+      return recv(doc.doc_, not_generic);
+    }
+#endif // WRAP_RAPIDJSON_FOR_DLL
     /*!
       @brief Receive an object from the communicator.
       @tparam T Type of object being received.
@@ -406,14 +414,14 @@ public:
     */
     template<typename T, typename... Args>
     long recvVar(T& data, Args... args) {
-      rapidjson::Document doc;
+      rapidjson::WDocument doc;
       long out = recv(doc, true);
       if (out < 0) return out;
       return _recvVA(0, false, doc, data, args...);
     }
     template<typename T, typename... Args>
     long recvVarRealloc(T& data, Args... args) {
-      rapidjson::Document doc;
+      rapidjson::WDocument doc;
       long out = recv(doc, true);
       if (out < 0) return out;
       return _recvVA(0, true, doc, data, args...);
@@ -424,7 +432,7 @@ private:
   bool was_array = doc.IsArray();					\
   UNUSED(was_array);							\
   if (!doc.IsArray()) {							\
-    rapidjson::Value tmp;						\
+    rapidjson::WValue tmp;						\
     tmp.Swap(doc);							\
     doc.SetArray();							\
     doc.PushBack(tmp, doc.GetAllocator());				\
@@ -461,7 +469,7 @@ private:
   }									\
   return i
 #define HANDLE_RECV_(check, set, adv, Tname, after, ...)		\
-  long _recvVA(int i, bool allow_realloc, rapidjson::Document& doc,	\
+  long _recvVA(int i, bool allow_realloc, rapidjson::WDocument& doc,	\
 	       __VA_ARGS__) {						\
     HANDLE_RECV_BEFORE_;						\
     HANDLE_RECV_CHECK_(check, Tname);					\
@@ -473,7 +481,7 @@ private:
     return i;								\
   }									\
   template<typename... Args>						\
-  long _recvVA(int i, bool allow_realloc, rapidjson::Document& doc,	\
+  long _recvVA(int i, bool allow_realloc, rapidjson::WDocument& doc,	\
 	       __VA_ARGS__, Args... args) {				\
     HANDLE_RECV_BEFORE_;						\
     HANDLE_RECV_CHECK_(check, Tname);					\
@@ -486,7 +494,7 @@ private:
 #define HANDLE_RECV_TMP_(cond, check, set, adv, after, ...)		\
   template<typename T>							\
   RAPIDJSON_ENABLEIF_RETURN(cond, (long))				\
-    _recvVA(int i, bool allow_realloc, rapidjson::Document& doc,	\
+    _recvVA(int i, bool allow_realloc, rapidjson::WDocument& doc,	\
 	    __VA_ARGS__) {						\
     HANDLE_RECV_BEFORE_;						\
     HANDLE_RECV_CHECK_(check, typeid(T).name());			\
@@ -499,7 +507,7 @@ private:
   }									\
   template<typename T, typename... Args>				\
   RAPIDJSON_ENABLEIF_RETURN(cond, (long))				\
-    _recvVA(int i, bool allow_realloc, rapidjson::Document& doc,	\
+    _recvVA(int i, bool allow_realloc, rapidjson::WDocument& doc,	\
 	    __VA_ARGS__, Args... args) {				\
     HANDLE_RECV_BEFORE_;						\
     HANDLE_RECV_CHECK_(check, typeid(T).name());			\
@@ -523,7 +531,7 @@ private:
 	       data.CopyFrom(doc[0], data.GetAllocator(), true),
 	       , "rapidjson::Document",
 	       if (i == 1 && (doc.Size() > 0 || was_array)) {
-		 rapidjson::Value tmp;
+		 rapidjson::WValue tmp;
 		 data.Swap(tmp);
 		 data.SetArray();
 		 data.Reserve(doc.Size() + 1, data.GetAllocator());
@@ -567,7 +575,7 @@ private:
 		   if (utils::copyData(data, len, doc[0].GetString(),
 				       static_cast<size_t>(doc[0].GetStringLength()),
 				       allow_realloc) < 0) { return -1; }
-		   const rapidjson::Value& doc_shape = doc[0].GetShape();
+		   const rapidjson::WValue& doc_shape = doc[0].GetShape();
 		   if (utils::copyData(shape, ndim * sizeof(size_t),
 				       (size_t*)NULL,
 				       static_cast<size_t>(doc_shape.Size()) * sizeof(size_t),
@@ -856,7 +864,7 @@ public:
     Comm_t* getGlobalComm() { return global_comm; }
 #endif
     bool addSchema(const utils::Metadata& s);
-    bool addSchema(const rapidjson::Value& s, bool isMetadata = false);
+    bool addSchema(const rapidjson::WValue& s, bool isMetadata = false);
     bool addSchema(const std::string& schemaStr, bool isMetadata = false);
     bool addFormat(const std::string& format_str, bool as_array = false);
     bool copySchema(const Comm_t* other);
@@ -963,7 +971,7 @@ protected:
       return out;
     }
 
-    int update_datatype(const rapidjson::Value& new_schema,
+    int update_datatype(const rapidjson::WValue& new_schema,
 			const DIRECTION dir);
     template<typename T>
     void zeroData(const T* data,
@@ -983,7 +991,7 @@ protected:
     //   return meta.fromData(data);
     // }
     virtual bool create_header_send(utils::Header&) { return true; }
-    rapidjson::Value* getSchema(const DIRECTION dir=NONE) {
+    rapidjson::WValue* getSchema(const DIRECTION dir=NONE) {
       return getMetadata(dir).getSchema();
     }
     virtual Comm_t* create_worker(utils::Address* address,

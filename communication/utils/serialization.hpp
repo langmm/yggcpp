@@ -8,22 +8,13 @@
 #endif
 #include "constants.hpp"
 #include "enums.hpp"
+#include "rapidjson_wrapper.hpp"
 
-#include "rapidjson/document.h"
-#include "rapidjson/writer.h"
-#include "rapidjson/prettywriter.h"
-#include "rapidjson/stringbuffer.h"
-#include "rapidjson/schema.h"
-#include "rapidjson/va_list.h"
 #include <cstring>
 #include <stdlib.h>
 
 
 #include "logging.hpp"
-
-#define STRLEN_RJ(var)				\
-  static_cast<rapidjson::SizeType>(strlen(var))
-
 
 namespace communication {
   namespace communicator {
@@ -140,7 +131,7 @@ public:
   void addTransform(transformFunc new_transform);
   void setFilters(std::vector<filterFunc>& new_filters);
   void setTransforms(std::vector<transformFunc>& new_transforms);
-  rapidjson::Document::AllocatorType& GetAllocator();
+  RAPIDJSON_DEFAULT_ALLOCATOR& GetAllocator();
   bool isGeneric() const;
   bool setGeneric();
   bool setAllowWrapped();

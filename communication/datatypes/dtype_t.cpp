@@ -2,6 +2,14 @@
 #include "utils/serialization.hpp"
 #include "utils/tools.hpp"
 
+#include "utils/rapidjson_wrapper.hpp"
+#include "rapidjson/document.h"
+#include "rapidjson/writer.h"
+#include "rapidjson/schema.h"
+
+#define STRLEN_RJ(var)				\
+  static_cast<rapidjson::SizeType>(strlen(var))
+
 #define _GET_METADATA(name, in, err)		\
   if (in.metadata == NULL) {			\
     return err;					\

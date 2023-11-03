@@ -31,9 +31,13 @@ public:
     
     // \copydoc Comm_t::logClass
     std::string logClass() const override;
-    
+    /*! \copydoc Comm_t::comm_nmsg */
+    int comm_nmsg(DIRECTION dir=NONE) const override;
+    // \copydoc Comm_t::set_timeout_recv
     void set_timeout_recv(int64_t new_timeout) override;
+    // \copydoc Comm_t::get_timeout_recv
     int64_t get_timeout_recv() override;
+    
     virtual bool signon();
     bool send_signon(int nloop, int interval=3,
 		     Comm_t* async_comm = nullptr);

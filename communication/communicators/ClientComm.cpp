@@ -25,6 +25,16 @@ std::string ClientComm::logClass() const {
   return out;
 }
 
+int ClientComm::comm_nmsg(DIRECTION dir) const {
+  int out = RPCComm::comm_nmsg(dir);
+  if (dir == RECV) {
+    std::string req_id = requests.activeRequestClient(true);
+    if ((!req_id.empty()) && requests.isComplete(req_id))
+      out++;
+  }
+  return out;
+}
+
 void ClientComm::set_timeout_recv(int64_t new_timeout) {
   if (global_comm) {
     global_comm->set_timeout_recv(new_timeout);
@@ -89,9 +99,10 @@ bool ClientComm::signon() {
   if (ret < 0 || !(tmp.flags & HEAD_FLAG_SERVER_SIGNON)) {
     log_error() << "signon: Error in receiving sign-on" << std::endl;
     return false;
+  } else if (ret > 0) {
+    setFlags(tmp, RECV);
+    log_debug() << "signon: Received response to signon" << std::endl;
   }
-  setFlags(tmp, RECV);
-  log_debug() << "signon: Received response to signon" << std::endl;
   return requests.signon_complete;
 }
 

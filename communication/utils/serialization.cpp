@@ -1,5 +1,14 @@
 #include "serialization.hpp"
 #include "../communicators/CommBase.hpp"
+
+#include "utils/rapidjson_wrapper.hpp"
+#include "rapidjson/document.h"
+#include "rapidjson/writer.h"
+#include "rapidjson/prettywriter.h"
+#include "rapidjson/stringbuffer.h"
+#include "rapidjson/schema.h"
+#include "rapidjson/va_list.h"
+
 using namespace communication::utils;
 
 bool communication::utils::numpy_arrays_imported() {

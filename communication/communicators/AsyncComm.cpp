@@ -94,7 +94,7 @@ bool AsyncBuffer::prepend(utils::Header& header, bool move,
 }
 
 bool AsyncBuffer::get(utils::Header& header, size_t idx,
-		      bool move, bool erase) {
+		      bool move, bool erase, bool dont_notify) {
   LOCK_BUFFER(get);
   if (is_closed())
     return false;
@@ -105,22 +105,42 @@ bool AsyncBuffer::get(utils::Header& header, size_t idx,
     out = header.MoveFrom(buffer[idx]);
   else
     out = header.CopyFrom(buffer[idx]);
-  if (out && erase)
+  if (out && erase) {
     buffer.erase(buffer.begin() + idx);
+    if (!dont_notify)
+      cv.notify_all();
+  }
   return out;
 }
-bool AsyncBuffer::pop(utils::Header& header, size_t idx) {
-  return get(header, idx, true, true);
+bool AsyncBuffer::pop(utils::Header& header, size_t idx,
+		      bool dont_notify) {
+  return get(header, idx, true, true, dont_notify);
 }
 #ifdef THREADSINSTALLED
-bool AsyncBuffer::message_waiting() {
-  return (is_closed() || buffer.size() > 0);
+bool AsyncBuffer::message_waiting(const std::string id,
+				  const bool negative) {
+  if (is_closed()) // exit early
+    return true;
+  if (buffer.empty())
+    return negative;
+  if (id.empty())
+    return (!negative);
+  std::string request_id;
+  for (std::vector<utils::Header>::iterator it = buffer.begin();
+       it != buffer.end(); it++) {
+    if (it->GetMetaString("request_id", request_id) &&
+	request_id == id)
+      return (!negative);
+  }
+  return negative;
 }
-bool AsyncBuffer::wait() {
+bool AsyncBuffer::wait(const std::string id, const bool negative) {
   std::unique_lock<std::mutex> lk(m);
   AsyncBuffer* _this = this;
-  cv.wait(lk, [_this]{
-    return _this->message_waiting(); });
+  if (_this->message_waiting(id, negative))
+    return true;
+  cv.wait(lk, [_this, id, negative]{
+    return _this->message_waiting(id, negative); });
   return true;
 }
 #endif // THREADSINSTALLED
@@ -134,12 +154,11 @@ bool AsyncBuffer::wait() {
 #ifdef THREADSINSTALLED
 
 AsyncBacklog::AsyncBacklog(Comm_t* parent) :
-  comm(nullptr), backlog(parent->logInst()), comm_mutex(),
-  locked(false), signon_sent(false),
+  comm(nullptr), backlog(parent->logInst()), comm_mutex(), locked(false),
   backlog_thread(&AsyncBacklog::on_thread, this, parent),
   status(THREAD_INACTIVE), cv_status(),
   logInst_(parent->logInst()) {
-  wait_for_status(THREAD_STARTED | THREAD_COMPLETE);
+  wait_status(THREAD_STARTED | THREAD_COMPLETE);
 }
 
 #else // THREADSINSTALLED
@@ -155,7 +174,7 @@ AsyncBacklog::~AsyncBacklog() {
   log_debug() << "~AsyncBacklog: begin" << std::endl;
 #ifdef THREADSINSTALLED
   backlog.close();
-  wait_for_status(THREAD_COMPLETE);
+  wait_status(THREAD_COMPLETE);
   try {
     if (backlog_thread.joinable())
       backlog_thread.join();
@@ -187,6 +206,9 @@ void AsyncBacklog::on_thread(Comm_t* parent) {
       parent->address->address(comm->getAddress());
       parent->updateMsgBufSize(comm->getMsgBufSize());
       parent->getFlags() |= (comm->getFlags() & ~flgs_comm);
+      if (comm->getCommType() != CLIENT_COMM) {
+	set_status(THREAD_SIGNON_SENT | THREAD_SIGNON_RECV, true);
+      }
       set_status(THREAD_STARTED);
     }
     if (direction == SEND) {
@@ -235,11 +257,16 @@ void AsyncBacklog::on_thread(Comm_t* parent) {
 }
 
 #ifdef THREADSINSTALLED
-void AsyncBacklog::set_status(const int new_status) {
-  status |= new_status;
-  cv_status.notify_all();
+void AsyncBacklog::set_status(const int new_status, bool dont_notify,
+			      bool negative) {
+  if (negative)
+    status &= new_status;
+  else
+    status |= new_status;
+  if (!dont_notify)
+    cv_status.notify_all();
 }
-bool AsyncBacklog::wait_for_status(const int new_status) {
+bool AsyncBacklog::wait_status(const int new_status) {
   if (!(status.load() & new_status)) {
     std::unique_lock<std::mutex> lk(comm_mutex);
     AsyncBacklog* _this = this;
@@ -253,16 +280,28 @@ bool AsyncBacklog::wait_for_status(const int new_status) {
 int AsyncBacklog::signon_status() {
   if (is_closing())
     return SIGNON_ERROR;
+  if (comm->getCommType() != CLIENT_COMM)
+    return SIGNON_COMPLETE;
+  if (!(status.load() & THREAD_SIGNON_SENT))
+    return SIGNON_NOT_SENT;
+  // Don't early exit to allow update to THREAD_HAS_RESPONSE
+  if (status.load() & THREAD_SIGNON_RECV)
+    return SIGNON_COMPLETE;
 #ifdef THREADSINSTALLED
   const std::lock_guard<std::mutex> comm_lock(comm_mutex);
-  if (comm->getType() != CLIENT_COMM)
-    return SIGNON_COMPLETE;
   ClientComm* cli = dynamic_cast<ClientComm*>(comm);
   RequestList& requests = cli->getRequests();
-  if (!signon_sent.load())
-    return SIGNON_NOT_SENT;
-  if (requests.signon_complete)
+  if (requests.signon_complete) {
+    // if (cli->comm_nmsg(RECV) > 0) {
+    //   if (!(status.load() & THREAD_HAS_RESPONSE))
+    // 	set_status(THREAD_HAS_RESPONSE, true);
+    // } else {
+    //   if (status.load() & THREAD_HAS_RESPONSE)
+    // 	set_status(THREAD_HAS_RESPONSE, true, true);
+    // }
+    set_status(THREAD_SIGNON_RECV);
     return SIGNON_COMPLETE;
+  }
   if ((!requests.requests.empty()) &&
       requests.activeComm()->comm_nmsg(RECV) > 0)
     return SIGNON_WAITING;
@@ -311,17 +350,18 @@ int AsyncBacklog::send() {
     return -1;
   }
   utils::Header header(true);
-  if (backlog.pop(header)) {
+  if (backlog.pop(header, 0, true)) {
     const std::lock_guard<std::mutex> comm_lock(comm_mutex);
     out = comm->send_single(header);
     if (out >= 0) {
       log_debug() << "send: Sent message from backlog" << std::endl;
       if (header.flags & HEAD_FLAG_CLIENT_SIGNON) {
-	signon_sent.store(true);
+	set_status(THREAD_SIGNON_SENT);
 	// Sleep for a bit on client open to prevent sending too many
 	//   signon messages.
 	// std::this_thread::sleep_for(std::chrono::microseconds(100*YGG_SLEEP_TIME));
       }
+      backlog.notify();
     } else {
       log_debug() << "send: Sending from backlog failed. " <<
 	"Another attempt will be made." << std::endl;
@@ -427,8 +467,29 @@ int AsyncComm::comm_nmsg(DIRECTION dir) const {
 
 #ifdef THREADSINSTALLED
 int AsyncComm::wait_for_recv(const int64_t& tout) {
-  if (global_comm || type == CLIENT_COMM)
+  if (global_comm || type == CLIENT_COMM) {
+    if (type == CLIENT_COMM && (flags & COMM_FLAGS_USED_SENT)) {
+      std::string req_id;
+      {
+	const AsyncLockGuard lock(handle);
+	ClientComm* cli = dynamic_cast<ClientComm*>(handle->comm);
+	req_id = cli->getRequests().activeRequestClient(true);
+      }
+      if (!req_id.empty()) {
+	// Ensure that the request has actually been sent by waiting
+	//   for it to exit the buffer.
+	log_debug() << "wait_for_recv: timeout = " << tout <<
+	  " microseconds (client response)" << std::endl;
+	handle->backlog.wait_for(std::chrono::microseconds(tout),
+				 req_id, true);
+	{
+	  const AsyncLockGuard lock(handle);
+	  return handle->comm->wait_for_recv(tout);
+	}
+      }
+    }
     return CommBase::wait_for_recv(tout);
+  }
   log_debug() << "wait_for_recv: timeout = " << tout <<
     " microseconds" << std::endl;
   if (!handle->backlog.wait_for(std::chrono::microseconds(tout)))

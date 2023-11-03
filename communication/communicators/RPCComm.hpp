@@ -19,6 +19,8 @@ public:
   using Comm_t::recv;
   /*! \copydoc Comm_t::comm_nmsg */
   int comm_nmsg(DIRECTION dir=NONE) const override;
+  /*! \copydoc Comm_t::wait_for_recv */
+  int wait_for_recv(const int64_t& tout) override;
 
   void close() override;
   

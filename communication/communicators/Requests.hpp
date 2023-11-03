@@ -274,13 +274,14 @@ public:
       }
       return comms[comms.size() - 1];
     }
-    std::string activeRequestClient() {
+    std::string activeRequestClient(bool dont_raise=false) const {
       for (size_t i = 0; i < requests.size(); i++) {
 	if ((requests[i].is_signon && !signon_complete) ||
 	    (signon_complete && !requests[i].is_signon))
 	  return requests[i].request_id;
       }
-      throw_error("activeRequestClient: No active requests");
+      if (!dont_raise)
+	throw_error("activeRequestClient: No active requests");
       return ""; // GCOVR_EXCL_LINE
     }
     int popRequestServer() {

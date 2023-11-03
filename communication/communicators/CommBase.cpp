@@ -1,6 +1,7 @@
 #define RAPIDJSON_FORCE_IMPORT_ARRAY
 #include "rapidjson/pyrj_c.h"
 #include "comms.hpp"
+#include "rapidjson/document.h"
 
 // #ifdef _OPENMP
 // int communication::communicator::global_scope_comm = 1;
@@ -540,7 +541,6 @@ long Comm_t::recv_raw(char*& data, const size_t &len,
     if (!head.hasType()) {
       log_debug() << "recv_raw: No type information in message header" << std::endl;
     } else {
-      std::cerr << "updating type" << std::endl;
       communication::utils::Metadata& meta = getMetadata(RECV);
       // meta.Display();
       if ((!meta.hasType()) && (meta.transforms.size() == 0)) {

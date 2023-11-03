@@ -33,6 +33,18 @@ int RPCComm::comm_nmsg(DIRECTION dir) const {
   return requests.comms[requests.requests[0].comm_idx]->comm_nmsg(dir);
 }
 
+int RPCComm::wait_for_recv(const int64_t& tout) {
+  if (global_comm)
+    return global_comm->wait_for_recv(tout);
+  if (direction == RECV)
+    return COMM_BASE::wait_for_recv(tout);
+  if (requests.requests.empty() || requests.comms.empty()) {
+    log_error() << "::RPCComm:wait_for_recv: No pending requests" << std::endl;
+    return -1;
+  }
+  return requests.comms[requests.requests[0].comm_idx]->wait_for_recv(tout);
+}
+
 communication::utils::Metadata& RPCComm::getMetadata(const DIRECTION dir) {
   if (global_comm)
     return global_comm->getMetadata(dir);

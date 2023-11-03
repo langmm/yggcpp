@@ -27,17 +27,23 @@ namespace communication {
       bool prepend(utils::Header& header, bool move=false,
 		   bool dont_notify=false, bool for_send=false);
       bool get(utils::Header& header, size_t idx=0,
-	       bool move=false, bool erase=false);
-      bool pop(utils::Header& header, size_t idx=0);
+	       bool move=false, bool erase=false, bool dont_notify=false);
+      bool pop(utils::Header& header, size_t idx=0,
+	       bool dont_notify=false);
+      void notify() { cv.notify_all(); }
 #ifdef THREADSINSTALLED
-      bool message_waiting();
-      bool wait();
+      bool message_waiting(const std::string id="",
+			   const bool negative=false);
+      bool wait(const std::string id="", const bool negative=false);
       template< class Rep, class Period >
-      bool wait_for(const std::chrono::duration<Rep, Period>& rel_time) {
+      bool wait_for(const std::chrono::duration<Rep, Period>& rel_time,
+		    const std::string id="", const bool negative=false) {
 	std::unique_lock<std::mutex> lk(m);
 	AsyncBuffer* _this = this;
-	return cv.wait_for(lk, rel_time, [_this]{
-	  return _this->message_waiting(); });
+	if (_this->message_waiting(id, negative))
+	  return true;
+	return cv.wait_for(lk, rel_time, [_this, id, negative]{
+	  return _this->message_waiting(id, negative); });
       }
 #endif // THREADSINSTALLED
     private:
@@ -66,15 +72,25 @@ namespace communication {
       std::string logInst() const override { return logInst_; }
       bool is_closing() const { return backlog.is_closed(); }
 #ifdef THREADSINSTALLED
-      void set_status(const int new_status);
-      bool wait_for_status(const int new_status);
+      void set_status(const int new_status, bool dont_notify=false,
+		      bool negative=false);
+      bool wait_status(const int new_status);
+      template< class Rep, class Period >
+      bool wait_for_status(const std::chrono::duration<Rep, Period>& rel_time,
+			   const int new_status) {
+	if (status.load() & new_status)
+	  return true;
+	std::unique_lock<std::mutex> lk(comm_mutex);
+	AsyncBacklog* _this = this;
+	return cv_status.wait_for(lk, rel_time, [_this, new_status]{
+	  return (_this->status.load() & new_status); });
+      }
 #endif // THREADSINSTALLED
       Comm_t* comm;
       AsyncBuffer backlog;
 #ifdef THREADSINSTALLED
       std::mutex comm_mutex;
       std::atomic_bool locked;
-      std::atomic_bool signon_sent;
       std::thread backlog_thread;
       std::atomic_int status;
       std::condition_variable cv_status;
