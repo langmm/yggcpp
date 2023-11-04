@@ -218,6 +218,12 @@ bool Metadata::fromSchema(const rapidjson::Value& new_schema,
   }
   return true;
 }
+#ifdef WRAP_RAPIDJSON_FOR_DLL
+bool Metadata::fromSchema(const rapidjson::WValue& new_schema,
+			  bool isMetadata, bool use_generic) {
+  return fromSchema(*(new_schema.val_), isMetadata, use_generic);
+}
+#endif // WRAP_RAPIDJSON_FOR_DLL
 bool Metadata::Normalize() {
   rapidjson::Document s(rapidjson::kObjectType);
 #define ADD_OBJECT_(x, name, len)					\

@@ -250,4 +250,32 @@ RAPIDJSON_NAMESPACE_END
 
 #endif // WRAP_RAPIDJSON_FOR_DLL
 
-
+/*
+RAPIDJSON_NAMESPACE_BEGIN
+template<typename T>
+void Value_Set(rapidjson::Value& v, const T& data,
+	       RAPIDJSON_DEFAULT_ALLOCATOR& allocator);
+void Value_SetString(rapidjson::Value& v,
+		     const char* s, SizeType length,
+		     RAPIDJSON_DEFAULT_ALLOCATOR& allocator);
+void Value_CopyFrom(rapidjson::Value& v,
+		    const rapidjson::Document& data,
+		    RAPIDJSON_DEFAULT_ALLOCATOR& allocator,
+		    bool copyConstStrings = false);
+template<typename T>
+void Value_Set1DArray(rapidjson::Value& v,
+		      const T* x, SizeType len,
+		      RAPIDJSON_DEFAULT_ALLOCATOR& allocator);
+template<typename T>
+void Value_SetNDArray(rapidjson::Value& v,
+		      const T* x, SizeType shape[], SizeType ndim,
+		      RAPIDJSON_DEFAULT_ALLOCATOR& allocator);
+rapidjson::Document* Document_new(Type type);
+void Document_delete(rapidjson::Document*& d);
+rapidjson::SizeType Document_Size(const rapidjson::Document& d);
+RAPIDJSON_DEFAULT_ALLOCATOR Document_GetAllocator(rapidjson::Document& d);
+void Document_PushBack(rapidjson::Document& d,
+		       rapidjson::Value& v,
+		       RAPIDJSON_DEFAULT_ALLOCATOR& allocator);
+RAPIDJSON_NAMESPACE_END
+*/

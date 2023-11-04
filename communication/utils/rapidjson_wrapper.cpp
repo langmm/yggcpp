@@ -201,7 +201,6 @@ WDocument& WDocument::CopyFrom(const rapidjson::Document& rhs,
   template WValue WValue::Set1DArray<type>(const type* x, SizeType len, WValue::Allocator& allocator); \
   template WValue WValue::SetNDArray<type>(const type* x, SizeType shape[], SizeType ndim, WValue::Allocator& allocator); \
   template void WValue::GetScalarValue<type>(type& data)
-  
 
 // default rapidjson
 SPECIALIZE(bool);
@@ -243,4 +242,57 @@ SPECIALIZE(rapidjson::Ply);
 SPECIALIZE(rapidjson::ObjWavefront);
 // vector
 // map
+
 #endif // WRAP_RAPIDJSON_FOR_DLL
+
+/*
+template<typename T>
+void rapidjson::Value_Set(rapidjson::Value& v, const T& data,
+			  RAPIDJSON_DEFAULT_ALLOCATOR& allocator) {
+  v.Set(data, allocator);
+}
+void rapidjson::Value_SetString(rapidjson::Value& v,
+				const char* s,
+				rapidjson::SizeType length,
+				RAPIDJSON_DEFAULT_ALLOCATOR& allocator) {
+  v.SetString(s, length, allocator);
+};
+void rapidjson::Value_CopyFrom(rapidjson::Value& v,
+			       const rapidjson::Document& data,
+			       RAPIDJSON_DEFAULT_ALLOCATOR& allocator,
+			       bool copyConstStrings) {
+  v.CopyFrom(data, allocator, copyConstStrings);
+}
+template<typename T>
+void rapidjson::Value_Set1DArray(rapidjson::Value& v,
+				 const T* x, rapidjson::SizeType len,
+				 RAPIDJSON_DEFAULT_ALLOCATOR& allocator) {
+  v.Set1DArray(x, len, allocator);
+}
+template<typename T>
+void rapidjson::Value_SetNDArray(rapidjson::Value& v,
+				 const T* x, rapidjson::SizeType shape[],
+				 rapidjson::SizeType ndim,
+				 RAPIDJSON_DEFAULT_ALLOCATOR& allocator) {
+  v.SetNDArray(x, shape, ndim, allocator);
+}
+rapidjson::Document* rapidjson::Document_new(Type type) {
+  return new rapidjson::Document(type);
+}
+void rapidjson::Document_delete(rapidjson::Document*& d) {
+  delete d;
+  d = nullptr;
+}
+RAPIDJSON_DEFAULT_ALLOCATOR rapidjson::Document_GetAllocator(rapidjson::Document& d) {
+  return d.GetAllocator();
+}
+rapidjson::SizeType rapidjson::Document_Size(const rapidjson::Document& d) {
+  return d.Size();
+}
+void rapidjson::Document_PushBack(rapidjson::Document& d,
+				  rapidjson::Value& v,
+				  RAPIDJSON_DEFAULT_ALLOCATOR& allocator) {
+  d.PushBack(v, allocator);
+}
+*/
+
