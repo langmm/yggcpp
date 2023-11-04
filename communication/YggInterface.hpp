@@ -1,5 +1,6 @@
 #pragma once
 #include "communicators/comms.hpp"
+#include "rapidjson/document.h"
 
 /*! @brief Memory to keep track of global scope comms. */
 #define WITH_GLOBAL_SCOPE(COMM) global_scope_comm_on(); COMM; global_scope_comm_off()

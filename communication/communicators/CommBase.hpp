@@ -267,7 +267,7 @@ private:
 #define HANDLE_SEND_LAST_(single)		\
   if (doc.Size() == 1) {			\
     rapidjson::WDocument tmp;			\
-    tmp.Swap(doc[0]);				\
+    tmp.Swap(doc[(int)0]);			\
     return send(tmp, single);			\
   }						\
   return send(doc, single)
@@ -465,7 +465,7 @@ private:
       "recvVar(T& data): " <<						\
       "Element" << i << " in received document is not the "		\
       "expected type. type = " << Tname <<				\
-      ", document = " << doc[0] << std::endl;				\
+      ", document = " << RJ_WVAL(doc[(int)0]) << std::endl;		\
     return -1;								\
   }
   
@@ -531,9 +531,9 @@ private:
   }
   // TODO: Handle case of table arrays
 
-  HANDLE_RECV_(doc[0].IsString(),
-	       long ret = utils::copyData(data, len, doc[0].GetString(),
-					  static_cast<size_t>(doc[0].GetStringLength()),
+  HANDLE_RECV_(RJ_WVAL(doc[(int)0]).IsString(),
+	       long ret = utils::copyData(data, len, RJ_WVAL(doc[(int)0]).GetString(),
+					  static_cast<size_t>(RJ_WVAL(doc[(int)0]).GetStringLength()),
 					  allow_realloc);
 	       if (ret < 0) { return -1; } len = static_cast<size_t>(ret),
 	       i++, "char*",
@@ -542,7 +542,7 @@ private:
 #ifdef WRAP_RAPIDJSON_FOR_DLL
   HANDLE_RECV_((i >= 0),
 	       WDocument wdata(&data);
-	       wdata.CopyFrom(doc[0], wdata.GetAllocator(), true),
+	       wdata.CopyFrom(doc[(int)0], wdata.GetAllocator(), true),
 	       , "rapidjson::Document",
 	       if (i == 1 && (doc.Size() > 0 || was_array)) {
 		 rapidjson::WValue tmp;
@@ -551,7 +551,7 @@ private:
 		 wdata.Reserve(doc.Size() + 1, wdata.GetAllocator());
 		 wdata.PushBack(tmp, wdata.GetAllocator());
 		 while (doc.Size() > 0) {
-		   tmp.CopyFrom(doc[0], wdata.GetAllocator(), true);
+		   tmp.CopyFrom(doc[(int)0], wdata.GetAllocator(), true);
 		   wdata.PushBack(tmp, wdata.GetAllocator());
 		   doc.Erase(doc.Begin());
 		 }
@@ -559,7 +559,7 @@ private:
 	       ,rapidjson::Document& data)
 #else // WRAP_RAPIDJSON_FOR_DLL
   HANDLE_RECV_((i >= 0),
-	       data.CopyFrom(doc[0], data.GetAllocator(), true),
+	       data.CopyFrom(doc[(int)0], data.GetAllocator(), true),
 	       , "rapidjson::Document",
 	       if (i == 1 && (doc.Size() > 0 || was_array)) {
 		 rapidjson::WValue tmp;
@@ -568,7 +568,7 @@ private:
 		 data.Reserve(doc.Size() + 1, data.GetAllocator());
 		 data.PushBack(tmp, data.GetAllocator());
 		 while (doc.Size() > 0) {
-		   tmp.CopyFrom(doc[0], data.GetAllocator(), true);
+		   tmp.CopyFrom(doc[(int)0], data.GetAllocator(), true);
 		   data.PushBack(tmp, data.GetAllocator());
 		   doc.Erase(doc.Begin());
 		 }
@@ -581,22 +581,25 @@ private:
 		    internal::OrExpr<internal::IsSame<T, char[]>, 
 		    internal::OrExpr<internal::IsSame<T, rapidjson::Document>,
 		    internal::IsPointer<T> > > > > >),
-		   doc[0].Is<T>(), doc[0].Get(data);
-		   if (i == 0 && doc.Size() == 1 && doc[0].IsString()) {
-		     return static_cast<long>(doc[0].GetStringLength());
+		   RJ_WVAL(doc[(int)0]).Is<T>(),
+		   RJ_WVAL(doc[(int)0]).Get(data);
+		   if (i == 0 && doc.Size() == 1 &&
+		       RJ_WVAL(doc[(int)0]).IsString()) {
+		     return static_cast<long>(RJ_WVAL(doc[(int)0]).GetStringLength());
 		   }, , ,
 		   T& data)
   HANDLE_RECV_TMP_((internal::AndExpr<internal::IsPointer<T>,
 		    internal::NotExpr<internal::IsSame<T, char*> > >),
-		   doc[0].Is1DArray<std::remove_pointer<T>::type >(),
-		   long ret = utils::copyData(data, len, doc[0].GetString(),
-					      static_cast<size_t>(doc[0].GetStringLength()),
+		   RJ_WVAL(doc[(int)0]).Is1DArray<std::remove_pointer<T>::type >(),
+		   long ret = utils::copyData(data, len,
+					      RJ_WVAL(doc[(int)0]).GetString(),
+					      static_cast<size_t>(RJ_WVAL(doc[(int)0]).GetStringLength()),
 					      allow_realloc);
-		   if (ret < 0) { return -1; } len = static_cast<size_t>(doc[0].GetNElements()),
+		   if (ret < 0) { return -1; } len = static_cast<size_t>(RJ_WVAL(doc[(int)0]).GetNElements()),
 		   i++, , T& data, size_t& len)
   HANDLE_RECV_TMP_((internal::AndExpr<internal::IsPointer<T>,
 		    internal::NotExpr<internal::IsSame<T, char*> > >),
-		   doc[0].IsNDArray<std::remove_pointer<T>::type >(),
+		   RJ_WVAL(doc[(int)0]).IsNDArray<std::remove_pointer<T>::type >(),
 		   size_t len = 0;
 		   if (ndim > 0 && shape) {
 		     len = 1;
@@ -604,22 +607,23 @@ private:
 		       len *= shape[ii];
 		     }
 		   }
-		   if (utils::copyData(data, len, doc[0].GetString(),
-				       static_cast<size_t>(doc[0].GetStringLength()),
+		   if (utils::copyData(data, len,
+				       RJ_WVAL(doc[(int)0]).GetString(),
+				       static_cast<size_t>(RJ_WVAL(doc[(int)0]).GetStringLength()),
 				       allow_realloc) < 0) { return -1; }
-		   const rapidjson::WValue& doc_shape = doc[0].GetShape();
+		   const rapidjson::WValue& doc_shape = RJ_VAL(RJ_WVAL(doc[(int)0]).GetShape());
 		   if (utils::copyData(shape, ndim * sizeof(size_t),
 				       (size_t*)NULL,
 				       static_cast<size_t>(doc_shape.Size()) * sizeof(size_t),
 				       allow_realloc) < 0) { return -1; }
 		   ndim = static_cast<size_t>(doc_shape.Size());
 		   for (size_t ii = 0; ii < ndim; ii++) {
-		     shape[ii] = static_cast<size_t>(doc_shape[static_cast<rapidjson::SizeType>(ii)].GetUint());
+		     shape[ii] = static_cast<size_t>(RJ_WVAL(doc_shape[static_cast<rapidjson::SizeType>(ii)]).GetUint());
 		   },
 		   i++, , T& data, size_t& ndim, size_t*& shape)
   HANDLE_RECV_TMP_((YGGDRASIL_IS_ANY_SCALAR(T)),
-		   doc[0].IsScalar<T>(),
-		   doc[0].GetScalarValue(data),
+		   RJ_WVAL(doc[(int)0]).IsScalar<T>(),
+		   RJ_WVAL(doc[(int)0]).GetScalarValue(data),
 		   , , T& data)
     
 					      

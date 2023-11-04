@@ -93,6 +93,12 @@ public:
   void reset();
   bool fromSchema(const rapidjson::Value& new_schema,
 		  bool isMetadata = false, bool use_generic = false);
+#ifdef WRAP_RAPIDJSON_FOR_DLL
+  bool fromSchema(const rapidjson::WValue& new_schema,
+		  bool isMetadata = false, bool use_generic = false) {
+    return fromSchema(*(new_schema.val_), isMetadata, use_generic);
+  }
+#endif // WRAP_RAPIDJSON_FOR_DLL
   bool Normalize();
   bool fromSchema(const std::string schemaStr, bool use_generic = false);
   // template<typename T>
