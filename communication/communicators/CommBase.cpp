@@ -536,20 +536,18 @@ long Comm_t::recv_raw(char*& data, const size_t &len,
       log_error() << "recv_raw: finalize_recv failed." << std::endl;
       return -1;
     }
-    std::cerr << "CommBase(" << name << ")::recv_raw: Before update type" << std::endl;
-    // head.Display();
     if (!head.hasType()) {
       log_debug() << "recv_raw: No type information in message header" << std::endl;
     } else {
+      log_debug() << "recv_raw: Updating type" << std::endl;
       communication::utils::Metadata& meta = getMetadata(RECV);
-      // meta.Display();
       if ((!meta.hasType()) && (meta.transforms.size() == 0)) {
 	if (!meta.fromSchema(head.getSchema()[0]))
 	  return -1;
       }
       // update_datatype(head.getSchema()[0], RECV);
+      log_debug() << "recv_raw: Updated type" << std::endl;
     }
-    std::cerr << "CommBase(" << name << ")::recv_raw: After update type" << std::endl;
   }
   log_debug() << "recv_raw: Received " << head.size_curr << " bytes from " << address->address() << std::endl;
   ret = head.size_data;
@@ -770,6 +768,8 @@ long Comm_t::vCall(rapidjson::VarArgList& ap) {
 std::vector<Comm_t*> Comm_t::registry;
 
 void Comm_t::register_comm(Comm_t* x) {
+  if (x->getFlags() & COMM_FLAG_ASYNC_WRAPPED)
+    return;
   YGG_THREAD_SAFE_BEGIN(comms) {
     x->index_in_register = Comm_t::registry.size();
     Comm_t::registry.push_back(x);
