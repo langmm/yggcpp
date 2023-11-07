@@ -39,11 +39,10 @@ namespace communication {
       bool wait_for(const std::chrono::duration<Rep, Period>& rel_time,
 		    const std::string id="", const bool negative=false) {
 	std::unique_lock<std::mutex> lk(m);
-	AsyncBuffer* _this = this;
-	if (_this->message_waiting(id, negative))
+	if (message_waiting(id, negative))
 	  return true;
-	return cv.wait_for(lk, rel_time, [_this, id, negative]{
-	  return _this->message_waiting(id, negative); });
+	return cv.wait_for(lk, rel_time, [this, id, negative]{
+	  return message_waiting(id, negative); });
       }
 #endif // THREADSINSTALLED
     private:
@@ -74,6 +73,8 @@ namespace communication {
 #ifdef THREADSINSTALLED
       void set_status(const int new_status, bool dont_notify=false,
 		      bool negative=false);
+      void set_status_lock(const int new_status, bool dont_notify=false,
+			   bool negative=false);
       bool wait_status(const int new_status);
       template< class Rep, class Period >
       bool wait_for_status(const std::chrono::duration<Rep, Period>& rel_time,

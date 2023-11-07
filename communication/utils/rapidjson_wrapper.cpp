@@ -12,6 +12,11 @@ using namespace rapidjson;
   type WValue::name argsT mods {			\
     return val_->name args;				\
   }
+#define RJV_WRAP_DEC_TEMP(name, argsT, args, type, mods)	\
+  template <typename T>						\
+  type WValue::name argsT mods {				\
+    return val_->name<T> args;					\
+  }
 #define RJD_WRAP_DEC(name, argsT, args, type, mods)	\
   type WDocument::name argsT mods {			\
     return doc_->name args;				\
@@ -25,9 +30,9 @@ using namespace rapidjson;
     val_->name args;						\
     return *this;						\
   }
-#define RJV_WRAP_DEC_RETV_CONST(name, argsT, args, mods)	\
-  const WValue WValue::name argsT const mods {			\
-    return WValue(&(val_->name args));				\
+#define RJV_WRAP_DEC_RETV_CONST(name, argsT, args, mods)		\
+  const WValue WValue::name argsT const mods {				\
+    return WValue(const_cast<RJ_WNS::Value*>(&(val_->name args)));	\
   }
 #define RJD_WRAP_DEC_RETSD(name, argsT, args, mods)		\
   WDocument& WDocument::name argsT mods {			\
@@ -63,6 +68,22 @@ WValue::~WValue() {
     delete val_;
   }
   val_ = nullptr;
+}
+#if RAPIDJSON_HAS_CXX11_RVALUE_REFS
+WValue::WValue(WValue&& rhs) :
+  val_(nullptr), created_val(false) {
+  std::swap(val_, rhs.val_);
+  std::swap(created_val, rhs.created_val);
+}
+WValue& WValue::operator=(WValue&& rhs) {
+  return *this = rhs.Move();
+}
+
+#endif
+WValue& WValue::operator=(WValue& rhs) {
+  std::swap(val_, rhs.val_);
+  std::swap(created_val, rhs.created_val);
+  return *this;
 }
 WValue& WValue::CopyFrom(const RJ_WNS::Document& rhs,
 			 WValue::Allocator& allocator,
@@ -115,14 +136,10 @@ bool WValue::operator==(const WValue& rhs) const {
   RJV_WRAP_DEC(GetString, (), (), const WValue::Ch*, const);
   RJV_WRAP_DEC(GetStringLength, (), (), SizeType, const);
   // Templated methods
-  template <typename T>
-  RJV_WRAP_DEC(Is, (), <T>(), bool, const);
-  template <typename T>
-  RJV_WRAP_DEC(IsScalar, (), <T>(), bool, const);
-  template <typename T>
-  RJV_WRAP_DEC(Is1DArray, (), <T>(), bool, const);
-  template <typename T>
-  RJV_WRAP_DEC(IsNDArray, (), <T>(), bool, const);
+  RJV_WRAP_DEC_TEMP(Is, (), (), bool, const);
+  RJV_WRAP_DEC_TEMP(IsScalar, (), (), bool, const);
+  RJV_WRAP_DEC_TEMP(Is1DArray, (), (), bool, const);
+  RJV_WRAP_DEC_TEMP(IsNDArray, (), (), bool, const);
   template<typename T>
   RJV_WRAP_DEC_RETSV(Set, (const T& data,
 			   WValue::AllocatorType& allocator),
@@ -210,6 +227,24 @@ WDocument::~WDocument() {
     delete doc_;
   }
   doc_ = nullptr;
+  val_ = nullptr;
+}
+#if RAPIDJSON_HAS_CXX11_RVALUE_REFS
+WDocument::WDocument(WDocument&& rhs) :
+  WValue(std::forward<WValue>(rhs)),
+  doc_(nullptr), created_doc(false) {
+  std::swap(doc_, rhs.doc_);
+  std::swap(created_doc, rhs.created_doc);
+}
+WDocument& WDocument::operator=(WDocument&& rhs) {
+  return *this = rhs.Move();
+}
+#endif
+WDocument& WDocument::operator=(WDocument& rhs) {
+  WValue::operator=(std::forward<WValue>(rhs));
+  std::swap(doc_, rhs.doc_);
+  std::swap(created_doc, rhs.created_doc);
+  return *this;
 }
 
 WDocument& WDocument::CopyFrom(const RJ_WNS::Document& rhs,
@@ -238,6 +273,7 @@ WDocument& WDocument::Swap(RJ_WNS::Document& rhs) {
 
 #undef RJV_WRAP_DEC
 #undef RJD_WRAP_DEC
+#undef RJV_WRAP_DEC_TEMP
 #undef RJV_WRAP_DEC_RETV
 #undef RJV_WRAP_DEC_RETSV
 #undef RJV_WRAP_DEC_RETV_CONST

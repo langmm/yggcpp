@@ -6,10 +6,10 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/allocators.h"
 
-// #if defined(_MSC_VER)
+#if defined(_MSC_VER)
 // _WINDOWS) && !(defined(YggInterface_EXPORTS) || defined(YggInterface_py_EXPORTS) || defined(RAPIDJSON_FORCE_IMPORT_ARRAY))
 #define WRAP_RAPIDJSON_FOR_DLL
-// #endif
+#endif
 
 #ifdef WRAP_RAPIDJSON_FOR_DLL
 
@@ -65,6 +65,9 @@ typedef GenericDocument<UTF8<>,  RAPIDJSON_DEFAULT_ALLOCATOR,
 
 #define RJV_WRAP_DEC(name, argsT, args, type, mods)	\
   type name argsT mods
+#define RJV_WRAP_DEC_TEMP(name, argsT, args, type, mods)	\
+  template <typename T>						\
+  type name argsT mods
 #define RJD_WRAP_DEC(name, argsT, args, type, mods)	\
   RJV_WRAP_DEC(name, argsT, args, type, mods)
 #define RJV_WRAP_DEC_RETV(name, argsT, args, mods)	\
@@ -88,6 +91,9 @@ class WDocument;
 
 // Helper classes for use in headers
 class WValue {
+private:
+  WValue(const WValue&) = delete;
+  WValue& operator=(const WValue&) = delete;
 public:
   typedef RAPIDJSON_DEFAULT_ALLOCATOR Allocator;
   typedef RAPIDJSON_DEFAULT_ALLOCATOR AllocatorType;
@@ -101,6 +107,12 @@ public:
   WValue(RJ_WNS::Value& val);
   WValue(RJ_WNS::Document* val);
   ~WValue();
+#if RAPIDJSON_HAS_CXX11_RVALUE_REFS
+  WValue(WValue&& rhs);
+  WValue& operator=(WValue&& rhs);
+#endif // RAPIDJSON_HAS_CXX11_RVALUE_REFS
+  WValue& operator=(WValue& rhs);
+  WValue& Move() { return *this; }
   WValue& CopyFrom(const RJ_WNS::Value& rhs,
 		   Allocator& allocator,
 		   bool copyConstStrings = false);
@@ -141,14 +153,10 @@ public:
   RJV_WRAP_DEC(GetString, (), (), const Ch*, const);
   RJV_WRAP_DEC(GetStringLength, (), (), SizeType, const);
   // Templated methods
-  template <typename T>
-  RJV_WRAP_DEC(Is, (), <T>(), bool, const);
-  template <typename T>
-  RJV_WRAP_DEC(IsScalar, (), <T>(), bool, const);
-  template <typename T>
-  RJV_WRAP_DEC(Is1DArray, (), <T>(), bool, const);
-  template <typename T>
-  RJV_WRAP_DEC(IsNDArray, (), <T>(), bool, const);
+  RJV_WRAP_DEC_TEMP(Is, (), <T>(), bool, const);
+  RJV_WRAP_DEC_TEMP(IsScalar, (), <T>(), bool, const);
+  RJV_WRAP_DEC_TEMP(Is1DArray, (), <T>(), bool, const);
+  RJV_WRAP_DEC_TEMP(IsNDArray, (), <T>(), bool, const);
   template<typename T>
   RJV_WRAP_DEC_RETSV(Set, (const T& data, AllocatorType& allocator),
 		     (data, allocator), );
@@ -215,6 +223,9 @@ public:
 };
 
 class WDocument : public WValue {
+private:
+  WDocument(const WDocument&) = delete;
+  WDocument& operator=(const WDocument&) = delete;
 public:
   typedef RAPIDJSON_DEFAULT_ALLOCATOR Allocator;
   typedef RAPIDJSON_DEFAULT_ALLOCATOR AllocatorType;
@@ -223,6 +234,12 @@ public:
   WDocument(RJ_WNS::Document* doc);
   WDocument(RJ_WNS::Document& doc);
   ~WDocument();
+#if RAPIDJSON_HAS_CXX11_RVALUE_REFS
+  WDocument(WDocument&& rhs);
+  WDocument& operator=(WDocument&& rhs);
+#endif // RAPIDJSON_HAS_CXX11_RVALUE_REFS
+  WDocument& operator=(WDocument& rhs);
+  WDocument& Move() { return *this; }
 
   using ValueType::CopyFrom;
   using ValueType::Swap;
@@ -251,6 +268,7 @@ public:
 
 #undef RJV_WRAP_DEC
 #undef RJD_WRAP_DEC
+#undef RJV_WRAP_DEC_TEMP
 #undef RJV_WRAP_DEC_RETV
 #undef RJV_WRAP_DEC_RETSV
 #undef RJV_WRAP_DEC_RETV_CONST

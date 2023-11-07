@@ -136,11 +136,10 @@ bool AsyncBuffer::message_waiting(const std::string id,
 }
 bool AsyncBuffer::wait(const std::string id, const bool negative) {
   std::unique_lock<std::mutex> lk(m);
-  AsyncBuffer* _this = this;
-  if (_this->message_waiting(id, negative))
+  if (message_waiting(id, negative))
     return true;
-  cv.wait(lk, [_this, id, negative]{
-    return _this->message_waiting(id, negative); });
+  cv.wait(lk, [this, id, negative]{
+    return message_waiting(id, negative); });
   return true;
 }
 #endif // THREADSINSTALLED
@@ -159,6 +158,7 @@ AsyncBacklog::AsyncBacklog(Comm_t* parent) :
   status(THREAD_INACTIVE), cv_status(),
   logInst_(parent->logInst()) {
   wait_status(THREAD_STARTED | THREAD_COMPLETE);
+  set_status_lock(THREAD_INIT);
 }
 
 #else // THREADSINSTALLED
@@ -211,6 +211,7 @@ void AsyncBacklog::on_thread(Comm_t* parent) {
       }
       set_status(THREAD_STARTED);
     }
+    // wait_status(THREAD_INIT);
     if (direction == SEND) {
       while (!backlog.is_closed()) {
 	cv_status.notify_all(); // Periodically notify
@@ -249,8 +250,8 @@ void AsyncBacklog::on_thread(Comm_t* parent) {
   }
 #ifdef THREADSINSTALLED
   if (!out)
-    set_status(THREAD_ERROR);
-  set_status(THREAD_COMPLETE);
+    set_status_lock(THREAD_ERROR);
+  set_status_lock(THREAD_COMPLETE);
 #else // THREADSINSTALLED
   UNUSED(out);
 #endif // THREADSINSTALLED
@@ -266,12 +267,16 @@ void AsyncBacklog::set_status(const int new_status, bool dont_notify,
   if (!dont_notify)
     cv_status.notify_all();
 }
+void AsyncBacklog::set_status_lock(const int new_status, bool dont_notify,
+				   bool negative) {
+  std::unique_lock<std::mutex> lk(comm_mutex);
+  set_status(new_status, dont_notify, negative);
+}
 bool AsyncBacklog::wait_status(const int new_status) {
+  std::unique_lock<std::mutex> lk(comm_mutex);
   if (!(status.load() & new_status)) {
-    std::unique_lock<std::mutex> lk(comm_mutex);
-    AsyncBacklog* _this = this;
-    cv_status.wait(lk, [_this, new_status]{
-      return (_this->status.load() & new_status); });
+    cv_status.wait(lk, [this, new_status]{
+      return (status.load() & new_status); });
   }
   return true;
 }
