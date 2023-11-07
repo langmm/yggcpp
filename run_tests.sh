@@ -7,6 +7,8 @@ DONT_BUILD=""
 NO_CORE=""
 CMAKE_FLAGS="-DRAPIDJSON_INCLUDE_DIRS=/Users/langmm/rapidjson/include"
 WITH_LLDB=""
+DO_SYMBOLS=""
+DONT_TEST=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -43,13 +45,23 @@ while [[ $# -gt 0 ]]; do
 	    CMAKE_FLAGS="${CMAKE_FLAGS} -DFORCE_SPLIT_CXXFORTRAN=1"
 	    shift # past argument with no value
 	    ;;
+	--symbols )
+	    DO_SYMBOLS="TRUE"
+	    DONT_TEST="TRUE"
+	    DONT_BUILD="TRUE"
+	    shift # past argument with no value
+	    ;;
+	--dont-test )
+	    DONT_TEST="TRUE"
+	    shift # past argument with no value
+	    ;;
 	*)
 	    ;;
     esac
 done
 
 if [ -n "$DO_PYTHON" ]; then
-    if [ -n "$DONT_BUILD"]; then
+    if [ ! -n "$DONT_BUILD"]; then
 	if [ -d "_skbuild" ]; then
 	    rm -rf "_skbuild"
 	fi
@@ -80,11 +92,13 @@ if [ -n "$DO_PYTHON" ]; then
     else
 	export TEST_DIR=python/test
     fi
-    export PYTHONFAULTHANDLER=1
-    if [ -n "$WITH_LLDB" ]; then
-	lldb -o 'run' -o 'quit' -- $(which python3) -m pytest -svx $TEST_DIR
-    else
-	python3 -m pytest -svx $TEST_DIR
+    if [ ! -n "$DONT_TEST" ]; then
+	export PYTHONFAULTHANDLER=1
+	if [ -n "$WITH_LLDB" ]; then
+	    lldb -o 'run' -o 'quit' -- $(which python3) -m pytest -svx $TEST_DIR
+	else
+	    python3 -m pytest -svx $TEST_DIR
+	fi
     fi
     if [ -n "$NO_CORE" ]; then
 	cd ../../
@@ -98,27 +112,33 @@ else
 	mkdir build
     fi
     cd build
-    if [ -n "$DO_FORTRAN" ]; then
-	# unset CFLAGS
-	# unset CXXFLAGS
-	# unset FFLAGS
-	# CMAKE_FLAGS="${CMAKE_FLAGS} -DCMAKE_C_COMPILER=gcc-13 -DCMAKE_CXX_COMPILER=g++-13 -DCMAKE_Fortran_COMPILER=gfortran-13"
-	CMAKE_FLAGS="${CMAKE_FLAGS} -DBUILD_FORTRAN_LIBRARY=ON -DYGG_BUILD_FORTRAN_TESTS=ON -DYGG_ENABLE_ELF=OFF"
-    else
-	CMAKE_FLAGS="${CMAKE_FLAGS} -DYGG_BUILD_CXX_TESTS=ON"
-    fi
-    cmake .. -DCMAKE_INSTALL_PREFIX=../devel -DYGG_ENABLE_COVERAGE=OFF -DYGG_SKIP_VALGRIND_TESTS=ON -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DBUILD_PYTHON_LIBRARY=OFF $CMAKE_FLAGS
-    make
-    if [ -n "$WITH_LLDB" ]; then
+    if [ ! -n "$DONT_BUILD" ]; then
 	if [ -n "$DO_FORTRAN" ]; then
-	    lldb -o 'run' -o 'quit' fortran/tests/fortran_testsuite -- test_ygg_input_1_
+	    # unset CFLAGS
+	    # unset CXXFLAGS
+	    # unset FFLAGS
+	    # CMAKE_FLAGS="${CMAKE_FLAGS} -DCMAKE_C_COMPILER=gcc-13 -DCMAKE_CXX_COMPILER=g++-13 -DCMAKE_Fortran_COMPILER=gfortran-13"
+	    CMAKE_FLAGS="${CMAKE_FLAGS} -DBUILD_FORTRAN_LIBRARY=ON -DYGG_BUILD_FORTRAN_TESTS=ON -DYGG_ENABLE_ELF=OFF"
 	else
-	    lldb -o 'run' -o 'quit' test/unittest
+	    CMAKE_FLAGS="${CMAKE_FLAGS} -DYGG_BUILD_CXX_TESTS=ON"
 	fi
-    else
-	make test ARGS="--stop-on-failure"
+	cmake .. -DCMAKE_INSTALL_PREFIX=../devel -DYGG_ENABLE_COVERAGE=OFF -DYGG_SKIP_VALGRIND_TESTS=ON -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DBUILD_PYTHON_LIBRARY=OFF $CMAKE_FLAGS
+	make
+    fi
+    if [ ! -n "$DONT_TEST" ]; then
+	if [ -n "$WITH_LLDB" ]; then
+	    if [ -n "$DO_FORTRAN" ]; then
+		lldb -o 'run' -o 'quit' fortran/tests/fortran_testsuite -- test_ygg_input_1_
+	    else
+		lldb -o 'run' -o 'quit' test/unittest
+	    fi
+	else
+	    make test ARGS="--stop-on-failure"
+	fi
     fi
     cd ../
 fi
 
-
+if [ -n "$DO_SYMBOLS" ]; then
+    python utils/check_symbols.py build/test/unittest build/libYggInterface.dylib  &> symbols.txt
+fi

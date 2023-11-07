@@ -486,6 +486,8 @@ int AsyncComm::wait_for_recv(const int64_t& tout) {
 	  const AsyncLockGuard lock(handle);
 	  return handle->comm->wait_for_recv(tout);
 	}
+      } else {
+	log_debug() << "wait_for_recv: client dosn't have any active requests" << std::endl;
       }
     }
     return CommBase::wait_for_recv(tout);

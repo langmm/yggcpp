@@ -164,18 +164,32 @@ bool WValue::operator==(const WValue& rhs) const {
   RJV_WRAP_DEC(IsObject, (), (), bool, const);
   RJV_WRAP_DEC_RETSV(SetObject, (), (), );
   RJV_WRAP_DEC(MemberCount, (), (), rapidjson::SizeType, const);
-  RJV_WRAP_DEC(HasMember, (const Ch* name), (name), bool, const);
+  RJV_WRAP_DEC(HasMember, (const WValue::Ch* name), (name), bool, const);
+  template <typename T>
+  RAPIDJSON_DISABLEIF_RETURN(
+    (internal::NotExpr<
+     internal::IsSame<typename internal::RemoveConst<T>::Type,
+     typename WValue::Ch> >),
+    (RJ_WNS::Value&)) WValue::operator[](T* name)
+  { return (*val_)[name]; }
+  template <typename T>
+  RAPIDJSON_DISABLEIF_RETURN(
+    (internal::NotExpr<
+     internal::IsSame<typename internal::RemoveConst<T>::Type,
+     typename WValue::Ch> >),
+    (const RJ_WNS::Value&)) WValue::operator[](T* name) const
+  { return const_cast<WValue&>(*this)[name]; }
   // RJV_WRAP_DEC_RETV(operator[], (const Ch* name), (name), );
   // RJV_WRAP_DEC_RETV_CONST(operator[], (const Ch* name), (name), );
-  RJV_WRAP_DEC(operator[], (const Ch* name), (name),
-	       RJ_WNS::Value&, );
-  RJV_WRAP_DEC(operator[], (const Ch* name), (name),
-	       const RJ_WNS::Value&, const);
+  // RJV_WRAP_DEC(operator[], (const Ch* name), (name),
+  // 	       RJ_WNS::Value&, );
+  // RJV_WRAP_DEC(operator[], (const Ch* name), (name),
+  // 	       const RJ_WNS::Value&, const);
   RJV_WRAP_DEC_RETSV(AddMember, (RJ_WNS::Value& name,
 				 RJ_WNS::Value& value,
 				 WValue::Allocator& allocator),
 		     (name, value, allocator), );
-  RJV_WRAP_DEC(RemoveMember, (const Ch* name), (name), bool, );
+  RJV_WRAP_DEC(RemoveMember, (const WValue::Ch* name), (name), bool, );
 
 namespace rapidjson {
 std::ostream & operator << (std::ostream &out, const WValue& p) {
@@ -231,6 +245,8 @@ WDocument& WDocument::Swap(RJ_WNS::Document& rhs) {
 #undef RJD_WRAP_DEC_RETSV
 #undef RJD_WRAP_DEC_RETSD
 
+// Explicitly instantiate template specializations
+
 #define SPECIALIZE_ACCEPT(type)			\
   template bool WValue::Accept<type>(type& handler, bool skip_yggdrasil) const
 
@@ -239,6 +255,17 @@ SPECIALIZE_ACCEPT(rapidjson::Writer<rapidjson::StringBuffer>);
 SPECIALIZE_ACCEPT(rapidjson::SchemaEncoder);
 
 #undef SPECIALIZE_ACCEPT
+
+template RAPIDJSON_DISABLEIF_RETURN(
+  (internal::NotExpr<
+   internal::IsSame<typename internal::RemoveConst<const WValue::Ch>::Type,
+   typename WValue::Ch> >),
+  (RJ_WNS::Value&)) WValue::operator[]<const WValue::Ch>(const WValue::Ch* name);
+template RAPIDJSON_DISABLEIF_RETURN(
+  (internal::NotExpr<
+   internal::IsSame<typename internal::RemoveConst<const WValue::Ch>::Type,
+   typename WValue::Ch> >),
+  (const RJ_WNS::Value&)) WValue::operator[]<const WValue::Ch>(const WValue::Ch* name) const;
 
 #define SPECIALIZE_BASE(type, set_type)					\
   template bool WValue::Is<type>() const;				\

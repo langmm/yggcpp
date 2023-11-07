@@ -6,10 +6,10 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/allocators.h"
 
-#if defined(_MSC_VER)
+// #if defined(_MSC_VER)
 // _WINDOWS) && !(defined(YggInterface_EXPORTS) || defined(YggInterface_py_EXPORTS) || defined(RAPIDJSON_FORCE_IMPORT_ARRAY))
 #define WRAP_RAPIDJSON_FOR_DLL
-#endif
+// #endif
 
 #ifdef WRAP_RAPIDJSON_FOR_DLL
 
@@ -22,6 +22,8 @@
 #define RJ_WDOC(body)				\
   (rapidjson::WDocument(&(body)))
 #define RJ_WNS RAPIDJSON_NAMESPACE
+// #define WValue Value
+// #define WDocument Document
 
 #include <ostream> // required for ostream
 
@@ -36,7 +38,16 @@
 
 RAPIDJSON_NAMESPACE_BEGIN
 
+#ifndef RAPIDJSON_DEFAULT_ALLOCATOR
+#define RAPIDJSON_DEFAULT_ALLOCATOR RAPIDJSON_NAMESPACE::MemoryPoolAllocator< RAPIDJSON_NAMESPACE::CrtAllocator >
+#endif
+
+#ifndef RAPIDJSON_DEFAULT_STACK_ALLOCATOR
+#define RAPIDJSON_DEFAULT_STACK_ALLOCATOR RAPIDJSON_NAMESPACE::CrtAllocator
+#endif
+
 // Forward declarations
+// namespace wrap {
 
 template <typename Encoding, typename Allocator>
 class GenericValue;
@@ -47,14 +58,6 @@ class CrtAllocator;
 template <typename BaseAllocator>
 class MemoryPoolAllocator;
 class VarArgList;
-
-#ifndef RAPIDJSON_DEFAULT_ALLOCATOR
-#define RAPIDJSON_DEFAULT_ALLOCATOR RAPIDJSON_NAMESPACE::MemoryPoolAllocator< RAPIDJSON_NAMESPACE::CrtAllocator >
-#endif
-
-#ifndef RAPIDJSON_DEFAULT_STACK_ALLOCATOR
-#define RAPIDJSON_DEFAULT_STACK_ALLOCATOR RAPIDJSON_NAMESPACE::CrtAllocator
-#endif
 
 typedef GenericValue<UTF8<>, RAPIDJSON_DEFAULT_ALLOCATOR> Value;
 typedef GenericDocument<UTF8<>,  RAPIDJSON_DEFAULT_ALLOCATOR,
@@ -187,10 +190,20 @@ public:
   RJV_WRAP_DEC(HasMember, (const Ch* name), (name), bool, const);
   // RJV_WRAP_DEC_RETV(operator[], (const Ch* name), (name), );
   // RJV_WRAP_DEC_RETV_CONST(operator[], (const Ch* name), (name), );
-  RJV_WRAP_DEC(operator[], (const Ch* name), (name),
-	       RJ_WNS::Value&, );
-  RJV_WRAP_DEC(operator[], (const Ch* name), (name),
-	       const RJ_WNS::Value&, const);
+  template <typename T>
+  RAPIDJSON_DISABLEIF_RETURN(
+    (internal::NotExpr<
+     internal::IsSame<typename internal::RemoveConst<T>::Type, Ch> >),
+    (RJ_WNS::Value&)) operator[](T* name);
+  template <typename T>
+  RAPIDJSON_DISABLEIF_RETURN(
+    (internal::NotExpr<
+     internal::IsSame<typename internal::RemoveConst<T>::Type, Ch> >),
+    (const RJ_WNS::Value&)) operator[](T* name) const;
+  // RJV_WRAP_DEC(operator[], (const Ch* name), (name),
+  // 	       RJ_WNS::Value&, );
+  // RJV_WRAP_DEC(operator[], (const Ch* name), (name),
+  // 	       const RJ_WNS::Value&, const);
   RJV_WRAP_DEC_RETSV(AddMember, (RJ_WNS::Value& name,
 				 RJ_WNS::Value& value,
 				 WValue::Allocator& allocator),
@@ -200,9 +213,6 @@ public:
   friend std::ostream & operator << (std::ostream &out,
 				     const WValue& p);
 };
-
-// std::ostream & operator << (std::ostream &out,
-// 			    const rapidjson::WValue& p);
 
 class WDocument : public WValue {
 public:
@@ -264,6 +274,7 @@ RAPIDJSON_NAMESPACE_END
 
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
+#include "rapidjson/prettywriter.h"
 #include "rapidjson/schema.h"
 
 RAPIDJSON_NAMESPACE_BEGIN
