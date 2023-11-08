@@ -157,7 +157,9 @@ AsyncBacklog::AsyncBacklog(Comm_t* parent) :
   backlog_thread(&AsyncBacklog::on_thread, this, parent),
   status(THREAD_INACTIVE), cv_status(),
   logInst_(parent->logInst()) {
+  log_debug() << "AsyncBacklog: waiting for thread to start" << std::endl;
   wait_status(THREAD_STARTED | THREAD_COMPLETE);
+  log_debug() << "AsyncBacklog: thread started" << std::endl;
   set_status_lock(THREAD_INIT);
 }
 
