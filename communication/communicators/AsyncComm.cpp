@@ -215,7 +215,7 @@ void AsyncBacklog::on_thread(Comm_t* parent) {
       set_status(THREAD_STARTED);
       log_debug() << "on_thread: Created comm on thread" << std::endl;
     }
-    // wait_status(THREAD_INIT);
+    wait_status(THREAD_INIT);
     if (direction == SEND) {
       while (!backlog.is_closed()) {
 	cv_status.notify_all(); // Periodically notify
