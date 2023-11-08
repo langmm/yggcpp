@@ -198,6 +198,7 @@ void AsyncBacklog::on_thread(Comm_t* parent) {
     DIRECTION direction = parent->getDirection();
     {
       const std::lock_guard<std::mutex> comm_lock(comm_mutex);
+      log_debug() << "on_thread: Creating comm on thread" << std::endl;
       int flgs_comm = (parent->getFlags() & ~COMM_FLAG_ASYNC) | COMM_FLAG_ASYNC_WRAPPED;
       comm = new_Comm_t(direction,
 			parent->getCommType(),
@@ -212,6 +213,7 @@ void AsyncBacklog::on_thread(Comm_t* parent) {
 	set_status(THREAD_SIGNON_SENT | THREAD_SIGNON_RECV, true);
       }
       set_status(THREAD_STARTED);
+      log_debug() << "on_thread: Created comm on thread" << std::endl;
     }
     // wait_status(THREAD_INIT);
     if (direction == SEND) {
