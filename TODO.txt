@@ -7,7 +7,6 @@
 * Add test to verify that send/recv/call/wait can be interuppted by Ctrl+C
 * Allow for server/client to dynamically use different base communicators?
 * Allow for datatype to be passed as a argument to the constructors in C++ and Python
-* Remove uses of C++ exceptions for better compatiblity with fortran (allows use of clang/msvc with gfortran)
 * Add cmake/package config files that can be used by other packages
 * Expand C & Fortran interfaces for ply/obj to match Python
 * Automate fortran wrapping of C interface?
@@ -17,4 +16,5 @@
 * Add templated methods for sending/receiving multiple variables of different types
 * Lock thread when getMetadata is used to prevent underlying data from being freed during use
 * Move thread patch to cmake with conditional check for specific version of mingw that conda currently packages (5.3)
-* Set explicit exports so that CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS doesn't need to be set (causes issues in a split C/Fortran build)
+* Add test for OMP threaded region
+* Re-enable disabled components in tests on fortran branch

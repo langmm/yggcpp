@@ -1,11 +1,12 @@
+#if defined(_MSC_VER) || defined(WRAP_RAPIDJSON_FOR_DLL)
 #define RAPIDJSON_FORCE_IMPORT_ARRAY
+#endif
 #include "rapidjson/pyrj_c.h"
 #include "rapidjson_wrapper.hpp"
 
 #define DO_NOTHING()
 #define UNPACK_BKTS(...)			\
   __VA_ARGS__
-  // UNPACK_MACRO X
 #define ADD_BKTS_T(X)			\
   template <UNPACK_MACRO X>
 #define ADD_BKTS(X)				\
@@ -195,12 +196,6 @@ using namespace rapidjson;
   WRAPPER_METHODS_OPS_(W ## base)
 #define WRAPPER_METHODS_NO_EMPTY_CONSTRUCTOR(base)	\
   WRAPPER_METHODS_(W ## base, RJ_WNS::base)
-
-// #define _Args(...) __VA_ARGS__
-// #define STRIP_PARENS(X) X
-// #define PACK_MACRO_(X) STRIP_PARENS( _Args X )
-// #define PACK_MACRO(...) PACK_MACRO_((__VA_ARGS__))
-// #define UNPACK_MACRO(...) __VA_ARGS__
 
 #define WRAP_HANDLER_METHOD_TEMP(cls, name, argsT, args, tempT, temp)	\
   WRAP_METHOD_TEMP_ARGS(cls, name, tempT, temp, argsT, args, bool, )
@@ -729,12 +724,6 @@ WDocument& WDocument::operator=(WDocument& rhs) {
   return *this;
 }
 
-  // WRAP_METHOD_SELF_CAST(WDocument, CopyFrom,
-  // 			(const WDocument& rhs,
-  // 			 WDocument::Allocator& allocator,
-  // 			 bool copyConstStrings),
-  // 			(*(rhs.val_), allocator, copyConstStrings),
-  // 			WValue, );
   WRAP_METHOD_SELF_CAST(WDocument, Swap, (WDocument& rhs), (*(rhs.val_)),
 			WValue, );
   WRAP_METHOD(WDocument, GetAllocator, (), (), WDocument::Allocator&, );
@@ -751,27 +740,42 @@ WDocument& WDocument::operator=(WDocument& rhs) {
 bool WDocument::SetVarArgs(WValue& schema, VarArgList& ap) const {
   return val_->ApplyVarArgs(*(schema.val_), ap, kSetVarArgsFlag, this);
 }
+bool WDocument::SetVarArgs(WValue* schema, ...) const {
+  size_t nargs = CountVarArgs(*schema, true);
+  RAPIDJSON_BEGIN_VAR_ARGS(ap, schema, &nargs, false);
+  bool out = val_->ApplyVarArgs(*(schema->val_), ap,
+				kSetVarArgsFlag, this);
+  RAPIDJSON_END_VAR_ARGS(ap);
+  return out;
+}
+bool WDocument::SetVarArgsRealloc(WValue& schema, VarArgList& ap) const {
+  return val_->ApplyVarArgs(*(schema.val_), ap, kSetVarArgsFlag, this);
+}
+bool WDocument::SetVarArgsRealloc(WValue* schema, ...) const {
+  size_t nargs = CountVarArgs(*schema, true);
+  RAPIDJSON_BEGIN_VAR_ARGS(ap, schema, &nargs, true);
+  bool out = val_->ApplyVarArgs(*(schema->val_), ap,
+				kSetVarArgsFlag, this);
+  RAPIDJSON_END_VAR_ARGS(ap);
+  return out;
+}
 bool WDocument::GetVarArgs(WValue& schema, VarArgList& ap) {
   return val_->ApplyVarArgs(*(schema.val_), ap, kGetVarArgsFlag, this);
 }
-  // WRAP_METHOD(WDocument, SetVarArgs, (WValue& schema, VarArgList& ap),
-  // 	      (*(schema.val_), ap), bool, const);
-  // WRAP_METHOD(WDocument, GetVarArgs, (WValue& schema, VarArgList& ap),
-  // 	      (*(schema.val_), ap), bool, );
+bool WDocument::GetVarArgs(WValue* schema, ...) {
+  size_t nargs = CountVarArgs(*schema, false);
+  RAPIDJSON_BEGIN_VAR_ARGS(ap, schema, &nargs, false);
+  bool out = val_->ApplyVarArgs(*(schema->val_), ap,
+				kGetVarArgsFlag, this);
+  RAPIDJSON_END_VAR_ARGS(ap);
+  return out;
+}
   WRAP_METHOD(WDocument, FinalizeFromStack, (), (), void, );
   template<typename InputStream>
   WRAP_METHOD_SELF(WDocument, ParseStream, (InputStream& is), (is), );
   WRAP_HANDLER_METHODS(WDocument);
 
 template WDocument& WDocument::ParseStream<StringStream>(StringStream& is);
-
-// bool WDocument::SetVarArgs(WValue& schema, ...) {
-//   size_t nargs = val->CountVarArgs(*(schema.val_), true);
-//   RAPIDJSON_BEGIN_VAR_ARGS(ap, schema, &nargs, false);
-//   bool out = val->SetVarArgs(*(schema.val_), ap);
-//   RAPIDJSON_END_VAR_ARGS(ap);
-//   return out;
-// }
 
 ////////////////////////////////////////////////////////////////////
 // WMember
@@ -865,14 +869,6 @@ const WMember* WMember::operator->() const {
   ITERATOR_COMP_OP_(op, false, false);		\
   ITERATOR_COMP_OP_(op, true, false);		\
   ITERATOR_COMP_OP_(op, false, true)
-/*
-#define ITERATOR_COMP_OP(op)						\
-  template<bool Const1, bool Const2>				\
-  bool operator op(const WGenericMemberIterator<Const1>& lhs,	\
-		   const WGenericMemberIterator<Const2>& rhs) {	\
-    return (*(lhs.val_) op *(rhs.val_));			\
-  }
-*/
 ITERATOR_COMP_OP(==);
 ITERATOR_COMP_OP(!=);
 ITERATOR_COMP_OP(<=);

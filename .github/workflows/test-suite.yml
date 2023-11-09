@@ -91,6 +91,15 @@ jobs:
             with-elf: false
             with-valgrind: false
             windows-compiler: msvc
+          - os: windows-latest
+            python-install: conda
+            install-zmq: true
+            install-mpi: true
+            with-coverage: false
+            with-asan: false
+            with-elf: false
+            with-valgrind: false
+            windows-compiler: msvc
       fail-fast: false
     steps:
       - name: Check out repository code
@@ -228,7 +237,7 @@ jobs:
         if: matrix.os == 'windows-latest' && matrix.python-install == 'conda' && matrix.windows-compiler == 'msvc'
         shell: bash -l {0}
         run: |
-          mamba install m2w64-gcc m2w64-gcc-fortran m2w64-toolchain_win-64 libpython -y
+          mamba install m2w64-gcc-fortran libpython -y
           # gcc -v
           # c++ -v
       - name: Install ZeroMQ on unix

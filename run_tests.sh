@@ -55,6 +55,10 @@ while [[ $# -gt 0 ]]; do
 	    DONT_TEST="TRUE"
 	    shift # past argument with no value
 	    ;;
+	--rj-wrapper )
+	    CMAKE_FLAGS="${CMAKE_FLAGS} -DWRAP_RAPIDJSON_FOR_DLL=1"
+	    shift # past argument with no value
+	    ;;
 	*)
 	    ;;
     esac

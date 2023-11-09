@@ -1,3 +1,6 @@
+#if !(defined(_MSC_VER) || defined(WRAP_RAPIDJSON_FOR_DLL))
+#define RAPIDJSON_FORCE_IMPORT_ARRAY
+#endif
 #include "comms.hpp"
 #include "utils/rapidjson_wrapper.hpp"
 

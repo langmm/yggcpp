@@ -703,12 +703,6 @@ public:
   using ValueType::CopyInto;
   using ValueType::Swap;
   
-  // WRAP_METHOD_SELF_CAST(WDocument, CopyFrom,
-  // 			(const WDocument& rhs,
-  // 			 WDocument::Allocator& allocator,
-  // 			 bool copyConstStrings = false),
-  // 			(*(rhs.val_), allocator, copyConstStrings),
-  // 			WValue, );
   WRAP_METHOD_SELF_CAST(WDocument, Swap, (WDocument& rhs), (*(rhs.val_)),
 			WValue, );
   WRAP_METHOD(WDocument, GetAllocator, (), (), Allocator&, );
@@ -723,7 +717,16 @@ public:
 	      (*(schema.val_), set), size_t, const);
   WRAP_METHOD(WDocument, SetVarArgs, (WValue& schema, VarArgList& ap),
 	      (*(schema.val_), ap), bool, const);
+  WRAP_METHOD(WDocument, SetVarArgs, (WValue* schema, ...),
+	      (*(schema.val_), ap), bool, const);
+  WRAP_METHOD(WDocument, SetVarArgsRealloc,
+	      (WValue& schema, VarArgList& ap),
+	      (*(schema.val_), ap), bool, const);
+  WRAP_METHOD(WDocument, SetVarArgsRealloc, (WValue* schema, ...),
+	      (*(schema.val_), ap), bool, const);
   WRAP_METHOD(WDocument, GetVarArgs, (WValue& schema, VarArgList& ap),
+	      (*(schema.val_), ap), bool, );
+  WRAP_METHOD(WDocument, GetVarArgs, (WValue* schema, ...),
 	      (*(schema.val_), ap), bool, );
   WRAP_METHOD(WDocument, FinalizeFromStack, (), (), void, );
   template<typename InputStream>
@@ -939,7 +942,6 @@ template<typename OutputStream, typename SourceEncoding = UTF8<>,
 	 unsigned writeFlags = kWriteDefaultFlags>
 class WPrettyWriter : public WrapperBase<WRAPPED_WRITER> {
   WRAPPER_METHODS_(WPrettyWriter, WRAPPED_WRITER);
-  // typedef CrtAllocator StackAllocator;
   typedef Writer<OutputStream, SourceEncoding, TargetEncoding,
 		 StackAllocator, writeFlags> Base;
   typedef typename SourceEncoding::Ch Ch;
@@ -993,18 +995,10 @@ RAPIDJSON_NAMESPACE_END
 
 #else // WRAP_RAPIDJSON_FOR_DLL
 
-// #define RJ_WNS RAPIDJSON_NAMESPACE
-
+#include "rapidjson/pyrj_c.h"
 #include "rapidjson/document.h"
 #include "rapidjson/prettywriter.h"
 #include "rapidjson/schema.h"
-
-// RAPIDJSON_NAMESPACE_BEGIN
-
-// typedef Value WValue;
-// typedef Document WDocument;
-
-// RAPIDJSON_NAMESPACE_END
 
 #endif // WRAP_RAPIDJSON_FOR_DLL
 
