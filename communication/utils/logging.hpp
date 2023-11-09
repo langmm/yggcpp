@@ -118,5 +118,7 @@ namespace utils {
 #define YggLogError communication::utils::YggdrasilLogger ygglog_param_error
 #define YggLogInfo communication::utils::YggdrasilLogger ygglog_param_info
 #define YggLogDebug communication::utils::YggdrasilLogger ygglog_param_debug
+#define YggLogDestructor YggLogDebug
+// #define YggLogDestructor log_destructor
 
 #define ygglog_throw_error(...) communication::utils::YggLogThrowError(communication::utils::string_format(__VA_ARGS__))

@@ -1,4 +1,3 @@
-#define RAPIDJSON_FORCE_IMPORT_ARRAY
 #include "rapidjson/pyrj_c.h"
 #include "rapidjson_wrapper.hpp"
 

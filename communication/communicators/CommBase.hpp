@@ -52,11 +52,11 @@ const int COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
   static COMM_TYPE defaultCommType() { return typ; }			\
   std::string logClass() const override { return #cls; }		\
   ~cls() {								\
-    log_debug() << "~" #cls ": Started (closed = " << is_closed() << ")" << std::endl; \
+    YggLogDestructor << "~" #cls ": Started (closed = " << is_closed() << ")" << std::endl; \
     if (handle) {							\
       close();								\
     }									\
-    log_debug() << "~" #cls ": Finished" << std::endl;			\
+    YggLogDestructor << "~" #cls ": Finished" << std::endl;		\
   }
 #define ADD_CONSTRUCTORS(T)			\
   ADD_CONSTRUCTORS_BASE(T ## Comm, T ## _COMM, T ## _INSTALLED_FLAG)
@@ -1171,9 +1171,9 @@ bool CommBase<H>::is_closed() const {
 
 template<typename H>
 CommBase<H>::~CommBase() {
-    log_debug() << "~CommBase: Started" << std::endl;
+    YggLogDestructor << "~CommBase: Started" << std::endl;
     close();
-    log_debug() << "~CommBase: Finished" << std::endl;
+    YggLogDestructor << "~CommBase: Finished" << std::endl;
 }
 
 

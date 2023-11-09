@@ -1,3 +1,4 @@
+#define RAPIDJSON_FORCE_IMPORT_ARRAY
 #include "comms.hpp"
 #include "utils/rapidjson_wrapper.hpp"
 
