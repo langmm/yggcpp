@@ -483,7 +483,7 @@ int AsyncComm::comm_nmsg(DIRECTION dir) const {
 
 #ifdef THREADSINSTALLED
 int AsyncComm::wait_for_recv(const int64_t& tout) {
-  if (global_comm || type == CLIENT_COMM) {
+  if (global_comm || (type == CLIENT_COMM)) {
     if (type == CLIENT_COMM && (flags & COMM_FLAGS_USED_SENT)) {
       std::string req_id;
       {
@@ -506,6 +506,7 @@ int AsyncComm::wait_for_recv(const int64_t& tout) {
 	log_debug() << "wait_for_recv: client dosn't have any active requests" << std::endl;
       }
     }
+    log_debug() << "wait_for_recv: Client using default method" << std::endl;
     return CommBase::wait_for_recv(tout);
   }
   log_debug() << "wait_for_recv: timeout = " << tout <<
