@@ -274,10 +274,13 @@ public:
       }
       return comms[comms.size() - 1];
     }
-    std::string activeRequestClient(bool dont_raise=false) const {
+    std::string activeRequestClient(bool ignore_signon=false,
+				    bool dont_raise=false) const {
+      if (!ignore_signon)
+	ignore_signon = signon_complete;
       for (size_t i = 0; i < requests.size(); i++) {
-	if ((requests[i].is_signon && !signon_complete) ||
-	    (signon_complete && !requests[i].is_signon))
+	if ((requests[i].is_signon && !ignore_signon) ||
+	    (ignore_signon && !requests[i].is_signon))
 	  return requests[i].request_id;
       }
       if (!dont_raise)

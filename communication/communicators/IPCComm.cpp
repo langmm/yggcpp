@@ -193,4 +193,8 @@ long IPCComm::recv_single(utils::Header& header) {
 
 WORKER_METHOD_DEFS(IPCComm)
 
+#else  /*IPCINSTALLED*/
+
+void IPCComm::_close() {}
+
 #endif /*IPCINSTALLED*/

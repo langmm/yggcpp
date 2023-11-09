@@ -220,4 +220,8 @@ long MPIComm::recv_single(utils::Header& header) {
 
 WORKER_METHOD_DEFS(MPIComm)
 
+#else
+
+void MPIComm::_close() {}
+
 #endif
