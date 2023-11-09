@@ -1,11 +1,7 @@
 #include "dtype_t.hpp"
 #include "utils/serialization.hpp"
 #include "utils/tools.hpp"
-
 #include "utils/rapidjson_wrapper.hpp"
-#include "rapidjson/document.h"
-#include "rapidjson/writer.h"
-#include "rapidjson/schema.h"
 
 #define STRLEN_RJ(var)				\
   static_cast<rapidjson::SizeType>(strlen(var))
@@ -1187,7 +1183,7 @@ extern "C" {
   int init_python_API() {
     try {
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
-      rapidjson::init_python_API();
+      rapidjson::initialize_python("init_python_API");
 #endif // YGGDRASIL_DISABLE_PYTHON_C_API
     } catch(...) {
       YggLogError << "init_python_API: C++ exception thrown." << std::endl;

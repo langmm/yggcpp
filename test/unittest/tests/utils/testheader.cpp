@@ -3,8 +3,6 @@
 #include "utils/tools.hpp"
 #include "../../elf_hook.hpp"
 #include "../../mock.hpp"
-#include "rapidjson/document.h"
-#include "rapidjson/va_list.h"
 // #include <sstream>
 // #include <algorithm>
 // #include <cstdlib>

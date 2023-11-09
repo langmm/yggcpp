@@ -4,8 +4,6 @@
 #include <cstdlib>
 #include "communicators/AsyncComm.hpp"
 #include "communicators/Proxy.hpp"
-#include "rapidjson/document.h"
-#include "rapidjson/schema.h"
 
 static inline
 bool example_filter(const rapidjson::Document& msg) {

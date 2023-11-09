@@ -26,14 +26,6 @@ namespace communication {
 namespace communication {
 namespace utils {
 
-typedef bool (*filterFunc)(const rapidjson::Document&);
-typedef bool (*transformFunc)(rapidjson::Document&);
-
-/*!
-  @brief Determine if numpy arrays are enabled.
- */
-bool numpy_arrays_imported();
-  
 /*!
   @brief Split header and body of message.
   @param[in] buf const char* Message that should be split.
@@ -93,10 +85,6 @@ public:
   void reset();
   bool fromSchema(const rapidjson::Value& new_schema,
 		  bool isMetadata = false, bool use_generic = false);
-#ifdef WRAP_RAPIDJSON_FOR_DLL
-  bool fromSchema(const rapidjson::WValue& new_schema,
-		  bool isMetadata = false, bool use_generic = false);
-#endif // WRAP_RAPIDJSON_FOR_DLL
   bool Normalize();
   bool fromSchema(const std::string schemaStr, bool use_generic = false);
   // template<typename T>
@@ -225,7 +213,7 @@ public:
   int serialize(char **buf, size_t *buf_siz,
 		rapidjson::VarArgList& ap);
   void Display(const char* indent="") const;
-  rapidjson::WDocument metadata;
+  rapidjson::Document metadata;
   Metadata* raw_schema;
   std::vector<filterFunc> filters;
   std::vector<transformFunc> transforms;

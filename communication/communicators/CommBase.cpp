@@ -1,7 +1,5 @@
-#define RAPIDJSON_FORCE_IMPORT_ARRAY
-#include "rapidjson/pyrj_c.h"
 #include "comms.hpp"
-#include "rapidjson/document.h"
+#include "utils/rapidjson_wrapper.hpp"
 
 // #ifdef _OPENMP
 // int communication::communicator::global_scope_comm = 1;

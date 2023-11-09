@@ -1,6 +1,5 @@
 #include "Proxy.hpp"
 #include "utils/logging.hpp"
-#include "rapidjson/document.h"
 
 using namespace communication::communicator;
 using namespace communication::utils;

@@ -1,24 +1,7 @@
 #include "serialization.hpp"
 #include "../communicators/CommBase.hpp"
 
-#include "utils/rapidjson_wrapper.hpp"
-#include "rapidjson/document.h"
-#include "rapidjson/writer.h"
-#include "rapidjson/prettywriter.h"
-#include "rapidjson/stringbuffer.h"
-#include "rapidjson/schema.h"
-#include "rapidjson/va_list.h"
-
 using namespace communication::utils;
-
-bool communication::utils::numpy_arrays_imported() {
-  bool out = false;
-#ifndef YGGDRASIL_DISABLE_PYTHON_C_API
-  if (rapidjson_ARRAY_API)
-    out = true;
-#endif // YGGDRASIL_DISABLE_PYTHON_C_API
-  return out;
-}
 
 int communication::utils::split_head_body(const char *buf,
 					  const char **head,
@@ -218,12 +201,6 @@ bool Metadata::fromSchema(const rapidjson::Value& new_schema,
   }
   return true;
 }
-#ifdef WRAP_RAPIDJSON_FOR_DLL
-bool Metadata::fromSchema(const rapidjson::WValue& new_schema,
-			  bool isMetadata, bool use_generic) {
-  return fromSchema(*(new_schema.val_), isMetadata, use_generic);
-}
-#endif // WRAP_RAPIDJSON_FOR_DLL
 bool Metadata::Normalize() {
   rapidjson::Document s(rapidjson::kObjectType);
 #define ADD_OBJECT_(x, name, len)					\

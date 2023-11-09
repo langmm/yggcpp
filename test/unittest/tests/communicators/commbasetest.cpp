@@ -1,7 +1,6 @@
 #include "../../unittest.hpp"
 #include "utils/tools.hpp"
 #include "communicators/CommBase.hpp"
-#include "rapidjson/document.h"
 
 using namespace communication;
 using namespace communication::communicator;

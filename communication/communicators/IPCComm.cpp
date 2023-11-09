@@ -1,6 +1,4 @@
 #include "IPCComm.hpp"
-#include "rapidjson/document.h"
-#include "rapidjson/writer.h"
 
 using namespace communication::communicator;
 using namespace communication::utils;
