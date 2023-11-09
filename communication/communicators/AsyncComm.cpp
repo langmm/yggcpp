@@ -473,7 +473,10 @@ AsyncComm::AsyncComm(utils::Address *addr,
 
 ADD_DESTRUCTOR_DEF(AsyncComm, CommBase, , )
 
-void AsyncComm::_close() {}
+void AsyncComm::_close(bool call_base) {
+  if (call_base)
+    CommBase::_close(true);
+}
 
 int AsyncComm::comm_nmsg(DIRECTION dir) const {
   if (global_comm)
@@ -551,9 +554,9 @@ int64_t AsyncComm::get_timeout_recv() {
   if (global_comm) {
     return global_comm->get_timeout_recv();
   }
-  const AsyncLockGuard lock(handle);
-  if (handle->comm)
-    return handle->comm->get_timeout_recv();
+  // const AsyncLockGuard lock(handle);
+  // if (handle->comm)
+  //   return handle->comm->get_timeout_recv();
   return CommBase::get_timeout_recv();
 }
 

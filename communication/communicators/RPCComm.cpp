@@ -16,8 +16,10 @@ RPCComm::RPCComm(const std::string &name, Address *address,
 
 ADD_DESTRUCTOR_DEF(RPCComm, COMM_BASE, , )
 
-void RPCComm::_close() {
+void RPCComm::_close(bool call_base) {
   requests.destroy();
+  if (call_base)
+    COMM_BASE::_close(true);
 }
 
 int RPCComm::comm_nmsg(DIRECTION dir) const {
