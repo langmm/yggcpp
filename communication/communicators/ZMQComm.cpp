@@ -743,4 +743,9 @@ bool ZMQComm::afterSendRecv(Comm_t* sComm, Comm_t* rComm) {
   return true; // GCOVR_EXCL_STOP
 }
 #endif // YGG_TEST
+
+#else // ZMQINSTALLED
+
+void ZMQComm::_close() {}
+
 #endif // ZMQINSTALLED

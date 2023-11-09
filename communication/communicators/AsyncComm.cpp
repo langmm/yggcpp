@@ -500,7 +500,7 @@ int AsyncComm::wait_for_recv(const int64_t& tout) {
       {
 	const AsyncLockGuard lock(handle);
 	ClientComm* cli = dynamic_cast<ClientComm*>(handle->comm);
-	req_id = cli->getRequests().activeRequestClient(true);
+	req_id = cli->getRequests().activeRequestClient(true, true);
       }
       if (!req_id.empty()) {
 	// Ensure that the request has actually been sent by waiting
