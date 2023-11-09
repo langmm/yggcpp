@@ -56,8 +56,7 @@ void FileComm::init() {
   CommBase::init();
 }
 
-void FileComm::close() {
-  log_debug() << "FileComm::close: Started" << std::endl;
+void FileComm::_close() {
   if (handle && !global_comm) {
     handle->close();
 #ifdef YGG_TEST
@@ -70,8 +69,6 @@ void FileComm::close() {
     if (delete_file)
       std::remove(this->address->address().c_str());
   }
-  log_debug() << "FileComm::close: Finished" << std::endl;
-  CommBase::close();
 }
 
 void FileComm::refresh() const {

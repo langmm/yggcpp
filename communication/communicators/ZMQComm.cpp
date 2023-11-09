@@ -542,8 +542,7 @@ void ZMQComm::init() {
   CommBase::init();
 }
 
-void ZMQComm::close() {
-    log_debug() << "ZMQComm::close: Started" << std::endl;
+void ZMQComm::_close() {
     if ((direction == RECV) && this->is_open() &&
 	(!global_comm) && (!(flags & COMM_EOF_RECV))) {
       if (utils::YggdrasilLogger::_ygg_error_flag == 0) {
@@ -559,8 +558,6 @@ void ZMQComm::close() {
 	      free(data);
         }
     }
-    log_debug() << "ZMQComm::close: Finished" << std::endl;
-    CommBase::close();
 }
 
 int ZMQComm::comm_nmsg(DIRECTION dir) const {

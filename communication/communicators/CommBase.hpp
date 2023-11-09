@@ -41,6 +41,29 @@ const int COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
 #define UNINSTALLED_ERROR(name)					\
   utils::YggLogThrowError("Compiler flag '" #name "INSTALLED' not defined so " #name " bindings are disabled")
 
+#define ADD_DESTRUCTOR(cls, base)					\
+  protected:								\
+  void _close();							\
+public:									\
+ void close() override;							\
+ ~cls() override;
+#define ADD_DESTRUCTOR_DEF(cls, base, tempT, temp)			\
+  tempT									\
+  void cls temp::close() {						\
+    log_debug() << #cls "::close: Started" << std::endl;		\
+    _close();								\
+    base::_close();							\
+    log_debug() << #cls "::close: Finished" << std::endl;		\
+  }									\
+  tempT									\
+  cls temp::~cls() {							\
+    YggLogDestructor << "~" #cls ": Started (closed = " << this->_is_closed() << ")" << std::endl; \
+    if (this->handle) {							\
+      _close();								\
+    }									\
+    YggLogDestructor << "~" #cls ": Finished" << std::endl;		\
+  }
+
 #define ADD_CONSTRUCTORS_BASE(cls, typ, flag)				\
   explicit cls(const std::string nme,					\
 	       const DIRECTION dirn,					\
@@ -51,13 +74,7 @@ const int COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
   static bool isInstalled() { return flag; }				\
   static COMM_TYPE defaultCommType() { return typ; }			\
   std::string logClass() const override { return #cls; }		\
-  ~cls() {								\
-    log_debug() << "~" #cls ": Started (closed = " << is_closed() << ")" << std::endl; \
-    if (handle) {							\
-      close();								\
-    }									\
-    log_debug() << "~" #cls ": Finished" << std::endl;			\
-  }
+  ADD_DESTRUCTOR(cls, CommBase)
 #define ADD_CONSTRUCTORS(T)			\
   ADD_CONSTRUCTORS_BASE(T ## Comm, T ## _COMM, T ## _INSTALLED_FLAG)
 
@@ -69,19 +86,23 @@ const int COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
   cls::cls(utils::Address *addr,		\
 	   const DIRECTION dirn,		\
 	   int flgs, const COMM_TYPE type) :	\
-    cls("", addr, dirn, flgs, type) {}
+    cls("", addr, dirn, flgs, type) {}		\
+  ADD_DESTRUCTOR_DEF(cls, CommBase, , )
 #define ADD_CONSTRUCTORS_RPC(cls, defT)				\
   explicit cls(const std::string nme,				\
 	       int flgs = 0, const COMM_TYPE type = defT);	\
   explicit cls(utils::Address *addr,				\
-	       int flgs = 0, const COMM_TYPE type = defT);
+	       int flgs = 0, const COMM_TYPE type = defT);	\
+  ADD_DESTRUCTOR(cls, RPCComm)
 #define ADD_CONSTRUCTORS_RPC_DEF(cls)		\
   cls::cls(const std::string nme,		\
 	   int flgs, const COMM_TYPE type) :	\
     cls(nme, nullptr, flgs, type) {}		\
   cls::cls(utils::Address *addr,		\
 	   int flgs, const COMM_TYPE type) :	\
-    cls("", addr, flgs, type) {}
+    cls("", addr, flgs, type) {}		\
+  ADD_DESTRUCTOR_DEF(cls, RPCComm, , )		\
+  void cls::_close() {}
 #define WORKER_METHOD_DECS(cls)					\
   Comm_t* create_worker(utils::Address* address,		\
 			const DIRECTION&, int flgs) override
@@ -930,8 +951,10 @@ public:
     static CLEANUP_MODE _ygg_cleanup_mode;
     static std::string _ygg_main_thread_id;
     static int _ygg_init();
-
+    
 protected:
+    void _close() {}
+    bool _is_closed() const { return true; };
     void updateMaxMsgSize(size_t new_size) {
       if (maxMsgSize == 0 || new_size < maxMsgSize)
 	maxMsgSize = new_size;
@@ -1128,14 +1151,18 @@ public:
       log_error() << "Comm_nmsg of base class called, must be overridden" << std::endl;
       return -1;
     }
-    /*! \copydoc Comm_t::close */
-    void close() override;
+    ADD_DESTRUCTOR(CommBase, Comm_t);
+
     /*! \copydoc Comm_t::is_closed */
     bool is_closed() const override;
+
     using Comm_t::send;
     using Comm_t::recv;
 
 protected:
+
+    bool _is_closed() const;
+  
     /**
      * Not used, must be overloaded by a child class
      */
@@ -1168,11 +1195,6 @@ protected:
       return NULL; // GCOVR_EXCL_LINE
     }
 
-    /**
-     * Destructor
-     */
-    ~CommBase() override;
-
     H *handle; //!< Pointer to handle for comm.
 
 #ifdef YGG_TEST
@@ -1199,7 +1221,17 @@ CommBase<H>::CommBase(const std::string &nme, utils::Address *addr,
 }
 
 template<typename H>
-void CommBase<H>::close() {
+bool CommBase<H>::is_closed() const {
+  return _is_closed();
+}
+
+template<typename H>
+bool CommBase<H>::_is_closed() const {
+  return ((!((bool)(handle))) || !(flags & COMM_FLAG_VALID));
+}
+
+template<typename H>
+void CommBase<H>::_close() {
   if (handle) {
     if (!global_comm)
       delete handle;
@@ -1208,18 +1240,7 @@ void CommBase<H>::close() {
   workers.workers.clear();
 }
 
-template<typename H>
-bool CommBase<H>::is_closed() const {
-  return ((!((bool)handle)) || !(flags & COMM_FLAG_VALID));
-}
-
-template<typename H>
-CommBase<H>::~CommBase() {
-    log_debug() << "~CommBase: Started" << std::endl;
-    close();
-    log_debug() << "~CommBase: Finished" << std::endl;
-}
-
+ADD_DESTRUCTOR_DEF(CommBase, Comm_t, template<typename H>, <H>)
 
 }
 }

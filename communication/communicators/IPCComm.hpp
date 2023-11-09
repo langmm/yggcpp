@@ -43,9 +43,6 @@ public:
 
 #ifdef IPCINSTALLED
 
-    /*! \copydoc Comm_t::close */
-    void close() override;
-
     /*! @brief Get the number of IPC queues that are currently open. */
     static int count_queues();
 
