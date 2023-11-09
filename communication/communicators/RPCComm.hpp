@@ -14,6 +14,7 @@ public:
   explicit RPCComm(const std::string &name, utils::Address *address,
 		   int flgs, DIRECTION dir, DIRECTION req_dir,
 		   const COMM_TYPE type);
+  ADD_DESTRUCTOR(RPCComm, COMM_BASE)
 
   using Comm_t::send;
   using Comm_t::recv;
@@ -22,8 +23,6 @@ public:
   /*! \copydoc Comm_t::wait_for_recv */
   int wait_for_recv(const int64_t& tout) override;
 
-  void close() override;
-  
   bool addResponseSchema(const std::string& s, bool use_generic=false);
   bool addResponseSchema(const rapidjson::Value& s,
 			 bool use_generic=false);

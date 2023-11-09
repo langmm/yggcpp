@@ -75,6 +75,8 @@ namespace communication {
 		      bool negative=false);
       void set_status_lock(const int new_status, bool dont_notify=false,
 			   bool negative=false);
+      bool _wait_status(const int new_status,
+			std::unique_lock<std::mutex>& lk);
       bool wait_status(const int new_status);
       template< class Rep, class Period >
       bool wait_for_status(const std::chrono::duration<Rep, Period>& rel_time,
@@ -92,7 +94,7 @@ namespace communication {
 #ifdef THREADSINSTALLED
       std::mutex comm_mutex;
       std::atomic_bool locked;
-      std::thread backlog_thread;
+      std::unique_ptr<std::thread> backlog_thread;
       std::atomic_int status;
       std::condition_variable cv_status;
 #endif // THREADSINSTALLED
@@ -134,6 +136,7 @@ namespace communication {
       explicit AsyncComm(utils::Address *addr,
 			 const DIRECTION dirn, int flgs = 0,
 			 const COMM_TYPE type = DEFAULT_COMM);
+      ADD_DESTRUCTOR(AsyncComm, CommBase)
 
       // \copydoc Comm_t::defaultCommType
       static COMM_TYPE defaultCommType() { return DEFAULT_COMM; }

@@ -131,8 +131,6 @@ public:
     ADD_CONSTRUCTORS(ZMQ)
 
 #ifdef ZMQINSTALLED
-    /*! \copydoc Comm_t::close */
-    void close() override;
 
     /*! \copydoc Comm_t::comm_nmsg */
     int comm_nmsg(DIRECTION dir=NONE) const override;

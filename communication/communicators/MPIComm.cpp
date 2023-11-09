@@ -105,11 +105,10 @@ void MPIComm::init() {
     CommBase::init();
 }
 
-void MPIComm::close() {
+void MPIComm::_close() {
   for (size_t i = 1; i < addresses.size(); i++)
     delete addresses[i];
   addresses.clear();
-  CommBase::close();
 }
 
 int MPIComm::mpi_comm_source_id() const {

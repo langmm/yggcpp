@@ -154,11 +154,14 @@ bool AsyncBuffer::wait(const std::string id, const bool negative) {
 
 AsyncBacklog::AsyncBacklog(Comm_t* parent) :
   comm(nullptr), backlog(parent->logInst()), comm_mutex(), locked(false),
-  backlog_thread(&AsyncBacklog::on_thread, this, parent),
+  backlog_thread(), // &AsyncBacklog::on_thread, this, parent),
   status(THREAD_INACTIVE), cv_status(),
   logInst_(parent->logInst()) {
+  std::unique_lock<std::mutex> lk(comm_mutex);
+  backlog_thread = std::unique_ptr<std::thread>(new std::thread(&AsyncBacklog::on_thread, this, parent));
+  
   log_debug() << "AsyncBacklog: waiting for thread to start" << std::endl;
-  wait_status(THREAD_STARTED | THREAD_COMPLETE);
+  _wait_status(THREAD_STARTED | THREAD_COMPLETE, lk);
   log_debug() << "AsyncBacklog: thread started" << std::endl;
   // set_status_lock(THREAD_INIT);
 }
@@ -178,9 +181,9 @@ AsyncBacklog::~AsyncBacklog() {
   backlog.close();
   wait_status(THREAD_COMPLETE);
   try {
-    if (backlog_thread.joinable())
-      backlog_thread.join();
-    log_debug() << "~AsyncBacklog: joinable = " << backlog_thread.joinable() << std::endl;
+    if (backlog_thread->joinable())
+      backlog_thread->join();
+    log_debug() << "~AsyncBacklog: joinable = " << backlog_thread->joinable() << std::endl;
   } catch (const std::system_error& e) {
     log_error() << "~AsyncBacklog: Error joining thread (" << e.code() << "): " << e.what() << std::endl;
   }
@@ -276,13 +279,17 @@ void AsyncBacklog::set_status_lock(const int new_status, bool dont_notify,
   std::unique_lock<std::mutex> lk(comm_mutex);
   set_status(new_status, dont_notify, negative);
 }
-bool AsyncBacklog::wait_status(const int new_status) {
+bool AsyncBacklog::_wait_status(const int new_status,
+				std::unique_lock<std::mutex>& lk) {
   if (!(status.load() & new_status)) {
-    std::unique_lock<std::mutex> lk(comm_mutex);
     cv_status.wait(lk, [this, new_status]{
       return (status.load() & new_status); });
   }
   return true;
+}
+bool AsyncBacklog::wait_status(const int new_status) {
+  std::unique_lock<std::mutex> lk(comm_mutex);
+  return _wait_status(new_status, lk);
 }
 #endif // THREADSINSTALLED
 
@@ -463,6 +470,10 @@ AsyncComm::AsyncComm(utils::Address *addr,
 		     const DIRECTION dirn,
 		     int flgs, const COMM_TYPE type) :
   AsyncComm("", addr, dirn, flgs, type) {}
+
+ADD_DESTRUCTOR_DEF(AsyncComm, CommBase, , )
+
+void AsyncComm::_close() {}
 
 int AsyncComm::comm_nmsg(DIRECTION dir) const {
   if (global_comm)

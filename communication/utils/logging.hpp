@@ -106,10 +106,6 @@ namespace utils {
     YggdrasilLogger log_debug() const { return log ygglog_param_debug; }
     //! @brief Get a verbose logger prefixed with class information.
     YggdrasilLogger log_verbose() const { return log ygglog_param_verbose; }
-    //! @brief Get a debug logger for inside class destructors.
-    YggdrasilLogger log_destructor() const {
-      return YggdrasilLogger ygglog_param_debug;
-    }
   };
   
 }
@@ -119,6 +115,5 @@ namespace utils {
 #define YggLogInfo communication::utils::YggdrasilLogger ygglog_param_info
 #define YggLogDebug communication::utils::YggdrasilLogger ygglog_param_debug
 #define YggLogDestructor YggLogDebug
-// #define YggLogDestructor log_destructor
 
 #define ygglog_throw_error(...) communication::utils::YggLogThrowError(communication::utils::string_format(__VA_ARGS__))

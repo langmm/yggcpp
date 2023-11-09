@@ -14,9 +14,10 @@ RPCComm::RPCComm(const std::string &name, Address *address,
 			    COMM_FLAG_ASYNC_WRAPPED),
 	   logInst()) {}
 
-void RPCComm::close() {
+ADD_DESTRUCTOR_DEF(RPCComm, COMM_BASE, , )
+
+void RPCComm::_close() {
   requests.destroy();
-  COMM_BASE::close();
 }
 
 int RPCComm::comm_nmsg(DIRECTION dir) const {

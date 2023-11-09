@@ -71,8 +71,7 @@ void IPCComm::init() {
     CommBase::init();
 }
 
-void IPCComm::close() {
-    log_debug() << "IPCComm::close: Started" << std::endl;
+void IPCComm::_close() {
     if (handle && !global_comm) {
 #ifdef YGG_TEST
       bool close_comm = true;
@@ -83,8 +82,6 @@ void IPCComm::close() {
 #endif
       remove_comm(close_comm);
     }
-    log_debug() << "IPCComm::close: Finished" << std::endl;
-    CommBase::close();
 }
 
 ADD_KEY_TRACKER_DEFS(IPCComm)

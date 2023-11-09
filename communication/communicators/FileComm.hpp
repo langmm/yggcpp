@@ -28,9 +28,6 @@ namespace communication {
 			int flgs = 0, const COMM_TYPE type = FILE_COMM);
       ADD_CONSTRUCTORS_BASE(FileComm, FILE_COMM, true)
 
-      /*! \copydoc Comm_t::close */
-      void close() override;
-      
       /**
        * The number of messages in the queue
        * @return The number of messages

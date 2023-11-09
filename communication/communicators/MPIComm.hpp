@@ -66,8 +66,6 @@ public:
     ADD_CONSTRUCTORS(MPI)
 
 #if defined(MPIINSTALLED) && defined(MPI_COMM_WORLD)
-    /*! \copydoc Comm_t::close */
-    void close() override;
     /*! \copydoc Comm_t::comm_nmsg */
     int comm_nmsg(DIRECTION dir=NONE) const override;
 
