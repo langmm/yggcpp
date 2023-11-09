@@ -384,6 +384,7 @@ int Comm_t::send_raw(const char *data, const size_t &len) {
   }
   if (!(head.flags & HEAD_FLAG_MULTIPART)) {
     log_debug() << "send_raw: " << head.size_msg << " bytes completed" << std::endl;
+    setFlags(head, SEND);
     return head.size_msg;
   }
   while ((head.offset + head.size_msg) < head.size_curr) {
