@@ -308,6 +308,24 @@ WValue& WValue::childRef(RJ_WNS::Value* x) {
   refs.emplace_back(x);
   return refs[refs.size() - 1];
 }
+WValue& WValue::CopyInto(WValue& rhs, Allocator& allocator,
+			 bool copyConstStrings) const {
+  return rhs.CopyFrom(*this, allocator, copyConstStrings);
+}
+RJ_WNS::Value& WValue::CopyInto(RJ_WNS::Value& rhs, Allocator& allocator,
+				bool copyConstStrings) const {
+  return rhs.CopyFrom(*val_, allocator, copyConstStrings);
+}
+WValue& WValue::CopyFrom(const RJ_WNS::Value& rhs, Allocator& allocator,
+			 bool copyConstStrings) {
+  val_->CopyFrom(rhs, allocator, copyConstStrings);
+  return *this;
+}
+#ifdef PTR_INDEX
+std::unique_ptr<WValue> WValue::operator&() {
+ return std::unique_ptr<WValue>(new WValue(val_));
+}
+#endif
 
   WRAPPER_METHODS(Value)
   WRAP_CONSTRUCTOR(WValue, (Type type), (type));
@@ -493,6 +511,12 @@ WValue::WValue(RJ_WNS::Document* val) :
 		    SizeType ndim, const WValue::Ch* units_str,
 		    SizeType units_len, WValue::Allocator& allocator),
 		   (x, shape, ndim, units_str, units_len, allocator), );
+  WRAP_METHOD_SELF(WValue, SetNDArray,
+		   (const Ch* x, SizeType precision, SizeType shape[],
+		    SizeType ndim, Allocator& allocator,
+		    const Ch* encoding, SizeType encoding_len),
+		   (x, precision, shape, ndim, allocator,
+		    encoding, encoding_len), );
   // Array methods
   WRAP_METHOD(WValue, IsArray, (), (), bool, const);
   WRAP_METHOD_SELF(WValue, SetArray, (), (), );
@@ -546,15 +570,15 @@ WValue::WValue(RJ_WNS::Document* val) :
   WRAP_METHOD_SELF(WValue, AddMember, (WValue& name,
 				       WValue&& value,
 				       WValue::Allocator& allocator),
-		   (*(name.val_), *(value.val_), allocator), );
+		   (*(name.val_), value.val_->Move(), allocator), );
   WRAP_METHOD_SELF(WValue, AddMember, (WValue&& name,
 				       WValue& value,
 				       WValue::Allocator& allocator),
-		   (*(name.val_), *(value.val_), allocator), );
+		   (name.val_->Move(), *(value.val_), allocator), );
   WRAP_METHOD_SELF(WValue, AddMember, (WValue&& name,
 				       WValue&& value,
 				       WValue::Allocator& allocator),
-		   (*(name.val_), *(value.val_), allocator), );
+		   (name.val_->Move(), value.val_->Move(), allocator), );
   WRAP_METHOD_SELF(WValue, AddMember, (const WValue& name,
 				       WValue& value,
 				       WValue::Allocator& allocator),
@@ -566,7 +590,7 @@ WValue::WValue(RJ_WNS::Document* val) :
   WRAP_METHOD_SELF(WValue, AddMember, (WStringRefType name,
 				       WValue&& value,
 				       WValue::Allocator& allocator),
-		   (*(name.val_), *(value.val_), allocator), );
+		   (*(name.val_), value.val_->Move(), allocator), );
   WRAP_METHOD(WValue, RemoveMember, (const WValue::Ch* name),
 	      (name), bool, );
   WRAP_METHOD_CAST(WValue, MemberBegin, (), (),
@@ -705,12 +729,12 @@ WDocument& WDocument::operator=(WDocument& rhs) {
   return *this;
 }
 
-  WRAP_METHOD_SELF_CAST(WDocument, CopyFrom,
-			(const WDocument& rhs,
-			 WDocument::Allocator& allocator,
-			 bool copyConstStrings),
-			(*(rhs.val_), allocator, copyConstStrings),
-			WValue, );
+  // WRAP_METHOD_SELF_CAST(WDocument, CopyFrom,
+  // 			(const WDocument& rhs,
+  // 			 WDocument::Allocator& allocator,
+  // 			 bool copyConstStrings),
+  // 			(*(rhs.val_), allocator, copyConstStrings),
+  // 			WValue, );
   WRAP_METHOD_SELF_CAST(WDocument, Swap, (WDocument& rhs), (*(rhs.val_)),
 			WValue, );
   WRAP_METHOD(WDocument, GetAllocator, (), (), WDocument::Allocator&, );
@@ -724,10 +748,16 @@ WDocument& WDocument::operator=(WDocument& rhs) {
   WRAP_METHOD(WDocument, HasParseError, (), (), bool, const);
   WRAP_METHOD(WDocument, CountVarArgs, (WValue& schema, bool set),
 	      (*(schema.val_), set), size_t, const);
-  WRAP_METHOD(WDocument, SetVarArgs, (WValue& schema, VarArgList& ap),
-	      (*(schema.val_), ap), bool, const);
-  WRAP_METHOD(WDocument, GetVarArgs, (WValue& schema, VarArgList& ap),
-	      (*(schema.val_), ap), bool, );
+bool WDocument::SetVarArgs(WValue& schema, VarArgList& ap) const {
+  return val_->ApplyVarArgs(*(schema.val_), ap, kSetVarArgsFlag, this);
+}
+bool WDocument::GetVarArgs(WValue& schema, VarArgList& ap) {
+  return val_->ApplyVarArgs(*(schema.val_), ap, kGetVarArgsFlag, this);
+}
+  // WRAP_METHOD(WDocument, SetVarArgs, (WValue& schema, VarArgList& ap),
+  // 	      (*(schema.val_), ap), bool, const);
+  // WRAP_METHOD(WDocument, GetVarArgs, (WValue& schema, VarArgList& ap),
+  // 	      (*(schema.val_), ap), bool, );
   WRAP_METHOD(WDocument, FinalizeFromStack, (), (), void, );
   template<typename InputStream>
   WRAP_METHOD_SELF(WDocument, ParseStream, (InputStream& is), (is), );

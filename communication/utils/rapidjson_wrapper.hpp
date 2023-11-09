@@ -274,7 +274,7 @@ class WRAPPER_CLASS(StringRefType) {
 		   (*(rhs.val_)));
   template<SizeType N>
   WStringRefType(const CharType (&str)[N]) :
-    WStringRefType(&(str[0]), N) {}
+    WStringRefType(&(str[0]), N-1) {}
   operator const Ch *() const;
 };
 
@@ -282,11 +282,19 @@ class WRAPPER_CLASS(StringRefType) {
 // WValue
 ////////////////////////////////////////////////////////////////////
 
+// #define PTR_INDEX
+
+#ifdef PTR_INDEX
+// #define INDEX_RTYPE WValue
+// #define INDEX_METHOD WValue(&tmp)
+// #define INDEX_METHOD_CONST WValue(const_cast<RJ_WNS::Value*>(&tmp))
+#else // PTR_INDEX
 #define INDEX_RTYPE WValue&
 #define INDEX_METHOD			\
   childRef(&tmp)
 #define INDEX_METHOD_CONST			\
   const_cast<WValue*>(this)->childRef(const_cast<RJ_WNS::Value*>(&tmp))
+#endif // PTR_INDEX
 
 class WRAPPER_CLASS(Value) {
 public:
@@ -302,6 +310,17 @@ public:
   
   std::vector<WValue> refs;
   WValue& childRef(RJ_WNS::Value* x);
+  operator RJ_WNS::Value& () { return *val_; }
+  operator const RJ_WNS::Value& () const { return *val_; }
+  WValue& CopyInto(WValue& rhs, Allocator& allocator,
+		   bool copyConstStrings = false) const;
+  RJ_WNS::Value& CopyInto(RJ_WNS::Value& rhs, Allocator& allocator,
+			  bool copyConstStrings = false) const;
+  WValue& CopyFrom(const RJ_WNS::Value& rhs, Allocator& allocator,
+		   bool copyConstStrings = false);
+#ifdef PTR_INDEX
+  std::unique_ptr<WValue> operator&();
+#endif
   
   WRAPPER_METHODS(Value);
   WRAP_CONSTRUCTOR(explicit WValue, (Type type), (type));
@@ -480,6 +499,12 @@ public:
 		    SizeType ndim, const Ch* units_str,
 		    SizeType units_len, Allocator& allocator),
 		   (x, shape, ndim, units_str, units_len, allocator), );
+  WRAP_METHOD_SELF(WValue, SetNDArray,
+		   (const Ch* x, SizeType precision, SizeType shape[],
+		    SizeType ndim, Allocator& allocator,
+		    const Ch* encoding=NULL, SizeType encoding_len=0),
+		   (x, precision, shape, ndim, allocator,
+		    encoding, encoding_len), );
   // Array methods
   WRAP_METHOD(WValue, IsArray, (), (), bool, const);
   WRAP_METHOD_SELF(WValue, SetArray, (), (), );
@@ -675,14 +700,15 @@ public:
   WDocument& Move() { return *this; }
 
   using ValueType::CopyFrom;
+  using ValueType::CopyInto;
   using ValueType::Swap;
   
-  WRAP_METHOD_SELF_CAST(WDocument, CopyFrom,
-			(const WDocument& rhs,
-			 WDocument::Allocator& allocator,
-			 bool copyConstStrings = false),
-			(*(rhs.val_), allocator, copyConstStrings),
-			WValue, );
+  // WRAP_METHOD_SELF_CAST(WDocument, CopyFrom,
+  // 			(const WDocument& rhs,
+  // 			 WDocument::Allocator& allocator,
+  // 			 bool copyConstStrings = false),
+  // 			(*(rhs.val_), allocator, copyConstStrings),
+  // 			WValue, );
   WRAP_METHOD_SELF_CAST(WDocument, Swap, (WDocument& rhs), (*(rhs.val_)),
 			WValue, );
   WRAP_METHOD(WDocument, GetAllocator, (), (), Allocator&, );
