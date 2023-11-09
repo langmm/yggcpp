@@ -282,6 +282,12 @@ class WRAPPER_CLASS(StringRefType) {
 // WValue
 ////////////////////////////////////////////////////////////////////
 
+#define INDEX_RTYPE WValue&
+#define INDEX_METHOD			\
+  childRef(&tmp)
+#define INDEX_METHOD_CONST			\
+  const_cast<WValue*>(this)->childRef(const_cast<RJ_WNS::Value*>(&tmp))
+
 class WRAPPER_CLASS(Value) {
 public:
   typedef RAPIDJSON_DEFAULT_ALLOCATOR Allocator;
@@ -487,8 +493,8 @@ public:
   WRAP_METHOD_ITER(WValue, End, (), (), );
   WRAP_METHOD_ITER(WValue, Begin, (), (), const);
   WRAP_METHOD_ITER(WValue, End, (), (), const);
-  WValue& operator[](SizeType index);
-  const WValue& operator[](SizeType index) const;
+  INDEX_RTYPE operator[](SizeType index);
+  const INDEX_RTYPE operator[](SizeType index) const;
   // Object methods
   WRAP_METHOD(WValue, IsObject, (), (), bool, const);
   WRAP_METHOD_SELF(WValue, SetObject, (), (), );
@@ -500,12 +506,12 @@ public:
   RAPIDJSON_DISABLEIF_RETURN(
     (internal::NotExpr<
      internal::IsSame<typename internal::RemoveConst<T>::Type, Ch> >),
-    (WValue&)) operator[](T* name);
+    (INDEX_RTYPE)) operator[](T* name);
   template <typename T>
   RAPIDJSON_DISABLEIF_RETURN(
     (internal::NotExpr<
      internal::IsSame<typename internal::RemoveConst<T>::Type, Ch> >),
-    (const WValue&)) operator[](T* name) const;
+    (const INDEX_RTYPE)) operator[](T* name) const;
   WRAP_METHOD_SELF(WValue, AddMember, (WValue& name,
 				       WValue& value,
 				       WValue::Allocator& allocator),

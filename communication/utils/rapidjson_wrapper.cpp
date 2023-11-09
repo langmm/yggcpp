@@ -1,3 +1,4 @@
+#define RAPIDJSON_FORCE_IMPORT_ARRAY
 #include "rapidjson/pyrj_c.h"
 #include "rapidjson_wrapper.hpp"
 
@@ -505,13 +506,13 @@ WValue::WValue(RJ_WNS::Document* val) :
   WRAP_METHOD_ITER(WValue, End, (), (), );
   WRAP_METHOD_ITER(WValue, Begin, (), (), const);
   WRAP_METHOD_ITER(WValue, End, (), (), const);
-  WValue& WValue::operator[](SizeType index) {
+  INDEX_RTYPE WValue::operator[](SizeType index) {
     RJ_WNS::Value& tmp = this->val_->operator[](index);
-    return childRef(&tmp);
+    return INDEX_METHOD;
   }
-  const WValue& WValue::operator[](SizeType index) const {
+  const INDEX_RTYPE WValue::operator[](SizeType index) const {
     const RJ_WNS::Value& tmp = this->val_->operator[](index);
-    return const_cast<WValue*>(this)->childRef(const_cast<RJ_WNS::Value*>(&tmp));
+    return INDEX_METHOD_CONST;
   }
   // Object methods
   WRAP_METHOD(WValue, IsObject, (), (), bool, const);
@@ -525,18 +526,18 @@ WValue::WValue(RJ_WNS::Document* val) :
     (internal::NotExpr<
      internal::IsSame<typename internal::RemoveConst<T>::Type,
      typename WValue::Ch> >),
-    (WValue&)) WValue::operator[](T* name) {
+    (INDEX_RTYPE)) WValue::operator[](T* name) {
     RJ_WNS::Value& tmp = this->val_->operator[](name);
-    return childRef(&tmp);
+    return INDEX_METHOD;
   }
   template <typename T>
   RAPIDJSON_DISABLEIF_RETURN(
     (internal::NotExpr<
      internal::IsSame<typename internal::RemoveConst<T>::Type,
      typename WValue::Ch> >),
-    (const WValue&)) WValue::operator[](T* name) const {
+    (const INDEX_RTYPE)) WValue::operator[](T* name) const {
     const RJ_WNS::Value& tmp = this->val_->operator[](name);
-    return const_cast<WValue*>(this)->childRef(const_cast<RJ_WNS::Value*>(&tmp));
+    return INDEX_METHOD_CONST;
   }
   WRAP_METHOD_SELF(WValue, AddMember, (WValue& name,
 				       WValue& value,
@@ -1168,6 +1169,8 @@ SPECIALIZE(rapidjson::ObjWavefront);
 #undef SPECIALIZE
 #undef SPECIALIZE_BASE
 
+#else // WRAP_RAPIDJSON_FOR_DLL
+#include "rapidjson/pyrj.h"
 #endif // WRAP_RAPIDJSON_FOR_DLL
 
 bool communication::utils::numpy_arrays_imported() {
