@@ -14,14 +14,18 @@ public:
       Comm_t(name, nullptr, direction, t, COMM_FLAG_INTERFACE), _closed(false) {}
     int comm_nmsg(DIRECTION=NONE) const override {return 1;}
     int get_flags() const {return flags;}
-    void close() override { _close(); Comm_t::_close(); }
+    void close() override { _close(true); }
     bool is_closed() const override { return _closed; }
-    ~Comm_tTest() { _close(); }
+    ~Comm_tTest() { _close(false); }
     bool check(const size_t &len) const {return check_size(len);}
     using Comm_t::send;
     using Comm_t::recv;
 protected:
-    void _close() { _closed = true; }
+    void _close(bool call_base) {
+      _closed = true;
+      if (call_base)
+	Comm_t::_close(true);
+    }
     int send_single(utils::Header&) override {
       return 0;
     }
