@@ -160,7 +160,7 @@ AsyncBacklog::AsyncBacklog(Comm_t* parent) :
   log_debug() << "AsyncBacklog: waiting for thread to start" << std::endl;
   wait_status(THREAD_STARTED | THREAD_COMPLETE);
   log_debug() << "AsyncBacklog: thread started" << std::endl;
-  set_status_lock(THREAD_INIT);
+  // set_status_lock(THREAD_INIT);
 }
 
 #else // THREADSINSTALLED
@@ -215,7 +215,7 @@ void AsyncBacklog::on_thread(Comm_t* parent) {
       set_status(THREAD_STARTED);
       log_debug() << "on_thread: Created comm on thread" << std::endl;
     }
-    wait_status(THREAD_INIT);
+    // wait_status(THREAD_INIT);
     if (direction == SEND) {
       while (!backlog.is_closed()) {
 	cv_status.notify_all(); // Periodically notify
@@ -277,8 +277,8 @@ void AsyncBacklog::set_status_lock(const int new_status, bool dont_notify,
   set_status(new_status, dont_notify, negative);
 }
 bool AsyncBacklog::wait_status(const int new_status) {
-  std::unique_lock<std::mutex> lk(comm_mutex);
   if (!(status.load() & new_status)) {
+    std::unique_lock<std::mutex> lk(comm_mutex);
     cv_status.wait(lk, [this, new_status]{
       return (status.load() & new_status); });
   }
