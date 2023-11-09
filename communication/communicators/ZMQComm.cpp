@@ -542,7 +542,7 @@ void ZMQComm::init() {
   CommBase::init();
 }
 
-void ZMQComm::_close() {
+void ZMQComm::_close(bool call_base) {
     if ((direction == RECV) && this->is_open() &&
 	(!global_comm) && (!(flags & COMM_EOF_RECV))) {
       if (utils::YggdrasilLogger::_ygg_error_flag == 0) {
@@ -558,6 +558,8 @@ void ZMQComm::_close() {
 	      free(data);
         }
     }
+    if (call_base)
+      CommBase::_close(true);
 }
 
 int ZMQComm::comm_nmsg(DIRECTION dir) const {
@@ -746,6 +748,9 @@ bool ZMQComm::afterSendRecv(Comm_t* sComm, Comm_t* rComm) {
 
 #else // ZMQINSTALLED
 
-void ZMQComm::_close() {}
+void ZMQComm::_close(bool call_base) {
+  if (call_base)
+    CommBase::_close(true);
+}
 
 #endif // ZMQINSTALLED

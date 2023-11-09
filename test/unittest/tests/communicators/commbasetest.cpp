@@ -20,7 +20,11 @@ public:
     using Comm_t::send;
     using Comm_t::recv;
 protected:
-    void _close() { _closed = true; }
+    void _close(bool call_base) {
+      _closed = true;
+      if (call_base)
+	Comm_t::_close(true);
+    }
     int send_single(utils::Header&) override {
       return 0;
     }

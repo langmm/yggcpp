@@ -61,7 +61,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [ -n "$DO_PYTHON" ]; then
-    if [ ! -n "$DONT_BUILD"]; then
+    if [ ! -n "$DONT_BUILD" ]; then
 	if [ -d "_skbuild" ]; then
 	    rm -rf "_skbuild"
 	fi

@@ -105,10 +105,12 @@ void MPIComm::init() {
     CommBase::init();
 }
 
-void MPIComm::_close() {
+void MPIComm::_close(bool call_base) {
   for (size_t i = 1; i < addresses.size(); i++)
     delete addresses[i];
   addresses.clear();
+  if (call_base)
+    CommBase::_close(true);
 }
 
 int MPIComm::mpi_comm_source_id() const {
@@ -222,6 +224,9 @@ WORKER_METHOD_DEFS(MPIComm)
 
 #else
 
-void MPIComm::_close() {}
+void MPIComm::_close(bool call_base) {
+  if (call_base)
+    CommBase::_close(true);
+}
 
 #endif

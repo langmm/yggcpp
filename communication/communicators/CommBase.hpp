@@ -43,7 +43,7 @@ const int COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
 
 #define ADD_DESTRUCTOR(cls, base)					\
   protected:								\
-  void _close();							\
+  void _close(bool call_base);						\
 public:									\
  void close() override;							\
  ~cls() override;
@@ -51,15 +51,14 @@ public:									\
   tempT									\
   void cls temp::close() {						\
     log_debug() << #cls "::close: Started" << std::endl;		\
-    _close();								\
-    base::_close();							\
+    _close(true);							\
     log_debug() << #cls "::close: Finished" << std::endl;		\
   }									\
   tempT									\
   cls temp::~cls() {							\
     YggLogDestructor << "~" #cls ": Started (closed = " << this->_is_closed() << ")" << std::endl; \
     if (this->handle) {							\
-      _close();								\
+      _close(false);							\
     }									\
     YggLogDestructor << "~" #cls ": Finished" << std::endl;		\
   }
@@ -102,7 +101,11 @@ public:									\
 	   int flgs, const COMM_TYPE type) :	\
     cls("", addr, flgs, type) {}		\
   ADD_DESTRUCTOR_DEF(cls, RPCComm, , )		\
-  void cls::_close() {}
+  void cls::_close(bool call_base) {		\
+    if (call_base) {				\
+      RPCComm::_close(true);			\
+    }						\
+  }
 #define WORKER_METHOD_DECS(cls)					\
   Comm_t* create_worker(utils::Address* address,		\
 			const DIRECTION&, int flgs) override
@@ -909,7 +912,7 @@ public:
     static int _ygg_init();
     
 protected:
-    void _close() {}
+    void _close(bool) {}
     bool _is_closed() const { return true; };
     void updateMaxMsgSize(size_t new_size) {
       if (maxMsgSize == 0 || new_size < maxMsgSize)
@@ -1187,13 +1190,15 @@ bool CommBase<H>::_is_closed() const {
 }
 
 template<typename H>
-void CommBase<H>::_close() {
+void CommBase<H>::_close(bool call_base) {
   if (handle) {
     if (!global_comm)
       delete handle;
     handle = nullptr;
   }
   workers.workers.clear();
+  if (call_base)
+    Comm_t::_close(true);
 }
 
 ADD_DESTRUCTOR_DEF(CommBase, Comm_t, template<typename H>, <H>)

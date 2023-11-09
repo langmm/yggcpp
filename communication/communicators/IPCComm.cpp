@@ -71,7 +71,7 @@ void IPCComm::init() {
     CommBase::init();
 }
 
-void IPCComm::_close() {
+void IPCComm::_close(bool call_base) {
     if (handle && !global_comm) {
 #ifdef YGG_TEST
       bool close_comm = true;
@@ -82,6 +82,8 @@ void IPCComm::_close() {
 #endif
       remove_comm(close_comm);
     }
+    if (call_base)
+      CommBase::_close(true);
 }
 
 ADD_KEY_TRACKER_DEFS(IPCComm)
@@ -195,6 +197,9 @@ WORKER_METHOD_DEFS(IPCComm)
 
 #else  /*IPCINSTALLED*/
 
-void IPCComm::_close() {}
+void IPCComm::_close(bool call_base) {
+  if (call_base)
+    CommBase::_close(true);
+}
 
 #endif /*IPCINSTALLED*/
