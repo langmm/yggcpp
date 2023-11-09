@@ -311,9 +311,13 @@ int AsyncBacklog::signon_status() {
     set_status(THREAD_SIGNON_RECV);
     return SIGNON_COMPLETE;
   }
-  if ((!requests.requests.empty()) &&
-      requests.activeComm()->comm_nmsg(RECV) > 0)
-    return SIGNON_WAITING;
+  if (!requests.requests.empty()) {
+    int nmsg = requests.activeComm()->comm_nmsg(RECV);
+    if (nmsg > 0)
+      return SIGNON_WAITING;
+    else if (nmsg < 0)
+      return SIGNON_ERROR;
+  }
   return SIGNON_NOT_WAITING;
 #else // SIGNON_NOT_WAITING
   return SIGNON_ERROR;
@@ -388,9 +392,12 @@ long AsyncBacklog::recv() {
   utils::Header header(true);
   {
     const std::lock_guard<std::mutex> comm_lock(comm_mutex);
-    if (comm->comm_nmsg() > 0) {
+    int nmsg = comm->comm_nmsg();
+    if (nmsg > 0) {
       out = comm->recv_single(header);
       received = true;
+    } else if (nmsg < 0) {
+      out = -1;
     }
   }
   if (received && out >= 0) {
