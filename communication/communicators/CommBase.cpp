@@ -370,6 +370,7 @@ int Comm_t::send_raw(const char *data, const size_t &len) {
     log_error() << "send_raw: Error formatting message with header." << std::endl;
     return -1;
   }
+  log_debug() << "send_raw: Formated header" << std::endl;
   Comm_t* xmulti = NULL;
   if (head.flags & HEAD_FLAG_MULTIPART) {
     log_debug() << "send_raw: Sending message in multiple parts" << std::endl;

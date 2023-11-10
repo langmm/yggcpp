@@ -741,7 +741,11 @@ PyObject* Comm_t_str(PyObject* self) {
 }
 
 PyObject* Comm_t_send_eof(PyObject* self, PyObject*) {
-  return PyLong_FromLong(((pyComm_t*)self)->comm->send_eof());
+  PyObject* out = NULL;
+  Py_BEGIN_ALLOW_THREADS
+  out = PyLong_FromLong(((pyComm_t*)self)->comm->send_eof());
+  Py_END_ALLOW_THREADS
+  return out;
 }
 
 static PyObject* Comm_t_call(PyObject* self, PyObject* arg) {

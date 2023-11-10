@@ -568,6 +568,7 @@ std::string AsyncComm::logClass() const {
 
 int AsyncComm::send_single(Header& header) {
   assert((!global_comm) && handle);
+  log_debug() << "send_single: begin" << std::endl;
   if (type == SERVER_COMM) {
     const AsyncLockGuard lock(handle);
     if (handle->is_closing()) {
