@@ -821,10 +821,11 @@ const WMember* WMember::operator->() const {
   WRAPPER_METHODS_EMPTY_CONSTRUCTOR_TEMP(WGenericMemberIterator,
 					 (MEMBER_ITERATOR(Const)),
 					 (bool Const), (Const));
-  WRAP_CONSTRUCTOR_TEMP(WGenericMemberIterator,
-			(bool Const), (Const),
-			(const WGenericMemberIterator::NonConstIterator& it),
-			(*(it.val_)));
+  template<bool Const>
+  WGenericMemberIterator<Const>::WGenericMemberIterator(const WGenericMemberIterator::NonConstIterator& it) :
+    WGenericMemberIterator() {
+    (*(this->val_)) = *(it.val_);
+  }
   template<bool Const>
   WRAP_METHOD_CAST_CONST(WGenericMemberIterator<Const>, operator*, (), (),
 			 WMember, );

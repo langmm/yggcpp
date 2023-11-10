@@ -791,11 +791,9 @@ class WGenericMemberIterator : public WrapperBase<MEMBER_ITERATOR(Const)> {
   typedef pointer         Pointer;
   typedef reference       Reference;
   typedef difference_type DifferenceType;
-  
+
   WRAP_CONSTRUCTOR(WGenericMemberIterator,
 		   (const NonConstIterator& it), (*(it.val_)));
-  WRAP_CONSTRUCTOR(WGenericMemberIterator,
-		   (const NonConstBaseType&& it), (&it));
   WRAP_METHOD_CAST(WGenericMemberIterator, operator*, (), (),
 		   const WMember, const);
   WRAP_METHOD_CAST(WGenericMemberIterator, operator->, (), (),
@@ -824,8 +822,8 @@ class WGenericMemberIterator : public WrapperBase<MEMBER_ITERATOR(Const)> {
   ITERATOR_COMP_OP(!=);
   ITERATOR_COMP_OP(<=);
   ITERATOR_COMP_OP(>=);
-  ITERATOR_COMP_OP(< );
-  ITERATOR_COMP_OP(> );
+  ITERATOR_COMP_OP(<);
+  ITERATOR_COMP_OP(>);
 #undef ITERATOR_COMP_OP
   
 };
