@@ -859,8 +859,8 @@ const WMember* WMember::operator->() const {
 #define ITERATOR_COMP_OP_(op, C1, C2)					\
   namespace rapidjson {							\
     template<>								\
-    bool operator op<C1,C2>(const WGenericMemberIterator<C1>& lhs,	\
-			    const WGenericMemberIterator<C2>& rhs) {	\
+    bool operator op(const WGenericMemberIterator<C1>& lhs,		\
+		     const WGenericMemberIterator<C2>& rhs) {		\
       return (*(lhs.val_) op *(rhs.val_));				\
     }									\
   }
