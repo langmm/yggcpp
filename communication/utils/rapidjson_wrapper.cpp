@@ -525,6 +525,8 @@ WValue::WValue(RJ_WNS::Document* val) :
   WRAP_METHOD_ITER(WValue, End, (), (), );
   WRAP_METHOD_ITER(WValue, Begin, (), (), const);
   WRAP_METHOD_ITER(WValue, End, (), (), const);
+  WRAP_METHOD(WValue, Contains, (const WValue& x),
+	      (*(x.val_)), bool, const);
   INDEX_RTYPE WValue::operator[](SizeType index) {
     RJ_WNS::Value& tmp = this->val_->operator[](index);
     return INDEX_METHOD;
@@ -800,7 +802,7 @@ WMember& WMember::operator=(WMember& rhs) {
   }
   return *this;
 }
-const WMember* WMember::operator->() const {
+WMember* WMember::operator->() const {
   return const_cast<WMember*>(this);
 }
 
@@ -827,11 +829,15 @@ const WMember* WMember::operator->() const {
     (*(this->val_)) = *(it.val_);
   }
   template<bool Const>
-  WRAP_METHOD_CAST_CONST(WGenericMemberIterator<Const>, operator*, (), (),
-			 WMember, );
+  WMember WGenericMemberIterator<Const>::operator*() const {
+    const WMember::BaseType& tmp = this->val_->operator*();
+    return WMember(*const_cast<WMember::BaseType*>(&tmp));
+  }
   template<bool Const>
-  WRAP_METHOD_CAST_CONST_PTR(WGenericMemberIterator<Const>, operator->, (), (),
-			     WMember, );
+  WMember WGenericMemberIterator<Const>::operator->() const {
+    const WMember::BaseType* tmp = this->val_->operator->();
+    return WMember(*const_cast<WMember::BaseType*>(tmp));
+  }
   template<bool Const>
   WRAP_METHOD_SELF(WGenericMemberIterator<Const>, operator=,
 		   (const WGenericMemberIterator::NonConstIterator& it),

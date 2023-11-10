@@ -518,6 +518,8 @@ public:
   WRAP_METHOD_ITER(WValue, End, (), (), );
   WRAP_METHOD_ITER(WValue, Begin, (), (), const);
   WRAP_METHOD_ITER(WValue, End, (), (), const);
+  WRAP_METHOD(WValue, Contains, (const WValue& x),
+	      (*(x.val_)), bool, const);
   INDEX_RTYPE operator[](SizeType index);
   const INDEX_RTYPE operator[](SizeType index) const;
   // Object methods
@@ -753,7 +755,7 @@ public:
   WMember(WMember&& rhs);
   WMember& operator=(WMember&& rhs);
   WMember& operator=(WMember& rhs);
-  const WMember* operator->() const;
+  WMember* operator->() const;
 };
 
 #undef MEMBER
@@ -795,9 +797,9 @@ class WGenericMemberIterator : public WrapperBase<MEMBER_ITERATOR(Const)> {
   WRAP_CONSTRUCTOR(WGenericMemberIterator,
 		   (const NonConstIterator& it), (*(it.val_)));
   WRAP_METHOD_CAST(WGenericMemberIterator, operator*, (), (),
-		   const WMember, const);
+		   WMember, const);
   WRAP_METHOD_CAST(WGenericMemberIterator, operator->, (), (),
-		   const WMember, const);
+		   WMember, const);
   
   WRAP_METHOD_SELF(WGenericMemberIterator, operator=,
 		   (const NonConstIterator& it), (it.val_), );
