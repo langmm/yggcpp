@@ -212,7 +212,9 @@ void AsyncBacklog::on_thread(Comm_t* parent) {
       parent->address->address(comm->getAddress());
       parent->updateMsgBufSize(comm->getMsgBufSize());
       parent->getFlags() |= (comm->getFlags() & ~flgs_comm);
-      if (comm->getCommType() != CLIENT_COMM) {
+      if (comm->getCommType() == CLIENT_COMM) {
+	set_status(THREAD_IS_CLIENT, true);
+      } else {
 	set_status(THREAD_SIGNON_SENT | THREAD_SIGNON_RECV, true);
       }
       set_status(THREAD_STARTED);
@@ -296,7 +298,7 @@ bool AsyncBacklog::wait_status(const int new_status) {
 int AsyncBacklog::signon_status() {
   if (is_closing())
     return SIGNON_ERROR;
-  if (comm->getCommType() != CLIENT_COMM)
+  if (!(status.load() & THREAD_IS_CLIENT))
     return SIGNON_COMPLETE;
   if (!(status.load() & THREAD_SIGNON_SENT))
     return SIGNON_NOT_SENT;
