@@ -158,13 +158,26 @@ namespace communication {
       
       using Comm_t::send;
       using Comm_t::recv;
-      
+
     protected:
       int send_single(utils::Header& header) override;
       long recv_single(utils::Header& header) override;
       bool create_header_send(utils::Header& header) override;
       Comm_t* create_worker(utils::Address* address,
 			    const DIRECTION& dir, int flgs) override;
+      
+      utils::Metadata response_metadata;
+
+    public:
+      // RPC methods
+      bool addResponseSchema(const std::string& s,
+			     bool use_generic=false);
+      bool addResponseSchema(const rapidjson::Value& s,
+			     bool use_generic=false);
+      bool addResponseSchema(const utils::Metadata& metadata,
+			     bool use_generic=false);
+      bool addResponseFormat(const std::string& fmt,
+			     bool use_generic=false);
       
     };
 

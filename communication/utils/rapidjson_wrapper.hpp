@@ -769,7 +769,7 @@ template<bool Const>
 class WGenericMemberIterator : public WrapperBase<MEMBER_ITERATOR(Const)> {
   WRAPPER_METHODS_(WGenericMemberIterator, MEMBER_ITERATOR(Const));
   WRAPPER_METHODS_EMPTY_CONSTRUCTOR(WGenericMemberIterator);
-  WRAPPER_METHODS_MOVE_CONSTRUCTOR(WGenericMemberIterator,
+  WRAPPER_METHODS_MOVE_CONSTRUCTOR(explicit WGenericMemberIterator,
 				   MEMBER_ITERATOR(Const));
   friend class WValue;
   template <bool> friend class WGenericMemberIterator;

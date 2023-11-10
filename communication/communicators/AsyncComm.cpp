@@ -1,5 +1,6 @@
 #include "AsyncComm.hpp"
 #include "ClientComm.hpp"
+#include "ServerComm.hpp"
 #include "utils/logging.hpp"
 
 using namespace communication::communicator;
@@ -412,6 +413,12 @@ long AsyncBacklog::recv() {
   if (received && out >= 0) {
     if (!(header.flags & HEAD_FLAG_REPEAT)) {
       log_debug() << "recv: Received message into backlog: " << out << std::endl;
+      // if (status.load() & THREAD_IS_CLIENT) {
+      // 	if (!addResponseSchema(dynamic_cast<ClientComm*>(comm)->getMetadata(RECV))) {
+      // 	  log_error() << "recv: Error transfering response metadata back to client wrapper" << std::endl;
+      // 	  return false;
+      // 	}
+      // }
       if (!backlog.append(header, true))
 	out = -1;
     }
@@ -454,7 +461,8 @@ AsyncComm::AsyncComm(const std::string name,
 		     utils::Address *address,
 		     const DIRECTION direction,
 		     int flgs, const COMM_TYPE type) :
-  CommBase(name, address, direction, type, flgs | COMM_FLAG_ASYNC) {
+  CommBase(name, address, direction, type, flgs | COMM_FLAG_ASYNC),
+  response_metadata() {
   if (type == SERVER_COMM)
     this->direction = RECV;
   else if (type == CLIENT_COMM)
@@ -536,9 +544,10 @@ int AsyncComm::wait_for_recv(const int64_t& tout) {
 communication::utils::Metadata& AsyncComm::getMetadata(const DIRECTION dir) {
   if (global_comm)
     return global_comm->getMetadata(dir);
-  const AsyncLockGuard lock(handle);
-  if (handle->comm)
-    return handle->comm->getMetadata(dir);
+  if ((type == CLIENT_COMM && dir == RECV) ||
+      (type == SERVER_COMM && dir == SEND)) {
+    return response_metadata;
+  }
   return metadata;
 }
 
@@ -628,6 +637,10 @@ bool AsyncComm::create_header_send(Header& header) {
       return false;
     log_debug() << "AsyncComm::create_header_send: Sent signon" << std::endl;
   }
+  if (type == SERVER_COMM) {
+    if (!dynamic_cast<ServerComm*>(handle->comm)->addResponseSchema(response_metadata))
+      return false;
+  }
   return handle->comm->create_header_send(header);
 }
 
@@ -635,3 +648,30 @@ Comm_t* AsyncComm::create_worker(utils::Address* address,
 				 const DIRECTION& dir, int flgs) {
   return new AsyncComm("", address, dir, flgs | COMM_FLAG_WORKER, type);
 }
+
+#define RESPONSE_SCHEMA(name, method, argsT, args)			\
+  bool AsyncComm::name argsT {						\
+    if (global_comm) {							\
+      return (dynamic_cast<AsyncComm*>(global_comm))->name args;	\
+    }									\
+    if (type != CLIENT_COMM) {						\
+      log_error() << "addResponseSchema: Wrapped communicator is not a client" << std::endl; \
+      return false;							\
+    }									\
+    return response_metadata.method args;				\
+  }
+
+RESPONSE_SCHEMA(addResponseSchema, fromSchema,
+		(const std::string& s, bool use_generic),
+		(s, use_generic))
+RESPONSE_SCHEMA(addResponseSchema, fromSchema,
+		(const rapidjson::Value& s, bool use_generic),
+		(s, use_generic))
+RESPONSE_SCHEMA(addResponseSchema, fromMetadata,
+		(const utils::Metadata& metadata, bool use_generic),
+		(metadata, use_generic))
+RESPONSE_SCHEMA(addResponseFormat, fromFormat,
+		(const std::string& format_str, bool use_generic),
+		(format_str, use_generic))
+
+#undef RESPONSE_SCHEMA
