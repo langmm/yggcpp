@@ -878,11 +878,6 @@ ITERATOR_COMP_OP(>);
 #undef ITERATOR_COMP_OP
 #undef ITERATOR_COMP_OP_
 
-namespace rapidjson {
-  template class WGenericMemberIterator<true>;
-  template class WGenericMemberIterator<false>;
-}
-
 ////////////////////////////////////////////////////////////////////
 // WSchemaDocument
 ////////////////////////////////////////////////////////////////////

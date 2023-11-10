@@ -830,6 +830,13 @@ class WGenericMemberIterator : public WrapperBase<MEMBER_ITERATOR(Const)> {
   
 };
 
+#undef MEMBER_ITERATOR
+
+template class WGenericMemberIterator<true>;
+template class WGenericMemberIterator<false>;
+typedef WGenericMemberIterator<false> WMemberIterator;
+typedef WGenericMemberIterator<true> WConstMemberIterator;
+
 #define ITERATOR_COMP_OP_(op, C1, C2)				  \
   template<>							  \
   bool operator op(const WGenericMemberIterator<C1>& lhs,	  \
@@ -852,11 +859,6 @@ ITERATOR_COMP_OP(<);
 ITERATOR_COMP_OP(>);
 #undef ITERATOR_COMP_OP
 #undef ITERATOR_COMP_OP_
-
-#undef MEMBER_ITERATOR
-
-typedef WGenericMemberIterator<false> WMemberIterator;
-typedef WGenericMemberIterator<true> WConstMemberIterator;
 
 ////////////////////////////////////////////////////////////////////
 // WSchemaDocument
