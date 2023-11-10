@@ -279,12 +279,18 @@ jobs:
         run: |
           # echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DCMAKE_Fortran_COMPILER=$(which gfortran).exe -DCMAKE_Fortran_PREPROCESS_SOURCE=ON -DCMAKE_Fortran_COMPILER_WORKS=1 -DDONT_CHECK_FORTRAN_C_COMPAT=ON" >> "$GITHUB_ENV"
           echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DCMAKE_Fortran_PREPROCESS_SOURCE=ON -DCMAKE_Fortran_COMPILER_WORKS=1 -DDONT_CHECK_FORTRAN_C_COMPAT=ON" >> "$GITHUB_ENV"
-      - name: Fortran config flags on Windows (CONDA)
-        if: matrix.with-asan == false && matrix.os == 'windows-latest' && matrix.windows-compiler == 'msvc' # && matrix.python-install == 'conda'
+      - name: Fortran config flags on Windows (PIP)
+        if: matrix.with-asan == false && matrix.os == 'windows-latest' && matrix.windows-compiler == 'msvc' && matrix.python-install != 'conda'
         run: |
           echo (Get-Command gfortran).Path
           $FC = (Get-Command gfortran).Path
           echo "CONFIG_FLAGS=$env:CONFIG_FLAGS -DCMAKE_Fortran_COMPILER=$FC" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Fortran config flags on Windows (CONDA)
+        if: matrix.with-asan == false && matrix.os == 'windows-latest' && matrix.windows-compiler == 'msvc' && matrix.python-install == 'conda'
+        shell: bash -l {0}
+        run: |
+          FC=$(which gfortran.exe)
+          echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DCMAKE_Fortran_COMPILER=$(which gfortran).exe" >> "$GITHUB_ENV"
       - name: ASAN dynamic library
         if: matrix.with-asan == true && matrix.os == 'macos-latest'
         shell: bash -l {0}
