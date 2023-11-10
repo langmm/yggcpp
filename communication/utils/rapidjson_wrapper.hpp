@@ -832,8 +832,6 @@ class WGenericMemberIterator : public WrapperBase<MEMBER_ITERATOR(Const)> {
 
 #undef MEMBER_ITERATOR
 
-template class WGenericMemberIterator<true>;
-template class WGenericMemberIterator<false>;
 typedef WGenericMemberIterator<false> WMemberIterator;
 typedef WGenericMemberIterator<true> WConstMemberIterator;
 
@@ -845,7 +843,9 @@ typedef WGenericMemberIterator<true> WConstMemberIterator;
 #define ITERATOR_COMP_OP(op)					\
   template<bool Const1, bool Const2>				\
   bool operator op(const WGenericMemberIterator<Const1>& lhs,	\
-		   const WGenericMemberIterator<Const2>& rhs);	\
+		   const WGenericMemberIterator<Const2>& rhs) {	\
+    return (*(lhs.val_) op *(rhs.val_));			\
+  }								\
   ITERATOR_COMP_OP_(op, true, true);				\
   ITERATOR_COMP_OP_(op, false, false);				\
   ITERATOR_COMP_OP_(op, true, false);				\

@@ -856,6 +856,11 @@ const WMember* WMember::operator->() const {
 
 #undef MEMBER_ITERATOR
 
+namespace rapidjson {
+  template class WGenericMemberIterator<true>;
+  template class WGenericMemberIterator<false>;
+}
+
 #define ITERATOR_COMP_OP_(op, C1, C2)					\
   namespace rapidjson {							\
     template<>								\
