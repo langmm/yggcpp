@@ -3,12 +3,18 @@
 using namespace communication::communicator;
 using namespace communication::utils;
 
-IPCComm::IPCComm(const std::string name, Address *address,
+IPCComm::IPCComm(const std::string name, Address &address,
 		 DIRECTION direction, int flgs,
 		 const COMM_TYPE type) :
   CommBase(name, address, direction, type, flgs) {
   if (!global_comm)
     init();
+}
+IPCComm::IPCComm(const std::string nme, const DIRECTION dirn,
+                 int flgs, const COMM_TYPE type) :
+        CommBase(nme, dirn, type, flgs) {
+    if (!global_comm)
+        init();
 }
 
 ADD_CONSTRUCTORS_DEF(IPCComm)
@@ -35,19 +41,15 @@ int IPCComm::count_queues() {
 void IPCComm::init() {
     updateMaxMsgSize(2048);
     int key = 0;
-    bool created = ((!address) || address->address().empty());
+    bool created = ((!address.valid()) || address.address().empty());
     if (created) {
       CREATE_KEY(IPCComm);
-      if (!address) {
-        address = new utils::Address(std::to_string(key));
-      } else {
-        address->address(std::to_string(key));
-      }
+      address.address(std::to_string(key));
     } else {
-      key = this->address->key();
+      key = this->address.key();
     }
     if (name.empty()) {
-        this->name = "tempnewIPC." + this->address->address();
+        this->name = "tempnewIPC." + this->address.address();
     } else {
         this->name = name;
     }
@@ -66,8 +68,8 @@ void IPCComm::init() {
       throw std::runtime_error("IPCComm::init: Error in msgget");
     }
     handle = fid;
-    track_key(address->key());
-    log_debug() << "init: address = " << this->address->address() << ", created = " << created << std::endl;
+    track_key(address.key());
+    log_debug() << "init: address = " << this->address.address() << ", created = " << created << std::endl;
     CommBase::init();
 }
 
@@ -101,7 +103,7 @@ int IPCComm::remove_comm(bool close_comm) {
         log_debug() << "Closing queue: " << handle[0] << std::endl;
         msgctl(handle[0], IPC_RMID, nullptr);
     }
-    return untrack_key(address->key());
+    return untrack_key(address.key());
 }
 
 int IPCComm::comm_nmsg(DIRECTION dir) const {

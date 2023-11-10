@@ -204,7 +204,7 @@ template<class OutputIt>
     return -1;
   }
   void *zmq_socket (void *, int) {
-    assert(RETVAL_CREATE < 0);
+    assert(RETVAL_CREATE <= 0);
     return NULL;
   }
   int zmq_connect (void *, const char *) {

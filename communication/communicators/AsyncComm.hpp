@@ -126,14 +126,14 @@ namespace communication {
        * @param flgs Bitwise flags describing the communicator
        * @param type Enumerated communicator type
        **/
-      explicit AsyncComm(const std::string name = "",
-			 utils::Address *address = new utils::Address(),
+      explicit AsyncComm(const std::string name,
+			 utils::Address& address,
 			 const DIRECTION direction = NONE, int flgs = 0,
 			 const COMM_TYPE type = DEFAULT_COMM);
       explicit AsyncComm(const std::string nme,
 			 const DIRECTION dirn, int flgs = 0,
 			 const COMM_TYPE type = DEFAULT_COMM);
-      explicit AsyncComm(utils::Address *addr,
+      explicit AsyncComm(utils::Address &addr,
 			 const DIRECTION dirn, int flgs = 0,
 			 const COMM_TYPE type = DEFAULT_COMM);
       ADD_DESTRUCTOR(AsyncComm, CommBase)
@@ -163,7 +163,7 @@ namespace communication {
       int send_single(utils::Header& header) override;
       long recv_single(utils::Header& header) override;
       bool create_header_send(utils::Header& header) override;
-      Comm_t* create_worker(utils::Address* address,
+      Comm_t* create_worker(utils::Address& address,
 			    const DIRECTION& dir, int flgs) override;
       
     };

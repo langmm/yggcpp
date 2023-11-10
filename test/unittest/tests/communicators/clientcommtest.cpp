@@ -19,11 +19,18 @@ private:
   ClientComm_tester(const ClientComm_tester&) = delete;
   ClientComm_tester& operator=(const ClientComm_tester&) = delete;
 public:
-  ClientComm_tester(const std::string &name = "", utils::Address *address = nullptr) :
+  ClientComm_tester(const std::string &name, utils::Address& address) :
     ClientComm(name, address), server_comm(NULL) {
-    server_comm = new ServerComm("", new utils::Address(this->address->address()));
+      utils::Address addr(this->address.address());
+    server_comm = new ServerComm("", addr);
   }
-  ~ClientComm_tester() override {
+    ClientComm_tester(const std::string &name) :
+            ClientComm(name), server_comm(NULL) {
+        utils::Address addr(this->address.address());
+        server_comm = new ServerComm("", addr);
+    }
+
+    ~ClientComm_tester() override {
     delete server_comm;
     server_comm = NULL;
   }
@@ -76,11 +83,11 @@ public:
   }
   void addResponseWorkers() {
     Comm_t* worker = server_comm->getWorkers().get(server_comm, SEND);
-    this->getWorkers().get(this, RECV, new utils::Address(worker->getAddress()));
+    this->getWorkers().get(this, RECV, worker->getAddress());
   }
   void addWorkers() {
     Comm_t* worker = this->getWorkers().get(this, SEND);
-    server_comm->getWorkers().get(server_comm, RECV, new utils::Address(worker->getAddress()));
+    server_comm->getWorkers().get(server_comm, RECV, worker->getAddress());
   }
   ServerComm* server_comm;
 };
@@ -89,13 +96,13 @@ public:
 
 TEST(ClientComm, constructor) {
     std::string name = "MyComm";
-    communication::testing::ClientComm_tester cc(name, nullptr);
-    communication::testing::ClientComm_tester cc1("", nullptr);
+    communication::testing::ClientComm_tester cc(name);
+    communication::testing::ClientComm_tester cc1("");
 }
 
 TEST(ClientComm, send) {
     std::string name = "MyComm";
-    communication::testing::ClientComm_tester cc(name, nullptr);
+    communication::testing::ClientComm_tester cc(name);
     std::string msg = "This is a test message";
     EXPECT_TRUE(cc.addSignon());
     EXPECT_GE(cc.send(msg.c_str(), msg.size()), 0);
@@ -103,7 +110,7 @@ TEST(ClientComm, send) {
 
 TEST(ClientComm, sendLarge) {
     std::string name = "MyComm";
-    communication::testing::ClientComm_tester cc(name, nullptr);
+    communication::testing::ClientComm_tester cc(name);
     cc.addWorkers();
     std::string msg(cc.getMaxMsgSize(), 'A');
     EXPECT_TRUE(cc.addSignon());
@@ -122,7 +129,7 @@ TEST(ClientComm, sendLarge) {
 
 TEST(ClientComm, recv) {
     std::string name = "MyComm";
-    communication::testing::ClientComm_tester cc(name, nullptr);
+    communication::testing::ClientComm_tester cc(name);
     std::string req_send = "REQUEST";
     std::string res_send = "RESPONSE";
     std::string req_recv;
@@ -177,7 +184,7 @@ TEST(ClientComm, recv) {
 #ifdef THREADSINSTALLED
 TEST(ClientComm, async) {
     std::string name = "MyComm";
-    AsyncComm sComm(name, nullptr, SEND, COMM_FLAG_ASYNC, CLIENT_COMM);
+    AsyncComm sComm(name, SEND, COMM_FLAG_ASYNC, CLIENT_COMM);
     std::string key_env = name + "_IN";
     std::string val_env = sComm.getAddress();
     setenv(key_env.c_str(), val_env.c_str(), 1);
@@ -206,7 +213,7 @@ TEST(ClientComm, async) {
 
 TEST(ClientComm, recvLarge) {
     std::string name = "MyComm";
-    communication::testing::ClientComm_tester cc(name, nullptr);
+    communication::testing::ClientComm_tester cc(name);
     std::string bigMsg(cc.getMaxMsgSize(), 'A');
     std::string req_send = "REQUEST" + bigMsg;
     std::string res_send = "RESPONSE" + bigMsg;
@@ -227,7 +234,7 @@ TEST(ClientComm, recvLarge) {
 
 TEST(ClientComm, call) {
   std::string name = "MyComm";
-  communication::testing::ClientComm_tester cc(name, nullptr);
+  communication::testing::ClientComm_tester cc(name);
   cc.addSchema("{\"type\": \"string\"}");
   std::string req_send = "REQUEST1";
   std::string res_send = "RESPONSE1";
@@ -282,14 +289,14 @@ TEST(ClientComm, call) {
 TEST(ClientComm, global) {
   std::string name = "test_name";
   {
-    ServerComm rComm(name, nullptr);
+    ServerComm rComm(name);
     rComm.set_timeout_recv(10000);
     std::string key_env = name + "_OUT";
     std::string val_env = rComm.getAddress();
     setenv(key_env.c_str(), val_env.c_str(), 1);
     {
       global_scope_comm_on();
-      ClientComm sComm(name, nullptr);
+      ClientComm sComm(name);
       sComm.set_timeout_recv(10000);
       global_scope_comm_off();
       sComm.addResponseFormat("%s");
@@ -317,7 +324,7 @@ TEST(ClientComm, global) {
     }
     {
       global_scope_comm_on();
-      ClientComm sComm(name, nullptr);
+      ClientComm sComm(name);
       global_scope_comm_off();
       std::string req_send = "REQUEST";
       std::string res_send = "RESPONSE";

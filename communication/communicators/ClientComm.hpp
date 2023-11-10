@@ -19,8 +19,8 @@ public:
      *                then an address will be created.
      * @param flgs Bitwise flags describing the communicator
      */
-    explicit ClientComm(const std::string name = "",
-			utils::Address *address = nullptr,
+    explicit ClientComm(const std::string name,
+			utils::Address &address,
 			int flgs = 0, const COMM_TYPE type = CLIENT_COMM);
     ADD_CONSTRUCTORS_RPC(ClientComm, CLIENT_COMM)
 

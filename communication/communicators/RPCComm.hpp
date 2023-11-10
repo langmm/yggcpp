@@ -11,9 +11,11 @@ namespace communicator {
 // @brief Structure for storing requests
 class YGG_API RPCComm : public COMM_BASE {
 public:
-  explicit RPCComm(const std::string &name, utils::Address *address,
+  explicit RPCComm(const std::string &name, utils::Address& address,
 		   int flgs, DIRECTION dir, DIRECTION req_dir,
 		   const COMM_TYPE type);
+  RPCComm(const std::string& name, int flgs, DIRECTION dir,
+	  DIRECTION req_dir, const COMM_TYPE type);
   ADD_DESTRUCTOR(RPCComm, COMM_BASE)
 
   using Comm_t::send;

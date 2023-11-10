@@ -67,7 +67,7 @@ public:									\
   explicit cls(const std::string nme,					\
 	       const DIRECTION dirn,					\
 	       int flgs = 0, const COMM_TYPE type = typ);		\
-  explicit cls(utils::Address *addr,					\
+  explicit cls(utils::Address &addr,					\
 	       const DIRECTION dirn,					\
 	       int flgs = 0, const COMM_TYPE type = typ);		\
   static bool isInstalled() { return flag; }				\
@@ -78,11 +78,7 @@ public:									\
   ADD_CONSTRUCTORS_BASE(T ## Comm, T ## _COMM, T ## _INSTALLED_FLAG)
 
 #define ADD_CONSTRUCTORS_DEF(cls)		\
-  cls::cls(const std::string nme,		\
-	   const DIRECTION dirn,		\
-	   int flgs, const COMM_TYPE type) :	\
-    cls(nme, nullptr, dirn, flgs, type) {}	\
-  cls::cls(utils::Address *addr,		\
+  cls::cls(utils::Address &addr,		\
 	   const DIRECTION dirn,		\
 	   int flgs, const COMM_TYPE type) :	\
     cls("", addr, dirn, flgs, type) {}		\
@@ -90,14 +86,11 @@ public:									\
 #define ADD_CONSTRUCTORS_RPC(cls, defT)				\
   explicit cls(const std::string nme,				\
 	       int flgs = 0, const COMM_TYPE type = defT);	\
-  explicit cls(utils::Address *addr,				\
+  explicit cls(utils::Address &addr,				\
 	       int flgs = 0, const COMM_TYPE type = defT);	\
   ADD_DESTRUCTOR(cls, RPCComm)
 #define ADD_CONSTRUCTORS_RPC_DEF(cls)		\
-  cls::cls(const std::string nme,		\
-	   int flgs, const COMM_TYPE type) :	\
-    cls(nme, nullptr, flgs, type) {}		\
-  cls::cls(utils::Address *addr,		\
+  cls::cls(utils::Address &addr,		\
 	   int flgs, const COMM_TYPE type) :	\
     cls("", addr, flgs, type) {}		\
   ADD_DESTRUCTOR_DEF(cls, RPCComm, , )		\
@@ -107,15 +100,15 @@ public:									\
     }						\
   }
 #define WORKER_METHOD_DECS(cls)					\
-  Comm_t* create_worker(utils::Address* address,		\
+  Comm_t* create_worker(utils::Address& address,		\
 			const DIRECTION&, int flgs) override
 #define WORKER_METHOD_DEFS(cls)					\
-  Comm_t* cls::create_worker(utils::Address* address,		\
+  Comm_t* cls::create_worker(utils::Address& address,		\
 			     const DIRECTION& dir, int flgs) {	\
     return new cls("", address, dir, flgs | COMM_FLAG_WORKER);	\
   }
 #define WORKER_METHOD_DUMMY(cls, abbr)				\
-  Comm_t* cls::create_worker(utils::Address*,			\
+  Comm_t* cls::create_worker(utils::Address&,			\
 			     const DIRECTION&, int) {		\
     abbr ## _install_error();					\
     return NULL;						\
@@ -843,9 +836,9 @@ public:
       @returns Address.
      */
     std::string getAddress() const {
-      if (address)
-	return address->address();
-      return "";
+        if (address.valid())
+            return address.address();
+        return "";
     }
     /*!
       @brief Get the communicator's direction.
@@ -893,6 +886,9 @@ private:
 		  rapidjson::VarArgList& ap);
 
 protected:
+
+    void init();
+    
     friend AsyncComm;
     friend AsyncBacklog;
     friend RPCComm;
@@ -935,10 +931,6 @@ protected:
       }
     }
 
-    void init() {
-      if (flags & COMM_FLAG_SET_OPP_ENV)
-	setOppEnv();
-    }
     static std::string envName(const std::string& name,
 			       DIRECTION dir, bool opp=false) {
       std::string out = name;
@@ -951,7 +943,7 @@ protected:
       return out;
     }
     void setOppEnv() {
-      if (address) {
+      if (address.valid()) {
 	std::string opp_name = envName(name, direction, true);
 	log_debug() << "setOppEnv: " << opp_name << " = " << getAddress() << std::endl;
 	setenv(opp_name.c_str(), getAddress().c_str(), 1);
@@ -963,9 +955,9 @@ protected:
       unsetenv(opp_name.c_str());
     }
 
-    static utils::Address* addressFromEnv(const std::string& name,
+    static utils::Address addressFromEnv(const std::string& name,
 					  DIRECTION direction) {
-      utils::Address* out = new utils::Address();
+      utils::Address out;
       if (name.empty())
 	return out;
       std::string full_name = envName(name, direction);
@@ -985,7 +977,7 @@ protected:
 	full_name << ", address = " << addr_str << std::endl;
       YggLogDebug << std::endl;
       if (addr)
-	out->address(addr);
+	out.address(addr);
       return out;
     }
 
@@ -1012,7 +1004,7 @@ protected:
     rapidjson::Value* getSchema(const DIRECTION dir=NONE) {
       return getMetadata(dir).getSchema();
     }
-    virtual Comm_t* create_worker(utils::Address* address,
+    virtual Comm_t* create_worker(utils::Address& address,
 				  const DIRECTION&, int flgs) VIRT_END;
     virtual Comm_t* create_worker_send(utils::Header& head);
     virtual Comm_t* create_worker_recv(utils::Header& head);
@@ -1039,10 +1031,12 @@ protected:
      * @see utils::Address()
      */
     explicit Comm_t(const std::string &name,
-		    utils::Address *address = nullptr,
+		    utils::Address &address,
 		    DIRECTION direction = NONE,
 		    const COMM_TYPE &t = NULL_COMM, int flgs = 0);
 
+    Comm_t(const std::string& name, DIRECTION direction = NONE,
+           const COMM_TYPE &t = NULL_COMM, int flgs = 0);
     /**
      * Checks the size of the message to see if it exceeds the maximum allowable size as define by YGG_MSG_MAX
      * @param len The length of the message to check
@@ -1053,7 +1047,7 @@ protected:
     COMM_TYPE type; //!< Comm type.
     //void *other; //!< Pointer to additional information for the comm.
     std::string name; //!< Comm name.
-    utils::Address *address; //!< Comm address.
+    utils::Address address; //!< Comm address.
     DIRECTION direction; //!< send or recv for direction messages will go.
     int flags; //!< Flags describing the status of the comm.
     size_t maxMsgSize; //!< The maximum message size.
@@ -1085,7 +1079,8 @@ public:
  * @return
  */
 YGG_API Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name="", char* address=nullptr, int flags=0);
-YGG_API Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, utils::Address* address, int flags=0);
+YGG_API Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, utils::Address& address, int flags=0);
+YGG_API Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, int flags=0);
 
 /**
  * Determine if a communicator type is installed.
@@ -1146,9 +1141,12 @@ protected:
      * @param t The enumerated type of the communicator
      * @param flags Bitwise flags describing the communicator
      */
-    explicit CommBase(const std::string &name, utils::Address *address = nullptr, DIRECTION direction = NONE, const COMM_TYPE &t = NULL_COMM, int flags = 0);
+    explicit CommBase(const std::string &name, utils::Address& address, DIRECTION direction = NONE, const COMM_TYPE &t = NULL_COMM, int flags = 0);
 
-    Comm_t* create_worker(utils::Address*, const DIRECTION&,
+    CommBase(const std::string &name, DIRECTION direction = NONE,
+             const COMM_TYPE &t = NULL_COMM, int flags = 0);
+
+    Comm_t* create_worker(utils::Address&, const DIRECTION&,
 			  int) override {
       throw_error("create_worker of base class called, must be overridden");
       return NULL; // GCOVR_EXCL_LINE
@@ -1172,7 +1170,7 @@ public:
 };
 
 template<typename H>
-CommBase<H>::CommBase(const std::string &nme, utils::Address *addr,
+CommBase<H>::CommBase(const std::string &nme, utils::Address &addr,
 		      DIRECTION dirn, const COMM_TYPE &t, int flgs) :
   Comm_t(nme, addr, dirn, t, flgs), handle(nullptr) {
   if (global_comm)
@@ -1187,6 +1185,14 @@ bool CommBase<H>::is_closed() const {
 template<typename H>
 bool CommBase<H>::_is_closed() const {
   return ((!((bool)(handle))) || !(flags & COMM_FLAG_VALID));
+}
+
+template<typename H>
+CommBase<H>::CommBase(const std::string &nme, DIRECTION dirn,
+                      const COMM_TYPE &t, int flgs) :
+        Comm_t(nme, dirn, t, flgs), handle(nullptr) {
+    if (global_comm)
+        handle = dynamic_cast<CommBase<H> *>(global_comm)->handle;
 }
 
 template<typename H>

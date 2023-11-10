@@ -3,18 +3,22 @@
 
 using namespace communication::utils;
 
-Address::Address(const std::string &adr) {
+Address::Address(const std::string &adr): _key(-1), _valid(false) {
     address(adr);
 }
 
-Address::Address(const char *adr) {
+Address::Address(const char *adr): _key(-1), _valid(false) {
     std::string sadr;
     if (adr != NULL)
-	sadr.assign(adr);
+        sadr.assign(adr);
     address(sadr);
 }
 
-Address::Address(Address *adr) : Address(adr->address()){}
+Address::Address(const Address& adr): _valid(false) {
+    address(adr.address());
+}
+
+Address::Address(const Address* adr): Address(*adr) {}
 
 void Address::address(const std::string &addr) {
     _address = addr;
@@ -43,6 +47,11 @@ int Address::key() const {
 
 bool Address::operator==(const Address &adr) {
     return this->_address == adr._address;
+}
+
+Address& Address::operator=(const Address& adr) {
+    address(adr.address());
+    return *this;
 }
 
 bool Address::valid() const {

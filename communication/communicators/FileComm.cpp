@@ -4,9 +4,9 @@
 using namespace communication::communicator;
 using namespace communication::utils;
 
-FileComm::FileComm(const std::string name, Address *address,
-		     DIRECTION direction, int flgs,
-		     const COMM_TYPE type) :
+FileComm::FileComm(const std::string name, Address &address,
+		   DIRECTION direction, int flgs,
+		   const COMM_TYPE type) :
   CommBase(name, address, direction, type, flgs),
   mode(std::fstream::in | std::fstream::out) {
   if (!global_comm)
@@ -17,7 +17,7 @@ ADD_CONSTRUCTORS_DEF(FileComm)
 
 void FileComm::init() {
   updateMaxMsgSize(0);
-  bool created = ((!address) || address->address().empty());
+  bool created = address.address().empty();
   if (created) {
 #ifdef _MSC_VER
     char key[L_tmpnam] = "yggXXXXXX";
@@ -33,14 +33,10 @@ void FileComm::init() {
       log_error() << "FileComm::init: Error generating temporary file name." << std::endl;
       throw std::runtime_error("FileComm::init: Error in std::mkstemp");
     }
-    if (!address) {
-      address = new utils::Address(key);
-    } else {
-      address->address(key);
-    }
+    address.address(key);
   }
   if (name.empty()) {
-    this->name = "tempnewFILE." + this->address->address();
+    this->name = "tempnewFILE." + this->address.address();
   } else {
     this->name = name;
   }
@@ -52,7 +48,7 @@ void FileComm::init() {
     mode |= std::fstream::app;
   if (flags & FILE_FLAG_BINARY)
     mode |= std::fstream::binary;
-  handle = new std::fstream(this->address->address().c_str(), mode);
+  handle = new std::fstream(this->address.address().c_str(), mode);
   CommBase::init();
 }
 
@@ -67,7 +63,7 @@ void FileComm::_close(bool call_base) {
 				    COMM_FLAG_WORKER))));
 #endif
     if (delete_file)
-      std::remove(this->address->address().c_str());
+      std::remove(this->address.address().c_str());
   }
   if (call_base)
     CommBase::_close(true);

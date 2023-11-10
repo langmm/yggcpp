@@ -103,47 +103,58 @@ int Comm_t::_ygg_finalized = 0;
 CLEANUP_MODE Comm_t::_ygg_cleanup_mode = CLEANUP_DEFAULT;
 std::string Comm_t::_ygg_main_thread_id = "";
 
-Comm_t::Comm_t(const std::string &nme, Address *addr,
+void Comm_t::init() {
+    _ygg_init();
+
+    flags |= COMM_FLAG_VALID;
+    if (direction == NONE)
+        flags &= ~COMM_FLAG_VALID;
+
+    thread_id = get_thread_id();
+    char *allow_threading = getenv("YGG_THREADING");
+    if (allow_threading)
+        flags |= COMM_ALLOW_MULTIPLE_COMMS;
+    char *model_name = std::getenv("YGG_MODEL_NAME");
+    if (model_name) {
+        std::string prefix(model_name);
+        prefix += ":";
+        if (name.rfind(prefix, 0) != 0) {
+            prefix += name;
+            name = prefix;
+        }
+    }
+
+    get_global_scope_comm();
+
+    Comm_t::register_comm(this);
+
+    if (!address.valid()) {
+        address = addressFromEnv(name, direction);
+        if ((flags & COMM_FLAG_INTERFACE) && (!address.valid())) {
+	    log_error() << "Comm_t: " << name << " not registered as environment variable.\n" << std::endl;
+            flags &= ~COMM_FLAG_VALID;
+        }
+    }
+    if (flags & COMM_FLAG_SET_OPP_ENV)
+      setOppEnv();
+    log_debug() << "Comm_t: Done" << std::endl;
+}
+Comm_t::Comm_t(const std::string &nme, Address &addr,
 	       DIRECTION dirn, const COMM_TYPE &t, int flgs) :
   type(t), name(nme), address(addr), direction(dirn), flags(flgs),
   maxMsgSize(COMM_BASE_MAX_MSG_SIZE), msgBufSize(0),
   index_in_register(-1), thread_id(), metadata(),
   timeout_recv(YGG_MAX_TIME), workers(), global_comm(nullptr) {
+  init();
+}
 
-  _ygg_init();
-
-  flags |= COMM_FLAG_VALID;
-  if (direction == NONE)
-    flags &= ~COMM_FLAG_VALID;
-  
-  thread_id = get_thread_id();
-  char *allow_threading = std::getenv("YGG_THREADING");
-  if (allow_threading)
-    flags |= COMM_ALLOW_MULTIPLE_COMMS;
-  char *model_name = std::getenv("YGG_MODEL_NAME");
-  if (model_name) {
-    std::string prefix(model_name);
-    prefix += ":";
-    if (name.rfind(prefix, 0) != 0) {
-      prefix += name;
-      name = prefix;
-    }
-  }
-
-  get_global_scope_comm();
-  
-  Comm_t::register_comm(this);
-
-  if (!(address && address->valid())) {
-    if (address)
-      delete address;
-    address = addressFromEnv(name, direction);
-    if ((flags & COMM_FLAG_INTERFACE) && (!address->valid())) {
-      log_error() << "Comm_t: " << name << " not registered as environment variable.\n" << std::endl;
-      flags &= ~COMM_FLAG_VALID;
-    }
-  }
-  log_debug() << "Comm_t: Done" << std::endl;
+Comm_t::Comm_t(const std::string &nme,
+               DIRECTION dirn, const COMM_TYPE &t, int flgs) :
+  type(t), name(nme), address(), direction(dirn), flags(flgs),
+  maxMsgSize(COMM_BASE_MAX_MSG_SIZE), msgBufSize(0),
+  index_in_register(-1), thread_id(), metadata(),
+  timeout_recv(YGG_MAX_TIME), workers(), global_comm(nullptr) {
+  init();
 }
 
 Comm_t::~Comm_t() {
@@ -153,13 +164,9 @@ Comm_t::~Comm_t() {
       Comm_t::registry[index_in_register] = NULL;
   } YGG_THREAD_SAFE_END;
   log_debug() << "~Comm_t: Started" << std::endl;
-  if (address) {
-    delete address;
-    address = nullptr;
-  }
-  log_debug() << "~Comm_t: Finished" << std::endl;
   if (flags & COMM_FLAG_SET_OPP_ENV)
     unsetOppEnv();
+  log_debug() << "~Comm_t: Finished" << std::endl;
 }
 
 bool Comm_t::get_global_scope_comm() {
@@ -187,7 +194,6 @@ bool Comm_t::get_global_scope_comm() {
 	if (!model_name)
 	  model_name = std::getenv("YGG_SERVER_INPUT");
       }
-      assert(model_name);
       if (model_name)
 	global_name.assign(model_name);
       global_scope_comm = 1;
@@ -207,9 +213,9 @@ bool Comm_t::get_global_scope_comm() {
   if (!global_comm) {
     log_debug() << "get_global_scope_comm: Creating global comm \""
 	      << global_name << "\"" << std::endl;
-    Address* global_address = new Address();
-    if (address)
-      global_address->address(address->address());
+    Address global_address;
+    if (address.valid())
+      global_address.address(address.address());
     global_comm = new_Comm_t(global_direction, global_type, global_name,
 			     global_address, flags | COMM_FLAG_GLOBAL);
     log_debug() << "get_global_scope_comm: Created global comm \""
@@ -218,9 +224,7 @@ bool Comm_t::get_global_scope_comm() {
     log_debug() << "get_global_scope_comm: Found global comm \""
 	      << global_name << "\"" << std::endl;
   }
-  if (!address)
-    address = new Address();
-  address->address(global_comm->address->address());
+  address.address(global_comm->address.address());
   flags = global_comm->flags & ~COMM_FLAG_GLOBAL;
   if (is_server)
     global_scope_comm = 0;
@@ -258,22 +262,24 @@ bool Comm_t::check_size(const size_t &len) const {
 }
 
 Comm_t* communication::communicator::new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, char* address, int flags) {
-  Address* addr = nullptr;
+  Address addr;
   if (address)
-    addr = new Address(address);
-  else
-    addr = new Address();
+    addr.address(address);
   return communication::communicator::new_Comm_t(dir, type, name, addr, flags);
 }
-Comm_t* communication::communicator::new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, Address* addr, int flags) {
+
+Comm_t* communication::communicator::new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, int flags) {
+    Address addr;
+    return communication::communicator::new_Comm_t(dir, type, name, addr, flags);
+}
+
+Comm_t* communication::communicator::new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, Address &addr, int flags) {
   flags |= COMM_FLAG_DELETE;
   if (flags & COMM_FLAG_ASYNC) {
     return new AsyncComm(name, addr, dir, flags, type);
   }
   switch(type) {
   case NULL_COMM:
-    delete addr;
-    addr = nullptr;
     break;
   case DEFAULT_COMM:
     return new COMM_BASE(name, addr, dir, flags);
@@ -317,8 +323,8 @@ bool communication::communicator::is_commtype_installed(const COMM_TYPE type) {
 Comm_t* Comm_t::create_worker_send(Header& head) {
   assert(!global_comm);
   Comm_t* worker = workers.get(this, SEND);
-  if (worker && worker->address) {
-    if (!head.SetMetaString("address", worker->address->address()))
+  if (worker && worker->address.valid()) {
+    if (!head.SetMetaString("address", worker->address.address()))
       return nullptr;
   }
   return worker;
@@ -328,10 +334,10 @@ Comm_t* Comm_t::create_worker_recv(Header& head) {
   assert(!global_comm);
   log_debug() << "create_worker_recv: begin" << std::endl;
   try {
-    const char* address;
-    if (!head.GetMetaString("address", address))
+    const char* address_str;
+    if (!head.GetMetaString("address", address_str))
       return nullptr;
-    Address* adr = new Address(address);
+    Address adr(address_str);
     return workers.get(this, RECV, adr);
   } catch (...) {
     return nullptr;
@@ -349,7 +355,7 @@ int Comm_t::send_raw(const char *data, const size_t &len) {
     log_debug() << "send_raw: Attempt to send though a communicator set up to receive" << std::endl;
     return -1;
   }
-  log_debug() << "send_raw: Sending " << len << " bytes to " << address->address() << std::endl;
+  log_debug() << "send_raw: Sending " << len << " bytes to " << address.address() << std::endl;
   if (is_closed()) {
     log_error() << "send_raw: Communicator closed." << std::endl;
     return -1;
@@ -393,7 +399,7 @@ int Comm_t::send_raw(const char *data, const size_t &len) {
       log_error() << "send_raw: send interupted at " << head.offset << " of " << head.size_curr << " bytes" << std::endl;
       return -1;
     }
-    log_debug() << "send_raw: " << head.offset << " of " << head.size_curr << " bytes sent to " << address->address() << std::endl;
+    log_debug() << "send_raw: " << head.offset << " of " << head.size_curr << " bytes sent to " << address.address() << std::endl;
   }
   log_debug() << "send_raw: returns " << head.size_curr << std::endl;
   setFlags(head, SEND);
@@ -464,7 +470,7 @@ long Comm_t::recv_raw(char*& data, const size_t &len,
 		      bool allow_realloc) {
   if (global_comm)
     return global_comm->recv_raw(data, len, allow_realloc);
-  log_debug() << "recv_raw: Receiving from " << address->address() << std::endl;
+  log_debug() << "recv_raw: Receiving from " << address.address() << std::endl;
   if (direction != RECV && type != CLIENT_COMM) {
     log_debug() << "recv_raw: Attempt to receive from communicator set up to send" << std::endl;
     return -1;
@@ -474,7 +480,7 @@ long Comm_t::recv_raw(char*& data, const size_t &len,
   if (!allow_realloc) {
     char* tmp = NULL;
     size_t tmp_len = 0;
-    long ret = recv_raw(tmp, tmp_len, true);
+    ret = recv_raw(tmp, tmp_len, true);
     if (ret >= 0 || ret == -2) {
       if (ret >= 0) {
 	tmp_len = static_cast<size_t>(ret);
@@ -551,7 +557,7 @@ long Comm_t::recv_raw(char*& data, const size_t &len,
       log_debug() << "recv_raw: Updated type" << std::endl;
     }
   }
-  log_debug() << "recv_raw: Received " << head.size_curr << " bytes from " << address->address() << std::endl;
+  log_debug() << "recv_raw: Received " << head.size_curr << " bytes from " << address.address() << std::endl;
   ret = head.size_data;
   setFlags(head, RECV);
   return ret;

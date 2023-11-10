@@ -99,7 +99,7 @@ public:
     }
     int hasComm(const std::string& response_address) const {
         for (size_t i = 0; i < comms.size(); i++) {
-            if (comms[i] && *(comms[i]->address) == response_address)
+            if (comms[i] && comms[i]->address.address() == response_address)
                 return (int)i;
         }
         return -1;
@@ -162,7 +162,7 @@ public:
 	  return -1;
       }
       if (!header.SetMetaString("response_address",
-				comms[0]->address->address()))
+				comms[0]->address.address()))
 	return -1;
       if (existing_idx < 0) {
 	size_t idx = requests.size();
@@ -180,7 +180,7 @@ public:
 	existing_idx = static_cast<int>(idx);
       }
       log_debug() << "addRequestClient: done response_address = "
-		   << comms[0]->address->address() << ", request_id = "
+		   << comms[0]->address.address() << ", request_id = "
 		   << request_id << std::endl;
       return existing_idx;
     }
@@ -200,7 +200,7 @@ public:
 			    (header.flags & HEAD_FLAG_CLIENT_SIGNON));
       log_debug() << "addRequestServer: done idx = " << idx
 		   << ", response_address = "
-		   << comms[requests[idx].comm_idx]->address->address()
+		   << comms[requests[idx].comm_idx]->address.address()
 		   << ", request_id = " << requests[idx].request_id
 		   << std::endl;
       return static_cast<int>(idx);
@@ -348,7 +348,7 @@ public:
             if (idx >= 0)
                 return idx;
         }
-        utils::Address* response_adr = new utils::Address(response_address);
+        utils::Address response_adr(response_address);
 	COMM_TYPE response_type = DEFAULT_COMM;
 	Comm_t* x = new_Comm_t(response_dir, response_type, "",
 			       response_adr, response_flags);

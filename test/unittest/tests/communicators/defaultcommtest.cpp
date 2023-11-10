@@ -11,7 +11,7 @@ using namespace communication::communicator;
 using namespace communication::mock;
 
 TEST(DefaultCommu, checkTypeErrors) {
-  DefaultComm x("", nullptr, SEND);
+  DefaultComm x("", SEND);
   EXPECT_TRUE(x.addSchema("{\"type\": \"boolean\"}"));
   {
     double data = 5.0;
@@ -42,8 +42,9 @@ TEST(DefaultCommu, checkTypeErrors) {
 }
 
 TEST(DefaultCommu, seriErrors) {
-  DefaultComm sComm("", nullptr, SEND);
-  DefaultComm rComm("", new utils::Address(sComm.getAddress().c_str()), RECV);
+  DefaultComm sComm("", SEND);
+  utils::Address addr(sComm.getAddress().c_str());
+  DefaultComm rComm("", addr, RECV);
   int a = 0, b = 0;
   EXPECT_EQ(sComm.send(2, 1, 1), -1); // No schema to parse variable arguments
   EXPECT_GE(sComm.send("hello", 5), 0);
@@ -51,17 +52,17 @@ TEST(DefaultCommu, seriErrors) {
 }
 
 TEST(DefaultCommu, workerErrors) {
-  DefaultComm sComm("", nullptr, SEND);
+  DefaultComm sComm("", SEND);
   EXPECT_FALSE(sComm.getWorkers().setRequest(nullptr, "invalid"));
   EXPECT_FALSE(sComm.getWorkers().setResponse("invalid"));
-  utils::Address* addr = new utils::Address(sComm.getAddress().c_str());
+  utils::Address addr(sComm.getAddress().c_str());
   EXPECT_EQ(sComm.getWorkers().get(nullptr, RECV, addr), nullptr);
-  delete addr;
 }
 
 TEST(DefaultCommu, filter_recv) {
-  DefaultComm sComm("", nullptr, SEND);
-  DefaultComm rComm("", new utils::Address(sComm.getAddress()), RECV);
+  DefaultComm sComm("", SEND);
+  utils::Address addr(sComm.getAddress());
+  DefaultComm rComm("", addr, RECV);
   rComm.getMetadata().addFilter(example_filter);
   EXPECT_GT(sComm.sendVar(0), 0);
   EXPECT_GT(sComm.sendVar(1), 0);
@@ -75,8 +76,9 @@ TEST(DefaultCommu, filter_recv) {
   EXPECT_EQ(rComm.recvVar(result), -2);
 }
 TEST(DefaultCommu, filter_send) {
-  DefaultComm sComm("", nullptr, SEND);
-  DefaultComm rComm("", new utils::Address(sComm.getAddress()), RECV);
+  DefaultComm sComm("", SEND);
+  utils::Address addr(sComm.getAddress());
+  DefaultComm rComm("", addr, RECV);
   sComm.getMetadata().addFilter(example_filter);
   EXPECT_GT(sComm.sendVar(0), 0);
   EXPECT_EQ(sComm.sendVar(1), 0);
@@ -91,8 +93,9 @@ TEST(DefaultCommu, filter_send) {
 }
 
 TEST(DefaultCommu, transform_recv) {
-  DefaultComm sComm("", nullptr, SEND);
-  DefaultComm rComm("", new utils::Address(sComm.getAddress()), RECV);
+  DefaultComm sComm("", SEND);
+  utils::Address addr(sComm.getAddress());
+  DefaultComm rComm("", addr, RECV);
   rComm.getMetadata().addTransform(&example_transform);
   EXPECT_GT(sComm.sendVar(0), 0);
   EXPECT_GT(sComm.sendVar(1), 0);
@@ -108,8 +111,9 @@ TEST(DefaultCommu, transform_recv) {
   EXPECT_EQ(rComm.recvVar(result), -2);
 }
 TEST(DefaultCommu, transform_send) {
-  DefaultComm sComm("", nullptr, SEND);
-  DefaultComm rComm("", new utils::Address(sComm.getAddress()), RECV);
+  DefaultComm sComm("", SEND);
+  utils::Address addr(sComm.getAddress());
+  DefaultComm rComm("", addr, RECV);
   sComm.getMetadata().addTransform(&example_transform);
   EXPECT_GT(sComm.sendVar(0), 0);
   EXPECT_GT(sComm.sendVar(1), 0);

@@ -22,8 +22,8 @@ namespace communication {
        * @param direction Enuerated direction for this instance
        * @param flags Bitwise flags describing the communicator
        */
-      explicit FileComm(const std::string name = "",
-			utils::Address *address = new utils::Address(),
+      explicit FileComm(const std::string name,
+			utils::Address &address,
 			const DIRECTION direction = NONE,
 			int flgs = 0, const COMM_TYPE type = FILE_COMM);
       ADD_CONSTRUCTORS_BASE(FileComm, FILE_COMM, true)

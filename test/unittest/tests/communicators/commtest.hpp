@@ -282,14 +282,15 @@ bool example_transform(rapidjson::Document& msg) {
   }
 
 #define TESTER_METHODS(cls)						\
-  cls ## _tester(const std::string name = "",				\
-		 utils::Address *address = new utils::Address(),	\
+  cls ## _tester(const std::string name,				\
+		 utils::Address& address,	\
 		 const DIRECTION direction = NONE) :			\
-  cls(name, address, direction) {}					\
+  cls(name, address, direction) {}          \
+    cls ## _tester(const std::string name="",				\
+		 const DIRECTION direction = NONE) :			\
+  cls(name, direction) {}					\
   cls ## _tester(DIRECTION dir) :					\
-  cls("", nullptr, dir) {}						\
-  cls ## _tester(const std::string name, DIRECTION dir) :		\
-  cls(name, dir) {}
+  cls("", dir) {}
 
 #define COMM_SERI_TEST_TYPE(cls, type, value, schema, init)		\
   TEST(cls, type) {							\
@@ -392,7 +393,7 @@ bool example_transform(rapidjson::Document& msg) {
     std::string name = "test_name";					\
     global_scope_comm_on();						\
     {									\
-      cls ## _tester sComm(name, nullptr, SEND);			\
+      cls ## _tester sComm(name, SEND);			\
       sComm.addSchema("{\"type\": \"number\"}");			\
       std::string key_env = name + "_IN";				\
       std::string val_env = sComm.getAddress();				\
@@ -405,7 +406,7 @@ bool example_transform(rapidjson::Document& msg) {
 			    recvVar, (data_recv));			\
     }									\
     {									\
-      cls ## _tester sComm(name, nullptr, SEND);			\
+      cls ## _tester sComm(name, SEND);			\
       cls ## _tester rComm(name, RECV);					\
       DO_SEND_RECV_EXCHANGE(INIT_DATA_SINGLE(double, 1.5),		\
 			    COMP_DATA_SINGLE,				\
@@ -421,7 +422,7 @@ bool example_transform(rapidjson::Document& msg) {
   TEST(cls, async) {							\
     std::string name = "test_name";					\
     COMM_TYPE typ = cls::defaultCommType();				\
-    AsyncComm sComm(name, nullptr, SEND, COMM_FLAG_ASYNC, typ);		\
+    AsyncComm sComm(name, SEND, COMM_FLAG_ASYNC, typ);		\
     sComm.addSchema("{\"type\": \"number\"}");				\
     std::string key_env = name + "_IN";					\
     std::string val_env = sComm.getAddress();				\
@@ -438,7 +439,7 @@ bool example_transform(rapidjson::Document& msg) {
     global_scope_comm_on();						\
     COMM_TYPE typ = cls::defaultCommType();				\
     {									\
-      AsyncComm sComm(name, nullptr, SEND, COMM_FLAG_ASYNC, typ);	\
+      AsyncComm sComm(name, SEND, COMM_FLAG_ASYNC, typ);	\
       sComm.addSchema("{\"type\": \"number\"}");			\
       std::string key_env = name + "_IN";				\
       std::string val_env = sComm.getAddress();				\
@@ -451,7 +452,7 @@ bool example_transform(rapidjson::Document& msg) {
 			    recvVar, (data_recv));			\
     }									\
     {									\
-      AsyncComm sComm(name, nullptr, SEND, COMM_FLAG_ASYNC, typ);	\
+      AsyncComm sComm(name, SEND, COMM_FLAG_ASYNC, typ);	\
       AsyncComm rComm(name, RECV, COMM_FLAG_ASYNC, typ);		\
       DO_SEND_RECV_EXCHANGE(INIT_DATA_SINGLE(double, 1.5),		\
 			    COMP_DATA_SINGLE,				\
@@ -471,12 +472,12 @@ bool example_transform(rapidjson::Document& msg) {
     std::string key_env = a_name + "_OUT";				\
     std::string val_env = proxy.getAddress(RECV);			\
     setenv(key_env.c_str(), val_env.c_str(), 1);			\
-    cls sComm(a_name, nullptr, SEND, COMM_ALLOW_MULTIPLE_COMMS);	\
+    cls sComm(a_name, SEND, COMM_ALLOW_MULTIPLE_COMMS);			\
     unsetenv(key_env.c_str());						\
     key_env = b_name + "_IN";						\
     val_env = proxy.getAddress(SEND);					\
     setenv(key_env.c_str(), val_env.c_str(), 1);			\
-    cls rComm(b_name, nullptr, RECV, COMM_ALLOW_MULTIPLE_COMMS);	\
+    cls rComm(b_name, RECV, COMM_ALLOW_MULTIPLE_COMMS);			\
     unsetenv(key_env.c_str());						\
     EXPECT_GE(sComm.sendVar(25.0), 0);					\
     double dest = -1.0;							\
@@ -488,7 +489,7 @@ bool example_transform(rapidjson::Document& msg) {
   TEST(cls, async) {							\
     std::string name = "test_name";					\
     COMM_TYPE typ = cls::defaultCommType();				\
-    EXPECT_THROW(AsyncComm sComm(name, nullptr, SEND,			\
+    EXPECT_THROW(AsyncComm sComm(name, SEND,				\
 				 COMM_FLAG_ASYNC, typ),			\
 		 std::exception);					\
   }
@@ -518,8 +519,9 @@ bool example_transform(rapidjson::Document& msg) {
     unsetenv(key_env.c_str());						\
     if (sComm.getMaxMsgSize() > 0) {					\
       /* Add worker in advance so that send is successful */		\
-      Comm_t* sComm_worker = sComm.getWorkers().get(&sComm, SEND);	\
-      rComm.getWorkers().get(&rComm, RECV, new utils::Address(sComm_worker->getAddress())); \
+      Comm_t* sComm_worker = sComm.getWorkers().get(&sComm, SEND); \
+      utils::Address addr(sComm_worker->getAddress());        \
+      rComm.getWorkers().get(&rComm, RECV, addr); \
       EXPECT_EQ(rComm.getWorkers().find_worker(sComm_worker), -1);	\
       rComm.getWorkers().remove_worker(sComm_worker);			\
       sComm_worker = nullptr;						\

@@ -6,11 +6,17 @@
 using namespace communication::communicator;
 using namespace communication::utils;
 
-ServerComm::ServerComm(const std::string nme, Address *addr,
+ServerComm::ServerComm(const std::string nme, Address& addr,
 		       int flgs, const COMM_TYPE type) :
   RPCComm(nme, addr,
 	  flgs | COMM_FLAG_SERVER | COMM_ALWAYS_SEND_HEADER,
 	  RECV, SEND, type) {}
+
+ServerComm::ServerComm(const std::string nme,
+                       int flgs, const COMM_TYPE type) :
+        RPCComm(nme,
+                flgs | COMM_FLAG_SERVER | COMM_ALWAYS_SEND_HEADER,
+                RECV, SEND, type) {}
 
 ADD_CONSTRUCTORS_RPC_DEF(ServerComm)
 
