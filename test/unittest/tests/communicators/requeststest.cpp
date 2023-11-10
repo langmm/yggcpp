@@ -14,8 +14,7 @@ TEST(RequestList, Empty) {
   EXPECT_EQ(req.hasComm("invalid"), -1);
   EXPECT_EQ(req.popRequestServer(), -1);
   EXPECT_FALSE(req.lastComm());
-  EXPECT_THROW(req.activeRequestClient(), std::exception);
-  // EXPECT_EQ(req.activeRequestClient(), "");
+  EXPECT_EQ(req.activeRequestClient(), "");
   EXPECT_FALSE(req.isComplete("invalid"));
   EXPECT_FALSE(req.signonSent());
   Header header;
