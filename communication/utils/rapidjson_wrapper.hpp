@@ -24,11 +24,6 @@
 #define WSchemaEncoder SchemaEncoder
 #define WPrettyWriter PrettyWriter
 
-#if defined(_MSC_VER)
-// _WINDOWS) && !(defined(YggInterface_EXPORTS) || defined(YggInterface_py_EXPORTS) || defined(RAPIDJSON_FORCE_IMPORT_ARRAY))
-#define WRAP_RAPIDJSON_FOR_DLL
-#endif
-
 #ifdef WRAP_RAPIDJSON_FOR_DLL
 
 #define RJ_WNS wrap::RAPIDJSON_NAMESPACE
@@ -37,10 +32,10 @@
 
 #ifdef _DEBUG
 #undef _DEBUG
-#include "Python.h"
+#include <Python.h>
 #define _DEBUG
 #else
-#include "Python.h"
+#include <Python.h>
 #endif
 
 #ifndef RAPIDJSON_DEFAULT_ALLOCATOR
@@ -111,6 +106,10 @@ namespace wrap {
 RAPIDJSON_NAMESPACE_BEGIN
 
 /*!
+  @brief Import the numpy C API.
+ */
+void init_numpy_API();
+/*!
   @brief Initialize the Python interpreter.
  */
 void initialize_python(const std::string error_prefix="");
@@ -121,13 +120,20 @@ void initialize_python(const std::string error_prefix="");
 void finalize_python(const std::string error_prefix="");
 
 // Forward declarations
+class WValue;
 class WDocument;
 class WMember;
-template<bool Const>
-class WGenericMemberIterator;
-typedef WGenericMemberIterator<false> WMemberIterator;
-typedef WGenericMemberIterator<true> WConstMemberIterator;
+template<typename T, bool Const>
+class IteratorWrapperBase;
+typedef IteratorWrapperBase<WValue, false> WValueIterator;
+typedef IteratorWrapperBase<WValue, true> WConstValueIterator;
+typedef IteratorWrapperBase<WMember, false> WMemberIterator;
+typedef IteratorWrapperBase<WMember, true> WConstMemberIterator;
 
+#define MEMBER							\
+  RJ_WNS::GenericMember<UTF8<>, RAPIDJSON_DEFAULT_ALLOCATOR>
+#define MEMBER_ITERATOR(C)						\
+  RJ_WNS::GenericMemberIterator<C, UTF8<>, RAPIDJSON_DEFAULT_ALLOCATOR>
 #define WRAP_CONSTRUCTOR(cls, argsT, args)		\
   cls argsT
 #define WRAP_METHOD(cls, name, argsT, args, type, mods)	\
@@ -141,6 +147,10 @@ typedef WGenericMemberIterator<true> WConstMemberIterator;
   WRAP_METHOD(cls, name, argsT, args, type&, mods)
 #define WRAP_METHOD_CAST(cls, name, argsT, args, type, mods)	\
   WRAP_METHOD(cls, name, argsT, args, type, mods)
+#define WRAP_METHOD_CAST_VITER(cls, name, argsT, args, type, mods)	\
+  WRAP_METHOD(cls, name, argsT, args, type, mods)
+#define WRAP_METHOD_CAST_MITER(cls, name, argsT, args, type, mods)	\
+  WRAP_METHOD(cls, name, argsT, args, type, mods)
 #define WRAP_METHOD_CAST_CONST(cls, name, argsT, args, type, mods)	\
   WRAP_METHOD(cls, name, argsT, args, const type, const mods)
 #define WRAP_SET_GET(name, type)					\
@@ -148,10 +158,9 @@ typedef WGenericMemberIterator<true> WConstMemberIterator;
   WRAP_METHOD(WValue, Get ## name, (), (), type, const);		\
   WRAP_METHOD_SELF(WValue, Set ## name, (type x), (x), );		\
   WRAP_METHOD(WValue, Is ## name, (), (), bool, const)
-#define WRAP_METHOD_ITER(cls, name, argsT, args, mods)	\
-  WRAP_METHOD(cls, name, argsT, args, cls, mods)
 #define WRAP_GET_STRING(name)			\
   static const WValue Get ## name ## String();
+
 
 
 ////////////////////////////////////////////////////////////////////
@@ -165,51 +174,42 @@ private:
   WrapperBase& operator=(const WrapperBase&) = delete;
 public:
   typedef T BaseType;
-  WrapperBase(T* val, bool created=false, bool iteration=false) :
-    val_(val), created_val(created), iter(iteration) {}
+  WrapperBase(T* val, bool created=false) :
+    val_(val), created_val(created) {}
   WrapperBase(T& val) :
     WrapperBase(&val) {}
+  WrapperBase(WrapperBase<T>&& rhs) :
+    WrapperBase(nullptr) {
+    std::swap(val_, rhs.val_);
+    std::swap(created_val, rhs.created_val);
+  }
+  ~WrapperBase();
+  WrapperBase<T>& operator=(WrapperBase<T>& rhs) {
+    std::swap(val_, rhs.val_);
+    std::swap(created_val, rhs.created_val);
+    return *this;
+  }
   T* val_;
   bool created_val;
-  bool iter;
 };
 
-#define WRAPPER_BASE(base)			\
-  WrapperBase<RJ_WNS::base>
 #define WRAPPER_CLASS(base)			\
-  W ## base : public WRAPPER_BASE(base)
-#define WRAPPER_METHODS_PRIV_(cls)		\
-private:					\
- cls(const cls&) = delete;			\
- cls& operator=(const cls&) = delete
-#define WRAPPER_METHODS_OPS_(cls)		\
- cls* operator->() const;			\
- cls& operator++();				\
- cls operator++(int);				\
- bool operator==(const cls& rhs) const;		\
- bool operator!=(const cls& rhs) const
-#define WRAPPER_METHODS_EMPTY_CONSTRUCTOR(cls)	\
- cls()
+  W ## base : public WrapperBase<RJ_WNS::base>
 #define WRAPPER_METHODS_MOVE_CONSTRUCTOR(cls, base)	\
   cls(base&& val)
-#define WRAPPER_METHODS_(cls, base)		\
-public:						\
- typedef base BaseType;				\
- cls(base* val, bool iterator=false);		\
+#define WRAPPER_METHODS_STRICT(cls, base)	\
+ cls(base* val);				\
  cls(base& val);				\
  cls(cls&& rhs);				\
- ~cls();					\
+ cls& operator=(cls& rhs)
+#define WRAPPER_METHODS_BASE(cls, base)		\
+public:						\
+ typedef base BaseType;				\
  cls& operator=(cls&& rhs);			\
- cls& operator=(cls& rhs);			\
  cls& Move()
-#define WRAPPER_METHODS(base)					\
-  WRAPPER_METHODS_PRIV_(W ## base);				\
-  WRAPPER_METHODS_(W ## base, RJ_WNS::base);			\
-  WRAPPER_METHODS_EMPTY_CONSTRUCTOR(W ## base);			\
-  WRAPPER_METHODS_MOVE_CONSTRUCTOR(W ## base, RJ_WNS::base);	\
-  WRAPPER_METHODS_OPS_(W ## base)
-#define WRAPPER_METHODS_NO_EMPTY_CONSTRUCTOR(base)	\
-  WRAPPER_METHODS_(W ## base, RJ_WNS::base)
+#define WRAPPER_METHODS(base)				\
+  WRAPPER_METHODS_BASE(W ## base, RJ_WNS::base);	\
+  WRAPPER_METHODS_STRICT(W ## base, RJ_WNS::base)
 
 #define WRAP_HANDLER_METHOD(cls, name, argsT, args)	\
   WRAP_METHOD(cls, name, argsT, args, bool, )
@@ -264,7 +264,7 @@ public:						\
 ////////////////////////////////////////////////////////////////////
 
 class WRAPPER_CLASS(StringRefType) {
-  WRAPPER_METHODS_NO_EMPTY_CONSTRUCTOR(StringRefType);
+  WRAPPER_METHODS(StringRefType);
   typedef char Ch;
   typedef char CharType;
   WRAP_CONSTRUCTOR(explicit WStringRefType, (const CharType* str), (str));
@@ -282,48 +282,73 @@ class WRAPPER_CLASS(StringRefType) {
 // WValue
 ////////////////////////////////////////////////////////////////////
 
-// #define PTR_INDEX
-
-#ifdef PTR_INDEX
-// #define INDEX_RTYPE WValue
-// #define INDEX_METHOD WValue(&tmp)
-// #define INDEX_METHOD_CONST WValue(const_cast<RJ_WNS::Value*>(&tmp))
-#else // PTR_INDEX
 #define INDEX_RTYPE WValue&
 #define INDEX_METHOD			\
   childRef(&tmp)
 #define INDEX_METHOD_CONST			\
   const_cast<WValue*>(this)->childRef(const_cast<RJ_WNS::Value*>(&tmp))
-#endif // PTR_INDEX
 
 class WRAPPER_CLASS(Value) {
+private:
+  WValue(const WValue&) = delete;
+  WValue& operator=(const WValue&) = delete;
 public:
   typedef RAPIDJSON_DEFAULT_ALLOCATOR Allocator;
   typedef RAPIDJSON_DEFAULT_ALLOCATOR AllocatorType;
   typedef WValue ValueType;
-  typedef WValue ValueIterator;
-  typedef WValue ConstValueIterator;
+  typedef WValueIterator ValueIterator;
+  typedef WConstValueIterator ConstValueIterator;
   typedef WMemberIterator MemberIterator;
   typedef WConstMemberIterator ConstMemberIterator;
   typedef char Ch;
   typedef rapidjson::units::Units UnitsType;
+
+  WValue(RJ_WNS::Value* x, WValue* parent=nullptr) :
+    WrapperBase(x), parent_(parent), vrefs(), mrefs() {}
+  WValue(RJ_WNS::Value& x, WValue* parent=nullptr) :
+    WrapperBase(x), parent_(parent), vrefs(), mrefs() {}
+  WValue(WValue&& rhs) :
+    WrapperBase(std::forward<WrapperBase<RJ_WNS::Value> >(rhs)),
+    parent_(nullptr),
+    vrefs(), mrefs() {
+    std::swap(parent_, rhs.parent_);
+    std::swap(vrefs, rhs.vrefs);
+    std::swap(mrefs, rhs.mrefs);
+  }
+  WValue& operator=(WValue& rhs) {
+    WrapperBase<RJ_WNS::Value>::operator=(rhs);
+    std::swap(parent_, rhs.parent_);
+    std::swap(vrefs, rhs.vrefs);
+    std::swap(mrefs, rhs.mrefs);
+    return *this;
+  }
+  WValue* parent_;
+  std::vector<WValue> vrefs;
+  std::vector<WMember> mrefs;
   
-  std::vector<WValue> refs;
+ public:
+  bool operator==(const WValue& rhs) const;
+  bool operator!=(const WValue& rhs) const;
+
   WValue& childRef(RJ_WNS::Value* x);
-  operator RJ_WNS::Value& () { return *val_; }
-  operator const RJ_WNS::Value& () const { return *val_; }
+  WMember& childRef(MEMBER* x);
+  WValue* _getPtr();
+  const WValue* _getPtr() const;
+  WValue* operator & ();
+  const WValue* operator & () const;
+  
+  // operator RJ_WNS::Value& () { return *val_; }
+  // operator const RJ_WNS::Value& () const { return *val_; }
   WValue& CopyInto(WValue& rhs, Allocator& allocator,
 		   bool copyConstStrings = false) const;
   RJ_WNS::Value& CopyInto(RJ_WNS::Value& rhs, Allocator& allocator,
 			  bool copyConstStrings = false) const;
   WValue& CopyFrom(const RJ_WNS::Value& rhs, Allocator& allocator,
 		   bool copyConstStrings = false);
-#ifdef PTR_INDEX
-  std::unique_ptr<WValue> operator&();
-#endif
+
+  WRAPPER_METHODS_BASE(WValue, RJ_WNS::Value);
   
-  WRAPPER_METHODS(Value);
-  WRAP_CONSTRUCTOR(explicit WValue, (Type type), (type));
+  WRAP_CONSTRUCTOR(explicit WValue, (Type type=kNullType), (type));
   WRAP_CONSTRUCTOR(WValue,
 		   (const Ch* str, SizeType len, Allocator& allocator),
 		   (str, len, allocator));
@@ -513,11 +538,16 @@ public:
   WRAP_METHOD_SELF(WValue, Reserve, (SizeType newCapacity,
 				     Allocator &allocator),
 		   (newCapacity, allocator), );
-  WRAP_METHOD_ITER(WValue, Erase, (const WValue& pos), (pos.val_), );
-  WRAP_METHOD_ITER(WValue, Begin, (), (), );
-  WRAP_METHOD_ITER(WValue, End, (), (), );
-  WRAP_METHOD_ITER(WValue, Begin, (), (), const);
-  WRAP_METHOD_ITER(WValue, End, (), (), const);
+  WRAP_METHOD_CAST_VITER(WValue, Erase, (ConstValueIterator pos),
+			 (pos.val_), ValueIterator, );
+  WRAP_METHOD_CAST_VITER(WValue, Begin, (), (),
+			 ValueIterator, );
+  WRAP_METHOD_CAST_VITER(WValue, End, (), (),
+			 ValueIterator, );
+  WRAP_METHOD_CAST_VITER(WValue, Begin, (), (),
+			 ConstValueIterator, const);
+  WRAP_METHOD_CAST_VITER(WValue, End, (), (),
+			 ConstValueIterator, const);
   WRAP_METHOD(WValue, Contains, (const WValue& x),
 	      (*(x.val_)), bool, const);
   INDEX_RTYPE operator[](SizeType index);
@@ -568,22 +598,23 @@ public:
 				       WValue::Allocator& allocator),
 		   (*(name.val_), *(value.val_), allocator), );
   WRAP_METHOD(WValue, RemoveMember, (const Ch* name), (name), bool, );
-  WRAP_METHOD_CAST(WValue, MemberBegin, (), (),
-		   MemberIterator, );
-  WRAP_METHOD_CAST(WValue, MemberEnd, (), (),
-		   MemberIterator, );
-  WRAP_METHOD_CAST(WValue, MemberBegin, (), (),
-		   ConstMemberIterator, const);
-  WRAP_METHOD_CAST(WValue, MemberEnd, (), (),
-		   ConstMemberIterator, const);
-  WRAP_METHOD_CAST(WValue, FindMember, (const Ch* name), (name),
-		   MemberIterator, );
-  WRAP_METHOD_CAST(WValue, FindMember, (const Ch* name), (name),
-		   ConstMemberIterator, const);
-  WRAP_METHOD_CAST(WValue, FindMember, (const WValue& name),
-		   (*(name.val_)), MemberIterator, );
-  WRAP_METHOD_CAST(WValue, FindMember, (const WValue& name),
-		   (*(name.val_)), ConstMemberIterator, const);
+  WRAP_METHOD_CAST_MITER(WValue, MemberBegin, (), (),
+			 MemberIterator, );
+  WRAP_METHOD_CAST_MITER(WValue, MemberEnd, (), (),
+			 MemberIterator, );
+  WRAP_METHOD_CAST_MITER(WValue, MemberBegin, (), (),
+			 ConstMemberIterator, const);
+  WRAP_METHOD_CAST_MITER(WValue, MemberEnd, (), (),
+			 ConstMemberIterator, const);
+  WRAP_METHOD_CAST_MITER(WValue, FindMember, (const Ch* name),
+			 (name), MemberIterator, );
+  WRAP_METHOD_CAST_MITER(WValue, FindMember, (const Ch* name),
+			 (name), ConstMemberIterator, const);
+  WRAP_METHOD_CAST_MITER(WValue, FindMember, (const WValue& name),
+			 (*(name.val_)), MemberIterator, );
+  WRAP_METHOD_CAST_MITER(WValue, FindMember, (const WValue& name),
+			 (*(name.val_)), ConstMemberIterator,
+			 const);
   // Python methods
   WRAP_METHOD(WValue, IsPythonClass, (), (), bool, const);
   WRAP_METHOD(WValue, IsPythonInstance, (), (), bool, const);
@@ -700,6 +731,11 @@ public:
 #endif // RAPIDJSON_HAS_CXX11_RVALUE_REFS
   WDocument& operator=(WDocument& rhs);
   WDocument& Move() { return *this; }
+  WDocument* _getPtr() { return this; }
+  const WDocument* _getPtr() const { return this; }
+  WDocument* operator & () { return this; }
+  const WDocument* operator & () const { return this; }
+  
 
   using ValueType::CopyFrom;
   using ValueType::CopyInto;
@@ -740,9 +776,6 @@ public:
 // WMember
 ////////////////////////////////////////////////////////////////////
 
-#define MEMBER							\
-  RJ_WNS::GenericMember<UTF8<>, RAPIDJSON_DEFAULT_ALLOCATOR>
-
 class WMember {
 private:
   WMember(const WMember&) = delete;
@@ -750,122 +783,102 @@ public:
   typedef MEMBER BaseType;
   WValue name;
   WValue value;
-  WMember(MEMBER& rhs);
-  WMember(MEMBER&& rhs);
+  BaseType* val_;
+  WValue* parent_;
+  WMember(BaseType* rhs, WValue* parent=nullptr);
   WMember(WMember&& rhs);
   WMember& operator=(WMember&& rhs);
   WMember& operator=(WMember& rhs);
-  WMember* operator->() const;
+  WMember* _getPtr() { return this; }
+  const WMember* _getPtr() const { return this; }
 };
 
-#undef MEMBER
-
 ////////////////////////////////////////////////////////////////////
-// WGenericMemberIterator
+// IteratorWrapperBase
 ////////////////////////////////////////////////////////////////////
 
-#define MEMBER_ITERATOR(C)						\
-  RJ_WNS::GenericMemberIterator<C, UTF8<>, RAPIDJSON_DEFAULT_ALLOCATOR>
-
-template<bool Const>
-class WGenericMemberIterator : public WrapperBase<MEMBER_ITERATOR(Const)> {
-  WRAPPER_METHODS_(WGenericMemberIterator, MEMBER_ITERATOR(Const));
-  WRAPPER_METHODS_EMPTY_CONSTRUCTOR(WGenericMemberIterator);
-  WRAPPER_METHODS_MOVE_CONSTRUCTOR(explicit WGenericMemberIterator,
-				   MEMBER_ITERATOR(Const));
-  friend class WValue;
-  template <bool> friend class WGenericMemberIterator;
-
-  typedef WMember PlainType;
+template<typename T, bool Const>
+class IteratorWrapperBase {
+public:
+  typedef T PlainType;
+  typedef typename PlainType::BaseType PlainTypeBase;
   typedef typename internal::MaybeAddConst<Const,PlainType>::Type ValueType;
+  typedef typename internal::MaybeAddConst<Const,PlainTypeBase>::Type BaseValueType;
+  typedef IteratorWrapperBase Iterator;
+  typedef IteratorWrapperBase<T, true> ConstIterator;
+  typedef IteratorWrapperBase<T, false> NonConstIterator;
   
-  typedef WGenericMemberIterator Iterator;
-  typedef WGenericMemberIterator<true> ConstIterator;
-  typedef WGenericMemberIterator<false> NonConstIterator;
-  typedef MEMBER_ITERATOR(true) ConstBaseType;
-  typedef MEMBER_ITERATOR(false) NonConstBaseType;
-
   typedef ValueType      value_type;
   typedef ValueType *    pointer;
   typedef ValueType &    reference;
   typedef std::ptrdiff_t difference_type;
+  typedef std::random_access_iterator_tag iterator_category;
 
   typedef pointer         Pointer;
   typedef reference       Reference;
   typedef difference_type DifferenceType;
 
-  WRAP_CONSTRUCTOR(WGenericMemberIterator,
-		   (const NonConstIterator& it), (*(it.val_)));
-  WRAP_METHOD_CAST(WGenericMemberIterator, operator*, (), (),
-		   WMember, const);
-  WRAP_METHOD_CAST(WGenericMemberIterator, operator->, (), (),
-		   WMember, const);
-  
-  WRAP_METHOD_SELF(WGenericMemberIterator, operator=,
-		   (const NonConstIterator& it), (it.val_), );
-  WRAP_METHOD_SELF(WGenericMemberIterator, operator++, (), (), );
-  WRAP_METHOD_SELF(WGenericMemberIterator, operator--, (), (), );
-  WRAP_METHOD(WGenericMemberIterator, operator++,
-	      (int x), (x), Iterator, );
-  WRAP_METHOD(WGenericMemberIterator, operator--,
-	      (int x), (x), Iterator, );
-  WRAP_METHOD_CAST(WGenericMemberIterator, operator+,
-		   (DifferenceType n), (n),
-		   WGenericMemberIterator, const);
-  WRAP_METHOD_CAST(WGenericMemberIterator, operator-,
-		   (DifferenceType n), (n),
-		   WGenericMemberIterator, const);
+  typedef BaseValueType * BasePointer;
+  typedef BaseValueType & BaseReference;
 
+  IteratorWrapperBase() :
+    ptr_(nullptr), parent_(nullptr) {}
+  
+  IteratorWrapperBase(BasePointer p, WValue* parent) :
+    ptr_(p), parent_(parent) {}
+  IteratorWrapperBase(BaseReference p, WValue* parent) :
+    ptr_(&p), parent_(parent) {}
+  
+  IteratorWrapperBase(const NonConstIterator & it) :
+    ptr_(it.ptr_), parent_(it.parent_) {}
+  Iterator& operator=(const NonConstIterator & it) {
+    ptr_ = it.ptr_;
+    parent_ = it.parent_;
+    return *this;
+  }
+
+#define ITERATOR_INC_OP(op)						\
+  IteratorWrapperBase<T, Const>& operator op ## op();			\
+  IteratorWrapperBase<T, Const> operator op ## op(int);			\
+  IteratorWrapperBase<T, Const> operator op(DifferenceType n) const;	\
+  IteratorWrapperBase<T, Const>& operator op ## =(DifferenceType n);
+  ITERATOR_INC_OP(+)
+  ITERATOR_INC_OP(-)
+#undef ITERATOR_INC_OP
+  
 #define ITERATOR_COMP_OP(op)						\
-  template<bool Const1, bool Const2>					\
-  friend bool operator op(const WGenericMemberIterator<Const1>& lhs,	\
-			  const WGenericMemberIterator<Const2>& rhs)
-  ITERATOR_COMP_OP(==);
-  ITERATOR_COMP_OP(!=);
-  ITERATOR_COMP_OP(<=);
-  ITERATOR_COMP_OP(>=);
-  ITERATOR_COMP_OP(<);
-  ITERATOR_COMP_OP(>);
+  template<bool Const1>							\
+  bool operator op(const IteratorWrapperBase<T, Const1>& rhs) const {	\
+    return ptr_ op rhs.ptr_;						\
+  }
+  ITERATOR_COMP_OP(==)
+  ITERATOR_COMP_OP(!=)
+  ITERATOR_COMP_OP(<=)
+  ITERATOR_COMP_OP(>=)
+  ITERATOR_COMP_OP(<)
+  ITERATOR_COMP_OP(>)
 #undef ITERATOR_COMP_OP
+
+  Reference operator*() const;
+  Pointer   operator->() const;
+  Reference operator[](DifferenceType n) const;
+  
+  BasePointer ptr_;
+  WValue* parent_;
   
 };
 
-#undef MEMBER_ITERATOR
-
-typedef WGenericMemberIterator<false> WMemberIterator;
-typedef WGenericMemberIterator<true> WConstMemberIterator;
-
-#define ITERATOR_COMP_OP_(op, C1, C2)				  \
-  template<>							  \
-  bool operator op(const WGenericMemberIterator<C1>& lhs,	  \
-		   const WGenericMemberIterator<C2>& rhs)
-
-#define ITERATOR_COMP_OP(op)					\
-  template<bool Const1, bool Const2>				\
-  bool operator op(const WGenericMemberIterator<Const1>& lhs,	\
-		   const WGenericMemberIterator<Const2>& rhs) {	\
-    return (*(lhs.val_) op *(rhs.val_));			\
-  }								\
-  ITERATOR_COMP_OP_(op, true, true);				\
-  ITERATOR_COMP_OP_(op, false, false);				\
-  ITERATOR_COMP_OP_(op, true, false);				\
-  ITERATOR_COMP_OP_(op, false, true)
-  
-ITERATOR_COMP_OP(==);
-ITERATOR_COMP_OP(!=);
-ITERATOR_COMP_OP(<=);
-ITERATOR_COMP_OP(>=);
-ITERATOR_COMP_OP(<);
-ITERATOR_COMP_OP(>);
-#undef ITERATOR_COMP_OP
-#undef ITERATOR_COMP_OP_
+typedef IteratorWrapperBase<WValue, false> WValueIterator;
+typedef IteratorWrapperBase<WValue, true> WConstValueIterator;
+typedef IteratorWrapperBase<WMember, false> WMemberIterator;
+typedef IteratorWrapperBase<WMember, true> WConstMemberIterator;
 
 ////////////////////////////////////////////////////////////////////
 // WSchemaDocument
 ////////////////////////////////////////////////////////////////////
 
 class WRAPPER_CLASS(SchemaDocument) {
-  WRAPPER_METHODS_NO_EMPTY_CONSTRUCTOR(SchemaDocument);
+  WRAPPER_METHODS(SchemaDocument);
   WRAP_CONSTRUCTOR(WSchemaDocument, (WDocument& d),
 		   (*((RJ_WNS::Document*)d.val_)));
   WRAP_CONSTRUCTOR(WSchemaDocument, (WValue& d), (*(d.val_)));
@@ -876,7 +889,7 @@ class WRAPPER_CLASS(SchemaDocument) {
 ////////////////////////////////////////////////////////////////////
 
 class WRAPPER_CLASS(SchemaValidator) {
-  WRAPPER_METHODS_NO_EMPTY_CONSTRUCTOR(SchemaValidator);
+  WRAPPER_METHODS(SchemaValidator);
   typedef RAPIDJSON_DEFAULT_ALLOCATOR Allocator;
   typedef RAPIDJSON_DEFAULT_ALLOCATOR AllocatorType;
   WRAP_CONSTRUCTOR(WSchemaValidator, (WSchemaDocument& s),
@@ -890,7 +903,7 @@ class WRAPPER_CLASS(SchemaValidator) {
 ////////////////////////////////////////////////////////////////////
 
 class WRAPPER_CLASS(SchemaNormalizer) {
-  WRAPPER_METHODS_NO_EMPTY_CONSTRUCTOR(SchemaNormalizer);
+  WRAPPER_METHODS(SchemaNormalizer);
   typedef RAPIDJSON_DEFAULT_ALLOCATOR Allocator;
   typedef RAPIDJSON_DEFAULT_ALLOCATOR AllocatorType;
   WRAP_CONSTRUCTOR(WSchemaNormalizer, (WSchemaDocument& s),
@@ -909,7 +922,7 @@ class WRAPPER_CLASS(SchemaNormalizer) {
 ////////////////////////////////////////////////////////////////////
 
 class WRAPPER_CLASS(SchemaEncoder) {
-  WRAPPER_METHODS_NO_EMPTY_CONSTRUCTOR(SchemaEncoder);
+  WRAPPER_METHODS(SchemaEncoder);
   typedef char Ch;
   typedef RAPIDJSON_DEFAULT_ALLOCATOR Allocator;
   typedef RAPIDJSON_DEFAULT_ALLOCATOR AllocatorType;
@@ -943,7 +956,8 @@ template<typename OutputStream, typename SourceEncoding = UTF8<>,
 	 typename StackAllocator = CrtAllocator,
 	 unsigned writeFlags = kWriteDefaultFlags>
 class WPrettyWriter : public WrapperBase<WRAPPED_WRITER> {
-  WRAPPER_METHODS_(WPrettyWriter, WRAPPED_WRITER);
+  WRAPPER_METHODS_BASE(WPrettyWriter, WRAPPED_WRITER);
+  WRAPPER_METHODS_STRICT(WPrettyWriter, WRAPPED_WRITER);
   typedef Writer<OutputStream, SourceEncoding, TargetEncoding,
 		 StackAllocator, writeFlags> Base;
   typedef typename SourceEncoding::Ch Ch;
@@ -976,22 +990,22 @@ class WPrettyWriter : public WrapperBase<WRAPPED_WRITER> {
 #undef WRAP_METHOD_SELF
 #undef WRAP_METHOD_SELF_CAST
 #undef WRAP_METHOD_CAST
+#undef WRAP_METHOD_CAST_VITER
+#undef WRAP_METHOD_CAST_MITER
 #undef WRAP_METHOD_CAST_CONST
 #undef WRAP_SET_GET
-#undef WRAP_METHOD_ITER
 #undef WRAP_GET_STRING
 #undef WRAPPER_CLASS
 #undef WRAPPER_BASE
-#undef WRAPPER_METHODS_
-#undef WRAPPER_METHODS_OPS_
-#undef WRAPPER_METHODS_PRIV_
-#undef WRAPPER_METHODS_EMPTY_CONSTRUCTOR
 #undef WRAPPER_METHODS_MOVE_CONSTRUCTOR
+#undef WRAPPER_METHODS_BASE
+#undef WRAPPER_METHODS_STRICT
 #undef WRAPPER_METHODS
-#undef WRAPPER_METHODS_NO_OP
-#undef WRAPPER_METHODS_NO_EMPTY_CONSTRUCTOR
 #undef WRAP_HANDLER_METHOD
 #undef WRAP_HANDLER_METHODS
+#undef MEMBER
+#undef MEMBER_ITERATOR
+
 
 RAPIDJSON_NAMESPACE_END
 

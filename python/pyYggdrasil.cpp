@@ -9,8 +9,10 @@
 #endif
 
 #include <Python.h>
+#ifndef WRAP_RAPIDJSON_FOR_DLL
 #define RAPIDJSON_FORCE_IMPORT_ARRAY
-#include "rapidjson/pyrj.h"
+#endif
+#include "utils/rapidjson_wrapper.hpp"
 #include "pyUtils.cpp"
 #include "pyYggCommBase.cpp"
 
@@ -69,8 +71,12 @@ PyInit__pyYggdrasil() {
 PyMODINIT_FUNC
 PyInit_pyYggdrasil() {
 #endif // YGG_PYTHON_LIBRARY_WRAP
-    import_array();
-    // import_umath();
+    try {
+      rapidjson::init_numpy_API();
+    } catch (std::exception& e) {
+      PyErr_SetString(PyExc_TypeError, e.what());
+      return NULL;
+    }
     PyObject* m = PyModuleDef_Init(&pyYggModule);
     communication::communicator::Comm_t::_ygg_init();
     return m;

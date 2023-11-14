@@ -1,4 +1,4 @@
-#if !(defined(_MSC_VER) || defined(WRAP_RAPIDJSON_FOR_DLL))
+#if !(defined(WRAP_RAPIDJSON_FOR_DLL) || defined(RAPIDJSON_YGGDRASIL_PYTHON))
 #define RAPIDJSON_FORCE_IMPORT_ARRAY
 #endif
 #include "comms.hpp"
