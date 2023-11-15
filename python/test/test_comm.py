@@ -1,6 +1,7 @@
 import pytest
 import pyYggdrasil
 from threading import Thread
+import numpy as np
 
 _commtypes = [
     pyYggdrasil.COMM_TYPE.IPC_COMM,
@@ -14,6 +15,13 @@ _commtype_map = {
     'mpi': pyYggdrasil.COMM_TYPE.MPI_COMM,
 }
 _commtype_map_inv = {v: k for k, v in _commtype_map.items()}
+_testdata = [
+    ('string', 'Hello world'),
+    ('integer', 1),
+    ('array', ['a', 1]),
+    ('object', {'a': 1, 'b': 'c'}),
+    ('ndarray', np.arange(10)),
+]
 
 
 class TestComm_t_Installed:
@@ -26,6 +34,10 @@ class TestComm_t_Installed:
     @pytest.fixture(scope="class")
     def commtype_str(self, commtype):
         return _commtype_map_inv[commtype]
+
+    @pytest.fixture(params=_testdata)
+    def message(self, request):
+        return request.param
 
     @pytest.fixture(scope="class", autouse=True)
     def require_installed(self, commtype):
@@ -81,9 +93,9 @@ class TestComm_t_Installed:
         return do_send_wrapped
 
     @pytest.fixture
-    def do_send_recv(self, comm_recv, do_send):
+    def do_send_recv(self, comm_recv, do_send, compare_message):
 
-        def do_send_recv_wrapped(msg):
+        def do_send_recv_wrapped(msg, msg_type='string'):
             result_send_thread = [False]
             result_recv = (False, None)
             assert comm_recv.n_msg == 0
@@ -99,11 +111,11 @@ class TestComm_t_Installed:
             finally:
                 thread.join(timeout=5)
                 assert not thread.is_alive()
-            assert comm_recv.datatype['type'] == 'string'
+            assert comm_recv.datatype['type'] == msg_type
             assert result_send_thread[0] is not None
             assert result_send_thread[0]
             assert result_recv[0]
-            assert result_recv[1] == msg
+            compare_message(result_recv[1], msg)
 
         return do_send_recv_wrapped
 
@@ -164,8 +176,8 @@ class TestComm_t_Installed:
         assert not result_recv_thread[0][0]
         assert result_recv_thread[0][1] is None
 
-    def test_send_recv(self, do_send_recv):
-        do_send_recv("Hello world")
+    def test_send_recv(self, do_send_recv, message):
+        do_send_recv(message[1], msg_type=message[0])
 
     def test_send_recv_async(self, commtype, require_installed):
         comm_recv = pyYggdrasil.CommBase(
@@ -213,6 +225,14 @@ class TestComm_t_NotInstalled:
 class TestRPC:
     r"""Tests for RPC client/server connection pattern."""
 
+    @pytest.fixture(params=_testdata)
+    def request_message(self, request):
+        return request.param
+
+    @pytest.fixture(params=(_testdata[1:] + _testdata))
+    def response_message(self, request):
+        return request.param
+
     @pytest.fixture
     def server(self):
         out = pyYggdrasil.CommBase(
@@ -247,9 +267,10 @@ class TestRPC:
         return do_call_wrapped
 
     @pytest.fixture
-    def do_rpc(self, do_call):
+    def do_rpc(self, do_call, compare_message):
 
-        def do_rpc_wrapped(server, req, res, **kwargs):
+        def do_rpc_wrapped(server, req, res, req_type='string',
+                           res_type='string', **kwargs):
             result_call_thread = [None]
             result_recv = (False, None)
             result_send = False
@@ -263,22 +284,24 @@ class TestRPC:
                 result_recv = server.recv()
                 assert result_recv
                 assert result_recv[0]
-                assert result_recv[1] == req
+                compare_message(result_recv[1], req)
                 # Response
                 result_send = server.send(res)
                 assert result_send
             finally:
                 thread.join(timeout=5)
                 assert not thread.is_alive()
-            assert server.datatype['type'] == 'string'
+            assert server.datatype['type'] == req_type
             assert result_call_thread[0] is not None
             assert result_call_thread[0][0]
-            assert result_call_thread[0][1] == res
+            compare_message(result_call_thread[0][1], res)
 
         return do_rpc_wrapped
 
-    def test_call(self, server, do_rpc):
-        do_rpc(server, "REQUEST", "RESPONSE")
+    def test_call(self, server, do_rpc, request_message,
+                  response_message):
+        do_rpc(server, request_message[1], response_message[1],
+               req_type=request_message[0], res_type=response_message[0])
 
     def test_call_long(self, server, do_rpc):
         if server.maxMsgSize == 0:
