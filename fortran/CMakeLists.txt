@@ -1,11 +1,6 @@
 set(YGG_TARGET_FORTRAN YggInterface_fortran)
 
 include(YggAddFortranSubdirectory)
-# if (WIN32)
-#   set_source_files_properties(
-#     YggInterface.f90 PROPERTIES
-#     COMPILE_OPTIONS -ffpe-trap=none)
-# endif()
 add_mixed_fortran_library(${YGG_TARGET_FORTRAN} SHARED
                           c_wrappers.c YggInterface.f90)
 add_library(YggInterface::fortran ALIAS ${YGG_TARGET_FORTRAN})
@@ -22,10 +17,6 @@ target_link_libraries(${YGG_TARGET_FORTRAN} PUBLIC YggInterface)
 		      # YggInterface ${DEPS_LIB_NAMES} ${DEPS_LIBRARIES})
 target_include_directories(${YGG_TARGET_FORTRAN} PUBLIC
                            ${DEPS_INCLUDE_DIRS})
-# if (WIN32)
-#     set_target_properties(${YGG_TARGET_FORTRAN}
-#         PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
-# endif()
 
 message(STATUS "CMAKE_INSTALL_INCLUDEDIR = ${CMAKE_INSTALL_INCLUDEDIR}")
 message(STATUS "CMAKE_CURRENT_BINARY_DIR = ${CMAKE_CURRENT_BINARY_DIR}")

@@ -9,8 +9,10 @@
 #endif
 
 #include <Python.h>
+#ifdef YGG_LINK_PYTHON_TO_CPP
 #define RAPIDJSON_FORCE_IMPORT_ARRAY
-#include "rapidjson/pyrj.h"
+#endif
+#include "utils/rapidjson_wrapper.hpp"
 #include "pyUtils.cpp"
 #include "pyYggCommBase.cpp"
 
@@ -69,8 +71,10 @@ PyInit__pyYggdrasil() {
 PyMODINIT_FUNC
 PyInit_pyYggdrasil() {
 #endif // YGG_PYTHON_LIBRARY_WRAP
-    import_array();
-    // import_umath();
+    if (!communication::utils::import_numpy_arrays()) {
+      PyErr_SetString(PyExc_ImportError, "Could not import numpy");
+      return NULL;
+    }
     PyObject* m = PyModuleDef_Init(&pyYggModule);
     communication::communicator::Comm_t::_ygg_init();
     return m;

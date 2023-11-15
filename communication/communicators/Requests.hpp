@@ -274,8 +274,7 @@ public:
       }
       return comms[comms.size() - 1];
     }
-    std::string activeRequestClient(bool ignore_signon=false,
-				    bool dont_raise=false) const {
+    std::string activeRequestClient(bool ignore_signon=false) const {
       if (!ignore_signon)
 	ignore_signon = signon_complete;
       for (size_t i = 0; i < requests.size(); i++) {
@@ -283,8 +282,6 @@ public:
 	    (ignore_signon && !requests[i].is_signon))
 	  return requests[i].request_id;
       }
-      if (!dont_raise)
-	throw_error("activeRequestClient: No active requests");
       return ""; // GCOVR_EXCL_LINE
     }
     int popRequestServer() {

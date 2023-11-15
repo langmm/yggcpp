@@ -59,6 +59,10 @@ while [[ $# -gt 0 ]]; do
 	    CMAKE_FLAGS="${CMAKE_FLAGS} -DWRAP_RAPIDJSON_FOR_DLL=1"
 	    shift # past argument with no value
 	    ;;
+	--python-link-cpp )
+	    CMAKE_FLAGS="${CMAKE_FLAGS} -DYGG_LINK_PYTHON_TO_CPP=1"
+	    shift # past argument with no value
+	    ;;
 	*)
 	    ;;
     esac

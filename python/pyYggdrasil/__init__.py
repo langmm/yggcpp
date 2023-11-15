@@ -1,6 +1,7 @@
 try:
     from pyYggdrasil import _pyYggdrasil  # noqa: F401
-except ImportError:
+except ImportError as e:
+    print("IMPORT ERROR: ", e)
     import os
     import os.path
     import re

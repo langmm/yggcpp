@@ -1,0 +1,46 @@
+
+
+RAPIDJSON_WRAPPER_DEFS_ bool communication::utils::initialize_python(const std::string error_prefix) {
+  try {
+    rapidjson::initialize_python(error_prefix);
+  } catch (std::exception& e) {
+    YggLogError << e.what() << std::endl;
+    return false;
+  }
+  return true;
+}
+
+RAPIDJSON_WRAPPER_DEFS_ bool communication::utils::finalize_python(const std::string error_prefix) {
+  try {
+    rapidjson::finalize_python(error_prefix);
+  } catch (std::exception& e) {
+    YggLogError << e.what() << std::endl;
+    return false;
+  }
+  return true;
+}
+
+RAPIDJSON_WRAPPER_DEFS_ bool communication::utils::import_numpy_arrays() {
+#ifndef YGGDRASIL_DISABLE_PYTHON_C_API
+  try {
+    if (!Py_IsInitialized()) {
+      YggLogError << "import_numpy_arrays: Python is not initialized" << std::endl;
+      return false;
+    }
+    rapidjson::init_numpy_API();
+  } catch (std::exception& e) {
+    YggLogError << e.what() << std::endl;
+    return false;
+  }
+#endif // YGGDRASIL_DISABLE_PYTHON_C_API
+  return true;
+}
+
+RAPIDJSON_WRAPPER_DEFS_ bool communication::utils::numpy_arrays_imported() {
+  bool out = false;
+#ifndef YGGDRASIL_DISABLE_PYTHON_C_API
+  if (rapidjson_ARRAY_API)
+    out = true;
+#endif // YGGDRASIL_DISABLE_PYTHON_C_API
+  return out;
+}

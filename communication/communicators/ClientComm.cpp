@@ -35,7 +35,7 @@ std::string ClientComm::logClass() const {
 int ClientComm::comm_nmsg(DIRECTION dir) const {
   int out = RPCComm::comm_nmsg(dir);
   if (dir == RECV) {
-    std::string req_id = requests.activeRequestClient(true);
+    std::string req_id = requests.activeRequestClient();
     if ((!req_id.empty()) && requests.isComplete(req_id))
       out++;
   }
@@ -177,11 +177,15 @@ long ClientComm::recv_single(utils::Header& header) {
       " (signon = " << in_signon << ")" << std::endl;
     Comm_t* response_comm = requests.activeComm();
     if (response_comm == NULL) {
-        log_error() << "recv_single: Error getting response comm" <<
-	  " (signon = " << in_signon << ")" << std::endl;
-        return -1;
+      log_error() << "recv_single: Error getting response comm" <<
+	" (signon = " << in_signon << ")" << std::endl;
+      return -1;
     }
     std::string req_id = requests.activeRequestClient();
+    if (req_id.empty()) {
+      log_error() << "recv_single: No active request" << std::endl;
+      return -1;
+    }
     long ret;
     utils::Header response_header;
     int64_t tout = get_timeout_recv();

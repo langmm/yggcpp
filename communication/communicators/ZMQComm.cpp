@@ -13,6 +13,7 @@ using namespace communication::utils;
 
 // const std::chrono::milliseconds timeout{1000};
 // const std::chrono::milliseconds short_timeout{10};
+#define first_timeout 10000
 #define timeout 1000
 #define short_timeout 10
 
@@ -405,7 +406,10 @@ bool ZMQReply::recv_stage2(std::string msg_send) {
   log_verbose() << "recv_stage2: Receiving acknowledgement of handshake (address = " << sock->endpoint << ")" << std::endl;
   // Receive
   std::string msg_recv;
-  sock->poll(ZMQ_POLLIN, timeout);
+  if (sock->poll(ZMQ_POLLIN, timeout) != 1) {
+    log_error() << "recv_stage2: No response waiting" << std::endl;
+    return false;
+  }
   if (sock->recv(msg_recv) < 0) {
     log_error() << "recv_stage2: Error receiving reponse" << std::endl;
     return false;
@@ -434,7 +438,10 @@ bool ZMQReply::send_stage1(std::string& msg_data) {
   }
   ZMQSocket* sock = &(sockets[0]);
   log_verbose() << "send_stage1: Receiving handshake to confirm message was received (address = " << sock->endpoint << ")" << std::endl;
-  sock->poll(ZMQ_POLLIN, timeout);
+  if (sock->poll(ZMQ_POLLIN, first_timeout) != 1) {
+    log_error() << "send_stage1: No reply waiting" << std::endl;
+    return false;
+  }
   if (sock->recv(msg_data) < 0) {
     log_error() << "send_stage1: Error receiving reply" << std::endl;
     return false;

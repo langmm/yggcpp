@@ -1,4 +1,5 @@
 from subprocess import Popen, PIPE
+import numpy as np
 import time
 import sys
 import gc
@@ -51,4 +52,16 @@ def check_ipc_cleanup():
         gc.collect()
         time.sleep(0.01)
     assert ipc_queue_count() == count
-    
+
+
+@pytest.fixture
+def compare_message():
+
+    def compare_message_wrapped(actual, expected):
+        if isinstance(expected, np.ndarray):
+            assert isinstance(actual, np.ndarray)
+            assert (actual == expected).all()
+        else:
+            assert actual == expected
+
+    return compare_message_wrapped

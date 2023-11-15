@@ -40,12 +40,14 @@ bool ServerComm::signon(const Header& header) {
 bool ServerComm::create_header_send(utils::Header& header) {
   log_debug() << "create_header_send: begin" << std::endl;
   assert(!global_comm);
+  log_debug() << "create_header_send: Checking for response comm" << std::endl;
   Comm_t* response_comm = requests.activeComm();
   if (response_comm == NULL) {
     requests.Display();
     log_error() << "create_header_send: Failed to get response comm" << std::endl;
     return false;
   }
+  log_debug() << "create_header_send: Found response comm" << std::endl;
   if (!requests.transferSchemaTo(response_comm))
     return false;
   bool out = response_comm->create_header_send(header);
@@ -55,6 +57,7 @@ bool ServerComm::create_header_send(utils::Header& header) {
     log_error() << "create_header_send: Failed to add response" << std::endl;
     return false;
   }
+  log_debug() << "create_header_send: done" << std::endl;
   return true;
 }
 

@@ -7,6 +7,9 @@ message(STATUS "YGG_TARGET_PY = ${YGG_TARGET_PY}")
 message(STATUS "Building Python bindings=Yes")
 set(PYSOURCES
     ${CMAKE_SOURCE_DIR}/python/pyYggdrasil.cpp)
+if (NOT YGG_LINK_PYTHON_TO_CPP)
+    set(PYSOURCES ${PYSOURCES} ${SOURCES})
+endif()
 if (SKBUILD STREQUAL "2")
     Python3_add_library(${YGG_TARGET_PY} MODULE ${PYSOURCES})
 else()
@@ -15,8 +18,11 @@ endif()
 target_include_directories(
           ${YGG_TARGET_PY} PUBLIC
           ${DEPS_INCLUDE_DIRS})
+if(YGG_LINK_PYTHON_TO_CPP)
+    target_link_libraries(${YGG_TARGET_PY} PUBLIC ${YGG_TARGET_CPP})
+endif()
 target_link_libraries(
-          ${YGG_TARGET_PY} ${YGG_CPP_LINK_KEYWORD} ${YGG_TARGET_CPP}
+          ${YGG_TARGET_PY} PUBLIC
 	  ${DEPS_LIB_NAMES_NO_PYTHON}
 	  ${DEPS_LIBRARIES_NO_PYTHON})
 target_compile_options(${YGG_TARGET_PY} PUBLIC
@@ -35,9 +41,11 @@ if(SKBUILD)
 	# Add C++ library as Python extension
 	# Force python_extension_module to link to Python libraries
 	# to allow dynamic lookup
-	set(CMAKE_CROSSCOMPILING ON)
-	python_extension_module(${YGG_TARGET_CPP})
-	set(CMAKE_CROSSCOMPILING OFF)
+	if(YGG_LINK_PYTHON_TO_CPP)
+  	    set(CMAKE_CROSSCOMPILING ON)
+	    python_extension_module(${YGG_TARGET_CPP})
+	    set(CMAKE_CROSSCOMPILING OFF)
+	endif()
 	# Add Python extension
 	python_extension_module(${YGG_TARGET_PY})
 	set(YGG_CPP_LIBRARY_DEST ${CMAKE_INSTALL_LIBDIR})
@@ -51,15 +59,17 @@ if(SKBUILD)
 	    set(Python_INSTALL_DIR ".")
 	endif()
     endif()
-    if(WIN32)
-        install(TARGETS ${YGG_TARGET_CPP}
-                LIBRARY DESTINATION ${YGG_CPP_LIBRARY_DEST}
-		PUBLIC_HEADER DESTINATION ${YGG_CPP_LIBRARY_DEST}
-		RUNTIME DESTINATION ${YGG_CPP_LIBRARY_DEST})
-    else()
-        install(TARGETS ${YGG_TARGET_CPP}
-                LIBRARY DESTINATION ${YGG_CPP_LIBRARY_DEST}
-	        PUBLIC_HEADER DESTINATION ${YGG_CPP_LIBRARY_DEST})
+    if(YGG_LINK_PYTHON_TO_CPP)
+        if(WIN32)
+            install(TARGETS ${YGG_TARGET_CPP}
+                   LIBRARY DESTINATION ${YGG_CPP_LIBRARY_DEST}
+		   PUBLIC_HEADER DESTINATION ${YGG_CPP_LIBRARY_DEST}
+		   RUNTIME DESTINATION ${YGG_CPP_LIBRARY_DEST})
+        else()
+            install(TARGETS ${YGG_TARGET_CPP}
+                    LIBRARY DESTINATION ${YGG_CPP_LIBRARY_DEST}
+	            PUBLIC_HEADER DESTINATION ${YGG_CPP_LIBRARY_DEST})
+        endif()
     endif()
     install(TARGETS ${YGG_TARGET_PY}
 	    LIBRARY DESTINATION ${Python_INSTALL_DIR})
