@@ -1183,7 +1183,7 @@ extern "C" {
   int init_python_API() {
     try {
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
-      rapidjson::initialize_python("init_python_API");
+      communication::utils::initialize_python("init_python_API");
 #endif // YGGDRASIL_DISABLE_PYTHON_C_API
     } catch(...) {
       YggLogError << "init_python_API: C++ exception thrown." << std::endl;

@@ -9,7 +9,7 @@
 #endif
 
 #include <Python.h>
-#ifndef WRAP_RAPIDJSON_FOR_DLL
+#ifdef YGG_LINK_PYTHON_TO_CPP
 #define RAPIDJSON_FORCE_IMPORT_ARRAY
 #endif
 #include "utils/rapidjson_wrapper.hpp"
@@ -71,10 +71,8 @@ PyInit__pyYggdrasil() {
 PyMODINIT_FUNC
 PyInit_pyYggdrasil() {
 #endif // YGG_PYTHON_LIBRARY_WRAP
-    try {
-      rapidjson::init_numpy_API();
-    } catch (std::exception& e) {
-      PyErr_SetString(PyExc_TypeError, e.what());
+    if (!communication::utils::import_numpy_arrays()) {
+      PyErr_SetString(PyExc_ImportError, "Could not import numpy");
       return NULL;
     }
     PyObject* m = PyModuleDef_Init(&pyYggModule);

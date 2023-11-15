@@ -13,6 +13,7 @@ using namespace communication::utils;
 
 // const std::chrono::milliseconds timeout{1000};
 // const std::chrono::milliseconds short_timeout{10};
+#define first_timeout 10000
 #define timeout 1000
 #define short_timeout 10
 
@@ -433,7 +434,7 @@ bool ZMQReply::send_stage1(std::string& msg_data) {
   }
   ZMQSocket* sock = &(sockets[0]);
   log_verbose() << "send_stage1: Receiving handshake to confirm message was received (address = " << sock->endpoint << ")" << std::endl;
-  if (sock->poll(ZMQ_POLLIN, timeout) != 1) {
+  if (sock->poll(ZMQ_POLLIN, first_timeout) != 1) {
     log_error() << "send_stage1: No reply waiting" << std::endl;
     return false;
   }

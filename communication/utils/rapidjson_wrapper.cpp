@@ -1,9 +1,9 @@
-#ifdef WRAP_RAPIDJSON_FOR_DLL
+// defined(YggInterface_py_EXPORTS)
+#ifndef YGG_LINK_PYTHON_TO_CPP
 #define RAPIDJSON_FORCE_IMPORT_ARRAY
-#endif
+#endif // YGG_LINK_PYTHON_TO_CPP
 #include "rapidjson/pyrj_c.h"
 #include "rapidjson_wrapper.hpp"
-#include "logging.hpp"
 
 #define DO_NOTHING()
 #define UNPACK_BKTS(...)			\
@@ -1193,11 +1193,7 @@ SPECIALIZE(rapidjson::ObjWavefront);
 #include "rapidjson/pyrj.h"
 #endif // WRAP_RAPIDJSON_FOR_DLL
 
-bool communication::utils::numpy_arrays_imported() {
-  bool out = false;
-#ifndef YGGDRASIL_DISABLE_PYTHON_C_API
-  if (rapidjson_ARRAY_API)
-    out = true;
-#endif // YGGDRASIL_DISABLE_PYTHON_C_API
-  return out;
-}
+#ifndef YGG_LINK_PYTHON_TO_CPP
+#define RAPIDJSON_WRAPPER_DEFS_
+#include "rapidjson_wrapper.defs"
+#endif

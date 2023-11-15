@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include "logging.hpp"
 #include "rapidjson/rapidjson.h"
 #include "rapidjson/internal/meta.h"
 #include "rapidjson/stringbuffer.h"
@@ -1024,9 +1025,29 @@ namespace communication {
     typedef bool (*transformFunc)(rapidjson::Document&);
 
     /*!
+      @brief Initialize the Python API.
+     */
+    bool initialize_python(const std::string error_prefix="");
+    
+    /*!
+      @brief Finalize the Python API.
+     */
+    bool finalize_python(const std::string error_prefix="");
+    
+    /*!
+      @brief Import numpy arrays.
+     */
+    bool import_numpy_arrays();
+
+    /*!
       @brief Determine if numpy arrays are enabled.
     */
     bool numpy_arrays_imported();
 
   }
 }
+
+#if defined(YGG_LINK_PYTHON_TO_CPP) && !defined(RAPIDJSON_WRAPPER_DEFS_)
+#define RAPIDJSON_WRAPPER_DEFS_ inline
+#include "rapidjson_wrapper.defs"
+#endif // WRAP_RAPIDJSON_FOR_DLL

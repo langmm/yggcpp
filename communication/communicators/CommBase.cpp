@@ -1,6 +1,3 @@
-#if !(defined(WRAP_RAPIDJSON_FOR_DLL) || defined(RAPIDJSON_YGGDRASIL_PYTHON))
-#define RAPIDJSON_FORCE_IMPORT_ARRAY
-#endif
 #include "comms.hpp"
 #include "utils/rapidjson_wrapper.hpp"
 
@@ -43,7 +40,7 @@ int Comm_t::_ygg_init() {
       ctx = nullptr;
 #endif
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
-      rapidjson::initialize_python("_ygg_init");
+      utils::initialize_python("_ygg_init");
 #endif // YGGDRASIL_DISABLE_PYTHON_C_API
       YggLogDebug << "_ygg_init: Registering cleanup" << std::endl;
       std::atexit(_cleanup_wrapper);
@@ -75,7 +72,7 @@ void Comm_t::_ygg_cleanup(CLEANUP_MODE mode) {
 	  ZMQContext::destroy();
 #endif
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
-	  rapidjson::finalize_python("_ygg_cleanup");
+	  utils::finalize_python("_ygg_cleanup");
 #endif // YGGDRASIL_DISABLE_PYTHON_C_API
 	}
       } YGG_THREAD_SAFE_END;
