@@ -215,10 +215,14 @@ function(add_mixed_fortran_library target library_type)
     #   POST_BUILD
     #   COMMAND LIB /DEF:${${fortran_target}_EXT_DEF} $<TARGET_FILE_NAME:${target}>
     #   COMMAND_EXPAND_LISTS)
+    cmake_path(APPEND ${target}_LIB_FILE "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_IMPORT_LIBRARY_PREFIX}${target}.lib")
     add_custom_command(
       TARGET ${target}
       POST_BUILD
-      COMMAND LIB /DEF:${${fortran_target}_EXT_DEF} /OUT:$<TARGET_IMPORT_FILE:${target}> # $<TARGET_OBJECTS:${target}>
+      COMMAND ${CMAKE_COMMAND} -E echo "TARGET_IMPORT_FILE for ${target} $<TARGET_IMPORT_FILE:${target}>"
+      COMMAND ${CMAKE_COMMAND} -E echo "TARGET_LIB_FILE for ${target} ${${target}_LIB_FILE}"
+      COMMAND LIB /DEF:${${fortran_target}_EXT_DEF} /OUT:${${target}_LIB_FILE}
+      # COMMAND LIB /DEF:${${fortran_target}_EXT_DEF} /OUT:$<TARGET_IMPORT_FILE:${target}> # $<TARGET_OBJECTS:${target}>
       COMMAND_EXPAND_LISTS)
   endif()
 endfunction()
@@ -307,6 +311,10 @@ function(add_external_fortran_library target_name library_type)
   if (NOT CMAKE_${final_library_type}_LIBRARY_PREFIX_Fortran)
     set(CMAKE_${final_library_type}_LIBRARY_PREFIX_Fortran ${CMAKE_${final_library_type}_LIBRARY_PREFIX})
   endif()
+  message(STATUS "CMAKE_${final_library_type}_LIBRARY_SUFFIX = ${CMAKE_${final_library_type}_LIBRARY_SUFFIX}")
+  message(STATUS "CMAKE_${final_library_type}_LIBRARY_SUFFIX_C = ${CMAKE_${final_library_type}_LIBRARY_SUFFIX_C}")
+  message(STATUS "CMAKE_${final_library_type}_LIBRARY_SUFFIX_CXX = ${CMAKE_${final_library_type}_LIBRARY_SUFFIX_CXX}")
+  message(STATUS "CMAKE_${final_library_type}_LIBRARY_SUFFIX_Fortran = ${CMAKE_${final_library_type}_LIBRARY_SUFFIX_Fortran}")
   if (NOT CMAKE_${final_library_type}_LIBRARY_SUFFIX_Fortran)
     set(CMAKE_${final_library_type}_LIBRARY_SUFFIX_Fortran ${CMAKE_${final_library_type}_LIBRARY_SUFFIX})
   endif()
@@ -315,6 +323,10 @@ function(add_external_fortran_library target_name library_type)
 
   # Determine import library file name
   if(MSVC AND ${library_type} STREQUAL "SHARED")
+    message(STATUS "CMAKE_IMPORT_LIBRARY_SUFFIX = ${CMAKE_IMPORT_LIBRARY_SUFFIX}")
+    message(STATUS "CMAKE_IMPORT_LIBRARY_SUFFIX_C = ${CMAKE_IMPORT_LIBRARY_SUFFIX_C}")
+    message(STATUS "CMAKE_IMPORT_LIBRARY_SUFFIX_CXX = ${CMAKE_IMPORT_LIBRARY_SUFFIX_CXX}")
+    message(STATUS "CMAKE_IMPORT_LIBRARY_SUFFIX_Fortran = ${CMAKE_IMPORT_LIBRARY_SUFFIX_Fortran}")
     if (NOT CMAKE_IMPORT_LIBRARY_PREFIX_Fortran)
       set(CMAKE_IMPORT_LIBRARY_PREFIX_Fortran ${CMAKE_IMPORT_LIBRARY_PREFIX})
     endif()
