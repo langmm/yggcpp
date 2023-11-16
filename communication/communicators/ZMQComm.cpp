@@ -402,7 +402,7 @@ bool ZMQReply::recv_stage2(std::string msg_send) {
   log_verbose() << "recv_stage2: Receiving acknowledgement of handshake (address = " << sock->endpoint << ")" << std::endl;
   // Receive
   std::string msg_recv;
-  if (sock->poll(ZMQ_POLLIN, timeout) != 1) {
+  if (sock->poll(ZMQ_POLLIN, first_timeout) != 1) {
     log_error() << "recv_stage2: No response waiting" << std::endl;
     return false;
   }
