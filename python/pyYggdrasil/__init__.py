@@ -7,6 +7,8 @@ except ImportError as e:
     from ctypes import CDLL
     if hasattr(os, 'add_dll_directory'):
         os.add_dll_directory(os.path.dirname(__file__))
+    print(os.path.dirname(__file__))
+    print(os.listdir(os.path.dirname(__file__)))
 
     bundled_lib = next(
         filter(

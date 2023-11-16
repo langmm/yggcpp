@@ -111,11 +111,11 @@ class TestComm_t_Installed:
             finally:
                 thread.join(timeout=5)
                 assert not thread.is_alive()
-            assert comm_recv.datatype['type'] == msg_type
             assert result_send_thread[0] is not None
             assert result_send_thread[0]
             assert result_recv[0]
             compare_message(result_recv[1], msg)
+            assert comm_recv.datatype['type'] == msg_type
 
         return do_send_recv_wrapped
 
@@ -291,10 +291,10 @@ class TestRPC:
             finally:
                 thread.join(timeout=5)
                 assert not thread.is_alive()
-            assert server.datatype['type'] == req_type
             assert result_call_thread[0] is not None
             assert result_call_thread[0][0]
             compare_message(result_call_thread[0][1], res)
+            assert server.datatype['type'] == req_type
 
         return do_rpc_wrapped
 
