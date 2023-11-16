@@ -83,7 +83,7 @@ TEST(ZMQComm, constructor) {
     //   ZMQSocket::resetPort();
     //   std::string alt_name = "TestZMQComm";
     //   ELF_BEGIN_ALT_F(getenv);
-    //   EXPECT_THROW(ZMQComm zmqc(alt_name, nullptr, SEND), std::runtime_error);
+    //   EXPECT_THROW(ZMQComm zmqc(alt_name, SEND), std::runtime_error);
     //   ELF_END_F(getenv);
     // }
     // Failure to create socket
@@ -274,9 +274,9 @@ TEST(ZMQComm, errors) {
 #else // ZMQINSTALLED
 
 TEST(ZMQComm, constructor) {
-    EXPECT_THROW(ZMQComm zmq, std::exception);
+    EXPECT_THROW(ZMQComm zmq(""), std::exception);
     std::string name = "";
-    EXPECT_THROW(ZMQComm zmq2(name, nullptr, SEND), std::exception);
+    EXPECT_THROW(ZMQComm zmq2(name, SEND), std::exception);
 }
 
 #endif // ZMQINSTALLED

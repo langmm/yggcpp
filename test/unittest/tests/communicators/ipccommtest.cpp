@@ -212,9 +212,9 @@ TEST(IPCComm, recv) {
 #else // IPCINSTALLED
 
 TEST(IPCComm, constructor) {
-    EXPECT_THROW(IPCComm_tester ipc, std::exception);
+    EXPECT_THROW(IPCComm_tester ipc(""), std::exception);
     std::string name = "";
-    EXPECT_THROW(IPCComm_tester ipc2(name, nullptr, SEND), std::exception);
+    EXPECT_THROW(IPCComm_tester ipc2(name, SEND), std::exception);
 }
 
 #endif // IPCINSTALLED
