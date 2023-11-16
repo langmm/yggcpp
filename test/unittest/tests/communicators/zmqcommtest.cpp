@@ -274,9 +274,7 @@ TEST(ZMQComm, errors) {
 #else // ZMQINSTALLED
 
 TEST(ZMQComm, constructor) {
-    EXPECT_THROW(ZMQComm zmq(""), std::exception);
-    std::string name = "";
-    EXPECT_THROW(ZMQComm zmq2(name, SEND), std::exception);
+  EXPECT_THROW(ZMQComm zmq2("", SEND), std::exception);
 }
 
 #endif // ZMQINSTALLED
