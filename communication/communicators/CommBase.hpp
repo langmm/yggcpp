@@ -63,25 +63,31 @@ public:									\
     YggLogDestructor << "~" #cls ": Finished" << std::endl;		\
   }
 
-#define ADD_CONSTRUCTORS_BASE(cls, typ, flag)				\
-  explicit cls(const std::string nme,					\
-	       const DIRECTION dirn,					\
-	       int flgs = 0, const COMM_TYPE type = typ);		\
+#define ADD_CONSTRUCTORS_BASE_NOLOG(cls, typ, flag)			\
+  cls(const std::string nme,						\
+      const DIRECTION dirn,						\
+      int flgs = 0, const COMM_TYPE type = typ);			\
   explicit cls(utils::Address &addr,					\
 	       const DIRECTION dirn,					\
 	       int flgs = 0, const COMM_TYPE type = typ);		\
   static bool isInstalled() { return flag; }				\
   static COMM_TYPE defaultCommType() { return typ; }			\
-  std::string logClass() const override { return #cls; }		\
   ADD_DESTRUCTOR(cls, CommBase)
+#define ADD_CONSTRUCTORS_BASE(cls, typ, flag)				\
+  ADD_CONSTRUCTORS_BASE_NOLOG(cls, typ, flag)				\
+  std::string logClass() const override { return #cls; }
 #define ADD_CONSTRUCTORS(T)			\
   ADD_CONSTRUCTORS_BASE(T ## Comm, T ## _COMM, T ## _INSTALLED_FLAG)
 
-#define ADD_CONSTRUCTORS_DEF(cls)		\
-  cls::cls(utils::Address &addr,		\
-	   const DIRECTION dirn,		\
-	   int flgs, const COMM_TYPE type) :	\
-    cls("", addr, dirn, flgs, type) {}		\
+#define ADD_CONSTRUCTORS_DEF(cls)				\
+  cls::cls(const std::string nme,				\
+	   const DIRECTION dirn,				\
+	   int flgs, const COMM_TYPE type) :			\
+    cls(nme, utils::blankAddress, dirn, flgs, type) {}		\
+  cls::cls(utils::Address &addr,				\
+	   const DIRECTION dirn,				\
+	   int flgs, const COMM_TYPE type) :			\
+    cls("", addr, dirn, flgs, type) {}				\
   ADD_DESTRUCTOR_DEF(cls, CommBase, , )
 #define ADD_CONSTRUCTORS_RPC(cls, defT)				\
   explicit cls(const std::string nme,				\
@@ -89,15 +95,18 @@ public:									\
   explicit cls(utils::Address &addr,				\
 	       int flgs = 0, const COMM_TYPE type = defT);	\
   ADD_DESTRUCTOR(cls, RPCComm)
-#define ADD_CONSTRUCTORS_RPC_DEF(cls)		\
-  cls::cls(utils::Address &addr,		\
-	   int flgs, const COMM_TYPE type) :	\
-    cls("", addr, flgs, type) {}		\
-  ADD_DESTRUCTOR_DEF(cls, RPCComm, , )		\
-  void cls::_close(bool call_base) {		\
-    if (call_base) {				\
-      RPCComm::_close(true);			\
-    }						\
+#define ADD_CONSTRUCTORS_RPC_DEF(cls)			\
+  cls::cls(const std::string nme,			\
+	   int flgs, const COMM_TYPE type) :		\
+    cls(nme, utils::blankAddress, flgs, type) {}	\
+  cls::cls(utils::Address &addr,			\
+	   int flgs, const COMM_TYPE type) :		\
+    cls("", addr, flgs, type) {}			\
+  ADD_DESTRUCTOR_DEF(cls, RPCComm, , )			\
+  void cls::_close(bool call_base) {			\
+    if (call_base) {					\
+      RPCComm::_close(true);				\
+    }							\
   }
 #define WORKER_METHOD_DECS(cls)					\
   Comm_t* create_worker(utils::Address& address,		\
@@ -1035,7 +1044,7 @@ protected:
      * @see utils::Address()
      */
     explicit Comm_t(const std::string &name,
-		    utils::Address &address,
+		    const utils::Address &address,
 		    DIRECTION direction = NONE,
 		    const COMM_TYPE &t = NULL_COMM, int flgs = 0);
 
@@ -1083,7 +1092,7 @@ public:
  * @return
  */
 YGG_API Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name="", char* address=nullptr, int flags=0);
-YGG_API Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, utils::Address& address, int flags=0);
+YGG_API Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, const utils::Address& address, int flags=0);
 YGG_API Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, int flags=0);
 
 /**
@@ -1145,7 +1154,7 @@ protected:
      * @param t The enumerated type of the communicator
      * @param flags Bitwise flags describing the communicator
      */
-    explicit CommBase(const std::string &name, utils::Address& address, DIRECTION direction = NONE, const COMM_TYPE &t = NULL_COMM, int flags = 0);
+    explicit CommBase(const std::string &name, const utils::Address& address, DIRECTION direction = NONE, const COMM_TYPE &t = NULL_COMM, int flags = 0);
 
     CommBase(const std::string &name, DIRECTION direction = NONE,
              const COMM_TYPE &t = NULL_COMM, int flags = 0);
@@ -1174,12 +1183,17 @@ public:
 };
 
 template<typename H>
-CommBase<H>::CommBase(const std::string &nme, utils::Address &addr,
+CommBase<H>::CommBase(const std::string &nme, const utils::Address &addr,
 		      DIRECTION dirn, const COMM_TYPE &t, int flgs) :
   Comm_t(nme, addr, dirn, t, flgs), handle(nullptr) {
   if (global_comm)
     handle = dynamic_cast<CommBase<H>*>(global_comm)->handle;
 }
+
+template<typename H>
+CommBase<H>::CommBase(const std::string &nme, DIRECTION dirn,
+                      const COMM_TYPE &t, int flgs) :
+  CommBase(nme, utils::blankAddress, dirn, t, flgs) {}
 
 template<typename H>
 bool CommBase<H>::is_closed() const {
@@ -1189,14 +1203,6 @@ bool CommBase<H>::is_closed() const {
 template<typename H>
 bool CommBase<H>::_is_closed() const {
   return ((!((bool)(handle))) || !(flags & COMM_FLAG_VALID));
-}
-
-template<typename H>
-CommBase<H>::CommBase(const std::string &nme, DIRECTION dirn,
-                      const COMM_TYPE &t, int flgs) :
-        Comm_t(nme, dirn, t, flgs), handle(nullptr) {
-    if (global_comm)
-        handle = dynamic_cast<CommBase<H> *>(global_comm)->handle;
 }
 
 template<typename H>

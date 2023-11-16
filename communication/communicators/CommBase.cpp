@@ -130,7 +130,7 @@ void Comm_t::init_base() {
     }
     log_debug() << "Comm_t: Done" << std::endl;
 }
-Comm_t::Comm_t(const std::string &nme, Address &addr,
+Comm_t::Comm_t(const std::string &nme, const Address &addr,
 	       DIRECTION dirn, const COMM_TYPE &t, int flgs) :
   type(t), name(nme), address(addr), direction(dirn), flags(flgs),
   maxMsgSize(COMM_BASE_MAX_MSG_SIZE), msgBufSize(0),
@@ -141,12 +141,7 @@ Comm_t::Comm_t(const std::string &nme, Address &addr,
 
 Comm_t::Comm_t(const std::string &nme,
                DIRECTION dirn, const COMM_TYPE &t, int flgs) :
-  type(t), name(nme), address(), direction(dirn), flags(flgs),
-  maxMsgSize(COMM_BASE_MAX_MSG_SIZE), msgBufSize(0),
-  index_in_register(-1), thread_id(), metadata(),
-  timeout_recv(YGG_MAX_TIME), workers(), global_comm(nullptr) {
-  init_base();
-}
+  Comm_t(nme, utils::Address(), dirn, t, flgs) {}
 
 Comm_t::~Comm_t() {
   log_debug() << "~Comm_t: Unregistering comm" << std::endl;
@@ -264,7 +259,7 @@ Comm_t* communication::communicator::new_Comm_t(const DIRECTION dir, const COMM_
     return communication::communicator::new_Comm_t(dir, type, name, addr, flags);
 }
 
-Comm_t* communication::communicator::new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, Address &addr, int flags) {
+Comm_t* communication::communicator::new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, const Address &addr, int flags) {
   flags |= COMM_FLAG_DELETE;
   if (flags & COMM_FLAG_ASYNC) {
     return new AsyncComm(name, addr, dir, flags, type);

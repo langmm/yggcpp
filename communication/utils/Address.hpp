@@ -79,5 +79,8 @@ private:
     bool _valid;                // validity flag
 
 };
+
+  static Address blankAddress;
+  
 }
 }

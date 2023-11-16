@@ -20,7 +20,7 @@ public:
      * @param flgs Bitwise flags describing the communicator
      */
     explicit ClientComm(const std::string name,
-			utils::Address &address,
+			const utils::Address &address,
 			int flgs = 0, const COMM_TYPE type = CLIENT_COMM);
     ADD_CONSTRUCTORS_RPC(ClientComm, CLIENT_COMM)
 

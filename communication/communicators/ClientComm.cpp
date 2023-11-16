@@ -8,7 +8,7 @@ using namespace communication::utils;
 
 unsigned ClientComm::_client_rand_seeded = 0;
 
-ClientComm::ClientComm(const std::string nme, Address& addr,
+ClientComm::ClientComm(const std::string nme, const Address& addr,
 		       int flgs, const COMM_TYPE type) :
   RPCComm(nme, addr,
 	  flgs | COMM_FLAG_CLIENT | COMM_ALWAYS_SEND_HEADER,
@@ -16,13 +16,6 @@ ClientComm::ClientComm(const std::string nme, Address& addr,
   // Called to create temp comm for send/recv
   if (!(global_comm || (name.empty() && address.valid())))
     init();
-}
-
-ClientComm::ClientComm(const std::string nme, int flgs, const COMM_TYPE type) :
-        RPCComm(nme, flgs | COMM_FLAG_CLIENT | COMM_ALWAYS_SEND_HEADER,
-                SEND, RECV, type) {
-    if (!(global_comm || (name.empty() && address.valid())))
-        init();
 }
 
 ADD_CONSTRUCTORS_RPC_DEF(ClientComm)

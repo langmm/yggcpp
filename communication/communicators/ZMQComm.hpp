@@ -127,7 +127,7 @@ public:
      * @param flgs Bitwise flags describing the communicator
      */
     explicit ZMQComm(const std::string name,
-                     utils::Address& address,
+                     const utils::Address& address,
                      const DIRECTION direction = NONE,
                      int flgs = 0, const COMM_TYPE type = ZMQ_COMM);
     ADD_CONSTRUCTORS(ZMQ)

@@ -205,7 +205,7 @@ TEST(ClientComm, async) {
 #else // THREADSINSTALLED
 TEST(ClientComm, async) {
     std::string name = "MyComm";
-    EXPECT_THROW(AsyncComm sComm(name, nullptr, SEND,
+    EXPECT_THROW(AsyncComm sComm(name, SEND,
 				 COMM_FLAG_ASYNC, CLIENT_COMM),
 		 std::exception);
 }

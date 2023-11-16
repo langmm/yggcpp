@@ -4,7 +4,7 @@
 using namespace communication::communicator;
 using namespace communication::utils;
 
-FileComm::FileComm(const std::string name, Address &address,
+FileComm::FileComm(const std::string name, const utils::Address &address,
 		   DIRECTION direction, int flgs,
 		   const COMM_TYPE type) :
   CommBase(name, address, direction, type, flgs),

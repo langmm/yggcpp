@@ -520,20 +520,12 @@ bool ZMQReply::send_stage2(const std::string msg_data) {
 // ZMQComm //
 /////////////
 
-ZMQComm::ZMQComm(const std::string name, utils::Address& address,
+ZMQComm::ZMQComm(const std::string name, const utils::Address& address,
 		 const DIRECTION direction, int flgs,
 		 const COMM_TYPE type) :
   CommBase(name, address, direction, type, flgs), reply(direction) {
   if (!global_comm)
     init();
-}
-
-ZMQComm::ZMQComm(const std::string name,
-                 const DIRECTION direction, int flgs,
-                 const COMM_TYPE type) :
-        CommBase(name, direction, type, flgs), reply(direction) {
-    if (!global_comm)
-        init();
 }
 
 ADD_CONSTRUCTORS_DEF(ZMQComm)

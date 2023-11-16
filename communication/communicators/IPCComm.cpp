@@ -3,18 +3,12 @@
 using namespace communication::communicator;
 using namespace communication::utils;
 
-IPCComm::IPCComm(const std::string name, Address &address,
+IPCComm::IPCComm(const std::string name, const Address &address,
 		 DIRECTION direction, int flgs,
 		 const COMM_TYPE type) :
   CommBase(name, address, direction, type, flgs) {
   if (!global_comm)
     init();
-}
-IPCComm::IPCComm(const std::string nme, const DIRECTION dirn,
-                 int flgs, const COMM_TYPE type) :
-        CommBase(nme, dirn, type, flgs) {
-    if (!global_comm)
-        init();
 }
 
 ADD_CONSTRUCTORS_DEF(IPCComm)
