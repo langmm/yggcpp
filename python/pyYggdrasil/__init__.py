@@ -1,29 +1,39 @@
 try:
     from pyYggdrasil import _pyYggdrasil  # noqa: F401
-except ImportError as e:
+except ImportError:
     import os
     import os.path
     import re
-    from ctypes import CDLL
+    from ctypes import CDLL, PyDLL
     if hasattr(os, 'add_dll_directory'):
         os.add_dll_directory(os.path.dirname(__file__))
-    print(os.path.dirname(__file__))
-    print(os.listdir(os.path.dirname(__file__)))
-
-    bundled_lib = next(
+    bundled_cpplib = next(
         filter(
             lambda fl: re.match(".*YggInterface_py\\..*", fl),
             sorted(os.listdir(os.path.dirname(__file__))),
         ),
         None,
     )
-    if bundled_lib:
-        CDLL(os.path.join(os.path.dirname(__file__), bundled_lib),
+    bundled_pylib = next(
+        filter(
+            lambda fl: re.match(".*_pyYggdrasil\\..*", fl),
+            sorted(os.listdir(os.path.dirname(__file__))),
+        ),
+        None,
+    )
+    print(os.path.dirname(__file__))
+    print(os.listdir(os.path.dirname(__file__)))
+    print(bundled_cpplib, bundled_pylib)
+    if bundled_cpplib:
+        CDLL(os.path.join(os.path.dirname(__file__), bundled_cpplib),
              winmode=0)
-    # else:
-    #     raise FileNotFoundError(
-    #         "YggInterface C++ library is not installed and "
-    #         "no bundled version was detected")
+    elif bundled_pylib:
+        PyDLL(os.path.join(os.path.dirname(__file__), bundled_pylib),
+              winmode=0)
+    else:
+        raise FileNotFoundError(
+            "YggInterface C++ library is not installed and "
+            "no bundled version was detected")
     from pyYggdrasil import _pyYggdrasil  # noqa: F401
 
 
