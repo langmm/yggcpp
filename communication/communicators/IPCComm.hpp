@@ -35,10 +35,10 @@ public:
      * @param direction Enuerated direction for this instance
      * @param flags Bitwise flags describing the communicator
      */
-    explicit IPCComm(const std::string name = "",
-		     utils::Address *address = new utils::Address(),
-                     const DIRECTION direction = NONE,
-		     int flgs = 0, const COMM_TYPE type = IPC_COMM);
+    IPCComm(const std::string name,
+            const utils::Address& address,
+            const DIRECTION direction = NONE,
+            int flgs = 0, const COMM_TYPE type = IPC_COMM);
     ADD_CONSTRUCTORS(IPC)
 
 #ifdef IPCINSTALLED

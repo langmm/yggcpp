@@ -6,7 +6,7 @@
 using namespace communication::communicator;
 using namespace communication::utils;
 
-RPCComm::RPCComm(const std::string &name, Address *address,
+RPCComm::RPCComm(const std::string &name, const utils::Address& address,
 		 int flgs, DIRECTION dir, DIRECTION req_dir,
 		 const COMM_TYPE type) :
   COMM_BASE(name, address, dir, flgs, type),
@@ -15,6 +15,11 @@ RPCComm::RPCComm(const std::string &name, Address *address,
 	   logInst()) {}
 
 ADD_DESTRUCTOR_DEF(RPCComm, COMM_BASE, , )
+
+RPCComm::RPCComm(const std::string &name,
+                 int flgs, DIRECTION dir, DIRECTION req_dir,
+                 const COMM_TYPE type) :
+  RPCComm(name, utils::blankAddress, flgs, dir, req_dir, type) {}
 
 void RPCComm::_close(bool call_base) {
   requests.destroy();

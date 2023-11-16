@@ -56,9 +56,10 @@ bool Proxy::on_thread(const std::string iname, const std::string oname,
   {
     const std::lock_guard<std::mutex> comm_lock(comm_mutex);
     // TODO: Allow multiple connections
-    icomm = new_Comm_t(RECV, itype, iname, new utils::Address(),
-		       iflgs);
-    ocomm = new_Comm_t(SEND, otype, oname, new utils::Address(),
+    utils::Address iAddr;
+    utils::Address oAddr;
+    icomm = new_Comm_t(RECV, itype, iname, iAddr, iflgs);
+    ocomm = new_Comm_t(SEND, otype, oname, oAddr,
 		       oflgs | COMM_FLAG_ASYNC);
     if (icomm && ocomm) {
       icomm->getMetadata().setFilters(filters);

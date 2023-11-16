@@ -8,13 +8,13 @@ using namespace communication::utils;
 
 unsigned ClientComm::_client_rand_seeded = 0;
 
-ClientComm::ClientComm(const std::string nme, Address *addr,
+ClientComm::ClientComm(const std::string nme, const Address& addr,
 		       int flgs, const COMM_TYPE type) :
   RPCComm(nme, addr,
 	  flgs | COMM_FLAG_CLIENT | COMM_ALWAYS_SEND_HEADER,
 	  SEND, RECV, type) {
   // Called to create temp comm for send/recv
-  if (!(global_comm || (name.empty() && address && address->valid())))
+  if (!(global_comm || (name.empty() && address.valid())))
     init();
 }
 
@@ -59,7 +59,7 @@ void ClientComm::init() {
     }
   } YGG_THREAD_SAFE_END;
   if (name.empty()) {
-    this->name = "client_request." + this->address->address();
+    this->name = "client_request." + this->address.address();
   }
 }
 
@@ -212,7 +212,7 @@ long ClientComm::recv_single(utils::Header& header) {
 	  " (signon = " << in_signon << ")" << std::endl;
 	break;
       } else {
-	log_debug() << "recv_single: No response to oldest request (address = " << response_comm->address->address() << "), sleeping" <<
+	log_debug() << "recv_single: No response to oldest request (address = " << response_comm->address.address() << "), sleeping" <<
 	  " (signon = " << in_signon << ")" << std::endl;
       }
     }

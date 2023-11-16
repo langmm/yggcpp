@@ -31,7 +31,7 @@ class ZMQComm_tester : public ZMQComm {
 public:
     TESTER_METHODS(ZMQComm)
 
-    std::string getAdr() { return address->address();}
+    std::string getAdr() { return address.address();}
 
     void setReply() {
         // this->getReply()->addresses.push_back(new communication::utils::Address("ABCDE"));
@@ -70,9 +70,9 @@ COMM_SERI_TEST(ZMQComm)
 TEST(ZMQComm, constructor) {
     std::string name = "";
     ZMQSocket::resetPort();
-    ZMQComm_tester zmqc(name, nullptr, SEND);
+    ZMQComm_tester zmqc(name, SEND);
     EXPECT_EQ(zmqc.comm_nmsg(), 0);
-    auto *adrs = new utils::Address();
+    utils::Address adrs;
     ZMQComm_tester zmqr(name, adrs, RECV);
     EXPECT_EQ(zmqr.comm_nmsg(), 0);
 #ifdef ELF_AVAILABLE
@@ -83,25 +83,26 @@ TEST(ZMQComm, constructor) {
     //   ZMQSocket::resetPort();
     //   std::string alt_name = "TestZMQComm";
     //   ELF_BEGIN_ALT_F(getenv);
-    //   EXPECT_THROW(ZMQComm zmqc(alt_name, nullptr, SEND), std::runtime_error);
+    //   EXPECT_THROW(ZMQComm zmqc(alt_name, SEND), std::runtime_error);
     //   ELF_END_F(getenv);
     // }
     // Failure to create socket
     {
       ELF_CREATE_T(ZMQ, -1);
-      EXPECT_THROW(ZMQComm zmqc(name, nullptr, SEND), std::exception);
+      EXPECT_THROW(ZMQComm zmqc1(name, SEND), std::exception);
       ELF_CREATE_REVERT_T(ZMQ);
     }
     // Failure to set socket options
     {
       ELF_BEGIN_F(zmq_setsockopt);
-      EXPECT_THROW(ZMQComm zmqc(name, nullptr, SEND), std::runtime_error);
+      EXPECT_THROW(ZMQComm zmqc2(name, SEND), std::runtime_error);
       ELF_END_F(zmq_setsockopt);
     }
     // Failure to connect
     {
       ELF_BEGIN_F(zmq_connect);
-      EXPECT_THROW(ZMQComm zmqc("", new utils::Address("1.2.3.4"), RECV),
+      utils::Address adr("1.2.3.4");
+      EXPECT_THROW(ZMQComm zmqc3("", adr, RECV),
 		   std::exception);
       ELF_END_F(zmq_connect);
     }
@@ -110,7 +111,7 @@ TEST(ZMQComm, constructor) {
       RETVAL = EADDRINUSE;
       ELF_BEGIN_F(zmq_bind);
       ELF_BEGIN_F(zmq_errno);
-      EXPECT_THROW(ZMQComm zmqc(name, nullptr, SEND), std::runtime_error);
+      EXPECT_THROW(ZMQComm zmqc4(name, SEND), std::runtime_error);
       ELF_END_F(zmq_bind);
       ELF_END_F(zmq_errno);
     }
@@ -118,10 +119,10 @@ TEST(ZMQComm, constructor) {
       // Failure to get socket options
       ELF_BEGIN_F(zmq_getsockopt);
       RETMSG = "";
-      EXPECT_THROW(ZMQComm zmqc(name, nullptr, SEND), std::runtime_error);
+      EXPECT_THROW(ZMQComm zmqc5(name, SEND), std::runtime_error);
       // Failure to get endpoint
       RETMSG = "invalid";
-      EXPECT_THROW(ZMQComm zmqc(name, nullptr, SEND), std::runtime_error);
+      EXPECT_THROW(ZMQComm zmqc6(name, SEND), std::runtime_error);
       ELF_END_F(zmq_getsockopt);
     }
     ELF_END;
@@ -130,8 +131,9 @@ TEST(ZMQComm, constructor) {
 
 TEST(ZMQComm, exchange) {
   std::string name = "TestZMQ";
-  ZMQComm sComm(name, nullptr, SEND);
-  ZMQComm rComm(name, new utils::Address(sComm.getAddress()), RECV);
+  ZMQComm sComm(name, SEND);
+  utils::Address adr(sComm.getAddress());
+  ZMQComm rComm(name, adr, RECV);
   std::string msg_send = "This is a test message";
   std::string msg_recv;
   EXPECT_GT(sComm.sendVar(msg_send), 0);
@@ -184,7 +186,7 @@ TEST(ZMQComm, send) {
 #ifdef ELF_AVAILABLE
     std::string name = "TestZMQSend";
     std::string mmsg = "This is a test message";
-    ZMQComm_tester zmq(name, nullptr, SEND);
+    ZMQComm_tester zmq(name, SEND);
     zmq.setReply();
     ELF_BEGIN;
     // Failure to create message
@@ -211,8 +213,8 @@ TEST(ZMQComm, send) {
 
 TEST(ZMQComm, recv) {
     std::string name = "TestZMQSend";
-    ZMQComm_tester zmq_recv(name, nullptr, RECV);
-    ZMQComm_tester zmq_send(name, nullptr, SEND);
+    ZMQComm_tester zmq_recv(name, RECV);
+    ZMQComm_tester zmq_send(name, SEND);
 #ifdef ELF_AVAILABLE
     ELF_BEGIN;
     char* data = NULL;
@@ -260,7 +262,7 @@ TEST(ZMQComm, recv) {
 }
 
 TEST(ZMQComm, errors) {
-  ZMQComm comm("", nullptr, SEND);
+  ZMQComm comm("", SEND);
   std::string msg;
   comm.getReply().clear();
   EXPECT_FALSE(comm.getReply().recv_stage1(msg));
@@ -272,9 +274,7 @@ TEST(ZMQComm, errors) {
 #else // ZMQINSTALLED
 
 TEST(ZMQComm, constructor) {
-    EXPECT_THROW(ZMQComm zmq, std::exception);
-    std::string name = "";
-    EXPECT_THROW(ZMQComm zmq2(name, nullptr, SEND), std::exception);
+  EXPECT_THROW(ZMQComm zmq2("", SEND), std::exception);
 }
 
 #endif // ZMQINSTALLED

@@ -22,13 +22,13 @@ COMM_SERI_TEST(IPCComm)
 TEST(IPCComm, constructor) {
     IPCComm_tester ipc;
     std::string name = "";
-    IPCComm_tester ipc2(name, nullptr, SEND);
+    IPCComm_tester ipc2(name, SEND);
     EXPECT_TRUE(ipc2.getName().find("tempnewIPC") != std::string::npos);
 
-    utils::Address *adr = new utils::Address("this.is.a.test");
+    utils::Address adr("this.is.a.test");
     IPCComm_tester ipc3(name, adr, RECV);
 
-    utils::Address *adr2 = new utils::Address("12345");
+    utils::Address adr2("12345");
     name = "TestName";
     EXPECT_THROW(IPCComm_tester ipc4(name, adr2, RECV), std::runtime_error);
 
@@ -36,10 +36,10 @@ TEST(IPCComm, constructor) {
     name = "";
     ELF_BEGIN;
     ELF_CREATE_T(IPC, 0); // To allow connection to non-existed queue
-    utils::Address *adr3 = new utils::Address("12345");
+    utils::Address adr3("12345");
     IPCComm_tester ipc5(name, adr3, RECV);
     RETVAL_CREATE = -1;
-    EXPECT_THROW(IPCComm_tester ipc6(name, nullptr, SEND), std::runtime_error);
+    EXPECT_THROW(IPCComm_tester ipc6(name, SEND), std::runtime_error);
     ELF_CREATE_REVERT_T(IPC);
     ELF_END;
 #endif // ELF_AVAILABLE
@@ -49,16 +49,16 @@ TEST(IPCComm, send) {
     std::string message = "Hello world";
     std::string name = "";
     std::string msg_recv;
-    IPCComm_tester ipc_r(name, nullptr, RECV);
+    IPCComm_tester ipc_r(name, RECV);
     EXPECT_EQ(ipc_r.send(message.c_str(), message.size()), -1);
-    IPCComm_tester ipc(name, nullptr, SEND);
+    IPCComm_tester ipc(name, SEND);
     EXPECT_EQ(ipc.recv(msg_recv), -1);
     EXPECT_GT(ipc.send(message.c_str(), message.size()), 0);
 #ifdef ELF_AVAILABLE
     ELF_BEGIN;
     ELF_CREATE_T(IPC, 0);
     std::string data = "abcdef12345";
-    utils::Address *adr2 = new utils::Address("12345678");
+    utils::Address adr2("12345678");
     IPCComm_tester ipc2(data, adr2, SEND);
     // Replace msgsnd and msgctl so that send fails, but msgctl succeeds
     ELF_REPLACE_SEND_IPC;
@@ -91,7 +91,7 @@ TEST(IPCComm, send) {
 
 TEST(IPCComm, commnmsg) {
     std::string name = "Comm_nsg_test";
-    IPCComm_tester ipc(name, NULL, SEND);
+    IPCComm_tester ipc(name, SEND);
     int res = ipc.comm_nmsg();
     EXPECT_EQ(res, 0);
 
@@ -118,7 +118,8 @@ TEST(IPCComm, sendLarge) {
     // Replace msgsnd to test sending long message
     ELF_REPLACE_SEND_IPC;
     ELF_SET_SUCCESS;
-    IPCComm_tester ipc(name, new utils::Address("2468"), SEND);
+    utils::Address adr("2468");
+    IPCComm_tester ipc(name, adr, SEND);
     std::string msg(ipc.getMaxMsgSize() - 1, 'A');
     EXPECT_GT(ipc.send(msg), 0);
     EXPECT_EQ(SENDCOUNT, 2);
@@ -151,7 +152,8 @@ TEST(IPCComm, recv) {
     ELF_BEGIN;
     ELF_CREATE_T(IPC, 0); // To allow connection to non-existed queue
     ELF_SET_SUCCESS;
-    IPCComm_tester ipc(name, new utils::Address("13579"), RECV);
+    utils::Address adr("13579");
+    IPCComm_tester ipc(name, adr, RECV);
     // Replace msgrcv to test different size messages
     ELF_RECV_T(IPC, 0);
     char* data = (char*)malloc(sizeof(char));
@@ -210,9 +212,9 @@ TEST(IPCComm, recv) {
 #else // IPCINSTALLED
 
 TEST(IPCComm, constructor) {
-    EXPECT_THROW(IPCComm_tester ipc, std::exception);
+    EXPECT_THROW(IPCComm_tester ipc(""), std::exception);
     std::string name = "";
-    EXPECT_THROW(IPCComm_tester ipc2(name, nullptr, SEND), std::exception);
+    EXPECT_THROW(IPCComm_tester ipc2(name, SEND), std::exception);
 }
 
 #endif // IPCINSTALLED

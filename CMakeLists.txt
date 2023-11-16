@@ -538,7 +538,7 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
    set(CMAKE_CXX_FLAGS_RELEASE "/Zi -DNDEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS}")
    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "/Zi -DNDEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS}")
 else ()
-   set(CMAKE_CXX_FLAGS_DEBUG "-g -DNDEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS} ")
+   set(CMAKE_CXX_FLAGS_DEBUG "-g3 -ggdb -DNDEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS} ")
    set(CMAKE_CXX_FLAGS_RELEASE "-g -DNDEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS} ")
    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g -DNDEBUG${BUILD_FLAGS}${YGG_BUILD_FLAGS} ")
 endif ()
@@ -649,7 +649,7 @@ if(YGG_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang|A
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
     else()
-        target_link_libraries(YggInterface PRIVATE gcov)
+        target_link_libraries(${YGG_TARGET_CPP} PRIVATE gcov)
         set(CTEST_COVERAGE_COMMAND "gcov")
         set(CTEST_COVERAGE_EXTRA_FLAGS "")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-inline-small-functions -fno-default-inline")
@@ -680,8 +680,8 @@ if(YGG_BUILD_TESTS OR YGG_BUILD_CXX_TESTS)
     set(SUBLIBFILE ${CMAKE_BINARY_DIR}/library_path.txt)
     add_custom_command(
         OUTPUT ${SUBLIBFILE}
-        COMMAND echo "$<TARGET_FILE:YggInterface>" > "${SUBLIBFILE}"
-       DEPENDS YggInterface
+        COMMAND echo "$<TARGET_FILE:${YGG_TARGET_CPP}>" > "${SUBLIBFILE}"
+       DEPENDS ${YGG_TARGET_CPP}
        VERBATIM)
     add_custom_target(make_sublib ALL DEPENDS ${SUBLIBFILE})
 

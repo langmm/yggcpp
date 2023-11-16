@@ -118,7 +118,7 @@ if (WIN32)
         add_custom_command(
             TARGET unittest
             POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:YggInterface> $<TARGET_FILE_DIR:unittest>
+            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${YGG_TARGET_CPP}> $<TARGET_FILE_DIR:unittest>
             COMMAND_EXPAND_LISTS
         )
     else()

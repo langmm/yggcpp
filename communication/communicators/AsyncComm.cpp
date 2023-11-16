@@ -204,22 +204,30 @@ void AsyncBacklog::on_thread(Comm_t* parent) {
       const std::lock_guard<std::mutex> comm_lock(comm_mutex);
       log_debug() << "on_thread: Creating comm on thread" << std::endl;
       int flgs_comm = (parent->getFlags() & ~COMM_FLAG_ASYNC) | COMM_FLAG_ASYNC_WRAPPED;
+      Address addr(parent->getAddress());
       comm = new_Comm_t(direction,
 			parent->getCommType(),
 			parent->getName(),
-			new utils::Address(parent->getAddress()),
+			addr,
 			flgs_comm);
-      parent->updateMaxMsgSize(comm->getMaxMsgSize());
-      parent->address->address(comm->getAddress());
-      parent->updateMsgBufSize(comm->getMsgBufSize());
-      parent->getFlags() |= (comm->getFlags() & ~flgs_comm);
-      if (comm->getCommType() == CLIENT_COMM) {
-	set_status(THREAD_IS_CLIENT, true);
+      if (comm) {
+	parent->updateMaxMsgSize(comm->getMaxMsgSize());
+	parent->address.address(comm->getAddress());
+	parent->updateMsgBufSize(comm->getMsgBufSize());
+	parent->getFlags() |= (comm->getFlags() & ~flgs_comm);
+	if (comm->getCommType() == CLIENT_COMM) {
+	  set_status(THREAD_IS_CLIENT, true);
+	} else {
+	  set_status(THREAD_SIGNON_SENT | THREAD_SIGNON_RECV, true);
+	}
+	set_status(THREAD_STARTED);
+	log_debug() << "on_thread: Created comm on thread" << std::endl;
       } else {
-	set_status(THREAD_SIGNON_SENT | THREAD_SIGNON_RECV, true);
+	log_error() << "on_thread: Failed to create comm on thread" << std::endl;
+	backlog.close();
+	out = false;
+	set_status(THREAD_STARTED);
       }
-      set_status(THREAD_STARTED);
-      log_debug() << "on_thread: Created comm on thread" << std::endl;
     }
     // wait_status(THREAD_INIT);
     if (direction == SEND) {
@@ -248,8 +256,10 @@ void AsyncBacklog::on_thread(Comm_t* parent) {
     backlog.close();
     {
       const std::lock_guard<std::mutex> comm_lock(comm_mutex);
-      delete comm;
-      comm = nullptr;
+      if (comm) {
+	delete comm;
+	comm = nullptr;
+      }
     }
 #else // THREADSINSTALLED
     UNUSED(parent);
@@ -308,6 +318,9 @@ int AsyncBacklog::signon_status() {
     return SIGNON_COMPLETE;
 #ifdef THREADSINSTALLED
   const std::lock_guard<std::mutex> comm_lock(comm_mutex);
+  if (is_closing() || !(comm)) {
+    return SIGNON_ERROR;
+  }
   ClientComm* cli = dynamic_cast<ClientComm*>(comm);
   RequestList& requests = cli->getRequests();
   if (requests.signon_complete) {
@@ -348,6 +361,9 @@ bool AsyncBacklog::wait_for_signon() {
       return true;
     {
       const std::lock_guard<std::mutex> comm_lock(comm_mutex);
+      if (is_closing() || !(comm)) {
+	return false;
+      }
       ClientComm* cli = dynamic_cast<ClientComm*>(comm);
       if (status == SIGNON_WAITING) {
 	log_debug() << "wait_for_signon: Sign-on after " <<
@@ -458,7 +474,7 @@ AsyncLockGuard::~AsyncLockGuard() {
 ///////////////
 
 AsyncComm::AsyncComm(const std::string name,
-		     utils::Address *address,
+		     const utils::Address& address,
 		     const DIRECTION direction,
 		     int flgs, const COMM_TYPE type) :
   CommBase(name, address, direction, type, flgs | COMM_FLAG_ASYNC),
@@ -470,18 +486,9 @@ AsyncComm::AsyncComm(const std::string name,
   if (!global_comm) {
     handle = new AsyncBacklog(this);
   }
+  CommBase::init();
 }
-AsyncComm::AsyncComm(const std::string nme,
-		     const DIRECTION dirn,
-		     int flgs, const COMM_TYPE type) :
-  AsyncComm(nme, nullptr, dirn, flgs, type) {}
-
-AsyncComm::AsyncComm(utils::Address *addr,
-		     const DIRECTION dirn,
-		     int flgs, const COMM_TYPE type) :
-  AsyncComm("", addr, dirn, flgs, type) {}
-
-ADD_DESTRUCTOR_DEF(AsyncComm, CommBase, , )
+ADD_CONSTRUCTORS_DEF(AsyncComm)
 
 void AsyncComm::_close(bool call_base) {
   if (call_base)
@@ -500,6 +507,10 @@ int AsyncComm::comm_nmsg(DIRECTION dir) const {
   if ((type == CLIENT_COMM && dir == RECV) ||
       (type == SERVER_COMM && dir == SEND)) {
     const AsyncLockGuard lock(handle);
+    if (handle->is_closing()) {
+      log_error() << "comm_nmsg: Thread is closing" << std::endl;
+      return -1;
+    }
     return handle->comm->comm_nmsg(dir);
   }
   return static_cast<int>(handle->backlog.size());
@@ -512,6 +523,10 @@ int AsyncComm::wait_for_recv(const int64_t& tout) {
       std::string req_id;
       {
 	const AsyncLockGuard lock(handle);
+	if (handle->is_closing() || !(handle->comm)) {
+	  log_error() << "wait_for_recv: Comm is closed" << std::endl;
+	  return -1;
+	}
 	ClientComm* cli = dynamic_cast<ClientComm*>(handle->comm);
 	req_id = cli->getRequests().activeRequestClient(true);
       }
@@ -523,6 +538,10 @@ int AsyncComm::wait_for_recv(const int64_t& tout) {
 	handle->backlog.wait_for(std::chrono::microseconds(tout),
 				 req_id, true);
 	{
+	  if (handle->is_closing()) {
+	    log_error() << "wait_for_recv: Comm is closed (request)" << std::endl;
+	    return -1;
+	  }
 	  const AsyncLockGuard lock(handle);
 	  return handle->comm->wait_for_recv(tout);
 	}
@@ -631,6 +650,10 @@ bool AsyncComm::create_header_send(Header& header) {
 				COMM_BASE_TYPE == FILE_COMM)))
     return true;
   const AsyncLockGuard lock(handle);
+  if (handle->is_closing() || !(handle->comm)) {
+    log_error() << "create_header_send: Comm is closed" << std::endl;
+    return false;
+  }
   if (type == CLIENT_COMM &&
       !(header.flags & (HEAD_FLAG_EOF | HEAD_FLAG_CLIENT_SIGNON))) {
     if (!dynamic_cast<ClientComm*>(handle->comm)->send_signon(0, 3, this))
@@ -644,7 +667,7 @@ bool AsyncComm::create_header_send(Header& header) {
   return handle->comm->create_header_send(header);
 }
 
-Comm_t* AsyncComm::create_worker(utils::Address* address,
+Comm_t* AsyncComm::create_worker(utils::Address& address,
 				 const DIRECTION& dir, int flgs) {
   return new AsyncComm("", address, dir, flgs | COMM_FLAG_WORKER, type);
 }
