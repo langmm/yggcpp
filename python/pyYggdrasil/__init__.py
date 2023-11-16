@@ -1,7 +1,6 @@
 try:
     from pyYggdrasil import _pyYggdrasil  # noqa: F401
 except ImportError as e:
-    print("IMPORT ERROR: ", e)
     import os
     import os.path
     import re
@@ -16,12 +15,13 @@ except ImportError as e:
         ),
         None,
     )
-    if not bundled_lib:
-        raise FileNotFoundError(
-            "YggInterface C++ library is not installed and "
-            "no bundled version was detected")
-    CDLL(os.path.join(os.path.dirname(__file__), bundled_lib),
-         winmode=0)
+    if bundled_lib:
+        CDLL(os.path.join(os.path.dirname(__file__), bundled_lib),
+             winmode=0)
+    # else:
+    #     raise FileNotFoundError(
+    #         "YggInterface C++ library is not installed and "
+    #         "no bundled version was detected")
     from pyYggdrasil import _pyYggdrasil  # noqa: F401
 
 

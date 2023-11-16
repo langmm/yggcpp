@@ -39,9 +39,7 @@ int Comm_t::_ygg_init() {
       delete ctx;
       ctx = nullptr;
 #endif
-#ifndef YGGDRASIL_DISABLE_PYTHON_C_API
       utils::initialize_python("_ygg_init");
-#endif // YGGDRASIL_DISABLE_PYTHON_C_API
       YggLogDebug << "_ygg_init: Registering cleanup" << std::endl;
       std::atexit(_cleanup_wrapper);
       Comm_t::_ygg_initialized = 1;
@@ -71,9 +69,7 @@ void Comm_t::_ygg_cleanup(CLEANUP_MODE mode) {
 	  // This hangs if there are ZMQ sockets that didn't get cleaned up
 	  ZMQContext::destroy();
 #endif
-#ifndef YGGDRASIL_DISABLE_PYTHON_C_API
 	  utils::finalize_python("_ygg_cleanup");
-#endif // YGGDRASIL_DISABLE_PYTHON_C_API
 	}
       } YGG_THREAD_SAFE_END;
 #ifndef YGG_TEST

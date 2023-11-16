@@ -70,9 +70,18 @@ if(SKBUILD)
                     LIBRARY DESTINATION ${YGG_CPP_LIBRARY_DEST}
 	            PUBLIC_HEADER DESTINATION ${YGG_CPP_LIBRARY_DEST})
         endif()
+        install(TARGETS ${YGG_TARGET_PY}
+  	        LIBRARY DESTINATION ${Python_INSTALL_DIR})
+    else()
+        if(WIN32)
+            install(TARGETS ${YGG_TARGET_PY}
+  	            LIBRARY DESTINATION ${Python_INSTALL_DIR}
+		    RUNTIME DESTINATION ${Python_INSTALL_DIR})
+	else()
+            install(TARGETS ${YGG_TARGET_PY}
+  	            LIBRARY DESTINATION ${Python_INSTALL_DIR})
+	endif()
     endif()
-    install(TARGETS ${YGG_TARGET_PY}
-	    LIBRARY DESTINATION ${Python_INSTALL_DIR})
     if (NOT SKBUILD)
         install(DIRECTORY pyYggdrasil/ DESTINATION ${Python_INSTALL_DIR})
     endif()
