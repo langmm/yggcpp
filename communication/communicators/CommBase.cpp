@@ -100,7 +100,7 @@ int Comm_t::_ygg_finalized = 0;
 CLEANUP_MODE Comm_t::_ygg_cleanup_mode = CLEANUP_DEFAULT;
 std::string Comm_t::_ygg_main_thread_id = "";
 
-void Comm_t::init() {
+void Comm_t::init_base() {
     _ygg_init();
 
     flags |= COMM_FLAG_VALID;
@@ -132,8 +132,6 @@ void Comm_t::init() {
             flags &= ~COMM_FLAG_VALID;
         }
     }
-    if (flags & COMM_FLAG_SET_OPP_ENV)
-      setOppEnv();
     log_debug() << "Comm_t: Done" << std::endl;
 }
 Comm_t::Comm_t(const std::string &nme, Address &addr,
@@ -142,7 +140,7 @@ Comm_t::Comm_t(const std::string &nme, Address &addr,
   maxMsgSize(COMM_BASE_MAX_MSG_SIZE), msgBufSize(0),
   index_in_register(-1), thread_id(), metadata(),
   timeout_recv(YGG_MAX_TIME), workers(), global_comm(nullptr) {
-  init();
+  init_base();
 }
 
 Comm_t::Comm_t(const std::string &nme,
@@ -151,7 +149,7 @@ Comm_t::Comm_t(const std::string &nme,
   maxMsgSize(COMM_BASE_MAX_MSG_SIZE), msgBufSize(0),
   index_in_register(-1), thread_id(), metadata(),
   timeout_recv(YGG_MAX_TIME), workers(), global_comm(nullptr) {
-  init();
+  init_base();
 }
 
 Comm_t::~Comm_t() {

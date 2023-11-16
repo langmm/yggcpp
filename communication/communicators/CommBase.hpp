@@ -887,7 +887,11 @@ private:
 
 protected:
 
-    void init();
+    void init_base();
+    void init() {
+      if (flags & COMM_FLAG_SET_OPP_ENV)
+	setOppEnv();
+    }
     
     friend AsyncComm;
     friend AsyncBacklog;
