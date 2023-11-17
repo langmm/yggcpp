@@ -17,19 +17,20 @@ function(convert_dlla_to_lib libname)
       find_file(dllfile "${CMAKE_SHARED_LIBRARY_PREFIX}${libname}${CMAKE_SHARED_LIBRARY_SUFFIX}")
     endif()
     if (dllfile STREQUAL "dllfile-NOTFOUND")
-      message(STATUS "Could not find ${libname} dll")
+      message(STATUS "DDLA2LIB: Could not find ${libname} dll")
       return()
     endif()
     string(REPLACE ".dll.a" ".lib" libfile "${dllafile}")
     string(REPLACE ".dll" ".def" deffile "${dllfile}")
     if(EXISTS "${libfile}")
-      message(STATUS "${libfile} already exists")
+      message(STATUS "DLLA2LIB: ${libfile} already exists")
       return()
     endif()
     if(NOT EXISTS "${deffile}")
       execute_process(COMMAND gendef ${dllfile})
     endif()
     execute_process(COMMAND dlltool -d ${deffile} -D ${dllfile} -l ${libfile})
+    message(STATUS "DLLA2LIB: Created ${libfile}")
   endif()
 endfunction()
 
@@ -44,7 +45,7 @@ function(create_lib_for_target target)
     set(libfile ${ARGS_LIBFILE})
   else()
     cmake_path(APPEND libfile "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_IMPORT_LIBRARY_PREFIX}${target}.lib")
-    set_target_properties(${target} PROPERTIES IMPORT_SUFFIX ".lib")
+    # set_target_properties(${target} PROPERTIES IMPORT_SUFFIX ".lib")
   endif()
   if (ARGS_DEFFILE)
     set(deffile ${ARGS_DEFFILE})
@@ -89,8 +90,8 @@ function(create_lib_for_target target)
     POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E echo "TARGET_IMPORT_FILE for ${target} $<TARGET_IMPORT_FILE:${target}>"
     COMMAND ${CMAKE_COMMAND} -E echo "TARGET_LIB_FILE for ${target} ${libfile}"
-    COMMAND LIB /DEF:${deffile} /OUT:${libfile}
-    # COMMAND LIB /DEF:${deffile} /OUT:$<TARGET_IMPORT_FILE:${target}>
+    # COMMAND LIB /DEF:${deffile} /OUT:${libfile}
+    COMMAND LIB /DEF:${deffile} /OUT:$<TARGET_IMPORT_FILE:${target}>
     # COMMAND dlltool -d ${deffile} -D ${dllfile} -l ${libfile}
     COMMAND_EXPAND_LISTS)
   set_source_files_properties(
