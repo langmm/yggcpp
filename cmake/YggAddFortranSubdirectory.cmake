@@ -112,6 +112,7 @@ function(_setup_native_config_and_build source_dir build_dir tmp_dir)
 endfunction()
 
 function(target_link_external_fortran_objects target fortran_target)
+    include(CreateMSVCLib)
     if ((NOT FORCE_SPLIT_CXXFORTRAN) AND (NOT MSVC))
         set_source_files_properties(
 	    ${${fortran_target}_EXT_SRC} PROPERTIES
@@ -126,29 +127,26 @@ function(target_link_external_fortran_objects target fortran_target)
       ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/CMakeAddFortranSubdirectory/copy_mod.cmake.in
       ${CMAKE_CURRENT_BINARY_DIR}/copy_mod.cmake
       @ONLY)
-    if (WIN32)
-      add_custom_command(
-          TARGET ${target}
-	  PRE_LINK
-	  COMMAND dlltool --export-all-symbols -z ${${fortran_target}_EXT_DEF} -e ${${fortran_target}_EXT_EXP} ${${fortran_target}_EXT_OBJ}
-	  COMMAND_EXPAND_LISTS)
-      set_source_files_properties(
-          ${${fortran_target}_EXT_DEF}
-	  PROPERTIES
-	  HEADER_FILE_ONLY true
-	  GENERATED true)
-      set_source_files_properties(
-          ${${fortran_target}_EXT_EXP}
-	  PROPERTIES
-	  EXTERNAL_OBJECT true
-	  GENERATED true)
-    endif()
+    # if (WIN32)
+    #   add_custom_command(
+    #       TARGET ${target}
+    # 	  PRE_LINK
+    # 	  COMMAND dlltool --export-all-symbols -z ${${fortran_target}_EXT_DEF} -e ${${fortran_target}_EXT_EXP} ${${fortran_target}_EXT_OBJ}
+    # 	  COMMAND_EXPAND_LISTS)
+    #   set_source_files_properties(
+    #       ${${fortran_target}_EXT_DEF}
+    # 	  PROPERTIES
+    # 	  HEADER_FILE_ONLY true
+    # 	  GENERATED true)
+    #   set_source_files_properties(
+    #       ${${fortran_target}_EXT_EXP}
+    # 	  PROPERTIES
+    # 	  EXTERNAL_OBJECT true
+    # 	  GENERATED true)
+    # endif()
     add_custom_command(
         TARGET ${target}
 	PRE_LINK
-	# COMMAND ${CMAKE_COMMAND} -E echo "IMPORTED_OBJECTS = $<TARGET_PROPERTY:${fortran_target},IMPORTED_OBJECTS>"
-	# COMMAND ${CMAKE_COMMAND} -E echo "TARGET_OBJECTS = $<TARGET_OBJECTS:${fortran_target}>"
-	# COMMAND ${CMAKE_COMMAND} -E echo "OBJECTS = ${${fortran_target}_EXT_OBJ}"
 	COMMAND ${CMAKE_COMMAND} "-DOBJS=$<JOIN:$<TARGET_OBJECTS:${fortran_target}>,\;>" -P ${CMAKE_CURRENT_BINARY_DIR}/copy_mod.cmake
 	COMMAND_EXPAND_LISTS)
     set_source_files_properties(
@@ -164,20 +162,27 @@ function(target_link_external_fortran_objects target fortran_target)
     target_link_directories(${target} PUBLIC $<TARGET_PROPERTY:${fortran_target},INTERFACE_LINK_DIRECTORIES>)
     target_sources(${target} PRIVATE "$<TARGET_OBJECTS:${fortran_target}>")
     if (WIN32)
-      set_source_files_properties(
-        ${${fortran_target}_EXT_DEF}
-	PROPERTIES
-	HEADER_FILE_ONLY true
-	GENERATED true)
-      set_source_files_properties(
-        ${${fortran_target}_EXT_EXP}
-	PROPERTIES
-	EXTERNAL_OBJECT true
-	GENERATED true)
-      target_sources(${target} PRIVATE
-                     ${${fortran_target}_EXT_DEF}
-		     ${${fortran_target}_EXT_EXP})
+      create_lib_for_target(
+        ${target} SOURCE_TARGET ${fortran_target}
+        DEFFILE ${${fortran_target}_EXT_DEF}
+        EXPFILE ${${fortran_target}_EXT_EXP}
+        OBJECTS ${${fortran_target}_EXT_OBJ})
     endif()
+    # if (WIN32)
+    #   set_source_files_properties(
+    #     ${${fortran_target}_EXT_DEF}
+    # 	PROPERTIES
+    # 	HEADER_FILE_ONLY true
+    # 	GENERATED true)
+    #   set_source_files_properties(
+    #     ${${fortran_target}_EXT_EXP}
+    # 	PROPERTIES
+    # 	EXTERNAL_OBJECT true
+    # 	GENERATED true)
+    #   target_sources(${target} PRIVATE
+    #                  ${${fortran_target}_EXT_DEF}
+    # 		     ${${fortran_target}_EXT_EXP})
+    # endif()
 endfunction()
 
 function(add_mixed_fortran_library target library_type)
@@ -207,24 +212,17 @@ function(add_mixed_fortran_library target library_type)
   # endif()
   add_library(${target} ${library_type} ${other_sources})
   target_link_external_fortran_objects(${target} ${fortran_target})
-  if (MSVC_AND_GNU_BUILD)
-    # set_target_properties(${target} PROPERTIES
-    #                       IMPORT_SUFFIX ".lib")
-    # add_custom_command(
-    #   TARGET ${target}
-    #   POST_BUILD
-    #   COMMAND LIB /DEF:${${fortran_target}_EXT_DEF} $<TARGET_FILE_NAME:${target}>
-    #   COMMAND_EXPAND_LISTS)
-    cmake_path(APPEND ${target}_LIB_FILE "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_IMPORT_LIBRARY_PREFIX}${target}.lib")
-    add_custom_command(
-      TARGET ${target}
-      POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E echo "TARGET_IMPORT_FILE for ${target} $<TARGET_IMPORT_FILE:${target}>"
-      COMMAND ${CMAKE_COMMAND} -E echo "TARGET_LIB_FILE for ${target} ${${target}_LIB_FILE}"
-      COMMAND LIB /DEF:${${fortran_target}_EXT_DEF} /OUT:${${target}_LIB_FILE}
-      # COMMAND LIB /DEF:${${fortran_target}_EXT_DEF} /OUT:$<TARGET_IMPORT_FILE:${target}> # $<TARGET_OBJECTS:${target}>
-      COMMAND_EXPAND_LISTS)
-  endif()
+  # if (MSVC_AND_GNU_BUILD)
+  #   cmake_path(APPEND ${target}_LIB_FILE "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_IMPORT_LIBRARY_PREFIX}${target}.lib")
+  #   add_custom_command(
+  #     TARGET ${target}
+  #     POST_BUILD
+  #     COMMAND ${CMAKE_COMMAND} -E echo "TARGET_IMPORT_FILE for ${target} $<TARGET_IMPORT_FILE:${target}>"
+  #     COMMAND ${CMAKE_COMMAND} -E echo "TARGET_LIB_FILE for ${target} ${${target}_LIB_FILE}"
+  #     # COMMAND LIB /DEF:${${fortran_target}_EXT_DEF} /OUT:${${target}_LIB_FILE}
+  #     COMMAND LIB /DEF:${${fortran_target}_EXT_DEF} /OUT:$<TARGET_IMPORT_FILE:${target}> # $<TARGET_OBJECTS:${target}>
+  #     COMMAND_EXPAND_LISTS)
+  # endif()
 endfunction()
 
 function(add_external_fortran_library target_name library_type)
