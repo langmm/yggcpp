@@ -9,7 +9,7 @@ function(convert_dlla_to_lib libname)
   else()
     find_library(dllafile ${libname})
   endif()
-  if(dllafile MATCHES "\\.dll\\.a$")
+  if(dllafile MATCHES ".*\\.dll\\.a$")
     # TODO: Find dll
     if(ARGS_DIRECTORIES)
       find_file(dllfile "${CMAKE_SHARED_LIBRARY_PREFIX}${libname}${CMAKE_SHARED_LIBRARY_SUFFIX}" PATHS ${ARGS_DIRECTORIES})
