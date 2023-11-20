@@ -145,11 +145,7 @@ function(target_link_external_fortran_objects target fortran_target)
     target_link_directories(${target} PUBLIC $<TARGET_PROPERTY:${fortran_target},INTERFACE_LINK_DIRECTORIES>)
     target_sources(${target} PRIVATE "$<TARGET_OBJECTS:${fortran_target}>")
     if (WIN32)
-      create_lib_for_target(
-        ${target} SOURCE_TARGET ${fortran_target}
-        # DEFFILE ${${fortran_target}_EXT_DEF}
-        # EXPFILE ${${fortran_target}_EXT_EXP}
-        OBJECTS ${${fortran_target}_EXT_OBJ})
+      create_lib_for_target(${target} SOURCE_TARGET ${fortran_target})
     endif()
 endfunction()
 
@@ -207,16 +203,10 @@ function(add_external_fortran_library target_name library_type)
     cmake_path(APPEND obj "${build_dir}" "${src_base}${CMAKE_C_OUTPUT_EXTENSION}")
     list(APPEND ${target_name}_EXT_OBJ ${obj})
   endforeach()
-  # cmake_path(APPEND ${target_name}_EXT_DEF "${build_dir}" "${target_name}.def")
-  # cmake_path(APPEND ${target_name}_EXT_EXP "${build_dir}" "${target_name}_exports${CMAKE_C_OUTPUT_EXTENSION}")
   set(${target_name}_EXT_SRC "${${target_name}_EXT_SRC}" PARENT_SCOPE)
   set(${target_name}_EXT_OBJ "${${target_name}_EXT_OBJ}" PARENT_SCOPE)
-  # set(${target_name}_EXT_DEF "${${target_name}_EXT_DEF}" PARENT_SCOPE)
-  # set(${target_name}_EXT_EXP "${${target_name}_EXT_EXP}" PARENT_SCOPE)
   message(STATUS "${target_name}_EXT_SRC = ${${target_name}_EXT_SRC}")
   message(STATUS "${target_name}_EXT_OBJ = ${${target_name}_EXT_OBJ}")
-  # message(STATUS "${target_name}_EXT_DEF = ${${target_name}_EXT_DEF}")
-  # message(STATUS "${target_name}_EXT_EXP = ${${target_name}_EXT_EXP}")
   set(EXTERNAL_PRODUCTS "${${target_name}_EXT_OBJ}") # ${${target_name}_EXT_DEF} ${${target_name}_EXT_EXP}")
   # if we have MSVC without Intel fortran then setup
   # external projects to build with mingw fortran
