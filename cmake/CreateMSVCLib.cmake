@@ -45,21 +45,22 @@ function(create_lib_for_target target)
   else()
     set(src_target ${target})
   endif()
+  # set(expfile "${target}.exp")
+  set(deffile "${target}.def")
   
   add_custom_command(
     TARGET ${target}
     DEPENDS ${src_target}
     PRE_LINK
     COMMAND ${CMAKE_COMMAND} -E echo "TARGET_OBJECTS for ${src_target} $<TARGET_OBJECTS:${src_target}>"
-    COMMAND dlltool --export-all-symbols -z $<TARGET_FILE_DIR:${target}>\\exports.def $<TARGET_OBJECTS:${src_target}>
-    BYPRODUCTS exports.def
+    COMMAND dlltool --export-all-symbols -z $<TARGET_FILE_DIR:${target}>\\${deffile} $<TARGET_OBJECTS:${src_target}>
+    BYPRODUCTS ${deffile}
     COMMAND_EXPAND_LISTS)
   # add_custom_command(
   #   TARGET ${target}
   #   POST_BUILD
   #   COMMAND ${CMAKE_COMMAND} -E echo "TARGET_IMPORT_FILE for ${target} $<TARGET_IMPORT_FILE:${target}>"
-  #   COMMAND LIB /DEF:$<TARGET_FILE_DIR:${target}>\\exports.def /OUT:$<TARGET_IMPORT_FILE:${target}>
-  #   # COMMAND ${CMAKE_COMMAND} -E copy_if_different 
+  #   COMMAND LIB /DEF:$<TARGET_FILE_DIR:${target}>\\${deffile} /NAME:${target} /OUT:$<TARGET_IMPORT_FILE:${target}>
   #   # COMMAND dlltool -d ${deffile} -D ${dllfile} -l ${libfile}
   #   COMMAND_EXPAND_LISTS)
   # set_source_files_properties(
@@ -73,7 +74,7 @@ function(create_lib_for_target target)
   #   EXTERNAL_OBJECT true
   #   GENERATED true)
   if(MSVC)
-    target_link_options(${target} PRIVATE /DEF:$<TARGET_FILE_DIR:${target}>\\exports.def)
+    target_link_options(${target} PRIVATE /DEF:$<TARGET_FILE_DIR:${target}>\\${deffile})
     # target_sources(${target} PRIVATE ${expfile})
   else()
     # target_sources(${target} PRIVATE ${deffile} ${expfile})
