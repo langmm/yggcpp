@@ -1,5 +1,5 @@
 function(convert_dlla_to_lib libname)
-  if (NOT MSVC)
+  if (NOT WIN32)
     return()
   endif()
   set(multiValueArgs DIRECTORIES)
