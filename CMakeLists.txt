@@ -608,6 +608,8 @@ if(BUILD_CPP_LIBRARY)
     target_include_directories(
         ${YGG_TARGET_CPP} PUBLIC
     	${DEPS_INCLUDE_DIRS})
+    include(CheckDLL)
+    show_runtimes(${YGG_TARGET_CPP})
 endif()
 
 #########################

@@ -75,51 +75,10 @@ function (add_fortran_test_executable TARGET)
         math (EXPR INDEX "${INDEX} + 1")
     endwhile ()
 
+    include(CheckDLL)
+    show_runtimes(${TARGET})
+    show_runtimes(${TARGET}_fortran)
     if (WIN32)
-        add_custom_command(
-            TARGET ${TARGET}
-            POST_BUILD
-            COMMAND echo "$<TARGET_RUNTIME_DLLS:${TARGET}>"
-        )
-	if (MSVC)
-            add_custom_command(
-                TARGET ${TARGET}
-                POST_BUILD
-                COMMAND dumpbin /dependents $<TARGET_FILE:YggInterface_fortran>
-                COMMAND_EXPAND_LISTS
-            )
-            add_custom_command(
-                TARGET ${TARGET}
-                POST_BUILD
-                COMMAND dumpbin /dependents $<TARGET_FILE:${TARGET}_fortran>
-                COMMAND_EXPAND_LISTS
-            )
-            add_custom_command(
-                TARGET ${TARGET}
-                POST_BUILD
-                COMMAND dumpbin /dependents $<TARGET_FILE:${TARGET}>
-                COMMAND_EXPAND_LISTS
-            )
-	else()
-            add_custom_command(
-                TARGET ${TARGET}
-                POST_BUILD
-                COMMAND objdump -x $<TARGET_FILE:YggInterface_fortran> | grep "DLL Name"
-                COMMAND_EXPAND_LISTS
-            )
-            add_custom_command(
-                TARGET ${TARGET}
-                POST_BUILD
-                COMMAND objdump -x $<TARGET_FILE:${TARGET}_fortran> | grep "DLL Name"
-                COMMAND_EXPAND_LISTS
-            )
-            add_custom_command(
-                TARGET ${TARGET}
-                POST_BUILD
-                COMMAND objdump -x $<TARGET_FILE:${TARGET}> | grep "DLL Name"
-                COMMAND_EXPAND_LISTS
-            )
-	endif()
         if (CONDA_PREFIX)
             add_custom_command(
                 TARGET ${TARGET}

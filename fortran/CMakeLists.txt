@@ -40,6 +40,9 @@ if (YGGDRASIL_INSTALL)
    #         COMPONENT YggInterface_Development)
 endif ()
 
+include(CheckDLL)
+show_runtimes(${YGG_TARGET_FORTRAN})
+
 #########
 # Tests #
 #########
