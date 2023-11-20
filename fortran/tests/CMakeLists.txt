@@ -85,10 +85,34 @@ function (add_fortran_test_executable TARGET)
             add_custom_command(
                 TARGET ${TARGET}
                 POST_BUILD
+                COMMAND dumpbin /dependents $<TARGET_FILE:YggInterface_fortran>
+                COMMAND_EXPAND_LISTS
+            )
+            add_custom_command(
+                TARGET ${TARGET}
+                POST_BUILD
+                COMMAND dumpbin /dependents $<TARGET_FILE:${TARGET}_fortran>
+                COMMAND_EXPAND_LISTS
+            )
+            add_custom_command(
+                TARGET ${TARGET}
+                POST_BUILD
                 COMMAND dumpbin /dependents $<TARGET_FILE:${TARGET}>
                 COMMAND_EXPAND_LISTS
             )
 	else()
+            add_custom_command(
+                TARGET ${TARGET}
+                POST_BUILD
+                COMMAND objdump -x $<TARGET_FILE:YggInterface_fortran> | grep "DLL Name"
+                COMMAND_EXPAND_LISTS
+            )
+            add_custom_command(
+                TARGET ${TARGET}
+                POST_BUILD
+                COMMAND objdump -x $<TARGET_FILE:${TARGET}_fortran> | grep "DLL Name"
+                COMMAND_EXPAND_LISTS
+            )
             add_custom_command(
                 TARGET ${TARGET}
                 POST_BUILD
