@@ -74,7 +74,7 @@ function(create_lib_for_target target)
       COMMAND ${CMAKE_COMMAND} -E echo "TARGET_OBJECTS for ${src_target} $<TARGET_OBJECTS:${src_target}>"
       COMMAND ${CMAKE_COMMAND} -E echo "Passed OBJECTS for ${src_target} ${ARGS_OBJECTS}"
       # COMMAND dlltool --export-all-symbols -z ${deffile} -e ${expfile} ${ARGS_OBJECTS}
-      COMMAND dlltool --export-all-symbols -z exports.def -e $<TARGET_OBJECTS:${src_target}>
+      COMMAND dlltool --export-all-symbols -z exports.def $<TARGET_OBJECTS:${src_target}>
       BYPRODUCTS exports.def
       COMMAND_EXPAND_LISTS)
   endif()
