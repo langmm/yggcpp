@@ -60,7 +60,7 @@ function(create_lib_for_target target)
   #   TARGET ${target}
   #   POST_BUILD
   #   COMMAND ${CMAKE_COMMAND} -E echo "TARGET_IMPORT_FILE for ${target} $<TARGET_IMPORT_FILE:${target}>"
-  #   COMMAND LIB /DEF:$<TARGET_FILE_DIR:${target}>\\${deffile} /NAME:${target} /OUT:$<TARGET_IMPORT_FILE:${target}>
+  #   COMMAND LIB /DEF:$<TARGET_FILE_DIR:${target}>\\${deffile} /NAME:$<PATH:GET_FILENAME,$<TARGET_FILE:${target}>> /OUT:$<PATH:REPLACE_EXTENSION,$<TARGET_IMPORT_FILE:${target}>,.lib>
   #   # COMMAND dlltool -d ${deffile} -D ${dllfile} -l ${libfile}
   #   COMMAND_EXPAND_LISTS)
   # set_source_files_properties(
