@@ -8,11 +8,13 @@ function(show_runtimes target)
     set(after_target ${target})
   endif()
   if (WIN32)
-    add_custom_command(
-      TARGET ${after_target}
-      POST_BUILD
-      COMMAND echo "TARGET_RUNTIME_DLLS(${target}) = $<TARGET_RUNTIME_DLLS:${target}>"
-      )
+    if (NOT ARGS_AFTER_TARGET)
+      add_custom_command(
+        TARGET ${after_target}
+        POST_BUILD
+        COMMAND echo "TARGET_RUNTIME_DLLS(${target}) = $<TARGET_RUNTIME_DLLS:${target}>"
+        )
+    endif()
     if (MSVC)
       add_custom_command(
         TARGET ${after_target}
