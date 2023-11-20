@@ -127,23 +127,6 @@ function(target_link_external_fortran_objects target fortran_target)
       ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/CMakeAddFortranSubdirectory/copy_mod.cmake.in
       ${CMAKE_CURRENT_BINARY_DIR}/copy_mod.cmake
       @ONLY)
-    # if (WIN32)
-    #   add_custom_command(
-    #       TARGET ${target}
-    # 	  PRE_LINK
-    # 	  COMMAND dlltool --export-all-symbols -z ${${fortran_target}_EXT_DEF} -e ${${fortran_target}_EXT_EXP} ${${fortran_target}_EXT_OBJ}
-    # 	  COMMAND_EXPAND_LISTS)
-    #   set_source_files_properties(
-    #       ${${fortran_target}_EXT_DEF}
-    # 	  PROPERTIES
-    # 	  HEADER_FILE_ONLY true
-    # 	  GENERATED true)
-    #   set_source_files_properties(
-    #       ${${fortran_target}_EXT_EXP}
-    # 	  PROPERTIES
-    # 	  EXTERNAL_OBJECT true
-    # 	  GENERATED true)
-    # endif()
     add_custom_command(
         TARGET ${target}
 	PRE_LINK
@@ -164,25 +147,10 @@ function(target_link_external_fortran_objects target fortran_target)
     if (WIN32)
       create_lib_for_target(
         ${target} SOURCE_TARGET ${fortran_target}
-        DEFFILE ${${fortran_target}_EXT_DEF}
-        EXPFILE ${${fortran_target}_EXT_EXP}
+        # DEFFILE ${${fortran_target}_EXT_DEF}
+        # EXPFILE ${${fortran_target}_EXT_EXP}
         OBJECTS ${${fortran_target}_EXT_OBJ})
     endif()
-    # if (WIN32)
-    #   set_source_files_properties(
-    #     ${${fortran_target}_EXT_DEF}
-    # 	PROPERTIES
-    # 	HEADER_FILE_ONLY true
-    # 	GENERATED true)
-    #   set_source_files_properties(
-    #     ${${fortran_target}_EXT_EXP}
-    # 	PROPERTIES
-    # 	EXTERNAL_OBJECT true
-    # 	GENERATED true)
-    #   target_sources(${target} PRIVATE
-    #                  ${${fortran_target}_EXT_DEF}
-    # 		     ${${fortran_target}_EXT_EXP})
-    # endif()
 endfunction()
 
 function(add_mixed_fortran_library target library_type)
@@ -212,17 +180,6 @@ function(add_mixed_fortran_library target library_type)
   # endif()
   add_library(${target} ${library_type} ${other_sources})
   target_link_external_fortran_objects(${target} ${fortran_target})
-  # if (MSVC_AND_GNU_BUILD)
-  #   cmake_path(APPEND ${target}_LIB_FILE "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_IMPORT_LIBRARY_PREFIX}${target}.lib")
-  #   add_custom_command(
-  #     TARGET ${target}
-  #     POST_BUILD
-  #     COMMAND ${CMAKE_COMMAND} -E echo "TARGET_IMPORT_FILE for ${target} $<TARGET_IMPORT_FILE:${target}>"
-  #     COMMAND ${CMAKE_COMMAND} -E echo "TARGET_LIB_FILE for ${target} ${${target}_LIB_FILE}"
-  #     # COMMAND LIB /DEF:${${fortran_target}_EXT_DEF} /OUT:${${target}_LIB_FILE}
-  #     COMMAND LIB /DEF:${${fortran_target}_EXT_DEF} /OUT:$<TARGET_IMPORT_FILE:${target}> # $<TARGET_OBJECTS:${target}>
-  #     COMMAND_EXPAND_LISTS)
-  # endif()
 endfunction()
 
 function(add_external_fortran_library target_name library_type)
@@ -254,13 +211,13 @@ function(add_external_fortran_library target_name library_type)
   cmake_path(APPEND ${target_name}_EXT_EXP "${build_dir}" "${target_name}_exports${CMAKE_C_OUTPUT_EXTENSION}")
   set(${target_name}_EXT_SRC "${${target_name}_EXT_SRC}" PARENT_SCOPE)
   set(${target_name}_EXT_OBJ "${${target_name}_EXT_OBJ}" PARENT_SCOPE)
-  set(${target_name}_EXT_DEF "${${target_name}_EXT_DEF}" PARENT_SCOPE)
-  set(${target_name}_EXT_EXP "${${target_name}_EXT_EXP}" PARENT_SCOPE)
+  # set(${target_name}_EXT_DEF "${${target_name}_EXT_DEF}" PARENT_SCOPE)
+  # set(${target_name}_EXT_EXP "${${target_name}_EXT_EXP}" PARENT_SCOPE)
   message(STATUS "${target_name}_EXT_SRC = ${${target_name}_EXT_SRC}")
   message(STATUS "${target_name}_EXT_OBJ = ${${target_name}_EXT_OBJ}")
-  message(STATUS "${target_name}_EXT_DEF = ${${target_name}_EXT_DEF}")
-  message(STATUS "${target_name}_EXT_EXP = ${${target_name}_EXT_EXP}")
-  set(EXTERNAL_PRODUCTS "${${target_name}_EXT_OBJ} ${${target_name}_EXT_DEF} ${${target_name}_EXT_EXP}")
+  # message(STATUS "${target_name}_EXT_DEF = ${${target_name}_EXT_DEF}")
+  # message(STATUS "${target_name}_EXT_EXP = ${${target_name}_EXT_EXP}")
+  set(EXTERNAL_PRODUCTS "${${target_name}_EXT_OBJ}") # ${${target_name}_EXT_DEF} ${${target_name}_EXT_EXP}")
   # if we have MSVC without Intel fortran then setup
   # external projects to build with mingw fortran
   # if(NOT (MSVC AND (NOT CMAKE_Fortran_COMPILER)))
