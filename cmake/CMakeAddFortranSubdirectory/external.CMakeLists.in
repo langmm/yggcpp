@@ -51,10 +51,18 @@ if(NOT library_type STREQUAL "OBJECT")
 	    COMMAND ${CMAKE_COMMAND} -E echo "External TARGET_FILE @target_name@: $<TARGET_FILE:@target_name@>"
 	    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:@target_name@>" @CMAKE_CURRENT_BINARY_DIR@)
     if (WIN32 AND library_type STREQUAL "SHARED")
-      add_custom_command(
-              TARGET @target_name@
-	      POST_BUILD
-	      COMMAND ${CMAKE_COMMAND} -E echo "External TARGET_IMPORT_FILE @target_name@: $<TARGET_IMPORT_FILE:@target_name@>"
-	      COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_IMPORT_FILE:@target_name@>" @CMAKE_CURRENT_BINARY_DIR@)
+      if (CMAKE_GNUtoMS)
+        add_custom_command(
+                TARGET @target_name@
+  	        POST_BUILD
+	        COMMAND ${CMAKE_COMMAND} -E echo "External TARGET_LIB_FILE @target_name@: $<PATH:REPLACE_EXTENSION,$<TARGET_IMPORT_FILE:@target_name@>,.lib>"
+	        COMMAND ${CMAKE_COMMAND} -E copy "$<PATH:REPLACE_EXTENSION,$<TARGET_IMPORT_FILE:@target_name@>,.lib>" @CMAKE_CURRENT_BINARY_DIR@)
+      else()
+        add_custom_command(
+                TARGET @target_name@
+  	        POST_BUILD
+	        COMMAND ${CMAKE_COMMAND} -E echo "External TARGET_IMPORT_FILE @target_name@: $<TARGET_IMPORT_FILE:@target_name@>"
+	        COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_IMPORT_FILE:@target_name@>" @CMAKE_CURRENT_BINARY_DIR@)
+      endif()
     endif()
 endif()
