@@ -1992,6 +1992,10 @@ contains
          logical(use_generic, kind=1))
     write(*, *) "after fortran create_dtype_from_schema"
   end function create_dtype_from_schema
+  subroutine dummy_function()
+    implicit none
+    write(*, *) "dummy function"
+  end subroutine dummy_function
 
   !> @brief Create an empty data type.
   !> @param[in] use_generic True if the data type should expect generic

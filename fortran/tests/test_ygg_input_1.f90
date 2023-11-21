@@ -6,15 +6,12 @@ integer function test_ygg_input_1() result(r)
   integer :: data_recv_len, data_send_len, i
   r = 1
   i = 0
-  i = i + 1
-  write (*, *) "HERE", i
   data_send = "Test message"
-  i = i + 1
-  write (*, *) "HERE", i
   data_send_len = 12
+  data_recv_len = 20
   i = i + 1
   write (*, *) "HERE", i
-  data_recv_len = 20
+  call dummy_function()
   i = i + 1
   write (*, *) "HERE", i
   sDtype = create_dtype_from_schema('{"type": "string"}', .false.)
