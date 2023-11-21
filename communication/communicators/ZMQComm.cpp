@@ -321,9 +321,9 @@ ZMQReply::ZMQReply(DIRECTION dir) :
 
 ZMQReply::~ZMQReply() {
   // Sleep to ensure receive is complete
-  if (direction == SEND) {
+  if (sockets.size() > 0 && direction == SEND && n_rep > 0) {
     ZMQSocket* sock = &(sockets[0]);
-    sock->poll(ZMQ_POLLIN, 1000);
+    sock->poll(ZMQ_POLLIN, 100);
   }
 }
 
