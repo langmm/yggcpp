@@ -1987,8 +1987,10 @@ contains
     type(yggdtype) :: out
     character(len=len_trim(schema)+1) :: c_schema
     c_schema = trim(schema)//c_null_char
+    write(*, *) "before fortran create_dtype_from_schema"
     out = create_dtype_from_schema_c(c_schema, &
          logical(use_generic, kind=1))
+    write(*, *) "after fortran create_dtype_from_schema"
   end function create_dtype_from_schema
 
   !> @brief Create an empty data type.

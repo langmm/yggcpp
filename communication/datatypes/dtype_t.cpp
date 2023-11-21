@@ -1323,6 +1323,7 @@ extern "C" {
 
   dtype_t create_dtype_from_schema(const char* schema,
 				   const bool use_generic) {
+    std::cerr << "Before C++ create_dtype_from_schema" << std::endl;
     dtype_t out = create_dtype(NULL, false);
     _BEGIN_CPP {
       _GET_METADATA(metadata, out, out);
@@ -1331,6 +1332,7 @@ extern "C" {
       }
     } _END_CPP_CLEANUP(create_dtype_from_schema, out,
 		       destroy_dtype(&out));
+    std::cerr << "After C++ create_dtype_from_schema" << std::endl;
     return out;
   }
 
