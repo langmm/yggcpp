@@ -319,14 +319,6 @@ void ZMQReply::set_return_val(bool new_val) {
 ZMQReply::ZMQReply(DIRECTION dir) :
   sockets(), n_msg(0), n_rep(0), direction(dir), last_idx(-1) {}
 
-ZMQReply::~ZMQReply() {
-  // Sleep to ensure receive is complete
-  if (sockets.size() > 0 && direction == SEND && n_rep > 0) {
-    ZMQSocket* sock = &(sockets[0]);
-    sock->poll(ZMQ_POLLIN, 100);
-  }
-}
-
 #ifdef ZMQINSTALLED
 
 void ZMQReply::clear() {
@@ -372,16 +364,17 @@ int ZMQReply::set(std::string endpoint) {
   last_idx = out;
   return out;
 }
-bool ZMQReply::recv(std::string msg_send) {
+bool ZMQReply::recv(std::string msg_send, bool* closed) {
   if (msg_send.empty())
     msg_send.assign(_reply_msg);
 #ifdef YGG_TEST
+  UNUSED(closed);
   // Exit early to prevent deadlock when running from the same thread
   return return_val;
 #else // YGG_TEST
   if (!recv_stage1(msg_send))
     return false;
-  return recv_stage2(msg_send);
+  return recv_stage2(msg_send, closed);
 #endif // YGG_TEST
 }
 bool ZMQReply::recv_stage1(std::string msg_send) {
@@ -405,7 +398,7 @@ bool ZMQReply::recv_stage1(std::string msg_send) {
   // }
   return true;
 }
-bool ZMQReply::recv_stage2(std::string msg_send) {
+bool ZMQReply::recv_stage2(std::string msg_send, bool* closed) {
   if (msg_send.empty())
     msg_send.assign(_reply_msg);
   if (last_idx < 0)
@@ -419,8 +412,13 @@ bool ZMQReply::recv_stage2(std::string msg_send) {
     return false;
   }
   if (sock->recv(msg_recv) < 0) {
-    log_error() << "recv_stage2: Error receiving reponse" << std::endl;
-    return false;
+    if (closed) {
+      closed[0] = true;
+      log_debug() << "recv_stage2: Handshake incomplete, closing" << std::endl;
+    } else {
+      log_error() << "recv_stage2: Error receiving reponse" << std::endl;
+      return false;
+    }
   }
   n_rep++;
   log_verbose() << "recv_stage2: Handshake complete (address = "
@@ -444,6 +442,7 @@ bool ZMQReply::send_stage1(std::string& msg_data) {
     log_error() << "send_stage1: Reply socket was not initialized." << std::endl;
     return false;
   }
+  n_msg++;
   ZMQSocket* sock = &(sockets[0]);
   log_verbose() << "send_stage1: Receiving handshake to confirm message was received (address = " << sock->endpoint << ")" << std::endl;
   if (sock->poll(ZMQ_POLLIN, first_timeout) != 1) {
@@ -477,7 +476,7 @@ bool ZMQReply::send_stage2(const std::string msg_data) {
     return false;
   }
   // Sleep briefly to ensure receive is complete
-  THREAD_USLEEP(100);
+  // THREAD_USLEEP(100);
   // Check for purge or EOF
   // if (is_purge) {
   //   log_verbose() << "send_stage2: PURGE received" << std::endl;
@@ -671,7 +670,13 @@ bool ZMQComm::do_reply_recv(const Header& header) {
     }
   }
   reply.set(adr);
-  return reply.recv();
+  bool closed = false;
+  bool out = reply.recv("", &closed);
+  if (out && closed) {
+    log_debug() << "do_reply_recv: Receive interrupted, closing" << std::endl;
+    close();
+  }
+  return out;
 }
 
 bool ZMQComm::create_header_send(Header& header) {

@@ -91,15 +91,14 @@ public:
 class ZMQReply : public communication::utils::LogBase {
 public:
   ZMQReply(DIRECTION dir);
-  ~ZMQReply();
 #ifdef ZMQINSTALLED
   void clear();
   int create(std::string& endpoint);
   int find(std::string endpoint);
   int set(std::string endpoint = "");
-  bool recv(std::string msg_send="");
+  bool recv(std::string msg_send="", bool* closed=nullptr);
   bool recv_stage1(std::string msg_send="");
-  bool recv_stage2(std::string msg_send="");
+  bool recv_stage2(std::string msg_send="", bool* closed=nullptr);
   bool send();
   bool send_stage1(std::string& msg_data);
   bool send_stage2(const std::string msg_data);
