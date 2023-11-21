@@ -91,6 +91,7 @@ public:
 class ZMQReply : public communication::utils::LogBase {
 public:
   ZMQReply(DIRECTION dir);
+  ~ZMQReply();
 #ifdef ZMQINSTALLED
   void clear();
   int create(std::string& endpoint);

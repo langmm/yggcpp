@@ -319,6 +319,14 @@ void ZMQReply::set_return_val(bool new_val) {
 ZMQReply::ZMQReply(DIRECTION dir) :
   sockets(), n_msg(0), n_rep(0), direction(dir), last_idx(-1) {}
 
+ZMQReply::~ZMQReply() {
+  // Sleep to ensure receive is complete
+  if (direction == SEND) {
+    ZMQSocket* sock = &(sockets[0]);
+    sock->poll(ZMQ_POLLIN, 1000);
+  }
+}
+
 #ifdef ZMQINSTALLED
 
 void ZMQReply::clear() {
