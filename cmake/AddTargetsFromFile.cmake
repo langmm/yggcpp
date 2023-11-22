@@ -51,6 +51,7 @@ function(generate_target_file target_file)
     else()
       set(CONTENTS "LIBRARIES;${ARGS_EXTRA_LIBRARIES};DIRECTORIES;${ARGS_EXTRA_DIRECTORIES}")
     endif()
+    message(STATUS "CONTENTS = ${CONTENTS}")
     if(ARGS_NO_CONFIG)
       if(ARGS_TARGETS)
         file(GENERATE OUTPUT "${target_file}"
