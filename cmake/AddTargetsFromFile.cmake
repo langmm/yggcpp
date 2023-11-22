@@ -43,7 +43,7 @@ function(generate_target_file target_file)
   if(ARGS_TARGETS OR ARGS_EXTRA_LIBRARIES OR ARGS_EXTRA_DIRECTORIES)
     message(STATUS "targets = ${ARGS_TARGETS}")
     message(STATUS "target_file = ${target_file}")
-    if(ARGS_EXTRA_LIBRARIES AND FULL_LIBRARIES)
+    if(ARGS_EXTRA_LIBRARIES AND ARGS_FULL_LIBRARIES)
       find_full_libraries(LIBRARIES ${ARGS_EXTRA_LIBRARIES}
                           DIRECTORIES ${ARGS_EXTRA_DIRECTORIES}
 			  OUTPUT ARGS_EXTRA_FULL_LIBRARIES)
