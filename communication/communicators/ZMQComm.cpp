@@ -408,18 +408,26 @@ bool ZMQReply::recv_stage2(std::string msg_send, bool* closed) {
   // Receive
   std::string msg_recv;
   if (sock->poll(ZMQ_POLLIN, first_timeout) != 1) {
-    log_error() << "recv_stage2: No response waiting" << std::endl;
-    return false;
+    if (closed != nullptr) {
+      closed[0] = true;
+      log_debug() << "recv_stage2: Handshake incomplete (no response), closing" << std::endl;
+      goto done;
+    } else {
+      log_error() << "recv_stage2: No response waiting" << std::endl;
+      return false;
+    }
   }
   if (sock->recv(msg_recv) < 0) {
-    if (closed) {
+    if (closed != nullptr) {
       closed[0] = true;
-      log_debug() << "recv_stage2: Handshake incomplete, closing" << std::endl;
+      log_debug() << "recv_stage2: Handshake incomplete (could not receive), closing" << std::endl;
+      goto done;
     } else {
       log_error() << "recv_stage2: Error receiving reponse" << std::endl;
       return false;
     }
   }
+ done:
   n_rep++;
   log_verbose() << "recv_stage2: Handshake complete (address = "
 	       << sock->endpoint << ")" << std::endl;
