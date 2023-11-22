@@ -628,12 +628,13 @@ endif()
 #########################
 
 if(BUILD_FORTRAN_LIBRARY)
+    message(STATUS "First CMAKE_IMPORT_LIBRARY_SUFFIX = ${CMAKE_IMPORT_LIBRARY_SUFFIX}")
     if(CMAKE_Fortran_COMPILER AND WIN32)
         message(STATUS "CMAKE_Fortran_COMPILER (before) = ${CMAKE_Fortran_COMPILER}")
         cmake_path(SET CMAKE_Fortran_COMPILER NORMALIZE ${CMAKE_Fortran_COMPILER})
         message(STATUS "CMAKE_Fortran_COMPILER (after)  = ${CMAKE_Fortran_COMPILER}")
     endif()
-    enable_language(Fortran)
+    # enable_language(Fortran)
     add_subdirectory(fortran)
 endif()
 
