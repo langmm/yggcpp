@@ -121,8 +121,7 @@ jobs:
       - name: Install dependencies on Mac
         if: matrix.os == 'macos-latest' && matrix.python-install == 'pip'
         run: |
-          rm -rf /usr/local/bin/2to3
-          rm -rf /usr/local/bin/2to3-3.11
+          brew link --overwrite python@3.11
           brew install llvm cmocka lcov gnutls
           echo "FC=$(which gfortran-12)" >> "$GITHUB_ENV"
       # - name: Set vcpkg triplet on Windows (mingw)
