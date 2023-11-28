@@ -1,6 +1,9 @@
 #include "c_wrappers.h"
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
+void dummy_function_f() {
+  printf("dummy function (c)\n");
+}
 
 // Utilities
 int ygg_init_f() {

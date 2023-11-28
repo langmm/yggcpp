@@ -1149,5 +1149,10 @@
        integer(kind=c_int) :: out
      end function init_python_API_c
 
+     subroutine dummy_function_c() bind(c, name="dummy_function_f")
+       use, intrinsic :: iso_c_binding
+       implicit none
+     end subroutine dummy_function_c
+
   end interface
 #endif ! DOXYGEN_SHOULD_SKIP_THIS

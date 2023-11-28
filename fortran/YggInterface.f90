@@ -1994,7 +1994,8 @@ contains
   end function create_dtype_from_schema
   subroutine dummy_function()
     implicit none
-    write(*, *) "dummy function"
+    write(*, *) "dummy function (fortran)"
+    call dummy_function_c()
   end subroutine dummy_function
 
   !> @brief Create an empty data type.
