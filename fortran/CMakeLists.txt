@@ -3,6 +3,7 @@ if ((NOT FORCE_SPLIT_CXXFORTRAN) AND (NOT MSVC))
     enable_language(Fortran)
 endif()
 
+# Test case that can be removed
 # include(ListSearchPaths)
 # list_search_directories(search_dirs)
 # find_library_suffix(omv opencv_stereo SHARED REQUIRED)
