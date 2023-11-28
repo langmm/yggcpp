@@ -3,6 +3,11 @@ if ((NOT FORCE_SPLIT_CXXFORTRAN) AND (NOT MSVC))
     enable_language(Fortran)
 endif()
 
+# include(ListSearchPaths)
+# list_search_directories(search_dirs)
+# find_library_suffix(omv opencv_stereo SHARED REQUIRED)
+# message(FATAL_ERROR "Found ${omv}")
+
 include(YggAddFortranSubdirectory)
 add_mixed_fortran_library(${YGG_TARGET_FORTRAN} SHARED
                           c_wrappers.c YggInterface.f90)
