@@ -146,6 +146,76 @@ bool AsyncBuffer::wait(const std::string id, const bool negative) {
 #endif // THREADSINSTALLED
 
 //////////////////
+// AsyncStatus //
+//////////////////
+
+// TODO: Preserve backlog buffers?
+
+#ifdef THREADSINSTALLED
+
+AsyncStatus::AsyncStatus(const std::string& logInst) :
+  mutex(), locked(false),
+  status(THREAD_INACTIVE), cv_status(),
+  logInst_(logInst) {}
+
+#else // THREADSINSTALLED
+
+AsyncStatus::AsyncStatus() :
+  logInst_() {
+  UNINSTALLED_ERROR(THREADS);
+}
+
+#endif // THREADSINSTALLED
+
+AsyncStatus::~AsyncStatus() {
+  log_debug() << "~AsyncStatus: begin" << std::endl;
+// #ifdef THREADSINSTALLED
+//   wait_status(THREAD_COMPLETE);
+//   try {
+//     if (backlog_thread->joinable())
+//       backlog_thread->join();
+//     log_debug() << "~AsyncStatus: joinable = " << backlog_thread->joinable() << std::endl;
+//   } catch (const std::system_error& e) {
+//     log_error() << "~AsyncStatus: Error joining thread (" << e.code() << "): " << e.what() << std::endl;
+//   }
+//   if (status.load() & THREAD_ERROR) {
+//     log_error() << "~AsyncStatus: Error on thread" << std::endl;
+//   }
+// #endif // THREADSINSTALLED
+  log_debug() << "~AsyncStatus: end" << std::endl;
+}
+
+#ifdef THREADSINSTALLED
+void AsyncStatus::set_status(const int new_status, bool dont_notify,
+			     bool negative) {
+  if (negative)
+    status &= new_status;
+  else
+    status |= new_status;
+  if (!dont_notify)
+    cv_status.notify_all();
+}
+void AsyncStatus::set_status_lock(const int new_status, bool dont_notify,
+				   bool negative) {
+  std::unique_lock<std::mutex> lk(mutex);
+  set_status(new_status, dont_notify, negative);
+}
+bool AsyncStatus::_wait_status(const int new_status,
+			       std::unique_lock<std::mutex>& lk) {
+  if (!(status.load() & new_status)) {
+    cv_status.wait(lk, [this, new_status]{
+      return (status.load() & new_status); });
+  }
+  return true;
+}
+bool AsyncStatus::wait_status(const int new_status) {
+  std::unique_lock<std::mutex> lk(mutex);
+  return _wait_status(new_status, lk);
+}
+#endif // THREADSINSTALLED
+
+
+//////////////////
 // AsyncBacklog //
 //////////////////
 
@@ -154,11 +224,9 @@ bool AsyncBuffer::wait(const std::string id, const bool negative) {
 #ifdef THREADSINSTALLED
 
 AsyncBacklog::AsyncBacklog(Comm_t* parent) :
-  comm(nullptr), backlog(parent->logInst()), comm_mutex(), locked(false),
-  backlog_thread(), // &AsyncBacklog::on_thread, this, parent),
-  status(THREAD_INACTIVE), cv_status(),
-  logInst_(parent->logInst()) {
-  std::unique_lock<std::mutex> lk(comm_mutex);
+  AsyncStatus(parent->logInst()),
+  comm(nullptr), backlog(parent->logInst()), backlog_thread() {
+  std::unique_lock<std::mutex> lk(mutex);
   backlog_thread = std::unique_ptr<std::thread>(new std::thread(&AsyncBacklog::on_thread, this, parent));
   
   log_debug() << "AsyncBacklog: waiting for thread to start" << std::endl;
@@ -170,7 +238,8 @@ AsyncBacklog::AsyncBacklog(Comm_t* parent) :
 #else // THREADSINSTALLED
 
 AsyncBacklog::AsyncBacklog(Comm_t* parent) :
-  comm(nullptr), backlog(parent->logInst()), logInst_(parent->logInst()) {
+  AsyncStatus(parent->logInst()),
+  comm(nullptr), backlog(parent->logInst()) {
   UNINSTALLED_ERROR(THREADS);
 }
 
@@ -201,7 +270,7 @@ void AsyncBacklog::on_thread(Comm_t* parent) {
 #ifdef THREADSINSTALLED
     DIRECTION direction = parent->getDirection();
     {
-      const std::lock_guard<std::mutex> comm_lock(comm_mutex);
+      const std::lock_guard<std::mutex> comm_lock(mutex);
       log_debug() << "on_thread: Creating comm on thread" << std::endl;
       int flgs_comm = (parent->getFlags() & ~COMM_FLAG_ASYNC) | COMM_FLAG_ASYNC_WRAPPED;
       Address addr(parent->getAddress());
@@ -255,7 +324,7 @@ void AsyncBacklog::on_thread(Comm_t* parent) {
     }
     backlog.close();
     {
-      const std::lock_guard<std::mutex> comm_lock(comm_mutex);
+      const std::lock_guard<std::mutex> comm_lock(mutex);
       if (comm) {
 	delete comm;
 	comm = nullptr;
@@ -277,35 +346,6 @@ void AsyncBacklog::on_thread(Comm_t* parent) {
 #endif // THREADSINSTALLED
 }
 
-#ifdef THREADSINSTALLED
-void AsyncBacklog::set_status(const int new_status, bool dont_notify,
-			      bool negative) {
-  if (negative)
-    status &= new_status;
-  else
-    status |= new_status;
-  if (!dont_notify)
-    cv_status.notify_all();
-}
-void AsyncBacklog::set_status_lock(const int new_status, bool dont_notify,
-				   bool negative) {
-  std::unique_lock<std::mutex> lk(comm_mutex);
-  set_status(new_status, dont_notify, negative);
-}
-bool AsyncBacklog::_wait_status(const int new_status,
-				std::unique_lock<std::mutex>& lk) {
-  if (!(status.load() & new_status)) {
-    cv_status.wait(lk, [this, new_status]{
-      return (status.load() & new_status); });
-  }
-  return true;
-}
-bool AsyncBacklog::wait_status(const int new_status) {
-  std::unique_lock<std::mutex> lk(comm_mutex);
-  return _wait_status(new_status, lk);
-}
-#endif // THREADSINSTALLED
-
 int AsyncBacklog::signon_status() {
   if (is_closing())
     return SIGNON_ERROR;
@@ -317,7 +357,7 @@ int AsyncBacklog::signon_status() {
   if (status.load() & THREAD_SIGNON_RECV)
     return SIGNON_COMPLETE;
 #ifdef THREADSINSTALLED
-  const std::lock_guard<std::mutex> comm_lock(comm_mutex);
+  const std::lock_guard<std::mutex> comm_lock(mutex);
   if (is_closing() || !(comm)) {
     return SIGNON_ERROR;
   }
@@ -360,7 +400,7 @@ bool AsyncBacklog::wait_for_signon() {
 	status == SIGNON_COMPLETE)
       return true;
     {
-      const std::lock_guard<std::mutex> comm_lock(comm_mutex);
+      const std::lock_guard<std::mutex> comm_lock(mutex);
       if (is_closing() || !(comm)) {
 	return false;
       }
@@ -390,7 +430,7 @@ int AsyncBacklog::send() {
   }
   utils::Header header(true);
   if (backlog.pop(header, 0, true)) {
-    const std::lock_guard<std::mutex> comm_lock(comm_mutex);
+    const std::lock_guard<std::mutex> comm_lock(mutex);
     out = comm->send_single(header);
     if (out >= 0) {
       log_debug() << "send: Sent message from backlog" << std::endl;
@@ -417,7 +457,7 @@ long AsyncBacklog::recv() {
   bool received = false;
   utils::Header header(true);
   {
-    const std::lock_guard<std::mutex> comm_lock(comm_mutex);
+    const std::lock_guard<std::mutex> comm_lock(mutex);
     int nmsg = comm->comm_nmsg();
     if (nmsg > 0) {
       out = comm->recv_single(header);
@@ -452,7 +492,7 @@ AsyncLockGuard::AsyncLockGuard(AsyncBacklog* bcklog, bool dont_lock) :
 #ifdef THREADSINSTALLED
   if (!(dont_lock || backlog->locked.load())) {
     locked = true;
-    backlog->comm_mutex.lock();
+    backlog->mutex.lock();
     backlog->locked.store(true);
   }
 #else // THREADSINSTALLED
@@ -463,7 +503,7 @@ AsyncLockGuard::~AsyncLockGuard() {
 #ifdef THREADSINSTALLED
   if (locked) {
     backlog->locked.store(false);
-    backlog->comm_mutex.unlock();
+    backlog->mutex.unlock();
   }
 #endif // THREADSINSTALLED
 }

@@ -55,21 +55,15 @@ namespace communication {
       std::string logInst_;
     };
 
-    class AsyncBacklog : public communication::utils::LogBase {
+    class AsyncStatus : public communication::utils::LogBase {
     private:
-      AsyncBacklog(const AsyncBacklog&) = delete;
-      AsyncBacklog& operator=(const AsyncBacklog&) = delete;
+      AsyncStatus(const AsyncStatus&) = delete;
+      AsyncStatus& operator=(const AsyncStatus&) = delete;
     public:
-      AsyncBacklog(Comm_t* parent);
-      ~AsyncBacklog();
-      void on_thread(Comm_t* parent);
-      int signon_status();
-      bool wait_for_signon();
-      int send();
-      long recv();
-      std::string logClass() const override { return "AsyncBacklog"; }
+      AsyncStatus(const std::string& logInst="");
+      ~AsyncStatus();
+      std::string logClass() const override { return "AsyncStatus"; }
       std::string logInst() const override { return logInst_; }
-      bool is_closing() const { return backlog.is_closed(); }
 #ifdef THREADSINSTALLED
       void set_status(const int new_status, bool dont_notify=false,
 		      bool negative=false);
@@ -83,22 +77,37 @@ namespace communication {
 			   const int new_status) {
 	if (status.load() & new_status)
 	  return true;
-	std::unique_lock<std::mutex> lk(comm_mutex);
-	AsyncBacklog* _this = this;
-	return cv_status.wait_for(lk, rel_time, [_this, new_status]{
-	  return (_this->status.load() & new_status); });
+	std::unique_lock<std::mutex> lk(mutex);
+	return cv_status.wait_for(lk, rel_time, [this, new_status]{
+	  return (this->status.load() & new_status); });
       }
-#endif // THREADSINSTALLED
-      Comm_t* comm;
-      AsyncBuffer backlog;
-#ifdef THREADSINSTALLED
-      std::mutex comm_mutex;
+      std::mutex mutex;
       std::atomic_bool locked;
-      std::unique_ptr<std::thread> backlog_thread;
       std::atomic_int status;
       std::condition_variable cv_status;
 #endif // THREADSINSTALLED
       std::string logInst_;
+    };
+
+    class AsyncBacklog : public AsyncStatus {
+    private:
+      AsyncBacklog(const AsyncBacklog&) = delete;
+      AsyncBacklog& operator=(const AsyncBacklog&) = delete;
+    public:
+      AsyncBacklog(Comm_t* parent);
+      ~AsyncBacklog();
+      void on_thread(Comm_t* parent);
+      int signon_status();
+      bool wait_for_signon();
+      int send();
+      long recv();
+      std::string logClass() const override { return "AsyncBacklog"; }
+      bool is_closing() const { return backlog.is_closed(); }
+      Comm_t* comm;
+      AsyncBuffer backlog;
+#ifdef THREADSINSTALLED
+      std::unique_ptr<std::thread> backlog_thread;
+#endif // THREADSINSTALLED
     };
     
     class AsyncLockGuard {
