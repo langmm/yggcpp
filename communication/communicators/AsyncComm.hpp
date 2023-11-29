@@ -55,6 +55,31 @@ namespace communication {
       std::string logInst_;
     };
 
+#define START_THREAD(args)			\
+    std::unique_lock<std::mutex> lk(mutex);				\
+    thread = std::unique_ptr<std::thread>(new std::thread args);	\
+    log_debug() << "start: waiting for thread to start" << std::endl;	\
+    _wait_status(THREAD_STARTED | THREAD_COMPLETE, lk);			\
+    log_debug() << "start: thread started" << std::endl
+    // set_status_lock(THREAD_INIT)
+#define STOP_THREAD							\
+    log_debug() << "stop: begin" << std::endl;				\
+    set_status_lock(THREAD_CLOSING);					\
+    wait_status(THREAD_COMPLETE);					\
+    try {								\
+      if (thread->joinable()) {						\
+	thread->join();							\
+      }									\
+      log_debug() << "stop: joinable = " << thread->joinable() << std::endl; \
+    } catch (const std::system_error& e) {				\
+      log_error() << "stop: Error joining thread (" << e.code() << "): " << e.what() << std::endl; \
+    }									\
+    if (status.load() & THREAD_ERROR) {					\
+      log_error() << "stop: Error on thread" << std::endl;		\
+    }									\
+    log_debug() << "stop: end" << std::endl
+    
+
     class AsyncStatus : public communication::utils::LogBase {
     private:
       AsyncStatus(const AsyncStatus&) = delete;
@@ -64,12 +89,7 @@ namespace communication {
 #ifdef THREADSINSTALLED
       template<typename... T>
       void start(T&&... t) {
-	std::unique_lock<std::mutex> lk(mutex);
-	thread = std::unique_ptr<std::thread>(new std::thread(std::forward<T>(t)...));
-	log_debug() << "start: waiting for thread to start" << std::endl;
-	_wait_status(THREAD_STARTED | THREAD_COMPLETE, lk);
-	log_debug() << "start: thread started" << std::endl;
-	// set_status_lock(THREAD_INIT);
+	START_THREAD((std::forward<T>(t)...));
       }
       void stop();
 #endif // THREADSINSTALLED

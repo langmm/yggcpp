@@ -13,8 +13,10 @@ Proxy::Proxy(const std::string iname, const std::string oname,
 	     std::vector<communication::utils::transformFunc> tforms) :
   AsyncStatus(), icomm(nullptr), ocomm(nullptr),
   filters(fltrs), transforms(tforms) {
-  start(&Proxy::on_thread, this, iname, oname,
-	iflgs, oflgs, itype, otype);
+  START_THREAD((&Proxy::on_thread, this, iname, oname,
+		iflgs, oflgs, itype, otype));
+  // start(&Proxy::on_thread, this, iname, oname,
+  // 	iflgs, oflgs, itype, otype);
 }
 #else // THREADSINSTALLED
 Proxy::Proxy(const std::string, const std::string,
@@ -28,7 +30,8 @@ Proxy::Proxy(const std::string, const std::string,
 Proxy::~Proxy() {
   log_debug() << "~Proxy: begin" << std::endl;
 #ifdef THREADSINSTALLED
-  stop();
+  STOP_THREAD;
+  // stop();
 #endif // THREADSINSTALLED
   log_debug() << "~Proxy: end" << std::endl;
 }
