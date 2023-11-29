@@ -3,6 +3,7 @@
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 void dummy_function_f() {
   printf("dummy function (c)\n");
+  ygglog_info("dummy function (c)\n");
 }
 
 // Utilities
