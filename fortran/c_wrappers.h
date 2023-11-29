@@ -6,6 +6,7 @@
 #include <string.h>
 
 #ifdef __cplusplus /* If this is a C++ compiler, use C linkage */
+#include "utils/enums.hpp"
 extern "C" {
 #endif
 
