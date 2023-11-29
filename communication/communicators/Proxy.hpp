@@ -1,6 +1,6 @@
 #pragma once
 
-#include "CommBase.hpp"
+#include "AsyncComm.hpp"
 #ifdef THREADSINSTALLED
 #include <atomic>
 #endif // THREADSINSTALLED
@@ -8,7 +8,7 @@
 namespace communication {
   namespace communicator {
 
-    class Proxy : public communication::utils::LogBase {
+    class Proxy : public AsyncStatus {
     private:
       Proxy(const Proxy&) = delete;
       Proxy& operator=(const Proxy&) = delete;
@@ -25,16 +25,12 @@ namespace communication {
 #ifdef THREADSINSTALLED
       std::string getAddress(DIRECTION dir);
     private:
-      bool on_thread(const std::string iname, const std::string oname,
+      void on_thread(const std::string iname, const std::string oname,
 		     int iflgs, int oflgs,
 		     const COMM_TYPE itype, const COMM_TYPE otype);
       long on_message();
       Comm_t* icomm;
       Comm_t* ocomm;
-      std::mutex comm_mutex;
-      std::atomic_bool opened;
-      std::atomic_bool closing;
-      std::thread backlog_thread;
       std::vector<communication::utils::filterFunc> filters;
       std::vector<communication::utils::transformFunc> transforms;
 #endif // THREADSINSTALLED

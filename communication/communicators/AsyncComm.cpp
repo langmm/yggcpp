@@ -168,7 +168,7 @@ AsyncStatus::AsyncStatus() :
 #ifdef THREADSINSTALLED
 void AsyncStatus::stop() {
   log_debug() << "stop: begin" << std::endl;
-#ifdef THREADSINSTALLED
+  set_status_lock(THREAD_CLOSING);
   wait_status(THREAD_COMPLETE);
   try {
     if (thread->joinable())
@@ -180,7 +180,6 @@ void AsyncStatus::stop() {
   if (status.load() & THREAD_ERROR) {
     log_error() << "stop: Error on thread" << std::endl;
   }
-#endif // THREADSINSTALLED
   log_debug() << "stop: end" << std::endl;
 
 }

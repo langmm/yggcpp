@@ -11,14 +11,10 @@ Proxy::Proxy(const std::string iname, const std::string oname,
 	     const COMM_TYPE otype,
 	     std::vector<communication::utils::filterFunc> fltrs,
 	     std::vector<communication::utils::transformFunc> tforms) :
-  icomm(nullptr), ocomm(nullptr),
-  comm_mutex(), opened(false), closing(false),
-  backlog_thread(&Proxy::on_thread, this, iname, oname,
-		 iflgs, oflgs, itype, otype),
+  AsyncStatus(), icomm(nullptr), ocomm(nullptr),
   filters(fltrs), transforms(tforms) {
-  while (!(opened.load() || closing.load())) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
-  }
+  start(&Proxy::on_thread, this, iname, oname,
+	iflgs, oflgs, itype, otype);
 }
 #else // THREADSINSTALLED
 Proxy::Proxy(const std::string, const std::string,
@@ -32,8 +28,7 @@ Proxy::Proxy(const std::string, const std::string,
 Proxy::~Proxy() {
   log_debug() << "~Proxy: begin" << std::endl;
 #ifdef THREADSINSTALLED
-  closing.store(true);
-  backlog_thread.join();
+  stop();
 #endif // THREADSINSTALLED
   log_debug() << "~Proxy: end" << std::endl;
 }
@@ -49,12 +44,12 @@ std::string Proxy::logInst() const {
 }
 
 #ifdef THREADSINSTALLED
-bool Proxy::on_thread(const std::string iname, const std::string oname,
+void Proxy::on_thread(const std::string iname, const std::string oname,
 		      int iflgs, int oflgs,
 		      const COMM_TYPE itype, const COMM_TYPE otype) {
   bool out = true;
   {
-    const std::lock_guard<std::mutex> comm_lock(comm_mutex);
+    const std::lock_guard<std::mutex> comm_lock(mutex);
     // TODO: Allow multiple connections
     utils::Address iAddr;
     utils::Address oAddr;
@@ -67,9 +62,9 @@ bool Proxy::on_thread(const std::string iname, const std::string oname,
     } else {
       out = false;
     }
-    opened.store(true);
+    set_status(THREAD_STARTED);
   }
-  while (out && !closing.load()) {
+  while (out && !(status.load() & THREAD_CLOSING)) {
     long ret = on_message();
     if (ret == 0) {
       std::this_thread::sleep_for(std::chrono::microseconds(YGG_SLEEP_TIME));
@@ -78,21 +73,22 @@ bool Proxy::on_thread(const std::string iname, const std::string oname,
       break;
     }
   }
-  closing.store(true);
   {
-    const std::lock_guard<std::mutex> comm_lock(comm_mutex);
+    const std::lock_guard<std::mutex> comm_lock(mutex);
     delete icomm;
     delete ocomm;
     icomm = nullptr;
     ocomm = nullptr;
+    if (!out)
+      set_status(THREAD_ERROR);
+    set_status(THREAD_CLOSING | THREAD_COMPLETE);
   }
-  return out;
 }
 
 long Proxy::on_message() {
-  const std::lock_guard<std::mutex> comm_lock(comm_mutex);
+  const std::lock_guard<std::mutex> comm_lock(mutex);
   long out = 0;
-  if (closing.load())
+  if (status.load() & THREAD_CLOSING)
     return -1;
   if (icomm->comm_nmsg() > 0) {
     rapidjson::Document msg;
@@ -110,8 +106,8 @@ long Proxy::on_message() {
 }
 
 std::string Proxy::getAddress(DIRECTION dir) {
-  const std::lock_guard<std::mutex> comm_lock(comm_mutex);
-  if (!closing.load()) {
+  const std::lock_guard<std::mutex> comm_lock(mutex);
+  if (!(status.load() & THREAD_CLOSING)) {
     if (dir == RECV)
       return icomm->getAddress();
     else if (dir == SEND)
