@@ -150,6 +150,7 @@ function(target_link_external_fortran_objects target fortran_target)
 endfunction()
 
 function(add_mixed_fortran_library target library_type)
+  set(oneValueArgs LANGUAGE)
   set(multiValueArgs SOURCES)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
   if (ARGS_SOURCES)
@@ -174,7 +175,15 @@ function(add_mixed_fortran_library target library_type)
   # if(MSVC AND library_type STREQUAL "SHARED")
   #   set(library_type STATIC)
   # endif()
+  if(ARGS_LANGUAGE AND NOT (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
+    set_source_files_properties(
+      ${other_sources} PROPERTIES LANGUAGE ${ARGS_LANGUAGE})
+  endif()
   add_library(${target} ${library_type} ${other_sources})
+  if(ARGS_LANGUAGE)
+    set_target_properties(
+      ${target} PROPERTIES LINKER_LANGUAGE ${ARGS_LANGUAGE})
+  endif()
   target_link_external_fortran_objects(${target} ${fortran_target})
 endfunction()
 

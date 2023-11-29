@@ -11,9 +11,8 @@ endif()
 
 include(YggAddFortranSubdirectory)
 add_mixed_fortran_library(${YGG_TARGET_FORTRAN} SHARED
+                          LANGUAGE CXX
                           c_wrappers.c YggInterface.f90)
-set_target_properties(${YGG_TARGET_FORTRAN} PROPERTIES
-                      LINKER_LANGUAGE CXX)
 add_library(YggInterface::fortran ALIAS ${YGG_TARGET_FORTRAN})
 
 # Configure Fortran wrapper
