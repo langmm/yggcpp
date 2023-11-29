@@ -1985,7 +1985,7 @@ contains
     character(len=*), intent(in) :: schema
     logical, intent(in) :: use_generic
     type(yggdtype) :: out
-    character(len=len_trim(schema)+1) :: c_schema
+    character(kind=c_char, len=len_trim(schema)+1) :: c_schema
     c_schema = trim(schema)//c_null_char
     write(*, *) "before fortran create_dtype_from_schema"
     out = create_dtype_from_schema_c(c_schema, &
