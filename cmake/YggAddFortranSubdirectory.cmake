@@ -114,6 +114,7 @@ endfunction()
 function(target_link_external_fortran_objects target fortran_target)
     include(CreateMSVCLib)
     if ((NOT FORCE_SPLIT_CXXFORTRAN) AND (NOT MSVC))
+        # TODO: Use CMAKE_Fortran_PREPROCESS_SOURCE
         set_source_files_properties(
 	    ${${fortran_target}_EXT_SRC} PROPERTIES
 	    COMPILE_FLAGS "-cpp -fPIC"
@@ -175,7 +176,7 @@ function(add_mixed_fortran_library target library_type)
   # if(MSVC AND library_type STREQUAL "SHARED")
   #   set(library_type STATIC)
   # endif()
-  if(ARGS_LANGUAGE AND NOT (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
+  if(ARGS_LANGUAGE AND MSVC)
     set_source_files_properties(
       ${other_sources} PROPERTIES LANGUAGE ${ARGS_LANGUAGE})
   endif()
@@ -261,6 +262,7 @@ function(add_external_fortran_library target_name library_type)
   set(final_library_flags "-fPIC")
   if(library_type STREQUAL "OBJECT")
     set(final_library_type STATIC)
+    # TODO: Use CMAKE_Fortran_PREPROCESS_SOURCE
     set(final_library_flags "${final_library_flags} -cpp")
   endif()
   if (NOT CMAKE_${final_library_type}_LIBRARY_PREFIX_Fortran)
