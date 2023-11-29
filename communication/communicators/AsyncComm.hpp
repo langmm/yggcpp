@@ -60,8 +60,19 @@ namespace communication {
       AsyncStatus(const AsyncStatus&) = delete;
       AsyncStatus& operator=(const AsyncStatus&) = delete;
     public:
-      AsyncStatus(const std::string& logInst="");
-      ~AsyncStatus();
+      AsyncStatus(const std::string& logInst = "");
+#ifdef THREADSINSTALLED
+      template<typename... T>
+      void start(T&&... t) {
+	std::unique_lock<std::mutex> lk(mutex);
+	thread = std::unique_ptr<std::thread>(new std::thread(std::forward<T>(t)...));
+	log_debug() << "start: waiting for thread to start" << std::endl;
+	_wait_status(THREAD_STARTED | THREAD_COMPLETE, lk);
+	log_debug() << "start: thread started" << std::endl;
+	// set_status_lock(THREAD_INIT);
+      }
+      void stop();
+#endif // THREADSINSTALLED
       std::string logClass() const override { return "AsyncStatus"; }
       std::string logInst() const override { return logInst_; }
 #ifdef THREADSINSTALLED
@@ -85,6 +96,7 @@ namespace communication {
       std::atomic_bool locked;
       std::atomic_int status;
       std::condition_variable cv_status;
+      std::unique_ptr<std::thread> thread;
 #endif // THREADSINSTALLED
       std::string logInst_;
     };
@@ -105,9 +117,6 @@ namespace communication {
       bool is_closing() const { return backlog.is_closed(); }
       Comm_t* comm;
       AsyncBuffer backlog;
-#ifdef THREADSINSTALLED
-      std::unique_ptr<std::thread> backlog_thread;
-#endif // THREADSINSTALLED
     };
     
     class AsyncLockGuard {

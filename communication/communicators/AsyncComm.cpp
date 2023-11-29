@@ -149,13 +149,11 @@ bool AsyncBuffer::wait(const std::string id, const bool negative) {
 // AsyncStatus //
 //////////////////
 
-// TODO: Preserve backlog buffers?
-
 #ifdef THREADSINSTALLED
 
 AsyncStatus::AsyncStatus(const std::string& logInst) :
   mutex(), locked(false),
-  status(THREAD_INACTIVE), cv_status(),
+  status(THREAD_INACTIVE), cv_status(), thread(),
   logInst_(logInst) {}
 
 #else // THREADSINSTALLED
@@ -167,23 +165,26 @@ AsyncStatus::AsyncStatus() :
 
 #endif // THREADSINSTALLED
 
-AsyncStatus::~AsyncStatus() {
-  log_debug() << "~AsyncStatus: begin" << std::endl;
-// #ifdef THREADSINSTALLED
-//   wait_status(THREAD_COMPLETE);
-//   try {
-//     if (backlog_thread->joinable())
-//       backlog_thread->join();
-//     log_debug() << "~AsyncStatus: joinable = " << backlog_thread->joinable() << std::endl;
-//   } catch (const std::system_error& e) {
-//     log_error() << "~AsyncStatus: Error joining thread (" << e.code() << "): " << e.what() << std::endl;
-//   }
-//   if (status.load() & THREAD_ERROR) {
-//     log_error() << "~AsyncStatus: Error on thread" << std::endl;
-//   }
-// #endif // THREADSINSTALLED
-  log_debug() << "~AsyncStatus: end" << std::endl;
+#ifdef THREADSINSTALLED
+void AsyncStatus::stop() {
+  log_debug() << "stop: begin" << std::endl;
+#ifdef THREADSINSTALLED
+  wait_status(THREAD_COMPLETE);
+  try {
+    if (thread->joinable())
+      thread->join();
+    log_debug() << "stop: joinable = " << thread->joinable() << std::endl;
+  } catch (const std::system_error& e) {
+    log_error() << "stop: Error joining thread (" << e.code() << "): " << e.what() << std::endl;
+  }
+  if (status.load() & THREAD_ERROR) {
+    log_error() << "stop: Error on thread" << std::endl;
+  }
+#endif // THREADSINSTALLED
+  log_debug() << "stop: end" << std::endl;
+
 }
+#endif // THREADSINSTALLED
 
 #ifdef THREADSINSTALLED
 void AsyncStatus::set_status(const int new_status, bool dont_notify,
@@ -225,14 +226,8 @@ bool AsyncStatus::wait_status(const int new_status) {
 
 AsyncBacklog::AsyncBacklog(Comm_t* parent) :
   AsyncStatus(parent->logInst()),
-  comm(nullptr), backlog(parent->logInst()), backlog_thread() {
-  std::unique_lock<std::mutex> lk(mutex);
-  backlog_thread = std::unique_ptr<std::thread>(new std::thread(&AsyncBacklog::on_thread, this, parent));
-  
-  log_debug() << "AsyncBacklog: waiting for thread to start" << std::endl;
-  _wait_status(THREAD_STARTED | THREAD_COMPLETE, lk);
-  log_debug() << "AsyncBacklog: thread started" << std::endl;
-  // set_status_lock(THREAD_INIT);
+  comm(nullptr), backlog(parent->logInst()) {
+  start(&AsyncBacklog::on_thread, this, parent);
 }
 
 #else // THREADSINSTALLED
@@ -249,17 +244,7 @@ AsyncBacklog::~AsyncBacklog() {
   log_debug() << "~AsyncBacklog: begin" << std::endl;
 #ifdef THREADSINSTALLED
   backlog.close();
-  wait_status(THREAD_COMPLETE);
-  try {
-    if (backlog_thread->joinable())
-      backlog_thread->join();
-    log_debug() << "~AsyncBacklog: joinable = " << backlog_thread->joinable() << std::endl;
-  } catch (const std::system_error& e) {
-    log_error() << "~AsyncBacklog: Error joining thread (" << e.code() << "): " << e.what() << std::endl;
-  }
-  if (status.load() & THREAD_ERROR) {
-    log_error() << "~AsyncBacklog: Error on thread" << std::endl;
-  }
+  stop();
 #endif // THREADSINSTALLED
   log_debug() << "~AsyncBacklog: end" << std::endl;
 }
