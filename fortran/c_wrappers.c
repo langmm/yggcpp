@@ -41,9 +41,12 @@ int is_comm_format_array_type_f(const comm_t x) {
 
 comm_t _init_comm_f(const char *name, const int dir, const int t,
 		    void* datatype, const int flags) {
+#ifdef __cplusplus
+  return _init_comm(name, static_cast<DIRECTION>(dir),
+		    static_cast<COMM_TYPE>(t), (dtype_t*)datatype, flags);
+#else
   return _init_comm(name, dir, t, (dtype_t*)datatype, flags);
-  /* return _init_comm(name, static_cast<DIRECTION>(dir), */
-  /* 		    static_cast<COMM_TYPE>(t), (dtype_t*)datatype, flags); */
+#endif
 }
 
 comm_t ygg_output_f(const char *name) {

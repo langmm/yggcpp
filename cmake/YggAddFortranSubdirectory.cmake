@@ -175,7 +175,7 @@ function(add_mixed_fortran_library target library_type)
   # if(MSVC AND library_type STREQUAL "SHARED")
   #   set(library_type STATIC)
   # endif()
-  if(ARGS_LANGUAGE AND MSVC)
+  if(ARGS_LANGUAGE AND NOT (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
     set_source_files_properties(
       ${other_sources} PROPERTIES LANGUAGE ${ARGS_LANGUAGE})
   endif()

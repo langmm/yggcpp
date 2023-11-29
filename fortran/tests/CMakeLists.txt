@@ -1,5 +1,8 @@
 cmake_minimum_required (VERSION 3.5)
-enable_language (C Fortran)
+enable_language (C)
+if ((NOT FORCE_SPLIT_CXXFORTRAN) AND (NOT MSVC))
+    enable_language(Fortran)
+endif()
 enable_testing ()
 
 # TODO: Determine where this path should really come from
