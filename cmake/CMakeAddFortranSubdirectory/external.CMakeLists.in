@@ -11,11 +11,15 @@ set(includes @ARGS_INCLUDES@)
 set(library_type @library_type@)
 add_library(@target_name@ @final_library_type@ @external_sources@)
 set_target_properties(
-        @target_name@ PROPERTIES
-	COMPILE_FLAGS "@final_library_flags@"
-	Fortran_STANDARD 2003
-	Fortran_STANDARD_REQUIRED ON
-	Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+    @target_name@ PROPERTIES
+    COMPILE_FLAGS "@final_library_flags@"
+    Fortran_STANDARD 2003
+    Fortran_STANDARD_REQUIRED ON
+    Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+if (library_type STREQUAL "SHARED" AND CMAKE_GNUtoMS)
+    set_target_properties(@target_name@ PROPERTIES
+        IMPORT_PREFIX "" PREFIX "")
+endif()
 if(WIN32)
     # target_compile_options(
     #     @target_name@ PRIVATE
