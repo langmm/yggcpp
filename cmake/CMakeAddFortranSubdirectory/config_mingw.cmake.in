@@ -8,4 +8,5 @@ execute_process(
   -DMSVC_AND_GNU_BUILD=ON
   -DCMAKE_GNUtoMS=ON
   ${CMAKE_COMMAND_LINE}
-  "@source_dir@")
+  "@source_dir@"
+  COMMAND_ERROR_IS_FATAL ANY)
