@@ -1,8 +1,8 @@
 #include "c_wrappers.h"
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-void dummy_function_f() {
-  printf("dummy function (c printf)\n");
+void dummy_function_f(const char* message) {
+  printf("dummy function (c printf) %s\n", message);
   ygglog_info("dummy function (c)");
 }
 

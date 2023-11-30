@@ -1992,10 +1992,13 @@ contains
          logical(use_generic, kind=1))
     write(*, *) "after fortran create_dtype_from_schema"
   end function create_dtype_from_schema
-  subroutine dummy_function()
+  subroutine dummy_function(message)
     implicit none
+    character(len=*), intent(in) :: message
+    character(kind=c_char, len=len_trim(message)+1) :: c_message
+    c_message = trim(message)//c_null_char
     write(*, *) "dummy function (fortran)"
-    call dummy_function_c()
+    call dummy_function_c(c_message)
   end subroutine dummy_function
 
   !> @brief Create an empty data type.

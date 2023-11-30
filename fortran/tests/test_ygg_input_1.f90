@@ -11,7 +11,10 @@ integer function test_ygg_input_1() result(r)
   data_recv_len = 20
   i = i + 1
   write (*, *) "HERE", i
-  call dummy_function()
+  call dummy_function("test message")
+  i = i + 1
+  write (*, *) "HERE", i
+  call dummy_function('"test message2"')
   i = i + 1
   write (*, *) "HERE", i
   sDtype = create_dtype_from_schema('{"type": "string"}', .false.)

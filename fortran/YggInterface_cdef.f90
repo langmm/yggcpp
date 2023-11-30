@@ -1149,9 +1149,11 @@
        integer(kind=c_int) :: out
      end function init_python_API_c
 
-     subroutine dummy_function_c() bind(c, name="dummy_function_f")
-       use, intrinsic :: iso_c_binding
+     subroutine dummy_function_c(message) &
+          bind(c, name="dummy_function_f")
+       use, intrinsic :: iso_c_binding, only: c_char
        implicit none
+       character(kind=c_char), dimension(*), intent(in) :: message
      end subroutine dummy_function_c
 
   end interface
