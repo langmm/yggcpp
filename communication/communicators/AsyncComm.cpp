@@ -491,6 +491,11 @@ AsyncComm::AsyncComm(const std::string name,
 		     int flgs, const COMM_TYPE type) :
   CommBase(name, address, direction, type, flgs | COMM_FLAG_ASYNC),
   response_metadata() {
+#ifdef _MSC_VER
+  if (type == FILE_COMM) {
+    utils::YggLogThrowError("AsyncComm: Cannot create an asynchronous communicator that uses a file when compiling with MSVC");
+  }
+#endif // _MSC_VER
   if (type == SERVER_COMM)
     this->direction = RECV;
   else if (type == CLIENT_COMM)

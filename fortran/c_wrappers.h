@@ -14,7 +14,7 @@ extern "C" {
 
 const int YGG_MSG_MAX_F = YGG_MSG_MAX;
 
-  void dummy_function_f(const char* message);
+  /* void dummy_function_f(const char* message); */
 
 // Utilities
 int ygg_init_f();

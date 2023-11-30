@@ -13,6 +13,11 @@ Proxy::Proxy(const std::string iname, const std::string oname,
 	     std::vector<communication::utils::transformFunc> tforms) :
   AsyncStatus(), icomm(nullptr), ocomm(nullptr),
   filters(fltrs), transforms(tforms) {
+#ifdef _MSC_VER
+  if (otype == FILE_COMM) {
+    utils::YggLogThrowError("Proxy: Cannot create an asynchronous communicator that uses a file when compiling with MSVC");
+  }
+#endif // _MSC_VER
   START_THREAD((&Proxy::on_thread, this, iname, oname,
 		iflgs, oflgs, itype, otype));
   // start(&Proxy::on_thread, this, iname, oname,

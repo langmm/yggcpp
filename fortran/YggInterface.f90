@@ -2019,21 +2019,10 @@ contains
     type(yggdtype) :: out
     character(kind=c_char), allocatable :: c_schema(:)
     c_schema = convert_string_f2c(schema)
-    write(*, *) "before fortran create_dtype_from_schema"
     out = create_dtype_from_schema_c(c_schema, &
          logical(use_generic, kind=1))
-    write(*, *) "after fortran create_dtype_from_schema"
     deallocate(c_schema)
   end function create_dtype_from_schema
-  subroutine dummy_function(message)
-    implicit none
-    character(len=*), intent(in) :: message
-    character(kind=c_char), allocatable :: c_message(:)
-    c_message = convert_string_f2c(message)
-    write(*, *) "dummy function (fortran)"
-    call dummy_function_c(c_message)
-    deallocate(c_message)
-  end subroutine dummy_function
 
   !> @brief Create an empty data type.
   !> @param[in] use_generic True if the data type should expect generic
@@ -4064,5 +4053,14 @@ contains
        stop "Error initializing Python."
     end if
   end subroutine init_python_API
+  ! subroutine dummy_function(message)
+  !   implicit none
+  !   character(len=*), intent(in) :: message
+  !   character(kind=c_char), allocatable :: c_message(:)
+  !   c_message = convert_string_f2c(message)
+  !   write(*, *) "dummy function (fortran)"
+  !   call dummy_function_c(c_message)
+  !   deallocate(c_message)
+  ! end subroutine dummy_function
   
 end module YggInterface

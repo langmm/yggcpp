@@ -417,12 +417,30 @@ bool example_transform(rapidjson::Document& msg) {
     global_scope_comm_off();						\
     Comm_t::_ygg_cleanup(CLEANUP_COMMS);				\
   }
+#define COMM_SERI_TEST_ASYNC_F(cls)					\
+  TEST(cls, async_failed) {						\
+    std::string name = "test_name";					\
+    COMM_TYPE typ = cls::defaultCommType();				\
+    EXPECT_THROW(AsyncComm sComm(name, SEND,				\
+				 COMM_FLAG_ASYNC, typ),			\
+		 std::exception);					\
+  }
+#define COMM_SERI_TEST_PROXY_F(cls)					\
+  TEST(cls, proxy_failed) {						\
+    std::string a_name = "test_a", b_name = "test_b";			\
+    EXPECT_THROW(Proxy proxy(a_name, b_name,				\
+			     COMM_ALLOW_MULTIPLE_COMMS,			\
+			     COMM_ALLOW_MULTIPLE_COMMS,			\
+			     cls::defaultCommType(),			\
+			     cls::defaultCommType()),			\
+		 std::exception);					\
+  }
 #ifdef THREADSINSTALLED
 #define COMM_SERI_TEST_ASYNC(cls)					\
   TEST(cls, async) {							\
     std::string name = "test_name";					\
     COMM_TYPE typ = cls::defaultCommType();				\
-    AsyncComm sComm(name, SEND, COMM_FLAG_ASYNC, typ);		\
+    AsyncComm sComm(name, SEND, COMM_FLAG_ASYNC, typ);			\
     sComm.addSchema("{\"type\": \"number\"}");				\
     std::string key_env = name + "_IN";					\
     std::string val_env = sComm.getAddress();				\
@@ -486,29 +504,12 @@ bool example_transform(rapidjson::Document& msg) {
   }
 #else // THREADSINSTALLED
 #define COMM_SERI_TEST_ASYNC(cls)					\
-  TEST(cls, async) {							\
-    std::string name = "test_name";					\
-    COMM_TYPE typ = cls::defaultCommType();				\
-    EXPECT_THROW(AsyncComm sComm(name, SEND,				\
-				 COMM_FLAG_ASYNC, typ),			\
-		 std::exception);					\
-  }
+  COMM_SERI_TEST_ASYNC_F(cls)
 #define COMM_SERI_TEST_PROXY(cls)					\
-  TEST(cls, proxy) {							\
-    std::string a_name = "test_a", b_name = "test_b";			\
-    EXPECT_THROW(Proxy proxy(a_name, b_name,				\
-			     COMM_ALLOW_MULTIPLE_COMMS,			\
-			     COMM_ALLOW_MULTIPLE_COMMS,			\
-			     cls::defaultCommType(),			\
-			     cls::defaultCommType()),			\
-      std::exception);							\
-  }
+  COMM_SERI_TEST_PROXY_F(cls)
 #endif // THREADSINSTALLED
 
-#define COMM_SERI_TEST(cls)						\
-  COMM_SERI_TEST_BASE(cls,)						\
-  COMM_SERI_TEST_ASYNC(cls)						\
-  COMM_SERI_TEST_PROXY(cls)						\
+#define COMM_SERI_TEST_LARGE(cls)					\
   TEST(cls, large) {							\
     cls ## _tester sComm(SEND);						\
     std::string name = "test_name";					\
@@ -519,9 +520,9 @@ bool example_transform(rapidjson::Document& msg) {
     unsetenv(key_env.c_str());						\
     if (sComm.getMaxMsgSize() > 0) {					\
       /* Add worker in advance so that send is successful */		\
-      Comm_t* sComm_worker = sComm.getWorkers().get(&sComm, SEND); \
-      utils::Address addr(sComm_worker->getAddress());        \
-      rComm.getWorkers().get(&rComm, RECV, addr); \
+      Comm_t* sComm_worker = sComm.getWorkers().get(&sComm, SEND);	\
+      utils::Address addr(sComm_worker->getAddress());			\
+      rComm.getWorkers().get(&rComm, RECV, addr);			\
       EXPECT_EQ(rComm.getWorkers().find_worker(sComm_worker), -1);	\
       rComm.getWorkers().remove_worker(sComm_worker);			\
       sComm_worker = nullptr;						\
@@ -546,6 +547,17 @@ bool example_transform(rapidjson::Document& msg) {
       EXPECT_EQ(sComm.send(data_send), -1);				\
     }									\
   }
+
+#define COMM_SERI_TEST(cls)						\
+  COMM_SERI_TEST_BASE(cls,)						\
+  COMM_SERI_TEST_ASYNC(cls)						\
+  COMM_SERI_TEST_PROXY(cls)						\
+  COMM_SERI_TEST_LARGE(cls)
+#define COMM_SERI_TEST_FAILED_ASYNC(cls)				\
+  COMM_SERI_TEST_BASE(cls,)						\
+  COMM_SERI_TEST_ASYNC_F(cls)						\
+  COMM_SERI_TEST_PROXY_F(cls)						\
+  COMM_SERI_TEST_LARGE(cls)
 
 #ifdef ELF_AVAILABLE
 

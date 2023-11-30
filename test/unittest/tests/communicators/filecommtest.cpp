@@ -15,4 +15,8 @@ public:
   TESTER_METHODS(FileComm)
 };
 
+#ifdef _MSC_VER
+COMM_SERI_TEST_FAILED_ASYNC(FileComm)
+#else // _MSC_VER
 COMM_SERI_TEST(FileComm)
+#endif // _MSC_VER
