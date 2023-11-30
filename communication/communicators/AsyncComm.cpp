@@ -584,7 +584,7 @@ communication::utils::Metadata& AsyncComm::getMetadata(const DIRECTION dir) {
       (type == SERVER_COMM && dir == SEND)) {
     return response_metadata;
   }
-  return metadata;
+  return CommBase::getMetadata();
 }
 
 void AsyncComm::set_timeout_recv(int64_t new_timeout) {

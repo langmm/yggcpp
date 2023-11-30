@@ -44,12 +44,12 @@ public:
     return true;
   }
   bool addStashedRequest(std::string& msg, bool skip_signon=false) {
-    while (server_comm->requests.requests.size() > 0) {
-      server_comm->requests.stashRequest();
+    while (server_comm->getRequests().requests.size() > 0) {
+      server_comm->getRequests().stashRequest();
     }
     if (!addRequest(msg, skip_signon))
       return false;
-    this->requests.stashRequest();
+    this->getRequests().stashRequest();
     return true;
   }
   bool addRequest(std::string& msg, bool skip_signon=false) {
@@ -62,7 +62,7 @@ public:
       return false;
     header.on_send();
     msg.assign(header.data[0], header.size_curr);
-    if (server_comm->requests.addRequestServer(header) < 0)
+    if (server_comm->getRequests().addRequestServer(header) < 0)
       return false;
     return true;
   }
@@ -75,7 +75,7 @@ public:
       return false;
     header.on_send();
     if (!skip_client) {
-      this->requests.addResponseClient(header);
+      this->getRequests().addResponseClient(header);
       // if (!this->create_header_recv(header))
       // 	return false;
     }

@@ -9,10 +9,12 @@ using namespace communication::utils;
 unsigned ClientComm::_client_rand_seeded = 0;
 
 ClientComm::ClientComm(const std::string nme, const Address& addr,
-		       int flgs, const COMM_TYPE type) :
+		       int flgs, const COMM_TYPE type,
+		       const COMM_TYPE reqtype,
+		       const COMM_TYPE restype) :
   RPCComm(nme, addr,
 	  flgs | COMM_FLAG_CLIENT | COMM_ALWAYS_SEND_HEADER,
-	  SEND, RECV, type) {
+	  SEND, RECV, type, reqtype, restype) {
   // Called to create temp comm for send/recv
   if (!(global_comm || (name.empty() && address.valid())))
     init();
@@ -40,7 +42,7 @@ void ClientComm::set_timeout_recv(int64_t new_timeout) {
     global_comm->set_timeout_recv(new_timeout);
     return;
   }
-  COMM_BASE::set_timeout_recv(new_timeout);
+  WrapComm::set_timeout_recv(new_timeout);
   requests.initClientResponse();
   Comm_t* active_comm = requests.comms[0];
   active_comm->set_timeout_recv(new_timeout);
@@ -112,7 +114,7 @@ Comm_t* ClientComm::create_worker_send(Header& head) {
   //   return global_comm->create_worker_send(head);
   assert(!global_comm);
   log_debug() << "create_worker_send: begin" << std::endl;
-  Comm_t* out = COMM_BASE::create_worker_send(head);
+  Comm_t* out = WrapComm::create_worker_send(head);
   // create_worker_send only called after create_header_send ensuring
   //   request_id is present
   std::string request_id;
@@ -141,7 +143,7 @@ Comm_t* ClientComm::create_worker_recv(Header& head) {
     log_error() << "create_worker_recv: Failed to clear request on worker (request_id = " << request_id << ")" << std::endl;
     return nullptr;
   }
-  Comm_t* out = COMM_BASE::create_worker_recv(head);
+  Comm_t* out = WrapComm::create_worker_recv(head);
   log_debug() << "create_worker_recv: done" << std::endl;
   return out;
 }
@@ -150,7 +152,7 @@ bool ClientComm::create_header_send(Header& header) {
   if (global_comm)
     return global_comm->create_header_send(header);
   log_debug() << "create_header_send: begin" << std::endl;
-  bool out = COMM_BASE::create_header_send(header);
+  bool out = WrapComm::create_header_send(header);
   if (out && !(header.flags & HEAD_FLAG_EOF)) {
     if (!((header.flags & HEAD_FLAG_CLIENT_SIGNON) ||
 	  (flags & COMM_FLAG_ASYNC_WRAPPED)))

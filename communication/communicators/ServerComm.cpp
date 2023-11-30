@@ -7,10 +7,12 @@ using namespace communication::communicator;
 using namespace communication::utils;
 
 ServerComm::ServerComm(const std::string nme, const utils::Address& addr,
-		       int flgs, const COMM_TYPE type) :
+		       int flgs, const COMM_TYPE type,
+		       const COMM_TYPE reqtype,
+		       const COMM_TYPE restype) :
   RPCComm(nme, addr,
 	  flgs | COMM_FLAG_SERVER | COMM_ALWAYS_SEND_HEADER,
-	  RECV, SEND, type) {}
+	  RECV, SEND, type, reqtype, restype) {}
 
 ADD_CONSTRUCTORS_RPC_DEF(ServerComm)
 
@@ -73,7 +75,7 @@ int ServerComm::send_single(utils::Header& header) {
 long ServerComm::recv_single(utils::Header& header) {
   assert(!global_comm);
   log_debug() << "recv_single" << std::endl;
-  long ret = COMM_BASE::recv_single(header);
+  long ret = WrapComm::recv_single(header);
   if (ret < 0)
     return ret;
   if (header.flags & HEAD_FLAG_EOF) {

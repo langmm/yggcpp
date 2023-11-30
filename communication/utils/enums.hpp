@@ -58,9 +58,10 @@ enum CommFlags {
   COMM_FLAG_ASYNC           = 0x00008000, //!< Comm is asynchronous
   COMM_FLAG_ASYNC_WRAPPED   = 0x00010000, //!< Comm is wrapped by an asynchronous comm
   COMM_FLAG_SET_OPP_ENV     = 0x00020000, //!< Set environment variables for opposite communicator
-  FILE_FLAG_APPEND          = 0x00040000, //!< Append sent messages to the end of the file
-  FILE_FLAG_BINARY          = 0x00080000, //!< Open file in binary mode
-  FILE_FLAG_READLINE        = 0x00200000  //!< Read file contents line by line
+  COMM_FLAG_WRAPPER         = 0x00040000, //!< Communicator is a wrapper
+  FILE_FLAG_APPEND          = 0x00080000, //!< Append sent messages to the end of the file
+  FILE_FLAG_BINARY          = 0x00200000, //!< Open file in binary mode
+  FILE_FLAG_READLINE        = 0x00400000  //!< Read file contents line by line
 };
   
 /*! @brief Bit flags describing message state. */

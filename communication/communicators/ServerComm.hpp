@@ -20,10 +20,15 @@ public:
      * @param address The address to associate with the communicator, if address is nullptr
      *                then an address will be created.
      * @param flgs Bitwise flags describing the communicator
+     * @param type Communicator type to assign (used internally).
+     * @param reqtype Communicator type to use for the input communicator.
+     * @param restype Communicator type to use for the output communicator.
      */
     explicit ServerComm(const std::string name,
 			const utils::Address& address,
-			int flgs = 0, const COMM_TYPE type = SERVER_COMM);
+			int flgs = 0, const COMM_TYPE type = SERVER_COMM,
+			const COMM_TYPE reqtype = DEFAULT_COMM,
+			const COMM_TYPE restype = DEFAULT_COMM);
     ADD_CONSTRUCTORS_RPC(ServerComm, SERVER_COMM)
 
     using RPCComm::send;

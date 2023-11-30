@@ -21,7 +21,9 @@ public:
      */
     explicit ClientComm(const std::string name,
 			const utils::Address &address,
-			int flgs = 0, const COMM_TYPE type = CLIENT_COMM);
+			int flgs = 0, const COMM_TYPE type = CLIENT_COMM,
+			const COMM_TYPE reqtype = DEFAULT_COMM,
+			const COMM_TYPE restype = DEFAULT_COMM);
     ADD_CONSTRUCTORS_RPC(ClientComm, CLIENT_COMM)
 
     // \copydoc Comm_t::logClass

@@ -140,6 +140,11 @@ public:
     using Comm_t::send;
     using Comm_t::recv;
 
+#ifdef YGG_TEST
+    bool afterSendRecv(Comm_t* sComm, Comm_t* rComm) override;
+    ZMQReply& getReply() { return reply; }
+#endif
+    
 #ifndef YGG_TEST
 protected:
 #endif
@@ -152,18 +157,10 @@ protected:
     WORKER_METHOD_DECS(ZMQComm);
     Comm_t* create_worker_send(utils::Header& head) override;
     Comm_t* create_worker_recv(utils::Header& head) override;
-#ifdef YGG_TEST
-    bool afterSendRecv(Comm_t* sComm, Comm_t* rComm) override;
-#endif
 #else
     void init() { UNINSTALLED_ERROR(ZMQ); }
 #endif
 
-#ifdef YGG_TEST
-public:
-    ZMQReply& getReply() { return reply; }
-#endif
-  
 private:
     friend class ClientComm;
     friend class ServerComm;

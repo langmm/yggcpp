@@ -9,3 +9,4 @@
 #include "ZMQComm.hpp"
 #include "AsyncComm.hpp"
 #include "FileComm.hpp"
+#include "WrapComm.hpp"

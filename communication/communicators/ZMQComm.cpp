@@ -1,5 +1,6 @@
 #include "ZMQComm.hpp"
 #include "DefaultComm.hpp"
+#include "WrapComm.hpp"
 #include "utils/tools.hpp"
 #include "utils/logging.hpp"
 
@@ -744,11 +745,25 @@ bool ZMQComm::afterSendRecv(Comm_t* sComm, Comm_t* rComm) {
     sComm = sComm->global_comm;
   if (rComm->global_comm)
     rComm = rComm->global_comm;
+  if (sComm->getFlags() & COMM_FLAG_WRAPPER) {
+    sComm = dynamic_cast<WrapComm*>(sComm)->getWrapped();
+    if (!sComm) {
+      log_error() << "afterSendRecv: Wrapped send comm doesn't exist" << std::endl;
+      return false;
+    }
+  }
+  if (rComm->getFlags() & COMM_FLAG_WRAPPER) {
+    rComm = dynamic_cast<WrapComm*>(rComm)->getWrapped();
+    if (!rComm) {
+      log_error() << "afterSendRecv: Wrapped recv comm doesn't exist" << std::endl;
+      return false;
+    }
+  }
   if ((sComm->getType() != ZMQ_COMM && sComm->getType() != SERVER_COMM &&
        sComm->getType() != CLIENT_COMM) || 
       (rComm->getType() != ZMQ_COMM && rComm->getType() != SERVER_COMM &&
        rComm->getType() != CLIENT_COMM)) {
-    log_error() << "afterSendRecv: One or both communicators are not ZMQ communicators" << std::endl;
+    log_error() << "afterSendRecv: One or both communicators are not ZMQ communicators (send commtype = " << sComm->getType() << ", recv commtype = " << rComm->getType() << ")" << std::endl;
     return false;
   }
   ZMQComm* sComm_z = dynamic_cast<ZMQComm*>(sComm);

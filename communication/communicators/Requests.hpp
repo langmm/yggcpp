@@ -44,11 +44,14 @@ public:
 
 class RequestList : public communication::utils::LogBase {
 public:
-    RequestList(DIRECTION dir, int flags = 0, std::string logName = "") :
+    RequestList(DIRECTION dir, int flags = 0,
+		const COMM_TYPE restyp = DEFAULT_COMM,
+		std::string logName = "") :
       comms(), requests(), partners(),
       response_dir(dir), response_flags(flags),
       response_metadata(), signon_complete(false),
-      stashed_request(), logInst_(logName) {
+      stashed_request(), restype(restyp),
+      logInst_(logName) {
       response_flags |= COMM_EOF_SENT | COMM_EOF_RECV;
       if (response_dir == RECV)
 	response_flags |= COMM_FLAG_CLIENT_RESPONSE;
@@ -346,8 +349,7 @@ public:
                 return idx;
         }
         utils::Address response_adr(response_address);
-	COMM_TYPE response_type = DEFAULT_COMM;
-	Comm_t* x = new_Comm_t(response_dir, response_type, "",
+	Comm_t* x = new_Comm_t(response_dir, restype, "",
 			       response_adr, response_flags);
         comms.push_back(x);
         if (!x->addSchema(response_metadata))
@@ -421,6 +423,7 @@ public:
     utils::Metadata response_metadata;
     bool signon_complete;
     std::string stashed_request;
+    COMM_TYPE restype;
     std::string logInst_;
 };
 }

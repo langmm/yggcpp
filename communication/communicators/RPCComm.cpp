@@ -8,23 +8,26 @@ using namespace communication::utils;
 
 RPCComm::RPCComm(const std::string &name, const utils::Address& address,
 		 int flgs, DIRECTION dir, DIRECTION req_dir,
-		 const COMM_TYPE type) :
-  COMM_BASE(name, address, dir, flgs, type),
+		 const COMM_TYPE type,
+		 const COMM_TYPE reqtype, const COMM_TYPE restype) :
+  WrapComm(name, address, dir, flgs, type, reqtype),
   requests(req_dir, flgs & (COMM_ALLOW_MULTIPLE_COMMS |
 			    COMM_FLAG_ASYNC_WRAPPED),
-	   logInst()) {}
+	   restype, logInst()) {}
 
-ADD_DESTRUCTOR_DEF(RPCComm, COMM_BASE, , )
+ADD_DESTRUCTOR_DEF(RPCComm, WrapComm, , )
 
 RPCComm::RPCComm(const std::string &name,
                  int flgs, DIRECTION dir, DIRECTION req_dir,
-                 const COMM_TYPE type) :
-  RPCComm(name, utils::blankAddress, flgs, dir, req_dir, type) {}
+                 const COMM_TYPE type,
+		 const COMM_TYPE reqtype, const COMM_TYPE restype) :
+  RPCComm(name, utils::blankAddress, flgs, dir, req_dir, type,
+	  reqtype, restype) {}
 
 void RPCComm::_close(bool call_base) {
   requests.destroy();
   if (call_base)
-    COMM_BASE::_close(true);
+    WrapComm::_close(true);
 }
 
 int RPCComm::comm_nmsg(DIRECTION dir) const {
@@ -33,7 +36,7 @@ int RPCComm::comm_nmsg(DIRECTION dir) const {
   if (dir == NONE)
     dir = direction;
   if (dir == direction)
-    return COMM_BASE::comm_nmsg(dir);
+    return WrapComm::comm_nmsg(dir);
   if (requests.requests.empty() || requests.comms.empty()) {
     log_error() << "::RPCComm:comm_nmsg: No pending requests" << std::endl;
     return -1;
@@ -45,7 +48,7 @@ int RPCComm::wait_for_recv(const int64_t& tout) {
   if (global_comm)
     return global_comm->wait_for_recv(tout);
   if (direction == RECV)
-    return COMM_BASE::wait_for_recv(tout);
+    return WrapComm::wait_for_recv(tout);
   if (requests.requests.empty() || requests.comms.empty()) {
     log_error() << "::RPCComm:wait_for_recv: No pending requests" << std::endl;
     return -1;
@@ -57,7 +60,7 @@ communication::utils::Metadata& RPCComm::getMetadata(const DIRECTION dir) {
   if (global_comm)
     return global_comm->getMetadata(dir);
   if (dir == this->direction || dir == NONE)
-    return this->metadata;
+    return WrapComm::getMetadata(dir);
   return requests.response_metadata;
 }
 bool RPCComm::addResponseSchema(const std::string& s, bool use_generic) {
@@ -96,7 +99,7 @@ bool RPCComm::afterSendRecv(Comm_t* sComm, Comm_t* rComm) {
     rComm = rComm->global_comm;
   if ((sComm->flags & COMM_FLAG_CLIENT) &&
       (rComm->flags & COMM_FLAG_SERVER))
-    return COMM_BASE::afterSendRecv(sComm, rComm);
+    return WrapComm::afterSendRecv(sComm, rComm);
   assert((sComm->flags & COMM_FLAG_SERVER) &&
 	 (rComm->flags & COMM_FLAG_CLIENT));
   Comm_t* sComm_res = dynamic_cast<RPCComm*>(sComm)->requests.lastComm();

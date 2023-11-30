@@ -230,8 +230,8 @@ bool Comm_t::addFormat(const std::string& format_str, bool as_array) {
   return getMetadata().fromFormat(format_str, as_array);
 }
 bool Comm_t::copySchema(const Comm_t* other) {
-  if (other->metadata.hasType()) {
-    return getMetadata().fromMetadata(other->metadata);
+  if (other->getMetadata().hasType()) {
+    return getMetadata().fromMetadata(other->getMetadata());
   }
   return true;
 }

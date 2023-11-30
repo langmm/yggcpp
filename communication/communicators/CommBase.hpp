@@ -91,17 +91,26 @@ public:									\
   ADD_DESTRUCTOR_DEF(cls, CommBase, , )
 #define ADD_CONSTRUCTORS_RPC(cls, defT)				\
   explicit cls(const std::string nme,				\
-	       int flgs = 0, const COMM_TYPE type = defT);	\
+	       int flgs = 0, const COMM_TYPE type = defT,	\
+	       const COMM_TYPE reqtype = DEFAULT_COMM,		\
+	       const COMM_TYPE restype = DEFAULT_COMM);		\
   explicit cls(utils::Address &addr,				\
-	       int flgs = 0, const COMM_TYPE type = defT);	\
+	       int flgs = 0, const COMM_TYPE type = defT,	\
+	       const COMM_TYPE reqtype = DEFAULT_COMM,		\
+	       const COMM_TYPE restype = DEFAULT_COMM);		\
   ADD_DESTRUCTOR(cls, RPCComm)
 #define ADD_CONSTRUCTORS_RPC_DEF(cls)			\
   cls::cls(const std::string nme,			\
-	   int flgs, const COMM_TYPE type) :		\
-    cls(nme, utils::blankAddress, flgs, type) {}	\
+	   int flgs, const COMM_TYPE type,		\
+	   const COMM_TYPE reqtype,			\
+	   const COMM_TYPE restype) :			\
+    cls(nme, utils::blankAddress, flgs, type,		\
+	reqtype, restype) {}				\
   cls::cls(utils::Address &addr,			\
-	   int flgs, const COMM_TYPE type) :		\
-    cls("", addr, flgs, type) {}			\
+	   int flgs, const COMM_TYPE type,		\
+	   const COMM_TYPE reqtype,			\
+	   const COMM_TYPE restype) :			\
+    cls("", addr, flgs, type, reqtype, restype) {}	\
   ADD_DESTRUCTOR_DEF(cls, RPCComm, , )			\
   void cls::_close(bool call_base) {			\
     if (call_base) {					\
@@ -203,17 +212,12 @@ void ygg_exit();
 
 class AsyncComm;
 class AsyncBacklog;
-
 class RPCComm;
-
 class ServerComm;
-
 class ClientComm;
-
 class ZMQComm;
-
 class IPCComm;
-
+class WrapComm;
 class RequestList;
 
 typedef struct comm_t comm_t;
@@ -794,6 +798,7 @@ public:
       @returns Type code.
      */
     COMM_TYPE getType() const { return type; }
+    void setType(COMM_TYPE new_type) { type = new_type; }
     /*!
       @brief Determine if the communicator is valid.
       @return true if it is valid, false otherwise.
@@ -816,6 +821,9 @@ public:
       @return Metadata.
      */
     virtual communication::utils::Metadata& getMetadata(const DIRECTION dir=NONE);
+    const communication::utils::Metadata&  getMetadata(const DIRECTION dir=NONE) const {
+      return const_cast<Comm_t*>(this)->getMetadata(dir);
+    }
     /*!
       @brief Get the bitwise flags associated with the communicator.
       @returns flags.
@@ -909,6 +917,7 @@ protected:
     friend ClientComm;
     friend IPCComm;
     friend ZMQComm;
+    friend WrapComm;
     friend RequestList;
     friend Worker;
     friend WorkerList;

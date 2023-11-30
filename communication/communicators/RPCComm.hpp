@@ -3,21 +3,24 @@
 #include "DefaultComm.hpp"
 #include "CommBase.hpp"
 #include "Requests.hpp"
+#include "WrapComm.hpp"
 
 #ifdef COMM_BASE
 namespace communication {
 namespace communicator {
 
 // @brief Structure for storing requests
-class YGG_API RPCComm : public COMM_BASE {
+class YGG_API RPCComm : public WrapComm {
 public:
   explicit RPCComm(const std::string &name,
 		   const utils::Address& address,
 		   int flgs, DIRECTION dir, DIRECTION req_dir,
-		   const COMM_TYPE type);
+		   const COMM_TYPE type, const COMM_TYPE reqtype,
+		   const COMM_TYPE restype);
   RPCComm(const std::string& name, int flgs, DIRECTION dir,
-	  DIRECTION req_dir, const COMM_TYPE type);
-  ADD_DESTRUCTOR(RPCComm, COMM_BASE)
+	  DIRECTION req_dir, const COMM_TYPE type,
+	  const COMM_TYPE reqtype, const COMM_TYPE restype);
+  ADD_DESTRUCTOR(RPCComm, WrapComm)
 
   using Comm_t::send;
   using Comm_t::recv;
@@ -35,16 +38,14 @@ public:
   // \copydoc Comm_t::getMetadata
   communication::utils::Metadata& getMetadata(const DIRECTION dir=NONE) override;
   bool signonComplete() const { return requests.signon_complete; }
-  static bool isInstalled() { return COMM_BASE::isInstalled(); }
+  static bool isInstalled() { return WrapComm::isInstalled(); }
   RequestList& getRequests() {
     if (global_comm)
       return (dynamic_cast<RPCComm*>(global_comm))->getRequests();
     return requests;
   }
   
-#ifndef YGG_TEST
-protected:
-#else
+#ifdef YGG_TEST
   bool afterSendRecv(Comm_t* sComm, Comm_t* rComm) override;
   // std::string getResponseAddress() {
   //   if (global_comm)
@@ -52,6 +53,8 @@ protected:
   //   return requests.lastComm()->getAddress();
   // }
 #endif
+  
+protected:
   
   RequestList requests;
 };
