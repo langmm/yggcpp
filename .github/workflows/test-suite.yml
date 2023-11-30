@@ -232,15 +232,11 @@ jobs:
         shell: bash -l {0}
         run: |
           mamba install m2w64-gcc m2w64-gcc-fortran m2w64-toolchain_win-64 libpython -c msys2 -y  # winpthreads
-          # gcc -v
-          # c++ -v
       - name: Install MinGW on windows for Fortran (msvc)
         if: matrix.os == 'windows-latest' && matrix.python-install == 'conda' && matrix.windows-compiler == 'msvc'
         shell: bash -l {0}
         run: |
           mamba install m2w64-gcc-fortran libpython -y
-          # gcc -v
-          # c++ -v
       - name: Install ZeroMQ on unix
         if: matrix.python-install == 'conda' && matrix.install-zmq
         shell: bash -l {0}
@@ -270,27 +266,10 @@ jobs:
           echo "ASAN_OPTIONS=detect_odr_violation=0:detect_container_overflow=0" >> $GITHUB_ENV
           echo "TEST_FLAGS=${{ env.TEST_FLAGS }} -E valgrind*" >> "$GITHUB_ENV"
       - name: Fortran config flags
-        if: matrix.with-asan == false # && matrix.os != 'windows-latest'
+        if: matrix.with-asan == false
         shell: bash -l {0}
         run: |
           echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DBUILD_FORTRAN_LIBRARY=ON" >> "$GITHUB_ENV"
-      # - name: Fortran config flags on Windows (CONDA)
-      #   if: matrix.with-asan == false && matrix.os == 'windows-latest' && matrix.windows-compiler == 'msvc' # && matrix.python-install == 'conda'
-      #   shell: bash -l {0}
-      #   run: |
-      #     echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DCMAKE_Fortran_PREPROCESS_SOURCE=ON -DCMAKE_Fortran_COMPILER_WORKS=1 -DDONT_CHECK_FORTRAN_C_COMPAT=ON" >> "$GITHUB_ENV"
-      # - name: Fortran config flags on Windows (PIP)
-      #   if: matrix.with-asan == false && matrix.os == 'windows-latest' && matrix.windows-compiler == 'msvc' && matrix.python-install != 'conda'
-      #   run: |
-      #     echo (Get-Command gfortran).Path
-      #     $FC = (Get-Command gfortran).Path
-      #     echo "CONFIG_FLAGS=$env:CONFIG_FLAGS -DCMAKE_Fortran_COMPILER=$FC" | Out-File -FilePath $Env:GITHUB_ENV -Encoding utf8 -Append
-      # - name: Fortran config flags on Windows (CONDA)
-      #   if: matrix.with-asan == false && matrix.os == 'windows-latest' && matrix.windows-compiler == 'msvc' && matrix.python-install == 'conda'
-      #   shell: bash -l {0}
-      #   run: |
-      #     FC=$(which gfortran.exe)
-      #     echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DCMAKE_Fortran_COMPILER=$(which gfortran).exe" >> "$GITHUB_ENV"
       - name: ASAN dynamic library
         if: matrix.with-asan == true && matrix.os == 'macos-latest'
         shell: bash -l {0}
@@ -401,6 +380,22 @@ jobs:
           echo "ls MINBIN_DIRECTORY=${MINBIN_DIRECTORY}"
           ls ${MINBIN_DIRECTORY}
           echo "MINGW_PTHREAD_ROOT=${MIN_DIRECTORY}" >> "$GITHUB_ENV"
+      - name: Conda library paths on Windows (msvc)
+        if: matrix.python-install == 'conda' && matrix.os == 'windows-latest' && matrix.windows-compiler == 'msvc'
+        shell: bash -l {0}
+        run: |
+          MIN_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64"
+          echo "ls MIN_DIRECTORY=${MIN_DIRECTORY}"
+          ls ${MIN_DIRECTORY}
+          MININC_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64"
+          echo "ls MININC_DIRECTORY=${MININC_DIRECTORY}"
+          ls ${MININC_DIRECTORY}
+          MINLIB_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64/lib"
+          echo "ls MINLIB_DIRECTORY=${MINLIB_DIRECTORY}"
+          ls ${MINLIB_DIRECTORY}
+          MINBIN_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64/bin"
+          echo "ls MINBIN_DIRECTORY=${MINBIN_DIRECTORY}"
+          ls ${MINBIN_DIRECTORY}
       - name: Set CMAKE_GENERATOR for MinGW
         if: matrix.with-asan == false && matrix.os == 'windows-latest' && matrix.windows-compiler == 'mingw'
         shell: bash -l {0}
