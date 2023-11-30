@@ -237,7 +237,7 @@ jobs:
         shell: bash -l {0}
         run: |
           mamba install m2w64-gcc-fortran libpython -y
-      - name: Install ZeroMQ on unix
+      - name: Install ZeroMQ using mamba
         if: matrix.python-install == 'conda' && matrix.install-zmq
         shell: bash -l {0}
         run: |
@@ -327,17 +327,17 @@ jobs:
       ###################################
       # Add paths for Windows dlls
       ###################################
-      - name: Choco library paths on Windows (Powershell)
-        if: matrix.os == 'windows-latest' && matrix.python-install == 'pip' # && matrix.windows-compiler == 'mingw'
-        run: |
-          echo "C:\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-      - name: Choco library paths on Windows (Bash)
-        if: matrix.os == 'windows-latest' && matrix.python-install == 'pip' # && matrix.windows-compiler == 'mingw'
-        shell: bash -l {0}
-        run: |
-          DLL_DIRECTORY="C:\mingw64\bin"
-          ls ${DLL_DIRECTORY}
-          echo "${DLL_DIRECTORY}" >> $GITHUB_PATH
+      # - name: Mingw library paths on Windows (Powershell)
+      #   if: matrix.os == 'windows-latest' && matrix.python-install == 'pip' # && matrix.windows-compiler == 'mingw'
+      #   run: |
+      #     echo "C:\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      # - name: Mingw library paths on Windows (Bash)
+      #   if: matrix.os == 'windows-latest' && matrix.python-install == 'pip' # && matrix.windows-compiler == 'mingw'
+      #   shell: bash -l {0}
+      #   run: |
+      #     DLL_DIRECTORY="C:\mingw64\bin"
+      #     ls ${DLL_DIRECTORY}
+      #     echo "${DLL_DIRECTORY}" >> $GITHUB_PATH
       - name: Vcpkg library paths on Windows (Powershell)
         if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
         run: |
