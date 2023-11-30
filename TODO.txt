@@ -14,5 +14,4 @@
 * Determine how async should be handled by the C/C++ interface (allow flags to be passed?)
 * Move thread patch to cmake with conditional check for specific version of mingw that conda currently packages (5.3)
 * Add test for OMP threaded region
-* Re-enable disabled components in tests on fortran branch
 * Fix how file comm is handled to allow async access when compiled with MSVC
