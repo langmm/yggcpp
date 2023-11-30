@@ -23,7 +23,7 @@ include(@CMAKE_CURRENT_FUNCTION_LIST_DIR@/AddTargetsFromFile.cmake)
 # TODO: Find stdc++ library?
 set(generate_args)
 if (MSVC_AND_GNU_BUILD)
-  set(generate_args CREATE_LIB FULL_LIBRARIES)
+  set(generate_args FULL_LIBRARIES) # CREATE_LIB)
 endif()
 generate_target_file(
     @external_target_file@ NO_CONFIG ${generate_args}
