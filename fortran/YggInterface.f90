@@ -1992,13 +1992,27 @@ contains
          logical(use_generic, kind=1))
     write(*, *) "after fortran create_dtype_from_schema"
   end function create_dtype_from_schema
+  function convert_string_f2c(f_message) result(c_message)
+    implicit none
+    character(len=*), intent(in) :: f_message
+    character(kind=c_char), allocatable :: c_message(:)
+    integer :: i
+    allocate(c_message(len(f_message)+1))
+    do i = 1, len(f_message)
+       c_message(i) = f_message(i:i)
+    end do
+    c_message(len(f_message)+1) = c_null_char
+  end function convert_string_f2c
   subroutine dummy_function(message)
     implicit none
     character(len=*), intent(in) :: message
-    character(kind=c_char, len=len_trim(message)+1) :: c_message
-    c_message = trim(message)//c_null_char
+    character(kind=c_char), allocatable :: c_message(:)
+    c_message = convert_string_f2c(message)
+    ! character(kind=c_char, len=len_trim(message)+1) :: c_message
+    ! c_message = trim(message)//c_null_char
     write(*, *) "dummy function (fortran)"
     call dummy_function_c(c_message)
+    deallocate(c_message)
   end subroutine dummy_function
 
   !> @brief Create an empty data type.

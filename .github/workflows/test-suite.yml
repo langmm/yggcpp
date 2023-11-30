@@ -359,10 +359,8 @@ jobs:
         run: |
           LIB_DIRECTORY="${CONDA_PREFIX}/Library/lib"
           ls ${LIB_DIRECTORY}
-          # echo "${LIB_DIRECTORY}" >> $GITHUB_PATH
           DLL_DIRECTORY="${CONDA_PREFIX}/Library/bin"
           ls ${DLL_DIRECTORY}
-          # echo "${DLL_DIRECTORY}" >> $GITHUB_PATH
       - name: Conda library paths on Windows (mingw)
         if: matrix.python-install == 'conda' && matrix.os == 'windows-latest' && matrix.windows-compiler == 'mingw'
         shell: bash -l {0}
