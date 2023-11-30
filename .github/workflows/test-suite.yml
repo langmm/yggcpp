@@ -317,7 +317,7 @@ jobs:
         if: matrix.with-asan == false && matrix.os == 'windows-latest' # && matrix.windows-compiler == 'msvc'
         shell: bash -l {0}
         run: |
-          echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DENABLE_OMP=OFF -DENABLE_MPI=OFF" >> $GITHUB_ENV
+          echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DENABLE_OMP=ON -DENABLE_MPI=ON" >> $GITHUB_ENV
      
       ###################################
       # Add paths for Windows dlls
