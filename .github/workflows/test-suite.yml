@@ -296,11 +296,11 @@ jobs:
         shell: bash -l {0}
         run: |
           echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DPython3_ROOT_DIR=${{ env.pythonLocation }}" >> "$GITHUB_ENV"
-      - name: Conda config flags
-        if: matrix.python-install == 'conda'
-        shell: bash -l {0}
-        run: |
-          echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DCMAKE_PREFIX_PATH=${CONDA_PREFIX}" >> "$GITHUB_ENV"
+      # - name: Conda config flags
+      #   if: matrix.python-install == 'conda'
+      #   shell: bash -l {0}
+      #   run: |
+      #     echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DCMAKE_PREFIX_PATH=${CONDA_PREFIX}" >> "$GITHUB_ENV"
 
 
       ############################################
@@ -327,17 +327,19 @@ jobs:
       ###################################
       # Add paths for Windows dlls
       ###################################
-      # - name: Mingw library paths on Windows (Powershell)
-      #   if: matrix.os == 'windows-latest' && matrix.python-install == 'pip' # && matrix.windows-compiler == 'mingw'
-      #   run: |
-      #     echo "C:\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-      # - name: Mingw library paths on Windows (Bash)
-      #   if: matrix.os == 'windows-latest' && matrix.python-install == 'pip' # && matrix.windows-compiler == 'mingw'
-      #   shell: bash -l {0}
-      #   run: |
-      #     DLL_DIRECTORY="C:\mingw64\bin"
-      #     ls ${DLL_DIRECTORY}
-      #     echo "${DLL_DIRECTORY}" >> $GITHUB_PATH
+      - name: Mingw library paths on Windows (Powershell)
+        if: matrix.os == 'windows-latest' && matrix.python-install == 'pip' # && matrix.windows-compiler == 'mingw'
+        run: |
+          # This isn't necessary, but it speeds up the build
+          echo "C:\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      - name: Mingw library paths on Windows (Bash)
+        if: matrix.os == 'windows-latest' && matrix.python-install == 'pip' # && matrix.windows-compiler == 'mingw'
+        shell: bash -l {0}
+        run: |
+          # This isn't necessary, but it speeds up the build
+          DLL_DIRECTORY="C:\mingw64\bin"
+          ls ${DLL_DIRECTORY}
+          echo "${DLL_DIRECTORY}" >> $GITHUB_PATH
       - name: Vcpkg library paths on Windows (Powershell)
         if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
         run: |
@@ -357,10 +359,13 @@ jobs:
         if: matrix.python-install == 'conda' && matrix.os == 'windows-latest'
         shell: bash -l {0}
         run: |
+          # This isn't necessary, but it speeds up the build
           LIB_DIRECTORY="${CONDA_PREFIX}/Library/lib"
           ls ${LIB_DIRECTORY}
+          echo "${LIB_DIRECTORY}" >> $GITHUB_PATH
           DLL_DIRECTORY="${CONDA_PREFIX}/Library/bin"
           ls ${DLL_DIRECTORY}
+          echo "${DLL_DIRECTORY}" >> $GITHUB_PATH
       - name: Conda library paths on Windows (mingw)
         if: matrix.python-install == 'conda' && matrix.os == 'windows-latest' && matrix.windows-compiler == 'mingw'
         shell: bash -l {0}
