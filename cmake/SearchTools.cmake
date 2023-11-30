@@ -291,12 +291,12 @@ function(find_libraries)
     else()
       message(STATUS "Looking for ${x}: ${x}_FOUND = ${${x}_FOUND}")
       check_suffixes(${${x}_FOUND} add_x
-                     INCLUDE ARGS_INCLUDE_SUFFIXES
-		     IGNORE ARGS_IGNORE_SUFFIXES)
+                     INCLUDE ${ARGS_INCLUDE_SUFFIXES}
+		     IGNORE ${ARGS_IGNORE_SUFFIXES})
       if (add_x)
         list(APPEND LIBS_FULL ${${x}_FOUND})
       else()
-        message(STATUS "Suffix does not match (include=${ARGS_INCLUDE_SUFFIXES}, ignore=${ARGS_IGNORE_SUFFIXES}")
+        message(STATUS "Suffix does not match (include=${ARGS_INCLUDE_SUFFIXES}, ignore=${ARGS_IGNORE_SUFFIXES})")
         list(APPEND LIBS_UNMT ${x})
       endif()
     endif()
