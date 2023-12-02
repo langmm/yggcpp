@@ -120,6 +120,7 @@ WRAP_METHOD(wait_for_recv, (const int64_t& tout), (tout),
 WRAP_METHOD_NORET(close, (), (), , )
 WRAP_METHOD(is_closed, (), (), out = false, bool, const)
 WRAP_METHOD(is_open, (), (), out = false, bool, const)
+WRAP_METHOD_DIRECT(getWorkers, (), (), THROW_NO_HANDLE(getWorkers), WorkerList&, );
 #ifdef YGG_TEST
 WRAP_METHOD(afterSendRecv, (Comm_t* sComm, Comm_t* rComm),
 	    (sComm, rComm), out = false, bool, )
@@ -136,3 +137,7 @@ WRAP_METHOD(create_worker,
 	    (utils::Address& address,
 	     const DIRECTION& dir, int flgs),
 	    (address, dir, flgs), out = nullptr, Comm_t*, )
+WRAP_METHOD(create_worker_send, (utils::Header& header),
+	    (header), out = nullptr, Comm_t*, )
+WRAP_METHOD(create_worker_recv, (utils::Header& header),
+	    (header), out = nullptr, Comm_t*, )

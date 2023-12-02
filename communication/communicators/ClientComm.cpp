@@ -120,7 +120,7 @@ Comm_t* ClientComm::create_worker_send(Header& head) {
   std::string request_id;
   if (!head.GetMetaString("request_id", request_id))
     return nullptr;
-  if (!workers.setRequest(out, request_id)) {
+  if (!getWorkers().setRequest(out, request_id)) {
     log_error() << "create_worker_send: Failed to set request on worker" << std::endl;
     return nullptr;
   }
@@ -139,7 +139,7 @@ Comm_t* ClientComm::create_worker_recv(Header& head) {
   std::string request_id;
   if (!head.GetMetaString("request_id", request_id))
     return nullptr;
-  if (!workers.setResponse(request_id)) {
+  if (!getWorkers().setResponse(request_id)) {
     log_error() << "create_worker_recv: Failed to clear request on worker (request_id = " << request_id << ")" << std::endl;
     return nullptr;
   }

@@ -884,8 +884,8 @@ public:
     */
     static bool isInstalled() { return false; }
   
+    virtual WorkerList& getWorkers() { return workers; }
 #ifdef YGG_TEST
-    WorkerList& getWorkers() { return workers; }
     virtual bool afterSendRecv(Comm_t*, Comm_t*) { return true; }
     Comm_t* getGlobalComm() { return global_comm; }
 #endif

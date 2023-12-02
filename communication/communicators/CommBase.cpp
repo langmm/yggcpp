@@ -308,7 +308,7 @@ bool communication::communicator::is_commtype_installed(const COMM_TYPE type) {
 
 Comm_t* Comm_t::create_worker_send(Header& head) {
   assert(!global_comm);
-  Comm_t* worker = workers.get(this, SEND);
+  Comm_t* worker = getWorkers().get(this, SEND);
   if (worker && worker->address.valid()) {
     if (!head.SetMetaString("address", worker->address.address()))
       return nullptr;
@@ -324,7 +324,7 @@ Comm_t* Comm_t::create_worker_recv(Header& head) {
     if (!head.GetMetaString("address", address_str))
       return nullptr;
     Address adr(address_str);
-    return workers.get(this, RECV, adr);
+    return getWorkers().get(this, RECV, adr);
   } catch (...) {
     return nullptr;
   }
@@ -524,7 +524,7 @@ long Comm_t::recv_raw(char*& data, const size_t &len,
     log_debug() << "recv_raw: " << head.size_curr << " of " << head.size_data << " bytes received." << std::endl;
   }
   if (xmulti)
-    workers.remove_worker(xmulti);
+    getWorkers().remove_worker(xmulti);
   if (ret < 0) return ret;
   if (ret > 0) {
     if (!head.finalize_recv()) {

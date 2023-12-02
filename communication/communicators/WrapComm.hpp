@@ -66,6 +66,7 @@ namespace communication {
       WRAP_METHOD(is_open, (), (), out = false, bool, const override);
       // WRAP_METHOD(logClass, (), (), out = "", std::string, const override);
       // WRAP_METHOD(logInst, (), (), out = "", std::string, const override);
+      WRAP_METHOD(getWorkers, (), (), THROW_NO_HANDLE(getWorkers), WorkerList&, override);
       
       using Comm_t::send;
       using Comm_t::recv;
@@ -87,6 +88,10 @@ namespace communication {
 		   const DIRECTION& dir, int flgs),
 		  (address, dir, flgs),
 		  out = nullptr, Comm_t*, override);
+      WRAP_METHOD(create_worker_send, (utils::Header& header),
+		  (header), out = nullptr, Comm_t*, override);
+      WRAP_METHOD(create_worker_recv, (utils::Header& header),
+		  (header), out = nullptr, Comm_t*, override);
       COMM_TYPE wraptype;
     };
       
