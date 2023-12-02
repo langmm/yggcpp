@@ -74,6 +74,8 @@ namespace communication {
 #ifdef YGG_TEST
       WRAP_METHOD(afterSendRecv, (Comm_t* sComm, Comm_t* rComm),
 		  (sComm, rComm), out = false, bool, override);
+      WRAP_METHOD(genMetadata, (std::string& meta), (meta),
+		  out = false, bool, override);
 #endif
       
     protected:

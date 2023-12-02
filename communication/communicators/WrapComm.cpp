@@ -124,6 +124,8 @@ WRAP_METHOD_DIRECT(getWorkers, (), (), THROW_NO_HANDLE(getWorkers), WorkerList&,
 #ifdef YGG_TEST
 WRAP_METHOD(afterSendRecv, (Comm_t* sComm, Comm_t* rComm),
 	    (sComm, rComm), out = false, bool, )
+WRAP_METHOD(genMetadata, (std::string& meta), (meta),
+	    out = false, bool, )
 #endif
 
 // protected methods

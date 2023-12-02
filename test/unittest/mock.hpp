@@ -110,13 +110,9 @@ std::string _mock_message();
   ELF_BEGIN_F(zmq_sendmsg)
 #define ELF_RESTORE_SEND_ZMQ			\
   ELF_END_F(zmq_sendmsg)
-#define ELF_META_ZMQ(comm)					\
-  {								\
-    std::string meta_reply_zmq = "";				\
-    EXPECT_GE(comm.getReply().create(meta_reply_zmq), 0);	\
-    if (!RETMSG_META.empty())					\
-      RETMSG_META += ", ";					\
-    RETMSG_META += "\"zmq_reply\": \"" + meta_reply_zmq + "\"";	\
+#define ELF_META_ZMQ(comm)			\
+  {						\
+    EXPECT_TRUE(comm.genMetadata(RETMSG_META));	\
   }
 #define ELF_REPLACE_CREATE_ZMQ			\
   ELF_BEGIN_F(zmq_socket)

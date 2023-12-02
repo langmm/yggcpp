@@ -791,6 +791,15 @@ bool ZMQComm::afterSendRecv(Comm_t* sComm, Comm_t* rComm) {
   }
   return true; // GCOVR_EXCL_STOP
 }
+bool ZMQComm::genMetadata(std::string& out) {
+  std::string new_reply = ""; // GCOVR_EXCL_START
+  if (reply.create(new_reply) < 0)
+    return false;
+  if (!out.empty())
+    out += ", ";
+  out += "\"zmq_reply\": \"" + new_reply + "\"";
+  return true; //  GCOVR_EXCL_STOP
+}
 #endif // YGG_TEST
 
 #else // ZMQINSTALLED

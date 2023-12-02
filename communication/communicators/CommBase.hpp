@@ -887,6 +887,7 @@ public:
     virtual WorkerList& getWorkers() { return workers; }
 #ifdef YGG_TEST
     virtual bool afterSendRecv(Comm_t*, Comm_t*) { return true; }
+    virtual bool genMetadata(std::string&) { return true; }
     Comm_t* getGlobalComm() { return global_comm; }
 #endif
     bool addSchema(const utils::Metadata& s);

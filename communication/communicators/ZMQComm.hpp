@@ -142,6 +142,7 @@ public:
 
 #ifdef YGG_TEST
     bool afterSendRecv(Comm_t* sComm, Comm_t* rComm) override;
+    bool genMetadata(std::string& out) override;
     ZMQReply& getReply() { return reply; }
 #endif
     
