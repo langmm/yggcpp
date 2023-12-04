@@ -106,7 +106,7 @@ void Comm_t::init_base() {
     thread_id = get_thread_id();
     char *allow_threading = getenv("YGG_THREADING");
     if (allow_threading)
-        flags |= COMM_ALLOW_MULTIPLE_COMMS;
+        flags |= COMM_FLAG_ALLOW_MULTIPLE_COMMS;
     char *model_name = std::getenv("YGG_MODEL_NAME");
     if (model_name) {
         std::string prefix(model_name);
@@ -116,6 +116,7 @@ void Comm_t::init_base() {
             name = prefix;
         }
     }
+    setLanguage();
 
     get_global_scope_comm();
 
@@ -135,7 +136,8 @@ Comm_t::Comm_t(const std::string &nme, const Address &addr,
   type(t), name(nme), address(addr), direction(dirn), flags(flgs),
   maxMsgSize(COMM_BASE_MAX_MSG_SIZE), msgBufSize(0),
   index_in_register(-1), thread_id(), metadata(),
-  timeout_recv(YGG_MAX_TIME), workers(), global_comm(nullptr) {
+  timeout_recv(YGG_MAX_TIME), workers(), global_comm(nullptr),
+  language(NO_LANGUAGE) {
   init_base();
 }
 
@@ -217,25 +219,30 @@ bool Comm_t::get_global_scope_comm() {
   return true;
 }
   
-bool Comm_t::addSchema(const Metadata& s) {
-  return getMetadata().fromMetadata(s);
+bool Comm_t::addSchema(const Metadata& s, const DIRECTION dir) {
+  return getMetadata(dir).fromMetadata(s);
 }
-bool Comm_t::addSchema(const rapidjson::Value& s, bool isMetadata) {
-  return getMetadata().fromSchema(s, isMetadata);
+bool Comm_t::addSchema(const rapidjson::Value& s, bool isMetadata,
+		       const DIRECTION dir) {
+  return getMetadata(dir).fromSchema(s, isMetadata);
 }
-bool Comm_t::addSchema(const std::string& schemaStr, bool isMetadata) {
-  return getMetadata().fromSchema(schemaStr, isMetadata);
+bool Comm_t::addSchema(const std::string& schemaStr, bool isMetadata,
+		       const DIRECTION dir) {
+  return getMetadata(dir).fromSchema(schemaStr, isMetadata);
 }
-bool Comm_t::addFormat(const std::string& format_str, bool as_array) {
-  return getMetadata().fromFormat(format_str, as_array);
+bool Comm_t::addFormat(const std::string& format_str, bool as_array,
+		       const std::vector<std::string>& field_names,
+		       const std::vector<std::string>& field_units,
+		       const DIRECTION dir) {
+  return getMetadata(dir).fromFormat(format_str, as_array,
+				     field_names, field_units);
 }
-bool Comm_t::copySchema(const Comm_t* other) {
-  if (other->getMetadata().hasType()) {
-    return getMetadata().fromMetadata(other->getMetadata());
+bool Comm_t::copySchema(const Comm_t* other, const DIRECTION dir) {
+  if (other->getMetadata(dir).hasType()) {
+    return getMetadata(dir).fromMetadata(other->getMetadata(dir));
   }
   return true;
 }
-
 bool Comm_t::check_size(const size_t &len) const {
     // Make sure you aren't sending a message that is too big
     if (len > YGG_MSG_MAX) {
@@ -247,22 +254,46 @@ bool Comm_t::check_size(const size_t &len) const {
     return true;
 }
 
-Comm_t* communication::communicator::new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, char* address, int flags) {
+Comm_t* communication::communicator::new_Comm_t(
+     const DIRECTION dir, const COMM_TYPE type, const std::string &name,
+     char* address, int flags,
+     const COMM_TYPE request_commtype, const COMM_TYPE response_commtype,
+     int request_flags, int response_flags) {
   Address addr;
   if (address)
     addr.address(address);
-  return communication::communicator::new_Comm_t(dir, type, name, addr, flags);
+  return communication::communicator::new_Comm_t(dir, type, name,
+						 addr, flags,
+						 request_commtype,
+						 response_commtype,
+						 request_flags,
+						 response_flags);
 }
 
-Comm_t* communication::communicator::new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, int flags) {
-    Address addr;
-    return communication::communicator::new_Comm_t(dir, type, name, addr, flags);
+Comm_t* communication::communicator::new_Comm_t(
+     const DIRECTION dir, const COMM_TYPE type, const std::string &name,
+     int flags,
+     const COMM_TYPE request_commtype, const COMM_TYPE response_commtype,
+     int request_flags, int response_flags) {
+  Address addr;
+  return communication::communicator::new_Comm_t(dir, type, name,
+						 addr, flags,
+						 request_commtype,
+						 response_commtype,
+						 request_flags,
+						 response_flags);
 }
 
-Comm_t* communication::communicator::new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, const Address &addr, int flags) {
+Comm_t* communication::communicator::new_Comm_t(
+     const DIRECTION dir, const COMM_TYPE type, const std::string &name,
+     const Address &addr, int flags,
+     const COMM_TYPE request_commtype, const COMM_TYPE response_commtype,
+     int request_flags, int response_flags) {
   flags |= COMM_FLAG_DELETE;
   if (flags & COMM_FLAG_ASYNC) {
-    return new AsyncComm(name, addr, dir, flags, type);
+    return new AsyncComm(name, addr, dir, flags, type,
+			 request_commtype, response_commtype,
+			 request_flags, response_flags);
   }
   switch(type) {
   case NULL_COMM:
@@ -276,14 +307,19 @@ Comm_t* communication::communicator::new_Comm_t(const DIRECTION dir, const COMM_
   case MPI_COMM:
     return new MPIComm(name, addr, dir, flags);
   case SERVER_COMM:
-    return new ServerComm(name, addr, flags);
+    return new ServerComm(name, addr, flags, type,
+			  request_commtype, response_commtype,
+			  request_flags, response_flags);
   case CLIENT_COMM:
-    return new ClientComm(name, addr, flags);
+    return new ClientComm(name, addr, flags, type,
+			  request_commtype, response_commtype,
+			  request_flags, response_flags);
   case FILE_COMM:
     return new FileComm(name, addr, dir, flags);
   }
   return nullptr;
 }
+
 bool communication::communicator::is_commtype_installed(const COMM_TYPE type) {
   switch(type) {
   case NULL_COMM:
@@ -348,7 +384,7 @@ int Comm_t::send_raw(const char *data, const size_t &len) {
   }
   Header head(data, len, this);
   if (head.flags & HEAD_FLAG_NO_HEAD) {
-    log_debug() << "send_raw: Sending data in single message. " << is_eof(data) << ", " << (flags & COMM_FLAGS_USED_SENT) << std::endl;
+    log_debug() << "send_raw: Sending data in single message. " << is_eof(data) << ", " << (flags & COMM_FLAG_USED_SENT) << std::endl;
     int out = send_single(head);
     if (out >= 0)
       setFlags(head, SEND);

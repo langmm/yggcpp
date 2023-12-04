@@ -8,7 +8,8 @@ integer function test_ygg_output_json_object_1() result(r)
        &"properties": {"a": {"type": "integer"}, &
        &"b": {"type": "string"}}}')
   rDtype = create_dtype_from_schema('{"type": "any"}', .true.)
-  rComm = init_comm("test_name", 2, 1, rDtype, 131072)
+  rComm = init_comm("test_name", RECV, DEFAULT_COMM, rDtype, &
+       COMM_FLAG_SET_OPP_ENV)
   sComm = ygg_json_object_output("test_name")
   if (.NOT.c_associated(sComm%comm)) then
      write(*,*) "comm init failed"

@@ -20,7 +20,8 @@ integer function test_ygg_output_table_array_1() result(r)
   nrow_send = 3
   nrow_recv = 3
   rDtype = create_dtype_format('%d\t%lf\t%5s', .true., .false.)
-  rComm = init_comm("test_name", 2, 1, rDtype, 131072)
+  rComm = init_comm("test_name", RECV, DEFAULT_COMM, rDtype, &
+       COMM_FLAG_SET_OPP_ENV)
   sComm = ygg_ascii_array_output("test_name", '%d\t%lf\t%5s')
   if (.NOT.c_associated(sComm%comm)) then
      write(*,*) "comm init failed"

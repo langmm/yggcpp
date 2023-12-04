@@ -429,8 +429,8 @@ bool example_transform(rapidjson::Document& msg) {
   TEST(cls, proxy_failed) {						\
     std::string a_name = "test_a", b_name = "test_b";			\
     EXPECT_THROW(Proxy proxy(a_name, b_name,				\
-			     COMM_ALLOW_MULTIPLE_COMMS,			\
-			     COMM_ALLOW_MULTIPLE_COMMS,			\
+			     COMM_FLAG_ALLOW_MULTIPLE_COMMS,		\
+			     COMM_FLAG_ALLOW_MULTIPLE_COMMS,		\
 			     cls::defaultCommType(),			\
 			     cls::defaultCommType()),			\
 		 std::exception);					\
@@ -485,17 +485,18 @@ bool example_transform(rapidjson::Document& msg) {
   TEST(cls, proxy) {							\
     std::string a_name = "test_a", b_name = "test_b";			\
     Proxy proxy(a_name, b_name,						\
-		COMM_ALLOW_MULTIPLE_COMMS, COMM_ALLOW_MULTIPLE_COMMS,	\
+		COMM_FLAG_ALLOW_MULTIPLE_COMMS,				\
+		COMM_FLAG_ALLOW_MULTIPLE_COMMS,				\
 		cls::defaultCommType(), cls::defaultCommType());	\
     std::string key_env = a_name + "_OUT";				\
     std::string val_env = proxy.getAddress(RECV);			\
     setenv(key_env.c_str(), val_env.c_str(), 1);			\
-    cls sComm(a_name, SEND, COMM_ALLOW_MULTIPLE_COMMS);			\
+    cls sComm(a_name, SEND, COMM_FLAG_ALLOW_MULTIPLE_COMMS);		\
     unsetenv(key_env.c_str());						\
     key_env = b_name + "_IN";						\
     val_env = proxy.getAddress(SEND);					\
     setenv(key_env.c_str(), val_env.c_str(), 1);			\
-    cls rComm(b_name, RECV, COMM_ALLOW_MULTIPLE_COMMS);			\
+    cls rComm(b_name, RECV, COMM_FLAG_ALLOW_MULTIPLE_COMMS);		\
     unsetenv(key_env.c_str());						\
     EXPECT_GE(sComm.sendVar(25.0), 0);					\
     double dest = -1.0;							\
@@ -540,7 +541,7 @@ bool example_transform(rapidjson::Document& msg) {
       EXPECT_EQ(data_send, data_recv);					\
       EXPECT_EQ(rComm.call(2, data_send.c_str(), data_recv.c_str()), -1); \
       /* Error when sending message that can't fit in buffer */		\
-      sComm.getFlags() |= COMM_ALWAYS_SEND_HEADER;			\
+      sComm.getFlags() |= COMM_FLAG_ALWAYS_SEND_HEADER;			\
       utils::Metadata& metadata = sComm.getMetadata();			\
       metadata.initMeta();						\
       metadata.SetMetaString("invalid", bigMsg);			\

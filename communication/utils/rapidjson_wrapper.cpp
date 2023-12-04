@@ -1177,7 +1177,7 @@ SPECIALIZE_SCALAR(std::complex<double>);
 SPECIALIZE_SCALAR(long double);
 SPECIALIZE_SCALAR(std::complex<long double>);
 #endif
-#ifdef YGGDRASIL_DISABLE_PYTHON_C_API
+#ifndef YGGDRASIL_DISABLE_PYTHON_C_API
 SPECIALIZE(PyObject*)
 #endif
 SPECIALIZE(rapidjson::Ply);
@@ -1197,3 +1197,39 @@ SPECIALIZE(rapidjson::ObjWavefront);
 #define RAPIDJSON_WRAPPER_DEFS_
 #include "rapidjson_wrapper.defs"
 #endif
+
+using namespace communication::utils;
+
+#ifndef YGGDRASIL_DISABLE_PYTHON_C_API
+bool PyBaseFunc::_call(const rapidjson::Document& doc,
+		       rapidjson::Document* out) {
+  PyObject* pyDoc = doc.GetPythonObjectRaw();
+  if (pyDoc == NULL) {
+    ygglog_throw_error("PyBaseFunc: Could not convert input document to Python");
+  }
+  PyObject* args = PyTuple_Pack(1, pyDoc);
+  if (args == NULL) {
+    Py_DECREF(pyDoc);
+    ygglog_throw_error("PyBaseFunc: Failed to create arguments tuple");
+  }
+  PyObject* resPy = PyObject_Call(func_, args, NULL);
+  Py_DECREF(args);
+  if (resPy == NULL) {
+    Py_DECREF(pyDoc);
+    ygglog_throw_error("PyBaseFunc: Error in function call");
+  } else if (!PyBool_Check(resPy)) {
+    Py_DECREF(pyDoc);
+    Py_DECREF(resPy);
+    ygglog_throw_error("PyBaseFunc: Result is not a boolean.");
+  }
+  bool res = (resPy == Py_True);
+  Py_DECREF(resPy);
+  if (out != nullptr &&
+      !out->SetPythonObjectRaw(pyDoc, out->GetAllocator())) {
+    Py_DECREF(pyDoc);
+    ygglog_throw_error("PyBaseFunc: Error setting document from Python");
+  }
+  Py_DECREF(pyDoc);
+  return res;
+}
+#endif // YGGDRASIL_DISABLE_PYTHON_C_API

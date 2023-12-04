@@ -167,11 +167,25 @@ void Metadata::resetRawSchema() {
     raw_schema = NULL;
   }
 }
+void Metadata::reset_filters() {
+  for (size_t i = 0; i < filters.size(); i++) {
+    delete filters[i];
+    filters[i] = nullptr;
+  }
+  filters.clear();
+}
+void Metadata::reset_transforms() {
+  for (size_t i = 0; i < transforms.size(); i++) {
+    delete transforms[i];
+    transforms[i] = nullptr;
+  }
+  transforms.clear();
+}  
 void Metadata::reset() {
   metadata.SetObject();
   resetRawSchema();
-  filters.clear();
-  transforms.clear();
+  reset_filters();
+  reset_transforms();
   skip_last = false;
 }
 bool Metadata::fromSchema(const rapidjson::Value& new_schema,
@@ -325,8 +339,10 @@ bool Metadata::_fromNDArray(const std::string subtype, size_t precision,
     return _init(use_generic);
   return true;
 }
-bool Metadata::fromFormat(const std::string& format_str,
-			  bool as_array, bool use_generic) {
+bool Metadata::fromFormat(const std::string& format_str, bool as_array,
+			  const std::vector<std::string>& field_names,
+			  const std::vector<std::string>& field_units,
+			  bool use_generic) {
   initSchema();
   metadata["serializer"].AddMember(
       rapidjson::Value("format_str", 10, GetAllocator()).Move(),
@@ -441,6 +457,38 @@ bool Metadata::fromFormat(const std::string& format_str,
     beg = end;
   }
   rapidjson::SizeType nItems = items.Size();
+  if (!field_names.empty()) {
+    if (field_names.size() != static_cast<size_t>(nItems)) {
+      log_error() << "fromFormat: Number of field_names (" <<
+	field_names.size() << ") does not match the number of format " <<
+	"items ( " << nItems << ")" << std::endl;
+      return false;
+    }
+    if (!SetVectorString("field_names", field_names,
+			 metadata["serializer"]))
+      return false;
+    for (size_t i = 0; i < field_names.size(); i++) {
+      if (!SetString("title", field_names[i],
+		     items[static_cast<rapidjson::SizeType>(i)]))
+	return false;
+    }
+  }
+  if (!field_units.empty()) {
+    if (field_units.size() != static_cast<size_t>(nItems)) {
+      log_error() << "fromFormat: Number of field_units (" <<
+	field_units.size() << ") does not match the number of format " <<
+	"items ( " << nItems << ")" << std::endl;
+      return false;
+    }
+    if (!SetVectorString("field_units", field_units,
+			 metadata["serializer"]))
+      return false;
+    for (size_t i = 0; i < field_units.size(); i++) {
+      if (!SetString("units", field_units[i],
+		     items[static_cast<rapidjson::SizeType>(i)]))
+	return false;
+    }
+  }
   if (!SetSchemaValue("items", items))
     return false;
   if (nItems == 1) {
@@ -457,10 +505,10 @@ bool Metadata::fromFormat(const std::string& format_str,
 }
 bool Metadata::fromMetadata(const Metadata& other, bool use_generic) {
   metadata.CopyFrom(other.metadata, GetAllocator(), true);
-  filters.clear();
-  filters.insert(filters.begin(), other.filters.begin(), other.filters.end());
-  transforms.clear();
-  transforms.insert(transforms.begin(), other.transforms.begin(), other.transforms.end());
+  reset_filters();
+  reset_transforms();
+  setFilters(other.filters);
+  setTransforms(other.transforms);
   skip_last = other.skip_last;
   return _init(use_generic);
 }
@@ -499,19 +547,23 @@ bool Metadata::fromEncode(PyObject* pyobj, bool use_generic) {
   rapidjson::Value d(pyobj, allocator);
   return fromEncode(d, use_generic);
 }
+void Metadata::addFilter(const FilterBase* new_filter) {
+  filters.push_back(new_filter->copy());
+}
+void Metadata::addFilter(const PyObject* new_filter) {
+  filters.push_back(dynamic_cast<FilterBase*>(new PyFilterClass(new_filter)));
+}
 void Metadata::addFilter(filterFunc new_filter) {
-  filters.push_back(new_filter);
+  filters.push_back(dynamic_cast<FilterBase*>(new FilterClass(new_filter)));
 }
-void Metadata::addTransform(transformFunc new_transform) {
-  transforms.push_back(new_transform);
+void Metadata::addTransform(const TransformBase* new_transform) {
+  transforms.push_back(new_transform->copy());
 }
-void Metadata::setFilters(std::vector<filterFunc>& new_filters) {
-  filters.clear();
-  filters.insert(filters.begin(), new_filters.begin(), new_filters.end());
+void Metadata::addTransform(const PyObject* new_transform) {
+  transforms.push_back(new PyTransformClass(new_transform));
 }
-void Metadata::setTransforms(std::vector<transformFunc>& new_transforms) {
-  transforms.clear();
-  transforms.insert(transforms.begin(), new_transforms.begin(), new_transforms.end());
+void Metadata::addTransform(const transformFunc& new_transform) {
+  transforms.push_back(new TransformClass(new_transform));
 }
 rapidjson::Document::AllocatorType& Metadata::GetAllocator() {
   return metadata.GetAllocator();
@@ -781,6 +833,43 @@ bool Metadata::SetValue(const std::string name, rapidjson::Value& x,
     }									\
     return Get ## method ## Optional(name, out, defV, *subSchema);	\
   }
+#define SET_VECTOR_METHOD_(type_in, method, setargs)			\
+  bool Metadata::SetVector ## method(const std::string name,		\
+				     const std::vector<type_in>& xvect,	\
+				     rapidjson::Value& subSchema) {	\
+    rapidjson::Value xvect_val(rapidjson::kArrayType);			\
+    for (typename std::vector<type_in>::const_iterator it = xvect.cbegin(); \
+	 it != xvect.cend(); it++) {					\
+      const type_in& x = *it;						\
+      rapidjson::Value x_val setargs;					\
+      xvect_val.PushBack(x_val, metadata.GetAllocator());		\
+    }									\
+    if (subSchema.HasMember(name.c_str())) {				\
+      subSchema[name.c_str()].Swap(xvect_val);				\
+    } else {								\
+      subSchema.AddMember(						\
+	rapidjson::Value(name.c_str(),		\
+			 (rapidjson::SizeType)(name.size()),		\
+			 metadata.GetAllocator()).Move(),		\
+	xvect_val, metadata.GetAllocator());				\
+    }									\
+    return true;							\
+    }									\
+  bool Metadata::SetMetaVector ## method(const std::string name,	\
+					 const std::vector<type_in>& xvect) { \
+    rapidjson::Value* subSchema = getMeta();				\
+    if (!subSchema) return false;					\
+    return SetVector ## method(name, xvect, *subSchema);		\
+  }									\
+  bool Metadata::SetSchemaVector ## method(const std::string name,	\
+					   const std::vector<type_in>& xvect, \
+					   rapidjson::Value* subSchema) { \
+    if (subSchema == NULL) {						\
+      subSchema = getSchema(true);					\
+      if (!subSchema) return false;					\
+    }									\
+    return SetVector ## method(name, xvect, *subSchema);		\
+  }
 #define SET_METHOD_(type_in, method, setargs)				\
   bool Metadata::Set ## method(const std::string name, type_in x,	\
 			       rapidjson::Value& subSchema) {		\
@@ -809,13 +898,14 @@ bool Metadata::SetValue(const std::string name, rapidjson::Value& x,
     }									\
     return Set ## method(name, x, *subSchema);				\
   }
-#define GET_SET_METHOD_(type_in, type_out, method, setargs)		\
+#define GET_SET_METHOD_(type_in, type_out, type_vect, method, setargs)	\
   GET_METHOD_(type_out, method);					\
-  SET_METHOD_(type_in, method, setargs)
-GET_SET_METHOD_(int, int, Int, (x));
-GET_SET_METHOD_(uint64_t, uint64_t, Uint, (x));
-GET_SET_METHOD_(bool, bool, Bool, (x));
-GET_SET_METHOD_(const std::string&, const char*, String,
+  SET_METHOD_(type_in, method, setargs);				\
+  SET_VECTOR_METHOD_(type_vect, method, setargs)
+GET_SET_METHOD_(int, int, int, Int, (x));
+GET_SET_METHOD_(uint64_t, uint64_t, uint64_t, Uint, (x));
+GET_SET_METHOD_(bool, bool, bool, Bool, (x));
+GET_SET_METHOD_(const std::string&, const char*, std::string, String,
 		(x.c_str(), (rapidjson::SizeType)(x.size()),
 		 metadata.GetAllocator()));
 GET_METHOD_(unsigned, Uint);
@@ -824,6 +914,7 @@ GET_METHOD_(std::string, String);
 #undef GET_SET_METHOD_
 #undef GET_METHOD_
 #undef SET_METHOD_
+#undef SET_VECTOR_METHOD_
 bool Metadata::SetMetaValue(const std::string name, rapidjson::Value& x) {
   rapidjson::Value* subSchema = getMeta();
   if (!subSchema) return false;
@@ -871,9 +962,9 @@ bool Metadata::checkFilter() {
   return out;
 }
 bool Metadata::filter(const rapidjson::Document& msg) {
-  for (std::vector<filterFunc>::iterator it = filters.begin();
+  for (std::vector<FilterBase*>::iterator it = filters.begin();
        it != filters.end(); it++) {
-    if ((*it)(msg)) {
+    if ((*it)->operator()(msg)) {
       skip_last = true;
       break;
     }
@@ -881,9 +972,9 @@ bool Metadata::filter(const rapidjson::Document& msg) {
   return skip_last;
 }
 bool Metadata::transform(rapidjson::Document& msg) {
-  for (std::vector<transformFunc>::iterator it = transforms.begin();
+  for (std::vector<TransformBase*>::iterator it = transforms.begin();
        it != transforms.end(); it++) {
-    if (!(*it)(msg))
+    if (!(*it)->operator()(msg))
       return false;
   }
   return true;
@@ -916,10 +1007,15 @@ int Metadata::deserialize(const char* buf, rapidjson::Document& d) {
       log_error() << "deserialize: Error updating pre-transformation schema" << std::endl;
       return -1;
     }
-    if (!transform(d)) {
-      log_error() << "deserialize: Error applying transformations" << std::endl;
-      if (!has_raw_schema)
-	resetRawSchema();
+    try {
+      if (!transform(d)) {
+	log_error() << "deserialize: Error applying transformation(s)" << std::endl;
+	if (!has_raw_schema)
+	  resetRawSchema();
+	return -1;
+      }
+    } catch (...) {
+      log_error() << "deserialize: Error applying transformation(s) (thrown)" << std::endl; 
       return -1;
     }
     log_debug() << "deserialize: After transformations " << d << std::endl;
@@ -946,9 +1042,14 @@ int Metadata::deserialize(const char* buf, rapidjson::Document& d) {
       return -1;
     }
   }
-  if (filter(d)) {
-    log_debug() << "deserialize: Message filtered" << std::endl;
-    return 0;
+  try {
+    if (filter(d)) {
+      log_debug() << "deserialize: Message filtered" << std::endl;
+      return 0;
+    }
+  } catch (...) {
+    log_error() << "deserialize: Error applying filter(s)" << std::endl;
+    return -1;
   }
   return 1;
 }
@@ -1021,8 +1122,13 @@ int Metadata::serialize(char **buf, size_t *buf_siz,
   }
   if (transforms.size() > 0) {
     log_debug() << "serialize: Before transformations " << d << std::endl;
-    if (!transform(d)) {
-      log_error() << "serialize: Error applying transformations" << std::endl;
+    try {
+      if (!transform(d)) {
+	log_error() << "serialize: Error applying transformation(s)" << std::endl;
+	return -1;
+      }
+    } catch (...) {
+      log_error() << "serialize: Error applying transformation(s) (thrown)" << std::endl;
       return -1;
     }
     log_debug() << "serialize: After transformations " << d << std::endl;
@@ -1035,9 +1141,14 @@ int Metadata::serialize(char **buf, size_t *buf_siz,
       return -1;
     }
   }
-  if (filter(d)) {
-    log_debug() << "serialize: Message filtered" << std::endl;
-    return 0;
+  try {
+    if (filter(d)) {
+      log_debug() << "serialize: Message filtered" << std::endl;
+      return 0;
+    }
+  } catch (...) {
+    log_error() << "serialize: Error applying filter(s)" << std::endl;
+    return -1;
   }
   rapidjson::StringBuffer buffer;
   rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
@@ -1291,10 +1402,10 @@ bool Header::for_send(Metadata* metadata0, const char* msg,
   data_[size_data] = '\0';
   data = &data_;
   setMessageFlags(msg, len);
-  if ((flags & HEAD_FLAG_EOF) || (comm_flags & COMM_FLAGS_USED_SENT)) {
+  if ((flags & HEAD_FLAG_EOF) || (comm_flags & COMM_FLAG_USED_SENT)) {
     flags |= HEAD_FLAG_NO_TYPE;
     if ((size_max == 0 || len < size_max) &&
-	!(comm_flags & COMM_ALWAYS_SEND_HEADER)) {
+	!(comm_flags & COMM_FLAG_ALWAYS_SEND_HEADER)) {
       flags |= HEAD_FLAG_NO_HEAD;
       return true;
     }

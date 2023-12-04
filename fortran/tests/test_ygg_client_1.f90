@@ -7,7 +7,8 @@ integer function test_ygg_client_1() result(r)
   r = 1
   rDtype = create_dtype_from_schema('{"type": "string", &
        &"allowWrapped": true}', .false.)
-  rComm = init_comm("test_name", 0, 5, rDtype, 163840)
+  rComm = init_comm("test_name", RECV, SERVER_COMM, rDtype, &
+       IOR(COMM_FLAG_ASYNC, COMM_FLAG_SET_OPP_ENV))
   sComm = ygg_rpc_client("test_name")
   if (.NOT.c_associated(sComm%comm)) then
      write(*,*) "error in comm init"

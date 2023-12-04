@@ -24,7 +24,7 @@ module_exec(PyObject* m)
     if (PyType_Ready(&commMetaType) < 0)
         return -1;
     Py_INCREF(&Comm_tType);
-    if(PyModule_AddObject(m, "CommBase", (PyObject*)&Comm_tType) < 0) {
+    if(PyModule_AddObject(m, "Comm_t", (PyObject*)&Comm_tType) < 0) {
         Py_DECREF(&Comm_tType);
         return -1;
     }
@@ -34,6 +34,10 @@ module_exec(PyObject* m)
 	return -1;
     }
     register_enums(m);
+    if (register_constants(m) < 0) {
+      Py_DECREF(&commMetaType);
+      return -1;
+    }
     return 0;
 };
 

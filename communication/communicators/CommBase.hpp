@@ -63,6 +63,10 @@ public:									\
     YggLogDestructor << "~" #cls ": Finished" << std::endl;		\
   }
 
+#define ADD_METHODS_BASE(cls, typ, flag)				\
+  static bool isInstalled() { return flag; }				\
+  static COMM_TYPE defaultCommType() { return typ; }			\
+  ADD_DESTRUCTOR(cls, CommBase)
 #define ADD_CONSTRUCTORS_BASE_NOLOG(cls, typ, flag)			\
   cls(const std::string nme,						\
       const DIRECTION dirn,						\
@@ -70,9 +74,7 @@ public:									\
   explicit cls(utils::Address &addr,					\
 	       const DIRECTION dirn,					\
 	       int flgs = 0, const COMM_TYPE type = typ);		\
-  static bool isInstalled() { return flag; }				\
-  static COMM_TYPE defaultCommType() { return typ; }			\
-  ADD_DESTRUCTOR(cls, CommBase)
+  ADD_METHODS_BASE(cls, typ, flag)
 #define ADD_CONSTRUCTORS_BASE(cls, typ, flag)				\
   ADD_CONSTRUCTORS_BASE_NOLOG(cls, typ, flag)				\
   std::string logClass() const override { return #cls; }
@@ -93,24 +95,29 @@ public:									\
   explicit cls(const std::string nme,				\
 	       int flgs = 0, const COMM_TYPE type = defT,	\
 	       const COMM_TYPE reqtype = DEFAULT_COMM,		\
-	       const COMM_TYPE restype = DEFAULT_COMM);		\
+	       const COMM_TYPE restype = DEFAULT_COMM,		\
+	       int reqflags = 0, int resflags = 0);		\
   explicit cls(utils::Address &addr,				\
 	       int flgs = 0, const COMM_TYPE type = defT,	\
 	       const COMM_TYPE reqtype = DEFAULT_COMM,		\
-	       const COMM_TYPE restype = DEFAULT_COMM);		\
+	       const COMM_TYPE restype = DEFAULT_COMM,		\
+	       int reqflags = 0, int resflags = 0);		\
   ADD_DESTRUCTOR(cls, RPCComm)
 #define ADD_CONSTRUCTORS_RPC_DEF(cls)			\
   cls::cls(const std::string nme,			\
 	   int flgs, const COMM_TYPE type,		\
 	   const COMM_TYPE reqtype,			\
-	   const COMM_TYPE restype) :			\
+	   const COMM_TYPE restype,			\
+	   int reqflags, int resflags) :		\
     cls(nme, utils::blankAddress, flgs, type,		\
-	reqtype, restype) {}				\
+	reqtype, restype, reqflags, resflags) {}	\
   cls::cls(utils::Address &addr,			\
 	   int flgs, const COMM_TYPE type,		\
 	   const COMM_TYPE reqtype,			\
-	   const COMM_TYPE restype) :			\
-    cls("", addr, flgs, type, reqtype, restype) {}	\
+	   const COMM_TYPE restype,			\
+	   int reqflags, int resflags) :		\
+    cls("", addr, flgs, type,				\
+	reqtype, restype, reqflags, resflags) {}	\
   ADD_DESTRUCTOR_DEF(cls, RPCComm, , )			\
   void cls::_close(bool call_base) {			\
     if (call_base) {					\
@@ -798,6 +805,10 @@ public:
       @returns Type code.
      */
     COMM_TYPE getType() const { return type; }
+    /*!
+      @brief Set the communicator type code.
+      @param[in] new_type New communicator type code.
+     */
     void setType(COMM_TYPE new_type) { type = new_type; }
     /*!
       @brief Determine if the communicator is valid.
@@ -836,7 +847,7 @@ public:
     const std::string& getName() const { return name; }
     //! \copydoc communication::utils::LogBase::logClass
     std::string logClass() const override {
-      return COMM_TYPE_map.find(getCommType())->second;
+      return COMM_TYPE_cls_map.find(getCommType())->second;
     }
     //! \copydoc communication::utils::LogBase::logInst
     std::string logInst() const override {
@@ -868,6 +879,32 @@ public:
      */
     COMM_TYPE getCommType() const { return type; }
     /*!
+      @brief Get the language associated with the communicator.
+      @returns Language code.
+    */
+    LANGUAGE getLanguage() const { return language; }
+    /*!
+      @brief Set the communicator language code.
+      @param[in] new_lang New communicator language code.
+      @returns false if there is an error, true otherwise.
+     */
+    bool setLanguage(LANGUAGE new_lang=NO_LANGUAGE) {
+      if (new_lang == NO_LANGUAGE) {
+	char* model_language = std::getenv("YGG_MODEL_LANGUAGE");
+	if (model_language) {
+	  if (!enum_value_search(LANGUAGE_map,
+				 std::string(model_language),
+				 new_lang))
+	    return false;
+	} else {
+	  new_lang = CXX_LANGUAGE;
+	}
+      }
+      if (new_lang != NO_LANGUAGE)
+	language = new_lang;
+      return true;
+    }
+    /*!
       @brief Get the maximum size (in bytes) for individual messages.
         Messages larger than this size will be split into multiple parts.
       @returns Maximum message size.
@@ -890,11 +927,26 @@ public:
     virtual bool genMetadata(std::string&) { return true; }
     Comm_t* getGlobalComm() { return global_comm; }
 #endif
-    bool addSchema(const utils::Metadata& s);
-    bool addSchema(const rapidjson::Value& s, bool isMetadata = false);
-    bool addSchema(const std::string& schemaStr, bool isMetadata = false);
-    bool addFormat(const std::string& format_str, bool as_array = false);
-    bool copySchema(const Comm_t* other);
+    bool addSchema(const utils::Metadata& s, const DIRECTION dir=NONE);
+    bool addSchema(const rapidjson::Value& s, bool isMetadata = false,
+		   const DIRECTION dir=NONE);
+    bool addSchema(const std::string& schemaStr, bool isMetadata = false,
+		   const DIRECTION dir=NONE);
+    bool addFormat(const std::string& format_str, bool as_array = false,
+		   const std::vector<std::string>& field_names = {},
+		   const std::vector<std::string>& field_units = {},
+		   const DIRECTION dir=NONE);
+    bool copySchema(const Comm_t* other, const DIRECTION dir=NONE);
+    template<typename T>
+    bool setFilters(const std::vector<T>& new_filters,
+		    const DIRECTION dir=NONE) {
+      return getMetadata(dir).setFilters(new_filters);
+    }
+    template<typename T>
+    bool setTransforms(const std::vector<T>& new_transforms,
+		       const DIRECTION dir=NONE) {
+      return getMetadata(dir).setTransforms(new_transforms);
+    }
 
     static void _ygg_cleanup(CLEANUP_MODE mode = CLEANUP_DEFAULT);
 
@@ -943,14 +995,19 @@ protected:
 
     void setFlags(const utils::Header& head, DIRECTION dir) {
       if (dir == SEND)
-	flags |= COMM_FLAGS_USED_SENT;
+	flags |= COMM_FLAG_USED_SENT;
       else
-	flags |= COMM_FLAGS_USED_RECV;
+	flags |= COMM_FLAG_USED_RECV;
       if (head.flags & HEAD_FLAG_EOF) {
-	if (dir == SEND)
-	  flags |= COMM_EOF_SENT;
-	else
-	  flags |= COMM_EOF_RECV;
+	if (dir == SEND) {
+	  flags |= COMM_FLAG_EOF_SENT;
+	  if (flags & COMM_FLAG_CLOSE_ON_EOF_SEND)
+	    close();
+	} else {
+	  flags |= COMM_FLAG_EOF_RECV;
+	  if (flags & COMM_FLAG_CLOSE_ON_EOF_RECV)
+	    close();
+	}
       }
     }
 
@@ -1081,6 +1138,7 @@ protected:
     int64_t timeout_recv; //!< Time to wait for messages during receive.
     WorkerList workers; //!< Communicator to use for sending large messages.
     Comm_t* global_comm; // !< Pointer to global comm that this comm shadows.
+    LANGUAGE language;
     std::vector<std::string> cache; // !< Cache of messages received.
 
     static std::vector<Comm_t*> registry;
@@ -1101,10 +1159,24 @@ public:
  * @param flags Bitwise flags describing the communicator
  * @return
  */
-YGG_API Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name="", char* address=nullptr, int flags=0);
-YGG_API Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, const utils::Address& address, int flags=0);
-YGG_API Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, int flags=0);
-
+YGG_API Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type,
+			   const std::string &name="",
+			   char* address=nullptr, int flags=0,
+			   const COMM_TYPE request_commtype=DEFAULT_COMM,
+			   const COMM_TYPE response_commtype=DEFAULT_COMM,
+			   int request_flags=0, int response_flags=0);
+YGG_API Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type,
+			   const std::string &name,
+			   const utils::Address& address, int flags=0,
+			   const COMM_TYPE request_commtype=DEFAULT_COMM,
+			   const COMM_TYPE response_commtype=DEFAULT_COMM,
+			   int request_flags=0, int response_flags=0);
+YGG_API Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type,
+			   const std::string &name, int flags=0,
+			   const COMM_TYPE request_commtype=DEFAULT_COMM,
+			   const COMM_TYPE response_commtype=DEFAULT_COMM,
+			   int request_flags=0, int response_flags=0);
+  
 /**
  * Determine if a communicator type is installed.
  * @param commtype The communicator type to check.

@@ -46,14 +46,14 @@ class TestComm_t_Installed:
 
     @pytest.fixture
     def comm_send(self, commtype, require_installed):
-        out = pyYggdrasil.CommBase(
+        out = pyYggdrasil.Comm_t(
             "test", commtype=commtype)
         yield out
         out.close()
 
     @pytest.fixture
     def comm_recv(self, commtype, require_installed):
-        out = pyYggdrasil.CommBase(
+        out = pyYggdrasil.Comm_t(
             "test", commtype=commtype,
             direction=pyYggdrasil.DIRECTION.RECV)
         yield out
@@ -66,9 +66,9 @@ class TestComm_t_Installed:
                 partner_dir = pyYggdrasil.DIRECTION.SEND
             else:
                 partner_dir = pyYggdrasil.DIRECTION.RECV
-            return pyYggdrasil.CommBase(
+            return pyYggdrasil.Comm_t(
                 "test", comm.address, partner_dir, commtype=comm.commtype,
-                flags=pyYggdrasil.COMM_FLAGS.COMM_FLAG_INTERFACE)
+                flags=pyYggdrasil.COMM_FLAG.COMM_FLAG_INTERFACE)
         return create_comm_partner_wrapped
 
     @pytest.fixture
@@ -123,11 +123,11 @@ class TestComm_t_Installed:
         assert pyYggdrasil.is_comm_installed(commtype)
 
     def test_str_arguments(self, commtype, commtype_str):
-        comm_send = pyYggdrasil.CommBase(
+        comm_send = pyYggdrasil.Comm_t(
             "test", commtype=commtype_str, direction="send")
         assert comm_send.commtype == commtype
         assert comm_send.direction == pyYggdrasil.DIRECTION.SEND
-        comm_recv = pyYggdrasil.CommBase(
+        comm_recv = pyYggdrasil.Comm_t(
             "test", commtype=commtype_str, direction="recv")
         assert comm_recv.commtype == commtype
         assert comm_recv.direction == pyYggdrasil.DIRECTION.RECV
@@ -180,15 +180,15 @@ class TestComm_t_Installed:
         do_send_recv(message[1], msg_type=message[0])
 
     def test_send_recv_async(self, commtype, require_installed):
-        comm_recv = pyYggdrasil.CommBase(
+        comm_recv = pyYggdrasil.Comm_t(
             "test", commtype=commtype,
             direction=pyYggdrasil.DIRECTION.RECV,
-            flags=pyYggdrasil.COMM_FLAGS.COMM_FLAG_ASYNC)
-        comm_send = pyYggdrasil.CommBase(
+            flags=pyYggdrasil.COMM_FLAG.COMM_FLAG_ASYNC)
+        comm_send = pyYggdrasil.Comm_t(
             "test", comm_recv.address, commtype=commtype,
             direction=pyYggdrasil.DIRECTION.SEND,
-            flags=(pyYggdrasil.COMM_FLAGS.COMM_FLAG_INTERFACE |
-                   pyYggdrasil.COMM_FLAGS.COMM_FLAG_ASYNC))
+            flags=(pyYggdrasil.COMM_FLAG.COMM_FLAG_INTERFACE |
+                   pyYggdrasil.COMM_FLAG.COMM_FLAG_ASYNC))
         msg = "Test Message"
         assert comm_send.send(msg)
         assert comm_recv.recv() == (True, msg)
@@ -219,7 +219,7 @@ class TestComm_t_NotInstalled:
 
     def test_error_on_create(self, commtype):
         with pytest.raises(TypeError):
-            pyYggdrasil.CommBase("test", commtype=commtype)
+            pyYggdrasil.Comm_t("test", commtype=commtype)
 
 
 class TestRPC:
@@ -235,7 +235,7 @@ class TestRPC:
 
     @pytest.fixture
     def server(self):
-        out = pyYggdrasil.CommBase(
+        out = pyYggdrasil.Comm_t(
             "test_server", commtype=pyYggdrasil.COMM_TYPE.SERVER_COMM)
         yield out
         out.close()
@@ -249,8 +249,8 @@ class TestRPC:
             else:
                 partner_name = "server"
                 partner_commtype = pyYggdrasil.COMM_TYPE.SERVER_COMM
-            flags |= pyYggdrasil.COMM_FLAGS.COMM_FLAG_INTERFACE
-            return pyYggdrasil.CommBase(
+            flags |= pyYggdrasil.COMM_FLAG.COMM_FLAG_INTERFACE
+            return pyYggdrasil.Comm_t(
                 "test_" + partner_name, comm.address,
                 commtype=partner_commtype, flags=flags)
         return create_comm_partner_wrapped
@@ -311,14 +311,14 @@ class TestRPC:
                "RESPONSE" + server.maxMsgSize * "0")
 
     def test_send_recv_async(self):
-        server = pyYggdrasil.CommBase(
+        server = pyYggdrasil.Comm_t(
             "test_server",
             commtype=pyYggdrasil.COMM_TYPE.SERVER_COMM,
-            flags=pyYggdrasil.COMM_FLAGS.COMM_FLAG_ASYNC)
-        client = pyYggdrasil.CommBase(
+            flags=pyYggdrasil.COMM_FLAG.COMM_FLAG_ASYNC)
+        client = pyYggdrasil.Comm_t(
             "test_client", server.address,
             commtype=pyYggdrasil.COMM_TYPE.CLIENT_COMM,
-            flags=pyYggdrasil.COMM_FLAGS.COMM_FLAG_ASYNC)
+            flags=pyYggdrasil.COMM_FLAG.COMM_FLAG_ASYNC)
         req = "REQUEST"
         res = "RESPONSE"
         server.timeout_recv = 1000000
@@ -331,10 +331,10 @@ class TestRPC:
         server.close()
 
     def test_call_async(self, do_rpc):
-        server = pyYggdrasil.CommBase(
+        server = pyYggdrasil.Comm_t(
             "test_server",
             commtype=pyYggdrasil.COMM_TYPE.SERVER_COMM,
-            flags=pyYggdrasil.COMM_FLAGS.COMM_FLAG_ASYNC)
+            flags=pyYggdrasil.COMM_FLAG.COMM_FLAG_ASYNC)
         do_rpc(server, "REQUEST", "RESPONSE",
-               flags=pyYggdrasil.COMM_FLAGS.COMM_FLAG_ASYNC)
+               flags=pyYggdrasil.COMM_FLAG.COMM_FLAG_ASYNC)
         server.close()

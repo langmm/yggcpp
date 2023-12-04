@@ -94,6 +94,14 @@ comm_t init_comm(const char* name, const enum DIRECTION dir,
 		 dtype_t* datatype);
 
 /**
+ * Set a communicators language.
+ * @param x Communicator
+ * @param lang Language.
+ * @return 1 if successful, 0 otherwise.
+ */
+int set_comm_language(comm_t x, const enum LANGUAGE lang);
+
+/**
  * Set a communicators datatype based on a C-style format string.
  * @param comm Communicator
  * @param fmt C-style format string

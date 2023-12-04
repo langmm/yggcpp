@@ -52,7 +52,7 @@ public:
       response_metadata(), signon_complete(false),
       stashed_request(), restype(restyp),
       logInst_(logName) {
-      response_flags |= COMM_EOF_SENT | COMM_EOF_RECV;
+      response_flags |= COMM_FLAG_EOF_SENT | COMM_FLAG_EOF_RECV;
       if (response_dir == RECV)
 	response_flags |= COMM_FLAG_CLIENT_RESPONSE;
       else
@@ -362,7 +362,7 @@ public:
             if (requests[i].is_signon)
 	        return true;
 	        // return (comms[requests[i].comm_idx]->flags &
-		//         COMM_FLAGS_USED_SENT);
+		//         COMM_FLAG_USED_SENT);
         }
         return false;
     }

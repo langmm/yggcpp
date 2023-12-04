@@ -105,7 +105,7 @@ long Proxy::on_message() {
       out = ocomm->send_eof();
     } else if (out >= 0) {
       log_debug() << "on_message: " << msg << std::endl;
-      if (!(ocomm->getFlags() & COMM_FLAGS_USED_SENT))
+      if (!(ocomm->getFlags() & COMM_FLAG_USED_SENT))
 	ocomm->addSchema(icomm->getMetadata(RECV));
       out = ocomm->sendVar(msg);
     }

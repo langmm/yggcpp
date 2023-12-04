@@ -63,14 +63,14 @@ TEST(Commt, Constructors) {
     Comm_tTest *ctest = new Comm_tTest(adr, SEND, NULL_COMM);
     EXPECT_EQ(ctest->getType(), NULL_COMM);
     EXPECT_TRUE(ctest->valid());
-    EXPECT_FALSE(ctest->get_flags() & COMM_ALLOW_MULTIPLE_COMMS);
+    EXPECT_FALSE(ctest->get_flags() & COMM_FLAG_ALLOW_MULTIPLE_COMMS);
     std::cout << ctest << std::endl;
     delete ctest;
     //adr = new utils::Address("this.is.a.test");
     ctest = new Comm_tTest(adr, NONE, NULL_COMM);
     EXPECT_EQ(ctest->getType(), NULL_COMM);
     EXPECT_FALSE(ctest->valid());
-    EXPECT_FALSE(ctest->get_flags() & COMM_ALLOW_MULTIPLE_COMMS);
+    EXPECT_FALSE(ctest->get_flags() & COMM_FLAG_ALLOW_MULTIPLE_COMMS);
     delete ctest;
     const char* ygg = getenv("YGG_THREADING");
     setenv("YGG_THREADING", "TRUE", true);
@@ -78,7 +78,7 @@ TEST(Commt, Constructors) {
     ctest = new Comm_tTest(adr, RECV, NULL_COMM);
     EXPECT_EQ(ctest->getType(), NULL_COMM);
     EXPECT_TRUE(ctest->valid());
-    EXPECT_TRUE(ctest->get_flags() & COMM_ALLOW_MULTIPLE_COMMS);
+    EXPECT_TRUE(ctest->get_flags() & COMM_FLAG_ALLOW_MULTIPLE_COMMS);
     delete ctest;
     if (ygg != nullptr) {
         setenv("YGG_THREADING", ygg, true);

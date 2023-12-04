@@ -6,7 +6,8 @@ integer function test_ygg_output_ply_1() result(r)
   r = 1
   data_send = generate_ply();
   rDtype = create_dtype_from_schema('{"type": "ply"}', .false.)
-  rComm = init_comm("test_name", 2, 1, rDtype, 131072)
+  rComm = init_comm("test_name", RECV, DEFAULT_COMM, rDtype, &
+       COMM_FLAG_SET_OPP_ENV)
   sComm = ygg_ply_output("test_name")
   if (.NOT.c_associated(sComm%comm)) then
      write(*,*) "error in comm init"

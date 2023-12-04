@@ -95,7 +95,19 @@ comm_t init_comm(const char* name, const enum DIRECTION dir,
 		 const enum COMM_TYPE t,
 		 dtype_t* datatype) {
   int flags = COMM_FLAG_INTERFACE;
-  return _init_comm(name, dir, t, datatype, flags);
+  comm_t out = _init_comm(name, dir, t, datatype, flags);
+  set_comm_language(out, C_LANGUAGE);
+  return out;
+}
+
+int set_comm_language(comm_t x, const enum LANGUAGE lang) {
+  _BEGIN_CPP {
+    if (!x.comm)
+      ygglog_throw_error("set_comm_language: Comm is not initialized");
+    if (!(static_cast<communication::communicator::Comm_t*>(x.comm)->setLanguage(lang)))
+      return 0;
+  } _END_CPP(set_comm_language, 0);
+  return 1;
 }
 
 int set_response_format(comm_t comm, const char *fmt) {

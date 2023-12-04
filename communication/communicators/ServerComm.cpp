@@ -9,10 +9,11 @@ using namespace communication::utils;
 ServerComm::ServerComm(const std::string nme, const utils::Address& addr,
 		       int flgs, const COMM_TYPE type,
 		       const COMM_TYPE reqtype,
-		       const COMM_TYPE restype) :
+		       const COMM_TYPE restype,
+		       int reqflags, int resflags) :
   RPCComm(nme, addr,
-	  flgs | COMM_FLAG_SERVER | COMM_ALWAYS_SEND_HEADER,
-	  RECV, SEND, type, reqtype, restype) {}
+	  flgs | COMM_FLAG_SERVER | COMM_FLAG_ALWAYS_SEND_HEADER,
+	  RECV, SEND, type, reqtype, restype, reqflags, resflags) {}
 
 ADD_CONSTRUCTORS_RPC_DEF(ServerComm)
 

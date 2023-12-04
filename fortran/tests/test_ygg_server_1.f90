@@ -6,7 +6,8 @@ integer function test_ygg_server_1() result(r)
   integer :: data_recv_len, data_send_len
   r = 1
   sDtype = create_dtype_from_schema('{"type": "string"}', .false.)
-  sComm = init_comm("test_name", 0, 6, sDtype, 163840)
+  sComm = init_comm("test_name", SEND, CLIENT_COMM, sDtype, &
+       IOR(COMM_FLAG_ASYNC, COMM_FLAG_SET_OPP_ENV))
   rComm = ygg_rpc_server("test_name")
   if (.NOT.c_associated(rComm%comm)) then
      write(*,*) "error in comm init"

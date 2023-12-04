@@ -209,7 +209,7 @@ bool AsyncStatus::wait_status(const int new_status) {
 
 #ifdef THREADSINSTALLED
 
-AsyncBacklog::AsyncBacklog(Comm_t* parent) :
+AsyncBacklog::AsyncBacklog(AsyncComm* parent) :
   AsyncStatus(parent->logInst()),
   comm(nullptr), backlog(parent->logInst()) {
   START_THREAD((&AsyncBacklog::on_thread, this, parent));
@@ -218,7 +218,7 @@ AsyncBacklog::AsyncBacklog(Comm_t* parent) :
 
 #else // THREADSINSTALLED
 
-AsyncBacklog::AsyncBacklog(Comm_t* parent) :
+AsyncBacklog::AsyncBacklog(AsyncComm* parent) :
   AsyncStatus(parent->logInst()),
   comm(nullptr), backlog(parent->logInst()) {
   UNINSTALLED_ERROR(THREADS);
@@ -236,7 +236,7 @@ AsyncBacklog::~AsyncBacklog() {
   log_debug() << "~AsyncBacklog: end" << std::endl;
 }
 
-void AsyncBacklog::on_thread(Comm_t* parent) {
+void AsyncBacklog::on_thread(AsyncComm* parent) {
   bool out = true;
   try {
 #ifdef THREADSINSTALLED
@@ -249,8 +249,11 @@ void AsyncBacklog::on_thread(Comm_t* parent) {
       comm = new_Comm_t(direction,
 			parent->getCommType(),
 			parent->getName(),
-			addr,
-			flgs_comm);
+			addr, flgs_comm,
+			parent->request_commtype,
+			parent->response_commtype,
+			parent->request_flags,
+			parent->response_flags);
       if (comm) {
 	parent->updateMaxMsgSize(comm->getMaxMsgSize());
 	parent->address.address(comm->getAddress());
@@ -488,9 +491,13 @@ AsyncLockGuard::~AsyncLockGuard() {
 AsyncComm::AsyncComm(const std::string name,
 		     const utils::Address& address,
 		     const DIRECTION direction,
-		     int flgs, const COMM_TYPE type) :
+		     int flgs, const COMM_TYPE type,
+		     const COMM_TYPE reqtype, const COMM_TYPE restype,
+		     int reqflags, int resflags) :
   CommBase(name, address, direction, type, flgs | COMM_FLAG_ASYNC),
-  response_metadata() {
+  response_metadata(),
+  request_commtype(reqtype), response_commtype(restype),
+  request_flags(reqflags), response_flags(resflags) {
 #ifdef _MSC_VER
   if (type == FILE_COMM) {
     utils::YggLogThrowError("AsyncComm: Cannot create an asynchronous communicator that uses a file when compiling with MSVC");
@@ -505,7 +512,21 @@ AsyncComm::AsyncComm(const std::string name,
   }
   CommBase::init();
 }
-ADD_CONSTRUCTORS_DEF(AsyncComm)
+AsyncComm::AsyncComm(const std::string name,
+		     const DIRECTION direction,
+		     int flgs, const COMM_TYPE type,
+		     const COMM_TYPE reqtype, const COMM_TYPE restype,
+		     int reqflags, int resflags) :
+  AsyncComm(name, utils::blankAddress, direction, flgs, type,
+	    reqtype, restype, reqflags, resflags) {}
+AsyncComm::AsyncComm(utils::Address &addr,
+		     const DIRECTION direction,
+		     int flgs, const COMM_TYPE type,
+		     const COMM_TYPE reqtype, const COMM_TYPE restype,
+		     int reqflags, int resflags) :
+  AsyncComm("", addr, direction, flgs, type,
+	    reqtype, restype, reqflags, resflags) {}
+ADD_DESTRUCTOR_DEF(AsyncComm, CommBase, , )
 
 void AsyncComm::_close(bool call_base) {
   if (call_base)
@@ -536,7 +557,7 @@ int AsyncComm::comm_nmsg(DIRECTION dir) const {
 #ifdef THREADSINSTALLED
 int AsyncComm::wait_for_recv(const int64_t& tout) {
   if (global_comm || (type == CLIENT_COMM)) {
-    if (type == CLIENT_COMM && (flags & COMM_FLAGS_USED_SENT)) {
+    if (type == CLIENT_COMM && (flags & COMM_FLAG_USED_SENT)) {
       std::string req_id;
       {
 	const AsyncLockGuard lock(handle);

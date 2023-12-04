@@ -1024,6 +1024,91 @@ namespace communication {
     typedef bool (*filterFunc)(const rapidjson::Document&);
     typedef bool (*transformFunc)(rapidjson::Document&);
 
+    class FilterBase {
+    public:
+      FilterBase() {}
+      virtual ~FilterBase() {}
+      virtual bool operator()(const rapidjson::Document&) {
+	ygglog_throw_error("FilterBase: operator() must be overridden");
+	return false;
+      }
+      virtual FilterBase* copy() const {
+	ygglog_throw_error("FilterBase: copy must be overriden");
+	return nullptr;
+      }
+    };
+    class TransformBase {
+    public:
+      TransformBase() {}
+      virtual ~TransformBase() {}
+      virtual bool operator()(rapidjson::Document&) {
+	ygglog_throw_error("TransformBase: operator() must be overridden");
+	return false;
+      }
+      virtual TransformBase* copy() const {
+	ygglog_throw_error("TransformBase: copy must be overriden");
+	return nullptr;
+      }
+    };
+
+    class FilterClass : public FilterBase {
+    public:
+      FilterClass(filterFunc func) :
+	FilterBase(), func_(func) {}
+      bool operator()(const rapidjson::Document& doc) override {
+	return func_(doc);
+      }
+      FilterBase* copy() const override {
+	return new FilterClass(func_);
+      }
+      filterFunc func_;
+    };
+    class TransformClass : public TransformBase {
+    public:
+      TransformClass(const transformFunc& func) :
+	TransformBase(), func_(func) {}
+      bool operator()(rapidjson::Document& doc) override {
+	return func_(doc);
+      }
+      TransformBase* copy() const override {
+	return new TransformClass(func_);
+      }
+      transformFunc func_;
+    };
+
+    class PyBaseFunc {
+    public:
+      PyBaseFunc(const PyObject* func) :
+	func_(const_cast<PyObject*>(func)) { Py_INCREF(func_); }
+      ~PyBaseFunc() { Py_DECREF(func_); }
+    protected:
+      bool _call(const rapidjson::Document& doc,
+		 rapidjson::Document* out=nullptr);
+      PyObject* func_;
+    };
+    class PyFilterClass : public FilterBase, public PyBaseFunc {
+    public:
+      PyFilterClass(const PyObject* func) :
+	FilterBase(), PyBaseFunc(func) {}
+      bool operator()(const rapidjson::Document& doc) override {
+	return PyBaseFunc::_call(doc);
+      }
+      FilterBase* copy() const override {
+	return new PyFilterClass(func_);
+      }
+    };
+    class PyTransformClass : public TransformBase, public PyBaseFunc {
+    public:
+      PyTransformClass(const PyObject* func) :
+	TransformBase(), PyBaseFunc(func) {}
+      bool operator()(rapidjson::Document& doc) override {
+	return PyBaseFunc::_call(doc, &doc);
+      }
+      TransformBase* copy() const override {
+	return new PyTransformClass(func_);
+      }
+    };
+
     /*!
       @brief Initialize the Python API.
      */

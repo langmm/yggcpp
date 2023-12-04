@@ -16,6 +16,58 @@ module YggInterface
   integer(kind=c_int), bind(c, name="YGG_MSG_MAX_F") :: YGG_MSG_MAX
   real(8),  parameter :: PI_8  = 4 * atan (1.0_8)
   real(16), parameter :: PI_16 = 4 * atan (1.0_16)
+  enum, bind( C )
+     enumerator ::     NULL_COMM,   &
+          DEFAULT_COMM, &
+          IPC_COMM,    &
+          ZMQ_COMM,    &
+          MPI_COMM,    &
+          SERVER_COMM, &
+          CLIENT_COMM, &
+          FILE_COMM
+  end enum
+  enum, bind( C )
+     enumerator :: SEND, &
+          NONE, &
+          RECV
+  end enum
+  ! enum, bind( C )
+  !    enumerator ::   NO_LANGUAGE,       &
+  !         CXX_LANGUAGE,      &
+  !         C_LANGUAGE,        &
+  !         FORTRAN_LANGUAGE,  &
+  !         PYTHON_LANGUAGE,   &
+  !         MATLAB_LANGUAGE,   &
+  !         R_LANGUAGE,        &
+  !         JULIA_LANGUAGE,    &
+  !         JAVA_LANGUAGE
+  ! end enum
+  enum, bind( C )
+     enumerator :: COMM_FLAG_VALID           = int(z'00000001'), &
+          COMM_FLAG_GLOBAL          = int(z'00000002'), &
+          COMM_FLAG_WORKER          = int(z'00000004'), &
+          COMM_FLAG_CLIENT          = int(z'00000008'), &
+          COMM_FLAG_SERVER          = int(z'00000010'), &
+          COMM_FLAG_CLIENT_RESPONSE = int(z'00000020'), &
+          COMM_FLAG_SERVER_RESPONSE = int(z'00000040'), &
+          COMM_FLAG_ALWAYS_SEND_HEADER   = int(z'00000080'), &
+          COMM_FLAG_ALLOW_MULTIPLE_COMMS = int(z'00000100'), &
+          COMM_FLAG_USED_SENT       = int(z'00000200'), &
+          COMM_FLAG_USED_RECV       = int(z'00000400'), &
+          COMM_FLAG_EOF_SENT        = int(z'00000800'), &
+          COMM_FLAG_EOF_RECV        = int(z'00001000'), &
+          COMM_FLAG_CLOSE_ON_EOF_RECV    = int(z'00002000'), &
+          COMM_FLAG_CLOSE_ON_EOF_SEND    = int(z'00004000'), &
+          COMM_FLAG_INTERFACE       = int(z'00008000'), &
+          COMM_FLAG_DELETE          = int(z'00010000'), &
+          COMM_FLAG_ASYNC           = int(z'00020000'), &
+          COMM_FLAG_ASYNC_WRAPPED   = int(z'00040000'), &
+          COMM_FLAG_SET_OPP_ENV     = int(z'00080000'), &
+          COMM_FLAG_WRAPPER         = int(z'00100000'), &
+          FILE_FLAG_APPEND          = int(z'00200000'), &
+          FILE_FLAG_BINARY          = int(z'00400000'), &
+          FILE_FLAG_READLINE        = int(z'00800000')
+  end enum
   ! END DOXYGEN_SHOULD_SKIP_THIS
 
   !> @brief Wrap a fortran variable so that yggdrasil can pass it to comm

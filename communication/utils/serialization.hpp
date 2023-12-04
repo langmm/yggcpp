@@ -67,6 +67,8 @@ public:
   Metadata();
   virtual ~Metadata() {
     if (raw_schema) resetRawSchema();
+    reset_filters();
+    reset_transforms();
   }
   // Metadata(Metadata& rhs);
 #if RAPIDJSON_HAS_CXX11_RVALUE_REFS
@@ -82,6 +84,8 @@ public:
   bool CopyFrom(const Metadata& rhs);
   bool _init(bool use_generic = false);
   void resetRawSchema();
+  void reset_filters();
+  void reset_transforms();
   void reset();
   bool fromSchema(const rapidjson::Value& new_schema,
 		  bool isMetadata = false, bool use_generic = false);
@@ -110,8 +114,10 @@ public:
 		    const size_t ndim=0, const size_t* shape=NULL,
 		    const char* units=NULL, bool use_generic=false,
 		    rapidjson::Value* subSchema = NULL);
-  bool fromFormat(const std::string& format_str,
-		  bool as_array = false, bool use_generic = false);
+  bool fromFormat(const std::string& format_str, bool as_array = false,
+		  const std::vector<std::string>& field_names = {},
+		  const std::vector<std::string>& field_units = {},
+		  bool use_generic = false);
   bool fromMetadata(const Metadata& other, bool use_generic = false);
   bool fromMetadata(const char* head, const size_t headsiz,
 		    bool use_generic = false);
@@ -119,10 +125,28 @@ public:
   bool fromEncode(const rapidjson::Value& document,
 		  bool use_generic = false);
   bool fromEncode(PyObject* pyobj, bool use_generic = false);
+  void addFilter(const FilterBase* new_filter);
+  void addFilter(const PyObject* new_filter);
   void addFilter(filterFunc new_filter);
-  void addTransform(transformFunc new_transform);
-  void setFilters(std::vector<filterFunc>& new_filters);
-  void setTransforms(std::vector<transformFunc>& new_transforms);
+  void addTransform(const TransformBase* new_transform);
+  void addTransform(const PyObject* new_transform);
+  void addTransform(const transformFunc& new_transform);
+  template<typename T>
+  bool setFilters(const std::vector<T>& new_filters) {
+    reset_filters();
+    for (typename std::vector<T>::const_iterator it = new_filters.cbegin();
+	 it != new_filters.cend(); it++)
+      addFilter(*it);
+    return true;
+  }
+  template<typename T>
+  bool setTransforms(const std::vector<T>& new_transforms) {
+    reset_transforms();
+    for (typename std::vector<T>::const_iterator it = new_transforms.cbegin();
+	 it != new_transforms.cend(); it++)
+      addTransform(*it);
+    return true;
+  }
   RAPIDJSON_DEFAULT_ALLOCATOR& GetAllocator();
   bool isGeneric() const;
   bool setGeneric();
@@ -169,19 +193,29 @@ public:
 				       type_out& out,			\
 				       type_out defV,			\
 				       const rapidjson::Value* subSchema = NULL) const
+#define SET_VECTOR_METHOD_(type_in, method, setargs)			\
+  bool SetVector ## method(const std::string name,			\
+			   const std::vector<type_in>& x,		\
+			   rapidjson::Value& subSchema);		\
+  bool SetMetaVector ## method(const std::string name,			\
+			       const std::vector<type_in>& x);		\
+  bool SetSchemaVector ## method(const std::string name,		\
+				 const std::vector<type_in>& x,		\
+				 rapidjson::Value* subSchema = NULL)
 #define SET_METHOD_(type_in, method, setargs)				\
   bool Set ## method(const std::string name, type_in x,			\
 		     rapidjson::Value& subSchema);			\
   bool SetMeta ## method(const std::string name, type_in x);		\
   bool SetSchema ## method(const std::string name, type_in x,		\
 			   rapidjson::Value* subSchema = NULL)
-#define GET_SET_METHOD_(type_in, type_out, method, setargs)		\
+#define GET_SET_METHOD_(type_in, type_out, type_vect, method, setargs)	\
   GET_METHOD_(type_out, method);					\
-  SET_METHOD_(type_in, method, setargs)
-  GET_SET_METHOD_(int, int, Int, (x));
-  GET_SET_METHOD_(uint64_t, uint64_t, Uint, (x));
-  GET_SET_METHOD_(bool, bool, Bool, (x));
-  GET_SET_METHOD_(const std::string&, const char*, String,
+  SET_METHOD_(type_in, method, setargs);				\
+  SET_VECTOR_METHOD_(type_vect, method, setargs)
+  GET_SET_METHOD_(int, int, int, Int, (x));
+  GET_SET_METHOD_(uint64_t, uint64_t, uint64_t, Uint, (x));
+  GET_SET_METHOD_(bool, bool, bool, Bool, (x));
+  GET_SET_METHOD_(const std::string&, const char*, std::string, String,
 		  (x.c_str(), (rapidjson::SizeType)(x.size()),
 		   metadata.GetAllocator()));
   GET_METHOD_(unsigned, Uint);
@@ -190,6 +224,7 @@ public:
 #undef GET_SET_METHOD_
 #undef GET_METHOD_
 #undef SET_METHOD_
+#undef SET_VECTOR_METHOD_
   bool SetMetaValue(const std::string name, rapidjson::Value& x);
   bool SetSchemaValue(const std::string name, rapidjson::Value& x,
 		      rapidjson::Value* subSchema = NULL);
@@ -215,8 +250,8 @@ public:
   void Display(const char* indent="") const;
   rapidjson::Document metadata;
   Metadata* raw_schema;
-  std::vector<filterFunc> filters;
-  std::vector<transformFunc> transforms;
+  std::vector<FilterBase*> filters;
+  std::vector<TransformBase*> transforms;
   bool skip_last;
 };
 

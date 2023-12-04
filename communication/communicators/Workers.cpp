@@ -9,7 +9,8 @@ Worker::Worker(Comm_t* parent, DIRECTION dir, Address& adr) :
   try {
     if (parent) {
       comm = parent->create_worker(adr, dir,
-				   COMM_EOF_SENT | COMM_EOF_RECV |
+				   COMM_FLAG_EOF_SENT |
+				   COMM_FLAG_EOF_RECV |
 				   COMM_FLAG_WORKER);
     }
   } catch (...) {

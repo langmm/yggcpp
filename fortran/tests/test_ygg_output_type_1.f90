@@ -8,7 +8,8 @@ integer function test_ygg_output_type_1() result(r)
   data_recv = 0
   rDtype = create_dtype_from_schema('{"type": "integer"}', .false.)
   sDtype = create_dtype_from_schema('{"type": "integer"}', .false.)
-  rComm = init_comm("test_name", 2, 1, rDtype, 131072)
+  rComm = init_comm("test_name", RECV, DEFAULT_COMM, rDtype, &
+       COMM_FLAG_SET_OPP_ENV)
   sComm = ygg_output("test_name", sDtype)
   if (.NOT.c_associated(rComm%comm)) then
      write(*,*) "error in comm init"

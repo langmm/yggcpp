@@ -553,7 +553,7 @@ void ZMQComm::init() {
   msgBufSize = 100;
   assert(!handle);
   int socket_type = ZMQ_PAIR;
-  if (flags & COMM_ALLOW_MULTIPLE_COMMS) {
+  if (flags & COMM_FLAG_ALLOW_MULTIPLE_COMMS) {
     if (direction == RECV && !(address.valid())) {
       socket_type = ZMQ_ROUTER;
     } else {
@@ -565,13 +565,13 @@ void ZMQComm::init() {
   if (this->name.empty())
     this->name = "tempnewZMQ-" + handle->endpoint.substr(handle->endpoint.find_last_of(':') + 1);
   if (direction == SEND)
-    flags |= COMM_ALWAYS_SEND_HEADER;
+    flags |= COMM_FLAG_ALWAYS_SEND_HEADER;
   CommBase::init();
 }
 
 void ZMQComm::_close(bool call_base) {
     if ((direction == RECV) && this->is_open() &&
-	(!global_comm) && (!(flags & COMM_EOF_RECV))) {
+	(!global_comm) && (!(flags & COMM_FLAG_EOF_RECV))) {
       if (utils::YggdrasilLogger::_ygg_error_flag == 0) {
 	    size_t data_len = 0;
             char *data = NULL;

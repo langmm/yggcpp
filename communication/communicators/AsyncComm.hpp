@@ -126,9 +126,9 @@ namespace communication {
       AsyncBacklog(const AsyncBacklog&) = delete;
       AsyncBacklog& operator=(const AsyncBacklog&) = delete;
     public:
-      AsyncBacklog(Comm_t* parent);
+      AsyncBacklog(AsyncComm* parent);
       ~AsyncBacklog();
-      void on_thread(Comm_t* parent);
+      void on_thread(AsyncComm* parent);
       int signon_status();
       bool wait_for_signon();
       int send();
@@ -167,8 +167,23 @@ namespace communication {
       explicit AsyncComm(const std::string name,
 			 const utils::Address& address,
 			 const DIRECTION direction = NONE, int flgs = 0,
-			 const COMM_TYPE type = DEFAULT_COMM);
-      ADD_CONSTRUCTORS_BASE_NOLOG(AsyncComm, DEFAULT_COMM, true)
+			 const COMM_TYPE type = DEFAULT_COMM,
+			 const COMM_TYPE reqtype = DEFAULT_COMM,
+			 const COMM_TYPE restype = DEFAULT_COMM,
+			 int reqflags = 0, int resflags = 0);
+      AsyncComm(const std::string name,
+		const DIRECTION direction = NONE, int flgs = 0,
+		const COMM_TYPE type = DEFAULT_COMM,
+		const COMM_TYPE reqtype = DEFAULT_COMM,
+		const COMM_TYPE restype = DEFAULT_COMM,
+		int reqflags = 0, int resflags = 0);
+      explicit AsyncComm(utils::Address& address,
+			 const DIRECTION direction = NONE, int flgs = 0,
+			 const COMM_TYPE type = DEFAULT_COMM,
+			 const COMM_TYPE reqtype = DEFAULT_COMM,
+			 const COMM_TYPE restype = DEFAULT_COMM,
+			 int reqflags = 0, int resflags = 0);
+      ADD_METHODS_BASE(AsyncComm, DEFAULT_COMM, true)
 
       // \copydoc Comm_t::comm_nmsg
       int comm_nmsg(DIRECTION dir=NONE) const override;
@@ -196,6 +211,10 @@ namespace communication {
 			    const DIRECTION& dir, int flgs) override;
       
       utils::Metadata response_metadata;
+      COMM_TYPE request_commtype;
+      COMM_TYPE response_commtype;
+      int request_flags;
+      int response_flags;
 
     public:
       // RPC methods
@@ -207,7 +226,8 @@ namespace communication {
 			     bool use_generic=false);
       bool addResponseFormat(const std::string& fmt,
 			     bool use_generic=false);
-      
+
+      friend class AsyncBacklog;
     };
 
   }

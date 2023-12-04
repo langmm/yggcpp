@@ -4,6 +4,7 @@
 #include <map>
 #include <string>
 #include <istream>
+#include <iostream>
 extern "C" {
 #endif
 /**
@@ -39,7 +40,7 @@ enum CLEANUP_MODE {
 };
 
 /*! @brief Bit flags. */
-enum CommFlags {
+enum COMM_FLAG {
   COMM_FLAG_VALID           = 0x00000001, //!< Comm is initialized
   COMM_FLAG_GLOBAL          = 0x00000002, //!< Comm is global
   COMM_FLAG_WORKER          = 0x00000004, //!< Comm is a worker
@@ -47,21 +48,35 @@ enum CommFlags {
   COMM_FLAG_SERVER          = 0x00000010, //!< Comm is a server
   COMM_FLAG_CLIENT_RESPONSE = 0x00000020, //!< Comm is a client response
   COMM_FLAG_SERVER_RESPONSE = 0x00000040, //!< Comm is a server response
-  COMM_ALWAYS_SEND_HEADER   = 0x00000080, //!< Comm should always include a header in messages
-  COMM_ALLOW_MULTIPLE_COMMS = 0x00000100, //!< Comm should connect in a way that allow multiple connections
-  COMM_FLAGS_USED_SENT      = 0x00000200, //!< Comm has sent messages
-  COMM_FLAGS_USED_RECV      = 0x00000400, //!< Comm has received messages
-  COMM_EOF_SENT             = 0x00000800, //!< EOF has been sent
-  COMM_EOF_RECV             = 0x00001000, //!< EOF has been received
-  COMM_FLAG_INTERFACE       = 0x00002000, //!< Comm is an interface comm
-  COMM_FLAG_DELETE          = 0x00004000, //!< Comm needs to be deleted
-  COMM_FLAG_ASYNC           = 0x00008000, //!< Comm is asynchronous
-  COMM_FLAG_ASYNC_WRAPPED   = 0x00010000, //!< Comm is wrapped by an asynchronous comm
-  COMM_FLAG_SET_OPP_ENV     = 0x00020000, //!< Set environment variables for opposite communicator
-  COMM_FLAG_WRAPPER         = 0x00040000, //!< Communicator is a wrapper
-  FILE_FLAG_APPEND          = 0x00080000, //!< Append sent messages to the end of the file
-  FILE_FLAG_BINARY          = 0x00200000, //!< Open file in binary mode
-  FILE_FLAG_READLINE        = 0x00400000  //!< Read file contents line by line
+  COMM_FLAG_ALWAYS_SEND_HEADER   = 0x00000080, //!< Comm should always include a header in messages
+  COMM_FLAG_ALLOW_MULTIPLE_COMMS = 0x00000100, //!< Comm should connect in a way that allow multiple connections
+  COMM_FLAG_USED_SENT       = 0x00000200, //!< Comm has sent messages
+  COMM_FLAG_USED_RECV       = 0x00000400, //!< Comm has received messages
+  COMM_FLAG_EOF_SENT        = 0x00000800, //!< EOF has been sent
+  COMM_FLAG_EOF_RECV        = 0x00001000, //!< EOF has been received
+  COMM_FLAG_CLOSE_ON_EOF_RECV    = 0x00002000, //!< Comm will close on EOF recv
+  COMM_FLAG_CLOSE_ON_EOF_SEND    = 0x00004000, //!< Comm will close on EOF recv
+  COMM_FLAG_INTERFACE       = 0x00008000, //!< Comm is an interface comm
+  COMM_FLAG_DELETE          = 0x00010000, //!< Comm needs to be deleted
+  COMM_FLAG_ASYNC           = 0x00020000, //!< Comm is asynchronous
+  COMM_FLAG_ASYNC_WRAPPED   = 0x00040000, //!< Comm is wrapped by an asynchronous comm
+  COMM_FLAG_SET_OPP_ENV     = 0x00080000, //!< Set environment variables for opposite communicator
+  COMM_FLAG_WRAPPER         = 0x00100000, //!< Communicator is a wrapper
+  FILE_FLAG_APPEND          = 0x00200000, //!< Append sent messages to the end of the file
+  FILE_FLAG_BINARY          = 0x00400000, //!< Open file in binary mode
+  FILE_FLAG_READLINE        = 0x00800000  //!< Read file contents line by line
+};
+
+enum LANGUAGE {
+  NO_LANGUAGE,       //!< No explicit language interface
+  CXX_LANGUAGE,      //!< Interfaced being accesed from CXX
+  C_LANGUAGE,        //!< Interfaced being accesed from C
+  FORTRAN_LANGUAGE,  //!< Interfaced being accesed from Fortran
+  PYTHON_LANGUAGE,   //!< Interfaced being accesed from Python
+  MATLAB_LANGUAGE,   //!< Interfaced being accesed from MATLAB
+  R_LANGUAGE,        //!< Interfaced being accesed from R
+  JULIA_LANGUAGE,    //!< Interfaced being accesed from Julia
+  JAVA_LANGUAGE,     //!< Interfaced being accesed from Java
 };
   
 /*! @brief Bit flags describing message state. */
@@ -139,6 +154,16 @@ const std::map<const DIRECTION, const std::string> DIRECTION_map {
   {RECV, "RECV"}};
 
 const std::map<const COMM_TYPE, const std::string> COMM_TYPE_map {
+  {NULL_COMM, "NULL"},
+  {DEFAULT_COMM, "DEFAULT"},
+  {IPC_COMM, "IPC"},
+  {ZMQ_COMM, "ZMQ"},
+  {MPI_COMM, "MPI"},
+  {SERVER_COMM, "SERVER"},
+  {CLIENT_COMM, "CLIENT"},
+  {FILE_COMM, "FILE"}};
+
+const std::map<const COMM_TYPE, const std::string> COMM_TYPE_cls_map {
   {NULL_COMM, "NullComm"},
   {DEFAULT_COMM, "DefaultComm"},
   {IPC_COMM, "IPCComm"},
@@ -147,6 +172,82 @@ const std::map<const COMM_TYPE, const std::string> COMM_TYPE_map {
   {SERVER_COMM, "ServerComm"},
   {CLIENT_COMM, "ClientComm"},
   {FILE_COMM, "FileComm"}};
+
+const std::map<const LANGUAGE, const std::string> LANGUAGE_map {
+  {NO_LANGUAGE, ""},
+  {CXX_LANGUAGE, "c"},
+  {C_LANGUAGE, "cxx"},
+  {FORTRAN_LANGUAGE, "fortran"},
+  {PYTHON_LANGUAGE, "python"},
+  {MATLAB_LANGUAGE, "matlab"},
+  {R_LANGUAGE, "r"},
+  {JULIA_LANGUAGE, "julia"},
+  {JAVA_LANGUAGE, "java"}};
+
+const std::map<const COMM_FLAG, const std::string> COMM_FLAG_map {
+  {COMM_FLAG_VALID           , "VALID"},
+  {COMM_FLAG_GLOBAL          , "GLOBAL"},
+  {COMM_FLAG_WORKER          , "WORKER"},
+  {COMM_FLAG_CLIENT          , "CLIENT"},
+  {COMM_FLAG_SERVER          , "SERVER"},
+  {COMM_FLAG_CLIENT_RESPONSE , "CLIENT_RESPONSE"},
+  {COMM_FLAG_SERVER_RESPONSE , "SERVER_RESPONSE"},
+  {COMM_FLAG_ALWAYS_SEND_HEADER   , "ALWAYS_SEND_HEADER"},
+  {COMM_FLAG_ALLOW_MULTIPLE_COMMS , "ALLOW_MULTIPLE_COMMS"},
+  {COMM_FLAG_USED_SENT       , "USED_SENT"},
+  {COMM_FLAG_USED_RECV       , "USED_RECV"},
+  {COMM_FLAG_EOF_SENT        , "EOF_SENT"},
+  {COMM_FLAG_EOF_RECV        , "EOF_RECV"},
+  {COMM_FLAG_CLOSE_ON_EOF_RECV    , "CLOSE_ON_EOF_RECV"},
+  {COMM_FLAG_CLOSE_ON_EOF_SEND    , "CLOSE_ON_EOF_SEND"},
+  {COMM_FLAG_INTERFACE       , "INTERFACE"},
+  {COMM_FLAG_DELETE          , "DELETE"},
+  {COMM_FLAG_ASYNC           , "ASYNC"},
+  {COMM_FLAG_ASYNC_WRAPPED   , "ASYNC_WRAPPED"},
+  {COMM_FLAG_SET_OPP_ENV     , "SET_OPP_ENV"},
+  {COMM_FLAG_WRAPPER         , "WRAPPER"}};
+const std::map<const COMM_FLAG, const std::string> FILE_FLAG_map {
+  {FILE_FLAG_APPEND          , "APPEND"},
+  {FILE_FLAG_BINARY          , "BINARY"},
+  {FILE_FLAG_READLINE        , "READLINE"}};
+
+static inline std::string str_toupper(const std::string& inStr) {
+  std::string outStr(inStr);
+  std::transform(inStr.begin(), inStr.end(), outStr.begin(),
+		 [](unsigned char c) { return std::toupper(c); });
+  return outStr;
+}
+static inline std::string str_tolower(const std::string& inStr) {
+  std::string outStr(inStr);
+  std::transform(inStr.begin(), inStr.end(), outStr.begin(),
+		 [](unsigned char c) { return std::tolower(c); });
+  return outStr;
+}
+
+template<typename T1, typename T2>
+static bool enum_value_search(const std::map<const T1, const T2> map,
+			      const T2& val,
+			      T1& key, bool allow_anycase=false,
+			      std::string prefix="",
+			      std::string suffix="") {
+  for (typename std::map<const T1, const T2>::const_iterator it = map.cbegin();
+       it != map.cend(); it++) {
+    if ((it->second == val) ||
+	(allow_anycase && (val == str_toupper(it->second) ||
+			   val == str_tolower(it->second))) ||
+	((!prefix.empty()) && (val == (prefix + it->second))) ||
+	((!suffix.empty()) && (val == (it->second + suffix)))) {
+      key = it->first;
+      return true;
+    }
+  }
+  return false;
+}
+
+template<typename T1, typename T2>
+static T1 max_enum_value(const std::map<const T1, const T2> map) {
+  return map.crbegin()->first;
+}
 
 // const std::map<const std::string, const SUBTYPE> submap {{"int", T_INT},
 //                                                          {"int8_t", T_INT},

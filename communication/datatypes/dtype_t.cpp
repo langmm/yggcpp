@@ -1378,7 +1378,7 @@ extern "C" {
     dtype_t out = create_dtype(NULL, false);
     _BEGIN_CPP {
       _GET_METADATA(metadata, out, out);
-      if (!metadata->fromFormat(format_str, as_array, use_generic))
+      if (!metadata->fromFormat(format_str, as_array, {}, {}, use_generic))
 	destroy_dtype(&out);
       return out;
     } _END_CPP_CLEANUP(create_dtype_format, out, destroy_dtype(&out));
