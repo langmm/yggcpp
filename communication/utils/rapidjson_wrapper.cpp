@@ -1178,7 +1178,7 @@ SPECIALIZE_SCALAR(long double);
 SPECIALIZE_SCALAR(std::complex<long double>);
 #endif
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
-SPECIALIZE(PyObject*)
+SPECIALIZE(PyObject*);
 #endif
 SPECIALIZE(rapidjson::Ply);
 SPECIALIZE(rapidjson::ObjWavefront);

@@ -9,6 +9,7 @@ CMAKE_FLAGS="-DRAPIDJSON_INCLUDE_DIRS=/Users/langmm/rapidjson/include"
 WITH_LLDB=""
 DO_SYMBOLS=""
 DONT_TEST=""
+NO_DEBUG_MSG=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -63,10 +64,22 @@ while [[ $# -gt 0 ]]; do
 	    CMAKE_FLAGS="${CMAKE_FLAGS} -DYGG_LINK_PYTHON_TO_CPP=1"
 	    shift # past argument with no value
 	    ;;
+	--disable-python )
+	    CMAKE_FLAGS="${CMAKE_FLAGS} -DYGGDRASIL_DISABLE_PYTHON_C_API=1"
+	    shift # past argument with no value
+	    ;;
+	--no-debug )
+	    NO_DEBUG_MSG="TRUE"
+	    shift # past argument with no value
+	    ;;
 	*)
 	    ;;
     esac
 done
+
+if [ ! -n "$NO_DEBUG_MSG" ]; then
+    CMAKE_FLAGS="${CMAKE_FLAGS} -DYGG_DEBUG_LEVEL=5"
+fi
 
 if [ -n "$DO_PYTHON" ]; then
     if [ ! -n "$DONT_BUILD" ]; then

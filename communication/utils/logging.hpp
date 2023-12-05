@@ -8,17 +8,14 @@
 #define localtime_r(_Time, _Tm) localtime_s(_Tm, _Time)
 #endif
 
-#ifdef YGG_TEST
-#ifndef YGG_DEBUG
-#define YGG_DEBUG 10
-#endif
-#endif
-
 #define ygglog_param_error ("ERROR", 40, true)
 #define ygglog_param_info ("INFO", 20)
-// #define ygglog_param_debug ("DEBUG", 10)
-#define ygglog_param_debug ("DEBUG", 40)
+#define ygglog_param_debug ("DEBUG", 10)
 #define ygglog_param_verbose ("DEBUG", 5)
+
+#ifndef YGG_DEBUG
+#define YGG_DEBUG 20
+#endif
 
 namespace communication {
 namespace utils {
