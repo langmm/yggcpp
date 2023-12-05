@@ -1025,88 +1025,78 @@ namespace communication {
     typedef bool (*transformFunc)(rapidjson::Document&);
 
     class FilterBase {
+    private:
+      FilterBase(const FilterBase&) = delete;
+      FilterBase& operator=(const FilterBase&) = delete;
     public:
-      FilterBase() {}
-      virtual ~FilterBase() {}
-      virtual bool operator()(const rapidjson::Document&) {
-	ygglog_throw_error("FilterBase: operator() must be overridden");
-	return false;
-      }
-      virtual FilterBase* copy() const {
-	ygglog_throw_error("FilterBase: copy must be overriden");
-	return nullptr;
-      }
+      FilterBase();
+      virtual ~FilterBase();
+      virtual bool operator()(const rapidjson::Document& doc);
+      virtual FilterBase* copy() const;
     };
     class TransformBase {
+    private:
+      TransformBase(const TransformBase&) = delete;
+      TransformBase& operator=(const TransformBase&) = delete;
     public:
-      TransformBase() {}
-      virtual ~TransformBase() {}
-      virtual bool operator()(rapidjson::Document&) {
-	ygglog_throw_error("TransformBase: operator() must be overridden");
-	return false;
-      }
-      virtual TransformBase* copy() const {
-	ygglog_throw_error("TransformBase: copy must be overriden");
-	return nullptr;
-      }
+      TransformBase();
+      virtual ~TransformBase();
+      virtual bool operator()(rapidjson::Document& doc);
+      virtual TransformBase* copy() const;
     };
 
     class FilterClass : public FilterBase {
+    private:
+      FilterClass(const FilterClass&) = delete;
+      FilterClass& operator=(const FilterClass&) = delete;
     public:
-      FilterClass(filterFunc func) :
-	FilterBase(), func_(func) {}
-      bool operator()(const rapidjson::Document& doc) override {
-	return func_(doc);
-      }
-      FilterBase* copy() const override {
-	return new FilterClass(func_);
-      }
+      FilterClass(filterFunc func);
+      bool operator()(const rapidjson::Document& doc) override;
+      FilterBase* copy() const override;
       filterFunc func_;
     };
     class TransformClass : public TransformBase {
+    private:
+      TransformClass(const TransformClass&) = delete;
+      TransformClass& operator=(const TransformClass&) = delete;
     public:
-      TransformClass(const transformFunc& func) :
-	TransformBase(), func_(func) {}
-      bool operator()(rapidjson::Document& doc) override {
-	return func_(doc);
-      }
-      TransformBase* copy() const override {
-	return new TransformClass(func_);
-      }
+      TransformClass(const transformFunc& func);
+      bool operator()(rapidjson::Document& doc) override;
+      TransformBase* copy() const override;
       transformFunc func_;
     };
 
     class PyBaseFunc {
+    private:
+      PyBaseFunc(const PyBaseFunc&) = delete;
+      PyBaseFunc& operator=(const PyBaseFunc&) = delete;
     public:
-      PyBaseFunc(const PyObject* func) :
-	func_(const_cast<PyObject*>(func)) { Py_INCREF(func_); }
-      ~PyBaseFunc() { Py_DECREF(func_); }
+      PyBaseFunc(const PyObject* func);
+      virtual ~PyBaseFunc();
     protected:
       bool _call(const rapidjson::Document& doc,
 		 rapidjson::Document* out=nullptr);
+#ifndef YGGDRASIL_DISABLE_PYTHON_C_API
       PyObject* func_;
+#endif // YGGDRASIL_DISABLE_PYTHON_C_API
     };
     class PyFilterClass : public FilterBase, public PyBaseFunc {
+    private:
+      PyFilterClass(const PyFilterClass&) = delete;
+      PyFilterClass& operator=(const PyFilterClass&) = delete;
     public:
-      PyFilterClass(const PyObject* func) :
-	FilterBase(), PyBaseFunc(func) {}
-      bool operator()(const rapidjson::Document& doc) override {
-	return PyBaseFunc::_call(doc);
-      }
-      FilterBase* copy() const override {
-	return new PyFilterClass(func_);
-      }
+      PyFilterClass(const PyObject* func);
+      bool operator()(const rapidjson::Document& doc) override;
+      FilterBase* copy() const override;
     };
     class PyTransformClass : public TransformBase, public PyBaseFunc {
+    private:
+      PyTransformClass(const PyTransformClass&) = delete;
+      PyTransformClass& operator=(const PyTransformClass&) = delete;
     public:
-      PyTransformClass(const PyObject* func) :
-	TransformBase(), PyBaseFunc(func) {}
-      bool operator()(rapidjson::Document& doc) override {
-	return PyBaseFunc::_call(doc, &doc);
-      }
-      TransformBase* copy() const override {
-	return new PyTransformClass(func_);
-      }
+      PyTransformClass(const PyObject* func);
+      bool operator()(rapidjson::Document& doc) override;
+      TransformBase* copy() const override;
     };
 
     /*!

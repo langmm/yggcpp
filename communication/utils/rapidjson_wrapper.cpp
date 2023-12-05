@@ -1200,7 +1200,78 @@ SPECIALIZE(rapidjson::ObjWavefront);
 
 using namespace communication::utils;
 
+FilterBase::FilterBase() {}
+FilterBase::~FilterBase() {}
+bool FilterBase::operator()(const rapidjson::Document&) {
+  ygglog_throw_error("FilterBase: operator() must be overridden");
+  return false;
+}
+FilterBase* FilterBase::copy() const {
+  ygglog_throw_error("FilterBase: copy must be overriden");
+  return nullptr;
+}
+
+TransformBase::TransformBase() {}
+TransformBase::~TransformBase() {}
+bool TransformBase::operator()(rapidjson::Document&) {
+  ygglog_throw_error("TransformBase: operator() must be overridden");
+  return false;
+}
+TransformBase* TransformBase::copy() const {
+  ygglog_throw_error("TransformBase: copy must be overriden");
+  return nullptr;
+}
+
+FilterClass::FilterClass(filterFunc func) :
+  FilterBase(), func_(func) {}
+bool FilterClass::operator()(const rapidjson::Document& doc) {
+  return func_(doc);
+}
+FilterBase* FilterClass::copy() const {
+  return new FilterClass(func_);
+}
+
+TransformClass::TransformClass(const transformFunc& func) :
+  TransformBase(), func_(func) {}
+bool TransformClass::operator()(rapidjson::Document& doc) {
+  return func_(doc);
+}
+TransformBase* TransformClass::copy() const {
+  return new TransformClass(func_);
+}
+
+PyFilterClass::PyFilterClass(const PyObject* func) :
+  FilterBase(), PyBaseFunc(func) {}
+bool PyFilterClass::operator()(const rapidjson::Document& doc) {
+  return PyBaseFunc::_call(doc);
+}
+FilterBase* PyFilterClass::copy() const {
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
+  return new PyFilterClass(func_);
+#else // YGGDRASIL_DISABLE_PYTHON_C_API
+  ygglog_throw_error("PyFilterClass: Python disabled");
+  return nullptr;
+#endif // YGGDRASIL_DISABLE_PYTHON_C_API
+}
+
+PyTransformClass::PyTransformClass(const PyObject* func) :
+  TransformBase(), PyBaseFunc(func) {}
+bool PyTransformClass::operator()(rapidjson::Document& doc) {
+  return PyBaseFunc::_call(doc, &doc);
+}
+TransformBase* PyTransformClass::copy() const {
+#ifndef YGGDRASIL_DISABLE_PYTHON_C_API
+  return new PyTransformClass(func_);
+#else // YGGDRASIL_DISABLE_PYTHON_C_API
+  ygglog_throw_error("PyTransformClass: Python disabled");
+  return nullptr;
+#endif // YGGDRASIL_DISABLE_PYTHON_C_API
+}
+
+#ifndef YGGDRASIL_DISABLE_PYTHON_C_API
+PyBaseFunc::PyBaseFunc(const PyObject* func) :
+  func_(const_cast<PyObject*>(func)) { Py_INCREF(func_); }
+PyBaseFunc::~PyBaseFunc() { Py_DECREF(func_); }
 bool PyBaseFunc::_call(const rapidjson::Document& doc,
 		       rapidjson::Document* out) {
   PyObject* pyDoc = doc.GetPythonObjectRaw();
@@ -1231,5 +1302,15 @@ bool PyBaseFunc::_call(const rapidjson::Document& doc,
   }
   Py_DECREF(pyDoc);
   return res;
+}
+#else
+PyBaseFunc::PyBaseFunc(const PyObject*) {
+  ygglog_throw_error("PyBaseFunc: Python API disabled");
+}
+PyBaseFunc::~PyBaseFunc() {}
+bool PyBaseFunc::_call(const rapidjson::Document&,
+		       rapidjson::Document*) {
+  ygglog_throw_error("PyBaseFunc: Python API disabled");
+  return false;
 }
 #endif // YGGDRASIL_DISABLE_PYTHON_C_API
