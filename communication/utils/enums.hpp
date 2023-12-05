@@ -5,6 +5,7 @@
 #include <string>
 #include <istream>
 #include <iostream>
+#include <algorithm>
 extern "C" {
 #endif
 /**
