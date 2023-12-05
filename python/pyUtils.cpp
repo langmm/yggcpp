@@ -26,6 +26,9 @@ static int register_constants(PyObject* module) {
 #define ADD_CONSTANT_LONG(name)					\
   iobj = PyLong_FromLong(name);					\
   ADD_CONSTANT(#name)
+#define ADD_CONSTANT_LONGLONG(name)				\
+  iobj = PyLong_FromLongLong(name);				\
+  ADD_CONSTANT(#name)
   ADD_CONSTANT_LONG(YGG_MSG_MAX);
   ADD_CONSTANT_STRING(YGG_MSG_EOF);
   // ADD_CONSTANT_LONG(YGG_MSG_EOF_LEN);
@@ -36,7 +39,7 @@ static int register_constants(PyObject* module) {
   // ADD_CONSTANT_LONG(YGG_SERVER_SIGNON_LEN);
   ADD_CONSTANT_LONG(YGG_MSG_BUF);
   ADD_CONSTANT_LONG(YGG_SLEEP_TIME);
-  ADD_CONSTANT_LONG(YGG_MAX_TIME);
+  ADD_CONSTANT_LONGLONG(YGG_MAX_TIME);
   // ADD_CONSTANT_LONG(PYTHON_NAME_SIZE);
   ADD_CONSTANT_LONG(PSI_MSG_MAX);
   ADD_CONSTANT_LONG(PSI_MSG_BUF);

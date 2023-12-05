@@ -187,7 +187,7 @@ long ClientComm::recv_single(utils::Header& header) {
     int64_t tout = get_timeout_recv();
     int nmsg = 0;
     TIMEOUT_LOOP(tout, tout / 10) {
-      log_info() << "recv_single: req " << req_id << " complete = " <<
+      log_debug() << "recv_single: req " << req_id << " complete = " <<
 	requests.isComplete(req_id) << std::endl;
       if (requests.isComplete(req_id))
 	break;

@@ -403,6 +403,44 @@ else()
 endif()
 endif()
 
+#############################
+# Patch MinGW 4.3.5 Threads #
+#############################
+
+# The version of MinGW provided by conda-forge (5.3.0) does not contain
+# the necessary comparison operators for the _M_thread members of
+# thread::id. This patch comments out those operators and modifies the
+# hash to include both the p & x members of _M_thread.
+
+if (MINGW AND CMAKE_CXX_COMPILER_VERSION STREQUAL "5.3.0")
+  find_file(THREAD_H thread)
+  message(STATUS "THREAD_H = ${THREAD_H}")
+  if(NOT THREAD_H STREQUAL THREAD_H-NOTFOUND)
+    set(MINGW_PATCH_TAG_REGEX "^// mingw\-c\+\+\-5\-3\-thread\.patch applied.*")
+    file(READ ${THREAD_H} THREAD_H_CONTENTS)
+    if(THREAD_H_CONTENTS MATCHES "${MINGW_PATCH_TAG_REGEX}")
+      message(STATUS "MinGW 5.3.0 thread already patched")
+    else()
+      message(STATUS "Patching MinGW 5.3.0 thread")
+      cmake_path(APPEND CMAKE_SOURCE_DIR "mingw-c++-5-3-thread.patch"
+                 OUTPUT_VARIABLE THREAD_H_PATCH)
+      message(STATUS "THREAD_H_PATCH = ${THREAD_H_PATCH}")
+      if (NOT EXISTS ${THREAD_H_PATCH})
+        message(FATAL_ERROR "THREAD_H_PATCH does not exist (${THREAD_H_PATCH})")
+      endif()
+      execute_process(
+        COMMAND patch ${THREAD_H} --input=${THREAD_H_PATCH}
+	--output=${THREAD_H} # --ignore-whitespace
+	TIMEOUT 15
+	COMMAND_ECHO STDOUT
+	RESULT_VARIABLE ret)
+      if (NOT ret EQUAL 0)
+        message(FATAL_ERROR "Failed to apply MinGW thread patch")
+      endif()
+    endif()
+  endif()
+endif()
+
 #######
 # MPI #
 #######
@@ -638,7 +676,6 @@ if(BUILD_FORTRAN_LIBRARY)
         cmake_path(SET CMAKE_Fortran_COMPILER NORMALIZE ${CMAKE_Fortran_COMPILER})
         message(STATUS "CMAKE_Fortran_COMPILER (after)  = ${CMAKE_Fortran_COMPILER}")
     endif()
-    # enable_language(Fortran)
     add_subdirectory(fortran)
 endif()
 

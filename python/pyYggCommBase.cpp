@@ -761,7 +761,7 @@ static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds) {
     rapidjson::Document datatype;
     int commtype = COMM_TYPE::DEFAULT_COMM;
     int flags = 0;
-    int64_t timeout_recv;
+    int64_t timeout_recv = -1;
     bool timeout_recv_set = false;
     const char* format_str = NULL;
     int as_array = 0;
