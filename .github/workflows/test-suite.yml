@@ -249,9 +249,9 @@ jobs:
       - name: Global config flags
         shell: bash -l {0}
         run: |
-          echo "CONFIG_FLAGS=-DYGG_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DBUILD_PYTHON_LIBRARY=OFF -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/_install -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DYGG_DEBUG_LEVEL=5" >> "$GITHUB_ENV"
+          echo "CONFIG_FLAGS=-DYGG_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/_install -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DYGG_DEBUG_LEVEL=5" >> "$GITHUB_ENV"
           echo "TEST_FLAGS=-C Debug --output-on-failure -VV" >> "$GITHUB_ENV"
-          echo "PYTHON_CMAKE_ARGS=" >> "$GITHUB_ENV"
+          echo "PYTHON_CMAKE_ARGS=-DYGG_DEBUG_LEVEL=5" >> "$GITHUB_ENV"
       - name: Coverage config flags
         if: matrix.with-coverage == true && matrix.os != 'windows-latest'
         shell: bash -l {0}
@@ -313,11 +313,6 @@ jobs:
       #   shell: bash -l {0}
       #   run: |
       #     patch -b C:/Miniconda3/envs/yggdrasil/Library/mingw-w64/include/c++/5.3.0/thread mingw-c++-5-3-thread.patch
-      - name: Fortran config flags on Windows (msvc)
-        if: matrix.with-asan == false && matrix.os == 'windows-latest' # && matrix.windows-compiler == 'msvc'
-        shell: bash -l {0}
-        run: |
-          echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DENABLE_OMP=ON -DENABLE_MPI=ON" >> $GITHUB_ENV
      
       ###################################
       # Add paths for Windows dlls
