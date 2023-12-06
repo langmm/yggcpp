@@ -432,8 +432,9 @@ if (CONDA_PREFIX AND MINGW AND
         message(FATAL_ERROR "THREAD_H_PATCH does not exist (${THREAD_H_PATCH})")
       endif()
       execute_process(
-        COMMAND patch ${THREAD_H} --input=${THREAD_H_PATCH}
-	--output=${THREAD_H} # --ignore-whitespace
+        COMMAND patch -b ${THREAD_H} ${THREAD_H_PATCH}
+        # COMMAND patch ${THREAD_H} --input=${THREAD_H_PATCH}
+	# --output=${THREAD_H} # --ignore-whitespace
 	TIMEOUT 15
 	COMMAND_ECHO STDOUT
 	RESULT_VARIABLE ret)
