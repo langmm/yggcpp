@@ -412,8 +412,11 @@ endif()
 # thread::id. This patch comments out those operators and modifies the
 # hash to include both the p & x members of _M_thread.
 
-if (MINGW AND CMAKE_CXX_COMPILER_VERSION STREQUAL "5.3.0")
-  find_file(THREAD_H thread)
+if (CONDA_PREFIX AND MINGW AND
+    CMAKE_CXX_COMPILER_VERSION STREQUAL "5.3.0")
+  cmake_path(APPEND CONDA_PREFIX Library mingw-w64
+             OUTPUT_VARIABLE MINGW_PATHS)
+  find_file(THREAD_H thread PATHS ${MINGW_PATHS} NO_DEFAULT_PATH)
   message(STATUS "THREAD_H = ${THREAD_H}")
   if(NOT THREAD_H STREQUAL THREAD_H-NOTFOUND)
     file(READ ${THREAD_H} THREAD_H_CONTENTS)

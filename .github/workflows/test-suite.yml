@@ -123,7 +123,8 @@ jobs:
         run: |
           brew link --overwrite python@3.11
           brew install cmocka lcov gnutls # llvm
-          # echo "FC=$(which gfortran-12)" >> "$GITHUB_ENV"
+          # Required for compiling with clang & gfortran
+          echo "FC=$(which gfortran-12)" >> "$GITHUB_ENV"
       # - name: Set vcpkg triplet on Windows (mingw)
       #   if: matrix.os == 'windows-latest' && matrix.python-install == 'pip' && matrix.windows-compiler == 'mingw'
       #   shell: bash -l {0}
@@ -306,8 +307,8 @@ jobs:
         if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
         shell: bash -l {0}
         run: |
-          echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} \\\"-DCMAKE_PREFIX_PATH=${VCPKG_INSTALLATION_ROOT}\installed\\${VCPKG_TRIPLET}\\\"" >> "$GITHUB_ENV"
-          echo "PYTHON_CONFIG_FLAGS=${{ env.PYTHON_CONFIG_FLAGS }} --config-settings=cmake.define.CMAKE_PREFIX_PATH=\"${VCPKG_INSTALLATION_ROOT}\installed\\${VCPKG_TRIPLET}\" --config-settings=cmake.define.Python3_ROOT_DIR=${{ env.pythonLocation }} --config-settings=cmake.define.Python_ROOT_DIR=${{ env.pythonLocation }}" >> "$GITHUB_ENV"
+          echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} \"-DCMAKE_PREFIX_PATH=${VCPKG_INSTALLATION_ROOT}\installed\${VCPKG_TRIPLET}\"" >> "$GITHUB_ENV"
+          echo "PYTHON_CONFIG_FLAGS=${{ env.PYTHON_CONFIG_FLAGS }} --config-settings=cmake.define.CMAKE_PREFIX_PATH=\"${VCPKG_INSTALLATION_ROOT}\installed\${VCPKG_TRIPLET}\" --config-settings=cmake.define.Python3_ROOT_DIR=${{ env.pythonLocation }} --config-settings=cmake.define.Python_ROOT_DIR=${{ env.pythonLocation }}" >> "$GITHUB_ENV"
       # - name: Patch conda thread header on Windows
       #   if: matrix.with-asan == false && matrix.os == 'windows-latest' && matrix.python-install == 'conda' && matrix.windows-compiler == 'mingw'
       #   shell: bash -l {0}
@@ -339,10 +340,10 @@ jobs:
         if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
         shell: bash -l {0}
         run: |
-          DLL_DIRECTORY="${VCPKG_INSTALLATION_ROOT}\installed\\${VCPKG_TRIPLET}\debug\bin"
+          DLL_DIRECTORY="${VCPKG_INSTALLATION_ROOT}\installed\${VCPKG_TRIPLET}\debug\bin"
           ls ${DLL_DIRECTORY}
           echo "${DLL_DIRECTORY}" >> $GITHUB_PATH
-          LIB_DIRECTORY="${VCPKG_INSTALLATION_ROOT}\installed\\${VCPKG_TRIPLET}\debug\lib"
+          LIB_DIRECTORY="${VCPKG_INSTALLATION_ROOT}\installed\${VCPKG_TRIPLET}\debug\lib"
           ls ${LIB_DIRECTORY}
           echo "${LIB_DIRECTORY}" >> $GITHUB_PATH
       - name: Conda library paths on Windows
