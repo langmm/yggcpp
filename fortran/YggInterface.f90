@@ -1457,14 +1457,31 @@ contains
   !>   name that is used to locate a particular comm address stored in an
   !>   environment variable.
   !> @param[in] name Name of the channel.
+  !> @param[in] commtype Optional communicator type code.
+  !> @param[in] flags Optional bitwise flags describing communicator.
   !> @returns Output comm structure.
-  function ygg_output(name) result(channel)
+  function ygg_output(name, commtype, flags) result(channel)
     implicit none
     character(len=*), intent(in) :: name
+    integer(kind=c_int), intent(in), optional :: commtype, flags
     character(kind=c_char), allocatable :: c_name(:)
+    integer(kind=c_int) :: c_commtype, c_flags
+    type(c_ptr) :: c_datatype
     type(yggcomm) :: channel
     c_name = convert_string_f2c(name)
-    channel = ygg_output_c(c_name)
+    if (present(commtype)) then
+       c_commtype = commtype
+    else
+       c_commtype = DEFAULT_COMM
+    end if
+    if (present(flags)) then
+       c_flags = flags
+    else
+       c_flags = 0
+    end if
+    c_flags = IOR(c_flags, COMM_FLAG_INTERFACE)
+    c_datatype = c_null_ptr
+    channel = init_comm_c(c_name, SEND, c_commtype, c_datatype, c_flags)
     deallocate(c_name)
   end function ygg_output
   
@@ -1473,14 +1490,31 @@ contains
   !>   name that is used to locate a particular comm address stored in an 
   !>   environment variable.
   !> @param[in] name Name of the channel.
+  !> @param[in] commtype Optional communicator type code.
+  !> @param[in] flags Optional bitwise flags describing communicator.
   !> @returns Input comm structure.
-  function ygg_input(name) result(channel)
+  function ygg_input(name, commtype, flags) result(channel)
     implicit none
     character(len=*), intent(in) :: name
+    integer(kind=c_int), intent(in), optional :: commtype, flags
     character(kind=c_char), allocatable :: c_name(:)
+    integer(kind=c_int) :: c_commtype, c_flags
+    type(c_ptr) :: c_datatype
     type(yggcomm) :: channel
     c_name = convert_string_f2c(name)
-    channel = ygg_input_c(c_name)
+    if (present(commtype)) then
+       c_commtype = commtype
+    else
+       c_commtype = DEFAULT_COMM
+    end if
+    if (present(flags)) then
+       c_flags = flags
+    else
+       c_flags = 0
+    end if
+    c_flags = IOR(c_flags, COMM_FLAG_INTERFACE)
+    c_datatype = c_null_ptr
+    channel = init_comm_c(c_name, RECV, c_commtype, c_datatype, c_flags)
     deallocate(c_name)
   end function ygg_input
 
@@ -1491,17 +1525,33 @@ contains
   !>   outgoing messages.
   !> @param[in] name Name of the channel.
   !> @param[in] datatype Data structure containing type information.
+  !> @param[in] commtype Optional communicator type code.
+  !> @param[in] flags Optional bitwise flags describing communicator.
   !> @returns Output comm structure.
-  function ygg_output_type(name, datatype) result(channel)
+  function ygg_output_type(name, datatype, commtype, flags) &
+       result(channel)
     implicit none
     character(len=*), intent(in) :: name
     type(yggdtype), target :: datatype
+    integer(kind=c_int), intent(in), optional :: commtype, flags
     type(c_ptr) :: c_datatype
     character(kind=c_char), allocatable :: c_name(:)
+    integer(kind=c_int) :: c_commtype, c_flags
     type(yggcomm) :: channel
     c_name = convert_string_f2c(name)
     c_datatype = c_loc(datatype)
-    channel = ygg_output_type_c(c_name, c_datatype)
+    if (present(commtype)) then
+       c_commtype = commtype
+    else
+       c_commtype = DEFAULT_COMM
+    end if
+    if (present(flags)) then
+       c_flags = flags
+    else
+       c_flags = 0
+    end if
+    c_flags = IOR(c_flags, COMM_FLAG_INTERFACE)
+    channel = init_comm_c(c_name, SEND, c_commtype, c_datatype, c_flags)
     deallocate(c_name)
   end function ygg_output_type
   
@@ -1512,17 +1562,33 @@ contains
   !>   incoming messages.
   !> @param[in] name Name of the channel.
   !> @param[in] datatype Data structure containing type information.
+  !> @param[in] commtype Optional communicator type code.
+  !> @param[in] flags Optional bitwise flags describing communicator.
   !> @returns Input comm structure.
-  function ygg_input_type(name, datatype) result(channel)
+  function ygg_input_type(name, datatype, commtype, flags) &
+       result(channel)
     implicit none
     character(len=*), intent(in) :: name
     type(yggdtype), target :: datatype
+    integer(kind=c_int), intent(in), optional :: commtype, flags
     type(c_ptr) :: c_datatype
     character(kind=c_char), allocatable :: c_name(:)
+    integer(kind=c_int) :: c_commtype, c_flags
     type(yggcomm) :: channel
     c_name = convert_string_f2c(name)
     c_datatype = c_loc(datatype)
-    channel = ygg_input_type_c(c_name, c_datatype)
+    if (present(commtype)) then
+       c_commtype = commtype
+    else
+       c_commtype = DEFAULT_COMM
+    end if
+    if (present(flags)) then
+       c_flags = flags
+    else
+       c_flags = 0
+    end if
+    c_flags = IOR(c_flags, COMM_FLAG_INTERFACE)
+    channel = init_comm_c(c_name, RECV, c_commtype, c_datatype, c_flags)
     deallocate(c_name)
   end function ygg_input_type
   

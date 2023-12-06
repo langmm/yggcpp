@@ -17,7 +17,9 @@ else()
 endif()
 target_include_directories(
           ${YGG_TARGET_PY} PUBLIC
-          ${DEPS_INCLUDE_DIRS})
+          ${DEPS_INCLUDE_DIRS}
+	  ${CMAKE_CURRENT_SOURCE_DIR}/../communication
+	  ${RAPIDJSON_INCLUDE_DIRS})
 if(YGG_LINK_PYTHON_TO_CPP)
     target_link_libraries(${YGG_TARGET_PY} PUBLIC ${YGG_TARGET_CPP})
 endif()
@@ -26,7 +28,7 @@ target_link_libraries(
 	  ${DEPS_LIB_NAMES_NO_PYTHON}
 	  ${DEPS_LIBRARIES_NO_PYTHON})
 target_compile_options(${YGG_TARGET_PY} PUBLIC
-	  -DRAPIDJSON_YGGDRASIL_PYTHON)
+	  ${YGG_INSTALL_DEFS} -DRAPIDJSON_YGGDRASIL_PYTHON)
 if(YGG_PYTHON_LIBRARY_WRAP)
     target_compile_options(${YGG_TARGET_PY} PRIVATE
               -DYGG_PYTHON_LIBRARY_WRAP)

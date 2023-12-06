@@ -124,7 +124,8 @@ void Comm_t::init_base() {
 
     if (!address.valid()) {
         address = addressFromEnv(name, direction);
-        if ((flags & COMM_FLAG_INTERFACE) && (!address.valid())) {
+        if ((flags & COMM_FLAG_INTERFACE) && (!address.valid()) &&
+	    (!(flags & COMM_FLAG_SET_OPP_ENV))) {
 	    log_error() << "Comm_t: " << name << " not registered as environment variable.\n" << std::endl;
             flags &= ~COMM_FLAG_VALID;
         }

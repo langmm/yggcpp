@@ -4,8 +4,6 @@
 * Fill in missing docs
 * Add RabbitMQ communicator (low priority)
 * Add test to verify that send/recv/call/wait can be interuppted by Ctrl+C
-* Allow for datatype to be passed as a argument to the constructors in C++ and Python
-* Add cmake/package config files that can be used by other packages
 * Expand C & Fortran interfaces for ply/obj to match Python
 * Automate fortran wrapping of C interface?
 * Change how ply & obj are stored to be generic geometry structure?
@@ -19,4 +17,4 @@
 * Verify C++ class is pickleable
 * Add C++ equivalent of get_status_message & printStatus
 * Update handling of specialized send/recv (dict, array) with transforms and test data
-* Add speed test
+* Enable speed test on GHA jobs

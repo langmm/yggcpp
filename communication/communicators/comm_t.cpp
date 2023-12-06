@@ -77,14 +77,9 @@ comm_t _init_comm(const char* name, const enum DIRECTION dir,
       YggLogError << "init_comm(" << name << "): Error initializing comm" << std::endl;
       return ret;
     }
-    if (datatype && datatype->metadata) {
-      communication::utils::Metadata* metadata = static_cast<communication::utils::Metadata*>(datatype->metadata);
-      if (!static_cast<communication::communicator::Comm_t*>(ret.comm)->addSchema(*metadata)) {
-	free_comm(&ret);
-	return ret;
-      }
-      datatype->metadata = NULL;
-      delete metadata;
+    if (!comm_set_datatype(ret, datatype)) {
+      free_comm(&ret);
+      return ret;
     }
     if (!((static_cast<communication::communicator::Comm_t*>(ret.comm))->getFlags() & COMM_FLAG_VALID))
       free_comm(&ret);
@@ -96,6 +91,13 @@ comm_t init_comm(const char* name, const enum DIRECTION dir,
 		 dtype_t* datatype) {
   int flags = COMM_FLAG_INTERFACE;
   comm_t out = _init_comm(name, dir, t, datatype, flags);
+  set_comm_language(out, C_LANGUAGE);
+  return out;
+}
+comm_t init_comm_flags(const char* name, const enum DIRECTION dir,
+		       const enum COMM_TYPE t, int flags) {
+  flags |= COMM_FLAG_INTERFACE;
+  comm_t out = _init_comm(name, dir, t, NULL, flags);
   set_comm_language(out, C_LANGUAGE);
   return out;
 }
@@ -153,6 +155,20 @@ dtype_t comm_get_datatype(comm_t x) {
   } _END_CPP_CLEANUP(comm_get_datatype, out,
 		     destroy_dtype(&out));
   return out;
+}
+int comm_set_datatype(comm_t x, dtype_t* datatype) {
+  int ret = 1;
+  _BEGIN_CPP {
+    if (datatype && datatype->metadata) {
+      communication::utils::Metadata* metadata = static_cast<communication::utils::Metadata*>(datatype->metadata);
+      if (!static_cast<communication::communicator::Comm_t*>(x.comm)->addSchema(*metadata)) {
+	return 0;
+      }
+      datatype->metadata = NULL;
+      delete metadata;
+    }
+  } _END_CPP_CLEANUP(comm_set_datatype, ret, ret = 0);
+  return 1;
 }
 
 int is_comm_format_array_type(comm_t x) {

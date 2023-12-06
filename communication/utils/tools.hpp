@@ -10,6 +10,9 @@
 // #else
 // #   define YGG_API
 // #endif
+#define UNUSED(arg) ((void)&(arg))
+#define STRINGIFY(x) #x
+
 
 #ifdef __cplusplus
 #include <vector>
@@ -45,8 +48,6 @@
 
 #include <cmath> // Required to prevent error when using mingw on windows
 
-#endif
-
 #ifdef _MSC_VER
 // Prevent windows.h from including winsock.h
 #ifndef WIN32_LEAN_AND_MEAN
@@ -63,6 +64,8 @@
 #include <unistd.h>
 
 #define ygg_getpid getpid
+#endif
+
 #endif
 
 #define STRBUFF 100
@@ -272,22 +275,6 @@ namespace utils {
 //     for (auto &word : values)
 //         std::replace(word.begin(), word.end(), spacer1, ' ');
 // }
-
-/*! @brief Define macros to allow counts of variables. */
-// https://codecraft.co/2014/11/25/variadic-macros-tricks/
-#ifdef _MSC_VER
-// https://stackoverflow.com/questions/48710758/how-to-fix-variadic-macro-related-issues-with-macro-overloading-in-msvc-mic
-#define MSVC_BUG(MACRO, ARGS) MACRO ARGS  // name to remind that bug fix is due to MSVC :-)
-#define _GET_NTH_ARG_2(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, N, ...) N
-#define _GET_NTH_ARG(...) MSVC_BUG(_GET_NTH_ARG_2, (__VA_ARGS__))
-#define COUNT_VARARGS(...) _GET_NTH_ARG("ignored", ##__VA_ARGS__, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0)
-#define VA_MACRO(MACRO, ...) MSVC_BUG(CONCATE, (MACRO, COUNT_VARARGS(__VA_ARGS__)))(__VA_ARGS__)
-#else
-#define _GET_NTH_ARG(_1, _2, _3, _4, _5, _6, _7, _8, _9, _10, _11, _12, _13, _14, N, ...) N
-#define COUNT_VARARGS(...) _GET_NTH_ARG("ignored", ##__VA_ARGS__, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0)
-#endif
-#define UNUSED(arg) ((void)&(arg))
-#define STRINGIFY(x) #x
 
 #ifdef THREADSINSTALLED
 #define THREAD_USLEEP(x) std::this_thread::sleep_for(std::chrono::microseconds(x))

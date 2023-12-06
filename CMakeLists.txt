@@ -219,21 +219,22 @@ if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
 endif("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
 
 if(WIN32)
-if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+  if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     set(WRAP_RAPIDJSON_FOR_DLL ON)
-# else()
-#     set(YGG_LINK_PYTHON_TO_CPP ON)
-endif()
-endif()
-if(WRAP_RAPIDJSON_FOR_DLL)
-    set(YGG_LINK_PYTHON_TO_CPP OFF)
-    add_definitions(-DWRAP_RAPIDJSON_FOR_DLL)
+  # else()
+  #     set(YGG_LINK_PYTHON_TO_CPP ON)
+  endif()
 endif()
 
-add_definitions(-DRAPIDJSON_YGGDRASIL)
-add_definitions(-DRAPIDJSON_HAS_STDSTRING)
-add_definitions(-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION)
-add_definitions(-D_USE_MATH_DEFINES)
+if(WRAP_RAPIDJSON_FOR_DLL)
+    set(YGG_LINK_PYTHON_TO_CPP OFF)
+    list(APPEND YGG_INSTALL_DEFS -DWRAP_RAPIDJSON_FOR_DLL)
+endif()
+
+list(APPEND YGG_INSTALL_DEFS
+     -DRAPIDJSON_YGGDRASIL -DRAPIDJSON_HAS_STDSTRING
+     -DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
+     -D_USE_MATH_DEFINES)
 
 set(RAPIDJSON_PYTHON_ENV "YGG_MODEL_INDEX=123")
 
@@ -255,7 +256,6 @@ endif()
 if(NOT RAPIDJSON_INCLUDE_DIRS)
     set(RAPIDJSON_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/communication/rapidjson/include")
 endif()
-set(DEPS_INCLUDE_DIRS ${DEPS_INCLUDE_DIRS} ${RAPIDJSON_INCLUDE_DIRS})
 message(STATUS "Rapidjson found ${RAPIDJSON_INCLUDE_DIRS}")
 
 ##############################
@@ -306,6 +306,7 @@ if(ENABLE_ZMQ)
     if ((NOT ZeroMQ_FOUND) AND (WIN32))
         find_package(ZeroMQ CONFIG REQUIRED)
     endif()
+    list(APPEND YGG_INSTALL_DEPS ZeroMQ)
 else (ENABLE_ZMQ)
     message(STATUS "No zmq support will be built." )
 endif (ENABLE_ZMQ)
@@ -331,7 +332,7 @@ if (ZeroMQ_FOUND)
 	    message(STATUS "Updated ZeroMQ_LIBRARY = ${ZeroMQ_LIBRARY}")
         endif()
     endif()
-    add_definitions(-DZMQINSTALLED)
+    list(APPEND YGG_INSTALL_DEFS -DZMQINSTALLED)
     if (ZeroMQ_STATIC_LIBRARY AND NOT ZeroMQ_LIBRARY)
         add_library(libzmq INTERFACE IMPORTED)
 	set_target_properties(libzmq PROPERTIES INTERFACE_LINK_LIBRARIES libzmq-static)
@@ -352,8 +353,8 @@ endif()
 ##########
 
 if (ENABLE_OMP)
-find_package(OpenMP)
-if (OpenMP_CXX_FOUND)
+  find_package(OpenMP)
+  if (OpenMP_CXX_FOUND)
     message(STATUS "OpenMP found")
     set(DEPS_LIBRARIES ${DEPS_LIBRARIES} ${OpenMP_CXX_LIBRARIES})
     set(DEPS_LIB_NAMES ${DEPS_LIB_NAMES} ${OpenMP_CXX_LIB_NAMES})
@@ -363,9 +364,10 @@ if (OpenMP_CXX_FOUND)
     message(STATUS "OpenMP_CXX_LIB_NAMES = ${OpenMP_CXX_LIB_NAMES}")
     message(STATUS "OpenMP_C_FLAGS = ${OpenMP_C_FLAGS}")
     message(STATUS "OpenMP_CXX_FLAGS = ${OpenMP_CXX_FLAGS}")
-else()
+    list(APPEND YGG_INSTALL_DEPS OpenMP)
+  else()
     message(STATUS "NO OpenMP")
-endif()
+  endif()
 endif()
 
 #############
@@ -388,7 +390,7 @@ if (Threads_FOUND)
     #     file(READ ${PTHREAD_H} PTHREAD_H_CONTENTS)
     # 	message(STATUS "PTHREAD_H_CONTENTS = ${PTHREAD_H_CONTENTS}")
     # endif()
-    add_definitions(-DTHREADSINSTALLED)
+    list(APPEND YGG_INSTALL_DEFS -DTHREADSINSTALLED)
     set(DEPS_LIB_NAMES ${DEPS_LIB_NAMES} Threads::Threads)
     if (CMAKE_THREAD_LIBS_INIT)
         message(STATUS "CMAKE_THREAD_LIBS_INIT = ${CMAKE_THREAD_LIBS_INIT}")
@@ -398,6 +400,7 @@ if (Threads_FOUND)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
     endif()
+    list(APPEND YGG_INSTALL_DEPS Threads)
 else()
     message(STATUS "NO Threads")
 endif()
@@ -453,10 +456,11 @@ if(ENABLE_MPI)
 find_package(MPI)
 if(MPI_CXX_FOUND)
     message(STATUS "MPI found")
-    add_definitions(-DMPIINSTALLED)
+    list(APPEND YGG_INSTALL_DEFS -DMPIINSTALLED)
     set(DEPS_LIBRARIES ${DEPS_LIBRARIES} ${MPI_CXX_LIBRARIES})
     set(DEPS_LIB_NAMES ${DEPS_LIB_NAMES} MPI::MPI_CXX)
     set(DEPS_INCLUDE_DIRS ${DEPS_INCLUDE_DIRS} ${MPI_CXX_INCLUDE_DIRS})
+    list(APPEND YGG_INSTALL_DEPS MPI)
 else()
     message(STATUS "NO MPI")
 endif()
@@ -469,7 +473,7 @@ endif()
 set(DEPS_LIBRARIES_NO_PYTHON ${DEPS_LIBRARIES})
 set(DEPS_LIB_NAMES_NO_PYTHON ${DEPS_LIB_NAMES})
 if(YGGDRASIL_DISABLE_PYTHON_C_API)
-    add_definitions(-DYGGDRASIL_DISABLE_PYTHON_C_API)
+    list(APPEND YGG_INSTALL_DEFS -DYGGDRASIL_DISABLE_PYTHON_C_API)
 else()
     # needed on GitHub Actions CI: actions/setup-python does not touch registry/frameworks on Windows/macOS
     # this mirrors PythonInterp behavior which did not consult registry/frameworks first
@@ -543,6 +547,7 @@ else()
     set(DEPS_LIBRARIES_PYTHON ${Python3_LIBRARIES})
     set(DEPS_LIB_NAMES_NO_PYTHON Python3::NumPy)
     set(DEPS_INCLUDE_DIRS ${DEPS_INCLUDE_DIRS} ${Python3_INCLUDE_DIRS} ${Python3_NumPy_INCLUDE_DIRS})
+    list(APPEND YGG_INSTALL_DEPS Python3)
 endif()
 
 ##################
@@ -554,13 +559,13 @@ if (NOT ZeroMQ_FOUND)
 endif()
 if(USING_IPC)
     if (UNIX OR CYGWIN)
-        add_definitions(-DIPCDEF)
+	list(APPEND YGG_INSTALL_DEFS -DIPCDEF)
     else()
         set(USING_IPC OFF)
     endif()
 endif()
 if (UNIX OR CYGWIN)
-    add_definitions(-DIPCINSTALLED)
+    list(APPEND YGG_INSTALL_DEFS -DIPCINSTALLED)
 endif()
 
 ###################
@@ -596,7 +601,6 @@ if (YGG_DEBUG_LEVEL)
 endif()
 
 
-set(DEPS_INCLUDE_DIRS ${DEPS_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/communication)
 message(STATUS "DEPS_INCLUDE_DIRS = ${DEPS_INCLUDE_DIRS}")
 message(STATUS "DEPS_LIBRARIES = ${DEPS_LIB_NAMES};${DEPS_LIBRARIES}")
 
@@ -612,16 +616,14 @@ if(SKBUILD)
   endif()
 endif()
 file(GLOB SOURCES "communication/*.cpp" "communication/utils/*.cpp" "communication/communicators/*.cpp" "communication/datatypes/dtype_t.cpp")
+
 if(BUILD_CPP_LIBRARY)
     if(SKBUILD)
         set(YGG_TARGET_CPP YggInterface_py)
     else()
         set(YGG_TARGET_CPP YggInterface)
     endif()
-    message(STATUS "YGG_TARGET_CPP = ${YGG_TARGET_CPP}")
     if(SKBUILD AND NOT YGGDRASIL_DISABLE_PYTHON_C_API)
-        message(STATUS "SKBUILD_PROJECT_NAME = ${SKBUILD_PROJECT_NAME}")
-	message(STATUS "SKBUILD_PLATLIB_DIR = ${SKBUILD_PLATLIB_DIR}")
 	if(SKBUILD STREQUAL "2")
   	    Python3_add_library(${YGG_TARGET_CPP} SHARED ${SOURCES})
 	    set(YGG_CPP_LINK_KEYWORD PUBLIC)
@@ -636,6 +638,8 @@ if(BUILD_CPP_LIBRARY)
      	    -DRAPIDJSON_YGGDRASIL_PYTHON -DYGG_LINK_PYTHON_TO_CPP)
     else()
         add_library(${YGG_TARGET_CPP} SHARED ${SOURCES})
+	add_library(YggInterface::CXX ALIAS ${YGG_TARGET_CPP})
+	add_library(YggInterface::C ALIAS ${YGG_TARGET_CPP})
         target_link_libraries(
 	    ${YGG_TARGET_CPP} PUBLIC
 	    ${DEPS_LIB_NAMES}
@@ -648,13 +652,24 @@ if(BUILD_CPP_LIBRARY)
 	    target_link_options(${YGG_TARGET_CPP}
 	        PRIVATE /INCLUDE:rapidjson_ARRAY_API)
 	endif()
+        list(APPEND YGG_INSTALL_TARGETS ${YGG_TARGET_CPP})
     endif()
     target_include_directories(
         ${YGG_TARGET_CPP} PUBLIC
+  	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/communication>
+	$<BUILD_INTERFACE:${RAPIDJSON_INCLUDE_DIRS}>
+	$<INSTALL_INTERFACE:include/YggInterface>
+	$<INSTALL_INTERFACE:include/YggInterface/rapidjson/include>)
+    target_include_directories(
+        ${YGG_TARGET_CPP} PRIVATE
     	${DEPS_INCLUDE_DIRS})
+    target_compile_definitions(
+        ${YGG_TARGET_CPP} PUBLIC ${YGG_INSTALL_DEFS})
+    
     include(CheckDLL)
     show_runtimes(${YGG_TARGET_CPP})
 endif()
+add_definitions(${YGG_INSTALL_DEFS})
 
 #########################
 # Create Python Library #
@@ -667,20 +682,49 @@ if(BUILD_PYTHON_LIBRARY AND NOT YGGDRASIL_DISABLE_PYTHON_C_API)
     add_subdirectory(python)
 endif()
 
-#########################
+##########################
 # Create Fortran Library #
-#########################
+##########################
 
 if(BUILD_FORTRAN_LIBRARY)
-    message(STATUS "First CMAKE_IMPORT_LIBRARY_SUFFIX = ${CMAKE_IMPORT_LIBRARY_SUFFIX}")
     if(CMAKE_Fortran_COMPILER AND WIN32)
-        message(STATUS "CMAKE_Fortran_COMPILER (before) = ${CMAKE_Fortran_COMPILER}")
         cmake_path(SET CMAKE_Fortran_COMPILER NORMALIZE ${CMAKE_Fortran_COMPILER})
-        message(STATUS "CMAKE_Fortran_COMPILER (after)  = ${CMAKE_Fortran_COMPILER}")
     endif()
     add_subdirectory(fortran)
 endif()
 
+##################
+# Install        #
+##################
+
+if (YGG_INSTALL_TARGETS)
+  include(GNUInstallDirs)
+  message(STATUS "YGG_INSTALL_TARGETS = ${YGG_INSTALL_TARGETS}")
+  install(TARGETS ${YGG_INSTALL_TARGETS}
+          EXPORT YggInterfaceTargets
+	  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+	  PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/YggInterface)
+  install(EXPORT YggInterfaceTargets
+          FILE YggInterfaceTargets.cmake
+	  NAMESPACE YggInterface::
+	  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/YggInterface)
+  install(DIRECTORY communication/
+          DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/YggInterface
+	  FILES_MATCHING REGEX ".*\\.h(pp)?$")
+  include(CMakePackageConfigHelpers)
+  write_basic_package_version_file(
+    "YggInterfaceConfigVersion.cmake"
+    VERSION ${LIB_VERSION_STRING}
+    COMPATIBILITY AnyNewerVersion)
+  configure_file(
+    YggInterfaceConfig.cmake.in YggInterfaceConfig.cmake @ONLY)
+  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/YggInterfaceConfig.cmake"
+          "${CMAKE_CURRENT_BINARY_DIR}/YggInterfaceConfigVersion.cmake"
+          DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/YggInterface)
+endif ()
+    
 ##################
 # Coverage       #
 ##################

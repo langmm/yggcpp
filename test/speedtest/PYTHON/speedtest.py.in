@@ -1,0 +1,29 @@
+# TODO: Replace errors with specific errors
+import pyYggdrasil
+
+
+SPEED_TEST_N_MSG = @SPEED_TEST_N_MSG@
+SPEED_TEST_S_MSG = @SPEED_TEST_S_MSG@
+SPEED_TEST_COMM = pyYggdrasil.COMM_TYPE.@SPEED_TEST_COMM@
+
+
+print(f"Sending {SPEED_TEST_N_MSG} messages containing "
+      f"{SPEED_TEST_S_MSG} bytes");
+icomm = pyYggdrasil.Comm_t(
+    "speed", direction=pyYggdrasil.DIRECTION.RECV,
+    commtype=SPEED_TEST_COMM,
+    flags=(pyYggdrasil.COMM_FLAG.COMM_FLAG_ASYNC |
+           pyYggdrasil.COMM_FLAG.COMM_FLAG_SET_OPP_ENV))
+ocomm = pyYggdrasil.Comm_t(
+    "speed", direction=pyYggdrasil.DIRECTION.SEND,
+    commtype=SPEED_TEST_COMM,
+    flags=pyYggdrasil.COMM_FLAG.COMM_FLAG_ASYNC)
+omsg = SPEED_TEST_S_MSG * 'x'
+for i in range(SPEED_TEST_N_MSG):
+    if (not ocomm.send(omsg)):
+        raise RuntimeError(f"Failure to send message #{i}")
+    flag, imsg = icomm.recv()
+    if (not flag):
+        raise RuntimeError(f"Failure to recv message #{i}")
+    if (imsg != omsg):
+        raise RuntimeError(f"Received message #{i} does not match sent message")

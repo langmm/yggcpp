@@ -13,42 +13,26 @@ include(YggAddFortranSubdirectory)
 add_mixed_fortran_library(${YGG_TARGET_FORTRAN} SHARED
                           LANGUAGE CXX
                           c_wrappers.c YggInterface.f90)
-add_library(YggInterface::fortran ALIAS ${YGG_TARGET_FORTRAN})
+add_library(YggInterface::Fortran ALIAS ${YGG_TARGET_FORTRAN})
 
 # Configure Fortran wrapper
 set_target_properties(${YGG_TARGET_FORTRAN} PROPERTIES
                       VERSION ${PROJECT_VERSION}
                       SOVERSION ${PROJECT_VERSION_MAJOR}
-                      OUTPUT_NAME ${YGG_TARGET_FORTRAN}
-                      PUBLIC_HEADER YggInterface.f90)
+                      OUTPUT_NAME ${YGG_TARGET_FORTRAN})
+                      # PUBLIC_HEADER YggInterface.f90)
 target_include_directories(${YGG_TARGET_FORTRAN} PUBLIC
                            "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>")
 target_link_libraries(${YGG_TARGET_FORTRAN} PUBLIC YggInterface)
-		      # YggInterface ${DEPS_LIB_NAMES} ${DEPS_LIBRARIES})
-target_include_directories(${YGG_TARGET_FORTRAN} PUBLIC
+target_include_directories(${YGG_TARGET_FORTRAN} PRIVATE
                            ${DEPS_INCLUDE_DIRS})
+list(APPEND YGG_INSTALL_TARGETS ${YGG_TARGET_FORTRAN})
+set(YGG_INSTALL_TARGETS ${YGG_INSTALL_TARGETS} PARENT_SCOPE)
 
-message(STATUS "CMAKE_INSTALL_INCLUDEDIR = ${CMAKE_INSTALL_INCLUDEDIR}")
-message(STATUS "CMAKE_CURRENT_BINARY_DIR = ${CMAKE_CURRENT_BINARY_DIR}")
 # Install
-if (YGGDRASIL_INSTALL)
-   install(TARGETS ${YGG_TARGET_FORTRAN}
-           EXPORT YggInterfaceTargets-fortran
-           LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT YggInterface_Runtime NAMELINK_COMPONENT YggInterface_Development
-           ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT YggInterface_Development
-           PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} COMPONENT YggInterface_Development)
-   export_components(COMPONENT fortran LIB_TYPE ${YGGDRASIL_LIB_TYPE})
-
-   # Maybe it is handled automatically
-   install(FILES ${CMAKE_Fortran_MODULE_DIRECTORY}/YggInterface.mod
-           DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
-           COMPONENT YggInterface_Development)
-
-   # configure_file(YggInterface.pc.in YggInterface.pc @ONLY)
-   # install(FILES ${CMAKE_CURRENT_BINARY_DIR}/YggInterface.pc
-   #         DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
-   #         COMPONENT YggInterface_Development)
-endif ()
+message(STATUS "CMAKE_CURRENT_BINARY_DIR = ${CMAKE_CURRENT_BINARY_DIR}")
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/YggInterface.mod
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 include(CheckDLL)
 show_runtimes(${YGG_TARGET_FORTRAN})
