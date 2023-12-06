@@ -101,7 +101,6 @@ if (WIN32)
     endif()
 endif ()
 
-option(YGG_SKIP_VALGRIND_TESTS "Disable valgrind tests" OFF)
 if(NOT MSVC)
     find_program(VALGRIND_FOUND valgrind)
     if((NOT YGG_SKIP_VALGRIND_TESTS) AND VALGRIND_FOUND)

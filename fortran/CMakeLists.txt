@@ -3,12 +3,6 @@ if ((NOT FORCE_SPLIT_CXXFORTRAN) AND (NOT MSVC))
     enable_language(Fortran)
 endif()
 
-# Test case that can be removed
-# include(SearchTools)
-# list_search_directories(search_dirs)
-# find_library_suffix(omv opencv_stereo SHARED REQUIRED)
-# message(FATAL_ERROR "Found ${omv}")
-
 include(YggAddFortranSubdirectory)
 add_mixed_fortran_library(${YGG_TARGET_FORTRAN} SHARED
                           LANGUAGE CXX
@@ -20,7 +14,6 @@ set_target_properties(${YGG_TARGET_FORTRAN} PROPERTIES
                       VERSION ${PROJECT_VERSION}
                       SOVERSION ${PROJECT_VERSION_MAJOR}
                       OUTPUT_NAME ${YGG_TARGET_FORTRAN})
-                      # PUBLIC_HEADER YggInterface.f90)
 target_include_directories(${YGG_TARGET_FORTRAN} PUBLIC
                            "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>")
 target_link_libraries(${YGG_TARGET_FORTRAN} PUBLIC YggInterface)
@@ -30,9 +23,8 @@ list(APPEND YGG_INSTALL_TARGETS ${YGG_TARGET_FORTRAN})
 set(YGG_INSTALL_TARGETS ${YGG_INSTALL_TARGETS} PARENT_SCOPE)
 
 # Install
-message(STATUS "CMAKE_CURRENT_BINARY_DIR = ${CMAKE_CURRENT_BINARY_DIR}")
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/YggInterface.mod
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+list(APPEND YGG_INSTALL_INCLUDES
+     ${CMAKE_CURRENT_BINARY_DIR}/YggInterface.mod)
 
 include(CheckDLL)
 show_runtimes(${YGG_TARGET_FORTRAN})
