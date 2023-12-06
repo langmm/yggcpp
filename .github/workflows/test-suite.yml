@@ -117,13 +117,13 @@ jobs:
           sudo apt-get install -y libc6-dbg gdb valgrind lcov libcmocka-dev gfortran
           sudo apt upgrade --fix-missing
           valgrind --version
-          echo "FC=$(which gfortran)" >> "$GITHUB_ENV"
+          # echo "FC=$(which gfortran)" >> "$GITHUB_ENV"
       - name: Install dependencies on Mac
         if: matrix.os == 'macos-latest' && matrix.python-install == 'pip'
         run: |
           brew link --overwrite python@3.11
           brew install cmocka lcov gnutls # llvm
-          echo "FC=$(which gfortran-12)" >> "$GITHUB_ENV"
+          # echo "FC=$(which gfortran-12)" >> "$GITHUB_ENV"
       # - name: Set vcpkg triplet on Windows (mingw)
       #   if: matrix.os == 'windows-latest' && matrix.python-install == 'pip' && matrix.windows-compiler == 'mingw'
       #   shell: bash -l {0}
@@ -140,17 +140,17 @@ jobs:
         if: matrix.os == 'windows-latest' && matrix.python-install == 'pip'
         run: |
           vcpkg.exe install cmocka --triplet $env:VCPKG_TRIPLET
-      - name: Set flags for dependencies on Windows
-        if: matrix.os == 'windows-latest' && matrix.python-install == 'pip' && matrix.windows-compiler == 'mingw'
-        shell: bash -l {0}
-        run: |
-          echo "CC=gcc.exe" >> "$GITHUB_ENV"
-          echo "CXX=c++.exe" >> "$GITHUB_ENV"
-      - name: Set flags for dependencies on Windows
-        if: matrix.os == 'windows-latest' # && matrix.python-install == 'pip'
-        shell: bash -l {0}
-        run: |
-          echo "FC=gfortran.exe" >> "$GITHUB_ENV"
+      # - name: Set flags for dependencies on Windows
+      #   if: matrix.os == 'windows-latest' && matrix.python-install == 'pip' && matrix.windows-compiler == 'mingw'
+      #   shell: bash -l {0}
+      #   run: |
+      #     echo "CC=gcc.exe" >> "$GITHUB_ENV"
+      #     echo "CXX=c++.exe" >> "$GITHUB_ENV"
+      # - name: Set flags for dependencies on Windows
+      #   if: matrix.os == 'windows-latest' # && matrix.python-install == 'pip'
+      #   shell: bash -l {0}
+      #   run: |
+      #     echo "FC=gfortran.exe" >> "$GITHUB_ENV"
       # ZeroMQ dependencies
       - name: Install ZeroMQ
         if: matrix.os == 'ubuntu-latest' && matrix.install-zmq && matrix.python-install == 'pip'
