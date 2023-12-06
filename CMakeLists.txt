@@ -414,9 +414,10 @@ endif()
 
 if (CONDA_PREFIX AND MINGW AND
     CMAKE_CXX_COMPILER_VERSION STREQUAL "5.3.0")
-  cmake_path(APPEND CONDA_PREFIX Library mingw-w64
+  cmake_path(APPEND CONDA_PREFIX Library mingw-w64 include c++ 5.3.0
              OUTPUT_VARIABLE MINGW_PATHS)
-  find_file(THREAD_H thread PATHS ${MINGW_PATHS} NO_DEFAULT_PATH)
+  message(STATUS "MINGW_PATHS = ${MINGW_PATHS}")
+  find_file(THREAD_H thread PATHS ${MINGW_PATHS} NO_DEFAULT_PATH REQUIRED)
   message(STATUS "THREAD_H = ${THREAD_H}")
   if(NOT THREAD_H STREQUAL THREAD_H-NOTFOUND)
     file(READ ${THREAD_H} THREAD_H_CONTENTS)
@@ -645,8 +646,6 @@ if(BUILD_CPP_LIBRARY)
 	if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 	    target_link_options(${YGG_TARGET_CPP}
 	        PRIVATE /INCLUDE:rapidjson_ARRAY_API)
-	    # target_link_options(${YGG_TARGET_CPP}
-	    #     INTERFACE /INCLUDE:rapidjson_ARRAY_API)
 	endif()
     endif()
     target_include_directories(
