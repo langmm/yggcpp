@@ -17,4 +17,3 @@
 * Verify C++ class is pickleable
 * Add C++ equivalent of get_status_message & printStatus
 * Update handling of specialized send/recv (dict, array) with transforms and test data
-* Enable speed test on GHA jobs
