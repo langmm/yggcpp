@@ -236,10 +236,10 @@ if [ -n "$DO_PYTHON" ] && [ -n "$NO_CORE" ]; then
     fi
     cd ../../
 else
-    DYLD_PRINT_LIBRARIES=1
-    DYLD_PRINT_APIS=1
-    DYLD_PRINT_WARNINGS=1
-    LDFLAGS='-undefined error'
+    # DYLD_PRINT_LIBRARIES=1
+    # DYLD_PRINT_APIS=1
+    # DYLD_PRINT_WARNINGS=1
+    # LDFLAGS='-undefined error'
     if [ ! -d "build" ]; then
 	mkdir build
     fi

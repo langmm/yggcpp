@@ -260,81 +260,19 @@ message(STATUS "Rapidjson found ${RAPIDJSON_INCLUDE_DIRS}")
 ##########
 
 if(ENABLE_ZMQ)
-    find_package(ZeroMQ CONFIG)
-    if (NOT ZeroMQ_FOUND)
-        message(STATUS "ZeroMQ could not be found using default search tree. Trying via pkg-config...")
-        # Only conda version has CMake config
-        ## load in pkg-config support
-        find_package(PkgConfig)
-        ## use pkg-config to get hints for 0mq locations
-        pkg_check_modules(PC_ZeroMQ QUIET zmq libzmq libzmq-static)
-
-        if (CONDA_PREFIX)
-	    if (WIN32)
-                set(PC_ZeroMQ_INCLUDE_DIRS "${CONDA_PREFIX}/Library/include ${PC_ZeroMQ_INCLUDE_DIRS}")
-                set(PC_ZeroMQ_LIBRARY_DIRS "${CONDA_PREFIX}/Library/lib ${CONDA_PREFIX}/Library/bin ${PC_ZeroMQ_LIBRARY_DIRS}")
-            else()
-                set(PC_ZeroMQ_INCLUDE_DIRS "${CONDA_PREFIX}/include ${PC_ZeroMQ_INCLUDE_DIRS}")
-                set(PC_ZeroMQ_LIBRARY_DIRS "${CONDA_PREFIX}/lib ${PC_ZeroMQ_LIBRARY_DIRS}")
-            endif()
-        endif()
-
-        ## use the hint from above to find where 'zmq.h' is located
-        find_path(ZeroMQ_INCLUDE_DIR
-            NAMES zmq.h
-            PATHS ${PC_ZeroMQ_INCLUDE_DIRS}
-            )
-
-        ## use the hint from above to find the location of libzmq
-        find_library(ZeroMQ_LIBRARY_NEW
-            NAMES zmq libzmq libzmq-static
-            PATHS ${PC_ZeroMQ_LIBRARY_DIRS}
-            )
-        set(ZeroMQ_LIBRARY ${ZeroMQ_LIBRARY_NEW})
-	if ((NOT ZeroMQ_INCLUDE_DIR STREQUAL ZeroMQ_INCLUDE_DIR-NOTFOUND) AND (NOT ZeroMQ_LIBRARY STREQUAL ZeroMQ_LIBRARY-NOTFOUND))
-            set(ZeroMQ_FOUND 1)
-	endif()
+    include(SearchTools)
+    find_package_zmq()
+    if (ZeroMQ_FOUND)
+        list(APPEND YGG_INSTALL_DEFS -DZMQINSTALLED)
+        list(APPEND YGG_INSTALL_DEPS ZeroMQ)
+	list(APPEND DEPS_LIBRARIES ${ZeroMQ_LIBRARY})
+	list(APPEND DEPS_INCLUDE_DIRS ${ZeroMQ_INCLUDE_DIR})
+    else()
+        message(STATUS "NO ZeroMQ")
     endif()
-    # Force error
-    if ((NOT ZeroMQ_FOUND) AND (WIN32))
-        find_package(ZeroMQ CONFIG REQUIRED)
-    endif()
-    list(APPEND YGG_INSTALL_DEPS ZeroMQ)
 else (ENABLE_ZMQ)
     message(STATUS "No zmq support will be built." )
 endif (ENABLE_ZMQ)
-
-if (ZeroMQ_FOUND)
-    message(STATUS "ZeroMQ found")
-    if (WIN32 AND ZeroMQ_LIBRARY)
-        string(FIND ${ZeroMQ_LIBRARY} ".dll" ZeroMQ_DLL_POS)
-        if (NOT "${ZeroMQ_DLL_POS}" STREQUAL "-1")
-            get_filename_component(ZeroMQ_BIN_DIR ${ZeroMQ_LIBRARY} DIRECTORY)
-            get_filename_component(ZeroMQ_PREFIX_DIR ${ZeroMQ_BIN_DIR} DIRECTORY)
-            get_filename_component(ZeroMQ_BASE_NAME ${ZeroMQ_LIBRARY} NAME_WLE)
-            find_library(ZeroMQ_LIBRARY_LIB
-                NAMES ${ZeroMQ_BASE_NAME}
-                PATHS ${ZeroMQ_PREFIX_DIR}/lib
-                )
-            set(ZeroMQ_LIBRARY ${ZeroMQ_LIBRARY_LIB})
-	    message(STATUS "Updated ZeroMQ_LIBRARY = ${ZeroMQ_LIBRARY}")
-        endif()
-    endif()
-    list(APPEND YGG_INSTALL_DEFS -DZMQINSTALLED)
-    if (ZeroMQ_STATIC_LIBRARY AND NOT ZeroMQ_LIBRARY)
-        add_library(libzmq INTERFACE IMPORTED)
-	set_target_properties(libzmq PROPERTIES INTERFACE_LINK_LIBRARIES libzmq-static)
-	set(ZeroMQ_LIBRARY ${ZeroMQ_STATIC_LIBRARY})
-        list(APPEND DEPS_LIBRARIES libzmq-static)
-    elseif (ZeroMQ_LIBRARY)
-        list(APPEND DEPS_LIBRARIES ${ZeroMQ_LIBRARY})
-    else()
-        list(APPEND DEPS_LIBRARIES libzmq)
-    endif()
-    list(APPEND DEPS_INCLUDE_DIRS ${ZeroMQ_INCLUDE_DIR})
-else()
-    message(STATUS "NO ZeroMQ")
-endif()
 
 ##########
 # OpenMP #
