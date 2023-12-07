@@ -654,7 +654,7 @@ module YggInterface
   end type yggdtype
   !> @brief Wrapper for a reallocatable character array.
   type :: yggchar_r
-     character, dimension(:), pointer :: x => null() !< Wrapped array
+     character(kind=c_char), dimension(:), pointer :: x => null() !< Wrapped array
   end type yggchar_r
   !> @brief Wrapper for a reallocatable 1D array of c_long.
   type :: c_long_1d

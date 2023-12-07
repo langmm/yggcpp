@@ -21,11 +21,12 @@ target_include_directories(
 	  ${RAPIDJSON_INCLUDE_DIRS})
 if(YGG_LINK_PYTHON_TO_CPP)
     target_link_libraries(${YGG_TARGET_PY} PUBLIC ${YGG_TARGET_CPP})
+else()
+    target_link_libraries(${YGG_TARGET_PY} PUBLIC
+                          ${DEPS_LIBRARIES} ${DEPS_PUBLIC_CXX_LIBS})
+    target_link_libraries(${YGG_TARGET_PY} PUBLIC
+                          ${DEPS_LIBRARIES_PRIVATE})
 endif()
-target_link_libraries(
-          ${YGG_TARGET_PY} PUBLIC
-	  ${DEPS_LIB_NAMES_NO_PYTHON}
-	  ${DEPS_LIBRARIES_NO_PYTHON})
 target_compile_options(${YGG_TARGET_PY} PUBLIC
 	  ${YGG_INSTALL_DEFS} -DRAPIDJSON_YGGDRASIL_PYTHON)
 if(YGG_PYTHON_LIBRARY_WRAP)
@@ -80,6 +81,11 @@ if(SKBUILD)
         install(TARGETS ${YGG_TARGET_PY}
   	        LIBRARY DESTINATION ${Python_INSTALL_DIR})
     else()
+        target_compile_definitions(
+            ${YGG_TARGET_PY} PUBLIC ${YGG_INSTALL_DEFS})
+	target_compile_options(
+	    ${YGG_TARGET_PY} PUBLIC ${DEPS_PUBLIC_COMPILE_FLAGS}
+	    ${DEPS_PUBLIC_CXX_COMPILE_FLAGS})
         if(WIN32)
             install(TARGETS ${YGG_TARGET_PY}
   	            LIBRARY DESTINATION ${Python_INSTALL_DIR}
@@ -104,6 +110,5 @@ if(SKBUILD)
 else()
     target_link_libraries(
 	    ${YGG_TARGET_PY} PRIVATE
-	    ${DEPS_LIB_NAMES_PYTHON}
 	    ${DEPS_LIBRARIES_PYTHON})
 endif(SKBUILD)

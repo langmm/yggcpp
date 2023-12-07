@@ -2,7 +2,7 @@ program main
   use YggInterface
   type(yggcomm) :: icomm, ocomm
   type(yggdtype) :: odtype
-  character(kind=c_char, len=@SPEED_TEST_N_MSG@) :: omsg
+  character(kind=c_char, len=@SPEED_TEST_S_MSG@) :: omsg
   type(yggchar_r) :: imsg
   integer(kind=c_size_t) :: ilength, olength, i, j
   integer(kind=c_int) :: SPEED_TEST_N_MSG = @SPEED_TEST_N_MSG@
@@ -15,8 +15,10 @@ program main
        IOR(COMM_FLAG_ASYNC, COMM_FLAG_SET_OPP_ENV))
   ocomm = ygg_output_type("speed", odtype, SPEED_TEST_COMM, &
        COMM_FLAG_ASYNC)
-  olength = SPEED_TEST_N_MSG
-  omsg(1:SPEED_TEST_S_MSG) = 'x'
+  olength = SPEED_TEST_S_MSG
+  do i = 1, SPEED_TEST_S_MSG
+     omsg(i:i) = 'x'
+  end do
   ilength = 0
   do i = 1, SPEED_TEST_N_MSG
      if (.NOT.ygg_send_var(ocomm, [yggarg(omsg), yggarg(olength)])) then
@@ -38,7 +40,6 @@ program main
      end if
      do j = 1, len(omsg)
         if (imsg%x(j).NE.omsg(j:j)) then
-           write(*,*) j, imsg%x(j), omsg(j:j)
            call ygglog_error("Received message does not match sent message\n")
            stop 1
         end if

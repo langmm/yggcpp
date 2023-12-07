@@ -90,11 +90,6 @@ if(NOT WIN32)
     endif(CCACHE_FOUND)
 endif()
 
-if (BUILD_FORTRAN_LIBRARY)
-    set(YGG_BUILD_ASAN OFF)
-    set(YGG_BUILD_UBSAN OFF)
-endif()
-
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     if(YGG_ENABLE_INSTRUMENTATION_OPT AND NOT CMAKE_CROSSCOMPILING)
         if(CMAKE_SYSTEM_PROCESSOR STREQUAL "powerpc" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "ppc" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "ppc64" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "ppc64le")
@@ -192,6 +187,10 @@ elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 elseif (CMAKE_CXX_COMPILER_ID MATCHES "XL")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -qarch=auto")
 endif()
+list(APPEND DEPS_PUBLIC_C_COMPILE_FLAGS ${ASAN_COMPILE_FLAGS})
+list(APPEND DEPS_PUBLIC_CXX_COMPILE_FLAGS ${ASAN_COMPILE_FLAGS})
+list(APPEND DEPS_PUBLIC_C_LINK_FLAGS ${ASAN_LINK_FLAGS})
+list(APPEND DEPS_PUBLIC_CXX_LINK_FLAGS ${ASAN_LINK_FLAGS})
 
 #add extra search paths for libraries and includes
 SET(INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/include" CACHE PATH "The directory the headers are installed in")
@@ -326,13 +325,13 @@ if (ZeroMQ_FOUND)
         add_library(libzmq INTERFACE IMPORTED)
 	set_target_properties(libzmq PROPERTIES INTERFACE_LINK_LIBRARIES libzmq-static)
 	set(ZeroMQ_LIBRARY ${ZeroMQ_STATIC_LIBRARY})
-        set(DEPS_LIB_NAMES ${DEPS_LIB_NAMES} libzmq-static)
+        list(APPEND DEPS_LIBRARIES libzmq-static)
     elseif (ZeroMQ_LIBRARY)
-        set(DEPS_LIBRARIES ${DEPS_LIBRARIES} ${ZeroMQ_LIBRARY})
+        list(APPEND DEPS_LIBRARIES ${ZeroMQ_LIBRARY})
     else()
-        set(DEPS_LIB_NAMES ${DEPS_LIB_NAMES} libzmq)
+        list(APPEND DEPS_LIBRARIES libzmq)
     endif()
-    set(DEPS_INCLUDE_DIRS ${DEPS_INCLUDE_DIRS} ${ZeroMQ_INCLUDE_DIR})
+    list(APPEND DEPS_INCLUDE_DIRS ${ZeroMQ_INCLUDE_DIR})
 else()
     message(STATUS "NO ZeroMQ")
 endif()
@@ -345,11 +344,8 @@ if (ENABLE_OMP)
   find_package(OpenMP)
   if (OpenMP_CXX_FOUND)
     message(STATUS "OpenMP found")
-    set(DEPS_LIBRARIES ${DEPS_LIBRARIES} ${OpenMP_CXX_LIBRARIES})
-    set(DEPS_LIB_NAMES ${DEPS_LIB_NAMES} ${OpenMP_CXX_LIB_NAMES})
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
     list(APPEND YGG_INSTALL_DEPS OpenMP)
+    list(APPEND DEPS_LIBRARIES OpenMP::OpenMP_CXX)
   else()
     message(STATUS "NO OpenMP")
   endif()
@@ -362,33 +358,27 @@ endif()
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 if(ENABLE_THREADS)
-cmake_path(SET MINGW_PTHREAD_ROOT "$ENV{MINGW_PTHREAD_ROOT}")
-if(MINGW_PTHREAD_ROOT)
+  cmake_path(SET MINGW_PTHREAD_ROOT "$ENV{MINGW_PTHREAD_ROOT}")
+  if(MINGW_PTHREAD_ROOT)
     message(STATUS "MINGW_PTHREAD_ROOT = ${MINGW_PTHREAD_ROOT}")
     find_package(Threads PATHS ${MINGW_PTHREAD_ROOT} NO_DEFAULT_PATH)
-endif()
-find_package(Threads)
-if (Threads_FOUND)
-    find_file(PTHREAD_H pthread.h)
-    message(STATUS "PTHREAD_H = ${PTHREAD_H}")
-    # if (NOT PTHREAD_H STREQUAL PTHREAD_H-NOTFOUND)
-    #     file(READ ${PTHREAD_H} PTHREAD_H_CONTENTS)
-    # 	message(STATUS "PTHREAD_H_CONTENTS = ${PTHREAD_H_CONTENTS}")
-    # endif()
+  endif()
+  find_package(Threads)
+  if (Threads_FOUND)
     list(APPEND YGG_INSTALL_DEFS -DTHREADSINSTALLED)
-    set(DEPS_LIB_NAMES ${DEPS_LIB_NAMES} Threads::Threads)
     if (CMAKE_THREAD_LIBS_INIT)
-        message(STATUS "CMAKE_THREAD_LIBS_INIT = ${CMAKE_THREAD_LIBS_INIT}")
-        set(DEPS_LIB_NAMES ${DEPS_LIB_NAMES} ${CMAKE_THREAD_LIBS_INIT})
+      message(STATUS "CMAKE_THREAD_LIBS_INIT = ${CMAKE_THREAD_LIBS_INIT}")
+      list(APPEND DEPS_LIBRARIES ${CMAKE_THREAD_LIBS_INIT})
     endif()
     if (CMAKE_USE_PTHREADS_INIT)
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
     endif()
     list(APPEND YGG_INSTALL_DEPS Threads)
-else()
+    list(APPEND DEPS_LIBRARIES Threads::Threads)
+  else()
     message(STATUS "NO Threads")
-endif()
+  endif()
 endif()
 
 #############################
@@ -421,8 +411,6 @@ if (CONDA_PREFIX AND MINGW AND
       endif()
       execute_process(
         COMMAND patch -b ${THREAD_H} ${THREAD_H_PATCH}
-        # COMMAND patch ${THREAD_H} --input=${THREAD_H_PATCH}
-	# --output=${THREAD_H} # --ignore-whitespace
 	TIMEOUT 15
 	COMMAND_ECHO STDOUT
 	RESULT_VARIABLE ret)
@@ -438,25 +426,21 @@ endif()
 #######
 
 if(ENABLE_MPI)
-find_package(MPI)
-if(MPI_CXX_FOUND)
+  find_package(MPI)
+  if(MPI_CXX_FOUND)
     message(STATUS "MPI found")
     list(APPEND YGG_INSTALL_DEFS -DMPIINSTALLED)
-    set(DEPS_LIBRARIES ${DEPS_LIBRARIES} ${MPI_CXX_LIBRARIES})
-    set(DEPS_LIB_NAMES ${DEPS_LIB_NAMES} MPI::MPI_CXX)
-    set(DEPS_INCLUDE_DIRS ${DEPS_INCLUDE_DIRS} ${MPI_CXX_INCLUDE_DIRS})
     list(APPEND YGG_INSTALL_DEPS MPI)
-else()
+    list(APPEND DEPS_LIBRARIES MPI::MPI_CXX)
+  else()
     message(STATUS "NO MPI")
-endif()
+  endif()
 endif()
 
 ##########
 # Python #
 ##########
 
-set(DEPS_LIBRARIES_NO_PYTHON ${DEPS_LIBRARIES})
-set(DEPS_LIB_NAMES_NO_PYTHON ${DEPS_LIB_NAMES})
 if(YGGDRASIL_DISABLE_PYTHON_C_API)
     list(APPEND YGG_INSTALL_DEFS -DYGGDRASIL_DISABLE_PYTHON_C_API)
 else()
@@ -518,21 +502,15 @@ else()
         message(FATAL_ERROR "Python libraries not found")
     endif()
 
-    # Set environment variables required for embedding Python
-    # set(RAPIDJSON_PYTHON_ENV "${RAPIDJSON_PYTHON_ENV};DATADIR=${CMAKE_SOURCE_DIR}/test;YGG_PYTHON_EXEC=${Python3_EXECUTABLE}")
-
     # There is an issue with embedding Python on Windows in conda environments
     # https://github.com/ContinuumIO/anaconda-issues/issues/11374
     if(WIN32)
         set(RAPIDJSON_PYTHON_ENV2 "PYTHONHOME=${Python3_RUNTIME_LIBRARY_DIRS}")
     endif()
     
-    set(DEPS_LIBRARIES ${DEPS_LIBRARIES} ${Python3_LIBRARIES})
-    set(DEPS_LIB_NAMES ${DEPS_LIB_NAMES} Python3::NumPy)
-    set(DEPS_LIBRARIES_PYTHON ${Python3_LIBRARIES})
-    set(DEPS_LIB_NAMES_NO_PYTHON Python3::NumPy)
-    set(DEPS_INCLUDE_DIRS ${DEPS_INCLUDE_DIRS} ${Python3_INCLUDE_DIRS} ${Python3_NumPy_INCLUDE_DIRS})
     list(APPEND YGG_INSTALL_DEPS Python3)
+    list(APPEND DEPS_LIBRARIES Python3::NumPy)
+    list(APPEND DEPS_LIBRARIES_PYTHON Python3::Python)
 endif()
 
 ##################
@@ -563,7 +541,6 @@ if(CONDA_PREFIX)
     else()
         set(CONDA_INCLUDE ${CONDA_PREFIX}/include)
     endif()
-    # set(DEPS_INCLUDE_DIRS ${DEPS_INCLUDE_DIRS} ${CONDA_INCLUDE})
 endif(CONDA_PREFIX)
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
@@ -585,7 +562,7 @@ if (YGG_DEBUG_LEVEL)
 endif()
 
 message(STATUS "DEPS_INCLUDE_DIRS = ${DEPS_INCLUDE_DIRS}")
-message(STATUS "DEPS_LIBRARIES = ${DEPS_LIB_NAMES};${DEPS_LIBRARIES}")
+message(STATUS "DEPS_LIBRARIES = ${DEPS_LIBRARIES}")
 
 ####################
 # Create library   #
@@ -598,6 +575,9 @@ if(SKBUILD)
     set(BUILD_CPP_LIBRARY OFF)
     set(BUILD_FORTRAN_LIBRARY OFF)
   endif()
+endif()
+if(BUILD_FORTRAN_LIBRARY)
+  set(BUILD_CPP_LIBRARY ON)
 endif()
 file(GLOB SOURCES "communication/*.cpp" "communication/utils/*.cpp" "communication/communicators/*.cpp" "communication/datatypes/dtype_t.cpp")
 
@@ -614,10 +594,6 @@ if(BUILD_CPP_LIBRARY)
 	else()
             add_library(${YGG_TARGET_CPP} SHARED ${SOURCES})
 	endif()
-        target_link_libraries(
-	    ${YGG_TARGET_CPP} ${YGG_CPP_LINK_KEYWORD}
-	    ${DEPS_LIB_NAMES_NO_PYTHON}
-	    ${DEPS_LIBRARIES_NO_PYTHON})
      	target_compile_options(${YGG_TARGET_CPP} PUBLIC
      	    -DRAPIDJSON_YGGDRASIL_PYTHON -DYGG_LINK_PYTHON_TO_CPP)
     else()
@@ -626,8 +602,7 @@ if(BUILD_CPP_LIBRARY)
 	add_library(YggInterface::C ALIAS ${YGG_TARGET_CPP})
         target_link_libraries(
 	    ${YGG_TARGET_CPP} PUBLIC
-	    ${DEPS_LIB_NAMES}
-	    ${DEPS_LIBRARIES})
+	    ${DEPS_LIBRARIES_PYTHON})
 	if (WIN32)
 	    set_target_properties(${YGG_TARGET_CPP}
 	        PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
@@ -638,6 +613,13 @@ if(BUILD_CPP_LIBRARY)
 	endif()
         list(APPEND YGG_INSTALL_TARGETS ${YGG_TARGET_CPP})
     endif()
+    target_link_libraries(
+        ${YGG_TARGET_CPP} PRIVATE ${DEPS_LIBRARIES_PRIVATE})
+    target_link_libraries(
+        ${YGG_TARGET_CPP} PUBLIC ${DEPS_LIBRARIES}
+	"$<$<LINK_LANGUAGE:C>:${DEPS_PUBLIC_C_LIBS}>"
+	"$<$<LINK_LANGUAGE:CXX>:${DEPS_PUBLIC_CXX_LIBS}>"
+	"$<$<LINK_LANGUAGE:Fortran>:${DEPS_PUBLIC_Fortran_LIBS}>")
     target_include_directories(
         ${YGG_TARGET_CPP} PUBLIC
   	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/communication>
@@ -645,23 +627,23 @@ if(BUILD_CPP_LIBRARY)
 	$<INSTALL_INTERFACE:include/YggInterface>
 	$<INSTALL_INTERFACE:include/YggInterface/rapidjson/include>)
     target_include_directories(
-        ${YGG_TARGET_CPP} PRIVATE
-    	${DEPS_INCLUDE_DIRS})
+        ${YGG_TARGET_CPP} PRIVATE ${DEPS_INCLUDE_DIRS})
     target_compile_definitions(
         ${YGG_TARGET_CPP} PUBLIC ${YGG_INSTALL_DEFS})
-    if (ASAN_COMPILE_FLAGS)
-        target_compile_options(
-	  ${YGG_TARGET_CPP} PUBLIC ${ASAN_COMPILE_FLAGS})
-    endif()
-    if (ASAN_LINK_FLAGS)
-        target_link_options(
-	  ${YGG_TARGET_CPP} PUBLIC ${ASAN_LINK_FLAGS})
-    endif()
+    target_compile_options(
+	${YGG_TARGET_CPP} PUBLIC ${DEPS_PUBLIC_COMPILE_FLAGS}
+	"$<$<COMPILE_LANGUAGE:C>:${DEPS_PUBLIC_C_COMPILE_FLAGS}>"
+	"$<$<COMPILE_LANGUAGE:CXX>:${DEPS_PUBLIC_CXX_COMPILE_FLAGS}>"
+	"$<$<COMPILE_LANGUAGE:Fortran>:${DEPS_PUBLIC_Fortran_COMPILE_FLAGS}>")
+    target_link_options(
+        ${YGG_TARGET_CPP} PUBLIC ${DEPS_PUBLIC_LINK_FLAGS}
+	"$<$<LINK_LANGUAGE:C>:${DEPS_PUBLIC_C_LINK_FLAGS}>"
+	"$<$<LINK_LANGUAGE:CXX>:${DEPS_PUBLIC_CXX_LINK_FLAGS}>"
+	"$<$<LINK_LANGUAGE:Fortran>:${DEPS_PUBLIC_Fortran_LINK_FLAGS}>")
     
     include(CheckDLL)
     show_runtimes(${YGG_TARGET_CPP})
 endif()
-add_definitions(${YGG_INSTALL_DEFS})
 
 #########################
 # Create Python Library #

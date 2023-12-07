@@ -169,10 +169,7 @@ int is_dtype_format_array_f(dtype_t type_struct) {
 }
 
 dtype_t create_dtype_from_schema_f(const char* schema, const bool use_generic) {
-  ygglog_info("before c create_dtype_from_schema");
-  dtype_t out = create_dtype_from_schema(schema, use_generic);
-  ygglog_info("after c create_dtype_from_schema");
-  return out;
+  return create_dtype_from_schema(schema, use_generic);
 }
 
 dtype_t create_dtype_empty_f(const bool use_generic) {

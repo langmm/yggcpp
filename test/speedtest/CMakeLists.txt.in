@@ -1,0 +1,15 @@
+cmake_minimum_required(VERSION 3.16)
+set(LANG @LANGUAGE@)
+if (LANG STREQUAL "CXX")
+  project(SpeedTest@LANGUAGE@ @LANGUAGE@)
+else()
+  project(SpeedTest@LANGUAGE@ @LANGUAGE@ CXX)
+endif()
+
+find_package(YggInterface REQUIRED)
+
+add_executable(speedtest_@LANGUAGE@ speedtest.@LANGUAGE_EXT@)
+set_target_properties(speedtest_@LANGUAGE@ PROPERTIES
+                      LINKER_LANGUAGE @LANGUAGE@)
+target_link_libraries(speedtest_@LANGUAGE@ PRIVATE
+                      YggInterface::@LANGUAGE@)

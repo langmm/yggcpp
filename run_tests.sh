@@ -9,7 +9,7 @@ DO_FORTRAN=""
 DO_PYTHON=""
 WITH_ASAN=""
 NO_CORE=""
-CMAKE_FLAGS="-DRAPIDJSON_INCLUDE_DIRS=/Users/langmm/rapidjson/include -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DYGG_SKIP_VALGRIND_TESTS=ON"
+CMAKE_FLAGS="-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DYGG_SKIP_VALGRIND_TESTS=ON"
 CMAKE_FLAGS_LIB=""
 CMAKE_FLAGS_SPEED=""
 WITH_LLDB=""
@@ -33,12 +33,10 @@ while [[ $# -gt 0 ]]; do
 	    ;;
 	-p | --python )
 	    DO_PYTHON="TRUE"
-	    CMAKE_FLAGS="${CMAKE_FLAGS} -DBUILD_PYTHON_LIBRARY=ON -DYGG_BUILD_PYTHON_TESTS=ON"
 	    shift # past argument with no value
 	    ;;
 	-f | --fortran )
 	    DO_FORTRAN="TRUE"
-	    CMAKE_FLAGS="${CMAKE_FLAGS} -DBUILD_FORTRAN_LIBRARY=ON -DYGG_BUILD_FORTRAN_TESTS=ON -DYGG_ENABLE_ELF=OFF"
 	    shift # past argument with no value
 	    ;;
 	-l | --language )
@@ -101,6 +99,10 @@ while [[ $# -gt 0 ]]; do
 	    NO_DEBUG_MSG="TRUE"
 	    shift # past argument with no value
 	    ;;
+	--local-rj )
+	    CMAKE_FLAGS="${CMAKE_FLAGS} -DRAPIDJSON_INCLUDE_DIRS=/Users/langmm/rapidjson/include"
+	    shift # past argument with no value
+	    ;;
 	--speed )
 	    SPEED_TEST="TRUE"
 	    shift # past argument with no value
@@ -145,7 +147,9 @@ if [ ! -n "$DO_C" ] && [ ! -n "$DO_CXX" ] && [ ! -n "$DO_FORTRAN" ] && [ ! -n "$
     DO_CXX="TRUE"
     DO_FORTRAN="TRUE"
     DO_PYTHON="TRUE"
-    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYGG_BUILD_TESTS=ON"
+    if [ ! -n "$SPEED_TEST" ]; then
+	CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYGG_BUILD_TESTS=ON"
+    fi
 fi
 
 if [ -n "$DO_C" ] || [ -n "$DO_CXX" ] || [ -n "$DO_FORTRAN" ] || [ -n "$DO_PYTHON" ]; then
@@ -160,24 +164,33 @@ if [ -n "$DO_C" ] || [ -n "$DO_CXX" ] || [ -n "$DO_FORTRAN" ] || [ -n "$DO_PYTHO
 	CMAKE_FLAGS_SPEED="${CMAKE_FLAGS_SPEED} -DENABLE_CXX=OFF"
     fi
     if [ -n "$DO_C" ] || [ -n "$DO_CXX" ]; then
-	CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DBUILD_CPP_LIBRARY=ON -DYGG_BUILD_CPP_TESTS=ON"
+	CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DBUILD_CPP_LIBRARY=ON"
+	if [ ! -n "$SPEED_TEST" ]; then
+	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYGG_BUILD_CPP_TESTS=ON"
+	fi
     else
 	CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DBUILD_CPP_LIBRARY=OFF"
     fi
     if [ -n "$DO_FORTRAN" ]; then
-	CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DBUILD_FORTRAN_LIBRARY=ON -DYGG_BUILD_FORTRAN_TESTS=ON"
-	CMAKE_FLAGS_SPEED="${CMAKE_FLAGS_SPEED} -DENABLE_FORTRAN=ON"
+	CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DBUILD_FORTRAN_LIBRARY=ON -DYGG_ENABLE_ELF=OFF"
+	if [ ! -n "$SPEED_TEST" ]; then
+	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYGG_BUILD_FORTRAN_TESTS=ON"
+	fi
+	CMAKE_FLAGS_SPEED="${CMAKE_FLAGS_SPEED} -DENABLE_Fortran=ON"
     else
-	CMAKE_FLAGS_SPEED="${CMAKE_FLAGS_SPEED} -DENABLE_FORTRAN=OFF"
+	CMAKE_FLAGS_SPEED="${CMAKE_FLAGS_SPEED} -DENABLE_Fortran=OFF"
     fi
     if [ -n "$DO_PYTHON" ]; then
-	CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DBUILD_PYTHON_LIBRARY=ON -DYGG_BUILD_PYTHON_TESTS=ON"
-	CMAKE_FLAGS_SPEED="${CMAKE_FLAGS_SPEED} -DENABLE_PYTHON=ON"
+	CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DBUILD_PYTHON_LIBRARY=ON"
+	if [ ! -n "$SPEED_TEST" ]; then
+	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYGG_BUILD_PYTHON_TESTS=ON"
+	fi
+	CMAKE_FLAGS_SPEED="${CMAKE_FLAGS_SPEED} -DENABLE_Python=ON"
     else
-	CMAKE_FLAGS_SPEED="${CMAKE_FLAGS_SPEED} -DENABLE_PYTHON=OFF"
+	CMAKE_FLAGS_SPEED="${CMAKE_FLAGS_SPEED} -DENABLE_Python=OFF"
     fi
 fi
-	
+
 if [ ! -n "$NO_DEBUG_MSG" ]; then
     CMAKE_FLAGS="${CMAKE_FLAGS} -DYGG_DEBUG_LEVEL=5"
 fi
@@ -233,9 +246,9 @@ else
     cd build
     if [ ! -n "$DONT_BUILD" ]; then
 	cmake .. $CMAKE_FLAGS $CMAKE_FLAGS_LIB
-	make
-	# cmake --build .
-	# cmake --install . --prefix ../devel
+	cmake --build .
+	# Need install here to ensure that cmake config files are in place
+	cmake --install . --prefix ../devel
     fi
     if [ ! -n "$DONT_TEST" ]; then
 	if [ -n "$WITH_LLDB" ]; then
@@ -252,16 +265,16 @@ else
 fi
 
 if [ -n "$SPEED_TEST" ]; then
-    if [ -n "$REBUILD" ]; then
-	if [ -d "build_speed" ]; then
-	    rm -rf build_speed
-	fi
+    # if [ -n "$REBUILD" ]; then
+    if [ -d "build_speed" ]; then
+	rm -rf build_speed
     fi
+    # fi
     if [ ! -d "build_speed" ]; then
 	mkdir build_speed
     fi
     cd build_speed
-    cmake ../test/speedtest -DCMAKE_PREFIX_PATH=../devel -DYggInterface_DIR=../../../devel/lib/cmake/YggInterface -DN_MSG=$N_MSG -DS_MSG=$S_MSG -DCOMM=$COMM $CMAKE_FLAGS $CMAKE_FLAGS_SPEED
+    cmake ../test/speedtest -DCMAKE_PREFIX_PATH=../devel -DYggInterface_DIR=../../devel/lib/cmake/YggInterface -DN_MSG=$N_MSG -DS_MSG=$S_MSG -DCOMM=$COMM $CMAKE_FLAGS $CMAKE_FLAGS_SPEED
     cmake --build .
     # cmake --install . --prefix .
     if [ -n "$WITH_ASAN" ]; then

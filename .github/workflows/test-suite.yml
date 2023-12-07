@@ -530,7 +530,6 @@ jobs:
       # Speed tests
       ###################################
       - name: Run speed tests
-        if: matrix.python-install == 'conda'
         shell: bash -l {0}
         run: |
           ./run_tests.sh --rebuild --speed
