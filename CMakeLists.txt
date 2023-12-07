@@ -655,6 +655,7 @@ if (YGG_INSTALL_TARGETS)
     YggInterfaceConfig.cmake.in YggInterfaceConfig.cmake @ONLY)
   install(FILES "${CMAKE_CURRENT_BINARY_DIR}/YggInterfaceConfig.cmake"
           "${CMAKE_CURRENT_BINARY_DIR}/YggInterfaceConfigVersion.cmake"
+	  cmake/SearchTools.cmake
           DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/YggInterface)
   if (YGG_INSTALL_INCLUDES)
     install(FILES ${YGG_INSTALL_INCLUDES}
