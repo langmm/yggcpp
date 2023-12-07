@@ -249,27 +249,28 @@ jobs:
       - name: Global config flags
         shell: bash -l {0}
         run: |
-          echo "CONFIG_FLAGS=-DYGG_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/_install -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DYGG_DEBUG_LEVEL=5" >> "$GITHUB_ENV"
+          echo "CMAKE_ARGS_BASE=-DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/_install -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DYGG_Fortran_REQUIRED=ON" >> "$GITHUB_ENV"
+          echo "CMAKE_ARGS_TEST=-DYGG_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=Debug -DYGG_DEBUG_LEVEL=5" >> "$GITHUB_ENV"
+          echo "CMAKE_ARGS_PYTHON=-DYGG_DEBUG_LEVEL=5" >> "$GITHUB_ENV"
           echo "TEST_FLAGS=-C Debug --output-on-failure -VV" >> "$GITHUB_ENV"
-          echo "PYTHON_CMAKE_ARGS=-DYGG_DEBUG_LEVEL=5" >> "$GITHUB_ENV"
       - name: Coverage config flags
         if: matrix.with-coverage == true && matrix.os != 'windows-latest'
         shell: bash -l {0}
         run: |
-          echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DYGG_ENABLE_COVERAGE=ON" >> "$GITHUB_ENV"
+          echo "CMAKE_ARGS_TEST=${{ env.CMAKE_ARGS_TEST }} -DYGG_ENABLE_COVERAGE=ON" >> "$GITHUB_ENV"
       - name: ASAN config flags
         if: matrix.with-asan == true
         shell: bash -l {0}
         run: |
-          echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DYGG_BUILD_ASAN=ON -DYGG_BUILD_UBSAN=ON -DYGGDRASIL_DISABLE_PYTHON_C_API=ON" >> "$GITHUB_ENV"
-          echo "PYTHON_CMAKE_ARGS=${{ env.PYTHON_CMAKE_ARGS }} -DYGG_BUILD_ASAN=ON -DYGG_BUILD_UBSAN=ON" >> "$GITHUB_ENV"
+          echo "CMAKE_ARGS_BASE=${{ env.CMAKE_ARGS_BASE }} -DYGG_BUILD_ASAN=ON -DYGG_BUILD_UBSAN=ON" >> "$GITHUB_ENV"
+          # echo "CMAKE_ARGS_TEST=-DYGGDRASIL_DISABLE_PYTHON_C_API=ON" >> "$GITHUB_ENV"
           echo "ASAN_OPTIONS=detect_odr_violation=0:detect_container_overflow=0" >> $GITHUB_ENV
           echo "TEST_FLAGS=${{ env.TEST_FLAGS }} -E valgrind*" >> "$GITHUB_ENV"
-      - name: Fortran config flags
-        if: matrix.with-asan == false
-        shell: bash -l {0}
-        run: |
-          echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DBUILD_FORTRAN_LIBRARY=ON" >> "$GITHUB_ENV"
+      # - name: Fortran config flags
+      #   if: matrix.with-asan == false
+      #   shell: bash -l {0}
+      #   run: |
+      #     echo "CMAKE_ARGS_BASE=${{ env.CMAKE_ARGS_BASE }} -DBUILD_FORTRAN_LIBRARY=ON" >> "$GITHUB_ENV"
       - name: ASAN dynamic library
         if: matrix.with-asan == true && matrix.os == 'macos-latest'
         shell: bash -l {0}
@@ -279,40 +280,36 @@ jobs:
         if: matrix.with-elf == false
         shell: bash -l {0}
         run: |
-          echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DYGG_ENABLE_ELF=OFF" >> "$GITHUB_ENV"
+          echo "CMAKE_ARGS_TEST=${{ env.CMAKE_ARGS_TEST }} -DYGG_ENABLE_ELF=OFF" >> "$GITHUB_ENV"
       - name: Valgrind on config flags
         if: matrix.with-valgrind == true
         shell: bash -l {0}
         run: |
-          echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DYGG_ENABLE_INSTRUMENTATION_OPT=OFF -DYGGDRASIL_DISABLE_PYTHON_C_API=ON" >> "$GITHUB_ENV"
+          echo "CMAKE_ARGS_TEST=${{ env.CMAKE_ARGS_TEST }} -DYGG_ENABLE_INSTRUMENTATION_OPT=OFF -DYGGDRASIL_DISABLE_PYTHON_C_API=ON" >> "$GITHUB_ENV"
       - name: Valgrind off config flags
         if: matrix.with-valgrind == false
         shell: bash -l {0}
         run: |
-          echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DYGG_SKIP_VALGRIND_TESTS=ON" >> "$GITHUB_ENV"
+          echo "CMAKE_ARGS_TEST=${{ env.CMAKE_ARGS_TEST }} -DYGG_SKIP_VALGRIND_TESTS=ON" >> "$GITHUB_ENV"
 
       - name: Pip config flags
         if: matrix.python-install == 'pip'
         shell: bash -l {0}
         run: |
-          echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} -DPython3_ROOT_DIR=${{ env.pythonLocation }}" >> "$GITHUB_ENV"
+          echo "CMAKE_ARGS_BASE=${{ env.CMAKE_ARGS_BASE }} -DPython3_ROOT_DIR=${{ env.pythonLocation }}" >> "$GITHUB_ENV"
+          echo "CMAKE_ARGS_PYTHON=${{ env.CMAKE_ARGS_BASE }} -DPython_ROOT_DIR=${{ env.pythonLocation }}" >> "$GITHUB_ENV" # required?
 
 
       ############################################
       # SET CONFIG FLAGS THAT CONTAIN QUOTES LAST
       ############################################
-      # TODO: CMAKE_PREFIX_PATH may not be needed in PYTHON_CONFIG_FLAGS
-      - name: Pip config flags on Windows
-        if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
-        shell: bash -l {0}
-        run: |
-          echo "CONFIG_FLAGS=${{ env.CONFIG_FLAGS }} \"-DCMAKE_PREFIX_PATH=${VCPKG_INSTALLATION_ROOT}\installed\\${VCPKG_TRIPLET}\"" >> "$GITHUB_ENV"
-          echo "PYTHON_CONFIG_FLAGS=${{ env.PYTHON_CONFIG_FLAGS }} --config-settings=cmake.define.CMAKE_PREFIX_PATH=\"${VCPKG_INSTALLATION_ROOT}\installed\\${VCPKG_TRIPLET}\" --config-settings=cmake.define.Python3_ROOT_DIR=${{ env.pythonLocation }} --config-settings=cmake.define.Python_ROOT_DIR=${{ env.pythonLocation }}" >> "$GITHUB_ENV"
-      # - name: Patch conda thread header on Windows
-      #   if: matrix.with-asan == false && matrix.os == 'windows-latest' && matrix.python-install == 'conda' && matrix.windows-compiler == 'mingw'
+      # TODO: CMAKE_PREFIX_PATH may not be needed in CMAKE_ARGS_PYTHON
+      # - name: Pip config flags on Windows
+      #   if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
       #   shell: bash -l {0}
       #   run: |
-      #     patch -b C:/Miniconda3/envs/yggdrasil/Library/mingw-w64/include/c++/5.3.0/thread mingw-c++-5-3-thread.patch
+      #     echo "CMAKE_ARGS_BASE=${{ env.CMAKE_ARGS_BASE }} \"-DCMAKE_PREFIX_PATH=${VCPKG_INSTALLATION_ROOT}\installed\\${VCPKG_TRIPLET}\"" >> "$GITHUB_ENV"
+      #     echo "PYTHON_CONFIG_FLAGS=${{ env.PYTHON_CONFIG_FLAGS }} --config-settings=cmake.define.CMAKE_PREFIX_PATH=\"${VCPKG_INSTALLATION_ROOT}\installed\\${VCPKG_TRIPLET}\" --config-settings=cmake.define.Python3_ROOT_DIR=${{ env.pythonLocation }} --config-settings=cmake.define.Python_ROOT_DIR=${{ env.pythonLocation }}" >> "$GITHUB_ENV"
      
       ###################################
       # Add paths for Windows dlls
@@ -432,13 +429,13 @@ jobs:
           mkdir build
           cd build
           which cmake
-          cmake .. ${{ env.CONFIG_FLAGS }}
+          cmake .. ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_TEST }}
       - name: Configure (PIP)
         if: matrix.python-install == 'pip'
         run: |
           mkdir build
           cd build
-          cmake .. ${{ env.CONFIG_FLAGS }}
+          cmake .. ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_TEST }}
       
       ###################################
       # Build CPP & C
@@ -455,23 +452,6 @@ jobs:
           cd build
           cmake --build . --config Debug
       
-      ###################################
-      # Build Python
-      ###################################
-      - name: Set CMAKE_ARGS for Python build
-        shell: bash -l {0}
-        run: |
-          echo "CMAKE_ARGS=${{ env.PYTHON_CMAKE_ARGS }}" >> "$GITHUB_ENV"
-      - name: Build Python (CONDA)
-        if: matrix.python-install == 'conda'
-        shell: bash -l {0}
-        run: |
-          pip install . -v ${{ env.PYTHON_CONFIG_FLAGS }}
-      - name: Build Python (PIP)
-        if: matrix.python-install == 'pip'
-        run: |
-          pip install . -v ${{ env.PYTHON_CONFIG_FLAGS }}
-
       ###################################
       # Test CPP, C, & Fortran
       ###################################
@@ -494,6 +474,28 @@ jobs:
           echo "PATH=$env:PATH"
           cd build
           ctest ${{ env.TEST_FLAGS }}
+
+      ###################################
+      # Build Python
+      ###################################
+      - name: Set CMAKE_ARGS for Python build
+        shell: bash -l {0}
+        run: |
+          echo "OLD_CMAKE_ARGS=${{ env.CMAKE_ARGS }}" >> "$GITHUB_ENV"
+          echo "CMAKE_ARGS=${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_PYTHON }}" >> "$GITHUB_ENV"
+      - name: Build Python (CONDA)
+        if: matrix.python-install == 'conda'
+        shell: bash -l {0}
+        run: |
+          pip install . -v ${{ env.PYTHON_CONFIG_FLAGS }}
+      - name: Build Python (PIP)
+        if: matrix.python-install == 'pip'
+        run: |
+          pip install . -v ${{ env.PYTHON_CONFIG_FLAGS }}
+      - name: Unset CMAKE_ARGS for Python build
+        shell: bash -l {0}
+        run: |
+          echo "CMAKE_ARGS=${{ env.OLD_CMAKE_ARGS }}" >> "$GITHUB_ENV"
 
       ###################################
       # Test Python

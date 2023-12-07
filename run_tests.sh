@@ -172,7 +172,7 @@ if [ -n "$DO_C" ] || [ -n "$DO_CXX" ] || [ -n "$DO_FORTRAN" ] || [ -n "$DO_PYTHO
 	CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DBUILD_CPP_LIBRARY=OFF"
     fi
     if [ -n "$DO_FORTRAN" ]; then
-	CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DBUILD_FORTRAN_LIBRARY=ON -DYGG_ENABLE_ELF=OFF"
+	CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DBUILD_FORTRAN_LIBRARY=ON -DYGG_Fortran_REQUIRED=ON -DYGG_ENABLE_ELF=OFF"
 	if [ ! -n "$SPEED_TEST" ]; then
 	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYGG_BUILD_FORTRAN_TESTS=ON"
 	fi
@@ -248,7 +248,7 @@ else
 	cmake .. $CMAKE_FLAGS $CMAKE_FLAGS_LIB
 	cmake --build .
 	# Need install here to ensure that cmake config files are in place
-	cmake --install . --prefix ../devel
+	cmake --install . --prefix ../_install
     fi
     if [ ! -n "$DONT_TEST" ]; then
 	if [ -n "$WITH_LLDB" ]; then
@@ -265,18 +265,16 @@ else
 fi
 
 if [ -n "$SPEED_TEST" ]; then
-    # if [ -n "$REBUILD" ]; then
     if [ -d "build_speed" ]; then
 	rm -rf build_speed
     fi
-    # fi
     if [ ! -d "build_speed" ]; then
 	mkdir build_speed
     fi
     cd build_speed
-    cmake ../test/speedtest -DCMAKE_PREFIX_PATH=../devel -DYggInterface_DIR=../../devel/lib/cmake/YggInterface -DN_MSG=$N_MSG -DS_MSG=$S_MSG -DCOMM=$COMM $CMAKE_FLAGS $CMAKE_FLAGS_SPEED
+    # cmake ../test/speedtest -DCMAKE_PREFIX_PATH=../_install -DCMAKE_INSTALL_PREFIX=../_install -DN_MSG=$N_MSG -DS_MSG=$S_MSG -DCOMM=$COMM $CMAKE_FLAGS $CMAKE_FLAGS_SPEED
+    cmake ../test/speedtest -DCMAKE_PREFIX_PATH=../_install -DYggInterface_DIR=../../_install/lib/cmake/YggInterface -DN_MSG=$N_MSG -DS_MSG=$S_MSG -DCOMM=$COMM $CMAKE_FLAGS $CMAKE_FLAGS_SPEED
     cmake --build .
-    # cmake --install . --prefix .
     if [ -n "$WITH_ASAN" ]; then
 	export DYLD_INSERT_LIBRARIES=$(clang -print-file-name=libclang_rt.asan_osx_dynamic.dylib)
     fi

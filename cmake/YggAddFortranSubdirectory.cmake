@@ -31,8 +31,38 @@ to on, so that Microsoft ``.lib`` files are created.  Usage is as follows:
 include(CheckLanguage)
 include(ExternalProject)
 
-function(_setup_mingw_config_and_build source_dir build_dir tmp_dir)
-  # Look for a MinGW gfortran.
+function(check_language_external language)
+  set(options REQUIRED)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  set(tmp_dir "${CMAKE_CURRENT_BINARY_DIR}/_check_for_${language}")
+  set(fcompiler "${tmp_dir}/${language}_compiler")
+  file(MAKE_DIRECTORY "${tmp_dir}")
+  configure_file(
+    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/CMakeAddFortranSubdirectory/check_language_external.CMakeLists.in
+    ${tmp_dir}/CMakeLists.txt
+    @ONLY)
+  execute_process(
+    COMMAND ${CMAKE_COMMAND} -B . -S .
+    WORKING_DIRECTORY ${tmp_dir}
+    RESULT_VARIABLE out)
+  if (EXISTS ${fcompiler})
+    file(READ ${fcompiler} CONTENTS)
+    set(CMAKE_${language}_COMPILER ${CONTENTS})
+  elseif(MSVC AND language STREQUAL "Fortran")
+    find_mingw_gfortran()
+    if (MINGW_GFORTRAN)
+      set(CMAKE_${language}_COMPILER MINGW_GFORTRAN)
+    endif()
+  endif()
+  if (NOT ${CMAKE_${language}_COMPILER} AND ARGS_REQUIRED)
+    message(FATAL_ERROR "Could not locate a ${language} compiler")
+  endif()
+  set(CMAKE_${language}_COMPILER ${CMAKE_${language}_COMPILER} PARENT_SCOPE)
+endfunction()
+
+function(find_mingw_gfortran)
+  set(options REQUIRED)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
   find_program(MINGW_GFORTRAN
     NAMES gfortran
     PATHS
@@ -40,10 +70,13 @@ function(_setup_mingw_config_and_build source_dir build_dir tmp_dir)
       "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\MinGW;InstallLocation]/bin"
     )
   if(NOT MINGW_GFORTRAN)
-    message(FATAL_ERROR
-      "gfortran not found, please install MinGW with the gfortran option."
-      "Or set the cache variable MINGW_GFORTRAN to the full path. "
-      " This is required to build")
+    if (ARGS_REQUIRED)
+      message(FATAL_ERROR
+        "gfortran not found, please install MinGW with the gfortran option."
+        "Or set the cache variable MINGW_GFORTRAN to the full path. "
+        " This is required to build")
+    endif()
+    return()
   endif()
 
   # Validate the MinGW gfortran we found.
@@ -56,15 +89,23 @@ function(_setup_mingw_config_and_build source_dir build_dir tmp_dir)
     ERROR_VARIABLE out ERROR_STRIP_TRAILING_WHITESPACE)
   if(NOT "${out}" MATCHES "${_mingw_target}")
     string(REPLACE "\n" "\n  " out "  ${out}")
-    message(FATAL_ERROR
-      "MINGW_GFORTRAN is set to\n"
-      "  ${MINGW_GFORTRAN}\n"
-      "which is not a MinGW gfortran for this architecture.  "
-      "The output from -v does not match \"${_mingw_target}\":\n"
-      "${out}\n"
-      "Set MINGW_GFORTRAN to a proper MinGW gfortran for this architecture."
+    if (ARGS_REQUIRED)
+      message(FATAL_ERROR
+        "MINGW_GFORTRAN is set to\n"
+        "  ${MINGW_GFORTRAN}\n"
+        "which is not a MinGW gfortran for this architecture.  "
+        "The output from -v does not match \"${_mingw_target}\":\n"
+        "${out}\n"
+        "Set MINGW_GFORTRAN to a proper MinGW gfortran for this architecture."
       )
+    endif()
   endif()
+  set(MINGW_GFORTRAN ${MINGW_GFORTRAN} PARENT_SCOPE)
+endfunction()
+
+function(_setup_mingw_config_and_build source_dir build_dir tmp_dir)
+  # Look for a MinGW gfortran.
+  find_mingw_gfortran(REQUIRED)
 
   # Configure scripts to run MinGW tools with the proper PATH.
   get_filename_component(MINGW_PATH ${MINGW_GFORTRAN} PATH)
