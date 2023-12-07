@@ -69,13 +69,11 @@ void IPCComm::init() {
 
 void IPCComm::_close(bool call_base) {
     if (handle && !global_comm) {
-#ifdef YGG_TEST
-      bool close_comm = true;
-#else
       bool close_comm = ((direction == RECV) ||
 			 (!(flags & (COMM_FLAG_INTERFACE |
 				     COMM_FLAG_WORKER))));
-#endif
+      if (Comm_t::_ygg_testing)
+	close_comm = true;
       remove_comm(close_comm);
     }
     if (call_base)

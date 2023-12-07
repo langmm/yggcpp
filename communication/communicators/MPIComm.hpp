@@ -78,6 +78,8 @@ public:
     using Comm_t::send;
     using Comm_t::recv;
 
+    std::vector<utils::Address>& getAddresses() { return addresses; }
+    
 protected:
     void init();
     int send_single(utils::Header& header) override;
@@ -86,11 +88,6 @@ protected:
 #else // MPIINSTALLED
     void init() { UNINSTALLED_ERROR(MPI); }
 #endif // MPIINSTALLED
-  
-#ifdef YGG_TEST
-public:
-    std::vector<utils::Address>& getAddresses() { return addresses; }
-#endif
   
 private:
     std::vector<utils::Address> addresses;

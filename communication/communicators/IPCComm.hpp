@@ -61,9 +61,7 @@ public:
     using Comm_t::send;
     using Comm_t::recv;
 
-#ifndef YGG_TEST
 protected:
-#endif
     void init();
     /*! \copydoc Comm_t::send_single */
     int send_single(utils::Header& header) override;

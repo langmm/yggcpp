@@ -8,11 +8,6 @@
 
 #include <vector>
 namespace communication {
-#ifdef YGG_TEST
-namespace testing {
-class ZMQSocket_tester;
-}
-#endif
 namespace communicator {
   
 YGG_THREAD_GLOBAL_VAR(char, _reply_msg, [100])
@@ -78,11 +73,10 @@ public:
 private:
   static int _last_port;
   static int _last_port_set;
-#ifdef YGG_TEST
 public:
-  friend class testing::ZMQSocket_tester;
+  // Test methods
+  // friend class testing::ZMQSocket_tester;
   static void resetPort();
-#endif
 };
 
 /*!
@@ -110,10 +104,9 @@ public:
   int n_rep;
   DIRECTION direction;
   int last_idx;
-#ifdef YGG_TEST
-  static bool return_val;
-  static void set_return_val(bool new_val);
-#endif // YGG_TEST
+  // Test methods
+  static bool _test_return_val;
+  static void set_test_return_val(bool new_val);
 };
 
 class YGG_API ZMQComm : public CommBase<ZMQSocket> {
@@ -140,15 +133,7 @@ public:
     using Comm_t::send;
     using Comm_t::recv;
 
-#ifdef YGG_TEST
-    bool afterSendRecv(Comm_t* sComm, Comm_t* rComm) override;
-    bool genMetadata(std::string& out) override;
-    ZMQReply& getReply() { return reply; }
-#endif
-    
-#ifndef YGG_TEST
 protected:
-#endif
     void init();
     int send_single(utils::Header& msg) override;
     long recv_single(utils::Header& msg) override;
@@ -168,6 +153,12 @@ private:
 
     ZMQReply reply;
 
+    // Test methods
+ public:
+    bool afterSendRecv(Comm_t* sComm, Comm_t* rComm) override;
+    bool genMetadata(std::string& out) override;
+    ZMQReply& getReply() { return reply; }
+    static int _disable_handshake;
 };
 
 }

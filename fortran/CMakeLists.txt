@@ -34,7 +34,6 @@ show_runtimes(${YGG_TARGET_FORTRAN})
 #########
 
 if(YGG_BUILD_TESTS OR YGG_BUILD_FORTRAN_TESTS)
-    add_definitions(-DYGG_TEST)
     add_subdirectory(tests)
     include(CTest)
 endif()

@@ -683,16 +683,6 @@ if(YGG_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang|A
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-inline-small-functions -fno-default-inline")
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-inline-small-functions -fno-default-inline")
     endif()
-    # find required tools
-    # find_program(LCOV lcov REQUIRED)
-    # find_program(GENHTML genhtml REQUIRED)
-    # add_custom_target(coverage
-    #         # gather data
-    #         COMMAND ${LCOV} --rc lcov_branch_coverage=1 --exclude '/usr/*' --exclude '/opt/*' --directory . --capture --output-file coverage.info
-    #         # generate report
-    #         COMMAND ${GENHTML} --rc genhtml_branch_coverage=1 --demangle-cpp -o coverage coverage.info
-    #         WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-    # set(YGG_BUILD_FLAGS "${YGG_BUILD_FLAGS} --coverage -fno-inline -fno-inline-small-functions -fno-default-inline ")
 endif(YGG_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang|ARMClang")
 
 #########
@@ -700,8 +690,8 @@ endif(YGG_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClan
 #########
 
 if(YGG_BUILD_TESTS OR YGG_BUILD_CXX_TESTS OR YGG_BUILD_FORTRAN_TESTS OR YGG_BUILD_PYTHON_TESTS)
+    enable_testing()
     include(CTest)
-    add_definitions(-DYGG_TEST)
 endif()
 if(YGG_BUILD_TESTS OR YGG_BUILD_CXX_TESTS)
     message(STATUS "TESTING ON")

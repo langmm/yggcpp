@@ -58,7 +58,7 @@ public:
 	return false;
     }
     utils::Header header(msg.c_str(), msg.size(), this);
-    if (!this->create_header_send(header))
+    if (!this->create_header_test(header))
       return false;
     header.on_send();
     msg.assign(header.data[0], header.size_curr);
@@ -71,7 +71,7 @@ public:
   }
   bool addResponse(std::string& msg, bool skip_client=false) {
     utils::Header header(msg.c_str(), msg.size(), server_comm);
-    if (!server_comm->create_header_send(header))
+    if (!server_comm->create_header_test(header))
       return false;
     header.on_send();
     if (!skip_client) {
@@ -303,7 +303,7 @@ TEST(ClientComm, global) {
       {
 	std::string msg_cli = YGG_CLIENT_SIGNON;
 	utils::Header header(msg_cli.c_str(), msg_cli.size(), &sComm);
-	EXPECT_TRUE(sComm.create_header_send(header));
+	EXPECT_TRUE(sComm.create_header_test(header));
 	header.on_send();
 	msg_cli.assign(header.data[0], header.size_curr);
 	EXPECT_GE(rComm.getRequests().addRequestServer(header), 0);

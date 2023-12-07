@@ -212,7 +212,7 @@ TEST(YggInterface_C, Client) {
   std::string msg = "\"" + req_send + "\"";
   {
     communication::utils::Header header(msg.c_str(), msg.size(), &sComm);
-    EXPECT_TRUE(sComm.create_header_send(header));
+    EXPECT_TRUE(sComm.create_header_test(header));
     int len = header.format();
     msg.assign(header.data[0], static_cast<size_t>(len));
     EXPECT_GE(rComm.getRequests().addRequestServer(header), 0);
@@ -313,7 +313,7 @@ TEST(YggInterface_C, ClientPointers) {
   std::string msg = "\"" + req_send + "\"";
   {
     communication::utils::Header header(msg.c_str(), msg.size(), &sComm);
-    EXPECT_TRUE(sComm.create_header_send(header));
+    EXPECT_TRUE(sComm.create_header_test(header));
     int len = header.format();
     msg.assign(header.data[0], static_cast<size_t>(len));
     EXPECT_GE(rComm.getRequests().addRequestServer(header), 0);

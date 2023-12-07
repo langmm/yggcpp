@@ -300,22 +300,19 @@ ZMQSocket::~ZMQSocket() {
   destroy();
 }
 
-#ifdef YGG_TEST
 void ZMQSocket::resetPort() {
   ZMQSocket::_last_port_set = 0;
 }
-#endif // YGG_TEST
 
 //////////////
 // ZMQReply //
 //////////////
 
-#ifdef YGG_TEST
-bool ZMQReply::return_val = true;
-void ZMQReply::set_return_val(bool new_val) {
-  ZMQReply::return_val = new_val;
+// Test methods
+bool ZMQReply::_test_return_val = true;
+void ZMQReply::set_test_return_val(bool new_val) {
+  ZMQReply::_test_return_val = new_val;
 }
-#endif // YGG_TEST
 
 ZMQReply::ZMQReply(DIRECTION dir) :
   sockets(), n_msg(0), n_rep(0), direction(dir), last_idx(-1) {}
@@ -368,15 +365,16 @@ int ZMQReply::set(std::string endpoint) {
 bool ZMQReply::recv(std::string msg_send, bool* closed) {
   if (msg_send.empty())
     msg_send.assign(_reply_msg);
-#ifdef YGG_TEST
-  UNUSED(closed);
-  // Exit early to prevent deadlock when running from the same thread
-  return return_val;
-#else // YGG_TEST
+  if (ZMQComm::_disable_handshake) {
+    if (Comm_t::_ygg_testing) {
+      return _test_return_val;
+    } else {
+      return true;
+    }
+  }
   if (!recv_stage1(msg_send))
     return false;
   return recv_stage2(msg_send, closed);
-#endif // YGG_TEST
 }
 bool ZMQReply::recv_stage1(std::string msg_send) {
   if (msg_send.empty())
@@ -437,14 +435,17 @@ bool ZMQReply::recv_stage2(std::string msg_send, bool* closed) {
 }
 
 bool ZMQReply::send() {
-#ifdef YGG_TEST
-  return return_val;
-#else // YGG_TEST
+  if (ZMQComm::_disable_handshake) {
+    if (Comm_t::_ygg_testing) {
+      return _test_return_val;
+    } else {
+      return true;
+    }
+  }
   std::string msg_data;
   if (!send_stage1(msg_data))
     return false;
   return send_stage2(msg_data);
-#endif // YGG_TEST
 }
 bool ZMQReply::send_stage1(std::string& msg_data) {
   if (sockets.size() == 0) {
@@ -535,6 +536,8 @@ bool ZMQReply::send_stage2(const std::string msg_data) {
 /////////////
 // ZMQComm //
 /////////////
+
+int ZMQComm::_disable_handshake = 0;
 
 ZMQComm::ZMQComm(const std::string name, const utils::Address& address,
 		 const DIRECTION direction, int flgs,
@@ -739,7 +742,7 @@ Comm_t* ZMQComm::create_worker_recv(Header& head) {
   return out;
 }
 
-#ifdef YGG_TEST
+// Test methods
 bool ZMQComm::afterSendRecv(Comm_t* sComm, Comm_t* rComm) {
   if (sComm->global_comm) // // GCOVR_EXCL_START
     sComm = sComm->global_comm;
@@ -800,7 +803,6 @@ bool ZMQComm::genMetadata(std::string& out) {
   out += "\"zmq_reply\": \"" + new_reply + "\"";
   return true; //  GCOVR_EXCL_STOP
 }
-#endif // YGG_TEST
 
 #else // ZMQINSTALLED
 

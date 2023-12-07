@@ -56,7 +56,6 @@ else()
 endif()
 
 
-add_definitions(-DYGG_TEST)
 # This is required for running tests with valgrind
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|ARMClang")
     add_custom_command(TARGET unittest POST_BUILD

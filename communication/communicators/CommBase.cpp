@@ -22,16 +22,19 @@ void communication::communicator::global_scope_comm_off() {
   global_scope_comm = 0;
   // #endif
 }
-int communication::communicator::ygg_init() {
-  return communication::communicator::Comm_t::_ygg_init();
+int communication::communicator::ygg_init(bool for_testing) {
+  return communication::communicator::Comm_t::_ygg_init(for_testing);
 }
 void communication::communicator::ygg_exit() {
   communication::communicator::Comm_t::_ygg_cleanup();
 }
 
-int Comm_t::_ygg_init() {
+int Comm_t::_ygg_init(bool for_testing) {
   YGG_THREAD_SAFE_BEGIN(init) {
     if (!Comm_t::_ygg_initialized) {
+      if (for_testing) {
+	Comm_t::_ygg_testing = 1;
+      }
       YggLogDebug << "_ygg_init: Begin initialization" << std::endl;
       communication::communicator::Comm_t::_ygg_main_thread_id = get_thread_id();
 #if defined(ZMQINSTALLED)
@@ -72,27 +75,24 @@ void Comm_t::_ygg_cleanup(CLEANUP_MODE mode) {
 	  utils::finalize_python("_ygg_cleanup");
 	}
       } YGG_THREAD_SAFE_END;
-#ifndef YGG_TEST
-      if (mode != CLEANUP_COMMS) {
+      if ((!Comm_t::_ygg_testing) && mode != CLEANUP_COMMS) {
 	Comm_t::_ygg_finalized = 1;
       }
-#endif // YGG_TEST
       YggLogDebug << "_ygg_cleanup: Cleanup complete" << std::endl;
     }
     Comm_t::_ygg_cleanup_mode = prev_mode;
   } YGG_THREAD_SAFE_END;
-#ifndef YGG_TEST
 #ifndef RAPIDJSON_YGGDRASIL_PYTHON
-  if (YggdrasilLogger::_ygg_error_flag) {
+  if ((!Comm_t::_ygg_testing) && YggdrasilLogger::_ygg_error_flag) {
     YggLogDebug << "_ygg_cleanup: Error code set" << std::endl;
     _exit(YggdrasilLogger::_ygg_error_flag);
   }
 #endif // RAPIDJSON_YGGDRASIL_PYTHON
-#endif // YGG_TEST
 }
 
 int Comm_t::_ygg_initialized = 0;
 int Comm_t::_ygg_finalized = 0;
+int Comm_t::_ygg_testing = 0;
 CLEANUP_MODE Comm_t::_ygg_cleanup_mode = CLEANUP_DEFAULT;
 std::string Comm_t::_ygg_main_thread_id = "";
 

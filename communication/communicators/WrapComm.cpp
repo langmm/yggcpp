@@ -121,12 +121,12 @@ WRAP_METHOD_NORET(close, (), (), , )
 WRAP_METHOD(is_closed, (), (), out = false, bool, const)
 WRAP_METHOD(is_open, (), (), out = false, bool, const)
 WRAP_METHOD_DIRECT(getWorkers, (), (), THROW_NO_HANDLE(getWorkers), WorkerList&, );
-#ifdef YGG_TEST
+
+// test methods
 WRAP_METHOD(afterSendRecv, (Comm_t* sComm, Comm_t* rComm),
 	    (sComm, rComm), out = false, bool, )
 WRAP_METHOD(genMetadata, (std::string& meta), (meta),
 	    out = false, bool, )
-#endif
 
 // protected methods
 WRAP_METHOD(send_single, (utils::Header& header),

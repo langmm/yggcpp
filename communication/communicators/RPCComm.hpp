@@ -5,7 +5,6 @@
 #include "Requests.hpp"
 #include "WrapComm.hpp"
 
-#ifdef COMM_BASE
 namespace communication {
 namespace communicator {
 
@@ -46,22 +45,16 @@ public:
       return (dynamic_cast<RPCComm*>(global_comm))->getRequests();
     return requests;
   }
-  
-#ifdef YGG_TEST
-  bool afterSendRecv(Comm_t* sComm, Comm_t* rComm) override;
-  // std::string getResponseAddress() {
-  //   if (global_comm)
-  //     return (dynamic_cast<RPCComm*>(global_comm))->getResponseAddress();
-  //   return requests.lastComm()->getAddress();
-  // }
-#endif
-  
+
 protected:
   
   RequestList requests;
+  
+  // Test methods
+public:
+  bool afterSendRecv(Comm_t* sComm, Comm_t* rComm) override;
+  
 };
   
 }
 } // communication
-
-#endif

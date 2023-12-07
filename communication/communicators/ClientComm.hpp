@@ -47,9 +47,7 @@ public:
     using RPCComm::send;
     using RPCComm::recv;
 
-#ifndef YGG_TEST
 protected:
-#endif
     void init();
     Comm_t* create_worker_send(utils::Header& head) override;
     Comm_t* create_worker_recv(utils::Header& head) override;
@@ -57,9 +55,7 @@ protected:
     /*! \copydoc Comm_t::recv_single */
     long recv_single(utils::Header& header) override;
 
-#ifndef YGG_TEST
 private:
-#endif
     static unsigned _client_rand_seeded;
 
 };

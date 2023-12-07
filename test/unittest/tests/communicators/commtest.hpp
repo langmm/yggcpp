@@ -65,7 +65,7 @@ bool example_transform(rapidjson::Document& msg) {
     std::string msg_cli = YGG_CLIENT_SIGNON;				\
     communication::utils::Header header(msg_cli.c_str(),		\
 					msg_cli.size(), &sComm);	\
-    EXPECT_TRUE(sComm.create_header_send(header));			\
+    EXPECT_TRUE(sComm.create_header_test(header));			\
     int len = header.format();						\
     msg_cli.assign(header.data[0], static_cast<size_t>(len));		\
     EXPECT_GE(rComm.getRequests().addRequestServer(header), 0);		\

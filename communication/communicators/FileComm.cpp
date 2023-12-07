@@ -55,13 +55,11 @@ void FileComm::init() {
 void FileComm::_close(bool call_base) {
   if (handle && !global_comm) {
     handle->close();
-#ifdef YGG_TEST
-    bool delete_file = true;
-#else
     bool delete_file = ((direction == RECV) ||
 			(!(flags & (COMM_FLAG_INTERFACE |
 				    COMM_FLAG_WORKER))));
-#endif
+    if (Comm_t::_ygg_testing)
+      delete_file = true;
     if (delete_file)
       std::remove(this->address.address().c_str());
   }

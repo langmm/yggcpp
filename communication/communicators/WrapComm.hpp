@@ -71,12 +71,11 @@ namespace communication {
       using Comm_t::send;
       using Comm_t::recv;
 
-#ifdef YGG_TEST
+      // Test methods
       WRAP_METHOD(afterSendRecv, (Comm_t* sComm, Comm_t* rComm),
 		  (sComm, rComm), out = false, bool, override);
       WRAP_METHOD(genMetadata, (std::string& meta), (meta),
 		  out = false, bool, override);
-#endif
       
     protected:
       WRAP_METHOD(send_single, (utils::Header& header),

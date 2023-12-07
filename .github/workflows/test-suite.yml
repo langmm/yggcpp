@@ -117,7 +117,6 @@ jobs:
           sudo apt-get install -y libc6-dbg gdb valgrind lcov libcmocka-dev gfortran
           sudo apt upgrade --fix-missing
           valgrind --version
-          # echo "FC=$(which gfortran)" >> "$GITHUB_ENV"
       - name: Install dependencies on Mac
         if: matrix.os == 'macos-latest' && matrix.python-install == 'pip'
         run: |

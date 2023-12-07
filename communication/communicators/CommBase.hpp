@@ -214,7 +214,7 @@ YGG_THREAD_GLOBAL_VAR(int, global_scope_comm, )
 
 void global_scope_comm_on();
 void global_scope_comm_off();
-int ygg_init();
+int ygg_init(bool for_testing=false);
 void ygg_exit();
 
 class AsyncComm;
@@ -922,11 +922,6 @@ public:
     static bool isInstalled() { return false; }
   
     virtual WorkerList& getWorkers() { return workers; }
-#ifdef YGG_TEST
-    virtual bool afterSendRecv(Comm_t*, Comm_t*) { return true; }
-    virtual bool genMetadata(std::string&) { return true; }
-    Comm_t* getGlobalComm() { return global_comm; }
-#endif
     bool addSchema(const utils::Metadata& s, const DIRECTION dir=NONE);
     bool addSchema(const rapidjson::Value& s, bool isMetadata = false,
 		   const DIRECTION dir=NONE);
@@ -978,9 +973,10 @@ protected:
 public:
     static int _ygg_initialized;
     static int _ygg_finalized;
+    static int _ygg_testing;
     static CLEANUP_MODE _ygg_cleanup_mode;
     static std::string _ygg_main_thread_id;
-    static int _ygg_init();
+    static int _ygg_init(bool for_testing=false);
     
 protected:
     void _close(bool) {}
@@ -1148,6 +1144,14 @@ public:
     static Comm_t* find_registered_comm(const std::string& name,
 					const DIRECTION dir,
 					const COMM_TYPE type);
+
+    // Methods for testing
+    virtual bool afterSendRecv(Comm_t*, Comm_t*) { return true; }
+    virtual bool genMetadata(std::string&) { return true; }
+    Comm_t* getGlobalComm() { return global_comm; }
+    bool create_header_test(utils::Header& header) {
+      return create_header_send(header);
+    }
 };
 
 /**
@@ -1249,7 +1253,7 @@ protected:
 
     H *handle; //!< Pointer to handle for comm.
 
-#ifdef YGG_TEST
+    // Test methods
 public:
     H* getHandle() {
       if (global_comm)
@@ -1261,7 +1265,6 @@ public:
 	dynamic_cast<CommBase<H>*>(global_comm)->setHandle(h);
       handle = h;
     }
-#endif // YGG_TEST
 };
 
 template<typename H>

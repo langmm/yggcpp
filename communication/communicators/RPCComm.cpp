@@ -1,8 +1,6 @@
 #include "RPCComm.hpp"
 #include "DefaultComm.hpp"
 
-#ifdef COMM_BASE
-
 using namespace communication::communicator;
 using namespace communication::utils;
 
@@ -93,7 +91,7 @@ bool RPCComm::addResponseFormat(const std::string& fmt,
   return requests.addResponseFormat(fmt, use_generic);
 }
 
-#ifdef YGG_TEST
+// Test methods
 bool RPCComm::afterSendRecv(Comm_t* sComm, Comm_t* rComm) {
   if (sComm->global_comm)
     sComm = sComm->global_comm;
@@ -109,6 +107,3 @@ bool RPCComm::afterSendRecv(Comm_t* sComm, Comm_t* rComm) {
   assert(sComm_res && rComm_res);
   return sComm_res->afterSendRecv(sComm_res, rComm_res);
 }
-#endif
-
-#endif

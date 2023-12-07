@@ -40,9 +40,7 @@ public:
     // \copydoc Comm_t::logClass
     std::string logClass() const override;
     
-#ifndef YGG_TEST
 protected:
-#endif
     virtual bool signon(const utils::Header& header);
     bool create_header_send(utils::Header& header) override;
     int send_single(utils::Header& header) override;
