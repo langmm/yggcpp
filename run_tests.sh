@@ -292,6 +292,8 @@ if [ -n "$SPEED_TEST" ]; then
     if [ ! -d "build_speed" ]; then
 	mkdir build_speed
     fi
+    export LD_LIBRARY_PATH="${LD_LIBRARY_PATH};$(pwd)/_install/lib"
+    echo $LD_LIBRARY_PATH
     cd build_speed
     cmake ../test/speedtest -DCMAKE_PREFIX_PATH=../_install -DYggInterface_DIR=../../_install/lib/cmake/YggInterface -DN_MSG=$N_MSG -DS_MSG=$S_MSG -DCOMM=$COMM $CMAKE_FLAGS $CMAKE_FLAGS_SPEED
     cmake --build .
