@@ -297,7 +297,7 @@ jobs:
         shell: bash -l {0}
         run: |
           echo "CMAKE_ARGS_BASE=${{ env.CMAKE_ARGS_BASE }} -DPython3_ROOT_DIR=${{ env.pythonLocation }}" >> "$GITHUB_ENV"
-          echo "CMAKE_ARGS_PYTHON=${{ env.CMAKE_ARGS_BASE }} -DPython_ROOT_DIR=${{ env.pythonLocation }}" >> "$GITHUB_ENV" # required?
+          echo "CMAKE_ARGS_PYTHON=${{ env.CMAKE_ARGS_PYTHON }} -DPython_ROOT_DIR=${{ env.pythonLocation }}" >> "$GITHUB_ENV" # required?
 
 
       ############################################
@@ -307,8 +307,8 @@ jobs:
         if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
         shell: bash -l {0}
         run: |
-          echo "CMAKE_ARGS_BASE=${{ env.CMAKE_ARGS_BASE }} \"-DCMAKE_PREFIX_PATH=${VCPKG_INSTALLATION_ROOT}\installed\\${VCPKG_TRIPLET}\"" >> "$GITHUB_ENV"
-          echo "PYTHON_CONFIG_FLAGS=${{ env.PYTHON_CONFIG_FLAGS }} --config-settings=cmake.define.CMAKE_PREFIX_PATH=\"${VCPKG_INSTALLATION_ROOT}\installed\\${VCPKG_TRIPLET}\" --config-settings=cmake.define.Python3_ROOT_DIR=${{ env.pythonLocation }} --config-settings=cmake.define.Python_ROOT_DIR=${{ env.pythonLocation }}" >> "$GITHUB_ENV"
+          echo "CMAKE_ARGS_BASE=${{ env.CMAKE_ARGS_BASE }} \"-DCMAKE_PREFIX_PATH=${VCPKG_INSTALLATION_ROOT}/installed/${VCPKG_TRIPLET}\"" >> "$GITHUB_ENV"
+          echo "PYTHON_CONFIG_FLAGS=${{ env.PYTHON_CONFIG_FLAGS }} --config-settings=cmake.define.CMAKE_PREFIX_PATH=\"${VCPKG_INSTALLATION_ROOT}/installed/${VCPKG_TRIPLET}\" --config-settings=cmake.define.Python3_ROOT_DIR=${{ env.pythonLocation }} --config-settings=cmake.define.Python_ROOT_DIR=${{ env.pythonLocation }}" >> "$GITHUB_ENV"
      
       ###################################
       # Add paths for Windows dlls
@@ -532,7 +532,7 @@ jobs:
       - name: Run speed tests
         shell: bash -l {0}
         run: |
-          ./run_tests.sh --rebuild --speed --config Release
+          ./run_tests.sh --rebuild --speed --config Release ${CMAKE_ARGS_BASE}
 
       ###################################
       # Coverage

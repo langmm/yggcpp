@@ -128,7 +128,12 @@ while [[ $# -gt 0 ]]; do
 	    shift
 	    shift
 	    ;;
+	-* | --* )
+	    CMAKE_FLAGS="${CMAKE_FLAGS} $1"
+	    shift
+	    ;;
 	*)
+	    shift
 	    ;;
     esac
 done
@@ -223,7 +228,7 @@ if [ -n "$REBUILD" ]; then
 	rm "communication/pyYggdrasil/lib/libYggInterface_py.dylib"
     fi
 fi
-export CMAKE_ARGS=${CMAKE_FLAGS}
+# export CMAKE_ARGS=${CMAKE_FLAGS}
 if [ -n "$DO_PYTHON" ] && [ -n "$NO_CORE" ]; then
     export CMAKE_ARGS="${CMAKE_FLAGS} ${CMAKE_FLAGS_LIB}"
     if [ ! -n "$DONT_BUILD" ]; then

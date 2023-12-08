@@ -43,9 +43,11 @@ if(POLICY CMP0094)  # https://cmake.org/cmake/help/latest/policy/CMP0094.html
 endif()
 
 # compile in release with debug info mode by default
+message(STATUS "CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif()
+message(STATUS "CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
 
 if (WIN32)
    set(CMAKE_CXX_EXTENSIONS OFF)
@@ -393,10 +395,14 @@ else()
     if(Python3_EXECUTABLE)
         message(STATUS "Python executable is ${Python3_EXECUTABLE}")
         if(NOT Python3_NumPy_INCLUDE_DIRS)
-            exec_program(${Python3_EXECUTABLE}
-	                 ARGS "-c \"import numpy; print(numpy.get_include())\""
-		         OUTPUT_VARIABLE Python3_NumPy_INCLUDE_DIRS
-		         RETURN_VALUE NUMPY_NOT_FOUND)
+	    execute_process(
+	      COMMAND ${Python3_EXECUTABLE} -c "import numpy; print(numpy.get_include())"
+	      OUTPUT_VARIABLE Python3_NumPy_INCLUDE_DIRS
+	      RESULT_VARIABLE NUMPY_NOT_FOUND)
+            # exec_program(${Python3_EXECUTABLE}
+	    #              ARGS "-c \"import numpy; print(numpy.get_include())\""
+	    # 	         OUTPUT_VARIABLE Python3_NumPy_INCLUDE_DIRS
+	    # 	         RETURN_VALUE NUMPY_NOT_FOUND)
             if(NUMPY_NOT_FOUND)
                 message(FATAL_ERROR "Numpy include dirs not found")
             endif()
@@ -407,10 +413,14 @@ else()
                 set(Python3_ROOT_DIR "${CONDA_PREFIX}")
             else()
                 if(Python3_EXECUTABLE)
-                    exec_program(${Python3_EXECUTABLE}
-	                         ARGS "-c \"import sysconfig; print(sysconfig.get_config_var('base'))\""
-		                 OUTPUT_VARIABLE PYTHON_ROOT
-		                 RETURN_VALUE ROOT_NOT_FOUND)
+		    execute_process(
+		      COMMAND ${Python3_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('base'))"
+		      OUTPUT_VARIABLE PYTHON_ROOT
+		      RESULT_VARIABLE ROOT_NOT_FOUND)
+                    # exec_program(${Python3_EXECUTABLE}
+	            #              ARGS "-c \"import sysconfig; print(sysconfig.get_config_var('base'))\""
+		    #              OUTPUT_VARIABLE PYTHON_ROOT
+		    #              RETURN_VALUE ROOT_NOT_FOUND)
                     if(ROOT_NOT_FOUND)
                         message(FATAL_ERROR "Python root not found")
                     endif()
