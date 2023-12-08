@@ -533,7 +533,7 @@ jobs:
       - name: Run speed tests
         shell: bash -l {0}
         run: |
-          ./run_tests.sh --rebuild --speed --config ${CMAKE_ARGS_BASE}
+          ./run_tests.sh --rebuild --speed --config Debug ${CMAKE_ARGS_BASE}
 
       ###################################
       # Coverage
