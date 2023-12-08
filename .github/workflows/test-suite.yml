@@ -445,12 +445,12 @@ jobs:
         shell: bash -l {0}
         run: |
           cd build
-          cmake --build . --config ${CMAKE_BUILD_TYPE_TEST}
+          cmake --build . --config ${{ env.CMAKE_BUILD_TYPE_TEST }}
       - name: Build C++ & C (PIP)
         if: matrix.python-install == 'pip'
         run: |
           cd build
-          cmake --build . --config ${CMAKE_BUILD_TYPE_TEST}
+          cmake --build . --config ${{ env.CMAKE_BUILD_TYPE_TEST }}
       
       ###################################
       # Test CPP, C, & Fortran
@@ -533,7 +533,7 @@ jobs:
       - name: Run speed tests
         shell: bash -l {0}
         run: |
-          ./run_tests.sh --rebuild --speed --config Debug ${CMAKE_ARGS_BASE}
+          ./run_tests.sh --rebuild --speed --config Debug ${{ env.CMAKE_ARGS_BASE }}
 
       ###################################
       # Coverage
