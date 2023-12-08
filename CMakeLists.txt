@@ -569,13 +569,13 @@ if(BUILD_CPP_LIBRARY)
 	"$<$<LINK_LANGUAGE:CXX>:${DEPS_PUBLIC_CXX_LIBS}>"
 	"$<$<LINK_LANGUAGE:Fortran>:${DEPS_PUBLIC_Fortran_LIBS}>")
     target_include_directories(
-        ${YGG_TARGET_CPP} PUBLIC
+        ${YGG_TARGET_CPP} PUBLIC ${DEPS_INCLUDE_DIRS}
   	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/communication>
 	$<BUILD_INTERFACE:${RAPIDJSON_INCLUDE_DIRS}>
 	$<INSTALL_INTERFACE:include/YggInterface>
 	$<INSTALL_INTERFACE:include/YggInterface/rapidjson/include>)
-    target_include_directories(
-        ${YGG_TARGET_CPP} PRIVATE ${DEPS_INCLUDE_DIRS})
+    # target_include_directories(
+    #     ${YGG_TARGET_CPP} PRIVATE ${DEPS_INCLUDE_DIRS})
     target_compile_definitions(
         ${YGG_TARGET_CPP} PUBLIC ${YGG_INSTALL_DEFS})
     target_compile_options(
