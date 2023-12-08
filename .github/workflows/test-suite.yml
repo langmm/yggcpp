@@ -252,7 +252,7 @@ jobs:
           CMAKE_BUILD_TYPE_TEST="Debug"
           echo "CMAKE_BUILD_TYPE_TEST=Debug" >> "$GITHUB_ENV"
           echo "CMAKE_ARGS_BASE=-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON" >> "$GITHUB_ENV"
-	  echo "CMAKE_ARGS_NO_PYTHON=-DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/_install -DYGG_Fortran_REQUIRED=ON"
+          echo "CMAKE_ARGS_NO_PYTHON=-DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/_install -DYGG_Fortran_REQUIRED=ON"
           echo "CMAKE_ARGS_TEST=-DYGG_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE_TEST} -DYGG_DEBUG_LEVEL=5" >> "$GITHUB_ENV"
           echo "CMAKE_ARGS_PYTHON=-DYGG_DEBUG_LEVEL=5" >> "$GITHUB_ENV"
           echo "TEST_FLAGS=-C ${CMAKE_BUILD_TYPE_TEST} --output-on-failure -VV" >> "$GITHUB_ENV"
