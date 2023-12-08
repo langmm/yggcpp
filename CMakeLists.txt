@@ -578,6 +578,8 @@ if(BUILD_CPP_LIBRARY)
 	"$<$<LINK_LANGUAGE:C>:${DEPS_PUBLIC_C_LINK_FLAGS}>"
 	"$<$<LINK_LANGUAGE:CXX>:${DEPS_PUBLIC_CXX_LINK_FLAGS}>"
 	"$<$<LINK_LANGUAGE:Fortran>:${DEPS_PUBLIC_Fortran_LINK_FLAGS}>")
+    target_compile_features(
+        ${YGG_TARGET_CPP} PUBLIC cxx_std_14)
     
     include(CheckDLL)
     show_runtimes(${YGG_TARGET_CPP})

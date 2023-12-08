@@ -16,6 +16,7 @@ WITH_LLDB=""
 DO_SYMBOLS=""
 DONT_TEST=""
 NO_DEBUG_MSG=""
+CONFIG_FLAGS=""
 SPEED_TEST=""
 N_MSG="100"
 S_MSG="100"
@@ -102,6 +103,11 @@ while [[ $# -gt 0 ]]; do
 	--local-rj )
 	    CMAKE_FLAGS="${CMAKE_FLAGS} -DRAPIDJSON_INCLUDE_DIRS=/Users/langmm/rapidjson/include"
 	    shift # past argument with no value
+	    ;;
+	--config )
+	    CONFIG_FLAGS="--config $2"
+	    shift
+	    shift
 	    ;;
 	--speed )
 	    SPEED_TEST="TRUE"
@@ -248,9 +254,9 @@ else
     cd build
     if [ ! -n "$DONT_BUILD" ]; then
 	cmake .. $CMAKE_FLAGS $CMAKE_FLAGS_LIB
-	cmake --build .
+	cmake --build . $CONFIG_FLAGS
 	# Need install here to ensure that cmake config files are in place
-	cmake --install . --prefix ../_install
+	cmake --install . --prefix ../_install $CONFIG_FLAGS
     fi
     if [ ! -n "$DONT_TEST" ]; then
 	if [ -n "$WITH_LLDB" ]; then
@@ -274,7 +280,6 @@ if [ -n "$SPEED_TEST" ]; then
 	mkdir build_speed
     fi
     cd build_speed
-    # cmake ../test/speedtest -DCMAKE_PREFIX_PATH=../_install -DCMAKE_INSTALL_PREFIX=../_install -DN_MSG=$N_MSG -DS_MSG=$S_MSG -DCOMM=$COMM $CMAKE_FLAGS $CMAKE_FLAGS_SPEED
     cmake ../test/speedtest -DCMAKE_PREFIX_PATH=../_install -DYggInterface_DIR=../../_install/lib/cmake/YggInterface -DN_MSG=$N_MSG -DS_MSG=$S_MSG -DCOMM=$COMM $CMAKE_FLAGS $CMAKE_FLAGS_SPEED
     cmake --build .
     if [ -n "$WITH_ASAN" ]; then

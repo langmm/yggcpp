@@ -37,7 +37,9 @@ EXPECT_ ## comparator ## _EQ(cmplx.im, ncmplx.im);               \
 TEST(Value, Complex) {
     COMPLEX_UNIT_TEST(float, float, FLOAT, 1.2f, 6.4f)
     COMPLEX_UNIT_TEST(double, double, DOUBLE, 1.64452778, 9.28667775882)
+#ifdef YGGDRASIL_LONG_DOUBLE_AVAILABLE
     COMPLEX_UNIT_TEST(long_double, long double, LONG_DOUBLE, 162.2235992765, -84.22876639)
+#endif // YGGDRASIL_LONG_DOUBLE_AVAILABLE
 }
 
 TEST(ADDRESS, Init) {
