@@ -106,6 +106,7 @@ while [[ $# -gt 0 ]]; do
 	    ;;
 	--config )
 	    CONFIG_FLAGS="--config $2"
+	    CMAKE_FLAGS="${CMAKE_FLAGS} -DCMAKE_BUILD_TYPE=$2"
 	    shift
 	    shift
 	    ;;
