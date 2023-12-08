@@ -249,6 +249,7 @@ jobs:
       - name: Global config flags
         shell: bash -l {0}
         run: |
+          CMAKE_BUILD_TYPE_TEST="Debug"
           echo "CMAKE_BUILD_TYPE_TEST=Debug" >> "$GITHUB_ENV"
           echo "CMAKE_ARGS_BASE=-DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/_install -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DYGG_Fortran_REQUIRED=ON" >> "$GITHUB_ENV"
           echo "CMAKE_ARGS_TEST=-DYGG_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE_TEST} -DYGG_DEBUG_LEVEL=5" >> "$GITHUB_ENV"
@@ -533,7 +534,7 @@ jobs:
       - name: Run speed tests
         shell: bash -l {0}
         run: |
-          ./run_tests.sh --rebuild --speed --config Debug ${{ env.CMAKE_ARGS_BASE }}
+          ./run_tests.sh --rebuild --speed --config Debug ${{ env.CMAKE_ARGS_BASE }} --verbose
 
       ###################################
       # Coverage

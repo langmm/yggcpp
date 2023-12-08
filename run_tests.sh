@@ -15,6 +15,7 @@ CMAKE_FLAGS_SPEED=""
 WITH_LLDB=""
 DO_SYMBOLS=""
 DONT_TEST=""
+TEST_FLAGS=""
 NO_DEBUG_MSG=""
 CONFIG_FLAGS=""
 SPEED_TEST=""
@@ -84,6 +85,10 @@ while [[ $# -gt 0 ]]; do
 	    DONT_TEST="TRUE"
 	    shift # past argument with no value
 	    ;;
+	--verbose )
+	    TEST_FLAGS="${TEST_FLAGS} --output-on-failure -VV"
+	    shift # past argument with no value
+	    ;;
 	--rj-wrapper )
 	    CMAKE_FLAGS="${CMAKE_FLAGS} -DWRAP_RAPIDJSON_FOR_DLL=1"
 	    shift # past argument with no value
@@ -107,6 +112,7 @@ while [[ $# -gt 0 ]]; do
 	--config )
 	    CONFIG_FLAGS="--config $2"
 	    CMAKE_FLAGS="${CMAKE_FLAGS} -DCMAKE_BUILD_TYPE=$2"
+	    TEST_FLAGS="${TEST_FLAGS} -C $2"
 	    shift
 	    shift
 	    ;;
@@ -272,7 +278,8 @@ else
 		lldb -o 'run' -o 'quit' test/unittest
 	    fi
 	else
-	    make test ARGS="--stop-on-failure"
+	    ctest $TEST_FLAGS --stop-on-failure
+	    # make test ARGS="--stop-on-failure"
 	fi
     fi
     cd ..
@@ -291,7 +298,8 @@ if [ -n "$SPEED_TEST" ]; then
     if [ -n "$WITH_ASAN" ]; then
 	export DYLD_INSERT_LIBRARIES=$(clang -print-file-name=libclang_rt.asan_osx_dynamic.dylib)
     fi
-    make test
+    ctest $TEST_FLAGS
+    # make test
     cd ..
 fi
 
