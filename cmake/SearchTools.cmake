@@ -69,6 +69,10 @@ function(find_package_zmq)
     set(ZeroMQ_LIBRARY ${ZeroMQ_LIBRARY} PARENT_SCOPE)
     set(ZeroMQ_STATIC_LIBRARY ${ZeroMQ_STATIC_LIBRARY} PARENT_SCOPE)
     set(ZeroMQ_INCLUDE_DIR ${ZeroMQ_INCLUDE_DIR} PARENT_SCOPE)
+    message(STATUS "ZeroMQ_FOUND = ${ZeroMQ_FOUND}")
+    message(STATUS "ZeroMQ_LIBRARY = ${ZeroMQ_LIBRARY}")
+    message(STATUS "ZeroMQ_STATIC_LIBRARY = ${ZeroMQ_STATIC_LIBRARY}")
+    message(STATUS "ZeroMQ_INCLUDE_DIR = ${ZeroMQ_INCLUDE_DIR}")
 endfunction()
 
 
