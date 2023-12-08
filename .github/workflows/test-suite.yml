@@ -251,7 +251,8 @@ jobs:
         run: |
           CMAKE_BUILD_TYPE_TEST="Debug"
           echo "CMAKE_BUILD_TYPE_TEST=Debug" >> "$GITHUB_ENV"
-          echo "CMAKE_ARGS_BASE=-DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/_install -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DYGG_Fortran_REQUIRED=ON" >> "$GITHUB_ENV"
+          echo "CMAKE_ARGS_BASE=-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON" >> "$GITHUB_ENV"
+	  echo "CMAKE_ARGS_NO_PYTHON=-DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/_install -DYGG_Fortran_REQUIRED=ON"
           echo "CMAKE_ARGS_TEST=-DYGG_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE_TEST} -DYGG_DEBUG_LEVEL=5" >> "$GITHUB_ENV"
           echo "CMAKE_ARGS_PYTHON=-DYGG_DEBUG_LEVEL=5" >> "$GITHUB_ENV"
           echo "TEST_FLAGS=-C ${CMAKE_BUILD_TYPE_TEST} --output-on-failure -VV" >> "$GITHUB_ENV"
@@ -430,13 +431,13 @@ jobs:
           mkdir build
           cd build
           which cmake
-          cmake .. ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_TEST }}
+          cmake .. ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} ${{ env.CMAKE_ARGS_TEST }}
       - name: Configure (PIP)
         if: matrix.python-install == 'pip'
         run: |
           mkdir build
           cd build
-          cmake .. ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_TEST }}
+          cmake .. ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} ${{ env.CMAKE_ARGS_TEST }}
       
       ###################################
       # Build CPP & C
@@ -534,7 +535,7 @@ jobs:
       - name: Run speed tests
         shell: bash -l {0}
         run: |
-          ./run_tests.sh --rebuild --speed --config Debug ${{ env.CMAKE_ARGS_BASE }} --verbose
+          ./run_tests.sh --rebuild --speed --config Debug ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} --verbose
 
       ###################################
       # Coverage
