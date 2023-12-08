@@ -20,7 +20,7 @@ void YggEnvironment::SetUp() {
   Nipc = communication::communicator::IPCComm::count_queues();
 #endif // IPCINSTALLED
   std::cerr << "SETUP" << std::endl;
-  communication::communicator::ZMQComm::_disable_handshake = 1;
+  communication::communicator::ZMQComm::disable_handshake();
   communication::communicator::ygg_init(true);
   std::cerr << "SETUP COMPLETE" << std::endl;
 }

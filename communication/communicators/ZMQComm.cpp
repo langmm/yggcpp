@@ -539,6 +539,10 @@ bool ZMQReply::send_stage2(const std::string msg_data) {
 
 int ZMQComm::_disable_handshake = 0;
 
+void ZMQComm::disable_handshake() {
+  ZMQComm::_disable_handshake = 1;
+}
+
 ZMQComm::ZMQComm(const std::string name, const utils::Address& address,
 		 const DIRECTION direction, int flgs,
 		 const COMM_TYPE type) :

@@ -10,7 +10,7 @@ integer function test_ygg_output_1() result(r)
   data_recv_len = 20
   rDtype = create_dtype_from_schema('{"type": "string"}', .false.)
   rComm = init_comm("test_name", RECV, DEFAULT_COMM, rDtype, &
-       COMM_FLAG_SET_OPP_ENV)
+       IOR(COMM_FLAG_ASYNC, COMM_FLAG_SET_OPP_ENV))
   sComm = ygg_output("test_name")
   if (.NOT.c_associated(rComm%comm)) then
      write(*,*) "error in comm init"

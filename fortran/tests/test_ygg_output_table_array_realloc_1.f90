@@ -24,7 +24,7 @@ integer function test_ygg_output_table_array_realloc_1() result(r)
   nrow_recv = 0
   rDtype = create_dtype_format('%d\t%lf\t%5s', .true., .false.)
   rComm = init_comm("test_name", RECV, DEFAULT_COMM, rDtype, &
-       COMM_FLAG_SET_OPP_ENV)
+       IOR(COMM_FLAG_ASYNC, COMM_FLAG_SET_OPP_ENV))
   sComm = ygg_ascii_array_output("test_name", '%d\t%lf\t%5s')
   if (.NOT.c_associated(sComm%comm)) then
      write(*,*) "error in comm init"

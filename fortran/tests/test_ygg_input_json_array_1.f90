@@ -8,7 +8,7 @@ integer function test_ygg_input_json_array_1() result(r)
        &"items": [{"type": "integer"}, {"type": "string"}]}')
   sDtype = create_dtype_from_schema('{"type": "any"}', .true.)
   sComm = init_comm("test_name", SEND, DEFAULT_COMM, sDtype, &
-       COMM_FLAG_SET_OPP_ENV)
+       IOR(COMM_FLAG_ASYNC, COMM_FLAG_SET_OPP_ENV))
   rComm = ygg_json_array_input("test_name")
   if (.NOT.c_associated(rComm%comm)) then
      write(*,*) "comm init failed"

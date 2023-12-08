@@ -7,7 +7,7 @@ integer function test_ygg_input_ply_1() result(r)
   data_send = generate_ply();
   sDtype = create_dtype_from_schema('{"type": "ply"}', .false.)
   sComm = init_comm("test_name", SEND, DEFAULT_COMM, sDtype, &
-       COMM_FLAG_SET_OPP_ENV)
+       IOR(COMM_FLAG_ASYNC, COMM_FLAG_SET_OPP_ENV))
   rComm = ygg_ply_input("test_name")
   if (.NOT.c_associated(rComm%comm)) then
      write(*,*) "error in comm init"

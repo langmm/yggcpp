@@ -9,7 +9,7 @@ integer function test_ygg_input_type_1() result(r)
   sDtype = create_dtype_from_schema('{"type": "integer"}', .false.)
   rDtype = create_dtype_from_schema('{"type": "integer"}', .false.)
   sComm = init_comm("test_name", SEND, DEFAULT_COMM, sDtype, &
-       COMM_FLAG_SET_OPP_ENV)
+       IOR(COMM_FLAG_ASYNC, COMM_FLAG_SET_OPP_ENV))
   call display_dtype(sDtype)
   rComm = ygg_input("test_name", rDtype)
   if (.NOT.c_associated(rComm%comm)) then

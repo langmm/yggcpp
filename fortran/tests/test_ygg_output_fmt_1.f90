@@ -14,7 +14,7 @@ integer function test_ygg_output_fmt_1() result(r)
   c_recv = ''
   rDtype = create_dtype_format('%d\t%lf\t%5s', .false., .false.)
   rComm = init_comm("test_name", RECV, DEFAULT_COMM, rDtype, &
-       COMM_FLAG_SET_OPP_ENV)
+       IOR(COMM_FLAG_ASYNC, COMM_FLAG_SET_OPP_ENV))
   sComm = ygg_output("test_name", '%d\t%lf\t%5s')
   if (.NOT.c_associated(sComm%comm)) then
      write(*,*) "error in comm init"

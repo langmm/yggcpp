@@ -155,9 +155,12 @@ private:
 
     // Test methods
  public:
+#ifdef ZMQINSTALLED
     bool afterSendRecv(Comm_t* sComm, Comm_t* rComm) override;
     bool genMetadata(std::string& out) override;
+#endif // ZMQINSTALLED
     ZMQReply& getReply() { return reply; }
+    static void disable_handshake();
     static int _disable_handshake;
 };
 

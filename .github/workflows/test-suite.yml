@@ -304,11 +304,11 @@ jobs:
       # SET CONFIG FLAGS THAT CONTAIN QUOTES LAST
       ############################################
       # TODO: CMAKE_PREFIX_PATH may not be needed in CMAKE_ARGS_PYTHON
-      # - name: Pip config flags on Windows
-      #   if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
-      #   shell: bash -l {0}
-      #   run: |
-      #     echo "CMAKE_ARGS_BASE=${{ env.CMAKE_ARGS_BASE }} \"-DCMAKE_PREFIX_PATH=${VCPKG_INSTALLATION_ROOT}\installed\\${VCPKG_TRIPLET}\"" >> "$GITHUB_ENV"
+      - name: Pip config flags on Windows
+        if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
+        shell: bash -l {0}
+        run: |
+          echo "CMAKE_ARGS_BASE=${{ env.CMAKE_ARGS_BASE }} \"-DCMAKE_PREFIX_PATH=${VCPKG_INSTALLATION_ROOT}\installed\\${VCPKG_TRIPLET}\"" >> "$GITHUB_ENV"
       #     echo "PYTHON_CONFIG_FLAGS=${{ env.PYTHON_CONFIG_FLAGS }} --config-settings=cmake.define.CMAKE_PREFIX_PATH=\"${VCPKG_INSTALLATION_ROOT}\installed\\${VCPKG_TRIPLET}\" --config-settings=cmake.define.Python3_ROOT_DIR=${{ env.pythonLocation }} --config-settings=cmake.define.Python_ROOT_DIR=${{ env.pythonLocation }}" >> "$GITHUB_ENV"
      
       ###################################
