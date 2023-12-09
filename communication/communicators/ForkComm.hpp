@@ -6,6 +6,9 @@ namespace communication {
   namespace communicator {
 
     class ForkTines : public communication::utils::LogBase {
+    private:
+      ForkTines(const ForkTines&) = delete;
+      ForkTines& operator=(const ForkTines&) = delete;
     public:
       ForkTines(const std::string logInst,
 		std::vector<Comm_t*>& comm,
@@ -32,7 +35,6 @@ namespace communication {
       FORK_TYPE forktype;
       std::vector<Comm_t*> comms;
       uint64_t iter;
-      Comm_t* next_comm;
     };
 
     class YGG_API ForkComm : public CommBase<ForkTines> {

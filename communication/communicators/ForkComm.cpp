@@ -11,7 +11,7 @@ using namespace communication::utils;
 ForkTines::ForkTines(const std::string logInst,
 		     std::vector<Comm_t*>& comm,
 		     const FORK_TYPE typ) :
-  logInst_(logInst), forktype(typ), comms(), iter(0), next_comm(nullptr) {
+  logInst_(logInst), forktype(typ), comms(), iter(0) {
   comms.swap(comm);
   updateType();
 }
@@ -20,8 +20,7 @@ ForkTines::ForkTines(const std::string logInst,
 		     const std::vector<std::string>& addrs,
 		     const DIRECTION dir, int flags,
 		     const COMM_TYPE commtype, const FORK_TYPE forktyp) :
-  logInst_(logInst), forktype(forktyp), comms(), iter(0),
-  next_comm(nullptr) {
+  logInst_(logInst), forktype(forktyp), comms(), iter(0) {
   size_t ncomm = (std::max)(names.size(), addrs.size());
   if (ncomm == 0) {
     ygglog_throw_error("ForkTines: Fork comm empty");
