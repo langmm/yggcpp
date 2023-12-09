@@ -460,6 +460,8 @@ if(SKBUILD)
     set(BUILD_CPP_LIBRARY OFF)
     set(BUILD_FORTRAN_LIBRARY OFF)
   endif()
+elseif(BUILD_PYTHON_LIBRARY AND NOT YGGDRASIL_DISABLE_PYTHON_C_API)
+  set(BUILD_CPP_LIBRARY ON)
 endif()
 if(BUILD_FORTRAN_LIBRARY)
   set(BUILD_CPP_LIBRARY ON)
@@ -548,12 +550,21 @@ elseif(BUILD_PYTHON_LIBRARY AND NOT YGGDRASIL_DISABLE_PYTHON_C_API)
     foreach(opt IN LISTS PYTHON_COPY_ARGS)
       list(APPEND PYTHON_CMAKE_ARGS "-D${opt}=${${opt}}")
     endforeach()
+    if (CMAKE_PREFIX_PATH)
+      list(APPEND PYTHON_BUILD_ARGS
+        --config-settings=cmake.define.CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH})
+    endif()
+    if (Python3_ROOT_DIR)
+      list(APPEND PYTHON_BUILD_ARGS
+        --config-settings=cmake.define.Python3_ROOT_DIR=${Python3_ROOT_DIR}
+        --config-settings=cmake.define.Python_ROOT_DIR=${Python3_ROOT_DIR})
+    endif()
     message(STATUS "Building Python with CMAKE_ARGS = ${PYTHON_CMAKE_ARGS}")
     
     set(OLD_CMAKE_ARGS "$ENV{CMAKE_ARGS}")
     set(ENV{CMAKE_ARGS} "${PYTHON_CMAKE_ARGS}")
     execute_process(
-      COMMAND pip3 install ${CMAKE_CURRENT_SOURCE_DIR} -v
+      COMMAND pip3 install ${CMAKE_CURRENT_SOURCE_DIR} -v ${PYTHON_BUILD_ARGS}
       COMMAND_ECHO STDOUT
       RESULT_VARIABLE ret)
     set(ENV{CMAKE_ARGS} ${OLD_CMAKE_ARGS})
