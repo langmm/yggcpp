@@ -991,15 +991,7 @@ int Metadata::deserialize_args(const rapidjson::Document& data,
   }
   return (int)(nargs_orig - ap.get_nargs());
 }
-int Metadata::deserialize(const char* buf, rapidjson::Document& d) {
-  // Order is: deserialize, set pre-transform schema, transform data,
-  //   set schema/normalize data, filter
-  rapidjson::StringStream s(buf);
-  d.ParseStream(s);
-  if (d.HasParseError()) {
-    log_error() << "deserialize: Error parsing JSON" << std::endl;
-    return -1;
-  }
+int Metadata::deserialize_updates(rapidjson::Document& d) {
   bool has_raw_schema = (raw_schema != NULL);
   if (transforms.size() > 0) {
     log_debug() << "deserialize: Before transformations " << d << std::endl;
@@ -1035,8 +1027,7 @@ int Metadata::deserialize(const char* buf, rapidjson::Document& d) {
 	"deserialize: Error normalizing document:" <<
 	std::endl << sb.GetString() <<
 	std::endl << "document=" << d <<
-	std::endl << "schema=" << *schema <<
-	std::endl << "message=" << buf << "..." << std::endl;
+	std::endl << "schema=" << *schema << "..." << std::endl;
       if (!has_raw_schema)
 	resetRawSchema();
       return -1;
@@ -1050,6 +1041,21 @@ int Metadata::deserialize(const char* buf, rapidjson::Document& d) {
   } catch (...) {
     log_error() << "deserialize: Error applying filter(s)" << std::endl;
     return -1;
+  }
+  return 1;
+}
+int Metadata::deserialize(const char* buf, rapidjson::Document& d,
+			  bool temporary) {
+  // Order is: deserialize, set pre-transform schema, transform data,
+  //   set schema/normalize data, filter
+  rapidjson::StringStream s(buf);
+  d.ParseStream(s);
+  if (d.HasParseError()) {
+    log_error() << "deserialize: Error parsing JSON" << std::endl;
+    return -1;
+  }
+  if (!temporary) {
+    return deserialize_updates(d);
   }
   return 1;
 }
@@ -1098,12 +1104,7 @@ int Metadata::serialize_args(rapidjson::Document& data,
   log_debug() << "serialize_args: " << data << std::endl;
   return 1;
 }
-int Metadata::serialize(char **buf, size_t *buf_siz,
-			const rapidjson::Document& data) {
-  // Order is: set schema/normalize data, transform data,
-  //   set post-transform schema, filter, serialize
-  rapidjson::Document d;
-  d.CopyFrom(data, d.GetAllocator(), true);
+int Metadata::serialize_updates(rapidjson::Document& d) {
   int hasT = hasType();
   if (!hasT) {
     if (!fromData(d)) {
@@ -1150,12 +1151,31 @@ int Metadata::serialize(char **buf, size_t *buf_siz,
     log_error() << "serialize: Error applying filter(s)" << std::endl;
     return -1;
   }
+  return 1;
+}
+int Metadata::serialize(char **buf, size_t *buf_siz,
+			const rapidjson::Document& data,
+			bool temporary) {
+  // Order is: set schema/normalize data, transform data,
+  //   set post-transform schema, filter, serialize
+  rapidjson::Document d;
+  d.CopyFrom(data, d.GetAllocator(), true);
+  if (!temporary) {
+    int iout = serialize_updates(d);
+    if (iout <= 0)
+      return iout;
+  }
   rapidjson::StringBuffer buffer;
   rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
   d.Accept(writer);
   if ((size_t)(buffer.GetLength() + 1) > buf_siz[0]) {
-    char* buf_t = (char*)(GetAllocator().Realloc(buf[0], buf_siz[0],
-						 (size_t)(buffer.GetLength() + 1)));
+    char* buf_t = NULL;
+    if (temporary) {
+      buf_t = (char*)realloc(buf[0], (size_t)(buffer.GetLength() + 1));
+    } else {
+      buf_t = (char*)(GetAllocator().Realloc(buf[0], buf_siz[0],
+					     (size_t)(buffer.GetLength() + 1)));
+    }
     if (buf_t == NULL) {
       log_error() << "serialize: Error in realloc" << std::endl;
       return -1;

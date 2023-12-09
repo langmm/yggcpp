@@ -9,13 +9,14 @@ using namespace communication::utils;
 unsigned ClientComm::_client_rand_seeded = 0;
 
 ClientComm::ClientComm(const std::string nme, const Address& addr,
-		       int flgs, const COMM_TYPE type,
+		       int flgs, const COMM_TYPE type, size_t ncomm,
 		       const COMM_TYPE reqtype,
 		       const COMM_TYPE restype,
 		       int reqflags, int resflags) :
   RPCComm(nme, addr,
 	  flgs | COMM_FLAG_CLIENT | COMM_FLAG_ALWAYS_SEND_HEADER,
-	  SEND, RECV, type, reqtype, restype, reqflags, resflags) {
+	  SEND, RECV, type, ncomm,
+	  reqtype, restype, reqflags, resflags) {
   // Called to create temp comm for send/recv
   if (!(global_comm || (name.empty() && address.valid())))
     init();

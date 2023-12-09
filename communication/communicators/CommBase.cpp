@@ -257,14 +257,14 @@ bool Comm_t::check_size(const size_t &len) const {
 
 Comm_t* communication::communicator::new_Comm_t(
      const DIRECTION dir, const COMM_TYPE type, const std::string &name,
-     char* address, int flags,
+     char* address, int flags, size_t ncomm,
      const COMM_TYPE request_commtype, const COMM_TYPE response_commtype,
      int request_flags, int response_flags) {
   Address addr;
   if (address)
     addr.address(address);
   return communication::communicator::new_Comm_t(dir, type, name,
-						 addr, flags,
+						 addr, flags, ncomm,
 						 request_commtype,
 						 response_commtype,
 						 request_flags,
@@ -273,12 +273,12 @@ Comm_t* communication::communicator::new_Comm_t(
 
 Comm_t* communication::communicator::new_Comm_t(
      const DIRECTION dir, const COMM_TYPE type, const std::string &name,
-     int flags,
+     int flags, size_t ncomm,
      const COMM_TYPE request_commtype, const COMM_TYPE response_commtype,
      int request_flags, int response_flags) {
   Address addr;
   return communication::communicator::new_Comm_t(dir, type, name,
-						 addr, flags,
+						 addr, flags, ncomm,
 						 request_commtype,
 						 response_commtype,
 						 request_flags,
@@ -287,10 +287,22 @@ Comm_t* communication::communicator::new_Comm_t(
 
 Comm_t* communication::communicator::new_Comm_t(
      const DIRECTION dir, const COMM_TYPE type, const std::string &name,
-     const Address &addr, int flags,
+     const Address &addr, int flags, size_t ncomm,
      const COMM_TYPE request_commtype, const COMM_TYPE response_commtype,
      int request_flags, int response_flags) {
   flags |= COMM_FLAG_DELETE;
+  utils::Address addr2(addr.address());
+  if (!(addr2.valid() || name.empty())) {
+    addr2 = Comm_t::addressFromEnv(name, dir);
+  }
+  if (((flags & COMM_FLAG_FORK_CYCLE) ||
+       (flags & COMM_FLAG_FORK_BROADCAST) ||
+       (flags & COMM_FLAG_FORK_COMPOSITE) ||
+       (ncomm > 1) || (addr.address().find(",") != std::string::npos) ||
+       (name.find(",") != std::string::npos)) &&
+      (type != SERVER_COMM) && (type != CLIENT_COMM)) {
+    return new ForkComm(name, addr, dir, flags, type, ncomm);
+  }
   if (flags & COMM_FLAG_ASYNC) {
     return new AsyncComm(name, addr, dir, flags, type,
 			 request_commtype, response_commtype,
@@ -307,12 +319,13 @@ Comm_t* communication::communicator::new_Comm_t(
     return new ZMQComm(name, addr, dir, flags);
   case MPI_COMM:
     return new MPIComm(name, addr, dir, flags);
+    // TODO: Pass ncomm to RPC communicators?
   case SERVER_COMM:
-    return new ServerComm(name, addr, flags, type,
+    return new ServerComm(name, addr, flags, type, ncomm,
 			  request_commtype, response_commtype,
 			  request_flags, response_flags);
   case CLIENT_COMM:
-    return new ClientComm(name, addr, flags, type,
+    return new ClientComm(name, addr, flags, type, ncomm,
 			  request_commtype, response_commtype,
 			  request_flags, response_flags);
   case FILE_COMM:
@@ -449,6 +462,11 @@ int Comm_t::send(const rapidjson::Document& data, bool not_generic) {
   meta.GetAllocator().Free(buf);
   log_debug() << "send: returns " << ret << std::endl;
   return ret;
+}
+int Comm_t::send(const rapidjson::Value& data, bool not_generic) {
+  rapidjson::Document tmp;
+  tmp.CopyFrom(data, tmp.GetAllocator(), true);
+  return send(tmp, not_generic);
 }
 int Comm_t::send(const char *data, const size_t &len) {
   std::string data_str(data, len);

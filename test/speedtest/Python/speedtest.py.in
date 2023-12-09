@@ -8,7 +8,7 @@ SPEED_TEST_COMM = pyYggdrasil.COMM_TYPE.@SPEED_TEST_COMM@
 
 
 print(f"Sending {SPEED_TEST_N_MSG} messages containing "
-      f"{SPEED_TEST_S_MSG} bytes");
+      f"{SPEED_TEST_S_MSG} bytes")
 icomm = pyYggdrasil.Comm_t(
     "speed", direction=pyYggdrasil.DIRECTION.RECV,
     commtype=SPEED_TEST_COMM,

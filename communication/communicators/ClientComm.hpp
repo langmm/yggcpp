@@ -18,6 +18,7 @@ public:
      * @param address The address to associate with the communicator, if
      *   address is empty, then an address will be created.
      * @param type Communicator type to assign (used internally).
+     * @param ncomm Number of communicators in a forked request comm.
      * @param reqtype Communicator type to use for the request communicator.
      * @param restype Communicator type to use for the response communicator.
      * @param reqflags Bitwise flags describing the request communicator.
@@ -26,6 +27,7 @@ public:
     explicit ClientComm(const std::string name,
 			const utils::Address &address,
 			int flgs = 0, const COMM_TYPE type = CLIENT_COMM,
+			size_t ncomm = 0,
 			const COMM_TYPE reqtype = DEFAULT_COMM,
 			const COMM_TYPE restype = DEFAULT_COMM,
 			int reqflags = 0, int resflags = 0);

@@ -665,9 +665,19 @@ if (YGG_INSTALL_TARGETS)
     COMPATIBILITY AnyNewerVersion)
   configure_file(
     YggInterfaceConfig.cmake.in YggInterfaceConfig.cmake @ONLY)
+  file(GLOB_RECURSE modules_raw LIST_DIRECTORIES false
+       "${CMAKE_CURRENT_LIST_DIR}/cmake/*.cmake")
+  foreach(f IN LISTS modules_raw)
+    if (NOT f MATCHES "Find*")
+      list(APPEND modules ${f})
+    endif()
+  endforeach()
+  install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/cmake/CMakeAddFortranSubdirectory
+          DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/YggInterface
+          FILES_MATCHING REGEX ".*\\.in$")
   install(FILES "${CMAKE_CURRENT_BINARY_DIR}/YggInterfaceConfig.cmake"
           "${CMAKE_CURRENT_BINARY_DIR}/YggInterfaceConfigVersion.cmake"
-	  cmake/SearchTools.cmake
+	  ${modules}
           DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/YggInterface)
   if (YGG_INSTALL_INCLUDES)
     install(FILES ${YGG_INSTALL_INCLUDES}

@@ -17,14 +17,28 @@ function(add_speed_test LANGUAGE LANGUAGE_EXT)
   if (NOT ENABLE_${LANGUAGE})
     return()
   endif()
+  find_package(YggInterface REQUIRED)
+  include(YggAddFortranSubdirectory)
+  check_language_external(${LANGUAGE} REQUIRED OUTPUT_VARIABLE external
+                          GENERATOR generator EXTERNAL_PATHS paths)
+  if (external)
+    list(APPEND CMAKE_COMMAND_ARGS -DCMAKE_${LANGUAGE}_COMPILER:PATH=${CMAKE_${LANGUAGE}_COMPILER})
+    if (generator)
+      list(APPEND CMAKE_COMMAND_ARGS "\"-G${generator}\"")
+    endif()
+  endif()
   configure_file(CMakeLists.txt.in ${LANGUAGE}/CMakeLists.txt @ONLY)
   configure_file(${LANGUAGE}/speedtest.${LANGUAGE_EXT}.in
                  ${LANGUAGE}/speedtest.${LANGUAGE_EXT} @ONLY)
   set(lang_src_dir ${CMAKE_CURRENT_BINARY_DIR}/${LANGUAGE})
   set(lang_bld_dir ${CMAKE_CURRENT_BINARY_DIR}/${LANGUAGE}_build)
   file(MAKE_DIRECTORY ${lang_bld_dir})
+  if (paths)
+    set(old_paths $ENV{PATH})
+    set(ENV{PATH} "${paths}\;$ENV{PATH}")
+  endif()
   execute_process(
-    COMMAND ${CMAKE_COMMAND} ${lang_src_dir} -DYggInterface_DIR=${YggInterface_DIR} -DCMAKE_VERBOSE_MAKEFILE=ON
+    COMMAND ${CMAKE_COMMAND} ${lang_src_dir} -DYggInterface_DIR=${YggInterface_DIR} -DCMAKE_VERBOSE_MAKEFILE=ON ${CMAKE_COMMAND_ARGS}
     WORKING_DIRECTORY ${lang_bld_dir}
     COMMAND_ECHO STDOUT
     RESULT_VARIABLE ret)
@@ -36,6 +50,9 @@ function(add_speed_test LANGUAGE LANGUAGE_EXT)
     WORKING_DIRECTORY ${lang_bld_dir}
     COMMAND_ECHO STDOUT
     RESULT_VARIABLE ret)
+  if (paths)
+    set(ENV{PATH} "${old_paths}")
+  endif()
   if (NOT ret EQUAL 0)
     message(FATAL_ERROR "Failed to build ${LANGUAGE} speedtest")
   endif()

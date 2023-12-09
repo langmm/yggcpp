@@ -228,6 +228,9 @@ if [ -n "$REBUILD" ]; then
     if [ -d "_skbuild" ]; then
 	rm -rf "_skbuild"
     fi
+    if [ -d "_install" ]; then
+	rm -rf "_install"
+    fi
     if [ -f "communication/pyYggdrasil/pyYggdrasil.cpython-39-darwin.so" ]; then
 	rm "communication/pyYggdrasil/pyYggdrasil.cpython-39-darwin.so"
     fi

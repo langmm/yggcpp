@@ -69,10 +69,11 @@ void close_comm(comm_t* comm) {
 
 comm_t _init_comm(const char* name, const enum DIRECTION dir,
 		  const enum COMM_TYPE t,
-		  dtype_t* datatype, const int flags) {
+		  dtype_t* datatype, const int flags,
+		  const size_t ncomm) {
   comm_t ret;
   _BEGIN_CPP {
-    ret.comm = (void*) communication::communicator::new_Comm_t(dir, t, name, (char*)NULL, flags);
+    ret.comm = (void*) communication::communicator::new_Comm_t(dir, t, name, (char*)NULL, flags, ncomm);
     if (!(ret.comm)) {
       YggLogError << "init_comm(" << name << "): Error initializing comm" << std::endl;
       return ret;
@@ -90,14 +91,14 @@ comm_t init_comm(const char* name, const enum DIRECTION dir,
 		 const enum COMM_TYPE t,
 		 dtype_t* datatype) {
   int flags = COMM_FLAG_INTERFACE;
-  comm_t out = _init_comm(name, dir, t, datatype, flags);
+  comm_t out = _init_comm(name, dir, t, datatype, flags, 0);
   set_comm_language(out, C_LANGUAGE);
   return out;
 }
 comm_t init_comm_flags(const char* name, const enum DIRECTION dir,
 		       const enum COMM_TYPE t, int flags) {
   flags |= COMM_FLAG_INTERFACE;
-  comm_t out = _init_comm(name, dir, t, NULL, flags);
+  comm_t out = _init_comm(name, dir, t, NULL, flags, 0);
   set_comm_language(out, C_LANGUAGE);
   return out;
 }

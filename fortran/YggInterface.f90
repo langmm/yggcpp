@@ -64,9 +64,13 @@ module YggInterface
           COMM_FLAG_ASYNC_WRAPPED   = int(z'00040000'), &
           COMM_FLAG_SET_OPP_ENV     = int(z'00080000'), &
           COMM_FLAG_WRAPPER         = int(z'00100000'), &
-          FILE_FLAG_APPEND          = int(z'00200000'), &
-          FILE_FLAG_BINARY          = int(z'00400000'), &
-          FILE_FLAG_READLINE        = int(z'00800000')
+          COMM_FLAG_FORK_CYCLE      = int(z'00200000'), &
+          COMM_FLAG_FORK_BROADCAST  = int(z'00400000'), &
+          COMM_FLAG_FORK_COMPOSITE  = int(z'00800000'), &
+          COMM_FLAG_FORK_TINE       = int(z'01000000'), &
+          FILE_FLAG_APPEND          = int(z'02000000'), &
+          FILE_FLAG_BINARY          = int(z'04000000'), &
+          FILE_FLAG_READLINE        = int(z'08000000')
   end enum
   ! END DOXYGEN_SHOULD_SKIP_THIS
 
@@ -1433,22 +1437,32 @@ contains
   !> @param[in] t Communicator type to create.
   !> @param[in] datatype Data type for the communicator.
   !> @param[in] flags Bitwise flags describing the communicator.
+  !> @param[in] ncomm Optional number of communicators in a forked comm.
   !> @returns Comm structure.
-  function init_comm(name, dir, t, datatype, flags) result(channel)
+  function init_comm(name, dir, t, datatype, flags, ncomm) &
+       result(channel)
     implicit none
     character(len=*), intent(in) :: name
     character(kind=c_char), allocatable :: c_name(:)
     integer, intent(in) :: dir, t, flags
+    integer, optional :: ncomm
     integer(kind=c_int) :: c_dir, c_t, c_flags
+    integer(kind=c_size_t) :: c_ncomm
     type(yggdtype), target :: datatype
     type(c_ptr) :: c_datatype
     type(yggcomm) :: channel
+    if (present(ncomm)) then
+       c_ncomm = ncomm
+    else
+       c_ncomm = 0
+    end if
     c_name = convert_string_f2c(name)
     c_dir = dir
     c_t = t
     c_flags = flags
     c_datatype = c_loc(datatype)
-    channel = init_comm_c(c_name, c_dir, c_t, c_datatype, c_flags)
+    channel = init_comm_c(c_name, c_dir, c_t, c_datatype, &
+         c_flags, c_ncomm)
     deallocate(c_name)
   end function init_comm
   
@@ -1466,6 +1480,7 @@ contains
     integer(kind=c_int), intent(in), optional :: commtype, flags
     character(kind=c_char), allocatable :: c_name(:)
     integer(kind=c_int) :: c_commtype, c_flags
+    integer(kind=c_size_t) :: c_ncomm
     type(c_ptr) :: c_datatype
     type(yggcomm) :: channel
     c_name = convert_string_f2c(name)
@@ -1479,9 +1494,11 @@ contains
     else
        c_flags = 0
     end if
+    c_ncomm = 0
     c_flags = IOR(c_flags, COMM_FLAG_INTERFACE)
     c_datatype = c_null_ptr
-    channel = init_comm_c(c_name, SEND, c_commtype, c_datatype, c_flags)
+    channel = init_comm_c(c_name, SEND, c_commtype, c_datatype, &
+         c_flags, c_ncomm)
     deallocate(c_name)
   end function ygg_output
   
@@ -1499,6 +1516,7 @@ contains
     integer(kind=c_int), intent(in), optional :: commtype, flags
     character(kind=c_char), allocatable :: c_name(:)
     integer(kind=c_int) :: c_commtype, c_flags
+    integer(kind=c_size_t) :: c_ncomm
     type(c_ptr) :: c_datatype
     type(yggcomm) :: channel
     c_name = convert_string_f2c(name)
@@ -1513,8 +1531,10 @@ contains
        c_flags = 0
     end if
     c_flags = IOR(c_flags, COMM_FLAG_INTERFACE)
+    c_ncomm = 0
     c_datatype = c_null_ptr
-    channel = init_comm_c(c_name, RECV, c_commtype, c_datatype, c_flags)
+    channel = init_comm_c(c_name, RECV, c_commtype, c_datatype, &
+         c_flags, c_ncomm)
     deallocate(c_name)
   end function ygg_input
 
@@ -1537,6 +1557,7 @@ contains
     type(c_ptr) :: c_datatype
     character(kind=c_char), allocatable :: c_name(:)
     integer(kind=c_int) :: c_commtype, c_flags
+    integer(kind=c_size_t) :: c_ncomm
     type(yggcomm) :: channel
     c_name = convert_string_f2c(name)
     c_datatype = c_loc(datatype)
@@ -1551,7 +1572,9 @@ contains
        c_flags = 0
     end if
     c_flags = IOR(c_flags, COMM_FLAG_INTERFACE)
-    channel = init_comm_c(c_name, SEND, c_commtype, c_datatype, c_flags)
+    c_ncomm = 0
+    channel = init_comm_c(c_name, SEND, c_commtype, c_datatype, &
+         c_flags, c_ncomm)
     deallocate(c_name)
   end function ygg_output_type
   
@@ -1574,6 +1597,7 @@ contains
     type(c_ptr) :: c_datatype
     character(kind=c_char), allocatable :: c_name(:)
     integer(kind=c_int) :: c_commtype, c_flags
+    integer(kind=c_size_t) :: c_ncomm
     type(yggcomm) :: channel
     c_name = convert_string_f2c(name)
     c_datatype = c_loc(datatype)
@@ -1588,7 +1612,9 @@ contains
        c_flags = 0
     end if
     c_flags = IOR(c_flags, COMM_FLAG_INTERFACE)
-    channel = init_comm_c(c_name, RECV, c_commtype, c_datatype, c_flags)
+    c_ncomm = 0
+    channel = init_comm_c(c_name, RECV, c_commtype, c_datatype, &
+         c_flags, c_ncomm)
     deallocate(c_name)
   end function ygg_input_type
   

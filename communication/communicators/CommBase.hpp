@@ -94,11 +94,13 @@ public:									\
 #define ADD_CONSTRUCTORS_RPC(cls, defT)				\
   explicit cls(const std::string nme,				\
 	       int flgs = 0, const COMM_TYPE type = defT,	\
+	       size_t ncomm = 0,				\
 	       const COMM_TYPE reqtype = DEFAULT_COMM,		\
 	       const COMM_TYPE restype = DEFAULT_COMM,		\
 	       int reqflags = 0, int resflags = 0);		\
   explicit cls(utils::Address &addr,				\
 	       int flgs = 0, const COMM_TYPE type = defT,	\
+	       size_t ncomm = 0,				\
 	       const COMM_TYPE reqtype = DEFAULT_COMM,		\
 	       const COMM_TYPE restype = DEFAULT_COMM,		\
 	       int reqflags = 0, int resflags = 0);		\
@@ -106,17 +108,19 @@ public:									\
 #define ADD_CONSTRUCTORS_RPC_DEF(cls)			\
   cls::cls(const std::string nme,			\
 	   int flgs, const COMM_TYPE type,		\
+	   size_t ncomm,				\
 	   const COMM_TYPE reqtype,			\
 	   const COMM_TYPE restype,			\
 	   int reqflags, int resflags) :		\
-    cls(nme, utils::blankAddress, flgs, type,		\
+    cls(nme, utils::blankAddress, flgs, type, ncomm,	\
 	reqtype, restype, reqflags, resflags) {}	\
   cls::cls(utils::Address &addr,			\
 	   int flgs, const COMM_TYPE type,		\
+	   size_t ncomm,				\
 	   const COMM_TYPE reqtype,			\
 	   const COMM_TYPE restype,			\
 	   int reqflags, int resflags) :		\
-    cls("", addr, flgs, type,				\
+    cls("", addr, flgs, type, ncomm,			\
 	reqtype, restype, reqflags, resflags) {}	\
   ADD_DESTRUCTOR_DEF(cls, RPCComm, , )			\
   void cls::_close(bool call_base) {			\
@@ -259,7 +263,7 @@ public:
       @param[in] len Size of data in bytes.
       @returns int Values >= 0 indicate success.
      */
-    int send_raw(const char *data, const size_t &len);
+    virtual int send_raw(const char *data, const size_t &len);
     /*!
       @brief Send a rapidjson document through the communicator.
       @param[in] data Message.
@@ -268,6 +272,14 @@ public:
       @returns int Values >= 0 indicate success.
      */
     int send(const rapidjson::Document& data, bool not_generic=false);
+    /*!
+      @brief Send a rapidjson value through the communicator.
+      @param[in] data Message.
+      @param[in] not_generic If true, the datatype will not be updated to
+        expect a generic object in all future send calls.
+      @returns int Values >= 0 indicate success.
+     */
+    int send(const rapidjson::Value& data, bool not_generic=false);
     /*!
       @brief Send an object through the communicator.
       @tparam T Type of object being sent.
@@ -418,7 +430,7 @@ public:
       @returns -1 if message could not be received. Length of the
         received message if message was received.
     */
-    long recv_raw(char*& data, const size_t &len,
+    virtual long recv_raw(char*& data, const size_t &len,
 			  bool allow_realloc=false);
     /*!
       @brief Receive a message as a rapidjson::Document.
@@ -1031,8 +1043,9 @@ protected:
       unsetenv(opp_name.c_str());
     }
 
+  public:
     static utils::Address addressFromEnv(const std::string& name,
-					  DIRECTION direction) {
+					 DIRECTION direction) {
       utils::Address out;
       if (name.empty())
 	return out;
@@ -1056,6 +1069,7 @@ protected:
 	out.address(addr);
       return out;
     }
+  protected:
 
     int update_datatype(const rapidjson::Value& new_schema,
 			const DIRECTION dir);
@@ -1161,22 +1175,26 @@ public:
  * @param name The name of the communicator
  * @param address The initial address of the communicator.
  * @param flags Bitwise flags describing the communicator
+ * @param ncomm Number of communicators to create.
  * @return
  */
 YGG_API Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type,
 			   const std::string &name="",
 			   char* address=nullptr, int flags=0,
+			   size_t ncomm=0,
 			   const COMM_TYPE request_commtype=DEFAULT_COMM,
 			   const COMM_TYPE response_commtype=DEFAULT_COMM,
 			   int request_flags=0, int response_flags=0);
 YGG_API Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type,
 			   const std::string &name,
 			   const utils::Address& address, int flags=0,
+			   size_t ncomm=0,
 			   const COMM_TYPE request_commtype=DEFAULT_COMM,
 			   const COMM_TYPE response_commtype=DEFAULT_COMM,
 			   int request_flags=0, int response_flags=0);
 YGG_API Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type,
 			   const std::string &name, int flags=0,
+			   size_t ncomm=0,
 			   const COMM_TYPE request_commtype=DEFAULT_COMM,
 			   const COMM_TYPE response_commtype=DEFAULT_COMM,
 			   int request_flags=0, int response_flags=0);

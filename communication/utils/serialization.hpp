@@ -237,13 +237,17 @@ public:
   bool transform(rapidjson::Document& msg);
   int deserialize_args(const rapidjson::Document& data,
 		       rapidjson::VarArgList& ap);
-  int deserialize(const char* buf, rapidjson::Document& data);
+  int deserialize_updates(rapidjson::Document& d);
+  int deserialize(const char* buf, rapidjson::Document& data,
+		  bool temporary = false);
   int deserialize(const char* buf, size_t nargs, int allow_realloc, ...);
   int deserialize(const char* buf, rapidjson::VarArgList& ap);
   int serialize_args(rapidjson::Document& data,
 		     rapidjson::VarArgList& ap);
+  int serialize_updates(rapidjson::Document& d);
   int serialize(char **buf, size_t *buf_siz,
-		const rapidjson::Document& data);
+		const rapidjson::Document& data,
+		bool temporary = false);
   int serialize(char **buf, size_t *buf_siz, size_t nargs, ...);
   int serialize(char **buf, size_t *buf_siz,
 		rapidjson::VarArgList& ap);

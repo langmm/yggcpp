@@ -63,9 +63,13 @@ enum COMM_FLAG {
   COMM_FLAG_ASYNC_WRAPPED   = 0x00040000, //!< Comm is wrapped by an asynchronous comm
   COMM_FLAG_SET_OPP_ENV     = 0x00080000, //!< Set environment variables for opposite communicator
   COMM_FLAG_WRAPPER         = 0x00100000, //!< Communicator is a wrapper
-  FILE_FLAG_APPEND          = 0x00200000, //!< Append sent messages to the end of the file
-  FILE_FLAG_BINARY          = 0x00400000, //!< Open file in binary mode
-  FILE_FLAG_READLINE        = 0x00800000  //!< Read file contents line by line
+  COMM_FLAG_FORK_CYCLE      = 0x00200000, //!< Forked communicator cycle
+  COMM_FLAG_FORK_BROADCAST  = 0x00400000, //!< Forked communicator broadcast
+  COMM_FLAG_FORK_COMPOSITE  = 0x00800000, //!< Forked communicator composite
+  COMM_FLAG_FORK_TINE       = 0x01000000, //!< Forked communicator tine.
+  FILE_FLAG_APPEND          = 0x02000000, //!< Append sent messages to the end of the file
+  FILE_FLAG_BINARY          = 0x04000000, //!< Open file in binary mode
+  FILE_FLAG_READLINE        = 0x08000000  //!< Read file contents line by line
 };
 
 enum LANGUAGE {
@@ -129,7 +133,14 @@ enum THREAD_STATUS {
   THREAD_IS_CLIENT    = 0x00000080,
   THREAD_CLOSING      = 0x00000100
 };
-  
+
+enum FORK_TYPE {
+  FORK_DEFAULT,   //!< Default set based on direction
+  FORK_CYCLE,     //!< Cycle through comms on each message
+  FORK_BROADCAST, //!< [SEND ONLY] Send the same message to each comm
+  FORK_COMPOSITE  //!< Part of message is sent/received to/from each comm
+};
+
 // enum DTYPE {
 //     T_NULL, T_OBJECT, T_1DARRAY,
 //     T_DIRECT, T_NDARRAY, T_SCALAR,
@@ -206,7 +217,11 @@ const std::map<const COMM_FLAG, const std::string> COMM_FLAG_map {
   {COMM_FLAG_ASYNC           , "ASYNC"},
   {COMM_FLAG_ASYNC_WRAPPED   , "ASYNC_WRAPPED"},
   {COMM_FLAG_SET_OPP_ENV     , "SET_OPP_ENV"},
-  {COMM_FLAG_WRAPPER         , "WRAPPER"}};
+  {COMM_FLAG_WRAPPER         , "WRAPPER"},
+  {COMM_FLAG_FORK_CYCLE      , "FORK_CYCLE"},
+  {COMM_FLAG_FORK_BROADCAST  , "FORK_BROADCAST"},
+  {COMM_FLAG_FORK_COMPOSITE  , "FORK_COMPOSITE"},
+  {COMM_FLAG_FORK_TINE       , "FORK_TINE"}};
 const std::map<const COMM_FLAG, const std::string> FILE_FLAG_map {
   {FILE_FLAG_APPEND          , "APPEND"},
   {FILE_FLAG_BINARY          , "BINARY"},

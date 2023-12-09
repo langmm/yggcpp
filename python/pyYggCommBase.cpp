@@ -761,6 +761,7 @@ static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds) {
     rapidjson::Document datatype;
     int commtype = COMM_TYPE::DEFAULT_COMM;
     int flags = 0;
+    unsigned int ncomm = 0;
     int64_t timeout_recv = -1;
     bool timeout_recv_set = false;
     const char* format_str = NULL;
@@ -793,6 +794,7 @@ static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds) {
       "datatype",
       "commtype",
       "flags",
+      "ncomm",
       "recv_timeout",
       "format_str",
       "as_array",
@@ -819,10 +821,10 @@ static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds) {
     };
     s->comm = NULL;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ssO$OOiOspOOOOiO",
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ssO$OOiIOspOOOOiO",
 				     (char**) kwlist,
 				     &name, &adr, &dirnPy, &datatypePy,
-				     &commtypePy, &flags,
+				     &commtypePy, &flags, &ncomm,
 				     &recv_timeoutPy, &format_str,
 				     &as_array, &field_namesPy,
 				     &field_unitsPy, &languagePy,
@@ -920,7 +922,7 @@ static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds) {
     try {
       s->comm = communication::communicator::new_Comm_t(
 		       (DIRECTION)dirn, (COMM_TYPE)commtype,
-		       name, adr, flags,
+		       name, adr, flags, static_cast<size_t>(ncomm),
 		       (COMM_TYPE)request_commtype,
 		       (COMM_TYPE)response_commtype,
 		       request_flags, response_flags);

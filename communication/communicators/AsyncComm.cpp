@@ -249,7 +249,7 @@ void AsyncBacklog::on_thread(AsyncComm* parent) {
       comm = new_Comm_t(direction,
 			parent->getCommType(),
 			parent->getName(),
-			addr, flgs_comm,
+			addr, flgs_comm, 0,
 			parent->request_commtype,
 			parent->response_commtype,
 			parent->request_flags,

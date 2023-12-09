@@ -6,10 +6,10 @@ using namespace communication::utils;
 
 RPCComm::RPCComm(const std::string &name, const utils::Address& address,
 		 int flgs, DIRECTION dir, DIRECTION req_dir,
-		 const COMM_TYPE type,
+		 const COMM_TYPE type, size_t ncomm,
 		 const COMM_TYPE reqtype, const COMM_TYPE restype,
 		 int reqflags, int resflags) :
-  WrapComm(name, address, dir, reqflags | flgs, type, reqtype),
+  WrapComm(name, address, dir, reqflags | flgs, type, ncomm, reqtype),
   requests(req_dir, resflags | (flgs & (COMM_FLAG_ALLOW_MULTIPLE_COMMS |
 					COMM_FLAG_ASYNC_WRAPPED)),
 	   restype, logInst()) {}
@@ -18,10 +18,10 @@ ADD_DESTRUCTOR_DEF(RPCComm, WrapComm, , )
 
 RPCComm::RPCComm(const std::string &name,
                  int flgs, DIRECTION dir, DIRECTION req_dir,
-                 const COMM_TYPE type,
+                 const COMM_TYPE type, size_t ncomm,
 		 const COMM_TYPE reqtype, const COMM_TYPE restype,
 		 int reqflags, int resflags) :
-  RPCComm(name, utils::blankAddress, flgs, dir, req_dir, type,
+  RPCComm(name, utils::blankAddress, flgs, dir, req_dir, type, ncomm,
 	  reqtype, restype, reqflags, resflags) {}
 
 void RPCComm::_close(bool call_base) {

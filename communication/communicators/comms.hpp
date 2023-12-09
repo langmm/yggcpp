@@ -10,3 +10,4 @@
 #include "AsyncComm.hpp"
 #include "FileComm.hpp"
 #include "WrapComm.hpp"
+#include "ForkComm.hpp"

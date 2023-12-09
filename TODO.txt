@@ -10,7 +10,6 @@
 * Add method for reserving addresses and generating new addresses if a reserved one is used so that proxy is not needed for every connection
 * Add test for OMP threaded region
 * Fix how file comm is handled to allow async access when compiled with MSVC
-* Add ForkComm communicator
 * Add Buffer communicator for communicators on the same process
 * Add component handling of _schema_properties_yaml_only
 * Add for_server keyword?

@@ -14,11 +14,11 @@ public:
   explicit RPCComm(const std::string &name,
 		   const utils::Address& address,
 		   int flgs, DIRECTION dir, DIRECTION req_dir,
-		   const COMM_TYPE type,
+		   const COMM_TYPE type, size_t ncomm,
 		   const COMM_TYPE reqtype, const COMM_TYPE restype,
 		   int reqflags, int resflags);
   RPCComm(const std::string& name, int flgs, DIRECTION dir,
-	  DIRECTION req_dir, const COMM_TYPE type,
+	  DIRECTION req_dir, const COMM_TYPE type, size_t ncomm,
 	  const COMM_TYPE reqtype, const COMM_TYPE restype,
 	  int reqflags, int resflags);
   ADD_DESTRUCTOR(RPCComm, WrapComm)

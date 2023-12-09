@@ -23,15 +23,18 @@ namespace communication {
 			const utils::Address &address,
 			const DIRECTION direction = NONE, int flgs = 0,
 			const COMM_TYPE type = DEFAULT_COMM,
+			size_t ncomm = 0,
 			const COMM_TYPE wraptype = NULL_COMM,
 			bool delay_init=false);
       explicit WrapComm(const std::string nme,
 			const DIRECTION dirn, int flgs = 0,
 			const COMM_TYPE type = DEFAULT_COMM,
+			size_t ncomm = 0,
 			const COMM_TYPE wraptype = NULL_COMM);
       explicit WrapComm(const utils::Address &addr,
 			const DIRECTION dirn, int flgs = 0,
 			const COMM_TYPE type = DEFAULT_COMM,
+			size_t ncomm = 0,
 			const COMM_TYPE wraptype = NULL_COMM);
       explicit WrapComm(Comm_t* comm);
       
@@ -67,6 +70,11 @@ namespace communication {
       // WRAP_METHOD(logClass, (), (), out = "", std::string, const override);
       // WRAP_METHOD(logInst, (), (), out = "", std::string, const override);
       WRAP_METHOD(getWorkers, (), (), THROW_NO_HANDLE(getWorkers), WorkerList&, override);
+      WRAP_METHOD(send_raw, (const char *data, const size_t &len),
+		  (data, len), out = -1, int, override);
+      WRAP_METHOD(recv_raw, (char*& data, const size_t &len,
+			     bool allow_realloc=false),
+		  (data, len, allow_realloc), out = -1, long, override);
       
       using Comm_t::send;
       using Comm_t::recv;
@@ -94,6 +102,7 @@ namespace communication {
       WRAP_METHOD(create_worker_recv, (utils::Header& header),
 		  (header), out = nullptr, Comm_t*, override);
       COMM_TYPE wraptype;
+      size_t wrapncomm;
     };
       
   }

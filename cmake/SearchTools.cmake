@@ -34,7 +34,7 @@ function(find_package_zmq)
         set(ZeroMQ_LIBRARY ${ZeroMQ_LIBRARY_NEW})
 	if ((NOT ZeroMQ_INCLUDE_DIR STREQUAL ZeroMQ_INCLUDE_DIR-NOTFOUND) AND (NOT ZeroMQ_LIBRARY STREQUAL ZeroMQ_LIBRARY-NOTFOUND))
             set(ZeroMQ_FOUND 1)
-	    set(create_interface ON)
+	    # set(create_interface ON)
 	endif()
     endif()
     # Force error

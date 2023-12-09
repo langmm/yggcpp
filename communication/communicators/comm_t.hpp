@@ -88,11 +88,13 @@ void close_comm(comm_t* comm);
  *   created communicator.
  * @param flags Bitwise flags describing properties the communicator
  *   should have.
+ * @param ncomm Number of communicators in a forked comm.
  * @return comm_t struct containing the requested communicator
  */
 comm_t _init_comm(const char* name, const enum DIRECTION dir,
 		  const enum COMM_TYPE t,
-		  dtype_t* datatype, const int flags);
+		  dtype_t* datatype, const int flags,
+		  const size_t ncomm);
   
 /**
  * Initialize a new communicator

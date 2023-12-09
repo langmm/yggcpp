@@ -27,7 +27,7 @@ void unset_global_comm();
 // Methods for initializing channels
 int is_comm_format_array_type_f(const comm_t x);
 comm_t _init_comm_f(const char *name, const int dir, const int t,
-		    void* datatype, const int flags);
+		    void* datatype, const int flags, const size_t ncomm);
 comm_t ygg_output_f(const char *name);
 comm_t ygg_input_f(const char *name);
 comm_t yggOutputType_f(const char *name, void* datatype);

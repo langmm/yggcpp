@@ -21,6 +21,7 @@ public:
      *                then an address will be created.
      * @param flgs Bitwise flags describing the communicator
      * @param type Communicator type to assign (used internally).
+     * @param ncomm Number of communicators in a forked request comm.
      * @param reqtype Communicator type to use for the request communicator.
      * @param restype Communicator type to use for the response communicator.
      * @param reqflags Bitwise flags describing the request communicator.
@@ -29,6 +30,7 @@ public:
     explicit ServerComm(const std::string name,
 			const utils::Address& address,
 			int flgs = 0, const COMM_TYPE type = SERVER_COMM,
+			size_t ncomm = 0,
 			const COMM_TYPE reqtype = DEFAULT_COMM,
 			const COMM_TYPE restype = DEFAULT_COMM,
 			int reqflags = 0, int resflags = 0);
