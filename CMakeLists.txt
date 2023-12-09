@@ -384,71 +384,8 @@ endif()
 if(YGGDRASIL_DISABLE_PYTHON_C_API)
     list(APPEND YGG_INSTALL_DEFS -DYGGDRASIL_DISABLE_PYTHON_C_API)
 else()
-    # needed on GitHub Actions CI: actions/setup-python does not touch registry/frameworks on Windows/macOS
-    # this mirrors PythonInterp behavior which did not consult registry/frameworks first
-    if (NOT DEFINED Python3_FIND_REGISTRY)
-        set(Python3_FIND_REGISTRY "LAST")
-    endif ()
-    if (NOT DEFINED Python3_FIND_FRAMEWORK)
-        set(Python3_FIND_FRAMEWORK "LAST")
-    endif ()
-    if(Python3_EXECUTABLE)
-        message(STATUS "Python executable is ${Python3_EXECUTABLE}")
-        if(NOT Python3_NumPy_INCLUDE_DIRS)
-	    execute_process(
-	      COMMAND ${Python3_EXECUTABLE} -c "import numpy; print(numpy.get_include())"
-	      OUTPUT_VARIABLE Python3_NumPy_INCLUDE_DIRS
-	      RESULT_VARIABLE NUMPY_NOT_FOUND)
-            # exec_program(${Python3_EXECUTABLE}
-	    #              ARGS "-c \"import numpy; print(numpy.get_include())\""
-	    # 	         OUTPUT_VARIABLE Python3_NumPy_INCLUDE_DIRS
-	    # 	         RETURN_VALUE NUMPY_NOT_FOUND)
-            if(NUMPY_NOT_FOUND)
-                message(FATAL_ERROR "Numpy include dirs not found")
-            endif()
-        endif()
-    else()
-        if(NOT Python3_ROOT_DIR)
-            if(CONDA_PREFIX)
-                set(Python3_ROOT_DIR "${CONDA_PREFIX}")
-            else()
-                if(Python3_EXECUTABLE)
-		    execute_process(
-		      COMMAND ${Python3_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('base'))"
-		      OUTPUT_VARIABLE PYTHON_ROOT
-		      RESULT_VARIABLE ROOT_NOT_FOUND)
-                    # exec_program(${Python3_EXECUTABLE}
-	            #              ARGS "-c \"import sysconfig; print(sysconfig.get_config_var('base'))\""
-		    #              OUTPUT_VARIABLE PYTHON_ROOT
-		    #              RETURN_VALUE ROOT_NOT_FOUND)
-                    if(ROOT_NOT_FOUND)
-                        message(FATAL_ERROR "Python root not found")
-                    endif()
-	            set(Python3_ROOT_DIR "${PYTHON_ROOT}")
-                endif()
-            endif()
-        endif()
-    endif()
-    if(Python3_EXECUTABLE OR Python3_ROOT_DIR)
-        # Force use of specified installation, should be enabled by
-	# default for CMP0094=NEW and CMake >= 3.15
-        if(NOT Python3_FIND_STRATEGY)
-            set(Python3_FIND_STRATEGY LOCATION)
-        endif()
-    endif()
-    if(Python3_ROOT_DIR)
-        message(STATUS "Python root directory is ${Python3_ROOT_DIR}")
-        if (NOT Python3_ROOT)
-            set(Python3_ROOT ${Python3_ROOT_DIR})
-        endif()
-    endif()
-    find_package(Python3 COMPONENTS Interpreter Development NumPy REQUIRED)
-    if(NOT Python3_NumPy_FOUND)
-        message(FATAL_ERROR "NumPy headers not found")
-    endif()
-    if(NOT Python3_FOUND)
-        message(FATAL_ERROR "Python libraries not found")
-    endif()
+    include(SearchTools)
+    find_package_python()
 
     # There is an issue with embedding Python on Windows in conda environments
     # https://github.com/ContinuumIO/anaconda-issues/issues/11374
