@@ -254,7 +254,8 @@ if [ -n "$DO_PYTHON" ] && [ -n "$NO_CORE" ]; then
 	if [ -n "$WITH_LLDB" ]; then
 	    lldb -o 'run' -o 'quit' -- $(which python3) -m pytest -svx $TEST_DIR
 	else
-	    python3 -m pytest -svx $TEST_DIR
+	    # python3 -m pytest -svx $TEST_DIR
+	    pytest -svx $TEST_DIR
 	fi
     fi
     cd ../../
