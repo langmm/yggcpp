@@ -278,7 +278,7 @@ bool example_transform(rapidjson::Document& msg) {
 	DO_SEND_RECV_RESPONSE(init_data, comp_data, send_method, send_args, recv_method, recv_args); \
       }									\
     }									\
-    Comm_t::_ygg_cleanup(CLEANUP_COMMS);				\
+    ygg_cleanup(CLEANUP_COMMS);						\
   }
 
 #define TESTER_METHODS(cls)						\
@@ -415,7 +415,7 @@ bool example_transform(rapidjson::Document& msg) {
       DO_SEND_RECV_EOF(recvVar, (data_recv));				\
     }									\
     global_scope_comm_off();						\
-    Comm_t::_ygg_cleanup(CLEANUP_COMMS);				\
+    ygg_cleanup(CLEANUP_COMMS);						\
   }
 #define COMM_SERI_TEST_ASYNC_F(cls)					\
   TEST(cls, async_failed) {						\
@@ -479,7 +479,7 @@ bool example_transform(rapidjson::Document& msg) {
       DO_SEND_RECV_EOF(recvVar, (data_recv));				\
     }									\
     global_scope_comm_off();						\
-    Comm_t::_ygg_cleanup(CLEANUP_COMMS);				\
+    ygg_cleanup(CLEANUP_COMMS);						\
   }
 #define COMM_SERI_TEST_PROXY(cls)					\
   TEST(cls, proxy) {							\

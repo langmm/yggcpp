@@ -313,19 +313,6 @@ static int global_thread_id = -1;
 #endif // _OPENMP
 #endif // _MSC_VER
 
-#ifdef THREADSINSTALLED
-#define YGG_THREAD_MUTEX(name)				\
-  extern std::mutex name ## _mutex;
-  YGG_THREAD_MUTEX(init)
-  YGG_THREAD_MUTEX(clean)
-  YGG_THREAD_MUTEX(client)
-  YGG_THREAD_MUTEX(comms)
-  YGG_THREAD_MUTEX(IPCComm)
-  YGG_THREAD_MUTEX(zmq)
-  YGG_THREAD_MUTEX(zmqport)
-#undef YGG_THREAD_MUTEX
-#endif // THREADSINSTALLED
-
 /*! @brief Macro to open section that should be synchronized across
   threads, typically where thread global variables are acessed. */
 #ifdef THREADSINSTALLED
@@ -333,11 +320,11 @@ static int global_thread_id = -1;
 #define YGG_THREADING_ACTIVE 1
 #define YGG_THREAD_SAFE_BEGIN(name)		\
   _Pragma(STRINGIFY(omp critical (name))) {	\
-    const std::lock_guard<std::mutex> name ## _lock(communication::utils::name ## _mutex);
+    const std::lock_guard<std::mutex> name ## _lock(global_context->name ## _mutex);
 #else // _OPENMP
 #define YGG_THREAD_SAFE_BEGIN(name)		\
   {						\
-    const std::lock_guard<std::mutex> name ## _lock(communication::utils::name ## _mutex);
+    const std::lock_guard<std::mutex> name ## _lock(global_context->name ## _mutex);
 #endif // _OPENMP
 #else // THREADSINSTALLED
 #ifdef _OPENMP

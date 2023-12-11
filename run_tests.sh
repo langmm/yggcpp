@@ -15,10 +15,10 @@ CMAKE_FLAGS_SPEED=""
 WITH_LLDB=""
 DO_SYMBOLS=""
 DONT_TEST=""
+TEST_TYPE="unit"
 TEST_FLAGS=""
 NO_DEBUG_MSG=""
 CONFIG_FLAGS=""
-SPEED_TEST=""
 N_MSG="100"
 S_MSG="100"
 COMM="DEFAULT_COMM"
@@ -117,7 +117,7 @@ while [[ $# -gt 0 ]]; do
 	    shift
 	    ;;
 	--speed )
-	    SPEED_TEST="TRUE"
+	    TEST_TYPE="speed"
 	    shift # past argument with no value
 	    ;;
 	-n | --n-msg )
@@ -151,9 +151,9 @@ if [[ "$CMAKE_FLAGS" == *"-DYGG_BUILD_ASAN=ON"* ]]; then
     WITH_ASAN="TRUE"
 fi
 
-if [ -n "$SPEED_TEST" ]; then
+if [[ "$TEST_TYPE" == "speed" ]]; then
     # NO_DEBUG_MSG="TRUE"
-    DONT_TEST="TRUE"
+    TEST_TYPE="speed"
 fi
 
 if [ "$LANGUAGE" = "C" ]; then
@@ -171,7 +171,7 @@ if [ ! -n "$DO_C" ] && [ ! -n "$DO_CXX" ] && [ ! -n "$DO_FORTRAN" ] && [ ! -n "$
     DO_CXX="TRUE"
     DO_FORTRAN="TRUE"
     DO_PYTHON="TRUE"
-    if [ ! -n "$SPEED_TEST" ]; then
+    if [[ "$TEST_TYPE" == "unit" ]]; then
 	CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYGG_BUILD_TESTS=ON"
     fi
 fi
@@ -189,7 +189,7 @@ if [ -n "$DO_C" ] || [ -n "$DO_CXX" ] || [ -n "$DO_FORTRAN" ] || [ -n "$DO_PYTHO
     fi
     if [ -n "$DO_C" ] || [ -n "$DO_CXX" ]; then
 	CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DBUILD_CPP_LIBRARY=ON"
-	if [ ! -n "$SPEED_TEST" ]; then
+	if [[ "$TEST_TYPE" == "unit" ]]; then
 	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYGG_BUILD_CXX_TESTS=ON"
 	fi
     else
@@ -197,7 +197,7 @@ if [ -n "$DO_C" ] || [ -n "$DO_CXX" ] || [ -n "$DO_FORTRAN" ] || [ -n "$DO_PYTHO
     fi
     if [ -n "$DO_FORTRAN" ]; then
 	CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DBUILD_FORTRAN_LIBRARY=ON -DYGG_Fortran_REQUIRED=ON -DYGG_ENABLE_ELF=OFF"
-	if [ ! -n "$SPEED_TEST" ]; then
+	if [[ "$TEST_TYPE" == "unit" ]]; then
 	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYGG_BUILD_FORTRAN_TESTS=ON"
 	fi
 	CMAKE_FLAGS_SPEED="${CMAKE_FLAGS_SPEED} -DENABLE_Fortran=ON"
@@ -207,7 +207,7 @@ if [ -n "$DO_C" ] || [ -n "$DO_CXX" ] || [ -n "$DO_FORTRAN" ] || [ -n "$DO_PYTHO
     fi
     if [ -n "$DO_PYTHON" ]; then
 	CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DBUILD_PYTHON_LIBRARY=ON"
-	if [ ! -n "$SPEED_TEST" ]; then
+	if [[ "$TEST_TYPE" == "unit" ]]; then
 	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYGG_BUILD_PYTHON_TESTS=ON"
 	fi
 	CMAKE_FLAGS_SPEED="${CMAKE_FLAGS_SPEED} -DENABLE_Python=ON"
@@ -255,7 +255,7 @@ if [ -n "$DO_PYTHON" ] && [ -n "$NO_CORE" ]; then
     fi
     cd python/pyYggdrasil
     export TEST_DIR=../test
-    if [ ! -n "$DONT_TEST" ]; then
+    if [[ "$TEST_TYPE" == "unit" ]] && [ ! -n "$DONT_TEST" ]; then
 	export PYTHONFAULTHANDLER=1
 	if [ -n "$WITH_LLDB" ]; then
 	    lldb -o 'run' -o 'quit' -- $(which python3) -m pytest -svx $TEST_DIR
@@ -280,7 +280,7 @@ else
 	# Need install here to ensure that cmake config files are in place
 	cmake --install . --prefix ../_install $CONFIG_FLAGS
     fi
-    if [ ! -n "$DONT_TEST" ]; then
+    if [[ "$TEST_TYPE" == "unit" ]] && [ ! -n "$DONT_TEST" ]; then
 	if [ -n "$WITH_ASAN" ] && [ ! -n "$DYLD_INSERT_LIBRARIES" ]; then
 	    export DYLD_INSERT_LIBRARIES=$(clang -print-file-name=libclang_rt.asan_osx_dynamic.dylib)
 	fi
@@ -298,27 +298,38 @@ else
     cd ..
 fi
 
-if [ -n "$SPEED_TEST" ]; then
-    if [ -d "build_speed" ]; then
-	rm -rf build_speed
-    fi
-    if [ ! -d "build_speed" ]; then
-	mkdir build_speed
-    fi
+if [[ "$TEST_TYPE" == "speed" ]]; then
     export LD_LIBRARY_PATH="${LD_LIBRARY_PATH};$(pwd)/_install/lib"
     echo "LD_LIBRARY_PATH = $LD_LIBRARY_PATH"
+    if [ ! -n "$DONT_BUILD" ]; then
+	if [ -d "build_speed" ]; then
+	    rm -rf build_speed
+	fi
+	if [ ! -d "build_speed" ]; then
+	    mkdir build_speed
+	fi
+    fi
     cd build_speed
     if [ -n "$WITH_ASAN" ] && [ ! -n "$DYLD_INSERT_LIBRARIES" ]; then
 	export DYLD_INSERT_LIBRARIES=$(clang -print-file-name=libclang_rt.asan_osx_dynamic.dylib)
     fi
-    cmake ../test/speedtest -DCMAKE_PREFIX_PATH=../_install -DYggInterface_DIR=../../_install/lib/cmake/YggInterface -DN_MSG=$N_MSG -DS_MSG=$S_MSG -DCOMM=$COMM $CMAKE_FLAGS $CMAKE_FLAGS_SPEED
-    cmake --build .
-    echo "DYLD_INSERT_LIBRARIES = ${DYLD_INSERT_LIBRARIES}"
-    ctest $TEST_FLAGS
-    # make test
+    if [ ! -n "$DONT_BUILD" ]; then
+	cmake ../test/speedtest -DCMAKE_PREFIX_PATH=../_install -DYggInterface_DIR=../../_install/lib/cmake/YggInterface -DN_MSG=$N_MSG -DS_MSG=$S_MSG -DCOMM=$COMM $CMAKE_FLAGS $CMAKE_FLAGS_SPEED
+	cmake --build .
+    fi
+    if [ ! -n "$DONT_TEST" ]; then
+	echo "DYLD_INSERT_LIBRARIES = ${DYLD_INSERT_LIBRARIES}"
+	ctest $TEST_FLAGS
+	# make test
+    fi
     cd ..
 fi
 
 if [ -n "$DO_SYMBOLS" ]; then
-    python utils/check_symbols.py build/test/unittest build/libYggInterface.dylib  &> symbols.txt
+    if [[ "$TEST_TYPE" == "speed" ]]; then
+	SYM_LANG="C"
+	python utils/check_symbols.py build_speed/${SYM_LANG}_build/speedtest_${SYM_LANG} build/libYggInterface.dylib  &> symbols.txt
+    else
+	python utils/check_symbols.py build/test/unittest build/libYggInterface.dylib  &> symbols.txt
+    fi
 fi

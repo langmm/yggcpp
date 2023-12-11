@@ -7,6 +7,7 @@
 #endif
 
 #include <vector>
+#include <memory>
 namespace communication {
 namespace communicator {
   
@@ -16,22 +17,26 @@ YGG_THREAD_GLOBAL_VAR(int, _zmq_sleeptime, )
 
 class ZMQContext : public communication::utils::LogBase {
 public:
-  ZMQContext();
+  ZMQContext(bool is_global=false);
+  ~ZMQContext();
 private:
   ZMQContext(const ZMQContext& rhs) = delete;
   ZMQContext& operator=(const ZMQContext& rhs) = delete;
 public:
 #ifdef ZMQINSTALLED
   void init();
-  static void destroy();
+  void destroy();
 #else
   void init() { UNINSTALLED_ERROR(ZMQ); }
 #endif
   std::string logClass() const override { return "ZMQContext"; }
   void* ctx;
-  static void* ygg_s_process_ctx;
+  bool is_global_;
 };
-  
+
+#ifdef ZMQINSTALLED
+extern std::shared_ptr<ZMQContext> _zmq_global_ctx;
+#endif // ZMQINSTALLED
 
 class ZMQSocket : public communication::utils::LogBase {
 private:
@@ -66,10 +71,10 @@ public:
   ~ZMQSocket();
   std::string logClass() const override { return "ZMQSocket"; }
   std::string logInst() const override { return endpoint; }
-  void *handle;               //  The libzmq socket handle
-  std::string endpoint;       //  Last bound endpoint, if any
-  int type;                   //  Socket type
-  ZMQContext ctx;             //  Context used to create the socket
+  void *handle;                    //  The libzmq socket handle
+  std::string endpoint;            //  Last bound endpoint, if any
+  int type;                        //  Socket type
+  std::shared_ptr<ZMQContext> ctx; //  Context used to create the socket
 private:
   static int _last_port;
   static int _last_port_set;

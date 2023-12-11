@@ -340,7 +340,7 @@ TEST(ClientComm, global) {
     }
     unsetenv(key_env.c_str());
   }
-  Comm_t::_ygg_cleanup();
+  ygg_cleanup();
 }
 
 #endif

@@ -66,7 +66,7 @@ void MPIComm::init() {
     updateMaxMsgSize(2147483647);
     assert(!handle);
     if (!this->address.valid()) {
-      if (Comm_t::_ygg_testing)
+      if (ctx->for_testing_)
 	  address.address(std::to_string(0));
       else
         throw std::runtime_error("No address specified for MPIComm constructor");

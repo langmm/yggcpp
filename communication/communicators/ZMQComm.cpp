@@ -8,6 +8,9 @@
 char communication::communicator::_reply_msg[100] = "YGG_REPLY";
 char communication::communicator::_purge_msg[100] = "YGG_PURGE";
 int communication::communicator::_zmq_sleeptime = 10000;
+#ifdef ZMQINSTALLED
+std::shared_ptr<communication::communicator::ZMQContext> communication::communicator::_zmq_global_ctx(new communication::communicator::ZMQContext(true));
+#endif // ZMQINSTALLED
 
 using namespace communication::communicator;
 using namespace communication::utils;
@@ -22,20 +25,23 @@ using namespace communication::utils;
 // ZMQContext //
 ////////////////
 
-void* ZMQContext::ygg_s_process_ctx = NULL;
-
-ZMQContext::ZMQContext() : ctx(NULL) { init(); }
-// ZMQContext::ZMQContext(const ZMQContext& rhs) : ctx(rhs.ctx) {}
-// ZMQContext& ZMQContext::operator=(const ZMQContext& rhs) {
-//   ctx = rhs.ctx;
-//   return *this;
-// }
+ZMQContext::ZMQContext(bool is_global) :
+  ctx(NULL), is_global_(is_global)
+{ init(); }
+ZMQContext::~ZMQContext() {
+  log_debug() << "~ZMQContext: Begin destructor (global = " <<
+    is_global_ << ")" << std::endl;
+#ifdef ZMQINSTALLED
+  if (is_global_)
+    destroy();
+#endif // ZMQINSTALLED
+}
 
 #ifdef ZMQINSTALLED
 void ZMQContext::init() {
   YGG_THREAD_SAFE_BEGIN(zmq) {
-    if (ZMQContext::ygg_s_process_ctx == NULL) {
-      if (get_thread_id() == communication::communicator::Comm_t::_ygg_main_thread_id) {
+    if (is_global_) {
+      if (get_thread_id() == global_context->thread_id) {
 	log_debug() << "init: Creating ZMQ context." << std::endl;
 	ctx = zmq_ctx_new();
       } else {
@@ -45,9 +51,12 @@ void ZMQContext::init() {
 		    "your model.");
       }
       log_debug() << "init: Created ZMQ context." << std::endl;
-      ZMQContext::ygg_s_process_ctx = ctx;
     } else {
-      ctx = ZMQContext::ygg_s_process_ctx;
+      throw_error("init: Only the global ZMQ context should be used");
+      // if (_zmq_global_ctx->ctx == NULL) {
+      // 	throw_error("init: Global ZMQ context has not been initialized");
+      // }
+      // ctx = _zmq_global_ctx->ctx;
     }
   } YGG_THREAD_SAFE_END;
   if (ctx == NULL) {
@@ -56,25 +65,21 @@ void ZMQContext::init() {
 }
 
 void ZMQContext::destroy() {
-  YGG_THREAD_SAFE_BEGIN(zmq) {
-    if (ZMQContext::ygg_s_process_ctx != NULL) {
+  // YGG_THREAD_SAFE_BEGIN(zmq) {
+    if (ctx != NULL) {
+      if (!is_global_) {
+	throw_error("destroy: Non-global ZMQ context calling destroy");
+      }
       YggLogDebug << "ZMQContext::destroy: Destroying the ZMQ context" << std::endl;
-// #ifdef _WIN32
-//       if (Comm_t::_ygg_atexit == 0) {
-// #endif // _WIN32
-	zmq_ctx_shutdown(ZMQContext::ygg_s_process_ctx);
-	if (zmq_ctx_term(ZMQContext::ygg_s_process_ctx) != 0) {
-	  YggLogError << "ZMQContext::destroy: Error terminating context with zmq_ctx_term" << std::endl;
-	}
-// #ifdef _WIN32
-//       }
-// #endif // _WIN32
-      ZMQContext::ygg_s_process_ctx = NULL;
+      zmq_ctx_shutdown(ctx);
+      if (zmq_ctx_term(ctx) != 0) {
+	YggLogError << "ZMQContext::destroy: Error terminating context with zmq_ctx_term" << std::endl;
+      }
+      ctx = NULL;
     }
-  } YGG_THREAD_SAFE_END;
+  // } YGG_THREAD_SAFE_END;
 }
 #endif // ZMQINSTALLED
-
 
 ///////////////
 // ZMQSocket //
@@ -84,19 +89,19 @@ int ZMQSocket::_last_port = 0;
 int ZMQSocket::_last_port_set = 0;
 
 ZMQSocket::ZMQSocket() :
-  handle(NULL), endpoint(), type(0), ctx() {}
+  handle(NULL), endpoint(), type(0), ctx(_zmq_global_ctx) {}
 ZMQSocket::ZMQSocket(const ZMQSocket& rhs) :
-  handle(NULL), endpoint(), type(rhs.type), ctx() {}
+  handle(NULL), endpoint(), type(rhs.type), ctx(_zmq_global_ctx) {}
 ZMQSocket::ZMQSocket(int type0, utils::Address& address,
 		     int linger, int immediate, int sndtimeo) :
-  handle(NULL), endpoint(), type(type0), ctx() {
+  handle(NULL), endpoint(), type(type0), ctx(_zmq_global_ctx) {
   init(type0, address, linger, immediate, sndtimeo);
 }
 ZMQSocket::ZMQSocket(int type0, int linger, int immediate,
-          int sndtimeo) :
-        handle(NULL), endpoint(), type(type0), ctx() {
-    utils::Address adr;
-    init(type0, adr, linger, immediate, sndtimeo);
+		     int sndtimeo) :
+  handle(NULL), endpoint(), type(type0), ctx(_zmq_global_ctx) {
+  utils::Address adr;
+  init(type0, adr, linger, immediate, sndtimeo);
 }
 
 
@@ -124,7 +129,7 @@ void ZMQSocket::init(int type0, utils::Address& addr,
   type = type0;
   std::string except_msg;
   YGG_THREAD_SAFE_BEGIN(zmq) {
-    handle = zmq_socket (ctx.ctx, type);
+    handle = zmq_socket (ctx->ctx, type);
     if (handle == NULL) {
       except_msg = "ZMQSocket::init: Error creating new socket.";
     } else {
@@ -366,7 +371,7 @@ bool ZMQReply::recv(std::string msg_send, bool* closed) {
   if (msg_send.empty())
     msg_send.assign(_reply_msg);
   if (ZMQComm::_disable_handshake) {
-    if (Comm_t::_ygg_testing) {
+    if (global_context->for_testing_) {
       return _test_return_val;
     } else {
       return true;
@@ -436,7 +441,7 @@ bool ZMQReply::recv_stage2(std::string msg_send, bool* closed) {
 
 bool ZMQReply::send() {
   if (ZMQComm::_disable_handshake) {
-    if (Comm_t::_ygg_testing) {
+    if (global_context->for_testing_) {
       return _test_return_val;
     } else {
       return true;
@@ -502,36 +507,6 @@ bool ZMQReply::send_stage2(const std::string msg_data) {
 }
 
 #endif // ZMQINSTALLED
-
-// #ifdef _OPENMP
-// std::vector<ygg_sock_t*> ygg_sock_t::activeSockets = {};
-
-// void ygg_sock_t::ctx_shutdown() {
-// #pragma omp critical (zmq)
-//     {
-//         if (ctx_valid) {
-//             // force all sockets to be closed, otherwise the context close will hang
-// 	    for (int i = ygg_sock_t::activeSockets.size() - 1; i >= 0; i--) {
-// 	        ygg_sock_t::activeSockets[i]->close();
-//             }
-//             ygg_s_process_ctx.shutdown();
-//             ygg_s_process_ctx.close();
-//             ctx_valid = false;
-//         }
-//     }
-// }
-
-
-//#ifdef _OPENMP
-//}
-//#endif
-
-// void ygg_sock_t::close() {
-//     ygg_sock_t::activeSockets.erase(std::remove(ygg_sock_t::activeSockets.begin(),
-//                                                 ygg_sock_t::activeSockets.end(),
-//                                                 this), ygg_sock_t::activeSockets.end());
-//     zmq::socket_t::close();
-// }
 
 /////////////
 // ZMQComm //

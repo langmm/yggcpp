@@ -7,6 +7,7 @@
 #include "utils/serialization.hpp"
 #include "Workers.hpp"
 #include "utils/rapidjson_wrapper.hpp"
+#include "CommContext.hpp"
 
 /*! @brief Set if the comm is the receiving comm for a client/server request connection */
 const int COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
@@ -215,10 +216,12 @@ namespace communication {
 namespace communicator {
 
 YGG_THREAD_GLOBAL_VAR(int, global_scope_comm, )
+extern std::shared_ptr<CommContext> global_context;
 
 void global_scope_comm_on();
 void global_scope_comm_off();
 int ygg_init(bool for_testing=false);
+void ygg_cleanup(CLEANUP_MODE mode=CLEANUP_DEFAULT);
 void ygg_exit();
 
 class AsyncComm;
@@ -233,11 +236,12 @@ class RequestList;
 
 typedef struct comm_t comm_t;
 
+
 /**
  * Abstract base class for all communicators. Cannot be instantiated directly, but is used as a generalized hook
  * for passing communicators around. Should only be instantiated by the CommBase<> class.
  */
-  class YGG_API Comm_t : public communication::utils::LogBase {
+class YGG_API Comm_t : public communication::utils::LogBase {
 public:
     Comm_t(const Comm_t& other) = delete;
     Comm_t& operator=(const Comm_t&) = delete;
@@ -955,8 +959,6 @@ public:
       return getMetadata(dir).setTransforms(new_transforms);
     }
 
-    static void _ygg_cleanup(CLEANUP_MODE mode = CLEANUP_DEFAULT);
-
 private:
     int deserialize(const char* buf, rapidjson::VarArgList& ap);
     int serialize(char*& buf, size_t& buf_siz,
@@ -969,7 +971,8 @@ protected:
       if (flags & COMM_FLAG_SET_OPP_ENV)
 	setOppEnv();
     }
-    
+
+    friend CommContext;
     friend AsyncComm;
     friend AsyncBacklog;
     friend RPCComm;
@@ -982,14 +985,6 @@ protected:
     friend Worker;
     friend WorkerList;
 
-public:
-    static int _ygg_initialized;
-    static int _ygg_finalized;
-    static int _ygg_testing;
-    static CLEANUP_MODE _ygg_cleanup_mode;
-    static std::string _ygg_main_thread_id;
-    static int _ygg_init(bool for_testing=false);
-    
 protected:
     void _close(bool) {}
     bool _is_closed() const { return true; };
@@ -1134,6 +1129,7 @@ protected:
      */
     bool check_size(const size_t &len) const;
 
+    std::shared_ptr<CommContext> ctx; //!< Context.
     COMM_TYPE type; //!< Comm type.
     //void *other; //!< Pointer to additional information for the comm.
     std::string name; //!< Comm name.
@@ -1151,13 +1147,8 @@ protected:
     LANGUAGE language;
     std::vector<std::string> cache; // !< Cache of messages received.
 
-    static std::vector<Comm_t*> registry;
     bool get_global_scope_comm();
 public:
-    static void register_comm(Comm_t* x);
-    static Comm_t* find_registered_comm(const std::string& name,
-					const DIRECTION dir,
-					const COMM_TYPE type);
 
     // Methods for testing
     virtual bool afterSendRecv(Comm_t*, Comm_t*) { return true; }

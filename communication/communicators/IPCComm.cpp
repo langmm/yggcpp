@@ -72,7 +72,7 @@ void IPCComm::_close(bool call_base) {
       bool close_comm = ((direction == RECV) ||
 			 (!(flags & (COMM_FLAG_INTERFACE |
 				     COMM_FLAG_WORKER))));
-      if (Comm_t::_ygg_testing)
+      if (ctx->for_testing_)
 	close_comm = true;
       remove_comm(close_comm);
     }

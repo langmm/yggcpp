@@ -1,17 +1,14 @@
 #include "comms.hpp"
 #include "utils/rapidjson_wrapper.hpp"
 
-// #ifdef _OPENMP
-// int communication::communicator::global_scope_comm = 1;
-// #else
 int communication::communicator::global_scope_comm = 0;
-// #endif
+std::shared_ptr<communication::communicator::CommContext> communication::communicator::global_context(new communication::communicator::CommContext());
 
 using namespace communication::communicator;
 using namespace communication::utils;
 
 void _cleanup_wrapper() {
-  Comm_t::_ygg_cleanup(CLEANUP_ATEXIT);
+  global_context->cleanup(CLEANUP_ATEXIT);
 }
 
 void communication::communicator::global_scope_comm_on() {
@@ -23,81 +20,16 @@ void communication::communicator::global_scope_comm_off() {
   // #endif
 }
 int communication::communicator::ygg_init(bool for_testing) {
-  return communication::communicator::Comm_t::_ygg_init(for_testing);
+  return global_context->init(for_testing);
+}
+void communication::communicator::ygg_cleanup(CLEANUP_MODE mode) {
+  global_context->cleanup(mode);
 }
 void communication::communicator::ygg_exit() {
-  communication::communicator::Comm_t::_ygg_cleanup();
+  global_context->cleanup();
 }
-
-int Comm_t::_ygg_init(bool for_testing) {
-  YGG_THREAD_SAFE_BEGIN(init) {
-    if (!Comm_t::_ygg_initialized) {
-      if (for_testing) {
-	Comm_t::_ygg_testing = 1;
-      }
-      YggLogDebug << "_ygg_init: Begin initialization" << std::endl;
-      communication::communicator::Comm_t::_ygg_main_thread_id = get_thread_id();
-#if defined(ZMQINSTALLED)
-      ZMQContext* ctx = new ZMQContext();
-      delete ctx;
-      ctx = nullptr;
-#endif
-      utils::initialize_python("_ygg_init");
-      YggLogDebug << "_ygg_init: Registering cleanup" << std::endl;
-      std::atexit(_cleanup_wrapper);
-      Comm_t::_ygg_initialized = 1;
-    }
-  } YGG_THREAD_SAFE_END;
-  return 0;
-}
-
-void Comm_t::_ygg_cleanup(CLEANUP_MODE mode) {
-  YggLogDebug << "_ygg_cleanup: mode = " << mode << std::endl;
-  YGG_THREAD_SAFE_BEGIN(clean) {
-    CLEANUP_MODE prev_mode = Comm_t::_ygg_cleanup_mode;
-    Comm_t::_ygg_cleanup_mode = mode;
-    if (!Comm_t::_ygg_finalized) {
-      YggLogDebug << "_ygg_cleanup: Begin cleanup of " << Comm_t::registry.size() << " communicators (mode = " << mode << ")" << std::endl;
-      for (size_t i = 0; i < Comm_t::registry.size(); i++) {
-	if (Comm_t::registry[i]) {
-	  if (Comm_t::registry[i]->flags & COMM_FLAG_DELETE) {
-	    delete Comm_t::registry[i];
-	  }
-	}
-      }
-      YGG_THREAD_SAFE_BEGIN(comms) {
-	Comm_t::registry.clear();
-	if (mode != CLEANUP_COMMS) {
-#if defined(ZMQINSTALLED)
-	  // This hangs if there are ZMQ sockets that didn't get cleaned up
-	  ZMQContext::destroy();
-#endif
-	  utils::finalize_python("_ygg_cleanup");
-	}
-      } YGG_THREAD_SAFE_END;
-      if ((!Comm_t::_ygg_testing) && mode != CLEANUP_COMMS) {
-	Comm_t::_ygg_finalized = 1;
-      }
-      YggLogDebug << "_ygg_cleanup: Cleanup complete" << std::endl;
-    }
-    Comm_t::_ygg_cleanup_mode = prev_mode;
-  } YGG_THREAD_SAFE_END;
-#ifndef RAPIDJSON_YGGDRASIL_PYTHON
-  if ((!Comm_t::_ygg_testing) && YggdrasilLogger::_ygg_error_flag) {
-    YggLogDebug << "_ygg_cleanup: Error code set" << std::endl;
-    _exit(YggdrasilLogger::_ygg_error_flag);
-  }
-#endif // RAPIDJSON_YGGDRASIL_PYTHON
-}
-
-int Comm_t::_ygg_initialized = 0;
-int Comm_t::_ygg_finalized = 0;
-int Comm_t::_ygg_testing = 0;
-CLEANUP_MODE Comm_t::_ygg_cleanup_mode = CLEANUP_DEFAULT;
-std::string Comm_t::_ygg_main_thread_id = "";
 
 void Comm_t::init_base() {
-    _ygg_init();
 
     flags |= COMM_FLAG_VALID;
     if (direction == NONE)
@@ -120,7 +52,7 @@ void Comm_t::init_base() {
 
     get_global_scope_comm();
 
-    Comm_t::register_comm(this);
+    ctx->register_comm(this);
 
     if (!address.valid()) {
         address = addressFromEnv(name, direction);
@@ -134,7 +66,8 @@ void Comm_t::init_base() {
 }
 Comm_t::Comm_t(const std::string &nme, const Address &addr,
 	       DIRECTION dirn, const COMM_TYPE &t, int flgs) :
-  type(t), name(nme), address(addr), direction(dirn), flags(flgs),
+  ctx(global_context), type(t), name(nme), address(addr),
+  direction(dirn), flags(flgs),
   maxMsgSize(COMM_BASE_MAX_MSG_SIZE), msgBufSize(0),
   index_in_register(-1), thread_id(), metadata(),
   timeout_recv(YGG_MAX_TIME), workers(), global_comm(nullptr),
@@ -150,7 +83,7 @@ Comm_t::~Comm_t() {
   log_debug() << "~Comm_t: Unregistering comm" << std::endl;
   YGG_THREAD_SAFE_BEGIN(comms) {
     if (index_in_register >= 0)
-      Comm_t::registry[index_in_register] = NULL;
+      ctx->registry_[index_in_register] = NULL;
   } YGG_THREAD_SAFE_END;
   log_debug() << "~Comm_t: Started" << std::endl;
   if (flags & COMM_FLAG_SET_OPP_ENV)
@@ -196,9 +129,9 @@ bool Comm_t::get_global_scope_comm() {
   log_debug() << "get_global_scope_comm: " << global_name << " (dir="
 	    << global_direction << ") is a global communicator"
 	    << std::endl;
-  global_comm = Comm_t::find_registered_comm(global_name,
-					     global_direction,
-					     global_type);
+  global_comm = ctx->find_registered_comm(global_name,
+					  global_direction,
+					  global_type);
   if (!global_comm) {
     log_debug() << "get_global_scope_comm: Creating global comm \""
 	      << global_name << "\"" << std::endl;
@@ -290,7 +223,6 @@ Comm_t* communication::communicator::new_Comm_t(
      const Address &addr, int flags, size_t ncomm,
      const COMM_TYPE request_commtype, const COMM_TYPE response_commtype,
      int request_flags, int response_flags) {
-  communication::communicator::ygg_init();
   flags |= COMM_FLAG_DELETE;
   utils::Address addr2(addr.address());
   if (!(addr2.valid() || name.empty())) {
@@ -813,38 +745,4 @@ long Comm_t::vCall(rapidjson::VarArgList& ap) {
   YGGCPP_END_VAR_ARGS(ap);
   return rret;
   
-}
-
-
-std::vector<Comm_t*> Comm_t::registry;
-
-void Comm_t::register_comm(Comm_t* x) {
-  if (x->getFlags() & COMM_FLAG_ASYNC_WRAPPED)
-    return;
-  YGG_THREAD_SAFE_BEGIN(comms) {
-    x->index_in_register = Comm_t::registry.size();
-    Comm_t::registry.push_back(x);
-  } YGG_THREAD_SAFE_END;
-}
-
-Comm_t* Comm_t::find_registered_comm(const std::string& name,
-				     const DIRECTION dir,
-				     const COMM_TYPE type) {
-  Comm_t* out = NULL;
-  assert(!name.empty());
-  YGG_THREAD_SAFE_BEGIN(comms) {
-    if (global_scope_comm) {
-      for (std::vector<Comm_t*>::iterator it = Comm_t::registry.begin();
-	   it != Comm_t::registry.end(); it++) {
-	if (*it && (*it)->global() &&
-	    ((*it)->name == name) &&
-	    ((*it)->direction == dir) &&
-	    ((*it)->type == type)) {
-	  out = *it;
-	  break;
-	}
-      }
-    }
-  } YGG_THREAD_SAFE_END;
-  return out;
 }

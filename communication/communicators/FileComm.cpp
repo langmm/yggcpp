@@ -58,7 +58,7 @@ void FileComm::_close(bool call_base) {
     bool delete_file = ((direction == RECV) ||
 			(!(flags & (COMM_FLAG_INTERFACE |
 				    COMM_FLAG_WORKER))));
-    if (Comm_t::_ygg_testing)
+    if (ctx->for_testing_)
       delete_file = true;
     if (delete_file)
       std::remove(this->address.address().c_str());
