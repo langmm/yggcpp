@@ -290,6 +290,7 @@ Comm_t* communication::communicator::new_Comm_t(
      const Address &addr, int flags, size_t ncomm,
      const COMM_TYPE request_commtype, const COMM_TYPE response_commtype,
      int request_flags, int response_flags) {
+  communication::communicator::ygg_init();
   flags |= COMM_FLAG_DELETE;
   utils::Address addr2(addr.address());
   if (!(addr2.valid() || name.empty())) {
