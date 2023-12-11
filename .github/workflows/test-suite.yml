@@ -535,7 +535,7 @@ jobs:
       - name: Run speed tests
         shell: bash -l {0}
         run: |
-          ./run_tests.sh --rebuild --speed --config Debug ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} --verbose # --no-debug
+          ./run_tests.sh --rebuild --speed --config Release ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} --verbose
 
       ###################################
       # Coverage

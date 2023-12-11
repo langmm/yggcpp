@@ -145,8 +145,12 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+if [[ "$CMAKE_FLAGS" == *"-DYGG_BUILD_ASAN=ON"* ]]; then
+    WITH_ASAN="TRUE"
+fi
+
 if [ -n "$SPEED_TEST" ]; then
-    NO_DEBUG_MSG="TRUE"
+    # NO_DEBUG_MSG="TRUE"
     DONT_TEST="TRUE"
 fi
 
