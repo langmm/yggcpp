@@ -22,6 +22,7 @@ function(add_speed_test LANGUAGE LANGUAGE_EXT)
   include(YggAddFortranSubdirectory)
   check_language_external(${LANGUAGE} REQUIRED OUTPUT_VARIABLE external
                           GENERATOR generator EXTERNAL_PATHS paths)
+  list(APPEND CMAKE_COMMAND_ARGS --config Release)
   if (external)
     list(APPEND CMAKE_COMMAND_ARGS -DCMAKE_${LANGUAGE}_COMPILER:PATH=${CMAKE_${LANGUAGE}_COMPILER})
     if (generator)

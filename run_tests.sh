@@ -135,12 +135,8 @@ while [[ $# -gt 0 ]]; do
 	    shift
 	    shift
 	    ;;
-	--* )
-	    CMAKE_FLAGS="${CMAKE_FLAGS} --$1"
-	    shift
-	    ;;
-	-* )
-	    CMAKE_FLAGS="${CMAKE_FLAGS} -$1"
+	-* | --* )
+	    CMAKE_FLAGS="${CMAKE_FLAGS} $1"
 	    shift
 	    ;;
 	*)
