@@ -5,6 +5,7 @@
 #define SPEED_TEST_COMM @SPEED_TEST_COMM@
 
 int main(int argc, char *argv[]) {
+  ygg_init();
   printf("Sending %d messages containing %d bytes\n",
 	 SPEED_TEST_N_MSG, SPEED_TEST_S_MSG);
   yggInput_t icomm = init_comm_flags("speed", RECV, SPEED_TEST_COMM,

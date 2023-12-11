@@ -65,6 +65,10 @@ function(add_speed_test LANGUAGE LANGUAGE_EXT)
   endif()
   add_test(NAME speedtest_${LANGUAGE}
            COMMAND ${LANGUAGE}_build/speedtest_${LANGUAGE})
+  if(WIN32)
+    set_tests_properties(speedtest_${LANGUAGE} PROPERTIES
+                         ENVIRONMENT "PYTHONHOME=${Python3_RUNTIME_LIBRARY_DIRS}")
+  endif()
 endfunction()
 
 enable_testing()
