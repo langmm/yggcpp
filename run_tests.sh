@@ -135,8 +135,12 @@ while [[ $# -gt 0 ]]; do
 	    shift
 	    shift
 	    ;;
-	-* | --* )
-	    CMAKE_FLAGS="${CMAKE_FLAGS} $1"
+	--* )
+	    CMAKE_FLAGS="${CMAKE_FLAGS} --$1"
+	    shift
+	    ;;
+	-* )
+	    CMAKE_FLAGS="${CMAKE_FLAGS} -$1"
 	    shift
 	    ;;
 	*)
@@ -144,6 +148,8 @@ while [[ $# -gt 0 ]]; do
 	    ;;
     esac
 done
+
+echo "CMAKE_FLAGS = ${CMAKE_FLAGS}"
 
 if [[ "$CMAKE_FLAGS" == *"-DYGG_BUILD_ASAN=ON"* ]]; then
     WITH_ASAN="TRUE"
