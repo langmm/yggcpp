@@ -244,7 +244,7 @@ if [ -n "$DO_PYTHON" ] && [ -n "$NO_CORE" ]; then
     if [ ! -n "$DONT_BUILD" ]; then
 	python3 setup.py build_ext --inplace
     fi
-    if [ -n "$WITH_ASAN" ]; then
+    if [ -n "$WITH_ASAN" ] && [ ! -n "$DYLD_INSERT_LIBRARIES" ]; then
 	export DYLD_INSERT_LIBRARIES=$(clang -print-file-name=libclang_rt.asan_osx_dynamic.dylib)
     fi
     cd python/pyYggdrasil
@@ -275,7 +275,7 @@ else
 	cmake --install . --prefix ../_install $CONFIG_FLAGS
     fi
     if [ ! -n "$DONT_TEST" ]; then
-	if [ -n "$WITH_ASAN" ]; then
+	if [ -n "$WITH_ASAN" ] && [ ! -n "$DYLD_INSERT_LIBRARIES" ]; then
 	    export DYLD_INSERT_LIBRARIES=$(clang -print-file-name=libclang_rt.asan_osx_dynamic.dylib)
 	fi
 	if [ -n "$WITH_LLDB" ]; then
@@ -300,13 +300,14 @@ if [ -n "$SPEED_TEST" ]; then
 	mkdir build_speed
     fi
     export LD_LIBRARY_PATH="${LD_LIBRARY_PATH};$(pwd)/_install/lib"
-    echo $LD_LIBRARY_PATH
+    echo "LD_LIBRARY_PATH = $LD_LIBRARY_PATH"
     cd build_speed
-    if [ -n "$WITH_ASAN" ]; then
+    if [ -n "$WITH_ASAN" ] && [ ! -n "$DYLD_INSERT_LIBRARIES" ]; then
 	export DYLD_INSERT_LIBRARIES=$(clang -print-file-name=libclang_rt.asan_osx_dynamic.dylib)
     fi
     cmake ../test/speedtest -DCMAKE_PREFIX_PATH=../_install -DYggInterface_DIR=../../_install/lib/cmake/YggInterface -DN_MSG=$N_MSG -DS_MSG=$S_MSG -DCOMM=$COMM $CMAKE_FLAGS $CMAKE_FLAGS_SPEED
     cmake --build .
+    echo "DYLD_INSERT_LIBRARIES = ${DYLD_INSERT_LIBRARIES}"
     ctest $TEST_FLAGS
     # make test
     cd ..
