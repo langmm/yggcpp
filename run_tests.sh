@@ -56,7 +56,7 @@ while [[ $# -gt 0 ]]; do
 	    ;;
 	--with-asan )
 	    WITH_ASAN="TRUE"
-	    CMAKE_FLAGS="${CMAKE_FLAGS} -DYGG_BUILD_ASAN=ON -DYGG_BUILD_UBSAN=ON"
+	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYGG_BUILD_ASAN=ON -DYGG_BUILD_UBSAN=ON"
 	    shift # past argument with no value
 	    ;;
 	--without-core )
@@ -64,7 +64,7 @@ while [[ $# -gt 0 ]]; do
 	    shift # past argument with no value
 	    ;;
 	--using-ipc )
-	    CMAKE_FLAGS="${CMAKE_FLAGS} -DUSING_IPC=1"
+	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DUSING_IPC=1"
 	    shift # past argument with no value
 	    ;;
 	--with-lldb )
@@ -72,7 +72,7 @@ while [[ $# -gt 0 ]]; do
 	    shift # past argument with no value 
 	    ;;
 	--split-cfort )
-	    CMAKE_FLAGS="${CMAKE_FLAGS} -DFORCE_SPLIT_CXXFORTRAN=1"
+	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DFORCE_SPLIT_CXXFORTRAN=1"
 	    shift # past argument with no value
 	    ;;
 	--symbols )
@@ -90,15 +90,15 @@ while [[ $# -gt 0 ]]; do
 	    shift # past argument with no value
 	    ;;
 	--rj-wrapper )
-	    CMAKE_FLAGS="${CMAKE_FLAGS} -DWRAP_RAPIDJSON_FOR_DLL=1"
+	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DWRAP_RAPIDJSON_FOR_DLL=1"
 	    shift # past argument with no value
 	    ;;
 	--python-link-cpp )
-	    CMAKE_FLAGS="${CMAKE_FLAGS} -DYGG_LINK_PYTHON_TO_CPP=1"
+	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYGG_LINK_PYTHON_TO_CPP=1"
 	    shift # past argument with no value
 	    ;;
 	--disable-python )
-	    CMAKE_FLAGS="${CMAKE_FLAGS} -DYGGDRASIL_DISABLE_PYTHON_C_API=1"
+	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYGGDRASIL_DISABLE_PYTHON_C_API=1"
 	    shift # past argument with no value
 	    ;;
 	--no-debug )
@@ -106,7 +106,7 @@ while [[ $# -gt 0 ]]; do
 	    shift # past argument with no value
 	    ;;
 	--local-rj )
-	    CMAKE_FLAGS="${CMAKE_FLAGS} -DRAPIDJSON_INCLUDE_DIRS=/Users/langmm/rapidjson/include"
+	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DRAPIDJSON_INCLUDE_DIRS=/Users/langmm/rapidjson/include"
 	    shift # past argument with no value
 	    ;;
 	--config )
@@ -275,6 +275,9 @@ else
 	cmake --install . --prefix ../_install $CONFIG_FLAGS
     fi
     if [ ! -n "$DONT_TEST" ]; then
+	if [ -n "$WITH_ASAN" ]; then
+	    export DYLD_INSERT_LIBRARIES=$(clang -print-file-name=libclang_rt.asan_osx_dynamic.dylib)
+	fi
 	if [ -n "$WITH_LLDB" ]; then
 	    if [ -n "$DO_FORTRAN" ]; then
 		lldb -o 'run' -o 'quit' fortran/tests/fortran_testsuite -- test_ygg_input_1_
@@ -299,11 +302,11 @@ if [ -n "$SPEED_TEST" ]; then
     export LD_LIBRARY_PATH="${LD_LIBRARY_PATH};$(pwd)/_install/lib"
     echo $LD_LIBRARY_PATH
     cd build_speed
-    cmake ../test/speedtest -DCMAKE_PREFIX_PATH=../_install -DYggInterface_DIR=../../_install/lib/cmake/YggInterface -DN_MSG=$N_MSG -DS_MSG=$S_MSG -DCOMM=$COMM $CMAKE_FLAGS $CMAKE_FLAGS_SPEED
-    cmake --build .
     if [ -n "$WITH_ASAN" ]; then
 	export DYLD_INSERT_LIBRARIES=$(clang -print-file-name=libclang_rt.asan_osx_dynamic.dylib)
     fi
+    cmake ../test/speedtest -DCMAKE_PREFIX_PATH=../_install -DYggInterface_DIR=../../_install/lib/cmake/YggInterface -DN_MSG=$N_MSG -DS_MSG=$S_MSG -DCOMM=$COMM $CMAKE_FLAGS $CMAKE_FLAGS_SPEED
+    cmake --build .
     ctest $TEST_FLAGS
     # make test
     cd ..

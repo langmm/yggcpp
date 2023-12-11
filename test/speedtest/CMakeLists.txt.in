@@ -6,8 +6,6 @@ else()
   project(SpeedTest@LANGUAGE@ @LANGUAGE@ CXX)
 endif()
 
-set(CMAKE_PREFIX_PATH @CMAKE_PREFIX_PATH@)
-set(Python3_ROOT_DIR @Python3_ROOT_DIR@)
 find_package(YggInterface REQUIRED)
 
 add_executable(speedtest_@LANGUAGE@ speedtest.@LANGUAGE_EXT@)
