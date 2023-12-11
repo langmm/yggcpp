@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION @CMAKE_MINIMUM_REQUIRED_VERSION@)
+message(STATUS "Checking for external language: @language@")
 project(check_language_@language@)
 enable_language(@language@)
+message(STATUS "CMAKE_@language@_COMPILER = ${CMAKE_@language@_COMPILER}")
 if (CMAKE_@language@_COMPILER)
   file(WRITE @fcompiler@ ${CMAKE_@language@_COMPILER})
 endif()

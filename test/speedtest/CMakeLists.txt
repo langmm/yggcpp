@@ -12,6 +12,7 @@ option(COMM "Communicator type that should be used" DEFAULT_COMM)
 set(SPEED_TEST_N_MSG ${N_MSG})
 set(SPEED_TEST_S_MSG ${S_MSG})
 set(SPEED_TEST_COMM ${COMM})
+list(APPEND CMAKE_COMMAND_ARGS_TO_COPY YggInterface_DIR CMAKE_PREFIX_PATH Python3_ROOT_DIR CMAKE_VERBOSE_MAKEFILE)
 
 function(add_speed_test LANGUAGE LANGUAGE_EXT)
   if (NOT ENABLE_${LANGUAGE})
@@ -27,6 +28,11 @@ function(add_speed_test LANGUAGE LANGUAGE_EXT)
       list(APPEND CMAKE_COMMAND_ARGS "-G${generator}")
     endif()
   endif()
+  foreach(opt IN LISTS CMAKE_COMMAND_ARGS_TO_COPY)
+    if (${opt})
+      list(APPEND CMAKE_COMMAND_ARGS -D${opt}=${${opt}})
+    endif()
+  endforeach()
   configure_file(CMakeLists.txt.in ${LANGUAGE}/CMakeLists.txt @ONLY)
   configure_file(${LANGUAGE}/speedtest.${LANGUAGE_EXT}.in
                  ${LANGUAGE}/speedtest.${LANGUAGE_EXT} @ONLY)
@@ -37,8 +43,9 @@ function(add_speed_test LANGUAGE LANGUAGE_EXT)
     set(old_paths $ENV{PATH})
     set(ENV{PATH} "${paths}\;$ENV{PATH}")
   endif()
+  message(STATUS "CMAKE_COMMAND_ARGS = ${CMAKE_COMMAND_ARGS}")
   execute_process(
-    COMMAND ${CMAKE_COMMAND} ${lang_src_dir} -DYggInterface_DIR=${YggInterface_DIR} -DCMAKE_VERBOSE_MAKEFILE=ON ${CMAKE_COMMAND_ARGS}
+    COMMAND ${CMAKE_COMMAND} ${lang_src_dir} ${CMAKE_COMMAND_ARGS}
     WORKING_DIRECTORY ${lang_bld_dir}
     COMMAND_ECHO STDOUT
     RESULT_VARIABLE ret)
