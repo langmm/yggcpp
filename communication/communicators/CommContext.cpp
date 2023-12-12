@@ -42,6 +42,7 @@ void CommContext::cleanup(CLEANUP_MODE mode) {
     YGG_THREAD_SAFE_BEGIN_LOCAL(comms) {
       registry_.clear();
       if (mode != CLEANUP_COMMS) {
+#ifdef ZMQINSTALLED
 	YGG_THREAD_SAFE_BEGIN_LOCAL(zmq) {
 	  if (zmq_ctx != NULL) {
 	    zmq_ctx_shutdown(zmq_ctx);
@@ -51,6 +52,7 @@ void CommContext::cleanup(CLEANUP_MODE mode) {
 	    zmq_ctx = NULL;
 	  }
 	} YGG_THREAD_SAFE_END;
+#endif // ZMQINSTALLED
 	utils::finalize_python("CommContext::cleanup");
       }
     } YGG_THREAD_SAFE_END;
