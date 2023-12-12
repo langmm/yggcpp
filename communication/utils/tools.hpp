@@ -321,19 +321,29 @@ static int global_thread_id = -1;
 #define YGG_THREAD_SAFE_BEGIN(name)		\
   _Pragma(STRINGIFY(omp critical (name))) {	\
     const std::lock_guard<std::mutex> name ## _lock(global_context->name ## _mutex);
+#define YGG_THREAD_SAFE_BEGIN_LOCAL(name)	\
+  _Pragma(STRINGIFY(omp critical (name))) {	\
+    const std::lock_guard<std::mutex> name ## _lock(name ## _mutex);
 #else // _OPENMP
 #define YGG_THREAD_SAFE_BEGIN(name)		\
   {						\
     const std::lock_guard<std::mutex> name ## _lock(global_context->name ## _mutex);
+#define YGG_THREAD_SAFE_BEGIN_LOCAL(name)	\
+  {						\
+    const std::lock_guard<std::mutex> name ## _lock(name ## _mutex);
 #endif // _OPENMP
 #else // THREADSINSTALLED
 #ifdef _OPENMP
 #define YGG_THREADING_ACTIVE 1
 #define YGG_THREAD_SAFE_BEGIN(name)		\
   _Pragma(STRINGIFY(omp critical (name))) {
+#define YGG_THREAD_SAFE_BEGIN_LOCAL(name)	\
+  YGG_THREAD_SAFE_BEGIN(name)
 #else // _OPENMP
 #define YGG_THREAD_SAFE_BEGIN(name)		\
   {
+#define YGG_THREAD_SAFE_BEGIN_LOCAL(name)	\
+  YGG_THREAD_SAFE_BEGIN(name)
 #endif // _OPENMP
 #endif // THREADSINSTALLED
 #define YGG_THREAD_SAFE_END			\

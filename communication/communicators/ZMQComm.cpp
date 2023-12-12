@@ -8,11 +8,6 @@
 char communication::communicator::_reply_msg[100] = "YGG_REPLY";
 char communication::communicator::_purge_msg[100] = "YGG_PURGE";
 int communication::communicator::_zmq_sleeptime = 10000;
-#ifdef ZMQINSTALLED
-std::shared_ptr<communication::communicator::ZMQContext> communication::communicator::_zmq_global_ctx(new communication::communicator::ZMQContext(true));
-#else // ZMQINSTALLED
-std::shared_ptr<communication::communicator::ZMQContext> communication::communicator::_zmq_global_ctx(nullptr);
-#endif // ZMQINSTALLED
 
 using namespace communication::communicator;
 using namespace communication::utils;
@@ -23,66 +18,6 @@ using namespace communication::utils;
 #define timeout 1000
 #define short_timeout 10
 
-////////////////
-// ZMQContext //
-////////////////
-
-ZMQContext::ZMQContext(bool is_global) :
-  ygg_ctx(global_context), ctx(NULL), is_global_(is_global)
-{ init(); }
-ZMQContext::~ZMQContext() {
-  log_debug() << "~ZMQContext: Begin destructor (global = " <<
-    is_global_ << ")" << std::endl;
-#ifdef ZMQINSTALLED
-  if (is_global_)
-    destroy();
-#endif // ZMQINSTALLED
-}
-
-#ifdef ZMQINSTALLED
-void ZMQContext::init() {
-  YGG_THREAD_SAFE_BEGIN(zmq) {
-    if (is_global_) {
-      if (get_thread_id() == ygg_ctx->thread_id) {
-	log_debug() << "init: Creating ZMQ context." << std::endl;
-	ctx = zmq_ctx_new();
-      } else {
-	throw_error("ZMQContext::init: Can only initialize the "
-		    "zeromq context on the main thread. Call "
-		    "ygg_init before the threaded portion of "
-		    "your model.");
-      }
-      log_debug() << "init: Created ZMQ context." << std::endl;
-    } else {
-      throw_error("init: Only the global ZMQ context should be used");
-      // if (_zmq_global_ctx->ctx == NULL) {
-      // 	throw_error("init: Global ZMQ context has not been initialized");
-      // }
-      // ctx = _zmq_global_ctx->ctx;
-    }
-  } YGG_THREAD_SAFE_END;
-  if (ctx == NULL) {
-    throw_error("ZMQContext::init: ZMQ context is NULL.");
-  }
-}
-
-void ZMQContext::destroy() {
-  // YGG_THREAD_SAFE_BEGIN(zmq) {
-    if (ctx != NULL) {
-      if (!is_global_) {
-	throw_error("destroy: Non-global ZMQ context calling destroy");
-      }
-      YggLogDebug << "ZMQContext::destroy: Destroying the ZMQ context" << std::endl;
-      zmq_ctx_shutdown(ctx);
-      if (zmq_ctx_term(ctx) != 0) {
-	YggLogError << "ZMQContext::destroy: Error terminating context with zmq_ctx_term" << std::endl;
-      }
-      ctx = NULL;
-    }
-  // } YGG_THREAD_SAFE_END;
-}
-#endif // ZMQINSTALLED
-
 ///////////////
 // ZMQSocket //
 ///////////////
@@ -91,17 +26,17 @@ int ZMQSocket::_last_port = 0;
 int ZMQSocket::_last_port_set = 0;
 
 ZMQSocket::ZMQSocket() :
-  handle(NULL), endpoint(), type(0), ctx(_zmq_global_ctx) {}
+  handle(NULL), endpoint(), type(0) {}
 ZMQSocket::ZMQSocket(const ZMQSocket& rhs) :
-  handle(NULL), endpoint(), type(rhs.type), ctx(_zmq_global_ctx) {}
+  handle(NULL), endpoint(), type(rhs.type) {}
 ZMQSocket::ZMQSocket(int type0, utils::Address& address,
 		     int linger, int immediate, int sndtimeo) :
-  handle(NULL), endpoint(), type(type0), ctx(_zmq_global_ctx) {
+  handle(NULL), endpoint(), type(type0) {
   init(type0, address, linger, immediate, sndtimeo);
 }
 ZMQSocket::ZMQSocket(int type0, int linger, int immediate,
 		     int sndtimeo) :
-  handle(NULL), endpoint(), type(type0), ctx(_zmq_global_ctx) {
+  handle(NULL), endpoint(), type(type0) {
   utils::Address adr;
   init(type0, adr, linger, immediate, sndtimeo);
 }
@@ -131,19 +66,23 @@ void ZMQSocket::init(int type0, utils::Address& addr,
   type = type0;
   std::string except_msg;
   YGG_THREAD_SAFE_BEGIN(zmq) {
-    handle = zmq_socket (ctx->ctx, type);
-    if (handle == NULL) {
-      except_msg = "ZMQSocket::init: Error creating new socket.";
+    if (!(global_context && global_context->zmq_ctx)) {
+      except_msg = "ZMQSocket::init: ZeroMQ context not initialized";
     } else {
+      handle = zmq_socket (global_context->zmq_ctx, type);
+      if (handle == NULL) {
+	except_msg = "ZMQSocket::init: Error creating new socket.";
+      } else {
 #define DO_SET(flag, var, def)					\
-      if (except_msg.empty() && var != def &&			\
-	  set(flag, var) < 0) {					\
-	except_msg = "ZMQSocket::init: Error setting " #flag " to " + std::to_string(var); \
-      }
-      DO_SET(ZMQ_LINGER, linger, -1);
-      DO_SET(ZMQ_IMMEDIATE, immediate, 0);
-      DO_SET(ZMQ_SNDTIMEO, sndtimeo, -1);
+	if (except_msg.empty() && var != def &&			\
+	    set(flag, var) < 0) {					\
+	  except_msg = "ZMQSocket::init: Error setting " #flag " to " + std::to_string(var); \
+	}
+	DO_SET(ZMQ_LINGER, linger, -1);
+	DO_SET(ZMQ_IMMEDIATE, immediate, 0);
+	DO_SET(ZMQ_SNDTIMEO, sndtimeo, -1);
 #undef DO_SET
+      }
     }
   } YGG_THREAD_SAFE_END;
   if (!except_msg.empty()) {

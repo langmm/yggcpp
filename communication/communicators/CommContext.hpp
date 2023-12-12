@@ -25,6 +25,7 @@ namespace communication {
       std::string thread_id;
       bool for_testing_;
       CLEANUP_MODE cleanup_mode_;
+      void* zmq_ctx;
 #ifdef THREADSINSTALLED
 #define YGG_THREAD_MUTEX(name)			\
       std::mutex name ## _mutex;

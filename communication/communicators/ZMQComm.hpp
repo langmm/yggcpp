@@ -15,28 +15,6 @@ YGG_THREAD_GLOBAL_VAR(char, _reply_msg, [100])
 YGG_THREAD_GLOBAL_VAR(char, _purge_msg, [100])
 YGG_THREAD_GLOBAL_VAR(int, _zmq_sleeptime, )
 
-class ZMQContext : public communication::utils::LogBase {
-public:
-  ZMQContext(bool is_global=false);
-  ~ZMQContext();
-private:
-  ZMQContext(const ZMQContext& rhs) = delete;
-  ZMQContext& operator=(const ZMQContext& rhs) = delete;
-public:
-#ifdef ZMQINSTALLED
-  void init();
-  void destroy();
-#else
-  void init() { UNINSTALLED_ERROR(ZMQ); }
-#endif
-  std::string logClass() const override { return "ZMQContext"; }
-  std::shared_ptr<CommContext> ygg_ctx;
-  void* ctx;
-  bool is_global_;
-};
-
-extern std::shared_ptr<ZMQContext> _zmq_global_ctx;
-
 class ZMQSocket : public communication::utils::LogBase {
 private:
   ZMQSocket& operator=(const ZMQSocket& rhs) = delete;
@@ -73,7 +51,6 @@ public:
   void *handle;                    //  The libzmq socket handle
   std::string endpoint;            //  Last bound endpoint, if any
   int type;                        //  Socket type
-  std::shared_ptr<ZMQContext> ctx; //  Context used to create the socket
 private:
   static int _last_port;
   static int _last_port_set;
