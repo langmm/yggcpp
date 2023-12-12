@@ -28,7 +28,7 @@ using namespace communication::utils;
 ////////////////
 
 ZMQContext::ZMQContext(bool is_global) :
-  ctx(NULL), is_global_(is_global)
+  ygg_ctx(global_context), ctx(NULL), is_global_(is_global)
 { init(); }
 ZMQContext::~ZMQContext() {
   log_debug() << "~ZMQContext: Begin destructor (global = " <<
@@ -43,7 +43,7 @@ ZMQContext::~ZMQContext() {
 void ZMQContext::init() {
   YGG_THREAD_SAFE_BEGIN(zmq) {
     if (is_global_) {
-      if (get_thread_id() == global_context->thread_id) {
+      if (get_thread_id() == ygg_ctx->thread_id) {
 	log_debug() << "init: Creating ZMQ context." << std::endl;
 	ctx = zmq_ctx_new();
       } else {

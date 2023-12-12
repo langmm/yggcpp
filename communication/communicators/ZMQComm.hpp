@@ -30,6 +30,7 @@ public:
   void init() { UNINSTALLED_ERROR(ZMQ); }
 #endif
   std::string logClass() const override { return "ZMQContext"; }
+  std::shared_ptr<CommContext> ygg_ctx;
   void* ctx;
   bool is_global_;
 };

@@ -40,6 +40,9 @@ void CommContext::cleanup(CLEANUP_MODE mode) {
     YGG_THREAD_SAFE_BEGIN(comms) {
       registry_.clear();
       if (mode != CLEANUP_COMMS) {
+	YGG_THREAD_SAFE_BEGIN(zmq) {
+	  _zmq_global_ctx.reset();
+	} YGG_THREAD_SAFE_END;
 	utils::finalize_python("CommContext::cleanup");
       }
     } YGG_THREAD_SAFE_END;

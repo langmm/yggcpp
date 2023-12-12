@@ -613,9 +613,9 @@ void AsyncComm::set_timeout_recv(int64_t new_timeout) {
     global_comm->set_timeout_recv(new_timeout);
     return;
   }
-  const AsyncLockGuard lock(handle);
-  if (handle->comm)
-    handle->comm->set_timeout_recv(new_timeout);
+  // const AsyncLockGuard lock(handle);
+  // if (handle->comm)
+  //   handle->comm->set_timeout_recv(new_timeout);
   CommBase::set_timeout_recv(new_timeout);
 }
 int64_t AsyncComm::get_timeout_recv() {
