@@ -16,7 +16,7 @@ namespace communication {
     class YGG_API CommContext : public communication::utils::LogBase {
     private:
       CommContext(const CommContext&) = delete;
-      CommContext& operator(const CommContext&) = delete;
+      CommContext& operator=(const CommContext&) = delete;
     public:
       CommContext(bool for_testing=false);
       ~CommContext();

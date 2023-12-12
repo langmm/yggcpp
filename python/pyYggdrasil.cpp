@@ -80,6 +80,6 @@ PyInit_pyYggdrasil() {
       return NULL;
     }
     PyObject* m = PyModuleDef_Init(&pyYggModule);
-    // communication::communicator::Comm_t::_ygg_init();
+    communication::communicator::ygg_init();
     return m;
 }

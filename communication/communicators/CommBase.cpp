@@ -2,7 +2,11 @@
 #include "utils/rapidjson_wrapper.hpp"
 
 int communication::communicator::global_scope_comm = 0;
+#ifdef RAPIDJSON_YGGDRASIL_PYTHON
+std::shared_ptr<communication::communicator::CommContext> communication::communicator::global_context(NULL);
+#else // RAPIDJSON_YGGDRASIL_PYTHON
 std::shared_ptr<communication::communicator::CommContext> communication::communicator::global_context(new communication::communicator::CommContext());
+#endif // RAPIDJSON_YGGDRASIL_PYTHON
 
 using namespace communication::communicator;
 using namespace communication::utils;
@@ -20,6 +24,8 @@ void communication::communicator::global_scope_comm_off() {
   // #endif
 }
 int communication::communicator::ygg_init(bool for_testing) {
+  if (!global_context)
+    global_context.reset(new communication::communicator::CommContext());
   return global_context->init(for_testing);
 }
 void communication::communicator::ygg_cleanup(CLEANUP_MODE mode) {
