@@ -8,7 +8,7 @@ CommContext::CommContext(bool for_testing) :
   LogBase(), registry_(), thread_id(utils::get_thread_id()),
   for_testing_(for_testing), cleanup_mode_()
 // #ifdef THREADSINSTALLED
-// #define YGG_THREAD_MUTEX(name)		\
+// #define YGG_THREAD_MUTEX(name)
 //  , name ## _mutex()
 // #undef YGG_THREAD_MUTEX
 // #endif // THREADSINSTALLED

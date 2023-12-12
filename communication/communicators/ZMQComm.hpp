@@ -34,9 +34,7 @@ public:
   bool is_global_;
 };
 
-#ifdef ZMQINSTALLED
 extern std::shared_ptr<ZMQContext> _zmq_global_ctx;
-#endif // ZMQINSTALLED
 
 class ZMQSocket : public communication::utils::LogBase {
 private:

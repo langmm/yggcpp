@@ -152,8 +152,7 @@ if [[ "$CMAKE_FLAGS" == *"-DYGG_BUILD_ASAN=ON"* ]]; then
 fi
 
 if [[ "$TEST_TYPE" == "speed" ]]; then
-    # NO_DEBUG_MSG="TRUE"
-    TEST_TYPE="speed"
+    NO_DEBUG_MSG="TRUE"
 fi
 
 if [ "$LANGUAGE" = "C" ]; then

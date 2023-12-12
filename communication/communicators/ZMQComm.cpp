@@ -10,6 +10,8 @@ char communication::communicator::_purge_msg[100] = "YGG_PURGE";
 int communication::communicator::_zmq_sleeptime = 10000;
 #ifdef ZMQINSTALLED
 std::shared_ptr<communication::communicator::ZMQContext> communication::communicator::_zmq_global_ctx(new communication::communicator::ZMQContext(true));
+#else // ZMQINSTALLED
+std::shared_ptr<communication::communicator::ZMQContext> communication::communicator::_zmq_global_ctx(nullptr);
 #endif // ZMQINSTALLED
 
 using namespace communication::communicator;
