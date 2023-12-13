@@ -45,10 +45,19 @@ void CommContext::cleanup(CLEANUP_MODE mode) {
 #ifdef ZMQINSTALLED
 	YGG_THREAD_SAFE_BEGIN_LOCAL(zmq) {
 	  if (zmq_ctx != NULL) {
+#ifdef _WIN32
+	    __try {
+#endif // _WIN32
 	    zmq_ctx_shutdown(zmq_ctx);
 	    if (zmq_ctx_term(zmq_ctx) != 0) {
 	      log_error() << "cleanup: Error terminating ZeroMQ context via zmq_ctx_term" << std::endl;
 	    }
+#ifdef _WIN32
+	    } __except(_HandleWSAStartupError(GetExceptionCode(),
+					      GetExceptionInformation())) {
+	      log_debug() << "cleanup: Caught error due to DLL unloading" << std::endl;
+	    }
+#endif // _WIN32
 	    zmq_ctx = NULL;
 	  }
 	} YGG_THREAD_SAFE_END;
@@ -85,6 +94,8 @@ Comm_t* CommContext::find_registered_comm(const std::string& name,
 					  const COMM_TYPE type) {
   Comm_t* out = NULL;
   assert(!name.empty());
+  log_debug() << "find_registered_comm: global_scope_comm = " <<
+    global_scope_comm << std::endl;
   YGG_THREAD_SAFE_BEGIN_LOCAL(comms) {
     if (global_scope_comm) {
       log_debug() << "find_registered_comm: Checking for match to (" <<
@@ -116,3 +127,18 @@ Comm_t* CommContext::find_registered_comm(const std::string& name,
   } YGG_THREAD_SAFE_END;
   return out;
 }
+
+#if defined(ZMQINSTALLED) && defined(_WIN32)
+DWORD CommContext::_HandleWSAStartupError(unsigned int code,
+					  struct _EXCEPTION_POINTERS *ep) {
+  if (code != 0x40000015)
+    return EXCEPTION_CONTINUE_SEARCH;
+  const char* msg = (const char*)(ep->ExceptionRecord->ExceptionInformation[0]);
+  const char* msg_handle = "Assertion failed: Successful WSASTARTUP not yet performed";
+  if (strncmp(msg, msg_handle, strlen(msg_handle)) != 0) {
+    std::cerr << "Error message did not match: \"" << msg << "\"" << std::endl;
+    return EXCEPTION_CONTINUE_SEARCH;
+  }
+  return EXCEPTION_EXECUTE_HANDLER;
+}
+#endif
