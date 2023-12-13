@@ -567,7 +567,8 @@ elseif(BUILD_PYTHON_LIBRARY AND NOT YGGDRASIL_DISABLE_PYTHON_C_API)
       COMMAND pip3 install ${CMAKE_CURRENT_SOURCE_DIR} -v ${PYTHON_BUILD_ARGS}
       COMMAND_ECHO STDOUT
       RESULT_VARIABLE ret)
-    set(ENV{CMAKE_ARGS} ${OLD_CMAKE_ARGS})
+    message(STATUS "Resetting CMAKE_ARGS = ${OLD_CMAKE_ARGS}")
+    set(ENV{CMAKE_ARGS} "${OLD_CMAKE_ARGS}")
     if (NOT ret EQUAL 0)
       message(FATAL_ERROR "Failed to build Python via pip")
     endif()

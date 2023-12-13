@@ -16,7 +16,7 @@ target_link_libraries(speedtest_@LANGUAGE@ PRIVATE
 include(CheckDLL)
 show_runtimes(speedtest_@LANGUAGE@)
 if (WIN32)
-    if (CONDA_PREFIX)
+    if (DEFINED ENV{CONDA_PREFIX})
         add_custom_command(
             TARGET speedtest_@LANGUAGE@
             POST_BUILD
