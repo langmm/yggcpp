@@ -8,10 +8,20 @@ CommContext::CommContext(bool for_testing) :
   LogBase(), registry_(), thread_id(utils::get_thread_id()),
   for_testing_(for_testing), cleanup_mode_(), zmq_ctx(NULL) {
   log_debug() << "CommContext: New context" << std::endl;
+#ifdef YGG_ZMQ_PRELOAD
+  hzmqDLL = LoadLibrary(TEXT("zmq"));
+  if (!hzmqDLL) {
+    throw_error("Failed to load zmq library");
+  }
+#endif // YGG_ZMQ_PRELOAD
   init(for_testing);
 }
 CommContext::~CommContext() {
   cleanup(CLEANUP_ATEXIT);
+#ifdef YGG_ZMQ_PRELOAD
+  if (hzmqDLL)
+    FreeLibrary(hzmqDLL);
+#endif // YGG_ZMQ_PRELOAD
 }
 int CommContext::init(bool for_testing) {
   log_debug() << "init: Begin" << std::endl;
@@ -45,19 +55,28 @@ void CommContext::cleanup(CLEANUP_MODE mode) {
 #ifdef ZMQINSTALLED
 	YGG_THREAD_SAFE_BEGIN_LOCAL(zmq) {
 	  if (zmq_ctx != NULL) {
-#ifdef _WIN32
-	    __try {
-#endif // _WIN32
+#ifdef YGG_ZMQ_PRESERVE_CONTEXT
+	    if (mode != CLEANUP_ATEXIT) {
+#endif // YGG_ZMQ_PRESERVE_CONTEXT
+#ifdef YGG_ZMQ_CATCH_ERROR_POST_UNLOAD
+	    __try
+	      {
+#endif // YGG_ZMQ_CATCH_ERROR_POST_UNLOAD
 	    zmq_ctx_shutdown(zmq_ctx);
 	    if (zmq_ctx_term(zmq_ctx) != 0) {
 	      log_error() << "cleanup: Error terminating ZeroMQ context via zmq_ctx_term" << std::endl;
 	    }
-#ifdef _WIN32
-	    } __except(_HandleWSAStartupError(GetExceptionCode(),
-					      GetExceptionInformation())) {
-	      log_debug() << "cleanup: Caught error due to DLL unloading" << std::endl;
+#ifdef YGG_ZMQ_CATCH_ERROR_POST_UNLOAD
+	      }
+	    __except(_HandleWSAStartupError(GetExceptionCode(),
+					    GetExceptionInformation()))
+	      {
+		log_debug() << "cleanup: Caught error due to DLL unloading" << std::endl;
+	      }
+#endif // YGG_ZMQ_CATCH_ERROR_POST_UNLOAD
+#ifdef YGG_ZMQ_PRESERVE_CONTEXT
 	    }
-#endif // _WIN32
+#endif // YGG_ZMQ_PRESERVE_CONTEXT
 	    zmq_ctx = NULL;
 	  }
 	} YGG_THREAD_SAFE_END;
@@ -128,7 +147,7 @@ Comm_t* CommContext::find_registered_comm(const std::string& name,
   return out;
 }
 
-#if defined(ZMQINSTALLED) && defined(_WIN32)
+#ifdef YGG_ZMQ_CATCH_ERROR_POST_UNLOAD
 DWORD CommContext::_HandleWSAStartupError(unsigned int code,
 					  struct _EXCEPTION_POINTERS *ep) {
   if (code != 0x40000015)

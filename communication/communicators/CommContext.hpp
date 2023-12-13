@@ -2,9 +2,18 @@
 
 #include "utils/tools.hpp"
 #include "utils/logging.hpp"
-#if defined(ZMQINSTALLED) && defined(_WIN32)
+// #if defined(ZMQINSTALLED) && defined(_MSC_VER)
+// #define YGG_ZMQ_CATCH_ERROR_POST_UNLOAD 1
+// #endif
+#ifdef YGG_ZMQ_PRELOAD
+#include <windows.h>
+#endif // YGG_ZMQ_PRELOAD
+#ifdef YGG_ZMQ_CATCH_ERROR_POST_UNLOAD
 #include <windows.h> // for EXCEPTION_ACCESS_VIOLATION
 #include <excpt.h>
+#endif // YGG_ZMQ_CATCH_ERROR_POST_UNLOAD
+#if defined(_WIN32) && !(defined(YGG_ZMQ_PRELOAD) || defined(YGG_ZMQ_CATCH_ERROR_POST_UNLOAD))
+#define YGG_ZMQ_PRESERVE_CONTEXT 1
 #endif
 
 namespace communication {
@@ -33,6 +42,9 @@ namespace communication {
       bool for_testing_;
       CLEANUP_MODE cleanup_mode_;
       void* zmq_ctx;
+#ifdef YGG_ZMQ_PRELOAD
+      HINSTANCE hzmqDLL;
+#endif // YGG_ZMQ_PRELOAD
 #ifdef THREADSINSTALLED
 #define YGG_THREAD_MUTEX(name)			\
       std::mutex name ## _mutex;
@@ -52,7 +64,7 @@ namespace communication {
       Comm_t* find_registered_comm(const std::string& name,
 				   const DIRECTION dir,
 				   const COMM_TYPE type);
-#if defined(ZMQINSTALLED) && defined(_WIN32)
+#ifdef YGG_ZMQ_CATCH_ERROR_POST_UNLOAD
     protected:
       DWORD _HandleWSAStartupError(unsigned int code,
 				   struct _EXCEPTION_POINTERS *ep);
