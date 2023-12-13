@@ -2,6 +2,9 @@
 
 #include "utils/tools.hpp"
 #include "utils/logging.hpp"
+#ifdef ZMQINSTALLED
+#include <zmq.h>
+#endif
 
 namespace communication {
   namespace communicator {
@@ -29,6 +32,9 @@ namespace communication {
       bool for_testing_;
       CLEANUP_MODE cleanup_mode_;
       void* zmq_ctx;
+#ifdef ZMQINSTALLED
+      zmq_msg_t zmq_msg;
+#endif // ZMQINSTALLED
 #ifdef THREADSINSTALLED
 #define YGG_THREAD_MUTEX(name)			\
       std::mutex name ## _mutex;
