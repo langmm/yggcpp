@@ -1,5 +1,4 @@
 #include "ZMQComm.hpp"
-#include "DefaultComm.hpp"
 #include "utils/tools.hpp"
 #include "utils/logging.hpp"
 

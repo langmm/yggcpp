@@ -55,6 +55,7 @@ option(YGG_BUILD_THIRDPARTY_GTEST "Use gtest installation in 'thirdpart/gtest' b
 option(YGG_BUILD_ASAN "Build with address sanitizer (gcc/clang)" OFF)
 option(YGG_BUILD_UBSAN "Build with undefined behavior sanitizer (gcc/clang)" OFF)
 option(YGG_ENABLE_INSTRUMENTATION_OPT "Build yggdrasil with -march or -mcpu options" ON)
+option(YGG_BUILD_DOCS "Build documentation (requires Doxygen)" OFF)
 
 message(STATUS "CMAKE_CXX_FLAGS = ${CMAKE_CXX_FLAGS}")
 
@@ -188,6 +189,25 @@ if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
     message(FATAL_ERROR "In-source build prohibited.")
 endif("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
 
+if(YGG_BUILD_DOCS)
+    find_package(Doxygen)
+    if(NOT Doxygen_FOUND)
+        message(WARNING "Doxygen not found, documentation will not be produced.")
+        set(YGG_BUILD_DOCS OFF CACHE BOOL "")
+    else()
+        set(DOXYGEN_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/doc CACHE INTERNAL "")
+        set(DOXYGEN_INPUT_DIR ${CMAKE_CURRENT_SOURCE_DIR} CACHE INTERNAL "")
+        file(MAKE_DIRECTORY ${DOXYGEN_BUILD_DIR})
+        configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
+        add_custom_target(docs
+                          COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+                          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                          VERBATIM)
+        install(DIRECTORY ${DOXYGEN_BUILD_DIR}
+                DESTINATION ${CMAKE_INSTALL_PREFIX}/share/doc/ygginterrfacecpp
+                OPTIONAL)
+    endif()
+endif()
 
 add_definitions(-DRAPIDJSON_YGGDRASIL)
 add_definitions(-DRAPIDJSON_HAS_STDSTRING)

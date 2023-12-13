@@ -1,5 +1,4 @@
 #include "IPCComm.hpp"
-#include "rapidjson/document.h"
 #include "rapidjson/writer.h"
 
 using namespace YggInterface::communicator;
@@ -84,10 +83,6 @@ void IPCComm::close() {
     CommBase::close();
 }
 
-/*!
-  @brief Check if an IPC channel is in use
-  @returns int <0 if the channel is already in use
- */
 int IPCComm::check_key(int key) {
     // Fail if trying to re-use the same channel twice
     unsigned i;
@@ -105,10 +100,6 @@ int IPCComm::check_key(int key) {
     return error_code;
 }
 
-/*!
-  @brief Add a new channel to the list of existing channels.
-*/
-
 void IPCComm::add_channel() {
   YGG_THREAD_SAFE_BEGIN(ipc) {
   // printf("add_channel(%s): %d, %s\n", comm->name, _yggChannelsUsed, comm->address);
@@ -118,14 +109,6 @@ void IPCComm::add_channel() {
     IPCComm::_yggChannelNames[IPCComm::_yggChannelsUsed] = address.key();
   } YGG_THREAD_SAFE_END;
 }
-
-/*!
-  @brief Remove a channel.
-  @param[in] close_comm int If 1, the queue will be closed, otherwise it will
-  just be removed from the register and it is assumed that another process
-  will close it.
-  @returns int -1 if removal not successful.
-*/
 
 int IPCComm::remove_comm(bool close_comm) {
     int ret = 0;

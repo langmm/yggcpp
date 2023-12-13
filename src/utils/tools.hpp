@@ -352,22 +352,22 @@ size_t strlen4(char *strarg) {
     return (size_t)(str - strarg);
 }
 
-/*!
-  @brief Called snprintf and realloc buffer if the formatted string is
-  larger than the provided buffer.
-  @param[in] dst char** Pointer to buffer where formatted message
-  should be stored.
-  @param[in,out] max_len size_t* Pointer to maximum size of buffer
-  that will be modified when the buffer is reallocated.
-  @param[in,out] offset size_t* Pointer to offset in buffer where the
-  formatted message should be stored. This will be updated to the end
-  of the updated message.
-  @param[in] format_str const char* Format string that should be used.
-  @param[in] ... Additional arguments are passed to snprintf as
-  parameters for formatting.
-  @returns int -1 if there is an error, otherwise the number of new
-  characters written to the buffer.
- */
+//
+//  @brief Called snprintf and realloc buffer if the formatted string is
+//  larger than the provided buffer.
+//  @param[in] dst char** Pointer to buffer where formatted message
+//  should be stored.
+//  @param[in,out] max_len size_t* Pointer to maximum size of buffer
+//  that will be modified when the buffer is reallocated.
+//  @param[in,out] offset size_t* Pointer to offset in buffer where the
+//  formatted message should be stored. This will be updated to the end
+//  of the updated message.
+//  @param[in] format_str const char* Format string that should be used.
+//  @param[in] ... Additional arguments are passed to snprintf as
+//  parameters for formatting.
+//  @returns int -1 if there is an error, otherwise the number of new
+//  characters written to the buffer.
+// */
 /*static inline
 int snprintf_realloc(char **dst, size_t *max_len, size_t *offset,
                      const char *format_str, ...) {

@@ -919,3 +919,56 @@ public:
   }
   
 };
+
+/*! \mainpage
+ *
+ * The Ygg Interface library provides a communication framework for Yggdrasil components to use to send
+ * messages and data between them. It provides C, C++, Fortran, and Python bindings to the core C++ library,
+ * allowing it to be used by a wide range of code.
+ *
+ * \section install_section Installation
+ *
+ * The Ygg Interface has a few optional dependencies:
+ * - ZeroMQ - required to build the ZMQ communicators
+ * - OpemMP - used to parallelize some of the code
+ * - MPI - required to build the MPI based communicators
+ * - Python3 - required to build the Python bindings to this library
+ * - Doxygen - required to build the documentation
+ *
+ * Ygg Interface uses cmake as the build system. To build this project first clone the repository
+ *
+ *     git clone https://github.com/astro-friedel/yggcpp.git
+ *
+ * then
+ *
+ *     cd yggcpp
+ *     mkdir build
+ *     cd build
+ *     cmake .. <OPTIONS>
+ *     cmake --build . -j<X>
+ *     cmake --install .
+ *
+ * where &lt;OPTIONS> is a set of flags and arguments for cmake, and &lt;X> gives the number of parallel processes to use for compiling. Common options are
+ *
+ * | Option                  | Description                          | Default |
+ * | :---------------------- | :----------------------------------- | :------ |
+ * | CMAKE_BUILD_TYPE        | The type of build. One of Debug, Release, RelWithDebInfo, MinSizeRel | Debug |
+ * | CMAKE_INSTALL_PREFIX    | The root path to install the library and headers in | System dependent |
+ * | ENABLE_ZMQ              | If ON, build the ZeroMQ based communicators, requires ZeroMQ is already installed. | ON |
+ * | YGGDRASIL_DISABLE_PYTHON_C_API | If ON, do not build the Python C API | OFF |
+ * | USING_IPC               | If ON, default to using IPC queues   | OFF |
+ * | BUILD_CPP_LIBRARY       | If ON, build the C++ interface library | ON |
+ * | BUILD_PYTHON_LIBRARY    | If ON, build the independent Python interface library | OFF |
+ * | YGG_PYTHON_LIBRARY_WRAP | If ON, build the Python interface library by wrapping the C++ module | ON |
+ * | YGG_BUILD_DOCS          | If ON, then build the documentation  | OFF |
+ * | YGG_BUILD_TESTS         | If ON, then build the test suite     | OFF |
+ * | YGG_BUILD_THIRDPARTY_GTEST | If ON, then use the included gtest with the test suite | ON |
+ * | YGG_ENABLE_COVERAGE     | If ON, enable test coverage reporting | OFF |
+ * | YGG_BUILD_ASAN          | If ON, then build with an address sanitizer (gcc/clang only) | OFF |
+ * | YGG_BUILD_UBSAN         | If ON, build with a undefined behavior sanitizer (gcc/clang only) | OFF |
+ * | YGG_ENABLE_INSTRUMENTATION_OPT | If ON, add the build options -march or -mcpu | ON |
+ *
+ * Note that options must be preceeded by a -D, e.g.
+ *
+ *     -DCMAKE_BUILD_TYPE=Release
+ */

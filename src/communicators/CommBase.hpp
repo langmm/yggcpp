@@ -118,7 +118,7 @@ class RequestList;
 typedef struct comm_t comm_t;
 
 /**
- * Abstract base class for all communicators. Cannot be instantiated directly, but is used as a generalized hook
+ * @brief Abstract base class for all communicators. Cannot be instantiated directly, but is used as a generalized hook
  * for passing communicators around. Should only be instantiated by the CommBase<> class.
  */
 class Comm_t {
@@ -188,6 +188,7 @@ public:
     virtual int wait_for_recv(const int& tout);
     /*!
       @brief Receive a string message from the communicator.
+      @tparam N The size of the message.
       @param[out] data Allocated buffer where the message should be saved.
       @returns int -1 if message could not be received. Length of the
         received message if message was received.
@@ -543,59 +544,128 @@ public:
     virtual bool afterSendRecv(Comm_t*, Comm_t*) { return true; }
     Comm_t* getGlobalComm() { return global_comm; }
 #endif
+    /*!
+     * Add a schema from the given metadata
+     * @param s The Metadata object to use
+     */
     void addSchema(const utils::Metadata& s);
+    /*!
+     * Add a schema based on the Value given
+     * @param s The value to use
+     * @param isMetadata If true, then the data is for the metadata section
+     */
     void addSchema(const rapidjson::Value& s, bool isMetadata = false);
+    /*!
+     * Add a schema based on the given string
+     * @param schemaStr String representation of schema to use
+     * @param isMetadata If true, then the data is for the metadata section
+     */
     void addSchema(const std::string& schemaStr, bool isMetadata = false);
+    /*!
+     * Get metadata based on the format string
+     * @param format_str The format to use
+     * @param as_array If true, then set the internal type to an array
+     */
     void addFormat(const std::string& format_str, bool as_array = false);
+    /*!
+     * Copy a schema from another communicator
+     * @param other THe communicator to use
+     */
     void copySchema(const Comm_t* other);
 
+    /*!
+     * Clean up when closing connection
+     */
     static void _ygg_cleanup();
 
 private:
+    /*!
+     * @brief Deserialize the given buffer into the argument list
+     * @param[out] buf The buffer to deserialize
+     * @param[in] ap The list to deserialize in to
+     * @return 0 on success
+     */
     int deserialize(const char* buf, rapidjson::VarArgList& ap);
+    /*!
+     * @brief Serialize the arg list into the buffer
+     * @param[out] buf The buffer to fill
+     * @param[in, out] buf_siz The initial size of buf
+     * @param[in] ap The argument list to serialize
+     * @return The size of buf
+     */
     int serialize(char*& buf, size_t& buf_siz,
 		  rapidjson::VarArgList& ap);
+    /*!
+     * @brief Initialize this instance
+     */
     void init();
 
 protected:
-    friend AsyncComm;
-    friend AsyncBacklog;
-    friend RPCComm;
-    friend ServerComm;
-    friend ClientComm;
-    friend IPCComm;
-    friend ZMQComm;
-    friend RequestList;
-    friend Worker;
-    friend WorkerList;
+    friend AsyncComm;    //!< @see AsyncComm
+    friend AsyncBacklog; //!< @see AsyncBacklog
+    friend RPCComm;      //!< @see RPCComm
+    friend ServerComm;   //!< @see ServerComm
+    friend ClientComm;   //!< @see ClientComm
+    friend IPCComm;      //!< @see IPCComm
+    friend ZMQComm;      //!< @see ZMQComm
+    friend RequestList;  //!< @see RequestList
+    friend Worker;       //!< @see Worker
+    friend WorkerList;   //!< @see WorkerList
 
 public:
-    static int _ygg_initialized;
-    static int _ygg_finalized;
+    static int _ygg_initialized;  //!< Used to indicate if the communicator has been initialized
+    static int _ygg_finalized;    //!< Used to indicate if the communicator has been finalized
+    /*!
+     * @brief Main initialization
+     */
     static void _ygg_init();
 
 protected:
+    /*!
+     * @brief Change the maximum message size
+     * @param[in] new_size The new maximum message size
+     */
     void updateMaxMsgSize(size_t new_size) {
         if (maxMsgSize == 0 || new_size < maxMsgSize)
             maxMsgSize = new_size;
     }
+    /*!
+     * @brief Change the message buffer size
+     * @param[in] new_size The new buffer size
+     */
     void updateMsgBufSize(size_t new_size) {
       msgBufSize = new_size;
     }
 
-    void setFlags(const utils::Header& head, DIRECTION dir) {
-      if (dir == SEND)
-	flags |= COMM_FLAGS_USED_SENT;
-      else
-	flags |= COMM_FLAGS_USED_RECV;
-      if (head.flags & HEAD_FLAG_EOF) {
-	if (dir == SEND)
-	  flags |= COMM_EOF_SENT;
-	else
-	  flags |= COMM_EOF_RECV;
-      }
+    /*!
+     * @brief Set the flags for the givern header
+     * @param[in] head The header to set the flags on
+     * @param[in] dir The communication direction
+     * @see utils::Header
+     */
+    void setFlags(const utils::Header& head, const DIRECTION dir) {
+        if (dir == SEND)
+            flags |= COMM_FLAGS_USED_SENT;
+        else
+            flags |= COMM_FLAGS_USED_RECV;
+        if (head.flags & HEAD_FLAG_EOF) {
+            if (dir == SEND)
+                flags |= COMM_EOF_SENT;
+            else
+                flags |= COMM_EOF_RECV;
+        }
     }
 
+    /*!
+     * @brief Get the address string from the environment based on the given name
+     *
+     * addressFromEnv("YGG", SEND) will look for YGG_OUT in the environment
+     * addressFromEnf("YGG", RECV) will look for YGG_IN in the environment
+     * @param[in] name The base name to search for in the environment
+     * @param[in] dir The communication direction
+     * @return The new address
+     * @see utils::Address
+     */
     static utils::Address addressFromEnv(const std::string& name,
                                          const DIRECTION dir) {
       utils::Address out;
@@ -632,119 +702,217 @@ protected:
         return out;
     }
 
+    /*!
+     * @brief Update the metadata from the given schems
+     * @param[in] new_schema The schema to update from
+     * @param[in] dir The communication direction
+     * @return Always returns 1
+     */
     int update_datatype(const rapidjson::Value& new_schema,
                         const DIRECTION dir);
+    /*!
+     * @brief Clear the given data
+     * @tparam T Template data type
+     * @param[in] data The data to clear
+     */
     template<typename T>
     void zeroData(const T* data,
 		  RAPIDJSON_ENABLEIF((internal::OrExpr<YGGDRASIL_IS_ANY_SCALAR(T), internal::IsSame<T, bool> >))) {
       memset(const_cast<T*>(data), 0, sizeof(T));
     }
+    /*!
+     * @brief Stub for constant data, which cannot be cleared.
+     * @tparam T
+     */
     template<typename T>
     void zeroData(const T*,
-		  RAPIDJSON_DISABLEIF((internal::OrExpr<YGGDRASIL_IS_ANY_SCALAR(T), internal::IsSame<T, bool> >))) {}
+		  RAPIDJSON_DISABLEIF((internal::OrExpr<YGGDRASIL_IS_ANY_SCALAR(T),
+                  internal::IsSame<T, bool> >))) {}
+    /*!
+     * @brief If dir is RECV, then clear the data, if dir is SEND then copy the data into the document
+     * @tparam T The template data type
+     * @param[in] data The data to work with
+     * @param[in] dir The communication direction
+     * @return true if successful
+     */
     template<typename T>
     bool checkType(const T& data, const DIRECTION dir) {
-      YggInterface::utils::Metadata& meta = getMetadata(dir);
-      if (dir == RECV)
-	zeroData(&data);
-      try {
-	meta.fromData(data);
-      } catch (...) {
-	return false;
-      }
-      return true;
+        YggInterface::utils::Metadata& meta = getMetadata(dir);
+        if (dir == RECV)
+            zeroData(&data);
+        try {
+            meta.fromData(data);
+        } catch (...) {
+            return false;
+        }
+        return true;
     }
+    /*!
+     * @brief Create a header for a reply
+     * @return true if successful
+     * @see utils::Header
+     */
     virtual bool create_header_send(utils::Header&) { return true; }
+    /*!
+     * @brief Get the schema for the given communications direction
+     * @param[in] dir The communications direction
+     * @return The schema
+     */
     rapidjson::Value& getSchema(const DIRECTION dir=NONE) {
       return getMetadata(dir).getSchema();
     }
+    /*!
+     * @brief Create a new communications worker
+     * @param[in] address The address for the communicator
+     * @param[in] dir The communications direction
+     * @param[in] flgs Flags for the worker settings
+     * @return The new worker
+     * @see utils::Address
+     */
     virtual Comm_t* create_worker(utils::Address& address,
                                   const DIRECTION dir, int flgs) VIRT_END;
+    /*!
+     * @brief Create a worker for sending
+     * @param[in] head The header to use
+     * @return The worker
+     * @see utils::Header
+     */
     virtual Comm_t* create_worker_send(utils::Header& head);
+    /*!
+     * @brief Create a worker for receiving
+     * @param[in] head The header to use
+     * @return The worker
+     * @see utils::Header
+     */
     virtual Comm_t* create_worker_recv(utils::Header& head);
     /**
-     * Sending function
-     * @param header Instance containing message and header.
+     * @brief Sending function
+     * @param[in] header Instance containing message and header.
      * @return The length of data sent.
+     * @see utils::Header
      */
     virtual int send_single(utils::Header& header) VIRT_END;
     /**
-     * Receiving function
-     * @param header Instance to store message and header in.
+     * @brief Receiving function
+     * @param[in] header Instance to store message and header in.
      * @return The length of data received.
+     * @see utils::Header
      */
     virtual long recv_single(utils::Header& header) VIRT_END;
 
     /**
-     * Constructor, which can only be instantiated by a child class
-     * @param name The name of communicator
-     * @param address The address to associate with this communicator.
-     * @param direction Whether this instance is a sender or receiver
-     * @param t Enumerated communicator type
-     * @param flgs Initial bitwise flags
-     * @see utils::Address()
+     * @brief Constructor, which can only be instantiated by a child class
+     * @param[in] name The name of communicator
+     * @param[in] address The address to associate with this communicator.
+     * @param[in] dir Whether this instance is a sender or receiver
+     * @param[in] t Enumerated communicator type
+     * @param[in] flgs Initial bitwise flags
+     * @see utils::Address
      */
     explicit Comm_t(const std::string &name,
 		    utils::Address &address,
 		    const DIRECTION dir = NONE,
 		    const COMM_TYPE t = NULL_COMM, int flgs = 0);
 
-    Comm_t(const std::string& name, DIRECTION direction = NONE,
-           const COMM_TYPE &t = NULL_COMM, int flgs = 0);
+    /*!
+     * @brief Constructor
+     * @param[in] name The name of communicator
+     * @param[in] dir Whether this instance is a sender or receiver
+     * @param[in] t Enumerated communicator type
+     * @param[in] flgs Initial bitwise flags
+     */
+    explicit Comm_t(const std::string& name, const DIRECTION dir = NONE,
+                    const COMM_TYPE t = NULL_COMM, int flgs = 0);
     /**
-     * Checks the size of the message to see if it exceeds the maximum allowable size as define by YGG_MSG_MAX
-     * @param len The length of the message to check
+     * @brief Checks the size of the message to see if it exceeds the maximum allowable size as define by YGG_MSG_MAX
+     * @param[in] len The length of the message to check
      * @return bool Whether the message is smaller than YGG_MSG_MAX (true), false otherwise
      */
     bool check_size(const size_t &len) const;
 
-    COMM_TYPE type; //!< Comm type.
+    COMM_TYPE type;                //!< Comm type.
     //void *other; //!< Pointer to additional information for the comm.
-    std::string name; //!< Comm name.
-    utils::Address address; //!< Comm address.
-    DIRECTION direction; //!< send or recv for direction messages will go.
-    int flags; //!< Flags describing the status of the comm.
-    size_t maxMsgSize; //!< The maximum message size.
-    size_t msgBufSize; //!< The size that should be reserved in messages.
-    int index_in_register; //!< Index of the comm in the comm register.
-    int thread_id; //!< ID for the thread that created the comm.
-    utils::Metadata metadata;
-    int timeout_recv; //!< Time to wait for messages during receive.
-    WorkerList workers; //!< Communicator to use for sending large messages.
-    Comm_t* global_comm; // !< Pointer to global comm that this comm shadows.
-    std::vector<std::string> cache; // !< Cache of messages received.
+    std::string name;              //!< Comm name.
+    utils::Address address;        //!< Comm address.
+    DIRECTION direction;           //!< send or recv for direction messages will go.
+    int flags;                     //!< Flags describing the status of the comm.
+    size_t maxMsgSize;             //!< The maximum message size.
+    size_t msgBufSize;             //!< The size that should be reserved in messages.
+    int index_in_register;         //!< Index of the comm in the comm register.
+    int thread_id;                 //!< ID for the thread that created the comm.
+    utils::Metadata metadata;      //!< Metadata for the communcator
+    int timeout_recv;              //!< Time to wait for messages during receive.
+    WorkerList workers;            //!< Communicator to use for sending large messages.
+    Comm_t* global_comm;           //!< Pointer to global comm that this comm shadows.
+    std::vector<std::string> cache; //!< Cache of messages received.
 
-    static std::vector<Comm_t*> registry;
+    static std::vector<Comm_t*> registry;  //!<
+    /*!
+     * @brief Set the global communicator based on environment variables: YGG_SERVER_INPUT, YGG_SERVER_OUTPUT, YGG_MODEL_NAME, YGG_SERVER_INPUT
+     * @return true on success
+     */
     bool get_global_scope_comm();
 public:
+    /*!
+     * @brief Register the given communicator in the system
+     * @param[in] x The communicator to register
+     */
     static void register_comm(Comm_t* x);
+    /*!
+     * @brief Find the registered communicator based on the given information
+     * @param[in] name The name of the communicator to find
+     * @param[in] dir The direction of the communicator to find
+     * @param[in] type The type of cummunicator to find
+     * @return The communicator, or NULL of none was found
+     */
     static Comm_t* find_registered_comm(const std::string& name,
 					const DIRECTION dir,
 					const COMM_TYPE type);
 };
 
 /**
- * Creates a new communicator of the specified type
- * @param dir The direction for the communicator
- * @param type The enumerated type of communicator to create
- * @param name The name of the communicator
- * @param address The initial address of the communicator.
- * @param flags Bitwise flags describing the communicator
- * @return
+ * @brief Creates a new communicator of the specified type
+ * @param[in] dir The direction for the communicator
+ * @param[in] type The enumerated type of communicator to create
+ * @param[in] name The name of the communicator
+ * @param[in] address The initial address of the communicator.
+ * @param[in] flags Bitwise flags describing the communicator
+ * @return The new communicator instance
  */
-Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name="", char* address=nullptr, int flags=0);
-Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, utils::Address& address, int flags=0);
-Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name, int flags=0);
+Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name="",
+                   char* address=nullptr, int flags=0);
+/*!
+ * @brief Creates a new communicator of the specified type
+ * @param[in] dir The direction for the communicator
+ * @param[in] type The enumerated type of communicator to create
+ * @param[in] name The name of the communicator
+ * @param[in] address The initial address of the communicator.
+ * @param[in] flags Bitwise flags describing the communicator
+ * @return The new communicator instance
+ * @see utils::Address
+ */
+Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name,
+                   utils::Address& address, int flags=0);
+/*!
+ * @brief Creates a new communicator of the specified type
+ * @param[in] dir The direction for the communicator
+ * @param[in] type The enumerated type of communicator to create
+ * @param[in] name The name of the communicator
+ * @param[in] flags Bitwise flags describing the communicator
+ * @return The new communicator instance
+ */
+Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type, const std::string &name,
+                   int flags=0);
 
 /**
- * Determine if a communicator type is installed.
- * @param commtype The communicator type to check.
+ * @brief Determine if a communicator type is installed.
+ * @param[in] type The communicator type to check.
  * @return true if the communicator type is installed, false otherwise.
  */
 bool is_commtype_installed(const COMM_TYPE type);
 
 /**
- * Templated base class for all communicators
+ * @brief Templated base class for all communicators
  * @tparam H Handle type for the communicator
  */
 template<typename H>
@@ -754,22 +922,25 @@ public:
     CommBase& operator=(const CommBase&) = delete;
     CommBase() = delete;
 
-    /*! \copydoc Comm_t::comm_nmsg */
+    /*! \copydoc  YggInterface::communicator::Comm_t::comm_nmsg */
     int comm_nmsg(const DIRECTION dir=NONE) const override {
         (void) dir;
       ygglog_error << "Comm_nmsg of base class called, must be overridden" << std::endl;
       return -1;
     }
-    /*! \copydoc Comm_t::close */
+    /*! \copybrief YggInterface::communicator::Comm_t::close */
     void close() override;
-    /*! \copydoc Comm_t::is_closed */
+    /*! \copydoc YggInterface::communicator::Comm_t::is_closed */
     bool is_closed() const override;
     using Comm_t::send;
     using Comm_t::recv;
 
 protected:
     /**
-     * Not used, must be overloaded by a child class
+     * @brief Send a single message with this communicator
+     * @param[in] header The header to use
+     * @return The size of the sent message
+     * @see utils::Header
      */
     int send_single(utils::Header& header) override {
         (void)header;
@@ -778,7 +949,10 @@ protected:
     }
 
     /**
-     * Not used, must be overloaded by child class
+     * @brief Receive a single message
+     * @param[in] header The header to put the message in.
+     * @return The size of the message
+     * @see utils::Header
      */
     long recv_single(utils::Header& header) override {
         (void)header;
@@ -787,27 +961,46 @@ protected:
     }
 
     /**
-     * Constructor
-     * @param name The name of the communicator
-     * @param address The initial address for the communicator
-     * @param direction The enumerated direction of the communicator
-     * @param t The enumerated type of the communicator
-     * @param flags Bitwise flags describing the communicator
+     * @brief Constructor
+     * @param[in] name The name of the communicator
+     * @param[in] address The initial address for the communicator
+     * @param[in] dir The enumerated direction of the communicator
+     * @param[in] t The enumerated type of the communicator
+     * @param[in] flgs Bitwise flags describing the communicator
+     * @see utils::Address
      */
     explicit CommBase(const std::string &name, utils::Address& address,
                       const DIRECTION dir = NONE, const COMM_TYPE t = NULL_COMM, int flgs = 0);
 
-    CommBase(const std::string &name, DIRECTION direction = NONE,
-             const COMM_TYPE &t = NULL_COMM, int flags = 0);
+    /*!
+     * @brief Constructor
+     * @param[in] name The name of the communicator
+     * @param[in] dir The enumerated direction of the communicator
+     * @param[in] t The enumerated type of the communicator
+     * @param[in] flgs Bitwise flags describing the communicator
+     */
+    explicit CommBase(const std::string &name, const DIRECTION dir = NONE,
+                      const COMM_TYPE t = NULL_COMM, int flgs = 0);
 
-    Comm_t* create_worker(utils::Address&, const DIRECTION&,
-			  int) override {
-      utils::ygglog_throw_error("create_worker of base class called, must be overridden");
-      return NULL; // GCOVR_EXCL_LINE
+    /*!
+     * @brief Create a worker using the inputs
+     * @param[in] address The address to use for the worker
+     * @param[in] dir The communication direction
+     * @param[in] flags Any flags for the worker
+     * @return The communications worker
+     * @see utils::Address
+     */
+    Comm_t* create_worker(utils::Address& address, const DIRECTION dir,
+                          int flags) override {
+        (void)dir;
+        (void)address;
+        (void)flags;
+        utils::ygglog_throw_error("create_worker of base class called, must be overridden");
+        return nullptr; // GCOVR_EXCL_LINE
     }
 
     /**
-     * Destructor
+     * @brief Destructor
      */
     ~CommBase() override;
 
@@ -815,15 +1008,23 @@ protected:
 
 #ifdef YGG_TEST
 public:
+    /*!
+     * @brief Get the handle
+     * @return The handle
+     */
     H* getHandle() {
-      if (global_comm)
-	return dynamic_cast<CommBase<H>*>(global_comm)->getHandle();
-      return handle;
+        if (global_comm)
+            return dynamic_cast<CommBase<H>*>(global_comm)->getHandle();
+        return handle;
     }
+    /*!
+     * @brief Set the handle
+     * @param[in] h The handle to use
+     */
     void setHandle(H* h) {
-      if (global_comm)
-	dynamic_cast<CommBase<H>*>(global_comm)->setHandle(h);
-      handle = h;
+        if (global_comm)
+            dynamic_cast<CommBase<H>*>(global_comm)->setHandle(h);
+        handle = h;
     }
 #endif // YGG_TEST
 };
