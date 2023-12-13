@@ -14,10 +14,6 @@ function(find_package_python)
 	      COMMAND ${Python3_EXECUTABLE} -c "import numpy; print(numpy.get_include())"
 	      OUTPUT_VARIABLE Python3_NumPy_INCLUDE_DIRS
 	      RESULT_VARIABLE NUMPY_NOT_FOUND)
-            # exec_program(${Python3_EXECUTABLE}
-	    #              ARGS "-c \"import numpy; print(numpy.get_include())\""
-	    # 	         OUTPUT_VARIABLE Python3_NumPy_INCLUDE_DIRS
-	    # 	         RETURN_VALUE NUMPY_NOT_FOUND)
             if(NUMPY_NOT_FOUND)
                 message(FATAL_ERROR "Numpy include dirs not found")
             endif()
@@ -32,10 +28,6 @@ function(find_package_python)
 		      COMMAND ${Python3_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('base'))"
 		      OUTPUT_VARIABLE PYTHON_ROOT
 		      RESULT_VARIABLE ROOT_NOT_FOUND)
-                    # exec_program(${Python3_EXECUTABLE}
-	            #              ARGS "-c \"import sysconfig; print(sysconfig.get_config_var('base'))\""
-		    #              OUTPUT_VARIABLE PYTHON_ROOT
-		    #              RETURN_VALUE ROOT_NOT_FOUND)
                     if(ROOT_NOT_FOUND)
                         message(FATAL_ERROR "Python root not found")
                     endif()
@@ -63,6 +55,15 @@ function(find_package_python)
     endif()
     if(NOT Python3_FOUND)
         message(FATAL_ERROR "Python libraries not found")
+    endif()
+    if (APPLE AND Python3_EXECUTABLE)
+      execute_process(
+        COMMAND realpath ${Python3_EXECUTABLE}
+	OUTPUT_VARIABLE Python3_EXECUTABLE_FULL
+	RESULT_VARIABLE ERROR_IN_FULL)
+      if (NOT ERROR_IN_FULL)
+        set(Python3_EXECUTABLE ${Python3_EXECUTABLE_FULL})
+      endif()
     endif()
     set(Python3_FOUND ${Python3_FOUND} PARENT_SCOPE)
     set(Python3_NumPy_FOUND ${Python3_NumPy_FOUND} PARENT_SCOPE)
