@@ -2,6 +2,13 @@
 #include "utils/tools.hpp"
 #include "utils/rapidjson_wrapper.hpp"
 
+int communication::communicator::global_scope_comm = 0;
+#ifdef RAPIDJSON_YGGDRASIL_PYTHON
+std::shared_ptr<communication::communicator::CommContext> communication::communicator::global_context(NULL);
+#else // RAPIDJSON_YGGDRASIL_PYTHON
+std::shared_ptr<communication::communicator::CommContext> communication::communicator::global_context(new communication::communicator::CommContext());
+#endif // RAPIDJSON_YGGDRASIL_PYTHON
+
 using namespace communication::communicator;
 
 CommContext::CommContext(bool for_testing) :
@@ -17,6 +24,7 @@ CommContext::CommContext(bool for_testing) :
   init(for_testing);
 }
 CommContext::~CommContext() {
+  log_debug() << "~CommContext: Begin destructor" << std::endl;
   cleanup(CLEANUP_ATEXIT);
 #ifdef YGG_ZMQ_PRELOAD
   if (hzmqDLL)
@@ -161,3 +169,33 @@ DWORD CommContext::_HandleWSAStartupError(unsigned int code,
   return EXCEPTION_EXECUTE_HANDLER;
 }
 #endif
+
+// void _cleanup_wrapper() {
+//   global_context->cleanup(CLEANUP_ATEXIT);
+// }
+
+int communication::communicator::get_global_scope_comm() {
+  return global_scope_comm;
+}
+void communication::communicator::set_global_scope_comm(int new_value) {
+  global_scope_comm = new_value;
+}
+void communication::communicator::global_scope_comm_on() {
+  set_global_scope_comm(1);
+}
+void communication::communicator::global_scope_comm_off() {
+  // #ifndef _OPENMP
+  set_global_scope_comm(0);
+  // #endif
+}
+int communication::communicator::ygg_init(bool for_testing) {
+  if (!global_context)
+    global_context.reset(new CommContext());
+  return global_context->init(for_testing);
+}
+void communication::communicator::ygg_cleanup(CLEANUP_MODE mode) {
+  global_context->cleanup(mode);
+}
+void communication::communicator::ygg_exit() {
+  global_context->cleanup();
+}

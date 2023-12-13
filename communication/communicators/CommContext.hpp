@@ -71,6 +71,17 @@ namespace communication {
 #endif
     };
 
+    YGG_THREAD_GLOBAL_VAR(int, global_scope_comm, )
+    extern std::shared_ptr<CommContext> global_context;
+
+    int get_global_scope_comm();
+    void set_global_scope_comm(int new_value);
+    void global_scope_comm_on();
+    void global_scope_comm_off();
+    int ygg_init(bool for_testing=false);
+    void ygg_cleanup(CLEANUP_MODE mode=CLEANUP_DEFAULT);
+    void ygg_exit();
+
   }
 }
 

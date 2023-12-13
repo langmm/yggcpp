@@ -1,6 +1,8 @@
+import os
+print(f"DYLD_INSERT_LIBRARIES = {os.environ.get('DYLD_INSERT_LIBRARIES', '')}")
+
 # TODO: Replace errors with specific errors
 import pyYggdrasil
-
 
 SPEED_TEST_N_MSG = @SPEED_TEST_N_MSG@
 SPEED_TEST_S_MSG = @SPEED_TEST_S_MSG@

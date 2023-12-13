@@ -215,15 +215,6 @@ namespace communication {
 
 namespace communicator {
 
-YGG_THREAD_GLOBAL_VAR(int, global_scope_comm, )
-extern std::shared_ptr<CommContext> global_context;
-
-void global_scope_comm_on();
-void global_scope_comm_off();
-int ygg_init(bool for_testing=false);
-void ygg_cleanup(CLEANUP_MODE mode=CLEANUP_DEFAULT);
-void ygg_exit();
-
 class AsyncComm;
 class AsyncBacklog;
 class RPCComm;
@@ -1147,7 +1138,7 @@ protected:
     LANGUAGE language;
     std::vector<std::string> cache; // !< Cache of messages received.
 
-    bool get_global_scope_comm();
+    bool create_global_scope_comm();
 public:
 
     // Methods for testing

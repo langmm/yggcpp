@@ -1,39 +1,8 @@
 #include "comms.hpp"
 #include "utils/rapidjson_wrapper.hpp"
 
-int communication::communicator::global_scope_comm = 0;
-#ifdef RAPIDJSON_YGGDRASIL_PYTHON
-std::shared_ptr<communication::communicator::CommContext> communication::communicator::global_context(NULL);
-#else // RAPIDJSON_YGGDRASIL_PYTHON
-std::shared_ptr<communication::communicator::CommContext> communication::communicator::global_context(new communication::communicator::CommContext());
-#endif // RAPIDJSON_YGGDRASIL_PYTHON
-
 using namespace communication::communicator;
 using namespace communication::utils;
-
-void _cleanup_wrapper() {
-  global_context->cleanup(CLEANUP_ATEXIT);
-}
-
-void communication::communicator::global_scope_comm_on() {
-  global_scope_comm = 1;
-}
-void communication::communicator::global_scope_comm_off() {
-  // #ifndef _OPENMP
-  global_scope_comm = 0;
-  // #endif
-}
-int communication::communicator::ygg_init(bool for_testing) {
-  if (!global_context)
-    global_context.reset(new communication::communicator::CommContext());
-  return global_context->init(for_testing);
-}
-void communication::communicator::ygg_cleanup(CLEANUP_MODE mode) {
-  global_context->cleanup(mode);
-}
-void communication::communicator::ygg_exit() {
-  global_context->cleanup();
-}
 
 void Comm_t::init_base() {
 
@@ -56,7 +25,7 @@ void Comm_t::init_base() {
     }
     setLanguage();
 
-    get_global_scope_comm();
+    create_global_scope_comm();
 
     ctx->register_comm(this);
 
@@ -98,12 +67,12 @@ Comm_t::~Comm_t() {
   log_debug() << "~Comm_t: Finished" << std::endl;
 }
 
-bool Comm_t::get_global_scope_comm() {
+bool Comm_t::create_global_scope_comm() {
   COMM_TYPE global_type = getType();
   std::string global_name = name;
   DIRECTION global_direction = direction;
   bool is_server = false;
-  int prev_global_scope_comm = global_scope_comm;
+  int prev_global_scope_comm = get_global_scope_comm();
   if (global_type != SERVER_COMM && global_type != CLIENT_COMM &&
       !name.empty()) {
     char* server_var = NULL;
@@ -113,7 +82,7 @@ bool Comm_t::get_global_scope_comm() {
       server_var = std::getenv("YGG_SERVER_OUTPUT");
     }
     if (server_var && name == std::string(server_var)) {
-      log_debug() << "get_global_scope_comm: " << name <<
+      log_debug() << "create_global_scope_comm: " << name <<
 	" is piecemeal server (server_var = " << server_var <<
 	")" << std::endl;
       is_server = true;
@@ -126,38 +95,39 @@ bool Comm_t::get_global_scope_comm() {
       }
       if (model_name)
 	global_name.assign(model_name);
-      global_scope_comm = 1;
+      global_scope_comm_on();
     }
   }
-  if (name.empty() || (!global_scope_comm) ||
+  if (name.empty() || (!get_global_scope_comm()) ||
       (flags & (COMM_FLAG_GLOBAL | COMM_FLAG_WORKER |
 		COMM_FLAG_CLIENT_RESPONSE |
 		COMM_FLAG_SERVER_RESPONSE)))
     return false;
-  log_debug() << "get_global_scope_comm: " << global_name << " (dir="
-	    << global_direction << ") is a global communicator"
-	    << std::endl;
+  log_debug() << "create_global_scope_comm: " << global_name << " (dir="
+	      << global_direction << ") is a global communicator ("
+	      << "global_scope_comm = " << get_global_scope_comm() << ")"
+	      << std::endl;
   global_comm = ctx->find_registered_comm(global_name,
 					  global_direction,
 					  global_type);
   if (!global_comm) {
-    log_debug() << "get_global_scope_comm: Creating global comm \""
+    log_debug() << "create_global_scope_comm: Creating global comm \""
 	      << global_name << "\"" << std::endl;
     Address global_address;
     if (address.valid())
       global_address.address(address.address());
     global_comm = new_Comm_t(global_direction, global_type, global_name,
 			     global_address, flags | COMM_FLAG_GLOBAL);
-    log_debug() << "get_global_scope_comm: Created global comm \""
+    log_debug() << "create_global_scope_comm: Created global comm \""
 	      << global_name << "\"" << std::endl;
   } else {
-    log_debug() << "get_global_scope_comm: Found global comm \""
+    log_debug() << "create_global_scope_comm: Found global comm \""
 	      << global_name << "\"" << std::endl;
   }
   address.address(global_comm->address.address());
   flags = global_comm->flags & ~COMM_FLAG_GLOBAL;
   if (is_server)
-    global_scope_comm = prev_global_scope_comm;
+    set_global_scope_comm(prev_global_scope_comm);
   return true;
 }
   
