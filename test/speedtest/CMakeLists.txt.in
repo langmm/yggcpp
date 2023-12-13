@@ -15,20 +15,20 @@ target_link_libraries(speedtest_@LANGUAGE@ PRIVATE
                       YggInterface::@LANGUAGE@)
 include(CheckDLL)
 show_runtimes(speedtest_@LANGUAGE@)
-if (WIN32)
-    if (DEFINED ENV{CONDA_PREFIX})
-        add_custom_command(
-            TARGET speedtest_@LANGUAGE@
-            POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:YggInterface> $<TARGET_FILE_DIR:speedtest_@LANGUAGE@>
-            COMMAND_EXPAND_LISTS
-        )
-    else()
-        add_custom_command(
-            TARGET speedtest_@LANGUAGE@
-            POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:speedtest_@LANGUAGE@> $<TARGET_FILE_DIR:speedtest_@LANGUAGE@>
-            COMMAND_EXPAND_LISTS
-        )
-    endif()
-endif ()
+# if (WIN32)
+#     if (DEFINED ENV{CONDA_PREFIX})
+#         add_custom_command(
+#             TARGET speedtest_@LANGUAGE@
+#             POST_BUILD
+#             COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:YggInterface> $<TARGET_FILE_DIR:speedtest_@LANGUAGE@>
+#             COMMAND_EXPAND_LISTS
+#         )
+#     else()
+#         add_custom_command(
+#             TARGET speedtest_@LANGUAGE@
+#             POST_BUILD
+#             COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:speedtest_@LANGUAGE@> $<TARGET_FILE_DIR:speedtest_@LANGUAGE@>
+#             COMMAND_EXPAND_LISTS
+#         )
+#     endif()
+# endif ()
