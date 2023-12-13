@@ -75,6 +75,9 @@ void CommContext::register_comm(Comm_t* x) {
     x->index_in_register = registry_.size();
     registry_.push_back(x);
   } YGG_THREAD_SAFE_END;
+  log_debug() << "register_comm: Registered " << x->name << ", " <<
+    x->address.address() << "(idx = " << x->index_in_register <<
+    ")" << std::endl;
 }
 
 Comm_t* CommContext::find_registered_comm(const std::string& name,

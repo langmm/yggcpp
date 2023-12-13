@@ -86,7 +86,8 @@ Comm_t::Comm_t(const std::string &nme,
   Comm_t(nme, utils::Address(), dirn, t, flgs) {}
 
 Comm_t::~Comm_t() {
-  log_debug() << "~Comm_t: Unregistering comm" << std::endl;
+  log_debug() << "~Comm_t: Unregistering comm (idx = " <<
+    index_in_register << ")" << std::endl;
   YGG_THREAD_SAFE_BEGIN(comms) {
     if (index_in_register >= 0)
       ctx->registry_[index_in_register] = NULL;
