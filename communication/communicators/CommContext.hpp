@@ -54,8 +54,8 @@ namespace communication {
 				   const COMM_TYPE type);
 #if defined(ZMQINSTALLED) && defined(_WIN32)
     protected:
-      DWORD CommContext::_HandleWSAStartupError(unsigned int code,
-						struct _EXCEPTION_POINTERS *ep);
+      DWORD _HandleWSAStartupError(unsigned int code,
+				   struct _EXCEPTION_POINTERS *ep);
 #endif
     };
 
