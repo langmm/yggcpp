@@ -102,6 +102,7 @@ bool Comm_t::get_global_scope_comm() {
   std::string global_name = name;
   DIRECTION global_direction = direction;
   bool is_server = false;
+  int prev_global_scope_comm = global_scope_comm;
   if (global_type != SERVER_COMM && global_type != CLIENT_COMM &&
       !name.empty()) {
     char* server_var = NULL;
@@ -155,7 +156,7 @@ bool Comm_t::get_global_scope_comm() {
   address.address(global_comm->address.address());
   flags = global_comm->flags & ~COMM_FLAG_GLOBAL;
   if (is_server)
-    global_scope_comm = 0;
+    global_scope_comm = prev_global_scope_comm;
   return true;
 }
   

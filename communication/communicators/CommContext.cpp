@@ -84,12 +84,17 @@ Comm_t* CommContext::find_registered_comm(const std::string& name,
   assert(!name.empty());
   YGG_THREAD_SAFE_BEGIN_LOCAL(comms) {
     if (global_scope_comm) {
+      log_debug() << "find_registered_comm: Checking for match to (" <<
+	name << ", " << dir << ", " << type << ") amongst " <<
+	registry_.size() << " registered comms" << std::endl;
       for (std::vector<Comm_t*>::iterator it = registry_.begin();
 	   it != registry_.end(); it++) {
 	if (*it && (*it)->global() &&
 	    ((*it)->name == name) &&
 	    ((*it)->direction == dir) &&
 	    ((*it)->type == type)) {
+	  log_debug() << "find_registered_comm: Found match for (" <<
+	    name << ", " << dir << ", " << type << ")" << std::endl;
 	  out = *it;
 	  break;
 	}
