@@ -536,7 +536,7 @@ jobs:
         shell: bash -l {0}
         run: |
           echo "PATH=$PATH"
-          ./run_tests.sh --rebuild --speed --config RelWithDebInfo ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} --verbose
+          ./run_tests.sh --rebuild --speed --config Release ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} --verbose
 
       ###################################
       # Coverage
