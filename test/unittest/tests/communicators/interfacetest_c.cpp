@@ -467,7 +467,7 @@ TEST(YggInterface_C, GlobalServer) {
     }
     unsetenv(key_env.c_str());
   }
-  ygg_cleanup();
+  ygg_cleanup(CLEANUP_COMMS);
 }
 
 #undef INTERFACE_TEST_SCHEMA

@@ -198,7 +198,7 @@ TEST(YggInterface, YggTimesync) {
 			    recv, (1, &data_recv));
     }
   }
-  ygg_cleanup();
+  ygg_cleanup(CLEANUP_COMMS);
 }
 TEST(YggInterface, YggTimesync_units) {
   INIT_OUTPUT_RPC(YggTimesync, "s");
@@ -355,7 +355,7 @@ TEST(YggInterface, GlobalServerPiecemeal) {
     unsetenv("YGG_SERVER_INPUT");
     unsetenv("YGG_SERVER_OUTPUT");
   }
-  ygg_cleanup();
+  ygg_cleanup(CLEANUP_COMMS);
 }
 
 #undef INTERFACE_TEST_SCHEMA

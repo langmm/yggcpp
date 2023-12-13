@@ -70,6 +70,7 @@ void CommContext::cleanup(CLEANUP_MODE mode) {
 void CommContext::register_comm(Comm_t* x) {
   if (x->getFlags() & COMM_FLAG_ASYNC_WRAPPED)
     return;
+  log_debug() << "register_comm: Registering " << x->name << ", " << x->address.address() << std::endl;
   YGG_THREAD_SAFE_BEGIN_LOCAL(comms) {
     x->index_in_register = registry_.size();
     registry_.push_back(x);
@@ -91,6 +92,16 @@ Comm_t* CommContext::find_registered_comm(const std::string& name,
 	    ((*it)->type == type)) {
 	  out = *it;
 	  break;
+	}
+	if (*it) {
+	  log_debug() << "find_registered_comm: No match for (" <<
+	    name << ", " << dir << ", " << type << ") against (" <<
+	    (*it)->name << ", " << (*it)->direction << ", " <<
+	    (*it)->type << ") global = " << (*it)->global() << std::endl;
+	} else {
+	  log_debug() << "find_registered_comm: No match for (" <<
+	    name << ", " << dir << ", " << type << ") against (null)" <<
+	    std::endl;
 	}
       }
     }
