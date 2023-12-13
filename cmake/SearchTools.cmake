@@ -60,8 +60,10 @@ function(find_package_python)
       execute_process(
         COMMAND realpath ${Python3_EXECUTABLE}
 	OUTPUT_VARIABLE Python3_EXECUTABLE_FULL
-	RESULT_VARIABLE ERROR_IN_FULL)
-      if (NOT ERROR_IN_FULL)
+	RESULT_VARIABLE ERROR_IN_FULL
+	OUTPUT_STRIP_TRAILING_WHITESPACE)
+      if ((NOT ERROR_IN_FULL) AND (NOT Python3_EXECUTABLE STREQUAL "${Python3_EXECUTABLE_FULL}"))
+        message(STATUS "before = ${Python3_EXECUTABLE}, after = ${Python3_EXECUTABLE_FULL}")
         set(Python3_EXECUTABLE ${Python3_EXECUTABLE_FULL})
       endif()
     endif()

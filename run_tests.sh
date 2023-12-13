@@ -298,7 +298,9 @@ else
 fi
 
 if [[ "$TEST_TYPE" == "speed" ]]; then
+    export PATH="${PATH};$(pwd)/_install/bin"
     export LD_LIBRARY_PATH="${LD_LIBRARY_PATH};$(pwd)/_install/lib"
+    echo "PATH = $PATH"
     echo "LD_LIBRARY_PATH = $LD_LIBRARY_PATH"
     if [ ! -n "$DONT_BUILD" ]; then
 	if [ -d "build_speed" ]; then
