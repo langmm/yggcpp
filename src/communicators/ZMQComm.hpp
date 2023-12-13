@@ -38,8 +38,8 @@ public:
   
 
 class ZMQSocket {
-private:
-  ZMQSocket& operator=(const ZMQSocket& rhs) = delete;
+public:
+    ZMQSocket& operator=(const ZMQSocket& rhs) = delete;
 public:
   ZMQSocket();
   ZMQSocket(const ZMQSocket& rhs);
@@ -123,7 +123,7 @@ public:
      * @param direction Enumerated direction for communicator
      * @param flgs Bitwise flags describing the communicator
      */
-    explicit ZMQComm(const std::string name,
+    explicit ZMQComm(const std::string& name,
                      utils::Address& address,
                      const DIRECTION direction = NONE,
                      int flgs = 0, const COMM_TYPE type = ZMQ_COMM);

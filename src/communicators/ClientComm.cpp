@@ -8,7 +8,7 @@ using namespace YggInterface::utils;
 
 unsigned ClientComm::_client_rand_seeded = 0;
 
-ClientComm::ClientComm(const std::string nme, Address& addr,
+ClientComm::ClientComm(const std::string& nme, Address& addr,
 		       int flgs, const COMM_TYPE type) :
   RPCComm(nme, addr,
 	  flgs | COMM_FLAG_CLIENT | COMM_ALWAYS_SEND_HEADER,
@@ -18,7 +18,7 @@ ClientComm::ClientComm(const std::string nme, Address& addr,
     init();
 }
 
-ClientComm::ClientComm(const std::string nme, int flgs, const COMM_TYPE type) :
+ClientComm::ClientComm(const std::string& nme, int flgs, const COMM_TYPE type) :
         RPCComm(nme, flgs | COMM_FLAG_CLIENT | COMM_ALWAYS_SEND_HEADER,
                 SEND, RECV, type) {
     if (!(global_comm || (name.empty() && address.valid())))
@@ -166,7 +166,7 @@ long ClientComm::recv_single(utils::Header& header) {
     assert(!global_comm);
     ygglog_debug << "ClientComm(" << name << ")::recv_single" << std::endl;
     Comm_t* response_comm = requests.activeComm();
-    if (response_comm == NULL) {
+    if (response_comm == nullptr) {
         ygglog_error << "ClientComm(" << name << ")::recv_single: Error getting response comm" << std::endl;
         return -1;
     }

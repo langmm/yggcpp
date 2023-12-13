@@ -35,7 +35,7 @@ public:
      * @param direction Enuerated direction for this instance
      * @param flags Bitwise flags describing the communicator
      */
-    IPCComm(const std::string name,
+    IPCComm(const std::string& name,
             utils::Address& address,
             const DIRECTION direction = NONE,
             int flgs = 0, const COMM_TYPE type = IPC_COMM);

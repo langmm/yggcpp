@@ -1,4 +1,6 @@
 #include "logging.hpp"
+
+#include <utility>
 #include "tools.hpp"
 
 namespace YggInterface {
@@ -6,7 +8,7 @@ namespace utils {
   
 int YggdrasilLogger::_ygg_error_flag = 0;
 YggdrasilLogger::YggdrasilLogger(std::string nme, size_t lvl, bool is_err) :
-  name(nme), level(lvl), is_error(is_err), ss() {
+  name(std::move(nme)), level(lvl), is_error(is_err), ss() {
 }
 YggdrasilLogger::~YggdrasilLogger() {
   std::string out = ss.str();

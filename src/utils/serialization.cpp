@@ -42,8 +42,6 @@ int YggInterface::utils::split_head_body(const char *buf,
     ret = find_match_c(re_head, buf, &sind, &eind);
 #endif
   if (ret == 0) {
-    sind_head = 0;
-    eind_head = 0;
     headsiz[0] = 0;
     ygglog_debug_c("split_head_body: No header in '%.1000s...'", buf);
   } else {
@@ -66,10 +64,10 @@ template <typename ValueT>
 std::string YggInterface::utils::document2string(ValueT& rhs,
 						  const char* indent) {
   rapidjson::StringBuffer sb;
-  rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(sb, 0, strlen(indent));
+  rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(sb, nullptr, strlen(indent));
   writer.SetYggdrasilMode(true);
   rhs.Accept(writer);
-  return std::string(sb.GetString());
+  return sb.GetString();
 }
 
 long YggInterface::utils::copyData(char*& dst, const size_t dst_len,
@@ -102,7 +100,7 @@ long YggInterface::utils::copyData(char*& dst, const size_t dst_len,
 //////////////
 
 Metadata::Metadata() :
-  metadata(rapidjson::kObjectType), schema(NULL) {}
+  metadata(rapidjson::kObjectType), schema(nullptr) {}
 void Metadata::_init(bool use_generic) {
   Normalize();
   _update_schema();
@@ -118,13 +116,13 @@ void Metadata::_init(bool use_generic) {
 //   rhs._update_schema();
 // }
 #if RAPIDJSON_HAS_CXX11_RVALUE_REFS
-Metadata::Metadata(Metadata&& rhs) :
-  metadata(), schema(NULL) {
+Metadata::Metadata(Metadata&& rhs) noexcept :
+  metadata(), schema(nullptr) {
   metadata.Swap(rhs.metadata);
   _update_schema();
   rhs._update_schema();
 }
-Metadata& Metadata::operator=(Metadata&& rhs) {
+Metadata& Metadata::operator=(Metadata&& rhs) noexcept {
   return *this = rhs.Move();
 }
 #endif // RAPIDJSON_HAS_CXX11_RVALUE_REFS
@@ -141,7 +139,7 @@ bool Metadata::operator!=(const Metadata& rhs) const {
   return (!(*this == rhs));
 }
 void Metadata::reset() {
-  schema = NULL;
+  schema = nullptr;
   metadata.SetObject();
 }
 void Metadata::fromSchema(const rapidjson::Value& new_schema,
@@ -202,7 +200,7 @@ void Metadata::Normalize() {
   }
 }
 
-void Metadata::fromSchema(const std::string schemaStr, bool use_generic) {
+void Metadata::fromSchema(const std::string& schemaStr, bool use_generic) {
   rapidjson::Document d;
   d.Parse(schemaStr.c_str());
   if (d.HasParseError()) {
@@ -230,25 +228,25 @@ void Metadata::fromData(const rapidjson::Document& data, bool indirect) {
   if ((!has_type) && indirect)
     SetSchemaBool("allowWrapped", true);
 }
-void Metadata::fromType(const std::string type, bool use_generic,
+void Metadata::fromType(const std::string& type, bool use_generic,
 			bool dont_init) {
   initSchema();
   SetSchemaString("type", type);
   if (!dont_init)
     _init(use_generic);
 }
-void Metadata::fromScalar(const std::string subtype, size_t precision,
+void Metadata::fromScalar(const std::string& subtype, size_t precision,
 			  const char* units, bool use_generic) {
   fromType("scalar", use_generic, true);
-  _fromNDArray(subtype, precision, 0, NULL, units, use_generic);
+  _fromNDArray(subtype, precision, 0, nullptr, units, use_generic);
 }
-void Metadata::fromNDArray(const std::string subtype, size_t precision,
+void Metadata::fromNDArray(const std::string& subtype, size_t precision,
 			   const size_t ndim, const size_t* shape,
 			   const char* units, bool use_generic) {
   fromType("ndarray", use_generic, true);
   _fromNDArray(subtype, precision, ndim, shape, units, use_generic);
 }
-void Metadata::_fromNDArray(const std::string subtype, size_t precision,
+void Metadata::_fromNDArray(const std::string& subtype, size_t precision,
 			    const size_t ndim, const size_t* shape,
 			    const char* units, bool use_generic,
 			    rapidjson::Value* subSchema) {
@@ -263,7 +261,7 @@ void Metadata::_fromNDArray(const std::string subtype, size_t precision,
   if (precision > 0)
     SetSchemaUint("precision", precision, subSchema);
   if (ndim > 0) {
-    if (shape != NULL) {
+    if (shape != nullptr) {
       rapidjson::Value shp(rapidjson::kArrayType);
       for (size_t i = 0; i < ndim; i++) {
 	shp.PushBack(rapidjson::Value((uint64_t)(shape[i])).Move(),
@@ -277,7 +275,7 @@ void Metadata::_fromNDArray(const std::string subtype, size_t precision,
   if (units && strlen(units) > 0) {
     SetSchemaString("units", units, subSchema);
   }
-  if (subSchema == NULL)
+  if (subSchema == nullptr)
     _init(use_generic);
 }
 void Metadata::fromFormat(const std::string& format_str,
@@ -388,7 +386,7 @@ void Metadata::fromFormat(const std::string& format_str,
 		   isubtype, iprecision, ifmt);
     rapidjson::Value item(rapidjson::kObjectType);
     SetString("type", element_type, item);
-    _fromNDArray(isubtype, iprecision, 0, NULL, NULL, false, &item);
+    _fromNDArray(isubtype, iprecision, 0, nullptr, nullptr, false, &item);
     items.PushBack(item, GetAllocator());
     beg = end;
   }
@@ -475,7 +473,7 @@ const char* Metadata::subtypeName() const {
   return (*schema)["subtype"].GetString();
 }
 void Metadata::initSchema() {
-  if (schema == NULL) {
+  if (schema == nullptr) {
     if (!metadata.HasMember("serializer"))
       metadata.AddMember(
 	  rapidjson::Value("serializer", 10).Move(),
@@ -519,7 +517,7 @@ bool Metadata::addItem(const Metadata& other,
   (*subSchema)["items"].PushBack(item, GetAllocator());
   return true;
 }
-bool Metadata::addMember(const std::string name, const Metadata& other,
+bool Metadata::addMember(const std::string& name, const Metadata& other,
 			 rapidjson::Value* subSchema) {
   if (!subSchema)
     subSchema = schema;
@@ -561,16 +559,16 @@ const rapidjson::Value& Metadata::getMeta() const {
   return metadata["__meta__"];
 }
 rapidjson::Value& Metadata::getSchema() {
-  if (schema == NULL)
+  if (schema == nullptr)
     ygglog_throw_error_c("getSchema: No datatype in metadata");
   return *schema;
 }
 const rapidjson::Value& Metadata::getSchema() const {
-  if (schema == NULL)
+  if (schema == nullptr)
     ygglog_throw_error_c("getSchema: No datatype in metadata");
   return *schema;
 }
-void Metadata::SetValue(const std::string name, rapidjson::Value& x,
+void Metadata::SetValue(const std::string& name, rapidjson::Value& x,
 			rapidjson::Value& subSchema) {
   if (!subSchema.IsObject()) {
     ygglog_throw_error_c("Metadata::SetValue: subSchema is not an object");
@@ -586,7 +584,7 @@ void Metadata::SetValue(const std::string name, rapidjson::Value& x,
   }
 }
 #define GET_SET_METHOD_(type_in, type_out, method, setargs)		\
-  type_out Metadata::Get ## method(const std::string name,		\
+  type_out Metadata::Get ## method(const std::string& name,		\
 				   const rapidjson::Value& subSchema) const { \
     if (!(subSchema.HasMember(name.c_str())))				\
       ygglog_throw_error_c("Get%s: No %s information in the schema.",	\
@@ -596,7 +594,7 @@ void Metadata::SetValue(const std::string name, rapidjson::Value& x,
 			   name.c_str(), #type_in);			\
     return subSchema[name.c_str()].Get ## method();			\
   }									\
-  type_out Metadata::Get ## method ## Optional(const std::string name,	\
+  type_out Metadata::Get ## method ## Optional(const std::string& name,	\
 					       type_out defV,		\
 					       const rapidjson::Value& subSchema \
 					       ) const {		\
@@ -607,7 +605,7 @@ void Metadata::SetValue(const std::string name, rapidjson::Value& x,
 			 #method, name.c_str(), #type_in);		\
     return subSchema[name.c_str()].Get ## method();			\
   }									\
-  void Metadata::Set ## method(const std::string name, type_in x,	\
+  void Metadata::Set ## method(const std::string& name, type_in x,	\
 			       rapidjson::Value& subSchema) {		\
     rapidjson::Value x_val setargs;					\
     if (subSchema.HasMember(name.c_str())) {				\
@@ -620,26 +618,26 @@ void Metadata::SetValue(const std::string name, rapidjson::Value& x,
 	x_val, metadata.GetAllocator());				\
     }									\
   }									\
-  type_out Metadata::GetMeta ## method(const std::string name) const {	\
+  type_out Metadata::GetMeta ## method(const std::string& name) const {	\
     return Get ## method(name, getMeta());				\
   }									\
-  type_out Metadata::GetMeta ## method ## Optional(const std::string name, \
+  type_out Metadata::GetMeta ## method ## Optional(const std::string& name, \
 						   type_out defV) const { \
     if (!(metadata.IsObject() && metadata.HasMember("__meta__")))	\
       return defV;							\
     return Get ## method ## Optional(name, defV, getMeta());		\
   }									\
-  void Metadata::SetMeta ## method(const std::string name, type_in x) {	\
+  void Metadata::SetMeta ## method(const std::string& name, type_in x) {	\
     Set ## method(name, x, getMeta());					\
   }									\
-  type_out Metadata::GetSchema ## method(const std::string name,	\
+  type_out Metadata::GetSchema ## method(const std::string& name,	\
 					 rapidjson::Value* subSchema	\
 					 ) const {			\
     if (subSchema == NULL)						\
       return Get ## method(name, getSchema());				\
     return Get ## method(name, *subSchema);				\
   }									\
-  type_out Metadata::GetSchema ## method ## Optional(const std::string name, \
+  type_out Metadata::GetSchema ## method ## Optional(const std::string& name, \
 						     type_out defV,	\
 						     rapidjson::Value* subSchema) const { \
     if (subSchema == NULL) {						\
@@ -649,7 +647,7 @@ void Metadata::SetValue(const std::string name, rapidjson::Value& x,
     }									\
     return Get ## method ## Optional(name, defV, *subSchema);		\
   }									\
-  void Metadata::SetSchema ## method(const std::string name, type_in x,	\
+  void Metadata::SetSchema ## method(const std::string& name, type_in x,	\
 				     rapidjson::Value* subSchema) {	\
     if (subSchema == NULL)						\
       Set ## method(name, x, getSchema());				\
@@ -663,32 +661,32 @@ GET_SET_METHOD_(const std::string&, const char*, String,
 		(x.c_str(), (rapidjson::SizeType)(x.size()),
 		 metadata.GetAllocator()));
 #undef GET_SET_METHOD_
-void Metadata::SetMetaValue(const std::string name, rapidjson::Value& x) {
+void Metadata::SetMetaValue(const std::string& name, rapidjson::Value& x) {
   SetValue(name, x, getMeta());
 }
-void Metadata::SetSchemaValue(const std::string name, rapidjson::Value& x,
+void Metadata::SetSchemaValue(const std::string& name, rapidjson::Value& x,
 			      rapidjson::Value* subSchema) {
-  if (subSchema == NULL)
+  if (subSchema == nullptr)
     SetValue(name, x, getSchema());
   else
     SetValue(name, x, *subSchema);
 }
-void Metadata::SetSchemaMetadata(const std::string name,
+void Metadata::SetSchemaMetadata(const std::string& name,
 				 const Metadata& other) {
-  if (other.schema == NULL)
+  if (other.schema == nullptr)
     ygglog_throw_error_c("SetSchemaMetadata: Value has no datatype");
   rapidjson::Value x;
   x.CopyFrom(*(other.schema), GetAllocator(), true);
   SetSchemaValue(name, x);
 }
-void Metadata::SetMetaID(const std::string name, const char** id) {
+void Metadata::SetMetaID(const std::string& name, const char** id) {
   char new_id[100];
   snprintf(new_id, 100, "%d", rand());
   SetMetaString(name, new_id);
   if (id)
     id[0] = GetMetaString(name);
 }
-void Metadata::SetMetaID(const std::string name, std::string& id) {
+void Metadata::SetMetaID(const std::string& name, std::string& id) {
   const char* id_str;
   SetMetaID(name, &id_str);
   id.assign(id_str);
@@ -750,7 +748,7 @@ int Metadata::serialize(char **buf, size_t *buf_siz,
   if ((size_t)(buffer.GetLength() + 1) > buf_siz[0]) {
     char* buf_t = (char*)(GetAllocator().Realloc(buf[0], buf_siz[0],
 						 (size_t)(buffer.GetLength() + 1)));
-    if (buf_t == NULL) {
+    if (buf_t == nullptr) {
       ygglog_error << "Metadata::serialize: Error in realloc" << std::endl;
       throw std::exception();
     }
@@ -772,7 +770,7 @@ void Metadata::_update_schema() {
       metadata["serializer"]["datatype"].IsObject()) {
     schema = &(metadata["serializer"]["datatype"]);
   } else {
-    schema = NULL;
+    schema = nullptr;
   }
 }
 
@@ -781,7 +779,7 @@ void Metadata::_update_schema() {
 ////////////
 
 Header::Header(bool own_data) :
-  data_(NULL), data(NULL),
+  data_(nullptr), data(nullptr),
   size_data(0), size_buff(0), size_curr(0),
   size_head(0), size_max(0), size_msg(0),
   flags(HEAD_FLAG_VALID), offset(0) {
@@ -793,7 +791,7 @@ Header::Header(bool own_data) :
 Header::Header(const char* buf, const size_t &len,
 	       YggInterface::communicator::Comm_t* comm) :
   Header() {
-  Metadata* meta = NULL;
+  Metadata* meta = nullptr;
   int comm_flags = 0;
   if (comm) {
     size_max = comm->getMaxMsgSize() - comm->getMsgBufSize();
@@ -810,16 +808,16 @@ Header::~Header() {
   reset();
 }
 #if RAPIDJSON_HAS_CXX11_RVALUE_REFS
-Header::Header(Header&& rhs) :
+Header::Header(Header&& rhs) noexcept :
   Metadata(std::forward<Metadata>(rhs)),
-  data_(NULL), data(NULL),
+  data_(nullptr), data(nullptr),
   size_data(0), size_buff(0), size_curr(0),
   size_head(0), size_max(0), size_msg(0),
   flags(HEAD_FLAG_VALID), offset(0) {
   RawAssign(rhs);
   rhs.reset(HEAD_RESET_DROP_DATA);
 }
-Header& Header::operator=(Header&& rhs) {
+Header& Header::operator=(Header&& rhs) noexcept {
   return *this = rhs.Move();
 }
 #endif // RAPIDJSON_HAS_CXX11_RVALUE_REFS
@@ -863,11 +861,11 @@ void Header::reset(HEAD_RESET_MODE mode) {
       if ((flags & HEAD_FLAG_OWNSDATA) && data_) {
 	free(data_);
       }
-      data_ = NULL;
-      data = NULL;
+      data_ = nullptr;
+      data = nullptr;
     }
-    data = NULL;
-    data_ = NULL;
+    data = nullptr;
+    data_ = nullptr;
     size_buff = 0;
     size_max = 0;
     if (mode == HEAD_RESET_OWN_DATA) {
@@ -895,7 +893,7 @@ bool Header::RawAssign(const Header& rhs, bool keep_buffer) {
       data = &data_;
     } else {
       data = rhs.data;
-      data_ = NULL;
+      data_ = nullptr;
     }
     size_buff = rhs.size_buff;
     flags = rhs.flags;
@@ -910,7 +908,7 @@ bool Header::RawAssign(const Header& rhs, bool keep_buffer) {
 }
 long Header::reallocData(const size_t size_new) {
   if ((size_new + 1) <= size_buff)
-    return size_buff;
+    return static_cast<long>(size_buff);
   if (!(flags & HEAD_FLAG_ALLOW_REALLOC)) {
     ygglog_error << "Header::reallocData: Buffer is not large enough and cannot be reallocated" << std::endl;
     return -1;
@@ -924,7 +922,7 @@ long Header::reallocData(const size_t size_new) {
   data[0] = data_t;
   if (flags & HEAD_FLAG_OWNSDATA)
     data_ = data_t;
-  return size_buff;
+  return static_cast<long>(size_buff);
 }
 
 long Header::copyData(const char* msg, const size_t msg_siz) {
@@ -995,7 +993,7 @@ void Header::for_send(Metadata* metadata0, const char* msg,
       return;
     }
   }
-  if (metadata0 != NULL && !(flags & (HEAD_FLAG_CLIENT_SIGNON |
+  if (metadata0 != nullptr && !(flags & (HEAD_FLAG_CLIENT_SIGNON |
 				      HEAD_FLAG_SERVER_SIGNON)))
     fromMetadata(*metadata0);
   initMeta();
@@ -1020,7 +1018,7 @@ int Header::on_send(bool dont_advance) {
     size_msg = std::min(size_curr - offset, size_max);
   }
   ygglog_debug << "Header::on_send: size_msg = " << size_msg << std::endl;
-  return size_curr;
+  return static_cast<int>(size_curr);
 }
 
 void Header::for_recv(char*& buf, size_t buf_siz, bool allow_realloc) {
@@ -1040,7 +1038,7 @@ long Header::on_recv(const char* msg, const size_t& msg_siz) {
   if (ret < 0 || !no_offset || !msg) {
     return ret;
   }
-  const char *head = NULL;
+  const char *head = nullptr;
   size_t headsiz = 0;
   split_head_body(*data, &head, &headsiz);
   if (headsiz == 0) {
@@ -1158,7 +1156,7 @@ size_t Header::format() {
   bool metaOnly = (flags & (HEAD_FLAG_NO_TYPE | HEAD_META_IN_DATA |
 			    HEAD_FLAG_CLIENT_SIGNON |
 			    HEAD_FLAG_SERVER_SIGNON));
-  size_t size_raw = size_data;
+  size_raw = size_data;
   rapidjson::StringBuffer buffer_body;
   std::string sep(MSG_HEAD_SEP);
   if (flags & HEAD_META_IN_DATA) {
@@ -1169,7 +1167,7 @@ size_t Header::format() {
   SetMetaUint("size", size_data);
   rapidjson::StringBuffer buffer;
   formatBuffer(buffer, metaOnly);
-  size_t size_head = static_cast<size_t>(buffer.GetLength()) + 2 * sep.size();
+  size_head = static_cast<size_t>(buffer.GetLength()) + 2 * sep.size();
   size_t size_new = size_head + size_data;
   if (size_max > 0 && size_new > size_max &&
       (!(flags & HEAD_FLAG_MULTIPART))) {

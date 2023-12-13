@@ -805,14 +805,14 @@ int update_dtype(dtype_t* dtype1, void* schema2);
   @returns: int 0 if free was successfull, -1 if there was an error.
 */
 int update_precision_dtype(dtype_t* dtype,
-			   const size_t new_precision);
+                           const size_t new_precision);
 
 /*!
   @brief Wrapper for displaying a data type.
   @param[in] dtype Wrapper struct for C++ Metadata.
   @param[in] indent Indentation to add to display output.
 */
-void display_dtype(const dtype_t dtype, const char* indent);
+void display_dtype(const dtype_t dtype, const char* indent="");
 
 
 #define free_generic destroy_generic

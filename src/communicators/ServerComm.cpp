@@ -6,13 +6,13 @@
 using namespace YggInterface::communicator;
 using namespace YggInterface::utils;
 
-ServerComm::ServerComm(const std::string nme, Address& addr,
+ServerComm::ServerComm(const std::string& nme, Address& addr,
 		       int flgs, const COMM_TYPE type) :
   RPCComm(nme, addr,
 	  flgs | COMM_FLAG_SERVER | COMM_ALWAYS_SEND_HEADER,
 	  RECV, SEND, type) {}
 
-ServerComm::ServerComm(const std::string nme,
+ServerComm::ServerComm(const std::string& nme,
                        int flgs, const COMM_TYPE type) :
         RPCComm(nme,
                 flgs | COMM_FLAG_SERVER | COMM_ALWAYS_SEND_HEADER,
@@ -36,7 +36,7 @@ bool ServerComm::create_header_send(utils::Header& header) {
   ygglog_debug << "ServerComm(" << name << ")::create_header_send: begin" << std::endl;
   assert(!global_comm);
   Comm_t* response_comm = requests.activeComm();
-  if (response_comm == NULL) {
+  if (response_comm == nullptr) {
     requests.Display();
     ygglog_error << "ServerComm(" << name << ")::create_header_send: Failed to get response comm" << std::endl;
     return false;
@@ -58,7 +58,7 @@ int ServerComm::send_single(utils::Header& header) {
     assert(!global_comm);
     ygglog_debug << "ServerComm(" << name << ")::send_single" << std::endl;
     Comm_t* response_comm = requests.activeComm();
-    if (response_comm == NULL) {
+    if (response_comm == nullptr) {
         ygglog_error << "ServerComm(" << name << ")::send_single: Failed to get response comm" << std::endl;
         return -1;
     }

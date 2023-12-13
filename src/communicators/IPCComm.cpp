@@ -9,14 +9,14 @@ unsigned IPCComm::_yggChannelsUsed = 0;
 int IPCComm::_yggChannelNames[_yggTrackChannels];
 bool IPCComm::_ipc_rand_seeded = false;
 
-IPCComm::IPCComm(const std::string name, Address& address,
+IPCComm::IPCComm(const std::string& name, Address& address,
 		 DIRECTION direction, int flgs,
 		 const COMM_TYPE type) :
   CommBase(name, address, direction, type, flgs) {
   if (!global_comm)
     init();
 }
-IPCComm::IPCComm(const std::string nme, const DIRECTION dirn,
+IPCComm::IPCComm(const std::string& nme, const DIRECTION dirn,
                  int flgs, const COMM_TYPE type) :
         CommBase(nme, dirn, type, flgs) {
     if (!global_comm)
@@ -95,7 +95,7 @@ int IPCComm::check_key(int key) {
     YGG_THREAD_SAFE_BEGIN(ipc) {
     for (i = 0; i < _yggChannelsUsed; i++ ) {
         if (IPCComm::_yggChannelNames[i] == key) {
-	    error_code = -static_cast<int>(i);
+            error_code = -static_cast<int>(i);
             break;
         }
     }
@@ -218,7 +218,7 @@ long IPCComm::recv_single(utils::Header& header) {
     msgbuf_t t;
     t.mtype = 1;
     t.data[0] = '\0';
-    long ret = -1;
+    long ret;
     while (true) {
         ret = msgrcv(handle[0], &t, maxMsgSize, 0, IPC_NOWAIT);
         if (ret == -1 && errno == ENOMSG) {

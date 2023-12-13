@@ -35,7 +35,7 @@ public:
     int tag; //!< Tag for next message.
 #endif
 protected:
-  void CheckReturn(int code, std::string method, int rank=0) const ;
+  void CheckReturn(int code, const std::string& method, int rank=0) const ;
 };
 
 #if !defined(MPIINSTALLED) && !defined(MPI_COMM_WORLD)
@@ -60,7 +60,7 @@ public:
      * @param direction Enumerated direction for the communicator
      * @param flags Bitwise flags describing the communicator
      */
-    MPIComm(const std::string name,
+    MPIComm(const std::string& name,
 	    utils::Address& address,
 	    const DIRECTION direction = NONE,
 	    int flgs = 0, const COMM_TYPE type = MPI_COMM);

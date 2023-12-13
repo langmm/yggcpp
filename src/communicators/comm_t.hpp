@@ -52,7 +52,7 @@ void close_comm(comm_t* comm);
  * @param t The enumerated communicator type to create
  * @return comm_t struct containing the requested communicator
  */
-comm_t init_comm(const char* name, DIRECTION dir, const COMM_TYPE &t,
+comm_t init_comm(const char* name, DIRECTION dir, const COMM_TYPE t,
 		 dtype_t datatype);
 
 int set_response_format(comm_t comm, const char *fmt);

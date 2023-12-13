@@ -19,7 +19,7 @@ public:
     @param[in] name Name of input channel. This should be named as a
       model input the in YAML for the model calling it.
    */
-  YggInput(const char *name) :
+  explicit YggInput(const char *name) :
     COMM_BASE(name, RECV, COMM_FLAG_INTERFACE) {}
   
   /*!
@@ -27,7 +27,7 @@ public:
     @param[in] name Name of input channel. This should be named as a
       model input the in YAML for the model calling it.
    */
-  YggInput(const std::string name) :
+  YggInput(const std::string& name) :
     COMM_BASE(name, RECV, COMM_FLAG_INTERFACE) {}
 
   /*!
@@ -53,7 +53,7 @@ public:
     @param[in] as_array If true, messages will contain arrays for columns
       in the table.
    */
-  YggInput(const std::string name, const std::string fmt,
+  YggInput(const std::string& name, const std::string& fmt,
 	   bool as_array = false) :
     COMM_BASE(name, RECV, COMM_FLAG_INTERFACE) {
     this->addFormat(fmt, as_array);
@@ -78,7 +78,7 @@ public:
     @param[in] schema Document containing JSON schema describing the type
       of data expected by the communicator.
    */
-  YggInput(const std::string name, const rapidjson::Document& schema) :
+  YggInput(const std::string& name, const rapidjson::Document& schema) :
     COMM_BASE(name, RECV, COMM_FLAG_INTERFACE) {
     this->addSchema(schema);
   }
@@ -98,7 +98,7 @@ public:
     @param[in] name Name of output channel. This should be named as a
       model output the in YAML for the model calling it.
    */
-  YggOutput(const char *name) :
+  explicit YggOutput(const char *name) :
     COMM_BASE(name, SEND, COMM_FLAG_INTERFACE) {}
   
   /*!
@@ -106,7 +106,7 @@ public:
     @param[in] name Name of output channel. This should be named as a
       model output the in YAML for the model calling it.
    */
-  YggOutput(const std::string name) :
+  YggOutput(const std::string& name) :
     COMM_BASE(name, SEND, COMM_FLAG_INTERFACE) {}
   
   /*!
@@ -134,7 +134,7 @@ public:
     @param[in] as_array If true, messages will contain arrays for columns
       in the table.
    */
-  YggOutput(const std::string name, const std::string fmt,
+  YggOutput(const std::string& name, const std::string& fmt,
 	    bool as_array=false) :
     COMM_BASE(name, SEND, COMM_FLAG_INTERFACE) {
     this->addFormat(fmt, as_array);
@@ -160,7 +160,7 @@ public:
     @param[in] schema Document containing JSON schema describing the type
       of data expected by the communicator.
    */
-  YggOutput(const std::string name, rapidjson::Document& schema) :
+  YggOutput(const std::string& name, rapidjson::Document& schema) :
     COMM_BASE(name, SEND, COMM_FLAG_INTERFACE) {
     this->addSchema(schema);
   }
@@ -181,7 +181,7 @@ public:
       a model's 'server' field in the YAML or the name of the model with
       'server' set to 'true'.
   */
-  YggRpcServer(const char *name) :
+  explicit YggRpcServer(const char *name) :
     ServerComm(name, COMM_FLAG_INTERFACE) {}
   /*!
     @brief Constructor for YggRpcServer.
@@ -210,8 +210,8 @@ public:
     @param[in] outFormat Format string specifying the datatype of
       messages that will be sent using this comm.
    */
-  YggRpcServer(const std::string name, const std::string inFormat,
-	       const std::string outFormat) :
+  YggRpcServer(const std::string& name, const std::string& inFormat,
+	       const std::string& outFormat) :
     ServerComm(name, COMM_FLAG_INTERFACE) {
     this->addFormat(inFormat);
     this->addResponseFormat(outFormat);
@@ -227,7 +227,7 @@ public:
     @param[in] outType Document containing JSON schema describing the type
       of data expected to be sent by the communicator.
    */
-  YggRpcServer(const std::string name, const rapidjson::Document& inType,
+  YggRpcServer(const std::string& name, const rapidjson::Document& inType,
 	       const rapidjson::Document& outType) :
     ServerComm(name, COMM_FLAG_INTERFACE) {
     this->addSchema(inType);
@@ -250,7 +250,7 @@ public:
       format '{server model name}_{client model name}' with the model
       names specified in the YAML.
   */
-  YggRpcClient(const char *name) :
+  explicit YggRpcClient(const char *name) :
     ClientComm(name, COMM_FLAG_INTERFACE) {}
   /*!
     @brief Constructor for YggRpcClient.
@@ -258,7 +258,7 @@ public:
       format '{server model name}_{client model name}' with the model
       names specified in the YAML.
   */
-  YggRpcClient(const std::string name) :
+  YggRpcClient(const std::string& name) :
     ClientComm(name, COMM_FLAG_INTERFACE) {}
   /*!
     @brief Constructor for YggRpcClient.
@@ -288,8 +288,8 @@ public:
     @param[in] inFormat Format string specifying the datatype of messages
       that will be received using this comm.
    */
-  YggRpcClient(const std::string name, const std::string outFormat,
-	       const std::string inFormat) :
+  YggRpcClient(const std::string& name, const std::string& outFormat,
+	       const std::string& inFormat) :
     ClientComm(name, COMM_FLAG_INTERFACE) {
     this->addFormat(outFormat);
     this->addResponseFormat(inFormat);
@@ -305,7 +305,7 @@ public:
     @param[in] inType Document containing JSON schema describing the type
       of data expected to be received by the communicator.
    */
-  YggRpcClient(const std::string name, const rapidjson::Document& outType,
+  YggRpcClient(const std::string& name, const rapidjson::Document& outType,
 	       const rapidjson::Document& inType) :
     ClientComm(name, COMM_FLAG_INTERFACE) {
     this->addSchema(outType);
@@ -331,8 +331,8 @@ public:
     @param[in] t_units Units that should be used for the timestep. ""
       indicates no units.
    */
-  YggTimesync(const std::string name="timesync",
-	      const std::string t_units="") :
+  YggTimesync(const std::string& name="timesync",
+	      const std::string& t_units="") :
     YggRpcClient(name) {
     this->addSchema(
       "{ \"type\": \"array\","
@@ -384,7 +384,7 @@ public:
     @param[in] name Name of output channel. This should be named as a
       model output the in YAML for the model calling it.
    */
-  YggAsciiFileOutput(const char *name) :
+  explicit YggAsciiFileOutput(const char *name) :
     YggOutput(name) {}
   
   /*!
@@ -392,7 +392,7 @@ public:
     @param[in] name Name of output channel. This should be named as a
       model output the in YAML for the model calling it.
    */
-  YggAsciiFileOutput(const std::string name) :
+  explicit YggAsciiFileOutput(const std::string& name) :
     YggOutput(name) {}
   
   /*!
@@ -417,7 +417,7 @@ public:
     @param[in] name Name of input channel. This should be named as a
       model input the in YAML for the model calling it.
    */
-  YggAsciiFileInput(const char *name) :
+  explicit YggAsciiFileInput(const char *name) :
     YggInput(name) {}
 
   /*!
@@ -425,7 +425,7 @@ public:
     @param[in] name Name of input channel. This should be named as a
       model input the in YAML for the model calling it.
    */
-  YggAsciiFileInput(const std::string name) :
+  explicit YggAsciiFileInput(const std::string& name) :
     YggInput(name) {}
 
   /*!
@@ -468,8 +468,8 @@ public:
       that will be sent using this comm. If messages are sent to an
       ASCII table, fmt will also be used to format messages in the table.
    */
-  YggAsciiTableOutput(const std::string name,
-		      const std::string fmt) :
+  YggAsciiTableOutput(const std::string& name,
+		      const std::string& fmt) :
     YggOutput(name, fmt) {}
 
 };
@@ -487,7 +487,7 @@ public:
     @param[in] name Name of input channel. This should be named as a
       model input the in YAML for the model calling it.
    */
-  YggAsciiTableInput(const char *name) :
+  explicit YggAsciiTableInput(const char *name) :
     YggInput(name) {}
 
   /*!
@@ -495,7 +495,7 @@ public:
     @param[in] name Name of input channel. This should be named as a
       model input the in YAML for the model calling it.
    */
-  YggAsciiTableInput(const std::string name) :
+  YggAsciiTableInput(const std::string& name) :
     YggInput(name) {}
 
 };
@@ -526,7 +526,7 @@ public:
       that will be sent using this comm. If messages are sent to an
       ASCII table, fmt will also be used to format messages in the table.
    */
-  YggAsciiArrayOutput(const std::string name, const std::string fmt) :
+  YggAsciiArrayOutput(const std::string& name, const std::string& fmt) :
     YggOutput(name, fmt, true) {}
 
 };
@@ -544,7 +544,7 @@ public:
     @param[in] name Name of output channel. This should be named as a
       model output the in YAML for the model calling it.
    */
-  YggAsciiArrayInput(const char *name) :
+  explicit YggAsciiArrayInput(const char *name) :
     YggInput(name) {}
 
   /*!
@@ -552,7 +552,7 @@ public:
     @param[in] name Name of output channel. This should be named as a
       model output the in YAML for the model calling it.
    */
-  YggAsciiArrayInput(const std::string name) :
+  YggAsciiArrayInput(const std::string& name) :
     YggInput(name) {}
 
 };
@@ -570,7 +570,7 @@ public:
     @param[in] name Name of output channel. This should be named as a
       model output the in YAML for the model calling it.
    */
-  YggPlyOutput(const char *name) :
+  explicit YggPlyOutput(const char *name) :
     YggOutput(name) {
     this->addSchema("{\"type\": \"ply\"}");
   }
@@ -580,7 +580,7 @@ public:
     @param[in] name Name of output channel. This should be named as a
       model output the in YAML for the model calling it.
    */
-  YggPlyOutput(const std::string name) :
+  YggPlyOutput(const std::string& name) :
     YggOutput(name) {
     this->addSchema("{\"type\": \"ply\"}");
   }
@@ -600,7 +600,7 @@ public:
     @param[in] name Name of input channel. This should be named as a
       model input the in YAML for the model calling it.
    */
-  YggPlyInput(const char *name) :
+  explicit YggPlyInput(const char *name) :
     YggInput(name) {
     this->addSchema("{\"type\": \"ply\"}");
   }
@@ -610,7 +610,7 @@ public:
     @param[in] name Name of input channel. This should be named as a
       model input the in YAML for the model calling it.
    */
-  YggPlyInput(const std::string name) :
+  YggPlyInput(const std::string& name) :
     YggInput(name) {
     this->addSchema("{\"type\": \"ply\"}");
   }
@@ -630,7 +630,7 @@ public:
     @param[in] name Name of output channel. This should be named as a
       model output the in YAML for the model calling it.
    */
-  YggObjOutput(const char *name) :
+  explicit YggObjOutput(const char *name) :
     YggOutput(name) {
     this->addSchema("{\"type\": \"obj\"}");
   }
@@ -640,7 +640,7 @@ public:
     @param[in] name Name of output channel. This should be named as a
       model output the in YAML for the model calling it.
    */
-  YggObjOutput(const std::string name) :
+  YggObjOutput(const std::string& name) :
     YggOutput(name) {
     this->addSchema("{\"type\": \"obj\"}");
   }
@@ -660,7 +660,7 @@ public:
     @param[in] name Name of input channel. This should be named as a
       model input the in YAML for the model calling it.
    */
-  YggObjInput(const char *name) :
+  explicit YggObjInput(const char *name) :
     YggInput(name) {
     this->addSchema("{\"type\": \"obj\"}");
   }
@@ -670,7 +670,7 @@ public:
     @param[in] name Name of input channel. This should be named as a
       model input the in YAML for the model calling it.
    */
-  YggObjInput(const std::string name) :
+  YggObjInput(const std::string& name) :
     YggInput(name) {
     this->addSchema("{\"type\": \"obj\"}");
   }
@@ -690,7 +690,7 @@ public:
     @param[in] name Name of output channel. This should be named as a
       model output the in YAML for the model calling it.
    */
-  YggGenericOutput(const char *name) :
+  explicit YggGenericOutput(const char *name) :
     YggOutput(name) {
     this->addSchema("{\"type\": \"any\"}");
   }
@@ -700,7 +700,7 @@ public:
     @param[in] name Name of output channel. This should be named as a
       model output the in YAML for the model calling it.
    */
-  YggGenericOutput(const std::string name) :
+  YggGenericOutput(const std::string& name) :
     YggOutput(name) {
     this->addSchema("{\"type\": \"any\"}");
   }
@@ -721,7 +721,7 @@ public:
     @param[in] name Name of input channel. This should be named as a
       model input the in YAML for the model calling it.
    */
-  YggGenericInput(const char *name) :
+  explicit YggGenericInput(const char *name) :
     YggInput(name) {
     this->addSchema("{\"type\": \"any\"}");
   }
@@ -731,7 +731,7 @@ public:
     @param[in] name Name of input channel. This should be named as a
       model input the in YAML for the model calling it.
    */
-  YggGenericInput(const std::string name) :
+  YggGenericInput(const std::string& name) :
     YggInput(name) {
     this->addSchema("{\"type\": \"any\"}");
   }
@@ -751,7 +751,7 @@ public:
     @param[in] name Name of output channel. This should be named as a
       model output the in YAML for the model calling it.
    */
-  YggAnyOutput(const char *name) :
+  explicit YggAnyOutput(const char *name) :
     YggOutput(name) {
     this->addSchema("{\"type\": \"any\"}");
   }
@@ -761,7 +761,7 @@ public:
     @param[in] name Name of output channel. This should be named as a
       model output the in YAML for the model calling it.
    */
-  YggAnyOutput(const std::string name) :
+  YggAnyOutput(const std::string& name) :
     YggOutput(name) {
     this->addSchema("{\"type\": \"any\"}");
   }
@@ -782,7 +782,7 @@ public:
     @param[in] name Name of input channel. This should be named as a
       model input the in YAML for the model calling it.
    */
-  YggAnyInput(const char *name) :
+  explicit YggAnyInput(const char *name) :
     YggInput(name) {
     this->addSchema("{\"type\": \"any\"}");
   }
@@ -792,7 +792,7 @@ public:
     @param[in] name Name of input channel. This should be named as a
       model input the in YAML for the model calling it.
    */
-  YggAnyInput(const std::string name) :
+  YggAnyInput(const std::string& name) :
     YggInput(name) {
     this->addSchema("{\"type\": \"any\"}");
   }
@@ -812,7 +812,7 @@ public:
     @param[in] name Name of output channel. This should be named as a
       model output the in YAML for the model calling it.
    */
-  YggJSONArrayOutput(const char *name) :
+  explicit YggJSONArrayOutput(const char *name) :
     YggOutput(name) {
     this->addSchema("{\"type\": \"array\"}");
   }
@@ -822,7 +822,7 @@ public:
     @param[in] name Name of output channel. This should be named as a
       model output the in YAML for the model calling it.
    */
-  YggJSONArrayOutput(const std::string name) :
+  YggJSONArrayOutput(const std::string& name) :
     YggOutput(name) {
     this->addSchema("{\"type\": \"array\"}");
   }
@@ -843,7 +843,7 @@ public:
     @param[in] name Name of input channel. This should be named as a
       model input the in YAML for the model calling it.
    */
-  YggJSONArrayInput(const char *name) :
+  explicit YggJSONArrayInput(const char *name) :
     YggInput(name) {
     this->addSchema("{\"type\": \"array\"}");
   }
@@ -852,7 +852,7 @@ public:
     @brief Constructor for YggJSONArrayInput.
     @param[in] name constant std::string the name of an input channel.
    */
-  YggJSONArrayInput(const std::string name) :
+  YggJSONArrayInput(const std::string& name) :
     YggInput(name) {
     this->addSchema("{\"type\": \"array\"}");
   }
@@ -872,7 +872,7 @@ public:
     @param[in] name Name of output channel. This should be named as a
       model output the in YAML for the model calling it.
    */
-  YggJSONObjectOutput(const char *name) :
+  explicit YggJSONObjectOutput(const char *name) :
     YggOutput(name) {
     this->addSchema("{\"type\": \"object\"}");
   }
@@ -882,7 +882,7 @@ public:
     @param[in] name Name of output channel. This should be named as a
       model output the in YAML for the model calling it.
    */
-  YggJSONObjectOutput(const std::string name) :
+  YggJSONObjectOutput(const std::string& name) :
     YggOutput(name) {
     this->addSchema("{\"type\": \"object\"}");
   }
@@ -903,7 +903,7 @@ public:
     @param[in] name Name of input channel. This should be named as a
       model input the in YAML for the model calling it.
    */
-  YggJSONObjectInput(const char *name) :
+  explicit YggJSONObjectInput(const char *name) :
     YggInput(name) {
     this->addSchema("{\"type\": \"object\"}");
   }
@@ -913,7 +913,7 @@ public:
     @param[in] name Name of input channel. This should be named as a
       model input the in YAML for the model calling it.
    */
-  YggJSONObjectInput(const std::string name) :
+  YggJSONObjectInput(const std::string& name) :
     YggInput(name) {
     this->addSchema("{\"type\": \"object\"}");
   }

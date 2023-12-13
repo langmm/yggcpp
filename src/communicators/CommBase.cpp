@@ -117,7 +117,7 @@ void Comm_t::init() {
     ygglog_debug << "CommBase(" << name << "): Done" << std::endl;
 }
 Comm_t::Comm_t(const std::string &nme, Address &addr,
-	       DIRECTION dirn, const COMM_TYPE &t, int flgs) :
+               const DIRECTION dirn, const COMM_TYPE t, int flgs) :
   type(t), name(nme), address(addr), direction(dirn), flags(flgs),
   maxMsgSize(COMM_BASE_MAX_MSG_SIZE), msgBufSize(0),
   index_in_register(-1), thread_id(-1), metadata(),
@@ -126,7 +126,7 @@ Comm_t::Comm_t(const std::string &nme, Address &addr,
 }
 
 Comm_t::Comm_t(const std::string &nme,
-               DIRECTION dirn, const COMM_TYPE &t, int flgs) :
+               const DIRECTION dirn, const COMM_TYPE t, int flgs) :
         type(t), name(nme), direction(dirn), flags(flgs),
         maxMsgSize(COMM_BASE_MAX_MSG_SIZE), msgBufSize(0),
         index_in_register(-1), thread_id(-1), metadata(),

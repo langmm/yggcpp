@@ -8,7 +8,7 @@ using namespace YggInterface::utils;
 
 #if defined(MPIINSTALLED) && defined(MPI_COMM_WORLD)
 
-mpi_registry_t::~mpi_registry_t() {}
+mpi_registry_t::~mpi_registry_t() = default;
 
 int mpi_registry_t::Probe(int source, MPI_Status *status) const {
   int out = MPI_Probe(source, tag, comm, status);
@@ -34,7 +34,7 @@ int mpi_registry_t::Recv(void *buf, int count, MPI_Datatype datatype, int source
 
 #endif
 
-void mpi_registry_t::CheckReturn(int code, std::string method, int rank) const {
+void mpi_registry_t::CheckReturn(int code, const std::string& method, int rank) const {
   if (code == MPI_SUCCESS)
     return;
   else if (code == MPI_ERR_COMM)
@@ -50,7 +50,7 @@ void mpi_registry_t::CheckReturn(int code, std::string method, int rank) const {
     ygglog_error << method << "(" << tag << "): Invalid count" << std::endl;
 }
 
-MPIComm::MPIComm(const std::string name, utils::Address& address,
+MPIComm::MPIComm(const std::string& name, utils::Address& address,
 		 const DIRECTION direction, int flgs,
 		 const COMM_TYPE type) :
   CommBase(name, address, direction, type, flgs) {
@@ -58,7 +58,7 @@ MPIComm::MPIComm(const std::string name, utils::Address& address,
     init();
 }
 
-MPIComm::MPIComm(const std::string name,
+MPIComm::MPIComm(const std::string& name,
                  const DIRECTION direction, int flgs,
                  const COMM_TYPE type) :
         CommBase(name, direction, type, flgs) {
@@ -196,7 +196,7 @@ long MPIComm::recv_single(utils::Header& header) {
         ygglog_error << "MPIComm(" << name << ")::recv_single: Error receiving message size for tag = " << handle->tag << std::endl;
         return -1;
     }
-    ret = header.on_recv(NULL, ret);
+    ret = static_cast<int>(header.on_recv(nullptr, ret));
     if (ret < 0) {
       ygglog_error << "MPIComm(" << name << ")::recv_single: Error reallocating data" << std::endl;
       return ret;
@@ -208,7 +208,7 @@ long MPIComm::recv_single(utils::Header& header) {
         return -1;
     }
     header.data_msg()[ret] = '\0';
-    ret = header.on_recv(header.data_msg(), ret);
+    ret = static_cast<int>(header.on_recv(header.data_msg(), ret));
     ygglog_debug << "MPIComm(" << name << ")::recv_single: returns " << ret << " bytes" << std::endl;
     handle->tag++;
     return ret;

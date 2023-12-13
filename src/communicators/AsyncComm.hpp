@@ -8,9 +8,9 @@ namespace YggInterface {
   namespace communicator {
 
     class AsyncBacklog {
-    private:
-      AsyncBacklog(const AsyncBacklog&) = delete;
-      AsyncBacklog& operator=(const AsyncBacklog&) = delete;
+    public:
+        AsyncBacklog(const AsyncBacklog&) = delete;
+        AsyncBacklog& operator=(const AsyncBacklog&) = delete;
     public:
       AsyncBacklog(Comm_t* parent);
       ~AsyncBacklog();
@@ -27,9 +27,9 @@ namespace YggInterface {
     };
     
     class AsyncLockGuard {
-    private:
-      AsyncLockGuard(const AsyncLockGuard&) = delete;
-      AsyncLockGuard& operator=(const AsyncLockGuard&) = delete;
+    public:
+        AsyncLockGuard(const AsyncLockGuard&) = delete;
+        AsyncLockGuard& operator=(const AsyncLockGuard&) = delete;
     public:
       AsyncLockGuard(AsyncBacklog* backlog, bool dont_lock=false);
       ~AsyncLockGuard();

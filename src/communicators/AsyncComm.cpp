@@ -78,9 +78,9 @@ bool AsyncBacklog::on_thread(Comm_t* parent) {
 int AsyncBacklog::send() {
   const std::lock_guard<std::mutex> comm_lock(comm_mutex);
   int out = 0;
-  if (backlog.size() > 0) {
+  if (!backlog.empty()) {
     if (comm->getType() == CLIENT_COMM) {
-      ClientComm* cli = dynamic_cast<ClientComm*>(comm);
+      auto* cli = dynamic_cast<ClientComm*>(comm);
       if (!cli->signon(backlog[0], comm))
 	return -1;
       // Sleep outside lock
@@ -138,7 +138,7 @@ AsyncLockGuard::~AsyncLockGuard() {
 // AsyncComm //
 ///////////////
 
-AsyncComm::AsyncComm(const std::string name,
+AsyncComm::AsyncComm(const std::string& name,
 		     utils::Address& address,
 		     const DIRECTION direction,
 		     int flgs, const COMM_TYPE type) :
@@ -151,7 +151,7 @@ AsyncComm::AsyncComm(const std::string name,
     handle = new AsyncBacklog(this);
   }
 }
-AsyncComm::AsyncComm(const std::string nme,
+AsyncComm::AsyncComm(const std::string& nme,
 		     const DIRECTION dirn,
 		     int flgs, const COMM_TYPE type) :
         CommBase(nme, dirn, type, flgs | COMM_FLAG_ASYNC) {
@@ -235,7 +235,7 @@ long AsyncComm::recv_single(Header& header) {
   }
   long ret = -1;
   ygglog_debug << "AsyncComm(" << name << ")::recv_single " << std::endl;
-  if (handle->backlog.size() == 0) {
+  if (handle->backlog.empty()) {
     ygglog_error << "AsyncComm(" << name << ")::recv_single: Backlog is empty." << std::endl;
     return ret;
   }
@@ -261,6 +261,6 @@ bool AsyncComm::create_header_send(Header& header) {
 }
 
 Comm_t* AsyncComm::create_worker(utils::Address& address,
-				 const DIRECTION& dir, int flgs) {
+                                 const DIRECTION dir, int flgs) {
   return new AsyncComm("", address, dir, flgs | COMM_FLAG_WORKER, type);
 }

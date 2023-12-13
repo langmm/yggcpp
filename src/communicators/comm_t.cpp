@@ -27,7 +27,7 @@ void close_comm(comm_t* comm) {
 //     return ret;
 // }
 
-comm_t init_comm(const char* name, DIRECTION dir, const COMM_TYPE &t,
+comm_t init_comm(const char* name, DIRECTION dir, const COMM_TYPE t,
 		 dtype_t datatype) {
   comm_t ret;
   _BEGIN_CPP {
@@ -35,7 +35,7 @@ comm_t init_comm(const char* name, DIRECTION dir, const COMM_TYPE &t,
     if (!(ret.comm))
       ygglog_throw_error_c("init_comm(%s): Error initializing comm", name);
     if (datatype.metadata) {
-      YggInterface::utils::Metadata* metadata = static_cast<YggInterface::utils::Metadata*>(datatype.metadata);
+      auto* metadata = static_cast<YggInterface::utils::Metadata*>(datatype.metadata);
       datatype.metadata = NULL;
       static_cast<YggInterface::communicator::Comm_t*>(ret.comm)->addSchema(*metadata);
       delete metadata;
@@ -62,7 +62,7 @@ int set_response_format(comm_t comm, const char *fmt) {
 int set_response_datatype(comm_t x, dtype_t datatype) {
   _BEGIN_CPP {
     if (datatype.metadata) {
-      YggInterface::utils::Metadata* metadata = static_cast<YggInterface::utils::Metadata*>(datatype.metadata);
+      auto* metadata = static_cast<YggInterface::utils::Metadata*>(datatype.metadata);
       datatype.metadata = NULL;
       if (x.comm)
 	static_cast<YggInterface::communicator::RPCComm*>(x.comm)->addResponseSchema(*metadata);
@@ -102,7 +102,7 @@ long comm_recv_realloc(comm_t comm, char **data, const size_t len) {
     return static_cast<YggInterface::communicator::Comm_t*>(comm.comm)->recv(data[0], len, true);
   } _END_CPP(comm_recv_realloc, -1);
 }
-int ncommSend(comm_t comm, size_t nargs, ...) {
+int ncommSend(const comm_t comm, size_t nargs, ...) {
   _BEGIN_CPP {
     if (!comm.comm)
       ygglog_throw_error_c("ncommSend: Comm is not initialized");

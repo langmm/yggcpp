@@ -443,7 +443,7 @@ bool ZMQReply::send_stage1(std::string& msg_data) {
   // }
   return true;
 }
-bool ZMQReply::send_stage2(const std::string msg_data) {
+bool ZMQReply::send_stage2(const std::string& msg_data) {
   // bool is_purge = (msg_data == _purge_msg);
   if (sockets.size() == 0) {
     ygglog_error << "ZMQReply::send_stage2: Reply socket was not initialized." << std::endl;
@@ -508,7 +508,7 @@ bool ZMQReply::send_stage2(const std::string msg_data) {
 // ZMQComm //
 /////////////
 
-ZMQComm::ZMQComm(const std::string name, utils::Address& address,
+ZMQComm::ZMQComm(const std::string& name, utils::Address& address,
 		 const DIRECTION direction, int flgs,
 		 const COMM_TYPE type) :
   CommBase(name, address, direction, type, flgs), reply(direction) {
@@ -516,7 +516,7 @@ ZMQComm::ZMQComm(const std::string name, utils::Address& address,
     init();
 }
 
-ZMQComm::ZMQComm(const std::string name,
+ZMQComm::ZMQComm(const std::string& name,
                  const DIRECTION direction, int flgs,
                  const COMM_TYPE type) :
         CommBase(name, direction, type, flgs), reply(direction) {

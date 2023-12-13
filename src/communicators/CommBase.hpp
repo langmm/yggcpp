@@ -44,11 +44,11 @@ const int COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
 #define UNINSTALLED_ERROR(name)					\
   utils::ygglog_throw_error("Compiler flag '" #name "INSTALLED' not defined so " #name " bindings are disabled")
 #define ADD_CONSTRUCTORS(T)						\
-  explicit T ## Comm(const std::string nme,				\
-		     const DIRECTION dirn,				\
+  explicit T ## Comm(const std::string& name,				\
+		     const DIRECTION dir,				\
 		     int flgs = 0, const COMM_TYPE type = T ## _COMM);	\
-  explicit T ## Comm(utils::Address &addr,				\
-		     const DIRECTION dirn,				\
+  explicit T ## Comm(utils::Address &address,				\
+		     const DIRECTION dir,				\
 		     int flgs = 0, const COMM_TYPE type = T ## _COMM);	\
   static bool isInstalled() { return T ## _INSTALLED_FLAG; }		\
   static COMM_TYPE defaultCommType() { return T ## _COMM; }		\
@@ -61,30 +61,30 @@ const int COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
   }
 
 #define ADD_CONSTRUCTORS_DEF(cls)		\
-  cls::cls(utils::Address &addr,		\
-	   const DIRECTION dirn,		\
+  cls::cls(utils::Address &address,		\
+	   const DIRECTION dir,		\
 	   int flgs, const COMM_TYPE type) :	\
-    cls("", addr, dirn, flgs, type) {}
+    cls("", address, dir, flgs, type) {}
 #define ADD_CONSTRUCTORS_RPC(cls, defT)				\
-  explicit cls(const std::string nme,				\
+  explicit cls(const std::string& name,				\
 	       int flgs = 0, const COMM_TYPE type = defT);	\
-  explicit cls(utils::Address &addr,				\
+  explicit cls(utils::Address &address,				\
 	       int flgs = 0, const COMM_TYPE type = defT);
 #define ADD_CONSTRUCTORS_RPC_DEF(cls)		\
-  cls::cls(utils::Address &addr,		\
+  cls::cls(utils::Address &address,		\
 	   int flgs, const COMM_TYPE type) :	\
-    cls("", addr, flgs, type) {}
+    cls("", address, flgs, type) {}
 #define WORKER_METHOD_DECS(cls)					\
   Comm_t* create_worker(utils::Address& address,		\
-			const DIRECTION&, int flgs) override
+			const DIRECTION dir, int flgs) override
 #define WORKER_METHOD_DEFS(cls)					\
   Comm_t* cls::create_worker(utils::Address& address,		\
-			     const DIRECTION& dir, int flgs) {	\
+			     const DIRECTION dir, int flgs) {	\
     return new cls("", address, dir, flgs | COMM_FLAG_WORKER);	\
   }
 #define WORKER_METHOD_DUMMY(cls, abbr)				\
   Comm_t* cls::create_worker(utils::Address&,			\
-			     const DIRECTION&, int) {		\
+			     const DIRECTION direction, int) {		\
     abbr ## _install_error();					\
     return NULL;						\
   }
@@ -149,15 +149,15 @@ public:
         received message if message was received.
      */
     long recv(std::string& data) {
-      char* str = NULL;
-      size_t len = 0;
-      long out = recv(str, len, true);
-      if (out >= 0 || out == -2) {
-	if (out >= 0)
-	  data.assign(str, static_cast<size_t>(out));
-	free(str);
-      }
-      return out;
+        char* str = nullptr;
+        size_t len = 0;
+        long out = recv(str, len, true);
+        if (out >= 0 || out == -2) {
+            if (out >= 0)
+                data.assign(str, static_cast<size_t>(out));
+            free(str);
+        }
+        return out;
     }
     /*!
       @brief Send a string message through the communicator.
@@ -210,7 +210,7 @@ public:
         received message if message was received.
     */
     virtual long recv(char*& data, const size_t &len,
-		      bool allow_realloc=false);
+                      bool allow_realloc=false);
 
     /*!
       @brief Send an object through the communicator.
@@ -221,13 +221,13 @@ public:
     */
     template<typename T>
     int sendVar(const T data) {
-      ygglog_debug << "CommBase(" << name <<
-	")::sendVar(const T& data)" << std::endl;
-      if (!checkType(data, SEND))
-	return -1;
-      if (getMetadata(SEND).isGeneric())
-	return sendVarAsGeneric(data);
-      return send(1, data);
+        ygglog_debug << "CommBase(" << name <<
+                     ")::sendVar(const T& data)" << std::endl;
+        if (!checkType(data, SEND))
+            return -1;
+        if (getMetadata(SEND).isGeneric())
+            return sendVarAsGeneric(data);
+        return send(1, data);
     }
     /*!
       @brief Send an object through the communicator as a rapidjson
@@ -239,11 +239,11 @@ public:
     */
     template<typename T>
     int sendVarAsGeneric(const T data) {
-      ygglog_debug << "CommBase(" << name <<
-	")::sendVarAsGeneric" << std::endl;
-      rapidjson::Document doc;
-      doc.Set(data, doc.GetAllocator());
-      return sendVar(doc);
+        ygglog_debug << "CommBase(" << name <<
+                     ")::sendVarAsGeneric" << std::endl;
+        rapidjson::Document doc;
+        doc.Set(data, doc.GetAllocator());
+        return sendVar(doc);
     }
     /*!
       @brief Send a C++ string through the communicator.
@@ -281,12 +281,12 @@ public:
     */
     template<typename T>
     long recvVar(T& data) {
-      ygglog_debug << "CommBase(" << name << ")::recvVar(T& data)" << std::endl;
-      if (!checkType(data, RECV))
-	return -1;
-      if (getMetadata(RECV).isGeneric())
-	return recvVarAsGeneric(data);
-      return recv(1, &data);
+        ygglog_debug << "CommBase(" << name << ")::recvVar(T& data)" << std::endl;
+        if (!checkType(data, RECV))
+            return -1;
+        if (getMetadata(RECV).isGeneric())
+            return recvVarAsGeneric(data);
+        return recv(1, &data);
     }
     /*!
       @brief Receive an object from the communicator that expects generic
@@ -298,13 +298,13 @@ public:
     */
     template<typename T>
     long recvVarAsGeneric(T& data) {
-      ygglog_debug << "CommBase(" << name << ")::recvVarAsGeneric" << std::endl;
-      rapidjson::Document doc;
-      long out = recvVar(doc);
-      if (out >= 0) {
-	data = doc.Get<T>();
-      }
-      return out;
+        ygglog_debug << "CommBase(" << name << ")::recvVarAsGeneric" << std::endl;
+        rapidjson::Document doc;
+        long out = recvVar(doc);
+        if (out >= 0) {
+            data = doc.Get<T>();
+        }
+        return out;
     }
     /*!
       @brief Receive a rapidjson::Document object from the communicator.
@@ -313,10 +313,10 @@ public:
         Values >= 0 indicate success.
     */
     long recvVar(rapidjson::Document& data) {
-      ygglog_debug << "CommBase(" << name << ")::recvVar(rapidjson::Document& data)" << std::endl;
-      if ((!data.IsNull()) && (!checkType(data, RECV)))
-	return -1;
-      return recv(1, &data);
+        ygglog_debug << "CommBase(" << name << ")::recvVar(rapidjson::Document& data)" << std::endl;
+        if ((!data.IsNull()) && (!checkType(data, RECV)))
+            return -1;
+        return recv(1, &data);
     }
     /*!
       @brief Receive a string object from the communicator.
@@ -325,18 +325,18 @@ public:
         indicate success.
     */
     long recvVar(std::string& data) {
-      ygglog_debug << "CommBase(" << name << ")::recvVar(std::string& data)" << std::endl;
-      if (!checkType(data, RECV))
-	return -1;
-      char* str = NULL;
-      size_t len = 0;
-      long out = recvRealloc(2, &str, &len);
-      if (out >= 0 || out == -2) {
-	if (out >= 0)
-	  data.assign(str, static_cast<size_t>(len));
-	free(str);
-      }
-      return out;
+        ygglog_debug << "CommBase(" << name << ")::recvVar(std::string& data)" << std::endl;
+        if (!checkType(data, RECV))
+            return -1;
+        char* str = nullptr;
+        size_t len = 0;
+        long out = recvRealloc(2, &str, &len);
+        if (out >= 0 || out == -2) {
+            if (out >= 0)
+                data.assign(str, static_cast<size_t>(len));
+            free(str);
+        }
+        return out;
     }
   
     // TODO: Versions of sendVar/recvVar with multiples?
@@ -475,17 +475,17 @@ public:
       @brief Determine if the communicator is valid.
       @return true if it is valid, false otherwise.
      */
-    bool valid() { return flags & COMM_FLAG_VALID; }
+    bool valid() const { return flags & COMM_FLAG_VALID; }
     /*!
       @brief Determine if the communicator is global.
       @return true if it is global, false otherwise.
      */
-    bool global() { return flags & COMM_FLAG_GLOBAL; }
+    bool global() const { return flags & COMM_FLAG_GLOBAL; }
     /*!
       @brief Determine if the communicator is async.
       @return true if it is async, false otherwise.
      */
-    bool async() { return flags & COMM_FLAG_ASYNC; }
+    bool async() const { return flags & COMM_FLAG_ASYNC; }
     /*!
       @brief Get the Metadata object containing header information about
         the comm including datatype.
@@ -576,8 +576,8 @@ public:
 
 protected:
     void updateMaxMsgSize(size_t new_size) {
-      if (maxMsgSize == 0 || new_size < maxMsgSize)
-	maxMsgSize = new_size;
+        if (maxMsgSize == 0 || new_size < maxMsgSize)
+            maxMsgSize = new_size;
     }
     void updateMsgBufSize(size_t new_size) {
       msgBufSize = new_size;
@@ -597,30 +597,30 @@ protected:
     }
 
     static utils::Address addressFromEnv(const std::string& name,
-					  DIRECTION direction) {
+                                         const DIRECTION dir) {
       utils::Address out;
-      if (name.empty())
-	return out;
-      std::string full_name;
-      full_name = name;
-      if (full_name.size() > COMM_NAME_SIZE)
-	full_name.resize(COMM_NAME_SIZE);
-      if (direction != NONE) {
-	if (direction == SEND) {
-	  full_name += "_OUT";
-	} else if (direction == RECV) {
-	  full_name += "_IN";
-	}
-      }
-      char *addr = std::getenv(full_name.c_str());
-      if (!addr) {
-          std::string temp_name(full_name);
-          size_t loc;
-          while ((loc = temp_name.find(":")) != std::string::npos) {
-              temp_name.replace(loc, 1, "__COLON__");
-          }
-          addr = getenv(temp_name.c_str());
-      }
+        if (name.empty())
+            return out;
+        std::string full_name;
+        full_name = name;
+        if (full_name.size() > COMM_NAME_SIZE)
+            full_name.resize(COMM_NAME_SIZE);
+        if (dir != NONE) {
+            if (dir == SEND) {
+                full_name += "_OUT";
+            } else if (dir == RECV) {
+                full_name += "_IN";
+            }
+        }
+        char *addr = std::getenv(full_name.c_str());
+        if (!addr) {
+            std::string temp_name(full_name);
+            size_t loc;
+            while ((loc = temp_name.find(":")) != std::string::npos) {
+                temp_name.replace(loc, 1, "__COLON__");
+            }
+            addr = getenv(temp_name.c_str());
+        }
         std::string addr_str = "null";
         if (addr)
             addr_str.assign(addr_str);
@@ -633,7 +633,7 @@ protected:
     }
 
     int update_datatype(const rapidjson::Value& new_schema,
-			const DIRECTION dir);
+                        const DIRECTION dir);
     template<typename T>
     void zeroData(const T* data,
 		  RAPIDJSON_ENABLEIF((internal::OrExpr<YGGDRASIL_IS_ANY_SCALAR(T), internal::IsSame<T, bool> >))) {
@@ -659,7 +659,7 @@ protected:
       return getMetadata(dir).getSchema();
     }
     virtual Comm_t* create_worker(utils::Address& address,
-				  const DIRECTION&, int flgs) VIRT_END;
+                                  const DIRECTION dir, int flgs) VIRT_END;
     virtual Comm_t* create_worker_send(utils::Header& head);
     virtual Comm_t* create_worker_recv(utils::Header& head);
     /**
@@ -686,8 +686,8 @@ protected:
      */
     explicit Comm_t(const std::string &name,
 		    utils::Address &address,
-		    DIRECTION direction = NONE,
-		    const COMM_TYPE &t = NULL_COMM, int flgs = 0);
+		    const DIRECTION dir = NONE,
+		    const COMM_TYPE t = NULL_COMM, int flgs = 0);
 
     Comm_t(const std::string& name, DIRECTION direction = NONE,
            const COMM_TYPE &t = NULL_COMM, int flgs = 0);
@@ -755,7 +755,8 @@ public:
     CommBase() = delete;
 
     /*! \copydoc Comm_t::comm_nmsg */
-    int comm_nmsg(DIRECTION=NONE) const override {
+    int comm_nmsg(const DIRECTION dir=NONE) const override {
+        (void) dir;
       ygglog_error << "Comm_nmsg of base class called, must be overridden" << std::endl;
       return -1;
     }
@@ -770,17 +771,19 @@ protected:
     /**
      * Not used, must be overloaded by a child class
      */
-    int send_single(utils::Header&) override {
-      ygglog_error << "Send of base class called, must be overridden" << std::endl;
-      return -1;
+    int send_single(utils::Header& header) override {
+        (void)header;
+        ygglog_error << "Send of base class called, must be overridden" << std::endl;
+        return -1;
     }
 
     /**
      * Not used, must be overloaded by child class
      */
-    long recv_single(utils::Header&) override {
-      ygglog_error << "Recv of base class called, must be overridden" << std::endl;
-      return -1;
+    long recv_single(utils::Header& header) override {
+        (void)header;
+        ygglog_error << "Recv of base class called, must be overridden" << std::endl;
+        return -1;
     }
 
     /**
@@ -791,7 +794,8 @@ protected:
      * @param t The enumerated type of the communicator
      * @param flags Bitwise flags describing the communicator
      */
-    explicit CommBase(const std::string &name, utils::Address& address, DIRECTION direction = NONE, const COMM_TYPE &t = NULL_COMM, int flags = 0);
+    explicit CommBase(const std::string &name, utils::Address& address,
+                      const DIRECTION dir = NONE, const COMM_TYPE t = NULL_COMM, int flgs = 0);
 
     CommBase(const std::string &name, DIRECTION direction = NONE,
              const COMM_TYPE &t = NULL_COMM, int flags = 0);
@@ -825,17 +829,17 @@ public:
 };
 
 template<typename H>
-CommBase<H>::CommBase(const std::string &nme, utils::Address &addr,
-		      DIRECTION dirn, const COMM_TYPE &t, int flgs) :
-  Comm_t(nme, addr, dirn, t, flgs), handle(nullptr) {
+CommBase<H>::CommBase(const std::string &name, utils::Address &addr,
+                      const DIRECTION dir, const COMM_TYPE t, int flgs) :
+  Comm_t(name, addr, dir, t, flgs), handle(nullptr) {
   if (global_comm)
     handle = dynamic_cast<CommBase<H>*>(global_comm)->handle;
 }
 
 template<typename H>
-CommBase<H>::CommBase(const std::string &nme, DIRECTION dirn,
-                      const COMM_TYPE &t, int flgs) :
-        Comm_t(nme, dirn, t, flgs), handle(nullptr) {
+CommBase<H>::CommBase(const std::string &name, const DIRECTION dir,
+                      const COMM_TYPE t, int flgs) :
+        Comm_t(name, dir, t, flgs), handle(nullptr) {
     if (global_comm)
         handle = dynamic_cast<CommBase<H> *>(global_comm)->handle;
 }

@@ -16,7 +16,7 @@
 #include "rapidjson/schema.h"
 #include "rapidjson/va_list.h"
 #include <cstring>
-#include <stdlib.h>
+#include <cstdlib>
 
 
 #include "logging.hpp"
@@ -67,12 +67,12 @@ long copyData(char*& dst, const size_t dst_len,
 	      bool allow_realloc);
 
 class Metadata {
-private:
-  Metadata(const Metadata&) = delete;
-  Metadata& operator=(const Metadata&) = delete;
+public:
+    Metadata(const Metadata&) = delete;
+    Metadata& operator=(const Metadata&) = delete;
 public:
   Metadata();
-  virtual ~Metadata() {}
+  virtual ~Metadata() = default;
   // Metadata(Metadata& rhs);
 #if RAPIDJSON_HAS_CXX11_RVALUE_REFS
   Metadata(Metadata&& rhs);
@@ -101,6 +101,7 @@ public:
   }
   void fromData(const rapidjson::Document& data, bool indirect=false);
   void fromType(const std::string type, bool use_generic=false,
+  void fromType(const std::string& type, bool use_generic=false,
 		bool dont_init = false);
   void fromScalar(const std::string subtype, size_t precision,
 		  const char* units=NULL, bool use_generic=false);
@@ -132,34 +133,42 @@ public:
   void initMeta();
   bool addItem(const Metadata& other,
 	       rapidjson::Value* subSchema=nullptr);
-  bool addMember(const std::string name, const Metadata& other,
+  /*!
+   * @brief Add a member to the subschema from the Metadata
+   * @param[in] name The name of the member to add
+   * @param[in] other The Meatdata containing the member
+   * @param[in] subSchema The subschema to use, if null then use the internal schema
+   * @return Always returns true
+   */
+  bool addMember(const std::string& name, const Metadata& other,
 		 rapidjson::Value* subSchema=nullptr);
   rapidjson::Value& getMeta();
   const rapidjson::Value& getMeta() const;
   rapidjson::Value& getSchema();
   const rapidjson::Value& getSchema() const;
   void SetValue(const std::string name, rapidjson::Value& x,
+  void SetValue(const std::string& name, rapidjson::Value& x,
 		rapidjson::Value& subSchema);
 #define GET_SET_METHOD_(type_in, type_out, method, setargs)		\
-  type_out Get ## method(const std::string name,			\
+  type_out Get ## method(const std::string& name,			\
 			 const rapidjson::Value& subSchema) const;	\
-  type_out Get ## method ## Optional(const std::string name,		\
+  type_out Get ## method ## Optional(const std::string& name,		\
 				     type_out defV,			\
 				     const rapidjson::Value& subSchema	\
 				     ) const;				\
-  void Set ## method(const std::string name, type_in x,			\
+  void Set ## method(const std::string& name, type_in x,			\
 		     rapidjson::Value& subSchema);			\
-  type_out GetMeta ## method(const std::string name) const;		\
-  type_out GetMeta ## method ## Optional(const std::string name,	\
+  type_out GetMeta ## method(const std::string& name) const;		\
+  type_out GetMeta ## method ## Optional(const std::string& name,	\
 					 type_out defV) const;		\
-  void SetMeta ## method(const std::string name, type_in x);		\
-  type_out GetSchema ## method(const std::string name,			\
+  void SetMeta ## method(const std::string& name, type_in x);		\
+  type_out GetSchema ## method(const std::string& name,			\
 			       rapidjson::Value* subSchema = NULL	\
 			       ) const;					\
-  type_out GetSchema ## method ## Optional(const std::string name,	\
+  type_out GetSchema ## method ## Optional(const std::string& name,	\
 					   type_out defV,		\
 					   rapidjson::Value* subSchema = NULL) const; \
-  void SetSchema ## method(const std::string name, type_in x,		\
+  void SetSchema ## method(const std::string& name, type_in x,		\
 			   rapidjson::Value* subSchema = NULL)
   GET_SET_METHOD_(int, int, Int, (x));
   GET_SET_METHOD_(uint64_t, uint64_t, Uint, (x));
@@ -188,7 +197,7 @@ public:
 };
 
 class Header : public Metadata {
-private:
+public:
   Header(const Header&) = delete;
   Header& operator=(const Header&) = delete;
 public:
