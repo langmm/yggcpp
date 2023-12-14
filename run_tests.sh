@@ -12,6 +12,7 @@ NO_CORE=""
 CMAKE_FLAGS="-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DYGG_SKIP_VALGRIND_TESTS=ON"
 CMAKE_FLAGS_LIB=""
 CMAKE_FLAGS_SPEED=""
+CMAKE_PREFIX_PATH=""
 WITH_LLDB=""
 DO_SYMBOLS=""
 DONT_TEST=""
@@ -136,6 +137,15 @@ while [[ $# -gt 0 ]]; do
 	    shift
 	    shift
 	    ;;
+	-DCMAKE_PREFIX_PATH=* )
+	    new_path=${1#"-DCMAKE_PREFIX_PATH="}
+	    if [ -n "$CMAKE_PREFIX_PATH" ]; then
+		CMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH};${new_path}"
+	    else
+		CMAKE_PREFIX_PATH="${new_path}"
+	    fi
+	    shift
+	    ;;
 	-* | --* )
 	    CMAKE_FLAGS="${CMAKE_FLAGS} $1"
 	    shift
@@ -221,6 +231,10 @@ if [ ! -n "$NO_DEBUG_MSG" ]; then
     CMAKE_FLAGS="${CMAKE_FLAGS} -DYGG_DEBUG_LEVEL=5"
 fi
 
+if [ -n "$CMAKE_PREFIX_PATH" ]; then
+    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}"
+fi
+
 # if [ -n "$WITH_ASAN" ]; then
 #     export ASAN_OPTIONS=symbolize=1
 #     export ASAN_SYMBOLIZER_PATH=$(which llvm-symbolizer)
@@ -298,6 +312,13 @@ else
     cd ..
 fi
 
+if [ -n "$CMAKE_PREFIX_PATH" ]; then
+    CMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH};${INSTALL_DIR}"
+else
+    CMAKE_PREFIX_PATH="${INSTALL_DIR}"
+fi
+CMAKE_FLAGS_SPEED="${CMAKE_FLAGS_SPEED} -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}"
+
 if [[ "$TEST_TYPE" == "speed" ]]; then
     if [ ! -n "$DONT_BUILD" ]; then
 	if [ -d "build_speed" ]; then
@@ -312,7 +333,7 @@ if [[ "$TEST_TYPE" == "speed" ]]; then
 	export DYLD_INSERT_LIBRARIES=$(clang -print-file-name=libclang_rt.asan_osx_dynamic.dylib)
     fi
     if [ ! -n "$DONT_BUILD" ]; then
-	cmake ../test/speedtest -DCMAKE_PREFIX_PATH=$INSTALL_DIR -DYggInterface_DIR=$INSTALL_DIR/lib/cmake/YggInterface -DN_MSG=$N_MSG -DS_MSG=$S_MSG -DCOMM=$COMM $CMAKE_FLAGS $CMAKE_FLAGS_SPEED
+	cmake ../test/speedtest -DYggInterface_DIR=$INSTALL_DIR/lib/cmake/YggInterface -DN_MSG=$N_MSG -DS_MSG=$S_MSG -DCOMM=$COMM $CMAKE_FLAGS $CMAKE_FLAGS_SPEED
 	cmake --build .
     fi
     if [ ! -n "$DONT_TEST" ]; then
