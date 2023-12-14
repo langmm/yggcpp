@@ -22,6 +22,7 @@ CONFIG_FLAGS=""
 N_MSG="100"
 S_MSG="100"
 COMM="DEFAULT_COMM"
+INSTALL_DIR="$(pwd)/_install"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -220,10 +221,10 @@ if [ ! -n "$NO_DEBUG_MSG" ]; then
     CMAKE_FLAGS="${CMAKE_FLAGS} -DYGG_DEBUG_LEVEL=5"
 fi
 
-if [ -n "$WITH_ASAN" ]; then
-    export ASAN_OPTIONS=symbolize=1
-    export ASAN_SYMBOLIZER_PATH=$(which llvm-symbolizer)
-fi
+# if [ -n "$WITH_ASAN" ]; then
+#     export ASAN_OPTIONS=symbolize=1
+#     export ASAN_SYMBOLIZER_PATH=$(which llvm-symbolizer)
+# fi
 
 if [ -n "$REBUILD" ]; then
     DONT_BUILD=""
@@ -233,8 +234,8 @@ if [ -n "$REBUILD" ]; then
     if [ -d "_skbuild" ]; then
 	rm -rf "_skbuild"
     fi
-    if [ -d "_install" ]; then
-	rm -rf "_install"
+    if [ -d "$INSTALL_DIR" ]; then
+	rm -rf "$INSTALL_DIR"
     fi
     if [ -f "communication/pyYggdrasil/pyYggdrasil.cpython-39-darwin.so" ]; then
 	rm "communication/pyYggdrasil/pyYggdrasil.cpython-39-darwin.so"
@@ -277,7 +278,7 @@ else
 	cmake .. $CMAKE_FLAGS $CMAKE_FLAGS_LIB
 	cmake --build . $CONFIG_FLAGS
 	# Need install here to ensure that cmake config files are in place
-	cmake --install . --prefix ../_install $CONFIG_FLAGS
+	cmake --install . --prefix $INSTALL_DIR $CONFIG_FLAGS
     fi
     if [[ "$TEST_TYPE" == "unit" ]] && [ ! -n "$DONT_TEST" ]; then
 	if [ -n "$WITH_ASAN" ] && [ ! -n "$DYLD_INSERT_LIBRARIES" ]; then
@@ -298,15 +299,6 @@ else
 fi
 
 if [[ "$TEST_TYPE" == "speed" ]]; then
-    if [[ "$PATH" == *";"* ]]; then
-	export PATH="${PATH};$(pwd)/_install/bin"
-	export LD_LIBRARY_PATH="${LD_LIBRARY_PATH};$(pwd)/_install/lib"
-    else
-	export PATH="${PATH}:$(pwd)/_install/bin"
-	export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:$(pwd)/_install/lib"
-    fi
-    echo "PATH = $PATH"
-    echo "LD_LIBRARY_PATH = $LD_LIBRARY_PATH"
     if [ ! -n "$DONT_BUILD" ]; then
 	if [ -d "build_speed" ]; then
 	    rm -rf build_speed
@@ -320,7 +312,7 @@ if [[ "$TEST_TYPE" == "speed" ]]; then
 	export DYLD_INSERT_LIBRARIES=$(clang -print-file-name=libclang_rt.asan_osx_dynamic.dylib)
     fi
     if [ ! -n "$DONT_BUILD" ]; then
-	cmake ../test/speedtest -DCMAKE_PREFIX_PATH=../_install -DYggInterface_DIR=../../_install/lib/cmake/YggInterface -DN_MSG=$N_MSG -DS_MSG=$S_MSG -DCOMM=$COMM $CMAKE_FLAGS $CMAKE_FLAGS_SPEED
+	cmake ../test/speedtest -DCMAKE_PREFIX_PATH=$INSTALL_DIR -DYggInterface_DIR=$INSTALL_DIR/lib/cmake/YggInterface -DN_MSG=$N_MSG -DS_MSG=$S_MSG -DCOMM=$COMM $CMAKE_FLAGS $CMAKE_FLAGS_SPEED
 	cmake --build .
     fi
     if [ ! -n "$DONT_TEST" ]; then
