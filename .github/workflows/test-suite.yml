@@ -489,11 +489,11 @@ jobs:
         if: matrix.python-install == 'conda'
         shell: bash -l {0}
         run: |
-          pip install . -v ${{ env.PYTHON_CONFIG_FLAGS }}
+          python -m pip install . -v ${{ env.PYTHON_CONFIG_FLAGS }}
       - name: Build Python (PIP)
         if: matrix.python-install == 'pip'
         run: |
-          pip install . -v ${{ env.PYTHON_CONFIG_FLAGS }}
+          python -m pip install . -v ${{ env.PYTHON_CONFIG_FLAGS }}
       - name: Unset CMAKE_ARGS for Python build
         shell: bash -l {0}
         run: |
