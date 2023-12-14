@@ -20,6 +20,7 @@ enum COMM_TYPE {
     SERVER_COMM, //!< Server communicator
     CLIENT_COMM, //!< Client communicator
     FILE_COMM,   //!< File communicator
+    RMQ_COMM,    //!< RabbitMQ communicator
 };
 
 /**

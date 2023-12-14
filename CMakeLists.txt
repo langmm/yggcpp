@@ -60,7 +60,8 @@ option(BUILD_FORTRAN_LIBRARY "Build the Yggdrasil Fortran interface library" ON)
 option(BUILD_PYTHON_LIBRARY "Build the Yggdrasil Python interface library" OFF)
 option(YGG_PYTHON_LIBRARY_WRAP "Build the Yggdrasil Python interface library by wrapping the C++ module" ON)
 option(YGG_Fortran_REQUIRED "Raise an error if the Fortran interface library cannot be build" OFF)
-option(ENABLE_ZMQ "Enable zeromq" ON)
+option(ENABLE_ZMQ "Enable ZeroMQ" ON)
+option(ENABLE_RMQ "Enable RabbitMQ" ON)
 option(USING_IPC "Default to using IPC V queues" OFF)
 option(YGGDRASIL_DISABLE_PYTHON_C_API "Disable the Python C API" OFF)
 option(ENABLE_OMP "Enable OpenMP" ON)
@@ -275,6 +276,25 @@ if(ENABLE_ZMQ)
 else (ENABLE_ZMQ)
     message(STATUS "No zmq support will be built." )
 endif (ENABLE_ZMQ)
+
+############
+# RabbitMQ #
+############
+
+if(ENABLE_RMQ)
+    find_package(rabbitmq-c CONFIG)
+    if (rabbitmq-c_FOUND)
+        include(${rabbitmq-c_CONFIG})
+        list(APPEND YGG_INSTALL_DEFS -DRMQINSTALLED)
+        list(APPEND YGG_INSTALL_DEPS rabbitmq-c)
+	list(APPEND DEPS_LIBRARIES rabbitmq::rabbitmq)
+    else()
+        message(STATUS "NO RabbitMQ client library")
+    endif()
+    dump_cmake_variables(REGEX "rabbitmq*")
+else (ENABLE_RMQ)
+    message(STATUS "No RabbitMQ support will be built." )
+endif (ENABLE_RMQ)
 
 ##########
 # OpenMP #

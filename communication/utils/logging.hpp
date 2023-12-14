@@ -76,7 +76,7 @@ namespace utils {
     }
     //! @brief Throw a C++ exception.
     void throw_error(const std::string msg) const {
-      utils::YggLogThrowError(logStr() + msg);
+      utils::YggLogThrowError(logStr() + "::" + msg);
     }
     /*!
       @brief Get a logger prefixed with class information.

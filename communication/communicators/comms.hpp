@@ -11,3 +11,4 @@
 #include "FileComm.hpp"
 #include "WrapComm.hpp"
 #include "ForkComm.hpp"
+#include "RMQComm.hpp"

@@ -1,3 +1,20 @@
+function(dump_cmake_variables)
+  set(oneValueArgs REGEX)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  get_cmake_property(_variableNames VARIABLES)
+  list (SORT _variableNames)
+  foreach (_variableName ${_variableNames})
+    if (ARGS_REGEX)
+      unset(MATCHED)
+      string(REGEX MATCH ${ARGS_REGEX} MATCHED ${_variableName})
+      if (NOT MATCHED)
+        continue()
+      endif()
+    endif()
+    message(STATUS "${_variableName}=${${_variableName}}")
+  endforeach()
+endfunction()
+
 function(find_package_python)
     # needed on GitHub Actions CI: actions/setup-python does not touch registry/frameworks on Windows/macOS
     # this mirrors PythonInterp behavior which did not consult registry/frameworks first

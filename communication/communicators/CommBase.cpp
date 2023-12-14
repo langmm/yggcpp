@@ -241,6 +241,8 @@ Comm_t* communication::communicator::new_Comm_t(
 			  request_flags, response_flags);
   case FILE_COMM:
     return new FileComm(name, addr, dir, flags);
+  case RMQ_COMM:
+    return new RMQComm(name, addr, dir, flags);
   }
   return nullptr;
 }
@@ -263,6 +265,8 @@ bool communication::communicator::is_commtype_installed(const COMM_TYPE type) {
     return ClientComm::isInstalled();
   case FILE_COMM:
     return FileComm::isInstalled();
+  case RMQ_COMM:
+    return RMQComm::isInstalled();
   }
   return false;
 }
