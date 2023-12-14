@@ -298,8 +298,13 @@ else
 fi
 
 if [[ "$TEST_TYPE" == "speed" ]]; then
-    export PATH="${PATH};$(pwd)/_install/bin"
-    export LD_LIBRARY_PATH="${LD_LIBRARY_PATH};$(pwd)/_install/lib"
+    if [[ "$PATH" == *";"* ]]; then
+	export PATH="${PATH};$(pwd)/_install/bin"
+	export LD_LIBRARY_PATH="${LD_LIBRARY_PATH};$(pwd)/_install/lib"
+    else
+	export PATH="${PATH}:$(pwd)/_install/bin"
+	export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:$(pwd)/_install/lib"
+    fi
     echo "PATH = $PATH"
     echo "LD_LIBRARY_PATH = $LD_LIBRARY_PATH"
     if [ ! -n "$DONT_BUILD" ]; then
