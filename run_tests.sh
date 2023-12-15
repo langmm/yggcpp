@@ -166,10 +166,9 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [ -n "$INSTALL_DIR" ]; then
-    CMAKE_FLAGS="${CMAKE_FLAGS} -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}"
+    echo "INSTALL_DIR = ${INSTALL_DIR}"
+    CMAKE_FLAGS="${CMAKE_FLAGS} \"-DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}\""
 fi
-
-echo "CMAKE_FLAGS = ${CMAKE_FLAGS}"
 
 if [[ "$CMAKE_FLAGS" == *"-DYGG_BUILD_ASAN=ON"* ]]; then
     WITH_ASAN="TRUE"
@@ -247,6 +246,10 @@ fi
 if [ -n "$CMAKE_PREFIX_PATH" ]; then
     CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}"
 fi
+
+echo "CMAKE_FLAGS = ${CMAKE_FLAGS}"
+echo "CMAKE_FLAGS_LIB = ${CMAKE_FLAGS_LIB}"
+echo "CMAKE_FLAGS_SPEED = ${CMAKE_FLAGS_SPEED}"
 
 # if [ -n "$WITH_ASAN" ]; then
 #     export ASAN_OPTIONS=symbolize=1
