@@ -532,8 +532,9 @@ jobs:
       ###################################
       - name: Set the install directory and add it to the path
         shell: bash -l {0}
+        if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
         run: |
-          INSTALL_DIR=$GITHUB_WORKSPACE/_install
+          INSTALL_DIR=$GITHUB_WORKSPACE\\_install
           echo "INSTALL_DIR=$INSTALL_DIR" >> "$GITHUB_ENV"
           echo "${INSTALL_DIR}" >> $GITHUB_PATH
       - name: Run speed tests
