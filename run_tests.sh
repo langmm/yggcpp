@@ -118,6 +118,11 @@ while [[ $# -gt 0 ]]; do
 	    shift
 	    shift
 	    ;;
+	--install-dir )
+	    INSTALL_DIR="$2"
+	    shift
+	    shift
+	    ;;
 	--speed )
 	    TEST_TYPE="speed"
 	    shift # past argument with no value
@@ -312,6 +317,7 @@ else
     cd ..
 fi
 
+echo "INSTALL_DIR = ${INSTALL_DIR}"
 if [ -n "$CMAKE_PREFIX_PATH" ]; then
     CMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH};${INSTALL_DIR}"
 else

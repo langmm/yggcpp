@@ -530,11 +530,17 @@ jobs:
       ###################################
       # Speed tests
       ###################################
+      - name: Set the install directory and add it to the path
+        shell: bash -l {0}
+        run: |
+          INSTALL_DIR=$GITHUB_WORKSPACE/_install
+          echo "INSTALL_DIR=$INSTALL_DIR" >> "$GITHUB_ENV"
+          echo "${INSTALL_DIR}" >> $GITHUB_PATH
       - name: Run speed tests
         shell: bash -l {0}
         run: |
           echo "PATH=$PATH"
-          ./run_tests.sh --rebuild --speed --config Release ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} --verbose
+          ./run_tests.sh --rebuild --speed --config Release ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} --install-dir ${{ env.INSTALL_DIR }} --verbose
 
       ###################################
       # Coverage
