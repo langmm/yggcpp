@@ -10,12 +10,19 @@ name: Test of package installation & execution
 jobs:
   build_cpp:
     runs-on: ${{ matrix.os }}
+    services:
+      rabbitmq:
+        image: rabbitmq:latest
+        ports:
+          - 5672:5672
+        options: --health-cmd "rabbitmqctl node_health_check" --health-interval 10s --health-timeout 5s --health-retries 5
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python-install: [pip, conda]
         install-zmq: [true, false]
         install-mpi: [true]
+        install-rmq: [true]
         with-coverage: [false, true]
         with-asan: [false]
         with-elf: [false]
@@ -41,6 +48,7 @@ jobs:
             python-install: pip
             install-zmq: true
             install-mpi: true
+            install-rmq: true
             with-coverage: true
             with-asan: false
             with-elf: true
@@ -50,6 +58,7 @@ jobs:
             python-install: pip
             install-zmq: true
             install-mpi: false
+            install-rmq: true
             with-coverage: true
             with-asan: false
             with-elf: true
@@ -59,6 +68,7 @@ jobs:
             python-install: pip
             install-zmq: true
             install-mpi: false
+            install-rmq: true
             with-coverage: false
             with-asan: true
             with-elf: true
@@ -68,6 +78,7 @@ jobs:
             python-install: pip
             install-zmq: true
             install-mpi: false
+            install-rmq: true
             with-coverage: false
             with-asan: false
             with-elf: false
@@ -77,6 +88,7 @@ jobs:
             python-install: pip
             install-zmq: true
             install-mpi: false
+            install-rmq: true
             with-coverage: false
             with-asan: false
             with-elf: false
@@ -86,6 +98,7 @@ jobs:
             python-install: pip
             install-zmq: true
             install-mpi: true
+            install-rmq: true
             with-coverage: false
             with-asan: false
             with-elf: false
@@ -95,6 +108,7 @@ jobs:
             python-install: conda
             install-zmq: true
             install-mpi: true
+            install-rmq: true
             with-coverage: false
             with-asan: false
             with-elf: false
@@ -152,36 +166,50 @@ jobs:
       #   run: |
       #     echo "FC=gfortran.exe" >> "$GITHUB_ENV"
       # ZeroMQ dependencies
-      - name: Install ZeroMQ
+      - name: Install ZeroMQ (Ubuntu)
         if: matrix.os == 'ubuntu-latest' && matrix.install-zmq && matrix.python-install == 'pip'
         run: |
           sudo apt-get update
           sudo apt-get install -y libzmq3-dev libgomp1
           sudo apt upgrade --fix-missing
-      - name: Install ZeroMQ
+      - name: Install ZeroMQ (Mac)
         if: matrix.os == 'macos-latest' && matrix.install-zmq && matrix.python-install == 'pip'
         run: |
           brew install zeromq libomp
-      - name: Install ZeroMQ
+      - name: Install ZeroMQ (Windows)
         if: matrix.os == 'windows-latest' && matrix.install-zmq && matrix.python-install == 'pip'
         run: |
           vcpkg.exe install zeromq --triplet $env:VCPKG_TRIPLET
 
       # MPI dependencies
-      - name: Install MPI dependencies on Ubuntu
+      - name: Install MPI (Ubuntu)
         if: matrix.os == 'ubuntu-latest' && matrix.install-mpi && matrix.python-install == 'pip'
         run: |
           sudo apt-get update
           sudo apt-get install -y mpich
           sudo apt upgrade --fix-missing
-      - name: Install MPI dependencies on Mac
+      - name: Install MPI (Mac)
         if: matrix.os == 'macos-latest' && matrix.install-mpi && matrix.python-install == 'pip'
         run: |
           brew install open-mpi
-      # - name: MPI dependencies on Windows
+      # - name: Install MPI (Windows)
       #   if: matrix.os == 'windows-latest' && matrix.install-mpi && matrix.python-install == 'pip'
       #   run: |
       #     vcpkg.exe install msmpi --triplet $env:VCPKG_TRIPLET
+
+      # RabbitMQ dependencies
+      - name: Install RabbitMQ (Ubuntu)
+        if: matrix.os == 'ubuntu-latest' && matrix.install-rmq && matrix.python-install == 'pip'
+        run: |
+          sudo apt-get install -y librabbitmq-dev
+      - name: Install RabbitMQ (Mac)
+        if: matrix.os == 'macos-latest' && matrix.install-rmq && matrix.python-install == 'pip'
+        run: |
+          brew install rabbitmq-c
+      - name: Install RabbitMQ (Windows)
+        if: matrix.os == 'windows-latest' && matrix.install-rmq && matrix.python-install == 'pip'
+        run: |
+          vcpkg.exe install librabbitmq --triplet $env:VCPKG_TRIPLET
 
       - name: Setup Python
         if: matrix.python-install == 'pip'
@@ -237,11 +265,16 @@ jobs:
         shell: bash -l {0}
         run: |
           mamba install m2w64-gcc-fortran libpython -y
-      - name: Install ZeroMQ using mamba
+      - name: Install ZeroMQ (mamba)
         if: matrix.python-install == 'conda' && matrix.install-zmq
         shell: bash -l {0}
         run: |
           mamba install zeromq -y
+      - name: Install RabbitMQ (mamba)
+        if: matrix.python-install == 'conda' && matrix.install-rmq
+        shell: bash -l {0}
+        run: |
+          mamba install librabbitmq -y
 
       ###################################
       # SET CONFIG FLAGS
@@ -252,7 +285,7 @@ jobs:
           CMAKE_BUILD_TYPE_TEST="Debug"
           echo "CMAKE_BUILD_TYPE_TEST=Debug" >> "$GITHUB_ENV"
           echo "CMAKE_ARGS_BASE=-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON" >> "$GITHUB_ENV"
-          echo "CMAKE_ARGS_NO_PYTHON=-DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/_install -DYGG_Fortran_REQUIRED=ON"
+          echo "CMAKE_ARGS_NO_PYTHON=-DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/_install -DYGG_Fortran_REQUIRED=ON" >> "$GITHUB_ENV"
           echo "CMAKE_ARGS_TEST=-DYGG_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE_TEST} -DYGG_DEBUG_LEVEL=5" >> "$GITHUB_ENV"
           echo "CMAKE_ARGS_PYTHON=-DYGG_DEBUG_LEVEL=5" >> "$GITHUB_ENV"
           echo "TEST_FLAGS=-C ${CMAKE_BUILD_TYPE_TEST} --output-on-failure -VV" >> "$GITHUB_ENV"
@@ -530,6 +563,13 @@ jobs:
       ###################################
       # Speed tests
       ###################################
+      # - name: Set the install directory and add it to the path
+      #   shell: bash -l {0}
+      #   if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
+      #   run: |
+      #     INSTALL_DIR=$GITHUB_WORKSPACE\\_install
+      #     echo "INSTALL_DIR=$INSTALL_DIR" >> "$GITHUB_ENV"
+      #     echo "${INSTALL_DIR}" >> $GITHUB_PATH
       - name: Run speed tests
         shell: bash -l {0}
         run: |
