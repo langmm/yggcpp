@@ -10,12 +10,12 @@ name: Test of package installation & execution
 jobs:
   build_cpp:
     runs-on: ${{ matrix.os }}
-    services:
-      rabbitmq:
-        image: rabbitmq:latest
-        ports:
-          - 5672:5672
-        options: --health-cmd "rabbitmqctl node_health_check" --health-interval 10s --health-timeout 5s --health-retries 5
+    # services:
+    #   rabbitmq:
+    #     image: rabbitmq:latest
+    #     ports:
+    #       - 5672:5672
+    #     options: --health-cmd "rabbitmqctl node_health_check" --health-interval 10s --health-timeout 5s --health-retries 5
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
@@ -199,17 +199,21 @@ jobs:
 
       # RabbitMQ dependencies
       - name: Install RabbitMQ (Ubuntu)
-        if: matrix.os == 'ubuntu-latest' && matrix.install-rmq && matrix.python-install == 'pip'
+        if: matrix.os == 'ubuntu-latest' && matrix.install-rmq # && matrix.python-install == 'pip'
         run: |
-          sudo apt-get install -y librabbitmq-dev
+          sudo apt-get install -y rabbitmq-server librabbitmq-dev
+          systemctl start rabbitmq-server
       - name: Install RabbitMQ (Mac)
-        if: matrix.os == 'macos-latest' && matrix.install-rmq && matrix.python-install == 'pip'
+        if: matrix.os == 'macos-latest' && matrix.install-rmq # && matrix.python-install == 'pip'
         run: |
-          brew install rabbitmq-c
+          brew install rabbitmq rabbitmq-c
+          brew services start rabbitmq
       - name: Install RabbitMQ (Windows)
-        if: matrix.os == 'windows-latest' && matrix.install-rmq && matrix.python-install == 'pip'
+        if: matrix.os == 'windows-latest' && matrix.install-rmq # && matrix.python-install == 'pip'
         run: |
+          choco install rabbitmq
           vcpkg.exe install librabbitmq --triplet $env:VCPKG_TRIPLET
+          rabbitmq-server.bat
 
       - name: Setup Python
         if: matrix.python-install == 'pip'
@@ -270,11 +274,11 @@ jobs:
         shell: bash -l {0}
         run: |
           mamba install zeromq -y
-      - name: Install RabbitMQ (mamba)
-        if: matrix.python-install == 'conda' && matrix.install-rmq
-        shell: bash -l {0}
-        run: |
-          mamba install librabbitmq -y
+      # - name: Install RabbitMQ (mamba)
+      #   if: matrix.python-install == 'conda' && matrix.install-rmq
+      #   shell: bash -l {0}
+      #   run: |
+      #     mamba install librabbitmq -y
 
       ###################################
       # SET CONFIG FLAGS

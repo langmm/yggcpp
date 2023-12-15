@@ -25,9 +25,11 @@ namespace communication {
       int send(utils::Header& header);
       long recv(utils::Header& header);
       void _format_address();
+#ifdef RMQINSTALLED
       bool _check_amqp_error(int x, const std::string& context) const;
       bool _check_amqp_reply_error(amqp_rpc_reply_t x,
 				   const std::string& context) const;
+#endif // RMQINSTALLED
       std::string logInst_;
       std::string address;
       DIRECTION direction;

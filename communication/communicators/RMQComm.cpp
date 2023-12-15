@@ -284,13 +284,6 @@ int RMQConnection::close() { return -1; }
 int RMQConnection::nmsg(DIRECTION) const { return -1; }
 int RMQConnection::send(utils::Header&) { return -1; }
 long RMQConnection::recv(utils::Header&) { return -1; }
-bool RMQConnection::_check_amqp_error(int, const std::string&) const {
-  return false;
-}
-bool RMQConnection::_check_amqp_reply_error(amqp_rpc_reply_t,
-					    const std::string&) const {
-  return false;
-}
 #endif // RMQINSTALLED
 
 RMQComm::RMQComm(const std::string name,
