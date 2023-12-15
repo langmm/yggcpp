@@ -123,6 +123,10 @@ while [[ $# -gt 0 ]]; do
 	    shift
 	    shift
 	    ;;
+	-DCMAKE_INSTALL_PREFIX=* )
+	    INSTALL_DIR=${1#"-DCMAKE_INSTALL_PREFIX="}
+	    shift
+	    ;;
 	--speed )
 	    TEST_TYPE="speed"
 	    shift # past argument with no value
@@ -160,6 +164,10 @@ while [[ $# -gt 0 ]]; do
 	    ;;
     esac
 done
+
+if [ -n "$INSTALL_DIR" ]; then
+    CMAKE_FLAGS="${CMAKE_FLAGS} -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}"
+fi
 
 echo "CMAKE_FLAGS = ${CMAKE_FLAGS}"
 

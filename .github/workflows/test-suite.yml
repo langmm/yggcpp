@@ -252,7 +252,7 @@ jobs:
           CMAKE_BUILD_TYPE_TEST="Debug"
           echo "CMAKE_BUILD_TYPE_TEST=Debug" >> "$GITHUB_ENV"
           echo "CMAKE_ARGS_BASE=-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON" >> "$GITHUB_ENV"
-          echo "CMAKE_ARGS_NO_PYTHON=-DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/_install -DYGG_Fortran_REQUIRED=ON"
+          echo "CMAKE_ARGS_NO_PYTHON=-DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/_install -DYGG_Fortran_REQUIRED=ON" >> "$GITHUB_ENV"
           echo "CMAKE_ARGS_TEST=-DYGG_BUILD_TESTS=ON -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE_TEST} -DYGG_DEBUG_LEVEL=5" >> "$GITHUB_ENV"
           echo "CMAKE_ARGS_PYTHON=-DYGG_DEBUG_LEVEL=5" >> "$GITHUB_ENV"
           echo "TEST_FLAGS=-C ${CMAKE_BUILD_TYPE_TEST} --output-on-failure -VV" >> "$GITHUB_ENV"
@@ -530,18 +530,18 @@ jobs:
       ###################################
       # Speed tests
       ###################################
-      - name: Set the install directory and add it to the path
-        shell: bash -l {0}
-        if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
-        run: |
-          INSTALL_DIR=$GITHUB_WORKSPACE\\_install
-          echo "INSTALL_DIR=$INSTALL_DIR" >> "$GITHUB_ENV"
-          echo "${INSTALL_DIR}" >> $GITHUB_PATH
+      # - name: Set the install directory and add it to the path
+      #   shell: bash -l {0}
+      #   if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
+      #   run: |
+      #     INSTALL_DIR=$GITHUB_WORKSPACE\\_install
+      #     echo "INSTALL_DIR=$INSTALL_DIR" >> "$GITHUB_ENV"
+      #     echo "${INSTALL_DIR}" >> $GITHUB_PATH
       - name: Run speed tests
         shell: bash -l {0}
         run: |
           echo "PATH=$PATH"
-          ./run_tests.sh --rebuild --speed --config Release ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} --install-dir ${{ env.INSTALL_DIR }} --verbose
+          ./run_tests.sh --rebuild --speed --config Release ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} --verbose
 
       ###################################
       # Coverage
