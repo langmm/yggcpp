@@ -124,7 +124,7 @@ while [[ $# -gt 0 ]]; do
 	    shift
 	    ;;
 	-DCMAKE_INSTALL_PREFIX=* )
-	    INSTALL_DIR=${1#"-DCMAKE_INSTALL_PREFIX="}
+	    INSTALL_DIR="${1#-DCMAKE_INSTALL_PREFIX=}"
 	    shift
 	    ;;
 	--speed )
@@ -167,7 +167,7 @@ done
 
 if [ -n "$INSTALL_DIR" ]; then
     echo "INSTALL_DIR = ${INSTALL_DIR}"
-    CMAKE_FLAGS="${CMAKE_FLAGS} \"-DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}\""
+    CMAKE_FLAGS="${CMAKE_FLAGS} -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}"
 fi
 
 if [[ "$CMAKE_FLAGS" == *"-DYGG_BUILD_ASAN=ON"* ]]; then
@@ -308,7 +308,7 @@ else
 	cmake .. $CMAKE_FLAGS $CMAKE_FLAGS_LIB
 	cmake --build . $CONFIG_FLAGS
 	# Need install here to ensure that cmake config files are in place
-	cmake --install . --prefix $INSTALL_DIR $CONFIG_FLAGS
+	cmake --install . --prefix "$INSTALL_DIR" $CONFIG_FLAGS
     fi
     if [[ "$TEST_TYPE" == "unit" ]] && [ ! -n "$DONT_TEST" ]; then
 	if [ -n "$WITH_ASAN" ] && [ ! -n "$DYLD_INSERT_LIBRARIES" ]; then
@@ -328,7 +328,7 @@ else
     cd ..
 fi
 
-echo "INSTALL_DIR = ${INSTALL_DIR}"
+echo "INSTALL_DIR = \"${INSTALL_DIR}\""
 if [ -n "$CMAKE_PREFIX_PATH" ]; then
     CMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH};${INSTALL_DIR}"
 else
@@ -350,7 +350,7 @@ if [[ "$TEST_TYPE" == "speed" ]]; then
 	export DYLD_INSERT_LIBRARIES=$(clang -print-file-name=libclang_rt.asan_osx_dynamic.dylib)
     fi
     if [ ! -n "$DONT_BUILD" ]; then
-	cmake ../test/speedtest -DYggInterface_DIR=$INSTALL_DIR/lib/cmake/YggInterface -DN_MSG=$N_MSG -DS_MSG=$S_MSG -DCOMM=$COMM $CMAKE_FLAGS $CMAKE_FLAGS_SPEED
+	cmake ../test/speedtest "-DYggInterface_DIR=$INSTALL_DIR/lib/cmake/YggInterface" -DN_MSG=$N_MSG -DS_MSG=$S_MSG -DCOMM=$COMM $CMAKE_FLAGS $CMAKE_FLAGS_SPEED
 	cmake --build .
     fi
     if [ ! -n "$DONT_TEST" ]; then
