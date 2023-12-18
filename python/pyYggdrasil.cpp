@@ -75,7 +75,7 @@ PyInit__pyYggdrasil() {
 PyMODINIT_FUNC
 PyInit_pyYggdrasil() {
 #endif // YGG_PYTHON_LIBRARY_WRAP
-    if (!communication::utils::import_numpy_arrays()) {
+    if (!YggInterface::utils::import_numpy_arrays()) {
       PyErr_SetString(PyExc_ImportError, "Could not import numpy");
       return NULL;
     }

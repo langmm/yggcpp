@@ -76,7 +76,7 @@ bool RPCComm::addResponseSchema(const rapidjson::Value& s,
   }
   return requests.addResponseSchema(s, use_generic);
 }
-void RPCComm::addResponseSchema(const YggInterface::utils::Metadata& metadata,
+bool RPCComm::addResponseSchema(const YggInterface::utils::Metadata& metadata,
 				bool use_generic) {
   if (global_comm) {
     return (dynamic_cast<RPCComm*>(global_comm))->addResponseSchema(metadata, use_generic);

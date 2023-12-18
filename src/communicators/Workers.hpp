@@ -11,7 +11,7 @@ namespace communicator {
   // Forward declare
   class Comm_t;
 
-  class Worker : public communication::utils::LogBase {
+  class Worker : public YggInterface::utils::LogBase {
   private:
     Worker(const Worker& rhs) = delete;
     Worker& operator=(const Worker& rhs) = delete;
@@ -26,7 +26,7 @@ namespace communicator {
     Comm_t* comm;
     std::string request;
   };
-  class WorkerList : public communication::utils::LogBase {
+  class WorkerList : public YggInterface::utils::LogBase {
   private:
     WorkerList(const WorkerList& rhs) = delete;
     WorkerList& operator=(const WorkerList& rhs) = delete;

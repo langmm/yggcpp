@@ -42,7 +42,7 @@ public:
     bool is_signon;
 };
 
-class RequestList : public communication::utils::LogBase {
+class RequestList : public YggInterface::utils::LogBase {
 public:
     RequestList(DIRECTION dir, int flags = 0,
 		const COMM_TYPE restyp = DEFAULT_COMM,

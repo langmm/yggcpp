@@ -12,7 +12,7 @@ namespace YggInterface {
 
     class AsyncBacklog;
 
-    class AsyncBuffer : public communication::utils::LogBase {
+    class AsyncBuffer : public YggInterface::utils::LogBase {
     public:
       AsyncBuffer(const std::string logInst);
       std::string logClass() const override { return "AsyncBuffer"; }
@@ -80,7 +80,7 @@ namespace YggInterface {
     log_debug() << "stop: end" << std::endl
     
 
-    class AsyncStatus : public communication::utils::LogBase {
+    class AsyncStatus : public YggInterface::utils::LogBase {
     private:
       AsyncStatus(const AsyncStatus&) = delete;
       AsyncStatus& operator=(const AsyncStatus&) = delete;

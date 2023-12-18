@@ -354,7 +354,7 @@ int Comm_t::send_raw(const char *data, const size_t &len) {
 }
 int Comm_t::send(const rapidjson::Document& data, bool not_generic) {
   log_debug() << "send: begin" << std::endl;
-  communication::utils::Metadata& meta = getMetadata(SEND);
+  YggInterface::utils::Metadata& meta = getMetadata(SEND);
   if (!(meta.hasType() || not_generic))
     meta.setGeneric();
   char* buf = NULL;
@@ -500,7 +500,7 @@ long Comm_t::recv_raw(char*& data, const size_t &len,
       log_debug() << "recv_raw: No type information in message header" << std::endl;
     } else {
       log_debug() << "recv_raw: Updating type" << std::endl;
-      communication::utils::Metadata& meta = getMetadata(RECV);
+      YggInterface::utils::Metadata& meta = getMetadata(RECV);
       if ((!meta.hasType()) && (meta.transforms.size() == 0)) {
 	if (!meta.fromSchema(head.getSchema()[0]))
 	  return -1;
@@ -519,7 +519,7 @@ long Comm_t::recv(rapidjson::Document& data, bool not_generic) {
   char* buf = NULL;
   size_t buf_siz = 0;
   long ret = recv_raw(buf, buf_siz, true);
-  communication::utils::Metadata& meta = getMetadata(RECV);
+  YggInterface::utils::Metadata& meta = getMetadata(RECV);
   if (ret < 0) {
     if (buf != NULL)
       free(buf);
@@ -649,7 +649,7 @@ long Comm_t::vRecv(rapidjson::VarArgList& ap) {
 	    log_error() << "vRecv: Error in recv" << std::endl;
         return ret;
     }
-    communication::utils::Metadata& meta = getMetadata(RECV);
+    YggInterface::utils::Metadata& meta = getMetadata(RECV);
     ret = meta.deserialize_args(data, ap);
     if (ret < 0) {
         log_error() << "vRecv: Error deserializing message" << std::endl;

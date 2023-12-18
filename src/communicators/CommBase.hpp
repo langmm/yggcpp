@@ -232,7 +232,7 @@ typedef struct comm_t comm_t;
  * Abstract base class for all communicators. Cannot be instantiated directly, but is used as a generalized hook
  * for passing communicators around. Should only be instantiated by the CommBase<> class.
  */
-class YGG_API Comm_t : public communication::utils::LogBase {
+class YGG_API Comm_t : public YggInterface::utils::LogBase {
 public:
     Comm_t(const Comm_t& other) = delete;
     Comm_t& operator=(const Comm_t&) = delete;
@@ -852,11 +852,11 @@ public:
       @returns name.
      */
     const std::string& getName() const { return name; }
-    //! \copydoc communication::utils::LogBase::logClass
+    //! \copydoc YggInterface::utils::LogBase::logClass
     std::string logClass() const override {
       return COMM_TYPE_cls_map.find(getCommType())->second;
     }
-    //! \copydoc communication::utils::LogBase::logInst
+    //! \copydoc YggInterface::utils::LogBase::logInst
     std::string logInst() const override {
       std::string out = name + "-" +
 	DIRECTION_map.find(getDirection())->second;
