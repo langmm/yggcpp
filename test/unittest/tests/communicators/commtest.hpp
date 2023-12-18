@@ -63,7 +63,7 @@ bool example_transform(rapidjson::Document& msg) {
 #define DO_RPC_SIGNON							\
   {									\
     std::string msg_cli = YGG_CLIENT_SIGNON;				\
-    communication::utils::Header header(msg_cli.c_str(),		\
+    YggInterface::utils::Header header(msg_cli.c_str(),		\
 					msg_cli.size(), &sComm);	\
     EXPECT_TRUE(sComm.create_header_test(header));			\
     int len = header.format();						\

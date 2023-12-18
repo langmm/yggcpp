@@ -17,20 +17,20 @@ YggEnvironment::~YggEnvironment() {
 
 void YggEnvironment::SetUp() {
 #ifdef IPCINSTALLED
-  Nipc = communication::communicator::IPCComm::count_queues();
+  Nipc = YggInterface::communicator::IPCComm::count_queues();
 #endif // IPCINSTALLED
   std::cerr << "SETUP" << std::endl;
-  communication::communicator::ZMQComm::disable_handshake();
-  communication::communicator::ygg_init(true);
+  YggInterface::communicator::ZMQComm::disable_handshake();
+  YggInterface::communicator::ygg_init(true);
   std::cerr << "SETUP COMPLETE" << std::endl;
 }
 
 void YggEnvironment::TearDown() {
   std::cerr << "TEARDOWN" << std::endl;
-  communication::communicator::ygg_exit();
+  YggInterface::communicator::ygg_exit();
   std::cerr << "TEARDOWN COMPLETE" << std::endl;
 #ifdef IPCINSTALLED
-  EXPECT_EQ(communication::communicator::IPCComm::count_queues(), Nipc);
+  EXPECT_EQ(YggInterface::communicator::IPCComm::count_queues(), Nipc);
 #endif // IPCINSTALLED
 }
 

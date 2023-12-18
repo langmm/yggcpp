@@ -251,7 +251,7 @@ endif()
 #############
 
 if(NOT RAPIDJSON_INCLUDE_DIRS)
-    set(RAPIDJSON_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/communication/rapidjson/include")
+    set(RAPIDJSON_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/src/rapidjson/include")
 endif()
 message(STATUS "Rapidjson found ${RAPIDJSON_INCLUDE_DIRS}")
 
@@ -466,7 +466,7 @@ endif()
 if(BUILD_FORTRAN_LIBRARY)
   set(BUILD_CPP_LIBRARY ON)
 endif()
-file(GLOB SOURCES "communication/*.cpp" "communication/utils/*.cpp" "communication/communicators/*.cpp" "communication/datatypes/dtype_t.cpp")
+file(GLOB SOURCES "src/*.cpp" "src/utils/*.cpp" "src/communicators/*.cpp" "src/datatypes/dtype_t.cpp")
 
 if(BUILD_CPP_LIBRARY)
     if(SKBUILD)
@@ -509,7 +509,7 @@ if(BUILD_CPP_LIBRARY)
 	"$<$<LINK_LANGUAGE:Fortran>:${DEPS_PUBLIC_Fortran_LIBS}>")
     target_include_directories(
         ${YGG_TARGET_CPP} PUBLIC ${DEPS_INCLUDE_DIRS}
-  	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/communication>
+  	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
 	$<BUILD_INTERFACE:${RAPIDJSON_INCLUDE_DIRS}>
 	$<INSTALL_INTERFACE:include/YggInterface>
 	$<INSTALL_INTERFACE:include/YggInterface/rapidjson/include>)
@@ -604,7 +604,7 @@ if (YGG_INSTALL_TARGETS)
           FILE YggInterfaceTargets.cmake
 	  NAMESPACE YggInterface::
 	  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/YggInterface)
-  install(DIRECTORY communication/
+  install(DIRECTORY src/
           DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/YggInterface
 	  FILES_MATCHING REGEX ".*\\.h(pp)?$")
   include(CMakePackageConfigHelpers)
@@ -640,8 +640,8 @@ endif ()
 
 if(YGG_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang|ARMClang")
     message(STATUS "COVERAGE ON")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 --coverage -fno-inline -fprofile-arcs -ftest-coverage -fprofile-filter-files=\"${CMAKE_SOURCE_DIR}/communication/*\" ")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0 --coverage -fno-inline -fprofile-arcs -ftest-coverage -fprofile-filter-files=\"${CMAKE_SOURCE_DIR}/communication/*\" ")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 --coverage -fno-inline -fprofile-arcs -ftest-coverage -fprofile-filter-files=\"${CMAKE_SOURCE_DIR}/src/*\" ")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0 --coverage -fno-inline -fprofile-arcs -ftest-coverage -fprofile-filter-files=\"${CMAKE_SOURCE_DIR}/src/*\" ")
     if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|ARMClang")
         set(CTEST_COVERAGE_COMMAND "llvm-cov")
         set(CTEST_COVERAGE_EXTRA_FLAGS "gcov")

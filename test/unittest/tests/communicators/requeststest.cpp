@@ -4,8 +4,8 @@
 #include "../../elf_hook.hpp"
 #include "../../mock.hpp"
 
-using namespace communication::communicator;
-using namespace communication::utils;
+using namespace YggInterface::communicator;
+using namespace YggInterface::utils;
 
 TEST(RequestList, Empty) {
   RequestList req(RECV);

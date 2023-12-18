@@ -24,7 +24,7 @@ void init_sublib_contents() {
 void init_sublib_contents() {}
 #endif
 
-namespace communication {
+namespace YggInterface {
 namespace mock {
 
 #ifdef ELF_AVAILABLE

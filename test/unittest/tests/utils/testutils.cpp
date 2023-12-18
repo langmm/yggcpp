@@ -20,7 +20,7 @@ std::streambuf* prevbuf = std::cerr.rdbuf(B.rdbuf());
   EXPECT_DOUBLE_EQ(static_cast<double>(lhs), static_cast<double>(rhs))
 #endif
 
-using namespace communication::utils;
+using namespace YggInterface::utils;
 namespace {
 #define COMPLEX_UNIT_TEST(type, typenm, comparator, real, img) { \
 complex_ ## type ## _t cmplx;                                    \

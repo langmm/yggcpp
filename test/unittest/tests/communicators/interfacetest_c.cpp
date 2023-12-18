@@ -4,7 +4,7 @@
 #include "utils/serialization.hpp"
 #include "commtest.hpp"
 
-using namespace communication::communicator;
+using namespace YggInterface::communicator;
 
 #define INIT_INPUT_BASE(cls, cls_args, alt, alt_args)	\
   alt sComm alt_args;					\

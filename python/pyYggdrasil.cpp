@@ -53,7 +53,7 @@ static PyMethodDef functions[] = {
 };
 
 static void pyYggModule_free(void*) {
-  communication::communicator::ygg_cleanup();
+  YggInterface::communicator::ygg_cleanup();
 };
 
 static struct PyModuleDef pyYggModule {
@@ -80,6 +80,6 @@ PyInit_pyYggdrasil() {
       return NULL;
     }
     PyObject* m = PyModuleDef_Init(&pyYggModule);
-    communication::communicator::ygg_init();
+    YggInterface::communicator::ygg_init();
     return m;
 }
