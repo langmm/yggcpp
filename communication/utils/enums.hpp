@@ -174,7 +174,8 @@ const std::map<const COMM_TYPE, const std::string> COMM_TYPE_map {
   {MPI_COMM, "MPI"},
   {SERVER_COMM, "SERVER"},
   {CLIENT_COMM, "CLIENT"},
-  {FILE_COMM, "FILE"}};
+  {FILE_COMM, "FILE"},
+  {RMQ_COMM, "RMQ"}};
 
 const std::map<const COMM_TYPE, const std::string> COMM_TYPE_cls_map {
   {NULL_COMM, "NullComm"},
@@ -184,7 +185,8 @@ const std::map<const COMM_TYPE, const std::string> COMM_TYPE_cls_map {
   {MPI_COMM, "MPIComm"},
   {SERVER_COMM, "ServerComm"},
   {CLIENT_COMM, "ClientComm"},
-  {FILE_COMM, "FileComm"}};
+  {FILE_COMM, "FileComm"},
+  {RMQ_COMM, "RMQComm"}};
 
 const std::map<const LANGUAGE, const std::string> LANGUAGE_map {
   {NO_LANGUAGE, ""},
