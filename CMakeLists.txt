@@ -285,7 +285,7 @@ endif (ENABLE_ZMQ)
 ############
 
 if(ENABLE_RMQ)
-    find_package(rabbitmq-c CONFIG)
+    find_package_pkgconfig(rabbitmq-c HEADER amqp.h LIBNAMES rabbitmq)
     if (rabbitmq-c_FOUND)
         include(${rabbitmq-c_CONFIG})
         list(APPEND YGG_INSTALL_DEFS -DRMQINSTALLED)
@@ -294,6 +294,14 @@ if(ENABLE_RMQ)
 	execute_process(
 	  COMMAND ls ${rabbitmq-c_DIR}
 	  COMMAND_ECHO STDOUT)
+	# In v0.12.0 (v9.2.5 so), the include files were moved into a
+	# dedicated rabbitmq-c directory
+	if (((rabbitmq-c_DIR MATCHES "*vcpkg*") AND
+	     (rabbitmq-c_VERSION VERSION_LESS "9.2.5")) OR
+	    (rabbitmq-c_VERSION VERSION_LESS "0.12.0"))
+          list(APPEND DEPS_PUBLIC_C_COMPILE_FLAGS -DYGG_RMQ_NOINCLUDEDIR)
+	  list(APPEND DEPS_PUBLIC_CXX_COMPILE_FLAGS -DYGG_RMQ_NOINCLUDEDIR)
+	endif()
     else()
         message(STATUS "NO RabbitMQ client library")
     endif()

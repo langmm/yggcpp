@@ -1,5 +1,5 @@
 function(dump_cmake_variables)
-  set(oneValueArgs REGEX)
+  set(oneValueArgs REGEX OUTPUT_VAR)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
   get_cmake_property(_variableNames VARIABLES)
   list (SORT _variableNames)
@@ -12,7 +12,13 @@ function(dump_cmake_variables)
       endif()
     endif()
     message(STATUS "${_variableName}=${${_variableName}}")
+    if (ARGS_OUTPUT_VAR)
+      list(APPEND ${ARGS_OUTPUT_VAR} ${_variableName})
+    endif()
   endforeach()
+  if (ARGS_OUTPUT_VAR)
+    set(${ARGS_OUTPUT_VAR} ${${ARGS_OUTPUT_VAR}} PARENT_SCOPE)
+  endif()
 endfunction()
 
 function(find_package_python)
@@ -93,45 +99,66 @@ function(find_package_python)
     set(Python3_NumPy_INCLUDE_DIRS ${Python3_NumPy_INCLUDE_DIRS} PARENT_SCOPE)
 endfunction()
 
-function(find_package_zmq)
+function(find_package_pkgconfig name)
+    set(oneValueArgs HEADER)
+    set(multiValueArgs LIBNAMES)
+    cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+    if (NOT ARGS_LIBNAMES)
+      list(APPEND ARGS_LIBNAMES ${name})
+    endif()
+    if (NOT ARGS_HEADER)
+      list(GET ARGS_LIBNAMES 0 FIRST_NAME)
+      set(ARGS_HEADER ${FIRST_NAME}.h)
+    endif()
     if (NOT CONDA_PREFIX)
         cmake_path(SET CONDA_PREFIX "$ENV{CONDA_PREFIX}")
     endif()
-    find_package(ZeroMQ CONFIG)
-    if (NOT ZeroMQ_FOUND)
-        message(STATUS "ZeroMQ could not be found using default search tree. Trying via pkg-config...")
+    find_package(${name} CONFIG)
+    if (NOT ${name}_FOUND)
+        message(STATUS "${name} could not be found using default search tree. Trying via pkg-config...")
         # Only conda version has CMake config
         ## load in pkg-config support
         find_package(PkgConfig)
-        ## use pkg-config to get hints for 0mq locations
-        pkg_check_modules(PC_ZeroMQ QUIET zmq libzmq libzmq-static)
+        ## use pkg-config to get hints for locations
+        pkg_check_modules(PC_${name} QUIET ${ARGS_LIBNAMES})
 
         if (CONDA_PREFIX)
 	    if (WIN32)
-                set(PC_ZeroMQ_INCLUDE_DIRS "${CONDA_PREFIX}/Library/include ${PC_ZeroMQ_INCLUDE_DIRS}")
-                set(PC_ZeroMQ_LIBRARY_DIRS "${CONDA_PREFIX}/Library/lib ${CONDA_PREFIX}/Library/bin ${PC_ZeroMQ_LIBRARY_DIRS}")
+                set(PC_${name}_INCLUDE_DIRS "${CONDA_PREFIX}/Library/include ${PC_${name}_INCLUDE_DIRS}")
+                set(PC_${name}_LIBRARY_DIRS "${CONDA_PREFIX}/Library/lib ${CONDA_PREFIX}/Library/bin ${PC_${name}_LIBRARY_DIRS}")
             else()
-                set(PC_ZeroMQ_INCLUDE_DIRS "${CONDA_PREFIX}/include ${PC_ZeroMQ_INCLUDE_DIRS}")
-                set(PC_ZeroMQ_LIBRARY_DIRS "${CONDA_PREFIX}/lib ${PC_ZeroMQ_LIBRARY_DIRS}")
+                set(PC_${name}_INCLUDE_DIRS "${CONDA_PREFIX}/include ${PC_${name}_INCLUDE_DIRS}")
+                set(PC_${name}_LIBRARY_DIRS "${CONDA_PREFIX}/lib ${PC_${name}_LIBRARY_DIRS}")
             endif()
         endif()
 
-        ## use the hint from above to find where 'zmq.h' is located
-        find_path(ZeroMQ_INCLUDE_DIR
-            NAMES zmq.h
-            PATHS ${PC_ZeroMQ_INCLUDE_DIRS})
+        ## use the hint from above to find where '*.h' is located
+        find_path(${name}_INCLUDE_DIR
+            NAMES ${ARGS_HEADER}
+            PATHS ${PC_${name}_INCLUDE_DIRS})
 
-        ## use the hint from above to find the location of libzmq
-        find_library(ZeroMQ_LIBRARY_NEW
-            NAMES zmq libzmq libzmq-static
-            PATHS ${PC_ZeroMQ_LIBRARY_DIRS})
+        ## use the hint from above to find the location of lib*
+        find_library(${name}_LIBRARY_NEW
+            NAMES ${ARGS_LIBNAMES}
+            PATHS ${PC_${name}_LIBRARY_DIRS})
 
-        set(ZeroMQ_LIBRARY ${ZeroMQ_LIBRARY_NEW})
-	if ((NOT ZeroMQ_INCLUDE_DIR STREQUAL ZeroMQ_INCLUDE_DIR-NOTFOUND) AND (NOT ZeroMQ_LIBRARY STREQUAL ZeroMQ_LIBRARY-NOTFOUND))
-            set(ZeroMQ_FOUND 1)
+        set(${name}_LIBRARY ${${name}_LIBRARY_NEW})
+	if ((NOT ${name}_INCLUDE_DIR STREQUAL ${name}_INCLUDE_DIR-NOTFOUND) AND (NOT ${name}_LIBRARY STREQUAL ${name}_LIBRARY-NOTFOUND))
+            set(${name}_FOUND 1)
 	    # set(create_interface ON)
 	endif()
     endif()
+    dump_cmake_variables(REGEX "${name}*" OUTPUT_VAR package_vars)
+    foreach (_variableName IN LISTS package_vars)
+      set(${_variableName} ${${_variableName}} PARENT_SCOPE)
+    endforeach()
+endfunction()
+
+
+function(find_package_zmq)
+    find_package_pkgconfig(ZeroMQ NAMES zmq libzmq libzmq-static
+                           HEADER zmq.h)
+
     # Force error
     if ((NOT ZeroMQ_FOUND) AND (WIN32))
         find_package(ZeroMQ CONFIG REQUIRED)

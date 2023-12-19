@@ -1,7 +1,13 @@
 #pragma once
 #ifdef RMQINSTALLED
+
+#ifdef YGG_RMQ_NOINCLUDEDIR
+#include <amqp.h>
+#include <amqp_tcp_socket.h>
+#else // YGG_RMQ_NOINCLUDEDIR
 #include <rabbitmq-c/amqp.h>
 #include <rabbitmq-c/tcp_socket.h>
+#endif // YGG_RMQ_NOINCLUDEDIR
 #endif // RMQINSTALLED
 #include "CommBase.hpp"
 
