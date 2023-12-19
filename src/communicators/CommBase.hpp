@@ -1480,18 +1480,18 @@ protected:
 
     /*!
      * @brief Create a worker using the inputs
-     * @param[in] address The address to use for the worker
+     * @param[in] addr The address to use for the worker
      * @param[in] dir The communication direction
-     * @param[in] flags Any flags for the worker
+     * @param[in] flgs Any flags for the worker
      * @return The communications worker
      * @see utils::Address
      */
-    Comm_t* create_worker(utils::Address& address, const DIRECTION dir,
-                          int flags) override {
+    Comm_t* create_worker(utils::Address& addr, const DIRECTION dir,
+                          int flgs) override {
   
         UNUSED(dir);
-	UNUSED(address);
-	UNUSED(flags);
+	UNUSED(addr);
+	UNUSED(flgs);
         throw_error("create_worker of base class called, must be overridden");
         return nullptr; // GCOVR_EXCL_LINE
     }
