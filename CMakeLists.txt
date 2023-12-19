@@ -287,20 +287,24 @@ endif (ENABLE_ZMQ)
 if(ENABLE_RMQ)
     find_package_pkgconfig(rabbitmq-c HEADER amqp.h LIBNAMES rabbitmq)
     if (rabbitmq-c_FOUND)
-        include(${rabbitmq-c_CONFIG})
         list(APPEND YGG_INSTALL_DEFS -DRMQINSTALLED)
         list(APPEND YGG_INSTALL_DEPS rabbitmq-c)
-	list(APPEND DEPS_LIBRARIES rabbitmq::rabbitmq)
-	if (rabbitmq-c_DIR)
+        if (rabbitmq-c_CONFIG)
+          include(${rabbitmq-c_CONFIG})
+  	  list(APPEND DEPS_LIBRARIES rabbitmq::rabbitmq)
 	  execute_process(
 	    COMMAND ls ${rabbitmq-c_DIR}
 	    COMMAND_ECHO STDOUT)
+	else()
+	  list(APPEND DEPS_LIBRARIES ${rabbitmq-c_LIBRARY})
+	  list(APPEND DEPS_INCLUDE_DIRS ${rabbitmq-c_INCLUDE_DIR})
 	endif()
 	# In v0.12.0 (v9.2.5 so), the include files were moved into a
 	# dedicated rabbitmq-c directory
-	if (((rabbitmq-c_DIR MATCHES "*vcpkg*") AND
-	     (rabbitmq-c_VERSION VERSION_LESS "9.2.5")) OR
-	    (rabbitmq-c_VERSION VERSION_LESS "0.12.0"))
+	if (rabbitmq-c_VERSION AND
+	    (((rabbitmq-c_DIR MATCHES "*vcpkg*") AND
+	      (rabbitmq-c_VERSION VERSION_LESS "9.2.5")) OR
+	     (rabbitmq-c_VERSION VERSION_LESS "0.12.0")))
           list(APPEND DEPS_PUBLIC_C_COMPILE_FLAGS -DYGG_RMQ_NOINCLUDEDIR)
 	  list(APPEND DEPS_PUBLIC_CXX_COMPILE_FLAGS -DYGG_RMQ_NOINCLUDEDIR)
 	endif()
