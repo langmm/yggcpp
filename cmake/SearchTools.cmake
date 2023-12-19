@@ -146,6 +146,7 @@ function(find_package_pkgconfig name)
         if(NOT tmp_library STREQUAL tmp_library-NOTFOUND)
             set(${name}_LIBRARY ${tmp_library})
 	else()
+	    set(${name}_LIBRARY ${name}_LIBRARY-NOTFOUND)
 	    foreach(dir IN LISTS PC_${name}_LIBRARY_DIRS)
 	      execute_process(
 	        COMMAND ls ${dir}
