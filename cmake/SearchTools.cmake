@@ -138,12 +138,22 @@ function(find_package_pkgconfig name)
             PATHS ${PC_${name}_INCLUDE_DIRS})
 
         ## use the hint from above to find the location of lib*
-        find_library(${name}_LIBRARY_NEW
+        find_library(tmp_library
             NAMES ${ARGS_LIBNAMES}
-            PATHS ${PC_${name}_LIBRARY_DIRS})
+            PATHS ${PC_${name}_LIBRARY_DIRS}
+	    NO_CACHE)
 
-        set(${name}_LIBRARY ${${name}_LIBRARY_NEW})
-	if ((NOT ${name}_INCLUDE_DIR STREQUAL ${name}_INCLUDE_DIR-NOTFOUND) AND (NOT ${name}_LIBRARY STREQUAL ${name}_LIBRARY-NOTFOUND))
+        if(NOT tmp_library STREQUAL tmp_library-NOTFOUND)
+            set(${name}_LIBRARY ${tmp_library})
+	else()
+	    foreach(dir IN LISTS PC_${name}_LIBRARY_DIRS)
+	      execute_process(
+	        COMMAND ls ${dir}
+	        COMMAND_ECHO STDOUT)
+	    endforeach()
+	endif()
+	if ((NOT ${name}_INCLUDE_DIR STREQUAL ${name}_INCLUDE_DIR-NOTFOUND) AND
+	    (NOT ${name}_LIBRARY STREQUAL ${name}_LIBRARY-NOTFOUND))
             set(${name}_FOUND 1)
 	    # set(create_interface ON)
 	endif()
