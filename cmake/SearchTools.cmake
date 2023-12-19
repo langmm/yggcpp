@@ -156,7 +156,7 @@ endfunction()
 
 
 function(find_package_zmq)
-    find_package_pkgconfig(ZeroMQ NAMES zmq libzmq libzmq-static
+    find_package_pkgconfig(ZeroMQ LIBNAMES zmq libzmq libzmq-static
                            HEADER zmq.h)
 
     # Force error

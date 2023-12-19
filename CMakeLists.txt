@@ -291,9 +291,11 @@ if(ENABLE_RMQ)
         list(APPEND YGG_INSTALL_DEFS -DRMQINSTALLED)
         list(APPEND YGG_INSTALL_DEPS rabbitmq-c)
 	list(APPEND DEPS_LIBRARIES rabbitmq::rabbitmq)
-	execute_process(
-	  COMMAND ls ${rabbitmq-c_DIR}
-	  COMMAND_ECHO STDOUT)
+	if (rabbitmq-c_DIR)
+	  execute_process(
+	    COMMAND ls ${rabbitmq-c_DIR}
+	    COMMAND_ECHO STDOUT)
+	endif()
 	# In v0.12.0 (v9.2.5 so), the include files were moved into a
 	# dedicated rabbitmq-c directory
 	if (((rabbitmq-c_DIR MATCHES "*vcpkg*") AND
