@@ -53,7 +53,7 @@ static PyMethodDef functions[] = {
 };
 
 static void pyYggModule_free(void*) {
-  communication::communicator::ygg_cleanup();
+  YggInterface::communicator::ygg_cleanup();
 };
 
 static struct PyModuleDef pyYggModule {
@@ -75,11 +75,11 @@ PyInit__pyYggdrasil() {
 PyMODINIT_FUNC
 PyInit_pyYggdrasil() {
 #endif // YGG_PYTHON_LIBRARY_WRAP
-    if (!communication::utils::import_numpy_arrays()) {
+    if (!YggInterface::utils::import_numpy_arrays()) {
       PyErr_SetString(PyExc_ImportError, "Could not import numpy");
       return NULL;
     }
     PyObject* m = PyModuleDef_Init(&pyYggModule);
-    communication::communicator::ygg_init();
+    YggInterface::communicator::ygg_init();
     return m;
 }

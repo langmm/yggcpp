@@ -2,8 +2,8 @@
 #include "utils/tools.hpp"
 #include "communicators/CommBase.hpp"
 
-using namespace communication;
-using namespace communication::communicator;
+using namespace YggInterface;
+using namespace YggInterface::communicator;
 
 class Comm_tTest: public Comm_t {
 public:

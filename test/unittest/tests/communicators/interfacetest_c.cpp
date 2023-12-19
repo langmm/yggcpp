@@ -4,7 +4,7 @@
 #include "utils/serialization.hpp"
 #include "commtest.hpp"
 
-using namespace communication::communicator;
+using namespace YggInterface::communicator;
 
 #define INIT_INPUT_BASE(cls, cls_args, alt, alt_args)	\
   alt sComm alt_args;					\
@@ -211,7 +211,7 @@ TEST(YggInterface_C, Client) {
   std::string req_recv = "";
   std::string msg = "\"" + req_send + "\"";
   {
-    communication::utils::Header header(msg.c_str(), msg.size(), &sComm);
+    YggInterface::utils::Header header(msg.c_str(), msg.size(), &sComm);
     EXPECT_TRUE(sComm.create_header_test(header));
     int len = header.format();
     msg.assign(header.data[0], static_cast<size_t>(len));
@@ -312,7 +312,7 @@ TEST(YggInterface_C, ClientPointers) {
   std::string req_recv = "";
   std::string msg = "\"" + req_send + "\"";
   {
-    communication::utils::Header header(msg.c_str(), msg.size(), &sComm);
+    YggInterface::utils::Header header(msg.c_str(), msg.size(), &sComm);
     EXPECT_TRUE(sComm.create_header_test(header));
     int len = header.format();
     msg.assign(header.data[0], static_cast<size_t>(len));

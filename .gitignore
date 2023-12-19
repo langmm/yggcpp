@@ -38,4 +38,4 @@
 cmake-build*
 .idea/*
 CMakeLists.txt.user
-communication/CPython
+src/CPython

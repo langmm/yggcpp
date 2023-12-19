@@ -7,9 +7,9 @@
 #include "commtest.hpp"
 #include "YggInterface.hpp"
 
-using namespace communication;
-using namespace communication::communicator;
-using namespace communication::mock;
+using namespace YggInterface;
+using namespace YggInterface::communicator;
+using namespace YggInterface::mock;
 
 TEST(ForkComm, default_pattern) {
   ForkComm sComm("fork", SEND, COMM_FLAG_SET_OPP_ENV, DEFAULT_COMM, 2);

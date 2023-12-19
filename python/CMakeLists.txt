@@ -17,7 +17,7 @@ endif()
 target_include_directories(
           ${YGG_TARGET_PY} PUBLIC
           ${DEPS_INCLUDE_DIRS}
-	  ${CMAKE_CURRENT_SOURCE_DIR}/../communication
+	  ${CMAKE_CURRENT_SOURCE_DIR}/../src
 	  ${RAPIDJSON_INCLUDE_DIRS})
 if(YGG_LINK_PYTHON_TO_CPP)
     target_link_libraries(${YGG_TARGET_PY} PUBLIC ${YGG_TARGET_CPP})

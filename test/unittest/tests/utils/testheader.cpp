@@ -8,7 +8,7 @@
 // #include <cstdlib>
 
 TEST(Metadata, Utilities) {
-  communication::utils::Metadata metadata;
+    YggInterface::utils::Metadata metadata;
   EXPECT_TRUE(metadata.empty());
   EXPECT_FALSE(metadata.hasType());
   EXPECT_FALSE(metadata.hasSubtype());
@@ -22,7 +22,7 @@ TEST(Metadata, Utilities) {
 }
 
 TEST(Metadata, SetAndGet) {
-  communication::utils::Metadata metadata;
+  YggInterface::utils::Metadata metadata;
   EXPECT_EQ(metadata.getMeta(), nullptr);
   EXPECT_EQ(metadata.getSchema(), nullptr);
   EXPECT_FALSE(metadata.SetSchemaMetadata("invalid", metadata));
@@ -153,9 +153,9 @@ TEST(Metadata, SetAndGet) {
 }
 
 TEST(Metadata, components) {
-  communication::utils::Metadata x;
-  communication::utils::Metadata y;
-  communication::utils::Metadata z;
+  YggInterface::utils::Metadata x;
+  YggInterface::utils::Metadata y;
+  YggInterface::utils::Metadata z;
   // Array
   z.fromSchema("{\"type\": \"array\", "
 	       "\"items\": [{\"type\": \"integer\"}]}", true);
@@ -192,25 +192,25 @@ TEST(Metadata, components) {
 }
 
 TEST(Metadata, fromSchema) {
-  communication::utils::Metadata x;
+  YggInterface::utils::Metadata x;
   EXPECT_TRUE(x.setGeneric());
   EXPECT_TRUE(x.isGeneric());
   EXPECT_TRUE(x.fromSchema("{\"type\": \"integer\"}"));
   EXPECT_TRUE(x.isGeneric());
-  communication::utils::Metadata y;
+  YggInterface::utils::Metadata y;
   EXPECT_TRUE(y.fromSchema(x.metadata, true));
   EXPECT_EQ(x.metadata, y.metadata);
   EXPECT_TRUE(y.fromSchema(*(x.getSchema())));
-  communication::utils::Metadata z;
+  YggInterface::utils::Metadata z;
   EXPECT_TRUE(z.fromSchema("{\"type\": \"string\"}"));
   EXPECT_FALSE(y.fromSchema(*(z.getSchema())));
-  communication::utils::Metadata q;
+  YggInterface::utils::Metadata q;
   EXPECT_TRUE(q.fromType("string"));
   EXPECT_EQ(z.metadata, q.metadata);
 }
 
 TEST(Metadata, fromScalar) {
-  communication::utils::Metadata x;
+  YggInterface::utils::Metadata x;
   EXPECT_TRUE(x.fromSchema(
 	       "{"
 	       "  \"type\": \"scalar\","
@@ -218,7 +218,7 @@ TEST(Metadata, fromScalar) {
 	       "  \"precision\": 4,"
 	       "  \"units\": \"cm\""
 	       "}"));
-  communication::utils::Metadata y;
+  YggInterface::utils::Metadata y;
   EXPECT_TRUE(y.fromScalar("float", 4, "cm"));
   EXPECT_EQ(x.metadata, y.metadata);
   std::cerr << x.metadata << std::endl;
@@ -228,7 +228,7 @@ TEST(Metadata, fromScalar) {
   EXPECT_EQ(strcmp(y.subtypeName(), "float"), 0);
 }
 TEST(Metadata, fromNDArray) {
-  communication::utils::Metadata x;
+  YggInterface::utils::Metadata x;
   EXPECT_TRUE(x.fromSchema(
 	       "{"
 	       "  \"type\": \"ndarray\","
@@ -237,7 +237,7 @@ TEST(Metadata, fromNDArray) {
 	       "  \"shape\": [2, 3],"
 	       "  \"units\": \"cm\""
 	       "}"));
-  communication::utils::Metadata y;
+  YggInterface::utils::Metadata y;
   size_t shape[2] = { 2, 3 };
   EXPECT_TRUE(y.fromNDArray("float", 4, 2, shape, "cm"));
   EXPECT_EQ(x.metadata, y.metadata);
@@ -291,7 +291,7 @@ TEST(Metadata, fromFormat) {
   std::string formatStr = "%f\t%d\t%5s\n";
   {
     // Scalar
-    communication::utils::Metadata x;
+    YggInterface::utils::Metadata x;
     EXPECT_TRUE(x.fromSchema(
 		 "{"
 		 "  \"type\": \"array\","
@@ -314,13 +314,13 @@ TEST(Metadata, fromFormat) {
 		 "  ]"
 		 "}"));
     x.SetString("format_str", formatStr, x.metadata["serializer"]);
-    communication::utils::Metadata y;
+    YggInterface::utils::Metadata y;
     EXPECT_TRUE(y.fromFormat(formatStr));
     EXPECT_EQ(x.metadata, y.metadata);
   }
   {
     // Arrays
-    communication::utils::Metadata x;
+    YggInterface::utils::Metadata x;
     EXPECT_TRUE(x.fromSchema(
 		 "{"
 		 "  \"type\": \"array\","
@@ -343,7 +343,7 @@ TEST(Metadata, fromFormat) {
 		 "  ]"
 		 "}"));
     x.SetString("format_str", formatStr, x.metadata["serializer"]);
-    communication::utils::Metadata y;
+    YggInterface::utils::Metadata y;
     EXPECT_TRUE(y.fromFormat(formatStr, true));
     EXPECT_EQ(x.metadata, y.metadata);
     EXPECT_TRUE(y.isFormatArray());
@@ -351,7 +351,7 @@ TEST(Metadata, fromFormat) {
   {
     // Additional types
     std::string fmt = "%hhi\t%hi\t%lli\t%l64i\t%li\t%i\t%hhu\t%hu\t%llu\t%l64u\t%lu\t%u\t%f%+fj\n";
-    communication::utils::Metadata x;
+    YggInterface::utils::Metadata x;
 #ifdef _WIN32
     EXPECT_TRUE(x.fromSchema(
 	         "{"
@@ -498,14 +498,14 @@ TEST(Metadata, fromFormat) {
 		 "}"));
 #endif // _WIN32
     x.SetString("format_str", fmt, x.metadata["serializer"]);
-    communication::utils::Metadata y;
+    YggInterface::utils::Metadata y;
     EXPECT_TRUE(y.fromFormat(fmt));
     EXPECT_EQ(x.metadata, y.metadata);
   }
   {
     // Singular
     std::string fmt = "%d\n";
-    communication::utils::Metadata x;
+    YggInterface::utils::Metadata x;
     EXPECT_TRUE(x.fromSchema(
 		 "{"
 		 "  \"type\": \"array\","
@@ -519,41 +519,41 @@ TEST(Metadata, fromFormat) {
 		 "  ]"
 		 "}"));
     x.SetString("format_str", fmt, x.metadata["serializer"]);
-    communication::utils::Metadata y;
+    YggInterface::utils::Metadata y;
     EXPECT_TRUE(y.fromFormat(fmt));
     EXPECT_EQ(x.metadata, y.metadata);
   }
   {
     // Error
-    communication::utils::Metadata x;
+    YggInterface::utils::Metadata x;
     EXPECT_FALSE(x.fromFormat("%m"));
   }
 }
 
 TEST(Metadata, fromMetadata) {
-  communication::utils::Metadata x;
+  YggInterface::utils::Metadata x;
   EXPECT_FALSE(x.fromMetadata("{"));
   EXPECT_FALSE(x.fromMetadata("\"hello\""));
   EXPECT_FALSE(x.fromMetadata("{}"));
   EXPECT_FALSE(x.fromMetadata("{\"__meta__\": \"hello\"}"));
   EXPECT_TRUE(x.fromMetadata("{\"__meta__\": {}}"));
-  communication::utils::Metadata y;
+  YggInterface::utils::Metadata y;
   EXPECT_TRUE(y.fromMetadata(x));
   EXPECT_EQ(x.metadata, y.metadata);
 }
 
 TEST(Metadata, fromEncode) {
   rapidjson::Value v(true);
-  communication::utils::Metadata x;
+  YggInterface::utils::Metadata x;
   x.fromSchema("{\"type\": \"boolean\"}");
-  communication::utils::Metadata y;
+  YggInterface::utils::Metadata y;
   y.fromEncode(v);
   EXPECT_EQ(x.metadata, y.metadata);
 }
 
 TEST(Metadata, deserialize_errors) {
   rapidjson::VarArgList va;
-  communication::utils::Metadata x;
+  YggInterface::utils::Metadata x;
   EXPECT_EQ(x.deserialize("", va), -1);
   bool dst = false, dst2 = false;
   EXPECT_EQ(x.deserialize("true", 1, false, &dst), 1);
@@ -570,7 +570,7 @@ TEST(Metadata, deserialize_errors) {
 
 TEST(Metadata, serialize_errors) {
   rapidjson::VarArgList va;
-  communication::utils::Metadata x;
+  YggInterface::utils::Metadata x;
   char* buf = (char*)(x.GetAllocator().Malloc(sizeof(char)));
   size_t len = 1;
   EXPECT_EQ(x.serialize(&buf, &len, va), -1);
@@ -598,14 +598,14 @@ TEST(Metadata, serialize_errors) {
 }
 
 TEST(Header, Utilities) {
-  communication::utils::Header header;
+  YggInterface::utils::Header header;
   rapidjson::StringBuffer buf;
   EXPECT_TRUE(header.formatBuffer(buf));
   EXPECT_EQ(buf.GetLength(), 0);
   EXPECT_EQ(header.format(), 0);
   EXPECT_TRUE(header == header);
   EXPECT_FALSE(header != header);
-  communication::utils::Header header2;
+  YggInterface::utils::Header header2;
   EXPECT_TRUE(header2.fromType("integer", false, false));
   EXPECT_FALSE(header == header2);
   EXPECT_TRUE(header != header2);
@@ -616,15 +616,15 @@ TEST(Header, Utilities) {
 }
 
 TEST(Header, for_send) {
-  communication::utils::Metadata schema;
+  YggInterface::utils::Metadata schema;
   EXPECT_TRUE(schema.fromSchema("{\"type\": \"string\"}"));
   std::string msg = "This is a test message";
   setenv("YGG_MODEL_NAME", "model", 1);
   setenv("YGG_MODEL_COPY", "1", 1);
-  communication::utils::Header header_send;
+  YggInterface::utils::Header header_send;
   EXPECT_TRUE(header_send.for_send(&schema, msg.c_str(), msg.size(), 0));
   EXPECT_TRUE(header_send.on_send());
-  communication::utils::Header header_recv;
+  YggInterface::utils::Header header_recv;
   EXPECT_EQ(header_recv.on_recv(header_send.data[0],
 				header_send.size_curr),
 	    -static_cast<long>(header_send.size_curr));
@@ -636,11 +636,11 @@ TEST(Header, for_send) {
   EXPECT_EQ(header_recv.size_data, msg.size());
   EXPECT_EQ(strcmp(header_recv.data[0], msg.c_str()), 0);
   // Header equality
-  communication::utils::Header header_send2;
+  YggInterface::utils::Header header_send2;
   EXPECT_TRUE(header_send2.for_send(&schema, msg.c_str(), msg.size(), 0));
   EXPECT_TRUE(header_send2.fromMetadata(header_send));
   EXPECT_TRUE(header_send2.on_send());
-  communication::utils::Header header_recv2(true);
+  YggInterface::utils::Header header_recv2(true);
   EXPECT_EQ(header_recv2.on_recv(header_send2.data[0],
 				 header_send2.size_curr),
 	    header_send2.size_curr);
@@ -649,12 +649,12 @@ TEST(Header, for_send) {
   EXPECT_NE(header_recv, header_send);
   // Received message larger than buffer
   std::string msg3(2048, 'a');
-  communication::utils::Header header_send3;
+  YggInterface::utils::Header header_send3;
   EXPECT_TRUE(header_send3.for_send(&schema, msg3.c_str(), msg3.size(), 0));
   EXPECT_TRUE(header_send3.on_send());
   size_t size_buf3 = header_send3.size_curr - 1000;
   char* buf3 = (char*)malloc(size_buf3);
-  communication::utils::Header header_recv3(buf3, size_buf3, false);
+  YggInterface::utils::Header header_recv3(buf3, size_buf3, false);
   EXPECT_EQ(header_recv3.on_recv(header_send3.data[0], size_buf3 - 1), -1);
   free(buf3);
   buf3 = NULL;

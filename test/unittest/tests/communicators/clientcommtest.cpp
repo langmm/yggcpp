@@ -8,11 +8,11 @@
 
 #ifdef COMM_BASE
 
-using namespace communication;
-using namespace communication::communicator;
-using namespace communication::mock;
+using namespace YggInterface;
+using namespace YggInterface::communicator;
+using namespace YggInterface::mock;
 
-namespace communication {
+namespace YggInterface {
 namespace testing {
 class ClientComm_tester : public ClientComm {
 private:
@@ -96,13 +96,13 @@ public:
 
 TEST(ClientComm, constructor) {
     std::string name = "MyComm";
-    communication::testing::ClientComm_tester cc(name);
-    communication::testing::ClientComm_tester cc1("");
+    YggInterface::testing::ClientComm_tester cc(name);
+    YggInterface::testing::ClientComm_tester cc1("");
 }
 
 TEST(ClientComm, send) {
     std::string name = "MyComm";
-    communication::testing::ClientComm_tester cc(name);
+    YggInterface::testing::ClientComm_tester cc(name);
     std::string msg = "This is a test message";
     EXPECT_TRUE(cc.addSignon());
     EXPECT_GE(cc.send(msg.c_str(), msg.size()), 0);
@@ -110,7 +110,7 @@ TEST(ClientComm, send) {
 
 TEST(ClientComm, sendLarge) {
     std::string name = "MyComm";
-    communication::testing::ClientComm_tester cc(name);
+    YggInterface::testing::ClientComm_tester cc(name);
     cc.addWorkers();
     std::string msg(cc.getMaxMsgSize(), 'A');
     EXPECT_TRUE(cc.addSignon());
@@ -129,7 +129,7 @@ TEST(ClientComm, sendLarge) {
 
 TEST(ClientComm, recv) {
     std::string name = "MyComm";
-    communication::testing::ClientComm_tester cc(name);
+    YggInterface::testing::ClientComm_tester cc(name);
     std::string req_send = "REQUEST";
     std::string res_send = "RESPONSE";
     std::string req_recv;
@@ -213,7 +213,7 @@ TEST(ClientComm, async) {
 
 TEST(ClientComm, recvLarge) {
     std::string name = "MyComm";
-    communication::testing::ClientComm_tester cc(name);
+    YggInterface::testing::ClientComm_tester cc(name);
     std::string bigMsg(cc.getMaxMsgSize(), 'A');
     std::string req_send = "REQUEST" + bigMsg;
     std::string res_send = "RESPONSE" + bigMsg;
@@ -234,7 +234,7 @@ TEST(ClientComm, recvLarge) {
 
 TEST(ClientComm, call) {
   std::string name = "MyComm";
-  communication::testing::ClientComm_tester cc(name);
+  YggInterface::testing::ClientComm_tester cc(name);
   cc.addSchema("{\"type\": \"string\"}");
   std::string req_send = "REQUEST1";
   std::string res_send = "RESPONSE1";
