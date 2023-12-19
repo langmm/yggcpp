@@ -128,14 +128,14 @@ int is_generic_init(generic_t x);
  */
 int is_generic_ref_init(generic_ref_t x);
 
-/*!
-  @brief Create a generic object from the provided information.
-  @param[in] type_class Type structure/class.
-  @param[in] data Pointer to data.
-  @param[in] nbytes Size of data.
-  @returns generic_t Pointer to new generic object structure.
- */
-/* generic_t create_generic(dtype_t type_class, void* data, size_t nbytes); */
+//
+//  @brief Create a generic object from the provided information.
+//  @param[in] type_class Type structure/class.
+//  @param[in] data Pointer to data.
+//  @param[in] nbytes Size of data.
+//  @returns generic_t Pointer to new generic object structure.
+//
+// generic_t create_generic(dtype_t type_class, void* data, size_t nbytes);
 
   
 /*!
@@ -296,26 +296,138 @@ int generic_map_has_key(generic_t x, const char* key);
  */
 size_t generic_map_get_keys(generic_t x, char*** keys);
 
-// TODO: Copy docs
-
+/**
+ * @brief Get a pointer to the given generic reference item
+ * @param[in] x The generic reference item to use
+ * @param[in] type The type x should be
+ * @return Pointer to the reference item or NULL on error
+ */
 void* generic_ref_get_item(generic_ref_t x, const char *type);
+/**
+ * @brief Get a pointer to the generic item
+ * @param[in] x The generic item to use
+ * @param[in] type The type x should be
+ * @return Pointer to the item or NULL on error
+ */
 void* generic_get_item(generic_t x, const char *type);
+/**
+ * @brief Get the size of the reference item
+ * @param[in] x The reference item to use
+ * @param[in] type The type x should be
+ * @return The size in bytes or -1 on error
+ */
 int generic_ref_get_item_nbytes(generic_ref_t x, const char *type);
+/**
+ * @brief Get the size of the item
+ * @param[in] x The item to use
+ * @param[in] type The type x should be
+ * @return The size in bytes or -1 on error
+ */
 int generic_get_item_nbytes(generic_t x, const char *type);
+/**
+ * @brief Set the data in the given item to the given value
+ * @param[in, out] x The item to set
+ * @param[in] type The type x should be
+ * @param[in] value The value to give to x
+ * @return 0 on success, 1 on error
+ */
 int generic_set_item(generic_t x, const char *type, void* value);
-
+/**
+ * @brief Set the data in the given item to the value given by the json character string
+ * @param[in, out] x The item to set
+ * @param[in] json The value to set x to
+ * @return 0 on success, 1 on error
+ */
 int generic_set_json(generic_t x, const char *json);
+/**
+ * @brief Get x as a scalar value
+ * @param[in] x The data to retrieve
+ * @param[in] subtype The subtype x should be
+ * @param[in] precision The precision of the scalar
+ * @return Pointer to the scalar value, NULL on error
+ */
 void* generic_ref_get_scalar(generic_ref_t x, const char *subtype, const size_t precision);
+/**
+ * @brief Get x as a scalar value
+ * @param[in] x The data to retrieve
+ * @param[in] subtype The subtype x should be
+ * @param[in] precision The precision of the scalar
+ * @return Pointer to the scalar value, NULL on error
+ */
 void* generic_get_scalar(generic_t x, const char *subtype, const size_t precision);
+/**
+ * @brief Get x as a 1D array of values
+ * @param[in] x The data to retrieve
+ * @param[in] subtype The subtype x should be
+ * @param[in] precision The precision of the array values
+ * @param[out] data Pointer to a pointer array for the values, will be resized as needed
+ * @return The number of elements in data, 0 on error
+ */
 size_t generic_ref_get_1darray(generic_ref_t x, const char *subtype, const size_t precision, void** data);
+/**
+ * @brief Get x as a 1D array of values
+ * @param[in] x The data to retrieve
+ * @param[in] subtype The subtype x should be
+ * @param[in] precision The precision of the array values
+ * @param[out] data Pointer to a pointer array for the values, will be resized as needed
+ * @return The number of elements in data, 0 on error
+ */
 size_t generic_get_1darray(generic_t x, const char *subtype, const size_t precision, void** data);
+/**
+ * @brief Get x as an N dimensionnal array of pointers
+ * @param[in] x The data to retrieve
+ * @param[in] subtype The subtype x should be
+ * @param[in] precision The precision of the array data members
+ * @param[out] data Pointer to an array of pointers for the values of the array, will be resized as needed
+ * @param[out] shape Pointer to an array of pointers, one for each dimension of data, giving the number of elements in each
+ * @return The number of dimensions, or 0 on error
+ */
 size_t generic_ref_get_ndarray(generic_ref_t x, const char *subtype, const size_t precision, void** data, size_t** shape);
+/**
+ * @brief Get x as an N dimensionnal array of pointers
+ * @param[in] x The data to retrieve
+ * @param[in] subtype The subtype x should be
+ * @param[in] precision The precision of the array data members
+ * @param[out] data Pointer to an array of pointers for the values of the array, will be resized as needed
+ * @param[out] shape Pointer to an array of pointers, one for each dimension of data, giving the number of elements in each
+ * @return The number of dimensions, or 0 on error
+ */
 size_t generic_get_ndarray(generic_t x, const char *subtype, const size_t precision, void** data, size_t** shape);
+/**
+ * @brief Set the given item to the given scalar value
+ * @param[in] x The item to set
+ * @param[in] value The value to give to x
+ * @param[in] subtype The expected subtype of x
+ * @param[in] precision The precision of value
+ * @param[in] units Th units of value
+ * @return 0 on success, 1 on error
+ */
 int generic_set_scalar(generic_t x, void* value, const char *subtype,
 		       const size_t precision, const char *units);
+/**
+ * @brief Set the given item to the given array
+ * @param[in] x The item to set
+ * @param[in] value The array of values to give to x
+ * @param[in] subtype The expected subtype of x
+ * @param[in] precision The precision of value
+ * @param[in] length The number of elements in value
+ * @param[in] units The units of value
+ * @return 0 on success, 1 on error
+ */
 int generic_set_1darray(generic_t x, void* value, const char *subtype,
 			const size_t precision, const size_t length,
 			const char* units);
+/**
+ * @brief Set the given item to the given array
+ * @param[in] x The item to set
+ * @param[in] data The values to give to x
+ * @param[in] subtype The expected subtype of x
+ * @param[in] precision The precision of data
+ * @param[in] ndim The number of dimensions in data
+ * @param[in] shape Array giving the number of elements in each dimension
+ * @param[in] units The units of data
+ * @return 0 on success, 1 on error
+ */
 int generic_set_ndarray(generic_t x, void* data, const char *subtype,
 			const size_t precision, const size_t ndim,
 			const size_t* shape, const char* units);
@@ -467,8 +579,8 @@ void destroy_python_function(python_function_t *x);
 
 /*!
   @brief Determine if a datatype is empty.
-  @param[in] Type structure to test.
-  @returns 1 if dtype is empty, 0 otherwise.
+  @param[in] dtype structure to test.
+  @returns int 1 if dtype is empty, 0 otherwise.
  */
 int is_empty_dtype(const dtype_t dtype);
 
@@ -802,14 +914,14 @@ int dtype_uses_generic(dtype_t dtype);
 
 /*!
   @brief Display a datatype.
-  @param[in] dtype Datatype structure to display.
-  @param[in] indent Indentation that should be used on each line.
+  @param[in] dtype Wrapper struct for C++ Metadata.
+  @param[in] indent Indentation to add to display output.
  */
-void display_dtype(const dtype_t dtype, const char* indent);
+void display_dtype(const dtype_t dtype, const char* indent="");
 
 /*!
   @brief Wrapper for updating a type object with information from another.
-  @param[in] Wrapper struct for C++ Metadata that should be updated.
+  @param[in] dtype1 struct for C++ Metadata that should be updated.
   @param[in] schema2 C++ rapidjson::Document that should be updated from.
   @returns: int 0 if successfull, -1 if there was an error.
 */
@@ -824,7 +936,7 @@ int update_dtype(dtype_t* dtype1, void* schema2);
   @returns: int 0 if free was successfull, -1 if there was an error.
 */
 int update_precision_dtype(dtype_t* dtype,
-			   const size_t new_precision);
+                           const size_t new_precision);
 
 #define free_generic destroy_generic
 #define init_json_object init_generic_map

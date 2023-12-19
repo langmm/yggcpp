@@ -8,7 +8,7 @@ using namespace YggInterface::utils;
 
 unsigned ClientComm::_client_rand_seeded = 0;
 
-ClientComm::ClientComm(const std::string nme, const Address& addr,
+ClientComm::ClientComm(const std::string& nme, const Address& addr,
 		       int flgs, const COMM_TYPE type, size_t ncomm,
 		       const COMM_TYPE reqtype,
 		       const COMM_TYPE restype,
@@ -173,7 +173,7 @@ long ClientComm::recv_single(utils::Header& header) {
     log_debug() << "recv_single" <<
       " (signon = " << in_signon << ")" << std::endl;
     Comm_t* response_comm = requests.activeComm();
-    if (response_comm == NULL) {
+    if (response_comm == nullptr) {
       log_error() << "recv_single: Error getting response comm" <<
 	" (signon = " << in_signon << ")" << std::endl;
       return -1;

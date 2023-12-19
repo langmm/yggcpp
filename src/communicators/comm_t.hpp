@@ -36,7 +36,7 @@ extern "C" {
 #endif
 
     /**
-     * Struct for holding a C++ class communicator as a void* for use in C
+     * @brief Struct for holding a C++ class communicator as a void* for use in C
      */
 typedef struct comm_t {
     void* comm;
@@ -59,28 +59,28 @@ int ygg_init();
 void ygg_exit();
 
 /**
- * Delete the underlying communicator
+ * @brief Delete the underlying communicator
  * @param comm The communicator to delete
  */
 void free_comm(comm_t* comm);
 
 /**
- * Close the underlying communicator
+ * @brief Close the underlying communicator
  * @param comm The communicator to close
  */
 void close_comm(comm_t* comm);
 
-/**
- * Open a new communicator of the given type
- * @param address The initial address of the communicator
- * @param dir The enumerated direction for the communicator
- * @param t The enumerated communicator type to create
- * @return comm_t struct containing the requested communicator
- */
+//**
+// * Open a new communicator of the given type
+// * @param address The initial address of the communicator
+// * @param dir The enumerated direction for the communicator
+// * @param t The enumerated communicator type to create
+// * @return comm_t struct containing the requested communicator
+// */
 // comm_t open_comm(char* address, DIRECTION dir, const COMM_TYPE &t);
 
 /**
- * Initialize a new communicator without interface flag set
+ * @brief Initialize a new communicator without interface flag set
  * @param name The name for the communicator
  * @param dir The enumerated direction of the communicator
  * @param t The enumerated communicator type to create
@@ -97,7 +97,7 @@ comm_t _init_comm(const char* name, const enum DIRECTION dir,
 		  const size_t ncomm);
   
 /**
- * Initialize a new communicator
+ * @brief Initialize a new communicator
  * @param name The name for the communicator
  * @param dir The enumerated direction of the communicator
  * @param t The enumerated communicator type to create
@@ -110,7 +110,7 @@ comm_t init_comm(const char* name, const enum DIRECTION dir,
 		 dtype_t* datatype);
 
 /**
- * Initialize a new communicator with flags
+ * @brief Initialize a new communicator with flags
  * @param name The name for the communicator
  * @param dir The enumerated direction of the communicator
  * @param t The enumerated communicator type to create
@@ -119,15 +119,16 @@ comm_t init_comm(const char* name, const enum DIRECTION dir,
  */
 comm_t init_comm_flags(const char* name, const enum DIRECTION dir,
 		       const enum COMM_TYPE t, int flags);
-  
+
 /**
- * Set a communicators language.
+ * @brief Set a communicators language.
  * @param x Communicator
  * @param lang Language.
  * @return 1 if successful, 0 otherwise.
  */
 int set_comm_language(comm_t x, const enum LANGUAGE lang);
 
+  
 /**
  * Set a communicators datatype based on a C-style format string.
  * @param comm Communicator
@@ -135,8 +136,9 @@ int set_comm_language(comm_t x, const enum LANGUAGE lang);
  * @return 1 if successful, 0 otherwise.
  */
 int set_response_format(comm_t comm, const char *fmt);
+  
 /**
- * Set a communicators datatype.
+ * @brief Set a communicators datatype.
  * @param x Communicator
  * @param datatype Pointer to datatype. The underlying data will be
  *   consumed.
@@ -145,14 +147,14 @@ int set_response_format(comm_t comm, const char *fmt);
 int set_response_datatype(comm_t x, dtype_t* datatype);
 
 /**
- * Get the datatype associated with a communicator.
+ * @brief Get the datatype associated with a communicator.
  * @param x Communicator
  * @return The datatype
  */
 dtype_t comm_get_datatype(comm_t x);
 
 /**
- * Set the datatype associated with a communicator.
+ * @brief Set the datatype associated with a communicator.
  * @param x Communicator
  * @param datatype The datatype
  * @return 1 if successful, 0 otherwise.
@@ -160,29 +162,31 @@ dtype_t comm_get_datatype(comm_t x);
 int comm_set_datatype(comm_t x, dtype_t* datatype);
   
 /**
- * Send a message with the given communicator
+ * @brief Send a message with the given communicator
  * @param comm The communicator to use
- * @param dtype The message to send
- * @return The status, negative values indicate errors
+ * @param data The message to send
+ * @param len The size of data in bytes
+ * @return Any value greater than 0 indicates success
  */
 int comm_send(comm_t comm, const char *data, const size_t len);
+
 /**
- * Send a message with the given communicator indicating that no more
- * messages will be sent.
+ * @brief Send an end-of-file notification on the given communicator
  * @param comm The communicator to use
- * @return The status, negative values indicate errors
+ * @return Any value greater than 0 indicates success
  */
 int comm_send_eof(comm_t comm);
 
 /**
- * Determine if a communicator's datatype indicates an table of arrays
+ * @brief Determine if a communicator's datatype indicates an table of
+ *   arrays
  * @param x The communicator to check.
  * @return 1 if true, 0 otherwise.
  */
 int is_comm_format_array_type(comm_t x);
   
 /**
- * Receive a message with the given communicator
+ * @brief Receive a message with the given communicator
  * @param comm The communicator to use
  * @param data An allocated buffer to put the received message into
  * @param len The size of the allocated buffer in data
@@ -191,8 +195,8 @@ int is_comm_format_array_type(comm_t x);
  */
 long comm_recv(comm_t comm, char *data, const size_t len);
 /**
- * Receive a message with the given communicator into a buffer allocated
- * on heap that can be reallocated.
+ * @brief Receive a message with the given communicator into a buffer
+ *   allocated on heap that can be reallocated.
  * @param comm The communicator to use
  * @param data Pointer to a buffer on heap to put the received message
  *   into that can be reallocated.
@@ -203,16 +207,65 @@ long comm_recv(comm_t comm, char *data, const size_t len);
 long comm_recv_realloc(comm_t comm, char **data, const size_t len);
   
 /**
- * The number of messages in the communicators queue
+ * @brief The number of messages in the communicators queue
  * @param comm The communicator to query
  * @return The number of messages in the queue
  */
 int comm_nmsg(comm_t comm);
+/*!
+ * @brief Send the variable argument list with the given communicator
+ * @param x The communicator to use
+ * @param nargs The number of arguments
+ * @param ... The arguments to send
+ * @return Any value greater than 0 indicates success
+ */
 int ncommSend(const comm_t x, size_t nargs, ...);
+/*!
+ * @brief Receive a message into a variable list of arguments
+ * @param x The communicator to use
+ * @param allow_realloc If true then the number of arguments can be changed based on the message
+ * @param nargs The current number of arguments
+ * @param ... The arguments
+ * @return Any value greater than 0 indicates success
+ */
 long ncommRecv(comm_t x, const int allow_realloc, size_t nargs, ...);
+/*!
+ * @brief Send a request and receive a response from a list of variable arguments containing data for both the request and response.
+ * @param x The communicator to use
+ * @param allow_realloc If true then the number of arguments can change based on the messages
+ * @param nargs The number of arguments
+ * @param ... The arguments
+ * @return Any value greater than 0 indicates success
+ */
 long ncommCall(comm_t x, const int allow_realloc, size_t nargs, ...);
+/*!
+ * @brief Send a message from a list of pointers
+ * @param comm The communicator to use
+ * @param nargs The number of arguments
+ * @param ptrs Pointer array of pointers of the data to send
+ * @param for_fortran If set to true then the list is of explicit fortran pointers
+ * @return Any value greater than 0 indicates success
+ */
 int pcommSend(const comm_t comm, size_t nargs, void** ptrs, int for_fortran);
+/*!
+ * @brief Receive a messag into a list of pointers
+ * @param comm The communciator to use
+ * @param allow_realloc If true then the number of pointers may change based on the message contents
+ * @param nargs The number of pointers
+ * @param ptrs Pointer array of pointers to hold the message
+ * @param for_fortran If true then the list is of explicit fortran pointers
+ * @return Any value greater than 0 indicates success
+ */
 long pcommRecv(comm_t comm, const int allow_realloc, size_t nargs, void** ptrs, int for_fortran);
+/*!
+ * @brief Send a request and receive a response from a list of pointers containing data for both the request and response.
+ * @param comm The communciator to use
+ * @param allow_realloc If true then the number of pointers may change based on the message contents
+ * @param nargs The number of pointers
+ * @param ptrs Pointer array of pointers to hold the message
+ * @param for_fortran If true then the list is of explicit fortran pointers
+ * @return Any value greater than 0 indicates success
+ */
 long pcommCall(comm_t comm, const int allow_realloc, size_t nargs, void** ptrs, int for_fortran);
 #define commSend(x, ...) ncommSend(x, COUNT_VARARGS(__VA_ARGS__), __VA_ARGS__)
 #define commRecvStack(x, ...) ncommRecv(x, 0, COUNT_VARARGS(__VA_ARGS__), __VA_ARGS__)

@@ -94,7 +94,7 @@ namespace YggInterface {
 		  (header), out = false, bool, override);
       WRAP_METHOD(create_worker,
 		  (utils::Address& address,
-		   const DIRECTION& dir, int flgs),
+		   const DIRECTION dir, int flgs),
 		  (address, dir, flgs),
 		  out = nullptr, Comm_t*, override);
       WRAP_METHOD(create_worker_send, (utils::Header& header),

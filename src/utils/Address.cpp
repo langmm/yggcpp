@@ -9,7 +9,7 @@ Address::Address(const std::string &adr): _key(-1), _valid(false) {
 
 Address::Address(const char *adr): _key(-1), _valid(false) {
     std::string sadr;
-    if (adr != NULL)
+    if (adr != nullptr)
         sadr.assign(adr);
     address(sadr);
 }

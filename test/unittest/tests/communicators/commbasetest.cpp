@@ -35,7 +35,7 @@ protected:
       return 0;
     }
     Comm_t* create_worker(utils::Address& adr,
-                          const DIRECTION& dir, int flgs) override {
+                          const DIRECTION dir, int flgs) override {
       return new Comm_tTest(adr, dir, this->type, flgs);
     }
 

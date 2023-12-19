@@ -6,7 +6,7 @@
 using namespace YggInterface::communicator;
 using namespace YggInterface::utils;
 
-ServerComm::ServerComm(const std::string nme, const utils::Address& addr,
+ServerComm::ServerComm(const std::string& nme, const utils::Address& addr,
 		       int flgs, const COMM_TYPE type, size_t ncomm,
 		       const COMM_TYPE reqtype,
 		       const COMM_TYPE restype,
@@ -40,7 +40,7 @@ bool ServerComm::create_header_send(utils::Header& header) {
   assert(!global_comm);
   log_debug() << "create_header_send: Checking for response comm" << std::endl;
   Comm_t* response_comm = requests.activeComm();
-  if (response_comm == NULL) {
+  if (response_comm == nullptr) {
     requests.Display();
     log_error() << "create_header_send: Failed to get response comm" << std::endl;
     return false;
@@ -63,7 +63,7 @@ int ServerComm::send_single(utils::Header& header) {
     assert(!global_comm);
     log_debug() << "send_single" << std::endl;
     Comm_t* response_comm = requests.activeComm();
-    if (response_comm == NULL) {
+    if (response_comm == nullptr) {
         log_error() << "send_single: Failed to get response comm" << std::endl;
         return -1;
     }

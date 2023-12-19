@@ -8,26 +8,28 @@ namespace YggInterface {
 namespace communicator {
 
 /**
- * Server communicator class, associated with ClientComms. Actual communicator type
+ * @brief Server communicator class, associated with ClientComms.
+ * Actual communicator type
  * is determined at compile time based on available packages. It will be either
  * an IPCComm or ZMQComm
  */
 class YGG_API ServerComm : public RPCComm {
 public:
     /**
-     * Constructor
-     * @param name The name of the communicator
-     * @param address The address to associate with the communicator, if address is nullptr
+     * @brief Constructor
+     * @param[in] name The name of the communicator
+     * @param[in] address The address to associate with the communicator, if address is nullptr
      *                then an address will be created.
-     * @param flgs Bitwise flags describing the communicator
-     * @param type Communicator type to assign (used internally).
-     * @param ncomm Number of communicators in a forked request comm.
-     * @param reqtype Communicator type to use for the request communicator.
-     * @param restype Communicator type to use for the response communicator.
-     * @param reqflags Bitwise flags describing the request communicator.
-     * @param resflags Bitwise flags describing the response communicator.
+     * @param[in] flgs Bitwise flags describing the communicator
+     * @param[in] type Communicator type to assign (used internally).
+     * @param[in] ncomm Number of communicators in a forked request comm.
+     * @param[in] reqtype Communicator type to use for the request communicator.
+     * @param[in] restype Communicator type to use for the response communicator.
+     * @param[in] reqflags Bitwise flags describing the request communicator.
+     * @param[in] resflags Bitwise flags describing the response communicator.
+     * @see utils::Address
      */
-    explicit ServerComm(const std::string name,
+    explicit ServerComm(const std::string& name,
 			const utils::Address& address,
 			int flgs = 0, const COMM_TYPE type = SERVER_COMM,
 			size_t ncomm = 0,
@@ -43,9 +45,18 @@ public:
     std::string logClass() const override;
     
 protected:
+
+    /*!
+     * @brief Handle client signon
+     * @param[in] header Header from client
+     * @return true if successful
+     */
     virtual bool signon(const utils::Header& header);
+    /*! \copydoc YggInterface::communicator::CommBase::create_header_send */
     bool create_header_send(utils::Header& header) override;
+    /*! \copydoc YggInterface::communicator::CommBase::send_single */
     int send_single(utils::Header& header) override;
+    /*! \copydoc YggInterface::communicator::CommBase::recv_single */
     long recv_single(utils::Header& header) override;
 
 };

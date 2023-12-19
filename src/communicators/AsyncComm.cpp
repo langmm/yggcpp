@@ -488,7 +488,7 @@ AsyncLockGuard::~AsyncLockGuard() {
 // AsyncComm //
 ///////////////
 
-AsyncComm::AsyncComm(const std::string name,
+AsyncComm::AsyncComm(const std::string& name,
 		     const utils::Address& address,
 		     const DIRECTION direction,
 		     int flgs, const COMM_TYPE type,
@@ -512,7 +512,7 @@ AsyncComm::AsyncComm(const std::string name,
   }
   CommBase::init();
 }
-AsyncComm::AsyncComm(const std::string name,
+AsyncComm::AsyncComm(const std::string& name,
 		     const DIRECTION direction,
 		     int flgs, const COMM_TYPE type,
 		     const COMM_TYPE reqtype, const COMM_TYPE restype,
@@ -706,7 +706,7 @@ bool AsyncComm::create_header_send(Header& header) {
 }
 
 Comm_t* AsyncComm::create_worker(utils::Address& address,
-				 const DIRECTION& dir, int flgs) {
+                                 const DIRECTION dir, int flgs) {
   return new AsyncComm("", address, dir, flgs | COMM_FLAG_WORKER, type);
 }
 

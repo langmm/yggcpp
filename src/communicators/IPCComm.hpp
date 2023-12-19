@@ -22,20 +22,25 @@ namespace communicator {
   @brief Message buffer structure.
 */
 typedef struct msgbuf_t {
-    long mtype; //!< Message buffer type
+    long mtype;      //!< Message buffer type
     char data[2048]; //!< Buffer for the message
 } msgbuf_t;
-  
+
+/*!
+ * @brief IPC based communicator
+ */
 class YGG_API IPCComm : public CommBase<int> {
 public:
     /**
      * Constructor for an IPC based communicator
-     * @param name The name for the communicator, if not given one will be generated
-     * @param address The address for the communicator, if not given one will be generated
-     * @param direction Enuerated direction for this instance
-     * @param flags Bitwise flags describing the communicator
+     * @param[in] name The name for the communicator, if not given one will be generated
+     * @param[in] address The address for the communicator, if not given one will be generated
+     * @param[in] direction Enuerated direction for this instance
+     * @param[in] flgs Bitwise flags describing the communicator
+     * @param[in] type The communicator type
+     * @see utils::Address
      */
-    IPCComm(const std::string name,
+    IPCComm(const std::string& name,
             const utils::Address& address,
             const DIRECTION direction = NONE,
             int flgs = 0, const COMM_TYPE type = IPC_COMM);
@@ -43,30 +48,35 @@ public:
 
 #ifdef IPCINSTALLED
 
-    /*! @brief Get the number of IPC queues that are currently open. */
+    /*!
+      @brief Get the number of IPC queues that are currently open.
+      @return Number of IPC queues.
+    */
     static int count_queues();
 
-    /**
-     * Remove the given ipc queue
-     * @param close_comm If 1, close the queue, otherwise remove the given comm from the register
-     * @return -1 on error
+    /*!
+     * @brief Remove a channel.
+     * @param[in] close_comm int If 1, the queue will be closed, otherwise it will
+     *  just be removed from the register and it is assumed that another process
+     *  will close it.
+     * @returns int -1 if removal not successful.
      */
     int remove_comm(bool close_comm);
 
-    /**
-     * The number of messages in the queue
-     * @return The number of messages
-     */
+    /*! \copydoc Comm_t::comm_nmsg */
     int comm_nmsg(DIRECTION dir=NONE) const override;
     using Comm_t::send;
     using Comm_t::recv;
 
 protected:
+    /**
+     * Initialize the communciator
+     */
     void init();
-    /*! \copydoc Comm_t::send_single */
+    /*! \copydoc Comm_t::send_single() */
     int send_single(utils::Header& header) override;
 
-    /*! \copydoc Comm_t::recv_single */
+    /*! \copydoc Comm_t::recv_single() */
     long recv_single(utils::Header& header) override;
   
     WORKER_METHOD_DECS(IPCComm);
@@ -75,10 +85,9 @@ protected:
 #endif // IPCINSTALLED
 
 private:
-    friend class ClientComm;
-    friend class ServerComm;
+    friend class ClientComm;   //!< @see ClientComm
+    friend class ServerComm;   //!< @see ServerComm
     ADD_KEY_TRACKER_DECS;
-  
 };
 
 }

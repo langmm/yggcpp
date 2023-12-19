@@ -209,7 +209,7 @@ long comm_recv_realloc(comm_t comm, char **data, const size_t len) {
     return static_cast<YggInterface::communicator::Comm_t*>(comm.comm)->recv(data[0], len, true);
   } _END_CPP(comm_recv_realloc, -1);
 }
-int ncommSend(comm_t comm, size_t nargs, ...) {
+int ncommSend(const comm_t comm, size_t nargs, ...) {
   _BEGIN_CPP {
     if (!comm.comm)
       ygglog_throw_error("ncommSend: Comm is not initialized");
