@@ -917,7 +917,7 @@ int dtype_uses_generic(dtype_t dtype);
   @param[in] dtype Wrapper struct for C++ Metadata.
   @param[in] indent Indentation to add to display output.
  */
-void display_dtype(const dtype_t dtype, const char* indent="");
+void display_dtype(const dtype_t dtype, const char* indent);
 
 /*!
   @brief Wrapper for updating a type object with information from another.
