@@ -301,10 +301,29 @@ if(ENABLE_RMQ)
 	endif()
 	# In v0.12.0 (v9.2.5 so), the include files were moved into a
 	# dedicated rabbitmq-c directory
-	if (rabbitmq-c_VERSION AND
-	    (((rabbitmq-c_DIR MATCHES "*vcpkg*") AND
-	      (rabbitmq-c_VERSION VERSION_LESS "9.2.5")) OR
-	     (rabbitmq-c_VERSION VERSION_LESS "0.12.0")))
+	if (rabbitmq-c_VERSION)
+	  if (rabbitmq-c_DIR MATCHES ".*vcpkg.*")
+	    message(STATUS "rabbitmq-c_DIR MATCHES *vcpkg*")
+	  else()
+	    message(STATUS "rabbitmq-c_DIR DOES NOT MATCH *vcpkg*")
+	  endif()
+	  if (rabbitmq-c_VERSION VERSION_LESS "0.12.0")
+	    message(STATUS "rabbitmq-c_VERSION LESS 0.12.0")
+	  else()
+	    message(STATUS "rabbitmq-c_VERSION MORE 0.12.0")
+	  endif()
+	  if (rabbitmq-c_VERSION VERSION_LESS "9.2.5")
+	    message(STATUS "rabbitmq-c_VERSION LESS 9.2.5")
+	  else()
+	    message(STATUS "rabbitmq-c_VERSION MORE 9.2.5")
+	  endif()
+	else()
+	  message(STATUS "rabbitmq-c_VERSION NOT SET")
+	endif()
+	if ((NOT rabbitmq-c_VERSION) OR
+	    ((rabbitmq-c_DIR MATCHES ".*vcpkg.*") AND
+	     (rabbitmq-c_VERSION VERSION_LESS "9.2.5")) OR
+	    (rabbitmq-c_VERSION VERSION_LESS "0.12.0"))
           list(APPEND DEPS_PUBLIC_C_COMPILE_FLAGS -DYGG_RMQ_NOINCLUDEDIR)
 	  list(APPEND DEPS_PUBLIC_CXX_COMPILE_FLAGS -DYGG_RMQ_NOINCLUDEDIR)
 	endif()
