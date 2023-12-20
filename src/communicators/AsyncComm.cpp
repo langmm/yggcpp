@@ -308,7 +308,9 @@ void AsyncBacklog::on_thread(AsyncComm* parent) {
 #else // THREADSINSTALLED
     UNUSED(parent);
 #endif // THREADSINSTALLED
-  } catch (...) {
+  } catch (const std::exception &exc) {
+  // } catch (...) {
+    log_error() << "on_thread: C++ Error on thread: " << exc.what() << std::endl;
     backlog.close();
     out = false;
   }

@@ -282,7 +282,7 @@ namespace YggInterface {
        * @brief Create a new instance
        * @param[in] parent The parent communicator
        */
-      explicit AsyncBacklog(AsyncComm* parent);
+      AsyncBacklog(AsyncComm* parent);
       ~AsyncBacklog();
       /**
        * @brief Function to run in a thread which sends/receives messages
@@ -334,7 +334,7 @@ namespace YggInterface {
        * @param[in] backlog Instance of the AsyncBacklog class being used for communication
        * @param[in] dont_lock If true, then immediately lock the mutex.
        */
-      explicit AsyncLockGuard(AsyncBacklog* backlog, bool dont_lock=false);
+      AsyncLockGuard(AsyncBacklog* backlog, bool dont_lock=false);
       ~AsyncLockGuard();
       bool locked;            /**< indicates whether the lock is currently enabled */
       AsyncBacklog* backlog;  /**< the AsyncBacklog instance to work with */

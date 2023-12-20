@@ -154,7 +154,7 @@ long IPCComm::recv_single(utils::Header& header) {
     msgbuf_t t;
     t.mtype = 1;
     t.data[0] = '\0';
-    long ret;
+    long ret = -1;
     while (true) {
         ret = msgrcv(handle[0], &t, maxMsgSize, 0, IPC_NOWAIT);
         if (ret == -1 && errno == ENOMSG) {
