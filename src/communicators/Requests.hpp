@@ -1,5 +1,6 @@
 #pragma once
 
+#include <utility>
 #include <vector>
 #include "DefaultComm.hpp"
 #include "CommBase.hpp"
@@ -7,22 +8,49 @@
 #ifdef COMM_BASE
 namespace YggInterface {
 namespace communicator {
+
 class Partner {
 public:
+    /**
+     * @brief Constructor
+     */
     Partner() : model(), signed_off(false) {}
-    Partner(const std::string adr) : model(adr), signed_off(false) {}
-    std::string model;
-    bool signed_off;
+    /**
+     * @brief Constructor
+     * @param[in] adr The address to use
+     */
+    explicit Partner(const std::string& adr) : model(adr), signed_off(false) {}
+    std::string model; //!< Partner model name.
+    bool signed_off;   //!< Weather the partner signed off or not.
 };
+/**
+ * @brief Class representing a request for communication
+ */
 class Request {
 public:
+    /**
+     * @brief Constructor
+     */
     Request() :
       request_id(), data(true), comm_idx(0), complete(false),
       is_signon(false) {}
+    /**
+     * @brief Constructor
+     * @param[in] req_id The request ID
+     * @param[in] cidx The communicator index
+     * @param[in] is_son Whether the communicator has been signed on
+     */
     Request(const std::string& req_id,
 	    const size_t cidx, bool is_son = false) :
       request_id(req_id), data(true), comm_idx(cidx),
       complete(false), is_signon(is_son) {}
+    /**
+     * @brief Set the internal data from the header
+     * @param[in] header The header to get the data from
+     * @param[in] copy If true then copy the header data, if false then move the header data instead
+     * @return 0 on success, -1 on failure
+     * @see utils::Header
+     */
     int setData(utils::Header& header, bool copy=false) {
       if (complete && !is_signon) {
 	YggLogError << "Request::setData: request already complete" << std::endl;
@@ -35,18 +63,28 @@ public:
       complete = true;
       return 0;
     }
-    std::string request_id;
-    utils::Header data;
-    size_t comm_idx;
-    bool complete;
-    bool is_signon;
+    std::string request_id;    //!< The request id
+    utils::Header data;        //!< Internal header for the message
+    size_t comm_idx;           //!< The communicator index to use
+    bool complete;             //!< Whether the request has been completed or not
+    bool is_signon;            //!< Whether the communicator has been signed on or not
 };
 
+/**
+ * Class for holding a list of requests
+ */
 class RequestList : public YggInterface::utils::LogBase {
 public:
-    RequestList(DIRECTION dir, int flags = 0,
-		const COMM_TYPE restyp = DEFAULT_COMM,
-		std::string logName = "") :
+    /**
+     * @brief Constructor
+     * @param[in] dir The direction for the requests
+     * @param[in] flags Response flags to use
+     * @param[in] restyp Response communicator type.
+     * @param[in] logName Instance descriptor for logging.
+     */
+    explicit RequestList(DIRECTION dir, int flags = 0,
+			 const COMM_TYPE restyp = DEFAULT_COMM,
+			 std::string logName = "") :
       comms(), requests(), partners(),
       response_dir(dir), response_flags(flags),
       response_metadata(), signon_complete(false),
@@ -62,10 +100,15 @@ public:
 	response_flags |= COMM_FLAG_ASYNC;
       }
     }
+    /**
+     * Destructor
+     */
     ~RequestList() {
         destroy();
     }
+    /** \copydoc YggInterface::communicator::Comm_t::logClass */
     std::string logClass() const override { return "RequestList"; }
+    /** \copydoc YggInterface::communicator::Comm_t::logInst */
     std::string logInst() const override { return logInst_; }
     // void initClientSignon() {
     //   if (requests.empty()) {
@@ -77,22 +120,35 @@ public:
     // 	log_debug() << "initClientSignon: complete" << std::endl;
     //   }
     // }
+    /**
+     * @brief Destroy the communicators
+     */
     void destroy() {
-      for (size_t i = 0; i < comms.size(); i++) {
-	if (comms[i] != NULL) {
-	  delete comms[i];
-	  comms[i] = NULL;
-	}
-      }
-      comms.resize(0);
+        for (size_t i = 0; i < comms.size(); i++) {
+            if (comms[i] != nullptr) {
+                delete comms[i];
+                comms[i] = nullptr;
+            }
+        }
+        comms.resize(0);
     }
+    /**
+     * @brief Get the index of the specified Request
+     * @param[in] request_id The id of the Request to get
+     * @return The index of the Request, or -1 if it is not found
+     */
     int hasRequest(const std::string& request_id) const {
-      for (size_t i = 0; i < requests.size(); i++) {
-	if (requests[i].request_id == request_id)
-	  return (int)i;
-      }
-      return -1;
+        for (size_t i = 0; i < requests.size(); i++) {
+            if (requests[i].request_id == request_id)
+                return (int)i;
+        }
+        return -1;
     }
+    /**
+     * @brief Get the index of the Partner with the given model
+     * @param[in] model The model to look for.
+     * @return The index of the Partner, or -1 if it is not found
+     */
     int hasPartner(const std::string& model) const {
         for (size_t i = 0; i < partners.size(); i++) {
             if (partners[i].model == model)
@@ -100,6 +156,11 @@ public:
         }
         return -1;
     }
+    /**
+     * @brief Get the index of the communicator with the given response address
+     * @param[in] response_address The address to search for
+     * @return The index of the communicator, or -1 if it is not found
+     */
     int hasComm(const std::string& response_address) const {
         for (size_t i = 0; i < comms.size(); i++) {
             if (comms[i] && comms[i]->address.address() == response_address)
@@ -107,12 +168,20 @@ public:
         }
         return -1;
     }
+    /**
+     * @brief Initialize the communicators
+     * @return Always returns 0
+     */
     int initClientResponse() {
-      if (comms.size() == 0) {
-	addComm();
-      }
-      return 0;
+        if (comms.empty()) {
+            addComm();
+        }
+        return 0;
     }
+    /**
+     * @brief Stash the first Request that is not signed on
+     * @return Always returns 1
+     */
     int stashRequest() {
       // if (!requests.empty()) {
       // 	stashed_request = requests[0].request_id;
@@ -129,6 +198,13 @@ public:
       }
       return 1;
     }
+    /**
+     * @brief Add a client to the request list
+     * @param[in] header The header for the client
+     * @param[in] request_id The request id, if any
+     * @return The index of the client, or -1 on failure
+     * @see utils::Header
+     */
     int addRequestClient(utils::Header& header, std::string request_id="") {
       log_debug() << "addRequestClient: begin" << std::endl;
       initClientResponse();
@@ -187,6 +263,12 @@ public:
 		   << request_id << std::endl;
       return existing_idx;
     }
+    /**
+     * @brief Add a server to the request list
+     * @param[in] header The header for the server
+     * @return The index of the server, -1 on failure
+     * @see utils::Header
+     */
     int addRequestServer(utils::Header& header) {
       log_debug() << "addRequestServer: begin" << std::endl;
       std::string request_id, response_address, partner_model;
@@ -208,6 +290,12 @@ public:
 		   << std::endl;
       return static_cast<int>(idx);
     }
+    /**
+     * @brief Add a response server to the request list
+     * @param[in] header The header for the response server
+     * @return 0 on success, -1 on failure
+     * @see utils::Header
+     */
     int addResponseServer(utils::Header& header) {
       log_debug() << "addResponseServer: begin" << std::endl;
       if (requests.size() == 0) {
@@ -228,6 +316,12 @@ public:
 	signon_complete << ")" << std::endl;
       return 0;
     }
+    /**
+     * @brief Add a response client to the request list
+     * @param[in] header The header for the response client
+     * @return 0 on success, -1 on failure
+     * @see utils::Header
+     */
     int addResponseClient(utils::Header& header) {
       log_debug() << "addResponseClient: begin" << std::endl;
       std::string request_id, partner_model;
@@ -257,12 +351,21 @@ public:
 	signon_complete << ")" << std::endl;
       return 0;
     }
+    /**
+     * @brief Get the communicator associated with the request_id
+     * @param[in] request_id The id of the communicator to search for
+     * @return The requested communicator
+     */
     Comm_t* getComm(const std::string& request_id) {
         int idx = hasRequest(request_id);
         if (idx < 0)
-            return NULL;
+            return nullptr;
         return comms[static_cast<size_t>(idx)];
     }
+    /**
+     * @brief Get the next communicator to use
+     * @return The next communicator to use, or nullptr if there are no pending requests or communicators
+     */
     Comm_t* activeComm() {
       if (requests.empty() || comms.empty()) {
 	log_error() << "activeComm: No pending requests" << std::endl;
@@ -270,6 +373,10 @@ public:
       }
       return comms[requests[0].comm_idx];
     }
+    /**
+     * @brief Get the last communicator in the list
+     * @return The last communicator
+     */
     Comm_t* lastComm() {
       if (comms.empty()) {
 	log_error() << "lastComm: No communicators" << std::endl;
@@ -277,6 +384,11 @@ public:
       }
       return comms[comms.size() - 1];
     }
+    /**
+     * @brief Get the ID of the currently active request client
+     * @param[in] ignore_signon If true, don't return any signon request.
+     * @return The ID, or en empty string if there are none.
+     */
     std::string activeRequestClient(bool ignore_signon=false) const {
       if (!ignore_signon)
 	ignore_signon = signon_complete;
@@ -287,6 +399,10 @@ public:
       }
       return ""; // GCOVR_EXCL_LINE
     }
+    /**
+     * @brief Remove the first request server, deleting it.
+     * @return 1 on success, -1 on failure
+     */
     int popRequestServer() {
         if (requests.empty() || comms.empty()) {
             log_error() << "popRequestServer: No pending requests" << std::endl;
@@ -316,6 +432,14 @@ public:
     //     requests.erase(requests.begin() + idx);
     //     return 1;
     // }
+    /**
+     * @brief Get the specified request client
+     * @param[in] request_id The id of the client to use
+     * @param[in, out] header The header to put the client data into
+     * @param[in] pop If true, then delete the client if it is not signed on
+     * @return 1 on success, -1 on failure
+     * @see utils::Header
+     */
     int getRequestClient(const std::string& request_id,
 			 utils::Header& header, bool pop=false) {
       log_debug() << "getRequestClient: begin" << std::endl;
@@ -341,7 +465,12 @@ public:
       log_debug() << "getRequestClient: done" << std::endl;
       return 1;
     }
-    int addComm(std::string response_address = "") {
+    /**
+     * @brief Add a default type communicator to the list, using the given address, if any
+     * @param[in] response_address The address to use for the communicator
+     * @return The index of the new communicator
+     */
+    int addComm(const std::string& response_address = "") {
         int idx;
         if (!response_address.empty()) {
             idx = hasComm(response_address);
@@ -357,36 +486,76 @@ public:
         idx = (int)(comms.size() - 1);
         return idx;
     }
+    /**
+     * @brief Query if any requests are signed on
+     * @return True if any are signed on
+     */
     bool signonSent() const {
         for (size_t i = 0; i < requests.size(); i++) {
             if (requests[i].is_signon)
-	        return true;
+                return true;
 	        // return (comms[requests[i].comm_idx]->flags &
 		//         COMM_FLAG_USED_SENT);
         }
         return false;
     }
+    /**
+     * @brief Query whether the specified request is complete
+     * @param[in] request_id The id of the request to query
+     * @return True is the request is complete, false if not complete, or not found
+     */
     bool isComplete(const std::string& request_id) const {
         int idx = hasRequest(request_id);
         if (idx < 0)
             return false;
         return requests[(size_t)idx].complete;
     }
+    /**
+     * @brief Add a schema to the response communicator(s).
+     * @param[in] s JSON serialized schema.
+     * @param[in] use_generic If true, set schema to expect generic
+     *   JSON objects.
+     */
     bool addResponseSchema(const std::string& s, bool use_generic=false) {
       return response_metadata.fromSchema(s, use_generic);
     }
+    /**
+     * @brief Add a schema to the response communicator(s).
+     * @param[in] s JSON schema.
+     * @param[in] use_generic If true, set schema to expect generic
+     *   JSON objects.
+     */
     bool addResponseSchema(const rapidjson::Value& s,
 			   bool use_generic=false) {
       return response_metadata.fromSchema(s, use_generic);
     }
+    /**
+     * @brief Add a schema to the response communicator(s).
+     * @param[in] metadata Metadata to copy containing JSON schema.
+     * @param[in] use_generic If true, set schema to expect generic
+     *   JSON objects.
+     */
     bool addResponseSchema(const utils::Metadata& metadata,
 			   bool use_generic=false) {
       return response_metadata.fromMetadata(metadata, use_generic);
     }
+    /**
+     * @brief Add a schema to the response communicator based on a
+     *   C-style format string.
+     * @param[in] fmt C-style format string.
+     * @param[in] use_generic If true, set schema to expect generic
+     *   JSON objects.
+     */
     bool addResponseFormat(const std::string& format_str,
 			   bool use_generic=false) {
       return response_metadata.fromFormat(format_str, use_generic);
     }
+    /**
+     * @brief Query whether all partners are signed off
+     * @param[in] header The header to use
+     * @return True if all partners are signed off, false otherwise
+     * @see utils::Header
+     */
     bool partnerSignoff(const utils::Header& header) {
       if (header.flags & HEAD_FLAG_EOF) {
 	std::string partner_model;
@@ -402,29 +571,40 @@ public:
       }
       return true;
     }
+    /**
+     * @brief Transfer the internal schema to the given communicator
+     * @param[in, out] comm The communicator to transfer to
+     */
     bool transferSchemaTo(Comm_t* comm) {
       return comm->getMetadata(response_dir).fromMetadata(response_metadata);
     }
+    /**
+     * @brief Transfer the schema from the given communicator
+     * @param[in] comm The communicator to transfer the schema from
+     */
     bool transferSchemaFrom(Comm_t* comm) {
       return response_metadata.fromMetadata(comm->getMetadata(response_dir));
     }
+    /**
+     * @brief Print the internal data to the terminal
+     */
     void Display() {
-      std::cout << requests.size() << " Requests:" << std::endl;
-      for (size_t i = 0; i < requests.size(); i++) {
-	std::cout << "  " << requests[i].request_id << ": " <<
-	  requests[i].complete << std::endl;
-      }
+        std::cout << requests.size() << " Requests:" << std::endl;
+        for (size_t i = 0; i < requests.size(); i++) {
+          std::cout << "  " << requests[i].request_id << ": " <<
+                    requests[i].complete << std::endl;
+        }
     }
-    std::vector<Comm_t*> comms;
-    std::vector<Request> requests;
-    std::vector<Partner> partners;
-    DIRECTION response_dir;
-    int response_flags;
-    utils::Metadata response_metadata;
-    bool signon_complete;
-    std::string stashed_request;
-    COMM_TYPE restype;
-    std::string logInst_;
+    std::vector<Comm_t*> comms;        //!< Communicators to use
+    std::vector<Request> requests;     //!< Requests to process
+    std::vector<Partner> partners;     //!< Any partners
+    DIRECTION response_dir;            //!< The direction for this instance
+    int response_flags;                //!< Response flags to use
+    utils::Metadata response_metadata; //!< Metadata to use for any responses
+    bool signon_complete;              //!< Whether signon is complete
+    std::string stashed_request;       //!< The currently stashed request
+    COMM_TYPE restype;                 //!< Response communicator type
+    std::string logInst_;              //!< Instance log descriptor
 };
 }
 }

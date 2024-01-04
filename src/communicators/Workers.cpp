@@ -17,16 +17,16 @@ Worker::Worker(Comm_t* parent, DIRECTION dir, Address& adr) :
     // Do nothing
   }
 }
-Worker::Worker(Worker&& rhs) : comm(rhs.comm), request(rhs.request) {
+Worker::Worker(Worker&& rhs) noexcept : comm(rhs.comm), request(rhs.request) {
   rhs.comm = nullptr;
   rhs.request = "";
 }
-Worker& Worker::operator=(Worker&& rhs) { // GCOVR_EXCL_START
+Worker& Worker::operator=(Worker&& rhs)  noexcept { // GCOVR_EXCL_START
   this->~Worker();
   new (this) Worker(std::move(rhs));
   return *this;
 } // GCOVR_EXCL_STOP
-bool Worker::matches(DIRECTION dir, Address& adr) {
+bool Worker::matches(DIRECTION dir, Address& adr) const {
   return (request.empty() && comm && comm->direction == dir &&
 	  ((!adr.valid()) || (adr.address() == comm->address.address())));
 }
@@ -69,23 +69,23 @@ void WorkerList::remove_worker(Comm_t*& worker) {
   worker = nullptr;
 }
 Comm_t* WorkerList::find_worker(DIRECTION dir, Address& adr, size_t* idx) {
-  for (size_t i = 0; i < workers.size(); i++) {
-    if (workers[i].matches(dir, adr)) {
-      if (idx)
-	idx[0] = i;
-      return workers[i].comm;
-    }
+    for (size_t i = 0; i < workers.size(); i++) {
+        if (workers[i].matches(dir, adr)) {
+            if (idx)
+                idx[0] = i;
+            return workers[i].comm;
+        }
   }
   log_debug() << "find_worker: Failed to find matching worker" << std::endl;
   return nullptr;
 }
 int WorkerList::find_worker(Comm_t* worker) {
-  if (!worker)
-    return -1;
-  size_t idx = 0;
-  if (!find_worker(worker->direction, worker->address, &idx))
-    return -1;
-  return static_cast<int>(idx);
+    if (!worker)
+        return -1;
+    size_t idx = 0;
+    if (!find_worker(worker->direction, worker->address, &idx))
+        return -1;
+    return static_cast<int>(idx);
 }
 
 Comm_t* WorkerList::get(Comm_t* parent, DIRECTION dir, Address& adr) {
@@ -105,12 +105,12 @@ Comm_t* WorkerList::get(Comm_t* parent, DIRECTION dir) {
     Address tempAdr;
     return get(parent, dir, tempAdr);
 }
-Comm_t* WorkerList::get(Comm_t* parent, DIRECTION dir, std::string adr) {
+Comm_t* WorkerList::get(Comm_t* parent, DIRECTION dir, const std::string& adr) {
     Address addrs(adr);
     return get(parent, dir, addrs);
 }
 
-bool WorkerList::setRequest(Comm_t* worker, std::string request) {
+bool WorkerList::setRequest(Comm_t* worker, const std::string& request) {
   int idx = find_worker(worker);
   if (idx < 0)
     return false;
@@ -118,7 +118,7 @@ bool WorkerList::setRequest(Comm_t* worker, std::string request) {
   workers[static_cast<size_t>(idx)].request = request;
   return true;
 }
-bool WorkerList::setResponse(std::string request) {
+bool WorkerList::setResponse(const std::string& request) {
   log_debug() << "setResponse: Looking for worker with request " << request << std::endl;
   for (size_t i = 0; i < workers.size(); i++) {
     if (workers[i].request == request) {

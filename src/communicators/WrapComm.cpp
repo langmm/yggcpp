@@ -156,7 +156,7 @@ WRAP_METHOD(create_header_send, (utils::Header& header),
 	    (header), out = false, bool, )
 WRAP_METHOD(create_worker,
 	    (utils::Address& address,
-	     const DIRECTION& dir, int flgs),
+	     const DIRECTION dir, int flgs),
 	    (address, dir, flgs), out = nullptr, Comm_t*, )
 WRAP_METHOD(create_worker_send, (utils::Header& header),
 	    (header), out = nullptr, Comm_t*, )

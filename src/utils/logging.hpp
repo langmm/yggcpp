@@ -19,22 +19,41 @@
 
 namespace YggInterface {
 namespace utils {
-
+  /*!
+   * @brief Class for logging
+   */
   class YggdrasilLogger {
   public:
+    /*!
+     * @brief Construnctor
+     * @param[in] nme The name of the logger
+     * @param[in] lvl The level to log at (i.e. any messages at or above this level will be logged)
+     * @param[in] is_err
+     */
     YggdrasilLogger(std::string nme, size_t lvl, bool is_err=false);
     YggdrasilLogger(YggdrasilLogger const & rhs);
     ~YggdrasilLogger();
-    std::string name;
-    size_t level;
-    bool is_error;
-    std::stringstream ss;
-    std::chrono::system_clock::time_point t;
+    std::string name;  /**! The logger name */
+    size_t level;      /**! The minimum logging level */
+    bool is_error;     /**!  */
+    std::stringstream ss;  /**! internal use */
+    std::chrono::system_clock::time_point t; /**! Time for message */
+    /*!
+     * @brief Templated streaming operator
+     * @tparam T The type of item to write
+     * @param x The item to write
+     * @return
+     */
     template<typename T>
     YggdrasilLogger& operator << (const T& x) {
       ss << x;
       return *this;
     }
+    /*!
+     * @brief Streaming operator
+     * @param x The item to write
+     * @return
+     */
     YggdrasilLogger& operator << (std::ostream& (*x)(std::ostream&)) {
       ss << x;
       return *this;
@@ -44,14 +63,14 @@ namespace utils {
 
   private:
     /**
-     * Get the prefix string for log messages
+     * @brief Get the prefix string for log messages
      * @return
      */
-    std::string _getLogPretex();
+    static std::string _getLogPretex();
   };
   
   /**
-   * Reports an error to the log, the raises the error as an exception
+   * @brief Reports an error to the log, the raises the error as an exception
    * @param msg
    */
   void YggLogThrowError(const std::string& msg);

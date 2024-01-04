@@ -4,17 +4,6 @@
 namespace YggInterface {
 namespace utils {
 
-/*!
-  @brief Find first match to regex.
-  @param[in] regex_text constant character pointer to string that should be
-  compiled into a regex.
-  @param[in] to_match constant character pointer to string that should be
-  checked for matches.
-  @param[out] sind size_t index where match begins.
-  @param[out] eind size_t index where match ends.
-  @return int Number of matches found. -1 is returned if the regex could not be
-  compiled.
-*/
 size_t find_match(const std::regex &regex, const std::string &to_match,
                const size_t& start, size_t &sind, size_t &eind) {
     size_t n_match = 0;

@@ -418,7 +418,7 @@ bool ZMQReply::send_stage1(std::string& msg_data) {
   // }
   return true;
 }
-bool ZMQReply::send_stage2(const std::string msg_data) {
+bool ZMQReply::send_stage2(const std::string& msg_data) {
   // bool is_purge = (msg_data == _purge_msg);
   if (sockets.size() == 0) {
     log_error() << "send_stage2: Reply socket was not initialized." << std::endl;
@@ -459,7 +459,7 @@ void ZMQComm::disable_handshake() {
   ZMQComm::_disable_handshake = 1;
 }
 
-ZMQComm::ZMQComm(const std::string name, const utils::Address& address,
+ZMQComm::ZMQComm(const std::string& name, const utils::Address& address,
 		 const DIRECTION direction, int flgs,
 		 const COMM_TYPE type) :
   CommBase(name, address, direction, type, flgs), reply(direction) {

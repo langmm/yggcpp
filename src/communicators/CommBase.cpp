@@ -40,7 +40,7 @@ void Comm_t::init_base() {
     log_debug() << "Comm_t: Done" << std::endl;
 }
 Comm_t::Comm_t(const std::string &nme, const Address &addr,
-	       DIRECTION dirn, const COMM_TYPE &t, int flgs) :
+	       const DIRECTION dirn, const COMM_TYPE &t, int flgs) :
   ctx(global_context), type(t), name(nme), address(addr),
   direction(dirn), flags(flgs),
   maxMsgSize(COMM_BASE_MAX_MSG_SIZE), msgBufSize(0),
@@ -51,7 +51,7 @@ Comm_t::Comm_t(const std::string &nme, const Address &addr,
 }
 
 Comm_t::Comm_t(const std::string &nme,
-               DIRECTION dirn, const COMM_TYPE &t, int flgs) :
+               const DIRECTION dirn, const COMM_TYPE &t, int flgs) :
   Comm_t(nme, utils::Address(), dirn, t, flgs) {}
 
 Comm_t::~Comm_t() {

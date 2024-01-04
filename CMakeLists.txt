@@ -81,6 +81,7 @@ option(YGG_ENABLE_INSTRUMENTATION_OPT "Build yggdrasil with -march or -mcpu opti
 option(WRAP_RAPIDJSON_FOR_DLL "Build yggdrasil using a wrapper for rapidjson to force it into a DLL (enabled automatically when compiling with MSVC" OFF)
 option(YGG_LINK_PYTHON_TO_CPP "Link the Python extension to the C++ wrapper as a library" OFF)
 option(YGG_DEBUG_LEVEL "Level that should be used for logging" OFF)
+option(YGG_BUILD_DOCS "Build documentation (requires Doxygen)" OFF)
 
 if(NOT WIN32)
     find_program(CCACHE_FOUND ccache)
@@ -237,6 +238,31 @@ list(APPEND YGG_INSTALL_DEFS
 set(RAPIDJSON_PYTHON_ENV "YGG_MODEL_INDEX=123")
 
 set(YGG_BUILD_FLAGS "")
+
+
+#################
+# Documentation #
+#################
+
+if(YGG_BUILD_DOCS)
+    find_package(Doxygen)
+    if(NOT Doxygen_FOUND)
+        message(WARNING "Doxygen not found, documentation will not be produced.")
+        set(YGG_BUILD_DOCS OFF CACHE BOOL "")
+    else()
+        set(DOXYGEN_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/doc CACHE INTERNAL "")
+        set(DOXYGEN_INPUT_DIR ${CMAKE_CURRENT_SOURCE_DIR} CACHE INTERNAL "")
+        file(MAKE_DIRECTORY ${DOXYGEN_BUILD_DIR})
+        configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
+        add_custom_target(docs
+                          COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+                          WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+                          VERBATIM)
+        install(DIRECTORY ${DOXYGEN_BUILD_DIR}
+                DESTINATION ${CMAKE_INSTALL_PREFIX}/share/doc/ygginterrfacecpp
+                OPTIONAL)
+    endif()
+endif()
 
 #########################################
 # DEPENDENCIES

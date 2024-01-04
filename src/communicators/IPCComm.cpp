@@ -3,7 +3,7 @@
 using namespace YggInterface::communicator;
 using namespace YggInterface::utils;
 
-IPCComm::IPCComm(const std::string name, const Address &address,
+IPCComm::IPCComm(const std::string& name, const Address &address,
 		 DIRECTION direction, int flgs,
 		 const COMM_TYPE type) :
   CommBase(name, address, direction, type, flgs) {
@@ -81,14 +81,6 @@ void IPCComm::_close(bool call_base) {
 }
 
 ADD_KEY_TRACKER_DEFS(IPCComm)
-
-/*!
-  @brief Remove a channel.
-  @param[in] close_comm int If 1, the queue will be closed, otherwise it will
-  just be removed from the register and it is assumed that another process
-  will close it.
-  @returns int -1 if removal not successful.
-*/
 
 int IPCComm::remove_comm(bool close_comm) {
     if (close_comm) {
