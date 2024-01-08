@@ -428,6 +428,7 @@ if (CONDA_PREFIX AND MINGW AND
       message(STATUS "MinGW 5.3.0 thread already patched")
     else()
       message(STATUS "Patching MinGW 5.3.0 thread")
+      message(STATUS "CONTENTS = ${THREAD_H_CONTENTS}")
       cmake_path(APPEND CMAKE_SOURCE_DIR "mingw-c++-5-3-thread.patch"
                  OUTPUT_VARIABLE THREAD_H_PATCH)
       message(STATUS "THREAD_H_PATCH = ${THREAD_H_PATCH}")

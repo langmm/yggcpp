@@ -128,14 +128,14 @@ jobs:
         if: matrix.os == 'ubuntu-latest' && matrix.python-install == 'pip'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libc6-dbg gdb valgrind lcov libcmocka-dev gfortran
+          sudo apt-get install -y libc6-dbg gdb valgrind lcov libcmocka-dev gfortran graphviz doxygen
           sudo apt upgrade --fix-missing
           valgrind --version
       - name: Install dependencies on Mac
         if: matrix.os == 'macos-latest' && matrix.python-install == 'pip'
         run: |
           brew link --overwrite python@3.11
-          brew install cmocka lcov gnutls # llvm
+          brew install cmocka lcov gnutls graphviz doxygen # llvm
           # Required for compiling with clang & gfortran
           echo "FC=$(which gfortran-12)" >> "$GITHUB_ENV"
       # - name: Set vcpkg triplet on Windows (mingw)
@@ -153,7 +153,7 @@ jobs:
       - name: Install dependencies on Windows
         if: matrix.os == 'windows-latest' && matrix.python-install == 'pip'
         run: |
-          vcpkg.exe install cmocka --triplet $env:VCPKG_TRIPLET
+          vcpkg.exe install cmocka graphviz doxygen --triplet $env:VCPKG_TRIPLET
       # - name: Set flags for dependencies on Windows
       #   if: matrix.os == 'windows-latest' && matrix.python-install == 'pip' && matrix.windows-compiler == 'mingw'
       #   shell: bash -l {0}
@@ -580,6 +580,14 @@ jobs:
           echo "PATH=$PATH"
           ./run_tests.sh --rebuild --speed --config Release ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} --verbose
 
+      ###################################
+      # Speed tests
+      ###################################
+      - name: Build docs
+        shell: bash -l {0}
+        run: |
+          ./run_tests.sh --docs
+      
       ###################################
       # Coverage
       ###################################

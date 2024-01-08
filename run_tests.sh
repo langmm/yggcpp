@@ -7,6 +7,7 @@ DO_C=""
 DO_CXX=""
 DO_FORTRAN=""
 DO_PYTHON=""
+DO_DOCS=""
 WITH_ASAN=""
 NO_CORE=""
 CMAKE_FLAGS="-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DYGG_SKIP_VALGRIND_TESTS=ON"
@@ -112,7 +113,7 @@ while [[ $# -gt 0 ]]; do
 	    shift # past argument with no value
 	    ;;
 	--config )
-	    CONFIG_FLAGS="--config $2"
+	    CONFIG_FLAGS="${CONFIG_FLAGS} --config $2"
 	    CMAKE_FLAGS="${CMAKE_FLAGS} -DCMAKE_BUILD_TYPE=$2"
 	    TEST_FLAGS="${TEST_FLAGS} -C $2"
 	    shift
@@ -125,6 +126,14 @@ while [[ $# -gt 0 ]]; do
 	    ;;
 	-DCMAKE_INSTALL_PREFIX=* )
 	    INSTALL_DIR="${1#-DCMAKE_INSTALL_PREFIX=}"
+	    shift
+	    ;;
+	--docs )
+	    DO_DOCS="TRUE"
+	    DONT_TEST="TRUE"
+	    DONT_BUILD="TRUE"
+	    # BUILD_FLAGS="${BUILD_FLAGS} --target docs"
+	    # CMAKE_FLAGS="${CMAKE_FLAGS} -DYGG_BUILD_DOCS=ON"
 	    shift
 	    ;;
 	--speed )
@@ -188,7 +197,7 @@ elif [ "$LANGUAGE" = "PYTHON" ]; then
     DO_PYTHON="TRUE"
 fi
 
-if [ ! -n "$DO_C" ] && [ ! -n "$DO_CXX" ] && [ ! -n "$DO_FORTRAN" ] && [ ! -n "$DO_PYTHON" ]; then
+if [ ! -n "$DO_C" ] && [ ! -n "$DO_CXX" ] && [ ! -n "$DO_FORTRAN" ] && [ ! -n "$DO_PYTHON" ] && [ ! -n "$DO_DOCS" ]; then
     DO_C="TRUE"
     DO_CXX="TRUE"
     DO_FORTRAN="TRUE"
@@ -368,4 +377,17 @@ if [ -n "$DO_SYMBOLS" ]; then
     else
 	python utils/check_symbols.py build/test/unittest build/libYggInterface.dylib  &> symbols.txt
     fi
+fi
+
+if [ -n "DO_DOCS" ]; then
+    if [ ! -d "build" ]; then
+	mkdir build
+    fi
+    cd build
+    cmake .. $CMAKE_FLAGS -DYGG_BUILD_DOCS=ON -DBUILD_CPP_LIBRARY=OFF -DBUILD_FORTRAN_LIBRARY=OFF
+    make docs
+    # cmake --build . $CONFIG_FLAGS --target docs
+    # Need install here to ensure that cmake config files are in place
+    # cmake --install . --prefix "$INSTALL_DIR" $CONFIG_FLAGS
+    cd ..
 fi
