@@ -153,7 +153,7 @@ jobs:
       - name: Install dependencies on Windows
         if: matrix.os == 'windows-latest' && matrix.python-install == 'pip'
         run: |
-          vcpkg.exe install cmocka graphviz doxygen --triplet $env:VCPKG_TRIPLET
+          vcpkg.exe install cmocka graphviz --triplet $env:VCPKG_TRIPLET
       # - name: Set flags for dependencies on Windows
       #   if: matrix.os == 'windows-latest' && matrix.python-install == 'pip' && matrix.windows-compiler == 'mingw'
       #   shell: bash -l {0}
@@ -262,7 +262,7 @@ jobs:
         if: matrix.os == 'windows-latest' && matrix.python-install == 'conda' && matrix.windows-compiler == 'mingw'
         shell: bash -l {0}
         run: |
-          mamba install m2w64-gcc m2w64-gcc-fortran m2w64-toolchain_win-64 libpython -c msys2 -y  # winpthreads
+          mamba install m2w64-gcc m2w64-gcc-fortran m2w64-toolchain_win-64 m2w64-gcc-libs m2w64-gcc-libs-core m2w64-gcc-libgfortran m2w64-libwinpthread-git msys2-conda-epoch libpython -c msys2 -y  # winpthreads
       - name: Install MinGW on windows for Fortran (msvc)
         if: matrix.os == 'windows-latest' && matrix.python-install == 'conda' && matrix.windows-compiler == 'msvc'
         shell: bash -l {0}
