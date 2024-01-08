@@ -7,12 +7,14 @@ _commtypes = [
     pyYggdrasil.COMM_TYPE.IPC_COMM,
     pyYggdrasil.COMM_TYPE.ZMQ_COMM,
     pyYggdrasil.COMM_TYPE.MPI_COMM,
+    pyYggdrasil.COMM_TYPE.RMQ_COMM,
 ]
 
 _commtype_map = {
     'ipc': pyYggdrasil.COMM_TYPE.IPC_COMM,
     'zmq': pyYggdrasil.COMM_TYPE.ZMQ_COMM,
     'mpi': pyYggdrasil.COMM_TYPE.MPI_COMM,
+    'rmq': pyYggdrasil.COMM_TYPE.RMQ_COMM,
 }
 _commtype_map_inv = {v: k for k, v in _commtype_map.items()}
 _testdata = [

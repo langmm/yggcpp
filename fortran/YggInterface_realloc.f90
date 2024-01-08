@@ -9,7 +9,6 @@ function yggptr_realloc(x, array_shape, precision, realloc) result(flag)
   integer(kind=c_size_t), pointer :: array_len
   integer(kind=c_size_t) :: old_len = 1
   integer(kind=c_size_t) :: i
-  call ygglog_debug("yggptr_realloc: begin")
   allocate(array_len)
   array_len = 1
   if (x%array) then
@@ -27,15 +26,10 @@ function yggptr_realloc(x, array_shape, precision, realloc) result(flag)
         array_len = array_shape(1)
      end if
   end if
-  call ygglog_debug("yggptr_realloc: set length")
   flag = .true.
   if ((x%array.and.(array_len.gt.old_len)).or. &
        ((x%type.eq."character").and.(precision.gt.x%prec))) then
      if (realloc.and.x%alloc) then
-        write(log_msg, '("yggptr_realloc: begin realloc. &
-             &size: ",i7,i7," precision: ",i7,i7)') &
-             old_len, array_len, x%prec, precision
-        call ygglog_debug(log_msg)
         select type(item=>x%item)
         type is (yggchar_r)
            call yggptr_realloc_character(x)
