@@ -145,7 +145,7 @@ class Comm_t;
      * @return True if it was found
      */
     bool setResponse(const std::string& request);
-    std::vector<Worker> workers; /**> Workers for sending large messages */
+    std::vector<Worker> workers; /**< Workers for sending large messages */
   };
 
 }

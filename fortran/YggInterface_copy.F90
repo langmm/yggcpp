@@ -1,4 +1,3 @@
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
 subroutine copy_real4_nd(x_out, x_in)
   type(real4_nd), intent(in) :: x_in
   class(real4_nd), intent(inout) :: x_out
@@ -8,4 +7,3 @@ subroutine copy_real4_nd(x_out, x_in)
   allocate(x_out%x, source = x_in%x)
   allocate(x_out%shape, source = x_in%shape)
 end subroutine copy_real4_nd
-#endif ! DOXYGEN_SHOULD_SKIP_THIS

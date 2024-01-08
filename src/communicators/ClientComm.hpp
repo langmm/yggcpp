@@ -47,7 +47,7 @@ public:
 
     /**
      * @brief Connect the client to the server
-     * @return True if successful
+     * @return true if successful, false otherwise
      */
     virtual bool signon();
     /**
@@ -57,6 +57,7 @@ public:
      *   number of loops.
      * @param[in] async_comm Async communicator that should be used for
      *   signon messages.
+     * @return true if successful, false otherwise
      */
     bool send_signon(int nloop, int interval=3,
 		     Comm_t* async_comm = nullptr);
@@ -65,6 +66,7 @@ public:
     using RPCComm::recv;
 
 protected:
+    /** \copydoc YggInterface::communicator::Comm_t::init */
     void init();
     /** \copydoc YggInterface::communicator::Comm_t::create_worker_send */
     Comm_t* create_worker_send(utils::Header& head) override;
@@ -76,7 +78,7 @@ protected:
     long recv_single(utils::Header& header) override;
 
 private:
-    static unsigned _client_rand_seeded;
+    static unsigned _client_rand_seeded; /**< Status of rand seed */
 
 };
 

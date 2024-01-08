@@ -1330,20 +1330,27 @@ public:
 
 /*! \mainpage
  *
- * The Ygg Interface library provides a communication framework for Yggdrasil components to use to send
+ * The YggInterface library provides a communication framework for Yggdrasil components to use to send
  * messages and data between them. It provides C, C++, Fortran, and Python bindings to the core C++ library,
  * allowing it to be used by a wide range of code.
  *
+ * | Language                | Interface                            |
+ * | :---------------------- | :----------------------------------- |
+ * | C++                     | src/YggInterface.hpp                 |
+ * | C                       | src/YggInterface.h                   |
+ * | Python                  | python/pyYggdrasil/__init__.py       |
+ * | Fortran                 | fortran/YggInterface.F90             |
+ *
  * \section install_section Installation
  *
- * The Ygg Interface has a few optional dependencies:
+ * The YggInterface has a few optional dependencies:
  * - ZeroMQ - required to build the ZMQ communicators
  * - OpenMP - used to parallelize some of the code
  * - MPI - required to build the MPI based communicators
  * - Python3 - required to build the Python bindings to this library
  * - Doxygen - required to build the documentation
  *
- * Ygg Interface uses cmake as the build system. To build this project first clone the repository
+ * YggInterface uses cmake as the build system. To build this project first clone the repository
  *
  *     git clone https://github.com/astro-friedel/yggcpp.git
  *

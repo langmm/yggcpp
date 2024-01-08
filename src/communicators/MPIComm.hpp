@@ -33,9 +33,17 @@ public:
     int tag; //!< Tag for next message.
 #endif
 protected:
+  /**
+   * @brief Check the return code from an MPI operation, logging the
+   *   appropriate error if there is one
+   * @param[in] code MPI return code
+   * @param[in] method MPI method returning the provided code
+   * @param[in] rank Rank of the MPI process returning the provided code
+   */
   void CheckReturn(int code, const std::string& method, int rank=0) const ;
 };
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 #if !defined(MPIINSTALLED) && !defined(MPI_COMM_WORLD)
 enum MPI_STATUS_FLAG {
   MPI_SUCCESS,
@@ -47,6 +55,7 @@ enum MPI_STATUS_FLAG {
   MPI_ERR_RANK
 };
 #endif
+#endif // DOXYGEN_SHOULD_SKIP_THIS
 
 /**
  * @brief MPI based communicator
@@ -84,16 +93,15 @@ public:
     std::vector<utils::Address>& getAddresses() { return addresses; }
     
 protected:
-    /**
-     * @brief Initialize the communicator
-     */
+    /** \copydoc YggInterface::communicator::Comm_t::init */
     void init();
-    /** \copydoc Comm_t::send_single */
+    /** \copydoc YggInterface::communicator::Comm_t::send_single */
     int send_single(utils::Header& header) override;
-    /** \copydoc Comm_t::recv_single */
+    /** \copydoc YggInterface::communicator::Comm_t::recv_single */
     long recv_single(utils::Header& header) override;
     WORKER_METHOD_DECS(MPIComm);
 #else // MPIINSTALLED
+    /** \copydoc YggInterface::communicator::Comm_t::init */
     void init() { UNINSTALLED_ERROR(MPI); }
 #endif // MPIINSTALLED
   

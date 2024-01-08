@@ -97,8 +97,10 @@ namespace YggInterface {
 #endif
     };
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
     YGG_THREAD_GLOBAL_VAR(int, global_scope_comm, )
     extern std::shared_ptr<CommContext> global_context; //!< Global context
+#endif // DOXYGEN_SHOULD_SKIP_THIS
 
     /**
      * @brief Get the status of the global scope flag.

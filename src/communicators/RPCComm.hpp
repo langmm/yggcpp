@@ -55,9 +55,9 @@ public:
 
   using Comm_t::send;
   using Comm_t::recv;
-  /*! \copydoc YggInterface::communicator::Comm_t::comm_nmsg */
+  /** \copydoc YggInterface::communicator::Comm_t::comm_nmsg */
   int comm_nmsg(DIRECTION dir=NONE) const override;
-  /*! \copydoc YggInterface::communicator::Comm_t::wait_for_recv */
+  /** \copydoc YggInterface::communicator::Comm_t::wait_for_recv */
   int wait_for_recv(const int64_t& tout) override;
 
   /**
@@ -65,6 +65,7 @@ public:
    * @param[in] s JSON serialized schema.
    * @param[in] use_generic If true, set schema to expect generic
    *   JSON objects.
+   * @return true if successful, false otherwise.
    */
   bool addResponseSchema(const std::string& s, bool use_generic=false);
   /**
@@ -72,6 +73,7 @@ public:
    * @param[in] s JSON schema.
    * @param[in] use_generic If true, set schema to expect generic
    *   JSON objects.
+   * @return true if successful, false otherwise.
    */
   bool addResponseSchema(const rapidjson::Value& s,
 			 bool use_generic=false);
@@ -80,6 +82,7 @@ public:
    * @param[in] metadata Metadata to copy containing JSON schema.
    * @param[in] use_generic If true, set schema to expect generic
    *   JSON objects.
+   * @return true if successful, false otherwise.
    */
   bool addResponseSchema(const utils::Metadata& metadata,
 			 bool use_generic=false);
@@ -89,6 +92,7 @@ public:
    * @param[in] fmt C-style format string.
    * @param[in] use_generic If true, set schema to expect generic
    *   JSON objects.
+   * @return true if successful, false otherwise.
    */
   bool addResponseFormat(const std::string& fmt, bool use_generic=false);
   /** \copydoc YggInterface::communicator::Comm_t::getMetadata */

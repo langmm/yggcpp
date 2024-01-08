@@ -72,7 +72,7 @@ module YggInterface
           FILE_FLAG_BINARY          = int(z'04000000'), &
           FILE_FLAG_READLINE        = int(z'08000000')
   end enum
-#endif ! DOXYGEN_SHOULD_SKIP_THIS
+#endif
 
   !> @brief Wrap a fortran variable so that yggdrasil can pass it to comm
   !>    send & receive methods.
@@ -116,8 +116,6 @@ module YggInterface
      module procedure yggarg_scalar_yggpyinst
      module procedure yggarg_scalar_yggpyfunc
      module procedure yggarg_scalar_yggptr
-     ! module procedure yggarg_scalar_yggptr_arr
-     ! module procedure yggarg_scalar_yggptr_map
      module procedure yggarg_realloc_1darray_unsigned1
      module procedure yggarg_realloc_1darray_unsigned2
      module procedure yggarg_realloc_1darray_unsigned4
@@ -214,24 +212,21 @@ module YggInterface
      module procedure yggarg_2darray_character
      module procedure yggarg_2darray_yggchar_r
   end interface yggarg
-  !> @brief Set an item in an array.
+  !> @brief Set an element in an array.
   !> @param[in] x Generic object that is presumed to contain an array.
-  !> @param[in] index Index for value that should be set.
-  !> @param[in] ... Additional variables contain information about the item.
+  !> @param[in] index Index for element that should be set.
+  !> @param[in] val Variable containing value for the element.
+  !> @param[in] units Optional units for scalars, 1D, & ND arrays.
   interface generic_array_set
      module procedure generic_array_set_generic
      module procedure generic_array_set_boolean
-     ! module procedure generic_array_set_integer
      module procedure generic_array_set_null
-     ! module procedure generic_array_set_number
      module procedure generic_array_set_array
      module procedure generic_array_set_map
      module procedure generic_array_set_ply
      module procedure generic_array_set_obj
      module procedure generic_array_set_python_class
-     ! module procedure generic_array_set_python_function
      module procedure generic_array_set_schema
-     ! module procedure generic_array_set_any
      module procedure generic_array_set_integer2
      module procedure generic_array_set_integer4
      module procedure generic_array_set_integer8
@@ -275,22 +270,20 @@ module YggInterface
   end interface generic_array_set
   !> @brief Set an item in a map.
   !> @param[in] x Generic object that is presumed to contain a map.
-  !> @param[in] key Key string for value that should be set.
-  !> @param[in] ... Additional variables contain information about the item.
+  !> @param[in] key Key string for item that should be set.
+  !> @param[in] val Value to assign to the item.
+  !> @param[in] units Units to assign to the item for scalars, 1D, & ND
+  !>   arrays.
   interface generic_map_set
      module procedure generic_map_set_generic
      module procedure generic_map_set_boolean
-     ! module procedure generic_map_set_integer
      module procedure generic_map_set_null
-     ! module procedure generic_map_set_number
      module procedure generic_map_set_array
      module procedure generic_map_set_map
      module procedure generic_map_set_ply
      module procedure generic_map_set_obj
      module procedure generic_map_set_python_class
-     ! module procedure generic_map_set_python_function
      module procedure generic_map_set_schema
-     ! module procedure generic_map_set_any
      module procedure generic_map_set_integer2
      module procedure generic_map_set_integer4
      module procedure generic_map_set_integer8
@@ -332,25 +325,22 @@ module YggInterface
      module procedure generic_map_set_ndarray_bytes
      module procedure generic_map_set_ndarray_unicode
   end interface generic_map_set
-  !> @brief Get an item from an array.
+  !> @brief Get an element from an array.
   !> @param[in] x Generic object that is presumed to contain an array.
-  !> @param[in,out] ... Additional arguments will determine the type of
-  !>    data that's returned.
-  !> @returns The item.
+  !> @param[in] index Index of element to return.
+  !> @param[out] out Variable to store element in. For ND arrays
+  !>   this should be a reallocatable type of the form \<type\>\<precision\>_nd
+  !>   (e.g. integer2_nd, real4_nd)
   interface generic_array_get
      module procedure generic_array_get_generic
      module procedure generic_array_get_boolean
-     ! module procedure generic_array_get_integer
      module procedure generic_array_get_null
-     ! module procedure generic_array_get_number
      module procedure generic_array_get_array
      module procedure generic_array_get_map
      module procedure generic_array_get_ply
      module procedure generic_array_get_obj
      module procedure generic_array_get_python_class
-     ! module procedure generic_array_get_python_function
      module procedure generic_array_get_schema
-     ! module procedure generic_array_get_any
      module procedure generic_array_get_integer2
      module procedure generic_array_get_integer4
      module procedure generic_array_get_integer8
@@ -394,23 +384,18 @@ module YggInterface
   end interface generic_array_get
   !> @brief Get an item from a map.
   !> @param[in] x Generic object that is presumed to contain a map.
-  !> @param[in,out] ... Additional arguments will determine the type of
-  !>    data that's returned.
-  !> @returns The item.
+  !> @param[in] key Key for item in the map that should be returned.
+  !> @param[in] out Variable to store the item in.
   interface generic_map_get
      module procedure generic_map_get_generic
      module procedure generic_map_get_boolean
-     ! module procedure generic_map_get_integer
      module procedure generic_map_get_null
-     ! module procedure generic_map_get_number
      module procedure generic_map_get_array
      module procedure generic_map_get_map
      module procedure generic_map_get_ply
      module procedure generic_map_get_obj
      module procedure generic_map_get_python_class
-     ! module procedure generic_map_get_python_function
      module procedure generic_map_get_schema
-     ! module procedure generic_map_get_any
      module procedure generic_map_get_integer2
      module procedure generic_map_get_integer4
      module procedure generic_map_get_integer8
@@ -453,9 +438,12 @@ module YggInterface
      module procedure generic_map_get_ndarray_unicode
   end interface generic_map_get
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
+  !> @brief Copy values from a specialized reallocatable array class
+  !>   to a classical fortran array
+  !> @param[in] in Specialized reallocatable array
+  !> @param[out] out Classical fortran array
   interface yggassign
      module procedure yggassign_yggchar2character
-     ! module procedure yggassign_character2yggchar
      module procedure yggassign_integer_1d_to_array
      module procedure yggassign_integer_1d_from_array
      module procedure yggassign_integer2_1d_to_array
@@ -464,8 +452,6 @@ module YggInterface
      module procedure yggassign_integer4_1d_from_array
      module procedure yggassign_integer8_1d_to_array
      module procedure yggassign_integer8_1d_from_array
-     ! module procedure yggassign_unsigned_1d_to_array
-     ! module procedure yggassign_unsigned_1d_from_array
      module procedure yggassign_unsigned2_1d_to_array
      module procedure yggassign_unsigned2_1d_from_array
      module procedure yggassign_unsigned4_1d_to_array
@@ -500,7 +486,7 @@ module YggInterface
      module procedure yggassign_logical8_1d_from_array
      ! TODO: ND array
   end interface yggassign
-#endif ! DOXYGEN_SHOULD_SKIP_THIS
+#endif
   !> @brief Convert an object to type(yggarr)
   !> @param[in] input Object to convert.
   !> @returns Converted object.
@@ -1144,7 +1130,7 @@ module YggInterface
      module procedure ygguint4_assign
      module procedure ygguint8_assign
   end interface assignment(=)
-#endif ! DOXYGEN_SHOULD_SKIP_THIS
+#endif
 
   public :: yggarg, yggchar_r, yggcomm, ygggeneric, &
        yggptr, yggnull, yggarr, yggmap, &
@@ -1187,7 +1173,6 @@ contains
     integer, intent(in) :: other
     self%x = int(other, kind=8)
   end subroutine ygguint8_assign
-#endif ! DOXYGEN_SHOULD_SKIP_THIS
 
 
 #ifndef _WIN32
@@ -1302,6 +1287,7 @@ contains
     y%x = x
     if (y%x.lt.0) stop "Unsigned int cannot be less than 0."
   end function init_ygguint8
+#endif
   !> @brief Display a null object (for completeness).
   !> @param[in] x Instance to display.
   subroutine display_null(x)
@@ -1339,7 +1325,7 @@ contains
        i = index(x, "\n")
     end do
   end subroutine fix_format_str
-#endif ! DOXYGEN_SHOULD_SKIP_THIS
+#endif
 
   ! YggInterface
 
@@ -1417,7 +1403,7 @@ contains
        ! stop "is_comm_format_array_type: Error checking type."
     end if
   end function is_comm_format_array_type
-#endif ! DOXYGEN_SHOULD_SKIP_THIS
+#endif
 
   !> @brief Constructor for a generic comm for testing purposes.
   !> @param[in] name Name of the channel.
@@ -2137,7 +2123,7 @@ contains
        stop "is_dtype_format_array: Error checking data type"
     end if
   end function is_dtype_format_array
-#endif ! DOXYGEN_SHOULD_SKIP_THIS
+#endif
 
   !> @brief Create a data type from a serialized JSON schema.
   !> @param[in] schema Serialized JSON schema.
@@ -3158,7 +3144,7 @@ contains
     call post_recv(args, c_args, flag, .true., is_format)
     call ygglog_debug("ygg_recv_var_realloc: end")
   end function ygg_recv_var_realloc_mult
-#endif ! DOXYGEN_SHOULD_SKIP_THIS
+#endif
 
   ! Ply interface
   !> @brief Initialize a ply mesh instance.
@@ -3406,7 +3392,7 @@ contains
   !   nbytes = data%nbytes
   !   out = create_generic_c(c_type_class, c_data, nbytes)
   ! end function create_generic
-#endif ! DOXYGEN_SHOULD_SKIP_THIS
+#endif
   
   !> @brief Free a generic object.
   !> @param[in] x A generic object to free.

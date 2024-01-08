@@ -139,20 +139,20 @@ namespace YggInterface {
 			size_t ncomm=0);
       ADD_METHODS_BASE(ForkComm, DEFAULT_COMM, true)
 	
-      // \copydoc Comm_t::comm_nmsg
+      /** \copydoc YggInterface::communicator::Comm_t::comm_nmsg */
       int comm_nmsg(DIRECTION dir=NONE) const override;
-      // \copydoc Comm_t::set_timeout_recv
+      /** \copydoc YggInterface::communicator::Comm_t::set_timeout_recv */
       void set_timeout_recv(int64_t new_timeout) override;
       
       using Comm_t::send;
       using Comm_t::recv;
 
     protected:
-      // \copydoc Comm_t::init
+      /** \copydoc YggInterface::communicator::Comm_t::init */
       void init();
-      // \copydoc Comm_t::send_raw
+      /** \copydoc YggInterface::communicator::Comm_t::send_raw */
       int send_raw(const char *data, const size_t &len) override;
-      // \copydoc Comm_t::recv_raw
+      /** \copydoc YggInterface::communicator::Comm_t::recv_raw */
       long recv_raw(char*& data, const size_t &len,
 		    bool allow_realloc=false) override;
 

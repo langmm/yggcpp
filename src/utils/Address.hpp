@@ -30,6 +30,10 @@ public:
      * @param adr The instance to copy
      */
     Address(const Address &adr);
+    /**
+     * @brief Copy constructor of the Address class
+     * @param adr The instance to copy
+     */
     explicit Address(const Address* adr);
 
     /**
@@ -57,6 +61,11 @@ public:
      */
     bool operator==(const Address &adr);
 
+    /**
+     * @brief Assignment operator
+     * @param[in] adr Address to copy
+     * @return A reference to this instance
+     */
     Address& operator=(const Address& adr);
     /**
      * @brief Whether or not this instance is has a valid address
@@ -71,19 +80,25 @@ public:
         _valid = false;
         _address.clear();
     }
+    /**
+     * @brief Output stream operator
+     * @param[in,out] out Output stream
+     * @param[in] addr Address to output to the stream
+     * @return Output stream
+     */
     friend std::ostream &operator<<(std::ostream &out, const Address &addr) {
         out << addr._address;
         return out;
     }
 
 private:
-    std::string _address;       // the address
-    int _key{};                 // the unique key
-    bool _valid;                // validity flag
+    std::string _address;       //!< the address
+    int _key{};                 //!< the unique key
+    bool _valid;                //!< validity flag
 
 };
 
-  static Address blankAddress;
+  static Address blankAddress;  //!< empty address singleton
   
 }
 }

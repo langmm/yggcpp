@@ -1,5 +1,3 @@
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-
 subroutine yggassign_yggchar2character(in, out)
   type(yggchar_r), intent(in) :: in
   character(len=:), allocatable :: out
@@ -401,4 +399,3 @@ subroutine yggassign_logical8_1d_from_array(in, out)
 end subroutine yggassign_logical8_1d_from_array
 
 ! TODO: ND
-#endif ! DOXYGEN_SHOULD_SKIP_THIS

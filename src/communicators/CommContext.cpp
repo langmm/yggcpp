@@ -2,12 +2,14 @@
 #include "utils/tools.hpp"
 #include "utils/rapidjson_wrapper.hpp"
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 int YggInterface::communicator::global_scope_comm = 0;
 #ifdef RAPIDJSON_YGGDRASIL_PYTHON
 std::shared_ptr<YggInterface::communicator::CommContext> YggInterface::communicator::global_context(NULL);
 #else // RAPIDJSON_YGGDRASIL_PYTHON
 std::shared_ptr<YggInterface::communicator::CommContext> YggInterface::communicator::global_context(new YggInterface::communicator::CommContext());
 #endif // RAPIDJSON_YGGDRASIL_PYTHON
+#endif // DOXYGEN_SHOULD_SKIP_THIS
 
 using namespace YggInterface::communicator;
 

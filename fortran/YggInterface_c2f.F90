@@ -1,4 +1,3 @@
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
 function convert_string_f2c(f_message) result(c_message)
   implicit none
   character(len=*), intent(in) :: f_message
@@ -1188,4 +1187,3 @@ subroutine yggptr_c2f_ndarray_realloc_character(x)
      stop "ERROR"
   end select
 end subroutine yggptr_c2f_ndarray_realloc_character
-#endif ! DOXYGEN_SHOULD_SKIP_THIS

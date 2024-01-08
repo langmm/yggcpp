@@ -40,10 +40,12 @@ namespace YggInterface {
       ~RMQConnection();
       /**
        * @brief Initialize the connection
+       * @return -1 if there is an error
        */
       int init();
       /**
        * @brief Close the connection
+       * @return -1 if there is an error
        */
       int close();
       /** \copydoc YggInterface::communicator::Comm_t::comm_nmsg */

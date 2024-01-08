@@ -1,4 +1,3 @@
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
 ! Scalar versions
 function yggarg_scalar_init(x) result (y)
   class(*), target :: x
@@ -1504,4 +1503,3 @@ function yggarg_realloc_ndarray_character(x) result (y)
      end if
   end if
 end function yggarg_realloc_ndarray_character
-#endif ! DOXYGEN_SHOULD_SKIP_THIS

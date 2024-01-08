@@ -4,10 +4,12 @@
 #include "utils/tools.hpp"
 #include "utils/logging.hpp"
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 /* double YggInterface::communicator::_wait_send_t = 0;  // 0.0001; */
 char YggInterface::communicator::_reply_msg[100] = "YGG_REPLY";
 char YggInterface::communicator::_purge_msg[100] = "YGG_PURGE";
 int YggInterface::communicator::_zmq_sleeptime = 10000;
+#endif // DOXYGEN_SHOULD_SKIP_THIS
 
 using namespace YggInterface::communicator;
 using namespace YggInterface::utils;

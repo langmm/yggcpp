@@ -378,7 +378,8 @@ if [ -n "$DO_SYMBOLS" ]; then
     fi
 fi
 
-if [ -n "DO_DOCS" ]; then
+if [ -n "$DO_DOCS" ]; then
+    echo "BUILDING DOCS"
     if [ ! -d "build" ]; then
 	mkdir build
     fi

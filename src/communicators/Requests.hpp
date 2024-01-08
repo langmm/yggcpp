@@ -560,7 +560,7 @@ public:
     /**
      * @brief Query whether all partners are signed off
      * @param[in] header The header to use
-     * @return True if all partners are signed off, false otherwise
+     * @return true if all partners are signed off, false otherwise
      * @see utils::Header
      */
     bool partnerSignoff(const utils::Header& header) {
@@ -581,6 +581,7 @@ public:
     /**
      * @brief Transfer the internal schema to the given communicator
      * @param[in, out] comm The communicator to transfer to
+     * @return true if successful, false otherwise
      */
     bool transferSchemaTo(Comm_t* comm) {
       return comm->getMetadata(response_dir).fromMetadata(response_metadata);
@@ -588,6 +589,7 @@ public:
     /**
      * @brief Transfer the schema from the given communicator
      * @param[in] comm The communicator to transfer the schema from
+     * @return true if successful, false otherwise
      */
     bool transferSchemaFrom(Comm_t* comm) {
       return response_metadata.fromMetadata(comm->getMetadata(response_dir));

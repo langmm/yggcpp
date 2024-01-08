@@ -31,18 +31,25 @@ namespace utils {
      * @param[in] is_err
      */
     YggdrasilLogger(std::string nme, size_t lvl, bool is_err=false);
+    /*!
+     * @brief Copy constructor
+     * @param[in] rhs Logger to copy
+     */
     YggdrasilLogger(YggdrasilLogger const & rhs);
+    /*!
+     * @brief Destructor
+     */
     ~YggdrasilLogger();
-    std::string name;  /**! The logger name */
-    size_t level;      /**! The minimum logging level */
-    bool is_error;     /**!  */
-    std::stringstream ss;  /**! internal use */
-    std::chrono::system_clock::time_point t; /**! Time for message */
+    std::string name;  /**< The logger name */
+    size_t level;      /**< The minimum logging level */
+    bool is_error;     /**< Is the logger used for errors */
+    std::stringstream ss;  /**< internal use */
+    std::chrono::system_clock::time_point t; /**< Time for message */
     /*!
      * @brief Templated streaming operator
      * @tparam T The type of item to write
      * @param x The item to write
-     * @return
+     * @return Logger
      */
     template<typename T>
     YggdrasilLogger& operator << (const T& x) {
@@ -52,7 +59,7 @@ namespace utils {
     /*!
      * @brief Streaming operator
      * @param x The item to write
-     * @return
+     * @return Logger
      */
     YggdrasilLogger& operator << (std::ostream& (*x)(std::ostream&)) {
       ss << x;
@@ -100,11 +107,20 @@ namespace utils {
     LogBase() {}
     /** @brief Destructor */
     virtual ~LogBase() {}
-    //! @brief A string describing the class.
+    /**
+     * @brief A string describing the class
+     * @return Description
+     */
     virtual std::string logClass() const { return ""; }
-    //! @brief A string describing the instance.
+    /**
+     * @brief A string describing the instance
+     * @return Description
+     */
     virtual std::string logInst() const { return ""; }
-    //! @brief A string describing the class and instance.
+    /**
+     * @brief A string describing the class and instance
+     * @return Description
+     */
     std::string logStr() const {
       std::string out = logClass();
       std::string out_inst = logInst();
@@ -112,20 +128,23 @@ namespace utils {
 	out += "(" + out_inst + ")";
       return out;
     }
-    //! @brief Throw a C++ exception.
+    /**
+       @brief Throw a C++ exception.
+       @param[in] msg Exception description
+    */
     void throw_error(const std::string msg) const {
       utils::YggLogThrowError(logStr() + "::" + msg);
     }
-    /*!
-      @brief Get a logger prefixed with class information.
-      @param[in] nme Name of the log level to prefix log messages with.
-      @param[in] lvl Level of logger to create.
-      @param[in] is_err If true, messages sent to the logger are
-        considered error messages and an error code will be returned
-	on exit.
-      @return Logger that messages can be added to. They will only be
-        flushed to the buffer when the logger is destroyed.
-    */
+    /**
+     * @brief Get a logger prefixed with class information.
+     * @param[in] nme Name of the log level to prefix log messages with.
+     * @param[in] lvl Level of logger to create.
+     * @param[in] is_err If true, messages sent to the logger are
+     *   considered error messages and an error code will be returned
+     *   on exit.
+     * @return Logger that messages can be added to. They will only be
+     *   flushed to the buffer when the logger is destroyed.
+     */
     YggdrasilLogger log(std::string nme, size_t lvl,
 			bool is_err=false) const {
       YggdrasilLogger out(nme, lvl, is_err);
@@ -133,13 +152,25 @@ namespace utils {
 	out << logStr() << "::";
       return out;
     }
-    //! @brief Get an error logger prefixed with class information.
+    /**
+     * @brief Get an error logger prefixed with class information.
+     * @return logger
+     */
     YggdrasilLogger log_error() const { return log ygglog_param_error; }
-    //! @brief Get an info logger prefixed with class information.
+    /**
+     * @brief Get an info logger prefixed with class information.
+     * @return logger
+     */
     YggdrasilLogger log_info() const { return log ygglog_param_info; }
-    //! @brief Get a debug logger prefixed with class information.
+    /**
+     * @brief Get an debug logger prefixed with class information.
+     * @return logger
+     */
     YggdrasilLogger log_debug() const { return log ygglog_param_debug; }
-    //! @brief Get a verbose logger prefixed with class information.
+    /**
+     * @brief Get an verbose logger prefixed with class information.
+     * @return logger
+     */
     YggdrasilLogger log_verbose() const { return log ygglog_param_verbose; }
   };
   

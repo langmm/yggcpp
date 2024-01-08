@@ -7,6 +7,7 @@ except ImportError:
     from ctypes import CDLL, PyDLL
     if hasattr(os, 'add_dll_directory'):
         os.add_dll_directory(os.path.dirname(__file__))
+    ## @cond HIDDEN_SYMBOLS
     bundled_cpplib = next(
         filter(
             lambda fl: re.match(".*YggInterface_py\\..*", fl),
@@ -32,6 +33,7 @@ except ImportError:
             "YggInterface C++ library is not installed and "
             "no bundled version was detected")
     from pyYggdrasil import _pyYggdrasil  # noqa: F401
+    ## @endcond
 
 
 from ._pyYggdrasil import (
@@ -47,10 +49,9 @@ from ._pyYggdrasil import (
 )
 # TODO: handle recv_converter, send_converter and other aliases
 
-YGG_SERVER_INPUT = os.environ.get('YGG_SERVER_INPUT', False)
-YGG_SERVER_OUTPUT = os.environ.get('YGG_SERVER_OUTPUT', False)
-YGG_MODEL_NAME = os.environ.get('YGG_MODEL_NAME', False)
+## @cond HIDDEN_SYMBOLS
 _global_scope_comms = {}
+## @endcond
 
 
 def maxMsgSize():
@@ -141,6 +142,8 @@ def YggInput(name, format_str=None, **kwargs):
         DefaultComm: Communication object.
 
     """
+    YGG_MODEL_NAME = os.environ.get('YGG_MODEL_NAME', False)
+    YGG_SERVER_INPUT = os.environ.get('YGG_SERVER_INPUT', False)
     if ((YGG_SERVER_INPUT
          and ((name == YGG_SERVER_INPUT)
               or (('%s:%s' % (YGG_MODEL_NAME, name)) == YGG_SERVER_INPUT)))):
@@ -169,6 +172,8 @@ def YggOutput(name, format_str=None, **kwargs):
         DefaultComm: Communication object.
 
     """
+    YGG_MODEL_NAME = os.environ.get('YGG_MODEL_NAME', False)
+    YGG_SERVER_OUTPUT = os.environ.get('YGG_SERVER_OUTPUT', False)
     if ((YGG_SERVER_OUTPUT
          and ((name == YGG_SERVER_OUTPUT)
               or (('%s:%s' % (YGG_MODEL_NAME, name)) == YGG_SERVER_OUTPUT)))):

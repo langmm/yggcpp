@@ -1,4 +1,3 @@
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
   interface
      ! Utilities
      function ygg_init_c() result(out) bind(c, name="ygg_init_f")
@@ -1159,4 +1158,3 @@
      ! end subroutine dummy_function_c
 
   end interface
-#endif ! DOXYGEN_SHOULD_SKIP_THIS

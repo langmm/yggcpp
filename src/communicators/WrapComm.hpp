@@ -162,8 +162,8 @@ namespace YggInterface {
 		  (header), out = nullptr, Comm_t*, override);
       WRAP_METHOD(create_worker_recv, (utils::Header& header),
 		  (header), out = nullptr, Comm_t*, override);
-      COMM_TYPE wraptype;
-      size_t wrapncomm;
+      COMM_TYPE wraptype; /**< Wrapped communicator type */
+      size_t wrapncomm;   /**< Number of wrapped communicators (fork only) */
     };
       
   }

@@ -1,3 +1,4 @@
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 #ifndef PY_SSIZE_T_CLEAN
 #define PY_SSIZE_T_CLEAN
 #endif
@@ -83,3 +84,4 @@ PyInit_pyYggdrasil() {
     YggInterface::communicator::ygg_init();
     return m;
 }
+#endif // DOXYGEN_SHOULD_SKIP_THIS

@@ -15,6 +15,8 @@
 
 namespace YggInterface {
 namespace communicator {
+
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 /*!
   @brief Message buffer structure for Sys V IPC queues.
 */
@@ -22,6 +24,7 @@ typedef struct msgbuf_t {
     long mtype;      //!< Message buffer type
     char data[2048]; //!< Buffer for the message
 } msgbuf_t;
+#endif // DOXYGEN_SHOULD_SKIP_THIS
 
 /**
  * @brief Sys V IPC queue based communicator
@@ -60,24 +63,23 @@ public:
      */
     int remove_comm(bool close_comm);
 
-    /*! \copydoc Comm_t::comm_nmsg */
+    /** \copydoc YggInterface::communicator::Comm_t::comm_nmsg */
     int comm_nmsg(DIRECTION dir=NONE) const override;
     using Comm_t::send;
     using Comm_t::recv;
 
 protected:
-    /**
-     * Initialize the communciator
-     */
+    /** \copydoc YggInterface::communicator::Comm_t::init */
     void init();
-    /*! \copydoc Comm_t::send_single() */
+    /** \copydoc YggInterface::communicator::Comm_t::send_single() */
     int send_single(utils::Header& header) override;
 
-    /*! \copydoc Comm_t::recv_single() */
+    /** \copydoc YggInterface::communicator::Comm_t::recv_single() */
     long recv_single(utils::Header& header) override;
   
     WORKER_METHOD_DECS(IPCComm);
 #else // IPCINSTALLED
+    /** \copydoc YggInterface::communicator::Comm_t::init */
     void init() { UNINSTALLED_ERROR(IPC); }
 #endif // IPCINSTALLED
 

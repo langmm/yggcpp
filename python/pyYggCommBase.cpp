@@ -1,3 +1,4 @@
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 #ifndef PY_SSIZE_T_CLEAN
 #define PY_SSIZE_T_CLEAN
 #endif
@@ -1293,3 +1294,4 @@ static PyObject* is_comm_installed(PyObject*, PyObject* args) {
   }
   Py_RETURN_FALSE;
 }
+#endif // DOXYGEN_SHOULD_SKIP_THIS

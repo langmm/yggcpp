@@ -10,10 +10,12 @@
 #include <memory>
 namespace YggInterface {
 namespace communicator {
-  
+
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 YGG_THREAD_GLOBAL_VAR(char, _reply_msg, [100])
 YGG_THREAD_GLOBAL_VAR(char, _purge_msg, [100])
 YGG_THREAD_GLOBAL_VAR(int, _zmq_sleeptime, )
+#endif // DOXYGEN_SHOULD_SKIP_THIS
 
 /*!
  * @brief Class for ZMQ sockets
@@ -109,9 +111,28 @@ public:
    */
   void destroy();
 #else
-  void init(int, utils::Address&, int = 0, int = 1, int = -1) {
+  /*!
+   * @brief Initialize the socket
+   * @param[in] type0 The type of zmq socket
+   * @param[in] address The  address for this socket to connect to
+   * @param[in] linger How long to allow queued messages to linger after a socket closes. A value of -1 means infinite wait.
+   * @param[in] immediate If set to 1 then messages will only be queued on completed connections
+   * @param[in] sndtimeo Sending timeout in ms. A value of -1 will block until the message is sent.
+   * @see utils::Address
+   */
+  void init(int type0, utils::Address& address,
+            int linger = 0, int immediate = 1,
+            int sndtimeo = -1) {
+    UNUSED(type0);
+    UNUSED(address);
+    UNUSED(linger);
+    UNUSED(immediate);
+    UNUSED(sndtimeo);
     UNINSTALLED_ERROR(ZMQ);
   }
+  /*!
+   * @brief Destroy the socket
+   */
   void destroy() {}
 #endif
   ~ZMQSocket();
@@ -124,11 +145,12 @@ public:
   std::string endpoint;       //!<  Last bound endpoint, if any
   int type;                   //!<  Socket type
 private:
-  static int _last_port;
-  static int _last_port_set;
+  static int _last_port;      //!<  Last ZMQ port used
+  static int _last_port_set;  //!<  1 if _last_port has been set, 0 otherwise
 public:
-  // Test methods
-  // friend class testing::ZMQSocket_tester;
+  /*!
+    @brief Reset the last port.
+   */
   static void resetPort();
 };
 
@@ -215,7 +237,12 @@ public:
   int last_idx;                     //!< index of last used socket
   
   // Test methods
-  static bool _test_return_val;
+  static bool _test_return_val;     //!< value to return from send/recv methods during test
+  /*!
+   * @brief Set the value that should be returned by send/recv methods
+   *   during a test.
+   * @param[in] new_val New return value.
+   */
   static void set_test_return_val(bool new_val);
 };
 
@@ -278,6 +305,7 @@ protected:
     /** \copydoc YggInterface::communicator::CommBase::create_worker_recv */
     Comm_t* create_worker_recv(utils::Header& head) override;
 #else
+    /** \copydoc YggInterface::communicator::Comm_t::init */
     void init() { UNINSTALLED_ERROR(ZMQ); }
 #endif
 

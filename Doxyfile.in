@@ -499,6 +499,9 @@ NUM_PROC_THREADS       = 1
 # normally produced when WARNINGS is set to YES.
 # The default value is: NO.
 
+# This must be yes to get the Python & Fortran documentation, but it also
+# suppresses the warnings so it should be turned of to determine if there
+# are an missing docs
 EXTRACT_ALL            = YES
 
 # If the EXTRACT_PRIVATE tag is set to YES, all private members of a class will
@@ -989,6 +992,12 @@ FILE_PATTERNS          = *.c \
                          *.f08 \
                          *.f18 \
                          *.f \
+                         *.F90 \
+                         *.F95 \
+                         *.F03 \
+                         *.F08 \
+                         *.F18 \
+                         *.F \
                          *.for \
                          *.vhd \
                          *.vhdl \
@@ -1018,9 +1027,12 @@ EXCLUDE                = @DOXYGEN_INPUT_DIR@/src/rapidjson \
                          @DOXYGEN_INPUT_DIR@/fortran/YggInterface_conv.F90 \
                          @DOXYGEN_INPUT_DIR@/fortran/YggInterface_copy.F90 \
                          @DOXYGEN_INPUT_DIR@/fortran/YggInterface_realloc.F90 \
+                         @DOXYGEN_INPUT_DIR@/fortran/YggInterface_array.F90 \
+                         @DOXYGEN_INPUT_DIR@/fortran/YggInterface_map.F90 \
                          @DOXYGEN_INPUT_DIR@/fortran/c_wrappers.c \
                          @DOXYGEN_INPUT_DIR@/fortran/c_wrappers.h \
-                         @DOXYGEN_INPUT_DIR@/python/test
+                         @DOXYGEN_INPUT_DIR@/python/test \
+			 @DOXYGEN_INPUT_DIR@/python/*.cpp
 
 # The EXCLUDE_SYMLINKS tag can be used to select whether or not files or
 # directories that are symbolic links (a Unix file system feature) are excluded

@@ -35,12 +35,12 @@
 extern "C" {
 #endif
 
-    /**
-     * @brief Struct for holding a C++ class communicator as a void* for use in C
-     */
+/**
+ * @brief Struct for holding a C++ class communicator as a void* for use in C
+ */
 typedef struct comm_t {
-    void* comm;
-}comm_t;
+  void* comm; /**< Pointer to C++ communicator */
+} comm_t;
 
   
 // TODO: Allow use of ygglog_error as function in C

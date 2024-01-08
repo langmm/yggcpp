@@ -130,6 +130,7 @@ public:
   /*!
    * @brief Initialize this instance
    * @param[in] use_generic If true then initialize with generic values
+   * @return true if successful, false otherwise
    */
   bool _init(bool use_generic = false);
   /*!
@@ -326,8 +327,11 @@ public:
    */
   void addTransform(const transformFunc& new_transform);
   /*!
-   * @brief Set the filters used to select messages.
-   * @param[in] new_filters New filters.
+   * @brief Set the filters used to select messages. This removes any
+   *   existing filters
+   * @tparam T Type of filters
+   * @param[in] new_filters New filters
+   * @return true if successful, false otherwise
    */
   template<typename T>
   bool setFilters(const std::vector<T>& new_filters) {
@@ -338,8 +342,10 @@ public:
     return true;
   }
   /*!
-   * @brief Set the transforms used to select messages.
-   * @param[in] new_transforms New transforms.
+   * @brief Set the transforms used to select messages
+   * @tparam T Type of transforms
+   * @param[in] new_transforms New transforms
+   * @return true if successful, false otherwise
    */
   template<typename T>
   bool setTransforms(const std::vector<T>& new_transforms) {
@@ -356,35 +362,37 @@ public:
   RAPIDJSON_DEFAULT_ALLOCATOR& GetAllocator();
   /*!
    * @brief Determine if the schema is a generic one
-   * @return True if the schema is generci
+   * @return true if the schema is generic, false otherwise
    */
   bool isGeneric() const;
   /*!
    * @brief Set the schema to be generic
+   * @return true if successful, false otherwise
    */
   bool setGeneric();
   /*!
    * @brief Set the schema to allow wrapping as an array
+   * @return true if successful, false otherwise
    */
   bool setAllowWrapped();
   /*!
    * @brief Determine if the metadata was from a format string
-   * @return True if it was set from a format string
+   * @return true if it was set from a format string
    */
   int isFormatArray() const;
   /*!
    * @brief Determine if the metadata is empty
-   * @return True if it is empty
+   * @return true if it is empty
    */
   bool empty() const;
   /*!
    * @brief Determine if the schema has a type
-   * @return True if the schema has a type
+   * @return true if the schema has a type
    */
   bool hasType() const;
   /*!
    * @brief Determine if the schema has a subtype
-   * @return True if the schema has a subtype
+   * @return true if the schema has a subtype
    */
   bool hasSubtype() const;
   /*!
@@ -399,6 +407,7 @@ public:
   const char* subtypeName() const;
   /*!
    * @brief Initialize the schema based on the metadata
+   * @return A pointer to the initialized schema section in the metadata
    */
   rapidjson::Value* initSchema();
   /*!
@@ -433,12 +442,16 @@ public:
    */
   const rapidjson::Value* getMeta() const;
   /*!
-   * @brief Get the schema
+   * @brief Get the schema section of the metadata
+   * @param[in] required If true, an error will be logged if the
+   *   metadata does not contain a schema section
    * @return The schema
    */
   rapidjson::Value* getSchema(bool required=false);
   /*!
-   * @brief Get a const version of the schema
+   * @brief Get a const version of the schema section of the metadata
+   * @param[in] required If true, an error will be logged if the
+   *   metadata does not contain a schema section
    * @return The schema (const)
    */
   const rapidjson::Value* getSchema(bool required=false) const;
@@ -447,46 +460,106 @@ public:
    * @param[in] name The name of the item to set the value for
    * @param[in] x The value to assign to the item
    * @param[in] subSchema The subschema to use.
+   * @return true if successful, false otherwise
    */
   bool SetValue(const std::string& name, rapidjson::Value& x,
 		rapidjson::Value& subSchema);
 #define GET_METHOD_(type_out, method)					\
+  /** @brief Get a property in a subschema */				\
+  /** @param[in] name Name of property to get */			\
+  /** @param[out] out Variable to store the property in */		\
+  /** @param[in] subSchema Subschema to get property from */		\
+  /** @return true if successful, false otherwise */			\
   bool Get ## method(const std::string& name,				\
 		     type_out& out,					\
 		     const rapidjson::Value& subSchema			\
 		     ) const;						\
+  /** @brief Get an optional property in a subschema */			\
+  /** @param[in] name Name of property to get */			\
+  /** @param[out] out Variable to store the property in */		\
+  /** @param[in] defV Value to return if the property is not present */	\
+  /** @param[in] subSchema Subschema to get property from */		\
+  /** @return true if successful, false otherwise */			\
   bool Get ## method ## Optional(const std::string& name,		\
 				 type_out& out,				\
 				 type_out defV,				\
 				 const rapidjson::Value& subSchema	\
 				 ) const;				\
+  /** @brief Get a property from the metadata */			\
+  /** @param[in] name Name of property to get */			\
+  /** @param[out] out Variable to store the property in */		\
+  /** @return true if successful, false otherwise */			\
   bool GetMeta ## method(const std::string& name,			\
-			     type_out& out) const;			\
+			 type_out& out) const;				\
+  /** @brief Get an optional property from the metadata */		\
+  /** @param[in] name Name of property to get */			\
+  /** @param[out] out Variable to store the property in */		\
+  /** @param[in] defV Value to return if the property is not present */	\
+  /** @return true if successful, false otherwise */			\
   bool GetMeta ## method ## Optional(const std::string& name,		\
 				     type_out& out,			\
 				     type_out defV			\
 				     ) const;				\
+  /** @brief Get a property from the schema section of the metadata */	\
+  /** @param[in] name Name of property to get */			\
+  /** @param[out] out Variable to store the property in */		\
+  /** @param[in] subSchema Subschema to use in place of the schema section in the metadata */ \
+  /** @return true if successful, false otherwise */			\
   bool GetSchema ## method(const std::string& name,			\
 			   type_out& out,				\
 			   const rapidjson::Value* subSchema = NULL	\
 			   ) const;					\
+  /** @brief Get an optional property from the schema section of the metadata */ \
+  /** @param[in] name Name of property to get */			\
+  /** @param[out] out Variable to store the property in */		\
+  /** @param[in] defV Value to return if the property is not present */	\
+  /** @param[in] subSchema Subschema to use in place of the schema section in the metadata */ \
+  /** @return true if successful, false otherwise */			\
   bool GetSchema ## method ## Optional(const std::string& name,		\
 				       type_out& out,			\
 				       type_out defV,			\
 				       const rapidjson::Value* subSchema = NULL) const
 #define SET_VECTOR_METHOD_(type_in, method, setargs)			\
+  /** @brief Set a property in a subschema to a vector */		\
+  /** @param[in] name Name of property to set */			\
+  /** @param[in] x Vector to assign to the property */			\
+  /** @param[in] subSchema Subschema to assign the property to */	\
+  /** @return true if successful, false otherwise */			\
   bool SetVector ## method(const std::string& name,			\
 			   const std::vector<type_in>& x,		\
 			   rapidjson::Value& subSchema);		\
+  /** @brief Set a property in the metadata to a vector */		\
+  /** @param[in] name Name of property to set */			\
+  /** @param[in] x Vector to assign to the property */			\
+  /** @return true if successful, false otherwise */			\
   bool SetMetaVector ## method(const std::string& name,			\
 			       const std::vector<type_in>& x);		\
+  /** @brief Set a property in the schema section of the metadata to a vector */ \
+  /** @param[in] name Name of property to set */			\
+  /** @param[in] x Vector to assign to the property */			\
+  /** @param[in] subSchema Subschema to use in place of the schema section in the metadata */ \
+  /** @return true if successful, false otherwise */			\
   bool SetSchemaVector ## method(const std::string& name,		\
 				 const std::vector<type_in>& x,		\
 				 rapidjson::Value* subSchema = NULL)
 #define SET_METHOD_(type_in, method, setargs)				\
+  /** @brief Set a property in a subschema */				\
+  /** @param[in] name Name of property to set */			\
+  /** @param[in] x Value to assign to the property */			\
+  /** @param[in] subSchema Subschema to assign the property to */	\
+  /** @return true if successful, false otherwise */			\
   bool Set ## method(const std::string& name, type_in x,		\
 		     rapidjson::Value& subSchema);			\
+  /** @brief Set a property in the metadata */				\
+  /** @param[in] name Name of property to set */			\
+  /** @param[in] x Value to assign to the property */			\
+  /** @return true if successful, false otherwise */			\
   bool SetMeta ## method(const std::string& name, type_in x);		\
+  /** @brief Set a property in the schema section of the metadata */	\
+  /** @param[in] name Name of property to set */			\
+  /** @param[in] x Value to assign to the property */			\
+  /** @param[in] subSchema Subschema to use in place of the schema section in the metadata */ \
+  /** @return true if successful, false otherwise */			\
   bool SetSchema ## method(const std::string& name, type_in x,		\
 			   rapidjson::Value* subSchema = NULL)
 #define GET_SET_METHOD_(type_in, type_out, type_vect, method, setargs)	\
@@ -510,6 +583,7 @@ public:
    * @brief Set the value of the named metadata item
    * @param[in] name The name of the item to set
    * @param[in] x The value to set the item to
+   * @return true if successful, false otherwise
    */
   bool SetMetaValue(const std::string& name, rapidjson::Value& x);
   /*!
@@ -517,6 +591,7 @@ public:
    * @param[in] name The name of the item to set
    * @param[in] x The value to give to the item
    * @param[in] subSchema The subschema to use
+   * @return true if successful, false otherwise
    */
   bool SetSchemaValue(const std::string& name, rapidjson::Value& x,
 		      rapidjson::Value* subSchema = NULL);
@@ -524,6 +599,7 @@ public:
    * @brief Set the named schema item from the given Metadata instnace
    * @param[in] name The name of the item to set the value for
    * @param[in] other Metadata containing the value for the item
+   * @return true if successful, false otherwise
    */
   bool SetSchemaMetadata(const std::string& name,
 			 const Metadata& other);
@@ -531,12 +607,14 @@ public:
    * @brief Set the ID for the metadata item
    * @param[in] name The name of the item to set the ID for
    * @param[in] id the id to use
+   * @return true if successful, false otherwise
    */
   bool SetMetaID(const std::string& name, const char** id=NULL);
   /*!
    * @brief Set the ID for the metadata item
    * @param[in] name The name of the item to set the ID for
    * @param[in] id the id to use
+   * @return true if successful, false otherwise
    */
   bool SetMetaID(const std::string& name, std::string& id);
   /*!
@@ -577,6 +655,7 @@ public:
    * @param[out] data Destination document.
    * @param[in] temporary If true, this is a temporary deserialization
    *   and the datatype should not be updated.
+   * @return 0 if successful
    */
   int deserialize(const char* buf, rapidjson::Document& data,
 		  bool temporary = false);
@@ -617,6 +696,7 @@ public:
    * @param[in] data Document to serialize.
    * @param[in] temporary If true, this is a temporary serialization and
    *   the datatype should not be updated.
+   * @return The size of buf
    */
   int serialize(char **buf, size_t *buf_siz,
 		const rapidjson::Document& data,
@@ -644,11 +724,11 @@ public:
    * @param[in] indent The indentation to use for different levels
    */
   virtual void Display(const char* indent="") const;
-  rapidjson::Document metadata;            /**! The metadata */
-  Metadata* raw_schema;                    /**! Metadata for messages prior to transformation */
-  std::vector<FilterBase*> filters;        /**! Filters for messages */
-  std::vector<TransformBase*> transforms;  /**! Transformations for messages */
-  bool skip_last;                          /**! Whether the last message was filtered */
+  rapidjson::Document metadata;            /**< The metadata */
+  Metadata* raw_schema;                    /**< Metadata for messages prior to transformation */
+  std::vector<FilterBase*> filters;        /**< Filters for messages */
+  std::vector<TransformBase*> transforms;  /**< Transformations for messages */
+  bool skip_last;                          /**< Whether the last message was filtered */
 };
 
 /*!
@@ -826,6 +906,7 @@ public:
    * @brief Reset and format the given buffer
    * @param[in, out] buffer The buffer to format
    * @param[in] metaOnly If true, then only work on the metadata
+   * @return true if successful, false otherwise
    */
   bool formatBuffer(rapidjson::StringBuffer& buffer, bool metaOnly=false);
   /*!
@@ -859,17 +940,17 @@ public:
     return data[0] + static_cast<long>(offset);
   }
   
-  char* data_;       /**! Internal data storage */
-  char** data;       /**! Internal data storage */
-  size_t size_data;  /**! Size of the data */
-  size_t size_buff;  /**! Size of the buffer */
-  size_t size_curr;  /**! Current size */
-  size_t size_head;  /**! Size of the header */
-  size_t size_max;   /**! Maximum size for a single header */
-  size_t size_msg;   /**! Size of the message */
-  size_t size_raw;   /**! Size of raw data */
-  uint16_t flags;    /**! Internal flags */
-  size_t offset;     /**! Offset for finding data */
+  char* data_;       /**< Internal data storage */
+  char** data;       /**< Internal data storage */
+  size_t size_data;  /**< Size of the data */
+  size_t size_buff;  /**< Size of the buffer */
+  size_t size_curr;  /**< Current size */
+  size_t size_head;  /**< Size of the header */
+  size_t size_max;   /**< Maximum size for a single header */
+  size_t size_msg;   /**< Size of the message */
+  size_t size_raw;   /**< Size of raw data */
+  uint16_t flags;    /**< Internal flags */
+  size_t offset;     /**< Offset for finding data */
 };
 
 }

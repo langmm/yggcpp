@@ -50,6 +50,7 @@ namespace YggInterface {
        *   will not be notified when the new message is added.
        * @param[in] for_send If true, the message being added will be
        *   sent.
+       * @return true if successful, flase otherwise.
        */
       bool insert(utils::Header& header, size_t idx, bool move=false,
 		  bool dont_notify=false, bool for_send=false);
@@ -61,6 +62,7 @@ namespace YggInterface {
        *   will not be notified when the new message is added.
        * @param[in] for_send If true, the message being added will be
        *   sent.
+       * @return true if successful, flase otherwise.
        */
       bool append(utils::Header& header, bool move=false,
 		  bool dont_notify=false, bool for_send=false);
@@ -72,6 +74,7 @@ namespace YggInterface {
        *   will not be notified when the new message is added.
        * @param[in] for_send If true, the message being added will be
        *   sent.
+       * @return true if successful, flase otherwise.
        */
       bool prepend(utils::Header& header, bool move=false,
 		   bool dont_notify=false, bool for_send=false);
@@ -84,6 +87,7 @@ namespace YggInterface {
        * @param[in] erase If True, erase the message from the buffer.
        * @param[in] dont_notify If true, don't notify threads waiting for
        *   a change to the buffer if the buffer is modified.
+       * @return true if successful, flase otherwise.
        */
       bool get(utils::Header& header, size_t idx=0,
 	       bool move=false, bool erase=false, bool dont_notify=false);
@@ -93,6 +97,7 @@ namespace YggInterface {
        * @param[in] idx Index of message to retrieve.
        * @param[in] dont_notify If true, don't notify threads waiting for
        *   a change to the buffer.
+       * @return true if successful, flase otherwise.
        */
       bool pop(utils::Header& header, size_t idx=0,
 	       bool dont_notify=false);
@@ -193,6 +198,11 @@ namespace YggInterface {
       AsyncStatus(const AsyncStatus&) = delete;
       AsyncStatus& operator=(const AsyncStatus&) = delete;
     public:
+      /**
+       * @brief Constructor
+       * @param[in] logInst String that should be used to describe the
+       *   instance in log messages.
+       */
       AsyncStatus(const std::string& logInst = "");
 #ifdef THREADSINSTALLED
       /**
@@ -288,6 +298,7 @@ namespace YggInterface {
        * @param[in] parent The parent communicator
        */
       AsyncBacklog(AsyncComm* parent);
+      /** @brief Destructor */
       ~AsyncBacklog();
       /**
        * @brief Function to run in a thread which sends/receives messages
@@ -450,6 +461,7 @@ namespace YggInterface {
        * @param[in] s JSON serialized schema.
        * @param[in] use_generic If true, set schema to expect generic
        *   JSON objects.
+       * @return true if successful, flase otherwise.
        */
       bool addResponseSchema(const std::string& s,
 			     bool use_generic=false);
@@ -458,6 +470,7 @@ namespace YggInterface {
        * @param[in] s JSON schema.
        * @param[in] use_generic If true, set schema to expect generic
        *   JSON objects.
+       * @return true if successful, flase otherwise.
        */
       bool addResponseSchema(const rapidjson::Value& s,
 			     bool use_generic=false);
@@ -466,6 +479,7 @@ namespace YggInterface {
        * @param[in] metadata Metadata to copy containing JSON schema.
        * @param[in] use_generic If true, set schema to expect generic
        *   JSON objects.
+       * @return true if successful, flase otherwise.
        */
       bool addResponseSchema(const utils::Metadata& metadata,
 			     bool use_generic=false);
@@ -475,6 +489,7 @@ namespace YggInterface {
        * @param[in] fmt C-style format string.
        * @param[in] use_generic If true, set schema to expect generic
        *   JSON objects.
+       * @return true if successful, flase otherwise.
        */
       bool addResponseFormat(const std::string& fmt,
 			     bool use_generic=false);

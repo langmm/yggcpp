@@ -49,9 +49,12 @@ const int COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
 
 #define ADD_DESTRUCTOR(cls, base)					\
   protected:								\
+  /** \copydoc YggInterface::communicator::Comm_t::_close */		\
   void _close(bool call_base);						\
 public:									\
+ /** @brief Close the communicator */					\
  void close() override;							\
+ /** @brief Destructor */						\
  ~cls() override;
 #define ADD_DESTRUCTOR_DEF(cls, base, tempT, temp)			\
   tempT									\
@@ -70,19 +73,32 @@ public:									\
   }
 
 #define ADD_METHODS_BASE(cls, typ, flag)				\
+  /** \copydoc YggInterface::communicator::Comm_t::isInstalled */	\
   static bool isInstalled() { return flag; }				\
+  /** \copydoc YggInterface::communicator::Comm_t::defaultCommType */	\
   static COMM_TYPE defaultCommType() { return typ; }			\
   ADD_DESTRUCTOR(cls, CommBase)
 #define ADD_CONSTRUCTORS_BASE_NOLOG(cls, typ, flag)			\
-  explicit cls(const std::string& nme,				\
+  /** @brief Constructor */						\
+  /** @param[in] nme Communicator name. If empty, one will be generated */ \
+  /** @param[in] dirn Enumerated communicator direction */		\
+  /** @param[in] flgs Bitwise communicator flags */			\
+  /** @param[in] type Enumerated communicator type */			\
+  explicit cls(const std::string& nme,					\
 	       const DIRECTION dirn,					\
 	       int flgs = 0, const COMM_TYPE type = typ);		\
+  /** @brief Constructor */						\
+  /** @param[in] addr Communicator address. If empty, one will be generated */ \
+  /** @param[in] dirn Enumerated communicator direction */		\
+  /** @param[in] flgs Bitwise communicator flags */			\
+  /** @param[in] type Enumerated communicator type */			\
   explicit cls(utils::Address &addr,					\
 	       const DIRECTION dirn,					\
 	       int flgs = 0, const COMM_TYPE type = typ);		\
   ADD_METHODS_BASE(cls, typ, flag)
 #define ADD_CONSTRUCTORS_BASE(cls, typ, flag)				\
   ADD_CONSTRUCTORS_BASE_NOLOG(cls, typ, flag)				\
+  /** \copydoc YggInterface::utils::LogBase::logClass */		\
   std::string logClass() const override { return #cls; }
 #define ADD_CONSTRUCTORS(T)			\
   ADD_CONSTRUCTORS_BASE(T ## Comm, T ## _COMM, T ## _INSTALLED_FLAG)
@@ -97,19 +113,38 @@ public:									\
 	   int flgs, const COMM_TYPE type) :			\
     cls("", addr, dirn, flgs, type) {}				\
   ADD_DESTRUCTOR_DEF(cls, CommBase, , )
-#define ADD_CONSTRUCTORS_RPC(cls, defT)				\
-  explicit cls(const std::string& nme,				\
-	       int flgs = 0, const COMM_TYPE type = defT,	\
-	       size_t ncomm = 0,				\
-	       const COMM_TYPE reqtype = DEFAULT_COMM,		\
-	       const COMM_TYPE restype = DEFAULT_COMM,		\
-	       int reqflags = 0, int resflags = 0);		\
-  explicit cls(utils::Address &addr,				\
-	       int flgs = 0, const COMM_TYPE type = defT,	\
-	       size_t ncomm = 0,				\
-	       const COMM_TYPE reqtype = DEFAULT_COMM,		\
-	       const COMM_TYPE restype = DEFAULT_COMM,		\
-	       int reqflags = 0, int resflags = 0);		\
+#define ADD_CONSTRUCTORS_RPC(cls, defT)					\
+  /** @brief Constructor */						\
+  /** @param[in] nme Communicator name. If empty, one will be generated */ \
+  /** @param[in] flgs Bitwise communicator flags */			\
+  /** @param[in] type Enumerated communicator type */			\
+  /** @param[in] ncomm Number of forked communicators (fork only) */	\
+  /** @param[in] reqtype Enumerated type of request comm (rpc only) */	\
+  /** @param[in] restype Enumerated type of response comm (rpc only) */	\
+  /** @param[in] reqflags Bitwise flags for request comm (rpc only) */	\
+  /** @param[in] resflags Bitwise flags for response comm (rpc only) */	\
+  explicit cls(const std::string& nme,					\
+	       int flgs = 0, const COMM_TYPE type = defT,		\
+	       size_t ncomm = 0,					\
+	       const COMM_TYPE reqtype = DEFAULT_COMM,			\
+	       const COMM_TYPE restype = DEFAULT_COMM,			\
+	       int reqflags = 0, int resflags = 0);			\
+  /** @brief Constructor */						\
+  /** @param[in] addr Communicator address. If empty, one will be generated */ \
+  /** @param[in] flgs Bitwise communicator flags */			\
+  /** @param[in] type Enumerated communicator type */			\
+  /** @param[in] ncomm Number of forked communicators (fork only) */	\
+  /** @param[in] reqtype Enumerated type of request comm (rpc only) */	\
+  /** @param[in] restype Enumerated type of response comm (rpc only) */	\
+  /** @param[in] reqflags Bitwise flags for request comm (rpc only) */	\
+  /** @param[in] resflags Bitwise flags for response comm (rpc only) */	\
+  /** @see utils::Address */						\
+  explicit cls(utils::Address &addr,					\
+	       int flgs = 0, const COMM_TYPE type = defT,		\
+	       size_t ncomm = 0,					\
+	       const COMM_TYPE reqtype = DEFAULT_COMM,			\
+	       const COMM_TYPE restype = DEFAULT_COMM,			\
+	       int reqflags = 0, int resflags = 0);			\
   ADD_DESTRUCTOR(cls, RPCComm)
 #define ADD_CONSTRUCTORS_RPC_DEF(cls)			\
   cls::cls(const std::string& nme,			\
@@ -134,8 +169,9 @@ public:									\
       RPCComm::_close(true);				\
     }							\
   }
-#define WORKER_METHOD_DECS(cls)					\
-  Comm_t* create_worker(utils::Address& address,		\
+#define WORKER_METHOD_DECS(cls)						\
+  /** \copydoc YggInterface::communicator::Comm_t::create_worker */	\
+  Comm_t* create_worker(utils::Address& address,			\
 			const DIRECTION dir, int flgs) override
 #define WORKER_METHOD_DEFS(cls)					\
   Comm_t* cls::create_worker(utils::Address& address,		\
@@ -148,14 +184,23 @@ public:									\
     abbr ## _install_error();					\
     return NULL;						\
   }
-#define ADD_KEY_TRACKER_DECS			\
-  private:					\
-  int check_key(int key);			\
-  int track_key(int key);			\
-  int untrack_key(int key);			\
-  static int _keysUsed[MAX_KEYS_ALLOWED];	\
-  static unsigned _NkeysUsed;			\
-  static bool _rand_seeded
+#define ADD_KEY_TRACKER_DECS						\
+  private:								\
+  /** @brief Check if a key is already registered */			\
+  /** @param[in] key Key to check */					\
+  /** @return Negative index+1 of key if present, 0 otherwise */	\
+  int check_key(int key);						\
+  /** @brief Add a key to the set of registered keys */			\
+  /** @param[in] key Key to add */					\
+  /** @return 0 on success, -1 on error */				\
+  int track_key(int key);						\
+  /** @brief Remove a key from those registered */			\
+  /** @param[in] key Key to remove from registry */			\
+  /** @return 0 on success, -1 on error */				\
+  int untrack_key(int key);						\
+  static int _keysUsed[MAX_KEYS_ALLOWED]; /**< Registry of keys */	\
+  static unsigned _NkeysUsed; /**< Number of registered keys */		\
+  static bool _rand_seeded /**< true if rand has been seeded for keys */
 #define ADD_KEY_TRACKER_DEFS(cls)					\
   int cls::_keysUsed[MAX_KEYS_ALLOWED];					\
   unsigned cls::_NkeysUsed = 0;						\
@@ -166,7 +211,7 @@ public:									\
     YGG_THREAD_SAFE_BEGIN(cls) {					\
       for (i = 0; i < cls::_NkeysUsed; i++ ) {				\
 	if (cls::_keysUsed[i] == key) {					\
-	  error_code = -static_cast<int>(i);				\
+	  error_code = -(static_cast<int>(i) + 1);			\
 	  break;							\
 	}								\
       }									\
@@ -230,7 +275,7 @@ class IPCComm;
 class WrapComm;
 class RequestList;
 
-typedef struct comm_t comm_t;
+  // typedef struct comm_t comm_t;
 
 
 /**
@@ -294,6 +339,7 @@ public:
       return _sendVA(0, doc, data, args...);
     }
 private:
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 #define HANDLE_SEND_BEFORE_			\
   UNUSED(i);					\
   rapidjson::Value v
@@ -378,6 +424,7 @@ private:
 #undef HANDLE_SEND_LAST_
 #undef HANDLE_SEND_
 #undef HANDLE_SEND_TMP_
+#endif // DOXYGEN_SHOULD_SKIP_THIS
 public:
     /*!
       @brief Send a string message through the communicator.
@@ -476,6 +523,7 @@ public:
       return _recvVA(0, true, doc, data, args...);
     }
 private:
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 #define HANDLE_RECV_BEFORE_						\
   UNUSED(allow_realloc);						\
   bool was_array = doc.IsArray();					\
@@ -652,6 +700,7 @@ private:
 #undef HANDLE_RECV_LAST_
 #undef HANDLE_RECV_
 #undef HANDLE_RECV_TMP_
+#endif // DOXYGEN_SHOULD_SKIP_THIS
 public:
     /*!
       @brief Receive a raw string message from the communicator.
@@ -857,6 +906,12 @@ public:
       @return Metadata.
      */
     virtual YggInterface::utils::Metadata& getMetadata(const DIRECTION dir=NONE);
+    /*!
+      @brief Get a constant reference to the Metadata object containing
+        header information about the comm including datatype.
+      @param[in] dir Direction to get metadata for.
+      @return Metadata.
+     */
     const YggInterface::utils::Metadata&  getMetadata(const DIRECTION dir=NONE) const {
       return const_cast<Comm_t*>(this)->getMetadata(dir);
     }
@@ -995,17 +1050,34 @@ public:
 		   const std::vector<std::string>& field_units = {},
 		   const DIRECTION dir=NONE);
     /*!
-     * Copy a schema from another communicator
+     * @brief Copy a schema from another communicator
      * @param other THe communicator to use
      * @param dir Direction of comm to set the schema for (RPC only).
      * @return true if successful, false otherwise.
      */
     bool copySchema(const Comm_t* other, const DIRECTION dir=NONE);
+    /*!
+     * @brief Set the filters used to select messages. This removes any
+     *   existing filters
+     * @tparam T Type of filters
+     * @param[in] new_filters Set of filters to use
+     * @param[in] dir Direction of messages to set filters for (RPC only)
+     * @return true if successful, false otherwise
+     */
     template<typename T>
     bool setFilters(const std::vector<T>& new_filters,
 		    const DIRECTION dir=NONE) {
       return getMetadata(dir).setFilters(new_filters);
     }
+    /*!
+     * @brief Set the transforms used to select messages. This removes
+     *   any existing transforms
+     * @tparam T Type of transforms
+     * @param[in] new_transforms Set of transforms to use
+     * @param[in] dir Direction of messages to set transforms for
+     *   (RPC only)
+     * @return true if successful, false otherwise
+     */
     template<typename T>
     bool setTransforms(const std::vector<T>& new_transforms,
 		       const DIRECTION dir=NONE) {
@@ -1057,10 +1129,21 @@ protected:
     friend Worker;       //!< @see Worker
     friend WorkerList;   //!< @see WorkerList
 
-    void _close(bool) {}
+    /**
+     * @brief Perform class specific close operations
+     * @param[in] call_base If true, the base class's _close method will
+     *   be called
+     */
+    void _close(bool call_base) {
+      UNUSED(call_base);
+    }
+    /**
+     * @brief Class specific check for if the comm is closed
+     * @return true if the comm is closed, false otherwise
+     */
     bool _is_closed() const { return true; };
     
-    /*!
+    /**
      * @brief Change the maximum message size
      * @param[in] new_size The new maximum message size
      */
@@ -1221,10 +1304,14 @@ protected:
     // }
     /*!
      * @brief Create a header for a reply
+     * @param[out] header Variable that new header should be stored in
      * @return true if successful
      * @see utils::Header
      */
-    virtual bool create_header_send(utils::Header&) { return true; }
+    virtual bool create_header_send(utils::Header& header) {
+      UNUSED(header);
+      return true;
+    }
     /*!
      * @brief Get the schema for the given communications direction
      * @param[in] dir The communications direction
@@ -1332,14 +1419,24 @@ public:
     // Methods for testing
     /*!
      * @brief Perform post send/recv tasks for testing.
-     * @return true on success
+     * @param[in,out] sComm Send communicator.
+     * @param[in,out] rComm Receive communicator.
+     * @return true on success.
      */
-    virtual bool afterSendRecv(Comm_t*, Comm_t*) { return true; }
+    virtual bool afterSendRecv(Comm_t* sComm, Comm_t* rComm) {
+      UNUSED(sComm);
+      UNUSED(rComm);
+      return true;
+    }
     /*!
      * @brief Generate metadata for a test message.
-     * @return true on success
+     * @param[out] out String that metadata should be stored in.
+     * @return true on success.
      */
-    virtual bool genMetadata(std::string&) { return true; }
+    virtual bool genMetadata(std::string& out) {
+      UNUSED(out);
+      return true;
+    }
     /*!
      * @brief Get the global communicator.
      * @return Global comm.
@@ -1453,6 +1550,7 @@ public:
 
 protected:
 
+    /** \copydoc YggInterface::communicator::Comm_t::_is_closed */
     bool _is_closed() const;
   
     /**
