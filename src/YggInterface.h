@@ -212,14 +212,14 @@ long ygg_recv(yggInput_t yggQ, char *data, const size_t len) {
   @param[in] len size_t length of message to be sent.
   @returns int 0 if send succesfull, -1 if send unsuccessful.
  */
-#define ygg_send_nolimit ygg_send
+#define ygg_send_nolimit(yggQ, data, len) ygg_send(yggQ, data, len)
 
 /*!
   @brief Send EOF message to the output queue.
   @param[in] yggQ yggOutput_t structure that message should be sent to.
   @returns int 0 if send successfull, -1 if unsuccessful.
 */
-#define ygg_send_nolimit_eof comm_send_eof
+#define ygg_send_nolimit_eof(yggQ) comm_send_eof(yggQ)
 
 /*!
   @brief Receive a large message from an input queue.
@@ -283,7 +283,7 @@ long ygg_recv_nolimit(yggInput_t yggQ, char **data, const size_t len) {
     type associated with the comm.
   @returns int 0 if send succesfull, -1 if send unsuccessful.
  */
-#define yggSend commSend
+#define yggSend(yggQ, ...) commSend(yggQ, __VA_ARGS__)
 
 /*!
   @brief Receive a message from a comm into variables passed as arguments.
@@ -298,7 +298,7 @@ long ygg_recv_nolimit(yggInput_t yggQ, char **data, const size_t len) {
   @returns int -1 if message could not be received or could not be parsed,
     length of the received message if message was received and parsed.
  */
-#define yggRecv commRecv
+#define yggRecv(yggQ, ...) commRecv(yggQ, __VA_ARGS__)
   
 /*!
   @brief Receive a message from a comm into variables passed as arguments.
@@ -314,7 +314,7 @@ long ygg_recv_nolimit(yggInput_t yggQ, char **data, const size_t len) {
   @returns int -1 if message could not be received or could not be parsed,
     length of the received message if the message was received and parsed.
  */
-#define yggRecvRealloc commRecvRealloc
+#define yggRecvRealloc(yggQ, ...) commRecvRealloc(yggQ, __VA_ARGS__)
 
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
@@ -533,7 +533,7 @@ comm_t yggTimesync(const char *name, const char *t_units) {
   @return integer specifying if the send was succesful. Values >= 0 indicate
     success.
  */
-#define rpcSend commSend
+#define rpcSend(rpc, ...) commSend(rpc, __VA_ARGS__)
 
 /*!
   @brief Receive and parse a message from an RPC input queue.
@@ -548,7 +548,8 @@ comm_t yggTimesync(const char *name, const char *t_units) {
   @return integer specifying if the receive was succesful. Values >= 0 
     indicate success.
 */
-#define rpcRecv commRecv
+#define rpcRecv(rpc, ...) commRecv(rpc, __VA_ARGS__)
+  
 /*!
   @brief Receive a message from a comm into variables passed as arguments.
     If received message data will exceed the bounds of provided variables,
@@ -563,7 +564,7 @@ comm_t yggTimesync(const char *name, const char *t_units) {
   @returns int -1 if message could not be received or could not be parsed,
     length of the received message if the message was received and parsed.
  */
-#define rpcRecvRealloc commRecvRealloc
+#define rpcRecvRealloc(rpc, ...) commRecvRealloc(rpc, __VA_ARGS__)
 
 /*!
   @brief Send request to an RPC server from the client and wait for a 
@@ -572,28 +573,32 @@ comm_t yggTimesync(const char *name, const char *t_units) {
     queue, and assign arguments from the message using the input queue 
     format string to parse it.
   @param[in] rpc yggRpc_t structure with RPC information.
-  @param[in] allow_realloc int If 1, output arguments are assumed to be 
-    pointers to pointers such that they can be reallocated as necessary to 
-    receive incoming data. If 0, output arguments are assumed to be 
-    preallocated.
-  @param[in] nargs size_t Number of arguments contained in ap including both
-    input and output arguments.
   @param[in,out] ... mixed arguments that include those that should be
     formatted using the output format string, followed by those that should 
-    be assigned parameters extracted using the input format string. If 
-    allow_realloc is 0, those arguments that will be assigned should be
-    pointers to memory that has already been allocated. If allow_realloc is
-    1, those arguments that will be assigned should be pointers to pointers
+    be assigned parameters extracted using the input format string. Those
+    arguments that will be assigned should be pointers to memory that has
+    already been allocated.
+  @return integer specifying if the receive was succesful. Values >= 0 
+    indicate success.
+*/
+#define rpcCall(rpc, ...) commCall(rpc, __VA_ARGS__)
+
+/*!
+  @brief Send request to an RPC server from the client and wait for a 
+    response. Format arguments using the output queue format string, send 
+    the message to the output queue, receive a response from the input 
+    queue, and assign arguments from the message using the input queue 
+    format string to parse it.
+  @param[in] rpc yggRpc_t structure with RPC information.
+  @param[in,out] ... mixed arguments that include those that should be
+    formatted using the output format string, followed by those that should 
+    be assigned parameters extracted using the input format string.
+    Those arguments that will be assigned should be pointers to pointers
     for memory that can be reallocated.
   @return integer specifying if the receive was succesful. Values >= 0 
     indicate success.
  */
-  
-/*! @brief Macro to call nrpcCallBase with allow_realloc=0 and the argument count. */
-#define rpcCall commCall
-
-/*! @brief Macro to call nrpcCallBase with allow_realloc=1 and the argument count. */
-#define rpcCallRealloc commCallRealloc
+#define rpcCallRealloc(rpc, ...) commCallRealloc(rpc, __VA_ARGS__)
 
 
 //==============================================================================

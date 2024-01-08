@@ -17,8 +17,28 @@
 
 namespace YggInterface {
   namespace communicator {
+    /**
+     * @brief Wrapper for a generic communicator.
+     */
     class YGG_API WrapComm : public CommBase<Comm_t> {
     public:
+      /**
+       * Constructor
+       * @param[in] name The name for the communicator, if empty one will
+       *   be generated
+       * @param[in] address The address for the communicator, if empty
+       *   one will be generated
+       * @param[in] direction Enuerated direction for this instance
+       * @param[in] flgs Bitwise flags describing the communicator
+       * @param[in] type The communicator type
+       * @param[in] ncomm Number of tines in a forked comm (if <= 1, a
+       *   normal communicator will be wrapped)
+       * @param[in] wraptype enumerated type of wrapped communicator to
+       *   created if different from type
+       * @param[in] delay_init If true, the wrapped communicator will not
+       *   be created yet.
+       * @see utils::Address
+       */
       explicit WrapComm(const std::string name,
 			const utils::Address &address,
 			const DIRECTION direction = NONE, int flgs = 0,
@@ -26,29 +46,70 @@ namespace YggInterface {
 			size_t ncomm = 0,
 			const COMM_TYPE wraptype = NULL_COMM,
 			bool delay_init=false);
+      /**
+       * Constructor without an address
+       * @param[in] nme The name for the communicator, if empty one will
+       *   be generated
+       * @param[in] dirn Enuerated direction for this instance
+       * @param[in] flgs Bitwise flags describing the communicator
+       * @param[in] type The communicator type
+       * @param[in] ncomm Number of tines in a forked comm (if <= 1, a
+       *   normal communicator will be wrapped)
+       * @param[in] wraptype enumerated type of wrapped communicator to
+       *   created if different from type
+       */
       explicit WrapComm(const std::string nme,
 			const DIRECTION dirn, int flgs = 0,
 			const COMM_TYPE type = DEFAULT_COMM,
 			size_t ncomm = 0,
 			const COMM_TYPE wraptype = NULL_COMM);
+      /**
+       * Constructor without a name
+       * @param[in] addr The address for the communicator, if empty
+       *   one will be generated
+       * @param[in] dirn Enuerated direction for this instance
+       * @param[in] flgs Bitwise flags describing the communicator
+       * @param[in] type The communicator type
+       * @param[in] ncomm Number of tines in a forked comm (if <= 1, a
+       *   normal communicator will be wrapped)
+       * @param[in] wraptype enumerated type of wrapped communicator to
+       *   created if different from type
+       * @see utils::Address
+       */
       explicit WrapComm(const utils::Address &addr,
 			const DIRECTION dirn, int flgs = 0,
 			const COMM_TYPE type = DEFAULT_COMM,
 			size_t ncomm = 0,
 			const COMM_TYPE wraptype = NULL_COMM);
+      /**
+       * @brief Constructor to wrap an existing communicator
+       * @param[in] comm Communicator to wrap
+       */
       explicit WrapComm(Comm_t* comm);
       
-      // \copydoc Comm_t::defaultCommType
+      /** \copydoc YggInterface::communicator::Comm_t::defaultCommType */
       static COMM_TYPE defaultCommType() { return DEFAULT_COMM; }
-      // \copydoc Comm_t::isInstalled
+      /** \copydoc YggInterface::communicator::Comm_t::isInstalled */
       static bool isInstalled() { return DefaultComm::isInstalled(); }
 
+      /**
+       * @brief Get the wrapped communicator
+       * @return Wrapped communicator
+       */
       Comm_t* getWrapped() { return handle; }
 
     protected:
+
+      /** \copydoc YggInterface::communicator::Comm_t::init */
       void init();
+      /** @brief Initialize properties from the wrapped communicator */
       void fromComm();
+      /**
+       * @brief Check if the wrapped communicator is initialized
+       * @return true if initialized, false otherwise
+       */
       virtual bool checkWrapped() const;
+      /** \copydoc YggInterface::communicator::Comm_t::_close */
       void _close(bool call_base);
       
     public:

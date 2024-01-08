@@ -58,8 +58,13 @@ namespace utils {
       ss << x;
       return *this;
     }
+    /*!
+     * @brief Evaluate the logger state to determine if the log should
+     *   be displayed
+     * @return true if the message should be logged, false otherwise
+     */
     bool eval();
-    static int _ygg_error_flag;
+    static int _ygg_error_flag; //!< 1 if the logger is for errors
 
   private:
     /**
@@ -74,12 +79,26 @@ namespace utils {
    * @param msg
    */
   void YggLogThrowError(const std::string& msg);
+  /**
+   * @brief Format a string based on a C-style format string
+   * @param[in] fmt C-Style format string
+   */
   std::string string_format(const std::string fmt, ...);
+  /**
+   * @brief Format a string based on a C-style format string
+   * @param[in] fmt C-Style format string
+   * @param[in] op Variable argument list to use if formatting
+   */
   std::string string_format_va(const std::string fmt, va_list op);
 
+  /**
+   * @brief Base class for loggers
+   */
   class LogBase {
   public:
+    /** @brief Constructor */
     LogBase() {}
+    /** @brief Destructor */
     virtual ~LogBase() {}
     //! @brief A string describing the class.
     virtual std::string logClass() const { return ""; }
@@ -104,8 +123,8 @@ namespace utils {
       @param[in] is_err If true, messages sent to the logger are
         considered error messages and an error code will be returned
 	on exit.
-      @param YggdrasilLogger Logger that messages can be added to. They
-        will only be flushed to the buffer when the logger is destroyed.
+      @return Logger that messages can be added to. They will only be
+        flushed to the buffer when the logger is destroyed.
     */
     YggdrasilLogger log(std::string nme, size_t lvl,
 			bool is_err=false) const {
@@ -127,9 +146,15 @@ namespace utils {
 }
 }
 
+//! @brief Logger for error messages
 #define YggLogError YggInterface::utils::YggdrasilLogger ygglog_param_error
+//! @brief Logger for info messages
 #define YggLogInfo YggInterface::utils::YggdrasilLogger ygglog_param_info
+//! @brief Logger for debug messages
 #define YggLogDebug YggInterface::utils::YggdrasilLogger ygglog_param_debug
+//! @brief Logger to use in destructors
 #define YggLogDestructor YggLogDebug
 
+//! @brief Throw an error message
+//! @param[in] ... Arguments to string_format for error message
 #define ygglog_throw_error(...) YggInterface::utils::YggLogThrowError(YggInterface::utils::string_format(__VA_ARGS__))

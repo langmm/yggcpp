@@ -4,7 +4,6 @@ module YggInterface
   use iso_c_binding
   implicit none
 
-  ! BEGIN DOXYGEN_SHOULD_SKIP_THIS
   integer, parameter :: LINE_SIZE_MAX = 2048
   integer, parameter :: YGG_MSG_BUF = 2048
   integer, parameter :: ascii = selected_char_kind ("ascii")
@@ -16,6 +15,7 @@ module YggInterface
   integer(kind=c_int), bind(c, name="YGG_MSG_MAX_F") :: YGG_MSG_MAX
   real(8),  parameter :: PI_8  = 4 * atan (1.0_8)
   real(16), parameter :: PI_16 = 4 * atan (1.0_16)
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
   enum, bind( C )
      enumerator ::     NULL_COMM,   &
           DEFAULT_COMM, &
@@ -72,7 +72,7 @@ module YggInterface
           FILE_FLAG_BINARY          = int(z'04000000'), &
           FILE_FLAG_READLINE        = int(z'08000000')
   end enum
-  ! END DOXYGEN_SHOULD_SKIP_THIS
+#endif ! DOXYGEN_SHOULD_SKIP_THIS
 
   !> @brief Wrap a fortran variable so that yggdrasil can pass it to comm
   !>    send & receive methods.
@@ -452,7 +452,7 @@ module YggInterface
      module procedure generic_map_get_ndarray_bytes
      module procedure generic_map_get_ndarray_unicode
   end interface generic_map_get
-  ! BEGIN DOXYGEN_SHOULD_SKIP_THIS
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
   interface yggassign
      module procedure yggassign_yggchar2character
      ! module procedure yggassign_character2yggchar
@@ -500,7 +500,7 @@ module YggInterface
      module procedure yggassign_logical8_1d_from_array
      ! TODO: ND array
   end interface yggassign
-  ! END DOXYGEN_SHOULD_SKIP_THIS
+#endif ! DOXYGEN_SHOULD_SKIP_THIS
   !> @brief Convert an object to type(yggarr)
   !> @param[in] input Object to convert.
   !> @returns Converted object.
@@ -709,12 +709,10 @@ module YggInterface
      real(kind=8), dimension(:), pointer :: x => null() !< Wrapped array
   end type real8_1d
 #ifdef _WIN32
-  ! BEGIN DOXYGEN_SHOULD_SKIP_THIS
   !> @brief Wrapper for a reallocatable 1D array of 16 byte real.
   type :: real16_1d
      real(kind=8), dimension(:), pointer :: x => null() !< Wrapped array
   end type real16_1d
-  ! END DOXYGEN_SHOULD_SKIP_THIS
 #else
   !> @brief Wrapper for a reallocatable 1D array of 16 byte real.
   type :: real16_1d
@@ -734,12 +732,10 @@ module YggInterface
      complex(kind=8), dimension(:), pointer :: x => null() !< Wrapped array
   end type complex8_1d
 #ifdef _WIN32
-  ! BEGIN DOXYGEN_SHOULD_SKIP_THIS
   !> @brief Wrapper for a reallocatable 1D array of 16 byte complex.
   type :: complex16_1d
      complex(kind=8), dimension(:), pointer :: x => null() !< Wrapped array
   end type complex16_1d
-  ! END DOXYGEN_SHOULD_SKIP_THIS
 #else
   !> @brief Wrapper for a reallocatable 1D array of 16 byte complex.
   type :: complex16_1d
@@ -831,13 +827,11 @@ module YggInterface
      integer(kind=c_size_t), dimension(:), pointer :: shape => null() !< Shape of the array
   end type real8_nd
 #ifdef _WIN32
-  ! BEGIN DOXYGEN_SHOULD_SKIP_THIS
   !> @brief Wrapper for a reallocatable ND array of 16 byte real.
   type :: real16_nd
      real(kind=8), dimension(:), pointer :: x => null() !< Wrapped array
      integer(kind=c_size_t), dimension(:), pointer :: shape => null() !< Shape of the array
   end type real16_nd
-  ! END DOXYGEN_SHOULD_SKIP_THIS
 #else
   !> @brief Wrapper for a reallocatable ND array of 16 byte real.
   type :: real16_nd
@@ -861,13 +855,11 @@ module YggInterface
      integer(kind=c_size_t), dimension(:), pointer :: shape => null() !< Shape of the array
   end type complex8_nd
 #ifdef _WIN32
-  ! BEGIN DOXYGEN_SHOULD_SKIP_THIS
   !> @brief Wrapper for a reallocatable ND array of 16 byte complex.
   type :: complex16_nd
      complex(kind=8), dimension(:), pointer :: x => null() !< Wrapped array
      integer(kind=c_size_t), dimension(:), pointer :: shape => null() !< Shape of the array
   end type complex16_nd
-  ! END DOXYGEN_SHOULD_SKIP_THIS
 #else
   !> @brief Wrapper for a reallocatable ND array of 16 byte complex.
   type :: complex16_nd
@@ -976,13 +968,11 @@ module YggInterface
      integer(kind=c_size_t), dimension(:), pointer :: shape => null() !< Shape of the array
   end type real8_2d
 #ifdef _WIN32
-  ! BEGIN DOXYGEN_SHOULD_SKIP_THIS
   !> @brief Wrapper for a reallocatable 2D array of 16 byte real.
   type :: real16_2d
      real(kind=8), dimension(:, :), pointer :: x => null() !< Wrapped array
      integer(kind=c_size_t), dimension(:), pointer :: shape => null() !< Shape of the array
   end type real16_2d
-  ! END DOXYGEN_SHOULD_SKIP_THIS
 #else
   !> @brief Wrapper for a reallocatable 2D array of 16 byte real.
   type :: real16_2d
@@ -1006,13 +996,11 @@ module YggInterface
      integer(kind=c_size_t), dimension(:), pointer :: shape => null() !< Shape of the array
   end type complex8_2d
 #ifdef _WIN32
-  ! BEGIN DOXYGEN_SHOULD_SKIP_THIS
   !> @brief Wrapper for a reallocatable 2D array of 16 byte complex.
   type :: complex16_2d
      complex(kind=8), dimension(:, :), pointer :: x => null() !< Wrapped array
      integer(kind=c_size_t), dimension(:), pointer :: shape => null() !< Shape of the array
   end type complex16_2d
-  ! END DOXYGEN_SHOULD_SKIP_THIS
 #else
   !> @brief Wrapper for a reallocatable 2D array of 16 byte complex.
   type :: complex16_2d
@@ -1149,36 +1137,36 @@ module YggInterface
      integer(kind=8) :: x !< Wrapped scalar
   end type ygguint8
 
-  ! BEGIN DOXYGEN_SHOULD_SKIP_THIS
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
   interface assignment(=)
      module procedure ygguint1_assign
      module procedure ygguint2_assign
      module procedure ygguint4_assign
      module procedure ygguint8_assign
   end interface assignment(=)
+#endif ! DOXYGEN_SHOULD_SKIP_THIS
 
   public :: yggarg, yggchar_r, yggcomm, ygggeneric, &
        yggptr, yggnull, yggarr, yggmap, &
        yggschema, yggpython, yggply, yggobj, yggpyinst, yggpyfunc, &
        LINE_SIZE_MAX
-  ! END DOXYGEN_SHOULD_SKIP_THIS
 
-  include "YggInterface_cdef.f90"
+  include "YggInterface_cdef.F90"
 
 #define WITH_GLOBAL_SCOPE(COMM) call set_global_comm(); COMM; call unset_global_comm()
 
 contains
 
-  ! include "YggInterface_copy.f90"
-  include "YggInterface_realloc.f90"
-  include "YggInterface_c2f.f90"
-  include "YggInterface_arg.f90"
-  include "YggInterface_conv.f90"
-  include "YggInterface_assign.f90"
-  include "YggInterface_array.f90"
-  include "YggInterface_map.f90"
+  ! include "YggInterface_copy.F90"
+  include "YggInterface_realloc.F90"
+  include "YggInterface_c2f.F90"
+  include "YggInterface_arg.F90"
+  include "YggInterface_conv.F90"
+  include "YggInterface_assign.F90"
+  include "YggInterface_array.F90"
+  include "YggInterface_map.F90"
 
-  ! BEGIN DOXYGEN_SHOULD_SKIP_THIS
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
   subroutine ygguint1_assign(self, other)
     type(ygguint1), intent(inout) :: self
     integer, intent(in) :: other
@@ -1199,7 +1187,7 @@ contains
     integer, intent(in) :: other
     self%x = int(other, kind=8)
   end subroutine ygguint8_assign
-  ! END DOXYGEN_SHOULD_SKIP_THIS
+#endif ! DOXYGEN_SHOULD_SKIP_THIS
 
 
 #ifndef _WIN32
@@ -1330,7 +1318,7 @@ contains
   !   character(*), intent(inout) :: iomsg  ! define if iostat non zero.
   !   write (unit, '("NULL")', IOSTAT=iostat, IOMSG=iomsg)
   ! end subroutine write_null
-  ! BEGIN DOXYGEN_SHOULD_SKIP_THIS
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
   subroutine fix_format_str(x)
     implicit none
     character(len=*) :: x
@@ -1351,7 +1339,7 @@ contains
        i = index(x, "\n")
     end do
   end subroutine fix_format_str
-  ! END DOXYGEN_SHOULD_SKIP_THIS
+#endif ! DOXYGEN_SHOULD_SKIP_THIS
 
   ! YggInterface
 
@@ -1400,7 +1388,7 @@ contains
   end subroutine ygglog_error
 
   ! Methods for initializing channels
-  ! BEGIN DOXYGEN_SHOULD_SKIP_THIS
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
   function is_comm_format_array_type(x, args) result(out)
     implicit none
     type(yggcomm), intent(in) :: x
@@ -1429,7 +1417,7 @@ contains
        ! stop "is_comm_format_array_type: Error checking type."
     end if
   end function is_comm_format_array_type
-  ! END DOXYGEN_SHOULD_SKIP_THIS
+#endif ! DOXYGEN_SHOULD_SKIP_THIS
 
   !> @brief Constructor for a generic comm for testing purposes.
   !> @param[in] name Name of the channel.
@@ -2134,7 +2122,7 @@ contains
     call display_dtype_c(datatype)
   end subroutine display_dtype
 
-  ! BEGIN DOXYGEN_SHOULD_SKIP_THIS
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
   function is_dtype_format_array(type_struct) result(out)
     implicit none
     type(yggdtype) :: type_struct
@@ -2149,7 +2137,7 @@ contains
        stop "is_dtype_format_array: Error checking data type"
     end if
   end function is_dtype_format_array
-  ! END DOXYGEN_SHOULD_SKIP_THIS
+#endif ! DOXYGEN_SHOULD_SKIP_THIS
 
   !> @brief Create a data type from a serialized JSON schema.
   !> @param[in] schema Serialized JSON schema.
@@ -2550,6 +2538,7 @@ contains
     end if
   end function ygg_recv_nolimit
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
   function ygg_send_var_sing(ygg_q, args) result (flag)
     implicit none
     type(yggcomm), intent(in) :: ygg_q
@@ -2576,7 +2565,6 @@ contains
     call post_send(args, c_args, flag)
   end function ygg_send_var_mult
 
-  ! BEGIN DOXYGEN_SHOULD_SKIP_THIS
   function is_next_size_t(args, i, req_array) result(flag)
     implicit none
     type(yggptr) :: args(:)
@@ -2963,8 +2951,7 @@ contains
     end if
     call ygglog_debug("post_send: end")
   end subroutine post_send
-  ! END DOXYGEN_SHOULD_SKIP_THIS
-
+  
   function ygg_rpc_call_1v1(ygg_q, oargs, iargs) result (flag)
     implicit none
     type(yggcomm) :: ygg_q
@@ -3171,6 +3158,7 @@ contains
     call post_recv(args, c_args, flag, .true., is_format)
     call ygglog_debug("ygg_recv_var_realloc: end")
   end function ygg_recv_var_realloc_mult
+#endif ! DOXYGEN_SHOULD_SKIP_THIS
 
   ! Ply interface
   !> @brief Initialize a ply mesh instance.
@@ -3189,7 +3177,7 @@ contains
   end function generate_ply
   !> @brief Set the wrapped ply mesh instance.
   !> @param[in] p The ply mesh to modify.
-  !> @param[in] ply The rapidjson::Ply instance to insert.
+  !> @param[in] obj The rapidjson::Ply instance to insert.
   !> @param[in] copy If 1, the instance will be copied, otherwise a reference
   !>   will be inserted.
   subroutine set_ply(p, obj, copy)
@@ -3400,10 +3388,11 @@ contains
     out = init_generic_generate_c(c_schema)
     deallocate(c_schema)
   end function init_generic_generate
-  !> @brief Create a generic object from a type and some data.
-  !> @param[in] type_class The data type associated with the data pointer.
-  !> @param[in] data A pointer to data of an arbitrary type defined by type_class.
-  !> @returns A new generic object containing the provided data.
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+  ! @brief Create a generic object from a type and some data.
+  ! @param[in] type_class The data type associated with the data pointer.
+  ! @param[in] data A pointer to data of an arbitrary type defined by type_class.
+  ! @returns A new generic object containing the provided data.
   ! function create_generic(type_class, data) result(out)
   !   implicit none
   !   type(yggdtype) :: type_class
@@ -3417,6 +3406,8 @@ contains
   !   nbytes = data%nbytes
   !   out = create_generic_c(c_type_class, c_data, nbytes)
   ! end function create_generic
+#endif ! DOXYGEN_SHOULD_SKIP_THIS
+  
   !> @brief Free a generic object.
   !> @param[in] x A generic object to free.
   subroutine free_generic(x)
@@ -3891,7 +3882,6 @@ contains
   !> @brief Get the keys in a map object.
   !> @param[in] x Generic object that is presumed to contain a map.
   !> @param[out] keys Pointer to memory where array of keys should be stored.
-  !> @returns Number of keys in map.
   subroutine generic_map_get_keys(x, keys)
     implicit none
     type(ygggeneric) :: x

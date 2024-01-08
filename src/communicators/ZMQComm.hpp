@@ -219,16 +219,16 @@ public:
   static void set_test_return_val(bool new_val);
 };
 
-/*!
- * @brief zeroMQ based communicator
+/**
+ * @brief ZeroMQ based communicator
  */
 class YGG_API ZMQComm : public CommBase<ZMQSocket> {
 public:
     /**
      * @brief Constructor
      * @param[in] name The name of the communicator
-     * @param[in] address The address to associate with the communicator, if address is nullptr
-     *                then an address will be created.
+     * @param[in] address The address to associate with the communicator,
+     *   if address is empty then an address will be created.
      * @param[in] direction Enumerated direction for communicator
      * @param[in] flgs Bitwise flags describing the communicator
      * @param[in] type THe communicator type
@@ -242,42 +242,40 @@ public:
 
 #ifdef ZMQINSTALLED
 
-    /*! \copydoc YggInterface::communicator::Comm_t::comm_nmsg */
+    /** \copydoc YggInterface::communicator::Comm_t::comm_nmsg */
     int comm_nmsg(DIRECTION dir=NONE) const override;
   
     using Comm_t::send;
     using Comm_t::recv;
 
 protected:
-    /*!
-     * @brief Initialize the communicator
-     */
+    /** \copydoc YggInterface::communicator::Comm_t::init */
     void init();
-    /*! \copydoc YggInterface::communicator::CommBase::send_single */
+    /** \copydoc YggInterface::communicator::CommBase::send_single */
     int send_single(utils::Header& msg) override;
-    /*! \copydoc YggInterface::communicator::CommBase::recv_single */
+    /** \copydoc YggInterface::communicator::CommBase::recv_single */
     long recv_single(utils::Header& msg) override;
-    /*!
+    /**
      * @brief Wait for the message was received signal
      * @param[in] header The header to use
      * @return True on success
      * @see utils::Header
      */
     virtual bool do_reply_recv(const utils::Header& header);
-    /*!
+    /**
      * @brief Send a reply that the message was received
      * @param header The header to use
      * @return True on success
      * @see utils::Header
      */
     virtual bool do_reply_send(const utils::Header& header);
-    /*! \copydoc YggInterface::communicator::CommBase::create_header_send */
+    /** \copydoc YggInterface::communicator::CommBase::create_header_send */
     bool create_header_send(utils::Header& header) override;
-    /*! \copydoc YggInterface::communicator::CommBase::create_worker */
+    /** \copydoc YggInterface::communicator::CommBase::create_worker */
     WORKER_METHOD_DECS(ZMQComm);
-    /*! \copydoc YggInterface::communicator::CommBase::create_worker_send */
+    /** \copydoc YggInterface::communicator::CommBase::create_worker_send */
     Comm_t* create_worker_send(utils::Header& head) override;
-    /*! \copydoc YggInterface::communicator::CommBase::create_worker_recv */
+    /** \copydoc YggInterface::communicator::CommBase::create_worker_recv */
     Comm_t* create_worker_recv(utils::Header& head) override;
 #else
     void init() { UNINSTALLED_ERROR(ZMQ); }
@@ -292,21 +290,21 @@ private:
     // Test methods
  public:
 #ifdef ZMQINSTALLED
-    /*! \copydoc YggInterface::communicator::Comm_t::afterSendRecv */
+    /** \copydoc YggInterface::communicator::Comm_t::afterSendRecv */
     bool afterSendRecv(Comm_t* sComm, Comm_t* rComm) override;
-    /*! \copydoc YggInterface::communicator::Comm_t::genMetadata */
+    /** \copydoc YggInterface::communicator::Comm_t::genMetadata */
     bool genMetadata(std::string& out) override;
 #endif // ZMQINSTALLED
-    /*!
+    /**
      * @brief Get the reply
      * @return The reply
      */
     ZMQReply& getReply() { return reply; }
-    /*!
+    /**
       @brief Disable the handshake after each message
      */
     static void disable_handshake();
-    static int _disable_handshake;
+    static int _disable_handshake; /**< Is handshake disabled */
 };
 
 }

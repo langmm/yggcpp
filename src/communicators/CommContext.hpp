@@ -23,8 +23,9 @@ namespace YggInterface {
     class Comm_t;
 
     /**
-     * Class for handling Yggdrasil communicator contexts including
-     * cleanup on exit. It is intended to be used as a singleton.
+     * @brief Class for handling Yggdrasil communicator contexts
+     *   including cleanup on exit. It is intended to be used as a
+     *   singleton.
      */
     class YGG_API CommContext : public YggInterface::utils::LogBase {
     private:

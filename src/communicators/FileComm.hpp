@@ -13,14 +13,18 @@
 namespace YggInterface {
   namespace communicator {
 
+    /**
+     * @brief File based communicator
+     */
     class YGG_API FileComm : public CommBase<std::fstream> {
     public:
       /**
-       * Constructor for a file based communicator
-       * @param name The name for the communicator, if not given one will be generated
-       * @param address The address for the communicator, if not given one will be generated
-       * @param direction Enuerated direction for this instance
-       * @param flags Bitwise flags describing the communicator
+       * Constructor
+       * @param[in] name The name for the communicator, if empty one will be generated
+       * @param[in] address The address for the communicator, if empty one will be generated
+       * @param[in] direction Enuerated direction for this instance
+       * @param[in] flgs Bitwise flags describing the communicator
+       * @param[in] type The enumerated type of communicator to create
        */
       explicit FileComm(const std::string name,
 			const utils::Address &address,
@@ -28,16 +32,15 @@ namespace YggInterface {
 			int flgs = 0, const COMM_TYPE type = FILE_COMM);
       ADD_CONSTRUCTORS_BASE(FileComm, FILE_COMM, true)
 
-      /**
-       * The number of messages in the queue
-       * @return The number of messages
-       */
+      /** \copydoc YggInterface::communicator::Comm_t::comm_nmsg */
       int comm_nmsg(DIRECTION dir=NONE) const override;
       using Comm_t::send;
       using Comm_t::recv;
       
     protected:
+      /*! \copydoc Comm_t::init */
       void init();
+      /*! @brief Flush and reload the file */
       void refresh() const;
       
       /*! \copydoc Comm_t::send_single */
@@ -49,7 +52,7 @@ namespace YggInterface {
       WORKER_METHOD_DECS(FileComm);
 
     private:
-      std::fstream::openmode mode;
+      std::fstream::openmode mode; //!< Mode used to open the file
       
     };
 

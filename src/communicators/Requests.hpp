@@ -9,6 +9,9 @@
 namespace YggInterface {
 namespace communicator {
 
+/**
+ * @brief Information about the partner model at the other end of a communicator
+ */
 class Partner {
 public:
     /**
@@ -71,7 +74,7 @@ public:
 };
 
 /**
- * Class for holding a list of requests
+ * @brief Container for a list of requests
  */
 class RequestList : public YggInterface::utils::LogBase {
 public:
@@ -515,6 +518,7 @@ public:
      * @param[in] s JSON serialized schema.
      * @param[in] use_generic If true, set schema to expect generic
      *   JSON objects.
+     * @return true if successful, false otherwise.
      */
     bool addResponseSchema(const std::string& s, bool use_generic=false) {
       return response_metadata.fromSchema(s, use_generic);
@@ -524,6 +528,7 @@ public:
      * @param[in] s JSON schema.
      * @param[in] use_generic If true, set schema to expect generic
      *   JSON objects.
+     * @return true if successful, false otherwise.
      */
     bool addResponseSchema(const rapidjson::Value& s,
 			   bool use_generic=false) {
@@ -534,6 +539,7 @@ public:
      * @param[in] metadata Metadata to copy containing JSON schema.
      * @param[in] use_generic If true, set schema to expect generic
      *   JSON objects.
+     * @return true if successful, false otherwise.
      */
     bool addResponseSchema(const utils::Metadata& metadata,
 			   bool use_generic=false) {
@@ -542,9 +548,10 @@ public:
     /**
      * @brief Add a schema to the response communicator based on a
      *   C-style format string.
-     * @param[in] fmt C-style format string.
+     * @param[in] format_str C-style format string.
      * @param[in] use_generic If true, set schema to expect generic
      *   JSON objects.
+     * @return true if successful, false otherwise.
      */
     bool addResponseFormat(const std::string& format_str,
 			   bool use_generic=false) {

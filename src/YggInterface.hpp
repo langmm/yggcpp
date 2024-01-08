@@ -1271,6 +1271,10 @@ public:
     @brief Constructor for YggJSONObjectOutput.
     @param[in] name Name of output channel. This should be named as a
       model output the in YAML for the model calling it.
+    @param[in] flags Bit flags to set communicator properties.
+    @param[in] commtype Type of communicator that should be used. Defaults
+      to DEFAULT_COMM that is set based on the available packages at
+      compilation.
    */
   YggJSONObjectOutput(const std::string& name, int flags = 0,
 		      const COMM_TYPE commtype = DEFAULT_COMM) :
@@ -1334,7 +1338,7 @@ public:
  *
  * The Ygg Interface has a few optional dependencies:
  * - ZeroMQ - required to build the ZMQ communicators
- * - OpemMP - used to parallelize some of the code
+ * - OpenMP - used to parallelize some of the code
  * - MPI - required to build the MPI based communicators
  * - Python3 - required to build the Python bindings to this library
  * - Doxygen - required to build the documentation

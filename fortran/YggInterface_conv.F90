@@ -1,4 +1,4 @@
-
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 function yggarr2ygggeneric(input) result(out)
   type(yggarr) :: input
   type(ygggeneric) :: out
@@ -64,3 +64,4 @@ function yggpython2yggpyfunc(input) result(out)
   type(yggpyfunc) :: out
   out%obj = input%obj
 end function yggpython2yggpyfunc
+#endif ! DOXYGEN_SHOULD_SKIP_THIS

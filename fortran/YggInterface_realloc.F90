@@ -1,4 +1,4 @@
-  ! BEGIN DOXYGEN_SHOULD_SKIP_THIS
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 function yggptr_realloc(x, array_shape, precision, realloc) result(flag)
   implicit none
   type(yggptr) :: x
@@ -458,4 +458,4 @@ subroutine yggptr_realloc_ndarray_character(x, array_len, precision)
      stop 'yggptr_realloc_ndarray_character: Unexpected type.'
   end select
 end subroutine yggptr_realloc_ndarray_character
-  ! END DOXYGEN_SHOULD_SKIP_THIS
+#endif ! DOXYGEN_SHOULD_SKIP_THIS

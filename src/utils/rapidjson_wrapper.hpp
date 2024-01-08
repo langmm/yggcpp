@@ -1024,78 +1024,174 @@ namespace YggInterface {
     typedef bool (*filterFunc)(const rapidjson::Document&);
     typedef bool (*transformFunc)(rapidjson::Document&);
 
+    /**
+     * @brief Base class for filters that can be used to exclude messages
+     */
     class FilterBase {
     private:
       FilterBase(const FilterBase&) = delete;
       FilterBase& operator=(const FilterBase&) = delete;
     public:
+      /** @brief Constructor */
       FilterBase();
+      /** @brief Destructor */
       virtual ~FilterBase();
+      /**
+       * @brief Apply the filter to a message
+       * @param[in] doc Message to run filter on
+       * @return true if message filtered, false otherwise
+       */
       virtual bool operator()(const rapidjson::Document& doc);
+      /**
+       * @brief Return a copy of this filter
+       * @return Copy
+       */
       virtual FilterBase* copy() const;
     };
+    /**
+     * @brief Base class for transforms that can be applied to messages
+     */
     class TransformBase {
     private:
       TransformBase(const TransformBase&) = delete;
       TransformBase& operator=(const TransformBase&) = delete;
     public:
+      /** @brief Constructor */
       TransformBase();
+      /** @brief Destructor */
       virtual ~TransformBase();
+      /**
+       * @brief Apply the transform to a message
+       * @param[in,out] doc Message to transform
+       * @return true if successful, false otherwise
+       */
       virtual bool operator()(rapidjson::Document& doc);
+      /**
+       * @brief Return a copy of this transform
+       * @return Copy
+       */
       virtual TransformBase* copy() const;
     };
 
+    /**
+     * @brief Filter based on a C++ function
+     */
     class FilterClass : public FilterBase {
     private:
       FilterClass(const FilterClass&) = delete;
       FilterClass& operator=(const FilterClass&) = delete;
     public:
+      /**
+       * @brief Constructor
+       * @param[in] func C++ function to use as a filter
+       */
       FilterClass(filterFunc func);
+      /**
+       * @brief Apply the filter to a message
+       * @param[in] doc Message to filter
+       * @return true if message filtered, false otherwise
+       */
       bool operator()(const rapidjson::Document& doc) override;
+      /** \copydoc YggInterface::utils::FilterBase::copy */
       FilterBase* copy() const override;
-      filterFunc func_;
+      filterFunc func_; /**< Filter function */
     };
+    /**
+     * @brief Transform based on a C++ function
+     */
     class TransformClass : public TransformBase {
     private:
       TransformClass(const TransformClass&) = delete;
       TransformClass& operator=(const TransformClass&) = delete;
     public:
+      /**
+       * @brief Constructor
+       * @param[in] func C++ function to use as a transform
+       */
       TransformClass(const transformFunc& func);
+      /**
+       * @brief Apply the transform to a message
+       * @param[in,out] doc Message to transform
+       * @return true if successful, false otherwise
+       */
       bool operator()(rapidjson::Document& doc) override;
+      /** \copydoc YggInterface::utils::TransformBase::copy */
       TransformBase* copy() const override;
-      transformFunc func_;
+      transformFunc func_; /**< Transform function */
     };
 
+    /**
+     * @brief Base function for utilizing a Python function
+     */
     class PyBaseFunc {
     private:
       PyBaseFunc(const PyBaseFunc&) = delete;
       PyBaseFunc& operator=(const PyBaseFunc&) = delete;
     public:
+      /**
+       * @brief Constructor
+       * @param[in] func Python function
+       */
       PyBaseFunc(const PyObject* func);
+      /**
+       * @brief Destructor
+       */
       virtual ~PyBaseFunc();
     protected:
+      /**
+       * @brief Call the Python function on document
+       * @param[in] doc Input document to pass as an argument
+       * @param[out] out Document to store the result in
+       * @return true if successful, false otherwise
+       */
       bool _call(const rapidjson::Document& doc,
 		 rapidjson::Document* out=nullptr);
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
-      PyObject* func_;
+      PyObject* func_; /**< Python function */
 #endif // YGGDRASIL_DISABLE_PYTHON_C_API
     };
+    /**
+     * @brief Filter based on a Python function
+     */
     class PyFilterClass : public FilterBase, public PyBaseFunc {
     private:
       PyFilterClass(const PyFilterClass&) = delete;
       PyFilterClass& operator=(const PyFilterClass&) = delete;
     public:
+      /**
+       * @brief Constructor
+       * @param[in] func Python function to use as a filter
+       */
       PyFilterClass(const PyObject* func);
+      /**
+       * @brief Apply the filter to a message
+       * @param[in] doc Message to filter
+       * @return true if message filtered, false otherwise
+       */
       bool operator()(const rapidjson::Document& doc) override;
+      /** \copydoc YggInterface::utils::FilterBase::copy */
       FilterBase* copy() const override;
     };
+    /**
+     * @brief Transform based on a Python function
+     */
     class PyTransformClass : public TransformBase, public PyBaseFunc {
     private:
       PyTransformClass(const PyTransformClass&) = delete;
       PyTransformClass& operator=(const PyTransformClass&) = delete;
     public:
+      /**
+       * @brief Constructor
+       * @param[in] func Python function to use as a transform
+       */
       PyTransformClass(const PyObject* func);
+      /**
+       * @brief Apply the transform to a message
+       * @param[in,out] doc Message to transform
+       * @return true if successful, false otherwise
+       */
       bool operator()(rapidjson::Document& doc) override;
+      /** \copydoc YggInterface::utils::TransformBase::copy */
       TransformBase* copy() const override;
     };
 

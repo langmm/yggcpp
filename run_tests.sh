@@ -266,7 +266,6 @@ echo "CMAKE_FLAGS_SPEED = ${CMAKE_FLAGS_SPEED}"
 # fi
 
 if [ -n "$REBUILD" ]; then
-    DONT_BUILD=""
     if [ -d "build" ]; then
 	rm -rf "build"
     fi
@@ -385,7 +384,7 @@ if [ -n "DO_DOCS" ]; then
     fi
     cd build
     cmake .. $CMAKE_FLAGS -DYGG_BUILD_DOCS=ON -DBUILD_CPP_LIBRARY=OFF -DBUILD_FORTRAN_LIBRARY=OFF
-    make docs
+    cmake --build . --target docs
     # cmake --build . $CONFIG_FLAGS --target docs
     # Need install here to ensure that cmake config files are in place
     # cmake --install . --prefix "$INSTALL_DIR" $CONFIG_FLAGS

@@ -17,6 +17,11 @@ namespace YggInterface {
      */
     class AsyncBuffer : public YggInterface::utils::LogBase {
     public:
+      /**
+       * @brief Constructor
+       * @param[in] logInst String that should be used in log messages
+       *   identifying the instance
+       */
       AsyncBuffer(const std::string logInst);
       /** \copydoc YggInterface::utils::LogBase::logClass */
       std::string logClass() const override { return "AsyncBuffer"; }
@@ -287,7 +292,6 @@ namespace YggInterface {
       /**
        * @brief Function to run in a thread which sends/receives messages
        * @param[in] parent The parent communicator
-       * @return Always returns false, when the thread is shut down.
        */
       void on_thread(AsyncComm* parent);
       /**

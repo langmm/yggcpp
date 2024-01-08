@@ -158,8 +158,8 @@ AsyncStatus::AsyncStatus(const std::string& logInst) :
 
 #else // THREADSINSTALLED
 
-AsyncStatus::AsyncStatus() :
-  logInst_() {
+AsyncStatus::AsyncStatus(const std::string& logInst) :
+  logInst_(logInst) {
   UNINSTALLED_ERROR(THREADS);
 }
 

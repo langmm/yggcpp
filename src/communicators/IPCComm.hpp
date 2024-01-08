@@ -13,26 +13,23 @@
 
 #include "CommBase.hpp"
 
-/*! @brief Maximum number of channels. */
-#define _yggTrackChannels 256
-
 namespace YggInterface {
 namespace communicator {
 /*!
-  @brief Message buffer structure.
+  @brief Message buffer structure for Sys V IPC queues.
 */
 typedef struct msgbuf_t {
     long mtype;      //!< Message buffer type
     char data[2048]; //!< Buffer for the message
 } msgbuf_t;
 
-/*!
- * @brief IPC based communicator
+/**
+ * @brief Sys V IPC queue based communicator
  */
 class YGG_API IPCComm : public CommBase<int> {
 public:
     /**
-     * Constructor for an IPC based communicator
+     * Constructor
      * @param[in] name The name for the communicator, if not given one will be generated
      * @param[in] address The address for the communicator, if not given one will be generated
      * @param[in] direction Enuerated direction for this instance

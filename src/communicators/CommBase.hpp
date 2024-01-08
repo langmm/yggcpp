@@ -281,9 +281,10 @@ public:
      */
     int send(const rapidjson::Value& data, bool not_generic=false);
     /*!
-      @brief Send an object through the communicator.
-      @tparam T Type of object being sent.
-      @param[in] data Object to send.
+      @brief Send a set of objects through the communicator.
+      @tparam T Type of first object being sent in message.
+      @param[in] data First object to send in message.
+      @param[in] args Additional objects to send in the message.
       @return Integer specifying if the receive was succesful.
         Values >= 0 indicate success.
     */
@@ -442,9 +443,11 @@ public:
     */
     long recv(rapidjson::Document& data, bool not_generic=false);
     /*!
-      @brief Receive an object from the communicator.
-      @tparam T Type of object being received.
-      @param[out] data Object to receive message into.
+      @brief Receive a series of objects from the communicator.
+      @tparam T Type of first object being received.
+      @param[out] data First object to receive message into.
+      @param[out] args Additional objects that message should be stored
+        in during recursive calls.
       @return Integer specifying if the receive was succesful.
         Values >= 0 indicate success.
     */
@@ -455,6 +458,16 @@ public:
       if (out < 0) return out;
       return _recvVA(0, false, doc, data, args...);
     }
+    /*!
+      @brief Receive a series of objects from the communicator, allowing
+        for reallocation of variable size objects.
+      @tparam T Type of first object being received.
+      @param[out] data First object to receive message into.
+      @param[out] args Additional objects that message should be stored
+        in during recursive calls.
+      @return Integer specifying if the receive was succesful.
+        Values >= 0 indicate success.
+    */
     template<typename T, typename... Args>
     long recvVarRealloc(T& data, Args... args) {
       rapidjson::Document doc;
@@ -932,6 +945,11 @@ public:
       @returns true if it is installed, false otherwise.
     */
     static bool isInstalled() { return false; }
+    /*!
+      @brief Get the default communicator type for this class
+      @returns Enumerated communicator type
+    */
+    static COMM_TYPE defaultCommType() { return DEFAULT_COMM; }
 
     /*!
       @brief Get the list of worker comms used for large messages.
@@ -1128,7 +1146,7 @@ protected:
      * addressFromEnv("YGG", SEND) will look for YGG_OUT in the environment
      * addressFromEnf("YGG", RECV) will look for YGG_IN in the environment
      * @param[in] name The base name to search for in the environment
-     * @param[in] dir The communication direction
+     * @param[in] direction The communication direction
      * @return The new address
      * @see utils::Address
      */
@@ -1258,7 +1276,7 @@ protected:
      * @brief Constructor, which can only be instantiated by a child class
      * @param[in] name The name of communicator
      * @param[in] address The address to associate with this communicator.
-     * @param[in] dir Whether this instance is a sender or receiver
+     * @param[in] direction Whether this instance is a sender or receiver
      * @param[in] t Enumerated communicator type
      * @param[in] flgs Initial bitwise flags
      * @see utils::Address
@@ -1419,8 +1437,9 @@ public:
     CommBase& operator=(const CommBase&) = delete;
     CommBase() = delete;
 
-    /*! \copydoc  YggInterface::communicator::Comm_t::comm_nmsg */
-    int comm_nmsg(DIRECTION=NONE) const override {
+    /*! \copydoc YggInterface::communicator::Comm_t::comm_nmsg */
+    int comm_nmsg(DIRECTION dir=NONE) const override {
+      UNUSED(dir);
       log_error() << "Comm_nmsg of base class called, must be overridden" << std::endl;
       return -1;
     }
@@ -1464,9 +1483,9 @@ protected:
      * @brief Constructor
      * @param[in] name The name of the communicator
      * @param[in] address The initial address for the communicator
-     * @param[in] dir The enumerated direction of the communicator
+     * @param[in] direction The enumerated direction of the communicator
      * @param[in] t The enumerated type of the communicator
-     * @param[in] flgs Bitwise flags describing the communicator
+     * @param[in] flags Bitwise flags describing the communicator
      * @see utils::Address
      */
     explicit CommBase(const std::string &name, const utils::Address& address,

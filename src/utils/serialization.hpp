@@ -14,6 +14,7 @@
 #include <cstdlib>
 
 
+#include "tools.hpp"
 #include "logging.hpp"
 
 namespace YggInterface {
@@ -152,23 +153,27 @@ public:
    * @param[in] new_schema The schema to copy from
    * @param[in] isMetadata If true then only copy the schema into the metadata of this instance
    * @param[in] use_generic If true then initialize the schema with generic values first
+   * @return true if successful, false otherwise.
    */
   bool fromSchema(const rapidjson::Value& new_schema,
 		  bool isMetadata = false, bool use_generic = false);
   /*!
    * @brief Normalize the schema
+   * @return true if successful, false otherwise.
    */
   bool Normalize();
   /*!
    * @brief Copy data from the input schema into this instance
    * @param[in] schemaStr The scema to copy in string form
    * @param[in] use_generic If true then initialize the schema with generic values first
+   * @return true if successful, false otherwise.
    */
   bool fromSchema(const std::string& schemaStr, bool use_generic = false);
   /*
    * @brief Template function for setting member values from the given data
    * @tparam T The datatype of the input data
    * @param[in] data The data
+   * @return true if successful, false otherwise.
    */
   // template<typename T>
   // bool fromData(const T& data) {
@@ -184,6 +189,7 @@ public:
    * @brief Copy the schema from the input document
    * @param[in] data The document to copy from
    * @param[in] before_transforms If true, the the pre-transform schema
+   * @return true if successful, false otherwise.
    */
   bool fromData(const rapidjson::Document& data,
 		bool before_transforms=false);
@@ -192,6 +198,7 @@ public:
    * @param[in] type String representation of the type
    * @param[in] use_generic If true then initialize with generic values (only if dont_init is false)
    * @param[in] dont_init If true, then initialize the schema
+   * @return true if successful, false otherwise.
    */
   bool fromType(const std::string& type, bool use_generic=false,
 		bool dont_init = false);
@@ -201,6 +208,7 @@ public:
    * @param[in] precision The precision of any numeric data
    * @param[in] units The units of the data
    * @param[in] use_generic If true then initialize with generic values
+   * @return true if successful, false otherwise.
    */
   bool fromScalar(const std::string& subtype, size_t precision,
 		  const char* units=NULL, bool use_generic=false);
@@ -213,6 +221,7 @@ public:
    *              must be equal to ndim.
    * @param[in] units The units of the data
    * @param[in] use_generic If true then initialize with generic values
+   * @return true if successful, false otherwise.
    */
   bool fromNDArray(const std::string& subtype, size_t precision,
 		   const size_t ndim=0, const size_t* shape=NULL,
@@ -227,6 +236,7 @@ public:
    * @param[in] units The units of the data
    * @param[in] use_generic If true then initialize with generic values
    * @param[in] subSchema Pointer to any sub-schema of this instance
+   * @return true if successful, false otherwise.
    */
   bool _fromNDArray(const std::string& subtype, size_t precision,
 		    const size_t ndim=0, const size_t* shape=NULL,
@@ -236,7 +246,12 @@ public:
    * @brief Initialize the instance from a format string
    * @param[in] format_str The format string to use
    * @param[in] as_array If true then set the internal element type to array, rather than scalar
+   * @param[in] field_names Set of names describing fields in the format
+   *   string.
+   * @param[in] field_units Set of units describing fields in the format
+   *   string.
    * @param[in] use_generic If true then initialize with generic values
+   * @return true if successful, false otherwise.
    */
   bool fromFormat(const std::string& format_str, bool as_array = false,
 		  const std::vector<std::string>& field_names = {},
@@ -246,6 +261,7 @@ public:
    * @brief Set the metadata from the given Metadata object
    * @param[in] other The Metadata object to use
    * @param[in] use_generic If true then initialize with generic values
+   * @return true if successful, false otherwise.
    */
   bool fromMetadata(const Metadata& other, bool use_generic = false);
   /*!
@@ -253,6 +269,7 @@ public:
    * @param[in] head The char* array to get the data from
    * @param[in] headsiz The size of header data.
    * @param[in] use_generic If true then initialize with generic values
+   * @return true if successful, false otherwise.
    */
   bool fromMetadata(const char* head, const size_t headsiz,
 		    bool use_generic = false);
@@ -260,12 +277,14 @@ public:
    * @brief Set the metadata from the given string
    * @param[in] head The string to get the data from
    * @param[in] use_generic If true then initialize with generic values
+   * @return true if successful, false otherwise.
    */
   bool fromMetadata(const std::string& head, bool use_generic = false);
   /*!
    * @brief Set the metadata from the encoded schema
    * @param[in] document The encoded schema
    * @param[in] use_generic If true then initialize with generic values
+   * @return true if successful, false otherwise.
    */
   bool fromEncode(const rapidjson::Value& document,
 		  bool use_generic = false);
@@ -273,6 +292,7 @@ public:
    * @brief Set the metadata from the encoded schema in a Python object
    * @param[in] pyobj The encoded schema
    * @param[in] use_generic If true then initialize with generic values
+   * @return true if successful, false otherwise.
    */
   bool fromEncode(PyObject* pyobj, bool use_generic = false);
   /*!
@@ -632,9 +652,9 @@ public:
 };
 
 /*!
- * @brief Header subtype of Metadata
+ * @brief Subtype of Metadata used for storing message information
  */
-class Header : public Metadata {
+class YGG_API Header : public Metadata {
 public:
   Header(const Header&) = delete;
   Header& operator=(const Header&) = delete;
