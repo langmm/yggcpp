@@ -16,5 +16,3 @@ dependencies:
   - openmpi
   - openmp
   - pytest
-  - graphviz
-  - doxygen

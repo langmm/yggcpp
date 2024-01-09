@@ -350,6 +350,7 @@ namespace YggInterface {
        * @param[in] dont_lock If true, then immediately lock the mutex.
        */
       AsyncLockGuard(AsyncBacklog* backlog, bool dont_lock=false);
+      /** @brief Destructor */
       ~AsyncLockGuard();
       bool locked;            /**< indicates whether the lock is currently enabled */
       AsyncBacklog* backlog;  /**< the AsyncBacklog instance to work with */
