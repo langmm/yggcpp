@@ -42,7 +42,7 @@ DOXYFILE_ENCODING      = UTF-8
 # title of most generated pages and in a few other places.
 # The default value is: My Project.
 
-PROJECT_NAME           = "Ygg Interface CPP"
+PROJECT_NAME           = "YggInterface"
 
 # The PROJECT_NUMBER tag can be used to enter a project or revision number. This
 # could be handy for archiving the generated documentation or if some version
@@ -502,7 +502,7 @@ NUM_PROC_THREADS       = 1
 # This must be yes to get the Python & Fortran documentation, but it also
 # suppresses the warnings so it should be turned of to determine if there
 # are an missing docs
-EXTRACT_ALL            = YES
+EXTRACT_ALL            = @DOXYGEN_EXTRACT_ALL@
 
 # If the EXTRACT_PRIVATE tag is set to YES, all private members of a class will
 # be included in the documentation.
@@ -869,7 +869,7 @@ WARN_NO_PARAMDOC       = YES
 # Possible values are: NO, YES and FAIL_ON_WARNINGS.
 # The default value is: NO.
 
-WARN_AS_ERROR          = YES
+WARN_AS_ERROR          = @DOXYGEN_WARN_AS_ERROR@
 
 # The WARN_FORMAT tag determines the format of the warning messages that doxygen
 # can produce. The string should contain the $file, $line, and $text tags, which
@@ -911,7 +911,7 @@ WARN_LOGFILE           =
 # spaces. See also FILE_PATTERNS and EXTENSION_MAPPING
 # Note: If this tag is empty the current directory is searched.
 
-INPUT                  = @DOXYGEN_INPUT_DIR@/src \
+INPUT                  = @DOXYGEN_INPUT_DIR@/cpp \
                          @DOXYGEN_INPUT_DIR@/fortran \
                          @DOXYGEN_INPUT_DIR@/python
 
@@ -1018,8 +1018,8 @@ RECURSIVE              = YES
 # Note that relative paths are relative to the directory from which doxygen is
 # run.
 
-EXCLUDE                = @DOXYGEN_INPUT_DIR@/src/rapidjson \
-                         @DOXYGEN_INPUT_DIR@/fortran/tests \
+EXCLUDE                = @DOXYGEN_INPUT_DIR@/cpp/rapidjson \
+                         @DOXYGEN_INPUT_DIR@/tests \
                          @DOXYGEN_INPUT_DIR@/fortran/YggInterface_arg.F90 \
                          @DOXYGEN_INPUT_DIR@/fortran/YggInterface_assign.F90 \
                          @DOXYGEN_INPUT_DIR@/fortran/YggInterface_c2f.F90 \
@@ -1031,7 +1031,6 @@ EXCLUDE                = @DOXYGEN_INPUT_DIR@/src/rapidjson \
                          @DOXYGEN_INPUT_DIR@/fortran/YggInterface_map.F90 \
                          @DOXYGEN_INPUT_DIR@/fortran/c_wrappers.c \
                          @DOXYGEN_INPUT_DIR@/fortran/c_wrappers.h \
-                         @DOXYGEN_INPUT_DIR@/python/test \
 			 @DOXYGEN_INPUT_DIR@/python/*.cpp
 
 # The EXCLUDE_SYMLINKS tag can be used to select whether or not files or
@@ -2325,7 +2324,7 @@ SEARCH_INCLUDES        = YES
 # RECURSIVE has no effect here.
 # This tag requires that the tag SEARCH_INCLUDES is set to YES.
 
-INCLUDE_PATH           = @DOXYGEN_INPUT_DIR@/src \
+INCLUDE_PATH           = @DOXYGEN_INPUT_DIR@/cpp \
                          @DOXYGEN_INPUT_DIR@/fortran
 
 # You can use the INCLUDE_FILE_PATTERNS tag to specify one or more wildcard

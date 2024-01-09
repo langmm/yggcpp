@@ -16,7 +16,8 @@ if sys.version_info < (3, 6):
 
 
 ROOT_PATH = os.path.abspath(os.path.dirname(__file__))
-rj_include_dir = './src/rapidjson/include'
+rj_include_dir = os.path.join(ROOT_PATH, 'cpp',
+                              'rapidjson', 'include')
 with_asan = False
 user_rj = False
 
@@ -28,7 +29,7 @@ for idx, arg in enumerate(sys.argv[:]):
         user_rj = True
         break
 else:
-    if not os.path.isdir(os.path.join(ROOT_PATH, 'src',
+    if not os.path.isdir(os.path.join(ROOT_PATH, 'cpp',
                                       'rapidjson', 'include')):
         raise RuntimeError("RapidJSON sources not found: if you cloned the"
                            " git repository, you should initialize the"
@@ -52,10 +53,10 @@ for idx, arg in enumerate(sys.argv[:]):
 
 
 other_setup_options = {
-    'cmake_install_dir': 'src/pyYggdrasil',
+    'cmake_install_dir': 'cpp/pyYggdrasil',
     'cmake_args': [],
     'packages': ['pyYggdrasil'],
-    'package_dir': {'': 'src'},
+    'package_dir': {'': 'cpp'},
 }
 if with_asan:
     other_setup_options['cmake_args'] += [

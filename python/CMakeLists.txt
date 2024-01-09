@@ -1,23 +1,23 @@
+message(STATUS "Building Python bindings=Yes")
 if(YGG_PYTHON_LIBRARY_WRAP)
     set(YGG_TARGET_PY _pyYggdrasil)
 else()
     set(YGG_TARGET_PY pyYggdrasil)
 endif()
-message(STATUS "Building Python bindings=Yes")
-set(PYSOURCES
+set(SOURCES_PY
     ${CMAKE_SOURCE_DIR}/python/pyYggdrasil.cpp)
 if (NOT YGG_LINK_PYTHON_TO_CPP)
-    set(PYSOURCES ${PYSOURCES} ${SOURCES})
+    set(SOURCES_PY ${SOURCES_PY} ${SOURCES_CPP})
 endif()
 if (SKBUILD STREQUAL "2")
-    Python3_add_library(${YGG_TARGET_PY} MODULE ${PYSOURCES})
+    Python3_add_library(${YGG_TARGET_PY} MODULE ${SOURCES_PY})
 else()
-    add_library(${YGG_TARGET_PY} MODULE ${PYSOURCES})
+    add_library(${YGG_TARGET_PY} MODULE ${SOURCES_PY})
 endif()
 target_include_directories(
           ${YGG_TARGET_PY} PUBLIC
           ${DEPS_INCLUDE_DIRS}
-	  ${CMAKE_CURRENT_SOURCE_DIR}/../src
+	  ${CMAKE_CURRENT_SOURCE_DIR}/../cpp
 	  ${RAPIDJSON_INCLUDE_DIRS})
 if(YGG_LINK_PYTHON_TO_CPP)
     target_link_libraries(${YGG_TARGET_PY} PUBLIC ${YGG_TARGET_CPP})

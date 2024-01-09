@@ -275,31 +275,33 @@ if [ -n "$REBUILD" ]; then
     if [ -d "$INSTALL_DIR" ]; then
 	rm -rf "$INSTALL_DIR"
     fi
-    if [ -f "src/pyYggdrasil/pyYggdrasil.cpython-39-darwin.so" ]; then
-	rm "src/pyYggdrasil/pyYggdrasil.cpython-39-darwin.so"
+    if [ -f "cpp/src/pyYggdrasil/pyYggdrasil.cpython-39-darwin.so" ]; then
+	rm "cpp/src/pyYggdrasil/pyYggdrasil.cpython-39-darwin.so"
     fi
-    if [ -f "src/pyYggdrasil/lib/libYggInterface_py.dylib" ]; then
-	rm "src/pyYggdrasil/lib/libYggInterface_py.dylib"
+    if [ -f "cpp/src/pyYggdrasil/lib/libYggInterface_py.dylib" ]; then
+	rm "cpp/src/pyYggdrasil/lib/libYggInterface_py.dylib"
     fi
 fi
 # export CMAKE_ARGS=${CMAKE_FLAGS}
 if [ -n "$DO_PYTHON" ] && [ -n "$NO_CORE" ]; then
     export CMAKE_ARGS="${CMAKE_FLAGS} ${CMAKE_FLAGS_LIB}"
     if [ ! -n "$DONT_BUILD" ]; then
+	cd python
 	python3 setup.py build_ext --inplace
+	cd ../
     fi
     if [ -n "$WITH_ASAN" ] && [ ! -n "$DYLD_INSERT_LIBRARIES" ]; then
 	export DYLD_INSERT_LIBRARIES=$(clang -print-file-name=libclang_rt.asan_osx_dynamic.dylib)
     fi
     cd python/pyYggdrasil
-    export TEST_DIR=../test
+    export PYTHON_TEST_DIR=../../tests/python
     if [[ "$TEST_TYPE" == "unit" ]] && [ ! -n "$DONT_TEST" ]; then
 	export PYTHONFAULTHANDLER=1
 	if [ -n "$WITH_LLDB" ]; then
-	    lldb -o 'run' -o 'quit' -- $(which python3) -m pytest -svx $TEST_DIR
+	    lldb -o 'run' -o 'quit' -- $(which python3) -m pytest -svx $PYTHON_TEST_DIR
 	else
-	    # python3 -m pytest -svx $TEST_DIR
-	    pytest -svx $TEST_DIR
+	    # python3 -m pytest -svx $PYTHON_TEST_DIR
+	    pytest -svx $PYTHON_TEST_DIR
 	fi
     fi
     cd ../../
@@ -324,9 +326,9 @@ else
 	fi
 	if [ -n "$WITH_LLDB" ]; then
 	    if [ -n "$DO_FORTRAN" ]; then
-		lldb -o 'run' -o 'quit' fortran/tests/fortran_testsuite -- test_ygg_input_1_
+		lldb -o 'run' -o 'quit' tests/fortran/fortran_testsuite -- test_ygg_input_1_
 	    else
-		lldb -o 'run' -o 'quit' test/unittest
+		lldb -o 'run' -o 'quit' tests/cpp/unittest
 	    fi
 	else
 	    ctest $TEST_FLAGS --stop-on-failure
@@ -358,7 +360,7 @@ if [[ "$TEST_TYPE" == "speed" ]]; then
 	export DYLD_INSERT_LIBRARIES=$(clang -print-file-name=libclang_rt.asan_osx_dynamic.dylib)
     fi
     if [ ! -n "$DONT_BUILD" ]; then
-	cmake ../test/speedtest "-DYggInterface_DIR=$INSTALL_DIR/lib/cmake/YggInterface" -DN_MSG=$N_MSG -DS_MSG=$S_MSG -DCOMM=$COMM $CMAKE_FLAGS $CMAKE_FLAGS_SPEED
+	cmake ../tests/speedtest "-DYggInterface_DIR=$INSTALL_DIR/lib/cmake/YggInterface" -DN_MSG=$N_MSG -DS_MSG=$S_MSG -DCOMM=$COMM $CMAKE_FLAGS $CMAKE_FLAGS_SPEED
 	cmake --build .
     fi
     if [ ! -n "$DONT_TEST" ]; then
@@ -378,15 +380,15 @@ if [ -n "$DO_SYMBOLS" ]; then
     fi
 fi
 
-if [ -n "$DO_DOCS" ]; then
+path_to_doxygen=$(which doxygen)
+if [ -n "$DO_DOCS" ] && [ -x "$path_to_doxygen" ]; then
     echo "BUILDING DOCS"
     if [ ! -d "build" ]; then
 	mkdir build
     fi
     cd build
-    cmake .. $CMAKE_FLAGS -DYGG_BUILD_DOCS=ON -DBUILD_CPP_LIBRARY=OFF -DBUILD_FORTRAN_LIBRARY=OFF
-    cmake --build . --target docs
-    # cmake --build . $CONFIG_FLAGS --target docs
+    cmake .. $CMAKE_FLAGS -DYGG_BUILD_DOCS=ON -DBUILD_CPP_LIBRARY=OFF -DBUILD_FORTRAN_LIBRARY=OFF -DDOXYGEN_CHECK_MISSING=ON
+    cmake --build . $CONFIG_FLAGS --target docs
     # Need install here to ensure that cmake config files are in place
     # cmake --install . --prefix "$INSTALL_DIR" $CONFIG_FLAGS
     cd ..

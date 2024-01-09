@@ -1,16 +1,13 @@
 cmake_minimum_required (VERSION 3.5)
+message(STATUS "Fortran TESTING ON")
 enable_language (C)
 if ((NOT FORCE_SPLIT_CXXFORTRAN) AND (NOT MSVC))
     enable_language(Fortran)
 endif()
 enable_testing ()
 
-# TODO: Determine where this path should really come from
-cmake_path(GET CMAKE_CURRENT_BINARY_DIR PARENT_PATH MOD_PATH)
-message(STATUS "MOD_PATH = ${MOD_PATH}")
-
 set(FORTRAN_TEST_LIBRARIES ${YGG_TARGET_FORTRAN})
-set(FORTRAN_TEST_INCLUDE_DIRS ${MOD_PATH})
+set(FORTRAN_TEST_INCLUDE_DIRS ${YGG_FORTRAN_MOD_DIR})
 
 message(STATUS "FORTRAN_TEST_LIBRARIES = ${FORTRAN_TEST_LIBRARIES}")
 message(STATUS "FORTRAN_TEST_INCLUDE_DIRS = ${FORTRAN_TEST_INCLUDE_DIRS}")

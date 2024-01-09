@@ -1,3 +1,4 @@
+message(STATUS "Python TESTING ON")
 include(CTest)
 include(SearchTools)
 find_package_python()

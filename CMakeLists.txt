@@ -82,6 +82,7 @@ option(WRAP_RAPIDJSON_FOR_DLL "Build yggdrasil using a wrapper for rapidjson to 
 option(YGG_LINK_PYTHON_TO_CPP "Link the Python extension to the C++ wrapper as a library" OFF)
 option(YGG_DEBUG_LEVEL "Level that should be used for logging" OFF)
 option(YGG_BUILD_DOCS "Build documentation (requires Doxygen)" OFF)
+option(DOXYGEN_CHECK_MISSING "Raise an error if documentation is missing" OFF)
 
 if(NOT WIN32)
     find_program(CCACHE_FOUND ccache)
@@ -252,6 +253,13 @@ if(YGG_BUILD_DOCS)
     else()
         set(DOXYGEN_BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/doc CACHE INTERNAL "")
         set(DOXYGEN_INPUT_DIR ${CMAKE_CURRENT_SOURCE_DIR} CACHE INTERNAL "")
+	if (DOXYGEN_CHECK_MISSING)
+	    set(DOXYGEN_WARN_AS_ERROR YES)
+	    set(DOXYGEN_EXTRACT_ALL NO)
+	else()
+	    set(DOXYGEN_WARN_AS_ERROR NO)
+	    set(DOXYGEN_EXTRACT_ALL YES)
+	endif()
         file(MAKE_DIRECTORY ${DOXYGEN_BUILD_DIR})
         configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
         add_custom_target(docs
@@ -259,7 +267,7 @@ if(YGG_BUILD_DOCS)
                           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
                           VERBATIM)
         install(DIRECTORY ${DOXYGEN_BUILD_DIR}
-                DESTINATION ${CMAKE_INSTALL_PREFIX}/share/doc/ygginterrfacecpp
+                DESTINATION ${CMAKE_INSTALL_PREFIX}/share/doc/ygginterface
                 OPTIONAL)
     endif()
 endif()
@@ -278,7 +286,7 @@ endif()
 #############
 
 if(NOT RAPIDJSON_INCLUDE_DIRS)
-    set(RAPIDJSON_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/src/rapidjson/include")
+    set(RAPIDJSON_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/cpp/rapidjson/include")
 endif()
 message(STATUS "Rapidjson found ${RAPIDJSON_INCLUDE_DIRS}")
 
@@ -356,7 +364,7 @@ if(ENABLE_RMQ)
     else()
         message(STATUS "NO RabbitMQ client library")
     endif()
-    dump_cmake_variables(REGEX "rabbitmq*")
+    # dump_cmake_variables(REGEX "rabbitmq*")
 else (ENABLE_RMQ)
     message(STATUS "No RabbitMQ support will be built." )
 endif (ENABLE_RMQ)
@@ -535,9 +543,9 @@ endif()
 message(STATUS "DEPS_INCLUDE_DIRS = ${DEPS_INCLUDE_DIRS}")
 message(STATUS "DEPS_LIBRARIES = ${DEPS_LIBRARIES}")
 
-####################
-# Create library   #
-####################
+######################
+# Create C++ Library #
+######################
 
 if(SKBUILD)
   if(YGG_LINK_PYTHON_TO_CPP)
@@ -552,72 +560,10 @@ endif()
 if(BUILD_FORTRAN_LIBRARY)
   set(BUILD_CPP_LIBRARY ON)
 endif()
-file(GLOB SOURCES "src/*.cpp" "src/utils/*.cpp" "src/communicators/*.cpp" "src/datatypes/dtype_t.cpp")
+file(GLOB SOURCES_CPP "cpp/*.cpp" "cpp/utils/*.cpp" "cpp/communicators/*.cpp" "cpp/datatypes/dtype_t.cpp")
 
 if(BUILD_CPP_LIBRARY)
-    if(SKBUILD)
-        set(YGG_TARGET_CPP YggInterface_py)
-    else()
-        set(YGG_TARGET_CPP YggInterface)
-    endif()
-    if(SKBUILD AND NOT YGGDRASIL_DISABLE_PYTHON_C_API)
-	if(SKBUILD STREQUAL "2")
-  	    Python3_add_library(${YGG_TARGET_CPP} SHARED ${SOURCES})
-	    set(YGG_CPP_LINK_KEYWORD PUBLIC)
-	else()
-            add_library(${YGG_TARGET_CPP} SHARED ${SOURCES})
-	endif()
-     	target_compile_options(${YGG_TARGET_CPP} PUBLIC
-     	    -DRAPIDJSON_YGGDRASIL_PYTHON -DYGG_LINK_PYTHON_TO_CPP)
-    else()
-        add_library(${YGG_TARGET_CPP} SHARED ${SOURCES})
-	add_library(YggInterface::CXX ALIAS ${YGG_TARGET_CPP})
-	add_library(YggInterface::C ALIAS ${YGG_TARGET_CPP})
-        target_link_libraries(
-	    ${YGG_TARGET_CPP} PUBLIC
-	    ${DEPS_LIBRARIES_PYTHON})
-	if (WIN32)
-	    set_target_properties(${YGG_TARGET_CPP}
-	        PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
-	endif()
-	if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-	    target_link_options(${YGG_TARGET_CPP}
-	        PRIVATE /INCLUDE:rapidjson_ARRAY_API)
-	endif()
-        list(APPEND YGG_INSTALL_TARGETS ${YGG_TARGET_CPP})
-    endif()
-    target_link_libraries(
-        ${YGG_TARGET_CPP} PRIVATE ${DEPS_LIBRARIES_PRIVATE})
-    target_link_libraries(
-        ${YGG_TARGET_CPP} PUBLIC ${DEPS_LIBRARIES}
-	"$<$<LINK_LANGUAGE:C>:${DEPS_PUBLIC_C_LIBS}>"
-	"$<$<LINK_LANGUAGE:CXX>:${DEPS_PUBLIC_CXX_LIBS}>"
-	"$<$<LINK_LANGUAGE:Fortran>:${DEPS_PUBLIC_Fortran_LIBS}>")
-    target_include_directories(
-        ${YGG_TARGET_CPP} PUBLIC ${DEPS_INCLUDE_DIRS}
-  	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
-	$<BUILD_INTERFACE:${RAPIDJSON_INCLUDE_DIRS}>
-	$<INSTALL_INTERFACE:include/YggInterface>
-	$<INSTALL_INTERFACE:include/YggInterface/rapidjson/include>)
-    # target_include_directories(
-    #     ${YGG_TARGET_CPP} PRIVATE ${DEPS_INCLUDE_DIRS})
-    target_compile_definitions(
-        ${YGG_TARGET_CPP} PUBLIC ${YGG_INSTALL_DEFS})
-    target_compile_options(
-	${YGG_TARGET_CPP} PUBLIC ${DEPS_PUBLIC_COMPILE_FLAGS}
-	"$<$<COMPILE_LANGUAGE:C>:${DEPS_PUBLIC_C_COMPILE_FLAGS}>"
-	"$<$<COMPILE_LANGUAGE:CXX>:${DEPS_PUBLIC_CXX_COMPILE_FLAGS}>"
-	"$<$<COMPILE_LANGUAGE:Fortran>:${DEPS_PUBLIC_Fortran_COMPILE_FLAGS}>")
-    target_link_options(
-        ${YGG_TARGET_CPP} PUBLIC ${DEPS_PUBLIC_LINK_FLAGS}
-	"$<$<LINK_LANGUAGE:C>:${DEPS_PUBLIC_C_LINK_FLAGS}>"
-	"$<$<LINK_LANGUAGE:CXX>:${DEPS_PUBLIC_CXX_LINK_FLAGS}>"
-	"$<$<LINK_LANGUAGE:Fortran>:${DEPS_PUBLIC_Fortran_LINK_FLAGS}>")
-    target_compile_features(
-        ${YGG_TARGET_CPP} PUBLIC cxx_std_14)
-    
-    include(CheckDLL)
-    show_runtimes(${YGG_TARGET_CPP})
+    add_subdirectory(cpp)
 endif()
 
 #########################
@@ -658,9 +604,6 @@ elseif(BUILD_PYTHON_LIBRARY AND NOT YGGDRASIL_DISABLE_PYTHON_C_API)
     if (NOT ret EQUAL 0)
       message(FATAL_ERROR "Failed to build Python via pip")
     endif()
-    if(YGG_BUILD_TESTS OR YGG_BUILD_PYTHON_TESTS)
-      add_subdirectory(python/test)
-    endif()
 endif(SKBUILD)
 
 ##########################
@@ -690,7 +633,7 @@ if (YGG_INSTALL_TARGETS)
           FILE YggInterfaceTargets.cmake
 	  NAMESPACE YggInterface::
 	  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/YggInterface)
-  install(DIRECTORY src/
+  install(DIRECTORY cpp/
           DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/YggInterface
 	  FILES_MATCHING REGEX ".*\\.h(pp)?$")
   include(CMakePackageConfigHelpers)
@@ -726,8 +669,8 @@ endif ()
 
 if(YGG_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang|ARMClang")
     message(STATUS "COVERAGE ON")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 --coverage -fno-inline -fprofile-arcs -ftest-coverage -fprofile-filter-files=\"${CMAKE_SOURCE_DIR}/src/*\" ")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0 --coverage -fno-inline -fprofile-arcs -ftest-coverage -fprofile-filter-files=\"${CMAKE_SOURCE_DIR}/src/*\" ")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 --coverage -fno-inline -fprofile-arcs -ftest-coverage -fprofile-filter-files=\"${CMAKE_SOURCE_DIR}/cpp/*\" ")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0 --coverage -fno-inline -fprofile-arcs -ftest-coverage -fprofile-filter-files=\"${CMAKE_SOURCE_DIR}/cpp/*\" ")
     if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|ARMClang")
         set(CTEST_COVERAGE_COMMAND "llvm-cov")
         set(CTEST_COVERAGE_EXTRA_FLAGS "gcov")
@@ -749,22 +692,5 @@ endif(YGG_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClan
 if(YGG_BUILD_TESTS OR YGG_BUILD_CXX_TESTS OR YGG_BUILD_FORTRAN_TESTS OR YGG_BUILD_PYTHON_TESTS)
     enable_testing()
     include(CTest)
+    add_subdirectory(tests)
 endif()
-if(YGG_BUILD_TESTS OR YGG_BUILD_CXX_TESTS)
-    message(STATUS "TESTING ON")
-    set(SUBLIBFILE ${CMAKE_BINARY_DIR}/library_path.txt)
-    add_custom_command(
-        OUTPUT ${SUBLIBFILE}
-        COMMAND echo "$<TARGET_FILE:${YGG_TARGET_CPP}>" > "${SUBLIBFILE}"
-       DEPENDS ${YGG_TARGET_CPP}
-       VERBATIM)
-    add_custom_target(make_sublib ALL DEPENDS ${SUBLIBFILE})
-
-    if(MSVC11)
-        # required for VS2012 due to missing support for variadic templates
-        add_definitions(-D_VARIADIC_MAX=10)
-    endif(MSVC11)
-    add_subdirectory(test)
-
-endif()
-
