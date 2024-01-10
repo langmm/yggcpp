@@ -378,7 +378,8 @@ if [ -n "$DO_SYMBOLS" ]; then
     fi
 fi
 
-if [ -n "$DO_DOCS" ]; then
+path_to_doxygen=$(which doxygen)
+if [ -n "$DO_DOCS" ] && [ -x "$path_to_doxygen" ]; then
     echo "BUILDING DOCS"
     if [ ! -d "build" ]; then
 	mkdir build
