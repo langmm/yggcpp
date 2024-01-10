@@ -53,9 +53,9 @@ for idx, arg in enumerate(sys.argv[:]):
 
 
 other_setup_options = {
-    'cmake_install_dir': 'cpp/pyYggdrasil',
+    'cmake_install_dir': 'cpp/YggInterface',
     'cmake_args': [],
-    'packages': ['pyYggdrasil'],
+    'packages': ['YggInterface'],
     'package_dir': {'': 'cpp'},
 }
 if with_asan:
@@ -69,7 +69,7 @@ if user_rj:
     )
 
 setup(
-    name='pyYggdrasil',
+    name='YggInterface',
     # version=VERSION,
     description='Python wrapper around yggdrasil C++',
     # long_description=LONG_DESCRIPTION + '\n\n' + CHANGES,

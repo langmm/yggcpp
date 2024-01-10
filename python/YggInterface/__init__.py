@@ -1,6 +1,6 @@
 import os
 try:
-    from pyYggdrasil import _pyYggdrasil  # noqa: F401
+    from YggInterface import _YggInterface  # noqa: F401
 except ImportError:
     import os.path
     import re
@@ -17,7 +17,7 @@ except ImportError:
     )
     bundled_pylib = next(
         filter(
-            lambda fl: re.match(".*_pyYggdrasil\\..*", fl),
+            lambda fl: re.match(".*_YggInterface\\..*", fl),
             sorted(os.listdir(os.path.dirname(__file__))),
         ),
         None,
@@ -32,11 +32,11 @@ except ImportError:
         raise FileNotFoundError(
             "YggInterface C++ library is not installed and "
             "no bundled version was detected")
-    from pyYggdrasil import _pyYggdrasil  # noqa: F401
+    from YggInterface import _YggInterface  # noqa: F401
     ## @endcond
 
 
-from ._pyYggdrasil import (
+from ._YggInterface import (
     Comm_t,  # noqa: F401
     DIRECTION,  # noqa: F401
     COMM_TYPE,  # noqa: F401

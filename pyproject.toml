@@ -10,7 +10,7 @@ build-backend = "scikit_build_core.build"
 # build-backend = "setuptools.build_meta"
 
 [project]
-name = "pyYggdrasil"
+name = "YggInterface"
 version = "0.0.1"
 description = "Python wrapper around yggdrasil C++ communicator classes"
 license = { text="MIT License" }
@@ -46,5 +46,5 @@ Repository = "https://github.com/astro-friedel/yggcpp"
 
 
 [tool.scikit-build]
-wheel.packages = ['python/pyYggdrasil']
-wheel.install-dir = "pyYggdrasil"
+wheel.packages = ['python/YggInterface']
+wheel.install-dir = "YggInterface"

@@ -1,20 +1,20 @@
 import pytest
-import pyYggdrasil
+import YggInterface
 from threading import Thread
 import numpy as np
 
 _commtypes = [
-    pyYggdrasil.COMM_TYPE.IPC_COMM,
-    pyYggdrasil.COMM_TYPE.ZMQ_COMM,
-    pyYggdrasil.COMM_TYPE.MPI_COMM,
-    pyYggdrasil.COMM_TYPE.RMQ_COMM,
+    YggInterface.COMM_TYPE.IPC_COMM,
+    YggInterface.COMM_TYPE.ZMQ_COMM,
+    YggInterface.COMM_TYPE.MPI_COMM,
+    YggInterface.COMM_TYPE.RMQ_COMM,
 ]
 
 _commtype_map = {
-    'ipc': pyYggdrasil.COMM_TYPE.IPC_COMM,
-    'zmq': pyYggdrasil.COMM_TYPE.ZMQ_COMM,
-    'mpi': pyYggdrasil.COMM_TYPE.MPI_COMM,
-    'rmq': pyYggdrasil.COMM_TYPE.RMQ_COMM,
+    'ipc': YggInterface.COMM_TYPE.IPC_COMM,
+    'zmq': YggInterface.COMM_TYPE.ZMQ_COMM,
+    'mpi': YggInterface.COMM_TYPE.MPI_COMM,
+    'rmq': YggInterface.COMM_TYPE.RMQ_COMM,
 }
 _commtype_map_inv = {v: k for k, v in _commtype_map.items()}
 _testdata = [
@@ -43,34 +43,34 @@ class TestComm_t_Installed:
 
     @pytest.fixture(scope="class", autouse=True)
     def require_installed(self, commtype):
-        if not pyYggdrasil.is_comm_installed(commtype):
+        if not YggInterface.is_comm_installed(commtype):
             pytest.skip(f"Communicator type {commtype} is not installed")
 
     @pytest.fixture
     def comm_send(self, commtype, require_installed):
-        out = pyYggdrasil.Comm_t(
+        out = YggInterface.Comm_t(
             "test", commtype=commtype)
         yield out
         out.close()
 
     @pytest.fixture
     def comm_recv(self, commtype, require_installed):
-        out = pyYggdrasil.Comm_t(
+        out = YggInterface.Comm_t(
             "test", commtype=commtype,
-            direction=pyYggdrasil.DIRECTION.RECV)
+            direction=YggInterface.DIRECTION.RECV)
         yield out
         out.close()
 
     @pytest.fixture
     def create_comm_partner(self):
         def create_comm_partner_wrapped(comm):
-            if comm.direction == pyYggdrasil.DIRECTION.RECV:
-                partner_dir = pyYggdrasil.DIRECTION.SEND
+            if comm.direction == YggInterface.DIRECTION.RECV:
+                partner_dir = YggInterface.DIRECTION.SEND
             else:
-                partner_dir = pyYggdrasil.DIRECTION.RECV
-            return pyYggdrasil.Comm_t(
+                partner_dir = YggInterface.DIRECTION.RECV
+            return YggInterface.Comm_t(
                 "test", comm.address, partner_dir, commtype=comm.commtype,
-                flags=pyYggdrasil.COMM_FLAG.COMM_FLAG_INTERFACE)
+                flags=YggInterface.COMM_FLAG.COMM_FLAG_INTERFACE)
         return create_comm_partner_wrapped
 
     @pytest.fixture
@@ -122,17 +122,17 @@ class TestComm_t_Installed:
         return do_send_recv_wrapped
 
     def test_is_comm_installed(self, commtype):
-        assert pyYggdrasil.is_comm_installed(commtype)
+        assert YggInterface.is_comm_installed(commtype)
 
     def test_str_arguments(self, commtype, commtype_str):
-        comm_send = pyYggdrasil.Comm_t(
+        comm_send = YggInterface.Comm_t(
             "test", commtype=commtype_str, direction="send")
         assert comm_send.commtype == commtype
-        assert comm_send.direction == pyYggdrasil.DIRECTION.SEND
-        comm_recv = pyYggdrasil.Comm_t(
+        assert comm_send.direction == YggInterface.DIRECTION.SEND
+        comm_recv = YggInterface.Comm_t(
             "test", commtype=commtype_str, direction="recv")
         assert comm_recv.commtype == commtype
-        assert comm_recv.direction == pyYggdrasil.DIRECTION.RECV
+        assert comm_recv.direction == YggInterface.DIRECTION.RECV
 
     def test_str(self, comm_send):
         print(str(comm_send))
@@ -141,7 +141,7 @@ class TestComm_t_Installed:
     def test_properties(self, comm_send):
         assert comm_send.name == "test"
         assert comm_send.address
-        assert comm_send.direction == pyYggdrasil.DIRECTION.SEND
+        assert comm_send.direction == YggInterface.DIRECTION.SEND
         assert comm_send.commtype
 
     def test_open_close(self, comm_send):
@@ -182,15 +182,15 @@ class TestComm_t_Installed:
         do_send_recv(message[1], msg_type=message[0])
 
     def test_send_recv_async(self, commtype, require_installed):
-        comm_recv = pyYggdrasil.Comm_t(
+        comm_recv = YggInterface.Comm_t(
             "test", commtype=commtype,
-            direction=pyYggdrasil.DIRECTION.RECV,
-            flags=pyYggdrasil.COMM_FLAG.COMM_FLAG_ASYNC)
-        comm_send = pyYggdrasil.Comm_t(
+            direction=YggInterface.DIRECTION.RECV,
+            flags=YggInterface.COMM_FLAG.COMM_FLAG_ASYNC)
+        comm_send = YggInterface.Comm_t(
             "test", comm_recv.address, commtype=commtype,
-            direction=pyYggdrasil.DIRECTION.SEND,
-            flags=(pyYggdrasil.COMM_FLAG.COMM_FLAG_INTERFACE |
-                   pyYggdrasil.COMM_FLAG.COMM_FLAG_ASYNC))
+            direction=YggInterface.DIRECTION.SEND,
+            flags=(YggInterface.COMM_FLAG.COMM_FLAG_INTERFACE |
+                   YggInterface.COMM_FLAG.COMM_FLAG_ASYNC))
         msg = "Test Message"
         assert comm_send.send(msg)
         assert comm_recv.recv() == (True, msg)
@@ -213,15 +213,15 @@ class TestComm_t_NotInstalled:
 
     @pytest.fixture(autouse=True)
     def require_not_installed(self, commtype):
-        if pyYggdrasil.is_comm_installed(commtype):
+        if YggInterface.is_comm_installed(commtype):
             pytest.skip(f"Communicator type {commtype} is installed")
 
     def test_is_comm_installed(self, commtype):
-        assert not pyYggdrasil.is_comm_installed(commtype)
+        assert not YggInterface.is_comm_installed(commtype)
 
     def test_error_on_create(self, commtype):
         with pytest.raises(TypeError):
-            pyYggdrasil.Comm_t("test", commtype=commtype)
+            YggInterface.Comm_t("test", commtype=commtype)
 
 
 class TestRPC:
@@ -237,22 +237,22 @@ class TestRPC:
 
     @pytest.fixture
     def server(self):
-        out = pyYggdrasil.Comm_t(
-            "test_server", commtype=pyYggdrasil.COMM_TYPE.SERVER_COMM)
+        out = YggInterface.Comm_t(
+            "test_server", commtype=YggInterface.COMM_TYPE.SERVER_COMM)
         yield out
         out.close()
 
     @pytest.fixture
     def create_comm_partner(self):
         def create_comm_partner_wrapped(comm, flags=0):
-            if comm.commtype == pyYggdrasil.COMM_TYPE.SERVER_COMM:
+            if comm.commtype == YggInterface.COMM_TYPE.SERVER_COMM:
                 partner_name = "client"
-                partner_commtype = pyYggdrasil.COMM_TYPE.CLIENT_COMM
+                partner_commtype = YggInterface.COMM_TYPE.CLIENT_COMM
             else:
                 partner_name = "server"
-                partner_commtype = pyYggdrasil.COMM_TYPE.SERVER_COMM
-            flags |= pyYggdrasil.COMM_FLAG.COMM_FLAG_INTERFACE
-            return pyYggdrasil.Comm_t(
+                partner_commtype = YggInterface.COMM_TYPE.SERVER_COMM
+            flags |= YggInterface.COMM_FLAG.COMM_FLAG_INTERFACE
+            return YggInterface.Comm_t(
                 "test_" + partner_name, comm.address,
                 commtype=partner_commtype, flags=flags)
         return create_comm_partner_wrapped
@@ -313,14 +313,14 @@ class TestRPC:
                "RESPONSE" + server.maxMsgSize * "0")
 
     def test_send_recv_async(self):
-        server = pyYggdrasil.Comm_t(
+        server = YggInterface.Comm_t(
             "test_server",
-            commtype=pyYggdrasil.COMM_TYPE.SERVER_COMM,
-            flags=pyYggdrasil.COMM_FLAG.COMM_FLAG_ASYNC)
-        client = pyYggdrasil.Comm_t(
+            commtype=YggInterface.COMM_TYPE.SERVER_COMM,
+            flags=YggInterface.COMM_FLAG.COMM_FLAG_ASYNC)
+        client = YggInterface.Comm_t(
             "test_client", server.address,
-            commtype=pyYggdrasil.COMM_TYPE.CLIENT_COMM,
-            flags=pyYggdrasil.COMM_FLAG.COMM_FLAG_ASYNC)
+            commtype=YggInterface.COMM_TYPE.CLIENT_COMM,
+            flags=YggInterface.COMM_FLAG.COMM_FLAG_ASYNC)
         req = "REQUEST"
         res = "RESPONSE"
         server.timeout_recv = 1000000
@@ -333,10 +333,10 @@ class TestRPC:
         server.close()
 
     def test_call_async(self, do_rpc):
-        server = pyYggdrasil.Comm_t(
+        server = YggInterface.Comm_t(
             "test_server",
-            commtype=pyYggdrasil.COMM_TYPE.SERVER_COMM,
-            flags=pyYggdrasil.COMM_FLAG.COMM_FLAG_ASYNC)
+            commtype=YggInterface.COMM_TYPE.SERVER_COMM,
+            flags=YggInterface.COMM_FLAG.COMM_FLAG_ASYNC)
         do_rpc(server, "REQUEST", "RESPONSE",
-               flags=pyYggdrasil.COMM_FLAG.COMM_FLAG_ASYNC)
+               flags=YggInterface.COMM_FLAG.COMM_FLAG_ASYNC)
         server.close()

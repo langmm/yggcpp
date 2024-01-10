@@ -4,9 +4,9 @@
 #endif
 
 #ifdef YGG_PYTHON_LIBRARY_WRAP
-#define YGG_MODULE_NAME "_pyYggdrasil"
+#define YGG_MODULE_NAME "_YggInterface"
 #else
-#define YGG_MODULE_NAME "pyYggdrasil"
+#define YGG_MODULE_NAME "YggInterface"
 #endif
 
 #include <Python.h>
@@ -71,10 +71,10 @@ static struct PyModuleDef pyYggModule {
 
 #ifdef YGG_PYTHON_LIBRARY_WRAP
 PyMODINIT_FUNC
-PyInit__pyYggdrasil() {
+PyInit__YggInterface() {
 #else
 PyMODINIT_FUNC
-PyInit_pyYggdrasil() {
+PyInit_YggInterface() {
 #endif // YGG_PYTHON_LIBRARY_WRAP
     if (!YggInterface::utils::import_numpy_arrays()) {
       PyErr_SetString(PyExc_ImportError, "Could not import numpy");
