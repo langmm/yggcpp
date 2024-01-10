@@ -443,14 +443,14 @@ if (CONDA_PREFIX AND MINGW AND
       if (NOT EXISTS ${THREAD_H_PATCH})
         message(FATAL_ERROR "THREAD_H_PATCH does not exist (${THREAD_H_PATCH})")
       endif()
-      execute_process(
-        COMMAND patch -b ${THREAD_H} ${THREAD_H_PATCH}
-	TIMEOUT 15
-	COMMAND_ECHO STDOUT
-	RESULT_VARIABLE ret)
-      if (NOT ret EQUAL 0)
-        message(FATAL_ERROR "Failed to apply MinGW thread patch")
-      endif()
+      # execute_process(
+      #   COMMAND patch -b ${THREAD_H} ${THREAD_H_PATCH}
+      # 	TIMEOUT 15
+      # 	COMMAND_ECHO STDOUT
+      # 	RESULT_VARIABLE ret)
+      # if (NOT ret EQUAL 0)
+      #   message(FATAL_ERROR "Failed to apply MinGW thread patch")
+      # endif()
     endif()
   endif()
 endif()
