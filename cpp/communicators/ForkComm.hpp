@@ -153,8 +153,7 @@ namespace YggInterface {
       /** \copydoc YggInterface::communicator::Comm_t::send_raw */
       int send_raw(const char *data, const size_t &len) override;
       /** \copydoc YggInterface::communicator::Comm_t::recv_raw */
-      long recv_raw(char*& data, const size_t &len,
-		    bool allow_realloc=false) override;
+      long recv_raw(char*& data, const size_t &len) override;
 
       FORK_TYPE forktype;  /**< Enumerated type of fork */
       size_t ncomm;        /**< Number of tines */

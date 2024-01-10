@@ -8,13 +8,14 @@
 // #include <cstdlib>
 
 TEST(Metadata, Utilities) {
-    YggInterface::utils::Metadata metadata;
+  YggInterface::utils::Metadata metadata;
   EXPECT_TRUE(metadata.empty());
   EXPECT_FALSE(metadata.hasType());
   EXPECT_FALSE(metadata.hasSubtype());
   EXPECT_EQ(strcmp(metadata.subtypeName(), ""), 0);
-  metadata.setGeneric();
+  EXPECT_TRUE(metadata.setGeneric());
   EXPECT_TRUE(metadata.isGeneric());
+  EXPECT_TRUE(metadata.setAllowWrapped());
   EXPECT_FALSE(metadata.empty());
   metadata.Display();
   EXPECT_TRUE(metadata == metadata);
@@ -528,6 +529,50 @@ TEST(Metadata, fromFormat) {
     YggInterface::utils::Metadata x;
     EXPECT_FALSE(x.fromFormat("%m"));
   }
+}
+
+TEST(Metadata, fromFormatNameUnits) {
+  std::string formatStr = "%f\t%d\t%5s\n";
+  std::vector<std::string> names = { "value", "count", "name" };
+  std::vector<std::string> units = { "cm", "mol", "n/a" };
+  {
+    // Scalar
+    YggInterface::utils::Metadata x;
+    EXPECT_TRUE(x.fromSchema(
+		 "{"
+		 "  \"type\": \"array\","
+		 "  \"items\": ["
+		 "    {"
+		 "      \"type\": \"scalar\","
+		 "      \"subtype\": \"float\","
+		 "      \"precision\": 8,"
+		 "      \"title\": \"value\","
+		 "      \"units\": \"cm\""
+		 "    },"
+		 "    {"
+		 "      \"type\": \"scalar\","
+		 "      \"subtype\": \"int\","
+		 "      \"precision\": 4,"
+		 "      \"title\": \"count\","
+		 "      \"units\": \"mol\""
+		 "    },"
+		 "    {"
+		 "      \"type\": \"scalar\","
+		 "      \"subtype\": \"string\","
+		 "      \"precision\": 5,"
+		 "      \"title\": \"name\","
+		 "      \"units\": \"n/a\""
+		 "    }"
+		 "  ]"
+		 "}"));
+    x.SetString("format_str", formatStr, x.metadata["serializer"]);
+    x.SetVectorString("field_names", names, x.metadata["serializer"]);
+    x.SetVectorString("field_units", units, x.metadata["serializer"]);
+    YggInterface::utils::Metadata y;
+    EXPECT_TRUE(y.fromFormat(formatStr, false, names, units));
+    EXPECT_EQ(x.metadata, y.metadata);
+  }
+  
 }
 
 TEST(Metadata, fromMetadata) {

@@ -320,28 +320,27 @@ int ForkComm::send_raw(const char *data, const size_t &len) {
   return handle->send(data, len, getMetadata(SEND));
 }
 
-long ForkComm::recv_raw(char*& data, const size_t &len,
-			bool allow_realloc) {
+long ForkComm::recv_raw(char*& data, const size_t &len) {
   if (global_comm)
-    return global_comm->recv_raw(data, len, allow_realloc);
+    return global_comm->recv_raw(data, len);
   log_debug() << "ForkComm::recv_raw: Receiving from " << address.address() << std::endl;
   if (direction != RECV && type != CLIENT_COMM) {
     log_debug() << "ForkComm::recv_raw: Attempt to receive from communicator set up to send" << std::endl;
     return -1;
   }
-  if (!allow_realloc) {
-    char* tmp = NULL;
-    size_t tmp_len = 0;
-    long ret = recv_raw(tmp, tmp_len, true);
-    if (ret >= 0 || ret == -2) {
-      if (ret >= 0) {
-	tmp_len = static_cast<size_t>(ret);
-	ret = copyData(data, len, tmp, tmp_len, false);
-      }
-      if (tmp)
-	free(tmp);
-    }
-    return ret;
-  }
+  // if (!allow_realloc) {
+  //   char* tmp = NULL;
+  //   size_t tmp_len = 0;
+  //   long ret = recv_raw(tmp, tmp_len, true);
+  //   if (ret >= 0 || ret == -2) {
+  //     if (ret >= 0) {
+  // 	tmp_len = static_cast<size_t>(ret);
+  // 	ret = copyData(data, len, tmp, tmp_len, false);
+  //     }
+  //     if (tmp)
+  // 	free(tmp);
+  //   }
+  //   return ret;
+  // }
   return handle->recv(data, len, getMetadata(RECV));
 }

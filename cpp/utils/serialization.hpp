@@ -299,33 +299,39 @@ public:
   /*!
    * @brief Add a filter to those used to select messages.
    * @param[in] new_filter New filter to add.
+   * @return true if successful, false otherwise.
    */
-  void addFilter(const FilterBase* new_filter);
+  bool addFilter(const FilterBase* new_filter);
   /*!
    * @brief Add a filter to those used to select messages.
    * @param[in] new_filter Python function to add as a filter.
+   * @return true if successful, false otherwise.
    */
-  void addFilter(const PyObject* new_filter);
+  bool addFilter(const PyObject* new_filter);
   /*!
    * @brief Add a filter to those used to select messages.
    * @param[in] new_filter Function to add as a filter.
+   * @return true if successful, false otherwise.
    */
-  void addFilter(filterFunc new_filter);
+  bool addFilter(filterFunc new_filter);
   /*!
    * @brief Add a transform to those used to modify messages.
    * @param[in] new_transform New transform to add.
+   * @return true if successful, false otherwise.
    */
-  void addTransform(const TransformBase* new_transform);
+  bool addTransform(const TransformBase* new_transform);
   /*!
    * @brief Add a transform to those used to modify messages.
    * @param[in] new_transform Python function to add as a transform.
+   * @return true if successful, false otherwise.
    */
-  void addTransform(const PyObject* new_transform);
+  bool addTransform(const PyObject* new_transform);
   /*!
    * @brief Add a transform to those used to modify messages.
    * @param[in] new_transform Function to add as a transform.
+   * @return true if successful, false otherwise.
    */
-  void addTransform(const transformFunc& new_transform);
+  bool addTransform(const transformFunc& new_transform);
   /*!
    * @brief Set the filters used to select messages. This removes any
    *   existing filters
@@ -337,8 +343,10 @@ public:
   bool setFilters(const std::vector<T>& new_filters) {
     reset_filters();
     for (typename std::vector<T>::const_iterator it = new_filters.cbegin();
-	 it != new_filters.cend(); it++)
-      addFilter(*it);
+	 it != new_filters.cend(); it++) {
+      if (!addFilter(*it))
+	return false;
+    }
     return true;
   }
   /*!
@@ -351,8 +359,10 @@ public:
   bool setTransforms(const std::vector<T>& new_transforms) {
     reset_transforms();
     for (typename std::vector<T>::const_iterator it = new_transforms.cbegin();
-	 it != new_transforms.cend(); it++)
-      addTransform(*it);
+	 it != new_transforms.cend(); it++) {
+      if (!addTransform(*it))
+	return false;
+    }
     return true;
   }
   /*!

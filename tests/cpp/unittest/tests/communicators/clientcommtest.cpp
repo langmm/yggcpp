@@ -98,6 +98,7 @@ TEST(ClientComm, constructor) {
     std::string name = "MyComm";
     YggInterface::testing::ClientComm_tester cc(name);
     YggInterface::testing::ClientComm_tester cc1("");
+    EXPECT_TRUE(is_commtype_installed(CLIENT_COMM));
 }
 
 TEST(ClientComm, send) {
@@ -272,6 +273,23 @@ TEST(ClientComm, call) {
   }
   EXPECT_EQ(cc.server_comm->recvVar(req_recv), 8);
   EXPECT_EQ(req_recv, req_send);
+  // Call with documents
+  req_send = "REQUEST3";
+  res_send = "RESPONSE3";
+  req_recv = req_send;
+  req_recv_fmt = "\"" + req_recv + "\"";
+  res_recv_len = res_send.size() + 1;
+  rapidjson::Document req_send_doc, res_recv_doc;
+  req_send_doc.SetString(req_send.c_str(),
+			 static_cast<rapidjson::SizeType>(req_send.size()),
+			 req_send_doc.GetAllocator());
+  cc.addStashedRequest(req_recv_fmt, true);
+  EXPECT_GE(cc.server_comm->sendVar(res_send), 0);
+  EXPECT_GE(cc.call(req_send_doc, res_recv_doc), 0);
+  EXPECT_TRUE(res_recv_doc.IsString());
+  if (res_recv_doc.IsString()) {
+    EXPECT_EQ(strcmp(res_send.c_str(), res_recv_doc.GetString()), 0);
+  }
   // Failed message due to incorrect number of arguments
   EXPECT_EQ(cc.call(1, req_send.c_str()), -1);
   // Failed message due to failed send

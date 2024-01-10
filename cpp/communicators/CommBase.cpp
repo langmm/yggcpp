@@ -422,31 +422,16 @@ int Comm_t::wait_for_recv(const int64_t& tout) {
   }
   return comm_nmsg(RECV);
 }
-long Comm_t::recv_raw(char*& data, const size_t &len,
-		      bool allow_realloc) {
+long Comm_t::recv_raw(char*& data, const size_t &len) {
   if (global_comm)
-    return global_comm->recv_raw(data, len, allow_realloc);
+    return global_comm->recv_raw(data, len);
   log_debug() << "recv_raw: Receiving from " << address.address() << std::endl;
   if (direction != RECV && type != CLIENT_COMM) {
     log_debug() << "recv_raw: Attempt to receive from communicator set up to send" << std::endl;
     return -1;
   }
-  Header head(data, len, allow_realloc);
+  Header head(data, len, true);
   long ret = -1;
-  if (!allow_realloc) {
-    char* tmp = NULL;
-    size_t tmp_len = 0;
-    ret = recv_raw(tmp, tmp_len, true);
-    if (ret >= 0 || ret == -2) {
-      if (ret >= 0) {
-	tmp_len = static_cast<size_t>(ret);
-	ret = copyData(data, len, tmp, tmp_len, false);
-      }
-      if (tmp)
-	free(tmp);
-    }
-    return ret;
-  }
   while (true) {
     if (is_closed()) {
       log_error() << "recv_raw: Communicator closed." << std::endl;
@@ -472,7 +457,7 @@ long Comm_t::recv_raw(char*& data, const size_t &len,
   }
   Comm_t* xmulti = NULL;
   if (head.flags & HEAD_FLAG_MULTIPART) {
-    log_debug() << "recv_raw(char*& data, const size_t &len, bool allow_realloc): Message is multipart" << std::endl;
+    log_debug() << "recv_raw: Message is multipart" << std::endl;
     xmulti = create_worker_recv(head);
     if (xmulti == NULL) {
       log_error() << "recv_raw: Failed to create worker communicator" << std::endl;
@@ -509,7 +494,6 @@ long Comm_t::recv_raw(char*& data, const size_t &len,
 	if (!meta.fromSchema(head.getSchema()[0]))
 	  return -1;
       }
-      // update_datatype(head.getSchema()[0], RECV);
       log_debug() << "recv_raw: Updated type" << std::endl;
     }
   }
@@ -522,7 +506,7 @@ long Comm_t::recv(rapidjson::Document& data, bool not_generic) {
   log_debug() << "recv: begin" << std::endl;
   char* buf = NULL;
   size_t buf_siz = 0;
-  long ret = recv_raw(buf, buf_siz, true);
+  long ret = recv_raw(buf, buf_siz);
   YggInterface::utils::Metadata& meta = getMetadata(RECV);
   if (ret < 0) {
     if (buf != NULL)
@@ -610,38 +594,39 @@ YggInterface::utils::Metadata& Comm_t::getMetadata(const DIRECTION dir) {
     return global_comm->getMetadata(dir);
   return metadata;
 }
-int Comm_t::update_datatype(const rapidjson::Value& new_schema,
-			    const DIRECTION dir) {
-  YggInterface::utils::Metadata& meta = getMetadata(dir);
-  if (!meta.fromSchema(new_schema))
-    return -1;
-  return 1;
-}
 
-int Comm_t::deserialize(const char* buf, rapidjson::VarArgList& ap) {
-  YggInterface::utils::Metadata& meta = getMetadata(RECV);
-  if (!meta.hasType()) {
-    log_error() << "deserialize: No datatype" << std::endl;
-    return -1;
-  }
-  log_debug() << "deserialize: begin" << std::endl;
-  int ret = meta.deserialize(buf, ap);
-  log_debug() << "deserialize: returns " << ret << std::endl;
-  return ret;
-}
+// int Comm_t::update_datatype(const rapidjson::Value& new_schema,
+// 			    const DIRECTION dir) {
+//   YggInterface::utils::Metadata& meta = getMetadata(dir);
+//   if (!meta.fromSchema(new_schema))
+//     return -1;
+//   return 1;
+// }
 
-int Comm_t::serialize(char*& buf, size_t& buf_siz,
-		      rapidjson::VarArgList& ap) {
-  YggInterface::utils::Metadata& meta = getMetadata(SEND);
-  if (!meta.hasType()) {
-    log_error() << "serialize: No datatype" << std::endl;
-    return -1;
-  }
-  log_debug() << "serialize: begin" << std::endl;
-  int ret = meta.serialize(&buf, &buf_siz, ap);
-  log_debug() << "serialize: returns " << ret << std::endl;
-  return ret;
-}
+// int Comm_t::deserialize(const char* buf, rapidjson::VarArgList& ap) {
+//   YggInterface::utils::Metadata& meta = getMetadata(RECV);
+//   if (!meta.hasType()) {
+//     log_error() << "deserialize: No datatype" << std::endl;
+//     return -1;
+//   }
+//   log_debug() << "deserialize: begin" << std::endl;
+//   int ret = meta.deserialize(buf, ap);
+//   log_debug() << "deserialize: returns " << ret << std::endl;
+//   return ret;
+// }
+
+// int Comm_t::serialize(char*& buf, size_t& buf_siz,
+// 		      rapidjson::VarArgList& ap) {
+//   YggInterface::utils::Metadata& meta = getMetadata(SEND);
+//   if (!meta.hasType()) {
+//     log_error() << "serialize: No datatype" << std::endl;
+//     return -1;
+//   }
+//   log_debug() << "serialize: begin" << std::endl;
+//   int ret = meta.serialize(&buf, &buf_siz, ap);
+//   log_debug() << "serialize: returns " << ret << std::endl;
+//   return ret;
+// }
 
 long Comm_t::vRecv(rapidjson::VarArgList& ap) {
     log_debug() << "vRecv: begin" << std::endl;

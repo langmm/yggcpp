@@ -12,12 +12,28 @@ bool example_filter(const rapidjson::Document& msg) {
 
 static inline
 bool example_transform(rapidjson::Document& msg) {
+  if (!(msg.IsInt() && msg.GetInt() < 4))
+    return false;
   std::string msg_str = std::to_string(msg.GetInt());
   msg.SetString(msg_str.c_str(),
 		static_cast<rapidjson::SizeType>(msg_str.size()),
 		msg.GetAllocator());
   return true;
 }
+
+// static inline
+// bool error_filter(const rapidjson::Document& msg) {
+//   UNUSED(msg);
+//   throw std::runtime_error("error_filter");
+//   return true;
+// }
+
+// static inline
+// bool error_transform(rapidjson::Document& msg) {
+//   UNUSED(msg);
+//   throw std::runtime_error("error_transform");
+//   return true;
+// }
 
 #define DO_SEND_RECV_EXCHANGE(init_data, comp_data, send_method, send_args, recv_method, recv_args) \
   std::cerr << "before init_data" << std::endl;				\
@@ -549,7 +565,15 @@ bool example_transform(rapidjson::Document& msg) {
     }									\
   }
 
+#define COMM_SERI_TEST_NOT_INSTALLED(cls)				\
+  TEST(cls, not_installed) {						\
+    EXPECT_FALSE(is_commtype_installed(cls::defaultCommType()));	\
+    EXPECT_THROW(cls x("", SEND), std::exception);			\
+  }
 #define COMM_SERI_TEST(cls)						\
+  TEST(cls, is_installed) {						\
+    EXPECT_TRUE(is_commtype_installed(cls::defaultCommType()));		\
+  }									\
   COMM_SERI_TEST_BASE(cls,)						\
   COMM_SERI_TEST_ASYNC(cls)						\
   COMM_SERI_TEST_PROXY(cls)						\

@@ -27,29 +27,33 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 endif()
 
 include(GoogleTest)
-file(GLOB files "${CMAKE_CURRENT_SOURCE_DIR}/unittest/tests/communicators/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/unittest/tests/utils/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/unittest/tests/datatypes/dtypetest.cpp")
+file(GLOB files "${CMAKE_CURRENT_SOURCE_DIR}/tests/communicators/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/tests/utils/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/tests/datatypes/dtypetest.cpp")
 
 include_directories(${TEST_INCLUDE_DIRS})
 if(CONDA_PREFIX)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I${CONDA_INCLUDE}")
     include_directories(SYSTEM ${CONDA_INCLUDE})
 endif()
-add_executable(unittest ${CMAKE_CURRENT_SOURCE_DIR}/unittest/unittest.cpp ${CMAKE_CURRENT_SOURCE_DIR}/unittest/elf_hook.cpp ${CMAKE_CURRENT_SOURCE_DIR}/unittest/mock.cpp ${files})
+add_executable(unittest ${CMAKE_CURRENT_SOURCE_DIR}/unittest.cpp ${CMAKE_CURRENT_SOURCE_DIR}/elf_hook.cpp ${CMAKE_CURRENT_SOURCE_DIR}/mock.cpp ${files})
 target_link_libraries(unittest ${TEST_LIBRARIES})
 target_include_directories(unittest PRIVATE ${TEST_INCLUDE_DIRS})
 message(STATUS "TEST_LIBRARIES = ${TEST_LIBRARIES}")
 message(STATUS "TEST_INCLUDE_DIRS = ${TEST_INCLUDE_DIRS}")
+cmake_path(GET CMAKE_CURRENT_SOURCE_DIR PARENT_PATH PARENT_SOURCE_DIR)
+cmake_path(GET CMAKE_CURRENT_BINARY_DIR PARENT_PATH PARENT_BINARY_DIR)
 if (WIN32)
     # There is a bug which prevents these environment variables from
     # being available during test discovery on windows
     # https://gitlab.kitware.com/cmake/cmake/-/issues/21453
     gtest_discover_tests(unittest DISCOVERY_MODE PRE_TEST
+                         WORKING_DIRECTORY ${PARENT_BINARY_DIR}
                          TEST_LIST ygg_test_list
                          PROPERTIES TIMEOUT 100
 			 ENVIRONMENT "${RAPIDJSON_PYTHON_ENV}"
 			 ENVIRONMENT "${RAPIDJSON_PYTHON_ENV2}")
 else()
     gtest_discover_tests(unittest DISCOVERY_MODE PRE_TEST
+                         WORKING_DIRECTORY ${PARENT_BINARY_DIR}
                          TEST_LIST ygg_test_list
                          PROPERTIES TIMEOUT 20
 			 ENVIRONMENT "${RAPIDJSON_PYTHON_ENV}")
@@ -106,7 +110,7 @@ if(NOT MSVC)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DRAPIDJSON_DONT_IMPORT_NUMPY")
         # Not running SIMD.* unit test cases for Valgrind
         add_test(NAME valgrind_unittest
-                 COMMAND valgrind --suppressions=${CMAKE_SOURCE_DIR}/test/valgrind.supp --suppressions=${CMAKE_SOURCE_DIR}/test/valgrind-python.supp --leak-check=full --error-exitcode=1 --track-origins=yes --dsymutil=no --keep-debuginfo=yes --read-var-info=yes ${CMAKE_BINARY_DIR}/test/unittest --gtest_filter=-SIMD.*
+                 COMMAND valgrind --suppressions=${PARENT_SOURCE_DIR}/valgrind.supp --suppressions=${PARENT_SOURCE_DIR}/valgrind-python.supp --leak-check=full --error-exitcode=1 --track-origins=yes --dsymutil=no --keep-debuginfo=yes --read-var-info=yes ${CMAKE_CURRENT_BINARY_DIR}/ --gtest_filter=-SIMD.*
                  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/test)
         set_tests_properties(valgrind_unittest PROPERTIES
                 ENVIRONMENT
@@ -115,3 +119,10 @@ if(NOT MSVC)
     endif((NOT YGG_SKIP_VALGRIND_TESTS) AND VALGRIND_FOUND)
 
 endif(NOT MSVC)
+
+add_custom_command(
+        TARGET unittest POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+                ${CMAKE_CURRENT_SOURCE_DIR}/example_python.py
+                ${PARENT_BINARY_DIR}/example_python.py)
+

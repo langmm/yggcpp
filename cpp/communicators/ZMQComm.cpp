@@ -501,7 +501,7 @@ void ZMQComm::_close(bool call_base) {
 	    size_t data_len = 0;
             char *data = NULL;
             while (comm_nmsg(RECV) > 0) {
-                if (long ret = recv_raw(data, data_len, true) >= 0) {
+                if (long ret = recv_raw(data, data_len) >= 0) {
 		  if (ret > (long)data_len)
 		    data_len = ret;
                 }

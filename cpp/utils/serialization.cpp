@@ -142,11 +142,10 @@ bool Metadata::operator!=(const Metadata& rhs) const {
 bool Metadata::CopyFrom(const Metadata& rhs) {
   metadata.CopyFrom(rhs.metadata, GetAllocator(), true);
   if (rhs.raw_schema) {
-    if (!raw_schema) {
+    if (!raw_schema)
       raw_schema = new Metadata();
-      if (!raw_schema->CopyFrom(*(rhs.raw_schema)))
-	return false;
-    }
+    if (!raw_schema->CopyFrom(*(rhs.raw_schema)))
+      return false;  // GCOV_EXCL_LINE
   }
   return true;
 }
@@ -285,7 +284,7 @@ bool Metadata::fromType(const std::string& type, bool use_generic,
 			bool dont_init) {
   initSchema();
   if (!SetSchemaString("type", type))
-    return false;
+    return false;  // GCOV_EXCL_LINE
   if (!dont_init)
     return _init(use_generic);
   return true;
@@ -293,14 +292,14 @@ bool Metadata::fromType(const std::string& type, bool use_generic,
 bool Metadata::fromScalar(const std::string& subtype, size_t precision,
 			  const char* units, bool use_generic) {
   if (!fromType("scalar", use_generic, true))
-    return false;
+    return false;  // GCOV_EXCL_LINE
   return _fromNDArray(subtype, precision, 0, NULL, units, use_generic);
 }
 bool Metadata::fromNDArray(const std::string& subtype, size_t precision,
 			   const size_t ndim, const size_t* shape,
 			   const char* units, bool use_generic) {
   if (!fromType("ndarray", use_generic, true))
-    return false;
+    return false;  // GCOV_EXCL_LINE
   return _fromNDArray(subtype, precision, ndim, shape, units, use_generic);
 }
 bool Metadata::_fromNDArray(const std::string& subtype, size_t precision,
@@ -544,23 +543,39 @@ bool Metadata::fromEncode(PyObject* pyobj, bool use_generic) {
   rapidjson::Value d(pyobj, allocator);
   return fromEncode(d, use_generic);
 }
-void Metadata::addFilter(const FilterBase* new_filter) {
+bool Metadata::addFilter(const FilterBase* new_filter) {
   filters.push_back(new_filter->copy());
+  return true;
 }
-void Metadata::addFilter(const PyObject* new_filter) {
-  filters.push_back(dynamic_cast<FilterBase*>(new PyFilterClass(new_filter)));
+bool Metadata::addFilter(const PyObject* new_filter) {
+  try {
+    filters.push_back(dynamic_cast<FilterBase*>(new PyFilterClass(new_filter)));
+  } catch (...) {
+    log_error() << "addFilter: Error adding filter" << std::endl;
+    return false;
+  }
+  return true;
 }
-void Metadata::addFilter(filterFunc new_filter) {
+bool Metadata::addFilter(filterFunc new_filter) {
   filters.push_back(dynamic_cast<FilterBase*>(new FilterClass(new_filter)));
+  return true;
 }
-void Metadata::addTransform(const TransformBase* new_transform) {
+bool Metadata::addTransform(const TransformBase* new_transform) {
   transforms.push_back(new_transform->copy());
+  return true;
 }
-void Metadata::addTransform(const PyObject* new_transform) {
-  transforms.push_back(new PyTransformClass(new_transform));
+bool Metadata::addTransform(const PyObject* new_transform) {
+  try {
+    transforms.push_back(new PyTransformClass(new_transform));
+  } catch (...) {
+    log_error() << "addTransform: Error adding transform" << std::endl;
+    return false;
+  }
+  return true;
 }
-void Metadata::addTransform(const transformFunc& new_transform) {
+bool Metadata::addTransform(const transformFunc& new_transform) {
   transforms.push_back(new TransformClass(new_transform));
+  return true;
 }
 rapidjson::Document::AllocatorType& Metadata::GetAllocator() {
   return metadata.GetAllocator();
@@ -940,7 +955,7 @@ bool Metadata::SetMetaID(const std::string& name, const char** id) {
   char new_id[100];
   snprintf(new_id, 100, "%d", rand());
   if (!SetMetaString(name, new_id))
-    return false;
+    return false;  // GCOV_EXCL_LINE
   if (id) {
     return GetMetaString(name, id[0]);
   }
@@ -949,7 +964,7 @@ bool Metadata::SetMetaID(const std::string& name, const char** id) {
 bool Metadata::SetMetaID(const std::string& name, std::string& id) {
   const char* id_str;
   if (!SetMetaID(name, &id_str))
-    return false;
+    return false;  // GCOV_EXCL_LINE
   id.assign(id_str);
   return true;
 }

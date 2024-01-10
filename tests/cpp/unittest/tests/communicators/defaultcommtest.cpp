@@ -100,6 +100,27 @@ TEST(DefaultCommu, transform_recv) {
   EXPECT_GT(sComm.sendVar(0), 0);
   EXPECT_GT(sComm.sendVar(1), 0);
   EXPECT_GT(sComm.sendVar(2), 0);
+  EXPECT_GT(sComm.sendVar(5), 0);
+  EXPECT_GT(sComm.send_eof(), 0);
+  std::string result = "";
+  EXPECT_GT(rComm.recvVar(result), 0);
+  EXPECT_EQ(result, "0");
+  EXPECT_GT(rComm.recvVar(result), 0);
+  EXPECT_EQ(result, "1");
+  EXPECT_GT(rComm.recvVar(result), 0);
+  EXPECT_EQ(result, "2");
+  EXPECT_EQ(rComm.recvVar(result), -1);
+  EXPECT_EQ(rComm.recvVar(result), -2);
+}
+TEST(DefaultCommu, transform_send) {
+  DefaultComm sComm("", SEND);
+  utils::Address addr(sComm.getAddress());
+  DefaultComm rComm("", addr, RECV);
+  sComm.getMetadata().addTransform(&example_transform);
+  EXPECT_GT(sComm.sendVar(0), 0);
+  EXPECT_GT(sComm.sendVar(1), 0);
+  EXPECT_GT(sComm.sendVar(2), 0);
+  EXPECT_LT(sComm.sendVar(5), 0);
   EXPECT_GT(sComm.send_eof(), 0);
   std::string result = "";
   EXPECT_GT(rComm.recvVar(result), 0);
@@ -110,11 +131,53 @@ TEST(DefaultCommu, transform_recv) {
   EXPECT_EQ(result, "2");
   EXPECT_EQ(rComm.recvVar(result), -2);
 }
-TEST(DefaultCommu, transform_send) {
+
+// TODO: Python transform/filter function
+#ifndef YGGDRASIL_DISABLE_PYTHON_C_API
+TEST(DefaultCommu, py_filter_recv) {
   DefaultComm sComm("", SEND);
   utils::Address addr(sComm.getAddress());
   DefaultComm rComm("", addr, RECV);
-  sComm.getMetadata().addTransform(&example_transform);
+  PyObject* py_filter = import_python_class("example_python",
+					    "example_filter");
+  rComm.getMetadata().addFilter(py_filter);
+  EXPECT_GT(sComm.sendVar(0), 0);
+  EXPECT_GT(sComm.sendVar(1), 0);
+  EXPECT_GT(sComm.sendVar(2), 0);
+  EXPECT_GT(sComm.send_eof(), 0);
+  int result = -1;
+  EXPECT_GT(rComm.recvVar(result), 0);
+  EXPECT_EQ(result, 0);
+  EXPECT_GT(rComm.recvVar(result), 0);
+  EXPECT_EQ(result, 2);
+  EXPECT_EQ(rComm.recvVar(result), -2);
+}
+TEST(DefaultCommu, py_filter_send) {
+  DefaultComm sComm("", SEND);
+  utils::Address addr(sComm.getAddress());
+  DefaultComm rComm("", addr, RECV);
+  PyObject* py_filter = import_python_class("example_python",
+					    "example_filter");
+  sComm.getMetadata().addFilter(py_filter);
+  EXPECT_GT(sComm.sendVar(0), 0);
+  EXPECT_EQ(sComm.sendVar(1), 0);
+  EXPECT_GT(sComm.sendVar(2), 0);
+  EXPECT_GT(sComm.send_eof(), 0);
+  int result = -1;
+  EXPECT_GT(rComm.recvVar(result), 0);
+  EXPECT_EQ(result, 0);
+  EXPECT_GT(rComm.recvVar(result), 0);
+  EXPECT_EQ(result, 2);
+  EXPECT_EQ(rComm.recvVar(result), -2);
+}
+
+TEST(DefaultCommu, py_transform_recv) {
+  DefaultComm sComm("", SEND);
+  utils::Address addr(sComm.getAddress());
+  DefaultComm rComm("", addr, RECV);
+  PyObject* py_transform = import_python_class("example_python",
+					       "example_transform");
+  rComm.getMetadata().addTransform(py_transform);
   EXPECT_GT(sComm.sendVar(0), 0);
   EXPECT_GT(sComm.sendVar(1), 0);
   EXPECT_GT(sComm.sendVar(2), 0);
@@ -128,3 +191,24 @@ TEST(DefaultCommu, transform_send) {
   EXPECT_EQ(result, "2");
   EXPECT_EQ(rComm.recvVar(result), -2);
 }
+TEST(DefaultCommu, py_transform_send) {
+  DefaultComm sComm("", SEND);
+  utils::Address addr(sComm.getAddress());
+  DefaultComm rComm("", addr, RECV);
+  PyObject* py_transform = import_python_class("example_python",
+					       "example_transform");
+  sComm.getMetadata().addTransform(py_transform);
+  EXPECT_GT(sComm.sendVar(0), 0);
+  EXPECT_GT(sComm.sendVar(1), 0);
+  EXPECT_GT(sComm.sendVar(2), 0);
+  EXPECT_GT(sComm.send_eof(), 0);
+  std::string result = "";
+  EXPECT_GT(rComm.recvVar(result), 0);
+  EXPECT_EQ(result, "0");
+  EXPECT_GT(rComm.recvVar(result), 0);
+  EXPECT_EQ(result, "1");
+  EXPECT_GT(rComm.recvVar(result), 0);
+  EXPECT_EQ(result, "2");
+  EXPECT_EQ(rComm.recvVar(result), -2);
+}
+#endif // YGGDRASIL_DISABLE_PYTHON_C_API

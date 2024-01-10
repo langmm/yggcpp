@@ -372,8 +372,26 @@ private:
     adv;							\
     HANDLE_SEND_NEXT_;						\
   }
-#define HANDLE_SEND_TMP_(set, cond, adv, single, ...)		\
-  template<typename T>						\
+#define HANDLE_SEND_TMP_(tmp, set, adv, single, ...)	\
+  template<tmp>						\
+  int _sendVA(int i, rapidjson::Document& doc, __VA_ARGS__) {	\
+    HANDLE_SEND_BEFORE_;					\
+    set;							\
+    HANDLE_SEND_AFTER_;						\
+    adv;							\
+    HANDLE_SEND_LAST_(single);					\
+  }								\
+  template<tmp, typename... Args>				\
+  int _sendVA(int i, rapidjson::Document& doc, __VA_ARGS__,	\
+	      Args... args) {					\
+    HANDLE_SEND_BEFORE_;					\
+    set;							\
+    HANDLE_SEND_AFTER_;						\
+    adv;							\
+    HANDLE_SEND_NEXT_;						\
+  }
+#define HANDLE_SEND_TMP_COND_(tmp, set, cond, adv, single, ...)	\
+  template<tmp>						\
   RAPIDJSON_ENABLEIF_RETURN(cond, (int))			\
   _sendVA(int i, rapidjson::Document& doc, __VA_ARGS__) {	\
     HANDLE_SEND_BEFORE_;					\
@@ -382,7 +400,7 @@ private:
     adv;							\
     HANDLE_SEND_LAST_(single);					\
   }								\
-  template<typename T, typename... Args>			\
+  template<tmp, typename... Args>				\
   RAPIDJSON_ENABLEIF_RETURN(cond, (int))			\
   _sendVA(int i, rapidjson::Document& doc, __VA_ARGS__,	\
 	  Args... args) {					\
@@ -392,38 +410,53 @@ private:
     adv;							\
     HANDLE_SEND_NEXT_;						\
   }
-  HANDLE_SEND_TMP_(v.Set(data, doc.GetAllocator()),
-		   (internal::NotExpr<
-		    internal::OrExpr<internal::IsSame<T, char*>,
-		    internal::OrExpr<internal::IsSame<T, char[]>, 
-		    internal::OrExpr<internal::IsSame<T, rapidjson::Document>,
-		    internal::IsPointer<T> > > > >),
-		   , true, const T& data)
-  HANDLE_SEND_(v.SetString(data, static_cast<rapidjson::SizeType>(len),
-			   doc.GetAllocator()),
-	       i++, true, const char*& data, const size_t& len)
-  HANDLE_SEND_(v.CopyFrom(data, doc.GetAllocator(), true),
-	       , false, const rapidjson::Document& data)
-  HANDLE_SEND_TMP_(v.Set1DArray(data,
-				static_cast<rapidjson::SizeType>(len),
-				doc.GetAllocator()),
-		   (internal::AndExpr<internal::IsPointer<T>,
-		    internal::NotExpr<internal::IsSame<T, char*> > >),
-		   i++, true, const T& data, const size_t& len)
-  HANDLE_SEND_TMP_(v.SetNDArray(data, shape,
-				static_cast<rapidjson::SizeType>(ndim),
-				doc.GetAllocator()),
-		   (internal::AndExpr<internal::IsPointer<T>,
-		    internal::NotExpr<internal::IsSame<T, char*> > >),
-		   i += 2, true, const T& data,
-		   const rapidjson::SizeType& ndim,
-		   const size_t*& shape)
+  HANDLE_SEND_TMP_COND_(
+    typename T, v.Set(data, doc.GetAllocator()),
+    (internal::NotExpr<
+     internal::OrExpr<internal::IsSame<T, char*>,
+     internal::OrExpr<internal::IsSame<T, char[]>, 
+     internal::OrExpr<internal::IsSame<T, rapidjson::Document>,
+     internal::IsPointer<T> > > > >),
+    , true, const T& data)
+  HANDLE_SEND_(
+    v.SetString(data, static_cast<rapidjson::SizeType>(len),
+		doc.GetAllocator()),
+    i++, true, const char*& data, const size_t& len)
+  HANDLE_SEND_(
+    v.SetString(data, static_cast<rapidjson::SizeType>(strlen(data)),
+		doc.GetAllocator()),
+    , false, const char*& data)
+  HANDLE_SEND_TMP_(
+    size_t N,
+    v.SetString(data, static_cast<rapidjson::SizeType>(N),
+		doc.GetAllocator()),
+    , false, const char (&data)[N])
+  HANDLE_SEND_(
+    v.CopyFrom(data, doc.GetAllocator(), true),
+    , false, const rapidjson::Document& data)
+  HANDLE_SEND_TMP_COND_(
+    typename T, v.Set1DArray(data,
+			     static_cast<rapidjson::SizeType>(len),
+			     doc.GetAllocator()),
+    (internal::AndExpr<internal::IsPointer<T>,
+     internal::NotExpr<internal::IsSame<T, char*> > >),
+    i++, true, const T& data, const size_t& len)
+  HANDLE_SEND_TMP_COND_(
+    typename T, v.SetNDArray(data, shape,
+			     static_cast<rapidjson::SizeType>(ndim),
+			     doc.GetAllocator()),
+    (internal::AndExpr<internal::IsPointer<T>,
+     internal::NotExpr<internal::IsSame<T, char*> > >),
+    i += 2, true, const T& data,
+    const rapidjson::SizeType& ndim,
+    const size_t*& shape)
 #undef HANDLE_SEND_BEFORE_
 #undef HANDLE_SEND_AFTER_
 #undef HANDLE_SEND_NEXT_
 #undef HANDLE_SEND_LAST_
 #undef HANDLE_SEND_
 #undef HANDLE_SEND_TMP_
+#undef HANDLE_SEND_TMP_COND_
 #endif // DOXYGEN_SHOULD_SKIP_THIS
 public:
     /*!
@@ -470,16 +503,12 @@ public:
       @brief Receive a raw string message from the communicator without
         performing transformations, normalization, filtering, setting the,
 	datatype, or calling the rapidjson deserializer.
-      @param[out] data Allocated buffer where the message should be saved.
+      @param[out] data Heap buffer where the message should be saved.
       @param[in] len Length of the allocated message buffer in bytes.
-      @param[in] allow_realloc If true, data will be reallocated if the
-        message is larger than len. If false, an error will be raised if
-	the message is larger than len.
       @returns -1 if message could not be received. Length of the
         received message if message was received.
     */
-    virtual long recv_raw(char*& data, const size_t &len,
-			  bool allow_realloc=false);
+    virtual long recv_raw(char*& data, const size_t &len);
     /*!
       @brief Receive a message as a rapidjson::Document.
       @param[out] data rapidjson document to populate with received data.
@@ -1085,22 +1114,22 @@ public:
     }
 
 private:
-    /*!
-     * @brief Deserialize the given buffer into the argument list
-     * @param[out] buf The buffer to deserialize
-     * @param[in] ap The list to deserialize in to
-     * @return 0 on success
-     */
-    int deserialize(const char* buf, rapidjson::VarArgList& ap);
-    /*!
-     * @brief Serialize the arg list into the buffer
-     * @param[out] buf The buffer to fill
-     * @param[in, out] buf_siz The initial size of buf
-     * @param[in] ap The argument list to serialize
-     * @return The size of buf
-     */
-    int serialize(char*& buf, size_t& buf_siz,
-		  rapidjson::VarArgList& ap);
+    // /*!
+    //  * @brief Deserialize the given buffer into the argument list
+    //  * @param[out] buf The buffer to deserialize
+    //  * @param[in] ap The list to deserialize in to
+    //  * @return 0 on success
+    //  */
+    // int deserialize(const char* buf, rapidjson::VarArgList& ap);
+    // /*!
+    //  * @brief Serialize the arg list into the buffer
+    //  * @param[out] buf The buffer to fill
+    //  * @param[in, out] buf_siz The initial size of buf
+    //  * @param[in] ap The argument list to serialize
+    //  * @return The size of buf
+    //  */
+    // int serialize(char*& buf, size_t& buf_siz,
+    // 		  rapidjson::VarArgList& ap);
     
 protected:
 
@@ -1260,14 +1289,14 @@ protected:
     }
   protected:
 
-    /*!
-     * @brief Update the metadata from the given schems
-     * @param[in] new_schema The schema to update from
-     * @param[in] dir The communication direction
-     * @return Always returns 1
-     */
-    int update_datatype(const rapidjson::Value& new_schema,
-                        const DIRECTION dir);
+    // /*!
+    //  * @brief Update the metadata from the given schems
+    //  * @param[in] new_schema The schema to update from
+    //  * @param[in] dir The communication direction
+    //  * @return Always returns 1
+    //  */
+    // int update_datatype(const rapidjson::Value& new_schema,
+    //                     const DIRECTION dir);
     /*!
      * @brief Clear the given data
      * @tparam T Template data type

@@ -1271,7 +1271,12 @@ TransformBase* PyTransformClass::copy() const {
 
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
 PyBaseFunc::PyBaseFunc(const PyObject* func) :
-  func_(const_cast<PyObject*>(func)) { Py_INCREF(func_); }
+  func_(const_cast<PyObject*>(func)) {
+  if (func_ == NULL) {
+    ygglog_throw_error("PyBaseFunc: Provided Python function is NULL");
+  }
+  Py_INCREF(func_);
+}
 PyBaseFunc::~PyBaseFunc() { Py_DECREF(func_); }
 bool PyBaseFunc::_call(const rapidjson::Document& doc,
 		       rapidjson::Document* out) {
@@ -1289,7 +1294,13 @@ bool PyBaseFunc::_call(const rapidjson::Document& doc,
   if (resPy == NULL) {
     Py_DECREF(pyDoc);
     ygglog_throw_error("PyBaseFunc: Error in function call");
-  } else if (!PyBool_Check(resPy)) {
+  } else if (out != nullptr) {
+    Py_DECREF(pyDoc);
+    pyDoc = resPy;
+    Py_INCREF(Py_True);
+    resPy = Py_True;
+  }
+  if (!PyBool_Check(resPy)) {
     Py_DECREF(pyDoc);
     Py_DECREF(resPy);
     ygglog_throw_error("PyBaseFunc: Result is not a boolean.");

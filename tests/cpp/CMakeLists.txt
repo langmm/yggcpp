@@ -51,7 +51,7 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND YGG_ENABLE_ELF)
 endif()
 
 if(GTESTSRC_FOUND)
-    include(unittest/CMakeLists.txt)
+    add_subdirectory(unittest)
 
     if(YGG_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang|ARMClang")
         find_program(GCOVR_FOUND gcovr)

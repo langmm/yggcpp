@@ -43,6 +43,7 @@ TEST(ServerComm, constructor) {
     std::string name = "MyComm";
     ServerComm sc(name);
     ServerComm sc1("");
+    EXPECT_TRUE(is_commtype_installed(SERVER_COMM));
 }
 
 TEST(ServerComm, send) {

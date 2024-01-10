@@ -273,8 +273,6 @@ TEST(ZMQComm, errors) {
 
 #else // ZMQINSTALLED
 
-TEST(ZMQComm, constructor) {
-  EXPECT_THROW(ZMQComm zmq2("", SEND), std::exception);
-}
+COMM_SERI_TEST_NOT_INSTALLED(ZMQComm)
 
 #endif // ZMQINSTALLED

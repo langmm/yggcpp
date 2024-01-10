@@ -131,14 +131,13 @@ int WrapComm::send_raw(const char *data, const size_t &len) {
   }
   return CommBase::send_raw(data, len);
 }
-long WrapComm::recv_raw(char*& data, const size_t &len,
-			bool allow_realloc) {
+long WrapComm::recv_raw(char*& data, const size_t &len) {
   if ((this->flags & COMM_FLAG_FORK_CYCLE) ||
       (this->flags & COMM_FLAG_FORK_BROADCAST) ||
       (this->flags & COMM_FLAG_FORK_COMPOSITE)) {
-    IN_CONTEXT(long, recv_raw(data, len, allow_realloc), out = -1);
+    IN_CONTEXT(long, recv_raw(data, len), out = -1);
   }
-  return CommBase::recv_raw(data, len, allow_realloc);
+  return CommBase::recv_raw(data, len);
 }
 
 // test methods

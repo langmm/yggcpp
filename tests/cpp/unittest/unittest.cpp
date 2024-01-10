@@ -22,6 +22,18 @@ void YggEnvironment::SetUp() {
   std::cerr << "SETUP" << std::endl;
   YggInterface::communicator::ZMQComm::disable_handshake();
   YggInterface::communicator::ygg_init(true);
+#ifndef YGGDRASIL_DISABLE_PYTHON_C_API
+  char cwd[PATH_MAX];
+  getcwd(cwd, sizeof(cwd));
+  // if (getcwd(cwd, sizeof(cwd)) != NULL) {
+  //   std::cerr << "Current path is " << cwd << std::endl;
+  // }
+  PyObject* path = PySys_GetObject("path");
+  PyObject* cwdPy = PyUnicode_FromString(cwd);
+  PyList_Append(path, cwdPy);
+  Py_DECREF(cwdPy);
+  // PyObject_Print(path, stderr, 0);
+#endif // YGGDRASIL_DISABLE_PYTHON_C_API
   std::cerr << "SETUP COMPLETE" << std::endl;
 }
 
