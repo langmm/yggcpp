@@ -376,16 +376,18 @@ if [ -n "$DO_SYMBOLS" ]; then
     fi
 fi
 
-path_to_doxygen=$(which doxygen)
-if [ -n "$DO_DOCS" ] && [ -x "$path_to_doxygen" ]; then
-    echo "BUILDING DOCS"
-    if [ ! -d "build" ]; then
-	mkdir build
+if [ -n "$DO_DOCS" ]; then
+    path_to_doxygen=$(which doxygen)
+    if [ -x "$path_to_doxygen" ]; then
+	echo "BUILDING DOCS"
+	if [ ! -d "build" ]; then
+	    mkdir build
+	fi
+	cd build
+	cmake .. $CMAKE_FLAGS -DYGG_BUILD_DOCS=ON -DBUILD_CPP_LIBRARY=OFF -DBUILD_FORTRAN_LIBRARY=OFF
+	cmake --build . $CONFIG_FLAGS --target docs
+	# Need install here to ensure that cmake config files are in place
+	cmake --install . --prefix "$INSTALL_DIR" $CONFIG_FLAGS
+	cd ..
     fi
-    cd build
-    cmake .. $CMAKE_FLAGS -DYGG_BUILD_DOCS=ON -DBUILD_CPP_LIBRARY=OFF -DBUILD_FORTRAN_LIBRARY=OFF
-    cmake --build . $CONFIG_FLAGS --target docs
-    # Need install here to ensure that cmake config files are in place
-    cmake --install . --prefix "$INSTALL_DIR" $CONFIG_FLAGS
-    cd ..
 fi
