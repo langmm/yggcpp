@@ -251,10 +251,12 @@ jobs:
           use-mamba: true
       - name: Install doxgen on unix systems
         if: matrix.os != 'windows-latest' && matrix.python-install == 'conda'
+        shell: bash -l {0}
         run: |
           mamba install doxygen>=1.9.2 graphviz -y
       - name: Install LLVM on mac for OpenMP
         if: matrix.os == 'macos-latest' && matrix.python-install == 'conda'
+        # shell: bash -l {0}
         run: |
           mamba install llvm -y
       - name: Install compilers using conda on Linux/Mac
