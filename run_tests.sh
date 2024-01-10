@@ -132,8 +132,6 @@ while [[ $# -gt 0 ]]; do
 	    DO_DOCS="TRUE"
 	    DONT_TEST="TRUE"
 	    DONT_BUILD="TRUE"
-	    # BUILD_FLAGS="${BUILD_FLAGS} --target docs"
-	    # CMAKE_FLAGS="${CMAKE_FLAGS} -DYGG_BUILD_DOCS=ON"
 	    shift
 	    ;;
 	--speed )
@@ -390,6 +388,6 @@ if [ -n "$DO_DOCS" ] && [ -x "$path_to_doxygen" ]; then
     cmake .. $CMAKE_FLAGS -DYGG_BUILD_DOCS=ON -DBUILD_CPP_LIBRARY=OFF -DBUILD_FORTRAN_LIBRARY=OFF -DDOXYGEN_CHECK_MISSING=ON
     cmake --build . $CONFIG_FLAGS --target docs
     # Need install here to ensure that cmake config files are in place
-    # cmake --install . --prefix "$INSTALL_DIR" $CONFIG_FLAGS
+    cmake --install . --prefix "$INSTALL_DIR" $CONFIG_FLAGS
     cd ..
 fi

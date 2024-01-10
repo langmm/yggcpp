@@ -266,7 +266,7 @@ if(YGG_BUILD_DOCS)
                           COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
                           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
                           VERBATIM)
-        install(DIRECTORY ${DOXYGEN_BUILD_DIR}
+        install(DIRECTORY ${DOXYGEN_BUILD_DIR}/
                 DESTINATION ${CMAKE_INSTALL_PREFIX}/share/doc/ygginterface
                 OPTIONAL)
     endif()
