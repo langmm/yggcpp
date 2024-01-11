@@ -112,13 +112,33 @@ RAPIDJSON_NAMESPACE_BEGIN
 void init_numpy_API();
 /*!
   @brief Initialize the Python interpreter.
+  @param[in] error_prefix Prefix to add to error message describine
+    the context from which the function was called.
  */
 void initialize_python(const std::string error_prefix="");
 
 /*!
   @brief Finalize the Python interpreter.
+  @param[in] error_prefix Prefix to add to error message describine
+    the context from which the function was called.
  */
 void finalize_python(const std::string error_prefix="");
+
+/*!
+  @brief Import a Python function or class.
+  @param[in] module_name Name of the module containing the desired
+    function or class.
+  @param[in] class_name Name of desired Python function or class.
+  @param[in] error_prefix Prefix to add to error message describine
+    the context from which the function was called.
+  @param[in] ignore_error If true, no error will be thrown and NULL will
+    be returned.
+  @return The Python function or class. NULL indicates an error.
+ */
+PyObject* import_python_class(const char* module_name,
+			      const char* class_name,
+			      const std::string error_prefix="",
+			      const bool ignore_error=false);
 
 // Forward declarations
 class WValue;
@@ -1197,23 +1217,46 @@ namespace YggInterface {
 
     /*!
       @brief Initialize the Python API.
+      @param[in] error_prefix Prefix to add to error message describine
+        the context from which the function was called.
+      @return true if successful, false otherwise.
      */
     bool initialize_python(const std::string error_prefix="");
     
     /*!
       @brief Finalize the Python API.
+      @param[in] error_prefix Prefix to add to error message describine
+        the context from which the function was called.
+      @return true if successful, false otherwise.
      */
     bool finalize_python(const std::string error_prefix="");
     
     /*!
       @brief Import numpy arrays.
+      @return true if successful, false otherwise.
      */
     bool import_numpy_arrays();
 
     /*!
       @brief Determine if numpy arrays are enabled.
+      @return true if successful, false otherwise.
     */
     bool numpy_arrays_imported();
+
+    /*!
+      @brief Import a Python function or class.
+      @param[in] module Name of the module containing the desired function
+        or class.
+      @param[in] element Name of desired Python function or class.
+      @param[in] error_prefix Prefix to add to error message describine
+        the context from which the function was called.
+      @param[in] ignore_error If true, no error will be logged.
+      @return The Python function or class. NULL indicates an error.
+     */
+    PyObject* import_python_element(const std::string& module,
+				    const std::string& element,
+				    const std::string error_prefix="",
+				    const bool ignore_error=false);
 
   }
 }

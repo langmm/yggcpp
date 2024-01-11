@@ -58,6 +58,9 @@
 #define ygg_getpid _getpid
 #define sleep(tsec) Sleep(1000*tsec)
 #define usleep(usec) Sleep(usec/1000)
+#ifndef PATH_MAX
+#define PATH_MAX MAX_PATH
+#endif
 #else
 
 #include <cstdint>

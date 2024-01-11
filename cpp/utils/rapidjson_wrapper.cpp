@@ -39,6 +39,13 @@ void rapidjson::initialize_python(const std::string error_prefix) {
 void rapidjson::finalize_python(const std::string error_prefix) {
   RJ_WNS::finalize_python(error_prefix);
 }
+PyObject* rapidjson::import_python_class(const char* module_name,
+					 const char* class_name,
+					 const std::string error_prefix,
+					 const bool ignore_error) {
+  return RJ_WNS::import_python_class(module_name, class_name,
+				     error_prefix, ignore_error);
+}
 
 using namespace rapidjson;
 

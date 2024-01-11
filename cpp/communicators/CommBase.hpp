@@ -1114,14 +1114,14 @@ public:
     }
 
 private:
-    // /*!
+    // /*
     //  * @brief Deserialize the given buffer into the argument list
     //  * @param[out] buf The buffer to deserialize
     //  * @param[in] ap The list to deserialize in to
     //  * @return 0 on success
     //  */
     // int deserialize(const char* buf, rapidjson::VarArgList& ap);
-    // /*!
+    // /*
     //  * @brief Serialize the arg list into the buffer
     //  * @param[out] buf The buffer to fill
     //  * @param[in, out] buf_siz The initial size of buf
@@ -1289,7 +1289,7 @@ protected:
     }
   protected:
 
-    // /*!
+    // /*
     //  * @brief Update the metadata from the given schems
     //  * @param[in] new_schema The schema to update from
     //  * @param[in] dir The communication direction

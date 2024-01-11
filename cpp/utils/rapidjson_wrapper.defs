@@ -17,6 +17,13 @@ RAPIDJSON_WRAPPER_DEFS_ bool YggInterface::utils::numpy_arrays_imported() {
   return false;
 }
 
+RAPIDJSON_WRAPPER_DEFS_ PyObject* YggInterface::utils::import_python_element(
+    const std::string&, const std::string&,
+    const std::string, const bool) {
+  return NULL;
+}
+    
+
 #else // YGGDRASIL_DISABLE_PYTHON_C_API
 
 RAPIDJSON_WRAPPER_DEFS_ bool YggInterface::utils::initialize_python(const std::string error_prefix) {
@@ -57,6 +64,19 @@ RAPIDJSON_WRAPPER_DEFS_ bool YggInterface::utils::numpy_arrays_imported() {
   bool out = false;
   if (rapidjson_ARRAY_API)
     out = true;
+  return out;
+}
+
+RAPIDJSON_WRAPPER_DEFS_ PyObject* YggInterface::utils::import_python_element(
+    const std::string& module, const std::string& element,
+    const std::string error_prefix, const bool ignore_error) {
+  PyObject* out = NULL;
+  try {
+    out = rapidjson::import_python_class(module.c_str(), element.c_str(),
+                                         error_prefix, ignore_error);
+  } catch (std::exception& e) {
+    YggLogError << e.what() << std::endl;
+  }
   return out;
 }
 

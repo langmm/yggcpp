@@ -22,6 +22,9 @@ except ImportError:
         ),
         None,
     )
+    print(f"dir = {os.path.dirname(__file__)}"
+          f"bundled_cpplib = {bundled_cpplib}\n"
+          f"bundled_pylib = {bundled_pylib}")
     if bundled_cpplib:
         CDLL(os.path.join(os.path.dirname(__file__), bundled_cpplib),
              winmode=0)

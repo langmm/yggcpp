@@ -24,8 +24,8 @@ void YggEnvironment::SetUp() {
   YggInterface::communicator::ygg_init(true);
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
   char cwd[PATH_MAX];
-  getcwd(cwd, sizeof(cwd));
-  // if (getcwd(cwd, sizeof(cwd)) != NULL) {
+  getcwd(cwd, PATH_MAX);
+  // if (getcwd(cwd, PATH_MAX) != NULL) {
   //   std::cerr << "Current path is " << cwd << std::endl;
   // }
   PyObject* path = PySys_GetObject("path");

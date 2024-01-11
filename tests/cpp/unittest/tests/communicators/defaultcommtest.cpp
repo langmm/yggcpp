@@ -138,8 +138,8 @@ TEST(DefaultCommu, py_filter_recv) {
   DefaultComm sComm("", SEND);
   utils::Address addr(sComm.getAddress());
   DefaultComm rComm("", addr, RECV);
-  PyObject* py_filter = import_python_class("example_python",
-					    "example_filter");
+  PyObject* py_filter = utils::import_python_element(
+      "example_python", "example_filter");
   rComm.getMetadata().addFilter(py_filter);
   EXPECT_GT(sComm.sendVar(0), 0);
   EXPECT_GT(sComm.sendVar(1), 0);
@@ -156,8 +156,8 @@ TEST(DefaultCommu, py_filter_send) {
   DefaultComm sComm("", SEND);
   utils::Address addr(sComm.getAddress());
   DefaultComm rComm("", addr, RECV);
-  PyObject* py_filter = import_python_class("example_python",
-					    "example_filter");
+  PyObject* py_filter = utils::import_python_element(
+      "example_python", "example_filter");
   sComm.getMetadata().addFilter(py_filter);
   EXPECT_GT(sComm.sendVar(0), 0);
   EXPECT_EQ(sComm.sendVar(1), 0);
@@ -175,8 +175,8 @@ TEST(DefaultCommu, py_transform_recv) {
   DefaultComm sComm("", SEND);
   utils::Address addr(sComm.getAddress());
   DefaultComm rComm("", addr, RECV);
-  PyObject* py_transform = import_python_class("example_python",
-					       "example_transform");
+  PyObject* py_transform = utils::import_python_element(
+      "example_python", "example_transform");
   rComm.getMetadata().addTransform(py_transform);
   EXPECT_GT(sComm.sendVar(0), 0);
   EXPECT_GT(sComm.sendVar(1), 0);
@@ -195,8 +195,8 @@ TEST(DefaultCommu, py_transform_send) {
   DefaultComm sComm("", SEND);
   utils::Address addr(sComm.getAddress());
   DefaultComm rComm("", addr, RECV);
-  PyObject* py_transform = import_python_class("example_python",
-					       "example_transform");
+  PyObject* py_transform = utils::import_python_element(
+      "example_python", "example_transform");
   sComm.getMetadata().addTransform(py_transform);
   EXPECT_GT(sComm.sendVar(0), 0);
   EXPECT_GT(sComm.sendVar(1), 0);
