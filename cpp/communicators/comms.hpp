@@ -12,3 +12,4 @@
 #include "WrapComm.hpp"
 #include "ForkComm.hpp"
 #include "RMQComm.hpp"
+#include "ValueComm.hpp"

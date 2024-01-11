@@ -230,7 +230,6 @@ Comm_t* YggInterface::communicator::new_Comm_t(
     return new ZMQComm(name, addr, dir, flags);
   case MPI_COMM:
     return new MPIComm(name, addr, dir, flags);
-    // TODO: Pass ncomm to RPC communicators?
   case SERVER_COMM:
     return new ServerComm(name, addr, flags, type, ncomm,
 			  request_commtype, response_commtype,
@@ -243,6 +242,8 @@ Comm_t* YggInterface::communicator::new_Comm_t(
     return new FileComm(name, addr, dir, flags);
   case RMQ_COMM:
     return new RMQComm(name, addr, dir, flags);
+  case VALUE_COMM:
+    return new ValueComm(name, addr, dir, flags);
   }
   return nullptr;
 }
@@ -266,6 +267,8 @@ bool YggInterface::communicator::is_commtype_installed(const COMM_TYPE type) {
     return FileComm::isInstalled();
   case RMQ_COMM:
     return RMQComm::isInstalled();
+  case VALUE_COMM:
+    return ValueComm::isInstalled();
   }
   return false;
 }

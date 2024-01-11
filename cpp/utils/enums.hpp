@@ -8,6 +8,9 @@
 #include <algorithm>
 extern "C" {
 #endif
+  
+// If any of these are updated they must be also be updated in
+//   fortran/YggInterface.F90
 /**
  * Enum for communicator types
  */
@@ -21,6 +24,7 @@ enum COMM_TYPE {
     CLIENT_COMM, //!< Client communicator
     FILE_COMM,   //!< File communicator
     RMQ_COMM,    //!< RabbitMQ communicator
+    VALUE_COMM,  //!< Value communicator
 };
 
 /**
@@ -41,6 +45,8 @@ enum CLEANUP_MODE {
   CLEANUP_COMMS    //!< Only cleanup comms, not ZMQ or Python
 };
 
+// If any of these are updated they must be also be updated in
+//   fortran/YggInterface.F90
 /*! @brief Bit flags. */
 enum COMM_FLAG {
   COMM_FLAG_VALID           = 0x00000001, //!< Comm is initialized
@@ -175,7 +181,8 @@ const std::map<const COMM_TYPE, const std::string> COMM_TYPE_map {
   {SERVER_COMM, "SERVER"},
   {CLIENT_COMM, "CLIENT"},
   {FILE_COMM, "FILE"},
-  {RMQ_COMM, "RMQ"}};
+  {RMQ_COMM, "RMQ"},
+  {VALUE_COMM, "VALUE"}};
 
 const std::map<const COMM_TYPE, const std::string> COMM_TYPE_cls_map {
   {NULL_COMM, "NullComm"},
@@ -186,7 +193,8 @@ const std::map<const COMM_TYPE, const std::string> COMM_TYPE_cls_map {
   {SERVER_COMM, "ServerComm"},
   {CLIENT_COMM, "ClientComm"},
   {FILE_COMM, "FileComm"},
-  {RMQ_COMM, "RMQComm"}};
+  {RMQ_COMM, "RMQComm"},
+  {VALUE_COMM, "ValueComm"}};
 
 const std::map<const LANGUAGE, const std::string> LANGUAGE_map {
   {NO_LANGUAGE, ""},

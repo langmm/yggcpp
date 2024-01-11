@@ -110,8 +110,8 @@ if(NOT MSVC)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DRAPIDJSON_DONT_IMPORT_NUMPY")
         # Not running SIMD.* unit test cases for Valgrind
         add_test(NAME valgrind_unittest
-                 COMMAND valgrind --suppressions=${PARENT_SOURCE_DIR}/valgrind.supp --suppressions=${PARENT_SOURCE_DIR}/valgrind-python.supp --leak-check=full --error-exitcode=1 --track-origins=yes --dsymutil=no --keep-debuginfo=yes --read-var-info=yes ${CMAKE_CURRENT_BINARY_DIR}/ --gtest_filter=-SIMD.*
-                 WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/test)
+                 COMMAND valgrind --suppressions=${PARENT_SOURCE_DIR}/valgrind.supp --suppressions=${PARENT_SOURCE_DIR}/valgrind-python.supp --leak-check=full --error-exitcode=1 --track-origins=yes --dsymutil=no --keep-debuginfo=yes --read-var-info=yes unittest --gtest_filter=-SIMD.*
+                 WORKING_DIRECTORY ${PARENT_BINARY_DIR})
         set_tests_properties(valgrind_unittest PROPERTIES
                 ENVIRONMENT
 		"YGG_MODEL_INDEX=123")

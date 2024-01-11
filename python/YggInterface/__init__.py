@@ -22,7 +22,8 @@ except ImportError:
         ),
         None,
     )
-    print(f"dir = {os.path.dirname(__file__)}"
+    print(f"dir = {os.path.dirname(__file__)}\n"
+          f"files = {os.listdir(os.path.dirname(__file__))}\n"
           f"bundled_cpplib = {bundled_cpplib}\n"
           f"bundled_pylib = {bundled_pylib}")
     if bundled_cpplib:
