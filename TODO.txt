@@ -1,6 +1,3 @@
-* Automated documentation using doxygen
-* Fill in missing docs
-* Add RabbitMQ communicator (low priority)
 * Add test to verify that send/recv/call/wait can be interuppted by Ctrl+C
 * Expand C & Fortran interfaces for ply/obj to match Python
 * Automate fortran wrapping of C interface?

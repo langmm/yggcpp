@@ -304,9 +304,9 @@ if(ENABLE_ZMQ)
         list(APPEND YGG_INSTALL_DEPS ZeroMQ)
 	list(APPEND DEPS_LIBRARIES ${ZeroMQ_LIBRARY})
 	list(APPEND DEPS_INCLUDE_DIRS ${ZeroMQ_INCLUDE_DIR})
-	execute_process(
-	  COMMAND ls ${ZeroMQ_INCLUDE_DIR}
-	  COMMAND_ECHO STDOUT)
+	# execute_process(
+	#   COMMAND ls ${ZeroMQ_INCLUDE_DIR}
+	#   COMMAND_ECHO STDOUT)
     else()
         message(STATUS "NO ZeroMQ")
     endif()
@@ -326,9 +326,9 @@ if(ENABLE_RMQ)
         if (rabbitmq-c_CONFIG)
           include(${rabbitmq-c_CONFIG})
   	  list(APPEND DEPS_LIBRARIES rabbitmq::rabbitmq)
-	  execute_process(
-	    COMMAND ls ${rabbitmq-c_DIR}
-	    COMMAND_ECHO STDOUT)
+	  # execute_process(
+	  #   COMMAND ls ${rabbitmq-c_DIR}
+	  #   COMMAND_ECHO STDOUT)
 	else()
 	  list(APPEND DEPS_LIBRARIES ${rabbitmq-c_LIBRARY})
 	  list(APPEND DEPS_INCLUDE_DIRS ${rabbitmq-c_INCLUDE_DIR})
@@ -543,11 +543,12 @@ endif()
 message(STATUS "DEPS_INCLUDE_DIRS = ${DEPS_INCLUDE_DIRS}")
 message(STATUS "DEPS_LIBRARIES = ${DEPS_LIBRARIES}")
 
-######################
-# Create C++ Library #
-######################
+############################
+# Handle interdependencies #
+############################
 
 if(SKBUILD)
+  set(BUILD_PYTHON_LIBRARY ON)
   if(YGG_LINK_PYTHON_TO_CPP)
     set(BUILD_CPP_LIBRARY ON)
   else()
@@ -555,11 +556,18 @@ if(SKBUILD)
     set(BUILD_FORTRAN_LIBRARY OFF)
   endif()
 elseif(BUILD_PYTHON_LIBRARY AND NOT YGGDRASIL_DISABLE_PYTHON_C_API)
-  set(BUILD_CPP_LIBRARY ON)
+  if(YGG_LINK_PYTHON_TO_CPP)
+    set(BUILD_CPP_LIBRARY ON)
+  endif()
 endif()
 if(BUILD_FORTRAN_LIBRARY)
   set(BUILD_CPP_LIBRARY ON)
 endif()
+
+######################
+# Create C++ Library #
+######################
+
 file(GLOB SOURCES_CPP "cpp/*.cpp" "cpp/utils/*.cpp" "cpp/communicators/*.cpp" "cpp/datatypes/dtype_t.cpp")
 
 if(BUILD_CPP_LIBRARY)
@@ -570,41 +578,9 @@ endif()
 # Create Python Library #
 #########################
 
-if(SKBUILD)
-    set(BUILD_PYTHON_LIBRARY ON)
+if(BUILD_PYTHON_LIBRARY)
     add_subdirectory(python)
-elseif(BUILD_PYTHON_LIBRARY AND NOT YGGDRASIL_DISABLE_PYTHON_C_API)
-    set(PYTHON_COPY_ARGS ENABLE_OMP USING_IPC ENABLE_OMP ENABLE_MPI
-        ENABLE_THREADS YGG_ENABLE_COVERAGE
-	YGG_SKIP_VALGRIND_TESTS YGG_BUILD_ASAN YGG_BUILD_UBSAN
-	YGG_ENABLE_INSTRUMENTATION_OPT WRAP_RAPIDJSON_FOR_DLL
-	YGG_DEBUG_LEVEL)
-    foreach(opt IN LISTS PYTHON_COPY_ARGS)
-      list(APPEND PYTHON_CMAKE_ARGS "-D${opt}=${${opt}}")
-    endforeach()
-    if (CMAKE_PREFIX_PATH)
-      list(APPEND PYTHON_BUILD_ARGS
-        --config-settings=cmake.define.CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH})
-    endif()
-    if (Python3_ROOT_DIR)
-      list(APPEND PYTHON_BUILD_ARGS
-        --config-settings=cmake.define.Python3_ROOT_DIR=${Python3_ROOT_DIR}
-        --config-settings=cmake.define.Python_ROOT_DIR=${Python3_ROOT_DIR})
-    endif()
-    message(STATUS "Building Python with CMAKE_ARGS = ${PYTHON_CMAKE_ARGS}")
-    
-    set(OLD_CMAKE_ARGS "$ENV{CMAKE_ARGS}")
-    set(ENV{CMAKE_ARGS} "${PYTHON_CMAKE_ARGS}")
-    execute_process(
-      COMMAND ${Python3_EXECUTABLE} -m pip install ${CMAKE_CURRENT_SOURCE_DIR} -v ${PYTHON_BUILD_ARGS}
-      COMMAND_ECHO STDOUT
-      RESULT_VARIABLE ret)
-    message(STATUS "Resetting CMAKE_ARGS = ${OLD_CMAKE_ARGS}")
-    set(ENV{CMAKE_ARGS} "${OLD_CMAKE_ARGS}")
-    if (NOT ret EQUAL 0)
-      message(FATAL_ERROR "Failed to build Python via pip")
-    endif()
-endif(SKBUILD)
+endif()
 
 ##########################
 # Create Fortran Library #

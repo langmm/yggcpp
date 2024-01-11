@@ -1,4 +1,3 @@
-message(STATUS "Building Python bindings=Yes")
 if(YGG_PYTHON_LIBRARY_WRAP)
     set(YGG_TARGET_PY _YggInterface)
 else()
@@ -9,6 +8,46 @@ set(SOURCES_PY
 if (NOT YGG_LINK_PYTHON_TO_CPP)
     set(SOURCES_PY ${SOURCES_PY} ${SOURCES_CPP})
 endif()
+cmake_path(GET CMAKE_CURRENT_SOURCE_DIR PARENT_PATH PARENT_SOURCE_DIR)
+cmake_path(GET CMAKE_CURRENT_BINARY_DIR PARENT_PATH PARENT_BINARY_DIR)
+
+if (NOT SKBUILD)
+  if (BUILD_PYTHON_LIBRARY AND NOT YGGDRASIL_DISABLE_PYTHON_C_API)
+    set(PYTHON_COPY_ARGS ENABLE_OMP USING_IPC ENABLE_OMP ENABLE_MPI
+        ENABLE_THREADS YGG_ENABLE_COVERAGE
+	YGG_SKIP_VALGRIND_TESTS YGG_BUILD_ASAN YGG_BUILD_UBSAN
+	YGG_ENABLE_INSTRUMENTATION_OPT WRAP_RAPIDJSON_FOR_DLL
+	YGG_DEBUG_LEVEL)
+    foreach(opt IN LISTS PYTHON_COPY_ARGS)
+      list(APPEND PYTHON_CMAKE_ARGS "-D${opt}=${${opt}}")
+    endforeach()
+    if (CMAKE_PREFIX_PATH)
+      list(APPEND PYTHON_BUILD_ARGS
+        --config-settings=cmake.define.CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH})
+    endif()
+    if (Python3_ROOT_DIR)
+      list(APPEND PYTHON_BUILD_ARGS
+        --config-settings=cmake.define.Python3_ROOT_DIR=${Python3_ROOT_DIR}
+        --config-settings=cmake.define.Python_ROOT_DIR=${Python3_ROOT_DIR})
+    endif()
+    message(STATUS "Building Python with CMAKE_ARGS = ${PYTHON_CMAKE_ARGS}")
+
+    include(BuildTools)
+    set(DEPENDS_PY ${SOURCES_PY} ${CMAKE_CURRENT_SOURCE_DIR}/YggInterface/__init__.py)
+    add_custom_command_env(
+      YggInterface_python
+      COMMAND ${Python3_EXECUTABLE} -m pip install ${PARENT_SOURCE_DIR} -v ${PYTHON_BUILD_ARGS}
+      KEYPREFIX "ENVK_"
+      ENV ENVK_CMAKE_ARGS ${PYTHON_CMAKE_ARGS} END_ENV
+      COMMENT "build Python via pip"
+      DEPENDS ${DEPENDS_PY}
+      OUTPUT ${Python3_SITELIB}/YggInterface/__init__.py)
+  endif()
+  return()
+endif()
+
+message(STATUS "Building Python bindings=Yes")
+
 if (SKBUILD STREQUAL "2")
     Python3_add_library(${YGG_TARGET_PY} MODULE ${SOURCES_PY})
 else()

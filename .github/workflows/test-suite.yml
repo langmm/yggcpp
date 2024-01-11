@@ -581,11 +581,26 @@ jobs:
       #     INSTALL_DIR=$GITHUB_WORKSPACE\\_install
       #     echo "INSTALL_DIR=$INSTALL_DIR" >> "$GITHUB_ENV"
       #     echo "${INSTALL_DIR}" >> $GITHUB_PATH
-      - name: Run speed tests
+      - name: Run speed tests (default)
         shell: bash -l {0}
         run: |
           echo "PATH=$PATH"
           ./run_tests.sh --rebuild --speed --config Release ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} --verbose
+      - name: Run speed tests (ipc)
+        if: matrix.os != 'windows-latest'
+        shell: bash -l {0}
+        run: |
+          ./run_tests.sh --speed --config Release ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} --verbose --comm IPC_COMM
+      - name: Run speed tests (zmq)
+        if: matrix.install-zmq
+        shell: bash -l {0}
+        run: |
+          ./run_tests.sh --speed --config Release ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} --verbose --comm ZMQ_COMM
+      - name: Run speed tests (rmq)
+        if: matrix.install-rmq
+        shell: bash -l {0}
+        run: |
+          ./run_tests.sh --speed --config Release ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} --verbose --comm RMQ_COMM
 
       ###################################
       # Docs tests

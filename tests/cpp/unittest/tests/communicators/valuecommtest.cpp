@@ -17,7 +17,10 @@ using namespace YggInterface::mock;
     EXPECT_EQ(rComm.comm_nmsg(), -1);		\
     EXPECT_EQ(rComm.comm_nmsg(SEND), 0);	\
     EXPECT_EQ(rComm.recvVar(data_recv), -1);	\
-    rComm.setValue(data_send, 1);		\
+    rComm.setValue(data_send, 2);		\
+    EXPECT_EQ(rComm.comm_nmsg(), 2);		\
+    EXPECT_GE(rComm.recvVar(data_recv), 0);	\
+    COMP_DATA_SINGLE;				\
     EXPECT_EQ(rComm.comm_nmsg(), 1);		\
     EXPECT_GE(rComm.recvVar(data_recv), 0);	\
     COMP_DATA_SINGLE;				\
@@ -30,6 +33,13 @@ using namespace YggInterface::mock;
 
 TEST(ValueComm, is_installed) {
   EXPECT_TRUE(is_commtype_installed(ValueComm::defaultCommType()));
+}
+
+TEST(ValueComm, send) {
+  ValueComm sComm("test", SEND);
+  sComm.setValue(1, 2);
+  EXPECT_EQ(sComm.comm_nmsg(SEND), 0);
+  EXPECT_EQ(sComm.sendVar(1), -1);
 }
 
 VALUE_TEST_TYPE(double, 1.5)
