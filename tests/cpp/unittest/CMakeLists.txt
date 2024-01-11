@@ -126,3 +126,14 @@ add_custom_command(
                 ${CMAKE_CURRENT_SOURCE_DIR}/example_python.py
                 ${PARENT_BINARY_DIR}/example_python.py)
 
+    if(YGG_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang|ARMClang")
+        find_program(GCOVR_FOUND gcovr)
+        if(GCOVR_FOUND)
+            message(STATUS "gcovr found")
+            file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/coverage)
+            add_test(NAME coverage
+                     COMMAND sh -c "gcovr ${CMAKE_BINARY_DIR} --gcov-executable=\"${CTEST_COVERAGE_COMMAND} ${CTEST_COVERAGE_EXTRA_FLAGS}\" --coveralls ${CMAKE_BINARY_DIR}/coverage/coverage.info --html-details ${CMAKE_BINARY_DIR}/coverage/coverage.html"
+                     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+            set_tests_properties(coverage PROPERTIES DEPENDS "unittest")
+        endif(GCOVR_FOUND)
+    endif(YGG_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang|ARMClang")

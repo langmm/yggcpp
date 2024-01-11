@@ -597,7 +597,7 @@ jobs:
         run: |
           ./run_tests.sh --speed --config Release ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} --verbose --comm ZMQ_COMM
       - name: Run speed tests (rmq)
-        if: matrix.install-rmq
+        if: matrix.install-rmq && matrix.python-install != 'conda'
         shell: bash -l {0}
         run: |
           ./run_tests.sh --speed --config Release ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} --verbose --comm RMQ_COMM
