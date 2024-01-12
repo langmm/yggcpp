@@ -267,6 +267,7 @@ if [ -n "$REBUILD" ]; then
     if [ -d "build" ]; then
 	rm -rf "build"
     fi
+    pip uninstall YggInterface -y
     if [ -d "_skbuild" ]; then
 	rm -rf "_skbuild"
     fi
