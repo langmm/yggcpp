@@ -521,7 +521,7 @@ jobs:
       - name: Preserve coverage information
         if: matrix.with-coverage && matrix.os != 'windows-latest'
         shell: bash -l {0}
-	run: |
+        run: |
           cp -r build/coverage coverage
 
       ###################################
