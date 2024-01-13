@@ -34,14 +34,20 @@ if (NOT SKBUILD)
 
     include(BuildTools)
     set(DEPENDS_PY ${SOURCES_PY} ${CMAKE_CURRENT_SOURCE_DIR}/YggInterface/__init__.py)
+    message(STATUS "PYTHON_OUTPUT = ${Python3_SITELIB}/YggInterface/__init__.py")
+    if (EXISTS "${Python3_SITELIB}/YggInterface/__init__.py")
+      message(STATUS "PYTHON_OUTPUT EXISTS")
+    else()
+      message(STATUS "PYTHON_OUTPUT DOES NOT EXIST")
+    endif()
     add_custom_command_env(
       YggInterface_python
       COMMAND ${Python3_EXECUTABLE} -m pip install ${PARENT_SOURCE_DIR} -v ${PYTHON_BUILD_ARGS}
       KEYPREFIX "ENVK_"
       ENV ENVK_CMAKE_ARGS ${PYTHON_CMAKE_ARGS} END_ENV
       COMMENT "build Python via pip"
-      DEPENDS ${DEPENDS_PY}
-      OUTPUT ${Python3_SITELIB}/YggInterface/__init__.py)
+      DEPENDS ${DEPENDS_PY})
+      # OUTPUT ${Python3_SITELIB}/YggInterface/__init__.py)
   endif()
   return()
 endif()
