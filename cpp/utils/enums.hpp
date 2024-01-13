@@ -251,13 +251,13 @@ static inline std::string str_tolower(const std::string& inStr) {
   return outStr;
 }
 
-template<typename T1, typename T2>
-static bool enum_value_search(const std::map<const T1, const T2> map,
-			      const T2& val,
+template<typename T1>
+static bool enum_value_search(const std::map<const T1, const std::string> map,
+			      const std::string& val,
 			      T1& key, bool allow_anycase=false,
 			      std::string prefix="",
 			      std::string suffix="") {
-  for (typename std::map<const T1, const T2>::const_iterator it = map.cbegin();
+  for (typename std::map<const T1, const std::string>::const_iterator it = map.cbegin();
        it != map.cend(); it++) {
     if ((it->second == val) ||
 	(allow_anycase && (val == str_toupper(it->second) ||

@@ -103,8 +103,7 @@ namespace YggInterface {
        */
       template<typename T>
       bool setValue(const T& value, int count=-1) {
-	if (!handle)
-	  return false;
+	assert(handle);
 	handle->update(value, count);
 	return true;
       }

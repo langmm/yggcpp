@@ -58,7 +58,7 @@ public:
 	   int flags = 0, const COMM_TYPE commtype = DEFAULT_COMM) :
     WrapComm(name, RECV, flags | COMM_FLAG_INTERFACE, commtype) {
     if (fmt && !this->addFormat(fmt, as_array))
-      this->throw_error("Invalid format");
+      this->throw_error("Invalid format");  // GCOV_EXCL_LINE
   }
 
   /*!
@@ -79,7 +79,7 @@ public:
 	   const COMM_TYPE commtype = DEFAULT_COMM) :
     WrapComm(name, RECV, flags | COMM_FLAG_INTERFACE, commtype) {
     if (!this->addFormat(fmt, as_array))
-      this->throw_error("Invalid format");
+      this->throw_error("Invalid format");  // GCOV_EXCL_LINE
   }    
 
   /*!
@@ -97,7 +97,7 @@ public:
 	   int flags = 0, const COMM_TYPE commtype = DEFAULT_COMM) :
     WrapComm(name, RECV, flags | COMM_FLAG_INTERFACE, commtype) {
     if (!this->addSchema(schema))
-      this->throw_error("Invalid schema");
+      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
   }
 
   /*!
@@ -115,7 +115,7 @@ public:
 	   int flags = 0, const COMM_TYPE commtype = DEFAULT_COMM) :
     WrapComm(name, RECV, flags | COMM_FLAG_INTERFACE, commtype) {
     if (!this->addSchema(schema))
-      this->throw_error("Invalid schema");
+      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
   }
 
 };
@@ -172,7 +172,7 @@ public:
 	    int flags = 0, const COMM_TYPE commtype = DEFAULT_COMM) :
     WrapComm(name, SEND, flags | COMM_FLAG_INTERFACE, commtype) {
     if (fmt && !this->addFormat(fmt, as_array))
-      this->throw_error("Invalid format");
+      this->throw_error("Invalid format");  // GCOV_EXCL_LINE
   }
 
   /*!
@@ -194,7 +194,7 @@ public:
 	    const COMM_TYPE commtype = DEFAULT_COMM) :
     WrapComm(name, SEND, flags | COMM_FLAG_INTERFACE, commtype) {
     if (!this->addFormat(fmt, as_array))
-      this->throw_error("Invalid format");
+      this->throw_error("Invalid format");  // GCOV_EXCL_LINE
   }
     
 
@@ -213,7 +213,7 @@ public:
 	    int flags = 0, const COMM_TYPE commtype = DEFAULT_COMM) :
     WrapComm(name, SEND, flags | COMM_FLAG_INTERFACE, commtype) {
     if (!this->addSchema(schema))
-      this->throw_error("Invalid schema");
+      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
   }
 
   /*!
@@ -231,7 +231,7 @@ public:
 	    int flags = 0, const COMM_TYPE commtype = DEFAULT_COMM) :
     WrapComm(name, SEND, flags | COMM_FLAG_INTERFACE, commtype) {
     if (!this->addSchema(schema))
-      this->throw_error("Invalid schema");
+      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
   }
 
 };
@@ -842,7 +842,7 @@ public:
 			const COMM_TYPE commtype = DEFAULT_COMM) :
     YggOutput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"ply\"}"))
-      this->throw_error("Invalid schema");
+      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
   }
   
   /*!
@@ -858,7 +858,7 @@ public:
 	       const COMM_TYPE commtype = DEFAULT_COMM) :
     YggOutput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"ply\"}"))
-      this->throw_error("Invalid schema");
+      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
   }
 
 };
@@ -884,7 +884,7 @@ public:
 		       const COMM_TYPE commtype = DEFAULT_COMM) :
     YggInput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"ply\"}"))
-      this->throw_error("Invalid schema");
+      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
   }
 
   /*!
@@ -900,7 +900,7 @@ public:
 	      const COMM_TYPE commtype = DEFAULT_COMM) :
     YggInput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"ply\"}"))
-      this->throw_error("Invalid schema");
+      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
   }
   
 };
@@ -926,7 +926,7 @@ public:
 			const COMM_TYPE commtype = DEFAULT_COMM) :
     YggOutput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"obj\"}"))
-      this->throw_error("Invalid schema");
+      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
   }
   
   /*!
@@ -942,7 +942,7 @@ public:
 	       const COMM_TYPE commtype = DEFAULT_COMM) :
     YggOutput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"obj\"}"))
-      this->throw_error("Invalid schema");
+      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
   }
   
 };
@@ -968,7 +968,7 @@ public:
 		       const COMM_TYPE commtype = DEFAULT_COMM) :
     YggInput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"obj\"}"))
-      this->throw_error("Invalid schema");
+      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
   }
 
   /*!
@@ -984,7 +984,7 @@ public:
 	      const COMM_TYPE commtype = DEFAULT_COMM) :
     YggInput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"obj\"}"))
-      this->throw_error("Invalid schema");
+      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
   }
 
 };
@@ -1010,7 +1010,7 @@ public:
 			    const COMM_TYPE commtype = DEFAULT_COMM) :
     YggOutput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"any\"}"))
-      this->throw_error("Invalid schema");
+      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
   }
   
   /*!
@@ -1026,7 +1026,7 @@ public:
 		   const COMM_TYPE commtype = DEFAULT_COMM) :
     YggOutput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"any\"}"))
-      this->throw_error("Invalid schema");
+      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
   }
   
 };
@@ -1053,7 +1053,7 @@ public:
 			   const COMM_TYPE commtype = DEFAULT_COMM) :
     YggInput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"any\"}"))
-      this->throw_error("Invalid schema");
+      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
   }
 
   /*!
@@ -1069,7 +1069,7 @@ public:
 		  const COMM_TYPE commtype = DEFAULT_COMM) :
     YggInput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"any\"}"))
-      this->throw_error("Invalid schema");
+      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
   }
 
 };
@@ -1095,7 +1095,7 @@ public:
 			const COMM_TYPE commtype = DEFAULT_COMM) :
     YggOutput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"any\"}"))
-      this->throw_error("Invalid schema");
+      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
   }
   
   /*!
@@ -1111,7 +1111,7 @@ public:
 	       const COMM_TYPE commtype = DEFAULT_COMM) :
     YggOutput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"any\"}"))
-      this->throw_error("Invalid schema");
+      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
   }
   
 };
@@ -1138,7 +1138,7 @@ public:
 		       const COMM_TYPE commtype = DEFAULT_COMM) :
     YggInput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"any\"}"))
-      this->throw_error("Invalid schema");
+      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
   }
 
   /*!
@@ -1154,7 +1154,7 @@ public:
 	      const COMM_TYPE commtype = DEFAULT_COMM) :
     YggInput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"any\"}"))
-      this->throw_error("Invalid schema");
+      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
   }
 
 };
@@ -1180,7 +1180,7 @@ public:
 			      const COMM_TYPE commtype = DEFAULT_COMM) :
     YggOutput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"array\"}"))
-      this->throw_error("Invalid schema");
+      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
   }
   
   /*!
@@ -1196,7 +1196,7 @@ public:
 		     const COMM_TYPE commtype = DEFAULT_COMM) :
     YggOutput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"array\"}"))
-      this->throw_error("Invalid schema");
+      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
   }
   
 };
@@ -1223,7 +1223,7 @@ public:
 			     const COMM_TYPE commtype = DEFAULT_COMM) :
     YggInput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"array\"}"))
-      this->throw_error("Invalid schema");
+      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
   }
 
   /*!
@@ -1238,7 +1238,7 @@ public:
 		    const COMM_TYPE commtype = DEFAULT_COMM) :
     YggInput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"array\"}"))
-      this->throw_error("Invalid schema");
+      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
   }
 
 };
@@ -1264,7 +1264,7 @@ public:
 			       const COMM_TYPE commtype = DEFAULT_COMM) :
     YggOutput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"object\"}"))
-      this->throw_error("Invalid schema");
+      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
   }
   
   /*!
@@ -1280,7 +1280,7 @@ public:
 		      const COMM_TYPE commtype = DEFAULT_COMM) :
     YggOutput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"object\"}"))
-      this->throw_error("Invalid schema");
+      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
   }
   
 };
@@ -1307,7 +1307,7 @@ public:
 			      const COMM_TYPE commtype = DEFAULT_COMM) :
     YggInput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"object\"}"))
-      this->throw_error("Invalid schema");
+      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
   }
 
   /*!
@@ -1323,7 +1323,7 @@ public:
 		     const COMM_TYPE commtype = DEFAULT_COMM) :
     YggInput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"object\"}"))
-      this->throw_error("Invalid schema");
+      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
   }
   
 };

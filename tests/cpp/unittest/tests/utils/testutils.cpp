@@ -261,6 +261,36 @@ TEST(REGEX, replacenosub) {
 TEST(REGEX, regex_replace_c) {
   char input[6] = "hello";
   EXPECT_EQ(regex_replace_c(input, 5, "l", "llll", 0), -1);
+  EXPECT_EQ(regex_replace_c(input, 5, "ll", "l", 1), 1);
+  EXPECT_EQ(strcmp(input, "helo"), 0);
+}
+
+TEST(STR, str_toupper) {
+  std::string x = "lower";
+  std::string y = "LOWER";
+  EXPECT_EQ(str_toupper(x), y);
+}
+
+TEST(STR, str_tolower) {
+  std::string x = "LOWER";
+  std::string y = "lower";
+  EXPECT_EQ(str_tolower(x), y);
+}
+
+TEST(ENUM, enum_value_search) {
+  COMM_TYPE key;
+  key = NULL_COMM;
+  EXPECT_TRUE(enum_value_search(COMM_TYPE_cls_map, "ZMQComm", key));
+  EXPECT_EQ(key, ZMQ_COMM);
+  key = NULL_COMM;
+  EXPECT_TRUE(enum_value_search(COMM_TYPE_cls_map, "zmqcomm", key, true));
+  EXPECT_EQ(key, ZMQ_COMM);
+  key = NULL_COMM;
+  EXPECT_TRUE(enum_value_search(COMM_TYPE_cls_map, "ZMQComm2", key,
+				false, "", "2"));
+  EXPECT_EQ(key, ZMQ_COMM);
+  key = NULL_COMM;
+  EXPECT_FALSE(enum_value_search(COMM_TYPE_cls_map, "INVALID", key));
 }
   
 }

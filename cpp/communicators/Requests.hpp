@@ -232,20 +232,20 @@ public:
 	  request_id = stashed_request;
 	  stashed_request.clear();
 	  if (!header.SetMetaString("request_id", request_id))
-	    return -1;
+	    return -1;  // GCOV_EXCL_LINE
 	} else {
 	  if (!header.SetMetaID("request_id", request_id))
-	    return -1;
+	    return -1;  // GCOV_EXCL_LINE
 	}
 	log_debug() << "addRequestClient: request_id = "
 		     << request_id << std::endl;
       } else {
 	if (!header.SetMetaString("request_id", request_id))
-	  return -1;
+	  return -1;  // GCOV_EXCL_LINE
       }
       if (!header.SetMetaString("response_address",
 				comms[0]->address.address()))
-	return -1;
+	return -1;  // GCOV_EXCL_LINE
       if (existing_idx < 0) {
 	size_t idx = requests.size();
 	if (hasRequest(request_id) >= 0) {
@@ -278,7 +278,7 @@ public:
       if (!(header.GetMetaString("request_id", request_id) &&
 	    header.GetMetaString("response_address", response_address) &&
 	    header.GetMetaString("model", partner_model)))
-	return -1;
+	return -1;  // GCOV_EXCL_LINE
       int comm_idx = addComm(response_address);
       size_t idx = requests.size();
       if (hasPartner(partner_model) < 0)
@@ -308,7 +308,7 @@ public:
       log_debug() << "addResponseServer: request_id = " << requests[0].request_id << std::endl;
       header.initMeta();
       if (!header.SetMetaString("request_id", requests[0].request_id))
-	return -1;
+	return -1;  // GCOV_EXCL_LINE
       if (requests[0].setData(header, true) < 0) {
 	log_error() << "addResponseServer: Error setting data" << std::endl;
 	return -1;
@@ -330,7 +330,7 @@ public:
       std::string request_id, partner_model;
       if (!(header.GetMetaString("model", partner_model) &&
 	    header.GetMetaString("request_id", request_id)))
-	return -1;
+	return -1;  // GCOV_EXCL_LINE
       if (header.flags & HEAD_FLAG_SERVER_SIGNON) {
 	log_debug() << "addResponseClient[" << request_id <<
 	  "]: signon!" << std::endl;
@@ -459,8 +459,8 @@ public:
 	return -1;
       }
       if (!header.MoveFrom(requests[(size_t)idx].data)) {
-	log_error() << "getRequestClient: Error moving response header" << std::endl;
-	return -1;
+	log_error() << "getRequestClient: Error moving response header" << std::endl;  // GCOV_EXCL_LINE
+	return -1;  // GCOV_EXCL_LINE
       }
       if (pop && !requests[(size_t)idx].is_signon) {
 	requests.erase(requests.begin() + idx);
@@ -485,7 +485,7 @@ public:
 			       response_adr, response_flags);
         comms.push_back(x);
         if (!x->addSchema(response_metadata))
-	  return -1;
+	  return -1;  // GCOV_EXCL_LINE
         idx = (int)(comms.size() - 1);
         return idx;
     }
