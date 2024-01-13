@@ -86,28 +86,6 @@ set(RAPIDJSON_PYTHON_ENV "YGG_MODEL_INDEX=123")
 set(YGG_BUILD_FLAGS "")
 
 
-##################
-# Coverage       #
-##################
-
-if(YGG_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang|ARMClang")
-    message(STATUS "COVERAGE ON")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 --coverage -fno-inline -fprofile-arcs -ftest-coverage -fprofile-filter-files=\"${CMAKE_SOURCE_DIR}/cpp/*\" ")
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0 --coverage -fno-inline -fprofile-arcs -ftest-coverage -fprofile-filter-files=\"${CMAKE_SOURCE_DIR}/cpp/*\" ")
-    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|ARMClang")
-        set(CTEST_COVERAGE_COMMAND "llvm-cov")
-        set(CTEST_COVERAGE_EXTRA_FLAGS "gcov")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
-    else()
-        target_link_libraries(${YGG_TARGET_CPP} PRIVATE gcov)
-        set(CTEST_COVERAGE_COMMAND "gcov")
-        set(CTEST_COVERAGE_EXTRA_FLAGS "")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-inline-small-functions -fno-default-inline")
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-inline-small-functions -fno-default-inline")
-    endif()
-endif(YGG_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang|ARMClang")
-
 #################
 # Documentation #
 #################
@@ -506,6 +484,28 @@ if (YGG_INSTALL_TARGETS)
   endif()
 endif ()
     
+##################
+# Coverage       #
+##################
+
+if(YGG_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang|ARMClang")
+    message(STATUS "COVERAGE ON")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 --coverage -fno-inline -fprofile-arcs -ftest-coverage -fprofile-filter-files=\"${CMAKE_SOURCE_DIR}/cpp/*\" ")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0 --coverage -fno-inline -fprofile-arcs -ftest-coverage -fprofile-filter-files=\"${CMAKE_SOURCE_DIR}/cpp/*\" ")
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|ARMClang")
+        set(CTEST_COVERAGE_COMMAND "llvm-cov")
+        set(CTEST_COVERAGE_EXTRA_FLAGS "gcov")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
+    else()
+        target_link_libraries(${YGG_TARGET_CPP} PRIVATE gcov)
+        set(CTEST_COVERAGE_COMMAND "gcov")
+        set(CTEST_COVERAGE_EXTRA_FLAGS "")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-inline-small-functions -fno-default-inline")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-inline-small-functions -fno-default-inline")
+    endif()
+endif(YGG_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang|ARMClang")
+
 #########
 # Tests #
 #########
