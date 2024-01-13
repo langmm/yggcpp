@@ -518,6 +518,11 @@ jobs:
           echo "PATH=$env:PATH"
           cd build
           ctest ${{ env.TEST_FLAGS }}
+      - name: Preserve coverage information
+        if: matrix.with-coverage && matrix.os != 'windows-latest'
+        shell: bash -l {0}
+	run: |
+          cp -r build/coverage coverage
 
       ###################################
       # Build Python
@@ -620,6 +625,5 @@ jobs:
         with:
           name: ${{ matrix.os }}-${{ matrix.python-install }}-${{ matrix.install-zmq }}-${{ matrix.install-mpi }}-${{ matrix.with-coverage }}-${{ matrix.with-asan }}-${{ matrix.with-elf }}-${{ matrix.with-valgrind }}
           token: ${{ secrets.CODECOV_TOKEN }}
-          file: build/coverage/coverage.info
-          # directory: build/Testing/CoverageInfo
+          file: coverage/coverage.info
           functionalities: gcov
