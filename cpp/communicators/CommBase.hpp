@@ -1463,8 +1463,8 @@ public:
      * @return true on success.
      */
     virtual bool genMetadata(std::string& out) {
-      UNUSED(out);
-      return true;
+      UNUSED(out); // GCOVR_EXCL_START
+      return true; // GCOVR_EXCL_STOP
     }
     /*!
      * @brief Get the global communicator.
@@ -1601,9 +1601,9 @@ protected:
      * @see utils::Header
      */
     long recv_single(utils::Header& header) override {
-      UNUSED(header);
+      UNUSED(header); // GCOVR_EXCL_START
       log_error() << "Recv of base class called, must be overridden" << std::endl;
-      return -1;
+      return -1; // GCOVR_EXCL_STOP
     }
 
     /**

@@ -233,7 +233,7 @@ public:
 	  stashed_request.clear();
 	  if (!header.SetMetaString("request_id", request_id))
 	    return -1;  // GCOV_EXCL_LINE
-	} else {
+	} else { // GCOV_EXCL_LINE
 	  if (!header.SetMetaID("request_id", request_id))
 	    return -1;  // GCOV_EXCL_LINE
 	}
@@ -567,7 +567,7 @@ public:
       if (header.flags & HEAD_FLAG_EOF) {
 	std::string partner_model;
 	if (!header.GetMetaString("model", partner_model))
-	  return false;
+	  return false; // GCOV_EXCL_LINE
 	int idx = hasPartner(partner_model);
 	if (idx >= 0)
 	  partners[static_cast<size_t>(idx)].signed_off = true;

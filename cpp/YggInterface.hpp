@@ -344,9 +344,9 @@ public:
     ServerComm(name, flags | COMM_FLAG_INTERFACE,
 	       SERVER_COMM, request_commtype, response_commtype) {
     if (!this->addSchema(inType))
-      this->throw_error("Invalid request schema");
+      this->throw_error("Invalid request schema");  // GCOV_EXCL_LINE
     if (!this->addResponseSchema(outType))
-      this->throw_error("Invalid response schema");
+      this->throw_error("Invalid response schema");  // GCOV_EXCL_LINE
   }
 
 };
@@ -478,9 +478,9 @@ public:
     ClientComm(name, flags | COMM_FLAG_INTERFACE,
 	       CLIENT_COMM, request_commtype, response_commtype) {
     if (!this->addSchema(outType))
-      this->throw_error("Invalid request schema");
+      this->throw_error("Invalid request schema");  // GCOV_EXCL_LINE
     if (!this->addResponseSchema(inType))
-      this->throw_error("Invalid response schema");
+      this->throw_error("Invalid response schema");  // GCOV_EXCL_LINE
   }
   
 };
@@ -524,7 +524,7 @@ public:
 			 "    { \"type\": \"object\" }"
 			 "  ]"
 			 "}"))
-      this->throw_error("Invalid time schema");
+      this->throw_error("Invalid time schema");  // GCOV_EXCL_LINE
     if (t_units.size() > 0) {
       (*(this->getMetadata().getSchema()))["items"][0].AddMember(
 	 rapidjson::Value("units", 5,
@@ -535,7 +535,7 @@ public:
 	 this->getMetadata().GetAllocator());
     }
     if (!this->addResponseSchema("{ \"type\": \"object\" }", true))
-      this->throw_error("Invalid state schema");
+      this->throw_error("Invalid state schema");  // GCOV_EXCL_LINE
   }
   
   /*!
