@@ -148,8 +148,6 @@ namespace YggInterface {
       using Comm_t::recv;
 
     protected:
-      /** \copydoc YggInterface::communicator::Comm_t::init */
-      void init();
       /** \copydoc YggInterface::communicator::Comm_t::send_raw */
       int send_raw(const char *data, const size_t &len) override;
       /** \copydoc YggInterface::communicator::Comm_t::recv_raw */

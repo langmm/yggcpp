@@ -4,41 +4,6 @@
 using namespace YggInterface::communicator;
 using namespace YggInterface::utils;
 
-void Comm_t::init_base() {
-
-    flags |= COMM_FLAG_VALID;
-    if (direction == NONE)
-        flags &= ~COMM_FLAG_VALID;
-
-    thread_id = get_thread_id();
-    char *allow_threading = getenv("YGG_THREADING");
-    if (allow_threading)
-        flags |= COMM_FLAG_ALLOW_MULTIPLE_COMMS;
-    char *model_name = std::getenv("YGG_MODEL_NAME");
-    if (model_name) {
-        std::string prefix(model_name);
-        prefix += ":";
-        if (name.rfind(prefix, 0) != 0) {
-            prefix += name;
-            name = prefix;
-        }
-    }
-    setLanguage();
-
-    create_global_scope_comm();
-
-    ctx->register_comm(this);
-
-    if (!address.valid()) {
-        address = addressFromEnv(name, direction);
-        if ((flags & COMM_FLAG_INTERFACE) && (!address.valid()) &&
-	    (!(flags & COMM_FLAG_SET_OPP_ENV))) {
-	    log_error() << "Comm_t: " << name << " not registered as environment variable.\n" << std::endl;
-            flags &= ~COMM_FLAG_VALID;
-        }
-    }
-    log_debug() << "Comm_t: Done" << std::endl;
-}
 Comm_t::Comm_t(const std::string &nme, const Address &addr,
 	       const DIRECTION dirn, const COMM_TYPE &t, int flgs) :
   ctx(global_context), type(t), name(nme), address(addr),
@@ -47,7 +12,7 @@ Comm_t::Comm_t(const std::string &nme, const Address &addr,
   index_in_register(-1), thread_id(), metadata(),
   timeout_recv(YGG_MAX_TIME), workers(), global_comm(nullptr),
   language(NO_LANGUAGE) {
-  init_base();
+  _before_open();
 }
 
 Comm_t::Comm_t(const std::string &nme,
@@ -65,6 +30,55 @@ Comm_t::~Comm_t() {
   if (flags & COMM_FLAG_SET_OPP_ENV)
     unsetOppEnv();
   log_debug() << "~Comm_t: Finished" << std::endl;
+}
+void Comm_t::_before_open() {
+
+  flags |= COMM_FLAG_VALID;
+  if (direction == NONE)
+    flags &= ~COMM_FLAG_VALID;
+
+  thread_id = get_thread_id();
+  char *allow_threading = getenv("YGG_THREADING");
+  if (allow_threading)
+    flags |= COMM_FLAG_ALLOW_MULTIPLE_COMMS;
+  char *model_name = std::getenv("YGG_MODEL_NAME");
+  if (model_name) {
+    std::string prefix(model_name);
+    prefix += ":";
+    if (name.rfind(prefix, 0) != 0) {
+      prefix += name;
+      name = prefix;
+    }
+  }
+  setLanguage();
+  
+  create_global_scope_comm();
+  
+  ctx->register_comm(this);
+  
+  if (!address.valid()) {
+    address = addressFromEnv(name, direction);
+    if ((flags & COMM_FLAG_INTERFACE) && (!address.valid()) &&
+	(!(flags & COMM_FLAG_SET_OPP_ENV))) {
+      log_error() << "before_open: " << name << " not registered as environment variable.\n" << std::endl;
+      flags &= ~COMM_FLAG_VALID;
+    }
+  }
+  log_debug() << "before_open: Done" << std::endl;
+}
+void Comm_t::_after_open() {
+  if (flags & COMM_FLAG_SET_OPP_ENV)
+    setOppEnv();
+}
+
+bool Comm_t::operator==(const Comm_t& rhs) const {
+  return (type == rhs.getType() &&
+	  name == rhs.getName() &&
+	  getAddress() == rhs.getAddress() &&
+	  direction == rhs.getDirection() &&
+	  metadata == rhs.getMetadata() &&
+	  timeout_recv == rhs.get_timeout_recv() &&
+	  language == rhs.getLanguage());
 }
 
 bool Comm_t::create_global_scope_comm() {
@@ -401,7 +415,7 @@ void Comm_t::set_timeout_recv(int64_t new_timeout) {
   }
   timeout_recv = new_timeout;
 }
-int64_t Comm_t::get_timeout_recv() {
+int64_t Comm_t::get_timeout_recv() const {
   if (global_comm) {
     return global_comm->get_timeout_recv();
   }

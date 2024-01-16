@@ -93,16 +93,11 @@ public:
     std::vector<utils::Address>& getAddresses() { return addresses; }
     
 protected:
-    /** \copydoc YggInterface::communicator::Comm_t::init */
-    void init();
     /** \copydoc YggInterface::communicator::Comm_t::send_single */
     int send_single(utils::Header& header) override;
     /** \copydoc YggInterface::communicator::Comm_t::recv_single */
     long recv_single(utils::Header& header) override;
     WORKER_METHOD_DECS(MPIComm);
-#else // MPIINSTALLED
-    /** \copydoc YggInterface::communicator::Comm_t::init */
-    void init() { UNINSTALLED_ERROR(MPI); }
 #endif // MPIINSTALLED
   
 private:

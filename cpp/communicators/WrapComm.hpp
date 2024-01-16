@@ -35,8 +35,6 @@ namespace YggInterface {
        *   normal communicator will be wrapped)
        * @param[in] wraptype enumerated type of wrapped communicator to
        *   created if different from type
-       * @param[in] delay_init If true, the wrapped communicator will not
-       *   be created yet.
        * @see utils::Address
        */
       explicit WrapComm(const std::string name,
@@ -44,8 +42,7 @@ namespace YggInterface {
 			const DIRECTION direction = NONE, int flgs = 0,
 			const COMM_TYPE type = DEFAULT_COMM,
 			size_t ncomm = 0,
-			const COMM_TYPE wraptype = NULL_COMM,
-			bool delay_init=false);
+			const COMM_TYPE wraptype = NULL_COMM);
       /**
        * Constructor without an address
        * @param[in] nme The name for the communicator, if empty one will
@@ -100,8 +97,6 @@ namespace YggInterface {
 
     protected:
 
-      /** \copydoc YggInterface::communicator::Comm_t::init */
-      void init();
       /** @brief Initialize properties from the wrapped communicator */
       void fromComm();
       /**
@@ -109,6 +104,8 @@ namespace YggInterface {
        * @return true if initialized, false otherwise
        */
       virtual bool checkWrapped() const;
+      /** \copydoc YggInterface::communicator::Comm_t::_open */
+      void _open(bool call_base);
       /** \copydoc YggInterface::communicator::Comm_t::_close */
       void _close(bool call_base);
       
@@ -122,7 +119,8 @@ namespace YggInterface {
 			(new_timeout),
 			THROW_NO_HANDLE(set_timeout_recv), override);
       WRAP_METHOD(get_timeout_recv, (), (),
-		  out = CommBase::get_timeout_recv(), int64_t, override);
+		  out = CommBase::get_timeout_recv(), int64_t,
+		  const override);
       WRAP_METHOD(wait_for_recv, (const int64_t& tout), (tout),
 		  out = -1, int, override);
       WRAP_METHOD_NORET(close, (), (), , override);
@@ -161,6 +159,8 @@ namespace YggInterface {
 		  (header), out = nullptr, Comm_t*, override);
       WRAP_METHOD(create_worker_recv, (utils::Header& header),
 		  (header), out = nullptr, Comm_t*, override);
+      
+    public:
       COMM_TYPE wraptype; /**< Wrapped communicator type */
       size_t wrapncomm;   /**< Number of wrapped communicators (fork only) */
     };

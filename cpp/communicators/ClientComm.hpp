@@ -43,7 +43,7 @@ public:
     /** \copydoc YggInterface::communicator::Comm_t::set_timeout_recv */
     void set_timeout_recv(int64_t new_timeout) override;
     /** \copydoc YggInterface::communicator::Comm_t::get_timeout_recv */
-    int64_t get_timeout_recv() override;
+    int64_t get_timeout_recv() const override;
 
     /**
      * @brief Connect the client to the server
@@ -66,8 +66,6 @@ public:
     using RPCComm::recv;
 
 protected:
-    /** \copydoc YggInterface::communicator::Comm_t::init */
-    void init();
     /** \copydoc YggInterface::communicator::Comm_t::create_worker_send */
     Comm_t* create_worker_send(utils::Header& head) override;
     /** \copydoc YggInterface::communicator::Comm_t::create_worker_recv */

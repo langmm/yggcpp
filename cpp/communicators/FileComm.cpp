@@ -9,13 +9,13 @@ FileComm::FileComm(const std::string name, const utils::Address &address,
 		   const COMM_TYPE type) :
   CommBase(name, address, direction, type, flgs),
   mode(std::fstream::in | std::fstream::out) {
-  if (!global_comm)
-    init();
+  ADD_CONSTRUCTOR_OPEN(FileComm)
 }
 
 ADD_CONSTRUCTORS_DEF(FileComm)
 
-void FileComm::init() {
+void FileComm::_open(bool call_base) {
+  BEFORE_OPEN_DEF;
   updateMaxMsgSize(0);
   bool created = address.address().empty();
   if (created) {
@@ -30,8 +30,8 @@ void FileComm::init() {
       ::close(fd);
     } else {
 #endif
-      log_error() << "FileComm::init: Error generating temporary file name." << std::endl;
-      throw std::runtime_error("FileComm::init: Error in std::mkstemp");
+      log_error() << "FileComm::_open: Error generating temporary file name." << std::endl;
+      throw std::runtime_error("FileComm::_open: Error in std::mkstemp");
     }
     address.address(key);
   }
@@ -49,10 +49,11 @@ void FileComm::init() {
   if (flags & FILE_FLAG_BINARY)
     mode |= std::fstream::binary;
   handle = new std::fstream(this->address.address().c_str(), mode);
-  CommBase::init();
+  AFTER_OPEN_DEF;
 }
 
 void FileComm::_close(bool call_base) {
+  BEFORE_CLOSE_DEF;
   if (handle && !global_comm) {
     handle->close();
     bool delete_file = ((direction == RECV) ||
@@ -63,8 +64,7 @@ void FileComm::_close(bool call_base) {
     if (delete_file)
       std::remove(this->address.address().c_str());
   }
-  if (call_base)
-    CommBase::_close(true);
+  AFTER_CLOSE_DEF;
 }
 
 void FileComm::refresh() const {

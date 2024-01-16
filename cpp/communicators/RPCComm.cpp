@@ -12,7 +12,9 @@ RPCComm::RPCComm(const std::string &name, const utils::Address& address,
   WrapComm(name, address, dir, reqflags | flgs, type, ncomm, reqtype),
   requests(req_dir, resflags | (flgs & (COMM_FLAG_ALLOW_MULTIPLE_COMMS |
 					COMM_FLAG_ASYNC_WRAPPED)),
-	   restype, logInst()) {}
+	   restype, logInst()) {
+  ADD_CONSTRUCTOR_OPEN(RPCComm);
+}
 
 ADD_DESTRUCTOR_DEF(RPCComm, WrapComm, , )
 
@@ -24,10 +26,15 @@ RPCComm::RPCComm(const std::string &name,
   RPCComm(name, utils::blankAddress, flgs, dir, req_dir, type, ncomm,
 	  reqtype, restype, reqflags, resflags) {}
 
+void RPCComm::_open(bool call_base) {
+  BEFORE_OPEN(WrapComm);
+  AFTER_OPEN(WrapComm);
+}
+
 void RPCComm::_close(bool call_base) {
+  BEFORE_CLOSE(WrapComm);
   requests.destroy();
-  if (call_base)
-    WrapComm::_close(true);
+  AFTER_CLOSE(WrapComm);
 }
 
 int RPCComm::comm_nmsg(DIRECTION dir) const {

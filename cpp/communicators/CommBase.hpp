@@ -48,15 +48,28 @@ const int COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
   utils::YggLogThrowError("Compiler flag '" #name "INSTALLED' not defined so " #name " bindings are disabled")
 
 #define ADD_DESTRUCTOR(cls, base)					\
+  public:								\
   protected:								\
+  /** \copydoc YggInterface::communicator::Comm_t::_open */		\
+  void _open(bool call_base);						\
   /** \copydoc YggInterface::communicator::Comm_t::_close */		\
   void _close(bool call_base);						\
 public:									\
+ /** @brief Open the communicator */					\
+ void open() override;							\
  /** @brief Close the communicator */					\
  void close() override;							\
  /** @brief Destructor */						\
  ~cls() override;
 #define ADD_DESTRUCTOR_DEF(cls, base, tempT, temp)			\
+  tempT									\
+  void cls temp::open() {						\
+    log_debug() << #cls "::open: Started" << std::endl;			\
+    if (!is_open()) {							\
+      _open(true);							\
+    }									\
+    log_debug() << #cls "::open: Finished" << std::endl;		\
+  }									\
   tempT									\
   void cls temp::close() {						\
     log_debug() << #cls "::close: Started" << std::endl;		\
@@ -103,6 +116,33 @@ public:									\
 #define ADD_CONSTRUCTORS(T)			\
   ADD_CONSTRUCTORS_BASE(T ## Comm, T ## _COMM, T ## _INSTALLED_FLAG)
 
+#define ADD_CONSTRUCTOR_OPEN(cls)					\
+  if (!(global_comm || (getFlags() & COMM_FLAG_DELAYED_OPEN))) {	\
+    _open(false);							\
+  }									\
+  if (getFlags() & COMM_FLAG_DELAYED_OPEN) {				\
+    getFlags() &= ~COMM_FLAG_DELAYED_OPEN;				\
+  }
+#define BEFORE_OPEN(base)					\
+  assert(handle);						\
+  if (call_base) {						\
+    base::_open(true);						\
+  }
+#define AFTER_OPEN(base)
+#define BEFORE_CLOSE(base)
+#define AFTER_CLOSE(base)					\
+  if (call_base) {						\
+    base::_close(true);						\
+  }
+#define BEFORE_OPEN_DEF						\
+  BEFORE_OPEN(CommBase)
+#define AFTER_OPEN_DEF						\
+  AFTER_OPEN(CommBase)						\
+  CommBase::_after_open()
+#define BEFORE_CLOSE_DEF					\
+  BEFORE_CLOSE(CommBase)
+#define AFTER_CLOSE_DEF						\
+  AFTER_CLOSE(CommBase)
 #define ADD_CONSTRUCTORS_DEF(cls)				\
   cls::cls(const std::string& nme,				\
 	   const DIRECTION dirn,				\
@@ -288,6 +328,13 @@ public:
     Comm_t& operator=(const Comm_t&) = delete;
     Comm_t() = delete;
     virtual ~Comm_t();
+
+    /**
+     * @brief Check for equality with another communicator.
+     * @param[in] rhs Communicator for comparison.
+     * @return true if equal, false otherwise.
+     */
+    bool operator==(const Comm_t& rhs) const;
 
     //////////////////
     // SEND METHODS //
@@ -489,7 +536,7 @@ public:
       @brief Get the time limit for receiving messages.
       @returns Timeout in micro-seconds.
      */
-    virtual int64_t get_timeout_recv();
+    virtual int64_t get_timeout_recv() const;
     /*!
       @brief Wait until a message is available to be received or a time
         limit is reached.
@@ -885,10 +932,15 @@ public:
     virtual int comm_nmsg(DIRECTION dir=NONE) const VIRT_END;
 
     /*!
+      @brief Open the communicator.
+     */
+    virtual void open() VIRT_END;
+
+    /*!
       @brief Close the communicator.
      */
     virtual void close() VIRT_END;
-
+    
     /*!
       @brief Check if the communicator is closed.
       @return true if the communicator is closed, false otherwise.
@@ -1133,18 +1185,6 @@ private:
     
 protected:
 
-    /*!
-     * @brief Initialize the base class for this instance
-     */
-    void init_base();
-    /*!
-     * @brief Initialize this instance
-     */
-    void init() {
-      if (flags & COMM_FLAG_SET_OPP_ENV)
-	setOppEnv();
-    }
-
     friend CommContext;  //!< @see CommContext
     friend AsyncComm;    //!< @see AsyncComm
     friend AsyncBacklog; //!< @see AsyncBacklog
@@ -1159,6 +1199,15 @@ protected:
     friend WorkerList;   //!< @see WorkerList
 
     /**
+     * @brief Perform class specific open operations
+     * @param[in] call_base If true, the base class's _open method will
+     *   be called
+     */
+    void _open(bool call_base) {
+      UNUSED(call_base);
+    }
+    
+    /**
      * @brief Perform class specific close operations
      * @param[in] call_base If true, the base class's _close method will
      *   be called
@@ -1166,6 +1215,17 @@ protected:
     void _close(bool call_base) {
       UNUSED(call_base);
     }
+    
+    /**
+     * @brief Initialize this instance before it has been opened
+     */
+    void _before_open();
+      
+    /**
+     * @brief Initialize this instance after it has been opened
+     */
+    void _after_open();
+
     /**
      * @brief Class specific check for if the comm is closed
      * @return true if the comm is closed, false otherwise
@@ -1675,8 +1735,8 @@ template<typename H>
 CommBase<H>::CommBase(const std::string &nme, const utils::Address &addr,
 		      const DIRECTION dirn, const COMM_TYPE &t, int flgs) :
   Comm_t(nme, addr, dirn, t, flgs), handle(nullptr) {
-  if (global_comm)
-    handle = dynamic_cast<CommBase<H>*>(global_comm)->handle;
+  if (!(getFlags() & COMM_FLAG_DELAYED_OPEN))
+    _open(false);
 }
 
 template<typename H>
@@ -1695,15 +1755,23 @@ bool CommBase<H>::_is_closed() const {
 }
 
 template<typename H>
+void CommBase<H>::_open(bool call_base) {
+  if (global_comm)
+    handle = dynamic_cast<CommBase<H>*>(global_comm)->handle;
+  if (call_base)
+    Comm_t::_open(true);
+}
+  
+template<typename H>
 void CommBase<H>::_close(bool call_base) {
+  BEFORE_CLOSE(Comm_t);
   if (handle) {
     if (!global_comm)
       delete handle;
     handle = nullptr;
   }
   workers.workers.clear();
-  if (call_base)
-    Comm_t::_close(true);
+  AFTER_CLOSE(Comm_t);
 }
 
 ADD_DESTRUCTOR_DEF(CommBase, Comm_t, template<typename H>, <H>)

@@ -139,10 +139,6 @@ namespace YggInterface {
       using Comm_t::send;
       using Comm_t::recv;
 
-    protected:
-      /** \copydoc Comm_t::init */
-      void init();
-
     };
     
   }

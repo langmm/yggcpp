@@ -8,6 +8,6 @@
 * Add Buffer communicator for communicators on the same process
 * Add component handling of _schema_properties_yaml_only
 * Add for_server keyword?
-* Verify C++ class is pickleable
 * Add C++ equivalent of get_status_message & printStatus
 * Update handling of specialized send/recv (dict, array) with transforms and test data
+* Add test for filter/transform in Python class

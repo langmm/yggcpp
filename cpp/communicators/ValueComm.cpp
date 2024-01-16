@@ -48,22 +48,21 @@ ValueComm::ValueComm(const std::string name,
 		     DIRECTION direction, int flgs,
 		     const COMM_TYPE type) :
   CommBase(name, address, direction, type, flgs) {
-  if (!global_comm)
-    init();
+  ADD_CONSTRUCTOR_OPEN(ValueComm)
 }
 
 ADD_CONSTRUCTORS_DEF(ValueComm)
 
-void ValueComm::init() {
+void ValueComm::_open(bool call_base) {
+  BEFORE_OPEN_DEF;
   updateMaxMsgSize(0);
-  assert(!handle);
   handle = new ValueManager(logInst());
-  CommBase::init();
+  AFTER_OPEN_DEF;
 }
 
 void ValueComm::_close(bool call_base) {
-  if (call_base)
-    CommBase::_close(true);
+  BEFORE_CLOSE_DEF;
+  AFTER_CLOSE_DEF;
 }
 
 int ValueComm::comm_nmsg(DIRECTION dir) const {

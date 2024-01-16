@@ -291,24 +291,23 @@ RMQComm::RMQComm(const std::string name,
 		 const DIRECTION direction, int flgs,
 		 const COMM_TYPE commtype) :
   CommBase(name, address, direction, commtype, flgs) {
-  if (!global_comm)
-    init();
+  ADD_CONSTRUCTOR_OPEN(RMQComm)
 }
 
 ADD_CONSTRUCTORS_DEF(RMQComm)
 
-void RMQComm::init() {
+void RMQComm::_open(bool call_base) {
+  BEFORE_OPEN_DEF;
   updateMaxMsgSize(1048576); // 2**20
-  assert(!handle);
   handle = new RMQConnection(logInst(), direction, address.address());
   if (!address.valid())
     address.address(handle->address);
-  CommBase::init();
+  AFTER_OPEN_DEF;
 }
 
 void RMQComm::_close(bool call_base) {
-  if (call_base)
-    CommBase::_close(true);
+  BEFORE_CLOSE_DEF;
+  AFTER_CLOSE_DEF;
 }
 	
 int RMQComm::comm_nmsg(DIRECTION dir) const {

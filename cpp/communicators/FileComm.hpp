@@ -38,8 +38,6 @@ namespace YggInterface {
       using Comm_t::recv;
       
     protected:
-      /*! \copydoc Comm_t::init */
-      void init();
       /*! @brief Flush and reload the file */
       void refresh() const;
       

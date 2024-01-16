@@ -13,6 +13,7 @@ public:
       Comm_t(name, direction, t, COMM_FLAG_INTERFACE), _closed(false) {}
     int comm_nmsg(DIRECTION=NONE) const override {return 1;}
     int get_flags() const {return flags;}
+    void open() override { _open(true); }
     void close() override { _close(true); }
     bool is_closed() const override { return _closed; }
     ~Comm_tTest() { _close(false); }
@@ -20,6 +21,10 @@ public:
     using Comm_t::send;
     using Comm_t::recv;
 protected:
+    void _open(bool call_base) {
+      if (call_base)
+	Comm_t::_open(true);
+    }
     void _close(bool call_base) {
       _closed = true;
       if (call_base)

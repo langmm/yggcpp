@@ -108,10 +108,6 @@ namespace YggInterface {
 	return true;
       }
       
-    protected:
-      /** \copydoc Comm_t::init */
-      void init();
-      
     };
   }
 }

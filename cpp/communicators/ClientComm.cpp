@@ -18,8 +18,9 @@ ClientComm::ClientComm(const std::string& nme, const Address& addr,
 	  SEND, RECV, type, ncomm,
 	  reqtype, restype, reqflags, resflags) {
   // Called to create temp comm for send/recv
-  if (!(global_comm || (name.empty() && address.valid())))
-    init();
+  if (!(name.empty() && address.valid())) {
+    ADD_CONSTRUCTOR_OPEN(ClientComm)
+  }
 }
 
 ADD_CONSTRUCTORS_RPC_DEF(ClientComm)
@@ -27,6 +28,20 @@ ADD_CONSTRUCTORS_RPC_DEF(ClientComm)
 std::string ClientComm::logClass() const {
   std::string out = "ClientComm";
   return out;
+}
+
+void ClientComm::_open(bool call_base) {
+  BEFORE_OPEN(RPCComm);
+  YGG_THREAD_SAFE_BEGIN(client) {
+    if (!(_client_rand_seeded)) {
+      srand(ptr2seed(this));
+      _client_rand_seeded = 1;
+    }
+  } YGG_THREAD_SAFE_END;
+  if (name.empty()) {
+    this->name = "client_request." + this->address.address();
+  }
+  AFTER_OPEN(RPCComm);
 }
 
 int ClientComm::comm_nmsg(DIRECTION dir) const {
@@ -49,22 +64,12 @@ void ClientComm::set_timeout_recv(int64_t new_timeout) {
   Comm_t* active_comm = requests.comms[0];
   active_comm->set_timeout_recv(new_timeout);
 }
-int64_t ClientComm::get_timeout_recv() {
-  requests.initClientResponse();
+int64_t ClientComm::get_timeout_recv() const {
+  if (requests.comms.empty()) {
+    return RPCComm::get_timeout_recv();
+  }
   Comm_t* active_comm = requests.comms[0];
   return active_comm->get_timeout_recv();
-}
-
-void ClientComm::init() {
-  YGG_THREAD_SAFE_BEGIN(client) {
-    if (!(_client_rand_seeded)) {
-      srand(ptr2seed(this));
-      _client_rand_seeded = 1;
-    }
-  } YGG_THREAD_SAFE_END;
-  if (name.empty()) {
-    this->name = "client_request." + this->address.address();
-  }
 }
 
 bool ClientComm::send_signon(int nloop, int interval,

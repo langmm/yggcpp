@@ -465,18 +465,17 @@ ZMQComm::ZMQComm(const std::string& name, const utils::Address& address,
 		 const DIRECTION direction, int flgs,
 		 const COMM_TYPE type) :
   CommBase(name, address, direction, type, flgs), reply(direction) {
-  if (!global_comm)
-    init();
+  ADD_CONSTRUCTOR_OPEN(ZMQComm)
 }
 
 ADD_CONSTRUCTORS_DEF(ZMQComm)
 
 #ifdef ZMQINSTALLED
 
-void ZMQComm::init() {
+void ZMQComm::_open(bool call_base) {
+  BEFORE_OPEN_DEF;
   updateMaxMsgSize(1048576);
   msgBufSize = 100;
-  assert(!handle);
   int socket_type = ZMQ_PAIR;
   if (flags & COMM_FLAG_ALLOW_MULTIPLE_COMMS) {
     if (direction == RECV && !(address.valid())) {
@@ -491,27 +490,27 @@ void ZMQComm::init() {
     this->name = "tempnewZMQ-" + handle->endpoint.substr(handle->endpoint.find_last_of(':') + 1);
   if (direction == SEND)
     flags |= COMM_FLAG_ALWAYS_SEND_HEADER;
-  CommBase::init();
+  AFTER_OPEN_DEF;
 }
 
 void ZMQComm::_close(bool call_base) {
-    if ((direction == RECV) && this->is_open() &&
-	(!global_comm) && (!(flags & COMM_FLAG_EOF_RECV))) {
-      if (utils::YggdrasilLogger::_ygg_error_flag == 0) {
-	    size_t data_len = 0;
-            char *data = NULL;
-            while (comm_nmsg(RECV) > 0) {
-                if (long ret = recv_raw(data, data_len) >= 0) {
-		  if (ret > (long)data_len)
-		    data_len = ret;
-                }
-            }
-	    if (data != NULL)
-	      free(data);
-        }
+  BEFORE_CLOSE_DEF;
+  if ((direction == RECV) && this->is_open() &&
+      (!global_comm) && (!(flags & COMM_FLAG_EOF_RECV))) {
+    if (utils::YggdrasilLogger::_ygg_error_flag == 0) {
+      size_t data_len = 0;
+      char *data = NULL;
+      while (comm_nmsg(RECV) > 0) {
+	if (long ret = recv_raw(data, data_len) >= 0) {
+	  if (ret > (long)data_len)
+	    data_len = ret;
+	}
+      }
+      if (data != NULL)
+	free(data);
     }
-    if (call_base)
-      CommBase::_close(true);
+  }
+  AFTER_CLOSE_DEF;
 }
 
 int ZMQComm::comm_nmsg(DIRECTION dir) const {
@@ -728,9 +727,15 @@ bool ZMQComm::genMetadata(std::string& out) {
 
 #else // ZMQINSTALLED
 
+void ZMQComm::_open(bool call_base) {
+  BEFORE_OPEN_DEF;
+  UNINSTALLED_ERROR(ZMQ);
+  AFTER_OPEN_DEF;
+}
+
 void ZMQComm::_close(bool call_base) {
-  if (call_base)
-    CommBase::_close(true);
+  BEFORE_CLOSE_DEF;
+  AFTER_CLOSE_DEF;
 }
 
 #endif // ZMQINSTALLED

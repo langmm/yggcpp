@@ -236,8 +236,7 @@ ForkComm::ForkComm(const std::string name, const Address &address,
     forktype = FORK_BROADCAST;
   else if (flgs & COMM_FLAG_FORK_COMPOSITE)
     forktype = FORK_COMPOSITE;
-  if (!global_comm)
-    init();
+  ADD_CONSTRUCTOR_OPEN(ForkComm)
 }
 ForkComm::ForkComm(const std::string name, const DIRECTION dirn,
 		   int flgs, const COMM_TYPE commtype, size_t ncomm) :
@@ -248,7 +247,8 @@ ForkComm::ForkComm(utils::Address &addr, const DIRECTION dirn,
 
 ADD_DESTRUCTOR_DEF(ForkComm, CommBase, , )
 
-void ForkComm::init() {
+void ForkComm::_open(bool call_base) {
+  BEFORE_OPEN_DEF;
   std::vector<std::string> names;
   std::vector<std::string> addrs;
   if (!this->name.empty())
@@ -287,17 +287,16 @@ void ForkComm::init() {
       new_address += (*it)->getAddress();
     }
     this->address.address(new_address);
-    if (flags & COMM_FLAG_SET_OPP_ENV)
-      setOppEnv();
   }
+  AFTER_OPEN_DEF;
 }
 
 void ForkComm::_close(bool call_base) {
+  BEFORE_CLOSE_DEF;
   if (handle && !global_comm) {
     handle->close();
   }
-  if (call_base)
-    CommBase::_close(true);
+  AFTER_CLOSE_DEF;
 }
 
 int ForkComm::comm_nmsg(DIRECTION dir) const {

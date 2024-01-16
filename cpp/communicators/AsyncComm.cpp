@@ -500,19 +500,7 @@ AsyncComm::AsyncComm(const std::string& name,
   response_metadata(),
   request_commtype(reqtype), response_commtype(restype),
   request_flags(reqflags), response_flags(resflags) {
-#ifdef _MSC_VER
-  if (type == FILE_COMM) {
-    utils::YggLogThrowError("AsyncComm: Cannot create an asynchronous communicator that uses a file when compiling with MSVC");
-  }
-#endif // _MSC_VER
-  if (type == SERVER_COMM)
-    this->direction = RECV;
-  else if (type == CLIENT_COMM)
-    this->direction = SEND;
-  if (!global_comm) {
-    handle = new AsyncBacklog(this);
-  }
-  CommBase::init();
+  ADD_CONSTRUCTOR_OPEN(AsyncComm);
 }
 AsyncComm::AsyncComm(const std::string& name,
 		     const DIRECTION direction,
@@ -530,9 +518,25 @@ AsyncComm::AsyncComm(utils::Address &addr,
 	    reqtype, restype, reqflags, resflags) {}
 ADD_DESTRUCTOR_DEF(AsyncComm, CommBase, , )
 
+void AsyncComm::_open(bool call_base) {
+  BEFORE_OPEN_DEF;
+#ifdef _MSC_VER
+  if (type == FILE_COMM) {
+    utils::YggLogThrowError("AsyncComm: Cannot create an asynchronous communicator that uses a file when compiling with MSVC");
+  }
+#endif // _MSC_VER
+  if (type == SERVER_COMM)
+    this->direction = RECV;
+  else if (type == CLIENT_COMM)
+    this->direction = SEND;
+  if (!global_comm) {
+    handle = new AsyncBacklog(this);
+  }
+  AFTER_OPEN_DEF;
+}
 void AsyncComm::_close(bool call_base) {
-  if (call_base)
-    CommBase::_close(true);
+  BEFORE_CLOSE_DEF;
+  AFTER_CLOSE_DEF;
 }
 
 int AsyncComm::comm_nmsg(DIRECTION dir) const {
@@ -620,7 +624,7 @@ void AsyncComm::set_timeout_recv(int64_t new_timeout) {
   //   handle->comm->set_timeout_recv(new_timeout);
   CommBase::set_timeout_recv(new_timeout);
 }
-int64_t AsyncComm::get_timeout_recv() {
+int64_t AsyncComm::get_timeout_recv() const {
   if (global_comm) {
     return global_comm->get_timeout_recv();
   }

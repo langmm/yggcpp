@@ -69,8 +69,6 @@ public:
     using Comm_t::recv;
 
 protected:
-    /** \copydoc YggInterface::communicator::Comm_t::init */
-    void init();
     /** \copydoc YggInterface::communicator::Comm_t::send_single() */
     int send_single(utils::Header& header) override;
 
@@ -78,9 +76,6 @@ protected:
     long recv_single(utils::Header& header) override;
   
     WORKER_METHOD_DECS(IPCComm);
-#else // IPCINSTALLED
-    /** \copydoc YggInterface::communicator::Comm_t::init */
-    void init() { UNINSTALLED_ERROR(IPC); }
 #endif // IPCINSTALLED
 
 private:

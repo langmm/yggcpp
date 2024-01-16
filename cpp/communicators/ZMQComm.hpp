@@ -276,8 +276,6 @@ public:
     using Comm_t::recv;
 
 protected:
-    /** \copydoc YggInterface::communicator::Comm_t::init */
-    void init();
     /** \copydoc YggInterface::communicator::CommBase::send_single */
     int send_single(utils::Header& msg) override;
     /** \copydoc YggInterface::communicator::CommBase::recv_single */

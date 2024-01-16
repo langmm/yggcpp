@@ -431,7 +431,7 @@ namespace YggInterface {
       /** \copydoc YggInterface::communicator::Comm_t::set_timeout_recv */
       void set_timeout_recv(int64_t new_timeout) override;
       /** \copydoc YggInterface::communicator::Comm_t::get_timeout_recv */
-      int64_t get_timeout_recv() override;
+      int64_t get_timeout_recv() const override;
       /** \copydoc YggInterface::utils::LogBase::logClass */
       std::string logClass() const override;
       

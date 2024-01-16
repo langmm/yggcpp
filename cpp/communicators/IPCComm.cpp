@@ -7,8 +7,7 @@ IPCComm::IPCComm(const std::string& name, const Address &address,
 		 DIRECTION direction, int flgs,
 		 const COMM_TYPE type) :
   CommBase(name, address, direction, type, flgs) {
-  if (!global_comm)
-    init();
+  ADD_CONSTRUCTOR_OPEN(IPCComm)
 }
 
 ADD_CONSTRUCTORS_DEF(IPCComm)
@@ -32,52 +31,53 @@ int IPCComm::count_queues() {
   return out;
 }
 
-void IPCComm::init() {
-    updateMaxMsgSize(2048);
-    int key = 0;
-    bool created = ((!address.valid()) || address.address().empty());
-    if (created) {
-      CREATE_KEY(IPCComm);
-      address.address(std::to_string(key));
-    } else {
-      key = this->address.key();
-    }
-    if (name.empty()) {
-        this->name = "tempnewIPC." + this->address.address();
-    } else {
-        this->name = name;
-    }
-    int *fid = new int;
-    if (created)
-      fid[0] = msgget(key, (IPC_CREAT | 0777));
-    else
-      fid[0] = msgget(key, 0600);
-    if (fid[0] < 0) {
-      log_error() << "IPCComm::init: msgget(" << key << ") "
-		  << "created(" << created << "), "
-		  << "ret(" << fid[0] << "), errno(" << errno << "): "
-		  << strerror(errno) << std::endl;
-      delete fid;
-      fid = nullptr;
-      throw std::runtime_error("IPCComm::init: Error in msgget");
-    }
-    handle = fid;
-    track_key(address.key());
-    log_debug() << "init: address = " << this->address.address() << ", created = " << created << std::endl;
-    CommBase::init();
+void IPCComm::_open(bool call_base) {
+  BEFORE_OPEN_DEF;
+  updateMaxMsgSize(2048);
+  int key = 0;
+  bool created = ((!address.valid()) || address.address().empty());
+  if (created) {
+    CREATE_KEY(IPCComm);
+    address.address(std::to_string(key));
+  } else {
+    key = this->address.key();
+  }
+  if (name.empty()) {
+    this->name = "tempnewIPC." + this->address.address();
+  } else {
+    this->name = name;
+  }
+  int *fid = new int;
+  if (created)
+    fid[0] = msgget(key, (IPC_CREAT | 0777));
+  else
+    fid[0] = msgget(key, 0600);
+  if (fid[0] < 0) {
+    log_error() << "IPCComm::_open: msgget(" << key << ") "
+		<< "created(" << created << "), "
+		<< "ret(" << fid[0] << "), errno(" << errno << "): "
+		<< strerror(errno) << std::endl;
+    delete fid;
+    fid = nullptr;
+    throw std::runtime_error("IPCComm::_open: Error in msgget");
+  }
+  handle = fid;
+  track_key(address.key());
+  log_debug() << "IPCComm::_open: address = " << this->address.address() << ", created = " << created << std::endl;
+  AFTER_OPEN_DEF;
 }
 
 void IPCComm::_close(bool call_base) {
-    if (handle && !global_comm) {
-      bool close_comm = ((direction == RECV) ||
-			 (!(flags & (COMM_FLAG_INTERFACE |
-				     COMM_FLAG_WORKER))));
-      if (ctx->for_testing_)
-	close_comm = true;
-      remove_comm(close_comm);
-    }
-    if (call_base)
-      CommBase::_close(true);
+  BEFORE_CLOSE_DEF;
+  if (handle && !global_comm) {
+    bool close_comm = ((direction == RECV) ||
+		       (!(flags & (COMM_FLAG_INTERFACE |
+				   COMM_FLAG_WORKER))));
+    if (ctx->for_testing_)
+      close_comm = true;
+    remove_comm(close_comm);
+  }
+  AFTER_CLOSE_DEF;
 }
 
 ADD_KEY_TRACKER_DEFS(IPCComm)
@@ -183,9 +183,15 @@ WORKER_METHOD_DEFS(IPCComm)
 
 #else  /*IPCINSTALLED*/
 
+void IPCComm::_open(bool call_base) {
+  BEFORE_OPEN_DEF;
+  UNINSTALLED_ERROR(IPC);
+  AFTER_OPEN_DEF;
+}
+
 void IPCComm::_close(bool call_base) {
-  if (call_base)
-    CommBase::_close(true);
+  BEFORE_CLOSE_DEF;
+  AFTER_CLOSE_DEF;
 }
 
 #endif /*IPCINSTALLED*/

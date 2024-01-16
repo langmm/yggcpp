@@ -54,56 +54,55 @@ MPIComm::MPIComm(const std::string& name, const utils::Address& address,
 		 const DIRECTION direction, int flgs,
 		 const COMM_TYPE type) :
   CommBase(name, address, direction, type, flgs) {
-  if (!global_comm)
-    init();
+  ADD_CONSTRUCTOR_OPEN(MPIComm)
 }
 
 ADD_CONSTRUCTORS_DEF(MPIComm)
 
 #if defined(MPIINSTALLED) && defined(MPI_COMM_WORLD)
 
-void MPIComm::init() {
-    updateMaxMsgSize(2147483647);
-    assert(!handle);
-    if (!this->address.valid()) {
-      if (ctx->for_testing_)
-	  address.address(std::to_string(0));
-      else
-        throw std::runtime_error("No address specified for MPIComm constructor");
+void MPIComm::_open(bool call_base) {
+  BEFORE_OPEN_DEF;
+  updateMaxMsgSize(2147483647);
+  if (!this->address.valid()) {
+    if (ctx->for_testing_)
+      address.address(std::to_string(0));
+    else
+      throw std::runtime_error("No address specified for MPIComm constructor");
+  }
+  if (this->name.empty()) {
+    this->name = "tempinitMPI." + address.address();
+  }
+  handle = new mpi_registry_t(MPI_COMM_WORLD);
+  handle->procs.clear();
+  handle->tag = 0;
+  std::vector<std::string> adrs = YggInterface::utils::split(this->address.address(), ",");
+  addresses.emplace_back(this->address.address());
+  if (adrs.size() > 1) {
+    addresses[0].address(adrs[0]);
+    for (size_t i = 1; i < adrs.size(); i++) {
+      addresses.emplace_back(adrs[i]);
     }
-    if (this->name.empty()) {
-        this->name = "tempinitMPI." + address.address();
+  }
+  
+  size_t ibeg, iend;
+  
+  for (const auto &a : adrs) {
+    ibeg = a.find("[");
+    iend = a.find("]");
+    if (ibeg != std::string::npos) {
+      handle->procs.push_back(stoi(a.substr(ibeg+1, iend-ibeg-1)));
+    } else {
+      handle->procs.push_back(stoi(a));
     }
-    handle = new mpi_registry_t(MPI_COMM_WORLD);
-    handle->procs.clear();
-    handle->tag = 0;
-    std::vector<std::string> adrs = YggInterface::utils::split(this->address.address(), ",");
-    addresses.emplace_back(this->address.address());
-    if (adrs.size() > 1) {
-        addresses[0].address(adrs[0]);
-        for (size_t i = 1; i < adrs.size(); i++) {
-	    addresses.emplace_back(adrs[i]);
-        }
-    }
-
-    size_t ibeg, iend;
-
-    for (const auto &a : adrs) {
-        ibeg = a.find("[");
-        iend = a.find("]");
-        if (ibeg != std::string::npos) {
-            handle->procs.push_back(stoi(a.substr(ibeg+1, iend-ibeg-1)));
-        } else {
-            handle->procs.push_back(stoi(a));
-        }
-    }
-    CommBase::init();
+  }
+  AFTER_OPEN_DEF;
 }
 
 void MPIComm::_close(bool call_base) {
+  BEFORE_CLOSE_DEF;
   addresses.clear();
-  if (call_base)
-    CommBase::_close(true);
+  AFTER_CLOSE_DEF;
 }
 
 int MPIComm::mpi_comm_source_id() const {
@@ -217,9 +216,15 @@ WORKER_METHOD_DEFS(MPIComm)
 
 #else
 
+void MPIComm::_open(bool call_base) {
+  BEFORE_OPEN_DEF;
+  UNINSTALLED_ERROR(MPI);
+  AFTER_OPEN_DEF;
+}
+
 void MPIComm::_close(bool call_base) {
-  if (call_base)
-    CommBase::_close(true);
+  BEFORE_CLOSE_DEF;
+  AFTER_CLOSE_DEF;
 }
 
 #endif

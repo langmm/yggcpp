@@ -39,13 +39,12 @@ WrapComm::WrapComm(const std::string name,
 		   const utils::Address &address,
 		   const DIRECTION direction,
 		   int flgs, const COMM_TYPE type, size_t ncomm,
-		   const COMM_TYPE wraptyp, bool delay_init) :
+		   const COMM_TYPE wraptyp) :
   CommBase(name, address, direction, type, flgs | COMM_FLAG_WRAPPER),
   wraptype(wraptyp), wrapncomm(ncomm) {
   if (wraptype == NULL_COMM)
     wraptype = type;
-  if (!(delay_init || global_comm))
-    init();
+  ADD_CONSTRUCTOR_OPEN(WrapComm)
 }
 WrapComm::WrapComm(const std::string nme,
 		   const DIRECTION dirn, int flgs,
@@ -60,8 +59,9 @@ WrapComm::WrapComm(const utils::Address &addr,
   WrapComm("", addr, dirn, flgs, type, ncomm, wraptype) {}
 WrapComm::WrapComm(Comm_t* comm) :
   WrapComm(comm->getName(), utils::Address(comm->getAddress()),
-	   comm->getDirection(), comm->getFlags(),
-	   comm->getType(), 0, NULL_COMM, true) {
+	   comm->getDirection(),
+	   comm->getFlags() | COMM_FLAG_DELAYED_OPEN,
+	   comm->getType(), 0, NULL_COMM) {
   handle = comm;
   fromComm();
 }
@@ -72,13 +72,6 @@ WrapComm::WrapComm(Comm_t* comm) :
 //   return out;
 // }
 
-void WrapComm::init() {
-  handle = new_Comm_t(getDirection(), wraptype, getName(),
-		      utils::Address(getAddress()),
-		      getFlags(), wrapncomm);
-  fromComm();
-  CommBase::init();
-}
 void WrapComm::fromComm() {
   if (handle) {
     if (type == DEFAULT_COMM)
@@ -99,11 +92,19 @@ bool WrapComm::checkWrapped() const {
   return (handle != nullptr);
 }
 
+void WrapComm::_open(bool call_base) {
+  BEFORE_OPEN_DEF;
+  handle = new_Comm_t(getDirection(), wraptype, getName(),
+		      utils::Address(getAddress()),
+		      getFlags(), wrapncomm);
+  fromComm();
+  AFTER_OPEN_DEF;
+}
 void WrapComm::_close(bool call_base) {
+  BEFORE_CLOSE_DEF;
   if (this->handle)
     this->handle->close();
-  if (call_base)
-    CommBase::_close(true);
+  AFTER_CLOSE_DEF;
 }
 
 // public methods
@@ -115,7 +116,7 @@ WRAP_METHOD_NORET(set_timeout_recv, (int64_t new_timeout),
 		  (new_timeout),
 		  THROW_NO_HANDLE(set_timeout_recv), )
 WRAP_METHOD(get_timeout_recv, (), (),
-	    out = CommBase::get_timeout_recv(), int64_t, )
+	    out = CommBase::get_timeout_recv(), int64_t, const)
 WRAP_METHOD(wait_for_recv, (const int64_t& tout), (tout),
 	    out = -1, int, )
 WRAP_METHOD_NORET(close, (), (), , )

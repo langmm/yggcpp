@@ -2,6 +2,7 @@ import pytest
 import YggInterface
 from threading import Thread
 import numpy as np
+import pickle
 
 _commtypes = [
     YggInterface.COMM_TYPE.IPC_COMM,
@@ -120,6 +121,16 @@ class TestComm_t_Installed:
             assert comm_recv.datatype['type'] == msg_type
 
         return do_send_recv_wrapped
+
+    def test_pickle(self, commtype, require_installed):
+        tmp = YggInterface.Comm_t(
+            "test", commtype=commtype, dont_open=True)
+        assert not tmp.is_open
+        x = pickle.dumps(tmp)
+        res = pickle.loads(x)
+        assert res == tmp
+        tmp.open()
+        assert tmp.is_open
 
     def test_is_comm_installed(self, commtype):
         assert YggInterface.is_comm_installed(commtype)

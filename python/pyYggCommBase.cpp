@@ -4,7 +4,11 @@
 #endif
 #include <Python.h>
 #include "communicators/CommBase.hpp"
+#include "communicators/comms.hpp"
 #include "utils/enums.hpp"
+
+static const char* PICKLE_VERSION_KEY = "_pickle_version";
+static int PICKLE_VERSION = 1;
 
 typedef struct {
     PyObject_HEAD
@@ -24,6 +28,7 @@ static PyObject* Comm_t_send_eof(PyObject* self, PyObject* arg);
 static PyObject* Comm_t_call(PyObject* self, PyObject* arg);
 static PyObject* Comm_t_set_timeout_recv(PyObject* self, PyObject* arg);
 static PyObject* Comm_t_wait_for_recv(PyObject* self, PyObject* arg);
+static PyObject* Comm_t_open(PyObject* self, PyObject* arg);
 static PyObject* Comm_t_close(PyObject* self, PyObject* arg);
 // static PyObject* Comm_t_create_worker(PyObject* self, PyObject* arg);
 // static PyObject* Comm_t_send_single(PyObject* self, PyObject* arg);
@@ -46,6 +51,9 @@ static PyObject* Comm_t_is_open_get(PyObject* self, void*);
 static PyObject* Comm_t_is_closed_get(PyObject* self, void*);
 static PyObject* Comm_t_n_msg_get(PyObject* self, void*);
 static PyObject* Comm_t_is_interface_get(PyObject* self, void*);
+static PyObject* Comm_t___getstate__(PyObject* self, PyObject*);
+static PyObject* Comm_t___setstate__(PyObject* self, PyObject* state);
+static PyObject* Comm_t_richcompare(PyObject *self, PyObject *other, int op);
 
 static PyObject* commMeta_new(PyTypeObject *type, PyObject* args, PyObject* kwds);
 static void commMeta_dealloc(PyObject* self);
@@ -113,7 +121,7 @@ static PyMethodDef commMeta_methods[] = {
 
 static PyTypeObject commMetaType = {
         PyVarObject_HEAD_INIT(NULL, 0)
-        "pyYggdrasil.CommMeta",    /* tp_name */
+        "YggInterface.CommMeta",   /* tp_name */
         sizeof(commMeta),          /* tp_basicsize */
         0,                         /* tp_itemsize */
         (destructor)commMeta_dealloc, /* tp_dealloc */
@@ -453,6 +461,7 @@ PyObject* commMeta_richcompare(PyObject *self, PyObject *other, int op) {
 
 static PyMethodDef Comm_t_methods[] = {
         {"send", (PyCFunction) Comm_t_send, METH_VARARGS, ""},
+        {"open", (PyCFunction) Comm_t_open, METH_NOARGS, ""},
         {"close", (PyCFunction) Comm_t_close, METH_NOARGS, ""},
         // {"create_worker", (PyCFunction) Comm_t_create_worker, METH_VARARGS, ""},
         // {"send_single", (PyCFunction) Comm_t_send_single, METH_VARARGS, ""},
@@ -462,6 +471,10 @@ static PyMethodDef Comm_t_methods[] = {
 	{"call", (PyCFunction) Comm_t_call, METH_VARARGS, ""},
         {"set_timeout_recv", (PyCFunction) Comm_t_set_timeout_recv, METH_VARARGS, ""},
         {"wait_for_recv", (PyCFunction) Comm_t_wait_for_recv, METH_VARARGS, ""},
+	{"__getstate__", (PyCFunction) Comm_t___getstate__, METH_NOARGS,
+	 "Pickle the Comm_t instance"},
+	{"__setstate__", (PyCFunction) Comm_t___setstate__, METH_O,
+	 "Un-pickle the Comm_t instance"},
         {NULL, NULL, 0, ""}  /* Sentinel */
 };
 
@@ -527,7 +540,7 @@ static PyGetSetDef Comm_t_properties[] = {
 
 static PyTypeObject Comm_tType = {
         PyVarObject_HEAD_INIT(NULL, 0)
-        "pyYggdrasil.Comm_t",      /* tp_name */
+        "YggInterface.Comm_t",     /* tp_name */
         sizeof(pyComm_t),          /* tp_basicsize */
         0,                         /* tp_itemsize */
         (destructor)Comm_t_dealloc, /* tp_dealloc */
@@ -549,7 +562,7 @@ static PyTypeObject Comm_tType = {
         "Comm_t object",           /* tp_doc */
         0,                         /* tp_traverse */
         0,                         /* tp_clear */
-        0,                         /* tp_richcompare */
+        Comm_t_richcompare,        /* tp_richcompare */
         0,                         /* tp_weaklistoffset */
         0,                         /* tp_iter */
         0,                         /* tp_iternext */
@@ -751,6 +764,7 @@ static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds) {
     char* name = NULL;
     PyObject* dirnPy = NULL;
     PyObject* datatypePy = NULL;
+    PyObject* metadataPy = NULL;
     PyObject* commtypePy = NULL;
     PyObject* recv_timeoutPy = NULL;
     PyObject* field_namesPy = NULL;
@@ -759,7 +773,7 @@ static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds) {
     PyObject* filterPy = NULL;
     PyObject* transformPy = NULL;
     int dirn = DIRECTION::SEND;
-    rapidjson::Document datatype;
+    rapidjson::Document datatype, metadata;
     int commtype = COMM_TYPE::DEFAULT_COMM;
     int flags = 0;
     unsigned int ncomm = 0;
@@ -775,9 +789,12 @@ static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds) {
     PyObject* request_commtypePy = NULL;
     PyObject* response_kwargs = NULL;
     PyObject* response_datatypePy = NULL;
+    PyObject* response_metadataPy = NULL;
     PyObject* response_commtypePy = NULL;
     PyObject* response_field_namesPy = NULL;
     PyObject* response_field_unitsPy = NULL;
+    PyObject* response_filterPy = NULL;
+    PyObject* response_transformPy = NULL;
     int request_commtype = COMM_TYPE::DEFAULT_COMM;
     int response_commtype = COMM_TYPE::DEFAULT_COMM;
     int request_flags = 0;
@@ -786,8 +803,11 @@ static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds) {
     int response_as_array = 0;
     std::vector<std::string> response_field_names;
     std::vector<std::string> response_field_units;
+    std::vector<PyObject*> response_filter;
+    std::vector<PyObject*> response_transform;
     int response_dirn = DIRECTION::NONE;
-    rapidjson::Document response_datatype;
+    rapidjson::Document response_datatype, response_metadata;
+    int dont_open = 0;
     static char const* kwlist[] = {
       "name",
       "address",
@@ -797,6 +817,7 @@ static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds) {
       "flags",
       "ncomm",
       "recv_timeout",
+      "metadata",
       "format_str",
       "as_array",
       "field_names",
@@ -807,31 +828,36 @@ static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds) {
       "request_commtype",
       "request_flags",
       "response_kwargs",
+      "dont_open",
       NULL
     };
     static char const* response_kwlist[] = {
       "datatype",
       "commtype",
       "flags",
+      "metadata",
       "format_str",
       "as_array",
       "field_names",
       "field_units",
-      "response_kwargs",
+      "filter",
+      "transform",
       NULL
     };
     s->comm = NULL;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ssO$OOiIOspOOOOiO",
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ssO$OOiIOOspOOOOOOiOp",
 				     (char**) kwlist,
 				     &name, &adr, &dirnPy, &datatypePy,
 				     &commtypePy, &flags, &ncomm,
-				     &recv_timeoutPy, &format_str,
+				     &recv_timeoutPy,
+				     &metadataPy, &format_str,
 				     &as_array, &field_namesPy,
 				     &field_unitsPy, &languagePy,
 				     &filterPy, &transformPy,
 				     &request_commtypePy,
-				     &request_flags, &response_kwargs))
+				     &request_flags, &response_kwargs,
+				     &dont_open))
       return -1;
 
     if(adr == NULL && name == NULL) {
@@ -841,6 +867,8 @@ static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds) {
     if (_parse_direction(dirnPy, dirn) < 0)
       return -1;
     if (_parse_schema(datatypePy, datatype) < 0)
+      return -1;
+    if (_parse_schema(metadataPy, metadata) < 0)
       return -1;
     if (_parse_commtype(commtypePy, commtype) < 0)
       return -1;
@@ -898,16 +926,21 @@ static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds) {
       }
       PyObject* response_args = PyTuple_New(0);
       if (!PyArg_ParseTupleAndKeywords(response_args, response_kwargs,
-				       "|$OOispOO", (char**) response_kwlist,
+				       "|$OOiOspOOOO", (char**) response_kwlist,
 				       &response_datatypePy,
 				       &response_commtypePy,
 				       &response_flags,
+				       &response_metadataPy,
 				       &response_format_str,
 				       &response_as_array,
 				       &response_field_namesPy,
-				       &response_field_unitsPy))
+				       &response_field_unitsPy,
+				       &response_filterPy,
+				       &response_transformPy))
 	return -1;
       if (_parse_schema(response_datatypePy, response_datatype) < 0)
+	return -1;
+      if (_parse_schema(response_metadataPy, response_metadata) < 0)
 	return -1;
       if (_parse_commtype(response_commtypePy, response_commtype) < 0)
 	return -1;
@@ -919,6 +952,17 @@ static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds) {
 			     response_field_unitsPy,
 			     response_field_units) < 0)
 	return -1;
+      if (_parse_doc_funcs("response filter",
+			   response_filterPy,
+			   response_filter) < 0)
+	return -1;
+      if (_parse_doc_funcs("response transform",
+			   response_transformPy,
+			   response_transform) < 0)
+	return -1;
+    }
+    if (dont_open) {
+      flags |= COMM_FLAG_DELAYED_OPEN;
     }
     try {
       s->comm = YggInterface::communicator::new_Comm_t(
@@ -937,6 +981,12 @@ static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds) {
     if (!datatype.IsNull()) {
       if (!s->comm->addSchema(datatype)) {
 	PyErr_SetString(PyExc_TypeError, "Invalid datatype");
+	return -1;
+      }
+    }
+    if (!metadata.IsNull()) {
+      if (!s->comm->addSchema(metadata, true)) {
+	PyErr_SetString(PyExc_TypeError, "Invalid metadata");
 	return -1;
       }
     }
@@ -976,6 +1026,25 @@ static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds) {
 	PyErr_SetString(PyExc_TypeError, "Invalid response datatype");
 	return -1;
       }
+    }
+    if (!response_metadata.IsNull()) {
+      if (!s->comm->addSchema(response_metadata, true,
+			      (DIRECTION)response_dirn)) {
+	PyErr_SetString(PyExc_TypeError, "Invalid response metadata");
+	return -1;
+      }
+    }
+    if ((!response_filter.empty()) &&
+	(!s->comm->setFilters(response_filter,
+			      (DIRECTION)response_dirn))) {
+      PyErr_SetString(PyExc_TypeError, "Error setting response filters");
+      return -1;
+    }
+    if ((!response_transform.empty()) &&
+	(!s->comm->setTransforms(response_transform,
+				 (DIRECTION)response_dirn))) {
+      PyErr_SetString(PyExc_TypeError, "Error setting response transforms");
+      return -1;
     }
     return 0;
 }
@@ -1034,9 +1103,21 @@ PyObject* Comm_t_recv(PyObject* self, PyObject*) {
     return out;
 }
 
+PyObject* Comm_t_open(PyObject* self, PyObject*) {
+  try {
+    ((pyComm_t*)self)->comm->open();
+    Py_RETURN_NONE;
+  } catch (...) {
+    return NULL;
+  }
+}
 PyObject* Comm_t_close(PyObject* self, PyObject*) {
+  try {
     ((pyComm_t*)self)->comm->close();
     Py_RETURN_NONE;
+  } catch (...) {
+    return NULL;
+  }
 }
 
 // PyObject* Comm_t_create_worker(PyObject* self, PyObject* arg) {
@@ -1124,6 +1205,161 @@ PyObject* Comm_t_wait_for_recv(PyObject* self, PyObject* arg) {
     wt = s->comm->wait_for_recv(tout);
     Py_END_ALLOW_THREADS
     return PyLong_FromLong(wt);
+}
+
+template<typename T>
+static PyObject* _get_pyfunc_array(const std::string& desc,
+				   std::vector<T*>& varVect) {
+  PyObject* out = PyList_New(varVect.size());
+  if (out == NULL)
+    return out;
+  for (size_t i = 0; i < varVect.size(); i++) {
+    PyObject* ival = varVect[i]->getPython();
+    if (!ival) {
+      PyErr_Format(PyExc_TypeError, "%s value %ld is not a Python callable",
+		   desc.c_str(), i);
+      Py_DECREF(out);
+      return NULL;
+    }
+    Py_INCREF(ival);
+    if (PyList_SetItem(out, i, ival) < 0) {
+      Py_DECREF(out);
+      return NULL;
+    }
+  }
+  return out;
+}
+
+static PyObject* Comm_t___getstate__(PyObject* self, PyObject*) {
+  pyComm_t* s = (pyComm_t*)self;
+  if (s->comm->is_open()) {
+    PyErr_Format(PyExc_TypeError, "Cannot pickle an open communicator");
+    return NULL;
+  }
+  PyObject* metadataPy = s->comm->getMetadata().metadata.GetPythonObjectRaw();
+  PyObject* filterPy = _get_pyfunc_array("filter",
+					 s->comm->getMetadata().filters);
+  PyObject* transformPy = _get_pyfunc_array("transform",
+					    s->comm->getMetadata().transforms);
+  if (metadataPy == NULL || filterPy == NULL || transformPy == NULL)
+    return NULL;
+  PyObject *ret = Py_BuildValue("{sssssisisislsisOsOsOsi}",
+				"name", s->comm->getName().c_str(),
+				"address", s->comm->getAddress().c_str(),
+				"direction", static_cast<int>(s->comm->getDirection()),
+				"commtype", static_cast<int>(s->comm->getCommType()),
+				"flags", s->comm->getFlags(),
+				"recv_timeout", static_cast<long>(s->comm->get_timeout_recv()),
+				"language", static_cast<int>(s->comm->getLanguage()),
+				"metadata", metadataPy,
+				"filter", filterPy,
+				"transform", transformPy,
+				PICKLE_VERSION_KEY, PICKLE_VERSION);
+  if (ret != NULL && (s->comm->getFlags() & (COMM_FLAG_CLIENT | COMM_FLAG_SERVER))) {
+    YggInterface::communicator::RPCComm* rpc_comm = dynamic_cast<YggInterface::communicator::RPCComm*>(s->comm);
+    YggInterface::communicator::RequestList& req = rpc_comm->getRequests();
+    PyObject* res_metadataPy = req.response_metadata.metadata.GetPythonObjectRaw();
+    PyObject* res_filterPy = _get_pyfunc_array("response filter",
+					       req.response_metadata.filters);
+    PyObject* res_transformPy = _get_pyfunc_array("response transform",
+						  req.response_metadata.transforms);
+    if (res_metadataPy == NULL || res_filterPy == NULL ||
+	res_transformPy == NULL)
+      return NULL;
+    PyObject* res_kws = Py_BuildValue("{sisisOsOsO}",
+				      "commtype", static_cast<int>(req.restype),
+				      "flags", req.response_flags,
+				      "metadata", res_metadataPy,
+				      "filter", res_filterPy,
+				      "transform", res_transformPy);
+    if (PyDict_SetItemString(ret, "response_kwargs", res_kws) < 0) {
+      Py_DECREF(ret);
+      Py_DECREF(res_kws);
+      return NULL;
+    }
+    Py_DECREF(res_kws);
+    PyObject* flagsPy = PyLong_FromLong(static_cast<long>(s->comm->getFlags() & req.response_flags));
+    if (PyDict_SetItemString(ret, "flags", flagsPy) < 0) {
+      Py_DECREF(ret);
+      Py_DECREF(flagsPy);
+      return NULL;
+    }
+    Py_DECREF(flagsPy);
+    PyObject* req_commtypePy = PyLong_FromLong(static_cast<long>(rpc_comm->wraptype));
+    if (PyDict_SetItemString(ret, "request_commtype", req_commtypePy) < 0) {
+      Py_DECREF(ret);
+      Py_DECREF(req_commtypePy);
+      return NULL;
+    }
+    Py_DECREF(req_commtypePy);
+    PyObject* req_flagsPy = PyLong_FromLong(static_cast<long>(s->comm->getFlags()));
+    if (PyDict_SetItemString(ret, "request_flags", req_flagsPy) < 0) {
+      Py_DECREF(ret);
+      Py_DECREF(req_flagsPy);
+      return NULL;
+    }
+    Py_DECREF(req_flagsPy);
+  }
+  return ret;
+}
+
+static PyObject* Comm_t___setstate__(PyObject* self, PyObject* state) {
+  if (!PyDict_CheckExact(state)) {
+    PyErr_SetString(PyExc_ValueError, "Pickled object is not a dict.");
+    return NULL;
+  }
+  /* Version check. */
+  PyObject *temp = PyDict_GetItemString(state, PICKLE_VERSION_KEY);
+  if (temp == NULL) {
+    PyErr_Format(PyExc_KeyError, "No \"%s\" in pickled dict.",
+		 PICKLE_VERSION_KEY);
+    return NULL;
+  }
+  int pickle_version = (int) PyLong_AsLong(temp);
+  if (pickle_version != PICKLE_VERSION) {
+    PyErr_Format(PyExc_ValueError,
+		 "Pickle version mismatch. Got version %d but expected version %d.",
+		 pickle_version, PICKLE_VERSION);
+    return NULL;
+  }
+  if (PyDict_DelItemString(state, PICKLE_VERSION_KEY) < 0) {
+    return NULL;
+  }
+  if (PyDict_SetItemString(state, "dont_open", Py_True) < 0) {
+    return NULL;
+  }
+  PyObject* args = PyTuple_New(0);
+  if (Comm_t_init(self, args, state) < 0)
+    return NULL;
+  Py_DECREF(args);
+  Py_RETURN_NONE;
+}
+
+static PyObject* Comm_t_richcompare(PyObject *self, PyObject *other, int op) {
+  switch (op) {
+  case (Py_EQ):
+  case (Py_NE): {
+    pyComm_t* s = (pyComm_t*)self;
+    if (!PyObject_IsInstance(other, (PyObject*)(&Comm_tType))) {
+      if (op == Py_EQ) {
+	Py_RETURN_FALSE;
+      } else {
+	Py_RETURN_TRUE;
+      }
+    }
+    pyComm_t* v = (pyComm_t*)other;
+    if ((op == Py_EQ) &&
+	(*(s->comm) == *(v->comm))) {
+      Py_RETURN_TRUE;
+    } else {
+      Py_RETURN_FALSE;
+    }
+  }
+  default: {
+    Py_INCREF(Py_NotImplemented);
+    return Py_NotImplemented;
+  }
+  }
 }
 
 // PyObject* Comm_t_getType(pyComm_t* self) {

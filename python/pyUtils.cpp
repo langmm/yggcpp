@@ -64,9 +64,10 @@ static int register_enum(PyObject* dict,
   for (typename std::map<const T, const std::string>::const_iterator it = map.cbegin();
        it != map.cend(); it++) {
     std::string iname = prefix + it->second + suffix;
-    if (PyDict_SetItemString(dict, iname.c_str(),
-			     PyLong_FromLong(it->first)) < 0)
+    PyObject* ival = PyLong_FromLong(it->first);
+    if (PyDict_SetItemString(dict, iname.c_str(), ival) < 0)
       return -1;
+    Py_DECREF(ival);
   }
   return 0;
 }

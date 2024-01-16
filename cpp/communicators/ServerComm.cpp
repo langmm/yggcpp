@@ -14,13 +14,20 @@ ServerComm::ServerComm(const std::string& nme, const utils::Address& addr,
   RPCComm(nme, addr,
 	  flgs | COMM_FLAG_SERVER | COMM_FLAG_ALWAYS_SEND_HEADER,
 	  RECV, SEND, type, ncomm,
-	  reqtype, restype, reqflags, resflags) {}
+	  reqtype, restype, reqflags, resflags) {
+  ADD_CONSTRUCTOR_OPEN(ServerComm)
+}
 
 ADD_CONSTRUCTORS_RPC_DEF(ServerComm)
 
 std::string ServerComm::logClass() const {
   std::string out = "ServerComm";
   return out;
+}
+
+void ServerComm::_open(bool call_base) {
+  BEFORE_OPEN(RPCComm);
+  AFTER_OPEN(RPCComm);
 }
 
 bool ServerComm::signon(const Header& header) {

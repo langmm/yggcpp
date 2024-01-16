@@ -52,31 +52,32 @@ enum COMM_FLAG {
   COMM_FLAG_VALID           = 0x00000001, //!< Comm is initialized
   COMM_FLAG_GLOBAL          = 0x00000002, //!< Comm is global
   COMM_FLAG_WORKER          = 0x00000004, //!< Comm is a worker
-  COMM_FLAG_CLIENT          = 0x00000008, //!< Comm is a client
-  COMM_FLAG_SERVER          = 0x00000010, //!< Comm is a server
-  COMM_FLAG_CLIENT_RESPONSE = 0x00000020, //!< Comm is a client response
-  COMM_FLAG_SERVER_RESPONSE = 0x00000040, //!< Comm is a server response
-  COMM_FLAG_ALWAYS_SEND_HEADER   = 0x00000080, //!< Comm should always include a header in messages
-  COMM_FLAG_ALLOW_MULTIPLE_COMMS = 0x00000100, //!< Comm should connect in a way that allow multiple connections
-  COMM_FLAG_USED_SENT       = 0x00000200, //!< Comm has sent messages
-  COMM_FLAG_USED_RECV       = 0x00000400, //!< Comm has received messages
-  COMM_FLAG_EOF_SENT        = 0x00000800, //!< EOF has been sent
-  COMM_FLAG_EOF_RECV        = 0x00001000, //!< EOF has been received
-  COMM_FLAG_CLOSE_ON_EOF_RECV    = 0x00002000, //!< Comm will close on EOF recv
-  COMM_FLAG_CLOSE_ON_EOF_SEND    = 0x00004000, //!< Comm will close on EOF recv
-  COMM_FLAG_INTERFACE       = 0x00008000, //!< Comm is an interface comm
-  COMM_FLAG_DELETE          = 0x00010000, //!< Comm needs to be deleted
-  COMM_FLAG_ASYNC           = 0x00020000, //!< Comm is asynchronous
-  COMM_FLAG_ASYNC_WRAPPED   = 0x00040000, //!< Comm is wrapped by an asynchronous comm
-  COMM_FLAG_SET_OPP_ENV     = 0x00080000, //!< Set environment variables for opposite communicator
-  COMM_FLAG_WRAPPER         = 0x00100000, //!< Communicator is a wrapper
-  COMM_FLAG_FORK_CYCLE      = 0x00200000, //!< Forked communicator cycle
-  COMM_FLAG_FORK_BROADCAST  = 0x00400000, //!< Forked communicator broadcast
-  COMM_FLAG_FORK_COMPOSITE  = 0x00800000, //!< Forked communicator composite
-  COMM_FLAG_FORK_TINE       = 0x01000000, //!< Forked communicator tine.
-  FILE_FLAG_APPEND          = 0x02000000, //!< Append sent messages to the end of the file
-  FILE_FLAG_BINARY          = 0x04000000, //!< Open file in binary mode
-  FILE_FLAG_READLINE        = 0x08000000  //!< Read file contents line by line
+  COMM_FLAG_DELAYED_OPEN    = 0x00000008, //!< Comm will not be opened when created
+  COMM_FLAG_CLIENT          = 0x00000010, //!< Comm is a client
+  COMM_FLAG_SERVER          = 0x00000020, //!< Comm is a server
+  COMM_FLAG_CLIENT_RESPONSE = 0x00000040, //!< Comm is a client response
+  COMM_FLAG_SERVER_RESPONSE = 0x00000080, //!< Comm is a server response
+  COMM_FLAG_ALWAYS_SEND_HEADER   = 0x00000100, //!< Comm should always include a header in messages
+  COMM_FLAG_ALLOW_MULTIPLE_COMMS = 0x00000200, //!< Comm should connect in a way that allow multiple connections
+  COMM_FLAG_USED_SENT       = 0x00000400, //!< Comm has sent messages
+  COMM_FLAG_USED_RECV       = 0x00000800, //!< Comm has received messages
+  COMM_FLAG_EOF_SENT        = 0x00001000, //!< EOF has been sent
+  COMM_FLAG_EOF_RECV        = 0x00002000, //!< EOF has been received
+  COMM_FLAG_CLOSE_ON_EOF_RECV    = 0x00004000, //!< Comm will close on EOF recv
+  COMM_FLAG_CLOSE_ON_EOF_SEND    = 0x00008000, //!< Comm will close on EOF recv
+  COMM_FLAG_INTERFACE       = 0x00010000, //!< Comm is an interface comm
+  COMM_FLAG_DELETE          = 0x00020000, //!< Comm needs to be deleted
+  COMM_FLAG_ASYNC           = 0x00040000, //!< Comm is asynchronous
+  COMM_FLAG_ASYNC_WRAPPED   = 0x00080000, //!< Comm is wrapped by an asynchronous comm
+  COMM_FLAG_SET_OPP_ENV     = 0x00100000, //!< Set environment variables for opposite communicator
+  COMM_FLAG_WRAPPER         = 0x00200000, //!< Communicator is a wrapper
+  COMM_FLAG_FORK_CYCLE      = 0x00400000, //!< Forked communicator cycle
+  COMM_FLAG_FORK_BROADCAST  = 0x00800000, //!< Forked communicator broadcast
+  COMM_FLAG_FORK_COMPOSITE  = 0x01000000, //!< Forked communicator composite
+  COMM_FLAG_FORK_TINE       = 0x02000000, //!< Forked communicator tine.
+  FILE_FLAG_APPEND          = 0x04000000, //!< Append sent messages to the end of the file
+  FILE_FLAG_BINARY          = 0x08000000, //!< Open file in binary mode
+  FILE_FLAG_READLINE        = 0x10000000  //!< Read file contents line by line
 };
 
 enum LANGUAGE {
@@ -211,6 +212,7 @@ const std::map<const COMM_FLAG, const std::string> COMM_FLAG_map {
   {COMM_FLAG_VALID           , "VALID"},
   {COMM_FLAG_GLOBAL          , "GLOBAL"},
   {COMM_FLAG_WORKER          , "WORKER"},
+  {COMM_FLAG_DELAYED_OPEN    , "DELAYED_OPEN"},
   {COMM_FLAG_CLIENT          , "CLIENT"},
   {COMM_FLAG_SERVER          , "SERVER"},
   {COMM_FLAG_CLIENT_RESPONSE , "CLIENT_RESPONSE"},

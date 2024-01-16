@@ -1067,6 +1067,11 @@ namespace YggInterface {
        * @return Copy
        */
       virtual FilterBase* copy() const;
+      /**
+       * @brief Get the wrapped Python function/callable if present.
+       * @return Python object if wrapped, NULL otherwise.
+       */
+      virtual PyObject* getPython() const { return NULL; }
     };
     /**
      * @brief Base class for transforms that can be applied to messages
@@ -1091,6 +1096,11 @@ namespace YggInterface {
        * @return Copy
        */
       virtual TransformBase* copy() const;
+      /**
+       * @brief Get the wrapped Python function/callable if present.
+       * @return Python object if wrapped, NULL otherwise.
+       */
+      virtual PyObject* getPython() const { return NULL; }
     };
 
     /**
@@ -1191,6 +1201,10 @@ namespace YggInterface {
       bool operator()(const rapidjson::Document& doc) override;
       /** \copydoc YggInterface::utils::FilterBase::copy */
       FilterBase* copy() const override;
+#ifndef YGGDRASIL_DISABLE_PYTHON_C_API
+      /** \copydoc YggInterface::utils::FilterBase::getPython */
+      PyObject* getPython() const override { return this->func_; }
+#endif // YGGDRASIL_DISABLE_PYTHON_C_API
     };
     /**
      * @brief Transform based on a Python function
@@ -1213,6 +1227,10 @@ namespace YggInterface {
       bool operator()(rapidjson::Document& doc) override;
       /** \copydoc YggInterface::utils::TransformBase::copy */
       TransformBase* copy() const override;
+#ifndef YGGDRASIL_DISABLE_PYTHON_C_API
+      /** \copydoc YggInterface::utils::FilterBase::getPython */
+      PyObject* getPython() const override { return this->func_; }
+#endif // YGGDRASIL_DISABLE_PYTHON_C_API
     };
 
     /*!
