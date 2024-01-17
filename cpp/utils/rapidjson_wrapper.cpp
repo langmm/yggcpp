@@ -1287,39 +1287,48 @@ PyBaseFunc::PyBaseFunc(const PyObject* func) :
 PyBaseFunc::~PyBaseFunc() { Py_DECREF(func_); }
 bool PyBaseFunc::_call(const rapidjson::Document& doc,
 		       rapidjson::Document* out) {
-  PyObject* pyDoc = doc.GetPythonObjectRaw();
-  if (pyDoc == NULL) {
-    ygglog_throw_error("PyBaseFunc: Could not convert input document to Python");
-  }
-  PyObject* args = PyTuple_Pack(1, pyDoc);
-  if (args == NULL) {
-    Py_DECREF(pyDoc);
-    ygglog_throw_error("PyBaseFunc: Failed to create arguments tuple");
-  }
-  PyObject* resPy = PyObject_Call(func_, args, NULL);
-  Py_DECREF(args);
-  if (resPy == NULL) {
-    Py_DECREF(pyDoc);
-    ygglog_throw_error("PyBaseFunc: Error in function call");
-  } else if (out != nullptr) {
-    Py_DECREF(pyDoc);
-    pyDoc = resPy;
-    Py_INCREF(Py_True);
-    resPy = Py_True;
-  }
-  if (!PyBool_Check(resPy)) {
-    Py_DECREF(pyDoc);
+  bool res = false;
+  PyGILState_STATE gstate;
+  gstate = PyGILState_Ensure();
+  try {
+    PyObject* pyDoc = doc.GetPythonObjectRaw();
+    if (pyDoc == NULL) {
+      ygglog_throw_error("PyBaseFunc: Could not convert input document to Python");
+    }
+    PyObject* args = PyTuple_Pack(1, pyDoc);
+    if (args == NULL) {
+      Py_DECREF(pyDoc);
+      ygglog_throw_error("PyBaseFunc: Failed to create arguments tuple");
+    }
+    PyObject* resPy = PyObject_Call(func_, args, NULL);
+    Py_DECREF(args);
+    if (resPy == NULL) {
+      Py_DECREF(pyDoc);
+      ygglog_throw_error("PyBaseFunc: Error in function call");
+    } else if (out != nullptr) {
+      Py_DECREF(pyDoc);
+      pyDoc = resPy;
+      Py_INCREF(Py_True);
+      resPy = Py_True;
+    }
+    if (!PyBool_Check(resPy)) {
+      Py_DECREF(pyDoc);
+      Py_DECREF(resPy);
+      ygglog_throw_error("PyBaseFunc: Result is not a boolean.");
+    }
+    res = (resPy == Py_True);
     Py_DECREF(resPy);
-    ygglog_throw_error("PyBaseFunc: Result is not a boolean.");
-  }
-  bool res = (resPy == Py_True);
-  Py_DECREF(resPy);
-  if (out != nullptr &&
-      !out->SetPythonObjectRaw(pyDoc, out->GetAllocator())) {
+    if (out != nullptr &&
+	!out->SetPythonObjectRaw(pyDoc, out->GetAllocator())) {
+      Py_DECREF(pyDoc);
+      ygglog_throw_error("PyBaseFunc: Error setting document from Python");
+    }
     Py_DECREF(pyDoc);
-    ygglog_throw_error("PyBaseFunc: Error setting document from Python");
+    PyGILState_Release(gstate);
+  } catch (...) {
+    PyGILState_Release(gstate);
+    ygglog_throw_error("PyBaseFunc: Caught");
   }
-  Py_DECREF(pyDoc);
   return res;
 }
 #else

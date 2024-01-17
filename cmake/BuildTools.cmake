@@ -17,6 +17,7 @@ function(set_environment_vars)
 	  list(APPEND ARGS_EXISTING "${ARGS_KEYPREFIX}${ikey}"
 	       "$ENV{${ikey}}")
 	endif()
+	string(REPLACE ";" " " ival "${ival}")
 	set(ENV{${ikey}} "${ival}")
       endif()
       string(SUBSTRING "${x}" ${KEYPREFIX_LENGTH} -1 ikey)
@@ -29,6 +30,7 @@ function(set_environment_vars)
     if (ARGS_EXISTING)
       list(APPEND ARGS_EXISTING "${ARGS_KEYPREFIX}${ikey}" "$ENV{${ikey}}")
     endif()
+    string(REPLACE ";" " " ival "${ival}")
     set(ENV{${ikey}} "${ival}")
   endif()
 endfunction()
@@ -43,12 +45,12 @@ function(add_custom_command_env target)
   endif()
   configure_file(
     ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/CMakeAddFortranSubdirectory/execute_env.cmake.in
-    ${CMAKE_CURRENT_BINARY_DIR}/execute_env.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/execute_env.cmake
     @ONLY)
   if (ARGS_OUTPUT)
     add_custom_command(
       OUTPUT ${ARGS_OUTPUT}
-      COMMAND ${CMAKE_COMMAND} ARGS -P ${CMAKE_CURRENT_BINARY_DIR}/execute_env.cmake.in
+      COMMAND ${CMAKE_COMMAND} ARGS -P ${CMAKE_CURRENT_BINARY_DIR}/execute_env.cmake
       ${ARGS_UNPARSED_ARGUMENTS})
     add_custom_target(
       ${target} ALL
@@ -56,7 +58,7 @@ function(add_custom_command_env target)
   else()
     add_custom_target(
       ${target} ALL
-      COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/execute_env.cmake.in
+      COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/execute_env.cmake
       ${ARGS_UNPARSED_ARGUMENTS})
   endif()
 endfunction()

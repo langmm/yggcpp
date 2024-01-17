@@ -710,9 +710,7 @@ static int _parse_doc_funcs(const std::string& desc, PyObject* varPy,
 			    std::vector<PyObject*>& varVect) {
   if (varPy == NULL)
     return 0;
-  if (PyCallable_Check(varPy)) {
-    varVect.push_back(varPy);
-  } else if (PySequence_Check(varPy)) {
+  if (PySequence_Check(varPy)) {
     for (Py_ssize_t i = 0; i < PySequence_Size(varPy); i++) {
       PyObject* item = PySequence_GetItem(varPy, i);
       if (item == NULL)
@@ -723,6 +721,9 @@ static int _parse_doc_funcs(const std::string& desc, PyObject* varPy,
       }
       Py_DECREF(item);
     }
+  } else if (PyCallable_Check(varPy)) {
+    Py_INCREF(varPy);
+    varVect.push_back(varPy);
   } else {
     PyErr_Format(PyExc_TypeError, "%s value is not callable", desc.c_str());
     return -1;
@@ -1151,11 +1152,14 @@ PyObject* Comm_t_str(PyObject* self) {
 }
 
 PyObject* Comm_t_send_eof(PyObject* self, PyObject*) {
-  PyObject* out = NULL;
+  int out = -1;
   Py_BEGIN_ALLOW_THREADS
-  out = PyLong_FromLong(((pyComm_t*)self)->comm->send_eof());
+  out = ((pyComm_t*)self)->comm->send_eof();
   Py_END_ALLOW_THREADS
-  return out;
+  if (out < 0) {
+    Py_RETURN_FALSE;
+  }
+  Py_RETURN_TRUE;
 }
 
 static PyObject* Comm_t_call(PyObject* self, PyObject* arg) {

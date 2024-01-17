@@ -27,6 +27,17 @@ _testdata = [
 ]
 
 
+def example_filter(msg):
+    print("MSG")
+    return (msg == 1)
+
+
+def example_transform(msg):
+    if not (isinstance(msg, int) and msg < 4):
+        raise Exception
+    return str(msg)
+
+
 class TestComm_t_Installed:
     r"""Tests for when a commtype is installed."""
 
@@ -214,6 +225,92 @@ class TestComm_t_Installed:
         msg = "Test Message"
         assert comm_send.send(msg)
         assert comm_recv.recv() == (True, msg)
+
+    def test_send_recv_filter_recv(self, commtype, require_installed):
+        comm_recv = YggInterface.Comm_t(
+            "test", commtype=commtype,
+            direction=YggInterface.DIRECTION.RECV,
+            filter=example_filter,
+            flags=YggInterface.COMM_FLAG.COMM_FLAG_ASYNC)
+        comm_send = YggInterface.Comm_t(
+            "test", comm_recv.address, commtype=commtype,
+            direction=YggInterface.DIRECTION.SEND,
+            flags=(YggInterface.COMM_FLAG.COMM_FLAG_INTERFACE |
+                   YggInterface.COMM_FLAG.COMM_FLAG_ASYNC))
+        assert comm_send.send(0)
+        assert comm_send.send(1)
+        assert comm_send.send(2)
+        assert comm_send.send_eof()
+        assert comm_recv.recv() == (True, 0)
+        assert comm_recv.recv() == (True, 2)
+        assert comm_recv.recv() == (False, None)
+        comm_send.close()
+        comm_recv.close()
+
+    def test_send_recv_filter_send(self, commtype, require_installed):
+        comm_recv = YggInterface.Comm_t(
+            "test", commtype=commtype,
+            direction=YggInterface.DIRECTION.RECV,
+            flags=YggInterface.COMM_FLAG.COMM_FLAG_ASYNC)
+        comm_send = YggInterface.Comm_t(
+            "test", comm_recv.address, commtype=commtype,
+            direction=YggInterface.DIRECTION.SEND,
+            filter=[example_filter],
+            flags=(YggInterface.COMM_FLAG.COMM_FLAG_INTERFACE |
+                   YggInterface.COMM_FLAG.COMM_FLAG_ASYNC))
+        assert comm_send.send(0)
+        assert comm_send.send(1)
+        assert comm_send.send(2)
+        assert comm_send.send_eof()
+        assert comm_recv.recv() == (True, 0)
+        assert comm_recv.recv() == (True, 2)
+        assert comm_recv.recv() == (False, None)
+        comm_send.close()
+        comm_recv.close()
+
+    def test_send_recv_transform_recv(self, commtype, require_installed):
+        comm_recv = YggInterface.Comm_t(
+            "test", commtype=commtype,
+            direction=YggInterface.DIRECTION.RECV,
+            transform=example_transform,
+            flags=YggInterface.COMM_FLAG.COMM_FLAG_ASYNC)
+        comm_send = YggInterface.Comm_t(
+            "test", comm_recv.address, commtype=commtype,
+            direction=YggInterface.DIRECTION.SEND,
+            flags=(YggInterface.COMM_FLAG.COMM_FLAG_INTERFACE |
+                   YggInterface.COMM_FLAG.COMM_FLAG_ASYNC))
+        assert comm_send.send(0)
+        assert comm_send.send(1)
+        assert comm_send.send(2)
+        assert comm_send.send_eof()
+        assert comm_recv.recv() == (True, "0")
+        assert comm_recv.recv() == (True, "1")
+        assert comm_recv.recv() == (True, "2")
+        assert comm_recv.recv() == (False, None)
+        comm_send.close()
+        comm_recv.close()
+
+    def test_send_recv_transform_send(self, commtype, require_installed):
+        comm_recv = YggInterface.Comm_t(
+            "test", commtype=commtype,
+            direction=YggInterface.DIRECTION.RECV,
+            flags=YggInterface.COMM_FLAG.COMM_FLAG_ASYNC)
+        comm_send = YggInterface.Comm_t(
+            "test", comm_recv.address, commtype=commtype,
+            direction=YggInterface.DIRECTION.SEND,
+            transform=[example_transform],
+            flags=(YggInterface.COMM_FLAG.COMM_FLAG_INTERFACE |
+                   YggInterface.COMM_FLAG.COMM_FLAG_ASYNC))
+        assert comm_send.send(0)
+        assert comm_send.send(1)
+        assert comm_send.send(2)
+        assert comm_send.send_eof()
+        assert comm_recv.recv() == (True, "0")
+        assert comm_recv.recv() == (True, "1")
+        assert comm_recv.recv() == (True, "2")
+        assert comm_recv.recv() == (False, None)
+        comm_send.close()
+        comm_recv.close()
 
     def test_send_recv_long(self, comm_recv, do_send_recv):
         if comm_recv.maxMsgSize == 0:
