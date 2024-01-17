@@ -128,6 +128,8 @@ class TestComm_t_Installed:
         assert not tmp.is_open
         x = pickle.dumps(tmp)
         res = pickle.loads(x)
+        tmp.printStatus()
+        res.printStatus()
         assert res == tmp
         tmp.open()
         assert tmp.is_open
@@ -154,6 +156,13 @@ class TestComm_t_Installed:
         assert comm_send.address
         assert comm_send.direction == YggInterface.DIRECTION.SEND
         assert comm_send.commtype
+
+    def test_status(self, comm_send):
+        comm_send.printStatus()
+        comm_send.printStatus(nindent=1)
+        comm_send.printStatus(extra_lines_before=["before"])
+        comm_send.printStatus(extra_lines_after=["after"])
+        print(comm_send.get_status_message(nindent=1))
 
     def test_open_close(self, comm_send):
         assert comm_send.is_open

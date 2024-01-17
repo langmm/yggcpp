@@ -336,6 +336,34 @@ public:
      */
     bool operator==(const Comm_t& rhs) const;
 
+    /**
+     * @brief Get a set of lines that should be used for a status message.
+     * @param[in] nindent Number of indentations that should proceed lines.
+     * @param[in] extra_lines_before Lines that should proceed the status
+     *   message.
+     * @param[in] extra_lines_after Lines that should follow the status
+     *   message.
+     * @return Vector of lines in the message.
+     */
+    virtual std::vector<std::string> get_status_message(
+      unsigned int nindent=0,
+      const std::vector<std::string>& extra_lines_before={},
+      const std::vector<std::string>& extra_lines_after={}) const;
+
+    /**
+     * @brief Log a message describing the status of the communicator.
+     * @param[in] nindent Number of indentations that should proceed lines.
+     * @param[in] extra_lines_before Lines that should proceed the status
+     *   message.
+     * @param[in] extra_lines_after Lines that should follow the status
+     *   message.
+     * @return The logged message.
+     */
+    virtual std::string printStatus(
+      unsigned int nindent=0,
+      const std::vector<std::string>& extra_lines_before={},
+      const std::vector<std::string>& extra_lines_after={}) const;
+
     //////////////////
     // SEND METHODS //
     //////////////////
@@ -1001,6 +1029,11 @@ public:
       @returns flags.
      */
     int& getFlags() { return flags; }
+    /*!
+      @brief Get the bitwise flags associated with the communicator.
+      @returns flags.
+     */
+    int getFlags() const { return flags; }
     /*!
       @brief Get the communicator's name.
       @returns name.

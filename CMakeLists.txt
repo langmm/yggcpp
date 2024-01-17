@@ -40,6 +40,7 @@ option(WRAP_RAPIDJSON_FOR_DLL "Build yggdrasil using a wrapper for rapidjson to 
 option(YGG_LINK_PYTHON_TO_CPP "Link the Python extension to the C++ wrapper as a library" OFF)
 option(YGG_BUILD_DOCS "Build documentation (requires Doxygen)" OFF)
 option(DOXYGEN_CHECK_MISSING "Raise an error if documentation is missing" OFF)
+option(YGG_PATCH_MINGW53_THREAD "Patch the MinGW 5.3.0 thread header" ON)
 
 list(APPEND DEPS_PUBLIC_C_COMPILE_FLAGS ${ASAN_COMPILE_FLAGS})
 list(APPEND DEPS_PUBLIC_CXX_COMPILE_FLAGS ${ASAN_COMPILE_FLAGS})
@@ -269,7 +270,8 @@ endif()
 # hash to include both the p & x members of _M_thread.
 
 if (CONDA_PREFIX AND MINGW AND
-    CMAKE_CXX_COMPILER_VERSION STREQUAL "5.3.0")
+    CMAKE_CXX_COMPILER_VERSION STREQUAL "5.3.0"
+    AND YGG_PATCH_MINGW53_THREAD)
   cmake_path(APPEND CONDA_PREFIX Library mingw-w64 include c++ 5.3.0
              OUTPUT_VARIABLE MINGW_PATHS)
   message(STATUS "MINGW_PATHS = ${MINGW_PATHS}")
@@ -288,14 +290,14 @@ if (CONDA_PREFIX AND MINGW AND
       if (NOT EXISTS ${THREAD_H_PATCH})
         message(FATAL_ERROR "THREAD_H_PATCH does not exist (${THREAD_H_PATCH})")
       endif()
-      # execute_process(
-      #   COMMAND patch -b ${THREAD_H} ${THREAD_H_PATCH}
-      # 	TIMEOUT 15
-      # 	COMMAND_ECHO STDOUT
-      # 	RESULT_VARIABLE ret)
-      # if (NOT ret EQUAL 0)
-      #   message(FATAL_ERROR "Failed to apply MinGW thread patch")
-      # endif()
+      execute_process(
+        COMMAND patch -b ${THREAD_H} ${THREAD_H_PATCH}
+	TIMEOUT 15
+	COMMAND_ECHO STDOUT
+	RESULT_VARIABLE ret)
+      if (NOT ret EQUAL 0)
+        message(FATAL_ERROR "Failed to apply MinGW thread patch")
+      endif()
     endif()
   endif()
 endif()

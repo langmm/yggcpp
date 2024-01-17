@@ -54,6 +54,8 @@ static PyObject* Comm_t_is_interface_get(PyObject* self, void*);
 static PyObject* Comm_t___getstate__(PyObject* self, PyObject*);
 static PyObject* Comm_t___setstate__(PyObject* self, PyObject* state);
 static PyObject* Comm_t_richcompare(PyObject *self, PyObject *other, int op);
+static PyObject* Comm_t_get_status_message(PyObject *self, PyObject* args, PyObject* kwargs);
+static PyObject* Comm_t_printStatus(PyObject *self, PyObject* args, PyObject* kwargs);
 
 static PyObject* commMeta_new(PyTypeObject *type, PyObject* args, PyObject* kwds);
 static void commMeta_dealloc(PyObject* self);
@@ -475,6 +477,12 @@ static PyMethodDef Comm_t_methods[] = {
 	 "Pickle the Comm_t instance"},
 	{"__setstate__", (PyCFunction) Comm_t___setstate__, METH_O,
 	 "Un-pickle the Comm_t instance"},
+	{"get_status_message", (PyCFunction) Comm_t_get_status_message,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Get a list of lines describing the communicator's status"},
+	{"printStatus", (PyCFunction) Comm_t_printStatus,
+	 METH_VARARGS | METH_KEYWORDS,
+	 "Log the communicator's status"},
         {NULL, NULL, 0, ""}  /* Sentinel */
 };
 
@@ -1360,6 +1368,110 @@ static PyObject* Comm_t_richcompare(PyObject *self, PyObject *other, int op) {
     return Py_NotImplemented;
   }
   }
+}
+
+static int _set_vector_str(const std::string& desc,
+			   PyObject* src, std::vector<std::string>& dst) {
+  if (src == NULL)
+    return 0;
+  if (!PyList_Check(src)) {
+    PyErr_Format(PyExc_TypeError, "%s must be a list", desc.c_str());
+    return -1;
+  }
+  for (Py_ssize_t i = 0; i < PyList_Size(src); i++) {
+    PyObject* ielePy = PyList_GetItem(src, i);
+    if (ielePy == NULL)
+      return -1;
+    if (!PyUnicode_Check(ielePy)) {
+      PyErr_Format(PyExc_TypeError, "%s all elements must be strings (%d is not)",
+		   desc.c_str(), i);
+      return -1;
+    }
+    Py_ssize_t iele_len = 0;
+    const char* iele = PyUnicode_AsUTF8AndSize(ielePy, &iele_len);
+    if (!iele) {
+      return -1;
+    }
+    dst.emplace_back(iele, static_cast<size_t>(iele_len));
+  }
+  return 0;
+}
+
+static PyObject* _get_vector_str(const std::vector<std::string>& src) {
+  PyObject* out = PyList_New(src.size());
+  Py_ssize_t i = 0;
+  for (std::vector<std::string>::const_iterator it = src.begin();
+       it != src.end(); it++, i++) {
+    PyObject* iout = PyUnicode_FromStringAndSize(it->c_str(),
+						 static_cast<Py_ssize_t>(it->size()));
+    if (!iout) {
+      Py_DECREF(out);
+      return NULL;
+    }
+    if (PyList_SetItem(out, i, iout) < 0) {
+      Py_DECREF(out);
+      return NULL;
+    }
+  }
+  return out;
+}
+
+static PyObject* Comm_t_get_status_message(PyObject *self, PyObject* args, PyObject* kwargs) {
+  pyComm_t* s = (pyComm_t*)self;
+  int nindent = 0;
+  PyObject* extra_lines_beforePy = NULL;
+  PyObject* extra_lines_afterPy = NULL;
+  std::vector<std::string> extra_lines_before, extra_lines_after;
+  static char const* kwlist[] = {
+    "nindent",
+    "extra_lines_before",
+    "extra_lines_after",
+    NULL
+  };
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs,
+				   "|iOO", (char**)kwlist,
+				   &nindent,
+				   &extra_lines_beforePy,
+				   &extra_lines_afterPy))
+    return NULL;
+  if (_set_vector_str("extra_lines_before", extra_lines_beforePy,
+		      extra_lines_before) < 0)
+    return NULL;
+  if (_set_vector_str("extra_lines_after", extra_lines_afterPy,
+		      extra_lines_after) < 0)
+    return NULL;
+  std::vector<std::string> res = s->comm->get_status_message(
+    nindent, extra_lines_before, extra_lines_after);
+  return _get_vector_str(res);
+}
+static PyObject* Comm_t_printStatus(PyObject *self, PyObject* args, PyObject* kwargs) {
+  pyComm_t* s = (pyComm_t*)self;
+  int nindent = 0;
+  PyObject* extra_lines_beforePy = NULL;
+  PyObject* extra_lines_afterPy = NULL;
+  std::vector<std::string> extra_lines_before, extra_lines_after;
+  static char const* kwlist[] = {
+    "nindent",
+    "extra_lines_before",
+    "extra_lines_after",
+    NULL
+  };
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs,
+				   "|iOO", (char**)kwlist,
+				   &nindent,
+				   &extra_lines_beforePy,
+				   &extra_lines_afterPy))
+    return NULL;
+  if (_set_vector_str("extra_lines_before", extra_lines_beforePy,
+		      extra_lines_before) < 0)
+    return NULL;
+  if (_set_vector_str("extra_lines_after", extra_lines_afterPy,
+		      extra_lines_after) < 0)
+    return NULL;
+  std::string res = s->comm->printStatus(
+    nindent, extra_lines_before, extra_lines_after);
+  return PyUnicode_FromStringAndSize(res.c_str(),
+				     static_cast<Py_ssize_t>(res.size()));
 }
 
 // PyObject* Comm_t_getType(pyComm_t* self) {

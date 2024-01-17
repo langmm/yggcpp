@@ -39,16 +39,20 @@ bool example_transform(rapidjson::Document& msg) {
   std::cerr << "before init_data" << std::endl;				\
   init_data;								\
   std::cerr << "before send" << std::endl;				\
+  sComm.printStatus();							\
   EXPECT_GE(sComm.send_method send_args, 0);				\
   std::cerr << "after send" << std::endl;				\
+  sComm.printStatus();							\
   EXPECT_GT(rComm.wait_for_recv(1000000), 0);				\
   std::cerr << "before comm_nmsg" << std::endl;				\
   EXPECT_GT(rComm.comm_nmsg(), 0);					\
   std::cerr << "after comm_nmsg" << std::endl;				\
   rComm.set_timeout_recv(10000);					\
   std::cerr << "before recv" << std::endl;				\
+  rComm.printStatus();							\
   EXPECT_GE(rComm.recv_method recv_args, 0);				\
   std::cerr << "after recv" << std::endl;				\
+  rComm.printStatus();							\
   EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));			\
   std::cerr << "afterSendRecv" << std::endl;				\
   comp_data;								\

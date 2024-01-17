@@ -302,9 +302,6 @@ protected:
     Comm_t* create_worker_send(utils::Header& head) override;
     /** \copydoc YggInterface::communicator::CommBase::create_worker_recv */
     Comm_t* create_worker_recv(utils::Header& head) override;
-#else
-    /** \copydoc YggInterface::communicator::Comm_t::init */
-    void init() { UNINSTALLED_ERROR(ZMQ); }
 #endif
 
 private:

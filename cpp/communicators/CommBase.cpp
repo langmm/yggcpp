@@ -72,13 +72,66 @@ void Comm_t::_after_open() {
 }
 
 bool Comm_t::operator==(const Comm_t& rhs) const {
-  return (type == rhs.getType() &&
-	  name == rhs.getName() &&
+  return (getType() == rhs.getType() &&
+	  getName() == rhs.getName() &&
+	  getFlags() == rhs.getFlags() &&
 	  getAddress() == rhs.getAddress() &&
-	  direction == rhs.getDirection() &&
-	  metadata == rhs.getMetadata() &&
-	  timeout_recv == rhs.get_timeout_recv() &&
-	  language == rhs.getLanguage());
+	  getDirection() == rhs.getDirection() &&
+	  getMetadata() == rhs.getMetadata() &&
+	  get_timeout_recv() == rhs.get_timeout_recv() &&
+	  getLanguage() == rhs.getLanguage());
+}
+std::vector<std::string> Comm_t::get_status_message(
+  unsigned int nindent,
+  const std::vector<std::string>& extra_lines_before,
+  const std::vector<std::string>& extra_lines_after) const {
+  std::vector<std::string> out;
+  std::string prefix = "";
+  for (unsigned int i = 0; i < nindent; i++)
+    prefix += "    ";
+  out.push_back(prefix + name);
+  prefix += "    ";
+  for (std::vector<std::string>::const_iterator it = extra_lines_before.begin();
+       it != extra_lines_before.end(); it++)
+    out.push_back(prefix + *it);
+  out.push_back(prefix + "commtype  = " + COMM_TYPE_map.find(getType())->second);
+  out.push_back(prefix + "address   = " + getAddress());
+  out.push_back(prefix + "direction = " + DIRECTION_map.find(getDirection())->second);
+  out.push_back(prefix + "language  = " + LANGUAGE_map.find(getLanguage())->second);
+  out.push_back(prefix + "open      = " + std::to_string(is_open()));
+  out.push_back(prefix + "flags     = [");
+  std::string flagsPrefix = prefix + "    ";
+  for (std::map<const COMM_FLAG, const std::string>::const_iterator it = COMM_FLAG_map.begin();
+       it != COMM_FLAG_map.end(); it++) {
+    if (getFlags() & it->first)
+      out.push_back(flagsPrefix + it->second);
+  }
+  out.push_back(prefix + "]");
+  rapidjson::StringBuffer sb;
+  rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(sb, nullptr, 4 * (nindent + 2));
+  writer.SetIndent(' ', 4);
+  writer.SetYggdrasilMode(true);
+  getMetadata().metadata.Accept(writer);
+  out.push_back(prefix + "metadata = " + std::string(sb.GetString()));
+  for (std::vector<std::string>::const_iterator it = extra_lines_after.begin();
+       it != extra_lines_after.end(); it++)
+    out.push_back(prefix + *it);
+  return out;
+}
+
+std::string Comm_t::printStatus(
+  unsigned int nindent,
+  const std::vector<std::string>& extra_lines_before,
+  const std::vector<std::string>& extra_lines_after) const {
+  std::vector<std::string> lines = get_status_message(
+    nindent, extra_lines_before, extra_lines_after);
+  std::string out;
+  for (std::vector<std::string>::const_iterator it = lines.begin();
+       it != lines.end(); it++) {
+    out += *it + "\n";
+  }
+  log_info() << out;
+  return out;
 }
 
 bool Comm_t::create_global_scope_comm() {
