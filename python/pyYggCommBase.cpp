@@ -1266,13 +1266,13 @@ static PyObject* Comm_t___getstate__(PyObject* self, PyObject*) {
 					    s->comm->getMetadata().transforms);
   if (metadataPy == NULL || filterPy == NULL || transformPy == NULL)
     return NULL;
-  PyObject *ret = Py_BuildValue("{sssssisisislsisOsOsOsi}",
+  PyObject *ret = Py_BuildValue("{sssssisisisLsisOsOsOsi}",
 				"name", s->comm->getName().c_str(),
 				"address", s->comm->getAddress().c_str(),
 				"direction", static_cast<int>(s->comm->getDirection()),
 				"commtype", static_cast<int>(s->comm->getCommType()),
 				"flags", s->comm->getFlags(),
-				"recv_timeout", static_cast<long>(s->comm->get_timeout_recv()),
+				"recv_timeout", static_cast<long long>(s->comm->get_timeout_recv()),
 				"language", static_cast<int>(s->comm->getLanguage()),
 				"metadata", metadataPy,
 				"filter", filterPy,
