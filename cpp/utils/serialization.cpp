@@ -132,6 +132,10 @@ Metadata& Metadata::operator=(Metadata& rhs) {
   return *this;
 }
 bool Metadata::operator==(const Metadata& rhs) const {
+  std::cerr << "metadata==(" <<
+    (metadata == rhs.metadata) << ", " <<
+    (filters == rhs.filters) << ", " <<
+    (transforms == rhs.transforms) << ")" << std::endl;
   return ((metadata == rhs.metadata) &&
 	  (filters == rhs.filters) &&
 	  (transforms == rhs.transforms));

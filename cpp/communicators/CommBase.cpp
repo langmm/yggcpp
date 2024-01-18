@@ -72,6 +72,14 @@ void Comm_t::_after_open() {
 }
 
 bool Comm_t::operator==(const Comm_t& rhs) const {
+  std::cerr << "Comm_t==(" <<
+    (getType() == rhs.getType()) << ", " <<
+    (getName() == rhs.getName()) << ", " <<
+    (getFlags() == rhs.getFlags()) << ", " <<
+    (getAddress() == rhs.getAddress()) << ", " <<
+    (getDirection() == rhs.getDirection()) << ", " <<
+    (get_timeout_recv() == rhs.get_timeout_recv()) << ", " <<
+    (getLanguage() == rhs.getLanguage()) << ")" << std::endl;
   return (getType() == rhs.getType() &&
 	  getName() == rhs.getName() &&
 	  getFlags() == rhs.getFlags() &&
@@ -180,6 +188,7 @@ std::vector<std::string> Comm_t::get_status_message(
   out.push_back(prefix + "direction = " + DIRECTION_map.find(getDirection())->second);
   out.push_back(prefix + "language  = " + LANGUAGE_map.find(getLanguage())->second);
   out.push_back(prefix + "open      = " + std::to_string(is_open()));
+  out.push_back(prefix + "recv_tout = " + std::to_string(get_timeout_recv()));
   out.push_back(prefix + "flags     = [");
   std::string flagsPrefix = prefix + "    ";
   for (std::map<const COMM_FLAG, const std::string>::const_iterator it = COMM_FLAG_map.begin();

@@ -403,6 +403,7 @@ public:
   template <typename Handler>
   WRAP_METHOD(WValue, Accept, (Handler& handler, bool skip_yggdrasil=false),
 	       (handler, skip_yggdrasil), bool, const);
+  WRAP_METHOD(WValue, GetType, (), (), rapidjson::Type, const);
   WRAP_METHOD_SELF(WValue, SetNull, (), (), );
   WRAP_METHOD(WValue, IsNull, (), (), bool, const);
   WRAP_SET_GET(Bool, bool);
@@ -414,6 +415,13 @@ public:
   WRAP_SET_GET(Float, float);
   WRAP_METHOD(WValue, GetNElements, (), (), SizeType, const);
   WRAP_METHOD_CAST_CONST(WValue, GetShape, (), (), WValue, );
+  WRAP_METHOD(WValue, GetElement,
+	      (const SizeType index, WValue& dst, Allocator& allocator),
+	      (index, *(dst.val_), allocator), bool, const);
+  WRAP_METHOD(WValue, GetSubArray,
+	      (const SizeType index, const SizeType dim,
+	       WValue& dst, Allocator& allocator),
+	      (index, dim, *(dst.val_), allocator), bool, const);
   // String methods
   WRAP_METHOD(WValue, IsString, (), (), bool, const);
   WRAP_METHOD_SELF(WValue, SetString, (const Ch* s, SizeType length,
@@ -434,6 +442,7 @@ public:
   template<typename T>
   WRAP_METHOD_SELF(WValue, Set, (const T& data), (data), );
   // Scalar methods
+  WRAP_METHOD(WValue, IsScalar, (), (), bool, const);
   WRAP_METHOD_TEMP(WValue, GetScalar, (), (), T, const);
   WRAP_METHOD_TEMP(WValue, GetScalar,
 		   (const UnitsType data_units),
@@ -473,6 +482,7 @@ public:
 		   (data, precision, allocator,
 		    encoding, encoding_len), );
   // 1DArray
+  WRAP_METHOD(WValue, Is1DArray, (), (), bool, const);
   template<typename T>
   WRAP_METHOD(WValue, Get1DArray,
 	      (T*& data, SizeType& nelements,
@@ -508,6 +518,7 @@ public:
 					Allocator& allocator),
 		   (x, len, units_str, units_len, allocator), );
   // NDArray
+  WRAP_METHOD(WValue, IsNDArray, (), (), bool, const);
   template<typename T>
   WRAP_METHOD(WValue, GetNDArray,
 	      (T*& data, SizeType*& shape, SizeType& ndim,
@@ -551,6 +562,21 @@ public:
 		    const Ch* encoding=NULL, SizeType encoding_len=0),
 		   (x, precision, shape, ndim, allocator,
 		    encoding, encoding_len), );
+  template<typename T, SizeType N>
+  WValue& SetNDArray(const T (&x)[N], Allocator& allocator) {
+    SizeType shape[1] = { N };
+    return SetNDArray(&(x[0]), shape, 1, allocator);
+  }
+  template<typename T, SizeType M, SizeType N>
+  WValue& SetNDArray(const T (&x)[M][N], Allocator& allocator) {
+    SizeType shape[2] = { M, N };
+    return SetNDArray(&(x[0][0]), shape, 2, allocator);
+  }
+  template<typename T, SizeType L, SizeType M, SizeType N>
+  WValue& SetNDArray(const T (&x)[L][M][N], Allocator& allocator) {
+    SizeType shape[3] = { L, M, N };
+    return SetNDArray(&(x[0][0][0]), shape, 3, allocator);
+  }
   // Array methods
   WRAP_METHOD(WValue, IsArray, (), (), bool, const);
   WRAP_METHOD_SELF(WValue, SetArray, (), (), );

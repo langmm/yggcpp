@@ -461,8 +461,12 @@ PyObject* commMeta_richcompare(PyObject *self, PyObject *other, int op) {
 // Comm_t Wrapper
 //////////////////////////////////////////////////////////////
 
+#ifdef __GNUC__
+#if !defined(__MINGW64_VERSION_MAJOR) || (defined(__MINGW64_VERSION_MAJOR) && __MINGW64_VERSION_MAJOR > 5)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wcast-function-type"
+#endif
+#endif
 static PyMethodDef Comm_t_methods[] = {
         {"send", (PyCFunction) Comm_t_send, METH_VARARGS, ""},
         {"open", (PyCFunction) Comm_t_open, METH_NOARGS, ""},
@@ -487,6 +491,11 @@ static PyMethodDef Comm_t_methods[] = {
 	 "Log the communicator's status"},
         {NULL, NULL, 0, ""}  /* Sentinel */
 };
+#ifdef __GNUC__
+#if !defined(__MINGW64_VERSION_MAJOR) || (defined(__MINGW64_VERSION_MAJOR) && __MINGW64_VERSION_MAJOR > 5)
+#pragma GCC diagnostic pop
+#endif
+#endif
 
 // Possible attributes/properties to convert:
 //   empty_bytes_msg, model_name, full_model_name, model_copies,
