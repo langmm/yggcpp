@@ -1302,7 +1302,7 @@ protected:
      * @return true if successful, false otherwise.
      */
     bool _coerce_to_dict(const rapidjson::Document& src,
-			 rapidjson::Document& tmp,
+			 rapidjson::Document& dst,
 			 std::vector<std::string> key_order={},
 			 size_t dim=1) const;
     /**

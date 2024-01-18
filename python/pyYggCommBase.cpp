@@ -461,6 +461,8 @@ PyObject* commMeta_richcompare(PyObject *self, PyObject *other, int op) {
 // Comm_t Wrapper
 //////////////////////////////////////////////////////////////
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-function-type"
 static PyMethodDef Comm_t_methods[] = {
         {"send", (PyCFunction) Comm_t_send, METH_VARARGS, ""},
         {"open", (PyCFunction) Comm_t_open, METH_NOARGS, ""},
