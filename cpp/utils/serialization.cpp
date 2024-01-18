@@ -773,6 +773,43 @@ bool Metadata::SetValue(const std::string& name, rapidjson::Value& x,
   }
   return true;
 }
+#define GET_VECTOR_METHOD_(type_out, method)				\
+  bool Metadata::GetVector ## method(const std::string& name,		\
+				     std::vector<type_out>& xvect,	\
+				     const rapidjson::Value& subSchema) const {	\
+    if (!(subSchema.HasMember(name.c_str()))) {				\
+      log_error() << "GetVector" << #method << ": No " << name << " information in the schema." << std::endl; \
+      return false;							\
+    }									\
+    if (!(subSchema[name.c_str()].IsArray())) {				\
+      log_error() << "GetVector" << #method << ": " << name << " is not " << #type_out << std::endl; \
+      return false;							\
+    }									\
+    for (rapidjson::SizeType i = 0; i < subSchema[name.c_str()].Size();	i++) { \
+      if (!(subSchema[name.c_str()][i].Is ## method())) {		\
+	log_error() << "GetVector" << #method << ": element " << i << " in " << name << " is not " << #type_out << std::endl; \
+	return false;							\
+      }									\
+      xvect.push_back(subSchema[name.c_str()][i].Get ## method());	\
+    }									\
+    return true;							\
+  }									\
+  bool Metadata::GetMetaVector ## method(const std::string& name,		\
+					 std::vector<type_out>& xvect) const { \
+    const rapidjson::Value* subSchema = getMeta();			\
+    if (!subSchema) return false;					\
+    return GetVector ## method(name, xvect, *subSchema);		\
+  }									\
+  bool Metadata::GetSchemaVector ## method(const std::string& name,	\
+					   std::vector<type_out>& xvect, \
+					   const rapidjson::Value* subSchema \
+					   ) const {			\
+    if (subSchema == NULL) {						\
+      subSchema = getSchema(true);					\
+      if (!subSchema) return false;					\
+    }									\
+    return GetVector ## method(name, xvect, *subSchema);		\
+  }
 #define GET_METHOD_(type_out, method)					\
   bool Metadata::Get ## method(const std::string& name,			\
 			       type_out& out,				\
@@ -912,6 +949,7 @@ bool Metadata::SetValue(const std::string& name, rapidjson::Value& x,
   }
 #define GET_SET_METHOD_(type_in, type_out, type_vect, method, setargs)	\
   GET_METHOD_(type_out, method);					\
+  GET_VECTOR_METHOD_(type_vect, method);				\
   SET_METHOD_(type_in, method, setargs);				\
   SET_VECTOR_METHOD_(type_vect, method, setargs)
 GET_SET_METHOD_(int, int, int, Int, (x));
@@ -927,6 +965,7 @@ GET_METHOD_(std::string, String);
 #undef GET_METHOD_
 #undef SET_METHOD_
 #undef SET_VECTOR_METHOD_
+#undef GET_VECTOR_METHOD_
 bool Metadata::SetMetaValue(const std::string& name, rapidjson::Value& x) {
   rapidjson::Value* subSchema = getMeta();
   if (!subSchema) return false;
@@ -1215,6 +1254,24 @@ int Metadata::serialize(char **buf, size_t *buf_siz,
   if (serialize_args(d, ap) < 0)
     return -1;
   return serialize(buf, buf_siz, d);
+}
+bool Metadata::get_field_names(std::vector<std::string>& out) const {
+  if (metadata.IsObject() &&
+      metadata.HasMember("serializer") &&
+      metadata["serializer"].IsObject() &&
+      metadata["serializer"].HasMember("field_names")) {
+    return GetVectorString("field_names", out, metadata["serializer"]);
+  }
+  return true;
+}
+bool Metadata::get_field_units(std::vector<std::string>& out) const {
+  if (metadata.IsObject() &&
+      metadata.HasMember("serializer") &&
+      metadata["serializer"].IsObject() &&
+      metadata["serializer"].HasMember("field_units")) {
+    return GetVectorString("field_units", out, metadata["serializer"]);
+  }
+  return true;
 }
 void Metadata::Display(const char* indent) const {
   std::cout << document2string(metadata, indent) << std::endl;

@@ -81,6 +81,87 @@ bool Comm_t::operator==(const Comm_t& rhs) const {
 	  get_timeout_recv() == rhs.get_timeout_recv() &&
 	  getLanguage() == rhs.getLanguage());
 }
+
+bool Comm_t::_coerce_to_dict(const rapidjson::Document& src,
+			     rapidjson::Document& dst,
+			     std::vector<std::string> key_order,
+			     size_t dim) const {
+  switch (src.GetType()) {
+  case (rapidjson::kObjectType):
+    dst.CopyFrom(src, dst.GetAllocator(), true);
+    break;
+  case (rapidjson::kArrayType):
+  case (rapidjson::kStringType):
+    if (src.IsArray() || src.IsNDArray()) {
+      if (key_order.empty()) {
+	if (!this->getMetadata(SEND).get_field_names(key_order)) {
+	  return false;
+	}
+	if (key_order.empty()) {
+	  for (int i = 0; i < static_cast<int>(src.Size()); i++)
+	    key_order.push_back("f" + std::to_string(i));
+	}
+      }
+      size_t src_size = 0;
+      if (src.IsArray())
+	src_size = static_cast<size_t>(src.Size());
+      else if (src.Is1DArray())
+	src_size = static_cast<size_t>(src.GetNElements());
+      else {
+	const rapidjson::Value& shape = src.GetShape();
+	if (dim >= static_cast<size_t>(shape.Size())) {
+	  log_error() << "coerce_to_dict: dim " << dim << " exceeds the " <<
+	    "number of dimensions (" << shape.Size() << ") in the " <<
+	    "array" << std::endl;
+	  return false;
+	}
+	src_size = static_cast<size_t>(shape[static_cast<rapidjson::SizeType>(dim)].GetUint64());
+      }
+      if (key_order.size() != static_cast<size_t>(src.Size())) {
+	log_error() << "coerce_to_dict: " << key_order.size() <<
+	  " keys provided, but there are " << src.Size() <<
+	  " elements in the message" << std::endl;
+	return false;
+      }
+      dst.SetObject();
+      for (size_t i = 0; i < src_size; i++) {
+	rapidjson::Value val;
+	if (src.IsArray()) {
+	  val.CopyFrom(src[static_cast<SizeType>(i)],
+		       dst.GetAllocator(), true);
+	} else if (src.Is1DArray()) {
+	  if (!src.GetElement(static_cast<SizeType>(i), val,
+			       dst.GetAllocator())) {
+	    log_error() << "coerce_to_dict: Could not get element " << i <<
+	      " from 1D array" << std::endl;
+	    return false;
+	  }
+	} else {
+	  if (!src.GetSubArray(static_cast<SizeType>(i),
+				static_cast<SizeType>(dim), val,
+				dst.GetAllocator())) {
+	    log_error() << "coerce_to_dict: Could not get subarray " << i <<
+	      " from ND array along dimension " << dim << std::endl;
+	    return false;
+	  }
+	}
+	dst.AddMember(rapidjson::Value(key_order[i].c_str(),
+				       static_cast<SizeType>(key_order[i].size()),
+				       dst.GetAllocator()).Move(),
+		      val, dst.GetAllocator());
+      }
+      break;
+    }
+    RAPIDJSON_DELIBERATE_FALLTHROUGH;
+  default:
+    rapidjson::Value val;
+    val.CopyFrom(src, dst.GetAllocator(), true);
+    dst.SetObject();
+    dst.AddMember("f0", val, dst.GetAllocator());
+  }
+  return true;
+}
+
 std::vector<std::string> Comm_t::get_status_message(
   unsigned int nindent,
   const std::vector<std::string>& extra_lines_before,
@@ -456,6 +537,14 @@ int Comm_t::send(const char *data, const size_t &len) {
   std::string data_str(data, len);
   return sendVar(data_str);
 }
+int Comm_t::send_dict(const rapidjson::Document& data,
+		      std::vector<std::string> key_order,
+		      size_t dim) {
+  rapidjson::Document tmp;
+  if (!_coerce_to_dict(data, tmp, key_order, dim))
+    return -1;
+  return send(tmp);
+}
 
 //////////////////
 // RECV METHODS //
@@ -617,6 +706,16 @@ long Comm_t::recv(char*& data, const size_t &len,
     if (out < 0)
       cache.push_back(data_str);
   }
+  return out;
+}
+
+long Comm_t::recv_dict(rapidjson::Document& data,
+		       std::vector<std::string> key_order,
+		       size_t dim) {
+  rapidjson::Document tmp;
+  long out = recv(tmp);
+  if (out >= 0 && !_coerce_to_dict(tmp, data, key_order, dim))
+    return -1;
   return out;
 }
 

@@ -474,6 +474,29 @@ public:
    */
   bool SetValue(const std::string& name, rapidjson::Value& x,
 		rapidjson::Value& subSchema);
+#define GET_VECTOR_METHOD_(type_out, method)				\
+  /** @brief Get a property in a subschema as a vector */		\
+  /** @param[in] name Name of property to get */			\
+  /** @param[out] x Vector to assign to the property */			\
+  /** @param[in] subSchema Subschema to assign the property to */	\
+  /** @return true if successful, false otherwise */			\
+  bool GetVector ## method(const std::string& name,			\
+			   std::vector<type_out>& x,			\
+			   const rapidjson::Value& subSchema) const;	\
+  /** @brief Get a property in the metadata as a vector */		\
+  /** @param[in] name Name of property to get */			\
+  /** @param[out] x Vector to assign to the property */			\
+  /** @return true if successful, false otherwise */			\
+  bool GetMetaVector ## method(const std::string& name,			\
+			       std::vector<type_out>& x) const;		\
+  /** @brief Get a property in the schema section of the metadata as a vector */ \
+  /** @param[in] name Name of property to get */			\
+  /** @param[out] x Vector to assign to the property */			\
+  /** @param[in] subSchema Subschema to use in place of the schema section in the metadata */ \
+  /** @return true if successful, false otherwise */			\
+  bool GetSchemaVector ## method(const std::string& name,		\
+				 std::vector<type_out>& x,		\
+				 const rapidjson::Value* subSchema = NULL) const
 #define GET_METHOD_(type_out, method)					\
   /** @brief Get a property in a subschema */				\
   /** @param[in] name Name of property to get */			\
@@ -574,6 +597,7 @@ public:
 			   rapidjson::Value* subSchema = NULL)
 #define GET_SET_METHOD_(type_in, type_out, type_vect, method, setargs)	\
   GET_METHOD_(type_out, method);					\
+  GET_VECTOR_METHOD_(type_vect, method);				\
   SET_METHOD_(type_in, method, setargs);				\
   SET_VECTOR_METHOD_(type_vect, method, setargs)
   GET_SET_METHOD_(int, int, int, Int, (x));
@@ -589,6 +613,7 @@ public:
 #undef GET_METHOD_
 #undef SET_METHOD_
 #undef SET_VECTOR_METHOD_
+#undef GET_VECTOR_METHOD_
   /*!
    * @brief Set the value of the named metadata item
    * @param[in] name The name of the item to set
@@ -729,6 +754,18 @@ public:
    */
   int serialize(char **buf, size_t *buf_siz,
 		rapidjson::VarArgList& ap);
+  /*!
+   * @brief Get the field names stored in the metadata if present.
+   * @param[in] out Vector to add field names to.
+   * @returns true if successful, false otherwise.
+   */
+  bool get_field_names(std::vector<std::string>& out) const;
+  /*!
+   * @brief Get the field units stored in the metadata if present.
+   * @param[in] out Vector to add field units to.
+   * @returns true if successful, false otherwise.
+   */
+  bool get_field_units(std::vector<std::string>& out) const;
   /*!
    * @brief Write the metadata to the terminal.
    * @param[in] indent The indentation to use for different levels

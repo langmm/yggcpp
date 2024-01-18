@@ -549,6 +549,18 @@ public:
     int send(const std::string& data) {
       return sendVar(data);
     }
+    /*!
+      @brief Send a message after coercing it to a JSON object.
+      @param[in] data Message.
+      @param[in] key_order Keys for array-like message.
+      @param[in] dim Dimension along which ND-arrays should be split into
+        JSON properties. Defaults to 1 which is columns for row-major
+	C/C++ ordering.
+      @returns int Values >= 0 indicate success.
+     */
+    int send_dict(const rapidjson::Document& data,
+		  std::vector<std::string> key_order={},
+		  size_t dim = 1);
 
     //////////////////
     // RECV METHODS //
@@ -840,6 +852,20 @@ public:
     long recv(std::string& data) {
       return recvVar(data);
     }
+    /*!
+      @brief Receive a message after coercing it to a JSON object.
+      @param[in] data Document to receive message into.
+      @param[in] key_order Keys for array-like message.
+      @param[in] dim Dimension along which ND-arrays should be split into
+        JSON properties. Defaults to 1 which is columns for row-major
+	C/C++ ordering.
+      @returns -1 if message could not be received. Length of the
+        received message if message was received.
+     */
+    long recv_dict(rapidjson::Document& data,
+		   std::vector<std::string> key_order={},
+		   size_t dim = 1);
+    
     /*!
       @brief Receive and parse a message into the provided arguments.
       @param[in] nargs Number of arguments being passed.
@@ -1264,7 +1290,21 @@ protected:
      * @return true if the comm is closed, false otherwise
      */
     bool _is_closed() const { return true; };
-    
+
+    /**
+     * @brief Convert a document to a dictionary
+     * @param[in] src Document to convert
+     * @param[in] dst Document to store converted object in
+     * @param[in] key_order Keys for array-like message.
+     * @param[in] dim Dimension along which ND-arrays should be split into
+     *   JSON properties. Defaults to 1 which is columns for row-major
+     *   C/C++ ordering.
+     * @return true if successful, false otherwise.
+     */
+    bool _coerce_to_dict(const rapidjson::Document& src,
+			 rapidjson::Document& tmp,
+			 std::vector<std::string> key_order={},
+			 size_t dim=1) const;
     /**
      * @brief Change the maximum message size
      * @param[in] new_size The new maximum message size
