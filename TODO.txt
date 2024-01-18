@@ -9,4 +9,3 @@
 * Add component handling of _schema_properties_yaml_only
 * Add for_server keyword?
 * Update handling of specialized send/recv (array) with transforms and test data
-* Add test for send_dict/recv_dict

@@ -755,8 +755,20 @@ public:
   int serialize(char **buf, size_t *buf_siz,
 		rapidjson::VarArgList& ap);
   /*!
+   * @brief Set the field names stored in the metadata.
+   * @param[in] x Vector of field names.
+   * @returns true if successful, false otherwise.
+   */
+  bool set_field_names(const std::vector<std::string>& x);
+  /*!
+   * @brief Set the field units stored in the metadata.
+   * @param[in] x Vector of field units.
+   * @returns true if successful, false otherwise.
+   */
+  bool set_field_units(const std::vector<std::string>& x);
+  /*!
    * @brief Get the field names stored in the metadata if present.
-   * @param[in] out Vector to add field names to.
+   * @param[out] out Vector to add field names to.
    * @returns true if successful, false otherwise.
    */
   bool get_field_names(std::vector<std::string>& out) const;

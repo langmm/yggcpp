@@ -452,45 +452,17 @@ bool Metadata::fromFormat(const std::string& format_str, bool as_array,
     items.PushBack(item, GetAllocator());
     beg = end;
   }
-  rapidjson::SizeType nItems = items.Size();
-  if (!field_names.empty()) {
-    if (field_names.size() != static_cast<size_t>(nItems)) {
-      log_error() << "fromFormat: Number of field_names (" <<
-	field_names.size() << ") does not match the number of format " <<
-	"items ( " << nItems << ")" << std::endl;
-      return false;
-    }
-    if (!SetVectorString("field_names", field_names,
-			 metadata["serializer"]))
-      return false;
-    for (size_t i = 0; i < field_names.size(); i++) {
-      if (!SetString("title", field_names[i],
-		     items[static_cast<rapidjson::SizeType>(i)]))
-	return false;
-    }
-  }
-  if (!field_units.empty()) {
-    if (field_units.size() != static_cast<size_t>(nItems)) {
-      log_error() << "fromFormat: Number of field_units (" <<
-	field_units.size() << ") does not match the number of format " <<
-	"items ( " << nItems << ")" << std::endl;
-      return false;
-    }
-    if (!SetVectorString("field_units", field_units,
-			 metadata["serializer"]))
-      return false;
-    for (size_t i = 0; i < field_units.size(); i++) {
-      if (!SetString("units", field_units[i],
-		     items[static_cast<rapidjson::SizeType>(i)]))
-	return false;
-    }
-  }
+  SizeType nItems = items.Size();
   if (!SetSchemaValue("items", items))
     return false;
   if (nItems == 1) {
     if (!SetSchemaBool("allowSingular", true))
       return false;
   }
+  if (!set_field_names(field_names))
+    return false;
+  if (!set_field_units(field_units))
+    return false;
   // if (nItems == 1) {
   //   typename rapidjson::Document::ValueType tmp;
   //   metadata["serializer"]["datatype"].Swap(tmp);
@@ -1254,6 +1226,66 @@ int Metadata::serialize(char **buf, size_t *buf_siz,
   if (serialize_args(d, ap) < 0)
     return -1;
   return serialize(buf, buf_siz, d);
+}
+bool Metadata::set_field_names(const std::vector<std::string>& x) {
+  if (x.empty())
+    return true;
+  if (hasType() &&
+      (*getSchema(true))["type"] == rapidjson::Value::GetArrayString() &&
+      (*getSchema(true)).HasMember("items") &&
+      (*getSchema(true))["items"].IsArray()) {
+    rapidjson::Value& items = (*getSchema(true))["items"];
+    if (x.size() != static_cast<size_t>(items.Size())) {
+      log_error() << "set_field_names: Number of field_names (" <<
+	x.size() << ") does not match the number of format " <<
+	"items ( " << items.Size() << ")" << std::endl;
+      return false;
+      
+    }
+    for (size_t i = 0; i < x.size(); i++) {
+      if (!SetString("title", x[i],
+		     items[static_cast<rapidjson::SizeType>(i)]))
+	return false;
+    }
+  }
+  if (!metadata.HasMember("serializer"))
+    metadata.AddMember(
+	  rapidjson::Value("serializer", 10).Move(),
+	  rapidjson::Value(rapidjson::kObjectType).Move(),
+	  metadata.GetAllocator());
+  if (!SetVectorString("field_names", x, metadata["serializer"]))
+    return false;
+  return true;
+}
+bool Metadata::set_field_units(const std::vector<std::string>& x) {
+  if (x.empty())
+    return true;
+  if (hasType() &&
+      (*getSchema(true))["type"] == rapidjson::Value::GetArrayString() &&
+      (*getSchema(true)).HasMember("items") &&
+      (*getSchema(true))["items"].IsArray()) {
+    rapidjson::Value& items = (*getSchema(true))["items"];
+    if (x.size() != static_cast<size_t>(items.Size())) {
+      log_error() << "set_field_units: Number of field_units (" <<
+	x.size() << ") does not match the number of format " <<
+	"items ( " << items.Size() << ")" << std::endl;
+      return false;
+      
+    }
+    for (size_t i = 0; i < x.size(); i++) {
+      if (!SetString("units", x[i],
+		     items[static_cast<rapidjson::SizeType>(i)]))
+	return false;
+    }
+  }
+  if (!metadata.HasMember("serializer"))
+    metadata.AddMember(
+	  rapidjson::Value("serializer", 10).Move(),
+	  rapidjson::Value(rapidjson::kObjectType).Move(),
+	  metadata.GetAllocator());
+  if (!SetVectorString("field_units", x, metadata["serializer"]))
+    return false;
+  return true;
 }
 bool Metadata::get_field_names(std::vector<std::string>& out) const {
   if (metadata.IsObject() &&

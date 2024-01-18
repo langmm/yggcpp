@@ -117,7 +117,7 @@ bool Comm_t::_coerce_to_dict(const rapidjson::Document& src,
 	}
 	src_size = static_cast<size_t>(shape[static_cast<rapidjson::SizeType>(dim)].GetUint64());
       }
-      if (key_order.size() != static_cast<size_t>(src.Size())) {
+      if (key_order.size() != src_size) {
 	log_error() << "coerce_to_dict: " << key_order.size() <<
 	  " keys provided, but there are " << src.Size() <<
 	  " elements in the message" << std::endl;
@@ -133,16 +133,16 @@ bool Comm_t::_coerce_to_dict(const rapidjson::Document& src,
 	  if (!src.GetElement(static_cast<SizeType>(i), val,
 			       dst.GetAllocator())) {
 	    log_error() << "coerce_to_dict: Could not get element " << i <<
-	      " from 1D array" << std::endl;
-	    return false;
+	      " from 1D array" << std::endl; // GCOVR_EXCL_START
+	    return false; // GCOVR_EXCL_STOP
 	  }
 	} else {
 	  if (!src.GetSubArray(static_cast<SizeType>(i),
 				static_cast<SizeType>(dim), val,
 				dst.GetAllocator())) {
 	    log_error() << "coerce_to_dict: Could not get subarray " << i <<
-	      " from ND array along dimension " << dim << std::endl;
-	    return false;
+	      " from ND array along dimension " << dim << std::endl; // GCOVR_EXCL_START
+	    return false; // GCOVR_EXCL_STOP
 	  }
 	}
 	dst.AddMember(rapidjson::Value(key_order[i].c_str(),
