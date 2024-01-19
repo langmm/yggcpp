@@ -700,7 +700,7 @@ static int _parse_timeout_recv(PyObject* recv_timeoutPy,
       timeout_recv = PyFloat_AsDouble(recv_timeoutPy) * 1000000;
       timeout_recv_set = true;
     } else if (PyLong_Check(recv_timeoutPy)) {
-      timeout_recv = PyLong_AsLong(recv_timeoutPy);
+      timeout_recv = PyLong_AsLongLong(recv_timeoutPy);
       timeout_recv_set = true;
     }
   }
