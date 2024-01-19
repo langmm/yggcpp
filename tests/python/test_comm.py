@@ -312,6 +312,38 @@ class TestComm_t_Installed:
         comm_send.close()
         comm_recv.close()
 
+    def test_send_dict_recv(self, commtype, require_installed):
+        comm_recv = YggInterface.Comm_t(
+            "test", commtype=commtype,
+            direction=YggInterface.DIRECTION.RECV,
+            flags=YggInterface.COMM_FLAG.COMM_FLAG_ASYNC)
+        comm_send = YggInterface.Comm_t(
+            "test", comm_recv.address, commtype=commtype,
+            direction=YggInterface.DIRECTION.SEND,
+            flags=(YggInterface.COMM_FLAG.COMM_FLAG_INTERFACE |
+                   YggInterface.COMM_FLAG.COMM_FLAG_ASYNC))
+        key_order = ["a", "b", "c"]
+        msg_send = ["a", 1, None]
+        msg_recv = {k: v for k, v in zip(key_order, msg_send)}
+        assert comm_send.send_dict(msg_send, key_order=key_order)
+        assert comm_recv.recv() == (True, msg_recv)
+
+    def test_send_recv_dict(self, commtype, require_installed):
+        comm_recv = YggInterface.Comm_t(
+            "test", commtype=commtype,
+            direction=YggInterface.DIRECTION.RECV,
+            flags=YggInterface.COMM_FLAG.COMM_FLAG_ASYNC)
+        comm_send = YggInterface.Comm_t(
+            "test", comm_recv.address, commtype=commtype,
+            direction=YggInterface.DIRECTION.SEND,
+            flags=(YggInterface.COMM_FLAG.COMM_FLAG_INTERFACE |
+                   YggInterface.COMM_FLAG.COMM_FLAG_ASYNC))
+        key_order = ["a", "b", "c"]
+        msg_send = ["a", 1, None]
+        msg_recv = {k: v for k, v in zip(key_order, msg_send)}
+        assert comm_send.send(msg_send)
+        assert comm_recv.recv_dict(key_order=key_order) == (True, msg_recv)
+
     def test_send_recv_long(self, comm_recv, do_send_recv):
         if comm_recv.maxMsgSize == 0:
             pytest.skip("Communicator does not have a maxMsgSize")

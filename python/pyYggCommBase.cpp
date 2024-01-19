@@ -22,20 +22,17 @@ typedef struct {
 static void Comm_t_dealloc(PyObject* self);
 static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds);
 static PyObject* Comm_t_new(PyTypeObject *type, PyObject* args, PyObject* kwds);
+static PyObject* Comm_t_open(PyObject* self, PyObject* arg);
+static PyObject* Comm_t_close(PyObject* self, PyObject* arg);
+static PyObject* Comm_t_str(PyObject* self);
 static PyObject* Comm_t_send(PyObject* self, PyObject* arg);
 static PyObject* Comm_t_recv(PyObject* self, PyObject* arg);
 static PyObject* Comm_t_send_eof(PyObject* self, PyObject* arg);
+static PyObject* Comm_t_send_dict(PyObject* self, PyObject* arg, PyObject* kwargs);
+static PyObject* Comm_t_recv_dict(PyObject* self, PyObject* arg, PyObject* kwargs);
 static PyObject* Comm_t_call(PyObject* self, PyObject* arg);
 static PyObject* Comm_t_set_timeout_recv(PyObject* self, PyObject* arg);
 static PyObject* Comm_t_wait_for_recv(PyObject* self, PyObject* arg);
-static PyObject* Comm_t_open(PyObject* self, PyObject* arg);
-static PyObject* Comm_t_close(PyObject* self, PyObject* arg);
-// static PyObject* Comm_t_create_worker(PyObject* self, PyObject* arg);
-// static PyObject* Comm_t_send_single(PyObject* self, PyObject* arg);
-// static PyObject* Comm_t_recv_single(PyObject* self, PyObject* arg);
-static PyObject* Comm_t_str(PyObject* self);
-// TODO: Replace this with a class so updating the returned dict updates
-//   the C++ class?
 static PyObject* Comm_t_name_get(PyObject* self, void*);
 static PyObject* Comm_t_address_get(PyObject* self, void*);
 static PyObject* Comm_t_direction_get(PyObject* self, void*);
@@ -468,14 +465,15 @@ PyObject* commMeta_richcompare(PyObject *self, PyObject *other, int op) {
 #endif
 #endif
 static PyMethodDef Comm_t_methods[] = {
-        {"send", (PyCFunction) Comm_t_send, METH_VARARGS, ""},
         {"open", (PyCFunction) Comm_t_open, METH_NOARGS, ""},
         {"close", (PyCFunction) Comm_t_close, METH_NOARGS, ""},
-        // {"create_worker", (PyCFunction) Comm_t_create_worker, METH_VARARGS, ""},
-        // {"send_single", (PyCFunction) Comm_t_send_single, METH_VARARGS, ""},
-        // {"recv_single", (PyCFunction) Comm_t_recv_single, METH_VARARGS, ""},
+        {"send", (PyCFunction) Comm_t_send, METH_VARARGS, ""},
         {"recv", (PyCFunction) Comm_t_recv, METH_VARARGS, ""},
         {"send_eof", (PyCFunction) Comm_t_send_eof, METH_NOARGS, ""},
+	{"send_dict", (PyCFunction) Comm_t_send_dict,
+	 METH_VARARGS | METH_KEYWORDS, ""},
+	{"recv_dict", (PyCFunction) Comm_t_recv_dict,
+	 METH_VARARGS | METH_KEYWORDS, ""},
 	{"call", (PyCFunction) Comm_t_call, METH_VARARGS, ""},
         {"set_timeout_recv", (PyCFunction) Comm_t_set_timeout_recv, METH_VARARGS, ""},
         {"wait_for_recv", (PyCFunction) Comm_t_wait_for_recv, METH_VARARGS, ""},
@@ -743,10 +741,15 @@ static int _parse_doc_funcs(const std::string& desc, PyObject* varPy,
 }
 
 static int _parse_string_vect(const std::string& desc, PyObject* varPy,
-			      std::vector<std::string>& varVect) {
+			      std::vector<std::string>& varVect,
+			      bool require_sequence=false) {
   if (varPy == NULL)
     return 0;
   if (PyUnicode_Check(varPy)) {
+    if (require_sequence) {
+      PyErr_Format(PyExc_TypeError, "%s value must be a sequence", desc.c_str());
+      return -1;
+    }
     varVect.emplace_back(PyUnicode_AsUTF8(varPy));
   } else if (PySequence_Check(varPy)) {
     for (Py_ssize_t i = 0; i < PySequence_Size(varPy); i++) {
@@ -1078,6 +1081,36 @@ static PyObject* Comm_t_new(PyTypeObject *type, PyObject* args, PyObject* kwds) 
     return (PyObject*)self;
 }
 
+PyObject* Comm_t_open(PyObject* self, PyObject*) {
+  try {
+    ((pyComm_t*)self)->comm->open();
+    Py_RETURN_NONE;
+  } catch (...) {
+    return NULL;
+  }
+}
+PyObject* Comm_t_close(PyObject* self, PyObject*) {
+  try {
+    ((pyComm_t*)self)->comm->close();
+    Py_RETURN_NONE;
+  } catch (...) {
+    return NULL;
+  }
+}
+
+PyObject* Comm_t_str(PyObject* self) {
+  pyComm_t* s = (pyComm_t*)self;
+  const char* dirStr = "NONE";
+  if (s->comm->getDirection() == DIRECTION::RECV)
+    dirStr = "RECV";
+  else if (s->comm->getDirection() == DIRECTION::SEND)
+    dirStr = "SEND";
+  return PyUnicode_FromFormat("Comm_t(%s, %s, %s)",
+			      s->comm->getName().c_str(),
+			      s->comm->getAddress().c_str(),
+			      dirStr);
+}
+
 PyObject* Comm_t_send(PyObject* self, PyObject* arg) {
     pyComm_t* s = (pyComm_t*)self;
     rapidjson::Document doc;
@@ -1123,45 +1156,6 @@ PyObject* Comm_t_recv(PyObject* self, PyObject*) {
     return out;
 }
 
-PyObject* Comm_t_open(PyObject* self, PyObject*) {
-  try {
-    ((pyComm_t*)self)->comm->open();
-    Py_RETURN_NONE;
-  } catch (...) {
-    return NULL;
-  }
-}
-PyObject* Comm_t_close(PyObject* self, PyObject*) {
-  try {
-    ((pyComm_t*)self)->comm->close();
-    Py_RETURN_NONE;
-  } catch (...) {
-    return NULL;
-  }
-}
-
-// PyObject* Comm_t_create_worker(PyObject* self, PyObject* arg) {
-// }
-
-// PyObject* Comm_t_send_single(PyObject* self, PyObject* arg) {
-// }
-
-// PyObject* Comm_t_recv_single(PyObject* self, PyObject* arg) {
-// }
-
-PyObject* Comm_t_str(PyObject* self) {
-  pyComm_t* s = (pyComm_t*)self;
-  const char* dirStr = "NONE";
-  if (s->comm->getDirection() == DIRECTION::RECV)
-    dirStr = "RECV";
-  else if (s->comm->getDirection() == DIRECTION::SEND)
-    dirStr = "SEND";
-  return PyUnicode_FromFormat("Comm_t(%s, %s, %s)",
-			      s->comm->getName().c_str(),
-			      s->comm->getAddress().c_str(),
-			      dirStr);
-}
-
 PyObject* Comm_t_send_eof(PyObject* self, PyObject*) {
   int out = -1;
   Py_BEGIN_ALLOW_THREADS
@@ -1171,6 +1165,86 @@ PyObject* Comm_t_send_eof(PyObject* self, PyObject*) {
     Py_RETURN_FALSE;
   }
   Py_RETURN_TRUE;
+}
+
+static PyObject* Comm_t_send_dict(PyObject* self, PyObject* arg, PyObject* kwargs) {
+  pyComm_t* s = (pyComm_t*)self;
+  rapidjson::Document doc;
+  PyObject* key_orderPy = NULL;
+  std::vector<std::string> key_order;
+  size_t dim = 1;
+  if (PyTuple_Size(arg) == 1) {
+    PyObject* arg0 = PyTuple_GetItem(arg, 0);
+    if (arg0 == NULL) {
+      return NULL;
+    }
+    doc.SetPythonObjectRaw(arg0, doc.GetAllocator());
+  } else {
+    doc.SetPythonObjectRaw(arg, doc.GetAllocator());
+  }
+  static char const* kwlist[] = {
+    "key_order",
+    "dim",
+    NULL
+  };
+  PyObject* empty_args = PyTuple_New(0);
+  if (empty_args == NULL) {
+    return NULL;
+  }
+  if (!PyArg_ParseTupleAndKeywords(empty_args, kwargs,
+				   "|$Oi", (char**)kwlist,
+				   &key_orderPy,
+				   &dim))
+    return NULL;
+  Py_DECREF(empty_args);
+  if (_parse_string_vect("key_order", key_orderPy, key_order, true) < 0)
+    return NULL;
+  int out = -1;
+  Py_BEGIN_ALLOW_THREADS
+  out = s->comm->send_dict(doc, key_order, dim);
+  Py_END_ALLOW_THREADS
+  if (out < 0) {
+    Py_RETURN_FALSE;
+  }
+  Py_RETURN_TRUE;
+}
+
+static PyObject* Comm_t_recv_dict(PyObject* self, PyObject* arg, PyObject* kwargs) {
+  pyComm_t* s = (pyComm_t*)self;
+  rapidjson::Document doc;
+  PyObject* key_orderPy = NULL;
+  std::vector<std::string> key_order;
+  size_t dim = 1;
+  static char const* kwlist[] = {
+    "key_order",
+    "dim",
+    NULL
+  };
+  if (!PyArg_ParseTupleAndKeywords(arg, kwargs,
+				   "|$Oi", (char**)kwlist,
+				   &key_orderPy,
+				   &dim))
+    return NULL;
+  if (_parse_string_vect("key_order", key_orderPy, key_order, true) < 0)
+    return NULL;
+  long flag = -1;
+  Py_BEGIN_ALLOW_THREADS
+  flag = s->comm->recv_dict(doc, key_order, dim);
+  Py_END_ALLOW_THREADS
+  PyObject* pyFlag;
+  PyObject* res;
+  if (flag < 0) {
+    Py_INCREF(Py_False);
+    pyFlag = Py_False;
+    Py_INCREF(Py_None);
+    res = Py_None;
+  } else {
+    Py_INCREF(Py_True);
+    pyFlag = Py_True;
+    res = doc.GetPythonObjectRaw();
+  }
+  PyObject* out = PyTuple_Pack(2, pyFlag, res);
+  return out;
 }
 
 static PyObject* Comm_t_call(PyObject* self, PyObject* arg) {
