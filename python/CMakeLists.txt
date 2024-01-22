@@ -25,29 +25,29 @@ if (NOT SKBUILD)
       list(APPEND PYTHON_BUILD_ARGS
         --config-settings=cmake.define.CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH})
     endif()
-    if (Python3_ROOT_DIR)
+    if (${PYTHON_PREFIX}_ROOT_DIR)
       list(APPEND PYTHON_BUILD_ARGS
-        --config-settings=cmake.define.Python3_ROOT_DIR=${Python3_ROOT_DIR}
-        --config-settings=cmake.define.Python_ROOT_DIR=${Python3_ROOT_DIR})
+        --config-settings=cmake.define.Python3_ROOT_DIR=${${PYTHON_PREFIX}_ROOT_DIR}
+        --config-settings=cmake.define.Python_ROOT_DIR=${${PYTHON_PREFIX}_ROOT_DIR})
     endif()
     message(STATUS "Building Python with CMAKE_ARGS = ${PYTHON_CMAKE_ARGS}")
 
     include(BuildTools)
     set(DEPENDS_PY ${SOURCES_PY} ${CMAKE_CURRENT_SOURCE_DIR}/YggInterface/__init__.py)
-    message(STATUS "PYTHON_OUTPUT = ${Python3_SITELIB}/YggInterface/__init__.py")
-    if (EXISTS "${Python3_SITELIB}/YggInterface/__init__.py")
+    message(STATUS "PYTHON_OUTPUT = ${${PYTHON_PREFIX}_SITELIB}/YggInterface/__init__.py")
+    if (EXISTS "${${PYTHON_PREFIX}_SITELIB}/YggInterface/__init__.py")
       message(STATUS "PYTHON_OUTPUT EXISTS")
     else()
       message(STATUS "PYTHON_OUTPUT DOES NOT EXIST")
     endif()
     add_custom_command_env(
       YggInterface_python
-      COMMAND ${Python3_EXECUTABLE} -m pip install ${PARENT_SOURCE_DIR} -v ${PYTHON_BUILD_ARGS}
+      COMMAND ${${PYTHON_PREFIX}_EXECUTABLE} -m pip install ${PARENT_SOURCE_DIR} -v ${PYTHON_BUILD_ARGS}
       KEYPREFIX "ENVK_"
       ENV ENVK_CMAKE_ARGS ${PYTHON_CMAKE_ARGS} END_ENV
       COMMENT "build Python via pip"
       DEPENDS ${DEPENDS_PY})
-      # OUTPUT ${Python3_SITELIB}/YggInterface/__init__.py)
+      # OUTPUT ${${PYTHON_PREFIX}_SITELIB}/YggInterface/__init__.py)
   endif()
   return()
 endif()
@@ -55,7 +55,11 @@ endif()
 message(STATUS "Building Python bindings=Yes")
 
 if (SKBUILD STREQUAL "2")
-    Python3_add_library(${YGG_TARGET_PY} MODULE ${SOURCES_PY})
+    if (PYTHON_PREFIX STREQUAL "Python3")
+      Python3_add_library(${YGG_TARGET_PY} MODULE ${SOURCES_PY})
+    else()
+      Python_add_library(${YGG_TARGET_PY} MODULE ${SOURCES_PY})
+    endif()
 else()
     add_library(${YGG_TARGET_PY} MODULE ${SOURCES_PY})
 endif()

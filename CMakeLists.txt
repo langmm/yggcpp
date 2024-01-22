@@ -14,6 +14,10 @@ else()
     PROJECT(YggInterfaceCPP VERSION "${LIB_VERSION_STRING}")
 endif()
 
+if (NOT DEFAULT_RAPIDJSON_INCLUDE_DIRS)
+  cmake_path(APPEND CMAKE_CURRENT_SOURCE_DIR cpp rapidjson include
+             OUTPUT_VARIABLE DEFAULT_RAPIDJSON_INCLUDE_DIRS)
+endif()
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${PROJECT_SOURCE_DIR}/cmake")
 include(ygg_options)
 
@@ -33,7 +37,7 @@ option(YGG_BUILD_FORTRAN_TESTS "Build Fortran tests" OFF)
 option(YGG_BUILD_CXX_TESTS "Build C/C++ tests" OFF)
 option(YGG_BUILD_PYTHON_TESTS "Build Python tests" OFF)
 # option(YGG_TEST_WITH_LLDB "Run tests with lldb" OFF)
-option(YGG_ENABLE_COVERAGE "Enable coverage reporting" OFF)
+option(YGG_ENABLE_COVERAGE "Enable coverage reporting" ON)
 option(YGG_BUILD_THIRDPARTY_GTEST "Use gtest installation in 'thirdpart/gtest' by default if available" ON)
 option(YGG_SKIP_VALGRIND_TESTS "Disable valgrind tests" OFF)
 option(WRAP_RAPIDJSON_FOR_DLL "Build yggdrasil using a wrapper for rapidjson to force it into a DLL (enabled automatically when compiling with MSVC" OFF)
@@ -126,17 +130,6 @@ cmake_path(SET CONDA_PREFIX "$ENV{CONDA_PREFIX}")
 if(CONDA_PREFIX)
     message(STATUS "CONDA_PREFIX = ${CONDA_PREFIX}")
 endif()
-
-#############
-# Rapidjson #
-#############
-
-if(NOT RAPIDJSON_INCLUDE_DIRS)
-    set(RAPIDJSON_INCLUDE_DIRS "${CMAKE_SOURCE_DIR}/cpp/rapidjson/include")
-endif()
-message(STATUS "Rapidjson found ${RAPIDJSON_INCLUDE_DIRS}")
-
-##############################
 
 ##########
 # ZeroMQ #
@@ -331,12 +324,12 @@ else()
     # There is an issue with embedding Python on Windows in conda environments
     # https://github.com/ContinuumIO/anaconda-issues/issues/11374
     if(WIN32)
-        set(RAPIDJSON_PYTHON_ENV2 "PYTHONHOME=${Python3_RUNTIME_LIBRARY_DIRS}")
+        set(RAPIDJSON_PYTHON_ENV2 "PYTHONHOME=${${PYTHON_PREFIX}_RUNTIME_LIBRARY_DIRS}")
     endif()
     
-    list(APPEND YGG_INSTALL_DEPS Python3)
-    list(APPEND DEPS_LIBRARIES Python3::NumPy)
-    list(APPEND DEPS_LIBRARIES_PYTHON Python3::Python)
+    list(APPEND YGG_INSTALL_DEPS ${PYTHON_PREFIX})
+    list(APPEND DEPS_LIBRARIES ${PYTHON_PREFIX}::NumPy)
+    list(APPEND DEPS_LIBRARIES_PYTHON ${PYTHON_PREFIX}::Python)
 endif()
 
 ##################
