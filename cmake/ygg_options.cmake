@@ -79,10 +79,11 @@ if (NOT EXISTS ${RAPIDJSON_INCLUDE_DIRS})
                       " want to report the issue.")
 endif()
 
-set(PYTHON_PREFIX Python)
+set(PYTHON_PREFIX Python3)
 
 if (RAPIDJSON_CHECK_PYREFS)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DRAPIDJSON_CHECK_PYREFS")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DPy_DEBUG")
 endif()
 
 if(NOT WIN32)
