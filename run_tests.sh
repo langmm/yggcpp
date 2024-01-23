@@ -9,7 +9,6 @@ DO_FORTRAN=""
 DO_PYTHON=""
 DO_DOCS=""
 WITH_ASAN=""
-NO_CORE=""
 CMAKE_FLAGS="-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DYGG_SKIP_VALGRIND_TESTS=ON"
 CMAKE_FLAGS_LIB=""
 CMAKE_FLAGS_SPEED=""
@@ -60,10 +59,6 @@ while [[ $# -gt 0 ]]; do
 	--with-asan )
 	    WITH_ASAN="TRUE"
 	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYGG_BUILD_ASAN=ON -DYGG_BUILD_UBSAN=ON"
-	    shift # past argument with no value
-	    ;;
-	--without-core )
-	    NO_CORE="TRUE"
 	    shift # past argument with no value
 	    ;;
 	--using-ipc )
@@ -281,61 +276,32 @@ if [ -n "$REBUILD" ]; then
 	rm "cpp/src/pyYggdrasil/lib/libYggInterface_py.dylib"
     fi
 fi
-# export CMAKE_ARGS=${CMAKE_FLAGS}
-if [ -n "$DO_PYTHON" ] && [ -n "$NO_CORE" ]; then
-    export CMAKE_ARGS="${CMAKE_FLAGS} ${CMAKE_FLAGS_LIB}"
-    if [ ! -n "$DONT_BUILD" ]; then
-	cd python
-	python3 setup.py build_ext --inplace
-	cd ../
-    fi
+if [ ! -d "build" ]; then
+    mkdir build
+fi
+cd build
+if [ ! -n "$DONT_BUILD" ]; then
+    cmake .. $CMAKE_FLAGS $CMAKE_FLAGS_LIB
+    cmake --build . $CONFIG_FLAGS
+    # Need install here to ensure that cmake config files are in place
+    cmake --install . --prefix "$INSTALL_DIR" $CONFIG_FLAGS
+fi
+if [[ "$TEST_TYPE" == "unit" ]] && [ ! -n "$DONT_TEST" ]; then
     if [ -n "$WITH_ASAN" ] && [ ! -n "$DYLD_INSERT_LIBRARIES" ]; then
 	export DYLD_INSERT_LIBRARIES=$(clang -print-file-name=libclang_rt.asan_osx_dynamic.dylib)
     fi
-    cd python/pyYggdrasil
-    export PYTHON_TEST_DIR=../../tests/python
-    if [[ "$TEST_TYPE" == "unit" ]] && [ ! -n "$DONT_TEST" ]; then
-	export PYTHONFAULTHANDLER=1
-	if [ -n "$WITH_LLDB" ]; then
-	    lldb -o 'run' -o 'quit' -- $(which python3) -m pytest -svx $PYTHON_TEST_DIR
+    if [ -n "$WITH_LLDB" ]; then
+	if [ -n "$DO_FORTRAN" ]; then
+	    lldb -o 'run' -o 'quit' tests/fortran/fortran_testsuite -- test_ygg_input_1_
 	else
-	    # python3 -m pytest -svx $PYTHON_TEST_DIR
-	    pytest -svx $PYTHON_TEST_DIR
+	    lldb -o 'run' -o 'quit' tests/cpp/unittest
 	fi
+    else
+	ctest $TEST_FLAGS --stop-on-failure
+	# make test ARGS="--stop-on-failure"
     fi
-    cd ../../
-else
-    # DYLD_PRINT_LIBRARIES=1
-    # DYLD_PRINT_APIS=1
-    # DYLD_PRINT_WARNINGS=1
-    # LDFLAGS='-undefined error'
-    if [ ! -d "build" ]; then
-	mkdir build
-    fi
-    cd build
-    if [ ! -n "$DONT_BUILD" ]; then
-	cmake .. $CMAKE_FLAGS $CMAKE_FLAGS_LIB
-	cmake --build . $CONFIG_FLAGS
-	# Need install here to ensure that cmake config files are in place
-	cmake --install . --prefix "$INSTALL_DIR" $CONFIG_FLAGS
-    fi
-    if [[ "$TEST_TYPE" == "unit" ]] && [ ! -n "$DONT_TEST" ]; then
-	if [ -n "$WITH_ASAN" ] && [ ! -n "$DYLD_INSERT_LIBRARIES" ]; then
-	    export DYLD_INSERT_LIBRARIES=$(clang -print-file-name=libclang_rt.asan_osx_dynamic.dylib)
-	fi
-	if [ -n "$WITH_LLDB" ]; then
-	    if [ -n "$DO_FORTRAN" ]; then
-		lldb -o 'run' -o 'quit' tests/fortran/fortran_testsuite -- test_ygg_input_1_
-	    else
-		lldb -o 'run' -o 'quit' tests/cpp/unittest
-	    fi
-	else
-	    ctest $TEST_FLAGS --stop-on-failure
-	    # make test ARGS="--stop-on-failure"
-	fi
-    fi
-    cd ..
 fi
+cd ..
 
 echo "INSTALL_DIR = \"${INSTALL_DIR}\""
 if [ -n "$CMAKE_PREFIX_PATH" ]; then
