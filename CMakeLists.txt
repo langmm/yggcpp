@@ -15,10 +15,10 @@ else()
 endif()
 
 if (NOT DEFAULT_RAPIDJSON_INCLUDE_DIRS)
-  cmake_path(APPEND CMAKE_CURRENT_SOURCE_DIR cpp rapidjson include
+  cmake_path(APPEND CMAKE_CURRENT_SOURCE_DIR cpp include rapidjson include
              OUTPUT_VARIABLE DEFAULT_RAPIDJSON_INCLUDE_DIRS)
 endif()
-set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${PROJECT_SOURCE_DIR}/cmake")
+set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(ygg_options)
 
 option(BUILD_CPP_LIBRARY "Build the Yggdrasil C++ interface library" ON)
@@ -391,9 +391,6 @@ if(SKBUILD)
   set(BUILD_PYTHON_LIBRARY ON)
   if(YGG_LINK_PYTHON_TO_CPP)
     set(BUILD_CPP_LIBRARY ON)
-  else()
-    set(BUILD_CPP_LIBRARY OFF)
-    set(BUILD_FORTRAN_LIBRARY OFF)
   endif()
 elseif(BUILD_PYTHON_LIBRARY AND NOT YGGDRASIL_DISABLE_PYTHON_C_API)
   if(YGG_LINK_PYTHON_TO_CPP)
@@ -408,7 +405,10 @@ endif()
 # Create C++ Library #
 ######################
 
-file(GLOB SOURCES_CPP "cpp/*.cpp" "cpp/utils/*.cpp" "cpp/communicators/*.cpp" "cpp/datatypes/dtype_t.cpp")
+file(GLOB_RECURSE SOURCES_CPP "cpp/src/*.cpp")
+if (NOT SOURCES_CPP)
+  message(FATAL_ERROR "Sources could not be located")
+endif()
 
 if(BUILD_CPP_LIBRARY)
     add_subdirectory(cpp)
@@ -449,9 +449,8 @@ if (YGG_INSTALL_TARGETS)
           FILE YggInterfaceTargets.cmake
 	  NAMESPACE YggInterface::
 	  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/YggInterface)
-  install(DIRECTORY cpp/
-          DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/YggInterface
-	  FILES_MATCHING REGEX ".*\\.h(pp)?$")
+  install(DIRECTORY cpp/include
+          DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/YggInterface)
   include(CMakePackageConfigHelpers)
   write_basic_package_version_file(
     "YggInterfaceConfigVersion.cmake"

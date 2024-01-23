@@ -24,6 +24,20 @@ function(dump_cmake_variables)
   endif()
 endfunction()
 
+function(add_library_python target)
+    if (NOT PYTHON_PREFIX)
+      set(PYTHON_PREFIX Python)
+      set(PYTHON_PREFIX Python PARENT_SCOPE)
+    endif()
+    cmake_parse_arguments(
+      ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+    if (PYTHON_PREFIX STREQUAL "Python3")
+      Python3_add_library(${target} ${ARGS_UNPARSED_ARGUMENTS})
+    else()
+      Python_add_library(${target} ${ARGS_UNPARSED_ARGUMENTS})
+    endif()
+endfunction()
+
 function(find_package_python)
     # needed on GitHub Actions CI: actions/setup-python does not touch registry/frameworks on Windows/macOS
     # this mirrors PythonInterp behavior which did not consult registry/frameworks first

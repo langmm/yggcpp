@@ -3,8 +3,7 @@ if(YGG_PYTHON_LIBRARY_WRAP)
 else()
     set(YGG_TARGET_PY YggInterface)
 endif()
-set(SOURCES_PY
-    ${CMAKE_SOURCE_DIR}/python/YggInterface.cpp)
+set(SOURCES_PY ${CMAKE_CURRENT_SOURCE_DIR}/YggInterface.cpp)
 if (NOT YGG_LINK_PYTHON_TO_CPP)
     set(SOURCES_PY ${SOURCES_PY} ${SOURCES_CPP})
 endif()
@@ -21,6 +20,8 @@ if (NOT SKBUILD)
     foreach(opt IN LISTS PYTHON_COPY_ARGS)
       list(APPEND PYTHON_CMAKE_ARGS "-D${opt}=${${opt}}")
     endforeach()
+    list(APPEND PYTHON_CMAKE_ARGS
+         -DBUILD_CPP_LIBRARY=OFF -DBUILD_FORTRAN_LIBRARY=OFF)
     if (CMAKE_PREFIX_PATH)
       list(APPEND PYTHON_BUILD_ARGS
         --config-settings=cmake.define.CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH})
@@ -58,15 +59,11 @@ if (NOT SKBUILD STREQUAL "2")
   message(FATAL_ERROR "Python interface must be built using scikit-build-core")
 endif()
 
-if (PYTHON_PREFIX STREQUAL "Python3")
-  Python3_add_library(${YGG_TARGET_PY} MODULE ${SOURCES_PY})
-else()
-  Python_add_library(${YGG_TARGET_PY} MODULE ${SOURCES_PY})
-endif()
+add_library_python(${YGG_TARGET_PY} MODULE ${SOURCES_PY})
 target_include_directories(
           ${YGG_TARGET_PY} PUBLIC
           ${DEPS_INCLUDE_DIRS}
-	  ${CMAKE_CURRENT_SOURCE_DIR}/../cpp
+	  ${PARENT_SOURCE_DIR}/cpp/include
 	  ${RAPIDJSON_INCLUDE_DIRS})
 if(YGG_LINK_PYTHON_TO_CPP)
     target_link_libraries(${YGG_TARGET_PY} PUBLIC ${YGG_TARGET_CPP})
@@ -91,11 +88,9 @@ if (ASAN_LINK_FLAGS)
       ${YGG_TARGET_PY} PUBLIC ${ASAN_LINK_FLAGS})
 endif()
 
-# set(YGG_CPP_LIBRARY_DEST YggInterface/${CMAKE_INSTALL_LIBDIR})
 set(YGG_CPP_LIBRARY_DEST ".")
 
 if(NOT ${PYTHON_PREFIX}_INSTALL_DIR)
-  # set(${PYTHON_PREFIX}_INSTALL_DIR YggInterface)
   set(${PYTHON_PREFIX}_INSTALL_DIR ".")
 endif()
 

@@ -1,17 +1,13 @@
-if(SKBUILD)
+if(SKBUILD AND YGG_LINK_PYTHON_TO_CPP)
     set(YGG_TARGET_CPP YggInterface_py)
 else()
     set(YGG_TARGET_CPP YggInterface)
 endif()
 set(YGG_TARGET_CPP ${YGG_TARGET_CPP} PARENT_SCOPE)
-if(SKBUILD AND NOT YGGDRASIL_DISABLE_PYTHON_C_API)
-    if(SKBUILD STREQUAL "2")
-  	Python3_add_library(${YGG_TARGET_CPP} SHARED ${SOURCES_CPP})
-	set(YGG_CPP_LINK_KEYWORD PUBLIC)
-    else()
-        add_library(${YGG_TARGET_CPP} SHARED ${SOURCES_CPP})
-    endif()
-    target_compile_options(${YGG_TARGET_CPP} PUBLIC
+if(SKBUILD AND YGG_LINK_PYTHON_TO_CPP AND NOT YGGDRASIL_DISABLE_PYTHON_C_API)
+    add_library_python(${YGG_TARGET_CPP} SHARED ${SOURCES_CPP})
+    target_compile_options(
+        ${YGG_TARGET_CPP} PUBLIC
  	-DRAPIDJSON_YGGDRASIL_PYTHON -DYGG_LINK_PYTHON_TO_CPP)
 else()
     add_library(${YGG_TARGET_CPP} SHARED ${SOURCES_CPP})
@@ -40,12 +36,10 @@ target_link_libraries(
     "$<$<LINK_LANGUAGE:Fortran>:${DEPS_PUBLIC_Fortran_LIBS}>")
 target_include_directories(
     ${YGG_TARGET_CPP} PUBLIC ${DEPS_INCLUDE_DIRS}
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<BUILD_INTERFACE:${RAPIDJSON_INCLUDE_DIRS}>
     $<INSTALL_INTERFACE:include/YggInterface>
     $<INSTALL_INTERFACE:include/YggInterface/rapidjson/include>)
-# target_include_directories(
-    # ${YGG_TARGET_CPP} PRIVATE ${DEPS_INCLUDE_DIRS})
 target_compile_definitions(
     ${YGG_TARGET_CPP} PUBLIC ${YGG_INSTALL_DEFS})
 target_compile_options(
