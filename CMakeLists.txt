@@ -449,7 +449,7 @@ if (YGG_INSTALL_TARGETS)
           FILE YggInterfaceTargets.cmake
 	  NAMESPACE YggInterface::
 	  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/YggInterface)
-  install(DIRECTORY cpp/include
+  install(DIRECTORY cpp/include/
           DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/YggInterface)
   include(CMakePackageConfigHelpers)
   write_basic_package_version_file(
