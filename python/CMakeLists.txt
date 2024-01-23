@@ -108,12 +108,12 @@ if(SKBUILD)
 	python_extension_module(${YGG_TARGET_PY})
 	set(YGG_CPP_LIBRARY_DEST ${CMAKE_INSTALL_LIBDIR})
     endif()
-    if(NOT Python_INSTALL_DIR)
+    if(NOT ${PYTHON_PREFIX}_INSTALL_DIR)
         if(SKBUILD STREQUAL "2")
-	    # set(Python_INSTALL_DIR YggInterface)
-	    set(Python_INSTALL_DIR ".")
+	    # set(${PYTHON_PREFIX}_INSTALL_DIR YggInterface)
+	    set(${PYTHON_PREFIX}_INSTALL_DIR ".")
 	else()
-	    set(Python_INSTALL_DIR ".")
+	    set(${PYTHON_PREFIX}_INSTALL_DIR ".")
 	endif()
     endif()
     if(YGG_LINK_PYTHON_TO_CPP)
@@ -122,7 +122,7 @@ if(SKBUILD)
 		PUBLIC_HEADER DESTINATION ${YGG_CPP_LIBRARY_DEST}
 		RUNTIME DESTINATION ${YGG_CPP_LIBRARY_DEST})
         install(TARGETS ${YGG_TARGET_PY}
-  	        LIBRARY DESTINATION ${Python_INSTALL_DIR})
+  	        LIBRARY DESTINATION ${${PYTHON_PREFIX}_INSTALL_DIR})
     else()
         target_compile_definitions(
             ${YGG_TARGET_PY} PUBLIC ${YGG_INSTALL_DEFS})
@@ -130,11 +130,11 @@ if(SKBUILD)
 	    ${YGG_TARGET_PY} PUBLIC ${DEPS_PUBLIC_COMPILE_FLAGS}
 	    ${DEPS_PUBLIC_CXX_COMPILE_FLAGS})
         install(TARGETS ${YGG_TARGET_PY}
-  	        LIBRARY DESTINATION ${Python_INSTALL_DIR}
-		RUNTIME DESTINATION ${Python_INSTALL_DIR})
+  	        LIBRARY DESTINATION ${${PYTHON_PREFIX}_INSTALL_DIR}
+		RUNTIME DESTINATION ${${PYTHON_PREFIX}_INSTALL_DIR})
     endif()
     if (NOT SKBUILD)
-        install(DIRECTORY YggInterface/ DESTINATION ${Python_INSTALL_DIR})
+        install(DIRECTORY YggInterface/ DESTINATION ${${PYTHON_PREFIX}_INSTALL_DIR})
     endif()
     if(APPLE)
         set_target_properties(
