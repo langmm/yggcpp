@@ -14,8 +14,8 @@
 #define RAPIDJSON_FORCE_IMPORT_ARRAY
 #endif
 #include "utils/rapidjson_wrapper.hpp"
-#include "pyUtils.cpp"
-#include "pyYggCommBase.cpp"
+#include "utils.cpp"
+#include "communicators.cpp"
 
 static int
 module_exec(PyObject* m)

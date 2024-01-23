@@ -11,4 +11,3 @@
 * Update handling of specialized send/recv (array) with transforms and test data
 * Update docs for python extension
 * Generate docs for python extension
-* Rename python extension files
