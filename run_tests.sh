@@ -8,6 +8,7 @@ DO_CXX=""
 DO_FORTRAN=""
 DO_PYTHON=""
 DO_DOCS=""
+DO_SKBUILD=""
 WITH_ASAN=""
 CMAKE_FLAGS="-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DYGG_SKIP_VALGRIND_TESTS=ON"
 CMAKE_FLAGS_LIB=""
@@ -127,6 +128,10 @@ while [[ $# -gt 0 ]]; do
 	    DO_DOCS="TRUE"
 	    DONT_TEST="TRUE"
 	    DONT_BUILD="TRUE"
+	    shift
+	    ;;
+	--skbuild-all )
+	    DO_SKBUILD="TRUE"
 	    shift
 	    ;;
 	--speed )
@@ -279,29 +284,36 @@ fi
 if [ ! -d "build" ]; then
     mkdir build
 fi
-cd build
-if [ ! -n "$DONT_BUILD" ]; then
-    cmake .. $CMAKE_FLAGS $CMAKE_FLAGS_LIB
-    cmake --build . $CONFIG_FLAGS
-    # Need install here to ensure that cmake config files are in place
-    cmake --install . --prefix "$INSTALL_DIR" $CONFIG_FLAGS
-fi
-if [[ "$TEST_TYPE" == "unit" ]] && [ ! -n "$DONT_TEST" ]; then
-    if [ -n "$WITH_ASAN" ] && [ ! -n "$DYLD_INSERT_LIBRARIES" ]; then
-	export DYLD_INSERT_LIBRARIES=$(clang -print-file-name=libclang_rt.asan_osx_dynamic.dylib)
+if [ -n "$DO_SKBUILD" ]; then
+    export CMAKE_ARGS="${CMAKE_FLAGS} ${CMAKE_FLAGS_LIB}"
+    pip install \
+	--config-settings=cmake.define.ALLOW_SKBUILD_NONPYTHON:BOOL=ON \
+	-v .
+else
+    cd build
+    if [ ! -n "$DONT_BUILD" ]; then
+	cmake .. $CMAKE_FLAGS $CMAKE_FLAGS_LIB
+	cmake --build . $CONFIG_FLAGS
+	# Need install here to ensure that cmake config files are in place
+	cmake --install . --prefix "$INSTALL_DIR" $CONFIG_FLAGS
     fi
-    if [ -n "$WITH_LLDB" ]; then
-	if [ -n "$DO_FORTRAN" ]; then
-	    lldb -o 'run' -o 'quit' tests/fortran/fortran_testsuite -- test_ygg_input_1_
-	else
-	    lldb -o 'run' -o 'quit' tests/cpp/unittest
+    if [[ "$TEST_TYPE" == "unit" ]] && [ ! -n "$DONT_TEST" ]; then
+	if [ -n "$WITH_ASAN" ] && [ ! -n "$DYLD_INSERT_LIBRARIES" ]; then
+	    export DYLD_INSERT_LIBRARIES=$(clang -print-file-name=libclang_rt.asan_osx_dynamic.dylib)
 	fi
-    else
-	ctest $TEST_FLAGS --stop-on-failure
-	# make test ARGS="--stop-on-failure"
+	if [ -n "$WITH_LLDB" ]; then
+	    if [ -n "$DO_FORTRAN" ]; then
+		lldb -o 'run' -o 'quit' tests/fortran/fortran_testsuite -- test_ygg_input_1_
+	    else
+		lldb -o 'run' -o 'quit' tests/cpp/unittest
+	    fi
+	else
+	    ctest $TEST_FLAGS --stop-on-failure
+	    # make test ARGS="--stop-on-failure"
+	fi
     fi
+    cd ..
 fi
-cd ..
 
 echo "INSTALL_DIR = \"${INSTALL_DIR}\""
 if [ -n "$CMAKE_PREFIX_PATH" ]; then
