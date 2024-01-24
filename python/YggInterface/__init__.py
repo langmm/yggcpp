@@ -1,6 +1,6 @@
 import os
 try:
-    from YggInterface import _YggInterface  # noqa: F401
+    from ._YggInterface import Comm_t  # noqa: F401
 except ImportError:
     import os.path
     import re
@@ -36,7 +36,7 @@ except ImportError:
         raise FileNotFoundError(
             "YggInterface C++ library is not installed and "
             "no bundled version was detected")
-    from YggInterface import _YggInterface  # noqa: F401
+    from ._YggInterface import Comm_t  # noqa: F401
     ## @endcond
 
 
@@ -44,6 +44,7 @@ from ._YggInterface import (
     Comm_t,  # noqa: F401
     DIRECTION,  # noqa: F401
     COMM_TYPE,  # noqa: F401
+    COMM_TYPE_map,  # noqa: F401
     COMM_FLAG,  # noqa: F401
     FILE_FLAG,  # noqa: F401
     is_comm_installed,  # noqa: F401

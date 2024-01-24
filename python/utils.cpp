@@ -58,12 +58,19 @@ template<typename T>
 static int register_enum(PyObject* dict,
 			 const std::map<const T, const std::string>& map,
 			 const std::string& prefix="",
-			 const std::string& suffix="") {
+			 const std::string& suffix="",
+			 bool to_lower=false, bool to_upper=false) {
   if (dict == NULL)
     return -1;
   for (typename std::map<const T, const std::string>::const_iterator it = map.cbegin();
        it != map.cend(); it++) {
-    std::string iname = prefix + it->second + suffix;
+    std::string tmp = it->second;
+    if (to_lower) {
+      tmp = str_tolower(tmp);
+    } else if (to_upper) {
+      tmp = str_toupper(tmp);
+    }
+    std::string iname = prefix + tmp + suffix;
     PyObject* ival = PyLong_FromLong(it->first);
     if (PyDict_SetItemString(dict, iname.c_str(), ival) < 0)
       return -1;
@@ -100,5 +107,16 @@ static int register_enums(PyObject* module) {
     REGISTER_ENUM(COMM_FLAG, FLAG_TYPE, COMM_FLAG_map, "COMM_FLAG_", "");
     REGISTER_ENUM(FILE_FLAG, FILE_FLAG_TYPE, FILE_FLAG_map, "FILE_FLAG_", "");
 #undef REGISTER_ENUM
+    {
+      PyObject* tmp = PyDict_New();
+      if (register_enum(tmp, COMM_TYPE_map, "", "", true) < 0) {
+	Py_CLEAR(tmp);
+	return -1;
+      }
+      if (PyModule_AddObject(module, "COMM_TYPE_map", tmp) < 0) {
+	Py_CLEAR(tmp);
+	return -1;
+      }
+    }
     return 0;
 }

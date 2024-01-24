@@ -616,6 +616,7 @@ public:
     (internal::NotExpr<
      internal::IsSame<typename internal::RemoveConst<T>::Type, Ch> >),
     (const INDEX_RTYPE)) operator[](T* name) const;
+  
   WRAP_METHOD_SELF(WValue, AddMember, (WValue& name,
 				       WValue& value,
 				       WValue::Allocator& allocator),
@@ -662,6 +663,11 @@ public:
   WRAP_METHOD_CAST_MITER(WValue, FindMember, (const WValue& name),
 			 (*(name.val_)), ConstMemberIterator,
 			 const);
+#if RAPIDJSON_HAS_STDSTRING
+  WRAP_METHOD_CAST_MITER(WValue, FindMember,
+			 (const std::basic_string<Ch>& name), (name),
+			 WValue::ConstMemberIterator, const);
+#endif
   // Python methods
   WRAP_METHOD(WValue, IsPythonClass, (), (), bool, const);
   WRAP_METHOD(WValue, IsPythonInstance, (), (), bool, const);
@@ -708,6 +714,16 @@ public:
 		   (const Ch* s, SizeType length,
 		    Allocator& allocator, const WValue& schema),
 		   (s, length, allocator, *(schema.val_)), );
+  WRAP_METHOD(WValue, AddSchemaMember,
+	      (const WValue& key, const WValue& value),
+	      (*(key.val_), *(value.val_)), void, );
+  WRAP_METHOD(WValue, AddSchemaMember,
+	      (const WValue& key, unsigned int value),
+	      (*(key.val_), value), void, );
+  WRAP_METHOD(WValue, AddSchemaMember,
+	      (const WValue& key, const Ch* str, SizeType str_len),
+	      (*(key.val_), str, str_len), void, );
+					
   // Strings
   WRAP_GET_STRING(Type);
   WRAP_GET_STRING(Object);
