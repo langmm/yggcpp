@@ -29,6 +29,7 @@ option(YGG_Fortran_REQUIRED "Raise an error if the Fortran interface library can
 option(ALLOW_SKBUILD_NONPYTHON "Allow the non-Python interfaces (C/C++/Fortran) to be built from SKBUILD" OFF)
 option(ENABLE_ZMQ "Enable ZeroMQ" ON)
 option(ENABLE_RMQ "Enable RabbitMQ" ON)
+option(ENABLE_REST "Enable REST API" ON)
 option(USING_IPC "Default to using IPC V queues" OFF)
 option(ENABLE_OMP "Enable OpenMP" ON)
 option(ENABLE_MPI "Enable MPI" ON)
@@ -197,6 +198,24 @@ if(ENABLE_RMQ)
 else (ENABLE_RMQ)
     message(STATUS "No RabbitMQ support will be built." )
 endif (ENABLE_RMQ)
+
+########
+# Curl #
+########
+
+if (ENABLE_REST)
+  find_package(CURL)
+  if (CURL_FOUND)
+    list(APPEND YGG_INSTALL_DEFS -DRESTINSTALLED)
+    list(APPEND YGG_INSTALL_DEPS %{CURL_LIBRARIES})
+    list(APPEND DEPS_LIBRARIES ${CURL_LIBRARIES})
+    list(APPEND DEPS_INCLUDE_DIRS ${CURL_INCLUDE_DIRS})
+  else()
+    message(STATUS "NO curl library")
+  endif()
+else (ENABLE_REST)
+  message(STATUS "No REST support will be built.")
+endif(ENABLE_REST)
 
 ##########
 # OpenMP #

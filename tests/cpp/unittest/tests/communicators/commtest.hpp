@@ -315,9 +315,9 @@ bool example_transform(rapidjson::Document& msg) {
 #define COMM_SERI_TEST_TYPE(cls, type, value, schema, init)		\
   TEST(cls, type) {							\
     init;								\
-    cls ## _tester sComm(SEND);						\
-    sComm.addSchema(schema);						\
     std::string name = "test_name";					\
+    cls ## _tester sComm(name, SEND);					\
+    sComm.addSchema(schema);						\
     std::string key_env = name + "_IN";					\
     std::string val_env = sComm.getAddress();				\
     setenv(key_env.c_str(), val_env.c_str(), 1);			\
@@ -329,9 +329,9 @@ bool example_transform(rapidjson::Document& msg) {
   }									\
   TEST(cls, type ## _AsGeneric) {					\
     init;								\
-    cls ## _tester sComm(SEND);						\
-    sComm.addSchema(schema);						\
     std::string name = "test_name";					\
+    cls ## _tester sComm(name, SEND);					\
+    sComm.addSchema(schema);						\
     std::string key_env = name + "_IN";					\
     std::string val_env = sComm.getAddress();				\
     setenv(key_env.c_str(), val_env.c_str(), 1);			\
@@ -346,9 +346,9 @@ bool example_transform(rapidjson::Document& msg) {
 #define COMM_SERI_TEST_GEOM(cls, type, init_data, schema, init)		\
   TEST(cls, type) {							\
     init;								\
-    cls ## _tester sComm(SEND);						\
-    sComm.addSchema(schema);						\
     std::string name = "test_name";					\
+    cls ## _tester sComm(name, SEND);					\
+    sComm.addSchema(schema);						\
     std::string key_env = name + "_IN";					\
     std::string val_env = sComm.getAddress();				\
     setenv(key_env.c_str(), val_env.c_str(), 1);			\
@@ -377,9 +377,9 @@ bool example_transform(rapidjson::Document& msg) {
 		      "{\"type\": \"obj\"}", init)			\
   TEST(cls, generic) {							\
     init;								\
-    cls ## _tester sComm(SEND);						\
-    sComm.addSchema("{\"type\": \"any\"}");				\
     std::string name = "test_name";					\
+    cls ## _tester sComm(name, SEND);					\
+    sComm.addSchema("{\"type\": \"any\"}");				\
     std::string key_env = name + "_IN";					\
     std::string val_env = sComm.getAddress();				\
     setenv(key_env.c_str(), val_env.c_str(), 1);			\
@@ -392,8 +392,8 @@ bool example_transform(rapidjson::Document& msg) {
   }									\
   TEST(cls, incompatible) {						\
     init;								\
-    cls ## _tester sComm(SEND);						\
     std::string name = "test_name";					\
+    cls ## _tester sComm(name, SEND);					\
     std::string key_env = name + "_IN";					\
     std::string val_env = sComm.getAddress();				\
     setenv(key_env.c_str(), val_env.c_str(), 1);			\

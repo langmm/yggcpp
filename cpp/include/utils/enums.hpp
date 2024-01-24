@@ -25,6 +25,7 @@ enum COMM_TYPE {
     FILE_COMM,   //!< File communicator
     RMQ_COMM,    //!< RabbitMQ communicator
     VALUE_COMM,  //!< Value communicator
+    REST_COMM,   //!< REST communicator
 };
 
 /**
@@ -183,7 +184,8 @@ const std::map<const COMM_TYPE, const std::string> COMM_TYPE_map {
   {CLIENT_COMM, "CLIENT"},
   {FILE_COMM, "FILE"},
   {RMQ_COMM, "RMQ"},
-  {VALUE_COMM, "VALUE"}};
+  {VALUE_COMM, "VALUE"},
+  {REST_COMM, "REST"}};
 
 const std::map<const COMM_TYPE, const std::string> COMM_TYPE_cls_map {
   {NULL_COMM, "NullComm"},
@@ -195,7 +197,8 @@ const std::map<const COMM_TYPE, const std::string> COMM_TYPE_cls_map {
   {CLIENT_COMM, "ClientComm"},
   {FILE_COMM, "FileComm"},
   {RMQ_COMM, "RMQComm"},
-  {VALUE_COMM, "ValueComm"}};
+  {VALUE_COMM, "ValueComm"},
+  {REST_COMM, "RESTComm"}};
 
 const std::map<const LANGUAGE, const std::string> LANGUAGE_map {
   {NO_LANGUAGE, ""},

@@ -43,6 +43,9 @@ int CommContext::init(bool for_testing) {
       zmq_ctx = zmq_ctx_new();
   } YGG_THREAD_SAFE_END;
 #endif // ZMQINSTALLED
+#ifdef RESTINSTALLED
+  curl_global_init(CURL_GLOBAL_ALL);
+#endif // RESTINSTALLED
   log_debug() << "init: End" << std::endl;
   return 0;
 }
@@ -94,6 +97,9 @@ void CommContext::cleanup(CLEANUP_MODE mode) {
 	utils::finalize_python("CommContext::cleanup");
       }
     } YGG_THREAD_SAFE_END;
+#ifdef RESTINSTALLED
+    curl_global_cleanup();
+#endif // RESTINSTALLED
     log_debug() << "cleanup: Cleanup complete" << std::endl;
     cleanup_mode_ = prev_mode;
   } YGG_THREAD_SAFE_END;

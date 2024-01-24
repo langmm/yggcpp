@@ -13,3 +13,4 @@
 #include "communicators/ForkComm.hpp"
 #include "communicators/RMQComm.hpp"
 #include "communicators/ValueComm.hpp"
+#include "communicators/RESTComm.hpp"

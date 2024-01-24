@@ -26,6 +26,7 @@ const int COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
 #define ZMQ_INSTALLED_FLAG 0
 #define MPI_INSTALLED_FLAG 0
 #define RMQ_INSTALLED_FLAG 0
+#define REST_INSTALLED_FLAG 0
 
 #ifdef IPCINSTALLED
 #undef IPC_INSTALLED_FLAG
@@ -42,6 +43,10 @@ const int COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
 #ifdef RMQINSTALLED // TODO: Check for RMQ server
 #undef RMQ_INSTALLED_FLAG
 #define RMQ_INSTALLED_FLAG 1
+#endif
+#ifdef RESTINSTALLED
+#undef REST_INSTALLED_FLAG
+#define REST_INSTALLED_FLAG 1
 #endif
 
 #define UNINSTALLED_ERROR(name)					\
@@ -1613,6 +1618,8 @@ protected:
     WorkerList workers;            //!< Communicator to use for sending large messages.
     Comm_t* global_comm;           //!< Pointer to global comm that this comm shadows.
     LANGUAGE language;             //!< Language that model is written in
+    std::string model;             //!< Name of the model
+    std::string partner_model;     //!< Name of the partner model
     std::vector<std::string> cache; //!< Cache of messages received.
     
     /*!

@@ -138,6 +138,13 @@ int unsetenv(const char *name) {
 namespace YggInterface {
 namespace utils {
 
+  /**
+   * @brief Generate a random alpha numeric string of a given length
+   * @param[in] length Size of string to generate
+   * @return Generated string
+   */
+  std::string random_string(std::string::size_type length);
+  
 // template<typename T, std::enable_if_t<!std::is_floating_point<T>::value &&
 //                                       !std::is_same<T, uint8_t>::value &&
 //                                       !std::is_same<T, int8_t>::value, bool> = true>

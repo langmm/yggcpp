@@ -26,7 +26,8 @@ module YggInterface
           CLIENT_COMM, &
           FILE_COMM, &
           RMQ_COMM, &
-          VALUE_COMM
+          VALUE_COMM, &
+          REST_COMM
   end enum
   enum, bind( C )
      enumerator :: SEND, &

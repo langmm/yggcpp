@@ -11,7 +11,7 @@ Comm_t::Comm_t(const std::string &nme, const Address &addr,
   maxMsgSize(COMM_BASE_MAX_MSG_SIZE), msgBufSize(0),
   index_in_register(-1), thread_id(), metadata(),
   timeout_recv(YGG_MAX_TIME), workers(), global_comm(nullptr),
-  language(NO_LANGUAGE) {
+  language(NO_LANGUAGE), model(), partner_model() {
   _before_open();
 }
 
@@ -43,6 +43,7 @@ void Comm_t::_before_open() {
     flags |= COMM_FLAG_ALLOW_MULTIPLE_COMMS;
   char *model_name = std::getenv("YGG_MODEL_NAME");
   if (model_name) {
+    model.assign(model_name);
     std::string prefix(model_name);
     prefix += ":";
     if (name.rfind(prefix, 0) != 0) {
@@ -518,6 +519,8 @@ Comm_t* YggInterface::communicator::new_Comm_t(
     return new FileComm(name, addr, dir, flags);
   case RMQ_COMM:
     return new RMQComm(name, addr, dir, flags);
+  case REST_COMM:
+    return new RESTComm(name, addr, dir, flags);
   case VALUE_COMM:
     return new ValueComm(name, addr, dir, flags);
   }
@@ -543,6 +546,8 @@ bool YggInterface::communicator::is_commtype_installed(const COMM_TYPE type) {
     return FileComm::isInstalled();
   case RMQ_COMM:
     return RMQComm::isInstalled();
+  case REST_COMM:
+    return RESTComm::isInstalled();
   case VALUE_COMM:
     return ValueComm::isInstalled();
   }

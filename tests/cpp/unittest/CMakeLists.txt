@@ -125,6 +125,11 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E copy
                 ${CMAKE_CURRENT_SOURCE_DIR}/example_python.py
                 ${PARENT_BINARY_DIR}/example_python.py)
+add_custom_command(
+        TARGET unittest POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+                ${CMAKE_CURRENT_SOURCE_DIR}/example_app.py
+                ${PARENT_BINARY_DIR}/example_app.py)
 
     if(YGG_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang|ARMClang")
         find_program(GCOVR_FOUND gcovr)
