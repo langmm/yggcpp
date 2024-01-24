@@ -190,6 +190,139 @@ TEST(DefaultCommu, recv_dict_array) {
   EXPECT_EQ(msg_recv, msg_expc);
 }
 
+TEST(DefaultCommu, send_array) {
+  rapidjson::Document msg_send, msg_recv, msg_expc;
+  msg_expc.Parse("[\"a\", 1, 5.0]");
+  msg_send.Parse("{\"a\": \"a\", \"b\": 1, \"c\": 5.0}");
+  std::vector<std::string> key_order = {"a", "b", "c"};
+  std::vector<std::string> invalid_key_order = {"a", "b", "invalid"};
+  DefaultComm sComm("", SEND);
+  utils::Address addr(sComm.getAddress());
+  DefaultComm rComm("", addr, RECV);
+  EXPECT_LT(sComm.send_array(msg_send, invalid_key_order), 0);
+  EXPECT_GT(sComm.send_array(msg_send, key_order), 0);
+  EXPECT_GT(rComm.recv(msg_recv), 0);
+  EXPECT_EQ(msg_recv, msg_expc);
+}
+
+TEST(DefaultCommu, recv_array) {
+  rapidjson::Document msg_send, msg_recv, msg_expc;
+  msg_expc.Parse("[\"a\", 1, 5.0]");
+  msg_send.Parse("{\"a\": \"a\", \"b\": 1, \"c\": 5.0}");
+  std::vector<std::string> key_order = {"a", "b", "c"};
+  std::vector<std::string> invalid_key_order = {"a", "b", "invalid"};
+  DefaultComm sComm("", SEND);
+  utils::Address addr(sComm.getAddress());
+  DefaultComm rComm("", addr, RECV);
+  EXPECT_GT(sComm.send(msg_send), 0);
+  EXPECT_LT(rComm.recv_array(msg_recv, invalid_key_order), 0);
+  EXPECT_GT(sComm.send(msg_send), 0);
+  EXPECT_GT(rComm.recv_array(msg_recv, key_order), 0);
+  EXPECT_EQ(msg_recv, msg_expc);
+}
+
+TEST(DefaultCommu, send_array_default) {
+  rapidjson::Document msg_send, msg_recv, msg_expc;
+  msg_expc.Parse("[\"a\", 1, 5.0]");
+  msg_send.Parse("{\"a\": \"a\", \"b\": 1, \"c\": 5.0}");
+  DefaultComm sComm("", SEND);
+  utils::Address addr(sComm.getAddress());
+  DefaultComm rComm("", addr, RECV);
+  EXPECT_GT(sComm.send_array(msg_send), 0);
+  EXPECT_GT(rComm.recv(msg_recv), 0);
+  EXPECT_EQ(msg_recv, msg_expc);
+}
+
+TEST(DefaultCommu, send_array_field_names) {
+  rapidjson::Document msg_send, msg_recv, msg_expc;
+  msg_expc.Parse("[\"a\", 1, 5.0]");
+  msg_send.Parse("{\"a\": \"a\", \"b\": 1, \"c\": 5.0}");
+  std::vector<std::string> key_order = {"a", "b", "c"};
+  DefaultComm sComm("", SEND);
+  utils::Address addr(sComm.getAddress());
+  DefaultComm rComm("", addr, RECV);
+  EXPECT_TRUE(sComm.getMetadata().set_field_names(key_order));
+  EXPECT_GT(sComm.send_array(msg_send), 0);
+  EXPECT_GT(rComm.recv(msg_recv), 0);
+  EXPECT_EQ(msg_recv, msg_expc);
+}
+
+TEST(DefaultCommu, recv_array_field_names) {
+  rapidjson::Document msg_send, msg_recv, msg_expc;
+  msg_expc.Parse("[\"a\", 1, 5.0]");
+  msg_send.Parse("{\"a\": \"a\", \"b\": 1, \"c\": 5.0}");
+  std::vector<std::string> key_order = {"a", "b", "c"};
+  DefaultComm sComm("", SEND);
+  utils::Address addr(sComm.getAddress());
+  DefaultComm rComm("", addr, RECV);
+  EXPECT_TRUE(rComm.getMetadata().set_field_names(key_order));
+  EXPECT_GT(sComm.send(msg_send), 0);
+  EXPECT_GT(rComm.recv_array(msg_recv), 0);
+  EXPECT_EQ(msg_recv, msg_expc);
+}
+
+TEST(DefaultCommu, send_array_array) {
+  int arr[2][2][3] = {{{0, 1, 2},
+		       {3, 4, 5}},
+		      {{6, 7, 8},
+		       {9, 10, 11}}};
+  int arr_a[2][2] = {{0, 3}, {6, 9}};
+  int arr_b[2][2] = {{1, 4}, {7, 10}};
+  int arr_c[2][2] = {{2, 5}, {8, 11}};
+  rapidjson::Document msg_send, msg_recv, msg_expc;
+  msg_expc.SetArray();
+  msg_expc.Reserve(3, msg_expc.GetAllocator());
+  msg_send.SetNDArray(arr, msg_send.GetAllocator());
+  rapidjson::Value val_a, val_b, val_c;
+  val_a.SetNDArray(arr_a, msg_expc.GetAllocator());
+  val_b.SetNDArray(arr_b, msg_expc.GetAllocator());
+  val_c.SetNDArray(arr_c, msg_expc.GetAllocator());
+  msg_expc.PushBack(val_a, msg_expc.GetAllocator());
+  msg_expc.PushBack(val_b, msg_expc.GetAllocator());
+  msg_expc.PushBack(val_c, msg_expc.GetAllocator());
+  std::vector<std::string> key_order = {"a", "b", "c"};
+  std::vector<std::string> invalid_key_order = {"a", "b"};
+  DefaultComm sComm("", SEND);
+  utils::Address addr(sComm.getAddress());
+  DefaultComm rComm("", addr, RECV);
+  EXPECT_LT(rComm.send_array(msg_send, invalid_key_order, 2), 0);
+  EXPECT_LT(sComm.send_array(msg_send, key_order, 3), 0);
+  EXPECT_GT(sComm.send_array(msg_send, key_order, 2), 0);
+  EXPECT_GT(rComm.recv(msg_recv), 0);
+  EXPECT_EQ(msg_recv, msg_expc);
+}
+
+TEST(DefaultCommu, recv_array_array) {
+  int arr[2][2][3] = {{{0, 1, 2},
+		       {3, 4, 5}},
+		      {{6, 7, 8},
+		       {9, 10, 11}}};
+  int arr_a[2][2] = {{0, 3}, {6, 9}};
+  int arr_b[2][2] = {{1, 4}, {7, 10}};
+  int arr_c[2][2] = {{2, 5}, {8, 11}};
+  rapidjson::Document msg_send, msg_recv, msg_expc;
+  msg_expc.SetArray();
+  msg_expc.Reserve(3, msg_expc.GetAllocator());
+  msg_send.SetNDArray(arr, msg_send.GetAllocator());
+  rapidjson::Value val_a, val_b, val_c;
+  val_a.SetNDArray(arr_a, msg_expc.GetAllocator());
+  val_b.SetNDArray(arr_b, msg_expc.GetAllocator());
+  val_c.SetNDArray(arr_c, msg_expc.GetAllocator());
+  msg_expc.PushBack(val_a, msg_expc.GetAllocator());
+  msg_expc.PushBack(val_b, msg_expc.GetAllocator());
+  msg_expc.PushBack(val_c, msg_expc.GetAllocator());
+  std::vector<std::string> key_order = {"a", "b", "c"};
+  std::vector<std::string> invalid_key_order = {"a", "b"};
+  DefaultComm sComm("", SEND);
+  utils::Address addr(sComm.getAddress());
+  DefaultComm rComm("", addr, RECV);
+  EXPECT_GT(sComm.send(msg_send), 0);
+  EXPECT_LT(rComm.recv_array(msg_recv, invalid_key_order, 2), 0);
+  EXPECT_GT(sComm.send(msg_send), 0);
+  EXPECT_GT(rComm.recv_array(msg_recv, key_order, 2), 0);
+  EXPECT_EQ(msg_recv, msg_expc);
+}
+
 TEST(DefaultCommu, filter_recv) {
   DefaultComm sComm("", SEND);
   utils::Address addr(sComm.getAddress());

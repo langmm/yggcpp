@@ -344,6 +344,90 @@ class TestComm_t_Installed:
         assert comm_send.send(msg_send)
         assert comm_recv.recv_dict(key_order=key_order) == (True, msg_recv)
 
+    def test_send_array_recv(self, commtype, require_installed):
+        comm_recv = YggInterface.Comm_t(
+            "test", commtype=commtype,
+            direction=YggInterface.DIRECTION.RECV,
+            flags=YggInterface.COMM_FLAG.COMM_FLAG_ASYNC)
+        comm_send = YggInterface.Comm_t(
+            "test", comm_recv.address, commtype=commtype,
+            direction=YggInterface.DIRECTION.SEND,
+            flags=(YggInterface.COMM_FLAG.COMM_FLAG_INTERFACE |
+                   YggInterface.COMM_FLAG.COMM_FLAG_ASYNC))
+        key_order = ["a", "b", "c"]
+        msg_recv = ["a", 1, None]
+        msg_send = {k: v for k, v in zip(key_order, msg_recv)}
+        assert comm_send.send_array(msg_send, key_order=key_order)
+        assert comm_recv.recv() == (True, msg_recv)
+
+    def test_send_recv_array(self, commtype, require_installed):
+        comm_recv = YggInterface.Comm_t(
+            "test", commtype=commtype,
+            direction=YggInterface.DIRECTION.RECV,
+            flags=YggInterface.COMM_FLAG.COMM_FLAG_ASYNC)
+        comm_send = YggInterface.Comm_t(
+            "test", comm_recv.address, commtype=commtype,
+            direction=YggInterface.DIRECTION.SEND,
+            flags=(YggInterface.COMM_FLAG.COMM_FLAG_INTERFACE |
+                   YggInterface.COMM_FLAG.COMM_FLAG_ASYNC))
+        key_order = ["a", "b", "c"]
+        msg_recv = ["a", 1, None]
+        msg_send = {k: v for k, v in zip(key_order, msg_recv)}
+        assert comm_send.send(msg_send)
+        assert comm_recv.recv_array(key_order=key_order) == (True, msg_recv)
+
+    def test_send_structarray_recv(self, commtype, require_installed):
+        comm_recv = YggInterface.Comm_t(
+            "test", commtype=commtype,
+            direction=YggInterface.DIRECTION.RECV,
+            flags=YggInterface.COMM_FLAG.COMM_FLAG_ASYNC)
+        comm_send = YggInterface.Comm_t(
+            "test", comm_recv.address, commtype=commtype,
+            direction=YggInterface.DIRECTION.SEND,
+            flags=(YggInterface.COMM_FLAG.COMM_FLAG_INTERFACE |
+                   YggInterface.COMM_FLAG.COMM_FLAG_ASYNC))
+        key_order = ["name", "age", "weight"]
+        msg_send = [
+            np.array(['Rex', 'Fido'], dtype='U10'),
+            np.array([9, 3], dtype='i4'),
+            np.array([81.0, 27.0], dtype='f4'),
+        ]
+        msg_expc = np.array(
+            [('Rex', 9, 81.0), ('Fido', 3, 27.0)],
+            dtype=[('name', 'U10'), ('age', 'i4'), ('weight', 'f4')])
+        assert comm_send.send_array(msg_send, key_order=key_order)
+        flag, msg_recv = comm_recv.recv()
+        assert flag
+        assert (type(msg_recv) is type(msg_expc)
+                and msg_recv.dtype == msg_expc.dtype)
+        np.testing.assert_equal(msg_recv, msg_expc)
+
+    def test_send_recv_structarray(self, commtype, require_installed):
+        comm_recv = YggInterface.Comm_t(
+            "test", commtype=commtype,
+            direction=YggInterface.DIRECTION.RECV,
+            flags=YggInterface.COMM_FLAG.COMM_FLAG_ASYNC)
+        comm_send = YggInterface.Comm_t(
+            "test", comm_recv.address, commtype=commtype,
+            direction=YggInterface.DIRECTION.SEND,
+            flags=(YggInterface.COMM_FLAG.COMM_FLAG_INTERFACE |
+                   YggInterface.COMM_FLAG.COMM_FLAG_ASYNC))
+        key_order = ["name", "age", "weight"]
+        msg_send = [
+            np.array(['Rex', 'Fido'], dtype='U10'),
+            np.array([9, 3], dtype='i4'),
+            np.array([81.0, 27.0], dtype='f4'),
+        ]
+        msg_expc = np.array(
+            [('Rex', 9, 81.0), ('Fido', 3, 27.0)],
+            dtype=[('name', 'U10'), ('age', 'i4'), ('weight', 'f4')])
+        assert comm_send.send(msg_send)
+        flag, msg_recv = comm_recv.recv_array(key_order=key_order)
+        assert flag
+        assert (type(msg_recv) is type(msg_expc)
+                and msg_recv.dtype == msg_expc.dtype)
+        np.testing.assert_equal(msg_recv, msg_expc)
+
     def test_send_recv_long(self, comm_recv, do_send_recv):
         if comm_recv.maxMsgSize == 0:
             pytest.skip("Communicator does not have a maxMsgSize")

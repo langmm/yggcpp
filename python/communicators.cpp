@@ -30,6 +30,8 @@ static PyObject* Comm_t_recv(PyObject* self, PyObject* arg);
 static PyObject* Comm_t_send_eof(PyObject* self, PyObject* arg);
 static PyObject* Comm_t_send_dict(PyObject* self, PyObject* arg, PyObject* kwargs);
 static PyObject* Comm_t_recv_dict(PyObject* self, PyObject* arg, PyObject* kwargs);
+static PyObject* Comm_t_recv_array(PyObject* self, PyObject* arg, PyObject* kwargs);
+static PyObject* Comm_t_send_array(PyObject* self, PyObject* arg, PyObject* kwargs);
 static PyObject* Comm_t_call(PyObject* self, PyObject* arg);
 static PyObject* Comm_t_set_timeout_recv(PyObject* self, PyObject* arg);
 static PyObject* Comm_t_wait_for_recv(PyObject* self, PyObject* arg);
@@ -473,6 +475,10 @@ static PyMethodDef Comm_t_methods[] = {
 	{"send_dict", (PyCFunction) Comm_t_send_dict,
 	 METH_VARARGS | METH_KEYWORDS, ""},
 	{"recv_dict", (PyCFunction) Comm_t_recv_dict,
+	 METH_VARARGS | METH_KEYWORDS, ""},
+	{"send_array", (PyCFunction) Comm_t_send_array,
+	 METH_VARARGS | METH_KEYWORDS, ""},
+	{"recv_array", (PyCFunction) Comm_t_recv_array,
 	 METH_VARARGS | METH_KEYWORDS, ""},
 	{"call", (PyCFunction) Comm_t_call, METH_VARARGS, ""},
         {"set_timeout_recv", (PyCFunction) Comm_t_set_timeout_recv, METH_VARARGS, ""},
@@ -1230,6 +1236,86 @@ static PyObject* Comm_t_recv_dict(PyObject* self, PyObject* arg, PyObject* kwarg
   long flag = -1;
   Py_BEGIN_ALLOW_THREADS
   flag = s->comm->recv_dict(doc, key_order, dim);
+  Py_END_ALLOW_THREADS
+  PyObject* pyFlag;
+  PyObject* res;
+  if (flag < 0) {
+    Py_INCREF(Py_False);
+    pyFlag = Py_False;
+    Py_INCREF(Py_None);
+    res = Py_None;
+  } else {
+    Py_INCREF(Py_True);
+    pyFlag = Py_True;
+    res = doc.GetPythonObjectRaw();
+  }
+  PyObject* out = PyTuple_Pack(2, pyFlag, res);
+  return out;
+}
+
+static PyObject* Comm_t_send_array(PyObject* self, PyObject* arg, PyObject* kwargs) {
+  pyComm_t* s = (pyComm_t*)self;
+  rapidjson::Document doc;
+  PyObject* key_orderPy = NULL;
+  std::vector<std::string> key_order;
+  size_t dim = 1;
+  if (PyTuple_Size(arg) == 1) {
+    PyObject* arg0 = PyTuple_GetItem(arg, 0);
+    if (arg0 == NULL) {
+      return NULL;
+    }
+    doc.SetPythonObjectRaw(arg0, doc.GetAllocator());
+  } else {
+    doc.SetPythonObjectRaw(arg, doc.GetAllocator());
+  }
+  static char const* kwlist[] = {
+    "key_order",
+    "dim",
+    NULL
+  };
+  PyObject* empty_args = PyTuple_New(0);
+  if (empty_args == NULL) {
+    return NULL;
+  }
+  if (!PyArg_ParseTupleAndKeywords(empty_args, kwargs,
+				   "|$Oi", (char**)kwlist,
+				   &key_orderPy,
+				   &dim))
+    return NULL;
+  Py_DECREF(empty_args);
+  if (_parse_string_vect("key_order", key_orderPy, key_order, true) < 0)
+    return NULL;
+  int out = -1;
+  Py_BEGIN_ALLOW_THREADS
+  out = s->comm->send_array(doc, key_order, dim);
+  Py_END_ALLOW_THREADS
+  if (out < 0) {
+    Py_RETURN_FALSE;
+  }
+  Py_RETURN_TRUE;
+}
+
+static PyObject* Comm_t_recv_array(PyObject* self, PyObject* arg, PyObject* kwargs) {
+  pyComm_t* s = (pyComm_t*)self;
+  rapidjson::Document doc;
+  PyObject* key_orderPy = NULL;
+  std::vector<std::string> key_order;
+  size_t dim = 1;
+  static char const* kwlist[] = {
+    "key_order",
+    "dim",
+    NULL
+  };
+  if (!PyArg_ParseTupleAndKeywords(arg, kwargs,
+				   "|$Oi", (char**)kwlist,
+				   &key_orderPy,
+				   &dim))
+    return NULL;
+  if (_parse_string_vect("key_order", key_orderPy, key_order, true) < 0)
+    return NULL;
+  long flag = -1;
+  Py_BEGIN_ALLOW_THREADS
+  flag = s->comm->recv_array(doc, key_order, dim);
   Py_END_ALLOW_THREADS
   PyObject* pyFlag;
   PyObject* res;

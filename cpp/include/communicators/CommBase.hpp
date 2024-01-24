@@ -562,6 +562,19 @@ public:
 		  std::vector<std::string> key_order={},
 		  size_t dim = 1);
 
+    /*!
+      @brief Send a message after coercing it to an ND structured array.
+      @param[in] data Message.
+      @param[in] key_order Keys for object or array-like message.
+      @param[in] dim Dimension along which ND-arrays should be split
+        between fields. Defaults to 1 which is columns for row-major
+        C/C++ ordering.
+      @returns int Values >= 0 indicate success.
+     */
+    int send_array(const rapidjson::Document& data,
+		   std::vector<std::string> key_order={},
+		   size_t dim = 1);
+
     //////////////////
     // RECV METHODS //
     //////////////////
@@ -854,8 +867,8 @@ public:
     }
     /*!
       @brief Receive a message after coercing it to a JSON object.
-      @param[in] data Document to receive message into.
-      @param[in] key_order Keys for array-like message.
+      @param[out] data Document to receive message into.
+      @param[in] key_order Keys for an array-like message.
       @param[in] dim Dimension along which ND-arrays should be split into
         JSON properties. Defaults to 1 which is columns for row-major
 	C/C++ ordering.
@@ -865,6 +878,20 @@ public:
     long recv_dict(rapidjson::Document& data,
 		   std::vector<std::string> key_order={},
 		   size_t dim = 1);
+
+    /*!
+      @brief Receive a message after coercing it to a structured ND array.
+      @param[out] data Document to receive message into.
+      @param[in] key_order Keys for an object or array-like message.
+      @param[in] dim Dimension along which ND-arrays should be split
+        between fields. Defaults to 1 which is columns for row-major
+        C/C++ ordering.
+      @returns -1 if message could not be received. Length of the
+        received message if message was received.
+     */
+    long recv_array(rapidjson::Document& data,
+		    std::vector<std::string> key_order={},
+		    size_t dim = 1);
     
     /*!
       @brief Receive and parse a message into the provided arguments.
@@ -1295,6 +1322,7 @@ protected:
      * @brief Convert a document to a dictionary
      * @param[in] src Document to convert
      * @param[in] dst Document to store converted object in
+     * @param[in] dir Direction that coercion is being performed for.
      * @param[in] key_order Keys for array-like message.
      * @param[in] dim Dimension along which ND-arrays should be split into
      *   JSON properties. Defaults to 1 which is columns for row-major
@@ -1303,8 +1331,26 @@ protected:
      */
     bool _coerce_to_dict(const rapidjson::Document& src,
 			 rapidjson::Document& dst,
+			 const DIRECTION dir,
 			 std::vector<std::string> key_order={},
 			 size_t dim=1) const;
+    /**
+     * @brief Convert a document to a structured ND array
+     * @param[in] src Document to convert
+     * @param[in] dst Document to store converted object in
+     * @param[in] dir Direction that coercion is being performed for.
+     * @param[in] key_order Keys for array-like message.
+     * @param[in] dim Dimension along which ND-arrays should be split
+     *   between fields. Defaults to 1 which is columns for row-major
+     *   C/C++ ordering.
+     * @return true if successful, false otherwise.
+     */
+    bool _coerce_to_array(const rapidjson::Document& src,
+			  rapidjson::Document& dst,
+			  const DIRECTION dir,
+			  std::vector<std::string> key_order={},
+			  size_t dim=1) const;
+    
     /**
      * @brief Change the maximum message size
      * @param[in] new_size The new maximum message size
