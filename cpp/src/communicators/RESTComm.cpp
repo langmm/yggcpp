@@ -20,10 +20,11 @@ RESTConnection::RESTConnection(const std::string logInst, DIRECTION dir,
 			       const std::string& addr,
 			       const std::string& mod) :
   LogBase(), logInst_(logInst), name(nme), address(addr), direction(dir),
-  model(mod),
+  model(mod)
 #ifdef RESTINSTALLED
-  curl(NULL) {
+  , curl(NULL)
 #endif // RESTINSTALLED
+{
   if (init() < 0) {
     throw_error("RESTConnection: Failed to initialize connection");
   }
