@@ -375,3 +375,39 @@ TEST(YggInterface, GlobalServerPiecemeal) {
 #undef INIT_INPUT_NOARGS
 #undef INIT_OUTPUT_BASE
 #undef INIT_INPUT_BASE
+
+
+#ifdef _OPENMP
+TEST(DefaultCommu, openmp) {
+  int nthreads = 2;
+  long res_recv = 0;
+  std::string send_msg = "test message";
+  DefaultComm sComm("test", SEND, COMM_FLAG_SET_OPP_ENV | COMM_FLAG_ASYNC);
+  omp_set_num_threads(nthreads);
+#pragma omp parallel for shared(res_recv)
+  for (int i = 0; i < nthreads; i++) {
+    if (omp_get_thread_num() == 0) {
+      EXPECT_GE(sComm.send(send_msg), 0);
+    } else {
+      std::string recv_msg;
+      WITH_GLOBAL_SCOPE(YggInput rComm("test", COMM_FLAG_ASYNC));
+      if (rComm.recv(recv_msg) < 0) {
+#pragma omp critical
+	{
+	  std::cerr << "Error in receive" << std::endl;
+	  res_recv = -1;
+	}
+      }
+      if (recv_msg != send_msg) {
+#pragma omp critical
+	{
+	  std::cerr << "recv_msg = " << recv_msg << ", send_msg = " <<
+	    send_msg << std::endl;
+	  res_recv = -1;
+	}
+      }
+    }
+  }
+  EXPECT_GE(res_recv, 0);
+}
+#endif // _OPENMP

@@ -1,5 +1,10 @@
 #pragma once
 
+#if defined(RESTINSTALLED) && defined(__MINGW32__)
+// Ensure winsock2.h is included before windows.h included by curl
+#include <winsock2.h>
+#endif
+
 #define YGG_API
 // #if defined(_WINDOWS)
 // #if defined(YggInterface_EXPORTS) || defined(YggInterface_py_EXPORTS)
@@ -47,11 +52,6 @@
 #endif
 
 #include <cmath> // Required to prevent error when using mingw on windows
-
-#if defined(RESTINSTALLED) && defined(__MINGW32__)
-// Ensure winsock2.h is included before windows.h included by curl
-#include <winsock2.h>
-#endif
 
 #ifdef _MSC_VER
 // Prevent windows.h from including winsock.h

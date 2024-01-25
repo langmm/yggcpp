@@ -96,7 +96,8 @@ void WrapComm::_open(bool call_base) {
   BEFORE_OPEN_DEF;
   handle = new_Comm_t(getDirection(), wraptype, getName(),
 		      utils::Address(getAddress()),
-		      getFlags(), wrapncomm);
+		      (getFlags() & ~(COMM_FLAG_WRAPPER)),
+		      wrapncomm);
   fromComm();
   AFTER_OPEN_DEF;
 }

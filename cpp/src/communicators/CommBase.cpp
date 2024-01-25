@@ -294,6 +294,9 @@ std::vector<std::string> Comm_t::get_status_message(
   unsigned int nindent,
   const std::vector<std::string>& extra_lines_before,
   const std::vector<std::string>& extra_lines_after) const {
+  if (global_comm)
+    return global_comm->get_status_message(nindent, extra_lines_before,
+					   extra_lines_after);
   std::vector<std::string> out;
   std::string prefix = "";
   for (unsigned int i = 0; i < nindent; i++)
@@ -333,6 +336,9 @@ std::string Comm_t::printStatus(
   unsigned int nindent,
   const std::vector<std::string>& extra_lines_before,
   const std::vector<std::string>& extra_lines_after) const {
+  if (global_comm)
+    return global_comm->printStatus(nindent, extra_lines_before,
+				    extra_lines_after);
   std::vector<std::string> lines = get_status_message(
     nindent, extra_lines_before, extra_lines_after);
   std::string out;
@@ -378,7 +384,10 @@ bool Comm_t::create_global_scope_comm() {
   if (name.empty() || (!get_global_scope_comm()) ||
       (flags & (COMM_FLAG_GLOBAL | COMM_FLAG_WORKER |
 		COMM_FLAG_CLIENT_RESPONSE |
-		COMM_FLAG_SERVER_RESPONSE)))
+		COMM_FLAG_SERVER_RESPONSE)) ||
+      // Allow server/client to be stored as a global_comm
+      ((flags & COMM_FLAG_WRAPPER) &&
+       !(global_type == SERVER_COMM || global_type == CLIENT_COMM)))
     return false;
   log_debug() << "create_global_scope_comm: " << global_name << " (dir="
 	      << global_direction << ") is a global communicator ("
@@ -822,7 +831,7 @@ long Comm_t::recv(rapidjson::Document& data, bool not_generic) {
     return ret;
   }
   if (meta.checkFilter()) {
-    log_error() << "recv: Skipping filtered message." << std::endl;
+    log_debug() << "recv: Skipping filtered message." << std::endl;
     return recv(data, not_generic);
   }
   log_debug() << "recv: returns " << ret << std::endl;
