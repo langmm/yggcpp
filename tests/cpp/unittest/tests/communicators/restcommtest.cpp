@@ -18,6 +18,8 @@ public:
 
 #ifdef RESTINSTALLED
 
+#ifndef _MSC_VER // No popen with MSVC
+
 class RunFlaskApp {
 private:
   RunFlaskApp(const RunFlaskApp&) = delete;
@@ -66,6 +68,8 @@ public:
 };
 
 COMM_SERI_TEST_BASE(RESTComm, RunFlaskApp app);
+
+#endif // _MSC_VER
 
 #else // RESTINSTALLED
 
