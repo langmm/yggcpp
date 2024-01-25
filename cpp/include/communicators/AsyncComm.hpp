@@ -164,7 +164,7 @@ namespace YggInterface {
       std::string logInst_;              /**< log string for instance */
     };
 
-#define START_THREAD(args)			\
+#define START_THREAD(args)						\
     std::unique_lock<std::mutex> lk(mutex);				\
     thread = std::unique_ptr<std::thread>(new std::thread args);	\
     log_debug() << "start: waiting for thread to start" << std::endl;	\

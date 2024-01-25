@@ -1,5 +1,5 @@
-#include "communicators/Workers.hpp"
 #include "communicators/CommBase.hpp"
+#include "communicators/Workers.hpp"
 
 using namespace YggInterface::communicator;
 using namespace YggInterface::utils;

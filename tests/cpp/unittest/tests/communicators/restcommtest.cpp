@@ -45,6 +45,9 @@ public:
       }
       pclose(app);
     }
+    if (curl) {
+      curl_easy_cleanup(curl);
+    }
   }
   bool post(const std::string& addr) {
     std::string address = "http://localhost:5000/" + addr;

@@ -335,7 +335,7 @@ jobs:
         if: matrix.with-valgrind == true
         shell: bash -l {0}
         run: |
-          echo "CMAKE_ARGS_TEST=${{ env.CMAKE_ARGS_TEST }} -DYGG_ENABLE_INSTRUMENTATION_OPT=OFF -DYGGDRASIL_DISABLE_PYTHON_C_API=ON" >> "$GITHUB_ENV"
+          echo "CMAKE_ARGS_TEST=${{ env.CMAKE_ARGS_TEST }} -DYGG_ENABLE_INSTRUMENTATION_OPT=OFF -DYGGDRASIL_DISABLE_PYTHON_C_API=ON -DENABLE_OMP=OFF" >> "$GITHUB_ENV"
       - name: Valgrind off config flags
         if: matrix.with-valgrind == false
         shell: bash -l {0}

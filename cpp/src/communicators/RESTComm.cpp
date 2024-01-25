@@ -78,6 +78,7 @@ int RESTConnection::close() {
   CHECK_ERROR(curl_easy_setopt(curl, CURLOPT_URL, close_address.c_str()));
   CHECK_ERROR(curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L));
   CHECK_ERROR(curl_easy_perform(curl));
+  curl_easy_cleanup(curl);
 #undef CHECK_ERROR
   return 0;
 }
