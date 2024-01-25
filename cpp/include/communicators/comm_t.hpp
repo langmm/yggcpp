@@ -1,4 +1,5 @@
 #pragma once
+#include "utils/tools.hpp"
 #ifdef __cplusplus
 #include <cstdlib>
 #else
