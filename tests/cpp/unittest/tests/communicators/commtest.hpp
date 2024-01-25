@@ -477,7 +477,7 @@ bool example_transform(rapidjson::Document& msg) {
     global_scope_comm_on();						\
     COMM_TYPE typ = cls::defaultCommType();				\
     {									\
-      AsyncComm sComm(name, SEND, COMM_FLAG_ASYNC, typ);	\
+      AsyncComm sComm(name, SEND, COMM_FLAG_ASYNC, typ);		\
       sComm.addSchema("{\"type\": \"number\"}");			\
       std::string key_env = name + "_IN";				\
       std::string val_env = sComm.getAddress();				\
@@ -490,7 +490,7 @@ bool example_transform(rapidjson::Document& msg) {
 			    recvVar, (data_recv));			\
     }									\
     {									\
-      AsyncComm sComm(name, SEND, COMM_FLAG_ASYNC, typ);	\
+      AsyncComm sComm(name, SEND, COMM_FLAG_ASYNC, typ);		\
       AsyncComm rComm(name, RECV, COMM_FLAG_ASYNC, typ);		\
       DO_SEND_RECV_EXCHANGE(INIT_DATA_SINGLE(double, 1.5),		\
 			    COMP_DATA_SINGLE,				\

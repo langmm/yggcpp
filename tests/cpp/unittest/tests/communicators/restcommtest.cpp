@@ -23,7 +23,7 @@ private:
   RunFlaskApp(const RunFlaskApp&) = delete;
   RunFlaskApp& operator=(const RunFlaskApp&) = delete;
 public:
-  RunFlaskApp() : app(NULL) {
+  RunFlaskApp() : app(NULL), curl(NULL) {
     app = popen("python example_app.py", "r");
     if (app == NULL) {
       throw std::runtime_error("Flask app could not be started");
@@ -37,9 +37,9 @@ public:
   ~RunFlaskApp() {
     if (app) {
       post("shutdown");
-      std::array<char, 80> buffer;
-      while (fgets(buffer.data(), 80, app) != NULL) {
-	std::cerr << buffer.data();
+      char buffer[80];
+      while (fgets(&(buffer[0]), 80, app) != NULL) {
+	std::cerr << buffer;
       }
       pclose(app);
     }
