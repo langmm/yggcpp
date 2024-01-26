@@ -114,8 +114,6 @@
     YggLogError << name.get_nargs() << " arguments unused" << std::endl
 
 
-#include "utils/logging.hpp"
-
 #ifdef _WIN32  // _MSC_VER
 static inline
 int setenv(const char *name, const char *value, int overwrite) {
@@ -139,6 +137,10 @@ int unsetenv(const char *name) {
   return setenv(name, "", true);
 }
 #endif // _WIN32 _MSC_VER
+
+#ifdef __cplusplus
+
+#include "utils/logging.hpp"
 
 namespace YggInterface {
 namespace utils {
@@ -488,3 +490,5 @@ int is_eof(const char *buf) {
 
 }
 }
+
+#endif // __cplusplus
