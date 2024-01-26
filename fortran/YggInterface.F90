@@ -45,38 +45,70 @@ module YggInterface
   !         JULIA_LANGUAGE,    &
   !         JAVA_LANGUAGE
   ! end enum
-  enum, bind( C )
-     enumerator :: COMM_FLAG_VALID           = int(z'00000001'), &
-          COMM_FLAG_GLOBAL          = int(z'00000002'), &
-          COMM_FLAG_WORKER          = int(z'00000004'), &
-          COMM_FLAG_DELAYED_OPEN    = int(z'00000008'), &
-          COMM_FLAG_CLIENT          = int(z'00000010'), &
-          COMM_FLAG_SERVER          = int(z'00000020'), &
-          COMM_FLAG_CLIENT_RESPONSE = int(z'00000040'), &
-          COMM_FLAG_SERVER_RESPONSE = int(z'00000080'), &
-          COMM_FLAG_ALWAYS_SEND_HEADER   = int(z'00000100'), &
-          COMM_FLAG_ALLOW_MULTIPLE_COMMS = int(z'00000200'), &
-          COMM_FLAG_USED_SENT       = int(z'00000400'), &
-          COMM_FLAG_USED_RECV       = int(z'00000800'), &
-          COMM_FLAG_EOF_SENT        = int(z'00001000'), &
-          COMM_FLAG_EOF_RECV        = int(z'00002000'), &
-          COMM_FLAG_CLOSE_ON_EOF_RECV    = int(z'00004000'), &
-          COMM_FLAG_CLOSE_ON_EOF_SEND    = int(z'00008000'), &
-          COMM_FLAG_INTERFACE       = int(z'00010000'), &
-          COMM_FLAG_DELETE          = int(z'00020000'), &
-          COMM_FLAG_ASYNC           = int(z'00040000'), &
-          COMM_FLAG_ASYNC_WRAPPED   = int(z'00080000'), &
-          COMM_FLAG_SET_OPP_ENV     = int(z'00100000'), &
-          COMM_FLAG_WRAPPER         = int(z'00200000'), &
-          COMM_FLAG_FORK_CYCLE      = int(z'00400000'), &
-          COMM_FLAG_FORK_BROADCAST  = int(z'00800000'), &
-          COMM_FLAG_FORK_COMPOSITE  = int(z'01000000'), &
-          COMM_FLAG_FORK_TINE       = int(z'02000000'), &
-          FILE_FLAG_APPEND          = int(z'04000000'), &
-          FILE_FLAG_BINARY          = int(z'08000000'), &
-          FILE_FLAG_READLINE        = int(z'10000000')
-  end enum
+  ! enum, bind( C )
+  ! enumerator ::
+  ! integer(kind=8), parameter :: &
+  !      COMM_FLAG_VALID           = int(z'00000001', 8), &
+  !         COMM_FLAG_GLOBAL          = int(z'00000002', 8), &
+  !         COMM_FLAG_WORKER          = int(z'00000004', 8), &
+  !         COMM_FLAG_DELAYED_OPEN    = int(z'00000008', 8), &
+  !         COMM_FLAG_CLIENT          = int(z'00000010', 8), &
+  !         COMM_FLAG_SERVER          = int(z'00000020', 8), &
+  !         COMM_FLAG_CLIENT_RESPONSE = int(z'00000040', 8), &
+  !         COMM_FLAG_SERVER_RESPONSE = int(z'00000080', 8), &
+  !         COMM_FLAG_ALWAYS_SEND_HEADER   = int(z'00000100', 8), &
+  !         COMM_FLAG_ALLOW_MULTIPLE_COMMS = int(z'00000200', 8), &
+  !         COMM_FLAG_USED_SENT       = int(z'00000400', 8), &
+  !         COMM_FLAG_USED_RECV       = int(z'00000800', 8), &
+  !         COMM_FLAG_EOF_SENT        = int(z'00001000', 8), &
+  !         COMM_FLAG_EOF_RECV        = int(z'00002000', 8), &
+  !         COMM_FLAG_CLOSE_ON_EOF_RECV    = int(z'00004000', 8), &
+  !         COMM_FLAG_CLOSE_ON_EOF_SEND    = int(z'00008000', 8), &
+  !         COMM_FLAG_INTERFACE       = int(z'00010000', 8), &
+  !         COMM_FLAG_DELETE          = int(z'00020000', 8), &
+  !         COMM_FLAG_ASYNC           = int(z'00040000', 8), &
+  !         COMM_FLAG_ASYNC_WRAPPED   = int(z'00080000', 8), &
+  !         COMM_FLAG_SET_OPP_ENV     = int(z'00100000', 8), &
+  !         COMM_FLAG_WRAPPER         = int(z'00200000', 8), &
+  !         COMM_FLAG_FORK_CYCLE      = int(z'00400000', 8), &
+  !         COMM_FLAG_FORK_BROADCAST  = int(z'00800000', 8), &
+  !         COMM_FLAG_FORK_COMPOSITE  = int(z'01000000', 8), &
+  !         COMM_FLAG_FORK_TINE       = int(z'02000000', 8), &
+  !         FILE_FLAG_APPEND          = int(z'0000100000000000', 8), &
+  !         FILE_FLAG_BINARY          = int(z'0000200000000000', 8), &
+  !         FILE_FLAG_READLINE        = int(z'0000400000000000', 8), &
+  !         COMM_FLAG_MAX             = int(z'8000000000000000', 8)
+  ! ! end enum
 #endif
+  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_VALID_F") :: COMM_FLAG_VALID
+  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_GLOBAL_F") :: COMM_FLAG_GLOBAL
+  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_WORKER_F") :: COMM_FLAG_WORKER
+  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_DELAYED_OPEN_F") :: COMM_FLAG_DELAYED_OPEN
+  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_CLIENT_F") :: COMM_FLAG_CLIENT
+  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_SERVER_F") :: COMM_FLAG_SERVER
+  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_CLIENT_RESPONSE_F") :: COMM_FLAG_CLIENT_RESPONSE
+  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_SERVER_RESPONSE_F") :: COMM_FLAG_SERVER_RESPONSE
+  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_ALWAYS_SEND_HEADER_F") :: COMM_FLAG_ALWAYS_SEND_HEADE
+  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_ALLOW_MULTIPLE_COMMS_F") :: COMM_FLAG_ALLOW_MULTIPLE_COMMS
+  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_USED_SENT_F") :: COMM_FLAG_USED_SENT
+  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_USED_RECV_F") :: COMM_FLAG_USED_RECV
+  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_EOF_SENT_F") :: COMM_FLAG_EOF_SENT
+  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_EOF_RECV_F") :: COMM_FLAG_EOF_RECV
+  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_CLOSE_ON_EOF_RECV_F") :: COMM_FLAG_CLOSE_ON_EOF_RECV
+  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_CLOSE_ON_EOF_SEND_F") :: COMM_FLAG_CLOSE_ON_EOF_SEND
+  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_INTERFACE_F") :: COMM_FLAG_INTERFACE
+  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_DELETE_F") :: COMM_FLAG_DELETE
+  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_ASYNC_F") :: COMM_FLAG_ASYNC
+  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_ASYNC_WRAPPED_F") :: COMM_FLAG_ASYNC_WRAPPED
+  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_SET_OPP_ENV_F") :: COMM_FLAG_SET_OPP_ENV
+  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_WRAPPER_F") :: COMM_FLAG_WRAPPER
+  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_FORK_CYCLE_F") :: COMM_FLAG_FORK_CYCLE
+  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_FORK_BROADCAST_F") :: COMM_FLAG_FORK_BROADCAST
+  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_FORK_COMPOSITE_F") :: COMM_FLAG_FORK_COMPOSITE
+  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_FORK_TINE_F") :: COMM_FLAG_FORK_TINE
+  integer(kind=c_int64_t), bind(c, name="FILE_FLAG_APPEND_F") :: FILE_FLAG_APPEND
+  integer(kind=c_int64_t), bind(c, name="FILE_FLAG_BINARY_F") :: FILE_FLAG_BINARY
+  integer(kind=c_int64_t), bind(c, name="FILE_FLAG_READLINE_F") :: FILE_FLAG_READLINE
 
   !> @brief Wrap a fortran variable so that yggdrasil can pass it to comm
   !>    send & receive methods.
@@ -1422,9 +1454,11 @@ contains
     implicit none
     character(len=*), intent(in) :: name
     character(kind=c_char), allocatable :: c_name(:)
-    integer, intent(in) :: dir, t, flags
+    integer, intent(in) :: dir, t
+    integer(kind=8), intent(in) :: flags
     integer, optional :: ncomm
-    integer(kind=c_int) :: c_dir, c_t, c_flags
+    integer(kind=c_int) :: c_dir, c_t
+    integer(kind=c_int64_t) :: c_flags
     integer(kind=c_size_t) :: c_ncomm
     type(yggdtype), target :: datatype
     type(c_ptr) :: c_datatype
@@ -1439,6 +1473,7 @@ contains
     c_t = t
     c_flags = flags
     c_datatype = c_loc(datatype)
+    write(*, *) "c_flags = ", c_flags
     channel = init_comm_c(c_name, c_dir, c_t, c_datatype, &
          c_flags, c_ncomm)
     deallocate(c_name)
@@ -1455,9 +1490,11 @@ contains
   function ygg_output(name, commtype, flags) result(channel)
     implicit none
     character(len=*), intent(in) :: name
-    integer(kind=c_int), intent(in), optional :: commtype, flags
+    integer(kind=c_int), intent(in), optional :: commtype
+    integer(kind=8), intent(in), optional :: flags
     character(kind=c_char), allocatable :: c_name(:)
-    integer(kind=c_int) :: c_commtype, c_flags
+    integer(kind=c_int) :: c_commtype
+    integer(kind=c_int64_t) :: c_flags
     integer(kind=c_size_t) :: c_ncomm
     type(c_ptr) :: c_datatype
     type(yggcomm) :: channel
@@ -1491,9 +1528,11 @@ contains
   function ygg_input(name, commtype, flags) result(channel)
     implicit none
     character(len=*), intent(in) :: name
-    integer(kind=c_int), intent(in), optional :: commtype, flags
+    integer(kind=c_int), intent(in), optional :: commtype
+    integer(kind=8), intent(in), optional :: flags
     character(kind=c_char), allocatable :: c_name(:)
-    integer(kind=c_int) :: c_commtype, c_flags
+    integer(kind=c_int) :: c_commtype
+    integer(kind=c_int64_t) :: c_flags
     integer(kind=c_size_t) :: c_ncomm
     type(c_ptr) :: c_datatype
     type(yggcomm) :: channel
@@ -1531,10 +1570,12 @@ contains
     implicit none
     character(len=*), intent(in) :: name
     type(yggdtype), target :: datatype
-    integer(kind=c_int), intent(in), optional :: commtype, flags
+    integer(kind=c_int), intent(in), optional :: commtype
+    integer(kind=8), intent(in), optional :: flags
     type(c_ptr) :: c_datatype
     character(kind=c_char), allocatable :: c_name(:)
-    integer(kind=c_int) :: c_commtype, c_flags
+    integer(kind=c_int) :: c_commtype
+    integer(kind=c_int64_t) :: c_flags
     integer(kind=c_size_t) :: c_ncomm
     type(yggcomm) :: channel
     c_name = convert_string_f2c(name)
@@ -1571,10 +1612,12 @@ contains
     implicit none
     character(len=*), intent(in) :: name
     type(yggdtype), target :: datatype
-    integer(kind=c_int), intent(in), optional :: commtype, flags
+    integer(kind=c_int), intent(in), optional :: commtype
+    integer(kind=8), intent(in), optional :: flags
     type(c_ptr) :: c_datatype
     character(kind=c_char), allocatable :: c_name(:)
-    integer(kind=c_int) :: c_commtype, c_flags
+    integer(kind=c_int) :: c_commtype
+    integer(kind=c_int64_t) :: c_flags
     integer(kind=c_size_t) :: c_ncomm
     type(yggcomm) :: channel
     c_name = convert_string_f2c(name)
@@ -4179,12 +4222,16 @@ contains
   end subroutine init_python_API
   ! subroutine dummy_function(message)
   !   implicit none
-  !   character(len=*), intent(in) :: message
-  !   character(kind=c_char), allocatable :: c_message(:)
-  !   c_message = convert_string_f2c(message)
-  !   write(*, *) "dummy function (fortran)"
+  !   integer(kind=c_int64_t), intent(in) :: message
+  !   integer(kind=c_int64_t) :: c_message
+  !   c_message = message
+  !   write(*,*) "c_int64_t", c_int64_t
+  !   ! character(len=*), intent(in) :: message
+  !   ! character(kind=c_char), allocatable :: c_message(:)
+  !   ! c_message = convert_string_f2c(message)
+  !   write(*, *) "dummy function (fortran)", message, c_message
   !   call dummy_function_c(c_message)
-  !   deallocate(c_message)
+  !   ! deallocate(c_message)
   ! end subroutine dummy_function
   
 end module YggInterface

@@ -85,7 +85,7 @@ public:
      * @param[in] restyp Response communicator type.
      * @param[in] logName Instance descriptor for logging.
      */
-    explicit RequestList(DIRECTION dir, int flags = 0,
+    explicit RequestList(DIRECTION dir, FLAG_TYPE flags = 0,
 			 const COMM_TYPE restyp = DEFAULT_COMM,
 			 std::string logName = "") :
       comms(), requests(), partners(),
@@ -608,7 +608,7 @@ public:
     std::vector<Request> requests;     //!< Requests to process
     std::vector<Partner> partners;     //!< Any partners
     DIRECTION response_dir;            //!< The direction for this instance
-    int response_flags;                //!< Response flags to use
+    FLAG_TYPE response_flags;           //!< Response flags to use
     utils::Metadata response_metadata; //!< Metadata to use for any responses
     bool signon_complete;              //!< Whether signon is complete
     std::string stashed_request;       //!< The currently stashed request

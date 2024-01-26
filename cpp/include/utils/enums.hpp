@@ -7,7 +7,13 @@
 #include <iostream>
 #include <algorithm>
 extern "C" {
+#include <cstdint>
+#else
+#include <stdint.h>
 #endif
+
+  // typedef int64_t FLAG_TYPE;
+#define FLAG_TYPE int64_t
   
 // If any of these are updated they must be also be updated in
 //   fortran/YggInterface.F90
@@ -46,40 +52,61 @@ enum CLEANUP_MODE {
   CLEANUP_COMMS    //!< Only cleanup comms, not ZMQ or Python
 };
 
-// If any of these are updated they must be also be updated in
-//   fortran/YggInterface.F90
-/*! @brief Bit flags. */
-enum COMM_FLAG {
-  COMM_FLAG_VALID           = 0x00000001, //!< Comm is initialized
-  COMM_FLAG_GLOBAL          = 0x00000002, //!< Comm is global
-  COMM_FLAG_WORKER          = 0x00000004, //!< Comm is a worker
-  COMM_FLAG_DELAYED_OPEN    = 0x00000008, //!< Comm will not be opened when created
-  COMM_FLAG_CLIENT          = 0x00000010, //!< Comm is a client
-  COMM_FLAG_SERVER          = 0x00000020, //!< Comm is a server
-  COMM_FLAG_CLIENT_RESPONSE = 0x00000040, //!< Comm is a client response
-  COMM_FLAG_SERVER_RESPONSE = 0x00000080, //!< Comm is a server response
-  COMM_FLAG_ALWAYS_SEND_HEADER   = 0x00000100, //!< Comm should always include a header in messages
-  COMM_FLAG_ALLOW_MULTIPLE_COMMS = 0x00000200, //!< Comm should connect in a way that allow multiple connections
-  COMM_FLAG_USED_SENT       = 0x00000400, //!< Comm has sent messages
-  COMM_FLAG_USED_RECV       = 0x00000800, //!< Comm has received messages
-  COMM_FLAG_EOF_SENT        = 0x00001000, //!< EOF has been sent
-  COMM_FLAG_EOF_RECV        = 0x00002000, //!< EOF has been received
-  COMM_FLAG_CLOSE_ON_EOF_RECV    = 0x00004000, //!< Comm will close on EOF recv
-  COMM_FLAG_CLOSE_ON_EOF_SEND    = 0x00008000, //!< Comm will close on EOF recv
-  COMM_FLAG_INTERFACE       = 0x00010000, //!< Comm is an interface comm
-  COMM_FLAG_DELETE          = 0x00020000, //!< Comm needs to be deleted
-  COMM_FLAG_ASYNC           = 0x00040000, //!< Comm is asynchronous
-  COMM_FLAG_ASYNC_WRAPPED   = 0x00080000, //!< Comm is wrapped by an asynchronous comm
-  COMM_FLAG_SET_OPP_ENV     = 0x00100000, //!< Set environment variables for opposite communicator
-  COMM_FLAG_WRAPPER         = 0x00200000, //!< Communicator is a wrapper
-  COMM_FLAG_FORK_CYCLE      = 0x00400000, //!< Forked communicator cycle
-  COMM_FLAG_FORK_BROADCAST  = 0x00800000, //!< Forked communicator broadcast
-  COMM_FLAG_FORK_COMPOSITE  = 0x01000000, //!< Forked communicator composite
-  COMM_FLAG_FORK_TINE       = 0x02000000, //!< Forked communicator tine.
-  FILE_FLAG_APPEND          = 0x04000000, //!< Append sent messages to the end of the file
-  FILE_FLAG_BINARY          = 0x08000000, //!< Open file in binary mode
-  FILE_FLAG_READLINE        = 0x10000000  //!< Read file contents line by line
+/*!
+  @brief Bit flags describing the communicator.
+  
+  The maximum int64_t is 9223372036854775807 (0x7fffffffffffffff) so
+  the maximum flag is 0x4000000000000000 (1 << 62)
+  
+  Generic flags can go up to 0x0000080000000000 (1 << 43)
+  Type specific flags start at 0x0000100000000000 (1 << 44) and can go
+    up to the maximum. Duplicates are allowed between types that are
+    exclusive, but should not be allowed for aggregate classes
+
+  Any time these values are updated, the corresponding values in
+    fortran/YggInterface.F90 should be updated as well
+
+*/
+enum COMM_FLAG
+#ifdef __cplusplus
+: FLAG_TYPE
+#endif // __cplusplus
+  {
+  COMM_FLAG_VALID           = 0x00000001LL, //!< Comm is initialized
+  COMM_FLAG_GLOBAL          = 0x00000002LL, //!< Comm is global
+  COMM_FLAG_WORKER          = 0x00000004LL, //!< Comm is a worker
+  COMM_FLAG_DELAYED_OPEN    = 0x00000008LL, //!< Comm will not be opened when created
+  COMM_FLAG_CLIENT          = 0x00000010LL, //!< Comm is a client
+  COMM_FLAG_SERVER          = 0x00000020LL, //!< Comm is a server
+  COMM_FLAG_CLIENT_RESPONSE = 0x00000040LL, //!< Comm is a client response
+  COMM_FLAG_SERVER_RESPONSE = 0x00000080LL, //!< Comm is a server response
+  COMM_FLAG_ALWAYS_SEND_HEADER   = 0x00000100LL, //!< Comm should always include a header in messages
+  COMM_FLAG_ALLOW_MULTIPLE_COMMS = 0x00000200LL, //!< Comm should connect in a way that allow multiple connections
+  COMM_FLAG_USED_SENT       = 0x00000400LL, //!< Comm has sent messages
+  COMM_FLAG_USED_RECV       = 0x00000800LL, //!< Comm has received messages
+  COMM_FLAG_EOF_SENT        = 0x00001000LL, //!< EOF has been sent
+  COMM_FLAG_EOF_RECV        = 0x00002000LL, //!< EOF has been received
+  COMM_FLAG_CLOSE_ON_EOF_RECV    = 0x00004000LL, //!< Comm will close on EOF recv
+  COMM_FLAG_CLOSE_ON_EOF_SEND    = 0x00008000LL, //!< Comm will close on EOF recv
+  COMM_FLAG_INTERFACE       = 0x00010000LL, //!< Comm is an interface comm
+  COMM_FLAG_DELETE          = 0x00020000LL, //!< Comm needs to be deleted
+  COMM_FLAG_ASYNC           = 0x00040000LL, //!< Comm is asynchronous
+  COMM_FLAG_ASYNC_WRAPPED   = 0x00080000LL, //!< Comm is wrapped by an asynchronous comm
+  COMM_FLAG_SET_OPP_ENV     = 0x00100000LL, //!< Set environment variables for opposite communicator
+  COMM_FLAG_WRAPPER         = 0x00200000LL, //!< Communicator is a wrapper
+  COMM_FLAG_FORK_CYCLE      = 0x00400000LL, //!< Forked communicator cycle
+  COMM_FLAG_FORK_BROADCAST  = 0x00800000LL, //!< Forked communicator broadcast
+  COMM_FLAG_FORK_COMPOSITE  = 0x01000000LL, //!< Forked communicator composite
+  COMM_FLAG_FORK_TINE       = 0x02000000LL, //!< Forked communicator tine.
+  // Type specific flags
+  // File flags
+  FILE_FLAG_APPEND          = 0x0000100000000000LL, //!< Append sent messages to the end of the file
+  FILE_FLAG_BINARY          = 0x0000200000000000LL, //!< Open file in binary mode
+  FILE_FLAG_READLINE        = 0x0000400000000000LL, //!< Read file contents line by line
+
+  COMM_FLAG_MAX             = 0x4000000000000000LL
 };
+
 
 enum LANGUAGE {
   NO_LANGUAGE,       //!< No explicit language interface
@@ -280,58 +307,5 @@ template<typename T1, typename T2>
 static T1 max_enum_value(const std::map<const T1, const T2> map) {
   return map.crbegin()->first;
 }
-
-// const std::map<const std::string, const SUBTYPE> submap {{"int", T_INT},
-//                                                          {"int8_t", T_INT},
-//                                                          {"int16_t", T_INT},
-//                                                          {"int32_t", T_INT},
-//                                                          {"int64_t", T_INT},
-//                                                          {"float", T_FLOAT},
-//                                                          {"double", T_FLOAT},
-//                                                          {"long double", T_FLOAT},
-//                                                          {"ldouble", T_FLOAT},
-//                                                          {"bool", T_BOOLEAN},
-//                                                          {"string", T_STRING},
-//                                                          {"complex_float_t", T_COMPLEX},
-//                                                          {"complex_double_t", T_COMPLEX},
-//                                                          {"complex_long_double_t", T_COMPLEX},
-//                                                          {"uint", T_UINT},
-//                                                          {"uint8_t", T_UINT},
-//                                                          {"uint16_t", T_UINT},
-//                                                          {"uint32_t", T_UINT},
-//                                                          {"uint64_t", T_UINT},
-//                                                          {"bytes", T_BYTES},
-//                                                          {"unicode", T_UNICODE},
-//                                                          {"uchar", T_UINT},
-//                                                          {"char", T_INT},
-//                                                          {"short", T_INT},
-//                                                          {"ushort", T_UINT},
-//                                                          {"long", T_INT},
-//                                                          {"ulong", T_UINT}};
-
-// const std::map<const SUBTYPE, const std::string> mapsub {{T_INT, "int"},
-//                                                          {T_FLOAT, "float"},
-//                                                          {T_BOOLEAN, "bool"},
-//                                                          {T_STRING, "string"},
-//                                                          {T_COMPLEX, "complex_float_t"},
-//                                                          {T_UINT, "uint"},
-//                                                          {T_BYTES, "bytes"},
-//                                                          {T_UNICODE, "unicode"}};
-
-// Currently unused
-// static
-// std::istream& operator>>(std::istream& in, SUBTYPE& type) {
-//     int t;
-//     in >> t;
-//     type = static_cast<SUBTYPE>(t);
-//     return in;
-// }
-// static
-// std::istream& operator>>(std::istream& in, VTYPE& type) {
-//     int t;
-//     in >> t;
-//     type = static_cast<VTYPE>(t);
-//     return in;
-// }
 
 #endif

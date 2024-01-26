@@ -43,7 +43,7 @@ public:
     IPCComm(const std::string& name,
             const utils::Address& address,
             const DIRECTION direction = NONE,
-            int flgs = 0, const COMM_TYPE type = IPC_COMM);
+            FLAG_TYPE flgs = 0, const COMM_TYPE type = IPC_COMM);
     ADD_CONSTRUCTORS(IPC)
 
 #ifdef IPCINSTALLED

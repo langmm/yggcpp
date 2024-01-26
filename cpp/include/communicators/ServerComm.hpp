@@ -31,11 +31,11 @@ public:
      */
     explicit ServerComm(const std::string& name,
 			const utils::Address& address,
-			int flgs = 0, const COMM_TYPE type = SERVER_COMM,
+			FLAG_TYPE flgs = 0, const COMM_TYPE type = SERVER_COMM,
 			size_t ncomm = 0,
 			const COMM_TYPE reqtype = DEFAULT_COMM,
 			const COMM_TYPE restype = DEFAULT_COMM,
-			int reqflags = 0, int resflags = 0);
+			FLAG_TYPE reqflags = 0, FLAG_TYPE resflags = 0);
     ADD_CONSTRUCTORS_RPC(ServerComm, SERVER_COMM)
 
     using RPCComm::send;

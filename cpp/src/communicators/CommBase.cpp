@@ -5,7 +5,7 @@ using namespace YggInterface::communicator;
 using namespace YggInterface::utils;
 
 Comm_t::Comm_t(const std::string &nme, const Address &addr,
-	       const DIRECTION dirn, const COMM_TYPE &t, int flgs) :
+	       const DIRECTION dirn, const COMM_TYPE &t, FLAG_TYPE flgs) :
   ctx(global_context), type(t), name(nme), address(addr),
   direction(dirn), flags(flgs),
   maxMsgSize(COMM_BASE_MAX_MSG_SIZE), msgBufSize(0),
@@ -16,7 +16,7 @@ Comm_t::Comm_t(const std::string &nme, const Address &addr,
 }
 
 Comm_t::Comm_t(const std::string &nme,
-               const DIRECTION dirn, const COMM_TYPE &t, int flgs) :
+               const DIRECTION dirn, const COMM_TYPE &t, FLAG_TYPE flgs) :
   Comm_t(nme, utils::Address(), dirn, t, flgs) {}
 
 Comm_t::~Comm_t() {
@@ -56,7 +56,7 @@ void Comm_t::_before_open() {
   create_global_scope_comm();
   
   ctx->register_comm(this);
-  
+
   if (!address.valid()) {
     address = addressFromEnv(name, direction);
     if ((flags & COMM_FLAG_INTERFACE) && (!address.valid()) &&
@@ -454,9 +454,9 @@ bool Comm_t::check_size(const size_t &len) const {
 
 Comm_t* YggInterface::communicator::new_Comm_t(
      const DIRECTION dir, const COMM_TYPE type, const std::string &name,
-     char* address, int flags, size_t ncomm,
+     char* address, FLAG_TYPE flags, size_t ncomm,
      const COMM_TYPE request_commtype, const COMM_TYPE response_commtype,
-     int request_flags, int response_flags) {
+     FLAG_TYPE request_flags, FLAG_TYPE response_flags) {
   Address addr;
   if (address)
     addr.address(address);
@@ -470,9 +470,9 @@ Comm_t* YggInterface::communicator::new_Comm_t(
 
 Comm_t* YggInterface::communicator::new_Comm_t(
      const DIRECTION dir, const COMM_TYPE type, const std::string &name,
-     int flags, size_t ncomm,
+     FLAG_TYPE flags, size_t ncomm,
      const COMM_TYPE request_commtype, const COMM_TYPE response_commtype,
-     int request_flags, int response_flags) {
+     FLAG_TYPE request_flags, FLAG_TYPE response_flags) {
   Address addr;
   return YggInterface::communicator::new_Comm_t(dir, type, name,
 						 addr, flags, ncomm,
@@ -484,9 +484,9 @@ Comm_t* YggInterface::communicator::new_Comm_t(
 
 Comm_t* YggInterface::communicator::new_Comm_t(
      const DIRECTION dir, const COMM_TYPE type, const std::string &name,
-     const Address &addr, int flags, size_t ncomm,
+     const Address &addr, FLAG_TYPE flags, size_t ncomm,
      const COMM_TYPE request_commtype, const COMM_TYPE response_commtype,
-     int request_flags, int response_flags) {
+     FLAG_TYPE request_flags, FLAG_TYPE response_flags) {
   flags |= COMM_FLAG_DELETE;
   utils::Address addr2(addr.address());
   if (!(addr2.valid() || name.empty())) {

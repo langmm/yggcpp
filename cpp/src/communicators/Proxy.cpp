@@ -6,7 +6,7 @@ using namespace YggInterface::utils;
 
 #ifdef THREADSINSTALLED
 Proxy::Proxy(const std::string iname, const std::string oname,
-	     int iflgs, int oflgs,
+	     FLAG_TYPE iflgs, FLAG_TYPE oflgs,
 	     const COMM_TYPE itype,
 	     const COMM_TYPE otype,
 	     std::vector<YggInterface::utils::filterFunc> fltrs,
@@ -25,7 +25,7 @@ Proxy::Proxy(const std::string iname, const std::string oname,
 }
 #else // THREADSINSTALLED
 Proxy::Proxy(const std::string, const std::string,
-	     int, int, const COMM_TYPE, const COMM_TYPE,
+	     FLAG_TYPE, FLAG_TYPE, const COMM_TYPE, const COMM_TYPE,
 	     std::vector<YggInterface::utils::filterFunc>,
 	     std::vector<YggInterface::utils::transformFunc>) {
   UNINSTALLED_ERROR(THREADS);
@@ -53,7 +53,7 @@ std::string Proxy::logInst() const {
 
 #ifdef THREADSINSTALLED
 void Proxy::on_thread(const std::string iname, const std::string oname,
-		      int iflgs, int oflgs,
+		      FLAG_TYPE iflgs, FLAG_TYPE oflgs,
 		      const COMM_TYPE itype, const COMM_TYPE otype) {
   bool out = true;
   {

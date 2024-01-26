@@ -38,7 +38,7 @@ using namespace YggInterface::utils;
 WrapComm::WrapComm(const std::string name,
 		   const utils::Address &address,
 		   const DIRECTION direction,
-		   int flgs, const COMM_TYPE type, size_t ncomm,
+		   FLAG_TYPE flgs, const COMM_TYPE type, size_t ncomm,
 		   const COMM_TYPE wraptyp) :
   CommBase(name, address, direction, type, flgs | COMM_FLAG_WRAPPER),
   wraptype(wraptyp), wrapncomm(ncomm) {
@@ -47,13 +47,13 @@ WrapComm::WrapComm(const std::string name,
   ADD_CONSTRUCTOR_OPEN(WrapComm)
 }
 WrapComm::WrapComm(const std::string nme,
-		   const DIRECTION dirn, int flgs,
+		   const DIRECTION dirn, FLAG_TYPE flgs,
 		   const COMM_TYPE type, size_t ncomm,
 		   const COMM_TYPE wraptype) :
   WrapComm(nme, utils::blankAddress, dirn, flgs, type,
 	   ncomm, wraptype) {}
 WrapComm::WrapComm(const utils::Address &addr,
-		   const DIRECTION dirn, int flgs,
+		   const DIRECTION dirn, FLAG_TYPE flgs,
 		   const COMM_TYPE type, size_t ncomm,
 		   const COMM_TYPE wraptype) :
   WrapComm("", addr, dirn, flgs, type, ncomm, wraptype) {}
@@ -157,7 +157,7 @@ WRAP_METHOD(create_header_send, (utils::Header& header),
 	    (header), out = false, bool, )
 WRAP_METHOD(create_worker,
 	    (utils::Address& address,
-	     const DIRECTION dir, int flgs),
+	     const DIRECTION dir, FLAG_TYPE flgs),
 	    (address, dir, flgs), out = nullptr, Comm_t*, )
 WRAP_METHOD(create_worker_send, (utils::Header& header),
 	    (header), out = nullptr, Comm_t*, )

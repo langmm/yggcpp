@@ -39,7 +39,7 @@ namespace YggInterface {
        */
       explicit WrapComm(const std::string name,
 			const utils::Address &address,
-			const DIRECTION direction = NONE, int flgs = 0,
+			const DIRECTION direction = NONE, FLAG_TYPE flgs = 0,
 			const COMM_TYPE type = DEFAULT_COMM,
 			size_t ncomm = 0,
 			const COMM_TYPE wraptype = NULL_COMM);
@@ -56,7 +56,7 @@ namespace YggInterface {
        *   created if different from type
        */
       explicit WrapComm(const std::string nme,
-			const DIRECTION dirn, int flgs = 0,
+			const DIRECTION dirn, FLAG_TYPE flgs = 0,
 			const COMM_TYPE type = DEFAULT_COMM,
 			size_t ncomm = 0,
 			const COMM_TYPE wraptype = NULL_COMM);
@@ -74,7 +74,7 @@ namespace YggInterface {
        * @see utils::Address
        */
       explicit WrapComm(const utils::Address &addr,
-			const DIRECTION dirn, int flgs = 0,
+			const DIRECTION dirn, FLAG_TYPE flgs = 0,
 			const COMM_TYPE type = DEFAULT_COMM,
 			size_t ncomm = 0,
 			const COMM_TYPE wraptype = NULL_COMM);
@@ -152,7 +152,7 @@ namespace YggInterface {
 		  (header), out = false, bool, override);
       WRAP_METHOD(create_worker,
 		  (utils::Address& address,
-		   const DIRECTION dir, int flgs),
+		   const DIRECTION dir, FLAG_TYPE flgs),
 		  (address, dir, flgs),
 		  out = nullptr, Comm_t*, override);
       WRAP_METHOD(create_worker_send, (utils::Header& header),

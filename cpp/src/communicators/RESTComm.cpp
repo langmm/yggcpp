@@ -153,7 +153,7 @@ long RESTConnection::recv(utils::Header&) { return -1; }
 
 RESTComm::RESTComm(const std::string name,
 		   const utils::Address& address,
-		   const DIRECTION direction, int flgs,
+		   const DIRECTION direction, FLAG_TYPE flgs,
 		   const COMM_TYPE commtype) :
   CommBase(name, address, direction, commtype, flgs) {
   ADD_CONSTRUCTOR_OPEN(RESTComm)

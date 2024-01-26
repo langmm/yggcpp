@@ -97,7 +97,7 @@ namespace YggInterface {
        */
       explicit RESTComm(const std::string name,
 			const utils::Address& address,
-			const DIRECTION direction=NONE, int flgs=0,
+			const DIRECTION direction=NONE, FLAG_TYPE flgs=0,
 			const COMM_TYPE commtype=REST_COMM);
       ADD_CONSTRUCTORS(REST)
 	

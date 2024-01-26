@@ -29,11 +29,11 @@ public:
      */
     explicit ClientComm(const std::string& name,
 			const utils::Address &address,
-			int flgs = 0, const COMM_TYPE type = CLIENT_COMM,
+			FLAG_TYPE flgs = 0, const COMM_TYPE type = CLIENT_COMM,
 			size_t ncomm = 0,
 			const COMM_TYPE reqtype = DEFAULT_COMM,
 			const COMM_TYPE restype = DEFAULT_COMM,
-			int reqflags = 0, int resflags = 0);
+			FLAG_TYPE reqflags = 0, FLAG_TYPE resflags = 0);
     ADD_CONSTRUCTORS_RPC(ClientComm, CLIENT_COMM)
 
     /** \copydoc YggInterface::communicator::Comm_t::logClass */

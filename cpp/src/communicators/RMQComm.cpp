@@ -288,7 +288,7 @@ long RMQConnection::recv(utils::Header&) { return -1; }
 
 RMQComm::RMQComm(const std::string name,
 		 const utils::Address& address,
-		 const DIRECTION direction, int flgs,
+		 const DIRECTION direction, uint64_t flgs,
 		 const COMM_TYPE commtype) :
   CommBase(name, address, direction, commtype, flgs) {
   ADD_CONSTRUCTOR_OPEN(RMQComm)

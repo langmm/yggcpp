@@ -7,10 +7,10 @@ using namespace YggInterface::communicator;
 using namespace YggInterface::utils;
 
 ServerComm::ServerComm(const std::string& nme, const utils::Address& addr,
-		       int flgs, const COMM_TYPE type, size_t ncomm,
+		       FLAG_TYPE flgs, const COMM_TYPE type, size_t ncomm,
 		       const COMM_TYPE reqtype,
 		       const COMM_TYPE restype,
-		       int reqflags, int resflags) :
+		       FLAG_TYPE reqflags, FLAG_TYPE resflags) :
   RPCComm(nme, addr,
 	  flgs | COMM_FLAG_SERVER | COMM_FLAG_ALWAYS_SEND_HEADER,
 	  RECV, SEND, type, ncomm,

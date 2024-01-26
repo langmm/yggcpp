@@ -38,7 +38,7 @@ namespace YggInterface {
       ForkTines(const std::string logInst,
 		const std::vector<std::string>& names,
 		const std::vector<std::string>& addresses,
-		const DIRECTION dir, int flags=0,
+		const DIRECTION dir, FLAG_TYPE flags=0,
 		const COMM_TYPE commtype=DEFAULT_COMM,
 		const FORK_TYPE forktype=FORK_DEFAULT);
       /** \copydoc YggInterface::utils::LogBase::logClass */
@@ -85,7 +85,7 @@ namespace YggInterface {
       std::string logInst_;       /**< Identifier to use for instance in log messages */
       FORK_TYPE forktype;         /**< Enumerated type of fork */
       std::vector<Comm_t*> comms; /**< Tine communicators */
-      uint64_t iter;              /**< Current iteration within tine cycle */
+      FLAG_TYPE iter;              /**< Current iteration within tine cycle */
     };
 
     /**
@@ -109,7 +109,7 @@ namespace YggInterface {
        */
       explicit ForkComm(const std::string name,
 			const utils::Address& address,
-			const DIRECTION direction=NONE, int flgs=0,
+			const DIRECTION direction=NONE, FLAG_TYPE flgs=0,
 			const COMM_TYPE commtype=DEFAULT_COMM,
 			size_t ncomm=0);
       /**
@@ -121,7 +121,7 @@ namespace YggInterface {
        * @param[in] ncomm The number of 'tine' communicators to created
        */
       ForkComm(const std::string nme, const DIRECTION dirn,
-	       int flgs=0, const COMM_TYPE commtype=DEFAULT_COMM,
+	       FLAG_TYPE flgs=0, const COMM_TYPE commtype=DEFAULT_COMM,
 	       size_t ncomm=0);
       /**
        * @brief Constructor without a name.
@@ -135,7 +135,7 @@ namespace YggInterface {
        * @see utils::Address
        */
       explicit ForkComm(utils::Address &addr, const DIRECTION dirn,
-			int flgs=0, const COMM_TYPE type=DEFAULT_COMM,
+			FLAG_TYPE flgs=0, const COMM_TYPE type=DEFAULT_COMM,
 			size_t ncomm=0);
       ADD_METHODS_BASE(ForkComm, DEFAULT_COMM, true)
 	

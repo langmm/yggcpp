@@ -5,7 +5,7 @@ using namespace YggInterface::communicator;
 using namespace YggInterface::utils;
 
 FileComm::FileComm(const std::string name, const utils::Address &address,
-		   DIRECTION direction, int flgs,
+		   DIRECTION direction, FLAG_TYPE flgs,
 		   const COMM_TYPE type) :
   CommBase(name, address, direction, type, flgs),
   mode(std::fstream::in | std::fstream::out) {

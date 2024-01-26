@@ -9,10 +9,10 @@ using namespace YggInterface::utils;
 unsigned ClientComm::_client_rand_seeded = 0;
 
 ClientComm::ClientComm(const std::string& nme, const Address& addr,
-		       int flgs, const COMM_TYPE type, size_t ncomm,
+		       FLAG_TYPE flgs, const COMM_TYPE type, size_t ncomm,
 		       const COMM_TYPE reqtype,
 		       const COMM_TYPE restype,
-		       int reqflags, int resflags) :
+		       FLAG_TYPE reqflags, FLAG_TYPE resflags) :
   RPCComm(nme, addr,
 	  flgs | COMM_FLAG_CLIENT | COMM_FLAG_ALWAYS_SEND_HEADER,
 	  SEND, RECV, type, ncomm,

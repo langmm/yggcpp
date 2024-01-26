@@ -10,7 +10,7 @@
 #include "communicators/CommContext.hpp"
 
 /*! @brief Set if the comm is the receiving comm for a client/server request connection */
-const int COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
+const FLAG_TYPE COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
 #define COMM_NAME_SIZE 100
 #define COMM_DIR_SIZE 100
 
@@ -104,7 +104,7 @@ public:									\
   /** @param[in] type Enumerated communicator type */			\
   explicit cls(const std::string& nme,					\
 	       const DIRECTION dirn,					\
-	       int flgs = 0, const COMM_TYPE type = typ);		\
+	       FLAG_TYPE flgs = 0, const COMM_TYPE type = typ);		\
   /** @brief Constructor */						\
   /** @param[in] addr Communicator address. If empty, one will be generated */ \
   /** @param[in] dirn Enumerated communicator direction */		\
@@ -112,7 +112,7 @@ public:									\
   /** @param[in] type Enumerated communicator type */			\
   explicit cls(utils::Address &addr,					\
 	       const DIRECTION dirn,					\
-	       int flgs = 0, const COMM_TYPE type = typ);		\
+	       FLAG_TYPE flgs = 0, const COMM_TYPE type = typ);		\
   ADD_METHODS_BASE(cls, typ, flag)
 #define ADD_CONSTRUCTORS_BASE(cls, typ, flag)				\
   ADD_CONSTRUCTORS_BASE_NOLOG(cls, typ, flag)				\
@@ -151,11 +151,11 @@ public:									\
 #define ADD_CONSTRUCTORS_DEF(cls)				\
   cls::cls(const std::string& nme,				\
 	   const DIRECTION dirn,				\
-	   int flgs, const COMM_TYPE type) :			\
+	   FLAG_TYPE flgs, const COMM_TYPE type) :			\
     cls(nme, utils::blankAddress, dirn, flgs, type) {}		\
   cls::cls(utils::Address &addr,				\
 	   const DIRECTION dirn,				\
-	   int flgs, const COMM_TYPE type) :			\
+	   FLAG_TYPE flgs, const COMM_TYPE type) :			\
     cls("", addr, dirn, flgs, type) {}				\
   ADD_DESTRUCTOR_DEF(cls, CommBase, , )
 #define ADD_CONSTRUCTORS_RPC(cls, defT)					\
@@ -169,11 +169,11 @@ public:									\
   /** @param[in] reqflags Bitwise flags for request comm (rpc only) */	\
   /** @param[in] resflags Bitwise flags for response comm (rpc only) */	\
   explicit cls(const std::string& nme,					\
-	       int flgs = 0, const COMM_TYPE type = defT,		\
+	       FLAG_TYPE flgs = 0, const COMM_TYPE type = defT,		\
 	       size_t ncomm = 0,					\
 	       const COMM_TYPE reqtype = DEFAULT_COMM,			\
 	       const COMM_TYPE restype = DEFAULT_COMM,			\
-	       int reqflags = 0, int resflags = 0);			\
+	       FLAG_TYPE reqflags = 0, FLAG_TYPE resflags = 0);		\
   /** @brief Constructor */						\
   /** @param[in] addr Communicator address. If empty, one will be generated */ \
   /** @param[in] flgs Bitwise communicator flags */			\
@@ -185,27 +185,27 @@ public:									\
   /** @param[in] resflags Bitwise flags for response comm (rpc only) */	\
   /** @see utils::Address */						\
   explicit cls(utils::Address &addr,					\
-	       int flgs = 0, const COMM_TYPE type = defT,		\
+	       FLAG_TYPE flgs = 0, const COMM_TYPE type = defT,		\
 	       size_t ncomm = 0,					\
 	       const COMM_TYPE reqtype = DEFAULT_COMM,			\
 	       const COMM_TYPE restype = DEFAULT_COMM,			\
-	       int reqflags = 0, int resflags = 0);			\
+	       FLAG_TYPE reqflags = 0, FLAG_TYPE resflags = 0);		\
   ADD_DESTRUCTOR(cls, RPCComm)
 #define ADD_CONSTRUCTORS_RPC_DEF(cls)			\
   cls::cls(const std::string& nme,			\
-	   int flgs, const COMM_TYPE type,		\
+	   FLAG_TYPE flgs, const COMM_TYPE type,		\
 	   size_t ncomm,				\
 	   const COMM_TYPE reqtype,			\
 	   const COMM_TYPE restype,			\
-	   int reqflags, int resflags) :		\
+	   FLAG_TYPE reqflags, FLAG_TYPE resflags) :	\
     cls(nme, utils::blankAddress, flgs, type, ncomm,	\
 	reqtype, restype, reqflags, resflags) {}	\
   cls::cls(utils::Address &addr,			\
-	   int flgs, const COMM_TYPE type,		\
+	   FLAG_TYPE flgs, const COMM_TYPE type,		\
 	   size_t ncomm,				\
 	   const COMM_TYPE reqtype,			\
 	   const COMM_TYPE restype,			\
-	   int reqflags, int resflags) :		\
+	   FLAG_TYPE reqflags, FLAG_TYPE resflags) :	\
     cls("", addr, flgs, type, ncomm,			\
 	reqtype, restype, reqflags, resflags) {}	\
   ADD_DESTRUCTOR_DEF(cls, RPCComm, , )			\
@@ -217,15 +217,15 @@ public:									\
 #define WORKER_METHOD_DECS(cls)						\
   /** \copydoc YggInterface::communicator::Comm_t::create_worker */	\
   Comm_t* create_worker(utils::Address& address,			\
-			const DIRECTION dir, int flgs) override
+			const DIRECTION dir, FLAG_TYPE flgs) override
 #define WORKER_METHOD_DEFS(cls)					\
   Comm_t* cls::create_worker(utils::Address& address,		\
-			     const DIRECTION dir, int flgs) {	\
+			     const DIRECTION dir, FLAG_TYPE flgs) {	\
     return new cls("", address, dir, flgs | COMM_FLAG_WORKER);	\
   }
 #define WORKER_METHOD_DUMMY(cls, abbr)				\
   Comm_t* cls::create_worker(utils::Address&,			\
-			     const DIRECTION direction, int) {	\
+			     const DIRECTION direction, FLAG_TYPE) {	\
     abbr ## _install_error();					\
     return NULL;						\
   }
@@ -1086,12 +1086,12 @@ public:
       @brief Get the bitwise flags associated with the communicator.
       @returns flags.
      */
-    int& getFlags() { return flags; }
+    FLAG_TYPE& getFlags() { return flags; }
     /*!
       @brief Get the bitwise flags associated with the communicator.
       @returns flags.
      */
-    int getFlags() const { return flags; }
+    FLAG_TYPE getFlags() const { return flags; }
     /*!
       @brief Get the communicator's name.
       @returns name.
@@ -1542,7 +1542,7 @@ protected:
      * @see utils::Address
      */
     virtual Comm_t* create_worker(utils::Address& address,
-                                  const DIRECTION dir, int flgs) VIRT_END;
+                                  const DIRECTION dir, FLAG_TYPE flgs) VIRT_END;
     /*!
      * @brief Create a worker for sending
      * @param[in] head The header to use
@@ -1584,7 +1584,7 @@ protected:
     explicit Comm_t(const std::string &name,
 		    const utils::Address &address,
 		    const DIRECTION direction = NONE,
-		    const COMM_TYPE &t = NULL_COMM, int flgs = 0);
+		    const COMM_TYPE &t = NULL_COMM, FLAG_TYPE flgs = 0);
 
     /*!
      * @brief Constructor
@@ -1594,7 +1594,7 @@ protected:
      * @param[in] flgs Initial bitwise flags
      */
     explicit Comm_t(const std::string& name, const DIRECTION dir = NONE,
-                    const COMM_TYPE &t = NULL_COMM, int flgs = 0);
+                    const COMM_TYPE &t = NULL_COMM, FLAG_TYPE flgs = 0);
     /**
      * @brief Checks the size of the message to see if it exceeds the maximum allowable size as define by YGG_MSG_MAX
      * @param[in] len The length of the message to check
@@ -1608,7 +1608,7 @@ protected:
     std::string name;              //!< Comm name.
     utils::Address address;        //!< Comm address.
     DIRECTION direction;           //!< send or recv for direction messages will go.
-    int flags;                     //!< Flags describing the status of the comm.
+    FLAG_TYPE flags;                //!< Flags describing the status of the comm.
     size_t maxMsgSize;             //!< The maximum message size.
     size_t msgBufSize;             //!< The size that should be reserved in messages.
     int index_in_register;         //!< Index of the comm in the comm register.
@@ -1684,11 +1684,12 @@ public:
  */
 YGG_API Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type,
 			   const std::string &name="",
-			   char* address=nullptr, int flags=0,
+			   char* address=nullptr, FLAG_TYPE flags=0,
 			   size_t ncomm=0,
 			   const COMM_TYPE request_commtype=DEFAULT_COMM,
 			   const COMM_TYPE response_commtype=DEFAULT_COMM,
-			   int request_flags=0, int response_flags=0);
+			   FLAG_TYPE request_flags=0,
+			   FLAG_TYPE response_flags=0);
 /**
  * @brief Creates a new communicator of the specified type
  * @param[in] dir The direction for the communicator
@@ -1706,11 +1707,13 @@ YGG_API Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type,
  */
 YGG_API Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type,
 			   const std::string &name,
-			   const utils::Address& address, int flags=0,
+			   const utils::Address& address,
+			   FLAG_TYPE flags=0,
 			   size_t ncomm=0,
 			   const COMM_TYPE request_commtype=DEFAULT_COMM,
 			   const COMM_TYPE response_commtype=DEFAULT_COMM,
-			   int request_flags=0, int response_flags=0);
+			   FLAG_TYPE request_flags=0,
+			   FLAG_TYPE response_flags=0);
 /**
  * @brief Creates a new communicator of the specified type
  * @param[in] dir The direction for the communicator
@@ -1725,11 +1728,12 @@ YGG_API Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type,
  * @return The new communicator instance
  */
 YGG_API Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type,
-			   const std::string &name, int flags=0,
+			   const std::string &name, FLAG_TYPE flags=0,
 			   size_t ncomm=0,
 			   const COMM_TYPE request_commtype=DEFAULT_COMM,
 			   const COMM_TYPE response_commtype=DEFAULT_COMM,
-			   int request_flags=0, int response_flags=0);
+			   FLAG_TYPE request_flags=0,
+			   FLAG_TYPE response_flags=0);
   
 /**
  * @brief Determine if a communicator type is installed.
@@ -1803,7 +1807,8 @@ protected:
      */
     explicit CommBase(const std::string &name, const utils::Address& address,
 		      const DIRECTION direction = NONE,
-		      const COMM_TYPE &t = NULL_COMM, int flags = 0);
+		      const COMM_TYPE &t = NULL_COMM,
+		      FLAG_TYPE flags = 0);
 
     /*!
      * @brief Constructor
@@ -1813,7 +1818,7 @@ protected:
      * @param[in] flgs Bitwise flags describing the communicator
      */
     explicit CommBase(const std::string &name, const DIRECTION dir = NONE,
-                      const COMM_TYPE &t = NULL_COMM, int flgs = 0);
+                      const COMM_TYPE &t = NULL_COMM, FLAG_TYPE flgs = 0);
 
     /*!
      * @brief Create a worker using the inputs
@@ -1824,7 +1829,7 @@ protected:
      * @see utils::Address
      */
     Comm_t* create_worker(utils::Address& addr, const DIRECTION dir,
-                          int flgs) override {
+                          FLAG_TYPE flgs) override {
   
         UNUSED(dir);
 	UNUSED(addr);
@@ -1859,7 +1864,7 @@ public:
 
 template<typename H>
 CommBase<H>::CommBase(const std::string &nme, const utils::Address &addr,
-		      const DIRECTION dirn, const COMM_TYPE &t, int flgs) :
+		      const DIRECTION dirn, const COMM_TYPE &t, FLAG_TYPE flgs) :
   Comm_t(nme, addr, dirn, t, flgs), handle(nullptr) {
   if (!(getFlags() & COMM_FLAG_DELAYED_OPEN))
     _open(false);
@@ -1867,7 +1872,7 @@ CommBase<H>::CommBase(const std::string &nme, const utils::Address &addr,
 
 template<typename H>
 CommBase<H>::CommBase(const std::string &nme, const DIRECTION dirn,
-                      const COMM_TYPE &t, int flgs) :
+                      const COMM_TYPE &t, FLAG_TYPE flgs) :
   CommBase(nme, utils::blankAddress, dirn, t, flgs) {}
 
 template<typename H>

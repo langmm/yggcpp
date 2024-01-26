@@ -6,7 +6,7 @@
 
 static PyObject* COMMTYPE;
 static PyObject* DIRECTION_TYPE;
-static PyObject* FLAG_TYPE;
+static PyObject* COMM_FLAG_TYPE;
 static PyObject* FILE_FLAG_TYPE;
 
 static int register_constants(PyObject* module) {
@@ -104,7 +104,7 @@ static int register_enums(PyObject* module) {
     }
     REGISTER_ENUM(COMM_TYPE, COMMTYPE, COMM_TYPE_map, "", "_COMM");
     REGISTER_ENUM(DIRECTION, DIRECTION_TYPE, DIRECTION_map, "", "");
-    REGISTER_ENUM(COMM_FLAG, FLAG_TYPE, COMM_FLAG_map, "COMM_FLAG_", "");
+    REGISTER_ENUM(COMM_FLAG, COMM_FLAG_TYPE, COMM_FLAG_map, "COMM_FLAG_", "");
     REGISTER_ENUM(FILE_FLAG, FILE_FLAG_TYPE, FILE_FLAG_map, "FILE_FLAG_", "");
 #undef REGISTER_ENUM
     {

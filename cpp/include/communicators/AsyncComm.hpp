@@ -377,11 +377,11 @@ namespace YggInterface {
        **/
       explicit AsyncComm(const std::string& name,
 			 const utils::Address& address,
-			 const DIRECTION direction = NONE, int flgs = 0,
+			 const DIRECTION direction = NONE, FLAG_TYPE flgs = 0,
 			 const COMM_TYPE type = DEFAULT_COMM,
 			 const COMM_TYPE reqtype = DEFAULT_COMM,
 			 const COMM_TYPE restype = DEFAULT_COMM,
-			 int reqflags = 0, int resflags = 0);
+			 FLAG_TYPE reqflags = 0, FLAG_TYPE resflags = 0);
       /**
        * @brief Constructor
        * @param[in] name The name of the communicator
@@ -394,11 +394,11 @@ namespace YggInterface {
        * @param[in] resflags Response communicator flags for RPC comm.
        **/
       explicit AsyncComm(const std::string& name,
-			 const DIRECTION direction = NONE, int flgs = 0,
+			 const DIRECTION direction = NONE, FLAG_TYPE flgs = 0,
 			 const COMM_TYPE type = DEFAULT_COMM,
 			 const COMM_TYPE reqtype = DEFAULT_COMM,
 			 const COMM_TYPE restype = DEFAULT_COMM,
-			 int reqflags = 0, int resflags = 0);
+			 FLAG_TYPE reqflags = 0, FLAG_TYPE resflags = 0);
       /**
        * @brief Constructor
        * @param[in] address The address to associate with the communicator,
@@ -413,11 +413,11 @@ namespace YggInterface {
        * @see utils::Address
        **/
       explicit AsyncComm(utils::Address& address,
-			 const DIRECTION direction = NONE, int flgs = 0,
+			 const DIRECTION direction = NONE, FLAG_TYPE flgs = 0,
 			 const COMM_TYPE type = DEFAULT_COMM,
 			 const COMM_TYPE reqtype = DEFAULT_COMM,
 			 const COMM_TYPE restype = DEFAULT_COMM,
-			 int reqflags = 0, int resflags = 0);
+			 FLAG_TYPE reqflags = 0, FLAG_TYPE resflags = 0);
       ADD_METHODS_BASE(AsyncComm, DEFAULT_COMM, true)
 
       /** \copydoc YggInterface::communicator::Comm_t::comm_nmsg */
@@ -447,13 +447,13 @@ namespace YggInterface {
       bool create_header_send(utils::Header& header) override;
       /** \copydoc YggInterface::communicator::Comm_t::create_worker */
       Comm_t* create_worker(utils::Address& address,
-			    const DIRECTION dir, int flgs) override;
+			    const DIRECTION dir, FLAG_TYPE flgs) override;
       
       utils::Metadata response_metadata; /**< Metadata for response communicator in RPC comm */
       COMM_TYPE request_commtype;        /**< Request communicator type for RPC comm */
       COMM_TYPE response_commtype;       /**< Response communicator type for RPC comm */
-      int request_flags;                 /**< Request communicator flags for RPC comm */
-      int response_flags;                /**< Request communicator flags for RPC comm */
+      FLAG_TYPE request_flags;                 /**< Request communicator flags for RPC comm */
+      FLAG_TYPE response_flags;                /**< Request communicator flags for RPC comm */
 
     public:
       // RPC methods

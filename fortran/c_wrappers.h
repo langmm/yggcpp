@@ -1,12 +1,12 @@
 #ifndef YGG_FC_WRAPPERS_H_
 #define YGG_FC_WRAPPERS_H_
 
-#include "YggInterface.h"
 #include <stdlib.h>
 #include <string.h>
+#include "utils/enums.hpp"
+#include "YggInterface.h"
 
 #ifdef __cplusplus /* If this is a C++ compiler, use C linkage */
-#include "utils/enums.hpp"
 extern "C" {
 #endif
 
@@ -14,7 +14,43 @@ extern "C" {
 
 const int YGG_MSG_MAX_F = YGG_MSG_MAX;
 
-  /* void dummy_function_f(const char* message); */
+#define CREATE_COMM_FLAG(name)				\
+  const FLAG_TYPE name ## _F = name
+
+  CREATE_COMM_FLAG(COMM_FLAG_VALID);
+  CREATE_COMM_FLAG(COMM_FLAG_GLOBAL);
+  CREATE_COMM_FLAG(COMM_FLAG_WORKER);
+  CREATE_COMM_FLAG(COMM_FLAG_DELAYED_OPEN);
+  CREATE_COMM_FLAG(COMM_FLAG_CLIENT);
+  CREATE_COMM_FLAG(COMM_FLAG_SERVER);
+  CREATE_COMM_FLAG(COMM_FLAG_CLIENT_RESPONSE);
+  CREATE_COMM_FLAG(COMM_FLAG_SERVER_RESPONSE);
+  CREATE_COMM_FLAG(COMM_FLAG_ALWAYS_SEND_HEADER);
+  CREATE_COMM_FLAG(COMM_FLAG_ALLOW_MULTIPLE_COMMS);
+  CREATE_COMM_FLAG(COMM_FLAG_USED_SENT);
+  CREATE_COMM_FLAG(COMM_FLAG_USED_RECV);
+  CREATE_COMM_FLAG(COMM_FLAG_EOF_SENT);
+  CREATE_COMM_FLAG(COMM_FLAG_EOF_RECV);
+  CREATE_COMM_FLAG(COMM_FLAG_CLOSE_ON_EOF_RECV);
+  CREATE_COMM_FLAG(COMM_FLAG_CLOSE_ON_EOF_SEND);
+  CREATE_COMM_FLAG(COMM_FLAG_INTERFACE);
+  CREATE_COMM_FLAG(COMM_FLAG_DELETE);
+  CREATE_COMM_FLAG(COMM_FLAG_ASYNC);
+  CREATE_COMM_FLAG(COMM_FLAG_ASYNC_WRAPPED);
+  CREATE_COMM_FLAG(COMM_FLAG_SET_OPP_ENV);
+  CREATE_COMM_FLAG(COMM_FLAG_WRAPPER);
+  CREATE_COMM_FLAG(COMM_FLAG_FORK_CYCLE);
+  CREATE_COMM_FLAG(COMM_FLAG_FORK_BROADCAST);
+  CREATE_COMM_FLAG(COMM_FLAG_FORK_COMPOSITE);
+  CREATE_COMM_FLAG(COMM_FLAG_FORK_TINE);
+  CREATE_COMM_FLAG(FILE_FLAG_APPEND);
+  CREATE_COMM_FLAG(FILE_FLAG_BINARY);
+  CREATE_COMM_FLAG(FILE_FLAG_READLINE);
+
+#undef CREATE_COMM_FLAG
+
+/* void dummy_function_f(const int64_t message); */
+/* void dummy_function_f(const char* message); */
 
 // Utilities
 int ygg_init_f();
@@ -27,7 +63,7 @@ void unset_global_comm();
 // Methods for initializing channels
 int is_comm_format_array_type_f(const comm_t x);
 comm_t _init_comm_f(const char *name, const int dir, const int t,
-		    void* datatype, const int flags, const size_t ncomm);
+		    void* datatype, const int64_t flags, const size_t ncomm);
 comm_t ygg_output_f(const char *name);
 comm_t ygg_input_f(const char *name);
 comm_t yggOutputType_f(const char *name, void* datatype);

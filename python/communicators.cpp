@@ -68,7 +68,7 @@ static PyObject* commMeta_update(PyObject* self, PyObject* args, PyObject* kwarg
 static PyObject* commMeta_append(PyObject* self, PyObject* args);
 static PyObject* commMeta_richcompare(PyObject *self, PyObject *other, int op);
 
-static PyObject* is_comm_installed(PyObject* self, PyObject* args);
+static PyObject* is_comm_installed(PyObject* self, PyObject* args, PyObject* kwargs);
 
 
 //////////////////////////////////////////////////////////////
@@ -804,7 +804,7 @@ static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds) {
     int dirn = DIRECTION::SEND;
     rapidjson::Document datatype, metadata;
     int commtype = COMM_TYPE::DEFAULT_COMM;
-    int flags = 0;
+    long long flags = 0;
     unsigned int ncomm = 0;
     int64_t timeout_recv = -1;
     bool timeout_recv_set = false;
@@ -826,8 +826,8 @@ static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds) {
     PyObject* response_transformPy = NULL;
     int request_commtype = COMM_TYPE::DEFAULT_COMM;
     int response_commtype = COMM_TYPE::DEFAULT_COMM;
-    int request_flags = 0;
-    int response_flags = 0;
+    long long request_flags = 0;
+    long long response_flags = 0;
     const char* response_format_str = NULL;
     int response_as_array = 0;
     std::vector<std::string> response_field_names;
@@ -875,7 +875,7 @@ static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds) {
     };
     s->comm = NULL;
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ssO$OOiIOOspOOOOOOiOp",
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|ssO$OOLIOOspOOOOOOLOp",
 				     (char**) kwlist,
 				     &name, &adr, &dirnPy, &datatypePy,
 				     &commtypePy, &flags, &ncomm,
@@ -905,8 +905,8 @@ static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds) {
 			    timeout_recv_set))
       return -1;
     if(flags < 0) {
-        PyErr_SetString(PyExc_TypeError, "Invalid flags value");
-        return -1;
+      PyErr_SetString(PyExc_TypeError, "Invalid flags value");
+      return -1;
     }
     if (_parse_string_vect("field_names", field_namesPy,
 			   field_names) < 0)
@@ -955,7 +955,7 @@ static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds) {
       }
       PyObject* response_args = PyTuple_New(0);
       if (!PyArg_ParseTupleAndKeywords(response_args, response_kwargs,
-				       "|$OOiOspOOOO", (char**) response_kwlist,
+				       "|$OOLOspOOOO", (char**) response_kwlist,
 				       &response_datatypePy,
 				       &response_commtypePy,
 				       &response_flags,
@@ -995,11 +995,13 @@ static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds) {
     }
     try {
       s->comm = YggInterface::communicator::new_Comm_t(
-		       (DIRECTION)dirn, (COMM_TYPE)commtype,
-		       name, adr, flags, static_cast<size_t>(ncomm),
+		       (DIRECTION)dirn, (COMM_TYPE)commtype, name, adr,
+		       static_cast<FLAG_TYPE>(flags),
+		       static_cast<size_t>(ncomm),
 		       (COMM_TYPE)request_commtype,
 		       (COMM_TYPE)response_commtype,
-		       request_flags, response_flags);
+		       static_cast<FLAG_TYPE>(request_flags),
+		       static_cast<FLAG_TYPE>(response_flags));
     } catch (...) {
       s->comm = NULL;
     }
@@ -1426,12 +1428,12 @@ static PyObject* Comm_t___getstate__(PyObject* self, PyObject*) {
 					    s->comm->getMetadata().transforms);
   if (metadataPy == NULL || filterPy == NULL || transformPy == NULL)
     return NULL;
-  PyObject *ret = Py_BuildValue("{sssssisisisLsisOsOsOsi}",
+  PyObject *ret = Py_BuildValue("{sssssisisLsLsisOsOsOsi}",
 				"name", s->comm->getName().c_str(),
 				"address", s->comm->getAddress().c_str(),
 				"direction", static_cast<int>(s->comm->getDirection()),
 				"commtype", static_cast<int>(s->comm->getCommType()),
-				"flags", s->comm->getFlags(),
+				"flags", static_cast<long long>(s->comm->getFlags()),
 				"recv_timeout", static_cast<long long>(s->comm->get_timeout_recv()),
 				"language", static_cast<int>(s->comm->getLanguage()),
 				"metadata", metadataPy,
@@ -1449,9 +1451,9 @@ static PyObject* Comm_t___getstate__(PyObject* self, PyObject*) {
     if (res_metadataPy == NULL || res_filterPy == NULL ||
 	res_transformPy == NULL)
       return NULL;
-    PyObject* res_kws = Py_BuildValue("{sisisOsOsO}",
+    PyObject* res_kws = Py_BuildValue("{sisLsOsOsO}",
 				      "commtype", static_cast<int>(req.restype),
-				      "flags", req.response_flags,
+				      "flags", static_cast<long long>(req.response_flags),
 				      "metadata", res_metadataPy,
 				      "filter", res_filterPy,
 				      "transform", res_transformPy);
@@ -1461,7 +1463,7 @@ static PyObject* Comm_t___getstate__(PyObject* self, PyObject*) {
       return NULL;
     }
     Py_DECREF(res_kws);
-    PyObject* flagsPy = PyLong_FromLong(static_cast<long>(s->comm->getFlags() & req.response_flags));
+    PyObject* flagsPy = PyLong_FromLongLong(static_cast<long long>(s->comm->getFlags() & req.response_flags));
     if (PyDict_SetItemString(ret, "flags", flagsPy) < 0) {
       Py_DECREF(ret);
       Py_DECREF(flagsPy);
@@ -1475,7 +1477,7 @@ static PyObject* Comm_t___getstate__(PyObject* self, PyObject*) {
       return NULL;
     }
     Py_DECREF(req_commtypePy);
-    PyObject* req_flagsPy = PyLong_FromLong(static_cast<long>(s->comm->getFlags()));
+    PyObject* req_flagsPy = PyLong_FromLongLong(static_cast<long long>(s->comm->getFlags()));
     if (PyDict_SetItemString(ret, "request_flags", req_flagsPy) < 0) {
       Py_DECREF(ret);
       Py_DECREF(req_flagsPy);
@@ -1803,14 +1805,23 @@ PyDoc_STRVAR(is_comm_installed_docstring,
 	     "\n"
 	     "Check if a communicator type is installed.");
 
-static PyObject* is_comm_installed(PyObject*, PyObject* args) {
+static PyObject* is_comm_installed(PyObject*, PyObject* args, PyObject* kwargs) {
+  PyObject* commtypePy = NULL;
   int commtype = 0;
-  if (!PyArg_ParseTuple(args, "i", &commtype)) {
+  const char* language = NULL;
+  static char const* kwlist[] = {
+    "commtype",
+    "language",
+    NULL
+  };
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs,
+				   "O|s", (char**)kwlist,
+				   &commtypePy, &language))
     return NULL;
-  }
-  if(commtype < 0 || commtype > (int)(max_enum_value(COMM_TYPE_map))) {
-    PyErr_SetString(PyExc_TypeError, "Invalid commtype");
+  if (_parse_commtype(commtypePy, commtype) < 0)
     return NULL;
+  if (language != NULL) {
+    PyErr_WarnEx(PyExc_DeprecationWarning, "'language' is deprecated as all communicators are based on the same C++ interface", 1);
   }
   if (YggInterface::communicator::is_commtype_installed((COMM_TYPE)commtype)) {
     Py_RETURN_TRUE;

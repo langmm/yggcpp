@@ -29,7 +29,7 @@ namespace YggInterface {
        * @param[in] tforms Transforms to apply to messages between communicators
        */
       Proxy(const std::string iname, const std::string oname,
-	    int iflgs = 0, int oflgs = 0,
+	    FLAG_TYPE iflgs = 0, FLAG_TYPE oflgs = 0,
 	    const COMM_TYPE itype = DEFAULT_COMM,
 	    const COMM_TYPE otype = DEFAULT_COMM,
 	    std::vector<YggInterface::utils::filterFunc> fltrs=std::vector<YggInterface::utils::filterFunc>(),
@@ -58,7 +58,7 @@ namespace YggInterface {
        * @param[in] otype Enumerated type of output communicator
        */
       void on_thread(const std::string iname, const std::string oname,
-		     int iflgs, int oflgs,
+		     FLAG_TYPE iflgs, FLAG_TYPE oflgs,
 		     const COMM_TYPE itype, const COMM_TYPE otype);
       /**
        * @brief Receive/send one message

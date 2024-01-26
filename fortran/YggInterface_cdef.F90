@@ -52,11 +52,12 @@
      function init_comm_c(name, dir, t, datatype, flags, ncomm) &
           result(channel) bind(c, name="_init_comm_f")
        use, intrinsic :: iso_c_binding, only: c_char, c_int, &
-            c_ptr, c_size_t
+            c_ptr, c_size_t, c_int64_t
        import :: yggcomm
        implicit none
        character(kind=c_char), dimension(*), intent(in) :: name
-       integer(kind=c_int), value, intent(in) :: dir, t, flags
+       integer(kind=c_int), value, intent(in) :: dir, t
+       integer(kind=c_int64_t), value, intent(in) :: flags
        integer(kind=c_size_t), value, intent(in) :: ncomm
        type(c_ptr), value, intent(in) :: datatype
        type(yggcomm) :: channel
@@ -1152,9 +1153,10 @@
 
      ! subroutine dummy_function_c(message) &
      !      bind(c, name="dummy_function_f")
-     !   use, intrinsic :: iso_c_binding, only: c_char
+     !   use, intrinsic :: iso_c_binding, only: c_char, c_int64_t
      !   implicit none
-     !   character(kind=c_char), dimension(*), intent(in) :: message
+     !   integer(kind=c_int64_t), value, intent(in) :: message
+     !   ! character(kind=c_char), dimension(*), intent(in) :: message
      ! end subroutine dummy_function_c
 
   end interface

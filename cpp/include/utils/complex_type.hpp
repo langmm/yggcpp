@@ -10,18 +10,21 @@
 extern "C" {
 #endif
 
+/** @brief Complex type comprised of floats. */
 struct complex_float{
-  float re;
-  float im;
+  float re; /**< Real part of the complex number */
+  float im; /**< Imagninary part of the complex number */
 };
+/** @brief Complex type comprised of doubles. */
 struct complex_double{
-  double re;
-  double im;
+  double re; /**< Real part of the complex number */
+  double im; /**< Imagninary part of the complex number */
 };
 #ifdef YGGDRASIL_LONG_DOUBLE_AVAILABLE
+/** @brief Complex type comprised of long doubles. */
 struct complex_long_double{
-  long double re;
-  long double im;
+  long double re; /**< Real part of the complex number */
+  long double im; /**< Imagninary part of the complex number */
 };
 #endif // YGGDRASIL_LONG_DOUBLE_AVAILABLE
 typedef struct complex_float complex_float;
@@ -106,6 +109,8 @@ typedef struct complex_long_double_t {
 
 #ifdef __cplusplus
 }
+
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 
 template<typename T>
 struct is_complex {
@@ -312,5 +317,7 @@ RAPIDJSON_ENABLEIF_RETURN((YGGDRASIL_IS_COMPLEX_TYPE_(T)), (complex_long_double_
 #endif // YGGDRASIL_LONG_DOUBLE_AVAILABLE
 
 #undef YGGDRASIL_IS_COMPLEX_TYPE_
+
+#endif // DOXYGEN_SHOULD_SKIP_THIS
 
 #endif

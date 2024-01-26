@@ -1,6 +1,9 @@
 #include "c_wrappers.h"
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
+/* void dummy_function_f(const int64_t message) { */
+/*   printf("dummy function (c printf) %lld\n", message); */
+/* } */
 /* void dummy_function_f(const char* message) { */
 /*   printf("dummy function (c printf) %s\n", message); */
 /*   ygglog_info("dummy function (c)"); */
@@ -40,14 +43,14 @@ int is_comm_format_array_type_f(const comm_t x) {
 }
 
 comm_t _init_comm_f(const char *name, const int dir, const int t,
-		    void* datatype, const int flags, const size_t ncomm) {
+		    void* datatype, const int64_t flags, const size_t ncomm) {
 #ifdef __cplusplus
   comm_t out = _init_comm(name, static_cast<DIRECTION>(dir),
 			  static_cast<COMM_TYPE>(t), (dtype_t*)datatype,
-			  flags, ncomm);
+			  static_cast<FLAG_TYPE>(flags), ncomm);
 #else
   comm_t out = _init_comm(name, dir, t, (dtype_t*)datatype,
-			  flags, ncomm);
+			  (FLAG_TYPE)(flags), ncomm);
 #endif
   set_comm_language(out, FORTRAN_LANGUAGE);
   return out;

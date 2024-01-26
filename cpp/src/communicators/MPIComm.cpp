@@ -51,7 +51,7 @@ void mpi_registry_t::CheckReturn(int code, const std::string& method, int rank) 
 }
 
 MPIComm::MPIComm(const std::string& name, const utils::Address& address,
-		 const DIRECTION direction, int flgs,
+		 const DIRECTION direction, FLAG_TYPE flgs,
 		 const COMM_TYPE type) :
   CommBase(name, address, direction, type, flgs) {
   ADD_CONSTRUCTOR_OPEN(MPIComm)

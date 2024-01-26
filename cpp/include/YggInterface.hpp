@@ -23,7 +23,7 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  explicit YggInput(const char *name, int flags = 0,
+  explicit YggInput(const char *name, FLAG_TYPE flags = 0,
 		    const COMM_TYPE commtype = DEFAULT_COMM) :
     WrapComm(name, RECV, flags | COMM_FLAG_INTERFACE, commtype) {
   }
@@ -37,7 +37,7 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggInput(const std::string& name, int flags = 0,
+  YggInput(const std::string& name, FLAG_TYPE flags = 0,
 	   const COMM_TYPE commtype = DEFAULT_COMM) :
     WrapComm(name, RECV, flags | COMM_FLAG_INTERFACE, commtype) {}
 
@@ -55,7 +55,7 @@ public:
       compilation.
    */
   YggInput(const char *name, const char *fmt, bool as_array = false,
-	   int flags = 0, const COMM_TYPE commtype = DEFAULT_COMM) :
+	   FLAG_TYPE flags = 0, const COMM_TYPE commtype = DEFAULT_COMM) :
     WrapComm(name, RECV, flags | COMM_FLAG_INTERFACE, commtype) {
     if (fmt && !this->addFormat(fmt, as_array))
       this->throw_error("Invalid format");  // GCOV_EXCL_LINE
@@ -75,7 +75,7 @@ public:
       compilation.
    */
   YggInput(const std::string& name, const std::string& fmt,
-	   bool as_array = false, int flags = 0,
+	   bool as_array = false, FLAG_TYPE flags = 0,
 	   const COMM_TYPE commtype = DEFAULT_COMM) :
     WrapComm(name, RECV, flags | COMM_FLAG_INTERFACE, commtype) {
     if (!this->addFormat(fmt, as_array))
@@ -94,7 +94,7 @@ public:
       compilation.
    */
   YggInput(const char *name, const rapidjson::Document& schema,
-	   int flags = 0, const COMM_TYPE commtype = DEFAULT_COMM) :
+	   FLAG_TYPE flags = 0, const COMM_TYPE commtype = DEFAULT_COMM) :
     WrapComm(name, RECV, flags | COMM_FLAG_INTERFACE, commtype) {
     if (!this->addSchema(schema))
       this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
@@ -112,7 +112,7 @@ public:
       compilation.
    */
   YggInput(const std::string& name, const rapidjson::Document& schema,
-	   int flags = 0, const COMM_TYPE commtype = DEFAULT_COMM) :
+	   FLAG_TYPE flags = 0, const COMM_TYPE commtype = DEFAULT_COMM) :
     WrapComm(name, RECV, flags | COMM_FLAG_INTERFACE, commtype) {
     if (!this->addSchema(schema))
       this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
@@ -137,7 +137,7 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  explicit YggOutput(const char *name, int flags = 0,
+  explicit YggOutput(const char *name, FLAG_TYPE flags = 0,
 	             const COMM_TYPE commtype = DEFAULT_COMM) :
     WrapComm(name, SEND, flags | COMM_FLAG_INTERFACE, commtype) {}
   
@@ -150,7 +150,7 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggOutput(const std::string& name, int flags = 0,
+  YggOutput(const std::string& name, FLAG_TYPE flags = 0,
 	    const COMM_TYPE commtype = DEFAULT_COMM) :
     WrapComm(name, SEND, flags | COMM_FLAG_INTERFACE, commtype) {}
   
@@ -169,7 +169,7 @@ public:
       compilation.
    */
   YggOutput(const char *name, const char *fmt, bool as_array=false,
-	    int flags = 0, const COMM_TYPE commtype = DEFAULT_COMM) :
+	    FLAG_TYPE flags = 0, const COMM_TYPE commtype = DEFAULT_COMM) :
     WrapComm(name, SEND, flags | COMM_FLAG_INTERFACE, commtype) {
     if (fmt && !this->addFormat(fmt, as_array))
       this->throw_error("Invalid format");  // GCOV_EXCL_LINE
@@ -190,7 +190,7 @@ public:
       compilation.
    */
   YggOutput(const std::string& name, const std::string& fmt,
-	    bool as_array=false, int flags = 0,
+	    bool as_array=false, FLAG_TYPE flags = 0,
 	    const COMM_TYPE commtype = DEFAULT_COMM) :
     WrapComm(name, SEND, flags | COMM_FLAG_INTERFACE, commtype) {
     if (!this->addFormat(fmt, as_array))
@@ -210,7 +210,7 @@ public:
       compilation.
    */
   YggOutput(const char *name, rapidjson::Document& schema,
-	    int flags = 0, const COMM_TYPE commtype = DEFAULT_COMM) :
+	    FLAG_TYPE flags = 0, const COMM_TYPE commtype = DEFAULT_COMM) :
     WrapComm(name, SEND, flags | COMM_FLAG_INTERFACE, commtype) {
     if (!this->addSchema(schema))
       this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
@@ -228,7 +228,7 @@ public:
       compilation.
    */
   YggOutput(const std::string& name, rapidjson::Document& schema,
-	    int flags = 0, const COMM_TYPE commtype = DEFAULT_COMM) :
+	    FLAG_TYPE flags = 0, const COMM_TYPE commtype = DEFAULT_COMM) :
     WrapComm(name, SEND, flags | COMM_FLAG_INTERFACE, commtype) {
     if (!this->addSchema(schema))
       this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
@@ -257,7 +257,7 @@ public:
       for the response communicator. Defaults to DEFAULT_COMM that is
       set based on the available packages at compilation.
   */
-  explicit YggRpcServer(const char *name, int flags = 0,
+  explicit YggRpcServer(const char *name, FLAG_TYPE flags = 0,
 			const COMM_TYPE request_commtype = DEFAULT_COMM,
 			const COMM_TYPE response_commtype = DEFAULT_COMM) :
     ServerComm(name, flags | COMM_FLAG_INTERFACE,
@@ -280,7 +280,7 @@ public:
       set based on the available packages at compilation.
    */
   YggRpcServer(const char *name, const char *inFormat,
-	       const char *outFormat, int flags = 0,
+	       const char *outFormat, FLAG_TYPE flags = 0,
 	       const COMM_TYPE request_commtype = DEFAULT_COMM,
 	       const COMM_TYPE response_commtype = DEFAULT_COMM) :
     ServerComm(name, flags | COMM_FLAG_INTERFACE,
@@ -309,7 +309,7 @@ public:
       set based on the available packages at compilation.
    */
   YggRpcServer(const std::string& name, const std::string& inFormat,
-	       const std::string& outFormat, int flags = 0,
+	       const std::string& outFormat, FLAG_TYPE flags = 0,
 	       const COMM_TYPE request_commtype = DEFAULT_COMM,
 	       const COMM_TYPE response_commtype = DEFAULT_COMM) :
     ServerComm(name, flags | COMM_FLAG_INTERFACE,
@@ -338,7 +338,7 @@ public:
       set based on the available packages at compilation.
    */
   YggRpcServer(const std::string& name, const rapidjson::Document& inType,
-	       const rapidjson::Document& outType, int flags = 0,
+	       const rapidjson::Document& outType, FLAG_TYPE flags = 0,
 	       const COMM_TYPE request_commtype = DEFAULT_COMM,
 	       const COMM_TYPE response_commtype = DEFAULT_COMM) :
     ServerComm(name, flags | COMM_FLAG_INTERFACE,
@@ -372,7 +372,7 @@ public:
       used for response communicators. Defaults to DEFAULT_COMM that is
       set based on the available packages at compilation.
   */
-  explicit YggRpcClient(const char *name, int flags = 0,
+  explicit YggRpcClient(const char *name, FLAG_TYPE flags = 0,
 			const COMM_TYPE request_commtype = DEFAULT_COMM,
 			const COMM_TYPE response_commtype = DEFAULT_COMM) :
     ClientComm(name, flags | COMM_FLAG_INTERFACE,
@@ -390,7 +390,7 @@ public:
       used for response communicators. Defaults to DEFAULT_COMM that is
       set based on the available packages at compilation.
   */
-  YggRpcClient(const std::string& name, int flags = 0,
+  YggRpcClient(const std::string& name, FLAG_TYPE flags = 0,
 	       const COMM_TYPE request_commtype = DEFAULT_COMM,
 	       const COMM_TYPE response_commtype = DEFAULT_COMM) :
     ClientComm(name, flags | COMM_FLAG_INTERFACE,
@@ -413,7 +413,7 @@ public:
       set based on the available packages at compilation.
    */
   YggRpcClient(const char *name, const char *outFormat,
-	       const char *inFormat, int flags = 0,
+	       const char *inFormat, FLAG_TYPE flags = 0,
 	       const COMM_TYPE request_commtype = DEFAULT_COMM,
 	       const COMM_TYPE response_commtype = DEFAULT_COMM) :
     ClientComm(name, flags | COMM_FLAG_INTERFACE,
@@ -443,7 +443,7 @@ public:
       set based on the available packages at compilation.
    */
   YggRpcClient(const std::string& name, const std::string& outFormat,
-	       const std::string& inFormat, int flags = 0,
+	       const std::string& inFormat, FLAG_TYPE flags = 0,
 	       const COMM_TYPE request_commtype = DEFAULT_COMM,
 	       const COMM_TYPE response_commtype = DEFAULT_COMM) :
     ClientComm(name, flags | COMM_FLAG_INTERFACE,
@@ -472,7 +472,7 @@ public:
       set based on the available packages at compilation.
    */
   YggRpcClient(const std::string& name, const rapidjson::Document& outType,
-	       const rapidjson::Document& inType, int flags = 0,
+	       const rapidjson::Document& inType, FLAG_TYPE flags = 0,
 	       const COMM_TYPE request_commtype = DEFAULT_COMM,
 	       const COMM_TYPE response_commtype = DEFAULT_COMM) :
     ClientComm(name, flags | COMM_FLAG_INTERFACE,
@@ -510,7 +510,7 @@ public:
       set based on the available packages at compilation.
    */
   YggTimesync(const std::string& name="timesync",
-	      const std::string& t_units="", int flags = 0,
+	      const std::string& t_units="", FLAG_TYPE flags = 0,
 	      const COMM_TYPE request_commtype = DEFAULT_COMM,
 	      const COMM_TYPE response_commtype = DEFAULT_COMM) :
     YggRpcClient(name, flags, request_commtype, response_commtype) {
@@ -555,7 +555,7 @@ public:
       set based on the available packages at compilation.
    */
   YggTimesync(const char *name="timesync", const char *t_units="",
-	      int flags = 0,
+	      FLAG_TYPE flags = 0,
 	      const COMM_TYPE request_commtype = DEFAULT_COMM,
 	      const COMM_TYPE response_commtype = DEFAULT_COMM) :
     YggTimesync(std::string(name), std::string(t_units),
@@ -580,7 +580,7 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  explicit YggAsciiFileOutput(const char *name, int flags = 0,
+  explicit YggAsciiFileOutput(const char *name, FLAG_TYPE flags = 0,
 			      const COMM_TYPE commtype = DEFAULT_COMM) :
     YggOutput(name, flags, commtype) {}
   
@@ -593,7 +593,7 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  explicit YggAsciiFileOutput(const std::string& name, int flags = 0,
+  explicit YggAsciiFileOutput(const std::string& name, FLAG_TYPE flags = 0,
 			      const COMM_TYPE commtype = DEFAULT_COMM) :
     YggOutput(name, flags, commtype) {}
   
@@ -623,7 +623,7 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  explicit YggAsciiFileInput(const char *name, int flags = 0,
+  explicit YggAsciiFileInput(const char *name, FLAG_TYPE flags = 0,
 			     const COMM_TYPE commtype = DEFAULT_COMM) :
     YggInput(name, flags, commtype) {}
 
@@ -636,7 +636,7 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  explicit YggAsciiFileInput(const std::string& name, int flags = 0,
+  explicit YggAsciiFileInput(const std::string& name, FLAG_TYPE flags = 0,
 			     const COMM_TYPE commtype = DEFAULT_COMM) :
     YggInput(name, flags, commtype) {}
 
@@ -673,7 +673,7 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggAsciiTableOutput(const char *name, const char *fmt, int flags = 0,
+  YggAsciiTableOutput(const char *name, const char *fmt, FLAG_TYPE flags = 0,
 		      const COMM_TYPE commtype = DEFAULT_COMM) :
     YggOutput(name, fmt, false, flags, commtype) {}
 
@@ -690,7 +690,7 @@ public:
       compilation.
    */
   YggAsciiTableOutput(const std::string& name, const std::string& fmt,
-		      int flags = 0,
+		      FLAG_TYPE flags = 0,
 		      const COMM_TYPE commtype = DEFAULT_COMM) :
     YggOutput(name, fmt, false, flags, commtype) {}
 
@@ -716,7 +716,7 @@ public:
       compilation.
    */
   explicit YggAsciiTableInput(const char *name, const char* fmt = nullptr,
-			      int flags = 0,
+			      FLAG_TYPE flags = 0,
 			      const COMM_TYPE commtype = DEFAULT_COMM) :
     YggInput(name, fmt, false, flags, commtype) {}
 
@@ -732,7 +732,7 @@ public:
       compilation.
    */
   YggAsciiTableInput(const std::string& name, const std::string& fmt = "",
-		     int flags = 0,
+		     FLAG_TYPE flags = 0,
 		     const COMM_TYPE commtype = DEFAULT_COMM) :
     YggInput(name, fmt, false, flags, commtype) {}
 
@@ -757,7 +757,7 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggAsciiArrayOutput(const char *name, const char *fmt, int flags = 0,
+  YggAsciiArrayOutput(const char *name, const char *fmt, FLAG_TYPE flags = 0,
 		      const COMM_TYPE commtype = DEFAULT_COMM) :
     YggOutput(name, fmt, true, flags, commtype) {}
 
@@ -774,7 +774,7 @@ public:
       compilation.
    */
   YggAsciiArrayOutput(const std::string& name, const std::string& fmt,
-		      int flags = 0,
+		      FLAG_TYPE flags = 0,
 		      const COMM_TYPE commtype = DEFAULT_COMM) :
     YggOutput(name, fmt, true, flags, commtype) {}
 
@@ -800,7 +800,7 @@ public:
       compilation.
    */
   explicit YggAsciiArrayInput(const char *name, const char* fmt = nullptr,
-			      int flags = 0,
+			      FLAG_TYPE flags = 0,
 			      const COMM_TYPE commtype = DEFAULT_COMM) :
     YggInput(name, fmt, true, flags, commtype) {}
 
@@ -816,7 +816,7 @@ public:
       compilation.
    */
   YggAsciiArrayInput(const std::string& name, const std::string& fmt = "",
-		     int flags = 0, const COMM_TYPE commtype = DEFAULT_COMM) :
+		     FLAG_TYPE flags = 0, const COMM_TYPE commtype = DEFAULT_COMM) :
     YggInput(name, fmt, true, flags, commtype) {}
 
 };
@@ -838,7 +838,7 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  explicit YggPlyOutput(const char *name, int flags = 0,
+  explicit YggPlyOutput(const char *name, FLAG_TYPE flags = 0,
 			const COMM_TYPE commtype = DEFAULT_COMM) :
     YggOutput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"ply\"}"))
@@ -854,7 +854,7 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggPlyOutput(const std::string& name, int flags = 0,
+  YggPlyOutput(const std::string& name, FLAG_TYPE flags = 0,
 	       const COMM_TYPE commtype = DEFAULT_COMM) :
     YggOutput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"ply\"}"))
@@ -880,7 +880,7 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  explicit YggPlyInput(const char *name, int flags = 0,
+  explicit YggPlyInput(const char *name, FLAG_TYPE flags = 0,
 		       const COMM_TYPE commtype = DEFAULT_COMM) :
     YggInput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"ply\"}"))
@@ -896,7 +896,7 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggPlyInput(const std::string& name, int flags = 0,
+  YggPlyInput(const std::string& name, FLAG_TYPE flags = 0,
 	      const COMM_TYPE commtype = DEFAULT_COMM) :
     YggInput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"ply\"}"))
@@ -922,7 +922,7 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  explicit YggObjOutput(const char *name, int flags = 0,
+  explicit YggObjOutput(const char *name, FLAG_TYPE flags = 0,
 			const COMM_TYPE commtype = DEFAULT_COMM) :
     YggOutput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"obj\"}"))
@@ -938,7 +938,7 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggObjOutput(const std::string& name, int flags = 0,
+  YggObjOutput(const std::string& name, FLAG_TYPE flags = 0,
 	       const COMM_TYPE commtype = DEFAULT_COMM) :
     YggOutput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"obj\"}"))
@@ -964,7 +964,7 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  explicit YggObjInput(const char *name, int flags = 0,
+  explicit YggObjInput(const char *name, FLAG_TYPE flags = 0,
 		       const COMM_TYPE commtype = DEFAULT_COMM) :
     YggInput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"obj\"}"))
@@ -980,7 +980,7 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggObjInput(const std::string& name, int flags = 0,
+  YggObjInput(const std::string& name, FLAG_TYPE flags = 0,
 	      const COMM_TYPE commtype = DEFAULT_COMM) :
     YggInput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"obj\"}"))
@@ -1006,7 +1006,7 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  explicit YggGenericOutput(const char *name, int flags = 0,
+  explicit YggGenericOutput(const char *name, FLAG_TYPE flags = 0,
 			    const COMM_TYPE commtype = DEFAULT_COMM) :
     YggOutput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"any\"}"))
@@ -1022,7 +1022,7 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggGenericOutput(const std::string& name, int flags = 0,
+  YggGenericOutput(const std::string& name, FLAG_TYPE flags = 0,
 		   const COMM_TYPE commtype = DEFAULT_COMM) :
     YggOutput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"any\"}"))
@@ -1049,7 +1049,7 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  explicit YggGenericInput(const char *name, int flags = 0,
+  explicit YggGenericInput(const char *name, FLAG_TYPE flags = 0,
 			   const COMM_TYPE commtype = DEFAULT_COMM) :
     YggInput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"any\"}"))
@@ -1065,7 +1065,7 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggGenericInput(const std::string& name, int flags = 0,
+  YggGenericInput(const std::string& name, FLAG_TYPE flags = 0,
 		  const COMM_TYPE commtype = DEFAULT_COMM) :
     YggInput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"any\"}"))
@@ -1091,7 +1091,7 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  explicit YggAnyOutput(const char *name, int flags = 0,
+  explicit YggAnyOutput(const char *name, FLAG_TYPE flags = 0,
 			const COMM_TYPE commtype = DEFAULT_COMM) :
     YggOutput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"any\"}"))
@@ -1107,7 +1107,7 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggAnyOutput(const std::string& name, int flags = 0,
+  YggAnyOutput(const std::string& name, FLAG_TYPE flags = 0,
 	       const COMM_TYPE commtype = DEFAULT_COMM) :
     YggOutput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"any\"}"))
@@ -1134,7 +1134,7 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  explicit YggAnyInput(const char *name, int flags = 0,
+  explicit YggAnyInput(const char *name, FLAG_TYPE flags = 0,
 		       const COMM_TYPE commtype = DEFAULT_COMM) :
     YggInput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"any\"}"))
@@ -1150,7 +1150,7 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggAnyInput(const std::string& name, int flags = 0,
+  YggAnyInput(const std::string& name, FLAG_TYPE flags = 0,
 	      const COMM_TYPE commtype = DEFAULT_COMM) :
     YggInput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"any\"}"))
@@ -1176,7 +1176,7 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  explicit YggJSONArrayOutput(const char *name, int flags = 0,
+  explicit YggJSONArrayOutput(const char *name, FLAG_TYPE flags = 0,
 			      const COMM_TYPE commtype = DEFAULT_COMM) :
     YggOutput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"array\"}"))
@@ -1192,7 +1192,7 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggJSONArrayOutput(const std::string& name, int flags = 0,
+  YggJSONArrayOutput(const std::string& name, FLAG_TYPE flags = 0,
 		     const COMM_TYPE commtype = DEFAULT_COMM) :
     YggOutput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"array\"}"))
@@ -1219,7 +1219,7 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  explicit YggJSONArrayInput(const char *name, int flags = 0,
+  explicit YggJSONArrayInput(const char *name, FLAG_TYPE flags = 0,
 			     const COMM_TYPE commtype = DEFAULT_COMM) :
     YggInput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"array\"}"))
@@ -1234,7 +1234,7 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggJSONArrayInput(const std::string& name, int flags = 0,
+  YggJSONArrayInput(const std::string& name, FLAG_TYPE flags = 0,
 		    const COMM_TYPE commtype = DEFAULT_COMM) :
     YggInput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"array\"}"))
@@ -1260,7 +1260,7 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  explicit YggJSONObjectOutput(const char *name, int flags = 0,
+  explicit YggJSONObjectOutput(const char *name, FLAG_TYPE flags = 0,
 			       const COMM_TYPE commtype = DEFAULT_COMM) :
     YggOutput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"object\"}"))
@@ -1276,7 +1276,7 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggJSONObjectOutput(const std::string& name, int flags = 0,
+  YggJSONObjectOutput(const std::string& name, FLAG_TYPE flags = 0,
 		      const COMM_TYPE commtype = DEFAULT_COMM) :
     YggOutput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"object\"}"))
@@ -1303,7 +1303,7 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  explicit YggJSONObjectInput(const char *name, int flags = 0,
+  explicit YggJSONObjectInput(const char *name, FLAG_TYPE flags = 0,
 			      const COMM_TYPE commtype = DEFAULT_COMM) :
     YggInput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"object\"}"))
@@ -1319,7 +1319,7 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggJSONObjectInput(const std::string& name, int flags = 0,
+  YggJSONObjectInput(const std::string& name, FLAG_TYPE flags = 0,
 		     const COMM_TYPE commtype = DEFAULT_COMM) :
     YggInput(name, flags, commtype) {
     if (!this->addSchema("{\"type\": \"object\"}"))

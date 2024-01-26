@@ -69,7 +69,7 @@ void close_comm(comm_t* comm) {
 
 comm_t _init_comm(const char* name, const enum DIRECTION dir,
 		  const enum COMM_TYPE t,
-		  dtype_t* datatype, const int flags,
+		  dtype_t* datatype, const FLAG_TYPE flags,
 		  const size_t ncomm) {
   comm_t ret;
   _BEGIN_CPP {
@@ -90,13 +90,13 @@ comm_t _init_comm(const char* name, const enum DIRECTION dir,
 comm_t init_comm(const char* name, const enum DIRECTION dir,
 		 const enum COMM_TYPE t,
 		 dtype_t* datatype) {
-  int flags = COMM_FLAG_INTERFACE;
+  FLAG_TYPE flags = COMM_FLAG_INTERFACE;
   comm_t out = _init_comm(name, dir, t, datatype, flags, 0);
   set_comm_language(out, C_LANGUAGE);
   return out;
 }
 comm_t init_comm_flags(const char* name, const enum DIRECTION dir,
-		       const enum COMM_TYPE t, int flags) {
+		       const enum COMM_TYPE t, FLAG_TYPE flags) {
   flags |= COMM_FLAG_INTERFACE;
   comm_t out = _init_comm(name, dir, t, NULL, flags, 0);
   set_comm_language(out, C_LANGUAGE);

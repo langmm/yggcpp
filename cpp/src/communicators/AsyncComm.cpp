@@ -244,7 +244,7 @@ void AsyncBacklog::on_thread(AsyncComm* parent) {
     {
       const std::lock_guard<std::mutex> comm_lock(mutex);
       log_debug() << "on_thread: Creating comm on thread" << std::endl;
-      int flgs_comm = (parent->getFlags() & ~COMM_FLAG_ASYNC) | COMM_FLAG_ASYNC_WRAPPED;
+      FLAG_TYPE flgs_comm = (parent->getFlags() & ~COMM_FLAG_ASYNC) | COMM_FLAG_ASYNC_WRAPPED;
       Address addr(parent->getAddress());
       comm = new_Comm_t(direction,
 			parent->getCommType(),
@@ -493,9 +493,9 @@ AsyncLockGuard::~AsyncLockGuard() {
 AsyncComm::AsyncComm(const std::string& name,
 		     const utils::Address& address,
 		     const DIRECTION direction,
-		     int flgs, const COMM_TYPE type,
+		     FLAG_TYPE flgs, const COMM_TYPE type,
 		     const COMM_TYPE reqtype, const COMM_TYPE restype,
-		     int reqflags, int resflags) :
+		     FLAG_TYPE reqflags, FLAG_TYPE resflags) :
   CommBase(name, address, direction, type, flgs | COMM_FLAG_ASYNC),
   response_metadata(),
   request_commtype(reqtype), response_commtype(restype),
@@ -504,16 +504,16 @@ AsyncComm::AsyncComm(const std::string& name,
 }
 AsyncComm::AsyncComm(const std::string& name,
 		     const DIRECTION direction,
-		     int flgs, const COMM_TYPE type,
+		     FLAG_TYPE flgs, const COMM_TYPE type,
 		     const COMM_TYPE reqtype, const COMM_TYPE restype,
-		     int reqflags, int resflags) :
+		     FLAG_TYPE reqflags, FLAG_TYPE resflags) :
   AsyncComm(name, utils::blankAddress, direction, flgs, type,
 	    reqtype, restype, reqflags, resflags) {}
 AsyncComm::AsyncComm(utils::Address &addr,
 		     const DIRECTION direction,
-		     int flgs, const COMM_TYPE type,
+		     FLAG_TYPE flgs, const COMM_TYPE type,
 		     const COMM_TYPE reqtype, const COMM_TYPE restype,
-		     int reqflags, int resflags) :
+		     FLAG_TYPE reqflags, FLAG_TYPE resflags) :
   AsyncComm("", addr, direction, flgs, type,
 	    reqtype, restype, reqflags, resflags) {}
 ADD_DESTRUCTOR_DEF(AsyncComm, CommBase, , )
@@ -712,7 +712,7 @@ bool AsyncComm::create_header_send(Header& header) {
 }
 
 Comm_t* AsyncComm::create_worker(utils::Address& address,
-                                 const DIRECTION dir, int flgs) {
+                                 const DIRECTION dir, FLAG_TYPE flgs) {
   return new AsyncComm("", address, dir, flgs | COMM_FLAG_WORKER, type);
 }
 

@@ -94,7 +94,7 @@ void close_comm(comm_t* comm);
  */
 comm_t _init_comm(const char* name, const enum DIRECTION dir,
 		  const enum COMM_TYPE t,
-		  dtype_t* datatype, const int flags,
+		  dtype_t* datatype, const FLAG_TYPE flags,
 		  const size_t ncomm);
   
 /**
@@ -119,7 +119,7 @@ comm_t init_comm(const char* name, const enum DIRECTION dir,
  * @return comm_t struct containing the requested communicator
  */
 comm_t init_comm_flags(const char* name, const enum DIRECTION dir,
-		       const enum COMM_TYPE t, int flags);
+		       const enum COMM_TYPE t, FLAG_TYPE flags);
 
 /**
  * @brief Set a communicators language.

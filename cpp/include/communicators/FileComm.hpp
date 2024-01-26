@@ -29,7 +29,7 @@ namespace YggInterface {
       explicit FileComm(const std::string name,
 			const utils::Address &address,
 			const DIRECTION direction = NONE,
-			int flgs = 0, const COMM_TYPE type = FILE_COMM);
+			FLAG_TYPE flgs = 0, const COMM_TYPE type = FILE_COMM);
       ADD_CONSTRUCTORS_BASE(FileComm, FILE_COMM, true)
 
       /** \copydoc YggInterface::communicator::Comm_t::comm_nmsg */

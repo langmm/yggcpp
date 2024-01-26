@@ -45,7 +45,7 @@ long ValueManager::recv(utils::Header& header) {
 
 ValueComm::ValueComm(const std::string name,
 		     const utils::Address &address,
-		     DIRECTION direction, int flgs,
+		     DIRECTION direction, FLAG_TYPE flgs,
 		     const COMM_TYPE type) :
   CommBase(name, address, direction, type, flgs) {
   ADD_CONSTRUCTOR_OPEN(ValueComm)

@@ -18,7 +18,7 @@ ForkTines::ForkTines(const std::string logInst,
 ForkTines::ForkTines(const std::string logInst,
 		     const std::vector<std::string>& names,
 		     const std::vector<std::string>& addrs,
-		     const DIRECTION dir, int flags,
+		     const DIRECTION dir, FLAG_TYPE flags,
 		     const COMM_TYPE commtype, const FORK_TYPE forktyp) :
   logInst_(logInst), forktype(forktyp), comms(), iter(0) {
   size_t ncomm = (std::max)(names.size(), addrs.size());
@@ -226,7 +226,7 @@ long ForkTines::recv(char*& data, const size_t &len,
 //////////////
 
 ForkComm::ForkComm(const std::string name, const Address &address,
-		   DIRECTION direction, int flgs,
+		   DIRECTION direction, FLAG_TYPE flgs,
 		   const COMM_TYPE commtype, size_t ncmm) :
   CommBase(name, address, direction, commtype, flgs),
   forktype(FORK_DEFAULT), ncomm(ncmm) {
@@ -239,10 +239,10 @@ ForkComm::ForkComm(const std::string name, const Address &address,
   ADD_CONSTRUCTOR_OPEN(ForkComm)
 }
 ForkComm::ForkComm(const std::string name, const DIRECTION dirn,
-		   int flgs, const COMM_TYPE commtype, size_t ncomm) :
+		   FLAG_TYPE flgs, const COMM_TYPE commtype, size_t ncomm) :
   ForkComm(name, utils::blankAddress, dirn, flgs, commtype, ncomm) {}
 ForkComm::ForkComm(utils::Address &addr, const DIRECTION dirn,
-		   int flgs, const COMM_TYPE commtype, size_t ncomm) :
+		   FLAG_TYPE flgs, const COMM_TYPE commtype, size_t ncomm) :
   ForkComm("", addr, dirn, flgs, commtype, ncomm) {}
 
 ADD_DESTRUCTOR_DEF(ForkComm, CommBase, , )
