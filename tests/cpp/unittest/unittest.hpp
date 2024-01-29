@@ -1,4 +1,10 @@
 #pragma once
+
+#if defined(RESTINSTALLED) && defined(__MINGW32__)
+// Ensure winsock2.h is included before windows.h included by curl
+#include <winsock2.h>
+#endif
+
 #ifndef __STDC_CONSTANT_MACROS
 #ifdef __clang__
 #pragma GCC diagnostic push

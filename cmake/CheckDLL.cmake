@@ -44,7 +44,7 @@ function(show_symbols target)
     add_custom_command(
         TARGET ${after_target}
 	POST_BUILD
-	COMMAND dumpbin /symbols $<TARGET_FILE:${target}>
+	COMMAND dumpbin /exports $<TARGET_FILE:${target}>
 	COMMAND_EXPAND_LISTS
 	)
   else()

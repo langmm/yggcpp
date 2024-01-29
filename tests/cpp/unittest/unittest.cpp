@@ -1,7 +1,6 @@
-#include <iostream>
 #include "unittest.hpp"
-#include "communicators/ZMQComm.hpp"
-#include "communicators/IPCComm.hpp"
+#include "communicators/comms.hpp"
+#include <iostream>
 
 #ifdef __clang__
 #pragma GCC diagnostic push
