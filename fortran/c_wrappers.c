@@ -1,4 +1,9 @@
 #include "c_wrappers.h"
+
+#ifdef __cplusplus /* If this is a C++ compiler, use C linkage */
+extern "C" {
+#endif
+  
 #include "utils/enums.hpp"
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
@@ -624,3 +629,7 @@ int init_python_API_f() {
 }
 
 #endif // DOXYGEN_SHOULD_SKIP_THIS
+
+#ifdef __cplusplus /* If this is a C++ compiler, use C linkage */
+}
+#endif

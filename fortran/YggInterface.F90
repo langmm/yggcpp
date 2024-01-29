@@ -80,35 +80,35 @@ module YggInterface
   !         COMM_FLAG_MAX             = int(z'8000000000000000', 8)
   ! ! end enum
 #endif
-  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_VALID_F") :: COMM_FLAG_VALID
-  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_GLOBAL_F") :: COMM_FLAG_GLOBAL
-  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_WORKER_F") :: COMM_FLAG_WORKER
-  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_DELAYED_OPEN_F") :: COMM_FLAG_DELAYED_OPEN
-  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_CLIENT_F") :: COMM_FLAG_CLIENT
-  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_SERVER_F") :: COMM_FLAG_SERVER
-  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_CLIENT_RESPONSE_F") :: COMM_FLAG_CLIENT_RESPONSE
-  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_SERVER_RESPONSE_F") :: COMM_FLAG_SERVER_RESPONSE
-  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_ALWAYS_SEND_HEADER_F") :: COMM_FLAG_ALWAYS_SEND_HEADE
-  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_ALLOW_MULTIPLE_COMMS_F") :: COMM_FLAG_ALLOW_MULTIPLE_COMMS
-  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_USED_SENT_F") :: COMM_FLAG_USED_SENT
-  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_USED_RECV_F") :: COMM_FLAG_USED_RECV
-  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_EOF_SENT_F") :: COMM_FLAG_EOF_SENT
-  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_EOF_RECV_F") :: COMM_FLAG_EOF_RECV
-  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_CLOSE_ON_EOF_RECV_F") :: COMM_FLAG_CLOSE_ON_EOF_RECV
-  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_CLOSE_ON_EOF_SEND_F") :: COMM_FLAG_CLOSE_ON_EOF_SEND
-  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_INTERFACE_F") :: COMM_FLAG_INTERFACE
-  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_DELETE_F") :: COMM_FLAG_DELETE
-  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_ASYNC_F") :: COMM_FLAG_ASYNC
-  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_ASYNC_WRAPPED_F") :: COMM_FLAG_ASYNC_WRAPPED
-  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_SET_OPP_ENV_F") :: COMM_FLAG_SET_OPP_ENV
-  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_WRAPPER_F") :: COMM_FLAG_WRAPPER
-  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_FORK_CYCLE_F") :: COMM_FLAG_FORK_CYCLE
-  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_FORK_BROADCAST_F") :: COMM_FLAG_FORK_BROADCAST
-  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_FORK_COMPOSITE_F") :: COMM_FLAG_FORK_COMPOSITE
-  integer(kind=c_int64_t), bind(c, name="COMM_FLAG_FORK_TINE_F") :: COMM_FLAG_FORK_TINE
-  integer(kind=c_int64_t), bind(c, name="FILE_FLAG_APPEND_F") :: FILE_FLAG_APPEND
-  integer(kind=c_int64_t), bind(c, name="FILE_FLAG_BINARY_F") :: FILE_FLAG_BINARY
-  integer(kind=c_int64_t), bind(c, name="FILE_FLAG_READLINE_F") :: FILE_FLAG_READLINE
+  integer(kind=c_int64_t), protected, bind(c, name="COMM_FLAG_VALID_F") :: COMM_FLAG_VALID
+  integer(kind=c_int64_t), protected, bind(c, name="COMM_FLAG_GLOBAL_F") :: COMM_FLAG_GLOBAL
+  integer(kind=c_int64_t), protected, bind(c, name="COMM_FLAG_WORKER_F") :: COMM_FLAG_WORKER
+  integer(kind=c_int64_t), protected, bind(c, name="COMM_FLAG_DELAYED_OPEN_F") :: COMM_FLAG_DELAYED_OPEN
+  integer(kind=c_int64_t), protected, bind(c, name="COMM_FLAG_CLIENT_F") :: COMM_FLAG_CLIENT
+  integer(kind=c_int64_t), protected, bind(c, name="COMM_FLAG_SERVER_F") :: COMM_FLAG_SERVER
+  integer(kind=c_int64_t), protected, bind(c, name="COMM_FLAG_CLIENT_RESPONSE_F") :: COMM_FLAG_CLIENT_RESPONSE
+  integer(kind=c_int64_t), protected, bind(c, name="COMM_FLAG_SERVER_RESPONSE_F") :: COMM_FLAG_SERVER_RESPONSE
+  integer(kind=c_int64_t), protected, bind(c, name="COMM_FLAG_ALWAYS_SEND_HEADER_F") :: COMM_FLAG_ALWAYS_SEND_HEADE
+  integer(kind=c_int64_t), protected, bind(c, name="COMM_FLAG_ALLOW_MULTIPLE_COMMS_F") :: COMM_FLAG_ALLOW_MULTIPLE_COMMS
+  integer(kind=c_int64_t), protected, bind(c, name="COMM_FLAG_USED_SENT_F") :: COMM_FLAG_USED_SENT
+  integer(kind=c_int64_t), protected, bind(c, name="COMM_FLAG_USED_RECV_F") :: COMM_FLAG_USED_RECV
+  integer(kind=c_int64_t), protected, bind(c, name="COMM_FLAG_EOF_SENT_F") :: COMM_FLAG_EOF_SENT
+  integer(kind=c_int64_t), protected, bind(c, name="COMM_FLAG_EOF_RECV_F") :: COMM_FLAG_EOF_RECV
+  integer(kind=c_int64_t), protected, bind(c, name="COMM_FLAG_CLOSE_ON_EOF_RECV_F") :: COMM_FLAG_CLOSE_ON_EOF_RECV
+  integer(kind=c_int64_t), protected, bind(c, name="COMM_FLAG_CLOSE_ON_EOF_SEND_F") :: COMM_FLAG_CLOSE_ON_EOF_SEND
+  integer(kind=c_int64_t), protected, bind(c, name="COMM_FLAG_INTERFACE_F") :: COMM_FLAG_INTERFACE
+  integer(kind=c_int64_t), protected, bind(c, name="COMM_FLAG_DELETE_F") :: COMM_FLAG_DELETE
+  integer(kind=c_int64_t), protected, bind(c, name="COMM_FLAG_ASYNC_F") :: COMM_FLAG_ASYNC
+  integer(kind=c_int64_t), protected, bind(c, name="COMM_FLAG_ASYNC_WRAPPED_F") :: COMM_FLAG_ASYNC_WRAPPED
+  integer(kind=c_int64_t), protected, bind(c, name="COMM_FLAG_SET_OPP_ENV_F") :: COMM_FLAG_SET_OPP_ENV
+  integer(kind=c_int64_t), protected, bind(c, name="COMM_FLAG_WRAPPER_F") :: COMM_FLAG_WRAPPER
+  integer(kind=c_int64_t), protected, bind(c, name="COMM_FLAG_FORK_CYCLE_F") :: COMM_FLAG_FORK_CYCLE
+  integer(kind=c_int64_t), protected, bind(c, name="COMM_FLAG_FORK_BROADCAST_F") :: COMM_FLAG_FORK_BROADCAST
+  integer(kind=c_int64_t), protected, bind(c, name="COMM_FLAG_FORK_COMPOSITE_F") :: COMM_FLAG_FORK_COMPOSITE
+  integer(kind=c_int64_t), protected, bind(c, name="COMM_FLAG_FORK_TINE_F") :: COMM_FLAG_FORK_TINE
+  integer(kind=c_int64_t), protected, bind(c, name="FILE_FLAG_APPEND_F") :: FILE_FLAG_APPEND
+  integer(kind=c_int64_t), protected, bind(c, name="FILE_FLAG_BINARY_F") :: FILE_FLAG_BINARY
+  integer(kind=c_int64_t), protected, bind(c, name="FILE_FLAG_READLINE_F") :: FILE_FLAG_READLINE
 
   !> @brief Wrap a fortran variable so that yggdrasil can pass it to comm
   !>    send & receive methods.

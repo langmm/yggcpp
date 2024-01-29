@@ -1,6 +1,7 @@
 #pragma once
 
 // Platform specific
+#include "utils/tools.hpp"
 #ifdef _WIN32
 #include "utils/regex.hpp"
 #else

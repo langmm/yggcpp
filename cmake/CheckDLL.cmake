@@ -32,3 +32,27 @@ function(show_runtimes target)
     endif()
   endif()
 endfunction()
+function(show_symbols target)
+  set(oneValueArgs AFTER_TARGET)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  if (ARGS_AFTER_TARGET)
+    set(after_target ${ARGS_AFTER_TARGET})
+  else()
+    set(after_target ${target})
+  endif()
+  if (MSVC)
+    add_custom_command(
+        TARGET ${after_target}
+	POST_BUILD
+	COMMAND dumpbin /symbols $<TARGET_FILE:${target}>
+	COMMAND_EXPAND_LISTS
+	)
+  else()
+    add_custom_command(
+        TARGET ${after_target}
+	POST_BUILD
+	COMMAND nm $<TARGET_FILE:${target}>
+	COMMAND_EXPAND_LISTS
+	)
+  endif()
+endfunction()

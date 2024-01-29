@@ -42,3 +42,4 @@ set(YGG_FORTRAN_MOD_DIR ${CMAKE_CURRENT_BINARY_DIR} PARENT_SCOPE)
 
 include(CheckDLL)
 show_runtimes(${YGG_TARGET_FORTRAN})
+show_symbols(${YGG_TARGET_FORTRAN})

@@ -74,3 +74,4 @@ endif()
     
 include(CheckDLL)
 show_runtimes(${YGG_TARGET_CPP})
+# show_symbols(${YGG_TARGET_CPP})
