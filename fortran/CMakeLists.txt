@@ -31,6 +31,10 @@ target_include_directories(${YGG_TARGET_FORTRAN} PUBLIC
 target_link_libraries(${YGG_TARGET_FORTRAN} PUBLIC YggInterface)
 target_include_directories(${YGG_TARGET_FORTRAN} PRIVATE
                            ${DEPS_INCLUDE_DIRS})
+if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    target_link_options(${YGG_TARGET_FORTRAN}
+        PRIVATE /INCLUDE:COMM_FLAG_ASYNC /INCLUDE:COMM_FLAG_ASYNC_F)
+endif()
 list(APPEND YGG_INSTALL_TARGETS ${YGG_TARGET_FORTRAN})
 set(YGG_INSTALL_TARGETS ${YGG_INSTALL_TARGETS} PARENT_SCOPE)
 
