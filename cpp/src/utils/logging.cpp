@@ -1,7 +1,7 @@
+#include "utils/tools.hpp"
 #include "utils/logging.hpp"
 
 #include <utility>
-#include "utils/tools.hpp"
 
 namespace YggInterface {
 namespace utils {

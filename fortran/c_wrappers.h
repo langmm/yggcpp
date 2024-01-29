@@ -3,7 +3,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "utils/enums.hpp"
 #include "YggInterface.h"
 
 #ifdef __cplusplus /* If this is a C++ compiler, use C linkage */
@@ -12,10 +11,10 @@ extern "C" {
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
-const int YGG_MSG_MAX_F = YGG_MSG_MAX;
+  extern int YGG_MSG_MAX_F;
 
 #define CREATE_COMM_FLAG(name)				\
-  const FLAG_TYPE name ## _F = name
+  extern FLAG_TYPE name ## _F
 
   CREATE_COMM_FLAG(COMM_FLAG_VALID);
   CREATE_COMM_FLAG(COMM_FLAG_GLOBAL);

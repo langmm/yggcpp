@@ -7,8 +7,8 @@ if(YGG_BUILD_TESTS OR YGG_BUILD_CXX_TESTS)
     add_custom_command(
         OUTPUT ${SUBLIBFILE}
         COMMAND echo "$<TARGET_FILE:${YGG_TARGET_CPP}>" > "${SUBLIBFILE}"
-       DEPENDS ${YGG_TARGET_CPP}
-       VERBATIM)
+        DEPENDS ${YGG_TARGET_CPP}
+        VERBATIM)
     add_custom_target(make_sublib ALL DEPENDS ${SUBLIBFILE})
 
     if(MSVC11)

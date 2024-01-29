@@ -1455,7 +1455,7 @@ contains
     character(len=*), intent(in) :: name
     character(kind=c_char), allocatable :: c_name(:)
     integer, intent(in) :: dir, t
-    integer(kind=8), intent(in) :: flags
+    integer(kind=8), value, intent(in) :: flags
     integer, optional :: ncomm
     integer(kind=c_int) :: c_dir, c_t
     integer(kind=c_int64_t) :: c_flags
@@ -1473,7 +1473,7 @@ contains
     c_t = t
     c_flags = flags
     c_datatype = c_loc(datatype)
-    write(*, *) "c_flags = ", c_flags
+    write(*, *) "flags = ", flags, ", c_flags = ", c_flags
     channel = init_comm_c(c_name, c_dir, c_t, c_datatype, &
          c_flags, c_ncomm)
     deallocate(c_name)

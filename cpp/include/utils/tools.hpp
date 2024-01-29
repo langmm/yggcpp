@@ -57,7 +57,7 @@
 // Prevent windows.h from including winsock.h
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
-#endif
+#endif // WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <process.h>
 #define ygg_getpid _getpid
@@ -65,20 +65,22 @@
 #define usleep(usec) Sleep(usec/1000)
 #ifndef PATH_MAX
 #define PATH_MAX MAX_PATH
-#endif
-#else
+#endif // PATH_MAX
+#else // _MSC_VER
 
 #include <cstdint>
 #include <unistd.h>
 
 #define ygg_getpid getpid
-#endif
+#endif // _MSC_VER
 
-#else
+#else // __cplusplus
 
 #include <stdbool.h>
+#include <stddef.h>
+#include <stdlib.h>
 
-#endif
+#endif // __cplusplus
 
 #define STRBUFF 100
 

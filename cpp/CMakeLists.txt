@@ -54,6 +54,23 @@ target_link_options(
     "$<$<LINK_LANGUAGE:Fortran>:${DEPS_PUBLIC_Fortran_LINK_FLAGS}>")
 target_compile_features(
     ${YGG_TARGET_CPP} PUBLIC cxx_std_14)
+
+if (COVERAGE_COMPILE_FLAGS)
+    target_compile_options(
+        ${YGG_TARGET_CPP} PUBLIC
+	"$<$<COMPILE_LANGUAGE:C>:${COVERAGE_COMPILE_FLAGS}>"
+	"$<$<COMPILE_LANGUAGE:CXX>:${COVERAGE_COMPILE_FLAGS}>")
+endif()
+if (COVERAGE_LINK_FLAGS)
+    target_link_options(
+        ${YGG_TARGET_CPP} PUBLIC
+	"$<$<LINK_LANGUAGE:C>:${COVERAGE_LINK_FLAGS}>"
+	"$<$<LINK_LANGUAGE:CXX>:${COVERAGE_LINK_FLAGS}>")
+endif()
+if (COVERAGE_LIBRARIES)
+    target_link_libraries(
+        ${YGG_TARGET_CPP} PRIVATE ${COVERAGE_LIBRARIES})
+endif()
     
 include(CheckDLL)
 show_runtimes(${YGG_TARGET_CPP})
