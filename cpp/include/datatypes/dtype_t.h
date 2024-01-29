@@ -1,4 +1,5 @@
 #pragma once
+#include "utils/tools.hpp"
 #include "utils/enums.hpp"
 #include "utils/complex_type.hpp"
 #include "rapidjson/pyrj_c.h"

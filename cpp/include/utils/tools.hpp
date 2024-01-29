@@ -74,6 +74,10 @@
 #define ygg_getpid getpid
 #endif
 
+#else
+
+#include <stdbool.h>
+
 #endif
 
 #define STRBUFF 100

@@ -47,11 +47,22 @@ static struct PyModuleDef_Slot slots[] = {
   {0, NULL}
 };
 
+#ifdef __GNUC__
+#if !defined(__MINGW64_VERSION_MAJOR) || (defined(__MINGW64_VERSION_MAJOR) && __MINGW64_VERSION_MAJOR > 5)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wcast-function-type"
+#endif
+#endif
 static PyMethodDef functions[] = {
   {"is_comm_installed", (PyCFunction) is_comm_installed,
    METH_VARARGS | METH_KEYWORDS, is_comm_installed_docstring},
   {NULL, NULL, 0, NULL} /* sentinel */
 };
+#ifdef __GNUC__
+#if !defined(__MINGW64_VERSION_MAJOR) || (defined(__MINGW64_VERSION_MAJOR) && __MINGW64_VERSION_MAJOR > 5)
+#pragma GCC diagnostic pop
+#endif
+#endif
 
 static void pyYggModule_free(void*) {
   YggInterface::communicator::ygg_cleanup();
