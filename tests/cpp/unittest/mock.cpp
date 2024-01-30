@@ -1,6 +1,6 @@
+#include "mock.hpp"
 #include <cstdlib>
 #include <iostream>
-#include "mock.hpp"
 #include "communicators/IPCComm.hpp"
 
 #ifdef SUBLIBFILE
