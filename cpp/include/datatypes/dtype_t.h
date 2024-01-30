@@ -1,4 +1,5 @@
 #pragma once
+#include "YggInterface_export.h"
 #include "utils/tools.hpp"
 #include "utils/enums.hpp"
 #include "utils/complex_type.hpp"
@@ -76,20 +77,20 @@ generic_t init_generic();
     returned reference object.
   @returns New generic reference object structure.
  */
-generic_ref_t init_generic_ref(generic_t parent);
+YGG_API generic_ref_t init_generic_ref(generic_t parent);
 
 /*!
   @brief Initialize an empty generic object with a null JSON document
   @returns generic_t New generic object structure.
  */
-generic_t init_generic_null();
+YGG_API generic_t init_generic_null();
   
 /*!
   @brief Initialize an empty array of mixed types with generic wrappers.
   @returns generic_t New generic object structure containing an empty
     array.
 */
-generic_t init_generic_array();
+YGG_API generic_t init_generic_array();
 
 /*!
   @brief Initialize an empty map (JSON object) of mixed types with
@@ -97,7 +98,7 @@ generic_t init_generic_array();
   @returns New generic object structure contaiing an empty map (JSON
     object).
  */
-generic_t init_generic_map();
+YGG_API generic_t init_generic_map();
 
 /*!
   @brief Initialize a generic object from a JSON string.
@@ -105,7 +106,7 @@ generic_t init_generic_map();
   @returns New generic object structure wrapping a rapidjson::Document
     instance.
  */
-generic_t init_generic_json(const char* json);
+YGG_API generic_t init_generic_json(const char* json);
 
 /*!
   @brief Initialize a generic object from a JSON string.
@@ -113,21 +114,21 @@ generic_t init_generic_json(const char* json);
   @returns New generic object structure wrapping a rapidjson::Document
     instance.
  */
-generic_t init_generic_generate(const char* schema);
+YGG_API generic_t init_generic_generate(const char* schema);
   
 /*!
   @brief Determine if a generic structure is initialized.
   @param[in] x Generic structure to test.
   @returns 1 if the structure is initialized, 0 otherwise.
  */
-int is_generic_init(generic_t x);
+YGG_API int is_generic_init(generic_t x);
 
 /*!
   @brief Determine if a generic reference structure is initialized.
   @param[in] x Generic reference structure to test.
   @returns 1 if the structure is initialized, 0 otherwise.
  */
-int is_generic_ref_init(generic_ref_t x);
+YGG_API int is_generic_ref_init(generic_ref_t x);
 
 //
 //  @brief Create a generic object from the provided information.
@@ -144,7 +145,7 @@ int is_generic_ref_init(generic_ref_t x);
   @param[in] x generic_t* Pointer to generic object structure to destory.
   @returns int -1 if unsuccessful, 0 otherwise.
  */
-int destroy_generic(generic_t* x);
+YGG_API int destroy_generic(generic_t* x);
 
 
 /*!
@@ -153,7 +154,7 @@ int destroy_generic(generic_t* x);
   @param[in] src Source object.
   @returns int -1 if unsuccessful, 0 otherwise.
 */
-int copy_generic_into(generic_t* dst, generic_t src);
+YGG_API int copy_generic_into(generic_t* dst, generic_t src);
 
 
 /*!
@@ -161,7 +162,7 @@ int copy_generic_into(generic_t* dst, generic_t src);
   @param[in] src generic_t Generic structure that data should be copied from.
   @returns generic_t Copied structure.
  */
-generic_t copy_generic(generic_t src);
+YGG_API generic_t copy_generic(generic_t src);
 
 /*!
   @brief Compare two generic objects.
@@ -169,40 +170,40 @@ generic_t copy_generic(generic_t src);
   @param[in] b Second object for comparison.
   @returns true if the two objects are equivalent, false otherwise.
  */
-bool compare_generic(generic_t a, generic_t b);
+YGG_API bool compare_generic(generic_t a, generic_t b);
 
 /*!
   @brief Display information about the generic type.
   @param[in] x generic_t* Wrapper for generic object.
  */
-void display_generic(generic_t x);
+YGG_API void display_generic(generic_t x);
 
 
 #define NESTED_BASICS_(base, idx, idxType)	\
-  void* generic_ ## base ## _get_item(generic_t x, idxType idx, const char *type); \
-  int generic_ ## base ## _get_item_nbytes(generic_t x, idxType idx, const char *type); \
-  void* generic_ ## base ## _get_scalar(generic_t x, idxType idx, const char *subtype, const size_t precision); \
-  size_t generic_ ## base ## _get_1darray(generic_t x, idxType idx, const char *subtype, const size_t precision, void** data); \
-  size_t generic_ ## base ## _get_ndarray(generic_t x, idxType idx, const char *subtype, const size_t precision, void** data, size_t** shape); \
-  int generic_ ## base ## _set_item(generic_t x, idxType idx, const char *type, void* value); \
-  int generic_ ## base ## _set_scalar(generic_t x, idxType idx,		\
-				      void* value,			\
-				      const char *subtype,		\
-				      const size_t precision,		\
-				      const char *units);		\
-  int generic_ ## base ## _set_1darray(generic_t x, idxType idx,	\
-				       void* value,			\
-				       const char *subtype,		\
-				       const size_t precision,		\
-				       const size_t length,		\
-				       const char *units);		\
-  int generic_ ## base ## _set_ndarray(generic_t x, idxType idx,	\
-				       void* value,			\
-				       const char *subtype,		\
-				       const size_t precision,		\
-				       const size_t ndim,		\
-				       const size_t* shape,		\
-				       const char *units);
+  YGG_API void* generic_ ## base ## _get_item(generic_t x, idxType idx, const char *type); \
+  YGG_API int generic_ ## base ## _get_item_nbytes(generic_t x, idxType idx, const char *type); \
+  YGG_API void* generic_ ## base ## _get_scalar(generic_t x, idxType idx, const char *subtype, const size_t precision); \
+  YGG_API size_t generic_ ## base ## _get_1darray(generic_t x, idxType idx, const char *subtype, const size_t precision, void** data); \
+  YGG_API size_t generic_ ## base ## _get_ndarray(generic_t x, idxType idx, const char *subtype, const size_t precision, void** data, size_t** shape); \
+  YGG_API int generic_ ## base ## _set_item(generic_t x, idxType idx, const char *type, void* value); \
+  YGG_API int generic_ ## base ## _set_scalar(generic_t x, idxType idx,	\
+					      void* value,		\
+					      const char *subtype,	\
+					      const size_t precision,	\
+					      const char *units);	\
+  YGG_API int generic_ ## base ## _set_1darray(generic_t x, idxType idx, \
+					       void* value,		\
+					       const char *subtype,	\
+					       const size_t precision,	\
+					       const size_t length,	\
+					       const char *units);	\
+  YGG_API int generic_ ## base ## _set_ndarray(generic_t x, idxType idx, \
+					       void* value,		\
+					       const char *subtype,	\
+					       const size_t precision,	\
+					       const size_t ndim,	\
+					       const size_t* shape,	\
+					       const char *units);
   
   NESTED_BASICS_(array, index, const size_t)
   NESTED_BASICS_(map, key, const char*)
@@ -215,7 +216,7 @@ void display_generic(generic_t x);
   @param[in] x generic_t Element to add.
   @returns int Flag that is 1 if there is an error and 0 otherwise.
  */
-int add_generic_array(generic_t arr, generic_t x);
+YGG_API int add_generic_array(generic_t arr, generic_t x);
 
 
 /*!
@@ -225,7 +226,7 @@ int add_generic_array(generic_t arr, generic_t x);
   @param[in] x generic_t Element to add.
   @returns int Flag that is 1 if there is an error and 0 otherwise.
  */
-int set_generic_array(generic_t arr, const size_t i, generic_t x);
+YGG_API int set_generic_array(generic_t arr, const size_t i, generic_t x);
 
 
 /*!
@@ -236,8 +237,8 @@ int set_generic_array(generic_t arr, const size_t i, generic_t x);
     stored.
   @returns int Flag that is 1 if there is an error and 0 otherwise.
  */
-int get_generic_array(generic_t arr, const size_t i, generic_t *x);
-int get_generic_array_ref(generic_t arr, const size_t i, generic_ref_t *x);
+YGG_API int get_generic_array(generic_t arr, const size_t i, generic_t *x);
+YGG_API int get_generic_array_ref(generic_t arr, const size_t i, generic_ref_t *x);
 
 
 /*!
@@ -247,7 +248,7 @@ int get_generic_array_ref(generic_t arr, const size_t i, generic_ref_t *x);
   @param[in] x generic_t Element to add.
   @returns int Flag that is 1 if there is an error and 0 otherwise.
  */
-int set_generic_object(generic_t arr, const char* k, generic_t x);
+YGG_API int set_generic_object(generic_t arr, const char* k, generic_t x);
 
 
 /*!
@@ -258,8 +259,8 @@ int set_generic_object(generic_t arr, const char* k, generic_t x);
   stored.
   @returns int Flag that is 1 if there is an error and 0 otherwise.
  */
-int get_generic_object(generic_t arr, const char* k, generic_t *x);
-int get_generic_object_ref(generic_t arr, const char* k, generic_ref_t *x);
+YGG_API int get_generic_object(generic_t arr, const char* k, generic_t *x);
+YGG_API int get_generic_object_ref(generic_t arr, const char* k, generic_ref_t *x);
 
 
 #define set_generic_map set_generic_object
@@ -272,14 +273,14 @@ int get_generic_object_ref(generic_t arr, const char* k, generic_ref_t *x);
   @param[in] x generic_t Generic object that is presumed to contain an array.
   @returns size_t Number of elements in array.
  */
-size_t generic_array_get_size(generic_t x);
+YGG_API size_t generic_array_get_size(generic_t x);
 
 /*!
   @brief Get the number of elements in an map object.
   @param[in] x generic_t Generic object that is presumed to contain a map.
   @returns size_t Number of elements in map.
  */
-size_t generic_map_get_size(generic_t x);
+YGG_API size_t generic_map_get_size(generic_t x);
 
 /*!
   @brief Determine if a map object has a certain key.
@@ -287,7 +288,7 @@ size_t generic_map_get_size(generic_t x);
   @param[in] key char* Key to check for.
   @returns int 1 if the key is present, 0 otherwise.
  */
-int generic_map_has_key(generic_t x, const char* key);
+YGG_API int generic_map_has_key(generic_t x, const char* key);
 
 /*!
   @brief Get the keys in a map object.
@@ -295,7 +296,7 @@ int generic_map_has_key(generic_t x, const char* key);
   @param[out] keys char*** Pointer to memory where array of keys should be stored.
   @returns size_t Number of keys in map.
  */
-size_t generic_map_get_keys(generic_t x, char*** keys);
+YGG_API size_t generic_map_get_keys(generic_t x, char*** keys);
 
 /**
  * @brief Get a pointer to the given generic reference item
@@ -303,28 +304,28 @@ size_t generic_map_get_keys(generic_t x, char*** keys);
  * @param[in] type The type x should be
  * @return Pointer to the reference item or NULL on error
  */
-void* generic_ref_get_item(generic_ref_t x, const char *type);
+YGG_API void* generic_ref_get_item(generic_ref_t x, const char *type);
 /**
  * @brief Get a pointer to the generic item
  * @param[in] x The generic item to use
  * @param[in] type The type x should be
  * @return Pointer to the item or NULL on error
  */
-void* generic_get_item(generic_t x, const char *type);
+YGG_API void* generic_get_item(generic_t x, const char *type);
 /**
  * @brief Get the size of the reference item
  * @param[in] x The reference item to use
  * @param[in] type The type x should be
  * @return The size in bytes or -1 on error
  */
-int generic_ref_get_item_nbytes(generic_ref_t x, const char *type);
+YGG_API int generic_ref_get_item_nbytes(generic_ref_t x, const char *type);
 /**
  * @brief Get the size of the item
  * @param[in] x The item to use
  * @param[in] type The type x should be
  * @return The size in bytes or -1 on error
  */
-int generic_get_item_nbytes(generic_t x, const char *type);
+YGG_API int generic_get_item_nbytes(generic_t x, const char *type);
 /**
  * @brief Set the data in the given item to the given value
  * @param[in, out] x The item to set
@@ -332,14 +333,14 @@ int generic_get_item_nbytes(generic_t x, const char *type);
  * @param[in] value The value to give to x
  * @return 0 on success, 1 on error
  */
-int generic_set_item(generic_t x, const char *type, void* value);
+YGG_API int generic_set_item(generic_t x, const char *type, void* value);
 /**
  * @brief Set the data in the given item to the value given by the json character string
  * @param[in, out] x The item to set
  * @param[in] json The value to set x to
  * @return 0 on success, 1 on error
  */
-int generic_set_json(generic_t x, const char *json);
+YGG_API int generic_set_json(generic_t x, const char *json);
 /**
  * @brief Get x as a scalar value
  * @param[in] x The data to retrieve
@@ -347,7 +348,7 @@ int generic_set_json(generic_t x, const char *json);
  * @param[in] precision The precision of the scalar
  * @return Pointer to the scalar value, NULL on error
  */
-void* generic_ref_get_scalar(generic_ref_t x, const char *subtype, const size_t precision);
+YGG_API void* generic_ref_get_scalar(generic_ref_t x, const char *subtype, const size_t precision);
 /**
  * @brief Get x as a scalar value
  * @param[in] x The data to retrieve
@@ -355,7 +356,7 @@ void* generic_ref_get_scalar(generic_ref_t x, const char *subtype, const size_t 
  * @param[in] precision The precision of the scalar
  * @return Pointer to the scalar value, NULL on error
  */
-void* generic_get_scalar(generic_t x, const char *subtype, const size_t precision);
+YGG_API void* generic_get_scalar(generic_t x, const char *subtype, const size_t precision);
 /**
  * @brief Get x as a 1D array of values
  * @param[in] x The data to retrieve
@@ -364,7 +365,7 @@ void* generic_get_scalar(generic_t x, const char *subtype, const size_t precisio
  * @param[out] data Pointer to a pointer array for the values, will be resized as needed
  * @return The number of elements in data, 0 on error
  */
-size_t generic_ref_get_1darray(generic_ref_t x, const char *subtype, const size_t precision, void** data);
+YGG_API size_t generic_ref_get_1darray(generic_ref_t x, const char *subtype, const size_t precision, void** data);
 /**
  * @brief Get x as a 1D array of values
  * @param[in] x The data to retrieve
@@ -373,7 +374,7 @@ size_t generic_ref_get_1darray(generic_ref_t x, const char *subtype, const size_
  * @param[out] data Pointer to a pointer array for the values, will be resized as needed
  * @return The number of elements in data, 0 on error
  */
-size_t generic_get_1darray(generic_t x, const char *subtype, const size_t precision, void** data);
+YGG_API size_t generic_get_1darray(generic_t x, const char *subtype, const size_t precision, void** data);
 /**
  * @brief Get x as an N dimensionnal array of pointers
  * @param[in] x The data to retrieve
@@ -383,7 +384,7 @@ size_t generic_get_1darray(generic_t x, const char *subtype, const size_t precis
  * @param[out] shape Pointer to an array of pointers, one for each dimension of data, giving the number of elements in each
  * @return The number of dimensions, or 0 on error
  */
-size_t generic_ref_get_ndarray(generic_ref_t x, const char *subtype, const size_t precision, void** data, size_t** shape);
+YGG_API size_t generic_ref_get_ndarray(generic_ref_t x, const char *subtype, const size_t precision, void** data, size_t** shape);
 /**
  * @brief Get x as an N dimensionnal array of pointers
  * @param[in] x The data to retrieve
@@ -393,7 +394,7 @@ size_t generic_ref_get_ndarray(generic_ref_t x, const char *subtype, const size_
  * @param[out] shape Pointer to an array of pointers, one for each dimension of data, giving the number of elements in each
  * @return The number of dimensions, or 0 on error
  */
-size_t generic_get_ndarray(generic_t x, const char *subtype, const size_t precision, void** data, size_t** shape);
+YGG_API size_t generic_get_ndarray(generic_t x, const char *subtype, const size_t precision, void** data, size_t** shape);
 /**
  * @brief Set the given item to the given scalar value
  * @param[in] x The item to set
@@ -403,8 +404,8 @@ size_t generic_get_ndarray(generic_t x, const char *subtype, const size_t precis
  * @param[in] units Th units of value
  * @return 0 on success, 1 on error
  */
-int generic_set_scalar(generic_t x, void* value, const char *subtype,
-		       const size_t precision, const char *units);
+YGG_API int generic_set_scalar(generic_t x, void* value, const char *subtype,
+			       const size_t precision, const char *units);
 /**
  * @brief Set the given item to the given array
  * @param[in] x The item to set
@@ -415,9 +416,9 @@ int generic_set_scalar(generic_t x, void* value, const char *subtype,
  * @param[in] units The units of value
  * @return 0 on success, 1 on error
  */
-int generic_set_1darray(generic_t x, void* value, const char *subtype,
-			const size_t precision, const size_t length,
-			const char* units);
+YGG_API int generic_set_1darray(generic_t x, void* value, const char *subtype,
+				const size_t precision, const size_t length,
+				const char* units);
 /**
  * @brief Set the given item to the given array
  * @param[in] x The item to set
@@ -429,17 +430,17 @@ int generic_set_1darray(generic_t x, void* value, const char *subtype,
  * @param[in] units The units of data
  * @return 0 on success, 1 on error
  */
-int generic_set_ndarray(generic_t x, void* data, const char *subtype,
-			const size_t precision, const size_t ndim,
-			const size_t* shape, const char* units);
+YGG_API int generic_set_ndarray(generic_t x, void* data, const char *subtype,
+				const size_t precision, const size_t ndim,
+				const size_t* shape, const char* units);
 
   
 #define NESTED_BASE_SET_(base, idx, idxType, name, ...)			\
-  int generic_ ## base ## _set_ ## name(generic_t x, idxType idx, __VA_ARGS__)
+  YGG_API int generic_ ## base ## _set_ ## name(generic_t x, idxType idx, __VA_ARGS__)
 #define NESTED_BASE_GET_(base, idx, idxType, name, type, ...)		\
-  type generic_ ## base ## _get_ ## name(generic_t x, idxType idx, __VA_ARGS__)
+  YGG_API type generic_ ## base ## _get_ ## name(generic_t x, idxType idx, __VA_ARGS__)
 #define NESTED_BASE_GET_NOARGS_(base, idx, idxType, name, type)	\
-  type generic_ ## base ## _get_ ## name(generic_t x, idxType idx)
+  YGG_API type generic_ ## base ## _get_ ## name(generic_t x, idxType idx)
 #define NESTED_SET_(name, ...)						\
   NESTED_BASE_SET_(array, index, const size_t, name, __VA_ARGS__);	\
   NESTED_BASE_SET_(map, key, const char*, name, __VA_ARGS__)
@@ -450,30 +451,30 @@ int generic_set_ndarray(generic_t x, void* data, const char *subtype,
   NESTED_BASE_GET_NOARGS_(array, index, const size_t, name, type);	\
   NESTED_BASE_GET_NOARGS_(map, key, const char*, name, type)
 #define STD_JSON_NESTED_(name)						\
-  generic_t generic_array_get_ ## name(generic_t x, const size_t index); \
-  generic_t generic_map_get_ ## name(generic_t x, const char* key);	\
-  int generic_array_set_ ## name(generic_t x, const size_t index, generic_t item); \
-  int generic_map_set_ ## name(generic_t x, const char* key, generic_t item)
+  YGG_API generic_t generic_array_get_ ## name(generic_t x, const size_t index); \
+  YGG_API generic_t generic_map_get_ ## name(generic_t x, const char* key); \
+  YGG_API int generic_array_set_ ## name(generic_t x, const size_t index, generic_t item); \
+  YGG_API int generic_map_set_ ## name(generic_t x, const char* key, generic_t item)
 #define STD_JSON_(name, type)						\
-  type generic_ref_get_ ## name(generic_ref_t x);			\
-  type generic_get_ ## name(generic_t x);				\
-  int generic_set_ ## name(generic_t x, type value);			\
+  YGG_API type generic_ref_get_ ## name(generic_ref_t x);		\
+  YGG_API type generic_get_ ## name(generic_t x);			\
+  YGG_API int generic_set_ ## name(generic_t x, type value);		\
   NESTED_GET_NOARGS_(name, type);					\
   NESTED_SET_(name, type value)
 #define STD_UNITS_(name, type)			\
-  type generic_ref_get_ ## name(generic_ref_t x);			\
-  type generic_get_ ## name(generic_t x);				\
-  int generic_set_ ## name(generic_t x, type value, const char* units); \
+  YGG_API type generic_ref_get_ ## name(generic_ref_t x);		\
+  YGG_API type generic_get_ ## name(generic_t x);			\
+  YGG_API int generic_set_ ## name(generic_t x, type value, const char* units); \
   NESTED_GET_NOARGS_(name, type);					\
   NESTED_SET_(name, type value, const char* units)
 #define GEOMETRY_(name, type)			\
   STD_JSON_(name, type)
 // TODO: Allow units when calling "get" methods?
 #define ARRAY_(name, type)						\
-  size_t generic_ref_get_1darray_ ## name(generic_ref_t x, type** data); \
-  size_t generic_get_1darray_ ## name(generic_t x, type** data);	\
-  size_t generic_ref_get_ndarray_ ## name(generic_ref_t x, type** data, size_t** shape); \
-  size_t generic_get_ndarray_ ## name(generic_t x, type** data, size_t** shape); \
+  YGG_API size_t generic_ref_get_1darray_ ## name(generic_ref_t x, type** data); \
+  YGG_API size_t generic_get_1darray_ ## name(generic_t x, type** data); \
+  YGG_API size_t generic_ref_get_ndarray_ ## name(generic_ref_t x, type** data, size_t** shape); \
+  YGG_API size_t generic_get_ndarray_ ## name(generic_t x, type** data, size_t** shape); \
   NESTED_GET_(1darray_ ## name, size_t, type** data);			\
   NESTED_GET_(ndarray_ ## name, size_t, type** data, size_t** shape);	\
   NESTED_SET_(1darray_ ## name, type* value, const size_t length, const char* units); \
@@ -540,19 +541,19 @@ int generic_set_ndarray(generic_t x, void* data, const char *subtype,
   @brief Initialize Python if it is not initialized.
   @returns int 0 if successful, other values indicate errors.
  */
-int init_python_API();
+YGG_API int init_python_API();
   
 /*!
   @brief Initialize a Python wrapper object.
   @returns Initialized object.
  */
-python_t init_python();
+YGG_API python_t init_python();
   
 /*!
   @brief Destroy a structure containing a Python object.
   @param[in] x Pointer to Python object structure that should be freed.
 */
-void destroy_python(python_t *x);
+YGG_API void destroy_python(python_t *x);
 
 
 /*!
@@ -561,21 +562,21 @@ void destroy_python(python_t *x);
   @param[in] x Structure containing Python object to copy.
   @returns python_t Copy of x.
  */
-python_t copy_python(python_t x);
+YGG_API python_t copy_python(python_t x);
 
 
 /*!
   @brief Display a Python object structure.
   @param[in] x Structure containing Python object to display.
  */
-void display_python(python_t x);
+YGG_API void display_python(python_t x);
 
   
 /*!
   @brief Destroy a structure containing a Python function object.
   @param[in] x Pointer to Python function structure that should be freed.
 */
-void destroy_python_function(python_function_t *x);
+YGG_API void destroy_python_function(python_function_t *x);
 
 
 /*!
@@ -583,7 +584,7 @@ void destroy_python_function(python_function_t *x);
   @param[in] dtype structure to test.
   @returns int 1 if dtype is empty, 0 otherwise.
  */
-int is_empty_dtype(const dtype_t dtype);
+YGG_API int is_empty_dtype(const dtype_t dtype);
 
   
 /*!
@@ -592,7 +593,7 @@ int is_empty_dtype(const dtype_t dtype);
   @returns 1 if the datatype was created from a format, 0 if it was not,
     -1 if there is an error.
  */
-int is_dtype_format_array(const dtype_t type_struct);
+YGG_API int is_dtype_format_array(const dtype_t type_struct);
   
   
 /*!
@@ -600,7 +601,7 @@ int is_dtype_format_array(const dtype_t type_struct);
   @param[in] type_class Type structure/class.
   @returns Type name.
 */
-const char* dtype_name(const dtype_t type_class);
+YGG_API const char* dtype_name(const dtype_t type_class);
 
 
 /*!
@@ -608,7 +609,7 @@ const char* dtype_name(const dtype_t type_class);
   @param[in] type_class Type structure/class.
   @returns The subtype of the class, "" if there is an error.
 */
-const char* dtype_subtype(const dtype_t type_class);
+YGG_API const char* dtype_subtype(const dtype_t type_class);
 
 
 /*!
@@ -616,7 +617,7 @@ const char* dtype_subtype(const dtype_t type_class);
   @param[in] type_class Type structure/class.
   @returns The precision of the class, 0 if there is an error.
 */
-size_t dtype_precision(const dtype_t type_class);
+YGG_API size_t dtype_precision(const dtype_t type_class);
 
 
 /*!
@@ -626,7 +627,7 @@ size_t dtype_precision(const dtype_t type_class);
   @param[in] name Type name to set in dtype.
   @returns 0 on success, -1 if there is an error.
  */
-int set_dtype_name(dtype_t dtype, const char* name);
+YGG_API int set_dtype_name(dtype_t dtype, const char* name);
 
   
 /*!
@@ -636,7 +637,7 @@ int set_dtype_name(dtype_t dtype, const char* name);
     objects will be expected to be generic_t instances.
   @returns Initialized type structure/class.
 */
-dtype_t complete_dtype(dtype_t dtype, const bool use_generic);
+YGG_API dtype_t complete_dtype(dtype_t dtype, const bool use_generic);
 
 
 /*!
@@ -646,8 +647,8 @@ dtype_t complete_dtype(dtype_t dtype, const bool use_generic);
     be expected to be generic_t instances.
   @returns Type structure/class.
  */
-dtype_t create_dtype_from_schema(const char* schema,
-				 const bool use_generic);
+YGG_API dtype_t create_dtype_from_schema(const char* schema,
+					 const bool use_generic);
 
 
 /*!
@@ -656,7 +657,7 @@ dtype_t create_dtype_from_schema(const char* schema,
     objects will be expected to be generic_t instances.
   @returns Type structure/class.
 */
-dtype_t create_dtype_empty(const bool use_generic);
+YGG_API dtype_t create_dtype_empty(const bool use_generic);
 
 
 /*!
@@ -666,7 +667,7 @@ dtype_t create_dtype_empty(const bool use_generic);
     objects will be expected to be generic_t instances.
   @returns Type structure/class.
  */
-dtype_t create_dtype_python(PyObject* pyobj, const bool use_generic);
+YGG_API dtype_t create_dtype_python(PyObject* pyobj, const bool use_generic);
 
 
 /*!
@@ -675,7 +676,7 @@ dtype_t create_dtype_python(PyObject* pyobj, const bool use_generic);
     objects will be expected to be generic_t instances.
   @returns Type structure/class.
 */
-dtype_t create_dtype_direct(const bool use_generic);
+YGG_API dtype_t create_dtype_direct(const bool use_generic);
 
 
   
@@ -686,8 +687,8 @@ dtype_t create_dtype_direct(const bool use_generic);
     objects will be expected to be generic_t instances.
   @returns Type structure/class.
 */
-dtype_t create_dtype_default(const char* type,
-			     const bool use_generic);
+YGG_API dtype_t create_dtype_default(const char* type,
+				     const bool use_generic);
 
 
 /*!
@@ -700,8 +701,10 @@ dtype_t create_dtype_default(const char* type,
     objects will be expected to be generic_t instances.
   @returns Type structure/class.
 */
-dtype_t create_dtype_scalar(const char* subtype, const size_t precision,
-			    const char* units, const bool use_generic);
+YGG_API dtype_t create_dtype_scalar(const char* subtype,
+				    const size_t precision,
+				    const char* units,
+				    const bool use_generic);
 
 
 /*!
@@ -716,9 +719,11 @@ dtype_t create_dtype_scalar(const char* subtype, const size_t precision,
     objects will be expected to be generic_t instances.
   @returns Type structure/class.
 */
-dtype_t create_dtype_1darray(const char* subtype, const size_t precision,
-			     const size_t length, const char* units,
-			     const bool use_generic);
+YGG_API dtype_t create_dtype_1darray(const char* subtype,
+				     const size_t precision,
+				     const size_t length,
+				     const char* units,
+				     const bool use_generic);
 
 
 /*!
@@ -736,9 +741,12 @@ dtype_t create_dtype_1darray(const char* subtype, const size_t precision,
     objects will be expected to be generic_t instances.
   @returns Type structure/class.
 */
-dtype_t create_dtype_ndarray(const char* subtype, const size_t precision,
-			     const size_t ndim, const size_t* shape,
-			     const char* units, const bool use_generic);
+YGG_API dtype_t create_dtype_ndarray(const char* subtype,
+				     const size_t precision,
+				     const size_t ndim,
+				     const size_t* shape,
+				     const char* units,
+				     const bool use_generic);
 
   
 /*!
@@ -756,9 +764,12 @@ dtype_t create_dtype_ndarray(const char* subtype, const size_t precision,
     objects will be expected to be generic_t instances.
   @returns Type structure/class.
 */
-dtype_t create_dtype_ndarray_arr(const char* subtype, const size_t precision,
-				 const size_t ndim, const int64_t shape[],
-				 const char* units, const bool use_generic);
+YGG_API dtype_t create_dtype_ndarray_arr(const char* subtype,
+					 const size_t precision,
+					 const size_t ndim,
+					 const int64_t shape[],
+					 const char* units,
+					 const bool use_generic);
 
   
 /*!
@@ -770,8 +781,9 @@ dtype_t create_dtype_ndarray_arr(const char* subtype, const size_t precision,
     objects will be expected to be generic_t instances.
   @returns Type structure/class.
 */
-dtype_t create_dtype_json_array(const size_t nitems, dtype_t* items,
-				const bool use_generic);
+YGG_API dtype_t create_dtype_json_array(const size_t nitems,
+					dtype_t* items,
+					const bool use_generic);
 
 
 /*!
@@ -784,8 +796,10 @@ dtype_t create_dtype_json_array(const size_t nitems, dtype_t* items,
     objects will be expected to be generic_t instances.
   @returns Type structure/class.
 */
-dtype_t create_dtype_json_object(const size_t nitems, const char** keys,
-				 dtype_t* values, const bool use_generic);
+YGG_API dtype_t create_dtype_json_object(const size_t nitems,
+					 const char** keys,
+					 dtype_t* values,
+					 const bool use_generic);
 
 /*!
   @brief Construct a Ply type object.
@@ -793,7 +807,7 @@ dtype_t create_dtype_json_object(const size_t nitems, const char** keys,
     objects will be expected to be generic_t instances.
   @returns Type structure/class.
 */
-dtype_t create_dtype_ply(const bool use_generic);
+YGG_API dtype_t create_dtype_ply(const bool use_generic);
 
 
 /*!
@@ -802,7 +816,7 @@ dtype_t create_dtype_ply(const bool use_generic);
     objects will be expected to be generic_t instances.
   @returns Type structure/class.
 */
-dtype_t create_dtype_obj(const bool use_generic);
+YGG_API dtype_t create_dtype_obj(const bool use_generic);
 
 
 /*!
@@ -816,9 +830,9 @@ dtype_t create_dtype_obj(const bool use_generic);
     objects will be expected to be generic_t instances.
   @returns Type structure/class.
 */
-dtype_t create_dtype_ascii_table(const char *format_str,
-				 const bool as_array,
-				 const bool use_generic);
+YGG_API dtype_t create_dtype_ascii_table(const char *format_str,
+					 const bool as_array,
+					 const bool use_generic);
 
 
 /*!
@@ -832,8 +846,9 @@ dtype_t create_dtype_ascii_table(const char *format_str,
     objects will be expected to be generic_t instances.
   @returns Type structure/class.
 */
-dtype_t create_dtype_format(const char *format_str, const bool as_array,
-			    const bool use_generic);
+YGG_API dtype_t create_dtype_format(const char *format_str,
+				    const bool as_array,
+				    const bool use_generic);
 
   
 /*!
@@ -843,7 +858,8 @@ dtype_t create_dtype_format(const char *format_str, const bool as_array,
     objects will be expected to be generic_t instances.
   @returns Type structure/class.
  */
-dtype_t create_dtype_pyobj(const char* type, const bool use_generic);
+YGG_API dtype_t create_dtype_pyobj(const char* type,
+				   const bool use_generic);
   
 
 /*!
@@ -860,10 +876,10 @@ dtype_t create_dtype_pyobj(const char* type, const bool use_generic);
     objects will be expected to be generic_t instances.
   @returns Type structure/class.
  */
-dtype_t create_dtype_pyinst(const char* class_name,
-			    dtype_t* args_dtype,
-			    dtype_t* kwargs_dtype,
-			    const bool use_generic);
+YGG_API dtype_t create_dtype_pyinst(const char* class_name,
+				    dtype_t* args_dtype,
+				    dtype_t* kwargs_dtype,
+				    const bool use_generic);
 
   
 /*!
@@ -872,7 +888,7 @@ dtype_t create_dtype_pyinst(const char* class_name,
     objects will be expected to be generic_t instances.
   @returns Type structure/class.
  */
-dtype_t create_dtype_schema(const bool use_generic);
+YGG_API dtype_t create_dtype_schema(const bool use_generic);
 
 
 /*!
@@ -881,7 +897,7 @@ dtype_t create_dtype_schema(const bool use_generic);
     objects will be expected to be generic_t instances.
   @returns Type structure/class.
  */
-dtype_t create_dtype_any(const bool use_generic);
+YGG_API dtype_t create_dtype_any(const bool use_generic);
 
 
 /*!
@@ -889,21 +905,21 @@ dtype_t create_dtype_any(const bool use_generic);
   @param[in] obj Pointer to rapidjson::Document.
   @returns int 0 if free was successfull, -1 if there was an error.
 */
-int destroy_document(void** obj);
+YGG_API int destroy_document(void** obj);
   
 /*!
   @brief Wrapper for freeing rapidjson::Document class wrapper struct.
   @param[in] dtype Wrapper struct for C++ Metadata.
   @returns int 0 if free was successfull, -1 if there was an error.
 */
-int destroy_dtype(dtype_t* dtype);
+YGG_API int destroy_dtype(dtype_t* dtype);
   
 /*!
   @brief Get a copy of a type structure.
   @param[in] dtype Wrapper struct for C++ Metadata.
   @returns: Type class.
 */
-dtype_t copy_dtype(const dtype_t dtype);
+YGG_API dtype_t copy_dtype(const dtype_t dtype);
 
 /*!
   @brief Determine if a type structure indicates that generic objects
@@ -911,14 +927,14 @@ dtype_t copy_dtype(const dtype_t dtype);
   @param[in] dtype Wrapper struct for C++ Metadata.
   @returns 1 if generic objects will be used, 0 if not, -1 for errors.
 */
-int dtype_uses_generic(dtype_t dtype);
+YGG_API int dtype_uses_generic(dtype_t dtype);
 
 /*!
   @brief Display a datatype.
   @param[in] dtype Wrapper struct for C++ Metadata.
   @param[in] indent Indentation to add to display output.
  */
-void display_dtype(const dtype_t dtype, const char* indent);
+YGG_API void display_dtype(const dtype_t dtype, const char* indent);
 
 /*!
   @brief Wrapper for updating a type object with information from another.
@@ -926,7 +942,7 @@ void display_dtype(const dtype_t dtype, const char* indent);
   @param[in] schema2 C++ rapidjson::Document that should be updated from.
   @returns: int 0 if successfull, -1 if there was an error.
 */
-int update_dtype(dtype_t* dtype1, void* schema2);
+YGG_API int update_dtype(dtype_t* dtype1, void* schema2);
 
 
 /*!
@@ -936,8 +952,8 @@ int update_dtype(dtype_t* dtype1, void* schema2);
   @param[in] new_precision New precision.
   @returns: int 0 if free was successfull, -1 if there was an error.
 */
-int update_precision_dtype(dtype_t* dtype,
-                           const size_t new_precision);
+YGG_API int update_precision_dtype(dtype_t* dtype,
+				   const size_t new_precision);
 
 #define free_generic destroy_generic
 #define init_json_object init_generic_map
@@ -956,13 +972,13 @@ int update_precision_dtype(dtype_t* dtype,
 #define GEOM_INTERFACE(name)						\
   name ## _t init_ ## name();						\
   name ## _t generate_ ## name();					\
-  void free_ ## name(name ## _t *p);					\
-  void set_ ## name(name ## _t* x, void* obj, int copy);		\
+  YGG_API void free_ ## name(name ## _t *p);				\
+  YGG_API void set_ ## name(name ## _t* x, void* obj, int copy);	\
   name ## _t copy_ ## name(name ## _t src);				\
-  void display_ ## name ## _indent(name ## _t p, const char* indent);	\
-  void display_ ## name(name ## _t p);					\
-  int nelements_ ## name(name ## _t p, const char* name);		\
-  bool compare_ ## name(const name ## _t a, const name ## _t b);
+  YGG_API void display_ ## name ## _indent(name ## _t p, const char* indent); \
+  YGG_API void display_ ## name(name ## _t p);				\
+  YGG_API int nelements_ ## name(name ## _t p, const char* name);	\
+  YGG_API bool compare_ ## name(const name ## _t a, const name ## _t b);
 
 // ObjWavefront wrapped methods
 

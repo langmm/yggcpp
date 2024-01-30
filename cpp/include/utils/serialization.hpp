@@ -64,7 +64,7 @@ long copyData(T*& dst, const size_t dst_len,
 /**
  * @brief Class for holding generic data
  */
-class Metadata : public YggInterface::utils::LogBase {
+class YGG_API Metadata : public YggInterface::utils::LogBase {
 private:
   Metadata(const Metadata&) = delete;
   Metadata& operator=(const Metadata&) = delete;

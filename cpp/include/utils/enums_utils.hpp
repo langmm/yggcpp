@@ -15,9 +15,24 @@ namespace YggInterface {
 			   const std::string& val,
 			   T1& key, bool allow_anycase=false,
 			   std::string prefix="",
-			   std::string suffix="");
+			   std::string suffix="") {
+      for (typename std::map<const T1, const std::string>::const_iterator it = map.cbegin();
+	   it != map.cend(); it++) {
+	if ((it->second == val) ||
+	    (allow_anycase && (val == str_toupper(it->second) ||
+			       val == str_tolower(it->second))) ||
+	    ((!prefix.empty()) && (val == (prefix + it->second))) ||
+	    ((!suffix.empty()) && (val == (it->second + suffix)))) {
+	  key = it->first;
+	  return true;
+	}
+      }
+      return false;
+    }
     template<typename T1, typename T2>
-    T1 max_enum_value(const std::map<const T1, const T2> map);
+    T1 max_enum_value(const std::map<const T1, const T2> map) {
+      return map.crbegin()->first;
+    }
     
   }
 }

@@ -1,4 +1,5 @@
 #pragma once
+#include "YggInterface_export.h"
 #include <string>
 #include <iostream>
 #include <iomanip>
@@ -22,7 +23,7 @@ namespace utils {
   /*!
    * @brief Class for logging
    */
-  class YggdrasilLogger {
+  class YGG_API YggdrasilLogger {
   public:
     /*!
      * @brief Construnctor
@@ -101,7 +102,7 @@ namespace utils {
   /**
    * @brief Base class for loggers
    */
-  class LogBase {
+  class YGG_API LogBase {
   public:
     /** @brief Constructor */
     LogBase() {}

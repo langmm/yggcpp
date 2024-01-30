@@ -130,9 +130,16 @@ def generate_maps(enums, dst=None):
         '#include <map>',
         '#include <string>',
         '#include "utils/enums.hpp"',
+        '',
+        'namespace YggInterface {',
+        '  namespace utils {',
     ]
     for k, v in enums.items():
-        lines += generate_map(k, v)
+        lines += ['    ' + x for x in generate_map(k, v)]
+    lines += [
+        '  }',
+        '}',
+    ]
     do_write(dst, lines)
 
 

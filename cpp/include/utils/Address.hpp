@@ -1,4 +1,5 @@
 #pragma once
+#include "YggInterface_export.h"
 #include <string>
 #include <ostream>
 
@@ -6,12 +7,12 @@
 
 namespace YggInterface {
 namespace utils {
-static std::string blank;
+YGG_API static std::string blank;
 
 /**
  * @brief Class for holding an address, used by the communicators
  */
-class Address {
+class YGG_API Address {
 public:
     /**
      * @brief Create a new instance of the Address class with the given input
@@ -98,7 +99,7 @@ private:
 
 };
 
-  static Address blankAddress;  //!< empty address singleton
+  YGG_API static Address blankAddress;  //!< empty address singleton
   
 }
 }

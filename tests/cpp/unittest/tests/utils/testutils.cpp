@@ -8,6 +8,7 @@
 #include "utils/logging.hpp"
 #include "utils/tools.hpp"
 #include "utils/regex.hpp"
+#include "utils/enums_utils.hpp"
 
 #define BEGIN_CAPTURE(B) \
 std::stringstream B;     \

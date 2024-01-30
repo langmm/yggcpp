@@ -639,7 +639,7 @@ static int _parse_enum_string(const std::string& desc,
     return 0;
   if (PyLong_Check(var)) {
     var_enum = PyLong_AsLong(var);
-    int enum_max = (int)(max_enum_value(enum_map));
+    int enum_max = (int)(YggInterface::utils::max_enum_value(enum_map));
     if (var_enum < 0 || var_enum > enum_max) {
       PyErr_Format(PyExc_TypeError, "Invalid %s: %d",
 		   desc.c_str(), var_enum);
@@ -650,8 +650,11 @@ static int _parse_enum_string(const std::string& desc,
     if (!varStr)
       return -1;
     T _var_enum;
-    if (!enum_value_search(enum_map, std::string(varStr), _var_enum,
-			   allow_anycase, prefix, suffix)) {
+    if (!YggInterface::utils::enum_value_search(enum_map,
+						std::string(varStr),
+						_var_enum,
+						allow_anycase, prefix,
+						suffix)) {
       if (!allow_nomatch) {
 	PyErr_Format(PyExc_TypeError, "Invalid %s: %s",
 		     desc.c_str(), varStr);
@@ -669,7 +672,8 @@ static int _parse_enum_string(const std::string& desc,
 
 static int _parse_direction(PyObject* dirnPy, int& dirn) {
   return _parse_enum_string("direction", dirnPy, dirn,
-			    DIRECTION_map, (int)(DIRECTION::SEND),
+			    YggInterface::utils::DIRECTION_map,
+			    (int)(DIRECTION::SEND),
 			    false, true);
 }
 
@@ -686,11 +690,11 @@ static int _parse_schema(PyObject* schemaPy, rapidjson::Document& schema) {
 static int _parse_commtype(PyObject* commtypePy, int& commtype) {
   // TODO: Verify that commtype is installed or throw Python error
   if (_parse_enum_string("commtype", commtypePy, commtype,
-			 COMM_TYPE_cls_map,
+			 YggInterface::utils::COMM_TYPE_cls_map,
 			 (int)(COMM_TYPE::DEFAULT_COMM), true) >= 0)
     return 0;
   return _parse_enum_string("commtype", commtypePy, commtype,
-			    COMM_TYPE_map,
+			    YggInterface::utils::COMM_TYPE_map,
 			    (int)(COMM_TYPE::DEFAULT_COMM),
 			    false, true, "", "_COMM");
 }
@@ -715,7 +719,7 @@ static int _parse_timeout_recv(PyObject* recv_timeoutPy,
 
 static int _parse_language(PyObject* languagePy, int& language) {
   return _parse_enum_string("language", languagePy, language,
-			    LANGUAGE_map,
+			    YggInterface::utils::LANGUAGE_map,
 			    (int)(LANGUAGE::PYTHON_LANGUAGE),
 			    false, true);
 }

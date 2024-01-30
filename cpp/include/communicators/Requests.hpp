@@ -1,5 +1,6 @@
 #pragma once
 
+#include "YggInterface_export.h"
 #include <utility>
 #include <vector>
 #include "communicators/DefaultComm.hpp"
@@ -12,7 +13,7 @@ namespace communicator {
 /**
  * @brief Information about the partner model at the other end of a communicator
  */
-class Partner {
+class YGG_API Partner {
 public:
     /**
      * @brief Constructor
@@ -29,7 +30,7 @@ public:
 /**
  * @brief Class representing a request for communication
  */
-class Request {
+class YGG_API Request {
 public:
     /**
      * @brief Constructor
@@ -76,7 +77,7 @@ public:
 /**
  * @brief Container for a list of requests
  */
-class RequestList : public YggInterface::utils::LogBase {
+class YGG_API RequestList : public YggInterface::utils::LogBase {
 public:
     /**
      * @brief Constructor

@@ -1,4 +1,5 @@
 #pragma once
+#include "YggInterface_export.h"
 #include "utils/tools.hpp"
 #ifdef __cplusplus
 #include <cstdlib>
@@ -45,31 +46,31 @@ typedef struct comm_t {
 
   
 // TODO: Allow use of ygglog_error as function in C
-void ygglog_error(const char* fmt, ...);
-void ygglog_debug(const char* fmt, ...);
-void ygglog_info(const char* fmt, ...);
+YGG_API void ygglog_error(const char* fmt, ...);
+YGG_API void ygglog_debug(const char* fmt, ...);
+YGG_API void ygglog_info(const char* fmt, ...);
 
 /**
  * Initialize yggdrasil interface.
  */
-int ygg_init();
+YGG_API int ygg_init();
 
 /**
  * Cleanup yggdrasil interface prior to exit.
  */
-void ygg_exit();
+YGG_API void ygg_exit();
 
 /**
  * @brief Delete the underlying communicator
  * @param comm The communicator to delete
  */
-void free_comm(comm_t* comm);
+YGG_API void free_comm(comm_t* comm);
 
 /**
  * @brief Close the underlying communicator
  * @param comm The communicator to close
  */
-void close_comm(comm_t* comm);
+YGG_API void close_comm(comm_t* comm);
 
 //**
 // * Open a new communicator of the given type
@@ -92,10 +93,10 @@ void close_comm(comm_t* comm);
  * @param ncomm Number of communicators in a forked comm.
  * @return comm_t struct containing the requested communicator
  */
-comm_t _init_comm(const char* name, const enum DIRECTION dir,
-		  const enum COMM_TYPE t,
-		  dtype_t* datatype, const FLAG_TYPE flags,
-		  const size_t ncomm);
+YGG_API comm_t _init_comm(const char* name, const enum DIRECTION dir,
+			  const enum COMM_TYPE t,
+			  dtype_t* datatype, const FLAG_TYPE flags,
+			  const size_t ncomm);
   
 /**
  * @brief Initialize a new communicator
@@ -106,9 +107,9 @@ comm_t _init_comm(const char* name, const enum DIRECTION dir,
  *   created communicator.
  * @return comm_t struct containing the requested communicator
  */
-comm_t init_comm(const char* name, const enum DIRECTION dir,
-		 const enum COMM_TYPE t,
-		 dtype_t* datatype);
+YGG_API comm_t init_comm(const char* name, const enum DIRECTION dir,
+			 const enum COMM_TYPE t,
+			 dtype_t* datatype);
 
 /**
  * @brief Initialize a new communicator with flags
@@ -118,8 +119,9 @@ comm_t init_comm(const char* name, const enum DIRECTION dir,
  * @param flags Bitwise flags describing the communicator.
  * @return comm_t struct containing the requested communicator
  */
-comm_t init_comm_flags(const char* name, const enum DIRECTION dir,
-		       const enum COMM_TYPE t, FLAG_TYPE flags);
+YGG_API comm_t init_comm_flags(const char* name,
+			       const enum DIRECTION dir,
+			       const enum COMM_TYPE t, FLAG_TYPE flags);
 
 /**
  * @brief Set a communicators language.
@@ -127,7 +129,7 @@ comm_t init_comm_flags(const char* name, const enum DIRECTION dir,
  * @param lang Language.
  * @return 1 if successful, 0 otherwise.
  */
-int set_comm_language(comm_t x, const enum LANGUAGE lang);
+YGG_API int set_comm_language(comm_t x, const enum LANGUAGE lang);
 
   
 /**
@@ -136,7 +138,7 @@ int set_comm_language(comm_t x, const enum LANGUAGE lang);
  * @param fmt C-style format string
  * @return 1 if successful, 0 otherwise.
  */
-int set_response_format(comm_t comm, const char *fmt);
+YGG_API int set_response_format(comm_t comm, const char *fmt);
   
 /**
  * @brief Set a communicators datatype.
@@ -145,14 +147,14 @@ int set_response_format(comm_t comm, const char *fmt);
  *   consumed.
  * @return 1 if successful, 0 otherwise.
  */
-int set_response_datatype(comm_t x, dtype_t* datatype);
+YGG_API int set_response_datatype(comm_t x, dtype_t* datatype);
 
 /**
  * @brief Get the datatype associated with a communicator.
  * @param x Communicator
  * @return The datatype
  */
-dtype_t comm_get_datatype(comm_t x);
+YGG_API dtype_t comm_get_datatype(comm_t x);
 
 /**
  * @brief Set the datatype associated with a communicator.
@@ -160,7 +162,7 @@ dtype_t comm_get_datatype(comm_t x);
  * @param datatype The datatype
  * @return 1 if successful, 0 otherwise.
  */
-int comm_set_datatype(comm_t x, dtype_t* datatype);
+YGG_API int comm_set_datatype(comm_t x, dtype_t* datatype);
   
 /**
  * @brief Send a message with the given communicator
@@ -169,14 +171,14 @@ int comm_set_datatype(comm_t x, dtype_t* datatype);
  * @param len The size of data in bytes
  * @return Any value greater than 0 indicates success
  */
-int comm_send(comm_t comm, const char *data, const size_t len);
+YGG_API int comm_send(comm_t comm, const char *data, const size_t len);
 
 /**
  * @brief Send an end-of-file notification on the given communicator
  * @param comm The communicator to use
  * @return Any value greater than 0 indicates success
  */
-int comm_send_eof(comm_t comm);
+YGG_API int comm_send_eof(comm_t comm);
 
 /**
  * @brief Determine if a communicator's datatype indicates an table of
@@ -184,7 +186,7 @@ int comm_send_eof(comm_t comm);
  * @param x The communicator to check.
  * @return 1 if true, 0 otherwise.
  */
-int is_comm_format_array_type(comm_t x);
+YGG_API int is_comm_format_array_type(comm_t x);
   
 /**
  * @brief Receive a message with the given communicator
@@ -194,7 +196,7 @@ int is_comm_format_array_type(comm_t x);
  * @return On success, the size of the received message will be returned.
  *   Negative values indicate there was an error.
  */
-long comm_recv(comm_t comm, char *data, const size_t len);
+YGG_API long comm_recv(comm_t comm, char *data, const size_t len);
 /**
  * @brief Receive a message with the given communicator into a buffer
  *   allocated on heap that can be reallocated.
@@ -205,14 +207,15 @@ long comm_recv(comm_t comm, char *data, const size_t len);
  * @return On success, the size of the received message will be returned.
  *   Negative values indicate there was an error.
  */
-long comm_recv_realloc(comm_t comm, char **data, const size_t len);
+YGG_API long comm_recv_realloc(comm_t comm, char **data,
+			       const size_t len);
   
 /**
  * @brief The number of messages in the communicators queue
  * @param comm The communicator to query
  * @return The number of messages in the queue
  */
-int comm_nmsg(comm_t comm);
+YGG_API int comm_nmsg(comm_t comm);
 /*!
  * @brief Send the variable argument list with the given communicator
  * @param x The communicator to use
@@ -220,7 +223,7 @@ int comm_nmsg(comm_t comm);
  * @param ... The arguments to send
  * @return Any value greater than 0 indicates success
  */
-int ncommSend(const comm_t x, size_t nargs, ...);
+YGG_API int ncommSend(const comm_t x, size_t nargs, ...);
 /*!
  * @brief Receive a message into a variable list of arguments
  * @param x The communicator to use
@@ -229,7 +232,8 @@ int ncommSend(const comm_t x, size_t nargs, ...);
  * @param ... The arguments
  * @return Any value greater than 0 indicates success
  */
-long ncommRecv(comm_t x, const int allow_realloc, size_t nargs, ...);
+YGG_API long ncommRecv(comm_t x, const int allow_realloc,
+		       size_t nargs, ...);
 /*!
  * @brief Send a request and receive a response from a list of variable arguments containing data for both the request and response.
  * @param x The communicator to use
@@ -238,7 +242,8 @@ long ncommRecv(comm_t x, const int allow_realloc, size_t nargs, ...);
  * @param ... The arguments
  * @return Any value greater than 0 indicates success
  */
-long ncommCall(comm_t x, const int allow_realloc, size_t nargs, ...);
+YGG_API long ncommCall(comm_t x, const int allow_realloc,
+		       size_t nargs, ...);
 /*!
  * @brief Send a message from a list of pointers
  * @param comm The communicator to use
@@ -247,7 +252,8 @@ long ncommCall(comm_t x, const int allow_realloc, size_t nargs, ...);
  * @param for_fortran If set to true then the list is of explicit fortran pointers
  * @return Any value greater than 0 indicates success
  */
-int pcommSend(const comm_t comm, size_t nargs, void** ptrs, int for_fortran);
+YGG_API int pcommSend(const comm_t comm, size_t nargs,
+		      void** ptrs, int for_fortran);
 /*!
  * @brief Receive a messag into a list of pointers
  * @param comm The communciator to use
@@ -257,7 +263,8 @@ int pcommSend(const comm_t comm, size_t nargs, void** ptrs, int for_fortran);
  * @param for_fortran If true then the list is of explicit fortran pointers
  * @return Any value greater than 0 indicates success
  */
-long pcommRecv(comm_t comm, const int allow_realloc, size_t nargs, void** ptrs, int for_fortran);
+YGG_API long pcommRecv(comm_t comm, const int allow_realloc,
+		       size_t nargs, void** ptrs, int for_fortran);
 /*!
  * @brief Send a request and receive a response from a list of pointers containing data for both the request and response.
  * @param comm The communciator to use
@@ -267,7 +274,8 @@ long pcommRecv(comm_t comm, const int allow_realloc, size_t nargs, void** ptrs, 
  * @param for_fortran If true then the list is of explicit fortran pointers
  * @return Any value greater than 0 indicates success
  */
-long pcommCall(comm_t comm, const int allow_realloc, size_t nargs, void** ptrs, int for_fortran);
+YGG_API long pcommCall(comm_t comm, const int allow_realloc,
+		       size_t nargs, void** ptrs, int for_fortran);
 #define commSend(x, ...) ncommSend(x, COUNT_VARARGS(__VA_ARGS__), __VA_ARGS__)
 #define commRecvStack(x, ...) ncommRecv(x, 0, COUNT_VARARGS(__VA_ARGS__), __VA_ARGS__)
 #define commRecvHeap(x, ...) ncommRecv(x, 1, COUNT_VARARGS(__VA_ARGS__), __VA_ARGS__)
@@ -279,8 +287,8 @@ long pcommCall(comm_t comm, const int allow_realloc, size_t nargs, void** ptrs, 
 #define commCall commCallStack
 #define commCallRealloc commCallHeap
 
-void global_scope_comm_on_c();
-void global_scope_comm_off_c();
+YGG_API void global_scope_comm_on_c();
+YGG_API void global_scope_comm_off_c();
 
 #ifdef __cplusplus
 }

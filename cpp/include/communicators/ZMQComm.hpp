@@ -20,7 +20,7 @@ YGG_THREAD_GLOBAL_VAR(int, _zmq_sleeptime, )
 /*!
  * @brief Class for ZMQ sockets
  */
-class ZMQSocket : public YggInterface::utils::LogBase {
+class YGG_API ZMQSocket : public YggInterface::utils::LogBase {
 private:
   ZMQSocket& operator=(const ZMQSocket& rhs) = delete;
 public:
@@ -145,8 +145,8 @@ public:
   std::string endpoint;       //!<  Last bound endpoint, if any
   int type;                   //!<  Socket type
 private:
-  static int _last_port;      //!<  Last ZMQ port used
-  static int _last_port_set;  //!<  1 if _last_port has been set, 0 otherwise
+  YGG_API static int _last_port;      //!<  Last ZMQ port used
+  YGG_API static int _last_port_set;  //!<  1 if _last_port has been set, 0 otherwise
 public:
   /*!
     @brief Reset the last port.
@@ -157,7 +157,7 @@ public:
 /*!
   @brief Struct to store info for reply.
 */
-class ZMQReply : public YggInterface::utils::LogBase {
+class YGG_API ZMQReply : public YggInterface::utils::LogBase {
 public:
     /*!
      * @brief Constructor
@@ -237,13 +237,13 @@ public:
   int last_idx;                     //!< index of last used socket
   
   // Test methods
-  static bool _test_return_val;     //!< value to return from send/recv methods during test
+  YGG_API static bool _test_return_val;     //!< value to return from send/recv methods during test
   /*!
    * @brief Set the value that should be returned by send/recv methods
    *   during a test.
    * @param[in] new_val New return value.
    */
-  static void set_test_return_val(bool new_val);
+  YGG_API static void set_test_return_val(bool new_val);
 };
 
 /**

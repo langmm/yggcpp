@@ -1,5 +1,6 @@
 #pragma once
 
+#include "YggInterface_export.h"
 #include "utils/tools.hpp"
 #include "utils/logging.hpp"
 // #if defined(ZMQINSTALLED) && defined(_MSC_VER)
@@ -99,7 +100,7 @@ namespace YggInterface {
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
     YGG_THREAD_GLOBAL_VAR(int, global_scope_comm, )
-    extern std::shared_ptr<CommContext> global_context; //!< Global context
+    extern YGG_API std::shared_ptr<CommContext> global_context; //!< Global context
 #endif // DOXYGEN_SHOULD_SKIP_THIS
 
     /**

@@ -2,6 +2,7 @@
 #include <Python.h>
 #include "structmember.h"
 #include "utils/enums.hpp"
+#include "utils/enums_utils.hpp"
 #include "utils/constants.hpp"
 
 static PyObject* COMMTYPE;
@@ -66,9 +67,9 @@ static int register_enum(PyObject* dict,
        it != map.cend(); it++) {
     std::string tmp = it->second;
     if (to_lower) {
-      tmp = str_tolower(tmp);
+      tmp = YggInterface::utils::str_tolower(tmp);
     } else if (to_upper) {
-      tmp = str_toupper(tmp);
+      tmp = YggInterface::utils::str_toupper(tmp);
     }
     std::string iname = prefix + tmp + suffix;
     PyObject* ival = PyLong_FromLong(it->first);
@@ -87,7 +88,7 @@ static int register_enums(PyObject* module) {
 #define REGISTER_ENUM(name, var, map, prefix, suffix)			\
     {									\
       PyObject* tmp = PyDict_New();					\
-      if (register_enum(tmp, map, prefix, suffix) < 0) {		\
+      if (register_enum(tmp, YggInterface::utils::map, prefix, suffix) < 0) { \
 	Py_DECREF(tmp);							\
 	return -1;							\
       }									\
@@ -109,7 +110,8 @@ static int register_enums(PyObject* module) {
 #undef REGISTER_ENUM
     {
       PyObject* tmp = PyDict_New();
-      if (register_enum(tmp, COMM_TYPE_map, "", "", true) < 0) {
+      if (register_enum(tmp, YggInterface::utils::COMM_TYPE_map,
+			"", "", true) < 0) {
 	Py_CLEAR(tmp);
 	return -1;
       }

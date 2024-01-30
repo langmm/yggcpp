@@ -13,7 +13,7 @@ class Comm_t;
 /**
  * @brief Class for workers
  */
-  class Worker : public YggInterface::utils::LogBase {
+  class YGG_API Worker : public YggInterface::utils::LogBase {
   private:
     Worker(const Worker& rhs) = delete;
     Worker& operator=(const Worker& rhs) = delete;
@@ -60,7 +60,7 @@ class Comm_t;
   /**
    * @brief Class for a list of workers
    */
-  class WorkerList : public YggInterface::utils::LogBase {
+  class YGG_API WorkerList : public YggInterface::utils::LogBase {
   private:
     WorkerList(const WorkerList& rhs) = delete;
     WorkerList& operator=(const WorkerList& rhs) = delete;
