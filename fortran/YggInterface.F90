@@ -46,9 +46,8 @@ module YggInterface
   !         JAVA_LANGUAGE
   ! end enum
   ! enum, bind( C )
-  ! enumerator ::
-  ! integer(kind=8), parameter :: &
-  !      COMM_FLAG_VALID           = int(z'00000001', 8), &
+  !    enumerator :: &
+  !         COMM_FLAG_VALID           = int(z'00000001', 8), &
   !         COMM_FLAG_GLOBAL          = int(z'00000002', 8), &
   !         COMM_FLAG_WORKER          = int(z'00000004', 8), &
   !         COMM_FLAG_DELAYED_OPEN    = int(z'00000008', 8), &
@@ -78,7 +77,7 @@ module YggInterface
   !         FILE_FLAG_BINARY          = int(z'0000200000000000', 8), &
   !         FILE_FLAG_READLINE        = int(z'0000400000000000', 8), &
   !         COMM_FLAG_MAX             = int(z'8000000000000000', 8)
-  ! ! end enum
+  ! end enum
 #endif
   integer(kind=c_int64_t), protected, bind(c, name="COMM_FLAG_VALID_F") :: COMM_FLAG_VALID
   integer(kind=c_int64_t), protected, bind(c, name="COMM_FLAG_GLOBAL_F") :: COMM_FLAG_GLOBAL

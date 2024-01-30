@@ -18,6 +18,8 @@
 #include <mpi.h>
 #endif // MPIINSTALLED
 
+#include <string>
+
 #define LIBRARY_ADDRESS_BY_HANDLE(dlhandle) ((NULL == dlhandle) ? NULL :  (void*)*(size_t const*)(dlhandle))
 
 void init_sublib_contents();

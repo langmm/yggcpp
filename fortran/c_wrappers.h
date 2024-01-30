@@ -47,7 +47,7 @@ extern "C" {
   CREATE_COMM_FLAG(FILE_FLAG_READLINE);
 
 #undef CREATE_COMM_FLAG
-
+  
 /* void dummy_function_f(const int64_t message); */
 /* void dummy_function_f(const char* message); */
 

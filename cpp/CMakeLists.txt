@@ -22,7 +22,8 @@ else()
     endif()
     if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
         target_link_options(${YGG_TARGET_CPP}
-	    PRIVATE /INCLUDE:rapidjson_ARRAY_API)
+	    PRIVATE /INCLUDE:rapidjson_ARRAY_API
+	    /INCLUDE:COMM_FLAG_ASYNC)
     endif()
     list(APPEND YGG_INSTALL_TARGETS ${YGG_TARGET_CPP})
     set(YGG_INSTALL_TARGETS ${YGG_INSTALL_TARGETS} PARENT_SCOPE)
