@@ -7,7 +7,7 @@
 
 namespace YggInterface {
 namespace utils {
-YGG_API static std::string blank;
+static std::string blank;
 
 /**
  * @brief Class for holding an address, used by the communicators
@@ -99,7 +99,7 @@ private:
 
 };
 
-  YGG_API static Address blankAddress;  //!< empty address singleton
+  static Address blankAddress;  //!< empty address singleton
   
 }
 }

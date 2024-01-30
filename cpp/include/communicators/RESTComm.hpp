@@ -11,7 +11,7 @@ namespace YggInterface {
     /**
      * @brief Wrapper for curl connection to REST API
      */
-    class YGG_API RESTConnection : public YggInterface::utils::LogBase {
+    class RESTConnection : public YggInterface::utils::LogBase {
       RESTConnection(const RESTConnection&) = delete;
       RESTConnection& operator=(const RESTConnection&) = delete;
     public:

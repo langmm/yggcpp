@@ -28,7 +28,7 @@ namespace YggInterface {
      *   including cleanup on exit. It is intended to be used as a
      *   singleton.
      */
-    class YGG_API CommContext : public YggInterface::utils::LogBase {
+    class CommContext : public YggInterface::utils::LogBase {
     private:
       CommContext(const CommContext&) = delete;
       CommContext& operator=(const CommContext&) = delete;
@@ -37,10 +37,10 @@ namespace YggInterface {
        * @brief Constructor
        * @param[in] for_testing true if for testing purposes.
        */
-      CommContext(bool for_testing=false);
-      ~CommContext();
+      YGG_API CommContext(bool for_testing=false);
+      YGG_API ~CommContext();
       /** \copydoc YggInterface::utils::LogBase::logClass */
-      std::string logClass() const override { return "CommContext"; }
+      YGG_API std::string logClass() const override { return "CommContext"; }
 
       // Class members
       std::vector<Comm_t*> registry_; //!< Registry of comms created
@@ -69,18 +69,18 @@ namespace YggInterface {
        * @param[in] for_testing true if the context is used for testing.
        * @return 0 on success
        */
-      int init(bool for_testing=false);
+      YGG_API int init(bool for_testing=false);
       /**
        * @brief Cleanup the context's resources
        * @param[in] mode Enumerated flag specifying which resources
        *   should be cleaned up.
        */
-      void cleanup(CLEANUP_MODE mode=CLEANUP_DEFAULT);
+      YGG_API void cleanup(CLEANUP_MODE mode=CLEANUP_DEFAULT);
       /**
        * @brief Register a communicator.
        * @param[in] x Communicator to register.
        */
-      void register_comm(Comm_t* x);
+      YGG_API void register_comm(Comm_t* x);
       /**
        * @brief Find the registered communicator based on the given information
        * @param[in] name The name of the communicator to find
@@ -88,9 +88,9 @@ namespace YggInterface {
        * @param[in] type The type of cummunicator to find
        * @return The communicator, or NULL of none was found
        */
-      Comm_t* find_registered_comm(const std::string& name,
-				   const DIRECTION dir,
-				   const COMM_TYPE type);
+      YGG_API Comm_t* find_registered_comm(const std::string& name,
+					   const DIRECTION dir,
+					   const COMM_TYPE type);
 #ifdef YGG_ZMQ_CATCH_ERROR_POST_UNLOAD
     protected:
       DWORD _HandleWSAStartupError(unsigned int code,
@@ -100,46 +100,46 @@ namespace YggInterface {
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
     YGG_THREAD_GLOBAL_VAR(int, global_scope_comm, )
-    extern YGG_API std::shared_ptr<CommContext> global_context; //!< Global context
+    extern std::shared_ptr<CommContext> global_context; //!< Global context
 #endif // DOXYGEN_SHOULD_SKIP_THIS
 
     /**
      * @brief Get the status of the global scope flag.
      * @return 1 indicates that the global scope flag is set.
      */
-    int get_global_scope_comm();
+    YGG_API int get_global_scope_comm();
     /**
      * @brief Set the global scope flag.
      * @param[in] new_value Value to set the global scope flag to. 0
      *   indicates that the global scope flag is not set.
      */
-    void set_global_scope_comm(int new_value);
+    YGG_API void set_global_scope_comm(int new_value);
     /**
      * @brief Turn the global scope flag on so that future communicators
      *   will be treated as global.
      */
-    void global_scope_comm_on();
+    YGG_API void global_scope_comm_on();
     /**
      * @brief Turn the global scope flag off so that future communicators
      *   will be treated as local.
      */
-    void global_scope_comm_off();
+    YGG_API void global_scope_comm_off();
     /**
      * @brief Initialize the global context.
      * @param[in] for_testing true if the global context is used for testing.
      * @return 0 on success
      */
-    int ygg_init(bool for_testing=false);
+    YGG_API int ygg_init(bool for_testing=false);
     /**
      * @brief Clean up the global context.
      * @param[in] mode Enumerated flag specifying which resources
      *   should be cleaned up.
      */
-    void ygg_cleanup(CLEANUP_MODE mode=CLEANUP_DEFAULT);
+    YGG_API void ygg_cleanup(CLEANUP_MODE mode=CLEANUP_DEFAULT);
     /**
      * @brief Clean up the global context prior to exit
      */
-    void ygg_exit();
+    YGG_API void ygg_exit();
 
   }
 }
