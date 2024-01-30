@@ -1,4 +1,10 @@
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
+
+#if defined(RESTINSTALLED) && defined(__MINGW32__)
+// Ensure winsock2.h is included before windows.h included by curl
+#include <winsock2.h>
+#endif
+
 #ifndef PY_SSIZE_T_CLEAN
 #define PY_SSIZE_T_CLEAN
 #endif
