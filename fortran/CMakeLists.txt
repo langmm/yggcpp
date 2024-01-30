@@ -16,7 +16,7 @@ if ((NOT FORCE_SPLIT_CXXFORTRAN) AND (NOT MSVC))
 endif()
 
 include(YggAddFortranSubdirectory)
-set(SOURCES_FORTRAN c_wrappers.c YggInterface.F90)
+set(SOURCES_FORTRAN c_wrappers.c c_wrappers_enums.c YggInterface.F90)
 add_mixed_fortran_library(${YGG_TARGET_FORTRAN} SHARED
                           LANGUAGE CXX ${SOURCES_FORTRAN})
 add_library(YggInterface::Fortran ALIAS ${YGG_TARGET_FORTRAN})

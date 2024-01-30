@@ -1098,19 +1098,9 @@ public:
      */
     const std::string& getName() const { return name; }
     //! \copydoc YggInterface::utils::LogBase::logClass
-    std::string logClass() const override {
-      return COMM_TYPE_cls_map.find(getCommType())->second;
-    }
+    std::string logClass() const override;
     //! \copydoc YggInterface::utils::LogBase::logInst
-    std::string logInst() const override {
-      std::string out = name + "-" +
-	DIRECTION_map.find(getDirection())->second;
-      if (flags & COMM_FLAG_CLIENT_RESPONSE)
-	out += "-CLIRES";
-      else if (flags & COMM_FLAG_SERVER_RESPONSE)
-	out += "-SRVRES";
-      return out;
-    }
+    std::string logInst() const override;
     /*!
       @brief Get the communicator's address.
       @returns Address.
@@ -1140,22 +1130,7 @@ public:
       @param[in] new_lang New communicator language code.
       @returns false if there is an error, true otherwise.
      */
-    bool setLanguage(LANGUAGE new_lang=NO_LANGUAGE) {
-      if (new_lang == NO_LANGUAGE) {
-	char* model_language = std::getenv("YGG_MODEL_LANGUAGE");
-	if (model_language) {
-	  if (!enum_value_search(LANGUAGE_map,
-				 std::string(model_language),
-				 new_lang))
-	    return false;
-	} else {
-	  new_lang = CXX_LANGUAGE;
-	}
-      }
-      if (new_lang != NO_LANGUAGE)
-	language = new_lang;
-      return true;
-    }
+    bool setLanguage(LANGUAGE new_lang=NO_LANGUAGE);
     /*!
       @brief Get the maximum size (in bytes) for individual messages.
         Messages larger than this size will be split into multiple parts.

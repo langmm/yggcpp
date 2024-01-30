@@ -1,5 +1,6 @@
 #include "communicators/comms.hpp"
 #include "utils/rapidjson_wrapper.hpp"
+#include "utils/enums_utils.hpp"
 
 using namespace YggInterface::communicator;
 using namespace YggInterface::utils;
@@ -414,6 +415,35 @@ bool Comm_t::create_global_scope_comm() {
   flags = global_comm->flags & ~COMM_FLAG_GLOBAL;
   if (is_server)
     set_global_scope_comm(prev_global_scope_comm);
+  return true;
+}
+
+std::string Comm_t::logClass() const {
+  return COMM_TYPE_cls_map.find(getCommType())->second;
+}
+std::string Comm_t::logInst() const {
+  std::string out = name + "-" +
+    DIRECTION_map.find(getDirection())->second;
+  if (flags & COMM_FLAG_CLIENT_RESPONSE)
+    out += "-CLIRES";
+  else if (flags & COMM_FLAG_SERVER_RESPONSE)
+    out += "-SRVRES";
+  return out;
+}
+bool Comm_t::setLanguage(LANGUAGE new_lang) {
+  if (new_lang == NO_LANGUAGE) {
+    char* model_language = std::getenv("YGG_MODEL_LANGUAGE");
+    if (model_language) {
+      if (!enum_value_search(LANGUAGE_map,
+			     std::string(model_language),
+			     new_lang))
+	return false;
+    } else {
+      new_lang = CXX_LANGUAGE;
+    }
+  }
+  if (new_lang != NO_LANGUAGE)
+    language = new_lang;
   return true;
 }
   

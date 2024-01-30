@@ -1,5 +1,6 @@
 #include "utils/serialization.hpp"
 #include "communicators/CommBase.hpp"
+#include "utils/enums_utils.hpp"
 using namespace YggInterface::utils;
 
 int YggInterface::utils::split_head_body(const char *buf,

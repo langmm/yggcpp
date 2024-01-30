@@ -1,18 +1,13 @@
-#pragma once
+#ifndef __YGG_ENUMS_HPP
+#define __YGG_ENUMS_HPP
 
 #ifdef __cplusplus
-#include <map>
-#include <string>
-#include <istream>
-#include <iostream>
-#include <algorithm>
 extern "C" {
 #include <cstdint>
 #else
 #include <stdint.h>
 #endif
 
-  // typedef int64_t FLAG_TYPE;
 #define FLAG_TYPE int64_t
   
 // If any of these are updated they must be also be updated in
@@ -68,9 +63,9 @@ enum CLEANUP_MODE {
 
 */
 enum COMM_FLAG
-#ifdef __cplusplus
-: FLAG_TYPE
-#endif // __cplusplus
+// #ifdef __cplusplus
+// : FLAG_TYPE
+// #endif // __cplusplus
   {
   COMM_FLAG_VALID           = 0x00000001LL, //!< Comm is initialized
   COMM_FLAG_GLOBAL          = 0x00000002LL, //!< Comm is global
@@ -139,8 +134,6 @@ enum HeadFlags {
   HEAD_FLAG_NO_HEAD         = 0x00004000, //!< No header in message
   HEAD_FLAG_ASYNC           = 0x00008000  //!< Header formated by async
 };
-const int HEAD_BUFFER_MASK = (HEAD_FLAG_ALLOW_REALLOC |
-			      HEAD_FLAG_OWNSDATA);
 
 enum HEAD_RESET_MODE {
   HEAD_RESET_COMPLETE,
@@ -177,135 +170,8 @@ enum FORK_TYPE {
   FORK_COMPOSITE  //!< Part of message is sent/received to/from each comm
 };
 
-// enum DTYPE {
-//     T_NULL, T_OBJECT, T_1DARRAY,
-//     T_DIRECT, T_NDARRAY, T_SCALAR,
-//     T_PLY, T_OBJ, T_GROUP, T_FORMATTED,
-//     T_CLASS, T_FUNCTION, T_INSTANCE, T_SCHEMA, T_ANY, T_PLY_T, T_OBJ_T
-// };
-
-// enum SUBTYPE {
-//     T_BOOLEAN, T_STRING,
-//     T_FLOAT, T_UINT, T_INT, T_COMPLEX, T_BYTES, T_UNICODE
-// };
-
-// enum VTYPE {
-//     T_SCALABLE, T_ARRAY1D
-// };
-
 #ifdef __cplusplus
 }
-
-const std::map<const DIRECTION, const std::string> DIRECTION_map {
-  {SEND, "SEND"},
-  {NONE, "NONE"},
-  {RECV, "RECV"}};
-
-const std::map<const COMM_TYPE, const std::string> COMM_TYPE_map {
-  {NULL_COMM, "NULL"},
-  {DEFAULT_COMM, "DEFAULT"},
-  {IPC_COMM, "IPC"},
-  {ZMQ_COMM, "ZMQ"},
-  {MPI_COMM, "MPI"},
-  {SERVER_COMM, "SERVER"},
-  {CLIENT_COMM, "CLIENT"},
-  {FILE_COMM, "FILE"},
-  {RMQ_COMM, "RMQ"},
-  {VALUE_COMM, "VALUE"},
-  {REST_COMM, "REST"}};
-
-const std::map<const COMM_TYPE, const std::string> COMM_TYPE_cls_map {
-  {NULL_COMM, "NullComm"},
-  {DEFAULT_COMM, "DefaultComm"},
-  {IPC_COMM, "IPCComm"},
-  {ZMQ_COMM, "ZMQComm"},
-  {MPI_COMM, "MPIComm"},
-  {SERVER_COMM, "ServerComm"},
-  {CLIENT_COMM, "ClientComm"},
-  {FILE_COMM, "FileComm"},
-  {RMQ_COMM, "RMQComm"},
-  {VALUE_COMM, "ValueComm"},
-  {REST_COMM, "RESTComm"}};
-
-const std::map<const LANGUAGE, const std::string> LANGUAGE_map {
-  {NO_LANGUAGE, ""},
-  {CXX_LANGUAGE, "c"},
-  {C_LANGUAGE, "cxx"},
-  {FORTRAN_LANGUAGE, "fortran"},
-  {PYTHON_LANGUAGE, "python"},
-  {MATLAB_LANGUAGE, "matlab"},
-  {R_LANGUAGE, "r"},
-  {JULIA_LANGUAGE, "julia"},
-  {JAVA_LANGUAGE, "java"}};
-
-const std::map<const COMM_FLAG, const std::string> COMM_FLAG_map {
-  {COMM_FLAG_VALID           , "VALID"},
-  {COMM_FLAG_GLOBAL          , "GLOBAL"},
-  {COMM_FLAG_WORKER          , "WORKER"},
-  {COMM_FLAG_DELAYED_OPEN    , "DELAYED_OPEN"},
-  {COMM_FLAG_CLIENT          , "CLIENT"},
-  {COMM_FLAG_SERVER          , "SERVER"},
-  {COMM_FLAG_CLIENT_RESPONSE , "CLIENT_RESPONSE"},
-  {COMM_FLAG_SERVER_RESPONSE , "SERVER_RESPONSE"},
-  {COMM_FLAG_ALWAYS_SEND_HEADER   , "ALWAYS_SEND_HEADER"},
-  {COMM_FLAG_ALLOW_MULTIPLE_COMMS , "ALLOW_MULTIPLE_COMMS"},
-  {COMM_FLAG_USED_SENT       , "USED_SENT"},
-  {COMM_FLAG_USED_RECV       , "USED_RECV"},
-  {COMM_FLAG_EOF_SENT        , "EOF_SENT"},
-  {COMM_FLAG_EOF_RECV        , "EOF_RECV"},
-  {COMM_FLAG_CLOSE_ON_EOF_RECV    , "CLOSE_ON_EOF_RECV"},
-  {COMM_FLAG_CLOSE_ON_EOF_SEND    , "CLOSE_ON_EOF_SEND"},
-  {COMM_FLAG_INTERFACE       , "INTERFACE"},
-  {COMM_FLAG_DELETE          , "DELETE"},
-  {COMM_FLAG_ASYNC           , "ASYNC"},
-  {COMM_FLAG_ASYNC_WRAPPED   , "ASYNC_WRAPPED"},
-  {COMM_FLAG_SET_OPP_ENV     , "SET_OPP_ENV"},
-  {COMM_FLAG_WRAPPER         , "WRAPPER"},
-  {COMM_FLAG_FORK_CYCLE      , "FORK_CYCLE"},
-  {COMM_FLAG_FORK_BROADCAST  , "FORK_BROADCAST"},
-  {COMM_FLAG_FORK_COMPOSITE  , "FORK_COMPOSITE"},
-  {COMM_FLAG_FORK_TINE       , "FORK_TINE"}};
-const std::map<const COMM_FLAG, const std::string> FILE_FLAG_map {
-  {FILE_FLAG_APPEND          , "APPEND"},
-  {FILE_FLAG_BINARY          , "BINARY"},
-  {FILE_FLAG_READLINE        , "READLINE"}};
-
-static inline std::string str_toupper(const std::string& inStr) {
-  std::string outStr(inStr);
-  std::transform(inStr.begin(), inStr.end(), outStr.begin(),
-		 [](unsigned char c) { return std::toupper(c); });
-  return outStr;
-}
-static inline std::string str_tolower(const std::string& inStr) {
-  std::string outStr(inStr);
-  std::transform(inStr.begin(), inStr.end(), outStr.begin(),
-		 [](unsigned char c) { return std::tolower(c); });
-  return outStr;
-}
-
-template<typename T1>
-static bool enum_value_search(const std::map<const T1, const std::string> map,
-			      const std::string& val,
-			      T1& key, bool allow_anycase=false,
-			      std::string prefix="",
-			      std::string suffix="") {
-  for (typename std::map<const T1, const std::string>::const_iterator it = map.cbegin();
-       it != map.cend(); it++) {
-    if ((it->second == val) ||
-	(allow_anycase && (val == str_toupper(it->second) ||
-			   val == str_tolower(it->second))) ||
-	((!prefix.empty()) && (val == (prefix + it->second))) ||
-	((!suffix.empty()) && (val == (it->second + suffix)))) {
-      key = it->first;
-      return true;
-    }
-  }
-  return false;
-}
-
-template<typename T1, typename T2>
-static T1 max_enum_value(const std::map<const T1, const T2> map) {
-  return map.crbegin()->first;
-}
-
 #endif
+
+#endif // __YGG_ENUMS_HPP
