@@ -22,12 +22,16 @@ else()
     endif()
     if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
         target_link_options(${YGG_TARGET_CPP}
-	    PRIVATE /INCLUDE:rapidjson_ARRAY_API
-	    /INCLUDE:COMM_FLAG_ASYNC)
+	    PRIVATE /INCLUDE:rapidjson_ARRAY_API)
     endif()
     list(APPEND YGG_INSTALL_TARGETS ${YGG_TARGET_CPP})
     set(YGG_INSTALL_TARGETS ${YGG_INSTALL_TARGETS} PARENT_SCOPE)
 endif()
+
+include(GenerateExportHeaderYggdrasil)
+generate_export_header_yggdrasil(${YGG_TARGET_CPP})
+set(YGG_INSTALL_INCLUDES ${YGG_INSTALL_INCLUDES} PARENT_SCOPE)
+
 target_link_libraries(
     ${YGG_TARGET_CPP} PRIVATE ${DEPS_LIBRARIES_PRIVATE})
 target_link_libraries(
@@ -72,7 +76,7 @@ if (COVERAGE_LIBRARIES)
     target_link_libraries(
         ${YGG_TARGET_CPP} PRIVATE ${COVERAGE_LIBRARIES})
 endif()
-    
+
 include(CheckDLL)
 show_runtimes(${YGG_TARGET_CPP})
 # show_symbols(${YGG_TARGET_CPP})

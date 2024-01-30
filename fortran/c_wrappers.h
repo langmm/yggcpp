@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include "YggInterface_fortran_export.h"
 #include "YggInterface.h"
 
 #ifdef __cplusplus /* If this is a C++ compiler, use C linkage */
@@ -11,10 +12,10 @@ extern "C" {
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
-  extern int YGG_MSG_MAX_F;
+  extern FYGG_API int YGG_MSG_MAX_F;
 
 #define CREATE_COMM_FLAG(name)				\
-  extern FLAG_TYPE name ## _F
+  extern FYGG_API FLAG_TYPE name ## _F
 
   CREATE_COMM_FLAG(COMM_FLAG_VALID);
   CREATE_COMM_FLAG(COMM_FLAG_GLOBAL);

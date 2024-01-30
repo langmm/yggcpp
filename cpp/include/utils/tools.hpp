@@ -5,16 +5,8 @@
 #include <winsock2.h>
 #endif
 
-#define YGG_API
-// #if defined(_WINDOWS)
-// #if defined(YggInterface_EXPORTS) || defined(YggInterface_py_EXPORTS)
-// #   define YGG_API __declspec(dllexport)
-// #else
-// #   define YGG_API __declspec(dllimport)
-// #endif
-// #else
-// #   define YGG_API
-// #endif
+#include "YggInterface_export.h"
+
 #define UNUSED(arg) ((void)&(arg))
 #define STRINGIFY(x) #x
 

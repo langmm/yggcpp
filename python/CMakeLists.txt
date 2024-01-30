@@ -88,6 +88,12 @@ if (ASAN_LINK_FLAGS)
       ${YGG_TARGET_PY} PUBLIC ${ASAN_LINK_FLAGS})
 endif()
 
+if (NOT YGG_LINK_PYTHON_TO_CPP)
+    include(GenerateExportHeaderYggdrasil)
+    generate_export_header_yggdrasil(${YGG_TARGET_PY})
+    set(YGG_INSTALL_INCLUDES ${YGG_INSTALL_INCLUDES} PARENT_SCOPE)
+endif()
+
 if(NOT ${PYTHON_PREFIX}_INSTALL_DIR)
   set(${PYTHON_PREFIX}_INSTALL_DIR ".")
 endif()

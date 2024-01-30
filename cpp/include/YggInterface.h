@@ -2,6 +2,11 @@
 #ifndef YGGINTERFACE_H_
 #define YGGINTERFACE_H_
 
+#if defined(RESTINSTALLED) && defined(__MINGW32__)
+// Ensure winsock2.h is included before windows.h included by curl
+#include <winsock2.h>
+#endif
+
 #include "communicators/comm_t.hpp"
 #include "datatypes/dtype_t.h"
 #include "utils/constants.hpp"

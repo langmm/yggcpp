@@ -31,12 +31,17 @@ target_include_directories(${YGG_TARGET_FORTRAN} PUBLIC
 target_link_libraries(${YGG_TARGET_FORTRAN} PUBLIC YggInterface)
 target_include_directories(${YGG_TARGET_FORTRAN} PRIVATE
                            ${DEPS_INCLUDE_DIRS})
-if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    target_link_options(${YGG_TARGET_FORTRAN}
-        PRIVATE /INCLUDE:COMM_FLAG_ASYNC_F)
-endif()
 list(APPEND YGG_INSTALL_TARGETS ${YGG_TARGET_FORTRAN})
 set(YGG_INSTALL_TARGETS ${YGG_INSTALL_TARGETS} PARENT_SCOPE)
+
+# Exports
+include(GenerateExportHeaderYggdrasil)
+generate_export_header_yggdrasil(
+    ${YGG_TARGET_FORTRAN}
+    BASE_NAME FYGG_API
+    EXPORT_MACRO_NAME FYGG_API
+    EXPORT_FILE_NAME YggInterface_fortran_export.h)
+set(YGG_INSTALL_INCLUDES ${YGG_INSTALL_INCLUDES} PARENT_SCOPE)
 
 # Install
 list(APPEND YGG_INSTALL_INCLUDES
