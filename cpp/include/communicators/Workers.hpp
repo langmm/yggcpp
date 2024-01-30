@@ -13,7 +13,7 @@ class Comm_t;
 /**
  * @brief Class for workers
  */
-  class YGG_API Worker : public YggInterface::utils::LogBase {
+  class Worker : public YggInterface::utils::LogBase {
   private:
     Worker(const Worker& rhs) = delete;
     Worker& operator=(const Worker& rhs) = delete;
@@ -60,7 +60,7 @@ class Comm_t;
   /**
    * @brief Class for a list of workers
    */
-  class YGG_API WorkerList : public YggInterface::utils::LogBase {
+  class WorkerList : public YggInterface::utils::LogBase {
   private:
     WorkerList(const WorkerList& rhs) = delete;
     WorkerList& operator=(const WorkerList& rhs) = delete;
@@ -72,7 +72,7 @@ class Comm_t;
     /**
      * @brief Destructor
      */
-    ~WorkerList();
+    YGG_API ~WorkerList();
     /**
      * @brief Add a new Worker to the list, using the given information
      * @param[in] parent The parent communicator
@@ -81,13 +81,13 @@ class Comm_t;
      * @return The newly created worker
      * @see utils::Address
      */
-    Comm_t* add_worker(Comm_t* parent, DIRECTION dir,
-                       utils::Address& adr);
+    YGG_API Comm_t* add_worker(Comm_t* parent, DIRECTION dir,
+			       utils::Address& adr);
     /**
      * @brief Remove and delete the given worker from the list
      * @param[in] worker The Worker instance to remove
      */
-    void remove_worker(Comm_t*& worker);
+    YGG_API void remove_worker(Comm_t*& worker);
     /**
      * @brief Find the Communicator that matches the given inputs
      * @param[in] dir The communications direction
@@ -96,14 +96,14 @@ class Comm_t;
      * @return The matching Communicator, nullptr if none matched
      * @see utils::Address
      */
-    Comm_t* find_worker(DIRECTION dir, utils::Address& adr,
-                        size_t* idx = nullptr);
+    YGG_API Comm_t* find_worker(DIRECTION dir, utils::Address& adr,
+				size_t* idx = nullptr);
     /**
      * @brief Find the index of the given worker
      * @param[in] worker The worker to find
      * @return The index of the worker or -1 if it was not found
      */
-    int find_worker(Comm_t* worker);
+    YGG_API int find_worker(Comm_t* worker);
     /**
      * @brief Get the Communicator for the Worker with the given direction and address. If there is no match
      * create a new Worker using the given communicator.
@@ -113,8 +113,8 @@ class Comm_t;
      * @return The matching or new Worker
      * @see utils::Address
      */
-    Comm_t* get(Comm_t* parent, DIRECTION dir,
-                utils::Address& adr);
+    YGG_API Comm_t* get(Comm_t* parent, DIRECTION dir,
+			utils::Address& adr);
     /**
      * @brief Get the Communicator for the Worker with the given direction and no address. If there is no match
      * create a new Worker using the given communicator.
@@ -122,7 +122,7 @@ class Comm_t;
      * @param[in] dir The communications direction
      * @return The matching or new Worker
      */
-    Comm_t* get(Comm_t* parent, DIRECTION dir);
+    YGG_API Comm_t* get(Comm_t* parent, DIRECTION dir);
     /**
      * @brief Get the Communicator for the Worker with the given direction and address. If there is no match
      * create a new Worker using the given communicator.
@@ -131,20 +131,21 @@ class Comm_t;
      * @param[in] adr The communications address
      * @return The matching or new Worker
      */
-    Comm_t* get(Comm_t* parent, DIRECTION dir, const std::string& adr);
+    YGG_API Comm_t* get(Comm_t* parent, DIRECTION dir,
+			const std::string& adr);
     /**
      * @brief Give the given reguest to the specified worker.
      * @param[in] worker The worker to use
      * @param[in] request The request to give the worker
      * @return True if successful, false if the Worker is not in the list
      */
-    bool setRequest(Comm_t* worker, const std::string& request);
+    YGG_API bool setRequest(Comm_t* worker, const std::string& request);
     /**
      * @brief Check whether a Worker has the given request
      * @param[in] request The request to check for
      * @return True if it was found
      */
-    bool setResponse(const std::string& request);
+    YGG_API bool setResponse(const std::string& request);
     std::vector<Worker> workers; /**< Workers for sending large messages */
   };
 

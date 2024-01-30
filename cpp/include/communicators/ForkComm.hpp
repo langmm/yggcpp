@@ -92,7 +92,7 @@ namespace YggInterface {
      * @brief Forked communicator class for sending/receiving to/from
      *    multiple communicators (tines).
      */
-    class YGG_API ForkComm : public CommBase<ForkTines> {
+    class ForkComm : public CommBase<ForkTines> {
     public:
 
       /**
@@ -107,11 +107,12 @@ namespace YggInterface {
        * @param[in] ncomm The number of 'tine' communicators to created.
        * @see utils::Address
        */
-      explicit ForkComm(const std::string name,
-			const utils::Address& address,
-			const DIRECTION direction=NONE, FLAG_TYPE flgs=0,
-			const COMM_TYPE commtype=DEFAULT_COMM,
-			size_t ncomm=0);
+      YGG_API explicit ForkComm(const std::string name,
+				const utils::Address& address,
+				const DIRECTION direction=NONE,
+				FLAG_TYPE flgs=0,
+				const COMM_TYPE commtype=DEFAULT_COMM,
+				size_t ncomm=0);
       /**
        * @brief Constructor without an address.
        * @param[in] nme The name of the communicator
@@ -120,9 +121,10 @@ namespace YggInterface {
        * @param[in] commtype THe communicator type
        * @param[in] ncomm The number of 'tine' communicators to created
        */
-      ForkComm(const std::string nme, const DIRECTION dirn,
-	       FLAG_TYPE flgs=0, const COMM_TYPE commtype=DEFAULT_COMM,
-	       size_t ncomm=0);
+      YGG_API ForkComm(const std::string nme, const DIRECTION dirn,
+		       FLAG_TYPE flgs=0,
+		       const COMM_TYPE commtype=DEFAULT_COMM,
+		       size_t ncomm=0);
       /**
        * @brief Constructor without a name.
        * @param[in] addr The address to associate with the
@@ -134,15 +136,17 @@ namespace YggInterface {
        * @param[in] ncomm The number of 'tine' communicators to created.
        * @see utils::Address
        */
-      explicit ForkComm(utils::Address &addr, const DIRECTION dirn,
-			FLAG_TYPE flgs=0, const COMM_TYPE type=DEFAULT_COMM,
-			size_t ncomm=0);
+      YGG_API explicit ForkComm(utils::Address &addr,
+				const DIRECTION dirn,
+				FLAG_TYPE flgs=0,
+				const COMM_TYPE type=DEFAULT_COMM,
+				size_t ncomm=0);
       ADD_METHODS_BASE(ForkComm, DEFAULT_COMM, true)
 	
       /** \copydoc YggInterface::communicator::Comm_t::comm_nmsg */
-      int comm_nmsg(DIRECTION dir=NONE) const override;
+      YGG_API int comm_nmsg(DIRECTION dir=NONE) const override;
       /** \copydoc YggInterface::communicator::Comm_t::set_timeout_recv */
-      void set_timeout_recv(int64_t new_timeout) override;
+      YGG_API void set_timeout_recv(int64_t new_timeout) override;
       
       using Comm_t::send;
       using Comm_t::recv;

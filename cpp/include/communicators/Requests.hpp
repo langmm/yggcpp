@@ -13,7 +13,7 @@ namespace communicator {
 /**
  * @brief Information about the partner model at the other end of a communicator
  */
-class YGG_API Partner {
+class Partner {
 public:
     /**
      * @brief Constructor
@@ -30,7 +30,7 @@ public:
 /**
  * @brief Class representing a request for communication
  */
-class YGG_API Request {
+class Request {
 public:
     /**
      * @brief Constructor
@@ -77,7 +77,7 @@ public:
 /**
  * @brief Container for a list of requests
  */
-class YGG_API RequestList : public YggInterface::utils::LogBase {
+class RequestList : public YggInterface::utils::LogBase {
 public:
     /**
      * @brief Constructor

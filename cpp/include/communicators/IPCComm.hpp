@@ -29,7 +29,7 @@ typedef struct msgbuf_t {
 /**
  * @brief Sys V IPC queue based communicator
  */
-class YGG_API IPCComm : public CommBase<int> {
+class IPCComm : public CommBase<int> {
 public:
     /**
      * Constructor
@@ -40,10 +40,11 @@ public:
      * @param[in] type The communicator type
      * @see utils::Address
      */
-    IPCComm(const std::string& name,
-            const utils::Address& address,
-            const DIRECTION direction = NONE,
-            FLAG_TYPE flgs = 0, const COMM_TYPE type = IPC_COMM);
+    YGG_API IPCComm(const std::string& name,
+		    const utils::Address& address,
+		    const DIRECTION direction = NONE,
+		    FLAG_TYPE flgs = 0,
+		    const COMM_TYPE type = IPC_COMM);
     ADD_CONSTRUCTORS(IPC)
 
 #ifdef IPCINSTALLED
@@ -61,10 +62,11 @@ public:
      *  will close it.
      * @returns int -1 if removal not successful.
      */
-    int remove_comm(bool close_comm);
+    YGG_API int remove_comm(bool close_comm);
 
     /** \copydoc YggInterface::communicator::Comm_t::comm_nmsg */
-    int comm_nmsg(DIRECTION dir=NONE) const override;
+    YGG_API int comm_nmsg(DIRECTION dir=NONE) const override;
+  
     using Comm_t::send;
     using Comm_t::recv;
 

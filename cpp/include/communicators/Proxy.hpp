@@ -28,25 +28,25 @@ namespace YggInterface {
        * @param[in] fltrs Filters to apply to messages between communicators
        * @param[in] tforms Transforms to apply to messages between communicators
        */
-      Proxy(const std::string iname, const std::string oname,
-	    FLAG_TYPE iflgs = 0, FLAG_TYPE oflgs = 0,
-	    const COMM_TYPE itype = DEFAULT_COMM,
-	    const COMM_TYPE otype = DEFAULT_COMM,
-	    std::vector<YggInterface::utils::filterFunc> fltrs=std::vector<YggInterface::utils::filterFunc>(),
-	    std::vector<YggInterface::utils::transformFunc> tforms=std::vector<YggInterface::utils::transformFunc>());
+      YGG_API Proxy(const std::string iname, const std::string oname,
+		    FLAG_TYPE iflgs = 0, FLAG_TYPE oflgs = 0,
+		    const COMM_TYPE itype = DEFAULT_COMM,
+		    const COMM_TYPE otype = DEFAULT_COMM,
+		    std::vector<YggInterface::utils::filterFunc> fltrs=std::vector<YggInterface::utils::filterFunc>(),
+		    std::vector<YggInterface::utils::transformFunc> tforms=std::vector<YggInterface::utils::transformFunc>());
       /** @brief Destructor */
-      ~Proxy();
+      YGG_API ~Proxy();
       /** \copydoc YggInterface::utils::LogBase::logClass */
       std::string logClass() const override { return "Proxy"; }
       /** \copydoc YggInterface::utils::LogBase::logInst */
-      std::string logInst() const override;
+      YGG_API std::string logInst() const override;
 #ifdef THREADSINSTALLED
       /**
        * @brief Get the address for either of the proxy's communicators
        * @param[in] dir Direction of comm to get the address for
        * @return Address
        */
-      std::string getAddress(DIRECTION dir);
+      YGG_API std::string getAddress(DIRECTION dir);
     private:
       /**
        * @brief Function to run in a thread which sends/receives messages

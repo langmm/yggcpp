@@ -20,7 +20,7 @@ namespace YggInterface {
     /**
      * @brief Wrapper for a generic communicator.
      */
-    class YGG_API WrapComm : public CommBase<Comm_t> {
+    class WrapComm : public CommBase<Comm_t> {
     public:
       /**
        * Constructor
@@ -37,12 +37,13 @@ namespace YggInterface {
        *   created if different from type
        * @see utils::Address
        */
-      explicit WrapComm(const std::string name,
-			const utils::Address &address,
-			const DIRECTION direction = NONE, FLAG_TYPE flgs = 0,
-			const COMM_TYPE type = DEFAULT_COMM,
-			size_t ncomm = 0,
-			const COMM_TYPE wraptype = NULL_COMM);
+      YGG_API explicit WrapComm(const std::string name,
+				const utils::Address &address,
+				const DIRECTION direction = NONE,
+				FLAG_TYPE flgs = 0,
+				const COMM_TYPE type = DEFAULT_COMM,
+				size_t ncomm = 0,
+				const COMM_TYPE wraptype = NULL_COMM);
       /**
        * Constructor without an address
        * @param[in] nme The name for the communicator, if empty one will
@@ -55,11 +56,12 @@ namespace YggInterface {
        * @param[in] wraptype enumerated type of wrapped communicator to
        *   created if different from type
        */
-      explicit WrapComm(const std::string nme,
-			const DIRECTION dirn, FLAG_TYPE flgs = 0,
-			const COMM_TYPE type = DEFAULT_COMM,
-			size_t ncomm = 0,
-			const COMM_TYPE wraptype = NULL_COMM);
+      YGG_API explicit WrapComm(const std::string nme,
+				const DIRECTION dirn,
+				FLAG_TYPE flgs = 0,
+				const COMM_TYPE type = DEFAULT_COMM,
+				size_t ncomm = 0,
+				const COMM_TYPE wraptype = NULL_COMM);
       /**
        * Constructor without a name
        * @param[in] addr The address for the communicator, if empty
@@ -73,16 +75,17 @@ namespace YggInterface {
        *   created if different from type
        * @see utils::Address
        */
-      explicit WrapComm(const utils::Address &addr,
-			const DIRECTION dirn, FLAG_TYPE flgs = 0,
-			const COMM_TYPE type = DEFAULT_COMM,
-			size_t ncomm = 0,
-			const COMM_TYPE wraptype = NULL_COMM);
+      YGG_API explicit WrapComm(const utils::Address &addr,
+				const DIRECTION dirn,
+				FLAG_TYPE flgs = 0,
+				const COMM_TYPE type = DEFAULT_COMM,
+				size_t ncomm = 0,
+				const COMM_TYPE wraptype = NULL_COMM);
       /**
        * @brief Constructor to wrap an existing communicator
        * @param[in] comm Communicator to wrap
        */
-      explicit WrapComm(Comm_t* comm);
+      YGG_API explicit WrapComm(Comm_t* comm);
       
       /** \copydoc YggInterface::communicator::Comm_t::defaultCommType */
       static COMM_TYPE defaultCommType() { return DEFAULT_COMM; }
@@ -110,29 +113,36 @@ namespace YggInterface {
       void _close(bool call_base);
       
     public:
-      WRAP_METHOD(comm_nmsg, (DIRECTION dir=NONE), (dir),
-		  out = -1, int, const override);
-      WRAP_METHOD(getMetadata, (const DIRECTION dir), (dir),
-		  THROW_NO_HANDLE(getMetadata),
-		  YggInterface::utils::Metadata&, override);
-      WRAP_METHOD_NORET(set_timeout_recv, (int64_t new_timeout),
-			(new_timeout),
-			THROW_NO_HANDLE(set_timeout_recv), override);
-      WRAP_METHOD(get_timeout_recv, (), (),
-		  out = CommBase::get_timeout_recv(), int64_t,
-		  const override);
-      WRAP_METHOD(wait_for_recv, (const int64_t& tout), (tout),
-		  out = -1, int, override);
-      WRAP_METHOD_NORET(close, (), (), , override);
-      WRAP_METHOD(is_closed, (), (), out = false, bool, const override);
-      WRAP_METHOD(is_open, (), (), out = false, bool, const override);
-      // WRAP_METHOD(logClass, (), (), out = "", std::string, const override);
-      // WRAP_METHOD(logInst, (), (), out = "", std::string, const override);
-      WRAP_METHOD(getWorkers, (), (), THROW_NO_HANDLE(getWorkers), WorkerList&, override);
-      WRAP_METHOD(send_raw, (const char *data, const size_t &len),
-		  (data, len), out = -1, int, override);
-      WRAP_METHOD(recv_raw, (char*& data, const size_t &len),
-		  (data, len), out = -1, long, override);
+      YGG_API WRAP_METHOD(comm_nmsg, (DIRECTION dir=NONE), (dir),
+			  out = -1, int, const override);
+      YGG_API WRAP_METHOD(getMetadata, (const DIRECTION dir), (dir),
+			  THROW_NO_HANDLE(getMetadata),
+			  YggInterface::utils::Metadata&, override);
+      YGG_API WRAP_METHOD_NORET(set_timeout_recv, (int64_t new_timeout),
+				(new_timeout),
+				THROW_NO_HANDLE(set_timeout_recv),
+				override);
+      YGG_API WRAP_METHOD(get_timeout_recv, (), (),
+			  out = CommBase::get_timeout_recv(), int64_t,
+			  const override);
+      YGG_API WRAP_METHOD(wait_for_recv, (const int64_t& tout), (tout),
+			  out = -1, int, override);
+      YGG_API WRAP_METHOD_NORET(close, (), (), , override);
+      YGG_API WRAP_METHOD(is_closed, (), (), out = false, bool,
+			  const override);
+      YGG_API WRAP_METHOD(is_open, (), (), out = false, bool,
+			  const override);
+      // YGG_API WRAP_METHOD(logClass, (), (), out = "", std::string, const override);
+      // YGG_API WRAP_METHOD(logInst, (), (), out = "", std::string, const override);
+      YGG_API WRAP_METHOD(getWorkers, (), (),
+			  THROW_NO_HANDLE(getWorkers),
+			  WorkerList&, override);
+      YGG_API WRAP_METHOD(send_raw,
+			  (const char *data, const size_t &len),
+			  (data, len), out = -1, int, override);
+      YGG_API WRAP_METHOD(recv_raw,
+			  (char*& data, const size_t &len),
+			  (data, len), out = -1, long, override);
       
       using Comm_t::send;
       using Comm_t::recv;

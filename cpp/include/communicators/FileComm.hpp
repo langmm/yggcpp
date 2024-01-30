@@ -16,7 +16,7 @@ namespace YggInterface {
     /**
      * @brief File based communicator
      */
-    class YGG_API FileComm : public CommBase<std::fstream> {
+    class FileComm : public CommBase<std::fstream> {
     public:
       /**
        * Constructor
@@ -26,14 +26,15 @@ namespace YggInterface {
        * @param[in] flgs Bitwise flags describing the communicator
        * @param[in] type The enumerated type of communicator to create
        */
-      explicit FileComm(const std::string name,
-			const utils::Address &address,
-			const DIRECTION direction = NONE,
-			FLAG_TYPE flgs = 0, const COMM_TYPE type = FILE_COMM);
+      YGG_API explicit FileComm(const std::string name,
+				const utils::Address &address,
+				const DIRECTION direction = NONE,
+				FLAG_TYPE flgs = 0,
+				const COMM_TYPE type = FILE_COMM);
       ADD_CONSTRUCTORS_BASE(FileComm, FILE_COMM, true)
 
       /** \copydoc YggInterface::communicator::Comm_t::comm_nmsg */
-      int comm_nmsg(DIRECTION dir=NONE) const override;
+      YGG_API int comm_nmsg(DIRECTION dir=NONE) const override;
       using Comm_t::send;
       using Comm_t::recv;
       

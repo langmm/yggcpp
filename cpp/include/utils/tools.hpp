@@ -175,15 +175,15 @@ static int global_thread_id = -1;
 /*! @brief Macro to define global vars to be used across thread */
 #if defined(_MSC_VER) && defined(_OPENMP)
 #define YGG_THREAD_GLOBAL_VAR(T, name, args)		\
-  extern YGG_API __declspec(thread) T name args;
+  extern __declspec(thread) T name args;
 #else // _MSC_VER
 #ifdef _OPENMP
 #define YGG_THREAD_GLOBAL_VAR(T, name, args)	\
-  extern YGG_API T name args;			\
+  extern T name args;			\
   _Pragma(STRINGIFY(omp threadprivate(name)))
 #else // _OPENMP
 #define YGG_THREAD_GLOBAL_VAR(T, name, args) \
-  extern YGG_API T name args;
+  extern T name args;
 #endif // _OPENMP
 #endif // _MSC_VER
 

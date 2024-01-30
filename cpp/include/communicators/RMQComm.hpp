@@ -108,7 +108,7 @@ namespace YggInterface {
     /**
      * @brief RabbitMQ based communicator
      */
-    class YGG_API RMQComm : public CommBase<RMQConnection> {
+    class RMQComm : public CommBase<RMQConnection> {
     public:
 
       /**
@@ -119,15 +119,20 @@ namespace YggInterface {
        * @param[in] flgs Bitwise flags describing the communicator
        * @param[in] commtype The enumerated type of communicator to create
        */
-      explicit RMQComm(const std::string name,
-		       const utils::Address& address,
-		       const DIRECTION direction=NONE, uint64_t flgs=0,
-		       const COMM_TYPE commtype=RMQ_COMM);
+      YGG_API explicit RMQComm(const std::string name,
+			       const utils::Address& address,
+			       const DIRECTION direction=NONE,
+			       uint64_t flgs=0,
+			       const COMM_TYPE commtype=RMQ_COMM);
       ADD_CONSTRUCTORS(RMQ)
 	
       /** \copydoc Comm_t::comm_nmsg */
-      int comm_nmsg(DIRECTION dir=NONE) const override;
+      YGG_API int comm_nmsg(DIRECTION dir=NONE) const override;
       
+      using Comm_t::send;
+      using Comm_t::recv;
+
+    protected:
       /** \copydoc Comm_t::send_single */
       int send_single(utils::Header& header) override;
 
@@ -136,9 +141,6 @@ namespace YggInterface {
 
       WORKER_METHOD_DECS(RMQComm);
       
-      using Comm_t::send;
-      using Comm_t::recv;
-
     };
     
   }

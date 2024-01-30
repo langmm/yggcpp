@@ -359,7 +359,7 @@ namespace YggInterface {
     /**
      * @brief Asynchonous communication class.
      **/
-    class YGG_API AsyncComm : public CommBase<AsyncBacklog> {
+    class AsyncComm : public CommBase<AsyncBacklog> {
     public:
       /**
        * @brief Constructor
@@ -375,13 +375,15 @@ namespace YggInterface {
        * @param[in] resflags Response communicator flags for RPC comm.
        * @see utils::Address
        **/
-      explicit AsyncComm(const std::string& name,
-			 const utils::Address& address,
-			 const DIRECTION direction = NONE, FLAG_TYPE flgs = 0,
-			 const COMM_TYPE type = DEFAULT_COMM,
-			 const COMM_TYPE reqtype = DEFAULT_COMM,
-			 const COMM_TYPE restype = DEFAULT_COMM,
-			 FLAG_TYPE reqflags = 0, FLAG_TYPE resflags = 0);
+      YGG_API explicit AsyncComm(const std::string& name,
+				 const utils::Address& address,
+				 const DIRECTION direction = NONE,
+				 FLAG_TYPE flgs = 0,
+				 const COMM_TYPE type = DEFAULT_COMM,
+				 const COMM_TYPE reqtype = DEFAULT_COMM,
+				 const COMM_TYPE restype = DEFAULT_COMM,
+				 FLAG_TYPE reqflags = 0,
+				 FLAG_TYPE resflags = 0);
       /**
        * @brief Constructor
        * @param[in] name The name of the communicator
@@ -393,12 +395,14 @@ namespace YggInterface {
        * @param[in] reqflags Request communicator flags for RPC comm.
        * @param[in] resflags Response communicator flags for RPC comm.
        **/
-      explicit AsyncComm(const std::string& name,
-			 const DIRECTION direction = NONE, FLAG_TYPE flgs = 0,
-			 const COMM_TYPE type = DEFAULT_COMM,
-			 const COMM_TYPE reqtype = DEFAULT_COMM,
-			 const COMM_TYPE restype = DEFAULT_COMM,
-			 FLAG_TYPE reqflags = 0, FLAG_TYPE resflags = 0);
+      YGG_API explicit AsyncComm(const std::string& name,
+				 const DIRECTION direction = NONE,
+				 FLAG_TYPE flgs = 0,
+				 const COMM_TYPE type = DEFAULT_COMM,
+				 const COMM_TYPE reqtype = DEFAULT_COMM,
+				 const COMM_TYPE restype = DEFAULT_COMM,
+				 FLAG_TYPE reqflags = 0,
+				 FLAG_TYPE resflags = 0);
       /**
        * @brief Constructor
        * @param[in] address The address to associate with the communicator,
@@ -412,28 +416,30 @@ namespace YggInterface {
        * @param[in] resflags Response communicator flags for RPC comm.
        * @see utils::Address
        **/
-      explicit AsyncComm(utils::Address& address,
-			 const DIRECTION direction = NONE, FLAG_TYPE flgs = 0,
-			 const COMM_TYPE type = DEFAULT_COMM,
-			 const COMM_TYPE reqtype = DEFAULT_COMM,
-			 const COMM_TYPE restype = DEFAULT_COMM,
-			 FLAG_TYPE reqflags = 0, FLAG_TYPE resflags = 0);
+      YGG_API explicit AsyncComm(utils::Address& address,
+				 const DIRECTION direction = NONE,
+				 FLAG_TYPE flgs = 0,
+				 const COMM_TYPE type = DEFAULT_COMM,
+				 const COMM_TYPE reqtype = DEFAULT_COMM,
+				 const COMM_TYPE restype = DEFAULT_COMM,
+				 FLAG_TYPE reqflags = 0,
+				 FLAG_TYPE resflags = 0);
       ADD_METHODS_BASE(AsyncComm, DEFAULT_COMM, true)
 
       /** \copydoc YggInterface::communicator::Comm_t::comm_nmsg */
-      int comm_nmsg(DIRECTION dir=NONE) const override;
+      YGG_API int comm_nmsg(DIRECTION dir=NONE) const override;
 #ifdef THREADSINSTALLED
       /** \copydoc YggInterface::communicator::Comm_t::wait_for_recv */
-      int wait_for_recv(const int64_t& tout) override;
+      YGG_API int wait_for_recv(const int64_t& tout) override;
 #endif // THREADSINSTALLED
       /** \copydoc YggInterface::communicator::Comm_t::getMetadata */
-      YggInterface::utils::Metadata& getMetadata(const DIRECTION dir=NONE) override;
+      YGG_API YggInterface::utils::Metadata& getMetadata(const DIRECTION dir=NONE) override;
       /** \copydoc YggInterface::communicator::Comm_t::set_timeout_recv */
-      void set_timeout_recv(int64_t new_timeout) override;
+      YGG_API void set_timeout_recv(int64_t new_timeout) override;
       /** \copydoc YggInterface::communicator::Comm_t::get_timeout_recv */
-      int64_t get_timeout_recv() const override;
+      YGG_API int64_t get_timeout_recv() const override;
       /** \copydoc YggInterface::utils::LogBase::logClass */
-      std::string logClass() const override;
+      YGG_API std::string logClass() const override;
       
       using Comm_t::send;
       using Comm_t::recv;
@@ -464,8 +470,8 @@ namespace YggInterface {
        *   JSON objects.
        * @return true if successful, flase otherwise.
        */
-      bool addResponseSchema(const std::string& s,
-			     bool use_generic=false);
+      YGG_API bool addResponseSchema(const std::string& s,
+				     bool use_generic=false);
       /**
        * @brief Add a schema to an RPC response communicator(s).
        * @param[in] s JSON schema.
@@ -473,8 +479,8 @@ namespace YggInterface {
        *   JSON objects.
        * @return true if successful, flase otherwise.
        */
-      bool addResponseSchema(const rapidjson::Value& s,
-			     bool use_generic=false);
+      YGG_API bool addResponseSchema(const rapidjson::Value& s,
+				     bool use_generic=false);
       /**
        * @brief Add a schema to an RPC response communicator(s).
        * @param[in] metadata Metadata to copy containing JSON schema.
@@ -482,8 +488,8 @@ namespace YggInterface {
        *   JSON objects.
        * @return true if successful, flase otherwise.
        */
-      bool addResponseSchema(const utils::Metadata& metadata,
-			     bool use_generic=false);
+      YGG_API bool addResponseSchema(const utils::Metadata& metadata,
+				     bool use_generic=false);
       /**
        * @brief Add a schema to an RPC response communicator based on a
        *   C-style format string.
@@ -492,8 +498,8 @@ namespace YggInterface {
        *   JSON objects.
        * @return true if successful, flase otherwise.
        */
-      bool addResponseFormat(const std::string& fmt,
-			     bool use_generic=false);
+      YGG_API bool addResponseFormat(const std::string& fmt,
+				     bool use_generic=false);
 
       friend class AsyncBacklog;
     };

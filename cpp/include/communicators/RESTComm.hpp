@@ -84,7 +84,7 @@ namespace YggInterface {
     /**
      * @brief REST API based communicator
      */
-    class YGG_API RESTComm : public CommBase<RESTConnection> {
+    class RESTComm : public CommBase<RESTConnection> {
     public:
 
       /**
@@ -95,15 +95,20 @@ namespace YggInterface {
        * @param[in] flgs Bitwise flags describing the communicator
        * @param[in] commtype The enumerated type of communicator to create
        */
-      explicit RESTComm(const std::string name,
-			const utils::Address& address,
-			const DIRECTION direction=NONE, FLAG_TYPE flgs=0,
-			const COMM_TYPE commtype=REST_COMM);
+      YGG_API explicit RESTComm(const std::string name,
+				const utils::Address& address,
+				const DIRECTION direction=NONE,
+				FLAG_TYPE flgs=0,
+				const COMM_TYPE commtype=REST_COMM);
       ADD_CONSTRUCTORS(REST)
 	
       /** \copydoc Comm_t::comm_nmsg */
-      int comm_nmsg(DIRECTION dir=NONE) const override;
+      YGG_API int comm_nmsg(DIRECTION dir=NONE) const override;
       
+      using Comm_t::send;
+      using Comm_t::recv;
+
+    protected:
       /** \copydoc Comm_t::send_single */
       int send_single(utils::Header& header) override;
 
@@ -112,9 +117,6 @@ namespace YggInterface {
 
       WORKER_METHOD_DECS(RESTComm);
       
-      using Comm_t::send;
-      using Comm_t::recv;
-
     };
     
   }

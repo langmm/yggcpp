@@ -60,7 +60,7 @@ enum MPI_STATUS_FLAG {
 /**
  * @brief MPI based communicator
  */
-class YGG_API MPIComm : public CommBase<mpi_registry_t> {
+class MPIComm : public CommBase<mpi_registry_t> {
 public:
     /**
      * @brief Constructor
@@ -72,21 +72,22 @@ public:
      * @param[in] type The communicator type
      * @see utils::Address
      */
-    MPIComm(const std::string& name,
-	    const utils::Address& address,
-	    const DIRECTION direction = NONE,
-	    FLAG_TYPE flgs = 0, const COMM_TYPE type = MPI_COMM);
+    YGG_API MPIComm(const std::string& name,
+		    const utils::Address& address,
+		    const DIRECTION direction = NONE,
+		    FLAG_TYPE flgs = 0,
+		    const COMM_TYPE type = MPI_COMM);
     ADD_CONSTRUCTORS(MPI)
 
 #if defined(MPIINSTALLED) && defined(MPI_COMM_WORLD)
     /*! \copydoc Comm_t::comm_nmsg */
-    int comm_nmsg(DIRECTION dir=NONE) const override;
+    YGG_API int comm_nmsg(DIRECTION dir=NONE) const override;
 
     /**
      * Get the communicator source id
      * @return
      */
-    int mpi_comm_source_id() const;
+    YGG_API int mpi_comm_source_id() const;
     using Comm_t::send;
     using Comm_t::recv;
 

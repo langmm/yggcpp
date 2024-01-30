@@ -61,11 +61,11 @@ const FLAG_TYPE COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
   void _close(bool call_base);						\
 public:									\
  /** @brief Open the communicator */					\
- void open() override;							\
+ YGG_API void open() override;						\
  /** @brief Close the communicator */					\
- void close() override;							\
+ YGG_API void close() override;						\
  /** @brief Destructor */						\
- ~cls() override;
+ YGG_API ~cls() override;
 #define ADD_DESTRUCTOR_DEF(cls, base, tempT, temp)			\
   tempT									\
   void cls temp::open() {						\
@@ -102,17 +102,17 @@ public:									\
   /** @param[in] dirn Enumerated communicator direction */		\
   /** @param[in] flgs Bitwise communicator flags */			\
   /** @param[in] type Enumerated communicator type */			\
-  explicit cls(const std::string& nme,					\
-	       const DIRECTION dirn,					\
-	       FLAG_TYPE flgs = 0, const COMM_TYPE type = typ);		\
+  YGG_API explicit cls(const std::string& nme,				\
+		       const DIRECTION dirn,				\
+		       FLAG_TYPE flgs = 0, const COMM_TYPE type = typ);	\
   /** @brief Constructor */						\
   /** @param[in] addr Communicator address. If empty, one will be generated */ \
   /** @param[in] dirn Enumerated communicator direction */		\
   /** @param[in] flgs Bitwise communicator flags */			\
   /** @param[in] type Enumerated communicator type */			\
-  explicit cls(utils::Address &addr,					\
-	       const DIRECTION dirn,					\
-	       FLAG_TYPE flgs = 0, const COMM_TYPE type = typ);		\
+  YGG_API explicit cls(utils::Address &addr,				\
+		       const DIRECTION dirn,				\
+		       FLAG_TYPE flgs = 0, const COMM_TYPE type = typ);	\
   ADD_METHODS_BASE(cls, typ, flag)
 #define ADD_CONSTRUCTORS_BASE(cls, typ, flag)				\
   ADD_CONSTRUCTORS_BASE_NOLOG(cls, typ, flag)				\
@@ -168,12 +168,12 @@ public:									\
   /** @param[in] restype Enumerated type of response comm (rpc only) */	\
   /** @param[in] reqflags Bitwise flags for request comm (rpc only) */	\
   /** @param[in] resflags Bitwise flags for response comm (rpc only) */	\
-  explicit cls(const std::string& nme,					\
-	       FLAG_TYPE flgs = 0, const COMM_TYPE type = defT,		\
-	       size_t ncomm = 0,					\
-	       const COMM_TYPE reqtype = DEFAULT_COMM,			\
-	       const COMM_TYPE restype = DEFAULT_COMM,			\
-	       FLAG_TYPE reqflags = 0, FLAG_TYPE resflags = 0);		\
+  YGG_API explicit cls(const std::string& nme,				\
+		       FLAG_TYPE flgs = 0, const COMM_TYPE type = defT,	\
+		       size_t ncomm = 0,				\
+		       const COMM_TYPE reqtype = DEFAULT_COMM,		\
+		       const COMM_TYPE restype = DEFAULT_COMM,		\
+		       FLAG_TYPE reqflags = 0, FLAG_TYPE resflags = 0);	\
   /** @brief Constructor */						\
   /** @param[in] addr Communicator address. If empty, one will be generated */ \
   /** @param[in] flgs Bitwise communicator flags */			\
@@ -184,12 +184,12 @@ public:									\
   /** @param[in] reqflags Bitwise flags for request comm (rpc only) */	\
   /** @param[in] resflags Bitwise flags for response comm (rpc only) */	\
   /** @see utils::Address */						\
-  explicit cls(utils::Address &addr,					\
-	       FLAG_TYPE flgs = 0, const COMM_TYPE type = defT,		\
-	       size_t ncomm = 0,					\
-	       const COMM_TYPE reqtype = DEFAULT_COMM,			\
-	       const COMM_TYPE restype = DEFAULT_COMM,			\
-	       FLAG_TYPE reqflags = 0, FLAG_TYPE resflags = 0);		\
+  YGG_API explicit cls(utils::Address &addr,				\
+		       FLAG_TYPE flgs = 0, const COMM_TYPE type = defT,	\
+		       size_t ncomm = 0,				\
+		       const COMM_TYPE reqtype = DEFAULT_COMM,		\
+		       const COMM_TYPE restype = DEFAULT_COMM,		\
+		       FLAG_TYPE reqflags = 0, FLAG_TYPE resflags = 0);	\
   ADD_DESTRUCTOR(cls, RPCComm)
 #define ADD_CONSTRUCTORS_RPC_DEF(cls)			\
   cls::cls(const std::string& nme,			\
@@ -327,19 +327,19 @@ class RequestList;
  * @brief Abstract base class for all communicators. Cannot be instantiated directly, but is used as a generalized hook
  * for passing communicators around. Should only be instantiated by the CommBase<> class.
  */
-class YGG_API Comm_t : public YggInterface::utils::LogBase {
+class Comm_t : public YggInterface::utils::LogBase {
 public:
     Comm_t(const Comm_t& other) = delete;
     Comm_t& operator=(const Comm_t&) = delete;
     Comm_t() = delete;
-    virtual ~Comm_t();
+    YGG_API virtual ~Comm_t();
 
     /**
      * @brief Check for equality with another communicator.
      * @param[in] rhs Communicator for comparison.
      * @return true if equal, false otherwise.
      */
-    bool operator==(const Comm_t& rhs) const;
+    YGG_API bool operator==(const Comm_t& rhs) const;
 
     /**
      * @brief Get a set of lines that should be used for a status message.
@@ -350,7 +350,7 @@ public:
      *   message.
      * @return Vector of lines in the message.
      */
-    virtual std::vector<std::string> get_status_message(
+    YGG_API virtual std::vector<std::string> get_status_message(
       unsigned int nindent=0,
       const std::vector<std::string>& extra_lines_before={},
       const std::vector<std::string>& extra_lines_after={}) const;
@@ -364,7 +364,7 @@ public:
      *   message.
      * @return The logged message.
      */
-    virtual std::string printStatus(
+    YGG_API virtual std::string printStatus(
       unsigned int nindent=0,
       const std::vector<std::string>& extra_lines_before={},
       const std::vector<std::string>& extra_lines_after={}) const;
@@ -377,7 +377,7 @@ public:
       @brief Send a message indicating that the communicator is closing.
       @returns int Values >= 0 indicate success.
      */
-     int send_eof() {
+     YGG_API int send_eof() {
        return send_raw(YGG_MSG_EOF, YGG_MSG_EOF_LEN);
      }
     /*!
@@ -388,7 +388,7 @@ public:
       @param[in] len Size of data in bytes.
       @returns int Values >= 0 indicate success.
      */
-    virtual int send_raw(const char *data, const size_t &len);
+    YGG_API virtual int send_raw(const char *data, const size_t &len);
     /*!
       @brief Send a rapidjson document through the communicator.
       @param[in] data Message.
@@ -396,7 +396,7 @@ public:
         expect a generic object in all future send calls.
       @returns int Values >= 0 indicate success.
      */
-    int send(const rapidjson::Document& data, bool not_generic=false);
+    YGG_API int send(const rapidjson::Document& data, bool not_generic=false);
     /*!
       @brief Send a rapidjson value through the communicator.
       @param[in] data Message.
@@ -404,7 +404,7 @@ public:
         expect a generic object in all future send calls.
       @returns int Values >= 0 indicate success.
      */
-    int send(const rapidjson::Value& data, bool not_generic=false);
+    YGG_API int send(const rapidjson::Value& data, bool not_generic=false);
     /*!
       @brief Send a set of objects through the communicator.
       @tparam T Type of first object being sent in message.
@@ -414,7 +414,7 @@ public:
         Values >= 0 indicate success.
     */
     template<typename T, typename... Args>
-    int sendVar(const T& data, Args... args) {
+    YGG_API int sendVar(const T& data, Args... args) {
       rapidjson::Document doc(rapidjson::kArrayType);
       return _sendVA(0, doc, data, args...);
     }
@@ -545,7 +545,7 @@ public:
       @param[in] len Size of data in bytes.
       @returns int Values >= 0 indicate success.
      */
-    int send(const char *data, const size_t &len);
+    YGG_API int send(const char *data, const size_t &len);
     /*!
       @brief Send a string message through the communicator.
       @param[in] data Message.
@@ -563,9 +563,9 @@ public:
 	C/C++ ordering.
       @returns int Values >= 0 indicate success.
      */
-    int send_dict(const rapidjson::Document& data,
-		  std::vector<std::string> key_order={},
-		  size_t dim = 1);
+    YGG_API int send_dict(const rapidjson::Document& data,
+			  std::vector<std::string> key_order={},
+			  size_t dim = 1);
 
     /*!
       @brief Send a message after coercing it to an ND structured array.
@@ -576,9 +576,9 @@ public:
         C/C++ ordering.
       @returns int Values >= 0 indicate success.
      */
-    int send_array(const rapidjson::Document& data,
-		   std::vector<std::string> key_order={},
-		   size_t dim = 1);
+    YGG_API int send_array(const rapidjson::Document& data,
+			   std::vector<std::string> key_order={},
+			   size_t dim = 1);
 
     //////////////////
     // RECV METHODS //
@@ -589,12 +589,12 @@ public:
       @param[in] new_timeout New time limit in micro-seconds. -1 will
         cause receive calls to block until a message is available.
      */
-    virtual void set_timeout_recv(int64_t new_timeout);
+    YGG_API virtual void set_timeout_recv(int64_t new_timeout);
     /*!
       @brief Get the time limit for receiving messages.
       @returns Timeout in micro-seconds.
      */
-    virtual int64_t get_timeout_recv() const;
+    YGG_API virtual int64_t get_timeout_recv() const;
     /*!
       @brief Wait until a message is available to be received or a time
         limit is reached.
@@ -603,7 +603,7 @@ public:
       @return Number of messages available for receive. -1 if an error
         occurred.
      */
-    virtual int wait_for_recv(const int64_t& tout);
+    YGG_API virtual int wait_for_recv(const int64_t& tout);
     /*!
       @brief Receive a raw string message from the communicator without
         performing transformations, normalization, filtering, setting the,
@@ -613,7 +613,7 @@ public:
       @returns -1 if message could not be received. Length of the
         received message if message was received.
     */
-    virtual long recv_raw(char*& data, const size_t &len);
+    YGG_API virtual long recv_raw(char*& data, const size_t &len);
     /*!
       @brief Receive a message as a rapidjson::Document.
       @param[out] data rapidjson document to populate with received data.
@@ -622,7 +622,7 @@ public:
       @returns -1 if message could not be received. Length of the
         received message if message was received.
     */
-    long recv(rapidjson::Document& data, bool not_generic=false);
+    YGG_API long recv(rapidjson::Document& data, bool not_generic=false);
     /*!
       @brief Receive a series of objects from the communicator.
       @tparam T Type of first object being received.
@@ -846,8 +846,8 @@ public:
       @returns -1 if message could not be received. Length of the
         received message if message was received.
     */
-    long recv(char*& data, const size_t &len,
-	      bool allow_realloc=false);
+    YGG_API long recv(char*& data, const size_t &len,
+		      bool allow_realloc=false);
     /*!
       @brief Receive a string message from the communicator.
       @tparam N The size of the message.
@@ -880,9 +880,9 @@ public:
       @returns -1 if message could not be received. Length of the
         received message if message was received.
      */
-    long recv_dict(rapidjson::Document& data,
-		   std::vector<std::string> key_order={},
-		   size_t dim = 1);
+    YGG_API long recv_dict(rapidjson::Document& data,
+			   std::vector<std::string> key_order={},
+			   size_t dim = 1);
 
     /*!
       @brief Receive a message after coercing it to a structured ND array.
@@ -894,9 +894,9 @@ public:
       @returns -1 if message could not be received. Length of the
         received message if message was received.
      */
-    long recv_array(rapidjson::Document& data,
-		    std::vector<std::string> key_order={},
-		    size_t dim = 1);
+    YGG_API long recv_array(rapidjson::Document& data,
+			    std::vector<std::string> key_order={},
+			    size_t dim = 1);
     
     /*!
       @brief Receive and parse a message into the provided arguments.
@@ -907,7 +907,7 @@ public:
       @return Integer specifying if the receive was succesful. Values >= 0
         indicate success.
     */
-    long recv(const int nargs, ...);
+    YGG_API long recv(const int nargs, ...);
     /*!
       @brief Receive and parse a message into the provided arguments,
         reallocating the memory pointed to by those arguments as necessary.
@@ -919,7 +919,7 @@ public:
       @return Integer specifying if the receive was succesful. Values >= 0
         indicate success.
     */
-    long recvRealloc(const int nargs, ...);
+    YGG_API long recvRealloc(const int nargs, ...);
     /*!
       @brief Send a message created by serializing the provided arugments.
       @param[in] nargs Number of arguments being passed.
@@ -927,7 +927,7 @@ public:
         message based on the datatype associated with this communicator.
       @returns 0 if send succesfull, -1 if send unsuccessful.
     */
-    int send(const int nargs, ...);
+    YGG_API int send(const int nargs, ...);
 
     /*!
       @brief Send a request and receive a response from the provided
@@ -942,7 +942,7 @@ public:
       @return Integer specifying if the receive was succesful.
         Values >= 0 indicate success.
     */
-    long call(const int nargs, ...);
+    YGG_API long call(const int nargs, ...);
     /*!
       @brief Send a request and receive a response from the provided
         arguments containing data for both the request and response.
@@ -955,7 +955,7 @@ public:
       @return Integer specifying if the receive was succesful.
         Values >= 0 indicate success.
     */
-    long callRealloc(const int nargs, ...);
+    YGG_API long callRealloc(const int nargs, ...);
   
     /*!
       @brief Receive a message into a list of variable arguments.
@@ -964,7 +964,7 @@ public:
       @return Integer specifying if the receive was succesful.
         Values >= 0 indicate success.
      */
-    long vRecv(rapidjson::VarArgList& ap);
+    YGG_API long vRecv(rapidjson::VarArgList& ap);
     /*!
       @brief Send a message containing a list of variable arguments.
       @param[in] ap Variable argument list that message will be
@@ -972,7 +972,7 @@ public:
       @return Integer specifying if the send was succesful.
         Values >= 0 indicate success.
      */
-    int vSend(rapidjson::VarArgList& ap);
+    YGG_API int vSend(rapidjson::VarArgList& ap);
 
     /*!
       @brief Send a request and receive a response in the forms of
@@ -983,7 +983,7 @@ public:
       @return Integer specifying if the send and receive were succesful.
         Values >= 0 indicate success.
     */
-    long call(const rapidjson::Document& sendData,
+    YGG_API long call(const rapidjson::Document& sendData,
 		      rapidjson::Document& recvData);
     /*!
       @brief Send a request and receive a response in the forms of
@@ -994,7 +994,7 @@ public:
       @return Integer specifying if the send and receive were succesful.
         Values >= 0 indicate success.
     */
-    long callVar(const rapidjson::Document& sendData,
+    YGG_API long callVar(const rapidjson::Document& sendData,
 			 rapidjson::Document& recvData) {
       return call(sendData, recvData);
     }
@@ -1008,30 +1008,30 @@ public:
       @return Integer specifying if the send and receive were succesful.
         Values >= 0 indicate success.
     */
-    virtual long vCall(rapidjson::VarArgList& ap);
+    YGG_API virtual long vCall(rapidjson::VarArgList& ap);
       
     /*!
       @brief Get the number of messages in the communicator.
       @param[in] dir Direction to check for messages in.
       @return Number of messages.
      */
-    virtual int comm_nmsg(DIRECTION dir=NONE) const VIRT_END;
+    YGG_API virtual int comm_nmsg(DIRECTION dir=NONE) const VIRT_END;
 
     /*!
       @brief Open the communicator.
      */
-    virtual void open() VIRT_END;
+    YGG_API virtual void open() VIRT_END;
 
     /*!
       @brief Close the communicator.
      */
-    virtual void close() VIRT_END;
+    YGG_API virtual void close() VIRT_END;
     
     /*!
       @brief Check if the communicator is closed.
       @return true if the communicator is closed, false otherwise.
      */
-    virtual bool is_closed() const VIRT_END;
+    YGG_API virtual bool is_closed() const VIRT_END;
 
     /*!
       @brief Check if the communicator is open.
@@ -1072,7 +1072,7 @@ public:
       @param[in] dir Direction to get metadata for.
       @return Metadata.
      */
-    virtual YggInterface::utils::Metadata& getMetadata(const DIRECTION dir=NONE);
+    YGG_API virtual YggInterface::utils::Metadata& getMetadata(const DIRECTION dir=NONE);
     /*!
       @brief Get a constant reference to the Metadata object containing
         header information about the comm including datatype.
@@ -1098,9 +1098,9 @@ public:
      */
     const std::string& getName() const { return name; }
     //! \copydoc YggInterface::utils::LogBase::logClass
-    std::string logClass() const override;
+    YGG_API std::string logClass() const override;
     //! \copydoc YggInterface::utils::LogBase::logInst
-    std::string logInst() const override;
+    YGG_API std::string logInst() const override;
     /*!
       @brief Get the communicator's address.
       @returns Address.
@@ -1130,7 +1130,7 @@ public:
       @param[in] new_lang New communicator language code.
       @returns false if there is an error, true otherwise.
      */
-    bool setLanguage(LANGUAGE new_lang=NO_LANGUAGE);
+    YGG_API bool setLanguage(LANGUAGE new_lang=NO_LANGUAGE);
     /*!
       @brief Get the maximum size (in bytes) for individual messages.
         Messages larger than this size will be split into multiple parts.
@@ -1164,7 +1164,8 @@ public:
      * @param dir Direction of comm to set the schema for (RPC only).
      * @return true if successful, false otherwise.
      */
-    bool addSchema(const utils::Metadata& s, const DIRECTION dir=NONE);
+    YGG_API bool addSchema(const utils::Metadata& s,
+			   const DIRECTION dir=NONE);
     /*!
      * Add a schema based on the Value given
      * @param s The value to use
@@ -1172,8 +1173,9 @@ public:
      * @param dir Direction of comm to set the schema for (RPC only).
      * @return true if successful, false otherwise.
      */
-    bool addSchema(const rapidjson::Value& s, bool isMetadata = false,
-		   const DIRECTION dir=NONE);
+    YGG_API bool addSchema(const rapidjson::Value& s,
+			   bool isMetadata = false,
+			   const DIRECTION dir=NONE);
     /*!
      * Add a schema based on the given string
      * @param schemaStr String representation of schema to use
@@ -1181,8 +1183,9 @@ public:
      * @param dir Direction of comm to set the schema for (RPC only).
      * @return true if successful, false otherwise.
      */
-    bool addSchema(const std::string& schemaStr, bool isMetadata = false,
-		   const DIRECTION dir=NONE);
+    YGG_API bool addSchema(const std::string& schemaStr,
+			   bool isMetadata = false,
+			   const DIRECTION dir=NONE);
     /*!
      * Get metadata based on the format string
      * @param format_str The format to use
@@ -1192,17 +1195,19 @@ public:
      * @param dir Direction of comm to set the schema for (RPC only).
      * @return true if successful, false otherwise.
      */
-    bool addFormat(const std::string& format_str, bool as_array = false,
-		   const std::vector<std::string>& field_names = {},
-		   const std::vector<std::string>& field_units = {},
-		   const DIRECTION dir=NONE);
+    YGG_API bool addFormat(const std::string& format_str,
+			   bool as_array = false,
+			   const std::vector<std::string>& field_names = {},
+			   const std::vector<std::string>& field_units = {},
+			   const DIRECTION dir=NONE);
     /*!
      * @brief Copy a schema from another communicator
      * @param other THe communicator to use
      * @param dir Direction of comm to set the schema for (RPC only).
      * @return true if successful, false otherwise.
      */
-    bool copySchema(const Comm_t* other, const DIRECTION dir=NONE);
+    YGG_API bool copySchema(const Comm_t* other,
+			    const DIRECTION dir=NONE);
     /*!
      * @brief Set the filters used to select messages. This removes any
      *   existing filters
@@ -1517,7 +1522,8 @@ protected:
      * @see utils::Address
      */
     virtual Comm_t* create_worker(utils::Address& address,
-                                  const DIRECTION dir, FLAG_TYPE flgs) VIRT_END;
+				  const DIRECTION dir,
+				  FLAG_TYPE flgs) VIRT_END;
     /*!
      * @brief Create a worker for sending
      * @param[in] head The header to use
@@ -1559,17 +1565,20 @@ protected:
     explicit Comm_t(const std::string &name,
 		    const utils::Address &address,
 		    const DIRECTION direction = NONE,
-		    const COMM_TYPE &t = NULL_COMM, FLAG_TYPE flgs = 0);
+		    const COMM_TYPE &t = NULL_COMM,
+		    FLAG_TYPE flgs = 0);
 
-    /*!
+    /**
      * @brief Constructor
      * @param[in] name The name of communicator
      * @param[in] dir Whether this instance is a sender or receiver
      * @param[in] t Enumerated communicator type
      * @param[in] flgs Initial bitwise flags
      */
-    explicit Comm_t(const std::string& name, const DIRECTION dir = NONE,
-                    const COMM_TYPE &t = NULL_COMM, FLAG_TYPE flgs = 0);
+    explicit Comm_t(const std::string& name,
+			    const DIRECTION dir = NONE,
+			    const COMM_TYPE &t = NULL_COMM,
+			    FLAG_TYPE flgs = 0);
     /**
      * @brief Checks the size of the message to see if it exceeds the maximum allowable size as define by YGG_MSG_MAX
      * @param[in] len The length of the message to check
@@ -1737,7 +1746,7 @@ public:
     ADD_DESTRUCTOR(CommBase, Comm_t);
 
     /*! \copydoc YggInterface::communicator::Comm_t::is_closed */
-    bool is_closed() const override;
+    YGG_API bool is_closed() const override;
 
     using Comm_t::send;
     using Comm_t::recv;

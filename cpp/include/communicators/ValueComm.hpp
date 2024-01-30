@@ -63,7 +63,7 @@ namespace YggInterface {
     /**
      * @brief Value based communicator
      */
-    class YGG_API ValueComm : public CommBase<ValueManager> {
+    class ValueComm : public CommBase<ValueManager> {
     public:
       
       /**
@@ -74,22 +74,15 @@ namespace YggInterface {
        * @param[in] flgs Bitwise flags describing the communicator
        * @param[in] commtype The enumerated type of communicator to create
        */
-      explicit ValueComm(const std::string name,
-			 const utils::Address& address,
-			 const DIRECTION direction=NONE, FLAG_TYPE flgs=0,
-			 const COMM_TYPE commtype=VALUE_COMM);
+      YGG_API explicit ValueComm(const std::string name,
+				 const utils::Address& address,
+				 const DIRECTION direction=NONE,
+				 FLAG_TYPE flgs=0,
+				 const COMM_TYPE commtype=VALUE_COMM);
       ADD_CONSTRUCTORS_BASE(ValueComm, VALUE_COMM, true)
 	
       /** \copydoc Comm_t::comm_nmsg */
-      int comm_nmsg(DIRECTION dir=NONE) const override;
-      
-      /** \copydoc Comm_t::send_single */
-      int send_single(utils::Header& header) override;
-
-      /** \copydoc Comm_t::recv_single */
-      long recv_single(utils::Header& header) override;
-
-      WORKER_METHOD_DECS(ValueComm);
+      YGG_API int comm_nmsg(DIRECTION dir=NONE) const override;
       
       using Comm_t::send;
       using Comm_t::recv;
@@ -107,6 +100,15 @@ namespace YggInterface {
 	handle->update(value, count);
 	return true;
       }
+
+    protected:
+      /** \copydoc Comm_t::send_single */
+      int send_single(utils::Header& header) override;
+
+      /** \copydoc Comm_t::recv_single */
+      long recv_single(utils::Header& header) override;
+
+      WORKER_METHOD_DECS(ValueComm);
       
     };
   }

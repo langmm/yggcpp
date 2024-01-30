@@ -69,7 +69,7 @@ typedef struct ply_t {
   @brief Initialize an empty generic object.
   @returns generic_t New generic object structure.
  */
-generic_t init_generic();
+YGG_API generic_t init_generic();
 
 /*!
   @brief Initialize an empty generic reference object.
@@ -970,11 +970,11 @@ YGG_API int update_precision_dtype(dtype_t* dtype,
 #define display_schema display_generic
 
 #define GEOM_INTERFACE(name)						\
-  name ## _t init_ ## name();						\
-  name ## _t generate_ ## name();					\
+  YGG_API name ## _t init_ ## name();					\
+  YGG_API name ## _t generate_ ## name();				\
   YGG_API void free_ ## name(name ## _t *p);				\
   YGG_API void set_ ## name(name ## _t* x, void* obj, int copy);	\
-  name ## _t copy_ ## name(name ## _t src);				\
+  YGG_API name ## _t copy_ ## name(name ## _t src);			\
   YGG_API void display_ ## name ## _indent(name ## _t p, const char* indent); \
   YGG_API void display_ ## name(name ## _t p);				\
   YGG_API int nelements_ ## name(name ## _t p, const char* name);	\

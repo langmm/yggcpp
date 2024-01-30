@@ -23,7 +23,7 @@ namespace utils {
   /*!
    * @brief Class for logging
    */
-  class YGG_API YggdrasilLogger {
+  class YggdrasilLogger {
   public:
     /*!
      * @brief Construnctor
@@ -31,16 +31,16 @@ namespace utils {
      * @param[in] lvl The level to log at (i.e. any messages at or above this level will be logged)
      * @param[in] is_err
      */
-    YggdrasilLogger(std::string nme, size_t lvl, bool is_err=false);
+    YGG_API YggdrasilLogger(std::string nme, size_t lvl, bool is_err=false);
     /*!
      * @brief Copy constructor
      * @param[in] rhs Logger to copy
      */
-    YggdrasilLogger(YggdrasilLogger const & rhs);
+    YGG_API YggdrasilLogger(YggdrasilLogger const & rhs);
     /*!
      * @brief Destructor
      */
-    ~YggdrasilLogger();
+    YGG_API ~YggdrasilLogger();
     std::string name;  /**< The logger name */
     size_t level;      /**< The minimum logging level */
     bool is_error;     /**< Is the logger used for errors */
@@ -86,28 +86,28 @@ namespace utils {
    * @brief Reports an error to the log, the raises the error as an exception
    * @param msg
    */
-  void YggLogThrowError(const std::string& msg);
+  YGG_API void YggLogThrowError(const std::string& msg);
   /**
    * @brief Format a string based on a C-style format string
    * @param[in] fmt C-Style format string
    */
-  std::string string_format(const std::string fmt, ...);
+  YGG_API std::string string_format(const std::string fmt, ...);
   /**
    * @brief Format a string based on a C-style format string
    * @param[in] fmt C-Style format string
    * @param[in] op Variable argument list to use if formatting
    */
-  std::string string_format_va(const std::string fmt, va_list op);
+  YGG_API std::string string_format_va(const std::string fmt, va_list op);
 
   /**
    * @brief Base class for loggers
    */
-  class YGG_API LogBase {
+  class LogBase {
   public:
     /** @brief Constructor */
-    LogBase() {}
+    YGG_API LogBase() {}
     /** @brief Destructor */
-    virtual ~LogBase() {}
+    YGG_API virtual ~LogBase() {}
     /**
      * @brief A string describing the class
      * @return Description

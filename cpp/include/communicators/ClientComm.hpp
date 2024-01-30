@@ -11,7 +11,7 @@ namespace communicator {
  * is determined at compile time based on available packages. It will be either
  * an IPCComm or ZMQComm
  */
-class YGG_API ClientComm : public RPCComm {
+class ClientComm : public RPCComm {
 public:
     /**
      * @brief Constructor
@@ -27,29 +27,31 @@ public:
      * @param[in] resflags Bitwise flags describing the response communicator.
      * @see utils::Address
      */
-    explicit ClientComm(const std::string& name,
-			const utils::Address &address,
-			FLAG_TYPE flgs = 0, const COMM_TYPE type = CLIENT_COMM,
-			size_t ncomm = 0,
-			const COMM_TYPE reqtype = DEFAULT_COMM,
-			const COMM_TYPE restype = DEFAULT_COMM,
-			FLAG_TYPE reqflags = 0, FLAG_TYPE resflags = 0);
+    YGG_API explicit ClientComm(const std::string& name,
+				const utils::Address &address,
+				FLAG_TYPE flgs = 0,
+				const COMM_TYPE type = CLIENT_COMM,
+				size_t ncomm = 0,
+				const COMM_TYPE reqtype = DEFAULT_COMM,
+				const COMM_TYPE restype = DEFAULT_COMM,
+				FLAG_TYPE reqflags = 0,
+				FLAG_TYPE resflags = 0);
     ADD_CONSTRUCTORS_RPC(ClientComm, CLIENT_COMM)
 
     /** \copydoc YggInterface::communicator::Comm_t::logClass */
-    std::string logClass() const override;
+    YGG_API std::string logClass() const override;
     /** \copydoc YggInterface::communicator::Comm_t::comm_nmsg */
-    int comm_nmsg(DIRECTION dir=NONE) const override;
+    YGG_API int comm_nmsg(DIRECTION dir=NONE) const override;
     /** \copydoc YggInterface::communicator::Comm_t::set_timeout_recv */
-    void set_timeout_recv(int64_t new_timeout) override;
+    YGG_API void set_timeout_recv(int64_t new_timeout) override;
     /** \copydoc YggInterface::communicator::Comm_t::get_timeout_recv */
-    int64_t get_timeout_recv() const override;
+    YGG_API int64_t get_timeout_recv() const override;
 
     /**
      * @brief Connect the client to the server
      * @return true if successful, false otherwise
      */
-    virtual bool signon();
+    YGG_API virtual bool signon();
     /**
      * @brief Send a signon message to the server.
      * @param[in] nloop Number of loops completed in signon.
@@ -59,8 +61,8 @@ public:
      *   signon messages.
      * @return true if successful, false otherwise
      */
-    bool send_signon(int nloop, int interval=3,
-		     Comm_t* async_comm = nullptr);
+    YGG_API bool send_signon(int nloop, int interval=3,
+			     Comm_t* async_comm = nullptr);
 
     using RPCComm::send;
     using RPCComm::recv;

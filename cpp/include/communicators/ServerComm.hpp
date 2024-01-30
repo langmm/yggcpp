@@ -13,7 +13,7 @@ namespace communicator {
  * is determined at compile time based on available packages. It will be either
  * an IPCComm or ZMQComm
  */
-class YGG_API ServerComm : public RPCComm {
+class ServerComm : public RPCComm {
 public:
     /**
      * @brief Constructor
@@ -29,20 +29,22 @@ public:
      * @param[in] resflags Bitwise flags describing the response communicator.
      * @see utils::Address
      */
-    explicit ServerComm(const std::string& name,
-			const utils::Address& address,
-			FLAG_TYPE flgs = 0, const COMM_TYPE type = SERVER_COMM,
-			size_t ncomm = 0,
-			const COMM_TYPE reqtype = DEFAULT_COMM,
-			const COMM_TYPE restype = DEFAULT_COMM,
-			FLAG_TYPE reqflags = 0, FLAG_TYPE resflags = 0);
+    YGG_API explicit ServerComm(const std::string& name,
+				const utils::Address& address,
+				FLAG_TYPE flgs = 0,
+				const COMM_TYPE type = SERVER_COMM,
+				size_t ncomm = 0,
+				const COMM_TYPE reqtype = DEFAULT_COMM,
+				const COMM_TYPE restype = DEFAULT_COMM,
+				FLAG_TYPE reqflags = 0,
+				FLAG_TYPE resflags = 0);
     ADD_CONSTRUCTORS_RPC(ServerComm, SERVER_COMM)
 
     using RPCComm::send;
     using RPCComm::recv;
 
     // \copydoc Comm_t::logClass
-    std::string logClass() const override;
+    YGG_API std::string logClass() const override;
     
 protected:
 
