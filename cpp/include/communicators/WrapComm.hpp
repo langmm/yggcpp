@@ -21,6 +21,8 @@ namespace YggInterface {
      * @brief Wrapper for a generic communicator.
      */
     class WrapComm : public CommBase<Comm_t> {
+      WrapComm(const WrapComm&) = delete;
+      WrapComm& operator=(const WrapComm&) = delete;
     public:
       /**
        * Constructor
@@ -86,6 +88,8 @@ namespace YggInterface {
        * @param[in] comm Communicator to wrap
        */
       YGG_API explicit WrapComm(Comm_t* comm);
+      /** @brief Destructor */
+      YGG_API ~WrapComm() override;
       
       /** \copydoc YggInterface::communicator::Comm_t::defaultCommType */
       static COMM_TYPE defaultCommType() { return DEFAULT_COMM; }
@@ -97,22 +101,20 @@ namespace YggInterface {
        * @return Wrapped communicator
        */
       Comm_t* getWrapped() { return handle; }
-      /** @brief Destructor */
-      ~WrapComm() override {}
 
     protected:
 
       /** @brief Initialize properties from the wrapped communicator */
-      void fromComm();
+      YGG_API void fromComm();
       /**
        * @brief Check if the wrapped communicator is initialized
        * @return true if initialized, false otherwise
        */
       YGG_API virtual bool checkWrapped() const;
       /** \copydoc YggInterface::communicator::Comm_t::_open */
-      void _open(bool call_base);
+      YGG_API void _open(bool call_base);
       /** \copydoc YggInterface::communicator::Comm_t::_close */
-      void _close(bool call_base);
+      YGG_API void _close(bool call_base);
       
     public:
       WRAP_METHOD(comm_nmsg, (DIRECTION dir=NONE), (dir),

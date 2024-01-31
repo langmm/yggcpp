@@ -1,4 +1,7 @@
 
+/*! @brief Global copy of rapidjson import of numpy PyArray_API */
+int rapidjson_NUMPY_IMPORTED = 0
+
 #ifdef YGGDRASIL_DISABLE_PYTHON_C_API
 
 RAPIDJSON_WRAPPER_DEFS_ bool YggInterface::utils::initialize_python(const std::string) {
@@ -29,6 +32,9 @@ RAPIDJSON_WRAPPER_DEFS_ PyObject* YggInterface::utils::import_python_element(
 RAPIDJSON_WRAPPER_DEFS_ bool YggInterface::utils::initialize_python(const std::string error_prefix) {
   try {
     rapidjson::initialize_python(error_prefix);
+#if !defined(RAPIDJSON_DONT_IMPORT_NUMPY) && defined(RAPIDJSON_FORCE_IMPORT_ARRAY)
+    rapidjson_NUMPY_IMPORTED = 1;
+#endif
   } catch (std::exception& e) {
     YggLogError << e.what() << std::endl;
     return false;
@@ -53,6 +59,9 @@ RAPIDJSON_WRAPPER_DEFS_ bool YggInterface::utils::import_numpy_arrays() {
       return false;
     }
     rapidjson::init_numpy_API();
+#if !defined(RAPIDJSON_DONT_IMPORT_NUMPY) && defined(RAPIDJSON_FORCE_IMPORT_ARRAY)
+    rapidjson_NUMPY_IMPORTED = 1;
+#endif
   } catch (std::exception& e) {
     YggLogError << e.what() << std::endl;
     return false;
@@ -61,10 +70,11 @@ RAPIDJSON_WRAPPER_DEFS_ bool YggInterface::utils::import_numpy_arrays() {
 }
 
 RAPIDJSON_WRAPPER_DEFS_ bool YggInterface::utils::numpy_arrays_imported() {
-  bool out = false;
-  if (rapidjson_ARRAY_API)
-    out = true;
-  return out;
+  return (rapidjson_NUMPY_IMPORTED == 1);
+  // bool out = false;
+  // if (rapidjson_ARRAY_API)
+  //   out = true;
+  // return out;
 }
 
 RAPIDJSON_WRAPPER_DEFS_ PyObject* YggInterface::utils::import_python_element(

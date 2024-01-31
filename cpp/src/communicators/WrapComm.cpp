@@ -66,6 +66,8 @@ WrapComm::WrapComm(Comm_t* comm) :
   fromComm();
 }
 
+WrapComm::~WrapComm() {}
+
 // std::string WrapComm::logClass() const {
 //   std::string out = CommBase::logClass();
 //   out += "[WRAPPER]";

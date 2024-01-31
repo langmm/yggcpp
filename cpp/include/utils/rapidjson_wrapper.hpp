@@ -5,6 +5,8 @@
 #include <winsock2.h>
 #endif
 
+#include "YggInterface_export.h"
+
 #include <vector>
 #include <string>
 #include <iostream>
@@ -1279,14 +1281,25 @@ namespace YggInterface {
       PyObject* getPython() const override { return this->func_; }
 #endif // YGGDRASIL_DISABLE_PYTHON_C_API
     };
+#ifdef YGG_LINK_PYTHON_TO_CPP
+// definitions are in the header and don't need to be exported
+#define YGG_RJ_API
+#else
+#define YGG_RJ_API YGG_API
+#endif
 
+#ifdef YGG_LINK_PYTHON_TO_CPP
+    /*! @brief Global copy of rapidjson import of numpy PyArray_API */
+    YGG_RJ_API extern int rapidjson_NUMPY_IMPORTED;
+#endif
+    
     /*!
       @brief Initialize the Python API.
       @param[in] error_prefix Prefix to add to error message describine
         the context from which the function was called.
       @return true if successful, false otherwise.
      */
-    YGG_API bool initialize_python(const std::string error_prefix="");
+    YGG_RJ_API bool initialize_python(const std::string error_prefix="");
     
     /*!
       @brief Finalize the Python API.
@@ -1294,19 +1307,19 @@ namespace YggInterface {
         the context from which the function was called.
       @return true if successful, false otherwise.
      */
-    YGG_API bool finalize_python(const std::string error_prefix="");
+    YGG_RJ_API bool finalize_python(const std::string error_prefix="");
     
     /*!
       @brief Import numpy arrays.
       @return true if successful, false otherwise.
      */
-    YGG_API bool import_numpy_arrays();
+    YGG_RJ_API bool import_numpy_arrays();
 
     /*!
       @brief Determine if numpy arrays are enabled.
       @return true if successful, false otherwise.
     */
-    YGG_API bool numpy_arrays_imported();
+    YGG_RJ_API bool numpy_arrays_imported();
 
     /*!
       @brief Import a Python function or class.
@@ -1318,10 +1331,10 @@ namespace YggInterface {
       @param[in] ignore_error If true, no error will be logged.
       @return The Python function or class. NULL indicates an error.
      */
-    YGG_API PyObject* import_python_element(const std::string& module,
-					    const std::string& element,
-					    const std::string error_prefix="",
-					    const bool ignore_error=false);
+    YGG_RJ_API PyObject* import_python_element(const std::string& module,
+					       const std::string& element,
+					       const std::string error_prefix="",
+					       const bool ignore_error=false);
 
   }
 }
