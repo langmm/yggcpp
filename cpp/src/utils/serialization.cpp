@@ -108,6 +108,11 @@ bool Metadata::_init(bool use_generic) {
 //   *this = rhs;
 //   metadata = rhs.metadata;
 // }
+Metadata::~Metadata() {
+  if (raw_schema) resetRawSchema();
+  reset_filters();
+  reset_transforms();
+}
 #if RAPIDJSON_HAS_CXX11_RVALUE_REFS
 Metadata::Metadata(Metadata&& rhs) noexcept :
   metadata(), raw_schema(NULL),
@@ -143,6 +148,9 @@ bool Metadata::operator==(const Metadata& rhs) const {
 }
 bool Metadata::operator!=(const Metadata& rhs) const {
   return (!(*this == rhs));
+}
+Metadata& Metadata::Move() {
+  return *this;
 }
 bool Metadata::CopyFrom(const Metadata& rhs) {
   metadata.CopyFrom(rhs.metadata, GetAllocator(), true);

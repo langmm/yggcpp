@@ -97,6 +97,8 @@ namespace YggInterface {
        * @return Wrapped communicator
        */
       Comm_t* getWrapped() { return handle; }
+      /** @brief Destructor */
+      YGG_API ~WrapComm() override {}
 
     protected:
 

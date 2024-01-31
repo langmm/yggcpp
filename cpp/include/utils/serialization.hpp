@@ -76,11 +76,7 @@ public:
   /*!
    * @brief Destructor
    */
-  virtual ~Metadata() {
-    if (raw_schema) resetRawSchema();
-    reset_filters();
-    reset_transforms();
-  }
+  YGG_API virtual ~Metadata();
   // Metadata(Metadata& rhs);
 #if RAPIDJSON_HAS_CXX11_RVALUE_REFS
     /*!
@@ -121,7 +117,7 @@ public:
    * @brief Move this instance to another instance
    * @return Pointer to this instance
    */
-  virtual Metadata& Move() { return *this; }
+  YGG_API virtual Metadata& Move();
   /*!
    * @brief Copy metadata from the input to this instance
    * @param[in] rhs Metqdata instance to copy from

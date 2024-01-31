@@ -151,7 +151,7 @@ public:
   /*!
     @brief Reset the last port.
    */
-  static void resetPort();
+  YGG_API static void resetPort();
 };
 
 /*!
@@ -163,30 +163,30 @@ public:
      * @brief Constructor
      * @param dir The direction for the reply
      */
-  explicit ZMQReply(DIRECTION dir);
+  YGG_API explicit ZMQReply(DIRECTION dir);
 #ifdef ZMQINSTALLED
   /*!
    * @brief Clear the socket
    */
-  void clear();
+  YGG_API void clear();
   /*!
    * @brief Create an endpoint
    * @param[in] endpoint The name of the endpoint
    * @return The index of the endpoint
    */
-  int create(std::string& endpoint);
+  YGG_API int create(std::string& endpoint);
   /*!
    * @brief Find an endpoint
    * @param[in] endpoint The endpoint to find
    * @return The index of the endpoint, or -1 on error
    */
-  int find(std::string endpoint);
+  YGG_API int find(std::string endpoint);
   /*!
    * @brief Set which endpoint to use
    * @param[in] endpoint The name of the endpoint to use
    * @return The index of the enpoint
    */
-  int set(std::string endpoint = "");
+  YGG_API int set(std::string endpoint = "");
   /*!
    * Receive a message
    * @param[out] msg_send Where to put the message
@@ -194,13 +194,13 @@ public:
    *   comm can be stored.
    * @return true on success
    */
-  bool recv(std::string msg_send="", bool* closed=nullptr);
+  YGG_API bool recv(std::string msg_send="", bool* closed=nullptr);
   /*!
    * @brief Receive the message
    * @param[in] msg_send where to put the message
    * @return true on success
    */
-  bool recv_stage1(std::string msg_send="");
+  YGG_API bool recv_stage1(std::string msg_send="");
   /*!
    * @brief Receive the message
    * @param[in] msg_send where to put the message
@@ -208,24 +208,24 @@ public:
    *   comm can be stored.
    * @return true on success
    */
-  bool recv_stage2(std::string msg_send="", bool* closed=nullptr);
+  YGG_API bool recv_stage2(std::string msg_send="", bool* closed=nullptr);
   /*!
    * @brief Send a message
    * @return true on success
    */
-  bool send();
-  /*!
-   * @brief Send a message
-   * @param[out] msg_data Reply from endpoint
-   * @return true on success
-   */
-  bool send_stage1(std::string& msg_data);
+  YGG_API bool send();
   /*!
    * @brief Send a message
    * @param[out] msg_data Reply from endpoint
    * @return true on success
    */
-  bool send_stage2(const std::string& msg_data);
+  YGG_API bool send_stage1(std::string& msg_data);
+  /*!
+   * @brief Send a message
+   * @param[out] msg_data Reply from endpoint
+   * @return true on success
+   */
+  YGG_API bool send_stage2(const std::string& msg_data);
 #endif // ZMQINSTALLED
   /*! \copydoc YggInterface::utils::LogBase::logClass */
   std::string logClass() const override { return "ZMQReply"; }
