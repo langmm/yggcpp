@@ -1,6 +1,6 @@
 
 /*! @brief Global copy of rapidjson import of numpy PyArray_API */
-int rapidjson_NUMPY_IMPORTED = 0
+int rapidjson_NUMPY_IMPORTED = 0;
 
 #ifdef YGGDRASIL_DISABLE_PYTHON_C_API
 
