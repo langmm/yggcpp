@@ -9,6 +9,7 @@ extern "C" {
 #endif
 
 #define FLAG_TYPE int64_t
+#define HEAD_FLAG_TYPE int
   
 // If any of these are updated they must be also be updated in
 //   fortran/YggInterface.F90
@@ -116,7 +117,11 @@ enum LANGUAGE {
 };
   
 /*! @brief Bit flags describing message state. */
-enum HeadFlags {
+enum HeadFlags
+#ifdef __cplusplus
+: HEAD_FLAG_TYPE
+#endif // __cplusplus
+  {
   HEAD_FLAG_VALID           = 0x00000001, //!< Message is valid
   HEAD_FLAG_MULTIPART       = 0x00000002, //!< Message is multipart
   HEAD_META_IN_DATA         = 0x00000004, //!< Type in message body

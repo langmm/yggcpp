@@ -16,9 +16,6 @@ lowers = {
 replacements = {
     'LANGUAGE': {'no': ''},
 }
-requires_int64 = {
-    'COMM_FLAG': True,
-}
 no_map = []
 no_map_item = {}
 no_fortran = [
@@ -30,6 +27,10 @@ no_fortran = [
 ]
 no_fortran_item = {
     'COMM_FLAG': ['COMM_FLAG_MAX'],
+}
+types_cxx = {
+    'COMM_FLAG': 'int64_t',
+    'HeadFlags': 'int',
 }
 
 
@@ -179,13 +180,14 @@ def generate_fortran_c_header(enums, dst=None):
         ''
     ]
     for name, members in enums.items():
-        if not requires_int64.get(name, False):
+        tname = types_cxx.get(name, 'int')
+        if tname == 'int':
             continue
         lines.append('')
         for x in members:
             if x['name'] in no_fortran_item.get(name, []):
                 continue
-            lines.append(f"  FYGG_API extern const int64_t {x['name']}_F;")
+            lines.append(f"  FYGG_API extern const {tname} {x['name']}_F;")
         lines.append('')
     lines += [
         '',
@@ -214,14 +216,15 @@ def generate_fortran_c_src(enums, dst=None):
         ''
     ]
     for name, members in enums.items():
-        if not requires_int64.get(name, False):
+        tname = types_cxx.get(name, 'int')
+        if tname == 'int':
             continue
         lines.append('')
         for x in members:
             if x['name'] in no_fortran_item.get(name, []):
                 continue
             lines.append(
-                f"  const int64_t {x['name']}_F = {x['name']};")
+                f"  const {tname} {x['name']}_F = {x['name']};")
         lines.append('')
     lines += [
         '',
@@ -242,12 +245,13 @@ def generate_fortran_c(enums, dst=None):
     ]
     for name, members in enums.items():
         lines.append('')
-        if requires_int64.get(name, False):
+        tname = types_cxx.get(name, 'int')
+        if tname != 'int':
             for x in members:
                 if x['name'] in no_fortran_item.get(name, []):
                     continue
                 lines.append(
-                    f"  integer(kind=c_int64_t), protected, "
+                    f"  integer(kind=c_{tname}), protected, "
                     f"bind(c, name=\"{x['name']}_F\") :: {x['name']}")
         else:
             lines += [
@@ -279,15 +283,15 @@ def generate_fortran(enums, dst=None):
     ]
     for name, members in enums.items():
         lines.append('')
-        if requires_int64.get(name, False):
-            # lines.append(
-            #     '  integer, parameter :: i8 = selected_int_kind(R=19)')
+        tname = types_cxx.get(name, 'int')
+        if tname != 'int':
+            tsuffix = tname.split('_')[0]
             for x in members:
                 if x['name'] in no_fortran_item.get(name, []):
                     continue
                 lines.append(
-                    f"  integer(kind=int64), parameter :: "
-                    f"{x['name']} = {x['val']}_int64")
+                    f"  integer(kind={tsuffix}), parameter :: "
+                    f"{x['name']} = {x['val']}_{tsuffix}")
         else:
             lines += [
                 '  enum, bind( C )',

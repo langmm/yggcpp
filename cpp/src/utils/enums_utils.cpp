@@ -4,8 +4,8 @@
 #include <iostream>
 #include <algorithm>
 
-int HEAD_BUFFER_MASK = (HEAD_FLAG_ALLOW_REALLOC |
-			HEAD_FLAG_OWNSDATA);
+HEAD_FLAG_TYPE HEAD_BUFFER_MASK = (HEAD_FLAG_ALLOW_REALLOC |
+				   HEAD_FLAG_OWNSDATA);
 
 std::string YggInterface::utils::str_toupper(const std::string& inStr) {
   std::string outStr(inStr);

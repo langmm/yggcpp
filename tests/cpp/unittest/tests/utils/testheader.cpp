@@ -674,7 +674,7 @@ TEST(Header, for_send) {
   EXPECT_EQ(header_recv.on_recv(header_send.data[0],
 				header_send.size_curr),
 	    -static_cast<long>(header_send.size_curr));
-  header_recv.flags |= static_cast<uint16_t>(HEAD_BUFFER_MASK);
+  header_recv.flags |= static_cast<HEAD_FLAG_TYPE>(HEAD_BUFFER_MASK);
   header_recv.data = &(header_recv.data_);
   EXPECT_EQ(header_recv.on_recv(header_send.data[0],
 				header_send.size_curr),

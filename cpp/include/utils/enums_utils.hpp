@@ -3,7 +3,7 @@
 #include "YggInterface_export.h"
 #include "utils/enums_maps.hpp"
 
-YGG_API extern int HEAD_BUFFER_MASK;
+YGG_API extern HEAD_FLAG_TYPE HEAD_BUFFER_MASK;
 
 namespace YggInterface {
   namespace utils {

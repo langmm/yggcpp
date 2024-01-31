@@ -1631,7 +1631,7 @@ long Header::on_recv(const char* msg, const size_t& msg_siz) {
       if (in_data)
 	flags |= HEAD_META_IN_DATA;
       else
-	flags &= static_cast<uint16_t>(~HEAD_META_IN_DATA);
+	flags &= static_cast<HEAD_FLAG_TYPE>(~HEAD_META_IN_DATA);
     } catch (...) {
       return -1;
     }
@@ -1641,7 +1641,7 @@ long Header::on_recv(const char* msg, const size_t& msg_siz) {
   if (size_curr < size_data)
     flags |= HEAD_FLAG_MULTIPART;
   else
-    flags &= static_cast<uint16_t>(~HEAD_FLAG_MULTIPART);
+    flags &= static_cast<HEAD_FLAG_TYPE>(~HEAD_FLAG_MULTIPART);
   if (reallocData(size_data) < 0) {
     return -1;
   }

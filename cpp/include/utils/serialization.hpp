@@ -1024,7 +1024,7 @@ public:
   size_t size_max;   /**< Maximum size for a single header */
   size_t size_msg;   /**< Size of the message */
   size_t size_raw;   /**< Size of raw data */
-  uint16_t flags;    /**< Internal flags */
+  HEAD_FLAG_TYPE flags; /**< Internal flags */
   size_t offset;     /**< Offset for finding data */
 };
 
