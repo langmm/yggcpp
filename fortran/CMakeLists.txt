@@ -16,10 +16,17 @@ if ((NOT FORCE_SPLIT_CXXFORTRAN) AND (NOT MSVC))
 endif()
 
 include(YggAddFortranSubdirectory)
-set(SOURCES_FORTRAN c_wrappers.c c_wrappers_enums.c YggInterface.F90)
+set(SOURCES_FORTRAN c_wrappers.c YggInterface.F90)
+if (YGG_FORTRAN_WRAP_C_ENUMS)
+    list(APPEND SOURCES_FORTRAN c_wrappers_enums.c)
+endif()
 add_mixed_fortran_library(${YGG_TARGET_FORTRAN} SHARED
                           LANGUAGE CXX ${SOURCES_FORTRAN})
 add_library(YggInterface::Fortran ALIAS ${YGG_TARGET_FORTRAN})
+if (YGG_FORTRAN_WRAP_C_ENUMS)
+    target_compile_options(
+        ${YGG_TARGET_FORTRAN} PUBLIC -DYGG_FORTRAN_WRAP_ENUMS)
+endif()
 
 # Configure Fortran wrapper
 set_target_properties(${YGG_TARGET_FORTRAN} PROPERTIES

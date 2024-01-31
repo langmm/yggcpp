@@ -2,6 +2,7 @@ module YggInterface
 
   ! TODO: Ensure that dynamically allocated C/C++ variables are freed.
   use iso_c_binding
+  use iso_fortran_env
   implicit none
 
   integer, parameter :: LINE_SIZE_MAX = 2048

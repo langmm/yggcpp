@@ -105,9 +105,9 @@ namespace utils {
   class LogBase {
   public:
     /** @brief Constructor */
-    YGG_API LogBase() {}
+    LogBase() {}
     /** @brief Destructor */
-    YGG_API virtual ~LogBase() {}
+    virtual ~LogBase() {}
     /**
      * @brief A string describing the class
      * @return Description

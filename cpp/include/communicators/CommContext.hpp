@@ -40,7 +40,7 @@ namespace YggInterface {
       YGG_API CommContext(bool for_testing=false);
       YGG_API ~CommContext();
       /** \copydoc YggInterface::utils::LogBase::logClass */
-      YGG_API std::string logClass() const override { return "CommContext"; }
+      std::string logClass() const override { return "CommContext"; }
 
       // Class members
       std::vector<Comm_t*> registry_; //!< Registry of comms created

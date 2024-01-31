@@ -5,7 +5,9 @@
 #include <string.h>
 #include "YggInterface_fortran_export.h"
 #include "YggInterface.h"
+#ifdef YGG_FORTRAN_WRAP_ENUMS
 #include "c_wrappers_enums.h"
+#endif
 
 #ifdef __cplusplus /* If this is a C++ compiler, use C linkage */
 extern "C" {

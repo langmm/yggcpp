@@ -52,7 +52,7 @@ const FLAG_TYPE COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
 #define UNINSTALLED_ERROR(name)					\
   utils::YggLogThrowError("Compiler flag '" #name "INSTALLED' not defined so " #name " bindings are disabled")
 
-#define ADD_DESTRUCTOR(cls, base)					\
+#define ADD_DESTRUCTOR_API(cls, base, api)				\
   public:								\
   protected:								\
   /** \copydoc YggInterface::communicator::Comm_t::_open */		\
@@ -61,11 +61,13 @@ const FLAG_TYPE COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
   void _close(bool call_base);						\
 public:									\
  /** @brief Open the communicator */					\
- YGG_API void open() override;						\
+ api void open() override;						\
  /** @brief Close the communicator */					\
- YGG_API void close() override;						\
+ api void close() override;						\
  /** @brief Destructor */						\
- YGG_API ~cls() override;
+ api ~cls() override;
+#define ADD_DESTRUCTOR(cls, base)					\
+  ADD_DESTRUCTOR_API(cls, base, YGG_API)
 #define ADD_DESTRUCTOR_DEF(cls, base, tempT, temp)			\
   tempT									\
   void cls temp::open() {						\
@@ -377,7 +379,7 @@ public:
       @brief Send a message indicating that the communicator is closing.
       @returns int Values >= 0 indicate success.
      */
-     YGG_API int send_eof() {
+     int send_eof() {
        return send_raw(YGG_MSG_EOF, YGG_MSG_EOF_LEN);
      }
     /*!
@@ -414,7 +416,7 @@ public:
         Values >= 0 indicate success.
     */
     template<typename T, typename... Args>
-    YGG_API int sendVar(const T& data, Args... args) {
+    int sendVar(const T& data, Args... args) {
       rapidjson::Document doc(rapidjson::kArrayType);
       return _sendVA(0, doc, data, args...);
     }
@@ -994,8 +996,8 @@ public:
       @return Integer specifying if the send and receive were succesful.
         Values >= 0 indicate success.
     */
-    YGG_API long callVar(const rapidjson::Document& sendData,
-			 rapidjson::Document& recvData) {
+    long callVar(const rapidjson::Document& sendData,
+		 rapidjson::Document& recvData) {
       return call(sendData, recvData);
     }
   
@@ -1743,10 +1745,10 @@ public:
       log_error() << "Comm_nmsg of base class called, must be overridden" << std::endl;
       return -1;
     }
-    ADD_DESTRUCTOR(CommBase, Comm_t);
+    ADD_DESTRUCTOR_API(CommBase, Comm_t, );
 
     /*! \copydoc YggInterface::communicator::Comm_t::is_closed */
-    YGG_API bool is_closed() const override;
+    bool is_closed() const override;
 
     using Comm_t::send;
     using Comm_t::recv;

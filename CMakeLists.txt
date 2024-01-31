@@ -47,6 +47,7 @@ option(YGG_LINK_PYTHON_TO_CPP "Link the Python extension to the C++ wrapper as a
 option(YGG_BUILD_DOCS "Build documentation (requires Doxygen)" OFF)
 option(DOXYGEN_CHECK_MISSING "Raise an error if documentation is missing" OFF)
 option(YGG_PATCH_MINGW53_THREAD "Patch the MinGW 5.3.0 thread header" ON)
+option(YGG_FORTRAN_WRAP_C_ENUMS "Wrap the int64_t enumerators in a C layer for binding in Fortran" OFF)
 
 list(APPEND DEPS_PUBLIC_C_COMPILE_FLAGS ${ASAN_COMPILE_FLAGS})
 list(APPEND DEPS_PUBLIC_CXX_COMPILE_FLAGS ${ASAN_COMPILE_FLAGS})
@@ -459,6 +460,20 @@ function(cover_test target)
     set_tests_properties(${target}_coverage PROPERTIES DEPENDS "${target}")
   endif(YGG_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang|ARMClang")
 endfunction()
+
+#########################
+# Regenerate enum files #
+#########################
+
+if (${PYTHON_PREFIX}_EXECUTABLE)
+  if (YGG_FORTRAN_WRAP_C_ENUMS)
+    list(APPEND GENERATE_ENUM_ARGS --fortran-wrap-c-enums)
+  endif()
+  execute_process(
+    COMMAND ${${PYTHON_PREFIX}_EXECUTABLE} utils/generate_enum.py ${GENERATE_ENUM_ARGS}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMAND_ERROR_IS_FATAL ANY)
+endif()
 
 ######################
 # Create C++ Library #

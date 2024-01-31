@@ -1,5 +1,6 @@
 import os
 import pprint
+import argparse
 
 
 prefixes = {
@@ -18,6 +19,8 @@ replacements = {
 requires_int64 = {
     'COMM_FLAG': True,
 }
+no_map = []
+no_map_item = {}
 no_fortran = [
     'CLEANUP_MODE',
     'HEAD_RESET_MODE',
@@ -25,6 +28,9 @@ no_fortran = [
     'THREAD_STATUS',
     'FORK_TYPE',
 ]
+no_fortran_item = {
+    'COMM_FLAG': ['COMM_FLAG_MAX'],
+}
 
 
 def do_write(dst, lines):
@@ -46,6 +52,7 @@ def parse(src=None):
     ksuffix = None
     klower = False
     kreplacement = None
+    lastval = None
     i = 0
     while i < len(lines):
         if k is not None:
@@ -55,14 +62,16 @@ def parse(src=None):
                 ksuffix = None
                 klower = False
                 kreplacement = None
+                lastval = None
             else:
-                member = {'doc': '', 'val': len(out[k])}
+                member = {'doc': '', 'val': lastval + 1}
                 rem = lines[i].split('//', 1)
                 if len(rem) == 2:
                     member['doc'] = rem[1].strip().rstrip('!<')
                 rem = rem[0].split(',')[0]
                 rem = rem.split("=", 1)
                 if len(rem) == 2:
+                    member['explicit_val'] = True
                     member['val'] = eval(rem[1].strip().rstrip('LL'))
                 member['name'] = rem[0].strip()
                 member['abbr'] = member['name']
@@ -76,12 +85,14 @@ def parse(src=None):
                                                   member['abbr'])
                 if member['name']:
                     out[k].append(member)
+                    lastval = member['val']
         elif lines[i].strip().startswith('enum'):
             k = lines[i].split('enum', 1)[1].split()[0].strip()
             kprefix = prefixes.get(k, [])
             ksuffix = suffixes.get(k, [])
             klower = lowers.get(k, False)
             kreplacement = replacements.get(k, {})
+            lastval = -1
             out.setdefault(k, [])
             while '{' not in lines[i]:
                 i += 1
@@ -100,6 +111,8 @@ def generate_map(name, members, tname=None):
     width = len(max(members, key=lambda x: len(x['name']))['name'])
     width_abbr = len(max(members, key=lambda x: len(x['abbr']))['abbr'])
     for x in members:
+        if x['name'] in no_map_item.get(name, []):
+            continue
         pad = (width_abbr - len(x['abbr'])) * ' '
         lines.append(f"  {{{x['name']:{width}}, \"{x['abbr']}\"{pad}}},")
     lines += ["};", ""]
@@ -135,6 +148,8 @@ def generate_maps(enums, dst=None):
         '  namespace utils {',
     ]
     for k, v in enums.items():
+        if k in no_map:
+            continue
         lines += ['    ' + x for x in generate_map(k, v)]
     lines += [
         '  }',
@@ -168,7 +183,9 @@ def generate_fortran_c_header(enums, dst=None):
             continue
         lines.append('')
         for x in members:
-            lines.append(f"  extern FYGG_API int64_t {x['name']}_F;")
+            if x['name'] in no_fortran_item.get(name, []):
+                continue
+            lines.append(f"  FYGG_API extern const int64_t {x['name']}_F;")
         lines.append('')
     lines += [
         '',
@@ -201,8 +218,10 @@ def generate_fortran_c_src(enums, dst=None):
             continue
         lines.append('')
         for x in members:
+            if x['name'] in no_fortran_item.get(name, []):
+                continue
             lines.append(
-                f"  int64_t {x['name']}_F = {x['name']};")
+                f"  const int64_t {x['name']}_F = {x['name']};")
         lines.append('')
     lines += [
         '',
@@ -213,7 +232,8 @@ def generate_fortran_c_src(enums, dst=None):
     do_write(dst, lines)
 
 
-def generate_fortran(enums, dst=None):
+# Version that binds to constants from C
+def generate_fortran_c(enums, dst=None):
     if dst is None:
         dst = os.path.join(os.path.dirname(os.path.dirname(__file__)),
                            'fortran', 'YggInterface_enums.F90')
@@ -224,6 +244,8 @@ def generate_fortran(enums, dst=None):
         lines.append('')
         if requires_int64.get(name, False):
             for x in members:
+                if x['name'] in no_fortran_item.get(name, []):
+                    continue
                 lines.append(
                     f"  integer(kind=c_int64_t), protected, "
                     f"bind(c, name=\"{x['name']}_F\") :: {x['name']}")
@@ -233,7 +255,48 @@ def generate_fortran(enums, dst=None):
                 '     enumerator :: &',
             ]
             for x in members:
-                lines.append(f"        {x['name']}, &")
+                if x['name'] in no_fortran_item.get(name, []):
+                    continue
+                lines.append(f"        {x['name']} = {x['val']}, &")
+            lines[-1] = lines[-1].split(',')[0]
+            lines += [
+                '  end enum',
+            ]
+        lines.append('')
+    lines += [
+        '#endif'
+    ]
+    do_write(dst, lines)
+
+
+# Version that just sets the values directly
+def generate_fortran(enums, dst=None):
+    if dst is None:
+        dst = os.path.join(os.path.dirname(os.path.dirname(__file__)),
+                           'fortran', 'YggInterface_enums.F90')
+    lines = [
+        '#ifndef DOXYGEN_SHOULD_SKIP_THIS',
+    ]
+    for name, members in enums.items():
+        lines.append('')
+        if requires_int64.get(name, False):
+            # lines.append(
+            #     '  integer, parameter :: i8 = selected_int_kind(R=19)')
+            for x in members:
+                if x['name'] in no_fortran_item.get(name, []):
+                    continue
+                lines.append(
+                    f"  integer(kind=int64), parameter :: "
+                    f"{x['name']} = {x['val']}_int64")
+        else:
+            lines += [
+                '  enum, bind( C )',
+                '     enumerator :: &',
+            ]
+            for x in members:
+                if x['name'] in no_fortran_item.get(name, []):
+                    continue
+                lines.append(f"        {x['name']} = {x['val']}, &")
             lines[-1] = lines[-1].split(',')[0]
             lines += [
                 '  end enum',
@@ -246,13 +309,24 @@ def generate_fortran(enums, dst=None):
 
 
 def generate(src=None, dst_maps=None, dst_fortran=None,
-             dst_fortran_c_header=None, dst_fortran_c_src=None):
+             dst_fortran_c_header=None, dst_fortran_c_src=None,
+             fortran_wrap_c_enums=False):
     enums = parse(src=src)
     generate_maps(enums, dst=dst_maps)
-    generate_fortran_c_header(enums, dst=dst_fortran_c_header)
-    generate_fortran_c_src(enums, dst=dst_fortran_c_src)
-    generate_fortran(enums, dst_fortran)
+    if fortran_wrap_c_enums:
+        generate_fortran_c_header(enums, dst=dst_fortran_c_header)
+        generate_fortran_c_src(enums, dst=dst_fortran_c_src)
+        generate_fortran_c(enums, dst=dst_fortran)
+    else:
+        generate_fortran(enums, dst=dst_fortran)
 
 
 if __name__ == "__main__":
-    generate()
+    parser = argparse.ArgumentParser(
+        "Generate enum source code & header files based on "
+        "the values defined in cpp/include/utils/enums.hpp")
+    parser.add_argument("--fortran-wrap-c-enums",
+                        action="store_true",
+                        help="Wrap enums for fortran in a C layer")
+    args = parser.parse_args()
+    generate(fortran_wrap_c_enums=args.fortran_wrap_c_enums)

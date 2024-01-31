@@ -322,7 +322,7 @@ private:
      * @brief Get the reply
      * @return The reply
      */
-    YGG_API ZMQReply& getReply() { return reply; }
+    ZMQReply& getReply() { return reply; }
     /**
       @brief Disable the handshake after each message
      */
