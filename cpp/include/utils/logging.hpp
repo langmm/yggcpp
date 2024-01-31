@@ -71,7 +71,7 @@ namespace utils {
      *   be displayed
      * @return true if the message should be logged, false otherwise
      */
-    bool eval();
+    YGG_API bool eval();
     static int _ygg_error_flag; //!< 1 if the logger is for errors
 
   private:

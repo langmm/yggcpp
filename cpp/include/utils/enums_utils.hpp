@@ -8,8 +8,8 @@ YGG_API extern int HEAD_BUFFER_MASK;
 namespace YggInterface {
   namespace utils {
 
-    std::string str_toupper(const std::string& inStr);
-    std::string str_tolower(const std::string& inStr);
+    YGG_API std::string str_toupper(const std::string& inStr);
+    YGG_API std::string str_tolower(const std::string& inStr);
     template<typename T1>
     bool enum_value_search(const std::map<const T1, const std::string> map,
 			   const std::string& val,

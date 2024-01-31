@@ -1100,20 +1100,20 @@ namespace YggInterface {
       FilterBase& operator=(const FilterBase&) = delete;
     public:
       /** @brief Constructor */
-      FilterBase();
+      YGG_API FilterBase();
       /** @brief Destructor */
-      virtual ~FilterBase();
+      YGG_API virtual ~FilterBase();
       /**
        * @brief Apply the filter to a message
        * @param[in] doc Message to run filter on
        * @return true if message filtered, false otherwise
        */
-      virtual bool operator()(const rapidjson::Document& doc);
+      YGG_API virtual bool operator()(const rapidjson::Document& doc);
       /**
        * @brief Return a copy of this filter
        * @return Copy
        */
-      virtual FilterBase* copy() const;
+      YGG_API virtual FilterBase* copy() const;
       /**
        * @brief Get the wrapped Python function/callable if present.
        * @return Python object if wrapped, NULL otherwise.
@@ -1129,20 +1129,20 @@ namespace YggInterface {
       TransformBase& operator=(const TransformBase&) = delete;
     public:
       /** @brief Constructor */
-      TransformBase();
+      YGG_API TransformBase();
       /** @brief Destructor */
-      virtual ~TransformBase();
+      YGG_API virtual ~TransformBase();
       /**
        * @brief Apply the transform to a message
        * @param[in,out] doc Message to transform
        * @return true if successful, false otherwise
        */
-      virtual bool operator()(rapidjson::Document& doc);
+      YGG_API virtual bool operator()(rapidjson::Document& doc);
       /**
        * @brief Return a copy of this transform
        * @return Copy
        */
-      virtual TransformBase* copy() const;
+      YGG_API virtual TransformBase* copy() const;
       /**
        * @brief Get the wrapped Python function/callable if present.
        * @return Python object if wrapped, NULL otherwise.
@@ -1162,15 +1162,15 @@ namespace YggInterface {
        * @brief Constructor
        * @param[in] func C++ function to use as a filter
        */
-      FilterClass(filterFunc func);
+      YGG_API FilterClass(filterFunc func);
       /**
        * @brief Apply the filter to a message
        * @param[in] doc Message to filter
        * @return true if message filtered, false otherwise
        */
-      bool operator()(const rapidjson::Document& doc) override;
+      YGG_API bool operator()(const rapidjson::Document& doc) override;
       /** \copydoc YggInterface::utils::FilterBase::copy */
-      FilterBase* copy() const override;
+      YGG_API FilterBase* copy() const override;
       filterFunc func_; /**< Filter function */
     };
     /**
@@ -1185,15 +1185,15 @@ namespace YggInterface {
        * @brief Constructor
        * @param[in] func C++ function to use as a transform
        */
-      TransformClass(const transformFunc& func);
+      YGG_API TransformClass(const transformFunc& func);
       /**
        * @brief Apply the transform to a message
        * @param[in,out] doc Message to transform
        * @return true if successful, false otherwise
        */
-      bool operator()(rapidjson::Document& doc) override;
+      YGG_API bool operator()(rapidjson::Document& doc) override;
       /** \copydoc YggInterface::utils::TransformBase::copy */
-      TransformBase* copy() const override;
+      YGG_API TransformBase* copy() const override;
       transformFunc func_; /**< Transform function */
     };
 
@@ -1209,11 +1209,11 @@ namespace YggInterface {
        * @brief Constructor
        * @param[in] func Python function
        */
-      PyBaseFunc(const PyObject* func);
+      YGG_API PyBaseFunc(const PyObject* func);
       /**
        * @brief Destructor
        */
-      virtual ~PyBaseFunc();
+      YGG_API virtual ~PyBaseFunc();
     protected:
       /**
        * @brief Call the Python function on document
@@ -1221,8 +1221,8 @@ namespace YggInterface {
        * @param[out] out Document to store the result in
        * @return true if successful, false otherwise
        */
-      bool _call(const rapidjson::Document& doc,
-		 rapidjson::Document* out=nullptr);
+      YGG_API bool _call(const rapidjson::Document& doc,
+			 rapidjson::Document* out=nullptr);
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
       PyObject* func_; /**< Python function */
 #endif // YGGDRASIL_DISABLE_PYTHON_C_API
@@ -1239,15 +1239,15 @@ namespace YggInterface {
        * @brief Constructor
        * @param[in] func Python function to use as a filter
        */
-      PyFilterClass(const PyObject* func);
+      YGG_API PyFilterClass(const PyObject* func);
       /**
        * @brief Apply the filter to a message
        * @param[in] doc Message to filter
        * @return true if message filtered, false otherwise
        */
-      bool operator()(const rapidjson::Document& doc) override;
+      YGG_API bool operator()(const rapidjson::Document& doc) override;
       /** \copydoc YggInterface::utils::FilterBase::copy */
-      FilterBase* copy() const override;
+      YGG_API FilterBase* copy() const override;
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
       /** \copydoc YggInterface::utils::FilterBase::getPython */
       PyObject* getPython() const override { return this->func_; }
@@ -1265,15 +1265,15 @@ namespace YggInterface {
        * @brief Constructor
        * @param[in] func Python function to use as a transform
        */
-      PyTransformClass(const PyObject* func);
+      YGG_API PyTransformClass(const PyObject* func);
       /**
        * @brief Apply the transform to a message
        * @param[in,out] doc Message to transform
        * @return true if successful, false otherwise
        */
-      bool operator()(rapidjson::Document& doc) override;
+      YGG_API bool operator()(rapidjson::Document& doc) override;
       /** \copydoc YggInterface::utils::TransformBase::copy */
-      TransformBase* copy() const override;
+      YGG_API TransformBase* copy() const override;
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
       /** \copydoc YggInterface::utils::FilterBase::getPython */
       PyObject* getPython() const override { return this->func_; }
@@ -1286,7 +1286,7 @@ namespace YggInterface {
         the context from which the function was called.
       @return true if successful, false otherwise.
      */
-    bool initialize_python(const std::string error_prefix="");
+    YGG_API bool initialize_python(const std::string error_prefix="");
     
     /*!
       @brief Finalize the Python API.
@@ -1294,19 +1294,19 @@ namespace YggInterface {
         the context from which the function was called.
       @return true if successful, false otherwise.
      */
-    bool finalize_python(const std::string error_prefix="");
+    YGG_API bool finalize_python(const std::string error_prefix="");
     
     /*!
       @brief Import numpy arrays.
       @return true if successful, false otherwise.
      */
-    bool import_numpy_arrays();
+    YGG_API bool import_numpy_arrays();
 
     /*!
       @brief Determine if numpy arrays are enabled.
       @return true if successful, false otherwise.
     */
-    bool numpy_arrays_imported();
+    YGG_API bool numpy_arrays_imported();
 
     /*!
       @brief Import a Python function or class.
@@ -1318,10 +1318,10 @@ namespace YggInterface {
       @param[in] ignore_error If true, no error will be logged.
       @return The Python function or class. NULL indicates an error.
      */
-    PyObject* import_python_element(const std::string& module,
-				    const std::string& element,
-				    const std::string error_prefix="",
-				    const bool ignore_error=false);
+    YGG_API PyObject* import_python_element(const std::string& module,
+					    const std::string& element,
+					    const std::string error_prefix="",
+					    const bool ignore_error=false);
 
   }
 }

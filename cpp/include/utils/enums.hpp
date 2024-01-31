@@ -63,9 +63,9 @@ enum CLEANUP_MODE {
 
 */
 enum COMM_FLAG
-// #ifdef __cplusplus
-// : FLAG_TYPE
-// #endif // __cplusplus
+#ifdef __cplusplus
+: FLAG_TYPE
+#endif // __cplusplus
   {
   COMM_FLAG_VALID           = 0x00000001LL, //!< Comm is initialized
   COMM_FLAG_GLOBAL          = 0x00000002LL, //!< Comm is global

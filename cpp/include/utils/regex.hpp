@@ -1,4 +1,5 @@
 #pragma once
+#include "YggInterface_export.h"
 #include <regex>
 #include <cstdio>
 #include <cstring>
@@ -20,27 +21,29 @@ namespace utils {
   @return int Number of matches found. -1 is returned if the regex could not be
   compiled.
 */
-size_t find_match(const std::regex &regex, const std::string &to_match,
-               const size_t& start, size_t &sind, size_t &eind);
+YGG_API size_t find_match(const std::regex &regex,
+			  const std::string &to_match,
+			  const size_t& start, size_t &sind,
+			  size_t &eind);
 // Currently unused
-// static
+// YGG_API static
 // size_t find_match(const std::regex &regex, const std::string &to_match,
 //                size_t &sind, size_t &eind) {
 //     return find_match(regex, to_match, 0, sind, eind);
 // }
-// static
+// YGG_API static
 // size_t find_match(const std::string &regex_text, const std::string &to_match,
 //                const size_t& start, size_t &sind, size_t &eind) {
 //     std::regex regex(regex_text, std::regex::extended);
 //     return find_match(regex, to_match, start, sind, eind);
 // }
-// static
+// YGG_API static
 // size_t find_match(const std::string &regex_text, const std::string &to_match,
 //                size_t &sind, size_t &eind) {
 //     return find_match(regex_text, to_match, 0, sind, eind);
 // }
-int find_match_c(const char *regex_text, const char *to_match,
-		 size_t *sind, size_t *eind);
+YGG_API int find_match_c(const char *regex_text, const char *to_match,
+			 size_t *sind, size_t *eind);
 
 
 /*!
@@ -52,7 +55,8 @@ int find_match_c(const char *regex_text, const char *to_match,
   @return int Number of matches found. -1 is returned if the regex could not be
   compiled.
 */
-size_t count_matches(const std::regex &re, const std::string &to_match);
+YGG_API size_t count_matches(const std::regex &re,
+			     const std::string &to_match);
 
 // Currently unused
 // static
@@ -69,8 +73,10 @@ size_t count_matches(const std::regex &re, const std::string &to_match);
  * @param[out] eind Vector of the ending positions of any matches
  * @return The number of matches found (also the length of sind an eind)
  */
-size_t find_matches(const std::string &regex_text, const std::string &to_match,
-                 std::vector<size_t> &sind, std::vector<size_t> &eind);
+YGG_API size_t find_matches(const std::string &regex_text,
+			    const std::string &to_match,
+			    std::vector<size_t> &sind,
+			    std::vector<size_t> &eind);
 /*!
  * @brief Replace instances of a substring with another string
  * @param[in, out] buf The string to have characters replaced
@@ -79,8 +85,9 @@ size_t find_matches(const std::string &regex_text, const std::string &to_match,
  * @param[in] nreplace The number to replace, 0 means all.
  * @return The number of replacements made.
  */
-size_t regex_replace(std::string &buf, const std::regex &re, const std::string &rp,
-                     const size_t &nreplace=0);
+YGG_API size_t regex_replace(std::string &buf, const std::regex &re,
+			     const std::string &rp,
+			     const size_t &nreplace=0);
 /*!
  * @brief Replace instances of a substring with another string
  * @param[in, out] buf The string to have characters replaced
@@ -89,8 +96,10 @@ size_t regex_replace(std::string &buf, const std::regex &re, const std::string &
  * @param[in] nreplace The number to replace, 0 means all.
  * @return The number of replacements made.
  */
-static size_t regex_replace(std::string &buf, const std::string &re, const std::string &rp,
-                            const size_t &nreplace=0) {
+static size_t regex_replace(std::string &buf,
+			    const std::string &re,
+			    const std::string &rp,
+			    const size_t &nreplace=0) {
     std::regex regex(re, std::regex::extended);
     return regex_replace(buf, regex, rp, nreplace);
 }
@@ -150,8 +159,8 @@ const std::regex RE_UINT("%([[:digit:]]*)[uoxX]", std::regex::extended);
  * @param[in] substr The delimiter to use
  * @return The split string
  */
-std::vector<std::string> split(const std::string &x,
-			       const std::string& substr);
+YGG_API std::vector<std::string> split(const std::string &x,
+				       const std::string& substr);
   
 }
 }

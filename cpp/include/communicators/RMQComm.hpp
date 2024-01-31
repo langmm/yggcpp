@@ -134,10 +134,10 @@ namespace YggInterface {
 
     protected:
       /** \copydoc Comm_t::send_single */
-      int send_single(utils::Header& header) override;
+      YGG_API int send_single(utils::Header& header) override;
 
       /** \copydoc Comm_t::recv_single */
-      long recv_single(utils::Header& header) override;
+      YGG_API long recv_single(utils::Header& header) override;
 
       WORKER_METHOD_DECS(RMQComm);
       

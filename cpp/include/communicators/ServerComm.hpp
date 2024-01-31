@@ -53,13 +53,13 @@ protected:
      * @param[in] header Header from client
      * @return true if successful
      */
-    virtual bool signon(const utils::Header& header);
+    YGG_API virtual bool signon(const utils::Header& header);
     /*! \copydoc YggInterface::communicator::CommBase::create_header_send */
-    bool create_header_send(utils::Header& header) override;
+    YGG_API bool create_header_send(utils::Header& header) override;
     /*! \copydoc YggInterface::communicator::CommBase::send_single */
-    int send_single(utils::Header& header) override;
+    YGG_API int send_single(utils::Header& header) override;
     /*! \copydoc YggInterface::communicator::CommBase::recv_single */
-    long recv_single(utils::Header& header) override;
+    YGG_API long recv_single(utils::Header& header) override;
 
 };
 

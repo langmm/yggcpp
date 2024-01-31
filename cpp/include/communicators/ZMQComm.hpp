@@ -243,7 +243,7 @@ public:
    *   during a test.
    * @param[in] new_val New return value.
    */
-  static void set_test_return_val(bool new_val);
+  YGG_API static void set_test_return_val(bool new_val);
 };
 
 /**
@@ -277,31 +277,31 @@ public:
 
 protected:
     /** \copydoc YggInterface::communicator::CommBase::send_single */
-    int send_single(utils::Header& msg) override;
+    YGG_API int send_single(utils::Header& msg) override;
     /** \copydoc YggInterface::communicator::CommBase::recv_single */
-    long recv_single(utils::Header& msg) override;
+    YGG_API long recv_single(utils::Header& msg) override;
     /**
      * @brief Wait for the message was received signal
      * @param[in] header The header to use
      * @return True on success
      * @see utils::Header
      */
-    virtual bool do_reply_recv(const utils::Header& header);
+    YGG_API virtual bool do_reply_recv(const utils::Header& header);
     /**
      * @brief Send a reply that the message was received
      * @param header The header to use
      * @return True on success
      * @see utils::Header
      */
-    virtual bool do_reply_send(const utils::Header& header);
+    YGG_API virtual bool do_reply_send(const utils::Header& header);
     /** \copydoc YggInterface::communicator::CommBase::create_header_send */
-    bool create_header_send(utils::Header& header) override;
+    YGG_API bool create_header_send(utils::Header& header) override;
     /** \copydoc YggInterface::communicator::CommBase::create_worker */
     WORKER_METHOD_DECS(ZMQComm);
     /** \copydoc YggInterface::communicator::CommBase::create_worker_send */
-    Comm_t* create_worker_send(utils::Header& head) override;
+    YGG_API Comm_t* create_worker_send(utils::Header& head) override;
     /** \copydoc YggInterface::communicator::CommBase::create_worker_recv */
-    Comm_t* create_worker_recv(utils::Header& head) override;
+    YGG_API Comm_t* create_worker_recv(utils::Header& head) override;
 #endif
 
 private:
@@ -314,9 +314,9 @@ private:
  public:
 #ifdef ZMQINSTALLED
     /** \copydoc YggInterface::communicator::Comm_t::afterSendRecv */
-    bool afterSendRecv(Comm_t* sComm, Comm_t* rComm) override;
+    YGG_API bool afterSendRecv(Comm_t* sComm, Comm_t* rComm) override;
     /** \copydoc YggInterface::communicator::Comm_t::genMetadata */
-    bool genMetadata(std::string& out) override;
+    YGG_API bool genMetadata(std::string& out) override;
 #endif // ZMQINSTALLED
     /**
      * @brief Get the reply
@@ -326,7 +326,7 @@ private:
     /**
       @brief Disable the handshake after each message
      */
-    static void disable_handshake();
+    YGG_API static void disable_handshake();
     static int _disable_handshake; /**< Is handshake disabled */
 };
 

@@ -151,11 +151,12 @@ namespace YggInterface {
       using Comm_t::send;
       using Comm_t::recv;
 
-    protected:
       /** \copydoc YggInterface::communicator::Comm_t::send_raw */
-      int send_raw(const char *data, const size_t &len) override;
+      YGG_API int send_raw(const char *data, const size_t &len) override;
       /** \copydoc YggInterface::communicator::Comm_t::recv_raw */
-      long recv_raw(char*& data, const size_t &len) override;
+      YGG_API long recv_raw(char*& data, const size_t &len) override;
+      
+    protected:
 
       FORK_TYPE forktype;  /**< Enumerated type of fork */
       size_t ncomm;        /**< Number of tines */

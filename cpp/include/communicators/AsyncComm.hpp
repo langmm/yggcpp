@@ -446,14 +446,15 @@ namespace YggInterface {
 
     protected:
       /** \copydoc YggInterface::communicator::Comm_t::send_single */
-      int send_single(utils::Header& header) override;
+      YGG_API int send_single(utils::Header& header) override;
       /** \copydoc YggInterface::communicator::Comm_t::recv_single */
-      long recv_single(utils::Header& header) override;
+      YGG_API long recv_single(utils::Header& header) override;
       /** \copydoc YggInterface::communicator::Comm_t::create_header_send */
-      bool create_header_send(utils::Header& header) override;
+      YGG_API bool create_header_send(utils::Header& header) override;
       /** \copydoc YggInterface::communicator::Comm_t::create_worker */
-      Comm_t* create_worker(utils::Address& address,
-			    const DIRECTION dir, FLAG_TYPE flgs) override;
+      YGG_API Comm_t* create_worker(utils::Address& address,
+				    const DIRECTION dir,
+				    FLAG_TYPE flgs) override;
       
       utils::Metadata response_metadata; /**< Metadata for response communicator in RPC comm */
       COMM_TYPE request_commtype;        /**< Request communicator type for RPC comm */

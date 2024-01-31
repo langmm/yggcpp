@@ -124,7 +124,7 @@ protected:
   // Test methods
 public:
   /*! \copydoc YggInterface::communicator::Comm_t::afterSendRecv */
-  bool afterSendRecv(Comm_t* sComm, Comm_t* rComm) override;
+  YGG_API bool afterSendRecv(Comm_t* sComm, Comm_t* rComm) override;
   
 };
   

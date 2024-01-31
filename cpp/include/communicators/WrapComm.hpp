@@ -4,9 +4,9 @@
 #include "communicators/DefaultComm.hpp"
 
 #define WRAP_METHOD_NORET(name, argsT, args, err, mods)	\
-  void name argsT mods
+  YGG_API void name argsT mods
 #define WRAP_METHOD(name, argsT, args, err, type, mods)	\
-  type name argsT mods
+  YGG_API type name argsT mods
 #define WRAP_METHOD_OVERRIDE(name, argsT, args, err, type, mods)	\
   WRAP_METHOD(name, argsT, args, err, type, mods override)
 
@@ -106,43 +106,43 @@ namespace YggInterface {
        * @brief Check if the wrapped communicator is initialized
        * @return true if initialized, false otherwise
        */
-      virtual bool checkWrapped() const;
+      YGG_API virtual bool checkWrapped() const;
       /** \copydoc YggInterface::communicator::Comm_t::_open */
       void _open(bool call_base);
       /** \copydoc YggInterface::communicator::Comm_t::_close */
       void _close(bool call_base);
       
     public:
-      YGG_API WRAP_METHOD(comm_nmsg, (DIRECTION dir=NONE), (dir),
-			  out = -1, int, const override);
-      YGG_API WRAP_METHOD(getMetadata, (const DIRECTION dir), (dir),
-			  THROW_NO_HANDLE(getMetadata),
-			  YggInterface::utils::Metadata&, override);
-      YGG_API WRAP_METHOD_NORET(set_timeout_recv, (int64_t new_timeout),
-				(new_timeout),
-				THROW_NO_HANDLE(set_timeout_recv),
-				override);
-      YGG_API WRAP_METHOD(get_timeout_recv, (), (),
-			  out = CommBase::get_timeout_recv(), int64_t,
-			  const override);
-      YGG_API WRAP_METHOD(wait_for_recv, (const int64_t& tout), (tout),
-			  out = -1, int, override);
-      YGG_API WRAP_METHOD_NORET(close, (), (), , override);
-      YGG_API WRAP_METHOD(is_closed, (), (), out = false, bool,
-			  const override);
-      YGG_API WRAP_METHOD(is_open, (), (), out = false, bool,
-			  const override);
-      // YGG_API WRAP_METHOD(logClass, (), (), out = "", std::string, const override);
-      // YGG_API WRAP_METHOD(logInst, (), (), out = "", std::string, const override);
-      YGG_API WRAP_METHOD(getWorkers, (), (),
-			  THROW_NO_HANDLE(getWorkers),
-			  WorkerList&, override);
-      YGG_API WRAP_METHOD(send_raw,
-			  (const char *data, const size_t &len),
-			  (data, len), out = -1, int, override);
-      YGG_API WRAP_METHOD(recv_raw,
-			  (char*& data, const size_t &len),
-			  (data, len), out = -1, long, override);
+      WRAP_METHOD(comm_nmsg, (DIRECTION dir=NONE), (dir),
+		  out = -1, int, const override);
+      WRAP_METHOD(getMetadata, (const DIRECTION dir), (dir),
+		  THROW_NO_HANDLE(getMetadata),
+		  YggInterface::utils::Metadata&, override);
+      WRAP_METHOD_NORET(set_timeout_recv, (int64_t new_timeout),
+			(new_timeout),
+			THROW_NO_HANDLE(set_timeout_recv),
+			override);
+      WRAP_METHOD(get_timeout_recv, (), (),
+		  out = CommBase::get_timeout_recv(), int64_t,
+		  const override);
+      WRAP_METHOD(wait_for_recv, (const int64_t& tout), (tout),
+		  out = -1, int, override);
+      WRAP_METHOD_NORET(close, (), (), , override);
+      WRAP_METHOD(is_closed, (), (), out = false, bool,
+		  const override);
+      WRAP_METHOD(is_open, (), (), out = false, bool,
+		  const override);
+      // WRAP_METHOD(logClass, (), (), out = "", std::string, const override);
+      // WRAP_METHOD(logInst, (), (), out = "", std::string, const override);
+      WRAP_METHOD(getWorkers, (), (),
+		  THROW_NO_HANDLE(getWorkers),
+		  WorkerList&, override);
+      WRAP_METHOD(send_raw,
+		  (const char *data, const size_t &len),
+		  (data, len), out = -1, int, override);
+      WRAP_METHOD(recv_raw,
+		  (char*& data, const size_t &len),
+		  (data, len), out = -1, long, override);
       
       using Comm_t::send;
       using Comm_t::recv;

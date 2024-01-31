@@ -218,8 +218,9 @@ public:									\
   }
 #define WORKER_METHOD_DECS(cls)						\
   /** \copydoc YggInterface::communicator::Comm_t::create_worker */	\
-  Comm_t* create_worker(utils::Address& address,			\
-			const DIRECTION dir, FLAG_TYPE flgs) override
+  YGG_API Comm_t* create_worker(utils::Address& address,		\
+				const DIRECTION dir,			\
+				FLAG_TYPE flgs) override
 #define WORKER_METHOD_DEFS(cls)					\
   Comm_t* cls::create_worker(utils::Address& address,		\
 			     const DIRECTION dir, FLAG_TYPE flgs) {	\
@@ -1523,37 +1524,37 @@ protected:
      * @return The new worker
      * @see utils::Address
      */
-    virtual Comm_t* create_worker(utils::Address& address,
-				  const DIRECTION dir,
-				  FLAG_TYPE flgs) VIRT_END;
+    YGG_API virtual Comm_t* create_worker(utils::Address& address,
+					  const DIRECTION dir,
+					  FLAG_TYPE flgs) VIRT_END;
     /*!
      * @brief Create a worker for sending
      * @param[in] head The header to use
      * @return The worker
      * @see utils::Header
      */
-    virtual Comm_t* create_worker_send(utils::Header& head);
+    YGG_API virtual Comm_t* create_worker_send(utils::Header& head);
     /*!
      * @brief Create a worker for receiving
      * @param[in] head The header to use
      * @return The worker
      * @see utils::Header
      */
-    virtual Comm_t* create_worker_recv(utils::Header& head);
+    YGG_API virtual Comm_t* create_worker_recv(utils::Header& head);
     /**
      * @brief Sending function
      * @param[in] header Instance containing message and header.
      * @return The length of data sent.
      * @see utils::Header
      */
-    virtual int send_single(utils::Header& header) VIRT_END;
+    YGG_API virtual int send_single(utils::Header& header) VIRT_END;
     /**
      * @brief Receiving function
      * @param[in] header Instance to store message and header in.
      * @return The length of data received.
      * @see utils::Header
      */
-    virtual long recv_single(utils::Header& header) VIRT_END;
+    YGG_API virtual long recv_single(utils::Header& header) VIRT_END;
 
     /**
      * @brief Constructor, which can only be instantiated by a child class
@@ -1564,11 +1565,11 @@ protected:
      * @param[in] flgs Initial bitwise flags
      * @see utils::Address
      */
-    explicit Comm_t(const std::string &name,
-		    const utils::Address &address,
-		    const DIRECTION direction = NONE,
-		    const COMM_TYPE &t = NULL_COMM,
-		    FLAG_TYPE flgs = 0);
+    YGG_API explicit Comm_t(const std::string &name,
+			    const utils::Address &address,
+			    const DIRECTION direction = NONE,
+			    const COMM_TYPE &t = NULL_COMM,
+			    FLAG_TYPE flgs = 0);
 
     /**
      * @brief Constructor
@@ -1577,7 +1578,7 @@ protected:
      * @param[in] t Enumerated communicator type
      * @param[in] flgs Initial bitwise flags
      */
-    explicit Comm_t(const std::string& name,
+    YGG_API explicit Comm_t(const std::string& name,
 			    const DIRECTION dir = NONE,
 			    const COMM_TYPE &t = NULL_COMM,
 			    FLAG_TYPE flgs = 0);
@@ -1586,7 +1587,7 @@ protected:
      * @param[in] len The length of the message to check
      * @return bool Whether the message is smaller than YGG_MSG_MAX (true), false otherwise
      */
-    bool check_size(const size_t &len) const;
+    YGG_API bool check_size(const size_t &len) const;
 
     std::shared_ptr<CommContext> ctx; //!< Context.
     COMM_TYPE type;                //!< Comm type.

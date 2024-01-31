@@ -69,13 +69,13 @@ public:
 
 protected:
     /** \copydoc YggInterface::communicator::Comm_t::create_worker_send */
-    Comm_t* create_worker_send(utils::Header& head) override;
+    YGG_API Comm_t* create_worker_send(utils::Header& head) override;
     /** \copydoc YggInterface::communicator::Comm_t::create_worker_recv */
-    Comm_t* create_worker_recv(utils::Header& head) override;
+    YGG_API Comm_t* create_worker_recv(utils::Header& head) override;
     /** \copydoc YggInterface::communicator::Comm_t::create_header_send */
-    bool create_header_send(utils::Header& header) override;
+    YGG_API bool create_header_send(utils::Header& header) override;
     /** \copydoc YggInterface::communicator::Comm_t::recv_single */
-    long recv_single(utils::Header& header) override;
+    YGG_API long recv_single(utils::Header& header) override;
 
 private:
     static unsigned _client_rand_seeded; /**< Status of rand seed */
