@@ -12,7 +12,8 @@
         FILE_COMM = 7, &
         RMQ_COMM = 8, &
         VALUE_COMM = 9, &
-        REST_COMM = 10
+        REST_COMM = 10, &
+        BUFFER_COMM = 11
   end enum
 
 

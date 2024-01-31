@@ -28,6 +28,7 @@ enum COMM_TYPE {
     RMQ_COMM,    //!< RabbitMQ communicator
     VALUE_COMM,  //!< Value communicator
     REST_COMM,   //!< REST communicator
+    BUFFER_COMM, //!< Shared memory communicator
 };
 
 /**

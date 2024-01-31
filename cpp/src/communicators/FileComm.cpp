@@ -8,7 +8,7 @@ FileComm::FileComm(const std::string name, const utils::Address &address,
 		   DIRECTION direction, FLAG_TYPE flgs,
 		   const COMM_TYPE type) :
   CommBase(name, address, direction, type, flgs),
-  mode(std::fstream::in | std::fstream::out) {
+  mode(std::fstream::in | std::fstream::out), mutex() {
   ADD_CONSTRUCTOR_OPEN(FileComm)
 }
 
@@ -19,20 +19,22 @@ void FileComm::_open(bool call_base) {
   updateMaxMsgSize(0);
   bool created = address.address().empty();
   if (created) {
+    std::string err;
 #ifdef _MSC_VER
     char key[L_tmpnam] = "yggXXXXXX";
     _mktemp(key);
-    if (errno != 0) {
+    if (errno != 0)
+      err = std::system_category().message(GetLastError());
 #else
     char key[L_tmpnam] = "yggXXXXXX";
     int fd = mkstemp(key);
-    if (fd >= 0) {
+    if (fd < 0)
+      err = std::string(strerror(errno));
+    else
       ::close(fd);
-    } else {
 #endif
-      log_error() << "FileComm::_open: Error generating temporary file name." << std::endl;
-      throw std::runtime_error("FileComm::_open: Error in std::mkstemp");
-    }
+    if (!err.empty())
+      throw_error("FileComm::_open: Error generating temporary file name. - " + err);
     address.address(key);
   }
   if (name.empty()) {
@@ -48,22 +50,42 @@ void FileComm::_open(bool call_base) {
     mode |= std::fstream::app;
   if (flags & FILE_FLAG_BINARY)
     mode |= std::fstream::binary;
-  handle = new std::fstream(this->address.address().c_str(), mode);
+  if (created) {
+    log_debug() << "FileComm::_open: Creating " << this->address.address() << std::endl;
+    std::ofstream tmp;
+    tmp.open(this->address.address().c_str(),
+	     std::fstream::out | std::fstream::app);
+    tmp.close();
+    // std::FILE* tmp = fopen(this->address.address().c_str(), "a+");
+    // fclose(tmp);
+  }
+  // if (created) {
+  //   // Create fstream first so that ftok can be used to generate the
+  //   // mutex on unix OSes
+  //   handle = new std::fstream(this->address.address().c_str(), mode);
+  //   mutex.init(this->address.address());
+  // } else {
+  mutex.init(this->address.address(), created);
+  {
+    ProcessLockGuard<ProcessMutex> lock_guard(mutex);
+    handle = new std::fstream(this->address.address().c_str(), mode);
+  }
+  // }
   AFTER_OPEN_DEF;
 }
 
 void FileComm::_close(bool call_base) {
   BEFORE_CLOSE_DEF;
   if (handle && !global_comm) {
+    ProcessLockGuard<ProcessMutex> lock_guard(mutex);
     handle->close();
-    bool delete_file = ((direction == RECV) ||
-			(!(flags & (COMM_FLAG_INTERFACE |
-				    COMM_FLAG_WORKER))));
-    if (ctx->for_testing_)
-      delete_file = true;
-    if (delete_file)
-      std::remove(this->address.address().c_str());
   }
+  bool delete_file = ((direction == RECV) ||
+		      (!(flags & (COMM_FLAG_INTERFACE |
+				  COMM_FLAG_WORKER))));
+  if (ctx->for_testing_)
+    delete_file = true;
+  mutex.close(delete_file);
   AFTER_CLOSE_DEF;
 }
 
@@ -84,22 +106,26 @@ int FileComm::comm_nmsg(DIRECTION dir) const {
     dir = direction;
   if (dir != direction || dir != RECV)
     return 0;
-  refresh();
   int out = -1;
-  if (!handle->fail()) {
-    if (handle->eof() && !handle->fail())
-      handle->clear();
-    if (handle->peek() == EOF) {
-      handle->clear();
-      out = 0;
-    } else if (!handle->fail()) {
-      out = 1;
+  {
+    refresh();
+    ProcessLockGuard<ProcessMutex> lock_guard(const_cast<ProcessMutex*>(&mutex)[0]);
+    if (!handle->fail()) {
+      if (handle->eof() && !handle->fail())
+	handle->clear();
+      if (handle->peek() == EOF) {
+	handle->clear();
+	out = 0;
+      } else if (!handle->fail()) {
+	out = 1;
+      }
     }
   }
   return out;
 }
 
 int FileComm::send_single(utils::Header& header) {
+  ProcessLockGuard<ProcessMutex> lock_guard(mutex);
   assert(!global_comm);
   if (header.on_send() < 0)
     return -1;
@@ -115,6 +141,7 @@ int FileComm::send_single(utils::Header& header) {
 }
 
 long FileComm::recv_single(utils::Header& header) {
+  ProcessLockGuard<ProcessMutex> lock_guard(mutex);
   assert(!global_comm);
   log_debug() << "recv_single:" << std::endl;
   refresh();

@@ -1,6 +1,6 @@
 #include "../../unittest.hpp"
 #include "utils/Address.hpp"
-#include "communicators/FileComm.hpp"
+#include "communicators/BufferComm.hpp"
 #include "../../elf_hook.hpp"
 #include "../../mock.hpp"
 #include "commtest.hpp"
@@ -10,9 +10,9 @@ using namespace YggInterface;
 using namespace YggInterface::communicator;
 using namespace YggInterface::mock;
 
-class FileComm_tester : public FileComm {
+class BufferComm_tester : public BufferComm {
 public:
-  TESTER_METHODS(FileComm)
+  TESTER_METHODS(BufferComm)
 };
 
-COMM_SERI_TEST(FileComm)
+COMM_SERI_TEST(BufferComm)

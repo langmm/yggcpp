@@ -19,6 +19,7 @@ namespace YggInterface {
       {RMQ_COMM    , "RMQ"    },
       {VALUE_COMM  , "VALUE"  },
       {REST_COMM   , "REST"   },
+      {BUFFER_COMM , "BUFFER" },
     };
     
     
@@ -34,6 +35,7 @@ namespace YggInterface {
       {RMQ_COMM    , "RMQComm"    },
       {VALUE_COMM  , "ValueComm"  },
       {REST_COMM   , "RESTComm"   },
+      {BUFFER_COMM , "BufferComm" },
     };
     
     

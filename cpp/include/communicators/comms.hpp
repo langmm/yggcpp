@@ -14,3 +14,4 @@
 #include "communicators/RMQComm.hpp"
 #include "communicators/ValueComm.hpp"
 #include "communicators/RESTComm.hpp"
+#include "communicators/BufferComm.hpp"

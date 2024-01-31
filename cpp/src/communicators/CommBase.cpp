@@ -562,6 +562,8 @@ Comm_t* YggInterface::communicator::new_Comm_t(
     return new RESTComm(name, addr, dir, flags);
   case VALUE_COMM:
     return new ValueComm(name, addr, dir, flags);
+  case BUFFER_COMM:
+    return new BufferComm(name, addr, dir, flags);
   }
   return nullptr;
 }
@@ -589,6 +591,8 @@ bool YggInterface::communicator::is_commtype_installed(const COMM_TYPE type) {
     return RESTComm::isInstalled();
   case VALUE_COMM:
     return ValueComm::isInstalled();
+  case BUFFER_COMM:
+    return BufferComm::isInstalled();
   }
   return false;
 }
