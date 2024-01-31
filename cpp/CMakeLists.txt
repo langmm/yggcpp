@@ -28,6 +28,10 @@ else()
     set(YGG_INSTALL_TARGETS ${YGG_INSTALL_TARGETS} PARENT_SCOPE)
 endif()
 
+if (MINGW)
+    target_compile_options(
+        ${YGG_TARGET_CPP} PUBLIC -DYGG_API)
+endif()
 include(GenerateExportHeaderYggdrasil)
 generate_export_header_yggdrasil(${YGG_TARGET_CPP})
 set(YGG_INSTALL_INCLUDES ${YGG_INSTALL_INCLUDES} PARENT_SCOPE)
