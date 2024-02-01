@@ -38,13 +38,17 @@ int CommContext::init(bool for_testing) {
   for_testing_ = for_testing;
   utils::initialize_python("CommContext::init");
 #ifdef ZMQINSTALLED
+  log_debug() << "init: begin zmq initialization" << std::endl;
   YGG_THREAD_SAFE_BEGIN_LOCAL(zmq) {
     if (zmq_ctx == NULL)
       zmq_ctx = zmq_ctx_new();
   } YGG_THREAD_SAFE_END;
+  log_debug() << "init: finished zmq initialization" << std::endl;
 #endif // ZMQINSTALLED
 #ifdef RESTINSTALLED
+  log_debug() << "init: begin curl initialization" << std::endl;
   curl_global_init(CURL_GLOBAL_ALL);
+  log_debug() << "init: finished curl initialization" << std::endl;
 #endif // RESTINSTALLED
   log_debug() << "init: End" << std::endl;
   return 0;
