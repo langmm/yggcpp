@@ -115,14 +115,17 @@ RAPIDJSON_NAMESPACE_BEGIN
 
 /*!
   @brief Import the numpy C API.
+  @return error message
  */
-void init_numpy_API();
+std::string init_numpy_API();
 /*!
   @brief Initialize the Python interpreter.
   @param[in] error_prefix Prefix to add to error message describine
     the context from which the function was called.
+  @param[in] dont_raise If true, the error will not be thrown.
  */
-void initialize_python(const std::string error_prefix="");
+std::string initialize_python(const std::string error_prefix="",
+			      bool dont_raise=false);
 
 /*!
   @brief Finalize the Python interpreter.
