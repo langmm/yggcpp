@@ -89,8 +89,12 @@ if (ASAN_LINK_FLAGS)
 endif()
 
 if (NOT YGG_LINK_PYTHON_TO_CPP)
+    if (MINGW)
+        list(APPEND EXPORT_HEADER_ARGS EMPTY)
+    endif()
     include(GenerateExportHeaderYggdrasil)
-    generate_export_header_yggdrasil(${YGG_TARGET_PY})
+    generate_export_header_yggdrasil(
+        ${YGG_TARGET_PY} ${EXPORT_HEADER_ARGS})
     set(YGG_INSTALL_INCLUDES ${YGG_INSTALL_INCLUDES} PARENT_SCOPE)
 endif()
 
