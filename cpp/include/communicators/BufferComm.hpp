@@ -10,7 +10,7 @@
 #include <sys/shm.h>
 #endif
 
-#define MAX_BUFFERS 10
+#define MAX_BUFFERS 100
 #define MAX_SHARED_MEM_SIZE 2048
 
 namespace YggInterface {
@@ -28,6 +28,8 @@ namespace YggInterface {
      * @brief Shared memory based communicator
      */
     class BufferComm : public CommBase<shmbuf_t> {
+      BufferComm(const BufferComm&) = delete;
+      BufferComm& operator=(const BufferComm&) = delete;
     public:
       /**
        * Constructor

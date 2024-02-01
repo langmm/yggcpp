@@ -520,11 +520,6 @@ ADD_DESTRUCTOR_DEF(AsyncComm, CommBase, , )
 
 void AsyncComm::_open(bool call_base) {
   BEFORE_OPEN_DEF;
-#ifdef _MSC_VER
-  if (type == FILE_COMM) {
-    utils::YggLogThrowError("AsyncComm: Cannot create an asynchronous communicator that uses a file when compiling with MSVC");
-  }
-#endif // _MSC_VER
   if (type == SERVER_COMM)
     this->direction = RECV;
   else if (type == CLIENT_COMM)

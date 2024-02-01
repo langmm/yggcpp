@@ -30,9 +30,11 @@ void BufferComm::_open(bool call_base) {
   {
     ProcessLockGuard<ProcessMutex> lock_guard(mutex);
 #ifdef _WIN32
+    ULARGE_INTEGER maxSize;
+    maxSize.QuadPart = sizeof(shmbuf_t);
     base_handle = CreateFileMapping(INVALID_HANDLE_VALUE, NULL,
-				    PAGE_READWRITE, 0,
-				    sizeof(shmbuf_t),
+				    PAGE_READWRITE,
+				    maxSize.HighPart, maxSize.LowPart,
 				    this->address.address().c_str());
     if (base_handle == NULL)
       throw_error("_open: CreateFileMapping failed - "
