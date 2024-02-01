@@ -85,13 +85,26 @@ namespace YggInterface {
       YGG_API int _semaphore_op(short op, short flags, std::string& err,
 				int id=-1);
       /**
+       * @brief Create a key from a file, creating it if necessary
+       * @param[in] address Address that should be used to initialize
+       *   the key via ftok.
+       * @param[in] create If true, the key should be new.
+       * @param[in] ftok_int Integer that should be used to create the
+       *   key via ftok
+       * @param[in] is_proc_count If true, the processor count is stored
+       *   in the semaphore's value.
+       * @return Created key, -1 on error
+       */
+      YGG_API static key_t _safe_ftok(const std::string& address,
+				      bool create=false, int ftok_int=0);
+      /**
        * @brief Initialize a semaphore from a string address.
        * @param[in] address Address that should be used to initialize
        *   the semaphore via ftok.
        * @param[out] err Error message if an error occurs.
        * @param[in] create If true, the semaphore should be new.
-       * @param[in] ftok_int Integer that should be used to create the key
-       *   via ftok
+       * @param[in] ftok_int Integer that should be used to create the
+       *   key via ftok
        * @param[in] is_proc_count If true, the processor count is stored
        *   in the semaphore's value.
        * @return ID associated with the semaphore or -1 if there

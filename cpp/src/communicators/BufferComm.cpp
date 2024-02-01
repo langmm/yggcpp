@@ -26,7 +26,7 @@ void BufferComm::_open(bool call_base) {
   } else {
     this->name = name;
   }
-  mutex.init(this->address.address(), created);
+  mutex.init(this->address.address() + "_mutex", created);
   {
     ProcessLockGuard<ProcessMutex> lock_guard(mutex);
 #ifdef _WIN32
@@ -48,7 +48,8 @@ void BufferComm::_open(bool call_base) {
 		  + std::system_category().message(GetLastError()));
     }
 #else
-    key_t key = ftok(this->address.address().c_str(), 10);
+    key_t key = ProcessMutex::_safe_ftok(this->address.address(),
+					 created, 10);
     if (key == -1)
       throw_error("_open: ftok failed - " + std::string(strerror(errno)));
     base_handle = shmget(key, sizeof(shmbuf_t), 0666 | IPC_CREAT);
@@ -128,7 +129,9 @@ int BufferComm::send_single(utils::Header& header) {
       return -1;
     is_full = (handle->count == (MAX_BUFFERS - 1));
     if (is_full) {
-      log_debug() << "send_single: Shared memory buffers are full, sleep" << std::endl;
+      log_debug() << "send_single: Shared memory buffers are full (" <<
+	handle->count << "messages (MAX_BUFFERS = " << MAX_BUFFERS <<
+	"), sleep" << std::endl;
       THREAD_USLEEP(YGG_SLEEP_TIME);
     } else {
       out = static_cast<int>(header.size_msg);

@@ -161,28 +161,33 @@ int ProcessMutex::_semaphore_op(short op, short flags,
   }
   return 0;
 }
-int ProcessMutex::_new_semaphore(const std::string& address,
-				 std::string& err,
-				 bool create, int ftok_int,
-				 bool is_proc_count) {
-  int semid = -1;
+key_t ProcessMutex::_safe_ftok(const std::string& address,
+			       bool create, int ftok_int) {
   key_t key = ftok(address.c_str(), ftok_int);
-  union semun
-  {
-    int val;
-    struct semid_ds *buf;
-    ushort array [1];
-  } sem_attr;
   if (key == -1 && errno == ENOENT && create) {
     std::ofstream tmp;
     tmp.open(address.c_str(), std::fstream::out | std::fstream::app);
     tmp.close();
     key = ftok(address.c_str(), ftok_int); 
   }
+  return key;
+}
+int ProcessMutex::_new_semaphore(const std::string& address,
+				 std::string& err,
+				 bool create, int ftok_int,
+				 bool is_proc_count) {
+  int semid = -1;
+  key_t key = ProcessMutex::_safe_ftok(address, create, ftok_int);
   if (key == -1) {
     err = "ftok - " + std::string(strerror(errno));
     return -1;
   }
+  union semun
+  {
+    int val;
+    struct semid_ds *buf;
+    ushort array [1];
+  } sem_attr;
   if (create) {
     semid = semget(key, 1, 0666 | IPC_CREAT | IPC_EXCL);
   } else {
