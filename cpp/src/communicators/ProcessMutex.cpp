@@ -5,47 +5,429 @@ using namespace YggInterface::communicator;
 using namespace YggInterface::utils;
 
 /////////////////////////////////
+// IPCBase
+/////////////////////////////////
+
+#define IPC_DESTRUCTOR(cls, base)				\
+  int cls::cleanup() {						\
+    if (local_cleanup() == -1)					\
+      return -1;						\
+    return base::local_cleanup();				\
+  }								\
+  int cls::destroy() {						\
+    if (local_destroy() == -1)					\
+      return -1;						\
+    return base::local_destroy();				\
+  }
+
+IPCBase::IPCBase(const std::string& addr, bool preserve_addr,
+		 const std::string& logCls) :
+  LogBase(), address(addr), preserve_address(preserve_addr),
+  logClass_(logCls) {
+  log_debug() << "IPCBase: begin, address = " << address << std::endl;
+  if (address.empty())
+    throw_error("IPCBase: Address cannot be empty");
+  log_debug() << "IPCBase: done" << std::endl;
+}
+IPCBase::~IPCBase() {
+  log_debug() << "~IPCBase: begin" << std::endl;
+  if (local_destroy() == -1)
+    throw_error("IPCBase: Error destroying instance");
+  log_debug() << "~IPCBase: cleanup" << std::endl;
+  if (local_cleanup() == -1)
+    throw_error("IPCBase: Error cleaning up instance");
+  log_debug() << "~IPCBase: done" << std::endl;
+}
+int IPCBase::local_destroy() {
+  log_debug() << "IPCBase::local_destroy: begin" << std::endl;
+  if (!preserve_address)
+    std::remove(address.c_str());
+  log_debug() << "IPCBase::local_destroy: done" << std::endl;
+  return 0;
+}
+
+#ifdef _WIN32
+
+#define WIN32_DESTRUCTOR(cls)			\
+  cls::~cls() {							\
+    if (local_destroy() == -1) {				\
+      throw_error("~" #cls ": Error destroying instance");	\
+    }								\
+    if (local_cleanup() == -1) {				\
+      throw_error("~" #cls ": Error cleaning up instance");	\
+    }								\
+  }								\
+  IPC_DESTRUCTOR(cls, Win32Base)
+
+/////////////////////////////////
+// Win32Base
+/////////////////////////////////
+
+Win32Base::Win32Base(const std::string& addr, bool preserve_addr,
+		     const std::string& logCls) :
+  IPCBase(addr, preserve_addr, logCls) {}
+Win32Base::~Win32Base() {
+  if (local_destroy() == -1)
+    throw_error("~Win32Base: Error destroying instance");
+  if (local_cleanup() == -1)
+    throw_error("~Win32Base: Error cleaning up instance");
+}
+int Win32Base::local_destroy() { return 0; }
+int Win32Base::local_cleanup() {
+  handle = NULL;
+  return 0;
+}
+
+IPC_DESTRUCTOR(Win32Base, IPCBase)
+
+/////////////////////////////////
+// Win32Mutex
+/////////////////////////////////
+
+Win32Mutex::Win32Mutex(const std::string& addr, bool preserve_addr) :
+  Win32Base(addr, preserve_addr, "Win32Mutex") {
+  preserve_address = true; // TODO: should this be false
+  handle = CreateMutexA(NULL, FALSE, address.c_str());
+  if (handle == NULL)
+    throw_error(error("Win32Mutex: CreateMutexA failed"));
+}
+WIN32_DESTRUCTOR(Win32Mutex)
+int Win32Mutex::local_destroy() { return 0; }
+int Win32Mutex::local_cleanup() {
+  log_debug() << "Win32Mutex::local_cleanup: begin" << std::endl;
+  if (handle) {
+    CloseHandle(handle); // TODO: Check error?
+    handle = NULL;
+  }
+  log_debug() << "Win32Mutex::local_cleanup: end" << std::endl;
+  return 0;
+}
+
+int Win32Mutex::lock(bool dont_wait) {
+  if (handle == NULL) {
+    log_error() << "lock: Handle is NULL" << std::endl;
+    return -1;
+  }
+  DWORD tout = INFINITE;
+  if (dont_wait)
+    tout = 0;
+  DWORD res = WaitForSingleObject(handle, tout);
+  if (res != WAIT_OBJECT_0) {
+    if (dont_wait && res == WAIT_TIMEOUT)
+      return -2;
+    log_error() << error("lock: Failed to take ownership of the mutex") << std::endl;
+    return -1;
+  }
+  return 0;
+}
+
+int Win32Mutex::unlock(bool) {
+  if (handle == NULL) {
+    log_error() << "unlock: Handle is NULL" << std::endl;
+    return -1;
+  }
+  if (!ReleaseMutex(handle)) {
+    log_error() << error("unlock: Failed to release mutex") << std::endl;
+    return -1;
+  }
+  return 0;
+}
+
+/////////////////////////////////
+// Win32SharedMem
+/////////////////////////////////
+
+Win32SharedMem::Win32SharedMem(size_t siz, const std::string& addr,
+			       bool preserve_addr) :
+  Win32Base(addr, preserve_addr, "Win32SharedMem"),
+  size(siz), memory(NULL) {
+  preserve_address = true; // TODO: should this be false
+  ULARGE_INTEGER maxSize;
+  maxSize.QuadPart = size;
+  handle = CreateFileMapping(INVALID_HANDLE_VALUE, NULL,
+			     PAGE_READWRITE,
+			     maxSize.HighPart, maxSize.LowPart,
+			     address.c_str());
+  if (handle == NULL)
+    throw_error(error("Win32SharedMem: CreateFileMapping failed"));
+  memory = MapViewOfFile(handle, FILE_MAP_ALL_ACCESS, 0, 0, size);
+  if (memory == NULL) {
+    CloseHandle(handle);
+    handle = NULL;
+    throw_error(error("Win32SharedMem: MapViewOfFile failed"));
+  }
+}
+WIN32_DESTRUCTOR(Win32SharedMem)
+int Win32SharedMem::local_destroy() { return 0; }
+int Win32SharedMem::local_cleanup() {
+  log_debug() << "Win32SharedMem::local_cleanup: begin" << std::endl;
+  if (memory != NULL) {
+    UnmapViewOfFile(memory);
+    memory = NULL;
+  }
+  if (handle != NULL) {
+    CloseHandle(handle); // TODO: Check error?
+    handle = NULL;
+  }
+  log_debug() << "Win32SharedMem::local_cleanup: end" << std::endl;
+  return 0;
+}
+
+#undef WIN32_DESTRUCTOR
+
+#else
+
+/////////////////////////////////
+// SysVBase
+/////////////////////////////////
+
+#define SYSV_DESTRUCTOR(cls)					\
+  cls::~cls() {							\
+    log_debug() << "~" << #cls << ": begin" << std::endl;	\
+    if (nproc_sem) {						\
+      log_debug() << "~" << #cls << ": decrementing nproc" << std::endl; \
+      if (nproc_sem->dec() == -1) {				\
+	throw_error("~" #cls ": Error decrementing nproc");	\
+      }								\
+      if (nproc() == 0) {					\
+	log_debug() << "~" << #cls << ": destroy" << std::endl;	\
+	if (local_destroy() == -1) {				\
+	  throw_error("~" #cls ": Error destroying instance");	\
+	}							\
+      }								\
+    }								\
+    log_debug() << "~" << #cls << ": cleanup" << std::endl;	\
+    if (local_cleanup() == -1) {				\
+      throw_error("~" #cls ": Error cleaning up instance");	\
+    }								\
+    log_debug() << "~" << #cls << ": done" << std::endl;	\
+  }								\
+  IPC_DESTRUCTOR(cls, SysVBase)
+
+SysVBase::SysVBase(const std::string& addr, const int sd,
+		   bool create, bool track_nproc, bool preserve_addr,
+		   const std::string& logCls) :
+  IPCBase(addr, preserve_addr, logCls), key(-1), nproc_sem(NULL) {
+  log_debug() << "SysVBase: begin, address = " << address << std::endl;
+  key = SysVBase::safe_ftok(address, sd, create);
+  if (key == -1)
+    throw_error(error("ftok"));
+  if (track_nproc) {
+    nproc_sem = new SysVSemaphore(address + "_nproc", sd, create);
+    if ((!create) && nproc_sem->inc() == -1)
+      throw_error("Failed to increment processor count");
+    log_debug() << "SysVBase: nproc = " << nproc() << std::endl;
+  }
+  log_debug() << "SysVBase: done" << std::endl;
+}
+SysVBase::~SysVBase() {
+  log_debug() << "~SysVBase: begin" << std::endl;
+  if (nproc_sem && nproc() == 0 && local_destroy() == -1)
+    throw_error("~SysVBase: Error destroying instance");
+  log_debug() << "~SysVBase: cleanup" << std::endl;
+  if (local_cleanup() == -1)
+    throw_error("~SysVBase: Error cleaning up instance");
+  log_debug() << "~SysVBase: done" << std::endl;
+}
+
+int SysVBase::local_cleanup() {
+  log_debug() << "SysVBase::local_cleanup: begin" << std::endl;
+  if (nproc_sem) {
+    delete nproc_sem;
+    nproc_sem = NULL;
+  }
+  log_debug() << "SysVBase::local_cleanup: done" << std::endl;
+  return 0;
+}
+int SysVBase::local_destroy() {
+  log_debug() << "SysVBase::local_destroy: begin" << std::endl;
+  if (nproc_sem && nproc_sem->destroy() == -1) {
+    log_error() << "local_destroy: Error destroying process counting semaphore" << std::endl;
+    return -1;
+  }
+  log_debug() << "SysVBase::local_destroy: done" << std::endl;
+  return 0;
+}
+
+IPC_DESTRUCTOR(SysVBase, IPCBase)
+
+int SysVBase::destroy_if_unused() {
+  if (nproc_sem && nproc() == 0) {
+    if (destroy() < 0)
+      return -1;
+  }
+  return 0;
+}
+
+int SysVBase::nproc() const {
+  if (!nproc_sem) {
+    log_error() << "nproc: process count not being tracked" << std::endl;
+    return -1;
+  }
+  return nproc_sem->get();
+}
+
+key_t SysVBase::safe_ftok(const std::string& address,
+			  int ftok_int, bool create) {
+  std::cerr << "safe_ftok: " << address << ", " << ftok_int <<
+    ", " << create << std::endl;
+  key_t key = ftok(address.c_str(), ftok_int);
+  if (key == -1 && errno == ENOENT && create) {
+    std::ofstream tmp;
+    tmp.open(address.c_str(), std::fstream::out | std::fstream::app);
+    tmp.close();
+    key = ftok(address.c_str(), ftok_int); 
+  }
+  return key;
+}
+
+/////////////////////////////////
+// SysVSemaphore
+/////////////////////////////////
+
+SysVSemaphore::SysVSemaphore(const std::string& addr, const int sd,
+			     bool create, bool track_nproc,
+			     bool preserve_address, int value) :
+  SysVBase(addr, sd, create, track_nproc, preserve_address,
+	   "SysVSemaphore"), id(-1) {
+  int flags = 0666 | IPC_CREAT;
+  if (create)
+    flags |= IPC_EXCL;
+  id = semget(key, 1, flags);
+  if (id < 0)
+    throw_error(error("semget"));
+  if (create && set(value) == -1)
+    throw_error("Failed to initialize semaphore");
+}
+
+SYSV_DESTRUCTOR(SysVSemaphore)
+
+int SysVSemaphore::local_cleanup() {
+  id = -1;
+  return 0;
+}
+
+int SysVSemaphore::local_destroy() {
+  log_debug() << "SysVSemaphore::local_destroy: begin" << std::endl;
+  if (id != -1 && semctl(id, 0, IPC_RMID) == -1) {
+    log_error() << error("semctl[IPC_RMID]") << std::endl;
+    id = -1;
+    return -1;
+  }
+  id = -1;
+  log_debug() << "SysVSemaphore::local_destroy: done" << std::endl;
+  return 0;
+}
+
+int SysVSemaphore::get() {
+  int out = semctl(id, 0, GETVAL);
+  if (out < 0)
+    log_error() << error("semctl[GETVAL]") << std::endl;
+  return out;
+}
+
+int SysVSemaphore::set(const int& value) {
+  union semun
+  {
+    int val;
+    struct semid_ds *buf;
+    ushort array [1];
+  } sem_attr;
+  sem_attr.val = value;
+  if (semctl(id, 0, SETVAL, sem_attr) == -1) {
+    log_error() << error("semctl[SETVAL]") << std::endl;
+    // semctl(semid, 0, IPC_RMID);
+    return -1;
+  }
+  return 0;  
+}
+
+int SysVSemaphore::op(const short& op, bool dont_wait, short flags) {
+  if (dont_wait)
+    flags |= IPC_NOWAIT;
+  struct sembuf sb = {0, op, flags};
+  if (semop(id, &sb, 1) == -1) {
+    if (dont_wait && errno == EAGAIN)
+      return -2;
+    log_error() << error("semop[" + std::to_string(op) + "]") << std::endl;
+    return -1;
+  }
+  return 0;
+}
+int SysVSemaphore::inc(bool dont_wait) {
+  return op(1, dont_wait);
+}
+int SysVSemaphore::dec(bool dont_wait) {
+  return op(-1, dont_wait);
+}
+
+/////////////////////////////////
+// SysVSharedMem
+/////////////////////////////////
+
+SysVSharedMem::SysVSharedMem(size_t size,
+			     const std::string& addr, const int sd,
+			     bool create, bool track_nproc,
+			     bool preserve_address) :
+  SysVBase(addr, sd, create, track_nproc, preserve_address,
+	   "SysVSharedMem"), id(-1), memory(NULL) {
+  int flags = 0666 | IPC_CREAT;
+  if (create)
+    flags |= IPC_EXCL;
+  id = shmget(key, size, flags);
+  if (id < 0)
+    throw_error(error("shmget"));
+  memory = shmat(id, NULL, 0);
+  if (memory == (void*)(-1)) {
+    memory = NULL;
+    throw_error(error("SysVSharedMem: shmat failed"));
+  }
+}
+
+SYSV_DESTRUCTOR(SysVSharedMem)
+
+int SysVSharedMem::local_cleanup() {
+  log_debug() << "SysVSharedMem::local_cleanup: begin" << std::endl;
+  if (shmdt(memory) == -1) {
+    log_error() << error("local_cleanup: shmdt failed") << std::endl;
+    return -1;
+  }
+  id = -1;
+  memory = NULL;
+  log_debug() << "SysVSharedMem::local_cleanup: done" << std::endl;
+  return 0;
+}
+
+int SysVSharedMem::local_destroy() {
+  log_debug() << "SysVSharedMem::local_destroy: begin" << std::endl;
+  if (id != -1 && shmctl(id, IPC_RMID, 0) == -1) {
+    log_error() << error("shmctl[IPC_RMID]") << std::endl;
+    id = -1;
+    return -1;
+  }
+  id = -1;
+  log_debug() << "SysVSharedMem::local_destroy: done" << std::endl;
+  return 0;
+}
+
+#undef SYSV_DESTRUCTOR
+
+#endif
+
+#undef IPC_DESTRUCTOR
+
+/////////////////////////////////
 // ProcessMutex
 /////////////////////////////////
 
-ProcessMutex::ProcessMutex(const std::string& addr) :
+ProcessMutex::ProcessMutex(const std::string& addr, bool created_) :
   address(), handle(NULL) {
   if (!addr.empty())
-    init(addr);
+    init(addr, created_);
 }
 
 ProcessMutex::~ProcessMutex() {
   close();
-}
-
-void ProcessMutex::close(bool remove_file) {
-  if (handle == NULL)
-    return;
-#ifdef _WIN32
-  CloseHandle(handle);
-  if (remove_file)
-    std::remove(address.c_str());
-#else
-  std::string err;
-  log_debug() << "~ProcessMutex: nproc_semid = " << nproc_semid << std::endl;
-  if (nproc_semid >= 0 && _semaphore_op(-1, 0, err, nproc_semid) == -1)
-    log_error() << "~ProcessMutex: Error decrementing nproc" << err << std::endl;
-  log_debug() << "~ProcessMutex: nproc = " << nproc() << std::endl;
-  if (nproc() <= 0) {
-    log_debug() << "~ProcessMutex: IPC_RMID" << std::endl;
-    if (semctl(*handle, 0, IPC_RMID) == -1)
-      log_error() << "~ProcessMutex: Error removing semaphore - " << std::string(strerror(errno)) << std::endl;
-    if (nproc_semid >= 0) {
-      if (semctl(nproc_semid, 0, IPC_RMID) == -1)
-	log_error() << "~ProcessMutex: Error removing nproc semaphore - " << std::string(strerror(errno)) << std::endl;
-      nproc_semid = -1;
-    }
-    if (remove_file)
-      std::remove(address.c_str());
-  }
-  delete handle;
-#endif
-  handle = NULL;
 }
 
 void ProcessMutex::init(const std::string& addr, bool created_) {
@@ -58,43 +440,31 @@ void ProcessMutex::init(const std::string& addr, bool created_) {
   }
   address = addr;
   created = created_;
+  log_debug() << "init: address = " << address << std::endl;
   std::string err;
 #ifdef _WIN32
-  handle = CreateMutexA(NULL, FALSE, address.c_str());
-  if (handle == NULL)
-    err = std::system_category().message(GetLastError());
+  handle = new Win32Mutex(address);
 #else
-  int semid = ProcessMutex::_new_semaphore(address, err, created, 5);
-  if (semid != -1) {
-    handle = new int(semid);
-    nproc_semid = ProcessMutex::_new_semaphore(address, err, created, 6, true);
-    log_debug() << "init: nproc_semid = " << nproc_semid << std::endl;
-    if (nproc_semid < 0) {
-      err = "nproc_semid - " + err;
-      delete handle;
-      handle = NULL;
-    }
-  }
-  log_debug() << "init: nproc = " << nproc() << std::endl;
+  handle = new SysVSemaphore(address, 5, created, true, true);
 #endif
   if (handle == NULL)
     throw_error("init: Failed to create mutex handle (" + err + ")");
   log_debug() << "init: Initialization complete" << std::endl;
 }
 
+void ProcessMutex::close(bool remove_file) {
+  if (handle == NULL)
+    return;
+  handle->preserve_address = (!remove_file);
+  delete handle;
+  handle = NULL;
+}
+
 void ProcessMutex::lock() {
   log_debug() << "lock: begin" << std::endl;
   if (handle) {
-#ifdef _WIN32
-    DWORD res = WaitForSingleObject(handle, INFINITE);
-    if (res != WAIT_OBJECT_0)
-      throw_error("lock: Failed to take ownership of the mutex - "
-		  + std::system_category().message(GetLastError()));
-#else
-    std::string err;
-    if (_semaphore_op(-1, 0, err) == -1)
-      throw_error("lock: " + err);
-#endif
+    if (handle->lock() == -1)
+      throw_error("lock: Failed to take ownership of the mutex");
   }
   log_debug() << "lock: done" << std::endl; 
 }
@@ -103,20 +473,11 @@ bool ProcessMutex::try_lock() {
   log_debug() << "try_lock: begin" << std::endl;
   bool out = false;
   if (handle) {
-#ifdef _WIN32
-    DWORD res = WaitForSingleObject(handle, 0);
-    if (res == WAIT_OBJECT_0)
+    int res = handle->lock(true);
+    if (res >= 0)
       out = true;
-    else if (res != WAIT_TIMEOUT)
-      throw_error("try_lock: Failed to take ownership of the mutex - "
-		  + std::system_category().message(GetLastError()));
-#else
-    std::string err;
-    if (_semaphore_op(-1, IPC_NOWAIT, err) != -1)
-      out = true;
-    if ((!out) && errno != EAGAIN)
-      throw_error("try_lock: " + err);
-#endif
+    else if (res != -2)
+      throw_error("try_lock: Failed to take ownership of the mutex");
   } else {
     out = true;
   }
@@ -126,117 +487,55 @@ bool ProcessMutex::try_lock() {
 
 void ProcessMutex::unlock() {
   log_debug() << "unlock: begin" << std::endl;
-  if (handle) {
-#ifdef _WIN32
-    if (!ReleaseMutex(handle))
-      throw_error("unlock: Failed to release mutex - "
-		  + std::system_category().message(GetLastError()));
-#else
-    std::string err;
-    if (_semaphore_op(1, IPC_NOWAIT, err) == -1)
-      throw_error("unlock: " + err);
-#endif
-  }
+  if (handle && handle->unlock(true) == -1)
+    throw_error("unlock: Failed to release mutex");
   log_debug() << "unlock: done" << std::endl;
 }
 
 #ifndef _WIN32
-int ProcessMutex::_semaphore_op(short op, short flags,
-				std::string& err, int id) {
-  if (id == -1) {
-    if (!handle) {
-      err = "handle NULL";
-      return -1;
-    }
-    id = handle[0];
-  }
-  struct sembuf sb = {0, op, flags};
-  if (semop(id, &sb, 1) == -1) {
-    // if (errno == EINVAL && handle && handle[0] == id) {
-    // 	delete handle;
-    // 	handle = NULL;
-    // } else {
-    err = "semop failed - " + std::string(strerror(errno));
-    return -1;
-  }
-  return 0;
-}
-key_t ProcessMutex::_safe_ftok(const std::string& address,
-			       bool create, int ftok_int) {
-  key_t key = ftok(address.c_str(), ftok_int);
-  if (key == -1 && errno == ENOENT && create) {
-    std::ofstream tmp;
-    tmp.open(address.c_str(), std::fstream::out | std::fstream::app);
-    tmp.close();
-    key = ftok(address.c_str(), ftok_int); 
-  }
-  return key;
-}
-int ProcessMutex::_new_semaphore(const std::string& address,
-				 std::string& err,
-				 bool create, int ftok_int,
-				 bool is_proc_count) {
-  int semid = -1;
-  key_t key = ProcessMutex::_safe_ftok(address, create, ftok_int);
-  if (key == -1) {
-    err = "ftok - " + std::string(strerror(errno));
-    return -1;
-  }
-  union semun
-  {
-    int val;
-    struct semid_ds *buf;
-    ushort array [1];
-  } sem_attr;
-  if (create) {
-    semid = semget(key, 1, 0666 | IPC_CREAT | IPC_EXCL);
-  } else {
-    semid = semget(key, 1, 0666 | IPC_CREAT);
-  }
-  if (semid < 0) {
-    err = "semget - " + std::string(strerror(errno));
-    return -1;
-  }
-  if (create) {
-    sem_attr.val = 1;
-    if (semctl(semid, 0, SETVAL, sem_attr) == -1) {
-      err = "semctl[SETVAL] - " + std::string(strerror(errno));
-      semctl(semid, 0, IPC_RMID);
-      return -1;
-    }
-  } else if (is_proc_count) {
-    struct sembuf sb = {0, 1, 0};
-    if (semop(semid, &sb, 1) == -1) {
-      err = "semop failed - " + std::string(strerror(errno));
-      semctl(semid, 0, IPC_RMID);
-      return -1;
-    }
-    // int nproc = semctl(semid, 0, GETVAL);
-    // if (nproc < 0) {
-    //   err = "semctl[GETVAL] - " + std::string(strerror(errno));
-    //   semctl(semid, 0, IPC_RMID);
-    //   return -1;
-    // }
-    // sem_attr.val = nproc + 1;
-    // if (semctl(semid, 0, SETVAL, sem_attr) == -1) {
-    //   err = "semctl[SETVAL] - " + std::string(strerror(errno));
-    //   semctl(semid, 0, IPC_RMID);
-    //   return -1;
-    // }
-  }
-  return semid;
-}
-
 int ProcessMutex::nproc() const {
-  if (nproc_semid < 0) {
-    log_error() << "nproc_semid not initialized" << std::endl;
+  if (handle == NULL) {
+    log_error() << "nproc: Handle is NULL" << std::endl;
     return -1;
   }
-  int nproc = semctl(nproc_semid, 0, GETVAL);
-  if (nproc < 0) {
-    log_error() << "semctl[GETVAL] - " + std::string(strerror(errno)) << std::endl;
-    return -1;
-  }
-  return nproc;
+  return handle->nproc();
 }
 #endif
+
+/////////////////////////////////
+// ProcessSharedMemory
+/////////////////////////////////
+
+ProcessSharedMemory::ProcessSharedMemory(size_t siz,
+					 const std::string& addr,
+					 bool created) :
+  LogBase(), address(addr), mutex(), size(siz), memory(NULL),
+  handle(NULL) {
+  log_debug() << "ProcessSharedMemory: begin" << std::endl;
+  mutex.init(address + "_mutex", created);
+  {
+    ProcessLockGuard<ProcessMutex> lock_guard(mutex);
+#ifdef _WIN32
+    handle = new Win32SharedMem(size, address);
+#else
+    handle = new SysVSharedMem(size, address, 10, created);
+#endif
+    memory = handle->memory;
+  }
+  log_debug() << "ProcessSharedMemory: done" << std::endl;
+}
+
+ProcessSharedMemory::~ProcessSharedMemory() {
+  ProcessLockGuard<ProcessMutex> lock_guard(mutex);
+  if (handle) {
+    log_debug() << "~ProcessSharedMemory: before destroy" << std::endl;
+    if (mutex.nproc() == 1 && handle->destroy() == -1)
+      throw_error("~ProcessSharedMemory: Failed to destroy the handle");
+    log_debug() << "~ProcessSharedMemory: after destroy" << std::endl;
+    delete handle;
+    log_debug() << "~ProcessSharedMemory: after delete" << std::endl;
+  }
+  handle = NULL;
+  memory = NULL;
+}
+

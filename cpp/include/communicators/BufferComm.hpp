@@ -3,12 +3,6 @@
 #include "utils/tools.hpp"
 #include "communicators/CommBase.hpp"
 #include "communicators/ProcessMutex.hpp"
-#ifdef _WIN32
-#include <windows.h>
-#else
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#endif
 
 #define MAX_BUFFERS 100
 #define MAX_SHARED_MEM_SIZE 2048
@@ -27,7 +21,7 @@ namespace YggInterface {
     /**
      * @brief Shared memory based communicator
      */
-    class BufferComm : public CommBase<shmbuf_t> {
+    class BufferComm : public CommBase<ProcessSharedMemory> {
       BufferComm(const BufferComm&) = delete;
       BufferComm& operator=(const BufferComm&) = delete;
     public:
@@ -61,13 +55,8 @@ namespace YggInterface {
 
       WORKER_METHOD_DECS(BufferComm);
     private:
-      
-      ProcessMutex mutex;          //!< Mutex for ensuring that a buffer is not accessed by two processes
-#ifdef _WIN32
-      PVOID base_handle;           //!< File mapping handle
-#else
-      int base_handle;             //!< Shared memory id
-#endif
+
+      shmbuf_t* memory;            /**< Shared memory */
     };
     
   }

@@ -80,6 +80,8 @@ void FileComm::_close(bool call_base) {
     ProcessLockGuard<ProcessMutex> lock_guard(mutex);
     handle->close();
   }
+  // TODO: This can probably be removed and we can rely on the mutex
+  // to cleanup the file
   bool delete_file = ((direction == RECV) ||
 		      (!(flags & (COMM_FLAG_INTERFACE |
 				  COMM_FLAG_WORKER))));

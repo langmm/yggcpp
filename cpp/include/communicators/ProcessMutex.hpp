@@ -9,10 +9,340 @@
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/sem.h>
+#include <sys/shm.h>
 #endif
 
 namespace YggInterface {
   namespace communicator {
+
+#define IPC_DESTRUCTOR(cls)						\
+    /** @brief Destructor */						\
+    YGG_API ~cls() override;						\
+    /** \copydoc IPCBase::local_cleanup */				\
+    YGG_API int local_cleanup();					\
+    /** \copydoc IPCBase::cleanup */					\
+    YGG_API int cleanup() override;					\
+    /** \copydoc IPCBase::local_destroy */				\
+    YGG_API int local_destroy();					\
+    /** \copydoc IPCBase::destroy */					\
+    YGG_API int destroy() override
+
+    /** @brief Base class for IPC wrappers */
+    class IPCBase : public YggInterface::utils::LogBase {
+      IPCBase(const IPCBase&) = delete;
+      IPCBase& operator=(const IPCBase&) = delete;
+    public:
+      /**
+       * @brief Constructor
+       * @param[in] address Name used to generate the id
+       * @param[in] preserve_address If true, don't remove the underlying
+       *   file specified by address during destruction
+       * @param[in] logClass Name of class to use in log messages
+       */
+      YGG_API IPCBase(const std::string& address,
+			bool preserve_address=false,
+			const std::string& logClass="");
+      /**
+       * @brief Destructor
+       */
+      YGG_API virtual ~IPCBase();
+      /** \copydoc YggInterface::utils::LogBase::logClass */
+      std::string logClass() const override { return logClass_; }
+      /** \copydoc YggInterface::utils::LogBase::logInst */
+      std::string logInst() const override { return address; }
+
+      /**
+       * @brief Cleanup C++ interface for this instance, but not the base
+       * @return -1 on error
+       */
+      YGG_API int local_cleanup() { return 0; }
+      /**
+       * @brief Cleanup C++ interface for this instance
+       * @return -1 on error
+       */
+      YGG_API virtual int cleanup() { return local_cleanup(); }
+      /**
+       * @brief Destroy the instance for this class only
+       * @param[in] dont_call_base If true, the base class's _destroy
+       *   method will not be called.
+       * @return -1 on error
+       */
+      YGG_API int local_destroy();
+      /**
+       * @brief Destroy the instance
+       * @return -1 on error
+       */
+      YGG_API virtual int destroy() { return local_destroy(); }
+      
+      std::string address;      /**< Unique identifier for the handle */
+      bool preserve_address;    /**< If true, preserve the underlying file after destruction */
+    private:
+      std::string logClass_;    /**< Name of class to use in log messages */
+    };
+
+#ifdef _WIN32
+
+    /** @brief Base class for Windows API IPC wrappers */
+    class Win32Base : public IPCBase {
+      Win32Base(const Win32Base&) = delete;
+      Win32Base& operator=(const Win32Base&) = delete;
+    public:
+      /**
+       * @brief Constructor
+       * @param[in] address Name used to generate the id
+       * @param[in] preserve_address If true, don't remove the underlying
+       *   file specified by address during destruction
+       * @param[in] logClass Name of class to use in log messages
+       */
+      YGG_API Win32Base(const std::string& address,
+			bool preserve_address=false,
+			const std::string& logClass="");
+      /**
+       * @brief Destructor
+       */
+      YGG_API virtual ~Win32Base();
+      /**
+       * @brief Get the current error message
+       * @param[in] Context that should be added to the error message
+       * @return Error message
+       */
+      static std::string error(const std::string& context="") {
+	std::string out(std::system_category().message(GetLastError()));
+	if (!context.empty())
+	  out = context + " - " + out;
+	return out;
+      }
+      PVOID handle;             /**< Object handle */
+    };
+
+    /** @brief Wrapper for Windows API mutex */
+    class Win32Mutex : public Win32Base {
+      Win32Mutex(const Win32Mutex&) = delete;
+      Win32Mutex& operator(const Win32Mutex&) = delete;
+    public:
+      /**
+       * @brief Constructor
+       * @param[in] address Name used to generate the id
+       * @param[in] preserve_address If true, don't remove the underlying
+       *   file specified by address during destruction
+       */
+      YGG_API Win32Mutex(const std::string& address,
+			 bool preserve_addr = false);
+      IPC_DESTRUCTOR(Win32Mutex);
+
+      /**
+       * @brief Locks the mutex, blocks if the mutex is not available
+       * @param[in] dont_wait If true, don't wait for the semaphore to be
+       *   available and return -2 if it is not. Otherwise, this will
+       *   block until the semaphore is available.
+       * @return 0 on success, -1 on error, -2 on unavailable
+       */
+      YGG_API int lock(bool dont_wait = false);
+      /**
+       * @brief Unlocks the mutex
+       * @param[in] dont_wait If true, don't wait for the semaphore to be
+       *   available and return -2 if it is not. Otherwise, this will
+       *   block until the semaphore is available.
+       * @return 0 on success, -1 on error, -2 on unavailable
+       */
+      YGG_API int unlock(bool dont_wait = false);
+    };
+    
+    /** @brief Wrapper for Windows API shared memory */
+    class Win32SharedMem : public Win32Base {
+      Win32SharedMem(const Win32SharedMem&) = delete;
+      Win32SharedMem& operator(const Win32SharedMem&) = delete;
+    public:
+      /**
+       * @brief Constructor
+       * @param[in] address Name used to generate the id
+       * @param[in] preserve_address If true, don't remove the underlying
+       *   file specified by address during destruction
+       */
+      YGG_API Win32SharedMem(const std::string& address,
+			     bool preserve_addr = false);
+      IPC_DESTRUCTOR(Win32SharedMem);
+    };
+    
+#else
+
+    /** @brief Forward declarations */
+    class SysVSemaphore;
+    
+    /** @brief Base class for Sys V IPC wrappers */
+    class SysVBase : public IPCBase {
+      SysVBase(const SysVBase&) = delete;
+      SysVBase& operator=(const SysVBase&) = delete;
+    public:
+      /**
+       * @brief Constructor
+       * @param[in] address Name used to generate the id
+       * @param[in] seed Integer used to generate the key via ftok
+       * @param[in] create If true, this should be a new id
+       * @param[in] track_nproc If true, use a semaphore to track
+       *   the number of processes that are using this object. If false,
+       *   the underlying objects will not be destroyed during destruction
+       *   but can be done explicitly by calling the destroy method
+       * @param[in] preserve_address If true, don't remove the underlying
+       *   file specified by address during destruction
+       * @param[in] logClass Name of class to use in log messages
+       */
+      YGG_API SysVBase(const std::string& address, const int seed=0,
+		       bool create=false, bool track_nproc=false,
+		       bool preserve_address=false,
+		       const std::string& logClass="");
+      IPC_DESTRUCTOR(SysVBase);
+      /**
+       * @brief Get the current error message
+       * @param[in] Context that should be added to the error message
+       * @return Error message
+       */
+      static std::string error(const std::string& context="") {
+	std::string out(strerror(errno));
+	if (!context.empty())
+	  out = context + " - " + out;
+	return out;
+      }
+      /**
+       * @brief Destroy the instance if there are no longer any processes
+       *   attached.
+       * @return -1 on error
+       */
+      YGG_API int destroy_if_unused();
+      /**
+       * @brief Get the number of processes using the instance
+       * @return Number of processes, -1 indicates an error.
+       */
+      YGG_API int nproc() const;
+      /**
+       * @brief Create a key from a file, creating it if necessary
+       * @param[in] address Address that should be used to initialize
+       *   the key via ftok.
+       * @param[in] ftok_int Integer that should be used to create the
+       *   key via ftok
+       * @param[in] create If true, the key should be new.
+       * @return Created key, -1 on error
+       */
+      YGG_API static key_t safe_ftok(const std::string& address,
+				     int ftok_int=0,
+				     bool create=false);
+
+      key_t key;                /**< Key that should be used to create the ID */
+      SysVSemaphore* nproc_sem; /**< Semaphore used to track the number of processes using this instance */
+    };
+
+    /** @brief Wrapper class for Sys V IPC shared memory */
+    class SysVSharedMem : public SysVBase {
+      SysVSharedMem(const SysVSharedMem&) = delete;
+      SysVSharedMem& operator=(const SysVSharedMem&) = delete;
+    public:
+      /**
+       * @brief Constructor
+       * @param[in] size Size of shared memory that should be created or
+       *   attached to
+       * @param[in] address Name used to generate the id
+       * @param[in] seed Integer used to generate the key via ftok
+       * @param[in] create If true, this should be a new id
+       * @param[in] track_nproc If true, use a semaphore to track
+       *   the number of processes that are using this object
+       * @param[in] preserve_address If true, don't remove the underlying
+       *   file specified by address during destruction
+       */
+      YGG_API SysVSharedMem(size_t size,
+			    const std::string& address, const int seed=0,
+			    bool create=false, bool track_nproc=false,
+			    bool preserve_address=false);
+      
+      IPC_DESTRUCTOR(SysVSharedMem);
+
+      int id;        /**< Shared memory id */
+      void* memory;  /**< Address of shared memory */
+    };
+    
+    /** @brief Wrapper class for Sys V IPC semaphore */
+    class SysVSemaphore : public SysVBase {
+      SysVSemaphore(const SysVSemaphore&) = delete;
+      SysVSemaphore& operator=(const SysVSemaphore&) = delete;
+    public:
+      /**
+       * @brief Constructor
+       * @param[in] address Name used to generate the id
+       * @param[in] seed Integer used to generate the key via ftok
+       * @param[in] create If true, this should be a new id
+       * @param[in] track_nproc If true, use a semaphore to track
+       *   the number of processes that are using this object
+       * @param[in] preserve_address If true, don't remove the underlying
+       *   file specified by address during destruction
+       * @param[in] value Value that semaphore should be initialized with
+       */
+      YGG_API SysVSemaphore(const std::string& address, const int seed=0,
+			    bool create=false, bool track_nproc=false,
+			    bool preserve_address=false, int value=1);
+      
+      IPC_DESTRUCTOR(SysVSemaphore);
+      
+      /**
+       * @brief Get the semaphore's value
+       * @return Value, -1 on error
+       */
+      YGG_API int get();
+      /**
+       * @brief Set the semaphore's value
+       * @param[in] value New value
+       * @return 0 on success, -1 on error, -2 on unavailable
+       */
+      YGG_API int set(const int& value);
+      /**
+       * @brief Perform an operation on a semaphore
+       * @param[in] op Operation
+       * @param[in] dont_wait If true, don't wait for the semaphore to be
+       *   available and return -2 if it is not. Otherwise, this will
+       *   block until the semaphore is available.
+       * @param[in] flags Additional operation flags
+       * @return 0 on success, -1 on error, -2 on unavailable
+       */
+      YGG_API int op(const short& op, bool dont_wait=false,
+		     short flags=0);
+      /**
+       * @brief Increment the semaphore
+       * @param[in] dont_wait If true, don't wait for the semaphore to be
+       *   available and return -2 if it is not. Otherwise, this will
+       *   block until the semaphore is available.
+       * @return 0 on success, -1 on error, -2 on unavailable
+       */
+      YGG_API int inc(bool dont_wait=false);
+      /**
+       * @brief Decrement the semaphore
+       * @param[in] dont_wait If true, don't wait for the semaphore to be
+       *   available and return -2 if it is not. Otherwise, this will
+       *   block until the semaphore is available.
+       * @return 0 on success, -1 on error, -2 on unavailable
+       */
+      YGG_API int dec(bool dont_wait=false);
+
+      /**
+       * @brief Locks the mutex, blocks if the mutex is not available
+       * @param[in] dont_wait If true, don't wait for the semaphore to be
+       *   available and return -2 if it is not. Otherwise, this will
+       *   block until the semaphore is available.
+       * @return 0 on success, -1 on error, -2 on unavailable
+       */
+      int lock(bool dont_wait=false) { return dec(dont_wait); }
+      /**
+       * @brief Unlocks the mutex
+       * @param[in] dont_wait If true, don't wait for the semaphore to be
+       *   available and return -2 if it is not. Otherwise, this will
+       *   block until the semaphore is available.
+       * @return 0 on success, -1 on error, -2 on unavailable
+       */
+      int unlock(bool dont_wait=false) { return inc(dont_wait); }
+      
+      int id;               /**< Semaphore ID */
+    };
+
+#endif
+    
+#undef IPC_DESTRUCTOR
 
     /**
      * @brief Mutual exclusion for inter-process synchronization similar
@@ -26,8 +356,11 @@ namespace YggInterface {
        * @brief Constructor
        * @param[in] address The name for the mutex. If not provided, a
        *   random address will be generated.
+       * @param[in] created If true, an error will be raised if the mutex
+       *   is not new.
        */
-      YGG_API ProcessMutex(const std::string& address="");
+      YGG_API ProcessMutex(const std::string& address="",
+			   bool created=false);
       /**
        * @brief Destructor
        */
@@ -73,54 +406,12 @@ namespace YggInterface {
        * @return Number of processes, -1 indicates an error.
        */
       YGG_API int nproc() const;
-      /**
-       * @brief Perform a semaphore operation.
-       * @param[in] op Operation
-       * @param[in] flags Operation flags
-       * @param[out] err Error message if an error occurs
-       * @param[in] id ID of semaphore to perform operation on. If -1,
-       *   the mutex semaphore will be used.
-       * @return -1 if there is an error, 0 otherwise.
-       */
-      YGG_API int _semaphore_op(short op, short flags, std::string& err,
-				int id=-1);
-      /**
-       * @brief Create a key from a file, creating it if necessary
-       * @param[in] address Address that should be used to initialize
-       *   the key via ftok.
-       * @param[in] create If true, the key should be new.
-       * @param[in] ftok_int Integer that should be used to create the
-       *   key via ftok
-       * @param[in] is_proc_count If true, the processor count is stored
-       *   in the semaphore's value.
-       * @return Created key, -1 on error
-       */
-      YGG_API static key_t _safe_ftok(const std::string& address,
-				      bool create=false, int ftok_int=0);
-      /**
-       * @brief Initialize a semaphore from a string address.
-       * @param[in] address Address that should be used to initialize
-       *   the semaphore via ftok.
-       * @param[out] err Error message if an error occurs.
-       * @param[in] create If true, the semaphore should be new.
-       * @param[in] ftok_int Integer that should be used to create the
-       *   key via ftok
-       * @param[in] is_proc_count If true, the processor count is stored
-       *   in the semaphore's value.
-       * @return ID associated with the semaphore or -1 if there
-       *   was an error.
-       */
-      YGG_API static int _new_semaphore(const std::string& address,
-					std::string& err,
-					bool create=false, int ftok_int=0,
-					bool is_proc_count=false);
 #endif
     private:
 #ifdef _WIN32
-      HANDLE handle;                       /**< Named mutex handle */
+      Win32Mutex* handle;           /**< Named mutex handle */
 #else
-      int* handle;                         /**< Semaphore handle */
-      int nproc_semid;                     /**< Semaphore for processor count */
+      SysVSemaphore* handle;        /**< Semaphore handle */
 #endif
     };
 
@@ -158,6 +449,46 @@ namespace YggInterface {
       mutex_type& mutex;                   /**< Locked mutex */
     };
 
+    /**
+     * @brief Shared memory object.
+     */
+    class ProcessSharedMemory : public YggInterface::utils::LogBase {
+      ProcessSharedMemory(const ProcessSharedMemory&) = delete;
+      ProcessSharedMemory& operator=(const ProcessSharedMemory&) = delete;
+    public:
+      /**
+       * @brief Constructor
+       * @param[in] size Size of the shared memory that will be created
+       * @param[in] address Unique identifier for the shared memory. If
+       *   empty, an address will be generated.
+       * @param[in] created If true, this should be a new shared memory
+       *   block
+       */
+      YGG_API ProcessSharedMemory(size_t size,
+				  const std::string& address="",
+				  bool created=false);
+      /**
+       * @brief Destructor
+       */
+      YGG_API ~ProcessSharedMemory();
+      /** \copydoc YggInterface::utils::LogBase::logClass */
+      std::string logClass() const override {
+	return "ProcessSharedMemory";
+      }
+      /** \copydoc YggInterface::utils::LogBase::logInst */
+      std::string logInst() const override { return address; }
+
+      std::string address;    /**< Unique identifier for the memory */
+      ProcessMutex mutex;     /**< Mutex used to synchronize access to the memory */
+      size_t size;            /**< Size of the shared memory */
+      void* memory;           /**< Address of the shared memory */
+    private:
+#ifdef _WIN32
+      Win32SharedMem* handle; /**< File mapping handle */
+#else
+      SysVSharedMem* handle;  /**< Shared memory id */
+#endif
+    };
     
   }
 }
