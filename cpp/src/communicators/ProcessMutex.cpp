@@ -23,6 +23,8 @@ void ProcessMutex::close(bool remove_file) {
     return;
 #ifdef _WIN32
   CloseHandle(handle);
+  if (remove_file)
+    std::remove(address.c_str());
 #else
   std::string err;
   log_debug() << "~ProcessMutex: nproc_semid = " << nproc_semid << std::endl;

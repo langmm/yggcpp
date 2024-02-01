@@ -104,7 +104,7 @@ namespace YggInterface {
 #endif
     private:
 #ifdef _WIN32
-      HANDLE* handle;                      /**< Named mutex handle */
+      HANDLE handle;                       /**< Named mutex handle */
 #else
       int* handle;                         /**< Semaphore handle */
       int nproc_semid;                     /**< Semaphore for processor count */
@@ -124,7 +124,7 @@ namespace YggInterface {
       typedef Mutex mutex_type; /**< Mutex type */
       /**
        * @brief Constructor
-       * @param[in] mutex Process mutex that should be locked until the
+       * @param[in] m Process mutex that should be locked until the
        *   lock guard goes out of scope.
        */
       explicit ProcessLockGuard(mutex_type& m) :

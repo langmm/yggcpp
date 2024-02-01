@@ -64,7 +64,7 @@ namespace YggInterface {
 #ifdef _WIN32
       PVOID base_handle;           //!< File mapping handle
 #else
-      int base_handle;             // Shared memory id
+      int base_handle;             //!< Shared memory id
 #endif
     };
     
