@@ -28,8 +28,11 @@ else()
     set(YGG_INSTALL_TARGETS ${YGG_INSTALL_TARGETS} PARENT_SCOPE)
 endif()
 
+if (MINGW)
+    list(APPEND EXPORT_HEADER_ARGS EMPTY)
+endif()
 include(GenerateExportHeaderYggdrasil)
-generate_export_header_yggdrasil(${YGG_TARGET_CPP})
+generate_export_header_yggdrasil(${YGG_TARGET_CPP} ${EXPORT_HEADER_ARGS})
 set(YGG_INSTALL_INCLUDES ${YGG_INSTALL_INCLUDES} PARENT_SCOPE)
 
 target_link_libraries(
@@ -79,4 +82,4 @@ endif()
 
 include(CheckDLL)
 show_runtimes(${YGG_TARGET_CPP})
-show_symbols(${YGG_TARGET_CPP})
+# show_symbols(${YGG_TARGET_CPP})

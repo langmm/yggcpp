@@ -42,12 +42,16 @@ list(APPEND YGG_INSTALL_TARGETS ${YGG_TARGET_FORTRAN})
 set(YGG_INSTALL_TARGETS ${YGG_INSTALL_TARGETS} PARENT_SCOPE)
 
 # Exports
+if (MINGW)
+    list(APPEND EXPORT_HEADER_ARGS EMPTY)
+endif()
 include(GenerateExportHeaderYggdrasil)
 generate_export_header_yggdrasil(
     ${YGG_TARGET_FORTRAN}
     BASE_NAME FYGG_API
     EXPORT_MACRO_NAME FYGG_API
-    EXPORT_FILE_NAME YggInterface_fortran_export.h)
+    EXPORT_FILE_NAME YggInterface_fortran_export.h
+    ${EXPORT_HEADER_ARGS})
 set(YGG_INSTALL_INCLUDES ${YGG_INSTALL_INCLUDES} PARENT_SCOPE)
 
 # Install
