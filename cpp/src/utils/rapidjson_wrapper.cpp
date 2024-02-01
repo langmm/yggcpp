@@ -30,11 +30,12 @@ namespace wrap {
 #undef UTF8
 }
 
-void rapidjson::init_numpy_API() {
-  RJ_WNS::init_numpy_API();
+std::string rapidjson::init_numpy_API() {
+  return RJ_WNS::init_numpy_API();
 }
-void rapidjson::initialize_python(const std::string error_prefix) {
-  RJ_WNS::initialize_python(error_prefix);
+std::string rapidjson::initialize_python(const std::string error_prefix,
+					 bool dont_raise) {
+  return RJ_WNS::initialize_python(error_prefix, dont_raise);
 }
 void rapidjson::finalize_python(const std::string error_prefix) {
   RJ_WNS::finalize_python(error_prefix);
