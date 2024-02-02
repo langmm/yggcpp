@@ -63,8 +63,6 @@ namespace YggInterface {
       YGG_API virtual int cleanup() { return local_cleanup(); }
       /**
        * @brief Destroy the instance for this class only
-       * @param[in] dont_call_base If true, the base class's _destroy
-       *   method will not be called.
        * @return -1 on error
        */
       YGG_API int local_destroy();
@@ -97,10 +95,7 @@ namespace YggInterface {
       YGG_API Win32Base(const std::string& address,
 			bool preserve_address=false,
 			const std::string& logClass="");
-      /**
-       * @brief Destructor
-       */
-      YGG_API virtual ~Win32Base();
+      IPC_DESTRUCTOR(Win32Base);
       /**
        * @brief Get the current error message
        * @param[in] Context that should be added to the error message
@@ -118,7 +113,7 @@ namespace YggInterface {
     /** @brief Wrapper for Windows API mutex */
     class Win32Mutex : public Win32Base {
       Win32Mutex(const Win32Mutex&) = delete;
-      Win32Mutex& operator(const Win32Mutex&) = delete;
+      Win32Mutex& operator=(const Win32Mutex&) = delete;
     public:
       /**
        * @brief Constructor
@@ -151,17 +146,23 @@ namespace YggInterface {
     /** @brief Wrapper for Windows API shared memory */
     class Win32SharedMem : public Win32Base {
       Win32SharedMem(const Win32SharedMem&) = delete;
-      Win32SharedMem& operator(const Win32SharedMem&) = delete;
+      Win32SharedMem& operator=(const Win32SharedMem&) = delete;
     public:
       /**
        * @brief Constructor
+       * @param[in] size Size of shared memory that should be created or
+       *   attached to
        * @param[in] address Name used to generate the id
        * @param[in] preserve_address If true, don't remove the underlying
        *   file specified by address during destruction
        */
-      YGG_API Win32SharedMem(const std::string& address,
+      YGG_API Win32SharedMem(size_t size, const std::string& address,
 			     bool preserve_addr = false);
+      
       IPC_DESTRUCTOR(Win32SharedMem);
+      
+      int id;        /**< Shared memory id */
+      void* memory;  /**< Address of shared memory */
     };
     
 #else
@@ -194,7 +195,8 @@ namespace YggInterface {
       IPC_DESTRUCTOR(SysVBase);
       /**
        * @brief Get the current error message
-       * @param[in] Context that should be added to the error message
+       * @param[in] context Context that should be added to the error
+       *   message
        * @return Error message
        */
       static std::string error(const std::string& context="") {
@@ -400,13 +402,11 @@ namespace YggInterface {
       std::string logInst() const override { return address; }
       std::string address;                 /**< Mutex name */
       bool created;                        /**< Status of if the mutex was created by this process */
-#ifndef _WIN32
       /**
        * @brief Get the number of processes connected to the mutex.
        * @return Number of processes, -1 indicates an error.
        */
       YGG_API int nproc() const;
-#endif
     private:
 #ifdef _WIN32
       Win32Mutex* handle;           /**< Named mutex handle */

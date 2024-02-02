@@ -492,7 +492,6 @@ void ProcessMutex::unlock() {
   log_debug() << "unlock: done" << std::endl;
 }
 
-#ifndef _WIN32
 int ProcessMutex::nproc() const {
   if (handle == NULL) {
     log_error() << "nproc: Handle is NULL" << std::endl;
@@ -500,7 +499,6 @@ int ProcessMutex::nproc() const {
   }
   return handle->nproc();
 }
-#endif
 
 /////////////////////////////////
 // ProcessSharedMemory
