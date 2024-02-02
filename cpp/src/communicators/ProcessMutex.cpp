@@ -137,10 +137,10 @@ int Win32Mutex::unlock(bool) {
 // Win32SharedMem
 /////////////////////////////////
 
-Win32SharedMem::Win32SharedMem(size_t siz, const std::string& addr,
+Win32SharedMem::Win32SharedMem(size_t size, const std::string& addr,
 			       bool preserve_addr) :
   Win32Base(addr, preserve_addr, "Win32SharedMem"),
-  size(siz), memory(NULL) {
+  memory(NULL) {
   preserve_address = true; // TODO: should this be false
   ULARGE_INTEGER maxSize;
   maxSize.QuadPart = size;

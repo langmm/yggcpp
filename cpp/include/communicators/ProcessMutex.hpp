@@ -71,6 +71,11 @@ namespace YggInterface {
        * @return -1 on error
        */
       YGG_API virtual int destroy() { return local_destroy(); }
+      /**
+       * @brief Get the number of processes using the instance
+       * @return Number of processes, -1 indicates an error.
+       */
+      YGG_API int nproc() const { return 1; }
       
       std::string address;      /**< Unique identifier for the handle */
       bool preserve_address;    /**< If true, preserve the underlying file after destruction */
@@ -161,7 +166,6 @@ namespace YggInterface {
       
       IPC_DESTRUCTOR(Win32SharedMem);
       
-      int id;        /**< Shared memory id */
       void* memory;  /**< Address of shared memory */
     };
     
