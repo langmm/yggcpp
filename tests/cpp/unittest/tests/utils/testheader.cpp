@@ -572,8 +572,23 @@ TEST(Metadata, fromFormatNameUnits) {
     YggInterface::utils::Metadata y;
     EXPECT_TRUE(y.fromFormat(formatStr, false, names, units));
     EXPECT_EQ(x.metadata, y.metadata);
+    std::vector<std::string> names2;
+    std::vector<std::string> units2;
+    EXPECT_TRUE(y.get_field_names(names2));
+    EXPECT_TRUE(y.get_field_units(units2));
+    EXPECT_EQ(names2, names);
+    EXPECT_EQ(units2, units);
   }
-  
+  {
+    std::vector<std::string> namesAlt = { "value", "count" };
+    YggInterface::utils::Metadata y;
+    EXPECT_FALSE(y.fromFormat(formatStr, false, namesAlt, units));
+  }
+  {
+    std::vector<std::string> unitsAlt = { "cm", "mol" };
+    YggInterface::utils::Metadata y;
+    EXPECT_FALSE(y.fromFormat(formatStr, false, names, unitsAlt));
+  }
 }
 
 TEST(Metadata, fromMetadata) {

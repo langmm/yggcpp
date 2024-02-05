@@ -8,7 +8,8 @@
 
 // https://stackoverflow.com/questions/440133/how-do-i-create-a-random-alpha-numeric-string-in-c
 std::string YggInterface::utils::random_string(std::string::size_type length,
-					       bool numeric) {
+					       bool numeric,
+					       int seed) {
   static size_t N_numeric = 10, N_all = 62;
   static const char* chrs = "0123456789"
     "abcdefghijklmnopqrstuvwxyz"
@@ -19,7 +20,9 @@ std::string YggInterface::utils::random_string(std::string::size_type length,
   if (numeric) {
     N = N_numeric;
   }
-  thread_local static std::mt19937 rg(std::rand());
+  if (seed <= 0)
+    seed = std::rand();
+  thread_local static std::mt19937 rg(seed);
   // thread_local static std::mt19937 rg{std::random_device{}()};
   thread_local static std::uniform_int_distribution<std::string::size_type> pick(0, N - 2);
   while(length--)

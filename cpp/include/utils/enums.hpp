@@ -131,7 +131,7 @@ enum HeadFlags
   HEAD_FLAG_ALLOW_REALLOC   = 0x00000020, //!< Buffer can be reallocated
   HEAD_TEMPORARY            = 0x00000040, //!< Message is temporary
   HEAD_FLAG_EOF             = 0x00000080, //!< Message is EOF
-  HEAD_FLAG_CLIENT_EOF      = 0x00000100, //!< Message is client EOF
+  // HEAD_FLAG_CLIENT_EOF      = 0x00000100, //!< Message is client EOF
   HEAD_FLAG_CLIENT_SIGNON   = 0x00000200, //!< Message is client signon
   HEAD_FLAG_SERVER_SIGNON   = 0x00000400, //!< Message is server signon
   HEAD_FLAG_REPEAT          = 0x00000800, //!< Message will be discarded

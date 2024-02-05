@@ -18,7 +18,8 @@ void BufferComm::_open(bool call_base) {
   updateMaxMsgSize(MAX_SHARED_MEM_SIZE);
   bool created = address.address().empty();
   if (created) {
-    address.address(random_string(10));
+    int seed = static_cast<int>(ptr2seed(this));
+    address.address(random_string(10, false, seed));
   }
   if (name.empty()) {
     this->name = "tempnewBUFF." + this->address.address();

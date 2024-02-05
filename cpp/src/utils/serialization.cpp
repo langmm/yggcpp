@@ -1213,8 +1213,8 @@ int Metadata::serialize(char **buf, size_t *buf_siz,
 					     (size_t)(buffer.GetLength() + 1)));
     }
     if (buf_t == nullptr) {
-      log_error() << "serialize: Error in realloc" << std::endl;
-      return -1;
+      log_error() << "serialize: Error in realloc" << std::endl; // GCOV_EXCL_LINE
+      return -1; // GCOV_EXCL_LINE
     }
     buf_siz[0] = (size_t)(buffer.GetLength() + 1);
     buf[0] = buf_t;
@@ -1258,7 +1258,7 @@ bool Metadata::set_field_names(const std::vector<std::string>& x) {
     for (size_t i = 0; i < x.size(); i++) {
       if (!SetString("title", x[i],
 		     items[static_cast<rapidjson::SizeType>(i)]))
-	return false;
+	return false; // GCOV_EXCL_LINE
     }
   }
   if (!metadata.HasMember("serializer"))
@@ -1267,7 +1267,7 @@ bool Metadata::set_field_names(const std::vector<std::string>& x) {
 	  rapidjson::Value(rapidjson::kObjectType).Move(),
 	  metadata.GetAllocator());
   if (!SetVectorString("field_names", x, metadata["serializer"]))
-    return false;
+    return false; // GCOV_EXCL_LINE
   return true;
 }
 bool Metadata::set_field_units(const std::vector<std::string>& x) {
@@ -1288,7 +1288,7 @@ bool Metadata::set_field_units(const std::vector<std::string>& x) {
     for (size_t i = 0; i < x.size(); i++) {
       if (!SetString("units", x[i],
 		     items[static_cast<rapidjson::SizeType>(i)]))
-	return false;
+	return false; // GCOV_EXCL_LINE
     }
   }
   if (!metadata.HasMember("serializer"))
@@ -1297,7 +1297,7 @@ bool Metadata::set_field_units(const std::vector<std::string>& x) {
 	  rapidjson::Value(rapidjson::kObjectType).Move(),
 	  metadata.GetAllocator());
   if (!SetVectorString("field_units", x, metadata["serializer"]))
-    return false;
+    return false; // GCOV_EXCL_LINE
   return true;
 }
 bool Metadata::get_field_names(std::vector<std::string>& out) const {
@@ -1348,7 +1348,7 @@ Header::Header(const char* buf, const size_t &len,
   }
   if (!for_send(meta, buf, len, comm_flags)) {
     // TODO: Raise?
-    flags &= ~HEAD_FLAG_VALID;
+    flags &= ~HEAD_FLAG_VALID; // GCOV_EXCL_LINE
   }
 }
 Header::Header(char*& buf, const size_t &len, bool allow_realloc) :
@@ -1436,7 +1436,7 @@ bool Header::RawAssign(const Header& rhs, bool keep_buffer) {
     offset = 0;
     if (rhs.data && rhs.size_buff &&
 	copyData(rhs.data[0], rhs.size_buff - 1) < 0)
-      return false;
+      return false; // GCOV_EXCL_LINE
     flags = (flags & HEAD_BUFFER_MASK) | (rhs.flags & ~HEAD_BUFFER_MASK);
   } else {
     if (rhs.flags & HEAD_FLAG_OWNSDATA) {
@@ -1467,8 +1467,8 @@ long Header::reallocData(const size_t size_new) {
   size_buff = size_new + 1;
   char* data_t = (char*)realloc(data[0], size_buff);
   if (!data_t) {
-    log_error() << "reallocData: Error in realloc" << std::endl;
-    return -1;
+    log_error() << "reallocData: Error in realloc" << std::endl; // GCOV_EXCL_LINE
+    return -1; // GCOV_EXCL_LINE
   }
   data[0] = data_t;
   if (flags & HEAD_FLAG_OWNSDATA)
@@ -1507,7 +1507,7 @@ bool Header::MoveFrom(Header& rhs) {
 bool Header::CopyFrom(const Header& rhs) {
   reset(HEAD_RESET_KEEP_BUFFER);
   if (!Metadata::CopyFrom(rhs))
-    return false;
+    return false; // GCOV_EXCL_LINE
   return RawAssign(rhs, true);
 }
 
@@ -1516,8 +1516,8 @@ void Header::setMessageFlags(const char* msg, const size_t msg_len) {
     return;
   if (strcmp(msg, YGG_MSG_EOF) == 0)
     flags |= HEAD_FLAG_EOF;
-  else if (strcmp(msg, YGG_CLIENT_EOF) == 0)
-    flags |= HEAD_FLAG_CLIENT_EOF;
+  // else if (strcmp(msg, YGG_CLIENT_EOF) == 0)
+  //   flags |= HEAD_FLAG_CLIENT_EOF;
   else if (strncmp(msg, YGG_CLIENT_SIGNON, YGG_CLIENT_SIGNON_LEN) == 0)
     flags |= HEAD_FLAG_CLIENT_SIGNON;
   else if (strncmp(msg, YGG_SERVER_SIGNON, YGG_SERVER_SIGNON_LEN) == 0)
@@ -1557,7 +1557,7 @@ bool Header::for_send(Metadata* metadata0, const char* msg,
   }
   initMeta();
   if (!SetMetaID("id"))
-    return false;
+    return false; // GCOV_EXCL_LINE
   char model[100] = "";
   char *model_name = getenv("YGG_MODEL_NAME");
   if (model_name != NULL) {
@@ -1609,7 +1609,7 @@ long Header::on_recv(const char* msg, const size_t& msg_siz) {
     size_data = size_curr;
   } else {
     if (!fromMetadata(head, headsiz))
-      return -1;
+      return -1; // GCOV_EXCL_LINE
     size_head = headsiz + 2*strlen(MSG_HEAD_SEP);
     if (size_head > msg_siz) {
       log_error() << "on_recv: Header (" << size_head <<
@@ -1621,20 +1621,16 @@ long Header::on_recv(const char* msg, const size_t& msg_siz) {
     memmove(data[0], data[0] + size_head, size_curr);
     (*data)[size_curr] = '\0';
     // Update parameters from document
-    try {
-      int size_data_int = 0;
-      bool in_data = false;
-      if (!(GetMetaInt("size", size_data_int) &&
-	    GetMetaBoolOptional("in_data", in_data, false)))
-	return -1;
-      size_data = static_cast<size_t>(size_data_int);
-      if (in_data)
-	flags |= HEAD_META_IN_DATA;
-      else
-	flags &= static_cast<HEAD_FLAG_TYPE>(~HEAD_META_IN_DATA);
-    } catch (...) {
+    int size_data_int = 0;
+    bool in_data = false;
+    if (!(GetMetaInt("size", size_data_int) &&
+	  GetMetaBoolOptional("in_data", in_data, false)))
       return -1;
-    }
+    size_data = static_cast<size_t>(size_data_int);
+    if (in_data)
+      flags |= HEAD_META_IN_DATA;
+    else
+      flags &= static_cast<HEAD_FLAG_TYPE>(~HEAD_META_IN_DATA);
   }
   // Check for flags
   setMessageFlags(data[0], size_curr);
@@ -1658,7 +1654,7 @@ bool Header::formatBuffer(rapidjson::StringBuffer& buffer, bool metaOnly) {
   rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
   bool in_data = false;
   if (!GetMetaBoolOptional("in_data", in_data, false))
-    return false;
+    return false; // GCOV_EXCL_LINE
   if (metaOnly) {
     if (metadata.HasMember("__meta__")) {
       writer.StartObject();
@@ -1733,16 +1729,16 @@ int Header::format() {
   std::string sep(MSG_HEAD_SEP);
   if (flags & HEAD_META_IN_DATA) {
     if (!SetMetaBool("in_data", true))
-      return -1;
+      return -1; // GCOV_EXCL_LINE
     if (!formatBuffer(buffer_body))
-      return -1;
+      return -1; // GCOV_EXCL_LINE
     size_data += sep.size() + static_cast<size_t>(buffer_body.GetLength());
   }
   if (!SetMetaUint("size", size_data))
-    return -1;
+    return -1; // GCOV_EXCL_LINE
   rapidjson::StringBuffer buffer;
   if (!formatBuffer(buffer, metaOnly))
-    return -1;
+    return -1; // GCOV_EXCL_LINE
   size_head = static_cast<size_t>(buffer.GetLength()) + 2 * sep.size();
   size_t size_new = size_head + size_data;
   if (size_max > 0) {
@@ -1759,7 +1755,7 @@ int Header::format() {
       return -1;
     }
   }
-  if (reallocData(size_new) < 0) {
+  if (reallocData(size_new) < 0) { // GCOV_EXCL_LINE
     return -1;
   }
   memmove(data[0] + static_cast<long>(size_new - size_raw),
@@ -1776,7 +1772,7 @@ int Header::format() {
 
   bool in_data = false;
   if (!GetMetaBoolOptional("in_data", in_data, false))
-    return -1;
+    return -1; // GCOV_EXCL_LINE
   if (in_data) {
     memcpy(data[0] + size_curr, buffer_body.GetString(),
 	   buffer_body.GetLength());
