@@ -33,6 +33,20 @@ namespace YggInterface {
     T1 max_enum_value(const std::map<const T1, const T2> map) {
       return map.crbegin()->first;
     }
-    
+
+
+    template<typename T, typename Tflag>
+    std::string strBitFlags(const T& flag,
+			    const std::map<const Tflag, const std::string>& map,
+			    const std::string& prefix="",
+			    const std::string& suffix="\n") {
+      std::string out;
+      for (typename std::map<const Tflag, const std::string>::const_iterator it = map.begin();
+	   it != map.end(); it++) {
+	if (flag & it->first)
+	  out += prefix + it->second + suffix;
+      }
+      return out;
+    }
   }
 }

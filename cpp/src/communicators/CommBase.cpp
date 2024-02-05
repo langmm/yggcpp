@@ -38,6 +38,9 @@ void Comm_t::_before_open() {
   if (direction == NONE)
     flags &= ~COMM_FLAG_VALID;
 
+  log_debug() << "before_open: flags = [" << std::endl <<
+    utils::strBitFlags(flags, COMM_FLAG_map, "    ") << "]" << std::endl;
+
   thread_id = get_thread_id();
   char *allow_threading = getenv("YGG_THREADING");
   if (allow_threading)
