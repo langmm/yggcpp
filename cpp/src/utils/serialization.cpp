@@ -290,7 +290,7 @@ bool Metadata::fromData(const rapidjson::Document& data,
   }
   rapidjson::SchemaEncoder encoder(!hasType());
   if (!data.Accept(encoder))
-    return false;
+    return false;  // GCOV_EXCL_LINE
   return fromSchema(encoder.GetSchema());
 }
 bool Metadata::fromType(const std::string& type, bool use_generic,
@@ -470,12 +470,12 @@ bool Metadata::fromFormat(const std::string& format_str, bool as_array,
     return false;
   if (nItems == 1) {
     if (!SetSchemaBool("allowSingular", true))
-      return false;
+      return false;  // GCOV_EXCL_LINE
   }
   if (!set_field_names(field_names))
-    return false;
+    return false;  // GCOV_EXCL_LINE
   if (!set_field_units(field_units))
-    return false;
+    return false;  // GCOV_EXCL_LINE
   // if (nItems == 1) {
   //   typename rapidjson::Document::ValueType tmp;
   //   metadata["serializer"]["datatype"].Swap(tmp);
@@ -536,8 +536,8 @@ bool Metadata::addFilter(const PyObject* new_filter) {
   try {
     filters.push_back(dynamic_cast<FilterBase*>(new PyFilterClass(new_filter)));
   } catch (...) {
-    log_error() << "addFilter: Error adding filter" << std::endl;
-    return false;
+    log_error() << "addFilter: Error adding filter" << std::endl;  // GCOV_EXCL_LINE
+    return false;  // GCOV_EXCL_LINE
   }
   return true;
 }
@@ -553,8 +553,8 @@ bool Metadata::addTransform(const PyObject* new_transform) {
   try {
     transforms.push_back(new PyTransformClass(new_transform));
   } catch (...) {
-    log_error() << "addTransform: Error adding transform" << std::endl;
-    return false;
+    log_error() << "addTransform: Error adding transform" << std::endl;  // GCOV_EXCL_LINE
+    return false;  // GCOV_EXCL_LINE
   }
   return true;
 }

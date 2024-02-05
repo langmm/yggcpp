@@ -107,7 +107,7 @@ namespace YggInterface {
        * @return Error message
        */
       static std::string error(const std::string& context="") {
-	std::string out(std::system_category().message(GetLastError()));
+	std::string out(std::system_category().message(static_cast<int>(GetLastError())));
 	if (!context.empty())
 	  out = context + " - " + out;
 	return out;
