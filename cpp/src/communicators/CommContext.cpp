@@ -51,6 +51,7 @@ int CommContext::init(bool for_testing) {
   log_debug() << "init: finished curl initialization" << std::endl;
 #endif // RESTINSTALLED
   log_debug() << "init: End" << std::endl;
+  std::srand(ptr2seed(this));
   return 0;
 }
 void CommContext::cleanup(CLEANUP_MODE mode) {

@@ -19,7 +19,8 @@ std::string YggInterface::utils::random_string(std::string::size_type length,
   if (numeric) {
     N = N_numeric;
   }
-  thread_local static std::mt19937 rg{std::random_device{}()};
+  thread_local static std::mt19937 rg(std::rand());
+  // thread_local static std::mt19937 rg{std::random_device{}()};
   thread_local static std::uniform_int_distribution<std::string::size_type> pick(0, N - 2);
   while(length--)
     s += chrs[pick(rg)];

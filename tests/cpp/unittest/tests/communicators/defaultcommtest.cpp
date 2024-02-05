@@ -395,6 +395,45 @@ TEST(DefaultCommu, transform_send) {
   EXPECT_EQ(result, "2");
   EXPECT_EQ(rComm.recvVar(result), -2);
 }
+// error
+TEST(DefaultCommu, filter_recv_error) {
+  DefaultComm sComm("", SEND);
+  utils::Address addr(sComm.getAddress());
+  DefaultComm rComm("", addr, RECV);
+  rComm.getMetadata().addFilter(example_filter_error);
+  EXPECT_GT(sComm.sendVar(0), 0);
+  int result = -1;
+  EXPECT_EQ(rComm.recvVar(result), -1);
+  EXPECT_EQ(result, -1);
+}
+TEST(DefaultCommu, filter_send_error) {
+  DefaultComm sComm("", SEND);
+  utils::Address addr(sComm.getAddress());
+  DefaultComm rComm("", addr, RECV);
+  sComm.getMetadata().addFilter(example_filter_error);
+  EXPECT_EQ(sComm.sendVar(0), -1);
+  EXPECT_EQ(rComm.comm_nmsg(), 0);
+}
+
+TEST(DefaultCommu, transform_recv_error) {
+  DefaultComm sComm("", SEND);
+  utils::Address addr(sComm.getAddress());
+  DefaultComm rComm("", addr, RECV);
+  rComm.getMetadata().addTransform(&example_transform_error);
+  EXPECT_GT(sComm.sendVar(0), 0);
+  std::string result = "";
+  EXPECT_EQ(rComm.recvVar(result), -1);
+  EXPECT_EQ(result, "");
+}
+TEST(DefaultCommu, transform_send_error) {
+  DefaultComm sComm("", SEND);
+  utils::Address addr(sComm.getAddress());
+  DefaultComm rComm("", addr, RECV);
+  sComm.getMetadata().addTransform(&example_transform_error);
+  EXPECT_EQ(sComm.sendVar(0), -1);
+  EXPECT_EQ(rComm.comm_nmsg(), 0);
+}
+
 
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
 TEST(DefaultCommu, py_filter_recv) {
