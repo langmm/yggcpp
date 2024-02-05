@@ -22,14 +22,16 @@ bool example_transform(rapidjson::Document& msg) {
 }
 
 static inline
-bool example_filter_error(const rapidjson::Document&) {
-  throw std::runtime_error("Test error");
+bool example_filter_error(const rapidjson::Document& msg) {
+  if (!msg.IsNull())
+    throw std::runtime_error("Test error");
   return false;
 }
 
 static inline
-bool example_transform_error(rapidjson::Document&) {
-  throw std::runtime_error("Test error");
+bool example_transform_error(rapidjson::Document& msg) {
+  if (!msg.IsNull())
+    throw std::runtime_error("Test error");
   return false;
 }
 
