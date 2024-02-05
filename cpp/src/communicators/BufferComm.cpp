@@ -52,7 +52,7 @@ int BufferComm::comm_nmsg(DIRECTION dir) const {
     return 0;
   int out = -1;
   {
-    ProcessLockGuard<ProcessMutex> lock_guard(const_cast<ProcessMutex*>(&(handle->mutex))[0]);
+    // ProcessLockGuard<ProcessMutex> lock_guard(const_cast<ProcessMutex*>(&(handle->mutex))[0]);
     if (memory == NULL)
       return -1;
     out = memory->count;
