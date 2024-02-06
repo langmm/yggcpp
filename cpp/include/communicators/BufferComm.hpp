@@ -1,8 +1,8 @@
 #pragma once
 
 #include "utils/tools.hpp"
+#include "utils/multiprocessing.hpp"
 #include "communicators/CommBase.hpp"
-#include "communicators/ProcessMutex.hpp"
 
 #define MAX_BUFFERS 100
 #define MAX_SHARED_MEM_SIZE 2048
@@ -21,7 +21,7 @@ namespace YggInterface {
     /**
      * @brief Shared memory based communicator
      */
-    class BufferComm : public CommBase<ProcessSharedMemory> {
+    class BufferComm : public CommBase<YggInterface::utils::ProcessSharedMemory> {
       BufferComm(const BufferComm&) = delete;
       BufferComm& operator=(const BufferComm&) = delete;
     public:

@@ -1,7 +1,6 @@
-#include "communicators/ProcessMutex.hpp"
+#include "utils/multiprocessing.hpp"
 #include <fstream>
 
-using namespace YggInterface::communicator;
 using namespace YggInterface::utils;
 
 /////////////////////////////////

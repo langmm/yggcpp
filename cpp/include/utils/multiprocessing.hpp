@@ -13,7 +13,7 @@
 #endif
 
 namespace YggInterface {
-  namespace communicator {
+  namespace utils {
 
 #define IPC_DESTRUCTOR(cls)						\
     /** @brief Destructor */						\

@@ -1051,9 +1051,12 @@ int Metadata::deserialize_updates(rapidjson::Document& d) {
   bool hasT = hasType();
   if (!hasT) {
     if (!fromData(d)) {
-      if (!has_raw_schema)
-	resetRawSchema();
-      return -1;
+      // This should be unreachable because the only error would come from
+      // encoding the schema, which should never happen for an existing
+      // document
+      if (!has_raw_schema) // GCOV_EXCL_LINE
+	resetRawSchema();  // GCOV_EXCL_LINE
+      return -1;           // GCOV_EXCL_LINE
     }
   } else {
     rapidjson::StringBuffer sb;

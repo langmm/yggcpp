@@ -1,6 +1,7 @@
 #pragma once
 
 #include "utils/tools.hpp"
+#include "utils/multiprocessing.hpp"
 
 #include <fstream>
 #include <cstdio>
@@ -9,7 +10,6 @@
 #endif // _MSC_VER
 
 #include "communicators/CommBase.hpp"
-#include "communicators/ProcessMutex.hpp"
 
 namespace YggInterface {
   namespace communicator {
@@ -53,7 +53,7 @@ namespace YggInterface {
 
     private:
       std::fstream::openmode mode; //!< Mode used to open the file
-      ProcessMutex mutex;          //!< Mutex for ensuring that a file is not accessed by two processes
+      YggInterface::utils::ProcessMutex mutex; //!< Mutex for ensuring that a file is not accessed by two processes
       
     };
 

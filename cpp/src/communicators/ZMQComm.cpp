@@ -130,7 +130,7 @@ void ZMQSocket::init(int type0, utils::Address& addr,
 	  if (zmq_bind(handle, endpoint.c_str()) != 0) {
 	    err = zmq_errno();
 	    if (err != EADDRINUSE) {
-	      except_msg = "ZMQSocket::init: Error binding to address: " + endpoint;
+	      except_msg = "ZMQSocket::init: Error binding to address  " + endpoint + ": " + std::string(zmq_strerror(err));
 	    } else { // GCOVR_EXCL_LINE
 	      port++;
 	    }
