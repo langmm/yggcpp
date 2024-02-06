@@ -360,7 +360,8 @@ namespace YggInterface {
     public:
       /**
        * @brief Constructor
-       * @param[in] address The name for the mutex. If not provided, a
+       * @param[in] name The name for the mutex.
+       * @param[in] address The address for the mutex. If not provided, a
        *   random address will be generated.
        * @param[in] created If true, an error will be raised if the mutex
        *   is not new.
