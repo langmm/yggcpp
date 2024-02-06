@@ -47,6 +47,22 @@ namespace YggInterface {
        * @return Address
        */
       YGG_API std::string getAddress(DIRECTION dir);
+      /**
+       * @brief Determine if the proxy connection is still open
+       * @param dir Direction to check, if NONE both will be checked
+       * @return true if open, false otherwise
+       */
+      bool is_open(const DIRECTION dir=NONE);
+      /**
+       * @brief Determine if the proxy connection is closed
+       * @param dir Direction to check, if NONE both will be checked
+       * @return true if closed, false otherwise
+       */
+      bool is_closed(const DIRECTION dir=NONE);
+      /**
+       * @brief Close the proxy
+       */
+      void close();
     private:
       /**
        * @brief Function to run in a thread which sends/receives messages

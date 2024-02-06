@@ -17,16 +17,11 @@ void BufferComm::_open(bool call_base) {
   BEFORE_OPEN_DEF;
   updateMaxMsgSize(MAX_SHARED_MEM_SIZE);
   bool created = address.address().empty();
-  if (created) {
-    int seed = static_cast<int>(ptr2seed(this));
-    address.address(random_string(10, false, seed));
-  }
-  if (name.empty()) {
-    this->name = "tempnewBUFF." + this->address.address();
-  } else {
-    this->name = name;
-  }
-  handle = new ProcessSharedMemory(sizeof(shmbuf_t),
+  if (created)
+    address.address(this->ctx->uuid_str(10));
+  Comm_t::_init_name();
+  handle = new ProcessSharedMemory(this->name,
+				   sizeof(shmbuf_t),
 				   this->address.address(),
 				   created);
   {

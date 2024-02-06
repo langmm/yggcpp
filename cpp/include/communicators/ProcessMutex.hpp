@@ -365,7 +365,8 @@ namespace YggInterface {
        * @param[in] created If true, an error will be raised if the mutex
        *   is not new.
        */
-      YGG_API ProcessMutex(const std::string& address="",
+      YGG_API ProcessMutex(const std::string& name,
+			   const std::string& address="",
 			   bool created=false);
       /**
        * @brief Destructor
@@ -373,11 +374,13 @@ namespace YggInterface {
       YGG_API ~ProcessMutex();
       /**
        * @brief Initialize the mutex.
-       * @param[in] address Name for the mutex.
+       * @param[in] name Name for the mutex.
+       * @param[in] address Address for the mutex.
        * @param[in] created If true, an error will be raised if the mutex
        *   is not new.
        */
-      YGG_API void init(const std::string& address,
+      YGG_API void init(const std::string& name,
+			const std::string& address,
 			bool created=false);
       /**
        * @brief Close the mutex
@@ -403,8 +406,9 @@ namespace YggInterface {
       /** \copydoc YggInterface::utils::LogBase::logClass */
       std::string logClass() const override { return "ProcessMutex"; }
       /** \copydoc YggInterface::utils::LogBase::logInst */
-      std::string logInst() const override { return address; }
-      std::string address;                 /**< Mutex name */
+      std::string logInst() const override { return name + "-" + address; }
+      std::string name;                    /**< Mutex name */
+      std::string address;                 /**< Mutex address */
       bool created;                        /**< Status of if the mutex was created by this process */
       /**
        * @brief Get the number of processes connected to the mutex.
@@ -448,7 +452,7 @@ namespace YggInterface {
       /** \copydoc YggInterface::utils::LogBase::logClass */
       std::string logClass() const override { return "ProcessLockGuard"; }
       /** \copydoc YggInterface::utils::LogBase::logInst */
-      std::string logInst() const override { return mutex.address; }
+      std::string logInst() const override { return mutex.logInst(); }
     private:
       mutex_type& mutex;                   /**< Locked mutex */
     };
@@ -462,13 +466,14 @@ namespace YggInterface {
     public:
       /**
        * @brief Constructor
+       * @param[in] name Name for the instance
        * @param[in] size Size of the shared memory that will be created
        * @param[in] address Unique identifier for the shared memory. If
        *   empty, an address will be generated.
        * @param[in] created If true, this should be a new shared memory
        *   block
        */
-      YGG_API ProcessSharedMemory(size_t size,
+      YGG_API ProcessSharedMemory(const std::string& name, size_t size,
 				  const std::string& address="",
 				  bool created=false);
       /**
@@ -480,8 +485,9 @@ namespace YggInterface {
 	return "ProcessSharedMemory";
       }
       /** \copydoc YggInterface::utils::LogBase::logInst */
-      std::string logInst() const override { return address; }
+      std::string logInst() const override { return name + "-" + address; }
 
+      std::string name;       /**< Name for the instance */
       std::string address;    /**< Unique identifier for the memory */
       ProcessMutex mutex;     /**< Mutex used to synchronize access to the memory */
       size_t size;            /**< Size of the shared memory */

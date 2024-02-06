@@ -143,19 +143,6 @@ int unsetenv(const char *name) {
 namespace YggInterface {
 namespace utils {
 
-  /**
-   * @brief Generate a random alpha numeric string of a given length
-   * @param[in] length Size of string to generate
-   * @param[in] numeric If true, the random string will only be numeric
-   *   and will not start with '0'
-   * @param[in] seed If >= 0, this will be the seed used to initialize
-   *   the random number generator
-   * @return Generated string
-   */
-  std::string random_string(std::string::size_type length,
-			    bool numeric = false,
-			    int seed = -1);
-  
 #ifdef THREADSINSTALLED
 #define THREAD_USLEEP(x) std::this_thread::sleep_for(std::chrono::microseconds(x))
 #else // THREADSINSTALLED

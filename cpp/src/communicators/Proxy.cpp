@@ -60,8 +60,13 @@ void Proxy::on_thread(const std::string iname, const std::string oname,
     ocomm = new_Comm_t(SEND, otype, oname, oAddr,
 		       oflgs | COMM_FLAG_ASYNC);
     if (icomm && ocomm) {
-      icomm->getMetadata().setFilters(filters);
-      icomm->getMetadata().setTransforms(transforms);
+      if (icomm->getAddress() == ocomm->getAddress()) {
+	log_error() << "on_thread: Send and receive communicators have the same address" << std::endl;
+	out = false;
+      } else {
+	icomm->getMetadata().setFilters(filters);
+	icomm->getMetadata().setTransforms(transforms);
+      }
     } else {
       out = false;
     }
@@ -117,6 +122,34 @@ std::string Proxy::getAddress(DIRECTION dir) {
       return ocomm->getAddress();
   }
   return "";
+}
+
+bool Proxy::is_open(const DIRECTION dir) {
+  const std::lock_guard<std::mutex> comm_lock(mutex);
+  if (status.load() & THREAD_CLOSING)
+    return false;
+  if (dir == RECV)
+    return icomm->is_open();
+  else if (dir == SEND)
+    return ocomm->is_open();
+  return (icomm->is_open() && ocomm->is_open());
+}
+
+bool Proxy::is_closed(const DIRECTION dir) {
+  const std::lock_guard<std::mutex> comm_lock(mutex);
+  if (status.load() & THREAD_CLOSING)
+    return true;
+  if (dir == RECV)
+    return icomm->is_closed();
+  else if (dir == SEND)
+    return ocomm->is_closed();
+  return (icomm->is_closed() && ocomm->is_closed());
+}
+
+void Proxy::close() {
+  log_debug() << "close: begin" << std::endl;
+  STOP_THREAD;
+  log_debug() << "close: end" << std::endl;
 }
 
 #endif // THREADSINSTALLED

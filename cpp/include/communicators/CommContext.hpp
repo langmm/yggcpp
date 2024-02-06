@@ -16,6 +16,7 @@
 #if defined(_WIN32) && !(defined(YGG_ZMQ_PRELOAD) || defined(YGG_ZMQ_CATCH_ERROR_POST_UNLOAD))
 #define YGG_ZMQ_PRESERVE_CONTEXT 1
 #endif
+#include <random>
 
 namespace YggInterface {
   namespace communicator {
@@ -48,6 +49,7 @@ namespace YggInterface {
       bool for_testing_;              //!< true if context used for testing
       CLEANUP_MODE cleanup_mode_;     //!< Mode of current cleanup action
       void* zmq_ctx;                  //!< ZeroMQ context
+      std::mt19937 rng;               //!< Random number generator
 #ifdef YGG_ZMQ_PRELOAD
       HINSTANCE hzmqDLL;              //!< Preloaded ZeroMQ DLL
 #endif // YGG_ZMQ_PRELOAD
@@ -61,6 +63,7 @@ namespace YggInterface {
       YGG_THREAD_MUTEX(IPCComm)
       YGG_THREAD_MUTEX(zmq)
       YGG_THREAD_MUTEX(zmqport)
+      YGG_THREAD_MUTEX(uuid)
 #undef YGG_THREAD_MUTEX
 #endif // THREADSINSTALLED
 
@@ -91,6 +94,17 @@ namespace YggInterface {
       YGG_API Comm_t* find_registered_comm(const std::string& name,
 					   const DIRECTION dir,
 					   const COMM_TYPE type);
+      /**
+       * @brief Get a random unique identifier
+       * @return ID
+       */
+      YGG_API uint64_t uuid();
+      /**
+       * @brief Get a random unique identifier string
+       * @param[in] length Length of ID string that should be generated
+       * @return ID
+       */
+      YGG_API std::string uuid_str(const size_t& length);
 #ifdef YGG_ZMQ_CATCH_ERROR_POST_UNLOAD
     protected:
       DWORD _HandleWSAStartupError(unsigned int code,

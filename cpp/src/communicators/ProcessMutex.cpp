@@ -420,17 +420,20 @@ int SysVSharedMem::local_destroy() {
 // ProcessMutex
 /////////////////////////////////
 
-ProcessMutex::ProcessMutex(const std::string& addr, bool created_) :
-  address(), handle(NULL) {
+ProcessMutex::ProcessMutex(const std::string& nme,
+			   const std::string& addr, bool created_) :
+  name(nme), address(), handle(NULL) {
   if (!addr.empty())
-    init(addr, created_);
+    init(name, addr, created_);
 }
 
 ProcessMutex::~ProcessMutex() {
   close();
 }
 
-void ProcessMutex::init(const std::string& addr, bool created_) {
+void ProcessMutex::init(const std::string& nme,
+			const std::string& addr, bool created_) {
+  name = nme;
   if (addr.empty())
     throw_error("init: Provided address is empty");
   if (!address.empty()) {
@@ -504,13 +507,14 @@ int ProcessMutex::nproc() const {
 // ProcessSharedMemory
 /////////////////////////////////
 
-ProcessSharedMemory::ProcessSharedMemory(size_t siz,
+ProcessSharedMemory::ProcessSharedMemory(const std::string& nme,
+					 size_t siz,
 					 const std::string& addr,
 					 bool created) :
-  LogBase(), address(addr), mutex(), size(siz), memory(NULL),
-  handle(NULL) {
+  LogBase(), name(nme), address(addr), mutex(nme), size(siz),
+  memory(NULL), handle(NULL) {
   log_debug() << "ProcessSharedMemory: begin" << std::endl;
-  mutex.init(address + "_mutex", created);
+  mutex.init(name + "_mutex", address + "_mutex", created);
   {
     ProcessLockGuard<ProcessMutex> lock_guard(mutex);
 #ifdef _WIN32

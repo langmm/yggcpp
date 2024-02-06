@@ -522,20 +522,27 @@ bool example_transform_error(rapidjson::Document& msg) {
 		COMM_FLAG_ALLOW_MULTIPLE_COMMS,				\
 		COMM_FLAG_ALLOW_MULTIPLE_COMMS,				\
 		cls::defaultCommType(), cls::defaultCommType());	\
+    EXPECT_TRUE(proxy.is_open());					\
     std::string key_env = a_name + "_OUT";				\
     std::string val_env = proxy.getAddress(RECV);			\
     setenv(key_env.c_str(), val_env.c_str(), 1);			\
+    EXPECT_TRUE(proxy.is_open());					\
     cls sComm(a_name, SEND, COMM_FLAG_ALLOW_MULTIPLE_COMMS);		\
     unsetenv(key_env.c_str());						\
     key_env = b_name + "_IN";						\
     val_env = proxy.getAddress(SEND);					\
     setenv(key_env.c_str(), val_env.c_str(), 1);			\
+    EXPECT_TRUE(proxy.is_open());					\
     cls rComm(b_name, RECV, COMM_FLAG_ALLOW_MULTIPLE_COMMS);		\
     unsetenv(key_env.c_str());						\
+    EXPECT_TRUE(proxy.is_open());					\
     EXPECT_GE(sComm.sendVar(25.0), 0);					\
     double dest = -1.0;							\
+    EXPECT_TRUE(proxy.is_open());					\
     EXPECT_GE(rComm.recvVar(dest), 0);					\
     EXPECT_EQ(dest, 25.0);						\
+    proxy.close();							\
+    EXPECT_TRUE(proxy.is_closed());					\
   }
 #else // THREADSINSTALLED
 #define COMM_SERI_TEST_ASYNC(cls)					\

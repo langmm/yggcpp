@@ -8,7 +8,7 @@ FileComm::FileComm(const std::string name, const utils::Address &address,
 		   DIRECTION direction, FLAG_TYPE flgs,
 		   const COMM_TYPE type) :
   CommBase(name, address, direction, type, flgs),
-  mode(std::fstream::in | std::fstream::out), mutex() {
+  mode(std::fstream::in | std::fstream::out), mutex(name) {
   ADD_CONSTRUCTOR_OPEN(FileComm)
 }
 
@@ -37,11 +37,7 @@ void FileComm::_open(bool call_base) {
       throw_error("FileComm::_open: Error generating temporary file name. - " + err);
     address.address(key);
   }
-  if (name.empty()) {
-    this->name = "tempnewFILE." + this->address.address();
-  } else {
-    this->name = name;
-  }
+  Comm_t::_init_name();
   if (direction == SEND)
     mode = std::fstream::out;
   else if (direction == RECV)
@@ -56,16 +52,8 @@ void FileComm::_open(bool call_base) {
     tmp.open(this->address.address().c_str(),
 	     std::fstream::out | std::fstream::app);
     tmp.close();
-    // std::FILE* tmp = fopen(this->address.address().c_str(), "a+");
-    // fclose(tmp);
   }
-  // if (created) {
-  //   // Create fstream first so that ftok can be used to generate the
-  //   // mutex on unix OSes
-  //   handle = new std::fstream(this->address.address().c_str(), mode);
-  //   mutex.init(this->address.address());
-  // } else {
-  mutex.init(this->address.address(), created);
+  mutex.init(this->name, this->address.address(), created);
   {
     ProcessLockGuard<ProcessMutex> lock_guard(mutex);
     handle = new std::fstream(this->address.address().c_str(), mode);

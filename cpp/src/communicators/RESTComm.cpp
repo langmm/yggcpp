@@ -32,10 +32,8 @@ RESTConnection::RESTConnection(const std::string logInst, DIRECTION dir,
     if (name[i] == ':')
       name[i] = '-';
   }
-  if (name.empty()) {
-    int seed = static_cast<int>(ptr2seed(this));
-    name = random_string(4, false, seed);
-  }
+  if (name.empty())
+    name = global_context->uuid_str(4);
 }
 RESTConnection::~RESTConnection() {
   if (close() < 0) {
@@ -59,8 +57,7 @@ int RESTConnection::init() {
       host += std::string(port);
     else
       host += "5000";
-    int seed = static_cast<int>(ptr2seed(this));
-    client_id = random_string(4, false, seed);
+    client_id = global_context->uuid_str(4);
     address = host + "/" + client_id + "/" + model + "/" + name;
   }
 #define CHECK_ERROR(method) CHECK_CURL_ERROR(method, "init")
@@ -173,8 +170,7 @@ void RESTComm::_open(bool call_base) {
   } else if (!model.empty()) {
     mod = model;
   } else {
-    int seed = static_cast<int>(ptr2seed(this));
-    mod = random_string(4, false, seed);
+    mod = this->ctx->uuid_str(4);
   }
   handle = new RESTConnection(logInst(), direction, name,
 			      address.address(), mod);

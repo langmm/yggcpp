@@ -15,7 +15,7 @@ using namespace YggInterface::communicator;
 
 CommContext::CommContext(bool for_testing) :
   LogBase(), registry_(), thread_id(utils::get_thread_id()),
-  for_testing_(for_testing), cleanup_mode_(), zmq_ctx(NULL) {
+  for_testing_(for_testing), cleanup_mode_(), zmq_ctx(NULL), rng() {
   log_debug() << "CommContext: New context" << std::endl;
 #ifdef YGG_ZMQ_PRELOAD
   hzmqDLL = LoadLibrary(TEXT("zmq"));
@@ -51,6 +51,7 @@ int CommContext::init(bool for_testing) {
   log_debug() << "init: finished curl initialization" << std::endl;
 #endif // RESTINSTALLED
   log_debug() << "init: End" << std::endl;
+  rng.seed((uint64_t)(this));
   std::srand(ptr2seed(this));
   return 0;
 }
@@ -166,6 +167,32 @@ Comm_t* CommContext::find_registered_comm(const std::string& name,
     }
   } YGG_THREAD_SAFE_END;
   return out;
+}
+
+uint64_t CommContext::uuid() {
+  uint64_t out = 0;
+  YGG_THREAD_SAFE_BEGIN_LOCAL(uuid) {
+    out = rng();
+  } YGG_THREAD_SAFE_END;
+  return out;
+}
+
+// https://stackoverflow.com/questions/440133/how-do-i-create-a-random-alpha-numeric-string-in-c
+std::string CommContext::uuid_str(const size_t& length) {
+  static size_t N = 62;
+  static const char* chrs = "0123456789"
+    "abcdefghijklmnopqrstuvwxyz"
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  thread_local static std::uniform_int_distribution<std::string::size_type> pick(0, N - 2);
+  std::string s;
+  s.reserve(length);
+  size_t len = length;
+  YGG_THREAD_SAFE_BEGIN_LOCAL(uuid) {
+    while(len--)
+      s += chrs[pick(rng)];
+  } YGG_THREAD_SAFE_END;
+  return s;
+  
 }
 
 #ifdef YGG_ZMQ_CATCH_ERROR_POST_UNLOAD

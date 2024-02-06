@@ -71,7 +71,13 @@ void Comm_t::_before_open() {
   }
   log_debug() << "before_open: Done" << std::endl;
 }
+void Comm_t::_init_name() {
+  if (name.empty()) {
+    name = COMM_TYPE_map.find(type)->second + "." + address.address();
+  }
+}
 void Comm_t::_after_open() {
+  _init_name();
   if (flags & COMM_FLAG_SET_OPP_ENV)
     setOppEnv();
 }

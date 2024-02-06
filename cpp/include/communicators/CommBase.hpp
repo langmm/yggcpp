@@ -1301,6 +1301,11 @@ protected:
     void _after_open();
 
     /**
+     * @brief Initialize the communicator name if it is empty
+     */
+    void _init_name();
+
+    /**
      * @brief Class specific check for if the comm is closed
      * @return true if the comm is closed, false otherwise
      */

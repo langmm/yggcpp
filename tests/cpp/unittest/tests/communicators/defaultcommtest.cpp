@@ -323,6 +323,32 @@ TEST(DefaultCommu, recv_array_array) {
   EXPECT_EQ(msg_recv, msg_expc);
 }
 
+TEST(DefaultCommu, mismatched_send) {
+  DefaultComm sComm("", SEND);
+  utils::Address addr(sComm.getAddress());
+  DefaultComm rComm("", addr, RECV);
+  int msg1_send = 5, msg1_recv = 0;
+  std::string msg2_send = "hello";
+  EXPECT_GT(sComm.sendVar(msg1_send), 0);
+  EXPECT_GT(rComm.recvVar(msg1_recv), 0);
+  EXPECT_EQ(msg1_recv, msg1_send);
+  EXPECT_EQ(sComm.sendVar(msg2_send), -1);
+}
+
+TEST(DefaultCommu, mismatched_recv) {
+  DefaultComm sComm("", SEND);
+  utils::Address addr(sComm.getAddress());
+  DefaultComm rComm("", addr, RECV);
+  int msg1_send = 5, msg1_recv = 0;
+  std::string msg2_send = "hello";
+  EXPECT_GT(sComm.sendVar(msg1_send), 0);
+  EXPECT_GT(rComm.recvVar(msg1_recv), 0);
+  EXPECT_EQ(msg1_recv, msg1_send);
+  sComm.getMetadata().reset();
+  EXPECT_GT(sComm.sendVar(msg2_send), 0);
+  EXPECT_EQ(rComm.recvVar(msg1_recv), -1);
+}
+
 TEST(DefaultCommu, filter_recv) {
   DefaultComm sComm("", SEND);
   utils::Address addr(sComm.getAddress());
