@@ -90,6 +90,30 @@ TEST(DefaultCommu, recv_dict) {
   EXPECT_EQ(msg_recv, msg_expc);
 }
 
+TEST(DefaultCommu, send_dict_single) {
+  rapidjson::Document msg_send, msg_recv, msg_expc;
+  msg_send.Parse("\"a\"");
+  msg_expc.Parse("{\"f0\": \"a\"}");
+  DefaultComm sComm("", SEND);
+  utils::Address addr(sComm.getAddress());
+  DefaultComm rComm("", addr, RECV);
+  EXPECT_GT(sComm.send_dict(msg_send), 0);
+  EXPECT_GT(rComm.recv(msg_recv), 0);
+  EXPECT_EQ(msg_recv, msg_expc);
+}
+
+TEST(DefaultCommu, recv_dict_single) {
+  rapidjson::Document msg_send, msg_recv, msg_expc;
+  msg_send.Parse("\"a\"");
+  msg_expc.Parse("{\"f0\": \"a\"}");
+  DefaultComm sComm("", SEND);
+  utils::Address addr(sComm.getAddress());
+  DefaultComm rComm("", addr, RECV);
+  EXPECT_GT(sComm.send_dict(msg_send), 0);
+  EXPECT_GT(rComm.recv(msg_recv), 0);
+  EXPECT_EQ(msg_recv, msg_expc);
+}
+
 TEST(DefaultCommu, send_dict_default) {
   rapidjson::Document msg_send, msg_recv, msg_expc;
   msg_send.Parse("[\"a\", 1, 5.0]");
@@ -218,6 +242,30 @@ TEST(DefaultCommu, recv_array) {
   EXPECT_LT(rComm.recv_array(msg_recv, invalid_key_order), 0);
   EXPECT_GT(sComm.send(msg_send), 0);
   EXPECT_GT(rComm.recv_array(msg_recv, key_order), 0);
+  EXPECT_EQ(msg_recv, msg_expc);
+}
+
+TEST(DefaultCommu, send_array_single) {
+  rapidjson::Document msg_send, msg_recv, msg_expc;
+  msg_expc.Parse("[\"a\"]");
+  msg_send.Parse("\"a\"");
+  DefaultComm sComm("", SEND);
+  utils::Address addr(sComm.getAddress());
+  DefaultComm rComm("", addr, RECV);
+  EXPECT_GT(sComm.send_array(msg_send), 0);
+  EXPECT_GT(rComm.recv(msg_recv), 0);
+  EXPECT_EQ(msg_recv, msg_expc);
+}
+
+TEST(DefaultCommu, recv_array_single) {
+  rapidjson::Document msg_send, msg_recv, msg_expc;
+  msg_expc.Parse("[\"a\"]");
+  msg_send.Parse("\"a\"");
+  DefaultComm sComm("", SEND);
+  utils::Address addr(sComm.getAddress());
+  DefaultComm rComm("", addr, RECV);
+  EXPECT_GT(sComm.send(msg_send), 0);
+  EXPECT_GT(rComm.recv_array(msg_recv), 0);
   EXPECT_EQ(msg_recv, msg_expc);
 }
 

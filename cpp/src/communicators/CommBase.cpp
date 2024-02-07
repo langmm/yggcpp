@@ -83,14 +83,6 @@ void Comm_t::_after_open() {
 }
 
 bool Comm_t::operator==(const Comm_t& rhs) const {
-  std::cerr << "Comm_t==(" <<
-    (getType() == rhs.getType()) << ", " <<
-    (getName() == rhs.getName()) << ", " <<
-    (getFlags() == rhs.getFlags()) << ", " <<
-    (getAddress() == rhs.getAddress()) << ", " <<
-    (getDirection() == rhs.getDirection()) << ", " <<
-    (get_timeout_recv() == rhs.get_timeout_recv()) << ", " <<
-    (getLanguage() == rhs.getLanguage()) << ")" << std::endl;
   return (getType() == rhs.getType() &&
 	  getName() == rhs.getName() &&
 	  getFlags() == rhs.getFlags() &&
