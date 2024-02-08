@@ -539,17 +539,13 @@ int AsyncComm::comm_nmsg(DIRECTION dir) const {
     return global_comm->comm_nmsg(dir);
   if (dir == NONE)
     dir = direction;
-  if (handle->is_closing()) {
-    log_error() << "comm_nmsg: Thread is closing" << std::endl;
-    return -1;
-  }
+  if ((!handle) || (handle->is_closing()))
+    return 0;
   if ((type == CLIENT_COMM && dir == RECV) ||
       (type == SERVER_COMM && dir == SEND)) {
     const AsyncLockGuard lock(handle);
-    if (handle->is_closing()) {
-      log_error() << "comm_nmsg: Thread is closing" << std::endl;
-      return -1;
-    }
+    if (handle->is_closing())
+      return 0;
     return handle->comm->comm_nmsg(dir);
   }
   return static_cast<int>(handle->backlog.size());
@@ -633,6 +629,13 @@ std::string AsyncComm::logClass() const {
   std::string out = CommBase::logClass();
   out += "[ASYNC]";
   return out;
+}
+
+void AsyncComm::close_thread() {
+  if (handle) {
+    const AsyncLockGuard lock(handle);
+    handle->backlog.close();
+  }
 }
 
 int AsyncComm::send_single(Header& header) {

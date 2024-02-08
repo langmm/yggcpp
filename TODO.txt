@@ -3,9 +3,16 @@
 * Automate fortran wrapping of C interface?
 * Change how ply & obj are stored to be generic geometry structure?
 * Add method for reserving addresses and generating new addresses if a reserved one is used so that proxy is not needed for every connection
-* Fix how file comm is handled to allow async access when compiled with MSVC
-* Add Buffer communicator for communicators on the same process
 * Add component handling of _schema_properties_yaml_only
 * Add for_server keyword?
 * Update docs for python extension
 * Generate docs for python extension
+* Change comm_nmsg to nmsg
+
+
+TESTS
+
+* Metadata.fromEncode for Python
+* GetUint for uint32_t
+* Error in deserialize_args SetVarArgs
+* Error in fromData for incompatible type

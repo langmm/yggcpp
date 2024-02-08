@@ -444,6 +444,11 @@ namespace YggInterface {
       using Comm_t::send;
       using Comm_t::recv;
 
+      /**
+       * @brief Close the thread
+       */
+      YGG_API void close_thread();
+
     protected:
       /** \copydoc YggInterface::communicator::Comm_t::send_single */
       YGG_API int send_single(utils::Header& header) override;
