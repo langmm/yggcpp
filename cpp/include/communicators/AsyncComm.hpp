@@ -218,8 +218,6 @@ namespace YggInterface {
        */
       void stop();
 #endif // THREADSINSTALLED
-      /** \copydoc YggInterface::utils::LogBase::logClass */
-      std::string logClass() const override { return "AsyncStatus"; }
       /** \copydoc YggInterface::utils::LogBase::logInst */
       std::string logInst() const override { return logInst_; }
 #ifdef THREADSINSTALLED

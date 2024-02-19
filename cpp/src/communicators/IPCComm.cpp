@@ -19,7 +19,7 @@ int IPCComm::count_queues() {
   int out = 0;
   char c[2];
   if (!pipe)
-    YggLogThrowError("ERROR getting ipcs count");
+    YggLogThrowError("ERROR getting ipcs count");  // GCOV_EXCL_LINE
   while (pipe.get() && !feof(pipe.get())) {
     if (fgets(c, 2, pipe.get()) != NULL) {
       if (c[0] == '\n')

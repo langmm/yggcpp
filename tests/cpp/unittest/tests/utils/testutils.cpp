@@ -278,6 +278,12 @@ TEST(STR, str_tolower) {
   EXPECT_EQ(str_tolower(x), y);
 }
 
+TEST(STR, string_format) {
+  std::string fmt = "%s";
+  std::string contents(fmt.size() * 2 + 50 + 2, 'A');
+  EXPECT_EQ(string_format(fmt, contents.c_str()), contents);
+}
+  
 TEST(ENUM, enum_value_search) {
   COMM_TYPE key;
   key = NULL_COMM;
@@ -293,5 +299,5 @@ TEST(ENUM, enum_value_search) {
   key = NULL_COMM;
   EXPECT_FALSE(enum_value_search(COMM_TYPE_cls_map, "INVALID", key));
 }
-  
+
 }

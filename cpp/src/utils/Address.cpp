@@ -18,8 +18,6 @@ Address::Address(const Address& adr): _valid(false) {
     address(adr.address());
 }
 
-Address::Address(const Address* adr): Address(*adr) {}
-
 void Address::address(const std::string &addr) {
     _address = addr;
     _address.erase(std::remove_if(_address.begin(), _address.end(), ::isspace), _address.end());

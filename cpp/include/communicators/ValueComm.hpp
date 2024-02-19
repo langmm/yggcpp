@@ -108,7 +108,7 @@ namespace YggInterface {
       /** \copydoc Comm_t::recv_single */
       YGG_API long recv_single(utils::Header& header) override;
 
-      WORKER_METHOD_DECS(ValueComm);
+      // WORKER_METHOD_DECS(ValueComm);
       
     };
   }

@@ -401,6 +401,8 @@ bool example_transform_error(rapidjson::Document& msg) {
     rComm.addSchema("{\"type\": \"any\"}");				\
     unsetenv(key_env.c_str());						\
     DO_SEND_RECV(sendVar, recvVar, int, 32);				\
+    EXPECT_EQ(rComm.comm_nmsg(SEND), 0);				\
+    EXPECT_EQ(sComm.comm_nmsg(RECV), 0);				\
     rComm.close();							\
     EXPECT_EQ(rComm.recvVar(data_recv), -1);				\
   }									\

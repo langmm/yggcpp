@@ -31,11 +31,6 @@ public:
      * @param adr The instance to copy
      */
     YGG_API Address(const Address &adr);
-    /**
-     * @brief Copy constructor of the Address class
-     * @param adr The instance to copy
-     */
-    YGG_API explicit Address(const Address* adr);
 
     /**
      * @brief Get the address from the class as a std::string

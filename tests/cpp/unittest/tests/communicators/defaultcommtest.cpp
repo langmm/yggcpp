@@ -401,7 +401,8 @@ TEST(DefaultCommu, filter_recv) {
   DefaultComm sComm("", SEND);
   utils::Address addr(sComm.getAddress());
   DefaultComm rComm("", addr, RECV);
-  rComm.getMetadata().addFilter(example_filter);
+  EXPECT_TRUE(rComm.getMetadata().addFilter(example_filter));
+  EXPECT_EQ(rComm.getMetadata().filters[0]->getPython(), (PyObject*)NULL);
   EXPECT_GT(sComm.sendVar(0), 0);
   EXPECT_GT(sComm.sendVar(1), 0);
   EXPECT_GT(sComm.sendVar(2), 0);
@@ -417,7 +418,7 @@ TEST(DefaultCommu, filter_send) {
   DefaultComm sComm("", SEND);
   utils::Address addr(sComm.getAddress());
   DefaultComm rComm("", addr, RECV);
-  sComm.getMetadata().addFilter(example_filter);
+  EXPECT_TRUE(sComm.getMetadata().addFilter(example_filter));
   EXPECT_GT(sComm.sendVar(0), 0);
   EXPECT_EQ(sComm.sendVar(1), 0);
   EXPECT_GT(sComm.sendVar(2), 0);
@@ -434,7 +435,8 @@ TEST(DefaultCommu, transform_recv) {
   DefaultComm sComm("", SEND);
   utils::Address addr(sComm.getAddress());
   DefaultComm rComm("", addr, RECV);
-  rComm.getMetadata().addTransform(&example_transform);
+  EXPECT_TRUE(rComm.getMetadata().addTransform(&example_transform));
+  EXPECT_EQ(rComm.getMetadata().transforms[0]->getPython(), (PyObject*)NULL);
   EXPECT_GT(sComm.sendVar(0), 0);
   EXPECT_GT(sComm.sendVar(1), 0);
   EXPECT_GT(sComm.sendVar(2), 0);
@@ -454,7 +456,7 @@ TEST(DefaultCommu, transform_send) {
   DefaultComm sComm("", SEND);
   utils::Address addr(sComm.getAddress());
   DefaultComm rComm("", addr, RECV);
-  sComm.getMetadata().addTransform(&example_transform);
+  EXPECT_TRUE(sComm.getMetadata().addTransform(&example_transform));
   EXPECT_GT(sComm.sendVar(0), 0);
   EXPECT_GT(sComm.sendVar(1), 0);
   EXPECT_GT(sComm.sendVar(2), 0);
@@ -474,7 +476,7 @@ TEST(DefaultCommu, filter_recv_error) {
   DefaultComm sComm("", SEND);
   utils::Address addr(sComm.getAddress());
   DefaultComm rComm("", addr, RECV);
-  rComm.getMetadata().addFilter(example_filter_error);
+  EXPECT_TRUE(rComm.getMetadata().addFilter(example_filter_error));
   EXPECT_GT(sComm.sendVar(0), 0);
   int result = -1;
   EXPECT_EQ(rComm.recvVar(result), -1);
@@ -484,7 +486,7 @@ TEST(DefaultCommu, filter_send_error) {
   DefaultComm sComm("", SEND);
   utils::Address addr(sComm.getAddress());
   DefaultComm rComm("", addr, RECV);
-  sComm.getMetadata().addFilter(example_filter_error);
+  EXPECT_TRUE(sComm.getMetadata().addFilter(example_filter_error));
   EXPECT_EQ(sComm.sendVar(0), -1);
   EXPECT_EQ(rComm.comm_nmsg(), 0);
 }
@@ -493,7 +495,7 @@ TEST(DefaultCommu, transform_recv_error) {
   DefaultComm sComm("", SEND);
   utils::Address addr(sComm.getAddress());
   DefaultComm rComm("", addr, RECV);
-  rComm.getMetadata().addTransform(&example_transform_error);
+  EXPECT_TRUE(rComm.getMetadata().addTransform(&example_transform_error));
   EXPECT_GT(sComm.sendVar(0), 0);
   std::string result = "";
   EXPECT_EQ(rComm.recvVar(result), -1);
@@ -503,7 +505,7 @@ TEST(DefaultCommu, transform_send_error) {
   DefaultComm sComm("", SEND);
   utils::Address addr(sComm.getAddress());
   DefaultComm rComm("", addr, RECV);
-  sComm.getMetadata().addTransform(&example_transform_error);
+  EXPECT_TRUE(sComm.getMetadata().addTransform(&example_transform_error));
   EXPECT_EQ(sComm.sendVar(0), -1);
   EXPECT_EQ(rComm.comm_nmsg(), 0);
 }
@@ -514,9 +516,13 @@ TEST(DefaultCommu, py_filter_recv) {
   DefaultComm sComm("", SEND);
   utils::Address addr(sComm.getAddress());
   DefaultComm rComm("", addr, RECV);
+  std::vector<PyObject*> filters;
+  filters.push_back((PyObject*)NULL);
+  EXPECT_FALSE(rComm.getMetadata().setFilters(filters));
   PyObject* py_filter = utils::import_python_element(
       "example_python", "example_filter");
-  rComm.getMetadata().addFilter(py_filter);
+  EXPECT_TRUE(rComm.getMetadata().addFilter(py_filter));
+  EXPECT_NE(rComm.getMetadata().filters[0]->getPython(), (PyObject*)NULL);
   EXPECT_GT(sComm.sendVar(0), 0);
   EXPECT_GT(sComm.sendVar(1), 0);
   EXPECT_GT(sComm.sendVar(2), 0);
@@ -534,7 +540,7 @@ TEST(DefaultCommu, py_filter_send) {
   DefaultComm rComm("", addr, RECV);
   PyObject* py_filter = utils::import_python_element(
       "example_python", "example_filter");
-  sComm.getMetadata().addFilter(py_filter);
+  EXPECT_TRUE(sComm.getMetadata().addFilter(py_filter));
   EXPECT_GT(sComm.sendVar(0), 0);
   EXPECT_EQ(sComm.sendVar(1), 0);
   EXPECT_GT(sComm.sendVar(2), 0);
@@ -551,9 +557,13 @@ TEST(DefaultCommu, py_transform_recv) {
   DefaultComm sComm("", SEND);
   utils::Address addr(sComm.getAddress());
   DefaultComm rComm("", addr, RECV);
+  std::vector<PyObject*> transforms;
+  transforms.push_back((PyObject*)NULL);
+  EXPECT_FALSE(rComm.getMetadata().setTransforms(transforms));
   PyObject* py_transform = utils::import_python_element(
       "example_python", "example_transform");
-  rComm.getMetadata().addTransform(py_transform);
+  EXPECT_TRUE(rComm.getMetadata().addTransform(py_transform));
+  EXPECT_NE(rComm.getMetadata().transforms[0]->getPython(), (PyObject*)NULL);
   EXPECT_GT(sComm.sendVar(0), 0);
   EXPECT_GT(sComm.sendVar(1), 0);
   EXPECT_GT(sComm.sendVar(2), 0);
@@ -573,7 +583,7 @@ TEST(DefaultCommu, py_transform_send) {
   DefaultComm rComm("", addr, RECV);
   PyObject* py_transform = utils::import_python_element(
       "example_python", "example_transform");
-  sComm.getMetadata().addTransform(py_transform);
+  EXPECT_TRUE(sComm.getMetadata().addTransform(py_transform));
   EXPECT_GT(sComm.sendVar(0), 0);
   EXPECT_GT(sComm.sendVar(1), 0);
   EXPECT_GT(sComm.sendVar(2), 0);

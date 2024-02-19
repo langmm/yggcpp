@@ -303,6 +303,22 @@ INTERFACE_TEST_NOARGS(JSONObject, YggJSONObject,
 		      COMP_DATA_SINGLE,
 		      sendVar, (data_send), recvVar, (data_recv))
 
+TEST(YggInterface, ServerInvalidFormat) {
+  ClientComm sComm("input");
+  setenv("input_IN", sComm.getAddress().c_str(), 1);
+  EXPECT_THROW(YggRpcServer("input", "%m", "%d"), std::exception);
+  EXPECT_THROW(YggRpcServer("input", "%d", "%m"), std::exception);
+  unsetenv("input_IN");
+}
+
+TEST(YggInterface, ClientInvalidFormat) {
+  ServerComm rComm("output");
+  setenv("output_IN", rComm.getAddress().c_str(), 1);
+  EXPECT_THROW(YggRpcClient("output", "%m", "%d"), std::exception);
+  EXPECT_THROW(YggRpcClient("output", "%d", "%m"), std::exception);
+  unsetenv("output_IN");
+}
+
 TEST(YggInterface, GlobalServerPiecemeal) {
   {
     std::string name = "test_name";

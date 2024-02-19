@@ -11,7 +11,7 @@ using namespace YggInterface::utils;
 ForkTines::ForkTines(const std::string logInst,
 		     std::vector<Comm_t*>& comm,
 		     const FORK_TYPE typ) :
-  logInst_(logInst), forktype(typ), comms(), iter(0) {
+  LogBase(), logInst_(logInst), forktype(typ), comms(), iter(0) {
   comms.swap(comm);
   updateType();
 }
@@ -20,10 +20,10 @@ ForkTines::ForkTines(const std::string logInst,
 		     const std::vector<std::string>& addrs,
 		     const DIRECTION dir, FLAG_TYPE flags,
 		     const COMM_TYPE commtype, const FORK_TYPE forktyp) :
-  logInst_(logInst), forktype(forktyp), comms(), iter(0) {
+  LogBase(), logInst_(logInst), forktype(forktyp), comms(), iter(0) {
   size_t ncomm = (std::max)(names.size(), addrs.size());
   if (ncomm == 0) {
-    ygglog_throw_error("ForkTines: Fork comm empty");
+    throw_error("ForkTines: Fork comm empty");
   }
   const std::string blankName = "";
   for (size_t i = 0; i < ncomm; i++) {
@@ -31,23 +31,23 @@ ForkTines::ForkTines(const std::string logInst,
     utils::Address iaddr("");
     if (!names.empty()) {
       if (i >= names.size()) {
-	ygglog_throw_error("ForkTines: More addrs provided than names");
+	throw_error("ForkTines: More addrs provided than names");
       }
       iname = &(names[i]);
     }
     if (!addrs.empty()) {
       if (i >= addrs.size()) {
-	ygglog_throw_error("ForkTines: More names provided than addresses");
+	throw_error("ForkTines: More names provided than addresses");
       }
       iaddr = utils::Address(addrs[i]);
     }
     Comm_t* icomm = new_Comm_t(dir, commtype, *iname, iaddr, flags);
     if (!icomm) {
-      ygglog_throw_error("ForkTines: Failed to create tine comm");
+      throw_error("ForkTines: Failed to create tine comm");
     }
     if (!(icomm->getFlags() & COMM_FLAG_VALID)) {
       delete icomm;
-      ygglog_throw_error("ForkTines: Invalid comm");
+      throw_error("ForkTines: Invalid comm");
     }
     comms.push_back(icomm);
   }
@@ -69,7 +69,7 @@ void ForkTines::updateType() {
       forktype = FORK_CYCLE;
   }
   if (forktype == FORK_DEFAULT) {
-    ygglog_throw_error("ForkTines: Could not determine fork type");
+    throw_error("ForkTines: Could not determine fork type");
   }
   for (typename std::vector<Comm_t*>::iterator it = comms.begin();
        it != comms.end(); it++)

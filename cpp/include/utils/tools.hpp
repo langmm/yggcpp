@@ -158,13 +158,6 @@ namespace utils {
 #define AFTER_TIMEOUT_LOOP(TSTEP)		\
   THREAD_USLEEP(TSTEP)
 
-/*! @brief Memory to allow thread association to be set via macro. */
-static int global_thread_id = -1;
-#define ASSOCIATED_WITH_THREAD(COMM, THREAD) global_thread_id = THREAD; COMM; global_thread_id = -1;
-#ifdef _OPENMP
-#pragma omp threadprivate(global_thread_id)
-#endif
-
 /*! @brief Macro to define global vars to be used across thread */
 #if defined(_MSC_VER) && defined(_OPENMP)
 #define YGG_THREAD_GLOBAL_VAR(T, name, args)		\
@@ -235,8 +228,6 @@ unsigned long ptr2seed(void *ptr) {
 static inline
 std::string get_thread_id() {
   std::string out;
-  if (global_thread_id >= 0)
-    return std::to_string(global_thread_id);
 #ifdef _OPENMP
   if (omp_in_parallel())
     return std::to_string(omp_get_thread_num());

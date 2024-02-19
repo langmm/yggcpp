@@ -24,10 +24,6 @@ int ValueManager::remaining() const {
 }
 
 long ValueManager::recv(utils::Header& header) {
-  if (value.empty()) {
-    log_error() << "recv: Value is empty" << std::endl;
-    return -1;
-  }
   if (count >= 0 && index >= count) {
     log_debug() << "recv: Maximum count reached" << std::endl;
     header.on_recv(YGG_MSG_EOF, YGG_MSG_EOF_LEN);
@@ -87,4 +83,4 @@ long ValueComm::recv_single(utils::Header& header) {
   return handle->recv(header);
 }
 
-WORKER_METHOD_DEFS(ValueComm)
+// WORKER_METHOD_DEFS(ValueComm)

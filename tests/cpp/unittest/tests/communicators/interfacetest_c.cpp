@@ -342,6 +342,44 @@ TEST(YggInterface_C, ClientPointers) {
   close_comm(&sComm_c);
 }
 
+TEST(YggInterface_C, Timesync) {
+  ServerComm rComm("");
+  setenv("output_OUT", rComm.getAddress().c_str(), 1);
+  rComm.addResponseSchema("{\"type\": \"object\"}");
+  comm_t sComm_c = yggTimesync("output", "s");
+  unsetenv("output_OUT");
+  ClientComm& sComm = *((ClientComm*)(sComm_c.comm));
+  DO_RPC_SIGNON;
+  // Request
+  {
+    double t_send = 1.5, t_recv = 0.0;
+    INIT_DATA_SCHEMA_C("{\"type\": \"object\", "
+		       "\"properties\": {\"a\": "
+		       "{\"type\": \"integer\"}}}");
+    EXPECT_GE(yggSend(sComm_c, t_send, data_send), 0);
+    EXPECT_GE(rComm.recv(2, &t_recv, data_recv_doc), 0);
+    EXPECT_TRUE(compare_generic(data_recv, data_send));
+    EXPECT_EQ(t_recv, t_send);
+    EXPECT_TRUE(sComm.afterSendRecv(&sComm, &rComm));
+    destroy_generic(&data_send);
+    destroy_generic(&data_recv);
+  }
+  // Response
+  {
+    INIT_DATA_SCHEMA_C("{\"type\": \"object\", "
+		       "\"properties\": {\"a\": "
+		       "{\"type\": \"integer\"}}}");
+    EXPECT_GE(rComm.sendVar(*data_send_doc), 0);
+    EXPECT_GE(yggRecv(sComm_c, &data_recv), 0);
+    EXPECT_TRUE(compare_generic(data_recv, data_send));
+    EXPECT_TRUE(rComm.afterSendRecv(&rComm, &sComm));
+    destroy_generic(&data_send);
+    destroy_generic(&data_recv);
+  }
+  // Cleanup
+  close_comm(&sComm_c);
+}
+
 TEST(comm_t, ErrorsEmpty) {
   comm_t tmp;
   tmp.comm = NULL;
