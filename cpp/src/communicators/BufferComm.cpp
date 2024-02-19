@@ -50,7 +50,7 @@ int BufferComm::comm_nmsg(DIRECTION dir) const {
   {
     // ProcessLockGuard<ProcessMutex> lock_guard(const_cast<ProcessMutex*>(&(handle->mutex))[0]);
     if (memory == NULL)
-      return -1;
+      return -1;  // GCOV_EXCL_LINE
     out = memory->count;
   }
   return out;
@@ -65,7 +65,7 @@ int BufferComm::send_single(utils::Header& header) {
   int out = -1;
   while (is_full) {
     if (handle == NULL || memory == NULL)
-      return -1;
+      return -1;  // GCOV_EXCL_LINE
     ProcessLockGuard<ProcessMutex> lock_guard(handle->mutex);
     is_full = (memory->count == (MAX_BUFFERS - 1));
     if (is_full) {
@@ -92,10 +92,10 @@ long BufferComm::recv_single(utils::Header& header) {
   assert(!global_comm);
   log_debug() << "recv_single:" << std::endl;
   if (handle == NULL)
-    return -1;
+    return -1;  // GCOV_EXCL_LINE
   ProcessLockGuard<ProcessMutex> lock_guard(handle->mutex);
   if (memory == NULL || memory->count == 0)
-    return -1;
+    return -1;  // GCOV_EXCL_LINE
   int next_size = memory->size[0];
   long ret = header.on_recv(&(memory->buf[0]), next_size);
   if (ret >= 0) {

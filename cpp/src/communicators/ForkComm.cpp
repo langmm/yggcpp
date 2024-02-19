@@ -145,28 +145,20 @@ int ForkTines::send(const char *data, const size_t &len,
       iter++;
     return out;
   } else if (forktype == FORK_COMPOSITE) {
-    if (is_eof) {
-      for (typename std::vector<Comm_t*>::iterator it = comms.begin();
-	   it != comms.end(); it++) {
-	if ((*it)->send_raw(tmp_data, tmp_len) < 0)
-	  return -1;
-	    }
-    } else {
-      if (!doc.IsArray()) {
-	log_error() << "send: Cannot split message for composite: " << doc << std::endl;
-	return -1;
-      }
-      if (static_cast<size_t>(doc.Size()) != comms.size()) {
-	log_error() << "send: Message has " << doc.Size() <<
-	  " elements, but there are " << comms.size() << " comms" << std::endl;
-	return -1;
-      }
-      size_t i = 0;
-      for (typename std::vector<Comm_t*>::iterator it = comms.begin();
-	   it != comms.end(); it++, i++) {
-	if ((*it)->send(doc[static_cast<rapidjson::SizeType>(i)]) < 0)
-	  return -1;
-      }
+    if (!doc.IsArray()) {
+      log_error() << "send: Cannot split message for composite: " << doc << std::endl;
+      return -1;
+    }
+    if (static_cast<size_t>(doc.Size()) != comms.size()) {
+      log_error() << "send: Message has " << doc.Size() <<
+	" elements, but there are " << comms.size() << " comms" << std::endl;
+      return -1;
+    }
+    size_t i = 0;
+    for (typename std::vector<Comm_t*>::iterator it = comms.begin();
+	 it != comms.end(); it++, i++) {
+      if ((*it)->send(doc[static_cast<rapidjson::SizeType>(i)]) < 0)
+	return -1;  // GCOV_EXCL_LINE
     }
   }
   if (tmp_created) {

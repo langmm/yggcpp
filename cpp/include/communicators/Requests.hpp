@@ -237,6 +237,13 @@ public:
 	} else { // GCOV_EXCL_LINE
 	  if (!header.SetMetaID("request_id", request_id))
 	    return -1;  // GCOV_EXCL_LINE
+	  while (hasRequest(request_id) >= 0) {
+	    log_debug() << "addRequestClient: Generating new request_id"
+			<< std::endl; // GCOV_EXCL_LINE
+	    request_id.clear(); // GCOV_EXCL_LINE
+	    if (!header.SetMetaID("request_id", request_id)) // GCOV_EXCL_LINE
+	      return -1;  // GCOV_EXCL_LINE
+	  }
 	}
 	log_debug() << "addRequestClient: request_id = "
 		     << request_id << std::endl;
