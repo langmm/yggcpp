@@ -113,7 +113,8 @@ int ForkTines::nmsg(DIRECTION dir) const {
 }
 
 int ForkTines::send(const char *data, const size_t &len,
-		    YggInterface::utils::Metadata& meta) {
+		    ForkComm& parent) {
+  YggInterface::utils::Metadata& meta = parent.getMetadata(SEND);
   bool is_eof = (strcmp(data, YGG_MSG_EOF) == 0);
   char* tmp_data = const_cast<char*>(data);
   size_t tmp_len = len;
@@ -122,16 +123,6 @@ int ForkTines::send(const char *data, const size_t &len,
   if (!is_eof) {
     if (meta.deserialize(data, doc, true) < 0)
       return -1;
-    int out = meta.serialize_updates(doc);
-    if (out <= 0) // Error or filter
-      return out;
-    if (meta.transforms.size() > 0 && forktype != FORK_COMPOSITE) {
-      tmp_created = true;
-      tmp_data = nullptr;
-      tmp_len = 0;
-      if (meta.serialize(&tmp_data, &tmp_len, doc, true) < 0)
-	return -1;
-    }
   }
   if (forktype == FORK_BROADCAST || is_eof) {
     for (typename std::vector<Comm_t*>::iterator it = comms.begin();
@@ -145,25 +136,53 @@ int ForkTines::send(const char *data, const size_t &len,
       iter++;
     return out;
   } else if (forktype == FORK_COMPOSITE) {
+    bool tmpdoc_created = false;
+    rapidjson::Document* tmp = &doc;
     if (!doc.IsArray()) {
-      log_error() << "send: Cannot split message for composite: " << doc << std::endl;
-      return -1;
+      tmp = new rapidjson::Document(rapidjson::kNullType);
+      tmpdoc_created = true;
+      std::cerr << "COERCING TO ARRAY" << std::endl;
+      if (!parent._coerce_to_array(doc, *tmp, SEND)) {
+	log_error() << "send: Cannot split message for composite: " << doc << std::endl;
+	delete tmp;
+	return -1;
+      }
+      tmp_created = true;
+      tmp_data = nullptr;
+      tmp_len = 0;
+      if (meta.serialize(&tmp_data, &tmp_len, *tmp, true) < 0)
+	return -1;
     }
-    if (static_cast<size_t>(doc.Size()) != comms.size()) {
-      log_error() << "send: Message has " << doc.Size() <<
+    if (static_cast<size_t>(tmp->Size()) != comms.size()) {
+      log_error() << "send: Message has " << tmp->Size() <<
 	" elements, but there are " << comms.size() << " comms" << std::endl;
+      if (tmpdoc_created)
+	delete tmp;
       return -1;
     }
+    std::vector<std::string> field_names;
+    if (!meta.get_field_names(field_names))
+      return -1;  // GCOV_EXCL_LINE
     size_t i = 0;
     for (typename std::vector<Comm_t*>::iterator it = comms.begin();
 	 it != comms.end(); it++, i++) {
-      if ((*it)->send(doc[static_cast<rapidjson::SizeType>(i)]) < 0)
+      // TODO: Any additional data to add from parent?
+      if (!field_names.empty()) {
+	(*it)->getMetadata(SEND).initSchema();
+	if (!(*it)->getMetadata(SEND).SetSchemaString("title", field_names[i]))
+	  return -1;  // GCOV_EXCL_LINE
+      }
+      if ((*it)->send((*tmp)[static_cast<rapidjson::SizeType>(i)]) < 0) {
+	if (tmpdoc_created)
+	  delete tmp;
 	return -1;  // GCOV_EXCL_LINE
+      }
     }
+    if (tmpdoc_created)
+      delete tmp;
   }
-  if (tmp_created) {
+  if (tmp_created)
     meta.GetAllocator().Free(tmp_data);
-  }
   return 1;
 }
 long ForkTines::recv(char*& data, const size_t &len,
@@ -183,7 +202,9 @@ long ForkTines::recv(char*& data, const size_t &len,
   } else if (forktype == FORK_COMPOSITE) {
     doc.SetArray();
     int i = 0;
-    bool is_eof = false;
+    bool is_eof = false, no_names = false;
+    std::vector<std::string> field_names;
+    std::string ival;
     for (typename std::vector<Comm_t*>::iterator it = comms.begin();
 	 it != comms.end(); it++, i++) {
       rapidjson::Document idoc;
@@ -194,8 +215,24 @@ long ForkTines::recv(char*& data, const size_t &len,
 	return -1;
       }
       is_eof = (iout == -2);
-      if (!is_eof)
+      if (!is_eof) {
 	doc.PushBack(idoc, doc.GetAllocator());
+	if (!no_names) {
+	  if (!(*it)->getMetadata(RECV).GetSchemaStringOptional(
+	       "title", ival, ""))
+	    return -1;
+	  if (ival.empty()) {
+	    no_names = true;
+	  } else {
+	    field_names.push_back(ival);
+	  }
+	}
+      }
+    }
+    // TODO: Any other fields need to be transfered?
+    if (!field_names.empty()) {
+      if (!meta.set_field_names(field_names))
+	return -1;
     }
   }
   if (eof()) {
@@ -308,7 +345,7 @@ void ForkComm::set_timeout_recv(int64_t new_timeout) {
 int ForkComm::send_raw(const char *data, const size_t &len) {
   if (global_comm)
     return global_comm->send_raw(data, len);
-  return handle->send(data, len, getMetadata(SEND));
+  return handle->send(data, len, *this);
 }
 
 long ForkComm::recv_raw(char*& data, const size_t &len) {

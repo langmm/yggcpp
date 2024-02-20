@@ -206,7 +206,20 @@ bool Metadata::fromSchema(const rapidjson::Value& new_schema,
     if (!use_generic)
       use_generic = isGeneric();
     rapidjson::Value* schema = initSchema();
-    schema->CopyFrom(new_schema, metadata.GetAllocator(), true);
+    if (schema->MemberCount() == 0) {
+      schema->CopyFrom(new_schema, metadata.GetAllocator(), true);
+    } else {
+      for (typename rapidjson::Value::ConstMemberIterator it = new_schema.MemberBegin();
+	   it != new_schema.MemberEnd(); it++) {
+	if (schema->HasMember(it->name)) {
+	  (*schema)[it->name].CopyFrom(it->value, metadata.GetAllocator(), true);
+	} else {
+	  schema->AddMember(rapidjson::Value(it->name, metadata.GetAllocator(), true).Move(),
+			    rapidjson::Value(it->value, metadata.GetAllocator(), true).Move(),
+			    metadata.GetAllocator());
+	}
+      }
+    }
     return _init(use_generic);
   } else {
     rapidjson::Value* schema = getSchema(true);
@@ -1243,8 +1256,15 @@ int Metadata::serialize(char **buf, size_t *buf_siz,
     return -1;
   return serialize(buf, buf_siz, d);
 }
-bool Metadata::set_field_names(const std::vector<std::string>& x) {
+bool Metadata::set_field_names(const std::vector<std::string>& x,
+			       bool overwrite) {
   if (x.empty())
+    return true;
+  if ((!overwrite) &&
+      metadata.IsObject() &&
+      metadata.HasMember("serializer") &&
+      metadata["serializer"].IsObject() &&
+      metadata["serializer"].HasMember("field_names"))
     return true;
   if (hasType() &&
       (*getSchema(true))["type"] == rapidjson::Value::GetArrayString() &&
@@ -1273,8 +1293,15 @@ bool Metadata::set_field_names(const std::vector<std::string>& x) {
     return false; // GCOV_EXCL_LINE
   return true;
 }
-bool Metadata::set_field_units(const std::vector<std::string>& x) {
+bool Metadata::set_field_units(const std::vector<std::string>& x,
+			       bool overwrite) {
   if (x.empty())
+    return true;
+  if ((!overwrite) &&
+      metadata.IsObject() &&
+      metadata.HasMember("serializer") &&
+      metadata["serializer"].IsObject() &&
+      metadata["serializer"].HasMember("field_units"))
     return true;
   if (hasType() &&
       (*getSchema(true))["type"] == rapidjson::Value::GetArrayString() &&
@@ -1303,22 +1330,50 @@ bool Metadata::set_field_units(const std::vector<std::string>& x) {
     return false; // GCOV_EXCL_LINE
   return true;
 }
-bool Metadata::get_field_names(std::vector<std::string>& out) const {
+bool Metadata::get_field_names(std::vector<std::string>& out) {
   if (metadata.IsObject() &&
       metadata.HasMember("serializer") &&
       metadata["serializer"].IsObject() &&
       metadata["serializer"].HasMember("field_names")) {
     return GetVectorString("field_names", out, metadata["serializer"]);
   }
+  if (hasType() &&
+      (*getSchema(true))["type"] == rapidjson::Value::GetArrayString() &&
+      (*getSchema(true)).HasMember("items") &&
+      (*getSchema(true))["items"].IsArray()) {
+    rapidjson::Value& items = (*getSchema(true))["items"];
+    for (rapidjson::SizeType i = 0; i < items.Size(); i++) {
+      if (!(items[i].HasMember("title") && items[i]["title"].IsString())) {
+	out.clear();
+	return true;
+      }
+      out.push_back(std::string(items[i]["title"].GetString()));
+    }
+    return set_field_names(out);
+  }  
   return true;
 }
-bool Metadata::get_field_units(std::vector<std::string>& out) const {
+bool Metadata::get_field_units(std::vector<std::string>& out) {
   if (metadata.IsObject() &&
       metadata.HasMember("serializer") &&
       metadata["serializer"].IsObject() &&
       metadata["serializer"].HasMember("field_units")) {
     return GetVectorString("field_units", out, metadata["serializer"]);
   }
+  if (hasType() &&
+      (*getSchema(true))["type"] == rapidjson::Value::GetArrayString() &&
+      (*getSchema(true)).HasMember("items") &&
+      (*getSchema(true))["items"].IsArray()) {
+    rapidjson::Value& items = (*getSchema(true))["items"];
+    for (rapidjson::SizeType i = 0; i < items.Size(); i++) {
+      if (!(items[i].HasMember("units") && items[i]["units"].IsString())) {
+	out.clear();
+	return true;
+      }
+      out.push_back(std::string(items[i]["units"].GetString()));
+    }
+    return set_field_units(out);
+  }  
   return true;
 }
 void Metadata::Display(const char* indent) const {

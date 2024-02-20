@@ -5,6 +5,8 @@
 namespace YggInterface {
   namespace communicator {
 
+    class ForkComm;
+
     /**
      * @brief Forked communication engine for coordinating send/recv
      *   actions for the set of 'tine' communicator.
@@ -68,11 +70,11 @@ namespace YggInterface {
        * @brief Send a message to the next tine
        * @param[in] data Message to send
        * @param[in] len Size of data (bytes)
-       * @param[in,out] meta Metadata used for format the message in data
+       * @param[in] parent Communicator containing this tine
        * @return Negative values indicate an error
        */
       int send(const char *data, const size_t &len,
-	       YggInterface::utils::Metadata& meta);
+	       ForkComm& parent);
       /**
        * @brief Receive a message from the next tine
        * @param[out] data Buffer to store the received message in

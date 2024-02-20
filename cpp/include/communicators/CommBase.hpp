@@ -322,6 +322,7 @@ class ZMQComm;
 class IPCComm;
 class WrapComm;
 class RequestList;
+class ForkTines;
 
   // typedef struct comm_t comm_t;
 
@@ -1271,6 +1272,7 @@ protected:
     friend RequestList;  //!< @see RequestList
     friend Worker;       //!< @see Worker
     friend WorkerList;   //!< @see WorkerList
+    friend ForkTines;    //!< @see ForkTines
 
     /**
      * @brief Perform class specific open operations
@@ -1326,7 +1328,7 @@ protected:
 			 rapidjson::Document& dst,
 			 const DIRECTION dir,
 			 std::vector<std::string> key_order={},
-			 size_t dim=1) const;
+			 size_t dim=1);
     /**
      * @brief Convert a document to a structured ND array
      * @param[in] src Document to convert
@@ -1342,7 +1344,7 @@ protected:
 			  rapidjson::Document& dst,
 			  const DIRECTION dir,
 			  std::vector<std::string> key_order={},
-			  size_t dim=1) const;
+			  size_t dim=1);
     
     /**
      * @brief Change the maximum message size

@@ -772,27 +772,33 @@ public:
   /*!
    * @brief Set the field names stored in the metadata.
    * @param[in] x Vector of field names.
+   * @param[in] overwrite If true, existing field names will be
+   *   overwritten.
    * @returns true if successful, false otherwise.
    */
-  YGG_API bool set_field_names(const std::vector<std::string>& x);
+  YGG_API bool set_field_names(const std::vector<std::string>& x,
+			       bool overwrite=false);
   /*!
    * @brief Set the field units stored in the metadata.
    * @param[in] x Vector of field units.
+   * @param[in] overwrite If true, existing field names will be
+   *   overwritten.
    * @returns true if successful, false otherwise.
    */
-  YGG_API bool set_field_units(const std::vector<std::string>& x);
+  YGG_API bool set_field_units(const std::vector<std::string>& x,
+			       bool overwrite=false);
   /*!
    * @brief Get the field names stored in the metadata if present.
    * @param[out] out Vector to add field names to.
    * @returns true if successful, false otherwise.
    */
-  YGG_API bool get_field_names(std::vector<std::string>& out) const;
+  YGG_API bool get_field_names(std::vector<std::string>& out);
   /*!
    * @brief Get the field units stored in the metadata if present.
    * @param[in] out Vector to add field units to.
    * @returns true if successful, false otherwise.
    */
-  YGG_API bool get_field_units(std::vector<std::string>& out) const;
+  YGG_API bool get_field_units(std::vector<std::string>& out);
   /*!
    * @brief Write the metadata to the terminal.
    * @param[in] indent The indentation to use for different levels

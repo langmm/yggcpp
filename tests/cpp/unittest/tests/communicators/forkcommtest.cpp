@@ -101,7 +101,66 @@ TEST(ForkComm, cycle_cycle_pattern) {
   EXPECT_EQ(rComm.recvVar(rData), -2);
 }
 
+TEST(ForkComm, filter) {
+  ForkComm sComm("fork", SEND,
+		 COMM_FLAG_SET_OPP_ENV | COMM_FLAG_FORK_CYCLE,
+		 DEFAULT_COMM, 2);
+  YggInput rComm("fork", COMM_FLAG_FORK_CYCLE);
+  EXPECT_TRUE(sComm.getMetadata().addFilter(&example_filter));
+  EXPECT_GT(sComm.sendVar(0), 0);
+  EXPECT_EQ(sComm.sendVar(1), 0);
+  EXPECT_GT(sComm.sendVar(2), 0);
+  EXPECT_GT(sComm.send_eof(), 0);
+  int result = -1;
+  EXPECT_GT(rComm.recvVar(result), 0);
+  EXPECT_EQ(result, 0);
+  EXPECT_GT(rComm.recvVar(result), 0);
+  EXPECT_EQ(result, 2);
+  EXPECT_EQ(rComm.recvVar(result), -2);
+}
 
-// TODO
-// TEST(ForkComm, transform) {
-// }
+TEST(ForkComm, transform) {
+  ForkComm sComm("fork", SEND,
+		 COMM_FLAG_SET_OPP_ENV | COMM_FLAG_FORK_CYCLE,
+		 DEFAULT_COMM, 2);
+  YggInput rComm("fork", COMM_FLAG_FORK_CYCLE);
+  EXPECT_TRUE(sComm.getMetadata().addTransform(&example_transform));
+  EXPECT_GT(sComm.sendVar(0), 0);
+  EXPECT_LT(sComm.sendVar(5), 0);
+  EXPECT_GT(sComm.sendVar(2), 0);
+  EXPECT_GT(sComm.send_eof(), 0);
+  std::string result = "";
+  EXPECT_GT(rComm.recvVar(result), 0);
+  EXPECT_EQ(result, "0");
+  EXPECT_GT(rComm.recvVar(result), 0);
+  EXPECT_EQ(result, "2");
+  EXPECT_EQ(rComm.recvVar(result), -2);
+}
+
+TEST(ForkComm, coerce_composite) {
+  ForkComm sComm("fork", SEND,
+		 COMM_FLAG_SET_OPP_ENV | COMM_FLAG_FORK_COMPOSITE,
+		 DEFAULT_COMM, 2);
+  YggInput rComm("fork", COMM_FLAG_FORK_COMPOSITE);
+  rapidjson::Document sData, rData;
+  sData.Parse("{\"a\": \"a\", \"b\": 1}");
+  EXPECT_GE(sComm.sendVar(sData), 0);
+  EXPECT_EQ(rComm.comm_nmsg(), 1);
+  EXPECT_GE(rComm.recv_dict(rData), 0);
+  EXPECT_EQ(rData, sData);
+  EXPECT_EQ(rComm.comm_nmsg(), 0);
+  EXPECT_GE(sComm.send_eof(), 0);
+  EXPECT_EQ(rComm.recv_dict(rData), -2);
+}
+
+TEST(ForkComm, coerce_composite_error) {
+  ForkComm sComm("fork", SEND,
+		 COMM_FLAG_SET_OPP_ENV | COMM_FLAG_FORK_COMPOSITE,
+		 DEFAULT_COMM, 2);
+  YggInput rComm("fork", COMM_FLAG_FORK_COMPOSITE);
+  rapidjson::Document sData, rData;
+  sData.Parse("{\"a\": \"a\", \"b\": 1, \"c\": 5.0}");
+  EXPECT_LT(sComm.sendVar(sData), 0);
+  EXPECT_GE(sComm.send_eof(), 0);
+  EXPECT_EQ(rComm.recv_dict(rData), -2);
+}

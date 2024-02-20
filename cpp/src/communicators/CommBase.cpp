@@ -97,7 +97,7 @@ bool Comm_t::_coerce_to_dict(const rapidjson::Document& src,
 			     rapidjson::Document& dst,
 			     const DIRECTION dir,
 			     std::vector<std::string> key_order,
-			     size_t dim) const {
+			     size_t dim) {
   switch (src.GetType()) {
   case (rapidjson::kObjectType):
     dst.CopyFrom(src, dst.GetAllocator(), true);
@@ -120,14 +120,13 @@ bool Comm_t::_coerce_to_dict(const rapidjson::Document& src,
 	}
 	src_size = static_cast<size_t>(shape[static_cast<rapidjson::SizeType>(dim)].GetUint64());
       }
+      if (key_order.empty() &&
+	  !this->getMetadata(dir).get_field_names(key_order)) {
+	return false;
+      }
       if (key_order.empty()) {
-	if (!this->getMetadata(dir).get_field_names(key_order)) {
-	  return false;
-	}
-	if (key_order.empty()) {
-	  for (int i = 0; i < static_cast<int>(src_size); i++)
-	    key_order.push_back("f" + std::to_string(i));
-	}
+	for (int i = 0; i < static_cast<int>(src_size); i++)
+	  key_order.push_back("f" + std::to_string(i));
       }
       if (key_order.size() != src_size) {
 	log_error() << "coerce_to_dict: " << key_order.size() <<
@@ -135,6 +134,8 @@ bool Comm_t::_coerce_to_dict(const rapidjson::Document& src,
 	  " elements in the message" << std::endl;
 	return false;
       }
+      if (!this->getMetadata(dir).set_field_names(key_order))
+	return false;
       dst.SetObject();
       for (size_t i = 0; i < src_size; i++) {
 	rapidjson::Value val;
@@ -178,10 +179,11 @@ bool Comm_t::_coerce_to_array(const rapidjson::Document& src,
 			      rapidjson::Document& dst,
 			      const DIRECTION dir,
 			      std::vector<std::string> key_order,
-			      size_t dim) const {
+			      size_t dim) {
   switch (src.GetType()) {
   case (rapidjson::kObjectType):
-    if (!this->getMetadata(dir).get_field_names(key_order)) {
+    if (key_order.empty() &&
+	!this->getMetadata(dir).get_field_names(key_order)) {
       return false;
     }
     if (key_order.empty()) {
@@ -189,6 +191,8 @@ bool Comm_t::_coerce_to_array(const rapidjson::Document& src,
 	   it != src.MemberEnd(); it++)
 	key_order.push_back(it->name.GetString());
     }
+    if (!this->getMetadata(dir).set_field_names(key_order))
+      return false;
     dst.SetArray();
     dst.Reserve(static_cast<rapidjson::SizeType>(key_order.size()),
 		dst.GetAllocator());
@@ -231,14 +235,13 @@ bool Comm_t::_coerce_to_array(const rapidjson::Document& src,
 	}
 	src_size = static_cast<size_t>(shape[static_cast<rapidjson::SizeType>(dim)].GetUint64());
       }
+      if (key_order.empty() &&
+	  !this->getMetadata(dir).get_field_names(key_order)) {
+	return false;
+      }
       if (key_order.empty()) {
-	if (!this->getMetadata(dir).get_field_names(key_order)) {
-	  return false;
-	}
-	if (key_order.empty()) {
-	  for (int i = 0; i < static_cast<int>(src_size); i++)
-	    key_order.push_back("f" + std::to_string(i));
-	}
+	for (int i = 0; i < static_cast<int>(src_size); i++)
+	  key_order.push_back("f" + std::to_string(i));
       }
       if (key_order.size() != src_size) {
 	log_error() << "coerce_to_array: " << key_order.size() <<
@@ -246,6 +249,8 @@ bool Comm_t::_coerce_to_array(const rapidjson::Document& src,
 	  " elements in the message" << std::endl;
 	return false;
       }
+      if (!this->getMetadata(dir).set_field_names(key_order))
+	return false;
       dst.SetArray();
       dst.Reserve(static_cast<rapidjson::SizeType>(src_size),
 		  dst.GetAllocator());
