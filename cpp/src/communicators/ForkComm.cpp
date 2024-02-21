@@ -118,72 +118,81 @@ int ForkTines::send(const char *data, const size_t &len,
   bool is_eof = (strcmp(data, YGG_MSG_EOF) == 0);
   char* tmp_data = const_cast<char*>(data);
   size_t tmp_len = len;
-  bool tmp_created = false;
+  bool tmp_created = false, tmpdoc_created = false;
   rapidjson::Document doc;
+  rapidjson::Document* tmp = &doc;
+  int out = 1;
   if (!is_eof) {
-    if (meta.deserialize(data, doc, true) < 0)
-      return -1;
+    if (meta.deserialize(data, doc, true) < 0) {
+      out = -1;
+      goto cleanup;
+    }
   }
   if (forktype == FORK_BROADCAST || is_eof) {
     for (typename std::vector<Comm_t*>::iterator it = comms.begin();
 	 it != comms.end(); it++) {
-      if ((*it)->send_raw(tmp_data, tmp_len) < 0)
-	return -1;
+      if ((*it)->send_raw(tmp_data, tmp_len) < 0) {
+	out = -1;
+	goto cleanup;
+      }
     }
   } else if (forktype == FORK_CYCLE) {
-    int out = current_cycle()->send_raw(tmp_data, tmp_len);
+    out = current_cycle()->send_raw(tmp_data, tmp_len);
     if (out >= 0)
       iter++;
-    return out;
+    goto cleanup;
   } else if (forktype == FORK_COMPOSITE) {
-    bool tmpdoc_created = false;
-    rapidjson::Document* tmp = &doc;
     if (!doc.IsArray()) {
       tmp = new rapidjson::Document(rapidjson::kNullType);
       tmpdoc_created = true;
       std::cerr << "COERCING TO ARRAY" << std::endl;
       if (!parent._coerce_to_array(doc, *tmp, SEND)) {
 	log_error() << "send: Cannot split message for composite: " << doc << std::endl;
-	delete tmp;
-	return -1;
+	out = -1;
+	goto cleanup;
       }
       tmp_created = true;
       tmp_data = nullptr;
       tmp_len = 0;
-      if (meta.serialize(&tmp_data, &tmp_len, *tmp, true) < 0)
-	return -1;
+      if (meta.serialize(&tmp_data, &tmp_len, *tmp, true) < 0) {
+	out = -1;
+	goto cleanup;
+      }
     }
     if (static_cast<size_t>(tmp->Size()) != comms.size()) {
       log_error() << "send: Message has " << tmp->Size() <<
 	" elements, but there are " << comms.size() << " comms" << std::endl;
-      if (tmpdoc_created)
-	delete tmp;
-      return -1;
+      out = -1;
+      goto cleanup;
     }
     std::vector<std::string> field_names;
-    if (!meta.get_field_names(field_names))
-      return -1;  // GCOV_EXCL_LINE
+    if (!meta.get_field_names(field_names)) {
+      out = -1;
+      goto cleanup;
+    }
     size_t i = 0;
     for (typename std::vector<Comm_t*>::iterator it = comms.begin();
 	 it != comms.end(); it++, i++) {
       // TODO: Any additional data to add from parent?
       if (!field_names.empty()) {
 	(*it)->getMetadata(SEND).initSchema();
-	if (!(*it)->getMetadata(SEND).SetSchemaString("title", field_names[i]))
-	  return -1;  // GCOV_EXCL_LINE
+	if (!(*it)->getMetadata(SEND).SetSchemaString("title", field_names[i])) {
+	  out = -1;
+	  goto cleanup;
+	}
       }
       if ((*it)->send((*tmp)[static_cast<rapidjson::SizeType>(i)]) < 0) {
-	if (tmpdoc_created)
-	  delete tmp;
-	return -1;  // GCOV_EXCL_LINE
+	out = -1;
+	goto cleanup;
       }
     }
-    if (tmpdoc_created)
-      delete tmp;
   }
+ cleanup:
+  if (tmpdoc_created)
+    delete tmp;
   if (tmp_created)
-    meta.GetAllocator().Free(tmp_data);
-  return 1;
+    free(tmp_data);
+  return out;
 }
 long ForkTines::recv(char*& data, const size_t &len,
 		     YggInterface::utils::Metadata& meta) {

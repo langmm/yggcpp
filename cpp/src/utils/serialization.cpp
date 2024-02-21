@@ -212,7 +212,7 @@ bool Metadata::fromSchema(const rapidjson::Value& new_schema,
       for (typename rapidjson::Value::ConstMemberIterator it = new_schema.MemberBegin();
 	   it != new_schema.MemberEnd(); it++) {
 	if (schema->HasMember(it->name)) {
-	  (*schema)[it->name].CopyFrom(it->value, metadata.GetAllocator(), true);
+	  (*schema)[it->name.GetString()].CopyFrom(it->value, metadata.GetAllocator(), true);
 	} else {
 	  schema->AddMember(rapidjson::Value(it->name, metadata.GetAllocator(), true).Move(),
 			    rapidjson::Value(it->value, metadata.GetAllocator(), true).Move(),
