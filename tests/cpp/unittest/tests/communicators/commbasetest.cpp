@@ -7,10 +7,13 @@ using namespace YggInterface::communicator;
 
 class Comm_tTest: public Comm_t {
 public:
-    Comm_tTest(utils::Address& address, DIRECTION dirn, const COMM_TYPE &t, FLAG_TYPE flgs = 0) :
-      Comm_t("", address, dirn, t, flgs), _closed(false) {}
-    Comm_tTest(const std::string &name, DIRECTION direction, const COMM_TYPE &t) :
-      Comm_t(name, direction, t, COMM_FLAG_INTERFACE), _closed(false) {}
+    Comm_tTest(utils::Address& address, DIRECTION dirn,
+	       FLAG_TYPE flgs = 0,
+	       const COMM_TYPE &t = NULL_COMM) :
+      Comm_t("", address, dirn, flgs, t), _closed(false) {}
+    Comm_tTest(const std::string &name, DIRECTION direction,
+	       const COMM_TYPE &t) :
+      Comm_t(name, direction, COMM_FLAG_INTERFACE, t), _closed(false) {}
     int comm_nmsg(DIRECTION=NONE) const override {return 1;}
     FLAG_TYPE get_flags() const {return flags;}
     void open() override { _open(true); }
@@ -41,7 +44,7 @@ protected:
     }
     Comm_t* create_worker(utils::Address& adr,
                           const DIRECTION dir, FLAG_TYPE flgs) override {
-      return new Comm_tTest(adr, dir, this->type, flgs);
+      return new Comm_tTest(adr, dir, flgs, this->type);
     }
 
     bool _closed;
@@ -50,7 +53,7 @@ protected:
 class EmptyComm : public CommBase<int> {
 public:
   EmptyComm() :
-    CommBase("", SEND, ZMQ_COMM, 0), nmsg_(-1) {
+    CommBase("", SEND, 0, ZMQ_COMM), nmsg_(-1) {
     handle = new int();
     updateMaxMsgSize(1000);
   }

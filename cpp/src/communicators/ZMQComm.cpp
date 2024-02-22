@@ -461,14 +461,7 @@ void ZMQComm::disable_handshake() {
   ZMQComm::_disable_handshake = 1;
 }
 
-ZMQComm::ZMQComm(const std::string& name, const utils::Address& address,
-		 const DIRECTION direction, FLAG_TYPE flgs,
-		 const COMM_TYPE type) :
-  CommBase(name, address, direction, type, flgs), reply(direction) {
-  ADD_CONSTRUCTOR_OPEN(ZMQComm)
-}
-
-ADD_CONSTRUCTORS_DEF(ZMQComm)
+COMM_CONSTRUCTOR_CORE_DEF_PARAM(ZMQComm, 0, reply(direction))
 
 #ifdef ZMQINSTALLED
 

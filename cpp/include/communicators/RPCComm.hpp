@@ -21,41 +21,16 @@ public:
    * @param[in] dir The communication direction
    * @param[in] req_dir The request direction
    * @param[in] type The communicator Type
-   * @param[in] ncomm Number of communicators in a forked request comm.
-   * @param[in] reqtype Communicator type to use for the request communicator.
-   * @param[in] restype Communicator type to use for the response communicator.
-   * @param[in] reqflags Bitwise flags describing the request communicator.
-   * @param[in] resflags Bitwise flags describing the response communicator.
+   * @param[in] supp Supplemental communicator parameters
    * @see utils::Address
    */
   YGG_API explicit RPCComm(const std::string &name,
 			   const utils::Address& address,
 			   int flgs, DIRECTION dir, DIRECTION req_dir,
-			   const COMM_TYPE type, size_t ncomm,
-			   const COMM_TYPE reqtype,
-			   const COMM_TYPE restype,
-			   int reqflags, int resflags);
-  /*!
-   * @brief Constructor
-   * @param[in] name The name of the communicator
-   * @param[in] flgs Flags to use
-   * @param[in] dir The communication direction
-   * @param[in] req_dir The request direction
-   * @param[in] type The communicator Type
-   * @param[in] ncomm Number of communicators in a forked request comm.
-   * @param[in] reqtype Communicator type to use for the request communicator.
-   * @param[in] restype Communicator type to use for the response communicator.
-   * @param[in] reqflags Bitwise flags describing the request communicator.
-   * @param[in] resflags Bitwise flags describing the response communicator.
-   */
-  YGG_API RPCComm(const std::string& name, int flgs, DIRECTION dir,
-		  DIRECTION req_dir, const COMM_TYPE type, size_t ncomm,
-		  const COMM_TYPE reqtype, const COMM_TYPE restype,
-		  int reqflags, int resflags);
-  ADD_DESTRUCTOR(RPCComm, WrapComm)
+			   const COMM_TYPE type,
+			   const SupplementCommArgs& supp);
+  COMM_DESTRUCTOR_DEC(RPCComm, WrapComm)
 
-  using Comm_t::send;
-  using Comm_t::recv;
   /** \copydoc YggInterface::communicator::Comm_t::comm_nmsg */
   YGG_API int comm_nmsg(DIRECTION dir=NONE) const override;
   /** \copydoc YggInterface::communicator::Comm_t::wait_for_recv */

@@ -96,63 +96,13 @@ namespace YggInterface {
      */
     class ForkComm : public CommBase<ForkTines> {
     public:
+      COMM_CONSTRUCTOR_CORE_DEC(ForkComm, DEFAULT_COMM, true)
 
-      /**
-       * @brief Constructor
-       * @param[in] name The name of the communicator
-       * @param[in] address The address to associate with the
-       *   communicator, if address is empty then an address will be
-       *   created.
-       * @param[in] direction Enumerated direction for communicator
-       * @param[in] flgs Bitwise flags describing the communicator
-       * @param[in] commtype THe communicator type
-       * @param[in] ncomm The number of 'tine' communicators to created.
-       * @see utils::Address
-       */
-      YGG_API explicit ForkComm(const std::string name,
-				const utils::Address& address,
-				const DIRECTION direction=NONE,
-				FLAG_TYPE flgs=0,
-				const COMM_TYPE commtype=DEFAULT_COMM,
-				size_t ncomm=0);
-      /**
-       * @brief Constructor without an address.
-       * @param[in] nme The name of the communicator
-       * @param[in] dirn Enumerated direction for communicator
-       * @param[in] flgs Bitwise flags describing the communicator
-       * @param[in] commtype THe communicator type
-       * @param[in] ncomm The number of 'tine' communicators to created
-       */
-      YGG_API ForkComm(const std::string nme, const DIRECTION dirn,
-		       FLAG_TYPE flgs=0,
-		       const COMM_TYPE commtype=DEFAULT_COMM,
-		       size_t ncomm=0);
-      /**
-       * @brief Constructor without a name.
-       * @param[in] addr The address to associate with the
-       *   communicator, if address is empty then an address will be
-       *   created.
-       * @param[in] dirn Enumerated direction for communicator
-       * @param[in] flgs Bitwise flags describing the communicator
-       * @param[in] type THe communicator type
-       * @param[in] ncomm The number of 'tine' communicators to created.
-       * @see utils::Address
-       */
-      YGG_API explicit ForkComm(utils::Address &addr,
-				const DIRECTION dirn,
-				FLAG_TYPE flgs=0,
-				const COMM_TYPE type=DEFAULT_COMM,
-				size_t ncomm=0);
-      ADD_METHODS_BASE(ForkComm, DEFAULT_COMM, true)
-	
       /** \copydoc YggInterface::communicator::Comm_t::comm_nmsg */
       YGG_API int comm_nmsg(DIRECTION dir=NONE) const override;
       /** \copydoc YggInterface::communicator::Comm_t::set_timeout_recv */
       YGG_API void set_timeout_recv(int64_t new_timeout) override;
       
-      using Comm_t::send;
-      using Comm_t::recv;
-
       /** \copydoc YggInterface::communicator::Comm_t::send_raw */
       YGG_API int send_raw(const char *data, const size_t &len) override;
       /** \copydoc YggInterface::communicator::Comm_t::recv_raw */

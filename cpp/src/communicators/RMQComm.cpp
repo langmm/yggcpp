@@ -286,15 +286,7 @@ int RMQConnection::send(utils::Header&) { return -1; }
 long RMQConnection::recv(utils::Header&) { return -1; }
 #endif // RMQINSTALLED
 
-RMQComm::RMQComm(const std::string name,
-		 const utils::Address& address,
-		 const DIRECTION direction, uint64_t flgs,
-		 const COMM_TYPE commtype) :
-  CommBase(name, address, direction, commtype, flgs) {
-  ADD_CONSTRUCTOR_OPEN(RMQComm)
-}
-
-ADD_CONSTRUCTORS_DEF(RMQComm)
+COMM_CONSTRUCTOR_CORE_DEF(RMQComm, 0)
 
 void RMQComm::_open(bool call_base) {
   BEFORE_OPEN_DEF;

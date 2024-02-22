@@ -50,14 +50,7 @@ void mpi_registry_t::CheckReturn(int code, const std::string& method, int rank) 
     YggLogError << method << "(" << tag << "): Invalid count" << std::endl;
 }
 
-MPIComm::MPIComm(const std::string& name, const utils::Address& address,
-		 const DIRECTION direction, FLAG_TYPE flgs,
-		 const COMM_TYPE type) :
-  CommBase(name, address, direction, type, flgs) {
-  ADD_CONSTRUCTOR_OPEN(MPIComm)
-}
-
-ADD_CONSTRUCTORS_DEF(MPIComm)
+COMM_CONSTRUCTOR_CORE_DEF(MPIComm, 0)
 
 #if defined(MPIINSTALLED) && defined(MPI_COMM_WORLD)
 

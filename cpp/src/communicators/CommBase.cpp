@@ -5,20 +5,51 @@
 using namespace YggInterface::communicator;
 using namespace YggInterface::utils;
 
-Comm_t::Comm_t(const std::string &nme, const Address &addr,
-	       const DIRECTION dirn, const COMM_TYPE &t, FLAG_TYPE flgs) :
+
+SupplementCommArgs::SupplementCommArgs(const size_t ncomm0,
+				       const COMM_TYPE request_commtype0,
+				       const COMM_TYPE response_commtyp0,
+				       const FLAG_TYPE request_flags0,
+				       const FLAG_TYPE response_flags0) :
+  ncomm(ncomm0), request_commtype(request_commtype0),
+  response_commtype(response_commtyp0),
+  request_flags(request_flags0), response_flags(response_flags0) {}
+SupplementCommArgs::SupplementCommArgs(const SupplementCommArgs& rhs) :
+  ncomm(rhs.ncomm), request_commtype(rhs.request_commtype),
+  response_commtype(rhs.response_commtype),
+  request_flags(rhs.request_flags), response_flags(rhs.response_flags) {}
+SupplementCommArgs::~SupplementCommArgs() {}
+SupplementCommArgs& SupplementCommArgs::operator=(const SupplementCommArgs& rhs) {
+  ncomm = rhs.ncomm;
+  request_commtype = rhs.request_commtype;
+  response_commtype = rhs.response_commtype;
+  request_flags = rhs.request_flags;
+  response_flags = rhs.response_flags;
+  return *this;
+}
+
+
+Comm_t::Comm_t(const std::string &nme,
+	       const Address &addr,
+	       const DIRECTION dirn,
+	       FLAG_TYPE flgs,
+	       const COMM_TYPE &t,
+	       const SupplementCommArgs& supp) :
   ctx(global_context), type(t), name(nme), address(addr),
   direction(dirn), flags(flgs),
   maxMsgSize(COMM_BASE_MAX_MSG_SIZE), msgBufSize(0),
   index_in_register(-1), thread_id(), metadata(),
   timeout_recv(YGG_MAX_TIME), workers(), global_comm(nullptr),
   language(NO_LANGUAGE), model(), partner_model() {
-  _before_open();
+  _before_open(supp);
 }
 
 Comm_t::Comm_t(const std::string &nme,
-               const DIRECTION dirn, const COMM_TYPE &t, FLAG_TYPE flgs) :
-  Comm_t(nme, utils::Address(), dirn, t, flgs) {}
+               const DIRECTION dirn,
+	       FLAG_TYPE flgs,
+	       const COMM_TYPE &t,
+	       const SupplementCommArgs& supp) :
+  Comm_t(nme, utils::Address(), dirn, flgs, t, supp) {}
 
 Comm_t::~Comm_t() {
   log_debug() << "~Comm_t: Unregistering comm (idx = " <<
@@ -28,12 +59,11 @@ Comm_t::~Comm_t() {
       ctx->registry_[index_in_register] = NULL;
   } YGG_THREAD_SAFE_END;
   log_debug() << "~Comm_t: Started" << std::endl;
-  if (flags & COMM_FLAG_SET_OPP_ENV)
+  if ((flags & COMM_FLAG_SET_OPP_ENV) && !global_comm)
     unsetOppEnv();
   log_debug() << "~Comm_t: Finished" << std::endl;
 }
-void Comm_t::_before_open() {
-
+void Comm_t::_before_open(const SupplementCommArgs& supp) {
   flags |= COMM_FLAG_VALID;
   if (direction == NONE)
     flags &= ~COMM_FLAG_VALID;
@@ -57,7 +87,7 @@ void Comm_t::_before_open() {
   }
   setLanguage();
   
-  create_global_scope_comm();
+  create_global_scope_comm(supp);
   
   ctx->register_comm(this);
 
@@ -357,7 +387,7 @@ std::string Comm_t::printStatus(
   return out;
 }
 
-bool Comm_t::create_global_scope_comm() {
+bool Comm_t::create_global_scope_comm(const SupplementCommArgs& supp) {
   COMM_TYPE global_type = getType();
   std::string global_name = name;
   DIRECTION global_direction = direction;
@@ -410,7 +440,8 @@ bool Comm_t::create_global_scope_comm() {
     if (address.valid())
       global_address.address(address.address());
     global_comm = new_Comm_t(global_direction, global_type, global_name,
-			     global_address, flags | COMM_FLAG_GLOBAL);
+			     global_address, flags | COMM_FLAG_GLOBAL,
+			     supp);
     log_debug() << "create_global_scope_comm: Created global comm \""
 	      << global_name << "\"" << std::endl;
   } else {
@@ -490,86 +521,80 @@ bool Comm_t::check_size(const size_t &len) const {
 
 Comm_t* YggInterface::communicator::new_Comm_t(
      const DIRECTION dir, const COMM_TYPE type, const std::string &name,
-     char* address, FLAG_TYPE flags, size_t ncomm,
-     const COMM_TYPE request_commtype, const COMM_TYPE response_commtype,
-     FLAG_TYPE request_flags, FLAG_TYPE response_flags) {
+     char* address, FLAG_TYPE flags, SUPP_PARAM_DEF) {
   Address addr;
   if (address)
     addr.address(address);
   return YggInterface::communicator::new_Comm_t(dir, type, name,
-						 addr, flags, ncomm,
-						 request_commtype,
-						 response_commtype,
-						 request_flags,
-						 response_flags);
+						addr, flags,
+						SUPP_PARAM_INIT);
 }
 
 Comm_t* YggInterface::communicator::new_Comm_t(
      const DIRECTION dir, const COMM_TYPE type, const std::string &name,
-     FLAG_TYPE flags, size_t ncomm,
-     const COMM_TYPE request_commtype, const COMM_TYPE response_commtype,
-     FLAG_TYPE request_flags, FLAG_TYPE response_flags) {
+     FLAG_TYPE flags, SUPP_PARAM_DEF) {
   Address addr;
   return YggInterface::communicator::new_Comm_t(dir, type, name,
-						 addr, flags, ncomm,
-						 request_commtype,
-						 response_commtype,
-						 request_flags,
-						 response_flags);
+						addr, flags,
+						SUPP_PARAM_INIT);
 }
 
 Comm_t* YggInterface::communicator::new_Comm_t(
      const DIRECTION dir, const COMM_TYPE type, const std::string &name,
-     const Address &addr, FLAG_TYPE flags, size_t ncomm,
-     const COMM_TYPE request_commtype, const COMM_TYPE response_commtype,
-     FLAG_TYPE request_flags, FLAG_TYPE response_flags) {
+     const Address &addr, FLAG_TYPE flags, SUPP_PARAM_DEF) {
+  return YggInterface::communicator::new_Comm_t(dir, type, name,
+						addr, flags,
+						SUPP_PARAM_INIT);
+}
+Comm_t* YggInterface::communicator::new_Comm_t(
+     const DIRECTION dir, const COMM_TYPE type, const std::string &name,
+     const Address &addr, FLAG_TYPE flags, const SupplementCommArgs& supp) {
+
   flags |= COMM_FLAG_DELETE;
   utils::Address addr2(addr.address());
   if (!(addr2.valid() || name.empty())) {
     addr2 = Comm_t::addressFromEnv(name, dir);
   }
-  if (((flags & COMM_FLAG_FORK_CYCLE) ||
+  std::cerr << "HERE: " << addr.address() << ", names = " << name << std::endl;
+  if (((flags & COMM_FLAG_FORK) ||
+       (flags & COMM_FLAG_FORK_CYCLE) ||
        (flags & COMM_FLAG_FORK_BROADCAST) ||
        (flags & COMM_FLAG_FORK_COMPOSITE) ||
-       (ncomm > 1) || (addr.address().find(",") != std::string::npos) ||
+       (supp.ncomm > 1) ||
+       (addr.address().find(",") != std::string::npos) ||
        (name.find(",") != std::string::npos)) &&
       (type != SERVER_COMM) && (type != CLIENT_COMM)) {
-    return new ForkComm(name, addr, dir, flags, type, ncomm);
+    return new ForkComm(name, addr, dir, flags, type, supp);
   }
   if (flags & COMM_FLAG_ASYNC) {
-    return new AsyncComm(name, addr, dir, flags, type,
-			 request_commtype, response_commtype,
-			 request_flags, response_flags);
+    return new AsyncComm(name, addr, dir, flags, type, supp);
   }
   switch(type) {
   case NULL_COMM:
     break;
   case DEFAULT_COMM:
-    return new COMM_BASE(name, addr, dir, flags);
+    return new COMM_BASE(name, addr, dir, flags,
+			 COMM_BASE::defaultCommType(), supp);
   case IPC_COMM:
-    return new IPCComm(name, addr, dir, flags);
+    return new IPCComm(name, addr, dir, flags, type, supp);
   case ZMQ_COMM:
-    return new ZMQComm(name, addr, dir, flags);
+    return new ZMQComm(name, addr, dir, flags, type, supp);
   case MPI_COMM:
-    return new MPIComm(name, addr, dir, flags);
-  case SERVER_COMM:
-    return new ServerComm(name, addr, flags, type, ncomm,
-			  request_commtype, response_commtype,
-			  request_flags, response_flags);
-  case CLIENT_COMM:
-    return new ClientComm(name, addr, flags, type, ncomm,
-			  request_commtype, response_commtype,
-			  request_flags, response_flags);
+    return new MPIComm(name, addr, dir, flags, type, supp);
   case FILE_COMM:
-    return new FileComm(name, addr, dir, flags);
+    return new FileComm(name, addr, dir, flags, type, supp);
   case RMQ_COMM:
-    return new RMQComm(name, addr, dir, flags);
+    return new RMQComm(name, addr, dir, flags, type, supp);
   case REST_COMM:
-    return new RESTComm(name, addr, dir, flags);
+    return new RESTComm(name, addr, dir, flags, type, supp);
   case VALUE_COMM:
-    return new ValueComm(name, addr, dir, flags);
+    return new ValueComm(name, addr, dir, flags, type, supp);
   case BUFFER_COMM:
-    return new BufferComm(name, addr, dir, flags);
+    return new BufferComm(name, addr, dir, flags, type, supp);
+  case SERVER_COMM:
+    return new ServerComm(name, addr, flags, type, supp);
+  case CLIENT_COMM:
+    return new ClientComm(name, addr, flags, type, supp);
   }
   return nullptr;
 }

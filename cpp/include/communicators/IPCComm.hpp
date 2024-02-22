@@ -31,21 +31,7 @@ typedef struct msgbuf_t {
  */
 class IPCComm : public CommBase<int> {
 public:
-    /**
-     * Constructor
-     * @param[in] name The name for the communicator, if not given one will be generated
-     * @param[in] address The address for the communicator, if not given one will be generated
-     * @param[in] direction Enuerated direction for this instance
-     * @param[in] flgs Bitwise flags describing the communicator
-     * @param[in] type The communicator type
-     * @see utils::Address
-     */
-    YGG_API IPCComm(const std::string& name,
-		    const utils::Address& address,
-		    const DIRECTION direction = NONE,
-		    FLAG_TYPE flgs = 0,
-		    const COMM_TYPE type = IPC_COMM);
-    ADD_CONSTRUCTORS(IPC)
+    COMM_CONSTRUCTOR_CORE_DEC(IPCComm, IPC_COMM, IPC_INSTALLED_FLAG)
 
 #ifdef IPCINSTALLED
 
@@ -67,9 +53,6 @@ public:
     /** \copydoc YggInterface::communicator::Comm_t::comm_nmsg */
     YGG_API int comm_nmsg(DIRECTION dir=NONE) const override;
   
-    using Comm_t::send;
-    using Comm_t::recv;
-
 protected:
     /** \copydoc YggInterface::communicator::Comm_t::send_single() */
     YGG_API int send_single(utils::Header& header) override;

@@ -33,10 +33,10 @@ namespace YggInterface {
        * @param[in] direction Enuerated direction for this instance
        * @param[in] flgs Bitwise flags describing the communicator
        * @param[in] type The communicator type
-       * @param[in] ncomm Number of tines in a forked comm (if <= 1, a
-       *   normal communicator will be wrapped)
        * @param[in] wraptype enumerated type of wrapped communicator to
        *   created if different from type
+       * @param[in] wrapsupp Supplementary comm parameters for the wrapped
+       *   communicator
        * @see utils::Address
        */
       YGG_API explicit WrapComm(const std::string name,
@@ -44,8 +44,8 @@ namespace YggInterface {
 				const DIRECTION direction = NONE,
 				FLAG_TYPE flgs = 0,
 				const COMM_TYPE type = DEFAULT_COMM,
-				size_t ncomm = 0,
-				const COMM_TYPE wraptype = NULL_COMM);
+				const COMM_TYPE wraptype = NULL_COMM,
+				const SupplementCommArgs& wrapsupp=SupplementCommArgs());
       /**
        * Constructor without an address
        * @param[in] nme The name for the communicator, if empty one will
@@ -53,17 +53,17 @@ namespace YggInterface {
        * @param[in] dirn Enuerated direction for this instance
        * @param[in] flgs Bitwise flags describing the communicator
        * @param[in] type The communicator type
-       * @param[in] ncomm Number of tines in a forked comm (if <= 1, a
-       *   normal communicator will be wrapped)
        * @param[in] wraptype enumerated type of wrapped communicator to
        *   created if different from type
+       * @param[in] wrapsupp Supplementary comm parameters for the wrapped
+       *   communicator
        */
       YGG_API explicit WrapComm(const std::string nme,
 				const DIRECTION dirn,
 				FLAG_TYPE flgs = 0,
 				const COMM_TYPE type = DEFAULT_COMM,
-				size_t ncomm = 0,
-				const COMM_TYPE wraptype = NULL_COMM);
+				const COMM_TYPE wraptype = NULL_COMM,
+				const SupplementCommArgs& wrapsupp=SupplementCommArgs());
       /**
        * Constructor without a name
        * @param[in] addr The address for the communicator, if empty
@@ -71,18 +71,18 @@ namespace YggInterface {
        * @param[in] dirn Enuerated direction for this instance
        * @param[in] flgs Bitwise flags describing the communicator
        * @param[in] type The communicator type
-       * @param[in] ncomm Number of tines in a forked comm (if <= 1, a
-       *   normal communicator will be wrapped)
        * @param[in] wraptype enumerated type of wrapped communicator to
        *   created if different from type
+       * @param[in] wrapsupp Supplementary comm parameters for the wrapped
+       *   communicator
        * @see utils::Address
        */
       YGG_API explicit WrapComm(const utils::Address &addr,
 				const DIRECTION dirn,
 				FLAG_TYPE flgs = 0,
 				const COMM_TYPE type = DEFAULT_COMM,
-				size_t ncomm = 0,
-				const COMM_TYPE wraptype = NULL_COMM);
+				const COMM_TYPE wraptype = NULL_COMM,
+				const SupplementCommArgs& wrapsupp=SupplementCommArgs());
       /**
        * @brief Constructor to wrap an existing communicator
        * @param[in] comm Communicator to wrap
@@ -176,7 +176,7 @@ namespace YggInterface {
       
     public:
       COMM_TYPE wraptype; /**< Wrapped communicator type */
-      size_t wrapncomm;   /**< Number of wrapped communicators (fork only) */
+      SupplementCommArgs wrapsupp; /**< Supplemental parameters for the wrapped comm */
     };
       
   }

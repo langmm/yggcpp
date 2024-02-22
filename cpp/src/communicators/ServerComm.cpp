@@ -6,24 +6,7 @@
 using namespace YggInterface::communicator;
 using namespace YggInterface::utils;
 
-ServerComm::ServerComm(const std::string& nme, const utils::Address& addr,
-		       FLAG_TYPE flgs, const COMM_TYPE type, size_t ncomm,
-		       const COMM_TYPE reqtype,
-		       const COMM_TYPE restype,
-		       FLAG_TYPE reqflags, FLAG_TYPE resflags) :
-  RPCComm(nme, addr,
-	  flgs | COMM_FLAG_SERVER | COMM_FLAG_ALWAYS_SEND_HEADER,
-	  RECV, SEND, type, ncomm,
-	  reqtype, restype, reqflags, resflags) {
-  ADD_CONSTRUCTOR_OPEN(ServerComm)
-}
-
-ADD_CONSTRUCTORS_RPC_DEF(ServerComm)
-
-std::string ServerComm::logClass() const {
-  std::string out = "ServerComm";
-  return out;
-}
+COMM_CONSTRUCTOR_RPC_DEF(ServerComm, COMM_FLAG_SERVER, RECV, SEND)
 
 void ServerComm::_open(bool call_base) {
   BEFORE_OPEN(RPCComm);

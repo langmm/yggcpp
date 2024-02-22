@@ -8,27 +8,7 @@ using namespace YggInterface::utils;
 
 unsigned ClientComm::_client_rand_seeded = 0;
 
-ClientComm::ClientComm(const std::string& nme, const Address& addr,
-		       FLAG_TYPE flgs, const COMM_TYPE type, size_t ncomm,
-		       const COMM_TYPE reqtype,
-		       const COMM_TYPE restype,
-		       FLAG_TYPE reqflags, FLAG_TYPE resflags) :
-  RPCComm(nme, addr,
-	  flgs | COMM_FLAG_CLIENT | COMM_FLAG_ALWAYS_SEND_HEADER,
-	  SEND, RECV, type, ncomm,
-	  reqtype, restype, reqflags, resflags) {
-  // Called to create temp comm for send/recv
-  if (!(name.empty() && address.valid())) {
-    ADD_CONSTRUCTOR_OPEN(ClientComm)
-  }
-}
-
-ADD_CONSTRUCTORS_RPC_DEF(ClientComm)
-
-std::string ClientComm::logClass() const {
-  std::string out = "ClientComm";
-  return out;
-}
+COMM_CONSTRUCTOR_RPC_DEF(ClientComm, COMM_FLAG_CLIENT, SEND, RECV)
 
 void ClientComm::_open(bool call_base) {
   BEFORE_OPEN(RPCComm);

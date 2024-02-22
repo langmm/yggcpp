@@ -263,29 +263,17 @@ long ForkTines::recv(char*& data, const size_t &len,
 // ForkComm //
 //////////////
 
-ForkComm::ForkComm(const std::string name, const Address &address,
-		   DIRECTION direction, FLAG_TYPE flgs,
-		   const COMM_TYPE commtype, size_t ncmm) :
-  CommBase(name, address, direction, commtype, flgs),
-  forktype(FORK_DEFAULT), ncomm(ncmm) {
-  if (flgs & COMM_FLAG_FORK_CYCLE)
-    forktype = FORK_CYCLE;
-  else if (flgs & COMM_FLAG_FORK_BROADCAST)
-    forktype = FORK_BROADCAST;
-  else if (flgs & COMM_FLAG_FORK_COMPOSITE)
-    forktype = FORK_COMPOSITE;
-  ADD_CONSTRUCTOR_OPEN(ForkComm)
-}
-ForkComm::ForkComm(const std::string name, const DIRECTION dirn,
-		   FLAG_TYPE flgs, const COMM_TYPE commtype, size_t ncomm) :
-  ForkComm(name, utils::blankAddress, dirn, flgs, commtype, ncomm) {}
-ForkComm::ForkComm(utils::Address &addr, const DIRECTION dirn,
-		   FLAG_TYPE flgs, const COMM_TYPE commtype, size_t ncomm) :
-  ForkComm("", addr, dirn, flgs, commtype, ncomm) {}
-
-ADD_DESTRUCTOR_DEF(ForkComm, CommBase, , )
+COMM_CONSTRUCTOR_CORE_DEF_PARAM(ForkComm, COMM_FLAG_FORK,
+				forktype(FORK_DEFAULT),
+				ncomm(supp.ncomm))
 
 void ForkComm::_open(bool call_base) {
+  if (flags & COMM_FLAG_FORK_CYCLE)
+    forktype = FORK_CYCLE;
+  else if (flags & COMM_FLAG_FORK_BROADCAST)
+    forktype = FORK_BROADCAST;
+  else if (flags & COMM_FLAG_FORK_COMPOSITE)
+    forktype = FORK_COMPOSITE;
   BEFORE_OPEN_DEF;
   std::vector<std::string> names;
   std::vector<std::string> addrs;
@@ -302,7 +290,8 @@ void ForkComm::_open(bool call_base) {
       names.push_back(this->name + "-" + std::to_string(i));
   }
   handle = new ForkTines(this->logInst(), names, addrs, direction,
-			 flags & ~COMM_FLAG_FORK_CYCLE &
+			 flags & ~COMM_FLAG_FORK &
+			 ~COMM_FLAG_FORK_CYCLE &
 			 ~COMM_FLAG_FORK_BROADCAST &
 			 ~COMM_FLAG_FORK_COMPOSITE,
 			 type, forktype);

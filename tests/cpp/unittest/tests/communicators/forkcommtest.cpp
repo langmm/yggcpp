@@ -30,6 +30,35 @@ TEST(ForkComm, default_pattern) {
   EXPECT_EQ(rComm.recvVar(rData), -2);
 }
 
+TEST(ForkComm, global) {
+  double sData = 5.0, rData = 0.0;
+  std::string name = "global_fork";
+  global_scope_comm_on();
+  {
+    ForkComm sComm(name, SEND, COMM_FLAG_SET_OPP_ENV, DEFAULT_COMM, 2);
+    YggInput rComm(name);
+    EXPECT_GE(sComm.sendVar(sData), 0);
+    EXPECT_EQ(rComm.comm_nmsg(), 2);
+    EXPECT_EQ(rComm.comm_nmsg(SEND), 0);
+    EXPECT_EQ(sComm.comm_nmsg(RECV), 0);
+    EXPECT_GE(rComm.recvVar(rData), 0);
+    EXPECT_EQ(rData, sData);
+    EXPECT_EQ(rComm.comm_nmsg(), 1);
+  }
+  {
+    ForkComm sComm(name, SEND, COMM_FLAG_SET_OPP_ENV, DEFAULT_COMM, 2);
+    YggInput rComm(name);
+    EXPECT_EQ(rComm.comm_nmsg(), 1);
+    EXPECT_GE(rComm.recvVar(rData), 0);
+    EXPECT_EQ(rData, sData);
+    EXPECT_EQ(rComm.comm_nmsg(), 0);
+    EXPECT_GE(sComm.send_eof(), 0);
+    EXPECT_EQ(rComm.recvVar(rData), -2);
+  }
+  global_scope_comm_off();
+  ygg_cleanup(CLEANUP_COMMS);
+}
+
 TEST(ForkComm, composite_pattern) {
   ForkComm sComm("fork", SEND,
 		 COMM_FLAG_SET_OPP_ENV | COMM_FLAG_FORK_COMPOSITE,

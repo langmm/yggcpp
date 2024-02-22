@@ -359,70 +359,7 @@ namespace YggInterface {
      **/
     class AsyncComm : public CommBase<AsyncBacklog> {
     public:
-      /**
-       * @brief Constructor
-       * @param[in] name The name of the communicator
-       * @param[in] address The address to associate with the communicator,
-       *   if the address is nullptr, then an address will be created.
-       * @param[in] direction Enumerated direction for communicator
-       * @param[in] flgs Bitwise flags describing the communicator
-       * @param[in] type Enumerated communicator type
-       * @param[in] reqtype Request communicator type for RPC comm.
-       * @param[in] restype Response communicator type for RPC comm.
-       * @param[in] reqflags Request communicator flags for RPC comm.
-       * @param[in] resflags Response communicator flags for RPC comm.
-       * @see utils::Address
-       **/
-      YGG_API explicit AsyncComm(const std::string& name,
-				 const utils::Address& address,
-				 const DIRECTION direction = NONE,
-				 FLAG_TYPE flgs = 0,
-				 const COMM_TYPE type = DEFAULT_COMM,
-				 const COMM_TYPE reqtype = DEFAULT_COMM,
-				 const COMM_TYPE restype = DEFAULT_COMM,
-				 FLAG_TYPE reqflags = 0,
-				 FLAG_TYPE resflags = 0);
-      /**
-       * @brief Constructor
-       * @param[in] name The name of the communicator
-       * @param[in] direction Enumerated direction for communicator
-       * @param[in] flgs Bitwise flags describing the communicator
-       * @param[in] type Enumerated communicator type
-       * @param[in] reqtype Request communicator type for RPC comm.
-       * @param[in] restype Response communicator type for RPC comm.
-       * @param[in] reqflags Request communicator flags for RPC comm.
-       * @param[in] resflags Response communicator flags for RPC comm.
-       **/
-      YGG_API explicit AsyncComm(const std::string& name,
-				 const DIRECTION direction = NONE,
-				 FLAG_TYPE flgs = 0,
-				 const COMM_TYPE type = DEFAULT_COMM,
-				 const COMM_TYPE reqtype = DEFAULT_COMM,
-				 const COMM_TYPE restype = DEFAULT_COMM,
-				 FLAG_TYPE reqflags = 0,
-				 FLAG_TYPE resflags = 0);
-      /**
-       * @brief Constructor
-       * @param[in] address The address to associate with the communicator,
-       *   if the address is nullptr, then an address will be created.
-       * @param[in] direction Enumerated direction for communicator
-       * @param[in] flgs Bitwise flags describing the communicator
-       * @param[in] type Enumerated communicator type
-       * @param[in] reqtype Request communicator type for RPC comm.
-       * @param[in] restype Response communicator type for RPC comm.
-       * @param[in] reqflags Request communicator flags for RPC comm.
-       * @param[in] resflags Response communicator flags for RPC comm.
-       * @see utils::Address
-       **/
-      YGG_API explicit AsyncComm(utils::Address& address,
-				 const DIRECTION direction = NONE,
-				 FLAG_TYPE flgs = 0,
-				 const COMM_TYPE type = DEFAULT_COMM,
-				 const COMM_TYPE reqtype = DEFAULT_COMM,
-				 const COMM_TYPE restype = DEFAULT_COMM,
-				 FLAG_TYPE reqflags = 0,
-				 FLAG_TYPE resflags = 0);
-      ADD_METHODS_BASE(AsyncComm, DEFAULT_COMM, true)
+      COMM_CONSTRUCTOR_CORE_DEC_NOLOG(AsyncComm, DEFAULT_COMM, true)
 
       /** \copydoc YggInterface::communicator::Comm_t::comm_nmsg */
       YGG_API int comm_nmsg(DIRECTION dir=NONE) const override;
@@ -439,9 +376,6 @@ namespace YggInterface {
       /** \copydoc YggInterface::utils::LogBase::logClass */
       YGG_API std::string logClass() const override;
       
-      using Comm_t::send;
-      using Comm_t::recv;
-
       /**
        * @brief Close the thread
        */

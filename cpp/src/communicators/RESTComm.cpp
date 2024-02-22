@@ -151,15 +151,7 @@ int RESTConnection::send(utils::Header&) { return -1; }
 long RESTConnection::recv(utils::Header&) { return -1; }
 #endif // RESTINSTALLED
 
-RESTComm::RESTComm(const std::string name,
-		   const utils::Address& address,
-		   const DIRECTION direction, FLAG_TYPE flgs,
-		   const COMM_TYPE commtype) :
-  CommBase(name, address, direction, commtype, flgs) {
-  ADD_CONSTRUCTOR_OPEN(RESTComm)
-}
-
-ADD_CONSTRUCTORS_DEF(RESTComm)
+COMM_CONSTRUCTOR_CORE_DEF(RESTComm, 0)
 
 void RESTComm::_open(bool call_base) {
   BEFORE_OPEN_DEF;

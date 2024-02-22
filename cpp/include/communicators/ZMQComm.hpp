@@ -251,30 +251,13 @@ public:
  */
 class ZMQComm : public CommBase<ZMQSocket> {
 public:
-    /**
-     * @brief Constructor
-     * @param[in] name The name of the communicator
-     * @param[in] address The address to associate with the communicator,
-     *   if address is empty then an address will be created.
-     * @param[in] direction Enumerated direction for communicator
-     * @param[in] flgs Bitwise flags describing the communicator
-     * @param[in] type THe communicator type
-     * @see utils::Address
-     */
-    YGG_API explicit ZMQComm(const std::string& name,
-			     const utils::Address& address,
-			     const DIRECTION direction = NONE,
-			     FLAG_TYPE flgs = 0, const COMM_TYPE type = ZMQ_COMM);
-    ADD_CONSTRUCTORS(ZMQ)
+    COMM_CONSTRUCTOR_CORE_DEC(ZMQComm, ZMQ_COMM, ZMQ_INSTALLED_FLAG)
 
 #ifdef ZMQINSTALLED
 
     /** \copydoc YggInterface::communicator::Comm_t::comm_nmsg */
     YGG_API int comm_nmsg(DIRECTION dir=NONE) const override;
   
-    using Comm_t::send;
-    using Comm_t::recv;
-
 protected:
     /** \copydoc YggInterface::communicator::CommBase::send_single */
     YGG_API int send_single(utils::Header& msg) override;

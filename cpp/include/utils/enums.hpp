@@ -91,10 +91,11 @@ enum COMM_FLAG
   COMM_FLAG_ASYNC_WRAPPED   = 0x00080000LL, //!< Comm is wrapped by an asynchronous comm
   COMM_FLAG_SET_OPP_ENV     = 0x00100000LL, //!< Set environment variables for opposite communicator
   COMM_FLAG_WRAPPER         = 0x00200000LL, //!< Communicator is a wrapper
-  COMM_FLAG_FORK_CYCLE      = 0x00400000LL, //!< Forked communicator cycle
-  COMM_FLAG_FORK_BROADCAST  = 0x00800000LL, //!< Forked communicator broadcast
-  COMM_FLAG_FORK_COMPOSITE  = 0x01000000LL, //!< Forked communicator composite
-  COMM_FLAG_FORK_TINE       = 0x02000000LL, //!< Forked communicator tine.
+  COMM_FLAG_FORK            = 0x00400000LL, //!< Forked communicator
+  COMM_FLAG_FORK_CYCLE      = 0x00800000LL, //!< Forked communicator cycle
+  COMM_FLAG_FORK_BROADCAST  = 0x01000000LL, //!< Forked communicator broadcast
+  COMM_FLAG_FORK_COMPOSITE  = 0x02000000LL, //!< Forked communicator composite
+  COMM_FLAG_FORK_TINE       = 0x04000000LL, //!< Forked communicator tine.
   // Type specific flags
   // File flags
   FILE_FLAG_APPEND          = 0x0000100000000000LL, //!< Append sent messages to the end of the file

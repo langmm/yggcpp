@@ -3,14 +3,7 @@
 using namespace YggInterface::communicator;
 using namespace YggInterface::utils;
 
-IPCComm::IPCComm(const std::string& name, const Address &address,
-		 DIRECTION direction, FLAG_TYPE flgs,
-		 const COMM_TYPE type) :
-  CommBase(name, address, direction, type, flgs) {
-  ADD_CONSTRUCTOR_OPEN(IPCComm)
-}
-
-ADD_CONSTRUCTORS_DEF(IPCComm)
+COMM_CONSTRUCTOR_CORE_DEF(IPCComm, 0)
 
 #ifdef IPCINSTALLED
 

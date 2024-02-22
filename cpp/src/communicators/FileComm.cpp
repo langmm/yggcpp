@@ -4,15 +4,10 @@
 using namespace YggInterface::communicator;
 using namespace YggInterface::utils;
 
-FileComm::FileComm(const std::string name, const utils::Address &address,
-		   DIRECTION direction, FLAG_TYPE flgs,
-		   const COMM_TYPE type) :
-  CommBase(name, address, direction, type, flgs),
-  mode(std::fstream::in | std::fstream::out), mutex(name) {
-  ADD_CONSTRUCTOR_OPEN(FileComm)
-}
-
-ADD_CONSTRUCTORS_DEF(FileComm)
+COMM_CONSTRUCTOR_CORE_DEF_PARAM(FileComm, 0,
+				mode(std::fstream::in |
+				     std::fstream::out),
+				mutex(name))
 
 void FileComm::_open(bool call_base) {
   BEFORE_OPEN_DEF;

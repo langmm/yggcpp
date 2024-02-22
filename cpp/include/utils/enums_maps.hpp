@@ -76,6 +76,7 @@ namespace YggInterface {
       {COMM_FLAG_ASYNC_WRAPPED       , "ASYNC_WRAPPED"       },
       {COMM_FLAG_SET_OPP_ENV         , "SET_OPP_ENV"         },
       {COMM_FLAG_WRAPPER             , "WRAPPER"             },
+      {COMM_FLAG_FORK                , "FORK"                },
       {COMM_FLAG_FORK_CYCLE          , "FORK_CYCLE"          },
       {COMM_FLAG_FORK_BROADCAST      , "FORK_BROADCAST"      },
       {COMM_FLAG_FORK_COMPOSITE      , "FORK_COMPOSITE"      },

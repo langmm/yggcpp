@@ -3,15 +3,7 @@
 using namespace YggInterface::communicator;
 using namespace YggInterface::utils;
 
-BufferComm::BufferComm(const std::string name,
-		       const utils::Address &address,
-		       DIRECTION direction, FLAG_TYPE flgs,
-		       const COMM_TYPE type) :
-  CommBase(name, address, direction, type, flgs), memory(NULL) {
-  ADD_CONSTRUCTOR_OPEN(BufferComm)
-}
-
-ADD_CONSTRUCTORS_DEF(BufferComm)
+COMM_CONSTRUCTOR_CORE_DEF_PARAM(BufferComm, 0, memory(NULL))
 
 void BufferComm::_open(bool call_base) {
   BEFORE_OPEN_DEF;

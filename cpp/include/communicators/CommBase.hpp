@@ -52,7 +52,90 @@ const FLAG_TYPE COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
 #define UNINSTALLED_ERROR(name)					\
   utils::YggLogThrowError("Compiler flag '" #name "INSTALLED' not defined so " #name " bindings are disabled")
 
-#define ADD_DESTRUCTOR_API(cls, base, api)				\
+
+#define BASE_PARAM_DOCS_NAME				\
+  /** @param[in] name The name for the communicator, if empty one will be generated */
+#define BASE_PARAM_DOCS_ADDR				\
+  /** @param[in] address The address for the communicator, if empty one will be generated */
+#define BASE_PARAM_DOCS_SUPP				\
+  /** @param[in] supp Supplementary communicator parameters */
+#define BASE_PARAM_DOCS_FLGS				\
+  /** @param[in] flags Bitwise flags describing the communicator */
+#define BASE_PARAM_DOCS_TYPE				\
+  /** @param[in] type The enumerated type of communicator to create */
+#define BASE_PARAM_DOCS_BASE						\
+  /** @param[in] direction Enuerated direction for this instance */	\
+  BASE_PARAM_DOCS_FLGS							\
+  BASE_PARAM_DOCS_TYPE
+#define BASE_PARAM_DOCS				\
+  BASE_PARAM_DOCS_NAME				\
+  BASE_PARAM_DOCS_ADDR				\
+  BASE_PARAM_DOCS_BASE				\
+  BASE_PARAM_DOCS_SUPP
+#define BASE_PARAM_DEC_NAME const std::string& name
+#define BASE_PARAM_DEC_ADDR const utils::Address& address
+#define BASE_PARAM_DEC_FLGS_NODEF FLAG_TYPE flags
+#define BASE_PARAM_DEC_FLGS BASE_PARAM_DEC_FLGS_NODEF = 0
+#define BASE_PARAM_DEC_TYPE_NODEF(defT) const COMM_TYPE type
+#define BASE_PARAM_DEC_TYPE(defT) BASE_PARAM_DEC_TYPE_NODEF(defT) = defT
+#define BASE_PARAM_DEC_SUPP const SupplementCommArgs& supp = SupplementCommArgs()
+
+#define BASE_PARAM_DEC_BASE_NODEF(defT)				\
+  const DIRECTION direction,					\
+    BASE_PARAM_DEC_FLGS_NODEF,					\
+    BASE_PARAM_DEC_TYPE_NODEF(defT)
+#define BASE_PARAM_DEC_BASE(defT)				\
+  const DIRECTION direction = NONE,				\
+    BASE_PARAM_DEC_FLGS,					\
+    BASE_PARAM_DEC_TYPE(defT)
+#define BASE_PARAM_DEC(defT)			\
+  BASE_PARAM_DEC_NAME,				\
+    BASE_PARAM_DEC_ADDR,			\
+    BASE_PARAM_DEC_BASE(defT),			\
+    BASE_PARAM_DEC_SUPP
+#define BASE_PARAM_DEF_NAME const std::string& nme
+#define BASE_PARAM_DEF_ADDR const utils::Address& addr
+#define BASE_PARAM_DEF_FLGS FLAG_TYPE flgs
+#define BASE_PARAM_DEF_TYPE const COMM_TYPE type
+#define BASE_PARAM_DEF_SUPP const SupplementCommArgs& supp
+#define BASE_PARAM_DEF_BASE			\
+  const DIRECTION dirn,				\
+    BASE_PARAM_DEF_FLGS,			\
+    BASE_PARAM_DEF_TYPE
+#define BASE_PARAM_DEF				\
+  BASE_PARAM_DEF_NAME,				\
+    BASE_PARAM_DEF_ADDR,			\
+    BASE_PARAM_DEF_BASE,			\
+    BASE_PARAM_DEF_SUPP
+#define BASE_PARAM_ARG_BASE			\
+  dirn, flgs, type
+#define BASE_PARAM_ARG				\
+  nme, addr, BASE_PARAM_ARG_BASE, supp
+#define BASE_PARAM_ARG_FLAG(newflg)		\
+  nme, addr, dirn, flgs | newflg, type, supp
+
+#define SUPP_PARAM_DOCS							\
+  /** @param[in] ncomm Number of forked communicators (fork only) */	\
+  /** @param[in] reqtype Enumerated type of request comm (rpc only) */	\
+  /** @param[in] restype Enumerated type of response comm (rpc only) */	\
+  /** @param[in] reqflags Bitwise flags for request comm (rpc only) */	\
+  /** @param[in] resflags Bitwise flags for response comm (rpc only) */
+  
+#define SUPP_PARAM_DEC				\
+  size_t ncomm = 0,				\
+    const COMM_TYPE reqtype = DEFAULT_COMM,	\
+    const COMM_TYPE restype = DEFAULT_COMM,	\
+    FLAG_TYPE reqflags = 0,			\
+    FLAG_TYPE resflags = 0
+#define SUPP_PARAM_DEF					\
+  size_t ncomm,						\
+    const COMM_TYPE reqtype, const COMM_TYPE restype,	\
+    FLAG_TYPE reqflags, FLAG_TYPE resflags
+#define SUPP_PARAM_INIT				\
+  SupplementCommArgs(ncomm, reqtype, restype, reqflags, resflags)
+
+
+#define COMM_DESTRUCTOR_API(cls, base, api)				\
   public:								\
   protected:								\
   /** \copydoc YggInterface::communicator::Comm_t::_open */		\
@@ -66,9 +149,9 @@ public:									\
  api void close() override;						\
  /** @brief Destructor */						\
  api ~cls() override;
-#define ADD_DESTRUCTOR(cls, base)					\
-  ADD_DESTRUCTOR_API(cls, base, YGG_API)
-#define ADD_DESTRUCTOR_DEF(cls, base, tempT, temp)			\
+#define COMM_DESTRUCTOR_DEC(cls, base)					\
+  COMM_DESTRUCTOR_API(cls, base, YGG_API)
+#define COMM_DESTRUCTOR_DEF(cls, base, tempT, temp)			\
   tempT									\
   void cls temp::open() {						\
     log_debug() << #cls "::open: Started" << std::endl;			\
@@ -97,31 +180,44 @@ public:									\
   static bool isInstalled() { return flag; }				\
   /** \copydoc YggInterface::communicator::Comm_t::defaultCommType */	\
   static COMM_TYPE defaultCommType() { return typ; }			\
-  ADD_DESTRUCTOR(cls, CommBase)
-#define ADD_CONSTRUCTORS_BASE_NOLOG(cls, typ, flag)			\
+  COMM_DESTRUCTOR_DEC(cls, CommBase)
+#define COMM_CONSTRUCTOR_DEC(cls, typ, flag)				\
   /** @brief Constructor */						\
-  /** @param[in] nme Communicator name. If empty, one will be generated */ \
-  /** @param[in] dirn Enumerated communicator direction */		\
-  /** @param[in] flgs Bitwise communicator flags */			\
-  /** @param[in] type Enumerated communicator type */			\
-  YGG_API explicit cls(const std::string& nme,				\
-		       const DIRECTION dirn,				\
-		       FLAG_TYPE flgs = 0, const COMM_TYPE type = typ);	\
+  BASE_PARAM_DOCS_NAME							\
+  BASE_PARAM_DOCS_ADDR							\
+  BASE_PARAM_DOCS_BASE							\
+  BASE_PARAM_DOCS_SUPP							\
+  /** @see utils::Address */						\
+  YGG_API explicit cls(BASE_PARAM_DEC_NAME,				\
+		       BASE_PARAM_DEC_ADDR,				\
+		       BASE_PARAM_DEC_BASE_NODEF(typ),			\
+		       BASE_PARAM_DEF_SUPP);				\
   /** @brief Constructor */						\
-  /** @param[in] addr Communicator address. If empty, one will be generated */ \
-  /** @param[in] dirn Enumerated communicator direction */		\
-  /** @param[in] flgs Bitwise communicator flags */			\
-  /** @param[in] type Enumerated communicator type */			\
-  YGG_API explicit cls(utils::Address &addr,				\
-		       const DIRECTION dirn,				\
-		       FLAG_TYPE flgs = 0, const COMM_TYPE type = typ);	\
-  ADD_METHODS_BASE(cls, typ, flag)
-#define ADD_CONSTRUCTORS_BASE(cls, typ, flag)				\
-  ADD_CONSTRUCTORS_BASE_NOLOG(cls, typ, flag)				\
-  /** \copydoc YggInterface::utils::LogBase::logClass */		\
-  std::string logClass() const override { return #cls; }
-#define ADD_CONSTRUCTORS(T)			\
-  ADD_CONSTRUCTORS_BASE(T ## Comm, T ## _COMM, T ## _INSTALLED_FLAG)
+  BASE_PARAM_DOCS_NAME							\
+  BASE_PARAM_DOCS_ADDR							\
+  BASE_PARAM_DOCS_BASE							\
+  SUPP_PARAM_DOCS							\
+  YGG_API explicit cls(BASE_PARAM_DEC_NAME,				\
+		       BASE_PARAM_DEC_ADDR,				\
+		       BASE_PARAM_DEC_BASE(typ),			\
+		       SUPP_PARAM_DEC);					\
+  /** @brief Constructor */						\
+  BASE_PARAM_DOCS_NAME							\
+  BASE_PARAM_DOCS_BASE							\
+  SUPP_PARAM_DOCS							\
+  YGG_API explicit cls(BASE_PARAM_DEC_NAME,				\
+		       BASE_PARAM_DEC_BASE(typ),			\
+		       SUPP_PARAM_DEC);					\
+  /** @brief Constructor */						\
+  BASE_PARAM_DOCS_ADDR							\
+  BASE_PARAM_DOCS_BASE							\
+  SUPP_PARAM_DOCS							\
+  YGG_API explicit cls(BASE_PARAM_DEC_ADDR,				\
+		       BASE_PARAM_DEC_BASE(typ),			\
+		       SUPP_PARAM_DEC);					\
+  ADD_METHODS_BASE(cls, typ, flag);					\
+  using Comm_t::send;							\
+  using Comm_t::recv;
 
 #define ADD_CONSTRUCTOR_OPEN(cls)					\
   if (!(global_comm || (getFlags() & COMM_FLAG_DELAYED_OPEN))) {	\
@@ -150,72 +246,141 @@ public:									\
   BEFORE_CLOSE(CommBase)
 #define AFTER_CLOSE_DEF						\
   AFTER_CLOSE(CommBase)
-#define ADD_CONSTRUCTORS_DEF(cls)				\
-  cls::cls(const std::string& nme,				\
-	   const DIRECTION dirn,				\
-	   FLAG_TYPE flgs, const COMM_TYPE type) :			\
-    cls(nme, utils::blankAddress, dirn, flgs, type) {}		\
-  cls::cls(utils::Address &addr,				\
-	   const DIRECTION dirn,				\
-	   FLAG_TYPE flgs, const COMM_TYPE type) :			\
-    cls("", addr, dirn, flgs, type) {}				\
-  ADD_DESTRUCTOR_DEF(cls, CommBase, , )
-#define ADD_CONSTRUCTORS_RPC(cls, defT)					\
+#define COMM_CONSTRUCTOR_DEF(cls)				\
+  cls::cls(BASE_PARAM_DEF_NAME,					\
+	   BASE_PARAM_DEF_BASE,					\
+	   SUPP_PARAM_DEF) :					\
+    cls(nme, utils::blankAddress, BASE_PARAM_ARG_BASE,		\
+	SUPP_PARAM_INIT) {}					\
+  cls::cls(BASE_PARAM_DEF_ADDR,					\
+	   BASE_PARAM_DEF_BASE,					\
+	   SUPP_PARAM_DEF) :					\
+    cls("", addr, BASE_PARAM_ARG_BASE,				\
+	SUPP_PARAM_INIT) {}					\
+  cls::cls(BASE_PARAM_DEF_NAME,					\
+	   BASE_PARAM_DEF_ADDR,					\
+	   BASE_PARAM_DEF_BASE,					\
+	   SUPP_PARAM_DEF) :					\
+    cls(nme, addr, BASE_PARAM_ARG_BASE, SUPP_PARAM_INIT) {}	\
+  COMM_DESTRUCTOR_DEF(cls, CommBase, , )
+#define COMM_DELETE_COPY(cls)				\
+  cls(const cls&) = delete;				\
+  cls& operator=(const cls&) = delete
+#define COMM_CONSTRUCTOR_CORE_DEC(cls, typ, install_flag)	\
+  COMM_CONSTRUCTOR_DEC(cls, typ, install_flag);			\
+  /** \copydoc YggInterface::utils::LogBase::logClass */	\
+  std::string logClass() const override { return #cls; }
+#define COMM_CONSTRUCTOR_CORE_DEC_NOLOG(cls, typ, install_flag)	\
+  COMM_CONSTRUCTOR_DEC(cls, typ, install_flag)
+#define COMM_CONSTRUCTOR_CORE_DEF(cls, flg)		\
+  cls::cls(BASE_PARAM_DEF_NAME,				\
+	   BASE_PARAM_DEF_ADDR,				\
+	   BASE_PARAM_DEF_BASE,				\
+	   BASE_PARAM_DEF_SUPP) :			\
+    CommBase(BASE_PARAM_ARG_FLAG(flg)) {		\
+    ADD_CONSTRUCTOR_OPEN(cls);				\
+  }							\
+  COMM_CONSTRUCTOR_DEF(cls);
+#define COMM_CONSTRUCTOR_CORE_DEF_PARAM(cls, flg, ...)		\
+  cls::cls(BASE_PARAM_DEF_NAME,					\
+	   BASE_PARAM_DEF_ADDR,					\
+	   BASE_PARAM_DEF_BASE,					\
+	   BASE_PARAM_DEF_SUPP) :				\
+    CommBase(BASE_PARAM_ARG_FLAG(flg)), __VA_ARGS__ {		\
+      ADD_CONSTRUCTOR_OPEN(cls);				\
+    }								\
+    COMM_CONSTRUCTOR_DEF(cls)
+#define COMM_CONSTRUCTOR_RPC_DEC(cls, defT)				\
   /** @brief Constructor */						\
-  /** @param[in] nme Communicator name. If empty, one will be generated */ \
-  /** @param[in] flgs Bitwise communicator flags */			\
-  /** @param[in] type Enumerated communicator type */			\
-  /** @param[in] ncomm Number of forked communicators (fork only) */	\
-  /** @param[in] reqtype Enumerated type of request comm (rpc only) */	\
-  /** @param[in] restype Enumerated type of response comm (rpc only) */	\
-  /** @param[in] reqflags Bitwise flags for request comm (rpc only) */	\
-  /** @param[in] resflags Bitwise flags for response comm (rpc only) */	\
-  YGG_API explicit cls(const std::string& nme,				\
-		       FLAG_TYPE flgs = 0, const COMM_TYPE type = defT,	\
-		       size_t ncomm = 0,				\
-		       const COMM_TYPE reqtype = DEFAULT_COMM,		\
-		       const COMM_TYPE restype = DEFAULT_COMM,		\
-		       FLAG_TYPE reqflags = 0, FLAG_TYPE resflags = 0);	\
-  /** @brief Constructor */						\
-  /** @param[in] addr Communicator address. If empty, one will be generated */ \
-  /** @param[in] flgs Bitwise communicator flags */			\
-  /** @param[in] type Enumerated communicator type */			\
-  /** @param[in] ncomm Number of forked communicators (fork only) */	\
-  /** @param[in] reqtype Enumerated type of request comm (rpc only) */	\
-  /** @param[in] restype Enumerated type of response comm (rpc only) */	\
-  /** @param[in] reqflags Bitwise flags for request comm (rpc only) */	\
-  /** @param[in] resflags Bitwise flags for response comm (rpc only) */	\
+  BASE_PARAM_DOCS_NAME							\
+  BASE_PARAM_DOCS_ADDR							\
+  BASE_PARAM_DOCS_FLGS							\
+  BASE_PARAM_DOCS_TYPE							\
+  BASE_PARAM_DOCS_SUPP							\
   /** @see utils::Address */						\
-  YGG_API explicit cls(utils::Address &addr,				\
-		       FLAG_TYPE flgs = 0, const COMM_TYPE type = defT,	\
-		       size_t ncomm = 0,				\
-		       const COMM_TYPE reqtype = DEFAULT_COMM,		\
-		       const COMM_TYPE restype = DEFAULT_COMM,		\
-		       FLAG_TYPE reqflags = 0, FLAG_TYPE resflags = 0);	\
-  ADD_DESTRUCTOR(cls, RPCComm)
-#define ADD_CONSTRUCTORS_RPC_DEF(cls)			\
-  cls::cls(const std::string& nme,			\
-	   FLAG_TYPE flgs, const COMM_TYPE type,		\
-	   size_t ncomm,				\
-	   const COMM_TYPE reqtype,			\
-	   const COMM_TYPE restype,			\
-	   FLAG_TYPE reqflags, FLAG_TYPE resflags) :	\
-    cls(nme, utils::blankAddress, flgs, type, ncomm,	\
-	reqtype, restype, reqflags, resflags) {}	\
-  cls::cls(utils::Address &addr,			\
-	   FLAG_TYPE flgs, const COMM_TYPE type,		\
-	   size_t ncomm,				\
-	   const COMM_TYPE reqtype,			\
-	   const COMM_TYPE restype,			\
-	   FLAG_TYPE reqflags, FLAG_TYPE resflags) :	\
-    cls("", addr, flgs, type, ncomm,			\
-	reqtype, restype, reqflags, resflags) {}	\
-  ADD_DESTRUCTOR_DEF(cls, RPCComm, , )			\
+  YGG_API explicit cls(BASE_PARAM_DEC_NAME,				\
+		       BASE_PARAM_DEC_ADDR,				\
+		       BASE_PARAM_DEC_FLGS_NODEF,			\
+		       BASE_PARAM_DEC_TYPE_NODEF(defT),			\
+		       BASE_PARAM_DEF_SUPP);				\
+  /** @brief Constructor */						\
+  BASE_PARAM_DOCS_NAME							\
+  BASE_PARAM_DOCS_ADDR							\
+  BASE_PARAM_DOCS_FLGS							\
+  BASE_PARAM_DOCS_TYPE							\
+  SUPP_PARAM_DOCS							\
+  /** @see utils::Address */						\
+  YGG_API explicit cls(BASE_PARAM_DEC_NAME,				\
+		       BASE_PARAM_DEC_ADDR,				\
+		       BASE_PARAM_DEC_FLGS,				\
+		       BASE_PARAM_DEC_TYPE(defT),			\
+		       SUPP_PARAM_DEC);					\
+  /** @brief Constructor */						\
+  BASE_PARAM_DOCS_NAME							\
+  BASE_PARAM_DOCS_FLGS							\
+  BASE_PARAM_DOCS_TYPE							\
+  SUPP_PARAM_DOCS							\
+  YGG_API explicit cls(BASE_PARAM_DEC_NAME,				\
+		       BASE_PARAM_DEC_FLGS,				\
+		       BASE_PARAM_DEC_TYPE(defT),			\
+		       SUPP_PARAM_DEC);					\
+  /** @brief Constructor */						\
+  BASE_PARAM_DOCS_ADDR							\
+  BASE_PARAM_DOCS_FLGS							\
+  BASE_PARAM_DOCS_TYPE							\
+  SUPP_PARAM_DOCS							\
+  /** @see utils::Address */						\
+  YGG_API explicit cls(BASE_PARAM_DEC_ADDR,				\
+		       BASE_PARAM_DEC_FLGS,				\
+		       BASE_PARAM_DEC_TYPE(defT),			\
+		       SUPP_PARAM_DEC);					\
+  COMM_DESTRUCTOR_DEC(cls, RPCComm)					\
+  /** \copydoc YggInterface::communicator::Comm_t::logClass */		\
+  YGG_API std::string logClass() const override;			\
+  using RPCComm::send;							\
+  using RPCComm::recv;
+#define COMM_CONSTRUCTOR_RPC_DEF(cls, rpcflg, reqdir, resdir)	\
+  cls::cls(BASE_PARAM_DEF_NAME,					\
+	   BASE_PARAM_DEF_ADDR,					\
+	   BASE_PARAM_DEF_FLGS,					\
+	   BASE_PARAM_DEF_TYPE,					\
+	   BASE_PARAM_DEF_SUPP) :				\
+    RPCComm(nme, addr,						\
+	    flgs | rpcflg | COMM_FLAG_ALWAYS_SEND_HEADER,	\
+	    reqdir, resdir, type, supp) {			\
+    /* Called to create temp comm for send/recv */		\
+    if (!((flags & COMM_FLAG_CLIENT) &&				\
+	  name.empty() && address.valid())) {			\
+      ADD_CONSTRUCTOR_OPEN(cls);				\
+    }								\
+  }								\
+  cls::cls(BASE_PARAM_DEF_NAME,				\
+	   BASE_PARAM_DEF_ADDR,				\
+	   BASE_PARAM_DEF_FLGS,				\
+	   BASE_PARAM_DEF_TYPE,				\
+	   SUPP_PARAM_DEF) :				\
+    cls(nme, addr, flgs, type, SUPP_PARAM_INIT) {}	\
+  cls::cls(BASE_PARAM_DEF_NAME,				\
+	   BASE_PARAM_DEF_FLGS,				\
+	   BASE_PARAM_DEF_TYPE,				\
+	   SUPP_PARAM_DEF) :				\
+    cls(nme, utils::blankAddress, flgs, type,		\
+	SUPP_PARAM_INIT) {}				\
+  cls::cls(BASE_PARAM_DEF_ADDR,				\
+	   BASE_PARAM_DEF_FLGS,				\
+	   BASE_PARAM_DEF_TYPE,				\
+	   SUPP_PARAM_DEF) :				\
+    cls("", addr, flgs, type, SUPP_PARAM_INIT) {}	\
+  COMM_DESTRUCTOR_DEF(cls, RPCComm, , )			\
   void cls::_close(bool call_base) {			\
     if (call_base) {					\
       RPCComm::_close(true);				\
     }							\
+  }							\
+  std::string cls::logClass() const {			\
+    return #cls;					\
   }
+
 #define WORKER_METHOD_DECS(cls)						\
   /** \copydoc YggInterface::communicator::Comm_t::create_worker */	\
   YGG_API Comm_t* create_worker(utils::Address& address,		\
@@ -325,6 +490,22 @@ class RequestList;
 class ForkTines;
 
   // typedef struct comm_t comm_t;
+
+  struct SupplementCommArgs {
+    SupplementCommArgs(const size_t ncomm=0,
+		       const COMM_TYPE request_commtype=DEFAULT_COMM,
+		       const COMM_TYPE response_commtype=DEFAULT_COMM,
+		       const FLAG_TYPE request_flags=0,
+		       const FLAG_TYPE response_flags=0);
+    SupplementCommArgs(const SupplementCommArgs& rhs);
+    ~SupplementCommArgs();
+    SupplementCommArgs& operator=(const SupplementCommArgs& rhs);
+    size_t ncomm;
+    COMM_TYPE request_commtype;
+    COMM_TYPE response_commtype;
+    FLAG_TYPE request_flags;
+    FLAG_TYPE response_flags;
+  };
 
 
 /**
@@ -1295,7 +1476,7 @@ protected:
     /**
      * @brief Initialize this instance before it has been opened
      */
-    void _before_open();
+    void _before_open(const SupplementCommArgs& supp=SupplementCommArgs());
       
     /**
      * @brief Initialize this instance after it has been opened
@@ -1568,27 +1749,31 @@ protected:
      * @param[in] name The name of communicator
      * @param[in] address The address to associate with this communicator.
      * @param[in] direction Whether this instance is a sender or receiver
-     * @param[in] t Enumerated communicator type
      * @param[in] flgs Initial bitwise flags
+     * @param[in] t Enumerated communicator type
+     * @param[in] supp Supplementary comm parameters
      * @see utils::Address
      */
     YGG_API explicit Comm_t(const std::string &name,
 			    const utils::Address &address,
 			    const DIRECTION direction = NONE,
+			    FLAG_TYPE flgs = 0,
 			    const COMM_TYPE &t = NULL_COMM,
-			    FLAG_TYPE flgs = 0);
+			    const SupplementCommArgs& supp=SupplementCommArgs());
 
     /**
      * @brief Constructor
      * @param[in] name The name of communicator
      * @param[in] dir Whether this instance is a sender or receiver
-     * @param[in] t Enumerated communicator type
      * @param[in] flgs Initial bitwise flags
+     * @param[in] t Enumerated communicator type
+     * @param[in] supp Supplementary comm parameters
      */
     YGG_API explicit Comm_t(const std::string& name,
 			    const DIRECTION dir = NONE,
+			    FLAG_TYPE flgs = 0,
 			    const COMM_TYPE &t = NULL_COMM,
-			    FLAG_TYPE flgs = 0);
+			    const SupplementCommArgs& supp=SupplementCommArgs());
     /**
      * @brief Checks the size of the message to see if it exceeds the maximum allowable size as define by YGG_MSG_MAX
      * @param[in] len The length of the message to check
@@ -1619,9 +1804,10 @@ protected:
     /*!
      * @brief Create a global communicator based on environment
      *   variables: YGG_SERVER_INPUT, YGG_SERVER_OUTPUT, YGG_MODEL_NAME
+     * @param[in] supp Supplementary parameters for the communicator
      * @return true on success
      */
-    bool create_global_scope_comm();
+  bool create_global_scope_comm(const SupplementCommArgs& supp=SupplementCommArgs());
     
 public:
 
@@ -1667,23 +1853,16 @@ public:
  * @param[in] dir The direction for the communicator
  * @param[in] type The enumerated type of communicator to create
  * @param[in] name The name of the communicator
- * @param[in] address The initial address of the communicator.
+ * @param[in] address The initial address of the communicator
  * @param[in] flags Bitwise flags describing the communicator
- * @param[in] ncomm Number of communicators to create.
- * @param[in] request_commtype Communicator type for RPC request comm.
- * @param[in] response_commtype Communicator type for RPC response comm.
- * @param[in] request_flags Communicator flags for RPC request comm.
- * @param[in] response_flags Communicator flags for RPC response comm.
+ * @param[in] supp Supplementary parameters to specific communicator types
  * @return The new communicator instance
  */
 YGG_API Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type,
-			   const std::string &name="",
-			   char* address=nullptr, FLAG_TYPE flags=0,
-			   size_t ncomm=0,
-			   const COMM_TYPE request_commtype=DEFAULT_COMM,
-			   const COMM_TYPE response_commtype=DEFAULT_COMM,
-			   FLAG_TYPE request_flags=0,
-			   FLAG_TYPE response_flags=0);
+			   const std::string &name,
+			   const utils::Address& address,
+			   FLAG_TYPE flags,
+			   const SupplementCommArgs& supp);
 /**
  * @brief Creates a new communicator of the specified type
  * @param[in] dir The direction for the communicator
@@ -1691,11 +1870,23 @@ YGG_API Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type,
  * @param[in] name The name of the communicator
  * @param[in] address The initial address of the communicator.
  * @param[in] flags Bitwise flags describing the communicator
- * @param[in] ncomm Number of communicators to create.
- * @param[in] request_commtype Communicator type for RPC request comm.
- * @param[in] response_commtype Communicator type for RPC response comm.
- * @param[in] request_flags Communicator flags for RPC request comm.
- * @param[in] response_flags Communicator flags for RPC response comm.
+ */
+SUPP_PARAM_DOCS
+/** @return The new communicator instance */
+YGG_API Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type,
+			   const std::string &name="",
+			   char* address=nullptr, FLAG_TYPE flags=0,
+			   SUPP_PARAM_DEC);
+/**
+ * @brief Creates a new communicator of the specified type
+ * @param[in] dir The direction for the communicator
+ * @param[in] type The enumerated type of communicator to create
+ * @param[in] name The name of the communicator
+ * @param[in] address The initial address of the communicator.
+ * @param[in] flags Bitwise flags describing the communicator
+ */
+SUPP_PARAM_DOCS
+/**
  * @return The new communicator instance
  * @see utils::Address
  */
@@ -1703,31 +1894,21 @@ YGG_API Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type,
 			   const std::string &name,
 			   const utils::Address& address,
 			   FLAG_TYPE flags=0,
-			   size_t ncomm=0,
-			   const COMM_TYPE request_commtype=DEFAULT_COMM,
-			   const COMM_TYPE response_commtype=DEFAULT_COMM,
-			   FLAG_TYPE request_flags=0,
-			   FLAG_TYPE response_flags=0);
+			   SUPP_PARAM_DEC);
 /**
  * @brief Creates a new communicator of the specified type
  * @param[in] dir The direction for the communicator
  * @param[in] type The enumerated type of communicator to create
  * @param[in] name The name of the communicator
  * @param[in] flags Bitwise flags describing the communicator
- * @param[in] ncomm Number of communicators to create.
- * @param[in] request_commtype Communicator type for RPC request comm.
- * @param[in] response_commtype Communicator type for RPC response comm.
- * @param[in] request_flags Communicator flags for RPC request comm.
- * @param[in] response_flags Communicator flags for RPC response comm.
+ */
+SUPP_PARAM_DOCS
+/**
  * @return The new communicator instance
  */
 YGG_API Comm_t* new_Comm_t(const DIRECTION dir, const COMM_TYPE type,
 			   const std::string &name, FLAG_TYPE flags=0,
-			   size_t ncomm=0,
-			   const COMM_TYPE request_commtype=DEFAULT_COMM,
-			   const COMM_TYPE response_commtype=DEFAULT_COMM,
-			   FLAG_TYPE request_flags=0,
-			   FLAG_TYPE response_flags=0);
+			   SUPP_PARAM_DEC);
   
 /**
  * @brief Determine if a communicator type is installed.
@@ -1753,7 +1934,7 @@ public:
       log_error() << "Comm_nmsg of base class called, must be overridden" << std::endl;
       return -1;
     }
-    ADD_DESTRUCTOR_API(CommBase, Comm_t, );
+    COMM_DESTRUCTOR_API(CommBase, Comm_t, );
 
     /*! \copydoc YggInterface::communicator::Comm_t::is_closed */
     bool is_closed() const override;
@@ -1795,24 +1976,31 @@ protected:
      * @param[in] name The name of the communicator
      * @param[in] address The initial address for the communicator
      * @param[in] direction The enumerated direction of the communicator
-     * @param[in] t The enumerated type of the communicator
      * @param[in] flags Bitwise flags describing the communicator
+     * @param[in] t The enumerated type of the communicator
+     * @param[in] supp Supplmentary comm parameters
      * @see utils::Address
      */
-    explicit CommBase(const std::string &name, const utils::Address& address,
+    explicit CommBase(const std::string &name,
+		      const utils::Address& address,
 		      const DIRECTION direction = NONE,
+		      FLAG_TYPE flags = 0,
 		      const COMM_TYPE &t = NULL_COMM,
-		      FLAG_TYPE flags = 0);
+		      const SupplementCommArgs& supp = SupplementCommArgs());
 
-    /*!
+    /**
      * @brief Constructor
      * @param[in] name The name of the communicator
      * @param[in] dir The enumerated direction of the communicator
-     * @param[in] t The enumerated type of the communicator
      * @param[in] flgs Bitwise flags describing the communicator
+     * @param[in] t The enumerated type of the communicator
+     * @param[in] supp Supplmentary comm parameters
      */
-    explicit CommBase(const std::string &name, const DIRECTION dir = NONE,
-                      const COMM_TYPE &t = NULL_COMM, FLAG_TYPE flgs = 0);
+    explicit CommBase(const std::string &name,
+		      const DIRECTION dir = NONE,
+		      FLAG_TYPE flgs = 0,
+                      const COMM_TYPE &t = NULL_COMM,
+		      const SupplementCommArgs& supp = SupplementCommArgs());
 
     /*!
      * @brief Create a worker using the inputs
@@ -1857,17 +2045,24 @@ public:
 };
 
 template<typename H>
-CommBase<H>::CommBase(const std::string &nme, const utils::Address &addr,
-		      const DIRECTION dirn, const COMM_TYPE &t, FLAG_TYPE flgs) :
-  Comm_t(nme, addr, dirn, t, flgs), handle(nullptr) {
+CommBase<H>::CommBase(const std::string &nme,
+		      const utils::Address &addr,
+		      const DIRECTION dirn,
+		      FLAG_TYPE flgs,
+		      const COMM_TYPE &t,
+		      const SupplementCommArgs& supp) :
+  Comm_t(nme, addr, dirn, flgs, t, supp), handle(nullptr) {
   if (!(getFlags() & COMM_FLAG_DELAYED_OPEN))
     _open(false);
 }
 
 template<typename H>
-CommBase<H>::CommBase(const std::string &nme, const DIRECTION dirn,
-                      const COMM_TYPE &t, FLAG_TYPE flgs) :
-  CommBase(nme, utils::blankAddress, dirn, t, flgs) {}
+CommBase<H>::CommBase(const std::string &nme,
+		      const DIRECTION dirn,
+		      FLAG_TYPE flgs,
+                      const COMM_TYPE &t,
+		      const SupplementCommArgs& supp) :
+  CommBase(nme, utils::blankAddress, dirn, flgs, t, supp) {}
 
 template<typename H>
 bool CommBase<H>::is_closed() const {
@@ -1899,7 +2094,7 @@ void CommBase<H>::_close(bool call_base) {
   AFTER_CLOSE(Comm_t);
 }
 
-ADD_DESTRUCTOR_DEF(CommBase, Comm_t, template<typename H>, <H>)
+COMM_DESTRUCTOR_DEF(CommBase, Comm_t, template<typename H>, <H>)
 
 }
 }

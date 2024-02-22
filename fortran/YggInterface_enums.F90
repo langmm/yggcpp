@@ -55,10 +55,11 @@
   integer(kind=int64), parameter :: COMM_FLAG_ASYNC_WRAPPED = 524288_int64
   integer(kind=int64), parameter :: COMM_FLAG_SET_OPP_ENV = 1048576_int64
   integer(kind=int64), parameter :: COMM_FLAG_WRAPPER = 2097152_int64
-  integer(kind=int64), parameter :: COMM_FLAG_FORK_CYCLE = 4194304_int64
-  integer(kind=int64), parameter :: COMM_FLAG_FORK_BROADCAST = 8388608_int64
-  integer(kind=int64), parameter :: COMM_FLAG_FORK_COMPOSITE = 16777216_int64
-  integer(kind=int64), parameter :: COMM_FLAG_FORK_TINE = 33554432_int64
+  integer(kind=int64), parameter :: COMM_FLAG_FORK = 4194304_int64
+  integer(kind=int64), parameter :: COMM_FLAG_FORK_CYCLE = 8388608_int64
+  integer(kind=int64), parameter :: COMM_FLAG_FORK_BROADCAST = 16777216_int64
+  integer(kind=int64), parameter :: COMM_FLAG_FORK_COMPOSITE = 33554432_int64
+  integer(kind=int64), parameter :: COMM_FLAG_FORK_TINE = 67108864_int64
   integer(kind=int64), parameter :: FILE_FLAG_APPEND = 17592186044416_int64
   integer(kind=int64), parameter :: FILE_FLAG_BINARY = 35184372088832_int64
   integer(kind=int64), parameter :: FILE_FLAG_READLINE = 70368744177664_int64

@@ -19,25 +19,10 @@ namespace YggInterface {
      */
     class FileComm : public CommBase<std::fstream> {
     public:
-      /**
-       * Constructor
-       * @param[in] name The name for the communicator, if empty one will be generated
-       * @param[in] address The address for the communicator, if empty one will be generated
-       * @param[in] direction Enuerated direction for this instance
-       * @param[in] flgs Bitwise flags describing the communicator
-       * @param[in] type The enumerated type of communicator to create
-       */
-      YGG_API explicit FileComm(const std::string name,
-				const utils::Address &address,
-				const DIRECTION direction = NONE,
-				FLAG_TYPE flgs = 0,
-				const COMM_TYPE type = FILE_COMM);
-      ADD_CONSTRUCTORS_BASE(FileComm, FILE_COMM, true)
+      COMM_CONSTRUCTOR_CORE_DEC(FileComm, FILE_COMM, true)
 
       /** \copydoc YggInterface::communicator::Comm_t::comm_nmsg */
       YGG_API int comm_nmsg(DIRECTION dir=NONE) const override;
-      using Comm_t::send;
-      using Comm_t::recv;
       
     protected:
       /*! @brief Flush and reload the file */

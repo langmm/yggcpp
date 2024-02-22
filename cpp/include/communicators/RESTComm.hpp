@@ -86,28 +86,11 @@ namespace YggInterface {
      */
     class RESTComm : public CommBase<RESTConnection> {
     public:
-
-      /**
-       * Constructor
-       * @param[in] name The name for the communicator, if empty one will be generated
-       * @param[in] address The address for the communicator, if empty one will be generated
-       * @param[in] direction Enuerated direction for this instance
-       * @param[in] flgs Bitwise flags describing the communicator
-       * @param[in] commtype The enumerated type of communicator to create
-       */
-      YGG_API explicit RESTComm(const std::string name,
-				const utils::Address& address,
-				const DIRECTION direction=NONE,
-				FLAG_TYPE flgs=0,
-				const COMM_TYPE commtype=REST_COMM);
-      ADD_CONSTRUCTORS(REST)
+      COMM_CONSTRUCTOR_CORE_DEC(RESTComm, REST_COMM, REST_INSTALLED_FLAG)
 	
       /** \copydoc Comm_t::comm_nmsg */
       YGG_API int comm_nmsg(DIRECTION dir=NONE) const override;
       
-      using Comm_t::send;
-      using Comm_t::recv;
-
     protected:
       /** \copydoc Comm_t::send_single */
       YGG_API int send_single(utils::Header& header) override;

@@ -6,25 +6,19 @@ using namespace YggInterface::utils;
 
 RPCComm::RPCComm(const std::string &name, const utils::Address& address,
 		 int flgs, DIRECTION dir, DIRECTION req_dir,
-		 const COMM_TYPE type, size_t ncomm,
-		 const COMM_TYPE reqtype, const COMM_TYPE restype,
-		 int reqflags, int resflags) :
-  WrapComm(name, address, dir, reqflags | flgs, type, ncomm, reqtype),
-  requests(req_dir, resflags | (flgs & (COMM_FLAG_ALLOW_MULTIPLE_COMMS |
-					COMM_FLAG_ASYNC_WRAPPED)),
-	   restype, logInst()) {
+		 const COMM_TYPE type,
+		 const SupplementCommArgs& supp) :
+  WrapComm(name, address, dir, supp.request_flags | flgs, type,
+	   supp.request_commtype, supp),
+  requests(req_dir,
+	   supp.response_flags |
+	   (flgs & (COMM_FLAG_ALLOW_MULTIPLE_COMMS |
+		    COMM_FLAG_ASYNC_WRAPPED)),
+	   supp.response_commtype, logInst()) {
   ADD_CONSTRUCTOR_OPEN(RPCComm);
 }
 
-ADD_DESTRUCTOR_DEF(RPCComm, WrapComm, , )
-
-RPCComm::RPCComm(const std::string &name,
-                 int flgs, DIRECTION dir, DIRECTION req_dir,
-                 const COMM_TYPE type, size_t ncomm,
-		 const COMM_TYPE reqtype, const COMM_TYPE restype,
-		 int reqflags, int resflags) :
-  RPCComm(name, utils::blankAddress, flgs, dir, req_dir, type, ncomm,
-	  reqtype, restype, reqflags, resflags) {}
+COMM_DESTRUCTOR_DEF(RPCComm, WrapComm, , )
 
 void RPCComm::_open(bool call_base) {
   BEFORE_OPEN(WrapComm);

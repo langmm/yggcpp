@@ -65,27 +65,10 @@ namespace YggInterface {
      */
     class ValueComm : public CommBase<ValueManager> {
     public:
-      
-      /**
-       * Constructor
-       * @param[in] name The name for the communicator, if empty one will be generated
-       * @param[in] address The address for the communicator, if empty one will be generated
-       * @param[in] direction Enuerated direction for this instance
-       * @param[in] flgs Bitwise flags describing the communicator
-       * @param[in] commtype The enumerated type of communicator to create
-       */
-      YGG_API explicit ValueComm(const std::string name,
-				 const utils::Address& address,
-				 const DIRECTION direction=NONE,
-				 FLAG_TYPE flgs=0,
-				 const COMM_TYPE commtype=VALUE_COMM);
-      ADD_CONSTRUCTORS_BASE(ValueComm, VALUE_COMM, true)
+      COMM_CONSTRUCTOR_CORE_DEC(ValueComm, VALUE_COMM, true)
 	
       /** \copydoc Comm_t::comm_nmsg */
       YGG_API int comm_nmsg(DIRECTION dir=NONE) const override;
-      
-      using Comm_t::send;
-      using Comm_t::recv;
       
       /**
        * @brief Update the value and number of values returned on receive

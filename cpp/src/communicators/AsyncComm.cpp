@@ -490,33 +490,12 @@ AsyncLockGuard::~AsyncLockGuard() {
 // AsyncComm //
 ///////////////
 
-AsyncComm::AsyncComm(const std::string& name,
-		     const utils::Address& address,
-		     const DIRECTION direction,
-		     FLAG_TYPE flgs, const COMM_TYPE type,
-		     const COMM_TYPE reqtype, const COMM_TYPE restype,
-		     FLAG_TYPE reqflags, FLAG_TYPE resflags) :
-  CommBase(name, address, direction, type, flgs | COMM_FLAG_ASYNC),
-  response_metadata(),
-  request_commtype(reqtype), response_commtype(restype),
-  request_flags(reqflags), response_flags(resflags) {
-  ADD_CONSTRUCTOR_OPEN(AsyncComm);
-}
-AsyncComm::AsyncComm(const std::string& name,
-		     const DIRECTION direction,
-		     FLAG_TYPE flgs, const COMM_TYPE type,
-		     const COMM_TYPE reqtype, const COMM_TYPE restype,
-		     FLAG_TYPE reqflags, FLAG_TYPE resflags) :
-  AsyncComm(name, utils::blankAddress, direction, flgs, type,
-	    reqtype, restype, reqflags, resflags) {}
-AsyncComm::AsyncComm(utils::Address &addr,
-		     const DIRECTION direction,
-		     FLAG_TYPE flgs, const COMM_TYPE type,
-		     const COMM_TYPE reqtype, const COMM_TYPE restype,
-		     FLAG_TYPE reqflags, FLAG_TYPE resflags) :
-  AsyncComm("", addr, direction, flgs, type,
-	    reqtype, restype, reqflags, resflags) {}
-ADD_DESTRUCTOR_DEF(AsyncComm, CommBase, , )
+COMM_CONSTRUCTOR_CORE_DEF_PARAM(AsyncComm, COMM_FLAG_ASYNC,
+				response_metadata(),
+				request_commtype(supp.request_commtype),
+				response_commtype(supp.response_commtype),
+				request_flags(supp.request_flags),
+				response_flags(supp.response_flags))
 
 void AsyncComm::_open(bool call_base) {
   BEFORE_OPEN_DEF;
@@ -711,7 +690,8 @@ bool AsyncComm::create_header_send(Header& header) {
 
 Comm_t* AsyncComm::create_worker(utils::Address& address,
                                  const DIRECTION dir, FLAG_TYPE flgs) {
-  return new AsyncComm("", address, dir, flgs | COMM_FLAG_WORKER, type);
+  std::string nme;
+  return new AsyncComm(nme, address, dir, flgs | COMM_FLAG_WORKER, type);
 }
 
 #define RESPONSE_SCHEMA(name, method, argsT, args)			\

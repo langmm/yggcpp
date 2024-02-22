@@ -39,15 +39,7 @@ long ValueManager::recv(utils::Header& header) {
 // ValueComm //
 ///////////////
 
-ValueComm::ValueComm(const std::string name,
-		     const utils::Address &address,
-		     DIRECTION direction, FLAG_TYPE flgs,
-		     const COMM_TYPE type) :
-  CommBase(name, address, direction, type, flgs) {
-  ADD_CONSTRUCTOR_OPEN(ValueComm)
-}
-
-ADD_CONSTRUCTORS_DEF(ValueComm)
+COMM_CONSTRUCTOR_CORE_DEF(ValueComm, 0)
 
 void ValueComm::_open(bool call_base) {
   BEFORE_OPEN_DEF;

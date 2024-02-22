@@ -62,22 +62,7 @@ enum MPI_STATUS_FLAG {
  */
 class MPIComm : public CommBase<mpi_registry_t> {
 public:
-    /**
-     * @brief Constructor
-     * @param[in] name The name of the communicator
-     * @param[in] address The address to associate with the communicator, if address is nullptr
-     *                then an address will be created.
-     * @param[in] direction Enumerated direction for the communicator
-     * @param[in] flgs Bitwise flags describing the communicator
-     * @param[in] type The communicator type
-     * @see utils::Address
-     */
-    YGG_API MPIComm(const std::string& name,
-		    const utils::Address& address,
-		    const DIRECTION direction = NONE,
-		    FLAG_TYPE flgs = 0,
-		    const COMM_TYPE type = MPI_COMM);
-    ADD_CONSTRUCTORS(MPI)
+    COMM_CONSTRUCTOR_CORE_DEC(MPIComm, MPI_COMM, MPI_INSTALLED_FLAG)
 
 #if defined(MPIINSTALLED) && defined(MPI_COMM_WORLD)
     /*! \copydoc Comm_t::comm_nmsg */
@@ -88,8 +73,6 @@ public:
      * @return
      */
     YGG_API int mpi_comm_source_id() const;
-    using Comm_t::send;
-    using Comm_t::recv;
 
     std::vector<utils::Address>& getAddresses() { return addresses; }
     

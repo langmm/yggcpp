@@ -38,30 +38,34 @@ using namespace YggInterface::utils;
 WrapComm::WrapComm(const std::string name,
 		   const utils::Address &address,
 		   const DIRECTION direction,
-		   FLAG_TYPE flgs, const COMM_TYPE type, size_t ncomm,
-		   const COMM_TYPE wraptyp) :
-  CommBase(name, address, direction, type, flgs | COMM_FLAG_WRAPPER),
-  wraptype(wraptyp), wrapncomm(ncomm) {
+		   FLAG_TYPE flgs, const COMM_TYPE type,
+		   const COMM_TYPE wraptyp,
+		   const SupplementCommArgs& wrapspp) :
+  CommBase(name, address, direction, flgs | COMM_FLAG_WRAPPER,
+	   type, wrapspp),
+  wraptype(wraptyp), wrapsupp(wrapspp) {
   if (wraptype == NULL_COMM)
     wraptype = type;
   ADD_CONSTRUCTOR_OPEN(WrapComm)
 }
 WrapComm::WrapComm(const std::string nme,
 		   const DIRECTION dirn, FLAG_TYPE flgs,
-		   const COMM_TYPE type, size_t ncomm,
-		   const COMM_TYPE wraptype) :
+		   const COMM_TYPE type,
+		   const COMM_TYPE wraptype,
+		   const SupplementCommArgs& wrapsupp) :
   WrapComm(nme, utils::blankAddress, dirn, flgs, type,
-	   ncomm, wraptype) {}
+	   wraptype, wrapsupp) {}
 WrapComm::WrapComm(const utils::Address &addr,
 		   const DIRECTION dirn, FLAG_TYPE flgs,
-		   const COMM_TYPE type, size_t ncomm,
-		   const COMM_TYPE wraptype) :
-  WrapComm("", addr, dirn, flgs, type, ncomm, wraptype) {}
+		   const COMM_TYPE type,
+		   const COMM_TYPE wraptype,
+		   const SupplementCommArgs& wrapsupp) :
+  WrapComm("", addr, dirn, flgs, type, wraptype, wrapsupp) {}
 WrapComm::WrapComm(Comm_t* comm) :
   WrapComm(comm->getName(), utils::Address(comm->getAddress()),
 	   comm->getDirection(),
 	   comm->getFlags() | COMM_FLAG_DELAYED_OPEN,
-	   comm->getType(), 0, NULL_COMM) {
+	   comm->getType(), NULL_COMM, wrapsupp) {
   handle = comm;
   fromComm();
 }
@@ -99,7 +103,7 @@ void WrapComm::_open(bool call_base) {
   handle = new_Comm_t(getDirection(), wraptype, getName(),
 		      utils::Address(getAddress()),
 		      (getFlags() & ~(COMM_FLAG_WRAPPER)),
-		      wrapncomm);
+		      wrapsupp);
   fromComm();
   AFTER_OPEN_DEF;
 }
