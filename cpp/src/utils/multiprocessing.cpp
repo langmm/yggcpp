@@ -495,11 +495,10 @@ void ProcessMutex::unlock() {
 }
 
 int ProcessMutex::nproc() const {
-  if (handle == NULL) {
-    log_error() << "nproc: Handle is NULL" << std::endl;
-    return -1;
-  }
-  return handle->nproc();
+  int out = -1;
+  if (handle)
+    out = handle->nproc();
+  return out;
 }
 
 /////////////////////////////////

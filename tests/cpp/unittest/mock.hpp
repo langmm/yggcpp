@@ -5,6 +5,14 @@
 #include <winsock2.h>
 #endif
 
+#ifndef _WIN32
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/sem.h>
+#include <sys/shm.h>
+#endif
+
 #ifdef IPCINSTALLED
 #include <sys/msg.h>
 #endif // IPCINSTALLED
@@ -211,6 +219,16 @@ int msgget(key_t a, int b);
 
 ssize_t msgrcv(int a, void* buf, size_t msz, long mtype, int flags);
 #endif // IPCINSTALLED
+
+#ifndef _WIN32
+int semget(key_t key, int nsems, int semflg);
+int semctl(int semid, int semnum, int cmd, ...);
+int semop(int semid, struct sembuf *sops, size_t nsops);
+int shmget(key_t key, size_t size, int shmflg);
+void *shmat(int shmid, const void *shmaddr, int shmflg);
+int shmdt(const void *shmaddr);
+int shmctl(int shmid, int cmd, struct shmid_ds *buf);
+#endif // _WIN32
 
 void* realloc(void* ptr, size_t size);
 // void* malloc(size_t size);

@@ -100,7 +100,18 @@ ssize_t msgrcv(int, void* rbuf, size_t, long, int) {
   memcpy(static_cast<communicator::msgbuf_t*>(rbuf)->data, msgS.c_str(), msgS.size());
   return (ssize_t)(msgS.size());
 }
+
 #endif // IPCINSTALLED
+
+#ifndef _WIN32
+int semget(key_t, int, int) { return -1; }
+int semctl(int, int, int, ...) { return -1; }
+int semop(int, struct sembuf *, size_t) { return -1; }
+int shmget(key_t, size_t, int) { return -1; }
+void *shmat(int, const void *, int) { return (void*)(-1); }
+int shmdt(const void *) { return -1; }
+int shmctl(int, int, struct shmid_ds *) { return -1; }
+#endif // _WIN32
 
 void* realloc(void*, size_t) {
   std::cerr << "MOCK REALLOC" << std::endl;
