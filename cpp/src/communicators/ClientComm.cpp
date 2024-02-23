@@ -24,8 +24,8 @@ void ClientComm::_open(bool call_base) {
   AFTER_OPEN(RPCComm);
 }
 
-int ClientComm::comm_nmsg(DIRECTION dir) const {
-  int out = RPCComm::comm_nmsg(dir);
+int ClientComm::nmsg(DIRECTION dir) const {
+  int out = RPCComm::nmsg(dir);
   if (dir == RECV) {
     std::string req_id = requests.activeRequestClient();
     if ((!req_id.empty()) && requests.isComplete(req_id))

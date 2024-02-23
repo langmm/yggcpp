@@ -83,9 +83,9 @@ int IPCComm::remove_comm(bool close_comm) {
     return untrack_key(address.key());
 }
 
-int IPCComm::comm_nmsg(DIRECTION dir) const {
+int IPCComm::nmsg(DIRECTION dir) const {
     if (global_comm)
-      return global_comm->comm_nmsg(dir);
+      return global_comm->nmsg(dir);
     if (dir == NONE)
       dir = direction;
     if (dir != direction)
@@ -95,7 +95,7 @@ int IPCComm::comm_nmsg(DIRECTION dir) const {
 
     int rc = msgctl(handle[0], IPC_STAT, &buf);
     if (rc != 0) {
-        /* log_error() << "comm_nmsg: Could not access queue." << std::endl; */
+        /* log_error() << "nmsg: Could not access queue." << std::endl; */
         return 0;
     }
     int ret = static_cast<int>(buf.msg_qnum);

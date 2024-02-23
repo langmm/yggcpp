@@ -200,6 +200,17 @@ public:									\
   BASE_PARAM_DOCS_ADDR							\
   BASE_PARAM_DOCS_BASE							\
   SUPP_PARAM_DOCS							\
+  /** @see utils::Address */						\
+  YGG_API explicit cls(BASE_PARAM_DEC_NAME,				\
+		       const std::string& address,			\
+		       BASE_PARAM_DEC_BASE(typ),			\
+		       SUPP_PARAM_DEC);					\
+  /** @brief Constructor */						\
+  BASE_PARAM_DOCS_NAME							\
+  BASE_PARAM_DOCS_ADDR							\
+  BASE_PARAM_DOCS_BASE							\
+  SUPP_PARAM_DOCS							\
+  /** @see utils::Address */						\
   YGG_API explicit cls(BASE_PARAM_DEC_NAME,				\
 		       BASE_PARAM_DEC_ADDR,				\
 		       BASE_PARAM_DEC_BASE(typ),			\
@@ -251,6 +262,17 @@ public:									\
   AFTER_CLOSE(CommBase)
 #define COMM_CONSTRUCTOR_DEF(cls)				\
   cls::cls(BASE_PARAM_DEF_NAME,					\
+	   const std::string& addr,				\
+	   BASE_PARAM_DEF_BASE,					\
+	   SUPP_PARAM_DEF) :					\
+    cls(nme, utils::Address(addr), BASE_PARAM_ARG_BASE,		\
+	SUPP_PARAM_INIT) {}					\
+  cls::cls(BASE_PARAM_DEF_NAME,					\
+	   BASE_PARAM_DEF_ADDR,					\
+	   BASE_PARAM_DEF_BASE,					\
+	   SUPP_PARAM_DEF) :					\
+    cls(nme, addr, BASE_PARAM_ARG_BASE, SUPP_PARAM_INIT) {}	\
+  cls::cls(BASE_PARAM_DEF_NAME,					\
 	   BASE_PARAM_DEF_BASE,					\
 	   SUPP_PARAM_DEF) :					\
     cls(nme, utils::blankAddress, BASE_PARAM_ARG_BASE,		\
@@ -260,11 +282,6 @@ public:									\
 	   SUPP_PARAM_DEF) :					\
     cls("", addr, BASE_PARAM_ARG_BASE,				\
 	SUPP_PARAM_INIT) {}					\
-  cls::cls(BASE_PARAM_DEF_NAME,					\
-	   BASE_PARAM_DEF_ADDR,					\
-	   BASE_PARAM_DEF_BASE,					\
-	   SUPP_PARAM_DEF) :					\
-    cls(nme, addr, BASE_PARAM_ARG_BASE, SUPP_PARAM_INIT) {}	\
   COMM_DESTRUCTOR_DEF(cls, CommBase, , )
 #define COMM_DELETE_COPY(cls)				\
   cls(const cls&) = delete;				\
@@ -1218,7 +1235,7 @@ public:
       @param[in] dir Direction to check for messages in.
       @return Number of messages.
      */
-    YGG_API virtual int comm_nmsg(DIRECTION dir=NONE) const VIRT_END;
+    YGG_API virtual int nmsg(DIRECTION dir=NONE) const VIRT_END;
 
     /*!
       @brief Open the communicator.
@@ -1947,10 +1964,10 @@ public:
     CommBase& operator=(const CommBase&) = delete;
     CommBase() = delete;
 
-    /*! \copydoc YggInterface::communicator::Comm_t::comm_nmsg */
-    int comm_nmsg(DIRECTION dir=NONE) const override {
+    /*! \copydoc YggInterface::communicator::Comm_t::nmsg */
+    int nmsg(DIRECTION dir=NONE) const override {
       UNUSED(dir);
-      log_error() << "Comm_nmsg of base class called, must be overridden" << std::endl;
+      log_error() << "nmsg of base class called, must be overridden" << std::endl;
       return -1;
     }
     COMM_DESTRUCTOR_API(CommBase, Comm_t, );

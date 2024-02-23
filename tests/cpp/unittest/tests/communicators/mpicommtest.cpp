@@ -175,12 +175,12 @@ TEST(MPIComm, commnmsg) {
     utils::Address adr("51000,50000");
     MPIComm_tester mpic("", adr, RECV);
     mpi_registry_mock::MPIPROC = 0;
-    EXPECT_EQ(mpic.comm_nmsg(), 0);
+    EXPECT_EQ(mpic.nmsg(), 0);
 
     mpi_registry_mock::MPIPROC = 50000;
-    EXPECT_EQ(mpic.comm_nmsg(), 1);
+    EXPECT_EQ(mpic.nmsg(), 1);
     mpi_registry_mock::MPISTATUS = 1;
-    EXPECT_EQ(mpic.comm_nmsg(), -1);
+    EXPECT_EQ(mpic.nmsg(), -1);
     //MPI_Finalize();
 }
 

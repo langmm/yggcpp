@@ -50,8 +50,8 @@ public:
      */
     YGG_API int remove_comm(bool close_comm);
 
-    /** \copydoc YggInterface::communicator::Comm_t::comm_nmsg */
-    YGG_API int comm_nmsg(DIRECTION dir=NONE) const override;
+    /** \copydoc YggInterface::communicator::Comm_t::nmsg */
+    YGG_API int nmsg(DIRECTION dir=NONE) const override;
   
 protected:
     /** \copydoc YggInterface::communicator::Comm_t::send_single() */

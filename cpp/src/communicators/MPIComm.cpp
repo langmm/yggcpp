@@ -134,9 +134,9 @@ int MPIComm::mpi_comm_source_id() const {
 #endif
 }
 
-int MPIComm::comm_nmsg(DIRECTION dir) const {
+int MPIComm::nmsg(DIRECTION dir) const {
     if (global_comm)
-      return global_comm->comm_nmsg(dir);
+      return global_comm->nmsg(dir);
     if (dir == NONE)
       dir = direction;
     if (dir != direction)
@@ -144,7 +144,7 @@ int MPIComm::comm_nmsg(DIRECTION dir) const {
     int src = mpi_comm_source_id();
     int nmsg = 0;
     if (src < 0) {
-        log_error() << "comm_nmsg: Error checking messages." << std::endl;
+        log_error() << "nmsg: Error checking messages." << std::endl;
         return -1;
     } else if (src > 0) {
         nmsg = 1;

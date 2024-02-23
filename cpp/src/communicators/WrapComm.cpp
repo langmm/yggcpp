@@ -115,7 +115,7 @@ void WrapComm::_close(bool call_base) {
 }
 
 // public methods
-WRAP_METHOD(comm_nmsg, (DIRECTION dir), (dir), out = -1, int, const)
+WRAP_METHOD(nmsg, (DIRECTION dir), (dir), out = -1, int, const)
 WRAP_METHOD_DIRECT(getMetadata, (const DIRECTION dir), (dir),
 		   THROW_NO_HANDLE(getMetadata),
 		   YggInterface::utils::Metadata&, )

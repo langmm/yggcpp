@@ -58,9 +58,9 @@ bool example_transform_error(rapidjson::Document& msg) {
   std::cerr << "after send" << std::endl;				\
   sComm.printStatus();							\
   EXPECT_GT(rComm.wait_for_recv(1000000), 0);				\
-  std::cerr << "before comm_nmsg" << std::endl;				\
-  EXPECT_GT(rComm.comm_nmsg(), 0);					\
-  std::cerr << "after comm_nmsg" << std::endl;				\
+  std::cerr << "before nmsg" << std::endl;				\
+  EXPECT_GT(rComm.nmsg(), 0);						\
+  std::cerr << "after nmsg" << std::endl;				\
   rComm.set_timeout_recv(10000);					\
   std::cerr << "before recv" << std::endl;				\
   rComm.printStatus();							\
@@ -401,8 +401,8 @@ bool example_transform_error(rapidjson::Document& msg) {
     rComm.addSchema("{\"type\": \"any\"}");				\
     unsetenv(key_env.c_str());						\
     DO_SEND_RECV(sendVar, recvVar, int, 32);				\
-    EXPECT_EQ(rComm.comm_nmsg(SEND), 0);				\
-    EXPECT_EQ(sComm.comm_nmsg(RECV), 0);				\
+    EXPECT_EQ(rComm.nmsg(SEND), 0);					\
+    EXPECT_EQ(sComm.nmsg(RECV), 0);					\
     rComm.close();							\
     EXPECT_EQ(rComm.recvVar(data_recv), -1);				\
   }									\

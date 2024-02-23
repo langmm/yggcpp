@@ -31,8 +31,8 @@ public:
 			   const SupplementCommArgs& supp);
   COMM_DESTRUCTOR_DEC(RPCComm, WrapComm)
 
-  /** \copydoc YggInterface::communicator::Comm_t::comm_nmsg */
-  YGG_API int comm_nmsg(DIRECTION dir=NONE) const override;
+  /** \copydoc YggInterface::communicator::Comm_t::nmsg */
+  YGG_API int nmsg(DIRECTION dir=NONE) const override;
   /** \copydoc YggInterface::communicator::Comm_t::wait_for_recv */
   YGG_API int wait_for_recv(const int64_t& tout) override;
 

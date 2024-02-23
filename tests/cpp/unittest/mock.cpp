@@ -38,6 +38,10 @@ int SENDCOUNT = 0;
 std::string RETMSG = "";
 std::string RETMSG_META = "";
 std::string RETMSG_META_DEFAULT = "";
+#ifdef RMQINSTALLED
+amqp_response_type_enum AMQP_REPLY_TYPE = AMQP_RESPONSE_NORMAL;
+int AMQP_ERROR = 0;
+#endif // RMQINSTALLED
 
 std::string _mock_message() {
   if (RETMSG.empty())
@@ -278,6 +282,40 @@ template<class OutputIt>
       return MPI_ERR_COUNT;
     }
     return MPI_SUCCESS;
+  }
+#endif
+  
+#ifdef RMQINSTALLED
+  amqp_rpc_reply_t _amqp_get_rpc_reply() {
+    amqp_rpc_reply_t out;
+    out.reply_type = AMQP_REPLY_TYPE;
+    out.library_error = 0;
+    out.reply.id = 0;
+    if (AMQP_REPLY_TYPE == AMQP_RESPONSE_LIBRARY_EXCEPTION) {
+      out.library_error = AMQP_ERROR;
+    } else if (AMQP_REPLY_TYPE == AMQP_RESPONSE_SERVER_EXCEPTION) {
+      out.reply.id = AMQP_ERROR;
+    }
+    return out;
+  }
+  amqp_socket_t* amqp_tcp_socket_new(amqp_connection_state_t state) {
+    return NULL;
+  }
+  amqp_rpc_reply_t amqp_get_rpc_reply(amqp_connection_state_t state) {
+    return _amqp_get_rpc_reply();
+  }
+  amqp_queue_declare_ok_t* amqp_queue_declare(
+    amqp_connection_state_t state, amqp_channel_t channel,
+    amqp_bytes_t queue, amqp_boolean_t passive, amqp_boolean_t durable,
+    amqp_boolean_t exclusive, amqp_boolean_t auto_delete,
+    amqp_table_t arguments) {
+    return NULL;
+  }
+  amqp_rpc_reply_t amqp_basic_get(amqp_connection_state_t state,
+				  amqp_channel_t channel,
+				  amqp_bytes_t queue,
+				  amqp_boolean_t no_ack) {
+    return _amqp_get_rpc_reply();
   }
 #endif
   

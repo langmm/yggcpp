@@ -71,10 +71,10 @@ TEST(ZMQComm, constructor) {
     std::string name = "";
     ZMQSocket::resetPort();
     ZMQComm_tester zmqc(name, SEND);
-    EXPECT_EQ(zmqc.comm_nmsg(), 0);
+    EXPECT_EQ(zmqc.nmsg(), 0);
     utils::Address adrs;
     ZMQComm_tester zmqr(name, adrs, RECV);
-    EXPECT_EQ(zmqr.comm_nmsg(), 0);
+    EXPECT_EQ(zmqr.nmsg(), 0);
 #ifdef ELF_AVAILABLE
     name = "";
     ELF_BEGIN;

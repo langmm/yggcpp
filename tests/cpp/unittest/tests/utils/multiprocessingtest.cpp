@@ -13,7 +13,9 @@ TEST(ProcessMutex, constructor) {
   mutex.init("test", "test");
   EXPECT_THROW(mutex.init("test", ""), std::exception);
   EXPECT_THROW(mutex.init("test", "invalid"), std::exception);
+#ifndef _WIN32
   EXPECT_THROW(ProcessMutex("test", "invalid_file"), std::exception);
+#endif // _WIN32
 #ifdef ELF_AVAILABLE
   ELF_BEGIN;
   ELF_BEGIN_F(semget);
@@ -53,7 +55,10 @@ TEST(ProcessMutex, nproc) {
 TEST(ProcessMutex, lock) {
   ProcessMutex mutex("test", "test", true);
   mutex.lock();
+#ifndef _WIN32
+  // Windows allows a thread to reacquire a mutex it already owns
   EXPECT_FALSE(mutex.try_lock());
+#endif // _WIN32
   mutex.unlock();
   EXPECT_TRUE(mutex.try_lock());
   mutex.unlock();
@@ -74,10 +79,12 @@ TEST(ProcessSharedMemory, constructor) {
 #ifdef ELF_AVAILABLE
   ELF_BEGIN;
   ELF_BEGIN_F(shmget);
-  EXPECT_THROW(ProcessSharedMemory("test", 8, "other", true));
+  EXPECT_THROW(ProcessSharedMemory("test", 8, "other", true),
+	       std::exception);
   ELF_END_F(shmget);
   ELF_BEGIN_F(shmat);
-  EXPECT_THROW(ProcessSharedMemory("test", 8, "other", true));
+  EXPECT_THROW(ProcessSharedMemory("test", 8, "other", true),
+	       std::exception);
   ELF_END_F(shmat);
   ELF_END;
 #endif // ELF_AVAILABLE

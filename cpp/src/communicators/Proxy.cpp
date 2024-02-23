@@ -98,7 +98,7 @@ long Proxy::on_message() {
   long out = 0;
   if (status.load() & THREAD_CLOSING)
     return -1;
-  if (icomm->comm_nmsg() > 0) {
+  if (icomm->nmsg() > 0) {
     rapidjson::Document msg;
     out = icomm->recvVar(msg);
     if (out == -2) {

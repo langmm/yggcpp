@@ -14,7 +14,7 @@ public:
     Comm_tTest(const std::string &name, DIRECTION direction,
 	       const COMM_TYPE &t) :
       Comm_t(name, direction, COMM_FLAG_INTERFACE, t), _closed(false) {}
-    int comm_nmsg(DIRECTION=NONE) const override {return 1;}
+    int nmsg(DIRECTION=NONE) const override {return 1;}
     FLAG_TYPE get_flags() const {return flags;}
     void open() override { _open(true); }
     void close() override { _close(true); }
@@ -58,9 +58,9 @@ public:
     updateMaxMsgSize(1000);
   }
   int wait_for_recv(const int64_t&) override { return 0; }
-  int comm_nmsg(DIRECTION dir=NONE) const override {
+  int nmsg(DIRECTION dir=NONE) const override {
     if (nmsg_ >= 0) return nmsg_;
-    return CommBase::comm_nmsg(dir);
+    return CommBase::nmsg(dir);
   }
   int nmsg_;
 };
@@ -129,7 +129,7 @@ TEST(Commt, checksize) {
 TEST(CommBase, MissingOverrides) {
   EmptyComm x;
   x.addSchema("{\"type\": \"any\"}");
-  EXPECT_EQ(x.comm_nmsg(), -1);
+  EXPECT_EQ(x.nmsg(), -1);
   EXPECT_EQ(x.sendVar(0), -1);
   int var = 0;
   EXPECT_EQ(x.recvVar(var), -1);

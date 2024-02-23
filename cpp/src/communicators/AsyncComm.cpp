@@ -341,7 +341,7 @@ int AsyncBacklog::signon_status() {
   ClientComm* cli = dynamic_cast<ClientComm*>(comm);
   RequestList& requests = cli->getRequests();
   if (requests.signon_complete) {
-    // if (cli->comm_nmsg(RECV) > 0) {
+    // if (cli->nmsg(RECV) > 0) {
     //   if (!(status.load() & THREAD_HAS_RESPONSE))
     // 	set_status(THREAD_HAS_RESPONSE, true);
     // } else {
@@ -352,7 +352,7 @@ int AsyncBacklog::signon_status() {
     return SIGNON_COMPLETE;
   }
   if (!requests.requests.empty()) {
-    int nmsg = requests.activeComm()->comm_nmsg(RECV);
+    int nmsg = requests.activeComm()->nmsg(RECV);
     if (nmsg > 0)
       return SIGNON_WAITING;
     else if (nmsg < 0)
@@ -435,7 +435,7 @@ long AsyncBacklog::recv() {
   utils::Header header(true);
   {
     const std::lock_guard<std::mutex> comm_lock(mutex);
-    int nmsg = comm->comm_nmsg();
+    int nmsg = comm->nmsg();
     if (nmsg > 0) {
       out = comm->recv_single(header);
       received = true;
@@ -513,9 +513,9 @@ void AsyncComm::_close(bool call_base) {
   AFTER_CLOSE_DEF;
 }
 
-int AsyncComm::comm_nmsg(DIRECTION dir) const {
+int AsyncComm::nmsg(DIRECTION dir) const {
   if (global_comm)
-    return global_comm->comm_nmsg(dir);
+    return global_comm->nmsg(dir);
   if (dir == NONE)
     dir = direction;
   if ((!handle) || (handle->is_closing()))
@@ -525,7 +525,7 @@ int AsyncComm::comm_nmsg(DIRECTION dir) const {
     const AsyncLockGuard lock(handle);
     if (handle->is_closing())
       return 0;
-    return handle->comm->comm_nmsg(dir);
+    return handle->comm->nmsg(dir);
   }
   return static_cast<int>(handle->backlog.size());
 }
@@ -570,7 +570,7 @@ int AsyncComm::wait_for_recv(const int64_t& tout) {
     " microseconds" << std::endl;
   if (!handle->backlog.wait_for(std::chrono::microseconds(tout)))
     return 0;
-  return comm_nmsg(RECV);
+  return nmsg(RECV);
 }
 #endif // THREADSINSTALLED
 

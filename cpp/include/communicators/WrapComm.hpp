@@ -117,7 +117,7 @@ namespace YggInterface {
       YGG_API void _close(bool call_base);
       
     public:
-      WRAP_METHOD(comm_nmsg, (DIRECTION dir=NONE), (dir),
+      WRAP_METHOD(nmsg, (DIRECTION dir=NONE), (dir),
 		  out = -1, int, const override);
       WRAP_METHOD(getMetadata, (const DIRECTION dir), (dir),
 		  THROW_NO_HANDLE(getMetadata),

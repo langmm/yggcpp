@@ -16,8 +16,8 @@ public:
   
     COMM_CONSTRUCTOR_RPC_DEC(ClientComm, CLIENT_COMM)
 
-    /** \copydoc YggInterface::communicator::Comm_t::comm_nmsg */
-    YGG_API int comm_nmsg(DIRECTION dir=NONE) const override;
+    /** \copydoc YggInterface::communicator::Comm_t::nmsg */
+    YGG_API int nmsg(DIRECTION dir=NONE) const override;
     /** \copydoc YggInterface::communicator::Comm_t::set_timeout_recv */
     YGG_API void set_timeout_recv(int64_t new_timeout) override;
     /** \copydoc YggInterface::communicator::Comm_t::get_timeout_recv */

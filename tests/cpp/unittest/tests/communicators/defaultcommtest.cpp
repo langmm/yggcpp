@@ -488,7 +488,7 @@ TEST(DefaultCommu, filter_send_error) {
   DefaultComm rComm("", addr, RECV);
   EXPECT_TRUE(sComm.getMetadata().addFilter(example_filter_error));
   EXPECT_EQ(sComm.sendVar(0), -1);
-  EXPECT_EQ(rComm.comm_nmsg(), 0);
+  EXPECT_EQ(rComm.nmsg(), 0);
 }
 
 TEST(DefaultCommu, transform_recv_error) {
@@ -507,7 +507,7 @@ TEST(DefaultCommu, transform_send_error) {
   DefaultComm rComm("", addr, RECV);
   EXPECT_TRUE(sComm.getMetadata().addTransform(&example_transform_error));
   EXPECT_EQ(sComm.sendVar(0), -1);
-  EXPECT_EQ(rComm.comm_nmsg(), 0);
+  EXPECT_EQ(rComm.nmsg(), 0);
 }
 
 

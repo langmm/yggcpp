@@ -92,18 +92,18 @@ TEST(IPCComm, send) {
 TEST(IPCComm, commnmsg) {
     std::string name = "Comm_nsg_test";
     IPCComm_tester ipc(name, SEND);
-    int res = ipc.comm_nmsg();
+    int res = ipc.nmsg();
     EXPECT_EQ(res, 0);
 
 #ifdef ELF_AVAILABLE
     ELF_BEGIN;
-    // Replace msgctl to test failure in comm_nmsg
+    // Replace msgctl to test failure in nmsg
     ELF_REPLACE_NMSG_IPC;
     ELF_SET_SUCCESS;
-    res = ipc.comm_nmsg();
+    res = ipc.nmsg();
     EXPECT_EQ(res, 10000);
     ELF_SET_FAILURE;
-    res = ipc.comm_nmsg();
+    res = ipc.nmsg();
     EXPECT_EQ(res, 0);
     ELF_RESTORE_NMSG_IPC;
     ELF_END;

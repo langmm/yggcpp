@@ -64,7 +64,7 @@ namespace YggInterface {
        * @return Tine communicator
        */
       Comm_t* current_cycle();
-      /** \copydoc YggInterface::communicator::Comm_t::comm_nmsg */
+      /** \copydoc YggInterface::communicator::Comm_t::nmsg */
       int nmsg(DIRECTION dir) const;
       /**
        * @brief Send a message to the next tine
@@ -98,8 +98,8 @@ namespace YggInterface {
     public:
       COMM_CONSTRUCTOR_CORE_DEC(ForkComm, DEFAULT_COMM, true)
 
-      /** \copydoc YggInterface::communicator::Comm_t::comm_nmsg */
-      YGG_API int comm_nmsg(DIRECTION dir=NONE) const override;
+      /** \copydoc YggInterface::communicator::Comm_t::nmsg */
+      YGG_API int nmsg(DIRECTION dir=NONE) const override;
       /** \copydoc YggInterface::communicator::Comm_t::set_timeout_recv */
       YGG_API void set_timeout_recv(int64_t new_timeout) override;
       

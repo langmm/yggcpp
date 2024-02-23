@@ -67,8 +67,8 @@ namespace YggInterface {
     public:
       COMM_CONSTRUCTOR_CORE_DEC(ValueComm, VALUE_COMM, true)
 	
-      /** \copydoc Comm_t::comm_nmsg */
-      YGG_API int comm_nmsg(DIRECTION dir=NONE) const override;
+      /** \copydoc Comm_t::nmsg */
+      YGG_API int nmsg(DIRECTION dir=NONE) const override;
       
       /**
        * @brief Update the value and number of values returned on receive

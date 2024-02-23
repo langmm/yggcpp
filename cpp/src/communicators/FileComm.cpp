@@ -84,9 +84,9 @@ void FileComm::refresh() const {
     handle->clear();
 }
 
-int FileComm::comm_nmsg(DIRECTION dir) const {
+int FileComm::nmsg(DIRECTION dir) const {
   if (global_comm)
-    return global_comm->comm_nmsg(dir);
+    return global_comm->nmsg(dir);
   if (dir == NONE)
     dir = direction;
   if (dir != direction || dir != RECV)

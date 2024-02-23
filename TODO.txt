@@ -7,7 +7,6 @@
 * Add for_server keyword?
 * Update docs for python extension
 * Generate docs for python extension
-* Change comm_nmsg to nmsg
 
 
 TESTS

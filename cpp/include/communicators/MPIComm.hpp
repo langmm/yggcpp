@@ -65,8 +65,8 @@ public:
     COMM_CONSTRUCTOR_CORE_DEC(MPIComm, MPI_COMM, MPI_INSTALLED_FLAG)
 
 #if defined(MPIINSTALLED) && defined(MPI_COMM_WORLD)
-    /*! \copydoc Comm_t::comm_nmsg */
-    YGG_API int comm_nmsg(DIRECTION dir=NONE) const override;
+    /*! \copydoc Comm_t::nmsg */
+    YGG_API int nmsg(DIRECTION dir=NONE) const override;
 
     /**
      * Get the communicator source id

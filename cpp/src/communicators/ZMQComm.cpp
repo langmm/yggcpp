@@ -493,7 +493,7 @@ void ZMQComm::_close(bool call_base) {
     if (utils::YggdrasilLogger::_ygg_error_flag == 0) {
       size_t data_len = 0;
       char *data = NULL;
-      while (comm_nmsg(RECV) > 0) {
+      while (nmsg(RECV) > 0) {
 	if (long ret = recv_raw(data, data_len) >= 0) {
 	  if (ret > (long)data_len)
 	    data_len = ret;
@@ -506,9 +506,9 @@ void ZMQComm::_close(bool call_base) {
   AFTER_CLOSE_DEF;
 }
 
-int ZMQComm::comm_nmsg(DIRECTION dir) const {
+int ZMQComm::nmsg(DIRECTION dir) const {
     if (global_comm)
-      return global_comm->comm_nmsg(dir);
+      return global_comm->nmsg(dir);
     if (dir == NONE)
       dir = direction;
     if (dir != direction)
@@ -519,7 +519,7 @@ int ZMQComm::comm_nmsg(DIRECTION dir) const {
 	    return handle->poll(ZMQ_POLLIN, short_timeout);
         }
     } else { // GCOVR_EXCL_LINE
-      log_debug() << "comm_nmsg: nmsg = " << reply.n_msg << ", nrep = "
+      log_debug() << "nmsg: nmsg = " << reply.n_msg << ", nrep = "
 		   << reply.n_rep << std::endl;
       out = reply.n_msg - reply.n_rep;
     }

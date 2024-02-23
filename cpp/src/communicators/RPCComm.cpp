@@ -31,18 +31,18 @@ void RPCComm::_close(bool call_base) {
   AFTER_CLOSE(WrapComm);
 }
 
-int RPCComm::comm_nmsg(DIRECTION dir) const {
+int RPCComm::nmsg(DIRECTION dir) const {
   if (global_comm)
-    return global_comm->comm_nmsg(dir);
+    return global_comm->nmsg(dir);
   if (dir == NONE)
     dir = direction;
   if (dir == direction)
-    return WrapComm::comm_nmsg(dir);
+    return WrapComm::nmsg(dir);
   if (requests.requests.empty() || requests.comms.empty()) {
-    log_error() << "::RPCComm:comm_nmsg: No pending requests" << std::endl;
+    log_error() << "::RPCComm:nmsg: No pending requests" << std::endl;
     return -1;
   }
-  return requests.comms[requests.requests[0].comm_idx]->comm_nmsg(dir);
+  return requests.comms[requests.requests[0].comm_idx]->nmsg(dir);
 }
 
 int RPCComm::wait_for_recv(const int64_t& tout) {

@@ -282,7 +282,7 @@ int comm_nmsg(comm_t comm) {
   _BEGIN_CPP {
     if (!comm.comm)
       ygglog_throw_error("comm_nmsg: Comm is not initialized");
-    return static_cast<YggInterface::communicator::Comm_t*>(comm.comm)->comm_nmsg();
+    return static_cast<YggInterface::communicator::Comm_t*>(comm.comm)->nmsg();
   } _END_CPP(comm_nmsg, -1);
 }
 

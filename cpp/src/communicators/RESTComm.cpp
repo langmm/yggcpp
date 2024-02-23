@@ -176,9 +176,9 @@ void RESTComm::_close(bool call_base) {
   AFTER_CLOSE_DEF;
 }
 	
-int RESTComm::comm_nmsg(DIRECTION dir) const {
+int RESTComm::nmsg(DIRECTION dir) const {
   if (global_comm)
-    return global_comm->comm_nmsg(dir);
+    return global_comm->nmsg(dir);
   if (dir == NONE)
     dir = direction;
   if (dir != direction)

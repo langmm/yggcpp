@@ -17,15 +17,15 @@ TEST(ForkComm, default_pattern) {
   YggInput rComm("fork");
   double sData = 5.0, rData = 0.0;
   EXPECT_GE(sComm.sendVar(sData), 0);
-  EXPECT_EQ(rComm.comm_nmsg(), 2);
-  EXPECT_EQ(rComm.comm_nmsg(SEND), 0);
-  EXPECT_EQ(sComm.comm_nmsg(RECV), 0);
+  EXPECT_EQ(rComm.nmsg(), 2);
+  EXPECT_EQ(rComm.nmsg(SEND), 0);
+  EXPECT_EQ(sComm.nmsg(RECV), 0);
   EXPECT_GE(rComm.recvVar(rData), 0);
   EXPECT_EQ(rData, sData);
-  EXPECT_EQ(rComm.comm_nmsg(), 1);
+  EXPECT_EQ(rComm.nmsg(), 1);
   EXPECT_GE(rComm.recvVar(rData), 0);
   EXPECT_EQ(rData, sData);
-  EXPECT_EQ(rComm.comm_nmsg(), 0);
+  EXPECT_EQ(rComm.nmsg(), 0);
   EXPECT_GE(sComm.send_eof(), 0);
   EXPECT_EQ(rComm.recvVar(rData), -2);
 }
@@ -38,20 +38,20 @@ TEST(ForkComm, global) {
     ForkComm sComm(name, SEND, COMM_FLAG_SET_OPP_ENV, DEFAULT_COMM, 2);
     YggInput rComm(name);
     EXPECT_GE(sComm.sendVar(sData), 0);
-    EXPECT_EQ(rComm.comm_nmsg(), 2);
-    EXPECT_EQ(rComm.comm_nmsg(SEND), 0);
-    EXPECT_EQ(sComm.comm_nmsg(RECV), 0);
+    EXPECT_EQ(rComm.nmsg(), 2);
+    EXPECT_EQ(rComm.nmsg(SEND), 0);
+    EXPECT_EQ(sComm.nmsg(RECV), 0);
     EXPECT_GE(rComm.recvVar(rData), 0);
     EXPECT_EQ(rData, sData);
-    EXPECT_EQ(rComm.comm_nmsg(), 1);
+    EXPECT_EQ(rComm.nmsg(), 1);
   }
   {
     ForkComm sComm(name, SEND, COMM_FLAG_SET_OPP_ENV, DEFAULT_COMM, 2);
     YggInput rComm(name);
-    EXPECT_EQ(rComm.comm_nmsg(), 1);
+    EXPECT_EQ(rComm.nmsg(), 1);
     EXPECT_GE(rComm.recvVar(rData), 0);
     EXPECT_EQ(rData, sData);
-    EXPECT_EQ(rComm.comm_nmsg(), 0);
+    EXPECT_EQ(rComm.nmsg(), 0);
     EXPECT_GE(sComm.send_eof(), 0);
     EXPECT_EQ(rComm.recvVar(rData), -2);
   }
@@ -78,12 +78,12 @@ TEST(ForkComm, composite_pattern) {
 		 sData.GetAllocator());
   rapidjson::Document rData;
   EXPECT_GE(sComm.sendVar(sData), 0);
-  EXPECT_EQ(rComm.comm_nmsg(), 1);
-  EXPECT_EQ(rComm.comm_nmsg(SEND), 0);
-  EXPECT_EQ(sComm.comm_nmsg(RECV), 0);
+  EXPECT_EQ(rComm.nmsg(), 1);
+  EXPECT_EQ(rComm.nmsg(SEND), 0);
+  EXPECT_EQ(sComm.nmsg(RECV), 0);
   EXPECT_GE(rComm.recvVar(rData), 0);
   EXPECT_EQ(rData, sData);
-  EXPECT_EQ(rComm.comm_nmsg(), 0);
+  EXPECT_EQ(rComm.nmsg(), 0);
   EXPECT_GE(sComm.send_eof(), 0);
   EXPECT_EQ(rComm.recvVar(rData), -2);
 }
@@ -96,15 +96,15 @@ TEST(ForkComm, broadcast_cycle_pattern) {
   YggInput rComm("fork", COMM_FLAG_FORK_CYCLE);
   double sData = 5.0, rData = 0.0;
   EXPECT_GE(sComm.sendVar(sData), 0);
-  EXPECT_EQ(rComm.comm_nmsg(), 2);
-  EXPECT_EQ(rComm.comm_nmsg(SEND), 0);
-  EXPECT_EQ(sComm.comm_nmsg(RECV), 0);
+  EXPECT_EQ(rComm.nmsg(), 2);
+  EXPECT_EQ(rComm.nmsg(SEND), 0);
+  EXPECT_EQ(sComm.nmsg(RECV), 0);
   EXPECT_GE(rComm.recvVar(rData), 0);
   EXPECT_EQ(rData, sData);
-  EXPECT_EQ(rComm.comm_nmsg(), 1);
+  EXPECT_EQ(rComm.nmsg(), 1);
   EXPECT_GE(rComm.recvVar(rData), 0);
   EXPECT_EQ(rData, sData);
-  EXPECT_EQ(rComm.comm_nmsg(), 0);
+  EXPECT_EQ(rComm.nmsg(), 0);
   EXPECT_GE(sComm.send_eof(), 0);
   EXPECT_EQ(rComm.recvVar(rData), -2);
 }
@@ -116,16 +116,16 @@ TEST(ForkComm, cycle_cycle_pattern) {
   YggInput rComm("fork", COMM_FLAG_FORK_CYCLE);
   double sData = 5.0, rData = 0.0;
   EXPECT_GE(sComm.sendVar(sData), 0);
-  EXPECT_EQ(rComm.comm_nmsg(), 1);
-  EXPECT_EQ(rComm.comm_nmsg(SEND), 0);
-  EXPECT_EQ(sComm.comm_nmsg(RECV), 0);
+  EXPECT_EQ(rComm.nmsg(), 1);
+  EXPECT_EQ(rComm.nmsg(SEND), 0);
+  EXPECT_EQ(sComm.nmsg(RECV), 0);
   EXPECT_GE(rComm.recvVar(rData), 0);
   EXPECT_EQ(rData, sData);
   EXPECT_GE(sComm.sendVar(sData), 0);
-  EXPECT_EQ(rComm.comm_nmsg(), 1);
+  EXPECT_EQ(rComm.nmsg(), 1);
   EXPECT_GE(rComm.recvVar(rData), 0);
   EXPECT_EQ(rData, sData);
-  EXPECT_EQ(rComm.comm_nmsg(), 0);
+  EXPECT_EQ(rComm.nmsg(), 0);
   EXPECT_GE(sComm.send_eof(), 0);
   EXPECT_EQ(rComm.recvVar(rData), -2);
 }
@@ -174,10 +174,10 @@ TEST(ForkComm, coerce_composite) {
   rapidjson::Document sData, rData;
   sData.Parse("{\"a\": \"a\", \"b\": 1}");
   EXPECT_GE(sComm.sendVar(sData), 0);
-  EXPECT_EQ(rComm.comm_nmsg(), 1);
+  EXPECT_EQ(rComm.nmsg(), 1);
   EXPECT_GE(rComm.recv_dict(rData), 0);
   EXPECT_EQ(rData, sData);
-  EXPECT_EQ(rComm.comm_nmsg(), 0);
+  EXPECT_EQ(rComm.nmsg(), 0);
   EXPECT_GE(sComm.send_eof(), 0);
   EXPECT_EQ(rComm.recv_dict(rData), -2);
 }

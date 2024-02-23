@@ -21,8 +21,8 @@ namespace YggInterface {
     public:
       COMM_CONSTRUCTOR_CORE_DEC(FileComm, FILE_COMM, true)
 
-      /** \copydoc YggInterface::communicator::Comm_t::comm_nmsg */
-      YGG_API int comm_nmsg(DIRECTION dir=NONE) const override;
+      /** \copydoc YggInterface::communicator::Comm_t::nmsg */
+      YGG_API int nmsg(DIRECTION dir=NONE) const override;
       
     protected:
       /*! @brief Flush and reload the file */

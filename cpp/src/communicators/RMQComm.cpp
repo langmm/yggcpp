@@ -71,16 +71,12 @@ int RMQConnection::init() {
   } else {
     std::vector<std::string> parts = YggInterface::utils::split(
 	  address, _RMQ_PARAM_SEP);
-    if (parts.empty()) {
-      log_error() << "init: Error parsing address: " << address <<
-	std::endl;
-      return -1;
-    }
     url = parts[0];
     if (parts.size() == 3) {
       exchange = parts[1];
       queue_name = parts[2];
     } else if (parts.size() != 1) {
+      std::cerr << "RMQ HERE" << std::endl;
       log_error() << "init: Error parsing address: " << address <<
 	std::endl;
       return -1;
@@ -302,9 +298,9 @@ void RMQComm::_close(bool call_base) {
   AFTER_CLOSE_DEF;
 }
 	
-int RMQComm::comm_nmsg(DIRECTION dir) const {
+int RMQComm::nmsg(DIRECTION dir) const {
   if (global_comm)
-    return global_comm->comm_nmsg(dir);
+    return global_comm->nmsg(dir);
   if (dir == NONE)
     dir = direction;
   if (dir != direction)

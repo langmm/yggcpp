@@ -198,31 +198,31 @@ TEST(ClientComm, async) {
     // Successful exchange
     EXPECT_GE(sComm.send(req_send), 0);
     EXPECT_GT(rComm.wait_for_recv(1000000), 0);
-    EXPECT_GT(rComm.comm_nmsg(RECV), 0);
-    EXPECT_EQ(rComm.comm_nmsg(SEND), 0);
+    EXPECT_GT(rComm.nmsg(RECV), 0);
+    EXPECT_EQ(rComm.nmsg(SEND), 0);
     EXPECT_EQ(rComm.recv(req_recv), req_send.size());
     EXPECT_EQ(req_recv, req_send);
     EXPECT_GE(rComm.send(res_send), 0);
     EXPECT_GT(sComm.wait_for_recv(1000000), 0);
-    EXPECT_GT(sComm.comm_nmsg(RECV), 0);
-    EXPECT_EQ(sComm.comm_nmsg(SEND), 0);
+    EXPECT_GT(sComm.nmsg(RECV), 0);
+    EXPECT_EQ(sComm.nmsg(SEND), 0);
     EXPECT_EQ(sComm.recv(res_recv), res_send.size());
     EXPECT_EQ(res_recv, res_send);
     // Close the thread, but leave the comm open to simulate an in-thread
     // error
     sComm.close_thread();
     rComm.close_thread();
-    EXPECT_EQ(sComm.comm_nmsg(RECV), 0);
-    EXPECT_EQ(sComm.comm_nmsg(SEND), 0);
-    EXPECT_EQ(rComm.comm_nmsg(RECV), 0);
-    EXPECT_EQ(rComm.comm_nmsg(SEND), 0);
+    EXPECT_EQ(sComm.nmsg(RECV), 0);
+    EXPECT_EQ(sComm.nmsg(SEND), 0);
+    EXPECT_EQ(rComm.nmsg(RECV), 0);
+    EXPECT_EQ(rComm.nmsg(SEND), 0);
     // methods after close
     sComm.close();
     rComm.close();
-    EXPECT_EQ(sComm.comm_nmsg(RECV), 0);
-    EXPECT_EQ(sComm.comm_nmsg(SEND), 0);
-    EXPECT_EQ(rComm.comm_nmsg(RECV), 0);
-    EXPECT_EQ(rComm.comm_nmsg(SEND), 0);
+    EXPECT_EQ(sComm.nmsg(RECV), 0);
+    EXPECT_EQ(sComm.nmsg(SEND), 0);
+    EXPECT_EQ(rComm.nmsg(RECV), 0);
+    EXPECT_EQ(rComm.nmsg(SEND), 0);
 }
 #else // THREADSINSTALLED
 TEST(ClientComm, async) {
@@ -354,7 +354,7 @@ TEST(ClientComm, global) {
       std::string req_recv;
       std::string res_recv;
       EXPECT_GE(sComm.send(req_send), 0);
-      EXPECT_GT(rComm.comm_nmsg(), 0);
+      EXPECT_GT(rComm.nmsg(), 0);
       EXPECT_EQ(rComm.recv(req_recv), req_send.size());
       EXPECT_EQ(req_recv, req_send);
       EXPECT_GE(rComm.send(res_send), 0);
@@ -370,7 +370,7 @@ TEST(ClientComm, global) {
       std::string req_recv;
       std::string res_recv;
       EXPECT_GE(sComm.send(req_send), 0);
-      EXPECT_GT(rComm.comm_nmsg(), 0);
+      EXPECT_GT(rComm.nmsg(), 0);
       EXPECT_EQ(rComm.recv(req_recv), req_send.size());
       EXPECT_EQ(req_recv, req_send);
       EXPECT_GE(rComm.send(res_send), 0);

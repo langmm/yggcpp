@@ -99,7 +99,7 @@ int ForkTines::nmsg(DIRECTION dir) const {
   std::vector<int> nmsg;
   for (typename std::vector<Comm_t*>::const_iterator it = comms.begin();
        it != comms.end(); it++) {
-    int inmsg = (*it)->comm_nmsg(dir);
+    int inmsg = (*it)->nmsg(dir);
     if (inmsg < 0)
       return -1;
     nmsg.push_back(inmsg);
@@ -201,7 +201,7 @@ long ForkTines::recv(char*& data, const size_t &len,
   if (forktype == FORK_CYCLE) {
     while (current_cycle()->is_closed() ||
 	   (current_cycle()->getFlags() & COMM_FLAG_EOF_RECV) ||
-	   (current_cycle()->comm_nmsg() == 0))
+	   (current_cycle()->nmsg() == 0))
       iter++;
     out = -2;
     while (out == -2 && !eof()) {
@@ -326,9 +326,9 @@ void ForkComm::_close(bool call_base) {
   AFTER_CLOSE_DEF;
 }
 
-int ForkComm::comm_nmsg(DIRECTION dir) const {
+int ForkComm::nmsg(DIRECTION dir) const {
   if (global_comm)
-    return global_comm->comm_nmsg(dir);
+    return global_comm->nmsg(dir);
   return handle->nmsg(dir);
 }
 

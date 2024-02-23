@@ -25,6 +25,15 @@
 #ifdef MPIINSTALLED
 #include <mpi.h>
 #endif // MPIINSTALLED
+#ifdef RMQINSTALLED
+#ifdef YGG_RMQ_NOINCLUDEDIR
+#include <amqp.h>
+#include <amqp_tcp_socket.h>
+#else // YGG_RMQ_NOINCLUDEDIR
+#include <rabbitmq-c/amqp.h>
+#include <rabbitmq-c/tcp_socket.h>
+#endif // YGG_RMQ_NOINCLUDEDIR
+#endif // RMQINSTALLED
 
 #include <string>
 
@@ -107,6 +116,13 @@ extern int SENDCOUNT;
 extern std::string RETMSG;
 extern std::string RETMSG_META;
 extern std::string RETMSG_META_DEFAULT;
+#ifdef RMQINSTALLED
+extern amqp_response_type_enum AMQP_REPLY_TYPE;
+extern int AMQP_ERROR;
+#define ELF_SET_RMQ_ERROR(reply_type, error)	\
+  AMQP_REPLY_TYPE = reply_type;			\
+  AMQP_ERROR = error
+#endif // RMQINSTALLED
 
 std::string _mock_message();
   
@@ -291,6 +307,21 @@ template<class OutputIt>
 	       int dest, int tag, MPI_Comm comm);
   int MPI_Recv(void *buf, int count, MPI_Datatype datatype, int source,
 	       int tag, MPI_Comm comm, MPI_Status * status);
+#endif
+
+#ifdef RMQINSTALLED
+  amqp_rpc_reply_t _amqp_get_rpc_reply();
+  amqp_socket_t* amqp_tcp_socket_new(amqp_connection_state_t state);
+  amqp_rpc_reply_t amqp_get_rpc_reply(amqp_connection_state_t state);
+  amqp_queue_declare_ok_t* amqp_queue_declare(
+    amqp_connection_state_t state, amqp_channel_t channel,
+    amqp_bytes_t queue, amqp_boolean_t passive, amqp_boolean_t durable,
+    amqp_boolean_t exclusive, amqp_boolean_t auto_delete,
+    amqp_table_t arguments);
+  amqp_rpc_reply_t amqp_basic_get(amqp_connection_state_t state,
+				  amqp_channel_t channel,
+				  amqp_bytes_t queue,
+				  amqp_boolean_t no_ack);
 #endif
   
 #endif // ELF_AVAILABLE

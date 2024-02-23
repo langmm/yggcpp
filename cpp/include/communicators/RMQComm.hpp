@@ -48,7 +48,7 @@ namespace YggInterface {
        * @return -1 if there is an error
        */
       int close();
-      /** \copydoc YggInterface::communicator::Comm_t::comm_nmsg */
+      /** \copydoc YggInterface::communicator::Comm_t::nmsg */
       int nmsg(DIRECTION dir) const;
       /**
        * @brief Send a message through the connection.
@@ -112,8 +112,8 @@ namespace YggInterface {
     public:
       COMM_CONSTRUCTOR_CORE_DEC(RMQComm, RMQ_COMM, RMQ_INSTALLED_FLAG)
 	
-      /** \copydoc Comm_t::comm_nmsg */
-      YGG_API int comm_nmsg(DIRECTION dir=NONE) const override;
+      /** \copydoc Comm_t::nmsg */
+      YGG_API int nmsg(DIRECTION dir=NONE) const override;
       
     protected:
       /** \copydoc Comm_t::send_single */

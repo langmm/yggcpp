@@ -784,17 +784,17 @@ int Comm_t::wait_for_recv(const int64_t& tout) {
   log_debug() << "wait_for_recv: timeout = " << tout <<
     " microseconds" << std::endl;
   TIMEOUT_LOOP(tout, YGG_SLEEP_TIME) {
-    int nmsg = comm_nmsg(RECV);
-    if (nmsg < 0) {
+    int N = nmsg(RECV);
+    if (N < 0) {
       log_error() << "wait_for_recv: Error in checking for messages" << std::endl;
       return -1;
-    } else if (nmsg > 0) {
-      return nmsg;
+    } else if (N > 0) {
+      return N;
     }
     log_debug() << "wait_for_recv: No messages, sleep " << YGG_SLEEP_TIME << " (timeout = " << tout << ")" << std::endl;
     AFTER_TIMEOUT_LOOP(YGG_SLEEP_TIME);
   }
-  return comm_nmsg(RECV);
+  return nmsg(RECV);
 }
 long Comm_t::recv_raw(char*& data, const size_t &len) {
   if (global_comm)
