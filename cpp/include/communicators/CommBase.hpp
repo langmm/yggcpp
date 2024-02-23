@@ -116,23 +116,26 @@ const FLAG_TYPE COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
 
 #define SUPP_PARAM_DOCS							\
   /** @param[in] ncomm Number of forked communicators (fork only) */	\
-  /** @param[in] reqtype Enumerated type of request comm (rpc only) */	\
-  /** @param[in] restype Enumerated type of response comm (rpc only) */	\
-  /** @param[in] reqflags Bitwise flags for request comm (rpc only) */	\
-  /** @param[in] resflags Bitwise flags for response comm (rpc only) */
-  
-#define SUPP_PARAM_DEC				\
-  size_t ncomm = 0,				\
-    const COMM_TYPE reqtype = DEFAULT_COMM,	\
-    const COMM_TYPE restype = DEFAULT_COMM,	\
-    FLAG_TYPE reqflags = 0,			\
-    FLAG_TYPE resflags = 0
+  /** @param[in] request_commtype Enumerated type of request comm (rpc only) */	\
+  /** @param[in] response_commtype Enumerated type of response comm (rpc only) */ \
+  /** @param[in] request_flags Bitwise flags for request comm (rpc only) */ \
+  /** @param[in] response_flags Bitwise flags for response comm (rpc only) */
+
+#define SUPP_PARAM_DEC					\
+  size_t ncomm = 0,					\
+    const COMM_TYPE request_commtype = DEFAULT_COMM,	\
+    const COMM_TYPE response_commtype = DEFAULT_COMM,	\
+    FLAG_TYPE request_flags = 0,			\
+    FLAG_TYPE response_flags = 0
 #define SUPP_PARAM_DEF					\
   size_t ncomm,						\
-    const COMM_TYPE reqtype, const COMM_TYPE restype,	\
-    FLAG_TYPE reqflags, FLAG_TYPE resflags
-#define SUPP_PARAM_INIT				\
-  SupplementCommArgs(ncomm, reqtype, restype, reqflags, resflags)
+    const COMM_TYPE request_commtype,			\
+    const COMM_TYPE response_commtype,			\
+    FLAG_TYPE request_flags,				\
+    FLAG_TYPE response_flags
+#define SUPP_PARAM_INIT							\
+  SupplementCommArgs(ncomm, request_commtype, response_commtype,	\
+		     request_flags, response_flags)
 
 
 #define COMM_DESTRUCTOR_API(cls, base, api)				\
@@ -491,20 +494,35 @@ class ForkTines;
 
   // typedef struct comm_t comm_t;
 
+  /**
+   * @brief Structure for organizing supplemental communicator parameters
+   */
   struct SupplementCommArgs {
+    /** @brief Constructor */
+    SUPP_PARAM_DOCS
     SupplementCommArgs(const size_t ncomm=0,
 		       const COMM_TYPE request_commtype=DEFAULT_COMM,
 		       const COMM_TYPE response_commtype=DEFAULT_COMM,
 		       const FLAG_TYPE request_flags=0,
 		       const FLAG_TYPE response_flags=0);
+    /**
+     * @brief Copy constructor
+     * @param[in] rhs Structure to copy
+     */
     SupplementCommArgs(const SupplementCommArgs& rhs);
+    /** @brief Destructor */
     ~SupplementCommArgs();
+    /**
+     * @brief Copy assignment
+     * @param[in] rhs Structure to copy
+     * @return This structure
+     */
     SupplementCommArgs& operator=(const SupplementCommArgs& rhs);
-    size_t ncomm;
-    COMM_TYPE request_commtype;
-    COMM_TYPE response_commtype;
-    FLAG_TYPE request_flags;
-    FLAG_TYPE response_flags;
+    size_t ncomm;                /**< ncomm Number of forked communicators (fork only) */
+    COMM_TYPE request_commtype;  /**< Enumerated type of request comm (rpc only) */
+    COMM_TYPE response_commtype; /**< Enumerated type of response comm (rpc only) */
+    FLAG_TYPE request_flags;     /**< Bitwise flags for request comm (rpc only) */
+    FLAG_TYPE response_flags;    /**< Bitwise flags for response comm (rpc only) */
   };
 
 
@@ -1475,6 +1493,7 @@ protected:
     
     /**
      * @brief Initialize this instance before it has been opened
+     * @param[in] supp Supplementary communicator parameters
      */
     void _before_open(const SupplementCommArgs& supp=SupplementCommArgs());
       
