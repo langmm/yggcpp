@@ -188,7 +188,7 @@ int Win32SharedMem::local_cleanup() {
       if (nproc_sem->dec() == -1) {				\
 	throw_error("~" #cls ": Error decrementing nproc");	\
       }								\
-      if (nproc() == 0) {					\
+      if (nproc() <= 0) {					\
 	log_debug() << "~" << #cls << ": destroy" << std::endl;	\
 	if (local_destroy() == -1) {				\
 	  throw_error("~" #cls ": Error destroying instance");	\
