@@ -1795,7 +1795,7 @@ static PyObject* Comm_t_is_closed_get(PyObject* self, void*) {
   Py_RETURN_FALSE;
 }
 static PyObject* Comm_t_n_msg_get(PyObject* self, void*) {
-  return PyLong_FromLong(((pyComm_t*)self)->comm->comm_nmsg());
+  return PyLong_FromLong(((pyComm_t*)self)->comm->nmsg());
 }
 static PyObject* Comm_t_is_interface_get(PyObject* self, void*) {
   pyComm_t* s = (pyComm_t*)self;

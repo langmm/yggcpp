@@ -294,27 +294,27 @@ template<class OutputIt>
     if (AMQP_REPLY_TYPE == AMQP_RESPONSE_LIBRARY_EXCEPTION) {
       out.library_error = AMQP_ERROR;
     } else if (AMQP_REPLY_TYPE == AMQP_RESPONSE_SERVER_EXCEPTION) {
-      out.reply.id = AMQP_ERROR;
+      out.reply.id = static_cast<amqp_method_number_t>(AMQP_ERROR);
     }
     return out;
   }
-  amqp_socket_t* amqp_tcp_socket_new(amqp_connection_state_t state) {
+  amqp_socket_t* amqp_tcp_socket_new(amqp_connection_state_t) {
     return NULL;
   }
-  amqp_rpc_reply_t amqp_get_rpc_reply(amqp_connection_state_t state) {
+  amqp_rpc_reply_t amqp_get_rpc_reply(amqp_connection_state_t) {
     return _amqp_get_rpc_reply();
   }
   amqp_queue_declare_ok_t* amqp_queue_declare(
-    amqp_connection_state_t state, amqp_channel_t channel,
-    amqp_bytes_t queue, amqp_boolean_t passive, amqp_boolean_t durable,
-    amqp_boolean_t exclusive, amqp_boolean_t auto_delete,
-    amqp_table_t arguments) {
+    amqp_connection_state_t, amqp_channel_t,
+    amqp_bytes_t, amqp_boolean_t, amqp_boolean_t,
+    amqp_boolean_t, amqp_boolean_t,
+    amqp_table_t) {
     return NULL;
   }
-  amqp_rpc_reply_t amqp_basic_get(amqp_connection_state_t state,
-				  amqp_channel_t channel,
-				  amqp_bytes_t queue,
-				  amqp_boolean_t no_ack) {
+  amqp_rpc_reply_t amqp_basic_get(amqp_connection_state_t,
+				  amqp_channel_t,
+				  amqp_bytes_t,
+				  amqp_boolean_t) {
     return _amqp_get_rpc_reply();
   }
 #endif
