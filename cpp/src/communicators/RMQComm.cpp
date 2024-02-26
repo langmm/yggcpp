@@ -30,6 +30,7 @@ RMQConnection::RMQConnection(const std::string logInst, DIRECTION dir,
   url(""), host(""), user(""), password(""), port(-1), vhost(""),
   exchange(""), queue_name("") {
   if (init() < 0) {
+    amqp_destroy_connection(conn);
     throw_error("RMQConnection: Failed to initialize connection");
   }
 }
@@ -76,7 +77,6 @@ int RMQConnection::init() {
       exchange = parts[1];
       queue_name = parts[2];
     } else if (parts.size() != 1) {
-      std::cerr << "RMQ HERE" << std::endl;
       log_error() << "init: Error parsing address: " << address <<
 	std::endl;
       return -1;

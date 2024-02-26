@@ -30,6 +30,7 @@ TEST(ProcessMutex, constructor) {
 
 TEST(ProcessMutex, destructor_error) {
 #ifdef ELF_AVAILABLE
+  ProcessMutex* mutex = new ProcessMutex("test", "test", true);
   ELF_BEGIN;
   ELF_BEGIN_F(semctl);
   EXPECT_THROW(mutex->~ProcessMutex(), std::exception);
