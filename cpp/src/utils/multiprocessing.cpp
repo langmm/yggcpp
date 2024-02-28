@@ -387,7 +387,7 @@ SYSV_DESTRUCTOR(SysVSharedMem)
 
 int SysVSharedMem::local_cleanup() {
   log_debug() << "SysVSharedMem::local_cleanup: begin" << std::endl;
-  if (shmdt(memory) == -1) {
+  if (memory && shmdt(memory) == -1) {
     log_error() << error("local_cleanup: shmdt failed") << std::endl;
     return -1;
   }

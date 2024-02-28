@@ -30,7 +30,9 @@ RMQConnection::RMQConnection(const std::string logInst, DIRECTION dir,
   url(""), host(""), user(""), password(""), port(-1), vhost(""),
   exchange(""), queue_name("") {
   if (init() < 0) {
+#ifdef RMQINSTALLED
     amqp_destroy_connection(conn);
+#endif // RMQINSTALLED
     throw_error("RMQConnection: Failed to initialize connection");
   }
 }

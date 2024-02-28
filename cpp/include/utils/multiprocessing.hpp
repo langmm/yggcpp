@@ -416,7 +416,6 @@ namespace YggInterface {
        * @return Number of processes, -1 indicates an error.
        */
       YGG_API int nproc() const;
-    private:
 #ifdef _WIN32
       Win32Mutex* handle;           /**< Named mutex handle */
 #else
@@ -493,7 +492,6 @@ namespace YggInterface {
       ProcessMutex mutex;     /**< Mutex used to synchronize access to the memory */
       size_t size;            /**< Size of the shared memory */
       void* memory;           /**< Address of the shared memory */
-    private:
 #ifdef _WIN32
       Win32SharedMem* handle; /**< File mapping handle */
 #else

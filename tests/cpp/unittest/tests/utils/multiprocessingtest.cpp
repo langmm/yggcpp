@@ -29,19 +29,17 @@ TEST(ProcessMutex, constructor) {
 }
 
 TEST(ProcessMutex, destructor_error) {
-#ifdef ELF_AVAILABLE
   ProcessMutex* mutex = new ProcessMutex("test", "test", true);
+#ifdef ELF_AVAILABLE
   ELF_BEGIN;
   ELF_BEGIN_F(semctl);
-  EXPECT_THROW(mutex->~ProcessMutex(), std::exception);
+  EXPECT_EQ(mutex->handle->local_destroy(), -1);
   ELF_END_F(semctl);
-  delete mutex;
   ELF_END;
 #else // ELF_AVAILABLE
-  ProcessMutex* mutex = new ProcessMutex("test", "test", true);
-  mutex->~ProcessMutex();
-  delete mutex;
+  EXPECT_EQ(mutex->handle->local_destroy(), 0);
 #endif // ELF_AVAILABLE
+  delete mutex;
 }
 
 TEST(ProcessMutex, nproc) {
@@ -95,23 +93,20 @@ TEST(ProcessSharedMemory, constructor) {
 }
 
 TEST(ProcessSharedMemory, destructor_error) {
-#ifdef ELF_AVAILABLE
   ProcessSharedMemory* shm = new ProcessSharedMemory("test", 8, "test", true);
+#ifdef ELF_AVAILABLE
   ELF_BEGIN;
   ELF_BEGIN_F(shmdt);
-  EXPECT_THROW(shm->~ProcessSharedMemory(), std::exception);
+  EXPECT_EQ(shm->handle->local_cleanup(), -1);
   ELF_END_F(shmdt);
-  delete shm;
-  shm = new ProcessSharedMemory("test", 8, "test", true);
   ELF_BEGIN_F(shmctl);
-  EXPECT_THROW(shm->~ProcessSharedMemory(), std::exception);
+  EXPECT_EQ(shm->handle->local_destroy(), -1);
   ELF_END_F(shmctl);
-  delete shm;
   ELF_END;
 #else // ELF_AVAILABLE
-  ProcessSharedMemory* shm = new ProcessSharedMemory("test", 8, "test", true);
-  shm->~ProcessSharedMemory();
-  delete shm;
+  EXPECT_EQ(shm->handle->local_destroy(), 0);
+  EXPECT_EQ(shm->handle->local_cleanup(), 0);
 #endif // ELF_AVAILABLE
+  delete shm;
 }
 
