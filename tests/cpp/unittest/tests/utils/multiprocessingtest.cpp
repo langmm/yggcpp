@@ -48,7 +48,7 @@ TEST(ProcessMutex, nproc) {
 #ifdef ELF_AVAILABLE
   ELF_BEGIN;
   ELF_BEGIN_F(semctl);
-  EXPECT_THROW(mutex.nproc(), std::exception);
+  EXPECT_EQ(mutex.nproc(), -1);
   ELF_END_F(semctl);
   ELF_END;
 #endif // ELF_AVAILABLE
@@ -64,10 +64,12 @@ TEST(ProcessMutex, lock) {
   mutex.unlock();
   EXPECT_TRUE(mutex.try_lock());
   mutex.unlock();
+  errno = 0;
 #ifdef ELF_AVAILABLE
   ELF_BEGIN;
   ELF_BEGIN_F(semop);
   EXPECT_THROW(mutex.lock(), std::exception);
+  errno = 0;
   EXPECT_THROW(mutex.try_lock(), std::exception);
   ELF_END_F(semop);
   ELF_END;
