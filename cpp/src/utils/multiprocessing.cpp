@@ -39,8 +39,12 @@ IPCBase::~IPCBase() {
 }
 int IPCBase::local_destroy() {
   log_debug() << "IPCBase::local_destroy: begin" << std::endl;
-  if (!preserve_address)
+  if (!preserve_address) {
+    log_debug() << "IPCBase::local_destroy: Removing address" << std::endl;
     std::remove(address.c_str());
+  } else {
+    log_debug() << "IPCBase::local_destroy: Preserving address" << std::endl;
+  }
   log_debug() << "IPCBase::local_destroy: done" << std::endl;
   return 0;
 }
@@ -277,6 +281,8 @@ key_t SysVBase::safe_ftok(const std::string& address,
     tmp.close();
     key = ftok(address.c_str(), ftok_int); 
   }
+  std::cerr << "safe_ftok: " << address << ", " << ftok_int <<
+    ", " << create << " => " << key << std::endl;
   return key;
 }
 
@@ -310,7 +316,6 @@ int SysVSemaphore::local_destroy() {
   log_debug() << "SysVSemaphore::local_destroy: begin" << std::endl;
   if (id != -1 && semctl(id, 0, IPC_RMID) == -1) {
     log_error() << error("semctl[IPC_RMID]") << std::endl;
-    id = -1;
     return -1;
   }
   id = -1;
@@ -401,7 +406,6 @@ int SysVSharedMem::local_destroy() {
   log_debug() << "SysVSharedMem::local_destroy: begin" << std::endl;
   if (id != -1 && shmctl(id, IPC_RMID, 0) == -1) {
     log_error() << error("shmctl[IPC_RMID]") << std::endl;
-    id = -1;
     return -1;
   }
   id = -1;
@@ -447,7 +451,7 @@ void ProcessMutex::init(const std::string& nme,
 #ifdef _WIN32
   handle = new Win32Mutex(address);
 #else
-  handle = new SysVSemaphore(address, 5, created, true, true);
+  handle = new SysVSemaphore(address, 5, created, true, false);
 #endif
   if (handle == NULL)
     throw_error("init: Failed to create mutex handle (" + err + ")");
@@ -457,7 +461,8 @@ void ProcessMutex::init(const std::string& nme,
 void ProcessMutex::close(bool remove_file) {
   if (handle == NULL)
     return;
-  handle->preserve_address = (!remove_file);
+  if (remove_file)
+    handle->preserve_address = (!remove_file);
   delete handle;
   handle = NULL;
 }
