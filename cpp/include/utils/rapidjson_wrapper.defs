@@ -34,11 +34,11 @@ RAPIDJSON_WRAPPER_DEFS_ bool YggInterface::utils::initialize_python(const std::s
   try {
     err = rapidjson::initialize_python(error_prefix, true);
   } catch (std::exception& e) {
-    err = e.what();
+    err = e.what();  // GCOV_EXCL_LINE
   }
   if (!err.empty()) {
-    YggLogError << err << std::endl;
-    return false;
+    YggLogError << err << std::endl;  // GCOV_EXCL_LINE
+    return false;  // GCOV_EXCL_LINE
   }
 #if !defined(RAPIDJSON_DONT_IMPORT_NUMPY) && defined(RAPIDJSON_FORCE_IMPORT_ARRAY)
   rapidjson_NUMPY_IMPORTED = 1;
@@ -50,8 +50,8 @@ RAPIDJSON_WRAPPER_DEFS_ bool YggInterface::utils::finalize_python(const std::str
   try {
     rapidjson::finalize_python(error_prefix);
   } catch (std::exception& e) {
-    YggLogError << e.what() << std::endl;
-    return false;
+    YggLogError << e.what() << std::endl;  // GCOV_EXCL_LINE
+    return false;  // GCOV_EXCL_LINE
   }
   return true;
 }
@@ -65,11 +65,11 @@ RAPIDJSON_WRAPPER_DEFS_ bool YggInterface::utils::import_numpy_arrays() {
     }
     err = rapidjson::init_numpy_API();
   } catch (std::exception& e) {
-    err = e.what();
+    err = e.what();  // GCOV_EXCL_LINE
   }
   if (!err.empty()) {
-    YggLogError << err << std::endl;
-    return false;
+    YggLogError << err << std::endl;  // GCOV_EXCL_LINE
+    return false;  // GCOV_EXCL_LINE
   }
 #if !defined(RAPIDJSON_DONT_IMPORT_NUMPY) && defined(RAPIDJSON_FORCE_IMPORT_ARRAY)
   rapidjson_NUMPY_IMPORTED = 1;
@@ -93,7 +93,7 @@ RAPIDJSON_WRAPPER_DEFS_ PyObject* YggInterface::utils::import_python_element(
     out = rapidjson::import_python_class(module.c_str(), element.c_str(),
                                          error_prefix, ignore_error);
   } catch (std::exception& e) {
-    YggLogError << e.what() << std::endl;
+    YggLogError << e.what() << std::endl;  // GCOV_EXCL_LINE
   }
   return out;
 }

@@ -1316,46 +1316,49 @@ bool PyBaseFunc::_call(const rapidjson::Document& doc,
 		       rapidjson::Document* out) {
   bool res = false;
   PyGILState_STATE gstate;
+  std::string err;
+  PyObject *pyDoc = NULL, *args = NULL, *resPy = NULL;
   gstate = PyGILState_Ensure();
-  try {
-    PyObject* pyDoc = doc.GetPythonObjectRaw();
-    if (pyDoc == NULL) {
-      ygglog_throw_error("PyBaseFunc: Could not convert input document to Python");
-    }
-    PyObject* args = PyTuple_Pack(1, pyDoc);
-    if (args == NULL) {
-      Py_DECREF(pyDoc);
-      ygglog_throw_error("PyBaseFunc: Failed to create arguments tuple");
-    }
-    PyObject* resPy = PyObject_Call(func_, args, NULL);
-    Py_DECREF(args);
-    if (resPy == NULL) {
-      Py_DECREF(pyDoc);
-      ygglog_throw_error("PyBaseFunc: Error in function call");
-    } else if (out != nullptr) {
-      Py_DECREF(pyDoc);
-      pyDoc = resPy;
-      Py_INCREF(Py_True);
-      resPy = Py_True;
-    }
-    if (!PyBool_Check(resPy)) {
-      Py_DECREF(pyDoc);
-      Py_DECREF(resPy);
-      ygglog_throw_error("PyBaseFunc: Result is not a boolean.");
-    }
-    res = (resPy == Py_True);
-    Py_DECREF(resPy);
-    if (out != nullptr &&
-	!out->SetPythonObjectRaw(pyDoc, out->GetAllocator())) {
-      Py_DECREF(pyDoc);
-      ygglog_throw_error("PyBaseFunc: Error setting document from Python");
-    }
-    Py_DECREF(pyDoc);
-    PyGILState_Release(gstate);
-  } catch (...) {
-    PyGILState_Release(gstate);
-    ygglog_throw_error("PyBaseFunc: Caught");
+  pyDoc = doc.GetPythonObjectRaw();
+  if (pyDoc == NULL) {
+    err = "PyBaseFunc: Could not convert input document to Python";  // GCOV_EXCL_LINE
+    goto cleanup;  // GCOV_EXCL_LINE
   }
+  args = PyTuple_Pack(1, pyDoc);
+  if (args == NULL) {
+    err = "PyBaseFunc: Failed to create arguments tuple";  // GCOV_EXCL_LINE
+    goto cleanup;  // GCOV_EXCL_LINE
+  }
+  resPy = PyObject_Call(func_, args, NULL);
+  Py_CLEAR(args);
+  if (resPy == NULL) {
+    err = "PyBaseFunc: Error in function call";
+    goto cleanup;
+  }
+  if (out != nullptr) {
+    Py_CLEAR(pyDoc);
+    pyDoc = resPy;
+    Py_INCREF(Py_True);
+    resPy = Py_True;
+  }
+  if (!PyBool_Check(resPy)) {
+    err = "PyBaseFunc: Result is not a boolean.";
+    goto cleanup;
+  }
+  res = (resPy == Py_True);
+  Py_CLEAR(resPy);
+  if (out != nullptr &&
+      !out->SetPythonObjectRaw(pyDoc, out->GetAllocator())) {
+    err = "PyBaseFunc: Error setting document from Python";  // GCOV_EXCL_LINE
+    goto cleanup;  // GCOV_EXCL_LINE
+  }
+ cleanup:
+  Py_XDECREF(pyDoc);
+  Py_XDECREF(args);
+  Py_XDECREF(resPy);
+  PyGILState_Release(gstate);
+  if (!err.empty())
+    ygglog_throw_error(err.c_str());
   return res;
 }
 #else

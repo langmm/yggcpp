@@ -9,6 +9,7 @@
 #include "utils/tools.hpp"
 #include "utils/regex.hpp"
 #include "utils/enums_utils.hpp"
+#include "utils/serialization.hpp"
 
 #define BEGIN_CAPTURE(B) \
 std::stringstream B;     \
@@ -300,4 +301,25 @@ TEST(ENUM, enum_value_search) {
   EXPECT_FALSE(enum_value_search(COMM_TYPE_cls_map, "INVALID", key));
 }
 
+TEST(utils, import_numpy_arrays) {
+  EXPECT_TRUE(import_numpy_arrays());
+#ifndef YGGDRASIL_DISABLE_PYTHON_C_API
+  EXPECT_TRUE(numpy_arrays_imported());
+#endif // YGGDRASIL_DISABLE_PYTHON_C_API
+}
+
+TEST(utils, FilterBase) {
+  FilterBase x;
+  rapidjson::Document doc;
+  EXPECT_THROW(x(doc), std::exception);
+  EXPECT_THROW(x.copy(), std::exception);
+}
+  
+TEST(utils, TransformBase) {
+  TransformBase x;
+  rapidjson::Document doc;
+  EXPECT_THROW(x(doc), std::exception);
+  EXPECT_THROW(x.copy(), std::exception);
+}
+  
 }

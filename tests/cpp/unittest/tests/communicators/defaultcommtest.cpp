@@ -471,7 +471,7 @@ TEST(DefaultCommu, transform_send) {
   EXPECT_EQ(result, "2");
   EXPECT_EQ(rComm.recvVar(result), -2);
 }
-// error
+// errors
 TEST(DefaultCommu, filter_recv_error) {
   DefaultComm sComm("", SEND);
   utils::Address addr(sComm.getAddress());
@@ -596,5 +596,75 @@ TEST(DefaultCommu, py_transform_send) {
   EXPECT_GT(rComm.recvVar(result), 0);
   EXPECT_EQ(result, "2");
   EXPECT_EQ(rComm.recvVar(result), -2);
+}
+// Python errors
+TEST(DefaultCommu, py_filter_recv_error) {
+  DefaultComm sComm("", SEND);
+  utils::Address addr(sComm.getAddress());
+  DefaultComm rComm("", addr, RECV);
+  PyObject* py_filter = utils::import_python_element(
+      "example_python", "example_filter_error");
+  EXPECT_TRUE(rComm.getMetadata().addFilter(py_filter));
+  EXPECT_GT(sComm.sendVar(0), 0);
+  int result = -1;
+  EXPECT_EQ(rComm.recvVar(result), -1);
+  EXPECT_EQ(result, -1);
+}
+TEST(DefaultCommu, py_filter_send_error) {
+  DefaultComm sComm("", SEND);
+  utils::Address addr(sComm.getAddress());
+  DefaultComm rComm("", addr, RECV);
+  PyObject* py_filter = utils::import_python_element(
+      "example_python", "example_filter_error");
+  EXPECT_TRUE(sComm.getMetadata().addFilter(py_filter));
+  EXPECT_EQ(sComm.sendVar(0), -1);
+  EXPECT_EQ(rComm.nmsg(), 0);
+}
+
+TEST(DefaultCommu, py_transform_recv_error) {
+  DefaultComm sComm("", SEND);
+  utils::Address addr(sComm.getAddress());
+  DefaultComm rComm("", addr, RECV);
+  PyObject* py_transform = utils::import_python_element(
+      "example_python", "example_transform_error");
+  EXPECT_TRUE(rComm.getMetadata().addTransform(py_transform));
+  EXPECT_GT(sComm.sendVar(0), 0);
+  std::string result = "";
+  EXPECT_EQ(rComm.recvVar(result), -1);
+  EXPECT_EQ(result, "");
+}
+TEST(DefaultCommu, py_transform_send_error) {
+  DefaultComm sComm("", SEND);
+  utils::Address addr(sComm.getAddress());
+  DefaultComm rComm("", addr, RECV);
+  PyObject* py_transform = utils::import_python_element(
+      "example_python", "example_transform_error");
+  EXPECT_TRUE(sComm.getMetadata().addTransform(py_transform));
+  EXPECT_EQ(sComm.sendVar(0), -1);
+  EXPECT_EQ(rComm.nmsg(), 0);
+}
+
+// Invalid return type
+TEST(DefaultCommu, py_filter_recv_invalid_return) {
+  DefaultComm sComm("", SEND);
+  utils::Address addr(sComm.getAddress());
+  DefaultComm rComm("", addr, RECV);
+  PyObject* py_filter = utils::import_python_element(
+      "example_python", "example_filter_invalid");
+  EXPECT_TRUE(rComm.getMetadata().addFilter(py_filter));
+  EXPECT_GT(sComm.sendVar(0), 0);
+  int result = -1;
+  EXPECT_EQ(rComm.recvVar(result), -1);
+  EXPECT_EQ(result, -1);
+}
+TEST(DefaultCommu, py_filter_send_invalid_return) {
+  DefaultComm sComm("", SEND);
+  utils::Address addr(sComm.getAddress());
+  DefaultComm rComm("", addr, RECV);
+  PyObject* py_filter = utils::import_python_element(
+      "example_python", "example_filter_invalid");
+  EXPECT_TRUE(sComm.getMetadata().addFilter(py_filter));
+  EXPECT_EQ(sComm.sendVar(0), -1);
+  EXPECT_EQ(rComm.nmsg(), 0);
 }
 #endif // YGGDRASIL_DISABLE_PYTHON_C_API

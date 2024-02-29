@@ -210,12 +210,6 @@ namespace YggInterface {
 	return out;
       }
       /**
-       * @brief Destroy the instance if there are no longer any processes
-       *   attached.
-       * @return -1 on error
-       */
-      YGG_API int destroy_if_unused();
-      /**
        * @brief Get the number of processes using the instance
        * @return Number of processes, -1 indicates an error.
        */

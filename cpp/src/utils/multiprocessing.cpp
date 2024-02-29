@@ -23,18 +23,19 @@ IPCBase::IPCBase(const std::string& addr, bool preserve_addr,
 		 const std::string& logCls) :
   LogBase(), address(addr), preserve_address(preserve_addr),
   logClass_(logCls) {
-  log_debug() << "IPCBase: begin, address = " << address << std::endl;
-  if (address.empty())
-    throw_error("IPCBase: Address cannot be empty");
-  log_debug() << "IPCBase: done" << std::endl;
+  log_debug() << "IPCBase: address = " << address << std::endl;
 }
 IPCBase::~IPCBase() {
   log_debug() << "~IPCBase: begin" << std::endl;
-  if (local_destroy() == -1)
-    throw_error("IPCBase: Error destroying instance");
+  // Currently local_destroy never returns -1
+  // if (local_destroy() == -1)
+  //   throw_error("IPCBase: Error destroying instance");
+  local_destroy();
   log_debug() << "~IPCBase: cleanup" << std::endl;
-  if (local_cleanup() == -1)
-    throw_error("IPCBase: Error cleaning up instance");
+  // Currently local_cleanup never returns -1
+  // if (local_cleanup() == -1)
+  //   throw_error("IPCBase: Error cleaning up instance");
+  local_cleanup();
   log_debug() << "~IPCBase: done" << std::endl;
 }
 int IPCBase::local_destroy() {
@@ -42,8 +43,6 @@ int IPCBase::local_destroy() {
   if (!preserve_address) {
     log_debug() << "IPCBase::local_destroy: Removing address" << std::endl;
     std::remove(address.c_str());
-  } else {
-    log_debug() << "IPCBase::local_destroy: Preserving address" << std::endl;
   }
   log_debug() << "IPCBase::local_destroy: done" << std::endl;
   return 0;
@@ -89,7 +88,7 @@ IPC_DESTRUCTOR(Win32Base, IPCBase)
 
 Win32Mutex::Win32Mutex(const std::string& addr, bool preserve_addr) :
   Win32Base(addr, preserve_addr, "Win32Mutex") {
-  preserve_address = true; // TODO: should this be false
+  preserve_address = true; // TODO: should this be false?
   handle = CreateMutexA(NULL, FALSE, address.c_str());
   if (handle == NULL)
     throw_error(error("Win32Mutex: CreateMutexA failed"));
@@ -189,7 +188,7 @@ int Win32SharedMem::local_cleanup() {
     log_debug() << "~" << #cls << ": begin" << std::endl;	\
     if (nproc_sem) {						\
       log_debug() << "~" << #cls << ": decrementing nproc" << std::endl; \
-      if (nproc_sem->dec() == -1) {				\
+      if (nproc() > 0 && nproc_sem->dec() == -1) {			\
 	throw_error("~" #cls ": Error decrementing nproc");	\
       }								\
       if (nproc() <= 0) {					\
@@ -217,8 +216,11 @@ SysVBase::SysVBase(const std::string& addr, const int sd,
     throw_error(error("ftok"));
   if (track_nproc) {
     nproc_sem = new SysVSemaphore(address + "_nproc", sd, create);
-    if ((!create) && nproc_sem->inc() == -1)
+    if ((!create) && nproc_sem->inc() == -1) {
+      delete nproc_sem;
+      nproc_sem = NULL;
       throw_error("Failed to increment processor count");
+    }
     log_debug() << "SysVBase: nproc = " << nproc() << std::endl;
   }
   log_debug() << "SysVBase: done" << std::endl;
@@ -253,14 +255,6 @@ int SysVBase::local_destroy() {
 }
 
 IPC_DESTRUCTOR(SysVBase, IPCBase)
-
-int SysVBase::destroy_if_unused() {
-  if (nproc_sem && nproc() == 0) {
-    if (destroy() < 0)
-      return -1;
-  }
-  return 0;
-}
 
 int SysVBase::nproc() const {
   if (!nproc_sem) {
@@ -447,14 +441,11 @@ void ProcessMutex::init(const std::string& nme,
   address = addr;
   created = created_;
   log_debug() << "init: address = " << address << std::endl;
-  std::string err;
 #ifdef _WIN32
   handle = new Win32Mutex(address);
 #else
   handle = new SysVSemaphore(address, 5, created, true, false);
 #endif
-  if (handle == NULL)
-    throw_error("init: Failed to create mutex handle (" + err + ")");
   log_debug() << "init: Initialization complete" << std::endl;
 }
 
@@ -485,8 +476,6 @@ bool ProcessMutex::try_lock() {
       out = true;
     else if (res != -2)
       throw_error("try_lock: Failed to take ownership of the mutex");
-  } else {
-    out = true;
   }
   log_debug() << "try_lock: done" << std::endl;
   return out;
