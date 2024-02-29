@@ -1011,6 +1011,7 @@ bool Metadata::checkFilter() {
   return out;
 }
 bool Metadata::filter(const rapidjson::Document& msg) {
+  skip_last = false;
   for (std::vector<FilterBase*>::iterator it = filters.begin();
        it != filters.end(); it++) {
     if ((*it)->operator()(msg)) {

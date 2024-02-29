@@ -17,16 +17,6 @@ namespace YggInterface {
       ForkTines& operator=(const ForkTines&) = delete;
     public:
       /**
-       * @brief Constructor using an existing set of tine communicators
-       * @param[in] logInst String that should be used in log messages
-       *   identifying the instance
-       * @param[in] comm Tine communicators
-       * @param[in] typ Enumerated fork type
-       */
-      ForkTines(const std::string logInst,
-		std::vector<Comm_t*>& comm,
-		const FORK_TYPE typ=FORK_DEFAULT);
-      /**
        * @brief Constructor to create a new set of tine communicators
        * @param[in] logInst String that should be used in log messages
        *   identifying the instance

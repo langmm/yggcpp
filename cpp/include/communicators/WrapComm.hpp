@@ -119,7 +119,7 @@ namespace YggInterface {
     public:
       WRAP_METHOD(nmsg, (DIRECTION dir=NONE), (dir),
 		  out = -1, int, const override);
-      WRAP_METHOD(getMetadata, (const DIRECTION dir), (dir),
+      WRAP_METHOD(getMetadata, (const DIRECTION dir=NONE), (dir),
 		  THROW_NO_HANDLE(getMetadata),
 		  YggInterface::utils::Metadata&, override);
       WRAP_METHOD_NORET(set_timeout_recv, (int64_t new_timeout),

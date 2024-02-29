@@ -9,13 +9,6 @@ using namespace YggInterface::utils;
 ///////////////
 
 ForkTines::ForkTines(const std::string logInst,
-		     std::vector<Comm_t*>& comm,
-		     const FORK_TYPE typ) :
-  LogBase(), logInst_(logInst), forktype(typ), comms(), iter(0) {
-  comms.swap(comm);
-  updateType();
-}
-ForkTines::ForkTines(const std::string logInst,
 		     const std::vector<std::string>& names,
 		     const std::vector<std::string>& addrs,
 		     const DIRECTION dir, FLAG_TYPE flags,
@@ -42,12 +35,9 @@ ForkTines::ForkTines(const std::string logInst,
       iaddr = utils::Address(addrs[i]);
     }
     Comm_t* icomm = new_Comm_t(dir, commtype, *iname, iaddr, flags);
-    if (!icomm) {
+    if (!(icomm && (icomm->getFlags() & COMM_FLAG_VALID))) {
+      if (icomm) delete icomm;
       throw_error("ForkTines: Failed to create tine comm");
-    }
-    if (!(icomm->getFlags() & COMM_FLAG_VALID)) {
-      delete icomm;
-      throw_error("ForkTines: Invalid comm");
     }
     comms.push_back(icomm);
   }
@@ -62,14 +52,11 @@ ForkTines::~ForkTines() {
 }
 void ForkTines::updateType() {
   // TODO: Set flag identifying fork tine?
-  if (forktype == FORK_DEFAULT && comms.size() > 0) {
+  if (forktype == FORK_DEFAULT) {
     if (comms[0]->getDirection() == SEND)
       forktype = FORK_BROADCAST;
     else
       forktype = FORK_CYCLE;
-  }
-  if (forktype == FORK_DEFAULT) {
-    throw_error("ForkTines: Could not determine fork type");
   }
   for (typename std::vector<Comm_t*>::iterator it = comms.begin();
        it != comms.end(); it++)
@@ -155,8 +142,8 @@ int ForkTines::send(const char *data, const size_t &len,
       tmp_data = nullptr;
       tmp_len = 0;
       if (meta.serialize(&tmp_data, &tmp_len, *tmp, true) < 0) {
-	out = -1;
-	goto cleanup;
+	out = -1;  // GCOV_EXCL_LINE
+	goto cleanup;  // GCOV_EXCL_LINE
       }
     }
     if (static_cast<size_t>(tmp->Size()) != comms.size()) {
@@ -167,8 +154,8 @@ int ForkTines::send(const char *data, const size_t &len,
     }
     std::vector<std::string> field_names;
     if (!meta.get_field_names(field_names)) {
-      out = -1;
-      goto cleanup;
+      out = -1;  // GCOV_EXCL_LINE
+      goto cleanup;  // GCOV_EXCL_LINE
     }
     size_t i = 0;
     for (typename std::vector<Comm_t*>::iterator it = comms.begin();
@@ -177,8 +164,8 @@ int ForkTines::send(const char *data, const size_t &len,
       if (!field_names.empty()) {
 	(*it)->getMetadata(SEND).initSchema();
 	if (!(*it)->getMetadata(SEND).SetSchemaString("title", field_names[i])) {
-	  out = -1;
-	  goto cleanup;
+	  out = -1;  // GCOV_EXCL_LINE
+	  goto cleanup;  // GCOV_EXCL_LINE
 	}
       }
       if ((*it)->send((*tmp)[static_cast<rapidjson::SizeType>(i)]) < 0) {
@@ -225,11 +212,15 @@ long ForkTines::recv(char*& data, const size_t &len,
       }
       is_eof = (iout == -2);
       if (!is_eof) {
+	if (iout < 0) {
+	  log_error() << "Error on one of the tines" << std::endl;
+	  return -1;
+	}
 	doc.PushBack(idoc, doc.GetAllocator());
 	if (!no_names) {
 	  if (!(*it)->getMetadata(RECV).GetSchemaStringOptional(
 	       "title", ival, ""))
-	    return -1;
+	    return -1;  // GCOV_EXCL_LINE
 	  if (ival.empty()) {
 	    no_names = true;
 	  } else {
@@ -241,12 +232,13 @@ long ForkTines::recv(char*& data, const size_t &len,
     // TODO: Any other fields need to be transfered?
     if (!field_names.empty()) {
       if (!meta.set_field_names(field_names))
-	return -1;
+	return -1;  // GCOV_EXCL_LINE
     }
+    out = 0;
   }
   if (eof()) {
     out = -2;
-  } else {
+  } else if (out >= 0) {
     size_t tmp_len = len;
     out = meta.deserialize_updates(doc);
     if (out == 0) {
@@ -301,8 +293,6 @@ void ForkComm::_open(bool call_base) {
       flags |= COMM_FLAG_FORK_CYCLE;
     else if (forktype == FORK_BROADCAST)
       flags |= COMM_FLAG_FORK_BROADCAST;
-    else if (forktype == FORK_COMPOSITE)
-      flags |= COMM_FLAG_FORK_COMPOSITE;
   }
   if (!this->address.valid()) {
     std::string new_address = "";

@@ -84,17 +84,21 @@ TEST(ProcessMutex, lock) {
   errno = 0;
 #ifdef ELF_AVAILABLE
   ELF_BEGIN;
-  ELF_BEGIN_F(semop);
-  EXPECT_THROW(mutex.lock(), std::exception);
-  errno = 0;
-  EXPECT_THROW(mutex.try_lock(), std::exception);
-  errno = 0;
-  EXPECT_THROW(ProcessMutex("test2", "test2", true), std::exception);
-  ELF_END_F(semop);
+  {
+    ELF_BEGIN_F(semop);
+    EXPECT_THROW(mutex.lock(), std::exception);
+    errno = 0;
+    EXPECT_THROW(mutex.try_lock(), std::exception);
+    errno = 0;
+    EXPECT_THROW(ProcessMutex("test2", "test2", true), std::exception);
+    ELF_END_F(semop);
+  }
   mutex.lock();
-  ELF_BEGIN_F(semop);
-  EXPECT_THROW(mutex.unlock(), std::exception);
-  ELF_END_F(semop);
+  {
+    ELF_BEGIN_F(semop);
+    EXPECT_THROW(mutex.unlock(), std::exception);
+    ELF_END_F(semop);
+  }
   mutex.unlock();
   ELF_END;
 #endif // ELF_AVAILABLE
