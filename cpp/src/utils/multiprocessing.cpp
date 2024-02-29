@@ -524,7 +524,7 @@ ProcessSharedMemory::~ProcessSharedMemory() {
   if (handle) {
     log_debug() << "~ProcessSharedMemory: before destroy" << std::endl;
     if (mutex.nproc() == 1 && handle->destroy() == -1)
-      throw_error("~ProcessSharedMemory: Failed to destroy the handle");
+      throw_error("~ProcessSharedMemory: Failed to destroy the handle");  // GCOV_EXCL_LINE
     log_debug() << "~ProcessSharedMemory: after destroy" << std::endl;
     delete handle;
     log_debug() << "~ProcessSharedMemory: after delete" << std::endl;

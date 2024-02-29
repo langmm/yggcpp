@@ -586,14 +586,10 @@ bool ZMQComm::do_reply_recv(const Header& header) {
   if ((flags & COMM_FLAG_WORKER) && (reply.sockets.size() == 1)) {
     adr = reply.sockets[0].endpoint;
   } else {
-    try {
-      const char* address_c;
-      if (!header.GetMetaString("zmq_reply", address_c))
-	return false;
-      adr.assign(address_c);
-    } catch (...) {
+    const char* address_c;
+    if (!header.GetMetaString("zmq_reply", address_c))
       return false;
-    }
+    adr.assign(address_c);
   }
   reply.set(adr);
   bool closed = false;
@@ -614,7 +610,7 @@ bool ZMQComm::create_header_send(Header& header) {
     reply.create(reply_address);
     log_debug() << "create_header_send: zmq_reply = " << reply_address << std::endl;
     if (!header.SetMetaString("zmq_reply", reply_address))
-      return false;
+      return false;  // GCOV_EXCL_LINE
   }
   return out;
 }
@@ -632,7 +628,7 @@ Comm_t* ZMQComm::create_worker_send(Header& head) {
     out->reply.create(reply_address);
     log_debug() << "create_worker_send: zmq_reply_worker = " << reply_address << std::endl;
     if (!head.SetMetaString("zmq_reply_worker", reply_address))
-      return nullptr;
+      return nullptr;  // GCOV_EXCL_LINE
   }
   return out;
 }
@@ -644,21 +640,17 @@ Comm_t* ZMQComm::create_worker_recv(Header& head) {
   assert(!global_comm);
   ZMQComm* out = dynamic_cast<ZMQComm*>(Comm_t::create_worker_recv(head));
   if (out) {
-    try {
-      const char* zmq_reply_worker;
-      if (!head.GetMetaString("zmq_reply_worker", zmq_reply_worker))
-	return nullptr;
-      out->reply.set(std::string(zmq_reply_worker));
-    } catch (...) {
-      return nullptr;
-    }
+    const char* zmq_reply_worker;
+    if (!head.GetMetaString("zmq_reply_worker", zmq_reply_worker))
+      return nullptr;  // GCOV_EXCL_LINE
+    out->reply.set(std::string(zmq_reply_worker));
   }
   return out;
 }
 
 // Test methods
-bool ZMQComm::afterSendRecv(Comm_t* sComm, Comm_t* rComm) {
-  if (sComm->global_comm) // // GCOVR_EXCL_START
+bool ZMQComm::afterSendRecv(Comm_t* sComm, Comm_t* rComm) { // GCOVR_EXCL_START
+  if (sComm->global_comm)
     sComm = sComm->global_comm;
   if (rComm->global_comm)
     rComm = rComm->global_comm;
@@ -706,17 +698,17 @@ bool ZMQComm::afterSendRecv(Comm_t* sComm, Comm_t* rComm) {
     log_error() << "afterSendRecv: Error in recv_stage2" << std::endl;
     return false;
   }
-  return true; // GCOVR_EXCL_STOP
-}
-bool ZMQComm::genMetadata(std::string& out) {
-  std::string new_reply = ""; // GCOVR_EXCL_START
+  return true;
+} // GCOVR_EXCL_STOP
+bool ZMQComm::genMetadata(std::string& out) { // GCOVR_EXCL_START
+  std::string new_reply = "";
   if (reply.create(new_reply) < 0)
     return false;
   if (!out.empty())
     out += ", ";
   out += "\"zmq_reply\": \"" + new_reply + "\"";
-  return true; //  GCOVR_EXCL_STOP
-}
+  return true;
+} // GCOVR_EXCL_STOP
 
 #else // ZMQINSTALLED
 

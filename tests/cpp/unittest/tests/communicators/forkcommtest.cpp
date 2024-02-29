@@ -17,8 +17,10 @@ TEST(ForkComm, constructor_errors) {
 	       std::exception);
   EXPECT_THROW(ForkComm("n1,n2", "a1,a2,a3", SEND, 0, DEFAULT_COMM, 0),
 	       std::exception);
-  EXPECT_THROW(ForkComm("fork", "a1,a2,a3", SEND, 0, DEFAULT_COMM, 0),
+#ifdef ZMQINSTALLED
+  EXPECT_THROW(ForkComm("fork", "a1,a2,a3", SEND, 0, ZMQ_COMM, 0),
 	       std::exception);
+#endif // ZMQINSTALLED
 }
 
 #ifdef ELF_AVAILABLE

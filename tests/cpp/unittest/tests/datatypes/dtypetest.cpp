@@ -587,4 +587,17 @@ DO_PYTHON(class)
 DO_PYTHON(function)
 DO_PYTHON(instance)
 #undef DO_PYTHON
+TEST(dtype_t, create_dtype_python) {
+  rapidjson::Document x, y;
+  x.Parse("{\"a\": 1, \"b\": \"hello\"}");
+  PyObject* py_x = x.GetPythonObjectRaw();
+  dtype_t dt1 = create_dtype_python(py_x, true);
+  dtype_t dt2 = create_dtype_from_schema(
+    "{\"type\": \"object\", "
+    " \"properties\": {"
+    "    \"a\": {\"type\": \"integer\"},"
+    "    \"b\": {\"type\": \"string\"}"
+    "}}", true);
+  EXPECT_TRUE(compare_dtype(dt1, dt2));
+}
 #endif // YGGDRASIL_DISABLE_PYTHON_C_API

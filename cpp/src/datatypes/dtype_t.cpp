@@ -1274,6 +1274,14 @@ extern "C" {
     return static_cast<size_t>(out);
   };
 
+  bool compare_dtype(const dtype_t a, const dtype_t b) {
+    _BEGIN_CPP {
+      _GET_METADATA_THROW(a_metadata, a);
+      _GET_METADATA_THROW(b_metadata, b);
+      return ((*a_metadata) == (*b_metadata));
+    } _END_CPP(compare_dtype, false);
+  }
+  
   int set_dtype_name(dtype_t dtype, const char* name) {
     _BEGIN_CPP {
       _GET_METADATA_THROW(metadata, dtype);
@@ -1356,7 +1364,7 @@ extern "C" {
       if (!metadata->fromType(type, use_generic))
 	destroy_dtype(&out);
       return out;
-    } _END_CPP_CLEANUP(create_dtype_default, out, destroy_dtype(&out));
+    } _END_CPP_CLEANUP(create_dtype_default, out, destroy_dtype(&out)); // GCOV_EXCL_LINE
   }
 
   dtype_t create_dtype_scalar(const char* subtype, const size_t precision,
@@ -1367,7 +1375,7 @@ extern "C" {
       if (!metadata->fromScalar(subtype, precision, units, use_generic))
 	destroy_dtype(&out);
       return out;
-    } _END_CPP_CLEANUP(create_dtype_scalar, out, destroy_dtype(&out));
+    } _END_CPP_CLEANUP(create_dtype_scalar, out, destroy_dtype(&out)); // GCOV_EXCL_LINE
   }
 
   dtype_t create_dtype_format(const char *format_str,
@@ -1379,7 +1387,7 @@ extern "C" {
       if (!metadata->fromFormat(format_str, as_array, {}, {}, use_generic))
 	destroy_dtype(&out);
       return out;
-    } _END_CPP_CLEANUP(create_dtype_format, out, destroy_dtype(&out));
+    } _END_CPP_CLEANUP(create_dtype_format, out, destroy_dtype(&out)); // GCOV_EXCL_LINE
   }
 
   dtype_t create_dtype_1darray(const char* subtype,
@@ -1393,7 +1401,7 @@ extern "C" {
 				 units, use_generic))
 	destroy_dtype(&out);
       return out;
-    } _END_CPP_CLEANUP(create_dtype_1darray, out, destroy_dtype(&out));
+    } _END_CPP_CLEANUP(create_dtype_1darray, out, destroy_dtype(&out)); // GCOV_EXCL_LINE
   }
 
   dtype_t create_dtype_ndarray(const char* subtype,
@@ -1408,7 +1416,7 @@ extern "C" {
 				 units, use_generic))
 	destroy_dtype(&out);
       return out;
-    } _END_CPP_CLEANUP(create_dtype_ndarray, out, destroy_dtype(&out));
+    } _END_CPP_CLEANUP(create_dtype_ndarray, out, destroy_dtype(&out)); // GCOV_EXCL_LINE
   }
   dtype_t create_dtype_ndarray_arr(const char* subtype,
 				   const size_t precision,
@@ -1435,14 +1443,14 @@ extern "C" {
       }
       _GET_METADATA(metadata, out, out);
       if (!metadata->fromType("array", (use_generic || nitems == 0))) {
-	destroy_dtype(&out);
-	return out;
+	destroy_dtype(&out);  // GCOV_EXCL_LINE
+	return out;  // GCOV_EXCL_LINE
       }
       if (nitems > 0) {
 	if (!metadata->SetSchemaValue(
 	      "items", rapidjson::Value(rapidjson::kArrayType).Move())) {
-	  destroy_dtype(&out);
-	  return out;
+	  destroy_dtype(&out);  // GCOV_EXCL_LINE
+	  return out;  // GCOV_EXCL_LINE
 	}
 	for (size_t i = 0; i < nitems; i++) {
 	  if (items[i].metadata == NULL) {
@@ -1456,7 +1464,7 @@ extern "C" {
       }
       return out;
     } _END_CPP_CLEANUP(create_dtype_json_array, out,
-		       destroy_dtype(&out));
+		       destroy_dtype(&out)); // GCOV_EXCL_LINE
   }
   dtype_t create_dtype_json_object(const size_t nitems, const char** keys,
 				   dtype_t* values,
@@ -1476,8 +1484,8 @@ extern "C" {
       if (nitems > 0) {
 	if (!metadata->SetSchemaValue(
 	       "properties", rapidjson::Value(rapidjson::kObjectType).Move())) {
-	  destroy_dtype(&out);
-	  return out;
+	  destroy_dtype(&out);  // GCOV_EXCL_LINE
+	  return out;  // GCOV_EXCL_LINE
 	}
 	for (size_t i = 0; i < nitems; i++) {
 	  if (values[i].metadata == NULL) {
@@ -1492,7 +1500,7 @@ extern "C" {
       }
       return out;
     } _END_CPP_CLEANUP(create_dtype_json_object, out,
-		       destroy_dtype(&out));
+		       destroy_dtype(&out)); // GCOV_EXCL_LINE
   }
   dtype_t create_dtype_ply(const bool use_generic) {
     return create_dtype_default("ply", use_generic);
@@ -1521,8 +1529,8 @@ extern "C" {
       }
       if (class_name && strlen(class_name) > 0) {
 	if (!metadata->SetSchemaString("class", class_name)) {
-	  destroy_dtype(&out);
-	  return out;
+	  destroy_dtype(&out);  // GCOV_EXCL_LINE
+	  return out;  // GCOV_EXCL_LINE
 	}
       }
       if (args_dtype && !is_empty_dtype(*args_dtype)) {
@@ -1569,7 +1577,7 @@ extern "C" {
     _BEGIN_CPP {
       _GET_METADATA(metadata, dtype, 0);
       return static_cast<int>(metadata->isGeneric());
-    } _END_CPP(dtype_uses_generic, -1);
+    } _END_CPP(dtype_uses_generic, -1); // GCOV_EXCL_LINE
   }
 
   void display_dtype(const dtype_t dtype, const char* indent) {

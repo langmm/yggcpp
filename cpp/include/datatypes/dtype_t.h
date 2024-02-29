@@ -613,6 +613,13 @@ YGG_API const char* dtype_subtype(const dtype_t type_class);
 
 
 /*!
+  @brief Compare two datatypes structures.
+  @param[in] a First datatype for comparison
+  @param[in] b Second datatype for comparison
+*/
+YGG_API bool compare_dtype(const dtype_t a, const dtype_t b);
+
+/*!
   @brief Get the precision of the type.
   @param[in] type_class Type structure/class.
   @returns The precision of the class, 0 if there is an error.
