@@ -272,6 +272,7 @@ key_t SysVBase::safe_ftok(const std::string& address,
   if (key == -1 && errno == ENOENT && create) {
     std::ofstream tmp;
     tmp.open(address.c_str(), std::fstream::out | std::fstream::app);
+    tmp << address << std::endl;
     tmp.close();
     key = ftok(address.c_str(), ftok_int); 
   }
