@@ -475,6 +475,17 @@ if (${PYTHON_PREFIX}_EXECUTABLE)
     COMMAND_ERROR_IS_FATAL ANY)
 endif()
 
+################################################
+# Generate data types interface in C & Fortran #
+################################################
+
+if (${PYTHON_PREFIX}_EXECUTABLE)
+  execute_process(
+    COMMAND ${${PYTHON_PREFIX}_EXECUTABLE} utils/generate_generic.py ${GENERATE_DATATYPES_ARGS}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMAND_ERROR_IS_FATAL ANY)
+endif()
+
 ######################
 # Create C++ Library #
 ######################

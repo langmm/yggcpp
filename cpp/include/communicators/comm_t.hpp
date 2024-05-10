@@ -45,9 +45,27 @@ typedef struct comm_t {
 } comm_t;
 
   
-// TODO: Allow use of ygglog_error as function in C
+/**
+ * @brief Write a log message at the ERROR level. This will also cause
+ *   the calling model to return an error code on exit.
+ * @param[in] fmt Log message.
+ * @param[in] ... Additional arguments are formated into the log message
+ *   via sprintf.
+ */
 YGG_API void ygglog_error(const char* fmt, ...);
+/**
+ * @brief Write a log message at the DEBUG level.
+ * @param[in] fmt Log message.   
+ * @param[in] ... Additional arguments are formated into the log message
+ *   via sprintf.
+ */
 YGG_API void ygglog_debug(const char* fmt, ...);
+/**
+ * @brief Write a log message at the INFO level.
+ * @param[in] fmt Log message.   
+ * @param[in] ... Additional arguments are formated into the log message
+ *   via sprintf.
+ */
 YGG_API void ygglog_info(const char* fmt, ...);
 
 /**
@@ -59,6 +77,25 @@ YGG_API int ygg_init();
  * Cleanup yggdrasil interface prior to exit.
  */
 YGG_API void ygg_exit();
+
+typedef bool c_function (generic_t, generic_t);
+
+/**
+ * @brief Register a C function wrapper
+ * @param[in] name Function name with or without a function prefix
+ * @param[in] no_prefix If true, the "c::" prefix will not be added to the
+ *   name (usually because another language has already been added).
+ * @param[in] func Function to register
+ */
+YGG_API int _register_function_wrapper(const char* name, c_function func,
+				       bool no_prefix);
+  
+/**
+ * @brief Register a C function wrapper
+ * @param[in] name Function name
+ * @param[in] func Function to register
+ */
+YGG_API int register_function_wrapper(const char* name, c_function func);
 
 /**
  * @brief Delete the underlying communicator
@@ -186,7 +223,7 @@ YGG_API int comm_send_eof(comm_t comm);
  * @param x The communicator to check.
  * @return 1 if true, 0 otherwise.
  */
-YGG_API int is_comm_format_array_type(comm_t x);
+YGG_API int is_comm_format_array_type(const comm_t x);
   
 /**
  * @brief Receive a message with the given communicator

@@ -142,11 +142,19 @@ namespace YggInterface {
 		  THROW_NO_HANDLE(getWorkers),
 		  WorkerList&, override);
       WRAP_METHOD(send_raw,
+		  (utils::Header& head), (head),
+		  out = -1, int, override);
+      WRAP_METHOD(recv_raw,
+		  (utils::Header& head), (head),
+		  out = -1, long, override);
+      WRAP_METHOD(send_raw,
 		  (const char *data, const size_t &len),
-		  (data, len), out = -1, int, override);
+		  (data, len),
+		  out = -1, int, override);
       WRAP_METHOD(recv_raw,
 		  (char*& data, const size_t &len),
-		  (data, len), out = -1, long, override);
+		  (data, len),
+		  out = -1, long, override);
       
       using Comm_t::send;
       using Comm_t::recv;

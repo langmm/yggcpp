@@ -1,3 +1,18 @@
+function convert_string_c2f(c_message_ptr) result(f_message)
+  implicit none
+  type(c_ptr), intent(in), value :: c_message_ptr
+  character(kind=c_char), dimension(:), pointer :: c_message
+  character(len=:), allocatable :: f_message
+  type(yggnull) :: c_message_null
+  integer :: i, len
+  c_message_null%ptr = c_message_ptr
+  len = pointer_strlen(c_message_null);
+  call c_f_pointer(c_message_ptr, c_message, [len])
+  allocate(character(len=len) :: f_message)
+  do i = 1, len
+     f_message(i:i) = c_message(i)
+  end do
+end function convert_string_c2f
 function convert_string_f2c(f_message) result(c_message)
   implicit none
   character(len=*), intent(in) :: f_message

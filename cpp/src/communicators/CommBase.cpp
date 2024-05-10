@@ -205,6 +205,44 @@ bool Comm_t::_coerce_to_dict(const rapidjson::Document& src,
   return true;
 }
 
+std::string Comm_t::getOppAddress() const {
+  return getAddress();
+}
+
+COMM_TYPE Comm_t::getOppCommType() const {
+  // Cannot be virtual because setOppEnv is called in the initializer
+  // before the instance is finalized
+  if (type == SERVER_COMM)
+    return CLIENT_COMM;
+  else if (type == CLIENT_COMM)
+    return SERVER_COMM;
+  return type;
+}
+
+void Comm_t::setOppEnv() const {
+  if (address.valid() && !(flags & COMM_FLAG_WRAPPER)) {
+    std::string env_name = altEnvName(name);
+    std::string opp_name = envName(env_name, direction, true);
+    std::string opp_comm = envComm(env_name, direction, true);
+    std::string opp_addr = getOppAddress();
+    std::string opp_type = YggInterface::utils::COMM_TYPE_map.find(getOppCommType())->second;
+    log_debug() << "setOppEnv: " <<
+      opp_name << " = " << opp_addr << ", " <<
+      opp_comm << " = " << opp_type << std::endl;
+    setenv(opp_name.c_str(), opp_addr.c_str(), 1);
+    setenv(opp_comm.c_str(), opp_type.c_str(), 1);
+  }
+}
+
+void Comm_t::unsetOppEnv() const {
+  log_debug() << "unsetOppEnv" << std::endl;
+  std::string env_name = altEnvName(name);
+  std::string opp_name = envName(env_name, direction, true);
+  std::string opp_comm = envComm(env_name, direction, true);
+  unsetenv(opp_name.c_str());
+  unsetenv(opp_comm.c_str());
+}
+
 bool Comm_t::_coerce_to_array(const rapidjson::Document& src,
 			      rapidjson::Document& dst,
 			      const DIRECTION dir,
@@ -547,15 +585,14 @@ Comm_t* YggInterface::communicator::new_Comm_t(
 						SUPP_PARAM_INIT);
 }
 Comm_t* YggInterface::communicator::new_Comm_t(
-     const DIRECTION dir, const COMM_TYPE type, const std::string &name,
+     const DIRECTION dir, const COMM_TYPE type0, const std::string &name,
      const Address &addr, FLAG_TYPE flags, const SupplementCommArgs& supp) {
-
+  COMM_TYPE type = type0;
   flags |= COMM_FLAG_DELETE;
   utils::Address addr2(addr.address());
   if (!(addr2.valid() || name.empty())) {
     addr2 = Comm_t::addressFromEnv(name, dir);
   }
-  std::cerr << "HERE: " << addr.address() << ", names = " << name << std::endl;
   if (((flags & COMM_FLAG_FORK) ||
        (flags & COMM_FLAG_FORK_CYCLE) ||
        (flags & COMM_FLAG_FORK_BROADCAST) ||
@@ -569,34 +606,81 @@ Comm_t* YggInterface::communicator::new_Comm_t(
   if (flags & COMM_FLAG_ASYNC) {
     return new AsyncComm(name, addr, dir, flags, type, supp);
   }
-  switch(type) {
-  case NULL_COMM:
-    break;
-  case DEFAULT_COMM:
-    return new COMM_BASE(name, addr, dir, flags,
-			 COMM_BASE::defaultCommType(), supp);
-  case IPC_COMM:
-    return new IPCComm(name, addr, dir, flags, type, supp);
-  case ZMQ_COMM:
-    return new ZMQComm(name, addr, dir, flags, type, supp);
-  case MPI_COMM:
-    return new MPIComm(name, addr, dir, flags, type, supp);
-  case FILE_COMM:
-    return new FileComm(name, addr, dir, flags, type, supp);
-  case RMQ_COMM:
-    return new RMQComm(name, addr, dir, flags, type, supp);
-  case REST_COMM:
-    return new RESTComm(name, addr, dir, flags, type, supp);
-  case VALUE_COMM:
-    return new ValueComm(name, addr, dir, flags, type, supp);
-  case BUFFER_COMM:
-    return new BufferComm(name, addr, dir, flags, type, supp);
-  case SERVER_COMM:
-    return new ServerComm(name, addr, flags, type, supp);
-  case CLIENT_COMM:
-    return new ClientComm(name, addr, flags, type, supp);
+  if (type == DEFAULT_COMM) {
+    std::string default_comm, default_comm_env;
+    if (default_comm.empty()) {
+      default_comm_env = Comm_t::envComm(name, dir);
+      default_comm = Comm_t::getEnvVar(default_comm_env);
+    }
+    if (default_comm.empty()) {
+      default_comm_env = "YGG_DEFAULT_COMM";
+      default_comm = Comm_t::getEnvVar(default_comm_env);
+    }
+    if (!default_comm.empty()) {
+      YggLogDebug << "new_Comm_t: default comm from environment " <<
+	"variable = \"" << default_comm << "\"" << std::endl;
+      if (!enum_value_search(COMM_TYPE_map, default_comm, type)) {
+	YggLogError << "new_Comm_t: Invalid " << default_comm_env <<
+	  " value \"" << default_comm << "\"" << std::endl;
+      }
+    }
   }
-  return nullptr;
+  Comm_t* out = nullptr;
+  switch(type) {
+  case NULL_COMM: {
+    break;
+  }
+  case DEFAULT_COMM: {
+    out = new COMM_BASE(name, addr, dir, flags,
+			 COMM_BASE::defaultCommType(), supp);
+    break;
+  }
+  case IPC_COMM: {
+    out = new IPCComm(name, addr, dir, flags, type, supp);
+    break;
+  }
+  case ZMQ_COMM: {
+    out = new ZMQComm(name, addr, dir, flags, type, supp);
+    break;
+  }
+  case MPI_COMM: {
+    out = new MPIComm(name, addr, dir, flags, type, supp);
+    break;
+  }
+  case FILE_COMM: {
+    out = new FileComm(name, addr, dir, flags, type, supp);
+    break;
+  }
+  case RMQ_COMM: {
+    out = new RMQComm(name, addr, dir, flags, type, supp);
+    break;
+  }
+  case REST_COMM: {
+    out = new RESTComm(name, addr, dir, flags, type, supp);
+    break;
+  }
+  case VALUE_COMM: {
+    out = new ValueComm(name, addr, dir, flags, type, supp);
+    break;
+  }
+  case BUFFER_COMM: {
+    out = new BufferComm(name, addr, dir, flags, type, supp);
+    break;
+  }
+  case FUNCTION_COMM: {
+    out = new FunctionComm(name, addr, dir, flags, type, supp);
+    break;
+  }
+  case SERVER_COMM: {
+    out = new ServerComm(name, addr, flags, type, supp);
+    break;
+  }
+  case CLIENT_COMM: {
+    out = new ClientComm(name, addr, flags, type, supp);
+    break;
+  }
+  }
+  return out;
 }
 bool YggInterface::communicator::is_commtype_installed(const COMM_TYPE type) {
   switch(type) {
@@ -624,6 +708,8 @@ bool YggInterface::communicator::is_commtype_installed(const COMM_TYPE type) {
     return ValueComm::isInstalled();
   case BUFFER_COMM:
     return BufferComm::isInstalled();
+  case FUNCTION_COMM:
+    return FunctionComm::isInstalled();
   }
   return false;
 }
@@ -659,18 +745,24 @@ Comm_t* Comm_t::create_worker_recv(Header& head) {
 int Comm_t::send_raw(const char *data, const size_t &len) {
   if (global_comm)
     return global_comm->send_raw(data, len);
+  Header head(data, len, this);
+  return send_raw(head);
+}
+int Comm_t::send_raw(Header& head) {
+  if (global_comm)
+    return global_comm->send_raw(head);
   if (direction != SEND && type != SERVER_COMM) {
     log_debug() << "send_raw: Attempt to send though a communicator set up to receive" << std::endl;
     return -1;
   }
-  log_debug() << "send_raw: Sending " << len << " bytes to " << address.address() << std::endl;
+  log_debug() << "send_raw: Sending " << head.size_data <<
+    " bytes to " << address.address() << std::endl;
   if (is_closed()) {
     log_error() << "send_raw: Communicator closed." << std::endl;
     return -1;
   }
-  Header head(data, len, this);
   if (head.flags & HEAD_FLAG_NO_HEAD) {
-    log_debug() << "send_raw: Sending data in single message. " << is_eof(data) << ", " << (flags & COMM_FLAG_USED_SENT) << std::endl;
+    log_debug() << "send_raw: Sending data in single message. " << is_eof(head.data[0]) << ", " << (flags & COMM_FLAG_USED_SENT) << std::endl;
     int out = send_single(head);
     if (out >= 0)
       setFlags(head, SEND);
@@ -721,7 +813,15 @@ int Comm_t::send(const rapidjson::Document& data, bool not_generic) {
     meta.setGeneric();
   char* buf = NULL;
   size_t buf_siz = 0;
-  int ret = meta.serialize(&buf, &buf_siz, data);
+  int ret = -1, msg_siz = 0;
+  rapidjson::Document d;
+  d.CopyFrom(data, d.GetAllocator(), true);
+  if (flags & COMM_FLAG_DONT_SERIALIZE) {
+    ret = meta.serialize_updates(d);
+  } else {
+    ret = meta.serialize(&buf, &buf_siz, d);
+    msg_siz = ret;
+  }
   if (ret < 0) {
     log_error() << "send: serialization error" << std::endl;
     return ret;
@@ -729,7 +829,8 @@ int Comm_t::send(const rapidjson::Document& data, bool not_generic) {
   if (meta.checkFilter()) {
     log_debug() << "send: Skipping filtered message" << std::endl;
   } else {
-    ret = send_raw(buf, ret);
+    Header head(buf, msg_siz, this, &d);
+    ret = send_raw(head);
   }
   meta.GetAllocator().Free(buf);
   log_debug() << "send: returns " << ret << std::endl;
@@ -799,12 +900,17 @@ int Comm_t::wait_for_recv(const int64_t& tout) {
 long Comm_t::recv_raw(char*& data, const size_t &len) {
   if (global_comm)
     return global_comm->recv_raw(data, len);
+  Header head(data, len, true);
+  return recv_raw(head);
+}
+long Comm_t::recv_raw(Header& head) {
+  if (global_comm)
+    return global_comm->recv_raw(head);
   log_debug() << "recv_raw: Receiving from " << address.address() << std::endl;
   if (direction != RECV && type != CLIENT_COMM) {
     log_debug() << "recv_raw: Attempt to receive from communicator set up to send" << std::endl;
     return -1;
   }
-  Header head(data, len, true);
   long ret = -1;
   while (true) {
     if (is_closed()) {
@@ -880,7 +986,8 @@ long Comm_t::recv(rapidjson::Document& data, bool not_generic) {
   log_debug() << "recv: begin" << std::endl;
   char* buf = NULL;
   size_t buf_siz = 0;
-  long ret = recv_raw(buf, buf_siz);
+  YggInterface::utils::Header head(buf, buf_siz, true);
+  long ret = recv_raw(head);
   YggInterface::utils::Metadata& meta = getMetadata(RECV);
   if (ret < 0) {
     if (buf != NULL)
@@ -889,7 +996,12 @@ long Comm_t::recv(rapidjson::Document& data, bool not_generic) {
       log_error() << "recv: Error in recv" << std::endl;
     return ret;
   }
-  ret = meta.deserialize(buf, data);
+  if (head.flags & HEAD_FLAG_DOC_SET) {
+    data.CopyFrom(head.doc, data.GetAllocator(), true);
+    ret = meta.deserialize_updates(data);
+  } else {
+    ret = meta.deserialize(buf, data);
+  }
   free(buf);
   if (ret < 0) {
     log_error() << "recv: Error deserializing message" << std::endl;

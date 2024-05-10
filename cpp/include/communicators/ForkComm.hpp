@@ -58,21 +58,18 @@ namespace YggInterface {
       int nmsg(DIRECTION dir) const;
       /**
        * @brief Send a message to the next tine
-       * @param[in] data Message to send
-       * @param[in] len Size of data (bytes)
+       * @param[in] head Header containing message data.
        * @param[in] parent Communicator containing this tine
        * @return Negative values indicate an error
        */
-      int send(const char *data, const size_t &len,
-	       ForkComm& parent);
+      int send(YggInterface::utils::Header& head, ForkComm& parent);
       /**
        * @brief Receive a message from the next tine
-       * @param[out] data Buffer to store the received message in
-       * @param[in] len Size of data
+       * @param[out] head Header that message should be shored in
        * @param[in,out] meta Metadata to update for the received message
        * @return Negative values indicate an error
        */
-      long recv(char*& data, const size_t &len,
+      long recv(YggInterface::utils::Header& head,
 		YggInterface::utils::Metadata& meta);
       std::string logInst_;       /**< Identifier to use for instance in log messages */
       FORK_TYPE forktype;         /**< Enumerated type of fork */
@@ -93,10 +90,10 @@ namespace YggInterface {
       /** \copydoc YggInterface::communicator::Comm_t::set_timeout_recv */
       YGG_API void set_timeout_recv(int64_t new_timeout) override;
       
-      /** \copydoc YggInterface::communicator::Comm_t::send_raw */
-      YGG_API int send_raw(const char *data, const size_t &len) override;
-      /** \copydoc YggInterface::communicator::Comm_t::recv_raw */
-      YGG_API long recv_raw(char*& data, const size_t &len) override;
+      /** \copydoc YggInterface::communicator::Comm_t::send_single */
+      YGG_API int send_single(YggInterface::utils::Header& head) override;
+      /** \copydoc YggInterface::communicator::Comm_t::recv_single */
+      YGG_API long recv_single(YggInterface::utils::Header& head) override;
       
     protected:
 

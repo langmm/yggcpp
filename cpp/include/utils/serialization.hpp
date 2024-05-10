@@ -743,13 +743,14 @@ public:
    * @brief Serialize a rapidjson document into a buffer.
    * @param[out] buf Destination buffer (assumed to be reallocatable).
    * @param[out] buf_siz Finalize size of destination buffer.
-   * @param[in] data Document to serialize.
+   * @param[in] data Document to serialize, modifications may be made
+   *   by transformations.
    * @param[in] temporary If true, this is a temporary serialization and
    *   the datatype should not be updated.
    * @return The size of buf
    */
   YGG_API int serialize(char **buf, size_t *buf_siz,
-			const rapidjson::Document& data,
+			rapidjson::Document& data,
 			bool temporary = false);
   /*!
    * @brief Serialize the arg list into the buffer
@@ -828,9 +829,11 @@ public:
    * @param[in] buf Buffer containing the message to send
    * @param[in] len The size of the buffer in bytes
    * @param[in] comm The communicator to use.
+   * @param[in] doc Document used to create the serialized message
    */
   YGG_API Header(const char* buf, const size_t &len,
-		 YggInterface::communicator::Comm_t* comm);
+		 YggInterface::communicator::Comm_t* comm,
+		 const rapidjson::Document* doc = nullptr);
   /*!
    * @brief Constructor for receiving data
    * @param[in] buf The buffer where the data will be put
@@ -943,6 +946,12 @@ public:
   YGG_API bool CopyFrom(const Header& rhs);
 
   /*!
+    @brief Set the document associated with this header.
+    @param[in] x Document to set.
+   */
+  YGG_API void setDoc(const rapidjson::Document& x);
+
+  /*!
     @brief Set flags based on a message's contents.
     @param[in] msg Message.
     @param[in] msg_len Message size.
@@ -1020,7 +1029,8 @@ public:
     }
     return data[0] + static_cast<long>(offset);
   }
-  
+
+  rapidjson::Document doc; /**< Data document */
   char* data_;       /**< Internal data storage */
   char** data;       /**< Internal data storage */
   size_t size_data;  /**< Size of the data */

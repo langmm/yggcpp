@@ -131,6 +131,23 @@ WRAP_METHOD(is_closed, (), (), out = false, bool, const)
 WRAP_METHOD(is_open, (), (), out = false, bool, const)
 WRAP_METHOD_DIRECT(getWorkers, (), (), THROW_NO_HANDLE(getWorkers), WorkerList&, );
 
+int WrapComm::send_raw(YggInterface::utils::Header& head) {
+  if ((this->flags & COMM_FLAG_FORK_CYCLE) ||
+      (this->flags & COMM_FLAG_FORK_BROADCAST) ||
+      (this->flags & COMM_FLAG_FORK_COMPOSITE)) {
+    IN_CONTEXT(int, send_raw(head), out = -1);
+  }
+  return CommBase::send_raw(head);
+}
+long WrapComm::recv_raw(YggInterface::utils::Header& head) {
+  if ((this->flags & COMM_FLAG_FORK_CYCLE) ||
+      (this->flags & COMM_FLAG_FORK_BROADCAST) ||
+      (this->flags & COMM_FLAG_FORK_COMPOSITE)) {
+    IN_CONTEXT(long, recv_raw(head), out = -1);
+  }
+  return CommBase::recv_raw(head);
+}
+
 int WrapComm::send_raw(const char *data, const size_t &len) {
   if ((this->flags & COMM_FLAG_FORK_CYCLE) ||
       (this->flags & COMM_FLAG_FORK_BROADCAST) ||

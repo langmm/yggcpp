@@ -82,13 +82,15 @@ size_t regex_replace(std::string &buf, const std::regex &re, const std::string &
 }
 
 std::vector<std::string> split(const std::string &x,
-			       const std::string& substr) {
+			       const std::string& substr,
+			       int maxSplits) {
   size_t pos = 0, last_pos = 0;
   std::vector<std::string> out;
   while (true) {
     last_pos = pos;
     pos = x.find(substr, pos);
-    if (pos == std::string::npos) {
+    if (pos == std::string::npos ||
+	(maxSplits > 0 && out.size() == static_cast<size_t>(maxSplits))) {
       out.push_back(x.substr(last_pos));
       break;
     }

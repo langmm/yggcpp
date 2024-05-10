@@ -99,51 +99,48 @@ int ForkTines::nmsg(DIRECTION dir) const {
 			 decltype(nmsg)::value_type(0));
 }
 
-int ForkTines::send(const char *data, const size_t &len,
+int ForkTines::send(YggInterface::utils::Header& head,
 		    ForkComm& parent) {
   YggInterface::utils::Metadata& meta = parent.getMetadata(SEND);
-  bool is_eof = (strcmp(data, YGG_MSG_EOF) == 0);
-  char* tmp_data = const_cast<char*>(data);
-  size_t tmp_len = len;
-  bool tmp_created = false, tmpdoc_created = false;
-  rapidjson::Document doc;
-  rapidjson::Document* tmp = &doc;
+  bool is_eof = (head.flags & HEAD_FLAG_EOF);
+  bool tmpdoc_created = false;
+  rapidjson::Document* tmp = &(head.doc);
   int out = 1;
-  if (!is_eof) {
-    if (meta.deserialize(data, doc, true) < 0) {
-      out = -1;
-      goto cleanup;
-    }
+  if ((!is_eof) && !(head.flags & HEAD_FLAG_DOC_SET)) {
+    log_error() << "send: Document not set" << std::endl;
+    out = -1;
+    goto cleanup;
   }
-  if (forktype == FORK_BROADCAST || is_eof) {
+  if (is_eof) {
     for (typename std::vector<Comm_t*>::iterator it = comms.begin();
 	 it != comms.end(); it++) {
-      if ((*it)->send_raw(tmp_data, tmp_len) < 0) {
+      if ((*it)->send_raw(head.data[0], head.size_data) < 0) {
+	log_error() << "send: Error sending raw data" << std::endl;
+	out = -1;
+	goto cleanup;
+      }
+    }
+  } else if (forktype == FORK_BROADCAST) {
+    for (typename std::vector<Comm_t*>::iterator it = comms.begin();
+	 it != comms.end(); it++) {
+      if ((*it)->send(*tmp) < 0) {
 	out = -1;
 	goto cleanup;
       }
     }
   } else if (forktype == FORK_CYCLE) {
-    out = current_cycle()->send_raw(tmp_data, tmp_len);
+    out = current_cycle()->send(*tmp);
     if (out >= 0)
       iter++;
     goto cleanup;
   } else if (forktype == FORK_COMPOSITE) {
-    if (!doc.IsArray()) {
+    if (!(tmp->IsArray())) {
       tmp = new rapidjson::Document(rapidjson::kNullType);
       tmpdoc_created = true;
-      std::cerr << "COERCING TO ARRAY" << std::endl;
-      if (!parent._coerce_to_array(doc, *tmp, SEND)) {
-	log_error() << "send: Cannot split message for composite: " << doc << std::endl;
+      if (!parent._coerce_to_array(head.doc, *tmp, SEND)) {
+	log_error() << "send: Cannot split message for composite: " << head.doc << std::endl;
 	out = -1;
 	goto cleanup;
-      }
-      tmp_created = true;
-      tmp_data = nullptr;
-      tmp_len = 0;
-      if (meta.serialize(&tmp_data, &tmp_len, *tmp, true) < 0) {
-	out = -1;  // GCOV_EXCL_LINE
-	goto cleanup;  // GCOV_EXCL_LINE
       }
     }
     if (static_cast<size_t>(tmp->Size()) != comms.size()) {
@@ -177,14 +174,11 @@ int ForkTines::send(const char *data, const size_t &len,
  cleanup:
   if (tmpdoc_created)
     delete tmp;
-  if (tmp_created)
-    free(tmp_data);
   return out;
 }
-long ForkTines::recv(char*& data, const size_t &len,
+long ForkTines::recv(YggInterface::utils::Header& head,
 		     YggInterface::utils::Metadata& meta) {
   long out = -1;
-  rapidjson::Document doc;
   if (forktype == FORK_CYCLE) {
     while (current_cycle()->is_closed() ||
 	   (current_cycle()->getFlags() & COMM_FLAG_EOF_RECV) ||
@@ -192,11 +186,11 @@ long ForkTines::recv(char*& data, const size_t &len,
       iter++;
     out = -2;
     while (out == -2 && !eof()) {
-      out = current_cycle()->recv(doc);
+      out = current_cycle()->recv(head.doc);
       iter++;
     }
   } else if (forktype == FORK_COMPOSITE) {
-    doc.SetArray();
+    head.doc.SetArray();
     int i = 0;
     bool is_eof = false, no_names = false;
     std::vector<std::string> field_names;
@@ -216,7 +210,7 @@ long ForkTines::recv(char*& data, const size_t &len,
 	  log_error() << "Error on one of the tines" << std::endl;
 	  return -1;
 	}
-	doc.PushBack(idoc, doc.GetAllocator());
+	head.doc.PushBack(idoc, head.doc.GetAllocator());
 	if (!no_names) {
 	  if (!(*it)->getMetadata(RECV).GetSchemaStringOptional(
 	       "title", ival, ""))
@@ -234,17 +228,15 @@ long ForkTines::recv(char*& data, const size_t &len,
       if (!meta.set_field_names(field_names))
 	return -1;  // GCOV_EXCL_LINE
     }
-    out = 0;
+    out = 1;
   }
   if (eof()) {
     out = -2;
   } else if (out >= 0) {
-    size_t tmp_len = len;
-    out = meta.deserialize_updates(doc);
-    if (out == 0) {
-      out = recv(data, len, meta); // message filtered
-    } else if (out > 0) {
-      out = meta.serialize(&data, &tmp_len, doc, true);
+    head.flags |= HEAD_FLAG_DOC_SET;
+    if (!head.finalize_recv()) {
+      log_error() << "recv_raw: finalize_recv failed." << std::endl;
+      return -1;
     }
   }
   return out;
@@ -255,7 +247,8 @@ long ForkTines::recv(char*& data, const size_t &len,
 // ForkComm //
 //////////////
 
-COMM_CONSTRUCTOR_CORE_DEF_PARAM(ForkComm, COMM_FLAG_FORK,
+COMM_CONSTRUCTOR_CORE_DEF_PARAM(ForkComm,
+				COMM_FLAG_FORK | COMM_FLAG_DONT_SERIALIZE,
 				forktype(FORK_DEFAULT),
 				ncomm(supp.ncomm))
 
@@ -283,6 +276,7 @@ void ForkComm::_open(bool call_base) {
   }
   handle = new ForkTines(this->logInst(), names, addrs, direction,
 			 flags & ~COMM_FLAG_FORK &
+			 ~COMM_FLAG_DONT_SERIALIZE &
 			 ~COMM_FLAG_FORK_CYCLE &
 			 ~COMM_FLAG_FORK_BROADCAST &
 			 ~COMM_FLAG_FORK_COMPOSITE,
@@ -330,33 +324,17 @@ void ForkComm::set_timeout_recv(int64_t new_timeout) {
   }
 }
 
-int ForkComm::send_raw(const char *data, const size_t &len) {
-  if (global_comm)
-    return global_comm->send_raw(data, len);
-  return handle->send(data, len, *this);
+int ForkComm::send_single(YggInterface::utils::Header& head) {
+  if (head.on_send() < 0)
+    return -1;
+  return handle->send(head, *this);
 }
 
-long ForkComm::recv_raw(char*& data, const size_t &len) {
-  if (global_comm)
-    return global_comm->recv_raw(data, len);
-  log_debug() << "ForkComm::recv_raw: Receiving from " << address.address() << std::endl;
+long ForkComm::recv_single(YggInterface::utils::Header& head) {
+  log_debug() << "ForkComm::recv_single: Receiving from " << address.address() << std::endl;
   if (direction != RECV && type != CLIENT_COMM) {
-    log_debug() << "ForkComm::recv_raw: Attempt to receive from communicator set up to send" << std::endl;
+    log_debug() << "ForkComm::recv_single: Attempt to receive from communicator set up to send" << std::endl;
     return -1;
   }
-  // if (!allow_realloc) {
-  //   char* tmp = NULL;
-  //   size_t tmp_len = 0;
-  //   long ret = recv_raw(tmp, tmp_len, true);
-  //   if (ret >= 0 || ret == -2) {
-  //     if (ret >= 0) {
-  // 	tmp_len = static_cast<size_t>(ret);
-  // 	ret = copyData(data, len, tmp, tmp_len, false);
-  //     }
-  //     if (tmp)
-  // 	free(tmp);
-  //   }
-  //   return ret;
-  // }
-  return handle->recv(data, len, getMetadata(RECV));
+  return handle->recv(head, getMetadata(RECV));
 }

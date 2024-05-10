@@ -23,6 +23,7 @@ namespace YggInterface {
 
     // Forward declaration
     class Comm_t;
+    class FunctionWrapper;
 
     /**
      * @brief Class for handling Yggdrasil communicator contexts
@@ -45,6 +46,7 @@ namespace YggInterface {
 
       // Class members
       std::vector<Comm_t*> registry_; //!< Registry of comms created
+      std::map<std::string, FunctionWrapper*> func_registry_; //!< Registry of functions
       std::string thread_id;          //!< ID of thread context was created on
       bool for_testing_;              //!< true if context used for testing
       CLEANUP_MODE cleanup_mode_;     //!< Mode of current cleanup action
@@ -64,6 +66,7 @@ namespace YggInterface {
       YGG_THREAD_MUTEX(zmq)
       YGG_THREAD_MUTEX(zmqport)
       YGG_THREAD_MUTEX(uuid)
+      YGG_THREAD_MUTEX(functions)
 #undef YGG_THREAD_MUTEX
 #endif // THREADSINSTALLED
 

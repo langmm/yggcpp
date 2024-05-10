@@ -68,6 +68,16 @@ void CommContext::cleanup(CLEANUP_MODE mode) {
 	}
       }
     }
+    YGG_THREAD_SAFE_BEGIN_LOCAL(functions) {
+      for (std::map<std::string, FunctionWrapper*>::iterator it = func_registry_.begin();
+	   it != func_registry_.end(); it++) {
+	if (it->second) {
+	  delete it->second;
+	  it->second = nullptr;
+	}
+      }
+      func_registry_.clear();
+    } YGG_THREAD_SAFE_END;
     YGG_THREAD_SAFE_BEGIN_LOCAL(comms) {
       registry_.clear();
       if (mode != CLEANUP_COMMS) {

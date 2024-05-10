@@ -1104,7 +1104,7 @@ int Metadata::deserialize(const char* buf, rapidjson::Document& d,
   rapidjson::StringStream s(buf);
   d.ParseStream(s);
   if (d.HasParseError()) {
-    log_error() << "deserialize: Error parsing JSON" << std::endl;
+    log_error() << "deserialize: Error parsing JSON at " << d.GetErrorOffset() << ": " << rapidjson::GetParseError_En(d.GetParseError()) << std::endl;
     return -1;
   }
   if (!temporary) {
@@ -1207,12 +1207,10 @@ int Metadata::serialize_updates(rapidjson::Document& d) {
   return 1;
 }
 int Metadata::serialize(char **buf, size_t *buf_siz,
-			const rapidjson::Document& data,
+			rapidjson::Document& d,
 			bool temporary) {
   // Order is: set schema/normalize data, transform data,
   //   set post-transform schema, filter, serialize
-  rapidjson::Document d;
-  d.CopyFrom(data, d.GetAllocator(), true);
   if (!temporary) {
     int iout = serialize_updates(d);
     if (iout <= 0)
@@ -1386,7 +1384,7 @@ void Metadata::Display(const char* indent) const {
 ////////////
 
 Header::Header(bool own_data) :
-  data_(nullptr), data(nullptr),
+  doc(), data_(nullptr), data(nullptr),
   size_data(0), size_buff(0), size_curr(0),
   size_head(0), size_max(0), size_msg(0),
   flags(HEAD_FLAG_VALID), offset(0) {
@@ -1396,8 +1394,11 @@ Header::Header(bool own_data) :
   }
 }
 Header::Header(const char* buf, const size_t &len,
-	       YggInterface::communicator::Comm_t* comm) :
+	       YggInterface::communicator::Comm_t* comm,
+	       const rapidjson::Document* doc0) :
   Header() {
+  if (doc0)
+    setDoc(*doc0);
   Metadata* meta = nullptr;
   int comm_flags = 0;
   if (comm) {
@@ -1420,7 +1421,7 @@ Header::~Header() {
 #if RAPIDJSON_HAS_CXX11_RVALUE_REFS
 Header::Header(Header&& rhs) noexcept :
   Metadata(std::forward<Metadata>(rhs)),
-  data_(nullptr), data(nullptr),
+  doc(), data_(nullptr), data(nullptr),
   size_data(0), size_buff(0), size_curr(0),
   size_head(0), size_max(0), size_msg(0),
   flags(HEAD_FLAG_VALID), offset(0) {
@@ -1435,6 +1436,7 @@ Header& Header::operator=(Header& rhs) {
   if (data && !(flags & HEAD_FLAG_OWNSDATA))
     log_debug() << "operator=: Supplied buffer will be displaced by move" << std::endl;
   reset();
+  doc.Swap(rhs.doc);
   Metadata::operator=(std::forward<Metadata>(rhs));
   RawAssign(rhs);
   rhs.reset(HEAD_RESET_DROP_DATA);
@@ -1443,6 +1445,7 @@ Header& Header::operator=(Header& rhs) {
 bool Header::operator==(const Header& rhs) const {
   if (!Metadata::operator==(rhs))
     return false;
+  
   if (!(size_data == rhs.size_data &&
 	size_buff == rhs.size_buff &&
 	size_curr == rhs.size_curr &&
@@ -1451,6 +1454,8 @@ bool Header::operator==(const Header& rhs) const {
 	size_msg == rhs.size_msg &&
 	flags == rhs.flags &&
 	offset == rhs.offset))
+    return false;
+  if (doc != rhs.doc)
     return false;
   if ((!data) || (!rhs.data))
     return (data == rhs.data);
@@ -1463,6 +1468,7 @@ bool Header::operator!=(const Header& rhs) const {
 }
 void Header::reset(HEAD_RESET_MODE mode) {
   Metadata::reset();
+  doc.SetNull();
   int keep_flags = 0;
   if (mode == HEAD_RESET_KEEP_BUFFER) {
     keep_flags = (flags & HEAD_BUFFER_MASK);
@@ -1565,9 +1571,15 @@ bool Header::MoveFrom(Header& rhs) {
 }
 bool Header::CopyFrom(const Header& rhs) {
   reset(HEAD_RESET_KEEP_BUFFER);
+  doc.CopyFrom(rhs.doc, doc.GetAllocator(), true);
   if (!Metadata::CopyFrom(rhs))
     return false; // GCOV_EXCL_LINE
   return RawAssign(rhs, true);
+}
+
+void Header::setDoc(const rapidjson::Document& x) {
+  flags |= HEAD_FLAG_DOC_SET;
+  doc.CopyFrom(x, doc.GetAllocator(), true);
 }
 
 void Header::setMessageFlags(const char* msg, const size_t msg_len) {
@@ -1591,10 +1603,17 @@ bool Header::for_send(Metadata* metadata0, const char* msg,
   size_data = len;
   size_curr = len;
   data_ = (char*)malloc(size_buff);
-  memcpy(data_, msg, size_data);
+  if (msg)
+    memcpy(data_, msg, size_data);
   data_[size_data] = '\0';
   data = &data_;
   setMessageFlags(msg, len);
+  if ((comm_flags & COMM_FLAG_DONT_SERIALIZE) &&
+      (flags & HEAD_FLAG_DOC_SET) && (!msg)) {
+    flags |= HEAD_FLAG_DOC_ONLY;
+    size_curr = 1;
+    size_data = 1;
+  }
   if ((flags & HEAD_FLAG_EOF) || (comm_flags & COMM_FLAG_USED_SENT)) {
     flags |= HEAD_FLAG_NO_TYPE;
     if ((size_max == 0 || len < size_max) &&
@@ -1759,6 +1778,8 @@ void Header::Display(const char* indent) const {
   if (data && data[0] && size_curr) {
     // std::string sData(data[0], size_curr);
     std::cout << data[0];
+  } else if ((flags & HEAD_FLAG_DOC_ONLY) && (flags & HEAD_FLAG_DOC_SET)) {
+    std::cout << doc;
   } else {
     std::cout << "NULL";
   }
@@ -1768,6 +1789,11 @@ void Header::Display(const char* indent) const {
 
 int Header::format() {
   if (flags & HEAD_FLAG_FORMATTED) {
+    return size_curr;
+  } else if ((flags & HEAD_FLAG_DOC_ONLY) &&
+	     (flags & HEAD_FLAG_DOC_SET)) {
+    size_curr = size_data;
+    flags |= HEAD_FLAG_FORMATTED;
     return size_curr;
   } else if (flags & HEAD_FLAG_NO_HEAD) {
     size_curr = size_data;
@@ -1846,6 +1872,13 @@ int Header::format() {
 }
 
 bool Header::finalize_recv() {
+  if (flags & HEAD_FLAG_DOC_SET) {
+    size_curr = 1;
+    size_data = 1;
+    if (!fromData(doc))
+      return false;
+    return true;
+  }
   bool in_data = false;
   if (!GetMetaBoolOptional("in_data", in_data, false))
     return false;

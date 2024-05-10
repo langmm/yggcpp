@@ -157,10 +157,12 @@ const std::regex RE_UINT("%([[:digit:]]*)[uoxX]", std::regex::extended);
  * @brief Split a string into a vector of strings
  * @param[in] x The string to split up
  * @param[in] substr The delimiter to use
+ * @param[in] maxSplits Maximum number of splits to perform.
  * @return The split string
  */
 YGG_API std::vector<std::string> split(const std::string &x,
-				       const std::string& substr);
+				       const std::string& substr,
+				       int maxSplits = -1);
   
 }
 }

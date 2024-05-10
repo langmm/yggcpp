@@ -44,6 +44,21 @@ void ygg_exit() {
     _exit(1);
   }
 }
+
+int _register_function_wrapper(const char* name, c_function func,
+			       bool no_prefix) {
+  try {
+    std::string name_s(name);
+    YggInterface::communicator::FunctionWrapper::register_function_wrapper(name_s, func, no_prefix);
+  } catch (...) {
+    return -1;
+  }
+  return 0;
+}
+  
+int register_function_wrapper(const char* name, c_function func) {
+  return _register_function_wrapper(name, func, false);
+}
   
 void free_comm(comm_t* comm) {
     if (comm && comm->comm) {
@@ -172,10 +187,10 @@ int comm_set_datatype(comm_t x, dtype_t* datatype) {
   return 1;
 }
 
-int is_comm_format_array_type(comm_t x) {
+int is_comm_format_array_type(const comm_t x) {
   int out = 0;
   _BEGIN_CPP {
-    YggInterface::utils::Metadata* metadata = &(static_cast<YggInterface::communicator::Comm_t*>(x.comm)->getMetadata());
+    const YggInterface::utils::Metadata* metadata = &(static_cast<const YggInterface::communicator::Comm_t*>(x.comm)->getMetadata());
     out = static_cast<int>(metadata->isFormatArray());
   } _END_CPP(is_comm_format_array_type, -1);
   return out;

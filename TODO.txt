@@ -7,7 +7,7 @@
 * Add for_server keyword?
 * Update docs for python extension
 * Generate docs for python extension
-
+* Only regenerate enum/fortran interface when source files change
 
 TESTS
 

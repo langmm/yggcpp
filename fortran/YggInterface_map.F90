@@ -1,5 +1,14 @@
 ! Interface for getting/setting generic map elements
 ! Get methods
+function generic_map_get_item(x, key, type) &
+     result(out)
+    implicit none
+    type(ygggeneric), value :: x
+    character(len = *), intent(in) :: key
+    character(len = *), intent(in) :: type
+    type(c_ptr) :: out
+    out = generic_object_get_item(x, key, type)
+end function generic_map_get_item
 subroutine generic_map_get_generic(x, key, out)
   implicit none
   type(ygggeneric), intent(in) :: x

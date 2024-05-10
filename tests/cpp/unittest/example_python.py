@@ -24,3 +24,10 @@ def example_transform_error(msg):
 
 def example_filter_invalid(msg):
     return "hello"
+
+
+def example_model_function(data_send):
+    print("IN PYTHON", data_send, type(data_send))
+    if not isinstance(data_send, str):
+        raise Exception("Test error")
+    return len(data_send)

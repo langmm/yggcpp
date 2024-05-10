@@ -17,10 +17,6 @@
 extern "C" {
 #endif
 
-/*! @brief Pointer to an output comm. */
-#define yggOutput_t comm_t
-/*! @brief Pointer to an input comm. */
-#define yggInput_t comm_t
 /*! @brief Aliases to method for freeing comms. */
 #define ygg_free free_comm
 /*! @brief Initialize a comm object. */
@@ -36,7 +32,7 @@ extern "C" {
   Output Usage:
       1. One-time: Create output channel (store in named variables)
 ```
-            yggOutput_t output_channel = yggOutput("out_name");
+            comm_t output_channel = yggOutput("out_name");
 ```
       2. Prepare: Format data to a character array buffer.
 ```
@@ -51,7 +47,7 @@ extern "C" {
   Input Usage:
       1. One-time: Create output channel (store in named variables)
 ```
-            yggInput_t input_channel = yggInput("in_name");
+            comm_t input_channel = yggInput("in_name");
 ```
       2. Prepare: Allocate a character array buffer.
 ```
@@ -65,48 +61,48 @@ extern "C" {
 //==============================================================================
 
 /*!
-  @brief Constructor for yggOutput_t structure with explicit data type.
-    Create a yggOutput_t structure based on a provided name that is used to
+  @brief Constructor for comm_t structure with explicit data type.
+    Create a comm_t structure based on a provided name that is used to
     locate a particular comm address stored in the environment variable name
     and a structure definining the datatype of outgoing messages for the
     queue.
   @param[in] name constant character pointer to name of queue.
   @param[in] datatype Pointer to data structure containing type
     information. The data contained in the datatype will be consumed.
-  @returns yggOutput_t output queue structure.
+  @returns comm_t output queue structure.
  */
 static inline
-yggOutput_t yggOutputType(const char *name, dtype_t* datatype) {
+comm_t yggOutputType(const char *name, dtype_t* datatype) {
   return init_comm(name, SEND, DEFAULT_COMM, datatype);
 };
 
 /*!
-  @brief Constructor for yggInput_t structure with explicit data type.
-    Create a yggInput_t structure based on a provided name that is used to
+  @brief Constructor for comm_t structure with explicit data type.
+    Create a comm_t structure based on a provided name that is used to
     locate a particular comm address stored in the environment variable name
     and a structure defining the expected datatype of received messages.
   @param[in] name constant character pointer to name of queue.
   @param[in] datatype Pointer to data structure containing type
     information. The data contained in the datatype will be consumed.
-  @returns yggInput_t input queue structure.
+  @returns comm_t input queue structure.
  */
 static inline
-yggInput_t yggInputType(const char *name, dtype_t* datatype) {
+comm_t yggInputType(const char *name, dtype_t* datatype) {
   return init_comm(name, RECV, DEFAULT_COMM, datatype);
 };
   
 /*!
-  @brief Constructor for yggOutput_t structure with format.
-    Create a yggOutput_t structure based on a provided name that is used to
+  @brief Constructor for comm_t structure with format.
+    Create a comm_t structure based on a provided name that is used to
     locate a particular comm address stored in the environment variable name
     and a format string that can be used to format arguments into outgoing 
     messages for the queue.   
   @param[in] name constant character pointer to name of queue.
   @param[in] fmtString character pointer to format string.
-  @returns yggOutput_t output queue structure.
+  @returns comm_t output queue structure.
  */
 static inline
-yggOutput_t yggOutputFmt(const char *name, const char *fmtString){
+comm_t yggOutputFmt(const char *name, const char *fmtString){
   comm_t out;
   out.comm = NULL;
   dtype_t datatype = create_dtype_format(fmtString, 0, false);
@@ -119,17 +115,17 @@ yggOutput_t yggOutputFmt(const char *name, const char *fmtString){
 }; // GCOVR_EXCL_LINE
 
 /*!
-  @brief Constructor for yggInput_t structure with format.
-    Create a yggInput_t structure based on a provided name that is used to
+  @brief Constructor for comm_t structure with format.
+    Create a comm_t structure based on a provided name that is used to
     locate a particular comm address stored in the environment variable name
     and a format stirng that can be used to extract arguments from received
     messages.
   @param[in] name constant character pointer to name of queue.
   @param[in] fmtString character pointer to format string.
-  @returns yggInput_t input queue structure.
+  @returns comm_t input queue structure.
  */
 static inline
-yggInput_t yggInputFmt(const char *name, const char *fmtString){
+comm_t yggInputFmt(const char *name, const char *fmtString){
   dtype_t datatype = create_dtype_format(fmtString, 0, false);
   comm_t out;
   out.comm = NULL;
@@ -142,27 +138,27 @@ yggInput_t yggInputFmt(const char *name, const char *fmtString){
 }; // GCOVR_EXCL_LINE
 
 /*!
-  @brief Constructor for yggOutput_t output structure.
-    Create a yggOutput_t structure based on a provided name that is used to
+  @brief Constructor for comm_t output structure.
+    Create a comm_t structure based on a provided name that is used to
     locate a particular comm address stored in the environment variable name.
   @param[in] name constant character pointer to name of queue.
-  @returns yggOutput_t output queue structure.
+  @returns comm_t output queue structure.
  */
 static inline
-yggOutput_t yggOutput(const char *name) {
+comm_t yggOutput(const char *name) {
   dtype_t datatype = create_dtype_empty(false);
   return yggOutputType(name, &datatype);
 };
 
 /*!
-  @brief Constructor for yggInput_t structure.
-    Create a yggInput_t structure based on a provided name that is used to
+  @brief Constructor for comm_t structure.
+    Create a comm_t structure based on a provided name that is used to
     locate a particular comm address stored in the environment variable name.
   @param[in] name constant character pointer to name of queue.
-  @returns yggInput_t input queue structure.
+  @returns comm_t input queue structure.
  */
 static inline
-yggInput_t yggInput(const char *name) {
+comm_t yggInput(const char *name) {
   dtype_t datatype = create_dtype_empty(false);
   return yggInputType(name, &datatype);
 };
@@ -171,23 +167,23 @@ yggInput_t yggInput(const char *name) {
   @brief Send a message to an output queue.
     Send a message smaller than YGG_MSG_MAX bytes to an output queue. If the
     message is larger, it will not be sent.
-  @param[in] yggQ yggOutput_t structure that queue should be sent to.
+  @param[in] yggQ comm_t structure that queue should be sent to.
   @param[in] data character pointer to message that should be sent.
   @param[in] len size_t length of message to be sent.
   @returns int 0 if send succesfull, -1 if send unsuccessful.
  */
 static inline
-int ygg_send(const yggOutput_t yggQ, const char *data, const size_t len) {
+int ygg_send(const comm_t yggQ, const char *data, const size_t len) {
   return comm_send(yggQ, data, len);
 };
 
 /*!
   @brief Send EOF message to the output queue.
-  @param[in] yggQ yggOutput_t structure that message should be sent to.
+  @param[in] yggQ comm_t structure that message should be sent to.
   @returns int 0 if send successfull, -1 if unsuccessful.
 */
 static inline
-int ygg_send_eof(const yggOutput_t yggQ) {
+int ygg_send_eof(const comm_t yggQ) {
   return comm_send_eof(yggQ);
 };
 
@@ -202,7 +198,7 @@ int ygg_send_eof(const yggOutput_t yggQ) {
     message if message was received.
  */
 static inline
-long ygg_recv(yggInput_t yggQ, char *data, const size_t len) {
+long ygg_recv(comm_t yggQ, char *data, const size_t len) {
   return comm_recv(yggQ, data, len);
 };
 
@@ -212,7 +208,7 @@ long ygg_recv(yggInput_t yggQ, char *data, const size_t len) {
     breaking it up between several smaller messages and sending initial 
     message with the size of the message that should be expected. Must be 
     partnered with ygg_recv_nolimit for communication to make sense.
-  @param[in] yggQ yggOutput_t structure that message should be sent to.
+  @param[in] yggQ comm_t structure that message should be sent to.
   @param[in] data character pointer to message that should be sent.
   @param[in] len size_t length of message to be sent.
   @returns int 0 if send succesfull, -1 if send unsuccessful.
@@ -221,7 +217,7 @@ long ygg_recv(yggInput_t yggQ, char *data, const size_t len) {
 
 /*!
   @brief Send EOF message to the output queue.
-  @param[in] yggQ yggOutput_t structure that message should be sent to.
+  @param[in] yggQ comm_t structure that message should be sent to.
   @returns int 0 if send successfull, -1 if unsuccessful.
 */
 #define ygg_send_nolimit_eof(yggQ) comm_send_eof(yggQ)
@@ -240,7 +236,7 @@ long ygg_recv(yggInput_t yggQ, char *data, const size_t len) {
     message if message was received.
  */
 static inline
-long ygg_recv_nolimit(yggInput_t yggQ, char **data, const size_t len) {
+long ygg_recv_nolimit(comm_t yggQ, char **data, const size_t len) {
   return comm_recv_realloc(yggQ, data, len);
 };
 
@@ -252,7 +248,7 @@ long ygg_recv_nolimit(yggInput_t yggQ, char **data, const size_t len) {
   Output Usage:
       1. One-time: Create output channel with format specifier.
 ```
-            yggOutput_t output_channel = yggOutputFmt("out_name", "a=%d, b=%d");
+            comm_t output_channel = yggOutputFmt("out_name", "a=%d, b=%d");
 ```
       2. Send:
 ```
@@ -266,7 +262,7 @@ long ygg_recv_nolimit(yggInput_t yggQ, char **data, const size_t len) {
   Input Usage:
       1. One-time: Create output channel with format specifier.
 ```
-            yggInput_t input_channel = yggInput("in_name", "a=%d, b=%d");
+            comm_t input_channel = yggInput("in_name", "a=%d, b=%d");
 ```
       2. Prepare: Allocate space for recovered variables.
 ```
@@ -294,7 +290,7 @@ long ygg_recv_nolimit(yggInput_t yggQ, char **data, const size_t len) {
   @brief Receive a message from a comm into variables passed as arguments.
     If received message data will exceed the bounds of provided variables,
     an error will be returned.
-  @param[in] yggQ yggOutput_t structure that message should be sent to.
+  @param[in] yggQ comm_t structure that message should be sent to.
   @param[out] ... Pointers to variables that should be assigned by 
     parsing the received message using the associated data type. If no data
     type has been added to the comm, one will be created from the data types
@@ -309,7 +305,7 @@ long ygg_recv_nolimit(yggInput_t yggQ, char **data, const size_t len) {
   @brief Receive a message from a comm into variables passed as arguments.
     If received message data will exceed the bounds of provided variables,
     the variables will be reallocated.
-  @param[in] yggQ yggOutput_t structure that message should be sent to.
+  @param[in] yggQ comm_t structure that message should be sent to.
   @param[out] ... Pointers to variables that should be assigned to by 
     parsing the received message using the associated data type. If no data 
     type has been added to the comm, one will be created from the data types
@@ -392,7 +388,7 @@ long ygg_recv_nolimit(yggInput_t yggQ, char **data, const size_t len) {
 #define yggRpc_t comm_t
 
 /*!
-  @brief Constructor for client side RPC structure w/ explicit type info.
+  @brief Constructor for client side RPC structure with explicit type info.
     Creates an instance of yggRpc_t with provided information.  
   @param[in] name constant character pointer to name for queues.
   @param[in] outType Pointer to a dtype_t data structure containing type info
@@ -421,7 +417,7 @@ comm_t yggRpcClientType(const char *name, dtype_t* outType, dtype_t* inType) {
 };
 
 /*!
-  @brief Constructor for server side RPC structure w/ explicit type info.
+  @brief Constructor for server side RPC structure with explicit type info.
     Creates an instance of yggRpc_t with provided information.  
   @param[in] name constant character pointer to name for queues.
   @param[in] inType Pointer to a dtype_t data structure containing type info

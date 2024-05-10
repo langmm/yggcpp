@@ -13,7 +13,8 @@
         RMQ_COMM = 8, &
         VALUE_COMM = 9, &
         REST_COMM = 10, &
-        BUFFER_COMM = 11
+        BUFFER_COMM = 11, &
+        FUNCTION_COMM = 12
   end enum
 
 
@@ -60,6 +61,7 @@
   integer(kind=int64), parameter :: COMM_FLAG_FORK_BROADCAST = 16777216_int64
   integer(kind=int64), parameter :: COMM_FLAG_FORK_COMPOSITE = 33554432_int64
   integer(kind=int64), parameter :: COMM_FLAG_FORK_TINE = 67108864_int64
+  integer(kind=int64), parameter :: COMM_FLAG_DONT_SERIALIZE = 134217728_int64
   integer(kind=int64), parameter :: FILE_FLAG_APPEND = 17592186044416_int64
   integer(kind=int64), parameter :: FILE_FLAG_BINARY = 35184372088832_int64
   integer(kind=int64), parameter :: FILE_FLAG_READLINE = 70368744177664_int64
@@ -95,7 +97,9 @@
         HEAD_FLAG_FORMATTED = 4096, &
         HEAD_FLAG_NO_TYPE = 8192, &
         HEAD_FLAG_NO_HEAD = 16384, &
-        HEAD_FLAG_ASYNC = 32768
+        HEAD_FLAG_ASYNC = 32768, &
+        HEAD_FLAG_DOC_SET = 65536, &
+        HEAD_FLAG_DOC_ONLY = 131072
   end enum
 
 

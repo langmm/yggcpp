@@ -17,18 +17,19 @@ extern "C" {
  * Enum for communicator types
  */
 enum COMM_TYPE {
-    NULL_COMM,   //!< No type
-    DEFAULT_COMM,//!< Default communicator
-    IPC_COMM,    //!< IPC based communicator
-    ZMQ_COMM,    //!< ZeroMQ based communicator
-    MPI_COMM,    //!< MPI based communicator
-    SERVER_COMM, //!< Server communicator
-    CLIENT_COMM, //!< Client communicator
-    FILE_COMM,   //!< File communicator
-    RMQ_COMM,    //!< RabbitMQ communicator
-    VALUE_COMM,  //!< Value communicator
-    REST_COMM,   //!< REST communicator
-    BUFFER_COMM, //!< Shared memory communicator
+    NULL_COMM,    //!< No type
+    DEFAULT_COMM, //!< Default communicator
+    IPC_COMM,     //!< IPC based communicator
+    ZMQ_COMM,     //!< ZeroMQ based communicator
+    MPI_COMM,     //!< MPI based communicator
+    SERVER_COMM,  //!< Server communicator
+    CLIENT_COMM,  //!< Client communicator
+    FILE_COMM,    //!< File communicator
+    RMQ_COMM,     //!< RabbitMQ communicator
+    VALUE_COMM,   //!< Value communicator
+    REST_COMM,    //!< REST communicator
+    BUFFER_COMM,  //!< Shared memory communicator
+    FUNCTION_COMM,//!< Direction functional call
 };
 
 /**
@@ -96,6 +97,7 @@ enum COMM_FLAG
   COMM_FLAG_FORK_BROADCAST  = 0x01000000LL, //!< Forked communicator broadcast
   COMM_FLAG_FORK_COMPOSITE  = 0x02000000LL, //!< Forked communicator composite
   COMM_FLAG_FORK_TINE       = 0x04000000LL, //!< Forked communicator tine.
+  COMM_FLAG_DONT_SERIALIZE  = 0x08000000LL, //!< Communicator does not required serialization
   // Type specific flags
   // File flags
   FILE_FLAG_APPEND          = 0x0000100000000000LL, //!< Append sent messages to the end of the file
@@ -139,7 +141,9 @@ enum HeadFlags
   HEAD_FLAG_FORMATTED       = 0x00001000, //!< Message is formatted
   HEAD_FLAG_NO_TYPE         = 0x00002000, //!< No type info in message
   HEAD_FLAG_NO_HEAD         = 0x00004000, //!< No header in message
-  HEAD_FLAG_ASYNC           = 0x00008000  //!< Header formated by async
+  HEAD_FLAG_ASYNC           = 0x00008000, //!< Header formated by async
+  HEAD_FLAG_DOC_SET         = 0x00010000, //!< No doc info in message
+  HEAD_FLAG_DOC_ONLY        = 0x00020000, //!< Only doc info in message
 };
 
 enum HEAD_RESET_MODE {

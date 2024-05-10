@@ -8,34 +8,36 @@ namespace YggInterface {
   namespace utils {
     
     const std::map<const COMM_TYPE, const std::string> COMM_TYPE_map {
-      {NULL_COMM   , "NULL"   },
-      {DEFAULT_COMM, "DEFAULT"},
-      {IPC_COMM    , "IPC"    },
-      {ZMQ_COMM    , "ZMQ"    },
-      {MPI_COMM    , "MPI"    },
-      {SERVER_COMM , "SERVER" },
-      {CLIENT_COMM , "CLIENT" },
-      {FILE_COMM   , "FILE"   },
-      {RMQ_COMM    , "RMQ"    },
-      {VALUE_COMM  , "VALUE"  },
-      {REST_COMM   , "REST"   },
-      {BUFFER_COMM , "BUFFER" },
+      {NULL_COMM    , "NULL"    },
+      {DEFAULT_COMM , "DEFAULT" },
+      {IPC_COMM     , "IPC"     },
+      {ZMQ_COMM     , "ZMQ"     },
+      {MPI_COMM     , "MPI"     },
+      {SERVER_COMM  , "SERVER"  },
+      {CLIENT_COMM  , "CLIENT"  },
+      {FILE_COMM    , "FILE"    },
+      {RMQ_COMM     , "RMQ"     },
+      {VALUE_COMM   , "VALUE"   },
+      {REST_COMM    , "REST"    },
+      {BUFFER_COMM  , "BUFFER"  },
+      {FUNCTION_COMM, "FUNCTION"},
     };
     
     
     const std::map<const COMM_TYPE, const std::string> COMM_TYPE_cls_map {
-      {NULL_COMM   , "NullComm"   },
-      {DEFAULT_COMM, "DefaultComm"},
-      {IPC_COMM    , "IPCComm"    },
-      {ZMQ_COMM    , "ZMQComm"    },
-      {MPI_COMM    , "MPIComm"    },
-      {SERVER_COMM , "ServerComm" },
-      {CLIENT_COMM , "ClientComm" },
-      {FILE_COMM   , "FileComm"   },
-      {RMQ_COMM    , "RMQComm"    },
-      {VALUE_COMM  , "ValueComm"  },
-      {REST_COMM   , "RESTComm"   },
-      {BUFFER_COMM , "BufferComm" },
+      {NULL_COMM    , "NullComm"    },
+      {DEFAULT_COMM , "DefaultComm" },
+      {IPC_COMM     , "IPCComm"     },
+      {ZMQ_COMM     , "ZMQComm"     },
+      {MPI_COMM     , "MPIComm"     },
+      {SERVER_COMM  , "ServerComm"  },
+      {CLIENT_COMM  , "ClientComm"  },
+      {FILE_COMM    , "FileComm"    },
+      {RMQ_COMM     , "RMQComm"     },
+      {VALUE_COMM   , "ValueComm"   },
+      {REST_COMM    , "RESTComm"    },
+      {BUFFER_COMM  , "BufferComm"  },
+      {FUNCTION_COMM, "FunctionComm"},
     };
     
     
@@ -81,6 +83,7 @@ namespace YggInterface {
       {COMM_FLAG_FORK_BROADCAST      , "FORK_BROADCAST"      },
       {COMM_FLAG_FORK_COMPOSITE      , "FORK_COMPOSITE"      },
       {COMM_FLAG_FORK_TINE           , "FORK_TINE"           },
+      {COMM_FLAG_DONT_SERIALIZE      , "DONT_SERIALIZE"      },
       {FILE_FLAG_APPEND              , "FILE_FLAG_APPEND"    },
       {FILE_FLAG_BINARY              , "FILE_FLAG_BINARY"    },
       {FILE_FLAG_READLINE            , "FILE_FLAG_READLINE"  },
@@ -124,6 +127,8 @@ namespace YggInterface {
       {HEAD_FLAG_NO_TYPE      , "HEAD_FLAG_NO_TYPE"      },
       {HEAD_FLAG_NO_HEAD      , "HEAD_FLAG_NO_HEAD"      },
       {HEAD_FLAG_ASYNC        , "HEAD_FLAG_ASYNC"        },
+      {HEAD_FLAG_DOC_SET      , "HEAD_FLAG_DOC_SET"      },
+      {HEAD_FLAG_DOC_ONLY     , "HEAD_FLAG_DOC_ONLY"     },
     };
     
     
