@@ -103,10 +103,10 @@ namespace YggInterface {
 	  std::string new_name = name;
 	  if (!no_prefix)
 	    new_name = "cxx::" + new_name;
-	  if (lookup_function_wrapper(new_name))
-	    return;
-	  FunctionWrapper* created = new FunctionWrapper(new_name, func);
-	  global_context->func_registry_[new_name] = created;
+	  if (!lookup_function_wrapper(new_name)) {
+	    FunctionWrapper* created = new FunctionWrapper(new_name, func);
+	    global_context->func_registry_[new_name] = created;
+	  }
 	} YGG_THREAD_SAFE_END;
       }
       /**
@@ -138,10 +138,10 @@ namespace YggInterface {
 	  std::string new_name = name;
 	  if (!no_prefix)
 	    new_name = "c::" + new_name;
-	  if (lookup_function_wrapper(new_name))
-	    return;
-	  FunctionWrapper* created = new FunctionWrapper(new_name, func);
-	  global_context->func_registry_[new_name] = created;
+	  if (!lookup_function_wrapper(new_name)) {
+	    FunctionWrapper* created = new FunctionWrapper(new_name, func);
+	    global_context->func_registry_[new_name] = created;
+	  }
 	} YGG_THREAD_SAFE_END;
       }
       
