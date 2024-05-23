@@ -240,8 +240,8 @@ jobs:
       - name: Set up MSVC Compiler on windows
         uses: ilammy/msvc-dev-cmd@v1
         if: matrix.os == 'windows-latest' # && matrix.python-install == 'conda'
-        with:
-          toolset: 14.0
+        # with:
+        #   toolset: 14.0
       - name: Set up miniconda test environment
         if: matrix.python-install == 'conda'
         uses: conda-incubator/setup-miniconda@v2
