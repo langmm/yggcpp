@@ -1411,7 +1411,8 @@ class FortranFile(AmendedFile):
     internal_types = [
         'yggnull', 'ygggeneric', 'yggply', 'yggobj', 'yggschema',
         'yggpython', 'yggpyfunc', 'yggpyinst', 'yggcomm', 'yggdtype',
-        'ygggenericref', 'yggchar_r',
+        'ygggenericref', 'yggchar_r', 'yggcomplex_float',
+        'yggcomplex_double', 'yggcomplex_long_double',
     ]
     iso_types = {'void*': 'c_ptr', 'bool': 'c_bool',
                  'c_function': 'c_funptr',
@@ -1543,6 +1544,11 @@ class FortranFile(AmendedFile):
                 'b_update': {'mods': ['allocatable'],
                              'length': ':'},
             },
+            'complex': {
+                'before': (
+                    "{b_name}%re = {a_name}%re\n"
+                    "{b_name}%im = {a_name}%im"),
+            },
             'shape': {
                 'a_update': {'mods': ['target']},
                 'before': "{b_name} = c_loc({a_name}(1))"},
@@ -1594,6 +1600,11 @@ class FortranFile(AmendedFile):
                     "do i = 1, size(x)\n"
                     "   {a_name}(i:i) = {b_name}(i)\n"
                     "enddo"),
+            },
+            'complex': {
+                'after': (
+                    "{a_name}%re = {b_name}%re\n"
+                    "{a_name}%im = {b_name}%im"),
             },
             'null': {
                 'a_update': {'mods': ['pointer']},
@@ -2120,7 +2131,14 @@ class FortranFile(AmendedFile):
                     raise NotImplementedError(
                         f"{kwargs['function']}: "
                         f"{a['raw_type']} vs. {b['raw_type']}")
-                conv = copy.deepcopy(self.conversions[key][a['raw_type']])
+                if ((a['raw_type'] == 'scalar'
+                     and a.get('scalar_raw_type', 'invalid')
+                     in self.conversions[key])):
+                    conv = copy.deepcopy(
+                        self.conversions[key][a['scalar_raw_type']])
+                else:
+                    conv = copy.deepcopy(
+                        self.conversions[key][a['raw_type']])
                 if conv.get('c2f', False):
                     conv.update(self.conversions[key]['c2f'])
             kws = copy.deepcopy(kwargs)
@@ -2228,7 +2246,7 @@ class FortranCdefsFile(FortranFile):
         self.types['scalar'].update(
             int='integer(kind = c_int{X}_t)',
             float='real(kind = c_{X_name})',
-            complex='complex(kind = c_{X_name}_complex)')
+            complex='type(yggcomplex_{X_name})')
         self.types['util'].update(
             length='integer(kind = c_size_t)',
             shape='type(c_ptr)',

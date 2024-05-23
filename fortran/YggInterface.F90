@@ -791,6 +791,7 @@ module YggInterface
   !> @brief Wrapper for a C generic ref object.
   type, bind(c) :: ygggenericref
      type(c_ptr) :: obj = c_null_ptr !< Pointer to C generic object
+     type(c_ptr) :: allocator = c_null_ptr !< Pointer to allocator
   end type ygggenericref
   !> @brief Wrapper for C NULL object.
   type :: yggnull
@@ -847,6 +848,23 @@ module YggInterface
   type ygguint8
      integer(kind=8) :: x !< Wrapped scalar
   end type ygguint8
+  !> @brief Wrapper for complex number with float components
+  type, bind(c) :: yggcomplex_float
+     real(kind=c_float) :: re !< Real component
+     real(kind=c_float) :: im !< Imaginary component
+  end type yggcomplex_float
+  !> @brief Wrapper for complex number with double components
+  type, bind(c) :: yggcomplex_double
+     real(kind=c_double) :: re !< Real component
+     real(kind=c_double) :: im !< Imaginary component
+  end type yggcomplex_double
+! #ifdef YGGDRASIL_LONG_DOUBLE_AVAILABLE
+  !> @brief Wrapper for complex number with long double components
+  type, bind(c) :: yggcomplex_long_double
+     real(kind=c_long_double) :: re !< Real component
+     real(kind=c_long_double) :: im !< Imaginary component
+  end type yggcomplex_long_double
+! #endif
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
   interface assignment(=)
@@ -857,10 +875,14 @@ module YggInterface
   end interface assignment(=)
 #endif
 
-  public :: yggarg, yggchar_r, yggcomm, ygggeneric, &
+  public :: yggarg, yggchar_r, yggcomm, ygggeneric, ygggenericref, &
        yggptr, yggnull, yggarr, yggmap, &
        yggschema, yggpython, yggply, yggobj, yggpyinst, yggpyfunc, &
-       LINE_SIZE_MAX
+       LINE_SIZE_MAX, yggcomplex_float, yggcomplex_double
+  
+#ifdef YGGDRASIL_LONG_DOUBLE_AVAILABLE
+  public :: yggcomplex_long_double
+#endif
 
   include "YggInterface_cdef.F90"
 
@@ -4420,10 +4442,11 @@ contains
     complex(kind = 4), value, intent(in) :: value
     character(len = *), intent(in) :: units
     integer :: out
-    complex(kind = c_float_complex) :: c_value
+    type(yggcomplex_float) :: c_value
     character(kind = c_char), dimension(:), allocatable :: c_units
     integer(kind = c_int) :: c_out
-    c_value = value
+    c_value%re = value%re
+    c_value%im = value%im
     c_units = convert_string_f2c(units)
     c_out = generic_set_complex_float_c(x, c_value, c_units)
     deallocate(c_units)
@@ -4441,10 +4464,11 @@ contains
     complex(kind = 8), value, intent(in) :: value
     character(len = *), intent(in) :: units
     integer :: out
-    complex(kind = c_double_complex) :: c_value
+    type(yggcomplex_double) :: c_value
     character(kind = c_char), dimension(:), allocatable :: c_units
     integer(kind = c_int) :: c_out
-    c_value = value
+    c_value%re = value%re
+    c_value%im = value%im
     c_units = convert_string_f2c(units)
     c_out = generic_set_complex_double_c(x, c_value, c_units)
     deallocate(c_units)
@@ -5213,9 +5237,10 @@ contains
     implicit none
     type(ygggeneric), value :: x
     complex(kind = 4) :: out
-    complex(kind = c_float_complex) :: c_out
+    type(yggcomplex_float) :: c_out
     c_out = generic_get_complex_float_c(x)
-    out = c_out
+    out%re = c_out%re
+    out%im = c_out%im
   end function generic_get_complex_float
   !> @brief Get a complex scalar from a generic item
   !> @param[in] x Generic item to retrieve data from
@@ -5225,9 +5250,10 @@ contains
     implicit none
     type(ygggeneric), value :: x
     complex(kind = 8) :: out
-    complex(kind = c_double_complex) :: c_out
+    type(yggcomplex_double) :: c_out
     c_out = generic_get_complex_double_c(x)
-    out = c_out
+    out%re = c_out%re
+    out%im = c_out%im
   end function generic_get_complex_double
   !> @brief Get a 1darray from a generic item
   !> @param[in] x Generic item to retrieve data from
@@ -5948,9 +5974,10 @@ contains
     implicit none
     type(ygggenericref), value :: x
     complex(kind = 4) :: out
-    complex(kind = c_float_complex) :: c_out
+    type(yggcomplex_float) :: c_out
     c_out = generic_ref_get_complex_float_c(x)
-    out = c_out
+    out%re = c_out%re
+    out%im = c_out%im
   end function generic_ref_get_complex_float
   !> @brief Get a complex scalar from a generic item reference
   !> @param[in] x Generic item reference to retrieve data from
@@ -5960,9 +5987,10 @@ contains
     implicit none
     type(ygggenericref), value :: x
     complex(kind = 8) :: out
-    complex(kind = c_double_complex) :: c_out
+    type(yggcomplex_double) :: c_out
     c_out = generic_ref_get_complex_double_c(x)
-    out = c_out
+    out%re = c_out%re
+    out%im = c_out%im
   end function generic_ref_get_complex_double
   !> @brief Get a 1darray from a generic item reference
   !> @param[in] x Generic item reference to retrieve data from
@@ -6858,11 +6886,12 @@ contains
     complex(kind = 4), value, intent(in) :: value
     character(len = *), intent(in) :: units
     integer(kind = c_size_t) :: c_index
-    complex(kind = c_float_complex) :: c_value
+    type(yggcomplex_float) :: c_value
     character(kind = c_char), dimension(:), allocatable :: c_units
     integer(kind = c_int) :: c_out
     c_index = index - 1
-    c_value = value
+    c_value%re = value%re
+    c_value%im = value%im
     c_units = convert_string_f2c(units)
     c_out = generic_array_set_complex_float_c(x, c_index, c_value, c_units)
     deallocate(c_units)
@@ -6883,11 +6912,12 @@ contains
     complex(kind = 8), value, intent(in) :: value
     character(len = *), intent(in) :: units
     integer(kind = c_size_t) :: c_index
-    complex(kind = c_double_complex) :: c_value
+    type(yggcomplex_double) :: c_value
     character(kind = c_char), dimension(:), allocatable :: c_units
     integer(kind = c_int) :: c_out
     c_index = index - 1
-    c_value = value
+    c_value%re = value%re
+    c_value%im = value%im
     c_units = convert_string_f2c(units)
     c_out = generic_array_set_complex_double_c(x, c_index, c_value, c_units)
     deallocate(c_units)
@@ -7822,10 +7852,11 @@ contains
     integer, value, intent(in) :: index
     complex(kind = 4) :: out
     integer(kind = c_size_t) :: c_index
-    complex(kind = c_float_complex) :: c_out
+    type(yggcomplex_float) :: c_out
     c_index = index - 1
     c_out = generic_array_get_complex_float_c(x, c_index)
-    out = c_out
+    out%re = c_out%re
+    out%im = c_out%im
   end function generic_array_get_complex_float
   !> @brief Get a complex scalar from an element in a array
   !> @param[in] x array to get element from
@@ -7838,10 +7869,11 @@ contains
     integer, value, intent(in) :: index
     complex(kind = 8) :: out
     integer(kind = c_size_t) :: c_index
-    complex(kind = c_double_complex) :: c_out
+    type(yggcomplex_double) :: c_out
     c_index = index - 1
     c_out = generic_array_get_complex_double_c(x, c_index)
-    out = c_out
+    out%re = c_out%re
+    out%im = c_out%im
   end function generic_array_get_complex_double
   !> @brief Get a 1darray from an element in a array
   !> @param[in] x array to get element from
@@ -8828,11 +8860,12 @@ contains
     complex(kind = 4), value, intent(in) :: value
     character(len = *), intent(in) :: units
     character(kind = c_char), dimension(:), allocatable :: c_key
-    complex(kind = c_float_complex) :: c_value
+    type(yggcomplex_float) :: c_value
     character(kind = c_char), dimension(:), allocatable :: c_units
     integer(kind = c_int) :: c_out
     c_key = convert_string_f2c(key)
-    c_value = value
+    c_value%re = value%re
+    c_value%im = value%im
     c_units = convert_string_f2c(units)
     c_out = generic_object_set_complex_float_c(x, c_key, c_value, c_units)
     deallocate(c_key)
@@ -8854,11 +8887,12 @@ contains
     complex(kind = 8), value, intent(in) :: value
     character(len = *), intent(in) :: units
     character(kind = c_char), dimension(:), allocatable :: c_key
-    complex(kind = c_double_complex) :: c_value
+    type(yggcomplex_double) :: c_value
     character(kind = c_char), dimension(:), allocatable :: c_units
     integer(kind = c_int) :: c_out
     c_key = convert_string_f2c(key)
-    c_value = value
+    c_value%re = value%re
+    c_value%im = value%im
     c_units = convert_string_f2c(units)
     c_out = generic_object_set_complex_double_c(x, c_key, c_value, c_units)
     deallocate(c_key)
@@ -9832,11 +9866,12 @@ contains
     character(len = *), intent(in) :: key
     complex(kind = 4) :: out
     character(kind = c_char), dimension(:), allocatable :: c_key
-    complex(kind = c_float_complex) :: c_out
+    type(yggcomplex_float) :: c_out
     c_key = convert_string_f2c(key)
     c_out = generic_object_get_complex_float_c(x, c_key)
     deallocate(c_key)
-    out = c_out
+    out%re = c_out%re
+    out%im = c_out%im
   end function generic_object_get_complex_float
   !> @brief Get a complex scalar from an element in a object
   !> @param[in] x object to get element from
@@ -9849,11 +9884,12 @@ contains
     character(len = *), intent(in) :: key
     complex(kind = 8) :: out
     character(kind = c_char), dimension(:), allocatable :: c_key
-    complex(kind = c_double_complex) :: c_out
+    type(yggcomplex_double) :: c_out
     c_key = convert_string_f2c(key)
     c_out = generic_object_get_complex_double_c(x, c_key)
     deallocate(c_key)
-    out = c_out
+    out%re = c_out%re
+    out%im = c_out%im
   end function generic_object_get_complex_double
   !> @brief Get a 1darray from an element in a object
   !> @param[in] x object to get element from
@@ -10449,10 +10485,11 @@ contains
     complex(kind = 16), value, intent(in) :: value
     character(len = *), intent(in) :: units
     integer :: out
-    complex(kind = c_long_double_complex) :: c_value
+    type(yggcomplex_long_double) :: c_value
     character(kind = c_char), dimension(:), allocatable :: c_units
     integer(kind = c_int) :: c_out
-    c_value = value
+    c_value%re = value%re
+    c_value%im = value%im
     c_units = convert_string_f2c(units)
     c_out = generic_set_complex_long_double_c(x, c_value, c_units)
     deallocate(c_units)
@@ -10596,9 +10633,10 @@ contains
     implicit none
     type(ygggeneric), value :: x
     complex(kind = 16) :: out
-    complex(kind = c_long_double_complex) :: c_out
+    type(yggcomplex_long_double) :: c_out
     c_out = generic_get_complex_long_double_c(x)
-    out = c_out
+    out%re = c_out%re
+    out%im = c_out%im
   end function generic_get_complex_long_double
   !> @brief Get a float 1darray from a generic item
   !> @param[in] x Generic item to retrieve data from
@@ -10732,9 +10770,10 @@ contains
     implicit none
     type(ygggenericref), value :: x
     complex(kind = 16) :: out
-    complex(kind = c_long_double_complex) :: c_out
+    type(yggcomplex_long_double) :: c_out
     c_out = generic_ref_get_complex_long_double_c(x)
-    out = c_out
+    out%re = c_out%re
+    out%im = c_out%im
   end function generic_ref_get_complex_long_double
   !> @brief Get a float 1darray from a generic item reference
   !> @param[in] x Generic item reference to retrieve data from
@@ -10886,11 +10925,12 @@ contains
     complex(kind = 16), value, intent(in) :: value
     character(len = *), intent(in) :: units
     integer(kind = c_size_t) :: c_index
-    complex(kind = c_long_double_complex) :: c_value
+    type(yggcomplex_long_double) :: c_value
     character(kind = c_char), dimension(:), allocatable :: c_units
     integer(kind = c_int) :: c_out
     c_index = index - 1
-    c_value = value
+    c_value%re = value%re
+    c_value%im = value%im
     c_units = convert_string_f2c(units)
     c_out = generic_array_set_complex_long_double_c(x, c_index, c_value, c_units)
     deallocate(c_units)
@@ -11059,10 +11099,11 @@ contains
     integer, value, intent(in) :: index
     complex(kind = 16) :: out
     integer(kind = c_size_t) :: c_index
-    complex(kind = c_long_double_complex) :: c_out
+    type(yggcomplex_long_double) :: c_out
     c_index = index - 1
     c_out = generic_array_get_complex_long_double_c(x, c_index)
-    out = c_out
+    out%re = c_out%re
+    out%im = c_out%im
   end function generic_array_get_complex_long_double
   !> @brief Get a float 1darray from an element in a array
   !> @param[in] x array to get element from
@@ -11231,11 +11272,12 @@ contains
     complex(kind = 16), value, intent(in) :: value
     character(len = *), intent(in) :: units
     character(kind = c_char), dimension(:), allocatable :: c_key
-    complex(kind = c_long_double_complex) :: c_value
+    type(yggcomplex_long_double) :: c_value
     character(kind = c_char), dimension(:), allocatable :: c_units
     integer(kind = c_int) :: c_out
     c_key = convert_string_f2c(key)
-    c_value = value
+    c_value%re = value%re
+    c_value%im = value%im
     c_units = convert_string_f2c(units)
     c_out = generic_object_set_complex_long_double_c(x, c_key, c_value, c_units)
     deallocate(c_key)
@@ -11410,11 +11452,12 @@ contains
     character(len = *), intent(in) :: key
     complex(kind = 16) :: out
     character(kind = c_char), dimension(:), allocatable :: c_key
-    complex(kind = c_long_double_complex) :: c_out
+    type(yggcomplex_long_double) :: c_out
     c_key = convert_string_f2c(key)
     c_out = generic_object_get_complex_long_double_c(x, c_key)
     deallocate(c_key)
-    out = c_out
+    out%re = c_out%re
+    out%im = c_out%im
   end function generic_object_get_complex_long_double
   !> @brief Get a float 1darray from an element in a object
   !> @param[in] x object to get element from

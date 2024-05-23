@@ -2056,11 +2056,11 @@
      function generic_set_complex_float_c(x, value, units) &
           result(out) &
           bind(c, name="generic_set_complex_float_f")
-       use, intrinsic :: iso_c_binding, only: c_char, c_float_complex, c_int
-       import :: ygggeneric
+       use, intrinsic :: iso_c_binding, only: c_char, c_int
+       import :: yggcomplex_float, ygggeneric
        implicit none
        type(ygggeneric), value :: x
-       complex(kind = c_float_complex), value, intent(in) :: value
+       type(yggcomplex_float), value, intent(in) :: value
        character(kind = c_char), dimension(*), intent(in) :: units
        integer(kind = c_int) :: out
      end function generic_set_complex_float_c
@@ -2072,11 +2072,11 @@
      function generic_set_complex_double_c(x, value, units) &
           result(out) &
           bind(c, name="generic_set_complex_double_f")
-       use, intrinsic :: iso_c_binding, only: c_char, c_double_complex, c_int
-       import :: ygggeneric
+       use, intrinsic :: iso_c_binding, only: c_char, c_int
+       import :: yggcomplex_double, ygggeneric
        implicit none
        type(ygggeneric), value :: x
-       complex(kind = c_double_complex), value, intent(in) :: value
+       type(yggcomplex_double), value, intent(in) :: value
        character(kind = c_char), dimension(*), intent(in) :: units
        integer(kind = c_int) :: out
      end function generic_set_complex_double_c
@@ -2676,11 +2676,10 @@
      function generic_get_complex_float_c(x) &
           result(out) &
           bind(c, name="generic_get_complex_float_f")
-       use, intrinsic :: iso_c_binding, only: c_float_complex
-       import :: ygggeneric
+       import :: yggcomplex_float, ygggeneric
        implicit none
        type(ygggeneric), value :: x
-       complex(kind = c_float_complex) :: out
+       type(yggcomplex_float) :: out
      end function generic_get_complex_float_c
      !> @brief Get a complex scalar from a generic item
      !> @param[in] x Generic item to retrieve data from
@@ -2688,11 +2687,10 @@
      function generic_get_complex_double_c(x) &
           result(out) &
           bind(c, name="generic_get_complex_double_f")
-       use, intrinsic :: iso_c_binding, only: c_double_complex
-       import :: ygggeneric
+       import :: yggcomplex_double, ygggeneric
        implicit none
        type(ygggeneric), value :: x
-       complex(kind = c_double_complex) :: out
+       type(yggcomplex_double) :: out
      end function generic_get_complex_double_c
      !> @brief Get a 1darray from a generic item
      !> @param[in] x Generic item to retrieve data from
@@ -3235,11 +3233,10 @@
      function generic_ref_get_complex_float_c(x) &
           result(out) &
           bind(c, name="generic_ref_get_complex_float_f")
-       use, intrinsic :: iso_c_binding, only: c_float_complex
-       import :: ygggenericref
+       import :: yggcomplex_float, ygggenericref
        implicit none
        type(ygggenericref), value :: x
-       complex(kind = c_float_complex) :: out
+       type(yggcomplex_float) :: out
      end function generic_ref_get_complex_float_c
      !> @brief Get a complex scalar from a generic item reference
      !> @param[in] x Generic item reference to retrieve data from
@@ -3247,11 +3244,10 @@
      function generic_ref_get_complex_double_c(x) &
           result(out) &
           bind(c, name="generic_ref_get_complex_double_f")
-       use, intrinsic :: iso_c_binding, only: c_double_complex
-       import :: ygggenericref
+       import :: yggcomplex_double, ygggenericref
        implicit none
        type(ygggenericref), value :: x
-       complex(kind = c_double_complex) :: out
+       type(yggcomplex_double) :: out
      end function generic_ref_get_complex_double_c
      !> @brief Get a 1darray from a generic item reference
      !> @param[in] x Generic item reference to retrieve data from
@@ -3877,12 +3873,12 @@
      function generic_array_set_complex_float_c(x, index, value, units) &
           result(out) &
           bind(c, name="generic_array_set_complex_float_f")
-       use, intrinsic :: iso_c_binding, only: c_char, c_float_complex, c_int, c_size_t
-       import :: ygggeneric
+       use, intrinsic :: iso_c_binding, only: c_char, c_int, c_size_t
+       import :: yggcomplex_float, ygggeneric
        implicit none
        type(ygggeneric), value :: x
        integer(kind = c_size_t), value, intent(in) :: index
-       complex(kind = c_float_complex), value, intent(in) :: value
+       type(yggcomplex_float), value, intent(in) :: value
        character(kind = c_char), dimension(*), intent(in) :: units
        integer(kind = c_int) :: out
      end function generic_array_set_complex_float_c
@@ -3895,12 +3891,12 @@
      function generic_array_set_complex_double_c(x, index, value, units) &
           result(out) &
           bind(c, name="generic_array_set_complex_double_f")
-       use, intrinsic :: iso_c_binding, only: c_char, c_double_complex, c_int, c_size_t
-       import :: ygggeneric
+       use, intrinsic :: iso_c_binding, only: c_char, c_int, c_size_t
+       import :: yggcomplex_double, ygggeneric
        implicit none
        type(ygggeneric), value :: x
        integer(kind = c_size_t), value, intent(in) :: index
-       complex(kind = c_double_complex), value, intent(in) :: value
+       type(yggcomplex_double), value, intent(in) :: value
        character(kind = c_char), dimension(*), intent(in) :: units
        integer(kind = c_int) :: out
      end function generic_array_set_complex_double_c
@@ -4584,12 +4580,12 @@
      function generic_array_get_complex_float_c(x, index) &
           result(out) &
           bind(c, name="generic_array_get_complex_float_f")
-       use, intrinsic :: iso_c_binding, only: c_float_complex, c_size_t
-       import :: ygggeneric
+       use, intrinsic :: iso_c_binding, only: c_size_t
+       import :: yggcomplex_float, ygggeneric
        implicit none
        type(ygggeneric), value :: x
        integer(kind = c_size_t), value, intent(in) :: index
-       complex(kind = c_float_complex) :: out
+       type(yggcomplex_float) :: out
      end function generic_array_get_complex_float_c
      !> @brief Get a complex scalar from an element in a array
      !> @param[in] x array to get element from
@@ -4598,12 +4594,12 @@
      function generic_array_get_complex_double_c(x, index) &
           result(out) &
           bind(c, name="generic_array_get_complex_double_f")
-       use, intrinsic :: iso_c_binding, only: c_double_complex, c_size_t
-       import :: ygggeneric
+       use, intrinsic :: iso_c_binding, only: c_size_t
+       import :: yggcomplex_double, ygggeneric
        implicit none
        type(ygggeneric), value :: x
        integer(kind = c_size_t), value, intent(in) :: index
-       complex(kind = c_double_complex) :: out
+       type(yggcomplex_double) :: out
      end function generic_array_get_complex_double_c
      !> @brief Get a 1darray from an element in a array
      !> @param[in] x array to get element from
@@ -5267,12 +5263,12 @@
      function generic_object_set_complex_float_c(x, key, value, units) &
           result(out) &
           bind(c, name="generic_object_set_complex_float_f")
-       use, intrinsic :: iso_c_binding, only: c_char, c_float_complex, c_int
-       import :: ygggeneric
+       use, intrinsic :: iso_c_binding, only: c_char, c_int
+       import :: yggcomplex_float, ygggeneric
        implicit none
        type(ygggeneric), value :: x
        character(kind = c_char), dimension(*), intent(in) :: key
-       complex(kind = c_float_complex), value, intent(in) :: value
+       type(yggcomplex_float), value, intent(in) :: value
        character(kind = c_char), dimension(*), intent(in) :: units
        integer(kind = c_int) :: out
      end function generic_object_set_complex_float_c
@@ -5285,12 +5281,12 @@
      function generic_object_set_complex_double_c(x, key, value, units) &
           result(out) &
           bind(c, name="generic_object_set_complex_double_f")
-       use, intrinsic :: iso_c_binding, only: c_char, c_double_complex, c_int
-       import :: ygggeneric
+       use, intrinsic :: iso_c_binding, only: c_char, c_int
+       import :: yggcomplex_double, ygggeneric
        implicit none
        type(ygggeneric), value :: x
        character(kind = c_char), dimension(*), intent(in) :: key
-       complex(kind = c_double_complex), value, intent(in) :: value
+       type(yggcomplex_double), value, intent(in) :: value
        character(kind = c_char), dimension(*), intent(in) :: units
        integer(kind = c_int) :: out
      end function generic_object_set_complex_double_c
@@ -5974,12 +5970,12 @@
      function generic_object_get_complex_float_c(x, key) &
           result(out) &
           bind(c, name="generic_object_get_complex_float_f")
-       use, intrinsic :: iso_c_binding, only: c_char, c_float_complex
-       import :: ygggeneric
+       use, intrinsic :: iso_c_binding, only: c_char
+       import :: yggcomplex_float, ygggeneric
        implicit none
        type(ygggeneric), value :: x
        character(kind = c_char), dimension(*), intent(in) :: key
-       complex(kind = c_float_complex) :: out
+       type(yggcomplex_float) :: out
      end function generic_object_get_complex_float_c
      !> @brief Get a complex scalar from an element in a object
      !> @param[in] x object to get element from
@@ -5988,12 +5984,12 @@
      function generic_object_get_complex_double_c(x, key) &
           result(out) &
           bind(c, name="generic_object_get_complex_double_f")
-       use, intrinsic :: iso_c_binding, only: c_char, c_double_complex
-       import :: ygggeneric
+       use, intrinsic :: iso_c_binding, only: c_char
+       import :: yggcomplex_double, ygggeneric
        implicit none
        type(ygggeneric), value :: x
        character(kind = c_char), dimension(*), intent(in) :: key
-       complex(kind = c_double_complex) :: out
+       type(yggcomplex_double) :: out
      end function generic_object_get_complex_double_c
      !> @brief Get a 1darray from an element in a object
      !> @param[in] x object to get element from
@@ -6352,11 +6348,11 @@
      function generic_set_complex_long_double_c(x, value, units) &
           result(out) &
           bind(c, name="generic_set_complex_long_double_f")
-       use, intrinsic :: iso_c_binding, only: c_char, c_int, c_long_double_complex
-       import :: ygggeneric
+       use, intrinsic :: iso_c_binding, only: c_char, c_int
+       import :: yggcomplex_long_double, ygggeneric
        implicit none
        type(ygggeneric), value :: x
-       complex(kind = c_long_double_complex), value, intent(in) :: value
+       type(yggcomplex_long_double), value, intent(in) :: value
        character(kind = c_char), dimension(*), intent(in) :: units
        integer(kind = c_int) :: out
      end function generic_set_complex_long_double_c
@@ -6456,11 +6452,10 @@
      function generic_get_complex_long_double_c(x) &
           result(out) &
           bind(c, name="generic_get_complex_long_double_f")
-       use, intrinsic :: iso_c_binding, only: c_long_double_complex
-       import :: ygggeneric
+       import :: yggcomplex_long_double, ygggeneric
        implicit none
        type(ygggeneric), value :: x
-       complex(kind = c_long_double_complex) :: out
+       type(yggcomplex_long_double) :: out
      end function generic_get_complex_long_double_c
      !> @brief Get a float 1darray from a generic item
      !> @param[in] x Generic item to retrieve data from
@@ -6546,11 +6541,10 @@
      function generic_ref_get_complex_long_double_c(x) &
           result(out) &
           bind(c, name="generic_ref_get_complex_long_double_f")
-       use, intrinsic :: iso_c_binding, only: c_long_double_complex
-       import :: ygggenericref
+       import :: yggcomplex_long_double, ygggenericref
        implicit none
        type(ygggenericref), value :: x
-       complex(kind = c_long_double_complex) :: out
+       type(yggcomplex_long_double) :: out
      end function generic_ref_get_complex_long_double_c
      !> @brief Get a float 1darray from a generic item reference
      !> @param[in] x Generic item reference to retrieve data from
@@ -6645,12 +6639,12 @@
      function generic_array_set_complex_long_double_c(x, index, value, units) &
           result(out) &
           bind(c, name="generic_array_set_complex_long_double_f")
-       use, intrinsic :: iso_c_binding, only: c_char, c_int, c_long_double_complex, c_size_t
-       import :: ygggeneric
+       use, intrinsic :: iso_c_binding, only: c_char, c_int, c_size_t
+       import :: yggcomplex_long_double, ygggeneric
        implicit none
        type(ygggeneric), value :: x
        integer(kind = c_size_t), value, intent(in) :: index
-       complex(kind = c_long_double_complex), value, intent(in) :: value
+       type(yggcomplex_long_double), value, intent(in) :: value
        character(kind = c_char), dimension(*), intent(in) :: units
        integer(kind = c_int) :: out
      end function generic_array_set_complex_long_double_c
@@ -6761,12 +6755,12 @@
      function generic_array_get_complex_long_double_c(x, index) &
           result(out) &
           bind(c, name="generic_array_get_complex_long_double_f")
-       use, intrinsic :: iso_c_binding, only: c_long_double_complex, c_size_t
-       import :: ygggeneric
+       use, intrinsic :: iso_c_binding, only: c_size_t
+       import :: yggcomplex_long_double, ygggeneric
        implicit none
        type(ygggeneric), value :: x
        integer(kind = c_size_t), value, intent(in) :: index
-       complex(kind = c_long_double_complex) :: out
+       type(yggcomplex_long_double) :: out
      end function generic_array_get_complex_long_double_c
      !> @brief Get a float 1darray from an element in a array
      !> @param[in] x array to get element from
@@ -6869,12 +6863,12 @@
      function generic_object_set_complex_long_double_c(x, key, value, units) &
           result(out) &
           bind(c, name="generic_object_set_complex_long_double_f")
-       use, intrinsic :: iso_c_binding, only: c_char, c_int, c_long_double_complex
-       import :: ygggeneric
+       use, intrinsic :: iso_c_binding, only: c_char, c_int
+       import :: yggcomplex_long_double, ygggeneric
        implicit none
        type(ygggeneric), value :: x
        character(kind = c_char), dimension(*), intent(in) :: key
-       complex(kind = c_long_double_complex), value, intent(in) :: value
+       type(yggcomplex_long_double), value, intent(in) :: value
        character(kind = c_char), dimension(*), intent(in) :: units
        integer(kind = c_int) :: out
      end function generic_object_set_complex_long_double_c
@@ -6985,12 +6979,12 @@
      function generic_object_get_complex_long_double_c(x, key) &
           result(out) &
           bind(c, name="generic_object_get_complex_long_double_f")
-       use, intrinsic :: iso_c_binding, only: c_char, c_long_double_complex
-       import :: ygggeneric
+       use, intrinsic :: iso_c_binding, only: c_char
+       import :: yggcomplex_long_double, ygggeneric
        implicit none
        type(ygggeneric), value :: x
        character(kind = c_char), dimension(*), intent(in) :: key
-       complex(kind = c_long_double_complex) :: out
+       type(yggcomplex_long_double) :: out
      end function generic_object_get_complex_long_double_c
      !> @brief Get a float 1darray from an element in a object
      !> @param[in] x object to get element from
