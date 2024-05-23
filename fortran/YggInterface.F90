@@ -2879,10 +2879,9 @@ contains
     integer, value :: for_fortran
     integer :: out
     integer(kind = c_size_t) :: c_nargs
-    type(c_ptr) :: c_ptrs
     integer(kind = c_int) :: c_for_fortran
     integer(kind = c_int) :: c_out
-    c_out = pcomm_send_c(comm, c_nargs, c_ptrs, c_for_fortran)
+    c_out = pcomm_send_c(comm, c_nargs, ptrs, c_for_fortran)
     nargs = c_nargs
     for_fortran = c_for_fortran
     out = c_out
@@ -2905,11 +2904,10 @@ contains
     logical :: out
     integer(kind = c_int) :: c_allow_realloc
     integer(kind = c_size_t) :: c_nargs
-    type(c_ptr) :: c_ptrs
     integer(kind = c_int) :: c_for_fortran
     integer(kind = c_long) :: c_out
     c_allow_realloc = allow_realloc
-    c_out = pcomm_recv_c(comm, c_allow_realloc, c_nargs, c_ptrs, c_for_fortran)
+    c_out = pcomm_recv_c(comm, c_allow_realloc, c_nargs, ptrs, c_for_fortran)
     nargs = c_nargs
     for_fortran = c_for_fortran
     out = (c_out.ge.0)
@@ -2932,11 +2930,10 @@ contains
     logical :: out
     integer(kind = c_int) :: c_allow_realloc
     integer(kind = c_size_t) :: c_nargs
-    type(c_ptr) :: c_ptrs
     integer(kind = c_int) :: c_for_fortran
     integer(kind = c_long) :: c_out
     c_allow_realloc = allow_realloc
-    c_out = pcomm_call_c(comm, c_allow_realloc, c_nargs, c_ptrs, c_for_fortran)
+    c_out = pcomm_call_c(comm, c_allow_realloc, c_nargs, ptrs, c_for_fortran)
     nargs = c_nargs
     for_fortran = c_for_fortran
     out = (c_out.ge.0)
@@ -5272,11 +5269,10 @@ contains
     integer :: out
     character(kind = c_char), dimension(:), allocatable :: c_subtype
     integer(kind = c_size_t) :: c_precision
-    type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
     c_subtype = convert_string_f2c(subtype)
     c_precision = precision
-    c_out = generic_get_1darray_c(x, c_subtype, c_precision, c_value)
+    c_out = generic_get_1darray_c(x, c_subtype, c_precision, value)
     deallocate(c_subtype)
     out = c_out
   end function generic_get_1darray
@@ -5295,6 +5291,7 @@ contains
     logical :: c_value_flag
     type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_out = generic_get_1darray_int16_c(x, c_value)
     c_value_int%ptr = c_value
@@ -5319,6 +5316,7 @@ contains
     logical :: c_value_flag
     type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_out = generic_get_1darray_int32_c(x, c_value)
     c_value_int%ptr = c_value
@@ -5343,6 +5341,7 @@ contains
     logical :: c_value_flag
     type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_out = generic_get_1darray_int64_c(x, c_value)
     c_value_int%ptr = c_value
@@ -5367,6 +5366,7 @@ contains
     logical :: c_value_flag
     type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_out = generic_get_1darray_float_c(x, c_value)
     c_value_int%ptr = c_value
@@ -5391,6 +5391,7 @@ contains
     logical :: c_value_flag
     type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_out = generic_get_1darray_double_c(x, c_value)
     c_value_int%ptr = c_value
@@ -5415,6 +5416,7 @@ contains
     logical :: c_value_flag
     type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_out = generic_get_1darray_complex_float_c(x, c_value)
     c_value_int%ptr = c_value
@@ -5439,6 +5441,7 @@ contains
     logical :: c_value_flag
     type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_out = generic_get_1darray_complex_double_c(x, c_value)
     c_value_int%ptr = c_value
@@ -5469,14 +5472,13 @@ contains
     type(c_ptr), target :: c_shape_target
     character(kind = c_char), dimension(:), allocatable :: c_subtype
     integer(kind = c_size_t) :: c_precision
-    type(c_ptr) :: c_value
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
     c_subtype = convert_string_f2c(subtype)
     c_precision = precision
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)
-    c_out = generic_get_ndarray_c(x, c_subtype, c_precision, c_value, c_shape)
+    c_out = generic_get_ndarray_c(x, c_subtype, c_precision, value, c_shape)
     deallocate(c_subtype)
     call c_f_pointer(c_shape_target, shape, [c_out])
     out = c_out
@@ -5501,6 +5503,7 @@ contains
     type(c_ptr) :: c_value
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)
@@ -5533,6 +5536,7 @@ contains
     type(c_ptr) :: c_value
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)
@@ -5565,6 +5569,7 @@ contains
     type(c_ptr) :: c_value
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)
@@ -5597,6 +5602,7 @@ contains
     type(c_ptr) :: c_value
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)
@@ -5629,6 +5635,7 @@ contains
     type(c_ptr) :: c_value
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)
@@ -5661,6 +5668,7 @@ contains
     type(c_ptr) :: c_value
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)
@@ -5693,6 +5701,7 @@ contains
     type(c_ptr) :: c_value
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)
@@ -6009,11 +6018,10 @@ contains
     integer :: out
     character(kind = c_char), dimension(:), allocatable :: c_subtype
     integer(kind = c_size_t) :: c_precision
-    type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
     c_subtype = convert_string_f2c(subtype)
     c_precision = precision
-    c_out = generic_ref_get_1darray_c(x, c_subtype, c_precision, c_value)
+    c_out = generic_ref_get_1darray_c(x, c_subtype, c_precision, value)
     deallocate(c_subtype)
     out = c_out
   end function generic_ref_get_1darray
@@ -6032,6 +6040,7 @@ contains
     logical :: c_value_flag
     type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_out = generic_ref_get_1darray_int16_c(x, c_value)
     c_value_int%ptr = c_value
@@ -6056,6 +6065,7 @@ contains
     logical :: c_value_flag
     type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_out = generic_ref_get_1darray_int32_c(x, c_value)
     c_value_int%ptr = c_value
@@ -6080,6 +6090,7 @@ contains
     logical :: c_value_flag
     type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_out = generic_ref_get_1darray_int64_c(x, c_value)
     c_value_int%ptr = c_value
@@ -6104,6 +6115,7 @@ contains
     logical :: c_value_flag
     type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_out = generic_ref_get_1darray_float_c(x, c_value)
     c_value_int%ptr = c_value
@@ -6128,6 +6140,7 @@ contains
     logical :: c_value_flag
     type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_out = generic_ref_get_1darray_double_c(x, c_value)
     c_value_int%ptr = c_value
@@ -6152,6 +6165,7 @@ contains
     logical :: c_value_flag
     type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_out = generic_ref_get_1darray_complex_float_c(x, c_value)
     c_value_int%ptr = c_value
@@ -6176,6 +6190,7 @@ contains
     logical :: c_value_flag
     type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_out = generic_ref_get_1darray_complex_double_c(x, c_value)
     c_value_int%ptr = c_value
@@ -6206,14 +6221,13 @@ contains
     type(c_ptr), target :: c_shape_target
     character(kind = c_char), dimension(:), allocatable :: c_subtype
     integer(kind = c_size_t) :: c_precision
-    type(c_ptr) :: c_value
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
     c_subtype = convert_string_f2c(subtype)
     c_precision = precision
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)
-    c_out = generic_ref_get_ndarray_c(x, c_subtype, c_precision, c_value, c_shape)
+    c_out = generic_ref_get_ndarray_c(x, c_subtype, c_precision, value, c_shape)
     deallocate(c_subtype)
     call c_f_pointer(c_shape_target, shape, [c_out])
     out = c_out
@@ -6238,6 +6252,7 @@ contains
     type(c_ptr) :: c_value
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)
@@ -6270,6 +6285,7 @@ contains
     type(c_ptr) :: c_value
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)
@@ -6302,6 +6318,7 @@ contains
     type(c_ptr) :: c_value
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)
@@ -6334,6 +6351,7 @@ contains
     type(c_ptr) :: c_value
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)
@@ -6366,6 +6384,7 @@ contains
     type(c_ptr) :: c_value
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)
@@ -6398,6 +6417,7 @@ contains
     type(c_ptr) :: c_value
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)
@@ -6430,6 +6450,7 @@ contains
     type(c_ptr) :: c_value
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)
@@ -7895,12 +7916,11 @@ contains
     integer(kind = c_size_t) :: c_index
     character(kind = c_char), dimension(:), allocatable :: c_subtype
     integer(kind = c_size_t) :: c_precision
-    type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
     c_index = index - 1
     c_subtype = convert_string_f2c(subtype)
     c_precision = precision
-    c_out = generic_array_get_1darray_c(x, c_index, c_subtype, c_precision, c_value)
+    c_out = generic_array_get_1darray_c(x, c_index, c_subtype, c_precision, value)
     deallocate(c_subtype)
     out = c_out
   end function generic_array_get_1darray
@@ -7923,6 +7943,7 @@ contains
     type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
     c_index = index - 1
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_out = generic_array_get_1darray_int16_c(x, c_index, c_value)
     c_value_int%ptr = c_value
@@ -7951,6 +7972,7 @@ contains
     type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
     c_index = index - 1
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_out = generic_array_get_1darray_int32_c(x, c_index, c_value)
     c_value_int%ptr = c_value
@@ -7979,6 +8001,7 @@ contains
     type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
     c_index = index - 1
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_out = generic_array_get_1darray_int64_c(x, c_index, c_value)
     c_value_int%ptr = c_value
@@ -8007,6 +8030,7 @@ contains
     type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
     c_index = index - 1
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_out = generic_array_get_1darray_float_c(x, c_index, c_value)
     c_value_int%ptr = c_value
@@ -8035,6 +8059,7 @@ contains
     type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
     c_index = index - 1
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_out = generic_array_get_1darray_double_c(x, c_index, c_value)
     c_value_int%ptr = c_value
@@ -8063,6 +8088,7 @@ contains
     type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
     c_index = index - 1
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_out = generic_array_get_1darray_complex_float_c(x, c_index, c_value)
     c_value_int%ptr = c_value
@@ -8091,6 +8117,7 @@ contains
     type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
     c_index = index - 1
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_out = generic_array_get_1darray_complex_double_c(x, c_index, c_value)
     c_value_int%ptr = c_value
@@ -8124,7 +8151,6 @@ contains
     integer(kind = c_size_t) :: c_index
     character(kind = c_char), dimension(:), allocatable :: c_subtype
     integer(kind = c_size_t) :: c_precision
-    type(c_ptr) :: c_value
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
     c_index = index - 1
@@ -8132,7 +8158,7 @@ contains
     c_precision = precision
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)
-    c_out = generic_array_get_ndarray_c(x, c_index, c_subtype, c_precision, c_value, c_shape)
+    c_out = generic_array_get_ndarray_c(x, c_index, c_subtype, c_precision, value, c_shape)
     deallocate(c_subtype)
     call c_f_pointer(c_shape_target, shape, [c_out])
     out = c_out
@@ -8161,6 +8187,7 @@ contains
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
     c_index = index - 1
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)
@@ -8197,6 +8224,7 @@ contains
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
     c_index = index - 1
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)
@@ -8233,6 +8261,7 @@ contains
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
     c_index = index - 1
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)
@@ -8269,6 +8298,7 @@ contains
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
     c_index = index - 1
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)
@@ -8305,6 +8335,7 @@ contains
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
     c_index = index - 1
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)
@@ -8341,6 +8372,7 @@ contains
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
     c_index = index - 1
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)
@@ -8377,6 +8409,7 @@ contains
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
     c_index = index - 1
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)
@@ -9911,12 +9944,11 @@ contains
     character(kind = c_char), dimension(:), allocatable :: c_key
     character(kind = c_char), dimension(:), allocatable :: c_subtype
     integer(kind = c_size_t) :: c_precision
-    type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
     c_key = convert_string_f2c(key)
     c_subtype = convert_string_f2c(subtype)
     c_precision = precision
-    c_out = generic_object_get_1darray_c(x, c_key, c_subtype, c_precision, c_value)
+    c_out = generic_object_get_1darray_c(x, c_key, c_subtype, c_precision, value)
     deallocate(c_key)
     deallocate(c_subtype)
     out = c_out
@@ -9940,6 +9972,7 @@ contains
     type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
     c_key = convert_string_f2c(key)
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_out = generic_object_get_1darray_int16_c(x, c_key, c_value)
     deallocate(c_key)
@@ -9969,6 +10002,7 @@ contains
     type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
     c_key = convert_string_f2c(key)
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_out = generic_object_get_1darray_int32_c(x, c_key, c_value)
     deallocate(c_key)
@@ -9998,6 +10032,7 @@ contains
     type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
     c_key = convert_string_f2c(key)
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_out = generic_object_get_1darray_int64_c(x, c_key, c_value)
     deallocate(c_key)
@@ -10027,6 +10062,7 @@ contains
     type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
     c_key = convert_string_f2c(key)
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_out = generic_object_get_1darray_float_c(x, c_key, c_value)
     deallocate(c_key)
@@ -10056,6 +10092,7 @@ contains
     type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
     c_key = convert_string_f2c(key)
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_out = generic_object_get_1darray_double_c(x, c_key, c_value)
     deallocate(c_key)
@@ -10085,6 +10122,7 @@ contains
     type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
     c_key = convert_string_f2c(key)
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_out = generic_object_get_1darray_complex_float_c(x, c_key, c_value)
     deallocate(c_key)
@@ -10114,6 +10152,7 @@ contains
     type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
     c_key = convert_string_f2c(key)
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_out = generic_object_get_1darray_complex_double_c(x, c_key, c_value)
     deallocate(c_key)
@@ -10148,7 +10187,6 @@ contains
     character(kind = c_char), dimension(:), allocatable :: c_key
     character(kind = c_char), dimension(:), allocatable :: c_subtype
     integer(kind = c_size_t) :: c_precision
-    type(c_ptr) :: c_value
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
     c_key = convert_string_f2c(key)
@@ -10156,7 +10194,7 @@ contains
     c_precision = precision
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)
-    c_out = generic_object_get_ndarray_c(x, c_key, c_subtype, c_precision, c_value, c_shape)
+    c_out = generic_object_get_ndarray_c(x, c_key, c_subtype, c_precision, value, c_shape)
     deallocate(c_key)
     deallocate(c_subtype)
     call c_f_pointer(c_shape_target, shape, [c_out])
@@ -10186,6 +10224,7 @@ contains
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
     c_key = convert_string_f2c(key)
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)
@@ -10223,6 +10262,7 @@ contains
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
     c_key = convert_string_f2c(key)
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)
@@ -10260,6 +10300,7 @@ contains
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
     c_key = convert_string_f2c(key)
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)
@@ -10297,6 +10338,7 @@ contains
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
     c_key = convert_string_f2c(key)
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)
@@ -10334,6 +10376,7 @@ contains
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
     c_key = convert_string_f2c(key)
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)
@@ -10371,6 +10414,7 @@ contains
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
     c_key = convert_string_f2c(key)
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)
@@ -10408,6 +10452,7 @@ contains
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
     c_key = convert_string_f2c(key)
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)
@@ -10653,6 +10698,7 @@ contains
     logical :: c_value_flag
     type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_out = generic_get_1darray_long_double_c(x, c_value)
     c_value_int%ptr = c_value
@@ -10677,6 +10723,7 @@ contains
     logical :: c_value_flag
     type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_out = generic_get_1darray_complex_long_double_c(x, c_value)
     c_value_int%ptr = c_value
@@ -10706,6 +10753,7 @@ contains
     type(c_ptr) :: c_value
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)
@@ -10738,6 +10786,7 @@ contains
     type(c_ptr) :: c_value
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)
@@ -10790,6 +10839,7 @@ contains
     logical :: c_value_flag
     type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_out = generic_ref_get_1darray_long_double_c(x, c_value)
     c_value_int%ptr = c_value
@@ -10814,6 +10864,7 @@ contains
     logical :: c_value_flag
     type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_out = generic_ref_get_1darray_complex_long_double_c(x, c_value)
     c_value_int%ptr = c_value
@@ -10843,6 +10894,7 @@ contains
     type(c_ptr) :: c_value
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)
@@ -10875,6 +10927,7 @@ contains
     type(c_ptr) :: c_value
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)
@@ -11124,6 +11177,7 @@ contains
     type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
     c_index = index - 1
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_out = generic_array_get_1darray_long_double_c(x, c_index, c_value)
     c_value_int%ptr = c_value
@@ -11152,6 +11206,7 @@ contains
     type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
     c_index = index - 1
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_out = generic_array_get_1darray_complex_long_double_c(x, c_index, c_value)
     c_value_int%ptr = c_value
@@ -11185,6 +11240,7 @@ contains
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
     c_index = index - 1
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)
@@ -11221,6 +11277,7 @@ contains
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
     c_index = index - 1
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)
@@ -11478,6 +11535,7 @@ contains
     type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
     c_key = convert_string_f2c(key)
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_out = generic_object_get_1darray_long_double_c(x, c_key, c_value)
     deallocate(c_key)
@@ -11507,6 +11565,7 @@ contains
     type(c_ptr) :: c_value
     integer(kind = c_size_t) :: c_out
     c_key = convert_string_f2c(key)
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_out = generic_object_get_1darray_complex_long_double_c(x, c_key, c_value)
     deallocate(c_key)
@@ -11541,6 +11600,7 @@ contains
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
     c_key = convert_string_f2c(key)
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)
@@ -11578,6 +11638,7 @@ contains
     type(c_ptr) :: c_shape
     integer(kind = c_size_t) :: c_out
     c_key = convert_string_f2c(key)
+    c_value = c_null_ptr
     c_value_int = yggarg(value)
     c_shape_target = c_null_ptr
     c_shape = c_loc(c_shape_target)

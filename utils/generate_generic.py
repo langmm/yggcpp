@@ -1301,7 +1301,7 @@ class CFile(AmendedFile):
                                    type_class='scalar')
                 if 'raw_type' not in x:
                     self._set_raw_type(x, kwargs, try_types=[x['base']])
-                    if 'raw_type' in x:
+                    if 'raw_type' in x and x['raw_type'] != 'noret':
                         x['base_raw_type'] = x['raw_type']
                     x['raw_type'] = 'pointer'
             elif 'enum' in x['type']:
@@ -1616,6 +1616,7 @@ class FortranFile(AmendedFile):
                     "type(yggptr) :: {b_name}_int\n"
                     "logical :: {b_name}_flag"),
                 'before': (
+                    "{b_name} = c_null_ptr\n"
                     "{b_name}_int = yggarg({a_name})"),
                 'after': (
                     "{b_name}_int%ptr = {b_name}\n"
