@@ -44,6 +44,8 @@ typedef struct comm_t {
   void* comm; /**< Pointer to C++ communicator */
 } comm_t;
 
+#define yggInput_t comm_t
+#define yggOutput_t comm_t
   
 /**
  * @brief Write a log message at the ERROR level. This will also cause
@@ -289,8 +291,8 @@ YGG_API long ncommCall(comm_t x, const int allow_realloc,
  * @param for_fortran If set to true then the list is of explicit fortran pointers
  * @return Any value greater than 0 indicates success
  */
-YGG_API int pcommSend(const comm_t comm, size_t nargs,
-		      void** ptrs, int for_fortran);
+YGG_API int pcommSend(const comm_t comm, const size_t nargs,
+		      void** ptrs, const int for_fortran);
 /*!
  * @brief Receive a messag into a list of pointers
  * @param comm The communciator to use
@@ -301,7 +303,8 @@ YGG_API int pcommSend(const comm_t comm, size_t nargs,
  * @return Any value greater than 0 indicates success
  */
 YGG_API long pcommRecv(comm_t comm, const int allow_realloc,
-		       size_t nargs, void** ptrs, int for_fortran);
+		       const size_t nargs, void** ptrs,
+		       const int for_fortran);
 /*!
  * @brief Send a request and receive a response from a list of pointers containing data for both the request and response.
  * @param comm The communciator to use
@@ -312,7 +315,8 @@ YGG_API long pcommRecv(comm_t comm, const int allow_realloc,
  * @return Any value greater than 0 indicates success
  */
 YGG_API long pcommCall(comm_t comm, const int allow_realloc,
-		       size_t nargs, void** ptrs, int for_fortran);
+		       const size_t nargs, void** ptrs,
+		       const int for_fortran);
 #define commSend(x, ...) ncommSend(x, COUNT_VARARGS(__VA_ARGS__), __VA_ARGS__)
 #define commRecvStack(x, ...) ncommRecv(x, 0, COUNT_VARARGS(__VA_ARGS__), __VA_ARGS__)
 #define commRecvHeap(x, ...) ncommRecv(x, 1, COUNT_VARARGS(__VA_ARGS__), __VA_ARGS__)

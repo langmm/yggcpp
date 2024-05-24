@@ -2874,16 +2874,16 @@ contains
        result(out)
     implicit none
     type(yggcomm), value, intent(in) :: comm
-    integer, value :: nargs
+    integer, value, intent(in) :: nargs
     type(c_ptr), value :: ptrs
-    integer, value :: for_fortran
+    integer, value, intent(in) :: for_fortran
     integer :: out
     integer(kind = c_size_t) :: c_nargs
     integer(kind = c_int) :: c_for_fortran
     integer(kind = c_int) :: c_out
+    c_nargs = nargs
+    c_for_fortran = for_fortran
     c_out = pcomm_send_c(comm, c_nargs, ptrs, c_for_fortran)
-    nargs = c_nargs
-    for_fortran = c_for_fortran
     out = c_out
   end function pcomm_send
   !> @brief Receive a messag into a list of pointers
@@ -2898,18 +2898,18 @@ contains
     implicit none
     type(yggcomm), value :: comm
     integer, value, intent(in) :: allow_realloc
-    integer, value :: nargs
+    integer, value, intent(in) :: nargs
     type(c_ptr), value :: ptrs
-    integer, value :: for_fortran
+    integer, value, intent(in) :: for_fortran
     logical :: out
     integer(kind = c_int) :: c_allow_realloc
     integer(kind = c_size_t) :: c_nargs
     integer(kind = c_int) :: c_for_fortran
     integer(kind = c_long) :: c_out
     c_allow_realloc = allow_realloc
+    c_nargs = nargs
+    c_for_fortran = for_fortran
     c_out = pcomm_recv_c(comm, c_allow_realloc, c_nargs, ptrs, c_for_fortran)
-    nargs = c_nargs
-    for_fortran = c_for_fortran
     out = (c_out.ge.0)
   end function pcomm_recv
   !> @brief Send a request and receive a response from a list of pointers containing data for both the request and response.
@@ -2924,18 +2924,18 @@ contains
     implicit none
     type(yggcomm), value :: comm
     integer, value, intent(in) :: allow_realloc
-    integer, value :: nargs
+    integer, value, intent(in) :: nargs
     type(c_ptr), value :: ptrs
-    integer, value :: for_fortran
+    integer, value, intent(in) :: for_fortran
     logical :: out
     integer(kind = c_int) :: c_allow_realloc
     integer(kind = c_size_t) :: c_nargs
     integer(kind = c_int) :: c_for_fortran
     integer(kind = c_long) :: c_out
     c_allow_realloc = allow_realloc
+    c_nargs = nargs
+    c_for_fortran = for_fortran
     c_out = pcomm_call_c(comm, c_allow_realloc, c_nargs, ptrs, c_for_fortran)
-    nargs = c_nargs
-    for_fortran = c_for_fortran
     out = (c_out.ge.0)
   end function pcomm_call
   subroutine set_global_comm()

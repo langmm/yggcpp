@@ -260,13 +260,13 @@ long comm_recv_f(comm_t comm, char* data, const size_t len) {
 int comm_nmsg_f(comm_t comm) {
   return comm_nmsg(comm);
 }
-int pcomm_send_f(const comm_t comm, size_t nargs, void* ptrs, int for_fortran) {
+int pcomm_send_f(const comm_t comm, const size_t nargs, void* ptrs, const int for_fortran) {
   return pcommSend(comm, nargs, (void**)ptrs, for_fortran);
 }
-long pcomm_recv_f(comm_t comm, const int allow_realloc, size_t nargs, void* ptrs, int for_fortran) {
+long pcomm_recv_f(comm_t comm, const int allow_realloc, const size_t nargs, void* ptrs, const int for_fortran) {
   return pcommRecv(comm, allow_realloc, nargs, (void**)ptrs, for_fortran);
 }
-long pcomm_call_f(comm_t comm, const int allow_realloc, size_t nargs, void* ptrs, int for_fortran) {
+long pcomm_call_f(comm_t comm, const int allow_realloc, const size_t nargs, void* ptrs, const int for_fortran) {
   return pcommCall(comm, allow_realloc, nargs, (void**)ptrs, for_fortran);
 }
 void set_global_comm_f() {

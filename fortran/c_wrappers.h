@@ -365,7 +365,7 @@ int comm_nmsg_f(comm_t comm);
  * @param for_fortran If set to true then the list is of explicit fortran pointers
  * @return Any value greater than 0 indicates success
  */
-int pcomm_send_f(const comm_t comm, size_t nargs, void* ptrs, int for_fortran);
+int pcomm_send_f(const comm_t comm, const size_t nargs, void* ptrs, const int for_fortran);
 /**
  * @brief Receive a messag into a list of pointers
  * @param comm The communciator to use
@@ -375,7 +375,7 @@ int pcomm_send_f(const comm_t comm, size_t nargs, void* ptrs, int for_fortran);
  * @param for_fortran If true then the list is of explicit fortran pointers
  * @return Any value greater than 0 indicates success
  */
-long pcomm_recv_f(comm_t comm, const int allow_realloc, size_t nargs, void* ptrs, int for_fortran);
+long pcomm_recv_f(comm_t comm, const int allow_realloc, const size_t nargs, void* ptrs, const int for_fortran);
 /**
  * @brief Send a request and receive a response from a list of pointers containing data for both the request and response.
  * @param comm The communciator to use
@@ -385,7 +385,7 @@ long pcomm_recv_f(comm_t comm, const int allow_realloc, size_t nargs, void* ptrs
  * @param for_fortran If true then the list is of explicit fortran pointers
  * @return Any value greater than 0 indicates success
  */
-long pcomm_call_f(comm_t comm, const int allow_realloc, size_t nargs, void* ptrs, int for_fortran);
+long pcomm_call_f(comm_t comm, const int allow_realloc, const size_t nargs, void* ptrs, const int for_fortran);
 void set_global_comm_f();
 void unset_global_comm_f();
 /**

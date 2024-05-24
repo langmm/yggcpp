@@ -693,9 +693,9 @@
        import :: yggcomm
        implicit none
        type(yggcomm), value, intent(in) :: comm
-       integer(kind = c_size_t), value :: nargs
+       integer(kind = c_size_t), value, intent(in) :: nargs
        type(c_ptr), value :: ptrs
-       integer(kind = c_int), value :: for_fortran
+       integer(kind = c_int), value, intent(in) :: for_fortran
        integer(kind = c_int) :: out
      end function pcomm_send_c
      !> @brief Receive a messag into a list of pointers
@@ -713,9 +713,9 @@
        implicit none
        type(yggcomm), value :: comm
        integer(kind = c_int), value, intent(in) :: allow_realloc
-       integer(kind = c_size_t), value :: nargs
+       integer(kind = c_size_t), value, intent(in) :: nargs
        type(c_ptr), value :: ptrs
-       integer(kind = c_int), value :: for_fortran
+       integer(kind = c_int), value, intent(in) :: for_fortran
        integer(kind = c_long) :: out
      end function pcomm_recv_c
      !> @brief Send a request and receive a response from a list of pointers containing data for both the request and response.
@@ -733,9 +733,9 @@
        implicit none
        type(yggcomm), value :: comm
        integer(kind = c_int), value, intent(in) :: allow_realloc
-       integer(kind = c_size_t), value :: nargs
+       integer(kind = c_size_t), value, intent(in) :: nargs
        type(c_ptr), value :: ptrs
-       integer(kind = c_int), value :: for_fortran
+       integer(kind = c_int), value, intent(in) :: for_fortran
        integer(kind = c_long) :: out
      end function pcomm_call_c
      subroutine set_global_comm_c() &

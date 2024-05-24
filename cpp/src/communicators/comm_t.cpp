@@ -258,8 +258,8 @@ long ncommCall(comm_t comm, const int allow_realloc, size_t nargs, ...) {
   } _END_CPP(ncommCall, -1);
 }
 
-int pcommSend(const comm_t comm, size_t nargs,
-	      void** ptrs, int for_fortran) {
+int pcommSend(const comm_t comm, const size_t nargs,
+	      void** ptrs, const int for_fortran) {
   _BEGIN_CPP {
     if (!comm.comm)
       ygglog_throw_error("pcommSend: Comm is not initialized");
@@ -270,7 +270,8 @@ int pcommSend(const comm_t comm, size_t nargs,
     return ret;
   } _END_CPP(pcommSend, -1);
 }
-long pcommRecv(comm_t comm, const int allow_realloc, size_t nargs, void** ptrs, int for_fortran) {
+long pcommRecv(comm_t comm, const int allow_realloc, const size_t nargs,
+	       void** ptrs, const int for_fortran) {
   _BEGIN_CPP {
     if (!comm.comm)
       ygglog_throw_error("pcommRecv: Comm is not initialized");
@@ -281,7 +282,8 @@ long pcommRecv(comm_t comm, const int allow_realloc, size_t nargs, void** ptrs, 
     return ret;
   } _END_CPP(pcommRecv, -1);
 }
-long pcommCall(comm_t comm, const int allow_realloc, size_t nargs, void** ptrs, int for_fortran) {
+long pcommCall(comm_t comm, const int allow_realloc, const size_t nargs,
+	       void** ptrs, const int for_fortran) {
   _BEGIN_CPP {
     if (!comm.comm)
       ygglog_throw_error("pcommCall: Comm is not initialized");
