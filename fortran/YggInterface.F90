@@ -1096,6 +1096,12 @@ contains
     ! procedure(func_abs), pointer :: func
     character(kind=c_char), allocatable :: c_name(:)
     type(c_funptr) :: c_func
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+    !> @brief Function wrapped to handle ygggeneric input and output
+    !>   that can be called from C++
+    !> @param[in] data_send Input data
+    !> @param[out] data_recv Output data structure that will be filled
+    !> @returns Success or failure of the function call
     interface
        logical(kind=c_bool) function func(data_send, data_recv) &
             bind(c)
@@ -1106,6 +1112,7 @@ contains
          type(ygggeneric), value :: data_recv
        end function func
     end interface
+#endif
     prefixed_name = 'fortran::' // trim(name)
     c_name = convert_string_f2c(prefixed_name)
     c_func = c_funloc(func)
@@ -6485,7 +6492,7 @@ contains
   end function generic_ref_get_any
   !> @brief Set an element in a array to a null
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The value to assign to x
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
   subroutine generic_array_set_null(x, index, value)
@@ -6505,7 +6512,7 @@ contains
   end subroutine generic_array_set_null
   !> @brief Set an element in a array to a boolean
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The value to assign to x
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
   subroutine generic_array_set_bool(x, index, value)
@@ -6525,7 +6532,7 @@ contains
   end subroutine generic_array_set_bool
   !> @brief Set an element in a array to a integer
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The value to assign to x
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
   subroutine generic_array_set_integer(x, index, value)
@@ -6545,7 +6552,7 @@ contains
   end subroutine generic_array_set_integer
   !> @brief Set an element in a array to a number
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The value to assign to x
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
   subroutine generic_array_set_number(x, index, value)
@@ -6565,7 +6572,7 @@ contains
   end subroutine generic_array_set_number
   !> @brief Set an element in a array to a string
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The value to assign to x
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
   subroutine generic_array_set_string(x, index, value)
@@ -6586,7 +6593,7 @@ contains
   end subroutine generic_array_set_string
   !> @brief Set an element in a array to a item
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The value to assign to x
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
   subroutine generic_array_set_item(x, index, type, value)
@@ -6608,7 +6615,7 @@ contains
   end subroutine generic_array_set_item
   !> @brief Set an element in a array to a array
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The value to assign to x
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
   subroutine generic_array_set_array(x, index, value)
@@ -6626,7 +6633,7 @@ contains
   end subroutine generic_array_set_array
   !> @brief Set an element in a array to a object
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The value to assign to x
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
   subroutine generic_array_set_object(x, index, value)
@@ -6644,7 +6651,7 @@ contains
   end subroutine generic_array_set_object
   !> @brief Set an element in a array to a ply
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The value to assign to x
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
   subroutine generic_array_set_ply(x, index, value)
@@ -6662,7 +6669,7 @@ contains
   end subroutine generic_array_set_ply
   !> @brief Set an element in a array to a obj
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The value to assign to x
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
   subroutine generic_array_set_obj(x, index, value)
@@ -6680,7 +6687,7 @@ contains
   end subroutine generic_array_set_obj
   !> @brief Set an element in a array to a class
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The value to assign to x
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
   subroutine generic_array_set_python_class(x, index, value)
@@ -6698,7 +6705,7 @@ contains
   end subroutine generic_array_set_python_class
   !> @brief Set an element in a array to a function
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The value to assign to x
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
   subroutine generic_array_set_python_function(x, index, value)
@@ -6716,7 +6723,7 @@ contains
   end subroutine generic_array_set_python_function
   !> @brief Set an element in a array to a instance
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The value to assign to x
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
   subroutine generic_array_set_python_instance(x, index, value)
@@ -6734,7 +6741,7 @@ contains
   end subroutine generic_array_set_python_instance
   !> @brief Set an element in a array to a scalar
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value Pointer to the memory containing the value to assign to x
   !> @param[in] subtype Subtype of data contained in value
   !> @param[in] precision The precision of the data in value
@@ -6771,7 +6778,7 @@ contains
   end subroutine generic_array_set_scalar
   !> @brief Set an element in a array to a int scalar
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The value to assign to x
   !> @param[in] units Units of value
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -6796,7 +6803,7 @@ contains
   end subroutine generic_array_set_int16
   !> @brief Set an element in a array to a int scalar
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The value to assign to x
   !> @param[in] units Units of value
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -6821,7 +6828,7 @@ contains
   end subroutine generic_array_set_int32
   !> @brief Set an element in a array to a int scalar
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The value to assign to x
   !> @param[in] units Units of value
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -6846,7 +6853,7 @@ contains
   end subroutine generic_array_set_int64
   !> @brief Set an element in a array to a float scalar
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The value to assign to x
   !> @param[in] units Units of value
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -6871,7 +6878,7 @@ contains
   end subroutine generic_array_set_float
   !> @brief Set an element in a array to a float scalar
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The value to assign to x
   !> @param[in] units Units of value
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -6896,7 +6903,7 @@ contains
   end subroutine generic_array_set_double
   !> @brief Set an element in a array to a complex scalar
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The value to assign to x
   !> @param[in] units Units of value
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -6922,7 +6929,7 @@ contains
   end subroutine generic_array_set_complex_float
   !> @brief Set an element in a array to a complex scalar
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The value to assign to x
   !> @param[in] units Units of value
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -6948,7 +6955,7 @@ contains
   end subroutine generic_array_set_complex_double
   !> @brief Set an element in a array to a 1darray
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value Pointer to the memory containing the array to assign
   !>   to x
   !> @param[in] subtype Subtype of data contained in value
@@ -6990,7 +6997,7 @@ contains
   end subroutine generic_array_set_1darray
   !> @brief Set an element in a array to a int 1darray
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The array of values to assign to x
   !> @param[in] length The number of elements in value
   !> @param[in] units Units of value
@@ -7021,7 +7028,7 @@ contains
   end subroutine generic_array_set_1darray_int16
   !> @brief Set an element in a array to a int 1darray
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The array of values to assign to x
   !> @param[in] length The number of elements in value
   !> @param[in] units Units of value
@@ -7052,7 +7059,7 @@ contains
   end subroutine generic_array_set_1darray_int32
   !> @brief Set an element in a array to a int 1darray
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The array of values to assign to x
   !> @param[in] length The number of elements in value
   !> @param[in] units Units of value
@@ -7083,7 +7090,7 @@ contains
   end subroutine generic_array_set_1darray_int64
   !> @brief Set an element in a array to a float 1darray
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The array of values to assign to x
   !> @param[in] length The number of elements in value
   !> @param[in] units Units of value
@@ -7114,7 +7121,7 @@ contains
   end subroutine generic_array_set_1darray_float
   !> @brief Set an element in a array to a float 1darray
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The array of values to assign to x
   !> @param[in] length The number of elements in value
   !> @param[in] units Units of value
@@ -7145,7 +7152,7 @@ contains
   end subroutine generic_array_set_1darray_double
   !> @brief Set an element in a array to a complex 1darray
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The array of values to assign to x
   !> @param[in] length The number of elements in value
   !> @param[in] units Units of value
@@ -7176,7 +7183,7 @@ contains
   end subroutine generic_array_set_1darray_complex_float
   !> @brief Set an element in a array to a complex 1darray
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The array of values to assign to x
   !> @param[in] length The number of elements in value
   !> @param[in] units Units of value
@@ -7207,7 +7214,7 @@ contains
   end subroutine generic_array_set_1darray_complex_double
   !> @brief Set an element in a array to a ndarray
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value Pointer to the memory containing the array to assign
   !>   to x
   !> @param[in] subtype Subtype of data contained in value
@@ -7252,7 +7259,7 @@ contains
   end subroutine generic_array_set_ndarray
   !> @brief Set an element in a array to a int ndarray
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The array of values to assign to x
   !>   in row-major order
   !> @param[in] ndim The number of dimensions in value, or 0 on error
@@ -7288,7 +7295,7 @@ contains
   end subroutine generic_array_set_ndarray_int16
   !> @brief Set an element in a array to a int ndarray
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The array of values to assign to x
   !>   in row-major order
   !> @param[in] ndim The number of dimensions in value, or 0 on error
@@ -7324,7 +7331,7 @@ contains
   end subroutine generic_array_set_ndarray_int32
   !> @brief Set an element in a array to a int ndarray
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The array of values to assign to x
   !>   in row-major order
   !> @param[in] ndim The number of dimensions in value, or 0 on error
@@ -7360,7 +7367,7 @@ contains
   end subroutine generic_array_set_ndarray_int64
   !> @brief Set an element in a array to a float ndarray
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The array of values to assign to x
   !>   in row-major order
   !> @param[in] ndim The number of dimensions in value, or 0 on error
@@ -7396,7 +7403,7 @@ contains
   end subroutine generic_array_set_ndarray_float
   !> @brief Set an element in a array to a float ndarray
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The array of values to assign to x
   !>   in row-major order
   !> @param[in] ndim The number of dimensions in value, or 0 on error
@@ -7432,7 +7439,7 @@ contains
   end subroutine generic_array_set_ndarray_double
   !> @brief Set an element in a array to a complex ndarray
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The array of values to assign to x
   !>   in row-major order
   !> @param[in] ndim The number of dimensions in value, or 0 on error
@@ -7468,7 +7475,7 @@ contains
   end subroutine generic_array_set_ndarray_complex_float
   !> @brief Set an element in a array to a complex ndarray
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The array of values to assign to x
   !>   in row-major order
   !> @param[in] ndim The number of dimensions in value, or 0 on error
@@ -7504,7 +7511,7 @@ contains
   end subroutine generic_array_set_ndarray_complex_double
   !> @brief Set an element in a array to a schema
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The value to assign to x
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
   subroutine generic_array_set_schema(x, index, value)
@@ -7522,7 +7529,7 @@ contains
   end subroutine generic_array_set_schema
   !> @brief Set an element in a array to a any
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The value to assign to x
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
   subroutine generic_array_set_any(x, index, value)
@@ -7540,7 +7547,7 @@ contains
   end subroutine generic_array_set_any
   !> @brief Get a null from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @returns Value from x
   function generic_array_get_null(x, index) &
        result(out)
@@ -7556,7 +7563,7 @@ contains
   end function generic_array_get_null
   !> @brief Get a boolean from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @returns Value from x
   function generic_array_get_bool(x, index) &
        result(out)
@@ -7572,7 +7579,7 @@ contains
   end function generic_array_get_bool
   !> @brief Get a integer from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @returns Value from x
   function generic_array_get_integer(x, index) &
        result(out)
@@ -7588,7 +7595,7 @@ contains
   end function generic_array_get_integer
   !> @brief Get a number from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @returns Value from x
   function generic_array_get_number(x, index) &
        result(out)
@@ -7604,7 +7611,7 @@ contains
   end function generic_array_get_number
   !> @brief Get a string from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @returns Value from x
   function generic_array_get_string(x, index) &
        result(out)
@@ -7620,7 +7627,7 @@ contains
   end function generic_array_get_string
   !> @brief Get a item from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @param[in] type Type of item to retrieve
   !> @returns Pointer to data containing raw item data, NULL on error
   function generic_array_get_item(x, index, type) &
@@ -7639,7 +7646,7 @@ contains
   end function generic_array_get_item
   !> @brief Get a item_nbytes from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @param[in] type Type of item to retrieve
   !> @returns Number of bytes in raw item data, 0 on error
   function generic_array_get_item_nbytes(x, index, type) &
@@ -7663,7 +7670,7 @@ contains
   end function generic_array_get_item_nbytes
   !> @brief Get a array from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @returns Value from x
   function generic_array_get_array(x, index) &
        result(out)
@@ -7677,7 +7684,7 @@ contains
   end function generic_array_get_array
   !> @brief Get a object from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @returns Value from x
   function generic_array_get_object(x, index) &
        result(out)
@@ -7691,7 +7698,7 @@ contains
   end function generic_array_get_object
   !> @brief Get a ply from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @returns Value from x
   function generic_array_get_ply(x, index) &
        result(out)
@@ -7705,7 +7712,7 @@ contains
   end function generic_array_get_ply
   !> @brief Get a obj from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @returns Value from x
   function generic_array_get_obj(x, index) &
        result(out)
@@ -7719,7 +7726,7 @@ contains
   end function generic_array_get_obj
   !> @brief Get a class from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @returns Value from x
   function generic_array_get_python_class(x, index) &
        result(out)
@@ -7733,7 +7740,7 @@ contains
   end function generic_array_get_python_class
   !> @brief Get a function from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @returns Value from x
   function generic_array_get_python_function(x, index) &
        result(out)
@@ -7747,7 +7754,7 @@ contains
   end function generic_array_get_python_function
   !> @brief Get a instance from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @returns Value from x
   function generic_array_get_python_instance(x, index) &
        result(out)
@@ -7761,7 +7768,7 @@ contains
   end function generic_array_get_python_instance
   !> @brief Get a scalar from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @param[in] subtype Subtype of data to return
   !> @param[in] precision Precision of the data to return
   !> @returns Pointer to value in x
@@ -7784,7 +7791,7 @@ contains
   end function generic_array_get_scalar
   !> @brief Get a int scalar from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @returns Value from x
   function generic_array_get_int16(x, index) &
        result(out)
@@ -7800,7 +7807,7 @@ contains
   end function generic_array_get_int16
   !> @brief Get a int scalar from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @returns Value from x
   function generic_array_get_int32(x, index) &
        result(out)
@@ -7816,7 +7823,7 @@ contains
   end function generic_array_get_int32
   !> @brief Get a int scalar from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @returns Value from x
   function generic_array_get_int64(x, index) &
        result(out)
@@ -7832,7 +7839,7 @@ contains
   end function generic_array_get_int64
   !> @brief Get a float scalar from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @returns Value from x
   function generic_array_get_float(x, index) &
        result(out)
@@ -7848,7 +7855,7 @@ contains
   end function generic_array_get_float
   !> @brief Get a float scalar from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @returns Value from x
   function generic_array_get_double(x, index) &
        result(out)
@@ -7864,7 +7871,7 @@ contains
   end function generic_array_get_double
   !> @brief Get a complex scalar from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @returns Value from x
   function generic_array_get_complex_float(x, index) &
        result(out)
@@ -7881,7 +7888,7 @@ contains
   end function generic_array_get_complex_float
   !> @brief Get a complex scalar from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @returns Value from x
   function generic_array_get_complex_double(x, index) &
        result(out)
@@ -7898,7 +7905,7 @@ contains
   end function generic_array_get_complex_double
   !> @brief Get a 1darray from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @param[in] subtype Subtype of data to return
   !> @param[in] precision Precision of the data to return
   !> @param[out] value Pointer to memory that should be reallocated and
@@ -7926,7 +7933,7 @@ contains
   end function generic_array_get_1darray
   !> @brief Get a int 1darray from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @param[out] value Pointer to memory that should be reallocated and
   !>   filled with the array contents of x
   !> @returns Number of elements in the array, or 0 on error
@@ -7955,7 +7962,7 @@ contains
   end function generic_array_get_1darray_int16
   !> @brief Get a int 1darray from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @param[out] value Pointer to memory that should be reallocated and
   !>   filled with the array contents of x
   !> @returns Number of elements in the array, or 0 on error
@@ -7984,7 +7991,7 @@ contains
   end function generic_array_get_1darray_int32
   !> @brief Get a int 1darray from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @param[out] value Pointer to memory that should be reallocated and
   !>   filled with the array contents of x
   !> @returns Number of elements in the array, or 0 on error
@@ -8013,7 +8020,7 @@ contains
   end function generic_array_get_1darray_int64
   !> @brief Get a float 1darray from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @param[out] value Pointer to memory that should be reallocated and
   !>   filled with the array contents of x
   !> @returns Number of elements in the array, or 0 on error
@@ -8042,7 +8049,7 @@ contains
   end function generic_array_get_1darray_float
   !> @brief Get a float 1darray from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @param[out] value Pointer to memory that should be reallocated and
   !>   filled with the array contents of x
   !> @returns Number of elements in the array, or 0 on error
@@ -8071,7 +8078,7 @@ contains
   end function generic_array_get_1darray_double
   !> @brief Get a complex 1darray from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @param[out] value Pointer to memory that should be reallocated and
   !>   filled with the array contents of x
   !> @returns Number of elements in the array, or 0 on error
@@ -8100,7 +8107,7 @@ contains
   end function generic_array_get_1darray_complex_float
   !> @brief Get a complex 1darray from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @param[out] value Pointer to memory that should be reallocated and
   !>   filled with the array contents of x
   !> @returns Number of elements in the array, or 0 on error
@@ -8129,7 +8136,7 @@ contains
   end function generic_array_get_1darray_complex_double
   !> @brief Get a ndarray from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @param[in] subtype Subtype of data to return
   !> @param[in] precision Precision of the data to return
   !> @param[out] value Pointer to memory that should be reallocated and
@@ -8165,7 +8172,7 @@ contains
   end function generic_array_get_ndarray
   !> @brief Get a int ndarray from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @param[out] value Pointer to memory that should be reallocated and
   !>   filled with the array contents of x in row-major order
   !> @param[out] shape Pointer to memory that should be reallocated and
@@ -8202,7 +8209,7 @@ contains
   end function generic_array_get_ndarray_int16
   !> @brief Get a int ndarray from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @param[out] value Pointer to memory that should be reallocated and
   !>   filled with the array contents of x in row-major order
   !> @param[out] shape Pointer to memory that should be reallocated and
@@ -8239,7 +8246,7 @@ contains
   end function generic_array_get_ndarray_int32
   !> @brief Get a int ndarray from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @param[out] value Pointer to memory that should be reallocated and
   !>   filled with the array contents of x in row-major order
   !> @param[out] shape Pointer to memory that should be reallocated and
@@ -8276,7 +8283,7 @@ contains
   end function generic_array_get_ndarray_int64
   !> @brief Get a float ndarray from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @param[out] value Pointer to memory that should be reallocated and
   !>   filled with the array contents of x in row-major order
   !> @param[out] shape Pointer to memory that should be reallocated and
@@ -8313,7 +8320,7 @@ contains
   end function generic_array_get_ndarray_float
   !> @brief Get a float ndarray from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @param[out] value Pointer to memory that should be reallocated and
   !>   filled with the array contents of x in row-major order
   !> @param[out] shape Pointer to memory that should be reallocated and
@@ -8350,7 +8357,7 @@ contains
   end function generic_array_get_ndarray_double
   !> @brief Get a complex ndarray from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @param[out] value Pointer to memory that should be reallocated and
   !>   filled with the array contents of x in row-major order
   !> @param[out] shape Pointer to memory that should be reallocated and
@@ -8387,7 +8394,7 @@ contains
   end function generic_array_get_ndarray_complex_float
   !> @brief Get a complex ndarray from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @param[out] value Pointer to memory that should be reallocated and
   !>   filled with the array contents of x in row-major order
   !> @param[out] shape Pointer to memory that should be reallocated and
@@ -8424,7 +8431,7 @@ contains
   end function generic_array_get_ndarray_complex_double
   !> @brief Get a schema from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @returns Value from x
   function generic_array_get_schema(x, index) &
        result(out)
@@ -8438,7 +8445,7 @@ contains
   end function generic_array_get_schema
   !> @brief Get a any from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @returns Value from x
   function generic_array_get_any(x, index) &
        result(out)
@@ -8452,7 +8459,7 @@ contains
   end function generic_array_get_any
   !> @brief Set an element in a object to a null
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The value to assign to x
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
   subroutine generic_object_set_null(x, key, value)
@@ -8473,7 +8480,7 @@ contains
   end subroutine generic_object_set_null
   !> @brief Set an element in a object to a boolean
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The value to assign to x
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
   subroutine generic_object_set_bool(x, key, value)
@@ -8494,7 +8501,7 @@ contains
   end subroutine generic_object_set_bool
   !> @brief Set an element in a object to a integer
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The value to assign to x
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
   subroutine generic_object_set_integer(x, key, value)
@@ -8515,7 +8522,7 @@ contains
   end subroutine generic_object_set_integer
   !> @brief Set an element in a object to a number
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The value to assign to x
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
   subroutine generic_object_set_number(x, key, value)
@@ -8536,7 +8543,7 @@ contains
   end subroutine generic_object_set_number
   !> @brief Set an element in a object to a string
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The value to assign to x
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
   subroutine generic_object_set_string(x, key, value)
@@ -8558,7 +8565,7 @@ contains
   end subroutine generic_object_set_string
   !> @brief Set an element in a object to a item
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The value to assign to x
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
   subroutine generic_object_set_item(x, key, type, value)
@@ -8581,7 +8588,7 @@ contains
   end subroutine generic_object_set_item
   !> @brief Set an element in a object to a array
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The value to assign to x
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
   subroutine generic_object_set_array(x, key, value)
@@ -8600,7 +8607,7 @@ contains
   end subroutine generic_object_set_array
   !> @brief Set an element in a object to a object
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The value to assign to x
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
   subroutine generic_object_set_object(x, key, value)
@@ -8619,7 +8626,7 @@ contains
   end subroutine generic_object_set_object
   !> @brief Set an element in a object to a ply
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The value to assign to x
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
   subroutine generic_object_set_ply(x, key, value)
@@ -8638,7 +8645,7 @@ contains
   end subroutine generic_object_set_ply
   !> @brief Set an element in a object to a obj
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The value to assign to x
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
   subroutine generic_object_set_obj(x, key, value)
@@ -8657,7 +8664,7 @@ contains
   end subroutine generic_object_set_obj
   !> @brief Set an element in a object to a class
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The value to assign to x
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
   subroutine generic_object_set_python_class(x, key, value)
@@ -8676,7 +8683,7 @@ contains
   end subroutine generic_object_set_python_class
   !> @brief Set an element in a object to a function
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The value to assign to x
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
   subroutine generic_object_set_python_function(x, key, value)
@@ -8695,7 +8702,7 @@ contains
   end subroutine generic_object_set_python_function
   !> @brief Set an element in a object to a instance
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The value to assign to x
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
   subroutine generic_object_set_python_instance(x, key, value)
@@ -8714,7 +8721,7 @@ contains
   end subroutine generic_object_set_python_instance
   !> @brief Set an element in a object to a scalar
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value Pointer to the memory containing the value to assign to x
   !> @param[in] subtype Subtype of data contained in value
   !> @param[in] precision The precision of the data in value
@@ -8752,7 +8759,7 @@ contains
   end subroutine generic_object_set_scalar
   !> @brief Set an element in a object to a int scalar
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The value to assign to x
   !> @param[in] units Units of value
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -8778,7 +8785,7 @@ contains
   end subroutine generic_object_set_int16
   !> @brief Set an element in a object to a int scalar
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The value to assign to x
   !> @param[in] units Units of value
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -8804,7 +8811,7 @@ contains
   end subroutine generic_object_set_int32
   !> @brief Set an element in a object to a int scalar
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The value to assign to x
   !> @param[in] units Units of value
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -8830,7 +8837,7 @@ contains
   end subroutine generic_object_set_int64
   !> @brief Set an element in a object to a float scalar
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The value to assign to x
   !> @param[in] units Units of value
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -8856,7 +8863,7 @@ contains
   end subroutine generic_object_set_float
   !> @brief Set an element in a object to a float scalar
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The value to assign to x
   !> @param[in] units Units of value
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -8882,7 +8889,7 @@ contains
   end subroutine generic_object_set_double
   !> @brief Set an element in a object to a complex scalar
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The value to assign to x
   !> @param[in] units Units of value
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -8909,7 +8916,7 @@ contains
   end subroutine generic_object_set_complex_float
   !> @brief Set an element in a object to a complex scalar
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The value to assign to x
   !> @param[in] units Units of value
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -8936,7 +8943,7 @@ contains
   end subroutine generic_object_set_complex_double
   !> @brief Set an element in a object to a 1darray
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value Pointer to the memory containing the array to assign
   !>   to x
   !> @param[in] subtype Subtype of data contained in value
@@ -8979,7 +8986,7 @@ contains
   end subroutine generic_object_set_1darray
   !> @brief Set an element in a object to a int 1darray
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The array of values to assign to x
   !> @param[in] length The number of elements in value
   !> @param[in] units Units of value
@@ -9011,7 +9018,7 @@ contains
   end subroutine generic_object_set_1darray_int16
   !> @brief Set an element in a object to a int 1darray
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The array of values to assign to x
   !> @param[in] length The number of elements in value
   !> @param[in] units Units of value
@@ -9043,7 +9050,7 @@ contains
   end subroutine generic_object_set_1darray_int32
   !> @brief Set an element in a object to a int 1darray
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The array of values to assign to x
   !> @param[in] length The number of elements in value
   !> @param[in] units Units of value
@@ -9075,7 +9082,7 @@ contains
   end subroutine generic_object_set_1darray_int64
   !> @brief Set an element in a object to a float 1darray
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The array of values to assign to x
   !> @param[in] length The number of elements in value
   !> @param[in] units Units of value
@@ -9107,7 +9114,7 @@ contains
   end subroutine generic_object_set_1darray_float
   !> @brief Set an element in a object to a float 1darray
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The array of values to assign to x
   !> @param[in] length The number of elements in value
   !> @param[in] units Units of value
@@ -9139,7 +9146,7 @@ contains
   end subroutine generic_object_set_1darray_double
   !> @brief Set an element in a object to a complex 1darray
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The array of values to assign to x
   !> @param[in] length The number of elements in value
   !> @param[in] units Units of value
@@ -9171,7 +9178,7 @@ contains
   end subroutine generic_object_set_1darray_complex_float
   !> @brief Set an element in a object to a complex 1darray
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The array of values to assign to x
   !> @param[in] length The number of elements in value
   !> @param[in] units Units of value
@@ -9203,7 +9210,7 @@ contains
   end subroutine generic_object_set_1darray_complex_double
   !> @brief Set an element in a object to a ndarray
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value Pointer to the memory containing the array to assign
   !>   to x
   !> @param[in] subtype Subtype of data contained in value
@@ -9249,7 +9256,7 @@ contains
   end subroutine generic_object_set_ndarray
   !> @brief Set an element in a object to a int ndarray
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The array of values to assign to x
   !>   in row-major order
   !> @param[in] ndim The number of dimensions in value, or 0 on error
@@ -9286,7 +9293,7 @@ contains
   end subroutine generic_object_set_ndarray_int16
   !> @brief Set an element in a object to a int ndarray
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The array of values to assign to x
   !>   in row-major order
   !> @param[in] ndim The number of dimensions in value, or 0 on error
@@ -9323,7 +9330,7 @@ contains
   end subroutine generic_object_set_ndarray_int32
   !> @brief Set an element in a object to a int ndarray
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The array of values to assign to x
   !>   in row-major order
   !> @param[in] ndim The number of dimensions in value, or 0 on error
@@ -9360,7 +9367,7 @@ contains
   end subroutine generic_object_set_ndarray_int64
   !> @brief Set an element in a object to a float ndarray
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The array of values to assign to x
   !>   in row-major order
   !> @param[in] ndim The number of dimensions in value, or 0 on error
@@ -9397,7 +9404,7 @@ contains
   end subroutine generic_object_set_ndarray_float
   !> @brief Set an element in a object to a float ndarray
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The array of values to assign to x
   !>   in row-major order
   !> @param[in] ndim The number of dimensions in value, or 0 on error
@@ -9434,7 +9441,7 @@ contains
   end subroutine generic_object_set_ndarray_double
   !> @brief Set an element in a object to a complex ndarray
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The array of values to assign to x
   !>   in row-major order
   !> @param[in] ndim The number of dimensions in value, or 0 on error
@@ -9471,7 +9478,7 @@ contains
   end subroutine generic_object_set_ndarray_complex_float
   !> @brief Set an element in a object to a complex ndarray
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The array of values to assign to x
   !>   in row-major order
   !> @param[in] ndim The number of dimensions in value, or 0 on error
@@ -9508,7 +9515,7 @@ contains
   end subroutine generic_object_set_ndarray_complex_double
   !> @brief Set an element in a object to a schema
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The value to assign to x
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
   subroutine generic_object_set_schema(x, key, value)
@@ -9527,7 +9534,7 @@ contains
   end subroutine generic_object_set_schema
   !> @brief Set an element in a object to a any
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The value to assign to x
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
   subroutine generic_object_set_any(x, key, value)
@@ -9546,7 +9553,7 @@ contains
   end subroutine generic_object_set_any
   !> @brief Get a null from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @returns Value from x
   function generic_object_get_null(x, key) &
        result(out)
@@ -9563,7 +9570,7 @@ contains
   end function generic_object_get_null
   !> @brief Get a boolean from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @returns Value from x
   function generic_object_get_bool(x, key) &
        result(out)
@@ -9580,7 +9587,7 @@ contains
   end function generic_object_get_bool
   !> @brief Get a integer from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @returns Value from x
   function generic_object_get_integer(x, key) &
        result(out)
@@ -9597,7 +9604,7 @@ contains
   end function generic_object_get_integer
   !> @brief Get a number from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @returns Value from x
   function generic_object_get_number(x, key) &
        result(out)
@@ -9614,7 +9621,7 @@ contains
   end function generic_object_get_number
   !> @brief Get a string from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @returns Value from x
   function generic_object_get_string(x, key) &
        result(out)
@@ -9631,7 +9638,7 @@ contains
   end function generic_object_get_string
   !> @brief Get a item from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @param[in] type Type of item to retrieve
   !> @returns Pointer to data containing raw item data, NULL on error
   function generic_object_get_item(x, key, type) &
@@ -9651,7 +9658,7 @@ contains
   end function generic_object_get_item
   !> @brief Get a item_nbytes from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @param[in] type Type of item to retrieve
   !> @returns Number of bytes in raw item data, 0 on error
   function generic_object_get_item_nbytes(x, key, type) &
@@ -9676,7 +9683,7 @@ contains
   end function generic_object_get_item_nbytes
   !> @brief Get a array from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @returns Value from x
   function generic_object_get_array(x, key) &
        result(out)
@@ -9691,7 +9698,7 @@ contains
   end function generic_object_get_array
   !> @brief Get a object from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @returns Value from x
   function generic_object_get_object(x, key) &
        result(out)
@@ -9706,7 +9713,7 @@ contains
   end function generic_object_get_object
   !> @brief Get a ply from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @returns Value from x
   function generic_object_get_ply(x, key) &
        result(out)
@@ -9721,7 +9728,7 @@ contains
   end function generic_object_get_ply
   !> @brief Get a obj from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @returns Value from x
   function generic_object_get_obj(x, key) &
        result(out)
@@ -9736,7 +9743,7 @@ contains
   end function generic_object_get_obj
   !> @brief Get a class from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @returns Value from x
   function generic_object_get_python_class(x, key) &
        result(out)
@@ -9751,7 +9758,7 @@ contains
   end function generic_object_get_python_class
   !> @brief Get a function from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @returns Value from x
   function generic_object_get_python_function(x, key) &
        result(out)
@@ -9766,7 +9773,7 @@ contains
   end function generic_object_get_python_function
   !> @brief Get a instance from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @returns Value from x
   function generic_object_get_python_instance(x, key) &
        result(out)
@@ -9781,7 +9788,7 @@ contains
   end function generic_object_get_python_instance
   !> @brief Get a scalar from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @param[in] subtype Subtype of data to return
   !> @param[in] precision Precision of the data to return
   !> @returns Pointer to value in x
@@ -9805,7 +9812,7 @@ contains
   end function generic_object_get_scalar
   !> @brief Get a int scalar from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @returns Value from x
   function generic_object_get_int16(x, key) &
        result(out)
@@ -9822,7 +9829,7 @@ contains
   end function generic_object_get_int16
   !> @brief Get a int scalar from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @returns Value from x
   function generic_object_get_int32(x, key) &
        result(out)
@@ -9839,7 +9846,7 @@ contains
   end function generic_object_get_int32
   !> @brief Get a int scalar from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @returns Value from x
   function generic_object_get_int64(x, key) &
        result(out)
@@ -9856,7 +9863,7 @@ contains
   end function generic_object_get_int64
   !> @brief Get a float scalar from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @returns Value from x
   function generic_object_get_float(x, key) &
        result(out)
@@ -9873,7 +9880,7 @@ contains
   end function generic_object_get_float
   !> @brief Get a float scalar from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @returns Value from x
   function generic_object_get_double(x, key) &
        result(out)
@@ -9890,7 +9897,7 @@ contains
   end function generic_object_get_double
   !> @brief Get a complex scalar from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @returns Value from x
   function generic_object_get_complex_float(x, key) &
        result(out)
@@ -9908,7 +9915,7 @@ contains
   end function generic_object_get_complex_float
   !> @brief Get a complex scalar from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @returns Value from x
   function generic_object_get_complex_double(x, key) &
        result(out)
@@ -9926,7 +9933,7 @@ contains
   end function generic_object_get_complex_double
   !> @brief Get a 1darray from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @param[in] subtype Subtype of data to return
   !> @param[in] precision Precision of the data to return
   !> @param[out] value Pointer to memory that should be reallocated and
@@ -9955,7 +9962,7 @@ contains
   end function generic_object_get_1darray
   !> @brief Get a int 1darray from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @param[out] value Pointer to memory that should be reallocated and
   !>   filled with the array contents of x
   !> @returns Number of elements in the array, or 0 on error
@@ -9985,7 +9992,7 @@ contains
   end function generic_object_get_1darray_int16
   !> @brief Get a int 1darray from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @param[out] value Pointer to memory that should be reallocated and
   !>   filled with the array contents of x
   !> @returns Number of elements in the array, or 0 on error
@@ -10015,7 +10022,7 @@ contains
   end function generic_object_get_1darray_int32
   !> @brief Get a int 1darray from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @param[out] value Pointer to memory that should be reallocated and
   !>   filled with the array contents of x
   !> @returns Number of elements in the array, or 0 on error
@@ -10045,7 +10052,7 @@ contains
   end function generic_object_get_1darray_int64
   !> @brief Get a float 1darray from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @param[out] value Pointer to memory that should be reallocated and
   !>   filled with the array contents of x
   !> @returns Number of elements in the array, or 0 on error
@@ -10075,7 +10082,7 @@ contains
   end function generic_object_get_1darray_float
   !> @brief Get a float 1darray from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @param[out] value Pointer to memory that should be reallocated and
   !>   filled with the array contents of x
   !> @returns Number of elements in the array, or 0 on error
@@ -10105,7 +10112,7 @@ contains
   end function generic_object_get_1darray_double
   !> @brief Get a complex 1darray from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @param[out] value Pointer to memory that should be reallocated and
   !>   filled with the array contents of x
   !> @returns Number of elements in the array, or 0 on error
@@ -10135,7 +10142,7 @@ contains
   end function generic_object_get_1darray_complex_float
   !> @brief Get a complex 1darray from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @param[out] value Pointer to memory that should be reallocated and
   !>   filled with the array contents of x
   !> @returns Number of elements in the array, or 0 on error
@@ -10165,7 +10172,7 @@ contains
   end function generic_object_get_1darray_complex_double
   !> @brief Get a ndarray from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @param[in] subtype Subtype of data to return
   !> @param[in] precision Precision of the data to return
   !> @param[out] value Pointer to memory that should be reallocated and
@@ -10202,7 +10209,7 @@ contains
   end function generic_object_get_ndarray
   !> @brief Get a int ndarray from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @param[out] value Pointer to memory that should be reallocated and
   !>   filled with the array contents of x in row-major order
   !> @param[out] shape Pointer to memory that should be reallocated and
@@ -10240,7 +10247,7 @@ contains
   end function generic_object_get_ndarray_int16
   !> @brief Get a int ndarray from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @param[out] value Pointer to memory that should be reallocated and
   !>   filled with the array contents of x in row-major order
   !> @param[out] shape Pointer to memory that should be reallocated and
@@ -10278,7 +10285,7 @@ contains
   end function generic_object_get_ndarray_int32
   !> @brief Get a int ndarray from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @param[out] value Pointer to memory that should be reallocated and
   !>   filled with the array contents of x in row-major order
   !> @param[out] shape Pointer to memory that should be reallocated and
@@ -10316,7 +10323,7 @@ contains
   end function generic_object_get_ndarray_int64
   !> @brief Get a float ndarray from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @param[out] value Pointer to memory that should be reallocated and
   !>   filled with the array contents of x in row-major order
   !> @param[out] shape Pointer to memory that should be reallocated and
@@ -10354,7 +10361,7 @@ contains
   end function generic_object_get_ndarray_float
   !> @brief Get a float ndarray from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @param[out] value Pointer to memory that should be reallocated and
   !>   filled with the array contents of x in row-major order
   !> @param[out] shape Pointer to memory that should be reallocated and
@@ -10392,7 +10399,7 @@ contains
   end function generic_object_get_ndarray_double
   !> @brief Get a complex ndarray from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @param[out] value Pointer to memory that should be reallocated and
   !>   filled with the array contents of x in row-major order
   !> @param[out] shape Pointer to memory that should be reallocated and
@@ -10430,7 +10437,7 @@ contains
   end function generic_object_get_ndarray_complex_float
   !> @brief Get a complex ndarray from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @param[out] value Pointer to memory that should be reallocated and
   !>   filled with the array contents of x in row-major order
   !> @param[out] shape Pointer to memory that should be reallocated and
@@ -10468,7 +10475,7 @@ contains
   end function generic_object_get_ndarray_complex_double
   !> @brief Get a schema from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @returns Value from x
   function generic_object_get_schema(x, key) &
        result(out)
@@ -10483,7 +10490,7 @@ contains
   end function generic_object_get_schema
   !> @brief Get a any from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @returns Value from x
   function generic_object_get_any(x, key) &
        result(out)
@@ -10942,7 +10949,7 @@ contains
   end function generic_ref_get_ndarray_complex_long_double
   !> @brief Set an element in a array to a float scalar
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The value to assign to x
   !> @param[in] units Units of value
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -10967,7 +10974,7 @@ contains
   end subroutine generic_array_set_long_double
   !> @brief Set an element in a array to a complex scalar
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The value to assign to x
   !> @param[in] units Units of value
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -10993,7 +11000,7 @@ contains
   end subroutine generic_array_set_complex_long_double
   !> @brief Set an element in a array to a float 1darray
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The array of values to assign to x
   !> @param[in] length The number of elements in value
   !> @param[in] units Units of value
@@ -11024,7 +11031,7 @@ contains
   end subroutine generic_array_set_1darray_long_double
   !> @brief Set an element in a array to a complex 1darray
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The array of values to assign to x
   !> @param[in] length The number of elements in value
   !> @param[in] units Units of value
@@ -11055,7 +11062,7 @@ contains
   end subroutine generic_array_set_1darray_complex_long_double
   !> @brief Set an element in a array to a float ndarray
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The array of values to assign to x
   !>   in row-major order
   !> @param[in] ndim The number of dimensions in value, or 0 on error
@@ -11091,7 +11098,7 @@ contains
   end subroutine generic_array_set_ndarray_long_double
   !> @brief Set an element in a array to a complex ndarray
   !> @param[in] x array to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to set
   !> @param[in] value The array of values to assign to x
   !>   in row-major order
   !> @param[in] ndim The number of dimensions in value, or 0 on error
@@ -11127,7 +11134,7 @@ contains
   end subroutine generic_array_set_ndarray_complex_long_double
   !> @brief Get a float scalar from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @returns Value from x
   function generic_array_get_long_double(x, index) &
        result(out)
@@ -11143,7 +11150,7 @@ contains
   end function generic_array_get_long_double
   !> @brief Get a complex scalar from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @returns Value from x
   function generic_array_get_complex_long_double(x, index) &
        result(out)
@@ -11160,7 +11167,7 @@ contains
   end function generic_array_get_complex_long_double
   !> @brief Get a float 1darray from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @param[out] value Pointer to memory that should be reallocated and
   !>   filled with the array contents of x
   !> @returns Number of elements in the array, or 0 on error
@@ -11189,7 +11196,7 @@ contains
   end function generic_array_get_1darray_long_double
   !> @brief Get a complex 1darray from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @param[out] value Pointer to memory that should be reallocated and
   !>   filled with the array contents of x
   !> @returns Number of elements in the array, or 0 on error
@@ -11218,7 +11225,7 @@ contains
   end function generic_array_get_1darray_complex_long_double
   !> @brief Get a float ndarray from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @param[out] value Pointer to memory that should be reallocated and
   !>   filled with the array contents of x in row-major order
   !> @param[out] shape Pointer to memory that should be reallocated and
@@ -11255,7 +11262,7 @@ contains
   end function generic_array_get_ndarray_long_double
   !> @brief Get a complex ndarray from an element in a array
   !> @param[in] x array to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] index index of element to get
   !> @param[out] value Pointer to memory that should be reallocated and
   !>   filled with the array contents of x in row-major order
   !> @param[out] shape Pointer to memory that should be reallocated and
@@ -11292,7 +11299,7 @@ contains
   end function generic_array_get_ndarray_complex_long_double
   !> @brief Set an element in a object to a float scalar
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The value to assign to x
   !> @param[in] units Units of value
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -11318,7 +11325,7 @@ contains
   end subroutine generic_object_set_long_double
   !> @brief Set an element in a object to a complex scalar
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The value to assign to x
   !> @param[in] units Units of value
   !> @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -11345,7 +11352,7 @@ contains
   end subroutine generic_object_set_complex_long_double
   !> @brief Set an element in a object to a float 1darray
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The array of values to assign to x
   !> @param[in] length The number of elements in value
   !> @param[in] units Units of value
@@ -11377,7 +11384,7 @@ contains
   end subroutine generic_object_set_1darray_long_double
   !> @brief Set an element in a object to a complex 1darray
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The array of values to assign to x
   !> @param[in] length The number of elements in value
   !> @param[in] units Units of value
@@ -11409,7 +11416,7 @@ contains
   end subroutine generic_object_set_1darray_complex_long_double
   !> @brief Set an element in a object to a float ndarray
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The array of values to assign to x
   !>   in row-major order
   !> @param[in] ndim The number of dimensions in value, or 0 on error
@@ -11446,7 +11453,7 @@ contains
   end subroutine generic_object_set_ndarray_long_double
   !> @brief Set an element in a object to a complex ndarray
   !> @param[in] x object to set element in
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to set
   !> @param[in] value The array of values to assign to x
   !>   in row-major order
   !> @param[in] ndim The number of dimensions in value, or 0 on error
@@ -11483,7 +11490,7 @@ contains
   end subroutine generic_object_set_ndarray_complex_long_double
   !> @brief Get a float scalar from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @returns Value from x
   function generic_object_get_long_double(x, key) &
        result(out)
@@ -11500,7 +11507,7 @@ contains
   end function generic_object_get_long_double
   !> @brief Get a complex scalar from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @returns Value from x
   function generic_object_get_complex_long_double(x, key) &
        result(out)
@@ -11518,7 +11525,7 @@ contains
   end function generic_object_get_complex_long_double
   !> @brief Get a float 1darray from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @param[out] value Pointer to memory that should be reallocated and
   !>   filled with the array contents of x
   !> @returns Number of elements in the array, or 0 on error
@@ -11548,7 +11555,7 @@ contains
   end function generic_object_get_1darray_long_double
   !> @brief Get a complex 1darray from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @param[out] value Pointer to memory that should be reallocated and
   !>   filled with the array contents of x
   !> @returns Number of elements in the array, or 0 on error
@@ -11578,7 +11585,7 @@ contains
   end function generic_object_get_1darray_complex_long_double
   !> @brief Get a float ndarray from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @param[out] value Pointer to memory that should be reallocated and
   !>   filled with the array contents of x in row-major order
   !> @param[out] shape Pointer to memory that should be reallocated and
@@ -11616,7 +11623,7 @@ contains
   end function generic_object_get_ndarray_long_double
   !> @brief Get a complex ndarray from an element in a object
   !> @param[in] x object to get element from
-  !> @param[in] {idx} {idx} of element to {x}
+  !> @param[in] key key of element to get
   !> @param[out] value Pointer to memory that should be reallocated and
   !>   filled with the array contents of x in row-major order
   !> @param[out] shape Pointer to memory that should be reallocated and

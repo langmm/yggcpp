@@ -34,11 +34,13 @@ class AmendedFile(object):
     file_suffix = ''
     preserved_param = ['xdocs', 'xdef', 'xbody', 'xfunc']
     param_order = ['name', 'type', 'ret_type', 'cpp_type', 'default',
-                   'init_default', 'function', 'set_shape', 'set']
+                   'init_default', 'function', 'set_shape', 'set',
+                   'args_docs', 'docs']
     aliased_functions = {}
     excluded_functions = []
 
-    def __init__(self, language, src, added=None):
+    def __init__(self, language, src, added=None, prefix_lines=None,
+                 suffix_lines=None):
         self.init_param()
         self.language = language
         self.src = os.path.join(
@@ -53,6 +55,8 @@ class AmendedFile(object):
             with open(self.src, 'r') as fd:
                 self.contents = fd.read().split(self.flag)[0]
         self.lines = []
+        self.prefix_lines = prefix_lines
+        self.suffix_lines = suffix_lines
 
     def init_param(self):
         self.types = copy.deepcopy(self.types)
@@ -132,16 +136,21 @@ class AmendedFile(object):
             self.lines.append(line)
 
     def write(self, debug=False):
-        self.lines = (
-            [self.flag, self.indent_append + self.comment + 68 * '=']
-            + self.lines)
+        prefix_lines = [
+            self.flag, self.indent_append + self.comment + 68 * '=']
+        if self.prefix_lines:
+            prefix_lines += self.prefix_lines
+        nprefix = len(self.lines)
+        self.lines = prefix_lines + self.lines
         new_content = '\n'.join(self.lines) + self.file_suffix
+        if self.suffix_lines:
+            new_content += '\n' + '\n'.join(self.suffix_lines)
         if debug:
-            if len(self.lines) == 2:
+            if len(self.lines) == nprefix:
                 raise Exception(self.src)
             print(f"\n{self.src}{new_content}")
         else:
-            if len(self.lines) > 2:
+            if len(self.lines) > nprefix:
                 with open(self.src, 'w') as fd:
                     fd.write(self.contents + new_content)
         for v in self.added.values():
@@ -284,6 +293,8 @@ class AmendedFile(object):
                 idx=self.idx[kwargs['container']])
 
     def format_docs(self, kwargs):
+        if 'args_docs' in kwargs:
+            kwargs['args_docs'] = kwargs['args_docs'].format(**kwargs)
         if (not kwargs.get('docs', None)) and kwargs.get('xdocs', None):
             kwargs['docs'] = kwargs['xdocs'].format(**kwargs)
         if 'docs' in kwargs:
@@ -1111,7 +1122,8 @@ class CFile(AmendedFile):
                 k: ', {idx_type} {idx}' + v
                 for k, v in self.param['args_def'][x].items()}
             self.param['args_docs'][f'{x}_cont'] = {
-                k: ('@param[in] {idx} {idx} of element to {x}\n') + v
+                k: ('@param[in] {idx} {idx} of element to '
+                    + x + '\n') + v
                 for k, v in self.param['args_docs'][x].items()}
             self.param['ret_type'][f'{x}_cont'] = self.param['ret_type'][x]
         for k in ['args', 'args_def', 'args_docs', 'ret_type']:
@@ -1779,7 +1791,7 @@ class FortranFile(AmendedFile):
     }
 
     def __init__(self, src=None, cdefs=None, cwrap=None,
-                 cwrap_header=None, finterface=None):
+                 cwrap_header=None, finterface=None, **kwargs):
         if src is None:
             src = os.path.join('fortran', 'YggInterface.F90')
         if cdefs is None:
@@ -1793,12 +1805,13 @@ class FortranFile(AmendedFile):
         if cwrap:
             cwrap = FortranWrapperFile(cwrap, cwrap_header)
         if finterface:
-            finterface = FortranFile(finterface,
-                                     cdefs=False, cwrap=False,
-                                     cwrap_header=False,
-                                     finterface=False)
+            finterface = FortranFile(
+                finterface, cdefs=False, cwrap=False, cwrap_header=False,
+                finterface=False,
+                prefix_lines=['#ifndef DOXYGEN_SHOULD_SKIP_THIS'],
+                suffix_lines=['#endif'])
         self.interfaces = {k: [] for k in self.interface_docs.keys()}
-        super(FortranFile, self).__init__('fortran', src)
+        super(FortranFile, self).__init__('fortran', src, **kwargs)
         if cdefs:
             self.added['cdefs'] = cdefs
         if cwrap:

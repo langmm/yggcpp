@@ -2130,7 +2130,7 @@ YGG_API generic_t generic_ref_get_any(generic_ref_t x);
 /**
  * @brief Set an element in a array to a null
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The value to assign to x
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
  */
@@ -2138,7 +2138,7 @@ YGG_API int generic_array_set_null(generic_t x, const size_t index, const void* 
 /**
  * @brief Set an element in a array to a boolean
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The value to assign to x
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
  */
@@ -2146,7 +2146,7 @@ YGG_API int generic_array_set_bool(generic_t x, const size_t index, const bool v
 /**
  * @brief Set an element in a array to a integer
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The value to assign to x
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
  */
@@ -2154,7 +2154,7 @@ YGG_API int generic_array_set_integer(generic_t x, const size_t index, const int
 /**
  * @brief Set an element in a array to a number
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The value to assign to x
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
  */
@@ -2162,7 +2162,7 @@ YGG_API int generic_array_set_number(generic_t x, const size_t index, const doub
 /**
  * @brief Set an element in a array to a string
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The value to assign to x
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
  */
@@ -2170,7 +2170,7 @@ YGG_API int generic_array_set_string(generic_t x, const size_t index, const char
 /**
  * @brief Set an element in a array to a item
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The value to assign to x
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
  */
@@ -2178,7 +2178,7 @@ YGG_API int generic_array_set_item(generic_t x, const size_t index, const char* 
 /**
  * @brief Set an element in a array to a array
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The value to assign to x
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
  */
@@ -2186,7 +2186,7 @@ YGG_API int generic_array_set_array(generic_t x, const size_t index, const gener
 /**
  * @brief Set an element in a array to a object
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The value to assign to x
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
  */
@@ -2195,7 +2195,7 @@ YGG_API int generic_array_set_object(generic_t x, const size_t index, const gene
 /**
  * @brief Set an element in a array to a ply
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The value to assign to x
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
  */
@@ -2203,7 +2203,7 @@ YGG_API int generic_array_set_ply(generic_t x, const size_t index, const ply_t v
 /**
  * @brief Set an element in a array to a obj
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The value to assign to x
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
  */
@@ -2211,7 +2211,7 @@ YGG_API int generic_array_set_obj(generic_t x, const size_t index, const obj_t v
 /**
  * @brief Set an element in a array to a class
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The value to assign to x
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
  */
@@ -2219,7 +2219,7 @@ YGG_API int generic_array_set_python_class(generic_t x, const size_t index, cons
 /**
  * @brief Set an element in a array to a function
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The value to assign to x
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
  */
@@ -2227,7 +2227,7 @@ YGG_API int generic_array_set_python_function(generic_t x, const size_t index, c
 /**
  * @brief Set an element in a array to a instance
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The value to assign to x
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
  */
@@ -2235,7 +2235,7 @@ YGG_API int generic_array_set_python_instance(generic_t x, const size_t index, c
 /**
  * @brief Set an element in a array to a scalar
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value Pointer to the memory containing the value to assign to x
  * @param[in] subtype Subtype of data contained in value
  * @param[in] precision The precision of the data in value
@@ -2246,7 +2246,7 @@ YGG_API int generic_array_set_scalar(generic_t x, const size_t index, const void
 /**
  * @brief Set an element in a array to a int scalar
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The value to assign to x
  * @param[in] units Units of value
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -2255,7 +2255,7 @@ YGG_API int generic_array_set_int8(generic_t x, const size_t index, const int8_t
 /**
  * @brief Set an element in a array to a int scalar
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The value to assign to x
  * @param[in] units Units of value
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -2264,7 +2264,7 @@ YGG_API int generic_array_set_int16(generic_t x, const size_t index, const int16
 /**
  * @brief Set an element in a array to a int scalar
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The value to assign to x
  * @param[in] units Units of value
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -2273,7 +2273,7 @@ YGG_API int generic_array_set_int32(generic_t x, const size_t index, const int32
 /**
  * @brief Set an element in a array to a int scalar
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The value to assign to x
  * @param[in] units Units of value
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -2282,7 +2282,7 @@ YGG_API int generic_array_set_int64(generic_t x, const size_t index, const int64
 /**
  * @brief Set an element in a array to a uint scalar
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The value to assign to x
  * @param[in] units Units of value
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -2291,7 +2291,7 @@ YGG_API int generic_array_set_uint8(generic_t x, const size_t index, const uint8
 /**
  * @brief Set an element in a array to a uint scalar
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The value to assign to x
  * @param[in] units Units of value
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -2300,7 +2300,7 @@ YGG_API int generic_array_set_uint16(generic_t x, const size_t index, const uint
 /**
  * @brief Set an element in a array to a uint scalar
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The value to assign to x
  * @param[in] units Units of value
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -2309,7 +2309,7 @@ YGG_API int generic_array_set_uint32(generic_t x, const size_t index, const uint
 /**
  * @brief Set an element in a array to a uint scalar
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The value to assign to x
  * @param[in] units Units of value
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -2318,7 +2318,7 @@ YGG_API int generic_array_set_uint64(generic_t x, const size_t index, const uint
 /**
  * @brief Set an element in a array to a float scalar
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The value to assign to x
  * @param[in] units Units of value
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -2327,7 +2327,7 @@ YGG_API int generic_array_set_float(generic_t x, const size_t index, const float
 /**
  * @brief Set an element in a array to a float scalar
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The value to assign to x
  * @param[in] units Units of value
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -2336,7 +2336,7 @@ YGG_API int generic_array_set_double(generic_t x, const size_t index, const doub
 /**
  * @brief Set an element in a array to a complex scalar
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The value to assign to x
  * @param[in] units Units of value
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -2345,7 +2345,7 @@ YGG_API int generic_array_set_complex_float(generic_t x, const size_t index, con
 /**
  * @brief Set an element in a array to a complex scalar
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The value to assign to x
  * @param[in] units Units of value
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -2354,7 +2354,7 @@ YGG_API int generic_array_set_complex_double(generic_t x, const size_t index, co
 /**
  * @brief Set an element in a array to a 1darray
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value Pointer to the memory containing the array to assign
  *   to x
  * @param[in] subtype Subtype of data contained in value
@@ -2367,7 +2367,7 @@ YGG_API int generic_array_set_1darray(generic_t x, const size_t index, const voi
 /**
  * @brief Set an element in a array to a int 1darray
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The array of values to assign to x
  * @param[in] length The number of elements in value
  * @param[in] units Units of value
@@ -2377,7 +2377,7 @@ YGG_API int generic_array_set_1darray_int8(generic_t x, const size_t index, cons
 /**
  * @brief Set an element in a array to a int 1darray
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The array of values to assign to x
  * @param[in] length The number of elements in value
  * @param[in] units Units of value
@@ -2387,7 +2387,7 @@ YGG_API int generic_array_set_1darray_int16(generic_t x, const size_t index, con
 /**
  * @brief Set an element in a array to a int 1darray
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The array of values to assign to x
  * @param[in] length The number of elements in value
  * @param[in] units Units of value
@@ -2397,7 +2397,7 @@ YGG_API int generic_array_set_1darray_int32(generic_t x, const size_t index, con
 /**
  * @brief Set an element in a array to a int 1darray
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The array of values to assign to x
  * @param[in] length The number of elements in value
  * @param[in] units Units of value
@@ -2407,7 +2407,7 @@ YGG_API int generic_array_set_1darray_int64(generic_t x, const size_t index, con
 /**
  * @brief Set an element in a array to a uint 1darray
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The array of values to assign to x
  * @param[in] length The number of elements in value
  * @param[in] units Units of value
@@ -2417,7 +2417,7 @@ YGG_API int generic_array_set_1darray_uint8(generic_t x, const size_t index, con
 /**
  * @brief Set an element in a array to a uint 1darray
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The array of values to assign to x
  * @param[in] length The number of elements in value
  * @param[in] units Units of value
@@ -2427,7 +2427,7 @@ YGG_API int generic_array_set_1darray_uint16(generic_t x, const size_t index, co
 /**
  * @brief Set an element in a array to a uint 1darray
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The array of values to assign to x
  * @param[in] length The number of elements in value
  * @param[in] units Units of value
@@ -2437,7 +2437,7 @@ YGG_API int generic_array_set_1darray_uint32(generic_t x, const size_t index, co
 /**
  * @brief Set an element in a array to a uint 1darray
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The array of values to assign to x
  * @param[in] length The number of elements in value
  * @param[in] units Units of value
@@ -2447,7 +2447,7 @@ YGG_API int generic_array_set_1darray_uint64(generic_t x, const size_t index, co
 /**
  * @brief Set an element in a array to a float 1darray
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The array of values to assign to x
  * @param[in] length The number of elements in value
  * @param[in] units Units of value
@@ -2457,7 +2457,7 @@ YGG_API int generic_array_set_1darray_float(generic_t x, const size_t index, con
 /**
  * @brief Set an element in a array to a float 1darray
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The array of values to assign to x
  * @param[in] length The number of elements in value
  * @param[in] units Units of value
@@ -2467,7 +2467,7 @@ YGG_API int generic_array_set_1darray_double(generic_t x, const size_t index, co
 /**
  * @brief Set an element in a array to a complex 1darray
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The array of values to assign to x
  * @param[in] length The number of elements in value
  * @param[in] units Units of value
@@ -2477,7 +2477,7 @@ YGG_API int generic_array_set_1darray_complex_float(generic_t x, const size_t in
 /**
  * @brief Set an element in a array to a complex 1darray
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The array of values to assign to x
  * @param[in] length The number of elements in value
  * @param[in] units Units of value
@@ -2487,7 +2487,7 @@ YGG_API int generic_array_set_1darray_complex_double(generic_t x, const size_t i
 /**
  * @brief Set an element in a array to a ndarray
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value Pointer to the memory containing the array to assign
  *   to x
  * @param[in] subtype Subtype of data contained in value
@@ -2501,7 +2501,7 @@ YGG_API int generic_array_set_ndarray(generic_t x, const size_t index, const voi
 /**
  * @brief Set an element in a array to a int ndarray
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The array of values to assign to x
  *   in row-major order
  * @param[in] ndim The number of dimensions in value, or 0 on error
@@ -2513,7 +2513,7 @@ YGG_API int generic_array_set_ndarray_int8(generic_t x, const size_t index, cons
 /**
  * @brief Set an element in a array to a int ndarray
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The array of values to assign to x
  *   in row-major order
  * @param[in] ndim The number of dimensions in value, or 0 on error
@@ -2525,7 +2525,7 @@ YGG_API int generic_array_set_ndarray_int16(generic_t x, const size_t index, con
 /**
  * @brief Set an element in a array to a int ndarray
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The array of values to assign to x
  *   in row-major order
  * @param[in] ndim The number of dimensions in value, or 0 on error
@@ -2537,7 +2537,7 @@ YGG_API int generic_array_set_ndarray_int32(generic_t x, const size_t index, con
 /**
  * @brief Set an element in a array to a int ndarray
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The array of values to assign to x
  *   in row-major order
  * @param[in] ndim The number of dimensions in value, or 0 on error
@@ -2549,7 +2549,7 @@ YGG_API int generic_array_set_ndarray_int64(generic_t x, const size_t index, con
 /**
  * @brief Set an element in a array to a uint ndarray
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The array of values to assign to x
  *   in row-major order
  * @param[in] ndim The number of dimensions in value, or 0 on error
@@ -2561,7 +2561,7 @@ YGG_API int generic_array_set_ndarray_uint8(generic_t x, const size_t index, con
 /**
  * @brief Set an element in a array to a uint ndarray
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The array of values to assign to x
  *   in row-major order
  * @param[in] ndim The number of dimensions in value, or 0 on error
@@ -2573,7 +2573,7 @@ YGG_API int generic_array_set_ndarray_uint16(generic_t x, const size_t index, co
 /**
  * @brief Set an element in a array to a uint ndarray
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The array of values to assign to x
  *   in row-major order
  * @param[in] ndim The number of dimensions in value, or 0 on error
@@ -2585,7 +2585,7 @@ YGG_API int generic_array_set_ndarray_uint32(generic_t x, const size_t index, co
 /**
  * @brief Set an element in a array to a uint ndarray
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The array of values to assign to x
  *   in row-major order
  * @param[in] ndim The number of dimensions in value, or 0 on error
@@ -2597,7 +2597,7 @@ YGG_API int generic_array_set_ndarray_uint64(generic_t x, const size_t index, co
 /**
  * @brief Set an element in a array to a float ndarray
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The array of values to assign to x
  *   in row-major order
  * @param[in] ndim The number of dimensions in value, or 0 on error
@@ -2609,7 +2609,7 @@ YGG_API int generic_array_set_ndarray_float(generic_t x, const size_t index, con
 /**
  * @brief Set an element in a array to a float ndarray
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The array of values to assign to x
  *   in row-major order
  * @param[in] ndim The number of dimensions in value, or 0 on error
@@ -2621,7 +2621,7 @@ YGG_API int generic_array_set_ndarray_double(generic_t x, const size_t index, co
 /**
  * @brief Set an element in a array to a complex ndarray
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The array of values to assign to x
  *   in row-major order
  * @param[in] ndim The number of dimensions in value, or 0 on error
@@ -2633,7 +2633,7 @@ YGG_API int generic_array_set_ndarray_complex_float(generic_t x, const size_t in
 /**
  * @brief Set an element in a array to a complex ndarray
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The array of values to assign to x
  *   in row-major order
  * @param[in] ndim The number of dimensions in value, or 0 on error
@@ -2645,7 +2645,7 @@ YGG_API int generic_array_set_ndarray_complex_double(generic_t x, const size_t i
 /**
  * @brief Set an element in a array to a schema
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The value to assign to x
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
  */
@@ -2653,7 +2653,7 @@ YGG_API int generic_array_set_schema(generic_t x, const size_t index, const gene
 /**
  * @brief Set an element in a array to a any
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The value to assign to x
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
  */
@@ -2661,42 +2661,42 @@ YGG_API int generic_array_set_any(generic_t x, const size_t index, const generic
 /**
  * @brief Get a null from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @returns Value from x
  */
 YGG_API void* generic_array_get_null(generic_t x, const size_t index);
 /**
  * @brief Get a boolean from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @returns Value from x
  */
 YGG_API bool generic_array_get_bool(generic_t x, const size_t index);
 /**
  * @brief Get a integer from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @returns Value from x
  */
 YGG_API int generic_array_get_integer(generic_t x, const size_t index);
 /**
  * @brief Get a number from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @returns Value from x
  */
 YGG_API double generic_array_get_number(generic_t x, const size_t index);
 /**
  * @brief Get a string from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @returns Value from x
  */
 YGG_API const char* generic_array_get_string(generic_t x, const size_t index);
 /**
  * @brief Get a item from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @param[in] type Type of item to retrieve
  * @returns Pointer to data containing raw item data, NULL on error
  */
@@ -2704,7 +2704,7 @@ YGG_API void* generic_array_get_item(generic_t x, const size_t index, const char
 /**
  * @brief Get a item_nbytes from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @param[in] type Type of item to retrieve
  * @returns Number of bytes in raw item data, 0 on error
  */
@@ -2712,14 +2712,14 @@ YGG_API int generic_array_get_item_nbytes(generic_t x, const size_t index, const
 /**
  * @brief Get a array from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @returns Value from x
  */
 YGG_API generic_t generic_array_get_array(generic_t x, const size_t index);
 /**
  * @brief Get a object from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @returns Value from x
  */
 YGG_API generic_t generic_array_get_object(generic_t x, const size_t index);
@@ -2727,42 +2727,42 @@ YGG_API generic_t generic_array_get_object(generic_t x, const size_t index);
 /**
  * @brief Get a ply from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @returns Value from x
  */
 YGG_API ply_t generic_array_get_ply(generic_t x, const size_t index);
 /**
  * @brief Get a obj from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @returns Value from x
  */
 YGG_API obj_t generic_array_get_obj(generic_t x, const size_t index);
 /**
  * @brief Get a class from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @returns Value from x
  */
 YGG_API python_t generic_array_get_python_class(generic_t x, const size_t index);
 /**
  * @brief Get a function from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @returns Value from x
  */
 YGG_API python_t generic_array_get_python_function(generic_t x, const size_t index);
 /**
  * @brief Get a instance from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @returns Value from x
  */
 YGG_API python_t generic_array_get_python_instance(generic_t x, const size_t index);
 /**
  * @brief Get a scalar from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @param[in] subtype Subtype of data to return
  * @param[in] precision Precision of the data to return
  * @returns Pointer to value in x
@@ -2771,91 +2771,91 @@ YGG_API void* generic_array_get_scalar(generic_t x, const size_t index, const ch
 /**
  * @brief Get a int scalar from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @returns Value from x
  */
 YGG_API int8_t generic_array_get_int8(generic_t x, const size_t index);
 /**
  * @brief Get a int scalar from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @returns Value from x
  */
 YGG_API int16_t generic_array_get_int16(generic_t x, const size_t index);
 /**
  * @brief Get a int scalar from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @returns Value from x
  */
 YGG_API int32_t generic_array_get_int32(generic_t x, const size_t index);
 /**
  * @brief Get a int scalar from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @returns Value from x
  */
 YGG_API int64_t generic_array_get_int64(generic_t x, const size_t index);
 /**
  * @brief Get a uint scalar from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @returns Value from x
  */
 YGG_API uint8_t generic_array_get_uint8(generic_t x, const size_t index);
 /**
  * @brief Get a uint scalar from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @returns Value from x
  */
 YGG_API uint16_t generic_array_get_uint16(generic_t x, const size_t index);
 /**
  * @brief Get a uint scalar from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @returns Value from x
  */
 YGG_API uint32_t generic_array_get_uint32(generic_t x, const size_t index);
 /**
  * @brief Get a uint scalar from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @returns Value from x
  */
 YGG_API uint64_t generic_array_get_uint64(generic_t x, const size_t index);
 /**
  * @brief Get a float scalar from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @returns Value from x
  */
 YGG_API float generic_array_get_float(generic_t x, const size_t index);
 /**
  * @brief Get a float scalar from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @returns Value from x
  */
 YGG_API double generic_array_get_double(generic_t x, const size_t index);
 /**
  * @brief Get a complex scalar from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @returns Value from x
  */
 YGG_API complex_float_t generic_array_get_complex_float(generic_t x, const size_t index);
 /**
  * @brief Get a complex scalar from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @returns Value from x
  */
 YGG_API complex_double_t generic_array_get_complex_double(generic_t x, const size_t index);
 /**
  * @brief Get a 1darray from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @param[in] subtype Subtype of data to return
  * @param[in] precision Precision of the data to return
  * @param[out] value Pointer to memory that should be reallocated and
@@ -2866,7 +2866,7 @@ YGG_API size_t generic_array_get_1darray(generic_t x, const size_t index, const 
 /**
  * @brief Get a int 1darray from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x
  * @returns Number of elements in the array, or 0 on error
@@ -2875,7 +2875,7 @@ YGG_API size_t generic_array_get_1darray_int8(generic_t x, const size_t index, i
 /**
  * @brief Get a int 1darray from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x
  * @returns Number of elements in the array, or 0 on error
@@ -2884,7 +2884,7 @@ YGG_API size_t generic_array_get_1darray_int16(generic_t x, const size_t index, 
 /**
  * @brief Get a int 1darray from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x
  * @returns Number of elements in the array, or 0 on error
@@ -2893,7 +2893,7 @@ YGG_API size_t generic_array_get_1darray_int32(generic_t x, const size_t index, 
 /**
  * @brief Get a int 1darray from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x
  * @returns Number of elements in the array, or 0 on error
@@ -2902,7 +2902,7 @@ YGG_API size_t generic_array_get_1darray_int64(generic_t x, const size_t index, 
 /**
  * @brief Get a uint 1darray from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x
  * @returns Number of elements in the array, or 0 on error
@@ -2911,7 +2911,7 @@ YGG_API size_t generic_array_get_1darray_uint8(generic_t x, const size_t index, 
 /**
  * @brief Get a uint 1darray from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x
  * @returns Number of elements in the array, or 0 on error
@@ -2920,7 +2920,7 @@ YGG_API size_t generic_array_get_1darray_uint16(generic_t x, const size_t index,
 /**
  * @brief Get a uint 1darray from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x
  * @returns Number of elements in the array, or 0 on error
@@ -2929,7 +2929,7 @@ YGG_API size_t generic_array_get_1darray_uint32(generic_t x, const size_t index,
 /**
  * @brief Get a uint 1darray from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x
  * @returns Number of elements in the array, or 0 on error
@@ -2938,7 +2938,7 @@ YGG_API size_t generic_array_get_1darray_uint64(generic_t x, const size_t index,
 /**
  * @brief Get a float 1darray from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x
  * @returns Number of elements in the array, or 0 on error
@@ -2947,7 +2947,7 @@ YGG_API size_t generic_array_get_1darray_float(generic_t x, const size_t index, 
 /**
  * @brief Get a float 1darray from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x
  * @returns Number of elements in the array, or 0 on error
@@ -2956,7 +2956,7 @@ YGG_API size_t generic_array_get_1darray_double(generic_t x, const size_t index,
 /**
  * @brief Get a complex 1darray from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x
  * @returns Number of elements in the array, or 0 on error
@@ -2965,7 +2965,7 @@ YGG_API size_t generic_array_get_1darray_complex_float(generic_t x, const size_t
 /**
  * @brief Get a complex 1darray from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x
  * @returns Number of elements in the array, or 0 on error
@@ -2974,7 +2974,7 @@ YGG_API size_t generic_array_get_1darray_complex_double(generic_t x, const size_
 /**
  * @brief Get a ndarray from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @param[in] subtype Subtype of data to return
  * @param[in] precision Precision of the data to return
  * @param[out] value Pointer to memory that should be reallocated and
@@ -2987,7 +2987,7 @@ YGG_API size_t generic_array_get_ndarray(generic_t x, const size_t index, const 
 /**
  * @brief Get a int ndarray from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x in row-major order
  * @param[out] shape Pointer to memory that should be reallocated and
@@ -2998,7 +2998,7 @@ YGG_API size_t generic_array_get_ndarray_int8(generic_t x, const size_t index, i
 /**
  * @brief Get a int ndarray from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x in row-major order
  * @param[out] shape Pointer to memory that should be reallocated and
@@ -3009,7 +3009,7 @@ YGG_API size_t generic_array_get_ndarray_int16(generic_t x, const size_t index, 
 /**
  * @brief Get a int ndarray from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x in row-major order
  * @param[out] shape Pointer to memory that should be reallocated and
@@ -3020,7 +3020,7 @@ YGG_API size_t generic_array_get_ndarray_int32(generic_t x, const size_t index, 
 /**
  * @brief Get a int ndarray from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x in row-major order
  * @param[out] shape Pointer to memory that should be reallocated and
@@ -3031,7 +3031,7 @@ YGG_API size_t generic_array_get_ndarray_int64(generic_t x, const size_t index, 
 /**
  * @brief Get a uint ndarray from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x in row-major order
  * @param[out] shape Pointer to memory that should be reallocated and
@@ -3042,7 +3042,7 @@ YGG_API size_t generic_array_get_ndarray_uint8(generic_t x, const size_t index, 
 /**
  * @brief Get a uint ndarray from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x in row-major order
  * @param[out] shape Pointer to memory that should be reallocated and
@@ -3053,7 +3053,7 @@ YGG_API size_t generic_array_get_ndarray_uint16(generic_t x, const size_t index,
 /**
  * @brief Get a uint ndarray from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x in row-major order
  * @param[out] shape Pointer to memory that should be reallocated and
@@ -3064,7 +3064,7 @@ YGG_API size_t generic_array_get_ndarray_uint32(generic_t x, const size_t index,
 /**
  * @brief Get a uint ndarray from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x in row-major order
  * @param[out] shape Pointer to memory that should be reallocated and
@@ -3075,7 +3075,7 @@ YGG_API size_t generic_array_get_ndarray_uint64(generic_t x, const size_t index,
 /**
  * @brief Get a float ndarray from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x in row-major order
  * @param[out] shape Pointer to memory that should be reallocated and
@@ -3086,7 +3086,7 @@ YGG_API size_t generic_array_get_ndarray_float(generic_t x, const size_t index, 
 /**
  * @brief Get a float ndarray from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x in row-major order
  * @param[out] shape Pointer to memory that should be reallocated and
@@ -3097,7 +3097,7 @@ YGG_API size_t generic_array_get_ndarray_double(generic_t x, const size_t index,
 /**
  * @brief Get a complex ndarray from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x in row-major order
  * @param[out] shape Pointer to memory that should be reallocated and
@@ -3108,7 +3108,7 @@ YGG_API size_t generic_array_get_ndarray_complex_float(generic_t x, const size_t
 /**
  * @brief Get a complex ndarray from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x in row-major order
  * @param[out] shape Pointer to memory that should be reallocated and
@@ -3119,21 +3119,21 @@ YGG_API size_t generic_array_get_ndarray_complex_double(generic_t x, const size_
 /**
  * @brief Get a schema from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @returns Value from x
  */
 YGG_API generic_t generic_array_get_schema(generic_t x, const size_t index);
 /**
  * @brief Get a any from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @returns Value from x
  */
 YGG_API generic_t generic_array_get_any(generic_t x, const size_t index);
 /**
  * @brief Set an element in a object to a null
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The value to assign to x
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
  */
@@ -3142,7 +3142,7 @@ YGG_API int generic_object_set_null(generic_t x, const char* key, const void* va
 /**
  * @brief Set an element in a object to a boolean
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The value to assign to x
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
  */
@@ -3151,7 +3151,7 @@ YGG_API int generic_object_set_bool(generic_t x, const char* key, const bool val
 /**
  * @brief Set an element in a object to a integer
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The value to assign to x
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
  */
@@ -3160,7 +3160,7 @@ YGG_API int generic_object_set_integer(generic_t x, const char* key, const int v
 /**
  * @brief Set an element in a object to a number
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The value to assign to x
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
  */
@@ -3169,7 +3169,7 @@ YGG_API int generic_object_set_number(generic_t x, const char* key, const double
 /**
  * @brief Set an element in a object to a string
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The value to assign to x
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
  */
@@ -3178,7 +3178,7 @@ YGG_API int generic_object_set_string(generic_t x, const char* key, const char* 
 /**
  * @brief Set an element in a object to a item
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The value to assign to x
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
  */
@@ -3187,7 +3187,7 @@ YGG_API int generic_object_set_item(generic_t x, const char* key, const char* ty
 /**
  * @brief Set an element in a object to a array
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The value to assign to x
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
  */
@@ -3196,7 +3196,7 @@ YGG_API int generic_object_set_array(generic_t x, const char* key, const generic
 /**
  * @brief Set an element in a object to a object
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The value to assign to x
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
  */
@@ -3206,7 +3206,7 @@ YGG_API int generic_object_set_object(generic_t x, const char* key, const generi
 /**
  * @brief Set an element in a object to a ply
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The value to assign to x
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
  */
@@ -3215,7 +3215,7 @@ YGG_API int generic_object_set_ply(generic_t x, const char* key, const ply_t val
 /**
  * @brief Set an element in a object to a obj
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The value to assign to x
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
  */
@@ -3224,7 +3224,7 @@ YGG_API int generic_object_set_obj(generic_t x, const char* key, const obj_t val
 /**
  * @brief Set an element in a object to a class
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The value to assign to x
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
  */
@@ -3233,7 +3233,7 @@ YGG_API int generic_object_set_python_class(generic_t x, const char* key, const 
 /**
  * @brief Set an element in a object to a function
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The value to assign to x
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
  */
@@ -3242,7 +3242,7 @@ YGG_API int generic_object_set_python_function(generic_t x, const char* key, con
 /**
  * @brief Set an element in a object to a instance
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The value to assign to x
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
  */
@@ -3251,7 +3251,7 @@ YGG_API int generic_object_set_python_instance(generic_t x, const char* key, con
 /**
  * @brief Set an element in a object to a scalar
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value Pointer to the memory containing the value to assign to x
  * @param[in] subtype Subtype of data contained in value
  * @param[in] precision The precision of the data in value
@@ -3263,7 +3263,7 @@ YGG_API int generic_object_set_scalar(generic_t x, const char* key, const void* 
 /**
  * @brief Set an element in a object to a int scalar
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The value to assign to x
  * @param[in] units Units of value
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -3273,7 +3273,7 @@ YGG_API int generic_object_set_int8(generic_t x, const char* key, const int8_t v
 /**
  * @brief Set an element in a object to a int scalar
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The value to assign to x
  * @param[in] units Units of value
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -3283,7 +3283,7 @@ YGG_API int generic_object_set_int16(generic_t x, const char* key, const int16_t
 /**
  * @brief Set an element in a object to a int scalar
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The value to assign to x
  * @param[in] units Units of value
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -3293,7 +3293,7 @@ YGG_API int generic_object_set_int32(generic_t x, const char* key, const int32_t
 /**
  * @brief Set an element in a object to a int scalar
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The value to assign to x
  * @param[in] units Units of value
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -3303,7 +3303,7 @@ YGG_API int generic_object_set_int64(generic_t x, const char* key, const int64_t
 /**
  * @brief Set an element in a object to a uint scalar
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The value to assign to x
  * @param[in] units Units of value
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -3313,7 +3313,7 @@ YGG_API int generic_object_set_uint8(generic_t x, const char* key, const uint8_t
 /**
  * @brief Set an element in a object to a uint scalar
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The value to assign to x
  * @param[in] units Units of value
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -3323,7 +3323,7 @@ YGG_API int generic_object_set_uint16(generic_t x, const char* key, const uint16
 /**
  * @brief Set an element in a object to a uint scalar
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The value to assign to x
  * @param[in] units Units of value
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -3333,7 +3333,7 @@ YGG_API int generic_object_set_uint32(generic_t x, const char* key, const uint32
 /**
  * @brief Set an element in a object to a uint scalar
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The value to assign to x
  * @param[in] units Units of value
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -3343,7 +3343,7 @@ YGG_API int generic_object_set_uint64(generic_t x, const char* key, const uint64
 /**
  * @brief Set an element in a object to a float scalar
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The value to assign to x
  * @param[in] units Units of value
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -3353,7 +3353,7 @@ YGG_API int generic_object_set_float(generic_t x, const char* key, const float v
 /**
  * @brief Set an element in a object to a float scalar
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The value to assign to x
  * @param[in] units Units of value
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -3363,7 +3363,7 @@ YGG_API int generic_object_set_double(generic_t x, const char* key, const double
 /**
  * @brief Set an element in a object to a complex scalar
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The value to assign to x
  * @param[in] units Units of value
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -3373,7 +3373,7 @@ YGG_API int generic_object_set_complex_float(generic_t x, const char* key, const
 /**
  * @brief Set an element in a object to a complex scalar
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The value to assign to x
  * @param[in] units Units of value
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -3383,7 +3383,7 @@ YGG_API int generic_object_set_complex_double(generic_t x, const char* key, cons
 /**
  * @brief Set an element in a object to a 1darray
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value Pointer to the memory containing the array to assign
  *   to x
  * @param[in] subtype Subtype of data contained in value
@@ -3397,7 +3397,7 @@ YGG_API int generic_object_set_1darray(generic_t x, const char* key, const void*
 /**
  * @brief Set an element in a object to a int 1darray
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The array of values to assign to x
  * @param[in] length The number of elements in value
  * @param[in] units Units of value
@@ -3408,7 +3408,7 @@ YGG_API int generic_object_set_1darray_int8(generic_t x, const char* key, const 
 /**
  * @brief Set an element in a object to a int 1darray
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The array of values to assign to x
  * @param[in] length The number of elements in value
  * @param[in] units Units of value
@@ -3419,7 +3419,7 @@ YGG_API int generic_object_set_1darray_int16(generic_t x, const char* key, const
 /**
  * @brief Set an element in a object to a int 1darray
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The array of values to assign to x
  * @param[in] length The number of elements in value
  * @param[in] units Units of value
@@ -3430,7 +3430,7 @@ YGG_API int generic_object_set_1darray_int32(generic_t x, const char* key, const
 /**
  * @brief Set an element in a object to a int 1darray
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The array of values to assign to x
  * @param[in] length The number of elements in value
  * @param[in] units Units of value
@@ -3441,7 +3441,7 @@ YGG_API int generic_object_set_1darray_int64(generic_t x, const char* key, const
 /**
  * @brief Set an element in a object to a uint 1darray
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The array of values to assign to x
  * @param[in] length The number of elements in value
  * @param[in] units Units of value
@@ -3452,7 +3452,7 @@ YGG_API int generic_object_set_1darray_uint8(generic_t x, const char* key, const
 /**
  * @brief Set an element in a object to a uint 1darray
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The array of values to assign to x
  * @param[in] length The number of elements in value
  * @param[in] units Units of value
@@ -3463,7 +3463,7 @@ YGG_API int generic_object_set_1darray_uint16(generic_t x, const char* key, cons
 /**
  * @brief Set an element in a object to a uint 1darray
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The array of values to assign to x
  * @param[in] length The number of elements in value
  * @param[in] units Units of value
@@ -3474,7 +3474,7 @@ YGG_API int generic_object_set_1darray_uint32(generic_t x, const char* key, cons
 /**
  * @brief Set an element in a object to a uint 1darray
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The array of values to assign to x
  * @param[in] length The number of elements in value
  * @param[in] units Units of value
@@ -3485,7 +3485,7 @@ YGG_API int generic_object_set_1darray_uint64(generic_t x, const char* key, cons
 /**
  * @brief Set an element in a object to a float 1darray
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The array of values to assign to x
  * @param[in] length The number of elements in value
  * @param[in] units Units of value
@@ -3496,7 +3496,7 @@ YGG_API int generic_object_set_1darray_float(generic_t x, const char* key, const
 /**
  * @brief Set an element in a object to a float 1darray
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The array of values to assign to x
  * @param[in] length The number of elements in value
  * @param[in] units Units of value
@@ -3507,7 +3507,7 @@ YGG_API int generic_object_set_1darray_double(generic_t x, const char* key, cons
 /**
  * @brief Set an element in a object to a complex 1darray
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The array of values to assign to x
  * @param[in] length The number of elements in value
  * @param[in] units Units of value
@@ -3518,7 +3518,7 @@ YGG_API int generic_object_set_1darray_complex_float(generic_t x, const char* ke
 /**
  * @brief Set an element in a object to a complex 1darray
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The array of values to assign to x
  * @param[in] length The number of elements in value
  * @param[in] units Units of value
@@ -3529,7 +3529,7 @@ YGG_API int generic_object_set_1darray_complex_double(generic_t x, const char* k
 /**
  * @brief Set an element in a object to a ndarray
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value Pointer to the memory containing the array to assign
  *   to x
  * @param[in] subtype Subtype of data contained in value
@@ -3544,7 +3544,7 @@ YGG_API int generic_object_set_ndarray(generic_t x, const char* key, const void*
 /**
  * @brief Set an element in a object to a int ndarray
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The array of values to assign to x
  *   in row-major order
  * @param[in] ndim The number of dimensions in value, or 0 on error
@@ -3557,7 +3557,7 @@ YGG_API int generic_object_set_ndarray_int8(generic_t x, const char* key, const 
 /**
  * @brief Set an element in a object to a int ndarray
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The array of values to assign to x
  *   in row-major order
  * @param[in] ndim The number of dimensions in value, or 0 on error
@@ -3570,7 +3570,7 @@ YGG_API int generic_object_set_ndarray_int16(generic_t x, const char* key, const
 /**
  * @brief Set an element in a object to a int ndarray
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The array of values to assign to x
  *   in row-major order
  * @param[in] ndim The number of dimensions in value, or 0 on error
@@ -3583,7 +3583,7 @@ YGG_API int generic_object_set_ndarray_int32(generic_t x, const char* key, const
 /**
  * @brief Set an element in a object to a int ndarray
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The array of values to assign to x
  *   in row-major order
  * @param[in] ndim The number of dimensions in value, or 0 on error
@@ -3596,7 +3596,7 @@ YGG_API int generic_object_set_ndarray_int64(generic_t x, const char* key, const
 /**
  * @brief Set an element in a object to a uint ndarray
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The array of values to assign to x
  *   in row-major order
  * @param[in] ndim The number of dimensions in value, or 0 on error
@@ -3609,7 +3609,7 @@ YGG_API int generic_object_set_ndarray_uint8(generic_t x, const char* key, const
 /**
  * @brief Set an element in a object to a uint ndarray
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The array of values to assign to x
  *   in row-major order
  * @param[in] ndim The number of dimensions in value, or 0 on error
@@ -3622,7 +3622,7 @@ YGG_API int generic_object_set_ndarray_uint16(generic_t x, const char* key, cons
 /**
  * @brief Set an element in a object to a uint ndarray
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The array of values to assign to x
  *   in row-major order
  * @param[in] ndim The number of dimensions in value, or 0 on error
@@ -3635,7 +3635,7 @@ YGG_API int generic_object_set_ndarray_uint32(generic_t x, const char* key, cons
 /**
  * @brief Set an element in a object to a uint ndarray
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The array of values to assign to x
  *   in row-major order
  * @param[in] ndim The number of dimensions in value, or 0 on error
@@ -3648,7 +3648,7 @@ YGG_API int generic_object_set_ndarray_uint64(generic_t x, const char* key, cons
 /**
  * @brief Set an element in a object to a float ndarray
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The array of values to assign to x
  *   in row-major order
  * @param[in] ndim The number of dimensions in value, or 0 on error
@@ -3661,7 +3661,7 @@ YGG_API int generic_object_set_ndarray_float(generic_t x, const char* key, const
 /**
  * @brief Set an element in a object to a float ndarray
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The array of values to assign to x
  *   in row-major order
  * @param[in] ndim The number of dimensions in value, or 0 on error
@@ -3674,7 +3674,7 @@ YGG_API int generic_object_set_ndarray_double(generic_t x, const char* key, cons
 /**
  * @brief Set an element in a object to a complex ndarray
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The array of values to assign to x
  *   in row-major order
  * @param[in] ndim The number of dimensions in value, or 0 on error
@@ -3687,7 +3687,7 @@ YGG_API int generic_object_set_ndarray_complex_float(generic_t x, const char* ke
 /**
  * @brief Set an element in a object to a complex ndarray
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The array of values to assign to x
  *   in row-major order
  * @param[in] ndim The number of dimensions in value, or 0 on error
@@ -3700,7 +3700,7 @@ YGG_API int generic_object_set_ndarray_complex_double(generic_t x, const char* k
 /**
  * @brief Set an element in a object to a schema
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The value to assign to x
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
  */
@@ -3709,7 +3709,7 @@ YGG_API int generic_object_set_schema(generic_t x, const char* key, const generi
 /**
  * @brief Set an element in a object to a any
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The value to assign to x
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
  */
@@ -3718,7 +3718,7 @@ YGG_API int generic_object_set_any(generic_t x, const char* key, const generic_t
 /**
  * @brief Get a null from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @returns Value from x
  */
 YGG_API void* generic_object_get_null(generic_t x, const char* key);
@@ -3726,7 +3726,7 @@ YGG_API void* generic_object_get_null(generic_t x, const char* key);
 /**
  * @brief Get a boolean from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @returns Value from x
  */
 YGG_API bool generic_object_get_bool(generic_t x, const char* key);
@@ -3734,7 +3734,7 @@ YGG_API bool generic_object_get_bool(generic_t x, const char* key);
 /**
  * @brief Get a integer from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @returns Value from x
  */
 YGG_API int generic_object_get_integer(generic_t x, const char* key);
@@ -3742,7 +3742,7 @@ YGG_API int generic_object_get_integer(generic_t x, const char* key);
 /**
  * @brief Get a number from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @returns Value from x
  */
 YGG_API double generic_object_get_number(generic_t x, const char* key);
@@ -3750,7 +3750,7 @@ YGG_API double generic_object_get_number(generic_t x, const char* key);
 /**
  * @brief Get a string from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @returns Value from x
  */
 YGG_API const char* generic_object_get_string(generic_t x, const char* key);
@@ -3758,7 +3758,7 @@ YGG_API const char* generic_object_get_string(generic_t x, const char* key);
 /**
  * @brief Get a item from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @param[in] type Type of item to retrieve
  * @returns Pointer to data containing raw item data, NULL on error
  */
@@ -3767,7 +3767,7 @@ YGG_API void* generic_object_get_item(generic_t x, const char* key, const char* 
 /**
  * @brief Get a item_nbytes from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @param[in] type Type of item to retrieve
  * @returns Number of bytes in raw item data, 0 on error
  */
@@ -3776,7 +3776,7 @@ YGG_API int generic_object_get_item_nbytes(generic_t x, const char* key, const c
 /**
  * @brief Get a array from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @returns Value from x
  */
 YGG_API generic_t generic_object_get_array(generic_t x, const char* key);
@@ -3784,7 +3784,7 @@ YGG_API generic_t generic_object_get_array(generic_t x, const char* key);
 /**
  * @brief Get a object from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @returns Value from x
  */
 YGG_API generic_t generic_object_get_object(generic_t x, const char* key);
@@ -3793,7 +3793,7 @@ YGG_API generic_t generic_object_get_object(generic_t x, const char* key);
 /**
  * @brief Get a ply from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @returns Value from x
  */
 YGG_API ply_t generic_object_get_ply(generic_t x, const char* key);
@@ -3801,7 +3801,7 @@ YGG_API ply_t generic_object_get_ply(generic_t x, const char* key);
 /**
  * @brief Get a obj from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @returns Value from x
  */
 YGG_API obj_t generic_object_get_obj(generic_t x, const char* key);
@@ -3809,7 +3809,7 @@ YGG_API obj_t generic_object_get_obj(generic_t x, const char* key);
 /**
  * @brief Get a class from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @returns Value from x
  */
 YGG_API python_t generic_object_get_python_class(generic_t x, const char* key);
@@ -3817,7 +3817,7 @@ YGG_API python_t generic_object_get_python_class(generic_t x, const char* key);
 /**
  * @brief Get a function from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @returns Value from x
  */
 YGG_API python_t generic_object_get_python_function(generic_t x, const char* key);
@@ -3825,7 +3825,7 @@ YGG_API python_t generic_object_get_python_function(generic_t x, const char* key
 /**
  * @brief Get a instance from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @returns Value from x
  */
 YGG_API python_t generic_object_get_python_instance(generic_t x, const char* key);
@@ -3833,7 +3833,7 @@ YGG_API python_t generic_object_get_python_instance(generic_t x, const char* key
 /**
  * @brief Get a scalar from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @param[in] subtype Subtype of data to return
  * @param[in] precision Precision of the data to return
  * @returns Pointer to value in x
@@ -3843,7 +3843,7 @@ YGG_API void* generic_object_get_scalar(generic_t x, const char* key, const char
 /**
  * @brief Get a int scalar from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @returns Value from x
  */
 YGG_API int8_t generic_object_get_int8(generic_t x, const char* key);
@@ -3851,7 +3851,7 @@ YGG_API int8_t generic_object_get_int8(generic_t x, const char* key);
 /**
  * @brief Get a int scalar from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @returns Value from x
  */
 YGG_API int16_t generic_object_get_int16(generic_t x, const char* key);
@@ -3859,7 +3859,7 @@ YGG_API int16_t generic_object_get_int16(generic_t x, const char* key);
 /**
  * @brief Get a int scalar from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @returns Value from x
  */
 YGG_API int32_t generic_object_get_int32(generic_t x, const char* key);
@@ -3867,7 +3867,7 @@ YGG_API int32_t generic_object_get_int32(generic_t x, const char* key);
 /**
  * @brief Get a int scalar from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @returns Value from x
  */
 YGG_API int64_t generic_object_get_int64(generic_t x, const char* key);
@@ -3875,7 +3875,7 @@ YGG_API int64_t generic_object_get_int64(generic_t x, const char* key);
 /**
  * @brief Get a uint scalar from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @returns Value from x
  */
 YGG_API uint8_t generic_object_get_uint8(generic_t x, const char* key);
@@ -3883,7 +3883,7 @@ YGG_API uint8_t generic_object_get_uint8(generic_t x, const char* key);
 /**
  * @brief Get a uint scalar from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @returns Value from x
  */
 YGG_API uint16_t generic_object_get_uint16(generic_t x, const char* key);
@@ -3891,7 +3891,7 @@ YGG_API uint16_t generic_object_get_uint16(generic_t x, const char* key);
 /**
  * @brief Get a uint scalar from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @returns Value from x
  */
 YGG_API uint32_t generic_object_get_uint32(generic_t x, const char* key);
@@ -3899,7 +3899,7 @@ YGG_API uint32_t generic_object_get_uint32(generic_t x, const char* key);
 /**
  * @brief Get a uint scalar from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @returns Value from x
  */
 YGG_API uint64_t generic_object_get_uint64(generic_t x, const char* key);
@@ -3907,7 +3907,7 @@ YGG_API uint64_t generic_object_get_uint64(generic_t x, const char* key);
 /**
  * @brief Get a float scalar from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @returns Value from x
  */
 YGG_API float generic_object_get_float(generic_t x, const char* key);
@@ -3915,7 +3915,7 @@ YGG_API float generic_object_get_float(generic_t x, const char* key);
 /**
  * @brief Get a float scalar from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @returns Value from x
  */
 YGG_API double generic_object_get_double(generic_t x, const char* key);
@@ -3923,7 +3923,7 @@ YGG_API double generic_object_get_double(generic_t x, const char* key);
 /**
  * @brief Get a complex scalar from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @returns Value from x
  */
 YGG_API complex_float_t generic_object_get_complex_float(generic_t x, const char* key);
@@ -3931,7 +3931,7 @@ YGG_API complex_float_t generic_object_get_complex_float(generic_t x, const char
 /**
  * @brief Get a complex scalar from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @returns Value from x
  */
 YGG_API complex_double_t generic_object_get_complex_double(generic_t x, const char* key);
@@ -3939,7 +3939,7 @@ YGG_API complex_double_t generic_object_get_complex_double(generic_t x, const ch
 /**
  * @brief Get a 1darray from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @param[in] subtype Subtype of data to return
  * @param[in] precision Precision of the data to return
  * @param[out] value Pointer to memory that should be reallocated and
@@ -3951,7 +3951,7 @@ YGG_API size_t generic_object_get_1darray(generic_t x, const char* key, const ch
 /**
  * @brief Get a int 1darray from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x
  * @returns Number of elements in the array, or 0 on error
@@ -3961,7 +3961,7 @@ YGG_API size_t generic_object_get_1darray_int8(generic_t x, const char* key, int
 /**
  * @brief Get a int 1darray from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x
  * @returns Number of elements in the array, or 0 on error
@@ -3971,7 +3971,7 @@ YGG_API size_t generic_object_get_1darray_int16(generic_t x, const char* key, in
 /**
  * @brief Get a int 1darray from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x
  * @returns Number of elements in the array, or 0 on error
@@ -3981,7 +3981,7 @@ YGG_API size_t generic_object_get_1darray_int32(generic_t x, const char* key, in
 /**
  * @brief Get a int 1darray from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x
  * @returns Number of elements in the array, or 0 on error
@@ -3991,7 +3991,7 @@ YGG_API size_t generic_object_get_1darray_int64(generic_t x, const char* key, in
 /**
  * @brief Get a uint 1darray from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x
  * @returns Number of elements in the array, or 0 on error
@@ -4001,7 +4001,7 @@ YGG_API size_t generic_object_get_1darray_uint8(generic_t x, const char* key, ui
 /**
  * @brief Get a uint 1darray from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x
  * @returns Number of elements in the array, or 0 on error
@@ -4011,7 +4011,7 @@ YGG_API size_t generic_object_get_1darray_uint16(generic_t x, const char* key, u
 /**
  * @brief Get a uint 1darray from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x
  * @returns Number of elements in the array, or 0 on error
@@ -4021,7 +4021,7 @@ YGG_API size_t generic_object_get_1darray_uint32(generic_t x, const char* key, u
 /**
  * @brief Get a uint 1darray from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x
  * @returns Number of elements in the array, or 0 on error
@@ -4031,7 +4031,7 @@ YGG_API size_t generic_object_get_1darray_uint64(generic_t x, const char* key, u
 /**
  * @brief Get a float 1darray from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x
  * @returns Number of elements in the array, or 0 on error
@@ -4041,7 +4041,7 @@ YGG_API size_t generic_object_get_1darray_float(generic_t x, const char* key, fl
 /**
  * @brief Get a float 1darray from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x
  * @returns Number of elements in the array, or 0 on error
@@ -4051,7 +4051,7 @@ YGG_API size_t generic_object_get_1darray_double(generic_t x, const char* key, d
 /**
  * @brief Get a complex 1darray from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x
  * @returns Number of elements in the array, or 0 on error
@@ -4061,7 +4061,7 @@ YGG_API size_t generic_object_get_1darray_complex_float(generic_t x, const char*
 /**
  * @brief Get a complex 1darray from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x
  * @returns Number of elements in the array, or 0 on error
@@ -4071,7 +4071,7 @@ YGG_API size_t generic_object_get_1darray_complex_double(generic_t x, const char
 /**
  * @brief Get a ndarray from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @param[in] subtype Subtype of data to return
  * @param[in] precision Precision of the data to return
  * @param[out] value Pointer to memory that should be reallocated and
@@ -4085,7 +4085,7 @@ YGG_API size_t generic_object_get_ndarray(generic_t x, const char* key, const ch
 /**
  * @brief Get a int ndarray from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x in row-major order
  * @param[out] shape Pointer to memory that should be reallocated and
@@ -4097,7 +4097,7 @@ YGG_API size_t generic_object_get_ndarray_int8(generic_t x, const char* key, int
 /**
  * @brief Get a int ndarray from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x in row-major order
  * @param[out] shape Pointer to memory that should be reallocated and
@@ -4109,7 +4109,7 @@ YGG_API size_t generic_object_get_ndarray_int16(generic_t x, const char* key, in
 /**
  * @brief Get a int ndarray from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x in row-major order
  * @param[out] shape Pointer to memory that should be reallocated and
@@ -4121,7 +4121,7 @@ YGG_API size_t generic_object_get_ndarray_int32(generic_t x, const char* key, in
 /**
  * @brief Get a int ndarray from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x in row-major order
  * @param[out] shape Pointer to memory that should be reallocated and
@@ -4133,7 +4133,7 @@ YGG_API size_t generic_object_get_ndarray_int64(generic_t x, const char* key, in
 /**
  * @brief Get a uint ndarray from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x in row-major order
  * @param[out] shape Pointer to memory that should be reallocated and
@@ -4145,7 +4145,7 @@ YGG_API size_t generic_object_get_ndarray_uint8(generic_t x, const char* key, ui
 /**
  * @brief Get a uint ndarray from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x in row-major order
  * @param[out] shape Pointer to memory that should be reallocated and
@@ -4157,7 +4157,7 @@ YGG_API size_t generic_object_get_ndarray_uint16(generic_t x, const char* key, u
 /**
  * @brief Get a uint ndarray from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x in row-major order
  * @param[out] shape Pointer to memory that should be reallocated and
@@ -4169,7 +4169,7 @@ YGG_API size_t generic_object_get_ndarray_uint32(generic_t x, const char* key, u
 /**
  * @brief Get a uint ndarray from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x in row-major order
  * @param[out] shape Pointer to memory that should be reallocated and
@@ -4181,7 +4181,7 @@ YGG_API size_t generic_object_get_ndarray_uint64(generic_t x, const char* key, u
 /**
  * @brief Get a float ndarray from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x in row-major order
  * @param[out] shape Pointer to memory that should be reallocated and
@@ -4193,7 +4193,7 @@ YGG_API size_t generic_object_get_ndarray_float(generic_t x, const char* key, fl
 /**
  * @brief Get a float ndarray from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x in row-major order
  * @param[out] shape Pointer to memory that should be reallocated and
@@ -4205,7 +4205,7 @@ YGG_API size_t generic_object_get_ndarray_double(generic_t x, const char* key, d
 /**
  * @brief Get a complex ndarray from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x in row-major order
  * @param[out] shape Pointer to memory that should be reallocated and
@@ -4217,7 +4217,7 @@ YGG_API size_t generic_object_get_ndarray_complex_float(generic_t x, const char*
 /**
  * @brief Get a complex ndarray from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x in row-major order
  * @param[out] shape Pointer to memory that should be reallocated and
@@ -4229,7 +4229,7 @@ YGG_API size_t generic_object_get_ndarray_complex_double(generic_t x, const char
 /**
  * @brief Get a schema from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @returns Value from x
  */
 YGG_API generic_t generic_object_get_schema(generic_t x, const char* key);
@@ -4237,7 +4237,7 @@ YGG_API generic_t generic_object_get_schema(generic_t x, const char* key);
 /**
  * @brief Get a any from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @returns Value from x
  */
 YGG_API generic_t generic_object_get_any(generic_t x, const char* key);
@@ -4398,7 +4398,7 @@ YGG_API size_t generic_ref_get_ndarray_complex_long_double(generic_ref_t x, comp
 /**
  * @brief Set an element in a array to a float scalar
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The value to assign to x
  * @param[in] units Units of value
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -4407,7 +4407,7 @@ YGG_API int generic_array_set_long_double(generic_t x, const size_t index, const
 /**
  * @brief Set an element in a array to a complex scalar
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The value to assign to x
  * @param[in] units Units of value
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -4416,7 +4416,7 @@ YGG_API int generic_array_set_complex_long_double(generic_t x, const size_t inde
 /**
  * @brief Set an element in a array to a float 1darray
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The array of values to assign to x
  * @param[in] length The number of elements in value
  * @param[in] units Units of value
@@ -4426,7 +4426,7 @@ YGG_API int generic_array_set_1darray_long_double(generic_t x, const size_t inde
 /**
  * @brief Set an element in a array to a complex 1darray
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The array of values to assign to x
  * @param[in] length The number of elements in value
  * @param[in] units Units of value
@@ -4436,7 +4436,7 @@ YGG_API int generic_array_set_1darray_complex_long_double(generic_t x, const siz
 /**
  * @brief Set an element in a array to a float ndarray
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The array of values to assign to x
  *   in row-major order
  * @param[in] ndim The number of dimensions in value, or 0 on error
@@ -4448,7 +4448,7 @@ YGG_API int generic_array_set_ndarray_long_double(generic_t x, const size_t inde
 /**
  * @brief Set an element in a array to a complex ndarray
  * @param[in] x array to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to set
  * @param[in] value The array of values to assign to x
  *   in row-major order
  * @param[in] ndim The number of dimensions in value, or 0 on error
@@ -4460,21 +4460,21 @@ YGG_API int generic_array_set_ndarray_complex_long_double(generic_t x, const siz
 /**
  * @brief Get a float scalar from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @returns Value from x
  */
 YGG_API long double generic_array_get_long_double(generic_t x, const size_t index);
 /**
  * @brief Get a complex scalar from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @returns Value from x
  */
 YGG_API complex_long_double_t generic_array_get_complex_long_double(generic_t x, const size_t index);
 /**
  * @brief Get a float 1darray from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x
  * @returns Number of elements in the array, or 0 on error
@@ -4483,7 +4483,7 @@ YGG_API size_t generic_array_get_1darray_long_double(generic_t x, const size_t i
 /**
  * @brief Get a complex 1darray from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x
  * @returns Number of elements in the array, or 0 on error
@@ -4492,7 +4492,7 @@ YGG_API size_t generic_array_get_1darray_complex_long_double(generic_t x, const 
 /**
  * @brief Get a float ndarray from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x in row-major order
  * @param[out] shape Pointer to memory that should be reallocated and
@@ -4503,7 +4503,7 @@ YGG_API size_t generic_array_get_ndarray_long_double(generic_t x, const size_t i
 /**
  * @brief Get a complex ndarray from an element in a array
  * @param[in] x array to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] index index of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x in row-major order
  * @param[out] shape Pointer to memory that should be reallocated and
@@ -4514,7 +4514,7 @@ YGG_API size_t generic_array_get_ndarray_complex_long_double(generic_t x, const 
 /**
  * @brief Set an element in a object to a float scalar
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The value to assign to x
  * @param[in] units Units of value
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -4524,7 +4524,7 @@ YGG_API int generic_object_set_long_double(generic_t x, const char* key, const l
 /**
  * @brief Set an element in a object to a complex scalar
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The value to assign to x
  * @param[in] units Units of value
  * @returns GENERIC_ERROR_ on error, GENERIC_SUCCESS_ on success
@@ -4534,7 +4534,7 @@ YGG_API int generic_object_set_complex_long_double(generic_t x, const char* key,
 /**
  * @brief Set an element in a object to a float 1darray
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The array of values to assign to x
  * @param[in] length The number of elements in value
  * @param[in] units Units of value
@@ -4545,7 +4545,7 @@ YGG_API int generic_object_set_1darray_long_double(generic_t x, const char* key,
 /**
  * @brief Set an element in a object to a complex 1darray
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The array of values to assign to x
  * @param[in] length The number of elements in value
  * @param[in] units Units of value
@@ -4556,7 +4556,7 @@ YGG_API int generic_object_set_1darray_complex_long_double(generic_t x, const ch
 /**
  * @brief Set an element in a object to a float ndarray
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The array of values to assign to x
  *   in row-major order
  * @param[in] ndim The number of dimensions in value, or 0 on error
@@ -4569,7 +4569,7 @@ YGG_API int generic_object_set_ndarray_long_double(generic_t x, const char* key,
 /**
  * @brief Set an element in a object to a complex ndarray
  * @param[in] x object to set element in
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to set
  * @param[in] value The array of values to assign to x
  *   in row-major order
  * @param[in] ndim The number of dimensions in value, or 0 on error
@@ -4582,7 +4582,7 @@ YGG_API int generic_object_set_ndarray_complex_long_double(generic_t x, const ch
 /**
  * @brief Get a float scalar from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @returns Value from x
  */
 YGG_API long double generic_object_get_long_double(generic_t x, const char* key);
@@ -4590,7 +4590,7 @@ YGG_API long double generic_object_get_long_double(generic_t x, const char* key)
 /**
  * @brief Get a complex scalar from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @returns Value from x
  */
 YGG_API complex_long_double_t generic_object_get_complex_long_double(generic_t x, const char* key);
@@ -4598,7 +4598,7 @@ YGG_API complex_long_double_t generic_object_get_complex_long_double(generic_t x
 /**
  * @brief Get a float 1darray from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x
  * @returns Number of elements in the array, or 0 on error
@@ -4608,7 +4608,7 @@ YGG_API size_t generic_object_get_1darray_long_double(generic_t x, const char* k
 /**
  * @brief Get a complex 1darray from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x
  * @returns Number of elements in the array, or 0 on error
@@ -4618,7 +4618,7 @@ YGG_API size_t generic_object_get_1darray_complex_long_double(generic_t x, const
 /**
  * @brief Get a float ndarray from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x in row-major order
  * @param[out] shape Pointer to memory that should be reallocated and
@@ -4630,7 +4630,7 @@ YGG_API size_t generic_object_get_ndarray_long_double(generic_t x, const char* k
 /**
  * @brief Get a complex ndarray from an element in a object
  * @param[in] x object to get element from
- * @param[in] {idx} {idx} of element to {x}
+ * @param[in] key key of element to get
  * @param[out] value Pointer to memory that should be reallocated and
  *   filled with the array contents of x in row-major order
  * @param[out] shape Pointer to memory that should be reallocated and

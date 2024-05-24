@@ -91,9 +91,9 @@ namespace YggInterface {
       YGG_API void set_timeout_recv(int64_t new_timeout) override;
       
       /** \copydoc YggInterface::communicator::Comm_t::send_single */
-      YGG_API int send_single(YggInterface::utils::Header& head) override;
+      YGG_API int send_single(YggInterface::utils::Header& header) override;
       /** \copydoc YggInterface::communicator::Comm_t::recv_single */
-      YGG_API long recv_single(YggInterface::utils::Header& head) override;
+      YGG_API long recv_single(YggInterface::utils::Header& header) override;
       
     protected:
 

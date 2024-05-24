@@ -844,7 +844,7 @@ public:
     YGG_API virtual long recv_raw(char*& data, const size_t &len);
     /**
      * @brief Receive a message from the communicator.
-     * @parma[out] head Header that should be populated with message info.
+     * @param[out] head Header that should be populated with message info.
      * @returns -1 if message could not be received. Length of the
      *   received message if message was received.
      */
@@ -1690,10 +1690,12 @@ protected:
 
     /**
      * @brief Get the address that should be used for the opposing comm.
+     * @returns Opposite comm address.
      */
     std::string getOppAddress() const;
     /**
      * @brief Get the comm type that should be used for the opposing comm.
+     * @returns Opposite comm type.
      */
     COMM_TYPE getOppCommType() const;
   

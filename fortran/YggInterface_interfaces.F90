@@ -1,6 +1,7 @@
 
   ! LINES AFTER THIS WERE GENERATED AND SHOULD NOT BE MODIFIED DIRECTLY
   !====================================================================
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
   
     !> @brief Get an element from an array.
     !> @param[in] x Generic object that is presumed to contain an array.
@@ -214,3 +215,5 @@
     end interface generic_object_set
 
 end module YggInterface
+
+#endif

@@ -10,10 +10,11 @@
 //   (YGG_FUNCTION_LIBRARY), check that the file exists, dynamically load
 //   it, search for functions, register function
 
-#include <functional>
-
+#include "utils/tools.hpp"
 #include "communicators/CommBase.hpp"
 #include "datatypes/dtype_t.h"
+
+#include <functional>
 
 namespace YggInterface {
   namespace communicator {
@@ -26,9 +27,11 @@ namespace YggInterface {
       FunctionWrapper& operator=(const FunctionWrapper&) = delete;
     public:
       
-      /** C++ function type */
+      /** @brief C++ function type using C++ types */
       typedef std::function<bool(const rapidjson::Document&, rapidjson::Document&)> cxx_function;
+      /** @brief C++ function type using C description */
       typedef bool cxx_function_alt (const rapidjson::Document&, rapidjson::Document&);
+      /** @brief C function type */
       typedef bool c_function (generic_t, generic_t);
     
       /** \copydoc YggInterface::utils::LogBase::logClass */
@@ -153,7 +156,7 @@ namespace YggInterface {
       bool send(const rapidjson::Document& data);
       /**
        * @brief Receive a message from the function.
-       * @param[in,out] Document to receive message into.
+       * @param[in,out] data Document to receive message into.
        * @returns true on success, false otherwise.
        */
       bool recv(rapidjson::Document& data);
@@ -168,10 +171,10 @@ namespace YggInterface {
       void clear();
       
     private:
-      std::string address;
-      LANGUAGE language;
-      void* func;
-      std::vector<rapidjson::Document> recv_backlog;
+      std::string address; /**< Name of the function */
+      LANGUAGE language;   /**< Language the function is written in */
+      void* func;          /**< Pointer to the function */
+      std::vector<rapidjson::Document> recv_backlog; /**< Backlog of function call results */
       
       /**
        * Call the wrapped method.
