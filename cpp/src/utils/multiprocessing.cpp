@@ -378,6 +378,7 @@ SysVSharedMem::SysVSharedMem(size_t size,
     throw_error(error("shmget"));
   memory = shmat(id, NULL, 0);
   if (memory == (void*)(-1)) {
+    local_destroy();
     memory = NULL;
     throw_error(error("SysVSharedMem: shmat failed"));
   }

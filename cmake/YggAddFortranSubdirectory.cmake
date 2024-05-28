@@ -411,8 +411,9 @@ function(add_external_fortran_library target_name library_type)
   message(STATUS "CMAKE_CURRENT_BINARY_DIR = ${CMAKE_CURRENT_BINARY_DIR}")
   set_target_properties(${target_name} PROPERTIES
                         IMPORTED_LOCATION ${FINAL_LIBRARY}
-			IMPORTED_OBJECTS ${${target_name}_EXT_OBJ}
+			# IMPORTED_OBJECTS ${${target_name}_EXT_OBJ}
 			INTERFACE_LINK_DIRECTORIES ${CMAKE_CURRENT_BINARY_DIR})
+  set_property(TARGET ${target_name} IMPORTED_OBJECTS ${${target_name}_EXT_OBJ})
   if(ORIG_LIBRARIES)
     set_target_properties(
       ${target_name} PROPERTIES
