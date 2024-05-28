@@ -4449,8 +4449,8 @@ contains
     type(yggcomplex_float) :: c_value
     character(kind = c_char), dimension(:), allocatable :: c_units
     integer(kind = c_int) :: c_out
-    c_value%re = value%re
-    c_value%im = value%im
+    c_value%re = real(value)
+    c_value%im = aimag(value)
     c_units = convert_string_f2c(units)
     c_out = generic_set_complex_float_c(x, c_value, c_units)
     deallocate(c_units)
@@ -4471,8 +4471,8 @@ contains
     type(yggcomplex_double) :: c_value
     character(kind = c_char), dimension(:), allocatable :: c_units
     integer(kind = c_int) :: c_out
-    c_value%re = value%re
-    c_value%im = value%im
+    c_value%re = real(value)
+    c_value%im = aimag(value)
     c_units = convert_string_f2c(units)
     c_out = generic_set_complex_double_c(x, c_value, c_units)
     deallocate(c_units)
@@ -5243,8 +5243,7 @@ contains
     complex(kind = 4) :: out
     type(yggcomplex_float) :: c_out
     c_out = generic_get_complex_float_c(x)
-    out%re = c_out%re
-    out%im = c_out%im
+    out = cmplx(c_out%re, c_out%im)
   end function generic_get_complex_float
   !> @brief Get a complex scalar from a generic item
   !> @param[in] x Generic item to retrieve data from
@@ -5256,8 +5255,7 @@ contains
     complex(kind = 8) :: out
     type(yggcomplex_double) :: c_out
     c_out = generic_get_complex_double_c(x)
-    out%re = c_out%re
-    out%im = c_out%im
+    out = cmplx(c_out%re, c_out%im)
   end function generic_get_complex_double
   !> @brief Get a 1darray from a generic item
   !> @param[in] x Generic item to retrieve data from
@@ -5992,8 +5990,7 @@ contains
     complex(kind = 4) :: out
     type(yggcomplex_float) :: c_out
     c_out = generic_ref_get_complex_float_c(x)
-    out%re = c_out%re
-    out%im = c_out%im
+    out = cmplx(c_out%re, c_out%im)
   end function generic_ref_get_complex_float
   !> @brief Get a complex scalar from a generic item reference
   !> @param[in] x Generic item reference to retrieve data from
@@ -6005,8 +6002,7 @@ contains
     complex(kind = 8) :: out
     type(yggcomplex_double) :: c_out
     c_out = generic_ref_get_complex_double_c(x)
-    out%re = c_out%re
-    out%im = c_out%im
+    out = cmplx(c_out%re, c_out%im)
   end function generic_ref_get_complex_double
   !> @brief Get a 1darray from a generic item reference
   !> @param[in] x Generic item reference to retrieve data from
@@ -6918,8 +6914,8 @@ contains
     character(kind = c_char), dimension(:), allocatable :: c_units
     integer(kind = c_int) :: c_out
     c_index = index - 1
-    c_value%re = value%re
-    c_value%im = value%im
+    c_value%re = real(value)
+    c_value%im = aimag(value)
     c_units = convert_string_f2c(units)
     c_out = generic_array_set_complex_float_c(x, c_index, c_value, c_units)
     deallocate(c_units)
@@ -6944,8 +6940,8 @@ contains
     character(kind = c_char), dimension(:), allocatable :: c_units
     integer(kind = c_int) :: c_out
     c_index = index - 1
-    c_value%re = value%re
-    c_value%im = value%im
+    c_value%re = real(value)
+    c_value%im = aimag(value)
     c_units = convert_string_f2c(units)
     c_out = generic_array_set_complex_double_c(x, c_index, c_value, c_units)
     deallocate(c_units)
@@ -7883,8 +7879,7 @@ contains
     type(yggcomplex_float) :: c_out
     c_index = index - 1
     c_out = generic_array_get_complex_float_c(x, c_index)
-    out%re = c_out%re
-    out%im = c_out%im
+    out = cmplx(c_out%re, c_out%im)
   end function generic_array_get_complex_float
   !> @brief Get a complex scalar from an element in a array
   !> @param[in] x array to get element from
@@ -7900,8 +7895,7 @@ contains
     type(yggcomplex_double) :: c_out
     c_index = index - 1
     c_out = generic_array_get_complex_double_c(x, c_index)
-    out%re = c_out%re
-    out%im = c_out%im
+    out = cmplx(c_out%re, c_out%im)
   end function generic_array_get_complex_double
   !> @brief Get a 1darray from an element in a array
   !> @param[in] x array to get element from
@@ -8904,8 +8898,8 @@ contains
     character(kind = c_char), dimension(:), allocatable :: c_units
     integer(kind = c_int) :: c_out
     c_key = convert_string_f2c(key)
-    c_value%re = value%re
-    c_value%im = value%im
+    c_value%re = real(value)
+    c_value%im = aimag(value)
     c_units = convert_string_f2c(units)
     c_out = generic_object_set_complex_float_c(x, c_key, c_value, c_units)
     deallocate(c_key)
@@ -8931,8 +8925,8 @@ contains
     character(kind = c_char), dimension(:), allocatable :: c_units
     integer(kind = c_int) :: c_out
     c_key = convert_string_f2c(key)
-    c_value%re = value%re
-    c_value%im = value%im
+    c_value%re = real(value)
+    c_value%im = aimag(value)
     c_units = convert_string_f2c(units)
     c_out = generic_object_set_complex_double_c(x, c_key, c_value, c_units)
     deallocate(c_key)
@@ -9910,8 +9904,7 @@ contains
     c_key = convert_string_f2c(key)
     c_out = generic_object_get_complex_float_c(x, c_key)
     deallocate(c_key)
-    out%re = c_out%re
-    out%im = c_out%im
+    out = cmplx(c_out%re, c_out%im)
   end function generic_object_get_complex_float
   !> @brief Get a complex scalar from an element in a object
   !> @param[in] x object to get element from
@@ -9928,8 +9921,7 @@ contains
     c_key = convert_string_f2c(key)
     c_out = generic_object_get_complex_double_c(x, c_key)
     deallocate(c_key)
-    out%re = c_out%re
-    out%im = c_out%im
+    out = cmplx(c_out%re, c_out%im)
   end function generic_object_get_complex_double
   !> @brief Get a 1darray from an element in a object
   !> @param[in] x object to get element from
@@ -10540,8 +10532,8 @@ contains
     type(yggcomplex_long_double) :: c_value
     character(kind = c_char), dimension(:), allocatable :: c_units
     integer(kind = c_int) :: c_out
-    c_value%re = value%re
-    c_value%im = value%im
+    c_value%re = real(value)
+    c_value%im = aimag(value)
     c_units = convert_string_f2c(units)
     c_out = generic_set_complex_long_double_c(x, c_value, c_units)
     deallocate(c_units)
@@ -10687,8 +10679,7 @@ contains
     complex(kind = 16) :: out
     type(yggcomplex_long_double) :: c_out
     c_out = generic_get_complex_long_double_c(x)
-    out%re = c_out%re
-    out%im = c_out%im
+    out = cmplx(c_out%re, c_out%im)
   end function generic_get_complex_long_double
   !> @brief Get a float 1darray from a generic item
   !> @param[in] x Generic item to retrieve data from
@@ -10828,8 +10819,7 @@ contains
     complex(kind = 16) :: out
     type(yggcomplex_long_double) :: c_out
     c_out = generic_ref_get_complex_long_double_c(x)
-    out%re = c_out%re
-    out%im = c_out%im
+    out = cmplx(c_out%re, c_out%im)
   end function generic_ref_get_complex_long_double
   !> @brief Get a float 1darray from a generic item reference
   !> @param[in] x Generic item reference to retrieve data from
@@ -10989,8 +10979,8 @@ contains
     character(kind = c_char), dimension(:), allocatable :: c_units
     integer(kind = c_int) :: c_out
     c_index = index - 1
-    c_value%re = value%re
-    c_value%im = value%im
+    c_value%re = real(value)
+    c_value%im = aimag(value)
     c_units = convert_string_f2c(units)
     c_out = generic_array_set_complex_long_double_c(x, c_index, c_value, c_units)
     deallocate(c_units)
@@ -11162,8 +11152,7 @@ contains
     type(yggcomplex_long_double) :: c_out
     c_index = index - 1
     c_out = generic_array_get_complex_long_double_c(x, c_index)
-    out%re = c_out%re
-    out%im = c_out%im
+    out = cmplx(c_out%re, c_out%im)
   end function generic_array_get_complex_long_double
   !> @brief Get a float 1darray from an element in a array
   !> @param[in] x array to get element from
@@ -11340,8 +11329,8 @@ contains
     character(kind = c_char), dimension(:), allocatable :: c_units
     integer(kind = c_int) :: c_out
     c_key = convert_string_f2c(key)
-    c_value%re = value%re
-    c_value%im = value%im
+    c_value%re = real(value)
+    c_value%im = aimag(value)
     c_units = convert_string_f2c(units)
     c_out = generic_object_set_complex_long_double_c(x, c_key, c_value, c_units)
     deallocate(c_key)
@@ -11520,8 +11509,7 @@ contains
     c_key = convert_string_f2c(key)
     c_out = generic_object_get_complex_long_double_c(x, c_key)
     deallocate(c_key)
-    out%re = c_out%re
-    out%im = c_out%im
+    out = cmplx(c_out%re, c_out%im)
   end function generic_object_get_complex_long_double
   !> @brief Get a float 1darray from an element in a object
   !> @param[in] x object to get element from

@@ -1558,8 +1558,8 @@ class FortranFile(AmendedFile):
             },
             'complex': {
                 'before': (
-                    "{b_name}%re = {a_name}%re\n"
-                    "{b_name}%im = {a_name}%im"),
+                    "{b_name}%re = real({a_name})\n"
+                    "{b_name}%im = aimag({a_name})"),
             },
             'shape': {
                 'a_update': {'mods': ['target']},
@@ -1615,8 +1615,7 @@ class FortranFile(AmendedFile):
             },
             'complex': {
                 'after': (
-                    "{a_name}%re = {b_name}%re\n"
-                    "{a_name}%im = {b_name}%im"),
+                    "{a_name} = cmplx({b_name}%re, {b_name}%im)"),
             },
             'null': {
                 'a_update': {'mods': ['pointer']},
