@@ -6,18 +6,18 @@ set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${PROJECT_SOURCE_DIR}/cmake")
 set(RAPIDJSON_BUILD_THIRDPARTY_GTEST ${YGG_BUILD_THIRDPARTY_GTEST})
 find_package(GTestSrc)
 
-find_package(cmocka)
-if(cmocka_FOUND)
-    message(STATUS "Found CMOCKA")
-else()
-    include(FetchContent)
-    FetchContent_Declare(
-            cmocka_ygg
-            GIT_REPOSITORY https://gitlab.com/cmocka/cmocka.git
-            GIT_TAG f5e2cd77c88d9f792562888d2b70c5a396bfbf7a
-    )
-    FetchContent_MakeAvailable(cmocka_ygg)
-endif()
+# find_package(cmocka)
+# if(cmocka_FOUND)
+#     message(STATUS "Found CMOCKA")
+# else()
+#     include(FetchContent)
+#     FetchContent_Declare(
+#             cmocka_ygg
+#             GIT_REPOSITORY https://gitlab.com/cmocka/cmocka.git
+#             GIT_TAG f5e2cd77c88d9f792562888d2b70c5a396bfbf7a
+#     )
+#     FetchContent_MakeAvailable(cmocka_ygg)
+# endif()
 
 if(GTESTSRC_FOUND)
     message(STATUS "Found GTestSrc")

@@ -405,6 +405,10 @@ function(add_external_fortran_library target_name library_type)
     EXTERNAL_OBJECT true)
   add_library(${target_name} ${library_type} IMPORTED GLOBAL)
   add_dependencies(${target_name} ${external_target_name})
+  message(STATUS "target_name = ${target_name}")
+  message(STATUS "FINAL_LIBRARY = ${FINAL_LIBRARY}")
+  message(STATUS "${target_name}_EXT_OBJ = ${${target_name}_EXT_OBJ}")
+  message(STATUS "CMAKE_CURRENT_BINARY_DIR = ${CMAKE_CURRENT_BINARY_DIR}")
   set_target_properties(${target_name} PROPERTIES
                         IMPORTED_LOCATION ${FINAL_LIBRARY}
 			IMPORTED_OBJECTS ${${target_name}_EXT_OBJ}
