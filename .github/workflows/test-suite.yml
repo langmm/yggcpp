@@ -536,6 +536,15 @@ jobs:
         run: |
           echo "OLD_CMAKE_ARGS=${{ env.CMAKE_ARGS }}" >> "$GITHUB_ENV"
           echo "CMAKE_ARGS=${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_PYTHON }}" >> "$GITHUB_ENV"
+      - name: Build conda package (CONDA)
+        if: matrix.python-install == 'conda' && matrix.os == 'windows-latest'
+        shell: bash -l {0}
+        continue-on-error: true
+        run: |
+          conda deactivate
+          conda activate base
+          mamba install boa -y
+          call conda mambabuild recipe --python 3.9 -q -c conda-forge --no-test
       - name: Build Python (CONDA)
         if: matrix.python-install == 'conda'
         shell: bash -l {0}
