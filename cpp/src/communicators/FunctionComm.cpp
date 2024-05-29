@@ -162,24 +162,38 @@ bool FunctionWrapper::_call(const rapidjson::Document& data_send,
 }
 
 bool FunctionWrapper::send(const rapidjson::Document& data) {
-  recv_backlog.resize(recv_backlog.size() + 1);
-  return _call(data, recv_backlog[recv_backlog.size() - 1]);
+  bool out = false;
+  YGG_THREAD_SAFE_BEGIN(functions) {
+    recv_backlog.resize(recv_backlog.size() + 1);
+    out = _call(data, recv_backlog[recv_backlog.size() - 1]);
+  } YGG_THREAD_SAFE_END;
+  return out;
 }
 
 bool FunctionWrapper::recv(rapidjson::Document& data) {
-  if (recv_backlog.empty())
-    return false;
-  data.Swap(recv_backlog[recv_backlog.size() - 1]);
-  recv_backlog.resize(recv_backlog.size() - 1);
-  return true;
+  bool out = false;
+  YGG_THREAD_SAFE_BEGIN(functions) {
+    if (!recv_backlog.empty()) {
+      data.Swap(recv_backlog[recv_backlog.size() - 1]);
+      recv_backlog.resize(recv_backlog.size() - 1);
+      out = true;
+    }
+  } YGG_THREAD_SAFE_END;
+  return out;
 }
 
 int FunctionWrapper::nmsg() const {
-  return static_cast<int>(recv_backlog.size());
+  int out = -1;
+  YGG_THREAD_SAFE_BEGIN(functions) {
+    out = static_cast<int>(recv_backlog.size());
+  } YGG_THREAD_SAFE_END;
+  return out;
 }
 
 void FunctionWrapper::clear() {
-  recv_backlog.clear();
+  YGG_THREAD_SAFE_BEGIN(functions) {
+    recv_backlog.clear();
+  } YGG_THREAD_SAFE_END;
 }
 
 /////////////////////////////////////////////////////////
