@@ -16,7 +16,7 @@ FunctionWrapper::FunctionWrapper(const std::string& f,
   if (parts.size() != 2)
     throw_error("FunctionWrapper: Error parsing function address \""
 		+ address + "\"");
-  if (not enum_value_search(LANGUAGE_map, parts[0], language, true)) {
+  if (!enum_value_search(LANGUAGE_map, parts[0], language, true)) {
     throw_error("FunctionWrapper: Could not find language in "
 		+ address + " (language part = " + parts[0] + ")");
   }
