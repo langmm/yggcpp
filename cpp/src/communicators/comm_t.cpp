@@ -45,19 +45,19 @@ void ygg_exit() {
   }
 }
 
-int _register_function_wrapper(const char* name, c_function func,
-			       bool no_prefix) {
+int _register_function(const char* name, c_function func,
+		       bool no_prefix) {
   try {
     std::string name_s(name);
-    YggInterface::communicator::FunctionWrapper::register_function_wrapper(name_s, func, no_prefix);
+    YggInterface::communicator::register_function(name_s, func, no_prefix);
   } catch (...) {
     return -1;
   }
   return 0;
 }
   
-int register_function_wrapper(const char* name, c_function func) {
-  return _register_function_wrapper(name, func, false);
+int register_function(const char* name, c_function func) {
+  return _register_function(name, func, false);
 }
   
 void free_comm(comm_t* comm) {

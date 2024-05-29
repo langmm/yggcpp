@@ -22,10 +22,10 @@ void ygg_c_free(void *x) {
   }
 }
 
-void register_function_wrapper_f(const char* name, void* func) {
+void register_function_f(const char* name, void* func) {
   c_function* func_c = (c_function*)func;
   /* bool (func_c*)(generic_t, generic_t) = func; */
-  _register_function_wrapper(name, *func_c, true);
+  _register_function(name, *func_c, true);
 }
 
 // Methods for initializing channels

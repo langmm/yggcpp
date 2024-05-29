@@ -11,13 +11,13 @@
        integer(kind=c_int), intent(in), value :: seconds
      end subroutine fsleep
 
-     subroutine register_function_wrapper_c(name, func) &
-          bind(c, name="register_function_wrapper_f")
+     subroutine register_function_c(name, func) &
+          bind(c, name="register_function_f")
        use, intrinsic :: iso_c_binding, only: c_funptr, c_bool, c_char
        implicit none
        character(kind=c_char), dimension(*), intent(in) :: name
        type(c_funptr), value, intent(in) :: func
-     end subroutine register_function_wrapper_c
+     end subroutine register_function_c
 
      ! Methods for initializing channels
      function init_comm_c(name, dir, t, datatype, flags, ncomm) &

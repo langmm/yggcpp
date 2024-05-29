@@ -83,21 +83,21 @@ YGG_API void ygg_exit();
 typedef bool c_function (generic_t, generic_t);
 
 /**
- * @brief Register a C function wrapper
+ * @brief Register a C function
  * @param[in] name Function name with or without a function prefix
  * @param[in] no_prefix If true, the "c::" prefix will not be added to the
  *   name (usually because another language has already been added).
  * @param[in] func Function to register
  */
-YGG_API int _register_function_wrapper(const char* name, c_function func,
-				       bool no_prefix);
+YGG_API int _register_function(const char* name, c_function func,
+			       bool no_prefix);
   
 /**
- * @brief Register a C function wrapper
+ * @brief Register a C function
  * @param[in] name Function name
  * @param[in] func Function to register
  */
-YGG_API int register_function_wrapper(const char* name, c_function func);
+YGG_API int register_function(const char* name, c_function func);
 
 /**
  * @brief Delete the underlying communicator

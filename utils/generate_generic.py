@@ -328,8 +328,8 @@ class CFile(AmendedFile):
                           'yggOutputType', 'yggInputType',
                           'ygg_recv_nolimit', 'comm_recv_realloc',
                           'yggRpcServerType_global',
-                          'register_function_wrapper',
-                          '_register_function_wrapper',
+                          'register_function',
+                          '_register_function',
                           'init_comm', '_init_comm', 'init_comm_flags',
                           'set_comm_language',
                           'ncommSend', 'ncommRecv', 'ncommCall']

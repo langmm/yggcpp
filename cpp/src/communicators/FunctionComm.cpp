@@ -192,21 +192,18 @@ void FunctionComm::_open(bool call_base) {
   BEFORE_OPEN_DEF;
   updateMaxMsgSize(0);
   bool created = ((!address.valid()) || address.address().empty());
-  if (created) {
-    YGG_THREAD_SAFE_BEGIN(functions) {
-      if (!global_context->func_registry_.empty()) {
-	std::map<std::string, FunctionWrapper*>::iterator it = global_context->func_registry_.begin();
-	address.address(it->first);
-      }
-    } YGG_THREAD_SAFE_END;
-    if ((!address.valid()) || address.address().empty()) {
-      throw std::runtime_error("FuntionComm::_open: Failed to find registered function");
+  handle = global_context->find_registered_function(this->address.address());
+  if (created && handle)
+    address.address(handle->address);
+  Comm_t::_init_name();
+  if (!handle) {
+    if (created) {
+      throw std::runtime_error("FuntionComm::_open: Failed to get function wrapper for \"" + this->address.address() + "\"");
+    } else {
+      handle = new FunctionWrapper(address.address());
+      global_context->register_function(handle);
     }
   }
-  Comm_t::_init_name();
-  handle = FunctionWrapper::create_function_wrapper(this->address.address());
-  if (!handle)
-    throw std::runtime_error("FuntionComm::_open: Failed to get function wrapper for \"" + this->address.address() + "\"");
   AFTER_OPEN_DEF;
 }
 
@@ -252,4 +249,35 @@ long FunctionComm::recv_single(utils::Header& header) {
   }
   header.flags |= HEAD_FLAG_DOC_SET;
   return 1;
+}
+
+void YggInterface::communicator::register_function(const std::string& name,
+						   cxx_function& func,
+						   bool no_prefix) {
+  std::string new_name = name;
+  if (!no_prefix)
+    new_name = "cxx::" + new_name;
+  if (!global_context->find_registered_function(new_name)) {
+    FunctionWrapper* created = new FunctionWrapper(new_name, func);
+    global_context->register_function(created);
+  }
+}
+
+void YggInterface::communicator::register_function(const std::string& name,
+						   cxx_function_alt& func,
+						   bool no_prefix) {
+  cxx_function cxx_func = func;
+  register_function(name, cxx_func, no_prefix);
+}
+
+void YggInterface::communicator::register_function(const std::string& name,
+						   c_function* func,
+						   bool no_prefix) {
+  std::string new_name = name;
+  if (!no_prefix)
+    new_name = "c::" + new_name;
+  if (!global_context->find_registered_function(new_name)) {
+    FunctionWrapper* created = new FunctionWrapper(new_name, func);
+    global_context->register_function(created);
+  }
 }

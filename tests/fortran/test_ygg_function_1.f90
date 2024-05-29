@@ -25,7 +25,7 @@ integer function test_ygg_function_1() result(r)
   type(yggdtype) :: sDtype
   character(len=5) :: data_send
   integer :: data_recv
-  call register_function_wrapper( &
+  call register_function( &
        "example_model_function", example_model_function)
   r = 1
   data_send = "alpha"

@@ -19,6 +19,13 @@
 namespace YggInterface {
   namespace communicator {
 
+    /** @brief C++ function type using C++ types */
+    typedef std::function<bool(const rapidjson::Document&, rapidjson::Document&)> cxx_function;
+    /** @brief C++ function type using C description */
+    typedef bool cxx_function_alt (const rapidjson::Document&, rapidjson::Document&);
+    /** @brief C function type */
+    typedef bool c_function (generic_t, generic_t);
+    
     /**
      * @brief Function wrapper.
      */
@@ -27,13 +34,6 @@ namespace YggInterface {
       FunctionWrapper& operator=(const FunctionWrapper&) = delete;
     public:
       
-      /** @brief C++ function type using C++ types */
-      typedef std::function<bool(const rapidjson::Document&, rapidjson::Document&)> cxx_function;
-      /** @brief C++ function type using C description */
-      typedef bool cxx_function_alt (const rapidjson::Document&, rapidjson::Document&);
-      /** @brief C function type */
-      typedef bool c_function (generic_t, generic_t);
-    
       /** \copydoc YggInterface::utils::LogBase::logClass */
       std::string logClass() const override { return "FunctionWrapper"; }
       /** \copydoc YggInterface::utils::LogBase::logInst */
@@ -63,92 +63,6 @@ namespace YggInterface {
       ~FunctionWrapper();
 
       /**
-       * @brief Check for a function in the function registry.
-       * @param[in] name Function name with language prefix
-       * @returns FunctionWrapper for the specified function if one exists
-       *   in the registry. nullptr is returned if there is not an entry.
-       */
-      static FunctionWrapper* lookup_function_wrapper(const std::string& name) {
-	std::map<std::string, FunctionWrapper*>::iterator it = global_context->func_registry_.find(name);
-	if (it != global_context->func_registry_.end())
-	  return it->second;
-	return nullptr;
-      }
-      /**
-       * @brief Create a function wrapper based on the provided function
-       *   name, checking for an existing entry in the registry first.
-       * @param[in] name Function name with language prefix
-       * @returns FunctionWrapper for the specified function.
-       */
-      static FunctionWrapper* create_function_wrapper(const std::string& name) {
-	FunctionWrapper* out = nullptr;
-	YGG_THREAD_SAFE_BEGIN(functions) {
-	  out = lookup_function_wrapper(name);
-	  if (!out) {
-	    out = new FunctionWrapper(name);
-	    global_context->func_registry_[name] = out;
-	  }
-	} YGG_THREAD_SAFE_END;
-	return out;
-      }
-      /**
-       * @brief Register a C++ function wrapper
-       * @param[in] name Function name with language prefix
-       * @param[in] func Function to register
-       * @param[in] no_prefix If true, the "cxx::" prefix will not be
-       *   added to the name (usually because another language has
-       *   already been added).
-       */
-      static void register_function_wrapper(const std::string& name,
-					    cxx_function& func,
-					    bool no_prefix=false) {
-	YGG_THREAD_SAFE_BEGIN(functions) {
-	  std::string new_name = name;
-	  if (!no_prefix)
-	    new_name = "cxx::" + new_name;
-	  if (!lookup_function_wrapper(new_name)) {
-	    FunctionWrapper* created = new FunctionWrapper(new_name, func);
-	    global_context->func_registry_[new_name] = created;
-	  }
-	} YGG_THREAD_SAFE_END;
-      }
-      /**
-       * @brief Register a C++ function wrapper
-       * @param[in] name Function name with language prefix
-       * @param[in] func Function to register
-       * @param[in] no_prefix If true, the "cxx::" prefix will not be
-       *   added to the name (usually because another language has
-       *   already been added).
-       */
-      static void register_function_wrapper(const std::string& name,
-					    cxx_function_alt& func,
-					    bool no_prefix=false) {
-	cxx_function cxx_func = func;
-	register_function_wrapper(name, cxx_func, no_prefix);
-      }
-      /**
-       * @brief Register a C function wrapper
-       * @param[in] name Function name with language prefix
-       * @param[in] func Function to register
-       * @param[in] no_prefix If true, the "c::" prefix will not be
-       *   added to the name (usually because another language has
-       *   already been added).
-       */
-      static void register_function_wrapper(const std::string& name,
-					    c_function* func,
-					    bool no_prefix=false) {
-	YGG_THREAD_SAFE_BEGIN(functions) {
-	  std::string new_name = name;
-	  if (!no_prefix)
-	    new_name = "c::" + new_name;
-	  if (!lookup_function_wrapper(new_name)) {
-	    FunctionWrapper* created = new FunctionWrapper(new_name, func);
-	    global_context->func_registry_[new_name] = created;
-	  }
-	} YGG_THREAD_SAFE_END;
-      }
-      
-      /**
        * @brief Send a message to the function.
        * @param[in] data Document containing function arguments.
        * @returns true on success, false otherwise.
@@ -170,9 +84,10 @@ namespace YggInterface {
        */
       void clear();
       
-    private:
       std::string address; /**< Name of the function */
       LANGUAGE language;   /**< Language the function is written in */
+      
+    private:
       void* func;          /**< Pointer to the function */
       std::vector<rapidjson::Document> recv_backlog; /**< Backlog of function call results */
       
@@ -206,5 +121,39 @@ namespace YggInterface {
       
     };
 
+    /**
+     * @brief Register a C++ function
+     * @param[in] name Function name with language prefix
+     * @param[in] func Function to register
+     * @param[in] no_prefix If true, the "cxx::" prefix will not be
+     *   added to the name (usually because another language has
+     *   already been added).
+     */
+    YGG_API void register_function(const std::string& name,
+				   cxx_function& func,
+				   bool no_prefix=false);
+    /**
+     * @brief Register a C++ function
+     * @param[in] name Function name with language prefix
+     * @param[in] func Function to register
+     * @param[in] no_prefix If true, the "cxx::" prefix will not be
+     *   added to the name (usually because another language has
+     *   already been added).
+     */
+    YGG_API void register_function(const std::string& name,
+				   cxx_function_alt& func,
+				   bool no_prefix=false);
+    /**
+     * @brief Register a C function
+     * @param[in] name Function name with language prefix
+     * @param[in] func Function to register
+     * @param[in] no_prefix If true, the "c::" prefix will not be
+     *   added to the name (usually because another language has
+     *   already been added).
+     */
+    YGG_API void register_function(const std::string& name,
+				   c_function* func,
+				   bool no_prefix=false);
+      
   }
 }

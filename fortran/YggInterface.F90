@@ -1086,10 +1086,10 @@ contains
 
   ! YggInterface
 
-  !> @brief Register a Fortran function wrapper
+  !> @brief Register a Fortran function
   !> @param[in] name Function name
   !> @param[in] func Function to register
-  subroutine register_function_wrapper(name, func)
+  subroutine register_function(name, func)
     implicit none
     character(len=*), intent(in) :: name
     character(len=len(name)+9) :: prefixed_name
@@ -1116,9 +1116,9 @@ contains
     prefixed_name = 'fortran::' // trim(name)
     c_name = convert_string_f2c(prefixed_name)
     c_func = c_funloc(func)
-    call register_function_wrapper_c(c_name, c_func)
+    call register_function_c(c_name, c_func)
     deallocate(c_name)
-  end subroutine register_function_wrapper
+  end subroutine register_function
 
   ! Methods for initializing channels
 #ifndef DOXYGEN_SHOULD_SKIP_THIS

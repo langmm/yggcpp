@@ -179,6 +179,40 @@ Comm_t* CommContext::find_registered_comm(const std::string& name,
   return out;
 }
 
+void CommContext::register_function(FunctionWrapper* x) {
+  log_debug() << "register_function: Registering " << x->address << std::endl;
+  YGG_THREAD_SAFE_BEGIN_LOCAL(functions) {
+    if (func_registry_.find(x->address) == func_registry_.end()) {
+      func_registry_[x->address] = x;
+    }
+  } YGG_THREAD_SAFE_END;
+  log_debug() << "register_function: Registered " << x->address <<
+    " (idx = " << func_registry_.size() << ")" << std::endl;
+}
+
+FunctionWrapper* CommContext::find_registered_function(const std::string& name) {
+  FunctionWrapper* out = NULL;
+  YGG_THREAD_SAFE_BEGIN_LOCAL(functions) {
+    log_debug() << "find_registered_function: Checking for match to " <<
+      name << " amongst " << func_registry_.size() <<
+      " registered functions" << std::endl;
+    std::map<std::string, FunctionWrapper*>::iterator it;
+    if (name.empty())
+      it = func_registry_.begin();
+    else
+      it = func_registry_.find(name);
+    if (it != func_registry_.end()) {
+      out = it->second;
+      log_debug() << "find_registered_function: Found match for " <<
+	name << std::endl;
+    } else {
+      log_debug() << "find_registered_function: No match for " <<
+	name << std::endl;
+    }
+  } YGG_THREAD_SAFE_END;
+  return out;
+}
+
 uint64_t CommContext::uuid() {
   uint64_t out = 0;
   YGG_THREAD_SAFE_BEGIN_LOCAL(uuid) {

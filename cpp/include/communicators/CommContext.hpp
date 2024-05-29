@@ -92,11 +92,23 @@ namespace YggInterface {
        * @param[in] name The name of the communicator to find
        * @param[in] dir The direction of the communicator to find
        * @param[in] type The type of cummunicator to find
-       * @return The communicator, or NULL of none was found
+       * @return The communicator or NULL if none was found
        */
       YGG_API Comm_t* find_registered_comm(const std::string& name,
 					   const DIRECTION dir,
 					   const COMM_TYPE type);
+      /**
+       * @brief Register a function.
+       * @param[in] x Function wrapper containing function to register.
+       */
+      YGG_API void register_function(FunctionWrapper* x);
+      /**
+       * @brief Find a registered function wrapper from the provided info.
+       * @param[in] name The name of the function to return, including the
+       *   language of the function in the prefix
+       * @return The function wrapper or NULL if none was found
+       */
+      YGG_API FunctionWrapper* find_registered_function(const std::string& name);
       /**
        * @brief Get a random unique identifier
        * @return ID

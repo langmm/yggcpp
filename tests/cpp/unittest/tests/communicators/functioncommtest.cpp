@@ -22,7 +22,7 @@ bool example_model_function(const rapidjson::Document& data_send,
 
 
 TEST(FunctionComm, call_c) {
-  FunctionWrapper::register_function_wrapper("example_model_function", example_model_function);
+  register_function("example_model_function", example_model_function);
   utils::Address addr("cxx::example_model_function");
   FunctionComm sComm("test", addr, SEND);
   FunctionComm rComm("test", addr, RECV);
