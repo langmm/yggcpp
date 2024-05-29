@@ -1,6 +1,6 @@
-#ifndef YGG_FC_WRAPPERS_H_
-#define YGG_FC_WRAPPERS_H_
-
+/* #ifndef YGG_FC_WRAPPERS_H_ */
+/* #define YGG_FC_WRAPPERS_H_ */
+#pragma once
 #include <stdlib.h>
 #include <string.h>
 #include "YggInterface_fortran_export.h"
@@ -42,12 +42,6 @@ int rpc_call_realloc_f(comm_t yggQ, int nargs, void *args);
 void* generic_map_get_keys_f(generic_t x, void* n_keys_f, void* key_size_f);
   
 #endif // DOXYGEN_SHOULD_SKIP_THIS
-
-#ifdef __cplusplus /* If this is a C++ compiler, end C linkage */
-}
-#endif
-
-#endif /*YGG_FC_WRAPPERS_H_*/
 
 // LINES AFTER THIS WERE GENERATED AND SHOULD NOT BE MODIFIED DIRECTLY
 //====================================================================

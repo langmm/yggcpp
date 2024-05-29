@@ -1081,6 +1081,7 @@ class CFile(AmendedFile):
             self.added['header'] = CFile(header, header=False)
             self.added['header'].file_suffix = (
                 '\n\n#ifdef __cplusplus\n}\n#endif\n')
+            # '\n\n#endif /*init once*/\n')
         if fortran:
             self.added['fortran'] = fortran
         if also_wrap:
