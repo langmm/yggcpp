@@ -161,6 +161,16 @@ int set_response_datatype(comm_t x, dtype_t* datatype) {
   return 1;
 }
 
+int comm_wait_for_recv(const comm_t x, const int64_t tout) {
+  int64_t out = -1;
+  _BEGIN_CPP {
+    out = static_cast<const YggInterface::communicator::Comm_t*>(x.comm)->wait_for_recv(tout);
+    if (!x.comm)
+      ygglog_throw_error("comm_wait_for_recv: Comm is not initialized");
+  } _END_CPP(comm_wait_for_recv, -1);
+  return out;
+}
+
 dtype_t comm_get_datatype(comm_t x) {
   dtype_t out;
   _BEGIN_CPP {

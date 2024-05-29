@@ -423,6 +423,7 @@ class CFile(AmendedFile):
             'registered_function': 'c_function',
             'commflag': 'FLAG_TYPE',
             'pointer': 'void*',
+            'timeout': 'int64_t',
         },
     }
     container_aliases = {
@@ -1710,6 +1711,7 @@ class FortranFile(AmendedFile):
             'registered_function': 'type(c_funptr)',
             'commflag': 'integer(kind=int64)',
             'pointer': 'type(c_ptr)',
+            'timeout': 'integer(kind=int64)',
         },
     }
     scalar_varients = {
@@ -1828,7 +1830,7 @@ class FortranFile(AmendedFile):
                     c_k = CFile.types['scalar'][k].format(X=v)
                     self.iso_types[c_k] = f'c_{c_k}'
         for k in ['null', 'boolean', 'integer', 'number',
-                  'length', 'scalar', 'commflag']:
+                  'length', 'scalar', 'commflag', 'timeout']:
             self.conversions['in'].setdefault(
                 k, self.conversions['in']['default'])
             self.conversions['out'].setdefault(
@@ -2270,7 +2272,8 @@ class FortranCdefsFile(FortranFile):
             string_return='type(c_ptr)',
             string_realloc='type(c_ptr)',
             string_array='type(c_ptr)',
-            commflag='integer(kind=c_int64_t)')
+            commflag='integer(kind=c_int64_t)',
+            timeout='integer(kind=c_int64_t)')
         self.types['varient'].update({
             '1darray': 'type(c_ptr)',
             'ndarray': 'type(c_ptr)'})

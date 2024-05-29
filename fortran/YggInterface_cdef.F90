@@ -585,6 +585,22 @@
        type(c_ptr), value :: datatype
        integer(kind = c_int) :: out
      end function set_response_datatype_c
+     !> @brief Wait for a message to become available to receive.
+     !> @param x Communicator
+     !> @param tout Time (in micro-seconds) that should be waited. If -1
+     !>   the process will wait forever.
+     !> @return Number of messages available for receive. -1 if an error
+     !>   occurred.
+     function comm_wait_for_recv_c(x, tout) &
+          result(out) &
+          bind(c, name="comm_wait_for_recv_f")
+       use, intrinsic :: iso_c_binding, only: c_int, c_int64_t
+       import :: yggcomm
+       implicit none
+       type(yggcomm), value, intent(in) :: x
+       integer(kind=c_int64_t), value, intent(in) :: tout
+       integer(kind = c_int) :: out
+     end function comm_wait_for_recv_c
      !> @brief Get the datatype associated with a communicator.
      !> @param x Communicator
      !> @return The datatype
@@ -2012,7 +2028,7 @@
        import :: ygggeneric
        implicit none
        type(ygggeneric), value :: x
-       integer(kind = c_int64_t), value, intent(in) :: value
+       integer(kind=c_int64_t), value, intent(in) :: value
        character(kind = c_char), dimension(*), intent(in) :: units
        integer(kind = c_int) :: out
      end function generic_set_int64_c
@@ -2644,7 +2660,7 @@
        import :: ygggeneric
        implicit none
        type(ygggeneric), value :: x
-       integer(kind = c_int64_t) :: out
+       integer(kind=c_int64_t) :: out
      end function generic_get_int64_c
      !> @brief Get a float scalar from a generic item
      !> @param[in] x Generic item to retrieve data from
@@ -3201,7 +3217,7 @@
        import :: ygggenericref
        implicit none
        type(ygggenericref), value :: x
-       integer(kind = c_int64_t) :: out
+       integer(kind=c_int64_t) :: out
      end function generic_ref_get_int64_c
      !> @brief Get a float scalar from a generic item reference
      !> @param[in] x Generic item reference to retrieve data from
@@ -3824,7 +3840,7 @@
        implicit none
        type(ygggeneric), value :: x
        integer(kind = c_size_t), value, intent(in) :: index
-       integer(kind = c_int64_t), value, intent(in) :: value
+       integer(kind=c_int64_t), value, intent(in) :: value
        character(kind = c_char), dimension(*), intent(in) :: units
        integer(kind = c_int) :: out
      end function generic_array_set_int64_c
@@ -4543,7 +4559,7 @@
        implicit none
        type(ygggeneric), value :: x
        integer(kind = c_size_t), value, intent(in) :: index
-       integer(kind = c_int64_t) :: out
+       integer(kind=c_int64_t) :: out
      end function generic_array_get_int64_c
      !> @brief Get a float scalar from an element in a array
      !> @param[in] x array to get element from
@@ -5214,7 +5230,7 @@
        implicit none
        type(ygggeneric), value :: x
        character(kind = c_char), dimension(*), intent(in) :: key
-       integer(kind = c_int64_t), value, intent(in) :: value
+       integer(kind=c_int64_t), value, intent(in) :: value
        character(kind = c_char), dimension(*), intent(in) :: units
        integer(kind = c_int) :: out
      end function generic_object_set_int64_c
@@ -5933,7 +5949,7 @@
        implicit none
        type(ygggeneric), value :: x
        character(kind = c_char), dimension(*), intent(in) :: key
-       integer(kind = c_int64_t) :: out
+       integer(kind=c_int64_t) :: out
      end function generic_object_get_int64_c
      !> @brief Get a float scalar from an element in a object
      !> @param[in] x object to get element from

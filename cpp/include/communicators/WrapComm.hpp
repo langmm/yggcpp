@@ -130,7 +130,7 @@ namespace YggInterface {
 		  out = CommBase::get_timeout_recv(), int64_t,
 		  const override);
       WRAP_METHOD(wait_for_recv, (const int64_t& tout), (tout),
-		  out = -1, int, override);
+		  out = -1, int, const override);
       WRAP_METHOD_NORET(close, (), (), , override);
       WRAP_METHOD(is_closed, (), (), out = false, bool,
 		  const override);

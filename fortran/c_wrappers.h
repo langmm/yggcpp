@@ -303,6 +303,15 @@ int set_response_format_f(comm_t comm, const char* fmt);
  */
 int set_response_datatype_f(comm_t x, void* datatype);
 /**
+ * @brief Wait for a message to become available to receive.
+ * @param x Communicator
+ * @param tout Time (in micro-seconds) that should be waited. If -1
+ *   the process will wait forever.
+ * @return Number of messages available for receive. -1 if an error
+ *   occurred.
+ */
+int comm_wait_for_recv_f(const comm_t x, const int64_t tout);
+/**
  * @brief Get the datatype associated with a communicator.
  * @param x Communicator
  * @return The datatype

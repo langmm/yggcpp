@@ -196,11 +196,15 @@ FunctionWrapper* CommContext::find_registered_function(const std::string& name) 
     log_debug() << "find_registered_function: Checking for match to " <<
       name << " amongst " << func_registry_.size() <<
       " registered functions" << std::endl;
-    std::map<std::string, FunctionWrapper*>::iterator it;
-    if (name.empty())
-      it = func_registry_.begin();
-    else
+    std::map<std::string, FunctionWrapper*>::iterator it = func_registry_.end();
+    if (!name.empty()) {
       it = func_registry_.find(name);
+    } else if (!func_registry_.empty()) {
+      log_debug() << "find_registered_function: Returning most " <<
+	"recently registered function" << std::endl;
+      it = func_registry_.end();
+      it--;
+    }
     if (it != func_registry_.end()) {
       out = it->second;
       log_debug() << "find_registered_function: Found match for " <<

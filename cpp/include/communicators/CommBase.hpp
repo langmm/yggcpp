@@ -831,7 +831,7 @@ public:
       @return Number of messages available for receive. -1 if an error
         occurred.
      */
-    YGG_API virtual int wait_for_recv(const int64_t& tout);
+    YGG_API virtual int wait_for_recv(const int64_t& tout) const;
     /**
       @brief Receive a raw string message from the communicator without
         performing transformations, normalization, filtering, setting the,

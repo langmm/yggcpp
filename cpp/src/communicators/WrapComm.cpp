@@ -125,7 +125,7 @@ WRAP_METHOD_NORET(set_timeout_recv, (int64_t new_timeout),
 WRAP_METHOD(get_timeout_recv, (), (),
 	    out = CommBase::get_timeout_recv(), int64_t, const)
 WRAP_METHOD(wait_for_recv, (const int64_t& tout), (tout),
-	    out = -1, int, )
+	    out = -1, int, const)
 WRAP_METHOD_NORET(close, (), (), , )
 WRAP_METHOD(is_closed, (), (), out = false, bool, const)
 WRAP_METHOD(is_open, (), (), out = false, bool, const)

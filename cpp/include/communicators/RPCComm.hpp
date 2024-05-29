@@ -34,7 +34,7 @@ public:
   /** \copydoc YggInterface::communicator::Comm_t::nmsg */
   YGG_API int nmsg(DIRECTION dir=NONE) const override;
   /** \copydoc YggInterface::communicator::Comm_t::wait_for_recv */
-  YGG_API int wait_for_recv(const int64_t& tout) override;
+  YGG_API int wait_for_recv(const int64_t& tout) const override;
 
   /**
    * @brief Add a schema to the response communicator(s).

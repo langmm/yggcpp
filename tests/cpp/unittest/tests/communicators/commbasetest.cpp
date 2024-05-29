@@ -57,7 +57,7 @@ public:
     handle = new int();
     updateMaxMsgSize(1000);
   }
-  int wait_for_recv(const int64_t&) override { return 0; }
+  int wait_for_recv(const int64_t&) const override { return 0; }
   int nmsg(DIRECTION dir=NONE) const override {
     if (nmsg_ >= 0) return nmsg_;
     return CommBase::nmsg(dir);

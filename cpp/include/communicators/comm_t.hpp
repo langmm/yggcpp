@@ -189,6 +189,16 @@ YGG_API int set_response_format(comm_t comm, const char *fmt);
 YGG_API int set_response_datatype(comm_t x, dtype_t* datatype);
 
 /**
+ * @brief Wait for a message to become available to receive.
+ * @param x Communicator
+ * @param tout Time (in micro-seconds) that should be waited. If -1
+ *   the process will wait forever.
+ * @return Number of messages available for receive. -1 if an error
+ *   occurred.
+ */
+YGG_API int comm_wait_for_recv(const comm_t x, const int64_t tout);
+
+/**
  * @brief Get the datatype associated with a communicator.
  * @param x Communicator
  * @return The datatype

@@ -42,6 +42,10 @@ integer function test_ygg_function_1() result(r)
      write(*,*) "send failed"
      return
   end if
+  if (comm_wait_for_recv(rComm, 10000_int64).LE.0) then
+     write(*,*) "no messages waiting"
+     return
+  end if
   if (.NOT.ygg_recv(rComm, yggarg(data_recv))) then
      write(*,*) "recv failed"
      return

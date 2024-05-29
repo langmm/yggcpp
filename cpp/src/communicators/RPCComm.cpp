@@ -45,7 +45,7 @@ int RPCComm::nmsg(DIRECTION dir) const {
   return requests.comms[requests.requests[0].comm_idx]->nmsg(dir);
 }
 
-int RPCComm::wait_for_recv(const int64_t& tout) {
+int RPCComm::wait_for_recv(const int64_t& tout) const {
   if (global_comm)
     return global_comm->wait_for_recv(tout);
   if (direction == RECV)

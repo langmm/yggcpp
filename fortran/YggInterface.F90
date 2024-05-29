@@ -2797,6 +2797,24 @@ contains
     nullify(datatype_ptr)
     out = c_out
   end function set_response_datatype
+  !> @brief Wait for a message to become available to receive.
+  !> @param x Communicator
+  !> @param tout Time (in micro-seconds) that should be waited. If -1
+  !>   the process will wait forever.
+  !> @return Number of messages available for receive. -1 if an error
+  !>   occurred.
+  function comm_wait_for_recv(x, tout) &
+       result(out)
+    implicit none
+    type(yggcomm), value, intent(in) :: x
+    integer(kind=int64), value, intent(in) :: tout
+    integer :: out
+    integer(kind=c_int64_t) :: c_tout
+    integer(kind = c_int) :: c_out
+    c_tout = tout
+    c_out = comm_wait_for_recv_c(x, c_tout)
+    out = c_out
+  end function comm_wait_for_recv
   !> @brief Get the datatype associated with a communicator.
   !> @param x Communicator
   !> @return The datatype
@@ -4380,10 +4398,10 @@ contains
        result(out)
     implicit none
     type(ygggeneric), value :: x
-    integer(kind = 8), value, intent(in) :: value
+    integer(kind=int64), value, intent(in) :: value
     character(len = *), intent(in) :: units
     integer :: out
-    integer(kind = c_int64_t) :: c_value
+    integer(kind=c_int64_t) :: c_value
     character(kind = c_char), dimension(:), allocatable :: c_units
     integer(kind = c_int) :: c_out
     c_value = value
@@ -5204,8 +5222,8 @@ contains
        result(out)
     implicit none
     type(ygggeneric), value :: x
-    integer(kind = 8) :: out
-    integer(kind = c_int64_t) :: c_out
+    integer(kind=int64) :: out
+    integer(kind=c_int64_t) :: c_out
     c_out = generic_get_int64_c(x)
     out = c_out
   end function generic_get_int64
@@ -5951,8 +5969,8 @@ contains
        result(out)
     implicit none
     type(ygggenericref), value :: x
-    integer(kind = 8) :: out
-    integer(kind = c_int64_t) :: c_out
+    integer(kind=int64) :: out
+    integer(kind=c_int64_t) :: c_out
     c_out = generic_ref_get_int64_c(x)
     out = c_out
   end function generic_ref_get_int64
@@ -6832,10 +6850,10 @@ contains
     implicit none
     type(ygggeneric), value :: x
     integer, value, intent(in) :: index
-    integer(kind = 8), value, intent(in) :: value
+    integer(kind=int64), value, intent(in) :: value
     character(len = *), intent(in) :: units
     integer(kind = c_size_t) :: c_index
-    integer(kind = c_int64_t) :: c_value
+    integer(kind=c_int64_t) :: c_value
     character(kind = c_char), dimension(:), allocatable :: c_units
     integer(kind = c_int) :: c_out
     c_index = index - 1
@@ -7826,9 +7844,9 @@ contains
     implicit none
     type(ygggeneric), value :: x
     integer, value, intent(in) :: index
-    integer(kind = 8) :: out
+    integer(kind=int64) :: out
     integer(kind = c_size_t) :: c_index
-    integer(kind = c_int64_t) :: c_out
+    integer(kind=c_int64_t) :: c_out
     c_index = index - 1
     c_out = generic_array_get_int64_c(x, c_index)
     out = c_out
@@ -8813,10 +8831,10 @@ contains
     implicit none
     type(ygggeneric), value :: x
     character(len = *), intent(in) :: key
-    integer(kind = 8), value, intent(in) :: value
+    integer(kind=int64), value, intent(in) :: value
     character(len = *), intent(in) :: units
     character(kind = c_char), dimension(:), allocatable :: c_key
-    integer(kind = c_int64_t) :: c_value
+    integer(kind=c_int64_t) :: c_value
     character(kind = c_char), dimension(:), allocatable :: c_units
     integer(kind = c_int) :: c_out
     c_key = convert_string_f2c(key)
@@ -9847,9 +9865,9 @@ contains
     implicit none
     type(ygggeneric), value :: x
     character(len = *), intent(in) :: key
-    integer(kind = 8) :: out
+    integer(kind=int64) :: out
     character(kind = c_char), dimension(:), allocatable :: c_key
-    integer(kind = c_int64_t) :: c_out
+    integer(kind=c_int64_t) :: c_out
     c_key = convert_string_f2c(key)
     c_out = generic_object_get_int64_c(x, c_key)
     deallocate(c_key)

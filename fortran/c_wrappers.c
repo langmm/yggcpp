@@ -239,6 +239,9 @@ int set_response_format_f(comm_t comm, const char* fmt) {
 int set_response_datatype_f(comm_t x, void* datatype) {
   return set_response_datatype(x, (dtype_t*)datatype);
 }
+int comm_wait_for_recv_f(const comm_t x, const int64_t tout) {
+  return comm_wait_for_recv(x, tout);
+}
 dtype_t comm_get_datatype_f(comm_t x) {
   return comm_get_datatype(x);
 }

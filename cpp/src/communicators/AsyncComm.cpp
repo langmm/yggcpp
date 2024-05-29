@@ -531,7 +531,7 @@ int AsyncComm::nmsg(DIRECTION dir) const {
 }
 
 #ifdef THREADSINSTALLED
-int AsyncComm::wait_for_recv(const int64_t& tout) {
+int AsyncComm::wait_for_recv(const int64_t& tout) const {
   if (global_comm || (type == CLIENT_COMM)) {
     if (type == CLIENT_COMM && (flags & COMM_FLAG_USED_SENT)) {
       std::string req_id;
