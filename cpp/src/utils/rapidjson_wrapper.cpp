@@ -47,6 +47,12 @@ PyObject* rapidjson::import_python_class(const char* module_name,
   return RJ_WNS::import_python_class(module_name, class_name,
 				     error_prefix, ignore_error);
 }
+PyObject* rapidjson::import_python_object(const char* module_class,
+					  const std::string error_prefix,
+					  const bool ignore_error) {
+  return RJ_WNS::import_python_object(module_class,
+				      error_prefix, ignore_error);
+}
 
 using namespace rapidjson;
 
@@ -402,6 +408,7 @@ WValue::WValue(RJ_WNS::Document* val) :
   WRAP_SET_GET(Uint64, uint64_t);
   WRAP_SET_GET(Double, double);
   WRAP_SET_GET(Float, float);
+  WRAP_METHOD(WValue, IsNumber, (), (), bool, const);
   WRAP_METHOD(WValue, GetNElements, (), (), SizeType, const);
   WRAP_METHOD_CAST_CONST(WValue, GetShape, (), (), WValue, );
   WRAP_METHOD(WValue, GetElement,
@@ -691,6 +698,13 @@ WValue::WValue(RJ_WNS::Document* val) :
 		   (rapidjson::Ply x, WValue::Allocator& allocator),
 		   (x, allocator), );
   // Yggdrasil methods
+  WRAP_METHOD(WValue, IsSchema, (), (), bool, const);
+  WRAP_METHOD_SELF(WValue, SetSchema,
+		   (Allocator& allocator),
+		   (allocator), );
+  WRAP_METHOD_SELF(WValue, SetSchema,
+		   (const WValue& x, Allocator& allocator),
+		   (*(x.val_), allocator), );
   WRAP_METHOD(WValue, IsType, (const WValue::Ch* type), (type), bool, const);
   WRAP_METHOD(WValue, GetDataPtr, (bool& requires_freeing),
 	      (requires_freeing), void*, const);
@@ -804,6 +818,8 @@ WDocument& WDocument::operator=(WDocument& rhs) {
 		   (str, length), );
   WRAP_METHOD_SELF(WDocument, Parse, (const WValue::Ch* str), (str), );
   WRAP_METHOD(WDocument, HasParseError, (), (), bool, const);
+  WRAP_METHOD(WDocument, GetParseError, (), (), ParseErrorCode, const);
+  WRAP_METHOD(WDocument, GetErrorOffset, (), (), size_t, const);
   WRAP_METHOD(WDocument, CountVarArgs, (WValue& schema, bool set),
 	      (*(schema.val_), set), size_t, const);
 bool WDocument::SetVarArgs(WValue& schema, VarArgList& ap) const {

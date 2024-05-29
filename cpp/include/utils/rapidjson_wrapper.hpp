@@ -22,6 +22,7 @@
 #include "rapidjson/ply.h"
 #include "rapidjson/obj.h"
 #include "rapidjson/helpers.h"
+#include "rapidjson/error/en.h"
 
 #define WStringRefType StringRefType
 #define WValue Value
@@ -149,6 +150,21 @@ PyObject* import_python_class(const char* module_name,
 			      const char* class_name,
 			      const std::string error_prefix="",
 			      const bool ignore_error=false);
+
+/*!
+  @brief Import a Python function or class.
+  @param[in] module_class String containing the name of the module
+    a function or class should be imported from and the name of the
+    function or class.
+  @param[in] error_prefix Prefix to add to error message describine
+    the context from which the function was called.
+  @param[in] ignore_error If true, no error will be thrown and NULL will
+    be returned.
+  @return The Python function or class. NULL indicates an error.
+ */
+PyObject* import_python_object(const char* module_class,
+			       const std::string error_prefix="",
+			       const bool ignore_error=false);
 
 // Forward declarations
 class WValue;
@@ -423,6 +439,7 @@ public:
   WRAP_SET_GET(Uint64, uint64_t);
   WRAP_SET_GET(Double, double);
   WRAP_SET_GET(Float, float);
+  WRAP_METHOD(WValue, IsNumber, (), (), bool, const);
   WRAP_METHOD(WValue, GetNElements, (), (), SizeType, const);
   WRAP_METHOD_CAST_CONST(WValue, GetShape, (), (), WValue, );
   WRAP_METHOD(WValue, GetElement,
@@ -709,6 +726,13 @@ public:
 		   (x, allocator), );
 		   
   // Yggdrasil methods
+  WRAP_METHOD(WValue, IsSchema, (), (), bool, const);
+  WRAP_METHOD_SELF(WValue, SetSchema,
+		   (Allocator& allocator),
+		   (allocator), );
+  WRAP_METHOD_SELF(WValue, SetSchema,
+		   (const WValue& x, Allocator& allocator),
+		   (*(rhs.val_), allocator), );
   WRAP_METHOD(WValue, IsType, (const Ch* type), (type), bool, const);
   WRAP_METHOD(WValue, GetDataPtr, (bool& requires_freeing),
 	      (requires_freeing), void*, const);
@@ -824,6 +848,8 @@ public:
 		   (str, length), );
   WRAP_METHOD_SELF(WDocument, Parse, (const Ch* str), (str), );
   WRAP_METHOD(WDocument, HasParseError, (), (), bool, const);
+  WRAP_METHOD(WDocument, GetParseError, (), (), ParseErrorCode, const);
+  WRAP_METHOD(WDocument, GetErrorOffset, (), (), size_t, const);
   WRAP_METHOD(WDocument, CountVarArgs, (WValue& schema, bool set),
 	      (*(schema.val_), set), size_t, const);
   WRAP_METHOD(WDocument, SetVarArgs, (WValue& schema, VarArgList& ap),
@@ -1338,6 +1364,21 @@ namespace YggInterface {
 					       const std::string& element,
 					       const std::string error_prefix="",
 					       const bool ignore_error=false);
+
+    /*!
+      @brief Import a Python function or class.
+      @param[in] module_class String containing the name of the module
+        a function or class should be imported from and the name of the
+	function or class.
+      @param[in] error_prefix Prefix to add to error message describine
+        the context from which the function was called.
+      @param[in] ignore_error If true, no error will be logged.
+      @return The Python function or class. NULL indicates an error.
+     */
+    YGG_RJ_API PyObject* import_python_object(const std::string& module_class,
+					      const std::string error_prefix="",
+					      const bool ignore_error=false);
+    
 
   }
 }

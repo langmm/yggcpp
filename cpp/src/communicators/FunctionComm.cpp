@@ -30,7 +30,7 @@ FunctionWrapper::FunctionWrapper(const std::string& f,
   }
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
   case PYTHON_LANGUAGE: {
-    func = (void*)rapidjson::import_python_object(parts[1].c_str());
+    func = (void*)utils::import_python_object(parts[1].c_str());
     if (func == NULL)
       throw_error("FunctionWrapper: Error importing python function: "
 		  + parts[1]);

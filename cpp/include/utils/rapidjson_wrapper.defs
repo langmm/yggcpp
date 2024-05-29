@@ -26,6 +26,12 @@ RAPIDJSON_WRAPPER_DEFS_ PyObject* YggInterface::utils::import_python_element(
   return NULL;
 }
     
+RAPIDJSON_WRAPPER_DEFS_ PyObject* YggInterface::utils::import_python_object(
+    const std::string&,
+    const std::string, const bool) {
+  return NULL;
+}
+    
 
 #else // YGGDRASIL_DISABLE_PYTHON_C_API
 
@@ -92,6 +98,19 @@ RAPIDJSON_WRAPPER_DEFS_ PyObject* YggInterface::utils::import_python_element(
   try {
     out = rapidjson::import_python_class(module.c_str(), element.c_str(),
                                          error_prefix, ignore_error);
+  } catch (std::exception& e) {
+    YggLogError << e.what() << std::endl;  // GCOV_EXCL_LINE
+  }
+  return out;
+}
+
+RAPIDJSON_WRAPPER_DEFS_ PyObject* YggInterface::utils::import_python_object(
+    const std::string& module_class,
+    const std::string error_prefix, const bool ignore_error) {
+  PyObject* out = NULL;
+  try {
+    out = rapidjson::import_python_object(module_class.c_str(),
+                                          error_prefix, ignore_error);
   } catch (std::exception& e) {
     YggLogError << e.what() << std::endl;  // GCOV_EXCL_LINE
   }
