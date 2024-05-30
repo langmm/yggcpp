@@ -60,7 +60,7 @@ FunctionWrapper::FunctionWrapper(const std::string& name,
 }
 
 FunctionWrapper::FunctionWrapper(const std::string& name,
-				 c_function* f) :
+				 c_function& f) :
   FunctionWrapper(name, true) {
   func = (void*)(f);
 }
@@ -104,7 +104,7 @@ bool FunctionWrapper::_call(const rapidjson::Document& data_send,
   switch (language) {
   case C_LANGUAGE:
   case FORTRAN_LANGUAGE: {
-    c_function* f = (c_function*)func;
+    c_function f = (c_function)func;
     generic_t c_data_send, c_data_recv;
     c_data_send.obj = (void*)(&data_send);
     c_data_recv.obj = (void*)(&data_recv);
@@ -285,7 +285,7 @@ void YggInterface::communicator::register_function(const std::string& name,
 }
 
 void YggInterface::communicator::register_function(const std::string& name,
-						   c_function* func,
+						   c_function& func,
 						   bool no_prefix) {
   std::string new_name = name;
   if (!no_prefix)

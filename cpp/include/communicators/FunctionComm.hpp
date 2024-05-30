@@ -24,7 +24,7 @@ namespace YggInterface {
     /** @brief C++ function type using C description */
     typedef bool cxx_function_alt (const rapidjson::Document&, rapidjson::Document&);
     /** @brief C function type */
-    typedef bool c_function (generic_t, generic_t);
+    typedef bool (*c_function) (generic_t, generic_t);
     
     /**
      * @brief Function wrapper.
@@ -56,7 +56,7 @@ namespace YggInterface {
        * @param[in] name Name of the function
        * @param[in] f Function
        */
-      FunctionWrapper(const std::string& name, c_function* f);
+      FunctionWrapper(const std::string& name, c_function& f);
       /**
        * Destructor
        */
@@ -152,7 +152,7 @@ namespace YggInterface {
      *   already been added).
      */
     YGG_API void register_function(const std::string& name,
-				   c_function* func,
+				   c_function& func,
 				   bool no_prefix=false);
       
   }

@@ -22,7 +22,8 @@ extern "C" {
 
 // Utilities
 void ygg_c_free(void *x);
-void register_function_f(const char* name, void* func);
+void register_function_f(const char* name,
+			 bool (*func)(generic_t, generic_t));
 // Methods for initializing channels
 comm_t _init_comm_f(const char *name, const int dir, const int t,
 		    void* datatype, const int64_t flags, const size_t ncomm);

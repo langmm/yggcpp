@@ -80,7 +80,7 @@ YGG_API int ygg_init();
  */
 YGG_API void ygg_exit();
 
-typedef bool c_function (generic_t, generic_t);
+typedef bool (*c_function) (generic_t, generic_t);
 
 /**
  * @brief Register a C function
