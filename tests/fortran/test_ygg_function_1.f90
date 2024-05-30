@@ -25,15 +25,20 @@ integer function test_ygg_function_1() result(r)
   type(yggdtype) :: sDtype
   character(len=5) :: data_send
   integer :: data_recv
+  write(*, *) "before register"
   call register_function( &
        "example_model_function", example_model_function)
+  write(*, *) "after register"
   r = 1
   data_send = "alpha"
   data_recv = 0
   sDtype = create_dtype_from_schema('{"type": "string"}', .false.)
+  write(*, *) "after create dtype"
   sComm = init_comm("test_name", SEND, FUNCTION_COMM, sDtype, &
        IOR(COMM_FLAG_ASYNC, COMM_FLAG_SET_OPP_ENV))
+  write(*, *) "after init send comm"
   rComm = ygg_input("test_name")
+  write(*, *) "after init recv comm"
   if (.NOT.c_associated(rComm%comm)) then
      write(*,*) "error in comm init"
      return
