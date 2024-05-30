@@ -290,8 +290,12 @@ void YggInterface::communicator::register_function(const std::string& name,
   std::string new_name = name;
   if (!no_prefix)
     new_name = "c::" + new_name;
+  std::cerr << "before register_function in FunctionComm.cpp: " << name << std::endl;
   if (!global_context->find_registered_function(new_name)) {
+    std::cerr << "creating wrapper in FunctionComm.cpp" << std::endl;
     FunctionWrapper* created = new FunctionWrapper(new_name, func);
+    std::cerr << "created wrapper in FunctionComm.cpp" << std::endl;
     global_context->register_function(created);
   }
+  std::cerr << "after register_function in FunctionComm.cpp: " << name << std::endl;
 }

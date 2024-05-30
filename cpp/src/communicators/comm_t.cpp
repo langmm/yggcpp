@@ -48,8 +48,11 @@ void ygg_exit() {
 int _register_function(const char* name, c_function func,
 		       bool no_prefix) {
   try {
+    std::cerr << "before _register_function in comm_t.cpp: " << name <<
+      " (no_prefix = " << no_prefix << ")" << std::endl;
     std::string name_s(name);
     YggInterface::communicator::register_function(name_s, func, no_prefix);
+    std::cerr << "after _register_function in comm_t.cpp" << std::endl;
   } catch (...) {
     return -1;
   }
