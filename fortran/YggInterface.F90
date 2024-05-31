@@ -1115,7 +1115,9 @@ contains
 #endif
     write(*, *) 'before string operation in register_function in YggInterface.F90'
     prefixed_name = 'fortran::' // trim(name)
+    write(*, *) 'before convert_string_f2c'
     c_name = convert_string_f2c(prefixed_name)
+    write(*, *) 'after convert_string_f2c'
     c_func = c_funloc(func)
     write(*, *) 'before register_function_c in YggInterface.F90'
     call register_function_c(c_name, c_func)
