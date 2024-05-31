@@ -888,15 +888,15 @@ module YggInterface
 
 #define WITH_GLOBAL_SCOPE(COMM) call set_global_comm(); COMM; call unset_global_comm()
 
-  ! abstract interface
-  !    logical(kind=c_bool) function func_abs(data_send, data_recv)
-  !      use, intrinsic :: iso_c_binding, only: c_bool
-  !      import :: ygggeneric
-  !      implicit none
-  !      type(ygggeneric), value, intent(in) :: data_send
-  !      type(ygggeneric), value :: data_recv
-  !    end function func_abs
-  ! end interface
+  abstract interface
+     logical(kind=c_bool) function func_abs(data_send, data_recv)
+       use, intrinsic :: iso_c_binding, only: c_bool
+       import :: ygggeneric
+       implicit none
+       type(ygggeneric), value, intent(in) :: data_send
+       type(ygggeneric), value :: data_recv
+     end function func_abs
+  end interface
   
 contains
 
@@ -1093,7 +1093,7 @@ contains
     implicit none
     character(len=*), intent(in) :: name
     character(len=len(name)+9) :: prefixed_name
-    ! procedure(func_abs), pointer :: func
+    procedure(func_abs) :: func
     character(kind=c_char), allocatable :: c_name(:)
     type(c_funptr) :: c_func
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
@@ -1102,21 +1102,23 @@ contains
     !> @param[in] data_send Input data
     !> @param[out] data_recv Output data structure that will be filled
     !> @returns Success or failure of the function call
-    interface
-       logical(kind=c_bool) function func(data_send, data_recv) &
-            bind(c)
-         use, intrinsic :: iso_c_binding, only: c_bool
-         import :: ygggeneric
-         implicit none
-         type(ygggeneric), value, intent(in) :: data_send
-         type(ygggeneric), value :: data_recv
-       end function func
-    end interface
+    ! interface
+    !    logical(kind=c_bool) function func(data_send, data_recv) &
+    !         bind(c)
+    !      use, intrinsic :: iso_c_binding, only: c_bool
+    !      import :: ygggeneric
+    !      implicit none
+    !      type(ygggeneric), value, intent(in) :: data_send
+    !      type(ygggeneric), value :: data_recv
+    !    end function func
+    ! end interface
 #endif
     prefixed_name = 'fortran::' // trim(name)
     c_name = convert_string_f2c(prefixed_name)
     c_func = c_funloc(func)
+    write(*, *) 'before register_function_c in YggInterface.F90'
     call register_function_c(c_name, c_func)
+    write(*, *) 'after register_function_c in YggInterface.F90'
     deallocate(c_name)
   end subroutine register_function
 

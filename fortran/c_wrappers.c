@@ -25,7 +25,9 @@ void ygg_c_free(void *x) {
 void register_function_f(const char* name,
 			 bool (*func)(generic_t, generic_t)) {
   /* c_function* func_c = (c_function*)func; */
+  printf("Before _register_function in c_wrappers.c\n");
   _register_function(name, func, true);
+  printf("After _register_function in c_wrappers.c\n");
 }
 
 // Methods for initializing channels
