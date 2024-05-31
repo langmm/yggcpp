@@ -16,7 +16,7 @@
        use, intrinsic :: iso_c_binding, only: c_funptr, c_bool, c_char
        implicit none
        character(kind=c_char), dimension(*), intent(in) :: name
-       type(c_funptr), value, intent(in) :: func
+       type(c_funptr), value :: func
      end subroutine register_function_c
 
      ! Methods for initializing channels

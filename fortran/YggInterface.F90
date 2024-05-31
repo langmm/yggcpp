@@ -1113,6 +1113,7 @@ contains
     !    end function func
     ! end interface
 #endif
+    write(*, *) 'before string operation in register_function in YggInterface.F90'
     prefixed_name = 'fortran::' // trim(name)
     c_name = convert_string_f2c(prefixed_name)
     c_func = c_funloc(func)
