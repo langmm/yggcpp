@@ -2,7 +2,7 @@ name: rapidjson
 channels:
   - conda-forge
 dependencies:
-  - numpy < 2.0.0
+  - numpy
   # - c-compiler
   # - cxx-compiler
   # - fortran-compiler
