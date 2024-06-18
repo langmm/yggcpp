@@ -1092,7 +1092,7 @@ contains
   subroutine register_function(name, func)
     implicit none
     character(len=*), intent(in) :: name
-    character(len=len(name)+9) :: prefixed_name
+    ! character(len=len(name)+9) :: prefixed_name
     procedure(func_abs) :: func
     character(kind=c_char), allocatable :: c_name(:)
     type(c_funptr) :: c_func
@@ -1113,10 +1113,11 @@ contains
     !    end function func
     ! end interface
 #endif
-    write(*, *) 'before string operation in register_function in YggInterface.F90'
-    prefixed_name = 'fortran::' // trim(name)
+    ! write(*, *) 'before string operation in register_function in YggInterface.F90'
+    ! prefixed_name = 'fortran::' // trim(name)
     write(*, *) 'before convert_string_f2c'
-    c_name = convert_string_f2c(prefixed_name)
+    ! c_name = convert_string_f2c(prefixed_name)
+    c_name = convert_string_f2c(name)
     write(*, *) 'after convert_string_f2c'
     c_func = c_funloc(func)
     write(*, *) 'before register_function_c in YggInterface.F90'
