@@ -23,8 +23,6 @@ namespace YggInterface {
     typedef std::function<bool(const rapidjson::Document&, rapidjson::Document&)> cxx_function;
     /** @brief C++ function type using C description */
     typedef bool cxx_function_alt (const rapidjson::Document&, rapidjson::Document&);
-    /** @brief C function type */
-    typedef bool (*c_function) (generic_t, generic_t);
     
     /**
      * @brief Function wrapper.

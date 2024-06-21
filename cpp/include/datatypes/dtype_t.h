@@ -65,6 +65,9 @@ typedef struct ply_t {
   void* obj; //!< Pointer to rapidjson::Ply instance.
 } ply_t;
 
+/*! @brief C function type */
+typedef bool (*c_function) (generic_t, generic_t);
+
 /*!
   @brief Get the length of a C string stored in a pointer.
   @param[in] x String pointer.

@@ -108,7 +108,10 @@ bool FunctionWrapper::_call(const rapidjson::Document& data_send,
     generic_t c_data_send, c_data_recv;
     c_data_send.obj = (void*)(&data_send);
     c_data_recv.obj = (void*)(&data_recv);
-    return (*f)(c_data_send, c_data_recv);
+    std::cerr << "_call: before function call" << std::endl;
+    bool out = (*f)(c_data_send, c_data_recv);
+    std::cerr << "_call: after function call" << std::endl;
+    return out;
   }
   case CXX_LANGUAGE: {
     cxx_function* f = (cxx_function*)func;
