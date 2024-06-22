@@ -66,7 +66,16 @@ typedef struct ply_t {
 } ply_t;
 
 /*! @brief C function type */
-typedef bool (*c_function) (generic_t, generic_t);
+typedef bool (__cdecl *c_function) (generic_t, generic_t);
+
+
+/*!
+  @brief Call a C function pointer.
+  @param[in] ptr Function pointer.
+  @param[in] data_send Function input data.
+  @param[in] data_recv Function output data.
+ */
+YGG_API bool _call_pointer(void* ptr, generic_t data_send, generic_t data_recv);
 
 /*!
   @brief Get the length of a C string stored in a pointer.

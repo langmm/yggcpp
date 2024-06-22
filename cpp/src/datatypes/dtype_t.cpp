@@ -83,6 +83,12 @@ extern "C" {
   //   return 0;
   // }
 
+  bool _call_pointer(void* ptr, generic_t data_send, generic_t data_recv) {
+    c_function f = (c_function)ptr;
+    // return (*f)(data_send, data_recv);
+    return f(data_send, data_recv);
+  }
+
   size_t pointer_strlen(const void* x) {
     if (!x)
       return 0;

@@ -332,7 +332,8 @@ class CFile(AmendedFile):
                           '_register_function',
                           'init_comm', '_init_comm', 'init_comm_flags',
                           'set_comm_language',
-                          'ncommSend', 'ncommRecv', 'ncommCall']
+                          'ncommSend', 'ncommRecv', 'ncommCall',
+                          '_call_pointer']
     char_types = [
         'const char*', 'char*']
     regexes = {

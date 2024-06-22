@@ -104,12 +104,13 @@ bool FunctionWrapper::_call(const rapidjson::Document& data_send,
   switch (language) {
   case C_LANGUAGE:
   case FORTRAN_LANGUAGE: {
-    c_function f = (c_function)func;
+    // c_function f = (c_function)func;
     generic_t c_data_send, c_data_recv;
     c_data_send.obj = (void*)(&data_send);
     c_data_recv.obj = (void*)(&data_recv);
     std::cerr << "_call: before function call" << std::endl;
-    bool out = (*f)(c_data_send, c_data_recv);
+    bool out = _call_pointer(func, c_data_send, c_data_recv);
+    // bool out = (*f)(c_data_send, c_data_recv);
     std::cerr << "_call: after function call" << std::endl;
     return out;
   }

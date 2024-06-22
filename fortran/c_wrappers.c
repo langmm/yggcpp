@@ -22,8 +22,8 @@ void ygg_c_free(void *x) {
   }
 }
 
-void register_function_f(const char* name,
-			 bool (*func)(generic_t, generic_t)) {
+void register_function_f(const char* name, c_function func) {
+  // bool (*func)(generic_t, generic_t)) {
   /* c_function* func_c = (c_function*)func; */
   printf("Before malloc in c_wrappers.c\n");
   size_t name_size = strlen(name) + 10;
