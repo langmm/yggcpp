@@ -66,7 +66,11 @@ typedef struct ply_t {
 } ply_t;
 
 /*! @brief C function type */
+#ifdef _WIN32
 typedef bool (__cdecl *c_function) (generic_t, generic_t);
+#else
+typedef bool (*c_function) (generic_t, generic_t);
+#endif
 
 
 /*!
