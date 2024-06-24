@@ -86,6 +86,8 @@ extern "C" {
   bool _call_pointer(void* ptr, generic_t data_send, generic_t data_recv) {
     c_function f = (c_function)ptr;
     printf("dtype_t.cpp::_call_pointer: before call: %p, %p\n", ptr, f);
+    printf("dtype_t.cpp::_call_pointer: before call: sizeof(void*) = %ld, sizeof(c_function) = %ld\n",
+	   sizeof(ptr), sizeof(f));
     // return (*f)(data_send, data_recv);
     bool out = f(data_send, data_recv);
     printf("dtype_t.cpp::_call_pointer: after call\n");
