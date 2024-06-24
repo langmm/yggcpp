@@ -32,7 +32,7 @@ void register_function_f(const char* name, c_function func) {
   int res = snprintf(prefixed_name, name_size, "fortran::%s", name);
   if (res < 0 || res >= name_size)
     printf("Error in snprintf in c_wrappers.c\n");
-  printf("Before _register_function in c_wrappers.c\n");
+  printf("Before _register_function in c_wrappers.c: %p\n", func);
   _register_function(prefixed_name, func, true);
   printf("After _register_function in c_wrappers.c\n");
   free(prefixed_name);
