@@ -76,6 +76,7 @@ function (add_fortran_test_executable TARGET)
     include(CheckDLL)
     show_runtimes(${TARGET})
     show_runtimes(${TARGET}_fortran AFTER_TARGET ${TARGET})
+    show_symbols(${TARGET}_fortran AFTER_TARGET ${TARGET})
     if (WIN32)
         if (CONDA_PREFIX)
             add_custom_command(
