@@ -181,7 +181,6 @@ Comm_t* CommContext::find_registered_comm(const std::string& name,
 
 void CommContext::register_function(FunctionWrapper* x) {
   log_debug() << "register_function: Registering " << x->address << std::endl;
-  std::cerr << "register_function: Registering " << x->address << std::endl;
   YGG_THREAD_SAFE_BEGIN_LOCAL(functions) {
     if (func_registry_.find(x->address) == func_registry_.end()) {
       func_registry_[x->address] = x;
@@ -189,16 +188,12 @@ void CommContext::register_function(FunctionWrapper* x) {
   } YGG_THREAD_SAFE_END;
   log_debug() << "register_function: Registered " << x->address <<
     " (idx = " << func_registry_.size() << ")" << std::endl;
-  std::cerr << "register_function: Registered " << x->address <<
-    " (idx = " << func_registry_.size() << ")" << std::endl;
 }
 
 FunctionWrapper* CommContext::find_registered_function(const std::string& name) {
   FunctionWrapper* out = NULL;
-  std::cerr << "find_registered_function: " << name << std::endl;
   log_debug() << "find_registered_function: " << name << std::endl;
   YGG_THREAD_SAFE_BEGIN_LOCAL(functions) {
-    std::cerr << "find_registered_function: inside thread lock" << std::endl;
     log_debug() << "find_registered_function: Checking for match to " <<
       name << " amongst " << func_registry_.size() <<
       " registered functions" << std::endl;

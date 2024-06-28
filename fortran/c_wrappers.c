@@ -23,18 +23,14 @@ void ygg_c_free(void *x) {
 }
 
 void register_function_f(const char* name, c_function func) {
-  // bool (*func)(generic_t, generic_t)) {
-  /* c_function* func_c = (c_function*)func; */
-  printf("Before malloc in c_wrappers.c\n");
   size_t name_size = strlen(name) + 10;
   char* prefixed_name = (char*)malloc(name_size);
-  printf("Before sprintf in c_wrappers.c\n");
   int res = snprintf(prefixed_name, name_size, "fortran::%s", name);
-  if (res < 0 || res >= name_size)
-    printf("Error in snprintf in c_wrappers.c\n");
-  printf("Before _register_function in c_wrappers.c: %p\n", func);
+  if (res < 0 || res >= name_size) {
+    ygglog_error("register_function_f: Error in snprintf in c_wrappers.c\n");
+    return;
+  }
   _register_function(prefixed_name, func, true);
-  printf("After _register_function in c_wrappers.c\n");
   free(prefixed_name);
 }
 

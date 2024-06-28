@@ -1113,16 +1113,9 @@ contains
     !    end function func
     ! end interface
 #endif
-    ! write(*, *) 'before string operation in register_function in YggInterface.F90'
-    ! prefixed_name = 'fortran::' // trim(name)
-    write(*, *) 'before convert_string_f2c'
-    ! c_name = convert_string_f2c(prefixed_name)
     c_name = convert_string_f2c(name)
-    write(*, *) 'after convert_string_f2c'
     c_func = c_funloc(func)
-    write(*, *) 'before register_function_c in YggInterface.F90'
     call register_function_c(c_name, c_func)
-    write(*, *) 'after register_function_c in YggInterface.F90'
     deallocate(c_name)
   end subroutine register_function
 
@@ -1190,7 +1183,6 @@ contains
     c_t = t
     c_flags = flags
     c_datatype = c_loc(datatype)
-    write(*, *) "flags = ", flags, ", c_flags = ", c_flags
     channel = init_comm_c(c_name, c_dir, c_t, c_datatype, &
          c_flags, c_ncomm)
     deallocate(c_name)

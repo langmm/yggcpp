@@ -104,15 +104,10 @@ bool FunctionWrapper::_call(const rapidjson::Document& data_send,
   switch (language) {
   case C_LANGUAGE:
   case FORTRAN_LANGUAGE: {
-    // c_function f = (c_function)func;
     generic_t c_data_send, c_data_recv;
     c_data_send.obj = (void*)(&data_send);
     c_data_recv.obj = (void*)(&data_recv);
-    std::cerr << "_call: before function call" << std::endl;
-    bool out = _call_pointer(func, c_data_send, c_data_recv);
-    // bool out = (*f)(c_data_send, c_data_recv);
-    std::cerr << "_call: after function call" << std::endl;
-    return out;
+    return _call_pointer(func, c_data_send, c_data_recv);
   }
   case CXX_LANGUAGE: {
     cxx_function* f = (cxx_function*)func;
@@ -294,12 +289,8 @@ void YggInterface::communicator::register_function(const std::string& name,
   std::string new_name = name;
   if (!no_prefix)
     new_name = "c::" + new_name;
-  std::cerr << "before register_function in FunctionComm.cpp: " << name << std::endl;
   if (!global_context->find_registered_function(new_name)) {
-    std::cerr << "creating wrapper in FunctionComm.cpp" << std::endl;
     FunctionWrapper* created = new FunctionWrapper(new_name, func);
-    std::cerr << "created wrapper in FunctionComm.cpp" << std::endl;
     global_context->register_function(created);
   }
-  std::cerr << "after register_function in FunctionComm.cpp: " << name << std::endl;
 }

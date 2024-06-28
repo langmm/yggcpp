@@ -1,6 +1,5 @@
 * Add test to verify that send/recv/call/wait can be interuppted by Ctrl+C
 * Expand C & Fortran interfaces for ply/obj to match Python
-* Automate fortran wrapping of C interface?
 * Change how ply & obj are stored to be generic geometry structure?
 * Add method for reserving addresses and generating new addresses if a reserved one is used so that proxy is not needed for every connection
 * Add component handling of _schema_properties_yaml_only
