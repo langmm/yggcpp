@@ -220,6 +220,14 @@ function(add_mixed_fortran_library target library_type)
       list(APPEND other_sources ${src})
     endif()
   endforeach()
+  if (NOT other_sources)
+    set(dummy_src "${CMAKE_CURRENT_BINARY_DIR}/${target}_dummy.c")
+    configure_file(
+      ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/CMakeAddFortranSubdirectory/dummy.c.in
+      ${dummy_src}
+      @ONLY)
+    list(APPEND other_sources ${dummy_src})
+  endif()
   set(fortran_target ${target}_FORTRAN_OBJECT_LIBRARY)
   add_external_fortran_library(
       ${fortran_target} OBJECT
