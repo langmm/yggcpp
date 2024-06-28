@@ -182,7 +182,7 @@ function(target_link_external_fortran_objects target fortran_target)
     add_custom_command(
         TARGET ${target}
 	PRE_LINK
-	COMMAND ${CMAKE_COMMAND} "-DOBJS=$<JOIN:$<TARGET_OBJECTS:${fortran_target}>,\;>" -P ${CMAKE_CURRENT_BINARY_DIR}/copy_mod.cmake
+	COMMAND ${CMAKE_COMMAND} "-DOBJS=\"$<JOIN:$<TARGET_OBJECTS:${fortran_target}>,\;>\"" -P ${CMAKE_CURRENT_BINARY_DIR}/copy_mod.cmake
 	COMMAND_EXPAND_LISTS)
     set_source_files_properties(
       ${${fortran_target}_EXT_OBJ}
@@ -203,7 +203,7 @@ endfunction()
 
 function(add_mixed_fortran_library target library_type)
   set(oneValueArgs LANGUAGE)
-  set(multiValueArgs SOURCES)
+  set(multiValueArgs SOURCES LIBRARIES INCLUDES)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
   if (ARGS_SOURCES)
     set(sources ${ARGS_SOURCES})
@@ -223,11 +223,13 @@ function(add_mixed_fortran_library target library_type)
   set(fortran_target ${target}_FORTRAN_OBJECT_LIBRARY)
   add_external_fortran_library(
       ${fortran_target} OBJECT
-      SOURCES ${fortran_sources})
+      SOURCES ${fortran_sources}
+      LIBRARIES ${ARGS_LIBRARIES}
+      INCLUDES ${ARGS_INCLUDES})
   # if(MSVC AND library_type STREQUAL "SHARED")
   #   set(library_type STATIC)
   # endif()
-  if(ARGS_LANGUAGE AND MSVC)
+  if(ARGS_LANGUAGE AND MSVC AND other_sources)
     set_source_files_properties(
       ${other_sources} PROPERTIES LANGUAGE ${ARGS_LANGUAGE})
   endif()
@@ -237,6 +239,12 @@ function(add_mixed_fortran_library target library_type)
       ${target} PROPERTIES LINKER_LANGUAGE ${ARGS_LANGUAGE})
   endif()
   target_link_external_fortran_objects(${target} ${fortran_target})
+  if(ARGS_LIBRARIES)
+    target_link_libraries(${target} PUBLIC ${ARGS_LIBRARIES})
+  endif()
+  if(ARGS_INCLUDES)
+    target_include_directories(${target} PUBLIC ${ARGS_INCLUDES})
+  endif()
 endfunction()
 
 function(add_external_fortran_library target_name library_type)

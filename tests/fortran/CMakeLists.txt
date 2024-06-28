@@ -45,10 +45,16 @@ function (add_fortran_test_executable TARGET)
     create_test_sourcelist (_ ${TARGET_SOURCE} ${TEST_FILES_MANGLED}
                             EXTRA_INCLUDE YggInterface.h)
 
-    add_external_fortran_library(
-        ${TARGET}_fortran SHARED SOURCES ${TEST_FILES}
-        LIBRARIES ${FORTRAN_TEST_LIBRARIES}
+    message(STATUS "FORTRAN_TEST_INCLUDE_DIRS = ${FORTRAN_TEST_INCLUDE_DIRS}")
+    add_mixed_fortran_library(
+        ${TARGET}_fortran SHARED
+	LANGUAGE CXX ${TEST_FILES}
+	LIBRARIES ${FORTRAN_TEST_LIBRARIES}
 	INCLUDES ${FORTRAN_TEST_INCLUDE_DIRS})
+    # add_external_fortran_library(
+    #     ${TARGET}_fortran SHARED SOURCES ${TEST_FILES}
+    #     LIBRARIES ${FORTRAN_TEST_LIBRARIES}
+    # 	INCLUDES ${FORTRAN_TEST_INCLUDE_DIRS})
     add_executable (${TARGET} ${TARGET_SOURCE})
     target_link_libraries (${TARGET} ${TARGET}_fortran ${FORTRAN_TEST_LIBRARIES})
     target_include_directories(${TARGET} PRIVATE ${FORTRAN_TEST_INCLUDE_DIRS})
