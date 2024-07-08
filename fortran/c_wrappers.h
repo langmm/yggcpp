@@ -21,6 +21,8 @@ extern "C" {
 /* void dummy_function_f(const char* message); */
 
 // Utilities
+void setenv_f(const char* name, const char* value);
+void unsetenv_f(const char* name);
 void ygg_c_free(void *x);
 void register_function_f(const char* name, c_function func);
   // bool (*func)(generic_t, generic_t));

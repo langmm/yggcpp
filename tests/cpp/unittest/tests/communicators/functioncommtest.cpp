@@ -21,6 +21,40 @@ bool example_model_function(const rapidjson::Document& data_send,
 }
 
 
+TEST(FunctionComm, call_dynamic_c) {
+  utils::Address addr("c::libexample_c::example_model_function");
+  FunctionComm sComm("test", addr, SEND);
+  FunctionComm rComm("test", addr, RECV);
+  rapidjson::Document data_send, data_recv, data_exp;
+  data_send.SetString("alpha", 5, data_send.GetAllocator());
+  data_exp.SetInt(5);
+  EXPECT_EQ(rComm.nmsg(), 0);
+  EXPECT_EQ(sComm.nmsg(), 0);
+  EXPECT_GE(sComm.send(data_send), 0);
+  EXPECT_EQ(rComm.nmsg(), 1);
+  EXPECT_EQ(sComm.nmsg(), 0);
+  EXPECT_GE(rComm.recv(data_recv), 0);
+  EXPECT_EQ(data_recv, data_exp);
+}
+
+
+TEST(FunctionComm, call_dynamic_fortran) {
+  utils::Address addr("fortran::libexample_fortran::example_model_function");
+  FunctionComm sComm("test", addr, SEND);
+  FunctionComm rComm("test", addr, RECV);
+  rapidjson::Document data_send, data_recv, data_exp;
+  data_send.SetString("alpha", 5, data_send.GetAllocator());
+  data_exp.SetInt(5);
+  EXPECT_EQ(rComm.nmsg(), 0);
+  EXPECT_EQ(sComm.nmsg(), 0);
+  EXPECT_GE(sComm.send(data_send), 0);
+  EXPECT_EQ(rComm.nmsg(), 1);
+  EXPECT_EQ(sComm.nmsg(), 0);
+  EXPECT_GE(rComm.recv(data_recv), 0);
+  EXPECT_EQ(data_recv, data_exp);
+}
+
+
 TEST(FunctionComm, call_c) {
   register_function("example_model_function", example_model_function);
   utils::Address addr("cxx::example_model_function");

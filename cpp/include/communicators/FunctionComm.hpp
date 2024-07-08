@@ -23,6 +23,39 @@ namespace YggInterface {
     typedef std::function<bool(const rapidjson::Document&, rapidjson::Document&)> cxx_function;
     /** @brief C++ function type using C description */
     typedef bool cxx_function_alt (const rapidjson::Document&, rapidjson::Document&);
+
+    /**
+     * @brief Dynamic library wrapper.
+     */
+    class DynamicLibrary : public YggInterface::utils::LogBase {
+      DynamicLibrary(const DynamicLibrary&) = delete;
+      DynamicLibrary& operator=(const DynamicLibrary&) = delete;
+    public:
+      /** \copydoc YggInterface::utils::LogBase::logClass */
+      std::string logClass() const override { return "DynamicLibrary"; }
+      /** \copydoc YggInterface::utils::LogBase::logInst */
+      std::string logInst() const override { return address; }
+      /**
+       * Constructor for loading a library from a file name.
+       * @param[in] name Library name.
+       */
+      DynamicLibrary(const std::string& name);
+      /**
+       * Destructor
+       */
+      ~DynamicLibrary();
+      
+      std::string address; /**< Name of the library */
+      void* library;       /**< Pointer to the loaded library */
+
+      /**
+       * Lookup a function in the library.
+       * @param[in] name Name of the function to return.
+       * @returns Pointer to the function in the library.
+       */
+      void* function(const std::string& name);
+      
+    };
     
     /**
      * @brief Function wrapper.
@@ -86,6 +119,7 @@ namespace YggInterface {
       LANGUAGE language;   /**< Language the function is written in */
       
     private:
+      DynamicLibrary* library; /**< Library containing the function */
       void* func;          /**< Pointer to the function */
       std::vector<rapidjson::Document> recv_backlog; /**< Backlog of function call results */
       

@@ -1086,6 +1086,29 @@ contains
 
   ! YggInterface
 
+  !> @brief Set an environment variable
+  !> @param[in] name Name of environment variable to update
+  !> @param[in] value Value to set environment variable to
+  subroutine setenv(name, val)
+    implicit none
+    character(len=*), intent(in) :: name
+    character(len=*), intent(in) :: val
+    character(kind=c_char), allocatable :: c_name(:)
+    character(kind=c_char), allocatable :: c_val(:)
+    c_name = convert_string_f2c(name)
+    c_val = convert_string_f2c(val)
+    call setenv_c(c_name, c_val)
+  end subroutine setenv
+  !> @brief Unset an environment variable
+  !> @param[in] name Name of environment variable to update
+  subroutine unsetenv(name)
+    implicit none
+    character(len=*), intent(in) :: name
+    character(kind=c_char), allocatable :: c_name(:)
+    c_name = convert_string_f2c(name)
+    call unsetenv_c(c_name)
+  end subroutine unsetenv
+
   !> @brief Register a Fortran function
   !> @param[in] name Function name
   !> @param[in] func Function to register

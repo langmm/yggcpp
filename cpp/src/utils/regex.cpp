@@ -83,19 +83,41 @@ size_t regex_replace(std::string &buf, const std::regex &re, const std::string &
 
 std::vector<std::string> split(const std::string &x,
 			       const std::string& substr,
-			       int maxSplits) {
+			       int maxSplits,
+			       bool from_right) {
+  if (maxSplits <= 0)
+    from_right = false;
   size_t pos = 0, last_pos = 0;
   std::vector<std::string> out;
+  if (x.empty() || substr.empty()) {
+    out.push_back(x);
+    return out;
+  }
+  if (from_right) {
+    pos = x.size();
+  }
   while (true) {
     last_pos = pos;
-    pos = x.find(substr, pos);
+    if (from_right) {
+      pos = x.rfind(substr, pos);
+    } else {
+      pos = x.find(substr, pos);
+    }
     if (pos == std::string::npos ||
 	(maxSplits > 0 && out.size() == static_cast<size_t>(maxSplits))) {
-      out.push_back(x.substr(last_pos));
+      if (from_right) {
+	out.insert(out.begin(), x.substr(0, last_pos));
+      } else {
+	out.push_back(x.substr(last_pos));
+      }
       break;
     }
-    out.push_back(x.substr(last_pos, pos - last_pos));
-    pos += substr.size();
+    if (from_right) {
+      out.insert(out.begin(), x.substr(pos + substr.size(), last_pos));
+    } else {
+      out.push_back(x.substr(last_pos, pos - last_pos));
+      pos += substr.size();
+    }
   }
   return out;
 }

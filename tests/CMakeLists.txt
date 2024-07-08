@@ -1,3 +1,11 @@
+################
+# Test library #
+################
+
+add_subdirectory(example_c)
+add_subdirectory(example_fortran)
+set(DYNAMIC_TEST_LIBRARIES example_c example_fortran)
+
 ###############
 # C++/C Tests #
 ###############

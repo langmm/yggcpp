@@ -1,0 +1,5 @@
+add_library(example_c SHARED example_c.c)
+if (WIN32)
+  set_target_properties(example_c PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+endif()
+target_link_libraries(example_c PUBLIC YggInterface)

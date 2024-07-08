@@ -16,6 +16,13 @@ extern "C" {
 int YGG_MSG_MAX_F = YGG_MSG_MAX;
 
 // Utilities
+void setenv_f(const char* name, const char* value) {
+  setenv(name, value, 1);
+}
+void unsetenv_f(const char* name) {
+  unsetenv(name);
+}
+  
 void ygg_c_free(void *x) {
   if (x != NULL) {
     free(x);

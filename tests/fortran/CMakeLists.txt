@@ -120,3 +120,6 @@ file(GLOB files "*.f90")
 message(STATUS "files = ${files}")
 add_fortran_test_executable (fortran_testsuite ${files})
 cover_test(fortran_testsuite)
+
+include(DynamicTestLibraries)
+add_dynamic_dependencies(fortran_testsuite ${DYNAMIC_TEST_LIBRARIES})

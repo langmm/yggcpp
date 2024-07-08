@@ -1,8 +1,65 @@
 #include "communicators/FunctionComm.hpp"
 #include "utils/enums_utils.hpp"
+#include "utils/tools.hpp"
+#ifdef _WIN32
+#include <windows.h>
+#include <system_error>
+#else
+#include <dlfcn.h>
+#endif
 
 using namespace YggInterface::communicator;
 using namespace YggInterface::utils;
+
+/////////////////////////////////////////////////////////
+// DynamicLibrary
+/////////////////////////////////////////////////////////
+
+DynamicLibrary::DynamicLibrary(const std::string& name) :
+  LogBase(), address(name), library(nullptr) {
+  std::vector<std::string> parts = split(address, ".", 1, true);
+  if (parts.size() == 1) {
+#ifdef _WIN32
+    address += ".dll";
+#elif __APPLE__
+    address += ".dylib";
+#else
+    address += ".so";
+#endif
+  }
+#ifdef _WIN32
+  library = (void*)LoadLibrary(TEXT(address.c_str()));
+#else
+  library = dlopen(address.c_str(), RTLD_LAZY);
+#endif
+  if (!library)
+    throw_error("DynamicLibrary: Failed to load library: " + address);
+}
+
+DynamicLibrary::~DynamicLibrary() {
+  if (library) {
+#ifdef _WIN32
+    if (!FreeLibrary(library))
+#else
+    if (dlclose(library) != 0)
+#endif
+      throw_error("DynamicLibrary: Error unloading library: " + address);
+    library = nullptr;
+  }
+}
+
+void* DynamicLibrary::function(const std::string& name) {
+  void* out = NULL;
+  if (library) {
+#ifdef _WIN32
+    out = (void*)GetProcAddress((HMODULE)library, name.c_str());
+#else
+    out = dlsym(library, name.c_str());
+#endif
+  }
+  return out;
+}
+
 
 /////////////////////////////////////////////////////////
 // FunctionWrapper
@@ -10,8 +67,8 @@ using namespace YggInterface::utils;
 
 FunctionWrapper::FunctionWrapper(const std::string& f,
 				 bool pointer_provided) :
-  LogBase(), address(f), language(NO_LANGUAGE), func(nullptr),
-  recv_backlog() {
+  LogBase(), address(f), language(NO_LANGUAGE), library(nullptr),
+  func(nullptr), recv_backlog() {
   std::vector<std::string> parts = split(address, "::", 1);
   if (parts.size() != 2)
     throw_error("FunctionWrapper: Error parsing function address \""
@@ -24,8 +81,17 @@ FunctionWrapper::FunctionWrapper(const std::string& f,
   case CXX_LANGUAGE:
   case C_LANGUAGE:
   case FORTRAN_LANGUAGE: {
-    if (!pointer_provided)
-      throw_error("FunctionWrapper: Pointer not provided to function");
+    if (!pointer_provided) {
+      std::vector<std::string> libparts = split(parts[1], "::", 1, true);
+      if (libparts.size() != 2)
+	throw_error("FunctionWrapper: Error parsing function address for library name \""
+		    + address + "\"");
+      library = new DynamicLibrary(libparts[0]);
+      func = library->function(libparts[1]);
+      if (!func)
+	throw_error("FunctionWrapper: Error locating function \""
+		    + libparts[1] + "\"");
+    }
     break;
   }
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
@@ -70,6 +136,8 @@ FunctionWrapper::~FunctionWrapper() {
   case C_LANGUAGE:
   case FORTRAN_LANGUAGE: {
     func = nullptr;
+    if (library)
+      delete library;
     break;
   }
   case CXX_LANGUAGE: {

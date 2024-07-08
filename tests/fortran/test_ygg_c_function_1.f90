@@ -1,35 +1,13 @@
-
-module example
-  
-  use iso_c_binding
+integer function test_ygg_c_function_1() result(r)
   use YggInterface
-  implicit none
-
-contains
-  
-  logical(kind=c_bool) function example_model_function(data_send, data_recv) &
-       result(out) bind(c)
-    type(ygggeneric), value, intent(in) :: data_send
-    type(ygggeneric), value :: data_recv
-    character(len=:), allocatable :: data
-    data = generic_get_string(data_send)
-    out = (generic_set_integer(data_recv, len_trim(data)).eq.0)
-  end function example_model_function
-  
-end module example
-
-integer function test_ygg_function_1() result(r)
-  use YggInterface
-  use example
   type(yggcomm) :: sComm, rComm
   type(yggdtype) :: sDtype
   character(len=5) :: data_send
   integer :: data_recv
-  call register_function( &
-       "example_model_function", example_model_function)
   r = 1
   data_send = "alpha"
   data_recv = 0
+  call setenv("test_name_OUT", "c::libexample_c::example_model_function")
   sDtype = create_dtype_from_schema('{"type": "string"}', .false.)
   sComm = init_comm("test_name", SEND, FUNCTION_COMM, sDtype, &
        IOR(COMM_FLAG_ASYNC, COMM_FLAG_SET_OPP_ENV))
@@ -55,4 +33,4 @@ integer function test_ygg_function_1() result(r)
      return
   end if
   r = 0
-end function test_ygg_function_1
+end function test_ygg_c_function_1

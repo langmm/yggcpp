@@ -1,5 +1,17 @@
   interface
      ! Utilities
+     subroutine setenv_c(name, val) bind(c, name="setenv_f")
+       use, intrinsic :: iso_c_binding, only: c_char
+       implicit none
+       character(kind=c_char), dimension(*), intent(in) :: name
+       character(kind=c_char), dimension(*), intent(in) :: val
+     end subroutine setenv_c
+     subroutine unsetenv_c(name) bind(c, name="unsetenv_f")
+       use, intrinsic :: iso_c_binding, only: c_char
+       implicit none
+       character(kind=c_char), dimension(*), intent(in) :: name
+     end subroutine unsetenv_c
+     
      subroutine c_free(x) bind(c, name="ygg_c_free")
        use, intrinsic :: iso_c_binding, only: c_ptr
        implicit none
