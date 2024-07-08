@@ -39,7 +39,7 @@ DynamicLibrary::DynamicLibrary(const std::string& name) :
 DynamicLibrary::~DynamicLibrary() {
   if (library) {
 #ifdef _WIN32
-    if (!FreeLibrary(library))
+    if (!FreeLibrary((HMODULE)library))
 #else
     if (dlclose(library) != 0)
 #endif

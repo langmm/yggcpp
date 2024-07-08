@@ -1,3 +1,8 @@
+cmake_minimum_required (VERSION 3.5)
+enable_language (C)
+if ((NOT FORCE_SPLIT_CXXFORTRAN) AND (NOT MSVC))
+    enable_language(Fortran)
+endif()
 include(YggAddFortranSubdirectory)
 include(CheckDLL)
 add_mixed_fortran_library(
