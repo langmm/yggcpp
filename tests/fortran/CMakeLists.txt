@@ -52,14 +52,9 @@ function (add_fortran_test_executable TARGET)
 	LIBRARIES ${FORTRAN_TEST_LIBRARIES}
 	INCLUDES ${FORTRAN_TEST_INCLUDE_DIRS}
 	DEFINITIONS ${DYNAMIC_TEST_DEFINITIONS})
-    # add_external_fortran_library(
-    #     ${TARGET}_fortran SHARED SOURCES ${TEST_FILES}
-    #     LIBRARIES ${FORTRAN_TEST_LIBRARIES}
-    # 	INCLUDES ${FORTRAN_TEST_INCLUDE_DIRS})
     add_executable (${TARGET} ${TARGET_SOURCE})
     target_link_libraries (${TARGET} ${TARGET}_fortran ${FORTRAN_TEST_LIBRARIES})
     target_include_directories(${TARGET} PRIVATE ${FORTRAN_TEST_INCLUDE_DIRS})
-    # ${CMAKE_CURRENT_SOURCE_DIR})
 
     set (TEST_TIMEOUT 40)
     # if (WIN32)
@@ -123,4 +118,4 @@ add_fortran_test_executable (fortran_testsuite ${files})
 cover_test(fortran_testsuite)
 
 include(DynamicTestLibraries)
-add_dynamic_dependencies(fortran_testsuite ${DYNAMIC_TEST_LIBRARIES})
+add_dynamic_dependencies(fortran_testsuite)

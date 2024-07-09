@@ -38,7 +38,7 @@ add_executable(unittest ${CMAKE_CURRENT_SOURCE_DIR}/unittest.cpp ${CMAKE_CURRENT
 target_link_libraries(unittest ${TEST_LIBRARIES})
 target_include_directories(unittest PRIVATE ${TEST_INCLUDE_DIRS})
 include(DynamicTestLibraries)
-add_dynamic_dependencies(unittest ${DYNAMIC_TEST_LIBRARIES})
+add_dynamic_dependencies(unittest)
 message(STATUS "TEST_LIBRARIES = ${TEST_LIBRARIES}")
 message(STATUS "TEST_INCLUDE_DIRS = ${TEST_INCLUDE_DIRS}")
 cmake_path(GET CMAKE_CURRENT_SOURCE_DIR PARENT_PATH PARENT_SOURCE_DIR)
