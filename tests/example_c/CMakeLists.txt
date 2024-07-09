@@ -1,5 +1,7 @@
-add_library(example_c SHARED example_c.c)
-if (WIN32)
-  set_target_properties(example_c PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
-endif()
-target_link_libraries(example_c PUBLIC YggInterface)
+cmake_minimum_required (VERSION 3.5)
+include(DynamicTestLibraries)
+add_dynamic_test_library(
+  example_c
+  SOURCES example_c.c
+  LIBRARIES ${YGG_TARGET_CPP}
+)
