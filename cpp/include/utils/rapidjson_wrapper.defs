@@ -37,6 +37,8 @@ RAPIDJSON_WRAPPER_DEFS_ PyObject* YggInterface::utils::import_python_object(
 
 RAPIDJSON_WRAPPER_DEFS_ bool YggInterface::utils::initialize_python(const std::string error_prefix) {
   std::string err;
+  if (getenv("YGG_PREVENT_PYTHON_INITIALIZATION"))
+    return true;
   try {
     err = rapidjson::initialize_python(error_prefix, true);
   } catch (std::exception& e) {

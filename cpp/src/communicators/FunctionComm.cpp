@@ -1,6 +1,7 @@
 #include "communicators/FunctionComm.hpp"
 #include "utils/enums_utils.hpp"
 #include "utils/tools.hpp"
+#include "utils/multiprocessing.hpp"
 #ifdef _WIN32
 #include <windows.h>
 #include <system_error>
@@ -27,20 +28,28 @@ DynamicLibrary::DynamicLibrary(const std::string& name) :
     address += ".so";
 #endif
   }
+  std::string error_msg;
+  setenv("YGG_PREVENT_PYTHON_INITIALIZATION", "1", 1);
 #ifdef _WIN32
-  library = (void*)LoadLibrary(TEXT(address.c_str()));
+  library = (void*)LoadLibraryA(address.c_str());
   if ((!library) && address.find("/") != std::string::npos) {
     log_info() << "DynamicLibrary: Could not load library using path " <<
       "containing forward slashes (" + address + "), a version with " <<
       "backslashes will be tried." << std::endl;
     regex_replace(address, "/", "\\");
-    library = (void*)LoadLibrary(TEXT(address.c_str()));
+    library = (void*)LoadLibraryA(address.c_str());
   }
-#else
-  library = dlopen(address.c_str(), RTLD_LAZY);
-#endif
   if (!library)
-    throw_error("DynamicLibrary: Failed to load library: " + address);
+    error_msg = Win32Base::error();
+#else
+  library = dlopen(address.c_str(), RTLD_LAZY | RTLD_GLOBAL);
+  if (!library)
+    error_msg = SysVBase::error();
+#endif
+  unsetenv("YGG_PREVENT_PYTHON_INITIALIZATION");
+  if (!library)
+    throw_error("DynamicLibrary: Failed to load library: " + address
+		+ " - " + error_msg);
 }
 
 DynamicLibrary::~DynamicLibrary() {
@@ -235,11 +244,17 @@ bool FunctionWrapper::_call(const rapidjson::Document& data_send,
   return false;
 }
 
-bool FunctionWrapper::send(const rapidjson::Document& data) {
+bool FunctionWrapper::send(const rapidjson::Document& data, bool is_eof) {
   bool out = false;
   YGG_THREAD_SAFE_BEGIN(functions) {
     recv_backlog.resize(recv_backlog.size() + 1);
-    out = _call(data, recv_backlog[recv_backlog.size() - 1]);
+    if (is_eof) {
+      recv_backlog[recv_backlog.size() - 1].SetString(YGG_MSG_EOF, YGG_MSG_EOF_LEN,
+						      recv_backlog[recv_backlog.size() - 1].GetAllocator());
+      out = true;
+    } else {
+      out = _call(data, recv_backlog[recv_backlog.size() - 1]);
+    }
   } YGG_THREAD_SAFE_END;
   return out;
 }
@@ -280,7 +295,7 @@ void FunctionComm::_open(bool call_base) {
   BEFORE_OPEN_DEF;
   updateMaxMsgSize(0);
   bool created = ((!address.valid()) || address.address().empty());
-  handle = global_context->find_registered_function(this->address.address());
+  handle = ctx->find_registered_function(this->address.address());
   if (created && handle)
     address.address(handle->address);
   Comm_t::_init_name();
@@ -289,7 +304,7 @@ void FunctionComm::_open(bool call_base) {
       throw std::runtime_error("FuntionComm::_open: Failed to get function wrapper for \"" + this->address.address() + "\"");
     } else {
       handle = new FunctionWrapper(address.address());
-      global_context->register_function(handle);
+      ctx->register_function(handle);
     }
   }
   AFTER_OPEN_DEF;
@@ -297,7 +312,9 @@ void FunctionComm::_open(bool call_base) {
 
 void FunctionComm::_close(bool call_base) {
   BEFORE_CLOSE_DEF;
-  if (handle && !global_comm) {
+  if ((direction == RECV) && this->is_open() &&
+      (!global_comm) && (!(flags & COMM_FLAG_EOF_RECV)) &&
+      (utils::YggdrasilLogger::_ygg_error_flag == 0)) {
     handle->clear();
   }
   // Prevent function wrapper from being cleaned up so it can be reused.
@@ -319,13 +336,17 @@ int FunctionComm::send_single(utils::Header& header) {
     return -1;
   bool is_eof = (header.flags & HEAD_FLAG_EOF);
   rapidjson::Document doc;
-  if (is_eof)
-    return 1;
-  if (!(header.flags & HEAD_FLAG_DOC_SET)) {
+  // TODO: Copy full message with header?
+  // if (is_eof) {
+  //   doc.SetString(YGG_MSG_EOF, YGG_MSG_EOF_LEN, doc.GetAllocator());
+  //   if (!(handle && handle->send(doc, is_eof)))
+  //     return -1;
+  // } else {
+  if (!(is_eof || (header.flags & HEAD_FLAG_DOC_SET))) {
     log_error() << "send_single: Document not set" << std::endl;
     return -1;
   }
-  if (!(handle && handle->send(header.doc)))
+  if (!(handle && handle->send(header.doc, is_eof)))
     return -1;
   return 1;
 }

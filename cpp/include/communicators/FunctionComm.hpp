@@ -96,9 +96,11 @@ namespace YggInterface {
       /**
        * @brief Send a message to the function.
        * @param[in] data Document containing function arguments.
+       * @param[in] is_eof If true, treat data like an EOF message and
+       *   copy it directly to the receive backlog.
        * @returns true on success, false otherwise.
        */
-      bool send(const rapidjson::Document& data);
+      bool send(const rapidjson::Document& data, bool is_eof=false);
       /**
        * @brief Receive a message from the function.
        * @param[in,out] data Document to receive message into.

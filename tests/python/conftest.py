@@ -3,7 +3,18 @@ import numpy as np
 import time
 import sys
 import gc
+import os
 import pytest
+
+
+def pytest_addoption(parser):
+    parser.addoption("--dynamic-testlib-dir", action="store",
+                     default=os.path.dirname(os.path.dirname(__file__)))
+
+
+@pytest.fixture(scope="session")
+def dynamic_testlib_dir(pytestconfig):
+    return pytestconfig.getoption("dynamic_testlib_dir")
 
 
 def ipc_queue_count():
@@ -65,3 +76,15 @@ def compare_message():
             assert actual == expected
 
     return compare_message_wrapped
+
+
+@pytest.fixture(scope="session")
+def dynamic_library_ext():
+    if sys.platform in ['win32', 'cygwin']:
+        return '.dll'
+    elif sys.platform.startswith('linux'):
+        return '.so'
+    elif sys.platform == 'darwin':
+        return '.dylib'
+    raise NotImplementedError(f"Cannot determine dynamic library file "
+                              f"extension for platform {sys.platform}")

@@ -115,6 +115,11 @@ while [[ $# -gt 0 ]]; do
 	    shift
 	    shift
 	    ;;
+	--test-type )
+	    TEST_TYPE="$2"
+	    shift
+	    shift
+	    ;;
 	--install-dir )
 	    INSTALL_DIR="$2"
 	    shift
@@ -218,7 +223,7 @@ if [ -n "$DO_C" ] || [ -n "$DO_CXX" ] || [ -n "$DO_FORTRAN" ] || [ -n "$DO_PYTHO
     fi
     if [ -n "$DO_C" ] || [ -n "$DO_CXX" ]; then
 	CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DBUILD_CPP_LIBRARY=ON"
-	if [[ "$TEST_TYPE" == "unit" ]]; then
+	if [[ "$TEST_TYPE" == "unit" ]] || [[ "$TEST_TYPE" == "c" ]] || [[ "$TEST_TYPE" == "cxx" ]]; then
 	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYGG_BUILD_CXX_TESTS=ON"
 	fi
     else
@@ -226,7 +231,7 @@ if [ -n "$DO_C" ] || [ -n "$DO_CXX" ] || [ -n "$DO_FORTRAN" ] || [ -n "$DO_PYTHO
     fi
     if [ -n "$DO_FORTRAN" ]; then
 	CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DBUILD_FORTRAN_LIBRARY=ON -DYGG_Fortran_REQUIRED=ON -DYGG_ENABLE_ELF=OFF"
-	if [[ "$TEST_TYPE" == "unit" ]]; then
+	if [[ "$TEST_TYPE" == "unit" ]] || [[ "$TEST_TYPE" == "fortran" ]]; then
 	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYGG_BUILD_FORTRAN_TESTS=ON"
 	fi
 	CMAKE_FLAGS_SPEED="${CMAKE_FLAGS_SPEED} -DENABLE_Fortran=ON"
@@ -236,7 +241,7 @@ if [ -n "$DO_C" ] || [ -n "$DO_CXX" ] || [ -n "$DO_FORTRAN" ] || [ -n "$DO_PYTHO
     fi
     if [ -n "$DO_PYTHON" ]; then
 	CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DBUILD_PYTHON_LIBRARY=ON"
-	if [[ "$TEST_TYPE" == "unit" ]]; then
+	if [[ "$TEST_TYPE" == "unit" ]] || [[ "$TEST_TYPE" == "python" ]]; then
 	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYGG_BUILD_PYTHON_TESTS=ON"
 	fi
 	CMAKE_FLAGS_SPEED="${CMAKE_FLAGS_SPEED} -DENABLE_Python=ON"
@@ -296,6 +301,9 @@ else
 	cmake --build . $CONFIG_FLAGS
 	# Need install here to ensure that cmake config files are in place
 	cmake --install . --prefix "$INSTALL_DIR" $CONFIG_FLAGS
+    fi
+    if [[ "$TEST_TYPE" == "c" ]] || [[ "$TEST_TYPE" == "cxx" ]] || [[ "$TEST_TYPE" == "fortran" ]] || [[ "$TEST_TYPE" == "python" ]]; then
+	TEST_TYPE="unit"
     fi
     if [[ "$TEST_TYPE" == "unit" ]] && [ ! -n "$DONT_TEST" ]; then
 	if [ -n "$WITH_ASAN" ] && [ ! -n "$DYLD_INSERT_LIBRARIES" ]; then

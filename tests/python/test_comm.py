@@ -3,7 +3,13 @@ import YggInterface
 from threading import Thread
 import numpy as np
 import pickle
+import os
 
+
+_dynamic_libs = [
+    ('c', 'example_c', 'example_model_function'),
+    ('fortran', 'example_fortran', 'example_model_function'),
+]
 _commtypes = [
     YggInterface.COMM_TYPE.IPC_COMM,
     YggInterface.COMM_TYPE.ZMQ_COMM,
@@ -16,6 +22,7 @@ _commtype_map = {
     'zmq': YggInterface.COMM_TYPE.ZMQ_COMM,
     'mpi': YggInterface.COMM_TYPE.MPI_COMM,
     'rmq': YggInterface.COMM_TYPE.RMQ_COMM,
+    'function': YggInterface.COMM_TYPE.FUNCTION_COMM,
 }
 _commtype_map_inv = {v: k for k, v in _commtype_map.items()}
 _testdata = [
@@ -38,6 +45,14 @@ def example_transform(msg):
     return str(msg)
 
 
+_testdata_filter = [
+    (example_filter, [0, 1, 2], [0, 2]),
+]
+_testdata_transform = [
+    (example_transform, [0, 1, 2], ["0", "1", "2"]),
+]
+
+
 class TestComm_t_Installed:
     r"""Tests for when a commtype is installed."""
 
@@ -53,23 +68,40 @@ class TestComm_t_Installed:
     def message(self, request):
         return request.param
 
+    @pytest.fixture(params=_testdata_filter)
+    def message_filter(self, request):
+        return request.param
+
+    @pytest.fixture(params=_testdata_transform)
+    def message_transform(self, request):
+        return request.param
+
     @pytest.fixture(scope="class", autouse=True)
     def require_installed(self, commtype):
         if not YggInterface.is_comm_installed(commtype):
             pytest.skip(f"Communicator type {commtype} is not installed")
 
+    @pytest.fixture(scope="class")
+    def comm_send_kwargs(self):
+        return {}
+
+    @pytest.fixture(scope="class")
+    def comm_recv_kwargs(self):
+        return {}
+
     @pytest.fixture
-    def comm_send(self, commtype, require_installed):
+    def comm_send(self, commtype, require_installed, comm_send_kwargs):
         out = YggInterface.Comm_t(
-            "test", commtype=commtype)
+            "test", commtype=commtype, **comm_send_kwargs)
         yield out
         out.close()
 
     @pytest.fixture
-    def comm_recv(self, commtype, require_installed):
+    def comm_recv(self, commtype, require_installed, comm_recv_kwargs):
         out = YggInterface.Comm_t(
             "test", commtype=commtype,
-            direction=YggInterface.DIRECTION.RECV)
+            direction=YggInterface.DIRECTION.RECV,
+            **comm_recv_kwargs)
         yield out
         out.close()
 
@@ -109,12 +141,16 @@ class TestComm_t_Installed:
     @pytest.fixture
     def do_send_recv(self, comm_recv, do_send, compare_message):
 
-        def do_send_recv_wrapped(msg, msg_type='string'):
+        def do_send_recv_wrapped(msg_send, msg_send_type='string',
+                                 msg_recv=None, msg_recv_type=None):
             result_send_thread = [False]
             result_recv = (False, None)
+            if msg_recv is None:
+                msg_recv = msg_send
+                msg_recv_type = msg_send_type
             assert comm_recv.n_msg == 0
             thread = Thread(target=do_send, daemon=True,
-                            args=(msg, result_send_thread))
+                            args=(msg_send, result_send_thread))
             thread.start()
             try:
                 comm_recv.timeout_recv = 100000
@@ -128,14 +164,14 @@ class TestComm_t_Installed:
             assert result_send_thread[0] is not None
             assert result_send_thread[0]
             assert result_recv[0]
-            compare_message(result_recv[1], msg)
-            assert comm_recv.datatype['type'] == msg_type
+            compare_message(result_recv[1], msg_recv)
+            assert comm_recv.datatype['type'] == msg_recv_type
 
         return do_send_recv_wrapped
 
-    def test_pickle(self, commtype, require_installed):
+    def test_pickle(self, commtype, require_installed, comm_send_kwargs):
         tmp = YggInterface.Comm_t(
-            "test", commtype=commtype, dont_open=True)
+            "test", commtype=commtype, dont_open=True, **comm_send_kwargs)
         assert not tmp.is_open
         x = pickle.dumps(tmp)
         res = pickle.loads(x)
@@ -148,13 +184,16 @@ class TestComm_t_Installed:
     def test_is_comm_installed(self, commtype):
         assert YggInterface.is_comm_installed(commtype)
 
-    def test_str_arguments(self, commtype, commtype_str):
+    def test_str_arguments(self, commtype, commtype_str,
+                           comm_send_kwargs, comm_recv_kwargs):
         comm_send = YggInterface.Comm_t(
-            "test", commtype=commtype_str, direction="send")
+            "test", commtype=commtype_str, direction="send",
+            **comm_send_kwargs)
         assert comm_send.commtype == commtype
         assert comm_send.direction == YggInterface.DIRECTION.SEND
         comm_recv = YggInterface.Comm_t(
-            "test", commtype=commtype_str, direction="recv")
+            "test", commtype=commtype_str, direction="recv",
+            **comm_recv_kwargs)
         assert comm_recv.commtype == commtype
         assert comm_recv.direction == YggInterface.DIRECTION.RECV
 
@@ -195,7 +234,7 @@ class TestComm_t_Installed:
             comm_send.datatype
         comm_send.datatype = {'type': 'integer'}
         assert comm_send.datatype == {'type': 'integer'}
-        with pytest.raises(TypeError):
+        with pytest.raises(ValueError):
             comm_send.datatype = {'type': 'string'}
 
     def test_send_recv_error(self, do_recv):
@@ -210,7 +249,11 @@ class TestComm_t_Installed:
         assert result_recv_thread[0][1] is None
 
     def test_send_recv(self, do_send_recv, message):
-        do_send_recv(message[1], msg_type=message[0])
+        kws = {}
+        if len(message) > 2:
+            kws['msg_recv_type'] = message[2]
+            kws['msg_recv'] = message[3]
+        do_send_recv(message[1], msg_send_type=message[0], **kws)
 
     def test_send_recv_async(self, commtype, require_installed):
         comm_recv = YggInterface.Comm_t(
@@ -226,28 +269,29 @@ class TestComm_t_Installed:
         assert comm_send.send(msg)
         assert comm_recv.recv() == (True, msg)
 
-    def test_send_recv_filter_recv(self, commtype, require_installed):
+    def test_send_recv_filter_recv(self, commtype, require_installed,
+                                   message_filter):
         comm_recv = YggInterface.Comm_t(
             "test", commtype=commtype,
             direction=YggInterface.DIRECTION.RECV,
-            filter=example_filter,
+            filter=message_filter[0],
             flags=YggInterface.COMM_FLAG.COMM_FLAG_ASYNC)
         comm_send = YggInterface.Comm_t(
             "test", comm_recv.address, commtype=commtype,
             direction=YggInterface.DIRECTION.SEND,
             flags=(YggInterface.COMM_FLAG.COMM_FLAG_INTERFACE |
                    YggInterface.COMM_FLAG.COMM_FLAG_ASYNC))
-        assert comm_send.send(0)
-        assert comm_send.send(1)
-        assert comm_send.send(2)
+        for x in message_filter[1]:
+            assert comm_send.send(x)
         assert comm_send.send_eof()
-        assert comm_recv.recv() == (True, 0)
-        assert comm_recv.recv() == (True, 2)
+        for x in message_filter[2]:
+            assert comm_recv.recv() == (True, x)
         assert comm_recv.recv() == (False, None)
         comm_send.close()
         comm_recv.close()
 
-    def test_send_recv_filter_send(self, commtype, require_installed):
+    def test_send_recv_filter_send(self, commtype, require_installed,
+                                   message_filter):
         comm_recv = YggInterface.Comm_t(
             "test", commtype=commtype,
             direction=YggInterface.DIRECTION.RECV,
@@ -258,17 +302,17 @@ class TestComm_t_Installed:
             filter=[example_filter],
             flags=(YggInterface.COMM_FLAG.COMM_FLAG_INTERFACE |
                    YggInterface.COMM_FLAG.COMM_FLAG_ASYNC))
-        assert comm_send.send(0)
-        assert comm_send.send(1)
-        assert comm_send.send(2)
+        for x in message_filter[1]:
+            assert comm_send.send(x)
         assert comm_send.send_eof()
-        assert comm_recv.recv() == (True, 0)
-        assert comm_recv.recv() == (True, 2)
+        for x in message_filter[2]:
+            assert comm_recv.recv() == (True, x)
         assert comm_recv.recv() == (False, None)
         comm_send.close()
         comm_recv.close()
 
-    def test_send_recv_transform_recv(self, commtype, require_installed):
+    def test_send_recv_transform_recv(self, commtype, require_installed,
+                                      message_transform):
         comm_recv = YggInterface.Comm_t(
             "test", commtype=commtype,
             direction=YggInterface.DIRECTION.RECV,
@@ -279,13 +323,11 @@ class TestComm_t_Installed:
             direction=YggInterface.DIRECTION.SEND,
             flags=(YggInterface.COMM_FLAG.COMM_FLAG_INTERFACE |
                    YggInterface.COMM_FLAG.COMM_FLAG_ASYNC))
-        assert comm_send.send(0)
-        assert comm_send.send(1)
-        assert comm_send.send(2)
+        for x in message_transform[1]:
+            assert comm_send.send(x)
         assert comm_send.send_eof()
-        assert comm_recv.recv() == (True, "0")
-        assert comm_recv.recv() == (True, "1")
-        assert comm_recv.recv() == (True, "2")
+        for x in message_transform[2]:
+            assert comm_recv.recv() == (True, x)
         assert comm_recv.recv() == (False, None)
         comm_send.close()
         comm_recv.close()
@@ -453,7 +495,7 @@ class TestComm_t_NotInstalled:
         assert not YggInterface.is_comm_installed(commtype)
 
     def test_error_on_create(self, commtype):
-        with pytest.raises(TypeError):
+        with pytest.raises(RuntimeError):
             YggInterface.Comm_t("test", commtype=commtype)
 
 
@@ -573,3 +615,56 @@ class TestRPC:
         do_rpc(server, "REQUEST", "RESPONSE",
                flags=YggInterface.COMM_FLAG.COMM_FLAG_ASYNC)
         server.close()
+
+
+class TestFunction(TestComm_t_Installed):
+    r"""Tests for Function communication."""
+
+    test_send_recv_async = None
+    test_send_recv_filter_recv = None
+    test_send_recv_filter_send = None
+    test_send_recv_transform_recv = None
+    test_send_recv_transform_send = None
+    test_send_dict_recv = None
+    test_send_recv_dict = None
+    test_send_array_recv = None
+    test_send_recv_array = None
+    test_send_structarray_recv = None
+    test_send_recv_structarray = None
+    test_send_recv_long = None
+    test_call = None
+
+    @pytest.fixture(scope="class")
+    def commtype(self):
+        return YggInterface.COMM_TYPE.FUNCTION_COMM
+
+    @pytest.fixture
+    def message(self):
+        return ('string', 'alpha', 'integer', 5)
+
+    @pytest.fixture
+    def message_filter(self):
+        return (example_filter, ["a", "ab", "abc"], [2, 3])
+
+    @pytest.fixture
+    def message_transform(self):
+        return (example_transform, ["a", "ab", "abc"], ["2", "3"])
+
+    @pytest.fixture(scope="class", params=_dynamic_libs,
+                    autouse=True)
+    def address(self, request, dynamic_library_ext, dynamic_testlib_dir):
+        libfile = os.path.abspath(os.path.join(
+            dynamic_testlib_dir,
+            'lib' + request.param[1] + dynamic_library_ext))
+        if not os.path.isfile(libfile):
+            pytest.skip(f"Dynamic test library does not exist: "
+                        f"{libfile}")
+        return f"{request.param[0]}::{libfile}::{request.param[2]}"
+
+    @pytest.fixture(scope="class")
+    def comm_send_kwargs(self, address):
+        return {'address': address}
+
+    @pytest.fixture(scope="class")
+    def comm_recv_kwargs(self, address):
+        return {'address': address}

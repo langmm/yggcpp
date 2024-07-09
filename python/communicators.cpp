@@ -643,7 +643,7 @@ static int _parse_enum_string(const std::string& desc,
     var_enum = PyLong_AsLong(var);
     int enum_max = (int)(YggInterface::utils::max_enum_value(enum_map));
     if (var_enum < 0 || var_enum > enum_max) {
-      PyErr_Format(PyExc_TypeError, "Invalid %s: %d",
+      PyErr_Format(PyExc_ValueError, "Invalid %s: %d",
 		   desc.c_str(), var_enum);
       return -1;
     }
@@ -658,7 +658,7 @@ static int _parse_enum_string(const std::string& desc,
 						allow_anycase, prefix,
 						suffix)) {
       if (!allow_nomatch) {
-	PyErr_Format(PyExc_TypeError, "Invalid %s: %s",
+	PyErr_Format(PyExc_ValueError, "Invalid %s: %s",
 		     desc.c_str(), varStr);
       }
       return -1;
@@ -682,7 +682,7 @@ static int _parse_direction(PyObject* dirnPy, int& dirn) {
 static int _parse_schema(PyObject* schemaPy, rapidjson::Document& schema) {
   if (schemaPy != NULL) {
     if (!schema.SetPythonObjectRaw(schemaPy, schema.GetAllocator())) {
-      PyErr_SetString(PyExc_TypeError, "Error converting schema to rapidjson::Document");
+      PyErr_SetString(PyExc_ValueError, "Error converting schema to rapidjson::Document");
       return -1;
     }
   }
@@ -896,7 +896,7 @@ static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds) {
       return -1;
 
     if(adr == NULL && name == NULL) {
-        PyErr_SetString(PyExc_TypeError, "Neither name nor address provided");
+        PyErr_SetString(PyExc_ValueError, "Neither name nor address provided");
         return -1;
     }
     if (_parse_direction(dirnPy, dirn) < 0)
@@ -911,7 +911,7 @@ static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds) {
 			    timeout_recv_set))
       return -1;
     if(flags < 0) {
-      PyErr_SetString(PyExc_TypeError, "Invalid flags value");
+      PyErr_SetString(PyExc_ValueError, "Invalid flags value");
       return -1;
     }
     if (_parse_string_vect("field_names", field_namesPy,
@@ -931,7 +931,7 @@ static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds) {
     if (request_commtypePy != NULL) {
       if (s->comm->getType() != COMM_TYPE::CLIENT_COMM &&
 	  s->comm->getType() != COMM_TYPE::SERVER_COMM) {
-	PyErr_SetString(PyExc_TypeError, "request_commtype is only valid as a keyword argument for client, server, or timesync communicators");
+	PyErr_SetString(PyExc_ValueError, "request_commtype is only valid as a keyword argument for client, server, or timesync communicators");
 	return -1;
       }
       if (_parse_commtype(request_commtypePy, request_commtype) < 0)
@@ -940,14 +940,14 @@ static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds) {
     if (request_flags != 0) {
       if (s->comm->getType() != COMM_TYPE::CLIENT_COMM &&
 	  s->comm->getType() != COMM_TYPE::SERVER_COMM) {
-	PyErr_SetString(PyExc_TypeError, "request_flags is only valid as a keyword argument for client, server, or timesync communicators");
+	PyErr_SetString(PyExc_ValueError, "request_flags is only valid as a keyword argument for client, server, or timesync communicators");
 	return -1;
       }
     }
     if (response_kwargs != NULL) {
       if (s->comm->getType() != COMM_TYPE::CLIENT_COMM &&
 	  s->comm->getType() != COMM_TYPE::SERVER_COMM) {
-	PyErr_SetString(PyExc_TypeError, "response_kwargs is only valid as a keyword argument for client, server, or timesync communicators");
+	PyErr_SetString(PyExc_ValueError, "response_kwargs is only valid as a keyword argument for client, server, or timesync communicators");
 	return -1;
       }
       if (!PyDict_Check(response_kwargs)) {
@@ -1012,18 +1012,18 @@ static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds) {
       s->comm = NULL;
     }
     if (!s->comm) {
-      PyErr_SetString(PyExc_TypeError, "Error initializing comm");
+      PyErr_SetString(PyExc_RuntimeError, "Error initializing comm");
       return -1;
     }
     if (!datatype.IsNull()) {
       if (!s->comm->addSchema(datatype)) {
-	PyErr_SetString(PyExc_TypeError, "Invalid datatype");
+	PyErr_SetString(PyExc_ValueError, "Invalid datatype");
 	return -1;
       }
     }
     if (!metadata.IsNull()) {
       if (!s->comm->addSchema(metadata, true)) {
-	PyErr_SetString(PyExc_TypeError, "Invalid metadata");
+	PyErr_SetString(PyExc_ValueError, "Invalid metadata");
 	return -1;
       }
     }
@@ -1033,54 +1033,54 @@ static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds) {
     if (format_str != NULL) {
       if (!s->comm->addFormat(format_str, as_array,
 			      field_names, field_units)) {
-	PyErr_SetString(PyExc_TypeError, "Invalid format_str");
+	PyErr_SetString(PyExc_ValueError, "Invalid format_str");
 	return -1;
       }
     }
     if (!s->comm->setLanguage((LANGUAGE)language)) {
-      PyErr_SetString(PyExc_TypeError, "Error setting language");
+      PyErr_SetString(PyExc_ValueError, "Error setting language");
       return -1;
     }
     if ((!filter.empty()) && (!s->comm->setFilters(filter))) {
-      PyErr_SetString(PyExc_TypeError, "Error setting filters");
+      PyErr_SetString(PyExc_ValueError, "Error setting filters");
       return -1;
     }
     if ((!transform.empty()) && (!s->comm->setTransforms(transform))) {
-      PyErr_SetString(PyExc_TypeError, "Error setting transforms");
+      PyErr_SetString(PyExc_ValueError, "Error setting transforms");
       return -1;
     }
     if (response_format_str != NULL) {
       if (!s->comm->addFormat(response_format_str, response_as_array,
 			      response_field_names, response_field_units,
 			      (DIRECTION)response_dirn)) {
-	PyErr_SetString(PyExc_TypeError, "Invalid response format_str");
+	PyErr_SetString(PyExc_ValueError, "Invalid response format_str");
 	return -1;
       }
     }
     if (!response_datatype.IsNull()) {
       if (!s->comm->addSchema(response_datatype, false,
 			      (DIRECTION)response_dirn)) {
-	PyErr_SetString(PyExc_TypeError, "Invalid response datatype");
+	PyErr_SetString(PyExc_ValueError, "Invalid response datatype");
 	return -1;
       }
     }
     if (!response_metadata.IsNull()) {
       if (!s->comm->addSchema(response_metadata, true,
 			      (DIRECTION)response_dirn)) {
-	PyErr_SetString(PyExc_TypeError, "Invalid response metadata");
+	PyErr_SetString(PyExc_ValueError, "Invalid response metadata");
 	return -1;
       }
     }
     if ((!response_filter.empty()) &&
 	(!s->comm->setFilters(response_filter,
 			      (DIRECTION)response_dirn))) {
-      PyErr_SetString(PyExc_TypeError, "Error setting response filters");
+      PyErr_SetString(PyExc_ValueError, "Error setting response filters");
       return -1;
     }
     if ((!response_transform.empty()) &&
 	(!s->comm->setTransforms(response_transform,
 				 (DIRECTION)response_dirn))) {
-      PyErr_SetString(PyExc_TypeError, "Error setting response transforms");
+      PyErr_SetString(PyExc_ValueError, "Error setting response transforms");
       return -1;
     }
     return 0;
@@ -1100,6 +1100,7 @@ PyObject* Comm_t_open(PyObject* self, PyObject*) {
     ((pyComm_t*)self)->comm->open();
     Py_RETURN_NONE;
   } catch (...) {
+    PyErr_SetString(PyExc_RuntimeError, "Error opening comm at the C++ level");
     return NULL;
   }
 }
@@ -1108,6 +1109,7 @@ PyObject* Comm_t_close(PyObject* self, PyObject*) {
     ((pyComm_t*)self)->comm->close();
     Py_RETURN_NONE;
   } catch (...) {
+    PyErr_SetString(PyExc_RuntimeError, "Error closing comm at the C++ level");
     return NULL;
   }
 }
@@ -1424,7 +1426,7 @@ static PyObject* _get_pyfunc_array(const std::string& desc,
 static PyObject* Comm_t___getstate__(PyObject* self, PyObject*) {
   pyComm_t* s = (pyComm_t*)self;
   if (s->comm->is_open()) {
-    PyErr_Format(PyExc_TypeError, "Cannot pickle an open communicator");
+    PyErr_Format(PyExc_RuntimeError, "Cannot pickle an open communicator");
     return NULL;
   }
   PyObject* metadataPy = s->comm->getMetadata().metadata.GetPythonObjectRaw();
@@ -1691,7 +1693,7 @@ PyObject* Comm_t_metadata_get(PyObject* self, void*) {
   // YggInterface::utils::Metadata& metadata = ((pyComm_t*)self)->comm->getMetadata();
   // PyObject* out = metadata.getMeta().GetPythonObjectRaw();
   // if (out == NULL) {
-  //   PyErr_SetString(PyExc_TypeError, "Error converting metadata to a Python object");
+  //   PyErr_SetString(PyExc_ValueError, "Error converting metadata to a Python object");
   // }
   PyObject* args = PyTuple_Pack(1, self);
   if (args == NULL)
@@ -1709,11 +1711,11 @@ int Comm_t_metadata_set(PyObject* self, PyObject* value, void*) {
   rapidjson::Document doc;
   doc.SetPythonObjectRaw(value, doc.GetAllocator());
   if (!doc.IsObject()) {
-    PyErr_SetString(PyExc_TypeError, "Error converting provided dictionary to a rapidjson Object");
+    PyErr_SetString(PyExc_ValueError, "Error converting provided dictionary to a rapidjson Object");
     return -1;
   }
   if (!((pyComm_t*)self)->comm->addSchema(doc, true)) {
-    PyErr_SetString(PyExc_TypeError, "Error updating metadata");
+    PyErr_SetString(PyExc_ValueError, "Error updating metadata");
     return -1;
   }
   return 0;
@@ -1724,7 +1726,7 @@ PyObject* Comm_t_datatype_get(PyObject* self, void*) {
   // YggInterface::utils::Metadata& metadata = ((pyComm_t*)self)->comm->getMetadata();
   // PyObject* out = metadata.getSchema()->GetPythonObjectRaw();
   // if (out == NULL) {
-  //   PyErr_SetString(PyExc_TypeError, "Error converting datatype to a Python object");
+  //   PyErr_SetString(PyExc_ValueError, "Error converting datatype to a Python object");
   // }
   PyObject* args = PyTuple_Pack(1, self);
   if (args == NULL)
@@ -1753,11 +1755,11 @@ int Comm_t_datatype_set(PyObject* self, PyObject* value, void*) {
   rapidjson::Document doc;
   doc.SetPythonObjectRaw(value, doc.GetAllocator());
   if (!doc.IsObject()) {
-    PyErr_SetString(PyExc_TypeError, "Error converting provided dictionary to a rapidjson Object");
+    PyErr_SetString(PyExc_ValueError, "Error converting provided dictionary to a rapidjson Object");
     return -1;
   }
   if (!((pyComm_t*)self)->comm->addSchema(doc, false)) {
-    PyErr_SetString(PyExc_TypeError, "Error updating datatype");
+    PyErr_SetString(PyExc_ValueError, "Error updating datatype");
     return -1;
   }
   return 0;

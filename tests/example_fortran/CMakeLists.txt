@@ -1,4 +1,7 @@
 cmake_minimum_required (VERSION 3.5)
+if (NOT BUILD_FORTRAN_LIBRARY)
+  return()
+endif()
 include(YggAddFortranSubdirectory)
 check_language_external(Fortran)
 if (NOT CMAKE_Fortran_COMPILER)

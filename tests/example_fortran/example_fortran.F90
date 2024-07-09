@@ -15,7 +15,7 @@ contains
     data = generic_get_string(data_send)
     write(*, *) "in example_model_function 2"
     out = (generic_set_integer(data_recv, len_trim(data)).eq.0)
-    write(*, *) "in example_model_function 3"
+    write(*, *) "in example_model_function 3", out
   end function example_model_function
   
 end module example_fortran
