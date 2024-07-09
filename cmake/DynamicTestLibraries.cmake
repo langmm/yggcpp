@@ -1,3 +1,14 @@
+function(add_dynamic_test_libraries)
+  set(YGGTEST_DYNAMIC_DIR ${CMAKE_BINARY_DIR})
+  set(YGGTEST_DYNAMIC_DIR ${CMAKE_BINARY_DIR} PARENT_SCOPE)
+  foreach(lib ${ARGN})
+    add_subdirectory(${lib})
+  endforeach()
+  set(DYNAMIC_TEST_LIBRARIES ${ARGN} PARENT_SCOPE)
+  set(DYNAMIC_TEST_DEFINITIONS -DYGGTEST_DYNAMIC_DIR="${YGGTEST_DYNAMIC_DIR}" PARENT_SCOPE)
+endfunction()
+
+
 function(add_dynamic_test_library TARGET)
   set(oneValueArgs LANGUAGE)
   set(multiValueArgs SOURCES LIBRARIES INCLUDES)
@@ -32,23 +43,23 @@ function(add_dynamic_test_library TARGET)
   if (WIN32)
     set_target_properties(${TARGET} PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
   endif()
-  # TODO: Output directory to file that can be loaded
   include(CheckDLL)
   show_symbols(${TARGET})
+  if (YGGTEST_DYNAMIC_DIR)
+    add_custom_command(
+      TARGET ${TARGET}
+      POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${TARGET}> ${YGGTEST_DYNAMIC_DIR}
+      COMMAND_EXPAND_LISTS
+    )
+  endif()
 endfunction()
 
 
 function(add_dynamic_dependencies TARGET)
   add_dependencies(${TARGET} ${ARGN})
-  cmake_path(GET CMAKE_CURRENT_BINARY_DIR PARENT_PATH PARENT_BINARY_DIR)
-  foreach(lib ${ARGN})
-    add_custom_command(
-      TARGET ${TARGET}
-      POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${lib}> ${PARENT_BINARY_DIR}
-      COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${lib}> ${CMAKE_CURRENT_BINARY_DIR}
-      COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${lib}> $<TARGET_FILE_DIR:${TARGET}>
-      COMMAND_EXPAND_LISTS
-    )
-  endforeach()
+  message(STATUS "YGGTEST_DYNAMIC_DIR = ${YGGTEST_DYNAMIC_DIR}")
+  if(YGGTEST_DYNAMIC_DIR)
+    target_compile_definitions(${TARGET} PUBLIC ${DYNAMIC_TEST_DEFINITIONS})
+  endif()
 endfunction()
