@@ -33,9 +33,11 @@ DynamicLibrary::DynamicLibrary(const std::string& name) :
 #ifdef _WIN32
   library = (void*)LoadLibraryA(address.c_str());
   if ((!library) && address.find("/") != std::string::npos) {
+    error_msg = Win32Base::error();
     log_info() << "DynamicLibrary: Could not load library using path " <<
-      "containing forward slashes (" + address + "), a version with " <<
-      "backslashes will be tried." << std::endl;
+      "containing forward slashes (" << address << "), a version with " <<
+      "backslashes will be tried [ERROR = \"" << error_msg <<
+      "\"]." << std::endl;
     regex_replace(address, "/", "\\");
     library = (void*)LoadLibraryA(address.c_str());
   }

@@ -88,23 +88,7 @@ message(STATUS "RAPIDJSON_PYTHON_ENV2 = ${RAPIDJSON_PYTHON_ENV2}")
 
 include(CheckDLL)
 show_runtimes(unittest)
-if (WIN32)
-    if (CONDA_PREFIX)
-        add_custom_command(
-            TARGET unittest
-            POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${YGG_TARGET_CPP}> $<TARGET_FILE_DIR:unittest>
-            COMMAND_EXPAND_LISTS
-        )
-    else()
-        add_custom_command(
-            TARGET unittest
-            POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:unittest> $<TARGET_FILE_DIR:unittest>
-            COMMAND_EXPAND_LISTS
-        )
-    endif()
-endif ()
+copy_required_runtimes(unittest DEPENDENCIES ${YGG_TARGET_CPP})
 
 if(NOT MSVC)
     find_program(VALGRIND_FOUND valgrind)

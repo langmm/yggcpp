@@ -985,6 +985,10 @@ private:
   }
   // TODO: Handle case of table arrays
 
+#ifdef _WIN32
+#pragma warning disable 0162
+#endif
+
   HANDLE_RECV_(doc[0].IsString(),
 	       long ret = utils::copyData(data, len, doc[0].GetString(),
 					  static_cast<size_t>(doc[0].GetStringLength()),
@@ -1060,7 +1064,11 @@ private:
 		   doc[0].IsScalar<T>(),
 		   doc[0].GetScalarValue(data),
 		   , , T& data)
-    
+
+#ifdef _WIN32
+#pragma warning restore 0162
+#endif
+
 					      
 #undef HANDLE_RECV_BEFORE_
 #undef HANDLE_RECV_AFTER_

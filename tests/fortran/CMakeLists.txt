@@ -79,35 +79,10 @@ function (add_fortran_test_executable TARGET)
     show_runtimes(${TARGET})
     show_runtimes(${TARGET}_fortran AFTER_TARGET ${TARGET})
     show_symbols(${TARGET}_fortran AFTER_TARGET ${TARGET})
-    if (WIN32)
-        if (CONDA_PREFIX)
-            add_custom_command(
-                TARGET ${TARGET}
-                POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:YggInterface> $<TARGET_FILE_DIR:${TARGET}>
-                COMMAND_EXPAND_LISTS
-            )
-            add_custom_command(
-                TARGET ${TARGET}
-                POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:YggInterface_fortran> $<TARGET_FILE_DIR:${TARGET}>
-                COMMAND_EXPAND_LISTS
-            )
-            add_custom_command(
-                TARGET ${TARGET}
-                POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${TARGET}_fortran> $<TARGET_FILE_DIR:${TARGET}>
-                COMMAND_EXPAND_LISTS
-            )
-        else()
-            add_custom_command(
-                TARGET ${TARGET}
-                POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:${TARGET}> $<TARGET_FILE_DIR:${TARGET}>
-                COMMAND_EXPAND_LISTS
-            )
-        endif()
-    endif ()
+    copy_required_runtimes(
+      ${TARGET} ARGS_DEPENDENCIES
+      YggInterface YggInterface_fortran ${TARGET}_fortran
+    )
 
 endfunction ()
 

@@ -1,3 +1,30 @@
+function(copy_required_runtimes TARGET)
+  set(multiValueArgs DEPENDENCIES DESTINATION)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  if (NOT ARGS_DESTINATION)
+    set(ARGS_DESTINATION "$<TARGET_FILE_DIR:${TARGET}>")
+  endif()
+  if (WIN32)
+    if (CONDA_PREFIX)
+      foreach(lib ${ARGS_DEPENDENCIES})
+        add_custom_command(
+          TARGET ${TARGET}
+          POST_BUILD
+          COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${lib}> ${ARGS_DESTINATION}
+          COMMAND_EXPAND_LISTS
+        )
+      endforeach()
+    else()
+      add_custom_command(
+          TARGET ${TARGET}
+          POST_BUILD
+          COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:${TARGET}> ${ARGS_DESTINATION}
+          COMMAND_EXPAND_LISTS
+      )
+    endif()
+  endif()
+endfunction()
+
 function(show_runtimes target)
   set(options IMPORTED)
   set(oneValueArgs AFTER_TARGET)
