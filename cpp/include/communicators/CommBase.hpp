@@ -985,8 +985,8 @@ private:
   }
   // TODO: Handle case of table arrays
 
-#ifdef _WIN32
-#pragma warning disable 0162
+#ifdef _MSC_VER
+#pragma warning(disable:0162)
 #endif
 
   HANDLE_RECV_(doc[0].IsString(),
@@ -1065,8 +1065,8 @@ private:
 		   doc[0].GetScalarValue(data),
 		   , , T& data)
 
-#ifdef _WIN32
-#pragma warning restore 0162
+#ifdef _MSC_VER
+#pragma warning(default:0162)
 #endif
 
 					      
