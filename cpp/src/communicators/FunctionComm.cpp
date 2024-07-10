@@ -263,8 +263,8 @@ bool FunctionWrapper::recv(rapidjson::Document& data) {
   bool out = false;
   YGG_THREAD_SAFE_BEGIN(functions) {
     if (!recv_backlog.empty()) {
-      data.Swap(recv_backlog[recv_backlog.size() - 1]);
-      recv_backlog.resize(recv_backlog.size() - 1);
+      data.Swap(recv_backlog[0]);
+      recv_backlog.erase(recv_backlog.begin());
       out = true;
     }
   } YGG_THREAD_SAFE_END;
@@ -356,6 +356,9 @@ long FunctionComm::recv_single(utils::Header& header) {
     log_error() << "recv_single: Error receiving message" << std::endl;
     return -1;
   }
+  if (header.doc.IsString()) 
+    header.setMessageFlags(header.doc.GetString(),
+			   static_cast<size_t>(header.doc.GetStringLength()));
   header.flags |= HEAD_FLAG_DOC_SET;
   return 1;
 }

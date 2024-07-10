@@ -653,6 +653,8 @@ long AsyncComm::recv_single(Header& header) {
     return ret;
   }
   ret = static_cast<long>(header.size_data);
+  if ((ret == 0) && (header.flags & HEAD_FLAG_DOC_SET))
+    ret = 1;
   log_debug() << "recv_single: returns " << ret << " bytes" << std::endl;
   return ret;
 }

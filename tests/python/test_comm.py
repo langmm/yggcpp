@@ -621,9 +621,7 @@ class TestFunction(TestComm_t_Installed):
     r"""Tests for Function communication."""
 
     test_send_recv_async = None
-    test_send_recv_filter_recv = None
     test_send_recv_filter_send = None
-    test_send_recv_transform_recv = None
     test_send_recv_transform_send = None
     test_send_dict_recv = None
     test_send_recv_dict = None
@@ -648,7 +646,7 @@ class TestFunction(TestComm_t_Installed):
 
     @pytest.fixture
     def message_transform(self):
-        return (example_transform, ["a", "ab", "abc"], ["2", "3"])
+        return (example_transform, ["a", "ab", "abc"], ["1", "2", "3"])
 
     @pytest.fixture(scope="class", params=_dynamic_libs,
                     autouse=True)

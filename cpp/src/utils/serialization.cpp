@@ -1436,7 +1436,6 @@ Header& Header::operator=(Header& rhs) {
   if (data && !(flags & HEAD_FLAG_OWNSDATA))
     log_debug() << "operator=: Supplied buffer will be displaced by move" << std::endl;
   reset();
-  doc.Swap(rhs.doc);
   Metadata::operator=(std::forward<Metadata>(rhs));
   RawAssign(rhs);
   rhs.reset(HEAD_RESET_DROP_DATA);
@@ -1520,6 +1519,7 @@ bool Header::RawAssign(const Header& rhs, bool keep_buffer) {
   size_max = rhs.size_max;
   size_msg = rhs.size_msg;
   offset = rhs.offset;
+  doc.CopyFrom(rhs.doc, doc.GetAllocator(), true);
   return true;
 }
 long Header::reallocData(const size_t size_new) {

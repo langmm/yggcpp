@@ -8,6 +8,7 @@
 * Generate docs for python extension
 * Only regenerate enum/fortran interface when source files change
 * Python tests for C/Fortran functions
+* Add methods for checking generic object type in C & Fortran (autowrap)
 
 TESTS
 
