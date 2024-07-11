@@ -986,7 +986,7 @@ private:
   // TODO: Handle case of table arrays
 
 #ifdef _MSC_VER
-#pragma warning(disable:0162)
+#pragma warning(disable:4702)
 #endif
 
   HANDLE_RECV_(doc[0].IsString(),
@@ -1066,7 +1066,7 @@ private:
 		   , , T& data)
 
 #ifdef _MSC_VER
-#pragma warning(default:0162)
+#pragma warning(default:4702)
 #endif
 
 					      
