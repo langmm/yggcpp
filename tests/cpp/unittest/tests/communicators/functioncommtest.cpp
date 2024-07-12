@@ -20,6 +20,20 @@ bool example_model_function(const rapidjson::Document& data_send,
   return true;
 }
 
+#define DO_FUNCTION_CALL					\
+  FunctionComm sComm("test", addr, SEND);			\
+  FunctionComm rComm("test", addr, RECV);			\
+  rapidjson::Document data_send, data_recv, data_exp;		\
+  data_send.SetString("alpha", 5, data_send.GetAllocator());	\
+  data_exp.SetInt(5);						\
+  EXPECT_EQ(rComm.nmsg(), 0);					\
+  EXPECT_EQ(sComm.nmsg(), 0);					\
+  EXPECT_GE(sComm.send(data_send), 0);				\
+  EXPECT_EQ(rComm.nmsg(), 1);					\
+  EXPECT_EQ(sComm.nmsg(), 0);					\
+  EXPECT_GE(rComm.recv(data_recv), 0);				\
+  EXPECT_EQ(data_recv, data_exp)
+
 
 #ifdef YGGTEST_DYNAMIC_example_c
 TEST(FunctionComm, call_dynamic_c) {
@@ -29,18 +43,7 @@ TEST(FunctionComm, call_dynamic_c) {
   library = directory + "/" + library;
 #endif
   utils::Address addr("c::" + library + "::example_model_function");
-  FunctionComm sComm("test", addr, SEND);
-  FunctionComm rComm("test", addr, RECV);
-  rapidjson::Document data_send, data_recv, data_exp;
-  data_send.SetString("alpha", 5, data_send.GetAllocator());
-  data_exp.SetInt(5);
-  EXPECT_EQ(rComm.nmsg(), 0);
-  EXPECT_EQ(sComm.nmsg(), 0);
-  EXPECT_GE(sComm.send(data_send), 0);
-  EXPECT_EQ(rComm.nmsg(), 1);
-  EXPECT_EQ(sComm.nmsg(), 0);
-  EXPECT_GE(rComm.recv(data_recv), 0);
-  EXPECT_EQ(data_recv, data_exp);
+  DO_FUNCTION_CALL;
 }
 #endif
 
@@ -53,18 +56,7 @@ TEST(FunctionComm, call_dynamic_fortran) {
   library = directory + "/" + library;
 #endif
   utils::Address addr("fortran::" + library + "::example_model_function");
-  FunctionComm sComm("test", addr, SEND);
-  FunctionComm rComm("test", addr, RECV);
-  rapidjson::Document data_send, data_recv, data_exp;
-  data_send.SetString("alpha", 5, data_send.GetAllocator());
-  data_exp.SetInt(5);
-  EXPECT_EQ(rComm.nmsg(), 0);
-  EXPECT_EQ(sComm.nmsg(), 0);
-  EXPECT_GE(sComm.send(data_send), 0);
-  EXPECT_EQ(rComm.nmsg(), 1);
-  EXPECT_EQ(sComm.nmsg(), 0);
-  EXPECT_GE(rComm.recv(data_recv), 0);
-  EXPECT_EQ(data_recv, data_exp);
+  DO_FUNCTION_CALL;
 }
 #endif
 
@@ -72,18 +64,7 @@ TEST(FunctionComm, call_dynamic_fortran) {
 TEST(FunctionComm, call_c) {
   register_function("example_model_function", example_model_function);
   utils::Address addr("cxx::example_model_function");
-  FunctionComm sComm("test", addr, SEND);
-  FunctionComm rComm("test", addr, RECV);
-  rapidjson::Document data_send, data_recv, data_exp;
-  data_send.SetString("alpha", 5, data_send.GetAllocator());
-  data_exp.SetInt(5);
-  EXPECT_EQ(rComm.nmsg(), 0);
-  EXPECT_EQ(sComm.nmsg(), 0);
-  EXPECT_GE(sComm.send(data_send), 0);
-  EXPECT_EQ(rComm.nmsg(), 1);
-  EXPECT_EQ(sComm.nmsg(), 0);
-  EXPECT_GE(rComm.recv(data_recv), 0);
-  EXPECT_EQ(data_recv, data_exp);
+  DO_FUNCTION_CALL;
 }
 
 TEST(FunctionComm, call_c_async) {

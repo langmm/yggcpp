@@ -99,7 +99,7 @@ std::vector<std::string> split(const std::string &x,
   while (true) {
     last_pos = pos;
     if (from_right) {
-      pos = x.rfind(substr, pos);
+      pos = x.rfind(substr, pos - 1);
     } else {
       pos = x.find(substr, pos);
     }
@@ -113,7 +113,7 @@ std::vector<std::string> split(const std::string &x,
       break;
     }
     if (from_right) {
-      out.insert(out.begin(), x.substr(pos + substr.size(), last_pos));
+      out.insert(out.begin(), x.substr(pos + substr.size(), last_pos - (pos + substr.size())));
     } else {
       out.push_back(x.substr(last_pos, pos - last_pos));
       pos += substr.size();
