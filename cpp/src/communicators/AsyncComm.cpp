@@ -253,7 +253,8 @@ void AsyncBacklog::on_thread(AsyncComm* parent) {
 			parent->request_commtype,
 			parent->response_commtype,
 			parent->request_flags,
-			parent->response_flags);
+			parent->response_flags,
+			parent->language);
       if (comm) {
 	parent->updateMaxMsgSize(comm->getMaxMsgSize());
 	parent->address.address(comm->getAddress());

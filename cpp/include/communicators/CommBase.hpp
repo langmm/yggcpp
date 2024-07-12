@@ -120,23 +120,26 @@ const FLAG_TYPE COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
   /** @param[in] request_commtype Enumerated type of request comm (rpc only) */	\
   /** @param[in] response_commtype Enumerated type of response comm (rpc only) */ \
   /** @param[in] request_flags Bitwise flags for request comm (rpc only) */ \
-  /** @param[in] response_flags Bitwise flags for response comm (rpc only) */
+  /** @param[in] response_flags Bitwise flags for response comm (rpc only) */ \
+  /** @param[in] language Language that the comm is being created from */
 
 #define SUPP_PARAM_DEC					\
   size_t ncomm = 0,					\
     const COMM_TYPE request_commtype = DEFAULT_COMM,	\
     const COMM_TYPE response_commtype = DEFAULT_COMM,	\
     FLAG_TYPE request_flags = 0,			\
-    FLAG_TYPE response_flags = 0
+    FLAG_TYPE response_flags = 0,			\
+    const LANGUAGE language = NO_LANGUAGE
 #define SUPP_PARAM_DEF					\
   size_t ncomm,						\
     const COMM_TYPE request_commtype,			\
     const COMM_TYPE response_commtype,			\
     FLAG_TYPE request_flags,				\
-    FLAG_TYPE response_flags
+    FLAG_TYPE response_flags,						\
+    const LANGUAGE language
 #define SUPP_PARAM_INIT							\
   SupplementCommArgs(ncomm, request_commtype, response_commtype,	\
-		     request_flags, response_flags)
+		     request_flags, response_flags, language)
 
 
 #define COMM_DESTRUCTOR_API(cls, base, api)				\
@@ -522,7 +525,8 @@ class ForkTines;
 		       const COMM_TYPE request_commtype=DEFAULT_COMM,
 		       const COMM_TYPE response_commtype=DEFAULT_COMM,
 		       const FLAG_TYPE request_flags=0,
-		       const FLAG_TYPE response_flags=0);
+		       const FLAG_TYPE response_flags=0,
+		       const LANGUAGE language=NO_LANGUAGE);
     /**
      * @brief Copy constructor
      * @param[in] rhs Structure to copy
@@ -541,6 +545,7 @@ class ForkTines;
     COMM_TYPE response_commtype; /**< Enumerated type of response comm (rpc only) */
     FLAG_TYPE request_flags;     /**< Bitwise flags for request comm (rpc only) */
     FLAG_TYPE response_flags;    /**< Bitwise flags for response comm (rpc only) */
+    LANGUAGE language;           /**< Language that the comm was created from */
   };
 
 

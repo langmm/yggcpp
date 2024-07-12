@@ -37,12 +37,7 @@ bool example_model_function(const rapidjson::Document& data_send,
 
 #ifdef YGGTEST_DYNAMIC_example_c
 TEST(FunctionComm, call_dynamic_c) {
-  std::string library = "example_c";
-#ifdef YGGTEST_DYNAMIC_DIR
-  std::string directory = YGGTEST_DYNAMIC_DIR;
-  library = directory + "/" + library;
-#endif
-  utils::Address addr("c::" + library + "::example_model_function");
+  utils::Address addr("c::example_c::example_model_function");
   DO_FUNCTION_CALL;
 }
 #endif
@@ -50,12 +45,7 @@ TEST(FunctionComm, call_dynamic_c) {
 
 #ifdef YGGTEST_DYNAMIC_example_fortran
 TEST(FunctionComm, call_dynamic_fortran) {
-  std::string library = "example_fortran";
-#ifdef YGGTEST_DYNAMIC_DIR
-  std::string directory = YGGTEST_DYNAMIC_DIR;
-  library = directory + "/" + library;
-#endif
-  utils::Address addr("fortran::" + library + "::example_model_function");
+  utils::Address addr("fortran::example_fortran::example_model_function");
   DO_FUNCTION_CALL;
 }
 #endif

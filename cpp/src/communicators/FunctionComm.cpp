@@ -16,8 +16,10 @@ using namespace YggInterface::utils;
 // DynamicLibrary
 /////////////////////////////////////////////////////////
 
-DynamicLibrary::DynamicLibrary(const std::string& name) :
-  LogBase(), address(name), library(nullptr) {
+DynamicLibrary::DynamicLibrary(LANGUAGE lang, const std::string& name,
+			       LANGUAGE calling_lang) :
+  LogBase(), language(lang), address(name), library(nullptr),
+  calling_language(calling_lang) {
   std::vector<std::string> parts = split(address, ".", 1, true);
   if (parts.size() == 1) {
 #ifdef _WIN32
@@ -33,12 +35,14 @@ DynamicLibrary::DynamicLibrary(const std::string& name) :
   to_try.push_back(address);
   std::string address_forward, address_dir, address_base, address_base_alt;
 // This is primarily for ease in testing
-#ifdef YGGTEST_DYNAMIC_DIR
-  if (address.find("/") == std::string::npos) {
-    std::string dynamic_dir = YGGTEST_DYNAMIC_DIR;
-    address = dynamic_dir + "/" + address;
+  if (address.find("/") == std::string::npos &&
+      address.find("\\") == std::string::npos) {
+    char* dynamic_dir_str = getenv("YGGTEST_DYNAMIC_DIR");
+    if (dynamic_dir_str) {
+      std::string dynamic_dir(dynamic_dir_str);
+      address = dynamic_dir + "/" + address;
+    }
   }
-#endif
 #ifdef _WIN32
   if (address.find("/") != std::string::npos) {
     address_forward = address;
@@ -89,6 +93,14 @@ DynamicLibrary::DynamicLibrary(const std::string& name) :
 }
 
 bool DynamicLibrary::load(const std::string& name) {
+#ifdef _MSC_VER
+  std::cerr << "LOAD: " << LANGUAGE_map.find(calling_language)->second << std::endl;
+  if (calling_language == FORTRAN_LANGUAGE) {
+    log_error() << "load: circumventing fortran load for MSVC: " <<
+      name << std::endl;
+    return false;
+  }
+#endif
   if (library) {
     log_error() << "load: Library already loaded" << std::endl;
     return false;
@@ -141,8 +153,10 @@ void* DynamicLibrary::function(const std::string& name) {
 /////////////////////////////////////////////////////////
 
 FunctionWrapper::FunctionWrapper(const std::string& f,
-				 bool pointer_provided) :
-  LogBase(), address(f), language(NO_LANGUAGE), library(nullptr),
+				 bool pointer_provided,
+				 const LANGUAGE calling_lang) :
+  LogBase(), address(f), language(NO_LANGUAGE),
+  calling_language(calling_lang), library(nullptr),
   func(nullptr), recv_backlog() {
   std::vector<std::string> parts = split(address, "::", 1);
   if (parts.size() != 2)
@@ -161,7 +175,8 @@ FunctionWrapper::FunctionWrapper(const std::string& f,
       if (libparts.size() != 2)
 	throw_error("FunctionWrapper: Error parsing function address for library name \""
 		    + address + "\"");
-      library = new DynamicLibrary(libparts[0]);
+      library = new DynamicLibrary(language, libparts[0],
+				   calling_language);
       func = library->function(libparts[1]);
       if (!func)
 	throw_error("FunctionWrapper: Error locating function \""
@@ -355,14 +370,15 @@ void FunctionComm::_open(bool call_base) {
   updateMaxMsgSize(0);
   bool created = ((!address.valid()) || address.address().empty());
   handle = ctx->find_registered_function(this->address.address());
-  if (created && handle)
+  if (created && handle) {
     address.address(handle->address);
+  }
   Comm_t::_init_name();
   if (!handle) {
     if (created) {
       throw std::runtime_error("FuntionComm::_open: Failed to get function wrapper for \"" + this->address.address() + "\"");
     } else {
-      handle = new FunctionWrapper(address.address());
+      handle = new FunctionWrapper(address.address(), false, language);
       ctx->register_function(handle);
     }
   }

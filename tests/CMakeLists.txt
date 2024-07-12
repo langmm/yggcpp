@@ -3,7 +3,7 @@
 ################
 
 include(DynamicTestLibraries)
-add_dynamic_test_libraries(example_c example_fortran)
+add_external_test_libraries(example_c.c example_fortran)
 
 ###############
 # C++/C Tests #

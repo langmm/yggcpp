@@ -1007,7 +1007,8 @@ static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds) {
 		       (COMM_TYPE)request_commtype,
 		       (COMM_TYPE)response_commtype,
 		       static_cast<FLAG_TYPE>(request_flags),
-		       static_cast<FLAG_TYPE>(response_flags));
+		       static_cast<FLAG_TYPE>(response_flags),
+		       (LANGUAGE)language);
     } catch (...) {
       s->comm = NULL;
     }
@@ -1036,10 +1037,6 @@ static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds) {
 	PyErr_SetString(PyExc_ValueError, "Invalid format_str");
 	return -1;
       }
-    }
-    if (!s->comm->setLanguage((LANGUAGE)language)) {
-      PyErr_SetString(PyExc_ValueError, "Error setting language");
-      return -1;
     }
     if ((!filter.empty()) && (!s->comm->setFilters(filter))) {
       PyErr_SetString(PyExc_ValueError, "Error setting filters");

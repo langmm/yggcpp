@@ -130,12 +130,13 @@ YGG_API void close_comm(comm_t* comm);
  * @param flags Bitwise flags describing properties the communicator
  *   should have.
  * @param ncomm Number of communicators in a forked comm.
+ * @param lang Language of the calling program.
  * @return comm_t struct containing the requested communicator
  */
 YGG_API comm_t _init_comm(const char* name, const enum DIRECTION dir,
 			  const enum COMM_TYPE t,
 			  dtype_t* datatype, const FLAG_TYPE flags,
-			  const size_t ncomm);
+			  const size_t ncomm, const enum LANGUAGE lang);
   
 /**
  * @brief Initialize a new communicator

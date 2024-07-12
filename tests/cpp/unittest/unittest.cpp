@@ -31,6 +31,9 @@ void YggEnvironment::SetUp() {
   PyObject* cwdPy = PyUnicode_FromString(cwd);
   PyList_Append(path, cwdPy);
   Py_DECREF(cwdPy);
+#ifdef YGGTEST_DYNAMIC_DIR
+  setenv("YGGTEST_DYNAMIC_DIR", YGGTEST_DYNAMIC_DIR, 1);
+#endif
   // PyObject_Print(path, stderr, 0);
 #endif // YGGDRASIL_DISABLE_PYTHON_C_API
   std::cerr << "SETUP COMPLETE" << std::endl;

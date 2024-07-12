@@ -10,14 +10,17 @@ SupplementCommArgs::SupplementCommArgs(const size_t ncomm0,
 				       const COMM_TYPE request_commtype0,
 				       const COMM_TYPE response_commtyp0,
 				       const FLAG_TYPE request_flags0,
-				       const FLAG_TYPE response_flags0) :
+				       const FLAG_TYPE response_flags0,
+				       const LANGUAGE language0) :
   ncomm(ncomm0), request_commtype(request_commtype0),
   response_commtype(response_commtyp0),
-  request_flags(request_flags0), response_flags(response_flags0) {}
+  request_flags(request_flags0), response_flags(response_flags0),
+  language(language0) {}
 SupplementCommArgs::SupplementCommArgs(const SupplementCommArgs& rhs) :
   ncomm(rhs.ncomm), request_commtype(rhs.request_commtype),
   response_commtype(rhs.response_commtype),
-  request_flags(rhs.request_flags), response_flags(rhs.response_flags) {}
+  request_flags(rhs.request_flags), response_flags(rhs.response_flags),
+  language (rhs.language) {}
 SupplementCommArgs::~SupplementCommArgs() {}
 SupplementCommArgs& SupplementCommArgs::operator=(const SupplementCommArgs& rhs) {
   ncomm = rhs.ncomm;
@@ -25,6 +28,7 @@ SupplementCommArgs& SupplementCommArgs::operator=(const SupplementCommArgs& rhs)
   response_commtype = rhs.response_commtype;
   request_flags = rhs.request_flags;
   response_flags = rhs.response_flags;
+  language = rhs.language;
   return *this;
 }
 
@@ -85,7 +89,7 @@ void Comm_t::_before_open(const SupplementCommArgs& supp) {
       name = prefix;
     }
   }
-  setLanguage();
+  setLanguage(supp.language);
   
   create_global_scope_comm(supp);
   

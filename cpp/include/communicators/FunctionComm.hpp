@@ -38,8 +38,10 @@ namespace YggInterface {
       /**
        * Constructor for loading a library from a file name.
        * @param[in] name Library name.
+       * @param[in] language Library language.
        */
-      DynamicLibrary(const std::string& name);
+      DynamicLibrary(LANGUAGE language, const std::string& name,
+		     LANGUAGE calling_language=NO_LANGUAGE);
       /**
        * Destructor
        */
@@ -50,9 +52,11 @@ namespace YggInterface {
        * @return true if successful, false otherwise.
        */
       bool load(const std::string& name);
-      
+
+      LANGUAGE language;   /**< Library language */
       std::string address; /**< Name of the library */
       void* library;       /**< Pointer to the loaded library */
+      LANGUAGE calling_language; /**< Language that library is loaded from. */
 
       /**
        * Lookup a function in the library.
@@ -80,8 +84,11 @@ namespace YggInterface {
        * @param[in] f Function name and import information.
        * @param[in] pointer_provided If true, the constructor is being
        *   called with an explicit function pointer.
+       * @parma[in] calling_language Language calling the function.
        */
-      FunctionWrapper(const std::string& f, bool pointer_provided=false);
+      FunctionWrapper(const std::string& f,
+		      bool pointer_provided=false,
+		      const LANGUAGE calling_language=NO_LANGUAGE);
       /**
        * Constructor for wrapping a C++ function
        * @param[in] name Name of the function
@@ -125,6 +132,7 @@ namespace YggInterface {
       
       std::string address; /**< Name of the function */
       LANGUAGE language;   /**< Language the function is written in */
+      LANGUAGE calling_language; /**< Language that function is called from */
       
     private:
       DynamicLibrary* library; /**< Library containing the function */

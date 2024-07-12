@@ -47,12 +47,13 @@ comm_t _init_comm_f(const char *name, const int dir, const int t,
 #ifdef __cplusplus
   comm_t out = _init_comm(name, static_cast<DIRECTION>(dir),
 			  static_cast<COMM_TYPE>(t), (dtype_t*)datatype,
-			  static_cast<FLAG_TYPE>(flags), ncomm);
+			  static_cast<FLAG_TYPE>(flags), ncomm,
+			  FORTRAN_LANGUAGE);
 #else
   comm_t out = _init_comm(name, dir, t, (dtype_t*)datatype,
-			  (FLAG_TYPE)(flags), ncomm);
+			  (FLAG_TYPE)(flags), ncomm,
+			  FORTRAN_LANGUAGE);
 #endif
-  set_comm_language(out, FORTRAN_LANGUAGE);
   return out;
 }
 

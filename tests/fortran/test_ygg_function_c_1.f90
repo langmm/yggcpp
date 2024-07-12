@@ -5,15 +5,10 @@ integer function test_ygg_function_c_1() result(r)
   type(yggdtype) :: sDtype
   character(len=5) :: data_send
   integer :: data_recv
-  character(len=256) :: library
-  library = "example_c"
-#ifdef YGGTEST_DYNAMIC_DIR
-  library = YGGTEST_DYNAMIC_DIR//"/"//library
-#endif
   r = 1
   data_send = "alpha"
   data_recv = 0
-  call setenv("test_name_OUT", "c::"//trim(library)//"::example_model_function")
+  call setenv("test_name_OUT", "c::example_c::example_model_function")
   sDtype = create_dtype_from_schema('{"type": "string"}', .false.)
   sComm = init_comm("test_name", SEND, FUNCTION_COMM, sDtype, &
        IOR(COMM_FLAG_ASYNC, COMM_FLAG_SET_OPP_ENV))

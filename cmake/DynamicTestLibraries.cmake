@@ -1,3 +1,41 @@
+function(is_compiled_language LANGUAGE VAR)
+  string(TOUPPER ${LANGUAGE} LANGUAGE_UPPER)
+  if ((LANGUAGE_UPPER STREQUAL "C") OR
+      (LANGUAGE_UPPER STREQUAL "CXX") OR
+      (LANGUAGE_UPPER STREQUAL "FORTRAN"))
+    set(${VAR} 1 PARENT_SCOPE)
+  endif()
+endfunction()
+
+function(extension2language EXT VAR)
+  if(EXT STREQUAL ".c")
+    set(${VAR} C PARENT_SCOPE)
+  elseif(EXT STREQUAL ".cpp")
+    set(${VAR} CXX PARENT_SCOPE)
+  elseif(EXT STREQUAL ".jl")
+    set(${VAR} Julia PARENT_SCOPE)
+  elseif(EXT STREQUAL ".py")
+    set(${VAR} Python PARENT_SCOPE)
+  elseif(EXT STREQUAL ".R")
+    set(${VAR} R PARENT_SCOPE)
+  elseif(EXT STREQUAL ".m")
+    set(${VAR} Matlab PARENT_SCOPE)
+  else()
+    string(REGEX MATCH "[.][fF]((90)|(95)|(03)|(08)|(18))?$" match ${EXT})
+    if(match)
+      set(${VAR} Fortran PARENT_SCOPE)
+    else()
+      message(ERROR "Support for extension \"${EXT}\" not implemented")
+    endif()
+  endif()
+endfunction()
+
+function(file2language TARGET VAR)
+  cmake_path(GET TARGET EXTENSION TARGET_EXT)
+  extension2language(${TARGET_EXT} ${VAR})
+  set(${VAR} ${${VAR}} PARENT_SCOPE)
+endfunction()
+
 function(get_dynamic_test_properties)
   if (YGGTEST_DYNAMIC_DIR)
     foreach(NAME ${ARGN})
@@ -30,28 +68,61 @@ function(set_dynamic_test_property NAME)
   set_dynamic_test_properties(${NAME})
 endfunction()
 
-function(add_dynamic_test_libraries)
+function(add_external_test_library TARGET)
+  set(oneValueArgs LANGUAGE)
+  set(multiValueArgs SOURCES)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  if (NOT YGGTEST_DYNAMIC_DIR)
+    set(YGGTEST_DYNAMIC_DIR ${CMAKE_BINARY_DIR})
+  endif()
+  set(YGGTEST_DYNAMIC_DIR ${YGGTEST_DYNAMIC_DIR} PARENT_SCOPE)
+  if (IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET})
+    add_subdirectory(${TARGET})
+  else()
+    if (NOT ARGS_SOURCES)
+      set(ARGS_SOURCES ${TARGET})
+      cmake_path(REMOVE_EXTENSION TARGET)
+    endif()
+    if (NOT ARGS_LANGUAGE)
+      file2language(${ARGS_SOURCES} ARGS_LANGUAGE)
+    endif()
+    is_compiled_language(${ARGS_LANGUAGE} IS_COMPILED)
+    if (IS_COMPILED)
+      add_dynamic_test_library(
+        ${TARGET} GENERATE
+	LANGUAGE ${ARGS_LANGUAGE}
+	SOURCES ${ARGS_SOURCES}
+        ${ARGS_UNPARSED_ARGUMENTS}
+      )
+    else()
+      add_embedded_test_script(
+        ${TARGET}
+	LANGUAGE ${ARGS_LANGUAGE}
+	SOURCES ${ARGS_SOURCES}
+	${ARGS_UNPARSED_ARGUMENTS}
+      )
+    endif()
+  endif()
+endfunction()
+
+function(add_external_test_libraries)
+  get_dynamic_test_property(DYNAMIC_TEST_DEFINITIONS)
   set(YGGTEST_DYNAMIC_DIR ${CMAKE_BINARY_DIR})
   list(APPEND DYNAMIC_TEST_DEFINITIONS -DYGGTEST_DYNAMIC_DIR="${YGGTEST_DYNAMIC_DIR}")
   set_dynamic_test_property(DYNAMIC_TEST_DEFINITIONS)
   foreach(lib ${ARGN})
-    if (IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${lib})
-      add_subdirectory(${lib})
-    else()
-      add_embedded_test_script(${lib})
-    endif()
+    add_external_test_library(${lib})
   endforeach()
   get_dynamic_test_properties(
     DYNAMIC_TEST_DEFINITIONS
+    DYNAMIC_TEST_LANGUAGES
     DYNAMIC_TEST_LIBRARIES
     DYNAMIC_TEST_DEPENDENCIES
     EMBEDDED_TEST_SCRIPTS
   )
-  # if (EMBEDDED_TEST_SCRIPTS)
-  #   add_custom_target(embedded_scripts DEPENDS ${EMBEDDED_TEST_SCRIPTS})
-  # endif()
   set(YGGTEST_DYNAMIC_DIR ${YGGTEST_DYNAMIC_DIR} PARENT_SCOPE)
   set(DYNAMIC_TEST_DEFINITIONS ${DYNAMIC_TEST_DEFINITIONS} PARENT_SCOPE)
+  set(DYNAMIC_TEST_LANGUAGES ${DYNAMIC_TEST_LANGUAGES} PARENT_SCOPE)
   set(DYNAMIC_TEST_LIBRARIES ${DYNAMIC_TEST_LIBRARIES} PARENT_SCOPE)
   set(DYNAMIC_TEST_DEPENDENCIES ${DYNAMIC_TEST_DEPENDENCIES} PARENT_SCOPE)
   set(EMBEDDED_TEST_SCRIPTS ${EMBEDDED_TEST_SCRIPTS} PARENT_SCOPE)
@@ -59,30 +130,45 @@ endfunction()
 
 
 function(add_dynamic_test_library TARGET)
+  set(options GENERATE)
   set(oneValueArgs LANGUAGE)
   set(multiValueArgs SOURCES LIBRARIES INCLUDES)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  if (ARGS_SOURCES)
+    set(ARGS_SOURCES ${ARGS_SOURCES})
+  else()
+    set(ARGS_SOURCES ${ARGS_UNPARSED_ARGUMENTS})
+    set(ARGS_UNPARSED_ARGUMENTS)
+  endif()
+  if (NOT ARGS_LANGUAGE)
+    file2language(${ARGS_SOURCES} ARGS_LANGUAGE)
+  endif()
+  if (ARGS_GENERATE)
+    if (ARGS_LANGUAGE STREQUAL "C" OR ARGS_LANGUAGE STREQUAL "CXX")
+      list(APPEND ARGS_LIBRARIES ${YGG_TARGET_CPP})
+    elseif (ARGS_LANGUAGE STREQUAL "Fortran")
+      list(APPEND ARGS_LIBRARIES ${YGG_TARGET_FORTRAN})
+      list(APPEND ARGS_INCLUDES ${YGG_FORTRAN_MOD_DIR})
+    else()
+      message(ERROR "Unsupported language \"${ARGS_LANGUAGE}\"")
+    endif()
+  endif()
   message(STATUS "ARGS_SOURCES = ${ARGS_SOURCES}")
   message(STATUS "ARGS_LANGUAGE = ${ARGS_LANGUAGE}")
   if (NOT YGGTEST_DYNAMIC_DIR)
     set(YGGTEST_DYNAMIC_DIR_SET 1)
     cmake_path(GET CMAKE_BINARY_DIR PARENT_PATH YGGTEST_DYNAMIC_DIR)
   endif()
-  if (ARGS_SOURCES)
-    set(sources ${ARGS_SOURCES})
-  else()
-    set(sources ${ARGS_UNPARSED_ARGUMENTS})
-  endif()
   if ((ARGS_LANGUAGE STREQUAL "Fortran") AND (FORCE_SPLIT_CXXFORTRAN OR MSVC))
     include(YggAddFortranSubdirectory)
     add_mixed_fortran_library(
       ${TARGET} SHARED LANGUAGE CXX
-      SOURCES ${sources}
+      SOURCES ${ARGS_SOURCES}
       LIBRARIES ${ARGS_LIBRARIES}
       INCLUDES ${ARGS_INCLUDES}
     )
   else()
-    add_library(${TARGET} SHARED ${sources})
+    add_library(${TARGET} SHARED ${ARGS_SOURCES})
     if (ARGS_LANGUAGE STREQUAL "Fortran")
       set_target_properties(${TARGET} PROPERTIES LINKER_LANGUAGE CXX)
     endif()
@@ -111,6 +197,7 @@ function(add_dynamic_test_library TARGET)
   )
   get_dynamic_test_properties(
     DYNAMIC_TEST_DEFINITIONS
+    DYNAMIC_TEST_LANGUAGES
     DYNAMIC_TEST_LIBRARIES
     DYNAMIC_TEST_DEPENDENCIES
     EMBEDDED_TEST_SCRIPTS
@@ -119,16 +206,14 @@ function(add_dynamic_test_library TARGET)
     list(APPEND DYNAMIC_TEST_DEFINITIONS -DYGGTEST_DYNAMIC_DIR="${YGGTEST_DYNAMIC_DIR}")
   endif()
   list(APPEND DYNAMIC_TEST_DEFINITIONS -DYGGTEST_DYNAMIC_${TARGET})
-  if (TARGET ${TARGET})
-    list(APPEND DYNAMIC_TEST_LIBRARIES ${TARGET})
-  endif()
+  list(APPEND DYNAMIC_TEST_LANGUAGES ${ARGS_LANGUAGE})
+  # if (TARGET ${TARGET})
+  list(APPEND DYNAMIC_TEST_LIBRARIES ${TARGET})
+  # endif()
   list(APPEND DYNAMIC_TEST_DEPENDENCIES ${ARGS_LIBRARIES})
-  set(DYNAMIC_TEST_DEFINITIONS ${DYNAMIC_TEST_DEFINITIONS} PARENT_SCOPE)
-  set(DYNAMIC_TEST_LIBRARIES ${DYNAMIC_TEST_LIBRARIES} PARENT_SCOPE)
-  set(DYNAMIC_TEST_DEPENDENCIES ${DYNAMIC_TEST_DEPENDENCIES} PARENT_SCOPE)
-  set(EMBEDDED_TEST_SCRIPTS ${EMBEDDED_TEST_SCRIPTS} PARENT_SCOPE)
   set_dynamic_test_properties(
     DYNAMIC_TEST_DEFINITIONS
+    DYNAMIC_TEST_LANGUAGES
     DYNAMIC_TEST_LIBRARIES
     DYNAMIC_TEST_DEPENDENCIES
     EMBEDDED_TEST_SCRIPTS
@@ -137,28 +222,31 @@ endfunction()
 
 
 function(add_embedded_test_script TARGET)
-  if (NOT YGGTEST_DYNAMIC_DIR)
-    set(YGGTEST_DYNAMIC_DIR ${CMAKE_BINARY_DIR})
+  set(oneValueArgs LANGUAGE)
+  set(multiValueArgs SOURCES)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  if (NOT ARGS_SOURCES)
+    set(ARGS_SOURCES ${TARGET})
+    cmake_path(REMOVE_EXTENSION TARGET)
   endif()
-  # if (YGGTEST_DYNAMIC_DIR)
-  #   add_custom_command(
-  #     OUTPUT ${TARGET}
-  #     COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET} ${TARGET}
-  #     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET}
-  #     VERBATIM
-  #   )
-  # endif()
-  cmake_path(REMOVE_EXTENSION TARGET OUTPUT_VARIABLE TARGET_NOEXT)
+  if (NOT ARGS_LANGUAGE)
+    file2language(${ARGS_SOURCES} ARGS_LANGUAGE)
+  endif()
+  add_custom_target(${TARGET})
   get_dynamic_test_properties(
     DYNAMIC_TEST_DEFINITIONS
+    DYNAMIC_TEST_LANGUAGES
     DYNAMIC_TEST_LIBRARIES
     DYNAMIC_TEST_DEPENDENCIES
     EMBEDDED_TEST_SCRIPTS
   )
-  list(APPEND DYNAMIC_TEST_DEFINITIONS -DYGGTEST_DYNAMIC_${TARGET_NOEXT})
-  list(APPEND EMBEDDED_TEST_SCRIPTS ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET})
+  list(APPEND DYNAMIC_TEST_LANGUAGES ${ARGS_LANGUAGE})
+  list(APPEND DYNAMIC_TEST_LIBRARIES ${TARGET})
+  list(APPEND DYNAMIC_TEST_DEFINITIONS -DYGGTEST_DYNAMIC_${TARGET})
+  list(APPEND EMBEDDED_TEST_SCRIPTS ${CMAKE_CURRENT_SOURCE_DIR}/${ARGS_SOURCES})
   set_dynamic_test_properties(
     DYNAMIC_TEST_DEFINITIONS
+    DYNAMIC_TEST_LANGUAGES
     DYNAMIC_TEST_LIBRARIES
     DYNAMIC_TEST_DEPENDENCIES
     EMBEDDED_TEST_SCRIPTS
@@ -169,6 +257,7 @@ endfunction()
 function(add_dynamic_dependencies TARGET)
   set(oneValueArgs WORKING_DIR)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  message(STATUS "DYNAMIC_TEST_LANGUAGES[${TARGET}] = ${DYNAMIC_TEST_LANGUAGES}")
   message(STATUS "DYNAMIC_TEST_LIBRARIES[${TARGET}] = ${DYNAMIC_TEST_LIBRARIES}")
   message(STATUS "DYNAMIC_TEST_DEFINITIONS[${TARGET}] = ${DYNAMIC_TEST_DEFINITIONS}")
   message(STATUS "DYNAMIC_TEST_DEPENDENCIES[${TARGET}] = ${DYNAMIC_TEST_DEPENDENCIES}")
@@ -189,11 +278,19 @@ function(add_dynamic_dependencies TARGET)
     endif()
     if (DYNAMIC_TEST_LIBRARIES AND DYNAMIC_TEST_DEPENDENCIES)
       foreach(lib ${DYNAMIC_TEST_LIBRARIES})
-        copy_required_runtimes(
-          ${lib}
-          DEPENDENCIES ${DYNAMIC_TEST_DEPENDENCIES}
-	  DESTINATION_TARGET ${TARGET}
-        )
+        if (TARGET ${lib})
+          add_custom_command(
+            TARGET ${TARGET}
+            POST_BUILD
+    	    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${lib}> ${ARGS_WORKING_DIR}
+            COMMAND_EXPAND_LISTS
+          )
+          copy_required_runtimes(
+            ${lib}
+            DEPENDENCIES ${DYNAMIC_TEST_DEPENDENCIES}
+	    DESTINATION_TARGET ${TARGET}
+          )
+	endif()
       endforeach()
     endif()
     foreach(script ${EMBEDDED_TEST_SCRIPTS})
@@ -208,3 +305,14 @@ function(add_dynamic_dependencies TARGET)
     message(STATUS "TARGET \"${TARGET}\" is not a cmake target")
   endif()
 endfunction()
+
+
+# function(generate_dynamic_tests TARGET CONFIG_FILE OUTPUT_TEMPLATE)
+#   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  
+#   configure_file(
+#     ${CONFIG_FILE}
+#     ${build_dir}/external_config.cmake
+#     @ONLY)
+  
+# endfunction()
