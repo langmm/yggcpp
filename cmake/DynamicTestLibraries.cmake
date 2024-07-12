@@ -1,38 +1,52 @@
-function(get_dynamic_test_property NAME)
+function(get_dynamic_test_properties)
   if (YGGTEST_DYNAMIC_DIR)
-    get_property(
-      ${NAME} DIRECTORY ${YGGTEST_DYNAMIC_DIR}
-      PROPERTY ${NAME}
-    )
-    set(${NAME} ${${NAME}} PARENT_SCOPE)
+    foreach(NAME ${ARGN})
+      get_property(
+        ${NAME} DIRECTORY ${YGGTEST_DYNAMIC_DIR}
+        PROPERTY ${NAME}
+      )
+      set(${NAME} ${${NAME}} PARENT_SCOPE)
+    endforeach()
   endif()
 endfunction()
 
-function(set_dynamic_test_property NAME)
+function(set_dynamic_test_properties)
   if (YGGTEST_DYNAMIC_DIR)
-    set_property(
-      DIRECTORY ${YGGTEST_DYNAMIC_DIR}
-      PROPERTY ${NAME} ${${NAME}}
-    )
+    foreach(NAME ${ARGN})
+      set_property(
+        DIRECTORY ${YGGTEST_DYNAMIC_DIR}
+        PROPERTY ${NAME} ${${NAME}}
+      )
+    endforeach()
   endif()
+endfunction()
+
+function(get_dynamic_test_property NAME)
+  get_dynamic_test_properties(${NAME})
+  set(${NAME} ${${NAME}} PARENT_SCOPE)
+endfunction()
+
+function(set_dynamic_test_property NAME)
+  set_dynamic_test_properties(${NAME})
 endfunction()
 
 function(add_dynamic_test_libraries)
   set(YGGTEST_DYNAMIC_DIR ${CMAKE_BINARY_DIR})
   list(APPEND DYNAMIC_TEST_DEFINITIONS -DYGGTEST_DYNAMIC_DIR="${YGGTEST_DYNAMIC_DIR}")
+  set_dynamic_test_property(DYNAMIC_TEST_DEFINITIONS)
   foreach(lib ${ARGN})
     if (IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${lib})
       add_subdirectory(${lib})
-      if (TARGET ${lib})
-        list(APPEND DYNAMIC_TEST_DEFINITIONS -DYGGTEST_DYNAMIC_${lib})
-        list(APPEND DYNAMIC_TEST_LIBRARIES ${lib})
-      endif()
     else()
       add_embedded_test_script(${lib})
     endif()
   endforeach()
-  get_dynamic_test_property(DYNAMIC_TEST_DEPENDENCIES)
-  get_dynamic_test_property(EMBEDDED_TEST_SCRIPTS)
+  get_dynamic_test_properties(
+    DYNAMIC_TEST_DEFINITIONS
+    DYNAMIC_TEST_LIBRARIES
+    DYNAMIC_TEST_DEPENDENCIES
+    EMBEDDED_TEST_SCRIPTS
+  )
   # if (EMBEDDED_TEST_SCRIPTS)
   #   add_custom_target(embedded_scripts DEPENDS ${EMBEDDED_TEST_SCRIPTS})
   # endif()
@@ -51,6 +65,7 @@ function(add_dynamic_test_library TARGET)
   message(STATUS "ARGS_SOURCES = ${ARGS_SOURCES}")
   message(STATUS "ARGS_LANGUAGE = ${ARGS_LANGUAGE}")
   if (NOT YGGTEST_DYNAMIC_DIR)
+    set(YGGTEST_DYNAMIC_DIR_SET 1)
     cmake_path(GET CMAKE_BINARY_DIR PARENT_PATH YGGTEST_DYNAMIC_DIR)
   endif()
   if (ARGS_SOURCES)
@@ -83,30 +98,41 @@ function(add_dynamic_test_library TARGET)
   endif()
   include(CheckDLL)
   show_symbols(${TARGET})
-  if (YGGTEST_DYNAMIC_DIR)
-    add_custom_command(
-      TARGET ${TARGET}
-      POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${TARGET}> ${YGGTEST_DYNAMIC_DIR}
-      COMMAND_EXPAND_LISTS
-    )
-    copy_required_runtimes(
-      ${TARGET}
-      DEPENDENCIES ${ARGS_LIBRARIES}
-      DESTINATION ${YGGTEST_DYNAMIC_DIR}
-    )
+  add_custom_command(
+    TARGET ${TARGET}
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:${TARGET}> ${YGGTEST_DYNAMIC_DIR}
+    COMMAND_EXPAND_LISTS
+  )
+  copy_required_runtimes(
+    ${TARGET}
+    DEPENDENCIES ${ARGS_LIBRARIES}
+    DESTINATION ${YGGTEST_DYNAMIC_DIR}
+  )
+  get_dynamic_test_properties(
+    DYNAMIC_TEST_DEFINITIONS
+    DYNAMIC_TEST_LIBRARIES
+    DYNAMIC_TEST_DEPENDENCIES
+    EMBEDDED_TEST_SCRIPTS
+  )
+  if (YGGTEST_DYNAMIC_DIR_SET)
+    list(APPEND DYNAMIC_TEST_DEFINITIONS -DYGGTEST_DYNAMIC_DIR="${YGGTEST_DYNAMIC_DIR}")
   endif()
-  get_dynamic_test_property(DYNAMIC_TEST_DEPENDENCIES)
-  get_dynamic_test_property(EMBEDDED_TEST_SCRIPTS)
-  list(APPEND DYNAMIC_TEST_DEFINITIONS -DYGGTEST_DYNAMIC_DIR="${YGGTEST_DYNAMIC_DIR}" -DYGGTEST_DYNAMIC_${TARGET})
-  list(APPEND DYNAMIC_TEST_LIBRARIES ${TARGET})
+  list(APPEND DYNAMIC_TEST_DEFINITIONS -DYGGTEST_DYNAMIC_${TARGET})
+  if (TARGET ${TARGET})
+    list(APPEND DYNAMIC_TEST_LIBRARIES ${TARGET})
+  endif()
   list(APPEND DYNAMIC_TEST_DEPENDENCIES ${ARGS_LIBRARIES})
   set(DYNAMIC_TEST_DEFINITIONS ${DYNAMIC_TEST_DEFINITIONS} PARENT_SCOPE)
   set(DYNAMIC_TEST_LIBRARIES ${DYNAMIC_TEST_LIBRARIES} PARENT_SCOPE)
   set(DYNAMIC_TEST_DEPENDENCIES ${DYNAMIC_TEST_DEPENDENCIES} PARENT_SCOPE)
   set(EMBEDDED_TEST_SCRIPTS ${EMBEDDED_TEST_SCRIPTS} PARENT_SCOPE)
-  set_dynamic_test_property(DYNAMIC_TEST_DEPENDENCIES)
-  set_dynamic_test_property(EMBEDDED_TEST_SCRIPTS)
+  set_dynamic_test_properties(
+    DYNAMIC_TEST_DEFINITIONS
+    DYNAMIC_TEST_LIBRARIES
+    DYNAMIC_TEST_DEPENDENCIES
+    EMBEDDED_TEST_SCRIPTS
+  )
 endfunction()
 
 
@@ -122,9 +148,21 @@ function(add_embedded_test_script TARGET)
   #     VERBATIM
   #   )
   # endif()
-  get_dynamic_test_property(EMBEDDED_TEST_SCRIPTS)
+  cmake_path(REMOVE_EXTENSION TARGET OUTPUT_VARIABLE TARGET_NOEXT)
+  get_dynamic_test_properties(
+    DYNAMIC_TEST_DEFINITIONS
+    DYNAMIC_TEST_LIBRARIES
+    DYNAMIC_TEST_DEPENDENCIES
+    EMBEDDED_TEST_SCRIPTS
+  )
+  list(APPEND DYNAMIC_TEST_DEFINITIONS -DYGGTEST_DYNAMIC_${TARGET_NOEXT})
   list(APPEND EMBEDDED_TEST_SCRIPTS ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET})
-  set_dynamic_test_property(EMBEDDED_TEST_SCRIPTS)
+  set_dynamic_test_properties(
+    DYNAMIC_TEST_DEFINITIONS
+    DYNAMIC_TEST_LIBRARIES
+    DYNAMIC_TEST_DEPENDENCIES
+    EMBEDDED_TEST_SCRIPTS
+  )
 endfunction()
 
 

@@ -28,30 +28,87 @@ DynamicLibrary::DynamicLibrary(const std::string& name) :
     address += ".so";
 #endif
   }
-  std::string error_msg;
   setenv("YGG_PREVENT_PYTHON_INITIALIZATION", "1", 1);
-#ifdef _WIN32
-  library = (void*)LoadLibraryA(address.c_str());
-  if ((!library) && address.find("/") != std::string::npos) {
-    error_msg = Win32Base::error();
-    log_info() << "DynamicLibrary: Could not load library using path " <<
-      "containing forward slashes (" << address << "), a version with " <<
-      "backslashes will be tried [ERROR = \"" << error_msg <<
-      "\"]." << std::endl;
-    regex_replace(address, "/", "\\");
-    library = (void*)LoadLibraryA(address.c_str());
+  std::vector<std::string> to_try;
+  to_try.push_back(address);
+  std::string address_forward, address_dir, address_base, address_base_alt;
+// This is primarily for ease in testing
+#ifdef YGGTEST_DYNAMIC_DIR
+  if (address.find("/") == std::string::npos) {
+    std::string dynamic_dir = YGGTEST_DYNAMIC_DIR;
+    address = dynamic_dir + "/" + address;
   }
+#endif
+#ifdef _WIN32
+  if (address.find("/") != std::string::npos) {
+    address_forward = address;
+    to_try.push_back(address);
+    regex_replace(to_try[to_try.size() - 1], "/", "\\");
+  } else if (address.find("\\") != std::string::npos) {
+    regex_replace(address_forward, "\\", "/");
+    to_try.push_back(address_forward);
+  }
+#else
+  if (address.find("/") != std::string::npos) {
+    address_forward = address;
+  }
+#endif
+  if (!address_forward.empty()) {
+    std::vector<std::string> path_parts = split(address, "/", 1, true);
+    address_dir = path_parts[0];
+    address_base = path_parts[1];
+  } else {
+    address_base = address;
+  }
+  if (address_base.find("lib") == 0) {
+    address_base_alt = address_base.substr(3);
+  } else {
+    address_base_alt = "lib" + address_base;
+  }
+  if (!address_dir.empty())
+    address_base_alt = address_dir + "/" + address_base_alt;
+  to_try.push_back(address_base_alt);
+#ifdef _WIN32
+  if (!address_forward.empty()) {
+    to_try.push_back(address_base_alt);
+    regex_replace(to_try[to_try.size() - 1], "/", "\\");
+  }
+#endif
+  for (std::vector<std::string>::iterator it = to_try.begin();
+       it != to_try.end(); it++) {
+    if (load(*it)) {
+      address = *it;
+      log_debug() << "DynamicLibrary: Loaded library \"" << address <<
+	"\"" << std::endl;
+      break;
+    }
+  }
+  unsetenv("YGG_PREVENT_PYTHON_INITIALIZATION");
+  if (!library)
+    throw_error("DynamicLibrary: Failed to load library: " + address);
+}
+
+bool DynamicLibrary::load(const std::string& name) {
+  if (library) {
+    log_error() << "load: Library already loaded" << std::endl;
+    return false;
+  }
+  std::string error_msg;
+#ifdef _WIN32
+  library = (void*)LoadLibraryA(name.c_str());
   if (!library)
     error_msg = Win32Base::error();
 #else
-  library = dlopen(address.c_str(), RTLD_LAZY | RTLD_GLOBAL);
+  library = dlopen(name.c_str(), RTLD_LAZY | RTLD_GLOBAL);
   if (!library)
     error_msg = SysVBase::error();
 #endif
-  unsetenv("YGG_PREVENT_PYTHON_INITIALIZATION");
-  if (!library)
-    throw_error("DynamicLibrary: Failed to load library: " + address
-		+ " - " + error_msg);
+  if (!library) {
+    log_info() << "load: Failed to load library: " << name << " = " <<
+      error_msg << std::endl;
+    return false;
+  }
+  return true;
 }
 
 DynamicLibrary::~DynamicLibrary() {

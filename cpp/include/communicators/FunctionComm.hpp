@@ -44,6 +44,12 @@ namespace YggInterface {
        * Destructor
        */
       ~DynamicLibrary();
+      /**
+       * @brief Load a library
+       * @param[in] name Name of the library to load
+       * @return true if successful, false otherwise.
+       */
+      bool load(const std::string& name);
       
       std::string address; /**< Name of the library */
       void* library;       /**< Pointer to the loaded library */

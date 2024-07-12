@@ -1,19 +1,19 @@
-integer function test_ygg_c_function_1() result(r)
-#ifdef YGGTEST_DYNAMIC_example_c
+integer function test_ygg_function_fortran_1() result(r)
+#ifdef YGGTEST_DYNAMIC_example_fortran
   use YggInterface
   type(yggcomm) :: sComm, rComm
   type(yggdtype) :: sDtype
   character(len=5) :: data_send
   integer :: data_recv
   character(len=256) :: library
-  library = "libexample_c"
+  library = "example_fortran"
 #ifdef YGGTEST_DYNAMIC_DIR
   library = YGGTEST_DYNAMIC_DIR//"/"//library
 #endif
   r = 1
   data_send = "alpha"
   data_recv = 0
-  call setenv("test_name_OUT", "c::"//trim(library)//"::example_model_function")
+  call setenv("test_name_OUT", "fortran::"//trim(library)//"::example_model_function")
   sDtype = create_dtype_from_schema('{"type": "string"}', .false.)
   sComm = init_comm("test_name", SEND, FUNCTION_COMM, sDtype, &
        IOR(COMM_FLAG_ASYNC, COMM_FLAG_SET_OPP_ENV))
@@ -39,7 +39,7 @@ integer function test_ygg_c_function_1() result(r)
      return
   end if
 #else
-  write(*,*) "Dynamic test library example_c not available"
+  write(*,*) "Dynamic test library example_fortran not available"
 #endif
   r = 0
-end function test_ygg_c_function_1
+end function test_ygg_function_fortran_1

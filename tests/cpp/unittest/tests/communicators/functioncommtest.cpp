@@ -37,7 +37,7 @@ bool example_model_function(const rapidjson::Document& data_send,
 
 #ifdef YGGTEST_DYNAMIC_example_c
 TEST(FunctionComm, call_dynamic_c) {
-  std::string library = "libexample_c";
+  std::string library = "example_c";
 #ifdef YGGTEST_DYNAMIC_DIR
   std::string directory = YGGTEST_DYNAMIC_DIR;
   library = directory + "/" + library;
@@ -50,7 +50,7 @@ TEST(FunctionComm, call_dynamic_c) {
 
 #ifdef YGGTEST_DYNAMIC_example_fortran
 TEST(FunctionComm, call_dynamic_fortran) {
-  std::string library = "libexample_fortran";
+  std::string library = "example_fortran";
 #ifdef YGGTEST_DYNAMIC_DIR
   std::string directory = YGGTEST_DYNAMIC_DIR;
   library = directory + "/" + library;
