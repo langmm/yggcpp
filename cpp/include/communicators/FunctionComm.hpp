@@ -39,6 +39,7 @@ namespace YggInterface {
        * Constructor for loading a library from a file name.
        * @param[in] name Library name.
        * @param[in] language Library language.
+       * @param[in] calling_language Language calling the library.
        */
       DynamicLibrary(LANGUAGE language, const std::string& name,
 		     LANGUAGE calling_language=NO_LANGUAGE);
@@ -84,7 +85,7 @@ namespace YggInterface {
        * @param[in] f Function name and import information.
        * @param[in] pointer_provided If true, the constructor is being
        *   called with an explicit function pointer.
-       * @parma[in] calling_language Language calling the function.
+       * @param[in] calling_language Language calling the function.
        */
       FunctionWrapper(const std::string& f,
 		      bool pointer_provided=false,
