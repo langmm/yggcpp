@@ -163,7 +163,6 @@ function(add_dynamic_dependencies TARGET)
         TARGET ${TARGET}
         POST_BUILD
 	COMMAND ${CMAKE_COMMAND} -E copy ${script} ${ARGS_WORKING_DIR}
-        # COMMAND ${CMAKE_COMMAND} -E copy ${YGGTEST_DYNAMIC_DIR}/${script} ${ARGS_WORKING_DIR}
         COMMAND_EXPAND_LISTS
       )
     endforeach()
