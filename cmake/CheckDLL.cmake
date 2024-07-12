@@ -12,7 +12,7 @@ function(copy_required_runtimes TARGET)
   message(STATUS "ARGS_DESTINATION_TARGET = ${ARGS_DESTINATION_TARGET}")
   message(STATUS "ARGS_DEPENDENCIES = ${ARGS_DEPENDENCIES}")
   message(STATUS "ARGS_DESTINATION = ${ARGS_DESTINATION}")
-  if (NOT WIN32)
+  if (WIN32)
     if (CONDA_PREFIX)
       foreach(lib ${ARGS_DEPENDENCIES})
         add_custom_command(
