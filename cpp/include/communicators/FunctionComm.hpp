@@ -149,6 +149,7 @@ namespace YggInterface {
       LANGUAGE language;   /**< Language the function is written in */
       LANGUAGE calling_language; /**< Language that function is called from */
       int flags;           /**< Bitwise flags describing the function */
+      int64_t commflags;   /**< Bitwise flags that should be add to comms utilizing this function */
       
     private:
       DynamicLibrary* library; /**< Library containing the function */

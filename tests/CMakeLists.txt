@@ -6,6 +6,7 @@ include(DynamicTestLibraries)
 add_external_test_libraries(
   example_c.c
   example_fortran
+  example_julia.jl
   example_python.py
 )
 

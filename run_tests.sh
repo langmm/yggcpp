@@ -25,9 +25,15 @@ N_MSG="100"
 S_MSG="100"
 COMM="DEFAULT_COMM"
 INSTALL_DIR="$(pwd)/_install"
+BUILD_DIR="build"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
+	--build-dir )
+	    BUILD_DIR="$2"
+	    shift
+	    shift
+	    ;;
 	-c )
 	    DO_C="TRUE"
 	    shift # past argument with no value
@@ -63,7 +69,7 @@ while [[ $# -gt 0 ]]; do
 	    shift # past argument with no value
 	    ;;
 	--using-ipc )
-	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DUSING_IPC=1"
+	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DDEFAULT_COMM=IPC"
 	    shift # past argument with no value
 	    ;;
 	--with-lldb )
@@ -269,8 +275,8 @@ echo "CMAKE_FLAGS_SPEED = ${CMAKE_FLAGS_SPEED}"
 # fi
 
 if [ -n "$REBUILD" ]; then
-    if [ -d "build" ]; then
-	rm -rf "build"
+    if [ -d "$BUILD_DIR" ]; then
+	rm -rf "$BUILD_DIR"
     fi
     pip uninstall YggInterface -y
     if [ -d "_skbuild" ]; then
@@ -286,8 +292,8 @@ if [ -n "$REBUILD" ]; then
 	rm "cpp/src/pyYggdrasil/lib/libYggInterface_py.dylib"
     fi
 fi
-if [ ! -d "build" ]; then
-    mkdir build
+if [ ! -d "$BUILD_DIR" ]; then
+    mkdir $BUILD_DIR
 fi
 if [ -n "$DO_SKBUILD" ]; then
     export CMAKE_ARGS="${CMAKE_FLAGS} ${CMAKE_FLAGS_LIB}"
@@ -295,7 +301,7 @@ if [ -n "$DO_SKBUILD" ]; then
 	--config-settings=cmake.define.ALLOW_SKBUILD_NONPYTHON:BOOL=ON \
 	-v .
 else
-    cd build
+    cd $BUILD_DIR
     if [ ! -n "$DONT_BUILD" ]; then
 	cmake .. $CMAKE_FLAGS $CMAKE_FLAGS_LIB
 	cmake --build . $CONFIG_FLAGS
@@ -333,14 +339,14 @@ CMAKE_FLAGS_SPEED="${CMAKE_FLAGS_SPEED} -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
 
 if [[ "$TEST_TYPE" == "speed" ]]; then
     if [ ! -n "$DONT_BUILD" ]; then
-	if [ -d "build_speed" ]; then
-	    rm -rf build_speed
+	if [ -d "${BUILD_DIR}_speed" ]; then
+	    rm -rf ${BUILD_DIR}_speed
 	fi
-	if [ ! -d "build_speed" ]; then
-	    mkdir build_speed
+	if [ ! -d "${BUILD_DIR}_speed" ]; then
+	    mkdir ${BUILD_DIR}_speed
 	fi
     fi
-    cd build_speed
+    cd ${BUILD_DIR}_speed
     if [ -n "$WITH_ASAN" ] && [ ! -n "$DYLD_INSERT_LIBRARIES" ]; then
 	export DYLD_INSERT_LIBRARIES=$(clang -print-file-name=libclang_rt.asan_osx_dynamic.dylib)
     fi
@@ -359,9 +365,9 @@ fi
 if [ -n "$DO_SYMBOLS" ]; then
     if [[ "$TEST_TYPE" == "speed" ]]; then
 	SYM_LANG="C"
-	python utils/check_symbols.py build_speed/${SYM_LANG}_build/speedtest_${SYM_LANG} build/libYggInterface.dylib  &> symbols.txt
+	python utils/check_symbols.py ${BUILD_DIR}_speed/${SYM_LANG}_build/speedtest_${SYM_LANG} ${BUILD_DIR}/libYggInterface.dylib  &> symbols.txt
     else
-	python utils/check_symbols.py build/test/unittest build/libYggInterface.dylib  &> symbols.txt
+	python utils/check_symbols.py ${BUILD_DIR}/test/unittest ${BUILD_DIR}/libYggInterface.dylib  &> symbols.txt
     fi
 fi
 
@@ -369,10 +375,10 @@ if [ -n "$DO_DOCS" ]; then
     path_to_doxygen=$(which doxygen)
     if [ -x "$path_to_doxygen" ]; then
 	echo "BUILDING DOCS"
-	if [ ! -d "build" ]; then
-	    mkdir build
+	if [ ! -d "$BUILD_DIR" ]; then
+	    mkdir $BUILD_DIR
 	fi
-	cd build
+	cd $BUILD_DIR
 	cmake .. $CMAKE_FLAGS -DYGG_BUILD_DOCS=ON -DBUILD_CPP_LIBRARY=OFF -DBUILD_FORTRAN_LIBRARY=OFF -DDOXYGEN_CHECK_MISSING=ON
 	cmake --build . $CONFIG_FLAGS --target docs
 	# Need install here to ensure that cmake config files are in place

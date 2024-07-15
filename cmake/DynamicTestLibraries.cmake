@@ -242,12 +242,11 @@ function(add_embedded_test_script TARGET)
     message(STATUS "YGGDRASIL_DISABLE_PYTHON_C_API so embedded tests using ${TARGET} will be skipped")
     return()
   endif()
-  # TODO: Only disabled until embedded languages added
-  # list(FIND YGG_INSTALL_DEPS ${ARGS_LANGUAGE} IDX_LANGUAGE)
-  # if (IDX_LANGUAGE STREQUAL "-1")
-  #   message(STATUS "Embedded language ${ARGS_LANGUAGE} NOT enabled")
-  #   return()
-  # endif()
+  list(FIND YGG_INSTALL_DEPS ${ARGS_LANGUAGE} IDX_LANGUAGE)
+  if (IDX_LANGUAGE STREQUAL "-1")
+    message(STATUS "Embedded language ${ARGS_LANGUAGE} NOT enabled")
+    return()
+  endif()
   add_custom_target(${TARGET})
   get_dynamic_test_properties(
     DYNAMIC_TEST_DEFINITIONS
@@ -329,7 +328,7 @@ function(add_dynamic_dependencies TARGET)
     message(STATUS "ARGS_WORKING_DIR = ${ARGS_WORKING_DIR}")
     set(target_setup ${TARGET}_setup_external)
     foreach(script ${EMBEDDED_TEST_SCRIPTS})
-      set(ifixture copy_${script})
+      set(ifixture copy_${script}_for_${TARGET})
       add_test(
         ${ifixture}
 	COMMAND ${CMAKE_COMMAND} -E copy ${script} ${ARGS_WORKING_DIR}

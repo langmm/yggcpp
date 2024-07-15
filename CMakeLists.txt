@@ -20,17 +20,25 @@ if (NOT DEFAULT_RAPIDJSON_INCLUDE_DIRS)
 endif()
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(ygg_options)
+include(AddYggInterface)
+
+# TODO: Variable name changes
+#   - BUILD_CPP_LIBRARY -> BUILD_CXX_LIBRARY
+#   - BUILD_FORTRAN_LIBRARY -> BUILD_Fortran_LIBRARY
+#   - BUILD_PYTHON_LIBRARY -> BUILD_Python_LIBRARY
 
 option(BUILD_CPP_LIBRARY "Build the Yggdrasil C++ interface library" ON)
 option(BUILD_FORTRAN_LIBRARY "Build the Yggdrasil Fortran interface library" ON)
 option(BUILD_PYTHON_LIBRARY "Build the Yggdrasil Python interface library" OFF)
+option(BUILD_Julia_LIBRARY "Build the Yggdrasil Julia interface library" OFF)
 option(YGG_PYTHON_LIBRARY_WRAP "Build the Yggdrasil Python interface library by wrapping the C++ module" ON)
 option(YGG_Fortran_REQUIRED "Raise an error if the Fortran interface library cannot be build" OFF)
+option(YGG_Julia_REQUIRED "Raise an error if the Julia interface library cannot be build" OFF)
 option(ALLOW_SKBUILD_NONPYTHON "Allow the non-Python interfaces (C/C++/Fortran) to be built from SKBUILD" OFF)
+set(DEFAULT_COMM "ZMQ" CACHE STRING "Default communicator")
 option(ENABLE_ZMQ "Enable ZeroMQ" ON)
 option(ENABLE_RMQ "Enable RabbitMQ" ON)
 option(ENABLE_REST "Enable REST API" ON)
-option(USING_IPC "Default to using IPC V queues" OFF)
 option(ENABLE_OMP "Enable OpenMP" ON)
 option(ENABLE_MPI "Enable MPI" ON)
 option(ENABLE_THREADS "Enable std::threads" ON)
@@ -38,6 +46,7 @@ option(YGG_BUILD_TESTS "Build tests" OFF)
 option(YGG_BUILD_FORTRAN_TESTS "Build Fortran tests" OFF)
 option(YGG_BUILD_CXX_TESTS "Build C/C++ tests" OFF)
 option(YGG_BUILD_PYTHON_TESTS "Build Python tests" OFF)
+option(YGG_BUILD_Julia_TESTS "Build Julia tests" OFF)
 # option(YGG_TEST_WITH_LLDB "Run tests with lldb" OFF)
 option(YGG_ENABLE_COVERAGE "Enable coverage reporting" OFF)
 option(YGG_BUILD_THIRDPARTY_GTEST "Use gtest installation in 'thirdpart/gtest' by default if available" ON)
@@ -127,113 +136,67 @@ endif()
 # ZeroMQ #
 ##########
 
-if(ENABLE_ZMQ)
-    include(SearchTools)
-    find_package_zmq()
-    if (ZeroMQ_FOUND)
-        list(APPEND YGG_INSTALL_DEFS -DZMQINSTALLED)
-        list(APPEND YGG_INSTALL_DEPS ZeroMQ)
-	list(APPEND DEPS_LIBRARIES ${ZeroMQ_LIBRARY})
-	list(APPEND DEPS_INCLUDE_DIRS ${ZeroMQ_INCLUDE_DIR})
-	# execute_process(
-	#   COMMAND ls ${ZeroMQ_INCLUDE_DIR}
-	#   COMMAND_ECHO STDOUT)
-    else()
-        message(STATUS "NO ZeroMQ")
-    endif()
-else (ENABLE_ZMQ)
-    message(STATUS "No zmq support will be built." )
-endif (ENABLE_ZMQ)
+add_yggdrasil_option(ZMQ COMM DEPENDENCY ZeroMQ)
+
+##################
+# IPC dependency #
+##################
+
+add_yggdrasil_option(
+  IPC COMM NO_DEPENDENCY
+  SUPPORTED_OS UNIX CYGWIN
+)
 
 ############
 # RabbitMQ #
 ############
 
-if(ENABLE_RMQ)
-    find_package_pkgconfig(rabbitmq-c HEADER amqp.h LIBNAMES rabbitmq)
-    if (rabbitmq-c_FOUND)
-        list(APPEND YGG_INSTALL_DEFS -DRMQINSTALLED)
-        list(APPEND YGG_INSTALL_DEPS rabbitmq-c)
-        if (rabbitmq-c_CONFIG)
-          include(${rabbitmq-c_CONFIG})
-  	  list(APPEND DEPS_LIBRARIES rabbitmq::rabbitmq)
-	  # execute_process(
-	  #   COMMAND ls ${rabbitmq-c_DIR}
-	  #   COMMAND_ECHO STDOUT)
-	else()
-	  list(APPEND DEPS_LIBRARIES ${rabbitmq-c_LIBRARY})
-	  list(APPEND DEPS_INCLUDE_DIRS ${rabbitmq-c_INCLUDE_DIR})
-	endif()
-	# In v0.12.0 (v9.2.5 so), the include files were moved into a
-	# dedicated rabbitmq-c directory
-	if (rabbitmq-c_VERSION)
-	  message(STATUS "rabbitmq-c_VERSION = ${rabbitmq-c_VERSION}")
-	  if (rabbitmq-c_DIR MATCHES ".*vcpkg.*")
-	    message(STATUS "rabbitmq-c_DIR MATCHES *vcpkg*")
-	  else()
-	    message(STATUS "rabbitmq-c_DIR DOES NOT MATCH *vcpkg*")
-	  endif()
-	  if (rabbitmq-c_VERSION VERSION_LESS "0.12.0")
-	    message(STATUS "rabbitmq-c_VERSION LESS 0.12.0")
-	  else()
-	    message(STATUS "rabbitmq-c_VERSION MORE 0.12.0")
-	  endif()
-	  # if (rabbitmq-c_VERSION VERSION_LESS "9.2.5")
-	  #   message(STATUS "rabbitmq-c_VERSION LESS 9.2.5")
-	  # else()
-	  #   message(STATUS "rabbitmq-c_VERSION MORE 9.2.5")
-	  # endif()
-	else()
-	  message(STATUS "rabbitmq-c_VERSION NOT SET")
-	endif()
-	if ((NOT rabbitmq-c_VERSION) OR
-	    # ((rabbitmq-c_DIR MATCHES ".*vcpkg.*") AND
-	    #  (rabbitmq-c_VERSION VERSION_LESS "9.2.5")) OR
-	    (rabbitmq-c_VERSION VERSION_LESS "0.12.0"))
-          list(APPEND DEPS_PUBLIC_C_COMPILE_FLAGS -DYGG_RMQ_NOINCLUDEDIR)
-	  list(APPEND DEPS_PUBLIC_CXX_COMPILE_FLAGS -DYGG_RMQ_NOINCLUDEDIR)
-	endif()
+add_yggdrasil_option(
+  RMQ COMM DEPENDENCY rabbitmq-c
+  LIBRARIES rabbitmq::rabbitmq
+  SEARCH_ARGS USING_PKGCONFIG HEADER amqp.h LIBNAMES rabbitmq
+)
+if (rabbitmq-c_FOUND)
+  message(STATUS "rabbitmq-c_VERSION = ${rabbitmq-c_VERSION}")
+  # In v0.12.0 (v9.2.5 so), the include files were moved into a
+  # dedicated rabbitmq-c directory
+  if (rabbitmq-c_VERSION)
+    if (rabbitmq-c_DIR MATCHES ".*vcpkg.*")
+       message(STATUS "rabbitmq-c_DIR MATCHES *vcpkg*")
     else()
-        message(STATUS "NO RabbitMQ client library")
+       message(STATUS "rabbitmq-c_DIR DOES NOT MATCH *vcpkg*")
     endif()
-    # dump_cmake_variables(REGEX "rabbitmq*")
-else (ENABLE_RMQ)
-    message(STATUS "No RabbitMQ support will be built." )
-endif (ENABLE_RMQ)
+    if (rabbitmq-c_VERSION VERSION_LESS "0.12.0")
+       message(STATUS "rabbitmq-c_VERSION LESS 0.12.0")
+    else()
+       message(STATUS "rabbitmq-c_VERSION MORE 0.12.0")
+    endif()
+  endif()
+  if ((NOT rabbitmq-c_VERSION) OR
+     (rabbitmq-c_VERSION VERSION_LESS "0.12.0"))
+    list(APPEND DEPS_PUBLIC_C_COMPILE_FLAGS -DYGG_RMQ_NOINCLUDEDIR)
+    list(APPEND DEPS_PUBLIC_CXX_COMPILE_FLAGS -DYGG_RMQ_NOINCLUDEDIR)
+  endif()
+endif()
 
 ########
 # Curl #
 ########
 
-if (ENABLE_REST)
-  find_package(CURL)
-  # find_package_pkgconfig(CURL LIBNAMES curl HEADER curl.h)
-  if (CURL_FOUND)
-    list(APPEND YGG_INSTALL_DEFS -DRESTINSTALLED)
-    list(APPEND YGG_INSTALL_DEPS CURL)
-    list(APPEND DEPS_LIBRARIES ${CURL_LIBRARIES})
-    list(APPEND DEPS_INCLUDE_DIRS ${CURL_INCLUDE_DIRS})
-  else()
-    message(STATUS "NO curl library")
-  endif()
-else (ENABLE_REST)
-  message(STATUS "No REST support will be built.")
-endif(ENABLE_REST)
+add_yggdrasil_option(
+  REST COMM DEPENDENCY CURL
+  # SEARCH_ARGS USING_PKGCONFIG LIBNAMES curl HEADER curl.h
+)
 
 ##########
 # OpenMP #
 ##########
 
-if (ENABLE_OMP)
-  find_package(OpenMP)
-  if (OpenMP_CXX_FOUND)
-    message(STATUS "OpenMP found")
-    list(APPEND YGG_INSTALL_DEPS OpenMP)
-    list(APPEND DEPS_LIBRARIES OpenMP::OpenMP_CXX)
-  else()
-    message(STATUS "NO OpenMP")
-  endif()
-endif()
+add_yggdrasil_option(
+  OMP DEPENDENCY OpenMP
+  FOUND_VAR OpenMP_CXX_FOUND
+  LIBRARIES OpenMP::OpenMP_CXX
+)
 
 #############
 # Threading #
@@ -241,28 +204,30 @@ endif()
 
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
-if(ENABLE_THREADS)
-  cmake_path(SET MINGW_PTHREAD_ROOT "$ENV{MINGW_PTHREAD_ROOT}")
-  if(MINGW_PTHREAD_ROOT)
-    message(STATUS "MINGW_PTHREAD_ROOT = ${MINGW_PTHREAD_ROOT}")
-    find_package(Threads PATHS ${MINGW_PTHREAD_ROOT} NO_DEFAULT_PATH)
-  endif()
-  find_package(Threads)
-  if (Threads_FOUND)
-    list(APPEND YGG_INSTALL_DEFS -DTHREADSINSTALLED)
-    if (CMAKE_THREAD_LIBS_INIT)
-      message(STATUS "CMAKE_THREAD_LIBS_INIT = ${CMAKE_THREAD_LIBS_INIT}")
-      list(APPEND DEPS_LIBRARIES ${CMAKE_THREAD_LIBS_INIT})
-    endif()
-    if (CMAKE_USE_PTHREADS_INIT)
-      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
-    endif()
-    list(APPEND YGG_INSTALL_DEPS Threads)
-    list(APPEND DEPS_LIBRARIES Threads::Threads)
-  else()
-    message(STATUS "NO Threads")
-  endif()
+cmake_path(SET MINGW_PTHREAD_ROOT "$ENV{MINGW_PTHREAD_ROOT}")
+if(MINGW_PTHREAD_ROOT)
+  message(STATUS "MINGW_PTHREAD_ROOT = ${MINGW_PTHREAD_ROOT}")
+  add_yggdrasil_option(
+    THREADS DEPENDENCY Threads
+    LIBRARIES Threads::Threads
+    DEFINITIONS -DTHREADSINSTALLED
+    DEPENDENCY_PROPERTIES CMAKE_THREAD_LIBS_INIT CMAKE_USE_PTHREADS_INIT
+    SEARCH_ARGS PATHS ${MINGW_PTHREAD_ROOT} NO_DEFAULT_PATH
+  )
+endif()
+add_yggdrasil_option(
+  THREADS DEPENDENCY Threads
+  LIBRARIES Threads::Threads
+  DEFINITIONS -DTHREADSINSTALLED
+  DEPENDENCY_PROPERTIES CMAKE_THREAD_LIBS_INIT CMAKE_USE_PTHREADS_INIT
+)
+if (CMAKE_THREAD_LIBS_INIT)
+  message(STATUS "CMAKE_THREAD_LIBS_INIT = ${CMAKE_THREAD_LIBS_INIT}")
+  list(APPEND DEPS_LIBRARIES ${CMAKE_THREAD_LIBS_INIT})
+endif()
+if (CMAKE_USE_PTHREADS_INIT)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 endif()
 
 #############################
@@ -311,27 +276,18 @@ endif()
 # MPI #
 #######
 
-if(ENABLE_MPI)
-  find_package(MPI)
-  if(MPI_CXX_FOUND)
-    message(STATUS "MPI found")
-    list(APPEND YGG_INSTALL_DEFS -DMPIINSTALLED)
-    list(APPEND YGG_INSTALL_DEPS MPI)
-    list(APPEND DEPS_LIBRARIES MPI::MPI_CXX)
-  else()
-    message(STATUS "NO MPI")
-  endif()
-endif()
+add_yggdrasil_option(MPI COMM LIBRARIES MPI::MPI_CXX)
 
-##########
-# Python #
-##########
+###################
+# Embedded Python #
+###################
+
+include(EmbedLanguage)
 
 if(YGGDRASIL_DISABLE_PYTHON_C_API)
     list(APPEND YGG_INSTALL_DEFS -DYGGDRASIL_DISABLE_PYTHON_C_API)
 else()
-    include(SearchTools)
-    find_package_python()
+    embed_language(Python)
 
     # There is an issue with embedding Python on Windows in conda environments
     # https://github.com/ContinuumIO/anaconda-issues/issues/11374
@@ -339,30 +295,33 @@ else()
         set(RAPIDJSON_PYTHON_ENV2 "PYTHONHOME=${${PYTHON_PREFIX}_RUNTIME_LIBRARY_DIRS}")
     endif()
     
-    list(APPEND YGG_INSTALL_DEPS ${PYTHON_PREFIX})
-    list(APPEND DEPS_LIBRARIES ${PYTHON_PREFIX}::NumPy)
-    list(APPEND DEPS_LIBRARIES_PYTHON ${PYTHON_PREFIX}::Python)
     if(YGGDRASIL_PYGIL_NO_MANAGEMENT)
       list(APPEND YGG_INSTALL_DEFS -DYGGDRASIL_PYGIL_NO_MANAGEMENT)
     endif()
 endif()
 
 ##################
-# IPC dependency #
+# Embedded Julia #
 ##################
 
-if (NOT ZeroMQ_FOUND)
-    set(USING_IPC ON)
+embed_language(Julia DEFINITIONS -DJULIA_ENABLE_THREADING DISABLE_BY_DEFAULT)
+
+##############
+# Embedded R #
+##############
+
+# embed_language(R DISABLE_BY_DEFAULT)
+
+#######################
+# Select default comm #
+#######################
+
+message(STATUS "DEFAULT_COMM = ${DEFAULT_COMM}, YGG_AVAILABLE_COMMS = ${YGG_AVAILABLE_COMMS}")
+if((NOT DEFAULT_COMM) AND YGG_AVAILABLE_COMMS)
+  list(GET YGG_AVAILABLE_COMMS 0 DEFAULT_COMM)
 endif()
-if(USING_IPC)
-    if (UNIX OR CYGWIN)
-	list(APPEND YGG_INSTALL_DEFS -DIPCDEF)
-    else()
-        set(USING_IPC OFF)
-    endif()
-endif()
-if (UNIX OR CYGWIN)
-    list(APPEND YGG_INSTALL_DEFS -DIPCINSTALLED)
+if(DEFAULT_COMM)
+  list(APPEND YGG_INSTALL_DEFS -DDEFAULT_COMM_PREFIX=${DEFAULT_COMM})
 endif()
 
 ###################
@@ -521,6 +480,14 @@ if(BUILD_FORTRAN_LIBRARY)
         cmake_path(SET CMAKE_Fortran_COMPILER NORMALIZE ${CMAKE_Fortran_COMPILER})
     endif()
     add_subdirectory(fortran)
+endif()
+
+########################
+# Create Julia Library #
+########################
+
+if(BUILD_Julia_LIBRARY)
+  add_subdirectory(julia)
 endif()
 
 ##################

@@ -511,6 +511,9 @@ void AsyncComm::_open(bool call_base) {
       throw_error("AsyncComm::_open: Failed to release the Python GIL");
 #endif
     try {
+      if (getCommType() == FUNCTION_COMM && !getAddress().empty()) {
+	ctx->create_registered_function(getAddress(), language);
+      }
       handle = new AsyncBacklog(this);
     } catch (std::exception& e) {
       err = e.what();

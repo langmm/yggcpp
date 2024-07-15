@@ -59,7 +59,14 @@ def run_server_terminate():
     p = multiprocessing.Process(target=run_server, args=(q,))
     p.start()
     token = q.get(block=True)
-    p.terminate()
+    if p.is_alive():
+        p.terminate()
+    if p.is_alive():
+        p.kill()
+    if p.is_alive():
+        p.join(1)
+    assert not p.is_alive()
+    p.close()
     return token
 
 

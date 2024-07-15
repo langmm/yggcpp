@@ -13,13 +13,261 @@ import itertools
 from collections import OrderedDict
 
 
-class AmendedFile(object):
+def camel2underscored(x):
+    ignored = ('API', 'JSON')
+    out = ''
+    i = 0
+    while i < len(x):
+        c = x[i]
+        if c.isupper():
+            if i != 0 and x[i - 1] != '_':
+                out += '_'
+            for m in ignored:
+                if x[i:].startswith(m):
+                    out += m.lower()
+                    i += len(m)
+                    break
+            else:
+                out += c.lower()
+                i += 1
+        else:
+            out += c
+            i += 1
+    return out
+
+
+def close_context(a, z, x, pos=None, endpos=None, count=1):
+    if pos is None:
+        pos = 0
+    if endpos is None:
+        endpos = len(x)
+    while (count > 0) and (pos < endpos):
+        if x[pos] == a:
+            count += 1
+        elif x[pos] == z:
+            count -= 1
+        pos += 1
+    assert count == 0
+    return pos
+
+
+class CodeUnit(object):
+
+    regex = None
+    fstring = None
+    _properties = ['name']
+    _properties_optional = ['docs', 'type']
+    code_units = {}
+
+    def __init__(self, name=None, **kwargs):
+        if name is not None:
+            kwargs['name'] = name
+        self.properties = {kwargs.pop(k) for k in self._properties}
+        for k in self._properties_optional:
+            if k in kwargs:
+                self.properties[k] = kwargs.pop(k)
+        self.unused_properties = kwargs
+
+    def __getattr__(self, key):
+        return self.properties[key]
+
+    def __setattr__(self, key, value):
+        self.properties[key] = value
+
+    def __getitem__(self, key):
+        return self.properties[key]
+
+    def __setitem__(self, key, value):
+        self.properties[key] = value
+
+    @classmethod
+    def from_match(cls, match, **kwargs):
+        kwargs = dict(match.groupdict(), match=match, **kwargs)
+        kwargs.setdefault('match_start', match.start())
+        kwargs.setdefault('match_end', match.end())
+        for k, v in kwargs.items():
+            if k in cls.code_units:
+                kwargs[k] = cls.code_units[k].parse(kwargs[k])
+        return cls(**kwargs)
+
+    @classmethod
+    def parse(cls, x, pos=None, endpos=None, return_match=False,
+              **kwargs):
+        pattern = re.compile(cls.regex, flags=re.MULTILINE)
+        match = pattern.search(x, pos, endpos)
+        if return_match:
+            return match
+        kwargs.setdefault('match_end', cls.complete_match(x, match))
+        return cls.from_match(match, **kwargs)
+
+    @classmethod
+    def complete_match(cls, x, match):
+        return match.end()
+
+    def format(self):
+        kws = {k: v.format() if isinstance(CodeUnit) else v
+               for k, v in self.properties.items()}
+        return self.fstring.format(**kws)
+
+
+class TypeUnit(CodeUnit):
+    pass
+
+
+class VariableUnit(CodeUnit):
+    pass
+
+
+class FunctionUnit(CodeUnit):
+
+    _properties = CodeUnit._properties + [
+        'args', 'return'
+    ]
+    args_unit = VariableUnit
+    return_unit = VariableUnit
+
+
+class MethodUnit(FunctionUnit):
+
+    _properties = FunctionUnit._properties + [
+        'parent'
+    ]
+
+
+class ClassUnit(CodeUnit):
+
+    _properties = CodeUnit._properties + [
+        'members', 'methods'
+    ]
+    method_unit = MethodUnit
+    member_unit = VariableUnit
+
+
+class GeneratedFile(object):
+    r"""Base class for generating files."""
 
     generated_flag = ('LINES AFTER THIS WERE GENERATED AND SHOULD NOT '
                       'BE MODIFIED DIRECTLY')
     comment = ''
     indent = ''
     indent_append = ''
+    file_suffix = ''
+    code_units = {
+        'class': ClassUnit,
+        'function': FunctionUnit,
+        'method': MethodUnit,
+    }
+
+    def __init__(self, src, added=None, prefix_lines=None,
+                 suffix_lines=None):
+        self.src = os.path.join(
+            os.path.dirname(os.path.dirname(__file__)), src)
+        self.added = added
+        if self.added is None:
+            self.added = {}
+        self.flag = ('\n' + self.indent_append + self.comment + ' '
+                     + self.generated_flag)
+        self.contents = ''
+        if os.path.isfile(self.src):
+            with open(self.src, 'r') as fd:
+                self.contents = fd.read().split(self.flag)[0]
+        self.lines = []
+        self.prefix_lines = prefix_lines
+        self.suffix_lines = suffix_lines
+
+    def append(self, line):
+        if not line:
+            return
+        if len(self.indent_append) > 0:
+            line = (
+                self.indent_append
+                + line.replace('\n', '\n' + self.indent_append))
+        if line in self.lines:
+            print("DUPLICATE")
+            print(line)
+        assert line not in self.lines
+        if line not in self.lines:
+            self.lines.append(line)
+
+    def write(self, debug=False):
+        prefix_lines = [
+            self.flag, self.indent_append + self.comment + 68 * '=']
+        if self.prefix_lines:
+            prefix_lines += self.prefix_lines
+        nprefix = len(self.lines)
+        self.lines = prefix_lines + self.lines
+        new_content = '\n'.join(self.lines) + self.file_suffix
+        if self.suffix_lines:
+            new_content += '\n' + '\n'.join(self.suffix_lines)
+        if debug:
+            if len(self.lines) == nprefix:
+                raise Exception(self.src)
+            print(f"\n{self.src}{new_content}")
+        else:
+            if len(self.lines) > nprefix:
+                with open(self.src, 'w') as fd:
+                    fd.write(self.contents + new_content)
+        for v in self.added.values():
+            if isinstance(v, GeneratedFile):
+                v.write(debug=debug)
+
+    def generate(self, dont_write=False, debug=False):
+        if not dont_write:
+            self.write(debug=debug)
+
+    def wrap(self, x):
+        if isinstance(x, ClassUnit):
+            self.lines += self.wrap_class(x)
+        elif isinstance(x, MethodUnit):
+            self.lines += self.wrap_method(x)
+        elif isinstance(x, FunctionUnit):
+            self.lines += self.wrap_function(x)
+
+    def wrap_function(self, x):
+        raise NotImplementedError
+
+    def wrap_class(self, x):
+        raise NotImplementedError
+
+    def wrap_method(self, x):
+        return self.wrap_function(x)
+
+    @classmethod
+    def parse(cls, x, pos=None, endpos=None, units=None, **kwargs):
+        if units is None:
+            units = ['class', 'function']
+        match = None
+        unit = None
+        for iunit in units:
+            if isinstance(iunit, str):
+                if iunit not in cls.code_units:
+                    continue
+                iunit = cls.code_units[iunit]
+            imatch = iunit.parse(x, pos=pos, endpos=endpos,
+                                 return_match=True, **kwargs)
+            if match is None or imatch.start() < match.start():
+                match = imatch
+                unit = iunit
+        if match is not None:
+            return unit.from_match(match)
+
+    @classmethod
+    def parseall(cls, x, pos=None, endpos=None, units=None):
+        if pos is None:
+            pos = 0
+        if endpos is None:
+            endpos = len(x)
+        while pos < endpos:
+            match = cls.parse(x, pos=pos, endpos=endpos, units=units)
+            if match:
+                yield match
+                pos = match.end
+            else:
+                pos = endpos
+
+
+class AmendedFile(GeneratedFile):
+
     regexes = {}
     types = {}
     scalar_varients = {}
@@ -39,24 +287,10 @@ class AmendedFile(object):
     aliased_functions = {}
     excluded_functions = []
 
-    def __init__(self, language, src, added=None, prefix_lines=None,
-                 suffix_lines=None):
+    def __init__(self, language, *args, **kwargs):
         self.init_param()
         self.language = language
-        self.src = os.path.join(
-            os.path.dirname(os.path.dirname(__file__)), src)
-        self.added = added
-        if self.added is None:
-            self.added = {}
-        self.flag = ('\n' + self.indent_append + self.comment + ' '
-                     + self.generated_flag)
-        self.contents = ''
-        if os.path.isfile(self.src):
-            with open(self.src, 'r') as fd:
-                self.contents = fd.read().split(self.flag)[0]
-        self.lines = []
-        self.prefix_lines = prefix_lines
-        self.suffix_lines = suffix_lines
+        super(AmendedFile, self).__init__(*args, **kwargs)
 
     def init_param(self):
         self.types = copy.deepcopy(self.types)
@@ -94,70 +328,15 @@ class AmendedFile(object):
                         f"A format parameter is still present in '{v}'"
                         f"(checked {check})")
 
-    @classmethod
-    def camel2underscored(self, x):
-        ignored = ('API', 'JSON')
-        out = ''
-        i = 0
-        while i < len(x):
-            c = x[i]
-            if c.isupper():
-                if i != 0 and x[i - 1] != '_':
-                    out += '_'
-                for m in ignored:
-                    if x[i:].startswith(m):
-                        out += m.lower()
-                        i += len(m)
-                        break
-                else:
-                    out += c.lower()
-                    i += 1
-            else:
-                out += c
-                i += 1
-        return out
-
     def append(self, line):
-        if not line:
-            return
-        for k in ['type', 'ret_type', 'X']:
-            if f'{{{k}}}' in line:
-                print(line)
-            assert f'{{{k}}}' not in line
-        if len(self.indent_append) > 0:
-            line = (
-                self.indent_append
-                + line.replace('\n', '\n' + self.indent_append))
-        if line in self.lines:
-            print("DUPLICATE")
-            print(line)
-        assert line not in self.lines
-        if line not in self.lines:
-            self.lines.append(line)
+        if line:
+            for k in ['type', 'ret_type', 'X']:
+                if f'{{{k}}}' in line:
+                    print(line)
+                assert f'{{{k}}}' not in line
+        return super(AmendedFile, self).append(line)
 
-    def write(self, debug=False):
-        prefix_lines = [
-            self.flag, self.indent_append + self.comment + 68 * '=']
-        if self.prefix_lines:
-            prefix_lines += self.prefix_lines
-        nprefix = len(self.lines)
-        self.lines = prefix_lines + self.lines
-        new_content = '\n'.join(self.lines) + self.file_suffix
-        if self.suffix_lines:
-            new_content += '\n' + '\n'.join(self.suffix_lines)
-        if debug:
-            if len(self.lines) == nprefix:
-                raise Exception(self.src)
-            print(f"\n{self.src}{new_content}")
-        else:
-            if len(self.lines) > nprefix:
-                with open(self.src, 'w') as fd:
-                    fd.write(self.contents + new_content)
-        for v in self.added.values():
-            if isinstance(v, AmendedFile):
-                v.write(debug=debug)
-
-    def generate(self, dont_write=False, debug=False):
+    def generate(self, **kwargs):
         iterover = OrderedDict([
             ('container', [None] + list(self.types['container'].keys())),
             ('action', [k for k in self.methods.keys() if k]),
@@ -177,8 +356,7 @@ class AmendedFile(object):
                         self.generate_method(scalar_raw_type=k,
                                              X=v, **kws)
         self.generate_long_double()
-        if not dont_write:
-            self.write(debug=debug)
+        return super(AmendedFile, self).generate(**kwargs)
 
     def generate_long_double(self, **kwargs):
         iterover = OrderedDict([
@@ -1871,7 +2049,7 @@ class FortranFile(AmendedFile):
                  and kwargs['X_bytes'] == '1'))):
             return ''
         docs = self.format_docs(kwargs)
-        kwargs['function'] = self.camel2underscored(kwargs['function'])
+        kwargs['function'] = camel2underscored(kwargs['function'])
         kwargs['check_function'] = False
         for k, v in self.checked_functions.items():
             if kwargs['function'].startswith(k):

@@ -185,6 +185,7 @@ enum FORK_TYPE {
 enum FUNCTION_FLAGS {
   FUNCTION_ON_ASYNC = 0x00000001, //!< Will be called from a thread
   FUNCTION_WEAK_REF = 0x00000002, //!< Pointer is used by other threads
+  FUNCTION_EMBEDDED = 0x00000004, //!< Comes from an embedded language
 };
 
 #ifdef __cplusplus
