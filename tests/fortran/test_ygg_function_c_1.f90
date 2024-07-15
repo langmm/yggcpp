@@ -8,7 +8,7 @@ integer function test_ygg_function_c_1() result(r)
   r = 1
   data_send = "alpha"
   data_recv = 0
-  call setenv("test_name_OUT", "c::example_c::example_model_function")
+  call setenv("test_name_OUT", "c::./example_c::example_model_function")
   sDtype = create_dtype_from_schema('{"type": "string"}', .false.)
   sComm = init_comm("test_name", SEND, FUNCTION_COMM, sDtype, &
        IOR(COMM_FLAG_ASYNC, COMM_FLAG_SET_OPP_ENV))
