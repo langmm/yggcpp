@@ -112,14 +112,6 @@ bool DynamicLibrary::load(const std::string& name) {
       error_msg << std::endl;
     return false;
   }
-#ifdef _MSC_VER
-  std::cerr << "LOAD: " << LANGUAGE_map.find(calling_language)->second << std::endl;
-  if (calling_language == FORTRAN_LANGUAGE) {
-    log_error() << "load: circumventing fortran load for MSVC: " <<
-      name << std::endl;
-    return false;
-  }
-#endif
   return true;
 }
 
@@ -181,6 +173,15 @@ FunctionWrapper::FunctionWrapper(const std::string& f,
       if (!func)
 	throw_error("FunctionWrapper: Error locating function \""
 		    + libparts[1] + "\"");
+#ifdef _MSC_VER
+      std::cerr << "LOAD: " << LANGUAGE_map.find(calling_language)->second << std::endl;
+      if (calling_language == FORTRAN_LANGUAGE) {
+	log_error() << "load: circumventing fortran load for MSVC: " <<
+	  name << std::endl;
+	throw_error("FunctionWrapper: From Fortran");
+	// return false;
+      }
+#endif
     }
     break;
   }
