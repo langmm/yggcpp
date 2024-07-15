@@ -177,7 +177,7 @@ FunctionWrapper::FunctionWrapper(const std::string& f,
       std::cerr << "LOAD: " << LANGUAGE_map.find(calling_language)->second << std::endl;
       if (calling_language == FORTRAN_LANGUAGE) {
 	log_error() << "load: circumventing fortran load for MSVC: " <<
-	  name << std::endl;
+	  address << std::endl;
 	throw_error("FunctionWrapper: From Fortran");
 	// return false;
       }
