@@ -106,7 +106,6 @@ function(add_external_test_library TARGET)
 endfunction()
 
 function(add_external_test_libraries)
-  get_dynamic_test_property(DYNAMIC_TEST_DEFINITIONS)
   set(YGGTEST_DYNAMIC_DIR ${CMAKE_BINARY_DIR})
   list(APPEND DYNAMIC_TEST_DEFINITIONS -DYGGTEST_DYNAMIC_DIR="${YGGTEST_DYNAMIC_DIR}")
   set_dynamic_test_property(DYNAMIC_TEST_DEFINITIONS)
@@ -279,8 +278,10 @@ function(add_dynamic_dependencies TARGET)
     if (DYNAMIC_TEST_LIBRARIES AND DYNAMIC_TEST_DEPENDENCIES)
       foreach(lib ${DYNAMIC_TEST_LIBRARIES})
         get_target_property(lib_type ${lib} TYPE)
+	message(STATUS "HERE: ${lib} ${lib_type}")
 	if ((lib_type STREQUAL "EXECUTABLE") OR
-	    (lib_type STREQUAL "LIBRARY"))
+	    (lib_type STREQUAL "SHARED_LIBRARY") OR
+	    (lib_type STREQUAL "STATIC_LIBRARY"))
           add_custom_command(
             TARGET ${TARGET}
             POST_BUILD
