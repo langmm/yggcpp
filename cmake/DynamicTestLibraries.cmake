@@ -278,7 +278,9 @@ function(add_dynamic_dependencies TARGET)
     endif()
     if (DYNAMIC_TEST_LIBRARIES AND DYNAMIC_TEST_DEPENDENCIES)
       foreach(lib ${DYNAMIC_TEST_LIBRARIES})
-        if (TARGET ${lib})
+        get_target_property(lib_type ${lib} TYPE)
+	if ((lib_type STREQUAL "EXECUTABLE") OR
+	    (lib_type STREQUAL "LIBRARY"))
           add_custom_command(
             TARGET ${TARGET}
             POST_BUILD
