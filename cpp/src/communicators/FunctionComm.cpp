@@ -254,15 +254,15 @@ bool FunctionWrapper::_call(const rapidjson::Document& data_send,
   switch (language) {
   case C_LANGUAGE:
   case FORTRAN_LANGUAGE: {
-#ifdef _MSC_VER
-      std::cerr << "CALL: " << LANGUAGE_map.find(calling_language)->second << std::endl;
-      if (calling_language == FORTRAN_LANGUAGE) {
-	log_error() << "load: circumventing fortran load for MSVC: " <<
-	  address << std::endl;
-	// throw_error("FunctionWrapper: From Fortran");
-	return false;
-      }
-#endif
+// #ifdef _MSC_VER
+//       std::cerr << "CALL: " << LANGUAGE_map.find(calling_language)->second << std::endl;
+//       if (calling_language == FORTRAN_LANGUAGE) {
+// 	log_error() << "load: circumventing fortran load for MSVC: " <<
+// 	  address << std::endl;
+// 	// throw_error("FunctionWrapper: From Fortran");
+// 	return false;
+//       }
+// #endif
     generic_t c_data_send, c_data_recv;
     c_data_send.obj = (void*)(&data_send);
     c_data_recv.obj = (void*)(&data_recv);
