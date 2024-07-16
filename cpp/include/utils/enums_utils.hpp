@@ -11,6 +11,20 @@ namespace YggInterface {
     YGG_API std::string str_toupper(const std::string& inStr);
     YGG_API std::string str_tolower(const std::string& inStr);
     template<typename T1>
+    bool enum_key_search(const std::map<const T1, const std::string> map,
+			 const T1& key,
+			 std::string& val) {
+      for (typename std::map<const T1, const std::string>::const_iterator it = map.cbegin();
+	   it != map.cend(); it++) {
+	if (it->first == key) {
+	  val = it->second;
+	  return true;
+	}
+      }
+      return false;
+    }
+			 
+    template<typename T1>
     bool enum_value_search(const std::map<const T1, const std::string> map,
 			   const std::string& val,
 			   T1& key, bool allow_anycase=false,

@@ -73,7 +73,7 @@ void Comm_t::_before_open(const SupplementCommArgs& supp) {
     flags &= ~COMM_FLAG_VALID;
 
   log_debug() << "before_open: flags = [" << std::endl <<
-    utils::strBitFlags(flags, COMM_FLAG_map, "    ") << "]" << std::endl;
+    utils::strBitFlags(flags, COMM_FLAG_map(), "    ") << "]" << std::endl;
 
   thread_id = get_thread_id();
   char *allow_threading = getenv("YGG_THREADING");
@@ -107,7 +107,7 @@ void Comm_t::_before_open(const SupplementCommArgs& supp) {
 }
 void Comm_t::_init_name() {
   if (name.empty()) {
-    name = COMM_TYPE_map.find(type)->second + "." + address.address();
+    name = COMM_TYPE_map().find(type)->second + "." + address.address();
   }
 }
 void Comm_t::_after_open() {
@@ -229,7 +229,7 @@ void Comm_t::setOppEnv() const {
     std::string opp_name = envName(env_name, direction, true);
     std::string opp_comm = envComm(env_name, direction, true);
     std::string opp_addr = getOppAddress();
-    std::string opp_type = YggInterface::utils::COMM_TYPE_map.find(getOppCommType())->second;
+    std::string opp_type = YggInterface::utils::COMM_TYPE_map().find(getOppCommType())->second;
     log_debug() << "setOppEnv: " <<
       opp_name << " = " << opp_addr << ", " <<
       opp_comm << " = " << opp_type << std::endl;
@@ -385,16 +385,16 @@ std::vector<std::string> Comm_t::get_status_message(
   for (std::vector<std::string>::const_iterator it = extra_lines_before.begin();
        it != extra_lines_before.end(); it++)
     out.push_back(prefix + *it);
-  out.push_back(prefix + "commtype  = " + COMM_TYPE_map.find(getType())->second);
+  out.push_back(prefix + "commtype  = " + COMM_TYPE_map().find(getType())->second);
   out.push_back(prefix + "address   = " + getAddress());
-  out.push_back(prefix + "direction = " + DIRECTION_map.find(getDirection())->second);
-  out.push_back(prefix + "language  = " + LANGUAGE_map.find(getLanguage())->second);
+  out.push_back(prefix + "direction = " + DIRECTION_map().find(getDirection())->second);
+  out.push_back(prefix + "language  = " + LANGUAGE_map().find(getLanguage())->second);
   out.push_back(prefix + "open      = " + std::to_string(is_open()));
   out.push_back(prefix + "recv_tout = " + std::to_string(get_timeout_recv()));
   out.push_back(prefix + "flags     = [");
   std::string flagsPrefix = prefix + "    ";
-  for (std::map<const COMM_FLAG, const std::string>::const_iterator it = COMM_FLAG_map.begin();
-       it != COMM_FLAG_map.end(); it++) {
+  for (std::map<const COMM_FLAG, const std::string>::const_iterator it = COMM_FLAG_map().begin();
+       it != COMM_FLAG_map().end(); it++) {
     if (getFlags() & it->first)
       out.push_back(flagsPrefix + it->second);
   }
@@ -498,11 +498,11 @@ bool Comm_t::create_global_scope_comm(const SupplementCommArgs& supp) {
 }
 
 std::string Comm_t::logClass() const {
-  return COMM_TYPE_cls_map.find(getCommType())->second;
+  return COMM_TYPE_cls_map().find(getCommType())->second;
 }
 std::string Comm_t::logInst() const {
   std::string out = name + "-" +
-    DIRECTION_map.find(getDirection())->second;
+    DIRECTION_map().find(getDirection())->second;
   if (flags & COMM_FLAG_CLIENT_RESPONSE)
     out += "-CLIRES";
   else if (flags & COMM_FLAG_SERVER_RESPONSE)
@@ -513,7 +513,7 @@ bool Comm_t::setLanguage(LANGUAGE new_lang) {
   if (new_lang == NO_LANGUAGE) {
     char* model_language = std::getenv("YGG_MODEL_LANGUAGE");
     if (model_language) {
-      if (!enum_value_search(LANGUAGE_map,
+      if (!enum_value_search(LANGUAGE_map(),
 			     std::string(model_language),
 			     new_lang))
 	return false;
@@ -623,7 +623,7 @@ Comm_t* YggInterface::communicator::new_Comm_t(
     if (!default_comm.empty()) {
       YggLogDebug << "new_Comm_t: default comm from environment " <<
 	"variable = \"" << default_comm << "\"" << std::endl;
-      if (!enum_value_search(COMM_TYPE_map, default_comm, type)) {
+      if (!enum_value_search(COMM_TYPE_map(), default_comm, type)) {
 	YggLogError << "new_Comm_t: Invalid " << default_comm_env <<
 	  " value \"" << default_comm << "\"" << std::endl;
       }

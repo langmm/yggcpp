@@ -154,7 +154,7 @@ FunctionWrapper::FunctionWrapper(const std::string& f,
   if (parts.size() != 2)
     throw_error("FunctionWrapper: Error parsing function address \""
 		+ address + "\"");
-  if (!enum_value_search(LANGUAGE_map, parts[0], language, true)) {
+  if (!enum_value_search(LANGUAGE_map(), parts[0], language, true)) {
     throw_error("FunctionWrapper: Could not find language in "
 		+ address + " (language part = " + parts[0] + ")");
   }
@@ -196,7 +196,7 @@ FunctionWrapper::FunctionWrapper(const std::string& f,
   // }
   default: {
     throw_error("FunctionWrapper: Unsupported language \""
-		+ LANGUAGE_map.find(language)->second + "\"");
+		+ LANGUAGE_map().find(language)->second + "\"");
   }
   }
 }
@@ -240,7 +240,7 @@ FunctionWrapper::~FunctionWrapper() {
 #endif // YGGDRASIL_DISABLE_PYTHON_C_API
   default: {
     throw_error("~FunctionWrapper: Unsupported language \""
-		+ LANGUAGE_map.find(language)->second + "\"");
+		+ LANGUAGE_map().find(language)->second + "\"");
   }
   }
 }
@@ -313,7 +313,7 @@ bool FunctionWrapper::_call(const rapidjson::Document& data_send,
 #endif // YGGDRASIL_DISABLE_PYTHON_C_API
   default: {
     throw_error("_call: Unsupported language \""
-		+ LANGUAGE_map.find(language)->second + "\"");
+		+ LANGUAGE_map().find(language)->second + "\"");
   }
   }
   return false;

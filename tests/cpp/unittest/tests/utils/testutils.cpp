@@ -288,17 +288,17 @@ TEST(STR, string_format) {
 TEST(ENUM, enum_value_search) {
   COMM_TYPE key;
   key = NULL_COMM;
-  EXPECT_TRUE(enum_value_search(COMM_TYPE_cls_map, "ZMQComm", key));
+  EXPECT_TRUE(enum_value_search(COMM_TYPE_cls_map(), "ZMQComm", key));
   EXPECT_EQ(key, ZMQ_COMM);
   key = NULL_COMM;
-  EXPECT_TRUE(enum_value_search(COMM_TYPE_cls_map, "zmqcomm", key, true));
+  EXPECT_TRUE(enum_value_search(COMM_TYPE_cls_map(), "zmqcomm", key, true));
   EXPECT_EQ(key, ZMQ_COMM);
   key = NULL_COMM;
-  EXPECT_TRUE(enum_value_search(COMM_TYPE_cls_map, "ZMQComm2", key,
+  EXPECT_TRUE(enum_value_search(COMM_TYPE_cls_map(), "ZMQComm2", key,
 				false, "", "2"));
   EXPECT_EQ(key, ZMQ_COMM);
   key = NULL_COMM;
-  EXPECT_FALSE(enum_value_search(COMM_TYPE_cls_map, "INVALID", key));
+  EXPECT_FALSE(enum_value_search(COMM_TYPE_cls_map(), "INVALID", key));
 }
 
 TEST(utils, import_numpy_arrays) {

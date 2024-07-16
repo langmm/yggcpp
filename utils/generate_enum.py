@@ -102,21 +102,33 @@ def parse(src=None):
     return out
 
 
-def generate_map(name, members, tname=None):
+def generate_map(name, members, tname=None, in_header=False,
+                 lines_decl=None):
     if tname is None:
         tname = name
+    if lines_decl is None:
+        lines_decl = []
+    func_name_decl = f"{name}_map"
+    func_name = func_name_decl
+    if not in_header:
+        func_name = f"YggInterface::utils::{func_name}"
+    func_decl = f"const std::map<const {tname}, const std::string>& {func_name}()"
     lines = [
+        f"{func_decl} {{"
         "",
-        f"const std::map<const {tname}, const std::string> {name}_map {{"
+        f"  static const std::map<const {tname}, const std::string> map {{"
     ]
+    lines_decl.append(
+        f"{func_decl};".replace(func_name, func_name_decl)
+    )
     width = len(max(members, key=lambda x: len(x['name']))['name'])
     width_abbr = len(max(members, key=lambda x: len(x['abbr']))['abbr'])
     for x in members:
         if x['name'] in no_map_item.get(name, []):
             continue
         pad = (width_abbr - len(x['abbr'])) * ' '
-        lines.append(f"  {{{x['name']:{width}}, \"{x['abbr']}\"{pad}}},")
-    lines += ["};", ""]
+        lines.append(f"    {{{x['name']:{width}}, \"{x['abbr']}\"{pad}}},")
+    lines += ["  };", "  return map;", "};", ""]
     if name == 'COMM_TYPE':
         alt_members = []
         for x in members:
@@ -124,21 +136,29 @@ def generate_map(name, members, tname=None):
             if abbr not in ['IPC', 'ZMQ', 'MPI', 'RMQ', 'REST']:
                 abbr = abbr.title()
             alt_members.append(dict(x, abbr=(abbr + 'Comm')))
-        lines += generate_map(name + '_cls', alt_members, tname=name)
+        lines += generate_map(name + '_cls', alt_members, tname=name,
+                              in_header=in_header, lines_decl=lines_decl)
     elif name == 'COMM_FLAG':
         for sub in ['FILE_FLAG']:
             alt_members = [dict(x, abbr=x['abbr'].split(sub + '_')[-1])
                            for x in members
                            if x['name'].startswith(sub)]
-            lines += generate_map(sub, alt_members, tname=name)
+            lines += generate_map(sub, alt_members, tname=name,
+                                  in_header=in_header,
+                                  lines_decl=lines_decl)
     return lines
 
 
-def generate_maps(enums, dst=None):
-    if dst is None:
-        dst = os.path.join(os.path.dirname(os.path.dirname(__file__)),
-                           'cpp', 'include', 'utils', 'enums_maps.hpp')
-    lines = [
+def generate_maps(enums, dst_header=None, dst_src=None):
+    if dst_header is None:
+        dst_header = os.path.join(
+            os.path.dirname(os.path.dirname(__file__)),
+            'cpp', 'include', 'utils', 'enums_maps.hpp')
+    if dst_src is None:
+        dst_src = os.path.join(
+            os.path.dirname(os.path.dirname(__file__)),
+            'cpp', 'src', 'utils', 'enums_maps.cpp')
+    lines_decl = [
         '#pragma once',
         '',
         '#include <map>',
@@ -148,15 +168,24 @@ def generate_maps(enums, dst=None):
         'namespace YggInterface {',
         '  namespace utils {',
     ]
+    lines = [
+        '#include "utils/enums_maps.hpp"',
+        '',
+        'using namespace YggInterface::utils;',
+        '',
+    ]
     for k, v in enums.items():
         if k in no_map:
             continue
-        lines += ['    ' + x for x in generate_map(k, v)]
-    lines += [
+        ilines_decl = []
+        lines += generate_map(k, v, lines_decl=ilines_decl)
+        lines_decl += ['    ' + x for x in ilines_decl]
+    lines_decl += [
         '  }',
         '}',
     ]
-    do_write(dst, lines)
+    do_write(dst_src, lines)
+    do_write(dst_header, lines_decl)
 
 
 def generate_fortran_c_header(enums, dst=None):
@@ -312,11 +341,13 @@ def generate_fortran(enums, dst=None):
     do_write(dst, lines)
 
 
-def generate(src=None, dst_maps=None, dst_fortran=None,
+def generate(src=None, dst_maps_header=None, dst_maps_src=None,
+             dst_fortran=None,
              dst_fortran_c_header=None, dst_fortran_c_src=None,
              fortran_wrap_c_enums=False):
     enums = parse(src=src)
-    generate_maps(enums, dst=dst_maps)
+    generate_maps(enums, dst_header=dst_maps_header,
+                  dst_src=dst_maps_src)
     if fortran_wrap_c_enums:
         generate_fortran_c_header(enums, dst=dst_fortran_c_header)
         generate_fortran_c_src(enums, dst=dst_fortran_c_src)
