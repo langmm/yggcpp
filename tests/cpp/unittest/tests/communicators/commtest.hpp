@@ -611,6 +611,21 @@ bool example_transform_error(rapidjson::Document& msg) {
   COMM_SERI_TEST_PROXY_F(cls)						\
   COMM_SERI_TEST_LARGE(cls)
 
+#define DO_FUNCTION_CALL					\
+  FunctionComm sComm("test", addr, SEND);			\
+  FunctionComm rComm("test", addr, RECV);			\
+  rapidjson::Document data_send, data_recv, data_exp;		\
+  data_send.SetString("alpha", 5, data_send.GetAllocator());	\
+  data_exp.SetInt(5);						\
+  EXPECT_EQ(rComm.nmsg(), 0);					\
+  EXPECT_EQ(sComm.nmsg(), 0);					\
+  EXPECT_GE(sComm.send(data_send), 0);				\
+  EXPECT_EQ(rComm.nmsg(), 1);					\
+  EXPECT_EQ(sComm.nmsg(), 0);					\
+  EXPECT_GE(rComm.recv(data_recv), 0);				\
+  EXPECT_EQ(data_recv, data_exp)
+
+
 #ifdef ELF_AVAILABLE
 
 #define ELF_SEND_T(type, ret)			\

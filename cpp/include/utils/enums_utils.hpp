@@ -33,8 +33,7 @@ namespace YggInterface {
       for (typename std::map<const T1, const std::string>::const_iterator it = map.cbegin();
 	   it != map.cend(); it++) {
 	if ((it->second == val) ||
-	    (allow_anycase && (val == str_toupper(it->second) ||
-			       val == str_tolower(it->second))) ||
+	    (allow_anycase && (str_toupper(val) == str_toupper(it->second))) ||
 	    ((!prefix.empty()) && (val == (prefix + it->second))) ||
 	    ((!suffix.empty()) && (val == (it->second + suffix)))) {
 	  key = it->first;

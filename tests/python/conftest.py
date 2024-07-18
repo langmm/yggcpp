@@ -10,6 +10,16 @@ import pytest
 def pytest_addoption(parser):
     parser.addoption("--dynamic-testlib-dir", action="store",
                      default=os.path.dirname(os.path.dirname(__file__)))
+    parser.addoption("--external-testlib", action="append",
+                     default=[])
+
+
+def pytest_generate_tests(metafunc):
+    if "external_testlib" in metafunc.fixturenames:
+        metafunc.parametrize(
+            "external_testlib",
+            metafunc.config.getoption("external_testlib"),
+            scope="class")
 
 
 @pytest.fixture(scope="session")

@@ -423,6 +423,7 @@ endif()
 if(BUILD_FORTRAN_LIBRARY)
   set(BUILD_CPP_LIBRARY ON)
 endif()
+set(BUILD_C_LIBRARY ${BUILD_CPP_LIBRARY})
 
 ##################
 # Coverage       #

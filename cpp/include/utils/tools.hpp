@@ -172,6 +172,10 @@ namespace utils {
   extern T name args;
 #endif // _OPENMP
 #endif // _MSC_VER
+#define YGG_THREAD_LOCAL_VAR(T, name, args)	\
+  thread_local T name args;
+#define YGG_THREAD_LOCAL_VAR_DEF(T, name, args)	\
+  thread_local T name args;
 
 /*! @brief Macro to open section that should be synchronized across
   threads, typically where thread global variables are acessed. */

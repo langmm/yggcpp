@@ -9,8 +9,30 @@
 #include <dlfcn.h>
 #endif
 
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+YGG_THREAD_LOCAL_VAR_DEF(bool, YggInterface::communicator::_with_gil, = false)
+#endif
+
 using namespace YggInterface::communicator;
 using namespace YggInterface::utils;
+
+#ifdef RAPIDJSON_YGGDRASIL_PYTHON
+#define YGG_EMBED_PYTHON_GIL_BEGIN		\
+  PyGILState_STATE gstate;			\
+  bool _prev_with_gil = _with_gil;		\
+  if (!_prev_with_gil) {			\
+    gstate = PyGILState_Ensure();		\
+    _with_gil = true;				\
+  }
+#define YGG_EMBED_PYTHON_GIL_END		\
+  if (!_prev_with_gil) {			\
+    PyGILState_Release(gstate);			\
+    _with_gil = false;				\
+  }
+#else
+#define YGG_EMBED_PYTHON_GIL_BEGIN
+#define YGG_EMBED_PYTHON_GIL_END
+#endif
 
 /////////////////////////////////////////////////////////
 // DynamicLibrary
@@ -178,10 +200,9 @@ FunctionWrapper::FunctionWrapper(const std::string& f,
   }
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
   case PYTHON_LANGUAGE: {
+    YGG_EMBED_PYTHON_GIL_BEGIN;
     func = (void*)utils::import_python_object(parts[1].c_str());
-    if (func == NULL)
-      throw_error("FunctionWrapper: Error importing python function: "
-		  + parts[1]);
+    YGG_EMBED_PYTHON_GIL_END;
     break;
   }
 #endif // YGGDRASIL_DISABLE_PYTHON_C_API
@@ -199,6 +220,10 @@ FunctionWrapper::FunctionWrapper(const std::string& f,
 		+ LANGUAGE_map().find(language)->second + "\"");
   }
   }
+  if ((!func) && (!pointer_provided))
+    throw_error("FunctionWrapper: Failed to initialize "
+		+ LANGUAGE_map().find(language)->second + " function: "
+		+ parts[1]);
 }
 
 FunctionWrapper::FunctionWrapper(const std::string& name,
@@ -231,9 +256,11 @@ FunctionWrapper::~FunctionWrapper() {
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
   case PYTHON_LANGUAGE: {
     if (func) {
+      YGG_EMBED_PYTHON_GIL_BEGIN;
       PyObject* py_func = (PyObject*)func;
       func = nullptr;
       Py_CLEAR(py_func);
+      YGG_EMBED_PYTHON_GIL_END;
     }
     break;
   }
@@ -254,15 +281,6 @@ bool FunctionWrapper::_call(const rapidjson::Document& data_send,
   switch (language) {
   case C_LANGUAGE:
   case FORTRAN_LANGUAGE: {
-// #ifdef _MSC_VER
-//       std::cerr << "CALL: " << LANGUAGE_map.find(calling_language)->second << std::endl;
-//       if (calling_language == FORTRAN_LANGUAGE) {
-// 	log_error() << "load: circumventing fortran load for MSVC: " <<
-// 	  address << std::endl;
-// 	// throw_error("FunctionWrapper: From Fortran");
-// 	return false;
-//       }
-// #endif
     generic_t c_data_send, c_data_recv;
     c_data_send.obj = (void*)(&data_send);
     c_data_recv.obj = (void*)(&data_recv);
@@ -274,41 +292,48 @@ bool FunctionWrapper::_call(const rapidjson::Document& data_send,
   }
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
   case PYTHON_LANGUAGE: {
-    PyObject* py_args = NULL;
-    PyObject* py_args_orig = data_send.GetPythonObjectRaw();
+    bool py_out = false;
+    PyObject *py_args = NULL, *py_args_orig = NULL, *py_result = NULL;
+    YGG_EMBED_PYTHON_GIL_BEGIN;
+    py_args_orig = data_send.GetPythonObjectRaw();
     if (py_args_orig == NULL) {
       log_error() << "_call: Error converting arguments from C++ to Python: " <<
 	data_send << std::endl;
-      return false;
+      goto cleanup;
     }
     if (PyList_Check(py_args_orig)) {
       py_args = PyList_AsTuple(py_args_orig);
       Py_CLEAR(py_args_orig);
       if (py_args == NULL) {
 	log_error() << "_call: Error converting arguments from Python list to Python tuple" << std::endl;
-	return false;
+	goto cleanup;
       }
     } else {
       py_args = PyTuple_Pack(1, py_args_orig);
       Py_CLEAR(py_args_orig);
       if (py_args == NULL) {
 	log_error() << "_call: Error packing arguments into Python tuple" << std::endl;
-	return false;
+	goto cleanup;
       }
     }
-    PyObject* py_result = PyObject_Call((PyObject*)func, py_args, NULL);
+    py_result = PyObject_Call((PyObject*)func, py_args, NULL);
     Py_CLEAR(py_args);
     if (py_result == NULL) {
       log_error() << "_call: Python call failed" << std::endl;
-      return false;
+      goto cleanup;
     }
     if (!data_recv.SetPythonObjectRaw(py_result, data_recv.GetAllocator())) {
       Py_CLEAR(py_result);
       log_error() << "_call: Error converting result from Python to C++" << std::endl;
-      return false;
+      goto cleanup;
     }
+    py_out = true;
+    cleanup:
+    Py_CLEAR(py_args);
+    Py_CLEAR(py_args_orig);
     Py_CLEAR(py_result);
-    return true;
+    YGG_EMBED_PYTHON_GIL_END;
+    return py_out;
   }
 #endif // YGGDRASIL_DISABLE_PYTHON_C_API
   default: {
@@ -377,7 +402,7 @@ void FunctionComm::_open(bool call_base) {
   Comm_t::_init_name();
   if (!handle) {
     if (created) {
-      throw std::runtime_error("FuntionComm::_open: Failed to get function wrapper for \"" + this->address.address() + "\"");
+      throw std::runtime_error("FunctionComm::_open: Failed to get function wrapper for \"" + this->address.address() + "\"");
     } else {
       handle = new FunctionWrapper(address.address(), false, language);
       ctx->register_function(handle);

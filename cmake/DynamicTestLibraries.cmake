@@ -86,6 +86,11 @@ function(add_external_test_library TARGET)
     if (NOT ARGS_LANGUAGE)
       file2language(${ARGS_SOURCES} ARGS_LANGUAGE)
     endif()
+    string(TOUPPER ${ARGS_LANGUAGE} LANGUAGE_UPPER)
+    if (NOT (BUILD_${ARGS_LANGUAGE}_LIBRARY OR
+             BUILD_${LANGUAGE_UPPER}_LIBRARY))
+      return()
+    endif()
     is_compiled_language(${ARGS_LANGUAGE} IS_COMPILED)
     if (IS_COMPILED)
       add_dynamic_test_library(
@@ -231,6 +236,12 @@ function(add_embedded_test_script TARGET)
   if (NOT ARGS_LANGUAGE)
     file2language(${ARGS_SOURCES} ARGS_LANGUAGE)
   endif()
+  # TODO: Only disabled until embedded languages added
+  # list(FIND YGG_INSTALL_DEPS ${ARGS_LANGUAGE} IDX_LANGUAGE)
+  # if (IDX_LANGUAGE STREQUAL "-1")
+  #   message(STATUS "Embedded language ${ARGS_LANGUAGE} NOT enabled")
+  #   return()
+  # endif()
   add_custom_target(${TARGET})
   get_dynamic_test_properties(
     DYNAMIC_TEST_DEFINITIONS
@@ -262,10 +273,10 @@ function(add_dynamic_dependencies TARGET)
   message(STATUS "DYNAMIC_TEST_DEPENDENCIES[${TARGET}] = ${DYNAMIC_TEST_DEPENDENCIES}")
   message(STATUS "EMBEDDED_TEST_SCRIPTS[${TARGET}] = ${EMBEDDED_TEST_SCRIPTS}")
   message(STATUS "ARGS_WORKING_DIR = ${ARGS_WORKING_DIR}")
-  if (NOT ARGS_WORKING_DIR)
-    set(ARGS_WORKING_DIR $<TARGET_FILE_DIR:${TARGET}>)
-  endif()
   if (TARGET ${TARGET})
+    if (NOT ARGS_WORKING_DIR)
+      set(ARGS_WORKING_DIR $<TARGET_FILE_DIR:${TARGET}>)
+    endif()
     if (DYNAMIC_TEST_LIBRARIES)
       add_dependencies(${TARGET} ${DYNAMIC_TEST_LIBRARIES})
     endif()
@@ -304,18 +315,67 @@ function(add_dynamic_dependencies TARGET)
         COMMAND_EXPAND_LISTS
       )
     endforeach()
+  elseif(TEST ${TARGET})
+    message(STATUS "TARGET \"${TARGET}\" is a cmake test")
+    if (NOT ARGS_WORKING_DIR)
+      set(ARGS_WORKING_DIR ${CMAKE_CURRENT_BINARY_DIR})
+    endif()
+    message(STATUS "ARGS_WORKING_DIR = ${ARGS_WORKING_DIR}")
+    set(target_setup ${TARGET}_setup_external)
+    foreach(script ${EMBEDDED_TEST_SCRIPTS})
+      set(ifixture copy_${script})
+      add_test(
+        ${ifixture}
+	COMMAND ${CMAKE_COMMAND} -E copy ${script} ${ARGS_WORKING_DIR}
+      )
+      set_tests_properties(
+        ${ifixture}
+	PROPERTIES FIXTURES_SETUP ${target_setup}
+      )
+    endforeach()
+    set_tests_properties(
+      ${TARGET}
+      PROPERTIES FIXTURES_REQUIRED ${target_setup}
+    )
   else()
     message(STATUS "TARGET \"${TARGET}\" is not a cmake target")
+    if (NOT ARGS_WORKING_DIR)
+      set(ARGS_WORKING_DIR ${CMAKE_CURRENT_BINARY_DIR})
+    endif()
+    message(STATUS "ARGS_WORKING_DIR = ${ARGS_WORKING_DIR}")
+    foreach(script ${EMBEDDED_TEST_SCRIPTS})
+      add_custom_command(
+        OUTPUT ${ARGS_WORKING_DIR}/${script}
+	COMMAND ${CMAKE_COMMAND} -E copy ${script} ${ARGS_WORKING_DIR}
+        COMMAND_EXPAND_LISTS
+      )
+    endforeach()
   endif()
 endfunction()
 
 
-# function(generate_dynamic_tests TARGET CONFIG_FILE OUTPUT_TEMPLATE)
-#   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+function(generate_dynamic_tests)
+  set(oneValueArgs APPEND_TO)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  foreach(CONFIG_FILE ${ARGS_UNPARSED_ARGUMENTS})
+    cmake_path(GET CONFIG_FILE FILENAME OUTPUT_TEMPLATE)
+    cmake_path(REMOVE_EXTENSION OUTPUT_TEMPLATE LAST_ONLY)
+    foreach(LANGUAGE LIBRARY IN ZIP_LISTS DYNAMIC_TEST_LANGUAGES DYNAMIC_TEST_LIBRARIES)
+      message(STATUS "GENERATE_DYNAMIC_TESTS: CONFIG_FILE = ${CONFIG_FILE}, LANGUAGE = ${LANGUAGE}, LIBRARY = ${LIBRARY}")
+      string(TOLOWER ${LANGUAGE} language)
+      string(REPLACE "language" "${language}" OUTPUT ${OUTPUT_TEMPLATE})
+      set(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${OUTPUT})
   
-#   configure_file(
-#     ${CONFIG_FILE}
-#     ${build_dir}/external_config.cmake
-#     @ONLY)
-  
-# endfunction()
+      configure_file(
+        ${CONFIG_FILE}
+        ${OUTPUT}
+        @ONLY)
+      if (ARGS_APPEND_TO)
+        list(APPEND ${ARGS_APPEND_TO} ${OUTPUT})
+      endif()
+    endforeach()
+  endforeach()
+  if (ARGS_APPEND_TO)
+    set(${ARGS_APPEND_TO} ${${ARGS_APPEND_TO}} PARENT_SCOPE)
+  endif()
+endfunction()

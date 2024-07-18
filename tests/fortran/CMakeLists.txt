@@ -5,6 +5,7 @@ if ((NOT FORCE_SPLIT_CXXFORTRAN) AND (NOT MSVC))
     enable_language(Fortran)
 endif()
 enable_testing ()
+include(DynamicTestLibraries)
 
 set(FORTRAN_TEST_LIBRARIES ${YGG_TARGET_FORTRAN})
 set(FORTRAN_TEST_INCLUDE_DIRS ${YGG_FORTRAN_MOD_DIR})
@@ -26,7 +27,7 @@ endfunction ()
 function (mangle_fortran_filename_list MANGLED)
     set (TMP)
     foreach (TFILE ${ARGN})
-        cmake_path(RELATIVE_PATH TFILE)
+        cmake_path(GET TFILE FILENAME TFILE)
         string (REGEX REPLACE ".f90$" "" TESTNAME ${TFILE})
 	mangle_fortran_name (C_TESTNAME ${TESTNAME})
 	list (APPEND TMP ${C_TESTNAME})
@@ -88,9 +89,11 @@ endfunction ()
 
 
 file(GLOB files "*.f90")
+generate_dynamic_tests(
+  test_ygg_function_language_1.f90.in APPEND_TO files
+)
 message(STATUS "files = ${files}")
 add_fortran_test_executable (fortran_testsuite ${files})
 cover_test(fortran_testsuite)
 
-include(DynamicTestLibraries)
 add_dynamic_dependencies(fortran_testsuite)

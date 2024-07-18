@@ -1,4 +1,5 @@
 include(CheckCXXCompilerFlag)
+include(DynamicTestLibraries)
 
 set_property(DIRECTORY PROPERTY COMPILE_OPTIONS ${EXTRA_CXX_FLAGS})
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -28,6 +29,10 @@ endif()
 
 include(GoogleTest)
 file(GLOB files "${CMAKE_CURRENT_SOURCE_DIR}/tests/communicators/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/tests/utils/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/tests/datatypes/dtypetest.cpp")
+generate_dynamic_tests(
+  "${CMAKE_CURRENT_SOURCE_DIR}/tests/communicators/functioncommtest_language.cpp.in"
+  APPEND_TO files
+)
 
 include_directories(${TEST_INCLUDE_DIRS})
 if(CONDA_PREFIX)
@@ -37,12 +42,11 @@ endif()
 add_executable(unittest ${CMAKE_CURRENT_SOURCE_DIR}/unittest.cpp ${CMAKE_CURRENT_SOURCE_DIR}/elf_hook.cpp ${CMAKE_CURRENT_SOURCE_DIR}/mock.cpp ${files})
 target_link_libraries(unittest ${TEST_LIBRARIES})
 target_include_directories(unittest PRIVATE ${TEST_INCLUDE_DIRS})
-include(DynamicTestLibraries)
-add_dynamic_dependencies(unittest)
 message(STATUS "TEST_LIBRARIES = ${TEST_LIBRARIES}")
 message(STATUS "TEST_INCLUDE_DIRS = ${TEST_INCLUDE_DIRS}")
 cmake_path(GET CMAKE_CURRENT_SOURCE_DIR PARENT_PATH PARENT_SOURCE_DIR)
 cmake_path(GET CMAKE_CURRENT_BINARY_DIR PARENT_PATH PARENT_BINARY_DIR)
+add_dynamic_dependencies(unittest WORKING_DIR ${PARENT_BINARY_DIR})
 if (WIN32)
     # There is a bug which prevents these environment variables from
     # being available during test discovery on windows
@@ -106,11 +110,6 @@ if(NOT MSVC)
 
 endif(NOT MSVC)
 
-add_custom_command(
-        TARGET unittest POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy
-                ${CMAKE_CURRENT_SOURCE_DIR}/example_python.py
-                ${PARENT_BINARY_DIR}/example_python.py)
 add_custom_command(
         TARGET unittest POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy

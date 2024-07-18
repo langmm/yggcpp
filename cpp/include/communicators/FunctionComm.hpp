@@ -19,6 +19,8 @@
 namespace YggInterface {
   namespace communicator {
 
+    extern YGG_THREAD_LOCAL_VAR(bool, _with_gil, )
+
     /** @brief C++ function type using C++ types */
     typedef std::function<bool(const rapidjson::Document&, rapidjson::Document&)> cxx_function;
     /** @brief C++ function type using C description */

@@ -88,7 +88,7 @@ static int register_enums(PyObject* module) {
 #define REGISTER_ENUM(name, var, map, prefix, suffix)			\
     {									\
       PyObject* tmp = PyDict_New();					\
-      if (register_enum(tmp, YggInterface::utils::map, prefix, suffix) < 0) { \
+      if (register_enum(tmp, YggInterface::utils::map(), prefix, suffix) < 0) { \
 	Py_DECREF(tmp);							\
 	return -1;							\
       }									\
@@ -110,7 +110,7 @@ static int register_enums(PyObject* module) {
 #undef REGISTER_ENUM
     {
       PyObject* tmp = PyDict_New();
-      if (register_enum(tmp, YggInterface::utils::COMM_TYPE_map,
+      if (register_enum(tmp, YggInterface::utils::COMM_TYPE_map(),
 			"", "", true) < 0) {
 	Py_CLEAR(tmp);
 	return -1;

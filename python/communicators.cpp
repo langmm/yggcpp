@@ -674,7 +674,7 @@ static int _parse_enum_string(const std::string& desc,
 
 static int _parse_direction(PyObject* dirnPy, int& dirn) {
   return _parse_enum_string("direction", dirnPy, dirn,
-			    YggInterface::utils::DIRECTION_map,
+			    YggInterface::utils::DIRECTION_map(),
 			    (int)(DIRECTION::SEND),
 			    false, true);
 }
@@ -692,11 +692,11 @@ static int _parse_schema(PyObject* schemaPy, rapidjson::Document& schema) {
 static int _parse_commtype(PyObject* commtypePy, int& commtype) {
   // TODO: Verify that commtype is installed or throw Python error
   if (_parse_enum_string("commtype", commtypePy, commtype,
-			 YggInterface::utils::COMM_TYPE_cls_map,
+			 YggInterface::utils::COMM_TYPE_cls_map(),
 			 (int)(COMM_TYPE::DEFAULT_COMM), true) >= 0)
     return 0;
   return _parse_enum_string("commtype", commtypePy, commtype,
-			    YggInterface::utils::COMM_TYPE_map,
+			    YggInterface::utils::COMM_TYPE_map(),
 			    (int)(COMM_TYPE::DEFAULT_COMM),
 			    false, true, "", "_COMM");
 }
@@ -721,7 +721,7 @@ static int _parse_timeout_recv(PyObject* recv_timeoutPy,
 
 static int _parse_language(PyObject* languagePy, int& language) {
   return _parse_enum_string("language", languagePy, language,
-			    YggInterface::utils::LANGUAGE_map,
+			    YggInterface::utils::LANGUAGE_map(),
 			    (int)(LANGUAGE::PYTHON_LANGUAGE),
 			    false, true);
 }
