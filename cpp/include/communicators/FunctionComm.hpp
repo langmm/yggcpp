@@ -19,8 +19,6 @@
 namespace YggInterface {
   namespace communicator {
 
-    extern YGG_THREAD_LOCAL_VAR(bool, _with_gil, )
-
     /** @brief C++ function type using C++ types */
     typedef std::function<bool(const rapidjson::Document&, rapidjson::Document&)> cxx_function;
     /** @brief C++ function type using C description */
@@ -74,7 +72,6 @@ namespace YggInterface {
      * @brief Function wrapper.
      */
     class FunctionWrapper : public YggInterface::utils::LogBase {
-      FunctionWrapper(const FunctionWrapper&) = delete;
       FunctionWrapper& operator=(const FunctionWrapper&) = delete;
     public:
       
@@ -87,25 +84,44 @@ namespace YggInterface {
        * @param[in] f Function name and import information.
        * @param[in] pointer_provided If true, the constructor is being
        *   called with an explicit function pointer.
+       * @param[in] is_async If true, the function will be called from
+       *   a C++ thread.
        * @param[in] calling_language Language calling the function.
+       * @param[in] flags Bitwise flags describing the function.
        */
       FunctionWrapper(const std::string& f,
 		      bool pointer_provided=false,
-		      const LANGUAGE calling_language=NO_LANGUAGE);
+		      const LANGUAGE calling_language=NO_LANGUAGE,
+		      int flags=0);
       /**
        * Constructor for wrapping a C++ function
        * @param[in] name Name of the function
        * @param[in] f Function
+       * @param[in] is_async If true, the function will be called from
+       *   a C++ thread.
        */
-      FunctionWrapper(const std::string& name, cxx_function& f);
+      FunctionWrapper(const std::string& name, cxx_function& f,
+		      int flags=0);
       /**
        * Constructor for wrapping a C function
        * @param[in] name Name of the function
        * @param[in] f Function
+       * @param[in] is_async If true, the function will be called from
+       *   a C++ thread.
        */
-      FunctionWrapper(const std::string& name, c_function& f);
+      FunctionWrapper(const std::string& name, c_function& f,
+		      int flags=0);
       /**
-       * Destructor
+       * @brief Copy constructor
+       * @param[in] rhs Function wrapper to copy
+       * @param[in] calling_language Language calling the function.
+       * @param[in] flags Flags to add to the returned
+       */
+      FunctionWrapper(const FunctionWrapper& rhs,
+		      const LANGUAGE calling_language=NO_LANGUAGE,
+		      int flags=0);
+      /**
+       * @brief Destructor
        */
       ~FunctionWrapper();
 
@@ -136,6 +152,7 @@ namespace YggInterface {
       std::string address; /**< Name of the function */
       LANGUAGE language;   /**< Language the function is written in */
       LANGUAGE calling_language; /**< Language that function is called from */
+      int flags;           /**< Bitwise flags describing the function */
       
     private:
       DynamicLibrary* library; /**< Library containing the function */

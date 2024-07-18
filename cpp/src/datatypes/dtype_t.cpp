@@ -468,7 +468,9 @@ extern "C" {
     if (x != NULL) {
       if (x->obj != NULL) {
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
+	YGGDRASIL_PYGIL_BEGIN
 	Py_DECREF(x->obj);
+	YGGDRASIL_PYGIL_END
 #endif // YGGDRASIL_DISABLE_PYTHON_C_API
 	x->obj = NULL;
       }
@@ -479,7 +481,9 @@ extern "C" {
     python_t out = { NULL };
     if (x.obj != NULL) {
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
+      YGGDRASIL_PYGIL_BEGIN
       Py_INCREF(x.obj);
+      YGGDRASIL_PYGIL_END
 #endif // YGGDRASIL_DISABLE_PYTHON_C_API
       out.obj = x.obj;
     }
@@ -498,7 +502,9 @@ extern "C" {
 	     "remaining compilation products in order to trigger yggdrasil "
 	     "to recompile your model during the next run.\n");
 #else
+      YGGDRASIL_PYGIL_BEGIN
       PyObject_Print(x.obj, stdout, 0);
+      YGGDRASIL_PYGIL_END
 #endif
 #endif // YGGDRASIL_DISABLE_PYTHON_C_API
     } else {

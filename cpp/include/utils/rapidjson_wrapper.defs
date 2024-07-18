@@ -4,6 +4,14 @@ int rapidjson_NUMPY_IMPORTED = 0;
 
 #ifdef YGGDRASIL_DISABLE_PYTHON_C_API
 
+RAPIDJSON_WRAPPER_DEFS_ bool YggInterface::utils::global_PyGILState(bool) {
+  return true;
+}
+
+RAPIDJSON_WRAPPER_DEFS_ bool YggInterface::utils::global_PyThreadState(bool) {
+  return true;
+}
+
 RAPIDJSON_WRAPPER_DEFS_ bool YggInterface::utils::initialize_python(const std::string) {
   return true;
 }
@@ -35,10 +43,16 @@ RAPIDJSON_WRAPPER_DEFS_ PyObject* YggInterface::utils::import_python_object(
 
 #else // YGGDRASIL_DISABLE_PYTHON_C_API
 
+RAPIDJSON_WRAPPER_DEFS_ bool YggInterface::utils::global_PyGILState(bool release) {
+  return rapidjson::global_PyGILState(release);
+}
+
+RAPIDJSON_WRAPPER_DEFS_ bool YggInterface::utils::global_PyThreadState(bool restore) {
+  return rapidjson::global_PyThreadState(restore);
+}
+
 RAPIDJSON_WRAPPER_DEFS_ bool YggInterface::utils::initialize_python(const std::string error_prefix) {
   std::string err;
-  if (getenv("YGG_PREVENT_PYTHON_INITIALIZATION"))
-    return true;
   try {
     err = rapidjson::initialize_python(error_prefix, true);
   } catch (std::exception& e) {

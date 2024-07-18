@@ -525,6 +525,17 @@ bool Comm_t::setLanguage(LANGUAGE new_lang) {
     language = new_lang;
   return true;
 }
+
+bool Comm_t::PyGIL_release(bool force) const {
+  if (force || (getFlags() & COMM_FLAG_REQUIRES_PYGIL))
+    return utils::global_PyThreadState();
+  return true;
+}
+bool Comm_t::PyGIL_restore(bool force) const {
+  if (force || (getFlags() & COMM_FLAG_REQUIRES_PYGIL))
+    return utils::global_PyThreadState(true);
+  return true;
+}
   
 bool Comm_t::addSchema(const Metadata& s, const DIRECTION dir) {
   return getMetadata(dir).fromMetadata(s);
@@ -755,70 +766,76 @@ int Comm_t::send_raw(const char *data, const size_t &len) {
 int Comm_t::send_raw(Header& head) {
   if (global_comm)
     return global_comm->send_raw(head);
+  int ret = -1;
+  Comm_t* xmulti = NULL;
+  YGGCOMM_PYGIL_ALLOW_THREADS_BEGIN(send_raw, -1)
   if (direction != SEND && type != SERVER_COMM) {
     log_debug() << "send_raw: Attempt to send though a communicator set up to receive" << std::endl;
-    return -1;
+    goto cleanup;
   }
   log_debug() << "send_raw: Sending " << head.size_data <<
     " bytes to " << address.address() << std::endl;
   if (is_closed()) {
     log_error() << "send_raw: Communicator closed." << std::endl;
-    return -1;
+    goto cleanup;
   }
   if (head.flags & HEAD_FLAG_NO_HEAD) {
     log_debug() << "send_raw: Sending data in single message. " << is_eof(head.data[0]) << ", " << (flags & COMM_FLAG_USED_SENT) << std::endl;
-    int out = send_single(head);
-    if (out >= 0)
+    ret = send_single(head);
+    if (ret >= 0)
       setFlags(head, SEND);
-    return out;
+    goto cleanup;
   }
   if (!create_header_send(head)) {
     log_error() << "send_raw: Failed to create header" << std::endl;
-    return -1;
+    goto cleanup;
   }
   if (head.format() < 0) {
     log_error() << "send_raw: Error formatting message with header." << std::endl;
-    return -1;
+    goto cleanup;
   }
   log_debug() << "send_raw: Formated header" << std::endl;
-  Comm_t* xmulti = NULL;
   if (head.flags & HEAD_FLAG_MULTIPART) {
     log_debug() << "send_raw: Sending message in multiple parts" << std::endl;
     xmulti = create_worker_send(head);
     if (!xmulti) {
       log_error() << "send_raw: Error creating worker" << std::endl;
-      return -1;
+      goto cleanup;
     }
   }
   if (send_single(head) < 0) {
     log_error() << "send_raw: Failed to send header." << std::endl;
-    return -1;
+    goto cleanup;
   }
   if (!(head.flags & HEAD_FLAG_MULTIPART)) {
     log_debug() << "send_raw: " << head.size_msg << " bytes completed" << std::endl;
     setFlags(head, SEND);
-    return head.size_msg;
+    ret = head.size_msg;
+    goto cleanup;
   }
   while ((head.offset + head.size_msg) < head.size_curr) {
     if (xmulti->send_single(head) < 0) {
       log_error() << "send_raw: send interupted at " << head.offset << " of " << head.size_curr << " bytes" << std::endl;
-      return -1;
+      goto cleanup;
     }
     log_debug() << "send_raw: " << head.offset << " of " << head.size_curr << " bytes sent to " << address.address() << std::endl;
   }
   log_debug() << "send_raw: returns " << head.size_curr << std::endl;
   setFlags(head, SEND);
-  return head.size_curr;
+  ret = head.size_curr;
+ cleanup:
+  YGGCOMM_PYGIL_ALLOW_THREADS_END(send_raw, -1)
+  return ret;
 }
 int Comm_t::send(const rapidjson::Document& data, bool not_generic) {
-  log_debug() << "send: begin" << std::endl;
-  YggInterface::utils::Metadata& meta = getMetadata(SEND);
-  if (!(meta.hasType() || not_generic))
-    meta.setGeneric();
   char* buf = NULL;
   size_t buf_siz = 0;
   int ret = -1, msg_siz = 0;
   rapidjson::Document d;
+  log_debug() << "send: begin" << std::endl;
+  YggInterface::utils::Metadata& meta = getMetadata(SEND);
+  if (!(meta.hasType() || not_generic))
+    meta.setGeneric();
   d.CopyFrom(data, d.GetAllocator(), true);
   if (flags & COMM_FLAG_DONT_SERIALIZE) {
     ret = meta.serialize_updates(d);
@@ -828,7 +845,7 @@ int Comm_t::send(const rapidjson::Document& data, bool not_generic) {
   }
   if (ret < 0) {
     log_error() << "send: serialization error" << std::endl;
-    return ret;
+    goto cleanup;
   }
   if (meta.checkFilter()) {
     log_debug() << "send: Skipping filtered message" << std::endl;
@@ -838,6 +855,7 @@ int Comm_t::send(const rapidjson::Document& data, bool not_generic) {
   }
   meta.GetAllocator().Free(buf);
   log_debug() << "send: returns " << ret << std::endl;
+ cleanup:
   return ret;
 }
 int Comm_t::send(const rapidjson::Value& data, bool not_generic) {
@@ -886,20 +904,26 @@ int64_t Comm_t::get_timeout_recv() const {
 int Comm_t::wait_for_recv(const int64_t& tout) const {
   if (global_comm)
     return global_comm->wait_for_recv(tout);
-  log_debug() << "wait_for_recv: timeout = " << tout <<
+  int N = -1;
+  YGGCOMM_PYGIL_ALLOW_THREADS_BEGIN(wait_for_recv, -1)
+  log_debug() << "Comm_t::wait_for_recv: timeout = " << tout <<
     " microseconds" << std::endl;
   TIMEOUT_LOOP(tout, YGG_SLEEP_TIME) {
-    int N = nmsg(RECV);
+    N = nmsg(RECV);
     if (N < 0) {
       log_error() << "wait_for_recv: Error in checking for messages" << std::endl;
-      return -1;
+      N = -1;
+      goto cleanup;
     } else if (N > 0) {
-      return N;
+      goto cleanup;
     }
     log_debug() << "wait_for_recv: No messages, sleep " << YGG_SLEEP_TIME << " (timeout = " << tout << ")" << std::endl;
     AFTER_TIMEOUT_LOOP(YGG_SLEEP_TIME);
   }
-  return nmsg(RECV);
+  N = nmsg(RECV);
+ cleanup:
+  YGGCOMM_PYGIL_ALLOW_THREADS_END(wait_for_recv, -1)
+  return N;
 }
 long Comm_t::recv_raw(char*& data, const size_t &len) {
   if (global_comm)
@@ -910,49 +934,54 @@ long Comm_t::recv_raw(char*& data, const size_t &len) {
 long Comm_t::recv_raw(Header& head) {
   if (global_comm)
     return global_comm->recv_raw(head);
+  long ret = -1;
+  Comm_t* xmulti = NULL;
+  YGGCOMM_PYGIL_ALLOW_THREADS_BEGIN(recv_raw, -1)
   log_debug() << "recv_raw: Receiving from " << address.address() << std::endl;
   if (direction != RECV && type != CLIENT_COMM) {
     log_debug() << "recv_raw: Attempt to receive from communicator set up to send" << std::endl;
-    return -1;
+    goto cleanup;
   }
-  long ret = -1;
   while (true) {
     if (is_closed()) {
       log_error() << "recv_raw: Communicator closed." << std::endl;
-      return -1;
+      goto cleanup;
     }
     if (wait_for_recv(get_timeout_recv()) <= 0) {
       log_error() << "recv_raw: No messages waiting" << std::endl;
-      return -1;
+      goto cleanup;
     }
     ret = recv_single(head);
     if (ret < 0) {
       log_error() << "recv_raw: Failed to receive header" << std::endl;
-      return ret;
+      goto cleanup;
     }
     if (!(head.flags & HEAD_FLAG_REPEAT))
       break;
     head.reset(HEAD_RESET_KEEP_BUFFER);
+    ret = -1;
   }
   if (head.flags & HEAD_FLAG_EOF) {
     log_debug() << "recv_raw: EOF received" << std::endl;
     setFlags(head, RECV);
-    return -2;
+    ret = -2;
+    goto cleanup;
   }
-  Comm_t* xmulti = NULL;
   if (head.flags & HEAD_FLAG_MULTIPART) {
     log_debug() << "recv_raw: Message is multipart" << std::endl;
     xmulti = create_worker_recv(head);
     if (xmulti == NULL) {
       log_error() << "recv_raw: Failed to create worker communicator" << std::endl;
-      return -1;
+      ret = -1;
+      goto cleanup;
     }
   }
   head.offset = head.size_curr;
   while (head.size_curr < head.size_data) {
     if (xmulti->wait_for_recv(get_timeout_recv()) <= 0) {
       log_error() << "recv_raw: No messages waiting in work comm" << std::endl;
-      return -1;
+      ret = -1;
+      goto cleanup;
     }
     ret = xmulti->recv_single(head);
     if (ret < 0) {
@@ -963,11 +992,12 @@ long Comm_t::recv_raw(Header& head) {
   }
   if (xmulti)
     getWorkers().remove_worker(xmulti);
-  if (ret < 0) return ret;
+  if (ret < 0) goto cleanup;
   if (ret > 0) {
     if (!head.finalize_recv()) {
       log_error() << "recv_raw: finalize_recv failed." << std::endl;
-      return -1;
+      ret = -1;
+      goto cleanup;
     }
     if (!head.hasType()) {
       log_debug() << "recv_raw: No type information in message header" << std::endl;
@@ -975,8 +1005,10 @@ long Comm_t::recv_raw(Header& head) {
       log_debug() << "recv_raw: Updating type" << std::endl;
       YggInterface::utils::Metadata& meta = getMetadata(RECV);
       if ((!meta.hasType()) && (meta.transforms.size() == 0)) {
-	if (!meta.fromSchema(head.getSchema()[0]))
-	  return -1;
+	if (!meta.fromSchema(head.getSchema()[0])) {
+	  ret = -1;
+	  goto cleanup;
+	}
       }
       log_debug() << "recv_raw: Updated type" << std::endl;
     }
@@ -984,21 +1016,24 @@ long Comm_t::recv_raw(Header& head) {
   log_debug() << "recv_raw: Received " << head.size_curr << " bytes from " << address.address() << std::endl;
   ret = head.size_data;
   setFlags(head, RECV);
+ cleanup:
+  YGGCOMM_PYGIL_ALLOW_THREADS_END(recv_raw, -1)
   return ret;
 }
 long Comm_t::recv(rapidjson::Document& data, bool not_generic) {
+  long ret = -1;
   log_debug() << "recv: begin" << std::endl;
   char* buf = NULL;
   size_t buf_siz = 0;
   YggInterface::utils::Header head(buf, buf_siz, true);
-  long ret = recv_raw(head);
+  ret = recv_raw(head);
   YggInterface::utils::Metadata& meta = getMetadata(RECV);
   if (ret < 0) {
     if (buf != NULL)
       free(buf);
     if (ret != -2)
       log_error() << "recv: Error in recv" << std::endl;
-    return ret;
+    goto cleanup;
   }
   if (head.flags & HEAD_FLAG_DOC_SET) {
     data.CopyFrom(head.doc, data.GetAllocator(), true);
@@ -1009,13 +1044,15 @@ long Comm_t::recv(rapidjson::Document& data, bool not_generic) {
   free(buf);
   if (ret < 0) {
     log_error() << "recv: Error deserializing message" << std::endl;
-    return ret;
+    goto cleanup;
   }
   if (meta.checkFilter()) {
     log_debug() << "recv: Skipping filtered message." << std::endl;
-    return recv(data, not_generic);
+    ret = recv(data, not_generic);
+    goto cleanup;
   }
   log_debug() << "recv: returns " << ret << std::endl;
+ cleanup:
   return ret;
 }
 

@@ -62,6 +62,7 @@
   integer(kind=int64), parameter :: COMM_FLAG_FORK_COMPOSITE = 33554432_int64
   integer(kind=int64), parameter :: COMM_FLAG_FORK_TINE = 67108864_int64
   integer(kind=int64), parameter :: COMM_FLAG_DONT_SERIALIZE = 134217728_int64
+  integer(kind=int64), parameter :: COMM_FLAG_REQUIRES_PYGIL = 268435456_int64
   integer(kind=int64), parameter :: FILE_FLAG_APPEND = 17592186044416_int64
   integer(kind=int64), parameter :: FILE_FLAG_BINARY = 35184372088832_int64
   integer(kind=int64), parameter :: FILE_FLAG_READLINE = 70368744177664_int64
@@ -143,6 +144,13 @@
         FORK_CYCLE = 1, &
         FORK_BROADCAST = 2, &
         FORK_COMPOSITE = 3
+  end enum
+
+
+  enum, bind( C )
+     enumerator :: &
+        FUNCTION_ON_ASYNC = 1, &
+        FUNCTION_WEAK_REF = 2
   end enum
 
 #endif

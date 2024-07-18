@@ -63,6 +63,7 @@ if (NOT DEFAULT_RAPIDJSON_INCLUDE_DIRS)
 endif()
 
 option(YGGDRASIL_DISABLE_PYTHON_C_API "Disable the Python C API" OFF)
+option(YGGDRASIL_PYGIL_NO_MANAGEMENT "Disable any handling of the Python GIL" OFF)
 option(YGG_BUILD_ASAN "Build with address sanitizer (gcc/clang)" OFF)
 option(YGG_BUILD_UBSAN "Build with undefined behavior sanitizer (gcc/clang)" OFF)
 option(YGG_ENABLE_INSTRUMENTATION_OPT "Build yggdrasil with -march or -mcpu options" ON)

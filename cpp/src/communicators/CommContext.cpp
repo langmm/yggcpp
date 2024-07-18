@@ -36,7 +36,9 @@ CommContext::~CommContext() {
 int CommContext::init(bool for_testing) {
   log_debug() << "init: Begin" << std::endl;
   for_testing_ = for_testing;
-  utils::initialize_python("CommContext::init");
+  if (!getenv("YGG_PREVENT_PYTHON_INITIALIZATION")) {
+    utils::initialize_python("CommContext::init");
+  }
 #ifdef ZMQINSTALLED
   log_debug() << "init: begin zmq initialization" << std::endl;
   YGG_THREAD_SAFE_BEGIN_LOCAL(zmq) {

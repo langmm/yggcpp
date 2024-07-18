@@ -22,6 +22,7 @@ void YggEnvironment::SetUp() {
   YggInterface::communicator::ZMQComm::disable_handshake();
   YggInterface::communicator::ygg_init(true);
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
+  YggInterface::utils::global_PyGILState();
   char cwd[PATH_MAX];
   getcwd(cwd, PATH_MAX);
   // if (getcwd(cwd, PATH_MAX) != NULL) {
@@ -32,6 +33,7 @@ void YggEnvironment::SetUp() {
   PyList_Append(path, cwdPy);
   Py_DECREF(cwdPy);
   // PyObject_Print(path, stderr, 0);
+  YggInterface::utils::global_PyGILState(true);
 #endif // YGGDRASIL_DISABLE_PYTHON_C_API
 #ifdef YGGTEST_DYNAMIC_DIR
   setenv("YGGTEST_DYNAMIC_DIR", YGGTEST_DYNAMIC_DIR, 1);

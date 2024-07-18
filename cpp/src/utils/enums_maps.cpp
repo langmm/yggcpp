@@ -88,6 +88,7 @@ const std::map<const COMM_FLAG, const std::string>& YggInterface::utils::COMM_FL
     {COMM_FLAG_FORK_COMPOSITE      , "FORK_COMPOSITE"      },
     {COMM_FLAG_FORK_TINE           , "FORK_TINE"           },
     {COMM_FLAG_DONT_SERIALIZE      , "DONT_SERIALIZE"      },
+    {COMM_FLAG_REQUIRES_PYGIL      , "REQUIRES_PYGIL"      },
     {FILE_FLAG_APPEND              , "FILE_FLAG_APPEND"    },
     {FILE_FLAG_BINARY              , "FILE_FLAG_BINARY"    },
     {FILE_FLAG_READLINE            , "FILE_FLAG_READLINE"  },
@@ -186,6 +187,14 @@ const std::map<const FORK_TYPE, const std::string>& YggInterface::utils::FORK_TY
     {FORK_CYCLE    , "FORK_CYCLE"    },
     {FORK_BROADCAST, "FORK_BROADCAST"},
     {FORK_COMPOSITE, "FORK_COMPOSITE"},
+  };
+  return map;
+};
+
+const std::map<const FUNCTION_FLAGS, const std::string>& YggInterface::utils::FUNCTION_FLAGS_map() {
+  static const std::map<const FUNCTION_FLAGS, const std::string> map {
+    {FUNCTION_ON_ASYNC, "FUNCTION_ON_ASYNC"},
+    {FUNCTION_WEAK_REF, "FUNCTION_WEAK_REF"},
   };
   return map;
 };

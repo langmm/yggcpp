@@ -28,19 +28,6 @@ TEST(FunctionComm, call_c) {
 
 TEST(FunctionComm, call_c_async) {
   register_function("example_model_function", example_model_function);
-  AsyncComm sComm("test_async", SEND,
-		  COMM_FLAG_ASYNC | COMM_FLAG_SET_OPP_ENV,
-		  FUNCTION_COMM);
-  AsyncComm rComm("test_async", RECV, COMM_FLAG_ASYNC, DEFAULT_COMM);
-  rapidjson::Document data_send, data_recv, data_exp;
-  data_send.SetString("alpha", 5, data_send.GetAllocator());
-  data_exp.SetInt(5);
-  EXPECT_EQ(rComm.nmsg(), 0);
-  EXPECT_EQ(sComm.nmsg(), 0);
-  EXPECT_GE(sComm.send(data_send), 0);
-  EXPECT_GT(rComm.wait_for_recv(1000000), 0);
-  EXPECT_EQ(rComm.nmsg(), 1);
-  EXPECT_EQ(sComm.nmsg(), 0);
-  EXPECT_GE(rComm.recv(data_recv), 0);
-  EXPECT_EQ(data_recv, data_exp);
+  utils::Address addr("cxx::example_model_function");
+  DO_FUNCTION_CALL_ASYNC;
 }

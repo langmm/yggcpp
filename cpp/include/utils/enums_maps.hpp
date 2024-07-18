@@ -18,5 +18,6 @@ namespace YggInterface {
     const std::map<const SIGNON_STATUS, const std::string>& SIGNON_STATUS_map();
     const std::map<const THREAD_STATUS, const std::string>& THREAD_STATUS_map();
     const std::map<const FORK_TYPE, const std::string>& FORK_TYPE_map();
+    const std::map<const FUNCTION_FLAGS, const std::string>& FUNCTION_FLAGS_map();
   }
 }

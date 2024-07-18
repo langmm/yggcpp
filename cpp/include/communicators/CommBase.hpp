@@ -50,6 +50,22 @@ const FLAG_TYPE COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
 #define REST_INSTALLED_FLAG 1
 #endif
 
+#ifdef YGGDRASIL_PYGIL_NO_MANAGEMENT
+#define YGGCOMM_PYGIL_ALLOW_THREADS_BEGIN(method, reterr)
+#define YGGCOMM_PYGIL_ALLOW_THREADS_END(method, reterr)
+#else // YGGDRASIL_PYGIL_NO_MANAGEMENT
+#define YGGCOMM_PYGIL_ALLOW_THREADS_BEGIN(method, reterr)	\
+  if (!PyGIL_release()) {					\
+    log_error() << #method << ": Failed to release the Python GIL" << std::endl; \
+    return reterr;							\
+  }
+#define YGGCOMM_PYGIL_ALLOW_THREADS_END(method, reterr)		\
+  if (!PyGIL_restore()) {					\
+    log_error() << #method << ": Failed to restore the Python GIL" << std::endl; \
+    return reterr;							\
+  }
+#endif // YGGDRASIL_PYGIL_NO_MANAGEMENT
+
 #define UNINSTALLED_ERROR(name)					\
   utils::YggLogThrowError("Compiler flag '" #name "INSTALLED' not defined so " #name " bindings are disabled")
 
@@ -1406,6 +1422,28 @@ public:
       @returns Workers.
      */
     virtual WorkerList& getWorkers() { return workers; }
+    /**
+     * @brief Release the Python GIL so that C++ threads can perform
+     *   Python tasks. The GIL will only be released if this thread has
+     *   already acquired it and the communicator requires the Python API.
+     *   All calls to PyGIL_release must be paired with calls to
+     *   PyGIL_restore.
+     * @param[in] force If true, the GIL will be restored regardless of if
+     *   the communicator requires the Python API or not.
+     * @returns true if successful, false otherwise.
+     */
+    YGG_API bool PyGIL_release(bool force = false) const;
+    /**
+     * @brief Restore the Python GIL so that this thread can perform
+     *   Python tasks. The GIL will only be restored if this thread has
+     *   not already acquired it and the communicator requires the Python
+     *   API. All calls to PyGIL_release must be paired with calls to
+     *   PyGIL_restore.
+     * @param[in] force If true, the GIL will be restored regardless of if
+     *   the communicator requires the Python API or not.
+     * @returns true if successful, false otherwise.
+     */
+    YGG_API bool PyGIL_restore(bool force = false) const;
     /**
      * Add a schema from the given metadata
      * @param s The Metadata object to use

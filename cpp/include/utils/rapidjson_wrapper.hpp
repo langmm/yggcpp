@@ -115,6 +115,25 @@ namespace wrap {
 RAPIDJSON_NAMESPACE_BEGIN
 
 /*!
+ * @brief Acquire/release the Python GIL.
+ * @param[in] release If true, the Python GIL will be released by the
+ *   current thread if it has already been acquired. If false, the GIL
+ *   will be acquired by the current thread if it has not already been
+ *   acquired.
+ * @returns true if successful, false otherwise.
+ */
+bool global_PyGILState(bool release = false);
+
+/*!
+ * @brief Save/restore the global Python thread state.
+ * @param[in] restore If true, the global thread state will be restored
+ *   if one has been saved. If false, the global thread state will be
+ *   saved if one does not already exist.
+ * @returns true if successful, false otherwise.
+ */
+bool global_PyThreadState(bool restore = false);
+
+/*!
   @brief Import the numpy C API.
   @return error message
  */
@@ -1321,6 +1340,25 @@ namespace YggInterface {
     /*! @brief Global copy of rapidjson import of numpy PyArray_API */
     YGG_RJ_API extern int rapidjson_NUMPY_IMPORTED;
 #endif
+
+    /*!
+     * @brief Acquire/release the Python GIL.
+     * @param[in] release If true, the Python GIL will be released by the
+     *   current thread if it has already been acquired. If false, the GIL
+     *   will be acquired by the current thread if it has not already been
+     *   acquired.
+     * @returns true if successful, false otherwise.
+     */
+    YGG_RJ_API bool global_PyGILState(bool release = false);
+
+    /*!
+     * @brief Save/restore the global Python thread state.
+     * @param[in] restore If true, the global thread state will be restored
+     *   if one has been saved. If false, the global thread state will be
+     *   saved if one does not already exist.
+     * @returns true if successful, false otherwise.
+     */
+    YGG_RJ_API bool global_PyThreadState(bool restore = false);
     
     /*!
       @brief Initialize the Python API.
@@ -1382,6 +1420,11 @@ namespace YggInterface {
 
   }
 }
+
+#define YGGDRASIL_PYGIL_BEGIN YggInterface::utils::global_PyGILState();
+#define YGGDRASIL_PYGIL_END YggInterface::utils::global_PyGILState(true);
+#define YGGDRASIL_PYGIL_ALLOW_THREADS_BEGIN YggInterface::utils::global_PyThreadState();
+#define YGGDRASIL_PYGIL_ALLOW_THREADS_END YggInterface::utils::global_PyThreadState(true);
 
 #if defined(YGG_LINK_PYTHON_TO_CPP) && !defined(RAPIDJSON_WRAPPER_DEFS_)
 #define RAPIDJSON_WRAPPER_DEFS_ inline

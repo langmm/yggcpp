@@ -440,9 +440,10 @@ function(add_external_fortran_library target_name library_type)
       INTERFACE_LINK_LIBRARIES ${ORIG_LIBRARIES})
   endif()
   if(ARGS_DEFINITIONS)
+    message(STATUS "ARGS_DEFINITIONS = ${ARGS_DEFINITIONS}")
     set_target_properties(
       ${target_name} PROPERTIES
-      INTERFACE_COMPILE_DEFINITIONS ${ARGS_DEFINITIONS})
+      INTERFACE_COMPILE_DEFINITIONS "${ARGS_DEFINITIONS}")
   endif()
   # if(MSVC_AND_GNU_BUILD)
   target_link_from_file(${target_name} IMPORTED ${external_target_file})

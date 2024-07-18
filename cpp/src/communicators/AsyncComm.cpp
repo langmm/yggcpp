@@ -505,7 +505,22 @@ void AsyncComm::_open(bool call_base) {
   else if (type == CLIENT_COMM)
     this->direction = SEND;
   if (!global_comm) {
-    handle = new AsyncBacklog(this);
+    std::string err;
+#ifndef YGGDRASIL_PYGIL_NO_MANAGEMENT
+    if (!PyGIL_release(true))
+      throw_error("AsyncComm::_open: Failed to release the Python GIL");
+#endif
+    try {
+      handle = new AsyncBacklog(this);
+    } catch (std::exception& e) {
+      err = e.what();
+    }
+#ifndef YGGDRASIL_PYGIL_NO_MANAGEMENT
+    if (!PyGIL_restore(true))
+      throw_error("AsyncComm::_open: Failed to restore the Python GIL [caught error: \"" + err + "\"]");
+#endif
+    if (!err.empty())
+      throw_error(std::string("AsyncComm::_open: ") + err);
   }
   AFTER_OPEN_DEF;
 }
@@ -531,8 +546,10 @@ int AsyncComm::nmsg(DIRECTION dir) const {
   return static_cast<int>(handle->backlog.size());
 }
 
-#ifdef THREADSINSTALLED
 int AsyncComm::wait_for_recv(const int64_t& tout) const {
+  int ret = -1;
+  YGGCOMM_PYGIL_ALLOW_THREADS_BEGIN(wait_for_recv, -1)
+#ifdef THREADSINSTALLED
   if (global_comm || (type == CLIENT_COMM)) {
     if (type == CLIENT_COMM && (flags & COMM_FLAG_USED_SENT)) {
       std::string req_id;
@@ -540,7 +557,7 @@ int AsyncComm::wait_for_recv(const int64_t& tout) const {
 	const AsyncLockGuard lock(handle);
 	if (handle->is_closing() || !(handle->comm)) {
 	  log_error() << "wait_for_recv: Comm is closed" << std::endl;
-	  return -1;
+	  goto cleanup;
 	}
 	ClientComm* cli = dynamic_cast<ClientComm*>(handle->comm);
 	req_id = cli->getRequests().activeRequestClient(true);
@@ -555,25 +572,34 @@ int AsyncComm::wait_for_recv(const int64_t& tout) const {
 	{
 	  if (handle->is_closing()) {
 	    log_error() << "wait_for_recv: Comm is closed (request)" << std::endl;
-	    return -1;
+	    goto cleanup;
 	  }
 	  const AsyncLockGuard lock(handle);
-	  return handle->comm->wait_for_recv(tout);
+	  ret = handle->comm->wait_for_recv(tout);
+	  goto cleanup;
 	}
       } else {
 	log_debug() << "wait_for_recv: client dosn't have any active requests" << std::endl;
       }
     }
     log_debug() << "wait_for_recv: Client using default method" << std::endl;
-    return CommBase::wait_for_recv(tout);
+    ret = CommBase::wait_for_recv(tout);
+    goto cleanup;
   }
   log_debug() << "wait_for_recv: timeout = " << tout <<
     " microseconds" << std::endl;
-  if (!handle->backlog.wait_for(std::chrono::microseconds(tout)))
-    return 0;
-  return nmsg(RECV);
-}
+  if (!handle->backlog.wait_for(std::chrono::microseconds(tout))) {
+    ret = 0;
+    goto cleanup;
+  }
+  ret = nmsg(RECV);
+#else // THREADSINSTALLED
+  ret = CommBase::wait_for_recv(tout);
 #endif // THREADSINSTALLED
+ cleanup:
+  YGGCOMM_PYGIL_ALLOW_THREADS_END(wait_for_recv, -1)
+  return ret;
+}
 
 YggInterface::utils::Metadata& AsyncComm::getMetadata(const DIRECTION dir) {
   if (global_comm)
@@ -619,44 +645,56 @@ void AsyncComm::close_thread() {
 }
 
 int AsyncComm::send_single(Header& header) {
+  int ret = -1;
   assert((!global_comm) && handle);
+  YGGCOMM_PYGIL_ALLOW_THREADS_BEGIN(send_single, -1)
   log_debug() << "send_single: begin" << std::endl;
   if (type == SERVER_COMM) {
     const AsyncLockGuard lock(handle);
     if (handle->is_closing()) {
       log_error() << "send_single: Thread is closing" << std::endl;
-      return -1;
+      goto cleanup;
     }
-    return handle->comm->send_single(header);
+    ret = handle->comm->send_single(header);
+    goto cleanup;
   }
   if (header.on_send() < 0)
-    return -1;
+    goto cleanup;
   log_debug() << "send_single: " << header.size_msg << " bytes" << std::endl;
   if (!handle->backlog.append(header, false, false, true))
-    return -1;
-  return static_cast<int>(header.size_msg);
+    goto cleanup;
+  // TODO: Wait for function call if function wrapped & Python GIL
+  //   would prevent concurrency?
+  ret = static_cast<int>(header.size_msg);
+ cleanup:
+  YGGCOMM_PYGIL_ALLOW_THREADS_END(send_single, -1)
+  return ret;
 }
 
 long AsyncComm::recv_single(Header& header) {
+  long ret = -1;
+  YGGCOMM_PYGIL_ALLOW_THREADS_BEGIN(recv_single, -1)
   if (type == CLIENT_COMM) {
     const AsyncLockGuard lock(handle);
     assert((!global_comm) && handle);
     if (handle->is_closing()) {
       log_error() << "recv_single: Thread is closing" << std::endl;
-      return -1;
+      goto cleanup;
     }
-    return handle->comm->recv_single(header);
+    ret = handle->comm->recv_single(header);
+    goto cleanup;
   }
-  long ret = -1;
   log_debug() << "recv_single " << std::endl;
   if (!handle->backlog.pop(header)) {
     log_error() << "recv_single: Error retrieving from backlog" << std::endl;
-    return ret;
+    goto cleanup;
   }
   ret = static_cast<long>(header.size_data);
   if ((ret == 0) && (header.flags & HEAD_FLAG_DOC_SET))
     ret = 1;
   log_debug() << "recv_single: returns " << ret << " bytes" << std::endl;
+ cleanup:
+  YGGCOMM_PYGIL_ALLOW_THREADS_END(recv_single, -1)
   return ret;
 }
 

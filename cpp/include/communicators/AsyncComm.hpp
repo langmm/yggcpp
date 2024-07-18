@@ -363,10 +363,8 @@ namespace YggInterface {
 
       /** \copydoc YggInterface::communicator::Comm_t::nmsg */
       YGG_API int nmsg(DIRECTION dir=NONE) const override;
-#ifdef THREADSINSTALLED
       /** \copydoc YggInterface::communicator::Comm_t::wait_for_recv */
       YGG_API int wait_for_recv(const int64_t& tout) const override;
-#endif // THREADSINSTALLED
       /** \copydoc YggInterface::communicator::Comm_t::getMetadata */
       YGG_API YggInterface::utils::Metadata& getMetadata(const DIRECTION dir=NONE) override;
       /** \copydoc YggInterface::communicator::Comm_t::set_timeout_recv */

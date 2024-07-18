@@ -173,7 +173,7 @@ namespace utils {
 #endif // _OPENMP
 #endif // _MSC_VER
 #define YGG_THREAD_LOCAL_VAR(T, name, args)	\
-  thread_local T name args;
+  extern thread_local T name args;
 #define YGG_THREAD_LOCAL_VAR_DEF(T, name, args)	\
   thread_local T name args;
 
@@ -212,6 +212,7 @@ namespace utils {
 #endif // THREADSINSTALLED
 #define YGG_THREAD_SAFE_END			\
   }
+
 
 /*!
   @brief Get an unsigned long seed from the least significant 32bits of a pointer.

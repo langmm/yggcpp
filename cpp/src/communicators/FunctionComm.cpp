@@ -9,30 +9,18 @@
 #include <dlfcn.h>
 #endif
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
-YGG_THREAD_LOCAL_VAR_DEF(bool, YggInterface::communicator::_with_gil, = false)
-#endif
-
 using namespace YggInterface::communicator;
 using namespace YggInterface::utils;
 
-#ifdef RAPIDJSON_YGGDRASIL_PYTHON
-#define YGG_EMBED_PYTHON_GIL_BEGIN		\
-  PyGILState_STATE gstate;			\
-  bool _prev_with_gil = _with_gil;		\
-  if (!_prev_with_gil) {			\
-    gstate = PyGILState_Ensure();		\
-    _with_gil = true;				\
-  }
-#define YGG_EMBED_PYTHON_GIL_END		\
-  if (!_prev_with_gil) {			\
-    PyGILState_Release(gstate);			\
-    _with_gil = false;				\
-  }
-#else
-#define YGG_EMBED_PYTHON_GIL_BEGIN
-#define YGG_EMBED_PYTHON_GIL_END
-#endif
+#define CALL_ALIASED_FUNCTION_WRAPPER_NORET(method)	\
+  if ((flags & FUNCTION_WEAK_REF) && func) {		\
+    ((FunctionWrapper*)func)->method;			\
+  } else
+#define CALL_ALIASED_FUNCTION_WRAPPER(method, ret)	\
+  if ((flags & FUNCTION_WEAK_REF) && func) {		\
+    ret = ((FunctionWrapper*)func)->method;		\
+  } else
+
 
 /////////////////////////////////////////////////////////
 // DynamicLibrary
@@ -168,9 +156,10 @@ void* DynamicLibrary::function(const std::string& name) {
 
 FunctionWrapper::FunctionWrapper(const std::string& f,
 				 bool pointer_provided,
-				 const LANGUAGE calling_lang) :
+				 const LANGUAGE calling_lang,
+				 int flags0) :
   LogBase(), address(f), language(NO_LANGUAGE),
-  calling_language(calling_lang), library(nullptr),
+  calling_language(calling_lang), flags(flags0), library(nullptr),
   func(nullptr), recv_backlog() {
   std::vector<std::string> parts = split(address, "::", 1);
   if (parts.size() != 2)
@@ -200,9 +189,9 @@ FunctionWrapper::FunctionWrapper(const std::string& f,
   }
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
   case PYTHON_LANGUAGE: {
-    YGG_EMBED_PYTHON_GIL_BEGIN;
+    YGGDRASIL_PYGIL_BEGIN;
     func = (void*)utils::import_python_object(parts[1].c_str());
-    YGG_EMBED_PYTHON_GIL_END;
+    YGGDRASIL_PYGIL_END;
     break;
   }
 #endif // YGGDRASIL_DISABLE_PYTHON_C_API
@@ -227,18 +216,29 @@ FunctionWrapper::FunctionWrapper(const std::string& f,
 }
 
 FunctionWrapper::FunctionWrapper(const std::string& name,
-				 cxx_function& f) :
-  FunctionWrapper(name, true) {
+				 cxx_function& f, int flags) :
+  FunctionWrapper(name, true, NO_LANGUAGE, flags) {
   func = (void*)(new cxx_function(f));
 }
 
 FunctionWrapper::FunctionWrapper(const std::string& name,
-				 c_function& f) :
-  FunctionWrapper(name, true) {
+				 c_function& f, int flags) :
+  FunctionWrapper(name, true, NO_LANGUAGE, flags) {
   func = (void*)(f);
 }
 
+FunctionWrapper::FunctionWrapper(const FunctionWrapper& rhs,
+				 const LANGUAGE calling_lang,
+				 int flags0) :
+  LogBase(), address(rhs.address), language(rhs.language),
+  calling_language(calling_lang), flags(flags0), library(nullptr),
+  func((void*)(&rhs)), recv_backlog() {}
+
 FunctionWrapper::~FunctionWrapper() {
+  if (flags & FUNCTION_WEAK_REF) {
+    func = nullptr;
+    return;
+  }
   switch (language) {
   case C_LANGUAGE:
   case FORTRAN_LANGUAGE: {
@@ -256,11 +256,11 @@ FunctionWrapper::~FunctionWrapper() {
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
   case PYTHON_LANGUAGE: {
     if (func) {
-      YGG_EMBED_PYTHON_GIL_BEGIN;
+      YGGDRASIL_PYGIL_BEGIN;
       PyObject* py_func = (PyObject*)func;
       func = nullptr;
       Py_CLEAR(py_func);
-      YGG_EMBED_PYTHON_GIL_END;
+      YGGDRASIL_PYGIL_END;
     }
     break;
   }
@@ -294,7 +294,7 @@ bool FunctionWrapper::_call(const rapidjson::Document& data_send,
   case PYTHON_LANGUAGE: {
     bool py_out = false;
     PyObject *py_args = NULL, *py_args_orig = NULL, *py_result = NULL;
-    YGG_EMBED_PYTHON_GIL_BEGIN;
+    YGGDRASIL_PYGIL_BEGIN;
     py_args_orig = data_send.GetPythonObjectRaw();
     if (py_args_orig == NULL) {
       log_error() << "_call: Error converting arguments from C++ to Python: " <<
@@ -332,7 +332,7 @@ bool FunctionWrapper::_call(const rapidjson::Document& data_send,
     Py_CLEAR(py_args);
     Py_CLEAR(py_args_orig);
     Py_CLEAR(py_result);
-    YGG_EMBED_PYTHON_GIL_END;
+    YGGDRASIL_PYGIL_END;
     return py_out;
   }
 #endif // YGGDRASIL_DISABLE_PYTHON_C_API
@@ -346,43 +346,51 @@ bool FunctionWrapper::_call(const rapidjson::Document& data_send,
 
 bool FunctionWrapper::send(const rapidjson::Document& data, bool is_eof) {
   bool out = false;
-  YGG_THREAD_SAFE_BEGIN(functions) {
-    recv_backlog.resize(recv_backlog.size() + 1);
-    if (is_eof) {
-      recv_backlog[recv_backlog.size() - 1].SetString(YGG_MSG_EOF, YGG_MSG_EOF_LEN,
-						      recv_backlog[recv_backlog.size() - 1].GetAllocator());
-      out = true;
-    } else {
-      out = _call(data, recv_backlog[recv_backlog.size() - 1]);
-    }
-  } YGG_THREAD_SAFE_END;
+  CALL_ALIASED_FUNCTION_WRAPPER(send(data, is_eof), out) {
+    YGG_THREAD_SAFE_BEGIN(functions) {
+      recv_backlog.resize(recv_backlog.size() + 1);
+      if (is_eof) {
+	recv_backlog[recv_backlog.size() - 1].SetString(YGG_MSG_EOF, YGG_MSG_EOF_LEN,
+							recv_backlog[recv_backlog.size() - 1].GetAllocator());
+	out = true;
+      } else {
+	out = _call(data, recv_backlog[recv_backlog.size() - 1]);
+      }
+    } YGG_THREAD_SAFE_END;
+  }
   return out;
 }
 
 bool FunctionWrapper::recv(rapidjson::Document& data) {
   bool out = false;
-  YGG_THREAD_SAFE_BEGIN(functions) {
-    if (!recv_backlog.empty()) {
-      data.Swap(recv_backlog[0]);
-      recv_backlog.erase(recv_backlog.begin());
-      out = true;
-    }
-  } YGG_THREAD_SAFE_END;
+  CALL_ALIASED_FUNCTION_WRAPPER(recv(data), out) {
+    YGG_THREAD_SAFE_BEGIN(functions) {
+      if (!recv_backlog.empty()) {
+	data.Swap(recv_backlog[0]);
+	recv_backlog.erase(recv_backlog.begin());
+	out = true;
+      }
+    } YGG_THREAD_SAFE_END;
+  }
   return out;
 }
 
 int FunctionWrapper::nmsg() const {
   int out = -1;
-  YGG_THREAD_SAFE_BEGIN(functions) {
-    out = static_cast<int>(recv_backlog.size());
-  } YGG_THREAD_SAFE_END;
+  CALL_ALIASED_FUNCTION_WRAPPER(nmsg(), out) {
+    YGG_THREAD_SAFE_BEGIN(functions) {
+      out = static_cast<int>(recv_backlog.size());
+    } YGG_THREAD_SAFE_END;
+  }
   return out;
 }
 
 void FunctionWrapper::clear() {
-  YGG_THREAD_SAFE_BEGIN(functions) {
-    recv_backlog.clear();
-  } YGG_THREAD_SAFE_END;
+  CALL_ALIASED_FUNCTION_WRAPPER_NORET(clear()) {
+    YGG_THREAD_SAFE_BEGIN(functions) {
+      recv_backlog.clear();
+    } YGG_THREAD_SAFE_END;
+  }
 }
 
 /////////////////////////////////////////////////////////
@@ -395,19 +403,29 @@ void FunctionComm::_open(bool call_base) {
   BEFORE_OPEN_DEF;
   updateMaxMsgSize(0);
   bool created = ((!address.valid()) || address.address().empty());
+  bool is_async = (getFlags() & COMM_FLAG_ASYNC_WRAPPED);
+  int func_flags = 0;
+  if (is_async)
+    func_flags |= FUNCTION_ON_ASYNC;
   handle = ctx->find_registered_function(this->address.address());
-  if (created && handle) {
+  if (created && handle)
     address.address(handle->address);
-  }
   Comm_t::_init_name();
   if (!handle) {
     if (created) {
       throw std::runtime_error("FunctionComm::_open: Failed to get function wrapper for \"" + this->address.address() + "\"");
     } else {
-      handle = new FunctionWrapper(address.address(), false, language);
+      handle = new FunctionWrapper(address.address(), false,
+				   language, func_flags);
       ctx->register_function(handle);
+      
     }
   }
+  if (handle && is_async)
+    handle = new FunctionWrapper(*handle, language,
+				 func_flags | FUNCTION_WEAK_REF);
+  if (handle && handle->language == PYTHON_LANGUAGE)
+    getFlags() |= COMM_FLAG_REQUIRES_PYGIL;
   AFTER_OPEN_DEF;
 }
 
@@ -420,6 +438,9 @@ void FunctionComm::_close(bool call_base) {
   }
   // Prevent function wrapper from being cleaned up so it can be reused.
   // It will be cleaned up by the communicator context.
+  if (handle && (handle->flags & FUNCTION_WEAK_REF)) {
+    delete handle;
+  }
   handle = nullptr;
   AFTER_CLOSE_DEF;
 }

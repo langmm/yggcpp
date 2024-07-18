@@ -30,6 +30,13 @@ namespace wrap {
 #undef UTF8
 }
 
+bool rapidjson::global_PyGILState(bool release) {
+  return RJ_WNS::global_PyGILState(release);
+}
+bool rapidjson::global_PyThreadState(bool restore) {
+  return RJ_WNS::global_PyThreadState(restore);
+}
+
 std::string rapidjson::init_numpy_API() {
   return RJ_WNS::init_numpy_API();
 }
@@ -1249,6 +1256,7 @@ SPECIALIZE(rapidjson::ObjWavefront);
 #include "utils/rapidjson_wrapper.defs"
 #endif
 
+
 using namespace YggInterface::utils;
 
 FilterBase::FilterBase() {}
@@ -1325,16 +1333,21 @@ PyBaseFunc::PyBaseFunc(const PyObject* func) :
   if (func_ == NULL) {
     ygglog_throw_error("PyBaseFunc: Provided Python function is NULL");
   }
+  YGGDRASIL_PYGIL_BEGIN;
   Py_INCREF(func_);
+  YGGDRASIL_PYGIL_END;
 }
-PyBaseFunc::~PyBaseFunc() { Py_DECREF(func_); }
+PyBaseFunc::~PyBaseFunc() {
+  YGGDRASIL_PYGIL_BEGIN;
+  Py_DECREF(func_);
+  YGGDRASIL_PYGIL_END;
+}
 bool PyBaseFunc::_call(const rapidjson::Document& doc,
 		       rapidjson::Document* out) {
   bool res = false;
-  PyGILState_STATE gstate;
   std::string err;
   PyObject *pyDoc = NULL, *args = NULL, *resPy = NULL;
-  gstate = PyGILState_Ensure();
+  YGGDRASIL_PYGIL_BEGIN;
   pyDoc = doc.GetPythonObjectRaw();
   if (pyDoc == NULL) {
     err = "PyBaseFunc: Could not convert input document to Python";  // GCOV_EXCL_LINE
@@ -1372,7 +1385,7 @@ bool PyBaseFunc::_call(const rapidjson::Document& doc,
   Py_XDECREF(pyDoc);
   Py_XDECREF(args);
   Py_XDECREF(resPy);
-  PyGILState_Release(gstate);
+  YGGDRASIL_PYGIL_END
   if (!err.empty())
     ygglog_throw_error(err.c_str());
   return res;

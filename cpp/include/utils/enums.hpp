@@ -98,6 +98,7 @@ enum COMM_FLAG
   COMM_FLAG_FORK_COMPOSITE  = 0x02000000LL, //!< Forked communicator composite
   COMM_FLAG_FORK_TINE       = 0x04000000LL, //!< Forked communicator tine.
   COMM_FLAG_DONT_SERIALIZE  = 0x08000000LL, //!< Communicator does not required serialization
+  COMM_FLAG_REQUIRES_PYGIL  = 0x10000000LL, //!< Communicator requires Python GIL
   // Type specific flags
   // File flags
   FILE_FLAG_APPEND          = 0x0000100000000000LL, //!< Append sent messages to the end of the file
@@ -179,6 +180,11 @@ enum FORK_TYPE {
   FORK_CYCLE,     //!< Cycle through comms on each message
   FORK_BROADCAST, //!< [SEND ONLY] Send the same message to each comm
   FORK_COMPOSITE  //!< Part of message is sent/received to/from each comm
+};
+
+enum FUNCTION_FLAGS {
+  FUNCTION_ON_ASYNC = 0x00000001, //!< Will be called from a thread
+  FUNCTION_WEAK_REF = 0x00000002, //!< Pointer is used by other threads
 };
 
 #ifdef __cplusplus
