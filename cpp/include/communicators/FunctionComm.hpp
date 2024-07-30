@@ -84,8 +84,6 @@ namespace YggInterface {
        * @param[in] f Function name and import information.
        * @param[in] pointer_provided If true, the constructor is being
        *   called with an explicit function pointer.
-       * @param[in] is_async If true, the function will be called from
-       *   a C++ thread.
        * @param[in] calling_language Language calling the function.
        * @param[in] flags Bitwise flags describing the function.
        */
@@ -97,8 +95,7 @@ namespace YggInterface {
        * Constructor for wrapping a C++ function
        * @param[in] name Name of the function
        * @param[in] f Function
-       * @param[in] is_async If true, the function will be called from
-       *   a C++ thread.
+       * @param[in] flags Bitwise flags describing the function.
        */
       FunctionWrapper(const std::string& name, cxx_function& f,
 		      int flags=0);
@@ -106,8 +103,7 @@ namespace YggInterface {
        * Constructor for wrapping a C function
        * @param[in] name Name of the function
        * @param[in] f Function
-       * @param[in] is_async If true, the function will be called from
-       *   a C++ thread.
+       * @param[in] flags Bitwise flags describing the function.
        */
       FunctionWrapper(const std::string& name, c_function& f,
 		      int flags=0);
