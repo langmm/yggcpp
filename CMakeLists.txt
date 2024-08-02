@@ -8,10 +8,10 @@ set(LIB_PATCH_VERSION "0")
 set(LIB_VERSION_STRING "${LIB_MAJOR_VERSION}.${LIB_MINOR_VERSION}.${LIB_PATCH_VERSION}")
 
 if (CMAKE_VERSION VERSION_LESS 3.0)
-    PROJECT(YggInterfaceCPP)
+    PROJECT(YggInterfaceCXX)
 else()
     cmake_policy(SET CMP0048 NEW)
-    PROJECT(YggInterfaceCPP VERSION "${LIB_VERSION_STRING}")
+    PROJECT(YggInterfaceCXX VERSION "${LIB_VERSION_STRING}")
 endif()
 
 if (NOT DEFAULT_RAPIDJSON_INCLUDE_DIRS)
@@ -22,35 +22,30 @@ set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(ygg_options)
 include(AddYggInterface)
 
-# TODO: Variable name changes
-#   - BUILD_CPP_LIBRARY -> BUILD_CXX_LIBRARY
-#   - BUILD_FORTRAN_LIBRARY -> BUILD_Fortran_LIBRARY
-#   - BUILD_PYTHON_LIBRARY -> BUILD_Python_LIBRARY
-
-option(BUILD_CPP_LIBRARY "Build the Yggdrasil C++ interface library" ON)
-option(BUILD_FORTRAN_LIBRARY "Build the Yggdrasil Fortran interface library" ON)
-option(BUILD_PYTHON_LIBRARY "Build the Yggdrasil Python interface library" OFF)
+option(BUILD_CXX_LIBRARY "Build the Yggdrasil C++ interface library" ON)
+option(BUILD_Fortran_LIBRARY "Build the Yggdrasil Fortran interface library" ON)
+option(BUILD_Python_LIBRARY "Build the Yggdrasil Python interface library" OFF)
 option(BUILD_Julia_LIBRARY "Build the Yggdrasil Julia interface library" OFF)
-option(YGG_PYTHON_LIBRARY_WRAP "Build the Yggdrasil Python interface library by wrapping the C++ module" ON)
+option(YGG_Python_LIBRARY_WRAP "Build the Yggdrasil Python interface library by wrapping the C++ module" ON)
 option(YGG_Fortran_REQUIRED "Raise an error if the Fortran interface library cannot be build" OFF)
 option(YGG_Julia_REQUIRED "Raise an error if the Julia interface library cannot be build" OFF)
-option(ALLOW_SKBUILD_NONPYTHON "Allow the non-Python interfaces (C/C++/Fortran) to be built from SKBUILD" OFF)
+option(ALLOW_SKBUILD_NONPython "Allow the non-Python interfaces (C/C++/Fortran) to be built from SKBUILD" OFF)
 set(DEFAULT_COMM "ZMQ" CACHE STRING "Default communicator")
 option(YGG_BUILD_TESTS "Build tests" OFF)
-option(YGG_BUILD_FORTRAN_TESTS "Build Fortran tests" OFF)
+option(YGG_BUILD_Fortran_TESTS "Build Fortran tests" OFF)
 option(YGG_BUILD_CXX_TESTS "Build C/C++ tests" OFF)
-option(YGG_BUILD_PYTHON_TESTS "Build Python tests" OFF)
+option(YGG_BUILD_Python_TESTS "Build Python tests" OFF)
 option(YGG_BUILD_Julia_TESTS "Build Julia tests" OFF)
 # option(YGG_TEST_WITH_LLDB "Run tests with lldb" OFF)
 option(YGG_ENABLE_COVERAGE "Enable coverage reporting" OFF)
 option(YGG_BUILD_THIRDPARTY_GTEST "Use gtest installation in 'thirdpart/gtest' by default if available" ON)
 option(YGG_SKIP_VALGRIND_TESTS "Disable valgrind tests" OFF)
 option(WRAP_RAPIDJSON_FOR_DLL "Build yggdrasil using a wrapper for rapidjson to force it into a DLL (enabled automatically when compiling with MSVC" OFF)
-option(YGG_LINK_PYTHON_TO_CPP "Link the Python extension to the C++ wrapper as a library" OFF)
+option(YGG_LINK_Python_TO_CXX "Link the Python extension to the C++ wrapper as a library" OFF)
 option(YGG_BUILD_DOCS "Build documentation (requires Doxygen)" OFF)
 option(DOXYGEN_CHECK_MISSING "Raise an error if documentation is missing" OFF)
 option(YGG_PATCH_MINGW53_THREAD "Patch the MinGW 5.3.0 thread header" ON)
-option(YGG_FORTRAN_WRAP_C_ENUMS "Wrap the int64_t enumerators in a C layer for binding in Fortran" OFF)
+option(YGG_Fortran_WRAP_C_ENUMS "Wrap the int64_t enumerators in a C layer for binding in Fortran" OFF)
 
 list(APPEND DEPS_PUBLIC_C_COMPILE_FLAGS ${ASAN_COMPILE_FLAGS})
 list(APPEND DEPS_PUBLIC_CXX_COMPILE_FLAGS ${ASAN_COMPILE_FLAGS})
@@ -67,12 +62,12 @@ if(WIN32)
   if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     set(WRAP_RAPIDJSON_FOR_DLL ON)
   # else()
-  #     set(YGG_LINK_PYTHON_TO_CPP ON)
+  #     set(YGG_LINK_Python_TO_CXX ON)
   endif()
 endif()
 
 if(WRAP_RAPIDJSON_FOR_DLL)
-    set(YGG_LINK_PYTHON_TO_CPP OFF)
+    set(YGG_LINK_Python_TO_CXX OFF)
     list(APPEND YGG_INSTALL_DEFS -DWRAP_RAPIDJSON_FOR_DLL)
 endif()
 
@@ -81,7 +76,7 @@ list(APPEND YGG_INSTALL_DEFS
      -DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
      -D_USE_MATH_DEFINES)
 
-set(RAPIDJSON_PYTHON_ENV "YGG_MODEL_INDEX=123")
+set(RAPIDJSON_Python_ENV "YGG_MODEL_INDEX=123")
 
 set(YGG_BUILD_FLAGS "")
 
@@ -277,7 +272,7 @@ add_yggdrasil_option(MPI COMM LIBRARIES MPI::MPI_CXX)
 
 include(EmbedLanguage)
 
-if(YGGDRASIL_DISABLE_PYTHON_C_API)
+if(YGGDRASIL_DISABLE_Python_C_API)
     list(APPEND YGG_INSTALL_DEFS -DYGGDRASIL_DISABLE_PYTHON_C_API)
 else()
     embed_language(Python)
@@ -285,7 +280,7 @@ else()
     # There is an issue with embedding Python on Windows in conda environments
     # https://github.com/ContinuumIO/anaconda-issues/issues/11374
     if(WIN32)
-        set(RAPIDJSON_PYTHON_ENV2 "PYTHONHOME=${${PYTHON_PREFIX}_RUNTIME_LIBRARY_DIRS}")
+        set(RAPIDJSON_PYTHON_ENV2 "PYTHONHOME=${${Python_PREFIX}_RUNTIME_LIBRARY_DIRS}")
     endif()
     
     if(YGGDRASIL_PYGIL_NO_MANAGEMENT)
@@ -355,30 +350,30 @@ message(STATUS "DEPS_LIBRARIES = ${DEPS_LIBRARIES}")
 ############################
 
 if(SKBUILD)
-  set(BUILD_PYTHON_LIBRARY ON)
-  if(YGG_LINK_PYTHON_TO_CPP)
-    if(ALLOW_SKBUILD_NONPYTHON)
-      message(FATAL_ERROR "ALLOW_SKBUILD_NONPYTHON is incompatible with YGG_LINK_PYTHON_TO_CPP")
+  set(BUILD_Python_LIBRARY ON)
+  if(YGG_LINK_Python_TO_CXX)
+    if(ALLOW_SKBUILD_NONPython)
+      message(FATAL_ERROR "ALLOW_SKBUILD_NONPython is incompatible with YGG_LINK_Python_TO_CXX")
     endif()
-    set(BUILD_CPP_LIBRARY ON)
-    set(BUILD_FORTRAN_LIBRARY OFF)
-  elseif(NOT ALLOW_SKBUILD_NONPYTHON)
-    set(BUILD_CPP_LIBRARY OFF)
-    set(BUILD_FORTRAN_LIBRARY OFF)
+    set(BUILD_CXX_LIBRARY ON)
+    set(BUILD_Fortran_LIBRARY OFF)
+  elseif(NOT ALLOW_SKBUILD_NONPython)
+    set(BUILD_CXX_LIBRARY OFF)
+    set(BUILD_Fortran_LIBRARY OFF)
   endif()
   set(YGG_BUILD_TESTS OFF)
   set(YGG_BUILD_CXX_TESTS OFF)
-  set(YGG_BUILD_FORTRAN_TESTS OFF)
+  set(YGG_BUILD_Fortran_TESTS OFF)
   set(YGG_BUILD_THIRDPARTY_GTEST OFF)
-elseif(BUILD_PYTHON_LIBRARY AND NOT YGGDRASIL_DISABLE_PYTHON_C_API)
-  if(YGG_LINK_PYTHON_TO_CPP)
-    set(BUILD_CPP_LIBRARY ON)
+elseif(BUILD_Python_LIBRARY AND NOT YGGDRASIL_DISABLE_Python_C_API)
+  if(YGG_LINK_Python_TO_CXX)
+    set(BUILD_CXX_LIBRARY ON)
   endif()
 endif()
-if(BUILD_FORTRAN_LIBRARY)
-  set(BUILD_CPP_LIBRARY ON)
+if(BUILD_Fortran_LIBRARY)
+  set(BUILD_CXX_LIBRARY ON)
 endif()
-set(BUILD_C_LIBRARY ${BUILD_CPP_LIBRARY})
+set(BUILD_C_LIBRARY ${BUILD_CXX_LIBRARY})
 
 ##################
 # Coverage       #
@@ -422,12 +417,12 @@ endfunction()
 # Regenerate enum files #
 #########################
 
-if (${PYTHON_PREFIX}_EXECUTABLE)
-  if (YGG_FORTRAN_WRAP_C_ENUMS)
+if (${Python_PREFIX}_EXECUTABLE)
+  if (YGG_Fortran_WRAP_C_ENUMS)
     list(APPEND GENERATE_ENUM_ARGS --fortran-wrap-c-enums)
   endif()
   execute_process(
-    COMMAND ${${PYTHON_PREFIX}_EXECUTABLE} utils/generate_enum.py ${GENERATE_ENUM_ARGS}
+    COMMAND ${${Python_PREFIX}_EXECUTABLE} utils/generate_enum.py ${GENERATE_ENUM_ARGS}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMAND_ERROR_IS_FATAL ANY)
 endif()
@@ -436,9 +431,9 @@ endif()
 # Generate data types interface in C & Fortran #
 ################################################
 
-if (${PYTHON_PREFIX}_EXECUTABLE)
+if (${Python_PREFIX}_EXECUTABLE)
   execute_process(
-    COMMAND ${${PYTHON_PREFIX}_EXECUTABLE} utils/generate_generic.py ${GENERATE_DATATYPES_ARGS}
+    COMMAND ${${Python_PREFIX}_EXECUTABLE} utils/generate_generic.py ${GENERATE_DATATYPES_ARGS}
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
     COMMAND_ERROR_IS_FATAL ANY)
 endif()
@@ -447,12 +442,12 @@ endif()
 # Create C++ Library #
 ######################
 
-file(GLOB_RECURSE SOURCES_CPP "cpp/src/*.cpp")
-if (NOT SOURCES_CPP)
+file(GLOB_RECURSE SOURCES_CXX "cpp/src/*.cpp")
+if (NOT SOURCES_CXX)
   message(FATAL_ERROR "Sources could not be located")
 endif()
 
-if(BUILD_CPP_LIBRARY)
+if(BUILD_CXX_LIBRARY)
     add_subdirectory(cpp)
 endif()
 
@@ -460,7 +455,7 @@ endif()
 # Create Python Library #
 #########################
 
-if(BUILD_PYTHON_LIBRARY)
+if(BUILD_Python_LIBRARY)
     add_subdirectory(python)
 endif()
 
@@ -468,7 +463,7 @@ endif()
 # Create Fortran Library #
 ##########################
 
-if(BUILD_FORTRAN_LIBRARY)
+if(BUILD_Fortran_LIBRARY)
     if(CMAKE_Fortran_COMPILER AND WIN32)
         cmake_path(SET CMAKE_Fortran_COMPILER NORMALIZE ${CMAKE_Fortran_COMPILER})
     endif()
@@ -540,7 +535,7 @@ endif ()
 # Tests #
 #########
 
-if(YGG_BUILD_TESTS OR YGG_BUILD_CXX_TESTS OR YGG_BUILD_FORTRAN_TESTS OR YGG_BUILD_PYTHON_TESTS)
+if(YGG_BUILD_TESTS OR YGG_BUILD_CXX_TESTS OR YGG_BUILD_Fortran_TESTS OR YGG_BUILD_Python_TESTS)
     enable_testing()
     include(CTest)
     add_subdirectory(tests)

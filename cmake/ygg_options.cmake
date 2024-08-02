@@ -62,7 +62,7 @@ if (NOT DEFAULT_RAPIDJSON_INCLUDE_DIRS)
              OUTPUT_VARIABLE DEFAULT_RAPIDJSON_INCLUDE_DIRS)
 endif()
 
-option(YGGDRASIL_DISABLE_PYTHON_C_API "Disable the Python C API" OFF)
+option(YGGDRASIL_DISABLE_Python_C_API "Disable the Python C API" OFF)
 option(YGGDRASIL_PYGIL_NO_MANAGEMENT "Disable any handling of the Python GIL" OFF)
 option(YGG_BUILD_ASAN "Build with address sanitizer (gcc/clang)" OFF)
 option(YGG_BUILD_UBSAN "Build with undefined behavior sanitizer (gcc/clang)" OFF)
@@ -80,7 +80,7 @@ if (NOT EXISTS ${RAPIDJSON_INCLUDE_DIRS})
                       " want to report the issue.")
 endif()
 
-set(PYTHON_PREFIX Python3)
+set(Python_PREFIX Python3)
 
 if (RAPIDJSON_CHECK_PYREFS)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DRAPIDJSON_CHECK_PYREFS")

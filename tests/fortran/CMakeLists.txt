@@ -1,17 +1,17 @@
 cmake_minimum_required (VERSION 3.5)
 message(STATUS "Fortran TESTING ON")
 enable_language (C)
-if ((NOT FORCE_SPLIT_CXXFORTRAN) AND (NOT MSVC))
+if ((NOT FORCE_SPLIT_CXXFortran) AND (NOT MSVC))
     enable_language(Fortran)
 endif()
 enable_testing ()
 include(DynamicTestLibraries)
 
-set(FORTRAN_TEST_LIBRARIES ${YGG_TARGET_FORTRAN})
-set(FORTRAN_TEST_INCLUDE_DIRS ${YGG_FORTRAN_MOD_DIR})
+set(Fortran_TEST_LIBRARIES ${YGG_TARGET_Fortran})
+set(Fortran_TEST_INCLUDE_DIRS ${YGG_Fortran_MOD_DIR})
 
-message(STATUS "FORTRAN_TEST_LIBRARIES = ${FORTRAN_TEST_LIBRARIES}")
-message(STATUS "FORTRAN_TEST_INCLUDE_DIRS = ${FORTRAN_TEST_INCLUDE_DIRS}")
+message(STATUS "Fortran_TEST_LIBRARIES = ${Fortran_TEST_LIBRARIES}")
+message(STATUS "Fortran_TEST_INCLUDE_DIRS = ${Fortran_TEST_INCLUDE_DIRS}")
 
 function (mangle_fortran_name CNAME FNAME)
     set (TMP)
@@ -46,16 +46,16 @@ function (add_fortran_test_executable TARGET)
     create_test_sourcelist (_ ${TARGET_SOURCE} ${TEST_FILES_MANGLED}
                             EXTRA_INCLUDE YggInterface.h)
 
-    message(STATUS "FORTRAN_TEST_INCLUDE_DIRS = ${FORTRAN_TEST_INCLUDE_DIRS}")
+    message(STATUS "Fortran_TEST_INCLUDE_DIRS = ${Fortran_TEST_INCLUDE_DIRS}")
     add_mixed_fortran_library(
         ${TARGET}_fortran SHARED
 	LANGUAGE CXX ${TEST_FILES}
-	LIBRARIES ${FORTRAN_TEST_LIBRARIES}
-	INCLUDES ${FORTRAN_TEST_INCLUDE_DIRS}
+	LIBRARIES ${Fortran_TEST_LIBRARIES}
+	INCLUDES ${Fortran_TEST_INCLUDE_DIRS}
 	DEFINITIONS ${DYNAMIC_TEST_DEFINITIONS})
     add_executable (${TARGET} ${TARGET_SOURCE})
-    target_link_libraries (${TARGET} ${TARGET}_fortran ${FORTRAN_TEST_LIBRARIES})
-    target_include_directories(${TARGET} PRIVATE ${FORTRAN_TEST_INCLUDE_DIRS})
+    target_link_libraries (${TARGET} ${TARGET}_fortran ${Fortran_TEST_LIBRARIES})
+    target_include_directories(${TARGET} PRIVATE ${Fortran_TEST_INCLUDE_DIRS})
 
     set (TEST_TIMEOUT 40)
     # if (WIN32)

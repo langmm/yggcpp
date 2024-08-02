@@ -8,7 +8,7 @@ name: Test of package installation & execution
   schedule:
   - cron: 0 10 * * 1
 jobs:
-  build_cpp:
+  build_cxx:
     runs-on: ${{ matrix.os }}
     # services:
     #   rabbitmq:
@@ -486,7 +486,7 @@ jobs:
           cmake .. ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} ${{ env.CMAKE_ARGS_TEST }}
       
       ###################################
-      # Build CPP & C
+      # Build CXX & C
       ###################################
       - name: Build C++ & C (CONDA)
         if: matrix.python-install == 'conda'
@@ -501,7 +501,7 @@ jobs:
           cmake --build . --config ${{ env.CMAKE_BUILD_TYPE_TEST }}
       
       ###################################
-      # Test CPP, C, & Fortran
+      # Test CXX, C, & Fortran
       ###################################
       - name: Test C++, C, & Fortran Interfaces (CONDA)
         if: matrix.python-install == 'conda'

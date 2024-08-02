@@ -5,8 +5,8 @@ REBUILD=""
 DONT_BUILD=""
 DO_C=""
 DO_CXX=""
-DO_FORTRAN=""
-DO_PYTHON=""
+DO_Fortran=""
+DO_Python=""
 DO_DOCS=""
 DO_SKBUILD=""
 WITH_ASAN=""
@@ -43,11 +43,11 @@ while [[ $# -gt 0 ]]; do
 	    shift # past argument with no value
 	    ;;
 	-p | --python )
-	    DO_PYTHON="TRUE"
+	    DO_Python="TRUE"
 	    shift # past argument with no value
 	    ;;
 	-f | --fortran )
-	    DO_FORTRAN="TRUE"
+	    DO_Fortran="TRUE"
 	    shift # past argument with no value
 	    ;;
 	-l | --language )
@@ -77,7 +77,7 @@ while [[ $# -gt 0 ]]; do
 	    shift # past argument with no value 
 	    ;;
 	--split-cfort )
-	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DFORCE_SPLIT_CXXFORTRAN=1"
+	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DFORCE_SPLIT_CXXFortran=1"
 	    shift # past argument with no value
 	    ;;
 	--symbols )
@@ -99,11 +99,11 @@ while [[ $# -gt 0 ]]; do
 	    shift # past argument with no value
 	    ;;
 	--python-link-cpp )
-	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYGG_LINK_PYTHON_TO_CPP=1"
+	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYGG_LINK_Python_TO_CXX=1"
 	    shift # past argument with no value
 	    ;;
 	--disable-python )
-	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYGGDRASIL_DISABLE_PYTHON_C_API=1"
+	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYGGDRASIL_DISABLE_Python_C_API=1"
 	    shift # past argument with no value
 	    ;;
 	--no-debug )
@@ -200,23 +200,23 @@ if [ "$LANGUAGE" = "C" ]; then
     DO_C="TRUE"
 elif [ "$LANGUAGE" = "CXX" ]; then
     DO_CXX="TRUE"
-elif [ "$LANGUAGE" = "FORTRAN" ]; then
-    DO_FORTRAN="TRUE"
-elif [ "$LANGUAGE" = "PYTHON" ]; then
-    DO_PYTHON="TRUE"
+elif [ "$LANGUAGE" = "Fortran" ]; then
+    DO_Fortran="TRUE"
+elif [ "$LANGUAGE" = "Python" ]; then
+    DO_Python="TRUE"
 fi
 
-if [ ! -n "$DO_C" ] && [ ! -n "$DO_CXX" ] && [ ! -n "$DO_FORTRAN" ] && [ ! -n "$DO_PYTHON" ] && [ ! -n "$DO_DOCS" ]; then
+if [ ! -n "$DO_C" ] && [ ! -n "$DO_CXX" ] && [ ! -n "$DO_Fortran" ] && [ ! -n "$DO_Python" ] && [ ! -n "$DO_DOCS" ]; then
     DO_C="TRUE"
     DO_CXX="TRUE"
-    DO_FORTRAN="TRUE"
-    DO_PYTHON="TRUE"
+    DO_Fortran="TRUE"
+    DO_Python="TRUE"
     if [[ "$TEST_TYPE" == "unit" ]]; then
 	CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYGG_BUILD_TESTS=ON"
     fi
 fi
 
-if [ -n "$DO_C" ] || [ -n "$DO_CXX" ] || [ -n "$DO_FORTRAN" ] || [ -n "$DO_PYTHON" ]; then
+if [ -n "$DO_C" ] || [ -n "$DO_CXX" ] || [ -n "$DO_Fortran" ] || [ -n "$DO_Python" ]; then
     if [ -n "$DO_C" ]; then
 	CMAKE_FLAGS_SPEED="${CMAKE_FLAGS_SPEED} -DENABLE_C=ON"
     else
@@ -228,32 +228,32 @@ if [ -n "$DO_C" ] || [ -n "$DO_CXX" ] || [ -n "$DO_FORTRAN" ] || [ -n "$DO_PYTHO
 	CMAKE_FLAGS_SPEED="${CMAKE_FLAGS_SPEED} -DENABLE_CXX=OFF"
     fi
     if [ -n "$DO_C" ] || [ -n "$DO_CXX" ]; then
-	CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DBUILD_CPP_LIBRARY=ON"
+	CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DBUILD_CXX_LIBRARY=ON"
 	if [[ "$TEST_TYPE" == "unit" ]] || [[ "$TEST_TYPE" == "c" ]] || [[ "$TEST_TYPE" == "cxx" ]]; then
 	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYGG_BUILD_CXX_TESTS=ON"
 	fi
     else
-	CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DBUILD_CPP_LIBRARY=OFF"
+	CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DBUILD_CXX_LIBRARY=OFF"
     fi
-    if [ -n "$DO_FORTRAN" ]; then
-	CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DBUILD_FORTRAN_LIBRARY=ON -DYGG_Fortran_REQUIRED=ON -DYGG_ENABLE_ELF=OFF"
+    if [ -n "$DO_Fortran" ]; then
+	CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DBUILD_Fortran_LIBRARY=ON -DYGG_Fortran_REQUIRED=ON -DYGG_ENABLE_ELF=OFF"
 	if [[ "$TEST_TYPE" == "unit" ]] || [[ "$TEST_TYPE" == "fortran" ]]; then
-	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYGG_BUILD_FORTRAN_TESTS=ON"
+	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYGG_BUILD_Fortran_TESTS=ON"
 	fi
 	CMAKE_FLAGS_SPEED="${CMAKE_FLAGS_SPEED} -DENABLE_Fortran=ON"
     else
-	CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DBUILD_FORTRAN_LIBRARY=OFF"
+	CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DBUILD_Fortran_LIBRARY=OFF"
 	CMAKE_FLAGS_SPEED="${CMAKE_FLAGS_SPEED} -DENABLE_Fortran=OFF"
     fi
-    if [ -n "$DO_PYTHON" ]; then
-	CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DBUILD_PYTHON_LIBRARY=ON"
+    if [ -n "$DO_Python" ]; then
+	CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DBUILD_Python_LIBRARY=ON"
 	if [[ "$TEST_TYPE" == "unit" ]] || [[ "$TEST_TYPE" == "python" ]]; then
-	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYGG_BUILD_PYTHON_TESTS=ON"
+	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYGG_BUILD_Python_TESTS=ON"
 	fi
 	CMAKE_FLAGS_SPEED="${CMAKE_FLAGS_SPEED} -DENABLE_Python=ON"
     else
 	CMAKE_FLAGS_SPEED="${CMAKE_FLAGS_SPEED} -DENABLE_Python=OFF"
-	CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DBUILD_PYTHON_LIBRARY=OFF"
+	CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DBUILD_Python_LIBRARY=OFF"
     fi
 fi
 
@@ -298,7 +298,7 @@ fi
 if [ -n "$DO_SKBUILD" ]; then
     export CMAKE_ARGS="${CMAKE_FLAGS} ${CMAKE_FLAGS_LIB}"
     pip install \
-	--config-settings=cmake.define.ALLOW_SKBUILD_NONPYTHON:BOOL=ON \
+	--config-settings=cmake.define.ALLOW_SKBUILD_NONPython:BOOL=ON \
 	-v .
 else
     cd $BUILD_DIR
@@ -316,7 +316,7 @@ else
 	    export DYLD_INSERT_LIBRARIES=$(clang -print-file-name=libclang_rt.asan_osx_dynamic.dylib)
 	fi
 	if [ -n "$WITH_LLDB" ]; then
-	    if [ -n "$DO_FORTRAN" ]; then
+	    if [ -n "$DO_Fortran" ]; then
 		lldb -o 'run' -o 'quit' tests/fortran/fortran_testsuite -- test_ygg_input_1_
 	    else
 		lldb -o 'run' -o 'quit' tests/cpp/unittest
@@ -379,7 +379,7 @@ if [ -n "$DO_DOCS" ]; then
 	    mkdir $BUILD_DIR
 	fi
 	cd $BUILD_DIR
-	cmake .. $CMAKE_FLAGS -DYGG_BUILD_DOCS=ON -DBUILD_CPP_LIBRARY=OFF -DBUILD_FORTRAN_LIBRARY=OFF -DDOXYGEN_CHECK_MISSING=ON
+	cmake .. $CMAKE_FLAGS -DYGG_BUILD_DOCS=ON -DBUILD_CXX_LIBRARY=OFF -DBUILD_Fortran_LIBRARY=OFF -DDOXYGEN_CHECK_MISSING=ON
 	cmake --build . $CONFIG_FLAGS --target docs
 	# Need install here to ensure that cmake config files are in place
 	cmake --install . --prefix "$INSTALL_DIR" $CONFIG_FLAGS

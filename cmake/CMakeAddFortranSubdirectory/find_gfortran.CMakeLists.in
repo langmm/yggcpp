@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION @CMAKE_MINIMUM_REQUIRED_VERSION@)
-project(@target_name@_FIND_FORTRAN LANGUAGES C CXX Fortran)
+project(@target_name@_FIND_Fortran LANGUAGES C CXX Fortran)
 enable_language(Fortran)
 set(CMAKE_VERBOSE_MAKEFILE @CMAKE_VERBOSE_MAKEFILE@)
 message(STATUS "Finding Fortran implicit libraries & directories")

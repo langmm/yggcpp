@@ -92,7 +92,7 @@ message(STATUS "RAPIDJSON_PYTHON_ENV2 = ${RAPIDJSON_PYTHON_ENV2}")
 
 include(CheckDLL)
 show_runtimes(unittest)
-copy_required_runtimes(unittest DEPENDENCIES ${YGG_TARGET_CPP})
+copy_required_runtimes(unittest DEPENDENCIES ${YGG_TARGET_CXX})
 
 if(NOT MSVC)
     find_program(VALGRIND_FOUND valgrind)

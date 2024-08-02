@@ -164,7 +164,7 @@ endfunction()
 
 function(target_link_external_fortran_objects target fortran_target)
     include(CreateMSVCLib)
-    if ((NOT FORCE_SPLIT_CXXFORTRAN) AND (NOT MSVC))
+    if ((NOT FORCE_SPLIT_CXXFortran) AND (NOT MSVC))
         # TODO: Use CMAKE_Fortran_PREPROCESS_SOURCE
         set_source_files_properties(
 	    ${${fortran_target}_EXT_SRC} PROPERTIES
@@ -228,7 +228,7 @@ function(add_mixed_fortran_library target library_type)
       @ONLY)
     list(APPEND other_sources ${dummy_src})
   endif()
-  set(fortran_target ${target}_FORTRAN_OBJECT_LIBRARY)
+  set(fortran_target ${target}_Fortran_OBJECT_LIBRARY)
   add_external_fortran_library(
       ${fortran_target} OBJECT
       SOURCES ${fortran_sources}
@@ -299,7 +299,7 @@ function(add_external_fortran_library target_name library_type)
     set(MSVC_AND_GNU_BUILD ON)
   endif()
   set(MSVC_AND_GNU_BUILD ${MSVC_AND_GNU_BUILD} PARENT_SCOPE)
-  if ((NOT FORCE_SPLIT_CXXFORTRAN) AND (NOT MSVC_AND_GNU_BUILD))
+  if ((NOT FORCE_SPLIT_CXXFortran) AND (NOT MSVC_AND_GNU_BUILD))
     enable_language(Fortran)
     include(FortranCInterface)
     FortranCInterface_VERIFY()
