@@ -1,8 +1,8 @@
 #include "communicators/FunctionComm.hpp"
-#include "utils/embedded_languages.hpp"
 #include "utils/enums_utils.hpp"
 #include "utils/tools.hpp"
 #include "utils/multiprocessing.hpp"
+#include "utils/embedded_languages.hpp"
 #ifdef _WIN32
 #include <windows.h>
 #include <system_error>
@@ -197,6 +197,7 @@ FunctionWrapper::FunctionWrapper(const std::string& f,
     if ((flags & FUNCTION_EMBEDDED) && (flags & FUNCTION_ON_ASYNC)) {
       throw_error("Cannot load an embedded function from a thread other than the one that owns the global context");
     }
+    INIT_EMBEDDED(language);
     func = global_context->embed_registry_[language]->load_function(parts[1]);
     break;
   }
@@ -260,6 +261,7 @@ FunctionWrapper::~FunctionWrapper() {
   }
   case PYTHON_LANGUAGE:
   case JULIA_LANGUAGE: {
+    CHECK_INIT(language, ~FunctionWrapper);
     global_context->embed_registry_[language]->free_embedded(func);
     break;
   }
@@ -297,6 +299,7 @@ bool FunctionWrapper::_call(const rapidjson::Document& data_send,
   }
   case PYTHON_LANGUAGE:
   case JULIA_LANGUAGE: {
+    CHECK_INIT(language, _call);
     return global_context->embed_registry_[language]->call_function(func, data_send, data_recv);
   }
   default: {

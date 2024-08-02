@@ -39,7 +39,7 @@ CommContext::~CommContext() {
 int CommContext::init(bool for_testing) {
   log_debug() << "init: Begin" << std::endl;
   for_testing_ = for_testing;
-#define ADD_EMBEDDED(cls)						\
+#define ADD_EMBEDDED(cls, do_init)					\
   {									\
     utils::cls* iembed = new utils::cls();				\
     LANGUAGE iembed_language = iembed->language;			\
@@ -50,13 +50,13 @@ int CommContext::init(bool for_testing) {
       delete iembed;							\
       iembed = dynamic_cast<utils::cls*>(it->second);			\
     }									\
-    if (iembed->is_enabled()) {						\
+    if (do_init && iembed->is_enabled()) {				\
       iembed->initialize();						\
     }									\
   }
   YGG_THREAD_SAFE_BEGIN_LOCAL(embed) {
-    ADD_EMBEDDED(EmbeddedPython);
-    ADD_EMBEDDED(EmbeddedJulia);
+    ADD_EMBEDDED(EmbeddedPython, 1);
+    ADD_EMBEDDED(EmbeddedJulia, 0);
   } YGG_THREAD_SAFE_END;
 #undef ADD_EMBEDDED
 #ifdef ZMQINSTALLED

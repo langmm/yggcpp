@@ -1,10 +1,30 @@
 #pragma once
+
+// Unclear what header is including windows.h
+#if defined(RESTINSTALLED) && defined(__MINGW32__)
+// Ensure winsock2.h is included before windows.h included by curl
+#include <winsock2.h>
+#endif
+
 #include "utils/tools.hpp"
 #include "utils/rapidjson_wrapper.hpp"
 #include "utils/logging.hpp"
+#include "utils/enums.hpp"
+#include "utils/enums_maps.hpp"
 #include "utils/enums_utils.hpp"
 
 // TODO: Pass error state to finalize?
+
+#define INIT_EMBEDDED(lang)					\
+  if (global_context->embed_registry_[lang]->is_enabled()) {	\
+    global_context->embed_registry_[lang]->initialize();	\
+  }
+#define CHECK_INIT(lang, method)					\
+  if (!global_context->embed_registry_[lang]->init_count()) {		\
+    throw_error(std::string(#method) + ": Embedded language \""		\
+		+ LANGUAGE_map().find(lang)->second			\
+		+ "\" not initialized");				\
+  }
 
 #define EMBEDED_LANGUAGE_DECL(cls, emT)					\
   public:								\
@@ -212,13 +232,13 @@ namespace YggInterface {
 	return false; // GCOVR_EXCL_STOP
       }
       /**
-       * @brief Check the number of functions using this language on the
-       *   current thread.
-       * @param[in] action The number that the function count for this
-       *   language should be incremented by.
-       * @returns The function count after performing the requested action.
+       * @brief Check the number of times this language has been
+       *   initialized on the current thread.
+       * @param[in] action The number that the count for this language
+       *   should be incremented by.
+       * @returns The count after performing the requested action.
        */
-      YGG_API virtual int function_count(int action = 0);
+      YGG_API virtual int init_count(int action = 0);
       /**
        * @brief Initialize the embeded language on a C++ thread.
        * @returns true if language is successfully initialized, false
@@ -369,6 +389,7 @@ namespace YggInterface {
       LANGUAGE language;     /**< Enum of the embeded language. */
       std::string ext;       /**< Language extension. */
       std::string thread_id; /**< Thread that initialized the language. */
+      bool initialized;      /**< true if the language has been initialized. */
     };
 
   }

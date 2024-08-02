@@ -24,6 +24,13 @@ function(dump_cmake_variables)
   endif()
 endfunction()
 
+macro(propagate_cmake_variables)
+  set(_temp_package_vars "${ARGN}")
+  foreach (_variableName IN LISTS _temp_package_vars)
+    set(${_variableName} ${${_variableName}} PARENT_SCOPE)
+  endforeach()
+endmacro()
+
 macro(propagate_cmake_library_variables NAME)
   set(_temp_package_vars "${ARGN}")
   dump_cmake_variables(

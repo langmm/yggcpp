@@ -1,13 +1,13 @@
-#include "utils/enums_maps.hpp"
-#include "utils/enums_utils.hpp"
 #include "utils/embedded_languages.hpp"
+
 
 using namespace YggInterface::utils;
 
 
 EmbeddedLanguageBase::EmbeddedLanguageBase(const LANGUAGE& lang,
 					   const std::string& ext0) :
-  LogBase(), language(lang), ext(ext0), thread_id(get_thread_id()) {
+  LogBase(), language(lang), ext(ext0), thread_id(get_thread_id()),
+  initialized(false) {
 }
 std::string EmbeddedLanguageBase::logInst() const {
   return LANGUAGE_map().find(language)->second;
@@ -44,7 +44,7 @@ bool EmbeddedLanguageBase::enable() const {
     setenv(envvar.c_str(), "0", 1);
   return out;
 }
-int EmbeddedLanguageBase::function_count(int action) {
+int EmbeddedLanguageBase::init_count(int action) {
   static thread_local std::map<LANGUAGE, int> languages = {};
   int value = 0;
   if (languages.find(language) != languages.end()) {
@@ -52,22 +52,29 @@ int EmbeddedLanguageBase::function_count(int action) {
   }
   value = value + action;
   if (value < 0)
-    throw_error("function_count: Cannot have a negative function count");
-  log_debug() << "function_count[" << action << "]: " << value << std::endl;
+    throw_error("init_count: Cannot have a negative function count");
+  log_debug() << "init_count[" << action << "]: " << value << std::endl;
   languages[language] = value;
   return value;
 }
 bool EmbeddedLanguageBase::initialize(bool on_thread) {
-  bool out = true;
+  bool out = true, inc = 1;
   log_debug() << "initialize: on_thread = " << on_thread << std::endl;
-  if (function_count() == 0) {
-    if (on_thread)
+  if (init_count() == 0) {
+    if (on_thread) {
       out = initialize_thread();
-    else
+    } else {
       out = initialize_main();
+      initialized = true;
+    }
+  } else {
+    // Only allow a single initialization on the main thread
+    if (not on_thread)
+      inc = 0;
   }
-  if (out)
-    function_count(1);
+  if (out && inc) {
+    init_count(inc);
+  }
   log_debug() << "initialize: on_thread = " << on_thread <<
     " [complete]" << std::endl;
   return out;
@@ -76,15 +83,16 @@ bool EmbeddedLanguageBase::finalize(bool on_thread) {
   bool out = true;
   log_debug() << "finalize: on_thread = " << on_thread << std::endl;
   if (on_thread) {
-    if (function_count() == 1) {
+    if (init_count() == 1) {
       out = finalize_thread();
     }
     if (out)
-      function_count(-1);
+      init_count(-1);
   } else {
-    // Avoid use of function_count in global CommContext destructor
+    // Avoid use of init_count in global CommContext destructor
     //   due to unpredictable teardown order of static variables
-    out = finalize_main();
+    if (initialized)
+      out = finalize_main();
   }
   log_debug() << "finalize: on_thread = " << on_thread <<
     " [complete]" << std::endl;

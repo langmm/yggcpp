@@ -5,10 +5,6 @@
 // - Type conversion
 // - Store type associated with function and use it to set the schema?
 // - Allow for multiple copies in the same model?
-// - Dynamic library lookup: Create dynamic library with wrapped, compiled
-//   model functions, pass the name in an environment variable
-//   (YGG_FUNCTION_LIBRARY), check that the file exists, dynamically load
-//   it, search for functions, register function
 
 #include "utils/tools.hpp"
 #include "communicators/CommBase.hpp"
