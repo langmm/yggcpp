@@ -9,10 +9,15 @@
 
 namespace YggInterface {
   namespace utils {
+    /** @brief Class to handling embedding R. */
     class EmbeddedR : public EmbeddedLanguageBase {
       EMBEDED_LANGUAGE_DECL(EmbeddedR, YGG_EMBED_R_TYPE);
-      void* R_; /** Embedded R */
+      void* R_; /**< Embedded R */
 #ifdef YGG_EMBED_R
+      /**
+       * @brief Get the embedded R interpreter.
+       * @returns R interpreter.
+       */
       Rinside& R() {
 	if (!R_)
 	  throw_error("RInside embedded R not initialized.");

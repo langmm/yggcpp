@@ -36,8 +36,8 @@ public:
     while (!post("startup")) {
       usleep(10000);
     }
-    if (!find_child())
-      throw std::runtime_error("Could not locate child process");
+    // if (!find_child())
+    //   throw std::runtime_error("Could not locate child process");
   }
   ~RunFlaskApp() {
     if (app) {

@@ -9,6 +9,7 @@
 
 namespace YggInterface {
   namespace utils {
+    /** @brief Class to handling embedding Python. */
     class EmbeddedPython : public EmbeddedLanguageBase {
       EMBEDED_LANGUAGE_DECL(EmbeddedPython, PyObject*);
       /** \copydoc YggInterface::utils:EmbeddedLanguageBase::commFlags */

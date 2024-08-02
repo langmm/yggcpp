@@ -3,7 +3,6 @@
 #include "YggInterface_export.h"
 #include "utils/tools.hpp"
 #include "utils/logging.hpp"
-#include "utils/embedded_languages.hpp"
 // #if defined(ZMQINSTALLED) && defined(_MSC_VER)
 // #define YGG_ZMQ_CATCH_ERROR_POST_UNLOAD 1
 // #endif
@@ -20,6 +19,12 @@
 #include <random>
 
 namespace YggInterface {
+
+  namespace utils {
+    // Forward declaration
+    class EmbeddedLanguageBase;
+  }
+  
   namespace communicator {
 
     // Forward declaration
@@ -133,10 +138,9 @@ namespace YggInterface {
        * @brief Create a registered function wrapper if one does not
        *   already exist in the registry.
        * @param[in] f Function name and import information.
-       * @param[in] pointer_provided If true, the constructor is being
-       *   called with an explicit function pointer.
        * @param[in] calling_language Language calling the function.
        * @param[in] flags Bitwise flags describing the function.
+       * @returns Created function wrapper. NULL on error.
        */
       YGG_API FunctionWrapper* create_registered_function(const std::string& f,
 							  const LANGUAGE calling_language=NO_LANGUAGE,

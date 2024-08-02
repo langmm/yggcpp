@@ -1,40 +1,41 @@
 #pragma once
 #include "utils/tools.hpp"
-#include "utils/enums_utils.hpp"
 #include "utils/rapidjson_wrapper.hpp"
-#include "YggInterface_export.h"
+#include "utils/logging.hpp"
+#include "utils/enums_utils.hpp"
 
 // TODO: Pass error state to finalize?
 
 #define EMBEDED_LANGUAGE_DECL(cls, emT)					\
   public:								\
+  /** \copydoc YggInterface::utils::EmbeddedLanguageBase::EmbeddedLanguageBase */ \
   YGG_API cls();							\
-  /** \copydoc YggInterface::utils:EmbeddedLanguageBase::is_enabled */	\
+  /** \copydoc YggInterface::utils::EmbeddedLanguageBase::is_enabled */	\
   YGG_API bool is_enabled() const override;				\
-  /** \copydoc YggInterface::utils:EmbeddedLanguageBase::initialize */	\
+  /** \copydoc YggInterface::utils::EmbeddedLanguageBase::initialize_main */	\
   YGG_API bool initialize_main() override;				\
-  /** \copydoc YggInterface::utils:EmbeddedLanguageBase::finalize */	\
+  /** \copydoc YggInterface::utils::EmbeddedLanguageBase::finalize_main */	\
   YGG_API bool finalize_main() override;				\
-  /** \copydoc YggInterface::utils:EmbeddedLanguageBase::get_error */	\
+  /** \copydoc YggInterface::utils::EmbeddedLanguageBase::get_error */	\
   YGG_API bool get_error(std::string& message) const override;	\
-  /** \copydoc YggInterface::utils:EmbeddedLanguageBase::preserve_embedded */ \
+  /** \copydoc YggInterface::utils::EmbeddedLanguageBase::preserve_embedded */ \
   YGG_API bool preserve_embedded(void*& x) const override;		\
-  /** \copydoc YggInterface::utils:EmbeddedLanguageBase::free_embedded */ \
+  /** \copydoc YggInterface::utils::EmbeddedLanguageBase::free_embedded */ \
   YGG_API bool free_embedded(void*& x) const override;			\
-  /** \copydoc YggInterface::utils:EmbeddedLanguageBase::string_embedded */ \
+  /** \copydoc YggInterface::utils::EmbeddedLanguageBase::string_embedded */ \
   YGG_API std::string string_embedded(const void* x) const override;	\
-  /** \copydoc YggInterface::utils:EmbeddedLanguageBase::eval */	\
+  /** \copydoc YggInterface::utils::EmbeddedLanguageBase::eval */	\
   YGG_API bool eval(const std::string& expr,				\
 		    rapidjson::Document& result) const override;	\
-  /** \copydoc YggInterface::utils:EmbeddedLanguageBase::convert_to */	\
+  /** \copydoc YggInterface::utils::EmbeddedLanguageBase::convert_to */	\
   YGG_API bool convert_to(const rapidjson::Value& v_in, void*& v_out,\
 			  bool dont_preserve = false) const;		\
-  /** \copydoc YggInterface::utils:EmbeddedLanguageBase::convert_from */ \
+  /** \copydoc YggInterface::utils::EmbeddedLanguageBase::convert_from */ \
   YGG_API bool convert_from(const void*& v_in, rapidjson::Value& v_out,\
 			    rapidjson::Value::AllocatorType& allocator) const; \
-  /** \copydoc YggInterface::utils:EmbeddedLanguageBase::load_function */ \
+  /** \copydoc YggInterface::utils::EmbeddedLanguageBase::load_function */ \
   YGG_API void* load_function(const std::string& name) const override;	\
-  /** \copydoc YggInterface::utils:EmbeddedLanguageBase::call_function */ \
+  /** \copydoc YggInterface::utils::EmbeddedLanguageBase::call_function */ \
   YGG_API bool call_function(void* func, const rapidjson::Document& args,\
 			     rapidjson::Document& result) const override
 #define EMBEDED_LANGUAGE_DEFN_ENABLED(cls, emT, lang, ext)		\
@@ -349,7 +350,7 @@ namespace YggInterface {
       }
       /**
        * @brief Call a function in the embedded language
-       * @parma[in] func Pointer to the function to call.
+       * @param[in] func Pointer to the function to call.
        * @param[in] args Document containing function arguments.
        * @param[out] result Document to store the result from the function
        *   call in.
@@ -365,9 +366,9 @@ namespace YggInterface {
 	return false; // GCOVR_EXCL_STOP
       }
       
-      LANGUAGE language;     /** Enum of the embeded language. */
-      std::string ext;       /** Language extension. */
-      std::string thread_id; /** Thread that initialized the language. */
+      LANGUAGE language;     /**< Enum of the embeded language. */
+      std::string ext;       /**< Language extension. */
+      std::string thread_id; /**< Thread that initialized the language. */
     };
 
   }

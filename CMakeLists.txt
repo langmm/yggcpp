@@ -36,12 +36,6 @@ option(YGG_Fortran_REQUIRED "Raise an error if the Fortran interface library can
 option(YGG_Julia_REQUIRED "Raise an error if the Julia interface library cannot be build" OFF)
 option(ALLOW_SKBUILD_NONPYTHON "Allow the non-Python interfaces (C/C++/Fortran) to be built from SKBUILD" OFF)
 set(DEFAULT_COMM "ZMQ" CACHE STRING "Default communicator")
-option(ENABLE_ZMQ "Enable ZeroMQ" ON)
-option(ENABLE_RMQ "Enable RabbitMQ" ON)
-option(ENABLE_REST "Enable REST API" ON)
-option(ENABLE_OMP "Enable OpenMP" ON)
-option(ENABLE_MPI "Enable MPI" ON)
-option(ENABLE_THREADS "Enable std::threads" ON)
 option(YGG_BUILD_TESTS "Build tests" OFF)
 option(YGG_BUILD_FORTRAN_TESTS "Build Fortran tests" OFF)
 option(YGG_BUILD_CXX_TESTS "Build C/C++ tests" OFF)
@@ -153,7 +147,6 @@ add_yggdrasil_option(
 
 add_yggdrasil_option(
   RMQ COMM DEPENDENCY rabbitmq-c
-  LIBRARIES rabbitmq::rabbitmq
   SEARCH_ARGS USING_PKGCONFIG HEADER amqp.h LIBNAMES rabbitmq
 )
 if (rabbitmq-c_FOUND)

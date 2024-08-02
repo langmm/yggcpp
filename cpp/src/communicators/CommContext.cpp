@@ -3,6 +3,7 @@
 #include "utils/rapidjson_wrapper.hpp"
 #include "utils/embedded_python.hpp"
 #include "utils/embedded_julia.hpp"
+#include "utils/embedded_r.hpp"
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 int YggInterface::communicator::global_scope_comm = 0;
