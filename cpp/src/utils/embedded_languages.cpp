@@ -69,7 +69,7 @@ bool EmbeddedLanguageBase::initialize(bool on_thread) {
     }
   } else {
     // Only allow a single initialization on the main thread
-    if (not on_thread)
+    if (!on_thread)
       inc = 0;
   }
   if (out && inc) {

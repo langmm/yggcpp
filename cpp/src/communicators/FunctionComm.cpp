@@ -192,12 +192,12 @@ FunctionWrapper::FunctionWrapper(const std::string& f,
   // case R_LANGUAGE:
   case PYTHON_LANGUAGE:
   case JULIA_LANGUAGE: {
+    INIT_EMBEDDED(language);
     flags |= global_context->embed_registry_[language]->functionFlags();
     commflags |= global_context->embed_registry_[language]->commFlags();
     if ((flags & FUNCTION_EMBEDDED) && (flags & FUNCTION_ON_ASYNC)) {
       throw_error("Cannot load an embedded function from a thread other than the one that owns the global context");
     }
-    INIT_EMBEDDED(language);
     func = global_context->embed_registry_[language]->load_function(parts[1]);
     break;
   }

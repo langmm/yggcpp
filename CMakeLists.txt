@@ -22,7 +22,6 @@ set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(ygg_options)
 include(AddYggInterface)
 
-option(BUILD_CXX_LIBRARY "Build the Yggdrasil C++ interface library" ON)
 option(BUILD_Fortran_LIBRARY "Build the Yggdrasil Fortran interface library" ON)
 option(BUILD_Python_LIBRARY "Build the Yggdrasil Python interface library" OFF)
 option(BUILD_Julia_LIBRARY "Build the Yggdrasil Julia interface library" OFF)
@@ -140,10 +139,7 @@ add_yggdrasil_option(
 # RabbitMQ #
 ############
 
-add_yggdrasil_option(
-  RMQ COMM DEPENDENCY rabbitmq-c
-  SEARCH_ARGS USING_PKGCONFIG HEADER amqp.h LIBNAMES rabbitmq
-)
+add_yggdrasil_option(RMQ COMM DEPENDENCY rabbitmq-c)
 if (rabbitmq-c_FOUND)
   message(STATUS "rabbitmq-c_VERSION = ${rabbitmq-c_VERSION}")
   # In v0.12.0 (v9.2.5 so), the include files were moved into a
@@ -447,9 +443,7 @@ if (NOT SOURCES_CXX)
   message(FATAL_ERROR "Sources could not be located")
 endif()
 
-if(BUILD_CXX_LIBRARY)
-    add_subdirectory(cpp)
-endif()
+add_yggdrasil_interface(CXX DIRECTORY cpp)
 
 #########################
 # Create Python Library #
@@ -514,7 +508,7 @@ if (YGG_INSTALL_TARGETS)
   file(GLOB_RECURSE modules_raw LIST_DIRECTORIES false
        "${CMAKE_CURRENT_LIST_DIR}/cmake/*.cmake")
   foreach(f IN LISTS modules_raw)
-    if (NOT f MATCHES "Find*")
+    if ((f STREQUAL "FindJulia.cmake") OR (NOT f MATCHES "Find*"))
       list(APPEND modules ${f})
     endif()
   endforeach()
