@@ -130,7 +130,6 @@ function(find_package_python)
     endif()
     message(STATUS "${Python_PREFIX}_EXECUTABLE = ${${Python_PREFIX}_EXECUTABLE}")
     propagate_cmake_library_variables("^Python*")
-    dump_cmake_variables(REGEX "^Python*" VERBOSE)
 endfunction()
 
 function(find_package_pkgconfig name)
@@ -193,7 +192,7 @@ function(find_package_pkgconfig name)
 	    # set(create_interface ON)
 	endif()
     endif()
-    propagate_cmake_library_variables("${name}*" ${ARGS_ADDITIONAL_PROPERTIES})
+    propagate_cmake_library_variables("^${name}*" ${ARGS_ADDITIONAL_PROPERTIES})
 endfunction()
 
 
@@ -243,8 +242,7 @@ function(find_package_zmq)
     set(ZeroMQ_LIBRARY ${ZeroMQ_LIBRARY} PARENT_SCOPE)
     set(ZeroMQ_STATIC_LIBRARY ${ZeroMQ_STATIC_LIBRARY} PARENT_SCOPE)
     set(ZeroMQ_INCLUDE_DIR ${ZeroMQ_INCLUDE_DIR} PARENT_SCOPE)
-    propagate_cmake_library_variables("ZeroMQ*")
-    dump_cmake_variables(REGEX "ZeroMQ*" VERBOSE)
+    propagate_cmake_library_variables("^ZeroMQ*")
 endfunction()
 
 

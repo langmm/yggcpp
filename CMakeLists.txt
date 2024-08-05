@@ -22,6 +22,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(ygg_options)
 include(AddYggInterface)
 
+option(BUILD_CXX_LIBRARY "Build the Yggdrasil C++ interface library" ON)
 option(BUILD_Fortran_LIBRARY "Build the Yggdrasil Fortran interface library" ON)
 option(BUILD_Python_LIBRARY "Build the Yggdrasil Python interface library" OFF)
 option(BUILD_Julia_LIBRARY "Build the Yggdrasil Julia interface library" OFF)
@@ -442,8 +443,10 @@ file(GLOB_RECURSE SOURCES_CXX "cpp/src/*.cpp")
 if (NOT SOURCES_CXX)
   message(FATAL_ERROR "Sources could not be located")
 endif()
-
-add_yggdrasil_interface(CXX DIRECTORY cpp)
+if(BUILD_CXX_LIBRARY)
+    add_subdirectory(cpp)
+endif()
+# add_yggdrasil_interface(CXX DIRECTORY cpp)
 
 #########################
 # Create Python Library #

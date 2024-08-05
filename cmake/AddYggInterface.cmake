@@ -1,6 +1,6 @@
 function(find_yggdrasil_dependency NAME)
   include(SearchTools)
-  set(options USING_PKGCONFIG FOR_PACKAGE_CONFIG)
+  set(options USING_PKGCONFIG FOR_PACKAGE_CONFIG VERBOSE)
   set(multiValueArgs ADDITIONAL_PROPERTIES)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
   if(NAME STREQUAL "rabbitmq-c")
@@ -26,7 +26,10 @@ function(find_yggdrasil_dependency NAME)
   else()
     find_package(${NAME} ${ARGS_UNPARSED_ARGUMENTS})
   endif()
-  propagate_cmake_library_variables("${NAME}*" ${ARGS_ADDITIONAL_PROPERTIES})
+  propagate_cmake_library_variables("^${NAME}*" ${ARGS_ADDITIONAL_PROPERTIES})
+  if(ARGS_VERBOSE)
+    dump_cmake_variables(REGEX "${NAME}*" VERBOSE)
+  endif()
 endfunction()
 
 function(add_yggdrasil_interface LANGUAGE)
@@ -98,7 +101,7 @@ function(add_yggdrasil_option NAME)
 	${ARGS_SEARCH_ARGS}
       )
       propagate_cmake_library_variables(
-        "${ARGS_DEPENDENCY}*" ${ARGS_DEPENDENCY_PROPERTIES}
+        "^${ARGS_DEPENDENCY}*" ${ARGS_DEPENDENCY_PROPERTIES}
       )
       if(${ARGS_FOUND_VAR})
         message(STATUS "${ARGS_DEPENDENCY} found")

@@ -1,6 +1,6 @@
 function(embed_language LANGUAGE)
   include(AddYggInterface)
-  set(options DISABLE_BY_DEFAULT)
+  set(options DISABLE_BY_DEFAULT VERBOSE)
   set(oneValueArgs INCLUDE_DIRS_VAR LIBRARY_VAR FIND_METHOD DEPENDENCY)
   set(multiValueArgs DEFINITIONS FIND_ARGS DEPENDENCY_PROPERTIES)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -67,9 +67,11 @@ function(embed_language LANGUAGE)
       endif()
     endif()
     propagate_cmake_library_variables(
-      "${ARGS_DEPENDENCY}*" ${ARGS_DEPENDENCY_PROPERTIES}
+      "^${ARGS_DEPENDENCY}*" ${ARGS_DEPENDENCY_PROPERTIES}
     )
-    dump_cmake_variables(REGEX "^${ARGS_DEPENDENCY}*" VERBOSE)
+    if(ARGS_VERBOSE)
+      dump_cmake_variables(REGEX "^${ARGS_DEPENDENCY}*" VERBOSE)
+    endif()
   endif()
   list(APPEND YGG_EMBEDDED_LANGUAGES ${LANGUAGE})
   propagate_cmake_variables(
