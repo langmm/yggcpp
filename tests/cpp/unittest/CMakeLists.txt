@@ -48,22 +48,24 @@ cmake_path(GET CMAKE_CURRENT_SOURCE_DIR PARENT_PATH PARENT_SOURCE_DIR)
 cmake_path(GET CMAKE_CURRENT_BINARY_DIR PARENT_PATH PARENT_BINARY_DIR)
 add_dynamic_dependencies(unittest WORKING_DIR ${PARENT_BINARY_DIR})
 if (WIN32)
-    # There is a bug which prevents these environment variables from
-    # being available during test discovery on windows
-    # https://gitlab.kitware.com/cmake/cmake/-/issues/21453
-    gtest_discover_tests(unittest DISCOVERY_MODE PRE_TEST
-                         WORKING_DIRECTORY ${PARENT_BINARY_DIR}
-                         TEST_LIST ygg_test_list
-                         PROPERTIES TIMEOUT 100
-			 ENVIRONMENT "${RAPIDJSON_PYTHON_ENV}"
-			 ENVIRONMENT "${RAPIDJSON_PYTHON_ENV2}")
+  set(unittest_timeout 100)
 else()
-    gtest_discover_tests(unittest DISCOVERY_MODE PRE_TEST
-                         WORKING_DIRECTORY ${PARENT_BINARY_DIR}
-                         TEST_LIST ygg_test_list
-                         PROPERTIES TIMEOUT 20
-			 ENVIRONMENT "${RAPIDJSON_PYTHON_ENV}")
+  set(unittest_timeout 20)
 endif()
+list(APPEND unittest_args PROPERTIES TIMEOUT ${unittest_timeout})
+if(RAPIDJSON_PYTHON_ENV)
+  list(APPEND unittest_args ENVIRONMENT "${RAPIDJSON_PYTHON_ENV}")
+endif()
+if(RAPIDJSON_PYTHON_ENV2)
+  list(APPEND unittest_args ENVIRONMENT "${RAPIDJSON_PYTHON_ENV2}")
+endif()
+# There is a bug which prevents environment variables from
+# being available during test discovery on windows
+# https://gitlab.kitware.com/cmake/cmake/-/issues/21453
+gtest_discover_tests(unittest DISCOVERY_MODE PRE_TEST
+                     WORKING_DIRECTORY ${PARENT_BINARY_DIR}
+                     TEST_LIST ygg_test_list
+		     ${unittest_args})
 
 
 # This is required for running tests with valgrind

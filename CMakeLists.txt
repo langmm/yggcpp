@@ -22,20 +22,12 @@ set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(ygg_options)
 include(AddYggInterface)
 
-option(BUILD_CXX_LIBRARY "Build the Yggdrasil C++ interface library" ON)
-option(BUILD_Fortran_LIBRARY "Build the Yggdrasil Fortran interface library" ON)
-option(BUILD_Python_LIBRARY "Build the Yggdrasil Python interface library" OFF)
-option(BUILD_Julia_LIBRARY "Build the Yggdrasil Julia interface library" OFF)
 option(YGG_Python_LIBRARY_WRAP "Build the Yggdrasil Python interface library by wrapping the C++ module" ON)
 option(YGG_Fortran_REQUIRED "Raise an error if the Fortran interface library cannot be build" OFF)
 option(YGG_Julia_REQUIRED "Raise an error if the Julia interface library cannot be build" OFF)
 option(ALLOW_SKBUILD_NONPython "Allow the non-Python interfaces (C/C++/Fortran) to be built from SKBUILD" OFF)
 set(DEFAULT_COMM "ZMQ" CACHE STRING "Default communicator")
 option(YGG_BUILD_TESTS "Build tests" OFF)
-option(YGG_BUILD_Fortran_TESTS "Build Fortran tests" OFF)
-option(YGG_BUILD_CXX_TESTS "Build C/C++ tests" OFF)
-option(YGG_BUILD_Python_TESTS "Build Python tests" OFF)
-option(YGG_BUILD_Julia_TESTS "Build Julia tests" OFF)
 # option(YGG_TEST_WITH_LLDB "Run tests with lldb" OFF)
 option(YGG_ENABLE_COVERAGE "Enable coverage reporting" OFF)
 option(YGG_BUILD_THIRDPARTY_GTEST "Use gtest installation in 'thirdpart/gtest' by default if available" ON)
@@ -76,7 +68,7 @@ list(APPEND YGG_INSTALL_DEFS
      -DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
      -D_USE_MATH_DEFINES)
 
-set(RAPIDJSON_Python_ENV "YGG_MODEL_INDEX=123")
+set(RAPIDJSON_PYTHON_ENV "YGG_MODEL_INDEX=123")
 
 set(YGG_BUILD_FLAGS "")
 
@@ -346,31 +338,33 @@ message(STATUS "DEPS_LIBRARIES = ${DEPS_LIBRARIES}")
 # Handle interdependencies #
 ############################
 
-if(SKBUILD)
-  set(BUILD_Python_LIBRARY ON)
-  if(YGG_LINK_Python_TO_CXX)
-    if(ALLOW_SKBUILD_NONPython)
-      message(FATAL_ERROR "ALLOW_SKBUILD_NONPython is incompatible with YGG_LINK_Python_TO_CXX")
-    endif()
-    set(BUILD_CXX_LIBRARY ON)
-    set(BUILD_Fortran_LIBRARY OFF)
-  elseif(NOT ALLOW_SKBUILD_NONPython)
-    set(BUILD_CXX_LIBRARY OFF)
-    set(BUILD_Fortran_LIBRARY OFF)
-  endif()
-  set(YGG_BUILD_TESTS OFF)
-  set(YGG_BUILD_CXX_TESTS OFF)
-  set(YGG_BUILD_Fortran_TESTS OFF)
-  set(YGG_BUILD_THIRDPARTY_GTEST OFF)
-elseif(BUILD_Python_LIBRARY AND NOT YGGDRASIL_DISABLE_Python_C_API)
-  if(YGG_LINK_Python_TO_CXX)
-    set(BUILD_CXX_LIBRARY ON)
-  endif()
-endif()
+# if(SKBUILD)
+#   set(BUILD_Python_LIBRARY ON)
+#   if(YGG_LINK_Python_TO_CXX)
+#     if(ALLOW_SKBUILD_NONPython)
+#       message(FATAL_ERROR "ALLOW_SKBUILD_NONPython is incompatible with YGG_LINK_Python_TO_CXX")
+#     endif()
+#     set(BUILD_CXX_LIBRARY ON)
+#     set(BUILD_Fortran_LIBRARY OFF)
+#   elseif(NOT ALLOW_SKBUILD_NONPython)
+#     set(BUILD_CXX_LIBRARY OFF)
+#     set(BUILD_Fortran_LIBRARY OFF)
+#   endif()
+#   set(YGG_BUILD_TESTS OFF)
+#   set(YGG_BUILD_CXX_TESTS OFF)
+#   set(YGG_BUILD_Fortran_TESTS OFF)
+#   set(YGG_BUILD_THIRDPARTY_GTEST OFF)
+# elseif(BUILD_Python_LIBRARY AND NOT YGGDRASIL_DISABLE_Python_C_API)
+#   if(YGG_LINK_Python_TO_CXX)
+#     set(BUILD_CXX_LIBRARY ON)
+#   endif()
+# endif()
 if(BUILD_Fortran_LIBRARY)
   set(BUILD_CXX_LIBRARY ON)
 endif()
-set(BUILD_C_LIBRARY ${BUILD_CXX_LIBRARY})
+if(YGG_LINK_Python_TO_CXX AND (BUILD_Python_LIBRARY OR SKBUILD))
+  set(BUILD_CXX_LIBRARY ON)
+endif()
 
 ##################
 # Coverage       #
@@ -443,37 +437,28 @@ file(GLOB_RECURSE SOURCES_CXX "cpp/src/*.cpp")
 if (NOT SOURCES_CXX)
   message(FATAL_ERROR "Sources could not be located")
 endif()
-if(BUILD_CXX_LIBRARY)
-    add_subdirectory(cpp)
-endif()
-# add_yggdrasil_interface(CXX DIRECTORY cpp)
+add_yggdrasil_interface(CXX DIRECTORY cpp)
 
 #########################
 # Create Python Library #
 #########################
 
-if(BUILD_Python_LIBRARY)
-    add_subdirectory(python)
-endif()
+add_yggdrasil_interface(Python DISABLE_BY_DEFAULT)
 
 ##########################
 # Create Fortran Library #
 ##########################
 
-if(BUILD_Fortran_LIBRARY)
-    if(CMAKE_Fortran_COMPILER AND WIN32)
-        cmake_path(SET CMAKE_Fortran_COMPILER NORMALIZE ${CMAKE_Fortran_COMPILER})
-    endif()
-    add_subdirectory(fortran)
+if(CMAKE_Fortran_COMPILER AND WIN32)
+  cmake_path(SET CMAKE_Fortran_COMPILER NORMALIZE ${CMAKE_Fortran_COMPILER})
 endif()
+add_yggdrasil_interface(Fortran)
 
 ########################
 # Create Julia Library #
 ########################
 
-if(BUILD_Julia_LIBRARY)
-  add_subdirectory(julia)
-endif()
+add_yggdrasil_interface(Julia DISABLE_BY_DEFAULT)
 
 ##################
 # Install        #

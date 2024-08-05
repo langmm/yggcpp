@@ -7,6 +7,7 @@ DO_C=""
 DO_CXX=""
 DO_Fortran=""
 DO_Python=""
+DO_Julia=""
 DO_DOCS=""
 DO_SKBUILD=""
 WITH_ASAN=""
@@ -48,6 +49,10 @@ while [[ $# -gt 0 ]]; do
 	    ;;
 	-f | --fortran )
 	    DO_Fortran="TRUE"
+	    shift # past argument with no value
+	    ;;
+	-j | --julia )
+	    DO_Julia="TRUE"
 	    shift # past argument with no value
 	    ;;
 	-l | --language )
@@ -204,19 +209,22 @@ elif [ "$LANGUAGE" = "Fortran" ]; then
     DO_Fortran="TRUE"
 elif [ "$LANGUAGE" = "Python" ]; then
     DO_Python="TRUE"
+elif [ "$LANGUAGE" = "Julia" ]; then
+    DO_Julia="TRUE"
 fi
 
-if [ ! -n "$DO_C" ] && [ ! -n "$DO_CXX" ] && [ ! -n "$DO_Fortran" ] && [ ! -n "$DO_Python" ] && [ ! -n "$DO_DOCS" ]; then
+if [ ! -n "$DO_C" ] && [ ! -n "$DO_CXX" ] && [ ! -n "$DO_Fortran" ] && [ ! -n "$DO_Python" ] && [ ! -n "$DO_Julia" ] && [ ! -n "$DO_DOCS" ]; then
     DO_C="TRUE"
     DO_CXX="TRUE"
     DO_Fortran="TRUE"
     DO_Python="TRUE"
+    DO_Julia=""
     if [[ "$TEST_TYPE" == "unit" ]]; then
 	CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYGG_BUILD_TESTS=ON"
     fi
 fi
 
-if [ -n "$DO_C" ] || [ -n "$DO_CXX" ] || [ -n "$DO_Fortran" ] || [ -n "$DO_Python" ]; then
+if [ -n "$DO_C" ] || [ -n "$DO_CXX" ] || [ -n "$DO_Fortran" ] || [ -n "$DO_Python" ] || [ -n "$DO_Julia" ]; then
     if [ -n "$DO_C" ]; then
 	CMAKE_FLAGS_SPEED="${CMAKE_FLAGS_SPEED} -DENABLE_C=ON"
     else
@@ -254,6 +262,16 @@ if [ -n "$DO_C" ] || [ -n "$DO_CXX" ] || [ -n "$DO_Fortran" ] || [ -n "$DO_Pytho
     else
 	CMAKE_FLAGS_SPEED="${CMAKE_FLAGS_SPEED} -DENABLE_Python=OFF"
 	CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DBUILD_Python_LIBRARY=OFF"
+    fi
+    if [ -n "$DO_Julia" ]; then
+	CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DBUILD_Julia_LIBRARY=ON"
+	if [[ "$TEST_TYPE" == "unit" ]] || [[ "$TEST_TYPE" == "julia" ]]; then
+	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYGG_BUILD_Julia_TESTS=ON"
+	fi
+	CMAKE_FLAGS_SPEED="${CMAKE_FLAGS_SPEED} -DENABLE_Julia=ON"
+    else
+	CMAKE_FLAGS_SPEED="${CMAKE_FLAGS_SPEED} -DENABLE_Julia=OFF"
+	CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DBUILD_Julia_LIBRARY=OFF"
     fi
 fi
 
@@ -308,7 +326,7 @@ else
 	# Need install here to ensure that cmake config files are in place
 	cmake --install . --prefix "$INSTALL_DIR" $CONFIG_FLAGS
     fi
-    if [[ "$TEST_TYPE" == "c" ]] || [[ "$TEST_TYPE" == "cxx" ]] || [[ "$TEST_TYPE" == "fortran" ]] || [[ "$TEST_TYPE" == "python" ]]; then
+    if [[ "$TEST_TYPE" == "c" ]] || [[ "$TEST_TYPE" == "cxx" ]] || [[ "$TEST_TYPE" == "fortran" ]] || [[ "$TEST_TYPE" == "python" ]]|| [[ "$TEST_TYPE" == "julia" ]]; then
 	TEST_TYPE="unit"
     fi
     if [[ "$TEST_TYPE" == "unit" ]] && [ ! -n "$DONT_TEST" ]; then
