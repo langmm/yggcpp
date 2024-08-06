@@ -172,6 +172,7 @@ namespace utils {
   extern T name args;
 #endif // _OPENMP
 #endif // _MSC_VER
+#define YGG_THREAD_LOCAL static thread_local
 #define YGG_THREAD_LOCAL_VAR(T, name, args)	\
   extern thread_local T name args;
 #define YGG_THREAD_LOCAL_VAR_DEF(T, name, args)	\

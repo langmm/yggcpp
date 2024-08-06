@@ -1,3 +1,4 @@
+#include "utils/tools.hpp"
 #include "utils/embedded_languages.hpp"
 
 
@@ -45,7 +46,7 @@ bool EmbeddedLanguageBase::enable() const {
   return out;
 }
 int EmbeddedLanguageBase::init_count(int action) {
-  static thread_local std::map<LANGUAGE, int> languages = {};
+  YGG_THREAD_LOCAL std::map<LANGUAGE, int> languages = {};
   int value = 0;
   if (languages.find(language) != languages.end()) {
     value = languages[language];
