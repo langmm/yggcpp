@@ -281,7 +281,7 @@ endif()
 # Embedded Julia #
 ##################
 
-embed_language(Julia DEFINITIONS -DJULIA_ENABLE_THREADING DISABLE_BY_DEFAULT)
+embed_language(Julia DEFINITIONS -DJULIA_ENABLE_THREADING)
 
 ##############
 # Embedded R #

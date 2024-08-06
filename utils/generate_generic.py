@@ -20,8 +20,15 @@ def camel2underscored(x):
     while i < len(x):
         c = x[i]
         if c.isupper():
-            if i != 0 and x[i - 1] != '_':
-                out += '_'
+            next_upper = False
+            last_upper = False
+            if i < (len(x) - 1):
+                next_upper = x[i + 1].isupper()
+            if i > 0:
+                last_upper = x[i - 1].isupper()
+            if not (last_upper and next_upper):
+                if i != 0 and x[i - 1] != '_':
+                    out += '_'
             for m in ignored:
                 if x[i:].startswith(m):
                     out += m.lower()
@@ -51,112 +58,403 @@ def close_context(a, z, x, pos=None, endpos=None, count=1):
     return pos
 
 
-class CodeUnit(object):
+def get_file_generator(fname, **kwargs):
+    from generate_cpp import CFile, CXXFile
+    classes = [CFile, CXXFile]
+    class_map = {}
+    for x in classes:
+        for ext in x.ext:
+            if ext not in class_map:
+                class_map[ext] = x
+    ext = os.path.splitext(fname)[-1]
+    return class_map[ext](fname, **kwargs)
 
-    regex = None
-    fstring = None
+
+_code_unit_registry = {}
+
+
+def code_unit_registry(language=None):
+    global _code_unit_registry
+    if language is not None:
+        return _code_unit_registry[language]
+    return _code_unit_registry
+
+
+def register_code_unit(k, v, languages):
+    global _code_unit_registry
+    for x in languages:
+        _code_unit_registry.setdefault(x, {})
+        if k in _code_unit_registry[x]:
+            if _code_unit_registry[x][k] == v:
+                return
+            raise RuntimeError(
+                f"{_code_unit_registry[x][k]} "
+                f"already registered as {k} for {x}. "
+                f"\'{v}\' cannot replace it.")
+        _code_unit_registry[x][k] = v
+
+
+class CodeUnitMeta(type):
+
+    def __new__(meta, name, bases, class_dict):
+        cls = type.__new__(meta, name, bases, class_dict)
+        parts = camel2underscored(name).split('_')
+        if (((parts[-1] == 'file' and len(parts) == 2)
+             or (parts[-1] != 'file' and len(parts) > 2))):
+            cls.language = parts[0]
+            languages = [cls.language] + cls.additional_languages
+            if parts[-1] == 'file':
+                register_code_unit('indent', cls.indent, languages)
+                register_code_unit('comment', cls.comment, languages)
+            else:
+                register_code_unit(cls.unit_type, cls, languages)
+        return cls
+
+
+class CodeUnit(metaclass=CodeUnitMeta):
+
+    language = None
+    additional_languages = []
+    unit_type = None
+    circular = False
+    _regex = None
+    _regex_nogroup = None
+    _regex_fstring = None
+    _fstring = None
+    _fstring_cond = None
     _properties = ['name']
     _properties_optional = ['docs', 'type']
-    code_units = {}
+    _properties_defaults = {'indent': 0}
+    member_units = []
 
-    def __init__(self, name=None, **kwargs):
+    def __init__(self, name=None, match_start=None, match_end=None,
+                 **kwargs):
         if name is not None:
             kwargs['name'] = name
-        self.properties = {kwargs.pop(k) for k in self._properties}
-        for k in self._properties_optional:
+        self.match_start = match_start
+        self.match_end = match_end
+        for k, v in self._properties_defaults.items():
+            kwargs.setdefault(k, v)
+        missing = []
+        for k in self._properties:
+            if k not in kwargs:
+                missing.append(k)
+        if missing:
+            raise KeyError(f"The following missing properties are "
+                           f"required for {self.__class__}: {missing}\n"
+                           f"Provided properties:\n"
+                           f"{pprint.pformat(kwargs)}")
+        self.properties = {k: kwargs.pop(k) for k in self._properties}
+        for k in (self._properties_optional
+                  + list(self._properties_defaults.keys())):
             if k in kwargs:
                 self.properties[k] = kwargs.pop(k)
         self.unused_properties = kwargs
+        # print(f"new {self.__class__}("
+        #       f"\n{self.match_start}:{self.match_end}"
+        #       f"\n{pprint.pformat(self.all_properties)}\n)")
 
-    def __getattr__(self, key):
-        return self.properties[key]
+    def __eq__(self, solf):
+        if not isinstance(solf, CodeUnit):
+            return False
+        for k, v in self.properties.items():
+            if v != solf.properties.get(k, None):
+                if isinstance(v, list):
+                    print(k, len(v), len(solf.properties[k]))
+                    for i, (vv1, vv2) in enumerate(zip(v, solf.properties[k])):
+                        if vv1 != vv2:
+                            print(k, i, vv1, vv2)
+                            return False
+                print(k, v, solf.properties.get(k, None))
+                return False
+        for k, v in solf.properties.items():
+            if k not in self.properties:
+                print(k, None, v)
+                return False
+        return True
+        # return solf.properties == self.properties
 
-    def __setattr__(self, key, value):
-        self.properties[key] = value
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self.address})"
 
-    def __getitem__(self, key):
-        return self.properties[key]
+    # def __getattr__(self, key):
+    #     return self.properties[key]
 
-    def __setitem__(self, key, value):
-        self.properties[key] = value
+    # def __setattr__(self, key, value):
+    #     self.properties[key] = value
+
+    # def __getitem__(self, key):
+    #     return self.properties[key]
+
+    # def __setitem__(self, key, value):
+    #     self.properties[key] = value
+
+    @classmethod
+    def get_regex_nogroup(cls):
+        if cls._regex_nogroup is None:
+            cls._regex_nogroup = cls.get_regex()
+            regex = re.compile(r'\?P\<\w+\>')
+            match = regex.search(cls._regex_nogroup)
+            while match:
+                cls._regex_nogroup = cls._regex_nogroup.replace(
+                    match.group(0), '?:')
+                match = regex.search(cls._regex_nogroup)
+        return cls._regex_nogroup
+
+    @classmethod
+    def code_units(cls):
+        return code_unit_registry(language=cls.language)
+
+    @classmethod
+    def get_regex(cls, **kwargs):
+        if cls._regex is None:
+            if cls._regex_fstring is None:
+                raise NotImplementedError(
+                    f"No _regex_fstring set for {cls}")
+            dont_cache = False
+            out = cls._regex_fstring
+
+            def do_repl(match):
+                if match.groupdict()['mod'] == 'R':
+                    dont_cache = True
+                    return kwargs[match.groupdict()['group']]
+                unit = cls.code_units()[match.groupdict()['group']]
+                if match.groupdict()['mod'] == 'NG':
+                    return unit.get_regex_nogroup()
+                elif match.groupdict()['mod']:
+                    raise NotImplementedError(
+                        f"Unsupported regex mod: "
+                        f"{match.groupdict()['mod']}")
+                return unit.get_regex()
+
+            out = re.sub(r'\{(?:(?P<mod>\w+)\:)?(?P<group>\w+)\}',
+                         do_repl, out)
+            if dont_cache:
+                return out
+            cls._regex = out
+        return cls._regex
+
+    def get_fstring(self, **kwargs):
+        if self._fstring is not None:
+            return self._fstring
+        if self._fstring_cond is None:
+            raise NotImplementedError(
+                f"No _fstring_cond set for {self.__class__}")
+        out = self._fstring_cond
+
+        def do_repl(match):
+            if match.groupdict()['mod'] == 'C':
+                if not kwargs.get(match.groupdict()['group'], ''):
+                    return ''
+            elif match.groupdict()['mod']:
+                raise NotImplementedError(
+                    f"Unsupported fstring mod: "
+                    f"{match.groupdict()['mod']}")
+            return kwargs[match.groupdict()['group']]
+
+        out = re.sub(r'\{(?:(?P<mod>\w+)\:)?(?P<group>\w+)\}',
+                     do_repl, out)
+        return out
+
+    @property
+    def all_properties(self):
+        return dict(self.properties, **self.unused_properties)
+
+    @property
+    def address(self):
+        return self.properties[self._properties[0]]
 
     @classmethod
     def from_match(cls, match, **kwargs):
+        cls.complete_match(match, kwargs)
         kwargs = dict(match.groupdict(), match=match, **kwargs)
         kwargs.setdefault('match_start', match.start())
         kwargs.setdefault('match_end', match.end())
-        for k, v in kwargs.items():
-            if k in cls.code_units:
-                kwargs[k] = cls.code_units[k].parse(kwargs[k])
+        kwargs = {k: cls.parse_property(k, v)
+                  for k, v in kwargs.items() if v is not None}
         return cls(**kwargs)
+
+    @classmethod
+    def from_unit(cls, x, **kwargs):
+        if isinstance(x, list):
+            return [cls.from_unit(xx, **kwargs) for xx in x]
+        elif isinstance(x, str):
+            return x
+        elif isinstance(x, CodeUnit):
+            if x.unit_type not in cls.code_units():
+                raise NotImplementedError(x.unit_type)
+            kwargs = dict(
+                {k: cls.from_unit(v) for k, v in x.properties.items()},
+                **kwargs)
+            return cls.code_units()[x.unit_type](**kwargs)
+        return x
 
     @classmethod
     def parse(cls, x, pos=None, endpos=None, return_match=False,
               **kwargs):
-        pattern = re.compile(cls.regex, flags=re.MULTILINE)
+        if pos is None:
+            pos = 0
+        if endpos is None:
+            endpos = len(x)
+        regex = cls.get_regex(**kwargs)
+        # print("PARSE", cls, regex)
+        pattern = re.compile(regex, flags=re.MULTILINE)
         match = pattern.search(x, pos, endpos)
         if return_match:
             return match
-        kwargs.setdefault('match_end', cls.complete_match(x, match))
-        return cls.from_match(match, **kwargs)
+        if match:
+            return cls.from_match(match, **kwargs)
 
     @classmethod
-    def complete_match(cls, x, match):
-        return match.end()
+    def parse_subunit(cls, x, pos=None, endpos=None, units=None, **kwargs):
+        if units is None:
+            units = cls.member_units
+        match = None
+        unit = None
+        ipos = pos
+        iendpos = endpos
+        for iunit in units:
+            if isinstance(iunit, str):
+                iunit = cls.code_units()[iunit]
+            imatch = iunit.parse(x, pos=ipos, endpos=iendpos,
+                                 return_match=True, **kwargs)
+            if imatch and (match is None or
+                           imatch.start() < match.start()):
+                match = imatch
+                unit = iunit
+                iendpos = match.start()
+        if match:
+            return unit.from_match(match, **kwargs)
+
+    @classmethod
+    def parse_subunits(cls, x, pos=None, endpos=None, units=None, **kwargs):
+        if pos is None:
+            pos = 0
+        if endpos is None:
+            endpos = len(x)
+        while pos < endpos:
+            match = cls.parse_subunit(x, pos=pos, endpos=endpos,
+                                      units=units, **kwargs)
+            if match:
+                yield match
+                pos = match.match_end
+            else:
+                pos = endpos
+
+    @classmethod
+    def complete_match(cls, match, kwargs):
+        kwargs.setdefault('match_start', match.start())
+        kwargs.setdefault('match_end', match.end())
+        if cls.member_units and 'members' not in kwargs:
+            kwargs['members'] = [
+                m for m in cls.parse_subunits(
+                    match.string, pos=kwargs['match_start'],
+                    endpos=kwargs['match_end'],
+                    units=cls.member_units,
+                    **kwargs.get('member_kwargs', {}))]
+
+    @classmethod
+    def parse_property(cls, k, x):
+        if k == 'indent':
+            return int(len(x) / len(cls.code_units()[k]))
+        elif k in cls.code_units() and not cls.code_units()[k].circular:
+            return cls.code_units()[k].parse(x)
+        elif k == 'args':
+            if x.startswith('(') and x.endswith(')'):
+                x = x[1:-1]
+            return list(cls.parse_subunits(x, units=['var']))
+        return x
+
+    @classmethod
+    def format_property(cls, k, x):
+        if k == 'indent':
+            assert isinstance(x, int)
+            return x * cls.code_units()['indent']
+        elif isinstance(x, CodeUnit):
+            return x.format()
+        elif isinstance(x, list):
+            sep = '\n'
+            if k == 'args':
+                sep = ', '
+            return sep.join([cls.format_property(k, xx) for xx in x])
+        return x
 
     def format(self):
-        kws = {k: v.format() if isinstance(CodeUnit) else v
+        kws = {k: self.format_property(k, v)
                for k, v in self.properties.items()}
-        return self.fstring.format(**kws)
+        out = self.get_fstring(**kws)
+        # print(f"FORMAT:\n{out}")
+        return out
+
+    def test_parse_format(self):
+        lines = self.format()
+        xalt = self.parse(lines)
+        assert xalt == self
 
 
 class TypeUnit(CodeUnit):
-    pass
+
+    unit_type = 'type'
+
+
+class DocsUnit(CodeUnit):
+
+    unit_type = 'docs'
 
 
 class VariableUnit(CodeUnit):
-    pass
+
+    unit_type = 'var'
 
 
 class FunctionUnit(CodeUnit):
 
+    unit_type = 'function'
     _properties = CodeUnit._properties + [
-        'args', 'return'
+        'args',
     ]
-    args_unit = VariableUnit
-    return_unit = VariableUnit
 
 
 class MethodUnit(FunctionUnit):
 
+    unit_type = 'method'
     _properties = FunctionUnit._properties + [
-        'parent'
+        'parent',
     ]
+
+    @property
+    def address(self):
+        return (f"{self.properties['parent']}::"
+                f"{super(MethodUnit, self).address}")
 
 
 class ClassUnit(CodeUnit):
 
-    _properties = CodeUnit._properties + [
-        'members', 'methods'
+    unit_type = 'class'
+    _properties = [
+        'name', 'members',
     ]
-    method_unit = MethodUnit
-    member_unit = VariableUnit
+
+    @classmethod
+    def complete_match(cls, match, kwargs):
+        kwargs.setdefault('member_kwargs',
+                          {'parent': match.groupdict()['name']})
+        assert match.groupdict()['name'] is not None
+        return super(ClassUnit, cls).complete_match(match, kwargs)
 
 
-class GeneratedFile(object):
+class GeneratedFile(CodeUnit):
     r"""Base class for generating files."""
 
+    unit_type = 'file'
+    member_units = ['class', 'function', 'var']
     generated_flag = ('LINES AFTER THIS WERE GENERATED AND SHOULD NOT '
                       'BE MODIFIED DIRECTLY')
+    ext = []
     comment = ''
     indent = ''
     indent_append = ''
     file_suffix = ''
-    code_units = {
-        'class': ClassUnit,
-        'function': FunctionUnit,
-        'method': MethodUnit,
-    }
 
     def __init__(self, src, added=None, prefix_lines=None,
                  suffix_lines=None):
@@ -168,9 +466,11 @@ class GeneratedFile(object):
         self.flag = ('\n' + self.indent_append + self.comment + ' '
                      + self.generated_flag)
         self.contents = ''
+        self.prev_contents = ''
         if os.path.isfile(self.src):
             with open(self.src, 'r') as fd:
-                self.contents = fd.read().split(self.flag)[0]
+                self.prev_contents = fd.read()
+                self.contents = self.prev_contents.split(self.flag)[0]
         self.lines = []
         self.prefix_lines = prefix_lines
         self.suffix_lines = suffix_lines
@@ -215,55 +515,21 @@ class GeneratedFile(object):
         if not dont_write:
             self.write(debug=debug)
 
-    def wrap(self, x):
-        if isinstance(x, ClassUnit):
-            self.lines += self.wrap_class(x)
-        elif isinstance(x, MethodUnit):
-            self.lines += self.wrap_method(x)
-        elif isinstance(x, FunctionUnit):
-            self.lines += self.wrap_function(x)
+    def generate_from(self, src, units=None, **kwargs):
+        if isinstance(src, str):
+            src = get_file_generator(src, **kwargs)
+        for x in src.parse(units=units):
+            self.lines += self.from_unit(x).format()
 
-    def wrap_function(self, x):
-        raise NotImplementedError
+    def parse(self, **kwargs):
+        for x in self.parse_subunits(self.prev_contents, **kwargs):
+            yield x
 
-    def wrap_class(self, x):
-        raise NotImplementedError
-
-    def wrap_method(self, x):
-        return self.wrap_function(x)
-
-    @classmethod
-    def parse(cls, x, pos=None, endpos=None, units=None, **kwargs):
-        if units is None:
-            units = ['class', 'function']
-        match = None
-        unit = None
-        for iunit in units:
-            if isinstance(iunit, str):
-                if iunit not in cls.code_units:
-                    continue
-                iunit = cls.code_units[iunit]
-            imatch = iunit.parse(x, pos=pos, endpos=endpos,
-                                 return_match=True, **kwargs)
-            if match is None or imatch.start() < match.start():
-                match = imatch
-                unit = iunit
-        if match is not None:
-            return unit.from_match(match)
-
-    @classmethod
-    def parseall(cls, x, pos=None, endpos=None, units=None):
-        if pos is None:
-            pos = 0
-        if endpos is None:
-            endpos = len(x)
-        while pos < endpos:
-            match = cls.parse(x, pos=pos, endpos=endpos, units=units)
-            if match:
-                yield match
-                pos = match.end
-            else:
-                pos = endpos
+    def test_parse_wrap(self):
+        for x in self.parse():
+            lines = self.from_unit(x).format()
+            xalt = self.parse_subunit(lines)
+            assert xalt == x
 
 
 class AmendedFile(GeneratedFile):
@@ -2472,5 +2738,16 @@ if __name__ == "__main__":
         "Generate interfaces for rapidjson::Document in C & Fortran")
     parser.add_argument("--debug", action="store_true",
                         help="Dont't actually write out to files")
+    parser.add_argument("--language", type=str,
+                        help="Language to generate")
     args = parser.parse_args()
-    generate(debug=args.debug)
+    if args.language == 'julia':
+        from generate_cpp import CXXFile
+        # from generate_julia import JuliaFile
+        f = CXXFile(os.path.join('cpp', 'include',
+                                 'communicators', 'CommBase.hpp'))
+        f.test_parse_wrap()
+        for x in f.parse():
+            x.test_parse_format()
+    else:
+        generate(debug=args.debug)
