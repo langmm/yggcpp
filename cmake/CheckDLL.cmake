@@ -65,6 +65,21 @@ function(show_runtimes target)
 	COMMAND_EXPAND_LISTS
 	)
     endif()
+  elseif(APPLE)
+    add_custom_command(
+      TARGET ${after_target}
+      POST_BUILD
+      # COMMAND dyldinfo -dylibs $<TARGET_FILE:${target}>
+      COMMAND otool -L $<TARGET_FILE:${target}>
+      COMMAND_EXPAND_LISTS
+    )
+  else()
+    add_custom_command(
+      TARGET ${after_target}
+      POST_BUILD
+      COMMAND ldd $<TARGET_FILE:${target}>
+      COMMAND_EXPAND_LISTS
+    )
   endif()
 endfunction()
 function(show_symbols target)
