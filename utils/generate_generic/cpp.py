@@ -1,10 +1,15 @@
-from generate_generic import (
+from generate_generic.base import (
     CodeUnit, TypeUnit, DocsUnit, VariableUnit, FunctionUnit,
-    ClassUnit, MethodUnit,
-    GeneratedFile, close_context)
+    ClassUnit, MethodUnit, ModuleUnit, FileUnit)
 
 
-# TODO: Make template a unit
+# PYTHONPATH=utils python -m generate_generic.runner --language=julia
+# python utils/generate_generic.py --language=julia
+# TODO:
+# - Make template a unit
+# - Handle separation of C/CXX header/source
+# - Add module unit
+# - Decorate C++ methods defined in header with YGG_API_DEF
 
 
 class CApiUnit(CodeUnit):
@@ -14,6 +19,21 @@ class CApiUnit(CodeUnit):
     circular = True
     _regex = (
         r'(?P<api>YGG_API(?:\_DEF)?\s+)'
+    )
+
+
+class CMacroUnit(CodeUnit):
+
+    additional_languages = ['cxx']
+    unit_type = 'macro'
+    _properties = ['name']
+    _properties_optional = ['macro_args', 'body']
+    _regex = (
+        r'^\#define\s+(?P<name>\w+)(?P<macro_args>\(.*?\))?'
+        r'(?P<body>(?:.+?\\)*(?:.*))'
+    )
+    _fstring_cond = (
+        '#define {name}{C:macro_args}{body}'
     )
 
 
@@ -91,15 +111,16 @@ class CFunctionUnit(FunctionUnit):
     )
     _properties = FunctionUnit._properties + ['type']
     _properties_optional = ['api']
+    member_context = ('{', '}')
 
 
-class CFile(GeneratedFile):
+class CFileUnit(FileUnit):
     r"""Class for generating/parsing C files."""
 
-    ext = ['.c', '.h']
+    ext = ['.h', '.c']
     comment = "//"
     indent = '  '
-    member_units = ['function', 'var']
+    member_units = ['macro', 'function', 'var']
 
 
 class CXXTypeUnit(TypeUnit):
@@ -157,7 +178,7 @@ class CXXMethodUnit(MethodUnit):
         r'(?:\s*(?:(?:{NG:var})|(?P<va_args>\.\.\.))\s*)?'
         r'\))(?P<const>\s+const)?'
         r'(?P<override>\s+(?:(?:override)|(?:VIRT\_END)))?'
-        r'\s*[;\{]\s*$'
+        r'\s*[;\{]'
     )
     _fstring_cond = (
         '{C:docs}'
@@ -166,12 +187,14 @@ class CXXMethodUnit(MethodUnit):
     )
     _properties = ['name', 'type', 'args', 'parent']
     _properties_optional = [
-        'api', 'virtual', 'const', 'override', 'va_args', 'Tparam'
+        'docs', 'api', 'virtual', 'const', 'override', 'va_args',
+        'body', 'Tparam',
     ]
+    member_context = ('{', '}')
 
     @property
     def address(self):
-        return (f"{super(MethodUnit, self).address}["
+        return (f"{super(CXXMethodUnit, self).address}["
                 f"{self.format_property('args', self.properties['args'])}]")
 
     @classmethod
@@ -200,10 +223,15 @@ class CXXConstructorUnit(CodeUnit):
         r'(?:\s*{NG:var}\s*(?:\,))*'
         r'(?:\s*(?:(?:{NG:var})|(?P<va_args>\.\.\.))\s*)?'
         r'\))'
-        r'\s*[;\{]\s*$'
+        r'\s*[;\{]'
     )
+    _fstring_cond = (
+        '{C:docs}'
+        '{indent}{C:api}{C:virtual}{parent}({args}{C:va_args});'
+    )
+    _properties = ['parent', 'args']
     _properties_optional = [
-        'api', 'virtual'
+        'docs', 'api', 'virtual', 'va_args', 'body'
     ]
 
 
@@ -213,16 +241,23 @@ class CXXDestructorUnit(CodeUnit):
     _regex_fstring = (
         # r'^(?:\s*{docs}\s+)?'
         r'^(?P<indent>\s*){api}(?P<virtual>virtual\s+)?'
-        r'~{R:parent}\(\)'
-        r'\s*[;\{]\s*$'
+        r'~{R:W:parent}\(\)'
+        r'\s*[;\{]'
     )
+    _fstring_cond = (
+        '{C:docs}'
+        '{indent}{C:api}{C:virtual}~{parent}();'
+    )
+    _properties = ['parent']
     _properties_optional = [
-        'api', 'virtual'
+        'docs', 'api', 'virtual', 'body'
     ]
 
 
 class CXXClassUnit(ClassUnit):
 
+    member_units = ['constructor', 'destructor', 'method']
+    member_context = ('{', '}')
     _regex = (
         r'^(?P<indent>\s*)class\s+(?P<name>\w+)'
         r'(?P<base>\s*\:\s+(?P<base_scope>(?:public)|(?:private))\s+'
@@ -234,18 +269,25 @@ class CXXClassUnit(ClassUnit):
         '{members}\n'
         '};'
     )
-    member_units = ['constructor', 'method']
     _properties_optional = ['base']
 
-    @classmethod
-    def complete_match(cls, match, kwargs):
-        endpos = close_context('{', '}', match.string, pos=match.end())
-        kwargs.setdefault('match_end', endpos)
-        return super(CXXClassUnit, cls).complete_match(match, kwargs)
+
+class CXXModuleUnit(ModuleUnit):
+
+    member_units = ['module', 'class', 'function']  # , 'var']
+    member_context = ('{', '}')
+    _regex = (
+        r'^(?P<indent>\s*)namespace\s+(?P<name>\w+)\s+\{'
+    )
+    _fstring_cond = (
+        '{indent}namespace {name} {\n'
+        '{members}\n'
+        '}'
+    )
 
 
-class CXXFile(CFile):
+class CXXFileUnit(CFileUnit):
     r"""Class for generating/parsing C++ files."""
 
-    ext = ['.cpp', '.hpp']
-    member_units = ['class', 'function']
+    ext = ['.hpp', '.cpp']
+    member_units = ['macro', 'class', 'function']  # , 'var']

@@ -424,8 +424,8 @@ endif()
 
 if (${Python_PREFIX}_EXECUTABLE)
   execute_process(
-    COMMAND ${${Python_PREFIX}_EXECUTABLE} utils/generate_generic.py ${GENERATE_DATATYPES_ARGS}
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMAND ${${Python_PREFIX}_EXECUTABLE} -m generate_generic.runner ${GENERATE_DATATYPES_ARGS}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/utils
     COMMAND_ERROR_IS_FATAL ANY)
 endif()
 

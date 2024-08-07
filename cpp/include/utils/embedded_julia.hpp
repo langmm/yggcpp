@@ -2,7 +2,6 @@
 #include "embedded_languages.hpp"
 #ifdef YGG_EMBED_JULIA
 #include <julia.h>
-#include <julia/julia.h>
 #else
 #define jl_value_t void
 #endif
