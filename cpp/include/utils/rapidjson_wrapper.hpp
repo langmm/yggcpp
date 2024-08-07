@@ -480,6 +480,7 @@ public:
   WRAP_METHOD_TEMP(WValue, IsScalar, (), (), bool, const);
   WRAP_METHOD_TEMP(WValue, Is1DArray, (), (), bool, const);
   WRAP_METHOD_TEMP(WValue, IsNDArray, (), (), bool, const);
+  WRAP_METHOD_TEMP(WValue, Get, (), (), T, const);
   template<typename T>
   WRAP_METHOD(WValue, Get, (T& data), (data), void, const);
   template<typename T>

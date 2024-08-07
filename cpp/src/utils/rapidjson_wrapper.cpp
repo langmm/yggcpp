@@ -438,6 +438,7 @@ WValue::WValue(RJ_WNS::Document* val) :
   WRAP_METHOD_TEMP(WValue, IsScalar, (), (), bool, const);
   WRAP_METHOD_TEMP(WValue, Is1DArray, (), (), bool, const);
   WRAP_METHOD_TEMP(WValue, IsNDArray, (), (), bool, const);
+  WRAP_METHOD_TEMP(WValue, Get, (), (), T, const);
   template<typename T>
   WRAP_METHOD(WValue, Get, (T& data), (data), void, const);
   template<typename T>
@@ -1115,7 +1116,8 @@ template RAPIDJSON_DISABLEIF_RETURN(
 #define SPECIALIZE_BASE(type, set_type)					\
   template bool WValue::Is<type>() const;				\
   template WValue& WValue::Set<set_type>(const set_type& data, WValue::Allocator& allocator); \
-  template void WValue::Get<type>(type& data) const
+  template void WValue::Get<type>(type& data) const;			\
+  template type WValue::Get<type>() const
 #define SPECIALIZE(type)						\
   SPECIALIZE_BASE(type, type)
 #define SPECIALIZE_SCALAR(type)						\
