@@ -13,6 +13,9 @@ set(Fortran_TEST_INCLUDE_DIRS ${YGG_Fortran_MOD_DIR})
 message(STATUS "Fortran_TEST_LIBRARIES = ${Fortran_TEST_LIBRARIES}")
 message(STATUS "Fortran_TEST_INCLUDE_DIRS = ${Fortran_TEST_INCLUDE_DIRS}")
 
+set(WORKING_DIR "${CMAKE_CURRENT_BINARY_DIR}")
+message(STATUS "WORKING_DIR = ${WORKING_DIR}")
+
 function (mangle_fortran_name CNAME FNAME)
     set (TMP)
     # if (WIN32)
@@ -68,7 +71,8 @@ function (add_fortran_test_executable TARGET)
 	list (GET TEST_FILES_MANGLED ${INDEX} TEST_FILE_MANGLED)
 	add_test (
 	    NAME ${TEST_FILE}
-	    COMMAND $<TARGET_FILE:${TARGET}> ${TEST_FILE_MANGLED})
+	    COMMAND $<TARGET_FILE:${TARGET}> ${TEST_FILE_MANGLED}
+	    WORKING_DIRECTORY ${WORKING_DIR})
 	set_tests_properties (
 	    ${TEST_FILE}
 	    PROPERTIES TIMEOUT ${TEST_TIMEOUT}
@@ -96,4 +100,4 @@ message(STATUS "files = ${files}")
 add_fortran_test_executable (fortran_testsuite ${files})
 cover_test(fortran_testsuite)
 
-add_dynamic_dependencies(fortran_testsuite)
+add_dynamic_dependencies(fortran_testsuite WORKING_DIR ${WORKING_DIR})
