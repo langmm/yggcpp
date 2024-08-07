@@ -101,6 +101,11 @@ string(REGEX REPLACE "\n" "" Sys.BINDIR "${Sys.BINDIR}")
 
 MESSAGE(STATUS "Sys.BINDIR:           ${Sys.BINDIR}")
 
+set(Julia_BINDIR ${Sys.BINDIR})
+set(Julia_BINDIR "${Julia_BINDIR}"
+    CACHE PATH "Julia bin directory")
+MESSAGE(STATUS "Julia_BINDIR:         ${Julia_BINDIR}")
+
 ###################
 # libLLVM version #
 ###################
@@ -127,7 +132,7 @@ MESSAGE(STATUS "Julia_LLVM_VERSION:   ${Julia_LLVM_VERSION}")
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Julia
-    REQUIRED_VARS   Julia_LIBRARY Julia_LIBRARY_DIR Julia_INCLUDE_DIRS Julia_MAIN_HEADER
+    REQUIRED_VARS   Julia_LIBRARY Julia_LIBRARY_DIR Julia_INCLUDE_DIRS Julia_MAIN_HEADER Julia_BINDIR
     VERSION_VAR     Julia_VERSION_STRING
     FAIL_MESSAGE    "Julia not found"
 )

@@ -59,6 +59,13 @@ function (add_fortran_test_executable TARGET)
     # if (WIN32)
     #   set (TEST_TIMEOUT 100)
     # endif()
+    list(APPEND ${TARGET}_test_args PROPERTIES TIMEOUT ${TEST_TIMEOUT})
+    foreach(var RAPIDJSON_PYTHON_ENV RAPIDJSON_PYTHON_ENV2 RAPIDJSON_PYTHON_ENV3)
+      if (${var})
+        list(APPEND ${TARGET}_test_args ENVIRONMENT "${${var}}")
+      endif()
+    endforeach()
+    message(STATUS "${TARGET}_test_args = ${${TARGET}_test_args}")
     set (INDEX 0)
     list (LENGTH TEST_FILES LEN)
     while (${LEN} GREATER ${INDEX})
@@ -68,10 +75,7 @@ function (add_fortran_test_executable TARGET)
 	    NAME ${TEST_FILE}
 	    COMMAND $<TARGET_FILE:${TARGET}> ${TEST_FILE_MANGLED}
 	    WORKING_DIRECTORY ${WORKING_DIR})
-	set_tests_properties (
-	    ${TEST_FILE}
-	    PROPERTIES TIMEOUT ${TEST_TIMEOUT}
-	    ENVIRONMENT "${RAPIDJSON_PYTHON_ENV2}")
+	set_tests_properties(${TEST_FILE} ${${TARGET}_test_args})
         math (EXPR INDEX "${INDEX} + 1")
     endwhile ()
 

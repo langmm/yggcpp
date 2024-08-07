@@ -51,12 +51,12 @@ else()
   set(unittest_timeout 20)
 endif()
 list(APPEND unittest_args PROPERTIES TIMEOUT ${unittest_timeout})
-if(RAPIDJSON_PYTHON_ENV)
-  list(APPEND unittest_args ENVIRONMENT "${RAPIDJSON_PYTHON_ENV}")
-endif()
-if(RAPIDJSON_PYTHON_ENV2)
-  list(APPEND unittest_args ENVIRONMENT "${RAPIDJSON_PYTHON_ENV2}")
-endif()
+foreach(var RAPIDJSON_PYTHON_ENV RAPIDJSON_PYTHON_ENV2 RAPIDJSON_PYTHON_ENV3)
+  if (${var})
+    list(APPEND unittest_args ENVIRONMENT "${${var}}")
+  endif()
+endforeach()
+message(STATUS "unittest_args = ${unittest_args}")
 # There is a bug which prevents environment variables from
 # being available during test discovery on windows
 # https://gitlab.kitware.com/cmake/cmake/-/issues/21453

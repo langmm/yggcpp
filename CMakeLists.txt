@@ -283,6 +283,10 @@ endif()
 
 embed_language(Julia DEFINITIONS -DJULIA_ENABLE_THREADING)
 
+if(YGG_EMBED_Julia AND WIN32)
+  set(RAPIDJSON_PYTHON_ENV3 "JULIA_HOME=${Julia_BINDIR}")
+endif()
+
 ##############
 # Embedded R #
 ##############
