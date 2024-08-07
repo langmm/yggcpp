@@ -1,7 +1,13 @@
 #pragma once
 #include "embedded_languages.hpp"
 #ifdef YGG_EMBED_JULIA
+#ifdef _MSC_VER
+#pragma warning ( disable: 4068 )
+#endif // _MSC_VER
 #include <julia.h>
+#ifdef _MSC_VER
+#pragma warning ( endable: 4068 )
+#endif // _MSC_VER
 #else
 #define jl_value_t void
 #endif
