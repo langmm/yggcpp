@@ -80,6 +80,9 @@ if (COVERAGE_C_LIBRARIES)
         ${YGG_TARGET_CXX} PRIVATE ${COVERAGE_C_LIBRARIES})
 endif()
 
+include(AddYggInterface)
+add_library_dirs_to_rpath(${YGG_TARGET_CXX})
+
 include(CheckDLL)
 show_runtimes(${YGG_TARGET_CXX})
 # show_symbols(${YGG_TARGET_CXX})

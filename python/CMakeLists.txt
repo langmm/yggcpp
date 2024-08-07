@@ -127,27 +127,11 @@ else()
           LIBRARY DESTINATION ${${Python_PREFIX}_INSTALL_DIR}
 	  RUNTIME DESTINATION ${${Python_PREFIX}_INSTALL_DIR})
 endif()
-if(APPLE)
-  list(APPEND YGG_RPATH "@loader_path/${YGG_CXX_LIBRARY_DEST}")
-else()
-  list(APPEND YGG_RPATH "$ORIGIN/${YGG_CXX_LIBRARY_DEST}")
-endif()
-foreach(lib ${DEPS_LIBRARIES})
-  if(EXISTS ${lib})
-    cmake_path(REMOVE_FILENAME lib OUTPUT_VARIABLE dir)
-    if (NOT dir IN_LIST YGG_RPATH)
-      list(APPEND YGG_RPATH ${dir})
-    endif()
-  endif()
-endforeach()
 
-message(STATUS "DEPS_LIBRARIES = ${DEPS_LIBRARIES}")
-message(STATUS "YGG_RPATH = ${YGG_RPATH}")
-if(NOT YGG_RPATH)
-  message(FATAL_ERROR "YGG_RPATH empty")
-endif()
-set_target_properties(
-  ${YGG_TARGET_PY} PROPERTIES INSTALL_RPATH "${YGG_RPATH}")
+include(AddYggInterface)
+add_library_dirs_to_rpath(
+  ${YGG_TARGET_PY} DESTINATION ${YGG_CXX_LIBRARY_DEST}
+)
 
 include(CheckDLL)
 show_runtimes(${YGG_TARGET_PY})
