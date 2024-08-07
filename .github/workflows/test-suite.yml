@@ -122,6 +122,12 @@ jobs:
           submodules: true
 
       ###################################
+      # Julia SETUP
+      ###################################
+      - name: Setup Julia
+        uses: julia-actions/setup-julia@v2
+
+      ###################################
       # PIP SETUP
       ###################################
       - name: Install dependencies on Ubuntu
