@@ -42,8 +42,6 @@ endif()
 add_executable(unittest ${CMAKE_CURRENT_SOURCE_DIR}/unittest.cpp ${CMAKE_CURRENT_SOURCE_DIR}/elf_hook.cpp ${CMAKE_CURRENT_SOURCE_DIR}/mock.cpp ${files})
 target_link_libraries(unittest ${TEST_LIBRARIES})
 target_include_directories(unittest PRIVATE ${TEST_INCLUDE_DIRS})
-message(STATUS "TEST_LIBRARIES = ${TEST_LIBRARIES}")
-message(STATUS "TEST_INCLUDE_DIRS = ${TEST_INCLUDE_DIRS}")
 cmake_path(GET CMAKE_CURRENT_SOURCE_DIR PARENT_PATH PARENT_SOURCE_DIR)
 cmake_path(GET CMAKE_CURRENT_BINARY_DIR PARENT_PATH PARENT_BINARY_DIR)
 add_dynamic_dependencies(unittest WORKING_DIR ${PARENT_BINARY_DIR})
@@ -85,12 +83,8 @@ else ()
    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
 endif()
 
-message(STATUS "RAPIDJSON_PYTHON_ENV = ${RAPIDJSON_PYTHON_ENV}")
-message(STATUS "RAPIDJSON_PYTHON_ENV2 = ${RAPIDJSON_PYTHON_ENV2}")
-# message(STATUS "ygg_test_list = ${ygg_test_list}")
-# set_tests_properties(${ygg_test_list} PROPERTIES
-#        ENVIRONMENT
-#        "${RAPIDJSON_PYTHON_ENV}")
+# message(STATUS "RAPIDJSON_PYTHON_ENV = ${RAPIDJSON_PYTHON_ENV}")
+# message(STATUS "RAPIDJSON_PYTHON_ENV2 = ${RAPIDJSON_PYTHON_ENV2}")
 
 include(CheckDLL)
 show_runtimes(unittest)

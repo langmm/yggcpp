@@ -34,14 +34,15 @@ types_cxx = {
 }
 
 
-def do_write(dst, lines):
+def do_write(dst, lines, verbose=False):
     contents = '\n'.join(lines) + '\n'
-    print(f"{dst}\n----------------\n{contents}")
+    if verbose:
+        print(f"{dst}\n----------------\n{contents}")
     with open(dst, 'w') as fd:
         fd.write(contents)
 
 
-def parse(src=None):
+def parse(src=None, verbose=False):
     if src is None:
         src = os.path.join(os.path.dirname(os.path.dirname(__file__)),
                            'cpp', 'include', 'utils', 'enums.hpp')
@@ -98,7 +99,8 @@ def parse(src=None):
             while '{' not in lines[i]:
                 i += 1
         i += 1
-    pprint.pprint(out)
+    if verbose:
+        pprint.pprint(out)
     return out
 
 
@@ -112,7 +114,8 @@ def generate_map(name, members, tname=None, in_header=False,
     func_name = func_name_decl
     if not in_header:
         func_name = f"YggInterface::utils::{func_name}"
-    func_decl = f"const std::map<const {tname}, const std::string>& {func_name}()"
+    func_decl = (
+        f"const std::map<const {tname}, const std::string>& {func_name}()")
     lines = [
         f"{func_decl} {{"
         "",
@@ -149,7 +152,7 @@ def generate_map(name, members, tname=None, in_header=False,
     return lines
 
 
-def generate_maps(enums, dst_header=None, dst_src=None):
+def generate_maps(enums, dst_header=None, dst_src=None, verbose=False):
     if dst_header is None:
         dst_header = os.path.join(
             os.path.dirname(os.path.dirname(__file__)),
@@ -184,11 +187,11 @@ def generate_maps(enums, dst_header=None, dst_src=None):
         '  }',
         '}',
     ]
-    do_write(dst_src, lines)
-    do_write(dst_header, lines_decl)
+    do_write(dst_src, lines, verbose=verbose)
+    do_write(dst_header, lines_decl, verbose=verbose)
 
 
-def generate_fortran_c_header(enums, dst=None):
+def generate_fortran_c_header(enums, dst=None, verbose=False):
     if dst is None:
         dst = os.path.join(os.path.dirname(os.path.dirname(__file__)),
                            'fortran', 'c_wrappers_enums.h')
@@ -228,10 +231,10 @@ def generate_fortran_c_header(enums, dst=None):
         '',
         '#endif // YGG_FC_ENUM_WRAPPERS_H_'
     ]
-    do_write(dst, lines)
+    do_write(dst, lines, verbose=verbose)
 
 
-def generate_fortran_c_src(enums, dst=None):
+def generate_fortran_c_src(enums, dst=None, verbose=False):
     if dst is None:
         dst = os.path.join(os.path.dirname(os.path.dirname(__file__)),
                            'fortran', 'c_wrappers_enums.c')
@@ -261,11 +264,11 @@ def generate_fortran_c_src(enums, dst=None):
         '}',
         '#endif',
     ]
-    do_write(dst, lines)
+    do_write(dst, lines, verbose=verbose)
 
 
 # Version that binds to constants from C
-def generate_fortran_c(enums, dst=None):
+def generate_fortran_c(enums, dst=None, verbose=False):
     if dst is None:
         dst = os.path.join(os.path.dirname(os.path.dirname(__file__)),
                            'fortran', 'YggInterface_enums.F90')
@@ -299,11 +302,11 @@ def generate_fortran_c(enums, dst=None):
     lines += [
         '#endif'
     ]
-    do_write(dst, lines)
+    do_write(dst, lines, verbose=verbose)
 
 
 # Version that just sets the values directly
-def generate_fortran(enums, dst=None):
+def generate_fortran(enums, dst=None, verbose=False):
     if dst is None:
         dst = os.path.join(os.path.dirname(os.path.dirname(__file__)),
                            'fortran', 'YggInterface_enums.F90')
@@ -338,22 +341,24 @@ def generate_fortran(enums, dst=None):
     lines += [
         '#endif'
     ]
-    do_write(dst, lines)
+    do_write(dst, lines, verbose=verbose)
 
 
 def generate(src=None, dst_maps_header=None, dst_maps_src=None,
              dst_fortran=None,
              dst_fortran_c_header=None, dst_fortran_c_src=None,
-             fortran_wrap_c_enums=False):
-    enums = parse(src=src)
+             fortran_wrap_c_enums=False, verbose=False):
+    enums = parse(src=src, verbose=verbose)
     generate_maps(enums, dst_header=dst_maps_header,
-                  dst_src=dst_maps_src)
+                  dst_src=dst_maps_src, verbose=verbose)
     if fortran_wrap_c_enums:
-        generate_fortran_c_header(enums, dst=dst_fortran_c_header)
-        generate_fortran_c_src(enums, dst=dst_fortran_c_src)
-        generate_fortran_c(enums, dst=dst_fortran)
+        generate_fortran_c_header(enums, dst=dst_fortran_c_header,
+                                  verbose=verbose)
+        generate_fortran_c_src(enums, dst=dst_fortran_c_src,
+                               verbose=verbose)
+        generate_fortran_c(enums, dst=dst_fortran, verbose=verbose)
     else:
-        generate_fortran(enums, dst=dst_fortran)
+        generate_fortran(enums, dst=dst_fortran, verbose=verbose)
 
 
 if __name__ == "__main__":
@@ -363,5 +368,7 @@ if __name__ == "__main__":
     parser.add_argument("--fortran-wrap-c-enums",
                         action="store_true",
                         help="Wrap enums for fortran in a C layer")
+    parser.add_argument("--verbose", action="store_true")
     args = parser.parse_args()
-    generate(fortran_wrap_c_enums=args.fortran_wrap_c_enums)
+    generate(fortran_wrap_c_enums=args.fortran_wrap_c_enums,
+             verbose=args.verbose)

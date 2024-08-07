@@ -293,7 +293,6 @@ embed_language(Julia DEFINITIONS -DJULIA_ENABLE_THREADING)
 # Select default comm #
 #######################
 
-message(STATUS "DEFAULT_COMM = ${DEFAULT_COMM}, YGG_COMMS_AVAILABLE = ${YGG_COMMS_AVAILABLE}")
 if((NOT DEFAULT_COMM) AND YGG_COMMS_AVAILABLE)
   list(GET YGG_COMMS_AVAILABLE 0 DEFAULT_COMM)
 endif()
@@ -333,6 +332,7 @@ endif()
 
 message(STATUS "DEPS_INCLUDE_DIRS = ${DEPS_INCLUDE_DIRS}")
 message(STATUS "DEPS_LIBRARIES = ${DEPS_LIBRARIES}")
+message(STATUS "DEPS_LIBRARY_DIRS = ${DEPS_LIBRARY_DIRS}")
 
 ############################
 # Handle interdependencies #
@@ -370,7 +370,6 @@ endif()
 # Coverage       #
 ##################
 
-message(STATUS "CMAKE_CURRENT_BINARY_DIR = ${CMAKE_CURRENT_BINARY_DIR}")
 if(YGG_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang|ARMClang")
   find_program(GCOVR_FOUND gcovr)
   if (GCOVR_FOUND)

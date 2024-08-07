@@ -124,7 +124,6 @@ function(find_package_python)
 	RESULT_VARIABLE ERROR_IN_FULL
 	OUTPUT_STRIP_TRAILING_WHITESPACE)
       if ((NOT ERROR_IN_FULL) AND (NOT ${Python_PREFIX}_EXECUTABLE STREQUAL "${${Python_PREFIX}_EXECUTABLE_FULL}"))
-        message(STATUS "before = ${${Python_PREFIX}_EXECUTABLE}, after = ${${Python_PREFIX}_EXECUTABLE_FULL}")
         set(${Python_PREFIX}_EXECUTABLE ${${Python_PREFIX}_EXECUTABLE_FULL})
       endif()
     endif()

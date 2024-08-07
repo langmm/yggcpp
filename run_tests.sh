@@ -189,7 +189,6 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [ -n "$INSTALL_DIR" ]; then
-    echo "INSTALL_DIR = ${INSTALL_DIR}"
     CMAKE_FLAGS="${CMAKE_FLAGS} -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}"
 fi
 
@@ -283,9 +282,9 @@ if [ -n "$CMAKE_PREFIX_PATH" ]; then
     CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}"
 fi
 
-echo "CMAKE_FLAGS = ${CMAKE_FLAGS}"
-echo "CMAKE_FLAGS_LIB = ${CMAKE_FLAGS_LIB}"
-echo "CMAKE_FLAGS_SPEED = ${CMAKE_FLAGS_SPEED}"
+# echo "CMAKE_FLAGS = ${CMAKE_FLAGS}"
+# echo "CMAKE_FLAGS_LIB = ${CMAKE_FLAGS_LIB}"
+# echo "CMAKE_FLAGS_SPEED = ${CMAKE_FLAGS_SPEED}"
 
 # if [ -n "$WITH_ASAN" ]; then
 #     export ASAN_OPTIONS=symbolize=1
@@ -347,7 +346,6 @@ else
     cd ..
 fi
 
-echo "INSTALL_DIR = \"${INSTALL_DIR}\""
 if [ -n "$CMAKE_PREFIX_PATH" ]; then
     CMAKE_PREFIX_PATH="${CMAKE_PREFIX_PATH};${INSTALL_DIR}"
 else
@@ -373,7 +371,7 @@ if [[ "$TEST_TYPE" == "speed" ]]; then
 	cmake --build .
     fi
     if [ ! -n "$DONT_TEST" ]; then
-	echo "DYLD_INSERT_LIBRARIES = ${DYLD_INSERT_LIBRARIES}"
+	# echo "DYLD_INSERT_LIBRARIES = ${DYLD_INSERT_LIBRARIES}"
 	ctest $TEST_FLAGS
 	# make test
     fi
@@ -392,7 +390,7 @@ fi
 if [ -n "$DO_DOCS" ]; then
     path_to_doxygen=$(which doxygen)
     if [ -x "$path_to_doxygen" ]; then
-	echo "BUILDING DOCS"
+	# echo "BUILDING DOCS"
 	if [ ! -d "$BUILD_DIR" ]; then
 	    mkdir $BUILD_DIR
 	fi

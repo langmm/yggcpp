@@ -9,10 +9,6 @@ include(DynamicTestLibraries)
 
 set(Fortran_TEST_LIBRARIES ${YGG_TARGET_Fortran})
 set(Fortran_TEST_INCLUDE_DIRS ${YGG_Fortran_MOD_DIR})
-
-message(STATUS "Fortran_TEST_LIBRARIES = ${Fortran_TEST_LIBRARIES}")
-message(STATUS "Fortran_TEST_INCLUDE_DIRS = ${Fortran_TEST_INCLUDE_DIRS}")
-
 set(WORKING_DIR "${CMAKE_CURRENT_BINARY_DIR}")
 message(STATUS "WORKING_DIR = ${WORKING_DIR}")
 
@@ -49,7 +45,6 @@ function (add_fortran_test_executable TARGET)
     create_test_sourcelist (_ ${TARGET_SOURCE} ${TEST_FILES_MANGLED}
                             EXTRA_INCLUDE YggInterface.h)
 
-    message(STATUS "Fortran_TEST_INCLUDE_DIRS = ${Fortran_TEST_INCLUDE_DIRS}")
     add_mixed_fortran_library(
         ${TARGET}_fortran SHARED
 	LANGUAGE CXX ${TEST_FILES}
@@ -96,7 +91,6 @@ file(GLOB files "*.f90")
 generate_dynamic_tests(
   test_ygg_function_language_1.f90.in APPEND_TO files
 )
-message(STATUS "files = ${files}")
 add_fortran_test_executable (fortran_testsuite ${files})
 cover_test(fortran_testsuite)
 
