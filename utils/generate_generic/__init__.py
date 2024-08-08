@@ -7,7 +7,6 @@
 import os
 import re
 import copy
-import argparse
 import pprint
 import itertools
 from collections import OrderedDict
@@ -64,7 +63,7 @@ class GeneratedFile(object):
         if line not in self.lines:
             self.lines.append(line)
 
-    def write(self, debug=False):
+    def write(self, debug=False, verbose=False):
         prefix_lines = [
             self.flag, self.indent_append + self.comment + 68 * '=']
         if self.prefix_lines:
@@ -77,18 +76,18 @@ class GeneratedFile(object):
         if debug:
             if len(self.lines) == nprefix:
                 raise Exception(self.src)
+        if debug or verbose:
             print(f"\n{self.src}{new_content}")
-        else:
-            if len(self.lines) > nprefix:
-                with open(self.src, 'w') as fd:
-                    fd.write(self.contents + new_content)
+        if (not debug) and len(self.lines) > nprefix:
+            with open(self.src, 'w') as fd:
+                fd.write(self.contents + new_content)
         for v in self.added.values():
             if isinstance(v, GeneratedFile):
-                v.write(debug=debug)
+                v.write(debug=debug, verbose=verbose)
 
-    def generate(self, dont_write=False, debug=False):
+    def generate(self, dont_write=False, **kwargs):
         if not dont_write:
-            self.write(debug=debug)
+            self.write(**kwargs)
 
     def wrap_file(self, src, **kwargs):
         if isinstance(src, str):
@@ -100,10 +99,10 @@ class GeneratedFile(object):
         kwargs.setdefault('contents', self.prev_contents)
         return self.file_unit.parse_file(**kwargs)
 
-    def test_parse_wrap(self):
-        xmed = self.parse(check_format=True)
+    def test_parse_wrap(self, **kwargs):
+        xmed = self.parse(check_format=True, **kwargs)
         lines = xmed.format()
-        xalt = self.parse(name=self.src, contents=lines)
+        xalt = self.parse(name=self.src, contents=lines, **kwargs)
         assert xalt == xmed
 
 
@@ -2304,22 +2303,5 @@ class FortranCdefsFile(FortranFile):
         super(FortranCdefsFile, self).init_param()
 
 
-def generate(debug=False):
-    CFile(fortran=FortranFile()).generate(debug=debug)
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        "Generate interfaces for rapidjson::Document in C & Fortran")
-    parser.add_argument("--debug", action="store_true",
-                        help="Dont't actually write out to files")
-    parser.add_argument("--language", type=str,
-                        help="Language to generate")
-    args = parser.parse_args()
-    if args.language == 'julia':
-        fcpp = GeneratedFile(
-            os.path.join('cpp', 'include',
-                         'communicators', 'CommBase.hpp'))
-        fcpp.test_parse_wrap()
-    else:
-        generate(debug=args.debug)
+def generate(**kwargs):
+    CFile(fortran=FortranFile()).generate(**kwargs)

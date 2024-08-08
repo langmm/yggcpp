@@ -129,7 +129,8 @@ class CodeUnitMeta(type):
         cls = type.__new__(meta, name, bases, class_dict)
         parts = camel2underscored(name).split('_')
         if len(parts) > 2:
-            cls.language = parts[0]
+            if cls.language is None:
+                cls.language = parts[0]
             languages = [cls.language] + cls.additional_languages
             if cls.unit_type == 'file':
                 register_code_unit('indent', cls.indent, languages)
@@ -157,7 +158,7 @@ class CodeUnit(metaclass=CodeUnitMeta):
     member_context = None
 
     def __init__(self, name=None, match_start=None, match_end=None,
-                 check_format=False, **kwargs):
+                 check_format=False, verbose=False, **kwargs):
         if name is not None:
             kwargs['name'] = name
         self.match_start = match_start
@@ -179,9 +180,10 @@ class CodeUnit(metaclass=CodeUnitMeta):
             if k in kwargs:
                 self.properties[k] = kwargs.pop(k)
         self.unused_properties = kwargs
-        # print(f"new {self.__class__}("
-        #       f"\n{self.match_start}:{self.match_end}"
-        #       f"\n{pprint.pformat(self.all_properties)}\n)")
+        if verbose:
+            print(f"new {self.__class__}("
+                  f"\n{self.match_start}:{self.match_end}"
+                  f"\n{pprint.pformat(self.all_properties)}\n)")
         if check_format:
             self.test_parse_format()
 

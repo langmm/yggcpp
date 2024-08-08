@@ -10,11 +10,13 @@ if __name__ == "__main__":
                         help="Dont't actually write out to files")
     parser.add_argument("--language", type=str,
                         help="Language to generate")
+    parser.add_argument("--verbose", action="store_true",
+                        help="Display information during parsing/generation")
     args = parser.parse_args()
     if args.language == 'julia':
         fcpp = GeneratedFile(
             os.path.join('cpp', 'include',
                          'communicators', 'CommBase.hpp'))
-        fcpp.test_parse_wrap()
+        fcpp.test_parse_wrap(verbose=args.verbose)
     else:
         generate(debug=args.debug)

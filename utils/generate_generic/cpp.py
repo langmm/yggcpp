@@ -289,5 +289,6 @@ class CXXModuleUnit(ModuleUnit):
 class CXXFileUnit(CFileUnit):
     r"""Class for generating/parsing C++ files."""
 
+    language = 'cxx'
     ext = ['.hpp', '.cpp']
     member_units = ['macro', 'class', 'function']  # , 'var']
