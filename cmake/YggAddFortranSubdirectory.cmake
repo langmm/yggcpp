@@ -2,8 +2,8 @@
 # file Copyright.txt or https://cmake.org/licensing for details.
 
 #[=======================================================================[.rst:
-CMakeAddFortranSubdirectory
----------------------------
+YggAddFortranSubdirectory
+-------------------------
 
 Add a fortran-only subdirectory, find a fortran compiler, and build.
 
@@ -39,7 +39,7 @@ function(check_language_external language)
   set(fcompiler "${tmp_dir}/${language}_compiler")
   file(MAKE_DIRECTORY "${tmp_dir}")
   configure_file(
-    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/CMakeAddFortranSubdirectory/check_language_external.CMakeLists.in
+    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/check_language_external.CMakeLists.in
     ${tmp_dir}/CMakeLists.txt
     @ONLY)
   execute_process(
@@ -122,11 +122,11 @@ function(_setup_mingw_config_and_build source_dir build_dir tmp_dir)
   file(TO_NATIVE_PATH "${MINGW_PATH}" MINGW_PATH)
   string(REPLACE "\\" "\\\\" MINGW_PATH "${MINGW_PATH}")
   configure_file(
-    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/CMakeAddFortranSubdirectory/config_mingw.cmake.in
+    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/config_mingw.cmake.in
     ${build_dir}/external_config.cmake
     @ONLY)
   configure_file(
-    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/CMakeAddFortranSubdirectory/build_mingw.cmake.in
+    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/build_mingw.cmake.in
     ${build_dir}/external_build.cmake
     @ONLY)
   set(source_dir ${tmp_dir})
@@ -136,18 +136,18 @@ function(_setup_mingw_config_and_build source_dir build_dir tmp_dir)
     set(ARGS_CMAKE_COMMAND_LINE "-B ${tmp_dir}")
   endif()
   configure_file(
-    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/CMakeAddFortranSubdirectory/config_mingw.cmake.in
+    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/config_mingw.cmake.in
     ${tmp_dir}/external_find_fortran.cmake
     @ONLY)
 endfunction()
 
 function(_setup_native_config_and_build source_dir build_dir tmp_dir)
   configure_file(
-    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/CMakeAddFortranSubdirectory/config_native.cmake.in
+    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/config_native.cmake.in
     ${build_dir}/external_config.cmake
     @ONLY)
   configure_file(
-    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/CMakeAddFortranSubdirectory/build_native.cmake.in
+    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/build_native.cmake.in
     ${build_dir}/external_build.cmake
     @ONLY)
   set(source_dir ${tmp_dir})
@@ -157,7 +157,7 @@ function(_setup_native_config_and_build source_dir build_dir tmp_dir)
     set(ARGS_CMAKE_COMMAND_LINE "-B ${tmp_dir}")
   endif()
   configure_file(
-    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/CMakeAddFortranSubdirectory/config_native.cmake.in
+    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/config_native.cmake.in
     ${tmp_dir}/external_find_fortran.cmake
     @ONLY)
 endfunction()
@@ -176,7 +176,7 @@ function(target_link_external_fortran_objects target fortran_target)
 	return()
     endif()
     configure_file(
-      ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/CMakeAddFortranSubdirectory/copy_mod.cmake.in
+      ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/copy_mod.cmake.in
       ${CMAKE_CURRENT_BINARY_DIR}/copy_mod.cmake
       @ONLY)
     add_custom_command(
@@ -221,7 +221,7 @@ function(add_mixed_fortran_library target library_type)
   if (NOT other_sources)
     set(dummy_src "${CMAKE_CURRENT_BINARY_DIR}/${target}_dummy.c")
     configure_file(
-      ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/CMakeAddFortranSubdirectory/dummy.c.in
+      ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/dummy.c.in
       ${dummy_src}
       @ONLY)
     list(APPEND other_sources ${dummy_src})
@@ -367,11 +367,11 @@ function(add_external_fortran_library target_name library_type)
   set(external_sources ${${target_name}_EXT_SRC})
   cmake_path(APPEND external_target_file "${source_dir}" "${target_name}.external_targets")
   configure_file(
-    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/CMakeAddFortranSubdirectory/external.CMakeLists.in
+    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/external.CMakeLists.in
     ${source_dir}/CMakeLists.txt
     @ONLY)
   configure_file(
-    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/CMakeAddFortranSubdirectory/find_gfortran.CMakeLists.in
+    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/find_gfortran.CMakeLists.in
     ${tmp_dir}/CMakeLists.txt
     @ONLY)
   list(APPEND EXTERNAL_PRODUCTS ${external_target_file})

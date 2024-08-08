@@ -37,7 +37,7 @@ function(generate_export_header_yggdrasil target)
     set(YGG_CUSTOM_CONTENT "${${ARGS_CUSTOM_CONTENT_FROM_VARIABLE}}")
   endif()
   configure_file(
-    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/CMakeAddFortranSubdirectory/YggInterface_export_extras.h.in
+    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/YggInterface_export_extras.h.in
     ${CMAKE_CURRENT_BINARY_DIR}/ygg_extras
     @ONLY
   )
@@ -51,7 +51,7 @@ function(generate_export_header_yggdrasil target)
     set(NO_DEPRECATED_MACRO_NAME "${ARGS_NO_DEPRECATED_MACRO_NAME}")
     set(EXPORT_MACRO_NAME_HEADER_DEF "${ARGS_EXPORT_MACRO_NAME_HEADER_DEF}")
     configure_file(
-      ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/CMakeAddFortranSubdirectory/YggInterface_export.h.in
+      ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/YggInterface_export.h.in
       ${CMAKE_CURRENT_BINARY_DIR}/${ARGS_EXPORT_FILE_NAME}
       @ONLY)
   else()

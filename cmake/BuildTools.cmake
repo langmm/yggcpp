@@ -44,7 +44,7 @@ function(add_custom_command_env target)
     message(FATAL_ERROR "If ENV provided, END_ENV must be as well.")
   endif()
   configure_file(
-    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/CMakeAddFortranSubdirectory/execute_env.cmake.in
+    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/execute_env.cmake.in
     ${CMAKE_CURRENT_BINARY_DIR}/execute_env.cmake
     @ONLY)
   if (ARGS_OUTPUT)

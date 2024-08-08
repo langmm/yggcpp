@@ -43,7 +43,7 @@ if(definitions)
 endif()
 message(STATUS "External @target_name@ CMAKE_GNUtoMS = ${CMAKE_GNUtoMS}")
 configure_file(
-        @CMAKE_CURRENT_FUNCTION_LIST_DIR@/CMakeAddFortranSubdirectory/copy_obj.cmake.in
+        @CMAKE_CURRENT_FUNCTION_LIST_DIR@/config/copy_obj.cmake.in
 	${CMAKE_CURRENT_BINARY_DIR}/copy_obj.cmake
 	@ONLY)
 add_custom_command(
