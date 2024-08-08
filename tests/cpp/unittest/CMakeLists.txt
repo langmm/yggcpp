@@ -50,7 +50,10 @@ if (WIN32)
 else()
   set(unittest_timeout 20)
 endif()
-set_ygg_test_env(unittest OUTPUT_PROPERTIES unittest_properties)
+set_ygg_test_env(
+  unittest OUTPUT_PROPERTIES unittest_properties
+  FOR_GTEST_DISCOVER_TESTS
+)
 gtest_discover_tests(unittest DISCOVERY_MODE PRE_TEST
                      WORKING_DIRECTORY ${PARENT_BINARY_DIR}
                      TEST_LIST ygg_test_list
