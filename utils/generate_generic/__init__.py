@@ -10,8 +10,8 @@ import copy
 import pprint
 import itertools
 from collections import OrderedDict
-from generate_generic.base import get_file_unit, camel2underscored
-_base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+from generate_generic.base import (
+    _base_dir, get_file_unit, camel2underscored)
 
 
 class GeneratedFile(object):
@@ -23,9 +23,9 @@ class GeneratedFile(object):
     file_suffix = ''
 
     def __init__(self, src, added=None, prefix_lines=None,
-                 suffix_lines=None):
+                 suffix_lines=None, language=None):
         self.src = os.path.join(_base_dir, src)
-        self.file_unit = get_file_unit(src)
+        self.file_unit = get_file_unit(src, language=language)
         self.added = added
         if self.added is None:
             self.added = {}
@@ -89,10 +89,20 @@ class GeneratedFile(object):
         if not dont_write:
             self.write(**kwargs)
 
+    def generate_wrapper(self, x, language=None, **kwargs):
+        unit = self.parse()
+        if isinstance(x, str):
+            x = GeneratedFile(x, language=language)
+        x.wrap_file(unit)
+        x.generate(**kwargs)
+
     def wrap_file(self, src, **kwargs):
         if isinstance(src, str):
             src = self.file_unit.parse_file(src, **kwargs)
-        self.lines += self.file_unit.from_unit(src).format().splitlines()
+        unit = self.file_unit.from_unit(src)
+        self.lines += unit.format().splitlines()
+        for k, v in self.added.items():
+            v.wrap_file(unit)
 
     def parse(self, **kwargs):
         kwargs.setdefault('name', self.src)

@@ -1,6 +1,7 @@
 from generate_generic.base import (
-    CodeUnit, TypeUnit, DocsUnit, VariableUnit, FunctionUnit,
-    ClassUnit, MethodUnit, ModuleUnit, FileUnit)
+    close_context, CodeUnit, TypeUnit, DocsUnit, VariableUnit,
+    FunctionUnit, ClassUnit, MethodUnit, ConstructorUnit, DestructorUnit,
+    ModuleUnit, FileUnit)
 
 
 # PYTHONPATH=utils python -m generate_generic.runner --language=julia
@@ -8,8 +9,9 @@ from generate_generic.base import (
 # TODO:
 # - Make template a unit
 # - Handle separation of C/CXX header/source
-# - Add module unit
 # - Decorate C++ methods defined in header with YGG_API_DEF
+# - Fix indentation so it is based on the number of parents for
+#   generation
 
 
 class CApiUnit(CodeUnit):
@@ -120,7 +122,29 @@ class CFileUnit(FileUnit):
     ext = ['.h', '.c']
     comment = "//"
     indent = '  '
-    member_units = ['macro', 'function', 'var']
+    member_units = ['macro', 'function']  # , 'var']
+
+
+class CXXTemplateUnit(CodeUnit):
+
+    unit_type = 'template'
+    _properties = ['template_param']
+    _regex = (
+        r'template\s*\<\s*'
+    )
+    _fstring_cond = (
+        'template<{template_param}>'
+    )
+
+    @classmethod
+    def complete_match(cls, match, kwargs, member_units=None,
+                       check_format=False):
+        kwargs.setdefault('match_start', match.start())
+        kwargs.setdefault('match_end', match.end())
+        endpos_prev = kwargs['match_end']
+        endpos = close_context("<", ">", match.string, pos=endpos_prev)
+        kwargs['template_param'] = match.string[endpos_prev:endpos]
+        kwargs['match_end'] = endpos
 
 
 class CXXTypeUnit(TypeUnit):
@@ -212,7 +236,7 @@ class CXXMethodUnit(MethodUnit):
         return out
 
 
-class CXXConstructorUnit(CodeUnit):
+class CXXConstructorUnit(ConstructorUnit):
 
     unit_type = 'constructor'
     _regex_fstring = (
@@ -235,7 +259,7 @@ class CXXConstructorUnit(CodeUnit):
     ]
 
 
-class CXXDestructorUnit(CodeUnit):
+class CXXDestructorUnit(DestructorUnit):
 
     unit_type = 'destructor'
     _regex_fstring = (
@@ -274,7 +298,7 @@ class CXXClassUnit(ClassUnit):
 
 class CXXModuleUnit(ModuleUnit):
 
-    member_units = ['module', 'class', 'function']  # , 'var']
+    member_units = ['class', 'function']  # , 'var']
     member_context = ('{', '}')
     _regex = (
         r'^(?P<indent>\s*)namespace\s+(?P<name>\w+)\s+\{'
@@ -291,4 +315,4 @@ class CXXFileUnit(CFileUnit):
 
     language = 'cxx'
     ext = ['.hpp', '.cpp']
-    member_units = ['macro', 'class', 'function']  # , 'var']
+    member_units = ['macro', 'module', 'class', 'function']  # , 'var']

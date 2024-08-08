@@ -1,7 +1,20 @@
 import os
 import re
 import pprint
+import sys
 from collections import OrderedDict
+_base_dir = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+
+
+if sys.platform == 'darwin':
+    _library_prefix = 'lib'
+    _library_ext = '.dylib'
+elif sys.platform in ['win32', 'cygwin']:
+    _library_prefix = ''
+    _library_ext = '.dll'
+else:
+    _library_prefix = 'lib'
+    _library_ext = '.so'
 
 
 def camel2underscored(x):
@@ -64,13 +77,19 @@ def code_unit_registry(language=None):
 def init_code_unit_registry():
     from generate_generic.cpp import CFileUnit, CXXFileUnit
     from generate_generic.fortran import FortranFileUnit
-    classes = [CFileUnit, CXXFileUnit, FortranFileUnit]
+    from generate_generic.julia import JuliaCXXWrapFileUnit, JuliaFileUnit
+    classes = [
+        CFileUnit, CXXFileUnit, FortranFileUnit,
+        JuliaCXXWrapFileUnit, JuliaFileUnit,
+    ]
     return classes
 
 
-def get_file_unit(fname):
+def get_file_unit(fname, language=None):
     init_code_unit_registry()
     global _code_unit_registry
+    if language is not None:
+        return code_unit_registry(language)['file']
     ext = os.path.splitext(fname)[-1]
     for k, v in code_unit_registry().items():
         if ext in v['file'].ext:
@@ -82,6 +101,7 @@ def get_file_unit(fname):
 
 def register_code_unit(k, v, languages):
     global _code_unit_registry
+    # print("REGISTER", k, v, languages)
     for x in languages:
         _code_unit_registry.setdefault(x, {})
         if k in _code_unit_registry[x]:
@@ -131,10 +151,23 @@ class CodeUnitMeta(type):
         if len(parts) > 2:
             if cls.language is None:
                 cls.language = parts[0]
+            for x in cls.ignored_units:
+                x_attr = {
+                    'unit_type': x,
+                    'language': cls.language,
+                    'additional_languages': cls.additional_languages,
+                    '_properties': [],
+                    '_properties_optional': [],
+                    '_fstring': '',
+                }
+                type(f'{cls.language.title()}{x.title()}Unit',
+                     (CodeUnit, ), x_attr)
             languages = [cls.language] + cls.additional_languages
             if cls.unit_type == 'file':
                 register_code_unit('indent', cls.indent, languages)
                 register_code_unit('comment', cls.comment, languages)
+                register_code_unit('libext', _library_ext, languages)
+                register_code_unit('libprefix', _library_prefix, languages)
             register_code_unit(cls.unit_type, cls, languages)
         return cls
 
@@ -152,10 +185,15 @@ class CodeUnit(metaclass=CodeUnitMeta):
     _fstring_cond = None
     _properties = ['name']
     _properties_optional = ['docs', 'type']
-    _properties_defaults = {'indent': 0}
+    _properties_defaults = {
+        'indent': 0,
+        'libext': _library_ext,
+        'libprefix': _library_prefix,
+    }
     _properties_dont_compare = ['body']
     member_units = []
     member_context = None
+    ignored_units = []
 
     def __init__(self, name=None, match_start=None, match_end=None,
                  check_format=False, verbose=False, **kwargs):
@@ -277,6 +315,17 @@ class CodeUnit(metaclass=CodeUnitMeta):
             if match.groupdict()['mod'] == 'C':
                 if not kwargs.get(match.groupdict()['group'], ''):
                     return ''
+            elif match.groupdict()['mod'] == 'RELPATHC':
+                # TODO: Set this more generically?
+                return os.path.relpath(
+                    kwargs[match.groupdict()['group']],
+                    start=os.path.join(_base_dir, 'cpp', 'include'))
+            elif match.groupdict()['mod'] == 'LIBFILE':
+                base = os.path.splitext(
+                    os.path.basename(kwargs[match.groupdict()['group']]))[0]
+                return f"{_library_prefix}{base}{_library_ext}"
+            elif match.groupdict()['mod'] == 'BASEFILE':
+                return os.path.basename(kwargs[match.groupdict()['group']])
             elif match.groupdict()['mod']:
                 raise NotImplementedError(
                     f"Unsupported fstring mod: "
@@ -293,6 +342,8 @@ class CodeUnit(metaclass=CodeUnitMeta):
 
     @property
     def address(self):
+        if len(self._properties) == 0:
+            return ''
         return self.properties[self._properties[0]]
 
     @classmethod
@@ -315,7 +366,7 @@ class CodeUnit(metaclass=CodeUnitMeta):
             return x
         elif isinstance(x, CodeUnit):
             if x.unit_type not in cls.code_units():
-                raise NotImplementedError(x.unit_type)
+                raise NotImplementedError(f'{x.unit_type} for {cls}')
             kwargs = dict(
                 {k: cls.from_unit(v) for k, v in x.properties.items()},
                 **kwargs)
@@ -431,7 +482,8 @@ class CodeUnit(metaclass=CodeUnitMeta):
             sep = '\n'
             if k == 'args':
                 sep = ', '
-            return sep.join([cls.format_property(k, xx) for xx in x])
+            vals = [cls.format_property(k, xx) for xx in x]
+            return sep.join([xx for xx in vals if xx])
         return x
 
     def format(self):
@@ -489,12 +541,22 @@ class MethodUnit(FunctionUnit):
                 f"{super(MethodUnit, self).address}")
 
 
+class ConstructorUnit(MethodUnit):
+
+    unit_type = 'constructor'
+
+
+class DestructorUnit(MethodUnit):
+
+    unit_type = 'destructor'
+
+
 class ClassUnit(CodeUnit):
 
     unit_type = 'class'
     member_units = ['method']
     _properties = [
-        'name', 'members',
+        'name', 'members', 'parent',
     ]
 
 
@@ -503,7 +565,7 @@ class ModuleUnit(CodeUnit):
     unit_type = 'module'
     member_units = ['module', 'class', 'function']  # , 'var']
     _properties = [
-        'name', 'members',
+        'name', 'members', 'parent',
     ]
 
 
