@@ -20,6 +20,8 @@ function(add_speed_test LANGUAGE LANGUAGE_EXT)
   endif()
   find_package(YggInterface REQUIRED)
   include(YggAddFortranSubdirectory)
+  include(TestTools)
+  include(BuildTools)
   check_language_external(${LANGUAGE} REQUIRED OUTPUT_VARIABLE external
                           GENERATOR generator EXTERNAL_PATHS paths)
   if (external)
@@ -28,46 +30,16 @@ function(add_speed_test LANGUAGE LANGUAGE_EXT)
       list(APPEND CMAKE_COMMAND_ARGS "-G${generator}")
     endif()
   endif()
-  foreach(opt IN LISTS CMAKE_COMMAND_ARGS_TO_COPY)
-    if (${opt})
-      list(LENGTH ${opt} opt_len)
-      if (opt_len GREATER 1)
-        list(JOIN ${opt} "\\\\;" tmp)
-        list(APPEND CMAKE_COMMAND_ARGS -D${opt}=${tmp})
-      else()
-        list(APPEND CMAKE_COMMAND_ARGS -D${opt}=${${opt}})
-      endif()
-    endif()
-  endforeach()
-  configure_file(CMakeLists.txt.in ${LANGUAGE}/CMakeLists.txt @ONLY)
+  cmakevars2cmakecliargs(CMAKE_COMMAND_ARGS ${CMAKE_COMMAND_ARGS_TO_COPY})
   configure_file(speedtest.${LANGUAGE_EXT}.in
                  ${LANGUAGE}/speedtest.${LANGUAGE_EXT} @ONLY)
-  set(lang_src_dir ${CMAKE_CURRENT_BINARY_DIR}/${LANGUAGE})
-  set(lang_bld_dir ${CMAKE_CURRENT_BINARY_DIR}/${LANGUAGE}_build)
-  file(MAKE_DIRECTORY ${lang_bld_dir})
-  if (paths)
-    set(old_paths $ENV{PATH})
-    set(ENV{PATH} "${paths}\\;$ENV{PATH}")
-  endif()
-  execute_process(
-    COMMAND ${CMAKE_COMMAND} ${lang_src_dir} ${CMAKE_COMMAND_ARGS}
-    WORKING_DIRECTORY ${lang_bld_dir}
-    COMMAND_ECHO STDOUT
-    RESULT_VARIABLE ret)
-  if (NOT ret EQUAL 0)
-    message(FATAL_ERROR "Failed to configure ${LANGUAGE} speedtest")
-  endif()
-  execute_process(
-    COMMAND ${CMAKE_COMMAND} --build . --config Release
-    WORKING_DIRECTORY ${lang_bld_dir}
-    COMMAND_ECHO STDOUT
-    RESULT_VARIABLE ret)
-  if (paths)
-    set(ENV{PATH} "${old_paths}")
-  endif()
-  if (NOT ret EQUAL 0)
-    message(FATAL_ERROR "Failed to build ${LANGUAGE} speedtest")
-  endif()
+  configure_and_build(
+    CMakeLists.txt.in
+    SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/${LANGUAGE}
+    BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/${LANGUAGE}_build
+    PREPEND_PATHS ${paths}
+    CMAKE_COMMAND_ARGS ${CMAKE_COMMAND_ARGS}
+  )
   add_test(NAME speedtest_${LANGUAGE}
            COMMAND ${LANGUAGE}_build/speedtest_${LANGUAGE})
   if(WIN32 AND ${Python_PREFIX}_RUNTIME_LIBRARY_DIRS)
@@ -75,31 +47,15 @@ function(add_speed_test LANGUAGE LANGUAGE_EXT)
   else()
     list(APPEND TEST_ENV "FAKE_ENV=test")
   endif()
-  if(WIN32)
-    set(pathsep "\\;")
-    set(suffix "bin")
-    set(envvar "PATH")
-  else()
-    set(pathsep ":")
-    set(suffix "lib")
-    set(envvar "LD_LIBRARY_PATH")
+  if (WIN32 AND ${Python_PREFIX}_ROOT_DIR)
+    list(APPEND NEW_PATHS ${${Python_PREFIX}_ROOT_DIR})
   endif()
-  if(envvar)
-    set(NEW_PATHS $ENV{${envvar}})
-    foreach(d IN LISTS CMAKE_PREFIX_PATH)
-      cmake_path(APPEND d ${suffix})
-      list(APPEND NEW_PATHS ${d})
-    endforeach()
-    if (WIN32 AND ${Python_PREFIX}_ROOT_DIR)
-      list(APPEND NEW_PATHS ${${Python_PREFIX}_ROOT_DIR})
-    endif()
-    if (NEW_PATHS)
-      list(JOIN NEW_PATHS "${pathsep}" NEW_PATH_ENV)
-      list(APPEND TEST_ENV "${envvar}=${NEW_PATH_ENV}")
-    endif()
-  endif()
-  set_tests_properties(speedtest_${LANGUAGE} PROPERTIES
-                       ENVIRONMENT "${TEST_ENV}")
+  set_tests_runtime_paths(
+    speedtest_${LANGUAGE}
+    PATHS ${NEW_PATHS}
+    ADDITIONAL_ENV_VARIABLES ${TEST_ENV}
+    ADD_CMAKE_PREFIX_PATHS
+  )
 endfunction()
 
 enable_testing()

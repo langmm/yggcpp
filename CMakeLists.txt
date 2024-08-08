@@ -504,7 +504,7 @@ if (YGG_INSTALL_TARGETS)
       list(APPEND modules ${f})
     endif()
   endforeach()
-  install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/cmake/CMakeAddFortranSubdirectory
+  install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/cmake/config
           DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/YggInterface
           FILES_MATCHING REGEX ".*\\.in$")
   install(FILES "${CMAKE_CURRENT_BINARY_DIR}/YggInterfaceConfig.cmake"

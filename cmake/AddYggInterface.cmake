@@ -213,69 +213,23 @@ function(add_library_dirs_to_rpath TARGET)
   endif()
 endfunction()
 
+
 function(set_ygg_test_paths TEST_NAME)
-  if(NOT YGG_TEST_PATHS)
-    return()
-  endif()
-  set(oneValueArgs PATH_VARIABLE DIRECTORY)
-  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-  if(NOT ARGS_PATH_VARIABLE)
-    if(WIN32)
-      set(ARGS_PATH_VARIABLE PATH)
-    elseif(APPLE)
-      set(ARGS_PATH_VARIABLE DYLD_LIBRARY_PATH)
-    else()
-      set(ARGS_PATH_VARIABLE LD_LIBRARY_PATH)
-    endif()
-  endif()
-  if(NOT ARGS_DIRECTORY)
-    set(ARGS_DIRECTORY .)
-  endif()
-  include(BuildTools)
-  configure_path_injection(
-    DIRECTORY ${ARGS_DIRECTORY}
-    PATH_VARIABLE ${ARGS_PATH_VARIABLE}
+  include(TestTools)
+  set_tests_runtime_paths(
+    ${TEST_NAME}
+    ${ARGN}
+    PREPEND
     PATHS ${YGG_TEST_PATHS}
   )
 endfunction()
 
+
 function(set_ygg_test_env TEST_NAME)
-  if(NOT YGG_TEST_ENV)
-    return()
-  endif()
-  set(oneValueArgs DIRECTORY OUTPUT_PROPERTIES PATH_VARIABLE)
-  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-  if(NOT ARGS_DIRECTORY)
-    set(ARGS_DIRECTORY .)
-  endif()
-  if(ARGS_UNPARSED_ARGUMENTS)
-    list(APPEND TEST_NAME ${ARGS_UNPARSED_ARGUMENTS})
-  endif()
-  foreach(var ${YGG_TEST_ENV})
-    list(APPEND properties ENVIRONMENT "${var}")
-  endforeach()
-  message(STATUS "Setting \'${TEST_NAME}\' test properties: ${properties}")
-  if(ARGS_OUTPUT_PROPERTIES)
-    set(${ARGS_OUTPUT_PROPERTIES} ${properties} PARENT_SCOPE)
-  elseif()
-    set_tests_properties(${TEST_NAME} PROPERTIES ${properties})
-  endif()
-  # There is a bug which prevents environment variables from
-  # being available during test discovery on windows
-  # https://gitlab.kitware.com/cmake/cmake/-/issues/21453
-  if(WIN32 AND NOT MSVC)
-    include(BuildTools)
-    configure_env_injection(
-      DIRECTORY ${ARGS_DIRECTORY}
-      VARIABLES ${YGG_TEST_ENV}
-    )
-  endif()
-  if(ARGS_PATH_VARIABLE)
-    list(APPEND path_args PATH_VARIABLE ${ARGS_PATH_VARIABLE})
-  endif()
+  include(TestTools)
   set_ygg_test_paths(
     ${TEST_NAME}
-    DIRECTORY ${ARGS_DIRECTORY}
-    ${path_args}
+    ${ARGN}
+    ADDITIONAL_ENV_VARIABLES ${YGG_TEST_ENV}
   )
 endfunction()
