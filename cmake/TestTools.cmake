@@ -18,7 +18,7 @@ function(set_tests_environment TEST_NAME)
       list(APPEND properties ENVIRONMENT "${var}")
     endforeach()
   else()
-    list(APPEND properties ENVIRONMENT "${ARGS_VARIABLES}")
+    set(properties ${ARGS_VARIABLES})
   endif()
   message(STATUS "Setting \'${TEST_NAME}\' test properties: ${properties}")
   if(ARGS_OUTPUT_PROPERTIES)
@@ -27,7 +27,15 @@ function(set_tests_environment TEST_NAME)
     if(NOT TEST ${TEST_NAME})
       message(FATAL_ERROR "\'${TEST_NAME}\' Is not a test")
     endif()
-    set_tests_properties(${TEST_NAME} PROPERTIES ${properties})
+    if (ARGS_FOR_GTEST_DISCOVER_TESTS)
+      set_tests_properties(
+        ${TEST_NAME} PROPERTIES ${properties}
+      )
+    else()
+      set_tests_properties(
+        ${TEST_NAME} PROPERTIES ENVIRONMENT "${properties}"
+      )
+    endif()
   endif()
   # There is a bug which prevents environment variables from
   # being available during test discovery on windows
