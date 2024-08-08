@@ -62,3 +62,63 @@ function(add_custom_command_env target)
       ${ARGS_UNPARSED_ARGUMENTS})
   endif()
 endfunction()
+
+function(configure_env_injection)
+  set(oneValueArgs OUTPUT_FILE DIRECTORY)
+  set(multiValueArgs VARIABLES)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  if (NOT ARGS_OUTPUT_FILE)
+    set(ARGS_OUTPUT_FILE ${CMAKE_CURRENT_BINARY_DIR}/CTestEnvInject.cmake)
+  endif()
+  if (ARGS_UNPARSED_ARGUMENTS)
+    list(APPEND ARGS_VARIABLES ${ARGS_UNPARSED_ARGUMENTS})
+  endif()
+  set(ENV_VARS ${ARGS_VARIABLES})
+  configure_file(
+    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/CTestEnvInject.cmake.in
+    ${ARGS_OUTPUT_FILE}
+    @ONLY)
+  if (ARGS_DIRECTORY)
+    set_property(
+      DIRECTORY ${ARGS_DIRECTORY} APPEND PROPERTY
+      TEST_INCLUDE_FILES ${ARGS_OUTPUT_FILE}
+    )
+  endif()
+endfunction()
+
+function(configure_path_injection)
+  set(oneValueArgs OUTPUT_FILE PATH_VARIABLE DIRECTORY)
+  set(multiValueArgs PATHS)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  if (NOT ARGS_OUTPUT_FILE)
+    set(ARGS_OUTPUT_FILE ${CMAKE_CURRENT_BINARY_DIR}/CTestPathInject.cmake)
+  endif()
+  if (NOT ARGS_PATH_VARIABLE)
+    set(ARGS_PATH_VARIABLE PATH)
+  endif()
+  set(PATH_VAR ${ARGS_PATH_VARIABLE})
+  if(ARGS_UNPARSED_ARGUMENTS)
+    list(APPEND ARGS_PATHS ${ARGS_UNPARSED_ARGUMENTS})
+  endif()
+  if(ARGS_PATHS)
+    if(WIN32)
+      set(PATH_SEP ";")
+    else()
+      set(PATH_SEP ":")
+    endif()
+    string(REPLACE ";" "${PATH_SEP}" NEW_PATHS "${ARGS_PATHS}")
+  else()
+    set(PATH_SEP)
+    set(NEW_PATHS)
+  endif()
+  configure_file(
+    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/CTestPathInject.cmake.in
+    ${ARGS_OUTPUT_FILE}
+    @ONLY)
+  if (ARGS_DIRECTORY)
+    set_property(
+      DIRECTORY ${ARGS_DIRECTORY} APPEND PROPERTY
+      TEST_INCLUDE_FILES ${ARGS_OUTPUT_FILE}
+    )
+  endif()
+endfunction()

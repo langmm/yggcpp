@@ -68,7 +68,7 @@ list(APPEND YGG_INSTALL_DEFS
      -DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
      -D_USE_MATH_DEFINES)
 
-set(RAPIDJSON_PYTHON_ENV "YGG_MODEL_INDEX=123")
+list(APPEND YGG_TEST_ENV "YGG_MODEL_INDEX=123")
 
 set(YGG_BUILD_FLAGS "")
 
@@ -269,7 +269,7 @@ else()
     # There is an issue with embedding Python on Windows in conda environments
     # https://github.com/ContinuumIO/anaconda-issues/issues/11374
     if(WIN32)
-        set(RAPIDJSON_PYTHON_ENV2 "PYTHONHOME=${${Python_PREFIX}_RUNTIME_LIBRARY_DIRS}")
+        list(APPEND YGG_TEST_ENV "PYTHONHOME=${${Python_PREFIX}_RUNTIME_LIBRARY_DIRS}")
     endif()
     
     if(YGGDRASIL_PYGIL_NO_MANAGEMENT)
@@ -284,7 +284,8 @@ endif()
 embed_language(Julia DEFINITIONS -DJULIA_ENABLE_THREADING)
 
 if(YGG_EMBED_Julia AND WIN32 AND (NOT MSVC) AND Julia_RUNTIME_LIBRARY_DIR)
-  set(RAPIDJSON_PYTHON_ENV3 "JULIA_HOME=${Julia_RUNTIME_LIBRARY_DIR}")
+  list(APPEND YGG_TEST_ENV "JULIA_HOME=${Julia_RUNTIME_LIBRARY_DIR}")
+  list(APPEND YGG_TEST_PATHS ${Julia_RUNTIME_LIBRARY_DIR})
 endif()
 
 ##############

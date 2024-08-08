@@ -50,20 +50,12 @@ if (WIN32)
 else()
   set(unittest_timeout 20)
 endif()
-list(APPEND unittest_args PROPERTIES TIMEOUT ${unittest_timeout})
-foreach(var RAPIDJSON_PYTHON_ENV RAPIDJSON_PYTHON_ENV2 RAPIDJSON_PYTHON_ENV3)
-  if (${var})
-    list(APPEND unittest_args ENVIRONMENT "${${var}}")
-  endif()
-endforeach()
-message(STATUS "unittest_args = ${unittest_args}")
-# There is a bug which prevents environment variables from
-# being available during test discovery on windows
-# https://gitlab.kitware.com/cmake/cmake/-/issues/21453
+set_ygg_test_env(unittest OUTPUT_PROPERTIES unittest_properties)
 gtest_discover_tests(unittest DISCOVERY_MODE PRE_TEST
                      WORKING_DIRECTORY ${PARENT_BINARY_DIR}
                      TEST_LIST ygg_test_list
-		     ${unittest_args})
+		     PROPERTIES TIMEOUT ${unittest_timeout}
+		     ${unittest_properties})
 
 
 # This is required for running tests with valgrind
@@ -83,9 +75,6 @@ else ()
    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
 endif()
 
-# message(STATUS "RAPIDJSON_PYTHON_ENV = ${RAPIDJSON_PYTHON_ENV}")
-# message(STATUS "RAPIDJSON_PYTHON_ENV2 = ${RAPIDJSON_PYTHON_ENV2}")
-
 include(CheckDLL)
 show_runtimes(unittest)
 copy_required_runtimes(unittest DEPENDENCIES ${YGG_TARGET_CXX})
@@ -98,10 +87,10 @@ if(NOT MSVC)
         add_test(NAME valgrind_unittest
                  COMMAND valgrind --suppressions=${PARENT_SOURCE_DIR}/valgrind.supp --suppressions=${PARENT_SOURCE_DIR}/valgrind-python.supp --leak-check=full --error-exitcode=1 --track-origins=yes --dsymutil=no --keep-debuginfo=yes --read-var-info=yes ${CMAKE_CURRENT_BINARY_DIR}/unittest --gtest_filter=-SIMD.*
                  WORKING_DIRECTORY ${PARENT_BINARY_DIR})
-        set_tests_properties(valgrind_unittest PROPERTIES
-                ENVIRONMENT
-		"YGG_MODEL_INDEX=123")
-                # "${RAPIDJSON_PYTHON_ENV}")
+        set_tests_properties(
+	  valgrind_unittest PROPERTIES
+          ENVIRONMENT "YGG_MODEL_INDEX=123"
+	)
     endif((NOT YGG_SKIP_VALGRIND_TESTS) AND VALGRIND_FOUND)
 
 endif(NOT MSVC)
