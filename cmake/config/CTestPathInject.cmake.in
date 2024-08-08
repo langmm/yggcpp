@@ -1,4 +1,4 @@
-if(NOT ENV{@PATH_VAR@})
+if(NOT DEFINED ENV{@PATH_VAR@})
   set ( ENV{@PATH_VAR@} "@NEW_PATHS" )
 else()
   set ( ENV{@PATH_VAR@} "@NEW_PATHS@@PATH_SEP@$ENV{@PATH_VAR@}" )

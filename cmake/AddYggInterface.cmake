@@ -46,6 +46,7 @@ function(add_yggdrasil_interface LANGUAGE)
   endif()
   option(BUILD_${LANGUAGE}_LIBRARY "Build the Yggdrasil ${LANGUAGE} interface library" ${DEFAULT_ENABLED})
   option(YGG_BUILD_${LANGUAGE}_TESTS "Build ${LANGUAGE} tests" OFF)
+  option(YGG_${LANGUAGE}_REQUIRED "Require that the ${LANGUAGE} interface is built" OFF)
   if(SKBUILD)
     if(LANGUAGE STREQUAL "Python")
       set(BUILD_${LANGUAGE}_LIBRARY ON)
@@ -70,6 +71,8 @@ function(add_yggdrasil_interface LANGUAGE)
   if(BUILD_${LANGUAGE}_LIBRARY)
     add_subdirectory(${ARGS_DIRECTORY})
     list(APPEND YGG_LANGUAGES_AVAILABLE ${LANGUAGE})
+  elseif(YGG_${LANGUAGE}_REQUIRED)
+    message(FATAL_ERROR "${LANGUAGE} interface cannot be built")
   else()
     message(STATUS "${LANGUAGE} library skipped")
   endif()
@@ -77,7 +80,7 @@ function(add_yggdrasil_interface LANGUAGE)
     YGG_LANGUAGES_SUPPORTED YGG_LANGUAGES_AVAILABLE
     YGG_INSTALL_TARGETS YGG_INSTALL_INCLUDES
     BUILD_${LANGUAGE}_LIBRARY YGG_BUILD_${LANGUAGE}_TESTS
-    YGG_TARGET_${LANGUAGE}
+    YGG_${LANGUAGE}_REQUIRED YGG_TARGET_${LANGUAGE}
     YGG_BUILD_TESTS YGG_BUILD_THIRDPARTY_GTEST
   )
   if (YGG_Fortran_MOD_DIR)
