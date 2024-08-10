@@ -54,14 +54,14 @@ function(add_speed_test LANGUAGE LANGUAGE_EXT)
     speedtest_${LANGUAGE}
     PATHS ${NEW_PATHS}
     ADDITIONAL_ENV_VARIABLES ${TEST_ENV}
-    OUTPUT_PROPERTIES NEW_TEST_ENV
+    # OUTPUT_PROPERTIES NEW_TEST_ENV
     ADD_CMAKE_PREFIX_PATHS
   )
   message(STATUS "NEW_TEST_ENV = ${NEW_TEST_ENV}")
-  list(JOIN NEW_TEST_ENV "\\;" NEW_TEST_ENV)
-  message(STATUS "NEW_TEST_ENV = ${NEW_TEST_ENV}")
-  set_tests_properties(speedtest_${LANGUAGE} PROPERTIES
-                       ENVIRONMENT "${NEW_TEST_ENV}")
+  # list(JOIN NEW_TEST_ENV "\;" NEW_TEST_ENV)
+  # message(STATUS "NEW_TEST_ENV = ${NEW_TEST_ENV}")
+  # set_tests_properties(speedtest_${LANGUAGE} PROPERTIES
+  #                      ENVIRONMENT "${NEW_TEST_ENV}")
 endfunction()
 
 enable_testing()
