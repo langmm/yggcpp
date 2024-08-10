@@ -16,7 +16,8 @@ interface_files_added = {
 
 
 if __name__ == "__main__":
-    from generate_generic import GeneratedFile, generate
+    from generate_generic import generate
+    from generate_generic.interface import JuliaInterface
     parser = argparse.ArgumentParser(
         "Generate interfaces for rapidjson::Document in C & Fortran")
     parser.add_argument("--debug", action="store_true",
@@ -27,12 +28,7 @@ if __name__ == "__main__":
                         help="Display information during parsing/generation")
     args = parser.parse_args()
     if args.language:
-        fcpp = GeneratedFile(interface_files['cpp'])
-        fcpp.test_parse_wrap(verbose=args.verbose)
-        languages = [
-            args.language] + interface_files_added.get(args.language, [])
-        for lang in languages:
-            fcpp.generate_wrapper(interface_files[lang],
-                                  language=lang, debug=True)
+        x = JuliaInterface()
+        x.generate(debug=args.debug, verbose=args.verbose)
     else:
         generate(debug=args.debug)

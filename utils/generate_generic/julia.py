@@ -33,7 +33,7 @@ class JuliaCXXWrapMethodUnit(JuliaCXXWrapMixin, MethodUnit):
 
     _properties = ['name', 'type', 'args', 'parent']
     _fstring_cond = (
-        '{indent}.method("{name}", &{parent}::{name})'
+        '{indent}.method("{name}", &{WR:parent}::{name})'
     )
 
 
@@ -73,7 +73,7 @@ class JuliaCXXWrapFileUnit(JuliaCXXWrapMixin, CXXFileUnit):
     ]
     _fstring_cond = (
         '#include "jlcxx/jlcxx.hpp"\n'
-        '#include "{RELPATHC:name}"\n'
+        '#include "{RELPATHC:WR:name}"\n'
         '{members}\n'
     )
 
@@ -87,7 +87,7 @@ class JuliaModuleUnit(ModuleUnit):
     _fstring_cond = (
         'module {name}\n'
         '  using CxxWrap\n'
-        '  @wrapmodule(() -> "{LIBFILE:parent}")\n'
+        '  @wrapmodule(() -> "{LIBFILE:GN:parent}")\n'
         '  function __init__()\n'
         '    @initcxx\n'
         '  end\n'

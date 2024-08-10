@@ -1,4 +1,5 @@
 import os
+import copy
 import re
 import pprint
 import sys
@@ -85,7 +86,7 @@ def init_code_unit_registry():
     return classes
 
 
-def get_file_unit(fname, language=None):
+def get_file_unit_class(fname, language=None):
     init_code_unit_registry()
     global _code_unit_registry
     if language is not None:
@@ -112,6 +113,34 @@ def register_code_unit(k, v, languages):
                 f"already registered as {k} for {x}. "
                 f"\'{v}\' cannot replace it.")
         _code_unit_registry[x][k] = v
+
+
+_file_unit_registry = {}
+
+
+def register_file_unit(v):
+    global _file_unit_registry
+    k = v.properties['name']
+    if k in _file_unit_registry:
+        raise RuntimeError(f"File unit for {k} already registered")
+    _file_unit_registry[k] = v
+
+
+def get_file_unit(name, language=None, contents=None,
+                  dont_generate=False, **kwargs):
+    global _file_unit_registry
+    if os.path.isabs(name):
+        name = os.path.relpath(name, _base_dir)
+    if name in _file_unit_registry:
+        return copy.deepcopy(_file_unit_registry[name])
+    if not dont_generate:
+        cls = get_file_unit_class(name, language=language)
+        if contents is None:
+            with open(name, 'r') as fd:
+                contents = fd.read()
+        out = cls.parse(contents, name=name, **kwargs)
+        return out
+    raise KeyError(f"No file unit registered for {name}")
 
 
 class DummyMatch:
@@ -196,11 +225,14 @@ class CodeUnit(metaclass=CodeUnitMeta):
     ignored_units = []
 
     def __init__(self, name=None, match_start=None, match_end=None,
+                 wrapped_unit=None, generating_unit=None,
                  check_format=False, verbose=False, **kwargs):
         if name is not None:
             kwargs['name'] = name
         self.match_start = match_start
         self.match_end = match_end
+        self.wrapped_unit = wrapped_unit
+        self.generating_unit = generating_unit
         for k, v in self._properties_defaults.items():
             kwargs.setdefault(k, v)
         missing = []
@@ -312,28 +344,47 @@ class CodeUnit(metaclass=CodeUnitMeta):
         out = self._fstring_cond
 
         def do_repl(match):
-            if match.groupdict()['mod'] == 'C':
-                if not kwargs.get(match.groupdict()['group'], ''):
+            mod = match.groupdict()['mod']
+            ds = match.groupdict()['ds']
+            k = match.groupdict()['group']
+            data = kwargs
+            if mod in ["WR", "GN"] and not ds:
+                ds = mod
+                mod = None
+            if ds == "WR":
+                if self.wrapped_unit:
+                    data = self.wrapped_unit.properties
+            elif ds == "GN":
+                print("HERE", self, match, self.generating_unit)
+                if self.generating_unit:
+                    data = self.generating_unit.properties
+                    pprint.pprint(data)
+            elif ds:
+                raise NotImplementedError(
+                    f"Unsupported fstring ds \'{ds}\' in {match.string}")
+            if mod == 'C':
+                if not data.get(k, ''):
                     return ''
-            elif match.groupdict()['mod'] == 'RELPATHC':
+            elif mod == 'RELPATHC':
                 # TODO: Set this more generically?
                 return os.path.relpath(
-                    kwargs[match.groupdict()['group']],
+                    data[k],
                     start=os.path.join(_base_dir, 'cpp', 'include'))
-            elif match.groupdict()['mod'] == 'LIBFILE':
+            elif mod == 'LIBFILE':
                 base = os.path.splitext(
-                    os.path.basename(kwargs[match.groupdict()['group']]))[0]
+                    os.path.basename(data[k]))[0]
                 return f"{_library_prefix}{base}{_library_ext}"
-            elif match.groupdict()['mod'] == 'BASEFILE':
-                return os.path.basename(kwargs[match.groupdict()['group']])
-            elif match.groupdict()['mod']:
+            elif mod == 'BASEFILE':
+                return os.path.basename(data[k])
+            elif mod:
                 raise NotImplementedError(
-                    f"Unsupported fstring mod: "
-                    f"{match.groupdict()['mod']}")
-            return kwargs[match.groupdict()['group']]
+                    f"Unsupported fstring mod \'{mod}\' in "
+                    f"{match.string}")
+            return data[k]
 
-        out = re.sub(r'\{(?:(?P<mod>\w+)\:)?(?P<group>\w+)\}',
-                     do_repl, out)
+        out = re.sub(
+            r'\{(?:(?P<mod>\w+)\:)?(?:(?P<ds>\w+)\:)?(?P<group>\w+)\}',
+            do_repl, out)
         return out
 
     @property
@@ -359,17 +410,31 @@ class CodeUnit(metaclass=CodeUnitMeta):
         return cls(check_format=check_format, **kwargs)
 
     @classmethod
-    def from_unit(cls, x, **kwargs):
+    def from_unit(cls, x, property_name=None, property_index=None,
+                  generating_unit=None, **kwargs):
+        if generating_unit and property_name == 'members':
+            if property_index is not None:
+                generating_unit = generating_unit[property_index]
+            elif property_name == 'members':
+                generating_unit = generating_unit.properties[property_name]
+            kwargs['generating_unit'] = generating_unit
         if isinstance(x, list):
-            return [cls.from_unit(xx, **kwargs) for xx in x]
-        elif isinstance(x, str):
-            return x
+            return [
+                cls.from_unit(xx, property_name=property_name,
+                              property_index=i, **kwargs)
+                for i, xx in enumerate(x)]
         elif isinstance(x, CodeUnit):
             if x.unit_type not in cls.code_units():
                 raise NotImplementedError(f'{x.unit_type} for {cls}')
             kwargs = dict(
-                {k: cls.from_unit(v) for k, v in x.properties.items()},
+                {k: cls.from_unit(
+                    v, property_name=k,
+                    parent=kwargs.get(
+                        'name', x.properties.get('name', None)),
+                    generating_unit=generating_unit)
+                 for k, v in x.properties.items()},
                 **kwargs)
+            kwargs['wrapped_unit'] = x
             return cls.code_units()[x.unit_type](**kwargs)
         return x
 
@@ -493,6 +558,32 @@ class CodeUnit(metaclass=CodeUnitMeta):
         # print(f"FORMAT:\n{out}")
         return out
 
+    def copy_members(self, solf, member_units=None):
+        for x in solf.properties['members']:
+            if member_units is None or x.unit_type in member_units:
+                self.add_member(x)
+
+    def add_member(self, x):
+        y = copy.deepcopy(x)
+        y.properties['parent'] = self.properties['name']
+        assert y.properties['parent'] != x.properties['parent']
+        self.properties['members'].append(y)
+
+    def find_member(self, value, key='name'):
+        for x in self.properties.get('members', []):
+            if x.properties.get(key, None) == value:
+                return x
+        raise KeyError(f"Could not find member with {key} matching {value}")
+
+    def __getitem__(self, k):
+        return self.find_member(k)
+
+    def set_property(self, k, v):
+        self.properties[k] = v
+        if k == 'name':
+            for x in self.properties.get('members', []):
+                x.set_property('parent', v)
+
     def test_parse_format(self):
         lines = self.format()
         context_properties = []
@@ -583,6 +674,13 @@ class FileUnit(CodeUnit):
         '{members}\n'
     )
 
+    def __init__(self, *args, **kwargs):
+        super(FileUnit, self).__init__(*args, **kwargs)
+        if self.wrapped_unit:
+            assert (self.properties['name']
+                    != self.wrapped_unit.properties['name'])
+        register_file_unit(self)
+
     @classmethod
     def parse(cls, x, pos=None, endpos=None, return_match=False,
               member_units=None, check_format=False, **kwargs):
@@ -593,12 +691,3 @@ class FileUnit(CodeUnit):
         if match:
             return cls.from_match(match, member_units=member_units,
                                   check_format=check_format)
-
-    @classmethod
-    def parse_file(cls, name, contents=None, **kwargs):
-        if not os.path.splitext(name)[-1] in cls.ext:
-            cls = get_file_unit(name)
-        if contents is None:
-            with open(name, 'r') as fd:
-                contents = fd.read()
-        return cls.parse(contents, name=name, **kwargs)

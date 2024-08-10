@@ -5,6 +5,7 @@ from generate_generic.base import (
 
 
 # PYTHONPATH=utils python -m generate_generic.runner --language=julia
+#   --verbose --debug
 # python utils/generate_generic.py --language=julia
 # TODO:
 # - Make template a unit

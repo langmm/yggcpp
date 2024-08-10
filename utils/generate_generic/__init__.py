@@ -11,7 +11,7 @@ import pprint
 import itertools
 from collections import OrderedDict
 from generate_generic.base import (
-    _base_dir, get_file_unit, camel2underscored)
+    _base_dir, get_file_unit_class, get_file_unit, camel2underscored)
 
 
 class GeneratedFile(object):
@@ -25,7 +25,8 @@ class GeneratedFile(object):
     def __init__(self, src, added=None, prefix_lines=None,
                  suffix_lines=None, language=None):
         self.src = os.path.join(_base_dir, src)
-        self.file_unit = get_file_unit(src, language=language)
+        self.file_unit = get_file_unit_class(src, language=language)
+        self.language = self.file_unit.language
         self.added = added
         if self.added is None:
             self.added = {}
@@ -93,21 +94,21 @@ class GeneratedFile(object):
         unit = self.parse()
         if isinstance(x, str):
             x = GeneratedFile(x, language=language)
-        x.wrap_file(unit)
+        x.wrap_unit(unit)
         x.generate(**kwargs)
 
-    def wrap_file(self, src, **kwargs):
-        if isinstance(src, str):
-            src = self.file_unit.parse_file(src, **kwargs)
-        unit = self.file_unit.from_unit(src)
-        self.lines += unit.format().splitlines()
+    def wrap_unit(self, x, language=None, **kwargs):
+        if isinstance(x, str):
+            x = get_file_unit(x, language=language)
+        wrapped = self.file_unit.from_unit(x, language=language,
+                                           name=self.src, **kwargs)
+        self.lines += wrapped.format().splitlines()
         for k, v in self.added.items():
-            v.wrap_file(unit)
+            v.wrap_unit(x, generating_unit=wrapped, **kwargs)
 
     def parse(self, **kwargs):
-        kwargs.setdefault('name', self.src)
         kwargs.setdefault('contents', self.prev_contents)
-        return self.file_unit.parse_file(**kwargs)
+        return get_file_unit(self.src, **kwargs)
 
     def test_parse_wrap(self, **kwargs):
         xmed = self.parse(check_format=True, **kwargs)
@@ -139,7 +140,7 @@ class AmendedFile(GeneratedFile):
 
     def __init__(self, language, *args, **kwargs):
         self.init_param()
-        self.language = language
+        kwargs['language'] = language
         super(AmendedFile, self).__init__(*args, **kwargs)
 
     def init_param(self):
