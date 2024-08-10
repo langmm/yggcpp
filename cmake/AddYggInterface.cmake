@@ -219,20 +219,36 @@ endfunction()
 
 function(set_ygg_test_paths TEST_NAME)
   include(TestTools)
+  set(oneValueArgs OUTPUT_PROPERTIES)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  if(ARGS_OUTPUT_PROPERTIES)
+    list(APPEND ARGS_UNPARSED_ARGUMENTS OUTPUT_PROPERTIES ${ARGS_OUTPUT_PROPERTIES})
+  endif()
   set_tests_runtime_paths(
     ${TEST_NAME}
-    ${ARGN}
+    ${ARGS_UNPARSED_ARGUMENTS}
     PREPEND
     PATHS ${YGG_TEST_PATHS}
   )
+  if(ARGS_OUTPUT_PROPERTIES)
+    set(${ARGS_OUTPUT_PROPERTIES} ${${ARGS_OUTPUT_PROPERTIES}} PARENT_SCOPE)
+  endif()
 endfunction()
 
 
 function(set_ygg_test_env TEST_NAME)
   include(TestTools)
+  set(oneValueArgs OUTPUT_PROPERTIES)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  if(ARGS_OUTPUT_PROPERTIES)
+    list(APPEND ARGS_UNPARSED_ARGUMENTS OUTPUT_PROPERTIES ${ARGS_OUTPUT_PROPERTIES})
+  endif()
   set_ygg_test_paths(
     ${TEST_NAME}
-    ${ARGN}
+    ${ARGS_UNPARSED_ARGUMENTS}
     ADDITIONAL_ENV_VARIABLES ${YGG_TEST_ENV}
   )
+  if(ARGS_OUTPUT_PROPERTIES)
+    set(${ARGS_OUTPUT_PROPERTIES} ${${ARGS_OUTPUT_PROPERTIES}} PARENT_SCOPE)
+  endif()
 endfunction()
