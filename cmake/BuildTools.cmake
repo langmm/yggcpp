@@ -104,6 +104,9 @@ function(update_env_path)
     get_pathsep(ARGS_PATH_SEP)
   endif()
   list(JOIN ARGS_PATHS "${ARGS_PATH_SEP}" NEW_PATHS)
+  if(WIN32)
+    string(REPLACE "/" "\\" NEW_PATHS "${NEW_PATHS}")
+  endif()
   if(NOT DEFINED ENV{${ARGS_PATH_VARIABLE}})
     set(UPDATED_PATHS "${NEW_PATHS}")
   elseif(ARGS_PREPEND)
@@ -188,6 +191,7 @@ function(configure_env_injection)
     list(APPEND ARGS_VARIABLES ${ARGS_UNPARSED_ARGUMENTS})
   endif()
   set(ENV_VARS ${ARGS_VARIABLES})
+  string(REPLACE "\\" "\\\\" ENV_VARS "${ENV_VARS}")
   configure_file(
     ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/CTestEnvInject.cmake.in
     ${ARGS_OUTPUT_FILE}
