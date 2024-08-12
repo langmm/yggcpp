@@ -1,8 +1,38 @@
+function(install_language_dependency NAME LANGUAGE)
+  if(LANGUAGE STREQUAL "Julia")
+    find_yggdrasil_dependency(Julia)
+    if(NOT Julia_FOUND)
+      message(STATUS "Julia could not be found so dependencies cannot be installed")
+      return()
+    endif()
+    execute_process(
+      COMMAND ${Julia_EXECUTABLE} -e "using Pkg; Pkg.add(\"${NAME}\")"
+      COMMAND_ERROR_IS_FATAL ANY
+    )
+    if(NAME STREQUAL CxxWrap)
+      execute_process(
+        COMMAND ${Julia_EXECUTABLE} -e "using CxxWrap; print(CxxWrap.prefix_path())"
+	COMMAND_ERROR_IS_FATAL ANY
+	OUTPUT_VARIABLE CxxWrap_PREFIX
+      )
+      string(STRIP ${CxxWrap_PREFIX} CxxWrap_PREFIX)
+      list(APPEND CMAKE_PREFIX_PATH ${CxxWrap_PREFIX})
+      set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} PARENT_SCOPE)
+    endif()
+  else()
+    message(FATAL_ERROR "Installation of ${LANGUAGE} dependencies not support (trying to install ${NAME}")
+  endif()
+endfunction()
+
 function(find_yggdrasil_dependency NAME)
   include(SearchTools)
   set(options USING_PKGCONFIG FOR_PACKAGE_CONFIG VERBOSE)
+  set(oneValueArgs LANGUAGE LANGUAGE_DEPENDENCY)
   set(multiValueArgs ADDITIONAL_PROPERTIES)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  if(NOT ARGS_LANGUAGE_DEPENDENCY)
+    set(ARGS_LANGUAGE_DEPENDENCY ${NAME})
+  endif()
   if(NAME STREQUAL "rabbitmq-c")
     set(ARGS_USING_PKGCONFIG ON)
     list(APPEND ARGS_UNPARSED_ARGUMENTS HEADER amqp.h LIBNAMES rabbitmq)
@@ -26,6 +56,24 @@ function(find_yggdrasil_dependency NAME)
   else()
     find_package(${NAME} ${ARGS_UNPARSED_ARGUMENTS})
   endif()
+  if(ARGS_LANGUAGE AND NOT ${name}_FOUND)
+    install_language_dependency(
+      ${ARGS_LANGUAGE_DEPENDENCY} ${ARGS_LANGUAGE}
+    )
+    if(ARGS_USING_PKGCONFIG)
+      list(APPEND RECURSE_TOKENS USING_PKGCONFIG)
+    endif()
+    if(ARGS_FOR_PACKAGE_CONFIG)
+      list(APPEND RECURSE_TOKENS FOR_PACKAGE_CONFIG)
+    endif()
+    if(ARGS_ADDITIONAL_PROPERTIES)
+      list(APPEND RECURSE_TOKENS ADDITIONAL_PROPERTIES ${ARGS_ADDITIONAL_PROPERTIES})
+    endif()
+    find_yggdrasil_dependency(
+      ${NAME} ${RECURSE_TOKENS}
+      ${ARGS_UNPARSED_ARGUMENTS}
+    )
+  endif()
   propagate_cmake_library_variables("^${NAME}*" ${ARGS_ADDITIONAL_PROPERTIES})
   if(ARGS_VERBOSE)
     dump_cmake_variables(REGEX "${NAME}*" VERBOSE)
@@ -35,7 +83,8 @@ endfunction()
 function(add_yggdrasil_interface LANGUAGE)
   include(SearchTools)
   set(options DISABLE_BY_DEFAULT)
-  set(oneValueArgs DIRECTORY)
+  set(oneValueArgs DIRECTORY DEPENDENCY LANGUAGE_DEPENDENCY)
+  set(multiValueArgs DEPENDENCY_PROPERTIES)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
   set(DEFAULT_ENABLED ON)
   if (NOT ARGS_DIRECTORY)
@@ -68,6 +117,17 @@ function(add_yggdrasil_interface LANGUAGE)
     set(BUILD_C_LIBRARY ${BUILD_${LANGUAGE}_LIBRARY} PARENT_SCOPE)
   endif()
   list(APPEND YGG_LANGUAGES_SUPPORTED ${LANGUAGE})
+  if(ARGS_DEPENDENCY AND BUILD_${LANGUAGE}_LIBRARY)
+    find_yggdrasil_dependency(
+      ${ARGS_DEPENDENCY} LANGUAGE ${LANGUAGE}
+      ADDITIONAL_PROPERTIES ${ARGS_DEPENDENCY_PROPERTIES}
+      LANGUAGE_DEPENDENCY ${ARGS_LANGUAGE_DEPENDENCY}
+    )
+    if(NOT ${ARGS_DEPENDENCY}_FOUND)
+      message(STATUS "${LANGUAGE} dependency ${ARGS_DEPENDENCY} not found, ${LANGUAGE} interface will not be built")
+      set(BUILD_${LANGUAGE}_LIBRARY OFF)
+    endif()
+  endif()
   if(BUILD_${LANGUAGE}_LIBRARY)
     add_subdirectory(${ARGS_DIRECTORY})
     list(APPEND YGG_LANGUAGES_AVAILABLE ${LANGUAGE})
@@ -84,7 +144,7 @@ function(add_yggdrasil_interface LANGUAGE)
     YGG_BUILD_TESTS YGG_BUILD_THIRDPARTY_GTEST
   )
   if (YGG_Fortran_MOD_DIR)
-    set(YGG_Fortran_MOD_DIR ${YGG_Fortran_MOD_DIR} PARENT_SCOPE)
+    set(YGG_Fortran_MOD_DIR "${YGG_Fortran_MOD_DIR}" PARENT_SCOPE)
   endif()
 endfunction()
 
@@ -231,7 +291,7 @@ function(set_ygg_test_paths TEST_NAME)
     PATHS ${YGG_TEST_PATHS}
   )
   if(ARGS_OUTPUT_PROPERTIES)
-    set(${ARGS_OUTPUT_PROPERTIES} ${${ARGS_OUTPUT_PROPERTIES}} PARENT_SCOPE)
+    set(${ARGS_OUTPUT_PROPERTIES} "${${ARGS_OUTPUT_PROPERTIES}}" PARENT_SCOPE)
   endif()
 endfunction()
 
@@ -249,6 +309,6 @@ function(set_ygg_test_env TEST_NAME)
     ADDITIONAL_ENV_VARIABLES ${YGG_TEST_ENV}
   )
   if(ARGS_OUTPUT_PROPERTIES)
-    set(${ARGS_OUTPUT_PROPERTIES} ${${ARGS_OUTPUT_PROPERTIES}} PARENT_SCOPE)
+    set(${ARGS_OUTPUT_PROPERTIES} "${${ARGS_OUTPUT_PROPERTIES}}" PARENT_SCOPE)
   endif()
 endfunction()

@@ -263,7 +263,7 @@ if [ -n "$DO_C" ] || [ -n "$DO_CXX" ] || [ -n "$DO_Fortran" ] || [ -n "$DO_Pytho
 	CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DBUILD_Python_LIBRARY=OFF"
     fi
     if [ -n "$DO_Julia" ]; then
-	CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DBUILD_Julia_LIBRARY=ON"
+	CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DBUILD_Julia_LIBRARY=ON -DYGG_Julia_REQUIRED=ON"
 	if [[ "$TEST_TYPE" == "unit" ]] || [[ "$TEST_TYPE" == "julia" ]]; then
 	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYGG_BUILD_Julia_TESTS=ON"
 	fi

@@ -130,13 +130,16 @@ def get_file_unit(name, language=None, contents=None,
                   dont_generate=False, **kwargs):
     global _file_unit_registry
     if os.path.isabs(name):
+        fullname = name
         name = os.path.relpath(name, _base_dir)
+    else:
+        fullname = os.path.join(_base_dir, name)
     if name in _file_unit_registry:
         return copy.deepcopy(_file_unit_registry[name])
     if not dont_generate:
         cls = get_file_unit_class(name, language=language)
         if contents is None:
-            with open(name, 'r') as fd:
+            with open(fullname, 'r') as fd:
                 contents = fd.read()
         out = cls.parse(contents, name=name, **kwargs)
         return out
@@ -367,8 +370,12 @@ class CodeUnit(metaclass=CodeUnitMeta):
                     return ''
             elif mod == 'RELPATHC':
                 # TODO: Set this more generically?
+                # raise Exception("HERE", data[k])
+                value = data[k]
+                if not os.path.isabs(value):
+                    value = os.path.join(_base_dir, value)
                 return os.path.relpath(
-                    data[k],
+                    value,
                     start=os.path.join(_base_dir, 'cpp', 'include'))
             elif mod == 'LIBFILE':
                 base = os.path.splitext(

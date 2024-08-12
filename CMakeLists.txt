@@ -21,10 +21,9 @@ endif()
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(ygg_options)
 include(AddYggInterface)
+include(BuildTools)
 
 option(YGG_Python_LIBRARY_WRAP "Build the Yggdrasil Python interface library by wrapping the C++ module" ON)
-option(YGG_Fortran_REQUIRED "Raise an error if the Fortran interface library cannot be build" OFF)
-option(YGG_Julia_REQUIRED "Raise an error if the Julia interface library cannot be build" OFF)
 option(ALLOW_SKBUILD_NONPython "Allow the non-Python interfaces (C/C++/Fortran) to be built from SKBUILD" OFF)
 set(DEFAULT_COMM "ZMQ" CACHE STRING "Default communicator")
 option(YGG_BUILD_TESTS "Build tests" OFF)
@@ -364,7 +363,7 @@ message(STATUS "DEPS_LIBRARY_DIRS = ${DEPS_LIBRARY_DIRS}")
 #     set(BUILD_CXX_LIBRARY ON)
 #   endif()
 # endif()
-if(BUILD_Fortran_LIBRARY)
+if(BUILD_Fortran_LIBRARY OR BUILD_Julia_LIBRARY)
   set(BUILD_CXX_LIBRARY ON)
 endif()
 if(YGG_LINK_Python_TO_CXX AND (BUILD_Python_LIBRARY OR SKBUILD))
@@ -412,26 +411,24 @@ endfunction()
 # Regenerate enum files #
 #########################
 
-if (${Python_PREFIX}_EXECUTABLE)
-  if (YGG_Fortran_WRAP_C_ENUMS)
-    list(APPEND GENERATE_ENUM_ARGS --fortran-wrap-c-enums)
-  endif()
-  execute_process(
-    COMMAND ${${Python_PREFIX}_EXECUTABLE} utils/generate_enum.py ${GENERATE_ENUM_ARGS}
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    COMMAND_ERROR_IS_FATAL ANY)
+if (YGG_Fortran_WRAP_C_ENUMS)
+  list(APPEND GENERATE_ENUM_ARGS --fortran-wrap-c-enums)
 endif()
+python_code_generation(
+  utils/generate_enum.py
+  ARGUMENTS ${GENERATE_ENUM_ARGS}
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
 
 ################################################
 # Generate data types interface in C & Fortran #
 ################################################
 
-if (${Python_PREFIX}_EXECUTABLE)
-  execute_process(
-    COMMAND ${${Python_PREFIX}_EXECUTABLE} -m generate_generic.runner ${GENERATE_DATATYPES_ARGS}
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/utils
-    COMMAND_ERROR_IS_FATAL ANY)
-endif()
+python_code_generation(
+  generate_generic.runner IS_MODULE
+  ARGUMENTS ${GENERATE_DATATYPES_ARGS}
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/utils
+)
 
 ######################
 # Create C++ Library #
@@ -462,7 +459,10 @@ add_yggdrasil_interface(Fortran)
 # Create Julia Library #
 ########################
 
-add_yggdrasil_interface(Julia DISABLE_BY_DEFAULT)
+add_yggdrasil_interface(
+  Julia DISABLE_BY_DEFAULT DEPENDENCY JlCxx
+  LANGUAGE_DEPENDENCY CxxWrap
+)
 
 ##################
 # Install        #

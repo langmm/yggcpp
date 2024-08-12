@@ -54,7 +54,8 @@ set_ygg_test_env(
   unittest OUTPUT_PROPERTIES unittest_properties
   FOR_GTEST_DISCOVER_TESTS
 )
-message(STATUS "unittest_properties = ${unittest_properties}")
+list(LENGTH unittest_properties unittest_properties_LEN)
+message(STATUS "unittest_properties = ${unittest_properties}, LEN=${unittest_properties_LEN}")
 gtest_discover_tests(unittest DISCOVERY_MODE PRE_TEST
                      WORKING_DIRECTORY ${PARENT_BINARY_DIR}
                      TEST_LIST ygg_test_list

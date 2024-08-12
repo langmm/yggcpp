@@ -71,6 +71,9 @@ function (add_fortran_test_executable TARGET)
       ${TEST_FILES} PROPERTIES TIMEOUT ${TEST_TIMEOUT}
     )
     set_ygg_test_env(${TEST_FILES})
+    # set_ygg_test_env(${TEST_FILES} OUTPUT_PROPERTIES ftest_properties)
+    # list(LENGTH ftest_properties ftest_properties_LEN)
+    # message(FATAL_ERROR "ftest_properties = ${ftest_properties}, LEN=${ftest_properties_LEN}")
 
     include(CheckDLL)
     show_runtimes(${TARGET})
