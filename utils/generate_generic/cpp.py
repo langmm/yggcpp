@@ -299,7 +299,7 @@ class CXXClassUnit(ClassUnit):
 
 class CXXModuleUnit(ModuleUnit):
 
-    member_units = ['class', 'function']  # , 'var']
+    member_units = ['module', 'class', 'function']  # , 'var']
     member_context = ('{', '}')
     _regex = (
         r'^(?P<indent>\s*)namespace\s+(?P<name>\w+)\s+\{'
@@ -317,3 +317,4 @@ class CXXFileUnit(CFileUnit):
     language = 'cxx'
     ext = ['.hpp', '.cpp']
     member_units = ['macro', 'module', 'class', 'function']  # , 'var']
+    modsep = '::'

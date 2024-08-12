@@ -388,9 +388,10 @@ public:
     std::swap(mrefs, rhs.mrefs);
     return *this;
   }
+  ~WValue();
   WValue* parent_;
-  std::vector<WValue> vrefs;
-  std::vector<WMember> mrefs;
+  std::vector<WValue*> vrefs;
+  std::vector<WMember*> mrefs;
   
  public:
   bool operator==(const WValue& rhs) const;

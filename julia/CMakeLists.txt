@@ -9,6 +9,7 @@ set(SOURCES_Julia YggInterface_julia.cpp)
 python_code_generation(
   generate_generic.runner IS_MODULE
   ARGUMENTS --language=julia
+  OUTPUTS julia/YggInterface_julia.cpp julia/YggInterface.jl
   WORKING_DIRECTORY ../utils
 )
 

@@ -25,7 +25,7 @@ class JuliaCXXWrapVariableUnit(JuliaCXXWrapMixin, CXXVariableUnit):
 class JuliaCXXWrapFunctionUnit(JuliaCXXWrapMixin, FunctionUnit):
 
     _fstring_cond = (
-        'types.method("{name}", &{name});'
+        'mod.method("{name}", &{name});'
     )
 
 
@@ -47,7 +47,7 @@ class JuliaCXXWrapConstructorUnit(JuliaCXXWrapMixin, ConstructorUnit):
 class JuliaCXXWrapClassUnit(JuliaCXXWrapMixin, ClassUnit):
 
     _fstring_cond = (
-        'types.add_type<{name}>("{name}")\n'
+        'mod.add_type<{name}>("{name}")\n'
         '{members};'
     )
 
@@ -58,7 +58,7 @@ class JuliaCXXWrapModuleUnit(JuliaCXXWrapMixin, ModuleUnit):
     _fstring_cond = (
         '{indent}JLCXX_MODULE define_{name}_module(jlcxx::Module& mod)\n'
         '{\n'
-        'using namespace {name};\n'
+        'using namespace {SKIPFIRST:WR:unitpath}::{WR:name};\n'
         '{members}\n'
         '}'
     )

@@ -198,6 +198,7 @@ class CodeUnitMeta(type):
             if cls.unit_type == 'file':
                 register_code_unit('indent', cls.indent, languages)
                 register_code_unit('comment', cls.comment, languages)
+                register_code_unit('modsep', cls.modsep, languages)
                 register_code_unit('libext', _library_ext, languages)
                 register_code_unit('libprefix', _library_prefix, languages)
             register_code_unit(cls.unit_type, cls, languages)
@@ -216,11 +217,12 @@ class CodeUnit(metaclass=CodeUnitMeta):
     _fstring = None
     _fstring_cond = None
     _properties = ['name']
-    _properties_optional = ['docs', 'type']
+    _properties_optional = ['docs', 'type', 'parent', 'unitpath']
     _properties_defaults = {
         'indent': 0,
         'libext': _library_ext,
         'libprefix': _library_prefix,
+        'unitpath': [],
     }
     _properties_dont_compare = ['body']
     member_units = []
@@ -358,36 +360,41 @@ class CodeUnit(metaclass=CodeUnitMeta):
                 if self.wrapped_unit:
                     data = self.wrapped_unit.properties
             elif ds == "GN":
-                print("HERE", self, match, self.generating_unit)
                 if self.generating_unit:
                     data = self.generating_unit.properties
-                    pprint.pprint(data)
             elif ds:
                 raise NotImplementedError(
                     f"Unsupported fstring ds \'{ds}\' in {match.string}")
             if mod == 'C':
-                if not data.get(k, ''):
-                    return ''
+                data_out = data.get(k, '')
+            else:
+                data_out = data[k]
+            if mod == 'C':
+                pass
             elif mod == 'RELPATHC':
                 # TODO: Set this more generically?
                 # raise Exception("HERE", data[k])
-                value = data[k]
+                value = data_out
                 if not os.path.isabs(value):
                     value = os.path.join(_base_dir, value)
-                return os.path.relpath(
+                data_out = os.path.relpath(
                     value,
                     start=os.path.join(_base_dir, 'cpp', 'include'))
             elif mod == 'LIBFILE':
                 base = os.path.splitext(
-                    os.path.basename(data[k]))[0]
-                return f"{_library_prefix}{base}{_library_ext}"
+                    os.path.basename(data_out))[0]
+                data_out = f"{_library_prefix}{base}{_library_ext}"
             elif mod == 'BASEFILE':
-                return os.path.basename(data[k])
+                data_out = os.path.basename(data_out)
+            elif mod == 'SKIPFIRST':
+                data_out = data_out[1:]
             elif mod:
                 raise NotImplementedError(
                     f"Unsupported fstring mod \'{mod}\' in "
                     f"{match.string}")
-            return data[k]
+            if k == 'unitpath':
+                data_out = self.code_units()['modsep'].join(data_out)
+            return data_out
 
         out = re.sub(
             r'\{(?:(?P<mod>\w+)\:)?(?:(?P<ds>\w+)\:)?(?P<group>\w+)\}',
@@ -438,6 +445,11 @@ class CodeUnit(metaclass=CodeUnitMeta):
                     v, property_name=k,
                     parent=kwargs.get(
                         'name', x.properties.get('name', None)),
+                    unitpath=kwargs.get(
+                        'unitpath', []) + [
+                            kwargs.get(
+                                'name',
+                                x.properties.get('name', None))],
                     generating_unit=generating_unit)
                  for k, v in x.properties.items()},
                 **kwargs)
@@ -511,6 +523,9 @@ class CodeUnit(metaclass=CodeUnitMeta):
                 'parent', match.groupdict()['name'])
             kwargs['member_kwargs'].setdefault(
                 'check_format', check_format)
+            unitpath = copy.deepcopy(kwargs.get('unitpath', []))
+            unitpath.append(kwargs['member_kwargs']['parent'])
+            kwargs['member_kwargs'].setdefault('unitpath', unitpath)
         kwargs.setdefault('match_start', match.start())
         kwargs.setdefault('match_end', match.end())
         if ((cls.member_context and 'body' not in kwargs
@@ -554,6 +569,8 @@ class CodeUnit(metaclass=CodeUnitMeta):
             sep = '\n'
             if k == 'args':
                 sep = ', '
+            elif k == 'unitpath':
+                sep = cls.code_units()['modsep']
             vals = [cls.format_property(k, xx) for xx in x]
             return sep.join([xx for xx in vals if xx])
         return x
@@ -565,14 +582,18 @@ class CodeUnit(metaclass=CodeUnitMeta):
         # print(f"FORMAT:\n{out}")
         return out
 
-    def copy_members(self, solf, member_units=None):
+    def copy_members(self, solf, member_units=None, **kwargs):
         for x in solf.properties['members']:
             if member_units is None or x.unit_type in member_units:
-                self.add_member(x)
+                self.add_member(x, **kwargs)
 
-    def add_member(self, x):
+    def add_member(self, x, dont_update_unitpath=False):
         y = copy.deepcopy(x)
         y.properties['parent'] = self.properties['name']
+        if not dont_update_unitpath:
+            y.properties['unitpath'] = copy.deepcopy(
+                self.properties['unitpath'])
+            y.properties['unitpath'].append(y.properties['parent'])
         assert y.properties['parent'] != x.properties['parent']
         self.properties['members'].append(y)
 
@@ -590,6 +611,10 @@ class CodeUnit(metaclass=CodeUnitMeta):
         if k == 'name':
             for x in self.properties.get('members', []):
                 x.set_property('parent', v)
+        elif k == 'unitpath':
+            prev = self.properties['unitpath'] + [self.properties['name']]
+            for x in self.properties.get('members', []):
+                x.set_property('unitpath', copy.deepcopy(prev))
 
     def test_parse_format(self):
         lines = self.format()
@@ -654,7 +679,7 @@ class ClassUnit(CodeUnit):
     unit_type = 'class'
     member_units = ['method']
     _properties = [
-        'name', 'members', 'parent',
+        'name', 'members',
     ]
 
 
@@ -663,7 +688,7 @@ class ModuleUnit(CodeUnit):
     unit_type = 'module'
     member_units = ['module', 'class', 'function']  # , 'var']
     _properties = [
-        'name', 'members', 'parent',
+        'name', 'members',
     ]
 
 
@@ -677,6 +702,7 @@ class FileUnit(CodeUnit):
     ext = []
     comment = ''
     indent = ''
+    modsep = '.'
     _fstring_cond = (
         '{members}\n'
     )

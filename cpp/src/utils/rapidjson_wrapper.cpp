@@ -306,6 +306,21 @@ WStringRefType::operator const Ch *() const {
 
 WRAPPER_CLASS(Value);
 
+WValue::~WValue() {
+  for (size_t i = 0; i < vrefs.size(); i++) {
+    if (vrefs[i]) {
+      delete vrefs[i];
+      vrefs[i] = nullptr;
+    }
+  }
+  for (size_t i = 0; i < mrefs.size(); i++) {
+    if (mrefs[i]) {
+      delete mrefs[i];
+      mrefs[i] = nullptr;
+    }
+  }
+}
+
 bool WValue::operator==(const WValue& rhs) const {
   return ((*val_) == (*rhs.val_));
 }
@@ -316,22 +331,22 @@ bool WValue::operator!=(const WValue& rhs) const {
 WValue& WValue::childRef(RJ_WNS::Value* x) {
   if (parent_)
     return parent_->childRef(x);
-  for (std::vector<WValue>::iterator it = vrefs.begin(); it != vrefs.end(); it++) {
-    if (x == it->val_)
-      return (*it);
+  for (std::vector<WValue*>::iterator it = vrefs.begin(); it != vrefs.end(); it++) {
+    if (x == (*it)->val_)
+      return (**it);
   }
-  vrefs.emplace_back(x); //, this);
-  return vrefs[vrefs.size() - 1];
+  vrefs.emplace_back(new WValue(x)); //, this);
+  return *vrefs[vrefs.size() - 1];
 }
 WMember& WValue::childRef(MEMBER* x) {
   if (parent_)
     return parent_->childRef(x);
-  for (std::vector<WMember>::iterator it = mrefs.begin(); it != mrefs.end(); it++) {
-    if (x == it->val_)
-      return (*it);
+  for (std::vector<WMember*>::iterator it = mrefs.begin(); it != mrefs.end(); it++) {
+    if (x == (*it)->val_)
+      return (**it);
   }
-  mrefs.emplace_back(x); //, this);
-  return mrefs[mrefs.size() - 1];
+  mrefs.emplace_back(new WMember(x)); //, this);
+  return *mrefs[mrefs.size() - 1];
 }
 WValue* WValue::_getPtr() {
   return this;

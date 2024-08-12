@@ -27,7 +27,7 @@ if __name__ == "__main__":
     parser.add_argument("--verbose", action="store_true",
                         help="Display information during parsing/generation")
     args = parser.parse_args()
-    if args.language:
+    if args.language == 'julia':
         x = JuliaInterface()
         x.generate(debug=args.debug, verbose=args.verbose)
     else:
