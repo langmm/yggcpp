@@ -50,6 +50,7 @@ function(set_tests_environment TEST_NAME)
   # being available during test discovery on windows
   # https://gitlab.kitware.com/cmake/cmake/-/issues/21453
   if(WIN32 AND NOT MSVC)
+    string(REPLACE "\\" "\\\\" ARGS_VARIABLES "${ARGS_VARIABLES}")
     configure_env_injection(
       DIRECTORY ${ARGS_DIRECTORY}
       VARIABLES ${ARGS_VARIABLES}
