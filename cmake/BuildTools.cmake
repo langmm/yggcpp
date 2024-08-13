@@ -213,12 +213,15 @@ function(configure_env_injection)
   if (ARGS_UNPARSED_ARGUMENTS)
     list(APPEND ARGS_VARIABLES ${ARGS_UNPARSED_ARGUMENTS})
   endif()
-  set(ENV_VARS ${ARGS_VARIABLES})
-  string(REPLACE "\\" "\\\\" ENV_VARS "${ENV_VARS}")
+  set(ENV_VARS "${ARGS_VARIABLES}")
+  string(REPLACE "\\" "\\\\" ENV_VARS "${ARGS_VARIABLES}")
+  message(STATUS "configure_env_injection ENV_VARS = ${ENV_VARS}")
   configure_file(
     ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/CTestEnvInject.cmake.in
     ${ARGS_OUTPUT_FILE}
     @ONLY)
+  file(READ ${ARGS_OUTPUT_FILE} CONTENTS)
+  message(STATUS "CONTENTS = ${CONTENTS}")
   if (ARGS_DIRECTORY)
     set_property(
       DIRECTORY ${ARGS_DIRECTORY} APPEND PROPERTY
