@@ -97,11 +97,15 @@ class GeneratedFile(object):
         x.wrap_unit(unit)
         x.generate(**kwargs)
 
-    def wrap_unit(self, x, language=None, **kwargs):
+    def from_unit(self, x, language=None, **kwargs):
         if isinstance(x, str):
             x = get_file_unit(x, language=language)
         wrapped = self.file_unit.from_unit(x, language=language,
                                            name=self.src, **kwargs)
+        return wrapped
+
+    def wrap_unit(self, x, **kwargs):
+        wrapped = self.from_unit(x, **kwargs)
         self.lines += wrapped.format().splitlines()
         for k, v in self.added.items():
             v.wrap_unit(x, generating_unit=wrapped, **kwargs)

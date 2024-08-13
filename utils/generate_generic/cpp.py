@@ -1,3 +1,4 @@
+import re
 from generate_generic.base import (
     close_context, CodeUnit, TypeUnit, DocsUnit, VariableUnit,
     FunctionUnit, ClassUnit, MethodUnit, ConstructorUnit, DestructorUnit,
@@ -10,9 +11,7 @@ from generate_generic.base import (
 # TODO:
 # - Make template a unit
 # - Handle separation of C/CXX header/source
-# - Decorate C++ methods defined in header with YGG_API_DEF
-# - Fix indentation so it is based on the number of parents for
-#   generation
+# - Wrap enums
 
 
 class CApiUnit(CodeUnit):
@@ -185,10 +184,10 @@ class CXXVariableUnit(VariableUnit):
     _properties_optional = ['shape', 'rhs']
 
     @classmethod
-    def format_property(cls, k, x):
+    def format_property(cls, k, x, **kwargs):
         if k == 'rhs':
             return f'={x}'
-        return super(CXXVariableUnit, cls).format_property(k, x)
+        return super(CXXVariableUnit, cls).format_property(k, x, **kwargs)
 
 
 class CXXMethodUnit(MethodUnit):
@@ -213,13 +212,13 @@ class CXXMethodUnit(MethodUnit):
     _properties = ['name', 'type', 'args', 'parent']
     _properties_optional = [
         'docs', 'api', 'virtual', 'const', 'override', 'va_args',
-        'body', 'Tparam',
+        'body', 'Tparam', 'access', 'overloaded',
     ]
     member_context = ('{', '}')
 
     @property
     def address(self):
-        return (f"{super(CXXMethodUnit, self).address}["
+        return (f"{self.address_noargs}["
                 f"{self.format_property('args', self.properties['args'])}]")
 
     @classmethod
@@ -230,10 +229,10 @@ class CXXMethodUnit(MethodUnit):
         return out
 
     @classmethod
-    def format_property(cls, k, x):
+    def format_property(cls, k, x, **kwargs):
         if k == 'Tparam':
             return f'template<{x}>\n'
-        out = super(CXXMethodUnit, cls).format_property(k, x)
+        out = super(CXXMethodUnit, cls).format_property(k, x, **kwargs)
         return out
 
 
@@ -256,7 +255,8 @@ class CXXConstructorUnit(ConstructorUnit):
     )
     _properties = ['parent', 'args']
     _properties_optional = [
-        'docs', 'api', 'virtual', 'va_args', 'body'
+        'docs', 'api', 'virtual', 'va_args', 'body', 'access',
+        'overloaded',
     ]
 
 
@@ -275,7 +275,7 @@ class CXXDestructorUnit(DestructorUnit):
     )
     _properties = ['parent']
     _properties_optional = [
-        'docs', 'api', 'virtual', 'body'
+        'docs', 'api', 'virtual', 'body', 'access',
     ]
 
 
@@ -285,8 +285,10 @@ class CXXClassUnit(ClassUnit):
     member_context = ('{', '}')
     _regex = (
         r'^(?P<indent>\s*)class\s+(?P<name>\w+)'
-        r'(?P<base>\s*\:\s+(?P<base_scope>(?:public)|(?:private))\s+'
-        r'(?P<base_name>[\:\w]+))?'
+        r'(?P<base>\s*\:\s*(?P<base_scope>(?:public)|(?:private))\s+'
+        r'(?P<base_name>[\:\w]+)'
+        r'(?P<base_template>\s*\<\s*[^\{]+\s*\>)?'
+        r')?'
         r'\s*\{'
     )
     _fstring_cond = (
@@ -295,6 +297,70 @@ class CXXClassUnit(ClassUnit):
         '};'
     )
     _properties_optional = ['base']
+
+    @classmethod
+    def parse_subunits(cls, x, pos=None, endpos=None, **kwargs):
+        if pos is None:
+            pos = 0
+        if endpos is None:
+            endpos = len(x)
+        kwargs.update(pos=pos, endpos=endpos)
+        full_pos = pos
+        full_endpos = endpos
+        access = None
+        for match in super(CXXClassUnit, cls).parse_subunits(x, **kwargs):
+            access = cls.check_access(match, x, pos, endpos,
+                                      previous_access=access)
+            # if access == 'public':
+            yield match
+            pos = match.match_end
+            assert pos > full_pos
+            assert pos < full_endpos
+            assert match.match_start > full_pos
+            assert match.match_start < full_endpos
+
+    @classmethod
+    def check_access(cls, match, x, pos=None, endpos=None,
+                     previous_access=None):
+        if 'access' in match.properties:
+            return match.properties['access']
+        if not x:
+            match.properties['access'] = 'public'
+            return match.properties['access']
+        if pos is None:
+            pos = 0
+        if endpos is None:
+            endpos = len(x)
+        if previous_access is None:
+            previous_access = 'private'
+        pattern = re.compile(
+            r'^\s*(?P<access>(?:public)|(?:protected)|(?:private))'
+            r'\:\s*$',
+            flags=re.MULTILINE)
+        matches = list([
+            m for m in pattern.finditer(x, pos, match.match_start)])
+        if matches:
+            match.properties['access'] = matches[-1].group('access')
+        else:
+            match.properties['access'] = previous_access
+        return match.properties['access']
+
+    @classmethod
+    def complete_match(cls, match, kwargs, **kws):
+        out = super(CXXClassUnit, cls).complete_match(match, kwargs, **kws)
+        counts = {}
+        for x in kwargs.get('members', []):
+            counts.setdefault(x.address_noargs, 0)
+            counts[x.address_noargs] += 1
+        for x in kwargs.get('members', []):
+            x.properties.setdefault('overloaded',
+                                    counts[x.address_noargs] > 1)
+        kwargs['members'] = [
+            x for x in kwargs.get('members', [])
+            if x.properties['access'] == 'public']
+        for x in kwargs.get('members', []):
+            print(x, x.properties['access'], x.properties['overloaded'])
+        return out
 
 
 class CXXModuleUnit(ModuleUnit):

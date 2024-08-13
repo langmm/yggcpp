@@ -6,24 +6,35 @@ from generate_generic.base import get_file_unit
 
 
 def get_interface_baseunit(verbose=False):
-    fygg = get_file_unit(
-        os.path.join('cpp', 'include', 'YggInterface.hpp'),
+    fwrp = get_file_unit(
+        os.path.join('cpp', 'include', 'communicators', 'WrapComm.hpp'),
         verbose=verbose)
     fcpp = get_file_unit(
         os.path.join('cpp', 'include', 'communicators', 'CommBase.hpp'),
         verbose=verbose)
-    for x in fygg.properties['members']:
-        if x.unit_type == 'class':
-            x.copy_members(
-                fcpp['YggInterface']['communicator']['Comm_t'],
-                member_units=['method'])
-    fcpp['YggInterface']['communicator']['CommBase'].copy_members(
-        fcpp['YggInterface']['communicator']['Comm_t'])
-    fcpp['YggInterface']['communicator'].set_property(
-        'members', [fcpp['YggInterface']['communicator']['CommBase']])
-    pprint.pprint(fcpp['YggInterface']['communicator'].properties)
-    pprint.pprint(fcpp['YggInterface']['communicator']['CommBase'].properties)
-    return fcpp
+    fwrp['YggInterface']['communicator']['WrapComm'].select_members(
+        member_units=['constructor'])
+    fwrp['YggInterface']['communicator']['WrapComm'].copy_members(
+        fcpp['YggInterface']['communicator']['Comm_t'],
+        member_units=['method'])
+    fwrp['YggInterface']['communicator'].set_property(
+        'members', [fwrp['YggInterface']['communicator']['WrapComm']])
+    members = []
+    for x in fwrp['YggInterface']['communicator'][
+            'WrapComm'].properties.get('members'):
+        args = x.format_property('args', x.properties['args'])
+        if (((x.properties.get('name', None) not in ['send', 'recv', 'call']
+              or 'rapidjson::Document' in args)
+             and 'utils::Header' not in args)):
+            members.append(x)
+    fwrp['YggInterface']['communicator']['WrapComm'].set_property(
+        'members', members)
+    fwrp['YggInterface']['communicator']['WrapComm'].remove_members(
+        member_names=['callRealloc', 'recvRealloc',
+                      'vRecv', 'vSend', 'vCall'])
+    pprint.pprint(fwrp['YggInterface']['communicator'].properties)
+    pprint.pprint(fwrp['YggInterface']['communicator']['WrapComm'].properties)
+    return fwrp
 
 
 class Interface(GeneratedFile):
@@ -39,11 +50,6 @@ class Interface(GeneratedFile):
 
 
 class JuliaInterface(Interface):
-
-    # TODO:
-    # - Fix indentation
-    # - Change to wrapped comm
-    # - Change method to using WrapComm?
 
     def __init__(self):
         src_jl = (os.path.join('julia', 'YggInterface.jl'), 'julia')
@@ -63,3 +69,8 @@ class JuliaInterface(Interface):
             'members',
             base['YggInterface'].properties['members'])
         return base
+
+    def from_unit(self, x, **kwargs):
+        out = super(JuliaInterface, self).from_unit(x, **kwargs)
+        out['communicator']['WrapComm'].set_property('name', 'YggComm')
+        return out

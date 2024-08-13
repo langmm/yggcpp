@@ -25,7 +25,7 @@ class JuliaCXXWrapVariableUnit(JuliaCXXWrapMixin, CXXVariableUnit):
 class JuliaCXXWrapFunctionUnit(JuliaCXXWrapMixin, FunctionUnit):
 
     _fstring_cond = (
-        'mod.method("{name}", &{name});'
+        '{indent}}mod.method("{name}", &{WR:name});'
     )
 
 
@@ -33,7 +33,9 @@ class JuliaCXXWrapMethodUnit(JuliaCXXWrapMixin, MethodUnit):
 
     _properties = ['name', 'type', 'args', 'parent']
     _fstring_cond = (
-        '{indent}.method("{name}", &{WR:parent}::{name})'
+        '{indent}.method<{WR:type}, {WR:parent}'
+        '{PREFIX[, ]:TYPE:WR:args}>'
+        '("{name}", &{WR:parent}::{WR:name})'
     )
 
 
@@ -47,7 +49,7 @@ class JuliaCXXWrapConstructorUnit(JuliaCXXWrapMixin, ConstructorUnit):
 class JuliaCXXWrapClassUnit(JuliaCXXWrapMixin, ClassUnit):
 
     _fstring_cond = (
-        'mod.add_type<{name}>("{name}")\n'
+        '{indent}mod.add_type<{WR:name}>("{name}")\n'
         '{members};'
     )
 
@@ -56,9 +58,9 @@ class JuliaCXXWrapModuleUnit(JuliaCXXWrapMixin, ModuleUnit):
 
     member_units = ['class', 'function']
     _fstring_cond = (
-        '{indent}JLCXX_MODULE define_{name}_module(jlcxx::Module& mod)\n'
+        'JLCXX_MODULE define_{name}_module(jlcxx::Module& mod)\n'
         '{\n'
-        'using namespace {SKIPFIRST:WR:unitpath}::{WR:name};\n'
+        '  using namespace {SKIPFIRST:WR:unitpath}::{WR:name};\n'
         '{members}\n'
         '}'
     )

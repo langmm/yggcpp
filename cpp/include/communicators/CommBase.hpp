@@ -619,7 +619,7 @@ public:
       @brief Send a message indicating that the communicator is closing.
       @returns int Values >= 0 indicate success.
      */
-     int send_eof() {
+     YGG_API_DEF int send_eof() {
        return send_raw(YGG_MSG_EOF, YGG_MSG_EOF_LEN);
      }
     /**
@@ -630,7 +630,7 @@ public:
       @param[in] len Size of data in bytes.
       @returns int Values >= 0 indicate success.
      */
-    YGG_API virtual int send_raw(const char *data, const size_t &len);
+    YGG_API virtual int send_raw(const char* data, const size_t& len);
 
     /**
       @brief Send a message through the communicator.
@@ -663,7 +663,7 @@ public:
         Values >= 0 indicate success.
     */
     template<typename T, typename... Args>
-    int sendVar(const T& data, Args... args) {
+    YGG_API_DEF int sendVar(const T& data, Args... args) {
       rapidjson::Document doc(rapidjson::kArrayType);
       return _sendVA(0, doc, data, args...);
     }
@@ -800,7 +800,7 @@ public:
       @param[in] data Message.
       @returns int Values >= 0 indicate success.
      */
-    int send(const std::string& data) {
+    YGG_API_DEF int send(const std::string& data) {
       return sendVar(data);
     }
     /**
@@ -889,7 +889,7 @@ public:
         Values >= 0 indicate success.
     */
     template<typename T, typename... Args>
-    long recvVar(T& data, Args... args) {
+    YGG_API_DEF long recvVar(T& data, Args... args) {
       rapidjson::Document doc;
       long out = recv(doc, true);
       if (out < 0) return out;
@@ -906,7 +906,7 @@ public:
         Values >= 0 indicate success.
     */
     template<typename T, typename... Args>
-    long recvVarRealloc(T& data, Args... args) {
+    YGG_API_DEF long recvVarRealloc(T& data, Args... args) {
       rapidjson::Document doc;
       long out = recv(doc, true);
       if (out < 0) return out;
@@ -1120,7 +1120,7 @@ public:
         received message if message was received.
     */
     template<size_t N>
-    long recv(char(& data)[N]) {
+    YGG_API_DEF long recv(char(& data)[N]) {
       size_t len = N;
       char* ptr = &(data[0]);
       return recv(ptr, len, false);
@@ -1131,7 +1131,7 @@ public:
       @returns -1 if message could not be received. Length of the
         received message if message was received.
      */
-    long recv(std::string& data) {
+    YGG_API_DEF long recv(std::string& data) {
       return recvVar(data);
     }
     /**
@@ -1301,7 +1301,7 @@ public:
       @brief Check if the communicator is open.
       @return true if the communicator is open, false otherwise.
      */
-    virtual bool is_open() const {
+    YGG_API_DEF virtual bool is_open() const {
         return (!is_closed());
     }
 
@@ -1309,27 +1309,27 @@ public:
       @brief Get the type code for the communicator.
       @returns Type code.
      */
-    COMM_TYPE getType() const { return type; }
+    YGG_API_DEF COMM_TYPE getType() const { return type; }
     /**
       @brief Set the communicator type code.
       @param[in] new_type New communicator type code.
      */
-    void setType(COMM_TYPE new_type) { type = new_type; }
+    YGG_API_DEF void setType(COMM_TYPE new_type) { type = new_type; }
     /**
       @brief Determine if the communicator is valid.
       @return true if it is valid, false otherwise.
      */
-    bool valid() const { return flags & COMM_FLAG_VALID; }
+    YGG_API_DEF bool valid() const { return flags & COMM_FLAG_VALID; }
     /**
       @brief Determine if the communicator is global.
       @return true if it is global, false otherwise.
      */
-    bool global() const { return flags & COMM_FLAG_GLOBAL; }
+    YGG_API_DEF bool global() const { return flags & COMM_FLAG_GLOBAL; }
     /**
       @brief Determine if the communicator is async.
       @return true if it is async, false otherwise.
      */
-    bool async() const { return flags & COMM_FLAG_ASYNC; }
+    YGG_API_DEF bool async() const { return flags & COMM_FLAG_ASYNC; }
     /**
       @brief Get the Metadata object containing header information about
         the comm including datatype.
@@ -1343,24 +1343,24 @@ public:
       @param[in] dir Direction to get metadata for.
       @return Metadata.
      */
-    const YggInterface::utils::Metadata&  getMetadata(const DIRECTION dir=NONE) const {
+    YGG_API_DEF const YggInterface::utils::Metadata&  getMetadata(const DIRECTION dir=NONE) const {
       return const_cast<Comm_t*>(this)->getMetadata(dir);
     }
     /**
       @brief Get the bitwise flags associated with the communicator.
       @returns flags.
      */
-    FLAG_TYPE& getFlags() { return flags; }
+    YGG_API_DEF FLAG_TYPE& getFlags() { return flags; }
     /**
       @brief Get the bitwise flags associated with the communicator.
       @returns flags.
      */
-    FLAG_TYPE getFlags() const { return flags; }
+    YGG_API_DEF FLAG_TYPE getFlags() const { return flags; }
     /**
       @brief Get the communicator's name.
       @returns name.
      */
-    const std::string& getName() const { return name; }
+    YGG_API_DEF const std::string& getName() const { return name; }
     //! \copydoc YggInterface::utils::LogBase::logClass
     YGG_API std::string logClass() const override;
     //! \copydoc YggInterface::utils::LogBase::logInst
@@ -1369,7 +1369,7 @@ public:
       @brief Get the communicator's address.
       @returns Address.
      */
-    std::string getAddress() const {
+    YGG_API_DEF std::string getAddress() const {
         if (address.valid())
             return address.address();
         return "";
@@ -1378,17 +1378,17 @@ public:
       @brief Get the communicator's direction.
       @returns Direction.
      */
-    DIRECTION getDirection() const { return direction; }
+    YGG_API_DEF DIRECTION getDirection() const { return direction; }
     /**
       @brief Get the communicator's type.
       @returns Communicator type.
      */
-    COMM_TYPE getCommType() const { return type; }
+    YGG_API_DEF COMM_TYPE getCommType() const { return type; }
     /**
       @brief Get the language associated with the communicator.
       @returns Language code.
     */
-    LANGUAGE getLanguage() const { return language; }
+    YGG_API_DEF LANGUAGE getLanguage() const { return language; }
     /**
       @brief Set the communicator language code.
       @param[in] new_lang New communicator language code.
@@ -1400,17 +1400,17 @@ public:
         Messages larger than this size will be split into multiple parts.
       @returns Maximum message size.
     */
-    size_t getMaxMsgSize() const { return maxMsgSize; }
+    YGG_API_DEF size_t getMaxMsgSize() const { return maxMsgSize; }
     /**
       @brief Get the buffer size that should be reserved in messages.
       @returns Reserved message buffer size.
     */
-    size_t getMsgBufSize() const { return msgBufSize; }
+    YGG_API_DEF size_t getMsgBufSize() const { return msgBufSize; }
     /**
       @brief Determine if the communicator is fully installed.
       @returns true if it is installed, false otherwise.
     */
-    static bool isInstalled() { return false; }
+    YGG_API_DEF static bool isInstalled() { return false; }
     /**
       @brief Get the default communicator type for this class
       @returns Enumerated communicator type
@@ -1421,7 +1421,7 @@ public:
       @brief Get the list of worker comms used for large messages.
       @returns Workers.
      */
-    virtual WorkerList& getWorkers() { return workers; }
+    YGG_API_DEF virtual WorkerList& getWorkers() { return workers; }
     /**
      * @brief Release the Python GIL so that C++ threads can perform
      *   Python tasks. The GIL will only be released if this thread has
@@ -1503,8 +1503,8 @@ public:
      * @return true if successful, false otherwise
      */
     template<typename T>
-    bool setFilters(const std::vector<T>& new_filters,
-		    const DIRECTION dir=NONE) {
+    YGG_API_DEF bool setFilters(const std::vector<T>& new_filters,
+				const DIRECTION dir=NONE) {
       return getMetadata(dir).setFilters(new_filters);
     }
     /**
@@ -1517,8 +1517,8 @@ public:
      * @return true if successful, false otherwise
      */
     template<typename T>
-    bool setTransforms(const std::vector<T>& new_transforms,
-		       const DIRECTION dir=NONE) {
+    YGG_API_DEF bool setTransforms(const std::vector<T>& new_transforms,
+				   const DIRECTION dir=NONE) {
       return getMetadata(dir).setTransforms(new_transforms);
     }
 
@@ -1743,21 +1743,21 @@ protected:
      * @brief Get the address that should be used for the opposing comm.
      * @returns Opposite comm address.
      */
-    std::string getOppAddress() const;
+    YGG_API std::string getOppAddress() const;
     /**
      * @brief Get the comm type that should be used for the opposing comm.
      * @returns Opposite comm type.
      */
-    COMM_TYPE getOppCommType() const;
+    YGG_API COMM_TYPE getOppCommType() const;
   
     /**
      * @brief Set the environment variables for the opposing comm.
      */
-    void setOppEnv() const;
+    YGG_API void setOppEnv() const;
     /**
      * @brief Unset the environment variables for the opposing comm.
      */
-    void unsetOppEnv() const;
+    YGG_API void unsetOppEnv() const;
 
   public:
     /**
@@ -1962,7 +1962,7 @@ public:
      * @param[in,out] rComm Receive communicator.
      * @return true on success.
      */
-    virtual bool afterSendRecv(Comm_t* sComm, Comm_t* rComm) {
+    YGG_API_DEF virtual bool afterSendRecv(Comm_t* sComm, Comm_t* rComm) {
       UNUSED(sComm);
       UNUSED(rComm);
       return true;
@@ -1972,7 +1972,7 @@ public:
      * @param[out] out String that metadata should be stored in.
      * @return true on success.
      */
-    virtual bool genMetadata(std::string& out) {
+    YGG_API_DEF virtual bool genMetadata(std::string& out) {
       UNUSED(out); // GCOVR_EXCL_START
       return true; // GCOVR_EXCL_STOP
     }
@@ -1980,13 +1980,13 @@ public:
      * @brief Get the global communicator.
      * @return Global comm.
      */
-    Comm_t* getGlobalComm() { return global_comm; }
+    YGG_API_DEF Comm_t* getGlobalComm() { return global_comm; }
     /**
      * @brief Create a test header.
      * @param[out] header Destination header.
      * @return true on success
      */
-    bool create_header_test(utils::Header& header) {
+    YGG_API_DEF bool create_header_test(utils::Header& header) {
       return create_header_send(header);
     }
 
