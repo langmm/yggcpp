@@ -146,6 +146,10 @@ def get_file_unit(name, language=None, contents=None,
     raise KeyError(f"No file unit registered for {name}")
 
 
+class NoDefault:
+    pass
+
+
 class DummyMatch:
 
     def __init__(self, x, pos=None, endpos=None, groups=None):
@@ -236,15 +240,16 @@ class CodeUnit(metaclass=CodeUnitMeta):
     ignored_units = []
 
     def __init__(self, name=None, match_start=None, match_end=None,
-                 match_string=None, parent_unit=None, wrapped_unit=None,
-                 generating_unit=None, check_format=False, verbose=False,
-                 **kwargs):
+                 match_string=None, parent_unit=None, base_unit=None,
+                 wrapped_unit=None, generating_unit=None,
+                 check_format=False, verbose=False, **kwargs):
         if name is not None:
             kwargs['name'] = name
         self.match_start = match_start
         self.match_end = match_end
         self.match_string = match_string
         self.parent_unit = parent_unit
+        self.base_unit = base_unit
         self.wrapped_unit = wrapped_unit
         self.generating_unit = generating_unit
         for k, v in self._properties_defaults.items():
@@ -403,11 +408,16 @@ class CodeUnit(metaclass=CodeUnitMeta):
                   generating_unit=None, **kwargs):
         if generating_unit and property_name == 'members':
             if property_index is not None:
-                generating_unit = generating_unit[property_index]
+                if property_index < len(generating_unit):
+                    generating_unit = generating_unit[property_index]
+                else:
+                    print("HERE", x, generating_unit, property_index)
+                    generating_unit = None
             elif property_name == 'members':
                 generating_unit = generating_unit.properties.get(
                     property_name, [])
-            kwargs['generating_unit'] = generating_unit
+            if generating_unit:
+                kwargs['generating_unit'] = generating_unit
         if isinstance(x, list):
             return [
                 cls.from_unit(xx, property_name=property_name,
@@ -562,7 +572,7 @@ class CodeUnit(metaclass=CodeUnitMeta):
     def fstring2data(cls, solf, match):
         k = match.groupdict()['group']
         if not match.groupdict()['mod']:
-            return solf.format_property(k, solf.properties[k])
+            return solf.format_property(k, solf.get_property(k))
         pattern = re.compile(
             r'(?P<add>(?:\w+(?:\[.+?\])?\:)+)?(?:(?P<mod>\w+)'
             r'(?:\[(?P<arg>.+?)\])?\:)')
@@ -570,13 +580,18 @@ class CodeUnit(metaclass=CodeUnitMeta):
         # orig = solf
         data = solf
         data_extracted = False
+        data_default = NoDefault
         while match.groupdict()['mod']:
             mod = match.groupdict()['mod']
-            if mod in ["PR", "WR", "GN", "C"]:
+            if mod in ["PR", "BS", "WR", "GN", "C"]:
                 assert isinstance(data, CodeUnit)
                 if mod == "PR":
                     if data.parent_unit:
                         data = data.parent_unit
+                        solf = data
+                elif mod == "BS":
+                    if data.base_unit:
+                        data = data.base_unit
                         solf = data
                 elif mod == "WR":
                     if data.wrapped_unit:
@@ -586,15 +601,17 @@ class CodeUnit(metaclass=CodeUnitMeta):
                     if data.generating_unit:
                         data = data.generating_unit
                         solf = data
-                elif mod == "C" and k not in data.properties:
-                    data = ''
-                    data_extracted = True
+                elif mod == "C":
+                    data_default = ''
+                    # data = ''
+                    # data_extracted = True
             elif not data_extracted:
                 assert isinstance(data, (list, CodeUnit))
                 if isinstance(data, list):
-                    data = [x.properties[k] for x in data]
+                    data = [x.get_property(k, default=data_default)
+                            for x in data]
                 else:
-                    data = data.properties[k]
+                    data = data.get_property(k, default=data_default)
                 data_extracted = True
                 continue
             elif mod in ['RELPATHC', 'LIBFILE', 'BASEFILE', 'PREFIX',
@@ -625,22 +642,25 @@ class CodeUnit(metaclass=CodeUnitMeta):
                 assert isinstance(data, list)
                 if mod == 'SKIPFIRST':
                     data = data[1:]
-            elif (isinstance(data, CodeUnit)
-                  and mod.lower() in data.properties):
-                k = mod.lower()
-                solf = data
-                data = data.properties[k]
-            elif (isinstance(data, list) and data
-                  and isinstance(data[0], CodeUnit)
-                  and mod.lower() in data[0].properties):
-                k = mod.lower()
-                data = [x.properties[k] for x in data]
             elif (isinstance(data, list) and len(data) == 0):
                 pass
             else:
-                raise NotImplementedError(
-                    f"Unsupported fstring mod \'{mod}\' in "
-                    f"\'{match.string}\' for data = {data}")
+                try:
+                    if isinstance(data, CodeUnit):
+                        k = mod.lower()
+                        solf = data
+                        data = data.get_property(k, default=data_default)
+                    elif (isinstance(data, list) and data
+                          and isinstance(data[0], CodeUnit)):
+                        k = mod.lower()
+                        data = [x.get_property(k, default=data_default)
+                                for x in data]
+                    else:
+                        raise KeyError
+                except KeyError:
+                    raise NotImplementedError(
+                        f"Unsupported fstring mod \'{mod}\' in "
+                        f"\'{match.string}\' for data = {data}")
             if match.groupdict()['add']:
                 add = match.groupdict()['add']
                 match = pattern.match(add)
@@ -649,7 +669,7 @@ class CodeUnit(metaclass=CodeUnitMeta):
             else:
                 break
         if isinstance(data, CodeUnit) and not data_extracted:
-            data = data.properties[k]
+            data = data.get_property(k, default=data_default)
             data_extracted = True
         return solf.format_property(k, data)
 
@@ -682,18 +702,31 @@ class CodeUnit(metaclass=CodeUnitMeta):
         self.properties['members'] = []
         self.copy_members(solf, **kwargs)
 
-    def add_member(self, x, dont_update_unitpath=False):
+    def prepend_member(self, x, **kwargs):
+        kwargs['index'] = 0
+        return self.add_member(x, **kwargs)
+
+    def append_member(self, x, **kwargs):
+        kwargs['index'] = -1
+        return self.add_member(x, **kwargs)
+
+    def add_member(self, x, dont_update_unitpath=False,
+                   index=-1):
         y = copy.deepcopy(x)
         y.properties['parent'] = self.properties['name']
         y.properties['indent'] = self.properties['indent'] + 1
+        y.base_unit = x
         y.parent_unit = self
         if not dont_update_unitpath:
             y.properties['unitpath'] = copy.deepcopy(
                 self.properties['unitpath'])
             y.properties['unitpath'].append(y.properties['parent'])
-        assert y.properties['parent'] != x.properties['parent']
+        # assert y.properties['parent'] != x.properties['parent']
         self.properties.setdefault('members', [])
-        self.properties['members'].append(y)
+        if index == -1:
+            self.properties['members'].append(y)
+        else:
+            self.properties['members'].insert(index, y)
 
     def find_member(self, value, key='name'):
         for x in self.properties.get('members', []):
@@ -703,6 +736,22 @@ class CodeUnit(metaclass=CodeUnitMeta):
 
     def __getitem__(self, k):
         return self.find_member(k)
+
+    def get_property(self, k, default=NoDefault):
+        if k == 'address':
+            return self.address
+        elif k == 'address_noargs':
+            return self.address_noargs
+        elif k == 'fullname':
+            parts = (
+                self.properties['unitpath'][1:]
+                + [self.get_property('name')])
+            return self.code_units()['modsep'].join(parts)
+        elif k in ['members']:
+            default = []
+        if default != NoDefault and k not in self.properties:
+            return default
+        return self.properties[k]
 
     def set_property(self, k, v):
         self.properties[k] = v
@@ -763,6 +812,7 @@ class MethodUnit(FunctionUnit):
 class ConstructorUnit(MethodUnit):
 
     unit_type = 'constructor'
+    _properties = ['parent', 'args']
 
 
 class DestructorUnit(MethodUnit):

@@ -194,8 +194,10 @@ class CXXMethodUnit(MethodUnit):
 
     _regex_fstring = (
         # r'(?:\s*{docs}\s*)?'
-        r'(?:\s*(?:static inline)|(?:template\<(?P<Tparam>.*?)\>)\s*)?'
-        r'^(?P<indent>\s*){api}(?P<virtual>virtual\s+)?'
+        r'^(?P<indent>\s*)'
+        r'(?:template\s*\<(?P<Tparam>.*?)\>\s+)?'
+        r'{api}(?P<static>static\s+(?:inline\s+)?)?'
+        r'(?P<virtual>virtual\s+)?'
         r'(?P<type>{NG:type})\s+(?P<name>\w+)'
         r'(?P<args>\('
         r'(?:\s*{NG:var}\s*(?:\,))*'
@@ -212,7 +214,7 @@ class CXXMethodUnit(MethodUnit):
     _properties = ['name', 'type', 'args', 'parent']
     _properties_optional = [
         'docs', 'api', 'virtual', 'const', 'override', 'va_args',
-        'body', 'Tparam', 'access', 'overloaded',
+        'body', 'Tparam', 'access', 'overloaded', 'static',
     ]
     member_context = ('{', '}')
 
@@ -242,6 +244,7 @@ class CXXConstructorUnit(ConstructorUnit):
     _regex_fstring = (
         # r'^(?:\s*{docs}\s+)?'
         r'^(?P<indent>\s*){api}(?P<virtual>virtual\s+)?'
+        r'(?P<explicit>explicit\s+)?'
         r'{R:parent}'
         r'(?P<args>\('
         r'(?:\s*{NG:var}\s*(?:\,))*'
@@ -251,7 +254,8 @@ class CXXConstructorUnit(ConstructorUnit):
     )
     _fstring_cond = (
         '{C:docs}'
-        '{indent}{C:api}{C:virtual}{parent}({args}{C:va_args});'
+        '{indent}{C:api}{C:virtual}{C:explicit}'
+        '{parent}({args}{C:va_args});'
     )
     _properties = ['parent', 'args']
     _properties_optional = [
@@ -286,7 +290,7 @@ class CXXClassUnit(ClassUnit):
     _regex = (
         r'^(?P<indent>\s*)class\s+(?P<name>\w+)'
         r'(?P<base>\s*\:\s*(?P<base_scope>(?:public)|(?:private))\s+'
-        r'(?P<base_name>[\:\w]+)'
+        r'(?P<base_class>[\:\w]+)'
         r'(?P<base_template>\s*\<\s*[^\{]+\s*\>)?'
         r')?'
         r'\s*\{'
@@ -296,7 +300,7 @@ class CXXClassUnit(ClassUnit):
         '{members}\n'
         '};'
     )
-    _properties_optional = ['base']
+    _properties_optional = ['base', 'base_class']
 
     @classmethod
     def parse_subunits(cls, x, pos=None, endpos=None, **kwargs):
