@@ -215,7 +215,7 @@ function(configure_env_injection)
     list(APPEND ARGS_VARIABLES ${ARGS_UNPARSED_ARGUMENTS})
   endif()
   message(STATUS "configure_env_injection2 ARGS_VARIABLES = ${ARGS_VARIABLES}")
-  string(REPLACE "\\" "\\\\" ENV_VARS "${ARGS_VARIABLES}")
+  string(REPLACE "\\" "\\\\\\\\" ENV_VARS "${ARGS_VARIABLES}")
   message(STATUS "configure_env_injection ENV_VARS = ${ENV_VARS}")
   configure_file(
     ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/CTestEnvInject.cmake.in
