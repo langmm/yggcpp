@@ -25,6 +25,26 @@ namespace YggInterface {
       WrapComm& operator=(const WrapComm&) = delete;
     public:
       /**
+       * @brief Move constructor.
+       * @param[in, out] rhs RHS reference to move into new instance.
+       */
+      YGG_API WrapComm(WrapComm&& rhs);
+      /**
+       * @brief Get a reference to this instance.
+       * @returns Reference.
+       */
+      YGG_API WrapComm& Move();
+      // /**
+      //  * @brief Move a communicator into this one.
+      //  * @param[in, out] rhs Communicator to move into this one.
+      //  */
+      // YGG_API WrapComm& operator=(WrapComm&& rhs);
+      // /**
+      //  * @brief Swap this communicator with another.
+      //  * @param[in, out] rhs Communicator to swap with this one.
+      //  */
+      // YGG_API WrapComm& operator=(WrapComm& rhs);
+      /**
        * Constructor
        * @param[in] name The name for the communicator, if empty one will
        *   be generated
@@ -102,6 +122,12 @@ namespace YggInterface {
        */
       Comm_t* getWrapped() { return handle; }
 
+      /** \copydoc YggInterface::communicator::Comm_t::get_status_message */
+      YGG_API std::vector<std::string> get_status_message(
+        unsigned int nindent=0,
+	const std::vector<std::string>& extra_lines_before={},
+	const std::vector<std::string>& extra_lines_after={}) const override;
+      
     protected:
 
       /** @brief Initialize properties from the wrapped communicator */

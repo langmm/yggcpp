@@ -288,21 +288,68 @@ function(cmakevars2cmakecliargs OUTPUT_LIST_VARIABLE)
   set(${OUTPUT_LIST_VARIABLE} "${${OUTPUT_LIST_VARIABLE}}" PARENT_SCOPE)
 endfunction()
 
-function(python_code_generation SCRIPT)
+function(python_code_generation NAME SCRIPT)
   # TODO: Conditional generation on sources
-  set(options IS_MODULE)
   set(oneValueArgs WORKING_DIRECTORY)
-  set(multiValueArgs SOURCES OUTPUTS ARGUMENTS)
+  set(multiValueArgs ARGUMENTS SOURCES BYPRODUCTS ENTRY_POINT)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-  if(ARGS_IS_MODULE)
-    set(MODULE_TOKEN -m)
+  set(IS_MODULE OFF)
+  cmake_path(ABSOLUTE_PATH SCRIPT NORMALIZE)
+  if(IS_DIRECTORY ${SCRIPT})
+    set(IS_MODULE ON)
+  endif()
+  if(NOT ARGS_ENTRY_POINT)
+    if(IS_MODULE)
+      set(ENTRY_POINT -m ${SCRIPT})
+    else()
+      set(ENTRY_POINT ${SCRIPT})
+    endif()
+  endif()
+  if(IS_MODULE)
+    file(GLOB_RECURSE MODULE_SOURCES "${SCRIPT}/*.py")
+    list(APPEND ARGS_SOURCES ${MODULE_SOURCES})
+    if(NOT ARGS_WORKING_DIRECTORY)
+      set(ARGS_WORKING_DIRECTORY ${SCRIPT})
+    endif()
+  endif()
+  if (ARGS_WORKING_DIRECTORY)
+    cmake_path(ABSOLUTE_PATH ARGS_WORKING_DIRECTORY NORMALIZE)
+    list(APPEND ARGS_UNPARSED_ARGUMENTS
+         WORKING_DIRECTORY ${ARGS_WORKING_DIRECTORY})
+  endif()
+  if (ARGS_SOURCES)
+    list(APPEND ARGS_UNPARSED_ARGUMENTS DEPENDS)  # SOURCES)
+    foreach(src ${ARGS_SOURCES})
+      cmake_path(ABSOLUTE_PATH src NORMALIZE)
+      list(APPEND ARGS_UNPARSED_ARGUMENTS ${src})
+    endforeach()
+  endif()
+  set(ARGS_UNPARSED_ARGUMENTS_CMD ${ARGS_UNPARSED_ARGUMENTS})
+  if (ARGS_BYPRODUCTS)
+    list(APPEND ARGS_UNPARSED_ARGUMENTS BYPRODUCTS)
+    list(APPEND ARGS_UNPARSED_ARGUMENTS_CMD OUTPUT)
+    foreach(src ${ARGS_BYPRODUCTS})
+      cmake_path(ABSOLUTE_PATH src NORMALIZE)
+      list(APPEND ARGS_UNPARSED_ARGUMENTS ${src})
+      list(APPEND ARGS_UNPARSED_ARGUMENTS_CMD ${src})
+    endforeach()
   endif()
   if (${Python_PREFIX}_EXECUTABLE)
-    execute_process(
-      COMMAND ${${Python_PREFIX}_EXECUTABLE} ${MODULE_TOKEN} ${SCRIPT}
-      ${ARGS_ARGUMENTS}
-      WORKING_DIRECTORY ${ARGS_WORKING_DIRECTORY}
-      COMMAND_ERROR_IS_FATAL ANY
-    )
+    message(STATUS "Calling python script ${SCRIPT}")
+    if (ARGS_BYPRODUCTS)
+      add_custom_command(
+        COMMAND ${${Python_PREFIX}_EXECUTABLE} ${ARGS_ENTRY_POINT}
+        ${ARGS_ARGUMENTS}
+        ${ARGS_UNPARSED_ARGUMENTS_CMD}
+      )
+      add_custom_target(${NAME} ALL DEPENDS ${ARGS_BYPRODUCTS})
+    else()
+      add_custom_target(
+        ${NAME}
+        COMMAND ${${Python_PREFIX}_EXECUTABLE} ${ARGS_ENTRY_POINT}
+        ${ARGS_ARGUMENTS}
+        ${ARGS_UNPARSED_ARGUMENTS}
+      )
+    endif()
   endif()
 endfunction()

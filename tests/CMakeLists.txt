@@ -46,3 +46,12 @@ endif()
 if(YGG_BUILD_TESTS OR YGG_BUILD_Python_TESTS)
     add_subdirectory(python)
 endif()
+
+
+################
+# Julia Tests #
+################
+
+if(YGG_BUILD_TESTS OR YGG_BUILD_Julia_TESTS)
+    add_subdirectory(julia)
+endif()

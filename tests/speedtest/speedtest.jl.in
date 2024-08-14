@@ -1,0 +1,31 @@
+using YggInterface
+
+SPEED_TEST_N_MSG = @SPEED_TEST_N_MSG@
+SPEED_TEST_S_MSG = @SPEED_TEST_S_MSG@
+SPEED_TEST_COMM = YggInterface.@SPEED_TEST_COMM@
+
+icomm = YggComm(
+    "speed", YggInterface.RECV,
+    flgs=(YggInterface.COMM_FLAG_ASYNC |
+          YggInterface.COMM_FLAG_SET_OPP_ENV),
+    type=SPEED_TEST_COMM)
+ocomm = YggComm(
+    "speed", YggInterface.SEND,
+    flgs=YggInterface.COMM_FLAG_ASYNC,
+    type=SPEED_TEST_COMM)
+YggInterface.set_timeout_recv(icomm, 600000000);
+omsg = repeat('x', SPEED_TEST_S_MSG)
+for i = 1:SPEED_TEST_N_MSG
+    if (YggInterface.send(ocomm, omsg) == 0)
+        throw("Failure to send message #$i")
+    end
+    flag, imsg = YggInterface.recv(icomm)
+    if (flag == 0)
+        throw("Failure to recv message #$i")
+    end
+    if (imsg != omsg)
+        println("Recv: $imsg")
+	println("Sent: $omsg")
+        throw("Received message #$i does not match sent message")
+    end
+end

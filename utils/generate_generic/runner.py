@@ -26,9 +26,16 @@ if __name__ == "__main__":
                         help="Language to generate")
     parser.add_argument("--verbose", action="store_true",
                         help="Display information during parsing/generation")
+    parser.add_argument("--wrap-rapidjson", action="store_true",
+                        help=("Create an interface that uses the wrapped "
+                              "rapidjson api"))
+    parser.add_argument("--rapidjson-include-dirs", type=str,
+                        help="Path to rapidjson include")
     args = parser.parse_args()
     if args.language == 'julia':
         x = JuliaInterface()
-        x.generate(debug=args.debug, verbose=args.verbose)
+        x.generate(debug=args.debug, verbose=args.verbose,
+                   wrap_rapidjson=args.wrap_rapidjson,
+                   rapidjson_include_dirs=args.rapidjson_include_dirs)
     else:
         generate(debug=args.debug)

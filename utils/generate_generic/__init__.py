@@ -21,12 +21,17 @@ class GeneratedFile(object):
                       'BE MODIFIED DIRECTLY')
     indent_append = ''
     file_suffix = ''
+    divider_char = '='
 
     def __init__(self, src, added=None, prefix_lines=None,
-                 suffix_lines=None, language=None):
+                 suffix_lines=None, language=None,
+                 from_unit_method=None):
         self.src = os.path.join(_base_dir, src)
         self.file_unit = get_file_unit_class(src, language=language)
         self.language = self.file_unit.language
+        self.divider_char = self.file_unit.divider_char
+        if from_unit_method or not hasattr(self, 'from_unit_method'):
+            self.from_unit_method = from_unit_method
         self.added = added
         if self.added is None:
             self.added = {}
@@ -66,7 +71,8 @@ class GeneratedFile(object):
 
     def write(self, debug=False, verbose=False):
         prefix_lines = [
-            self.flag, self.indent_append + self.comment + 68 * '=']
+            self.flag,
+            self.indent_append + self.comment + 68 * self.divider_char]
         if self.prefix_lines:
             prefix_lines += self.prefix_lines
         nprefix = len(self.lines)
@@ -102,6 +108,8 @@ class GeneratedFile(object):
             x = get_file_unit(x, language=language)
         wrapped = self.file_unit.from_unit(x, language=language,
                                            name=self.src, **kwargs)
+        if self.from_unit_method:
+            wrapped = self.from_unit_method(wrapped)
         return wrapped
 
     def wrap_unit(self, x, **kwargs):

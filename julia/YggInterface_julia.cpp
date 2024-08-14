@@ -1,60 +1,340 @@
 
 // LINES AFTER THIS WERE GENERATED AND SHOULD NOT BE MODIFIED DIRECTLY
-//====================================================================
+//####################################################################
 #include "jlcxx/jlcxx.hpp"
-#include "communicators/WrapComm.hpp"
-namespace jlcxx
-{
-    template<> struct SuperType<YggInterface::communicator::WrapComm> 
-{ typedef YggInterface::communicator::Comm_t type; };
+#include "YggInterface.hpp"
+
+
+
+namespace jlcxx {
+  template<> struct SuperType< rapidjson::Document > 
+  { typedef rapidjson::Value type; };
+  template<> struct SuperType< YggInterface::communicator::WrapComm > 
+  { typedef YggInterface::communicator::Comm_t type; };
 }
-JLCXX_MODULE define_communicator_module(jlcxx::Module& mod)
+
+JLCXX_MODULE define_module_rapidjson(jlcxx::Module& mod)
+{
+  using namespace rapidjson;
+  mod.add_bits< enum YggSubType >("YggSubType", jlcxx::julia_type("CppEnum"));
+  mod.set_const("kYggNullSubType", kYggNullSubType);
+  mod.set_const("kYggUintSubType", kYggUintSubType);
+  mod.set_const("kYggComplexSubType", kYggComplexSubType);
+  mod.add_bits< enum YggEncodingType >("YggEncodingType", jlcxx::julia_type("CppEnum"));
+  mod.set_const("kYggNullEncodingType", kYggNullEncodingType);
+  mod.set_const("kYggUTF8EncodingType", kYggUTF8EncodingType);
+  auto wrapped_Value = mod.add_type< Value >("Value");
+  wrapped_Value.constructor<  >();
+  wrapped_Value.method("_construct", [](jlcxx::StrictlyTypedNumber<int> (i)){ return Value(i.value); });
+  wrapped_Value.method("_construct", [](jlcxx::StrictlyTypedNumber<unsigned> (u)){ return Value(u.value); });
+  wrapped_Value.method("_construct", [](jlcxx::StrictlyTypedNumber<int64_t> (i64)){ return Value(i64.value); });
+  wrapped_Value.method("_construct", [](jlcxx::StrictlyTypedNumber<uint64_t> (u64)){ return Value(u64.value); });
+  wrapped_Value.constructor< double >();
+  wrapped_Value.constructor< float >();
+  wrapped_Value.method("_construct", [](const std::string (s), jlcxx::StrictlyTypedNumber<unsigned> (length)){ return Value(s.c_str(), length.value); });
+  wrapped_Value.method("Swap", []( Value& self, Value& (other)) { self.Swap(other); });
+  wrapped_Value.method< bool, Value >("IsNull", &Value::IsNull);
+  wrapped_Value.method< bool, Value >("IsFalse", &Value::IsFalse);
+  wrapped_Value.method< bool, Value >("IsTrue", &Value::IsTrue);
+  wrapped_Value.method< bool, Value >("IsBool", &Value::IsBool);
+  wrapped_Value.method< bool, Value >("IsObject", &Value::IsObject);
+  wrapped_Value.method< bool, Value >("IsArray", &Value::IsArray);
+  wrapped_Value.method< bool, Value >("IsNumber", &Value::IsNumber);
+  wrapped_Value.method< bool, Value >("IsInt", &Value::IsInt);
+  wrapped_Value.method< bool, Value >("IsUint", &Value::IsUint);
+  wrapped_Value.method< bool, Value >("IsInt64", &Value::IsInt64);
+  wrapped_Value.method< bool, Value >("IsUint64", &Value::IsUint64);
+  wrapped_Value.method< bool, Value >("IsDouble", &Value::IsDouble);
+  wrapped_Value.method< bool, Value >("IsString", &Value::IsString);
+  wrapped_Value.method< bool, Value >("IsLosslessDouble", &Value::IsLosslessDouble);
+  wrapped_Value.method< bool, Value >("IsFloat", &Value::IsFloat);
+  wrapped_Value.method< bool, Value >("IsLosslessFloat", &Value::IsLosslessFloat);
+  wrapped_Value.method("SetNull", []( Value& self) { self.SetNull(); });
+  wrapped_Value.method< bool, Value >("GetBool", &Value::GetBool);
+  wrapped_Value.method("SetBool", []( Value& self, bool (b)) { self.SetBool(b); });
+  wrapped_Value.method("SetObject", []( Value& self) { self.SetObject(); });
+  wrapped_Value.method< unsigned, Value >("MemberCount", &Value::MemberCount);
+  wrapped_Value.method< unsigned, Value >("MemberCapacity", &Value::MemberCapacity);
+  wrapped_Value.method< bool, Value >("ObjectEmpty", &Value::ObjectEmpty);
+  wrapped_Value.method("HasMember", []( const Value& self, const std::string (name)) { return self.HasMember(name.c_str()); });
+  wrapped_Value.method< bool, Value, const std::basic_string< char >& >("HasMember", &Value::HasMember);
+  wrapped_Value.method< void, Value >("RemoveAllMembers", &Value::RemoveAllMembers);
+  wrapped_Value.method("RemoveMember", []( Value& self, const std::string (name)) { return self.RemoveMember(name.c_str()); });
+  wrapped_Value.method< bool, Value, const std::basic_string< char >& >("RemoveMember", &Value::RemoveMember);
+  wrapped_Value.method("EraseMember", []( Value& self, const std::string (name)) { return self.EraseMember(name.c_str()); });
+  wrapped_Value.method< bool, Value, const std::basic_string< char >& >("EraseMember", &Value::EraseMember);
+  wrapped_Value.method("SetArray", []( Value& self) { self.SetArray(); });
+  wrapped_Value.method< unsigned, Value >("Size", &Value::Size);
+  wrapped_Value.method< unsigned, Value >("Capacity", &Value::Capacity);
+  wrapped_Value.method< bool, Value >("Empty", &Value::Empty);
+  wrapped_Value.method< void, Value >("Clear", &Value::Clear);
+  wrapped_Value.method("PopBack", []( Value& self) { self.PopBack(); });
+  wrapped_Value.method< bool, Value, const Value& >("Contains", &Value::Contains);
+  wrapped_Value.method< int, Value >("GetInt", &Value::GetInt);
+  wrapped_Value.method< unsigned, Value >("GetUint", &Value::GetUint);
+  wrapped_Value.method< int64_t, Value >("GetInt64", &Value::GetInt64);
+  wrapped_Value.method< uint64_t, Value >("GetUint64", &Value::GetUint64);
+  wrapped_Value.method< double, Value >("GetDouble", &Value::GetDouble);
+  wrapped_Value.method< float, Value >("GetFloat", &Value::GetFloat);
+  wrapped_Value.method("SetInt", []( Value& self, jlcxx::StrictlyTypedNumber<int> (i)) { self.SetInt(i.value); });
+  wrapped_Value.method("SetUint", []( Value& self, jlcxx::StrictlyTypedNumber<unsigned> (u)) { self.SetUint(u.value); });
+  wrapped_Value.method("SetInt64", []( Value& self, jlcxx::StrictlyTypedNumber<int64_t> (i64)) { self.SetInt64(i64.value); });
+  wrapped_Value.method("SetUint64", []( Value& self, jlcxx::StrictlyTypedNumber<uint64_t> (u64)) { self.SetUint64(u64.value); });
+  wrapped_Value.method("SetDouble", []( Value& self, double (d)) { self.SetDouble(d); });
+  wrapped_Value.method("SetFloat", []( Value& self, float (f)) { self.SetFloat(f); });
+  wrapped_Value.method("GetString", []( const Value& self) { return std::string(self.GetString()); });
+  wrapped_Value.method< unsigned, Value >("GetStringLength", &Value::GetStringLength);
+  wrapped_Value.method("SetString", []( Value& self, const std::string& (s)) { self.SetString(s.c_str(), s.size()); });
+  wrapped_Value.module().method("YggSubTypeString", [](YggSubType (subtype)) { return Value::YggSubTypeString(subtype).Get<std::basic_string< char >>(); });
+  wrapped_Value.method< void, Value >("DestroySchema", &Value::DestroySchema);
+  wrapped_Value.method< bool, Value >("HasSchema", &Value::HasSchema);
+  wrapped_Value.method< bool, Value >("HasUnits", &Value::HasUnits);
+  wrapped_Value.method< bool, Value, const std::basic_string< char > >("SetUnits", &Value::SetUnits);
+  wrapped_Value.method("GetUnits", []( const Value& self) { return self.GetUnits().Get<std::basic_string< char >>(); });
+  wrapped_Value.method< bool, Value >("HasSchemaNested", &Value::HasSchemaNested);
+  wrapped_Value.method< void, Value, Value& >("RawAssignSchema", &Value::RawAssignSchema);
+  wrapped_Value.method< void, Value, const Value&, const Value& >("AddSchemaMember", &Value::AddSchemaMember);
+  wrapped_Value.method< void, Value, const Value&, unsigned int >("AddSchemaMember", &Value::AddSchemaMember);
+  wrapped_Value.method("AddSchemaMember", []( Value& self, const Value& (key), const std::string (str), jlcxx::StrictlyTypedNumber<unsigned> (str_len)) { self.AddSchemaMember(key, str.c_str(), str_len.value); });
+  wrapped_Value.method("GetYggType", []( const Value& self) { return self.GetYggType().Get<std::basic_string< char >>(); });
+  wrapped_Value.method< bool, Value >("RequiresPython", &Value::RequiresPython);
+  wrapped_Value.method< bool, Value >("IsYggdrasil", &Value::IsYggdrasil);
+  wrapped_Value.method< bool, Value >("HasTitle", &Value::HasTitle);
+  wrapped_Value.method("GetTitle", []( const Value& self) { return self.GetTitle().Get<std::basic_string< char >>(); });
+  wrapped_Value.method("IsSubType", []( const Value& self, const std::string (subtype), jlcxx::StrictlyTypedNumber<unsigned> (precision)) { return self.IsSubType(subtype.c_str(), precision.value); });
+  wrapped_Value.method("IsType", []( const Value& self, const std::string (type)) { return self.IsType(type.c_str()); });
+  wrapped_Value.method< bool, Value >("IsScalar", &Value::IsScalar);
+  wrapped_Value.method("IsScalar", []( const Value& self, const std::string (subT)) { return self.IsScalar(subT.c_str()); });
+  wrapped_Value.method< bool, Value >("Is1DArray", &Value::Is1DArray);
+  wrapped_Value.method< bool, Value >("IsNDArray", &Value::IsNDArray);
+  wrapped_Value.method< bool, Value >("IsPythonClass", &Value::IsPythonClass);
+  wrapped_Value.method< bool, Value >("IsPythonFunction", &Value::IsPythonFunction);
+  wrapped_Value.method< bool, Value >("IsPythonInstance", &Value::IsPythonInstance);
+  wrapped_Value.method< bool, Value >("IsObjWavefront", &Value::IsObjWavefront);
+  wrapped_Value.method< bool, Value >("IsPly", &Value::IsPly);
+  wrapped_Value.method< bool, Value >("IsSchema", &Value::IsSchema);
+  wrapped_Value.method< YggSubType, Value >("GetSubTypeCode", &Value::GetSubTypeCode);
+  wrapped_Value.method< int, Value, Value& >("GetSubTypeNumpyType", &Value::GetSubTypeNumpyType);
+  wrapped_Value.method("GetSubType", []( const Value& self) { return self.GetSubType().Get<std::basic_string< char >>(); });
+  wrapped_Value.method("GetSubType", []( const Value& self, unsigned& (length)) { return std::string(self.GetSubType(length)); });
+  wrapped_Value.method< bool, Value >("HasPrecision", &Value::HasPrecision);
+  wrapped_Value.method< unsigned, Value >("GetPrecision", &Value::GetPrecision);
+  wrapped_Value.method< bool, Value >("HasEncoding", &Value::HasEncoding);
+  wrapped_Value.method("GetEncoding", []( const Value& self) { return self.GetEncoding().Get<std::basic_string< char >>(); });
+  wrapped_Value.method("GetShape", []( const Value& self) { return self.GetShape().Get<std::vector< unsigned >>(); });
+  wrapped_Value.method< unsigned, Value >("GetNElements", &Value::GetNElements);
+  wrapped_Value.method< void*, Value, bool& >("GetDataPtr", &Value::GetDataPtr);
+  wrapped_Value.method< unsigned, Value >("GetNBytes", &Value::GetNBytes);
+  auto wrapped_Document = mod.add_type< Document >("Document", jlcxx::julia_base_type< Value >());
+  wrapped_Document.method("Swap", []( Document& self, Document& (rhs)) { self.Swap(rhs); });
+  wrapped_Document.method< bool, Document >("Null", &Document::Null);
+  wrapped_Document.method< bool, Document, bool >("Bool", &Document::Bool);
+  wrapped_Document.method("RawNumber", []( Document& self, const std::string (str), jlcxx::StrictlyTypedNumber<unsigned> (length), bool (copy)) { return self.RawNumber(str.c_str(), length.value, copy); });
+  wrapped_Document.method("FromYggdrasilString", []( Document& self, const std::string (str), jlcxx::StrictlyTypedNumber<unsigned> (length), bool (copy)) { return self.FromYggdrasilString(str.c_str(), length.value, copy); });
+  wrapped_Document.method< bool, Document >("WasFinalized", &Document::WasFinalized);
+  wrapped_Document.method< void, Document >("ConsolidateStack", &Document::ConsolidateStack);
+  wrapped_Document.method< void, Document >("FinalizeFromStack", &Document::FinalizeFromStack);
+  wrapped_Document.method< bool, Document >("StartObject", &Document::StartObject);
+  wrapped_Document.method("Key", []( Document& self, const std::string (str), jlcxx::StrictlyTypedNumber<unsigned> (length), bool (copy)) { return self.Key(str.c_str(), length.value, copy); });
+  wrapped_Document.method("EndObject", []( Document& self, jlcxx::StrictlyTypedNumber<unsigned> (memberCount)) { return self.EndObject(memberCount.value); });
+  wrapped_Document.method< bool, Document >("StartArray", &Document::StartArray);
+  wrapped_Document.method("EndArray", []( Document& self, jlcxx::StrictlyTypedNumber<unsigned> (elementCount)) { return self.EndArray(elementCount.value); });
+  wrapped_Document.method("Parse", []( Document& self, const std::string (str), Document& (schema)) { self.Parse(str.c_str(), schema); });
+  wrapped_Document.method("YggdrasilEndObject", []( Document& self, jlcxx::StrictlyTypedNumber<unsigned> (memberCount)) { return self.YggdrasilEndObject(memberCount.value); });
+}
+JLCXX_MODULE define_module_YggInterface(jlcxx::Module& mod)
 {
   using namespace YggInterface::communicator;
-    mod.add_type<Comm_t>("Comm_t")
-      .method<int, Comm_t>("send_eof", &Comm_t::send_eof)
-      .method<int, Comm_t, const char*, const size_t&>("send_raw", &Comm_t::send_raw)
-      .method<int, Comm_t, const rapidjson::Document&, bool>("send", &Comm_t::send)
-      .method<void, Comm_t, int64_t>("set_timeout_recv", &Comm_t::set_timeout_recv)
-      .method<int64_t, Comm_t>("get_timeout_recv", &Comm_t::get_timeout_recv)
-      .method<int, Comm_t, const int64_t&>("wait_for_recv", &Comm_t::wait_for_recv)
-      .method<long, Comm_t, rapidjson::Document&, bool>("recv", &Comm_t::recv)
-      .method<long, Comm_t, const rapidjson::Document&, rapidjson::Document&>("call", &Comm_t::call)
-      .method<int, Comm_t, DIRECTION>("nmsg", &Comm_t::nmsg)
-      .method<void, Comm_t>("open", &Comm_t::open)
-      .method<void, Comm_t>("close", &Comm_t::close)
-      .method<bool, Comm_t>("is_closed", &Comm_t::is_closed)
-      .method<bool, Comm_t>("is_open", &Comm_t::is_open)
-      .method<COMM_TYPE, Comm_t>("getType", &Comm_t::getType)
-      .method<void, Comm_t, COMM_TYPE>("setType", &Comm_t::setType)
-      .method<bool, Comm_t>("valid", &Comm_t::valid)
-      .method<bool, Comm_t>("global", &Comm_t::global)
-      .method<bool, Comm_t>("async", &Comm_t::async)
-      .method<FLAG_TYPE&, Comm_t>("getFlags", &Comm_t::getFlags)
-      .method<FLAG_TYPE, Comm_t>("getFlags", &Comm_t::getFlags)
-      .method<const std::string&, Comm_t>("getName", &Comm_t::getName)
-      .method<std::string, Comm_t>("logClass", &Comm_t::logClass)
-      .method<std::string, Comm_t>("logInst", &Comm_t::logInst)
-      .method<std::string, Comm_t>("getAddress", &Comm_t::getAddress)
-      .method<DIRECTION, Comm_t>("getDirection", &Comm_t::getDirection)
-      .method<COMM_TYPE, Comm_t>("getCommType", &Comm_t::getCommType)
-      .method<LANGUAGE, Comm_t>("getLanguage", &Comm_t::getLanguage)
-      .method<bool, Comm_t, LANGUAGE>("setLanguage", &Comm_t::setLanguage)
-      .method<size_t, Comm_t>("getMaxMsgSize", &Comm_t::getMaxMsgSize)
-      .method<size_t, Comm_t>("getMsgBufSize", &Comm_t::getMsgBufSize)
-      .method<WorkerList&, Comm_t>("getWorkers", &Comm_t::getWorkers)
-      .method<bool, Comm_t, bool>("PyGIL_release", &Comm_t::PyGIL_release)
-      .method<bool, Comm_t, bool>("PyGIL_restore", &Comm_t::PyGIL_restore)
-      .method<bool, Comm_t, const rapidjson::Value&, bool, const DIRECTION>("addSchema", &Comm_t::addSchema)
-      .method<bool, Comm_t, const std::string&, bool, const DIRECTION>("addSchema", &Comm_t::addSchema)
-      .method<bool, Comm_t, const Comm_t*, const DIRECTION>("copySchema", &Comm_t::copySchema)
-      .method<std::string, Comm_t>("getOppAddress", &Comm_t::getOppAddress)
-      .method<COMM_TYPE, Comm_t>("getOppCommType", &Comm_t::getOppCommType)
-      .method<void, Comm_t>("setOppEnv", &Comm_t::setOppEnv)
-      .method<void, Comm_t>("unsetOppEnv", &Comm_t::unsetOppEnv)
-      .method<bool, Comm_t, Comm_t*, Comm_t*>("afterSendRecv", &Comm_t::afterSendRecv)
-      .method<bool, Comm_t, std::string&>("genMetadata", &Comm_t::genMetadata)
-      .method<Comm_t*, Comm_t>("getGlobalComm", &Comm_t::getGlobalComm);
-    mod.add_type<WrapComm>("YggComm", jlcxx::julia_base_type<Comm_t>())
-      .constructor<Comm_t*>();
+  mod.add_bits< enum COMM_TYPE >("COMM_TYPE", jlcxx::julia_type("CppEnum"));
+  mod.set_const("NULL_COMM", NULL_COMM);
+  mod.set_const("DEFAULT_COMM", DEFAULT_COMM);
+  mod.set_const("IPC_COMM", IPC_COMM);
+  mod.set_const("ZMQ_COMM", ZMQ_COMM);
+  mod.set_const("MPI_COMM", MPI_COMM);
+  mod.set_const("SERVER_COMM", SERVER_COMM);
+  mod.set_const("CLIENT_COMM", CLIENT_COMM);
+  mod.set_const("FILE_COMM", FILE_COMM);
+  mod.set_const("RMQ_COMM", RMQ_COMM);
+  mod.set_const("VALUE_COMM", VALUE_COMM);
+  mod.set_const("REST_COMM", REST_COMM);
+  mod.set_const("BUFFER_COMM", BUFFER_COMM);
+  mod.set_const("FUNCTION_COMM", FUNCTION_COMM);
+  mod.add_bits< enum DIRECTION >("DIRECTION", jlcxx::julia_type("CppEnum"));
+  mod.set_const("SEND", SEND);
+  mod.set_const("NONE", NONE);
+  mod.set_const("RECV", RECV);
+  mod.add_bits< enum CLEANUP_MODE >("CLEANUP_MODE", jlcxx::julia_type("CppEnum"));
+  mod.set_const("CLEANUP_DEFAULT", CLEANUP_DEFAULT);
+  mod.set_const("CLEANUP_ATEXIT", CLEANUP_ATEXIT);
+  mod.set_const("CLEANUP_COMMS", CLEANUP_COMMS);
+  mod.add_bits< enum COMM_FLAG >("COMM_FLAG", jlcxx::julia_type("CppEnum"));
+  mod.set_const("COMM_FLAG_VALID", COMM_FLAG_VALID);
+  mod.set_const("COMM_FLAG_GLOBAL", COMM_FLAG_GLOBAL);
+  mod.set_const("COMM_FLAG_WORKER", COMM_FLAG_WORKER);
+  mod.set_const("COMM_FLAG_DELAYED_OPEN", COMM_FLAG_DELAYED_OPEN);
+  mod.set_const("COMM_FLAG_CLIENT", COMM_FLAG_CLIENT);
+  mod.set_const("COMM_FLAG_SERVER", COMM_FLAG_SERVER);
+  mod.set_const("COMM_FLAG_CLIENT_RESPONSE", COMM_FLAG_CLIENT_RESPONSE);
+  mod.set_const("COMM_FLAG_SERVER_RESPONSE", COMM_FLAG_SERVER_RESPONSE);
+  mod.set_const("COMM_FLAG_ALWAYS_SEND_HEADER", COMM_FLAG_ALWAYS_SEND_HEADER);
+  mod.set_const("COMM_FLAG_ALLOW_MULTIPLE_COMMS", COMM_FLAG_ALLOW_MULTIPLE_COMMS);
+  mod.set_const("COMM_FLAG_USED_SENT", COMM_FLAG_USED_SENT);
+  mod.set_const("COMM_FLAG_USED_RECV", COMM_FLAG_USED_RECV);
+  mod.set_const("COMM_FLAG_EOF_SENT", COMM_FLAG_EOF_SENT);
+  mod.set_const("COMM_FLAG_EOF_RECV", COMM_FLAG_EOF_RECV);
+  mod.set_const("COMM_FLAG_CLOSE_ON_EOF_RECV", COMM_FLAG_CLOSE_ON_EOF_RECV);
+  mod.set_const("COMM_FLAG_CLOSE_ON_EOF_SEND", COMM_FLAG_CLOSE_ON_EOF_SEND);
+  mod.set_const("COMM_FLAG_INTERFACE", COMM_FLAG_INTERFACE);
+  mod.set_const("COMM_FLAG_DELETE", COMM_FLAG_DELETE);
+  mod.set_const("COMM_FLAG_ASYNC", COMM_FLAG_ASYNC);
+  mod.set_const("COMM_FLAG_ASYNC_WRAPPED", COMM_FLAG_ASYNC_WRAPPED);
+  mod.set_const("COMM_FLAG_SET_OPP_ENV", COMM_FLAG_SET_OPP_ENV);
+  mod.set_const("COMM_FLAG_WRAPPER", COMM_FLAG_WRAPPER);
+  mod.set_const("COMM_FLAG_FORK", COMM_FLAG_FORK);
+  mod.set_const("COMM_FLAG_FORK_CYCLE", COMM_FLAG_FORK_CYCLE);
+  mod.set_const("COMM_FLAG_FORK_BROADCAST", COMM_FLAG_FORK_BROADCAST);
+  mod.set_const("COMM_FLAG_FORK_COMPOSITE", COMM_FLAG_FORK_COMPOSITE);
+  mod.set_const("COMM_FLAG_FORK_TINE", COMM_FLAG_FORK_TINE);
+  mod.set_const("COMM_FLAG_DONT_SERIALIZE", COMM_FLAG_DONT_SERIALIZE);
+  mod.set_const("COMM_FLAG_REQUIRES_PYGIL", COMM_FLAG_REQUIRES_PYGIL);
+  mod.set_const("FILE_FLAG_APPEND", FILE_FLAG_APPEND);
+  mod.set_const("FILE_FLAG_BINARY", FILE_FLAG_BINARY);
+  mod.set_const("FILE_FLAG_READLINE", FILE_FLAG_READLINE);
+  mod.set_const("COMM_FLAG_MAX", COMM_FLAG_MAX);
+  mod.method("|", [](const enum COMM_FLAG& a, const enum COMM_FLAG& b) { return static_cast<FLAG_TYPE>((a | b)); });
+  mod.method("|", [](const enum COMM_FLAG& a, const FLAG_TYPE& b) { return static_cast<FLAG_TYPE>((a | b)); });
+  mod.method("|", [](const FLAG_TYPE& a, const enum COMM_FLAG& b) { return static_cast<FLAG_TYPE>((a | b)); });
+  mod.add_bits< enum LANGUAGE >("LANGUAGE", jlcxx::julia_type("CppEnum"));
+  mod.set_const("NO_LANGUAGE", NO_LANGUAGE);
+  mod.set_const("CXX_LANGUAGE", CXX_LANGUAGE);
+  mod.set_const("C_LANGUAGE", C_LANGUAGE);
+  mod.set_const("FORTRAN_LANGUAGE", FORTRAN_LANGUAGE);
+  mod.set_const("PYTHON_LANGUAGE", PYTHON_LANGUAGE);
+  mod.set_const("MATLAB_LANGUAGE", MATLAB_LANGUAGE);
+  mod.set_const("R_LANGUAGE", R_LANGUAGE);
+  mod.set_const("JULIA_LANGUAGE", JULIA_LANGUAGE);
+  mod.set_const("JAVA_LANGUAGE", JAVA_LANGUAGE);
+  mod.add_bits< enum HeadFlags >("HeadFlags", jlcxx::julia_type("CppEnum"));
+  mod.set_const("HEAD_FLAG_VALID", HEAD_FLAG_VALID);
+  mod.set_const("HEAD_FLAG_MULTIPART", HEAD_FLAG_MULTIPART);
+  mod.set_const("HEAD_META_IN_DATA", HEAD_META_IN_DATA);
+  mod.set_const("HEAD_AS_ARRAY", HEAD_AS_ARRAY);
+  mod.set_const("HEAD_FLAG_OWNSDATA", HEAD_FLAG_OWNSDATA);
+  mod.set_const("HEAD_FLAG_ALLOW_REALLOC", HEAD_FLAG_ALLOW_REALLOC);
+  mod.set_const("HEAD_TEMPORARY", HEAD_TEMPORARY);
+  mod.set_const("HEAD_FLAG_EOF", HEAD_FLAG_EOF);
+  mod.set_const("HEAD_FLAG_CLIENT_SIGNON", HEAD_FLAG_CLIENT_SIGNON);
+  mod.set_const("HEAD_FLAG_SERVER_SIGNON", HEAD_FLAG_SERVER_SIGNON);
+  mod.set_const("HEAD_FLAG_REPEAT", HEAD_FLAG_REPEAT);
+  mod.set_const("HEAD_FLAG_FORMATTED", HEAD_FLAG_FORMATTED);
+  mod.set_const("HEAD_FLAG_NO_TYPE", HEAD_FLAG_NO_TYPE);
+  mod.set_const("HEAD_FLAG_NO_HEAD", HEAD_FLAG_NO_HEAD);
+  mod.set_const("HEAD_FLAG_ASYNC", HEAD_FLAG_ASYNC);
+  mod.set_const("HEAD_FLAG_DOC_SET", HEAD_FLAG_DOC_SET);
+  mod.set_const("HEAD_FLAG_DOC_ONLY", HEAD_FLAG_DOC_ONLY);
+  mod.method("|", [](const enum HeadFlags& a, const enum HeadFlags& b) { return static_cast<HEAD_FLAG_TYPE>((a | b)); });
+  mod.method("|", [](const enum HeadFlags& a, const HEAD_FLAG_TYPE& b) { return static_cast<HEAD_FLAG_TYPE>((a | b)); });
+  mod.method("|", [](const HEAD_FLAG_TYPE& a, const enum HeadFlags& b) { return static_cast<HEAD_FLAG_TYPE>((a | b)); });
+  mod.add_bits< enum HEAD_RESET_MODE >("HEAD_RESET_MODE", jlcxx::julia_type("CppEnum"));
+  mod.set_const("HEAD_RESET_COMPLETE", HEAD_RESET_COMPLETE);
+  mod.set_const("HEAD_RESET_OWN_DATA", HEAD_RESET_OWN_DATA);
+  mod.add_bits< enum SIGNON_STATUS >("SIGNON_STATUS", jlcxx::julia_type("CppEnum"));
+  mod.set_const("SIGNON_NOT_SENT", SIGNON_NOT_SENT);
+  mod.set_const("SIGNON_NOT_WAITING", SIGNON_NOT_WAITING);
+  mod.set_const("SIGNON_COMPLETE", SIGNON_COMPLETE);
+  mod.add_bits< enum THREAD_STATUS >("THREAD_STATUS", jlcxx::julia_type("CppEnum"));
+  mod.set_const("THREAD_INACTIVE", THREAD_INACTIVE);
+  mod.set_const("THREAD_STARTED", THREAD_STARTED);
+  mod.set_const("THREAD_ERROR", THREAD_ERROR);
+  mod.set_const("THREAD_SIGNON_RECV", THREAD_SIGNON_RECV);
+  mod.set_const("THREAD_IS_CLIENT", THREAD_IS_CLIENT);
+  mod.add_bits< enum FORK_TYPE >("FORK_TYPE", jlcxx::julia_type("CppEnum"));
+  mod.set_const("FORK_DEFAULT", FORK_DEFAULT);
+  mod.set_const("FORK_CYCLE", FORK_CYCLE);
+  mod.set_const("FORK_BROADCAST", FORK_BROADCAST);
+  mod.set_const("FORK_COMPOSITE", FORK_COMPOSITE);
+  mod.add_bits< enum FUNCTION_FLAGS >("FUNCTION_FLAGS", jlcxx::julia_type("CppEnum"));
+  mod.set_const("FUNCTION_ON_ASYNC", FUNCTION_ON_ASYNC);
+  mod.set_const("FUNCTION_WEAK_REF", FUNCTION_WEAK_REF);
+  mod.set_const("FUNCTION_EMBEDDED", FUNCTION_EMBEDDED);
+  auto wrapped_Comm_t = mod.add_type< Comm_t >("Comm_t");
+  wrapped_Comm_t.method("get_status_message", []( const Comm_t& self) { return self.get_status_message(0, {}, {}); });
+  wrapped_Comm_t.method("get_status_message", []( const Comm_t& self, unsigned int (nindent)) { return self.get_status_message(nindent, {}, {}); });
+  wrapped_Comm_t.method("get_status_message", []( const Comm_t& self, unsigned int (nindent), const std::vector< std::string >& (extra_lines_before)) { return self.get_status_message(nindent, extra_lines_before, {}); });
+  wrapped_Comm_t.method("get_status_message", []( const Comm_t& self, unsigned int (nindent), const std::vector< std::string >& (extra_lines_before), const std::vector< std::string >& (extra_lines_after)) { return self.get_status_message(nindent, extra_lines_before, extra_lines_after); });
+  wrapped_Comm_t.method("printStatus", []( const Comm_t& self) { return self.printStatus(0, {}, {}); });
+  wrapped_Comm_t.method("printStatus", []( const Comm_t& self, unsigned int (nindent)) { return self.printStatus(nindent, {}, {}); });
+  wrapped_Comm_t.method("printStatus", []( const Comm_t& self, unsigned int (nindent), const std::vector< std::string >& (extra_lines_before)) { return self.printStatus(nindent, extra_lines_before, {}); });
+  wrapped_Comm_t.method("printStatus", []( const Comm_t& self, unsigned int (nindent), const std::vector< std::string >& (extra_lines_before), const std::vector< std::string >& (extra_lines_after)) { return self.printStatus(nindent, extra_lines_before, extra_lines_after); });
+  wrapped_Comm_t.method< int, Comm_t >("send_eof", &Comm_t::send_eof);
+  wrapped_Comm_t.method("send", []( Comm_t& self, const rapidjson::Document& (data)) { return self.send(data, false); });
+  wrapped_Comm_t.method("send", []( Comm_t& self, const rapidjson::Document& (data), bool (not_generic)) { return self.send(data, not_generic); });
+  wrapped_Comm_t.method("send", []( Comm_t& self, const rapidjson::Value& (data)) { return self.send(data, false); });
+  wrapped_Comm_t.method("send", []( Comm_t& self, const rapidjson::Value& (data), bool (not_generic)) { return self.send(data, not_generic); });
+  wrapped_Comm_t.method< int, Comm_t, const std::string& >("send", &Comm_t::send);
+  wrapped_Comm_t.method("set_timeout_recv", []( Comm_t& self, jlcxx::StrictlyTypedNumber<int64_t> (new_timeout)) { self.set_timeout_recv(new_timeout.value); });
+  wrapped_Comm_t.method< int64_t, Comm_t >("get_timeout_recv", &Comm_t::get_timeout_recv);
+  wrapped_Comm_t.method< int, Comm_t, const int64_t& >("wait_for_recv", &Comm_t::wait_for_recv);
+  wrapped_Comm_t.method("recv", []( Comm_t& self, rapidjson::Document& (data)) { return self.recv(data, false); });
+  wrapped_Comm_t.method("recv", []( Comm_t& self, rapidjson::Document& (data), bool (not_generic)) { return self.recv(data, not_generic); });
+  wrapped_Comm_t.method< long, Comm_t, std::string& >("recv", &Comm_t::recv);
+  wrapped_Comm_t.method< long, Comm_t, const rapidjson::Document&, rapidjson::Document& >("call", &Comm_t::call);
+  wrapped_Comm_t.method("nmsg", []( const Comm_t& self) { return self.nmsg(NONE); });
+  wrapped_Comm_t.method("nmsg", []( const Comm_t& self, DIRECTION (dir)) { return self.nmsg(dir); });
+  wrapped_Comm_t.method< void, Comm_t >("open", &Comm_t::open);
+  wrapped_Comm_t.method< void, Comm_t >("close", &Comm_t::close);
+  wrapped_Comm_t.method< bool, Comm_t >("is_closed", &Comm_t::is_closed);
+  wrapped_Comm_t.method< bool, Comm_t >("is_open", &Comm_t::is_open);
+  wrapped_Comm_t.method< COMM_TYPE, Comm_t >("getType", &Comm_t::getType);
+  wrapped_Comm_t.method< void, Comm_t, COMM_TYPE >("setType", &Comm_t::setType);
+  wrapped_Comm_t.method< bool, Comm_t >("valid", &Comm_t::valid);
+  wrapped_Comm_t.method< bool, Comm_t >("global", &Comm_t::global);
+  wrapped_Comm_t.method< bool, Comm_t >("async", &Comm_t::async);
+  wrapped_Comm_t.method< FLAG_TYPE&, Comm_t >("getFlags", &Comm_t::getFlags);
+  wrapped_Comm_t.method< FLAG_TYPE, Comm_t >("getFlags", &Comm_t::getFlags);
+  wrapped_Comm_t.method< const std::string&, Comm_t >("getName", &Comm_t::getName);
+  wrapped_Comm_t.method< std::string, Comm_t >("logClass", &Comm_t::logClass);
+  wrapped_Comm_t.method< std::string, Comm_t >("logInst", &Comm_t::logInst);
+  wrapped_Comm_t.method< std::string, Comm_t >("getAddress", &Comm_t::getAddress);
+  wrapped_Comm_t.method< DIRECTION, Comm_t >("getDirection", &Comm_t::getDirection);
+  wrapped_Comm_t.method< COMM_TYPE, Comm_t >("getCommType", &Comm_t::getCommType);
+  wrapped_Comm_t.method< LANGUAGE, Comm_t >("getLanguage", &Comm_t::getLanguage);
+  wrapped_Comm_t.method("setLanguage", []( Comm_t& self) { return self.setLanguage(NO_LANGUAGE); });
+  wrapped_Comm_t.method("setLanguage", []( Comm_t& self, LANGUAGE (new_lang)) { return self.setLanguage(new_lang); });
+  wrapped_Comm_t.method< size_t, Comm_t >("getMaxMsgSize", &Comm_t::getMaxMsgSize);
+  wrapped_Comm_t.method< size_t, Comm_t >("getMsgBufSize", &Comm_t::getMsgBufSize);
+  wrapped_Comm_t.module().method< bool >("isInstalled", &Comm_t::isInstalled);
+  wrapped_Comm_t.method("PyGIL_release", []( const Comm_t& self) { return self.PyGIL_release(false); });
+  wrapped_Comm_t.method("PyGIL_release", []( const Comm_t& self, bool (force)) { return self.PyGIL_release(force); });
+  wrapped_Comm_t.method("PyGIL_restore", []( const Comm_t& self) { return self.PyGIL_restore(false); });
+  wrapped_Comm_t.method("PyGIL_restore", []( const Comm_t& self, bool (force)) { return self.PyGIL_restore(force); });
+  wrapped_Comm_t.method("addSchema", []( Comm_t& self, const rapidjson::Value& (s)) { return self.addSchema(s, false, NONE); });
+  wrapped_Comm_t.method("addSchema", []( Comm_t& self, const rapidjson::Value& (s), bool (isMetadata)) { return self.addSchema(s, isMetadata, NONE); });
+  wrapped_Comm_t.method("addSchema", []( Comm_t& self, const rapidjson::Value& (s), bool (isMetadata), const DIRECTION (dir)) { return self.addSchema(s, isMetadata, dir); });
+  wrapped_Comm_t.method("addSchema", []( Comm_t& self, const std::string& (schemaStr)) { return self.addSchema(schemaStr, false, NONE); });
+  wrapped_Comm_t.method("addSchema", []( Comm_t& self, const std::string& (schemaStr), bool (isMetadata)) { return self.addSchema(schemaStr, isMetadata, NONE); });
+  wrapped_Comm_t.method("addSchema", []( Comm_t& self, const std::string& (schemaStr), bool (isMetadata), const DIRECTION (dir)) { return self.addSchema(schemaStr, isMetadata, dir); });
+  wrapped_Comm_t.method("addFormat", []( Comm_t& self, const std::string& (format_str)) { return self.addFormat(format_str, false, {}, {}, NONE); });
+  wrapped_Comm_t.method("addFormat", []( Comm_t& self, const std::string& (format_str), bool (as_array)) { return self.addFormat(format_str, as_array, {}, {}, NONE); });
+  wrapped_Comm_t.method("addFormat", []( Comm_t& self, const std::string& (format_str), bool (as_array), const std::vector< std::string >& (field_names)) { return self.addFormat(format_str, as_array, field_names, {}, NONE); });
+  wrapped_Comm_t.method("addFormat", []( Comm_t& self, const std::string& (format_str), bool (as_array), const std::vector< std::string >& (field_names), const std::vector< std::string >& (field_units)) { return self.addFormat(format_str, as_array, field_names, field_units, NONE); });
+  wrapped_Comm_t.method("addFormat", []( Comm_t& self, const std::string& (format_str), bool (as_array), const std::vector< std::string >& (field_names), const std::vector< std::string >& (field_units), const DIRECTION (dir)) { return self.addFormat(format_str, as_array, field_names, field_units, dir); });
+  wrapped_Comm_t.method("copySchema", []( Comm_t& self, const Comm_t* (other)) { return self.copySchema(other, NONE); });
+  wrapped_Comm_t.method("copySchema", []( Comm_t& self, const Comm_t* (other), const DIRECTION (dir)) { return self.copySchema(other, dir); });
+  wrapped_Comm_t.method< std::string, Comm_t >("getOppAddress", &Comm_t::getOppAddress);
+  wrapped_Comm_t.method< COMM_TYPE, Comm_t >("getOppCommType", &Comm_t::getOppCommType);
+  wrapped_Comm_t.method< void, Comm_t >("setOppEnv", &Comm_t::setOppEnv);
+  wrapped_Comm_t.method< void, Comm_t >("unsetOppEnv", &Comm_t::unsetOppEnv);
+  wrapped_Comm_t.method< bool, Comm_t, Comm_t*, Comm_t* >("afterSendRecv", &Comm_t::afterSendRecv);
+  wrapped_Comm_t.method< bool, Comm_t, std::string& >("genMetadata", &Comm_t::genMetadata);
+  wrapped_Comm_t.method< Comm_t*, Comm_t >("getGlobalComm", &Comm_t::getGlobalComm);
+
+  mod.method< void >("ygg_cleanup", &ygg_cleanup);
+
+  auto wrapped_YggComm = mod.add_type< WrapComm >("YggComm", jlcxx::julia_base_type< Comm_t >());
+  wrapped_YggComm.method("_construct", [](const std::string (nme), const DIRECTION (dirn)){ return WrapComm(nme, dirn, 0, DEFAULT_COMM, NULL_COMM); });
+  wrapped_YggComm.method("_construct", [](const std::string (nme), const DIRECTION (dirn), jlcxx::StrictlyTypedNumber<FLAG_TYPE> (flgs)){ return WrapComm(nme, dirn, flgs.value, DEFAULT_COMM, NULL_COMM); });
+  wrapped_YggComm.method("_construct", [](const std::string (nme), const DIRECTION (dirn), jlcxx::StrictlyTypedNumber<FLAG_TYPE> (flgs), const COMM_TYPE (type)){ return WrapComm(nme, dirn, flgs.value, type, NULL_COMM); });
+  wrapped_YggComm.method("_construct", [](const std::string (nme), const DIRECTION (dirn), jlcxx::StrictlyTypedNumber<FLAG_TYPE> (flgs), const COMM_TYPE (type), const COMM_TYPE (wraptype)){ return WrapComm(nme, dirn, flgs.value, type, wraptype); });
+  wrapped_YggComm.constructor< Comm_t* >();
 }

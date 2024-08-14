@@ -82,7 +82,7 @@ endfunction()
 
 function(add_yggdrasil_interface LANGUAGE)
   include(SearchTools)
-  set(options DISABLE_BY_DEFAULT)
+  set(options DISABLE_BY_DEFAULT LANGUAGE_IS_DEPENDENCY)
   set(oneValueArgs DIRECTORY DEPENDENCY LANGUAGE_DEPENDENCY)
   set(multiValueArgs DEPENDENCY_PROPERTIES)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -117,6 +117,13 @@ function(add_yggdrasil_interface LANGUAGE)
     set(BUILD_C_LIBRARY ${BUILD_${LANGUAGE}_LIBRARY} PARENT_SCOPE)
   endif()
   list(APPEND YGG_LANGUAGES_SUPPORTED ${LANGUAGE})
+  if(BUILD_${LANGUAGE}_LIBRARY AND ARGS_LANGUAGE_IS_DEPENDENCY)
+    find_yggdrasil_dependency(${LANGUAGE})
+    if(NOT ${LANGUAGE}_FOUND)
+      message(STATUS "${LANGUAGE} library not found, ${LANGUAGE} interface will not be built")
+      set(BUILD_${LANGUAGE}_LIBRARY OFF)
+    endif()
+  endif()
   if(ARGS_DEPENDENCY AND BUILD_${LANGUAGE}_LIBRARY)
     find_yggdrasil_dependency(
       ${ARGS_DEPENDENCY} LANGUAGE ${LANGUAGE}
@@ -138,7 +145,7 @@ function(add_yggdrasil_interface LANGUAGE)
   endif()
   propagate_cmake_variables(
     YGG_LANGUAGES_SUPPORTED YGG_LANGUAGES_AVAILABLE
-    YGG_INSTALL_TARGETS YGG_INSTALL_INCLUDES
+    YGG_INSTALL_TARGETS YGG_INSTALL_INCLUDES YGG_INSTALL_CONFIG
     BUILD_${LANGUAGE}_LIBRARY YGG_BUILD_${LANGUAGE}_TESTS
     YGG_${LANGUAGE}_REQUIRED YGG_TARGET_${LANGUAGE}
     YGG_BUILD_TESTS YGG_BUILD_THIRDPARTY_GTEST
@@ -237,14 +244,15 @@ function(add_yggdrasil_option NAME)
     unset(DEFAULT_COMM CACHE)
   endif()
   propagate_cmake_variables(
-    ENABLE_${NAME} YGG_INSTALL_DEPS YGG_INSTALL_DEFS DEPS_LIBRARIES
-    DEPS_LIBRARY_DIRS DEPS_INCLUDE_DIRS YGG_COMMS_AVAILABLE
+    ENABLE_${NAME} YGG_INSTALL_DEPS YGG_INSTALL_DEFS YGG_INSTALL_CONFIG
+    DEPS_LIBRARIES DEPS_LIBRARY_DIRS DEPS_INCLUDE_DIRS YGG_COMMS_AVAILABLE
   )
 endfunction()
 
 
 function(add_library_dirs_to_rpath TARGET)
   set(oneValueArgs DESTINATION)
+  set(multiValueArgs ADDITIONAL_DIRECTORIES)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
   get_target_property(YGG_RPATH ${TARGET} INSTALL_RPATH)
   if (ARGS_DESTINATION)
@@ -256,6 +264,9 @@ function(add_library_dirs_to_rpath TARGET)
   endif()
   if (DEPS_LIBRARY_DIRS)
     list(APPEND YGG_RPATH ${DEPS_LIBRARY_DIRS})
+  endif()
+  if (ARGS_ADDITIONAL_DIRECTORIES)
+    list(APPEND YGG_RPATH ${ARGS_ADDITIONAL_DIRECTORIES})
   endif()
   # foreach(lib ${DEPS_LIBRARIES})
   #   if(EXISTS ${lib})
@@ -269,6 +280,9 @@ function(add_library_dirs_to_rpath TARGET)
   message(STATUS "DEPS_LIBRARIES[${TARGET}] = ${DEPS_LIBRARIES}")
   message(STATUS "YGG_RPATH[${TARGET}] = ${YGG_RPATH}")
   if (YGG_RPATH)
+    if(APPLE)
+      set_target_properties(${TARGET} PROPERTIES MACOSX_RPATH 1)
+    endif()
     set_target_properties(
       ${TARGET} PROPERTIES
       INSTALL_RPATH "${YGG_RPATH}"
@@ -311,4 +325,46 @@ function(set_ygg_test_env TEST_NAME)
   if(ARGS_OUTPUT_PROPERTIES)
     set(${ARGS_OUTPUT_PROPERTIES} "${${ARGS_OUTPUT_PROPERTIES}}" PARENT_SCOPE)
   endif()
+endfunction()
+
+function(parse_yggdrasil_cmake_config)
+  set(ikey)
+  set(ityp)
+  set(ides)
+  foreach(cfg ${YGG_INSTALL_CONFIG})
+    if(ikey AND ityp AND ides)
+      set(${ikey} "${cfg}" CACHE ${ityp} "${ides}")
+      set(ikey)
+      set(ityp)
+      set(ides)
+    elseif(NOT ikey)
+      set(ikey "${cfg}")
+    elseif(NOT ityp)
+      set(ityp "${cfg}")
+    elseif(NOT ides)
+      set(ides "${cfg}")
+    endif()
+  endforeach()
+endfunction()
+
+function(add_yggdrasil_cmake_config NAME)
+  set(oneValueArgs VALUE TYPE DESCRIPTION)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  if(ARGS_VALUE)
+    set(${NAME} ${ARGS_VALUE})
+  else()
+    set(ARGS_VALUE ${${NAME}})
+  endif()
+  if(NOT ARGS_TYPE)
+    set(ARGS_TYPE STRING)
+  endif()
+  if(NOT ARGS_DESCRIPTION)
+    set(ARGS_DESCRIPTION "${NAME}")
+  endif()
+  set(${NAME} "${${NAME}}" CACHE ${ARGS_TYPE} "${ARGS_DESCRIPTION}")
+  list(
+    APPEND YGG_INSTALL_CONFIG
+    "${NAME}" "${ARGS_TYPE}" "${ARGS_DESCRIPTION}" "${${NAME}}"
+  )
+  set(YGG_INSTALL_CONFIG "${YGG_INSTALL_CONFIG}" PARENT_SCOPE)
 endfunction()

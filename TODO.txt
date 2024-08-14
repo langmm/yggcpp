@@ -6,11 +6,13 @@
 * Add for_server keyword?
 * Update docs for python extension
 * Generate docs for python extension
-* Only regenerate enum/fortran interface when source files change
 * Add methods for checking generic object type in C & Fortran (autowrap)
 * Automated wrapping of C++ classes/methods
 * Ensure that tests for Python calling of C/Fortran functions is run on GHA jobs
 * Update names of Python GIL macros in rapidjson to be yggdrasil specific
+* Handle graceful exit on Julia error
+* Merge YggInterface & rapidjson modules for Julia interface
+* Add julia convert/promote functions for Value/Document to/from String, Int, UInt, Int64, UInt64, Float, Double
 
 TESTS
 

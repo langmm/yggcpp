@@ -363,7 +363,7 @@ message(STATUS "DEPS_LIBRARY_DIRS = ${DEPS_LIBRARY_DIRS}")
 #     set(BUILD_CXX_LIBRARY ON)
 #   endif()
 # endif()
-if(BUILD_Fortran_LIBRARY OR BUILD_Julia_LIBRARY)
+if(BUILD_Fortran_LIBRARY OR BUILD_Julia_LIBRARY OR BUILD_R_LIBRARY)
   set(BUILD_CXX_LIBRARY ON)
 endif()
 if(YGG_LINK_Python_TO_CXX AND (BUILD_Python_LIBRARY OR SKBUILD))
@@ -415,9 +415,16 @@ if (YGG_Fortran_WRAP_C_ENUMS)
   list(APPEND GENERATE_ENUM_ARGS --fortran-wrap-c-enums)
 endif()
 python_code_generation(
-  utils/generate_enum.py
+  enum utils/generate_enum.py
   ARGUMENTS ${GENERATE_ENUM_ARGS}
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  SOURCES cpp/include/utils/enums.hpp
+  BYPRODUCTS
+  cpp/include/utils/enums_maps.hpp
+  cpp/src/utils/enums_maps.cpp
+  fortran/c_wrappers_enums.h
+  fortran/c_wrappers_enums.c
+  fortran/YggInterface_enums.F90
 )
 
 ################################################
@@ -425,9 +432,20 @@ python_code_generation(
 ################################################
 
 python_code_generation(
-  generate_generic.runner IS_MODULE
+  cfort utils/generate_generic
+  ENTRY_POINT -m generate_generic.runner
   ARGUMENTS ${GENERATE_DATATYPES_ARGS}
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/utils
+  SOURCES
+  cpp/include/YggInterface.h
+  cpp/include/communicators/comm_t.hpp
+  BYPRODUCTS
+  cpp/src/datatypes/dtype_t.cpp
+  cpp/include/datatypes/dtype_t.h
+  fortran/YggInterface.F90
+  fortran/YggInterface_cdef.F90
+  fortran/c_wrappers.c
+  fortran/YggInterface_interfaces.F90
 )
 
 ######################
@@ -462,7 +480,17 @@ add_yggdrasil_interface(Fortran)
 add_yggdrasil_interface(
   Julia DISABLE_BY_DEFAULT DEPENDENCY JlCxx
   LANGUAGE_DEPENDENCY CxxWrap
+  LANGUAGE_IS_DEPENDENCY
 )
+
+####################
+# Create R Library #
+####################
+
+# add_yggdrasil_interface(
+#   R DISABLE_BY_DEFAULT
+#   DEPENDENCY Rcpp
+# )
 
 ##################
 # Install        #
@@ -500,7 +528,7 @@ if (YGG_INSTALL_TARGETS)
   file(GLOB_RECURSE modules_raw LIST_DIRECTORIES false
        "${CMAKE_CURRENT_LIST_DIR}/cmake/*.cmake")
   foreach(f IN LISTS modules_raw)
-    if ((f STREQUAL "FindJulia.cmake") OR (NOT f MATCHES "Find*"))
+    if ((f MATCHES "FindJulia.cmake") OR (NOT f MATCHES "Find*"))
       list(APPEND modules ${f})
     endif()
   endforeach()
@@ -515,13 +543,22 @@ if (YGG_INSTALL_TARGETS)
     install(FILES ${YGG_INSTALL_INCLUDES}
             DESTINATION ${YGGDRASIL_INSTALL_INCLUDEDIR})
   endif()
+  if(BUILD_Julia_LIBRARY AND Julia_EXECUTABLE)
+    include(InstallJuliaPackage)
+    install_julia_package(
+      ${CMAKE_CURRENT_SOURCE_DIR}/julia/YggInterface
+      DESTINATION ${CMAKE_INSTALL_BINDIR}
+      TARGET ${YGG_TARGET_Julia}
+      Julia_EXECUTABLE ${Julia_EXECUTABLE}
+    )
+  endif()
 endif ()
     
 #########
 # Tests #
 #########
 
-if(YGG_BUILD_TESTS OR YGG_BUILD_CXX_TESTS OR YGG_BUILD_Fortran_TESTS OR YGG_BUILD_Python_TESTS)
+if(YGG_BUILD_TESTS OR YGG_BUILD_CXX_TESTS OR YGG_BUILD_Fortran_TESTS OR YGG_BUILD_Python_TESTS OR YGG_BUILD_Julia_TESTS)
     enable_testing()
     include(CTest)
     add_subdirectory(tests)

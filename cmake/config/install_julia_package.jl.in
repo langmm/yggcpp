@@ -1,0 +1,12 @@
+using CxxWrap
+using Pkg
+try
+  println("Removing package")
+  Pkg.rm("@PACKAGE_NAME@")
+catch
+  println("Package not installed")
+end
+Pkg.develop(path="@PACKAGE_DIRECTORY@")
+using @PACKAGE_NAME@
+println(names(@PACKAGE_NAME@; all=true))
+println(@PACKAGE_NAME@.DEFAULT_COMM)

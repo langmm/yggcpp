@@ -27,6 +27,7 @@ S_MSG="100"
 COMM="DEFAULT_COMM"
 INSTALL_DIR="$(pwd)/_install"
 BUILD_DIR="build"
+RUNDIRECT=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -152,6 +153,11 @@ while [[ $# -gt 0 ]]; do
 	    ;;
 	--speed )
 	    TEST_TYPE="speed"
+	    shift # past argument with no value
+	    ;;
+	--speed-raw )
+	    TEST_TYPE="speed"
+	    RUNDIRECT="TRUE"
 	    shift # past argument with no value
 	    ;;
 	-n | --n-msg )
@@ -291,6 +297,11 @@ fi
 #     export ASAN_SYMBOLIZER_PATH=$(which llvm-symbolizer)
 # fi
 
+if [ -n "${DYLD_LIBRARY_PATH}" ]; then
+    export DYLD_LIBRARY_PATH="${DYLD_LIBRARY_PATH}:${INSTALL_DIR}/lib"
+else
+    export DYLD_LIBRARY_PATH="${INSTALL_DIR}/lib"
+fi
 if [ -n "$REBUILD" ]; then
     if [ -d "$BUILD_DIR" ]; then
 	rm -rf "$BUILD_DIR"
@@ -308,6 +319,7 @@ if [ -n "$REBUILD" ]; then
     if [ -f "cpp/src/pyYggdrasil/lib/libYggInterface_py.dylib" ]; then
 	rm "cpp/src/pyYggdrasil/lib/libYggInterface_py.dylib"
     fi
+    # julia -e "using Pkg; Pkg.rm(\"YggInterface\")"
 fi
 if [ ! -d "$BUILD_DIR" ]; then
     mkdir $BUILD_DIR
@@ -370,10 +382,15 @@ if [[ "$TEST_TYPE" == "speed" ]]; then
 	cmake ../tests/speedtest "-DYggInterface_DIR=$INSTALL_DIR/lib/cmake/YggInterface" -DN_MSG=$N_MSG -DS_MSG=$S_MSG -DCOMM=$COMM $CMAKE_FLAGS $CMAKE_FLAGS_SPEED
 	cmake --build .
     fi
-    if [ ! -n "$DONT_TEST" ]; then
-	# echo "DYLD_INSERT_LIBRARIES = ${DYLD_INSERT_LIBRARIES}"
-	ctest $TEST_FLAGS
-	# make test
+    if [ -n "$RUNDIRECT" ]; then
+	export DYLD_LIBRARY_PATH="${DYLD_LIBRARY_PATH}:/Users/langmm/mambaforge/envs/mamba39/lib:/opt/homebrew/Cellar/julia/1.9.4/lib:/opt/homebrew/Cellar/julia/1.9.4/lib/julia"
+	julia Julia/speedtest.jl
+    else
+	if [ ! -n "$DONT_TEST" ]; then
+	    # echo "DYLD_INSERT_LIBRARIES = ${DYLD_INSERT_LIBRARIES}"
+	    ctest $TEST_FLAGS
+	    # make test
+	fi
     fi
     cd ..
 fi
