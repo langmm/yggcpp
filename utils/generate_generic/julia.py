@@ -5,7 +5,7 @@ from generate_generic.base import (
     ConstructorUnit, ClassUnit, ModuleUnit, FileUnit, FunctionUnit)
 from generate_generic.cpp import (
     CXXTypeBaseUnit, CXXTypeUnit, CXXVariableUnit, CXXFunctionUnit,
-    CXXMethodUnit, CXXModuleUnit, CXXFileUnit)
+    CXXMethodUnit, CXXModuleUnit, CXXFileUnit, CXXTypedefUnit)
 
 
 JuliaCXXWrapMixin = create_mixin('julia_cxxwrap')
@@ -14,14 +14,14 @@ JuliaCXXWrapMixin = create_mixin('julia_cxxwrap')
 class JuliaCXXWrapEnumValueUnit(JuliaCXXWrapMixin, EnumValueUnit):
 
     _fstring_cond = (
-        '{indent}mod.set_const("{name}", {name:WR});'
+        'mod.set_const("{name}", {name:WR});'
     )
 
 
 class JuliaCXXWrapEnumUnit(JuliaCXXWrapMixin, EnumUnit):
 
     _fstring_cond = (
-        '{indent}mod.add_bits< enum {name:WR} >("{name}", '
+        'mod.add_bits< enum {name:WR} >("{name}", '
         'jlcxx::julia_type("CppEnum"));\n'
         '{members}'
     )
@@ -39,8 +39,8 @@ class JuliaCXXWrapEnumUnit(JuliaCXXWrapMixin, EnumUnit):
         if self.properties.get('type', None):
             kwargs.setdefault(
                 'alt_fstring_cond',
-                self._fstring_cond + '\n{indent}'
-                + '\n{indent}'.join(self._fstring_cond_op))
+                self._fstring_cond + '\n'
+                + '\n'.join(self._fstring_cond_op))
         return super(JuliaCXXWrapEnumUnit, self).get_fstring(**kwargs)
 
 
@@ -70,22 +70,24 @@ class JuliaCXXWrapTypeUnit(JuliaCXXWrapMixin, CXXTypeUnit):
     }
 
     def wrap_type(self):
-        if ((self.properties['base'] in self.integer_types
-             and not self.properties.get('ptr', False))):
+        if ((self.properties['base'].properties['name'] in self.integer_types
+             and not (self.properties.get('ptr', False)
+                      or self.properties.get('shape', False)))):
             if not self.properties.get('strictly_typed', False):
+                template_spec = JuliaCXXWrapTypeUnit.parse(self.format())
                 self.properties['strictly_typed'] = True
-                self.properties['base'] = (
-                    f"jlcxx::StrictlyTypedNumber<"
-                    f"{self.properties['base']}"
-                    f"{self.properties.get('ptr', '')}>")
+                self.properties['base'] = JuliaCXXWrapTypeBaseUnit.parse(
+                    "jlcxx::StrictlyTypedNumber")
+                self.properties['template_spec'] = [template_spec]
                 self.properties.pop('ptr', None)
             return True
-        elif (self.properties['base'] == 'char'
+        elif (self.properties['base'].properties['name'] == 'char'
               and self.properties.get('const', None)
               and self.properties.get('ptr', '*')):
             if not self.properties.get('wrapped_type', False):
                 self.properties['wrapped_type'] = True
-                self.properties['base'] = 'std::string'
+                self.properties['base'] = JuliaCXXWrapTypeBaseUnit.parse(
+                    'std::string')
                 self.properties.pop('ptr', None)
             return True
         return False
@@ -113,14 +115,14 @@ class JuliaCXXWrapFunctionUnit(JuliaCXXWrapMixin, CXXFunctionUnit):
 
     _fstring_cond = (
         '{SUFFIX[\\n]:preprocess_contexts:BS:WR}'
-        '{indent}mod.method'
+        'mod.method'
         '< {type:WR}{CPREFIX[, ]:type:args:C:0} >'
         '("{name}", &{name:WR});'
         '{PREFIX[\\n]:RITER[#endif]:preprocess_contexts:BS:WR}'
     )
     _fstring_cond_body = (
         '{SUFFIX[\\n]:preprocess_contexts:BS:WR}'
-        '{indent}mod.method'
+        'mod.method'
         '("{name}", []({args}) '
         '{ {wrapper_body} });'
         '{PREFIX[\\n]:RITER[#endif]:preprocess_contexts:BS:WR}'
@@ -137,22 +139,24 @@ class JuliaCXXWrapFunctionUnit(JuliaCXXWrapMixin, CXXFunctionUnit):
 class JuliaCXXWrapMethodUnit(JuliaCXXWrapMixin, CXXMethodUnit):
 
     _properties_optional = CXXMethodUnit._properties_optional + [
-        'wrapper_body'
+        'wrapper_body', 'wrapped_method', 'wrapped_args', 'wrapped_type',
+        'wrapped_type_conv',
     ]
     _fstring_cond = (
         '{SUFFIX[\\n]:preprocess_contexts:BS:WR}'
-        '{indent}{wrapper_inst:PR}'
+        '{wrapper_inst:PR}'
         '{IF[{static:BS:WR}]:STR[.module()]:0}.method'
         '< {type:WR}{IFNOT[{static:BS:WR}]:PREFIX[, ]:parent:BS:WR}'
         '{CPREFIX[, ]:type:args:C:0} >'
-        '("{name}", &{parent:BS:WR}'
-        '{CBOOKEND[< ][ >]:template_spec:PR:BS:WR}'
-        '::{name:WR});'
+        '("{name}", '
+        '&{parent:BS:WR}{CBOOKEND[< ][ >]:template_spec:PR:BS:WR}'
+        '::{name:WR}'
+        ');'
         '{PREFIX[\\n]:RITER[#endif]:preprocess_contexts:BS:WR}'
     )
     _fstring_cond_body = (
         '{SUFFIX[\\n]:preprocess_contexts:BS:WR}'
-        '{indent}{wrapper_inst:PR}'
+        '{wrapper_inst:PR}'
         '{IF[{static:BS:WR}]:STR[.module()]:0}.method'
         '("{name}", []('
         '{IFNOT[{static:BS:WR}]:SUB[{const_method:BS:WR} '
@@ -161,16 +165,44 @@ class JuliaCXXWrapMethodUnit(JuliaCXXWrapMixin, CXXMethodUnit):
         '{ {wrapper_body} });'
         '{PREFIX[\\n]:RITER[#endif]:preprocess_contexts:BS:WR}'
     )
+    _fstring_cond_method = (
+        '{SUFFIX[\\n]:preprocess_contexts:BS:WR}'
+        '{wrapper_inst:PR}'
+        '{IF[{static:BS:WR}]:STR[.module()]:0}.method'
+        '("{name}", []('
+        '{IFNOT[{static:BS:WR}]:SUB[{const_method:BS:WR} '
+        '{parent:BS:WR}& self{IF[{args}]:STR[, ]:0}]:0}'
+        '{args}) { {IFNEQ[{type}][void]:STR[return ]:0}'
+        '{IF[{wrapped_type}]:SUB[({wrapped_type})]:0}( '
+        '{IF[{static:BS:WR}][self.]:SUB[{parent:BS:WR}::]:0}'
+        '{wrapped_method}{BOOKEND:specialized_template_spec}'
+        '({wrapped_args}){wrapped_type_conv} ); });'
+        '{PREFIX[\\n]:RITER[#endif]:preprocess_contexts:BS:WR}'
+    )
 
     def __init__(self, *args, **kwargs):
         super(JuliaCXXWrapMethodUnit, self).__init__(*args, **kwargs)
+        # if self.properties.get('static', False):
         JuliaCXXWrapMethodUnit.handle_wrapped_types(
-            self, f"self.{self.wrapped_unit.properties['name']}")
+            self, self.wrapped_unit.properties['name'])
+        # else:
+        #     JuliaCXXWrapMethodUnit.handle_wrapped_types(
+        #         self, f"self.{self.wrapped_unit.properties['name']}")
 
     def get_fstring(self, **kwargs):
-        if 'wrapper_body' in self.properties:
+        if 'wrapped_method' in self.properties:
+            kwargs.setdefault(
+                'alt_fstring_cond', self._fstring_cond_method)
+        elif 'wrapper_body' in self.properties:
             kwargs.setdefault(
                 'alt_fstring_cond', self._fstring_cond_body)
+        # if self.properties.get('name', None) == 'GetScalarQuantity':
+        #     import pprint
+        #     pprint.pprint(self.properties)
+        #     out = super(JuliaCXXWrapMethodUnit, self).get_fstring(
+        #         **kwargs)
+        #     print(out)
+        #     import pdb; pdb.set_trace()
         try:
             return super(JuliaCXXWrapMethodUnit, self).get_fstring(
                 **kwargs)
@@ -185,13 +217,15 @@ class JuliaCXXWrapMethodUnit(JuliaCXXWrapMixin, CXXMethodUnit):
     def handle_wrapped_types(self, name):
         for x in self.properties['args']:
             if x.wrap_type():
-                self.properties['wrapped_type'] = True
+                self.properties.setdefault('wrapped_type', True)
         # Defaults
         core_args = []
         deft_args = []
         defaults = []
         for x in self.properties['args']:
             if deft_args or x.properties.get('rhs', None):
+                assert x.properties.get('rhs', None)
+                assert '=' not in x.properties['rhs']
                 deft_args.append(x)
                 defaults.append(x.properties.pop('rhs'))
             else:
@@ -201,10 +235,9 @@ class JuliaCXXWrapMethodUnit(JuliaCXXWrapMixin, CXXMethodUnit):
             members_for_parent = []
             for i in range(len(deft_args)):
                 new_version = copy.deepcopy(self)
-                new_version.properties['args'] = copy.deepcopy(
+                new_version.properties['args'] = (
                     core_args + deft_args[:(i + 1)])
-                new_version.properties['defaults'] = copy.deepcopy(
-                    defaults[(i + 1):])
+                new_version.properties['defaults'] = defaults[(i + 1):]
                 JuliaCXXWrapMethodUnit.set_wrapper_body(new_version, name,
                                                         force=True)
                 members_for_parent.append(new_version)
@@ -216,26 +249,44 @@ class JuliaCXXWrapMethodUnit(JuliaCXXWrapMixin, CXXMethodUnit):
 
     @staticmethod
     def set_wrapper_body(self, name, force=False):
-        if ((force or self.properties.get('defaults', False)
-             or self.properties.get('wrapped_type', False))):
+        if ((force or ((not self.properties.get('wrapper_body', False))
+                       and (self.properties.get('defaults', False)
+                            or self.properties.get('wrapped_type', False)
+                            or self.properties.get(
+                                'specialized_template_spec', False))))):
+            if isinstance(self.properties.get('wrapped_type', False),
+                          CodeUnit):
+                wrapT = self.properties['wrapped_type']
+                if wrapT == self.properties['type']:
+                    self.properties.pop('wrapped_type')
+                else:
+                    self.set_property('type', wrapT)
+                    wrapT_str = wrapT.format()
+                    if wrapT_str == 'void':
+                        self.properties.pop('wrapped_type')
+            elif isinstance(self.properties.get('wrapped_type', None), bool):
+                self.properties.pop('wrapped_type')
             wargs = ', '.join(
                 ([x.wrapped_arg for x in self.properties['args']]
                  + self.properties.get('defaults', [])))
-            ret = ''
-            if ((self.unit_type == 'constructor'
-                 or (self.properties['type'].properties['base']
-                     not in ['void', 'GenericValue']))):
-                ret = 'return '
-            self.properties['wrapper_body'] = f"{ret}{name}({wargs});"
+            self.properties.pop('wrapper_body', False)
+            self.properties['wrapped_method'] = name
+            self.properties['wrapped_args'] = wargs
+            # if name == 'GetShape':
+            #     import pprint
+            #     pprint.pprint(self.properties)
+            #     print('wrapped_type_conv' in self.properties)
+            #     if 'wrapped_type_conv' not in self.properties:
+            #         import pdb; pdb.set_trace()
 
 
 class JuliaCXXWrapConstructorUnit(JuliaCXXWrapMixin, ConstructorUnit):
 
     _fstring_cond = (
-        '{indent}{wrapper_inst:PR}.constructor< {type:args:WR} >();'
+        '{wrapper_inst:PR}.constructor< {type:args:WR} >();'
     )
     _fstring_cond_method = (
-        '{indent}{wrapper_inst:PR}.method("_construct", []({args})'
+        '{wrapper_inst:PR}.method("_construct", []({args})'
         '{ {wrapper_body} });'
     )
     _properties_optional = ConstructorUnit._properties_optional + [
@@ -258,29 +309,35 @@ class JuliaCXXWrapConstructorUnit(JuliaCXXWrapMixin, ConstructorUnit):
 class JuliaCXXWrapClassUnit(JuliaCXXWrapMixin, ClassUnit):
 
     _fstring_cond = (
-        '{indent}auto {wrapper_inst} = mod.add_type< {name:WR}'
+        '{\n'
+        '  auto {wrapper_inst} = mod.add_type< {name:WR}'
         '{CBOOKEND[< ][ >]:template_spec:WR} >'
         '("{name}"'
         '{BOOKEND[, jlcxx::julia_base_type< ][ >()]:base_class:WR}'
         ');\n'
-        '{members}'
+        '{members}\n'
+        '}'
     )
     _fstring_cond_template = (
-        '{indent}auto {wrapper_inst} = mod.add_type< Parametric< '
-        '{JOIN[, ]:ITER[TypeVar< {XXX} >]:ADD[1]:member_index:param:'
+        '{\n'
+        '  auto {wrapper_inst} = mod.add_type< jlcxx::Parametric< '
+        '{JOIN[, ]:ITER[jlcxx::TypeVar< {XXX} >]:ADD[1]:subunit_index:param:'
         'template:WR}'
         ' > >("{name}"'
-        '{BOOKEND[, wrapped_][.dt()]:base_class}'
+        # '{BOOKEND[, wrapped_][.dt()]:name:WR}'
         ');\n'
-        '{indent}{wrapper_inst}.apply< '
-        '{JOIN[, ]:ITER[{name:WR}< {XXX} >]:template_spec:WR}'
-        ' >({wrapper_class}());'
+        '  {wrapper_inst}.apply< '
+        # '{JOIN[, ]:ITER[{name:WR}< {XXX} >]:instant_spec:WR}'
+        '{instant_spec:WR}'
+        # '{JOIN[, ]:ITER[{name:WR}< {XXX} >]:instant_spec:WR}'
+        ' >({wrapper_class}());\n'
+        '}'
     )
     dont_cache = ['regex']
     _properties_optional = ClassUnit._properties_optional + [
         'wrapper_inst', 'wrapper_class',
     ]
-    child_indent = 0
+    child_indent = 1
 
     def get_property(self, k, default=NoDefault, **kwargs):
         kwargs['default'] = default
@@ -311,10 +368,9 @@ class JuliaCXXWrapSuperType(JuliaCXXWrapMixin, CodeUnit):
 
     unit_type = 'super_type_class'
     _fstring_cond = (
-        '{indent}template<> struct SuperType< {fullname:BS:WR:WR}'
+        'template<> struct SuperType< {type:BS:WR:WR}'
         '{CBOOKEND[< ][ >]:template_spec:C:BS:WR:WR} > \n'
-        '{indent}{ typedef {fullname:BC:BS:WR:WR}'
-        '{CBOOKEND[< ][ >]:template_spec:C:BC:BS:WR:WR} type; };'
+        '{ typedef {type:BC:BS:WR:WR} type; };'
     )
     _properties = [
         'name',
@@ -327,53 +383,130 @@ class JuliaCXXWrapSuperType(JuliaCXXWrapMixin, CodeUnit):
 class JuliaCXXWrapTemplateWrapperMethod(JuliaCXXWrapMixin, CodeUnit):
 
     unit_type = 'template_wrapper_method'
-    _fstring_cond = (
-        '{indent}{PR:wrapper_inst}'
-        '{IF[{static:BS:WR}]:STR[.module()]:0}.method'
-        '< {type:WR}, WrappedT{CPREFIX[, ]:type:args:WR} >'
-        '("{name}", &WrappedT::{name});'
-    )
+    # _fstring_cond = JuliaCXXWrapMethodUnit._fstring_cond.replace(
+    #     '{SUFFIX[\\n]:preprocess_contexts:BS:WR}', ''
+    # ).replace(
+    #     '{PREFIX[\\n]:RITER[#endif]:preprocess_contexts:BS:WR}', ''
+    # ).replace(
+    #     '.method', '.template method'
+    # ).replace(
+    #     '{type:WR}', '{REPLACE_TYPES[{type:WR}]:replacements:PR:0}',
+    # ).replace(
+    #     '{CPREFIX[, ]:type:args:C:0}',
+    #     '{CPREFIX[, ]:REPLACE_TYPES[{type:args:WR}]:replacements:PR:0}'
+    # ).replace(
+    #     '&{parent:BS:WR}{CBOOKEND[< ][ >]:template_spec:PR:BS:WR}',
+    #     '&WrappedT'
+    # )
+    # _fstring_cond = (
+    #     '{wrapper_inst:WR:PR}'
+    #     '{IF[{static:BS:WR}]:STR[.module()]:0}.template method< '
+    #     '{REPLACE_TYPES[{type:WR}]:replacements:PR:0}, WrappedT'
+    #     '{CPREFIX[, ]:REPLACE_TYPES[{type:args:WR}]:replacements:PR:0} >'
+    #     '("{name}", &WrappedT::{name});'
+    # )
     _properties = [
         'name'
     ]
+    _properties_optional = [
+        x for x in JuliaCXXWrapMethodUnit._properties_optional
+    ]
+
+    @classmethod
+    def _before_registration(cls):
+        replacements = [
+            ('{SUFFIX[\\n]:preprocess_contexts:BS:WR}', ''),
+            ('{PREFIX[\\n]:RITER[#endif]:preprocess_contexts:BS:WR}', ''),
+            ('{wrapper_inst:PR}', '{wrapper_inst:WR:PR}'),
+            ('.method', '.template method'),
+            ('{type:WR}', '{REPLACE_TYPES[{type:WR}]:replacements:PR:0}'),
+            ('{CPREFIX[, ]:type:args:C:0}',
+             '{CPREFIX[, ]:REPLACE_TYPES[{type:args:WR}]:replacements:PR:0}'),
+            ('&{parent:BS:WR}{CBOOKEND[< ][ >]:template_spec:PR:BS:WR}',
+             '&WrappedT'),
+        ]
+        properties = [
+            '_fstring_cond', '_fstring_cond_body', '_fstring_cond_method'
+        ]
+        for x in properties:
+            y = getattr(JuliaCXXWrapMethodUnit, x)
+            for k, v in replacements:
+                y = y.replace(k, v)
+            setattr(cls, x, y)
 
 
 class JuliaCXXWrapTemplateWrapperConstructor(JuliaCXXWrapMixin, CodeUnit):
 
     unit_type = 'template_wrapper_constructor'
     _fstring_cond = (
-        '{indent}{wrapper_inst:PR}.constructor'
-        '{IF[{args:WR}]:SUB[< {type:args:WR} >]:0}();'
+        '{wrapper_inst:WR:PR}.'
+        '{IF[{args:WR}]:STR[template ]:0}'
+        'constructor{IF[{args:WR}]:'
+        'SUB[< {REPLACE_TYPES[{type:args:WR}]:replacements:PR:0} >]:0}();'
     )
     _properties = [
         'parent'
     ]
+    address_property = 'parent'
 
 
 class JuliaCXXWrapTemplateWrapper(JuliaCXXWrapMixin, CodeUnit):
 
     unit_type = 'template_wrapper_class'
     _fstring_cond = (
-        '{indent}struct {wrapper_class:WR} {\n'
-        '{indent}  template<typename TypeWrapperT>\n'
-        '{indent}  void operator()(TypeWrapperT&& wrapped)\n'
-        '{indent}  {\n'
-        '{indent}    typedef typename TypeWrapperT::type WrappedT;\n'
-        '{indent}    {members}\n'
-        '{indent}  }\n'
-        '{indent}};'
+        'struct {wrapper_class:WR} {\n'
+        '  template<typename TypeWrapperT>\n'
+        '  void operator()(TypeWrapperT&& {wrapper_inst:WR})\n'
+        '  {\n'
+        '    using namespace {fullname:BS:PR:WR};\n'
+        '    typedef typename TypeWrapperT::type WrappedT;\n'
+        '{members}\n'
+        '  }\n'
+        '};'
     )
     _properties = [
         'name'
     ]
     _properties_optional = [
-        'members',
+        'members', 'replacements',
     ]
     member_units = [
         'template_wrapper_method',
         'template_wrapper_constructor',
     ]
     child_indent = 2
+
+    @classmethod
+    def from_unit(cls, *args, **kwargs):
+        out = super(JuliaCXXWrapTemplateWrapper, cls).from_unit(
+            *args, **kwargs)
+        if isinstance(out, JuliaCXXWrapTemplateWrapper):
+            # if out.properties['name'] == 'QuantityArray':
+            #     import pdb; pdb.set_trace()
+            class_type = out.get_property('wrapped_unit').get_property(
+                'wrapped_unit').as_type()
+            replacements = {
+                class_type: out.code_unit('type').parse('WrappedT')
+            }
+            replacements[class_type.properties['base']] = replacements[
+                class_type]
+            members = []
+            for x in out.properties['members']:
+                if x.unit_type == 'typedef':
+                    type_unit = x.code_unit('type')
+                    a = x.properties['name']
+                    b = type_unit.parse(
+                        f"typename WrappedT::{x.properties['name']}")
+                    replacements[a] = b
+                    assert replacements[a].properties.get('typename', None)
+                    members.append(x)
+            out.remove_members(members)
+            out.properties['replacements'] = replacements
+            # if out.properties['name'] == 'QuantityArray':
+            #     import pprint
+            #     pprint.pprint(replacements)
+            #     import pdb; pdb.set_trace()
+        return out
 
 
 class JuliaCXXWrapPreamble(JuliaCXXWrapMixin, CodeUnit):
@@ -410,10 +543,17 @@ class JuliaCXXWrapJLCXXMod(JuliaCXXWrapMixin, CXXModuleUnit):
         super(JuliaCXXWrapJLCXXMod, self).__init__(*args, **kwargs)
 
 
+class JuliaCXXWrapTypedefUnit(JuliaCXXWrapMixin, CXXTypedefUnit):
+
+    pass
+
+
+# TODO: Handle nested modules
 class JuliaCXXWrapModuleUnit(JuliaCXXWrapMixin, ModuleUnit):
 
-    member_units = ['class', 'function', 'enum']
+    member_units = ['class', 'function', 'enum', 'typedef']
     _fstring_cond = (
+        '{IFNEQ[{unit_type:PR}][{STR[file]:0}]:STR[// ]:0}'
         'JLCXX_MODULE define_module_{name}(jlcxx::Module& mod)\n'
         '{\n'
         '  using namespace {fullname:BS:WR};\n'
@@ -493,6 +633,8 @@ class JuliaTypeUnit(TypeUnit):
         'uint64_t': 'Core.UInt64',
         'rapidjson::Document': 'Document',
         'rapidjson::Value': 'Value',
+        'rapidjson::Array': 'Array',
+        'rapidjson::Object': 'Object',
     }
     typemap_cxx = {
         'std::basic_string': 'StdString',
@@ -502,7 +644,7 @@ class JuliaTypeUnit(TypeUnit):
     default_flags = {
         'COMM_FLAG': ['COMM_FLAG_INTERFACE'],
     }
-    rapidjson_types = ['Document', 'Value']
+    rapidjson_types = ['Document', 'Value', 'Array', 'Object']
     typemap_rj = {  # Order determines order of type checking
         'String': 'std::string',
         'Int64': 'int64_t',
@@ -511,6 +653,8 @@ class JuliaTypeUnit(TypeUnit):
         'Uint': 'unsigned',
         'Float': 'float',
         'Double': 'double',
+        # 'Array': 'Array',
+        # 'Object': 'Object',
     }
     address_property = 'full'
     _properties = ['full', 'base', 'orig', 'native']
@@ -520,6 +664,7 @@ class JuliaTypeUnit(TypeUnit):
     )
 
     def __init__(self, *args, **kwargs):
+        kwargs['base'] = kwargs['base'].format()
         orig = kwargs['base'] + kwargs.get('ptr', '').replace('&', '')
         native = orig
         if orig in JuliaCXXWrapTypeUnit.enum_types:
@@ -613,7 +758,7 @@ class JuliaVariableUnit(VariableUnit):
 class JuliaConstructorUnit(ConstructorUnit):
 
     _fstring_cond = (
-        '{indent}{name:PR:GN}({args}{IF[{kwargs}]:STR[; ]:0}'
+        '{name:PR:GN}({args}{IF[{kwargs}]:STR[; ]:0}'
         '{kwargs}) = '
         '_construct({JOIN[, ]:convert_args})'
     )
@@ -665,33 +810,33 @@ class JuliaTypeConversionUnit(TypeConversionUnit):
     ]
     address_property = 'type'
     _fstring_cond = (
-        '{indent}convert(::Type{ {type} }, x::{source_type}) = '
+        'convert(::Type{ {type} }, x::{source_type}) = '
         'reinterpret({type}, x)'
     )
     _fstring_cond_rj = (
-        '{indent}function convert(::Type{ {IF[{promote}]:STR[<:]:0} '
+        'function convert(::Type{ {IF[{promote}]:STR[<:]:0} '
         '{type} }, x::{source_type})\n'
-        '{indent}  if (!Is{rj_type}(x))\n'
-        '{indent}    throw("{source_type} is not a {rj_type}")\n'
-        '{indent}  end\n'
-        '{indent}  return convert({type}, Get{rj_type}(x))\n'
-        '{indent}end\n'
-        '{indent}function {source_type}(y::{type})\n'
-        '{indent}  x = {source_type}()\n'
-        '{indent}  Set{rj_type}(x, y)\n'
-        '{indent}  return x\n'
-        '{indent}end\n'
-        '{indent}function Set{source_type}(x::{source_type}, y::{type})\n'
-        '{indent}  Set{rj_type}(x, y)\n'
-        '{indent}end'
+        '  if (!Is{rj_type}(x))\n'
+        '    throw("{source_type} is not a {rj_type}")\n'
+        '  end\n'
+        '  return convert({type}, Get{rj_type}(x))\n'
+        'end\n'
+        'function {source_type}(y::{type})\n'
+        '  x = {source_type}()\n'
+        '  Set{rj_type}(x, y)\n'
+        '  return x\n'
+        'end\n'
+        'function Set{source_type}(x::{source_type}, y::{type})\n'
+        '  Set{rj_type}(x, y)\n'
+        'end'
     )
     _fstring_cond_extract = (
-        '{indent}function extract(x::{source_type})\n'
-        '{indent}  {JOIN[\n{indent}  ]:body}\n'
-        '{indent}end'
+        'function extract(x::{source_type})\n'
+        '  {JOIN[\n  ]:body}\n'
+        'end'
     )
     _fstring_promote_rj = (
-        '{indent}promote_rule(::Type{ {type} }, '
+        'promote_rule(::Type{ {type} }, '
         '::Type{ <:{source_type} })'
     )
 
@@ -711,7 +856,7 @@ class JuliaTypeConversionUnit(TypeConversionUnit):
 class JuliaEnumUnit(EnumUnit):
 
     _fstring_cond = (
-        '{indent}|(a::{name}, b::{name}) = '
+        '|(a::{name}, b::{name}) = '
         '(reinterpret({base:type}, a) | reinterpret({base:type}, b))'
     )
 
@@ -743,20 +888,20 @@ class JuliaFunctionUnit(FunctionUnit):
 class JuliaMethodUnit(MethodUnit):
 
     _fstring_cond = (
-        '{indent}function {name}('
+        'function {name}('
         'self::Union{ {JOIN[, ]:name:GN:CC:PR} }, {input_args})\n'
-        '{indent}  {name:var} = {type:var}()\n'
-        '{indent}  flag = {name}(self, '
+        '  {name:var} = {type:var}()\n'
+        '  flag = {name}(self, '
         '{JOIN[, ]:name:input_args_front}'
         '{IF[{input_args_front}]:STR[, ]:0}'
         'CxxRef({name:var})'
         '{IF[{input_args_back}]:STR[, ]:0}'
         '{JOIN[, ]:name:input_args_back}'
         ')\n'
-        '{indent}  return flag, '
+        '  return flag, '
         '{IF[{extract_var}]:STR[extract(]:0}{name:var}'
         '{IF[{extract_var}]:STR[)]:0}\n'
-        '{indent}end'
+        'end'
     )
 
     _properties_optional = MethodUnit._properties_optional + [
@@ -888,6 +1033,7 @@ class JuliaFileUnit(FileUnit):
     ignored_units = [
         'macro', 'destructor', 'enum_value', 'operator',
         'template', 'template_param', 'preprocess_context',
+        'typedef', 'base_type',
     ]
     language_wrapped = 'cxx'
     generating_unit_type = 'julia_cxxwrap'

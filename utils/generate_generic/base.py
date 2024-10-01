@@ -196,10 +196,47 @@ class DummyMatch:
             raise KeyError(f'No group with name \'{idx}\'')
         return self._groups[idx - 1]
 
-    def contains(self, start, end=None):
+    def intersects(self, method, start, end=None):
+        code_unit = None
+        if isinstance(start, CodeUnit):
+            code_unit = start
+            start = self.adjust_position(
+                code_unit.match.start(),
+                check_against=code_unit.match.string)
+            end = self.adjust_position(
+                code_unit.match.end(),
+                check_against=code_unit.match.string)
         if end is None:
             end = start
-        return (start >= self.start() and end <= self.end())
+        if method == 'contains':
+            return self._contains((self.start(), self.end()),
+                                  (start, end))
+        elif method == 'contained':
+            return self._contains((start, end),
+                                  (self.start(), self.end()))
+        elif method == 'overlaps':
+            return (self._contains((self.start(), self.end()),
+                                   (start, start))
+                    or self._contains((self.start(), self.end()),
+                                      (end, end))
+                    or self._contains((start, end),
+                                      (self.start(), self.end())))
+        else:
+            raise ValueError(f"Invalid intersection method: {method}")
+
+    @classmethod
+    def _contains(cls, bounds_a, bounds_b):
+        return (bounds_a[0] <= bounds_b[0]
+                and bounds_a[1] >= bounds_b[1])
+
+    def overlaps(self, start, end=None):
+        return self.intersects('overlaps', start, end)
+
+    def contained(self, start, end=None):
+        return self.intersects('contained', start, end)
+
+    def contains(self, start, end=None):
+        return self.intersects('contains', start, end)
 
     def start(self, idx=0):
         if idx == 0:
@@ -286,18 +323,36 @@ class ContextMatch(DummyMatch):
     def body(self):
         return self.string[self.body_start():self.body_end()]
 
-    def tokens_containing(self, pos, endpos=None, include_tokens=None):
+    def tokens_intersecting(self, method, pos, endpos=None,
+                            include_tokens=None):
+        code_unit = None
+        if isinstance(pos, CodeUnit):
+            code_unit = pos
+            pos = self.adjust_position(
+                code_unit.match.start(),
+                check_against=code_unit.match.string)
+            endpos = self.adjust_position(
+                code_unit.match.end(),
+                check_against=code_unit.match.string)
         if endpos is None:
             endpos = pos
         out = []
-        if (((include_tokens is None
+        if ((((include_tokens is None and self.token.name != 'dummy')
               or self.token.name in include_tokens)
-             and self.contains(pos, endpos))):
+             and self.intersects(method, pos, endpos))):
             out.append(self)
         for child in self.children:
-            out += child.tokens_containing(pos, endpos=endpos,
-                                           include_tokens=include_tokens)
+            out += child.tokens_intersecting(method, pos, endpos=endpos,
+                                             include_tokens=include_tokens)
         return out
+
+    def tokens_overlapping(self, pos, endpos=None, include_tokens=None):
+        return self.tokens_intersecting('overlaps', pos, endpos,
+                                        include_tokens=include_tokens)
+
+    def tokens_containing(self, pos, endpos=None, include_tokens=None):
+        return self.tokens_intersecting('contains', pos, endpos,
+                                        include_tokens=include_tokens)
 
     def find_last(self, pos, include_tokens=None, token=None,
                   include_overlap=False):
@@ -552,6 +607,20 @@ class ContextToken:
             z = '\n'
         self.z = z
         self.name = name
+        if isinstance(self.a, list) or isinstance(self.z, list):
+            if isinstance(self.a, list):
+                if not use_regex:
+                    self.a = [re.escape(x) for x in self.a]
+                self.a = '(?:' + '|'.join(self.a) + ')'
+            elif not use_regex:
+                self.a = re.escape(self.a)
+            if isinstance(self.z, list):
+                if not use_regex:
+                    self.z = [re.escape(x) for x in self.z]
+                self.z = '(?:' + '|'.join(self.z) + ')'
+            elif not use_regex:
+                self.z = re.escape(self.z)
+            use_regex = True
         if use_regex:
             if isinstance(self.a, str):
                 self.a = re.compile(self.a, flags=re.MULTILINE)
@@ -815,10 +884,11 @@ class SubContextToken(ContextToken):
 class CodeUnitFormatterResult:
 
     def __init__(self, solf, match, pattern, in_test=False, nargs=3,
-                 replacements=None, level=None, **kwargs):
+                 replacements=None, level=None, parent_result=None,
+                 **kwargs):
         self.full = match.group()
-        self.orig = solf
-        self.solf = solf
+        # self.orig = solf
+        # self.solf = solf
         self.data = solf
         self.data_default = NoDefault
         self.required = False
@@ -834,7 +904,29 @@ class CodeUnitFormatterResult:
         self.replacements = replacements
         self.level = level
         self.dont_cache = False
+        self.parent_result = parent_result
+        self.solf_trace = []
+        self.match_trace = []
+        if parent_result:
+            self.solf_trace += parent_result.solf_trace
+        self.solf_trace.append(solf)
         self.update_match(match)
+
+    @property
+    def orig(self):
+        return self.solf_trace[0]
+
+    @property
+    def solf(self):
+        out = self.solf_trace[-1]
+        if isinstance(out, list):
+            return out[0]
+        return out
+
+    @solf.setter
+    def solf(self, value):
+        if value != self.solf_trace[-1]:
+            self.solf_trace.append(value)
 
     @property
     def complete(self):
@@ -844,6 +936,11 @@ class CodeUnitFormatterResult:
         if self.in_test:
             print(f"mod = {self.match.group('mod')}, data = {self.data}")
             pdb.set_trace()
+
+    def transfer_data(self, solf):
+        self.update(solf.data)
+        self.group = solf.group
+        self.solf = solf.solf
 
     @classmethod
     def do_replace(cls, x, level=None, replacements=None):
@@ -867,13 +964,15 @@ class CodeUnitFormatterResult:
             kwargs.setdefault('level', self.level - 1)
         return self.do_replace(x, **kwargs)
 
-    def isinstance_unitlist(self, x):
-        return (isinstance(x, list)
+    def isinstance_unitlist(self, x, allow_empty=False):
+        return ((allow_empty or x)
+                and isinstance(x, list)
                 and all(isinstance(xx, CodeUnit) for xx in x))
 
     def update_match(self, match):
         self.match = match
         if match:
+            self.match_trace.append(match)
             self.mod = match.group('mod')
             self.args = [
                 match.group(f'arg{i}') for i in range(self.nargs)
@@ -921,7 +1020,7 @@ class CodeUnitFormatter:
         self.pattern_sub = re.compile(self.string_sub + r'\:')
         self.pattern_full = re.compile(self.string_full)
 
-    def sub(self, solf, x, dont_cache=None, **kws):
+    def sub(self, solf, x, dont_cache=None, parent_result=None, **kws):
         x0 = x
         replacements = OrderedDict()
         level = 0
@@ -929,9 +1028,17 @@ class CodeUnitFormatter:
         def do_repl(match):
             result = CodeUnitFormatterResult(
                 solf, match, self.pattern_sub,
+                parent_result=parent_result,
                 replacements=replacements, level=level, **kws)
             out = self.replacements(result)
             return out
+
+        class PreserveUnitsError(TypeError):
+
+            def __init__(self, unit):
+                self.unit = unit
+                super(PreserveUnitsError, self).__init__(
+                    f"Preserving unit: {unit}")
 
         def do_sub(match):
             result = CodeUnitFormatterResult(
@@ -940,6 +1047,8 @@ class CodeUnitFormatter:
             out = self.substring(result)
             if result.dont_cache and dont_cache:
                 dont_cache[0] = result.dont_cache
+            if not isinstance(out, str):
+                raise PreserveUnitsError(out)
             return out
 
         while self.pattern_full.search(x):
@@ -953,16 +1062,21 @@ class CodeUnitFormatter:
                 x, level=level, replacements=replacements)
             level -= 1
         last = None
-        while self.pattern_full.search(x):
+        while isinstance(x, str) and self.pattern_full.search(x):
             assert x != last
             last = x
-            x = self.pattern_full.sub(do_sub, x)
-            x = CodeUnitFormatterResult.do_replace(
-                x, level=level, replacements=replacements)
+            try:
+                x = self.pattern_full.sub(do_sub, x)
+                x = CodeUnitFormatterResult.do_replace(
+                    x, level=level, replacements=replacements)
+            except PreserveUnitsError as e:
+                x = e.unit
+                break
             level -= 1
-        assert not self.pattern_full.search(x)
-        if replacements and 'recurse' in replacements:
-            x = self.recursion(x, replacements.pop('recurse'))
+        if isinstance(x, str):
+            assert not self.pattern_full.search(x)
+            if replacements and 'recurse' in replacements:
+                x = self.recursion(x, replacements.pop('recurse'))
         return x
 
     def replacements(self, result):
@@ -1036,12 +1150,13 @@ class CodeUnitFormatter:
                          f"[{result.args[0]}]"
                          f"[{final}]")
             result.update(idstr)  # f"(?:(?:{final})|(?:{idstr}))")
-            # pdb.set_trace()
         elif mod == "REQ":
             result.required = True
-        elif mod in ['OR', 'AND', 'IF', 'IFNOT']:
+        elif mod in ['OR', 'AND', 'IF', 'IFNOT', 'IFEQ', 'IFNEQ']:
             if mod in ['IF', 'IFNOT']:
                 assert len(args) == 1 or len(args) == 2
+            elif mod in ['IFEQ', 'IFNEQ']:
+                assert len(args) == 2 or len(args) == 3
             cond = []
             for i in range(len(args)):
                 try:
@@ -1054,9 +1169,13 @@ class CodeUnitFormatter:
             if (((mod == 'OR' and not any(cond))
                  or (mod == 'AND' and not all(cond))
                  or (mod == "IF" and not cond[0])
-                 or (mod == "IFNOT" and cond[0]))):
+                 or (mod == "IFNOT" and cond[0])
+                 or (mod == "IFEQ" and (cond[0] != cond[1]))
+                 or (mod == "IFNEQ" and (cond[0] == cond[1])))):
                 if (mod in ['IF', 'IFNOT']) and len(args) == 2:
-                    result.update(cond[1])
+                    result.update(cond[-1])
+                elif (mod in ['IFEQ', 'IFNEQ']) and len(args) == 3:
+                    result.update(cond[-1])
                 else:
                     result.update(None)
         elif mod == 'NULL':
@@ -1080,6 +1199,17 @@ class CodeUnitFormatter:
                                       result.data_default)
             else:
                 result.data = getattr(result.data, args[0])
+        elif mod == 'REPLACE_TYPES':
+            assert len(args) == 1
+            result0 = self.sub(result.orig, result.replace(args[0]),
+                               in_test=result.in_test, **dict(
+                                   result.kwargs, return_result=True))
+            if isinstance(result0.data, list):
+                for x in result0.data:
+                    x.replace_types(result.data)
+            elif isinstance(result0.data, CodeUnit):
+                result0.data.replace_types(result.data)
+            result.transfer_data(result0)
         elif mod in ['ADD', 'SUBTRACT']:
             assert len(args) == 1
             if isinstance(result.data, list):
@@ -1129,12 +1259,16 @@ class CodeUnitFormatter:
             elif mod == 'SUFFIX' or (mod == 'CSUFFIX' and result.data):
                 assert len(args) == 1
                 result.data = result.data + args[0].replace('\\n', '\n')
-        elif mod in ['SKIPFIRST', 'JOIN', 'ITER', 'RITER', 'UNIQUE']:
+        elif mod in ['SKIPFIRST', 'JOIN', 'ITER', 'RITER', 'UNIQUE',
+                     'SELECT', 'FIRST', 'LAST', 'INDEX']:
             if result.data is None:
                 return True
             assert isinstance(result.data, list)
             if mod == 'SKIPFIRST':
-                result.data = result.data[1:]
+                if result.data:
+                    result.data = result.data[1:]
+                else:
+                    result.data = result.default_data
             elif mod == 'JOIN':
                 assert len(args) == 1
                 result.data = args[0].join(result.data)
@@ -1159,6 +1293,24 @@ class CodeUnitFormatter:
                 for x in vals:
                     if x not in result.data:
                         result.data.append(x)
+            elif mod == 'SELECT':
+                vals = result.data
+                result.data = []
+                for x in vals:
+                    if isinstance(x, CodeUnit) and x.unit_type in args:
+                        result.data.append(x)
+            elif mod in ['FIRST', 'LAST', 'INDEX']:
+                if mod == 'INDEX':
+                    assert len(args) == 1
+                    idx = args[0]
+                elif mod == 'FIRST':
+                    idx = 0
+                elif mod == 'LAST':
+                    idx = -1
+                if idx >= len(result.data) or len(result.data) == 0:
+                    result.data = result.default_data
+                else:
+                    result.data = result.data[idx]
         elif (isinstance(result.data, list) and len(result.data) == 0):
             pass
         else:
@@ -1171,8 +1323,11 @@ class FstringFormatter(CodeUnitFormatter):
     def format(self, result):
         if result.data is None:
             result.data = ''
-        result.data = result.solf.format_property(result.group,
-                                                  result.data)
+        if result.kwargs.get('return_result', False):
+            return result
+        if not result.kwargs.get('preserve_units', False):
+            result.data = result.solf.format_property(
+                result.group, result.data, parent_result=result)
         return result.data
 
     def extract(self, result, key=None, korig=None, value=NoDefault):
@@ -1184,10 +1339,9 @@ class FstringFormatter(CodeUnitFormatter):
             assert key != '0'
         if korig is None:
             korig = key
-        if isinstance(result.data, CodeUnit):
+        if ((isinstance(result.data, CodeUnit)
+             or result.isinstance_unitlist(result.data))):
             result.solf = result.data
-        elif (result.data and result.isinstance_unitlist(result.data)):
-            result.solf = result.data[0]
         if ((key in result.solf._properties_optional
              and not result.required)):
             result.data_default = None
@@ -1197,10 +1351,13 @@ class FstringFormatter(CodeUnitFormatter):
             elif isinstance(result.data, CodeUnit):
                 result.data = result.data.get_property(
                     key, default=result.data_default, **result.kwargs)
-            elif result.data and result.isinstance_unitlist(result.data):
+            elif result.isinstance_unitlist(result.data):
                 result.data = [x.get_property(
                     key, default=result.data_default, **result.kwargs)
-                             for x in result.data]
+                               for x in result.data]
+                result.data = [x for x in result.data if x is not None]
+            elif result.data is None and result.data_default != NoDefault:
+                return
             else:
                 raise TypeError(
                     f"Cannot extract data from {type(result.data)} "
@@ -1227,6 +1384,7 @@ class FstringFormatter(CodeUnitFormatter):
             "BC": 'base_class_unit',
             "CC": 'child_class_unit',
             "TL": 'top_level',
+            "FWD": 'forward_unit',
         }
         if mod is None:
             mod = result.mod
@@ -1238,7 +1396,8 @@ class FstringFormatter(CodeUnitFormatter):
         elif ((mod in _attr_aliases
                or (mod and mod.lower() in result.orig.related_units))):
             assert (isinstance(result.data, CodeUnit)
-                    or result.isinstance_unitlist(result.data))
+                    or result.isinstance_unitlist(result.data,
+                                                  allow_empty=True))
             if mod.lower() in result.orig.related_units:
                 self.extract(result, key=mod.lower(), korig=mod)
             else:
@@ -1365,11 +1524,17 @@ class RegexFormatter(CodeUnitFormatter):
                           f'{result.solf.property_subunits}')
                     pdb.set_trace()
                 subunit = result.solf.property_subunits[group]
+                if isinstance(subunit, list):
+                    subunit_data = '|'.join(f"(?:{{NG:{x}}})"
+                                            for x in subunit)
+                    subunit_data = f'(?:{subunit_data})'
+                else:
+                    subunit_data = f'{{NG:{subunit}}}'
                 # result.group = result.solf.property_subunits[group]
                 # subunit = self.format(result)
                 result.data = (
-                    f'(?:\\s*{{NG:{subunit}}}\\s*{sep})*'
-                    f'(?:\\s*{{NG:{subunit}}}){suffix}\\s*')
+                    f'(?:\\s*{subunit_data}\\s*{sep})*'
+                    f'(?:\\s*{subunit_data}){suffix}\\s*')
             else:
                 result.data_default = args[0]
                 self.format(result)
@@ -1406,9 +1571,11 @@ def init_code_unit_registry():
     from generate_generic.cpp import CFileUnit, CXXFileUnit
     from generate_generic.fortran import FortranFileUnit
     from generate_generic.julia import JuliaCXXWrapFileUnit, JuliaFileUnit
+    from generate_generic.rjwrapper import RJWrapperFileUnit
     classes = [
         CFileUnit, CXXFileUnit, FortranFileUnit,
         JuliaCXXWrapFileUnit, JuliaFileUnit,
+        RJWrapperFileUnit,
     ]
     return classes
 
@@ -1485,9 +1652,13 @@ class CodeUnitMeta(type):
         base_unit_type = None
         for base in bases:
             base_unit_type = getattr(base, 'unit_type', None)
-        if ((cls.language is not None
-             or (cls.unit_type is not None
-                 and cls.unit_type == base_unit_type))):
+        temp_skip = getattr(cls, 'skip_registry_temp', False)
+        if temp_skip:
+            delattr(cls, 'skip_registry_temp')
+        if (((not temp_skip)
+             and (cls.language is not None
+                  or (cls.unit_type is not None
+                      and cls.unit_type == base_unit_type)))):
             cls._generated_class_properties = []
             for k in ['_regex', '_regex_nogroup', '_fstring',
                       '_regex_norecurse']:
@@ -1575,6 +1746,8 @@ class CodeUnitMeta(type):
                 register_code_unit('modsep', cls.modsep, languages)
                 register_code_unit('libext', _library_ext, languages)
                 register_code_unit('libprefix', _library_prefix, languages)
+            cls.add_subunits()
+            cls._before_registration()
             register_code_unit(cls.unit_type, cls, languages)
         return cls
 
@@ -1601,6 +1774,7 @@ class CodeUnit(metaclass=CodeUnitMeta):
     fstring_formatter = FstringFormatter()
     allow_duplicates = False
     regex_formatter = RegexFormatter()
+    no_forward_unit = False
     _regex = None
     _regex_fstring = None
     _regex_fstring_norecurse = None
@@ -1608,26 +1782,41 @@ class CodeUnit(metaclass=CodeUnitMeta):
     _regex_nogroup_fstring = None
     _fstring = None
     _fstring_cond = None
+    _fstring_cond_prop = {}
+    _noindent_flag = '\\NOINDENT'
     _properties = ['name']
     _properties_optional = [
         'docs', 'type', 'parent', 'unitpath',
         'members_for_parent', 'members_for_parent_used',
-        'external_types', 'top_level',
+        'external_types', 'top_level', 'subunit_index',
+        'skipped',
     ]
     _properties_defaults = {
         'indent': 0,
         'libext': _library_ext,
         'libprefix': _library_prefix,
         'unitpath': [],
+        'skipped': False,
     }
     _properties_defaults_units = {}
+    _properties_from_parent = [
+        'indent', 'unitpath', 'member_index',
+    ]
+    _properties_dont_copy = [
+        'members_for_parent', 'members_for_parent_used',
+        'child_class_unit',
+    ]
+    _properties_references = [
+        'base_class_unit', 'forward_unit', 'parent',
+        'top_level', 'specialized_type',
+    ]
     _properties_dont_compare = [
         'body', 'indent', 'unitpath', 'parent', 'member_index',
         'child_class', 'external_types',
-        'base_class', 'base_class_unit',
+        'base_class', 'base_class_unit', 'forward_unit',
     ]
     _recursive_properties = [
-        'child_class_unit', 'top_level',
+        'child_class_unit', 'top_level', 'specialized_type',
     ]
     child_indent = 1
     member_units = []
@@ -1641,17 +1830,22 @@ class CodeUnit(metaclass=CodeUnitMeta):
         'members': '\n',
         'args': ', ',
         'type': ', ',
+        'instant_spec': ', ',
         'template_spec': ', ',
         'base_template_spec': ', ',
+        'specialized_template_spec': ', ',
     }
     list_bounds = {
         'args': ('(', ')'),
+        'instant_spec': ('<', '>'),
         'template_spec': ('<', '>'),
         'base_template_spec': ('<', '>'),
+        'specialized_template_spec': ('<', '>'),
     }
     address_property = None
     parallel_units = ['base_unit', 'wrapped_unit', 'generating_unit']
     related_units = ['parent_unit', 'file_unit']
+    property_units = {}
     property_subunits = {}
     members_discontiguous = False
 
@@ -1715,6 +1909,25 @@ class CodeUnit(metaclass=CodeUnitMeta):
     def __eq__(self, solf):
         return self.compare(solf)
 
+    def __deepcopy__(self, memo):
+        properties_preserved = {}
+        properties = {}
+        for k in self._properties + self._properties_optional:
+            if ((k not in self.properties
+                 or k in (self._properties_from_parent
+                          + self._properties_dont_copy))):
+                continue
+            if k in self._properties_references:
+                properties_preserved[k] = self.properties[k]
+            else:
+                properties[k] = copy.deepcopy(
+                    self.properties[k], memo)
+        properties.update(properties_preserved)
+        for k in self.related_units:
+            if getattr(self, k, None):
+                properties[k] = getattr(self, k)
+        return type(self)(**properties)
+
     def compare(self, solf, ignore_attr=None,
                 ignore_prop=None):
         if not isinstance(solf, CodeUnit):
@@ -1756,12 +1969,25 @@ class CodeUnit(metaclass=CodeUnitMeta):
 
     @classmethod
     def code_unit(cls, unit_type, default=NoDefault):
-        out = cls.code_units().get(unit_type, default)
-        if out == NoDefault:
-            raise InvalidUnitType(
-                f"No unit_type \'{unit_type}\' associated "
-                f"with language \'{cls.language}\'")
-        return out
+        out = cls.code_units().get(unit_type, NoDefault)
+        if out == NoDefault and unit_type.startswith('forward_'):
+            out = cls.code_units().get(unit_type.split('forward_')[-1],
+                                       NoDefault)
+            if out != NoDefault and out.no_forward_unit:
+                out = NoDefault
+        if out != NoDefault:
+            return out
+        if default != NoDefault:
+            return default
+        raise InvalidUnitType(
+            f"No unit_type \'{unit_type}\' associated "
+            f"with language \'{cls.language}\'")
+
+    def as_type(self, **kwargs):
+        if self.unit_type == 'type':
+            return self
+        raise NotImplementedError(
+            f"Cannot convert {self.language} {self.unit_type} to type")
 
     @classmethod
     def get_regex(cls, no_group=False, no_recurse=False, key='_regex',
@@ -1794,7 +2020,11 @@ class CodeUnit(metaclass=CodeUnitMeta):
             key_fstring = key + '_fstring'
             alt_regex_fstring = getattr(cls, key_fstring, None)
             if alt_regex_fstring is None:
-                msg = f"No {key} or {key_fstring} set for {cls}"
+                msg = (
+                    f"No {key} or {key_fstring} set for {cls} "
+                    f"(unit_type = \'{cls.unit_type}\', "
+                    f"language = \'{cls.language}\')"
+                )
                 print(msg)
                 pdb.set_trace()
                 raise NotImplementedError(msg)
@@ -1813,12 +2043,21 @@ class CodeUnit(metaclass=CodeUnitMeta):
         return out
 
     def get_fstring(self, alt_fstring_cond=None, **kwargs):
+        if self.properties.get('skipped', False):
+            return ''
+        if alt_fstring_cond is None and self._fstring_cond_prop:
+            for k, v in self._fstring_cond_prop.items():
+                if k in self.properties.items():
+                    alt_fstring_cond = v
+                    break
         if alt_fstring_cond is None:
             if self._fstring is not None:
                 return self._fstring
             if self._fstring_cond is None:
                 raise NotImplementedError(
-                    f"No _fstring_cond set for {self.__class__}")
+                    f"No _fstring_cond set for {self.__class__} "
+                    f"(unit_type = \'{self.unit_type}\', "
+                    f"language = \'{self.language}\')")
             out = self._fstring_cond
         else:
             out = alt_fstring_cond
@@ -1830,14 +2069,17 @@ class CodeUnit(metaclass=CodeUnitMeta):
 
     @property
     def address_tuple(self):
-        parts = copy.deepcopy(self.properties.get('unitpath', []))
+        parts = [x for x in self.properties.get('unitpath', [])]
         parts.append(self.address_local)
         return tuple(parts)
 
     @property
     def address_local(self):
         if self.address_property is not None:
-            return self.properties[self.address_property]
+            out = self.properties[self.address_property]
+            if isinstance(out, CodeUnit):
+                out = out.format()
+            return out
         elif 'name' in self.properties:
             return self.properties['name']
         elif ((not self.is_dummy_unit)
@@ -1859,8 +2101,9 @@ class CodeUnit(metaclass=CodeUnitMeta):
     @classmethod
     def from_match(cls, match, member_units=None, check_format=False,
                    **kwargs):
-        cls.complete_match(match, kwargs, member_units=member_units,
-                           check_format=check_format)
+        kwargs = cls.complete_match(match, kwargs,
+                                    member_units=member_units,
+                                    check_format=check_format)
         kwargs = dict(match.groupdict(), match=match, **kwargs)
         kwargs.setdefault('match_start', match.start())
         kwargs.setdefault('match_end', match.end())
@@ -1874,7 +2117,7 @@ class CodeUnit(metaclass=CodeUnitMeta):
     @classmethod
     def from_unit(cls, x, property_name=None, property_index=None,
                   generating_unit=None, dont_convert=False,
-                  conversion_prefix=None, **kwargs):
+                  conversion_prefix=None, member_types=None, **kwargs):
         if dont_convert:
             if generating_unit is not None:
                 kwargs['generating_unit'] = generating_unit
@@ -1897,11 +2140,14 @@ class CodeUnit(metaclass=CodeUnitMeta):
         if generating_unit:
             kwargs['generating_unit'] = generating_unit
         if isinstance(x, list):
-            return [
+            out = [
                 cls.from_unit(xx, property_name=property_name,
                               conversion_prefix=conversion_prefix,
                               property_index=i, **kwargs)
                 for i, xx in enumerate(x)]
+            if member_types is not None and property_name == 'members':
+                out = [xx for xx in out if xx.unit_type in member_types]
+            return out
         elif isinstance(x, CodeUnit):
             unit = None
             if conversion_prefix:
@@ -1920,7 +2166,8 @@ class CodeUnit(metaclass=CodeUnitMeta):
                         'unitpath', []) + [
                             kwargs.get('name', x.address_local)],
                     generating_unit=generating_unit,
-                    conversion_prefix=conversion_prefix)
+                    conversion_prefix=conversion_prefix,
+                    member_types=member_types)
                  for k, v in x.properties.items()
                  if k not in cls._recursive_properties},
                 **kwargs)
@@ -1964,8 +2211,16 @@ class CodeUnit(metaclass=CodeUnitMeta):
             match = pattern.search(x, pos, endpos)
         block_comment = cls.code_unit('block_comment')
         if match and block_comment:
-            idx_begin = x.rfind(block_comment[0], 0, match.start())
-            idx_end = x.rfind(block_comment[1], 0, match.start())
+            if isinstance(block_comment[0], list):
+                idx_begin = max([x.rfind(c, 0, match.start())
+                                 for c in block_comment[0]])
+            else:
+                idx_begin = x.rfind(block_comment[0], 0, match.start())
+            if isinstance(block_comment[1], list):
+                idx_end = max([x.rfind(c, 0, match.start())
+                               for c in block_comment[1]])
+            else:
+                idx_end = x.rfind(block_comment[1], 0, match.start())
             if idx_begin != -1 and idx_begin > idx_end:
                 match = None
         if return_match:
@@ -2017,6 +2272,7 @@ class CodeUnit(metaclass=CodeUnitMeta):
         kwargs['cached_matches'] = cached_matches
         pos_final = pos
         while pos < endpos:
+            assert pos >= 0
             match = cls.parse_subunit(x, pos=pos, endpos=endpos,
                                       member_index=member_index,
                                       units=units, **kwargs)
@@ -2066,6 +2322,8 @@ class CodeUnit(metaclass=CodeUnitMeta):
     def complete_match_body(cls, match, pos=None, endpos=None,
                             parent_body_match=None):
         if 'body' in match.groupdict():
+            if match.group('body') is None:
+                return None
             return DummyMatch(match.string, start=match.start('body'),
                               end=match.end('body'))
         body_match = None
@@ -2100,11 +2358,17 @@ class CodeUnit(metaclass=CodeUnitMeta):
             if 'name' not in kwargs:
                 kwargs['name'] = match.group('name')
             kwargs.setdefault('member_kwargs', {})
+            kwargs.setdefault('recursive_member_kwargs', {})
             kwargs['member_kwargs'].setdefault(
                 'parent', kwargs['name'])
             kwargs['member_kwargs'].setdefault(
                 'check_format', check_format)
-            unitpath = copy.deepcopy(kwargs.get('unitpath', []))
+            kwargs['member_kwargs'].setdefault(
+                'recursive_member_kwargs',
+                kwargs['recursive_member_kwargs'])
+            kwargs['member_kwargs'].update(
+                **kwargs['recursive_member_kwargs'])
+            unitpath = [x for x in kwargs.get('unitpath', [])]
             unitpath.append(kwargs['member_kwargs']['parent'])
             kwargs['member_kwargs'].setdefault('unitpath', unitpath)
             for k in kwargs.keys():
@@ -2126,8 +2390,6 @@ class CodeUnit(metaclass=CodeUnitMeta):
                 if member_units:
                     kwargs['member_kwargs'].setdefault(
                         'parent_body_match', body_match)
-        # if match.groupdict().get('name', None) == 'GenericValue':
-        #     print('HERE1')
         if member_units and 'members' not in kwargs:
             addresses = []
             kwargs['members'] = []
@@ -2137,59 +2399,108 @@ class CodeUnit(metaclass=CodeUnitMeta):
                     endpos=kwargs.get('body_end', kwargs['match_end']),
                     units=member_units,
                     **kwargs.get('member_kwargs', {})):
-                # print("PARSE_SUBUNIT", m)
                 if ((m.address in addresses
                      and not m.allow_duplicates)):
-                    prev = kwargs['members'][addresses.index(m.address)]
+                    prev_idx = addresses.index(m.address)
+                    prev = kwargs['members'][prev_idx]
                     macros = [x for x in kwargs['members'] if
                               x.unit_type == 'macro']
-                    print('macros', macros)
-                    if not m.check_duplicate(prev):
+                    selected = m.check_duplicate(prev, macros, match,
+                                                 kwargs)
+                    if (not selected) or selected == prev:
                         continue
+                    else:
+                        assert selected == m
+                        addresses.pop(prev_idx)
+                        kwargs['members'].pop(prev_idx)
                 if m.allow_duplicates != 'ignore':
                     kwargs['members'].append(m)
                     addresses.append(m.address)
-        # if match.groupdict().get('name', None) == 'GenericValue':
-        #     print('HERE2')
-        #     pdb.set_trace()
+        return kwargs
 
-    def check_duplicate(self, solf):
-        msg = (f"Duplicate member located: {self.address}")
+    def check_duplicate(self, solf, macros, parent_match, parent_kws):
+        if self.unit_type != solf.unit_type:
+            if self.unit_type == f'forward_{solf.unit_type}':
+                return solf
+            elif solf.unit_type == f'forward_{self.unit_type}':
+                return self
+        if 'return_macro_tokens' in parent_kws:
+            tokens = parent_kws['return_macro_tokens']
+            self_tokens = tokens.tokens_intersecting(
+                'overlaps', self, include_tokens=['return_macro'])
+            solf_tokens = tokens.tokens_intersecting(
+                'overlaps', solf, include_tokens=['return_macro'])
+            if self_tokens != solf_tokens:
+                return solf
+        msg = (f"Duplicate member located:\n"
+               f"{self.address}\n"
+               f"{pprint.pformat(self.properties)} vs.\n"
+               f"{solf.address}\n"
+               f"{pprint.pformat(solf.properties)}\n"
+               f"Parent kwargs:\n{pprint.pformat(parent_kws)}")
         print(msg)
         pdb.set_trace()
         raise ValueError(msg)
+
+    @classmethod
+    def _before_registration(cls):
+        pass
+
+    @classmethod
+    def add_subunits(cls):
+        for p in cls._properties + cls._properties_optional:
+            try:
+                unit = cls.code_unit(cls.property_units.get(p, p))
+                for x in ['property_subunits', 'property_units',
+                          'list_seps', 'list_bounds']:
+                    for k, v in getattr(unit, x).items():
+                        getattr(cls, x).setdefault(k, v)
+            except InvalidUnitType:
+                pass
 
     @classmethod
     def parse_property(cls, k, x):
         if k == 'indent':
             return int(len(x) / len(cls.code_unit(k)))
         try:
-            unit = cls.code_unit(k)
+            unit = cls.code_unit(cls.property_units.get(k, k))
             if not unit.circular:
                 return unit.parse(x)
         except InvalidUnitType:
             pass
         if k in cls.property_subunits:
+            if k not in cls.list_seps:
+                print(f"SUBUNIT {k} in {cls} does not have a list "
+                      f"separator. Existing list_seps = {cls.list_seps}")
+                pdb.set_trace()
             sep = re.escape(cls.list_seps[k].strip())
-            end = re.escape(cls.list_bounds[k][-1].strip())
+            end = re.escape(cls.list_bounds.get(k, ('', ''))[-1].strip())
+            units = cls.property_subunits[k]
+            if not isinstance(units, list):
+                units = [units]
+            if end:
+                end = r'|(?=' + end + ')'
             kws = {
                 'fullmatch': True,
                 'contiguous': True,
-                'units': [cls.property_subunits[k]],
+                'units': units,
                 'regex_prefix': r'\s*',
                 'regex_suffix': (
-                    r'\s*(?:(?:' + sep + r')|(?:$)|(?=' + end + '))'),
+                    r'\s*(?:(?:' + sep + r')|(?:$)' + end + ')'),
             }
-            return list(cls.parse_subunits(x, **kws))
+            out = list(cls.parse_subunits(x, **kws))
+            for i, x in enumerate(out):
+                x.properties['subunit_index'] = i
+            return out
         return x
 
     @classmethod
-    def format_property(cls, k, x):
+    def format_property(cls, k, x, parent_result=None):
         if k == 'indent':
             assert isinstance(x, int)
             return x * cls.code_unit('indent')
         elif isinstance(x, CodeUnit):
-            return x.format()
+            return x.format(parent_result=parent_result)
         elif isinstance(x, list):
             sep = '\n'
             if k in cls.list_seps:
@@ -2201,11 +2512,23 @@ class CodeUnit(metaclass=CodeUnitMeta):
             else:
                 kk = k
             vals = [cls.format_property(kk, xx) for xx in x]
-            return sep.join([xx for xx in vals if xx])
+            vals = [xx for xx in vals if xx]
+            if sep == '\n':
+                vals = [xx for xx in vals if not xx.isspace()]
+            return sep.join(vals)
         return str(x)
 
     def format(self, **kws):
-        return self.get_fstring(**kws)
+        out = self.get_fstring(**kws)
+        if not out:
+            return out
+        indent = self.format_property('indent',
+                                      self.get_property('indent'))
+        out = out.replace(f'\n{self._noindent_flag}',
+                          self._noindent_flag)
+        out = indent + out.replace('\n', f'\n{indent}')
+        out = out.replace(self._noindent_flag, '\n')
+        return out
 
     def selected(self, member_units=None,
                  member_names=None, member_addresses=None,
@@ -2246,7 +2569,7 @@ class CodeUnit(metaclass=CodeUnitMeta):
         self.properties['members'] = new_members
 
     def select_members(self, **kwargs):
-        members = self.properties['members']
+        members = self.properties.get('members', [])
         self.properties['members'] = []
         self.add_members(members, **kwargs)
 
@@ -2264,8 +2587,12 @@ class CodeUnit(metaclass=CodeUnitMeta):
         self.add_member(self.code_unit(unit_type)(**kwargs))
         self.properties['members'][-1].add_members(members)
 
-    def add_members(self, members, dont_update_unitpath=False,
+    def add_members(self, members=None, dont_update_unitpath=False,
                     index=-1, make_copy=False, **kwargs):
+        if isinstance(members, dict) and 'members' in members:
+            return self.add_members(**members)
+        if not isinstance(members, list):
+            members = [members]
         for x in members:
             if x.selected(**kwargs):
                 self.add_member(
@@ -2311,13 +2638,13 @@ class CodeUnit(metaclass=CodeUnitMeta):
         else:
             y = x
         y.set_property('parent', self.address_local)
-        y.set_property(
-            'indent',
-            self.properties.get('indent', 0) + self.child_indent)
+        y.set_property('indent', self.child_indent)
         y.parent_unit = self
         if not dont_update_unitpath:
-            y.properties['unitpath'] = copy.deepcopy(
-                self.properties.get('unitpath', []))
+            y.properties['unitpath'] = [
+                x for x in
+                self.properties.get('unitpath', [])
+            ]
             y.properties['unitpath'].append(y.properties['parent'])
         self.properties.setdefault('members', [])
         if index == -1:
@@ -2504,8 +2831,19 @@ class CodeUnit(metaclass=CodeUnitMeta):
     def __getitem__(self, k):
         return self.find_member(k)
 
+    def __hash__(self):
+        return hash(self.address)
+
     def index(self, x, key=NoDefault):
         return self.find_member(x, key=key, return_index=True)
+
+    def check_get_property_escape(self, k, default=NoDefault,
+                                  from_unit=None, **kwargs):
+        if from_unit in self.related_units:
+            return True
+        if k in kwargs:
+            return True
+        return False
 
     def get_property(self, k, default=NoDefault, from_unit=None,
                      **kwargs):
@@ -2520,21 +2858,21 @@ class CodeUnit(metaclass=CodeUnitMeta):
             return self.address
         elif k == 'address_stripped':
             return self.address_stripped
+        elif k == "NOINDENT":
+            return self._noindent_flag
         elif k == 'fullname':
             parts = (
                 self.properties['unitpath'][1:]
                 + [self.get_property('name')])
             return self.code_unit('modsep').join(parts)
-        elif (k == 'base_class' and k not in self.properties
-              and 'base_class_unit' in self.properties):
-            return self.get_property(
-                'base_class_unit').get_property('name')
-        elif (k == 'child_class' and k not in self.properties
-              and 'child_class_unit' in self.properties):
-            return self.get_property(
-                'child_class_unit').get_property('name')
+        elif (k in ['base_class', 'child_class']
+              and k not in self.properties
+              and f'{k}_unit' in self.properties):
+            return self.get_property(f'{k}_unit').get_property('name')
         elif k in ['members']:
             default = []
+        elif k == 'parent_match':
+            return self.parent_unit.match
         elif k in self.parallel_units:
             return self.get_parallel_unit(k, default=default)
         elif k in self.related_units:
@@ -2555,6 +2893,14 @@ class CodeUnit(metaclass=CodeUnitMeta):
                            f"have related unit \'{k}\'")
         if k in self.properties:
             return self.properties[k]
+        if k == 'forward_unit':
+            out = self.from_unit(self,
+                                 # generating_unit=self.generating_unit,
+                                 conversion_prefix='forward_')
+            self.set_property('forward_unit', out)
+            return out
+        elif k in 'type' and self.unit_type == 'class':
+            return self.as_type(**kwargs)
         if default != NoDefault:
             return default
         raise KeyError(f"{self.language} {self.unit_type} does not "
@@ -2571,8 +2917,6 @@ class CodeUnit(metaclass=CodeUnitMeta):
             except BaseException:
                 pdb.set_trace()
                 raise
-        print('get_parallel_unit', k, self)
-        pdb.set_trace()
         idx = self.parent_unit.index(self)
         try:
             out = self.parent_unit.get_parallel_unit(k).get_property(
@@ -2593,14 +2937,12 @@ class CodeUnit(metaclass=CodeUnitMeta):
         elif k == 'members':
             self.add_members(v)
         elif k == 'unitpath':
-            prev = self.properties['unitpath'] + [self.properties['name']]
+            prev = self.properties['unitpath'] + [self.address_local]
             for x in self.properties.get('members', []):
-                x.set_property('unitpath', copy.deepcopy(prev))
+                x.set_property('unitpath', [x for x in prev])
         elif k == 'indent':
             for x in self.properties.get('members', []):
-                x.set_property(
-                    'indent',
-                    self.properties.get('indent', 0) + self.child_indent)
+                x.set_property('indent', self.child_indent)
         elif k == 'base_class_unit':
             self.properties.pop('base_class', None)
             child_class = self.properties[k].get_property(
@@ -2618,6 +2960,9 @@ class CodeUnit(metaclass=CodeUnitMeta):
             if k in ['file_unit']:
                 for x in self.properties.get('members', []):
                     x.set_property(k, v)
+        if (((k == self.address_property)
+             or (self.address_property is None and k == 'name'))):
+            self.set_property('unitpath', self.properties['unitpath'])
 
     def set_parallel_unit(self, k, solf):
         print('set_parallel_unit', k, self, solf)
@@ -2632,6 +2977,7 @@ class CodeUnit(metaclass=CodeUnitMeta):
     def call_method_for_all_children(self, method, args, kwargs,
                                      accumulate=None):
         out = []
+        prev_new_siblings = kwargs.pop('new_siblings', {})
 
         def do_call(v):
             nonlocal out
@@ -2644,10 +2990,20 @@ class CodeUnit(metaclass=CodeUnitMeta):
                     out = do_call(vv)
             return out
 
+        call_history = kwargs.pop('call_history', [])
         for k, v in self.properties.items():
             if k in self._recursive_properties:
                 continue
+            if k == 'members':
+                kwargs['new_siblings'] = {}
+            kwargs['call_history'] = call_history + [self]
             out = do_call(v)
+            if k == 'members':
+                for kk, vv in kwargs.pop('new_siblings', {}).items():
+                    index = self.index(kk)
+                    self.add_members(vv, index=index)
+        if prev_new_siblings is not None:
+            kwargs['new_siblings'] = prev_new_siblings
         if accumulate:
             return out
 
@@ -2661,6 +3017,8 @@ class CodeUnit(metaclass=CodeUnitMeta):
         out = []
         if self.unit_type == 'type':
             out.append(self)
+        elif self.unit_type in ['class']:
+            out.append(self.as_type())
         out += self.call_method_for_all_children(
             'utilized_type_units', args, kwargs,
             accumulate=lambda x, y: x + y)
@@ -2670,9 +3028,21 @@ class CodeUnit(metaclass=CodeUnitMeta):
         self.call_method_for_all_children(
             'replace_type', (a, b), kwargs)
 
-    def specialize(self, *args, **kwargs):
+    def replace_types(self, types, **kwargs):
+        for k, v in types.items():
+            self.replace_type(k, v, **kwargs)
+
+    def specialize(self, *args, type_replacements=None, **kwargs):
+        top_level = False
+        if type_replacements is None:
+            type_replacements = {}
+            top_level = True
+        kwargs['type_replacements'] = type_replacements
         self.call_method_for_all_children(
             'specialize', args, kwargs)
+        if top_level:
+            for k, v in type_replacements.items():
+                self.replace_type(k, v)
 
     def test_parse_format(self):
         lines = self.format()
@@ -2764,8 +3134,14 @@ class ClassUnit(CodeUnit):
         'name',
     ]
     _properties_optional = CodeUnit._properties_optional + [
-        'type_constructors'
+        'type_constructors',
     ]
+
+    def as_type(self, **kwargs):
+        unit = self.code_unit('type')
+        kwargs.setdefault('name', self.properties['name'])
+        # kwargs.setdefault('class_unit', self)
+        return unit(**kwargs)
 
 
 class ModuleUnit(CodeUnit):
@@ -2797,7 +3173,6 @@ class FileUnit(CodeUnit):
     comment_token = None
     divider_char = '='
     block_comment = None
-    block_comment = None
     context_tokens = {}
     ignore_blocks = []
     indent = ''
@@ -2812,7 +3187,8 @@ class FileUnit(CodeUnit):
         if self.wrapped_unit:
             assert (self.properties['name']
                     != self.wrapped_unit.properties['name'])
-        register_file_unit(self)
+        if not kwargs.get('dont_register', False):
+            register_file_unit(self)
 
     @classmethod
     def reset_class_properties(cls):
@@ -2828,10 +3204,21 @@ class FileUnit(CodeUnit):
 
     @classmethod
     def parse(cls, x, pos=None, endpos=None, return_match=False,
-              member_units=None, check_format=False, **kwargs):
+              member_units=None, check_format=False,
+              preprocess_kws=None, output_preprocess=None,
+              **kwargs):
+        if preprocess_kws is None:
+            preprocess_kws = {}
         kwargs.setdefault('name', 'dummy')
         assert pos is None and endpos is None
-        x, kws = cls.preprocess(x)
+        x, kws = cls.preprocess(x, **preprocess_kws)
+        if output_preprocess:
+            if not os.path.isabs(output_preprocess):
+                output_preprocess = os.path.join(os.getcwd(),
+                                                 output_preprocess)
+            with open(output_preprocess, 'w') as fd:
+                fd.write(x)
+            print(f"OUTPUT PREPROCESSED {x} TO {output_preprocess}")
         match = DummyMatch(x, start=pos, end=endpos)
         if return_match:
             return match

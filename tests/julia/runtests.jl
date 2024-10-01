@@ -12,7 +12,9 @@ for x in ARGS
   end
 end
 
-@testset "Document Tests $x" for x in ["hello", 1, 3.0, Core.UInt64(2)]
+@testset "Document Tests $x" for x in ["hello", 1, 3.0, Core.UInt64(2),
+                                       Core.Int64(5), Int64(5),
+                                       ["hello", 1, 3.0, Core.UInt64(2)]]
   doc = Document(x)
   @test extract(doc) == x
 end

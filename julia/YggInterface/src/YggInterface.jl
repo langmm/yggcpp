@@ -16,6 +16,250 @@ module librapidjson
   Value(i64::Core.Int64) = _construct(i64)
   Value(u64::Core.UInt64) = _construct(u64)
   Value(s::Cstring, length::CxxULong) = _construct(s, length)
+  function convert(::Type{ <: String }, x::Object)
+    if (!IsString(x))
+      throw("Object is not a String")
+    end
+    return convert(String, GetString(x))
+  end
+  function Object(y::String)
+    x = Object()
+    SetString(x, y)
+    return x
+  end
+  function SetObject(x::Object, y::String)
+    SetString(x, y)
+  end
+  function convert(::Type{ <: Core.Int64 }, x::Object)
+    if (!IsInt64(x))
+      throw("Object is not a Int64")
+    end
+    return convert(Core.Int64, GetInt64(x))
+  end
+  function Object(y::Core.Int64)
+    x = Object()
+    SetInt64(x, y)
+    return x
+  end
+  function SetObject(x::Object, y::Core.Int64)
+    SetInt64(x, y)
+  end
+  function convert(::Type{ <: Core.UInt64 }, x::Object)
+    if (!IsUint64(x))
+      throw("Object is not a Uint64")
+    end
+    return convert(Core.UInt64, GetUint64(x))
+  end
+  function Object(y::Core.UInt64)
+    x = Object()
+    SetUint64(x, y)
+    return x
+  end
+  function SetObject(x::Object, y::Core.UInt64)
+    SetUint64(x, y)
+  end
+  function convert(::Type{ <: CxxLong }, x::Object)
+    if (!IsInt(x))
+      throw("Object is not a Int")
+    end
+    return convert(CxxLong, GetInt(x))
+  end
+  function Object(y::CxxLong)
+    x = Object()
+    SetInt(x, y)
+    return x
+  end
+  function SetObject(x::Object, y::CxxLong)
+    SetInt(x, y)
+  end
+  function convert(::Type{ <: CxxULong }, x::Object)
+    if (!IsUint(x))
+      throw("Object is not a Uint")
+    end
+    return convert(CxxULong, GetUint(x))
+  end
+  function Object(y::CxxULong)
+    x = Object()
+    SetUint(x, y)
+    return x
+  end
+  function SetObject(x::Object, y::CxxULong)
+    SetUint(x, y)
+  end
+  function convert(::Type{ <: Float32 }, x::Object)
+    if (!IsFloat(x))
+      throw("Object is not a Float")
+    end
+    return convert(Float32, GetFloat(x))
+  end
+  function Object(y::Float32)
+    x = Object()
+    SetFloat(x, y)
+    return x
+  end
+  function SetObject(x::Object, y::Float32)
+    SetFloat(x, y)
+  end
+  function convert(::Type{ <: Float64 }, x::Object)
+    if (!IsDouble(x))
+      throw("Object is not a Double")
+    end
+    return convert(Float64, GetDouble(x))
+  end
+  function Object(y::Float64)
+    x = Object()
+    SetDouble(x, y)
+    return x
+  end
+  function SetObject(x::Object, y::Float64)
+    SetDouble(x, y)
+  end
+  function extract(x::Object)
+    if (IsString(x))
+      return convert(String, x)
+    end
+    if (IsInt64(x))
+      return convert(Core.Int64, x)
+    end
+    if (IsUint64(x))
+      return convert(Core.UInt64, x)
+    end
+    if (IsInt(x))
+      return convert(CxxLong, x)
+    end
+    if (IsUint(x))
+      return convert(CxxULong, x)
+    end
+    if (IsFloat(x))
+      return convert(Float32, x)
+    end
+    if (IsDouble(x))
+      return convert(Float64, x)
+    end
+    return x
+  end
+  function convert(::Type{ <: String }, x::Array)
+    if (!IsString(x))
+      throw("Array is not a String")
+    end
+    return convert(String, GetString(x))
+  end
+  function Array(y::String)
+    x = Array()
+    SetString(x, y)
+    return x
+  end
+  function SetArray(x::Array, y::String)
+    SetString(x, y)
+  end
+  function convert(::Type{ <: Core.Int64 }, x::Array)
+    if (!IsInt64(x))
+      throw("Array is not a Int64")
+    end
+    return convert(Core.Int64, GetInt64(x))
+  end
+  function Array(y::Core.Int64)
+    x = Array()
+    SetInt64(x, y)
+    return x
+  end
+  function SetArray(x::Array, y::Core.Int64)
+    SetInt64(x, y)
+  end
+  function convert(::Type{ <: Core.UInt64 }, x::Array)
+    if (!IsUint64(x))
+      throw("Array is not a Uint64")
+    end
+    return convert(Core.UInt64, GetUint64(x))
+  end
+  function Array(y::Core.UInt64)
+    x = Array()
+    SetUint64(x, y)
+    return x
+  end
+  function SetArray(x::Array, y::Core.UInt64)
+    SetUint64(x, y)
+  end
+  function convert(::Type{ <: CxxLong }, x::Array)
+    if (!IsInt(x))
+      throw("Array is not a Int")
+    end
+    return convert(CxxLong, GetInt(x))
+  end
+  function Array(y::CxxLong)
+    x = Array()
+    SetInt(x, y)
+    return x
+  end
+  function SetArray(x::Array, y::CxxLong)
+    SetInt(x, y)
+  end
+  function convert(::Type{ <: CxxULong }, x::Array)
+    if (!IsUint(x))
+      throw("Array is not a Uint")
+    end
+    return convert(CxxULong, GetUint(x))
+  end
+  function Array(y::CxxULong)
+    x = Array()
+    SetUint(x, y)
+    return x
+  end
+  function SetArray(x::Array, y::CxxULong)
+    SetUint(x, y)
+  end
+  function convert(::Type{ <: Float32 }, x::Array)
+    if (!IsFloat(x))
+      throw("Array is not a Float")
+    end
+    return convert(Float32, GetFloat(x))
+  end
+  function Array(y::Float32)
+    x = Array()
+    SetFloat(x, y)
+    return x
+  end
+  function SetArray(x::Array, y::Float32)
+    SetFloat(x, y)
+  end
+  function convert(::Type{ <: Float64 }, x::Array)
+    if (!IsDouble(x))
+      throw("Array is not a Double")
+    end
+    return convert(Float64, GetDouble(x))
+  end
+  function Array(y::Float64)
+    x = Array()
+    SetDouble(x, y)
+    return x
+  end
+  function SetArray(x::Array, y::Float64)
+    SetDouble(x, y)
+  end
+  function extract(x::Array)
+    if (IsString(x))
+      return convert(String, x)
+    end
+    if (IsInt64(x))
+      return convert(Core.Int64, x)
+    end
+    if (IsUint64(x))
+      return convert(Core.UInt64, x)
+    end
+    if (IsInt(x))
+      return convert(CxxLong, x)
+    end
+    if (IsUint(x))
+      return convert(CxxULong, x)
+    end
+    if (IsFloat(x))
+      return convert(Float32, x)
+    end
+    if (IsDouble(x))
+      return convert(Float64, x)
+    end
+    return x
+  end
   function convert(::Type{ <: String }, x::Value)
     if (!IsString(x))
       throw("Value is not a String")
@@ -260,7 +504,7 @@ module librapidjson
     end
     return x
   end
-  export YggSubType, YggEncodingType, Value, Document
+  export YggSubType, YggEncodingType, Value, Document, GenericArray, GenericObject
   
 end
 using .librapidjson

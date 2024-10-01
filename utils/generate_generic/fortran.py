@@ -47,7 +47,7 @@ class FortranModuleUnit(FortranMixin, ModuleUnit):
         r'^module\s+(?P<name>\w+)\s*$'
     )
     _fstring_cond = (
-        '{indent}module {name}\n'
+        'module {name}\n'
         '{members}\n'
         'end module {name}'
     )

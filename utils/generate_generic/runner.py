@@ -17,7 +17,7 @@ interface_files_added = {
 
 if __name__ == "__main__":
     from generate_generic import generate
-    from generate_generic.interface import JuliaInterface
+    from generate_generic.interface import get_interface_file
     parser = argparse.ArgumentParser(
         "Generate interfaces for rapidjson::Document in C & Fortran")
     parser.add_argument("--debug", action="store_true",
@@ -32,10 +32,11 @@ if __name__ == "__main__":
     parser.add_argument("--rapidjson-include-dirs", type=str,
                         help="Path to rapidjson include")
     args = parser.parse_args()
-    if args.language == 'julia':
-        x = JuliaInterface()
-        x.generate(debug=args.debug, verbose=args.verbose,
-                   wrap_rapidjson=args.wrap_rapidjson,
-                   rapidjson_include_dirs=args.rapidjson_include_dirs)
+    if args.language:
+        x = get_interface_file(args.language)(
+            wrap_rapidjson=args.wrap_rapidjson,
+            rapidjson_include_dirs=args.rapidjson_include_dirs,
+        )
+        x.generate(debug=args.debug, verbose=args.verbose)
     else:
         generate(debug=args.debug)
