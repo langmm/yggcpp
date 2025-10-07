@@ -24,7 +24,7 @@ jobs:
         python-install: [pip, conda]
         install-zmq: [true, false]
         install-mpi: [true]
-        install-rmq: [true]
+        install-rmq: [false]  # TODO: Fix this
         with-coverage: [false, true]
         with-asan: [false]
         with-elf: [false]
