@@ -165,7 +165,8 @@ if(ENABLE_RMQ)
 	  list(APPEND DEPS_INCLUDE_DIRS ${rabbitmq-c_INCLUDE_DIR})
 	endif()
 	# In v0.12.0 (v9.2.5 so), the include files were moved into a
-	# dedicated rabbitmq-c directory
+	# dedicated rabbitmq-c directory. This is complicated by the
+        # so version (and cmake version) not matching the source version.
 	if (rabbitmq-c_VERSION)
 	  message(STATUS "rabbitmq-c_VERSION = ${rabbitmq-c_VERSION}")
 	  if (rabbitmq-c_DIR MATCHES ".*vcpkg.*")
@@ -187,8 +188,7 @@ if(ENABLE_RMQ)
 	  message(STATUS "rabbitmq-c_VERSION NOT SET")
 	endif()
 	if ((NOT rabbitmq-c_VERSION) OR
-	    # ((rabbitmq-c_DIR MATCHES ".*vcpkg.*") AND
-	    #  (rabbitmq-c_VERSION VERSION_LESS "9.2.5")) OR
+            (rabbitmq-c_VERSION VERSION_GREATER "1.0.0") OR
 	    (rabbitmq-c_VERSION VERSION_LESS "0.12.0"))
           list(APPEND DEPS_PUBLIC_C_COMPILE_FLAGS -DYGG_RMQ_NOINCLUDEDIR)
 	  list(APPEND DEPS_PUBLIC_CXX_COMPILE_FLAGS -DYGG_RMQ_NOINCLUDEDIR)
