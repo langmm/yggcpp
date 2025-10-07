@@ -67,7 +67,7 @@ requirements:
 tests:
   - python:
       imports:
-        - YggInterface
+        - ygginterface
   - script:
       - pytest -sv tests/python
     requirements:
