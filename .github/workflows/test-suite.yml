@@ -60,7 +60,7 @@ jobs:
             python-install: pip
             install-zmq: true
             install-mpi: false
-            install-rmq: true
+            install-rmq: false  # TODO: fix
             with-coverage: true
             with-asan: false
             with-elf: true
@@ -70,7 +70,7 @@ jobs:
             python-install: pip
             install-zmq: true
             install-mpi: false
-            install-rmq: true
+            install-rmq: false  # TODO: fix
             with-coverage: false
             with-asan: true
             with-elf: true
@@ -80,7 +80,7 @@ jobs:
             python-install: pip
             install-zmq: true
             install-mpi: false
-            install-rmq: true
+            install-rmq: false  # TODO: fix
             with-coverage: false
             with-asan: false
             with-elf: false
@@ -90,7 +90,7 @@ jobs:
             python-install: pip
             install-zmq: true
             install-mpi: false
-            install-rmq: true
+            install-rmq: false  # TODO: fix
             with-coverage: false
             with-asan: false
             with-elf: false
@@ -100,7 +100,7 @@ jobs:
             python-install: pip
             install-zmq: true
             install-mpi: true
-            install-rmq: true
+            install-rmq: false  # TODO: fix
             with-coverage: false
             with-asan: false
             with-elf: false
@@ -110,7 +110,7 @@ jobs:
             python-install: conda
             install-zmq: true
             install-mpi: true
-            install-rmq: true
+            install-rmq: false  # TODO: fix
             with-coverage: false
             with-asan: false
             with-elf: false

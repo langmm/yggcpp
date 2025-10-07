@@ -2,6 +2,7 @@ context:
   name: "YggInterface"
   python_name: "ygginterface"
   version: "1.10.2"
+  build_number: 0
 
 package:
   name: ${{ name|lower }}
@@ -13,7 +14,8 @@ source:
   path: ../
 
 build:
-  number: 0
+  number: ${{ build_number }}
+  string: py${{ python | version_to_buildstring }}h${{ hash }}_${{ build_number }}
   script:
     - if: unix
       then: 'CMAKE_GENERATOR="Ninja" ${{ PYTHON }} -m pip install . --no-deps --ignore-installed -vv --no-build-isolation --config-settings=cmake.define.RAPIDJSON_INCLUDE_DIRS=cpp/include/rapidjson/include '

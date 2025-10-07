@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.5)
+cmake_minimum_required(VERSION 3.16)
 message(STATUS "Fortran TESTING ON")
 enable_language (C)
 if ((NOT FORCE_SPLIT_CXXFORTRAN) AND (NOT MSVC))

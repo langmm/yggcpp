@@ -58,6 +58,8 @@ test:
     - ygginterface
   requires:
     - pytest
+    - flask
+    - gunicorn
   source_files:
     - tests
   commands:
@@ -78,7 +80,7 @@ test:
   #   - if not exist %LIBRARY_PREFIX%\\include\\YggInterface\\ygginterface.mod  # [win]
 
 about:
-  home: https://github.com/cropsinsilico/yggdrasil
+  home: https://github.com/langmm/yggcpp
   license: BSD-3-Clause
   license_family: BSD
   license_file: LICENSE.txt
@@ -94,8 +96,8 @@ about:
     on parallel processes and orchestrate asynchronous communication between them.
     Although designed for connecting crop models, yggdrasil can be used to
     connect scientific models from any domain.
-  doc_url: https://cropsinsilico.github.io/yggdrasil
-  dev_url: https://github.com/cropsinsilico/yggdrasil
+  doc_url: https://cropsinsilico.github.io/yggcpp
+  dev_url: https://github.com/langmm/yggcpp
 
 extra:
   recipe-maintainers:
