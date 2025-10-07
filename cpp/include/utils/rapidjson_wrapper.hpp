@@ -1421,6 +1421,12 @@ namespace YggInterface {
   }
 }
 
+#ifdef YGGDRASIL_PYGIL_ALLOW_THREADS_BEGIN
+#undef YGGDRASIL_PYGIL_ALLOW_THREADS_BEGIN
+#endif // YGGDRASIL_PYGIL_ALLOW_THREADS_BEGIN
+#ifdef YGGDRASIL_PYGIL_ALLOW_THREADS_END
+#undef YGGDRASIL_PYGIL_ALLOW_THREADS_END
+#endif // YGGDRASIL_PYGIL_ALLOW_THREADS_END
 #define YGGDRASIL_PYGIL_BEGIN YggInterface::utils::global_PyGILState();
 #define YGGDRASIL_PYGIL_END YggInterface::utils::global_PyGILState(true);
 #define YGGDRASIL_PYGIL_ALLOW_THREADS_BEGIN YggInterface::utils::global_PyThreadState();
