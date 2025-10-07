@@ -1,0 +1,46 @@
+#include <YggInterface.h>
+
+#define SPEED_TEST_N_MSG @SPEED_TEST_N_MSG@
+#define SPEED_TEST_S_MSG @SPEED_TEST_S_MSG@
+#define SPEED_TEST_COMM @SPEED_TEST_COMM@
+
+int main(int argc, char *argv[]) {
+  printf("Sending %d messages containing %d bytes\n",
+	 SPEED_TEST_N_MSG, SPEED_TEST_S_MSG);
+  yggInput_t icomm = init_comm_flags("speed", RECV, SPEED_TEST_COMM,
+				     COMM_FLAG_ASYNC | COMM_FLAG_SET_OPP_ENV);
+  yggOutput_t ocomm = init_comm_flags("speed", SEND, SPEED_TEST_COMM,
+				      COMM_FLAG_ASYNC);
+  dtype_t odtype = create_dtype_default("string", false);
+  if (!comm_set_datatype(ocomm, &odtype)) {
+    ygglog_error("Failure to set datatype\n");
+    return -1;
+  }
+  char* omsg = (char*)malloc(SPEED_TEST_S_MSG + 1);
+  size_t olen = SPEED_TEST_S_MSG;
+  memset(omsg, 'x', SPEED_TEST_S_MSG);
+  omsg[SPEED_TEST_S_MSG] = '\0';
+  for (size_t i = 0; i < SPEED_TEST_N_MSG; i++) {
+    char* imsg = NULL;
+    if (yggSend(ocomm, omsg, olen) < 0) {
+      ygglog_error("Failure to send message #%ld\n", i);
+      free(omsg);
+      return -1;
+    }
+    size_t ilen = 0;
+    if (yggRecvRealloc(icomm, &imsg, &ilen) < 0) {
+      ygglog_error("Failure to recv message #%ld\n", i);
+      free(omsg);
+      return -1;
+    }
+    if (strcmp(imsg, omsg) != 0) {
+      free(imsg);
+      free(omsg);
+      ygglog_error("Received message #%ld does not match sent message\n", i);
+      return -1;
+    }
+    free(imsg);
+  }
+  free(omsg);
+  return 0;
+}

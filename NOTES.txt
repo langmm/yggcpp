@@ -1,0 +1,2 @@
+Errors including -1073741511, 0xc0000142, 0xc0000135 are likely caused by a dll that is not on PATH, particularly for libraries install via vcpkg
+For Windows GHA jobs, GITHUB_PATH must be updated in both powershell and bash shell's since both seem to be used during compilation with MinGW generators and it is not clear if GITHUB_PATH

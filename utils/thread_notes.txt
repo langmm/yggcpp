@@ -1,0 +1,13 @@
+Threads are very confusing on windows
+
+mingw-w64			https://github.com/mingw-w64/mingw-w64
+pthread-win32			https://github.com/GerHobbelt/pthread-win32
+winpthread			https://github.com/enlyze/winpthreads
+pthreads-win32-feedstock	https://github.com/conda-forge/pthreads-win32-feedstock
+winpthreads-feedstock 	 	https://github.com/conda-forge/winpthreads-feedstock
+
+Package	    	 Description
+std::thread 	 C++ standard library. Wraps calls to either pthread or win32 depending on compiler used.
+pthread     	 POSIX implementation of threading (standard requires a few declarations including pthread_t for ID) part of C standard library
+pthreads-win32	 Implementation of pthread using windows threading. The pthread_t implementation is a struct (ptw32_handle_t { void* p; size_t x; }) and so there are not comparison operators (outside pthread_equal) or << operators. numpy->mkl->libhwoc conda package requires pthread-win32 which is incompatible with winpthread. The missing comparison operators are a known issue that is commonly solved by patching the 'thread' header in mingw (e.g. https://hectorhon.blogspot.com/2018/05/building-libpqxx-on-msys2-mingw-64-bit.html) to remove references to the missing operators.
+winpthread       Implementation of pthread using windows threading. The pthread_t implementation is an integer.

@@ -1,0 +1,28 @@
+include(@CMAKE_CURRENT_FUNCTION_LIST_DIR@/BuildTools.cmake)
+message(STATUS "Running @ARGS_COMMENT@")
+set(KEYPREFIX @ARGS_KEYPREFIX@)
+if (NOT KEYPREFIX)
+  set(KEYPREFIX "ENVK_")
+endif()
+set(ARGS_ENV @ARGS_ENV@)
+message(STATUS "ARGS_ENV = ${ARGS_ENV}")
+set_environment_vars(
+  VARS ${ARGS_ENV} END_VARS
+  KEYPREFIX ${KEYPREFIX}
+  EXISTING old_vars)
+message(STATUS "old_vars = ${old_vars}")
+set(WORKING_DIR @ARGS_WORKING_DIRECTORY@)
+if (WORKING_DIR)
+  list(APPEND add_args WORKING_DIR ${WORKING_DIR})
+endif()
+execute_process(
+  COMMAND @ARGS_COMMAND@
+  COMMAND_ECHO STDOUT
+  RESULT_VARIABLE ret
+  ${add_args})
+set_environment_vars(
+  VARS ${old_vars} END_VARS
+  KEYPREFIX ${KEYPREFIX})
+if (NOT ret EQUAL 0)
+  message(FATAL_ERROR "Failed to run @ARGS_COMMENT@")
+endif()

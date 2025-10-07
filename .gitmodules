@@ -1,0 +1,4 @@
+[submodule "cpp/include/rapidjson"]
+	path = cpp/include/rapidjson
+	url = https://github.com/cropsinsilico/rapidjson
+	branch = yggdrasil

@@ -1,3 +1,10 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# Temporary files
+*~
+
 # Prerequisites
 *.d
 
@@ -34,3 +41,9 @@
 # builds
 cmake-build*
 .idea/*
+CMakeLists.txt.user
+src/CPython
+_version.py
+build
+build_speed
+*.bak

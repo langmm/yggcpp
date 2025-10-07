@@ -1,0 +1,24 @@
+if(NOT OBJS)
+  return()
+endif()
+
+set(new_objs)
+foreach(obj IN LISTS OBJS)
+  cmake_path(GET obj FILENAME oldbase)
+  string(REGEX REPLACE
+         "@CMAKE_Fortran_OUTPUT_EXTENSION@$"
+	 "@CMAKE_C_OUTPUT_EXTENSION@"
+	 newbase ${oldbase})
+  cmake_path(APPEND CMAKE_CURRENT_LIST_DIR ${oldbase} OUTPUT_VARIABLE oldobj)
+  cmake_path(APPEND CMAKE_CURRENT_LIST_DIR ${newbase} OUTPUT_VARIABLE newobj)
+  message(STATUS "Copying ${obj} to ${newobj}")
+  # if(WIN32)
+  #   execute_process(COMMAND objcopy -I elf32-i386 -O pe-i386 "${obj}" "${newobj}")
+  # else()
+  file(COPY ${obj} DESTINATION ${CMAKE_CURRENT_LIST_DIR})
+  file(RENAME ${oldobj} ${newobj})
+  # endif()
+  list(APPEND new_objs ${newobj})
+endforeach()
+message(STATUS "Fortran objects: ${new_objs}")
+message(STATUS "Copied Fortran objects to ${CMAKE_CURRENT_LIST_DIR}")

@@ -1,0 +1,20 @@
+* Add test to verify that send/recv/call/wait can be interuppted by Ctrl+C
+* Expand C & Fortran interfaces for ply/obj to match Python
+* Change how ply & obj are stored to be generic geometry structure?
+* Add method for reserving addresses and generating new addresses if a reserved one is used so that proxy is not needed for every connection
+* Add component handling of _schema_properties_yaml_only
+* Add for_server keyword?
+* Update docs for python extension
+* Generate docs for python extension
+* Only regenerate enum/fortran interface when source files change
+* Add methods for checking generic object type in C & Fortran (autowrap)
+* Automated wrapping of C++ classes/methods
+* Ensure that tests for Python calling of C/Fortran functions is run on GHA jobs
+* Update names of Python GIL macros in rapidjson to be yggdrasil specific
+
+TESTS
+
+* Metadata.fromEncode for Python
+* GetUint for uint32_t
+* Error in deserialize_args SetVarArgs
+* Error in fromData for incompatible type

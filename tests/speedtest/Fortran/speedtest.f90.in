@@ -1,0 +1,48 @@
+program main
+  use YggInterface
+  type(yggcomm) :: icomm, ocomm
+  type(yggdtype) :: odtype
+  character(kind=c_char, len=@SPEED_TEST_S_MSG@) :: omsg
+  type(yggchar_r) :: imsg
+  integer(kind=c_size_t) :: ilength, olength, i, j
+  integer(kind=c_int) :: SPEED_TEST_N_MSG = @SPEED_TEST_N_MSG@
+  integer(kind=c_int) :: SPEED_TEST_S_MSG = @SPEED_TEST_S_MSG@
+  integer(kind=c_int) :: SPEED_TEST_COMM = @SPEED_TEST_COMM@
+  write(*, *) "Sending ", SPEED_TEST_N_MSG, " messages containing ", &
+       SPEED_TEST_S_MSG, " bytes"
+  odtype = create_dtype_default("string", .false.)
+  icomm = ygg_input("speed", SPEED_TEST_COMM, &
+       IOR(COMM_FLAG_ASYNC, COMM_FLAG_SET_OPP_ENV))
+  ocomm = ygg_output_type("speed", odtype, SPEED_TEST_COMM, &
+       COMM_FLAG_ASYNC)
+  olength = SPEED_TEST_S_MSG
+  do i = 1, SPEED_TEST_S_MSG
+     omsg(i:i) = 'x'
+  end do
+  ilength = 0
+  do i = 1, SPEED_TEST_N_MSG
+     if (.NOT.ygg_send_var(ocomm, [yggarg(omsg), yggarg(olength)])) then
+        call ygglog_error("Failure to send message\n")
+        stop 1
+     end if
+     if (.NOT.ygg_recv_var_realloc(icomm, [yggarg(imsg), &
+          yggarg(ilength)])) then
+        call ygglog_error("Failure to recv message\n")
+        stop 1
+     end if
+     if (ilength.NE.olength) then
+        call ygglog_error("Received message size does not match sent message")
+        stop 1
+     end if
+     if (size(imsg%x).NE.len(omsg)) then
+        call ygglog_error("Received message size does not match sent message")
+        stop 1
+     end if
+     do j = 1, len(omsg)
+        if (imsg%x(j).NE.omsg(j:j)) then
+           call ygglog_error("Received message does not match sent message\n")
+           stop 1
+        end if
+     end do
+  end do
+end program main

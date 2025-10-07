@@ -1,0 +1,30 @@
+#include "@CMAKE_CURRENT_SOURCE_DIR@/unittest.hpp"
+#include "utils/Address.hpp"
+#include "communicators/FunctionComm.hpp"
+#include "@CMAKE_CURRENT_SOURCE_DIR@/tests/communicators/commtest.hpp"
+
+
+using namespace YggInterface;
+using namespace YggInterface::communicator;
+
+
+TEST(FunctionComm, call_@LIBRARY@) {
+  utils::Address addr("@language@::@LIBRARY@::example_model_function");
+#ifdef YGGTEST_DYNAMIC_@LIBRARY@
+  DO_FUNCTION_CALL;
+#else
+  EXPECT_THROW(FunctionComm sComm("test", addr, SEND), std::exception);
+#endif
+}
+
+
+TEST(FunctionComm, call_@LIBRARY@_async) {
+  utils::Address addr("@language@::@LIBRARY@::example_model_function");
+#ifdef YGGTEST_DYNAMIC_@LIBRARY@
+  DO_FUNCTION_CALL_ASYNC;
+#else
+  EXPECT_THROW(AsyncComm sComm("test_async", addr, SEND,
+			       COMM_FLAG_ASYNC, FUNCTION_COMM),
+	       std::exception);
+#endif
+}

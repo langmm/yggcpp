@@ -1,0 +1,643 @@
+name: Test of package installation & execution
+'on':
+  push:
+    branches-ignore:
+     - gh-pages
+    tags:
+     - '*'
+  schedule:
+  - cron: 0 10 * * 1
+jobs:
+  build_cpp:
+    runs-on: ${{ matrix.os }}
+    # services:
+    #   rabbitmq:
+    #     image: rabbitmq:latest
+    #     ports:
+    #       - 5672:5672
+    #     options: --health-cmd "rabbitmqctl node_health_check" --health-interval 10s --health-timeout 5s --health-retries 5
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-install: [pip, conda]
+        install-zmq: [true, false]
+        install-mpi: [true]
+        install-rmq: [true]
+        with-coverage: [false, true]
+        with-asan: [false]
+        with-elf: [false]
+        with-valgrind: [false]
+        windows-compiler: [mingw]
+        exclude:
+          - python-install: conda
+            with-coverage: false
+          - python-install: pip
+            with-coverage: true
+          - os: windows-latest
+            install-zmq: false
+          - os: windows-latest
+            with-asan: true
+          - python-install: conda
+            install-zmq: false
+          - python-install: conda
+            install-mpi: false
+          - python-install: conda
+            with-asan: true
+        include:
+          - os: ubuntu-latest
+            python-install: pip
+            install-zmq: true
+            install-mpi: true
+            install-rmq: true
+            with-coverage: true
+            with-asan: false
+            with-elf: true
+            with-valgrind: false
+            windows-compiler: mingw
+          - os: ubuntu-latest
+            python-install: pip
+            install-zmq: true
+            install-mpi: false
+            install-rmq: true
+            with-coverage: true
+            with-asan: false
+            with-elf: true
+            with-valgrind: false
+            windows-compiler: mingw
+          - os: macos-latest
+            python-install: pip
+            install-zmq: true
+            install-mpi: false
+            install-rmq: true
+            with-coverage: false
+            with-asan: true
+            with-elf: true
+            with-valgrind: false
+            windows-compiler: mingw
+          - os: ubuntu-latest
+            python-install: pip
+            install-zmq: true
+            install-mpi: false
+            install-rmq: true
+            with-coverage: false
+            with-asan: false
+            with-elf: false
+            with-valgrind: true
+            windows-compiler: mingw
+          - os: macos-latest
+            python-install: pip
+            install-zmq: true
+            install-mpi: false
+            install-rmq: true
+            with-coverage: false
+            with-asan: false
+            with-elf: false
+            with-valgrind: true
+            windows-compiler: mingw
+          - os: windows-latest
+            python-install: pip
+            install-zmq: true
+            install-mpi: true
+            install-rmq: true
+            with-coverage: false
+            with-asan: false
+            with-elf: false
+            with-valgrind: false
+            windows-compiler: msvc
+          - os: windows-latest
+            python-install: conda
+            install-zmq: true
+            install-mpi: true
+            install-rmq: true
+            with-coverage: false
+            with-asan: false
+            with-elf: false
+            with-valgrind: false
+            windows-compiler: msvc
+      fail-fast: false
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      ###################################
+      # PIP SETUP
+      ###################################
+      - name: Install dependencies on Ubuntu
+        if: matrix.os == 'ubuntu-latest' && matrix.python-install == 'pip'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libc6-dbg gdb valgrind lcov libcmocka-dev gfortran graphviz doxygen>=1.9.2
+          sudo apt upgrade --fix-missing
+          valgrind --version
+      - name: Install dependencies on Mac
+        if: matrix.os == 'macos-latest' && matrix.python-install == 'pip'
+        run: |
+          brew link --overwrite python@3.11
+          brew install cmocka lcov gnutls graphviz doxygen>=1.9.2 # llvm
+          # Required for compiling with clang & gfortran
+          echo "FC=$(which gfortran-12)" >> "$GITHUB_ENV"
+      # - name: Set vcpkg triplet on Windows (mingw)
+      #   if: matrix.os == 'windows-latest' && matrix.windows-compiler == 'mingw'
+      #   shell: bash -l {0}
+      #   run: |
+      #     # echo "VCPKG_TRIPLET=x64-mingw" >> "$GITHUB_ENV"
+      #     echo "VCPKG_TRIPLET=x64-mingw-static" >> "$GITHUB_ENV"
+      - name: Set vcpkg triplet on Windows (msvc)
+        if: matrix.os == 'windows-latest' # && matrix.windows-compiler == 'msvc'
+        shell: bash -l {0}
+        run: |
+          echo "VCPKG_TRIPLET=x64-windows" >> "$GITHUB_ENV"
+          # echo "VCPKG_TRIPLET=x64-windows-static" >> "$GITHUB_ENV"
+      - name: Install dependencies on Windows
+        if: matrix.os == 'windows-latest' && matrix.python-install == 'pip'
+        run: |
+          vcpkg.exe install cmocka --triplet $env:VCPKG_TRIPLET
+      # - name: Set flags for dependencies on Windows
+      #   if: matrix.os == 'windows-latest' && matrix.python-install == 'pip' && matrix.windows-compiler == 'mingw'
+      #   shell: bash -l {0}
+      #   run: |
+      #     echo "CC=gcc.exe" >> "$GITHUB_ENV"
+      #     echo "CXX=c++.exe" >> "$GITHUB_ENV"
+      # - name: Set flags for dependencies on Windows
+      #   if: matrix.os == 'windows-latest' # && matrix.python-install == 'pip'
+      #   shell: bash -l {0}
+      #   run: |
+      #     echo "FC=gfortran.exe" >> "$GITHUB_ENV"
+      # ZeroMQ dependencies
+      - name: Install ZeroMQ (Ubuntu)
+        if: matrix.os == 'ubuntu-latest' && matrix.install-zmq && matrix.python-install == 'pip'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libzmq3-dev libgomp1
+          sudo apt upgrade --fix-missing
+      - name: Install ZeroMQ (Mac)
+        if: matrix.os == 'macos-latest' && matrix.install-zmq && matrix.python-install == 'pip'
+        run: |
+          brew install zeromq libomp
+      - name: Install ZeroMQ (Windows)
+        if: matrix.os == 'windows-latest' && matrix.install-zmq && matrix.python-install == 'pip'
+        run: |
+          vcpkg.exe install zeromq --triplet $env:VCPKG_TRIPLET
+
+      # MPI dependencies
+      - name: Install MPI (Ubuntu)
+        if: matrix.os == 'ubuntu-latest' && matrix.install-mpi && matrix.python-install == 'pip'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mpich
+          sudo apt upgrade --fix-missing
+      - name: Install MPI (Mac)
+        if: matrix.os == 'macos-latest' && matrix.install-mpi && matrix.python-install == 'pip'
+        run: |
+          brew install open-mpi
+      # - name: Install MPI (Windows)
+      #   if: matrix.os == 'windows-latest' && matrix.install-mpi && matrix.python-install == 'pip'
+      #   run: |
+      #     vcpkg.exe install msmpi --triplet $env:VCPKG_TRIPLET
+
+      # RabbitMQ dependencies
+      - name: Install RabbitMQ (Ubuntu)
+        if: matrix.os == 'ubuntu-latest' && matrix.install-rmq # && matrix.python-install == 'pip'
+        run: |
+          sudo apt-get install -y rabbitmq-server librabbitmq-dev
+          sudo systemctl start rabbitmq-server
+      - name: Install RabbitMQ (Mac)
+        if: matrix.os == 'macos-latest' && matrix.install-rmq # && matrix.python-install == 'pip'
+        run: |
+          brew install rabbitmq rabbitmq-c
+          brew services start rabbitmq
+      - name: Install RabbitMQ (Windows)
+        if: matrix.os == 'windows-latest' && matrix.install-rmq # && matrix.python-install == 'pip'
+        run: |
+          choco install rabbitmq
+          vcpkg.exe install librabbitmq --triplet $env:VCPKG_TRIPLET
+
+      - name: Setup Python
+        if: matrix.python-install == 'pip'
+        id: pysetup
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Fix Python path on mac
+        if: matrix.os == 'macos-latest' && matrix.python-install == 'pip'
+        run: |
+          tee -a ~/.profile <<<'export PATH="${pythonLocation}/bin:${PATH}"'
+      - name: Install Python dependencies (PIP)
+        if: matrix.python-install == 'pip'
+        run: |
+          python -m pip install -r requirements.txt
+          python -m pip install -r requirements-test.txt
+      - name: Install Python dependencies (CONDA)
+        if: matrix.python-install == 'conda'
+        run: |
+          python -m pip install gunicorn
+
+      ###################################
+      # CONDA SETUP
+      ###################################
+      - name: Set up MSVC Compiler on windows
+        uses: ilammy/msvc-dev-cmd@v1
+        if: matrix.os == 'windows-latest' # && matrix.python-install == 'conda'
+        # with:
+        #   toolset: 14.0
+      - name: Set up miniconda test environment
+        if: matrix.python-install == 'conda'
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          activate-environment: yggdrasil
+          environment-file: environment.yml
+          auto-update-conda: true
+          channels: conda-forge
+          channel-priority: strict
+          miniforge-variant: Mambaforge
+          use-mamba: true
+      - name: Install doxgen on unix systems
+        if: matrix.os != 'windows-latest' && matrix.python-install == 'conda'
+        shell: bash -l {0}
+        run: |
+          mamba install doxygen>=1.9.2 graphviz -y
+      - name: Install LLVM on mac for OpenMP
+        if: matrix.os == 'macos-latest' && matrix.python-install == 'conda'
+        # shell: bash -l {0}
+        run: |
+          mamba install llvm -y
+      - name: Install compilers using conda on Linux/Mac
+        if: matrix.os != 'windows-latest' && matrix.python-install == 'conda'
+        shell: bash -l {0}
+        run: |
+          mamba install c-compiler cxx-compiler fortran-compiler
+      - name: Install MinGW on windows for Fortran (mingw)
+        if: matrix.os == 'windows-latest' && matrix.python-install == 'conda' && matrix.windows-compiler == 'mingw'
+        shell: bash -l {0}
+        run: |
+          mamba install m2w64-gcc m2w64-gcc-fortran m2w64-toolchain_win-64 libpython -c msys2 -y  # winpthreads
+          mamba install m2w64-gcc-libs m2w64-gcc-libs-core m2w64-gcc-libgfortran m2w64-libwinpthread-git msys2-conda-epoch -c msys2 -y
+      - name: Install MinGW on windows for Fortran (msvc)
+        if: matrix.os == 'windows-latest' && matrix.python-install == 'conda' && matrix.windows-compiler == 'msvc'
+        shell: bash -l {0}
+        run: |
+          mamba install m2w64-gcc-fortran libpython -y
+      - name: Install ZeroMQ (mamba)
+        if: matrix.python-install == 'conda' && matrix.install-zmq
+        shell: bash -l {0}
+        run: |
+          mamba install zeromq -y
+      # - name: Install RabbitMQ (mamba)
+      #   if: matrix.python-install == 'conda' && matrix.install-rmq
+      #   shell: bash -l {0}
+      #   run: |
+      #     mamba install librabbitmq -y
+
+      ###################################
+      # SET CONFIG FLAGS
+      ###################################
+      - name: Global config flags
+        shell: bash -l {0}
+        run: |
+          CMAKE_BUILD_TYPE_TEST="Debug"
+          echo "CMAKE_BUILD_TYPE_TEST=Debug" >> "$GITHUB_ENV"
+          echo "CMAKE_ARGS_BASE=-DCMAKE_VERBOSE_MAKEFILE:BOOL=ON" >> "$GITHUB_ENV"
+          echo "CMAKE_ARGS_NO_PYTHON=-DYGG_Fortran_REQUIRED=ON" >> "$GITHUB_ENV"
+          echo "CMAKE_ARGS_TEST=-DYGG_BUILD_CXX_TESTS=ON -DYGG_BUILD_FORTRAN_TESTS=ON -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE_TEST} -DYGG_DEBUG_LEVEL=5" >> "$GITHUB_ENV"
+          echo "CMAKE_ARGS_PYTHON=-DYGG_DEBUG_LEVEL=5" >> "$GITHUB_ENV"
+          echo "TEST_FLAGS=-C ${CMAKE_BUILD_TYPE_TEST} --output-on-failure -VV" >> "$GITHUB_ENV"
+      - name: Coverage config flags
+        if: matrix.with-coverage == true && matrix.os != 'windows-latest'
+        shell: bash -l {0}
+        run: |
+          echo "CMAKE_ARGS_TEST=${{ env.CMAKE_ARGS_TEST }} -DYGG_ENABLE_COVERAGE=ON" >> "$GITHUB_ENV"
+      - name: ASAN config flags
+        if: matrix.with-asan == true
+        shell: bash -l {0}
+        run: |
+          echo "CMAKE_ARGS_BASE=${{ env.CMAKE_ARGS_BASE }} -DYGG_BUILD_ASAN=ON -DYGG_BUILD_UBSAN=ON" >> "$GITHUB_ENV"
+          # echo "CMAKE_ARGS_TEST=-DYGGDRASIL_DISABLE_PYTHON_C_API=ON" >> "$GITHUB_ENV"
+          echo "ASAN_OPTIONS=detect_odr_violation=0:detect_container_overflow=0" >> $GITHUB_ENV
+          echo "TEST_FLAGS=${{ env.TEST_FLAGS }} -E valgrind*" >> "$GITHUB_ENV"
+      # - name: Fortran config flags
+      #   if: matrix.with-asan == false
+      #   shell: bash -l {0}
+      #   run: |
+      #     echo "CMAKE_ARGS_BASE=${{ env.CMAKE_ARGS_BASE }} -DBUILD_FORTRAN_LIBRARY=ON" >> "$GITHUB_ENV"
+      - name: ASAN dynamic library
+        if: matrix.with-asan == true && matrix.os == 'macos-latest'
+        shell: bash -l {0}
+        run: |
+          echo "DYLD_INSERT_LIBRARIES=$(clang -print-file-name=libclang_rt.asan_osx_dynamic.dylib)" >> "$GITHUB_ENV"
+      - name: ELF config flags
+        if: matrix.with-elf == false
+        shell: bash -l {0}
+        run: |
+          echo "CMAKE_ARGS_TEST=${{ env.CMAKE_ARGS_TEST }} -DYGG_ENABLE_ELF=OFF" >> "$GITHUB_ENV"
+      - name: Valgrind on config flags
+        if: matrix.with-valgrind == true
+        shell: bash -l {0}
+        run: |
+          echo "CMAKE_ARGS_TEST=${{ env.CMAKE_ARGS_TEST }} -DYGG_ENABLE_INSTRUMENTATION_OPT=OFF -DYGGDRASIL_DISABLE_PYTHON_C_API=ON -DENABLE_OMP=OFF" >> "$GITHUB_ENV"
+      - name: Valgrind off config flags
+        if: matrix.with-valgrind == false
+        shell: bash -l {0}
+        run: |
+          echo "CMAKE_ARGS_TEST=${{ env.CMAKE_ARGS_TEST }} -DYGG_SKIP_VALGRIND_TESTS=ON" >> "$GITHUB_ENV"
+
+      ############################################
+      # SET CONFIG FLAGS THAT CONTAIN QUOTES LAST
+      ############################################
+      - name: Pip config flags
+        if: matrix.python-install == 'pip'
+        shell: bash -l {0}
+        run: |
+          echo "CMAKE_ARGS_BASE=${{ env.CMAKE_ARGS_BASE }} \"-DPython3_ROOT_DIR=${{ env.pythonLocation }}\"" >> "$GITHUB_ENV"
+          echo "CMAKE_ARGS_PYTHON=${{ env.CMAKE_ARGS_PYTHON }} \"-DPython_ROOT_DIR=${{ env.pythonLocation }}\"" >> "$GITHUB_ENV" # required?
+          # echo "CMAKE_ARGS_NO_PYTHON=${{ env.CMAKE_ARGS_NO_PYTHON }} \"-DCMAKE_INSTALL_PREFIX=${{ github.workspace }}/_install\"" >> "$GITHUB_ENV"
+      - name: Pip config flags on Windows
+        if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
+        shell: bash -l {0}
+        run: |
+          echo "CMAKE_ARGS_NO_PYTHON=${{ env.CMAKE_ARGS_NO_PYTHON }} \"-DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\\_install\" \"-DCMAKE_PREFIX_PATH=${VCPKG_INSTALLATION_ROOT}\installed\\${VCPKG_TRIPLET}\"" >> "$GITHUB_ENV"
+          echo "PYTHON_CONFIG_FLAGS=${{ env.PYTHON_CONFIG_FLAGS }} --config-settings=cmake.define.CMAKE_PREFIX_PATH=\"${VCPKG_INSTALLATION_ROOT}\installed\\${VCPKG_TRIPLET}\" --config-settings=cmake.define.Python3_ROOT_DIR=${{ env.pythonLocation }} --config-settings=cmake.define.Python_ROOT_DIR=${{ env.pythonLocation }}" >> "$GITHUB_ENV"
+     
+      ###################################
+      # Add paths for Windows dlls
+      ###################################
+      - name: Mingw library paths on Windows (Powershell)
+        if: matrix.os == 'windows-latest' && matrix.python-install == 'pip' # && matrix.windows-compiler == 'mingw'
+        run: |
+          # This isn't necessary, but it speeds up the build
+          echo "C:\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      - name: Mingw library paths on Windows (Bash)
+        if: matrix.os == 'windows-latest' && matrix.python-install == 'pip' # && matrix.windows-compiler == 'mingw'
+        shell: bash -l {0}
+        run: |
+          # This isn't necessary, but it speeds up the build
+          DLL_DIRECTORY="C:\mingw64\bin"
+          ls ${DLL_DIRECTORY}
+          echo "${DLL_DIRECTORY}" >> $GITHUB_PATH
+      - name: Vcpkg library paths on Windows (Powershell)
+        if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
+        run: |
+          echo "$env:VCPKG_INSTALLATION_ROOT\installed\$env:VCPKG_TRIPLET\debug\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          echo "$env:VCPKG_INSTALLATION_ROOT\installed\$env:VCPKG_TRIPLET\debug\lib" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      - name: Vcpkg library paths on Windows (Bash)
+        if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
+        shell: bash -l {0}
+        run: |
+          DLL_DIRECTORY="${VCPKG_INSTALLATION_ROOT}\installed\\${VCPKG_TRIPLET}\debug\bin"
+          ls ${DLL_DIRECTORY}
+          echo "${DLL_DIRECTORY}" >> $GITHUB_PATH
+          LIB_DIRECTORY="${VCPKG_INSTALLATION_ROOT}\installed\\${VCPKG_TRIPLET}\debug\lib"
+          ls ${LIB_DIRECTORY}
+          echo "${LIB_DIRECTORY}" >> $GITHUB_PATH
+      - name: Conda library paths on Windows
+        if: matrix.python-install == 'conda' && matrix.os == 'windows-latest'
+        shell: bash -l {0}
+        run: |
+          # This isn't necessary, but it speeds up the build
+          LIB_DIRECTORY="${CONDA_PREFIX}/Library/lib"
+          ls ${LIB_DIRECTORY}
+          echo "${LIB_DIRECTORY}" >> $GITHUB_PATH
+          DLL_DIRECTORY="${CONDA_PREFIX}/Library/bin"
+          ls ${DLL_DIRECTORY}
+          echo "${DLL_DIRECTORY}" >> $GITHUB_PATH
+      - name: Conda library paths on Windows (mingw)
+        if: matrix.python-install == 'conda' && matrix.os == 'windows-latest' && matrix.windows-compiler == 'mingw'
+        shell: bash -l {0}
+        run: |
+          MIN_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64/x86_64-w64-mingw32"
+          echo "ls MIN_DIRECTORY=${MIN_DIRECTORY}"
+          ls ${MIN_DIRECTORY}
+          MININC_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64/x86_64-w64-mingw32/include"
+          echo "ls MININC_DIRECTORY=${MININC_DIRECTORY}"
+          ls ${MININC_DIRECTORY}
+          MINLIB_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64/x86_64-w64-mingw32/lib"
+          echo "ls MINLIB_DIRECTORY=${MINLIB_DIRECTORY}"
+          ls ${MINLIB_DIRECTORY}
+          MINBIN_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64/x86_64-w64-mingw32/bin"
+          echo "ls MINBIN_DIRECTORY=${MINBIN_DIRECTORY}"
+          ls ${MINBIN_DIRECTORY}
+          echo "MINGW_PTHREAD_ROOT=${MIN_DIRECTORY}" >> "$GITHUB_ENV"
+      - name: Conda library paths on Windows (msvc)
+        if: matrix.python-install == 'conda' && matrix.os == 'windows-latest' && matrix.windows-compiler == 'msvc'
+        shell: bash -l {0}
+        run: |
+          MIN_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64"
+          echo "ls MIN_DIRECTORY=${MIN_DIRECTORY}"
+          ls ${MIN_DIRECTORY}
+          MININC_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64"
+          echo "ls MININC_DIRECTORY=${MININC_DIRECTORY}"
+          ls ${MININC_DIRECTORY}
+          MINLIB_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64/lib"
+          echo "ls MINLIB_DIRECTORY=${MINLIB_DIRECTORY}"
+          ls ${MINLIB_DIRECTORY}
+          MINBIN_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64/bin"
+          echo "ls MINBIN_DIRECTORY=${MINBIN_DIRECTORY}"
+          ls ${MINBIN_DIRECTORY}
+      - name: Set CMAKE_GENERATOR for MinGW
+        if: matrix.with-asan == false && matrix.os == 'windows-latest' && matrix.windows-compiler == 'mingw'
+        shell: bash -l {0}
+        run: |
+          echo "CMAKE_GENERATOR=MinGW Makefiles" >> $GITHUB_ENV
+      
+      ###################################
+      # Check
+      ###################################
+      - name: Check for numpy (CONDA)
+        if: matrix.python-install == 'conda'
+        shell: bash -l {0}
+        run: |
+          python -c "import sys; print(sys.executable)"
+          python -c "import numpy; print(numpy.get_include())"
+      - name: Check for numpy (PIP)
+        if: matrix.python-install == 'pip'
+        run: |
+          python -c "import sys; print(sys.executable)"
+          python -c "import numpy; print(numpy.get_include())"
+
+      ###################################
+      # Configure
+      ###################################
+      - name: Remove Strawberry Perl from PATH
+        if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
+        run: |
+          $env:PATH = $env:PATH -replace "C:\\Strawberry\\c\\bin;", ""
+          "PATH=$env:PATH" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Get-ChildItem -Path C:\Strawberry -Recurse | Remove-Item -force -recurse
+          Remove-Item C:\Strawberry -Force
+      - name: Check cmake (PIP)
+        if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
+        run: |
+          where.exe cmake | Write-Output
+          where.exe ctest | Write-Output
+      - name: Configure (CONDA)
+        if: matrix.python-install == 'conda'
+        shell: bash -l {0}
+        run: |
+          mkdir build
+          cd build
+          which cmake
+          cmake .. ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} ${{ env.CMAKE_ARGS_TEST }}
+      - name: Configure (PIP)
+        if: matrix.python-install == 'pip'
+        run: |
+          mkdir build
+          cd build
+          cmake .. ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} ${{ env.CMAKE_ARGS_TEST }}
+      
+      ###################################
+      # Build CPP & C
+      ###################################
+      - name: Build C++ & C (CONDA)
+        if: matrix.python-install == 'conda'
+        shell: bash -l {0}
+        run: |
+          cd build
+          cmake --build . --config ${{ env.CMAKE_BUILD_TYPE_TEST }}
+      - name: Build C++ & C (PIP)
+        if: matrix.python-install == 'pip'
+        run: |
+          cd build
+          cmake --build . --config ${{ env.CMAKE_BUILD_TYPE_TEST }}
+      
+      ###################################
+      # Test CPP, C, & Fortran
+      ###################################
+      - name: Test C++, C, & Fortran Interfaces (CONDA)
+        if: matrix.python-install == 'conda'
+        shell: bash -l {0}
+        run: |
+          mamba list
+          echo "PATH=$PATH"
+          cd build
+          which ctest
+          ctest ${{ env.TEST_FLAGS }}
+      - name: Show path (PIP & WINDOWS)
+        if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
+        run: |
+          echo $env:path
+      - name: Test C++, C, & Fortran Interfaces (PIP)
+        if: matrix.python-install == 'pip'
+        run: |
+          echo "PATH=$env:PATH"
+          cd build
+          ctest ${{ env.TEST_FLAGS }}
+      - name: Preserve coverage information
+        if: matrix.with-coverage && matrix.os != 'windows-latest'
+        shell: bash -l {0}
+        run: |
+          cp -r build/coverage coverage
+
+      ###################################
+      # Build Python
+      ###################################
+      - name: Set CMAKE_ARGS for Python build
+        shell: bash -l {0}
+        run: |
+          echo "OLD_CMAKE_ARGS=${{ env.CMAKE_ARGS }}" >> "$GITHUB_ENV"
+          echo "CMAKE_ARGS=${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_PYTHON }}" >> "$GITHUB_ENV"
+      - name: Build conda package (CONDA)
+        if: matrix.python-install == 'conda' && matrix.os == 'windows-latest'
+        # shell: bash -l {0}
+        continue-on-error: true
+        run: |
+          conda deactivate
+          conda activate base
+          mamba install boa -y
+          conda mambabuild recipe --python 3.9 -q -c conda-forge --no-test
+      - name: Build Python (CONDA)
+        if: matrix.python-install == 'conda'
+        shell: bash -l {0}
+        run: |
+          python -m pip install . -v ${{ env.PYTHON_CONFIG_FLAGS }}
+      - name: Build Python (PIP)
+        if: matrix.python-install == 'pip'
+        run: |
+          python -m pip install . -v ${{ env.PYTHON_CONFIG_FLAGS }}
+      - name: Unset CMAKE_ARGS for Python build
+        shell: bash -l {0}
+        run: |
+          echo "CMAKE_ARGS=${{ env.OLD_CMAKE_ARGS }}" >> "$GITHUB_ENV"
+
+      ###################################
+      # Test Python
+      ###################################
+      - name: Test Python Interfaces (CONDA)
+        if: matrix.python-install == 'conda' && matrix.with-elf == false && matrix.with-valgrind == false
+        shell: bash -l {0}
+        run: |
+          pytest -sv tests/python
+      # - name: Check for Python Interfaces (PIP)
+      #   if: matrix.python-install == 'pip' && matrix.with-elf == false && matrix.with-valgrind == false
+      #   shell: bash -l {0}
+      #   run: |
+      #     PYTHON_EXEC=${{ steps.pysetup.outputs.python-path }}
+      #     ${PYTHON_EXEC} -m site
+      #     ${PYTHON_EXEC} -c 'import site; print(site.getsitepackages())'
+      #     ls $(${PYTHON_EXEC} -c 'import site; print(site.getsitepackages()[0])')
+      #     ls $(${PYTHON_EXEC} -c 'import os; import site; print(os.path.join(site.getsitepackages()[0], "pyYggdrasil"))')
+      # - name: Test Python Interfaces w/ LLDB (PIP)
+      #   if: matrix.python-install == 'pip' && matrix.with-elf == false && matrix.with-valgrind == false && matrix.os == 'macos-latest'
+      #   run: |
+      #     lldb -o 'run' -o 'quit' -- $(which python) -m pytest -svx tests/python
+      # - name: Test Python Interfaces w/ GDB (PIP)
+      #   if: matrix.python-install == 'pip' && matrix.with-elf == false && matrix.with-valgrind == false && matrix.os == 'ubuntu-latest'
+      #   run: |
+      #     gdb --batch -x gdb_commands.txt --args $(which python) -m pytest -svx tests/python
+      - name: Test Python Interfaces (PIP)
+        if: matrix.python-install == 'pip' && matrix.with-elf == false && matrix.with-valgrind == false
+        run: |
+          pytest -sv tests/python
+
+      ###################################
+      # Speed tests
+      ###################################
+      # - name: Set the install directory and add it to the path
+      #   shell: bash -l {0}
+      #   if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
+      #   run: |
+      #     INSTALL_DIR=$GITHUB_WORKSPACE\\_install
+      #     echo "INSTALL_DIR=$INSTALL_DIR" >> "$GITHUB_ENV"
+      #     echo "${INSTALL_DIR}" >> $GITHUB_PATH
+      - name: Run speed tests (default)
+        if: matrix.with-asan == false
+        shell: bash -l {0}
+        run: |
+          echo "PATH=$PATH"
+          ./run_tests.sh --rebuild --speed --config Release ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} --verbose
+      - name: Run speed tests (ipc)
+        if: matrix.with-asan == false && matrix.os != 'windows-latest'
+        shell: bash -l {0}
+        run: |
+          ./run_tests.sh --speed --config Release ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} --verbose --comm IPC_COMM
+      - name: Run speed tests (zmq)
+        if: matrix.with-asan == false && matrix.install-zmq
+        shell: bash -l {0}
+        run: |
+          ./run_tests.sh --speed --config Release ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} --verbose --comm ZMQ_COMM
+      - name: Run speed tests (rmq)
+        if: matrix.with-asan == false && matrix.install-rmq && matrix.python-install != 'conda'
+        shell: bash -l {0}
+        run: |
+          ./run_tests.sh --speed --config Release ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} --verbose --comm RMQ_COMM
+
+      ###################################
+      # Docs tests
+      ###################################
+      - name: Build docs
+        if: matrix.os != 'windows-latest' && (matrix.os == 'macos-latest' || matrix.python-install == 'conda')
+        shell: bash -l {0}
+        run: |
+          ./run_tests.sh --rebuild --docs
+      
+      ###################################
+      # Coverage
+      ###################################
+      - name: Upload coverage report
+        if: matrix.with-coverage == true && matrix.os != 'windows-latest'
+        uses: codecov/codecov-action@v4
+        with:
+          name: ${{ matrix.os }}-${{ matrix.python-install }}-${{ matrix.install-zmq }}-${{ matrix.install-mpi }}-${{ matrix.with-coverage }}-${{ matrix.with-asan }}-${{ matrix.with-elf }}-${{ matrix.with-valgrind }}
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: coverage/coverage.info
+          functionalities: gcov

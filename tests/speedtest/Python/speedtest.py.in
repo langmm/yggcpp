@@ -1,0 +1,30 @@
+import os
+print(f"DYLD_INSERT_LIBRARIES = {os.environ.get('DYLD_INSERT_LIBRARIES', '')}")
+
+# TODO: Replace errors with specific errors
+import YggInterface
+
+SPEED_TEST_N_MSG = @SPEED_TEST_N_MSG@
+SPEED_TEST_S_MSG = @SPEED_TEST_S_MSG@
+SPEED_TEST_COMM = YggInterface.COMM_TYPE.@SPEED_TEST_COMM@
+
+
+print(f"Sending {SPEED_TEST_N_MSG} messages containing {SPEED_TEST_S_MSG} bytes")
+icomm = YggInterface.Comm_t(
+    "speed", direction=YggInterface.DIRECTION.RECV,
+    commtype=SPEED_TEST_COMM,
+    flags=(YggInterface.COMM_FLAG.COMM_FLAG_ASYNC |
+           YggInterface.COMM_FLAG.COMM_FLAG_SET_OPP_ENV))
+ocomm = YggInterface.Comm_t(
+    "speed", direction=YggInterface.DIRECTION.SEND,
+    commtype=SPEED_TEST_COMM,
+    flags=YggInterface.COMM_FLAG.COMM_FLAG_ASYNC)
+omsg = SPEED_TEST_S_MSG * 'x'
+for i in range(SPEED_TEST_N_MSG):
+    if (not ocomm.send(omsg)):
+        raise RuntimeError(f"Failure to send message #{i}")
+    flag, imsg = icomm.recv()
+    if (not flag):
+        raise RuntimeError(f"Failure to recv message #{i}")
+    if (imsg != omsg):
+        raise RuntimeError(f"Received message #{i} does not match sent message")

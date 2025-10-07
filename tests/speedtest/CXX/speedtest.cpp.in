@@ -1,0 +1,32 @@
+#include <YggInterface.hpp>
+
+#define SPEED_TEST_N_MSG @SPEED_TEST_N_MSG@
+#define SPEED_TEST_S_MSG @SPEED_TEST_S_MSG@
+#define SPEED_TEST_COMM @SPEED_TEST_COMM@
+
+int main(int argc, char *argv[]) {
+  std::cerr << "Sending " << SPEED_TEST_N_MSG <<
+    " messages containing " << SPEED_TEST_S_MSG << " bytes" << std::endl;
+  YggInput icomm("speed",
+		 COMM_FLAG::COMM_FLAG_ASYNC | COMM_FLAG::COMM_FLAG_SET_OPP_ENV,
+		 COMM_TYPE::SPEED_TEST_COMM);
+  YggOutput ocomm("speed", COMM_FLAG::COMM_FLAG_ASYNC,
+		  COMM_TYPE::SPEED_TEST_COMM);
+  std::string omsg(SPEED_TEST_S_MSG, 'x');
+  for (size_t i = 0; i < SPEED_TEST_N_MSG; i++) {
+    std::string imsg;
+    if (ocomm.send(omsg) < 0) {
+      YggLogError << "Failure to send message #" << i << std::endl;
+      return -1;
+    }
+    if (icomm.recv(imsg) < 0) {
+      YggLogError << "Failure to recv message #" << i << std::endl;
+      return -1;
+    }
+    if (imsg != omsg) {
+      YggLogError << "Received message #" << i << " does not match sent message" << std::endl;
+      return -1;
+    }
+  }
+  return 0;
+}

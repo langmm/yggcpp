@@ -1,0 +1,136 @@
+
+/*! @brief Global copy of rapidjson import of numpy PyArray_API */
+int rapidjson_NUMPY_IMPORTED = 0;
+
+#ifdef YGGDRASIL_DISABLE_PYTHON_C_API
+
+RAPIDJSON_WRAPPER_DEFS_ bool YggInterface::utils::global_PyGILState(bool) {
+  return true;
+}
+
+RAPIDJSON_WRAPPER_DEFS_ bool YggInterface::utils::global_PyThreadState(bool) {
+  return true;
+}
+
+RAPIDJSON_WRAPPER_DEFS_ bool YggInterface::utils::initialize_python(const std::string) {
+  return true;
+}
+
+RAPIDJSON_WRAPPER_DEFS_ bool YggInterface::utils::finalize_python(const std::string) {
+  return true;
+}
+
+RAPIDJSON_WRAPPER_DEFS_ bool YggInterface::utils::import_numpy_arrays() {
+  return true;
+}
+
+RAPIDJSON_WRAPPER_DEFS_ bool YggInterface::utils::numpy_arrays_imported() {
+  return false;
+}
+
+RAPIDJSON_WRAPPER_DEFS_ PyObject* YggInterface::utils::import_python_element(
+    const std::string&, const std::string&,
+    const std::string, const bool) {
+  return NULL;
+}
+    
+RAPIDJSON_WRAPPER_DEFS_ PyObject* YggInterface::utils::import_python_object(
+    const std::string&,
+    const std::string, const bool) {
+  return NULL;
+}
+    
+
+#else // YGGDRASIL_DISABLE_PYTHON_C_API
+
+RAPIDJSON_WRAPPER_DEFS_ bool YggInterface::utils::global_PyGILState(bool release) {
+  return rapidjson::global_PyGILState(release);
+}
+
+RAPIDJSON_WRAPPER_DEFS_ bool YggInterface::utils::global_PyThreadState(bool restore) {
+  return rapidjson::global_PyThreadState(restore);
+}
+
+RAPIDJSON_WRAPPER_DEFS_ bool YggInterface::utils::initialize_python(const std::string error_prefix) {
+  std::string err;
+  try {
+    err = rapidjson::initialize_python(error_prefix, true);
+  } catch (std::exception& e) {
+    err = e.what();  // GCOV_EXCL_LINE
+  }
+  if (!err.empty()) {
+    YggLogError << err << std::endl;  // GCOV_EXCL_LINE
+    return false;  // GCOV_EXCL_LINE
+  }
+#if !defined(RAPIDJSON_DONT_IMPORT_NUMPY) && defined(RAPIDJSON_FORCE_IMPORT_ARRAY)
+  rapidjson_NUMPY_IMPORTED = 1;
+#endif
+  return true;
+}
+
+RAPIDJSON_WRAPPER_DEFS_ bool YggInterface::utils::finalize_python(const std::string error_prefix) {
+  try {
+    rapidjson::finalize_python(error_prefix);
+  } catch (std::exception& e) {
+    YggLogError << e.what() << std::endl;  // GCOV_EXCL_LINE
+    return false;  // GCOV_EXCL_LINE
+  }
+  return true;
+}
+
+RAPIDJSON_WRAPPER_DEFS_ bool YggInterface::utils::import_numpy_arrays() {
+  std::string err;
+  try {
+    if (!Py_IsInitialized()) {
+      YggLogError << "import_numpy_arrays: Python is not initialized" << std::endl;
+      return false;
+    }
+    err = rapidjson::init_numpy_API();
+  } catch (std::exception& e) {
+    err = e.what();  // GCOV_EXCL_LINE
+  }
+  if (!err.empty()) {
+    YggLogError << err << std::endl;  // GCOV_EXCL_LINE
+    return false;  // GCOV_EXCL_LINE
+  }
+#if !defined(RAPIDJSON_DONT_IMPORT_NUMPY) && defined(RAPIDJSON_FORCE_IMPORT_ARRAY)
+  rapidjson_NUMPY_IMPORTED = 1;
+#endif
+  return true;
+}
+
+RAPIDJSON_WRAPPER_DEFS_ bool YggInterface::utils::numpy_arrays_imported() {
+  return (rapidjson_NUMPY_IMPORTED == 1);
+  // bool out = false;
+  // if (rapidjson_ARRAY_API)
+  //   out = true;
+  // return out;
+}
+
+RAPIDJSON_WRAPPER_DEFS_ PyObject* YggInterface::utils::import_python_element(
+    const std::string& module, const std::string& element,
+    const std::string error_prefix, const bool ignore_error) {
+  PyObject* out = NULL;
+  try {
+    out = rapidjson::import_python_class(module.c_str(), element.c_str(),
+                                         error_prefix, ignore_error);
+  } catch (std::exception& e) {
+    YggLogError << e.what() << std::endl;  // GCOV_EXCL_LINE
+  }
+  return out;
+}
+
+RAPIDJSON_WRAPPER_DEFS_ PyObject* YggInterface::utils::import_python_object(
+    const std::string& module_class,
+    const std::string error_prefix, const bool ignore_error) {
+  PyObject* out = NULL;
+  try {
+    out = rapidjson::import_python_object(module_class.c_str(),
+                                          error_prefix, ignore_error);
+  } catch (std::exception& e) {
+    YggLogError << e.what() << std::endl;  // GCOV_EXCL_LINE
+  }
+  return out;
+}
+
+#endif // YGGDRASIL_DISABLE_PYTHON_C_API

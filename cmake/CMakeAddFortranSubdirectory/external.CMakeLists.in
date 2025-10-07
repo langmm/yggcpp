@@ -1,0 +1,76 @@
+cmake_minimum_required(VERSION @CMAKE_MINIMUM_REQUIRED_VERSION@)
+project(@target_name@_PROJECT)
+enable_language(Fortran)
+include(@CMAKE_CURRENT_FUNCTION_LIST_DIR@/AddTargetsFromFile.cmake)
+message(STATUS "target_name = @target_name@, ${CMAKE_CURRENT_BINARY_DIR}")
+set(CMAKE_VERBOSE_MAKEFILE @CMAKE_VERBOSE_MAKEFILE@)
+set(CMAKE_C_OUTPUT_EXTENSION @CMAKE_C_OUTPUT_EXTENSION@)
+set(CMAKE_Fortran_OUTPUT_EXTENSION @CMAKE_C_OUTPUT_EXTENSION@)
+set(libraries @ARGS_LIBRARIES@)
+set(includes @ARGS_INCLUDES@)
+set(definitions @ARGS_DEFINITIONS@)
+set(library_type @library_type@)
+add_library(@target_name@ @final_library_type@ @external_sources@)
+set_target_properties(
+    @target_name@ PROPERTIES
+    COMPILE_FLAGS "@final_library_flags@"
+    Fortran_STANDARD 2003
+    Fortran_STANDARD_REQUIRED ON
+    Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+if (library_type STREQUAL "SHARED" AND CMAKE_GNUtoMS)
+    set_target_properties(@target_name@ PROPERTIES
+        IMPORT_PREFIX "" PREFIX "")
+endif()
+if(WIN32)
+    # target_compile_options(
+    #     @target_name@ PRIVATE
+    # 	-fno-stack-check -fno-stack-protector -mno-stack-arg-probe)
+    set_target_properties(@target_name@
+        PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+endif()
+target_link_from_file(@target_name@ PUBLIC @target_file@)
+if(libraries)
+    message(STATUS "Linking libraries ${libraries}")
+    target_link_libraries(@target_name@ PUBLIC ${libraries})
+endif()
+if(includes)
+    message(STATUS "Including directories ${includes}")
+    target_include_directories(@target_name@ PUBLIC ${includes})
+endif()
+if(definitions)
+    message(STATUS "Compilation definitions ${definitions}")
+    target_compile_definitions(@target_name@ PUBLIC ${definitions})
+endif()
+message(STATUS "External @target_name@ CMAKE_GNUtoMS = ${CMAKE_GNUtoMS}")
+configure_file(
+        @CMAKE_CURRENT_FUNCTION_LIST_DIR@/CMakeAddFortranSubdirectory/copy_obj.cmake.in
+	${CMAKE_CURRENT_BINARY_DIR}/copy_obj.cmake
+	@ONLY)
+add_custom_command(
+        TARGET @target_name@
+	PRE_LINK
+	COMMAND ${CMAKE_COMMAND} -E echo "OBJS=$<JOIN:$<TARGET_OBJECTS:@target_name@>,\;>"
+	COMMAND ${CMAKE_COMMAND} "-DOBJS=$<JOIN:$<TARGET_OBJECTS:@target_name@>,\;>" -P ${CMAKE_CURRENT_BINARY_DIR}/copy_obj.cmake
+	VERBATIM
+	COMMAND_EXPAND_LISTS)
+if(NOT library_type STREQUAL "OBJECT")
+    add_custom_command(
+            TARGET @target_name@
+	    POST_BUILD
+	    COMMAND ${CMAKE_COMMAND} -E echo "External TARGET_FILE @target_name@: $<TARGET_FILE:@target_name@>"
+	    COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:@target_name@>" @CMAKE_CURRENT_BINARY_DIR@)
+    if (WIN32 AND library_type STREQUAL "SHARED")
+      if (CMAKE_GNUtoMS)
+        add_custom_command(
+                TARGET @target_name@
+  	        POST_BUILD
+	        COMMAND ${CMAKE_COMMAND} -E echo "External TARGET_LIB_FILE @target_name@: $<PATH:REPLACE_EXTENSION,$<TARGET_IMPORT_FILE:@target_name@>,.lib>"
+	        COMMAND ${CMAKE_COMMAND} -E copy "$<PATH:REPLACE_EXTENSION,$<TARGET_IMPORT_FILE:@target_name@>,.lib>" @CMAKE_CURRENT_BINARY_DIR@)
+      endif()
+      add_custom_command(
+              TARGET @target_name@
+  	      POST_BUILD
+	      COMMAND ${CMAKE_COMMAND} -E echo "External TARGET_IMPORT_FILE @target_name@: $<TARGET_IMPORT_FILE:@target_name@>"
+	      COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_IMPORT_FILE:@target_name@>" @CMAKE_CURRENT_BINARY_DIR@)
+    endif()
+endif()
