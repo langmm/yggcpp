@@ -157,9 +157,9 @@ if(ENABLE_RMQ)
         if (rabbitmq-c_CONFIG)
           include(${rabbitmq-c_CONFIG})
   	  list(APPEND DEPS_LIBRARIES rabbitmq::rabbitmq)
-	  # execute_process(
-	  #   COMMAND ls ${rabbitmq-c_DIR}
-	  #   COMMAND_ECHO STDOUT)
+	  execute_process(
+	    COMMAND ls ${rabbitmq-c_DIR}
+	    COMMAND_ECHO STDOUT)
 	else()
 	  list(APPEND DEPS_LIBRARIES ${rabbitmq-c_LIBRARY})
 	  list(APPEND DEPS_INCLUDE_DIRS ${rabbitmq-c_INCLUDE_DIR})
@@ -196,7 +196,7 @@ if(ENABLE_RMQ)
     else()
         message(STATUS "NO RabbitMQ client library")
     endif()
-    # dump_cmake_variables(REGEX "rabbitmq*")
+    dump_cmake_variables(REGEX "rabbitmq*")
 else (ENABLE_RMQ)
     message(STATUS "No RabbitMQ support will be built." )
 endif (ENABLE_RMQ)

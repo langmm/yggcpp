@@ -1,0 +1,103 @@
+context:
+  name: "YggInterface"
+  python_name: "ygginterface"
+  version: "1.10.2"
+
+package:
+  name: ${{ name|lower }}
+  version: ${{ version }}
+
+source:
+  # url: https://pypi.io/packages/source/${{ name[0] }}/${{ name }}/${{ python_name }}-${{ version }}.tar.gz
+  # sha256: 
+  path: ../
+
+build:
+  number: 0
+  script:
+    - if: unix
+      then: 'CMAKE_GENERATOR="Ninja" ${{ PYTHON }} -m pip install . --no-deps --ignore-installed -vv --no-build-isolation --config-settings=cmake.define.RAPIDJSON_INCLUDE_DIRS=cpp/include/rapidjson/include '
+    - if: win
+      then:
+        - 'set "SKBUILD_CMAKE_ARGS=-G Ninja"'
+        - '${{ PYTHON }} -m pip install . --no-deps --ignore-installed -vv --no-build-isolation --config-settings=cmake.define.RAPIDJSON_INCLUDE_DIRS=cpp/include/rapidjson/include '
+
+requirements:
+  build:
+    - if: build_platform != target_platform
+      then:
+        - cross-python_${{ target_platform }}
+        - numpy >=1.13.0
+        - python
+    - cmake >=3.16
+    - ninja
+    - if: unix
+      then:
+        - ${{ stdlib('c') }}
+        - ${{ compiler('c') }}
+        - ${{ compiler('cxx') }}
+        - ${{ compiler('fortran') }}
+    - if: win
+      then:
+        - m2w64-gcc-fortran
+  host:
+    - hatch-fancy-pypi-readme
+    - llvm-openmp
+    - numpy >=1.13.0
+    - openmpi
+    - pip
+    - python
+    - scikit-build-core
+    - setuptools_scm
+    - if: unix
+      then: sysv_ipc
+    - zeromq
+  run:
+    - if: unix
+      then:
+        - ${{ stdlib('c') }}
+    - llvm-openmp
+    - numpy >=1.13.0
+    - openmpi
+    - python
+    - pyzmq
+    - if: unix
+      then: sysv_ipc
+
+tests:
+  - python:
+      imports:
+        - YggInterface
+  - script:
+      - pytest -sv tests/python
+    requirements:
+      run:
+        - pytest
+        - flask
+        - gunicorn
+    files:
+      source:
+        - tests/
+
+about:
+  homepage: https://github.com/langmm/yggcpp
+  repository: https://github.com/langmm/yggcpp
+  license: BSD-3-Clause
+  license_family: BSD
+  license_file: LICENSE.txt
+  summary: A framework for connecting computational models from multiple languages.
+  description: |
+    The Crops in Silico (CiS) framework, yggdrasil, provides support for
+    connecting scientific models written in different programming languages.
+    To connect two models, modelers add communications interfaces to the model code
+    and provide declarative specification files that identfy the
+    models that should be run and the inputs and outputs those models
+    expect. yggdrasil uses this information to launch the models
+    on parallel processes and orchestrate asynchronous communication between them.
+    Although designed for connecting crop models, yggdrasil can be used to
+    connect scientific models from any domain.
+  documentation: https://cropsinsilico.github.io/yggcpp
+
+extra:
+  recipe-maintainers:
+    - langmm
