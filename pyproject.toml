@@ -10,7 +10,7 @@ build-backend = "scikit_build_core.build"
 [project]
 name = "YggInterface"
 # dynamic = ["version"]
-version = "0.0.1"
+version = "0.1.0"
 description = "Python wrapper around yggdrasil C++ communicator classes"
 license = { text="MIT License" }
 keywords = [

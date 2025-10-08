@@ -52,7 +52,7 @@ jobs:
         run: |
           conda info
           conda list
-          conda install rattler-build -y
+          conda install "rattler-build<=0.48.0" -y
       - name: Check conda installation
         run: |
           conda info

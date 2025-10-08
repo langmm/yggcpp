@@ -257,39 +257,38 @@ jobs:
         if: matrix.os != 'windows-latest' && matrix.python-install == 'conda'
         shell: bash -l {0}
         run: |
-          mamba install doxygen>=1.9.2 graphviz -y
+          conda install doxygen>=1.9.2 graphviz -y
       - name: Install LLVM on mac for OpenMP
         if: matrix.os == 'macos-latest' && matrix.python-install == 'conda'
         # shell: bash -l {0}
         run: |
-          mamba install llvm -y
+          conda install llvm -y
       - name: Install compilers using conda on Linux/Mac
         if: matrix.os != 'windows-latest' && matrix.python-install == 'conda'
         shell: bash -l {0}
         run: |
-          mamba install c-compiler cxx-compiler fortran-compiler
+          conda install c-compiler cxx-compiler fortran-compiler
       - name: Install MinGW on windows for Fortran (mingw)
         if: matrix.os == 'windows-latest' && matrix.python-install == 'conda' && matrix.windows-compiler == 'mingw'
         shell: bash -l {0}
         run: |
-          mamba install m2w64-gcc m2w64-gcc-fortran m2w64-toolchain_win-64 libpython -c msys2 -y  # winpthreads
-          mamba install m2w64-gcc-libs m2w64-gcc-libs-core m2w64-gcc-libgfortran m2w64-libwinpthread-git msys2-conda-epoch -c msys2 -y
+          conda install m2w64-gcc m2w64-gcc-fortran m2w64-toolchain_win-64 libpython -c msys2 -y  # winpthreads
+          conda install m2w64-gcc-libs m2w64-gcc-libs-core m2w64-gcc-libgfortran m2w64-libwinpthread-git msys2-conda-epoch -c msys2 -y
       - name: Install MinGW on windows for Fortran (msvc)
         if: matrix.os == 'windows-latest' && matrix.python-install == 'conda' && matrix.windows-compiler == 'msvc'
         shell: bash -l {0}
         run: |
-          mamba install m2w64-gcc-fortran libpython -y
-      - name: Install ZeroMQ (mamba)
+          conda install m2w64-gcc-fortran libpython -y
+      - name: Install ZeroMQ (conda)
         if: matrix.python-install == 'conda' && matrix.install-zmq
         shell: bash -l {0}
         run: |
-          mamba install zeromq -y
-          mamba list
-      # - name: Install RabbitMQ (mamba)
+          conda install zeromq -y
+      # - name: Install RabbitMQ (conda)
       #   if: matrix.python-install == 'conda' && matrix.install-rmq
       #   shell: bash -l {0}
       #   run: |
-      #     mamba install librabbitmq -y
+      #     conda install librabbitmq -y
 
       ###################################
       # SET CONFIG FLAGS
@@ -523,7 +522,7 @@ jobs:
         if: matrix.python-install == 'conda'
         shell: bash -l {0}
         run: |
-          mamba list
+          conda list
           echo "PATH=$PATH"
           cd build
           which ctest
@@ -552,15 +551,6 @@ jobs:
         run: |
           echo "OLD_CMAKE_ARGS=${{ env.CMAKE_ARGS }}" >> "$GITHUB_ENV"
           echo "CMAKE_ARGS=${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_PYTHON }}" >> "$GITHUB_ENV"
-      - name: Build conda package (CONDA)
-        if: matrix.python-install == 'conda' && matrix.os == 'windows-latest'
-        # shell: bash -l {0}
-        continue-on-error: true
-        run: |
-          conda deactivate
-          conda activate base
-          mamba install boa -y
-          conda mambabuild recipe --python 3.9 -q -c conda-forge --no-test
       - name: Build Python (CONDA)
         if: matrix.python-install == 'conda'
         shell: bash -l {0}

@@ -1,5 +1,6 @@
 {% set name = "YggInterface" %}
-{% set version = "1.10.2" %}
+{% set version = "0.1.0" %}
+{% set version_major = "0" %}
 {% set PY_VER_MAJOR = PY_VER.split('.')[0] %}
 {% set PY_VER_MINOR = PY_VER.split('.')[1] %}
 
@@ -68,16 +69,16 @@ test:
     - test -f $PREFIX/include/YggInterface/YggInterface.hpp  # [unix]
     - test -f $PREFIX/include/YggInterface/YggInterface.h    # [unix]
     - test -f $PREFIX/include/YggInterface/rapidjson/include/rapidjson/rapidjson.h  # [unix]
-    - test -f $PREFIX/lib/libYggInterface${SHLIB_EXT}        # [unix]
-    - test -f $PREFIX/lib/libYggInterface_fortran.0.${SHLIB_EXT}  # [unix]
+    - test -f $PREFIX/lib/libYggInterface.{{ version_major }}${SHLIB_EXT}        # [unix]
+    - test -f $PREFIX/lib/libYggInterface_fortran.{{ version_major }}${SHLIB_EXT}  # [unix]
     - test -f $PREFIX/include/YggInterface/ygginterface.mod  # [unix]
     - if not exist %LIBRARY_PREFIX%\\cmake\\YggInterfaceConfig.cmake exit 1  # [win]
     - if not exist %LIBRARY_PREFIX%\\cmake\\YggInterfaceConfigVersion.cmake exit 1  # [win]
     - if not exist %LIBRARY_PREFIX%\\include\\YggInterface\\YggInterface.hpp  # [win]
     - if not exist %LIBRARY_PREFIX%\\include\\YggInterface\\YggInterface.h  # [win]
     - if not exist %LIBRARY_PREFIX%\\include\\YggInterface\\rapidjson\\include\\rapidjson\\rapidjson.h exit 1  # [win]
-    - if not exist %LIBRARY_BIN%\\YggInterface.dll exit 1  # [win]
-    - if not exist %LIBRARY_BIN%\\YggInterface_fortran.0.dll exit 1  # [win]
+    - if not exist %LIBRARY_BIN%\\YggInterface.{{ version_major }}.dll exit 1  # [win]
+    - if not exist %LIBRARY_BIN%\\YggInterface_fortran.{{ version_major }}.dll exit 1  # [win]
     - if not exist %LIBRARY_PREFIX%\\include\\YggInterface\\ygginterface.mod exit 1  # [win]
 
 about:

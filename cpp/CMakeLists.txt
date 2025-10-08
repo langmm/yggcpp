@@ -16,6 +16,11 @@ else()
     target_link_libraries(
 	${YGG_TARGET_CXX} PUBLIC
 	${DEPS_LIBRARIES_Python})
+    set_target_properties(
+        ${YGG_TARGET_CXX} PROPERTIES
+        VERSION ${PROJECT_VERSION}
+        SOVERSION ${PROJECT_VERSION_MAJOR}
+    )
     if (WIN32)
 	set_target_properties(${YGG_TARGET_CXX}
 	    PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)

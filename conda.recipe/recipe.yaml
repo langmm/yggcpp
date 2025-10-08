@@ -1,7 +1,8 @@
 context:
   name: "YggInterface"
   python_name: "ygginterface"
-  version: "1.10.2"
+  version: "0.1.0"
+  version_major: "0"
   build_number: 0
 
 package:
@@ -80,20 +81,20 @@ tests:
           then:
             - Library/cmake/YggInterfaceConfig.cmake
             - Library/cmake/YggInterfaceConfigVersion.cmake
-            - Library/lib/libYggInterface.dll
-            - Library/lib/libYggInterface_fortran.0.dll
+            - Library/lib/libYggInterface.${{ version_major }}.dll
+            - Library/lib/libYggInterface_fortran.${{ version_major }}.dll
         - if: unix
           then:
             - lib/cmake/YggInterface/YggInterfaceConfig.cmake
             - lib/cmake/YggInterface/YggInterfaceConfigVersion.cmake
         - if: linux
           then:
-            - lib/libYggInterface.so
-            - lib/libYggInterface_fortran.0.so
+            - lib/libYggInterface.${{ version_major }}.so
+            - lib/libYggInterface_fortran.${{ version_major }}.so
         - if: osx
           then:
-            - lib/libYggInterface.dylib
-            - lib/libYggInterface_fortran.0.dylib
+            - lib/libYggInterface.${{ version_major }}.dylib
+            - lib/libYggInterface_fortran.${{ version_major }}.dylib
       include:
         - YggInterface/YggInterface.hpp
         - YggInterface/YggInterface.h
