@@ -42,28 +42,25 @@ endif()
 add_executable(unittest ${CMAKE_CURRENT_SOURCE_DIR}/unittest.cpp ${CMAKE_CURRENT_SOURCE_DIR}/elf_hook.cpp ${CMAKE_CURRENT_SOURCE_DIR}/mock.cpp ${files})
 target_link_libraries(unittest ${TEST_LIBRARIES})
 target_include_directories(unittest PRIVATE ${TEST_INCLUDE_DIRS})
-message(STATUS "TEST_LIBRARIES = ${TEST_LIBRARIES}")
-message(STATUS "TEST_INCLUDE_DIRS = ${TEST_INCLUDE_DIRS}")
 cmake_path(GET CMAKE_CURRENT_SOURCE_DIR PARENT_PATH PARENT_SOURCE_DIR)
 cmake_path(GET CMAKE_CURRENT_BINARY_DIR PARENT_PATH PARENT_BINARY_DIR)
 add_dynamic_dependencies(unittest WORKING_DIR ${PARENT_BINARY_DIR})
 if (WIN32)
-    # There is a bug which prevents these environment variables from
-    # being available during test discovery on windows
-    # https://gitlab.kitware.com/cmake/cmake/-/issues/21453
-    gtest_discover_tests(unittest DISCOVERY_MODE PRE_TEST
-                         WORKING_DIRECTORY ${PARENT_BINARY_DIR}
-                         TEST_LIST ygg_test_list
-                         PROPERTIES TIMEOUT 100
-			 ENVIRONMENT "${RAPIDJSON_PYTHON_ENV}"
-			 ENVIRONMENT "${RAPIDJSON_PYTHON_ENV2}")
+  set(unittest_timeout 100)
 else()
-    gtest_discover_tests(unittest DISCOVERY_MODE PRE_TEST
-                         WORKING_DIRECTORY ${PARENT_BINARY_DIR}
-                         TEST_LIST ygg_test_list
-                         PROPERTIES TIMEOUT 20
-			 ENVIRONMENT "${RAPIDJSON_PYTHON_ENV}")
+  set(unittest_timeout 20)
 endif()
+set_ygg_test_env(
+  unittest OUTPUT_PROPERTIES unittest_properties
+  FOR_GTEST_DISCOVER_TESTS
+)
+list(LENGTH unittest_properties unittest_properties_LEN)
+message(STATUS "unittest_properties = ${unittest_properties}, LEN=${unittest_properties_LEN}")
+gtest_discover_tests(unittest DISCOVERY_MODE PRE_TEST
+                     WORKING_DIRECTORY ${PARENT_BINARY_DIR}
+                     TEST_LIST ygg_test_list
+		     PROPERTIES TIMEOUT ${unittest_timeout}
+		     ${unittest_properties})
 
 
 # This is required for running tests with valgrind
@@ -83,16 +80,9 @@ else ()
    set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g ${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
 endif()
 
-message(STATUS "RAPIDJSON_PYTHON_ENV = ${RAPIDJSON_PYTHON_ENV}")
-message(STATUS "RAPIDJSON_PYTHON_ENV2 = ${RAPIDJSON_PYTHON_ENV2}")
-# message(STATUS "ygg_test_list = ${ygg_test_list}")
-# set_tests_properties(${ygg_test_list} PROPERTIES
-#        ENVIRONMENT
-#        "${RAPIDJSON_PYTHON_ENV}")
-
 include(CheckDLL)
 show_runtimes(unittest)
-copy_required_runtimes(unittest DEPENDENCIES ${YGG_TARGET_CPP})
+copy_required_runtimes(unittest DEPENDENCIES ${YGG_TARGET_CXX})
 
 if(NOT MSVC)
     find_program(VALGRIND_FOUND valgrind)
@@ -102,10 +92,10 @@ if(NOT MSVC)
         add_test(NAME valgrind_unittest
                  COMMAND valgrind --suppressions=${PARENT_SOURCE_DIR}/valgrind.supp --suppressions=${PARENT_SOURCE_DIR}/valgrind-python.supp --leak-check=full --error-exitcode=1 --track-origins=yes --dsymutil=no --keep-debuginfo=yes --read-var-info=yes ${CMAKE_CURRENT_BINARY_DIR}/unittest --gtest_filter=-SIMD.*
                  WORKING_DIRECTORY ${PARENT_BINARY_DIR})
-        set_tests_properties(valgrind_unittest PROPERTIES
-                ENVIRONMENT
-		"YGG_MODEL_INDEX=123")
-                # "${RAPIDJSON_PYTHON_ENV}")
+        set_tests_properties(
+	  valgrind_unittest PROPERTIES
+          ENVIRONMENT "YGG_MODEL_INDEX=123"
+	)
     endif((NOT YGG_SKIP_VALGRIND_TESTS) AND VALGRIND_FOUND)
 
 endif(NOT MSVC)

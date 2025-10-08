@@ -6,7 +6,6 @@
 * Add for_server keyword?
 * Update docs for python extension
 * Generate docs for python extension
-* Only regenerate enum/fortran interface when source files change
 * Add methods for checking generic object type in C & Fortran (autowrap)
 * Automated wrapping of C++ classes/methods
 * Ensure that tests for Python calling of C/Fortran functions is run on GHA jobs

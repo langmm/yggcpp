@@ -25,8 +25,9 @@ private:
   RunFlaskApp(const RunFlaskApp&) = delete;
   RunFlaskApp& operator=(const RunFlaskApp&) = delete;
 public:
-  RunFlaskApp() : app(NULL), curl(NULL) {
-    app = popen("python example_app.py", "r");
+  RunFlaskApp() : app(NULL), curl(NULL), cmd("python example_app.py"),
+		  child_pid(-1) {
+    app = popen(cmd.c_str(), "r");
     if (app == NULL) {
       throw std::runtime_error("Flask app could not be started");
     }
@@ -35,6 +36,8 @@ public:
     while (!post("startup")) {
       usleep(10000);
     }
+    // if (!find_child())
+    //   throw std::runtime_error("Could not locate child process");
   }
   ~RunFlaskApp() {
     if (app) {
@@ -43,11 +46,30 @@ public:
       while (fgets(&(buffer[0]), 80, app) != NULL) {
 	std::cerr << buffer;
       }
+      // int count = 0;
+      // while (find_child() && (count < 10)) {
+      // 	kill(child_pid, SIGKILL);
+      // 	count++;
+      // }
+      // if (find_child())
+      // 	std::cerr << "Child still alive" << std::endl;
+      // 	// throw std::runtime_error("Child still alive");
       pclose(app);
     }
     if (curl) {
       curl_easy_cleanup(curl);
     }
+  }
+  bool find_child() {
+    child_pid = -1;
+    std::string grep_cmd = "ps | grep \"" + cmd + "\" | grep -v grep | grep -v \"sh -c \" | sed \'s/^ *//\' | sed \'s/ .*$//\'";
+    FILE* grep_ps = popen(grep_cmd.c_str(), "r");
+    if (grep_ps == NULL) {
+      throw std::runtime_error("Could not launch grep for child process");
+    }
+    int found = fscanf(grep_ps, "%d", &child_pid);
+    pclose(grep_ps);
+    return (found == 1);
   }
   bool post(const std::string& addr) {
     std::string address = "http://localhost:5000/" + addr;
@@ -68,6 +90,8 @@ public:
     
   FILE* app;
   CURL* curl;
+  std::string cmd;
+  int child_pid;
 };
 
 COMM_SERI_TEST_BASE(RESTComm, RunFlaskApp app);

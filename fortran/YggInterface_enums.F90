@@ -150,7 +150,8 @@
   enum, bind( C )
      enumerator :: &
         FUNCTION_ON_ASYNC = 1, &
-        FUNCTION_WEAK_REF = 2
+        FUNCTION_WEAK_REF = 2, &
+        FUNCTION_EMBEDDED = 4
   end enum
 
 #endif

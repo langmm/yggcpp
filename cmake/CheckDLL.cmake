@@ -8,10 +8,6 @@ function(copy_required_runtimes TARGET)
   if (NOT ARGS_DESTINATION)
     set(ARGS_DESTINATION "$<TARGET_FILE_DIR:${ARGS_DESTINATION_TARGET}>")
   endif()
-  message(STATUS "TARGET = ${TARGET}")
-  message(STATUS "ARGS_DESTINATION_TARGET = ${ARGS_DESTINATION_TARGET}")
-  message(STATUS "ARGS_DEPENDENCIES = ${ARGS_DEPENDENCIES}")
-  message(STATUS "ARGS_DESTINATION = ${ARGS_DESTINATION}")
   if (WIN32)
     if (CONDA_PREFIX)
       foreach(lib ${ARGS_DEPENDENCIES})
@@ -65,6 +61,21 @@ function(show_runtimes target)
 	COMMAND_EXPAND_LISTS
 	)
     endif()
+  elseif(APPLE)
+    add_custom_command(
+      TARGET ${after_target}
+      POST_BUILD
+      # COMMAND dyldinfo -dylibs $<TARGET_FILE:${target}>
+      COMMAND otool -L $<TARGET_FILE:${target}>
+      COMMAND_EXPAND_LISTS
+    )
+  else()
+    add_custom_command(
+      TARGET ${after_target}
+      POST_BUILD
+      COMMAND ldd $<TARGET_FILE:${target}>
+      COMMAND_EXPAND_LISTS
+    )
   endif()
 endfunction()
 function(show_symbols target)

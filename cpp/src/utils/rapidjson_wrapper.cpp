@@ -142,6 +142,19 @@ using namespace rapidjson;
   const WValue WValue::Get ## name ## String() {			\
     return WValue(const_cast<WValue::BaseType*>(&(WValue::BaseType::Get ## name ## String())));	\
   }
+#define WRAP_STATIC(cls, name, argsT, args, type, mods)	\
+  type cls::name argsT mods {				\
+    return cls::BaseType::name args;			\
+  }
+#define WRAP_STATIC_CAST(cls, name, argsT, args, type, mods)	\
+  type cls::name argsT mods {					\
+    return type(cls::BaseType::name args);			\
+  }
+#define WRAP_STATIC_CAST_CONST(cls, name, argsT, args, type, mods)	\
+  const type cls::name argsT mods {					\
+    const type::BaseType& res = cls::BaseType::name args;		\
+    return type(const_cast<type::BaseType*>(&res));			\
+  }
 
 ////////////////////////////////////////////////////////////////////
 // WrapperBase
@@ -306,6 +319,29 @@ WStringRefType::operator const Ch *() const {
 
 WRAPPER_CLASS(Value);
 
+WValue& WValue::operator=(WValue& rhs) {
+  WrapperBase<RJ_WNS::Value>::operator=(rhs);
+  std::swap(parent_, rhs.parent_);
+  std::swap(vrefs, rhs.vrefs);
+  std::swap(mrefs, rhs.mrefs);
+  return *this;
+}
+
+WValue::~WValue() {
+  for (size_t i = 0; i < vrefs.size(); i++) {
+    if (vrefs[i]) {
+      delete vrefs[i];
+      vrefs[i] = nullptr;
+    }
+  }
+  for (size_t i = 0; i < mrefs.size(); i++) {
+    if (mrefs[i]) {
+      delete mrefs[i];
+      mrefs[i] = nullptr;
+    }
+  }
+}
+
 bool WValue::operator==(const WValue& rhs) const {
   return ((*val_) == (*rhs.val_));
 }
@@ -316,22 +352,22 @@ bool WValue::operator!=(const WValue& rhs) const {
 WValue& WValue::childRef(RJ_WNS::Value* x) {
   if (parent_)
     return parent_->childRef(x);
-  for (std::vector<WValue>::iterator it = vrefs.begin(); it != vrefs.end(); it++) {
-    if (x == it->val_)
-      return (*it);
+  for (std::vector<WValue*>::iterator it = vrefs.begin(); it != vrefs.end(); it++) {
+    if (x == (*it)->val_)
+      return (**it);
   }
-  vrefs.emplace_back(x); //, this);
-  return vrefs[vrefs.size() - 1];
+  vrefs.emplace_back(new WValue(x)); //, this);
+  return *vrefs[vrefs.size() - 1];
 }
 WMember& WValue::childRef(MEMBER* x) {
   if (parent_)
     return parent_->childRef(x);
-  for (std::vector<WMember>::iterator it = mrefs.begin(); it != mrefs.end(); it++) {
-    if (x == it->val_)
-      return (*it);
+  for (std::vector<WMember*>::iterator it = mrefs.begin(); it != mrefs.end(); it++) {
+    if (x == (*it)->val_)
+      return (**it);
   }
-  mrefs.emplace_back(x); //, this);
-  return mrefs[mrefs.size() - 1];
+  mrefs.emplace_back(new WMember(x)); //, this);
+  return *mrefs[mrefs.size() - 1];
 }
 WValue* WValue::_getPtr() {
   return this;
@@ -366,6 +402,10 @@ WValue& WValue::CopyFrom(const RJ_WNS::Value& rhs, Allocator& allocator,
 
   WRAPPER_METHODS_BASE(WValue, RJ_WNS::Value,
 		       , , , DO_NOTHING, DO_NOTHING)
+
+  WRAP_STATIC_CAST_CONST(WValue, YggSubTypeString,
+			 (enum YggSubType subtype),
+			 (subtype), WValue, );
   
   WRAP_CONSTRUCTOR_VAL(WValue, (Type type), (type));
   WRAP_CONSTRUCTOR_VAL(WValue,
@@ -408,6 +448,10 @@ WValue::WValue(RJ_WNS::Document* val) :
   WRAP_METHOD(WValue, GetType, (), (), rapidjson::Type, const);
   WRAP_METHOD_SELF(WValue, SetNull, (), (), );
   WRAP_METHOD(WValue, IsNull, (), (), bool, const);
+  WRAP_METHOD(WValue, IsFalse, (), (), bool, const);
+  WRAP_METHOD(WValue, IsTrue, (), (), bool, const);
+  WRAP_METHOD(WValue, IsLosslessDouble, (), (), bool, const);
+  WRAP_METHOD(WValue, IsLosslessFloat, (), (), bool, const);
   WRAP_SET_GET(Bool, bool);
   WRAP_SET_GET(Int, int);
   WRAP_SET_GET(Uint, unsigned);
@@ -418,6 +462,7 @@ WValue::WValue(RJ_WNS::Document* val) :
   WRAP_METHOD(WValue, IsNumber, (), (), bool, const);
   WRAP_METHOD(WValue, GetNElements, (), (), SizeType, const);
   WRAP_METHOD_CAST_CONST(WValue, GetShape, (), (), WValue, );
+  WRAP_METHOD_CAST_CONST(WValue, GetUnits, (), (), WValue, );
   WRAP_METHOD(WValue, GetElement,
 	      (const SizeType index, WValue& dst, Allocator& allocator),
 	      (index, *(dst.val_), allocator), bool, const);
@@ -431,6 +476,10 @@ WValue::WValue(RJ_WNS::Document* val) :
 		   (const WValue::Ch* s, SizeType length,
 		    WValue::Allocator& allocator),
 		   (s, length, allocator), );
+  WRAP_METHOD_SELF(WValue, SetString,
+		   (const WValue::Ch* s, SizeType length),
+		   (s, length), );
+  WRAP_METHOD_SELF(WValue, SetString, (WStringRefType s), (*(s.val_)), );
   WRAP_METHOD(WValue, GetString, (), (), const WValue::Ch*, const);
   WRAP_METHOD(WValue, GetStringLength, (), (), SizeType, const);
   // Templated methods
@@ -438,6 +487,7 @@ WValue::WValue(RJ_WNS::Document* val) :
   WRAP_METHOD_TEMP(WValue, IsScalar, (), (), bool, const);
   WRAP_METHOD_TEMP(WValue, Is1DArray, (), (), bool, const);
   WRAP_METHOD_TEMP(WValue, IsNDArray, (), (), bool, const);
+  WRAP_METHOD_TEMP(WValue, Get, (), (), T, const);
   template<typename T>
   WRAP_METHOD(WValue, Get, (T& data), (data), void, const);
   template<typename T>
@@ -448,6 +498,7 @@ WValue::WValue(RJ_WNS::Document* val) :
   WRAP_METHOD_SELF(WValue, Set, (const T& data), (data), );
   // Scalar methods
   WRAP_METHOD(WValue, IsScalar, (), (), bool, const);
+  WRAP_METHOD(WValue, IsScalar, (const Ch* subT), (subT), bool, const);
   WRAP_METHOD_TEMP(WValue, GetScalar, (), (), T, const);
   WRAP_METHOD_TEMP(WValue, GetScalar,
 		   (const WValue::UnitsType data_units),
@@ -573,10 +624,12 @@ WValue::WValue(RJ_WNS::Document* val) :
   WRAP_METHOD(WValue, IsArray, (), (), bool, const);
   WRAP_METHOD_SELF(WValue, SetArray, (), (), );
   WRAP_METHOD(WValue, Size, (), (), rapidjson::SizeType, const);
+  WRAP_METHOD(WValue, Capacity, (), (), rapidjson::SizeType, const);
   WRAP_METHOD(WValue, Empty, (), (), bool, const);
   WRAP_METHOD_SELF(WValue, Reserve, (SizeType newCapacity,
 				     WValue::Allocator &allocator),
 		   (newCapacity, allocator), );
+  WRAP_METHOD(WValue, Clear, (), (), void, );
   WRAP_METHOD_CAST_VITER(WValue, Erase, (WValue::ConstValueIterator pos),
 			 (pos.ptr_), WValue::ValueIterator, );
   WRAP_METHOD_CAST_VITER(WValue, Begin, (), (),
@@ -589,6 +642,7 @@ WValue::WValue(RJ_WNS::Document* val) :
 			 WValue::ConstValueIterator, const);
   WRAP_METHOD(WValue, Contains, (const WValue& x),
 	      (*(x.val_)), bool, const);
+  WRAP_METHOD_SELF(WValue, PopBack, (), (), );
   INDEX_RTYPE WValue::operator[](SizeType index) {
     RJ_WNS::Value& tmp = this->val_->operator[](index);
     return INDEX_METHOD;
@@ -601,6 +655,11 @@ WValue::WValue(RJ_WNS::Document* val) :
   WRAP_METHOD(WValue, IsObject, (), (), bool, const);
   WRAP_METHOD_SELF(WValue, SetObject, (), (), );
   WRAP_METHOD(WValue, MemberCount, (), (), rapidjson::SizeType, const);
+  WRAP_METHOD(WValue, MemberCapacity, (), (), rapidjson::SizeType, const);
+  WRAP_METHOD(WValue, ObjectEmpty, (), (), bool, const);
+#if RAPIDJSON_HAS_STDSTRING
+  WRAP_METHOD(WValue, HasMember, (const std::basic_string<Ch>& name), (name), bool, const);
+#endif
   WRAP_METHOD(WValue, HasMember, (const WValue::Ch* name), (name), bool, const);
   WRAP_METHOD(WValue, HasMember, (const WValue& name), (*(name.val_)),
 	      bool, const);
@@ -652,6 +711,11 @@ WValue::WValue(RJ_WNS::Document* val) :
 		   (*(name.val_), value.val_->Move(), allocator), );
   WRAP_METHOD(WValue, RemoveMember, (const WValue::Ch* name),
 	      (name), bool, );
+#if RAPIDJSON_HAS_STDSTRING
+  WRAP_METHOD(WValue, RemoveMember, (const std::basic_string<WValue::Ch>& name),
+	      (name), bool, );
+#endif
+  WRAP_METHOD(WValue, RemoveAllMembers, (), (), void, );
   WRAP_METHOD_CAST_MITER(WValue, MemberBegin, (), (),
 			 WValue::MemberIterator, );
   WRAP_METHOD_CAST_MITER(WValue, MemberEnd, (), (),
@@ -675,6 +739,23 @@ WValue::WValue(RJ_WNS::Document* val) :
 			 (const std::basic_string<Ch>& name), (name),
 			 WValue::ConstMemberIterator, const);
 #endif
+  WRAP_METHOD_CAST_MITER(WValue, EraseMember,
+			 (WValue::ConstMemberIterator pos),
+			 (WRAP_MEMBER_ITERATOR(pos)),
+			 WValue::ConstMemberIterator, );
+  WRAP_METHOD_CAST_MITER(WValue, EraseMember,
+			 (WValue::ConstMemberIterator first,
+			  WValue::ConstMemberIterator last),
+			 (WRAP_MEMBER_ITERATOR(first),
+			  WRAP_MEMBER_ITERATOR(last)),
+			 WValue::ConstMemberIterator, );
+  WRAP_METHOD(WValue, EraseMember, (const Ch* name), (name), bool, );
+#if RAPIDJSON_HAS_STDSTRING
+  WRAP_METHOD(WValue, EraseMember, (const std::basic_string<Ch>& name),
+	      (name), bool, );
+#endif
+  WRAP_METHOD(WValue, EraseMember, (const WValue& name),
+	      (*(name.val_)), bool, );
   // Python methods
   WRAP_METHOD(WValue, IsPythonClass, (), (), bool, const);
   WRAP_METHOD(WValue, IsPythonInstance, (), (), bool, const);
@@ -705,6 +786,7 @@ WValue::WValue(RJ_WNS::Document* val) :
 		   (rapidjson::Ply x, WValue::Allocator& allocator),
 		   (x, allocator), );
   // Yggdrasil methods
+  WRAP_METHOD(WValue, IsYggdrasil, (), (), bool, const);
   WRAP_METHOD(WValue, IsSchema, (), (), bool, const);
   WRAP_METHOD_SELF(WValue, SetSchema,
 		   (Allocator& allocator),
@@ -712,7 +794,33 @@ WValue::WValue(RJ_WNS::Document* val) :
   WRAP_METHOD_SELF(WValue, SetSchema,
 		   (const WValue& x, Allocator& allocator),
 		   (*(x.val_), allocator), );
-  WRAP_METHOD(WValue, IsType, (const WValue::Ch* type), (type), bool, const);
+  WRAP_METHOD(WValue, RawAssignSchema, (WValue& rhs),
+	      (*(rhs.val_)), void, );
+  WRAP_METHOD(WValue, DestroySchema, (), (), void, );
+  WRAP_METHOD(WValue, HasSchema, (), (), bool, const);
+  WRAP_METHOD(WValue, HasSchemaNested, (), (), bool, const);
+  WRAP_METHOD(WValue, HasUnits, (), (), bool, const);
+  WRAP_METHOD(WValue, HasTitle, (), (), bool, const);
+  WRAP_METHOD(WValue, HasPrecision, (), (), bool, const);
+  WRAP_METHOD(WValue, HasEncoding, (), (), bool, const);
+  WRAP_METHOD_CAST_CONST(WValue, GetTitle, (), (), WValue, );
+  WRAP_METHOD(WValue, GetPrecision, (), (), SizeType, const);
+  WRAP_METHOD_CAST_CONST(WValue, GetEncoding, (), (), WValue, );
+  WRAP_METHOD(WValue, RequiresPython, (), (), bool, const);
+  WRAP_METHOD(WValue, IsType, (const WValue::Ch* type), (type),
+	      bool, const);
+  WRAP_METHOD_CAST_CONST(WValue, GetYggType, (), (), WValue, );
+  WRAP_METHOD(WValue, GetSubTypeCode, (), (), enum YggSubType, const);
+  WRAP_METHOD_CAST_CONST(WValue, GetSubType, (), (), WValue, );
+  WRAP_METHOD(WValue, GetSubType, (SizeType &length), (length),
+	      const WValue::Ch*, const);
+  WRAP_METHOD(WValue, GetSubTypeNumpyType, (WValue& enc), (*(enc.val_)),
+	      int, const);
+  WRAP_METHOD(WValue, SetUnits, (const std::basic_string<Ch> units),
+	      (units), bool, );
+  WRAP_METHOD(WValue, SetUnits,
+	      (const Ch* units_str, const SizeType units_len),
+	      (units_str, units_len), bool, );
   WRAP_METHOD(WValue, GetDataPtr, (bool& requires_freeing),
 	      (requires_freeing), void*, const);
   WRAP_METHOD(WValue, GetNBytes, (), (), SizeType, const);
@@ -815,7 +923,8 @@ WDocument& WDocument::operator=(WDocument& rhs) {
 
 
   WRAP_METHOD_SELF_CAST(WDocument, Swap, (WDocument& rhs), (*(rhs.val_)),
-			WValue, );
+			WDocument, );
+			// WValue, );
   WRAP_METHOD(WDocument, GetAllocator, (), (), WDocument::Allocator&, );
   WRAP_METHOD(WDocument, Normalize, (const WValue& schema,
 				     StringBuffer* error),
@@ -824,6 +933,12 @@ WDocument& WDocument::operator=(WDocument& rhs) {
 		   (const WValue::Ch* str, size_t length),
 		   (str, length), );
   WRAP_METHOD_SELF(WDocument, Parse, (const WValue::Ch* str), (str), );
+  WDocument& WDocument::Parse(const WValue::Ch* str, WDocument& schema) {
+    WDocument::BaseType schema_base;
+    schema_base.CopyFrom(*(schema.val_), schema_base.GetAllocator(), true);
+    ((WDocument::BaseType*)(this->val_))->Parse(str, schema_base);
+    return *this;
+  }
   WRAP_METHOD(WDocument, HasParseError, (), (), bool, const);
   WRAP_METHOD(WDocument, GetParseError, (), (), ParseErrorCode, const);
   WRAP_METHOD(WDocument, GetErrorOffset, (), (), size_t, const);
@@ -862,6 +977,14 @@ bool WDocument::GetVarArgs(WValue* schema, ...) {
   RAPIDJSON_END_VAR_ARGS(ap);
   return out;
 }
+  WRAP_METHOD(WDocument, RawNumber,
+	      (const Ch* str, SizeType length, bool copy),
+	      (str, length, copy), bool, );
+  WRAP_METHOD(WDocument, FromYggdrasilString,
+	      (const Ch* str, SizeType length, bool copy),
+	      (str, length, copy), bool, );
+  WRAP_METHOD(WDocument, WasFinalized, (), (), bool, const);
+  WRAP_METHOD(WDocument, ConsolidateStack, (), (), void, );
   WRAP_METHOD(WDocument, FinalizeFromStack, (), (), void, );
   template<typename InputStream>
   WRAP_METHOD_SELF(WDocument, ParseStream, (InputStream& is), (is), );
@@ -1070,6 +1193,9 @@ namespace rapidjson {
 #undef WRAP_METHOD_CAST_MITER
 #undef WRAP_METHOD_CAST_CONST
 #undef WRAP_SET_GET
+#undef WRAP_STATIC
+#undef WRAP_STATIC_CAST
+#undef WRAP_STATIC_CAST_CONST
 #undef WRAP_GET_STRING
 #undef WRAPPER_METHODS_MOVE_CONSTRUCTOR
 #undef WRAPPER_METHODS_MOVE_CONSTRUCTOR_TEMP
@@ -1115,9 +1241,11 @@ template RAPIDJSON_DISABLEIF_RETURN(
 #define SPECIALIZE_BASE(type, set_type)					\
   template bool WValue::Is<type>() const;				\
   template WValue& WValue::Set<set_type>(const set_type& data, WValue::Allocator& allocator); \
-  template void WValue::Get<type>(type& data) const
+  template void WValue::Get<type>(type& data) const;			\
+  template type WValue::Get<type>() const
 #define SPECIALIZE(type)						\
-  SPECIALIZE_BASE(type, type)
+  SPECIALIZE_BASE(type, type);						\
+  SPECIALIZE_BASE(std::vector<type>, std::vector<type>)
 #define SPECIALIZE_SCALAR(type)						\
   SPECIALIZE(type);							\
   template bool WValue::IsScalar<type>() const;				\

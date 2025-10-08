@@ -12,14 +12,36 @@ option(COMM "Communicator type that should be used" DEFAULT_COMM)
 set(SPEED_TEST_N_MSG ${N_MSG})
 set(SPEED_TEST_S_MSG ${S_MSG})
 set(SPEED_TEST_COMM ${COMM})
-list(APPEND CMAKE_COMMAND_ARGS_TO_COPY YggInterface_DIR CMAKE_PREFIX_PATH ${PYTHON_PREFIX}_ROOT_DIR CMAKE_VERBOSE_MAKEFILE)
+set(SPEED_TEST_DIR ${CMAKE_CURRENT_BINARY_DIR})
+list(APPEND CMAKE_COMMAND_ARGS_TO_COPY YggInterface_DIR CMAKE_PREFIX_PATH ${Python_PREFIX}_ROOT_DIR CMAKE_VERBOSE_MAKEFILE)
 
 function(add_speed_test LANGUAGE LANGUAGE_EXT)
   if (NOT ENABLE_${LANGUAGE})
     return()
   endif()
+  set(OUTPUT_FILE "${LANGUAGE}/speedtest.${LANGUAGE_EXT}")
+  configure_file(speedtest.${LANGUAGE_EXT}.in
+                 ${OUTPUT_FILE} @ONLY)
   find_package(YggInterface REQUIRED)
   include(YggAddFortranSubdirectory)
+  include(TestTools)
+  include(BuildTools)
+  include(AddYggInterface)
+  if (LANGUAGE STREQUAL "Python")
+    # find_yggdrasil_dependency(${LANGUAGE} REQUIRED)
+    if(LANGUAGE STREQUAL "Python")
+      set(Python_EXECUTABLE ${${Python_PREFIX}_EXECUTABLE})
+    endif()
+    message(STATUS "${LANGUAGE}_EXECUTABLE = ${${LANGUAGE}_EXECUTABLE}")
+    if(NOT ${LANGUAGE}_EXECUTABLE)
+      message(FATAL_ERROR "${LANGUAGE}_EXECUTABLE not set")
+    endif()
+    add_test(
+      NAME speedtest_${LANGUAGE}
+      COMMAND ${${LANGUAGE}_EXECUTABLE} ${OUTPUT_FILE}
+    )
+    return()
+  endif()
   check_language_external(${LANGUAGE} REQUIRED OUTPUT_VARIABLE external
                           GENERATOR generator EXTERNAL_PATHS paths)
   if (external)
@@ -28,93 +50,56 @@ function(add_speed_test LANGUAGE LANGUAGE_EXT)
       list(APPEND CMAKE_COMMAND_ARGS "-G${generator}")
     endif()
   endif()
-  foreach(opt IN LISTS CMAKE_COMMAND_ARGS_TO_COPY)
-    if (${opt})
-      list(LENGTH ${opt} opt_len)
-      if (opt_len GREATER 1)
-        list(JOIN ${opt} "\\\\;" tmp)
-        list(APPEND CMAKE_COMMAND_ARGS -D${opt}=${tmp})
-      else()
-        list(APPEND CMAKE_COMMAND_ARGS -D${opt}=${${opt}})
-      endif()
-    endif()
-  endforeach()
-  configure_file(CMakeLists.txt.in ${LANGUAGE}/CMakeLists.txt @ONLY)
-  configure_file(${LANGUAGE}/speedtest.${LANGUAGE_EXT}.in
-                 ${LANGUAGE}/speedtest.${LANGUAGE_EXT} @ONLY)
-  set(lang_src_dir ${CMAKE_CURRENT_BINARY_DIR}/${LANGUAGE})
-  set(lang_bld_dir ${CMAKE_CURRENT_BINARY_DIR}/${LANGUAGE}_build)
-  file(MAKE_DIRECTORY ${lang_bld_dir})
-  if (paths)
-    set(old_paths $ENV{PATH})
-    set(ENV{PATH} "${paths}\\;$ENV{PATH}")
-  endif()
-  message(STATUS "CMAKE_COMMAND_ARGS = ${CMAKE_COMMAND_ARGS}")
-  execute_process(
-    COMMAND ${CMAKE_COMMAND} ${lang_src_dir} ${CMAKE_COMMAND_ARGS}
-    WORKING_DIRECTORY ${lang_bld_dir}
-    COMMAND_ECHO STDOUT
-    RESULT_VARIABLE ret)
-  if (NOT ret EQUAL 0)
-    message(FATAL_ERROR "Failed to configure ${LANGUAGE} speedtest")
-  endif()
-  execute_process(
-    COMMAND ${CMAKE_COMMAND} --build . --config Release
-    WORKING_DIRECTORY ${lang_bld_dir}
-    COMMAND_ECHO STDOUT
-    RESULT_VARIABLE ret)
-  if (paths)
-    set(ENV{PATH} "${old_paths}")
-  endif()
-  if (NOT ret EQUAL 0)
-    message(FATAL_ERROR "Failed to build ${LANGUAGE} speedtest")
-  endif()
+  cmakevars2cmakecliargs(CMAKE_COMMAND_ARGS ${CMAKE_COMMAND_ARGS_TO_COPY})
+  configure_and_build(
+    CMakeLists.txt.in
+    SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/${LANGUAGE}
+    BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/${LANGUAGE}_build
+    PREPEND_PATHS ${paths}
+    CMAKE_COMMAND_ARGS ${CMAKE_COMMAND_ARGS}
+  )
   add_test(NAME speedtest_${LANGUAGE}
            COMMAND ${LANGUAGE}_build/speedtest_${LANGUAGE})
-  if(WIN32 AND ${PYTHON_PREFIX}_RUNTIME_LIBRARY_DIRS)
-    list(APPEND TEST_ENV "PYTHONHOME=${${PYTHON_PREFIX}_RUNTIME_LIBRARY_DIRS}")
+  if(WIN32 AND ${Python_PREFIX}_RUNTIME_LIBRARY_DIRS)
+    list(APPEND TEST_ENV "PYTHONHOME=${${Python_PREFIX}_RUNTIME_LIBRARY_DIRS}")
   else()
     list(APPEND TEST_ENV "FAKE_ENV=test")
   endif()
-  if(WIN32)
-    set(pathsep "\\;")
-    set(suffix "bin")
-    set(envvar "PATH")
-  else()
-    set(pathsep ":")
-    set(suffix "lib")
-    set(envvar "LD_LIBRARY_PATH")
+  if (WIN32 AND ${Python_PREFIX}_ROOT_DIR)
+    list(APPEND NEW_PATHS ${${Python_PREFIX}_ROOT_DIR})
   endif()
-  set(NEW_PATHS $ENV{${envvar}})
-  foreach(d IN LISTS CMAKE_PREFIX_PATH)
-    cmake_path(APPEND d ${suffix})
-    list(APPEND NEW_PATHS ${d})
-  endforeach()
-  if (WIN32 AND ${PYTHON_PREFIX}_ROOT_DIR)
-    message(STATUS "${PYTHON_PREFIX}_ROOT_DIR = ${${PYTHON_PREFIX}_ROOT_DIR}")
-    list(APPEND NEW_PATHS ${${PYTHON_PREFIX}_ROOT_DIR})
+  set_tests_runtime_paths(
+    speedtest_${LANGUAGE}
+    PATHS ${NEW_PATHS}
+    ADDITIONAL_ENV_VARIABLES ${TEST_ENV}
+    ADD_CMAKE_PREFIX_PATHS
+  )
+endfunction()
+
+function(add_speed_test_interp LANGUAGE LANGUAGE_EXT)
+  if (NOT ENABLE_${LANGUAGE})
+    return()
   endif()
-  if (NEW_PATHS)
-    list(JOIN NEW_PATHS "${pathsep}" NEW_PATH_ENV)
-    list(APPEND TEST_ENV "${envvar}=${NEW_PATH_ENV}")
+  find_package(YggInterface)
+  if (NOT YggInterface_FOUND)
+    set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/../../cmake")
   endif()
-  message(STATUS "TEST_ENV = ${TEST_ENV}")
-  set_tests_properties(speedtest_${LANGUAGE} PROPERTIES
-                       ENVIRONMENT "${TEST_ENV}")
+  include(AddYggInterface)
+  find_yggdrasil_dependency(${LANGUAGE} REQUIRED)
+  set(OUTPUT_FILE "${LANGUAGE}/speedtest.${LANGUAGE_EXT}")
+  configure_file(speedtest.${LANGUAGE_EXT}.in
+                 ${OUTPUT_FILE} @ONLY)
+  if(LANGUAGE STREQUAL "Python")
+    set(Python_EXECUTABLE ${${Python_PREFIX}_EXECUTABLE})
+  endif()
+  add_test(
+    NAME speedtest_${LANGUAGE}
+    COMMAND ${${LANGUAGE}_EXECUTABLE} ${OUTPUT_FILE}
+  )
 endfunction()
 
 enable_testing()
 add_speed_test(C c)
 add_speed_test(CXX cpp)
 add_speed_test(Fortran f90)
-if (ENABLE_Python)
-  find_package(YggInterface)
-  if (NOT YggInterface_FOUND)
-    set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/../../cmake")
-  endif()
-  include(SearchTools)
-  find_package_python()
-  message(STATUS "${PYTHON_PREFIX}_EXECUTABLE = ${${PYTHON_PREFIX}_EXECUTABLE}")
-  configure_file(Python/speedtest.py.in Python/speedtest.py @ONLY)
-  add_test(NAME speedtest_Python COMMAND ${${PYTHON_PREFIX}_EXECUTABLE} Python/speedtest.py)
-endif()
+add_speed_test(Python py)

@@ -17,8 +17,8 @@ if(YGG_BUILD_TESTS OR YGG_BUILD_CXX_TESTS)
     set(SUBLIBFILE ${CMAKE_BINARY_DIR}/library_path.txt)
     add_custom_command(
         OUTPUT ${SUBLIBFILE}
-        COMMAND echo "$<TARGET_FILE:${YGG_TARGET_CPP}>" > "${SUBLIBFILE}"
-        DEPENDS ${YGG_TARGET_CPP}
+        COMMAND echo "$<TARGET_FILE:${YGG_TARGET_CXX}>" > "${SUBLIBFILE}"
+        DEPENDS ${YGG_TARGET_CXX}
         VERBATIM)
     add_custom_target(make_sublib ALL DEPENDS ${SUBLIBFILE})
 
@@ -34,7 +34,7 @@ endif()
 # Fortran Tests #
 #################
 
-if(YGG_BUILD_TESTS OR YGG_BUILD_FORTRAN_TESTS)
+if(YGG_BUILD_TESTS OR YGG_BUILD_Fortran_TESTS)
     add_subdirectory(fortran)
 endif()
 
@@ -42,6 +42,6 @@ endif()
 # Python Tests #
 ################
 
-if(YGG_BUILD_TESTS OR YGG_BUILD_PYTHON_TESTS)
+if(YGG_BUILD_TESTS OR YGG_BUILD_Python_TESTS)
     add_subdirectory(python)
 endif()

@@ -4,14 +4,15 @@ include(SearchTools)
 find_package_python()
 enable_testing()
 list(APPEND PYTEST_ARGS -sv)
-if (YGGTEST_DYNAMIC_DIR)
-  list(APPEND PYTEST_ARGS --dynamic-testlib-dir=${YGGTEST_DYNAMIC_DIR})
+if (NOT YGGTEST_DYNAMIC_DIR)
+  set(YGGTEST_DYNAMIC_DIR ${CMAKE_CURRENT_BINARY_DIR})
 endif()
+list(APPEND PYTEST_ARGS --dynamic-testlib-dir=${YGGTEST_DYNAMIC_DIR})
 foreach(LANGUAGE LIBRARY IN ZIP_LISTS DYNAMIC_TEST_LANGUAGES DYNAMIC_TEST_LIBRARIES)
   list(APPEND PYTEST_ARGS --external-testlib=${LANGUAGE}::${LIBRARY})
 endforeach()
 add_test(NAME python_tests COMMAND
-         ${${PYTHON_PREFIX}_EXECUTABLE} -m pytest ${PYTEST_ARGS}
+         ${${Python_PREFIX}_EXECUTABLE} -m pytest ${PYTEST_ARGS}
          ${CMAKE_CURRENT_SOURCE_DIR}
 	 COMMAND_EXPAND_LISTS)
 if (YGG_BUILD_ASAN AND DEFINED ENV{DYLD_INSERT_LIBRARIES})
@@ -22,4 +23,4 @@ if (YGG_BUILD_ASAN AND DEFINED ENV{DYLD_INSERT_LIBRARIES})
 endif()
 
 include(DynamicTestLibraries)
-add_dynamic_dependencies(python_tests)
+add_dynamic_dependencies(python_tests WORKING_DIR ${YGGTEST_DYNAMIC_DIR})

@@ -1,6 +1,7 @@
 #include "communicators/comms.hpp"
 #include "utils/tools.hpp"
 #include "utils/rapidjson_wrapper.hpp"
+#include "utils/embedded_python.hpp"
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 int YggInterface::communicator::global_scope_comm = 0;
@@ -36,9 +37,25 @@ CommContext::~CommContext() {
 int CommContext::init(bool for_testing) {
   log_debug() << "init: Begin" << std::endl;
   for_testing_ = for_testing;
-  if (!getenv("YGG_PREVENT_PYTHON_INITIALIZATION")) {
-    utils::initialize_python("CommContext::init");
+#define ADD_EMBEDDED(cls, do_init)					\
+  {									\
+    utils::cls* iembed = new utils::cls();				\
+    LANGUAGE iembed_language = iembed->language;			\
+    std::map<LANGUAGE, utils::EmbeddedLanguageBase*>::iterator it = embed_registry_.find(iembed_language); \
+    if (it == embed_registry_.end() || !(it->second)) {			\
+      embed_registry_[iembed_language] = iembed;			\
+    } else {								\
+      delete iembed;							\
+      iembed = dynamic_cast<utils::cls*>(it->second);			\
+    }									\
+    if (do_init && iembed->is_enabled()) {				\
+      iembed->initialize();						\
+    }									\
   }
+  YGG_THREAD_SAFE_BEGIN_LOCAL(embed) {
+    ADD_EMBEDDED(EmbeddedPython, 1);
+  } YGG_THREAD_SAFE_END;
+#undef ADD_EMBEDDED
 #ifdef ZMQINSTALLED
   log_debug() << "init: begin zmq initialization" << std::endl;
   YGG_THREAD_SAFE_BEGIN_LOCAL(zmq) {
@@ -112,7 +129,17 @@ void CommContext::cleanup(CLEANUP_MODE mode) {
 	  }
 	} YGG_THREAD_SAFE_END;
 #endif // ZMQINSTALLED
-	utils::finalize_python("CommContext::cleanup");
+	YGG_THREAD_SAFE_BEGIN_LOCAL(embed) {
+	  for (std::map<LANGUAGE, utils::EmbeddedLanguageBase*>::iterator it = embed_registry_.begin();
+	       it != embed_registry_.end(); it++) {
+	    if (it->second) {
+	      if (it->second->is_enabled())
+		it->second->finalize();
+	      delete it->second;
+	      it->second = nullptr;
+	    }
+	  }
+	} YGG_THREAD_SAFE_END;
       }
     } YGG_THREAD_SAFE_END;
 #ifdef RESTINSTALLED
@@ -127,6 +154,30 @@ void CommContext::cleanup(CLEANUP_MODE mode) {
     _exit(utils::YggdrasilLogger::_ygg_error_flag);
   }
 #endif // RAPIDJSON_YGGDRASIL_PYTHON
+}
+
+std::map<LANGUAGE, bool> CommContext::disable_embedded_languages(const std::map<LANGUAGE, bool>& languages) const {
+  std::map<LANGUAGE, bool> out;
+  for (std::map<LANGUAGE, utils::EmbeddedLanguageBase*>::const_iterator it = embed_registry_.begin();
+       it != embed_registry_.end(); it++) {
+    out[it->first] = it->second->is_enabled();
+    std::map<LANGUAGE, bool>::const_iterator it_bool = languages.find(it->first);
+    if ((it_bool == languages.end()) || it_bool->second)
+      it->second->disable();
+  }
+  return out;
+}
+
+std::map<LANGUAGE, bool> CommContext::enable_embedded_languages(const std::map<LANGUAGE, bool>& languages) const {
+  std::map<LANGUAGE, bool> out;
+  for (std::map<LANGUAGE, utils::EmbeddedLanguageBase*>::const_iterator it = embed_registry_.begin();
+       it != embed_registry_.end(); it++) {
+    out[it->first] = it->second->is_enabled();
+    std::map<LANGUAGE, bool>::const_iterator it_bool = languages.find(it->first);
+    if ((it_bool == languages.end()) || it_bool->second)
+      it->second->enable();
+  }
+  return out;
 }
 
 void CommContext::register_comm(Comm_t* x) {
@@ -183,6 +234,10 @@ Comm_t* CommContext::find_registered_comm(const std::string& name,
 
 void CommContext::register_function(FunctionWrapper* x) {
   log_debug() << "register_function: Registering " << x->address << std::endl;
+  if (x && (x->flags & FUNCTION_WEAK_REF)) {
+    log_debug() << "register_function: Skipping registration of weakref function" << std::endl;
+    return;
+  }
   YGG_THREAD_SAFE_BEGIN_LOCAL(functions) {
     if (func_registry_.find(x->address) == func_registry_.end()) {
       func_registry_[x->address] = x;
@@ -218,6 +273,21 @@ FunctionWrapper* CommContext::find_registered_function(const std::string& name) 
     }
   } YGG_THREAD_SAFE_END;
   return out;
+}
+
+FunctionWrapper* CommContext::create_registered_function(const std::string& name,
+							 const LANGUAGE calling_lang,
+							 int flags) {
+  FunctionWrapper* handle = find_registered_function(name);
+  if (handle)
+    return handle;
+  if (name.empty())
+    throw_error("create_registered_function: Failed to get function wrapper given empty address");
+  log_debug() << "create_registered_function: Creating function " <<
+    "wrapper for " << name << std::endl;
+  handle = new FunctionWrapper(name, false, calling_lang, flags);
+  register_function(handle);
+  return handle;
 }
 
 uint64_t CommContext::uuid() {
@@ -280,8 +350,10 @@ void YggInterface::communicator::global_scope_comm_off() {
   // #endif
 }
 int YggInterface::communicator::ygg_init(bool for_testing) {
-  if (!global_context)
+  if (!global_context) {
     global_context.reset(new CommContext());
+    return 0;
+  }
   return global_context->init(for_testing);
 }
 void YggInterface::communicator::ygg_cleanup(CLEANUP_MODE mode) {

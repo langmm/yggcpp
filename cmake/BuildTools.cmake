@@ -44,7 +44,7 @@ function(add_custom_command_env target)
     message(FATAL_ERROR "If ENV provided, END_ENV must be as well.")
   endif()
   configure_file(
-    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/CMakeAddFortranSubdirectory/execute_env.cmake.in
+    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/execute_env.cmake.in
     ${CMAKE_CURRENT_BINARY_DIR}/execute_env.cmake
     @ONLY)
   if (ARGS_OUTPUT)
@@ -60,5 +60,296 @@ function(add_custom_command_env target)
       ${target} ALL
       COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/execute_env.cmake
       ${ARGS_UNPARSED_ARGUMENTS})
+  endif()
+endfunction()
+
+
+function(get_runtime_environment_var OUTPUT_VARIABLE)
+  if(WIN32)
+    set(OUT PATH)
+  elseif(APPLE)
+    set(OUT DYLD_LIBRARY_PATH)
+  else()
+    set(OUT LD_LIBRARY_PATH)
+  endif()
+  set(${OUTPUT_VARIABLE} "${OUT}" PARENT_SCOPE)
+endfunction()
+
+
+function(get_pathsep OUTPUT_VARIABLE)
+  set(oneValueArgs ESCAPE_LEVEL)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  if(WIN32)
+    if(NOT ARGS_ESCAPE_LEVEL)
+      set(ARGS_ESCAPE_LEVEL 0)
+    endif()
+    math(EXPR COUNT "${ARGS_ESCAPE_LEVEL}+1")
+    string(REPEAT "\\" ${COUNT} ESCAPE_STR)
+    set(OUT "${ESCAPE_STR};")
+  else()
+    set(OUT ":")
+  endif()
+  set(${OUTPUT_VARIABLE} "${OUT}" PARENT_SCOPE)
+endfunction()
+
+
+function(update_env_path)
+  set(options PREPEND)
+  set(oneValueArgs PATH_VARIABLE PATH_SEP OUTPUT_VARIABLE PREVIOUS_VALUE ESCAPE_LEVEL)
+  set(multiValueArgs PATHS)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  if(ARGS_UNPARSED_ARGUMENTS)
+    list(APPEND ARGS_PATHS ${ARGS_UNPARSED_ARGUMENTS})
+  endif()
+  if(NOT ARGS_PATHS)
+    return()
+  endif()
+  if(NOT ARGS_ESCAPE_LEVEL)
+    set(ARGS_ESCAPE_LEVEL 0)
+  endif()
+  if(NOT ARGS_PATH_VARIABLE)
+    get_runtime_environment_var(ARGS_PATH_VARIABLE)
+  endif()
+  if(NOT ARGS_PATH_SEP)
+    get_pathsep(ARGS_PATH_SEP ESCAPE_LEVEL ${ARGS_ESCAPE_LEVEL})
+  endif()
+  set(UPDATED_PATHS)
+  if(ARGS_PREPEND)
+    list(APPEND UPDATED_PATHS ${ARGS_PATHS})
+  endif()
+  if(DEFINED ENV{${ARGS_PATH_VARIABLE}})
+    get_pathsep(path_sep_basic)
+    string(REPLACE "${path_sep_basic}" ";" PREVIOUS_PATHS "$ENV{${ARGS_PATH_VARIABLE}}")
+    list(LENGTH PREVIOUS_PATHS PREVIOUS_PATHS_LEN)
+    message(STATUS "PREVIOUS_PATHS = ${PREVIOUS_PATHS} [len = ${PREVIOUS_PATHS_LEN}]")
+    list(APPEND UPDATED_PATHS ${PREVIOUS_PATHS})
+  endif()
+  if(NOT ARGS_PREPEND)
+    list(APPEND UPDATED_PATHS ${ARGS_PATHS})
+  endif()
+  list(LENGTH UPDATED_PATHS UPDATED_PATHS_LEN)
+  message(STATUS "UPDATED_PATHS = ${UPDATED_PATHS} [len = ${UPDATED_PATHS_LEN}]")
+  list(JOIN UPDATED_PATHS "${ARGS_PATH_SEP}" UPDATED_PATHS)
+  list(LENGTH UPDATED_PATHS UPDATED_PATHS_LEN)
+  message(STATUS "UPDATED_PATHS = ${UPDATED_PATHS} [len = ${UPDATED_PATHS_LEN}]")
+  if(WIN32)
+    string(REPLACE "/" "\\" UPDATED_PATHS "${UPDATED_PATHS}")
+  endif()
+  if(ARGS_PREVIOUS_VALUE)
+    set(${ARGS_PREVIOUS_VALUE} "$ENV{${ARGS_PATH_VARIABLE}}" PARENT_SCOPE)
+  endif()
+  if(ARGS_OUTPUT_VARIABLE)
+    # PARENT_SCOPE?
+    set(${ARGS_OUTPUT_VARIABLE} "${UPDATED_PATHS}")
+    set(${ARGS_OUTPUT_VARIABLE} "${UPDATED_PATHS}" PARENT_SCOPE)
+    message(STATUS "update_env_path[VAR] ${ARGS_OUTPUT_VARIABLE} = ${${ARGS_OUTPUT_VARIABLE}}")
+  else()
+    set(ENV{${ARGS_PATH_VARIABLE}} "${UPDATED_PATHS}" PARENT_SCOPE)
+    message(STATUS "update_env_path[ENV] ${ARGS_PATH_VARIABLE} = $ENV{${ARGS_PATH_VARIABLE}}")
+  endif()
+endfunction()
+
+
+function(get_runtime_directory_suffix OUTPUT_VARIABLE)
+  if(WIN32)
+    set(OUT "bin")
+  else()
+    set(OUT "lib")
+  endif()
+  set(${OUTPUT_VARIABLE} "${OUT}" PARENT_SCOPE)
+endfunction()
+
+
+function(configure_and_build CONFIG_FILE)
+  set(oneValueArgs SOURCE_DIR BUILD_DIR)
+  set(multiValueArgs PREPEND_PATHS CMAKE_COMMAND_ARGS)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  if(NOT ARGS_SOURCE_DIR)
+    set(ARGS_SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/_tmp)
+  endif()
+  if(NOT ARGS_BUILD_DIR)
+    set(ARGS_BUILD_DIR ${ARGS_SOURCE_DIR}_build)
+  endif()
+  cmake_path(APPEND ARGS_SOURCE_DIR "CMakeLists.txt" OUTPUT_VARIABLE OUTPUT_FILE)
+  configure_file(${CONFIG_FILE} ${OUTPUT_FILE} @ONLY)
+  file(MAKE_DIRECTORY ${ARGS_BUILD_DIR})
+  if(ARGS_PREPEND_PATHS)
+    update_env_path(
+      PREPEND
+      PATH_VARIABLE PATH
+      PATHS ${ARGS_PREPEND_PATHS}
+      PREVIOUS_VALUE old_paths
+    )
+  endif()
+  execute_process(
+    COMMAND ${CMAKE_COMMAND} ${ARGS_SOURCE_DIR} ${ARGS_CMAKE_COMMAND_ARGS}
+    WORKING_DIRECTORY ${ARGS_BUILD_DIR}
+    COMMAND_ECHO STDOUT
+    RESULT_VARIABLE ret)
+  if (NOT ret EQUAL 0)
+    message(FATAL_ERROR "Failed to configure ${OUTPUT_FILE}")
+  endif()
+  execute_process(
+    COMMAND ${CMAKE_COMMAND} --build . --config Release
+    WORKING_DIRECTORY ${ARGS_BUILD_DIR}
+    COMMAND_ECHO STDOUT
+    RESULT_VARIABLE ret)
+  if(old_paths)
+    set(ENV{PATH} "${old_paths}")
+  endif()
+  if (NOT ret EQUAL 0)
+    message(FATAL_ERROR "Failed to build ${OUTPUT_FILE}")
+  endif()
+endfunction()
+
+
+function(configure_env_injection)
+  set(oneValueArgs OUTPUT_FILE DIRECTORY)
+  set(multiValueArgs VARIABLES)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  if (NOT ARGS_OUTPUT_FILE)
+    set(ARGS_OUTPUT_FILE ${CMAKE_CURRENT_BINARY_DIR}/CTestEnvInject.cmake)
+  endif()
+  message(STATUS "configure_env_injection1 ARGS_VARIABLES = ${ARGS_VARIABLES}")
+  if (ARGS_UNPARSED_ARGUMENTS)
+    list(APPEND ARGS_VARIABLES ${ARGS_UNPARSED_ARGUMENTS})
+  endif()
+  message(STATUS "configure_env_injection2 ARGS_VARIABLES = ${ARGS_VARIABLES}")
+  string(REPLACE "\\" "\\\\\\\\" ENV_VARS "${ARGS_VARIABLES}")
+  message(STATUS "configure_env_injection ENV_VARS = ${ENV_VARS}")
+  configure_file(
+    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/CTestEnvInject.cmake.in
+    ${ARGS_OUTPUT_FILE}
+    @ONLY)
+  file(READ ${ARGS_OUTPUT_FILE} CONTENTS)
+  message(STATUS "CONTENTS = ${CONTENTS}")
+  if (ARGS_DIRECTORY)
+    set_property(
+      DIRECTORY ${ARGS_DIRECTORY} APPEND PROPERTY
+      TEST_INCLUDE_FILES ${ARGS_OUTPUT_FILE}
+    )
+  endif()
+endfunction()
+
+function(configure_path_injection)
+  set(oneValueArgs OUTPUT_FILE PATH_VARIABLE DIRECTORY)
+  set(multiValueArgs PATHS)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  if (NOT ARGS_OUTPUT_FILE)
+    set(ARGS_OUTPUT_FILE ${CMAKE_CURRENT_BINARY_DIR}/CTestPathInject.cmake)
+  endif()
+  if (NOT ARGS_PATH_VARIABLE)
+    set(ARGS_PATH_VARIABLE PATH)
+  endif()
+  set(PATH_VAR ${ARGS_PATH_VARIABLE})
+  if(ARGS_UNPARSED_ARGUMENTS)
+    list(APPEND ARGS_PATHS ${ARGS_UNPARSED_ARGUMENTS})
+  endif()
+  if(ARGS_PATHS)
+    get_pathsep(PATH_SEP ESCAPE_LEVEL 2)
+    list(JOIN ARGS_PATHS "${PATH_SEP}" NEW_PATHS)
+  else()
+    set(PATH_SEP)
+    set(NEW_PATHS)
+  endif()
+  configure_file(
+    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/CTestPathInject.cmake.in
+    ${ARGS_OUTPUT_FILE}
+    @ONLY)
+  if (ARGS_DIRECTORY)
+    set_property(
+      DIRECTORY ${ARGS_DIRECTORY} APPEND PROPERTY
+      TEST_INCLUDE_FILES ${ARGS_OUTPUT_FILE}
+    )
+  endif()
+endfunction()
+
+
+function(cmakevar2cmakecliarg opt OUTPUT_LIST_VARIABLE)
+  if(NOT ${opt})
+    return()
+  endif()
+  list(LENGTH ${opt} opt_len)
+  if (opt_len GREATER 1)
+    list(JOIN ${opt} "\\\\;" tmp)
+    set(OUT -D${opt}=${tmp})
+  else()
+    set(OUT -D${opt}=${${opt}})
+  endif()
+  list(APPEND ${OUTPUT_LIST_VARIABLE} ${OUT})
+  set(${OUTPUT_LIST_VARIABLE} "${${OUTPUT_LIST_VARIABLE}}" PARENT_SCOPE)
+endfunction()
+
+
+function(cmakevars2cmakecliargs OUTPUT_LIST_VARIABLE)
+  foreach(opt ${ARGN})
+    cmakevar2cmakecliarg(${opt} ${OUTPUT_LIST_VARIABLE})
+  endforeach()
+  set(${OUTPUT_LIST_VARIABLE} "${${OUTPUT_LIST_VARIABLE}}" PARENT_SCOPE)
+endfunction()
+
+function(python_code_generation NAME SCRIPT)
+  # TODO: Conditional generation on sources
+  set(oneValueArgs WORKING_DIRECTORY)
+  set(multiValueArgs ARGUMENTS SOURCES BYPRODUCTS ENTRY_POINT)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  set(IS_MODULE OFF)
+  cmake_path(ABSOLUTE_PATH SCRIPT NORMALIZE)
+  if(IS_DIRECTORY ${SCRIPT})
+    set(IS_MODULE ON)
+  endif()
+  if(NOT ARGS_ENTRY_POINT)
+    if(IS_MODULE)
+      set(ARGS_ENTRY_POINT -m ${SCRIPT})
+    else()
+      set(ARGS_ENTRY_POINT ${SCRIPT})
+    endif()
+  endif()
+  if(IS_MODULE)
+    file(GLOB_RECURSE MODULE_SOURCES "${SCRIPT}/*.py")
+    list(APPEND ARGS_SOURCES ${MODULE_SOURCES})
+    if(NOT ARGS_WORKING_DIRECTORY)
+      set(ARGS_WORKING_DIRECTORY ${SCRIPT})
+    endif()
+  endif()
+  if (ARGS_WORKING_DIRECTORY)
+    cmake_path(ABSOLUTE_PATH ARGS_WORKING_DIRECTORY NORMALIZE)
+    list(APPEND ARGS_UNPARSED_ARGUMENTS
+         WORKING_DIRECTORY ${ARGS_WORKING_DIRECTORY})
+  endif()
+  if (ARGS_SOURCES)
+    list(APPEND ARGS_UNPARSED_ARGUMENTS DEPENDS)  # SOURCES)
+    foreach(src ${ARGS_SOURCES})
+      cmake_path(ABSOLUTE_PATH src NORMALIZE)
+      list(APPEND ARGS_UNPARSED_ARGUMENTS ${src})
+    endforeach()
+  endif()
+  set(ARGS_UNPARSED_ARGUMENTS_CMD ${ARGS_UNPARSED_ARGUMENTS})
+  if (ARGS_BYPRODUCTS)
+    list(APPEND ARGS_UNPARSED_ARGUMENTS BYPRODUCTS)
+    list(APPEND ARGS_UNPARSED_ARGUMENTS_CMD OUTPUT)
+    foreach(src ${ARGS_BYPRODUCTS})
+      cmake_path(ABSOLUTE_PATH src NORMALIZE)
+      list(APPEND ARGS_UNPARSED_ARGUMENTS ${src})
+      list(APPEND ARGS_UNPARSED_ARGUMENTS_CMD ${src})
+    endforeach()
+  endif()
+  if (${Python_PREFIX}_EXECUTABLE)
+    message(STATUS "Calling python script ${SCRIPT}")
+    if (ARGS_BYPRODUCTS)
+      add_custom_command(
+        COMMAND ${${Python_PREFIX}_EXECUTABLE} ${ARGS_ENTRY_POINT}
+        ${ARGS_ARGUMENTS}
+        ${ARGS_UNPARSED_ARGUMENTS_CMD}
+      )
+      add_custom_target(${NAME} ALL DEPENDS ${ARGS_BYPRODUCTS})
+    else()
+      add_custom_target(
+        ${NAME}
+        COMMAND ${${Python_PREFIX}_EXECUTABLE} ${ARGS_ENTRY_POINT}
+        ${ARGS_ARGUMENTS}
+        ${ARGS_UNPARSED_ARGUMENTS}
+      )
+    endif()
   endif()
 endfunction()

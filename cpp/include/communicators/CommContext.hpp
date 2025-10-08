@@ -19,6 +19,12 @@
 #include <random>
 
 namespace YggInterface {
+
+  namespace utils {
+    // Forward declaration
+    class EmbeddedLanguageBase;
+  }
+  
   namespace communicator {
 
     // Forward declaration
@@ -43,10 +49,28 @@ namespace YggInterface {
       YGG_API ~CommContext();
       /** \copydoc YggInterface::utils::LogBase::logClass */
       std::string logClass() const override { return "CommContext"; }
-
+      /**
+       * @brief Disable the embedded languages.
+       * @param[in] languages Mapping between embedded languages and
+       *   whether or not it should be disabled. If a language is not
+       *   present, it will be disabled.
+       * @returns mapping between embedded languages and initial state
+       *   of each as enabled/disabled.
+       */
+      YGG_API std::map<LANGUAGE, bool> disable_embedded_languages(const std::map<LANGUAGE, bool>& languages={}) const;
+      /**
+       * @brief Enabled embedded languages based on the provided map.
+       * @param[in] languages Mapping between embedded languages and
+       *   whether or not it should be enabled. If a language is not
+       *   present, it will be enabled.
+       * @returns mapping between embedded languages and initial state
+       *   of each as enabled/disabled.
+       */
+      YGG_API std::map<LANGUAGE, bool> enable_embedded_languages(const std::map<LANGUAGE, bool>& languages={}) const;
       // Class members
       std::vector<Comm_t*> registry_; //!< Registry of comms created
       std::map<std::string, FunctionWrapper*> func_registry_; //!< Registry of functions
+      std::map<LANGUAGE, utils::EmbeddedLanguageBase*> embed_registry_; //!< Registry of embedded languages
       std::string thread_id;          //!< ID of thread context was created on
       bool for_testing_;              //!< true if context used for testing
       CLEANUP_MODE cleanup_mode_;     //!< Mode of current cleanup action
@@ -67,6 +91,7 @@ namespace YggInterface {
       YGG_THREAD_MUTEX(zmqport)
       YGG_THREAD_MUTEX(uuid)
       YGG_THREAD_MUTEX(functions)
+      YGG_THREAD_MUTEX(embed)
 #undef YGG_THREAD_MUTEX
 #endif // THREADSINSTALLED
 
@@ -109,6 +134,17 @@ namespace YggInterface {
        * @return The function wrapper or NULL if none was found
        */
       YGG_API FunctionWrapper* find_registered_function(const std::string& name);
+      /**
+       * @brief Create a registered function wrapper if one does not
+       *   already exist in the registry.
+       * @param[in] f Function name and import information.
+       * @param[in] calling_language Language calling the function.
+       * @param[in] flags Bitwise flags describing the function.
+       * @returns Created function wrapper. NULL on error.
+       */
+      YGG_API FunctionWrapper* create_registered_function(const std::string& f,
+							  const LANGUAGE calling_language=NO_LANGUAGE,
+							  int flags=0);
       /**
        * @brief Get a random unique identifier
        * @return ID

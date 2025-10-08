@@ -7,19 +7,130 @@
 import os
 import re
 import copy
-import argparse
 import pprint
 import itertools
 from collections import OrderedDict
+from generate_generic.base import (
+    _base_dir, get_file_unit_class, get_file_unit, camel2underscored)
 
 
-class AmendedFile(object):
+class GeneratedFile(object):
+    r"""Base class for generating files."""
 
     generated_flag = ('LINES AFTER THIS WERE GENERATED AND SHOULD NOT '
                       'BE MODIFIED DIRECTLY')
-    comment = ''
-    indent = ''
     indent_append = ''
+    file_suffix = ''
+    divider_char = '='
+
+    def __init__(self, src, added=None, prefix_lines=None,
+                 suffix_lines=None, language=None,
+                 from_unit_method=None):
+        self.src = os.path.join(_base_dir, src)
+        self.file_unit = get_file_unit_class(src, language=language)
+        self.language = self.file_unit.language
+        self.divider_char = self.file_unit.divider_char
+        if from_unit_method or not hasattr(self, 'from_unit_method'):
+            self.from_unit_method = from_unit_method
+        self.added = added
+        if self.added is None:
+            self.added = {}
+        self.flag = ('\n' + self.indent_append + self.comment + ' '
+                     + self.generated_flag)
+        self.contents = ''
+        self.prev_contents = ''
+        if os.path.isfile(self.src):
+            with open(self.src, 'r') as fd:
+                self.prev_contents = fd.read()
+                self.contents = self.prev_contents.split(self.flag)[0]
+        self.lines = []
+        self.prefix_lines = prefix_lines
+        self.suffix_lines = suffix_lines
+
+    @property
+    def indent(self):
+        return self.file_unit.indent
+
+    @property
+    def comment(self):
+        return self.file_unit.comment
+
+    def append(self, line):
+        if not line:
+            return
+        if len(self.indent_append) > 0:
+            line = (
+                self.indent_append
+                + line.replace('\n', '\n' + self.indent_append))
+        if line in self.lines:
+            print("DUPLICATE")
+            print(line)
+        assert line not in self.lines
+        if line not in self.lines:
+            self.lines.append(line)
+
+    def write(self, debug=False, verbose=False):
+        prefix_lines = [
+            self.flag,
+            self.indent_append + self.comment + 68 * self.divider_char]
+        if self.prefix_lines:
+            prefix_lines += self.prefix_lines
+        nprefix = len(self.lines)
+        self.lines = prefix_lines + self.lines
+        new_content = '\n'.join(self.lines) + self.file_suffix
+        if self.suffix_lines:
+            new_content += '\n' + '\n'.join(self.suffix_lines)
+        if debug:
+            if len(self.lines) == nprefix:
+                raise Exception(self.src)
+        if debug or verbose:
+            print(f"\n{self.src}{new_content}")
+        if (not debug) and len(self.lines) > nprefix:
+            with open(self.src, 'w') as fd:
+                fd.write(self.contents + new_content)
+        for v in self.added.values():
+            if isinstance(v, GeneratedFile):
+                v.write(debug=debug, verbose=verbose)
+
+    def generate(self, dont_write=False, **kwargs):
+        if not dont_write:
+            self.write(**kwargs)
+
+    def generate_wrapper(self, x, language=None, **kwargs):
+        unit = self.parse()
+        if isinstance(x, str):
+            x = GeneratedFile(x, language=language)
+        x.wrap_unit(unit)
+        x.generate(**kwargs)
+
+    def from_unit(self, x, language=None, **kwargs):
+        if isinstance(x, str):
+            x = get_file_unit(x, language=language)
+        wrapped = self.file_unit.from_unit(x, language=language,
+                                           name=self.src, **kwargs)
+        if self.from_unit_method:
+            wrapped = self.from_unit_method(wrapped)
+        return wrapped
+
+    def wrap_unit(self, x, **kwargs):
+        wrapped = self.from_unit(x, **kwargs)
+        self.lines += wrapped.format().splitlines()
+        for k, v in self.added.items():
+            v.wrap_unit(x, generating_unit=wrapped, **kwargs)
+
+    def parse(self, **kwargs):
+        kwargs.setdefault('contents', self.prev_contents)
+        return get_file_unit(self.src, **kwargs)
+
+    def test_parse_wrap(self, **kwargs):
+        xmed = self.parse(check_format=True, **kwargs)
+        lines = xmed.format()
+        xalt = self.parse(name=self.src, contents=lines, **kwargs)
+        assert xalt == xmed
+
+
+class AmendedFile(GeneratedFile):
+
     regexes = {}
     types = {}
     scalar_varients = {}
@@ -39,24 +150,10 @@ class AmendedFile(object):
     aliased_functions = {}
     excluded_functions = []
 
-    def __init__(self, language, src, added=None, prefix_lines=None,
-                 suffix_lines=None):
+    def __init__(self, language, *args, **kwargs):
         self.init_param()
-        self.language = language
-        self.src = os.path.join(
-            os.path.dirname(os.path.dirname(__file__)), src)
-        self.added = added
-        if self.added is None:
-            self.added = {}
-        self.flag = ('\n' + self.indent_append + self.comment + ' '
-                     + self.generated_flag)
-        self.contents = ''
-        if os.path.isfile(self.src):
-            with open(self.src, 'r') as fd:
-                self.contents = fd.read().split(self.flag)[0]
-        self.lines = []
-        self.prefix_lines = prefix_lines
-        self.suffix_lines = suffix_lines
+        kwargs['language'] = language
+        super(AmendedFile, self).__init__(*args, **kwargs)
 
     def init_param(self):
         self.types = copy.deepcopy(self.types)
@@ -94,70 +191,15 @@ class AmendedFile(object):
                         f"A format parameter is still present in '{v}'"
                         f"(checked {check})")
 
-    @classmethod
-    def camel2underscored(self, x):
-        ignored = ('API', 'JSON')
-        out = ''
-        i = 0
-        while i < len(x):
-            c = x[i]
-            if c.isupper():
-                if i != 0 and x[i - 1] != '_':
-                    out += '_'
-                for m in ignored:
-                    if x[i:].startswith(m):
-                        out += m.lower()
-                        i += len(m)
-                        break
-                else:
-                    out += c.lower()
-                    i += 1
-            else:
-                out += c
-                i += 1
-        return out
-
     def append(self, line):
-        if not line:
-            return
-        for k in ['type', 'ret_type', 'X']:
-            if f'{{{k}}}' in line:
-                print(line)
-            assert f'{{{k}}}' not in line
-        if len(self.indent_append) > 0:
-            line = (
-                self.indent_append
-                + line.replace('\n', '\n' + self.indent_append))
-        if line in self.lines:
-            print("DUPLICATE")
-            print(line)
-        assert line not in self.lines
-        if line not in self.lines:
-            self.lines.append(line)
+        if line:
+            for k in ['type', 'ret_type', 'X']:
+                if f'{{{k}}}' in line:
+                    print(line)
+                assert f'{{{k}}}' not in line
+        return super(AmendedFile, self).append(line)
 
-    def write(self, debug=False):
-        prefix_lines = [
-            self.flag, self.indent_append + self.comment + 68 * '=']
-        if self.prefix_lines:
-            prefix_lines += self.prefix_lines
-        nprefix = len(self.lines)
-        self.lines = prefix_lines + self.lines
-        new_content = '\n'.join(self.lines) + self.file_suffix
-        if self.suffix_lines:
-            new_content += '\n' + '\n'.join(self.suffix_lines)
-        if debug:
-            if len(self.lines) == nprefix:
-                raise Exception(self.src)
-            print(f"\n{self.src}{new_content}")
-        else:
-            if len(self.lines) > nprefix:
-                with open(self.src, 'w') as fd:
-                    fd.write(self.contents + new_content)
-        for v in self.added.values():
-            if isinstance(v, AmendedFile):
-                v.write(debug=debug)
-
-    def generate(self, dont_write=False, debug=False):
+    def generate(self, **kwargs):
         iterover = OrderedDict([
             ('container', [None] + list(self.types['container'].keys())),
             ('action', [k for k in self.methods.keys() if k]),
@@ -177,8 +219,7 @@ class AmendedFile(object):
                         self.generate_method(scalar_raw_type=k,
                                              X=v, **kws)
         self.generate_long_double()
-        if not dont_write:
-            self.write(debug=debug)
+        return super(AmendedFile, self).generate(**kwargs)
 
     def generate_long_double(self, **kwargs):
         iterover = OrderedDict([
@@ -1138,7 +1179,7 @@ class CFile(AmendedFile):
         if 'fortran' in self.added:
             if 'also_wrap' in self.added:
                 for x in self.added['also_wrap']:
-                    with open(x, 'r') as fd:
+                    with open(os.path.join(_base_dir, x), 'r') as fd:
                         contents = fd.read()
                     assert contents
                     self.wrapfortran(contents)
@@ -1871,7 +1912,7 @@ class FortranFile(AmendedFile):
                  and kwargs['X_bytes'] == '1'))):
             return ''
         docs = self.format_docs(kwargs)
-        kwargs['function'] = self.camel2underscored(kwargs['function'])
+        kwargs['function'] = camel2underscored(kwargs['function'])
         kwargs['check_function'] = False
         for k, v in self.checked_functions.items():
             if kwargs['function'].startswith(k):
@@ -2285,14 +2326,5 @@ class FortranCdefsFile(FortranFile):
         super(FortranCdefsFile, self).init_param()
 
 
-def generate(debug=False):
-    CFile(fortran=FortranFile()).generate(debug=debug)
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        "Generate interfaces for rapidjson::Document in C & Fortran")
-    parser.add_argument("--debug", action="store_true",
-                        help="Dont't actually write out to files")
-    args = parser.parse_args()
-    generate(debug=args.debug)
+def generate(**kwargs):
+    CFile(fortran=FortranFile()).generate(**kwargs)

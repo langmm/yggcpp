@@ -195,6 +195,7 @@ const std::map<const FUNCTION_FLAGS, const std::string>& YggInterface::utils::FU
   static const std::map<const FUNCTION_FLAGS, const std::string> map {
     {FUNCTION_ON_ASYNC, "FUNCTION_ON_ASYNC"},
     {FUNCTION_WEAK_REF, "FUNCTION_WEAK_REF"},
+    {FUNCTION_EMBEDDED, "FUNCTION_EMBEDDED"},
   };
   return map;
 };

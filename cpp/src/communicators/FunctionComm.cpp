@@ -2,6 +2,7 @@
 #include "utils/enums_utils.hpp"
 #include "utils/tools.hpp"
 #include "utils/multiprocessing.hpp"
+#include "utils/embedded_languages.hpp"
 #ifdef _WIN32
 #include <windows.h>
 #include <system_error>
@@ -40,7 +41,7 @@ DynamicLibrary::DynamicLibrary(LANGUAGE lang, const std::string& name,
     address += ".so";
 #endif
   }
-  setenv("YGG_PREVENT_PYTHON_INITIALIZATION", "1", 1);
+  std::map<LANGUAGE, bool> enabled = global_context->disable_embedded_languages();
   std::vector<std::string> to_try;
   to_try.push_back(address);
   std::string address_forward, address_dir, address_base, address_base_alt;
@@ -97,7 +98,7 @@ DynamicLibrary::DynamicLibrary(LANGUAGE lang, const std::string& name,
       break;
     }
   }
-  unsetenv("YGG_PREVENT_PYTHON_INITIALIZATION");
+  global_context->enable_embedded_languages(enabled);
   if (!library)
     throw_error("DynamicLibrary: Failed to load library: " + address);
 }
@@ -159,8 +160,8 @@ FunctionWrapper::FunctionWrapper(const std::string& f,
 				 const LANGUAGE calling_lang,
 				 int flags0) :
   LogBase(), address(f), language(NO_LANGUAGE),
-  calling_language(calling_lang), flags(flags0), library(nullptr),
-  func(nullptr), recv_backlog() {
+  calling_language(calling_lang), flags(flags0), commflags(0),
+  library(nullptr), func(nullptr), recv_backlog() {
   std::vector<std::string> parts = split(address, "::", 1);
   if (parts.size() != 2)
     throw_error("FunctionWrapper: Error parsing function address \""
@@ -187,21 +188,18 @@ FunctionWrapper::FunctionWrapper(const std::string& f,
     }
     break;
   }
-#ifndef YGGDRASIL_DISABLE_PYTHON_C_API
+  // case MATLAB_LANGUAGE:
+  // case R_LANGUAGE:
   case PYTHON_LANGUAGE: {
-    YGGDRASIL_PYGIL_BEGIN;
-    func = (void*)utils::import_python_object(parts[1].c_str());
-    YGGDRASIL_PYGIL_END;
+    INIT_EMBEDDED(language);
+    flags |= global_context->embed_registry_[language]->functionFlags();
+    commflags |= global_context->embed_registry_[language]->commFlags();
+    if ((flags & FUNCTION_EMBEDDED) && (flags & FUNCTION_ON_ASYNC)) {
+      throw_error("Cannot load an embedded function from a thread other than the one that owns the global context");
+    }
+    func = global_context->embed_registry_[language]->load_function(parts[1]);
     break;
   }
-#endif // YGGDRASIL_DISABLE_PYTHON_C_API
-  // case MATLAB_LANGUAGE: {
-  //   break;
-  // }
-  // case R_LANGUAGE: {
-  // }
-  // case JULIA_LANGUAGE: {
-  // }
   // case JAVA_LANGUAGE: {
   // }
   default: {
@@ -231,13 +229,20 @@ FunctionWrapper::FunctionWrapper(const FunctionWrapper& rhs,
 				 const LANGUAGE calling_lang,
 				 int flags0) :
   LogBase(), address(rhs.address), language(rhs.language),
-  calling_language(calling_lang), flags(flags0), library(nullptr),
-  func((void*)(&rhs)), recv_backlog() {}
+  calling_language(calling_lang), flags(flags0), commflags(rhs.commflags),
+  library(nullptr), func((void*)(&rhs)), recv_backlog() {
+  if ((flags & FUNCTION_EMBEDDED) && (flags & FUNCTION_ON_ASYNC)) {
+    YGG_THREAD_SAFE_BEGIN(embed) {
+      if (!global_context->embed_registry_[language]->initialize(true))
+	throw_error("FunctionWrapper: Error initializing embedded language on thread for weakref");
+    } YGG_THREAD_SAFE_END;
+  }
+}
 
 FunctionWrapper::~FunctionWrapper() {
   if (flags & FUNCTION_WEAK_REF) {
     func = nullptr;
-    return;
+    goto cleanup;
   }
   switch (language) {
   case C_LANGUAGE:
@@ -253,22 +258,22 @@ FunctionWrapper::~FunctionWrapper() {
     delete c_func;
     break;
   }
-#ifndef YGGDRASIL_DISABLE_PYTHON_C_API
   case PYTHON_LANGUAGE: {
-    if (func) {
-      YGGDRASIL_PYGIL_BEGIN;
-      PyObject* py_func = (PyObject*)func;
-      func = nullptr;
-      Py_CLEAR(py_func);
-      YGGDRASIL_PYGIL_END;
-    }
+    CHECK_INIT(language, ~FunctionWrapper);
+    global_context->embed_registry_[language]->free_embedded(func);
     break;
   }
-#endif // YGGDRASIL_DISABLE_PYTHON_C_API
   default: {
     throw_error("~FunctionWrapper: Unsupported language \""
 		+ LANGUAGE_map().find(language)->second + "\"");
   }
+  }
+ cleanup:
+  if ((flags & FUNCTION_EMBEDDED) && (flags & FUNCTION_ON_ASYNC)) {
+    YGG_THREAD_SAFE_BEGIN(embed) {
+      if (!global_context->embed_registry_[language]->finalize(true))
+	throw_error("FunctionWrapper: Error finalizing embedded language on thread for weakref");
+    } YGG_THREAD_SAFE_END;
   }
 }
 
@@ -290,52 +295,10 @@ bool FunctionWrapper::_call(const rapidjson::Document& data_send,
     cxx_function* f = (cxx_function*)func;
     return (*f)(data_send, data_recv);
   }
-#ifndef YGGDRASIL_DISABLE_PYTHON_C_API
   case PYTHON_LANGUAGE: {
-    bool py_out = false;
-    PyObject *py_args = NULL, *py_args_orig = NULL, *py_result = NULL;
-    YGGDRASIL_PYGIL_BEGIN;
-    py_args_orig = data_send.GetPythonObjectRaw();
-    if (py_args_orig == NULL) {
-      log_error() << "_call: Error converting arguments from C++ to Python: " <<
-	data_send << std::endl;
-      goto cleanup;
-    }
-    if (PyList_Check(py_args_orig)) {
-      py_args = PyList_AsTuple(py_args_orig);
-      Py_CLEAR(py_args_orig);
-      if (py_args == NULL) {
-	log_error() << "_call: Error converting arguments from Python list to Python tuple" << std::endl;
-	goto cleanup;
-      }
-    } else {
-      py_args = PyTuple_Pack(1, py_args_orig);
-      Py_CLEAR(py_args_orig);
-      if (py_args == NULL) {
-	log_error() << "_call: Error packing arguments into Python tuple" << std::endl;
-	goto cleanup;
-      }
-    }
-    py_result = PyObject_Call((PyObject*)func, py_args, NULL);
-    Py_CLEAR(py_args);
-    if (py_result == NULL) {
-      log_error() << "_call: Python call failed" << std::endl;
-      goto cleanup;
-    }
-    if (!data_recv.SetPythonObjectRaw(py_result, data_recv.GetAllocator())) {
-      Py_CLEAR(py_result);
-      log_error() << "_call: Error converting result from Python to C++" << std::endl;
-      goto cleanup;
-    }
-    py_out = true;
-    cleanup:
-    Py_CLEAR(py_args);
-    Py_CLEAR(py_args_orig);
-    Py_CLEAR(py_result);
-    YGGDRASIL_PYGIL_END;
-    return py_out;
+    CHECK_INIT(language, _call);
+    return global_context->embed_registry_[language]->call_function(func, data_send, data_recv);
   }
-#endif // YGGDRASIL_DISABLE_PYTHON_C_API
   default: {
     throw_error("_call: Unsupported language \""
 		+ LANGUAGE_map().find(language)->second + "\"");
@@ -407,25 +370,19 @@ void FunctionComm::_open(bool call_base) {
   int func_flags = 0;
   if (is_async)
     func_flags |= FUNCTION_ON_ASYNC;
-  handle = ctx->find_registered_function(this->address.address());
+  handle = ctx->create_registered_function(address.address(),
+					   language, func_flags);
   if (created && handle)
     address.address(handle->address);
   Comm_t::_init_name();
-  if (!handle) {
-    if (created) {
-      throw std::runtime_error("FunctionComm::_open: Failed to get function wrapper for \"" + this->address.address() + "\"");
-    } else {
-      handle = new FunctionWrapper(address.address(), false,
-				   language, func_flags);
-      ctx->register_function(handle);
-      
-    }
-  }
-  if (handle && is_async)
+  if ((handle->flags & FUNCTION_EMBEDDED) &&
+      (!global_context->embed_registry_[handle->language]->onParentThread()))
+    is_async = true;
+  if (is_async)
     handle = new FunctionWrapper(*handle, language,
-				 func_flags | FUNCTION_WEAK_REF);
-  if (handle && handle->language == PYTHON_LANGUAGE)
-    getFlags() |= COMM_FLAG_REQUIRES_PYGIL;
+				 handle->flags | FUNCTION_WEAK_REF |
+				 FUNCTION_ON_ASYNC);
+  getFlags() |= handle->commflags;
   AFTER_OPEN_DEF;
 }
 

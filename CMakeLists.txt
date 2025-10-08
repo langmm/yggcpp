@@ -8,10 +8,10 @@ set(LIB_PATCH_VERSION "0")
 set(LIB_VERSION_STRING "${LIB_MAJOR_VERSION}.${LIB_MINOR_VERSION}.${LIB_PATCH_VERSION}")
 
 if (CMAKE_VERSION VERSION_LESS 3.0)
-    PROJECT(YggInterfaceCPP)
+    PROJECT(YggInterfaceCXX)
 else()
     cmake_policy(SET CMP0048 NEW)
-    PROJECT(YggInterfaceCPP VERSION "${LIB_VERSION_STRING}")
+    PROJECT(YggInterfaceCXX VERSION "${LIB_VERSION_STRING}")
 endif()
 
 if (NOT DEFAULT_RAPIDJSON_INCLUDE_DIRS)
@@ -20,34 +20,24 @@ if (NOT DEFAULT_RAPIDJSON_INCLUDE_DIRS)
 endif()
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(ygg_options)
+include(AddYggInterface)
+include(BuildTools)
 
-option(BUILD_CPP_LIBRARY "Build the Yggdrasil C++ interface library" ON)
-option(BUILD_FORTRAN_LIBRARY "Build the Yggdrasil Fortran interface library" ON)
-option(BUILD_PYTHON_LIBRARY "Build the Yggdrasil Python interface library" OFF)
-option(YGG_PYTHON_LIBRARY_WRAP "Build the Yggdrasil Python interface library by wrapping the C++ module" ON)
-option(YGG_Fortran_REQUIRED "Raise an error if the Fortran interface library cannot be build" OFF)
-option(ALLOW_SKBUILD_NONPYTHON "Allow the non-Python interfaces (C/C++/Fortran) to be built from SKBUILD" OFF)
-option(ENABLE_ZMQ "Enable ZeroMQ" ON)
-option(ENABLE_RMQ "Enable RabbitMQ" ON)
-option(ENABLE_REST "Enable REST API" ON)
-option(USING_IPC "Default to using IPC V queues" OFF)
-option(ENABLE_OMP "Enable OpenMP" ON)
-option(ENABLE_MPI "Enable MPI" ON)
-option(ENABLE_THREADS "Enable std::threads" ON)
+option(YGG_Python_LIBRARY_WRAP "Build the Yggdrasil Python interface library by wrapping the C++ module" ON)
+option(ALLOW_SKBUILD_NONPython "Allow the non-Python interfaces (C/C++/Fortran) to be built from SKBUILD" OFF)
+set(DEFAULT_COMM "ZMQ" CACHE STRING "Default communicator")
 option(YGG_BUILD_TESTS "Build tests" OFF)
-option(YGG_BUILD_FORTRAN_TESTS "Build Fortran tests" OFF)
-option(YGG_BUILD_CXX_TESTS "Build C/C++ tests" OFF)
-option(YGG_BUILD_PYTHON_TESTS "Build Python tests" OFF)
 # option(YGG_TEST_WITH_LLDB "Run tests with lldb" OFF)
 option(YGG_ENABLE_COVERAGE "Enable coverage reporting" OFF)
 option(YGG_BUILD_THIRDPARTY_GTEST "Use gtest installation in 'thirdpart/gtest' by default if available" ON)
 option(YGG_SKIP_VALGRIND_TESTS "Disable valgrind tests" OFF)
 option(WRAP_RAPIDJSON_FOR_DLL "Build yggdrasil using a wrapper for rapidjson to force it into a DLL (enabled automatically when compiling with MSVC" OFF)
-option(YGG_LINK_PYTHON_TO_CPP "Link the Python extension to the C++ wrapper as a library" OFF)
+option(GENERATE_RAPIDJSON_WRAPPER "Generate the rapidjson wrapper from the C++ interface" OFF)
+option(YGG_LINK_Python_TO_CXX "Link the Python extension to the C++ wrapper as a library" OFF)
 option(YGG_BUILD_DOCS "Build documentation (requires Doxygen)" OFF)
 option(DOXYGEN_CHECK_MISSING "Raise an error if documentation is missing" OFF)
 option(YGG_PATCH_MINGW53_THREAD "Patch the MinGW 5.3.0 thread header" ON)
-option(YGG_FORTRAN_WRAP_C_ENUMS "Wrap the int64_t enumerators in a C layer for binding in Fortran" OFF)
+option(YGG_Fortran_WRAP_C_ENUMS "Wrap the int64_t enumerators in a C layer for binding in Fortran" OFF)
 
 list(APPEND DEPS_PUBLIC_C_COMPILE_FLAGS ${ASAN_COMPILE_FLAGS})
 list(APPEND DEPS_PUBLIC_CXX_COMPILE_FLAGS ${ASAN_COMPILE_FLAGS})
@@ -64,12 +54,12 @@ if(WIN32)
   if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
     set(WRAP_RAPIDJSON_FOR_DLL ON)
   # else()
-  #     set(YGG_LINK_PYTHON_TO_CPP ON)
+  #     set(YGG_LINK_Python_TO_CXX ON)
   endif()
 endif()
 
 if(WRAP_RAPIDJSON_FOR_DLL)
-    set(YGG_LINK_PYTHON_TO_CPP OFF)
+    set(YGG_LINK_Python_TO_CXX OFF)
     list(APPEND YGG_INSTALL_DEFS -DWRAP_RAPIDJSON_FOR_DLL)
 endif()
 
@@ -78,7 +68,7 @@ list(APPEND YGG_INSTALL_DEFS
      -DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
      -D_USE_MATH_DEFINES)
 
-set(RAPIDJSON_PYTHON_ENV "YGG_MODEL_INDEX=123")
+list(APPEND YGG_TEST_ENV "YGG_MODEL_INDEX=123")
 
 set(YGG_BUILD_FLAGS "")
 
@@ -127,113 +117,73 @@ endif()
 # ZeroMQ #
 ##########
 
-if(ENABLE_ZMQ)
-    include(SearchTools)
-    find_package_zmq()
-    if (ZeroMQ_FOUND)
-        list(APPEND YGG_INSTALL_DEFS -DZMQINSTALLED)
-        list(APPEND YGG_INSTALL_DEPS ZeroMQ)
-	list(APPEND DEPS_LIBRARIES ${ZeroMQ_LIBRARY})
-	list(APPEND DEPS_INCLUDE_DIRS ${ZeroMQ_INCLUDE_DIR})
-	# execute_process(
-	#   COMMAND ls ${ZeroMQ_INCLUDE_DIR}
-	#   COMMAND_ECHO STDOUT)
-    else()
-        message(STATUS "NO ZeroMQ")
-    endif()
-else (ENABLE_ZMQ)
-    message(STATUS "No zmq support will be built." )
-endif (ENABLE_ZMQ)
+add_yggdrasil_option(ZMQ COMM DEPENDENCY ZeroMQ)
+
+##################
+# IPC dependency #
+##################
+
+add_yggdrasil_option(
+  IPC COMM NO_DEPENDENCY
+  SUPPORTED_OS UNIX CYGWIN
+)
 
 ############
 # RabbitMQ #
 ############
 
-if(ENABLE_RMQ)
-    find_package_pkgconfig(rabbitmq-c HEADER amqp.h LIBNAMES rabbitmq)
-    if (rabbitmq-c_FOUND)
-        list(APPEND YGG_INSTALL_DEFS -DRMQINSTALLED)
-        list(APPEND YGG_INSTALL_DEPS rabbitmq-c)
-        if (rabbitmq-c_CONFIG)
-          include(${rabbitmq-c_CONFIG})
-  	  list(APPEND DEPS_LIBRARIES rabbitmq::rabbitmq)
-	  execute_process(
-	    COMMAND ls ${rabbitmq-c_DIR}
-	    COMMAND_ECHO STDOUT)
-	else()
-	  list(APPEND DEPS_LIBRARIES ${rabbitmq-c_LIBRARY})
-	  list(APPEND DEPS_INCLUDE_DIRS ${rabbitmq-c_INCLUDE_DIR})
-	endif()
-	# In v0.12.0 (v9.2.5 so), the include files were moved into a
-	# dedicated rabbitmq-c directory. This is complicated by the
-        # so version (and cmake version) not matching the source version.
-	if (rabbitmq-c_VERSION)
-	  message(STATUS "rabbitmq-c_VERSION = ${rabbitmq-c_VERSION}")
-	  if (rabbitmq-c_DIR MATCHES ".*vcpkg.*")
-	    message(STATUS "rabbitmq-c_DIR MATCHES *vcpkg*")
-	  else()
-	    message(STATUS "rabbitmq-c_DIR DOES NOT MATCH *vcpkg*")
-	  endif()
-	  if (rabbitmq-c_VERSION VERSION_LESS "0.12.0")
-	    message(STATUS "rabbitmq-c_VERSION LESS 0.12.0")
-	  else()
-	    message(STATUS "rabbitmq-c_VERSION MORE 0.12.0")
-	  endif()
-	  # if (rabbitmq-c_VERSION VERSION_LESS "9.2.5")
-	  #   message(STATUS "rabbitmq-c_VERSION LESS 9.2.5")
-	  # else()
-	  #   message(STATUS "rabbitmq-c_VERSION MORE 9.2.5")
-	  # endif()
-	else()
-	  message(STATUS "rabbitmq-c_VERSION NOT SET")
-	endif()
-	if ((NOT rabbitmq-c_VERSION) OR
-            (rabbitmq-c_VERSION VERSION_GREATER "1.0.0") OR
-	    (rabbitmq-c_VERSION VERSION_LESS "0.12.0"))
-          list(APPEND DEPS_PUBLIC_C_COMPILE_FLAGS -DYGG_RMQ_NOINCLUDEDIR)
-	  list(APPEND DEPS_PUBLIC_CXX_COMPILE_FLAGS -DYGG_RMQ_NOINCLUDEDIR)
-	endif()
+add_yggdrasil_option(RMQ COMM DEPENDENCY rabbitmq-c)
+if (rabbitmq-c_FOUND)
+  # In v0.12.0 (v9.2.5 so), the include files were moved into a
+  # dedicated rabbitmq-c directory. This is complicated by the
+  # so version (and cmake version) not matching the source version.
+  if (rabbitmq-c_VERSION)
+    message(STATUS "rabbitmq-c_VERSION = ${rabbitmq-c_VERSION}")
+    if (rabbitmq-c_DIR MATCHES ".*vcpkg.*")
+      message(STATUS "rabbitmq-c_DIR MATCHES *vcpkg*")
     else()
-        message(STATUS "NO RabbitMQ client library")
+      message(STATUS "rabbitmq-c_DIR DOES NOT MATCH *vcpkg*")
     endif()
-    dump_cmake_variables(REGEX "rabbitmq*" VERBOSE)
-else (ENABLE_RMQ)
-    message(STATUS "No RabbitMQ support will be built." )
-endif (ENABLE_RMQ)
+    if (rabbitmq-c_VERSION VERSION_LESS "0.12.0")
+      message(STATUS "rabbitmq-c_VERSION LESS 0.12.0")
+    else()
+      message(STATUS "rabbitmq-c_VERSION MORE 0.12.0")
+    endif()
+    # if (rabbitmq-c_VERSION VERSION_LESS "9.2.5")
+    #   message(STATUS "rabbitmq-c_VERSION LESS 9.2.5")
+    # else()
+    #   message(STATUS "rabbitmq-c_VERSION MORE 9.2.5")
+    # endif()
+  else()
+    message(STATUS "rabbitmq-c_VERSION NOT SET")
+  endif()
+  if ((NOT rabbitmq-c_VERSION) OR
+      (rabbitmq-c_VERSION VERSION_GREATER "1.0.0") OR
+      (rabbitmq-c_VERSION VERSION_LESS "0.12.0"))
+    list(APPEND DEPS_PUBLIC_C_COMPILE_FLAGS -DYGG_RMQ_NOINCLUDEDIR)
+    list(APPEND DEPS_PUBLIC_CXX_COMPILE_FLAGS -DYGG_RMQ_NOINCLUDEDIR)
+  endif()
+  dump_cmake_variables(REGEX "rabbitmq*" VERBOSE)
+endif()
 
 ########
 # Curl #
 ########
 
-if (ENABLE_REST)
-  find_package(CURL)
-  # find_package_pkgconfig(CURL LIBNAMES curl HEADER curl.h)
-  if (CURL_FOUND)
-    list(APPEND YGG_INSTALL_DEFS -DRESTINSTALLED)
-    list(APPEND YGG_INSTALL_DEPS CURL)
-    list(APPEND DEPS_LIBRARIES ${CURL_LIBRARIES})
-    list(APPEND DEPS_INCLUDE_DIRS ${CURL_INCLUDE_DIRS})
-  else()
-    message(STATUS "NO curl library")
-  endif()
-else (ENABLE_REST)
-  message(STATUS "No REST support will be built.")
-endif(ENABLE_REST)
+add_yggdrasil_option(
+  REST COMM DEPENDENCY CURL
+  # SEARCH_ARGS USING_PKGCONFIG LIBNAMES curl HEADER curl.h
+)
 
 ##########
 # OpenMP #
 ##########
 
-if (ENABLE_OMP)
-  find_package(OpenMP)
-  if (OpenMP_CXX_FOUND)
-    message(STATUS "OpenMP found")
-    list(APPEND YGG_INSTALL_DEPS OpenMP)
-    list(APPEND DEPS_LIBRARIES OpenMP::OpenMP_CXX)
-  else()
-    message(STATUS "NO OpenMP")
-  endif()
-endif()
+add_yggdrasil_option(
+  OMP DEPENDENCY OpenMP
+  FOUND_VAR OpenMP_CXX_FOUND
+  LIBRARIES OpenMP::OpenMP_CXX
+)
 
 #############
 # Threading #
@@ -241,28 +191,30 @@ endif()
 
 set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
-if(ENABLE_THREADS)
-  cmake_path(SET MINGW_PTHREAD_ROOT "$ENV{MINGW_PTHREAD_ROOT}")
-  if(MINGW_PTHREAD_ROOT)
-    message(STATUS "MINGW_PTHREAD_ROOT = ${MINGW_PTHREAD_ROOT}")
-    find_package(Threads PATHS ${MINGW_PTHREAD_ROOT} NO_DEFAULT_PATH)
-  endif()
-  find_package(Threads)
-  if (Threads_FOUND)
-    list(APPEND YGG_INSTALL_DEFS -DTHREADSINSTALLED)
-    if (CMAKE_THREAD_LIBS_INIT)
-      message(STATUS "CMAKE_THREAD_LIBS_INIT = ${CMAKE_THREAD_LIBS_INIT}")
-      list(APPEND DEPS_LIBRARIES ${CMAKE_THREAD_LIBS_INIT})
-    endif()
-    if (CMAKE_USE_PTHREADS_INIT)
-      set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
-      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
-    endif()
-    list(APPEND YGG_INSTALL_DEPS Threads)
-    list(APPEND DEPS_LIBRARIES Threads::Threads)
-  else()
-    message(STATUS "NO Threads")
-  endif()
+cmake_path(SET MINGW_PTHREAD_ROOT "$ENV{MINGW_PTHREAD_ROOT}")
+if(MINGW_PTHREAD_ROOT)
+  message(STATUS "MINGW_PTHREAD_ROOT = ${MINGW_PTHREAD_ROOT}")
+  add_yggdrasil_option(
+    THREADS DEPENDENCY Threads
+    LIBRARIES Threads::Threads
+    DEFINITIONS -DTHREADSINSTALLED
+    DEPENDENCY_PROPERTIES CMAKE_THREAD_LIBS_INIT CMAKE_USE_PTHREADS_INIT
+    SEARCH_ARGS PATHS ${MINGW_PTHREAD_ROOT} NO_DEFAULT_PATH
+  )
+endif()
+add_yggdrasil_option(
+  THREADS DEPENDENCY Threads
+  LIBRARIES Threads::Threads
+  DEFINITIONS -DTHREADSINSTALLED
+  DEPENDENCY_PROPERTIES CMAKE_THREAD_LIBS_INIT CMAKE_USE_PTHREADS_INIT
+)
+if (CMAKE_THREAD_LIBS_INIT)
+  message(STATUS "CMAKE_THREAD_LIBS_INIT = ${CMAKE_THREAD_LIBS_INIT}")
+  list(APPEND DEPS_LIBRARIES ${CMAKE_THREAD_LIBS_INIT})
+endif()
+if (CMAKE_USE_PTHREADS_INIT)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 endif()
 
 #############################
@@ -311,58 +263,39 @@ endif()
 # MPI #
 #######
 
-if(ENABLE_MPI)
-  find_package(MPI)
-  if(MPI_CXX_FOUND)
-    message(STATUS "MPI found")
-    list(APPEND YGG_INSTALL_DEFS -DMPIINSTALLED)
-    list(APPEND YGG_INSTALL_DEPS MPI)
-    list(APPEND DEPS_LIBRARIES MPI::MPI_CXX)
-  else()
-    message(STATUS "NO MPI")
-  endif()
-endif()
+add_yggdrasil_option(MPI COMM LIBRARIES MPI::MPI_CXX)
 
-##########
-# Python #
-##########
+###################
+# Embedded Python #
+###################
 
-if(YGGDRASIL_DISABLE_PYTHON_C_API)
+include(EmbedLanguage)
+
+if(YGGDRASIL_DISABLE_Python_C_API)
     list(APPEND YGG_INSTALL_DEFS -DYGGDRASIL_DISABLE_PYTHON_C_API)
 else()
-    include(SearchTools)
-    find_package_python()
+    embed_language(Python)
 
     # There is an issue with embedding Python on Windows in conda environments
     # https://github.com/ContinuumIO/anaconda-issues/issues/11374
     if(WIN32)
-        set(RAPIDJSON_PYTHON_ENV2 "PYTHONHOME=${${PYTHON_PREFIX}_RUNTIME_LIBRARY_DIRS}")
+        list(APPEND YGG_TEST_ENV "PYTHONHOME=${${Python_PREFIX}_RUNTIME_LIBRARY_DIRS}")
     endif()
     
-    list(APPEND YGG_INSTALL_DEPS ${PYTHON_PREFIX})
-    list(APPEND DEPS_LIBRARIES ${PYTHON_PREFIX}::NumPy)
-    list(APPEND DEPS_LIBRARIES_PYTHON ${PYTHON_PREFIX}::Python)
     if(YGGDRASIL_PYGIL_NO_MANAGEMENT)
       list(APPEND YGG_INSTALL_DEFS -DYGGDRASIL_PYGIL_NO_MANAGEMENT)
     endif()
 endif()
 
-##################
-# IPC dependency #
-##################
+#######################
+# Select default comm #
+#######################
 
-if (NOT ZeroMQ_FOUND)
-    set(USING_IPC ON)
+if((NOT DEFAULT_COMM) AND YGG_COMMS_AVAILABLE)
+  list(GET YGG_COMMS_AVAILABLE 0 DEFAULT_COMM)
 endif()
-if(USING_IPC)
-    if (UNIX OR CYGWIN)
-	list(APPEND YGG_INSTALL_DEFS -DIPCDEF)
-    else()
-        set(USING_IPC OFF)
-    endif()
-endif()
-if (UNIX OR CYGWIN)
-    list(APPEND YGG_INSTALL_DEFS -DIPCINSTALLED)
+if(DEFAULT_COMM)
+  list(APPEND YGG_INSTALL_DEFS -DDEFAULT_COMM_PREFIX=${DEFAULT_COMM})
 endif()
 
 ###################
@@ -397,42 +330,44 @@ endif()
 
 message(STATUS "DEPS_INCLUDE_DIRS = ${DEPS_INCLUDE_DIRS}")
 message(STATUS "DEPS_LIBRARIES = ${DEPS_LIBRARIES}")
+message(STATUS "DEPS_LIBRARY_DIRS = ${DEPS_LIBRARY_DIRS}")
 
 ############################
 # Handle interdependencies #
 ############################
 
-if(SKBUILD)
-  set(BUILD_PYTHON_LIBRARY ON)
-  if(YGG_LINK_PYTHON_TO_CPP)
-    if(ALLOW_SKBUILD_NONPYTHON)
-      message(FATAL_ERROR "ALLOW_SKBUILD_NONPYTHON is incompatible with YGG_LINK_PYTHON_TO_CPP")
-    endif()
-    set(BUILD_CPP_LIBRARY ON)
-    set(BUILD_FORTRAN_LIBRARY OFF)
-  elseif(NOT ALLOW_SKBUILD_NONPYTHON)
-    set(BUILD_CPP_LIBRARY OFF)
-    set(BUILD_FORTRAN_LIBRARY OFF)
-  endif()
-  set(YGG_BUILD_TESTS OFF)
-  set(YGG_BUILD_CXX_TESTS OFF)
-  set(YGG_BUILD_FORTRAN_TESTS OFF)
-  set(YGG_BUILD_THIRDPARTY_GTEST OFF)
-elseif(BUILD_PYTHON_LIBRARY AND NOT YGGDRASIL_DISABLE_PYTHON_C_API)
-  if(YGG_LINK_PYTHON_TO_CPP)
-    set(BUILD_CPP_LIBRARY ON)
-  endif()
+# if(SKBUILD)
+#   set(BUILD_Python_LIBRARY ON)
+#   if(YGG_LINK_Python_TO_CXX)
+#     if(ALLOW_SKBUILD_NONPython)
+#       message(FATAL_ERROR "ALLOW_SKBUILD_NONPython is incompatible with YGG_LINK_Python_TO_CXX")
+#     endif()
+#     set(BUILD_CXX_LIBRARY ON)
+#     set(BUILD_Fortran_LIBRARY OFF)
+#   elseif(NOT ALLOW_SKBUILD_NONPython)
+#     set(BUILD_CXX_LIBRARY OFF)
+#     set(BUILD_Fortran_LIBRARY OFF)
+#   endif()
+#   set(YGG_BUILD_TESTS OFF)
+#   set(YGG_BUILD_CXX_TESTS OFF)
+#   set(YGG_BUILD_Fortran_TESTS OFF)
+#   set(YGG_BUILD_THIRDPARTY_GTEST OFF)
+# elseif(BUILD_Python_LIBRARY AND NOT YGGDRASIL_DISABLE_Python_C_API)
+#   if(YGG_LINK_Python_TO_CXX)
+#     set(BUILD_CXX_LIBRARY ON)
+#   endif()
+# endif()
+if(BUILD_Fortran_LIBRARY)
+  set(BUILD_CXX_LIBRARY ON)
 endif()
-if(BUILD_FORTRAN_LIBRARY)
-  set(BUILD_CPP_LIBRARY ON)
+if(YGG_LINK_Python_TO_CXX AND (BUILD_Python_LIBRARY OR SKBUILD))
+  set(BUILD_CXX_LIBRARY ON)
 endif()
-set(BUILD_C_LIBRARY ${BUILD_CPP_LIBRARY})
 
 ##################
 # Coverage       #
 ##################
 
-message(STATUS "CMAKE_CURRENT_BINARY_DIR = ${CMAKE_CURRENT_BINARY_DIR}")
 if(YGG_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang|ARMClang")
   find_program(GCOVR_FOUND gcovr)
   if (GCOVR_FOUND)
@@ -470,58 +405,92 @@ endfunction()
 # Regenerate enum files #
 #########################
 
-if (${PYTHON_PREFIX}_EXECUTABLE)
-  if (YGG_FORTRAN_WRAP_C_ENUMS)
-    list(APPEND GENERATE_ENUM_ARGS --fortran-wrap-c-enums)
-  endif()
-  execute_process(
-    COMMAND ${${PYTHON_PREFIX}_EXECUTABLE} utils/generate_enum.py ${GENERATE_ENUM_ARGS}
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    COMMAND_ERROR_IS_FATAL ANY)
+if (YGG_Fortran_WRAP_C_ENUMS)
+  list(APPEND GENERATE_ENUM_ARGS --fortran-wrap-c-enums)
+endif()
+python_code_generation(
+  enum utils/generate_enum.py
+  ARGUMENTS ${GENERATE_ENUM_ARGS}
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  SOURCES cpp/include/utils/enums.hpp
+  BYPRODUCTS
+  cpp/include/utils/enums_maps.hpp
+  cpp/src/utils/enums_maps.cpp
+  fortran/c_wrappers_enums.h
+  fortran/c_wrappers_enums.c
+  fortran/YggInterface_enums.F90
+)
+
+##############################
+# Generate rapidjson wrapper #
+##############################
+
+set(GENERATE_RJWRAPPER_ARGS)
+# if(WRAP_RAPIDJSON_FOR_DLL)
+#   list(APPEND GENERATE_RJWRAPPER_ARGS --wrap-rapidjson)
+# endif()
+if(RAPIDJSON_INCLUDE_DIRS)
+  list(APPEND GENERATE_RJWRAPPER_ARGS --rapidjson-include-dirs=${RAPIDJSON_INCLUDE_DIRS})
+endif()
+if(GENERATE_RAPIDJSON_WRAPPER)
+  python_code_generation(
+    rjwrapper utils/generate_generic
+    ENTRY_POINT -m generate_generic.runner
+    ARGUMENTS --language=rjwrapper ${GENERATE_RJWRAPPER_ARGS}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/utils
+    SOURCES
+    ${RAPIDJSON_INCLUDE_DIRS}/rapidjson/document.h
+    BYPRODUCTS
+    ${CMAKE_SOURCE_DIR}/cpp/include/utils/rapidjson_wrapper2.hpp
+    ${CMAKE_SOURCE_DIR}/cpp/src/utils/rapidjson_wrapper2.cpp
+  )
 endif()
 
 ################################################
 # Generate data types interface in C & Fortran #
 ################################################
 
-if (${PYTHON_PREFIX}_EXECUTABLE)
-  execute_process(
-    COMMAND ${${PYTHON_PREFIX}_EXECUTABLE} utils/generate_generic.py ${GENERATE_DATATYPES_ARGS}
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-    COMMAND_ERROR_IS_FATAL ANY)
-endif()
+python_code_generation(
+  cfort utils/generate_generic
+  ENTRY_POINT -m generate_generic.runner
+  ARGUMENTS ${GENERATE_DATATYPES_ARGS}
+  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/utils
+  SOURCES
+  cpp/include/YggInterface.h
+  cpp/include/communicators/comm_t.hpp
+  BYPRODUCTS
+  cpp/src/datatypes/dtype_t.cpp
+  cpp/include/datatypes/dtype_t.h
+  fortran/YggInterface.F90
+  fortran/YggInterface_cdef.F90
+  fortran/c_wrappers.c
+  fortran/YggInterface_interfaces.F90
+)
 
 ######################
 # Create C++ Library #
 ######################
 
-file(GLOB_RECURSE SOURCES_CPP "cpp/src/*.cpp")
-if (NOT SOURCES_CPP)
+file(GLOB_RECURSE SOURCES_CXX "cpp/src/*.cpp")
+if (NOT SOURCES_CXX)
   message(FATAL_ERROR "Sources could not be located")
 endif()
-
-if(BUILD_CPP_LIBRARY)
-    add_subdirectory(cpp)
-endif()
+add_yggdrasil_interface(CXX DIRECTORY cpp)
 
 #########################
 # Create Python Library #
 #########################
 
-if(BUILD_PYTHON_LIBRARY)
-    add_subdirectory(python)
-endif()
+add_yggdrasil_interface(Python DISABLE_BY_DEFAULT)
 
 ##########################
 # Create Fortran Library #
 ##########################
 
-if(BUILD_FORTRAN_LIBRARY)
-    if(CMAKE_Fortran_COMPILER AND WIN32)
-        cmake_path(SET CMAKE_Fortran_COMPILER NORMALIZE ${CMAKE_Fortran_COMPILER})
-    endif()
-    add_subdirectory(fortran)
+if(CMAKE_Fortran_COMPILER AND WIN32)
+  cmake_path(SET CMAKE_Fortran_COMPILER NORMALIZE ${CMAKE_Fortran_COMPILER})
 endif()
+add_yggdrasil_interface(Fortran)
 
 ##################
 # Install        #
@@ -563,7 +532,7 @@ if (YGG_INSTALL_TARGETS)
       list(APPEND modules ${f})
     endif()
   endforeach()
-  install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/cmake/CMakeAddFortranSubdirectory
+  install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/cmake/config
           DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/YggInterface
           FILES_MATCHING REGEX ".*\\.in$")
   install(FILES "${CMAKE_CURRENT_BINARY_DIR}/YggInterfaceConfig.cmake"
@@ -580,7 +549,7 @@ endif ()
 # Tests #
 #########
 
-if(YGG_BUILD_TESTS OR YGG_BUILD_CXX_TESTS OR YGG_BUILD_FORTRAN_TESTS OR YGG_BUILD_PYTHON_TESTS)
+if(YGG_BUILD_TESTS OR YGG_BUILD_CXX_TESTS OR YGG_BUILD_Fortran_TESTS OR YGG_BUILD_Python_TESTS)
     enable_testing()
     include(CTest)
     add_subdirectory(tests)

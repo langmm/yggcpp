@@ -1,0 +1,30 @@
+using CxxWrap
+using BinaryBuilder
+
+const src_name = "@PACKAGE_NAME@"
+const src_version = v"@PACKAGE_VERSION@"
+
+platforms = [HostPlatform()]  # supported_platforms()
+
+sources = [
+    DirectorySource(@PACKAGE_DIRECTORY@)
+]
+
+script = raw"""
+cd $WORKSPACE/srcdir/@PACKAGE_NAME@
+mkdir build && cd build
+cmake -DCMAKE_TOOLCHAIN_FILE=/opt/$target/$target.toolchain -DCMAKE_CXX_FLAGS="-march=x86-64" -DCMAKE_INSTALL_PREFIX=${prefix} -DCMAKE_FIND_ROOT_PATH=${prefix} -DJulia_PREFIX=${prefix} -DWITH_JULIA=ON -DWITH_PYTHON=OFF -DBUILD_Julia_LIBRARY=ON -DBUILD_Python_LIBRARY=OFF -DBUILD_Fortran_LIBRARY=OFF ..
+make
+make install
+"""
+
+products(prefix) = [
+    LibraryProduct(prefix, "@PACKAGE_LIBRARY@", :@PACKAGE_LIBRARY@)
+]
+
+dependencies = [
+    Dependency("CxxWrap"),
+    Dependency("libcxxwrap")
+]
+
+build_tarballs(ARGS, src_name, src_version, sources, script, platforms, products, dependencies)

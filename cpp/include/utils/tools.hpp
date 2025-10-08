@@ -172,6 +172,7 @@ namespace utils {
   extern T name args;
 #endif // _OPENMP
 #endif // _MSC_VER
+#define YGG_THREAD_LOCAL static thread_local
 #define YGG_THREAD_LOCAL_VAR(T, name, args)	\
   extern thread_local T name args;
 #define YGG_THREAD_LOCAL_VAR_DEF(T, name, args)	\
@@ -230,26 +231,7 @@ unsigned long ptr2seed(void *ptr) {
   @brief Get the ID for the current thread (if inside one).
   @returns int Thread ID.
  */
-static inline
-std::string get_thread_id() {
-  std::string out;
-#ifdef _OPENMP
-  if (omp_in_parallel())
-    return std::to_string(omp_get_thread_num());
-#endif
-#ifdef RAPIDJSON_YGGDRASIL_PYTHON
-  // TODO: Check for Python thread
-#endif // RAPIDJSON_YGGDRASIL_PYTHON
-#ifdef THREADSINSTALLED
-  std::stringstream ss;
-  ss << std::this_thread::get_id();
-  out = ss.str();
-#endif // THREADSINSTALLED
-  return out;
-}
-
-
-
+YGG_API std::string get_thread_id();
 
 
 /*!

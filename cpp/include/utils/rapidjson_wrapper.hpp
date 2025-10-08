@@ -205,6 +205,8 @@ typedef IteratorWrapperBase<WMember, true> WConstMemberIterator;
   RJ_WNS::GenericMember<UTF8<>, RAPIDJSON_DEFAULT_ALLOCATOR>
 #define MEMBER_ITERATOR(C)						\
   RJ_WNS::GenericMemberIterator<C, UTF8<>, RAPIDJSON_DEFAULT_ALLOCATOR>
+#define WRAP_MEMBER_ITERATOR(x)				\
+  val_->MemberBegin() + (const_cast<RJ_WNS::Value::Member*>(x.ptr_) - &(*(val_->MemberBegin())))
 #define WRAP_CONSTRUCTOR(cls, argsT, args)		\
   cls argsT
 #define WRAP_METHOD(cls, name, argsT, args, type, mods)	\
@@ -231,7 +233,12 @@ typedef IteratorWrapperBase<WMember, true> WConstMemberIterator;
   WRAP_METHOD(WValue, Is ## name, (), (), bool, const)
 #define WRAP_GET_STRING(name)			\
   static const WValue Get ## name ## String();
-
+#define WRAP_STATIC(cls, name, argsT, args, type, mods)	\
+  static WRAP_METHOD(cls, name, argsT, args, type, mods)
+#define WRAP_STATIC_CAST(cls, name, argsT, args, type, mods)	\
+  static WRAP_METHOD(cls, name, argsT, args, type, mods)
+#define WRAP_STATIC_CAST_CONST(cls, name, argsT, args, type, mods)	\
+  static WRAP_METHOD(cls, name, argsT, args, const type, mods)
 
 
 ////////////////////////////////////////////////////////////////////
@@ -386,16 +393,11 @@ public:
     std::swap(vrefs, rhs.vrefs);
     std::swap(mrefs, rhs.mrefs);
   }
-  WValue& operator=(WValue& rhs) {
-    WrapperBase<RJ_WNS::Value>::operator=(rhs);
-    std::swap(parent_, rhs.parent_);
-    std::swap(vrefs, rhs.vrefs);
-    std::swap(mrefs, rhs.mrefs);
-    return *this;
-  }
+  WValue& operator=(WValue& rhs);
+  ~WValue();
   WValue* parent_;
-  std::vector<WValue> vrefs;
-  std::vector<WMember> mrefs;
+  std::vector<WValue*> vrefs;
+  std::vector<WMember*> mrefs;
   
  public:
   bool operator==(const WValue& rhs) const;
@@ -419,6 +421,11 @@ public:
 
   WRAPPER_METHODS_BASE(WValue, RJ_WNS::Value);
   
+  // Static methods
+  WRAP_STATIC_CAST_CONST(WValue, YggSubTypeString,
+			 (enum YggSubType subtype),
+			 (subtype), WValue, );
+
   WRAP_CONSTRUCTOR(explicit WValue, (Type type=kNullType), (type));
   WRAP_CONSTRUCTOR(WValue,
 		   (const Ch* str, SizeType len, Allocator& allocator),
@@ -456,6 +463,10 @@ public:
   WRAP_METHOD(WValue, GetType, (), (), rapidjson::Type, const);
   WRAP_METHOD_SELF(WValue, SetNull, (), (), );
   WRAP_METHOD(WValue, IsNull, (), (), bool, const);
+  WRAP_METHOD(WValue, IsFalse, (), (), bool, const);
+  WRAP_METHOD(WValue, IsTrue, (), (), bool, const);
+  WRAP_METHOD(WValue, IsLosslessDouble, (), (), bool, const);
+  WRAP_METHOD(WValue, IsLosslessFloat, (), (), bool, const);
   WRAP_SET_GET(Bool, bool);
   WRAP_SET_GET(Int, int);
   WRAP_SET_GET(Uint, unsigned);
@@ -466,6 +477,7 @@ public:
   WRAP_METHOD(WValue, IsNumber, (), (), bool, const);
   WRAP_METHOD(WValue, GetNElements, (), (), SizeType, const);
   WRAP_METHOD_CAST_CONST(WValue, GetShape, (), (), WValue, );
+  WRAP_METHOD_CAST_CONST(WValue, GetUnits, (), (), WValue, );
   WRAP_METHOD(WValue, GetElement,
 	      (const SizeType index, WValue& dst, Allocator& allocator),
 	      (index, *(dst.val_), allocator), bool, const);
@@ -478,6 +490,9 @@ public:
   WRAP_METHOD_SELF(WValue, SetString, (const Ch* s, SizeType length,
 				       Allocator& allocator),
 		   (s, length, allocator), );
+  WRAP_METHOD_SELF(WValue, SetString, (const Ch* s, SizeType length),
+		   (s, length), );
+  WRAP_METHOD_SELF(WValue, SetString, (WStringRefType s), (*(s.val_)), );
   WRAP_METHOD(WValue, GetString, (), (), const Ch*, const);
   WRAP_METHOD(WValue, GetStringLength, (), (), SizeType, const);
   // Templated methods
@@ -485,6 +500,7 @@ public:
   WRAP_METHOD_TEMP(WValue, IsScalar, (), (), bool, const);
   WRAP_METHOD_TEMP(WValue, Is1DArray, (), (), bool, const);
   WRAP_METHOD_TEMP(WValue, IsNDArray, (), (), bool, const);
+  WRAP_METHOD_TEMP(WValue, Get, (), (), T, const);
   template<typename T>
   WRAP_METHOD(WValue, Get, (T& data), (data), void, const);
   template<typename T>
@@ -494,6 +510,7 @@ public:
   WRAP_METHOD_SELF(WValue, Set, (const T& data), (data), );
   // Scalar methods
   WRAP_METHOD(WValue, IsScalar, (), (), bool, const);
+  WRAP_METHOD(WValue, IsScalar, (const Ch* subT), (subT), bool, const);
   WRAP_METHOD_TEMP(WValue, GetScalar, (), (), T, const);
   WRAP_METHOD_TEMP(WValue, GetScalar,
 		   (const UnitsType data_units),
@@ -632,10 +649,12 @@ public:
   WRAP_METHOD(WValue, IsArray, (), (), bool, const);
   WRAP_METHOD_SELF(WValue, SetArray, (), (), );
   WRAP_METHOD(WValue, Size, (), (), rapidjson::SizeType, const);
+  WRAP_METHOD(WValue, Capacity, (), (), rapidjson::SizeType, const);
   WRAP_METHOD(WValue, Empty, (), (), bool, const);
   WRAP_METHOD_SELF(WValue, Reserve, (SizeType newCapacity,
 				     Allocator &allocator),
 		   (newCapacity, allocator), );
+  WRAP_METHOD(WValue, Clear, (), (), void, );
   WRAP_METHOD_CAST_VITER(WValue, Erase, (ConstValueIterator pos),
 			 (pos.val_), ValueIterator, );
   WRAP_METHOD_CAST_VITER(WValue, Begin, (), (),
@@ -648,12 +667,18 @@ public:
 			 ConstValueIterator, const);
   WRAP_METHOD(WValue, Contains, (const WValue& x),
 	      (*(x.val_)), bool, const);
+  WRAP_METHOD_SELF(WValue, PopBack, (), (), );
   INDEX_RTYPE operator[](SizeType index);
   const INDEX_RTYPE operator[](SizeType index) const;
   // Object methods
   WRAP_METHOD(WValue, IsObject, (), (), bool, const);
   WRAP_METHOD_SELF(WValue, SetObject, (), (), );
   WRAP_METHOD(WValue, MemberCount, (), (), rapidjson::SizeType, const);
+  WRAP_METHOD(WValue, MemberCapacity, (), (), rapidjson::SizeType, const);
+  WRAP_METHOD(WValue, ObjectEmpty, (), (), bool, const);
+#if RAPIDJSON_HAS_STDSTRING
+  WRAP_METHOD(WValue, HasMember, (const std::basic_string<Ch>& name), (name), bool, const);
+#endif
   WRAP_METHOD(WValue, HasMember, (const Ch* name), (name), bool, const);
   WRAP_METHOD(WValue, HasMember, (const WValue& name), (*(name.val_)),
 	      bool, const);
@@ -697,6 +722,11 @@ public:
 				       WValue::Allocator& allocator),
 		   (*(name.val_), *(value.val_), allocator), );
   WRAP_METHOD(WValue, RemoveMember, (const Ch* name), (name), bool, );
+#if RAPIDJSON_HAS_STDSTRING
+  WRAP_METHOD(WValue, RemoveMember, (const std::basic_string<Ch>& name),
+	      (name), bool, );
+#endif
+  WRAP_METHOD(WValue, RemoveAllMembers, (), (), void, );
   WRAP_METHOD_CAST_MITER(WValue, MemberBegin, (), (),
 			 MemberIterator, );
   WRAP_METHOD_CAST_MITER(WValue, MemberEnd, (), (),
@@ -719,6 +749,24 @@ public:
 			 (const std::basic_string<Ch>& name), (name),
 			 WValue::ConstMemberIterator, const);
 #endif
+  // *const_cast<RJ_WNS::Value::Member*>(x->val_)))
+  WRAP_METHOD_CAST_MITER(WValue, EraseMember,
+			 (WValue::ConstMemberIterator pos),
+			 (WRAP_MEMBER_ITERATOR(pos)),
+			 WValue::ConstMemberIterator, );
+  WRAP_METHOD_CAST_MITER(WValue, EraseMember,
+			 (WValue::ConstMemberIterator first,
+			  WValue::ConstMemberIterator last),
+			 (WRAP_MEMBER_ITERATOR(first),
+			  WRAP_MEMBER_ITERATOR(last)),
+			 WValue::ConstMemberIterator, );
+  WRAP_METHOD(WValue, EraseMember, (const Ch* name), (name), bool, );
+#if RAPIDJSON_HAS_STDSTRING
+  WRAP_METHOD(WValue, EraseMember, (const std::basic_string<Ch>& name),
+	      (name), bool, );
+#endif
+  WRAP_METHOD(WValue, EraseMember, (const WValue& name),
+	      (*(name.val_)), bool, );
   // Python methods
   WRAP_METHOD(WValue, IsPythonClass, (), (), bool, const);
   WRAP_METHOD(WValue, IsPythonInstance, (), (), bool, const);
@@ -750,6 +798,7 @@ public:
 		   (x, allocator), );
 		   
   // Yggdrasil methods
+  WRAP_METHOD(WValue, IsYggdrasil, (), (), bool, const);
   WRAP_METHOD(WValue, IsSchema, (), (), bool, const);
   WRAP_METHOD_SELF(WValue, SetSchema,
 		   (Allocator& allocator),
@@ -757,7 +806,32 @@ public:
   WRAP_METHOD_SELF(WValue, SetSchema,
 		   (const WValue& x, Allocator& allocator),
 		   (*(rhs.val_), allocator), );
+  WRAP_METHOD(WValue, RawAssignSchema, (WValue& rhs),
+	      (*(rhs.val_)), void, );
+  WRAP_METHOD(WValue, DestroySchema, (), (), void, );
+  WRAP_METHOD(WValue, HasSchema, (), (), bool, const);
+  WRAP_METHOD(WValue, HasSchemaNested, (), (), bool, const);
+  WRAP_METHOD(WValue, HasUnits, (), (), bool, const);
+  WRAP_METHOD(WValue, HasTitle, (), (), bool, const);
+  WRAP_METHOD(WValue, HasPrecision, (), (), bool, const);
+  WRAP_METHOD(WValue, HasEncoding, (), (), bool, const);
+  WRAP_METHOD_CAST_CONST(WValue, GetTitle, (), (), WValue, );
+  WRAP_METHOD(WValue, GetPrecision, (), (), SizeType, const);
+  WRAP_METHOD_CAST_CONST(WValue, GetEncoding, (), (), WValue, );
+  WRAP_METHOD(WValue, RequiresPython, (), (), bool, const);
   WRAP_METHOD(WValue, IsType, (const Ch* type), (type), bool, const);
+  WRAP_METHOD_CAST_CONST(WValue, GetYggType, (), (), WValue, );
+  WRAP_METHOD(WValue, GetSubTypeCode, (), (), enum YggSubType, const);
+  WRAP_METHOD_CAST_CONST(WValue, GetSubType, (), (), WValue, );
+  WRAP_METHOD(WValue, GetSubType, (SizeType &length), (length),
+	      const Ch*, const);
+  WRAP_METHOD(WValue, GetSubTypeNumpyType, (WValue& enc), (*(enc.val_)),
+	      int, const);
+  WRAP_METHOD(WValue, SetUnits, (const std::basic_string<Ch> units),
+	      (units), bool, );
+  WRAP_METHOD(WValue, SetUnits,
+	      (const Ch* units_str, const SizeType units_len=0),
+	      (units_str, units_len), bool, );
   WRAP_METHOD(WValue, GetDataPtr, (bool& requires_freeing),
 	      (requires_freeing), void*, const);
   WRAP_METHOD(WValue, GetNBytes, (), (), SizeType, const);
@@ -863,7 +937,8 @@ public:
   using ValueType::Swap;
   
   WRAP_METHOD_SELF_CAST(WDocument, Swap, (WDocument& rhs), (*(rhs.val_)),
-			WValue, );
+			WDocument, );
+			// WValue, );
   WRAP_METHOD(WDocument, GetAllocator, (), (), Allocator&, );
   WRAP_METHOD(WDocument, Normalize, (const WValue& schema,
 			   StringBuffer* error=NULL),
@@ -871,6 +946,9 @@ public:
   WRAP_METHOD_SELF(WDocument, Parse, (const Ch* str, size_t length),
 		   (str, length), );
   WRAP_METHOD_SELF(WDocument, Parse, (const Ch* str), (str), );
+  WRAP_METHOD_SELF(WDocument, Parse,
+		   (const WValue::Ch* str, WDocument& schema),
+		   (str, *(schema.val_)), );
   WRAP_METHOD(WDocument, HasParseError, (), (), bool, const);
   WRAP_METHOD(WDocument, GetParseError, (), (), ParseErrorCode, const);
   WRAP_METHOD(WDocument, GetErrorOffset, (), (), size_t, const);
@@ -889,6 +967,14 @@ public:
 	      (*(schema.val_), ap), bool, );
   WRAP_METHOD(WDocument, GetVarArgs, (WValue* schema, ...),
 	      (*(schema.val_), ap), bool, );
+  WRAP_METHOD(WDocument, RawNumber,
+	      (const Ch* str, SizeType length, bool copy),
+	      (str, length, copy), bool, );
+  WRAP_METHOD(WDocument, FromYggdrasilString,
+	      (const Ch* str, SizeType length, bool copy),
+	      (str, length, copy), bool, );
+  WRAP_METHOD(WDocument, WasFinalized, (), (), bool, const);
+  WRAP_METHOD(WDocument, ConsolidateStack, (), (), void, );
   WRAP_METHOD(WDocument, FinalizeFromStack, (), (), void, );
   template<typename InputStream>
   WRAP_METHOD_SELF(WDocument, ParseStream, (InputStream& is), (is), );
@@ -1117,6 +1203,9 @@ class WPrettyWriter : public WrapperBase<WRAPPED_WRITER> {
 #undef WRAP_METHOD_CAST_MITER
 #undef WRAP_METHOD_CAST_CONST
 #undef WRAP_SET_GET
+#undef WRAP_STATIC
+#undef WRAP_STATIC_CAST
+#undef WRAP_STATIC_CAST_CONST
 #undef WRAP_GET_STRING
 #undef WRAPPER_CLASS
 #undef WRAPPER_BASE

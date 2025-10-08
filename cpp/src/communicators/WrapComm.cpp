@@ -35,6 +35,29 @@ using namespace YggInterface::utils;
     IN_CONTEXT_DIRECT(type, name args, err);			\
   }
 
+WrapComm::WrapComm(WrapComm&& rhs) :
+  WrapComm(rhs.handle) {
+  if (rhs.flags & COMM_FLAG_SET_OPP_ENV)
+    rhs.flags &= ~COMM_FLAG_SET_OPP_ENV;
+  rhs.handle = nullptr;
+  rhs.index_in_register = -1;
+}
+WrapComm& WrapComm::Move() {
+  return *this;
+}
+// WrapComm& WrapComm::operator=(WrapComm&& rhs) {
+//   return *this = rhs.Move();
+// }
+// WrapComm& WrapComm::operator=(WrapComm& rhs) {
+//   name = rhs.name;
+//   address = rhs.address;
+//   direction = rhs.direction;
+//   flags = rhs.flags;
+//   std::swap(handle, rhs.handle);
+//   fromComm();
+//   return *this;
+// }
+
 WrapComm::WrapComm(const std::string name,
 		   const utils::Address &address,
 		   const DIRECTION direction,
@@ -77,6 +100,30 @@ WrapComm::~WrapComm() {}
 //   out += "[WRAPPER]";
 //   return out;
 // }
+
+std::vector<std::string> WrapComm::get_status_message(
+      unsigned int nindent,
+      const std::vector<std::string>& extra_lines_before,
+      const std::vector<std::string>& extra_lines_after) const {
+  if (!handle) {
+    std::vector<std::string> out;
+    std::string prefix = "";
+    for (unsigned int i = 0; i < nindent; i++)
+      prefix += "    ";
+    out.push_back(prefix + name);
+    prefix += "    ";
+    for (std::vector<std::string>::const_iterator it = extra_lines_before.begin();
+	 it != extra_lines_before.end(); it++)
+      out.push_back(prefix + *it);
+    out.push_back(prefix + "No wrapped comm");
+    for (std::vector<std::string>::const_iterator it = extra_lines_after.begin();
+	 it != extra_lines_after.end(); it++)
+      out.push_back(prefix + *it);
+    return out;
+  }
+  return CommBase::get_status_message(nindent, extra_lines_before,
+				      extra_lines_after);
+}
 
 void WrapComm::fromComm() {
   if (handle) {
