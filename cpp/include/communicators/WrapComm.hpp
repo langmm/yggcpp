@@ -35,13 +35,13 @@ namespace YggInterface {
        */
       YGG_API WrapComm& Move();
       // /**
-      //  * @brief Move a communicator into this one.
-      //  * @param[in, out] rhs Communicator to move into this one.
+      //  * brief Move a communicator into this one.
+      //  * param[in, out] rhs Communicator to move into this one.
       //  */
       // YGG_API WrapComm& operator=(WrapComm&& rhs);
       // /**
-      //  * @brief Swap this communicator with another.
-      //  * @param[in, out] rhs Communicator to swap with this one.
+      //  * brief Swap this communicator with another.
+      //  * param[in, out] rhs Communicator to swap with this one.
       //  */
       // YGG_API WrapComm& operator=(WrapComm& rhs);
       /**
