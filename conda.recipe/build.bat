@@ -13,8 +13,9 @@ cmake %CMAKE_ARGS% ^
       -D "Python3_EXECUTABLE:FILEPATH=%PYTHON%" ^
       -D BUILD_CXX_LIBRARY:BOOL=ON ^
       -D BUILD_Python_LIBRARY:BOOL=OFF ^
-      -D BUILD_Fortran_LIBRARY:BOOL=OFF ^
+      -D BUILD_Fortran_LIBRARY:BOOL=ON ^
       -D YGG_CXX_REQUIRED:BOOL=ON ^
+      -D YGG_Fortran_REQUIRED:BOOL=ON ^
       ..
 if errorlevel 1 exit 1
 

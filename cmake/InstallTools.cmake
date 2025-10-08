@@ -161,15 +161,17 @@ function(complete_install PROJECT)
       endif()
     endif()
     if(NOT ARGS_CONFIG_TEMPLATE)
-      set(ARGS_CONFIG_TEMPLATE "${PROJECT}Config.cmake.in")
-      if((NOT EXISTS ${ARGS_CONFIG_TEMPLATE}) AND ARGS_MODULE_DIR)
+      set(CONFIG_TEMPLATE_BASE "${PROJECT}Config.cmake.in")
+      if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/${CONFIG_TEMPLATE_BASE}")
         cmake_path(
-          APPEND ARGS_MODULE_DIR ${ARGS_CONFIG_TEMPLATE}
+          APPEND CMAKE_CURRENT_LIST_DIR ${CONFIG_TEMPLATE_BASE}
           OUTPUT_VARIABLE ARGS_CONFIG_TEMPLATE
         )
-      endif()
-      if(NOT EXISTS ${ARGS_CONFIG_TEMPLATE})
-        set(ARGS_CONFIG_TEMPLATE)
+      elseif(ARGS_MODULE_DIR AND EXISTS "${ARGS_MODULE_DIR}/${CONFIG_TEMPLATE_BASE}")
+        cmake_path(
+          APPEND ARGS_MODULE_DIR ${CONFIG_TEMPLATE_BASE}
+          OUTPUT_VARIABLE ARGS_CONFIG_TEMPLATE
+        )
       endif()
     endif()
     if(ARGS_CONFIG_TEMPLATE)

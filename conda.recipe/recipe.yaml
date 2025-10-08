@@ -74,6 +74,31 @@ tests:
         #   then: gunicorn
         # - if: win
         #   then: waitress
+  - package_contents:
+      files:
+        - if: win
+          then:
+            - Library/cmake/YggInterfaceConfig.cmake
+            - Library/cmake/YggInterfaceConfigVersion.cmake
+            - Library/lib/libYggInterface.dll
+            - Library/lib/libYggInterface_fortran.0.dll
+        - if: unix
+          then:
+            - lib/cmake/YggInterface/YggInterfaceConfig.cmake
+            - lib/cmake/YggInterface/YggInterfaceConfigVersion.cmake
+        - if: linux
+          then:
+            - lib/libYggInterface.so
+            - lib/libYggInterface_fortran.0.so
+        - if: osx
+          then:
+            - lib/libYggInterface.dylib
+            - lib/libYggInterface_fortran.0.dylib
+      include:
+        - YggInterface/YggInterface.hpp
+        - YggInterface/YggInterface.h
+        - YggInterface/rapidjson/include/rapidjson/rapidjson.h
+        - YggInterface/ygginterface.mod
     files:
       source:
         - tests/
