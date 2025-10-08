@@ -40,10 +40,15 @@ requirements:
     - zeromq
   host:
     - hatch-fancy-pypi-readme
+    - llvm-openmp
+    - numpy >=1.13.0
+    - openmpi
     - pip
     - python
     - scikit-build-core
     - setuptools_scm
+    - sysv_ipc  # [not win]
+    - zeromq
   run:
     - python
 
