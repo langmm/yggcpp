@@ -75,7 +75,10 @@ tests:
       run:
         - pytest
         - flask
-        - gunicorn
+        # - if: unix
+        #   then: gunicorn
+        # - if: win
+        #   then: waitress
     files:
       source:
         - tests/

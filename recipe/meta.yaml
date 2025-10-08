@@ -58,7 +58,8 @@ test:
   requires:
     - pytest
     - flask
-    - gunicorn
+    # - gunicorn  # [unix]
+    # - waitress  # [win]
   source_files:
     - tests
   commands:
