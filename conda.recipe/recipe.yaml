@@ -27,12 +27,10 @@ requirements:
     - libcurl
     - ninja
     - numpy >=1.13.0
-    - if: unix
-      then:
-        - ${{ stdlib('c') }}
-        - ${{ compiler('c') }}
-        - ${{ compiler('cxx') }}
-        - ${{ compiler('fortran') }}
+    - ${{ stdlib('c') }}
+    - ${{ compiler('c') }}
+    - ${{ compiler('cxx') }}
+    - ${{ compiler('fortran') }}
     # - if: win
     #   then:
     #     - m2w64-gcc-fortran
@@ -70,10 +68,12 @@ tests:
       run:
         - pytest
         - flask
-        # - if: unix
-        #   then: gunicorn
-        # - if: win
-        #   then: waitress
+        - ninja
+        - cmake
+        - ${{ stdlib('c') }}
+        - ${{ compiler('c') }}
+        - ${{ compiler('cxx') }}
+        - ${{ compiler('fortran') }}
   - package_contents:
       files:
         - if: win

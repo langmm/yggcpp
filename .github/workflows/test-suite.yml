@@ -462,7 +462,7 @@ jobs:
         if: matrix.python-install == 'conda'
         shell: bash -l {0}
         run: |
-          mamba list
+          conda list
           python -c "import sys; print(sys.executable)"
           python -c "import numpy; print(numpy.get_include())"
       - name: Check for numpy (PIP)
