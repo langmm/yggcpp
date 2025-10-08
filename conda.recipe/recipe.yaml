@@ -39,37 +39,30 @@ requirements:
         - ${{ compiler('c') }}
         - ${{ compiler('cxx') }}
         - ${{ compiler('fortran') }}
-    - if: win
-      then:
-        - m2w64-gcc-fortran
+    # - if: win
+    #   then:
+    #     - m2w64-gcc-fortran
+    - llvm-openmp
+    - openmpi
+    - if: unix
+      then: sysv_ipc
+    - zeromq
   host:
     - hatch-fancy-pypi-readme
-    - llvm-openmp
-    - numpy >=1.13.0
-    - openmpi
     - pip
     - python
     - scikit-build-core
     - setuptools_scm
-    - if: unix
-      then: sysv_ipc
-    - zeromq
   run:
-    - if: unix
-      then:
-        - ${{ stdlib('c') }}
-    - llvm-openmp
-    - numpy >=1.13.0
-    - openmpi
+    # - if: unix
+    #   then:
+    #     - ${{ stdlib('c') }}
     - python
-    - pyzmq
-    - if: unix
-      then: sysv_ipc
 
 tests:
   - python:
       imports:
-        - ygginterface
+        - YggInterface
   - script:
       - pytest -sv tests/python
     requirements:

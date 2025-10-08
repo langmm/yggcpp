@@ -29,33 +29,27 @@ requirements:
     - python                                 # [build_platform != target_platform]
     - scikit-build-core
     - setuptools_scm
-    - {{ stdlib('c') }}                      # [not win]
-    - {{ compiler('c') }}                    # [not win]
-    - {{ compiler('cxx') }}                  # [not win]
-    - {{ compiler('fortran') }}              # [not win]
-    - m2w64-gcc-fortran                      # [win]
+    - {{ stdlib('c') }}
+    - {{ compiler('c') }}
+    - {{ compiler('cxx') }}
+    - {{ compiler('fortran') }}
+    # - m2w64-gcc-fortran                      # [win]
+    - llvm-openmp
+    - openmpi
+    - sysv_ipc  # [not win]
+    - zeromq
   host:
     - hatch-fancy-pypi-readme
-    - llvm-openmp
-    - numpy >=1.13.0
-    - openmpi
     - pip
     - python
     - scikit-build-core
     - setuptools_scm
-    - sysv_ipc  # [not win]
-    - zeromq
   run:
-    - llvm-openmp
-    - numpy >=1.13.0
-    - openmpi
     - python
-    - pyzmq
-    - sysv_ipc  # [not win]
 
 test:
   imports:
-    - ygginterface
+    - YggInterface
   requires:
     - pytest
     - flask

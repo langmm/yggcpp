@@ -405,19 +405,20 @@ jobs:
         if: matrix.python-install == 'conda' && matrix.os == 'windows-latest' && matrix.windows-compiler == 'mingw'
         shell: bash -l {0}
         run: |
-          MIN_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64/x86_64-w64-mingw32"
-          echo "ls MIN_DIRECTORY=${MIN_DIRECTORY}"
-          ls ${MIN_DIRECTORY}
-          MININC_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64/x86_64-w64-mingw32/include"
-          echo "ls MININC_DIRECTORY=${MININC_DIRECTORY}"
-          ls ${MININC_DIRECTORY}
-          MINLIB_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64/x86_64-w64-mingw32/lib"
-          echo "ls MINLIB_DIRECTORY=${MINLIB_DIRECTORY}"
-          ls ${MINLIB_DIRECTORY}
-          MINBIN_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64/x86_64-w64-mingw32/bin"
-          echo "ls MINBIN_DIRECTORY=${MINBIN_DIRECTORY}"
-          ls ${MINBIN_DIRECTORY}
-          echo "MINGW_PTHREAD_ROOT=${MIN_DIRECTORY}" >> "$GITHUB_ENV"
+          ls "${CONDA_PREFIX}/Library/"
+          # MIN_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64/x86_64-w64-mingw32"
+          # echo "ls MIN_DIRECTORY=${MIN_DIRECTORY}"
+          # ls ${MIN_DIRECTORY}
+          # MININC_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64/x86_64-w64-mingw32/include"
+          # echo "ls MININC_DIRECTORY=${MININC_DIRECTORY}"
+          # ls ${MININC_DIRECTORY}
+          # MINLIB_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64/x86_64-w64-mingw32/lib"
+          # echo "ls MINLIB_DIRECTORY=${MINLIB_DIRECTORY}"
+          # ls ${MINLIB_DIRECTORY}
+          # MINBIN_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64/x86_64-w64-mingw32/bin"
+          # echo "ls MINBIN_DIRECTORY=${MINBIN_DIRECTORY}"
+          # ls ${MINBIN_DIRECTORY}
+          # echo "MINGW_PTHREAD_ROOT=${MIN_DIRECTORY}" >> "$GITHUB_ENV"
       - name: Conda library paths on Windows (msvc)
         if: matrix.python-install == 'conda' && matrix.os == 'windows-latest' && matrix.windows-compiler == 'msvc'
         shell: bash -l {0}
