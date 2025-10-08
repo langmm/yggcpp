@@ -1,0 +1,70 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index f8a97faa..f4446edb 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -1,4 +1,4 @@
+-cmake_minimum_required(VERSION 2.6.4)
++CMAKE_MINIMUM_REQUIRED(VERSION 3.5)
+ 
+ if (POLICY CMP0048)
+   cmake_policy(SET CMP0048 NEW)
+diff --git a/googlemock/CMakeLists.txt b/googlemock/CMakeLists.txt
+index bac2e3bf..4cf217a6 100644
+--- a/googlemock/CMakeLists.txt
++++ b/googlemock/CMakeLists.txt
+@@ -43,7 +43,7 @@ else()
+   cmake_policy(SET CMP0048 NEW)
+   project(gmock VERSION 1.9.0 LANGUAGES CXX C)
+ endif()
+-cmake_minimum_required(VERSION 2.6.4)
++CMAKE_MINIMUM_REQUIRED(VERSION 3.5)
+ 
+ if (COMMAND set_up_hermetic_build)
+   set_up_hermetic_build()
+diff --git a/googletest/CMakeLists.txt b/googletest/CMakeLists.txt
+index b09c46ed..f6a77ef0 100644
+--- a/googletest/CMakeLists.txt
++++ b/googletest/CMakeLists.txt
+@@ -50,7 +50,7 @@ else()
+   cmake_policy(SET CMP0048 NEW)
+   project(gtest VERSION 1.9.0 LANGUAGES CXX C)
+ endif()
+-cmake_minimum_required(VERSION 2.6.4)
++CMAKE_MINIMUM_REQUIRED(VERSION 3.5)
+ 
+ if (POLICY CMP0063) # Visibility
+   cmake_policy(SET CMP0063 NEW)
+diff --git a/googletest/include/gtest/internal/gtest-param-util-generated.h b/googletest/include/gtest/internal/gtest-param-util-generated.h
+index dcf90c27..2a8fe4a2 100644
+--- a/googletest/include/gtest/internal/gtest-param-util-generated.h
++++ b/googletest/include/gtest/internal/gtest-param-util-generated.h
+@@ -99,7 +99,7 @@ class ValueArray2 {
+ 
+  private:
+   // No implementation - assignment is unsupported.
+-  void operator=(const ValueArray2& other);
++  // void operator=(const ValueArray2& other);
+ 
+   const T1 v1_;
+   const T2 v2_;
+diff --git a/googletest/src/gtest-death-test.cc b/googletest/src/gtest-death-test.cc
+index 2f772f6f..4828b4a9 100644
+--- a/googletest/src/gtest-death-test.cc
++++ b/googletest/src/gtest-death-test.cc
+@@ -1173,14 +1173,14 @@ static int ExecDeathTestChildMain(void* child_arg) {
+ static void StackLowerThanAddress(const void* ptr,
+                                   bool* result) GTEST_NO_INLINE_;
+ static void StackLowerThanAddress(const void* ptr, bool* result) {
+-  int dummy;
++  int dummy = 0;
+   *result = (&dummy < ptr);
+ }
+ 
+ // Make sure AddressSanitizer does not tamper with the stack here.
+ GTEST_ATTRIBUTE_NO_SANITIZE_ADDRESS_
+ static bool StackGrowsDown() {
+-  int dummy;
++  int dummy = 0;
+   bool result;
+   StackLowerThanAddress(&dummy, &result);
+   return result;

@@ -44,13 +44,16 @@ def run_server(q):
 
     @app.route('/startup')
     def startup():
+        print("SERVER RECEIVED startup")
         return 'startup'
 
     @app.route('/shutdown')
     def shutdown():
+        print("SERVER RECEIVED shutdown")
         q.put('shutdown')
         return 'shutdown'
 
+    print("RUNNING FLASK SERVER APPLICATION")
     app.run(host='localhost', port=int(os.environ.get('PORT', 5000)))
 
 
@@ -58,7 +61,9 @@ def run_server_terminate():
     q = multiprocessing.Queue()
     p = multiprocessing.Process(target=run_server, args=(q,))
     p.start()
+    print("STARTED FLASK SERVER APPLICATION")
     token = q.get(block=True)
+    print("SHUTDOWN FLASK SERVER APPLICATION")
     if p.is_alive():
         p.terminate()
     if p.is_alive():

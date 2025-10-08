@@ -44,6 +44,7 @@ requirements:
   host:
     - hatch-fancy-pypi-readme
     - llvm-openmp
+    - ninja
     - numpy >=1.13.0
     - openmpi
     - pip
@@ -60,6 +61,31 @@ requirements:
     - python
 
 tests:
+  - package_contents:
+      files:
+        - if: win
+          then:
+            - Library/cmake/YggInterfaceConfig.cmake
+            - Library/cmake/YggInterfaceConfigVersion.cmake
+            - Library/lib/libYggInterface.${{ version_major }}.dll
+            - Library/lib/libYggInterface_fortran.${{ version_major }}.dll
+        - if: unix
+          then:
+            - lib/cmake/YggInterface/YggInterfaceConfig.cmake
+            - lib/cmake/YggInterface/YggInterfaceConfigVersion.cmake
+        - if: linux
+          then:
+            - lib/libYggInterface.so.${{ version_major }}
+            - lib/libYggInterface_fortran.so.${{ version_major }}
+        - if: osx
+          then:
+            - lib/libYggInterface.${{ version_major }}.dylib
+            - lib/libYggInterface_fortran.${{ version_major }}.dylib
+      include:
+        - YggInterface/YggInterface.hpp
+        - YggInterface/YggInterface.h
+        - YggInterface/rapidjson/include/rapidjson/rapidjson.h
+        - YggInterface/ygginterface.mod
   - python:
       imports:
         - YggInterface
@@ -75,31 +101,6 @@ tests:
         - ${{ compiler('c') }}
         - ${{ compiler('cxx') }}
         - ${{ compiler('fortran') }}
-  - package_contents:
-      files:
-        - if: win
-          then:
-            - Library/cmake/YggInterfaceConfig.cmake
-            - Library/cmake/YggInterfaceConfigVersion.cmake
-            - Library/lib/libYggInterface.${{ version_major }}.dll
-            - Library/lib/libYggInterface_fortran.${{ version_major }}.dll
-        - if: unix
-          then:
-            - lib/cmake/YggInterface/YggInterfaceConfig.cmake
-            - lib/cmake/YggInterface/YggInterfaceConfigVersion.cmake
-        - if: linux
-          then:
-            - lib/libYggInterface.${{ version_major }}.so
-            - lib/libYggInterface_fortran.${{ version_major }}.so
-        - if: osx
-          then:
-            - lib/libYggInterface.${{ version_major }}.dylib
-            - lib/libYggInterface_fortran.${{ version_major }}.dylib
-      include:
-        - YggInterface/YggInterface.hpp
-        - YggInterface/YggInterface.h
-        - YggInterface/rapidjson/include/rapidjson/rapidjson.h
-        - YggInterface/ygginterface.mod
     files:
       source:
         - tests/

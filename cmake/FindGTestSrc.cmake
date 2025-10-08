@@ -1,7 +1,7 @@
 
 SET(GTEST_SEARCH_PATH
-        "${GTEST_SOURCE_DIR}"
-        "${CMAKE_CURRENT_LIST_DIR}/../thirdparty/gtest")
+    "${GTEST_SOURCE_DIR}"
+    "${CMAKE_CURRENT_LIST_DIR}/../thirdparty/gtest")
 
 IF(UNIX)
     IF(RAPIDJSON_BUILD_THIRDPARTY_GTEST)
@@ -15,6 +15,20 @@ FIND_PATH(GTEST_SOURCE_DIR
         NAMES src/gtest_main.cc
 	PATH_SUFFIXES googletest
         PATHS ${GTEST_SEARCH_PATH})
+        
+string(FIND ${GTEST_SOURCE_DIR} "thirdparty" IDX_THIRDPARTY)
+set(GTEST_THIRDPARTY OFF)
+if(NOT IDX_THIRDPARTY EQUAL -1)
+  set(GTEST_THIRDPARTY ON)
+endif()
+if(GTEST_THIRDPARTY)
+  execute_process(
+    COMMAND git apply ${CMAKE_CURRENT_LIST_DIR}/gtest.patch
+    WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/../thirdparty/gtest"
+    RESULT_VARIABLE GTEST_THIRDPARTY_PATCH_RESULT
+  )
+endif()
+
 if(GTEST_SOURCE_DIR EQUAL GTEST_SOURCE_DIR-NOTFOUND)
     set(GTEST_SOURCE_DIR "")
 endif()

@@ -41,6 +41,7 @@ requirements:
     - hatch-fancy-pypi-readme
     - libcurl
     - llvm-openmp
+    - ninja
     - numpy >=1.13.0
     - openmpi
     - pip
@@ -69,8 +70,10 @@ test:
     - test -f $PREFIX/include/YggInterface/YggInterface.hpp  # [unix]
     - test -f $PREFIX/include/YggInterface/YggInterface.h    # [unix]
     - test -f $PREFIX/include/YggInterface/rapidjson/include/rapidjson/rapidjson.h  # [unix]
-    - test -f $PREFIX/lib/libYggInterface.{{ version_major }}${SHLIB_EXT}        # [unix]
-    - test -f $PREFIX/lib/libYggInterface_fortran.{{ version_major }}${SHLIB_EXT}  # [unix]
+    - test -f $PREFIX/lib/libYggInterface.so.{{ version_major }}  # [linix]
+    - test -f $PREFIX/lib/libYggInterface_fortran.so.{{ version_major }}  # [linix]
+    - test -f $PREFIX/lib/libYggInterface.{{ version_major }}.dylib        # [osx]
+    - test -f $PREFIX/lib/libYggInterface_fortran.{{ version_major }}.dylib  # [osx]
     - test -f $PREFIX/include/YggInterface/ygginterface.mod  # [unix]
     - if not exist %LIBRARY_PREFIX%\\cmake\\YggInterfaceConfig.cmake exit 1  # [win]
     - if not exist %LIBRARY_PREFIX%\\cmake\\YggInterfaceConfigVersion.cmake exit 1  # [win]
