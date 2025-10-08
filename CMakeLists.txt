@@ -8,10 +8,10 @@ set(LIB_PATCH_VERSION "0")
 set(LIB_VERSION_STRING "${LIB_MAJOR_VERSION}.${LIB_MINOR_VERSION}.${LIB_PATCH_VERSION}")
 
 if (CMAKE_VERSION VERSION_LESS 3.0)
-    PROJECT(YggInterfaceCXX)
+    PROJECT(YggInterface)
 else()
     cmake_policy(SET CMP0048 NEW)
-    PROJECT(YggInterfaceCXX VERSION "${LIB_VERSION_STRING}")
+    PROJECT(YggInterface VERSION "${LIB_VERSION_STRING}")
 endif()
 
 if (NOT DEFAULT_RAPIDJSON_INCLUDE_DIRS)
@@ -38,6 +38,28 @@ option(YGG_BUILD_DOCS "Build documentation (requires Doxygen)" OFF)
 option(DOXYGEN_CHECK_MISSING "Raise an error if documentation is missing" OFF)
 option(YGG_PATCH_MINGW53_THREAD "Patch the MinGW 5.3.0 thread header" ON)
 option(YGG_Fortran_WRAP_C_ENUMS "Wrap the int64_t enumerators in a C layer for binding in Fortran" OFF)
+
+if (SKBUILD)
+    SET(_INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_INCLUDEDIR})
+else()
+    cmake_path(APPEND CMAKE_INSTALL_INCLUDEDIR ${PROJECT_NAME}
+               OUTPUT_VARIABLE _INCLUDE_INSTALL_DIR)
+endif()
+SET(INCLUDE_INSTALL_DIR "${_INCLUDE_INSTALL_DIR}" CACHE PATH
+    "The directory the headers are installed in")
+SET(LIB_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR} CACHE STRING
+    "Directory where libraries will be installed")
+SET(BIN_INSTALL_DIR ${CMAKE_INSTALL_BINDIR} CACHE STRING
+    "Directory where executables will be installed")
+SET(DOC_INSTALL_DIR "share/doc/${PROJECT_NAME}" CACHE PATH
+    "Directory where the documentation will be installed")
+IF(UNIX OR CYGWIN)
+    SET(_CMAKE_INSTALL_DIR "${LIB_INSTALL_DIR}/cmake/${PROJECT_NAME}")
+ELSEIF(WIN32)
+    SET(_CMAKE_INSTALL_DIR "cmake")
+ENDIF()
+SET(CMAKE_INSTALL_DIR "${_CMAKE_INSTALL_DIR}" CACHE PATH
+    "Directory where cmake files will be installed")
 
 list(APPEND DEPS_PUBLIC_C_COMPILE_FLAGS ${ASAN_COMPILE_FLAGS})
 list(APPEND DEPS_PUBLIC_CXX_COMPILE_FLAGS ${ASAN_COMPILE_FLAGS})
@@ -99,7 +121,7 @@ if(YGG_BUILD_DOCS)
                           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
                           VERBATIM)
         install(DIRECTORY ${DOXYGEN_BUILD_DIR}/
-                DESTINATION ${CMAKE_INSTALL_PREFIX}/share/doc/ygginterface
+                DESTINATION ${DOC_INSTALL_DIR}
                 OPTIONAL)
     endif()
 endif()
@@ -496,54 +518,63 @@ add_yggdrasil_interface(Fortran)
 # Install        #
 ##################
 
-if (YGG_INSTALL_TARGETS)
-  include(GNUInstallDirs)
-  
-  if (SKBUILD)
-    set(YGGDRASIL_INSTALL_INCLUDEDIR ${CMAKE_INSTALL_INCLUDEDIR})
-  else()
-    cmake_path(APPEND CMAKE_INSTALL_INCLUDEDIR YggInterface
-               OUTPUT_VARIABLE YGGDRASIL_INSTALL_INCLUDEDIR)
-  endif()
-
-  install(TARGETS ${YGG_INSTALL_TARGETS}
-          EXPORT YggInterfaceTargets
-	  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-	  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-	  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-	  PUBLIC_HEADER DESTINATION ${YGGDRASIL_INSTALL_INCLUDEDIR})
-  install(EXPORT YggInterfaceTargets
-          FILE YggInterfaceTargets.cmake
-	  NAMESPACE YggInterface::
-	  DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/YggInterface)
-  install(DIRECTORY cpp/include/
-          DESTINATION ${YGGDRASIL_INSTALL_INCLUDEDIR})
-  include(CMakePackageConfigHelpers)
-  write_basic_package_version_file(
-    "YggInterfaceConfigVersion.cmake"
+include(InstallTools)
+message(STATUS "YGG_INSTALL_TARGETS = ${YGG_INSTALL_TARGETS}")
+set(CONDITIONAL_INSTALL_ARGS)
+if(NOT YGG_BUILD_DOCS)
+  list(APPEND CONDITIONAL_INSTALL_ARGS DONT_INSTALL_DOCS)
+endif()
+if(YGG_INSTALL_TARGETS)
+  complete_install(
+    ${PROJECT_NAME} TARGETS ${YGG_INSTALL_TARGETS}
     VERSION ${LIB_VERSION_STRING}
-    COMPATIBILITY AnyNewerVersion)
-  configure_file(
-    YggInterfaceConfig.cmake.in YggInterfaceConfig.cmake @ONLY)
-  file(GLOB_RECURSE modules_raw LIST_DIRECTORIES false
-       "${CMAKE_CURRENT_LIST_DIR}/cmake/*.cmake")
-  foreach(f IN LISTS modules_raw)
-    if (NOT f MATCHES "Find*")
-      list(APPEND modules ${f})
-    endif()
-  endforeach()
-  install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/cmake/config
-          DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/YggInterface
-          FILES_MATCHING REGEX ".*\\.in$")
-  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/YggInterfaceConfig.cmake"
-          "${CMAKE_CURRENT_BINARY_DIR}/YggInterfaceConfigVersion.cmake"
-	  ${modules}
-          DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/YggInterface)
-  if (YGG_INSTALL_INCLUDES)
-    install(FILES ${YGG_INSTALL_INCLUDES}
-            DESTINATION ${YGGDRASIL_INSTALL_INCLUDEDIR})
-  endif()
-endif ()
+    HEADERS ${YGG_INSTALL_INCLUDES}
+    HEADER_DIR cpp/include/ NESTED_INCLUDEDIR
+    MODULE_DIR "${CMAKE_CURRENT_LIST_DIR}/cmake"
+    CONFIG_TEMPLATE_DIR ${CMAKE_CURRENT_LIST_DIR}/cmake/config
+    DOC_DIR ${DOXYGEN_BUILD_DIR}/
+  )
+endif()
+# if (YGG_INSTALL_TARGETS)
+  
+#   # install(TARGETS ${YGG_INSTALL_TARGETS}
+#   #         EXPORT YggInterfaceTargets
+#   #         LIBRARY DESTINATION ${LIB_INSTALL_DIR}
+#   #         ARCHIVE DESTINATION ${LIB_INSTALL_DIR}
+#   #         RUNTIME DESTINATION ${BIN_INSTALL_DIR}
+#   #         PUBLIC_HEADER DESTINATION ${INCLUDE_INSTALL_DIR})
+#   # install(EXPORT YggInterfaceTargets
+#   #         FILE YggInterfaceTargets.cmake
+#   #         NAMESPACE YggInterface::
+#   #         DESTINATION ${CMAKE_INSTALL_DIR})
+#   # install(DIRECTORY cpp/include/
+#   #         DESTINATION ${INCLUDE_INSTALL_DIR})
+#   # include(CMakePackageConfigHelpers)
+#   # write_basic_package_version_file(
+#   #   "YggInterfaceConfigVersion.cmake"
+#   #   VERSION ${LIB_VERSION_STRING}
+#   #   COMPATIBILITY AnyNewerVersion)
+#   # configure_file(
+#   #   YggInterfaceConfig.cmake.in YggInterfaceConfig.cmake @ONLY)
+#   # file(GLOB_RECURSE modules_raw LIST_DIRECTORIES false
+#   #      "${CMAKE_CURRENT_LIST_DIR}/cmake/*.cmake")
+#   # foreach(f IN LISTS modules_raw)
+#   #   if (NOT f MATCHES "Find*")
+#   #     list(APPEND modules ${f})
+#   #   endif()
+#   # endforeach()
+#   # install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/cmake/config
+#   #         DESTINATION ${CMAKE_INSTALL_DIR}
+#   #         FILES_MATCHING REGEX ".*\\.in$")
+#   # install(FILES "${CMAKE_CURRENT_BINARY_DIR}/YggInterfaceConfig.cmake"
+#   #         "${CMAKE_CURRENT_BINARY_DIR}/YggInterfaceConfigVersion.cmake"
+#   #         ${modules}
+#   #         DESTINATION ${CMAKE_INSTALL_DIR})
+#   # if (YGG_INSTALL_INCLUDES)
+#   #   install(FILES ${YGG_INSTALL_INCLUDES}
+#   #           DESTINATION ${INCLUDE_INSTALL_DIR})
+#   # endif()
+# endif ()
     
 #########
 # Tests #
