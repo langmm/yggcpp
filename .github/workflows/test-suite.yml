@@ -427,8 +427,8 @@ jobs:
           ls "${CONDA_PREFIX}"
           echo "ls ${CONDA_PREFIX}/Library/"
           ls "${CONDA_PREFIX}/Library/"
-          echo "ls ${CONDA_PREFIX}/Library/App"
-          ls "${CONDA_PREFIX}/Library/App"
+          echo "ls ${CONDA_PREFIX}/Library/bin"
+          ls "${CONDA_PREFIX}/Library/bin"
           # MIN_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64"
           # echo "ls MIN_DIRECTORY=${MIN_DIRECTORY}"
           # ls ${MIN_DIRECTORY}
