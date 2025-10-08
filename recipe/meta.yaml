@@ -64,20 +64,20 @@ test:
     - tests
   commands:
     - pytest -sv tests/python
-  #   - test -f $PREFIX/lib/cmake/YggInterface/YggInterfaceConfig.cmake  # [unix]
-  #   - test -f $PREFIX/lib/cmake/YggInterface/YggInterfaceConfigVersion.cmake  # [unix]
-  #   - test -f $PREFIX/include/YggInterface/YggInterface.hpp  # [unix]
-  #   - test -f $PREFIX/include/YggInterface/YggInterface.h    # [unix]
-  #   - test -f $PREFIX/include/YggInterface/rapidjson/include/rapidjson/rapidjson.h  # [unix]
-  #   - test -f $PREFIX/lib/libYggInterface${SHLIB_EXT}        # [unix]
-  #   - test -f $PREFIX/include/YggInterface/ygginterface.mod  # [unix]
-  #   - if not exist %LIBRARY_PREFIX%\\cmake\\YggInterfaceConfig.cmake exit 1  # [win]
-  #   - if not exist %LIBRARY_PREFIX%\\cmake\\YggInterfaceConfigVersion.cmake exit 1  # [win]
-  #   - if not exist %LIBRARY_PREFIX%\\include\\YggInterface\\YggInterface.hpp  # [win]
-  #   - if not exist %LIBRARY_PREFIX%\\include\\YggInterface\\YggInterface.h  # [win]
-  #   - if not exist %LIBRARY_PREFIX%\\include\\YggInterface\\rapidjson\\include\\rapidjson\\rapidjson.h exit 1  # [win]
-  #   - if not exist %LIBRARY_BIN%\\YggInterface.dll exit 1  # [win]
-  #   - if not exist %LIBRARY_PREFIX%\\include\\YggInterface\\ygginterface.mod  # [win]
+    - test -f $PREFIX/lib/cmake/YggInterface/YggInterfaceConfig.cmake  # [unix]
+    - test -f $PREFIX/lib/cmake/YggInterface/YggInterfaceConfigVersion.cmake  # [unix]
+    - test -f $PREFIX/include/YggInterface/YggInterface.hpp  # [unix]
+    - test -f $PREFIX/include/YggInterface/YggInterface.h    # [unix]
+    - test -f $PREFIX/include/YggInterface/rapidjson/include/rapidjson/rapidjson.h  # [unix]
+    - test -f $PREFIX/lib/libYggInterface${SHLIB_EXT}        # [unix]
+    # - test -f $PREFIX/include/YggInterface/ygginterface.mod  # [unix]
+    - if not exist %LIBRARY_PREFIX%\\cmake\\YggInterfaceConfig.cmake exit 1  # [win]
+    - if not exist %LIBRARY_PREFIX%\\cmake\\YggInterfaceConfigVersion.cmake exit 1  # [win]
+    - if not exist %LIBRARY_PREFIX%\\include\\YggInterface\\YggInterface.hpp  # [win]
+    - if not exist %LIBRARY_PREFIX%\\include\\YggInterface\\YggInterface.h  # [win]
+    - if not exist %LIBRARY_PREFIX%\\include\\YggInterface\\rapidjson\\include\\rapidjson\\rapidjson.h exit 1  # [win]
+    - if not exist %LIBRARY_BIN%\\YggInterface.dll exit 1  # [win]
+    # - if not exist %LIBRARY_PREFIX%\\include\\YggInterface\\ygginterface.mod  # [win]
 
 about:
   home: https://github.com/langmm/yggcpp
