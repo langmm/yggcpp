@@ -409,10 +409,6 @@ jobs:
           echo "ls LIB_DIRECTORY = ${LIB_DIRECTORY}"
           ls ${LIB_DIRECTORY}
           echo "${LIB_DIRECTORY}" >> $GITHUB_PATH
-          DLL_DIRECTORY="${CONDA_PREFIX}/bin"
-          echo "ls DLL_DIRECTORY = ${DLL_DIRECTORY}"
-          ls ${DLL_DIRECTORY}
-          echo "${DLL_DIRECTORY}" >> $GITHUB_PATH
       # - name: Conda library paths on Windows (mingw)
       #   if: matrix.python-install == 'conda' && matrix.os == 'windows-latest' && matrix.windows-compiler == 'mingw'
       #   shell: bash -l {0}
@@ -466,6 +462,7 @@ jobs:
         if: matrix.python-install == 'conda'
         shell: bash -l {0}
         run: |
+          mamba list
           python -c "import sys; print(sys.executable)"
           python -c "import numpy; print(numpy.get_include())"
       - name: Check for numpy (PIP)

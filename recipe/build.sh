@@ -19,6 +19,8 @@ cmake ${CMAKE_ARGS} \
       -D YGG_CXX_REQUIRED:BOOL=ON \
       ..
 
+cmake --build .
+
 cmake --install .
 
 cd ..

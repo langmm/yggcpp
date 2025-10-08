@@ -525,6 +525,7 @@ if(NOT YGG_BUILD_DOCS)
   list(APPEND CONDITIONAL_INSTALL_ARGS DONT_INSTALL_DOCS)
 endif()
 if(YGG_INSTALL_TARGETS)
+  message(STATUS "Install enabled")
   complete_install(
     ${PROJECT_NAME} TARGETS ${YGG_INSTALL_TARGETS}
     VERSION ${LIB_VERSION_STRING}
@@ -534,47 +535,9 @@ if(YGG_INSTALL_TARGETS)
     CONFIG_TEMPLATE_DIR ${CMAKE_CURRENT_LIST_DIR}/cmake/config
     DOC_DIR ${DOXYGEN_BUILD_DIR}/
   )
+else()
+  message(STATUS "Install disabled")
 endif()
-# if (YGG_INSTALL_TARGETS)
-  
-#   # install(TARGETS ${YGG_INSTALL_TARGETS}
-#   #         EXPORT YggInterfaceTargets
-#   #         LIBRARY DESTINATION ${LIB_INSTALL_DIR}
-#   #         ARCHIVE DESTINATION ${LIB_INSTALL_DIR}
-#   #         RUNTIME DESTINATION ${BIN_INSTALL_DIR}
-#   #         PUBLIC_HEADER DESTINATION ${INCLUDE_INSTALL_DIR})
-#   # install(EXPORT YggInterfaceTargets
-#   #         FILE YggInterfaceTargets.cmake
-#   #         NAMESPACE YggInterface::
-#   #         DESTINATION ${CMAKE_INSTALL_DIR})
-#   # install(DIRECTORY cpp/include/
-#   #         DESTINATION ${INCLUDE_INSTALL_DIR})
-#   # include(CMakePackageConfigHelpers)
-#   # write_basic_package_version_file(
-#   #   "YggInterfaceConfigVersion.cmake"
-#   #   VERSION ${LIB_VERSION_STRING}
-#   #   COMPATIBILITY AnyNewerVersion)
-#   # configure_file(
-#   #   YggInterfaceConfig.cmake.in YggInterfaceConfig.cmake @ONLY)
-#   # file(GLOB_RECURSE modules_raw LIST_DIRECTORIES false
-#   #      "${CMAKE_CURRENT_LIST_DIR}/cmake/*.cmake")
-#   # foreach(f IN LISTS modules_raw)
-#   #   if (NOT f MATCHES "Find*")
-#   #     list(APPEND modules ${f})
-#   #   endif()
-#   # endforeach()
-#   # install(DIRECTORY ${CMAKE_CURRENT_LIST_DIR}/cmake/config
-#   #         DESTINATION ${CMAKE_INSTALL_DIR}
-#   #         FILES_MATCHING REGEX ".*\\.in$")
-#   # install(FILES "${CMAKE_CURRENT_BINARY_DIR}/YggInterfaceConfig.cmake"
-#   #         "${CMAKE_CURRENT_BINARY_DIR}/YggInterfaceConfigVersion.cmake"
-#   #         ${modules}
-#   #         DESTINATION ${CMAKE_INSTALL_DIR})
-#   # if (YGG_INSTALL_INCLUDES)
-#   #   install(FILES ${YGG_INSTALL_INCLUDES}
-#   #           DESTINATION ${INCLUDE_INSTALL_DIR})
-#   # endif()
-# endif ()
     
 #########
 # Tests #
