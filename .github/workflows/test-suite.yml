@@ -231,10 +231,10 @@ jobs:
         run: |
           python -m pip install -r requirements.txt
           python -m pip install -r requirements-test.txt
-      - name: Install Python dependencies (CONDA)
-        if: matrix.python-install == 'conda'
-        run: |
-          python -m pip install gunicorn
+      # - name: Install Python dependencies (CONDA)
+      #   if: matrix.python-install == 'conda' && matrix.os != 'windows-latest'
+      #   run: |
+      #     python -m pip install gunicorn
 
       ###################################
       # CONDA SETUP
@@ -423,18 +423,24 @@ jobs:
         if: matrix.python-install == 'conda' && matrix.os == 'windows-latest' && matrix.windows-compiler == 'msvc'
         shell: bash -l {0}
         run: |
-          MIN_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64"
-          echo "ls MIN_DIRECTORY=${MIN_DIRECTORY}"
-          ls ${MIN_DIRECTORY}
-          MININC_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64"
-          echo "ls MININC_DIRECTORY=${MININC_DIRECTORY}"
-          ls ${MININC_DIRECTORY}
-          MINLIB_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64/lib"
-          echo "ls MINLIB_DIRECTORY=${MINLIB_DIRECTORY}"
-          ls ${MINLIB_DIRECTORY}
-          MINBIN_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64/bin"
-          echo "ls MINBIN_DIRECTORY=${MINBIN_DIRECTORY}"
-          ls ${MINBIN_DIRECTORY}
+          echo "ls ${CONDA_PREFIX}"
+          ls "${CONDA_PREFIX}"
+          echo "ls ${CONDA_PREFIX}/Library/"
+          ls "${CONDA_PREFIX}/Library/"
+          echo "ls ${CONDA_PREFIX}/Library/App"
+          ls "${CONDA_PREFIX}/Library/App"
+          # MIN_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64"
+          # echo "ls MIN_DIRECTORY=${MIN_DIRECTORY}"
+          # ls ${MIN_DIRECTORY}
+          # MININC_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64"
+          # echo "ls MININC_DIRECTORY=${MININC_DIRECTORY}"
+          # ls ${MININC_DIRECTORY}
+          # MINLIB_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64/lib"
+          # echo "ls MINLIB_DIRECTORY=${MINLIB_DIRECTORY}"
+          # ls ${MINLIB_DIRECTORY}
+          # MINBIN_DIRECTORY="${CONDA_PREFIX}/Library/mingw-w64/bin"
+          # echo "ls MINBIN_DIRECTORY=${MINBIN_DIRECTORY}"
+          # ls ${MINBIN_DIRECTORY}
       - name: Set CMAKE_GENERATOR for MinGW
         if: matrix.with-asan == false && matrix.os == 'windows-latest' && matrix.windows-compiler == 'mingw'
         shell: bash -l {0}
