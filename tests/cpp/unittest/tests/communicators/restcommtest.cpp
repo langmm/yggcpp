@@ -77,7 +77,7 @@ public:
     {									\
       CURLcode x = method;						\
       if (x != CURLE_OK) {						\
-	std::cerr << "CURL ERROR: " << curl_easy_strerror(x) << std::endl; \
+	std::cerr << "CURL ERROR[" << addr << "]: " << #method << ", ERROR = " << curl_easy_strerror(x) << std::endl; \
 	return false;							\
       }									\
     }

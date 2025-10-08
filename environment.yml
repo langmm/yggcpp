@@ -11,6 +11,7 @@ dependencies:
   - pyyaml
   # - zeromq
   - lcov
+  - libcurl
   - cmake
   - openmpi
   - llvm-openmp
