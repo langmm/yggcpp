@@ -264,9 +264,10 @@ function(add_external_fortran_library target_name library_type)
       DEFINITIONS)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
   set(orig_source_dir "${CMAKE_CURRENT_SOURCE_DIR}/${ARGS_SOURCE_DIRECTORY}")
-  set(build_dir "${CMAKE_CURRENT_BINARY_DIR}/${target_name}")
+  # set(build_dir "${CMAKE_CURRENT_BINARY_DIR}/${target_name}")
+  set(build_dir "${CMAKE_BINARY_DIR}/${target_name}")
   set(source_dir "${build_dir}/src")
-  set(tmp_dir "${build_dir}/find_fortran")
+  set(tmp_dir "${build_dir}/findfort")
 
   # Get source & object file names
   set(${target_name}_EXT_SRC)

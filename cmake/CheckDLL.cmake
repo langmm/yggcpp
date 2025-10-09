@@ -38,6 +38,7 @@ function(show_runtimes target)
   else()
     set(after_target ${target})
   endif()
+  set(TOOLNAME)
   if (WIN32)
     if (NOT ARGS_AFTER_TARGET)
       add_custom_command(
@@ -47,6 +48,7 @@ function(show_runtimes target)
         )
     endif()
     if (MSVC)
+      set(TOOLNAME dumpbin)
       add_custom_command(
         TARGET ${after_target}
 	POST_BUILD
@@ -54,6 +56,7 @@ function(show_runtimes target)
 	COMMAND_EXPAND_LISTS
 	)
     else()
+      set(TOOLNAME objdump)
       add_custom_command(
         TARGET ${after_target}
 	POST_BUILD
@@ -62,6 +65,7 @@ function(show_runtimes target)
 	)
     endif()
   elseif(APPLE)
+    set(TOOLNAME otool)
     add_custom_command(
       TARGET ${after_target}
       POST_BUILD
@@ -70,6 +74,7 @@ function(show_runtimes target)
       COMMAND_EXPAND_LISTS
     )
   else()
+    set(TOOLNAME ldd)
     add_custom_command(
       TARGET ${after_target}
       POST_BUILD
@@ -77,7 +82,16 @@ function(show_runtimes target)
       COMMAND_EXPAND_LISTS
     )
   endif()
+  add_custom_command(
+    TARGET ${after_target}
+    POST_BUILD
+    COMMAND python
+    ${PROJECT_SOURCE_DIR}/cmake/inspect_runtime_dependencies.py
+    $<TARGET_FILE:${target}> --tool=${TOOLNAME}
+    COMMAND_EXPAND_LISTS
+  )
 endfunction()
+
 function(show_symbols target)
   set(oneValueArgs AFTER_TARGET)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
