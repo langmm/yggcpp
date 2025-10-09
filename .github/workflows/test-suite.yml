@@ -390,9 +390,11 @@ jobs:
         shell: bash -l {0}
         run: |
           DLL_DIRECTORY="${VCPKG_INSTALLATION_ROOT}\installed\\${VCPKG_TRIPLET}\debug\bin"
+          echo "ls DLL_DIRECTORY = ${DLL_DIRECTORY}"
           ls ${DLL_DIRECTORY}
           echo "${DLL_DIRECTORY}" >> $GITHUB_PATH
           LIB_DIRECTORY="${VCPKG_INSTALLATION_ROOT}\installed\\${VCPKG_TRIPLET}\debug\lib"
+          echo "ls LIB_DIRECTORY = ${LIB_DIRECTORY}"
           ls ${LIB_DIRECTORY}
           echo "${LIB_DIRECTORY}" >> $GITHUB_PATH
       - name: Conda library paths on Windows

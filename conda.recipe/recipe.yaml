@@ -26,17 +26,19 @@ requirements:
         - python
     - cmake >=3.16
     - libcurl
-    - if: win
-      then: make
+    # - if: win
+    #   then:
+    #     - m2w64-make
+    #     - ${{ compiler('m2w64_fortran') }}
     - ninja
     - numpy >=1.13.0
     - ${{ stdlib('c') }}
     - ${{ compiler('c') }}
     - ${{ compiler('cxx') }}
     - ${{ compiler('fortran') }}
-    # - if: win
+    # - if: unix
     #   then:
-    #     - m2w64-gcc-fortran
+    #     - ${{ compiler('fortran') }}
     - libcurl
     - llvm-openmp
     - openmpi

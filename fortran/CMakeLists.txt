@@ -15,7 +15,6 @@ if ((NOT FORCE_SPLIT_CXXFortran) AND (NOT MSVC))
     enable_language(Fortran)
 endif()
 
-include(YggAddFortranSubdirectory)
 set(SOURCES_Fortran c_wrappers.c YggInterface.F90)
 if (YGG_Fortran_WRAP_C_ENUMS)
     list(APPEND SOURCES_Fortran c_wrappers_enums.c)

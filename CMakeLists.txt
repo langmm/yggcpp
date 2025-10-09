@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
+message(STATUS "TOP LEVEL CMAKE_GENERATOR=${CMAKE_GENERATOR}")
 
 SET(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules")
 
@@ -38,28 +39,6 @@ option(YGG_BUILD_DOCS "Build documentation (requires Doxygen)" OFF)
 option(DOXYGEN_CHECK_MISSING "Raise an error if documentation is missing" OFF)
 option(YGG_PATCH_MINGW53_THREAD "Patch the MinGW 5.3.0 thread header" OFF)
 option(YGG_Fortran_WRAP_C_ENUMS "Wrap the int64_t enumerators in a C layer for binding in Fortran" OFF)
-
-if (SKBUILD)
-    SET(_INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_INCLUDEDIR})
-else()
-    cmake_path(APPEND CMAKE_INSTALL_INCLUDEDIR ${PROJECT_NAME}
-               OUTPUT_VARIABLE _INCLUDE_INSTALL_DIR)
-endif()
-SET(INCLUDE_INSTALL_DIR "${_INCLUDE_INSTALL_DIR}" CACHE PATH
-    "The directory the headers are installed in")
-SET(LIB_INSTALL_DIR ${CMAKE_INSTALL_LIBDIR} CACHE STRING
-    "Directory where libraries will be installed")
-SET(BIN_INSTALL_DIR ${CMAKE_INSTALL_BINDIR} CACHE STRING
-    "Directory where executables will be installed")
-SET(DOC_INSTALL_DIR "share/doc/${PROJECT_NAME}" CACHE PATH
-    "Directory where the documentation will be installed")
-IF(UNIX OR CYGWIN)
-    SET(_CMAKE_INSTALL_DIR "${LIB_INSTALL_DIR}/cmake/${PROJECT_NAME}")
-ELSEIF(WIN32)
-    SET(_CMAKE_INSTALL_DIR "cmake")
-ENDIF()
-SET(CMAKE_INSTALL_DIR "${_CMAKE_INSTALL_DIR}" CACHE PATH
-    "Directory where cmake files will be installed")
 
 list(APPEND DEPS_PUBLIC_C_COMPILE_FLAGS ${ASAN_COMPILE_FLAGS})
 list(APPEND DEPS_PUBLIC_CXX_COMPILE_FLAGS ${ASAN_COMPILE_FLAGS})
@@ -120,9 +99,6 @@ if(YGG_BUILD_DOCS)
                           COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
                           WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
                           VERBATIM)
-        install(DIRECTORY ${DOXYGEN_BUILD_DIR}/
-                DESTINATION ${DOC_INSTALL_DIR}
-                OPTIONAL)
     endif()
 endif()
 
@@ -532,6 +508,7 @@ if(YGG_INSTALL_TARGETS)
     HEADERS ${YGG_INSTALL_INCLUDES}
     HEADER_DIR cpp/include/ NESTED_INCLUDEDIR
     MODULE_DIR "${CMAKE_CURRENT_LIST_DIR}/cmake"
+    MODULES_INCLUDE "${CMAKE_CURRENT_LIST_DIR}/cmake/inspect_runtime_dependencies.py"
     CONFIG_TEMPLATE_DIR ${CMAKE_CURRENT_LIST_DIR}/cmake/config
     DOC_DIR ${DOXYGEN_BUILD_DIR}/
   )

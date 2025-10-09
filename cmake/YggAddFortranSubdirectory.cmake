@@ -31,43 +31,86 @@ to on, so that Microsoft ``.lib`` files are created.  Usage is as follows:
 include(CheckLanguage)
 include(ExternalProject)
 
-function(check_language_external language)
-  set(options REQUIRED)
-  set(oneValueArgs OUTPUT_VARIABLE GENERATOR EXTERNAL_PATHS)
+function(find_compiler_external language)
+  set(oneValueArgs GENERATOR)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-  set(tmp_dir "${CMAKE_CURRENT_BINARY_DIR}/_check_for_${language}")
-  set(fcompiler "${tmp_dir}/${language}_compiler")
   file(MAKE_DIRECTORY "${tmp_dir}")
+  if(NOT ARGS_GENERATOR)
+    set(ARGS_GENERATOR "${CMAKE_GENERATOR}")
+  endif()
+  string(REPLACE " " "_" "${ARGS_GENERATOR}" GENSTR)
+  set(tmp_dir "${CMAKE_CURRENT_BINARY_DIR}/_check_for_${language}_${GENSTR}")
+  set(fcompiler "${tmp_dir}/${language}_compiler")
   configure_file(
     ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/check_language_external.CMakeLists.in
     ${tmp_dir}/CMakeLists.txt
     @ONLY)
+  message(STATUS "Looking for ${language} compiler using \"${ARGS_GENERATOR}\" generator")
   execute_process(
-    COMMAND ${CMAKE_COMMAND} -B . -S .
+    COMMAND ${CMAKE_COMMAND} "-G${ARGS_GENERATOR}" -B . -S .
     WORKING_DIRECTORY ${tmp_dir}
     RESULT_VARIABLE out)
   if (EXISTS ${fcompiler})
     file(READ ${fcompiler} CONTENTS)
-    set(CMAKE_${language}_COMPILER ${CONTENTS})
-  elseif(MSVC AND language STREQUAL "Fortran")
-    find_mingw_gfortran()
-    if (MINGW_GFORTRAN)
-      set(CMAKE_${language}_COMPILER ${MINGW_GFORTRAN})
-      if (ARGS_OUTPUT_VARIABLE)
-        set(${ARGS_OUTPUT_VARIABLE} ON PARENT_SCOPE)
-      endif()
-      if (ARGS_GENERATOR)
-        set(${ARGS_GENERATOR} "MinGW Makefiles" PARENT_SCOPE)
-      endif()
-      if (ARGS_EXTERNAL_PATHS)
-        set(${ARGS_EXTERNAL_PATHS} ${MINGW_PATH} PARENT_SCOPE)
+    set(CMAKE_${language}_COMPILER ${CONTENTS} PARENT_SCOPE)
+  endif()
+endfunction()
+
+function(check_language_external language)
+  set(options REQUIRED)
+  set(oneValueArgs OUTPUT_VARIABLE GENERATOR)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  find_compiler_external(${language})
+  if((NOT CMAKE_${language}_COMPILER) AND MSVC AND
+     language STREQUAL "Fortran")
+    find_gnu_fortran(SKIP_CURRENT_GENERATOR)
+    if(GNU_FORTRAN)
+      set(CMAKE_${language}_COMPILER "${GNU_FORTRAN}")
+      if(ARGS_GENERATOR)
+        set(${ARGS_GENERATOR} "${GNU_FORTRAN_GENERATOR}" PARENT_SCOPE)
       endif()
     endif()
   endif()
-  if (NOT CMAKE_${language}_COMPILER AND ARGS_REQUIRED)
+  if(NOT CMAKE_${language}_COMPILER AND ARGS_REQUIRED)
     message(FATAL_ERROR "Could not locate a ${language} compiler")
   endif()
   set(CMAKE_${language}_COMPILER ${CMAKE_${language}_COMPILER} PARENT_SCOPE)
+  if(CMAKE_${language}_COMPILER AND ARGS_OUTPUT_VARIABLE)
+    set(${ARGS_OUTPUT_VARIABLE} ON PARENT_SCOPE)
+  endif()
+endfunction()
+
+function(find_gnu_fortran)
+  set(options REQUIRED SKIP_CURRENT_GENERATOR)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  foreach(igen "Ninja" "MinGW Makefiles")
+    if(ARGS_SKIP_CURRENT_GENERATOR
+       AND igen STREQUAL "${CMAKE_GENERATOR}")
+      continue()
+    endif()
+    find_compiler_external(${language} GENERATOR "${igen}")
+    if(CMAKE_${language}_COMPILER)
+      set(GNU_FORTRAN "${CMAKE_${language}_COMPILER}" PARENT_SCOPE)
+      set(GNU_FORTRAN_GENERATOR "${igen}" PARENT_SCOPE)
+      message(STATUS "GNU_FORTRAN = ${CMAKE_${language}_COMPILER}")
+      message(STATUS "GNU_FORTRAN_GENERATOR = ${igen}")
+      return()
+    endif()
+  endforeach()
+  if(ARGS_REQUIRED)
+    find_mingw_gfortran()
+  endif()
+  if(MINGW_GFORTRAN)
+    set(GNU_FORTRAN "${MINGW_GFORTRAN}" PARENT_SCOPE)
+    set(GNU_FORTRAN_GENERATOR "MinGW Makefiles" PARENT_SCOPE)
+    message(STATUS "GNU_FORTRAN[MINGW] = ${MINGW_GFORTRAN}")
+    message(STATUS "GNU_FORTRAN_GENERATOR[MINGW] = MinGW Makefiles")
+    return()
+  elseif(ARGS_REQUIRED)
+    message(FATAL_ERROR
+      "GNU fortran not found, please install gfortran via MinGW "
+      "with the gfortran option. This is required to build.")
+  endif()
 endfunction()
 
 function(find_mingw_gfortran)
@@ -137,6 +180,34 @@ function(_setup_mingw_config_and_build source_dir build_dir tmp_dir)
   endif()
   configure_file(
     ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/config_mingw.cmake.in
+    ${tmp_dir}/external_find_fortran.cmake
+    @ONLY)
+endfunction()
+
+function(_setup_msvc_and_gnu_config_and_build source_dir build_dir tmp_dir)
+  # Look for a GNU fortran.
+  find_gnu_fortran(REQUIRED)
+
+  # Configure scripts to run GNU tools with the proper PATH.
+  get_filename_component(GNU_PATH ${GNU_FORTRAN} PATH)
+  file(TO_NATIVE_PATH "${GNU_PATH}" GNU_PATH)
+  string(REPLACE "\\" "\\\\" GNU_PATH "${GNU_PATH}")
+  configure_file(
+    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/config_msvc_and_gnu.cmake.in
+    ${build_dir}/external_config.cmake
+    @ONLY)
+  configure_file(
+    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/build_msvc_and_gnu.cmake.in
+    ${build_dir}/external_build.cmake
+    @ONLY)
+  set(source_dir ${tmp_dir})
+  if (ARGS_CMAKE_COMMAND_LINE)
+    set(ARGS_CMAKE_COMMAND_LINE "${ARGS_CMAKE_COMMAND_LINE} -B ${tmp_dir}")
+  else()
+    set(ARGS_CMAKE_COMMAND_LINE "-B ${tmp_dir}")
+  endif()
+  configure_file(
+    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/config_msvc_and_gnu.cmake.in
     ${tmp_dir}/external_find_fortran.cmake
     @ONLY)
 endfunction()
@@ -357,10 +428,12 @@ function(add_external_fortran_library target_name library_type)
   endif()
 
   include(AddTargetsFromFile)
-  generate_target_file("${target_name}.targets" TARGETS ${targets}
-                       DIRECTORY ${source_dir}
-		       OUTPUT_VAR target_file
-		       CUSTOM_TARGET "generate_target_file_${target_name}")
+  generate_target_file(
+    "${target_name}.targets" TARGETS ${targets}
+    DIRECTORY ${source_dir}
+    OUTPUT_VAR target_file
+    CUSTOM_TARGET "generate_target_file_${target_name}"
+  )
 
   # create the external project cmake file
   file(MAKE_DIRECTORY "${source_dir}")
@@ -381,9 +454,14 @@ function(add_external_fortran_library target_name library_type)
   # check_language(Fortran)
   message(STATUS "MSVC_AND_GNU_BUILD = ${MSVC_AND_GNU_BUILD}")
   if(MSVC_AND_GNU_BUILD)
-    _setup_mingw_config_and_build("${source_dir}" "${build_dir}" "${tmp_dir}")
+    # _setup_mingw_config_and_build("${source_dir}" "${build_dir}" "${tmp_dir}")
+    _setup_msvc_and_gnu_config_and_build(
+      "${source_dir}" "${build_dir}" "${tmp_dir}"
+    )
   else()
-    _setup_native_config_and_build("${source_dir}" "${build_dir}" "${tmp_dir}")
+    _setup_native_config_and_build(
+      "${source_dir}" "${build_dir}" "${tmp_dir}"
+    )
   endif()
   set(CONFIGURE_COMMAND
     ${CMAKE_COMMAND} -P ${build_dir}/external_config.cmake)
