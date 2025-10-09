@@ -462,16 +462,17 @@ jobs:
       ###################################
       # Check
       ###################################
-      - name: Check for numpy (CONDA)
+      - name: Check installed packages (CONDA)
         if: matrix.python-install == 'conda'
         shell: bash -l {0}
         run: |
           conda list
           python -c "import sys; print(sys.executable)"
           python -c "import numpy; print(numpy.get_include())"
-      - name: Check for numpy (PIP)
+      - name: Check installed packages (PIP)
         if: matrix.python-install == 'pip'
         run: |
+          pip list
           python -c "import sys; print(sys.executable)"
           python -c "import numpy; print(numpy.get_include())"
 

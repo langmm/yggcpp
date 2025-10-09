@@ -24,7 +24,7 @@ endif()
 if(GTEST_THIRDPARTY)
   execute_process(
     COMMAND git apply ${CMAKE_CURRENT_LIST_DIR}/gtest.patch
-    WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/../thirdparty/gtest"
+    WORKING_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/../cpp/include/rapidjson/thirdparty/gtest"
     RESULT_VARIABLE GTEST_THIRDPARTY_PATCH_RESULT
   )
 endif()

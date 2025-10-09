@@ -26,6 +26,8 @@ requirements:
         - python
     - cmake >=3.16
     - libcurl
+    - if: win
+      then: make
     - ninja
     - numpy >=1.13.0
     - ${{ stdlib('c') }}
@@ -44,6 +46,8 @@ requirements:
   host:
     - hatch-fancy-pypi-readme
     - llvm-openmp
+    - if: win
+      then: make
     - ninja
     - numpy >=1.13.0
     - openmpi

@@ -63,7 +63,7 @@ class ToolBase(metaclass=ToolMeta):
         if _library_ext in x:
             try:
                 ctypes.CDLL(x)
-                out = x + ' [VIRTUAL]'
+                return x + ' [VIRTUAL]'
             except OSError:
                 pass
         return out

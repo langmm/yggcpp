@@ -379,6 +379,7 @@ function(add_external_fortran_library target_name library_type)
 
   # create build and configure wrapper scripts
   # check_language(Fortran)
+  message(STATUS "MSVC_AND_GNU_BUILD = ${MSVC_AND_GNU_BUILD}")
   if(MSVC_AND_GNU_BUILD)
     _setup_mingw_config_and_build("${source_dir}" "${build_dir}" "${tmp_dir}")
   else()

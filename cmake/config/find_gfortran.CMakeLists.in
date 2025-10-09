@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION @CMAKE_MINIMUM_REQUIRED_VERSION@)
-message(STATUS "BEGIN @target_name@_FIND_Fortran")
+message(STATUS "BEGIN FIND_Fortran for @target_name@")
+message(STATUS "CMAKE_GENERATOR = ${CMAKE_GENERATOR}")
 project(@target_name@_FIND_Fortran LANGUAGES C CXX Fortran)
 enable_language(Fortran)
 set(CMAKE_VERBOSE_MAKEFILE @CMAKE_VERBOSE_MAKEFILE@)

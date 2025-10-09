@@ -359,6 +359,7 @@ if [[ "$TEST_TYPE" == "speed" ]]; then
     fi
     if [ ! -n "$DONT_TEST" ]; then
 	# echo "DYLD_INSERT_LIBRARIES = ${DYLD_INSERT_LIBRARIES}"
+        echo "Running speed tests"
 	ctest $TEST_FLAGS
 	# make test
     fi

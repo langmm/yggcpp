@@ -86,7 +86,7 @@ function(show_runtimes target)
     TARGET ${after_target}
     POST_BUILD
     COMMAND python
-    ${PROJECT_SOURCE_DIR}/cmake/inspect_runtime_dependencies.py
+    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/inspect_runtime_dependencies.py
     $<TARGET_FILE:${target}> --tool=${TOOLNAME}
     COMMAND_EXPAND_LISTS
   )
