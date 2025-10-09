@@ -28,7 +28,7 @@
 
 #define EMBEDED_LANGUAGE_DECL(cls, emT)					\
   public:								\
-  /** \copydoc YggInterface::utils::EmbeddedLanguageBase::EmbeddedLanguageBase */ \
+  /** @brief Initializer */                                             \
   YGG_API cls();							\
   /** \copydoc YggInterface::utils::EmbeddedLanguageBase::is_enabled */	\
   YGG_API bool is_enabled() const override;				\

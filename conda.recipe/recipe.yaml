@@ -26,10 +26,11 @@ requirements:
         - python
     - cmake >=3.16
     - libcurl
-    # - if: win
-    #   then:
-    #     - m2w64-make
-    #     - ${{ compiler('m2w64_fortran') }}
+    - if: win
+      then:
+        - make
+        # - m2w64-make
+        # - ${{ compiler('m2w64_fortran') }}
     - ninja
     - numpy >=1.13.0
     - ${{ stdlib('c') }}

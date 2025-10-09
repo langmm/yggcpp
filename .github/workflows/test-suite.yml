@@ -24,7 +24,7 @@ jobs:
         python-install: [pip, conda]
         install-zmq: [true, false]
         install-mpi: [true]
-        install-rmq: [false]  # TODO: Fix this
+        install-rmq: [true]
         with-coverage: [false, true]
         with-asan: [false]
         with-elf: [false]
@@ -60,7 +60,7 @@ jobs:
             python-install: pip
             install-zmq: true
             install-mpi: false
-            install-rmq: false  # TODO: fix
+            install-rmq: true
             with-coverage: true
             with-asan: false
             with-elf: true
@@ -70,7 +70,7 @@ jobs:
             python-install: pip
             install-zmq: true
             install-mpi: false
-            install-rmq: false  # TODO: fix
+            install-rmq: true
             with-coverage: false
             with-asan: true
             with-elf: true
@@ -80,7 +80,7 @@ jobs:
             python-install: pip
             install-zmq: true
             install-mpi: false
-            install-rmq: false  # TODO: fix
+            install-rmq: true
             with-coverage: false
             with-asan: false
             with-elf: false
@@ -90,7 +90,7 @@ jobs:
             python-install: pip
             install-zmq: true
             install-mpi: false
-            install-rmq: false  # TODO: fix
+            install-rmq: true
             with-coverage: false
             with-asan: false
             with-elf: false
@@ -100,7 +100,7 @@ jobs:
             python-install: pip
             install-zmq: true
             install-mpi: true
-            install-rmq: false  # TODO: fix
+            install-rmq: true
             with-coverage: false
             with-asan: false
             with-elf: false
@@ -110,7 +110,7 @@ jobs:
             python-install: conda
             install-zmq: true
             install-mpi: true
-            install-rmq: false  # TODO: fix
+            install-rmq: true
             with-coverage: false
             with-asan: false
             with-elf: false
@@ -303,11 +303,11 @@ jobs:
           echo "CMAKE_ARGS_TEST=-DYGG_BUILD_CXX_TESTS=ON -DYGG_BUILD_Fortran_TESTS=ON -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE_TEST} -DYGG_DEBUG_LEVEL=5" >> "$GITHUB_ENV"
           echo "CMAKE_ARGS_PYTHON=-DYGG_DEBUG_LEVEL=5" >> "$GITHUB_ENV"
           echo "TEST_FLAGS=-C ${CMAKE_BUILD_TYPE_TEST} --output-on-failure -VV" >> "$GITHUB_ENV"
-      - name: Temp windows config flags for testing
-        if: matrix.os == 'windows-latest'
-        shell: bash -l {0}
-        run: |
-          echo "CMAKE_ARGS_TEST=${{ env.CMAKE_ARGS_TEST }} -DENABLE_OMP=OFF -DYGGDRASIL_DISABLE_Python_C_API=OFF" >> "$GITHUB_ENV"
+      # - name: Temp windows config flags for testing
+      #   if: matrix.os == 'windows-latest'
+      #   shell: bash -l {0}
+      #   run: |
+      #     echo "CMAKE_ARGS_TEST=${{ env.CMAKE_ARGS_TEST }} -DENABLE_OMP=OFF -DYGGDRASIL_DISABLE_Python_C_API=OFF" >> "$GITHUB_ENV"
       - name: Coverage config flags
         if: matrix.with-coverage == true && matrix.os != 'windows-latest'
         shell: bash -l {0}

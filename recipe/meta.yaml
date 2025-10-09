@@ -23,6 +23,7 @@ requirements:
     - cross-python_{{ target_platform }}     # [build_platform != target_platform]
     - hatch-fancy-pypi-readme
     - libcurl
+    - make  # [win]
     # - m2w64-make  # [win]
     - ninja
     - numpy >=1.13.0
