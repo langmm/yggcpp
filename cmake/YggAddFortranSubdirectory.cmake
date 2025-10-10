@@ -39,7 +39,7 @@ function(find_compiler_external language)
   endif()
   string(REPLACE " " "_" GENSTR "${ARGS_GENERATOR}")
   set(tmp_dir "${CMAKE_CURRENT_BINARY_DIR}/_check_for_${language}_${GENSTR}")
-  message(STATUS "find_compiler_external(${language} GENERATOR ${ARGS_GENERATOR}): tmp_dir = ${tmp_dir}")
+  message(DEBUG "find_compiler_external(${language} GENERATOR ${ARGS_GENERATOR}): tmp_dir = ${tmp_dir}")
   set(fcompiler "${tmp_dir}/${language}_compiler")
   file(MAKE_DIRECTORY "${tmp_dir}")
   configure_file(
@@ -90,24 +90,30 @@ function(find_gnu_fortran)
        AND igen STREQUAL "${CMAKE_GENERATOR}")
       continue()
     endif()
-    find_compiler_external(${language} GENERATOR "${igen}")
+    find_compiler_external(Fortran GENERATOR "${igen}")
     if(CMAKE_${language}_COMPILER)
-      set(GNU_FORTRAN "${CMAKE_${language}_COMPILER}" PARENT_SCOPE)
-      set(GNU_FORTRAN_GENERATOR "${igen}" PARENT_SCOPE)
-      message(STATUS "GNU_FORTRAN = ${CMAKE_${language}_COMPILER}")
-      message(STATUS "GNU_FORTRAN_GENERATOR = ${igen}")
-      return()
+      set(GNU_FORTRAN "${CMAKE_${language}_COMPILER}")
+      set(GNU_FORTRAN_GENERATOR "${igen}")
+      break()
     endif()
   endforeach()
-  if(ARGS_REQUIRED)
+  if(NOT GNU_FORTRAN)
     find_mingw_gfortran()
+    if(MINGW_GFORTRAN)
+      set(GNU_FORTRAN "${MINGW_GFORTRAN}")
+      set(GNU_FORTRAN_GENERATOR "MinGW Makefiles")
+    endif()
   endif()
-  if(MINGW_GFORTRAN)
-    set(GNU_FORTRAN "${MINGW_GFORTRAN}" PARENT_SCOPE)
-    set(GNU_FORTRAN_GENERATOR "MinGW Makefiles" PARENT_SCOPE)
-    message(STATUS "GNU_FORTRAN[MINGW] = ${MINGW_GFORTRAN}")
-    message(STATUS "GNU_FORTRAN_GENERATOR[MINGW] = MinGW Makefiles")
-    return()
+  if(GNU_FORTRAN)
+    get_filename_component(GNU_PATH ${GNU_FORTRAN} PATH)
+    file(TO_NATIVE_PATH "${GNU_PATH}" GNU_PATH)
+    string(REPLACE "\\" "\\\\" GNU_PATH "${GNU_PATH}")
+    set(GNU_FORTRAN "${GNU_FORTRAN}" PARENT_SCOPE)
+    set(GNU_FORTRAN_GENERATOR "${GNU_FORTRAN_GENERATOR}" PARENT_SCOPE)
+    set(GNU_PATH "${GNU_PATH}" PARENT_SCOPE)
+    message(DEBUG "GNU_FORTRAN = ${GNU_FORTRAN}")
+    message(DEBUG "GNU_FORTRAN_GENERATOR = ${GNU_FORTRAN_GENERATOR}")
+    message(DEBUG "GNU_PATH = ${GNU_PATH}")
   elseif(ARGS_REQUIRED)
     message(FATAL_ERROR
       "GNU fortran not found, please install gfortran via MinGW "
@@ -248,15 +254,12 @@ function(target_link_external_fortran_objects target fortran_target)
         target_sources(${target} PRIVATE ${${fortran_target}_EXT_SRC})
 	return()
     endif()
-    configure_file(
-      ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/copy_mod.cmake.in
-      ${CMAKE_CURRENT_BINARY_DIR}/copy_mod.cmake
-      @ONLY)
-    add_custom_command(
-        TARGET ${target}
-	PRE_LINK
-	COMMAND ${CMAKE_COMMAND} "-DOBJS=\"$<JOIN:$<TARGET_OBJECTS:${fortran_target}>,\;>\"" -P ${CMAKE_CURRENT_BINARY_DIR}/copy_mod.cmake
-	COMMAND_EXPAND_LISTS)
+    # include(BuildTools)
+    copy_target_files(
+      ${fortran_target} ${CMAKE_CURRENT_BINARY_DIR}
+      EVENT_TARGET ${target} EVENT_TYPE PRE_LINK
+      COMPONENTS FORTRAN_MOD
+    )
     set_source_files_properties(
       ${${fortran_target}_EXT_OBJ}
       PROPERTIES
@@ -300,12 +303,15 @@ function(add_mixed_fortran_library target library_type)
     list(APPEND other_sources ${dummy_src})
   endif()
   set(fortran_target ${target}_Fortran_OBJECT_LIBRARY)
+  # set(USE_NEW_VERSION ON)
+  if(NOT USE_NEW_VERSION)
   add_external_fortran_library(
       ${fortran_target} OBJECT
       SOURCES ${fortran_sources}
       LIBRARIES ${ARGS_LIBRARIES}
       INCLUDES ${ARGS_INCLUDES}
       DEFINITIONS ${ARGS_DEFINITIONS})
+  endif()
   # if(MSVC AND library_type STREQUAL "SHARED")
   #   set(library_type STATIC)
   # endif()
@@ -318,7 +324,9 @@ function(add_mixed_fortran_library target library_type)
     set_target_properties(
       ${target} PROPERTIES LINKER_LANGUAGE ${ARGS_LANGUAGE})
   endif()
+  if(NOT USE_NEW_VERSION)
   target_link_external_fortran_objects(${target} ${fortran_target})
+  endif()
   if(ARGS_LIBRARIES)
     target_link_libraries(${target} PUBLIC ${ARGS_LIBRARIES})
   endif()
@@ -328,6 +336,56 @@ function(add_mixed_fortran_library target library_type)
   if(ARGS_DEFINITIONS)
     target_compile_definitions(${target} PUBLIC ${ARGS_DEFINITIONS})
   endif()
+  
+  ########### Begin New Version
+  if(USE_NEW_VERSION)
+  set(MSVC_AND_GNU_BUILD)
+  if (MSVC)
+    # TODO: Only do this if MSVC w/ gfortran
+    set(MSVC_AND_GNU_BUILD ON)
+  endif()
+  if ((NOT FORCE_SPLIT_CXXFortran) AND (NOT MSVC_AND_GNU_BUILD))
+    enable_language(Fortran)
+    include(FortranCInterface)
+    FortranCInterface_VERIFY()
+    FortranCInterface_VERIFY(CXX)
+    set_source_files_properties(
+      ${fortran_sources}
+      PROPERTIES
+      COMPILE_FLAGS "-cpp -fPIC"
+      Fortran_STANDARD 2003
+      Fortran_STANDARD_REQUIRED ON
+      Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    )
+    target_sources(${target} PRIVATE ${fortran_sources})
+  else()
+    set(CMAKE_Fortran_OUTPUT_EXTENSION ${CMAKE_C_OUTPUT_EXTENSION})
+    add_external_library(
+      ${fortran_target} OBJECT LANGUAGE Fortran
+      SOURCES ${fortran_sources}
+      LIBRARIES ${ARGS_LIBRARIES}
+      INCLUDES ${ARGS_INCLUDES}
+      DEFINITIONS ${ARGS_DEFINITIONS}
+      COMPILE_FLAGS "-fPIC -cpp"
+      PROPERTIES
+      Fortran_STANDARD 2003
+      Fortran_STANDARD_REQUIRED ON
+      Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    )
+    copy_target_files(
+      ${fortran_target} ${CMAKE_CURRENT_BINARY_DIR}
+      EVENT_TARGET ${target} EVENT_TYPE PRE_LINK
+      COMPONENTS FORTRAN_MOD
+    )
+    target_link_libraries(${target} PRIVATE $<TARGET_PROPERTY:${fortran_target},INTERFACE_LINK_LIBRARIES>)
+    target_link_directories(${target} PRIVATE $<TARGET_PROPERTY:${fortran_target},INTERFACE_LINK_DIRECTORIES>)
+    target_sources(${target} PRIVATE "$<TARGET_OBJECTS:${fortran_target}>")
+    if (WIN32)
+      create_lib_for_target(${target} SOURCE_TARGET ${fortran_target})
+    endif()
+  endif()
+  endif()
+  ########### End New Version
 endfunction()
 
 function(add_external_fortran_library target_name library_type)
@@ -357,11 +415,11 @@ function(add_external_fortran_library target_name library_type)
     cmake_path(APPEND obj "${build_dir}" "${src_base}${CMAKE_C_OUTPUT_EXTENSION}")
     list(APPEND ${target_name}_EXT_OBJ ${obj})
   endforeach()
-  set(${target_name}_EXT_SRC "${${target_name}_EXT_SRC}" PARENT_SCOPE)
-  set(${target_name}_EXT_OBJ "${${target_name}_EXT_OBJ}" PARENT_SCOPE)
+  # set(${target_name}_EXT_SRC "${${target_name}_EXT_SRC}" PARENT_SCOPE)
+  # set(${target_name}_EXT_OBJ "${${target_name}_EXT_OBJ}" PARENT_SCOPE)
   set(EXTERNAL_PRODUCTS "${${target_name}_EXT_OBJ}")
   # if we have MSVC without Intel fortran then setup
-  # external projects to build with mingw fortran
+  # external projects to build with gnu fortran
   # if(NOT (MSVC AND (NOT CMAKE_Fortran_COMPILER)))
   set(MSVC_AND_GNU_BUILD)
   if (MSVC)
@@ -409,24 +467,20 @@ function(add_external_fortran_library target_name library_type)
     set(final_library_type STATIC)
     # TODO: Use CMAKE_Fortran_PREPROCESS_SOURCE
     set(final_library_flags "${final_library_flags} -cpp")
+    predict_target_filename(
+      ${target_name} ${final_library_type} Fortran FINAL_LIBRARY
+    )
+  else()
+    predict_target_filename(
+      ${target_name} ${library_type} Fortran FINAL_LIBRARY
+    )
   endif()
-  if (NOT CMAKE_${final_library_type}_LIBRARY_PREFIX_Fortran)
-    set(CMAKE_${final_library_type}_LIBRARY_PREFIX_Fortran ${CMAKE_${final_library_type}_LIBRARY_PREFIX})
-  endif()
-  if (NOT CMAKE_${final_library_type}_LIBRARY_SUFFIX_Fortran)
-    set(CMAKE_${final_library_type}_LIBRARY_SUFFIX_Fortran ${CMAKE_${final_library_type}_LIBRARY_SUFFIX})
-  endif()
-  cmake_path(APPEND FINAL_LIBRARY "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_${final_library_type}_LIBRARY_PREFIX_Fortran}${target_name}${CMAKE_${final_library_type}_LIBRARY_SUFFIX_Fortran}")
 
   # Determine import library file name
   if(MSVC AND ${library_type} STREQUAL "SHARED")
-    if (NOT CMAKE_IMPORT_LIBRARY_PREFIX_Fortran)
-      set(CMAKE_IMPORT_LIBRARY_PREFIX_Fortran ${CMAKE_IMPORT_LIBRARY_PREFIX})
-    endif()
-    if (NOT CMAKE_IMPORT_LIBRARY_SUFFIX_Fortran)
-      set(CMAKE_IMPORT_LIBRARY_SUFFIX_Fortran ${CMAKE_IMPORT_LIBRARY_SUFFIX})
-    endif()
-    cmake_path(APPEND FINAL_LIBRARY_IMPLIB "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_IMPORT_LIBRARY_PREFIX_Fortran}${target_name}${CMAKE_IMPORT_LIBRARY_SUFFIX_Fortran}")
+    predict_target_filename(
+      ${target_name} IMPORT Fortran FINAL_LIBRARY_IMPLIB
+    )
   endif()
 
   include(AddTargetsFromFile)
@@ -435,6 +489,7 @@ function(add_external_fortran_library target_name library_type)
     DIRECTORY ${source_dir}
     OUTPUT_VAR target_file
     CUSTOM_TARGET "generate_target_file_${target_name}"
+    VERBOSE
   )
 
   # create the external project cmake file
@@ -443,7 +498,7 @@ function(add_external_fortran_library target_name library_type)
   set(external_sources ${${target_name}_EXT_SRC})
   cmake_path(APPEND external_target_file "${source_dir}" "${target_name}.external_targets")
   configure_file(
-    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/external.CMakeLists.in
+    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/external_fortran.CMakeLists.in
     ${source_dir}/CMakeLists.txt
     @ONLY)
   configure_file(

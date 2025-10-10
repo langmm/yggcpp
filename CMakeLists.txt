@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-message(STATUS "TOP LEVEL CMAKE_GENERATOR=${CMAKE_GENERATOR}")
+message(DEBUG "TOP LEVEL CMAKE_GENERATOR=${CMAKE_GENERATOR}")
 
 SET(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules")
 
@@ -136,24 +136,24 @@ if (rabbitmq-c_FOUND)
   # dedicated rabbitmq-c directory. This is complicated by the
   # so version (and cmake version) not matching the source version.
   if (rabbitmq-c_VERSION)
-    message(STATUS "rabbitmq-c_VERSION = ${rabbitmq-c_VERSION}")
+    message(DEBUG "rabbitmq-c_VERSION = ${rabbitmq-c_VERSION}")
     if (rabbitmq-c_DIR MATCHES ".*vcpkg.*")
-      message(STATUS "rabbitmq-c_DIR MATCHES *vcpkg*")
+      message(DEBUG "rabbitmq-c_DIR MATCHES *vcpkg*")
     else()
-      message(STATUS "rabbitmq-c_DIR DOES NOT MATCH *vcpkg*")
+      message(DEBUG "rabbitmq-c_DIR DOES NOT MATCH *vcpkg*")
     endif()
     if (rabbitmq-c_VERSION VERSION_LESS "0.12.0")
-      message(STATUS "rabbitmq-c_VERSION LESS 0.12.0")
+      message(DEBUG "rabbitmq-c_VERSION LESS 0.12.0")
     else()
-      message(STATUS "rabbitmq-c_VERSION MORE 0.12.0")
+      message(DEBUG "rabbitmq-c_VERSION MORE 0.12.0")
     endif()
     # if (rabbitmq-c_VERSION VERSION_LESS "9.2.5")
-    #   message(STATUS "rabbitmq-c_VERSION LESS 9.2.5")
+    #   message(DEBUG "rabbitmq-c_VERSION LESS 9.2.5")
     # else()
-    #   message(STATUS "rabbitmq-c_VERSION MORE 9.2.5")
+    #   message(DEBUG "rabbitmq-c_VERSION MORE 9.2.5")
     # endif()
   else()
-    message(STATUS "rabbitmq-c_VERSION NOT SET")
+    message(DEBUG "rabbitmq-c_VERSION NOT SET")
   endif()
   if ((NOT rabbitmq-c_VERSION) OR
       (rabbitmq-c_VERSION VERSION_GREATER "1.0.0") OR
@@ -191,7 +191,7 @@ set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 cmake_path(SET MINGW_PTHREAD_ROOT "$ENV{MINGW_PTHREAD_ROOT}")
 if(MINGW_PTHREAD_ROOT)
-  message(STATUS "MINGW_PTHREAD_ROOT = ${MINGW_PTHREAD_ROOT}")
+  message(DEBUG "MINGW_PTHREAD_ROOT = ${MINGW_PTHREAD_ROOT}")
   add_yggdrasil_option(
     THREADS DEPENDENCY Threads
     LIBRARIES Threads::Threads
@@ -207,7 +207,7 @@ add_yggdrasil_option(
   DEPENDENCY_PROPERTIES CMAKE_THREAD_LIBS_INIT CMAKE_USE_PTHREADS_INIT
 )
 if (CMAKE_THREAD_LIBS_INIT)
-  message(STATUS "CMAKE_THREAD_LIBS_INIT = ${CMAKE_THREAD_LIBS_INIT}")
+  message(DEBUG "CMAKE_THREAD_LIBS_INIT = ${CMAKE_THREAD_LIBS_INIT}")
   list(APPEND DEPS_LIBRARIES ${CMAKE_THREAD_LIBS_INIT})
 endif()
 if (CMAKE_USE_PTHREADS_INIT)
@@ -229,19 +229,19 @@ if (CONDA_PREFIX AND MINGW AND
     AND YGG_PATCH_MINGW53_THREAD)
   cmake_path(APPEND CONDA_PREFIX Library mingw-w64 include c++ 5.3.0
              OUTPUT_VARIABLE MINGW_PATHS)
-  message(STATUS "MINGW_PATHS = ${MINGW_PATHS}")
+  message(DEBUG "MINGW_PATHS = ${MINGW_PATHS}")
   find_file(THREAD_H thread PATHS ${MINGW_PATHS} NO_DEFAULT_PATH REQUIRED)
-  message(STATUS "THREAD_H = ${THREAD_H}")
+  message(DEBUG "THREAD_H = ${THREAD_H}")
   if(NOT THREAD_H STREQUAL THREAD_H-NOTFOUND)
     file(READ ${THREAD_H} THREAD_H_CONTENTS)
     if(THREAD_H_CONTENTS MATCHES "^// mingw\\-c\\+\\+\\-5\\-3\\-thread\\.patch applied.*")
-      message(STATUS "MinGW 5.3.0 thread already patched")
+      message(DEBUG "MinGW 5.3.0 thread already patched")
     else()
-      message(STATUS "Patching MinGW 5.3.0 thread")
-      message(STATUS "CONTENTS = ${THREAD_H_CONTENTS}")
+      message(DEBUG "Patching MinGW 5.3.0 thread")
+      message(DEBUG "CONTENTS = ${THREAD_H_CONTENTS}")
       cmake_path(APPEND CMAKE_SOURCE_DIR "mingw-c++-5-3-thread.patch"
                  OUTPUT_VARIABLE THREAD_H_PATCH)
-      message(STATUS "THREAD_H_PATCH = ${THREAD_H_PATCH}")
+      message(DEBUG "THREAD_H_PATCH = ${THREAD_H_PATCH}")
       if (NOT EXISTS ${THREAD_H_PATCH})
         message(FATAL_ERROR "THREAD_H_PATCH does not exist (${THREAD_H_PATCH})")
       endif()
@@ -326,9 +326,9 @@ if (YGG_DEBUG_LEVEL)
   set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -DYGG_DEBUG=${YGG_DEBUG_LEVEL}")
 endif()
 
-message(STATUS "DEPS_INCLUDE_DIRS = ${DEPS_INCLUDE_DIRS}")
-message(STATUS "DEPS_LIBRARIES = ${DEPS_LIBRARIES}")
-message(STATUS "DEPS_LIBRARY_DIRS = ${DEPS_LIBRARY_DIRS}")
+message(DEBUG "DEPS_INCLUDE_DIRS = ${DEPS_INCLUDE_DIRS}")
+message(DEBUG "DEPS_LIBRARIES = ${DEPS_LIBRARIES}")
+message(DEBUG "DEPS_LIBRARY_DIRS = ${DEPS_LIBRARY_DIRS}")
 
 ############################
 # Handle interdependencies #
@@ -466,6 +466,24 @@ python_code_generation(
 )
 
 ######################
+# Debug messages     #
+######################
+
+dump_cmake_variables(
+  LOG_LEVEL DEBUG VARIABLES
+  DEPS_PUBLIC_C_COMPILE_FLAGS DEPS_PUBLIC_CXX_COMPILE_FLAGS
+  DEPS_PUBLIC_C_LINK_FLAGS DEPS_PUBLIC_CXX_LINK_FLAGS
+  DEPS_LIBRARIES DEPS_LIBRARIES_PRIVATE
+  DEPS_PUBLIC_C_LIBS DEPS_PUBLIC_CXX_LIBS
+  DEPS_PUBLIC_Fortran_LIBS
+  DEPS_LIBRARIES_Python
+  DEPS_LIBRARY_DIRS DEPS_INCLUDE_DIRS
+  YGG_INSTALL_DEPS YGG_INSTALL_DEFS
+  YGG_OPTIONS_SUPPORTED YGG_COMMS_SUPPORTED YGG_COMMS_AVAILABLE
+  YGG_LANGUAGES_SUPPORTED YGG_LANGUAGES_AVAILABLE YGG_RPATH
+)
+
+######################
 # Create C++ Library #
 ######################
 
@@ -495,7 +513,7 @@ add_yggdrasil_interface(Fortran)
 ##################
 
 include(InstallTools)
-message(STATUS "YGG_INSTALL_TARGETS = ${YGG_INSTALL_TARGETS}")
+message(DEBUG "YGG_INSTALL_TARGETS = ${YGG_INSTALL_TARGETS}")
 set(CONDITIONAL_INSTALL_ARGS)
 if(NOT YGG_BUILD_DOCS)
   list(APPEND CONDITIONAL_INSTALL_ARGS DONT_INSTALL_DOCS)

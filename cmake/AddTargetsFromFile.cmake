@@ -1,3 +1,15 @@
+function(select_targets output_var)
+  set(multiValueArgs LIBRARIES)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  set(targets)
+  foreach(lib IN LISTS ARGS_LIBRARIES)
+    if (TARGET ${lib})
+      list(APPEND targets ${lib})
+    endif()
+  endforeach()
+  set(${output_var} ${targets} PARENT_SCOPE)
+endfunction()
+
 function(generate_target_file target_file)
   include(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/SearchTools.cmake)
   set(options NO_CONFIG CREATE_LIB FULL_LIBRARIES)
@@ -30,6 +42,7 @@ function(generate_target_file target_file)
     set(libnames ${ARGS_EXTRA_LIBRARIES})
   endif()
   set(CONTENTS "LIBRARIES;${libnames};FULL_LIBRARIES;${full_libraries};DIRECTORIES;${ARGS_EXTRA_DIRECTORIES}")
+  message(DEBUG "Generating target file ${target_file} with TARGETS = ${ARGS_TARGETS} AND CONTENTS = ${CONTENTS}")
   if(ARGS_TARGETS OR libnames OR full_libraries OR ARGS_EXTRA_DIRECTORIES)
     if(ARGS_NO_CONFIG)
       if(ARGS_TARGETS)
@@ -52,7 +65,7 @@ function(generate_target_file target_file)
       add_custom_command(
         COMMAND ${CMAKE_COMMAND} "-E" "copy_if_different" "${target_file}.$<CONFIG>" "${target_file}"
 	VERBATIM
-	PRE_BUILD
+        # PRE_BUILD Not supported by this version of add_custom_command
 	DEPENDS  "${target_file}.$<CONFIG>"
 	OUTPUT   "${target_file}"
 	COMMENT  "creating ${target_file} file ({event: PRE_BUILD}, {filename: ${target_file}})")

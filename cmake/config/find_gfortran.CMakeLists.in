@@ -3,9 +3,10 @@ message(STATUS "BEGIN FIND_Fortran for @target_name@")
 message(STATUS "CMAKE_GENERATOR = ${CMAKE_GENERATOR}")
 project(@target_name@_FIND_Fortran LANGUAGES C CXX Fortran)
 enable_language(Fortran)
-set(CMAKE_VERBOSE_MAKEFILE @CMAKE_VERBOSE_MAKEFILE@)
+set(TARGET_FILE @external_target_file@)
+set(MODULE_DIR @CMAKE_CURRENT_FUNCTION_LIST_DIR@)
 message(STATUS "Finding Fortran implicit libraries & directories")
-message(STATUS "TARGET_FILE = @external_target_file@")
+message(STATUS "TARGET_FILE = ${TARGET_FILE}")
 message(STATUS "CMAKE_GNUtoMS = ${CMAKE_GNUtoMS}")
 message(STATUS "MSVC_AND_GNU_BUILD = ${MSVC_AND_GNU_BUILD}")
 message(STATUS "EXTERNAL: CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES = ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}")
@@ -13,13 +14,13 @@ set(IMPLICIT_LINK_LIBRARIES gfortran gcc)
 set(IMPLICIT_LINK_DIRECTORIES ${CMAKE_Fortran_IMPLICIT_LINK_DIRECTORIES})
 message(STATUS "EXTERNAL: IMPLICIT_LINK_LIBRARIES = ${IMPLICIT_LINK_LIBRARIES}")
 message(STATUS "EXTERNAL: IMPLICIT_LINK_DIRECTORIES = ${IMPLICIT_LINK_DIRECTORIES}")
-include(@CMAKE_CURRENT_FUNCTION_LIST_DIR@/AddTargetsFromFile.cmake)
+include(${MODULE_DIR}/AddTargetsFromFile.cmake)
 # TODO: Find stdc++ library?
 set(generate_args)
 if (MSVC_AND_GNU_BUILD)
   set(generate_args FULL_LIBRARIES) # CREATE_LIB)
 endif()
 generate_target_file(
-    @external_target_file@ NO_CONFIG ${generate_args}
+    ${TARGET_FILE} NO_CONFIG ${generate_args}
     EXTRA_LIBRARIES ${IMPLICIT_LINK_LIBRARIES}
     EXTRA_DIRECTORIES ${IMPLICIT_LINK_DIRECTORIES})
