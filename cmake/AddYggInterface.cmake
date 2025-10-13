@@ -38,11 +38,11 @@ function(find_yggdrasil_dependency NAME)
          HEADER amqp.h LIBNAMES rabbitmq
          SEARCH_ORDER CONDA PKGCONFIG)
   elseif(NAME STREQUAL "ZeroMQ")
-    set(APPEND ARGS_UNPARSED_ARGUMENTS
-        HEADER zmq.h
-        LIBNAMES zmq libzmq libzmq-static
-        IMPORTED_TARGET ZeroMQ
-        SEARCH_ORDER DEFAULT_CONFIG CONDA PKGCONFIG)
+    list(APPEND ARGS_UNPARSED_ARGUMENTS
+         HEADER zmq.h
+         LIBNAMES zmq libzmq libzmq-static
+         IMPORTED_TARGET ZeroMQ
+         SEARCH_ORDER DEFAULT_CONFIG CONDA PKGCONFIG)
     if(WIN32)
       set(APPEND ARGS_UNPARSED_ARGUMENTS REQUIRED)
     endif()
