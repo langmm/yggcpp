@@ -1,0 +1,4 @@
+module @target@
+  subroutine @target@_dummy()
+  end subroutine
+end module @target@

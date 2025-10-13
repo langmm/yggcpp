@@ -432,6 +432,208 @@ function(setup_external_build build_dir)
   endif()
 endfunction()
 
+function(check_language_compat base_language language VAR)
+  if(base_language STREQUAL "${language}")
+    set(${VAR} ON PARENT_SCOPE)
+    return()
+  endif()
+  if((base_language STREQUAL "C" AND language STREQUAL "CXX") OR
+     (base_language STREQUAL "CXX" AND language STREQUAL "C"))
+    set(${VAR} ON PARENT_SCOPE)
+    return()
+  endif()
+  include(CheckLanguage)
+  check_language(${language})
+  if(CMAKE_${language}_COMPILER)
+    set(${VAR} ON PARENT_SCOPE)
+  endif()
+  set(${VAR} OFF PARENT_SCOPE)
+endfunction()
+
+function(add_mixed_language_library target library_type)
+  include(GeneralTools)
+  set(options FORCE_EXTERNAL)
+  set(oneValueArgs LINKER_LANGUAGE BASE_LANGUAGE GENERATOR)
+  set(multiValueArgs LANGUAGES SOURCES LIBRARIES INCLUDES DEFINITIONS
+      PROPERTIES COMPILE_FLAGS CONFIG_ARGUMENTS BUILD_ARGUMENTS
+      PRESERVE_VARIABLES)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  sort_files_by_language(
+    SOURCES ${ARGS_SOURCES}
+    OUTPUT_LANGUAGES SOURCE_LANGUAGES
+  )
+  if(NOT ARGS_LANGUAGES)
+    set(ARGS_LANGUAGES ${SOURCE_LANGUAGES})
+  endif()
+  if(NOT (ARGS_BASE_LANGUAGE OR ARGS_LINKER_LANGUAGE))
+    message(FATAL_ERROR "Neither BASE_LANGUAGE or LINKER_LANGUAGE provided")
+  elseif(NOT ARGS_BASE_LANGUAGE)
+    set(ARGS_BASE_LANGUAGE ${ARGS_LINKER_LANGUAGE})
+  elseif(NOT ARGS_LINKER_LANGUAGE)
+    set(ARGS_LINKER_LANGUAGE ${ARGS_BASE_LANGUAGE})
+  endif()
+
+  foreach(ilanguage IN LISTS ARGS_LANGUAGES)
+    if(NOT SOURCES_${ilanguage})
+      # Add dummy source files for missing languages
+      set(iext)
+      language2srcext(${ilanguage} iext)
+      set(dummy_src "${CMAKE_CURRENT_BINARY_DIR}/${target}_dummy${iext}")
+      configure_file(
+        ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/dummy${iext}.in
+        ${dummy_src}
+        @ONLY
+      )
+      list(APPEND SOURCES_${ilanguage} ${dummy_src})
+    endif()
+  endforeach()
+  
+  add_internal_library(
+    ${target} ${library_type}
+    LANGUAGE ${ARGS_BASE_LANGUAGE}
+    SOURCES ${SOURCES_${ARGS_BASE_LANGUAGE}}
+    LIBRARIES ${ARGS_LIBRARIES}
+    INCLUDES ${ARGS_INCLUDES}
+    DEFINITIONS ${ARGS_DEFINITIONS}
+    COMPILE_FLAGS ${ARGS_COMPILE_FLAGS}
+    PROPERTIES ${ARGS_PROPERTIES}
+    LINKER_LANGUAGE ${ARGS_LINKER_LANGUAGE}
+  )
+
+  foreach(ilanguage IN LISTS ARGS_LANGUAGES)
+    if(ilanguage STREQUAL "${ARGS_BASE_LANGUAGE}")
+      continue()
+    endif()
+  
+    set(${ilanguage}_target "${target}_${ilanguage}_OBJECT_LIBRARY")
+    if(ARGS_FORCE_EXTERNAL)
+      set(${ilanguage}_external ON)
+    else()
+      check_language_compat(
+        ${ARGS_BASE_LANGUAGE} ${ilanguage} ${ilanguage}_external
+      )
+    endif()
+    if(${ilanguage}_external)
+      if(ilanguage STREQUAL "Fortran")
+        list(APPEND ARGS_COMPILE_FLAGS -fPIC -cpp)
+        list(APPEND ARGS_PROPERTIES
+             Fortran_STANDARD 2003
+             Fortran_STANDARD_REQUIRED ON
+             Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+      endif()
+      add_external_library(
+        ${${ilanguage}_target} OBJECT LANGUAGE ${ilanguage}
+        SOURCES ${SOURCES_${ilanguage}}
+        LIBRARIES ${ARGS_LIBRARIES}
+        INCLUDES ${ARGS_INCLUDES}
+        DEFINITIONS ${ARGS_DEFINITIONS}
+        COMPILE_FLAGS ${ARGS_COMPILE_FLAGS}
+        PROPERTIES ${ARGS_PROPERTIES}
+        LINKER_LANGUAGE ${ARGS_LINKER_LANGUAGE}
+      )
+      if(ilanguage STREQUAL "Fortran")
+        copy_target_files(
+          ${${ilanguage}_target} ${CMAKE_CURRENT_BINARY_DIR}
+          EVENT_TARGET ${target} EVENT_TYPE PRE_LINK
+          COMPONENTS FORTRAN_MOD
+        )
+      endif()
+      target_link_libraries(
+        ${target} PRIVATE
+        $<TARGET_PROPERTY:${${ilanguage}_target},INTERFACE_LINK_LIBRARIES>
+      )
+      target_link_directories(
+        ${target} PRIVATE
+        $<TARGET_PROPERTY:${${ilanguage}_target},INTERFACE_LINK_DIRECTORIES>
+      )
+      target_sources(
+        ${target} PRIVATE "$<TARGET_OBJECTS:${${ilanguage}_target}>"
+      )
+      if (WIN32)
+        create_lib_for_target(
+          ${target} SOURCE_TARGET ${${ilanguage}_target}
+        )
+      endif()
+    else()
+      enable_language(${ilanguage})
+      if(ilanguage STREQUAL "Fortran")
+        include(FortranCInterface)
+        FortranCInterface_VERIFY()
+        FortranCInterface_VERIFY(CXX)
+        set_source_files_properties(
+          ${SOURCES_${ilanguage}}
+          PROPERTIES
+          COMPILE_FLAGS "-cpp -fPIC"
+          Fortran_STANDARD 2003
+          Fortran_STANDARD_REQUIRED ON
+          Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        )
+      endif()
+      target_sources(${target} PRIVATE ${SOURCES_${ilanguage}})
+    endif()
+  endforeach()
+endfunction()
+
+function(add_internal_library target library_type)
+  set(oneValueArgs LANGUAGE LINKER_LANGUAGE TARGETS_FILE)
+  set(multiValueArgs SOURCES LIBRARIES INCLUDES DEFINITIONS PROPERTIES
+      COMPILE_FLAGS)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  if(NOT ARGS_SOURCES)
+    set(ARGS_SOURCES ${ARGS_UNPARSED_ARGUMENTS})
+  endif()
+  message(DEBUG "${target} ${ARGS_LANGUAGE} ${library_type}")
+  message(DEBUG "${target}: SOURCES = ${ARGS_SOURCES}")
+  if(ARGS_LANGUAGE)
+    enable_language(${ARGS_LANGUAGE})
+  endif()
+  if(ARGS_LINKER_LANGUAGE AND
+     (NOT ARGS_LANGUAGE STREQUAL "${ARGS_LINKER_LANGUAGE}"))
+    enable_language(${ARGS_LINKER_LANGUAGE})
+  endif()
+  add_library(${target} ${library_type} ${ARGS_SOURCES})
+  if(ARGS_LINKER_LANGUAGE)
+    message(DEBUG "${target}: LINKER_LANGUAGE = ${ARGS_LINKER_LANGUAGE}")
+    set_target_properties(
+      ${target} PROPERTIES LINKER_LANGUAGE ${ARGS_LINKER_LANGUAGE}
+    )
+  endif()
+  if(ARGS_COMPILE_FLAGS)
+    message(DEBUG "${target}: COMPILE_FLAGS = ${ARGS_COMPILE_FLAGS}")
+    string(REPLACE ";" " " compile_flags_str "${ARGS_COMPILE_FLAGS}")
+    set_target_properties(${target} PROPERTIES COMPILE_FLAGS "${compile_flags_str}")
+  endif()
+  if (library_type STREQUAL "SHARED" AND CMAKE_GNUtoMS)
+    set_target_properties(${target} PROPERTIES IMPORT_PREFIX "" PREFIX "")
+  endif()
+  if(WIN32)
+    set_target_properties(
+      ${target} PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON
+    )
+  endif()
+  if(ARGS_PROPERTIES)
+    message(DEBUG "${target}: PROPERTIES = ${ARGS_PROPERTIES}")
+    set_target_properties(${target} PROPERTIES ${ARGS_PROPERTIES})
+  endif()
+  if(ARGS_TARGETS_FILE)
+    message(DEBUG "${target}: TARGETS_FILE = ${ARGS_TARGETS_FILE}")
+    include(AddTargetsFromFile)
+    target_link_from_file(${target} PUBLIC ${ARGS_TARGETS_FILE})
+  endif()
+  if(ARGS_LIBRARIES)
+    message(DEBUG "${target}: LIBRARIES = ${ARGS_LIBRARIES}")
+    target_link_libraries(${target} PUBLIC ${ARGS_LIBRARIES})
+  endif()
+  if(ARGS_INCLUDES)
+    message(DEBUG "${target}: INCLUDES = ${ARGS_INCLUDES}")
+    target_include_directories(${target} PUBLIC ${ARGS_INCLUDES})
+  endif()
+  if(ARGS_DEFINITIONS)
+    message(DEBUG "${target}: DEFINITIONS = ${ARGS_DEFINITIONS}")
+    target_compile_definitions(${target} PUBLIC ${ARGS_DEFINITIONS})
+  endif()
+endfunction()
+
 function(add_external_library target library_type)
   set(oneValueArgs GENERATOR PREPEND_PATH LANGUAGE
       LISTS_DIR BUILD_DIR SOURCE_DIR)
@@ -453,7 +655,16 @@ function(add_external_library target library_type)
     set(ARGS_BUILD_DIR "${ARGS_LISTS_DIR}")
   endif()
   if(NOT ARGS_LANGUAGE)
-    message(FATAL_ERROR "Determine language from sources")
+    include(GeneralTools)
+    if(NOT ARGS_SOURCES)
+      message(FATAL_ERROR "LANGUAGE not set and SOURCES not provided")
+    endif()
+    list(GET SOURCES 0 FIRST_SOURCE)
+    file2language(${FIRST_SOURCE} ARGS_LANGUAGE)
+  endif()
+  set(final_library_type ${library_type})
+  if(library_type STREQUAL "OBJECT")
+    set(final_library_type STATIC)
   endif()
 
   # Get source & object file names
@@ -540,6 +751,8 @@ function(add_external_library target library_type)
     ARGUMENTS ${ARGS_BUILD_ARGUMENTS}
   )
   set(external_target_name ${target}_build)
+  message(STATUS "CONFIGURE_COMMAND = ${CONFIGURE_COMMAND}")
+  message(STATUS "BUILD_COMMAND = ${BUILD_COMMAND}")
   externalproject_add(
     ${external_target_name}
     SOURCE_DIR ${ARGS_SOURCE_DIR}
@@ -553,17 +766,10 @@ function(add_external_library target library_type)
   )
   
   # create import library for other projects to link to
-  if(library_type STREQUAL "OBJECT")
-    predict_target_filename(
-      ${target} STATIC ${ARGS_LANGUAGE} LIBNAME
-      BUILD_DIR ${ARGS_BUILD_DIR}
-    )
-  else()
-    predict_target_filename(
-      ${target} ${library_type} ${ARGS_LANGUAGE} LIBNAME
-      BUILD_DIR ${ARGS_BUILD_DIR}
-    )
-  endif()
+  predict_target_filename(
+    ${target} ${final_library_type} ${ARGS_LANGUAGE} LIBNAME
+    BUILD_DIR ${ARGS_BUILD_DIR}
+  )
   if(WIN32 AND ${library_type} STREQUAL "SHARED")
     predict_target_filename(
       ${target} IMPORT ${ARGS_LANGUAGE} IMPNAME
@@ -579,22 +785,50 @@ function(add_external_library target library_type)
     PROPERTIES
     EXTERNAL_OBJECT true
     GENERATED true)
-  if(library_type STREQUAL "OBJECT")
-    add_library(${target} STATIC IMPORTED GLOBAL)
-  else()
-    add_library(${target} ${library_type} IMPORTED GLOBAL)
+  add_import_library(
+    ${target} ${library_type} ${LIBNAME} GLOBAL
+    OBJECTS ${EXTERNAL_OBJECTS}
+    DEPENDENCIES ${external_target_name}
+    LIBRARIES ${ARGS_LIBRARIES}
+    DEFINITIONS ${ARGS_DEFINITIONS}
+    LINK_DIRECTORIES ${CMAKE_CURRENT_BINARY_DIR}
+    TARGETS_FILE ${external_target_file}
+    IMPORT_LIBRARY ${IMPNAME}
+  )
+endfunction()
+
+function(add_import_library target library_type library)
+  set(options GLOBAL)
+  set(oneValueArgs TARGETS_FILE IMPORT_LIBRARY)
+  set(multiValueArgs LIBRARIES DEFINITIONS DEPENDENCIES OBJECTS
+      LINK_DIRECTORIES)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  if(ARGS_GLOBAL)
+    set(ARGS_GLOBAL GLOBAL)
   endif()
-  add_dependencies(${target} ${external_target_name})
+  add_library(${target} ${library_type} IMPORTED ${ARGS_GLOBAL})
+  if(ARGS_DEPENDENCIES)
+    add_dependencies(${target} ${ARGS_DEPENDENCIES})
+  endif()
+  if(library_type STREQUAL "OBJECT" AND NOT ARGS_OBJECTS)
+    message(FATAL_ERROR "No OBJECTS provided for OBJECT IMPORT library")
+  endif()
   set_target_properties(
     ${target} PROPERTIES
-    IMPORTED_LOCATION ${LIBNAME}
-    # IMPORTED_OBJECTS ${EXTERNAL_OBJECTS}
-    INTERFACE_LINK_DIRECTORIES ${CMAKE_CURRENT_BINARY_DIR}
+    IMPORTED_LOCATION ${library}
   )
-  set_property(
-    TARGET ${target}
-    PROPERTY IMPORTED_OBJECTS ${EXTERNAL_OBJECTS}
-  )
+  if(ARGS_LINK_DIRECTORIES)
+    set_target_properties(
+      ${target} PROPERTIES
+      INTERFACE_LINK_DIRECTORIES ${ARGS_LINK_DIRECTORIES}
+    )
+  endif()
+  if(ARGS_OBJECTS)
+    set_property(
+      TARGET ${target}
+      PROPERTY IMPORTED_OBJECTS ${ARGS_OBJECTS}
+    )
+  endif()
   if(ARGS_LIBRARIES)
     set_target_properties(
       ${target} PROPERTIES
@@ -607,13 +841,16 @@ function(add_external_library target library_type)
       INTERFACE_COMPILE_DEFINITIONS "${ARGS_DEFINITIONS}"
     )
   endif()
-  if(external_target_file)
-    target_link_from_file(${target} IMPORTED ${external_target_file})
+  if(ARGS_TARGETS_FILE)
+    target_link_from_file(${target} IMPORTED ${ARGS_TARGETS_FILE})
   endif()
   if(WIN32 AND ${library_type} STREQUAL "SHARED")
+    if(NOT ARGS_IMPORT_LIBRARY)
+      message(FATAL_ERROR "IMPORT_LIBRARY must be defined for windows build")
+    endif()
     set_target_properties(
       ${target} PROPERTIES
-      IMPORTED_IMPLIB ${IMPNAME}
+      IMPORTED_IMPLIB ${ARGS_IMPORT_LIBRARY}
     )
   endif()
 endfunction()

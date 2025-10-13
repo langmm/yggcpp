@@ -276,6 +276,7 @@ function(target_link_external_fortran_objects target fortran_target)
 endfunction()
 
 function(add_mixed_fortran_library target library_type)
+  include(GeneralTools)
   set(oneValueArgs LANGUAGE)
   set(multiValueArgs SOURCES LIBRARIES INCLUDES DEFINITIONS)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -284,16 +285,11 @@ function(add_mixed_fortran_library target library_type)
   else()
     set(sources ${ARGS_UNPARSED_ARGUMENTS})
   endif()
-  set(fortran_sources)
-  set(other_sources)
-  foreach(src IN LISTS sources)
-    string(REGEX MATCH "[.][fF]((90)|(95)|(03)|(08)|(18))?$" match ${src})
-    if(match)
-      list(APPEND fortran_sources ${src})
-    else()
-      list(APPEND other_sources ${src})
-    endif()
-  endforeach()
+  select_files_by_language(
+    Fortran fortran_sources
+    OTHER_DESTINATION other_sources
+    SOURCES ${sources}
+  )
   if (NOT other_sources)
     set(dummy_src "${CMAKE_CURRENT_BINARY_DIR}/${target}_dummy.c")
     configure_file(
@@ -303,7 +299,7 @@ function(add_mixed_fortran_library target library_type)
     list(APPEND other_sources ${dummy_src})
   endif()
   set(fortran_target ${target}_Fortran_OBJECT_LIBRARY)
-  # set(USE_NEW_VERSION ON)
+  set(USE_NEW_VERSION ON)
   if(NOT USE_NEW_VERSION)
   add_external_fortran_library(
       ${fortran_target} OBJECT
@@ -549,31 +545,14 @@ function(add_external_fortran_library target_name library_type)
     ${${target_name}_EXT_OBJ}
     PROPERTIES
     EXTERNAL_OBJECT true)
-  add_library(${target_name} ${library_type} IMPORTED GLOBAL)
-  add_dependencies(${target_name} ${external_target_name})
-  set_target_properties(${target_name} PROPERTIES
-                        IMPORTED_LOCATION ${FINAL_LIBRARY}
-			# IMPORTED_OBJECTS ${${target_name}_EXT_OBJ}
-			INTERFACE_LINK_DIRECTORIES ${CMAKE_CURRENT_BINARY_DIR})
-  set_property(TARGET ${target_name}
-               PROPERTY IMPORTED_OBJECTS ${${target_name}_EXT_OBJ})
-  if(ORIG_LIBRARIES)
-    set_target_properties(
-      ${target_name} PROPERTIES
-      INTERFACE_LINK_LIBRARIES ${ORIG_LIBRARIES})
-  endif()
-  if(ARGS_DEFINITIONS)
-    set_target_properties(
-      ${target_name} PROPERTIES
-      INTERFACE_COMPILE_DEFINITIONS "${ARGS_DEFINITIONS}")
-  endif()
-  # if(MSVC_AND_GNU_BUILD)
-  target_link_from_file(${target_name} IMPORTED ${external_target_file})
-  # endif()
-  if(WIN32 AND ${library_type} STREQUAL "SHARED")
-    set_target_properties(
-      ${target_name} PROPERTIES
-      IMPORTED_IMPLIB ${FINAL_LIBRARY_IMPLIB})
-  endif()
-
+  add_import_library(
+    ${target_name} ${library_type} ${FINAL_LIBRARY} GLOBAL
+    OBJECTS ${${target_name}_EXT_OBJ}
+    DEPENDENCIES ${external_target_name}
+    LIBRARIES ${ORIG_LIBRARIES}
+    DEFINITIONS ${ARGS_DEFINITIONS}
+    LINK_DIRECTORIES ${CMAKE_CURRENT_BINARY_DIR}
+    TARGETS_FILE ${external_target_file}
+    IMPORT_LIBRARY ${FINAL_LIBRARY_IMPLIB}
+  )
 endfunction()

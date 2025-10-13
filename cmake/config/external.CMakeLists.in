@@ -1,65 +1,28 @@
 cmake_minimum_required(VERSION @CMAKE_MINIMUM_REQUIRED_VERSION@)
 project(@target@_PROJECT)
 enable_language(@ARGS_LANGUAGE@)
-message(STATUS "target = @target@, ${CMAKE_CURRENT_BINARY_DIR}")
-message(STATUS "CMAKE_VERBOSE_MAKEFILE = ${CMAKE_VERBOSE_MAKEFILE}")
-set(MODULE_DIR "@CMAKE_CURRENT_FUNCTION_LIST_DIR@")
+set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};@CMAKE_CURRENT_FUNCTION_LIST_DIR@")
 set(EXTERNAL_BUILD_DIR "@CMAKE_CURRENT_BINARY_DIR@")
-set(language @ARGS_LANGUAGE@)
 set(target @target@)
-set(libraries @ARGS_LIBRARIES@)
-set(includes @ARGS_INCLUDES@)
-set(definitions @ARGS_DEFINITIONS@)
-set(properties @ARGS_PROPERTIES@)
-set(compile_flags @ARGS_COMPILE_FLAGS@)
-set(target_file @target_file@)
-set(sources @EXTERNAL_SOURCES@)
 set(library_type @library_type@)
-message(STATUS "${target}: SOURCES = ${sources}")
+set(final_library_type ${library_type})
 if(library_type STREQUAL "OBJECT")
-  add_library(${target} STATIC ${sources})
-else()
-  add_library(${target} ${library_type} ${sources})
+  set(final_library_type STATIC)
 endif()
-if(compile_flags)
-  string(REPLACE ";" " " compile_flags_str "${compile_flags}")
-  message(STATUS "${target}: COMPILE_FLAGS = \"${compile_flags_str}\"")
-  set_target_properties(${target} PROPERTIES COMPILE_FLAGS "${compile_flags_str}")
-endif()
-if(properties)
-  message(STATUS "${target}: PROPERTIES = ${properties}")
-  set_target_properties(${target} PROPERTIES ${properties})
-endif()
-if (library_type STREQUAL "SHARED" AND CMAKE_GNUtoMS)
-  set_target_properties(${target} PROPERTIES IMPORT_PREFIX "" PREFIX "")
-endif()
-if(WIN32)
-  # target_compile_options(
-  #     ${target} PRIVATE
-  # 	-fno-stack-check -fno-stack-protector -mno-stack-arg-probe)
-  set_target_properties(
-    ${target} PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON
-  )
-endif()
-if(target_file)
-  include(${MODULE_DIR}/AddTargetsFromFile.cmake)
-  message(STATUS "${target}: Linking from file ${target_file}")
-  target_link_from_file(${target} PUBLIC ${target_file})
-endif()
-if(libraries)
-  message(STATUS "${target}: Linking libraries ${libraries}")
-  target_link_libraries(${target} PUBLIC ${libraries})
-endif()
-if(includes)
-  message(STATUS "${target}: Including directories ${includes}")
-  target_include_directories(${target} PUBLIC ${includes})
-endif()
-if(definitions)
-  message(STATUS "${target}: Compilation definitions ${definitions}")
-  target_compile_definitions(${target} PUBLIC ${definitions})
-endif()
-message(STATUS "External ${target} CMAKE_GNUtoMS = ${CMAKE_GNUtoMS}")
-include(${MODULE_DIR}/BuildTools.cmake)
+
+include(BuildTools)
+add_internal_library(
+  ${target} ${final_library_type}
+  LANGUAGE @ARGS_LANGUAGE@
+  SOURCES @EXTERNAL_SOURCES@
+  LIBRARIES @ARGS_LIBRARIES@
+  INCLUDES @ARGS_INCLUDES@
+  DEFINITIONS @ARGS_DEFINITIONS@
+  COMPILE_FLAGS @ARGS_COMPILE_FLAGS@
+  PROPERTIES @ARGS_PROPERTIES@
+  TARGETS_FILE @target_file@
+)
+
 # set(COPY_COMPONENTS OBJECTS)
 # if(NOT library_type STREQUAL "OBJECT")
 #   list(APPEND COPY_COMPONENTS LIBRARY)
