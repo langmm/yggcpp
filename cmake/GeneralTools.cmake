@@ -44,7 +44,6 @@ endfunction()
 function(file2language TARGET VAR)
   cmake_path(GET TARGET EXTENSION TARGET_EXT)
   extension2language(${TARGET_EXT} ${VAR})
-  message(STATUS "${TARGET}, ${VAR}, ${TARGET_EXT}, ${${VAR}}")
   set(${VAR} ${${VAR}} PARENT_SCOPE)
 endfunction()
 

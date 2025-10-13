@@ -142,67 +142,306 @@ function(find_package_python)
     propagate_cmake_library_variables("^Python*")
 endfunction()
 
-function(find_package_pkgconfig name)
-    set(oneValueArgs HEADER)
-    set(multiValueArgs LIBNAMES ADDITIONAL_PROPERTIES)
-    cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-    if (NOT ARGS_LIBNAMES)
-      list(APPEND ARGS_LIBNAMES ${name})
-    endif()
-    if (NOT ARGS_HEADER)
-      list(GET ARGS_LIBNAMES 0 FIRST_NAME)
-      set(ARGS_HEADER ${FIRST_NAME}.h)
-    endif()
-    if (NOT CONDA_PREFIX)
-        cmake_path(SET CONDA_PREFIX "$ENV{CONDA_PREFIX}")
-    endif()
-    find_package(${name} CONFIG)
-    if (NOT ${name}_FOUND)
-        message(DEBUG "${name} could not be found using default search tree. Trying via pkg-config...")
-        # Only conda version has CMake config
-        ## load in pkg-config support
-        find_package(PkgConfig)
-        ## use pkg-config to get hints for locations
-        pkg_check_modules(PC_${name} QUIET ${ARGS_LIBNAMES})
+function(find_package_generic name)
+  set(options REQUIRED NO_DEFAULT NO_PKGCONFIG NO_CONDA)
+  set(oneValueArgs HEADER IMPORTED_TARGET)
+  set(multiValueArgs LIBNAMES SEARCH_ORDER ADDITIONAL_PROPERTIES)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  if (NOT ARGS_LIBNAMES)
+    list(APPEND ARGS_LIBNAMES ${name})
+  endif()
+  if (NOT ARGS_HEADER)
+    list(GET ARGS_LIBNAMES 0 FIRST_NAME)
+    set(ARGS_HEADER ${FIRST_NAME}.h)
+  endif()
+  if(NOT ARGS_SEARCH_ORDER)
+    set(ARGS_SEARCH_ORDER DEFAULT PKGCONFIG CONDA)
+  endif()
+  set(SEARCH_ARGS LIBNAMES ${LIBNAMES} HEADER ${HEADER})
+  if(ARGS_IMPORTED_TARGET)
+    list(APPEND SEARCH_ARGS IMPORTED_TARGET ${ARGS_IMPORTED_TARGET})
+  endif()
+  if(ARGS_ADDITIONAL_PROPERTIES)
+    list(APPEND SEARCH_ARGS ADDITIONAL_PROPERTIES ${ARGS_ADDITIONAL_PROPERTIES})
+  endif()
+  if(ARGS_UNPARSED_ARGUMENTS)
+    list(APPEND SEARCH_ARGS ${ARGS_UNPARSED_ARGUMENTS})
+  endif()
 
-        if (CONDA_PREFIX)
-	    if (WIN32)
-                set(PC_${name}_INCLUDE_DIRS "${CONDA_PREFIX}/Library/include ${PC_${name}_INCLUDE_DIRS}")
-                set(PC_${name}_LIBRARY_DIRS "${CONDA_PREFIX}/Library/lib ${CONDA_PREFIX}/Library/bin ${PC_${name}_LIBRARY_DIRS}")
-            else()
-                set(PC_${name}_INCLUDE_DIRS "${CONDA_PREFIX}/include ${PC_${name}_INCLUDE_DIRS}")
-                set(PC_${name}_LIBRARY_DIRS "${CONDA_PREFIX}/lib ${PC_${name}_LIBRARY_DIRS}")
-            endif()
+  foreach(method IN LISTS ARGS_SEARCH_ORDER)
+    if(ARGS_NO_${method})
+      continue()
+    endif()
+    message(DEBUG "Searching for ${name} using ${method}")
+    if(method STREQUAL "DEFAULT")
+      find_package(${name} ${ARGS_UNPARSED_ARGUMENTS})
+    elseif(method STREQUAL "DEFAULT_CONFIG")
+      find_package(${name} CONFIG ${ARGS_UNPARSED_ARGUMENTS})
+    elseif(method STREQUAL "CONDA")
+      find_package_conda(${name} ${SEARCH_ARGS})
+    elseif(method STREQUAL "PKGCONFIG")
+      find_package_pkgconfig(${name} ${SEARCH_ARGS})
+    else()
+      message(FATAL_ERROR "Unsupported method \"${method}\"")
+    endif()
+    if(${name}_FOUND)
+      message(DEBUG "${name} found using ${method}")
+      break()
+    endif()
+  endforeach()
+
+  if(ARGS_REQUIRED AND NOT ${name}_FOUND)
+    message(FATAL_ERROR "Failed to find package \"${name}\"")
+  endif()
+
+  if(${name}_CONFIG)
+    include(${${name}_CONFIG})
+  endif()
+  
+  if(${name}_FOUND AND ARGS_IMPORTED_TARGET)
+    create_interface_library(
+      ${name} TARGET ${ARGS_IMPORTED_TARGET}
+      LIBNAMES ${ARGS_LIBNAMES}
+    )
+  endif()
+  dump_cmake_variables(REGEX "^${name}*" LOG_LEVEL DEBUG)
+  propagate_cmake_library_variables("^${name}*" ${ARGS_ADDITIONAL_PROPERTIES})
+endfunction()
+
+function(create_interface_library package)
+  set(oneValueArgs TARGET)
+  set(multiValueArgs LIBNAMES)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  set(target ${package})
+  if(ARGS_TARGET)
+    set(target ${ARGS_TARGET})
+  endif()
+  # From current scope variables
+  if(TARGET ${target})
+    message(DEBUG "${target} is already a target")
+    return()
+  endif()
+  if(${package}_LIBRARY AND TARGET ${${package}_LIBRARY})
+    message(DEBUG "Creating target \"${target}\" by aliassing \"${${package}_LIBRARY}\"")
+    add_library(${target} ALIAS ${${package}_LIBRARY})
+    return()
+  endif()
+  foreach(ilib IN LISTS ARGS_LIBNAMES)
+    if(TARGET ${ilib})
+      message(DEBUG "Creating target \"${target}\" by aliassing \"${ilib}\"")
+      add_library(${target} ALIAS ${ilib})
+      return()
+    endif()
+  endforeach()
+  message(DEBUG "Creating target \"${target}\" from the variables in scope for package \"${package}\"")
+  dump_cmake_variables(REGEX "^${package}*" LOG_LEVEL DEBUG)
+  add_library(${target} INTERFACE IMPORTED GLOBAL)
+  if(${package}_LIBRARY)
+    if(WIN32 AND NOT ${package}_IMPLIB)
+      string(FIND ${${package}_LIBRARY} ".dll" DLL_IDX)
+      if(DLL_IDX EQUAL -1)
+        find_dll_from_implib(${${package}_LIBRARY} dlllib)
+        if(dlllib)
+          set(${package}_IMPLIB ${${package}_LIBRARY})
+          set(${package}_LIBRARY ${dlllib})
         endif()
-
-        ## use the hint from above to find where '*.h' is located
-        find_path(${name}_INCLUDE_DIR
-            NAMES ${ARGS_HEADER}
-            PATHS ${PC_${name}_INCLUDE_DIRS})
-
-        ## use the hint from above to find the location of lib*
-        find_library(tmp_library
-            NAMES ${ARGS_LIBNAMES}
-            PATHS ${PC_${name}_LIBRARY_DIRS}
-	    NO_CACHE)
-
-        if(NOT tmp_library STREQUAL tmp_library-NOTFOUND)
-            set(${name}_LIBRARY ${tmp_library})
-	else()
-	    set(${name}_LIBRARY ${name}_LIBRARY-NOTFOUND)
-	    foreach(dir IN LISTS PC_${name}_LIBRARY_DIRS)
-	      execute_process(
-	        COMMAND ls ${dir}
-	        COMMAND_ECHO STDOUT)
-	    endforeach()
-	endif()
-	if ((NOT ${name}_INCLUDE_DIR STREQUAL ${name}_INCLUDE_DIR-NOTFOUND) AND
-	    (NOT ${name}_LIBRARY STREQUAL ${name}_LIBRARY-NOTFOUND))
-            set(${name}_FOUND 1)
-	    # set(create_interface ON)
-	endif()
+      else()
+        find_implib_from_dll(${${package}_LIBRARY} implib)
+        if(implib)
+          set(${package}_IMPLIB ${implib})
+        endif()
+      endif()
     endif()
-    propagate_cmake_library_variables("^${name}*" ${ARGS_ADDITIONAL_PROPERTIES})
+    set_target_properties(
+      ${target} PROPERTIES
+      IMPORTED_LOCATION ${${package}_LIBRARY}
+    )
+  endif()
+  if(WIN32 AND ${package}_IMPLIB)
+    set_target_properties(
+      ${target} PROPERTIES
+      IMPORTED_IMPLIB ${${package}_IMPLIB}
+    )
+  endif()
+  if(${package}_LIBRARIES)
+    add_dependencies(${target} ${${package}_LIBRARIES})
+  endif()
+  if(${package}_LIBRARY_DIRS)
+    set_target_properties(
+      ${target} PROPERTIES
+      INTERFACE_LINK_DIRECTORIES ${${package}_LIBRARY_DIRS}
+    )
+  endif()
+  if(${package}_LINK_LIBRARIES)
+    set_target_properties(
+      ${target} PROPERTIES
+      INTERFACE_LINK_LIBRARIES ${${package}_LINK_LIBRARIES}
+    )
+  endif()
+  if(${package}_LDFLAGS)
+    set_target_properties(
+      ${target} PROPERTIES
+      INTERFACE_LINK_OPTIONS ${${package}_LDFLAGS}
+      # ${${package}_LDFLAGS_OTHER}  # Not required
+    )
+  endif()
+  if(${package}_INCLUDE_DIRS)
+    set_target_properties(
+      ${target} PROPERTIES
+      INTERFACE_INCLUDE_DIRECTORIES ${${package}_INCLUDE_DIRS}
+    )
+  endif()
+  if(${package}_CFLAGS)
+    set_target_properties(
+      ${target} PROPERTIES
+      INTERFACE_COMPILE_OPTIONS ${${package}_CFLAGS}
+      # ${${package}_CFLAGS_OTHER}  # Not required
+    )
+  endif()
+  set(${package}_LIBRARY ${target} PARENT_SCOPE)
+endfunction()
+
+function(find_package_brute name)
+  set(options REQUIRED)
+  set(oneValueArgs HEADER IMPORTED_TARGET)
+  set(multiValueArgs LIBNAMES LIBRARY_SEARCH_PATH HEADER_SEARCH_PATH)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  if (NOT ARGS_LIBNAMES)
+    list(APPEND ARGS_LIBNAMES ${name})
+  endif()
+  if (NOT ARGS_HEADER)
+    list(GET ARGS_LIBNAMES 0 FIRST_NAME)
+    set(ARGS_HEADER ${FIRST_NAME}.h)
+  endif()
+
+  find_path(
+    ${name}_INCLUDE_DIR
+    NAMES ${ARGS_HEADER}
+    PATHS ${ARGS_HEADER_SEARCH_PATH}
+  )
+  if(${name}_INCLUDE_DIR STREQUAL "${name}_INCLUDE_DIR-NOTFOUND")
+    message(DEBUG "Failed to find ${name}_INCLUDE_DIR")
+    foreach(dir IN LISTS ARGS_HEADER_SEARCH_PATH)
+      execute_process(
+        COMMAND ls ${dir}
+        COMMAND_ECHO STDOUT
+      )
+    endforeach()
+    set(${name}_INCLUDE_DIR)
+  else()
+    set(${name}_INCLUDE_DIRS ${${name}_INCLUDE_DIR})
+  endif()
+  find_library(
+    ${name}_LIBRARY
+    NAMES ${ARGS_LIBNAMES}
+    PATHS ${ARGS_LIBRARY_SEARCH_PATH}
+    NO_CACHE
+  )
+  if(${name}_LIBRARY STREQUAL "${name}_LIBRARY-NOTFOUND")
+    message(DEBUG "Failed to find ${name}_LIBRARY")
+    foreach(dir IN LISTS ARGS_LIBRARY_SEARCH_PATH)
+      execute_process(
+        COMMAND ls ${dir}
+        COMMAND_ECHO STDOUT
+      )
+    endforeach()
+    set(${name}_LIBRARY)
+  endif()
+
+  if(${name}_INCLUDE_DIR AND ${name}_LIBRARY)
+    set(${name}_FOUND ON)
+  endif()
+
+  if(${name}_FOUND AND ARGS_IMPORTED_TARGET)
+    create_interface_library(
+      ${name} TARGET ${ARGS_IMPORTED_TARGET}
+      LIBNAMES ${ARGS_LIBNAMES}
+    )
+  endif()
+  if(ARGS_REQUIRED AND NOT ${name}_FOUND)
+    message(STATUS "Failed to find package \"${name}\"")
+  endif()
+  propagate_cmake_library_variables("^${name}*")
+endfunction()
+
+function(find_package_conda name)
+  if (NOT CONDA_PREFIX)
+    cmake_path(SET CONDA_PREFIX "$ENV{CONDA_PREFIX}")
+  endif()
+
+  if(CONDA_PREFIX)
+    if (WIN32)
+      set(INCLUDE_DIRS "${CONDA_PREFIX}/Library/include")
+      set(LIBRARY_DIRS "${CONDA_PREFIX}/Library/lib")
+    else()
+      set(INCLUDE_DIRS "${CONDA_PREFIX}/include")
+      set(LIBRARY_DIRS "${CONDA_PREFIX}/lib")
+    endif()
+    find_package_brute(
+      ${name} ${ARGN}
+      LIBRARY_SEARCH_PATH ${LIBRARY_DIRS}
+      HEADER_SEARCH_PATH ${LIBRARY_DIRS}
+    )
+  endif()
+
+  propagate_cmake_library_variables("^${name}*")
+endfunction()
+
+function(find_package_pkgconfig name)
+  set(options REQUIRED)
+  set(oneValueArgs HEADER IMPORTED_TARGET)
+  set(multiValueArgs LIBNAMES ADDITIONAL_PROPERTIES)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  
+  if (NOT ARGS_LIBNAMES)
+    list(APPEND ARGS_LIBNAMES ${name})
+  endif()
+  if (NOT ARGS_HEADER)
+    list(GET ARGS_LIBNAMES 0 FIRST_NAME)
+    set(ARGS_HEADER ${FIRST_NAME}.h)
+  endif()
+
+  find_package(PkgConfig)
+  set(pkg_check_args)
+  if(ARGS_REQUIRED)
+    list(APPEND pkg_check_args REQUIRED)
+  else()
+    list(APPEND pkg_check_args QUIET)
+  endif()
+  # if(ARGS_IMPORTED_TARGET)
+  #   list(APPEND pkg_check_args IMPORTED_TARGET ${ARGS_IMPORTED_TARGET})
+  #   if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.13")
+  #     list(APPEND pkg_check_args GLOBAL)
+  #   endif()
+  # endif()
+  pkg_check_modules(PC_${name} ${pkg_check_args} ${ARGS_LIBNAMES})
+
+  if(PC_${name}_FOUND)
+    ## use the hints from above to find where 'lib*' & '*.h' are located
+    find_package_brute(
+      ${name} LIBNAMES ${ARGS_LIBNAMES} HEADER ${ARGS_HEADER}
+      HEADER_SEARCH_PATH ${PC_${name}_INCLUDE_DIRS}
+      LIBRARY_SEARCH_PATH ${PC_${name}_LIBRARY_DIRS}
+    )
+    dump_cmake_variables(REGEX "^PC_${name}*" OUTPUT_VAR PC_VARS VERBOSE)
+    foreach(pcvar IN LISTS PC_VARS)
+      string(REPLACE "PC_${name}" "${name}" ivar "${pcvar}")
+      set(${ivar} "${pcvar}")
+    endforeach()
+    if(TARGET PkgConfig::PC_${name})
+      add_library(${name} ALIAS PkgConfig::PC_${name})
+    endif()
+    if(NOT ${name}_FOUND)
+      message(FATAL_ERROR "Error setting variables from PC vars")
+    endif()
+  endif()
+  if(${name}_FOUND AND ARGS_IMPORTED_TARGET)
+    create_interface_library(
+      ${name} TARGET ${ARGS_IMPORTED_TARGET}
+      LIBNAMES ${ARGS_LIBNAMES}
+    )
+  endif()
+  propagate_cmake_library_variables("^${name}*" ${ARGS_ADDITIONAL_PROPERTIES})
 endfunction()
 
 function(find_implib_from_dll dll VAR)
@@ -214,77 +453,83 @@ function(find_implib_from_dll dll VAR)
     NAMES ${BASE_NAME}
     PATHS ${PREFIX_DIR}/lib
   )
-  set(${VAR} ${implib} PARENT_SCOPE)
+  if(NOT implib STREQUAL "implib-NOTFOUND")
+    set(${VAR} ${implib} PARENT_SCOPE)
+  endif()
+endfunction()
+
+function(find_dll_from_implib implib VAR)
+  get_filename_component(LIB_DIR ${implib} DIRECTORY)
+  get_filename_component(PREFIX_DIR ${LIB_DIR} DIRECTORY)
+  get_filename_component(BASE_NAME ${implib} NAME_WLE)
+  find_library(
+    dll
+    NAMES ${BASE_NAME}
+    PATHS ${PREFIX_DIR}/bin
+  )
+  if(NOT dll STREQUAL "dll-NOTFOUND")
+    set(${VAR} ${dll} PARENT_SCOPE)
+  endif()
 endfunction()
 
 function(find_package_zmq)
-    find_package_pkgconfig(ZeroMQ LIBNAMES zmq libzmq libzmq-static
-                           HEADER zmq.h)
+  set(options REQUIRED)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    # Force error
-    if ((NOT ZeroMQ_FOUND) AND (WIN32))
-        find_package(ZeroMQ CONFIG REQUIRED)
-    endif()
+  set(LIBNAMES zmq libzmq libzmq-static)
+  set(HEADER zmq.h)
+  set(IMPORTED_TARGET ZeroMQ)
+  set(SEARCH_ARGS LIBNAMES ${LIBNAMES} HEADER ${HEADER}
+      IMPORTED_TARGET ${IMPORTED_TARGET})
+  if(WIN32)
+    set(ARGS_REQUIRED ON)  # Force error
+  endif()
+  if(ARGS_REQUIRED)
+    list(APPEND SEARCH_ARGS REQUIRED)
+  endif()
 
-    if (ZeroMQ_FOUND)
-        if (WIN32 AND ZeroMQ_LIBRARY AND NOT TARGET ${ZeroMQ_LIBRARY})
-            string(FIND ${ZeroMQ_LIBRARY} ".dll" ZeroMQ_DLL_POS)
-            if (NOT "${ZeroMQ_DLL_POS}" STREQUAL "-1")
-                message(DEBUG "Located ZeroMQ DLL: ${ZeroMQ_LIBRARY}")
-                find_implib_from_dll(${ZeroMQ_LIBRARY} ZeroMQ_IMPLIB)
-                message(DEBUG "Located ZeroMQ IMP: ${ZeroMQ_IMPLIB}")
-                # set(ZeroMQ_LIBRARY ${ZeroMQ_IMPLIB})
- 	        # message(DEBUG "Updated ZeroMQ_LIBRARY = ${ZeroMQ_LIBRARY}")
-		# set(create_interface ON)
-            endif()
-        endif()
-        if(ZeroMQ_LIBRARY AND TARGET ${ZeroMQ_LIBRARY})
-            message(DEBUG "ZeroMQ_LIBRARY is TARGET ${ZeroMQ_LIBRARY}")
-        elseif(TARGET libzmq)
-            message(DEBUG "libzmq target exists (ZeroMQ_LIBRARY = ${ZeroMQ_LIBRARY})")
-            set(ZeroMQ_LIBRARY libzmq)
-        elseif(TARGET libzmq-static)
-            message(DEBUG "libzmq-static target exists (ZeroMQ_LIBRARY = ${ZeroMQ_LIBRARY})")
-            # add_library(libzmq INTERFACE IMPORTED GLOBAL)
-	    # set_target_properties(
-            #     libzmq PROPERTIES
-            #     INTERFACE_LINK_LIBRARIES libzmq-static
-            # )
-            set(ZeroMQ_LIBRARY libzmq-static)
-        else()
-            message(DEBUG "Creating libzmq interface target")
-            add_library(libzmq INTERFACE IMPORTED GLOBAL)
-	    set_target_properties(
-                libzmq PROPERTIES
-                IMPORTED_LOCATION ${ZeroMQ_LIBRARY}
-                # INTERFACE_LINK_LIBRARIES ${ZeroMQ_LIBRARY}
-                INTERFACE_INCLUDE_DIRECTORIES ${ZeroMQ_INCLUDE_DIR}
-            )
-            if(ZeroMQ_IMPLIB)
-              set_target_properties(
-                  libzmq PROPERTIES
-                  IMPORTED_IMPLIB ${ZeroMQ_IMPLIB}
-              )
-            endif()
-            set(ZeroMQ_LIBRARY libzmq)
-        endif()
-        
-	# if (create_interface)
-	#     if (NOT TARGET libzmq)
-        #         add_library(libzmq INTERFACE IMPORTED GLOBAL)
-	#     endif()
-	#     set_target_properties(
-        #         libzmq PROPERTIES
-        #         INTERFACE_LINK_LIBRARIES ${ZeroMQ_LIBRARY}
-        #         INTERFACE_INCLUDE_DIRECTORIES ${ZeroMQ_INCLUDE_DIR}
-        #     )
-        # endif()
-    endif()
-    set(ZeroMQ_FOUND ${ZeroMQ_FOUND} PARENT_SCOPE)
-    set(ZeroMQ_LIBRARY ${ZeroMQ_LIBRARY} PARENT_SCOPE)
-    set(ZeroMQ_STATIC_LIBRARY ${ZeroMQ_STATIC_LIBRARY} PARENT_SCOPE)
-    set(ZeroMQ_INCLUDE_DIR ${ZeroMQ_INCLUDE_DIR} PARENT_SCOPE)
-    propagate_cmake_library_variables("^ZeroMQ*")
+  # Conda version has CMake config, but source code uses pkg-config
+  find_package_generic(
+    ZeroMQ ${SEARCH_ARGS}
+    SEARCH_ORDER DEFAULT_CONFIG CONDA PKGCONFIG
+  )
+
+  # if (ZeroMQ_FOUND)
+  #   if (WIN32 AND ZeroMQ_LIBRARY AND NOT TARGET ${ZeroMQ_LIBRARY})
+  #     string(FIND ${ZeroMQ_LIBRARY} ".dll" ZeroMQ_DLL_POS)
+  #     if (NOT "${ZeroMQ_DLL_POS}" STREQUAL "-1")
+  #       message(DEBUG "Located ZeroMQ DLL: ${ZeroMQ_LIBRARY}")
+  #       find_implib_from_dll(${ZeroMQ_LIBRARY} ZeroMQ_IMPLIB)
+  #       message(DEBUG "Located ZeroMQ IMP: ${ZeroMQ_IMPLIB}")
+  #     endif()
+  #   endif()
+  #   if(TARGET ZeroMQ)
+  #     message(DEBUG "ZeroMQ is already TARGET")
+  #   elseif(ZeroMQ_LIBRARY AND TARGET ${ZeroMQ_LIBRARY})
+  #     message(DEBUG "ZeroMQ_LIBRARY is TARGET ${ZeroMQ_LIBRARY}")
+  #     add_library(ZeroMQ ALIAS ${ZeroQM_LIBRARY})
+  #   elseif(TARGET libzmq)
+  #     message(DEBUG "libzmq target exists (ZeroMQ_LIBRARY = ${ZeroMQ_LIBRARY})")
+  #     add_library(ZeroMQ ALIAS libzmq)
+  #   elseif(TARGET libzmq-static)
+  #     message(DEBUG "libzmq-static target exists (ZeroMQ_LIBRARY = ${ZeroMQ_LIBRARY})")
+  #     add_library(ZeroMQ ALIAS libzmq-static)
+  #   else()
+  #     message(DEBUG "Creating ZeroMQ interface target ZeroMQ_LIBRARY = ${ZeroMQ_LIBRARY}, ZeroMQ_IMPLIB = ${ZeroMQ_IMPLIB}")
+  #     create_interface_library(ZeroMQ)
+  #     # if(ZeroMQ_IMPLIB)
+  #     #   set_target_properties(
+  #     #       ZeroMQ PROPERTIES
+  #     #       IMPORTED_IMPLIB ${ZeroMQ_IMPLIB}
+  #     #   )
+  #     # endif()
+  #   endif()
+  # endif()
+  # set(ZeroMQ_FOUND ${ZeroMQ_FOUND} PARENT_SCOPE)
+  # set(ZeroMQ_LIBRARY ${ZeroMQ_LIBRARY} PARENT_SCOPE)
+  # set(ZeroMQ_STATIC_LIBRARY ${ZeroMQ_STATIC_LIBRARY} PARENT_SCOPE)
+  # set(ZeroMQ_INCLUDE_DIR ${ZeroMQ_INCLUDE_DIR} PARENT_SCOPE)
+  propagate_cmake_library_variables("^ZeroMQ*")
 endfunction()
 
 
