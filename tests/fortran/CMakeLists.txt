@@ -45,12 +45,20 @@ function (add_fortran_test_executable TARGET)
     create_test_sourcelist (_ ${TARGET_SOURCE} ${TEST_FILES_MANGLED}
                             EXTRA_INCLUDE YggInterface.h)
 
-    add_mixed_fortran_library(
+    add_mixed_language_library(
         ${TARGET}_fortran SHARED
-	LANGUAGE CXX ${TEST_FILES}
+        LINKER_LANGUAGE CXX
+        SOURCES ${TEST_FILES}
 	LIBRARIES ${Fortran_TEST_LIBRARIES}
 	INCLUDES ${Fortran_TEST_INCLUDE_DIRS}
-	DEFINITIONS ${DYNAMIC_TEST_DEFINITIONS})
+	DEFINITIONS ${DYNAMIC_TEST_DEFINITIONS}
+    )
+    # add_mixed_fortran_library(
+    #     ${TARGET}_fortran SHARED
+    #     LANGUAGE CXX ${TEST_FILES}
+    #     LIBRARIES ${Fortran_TEST_LIBRARIES}
+    #     INCLUDES ${Fortran_TEST_INCLUDE_DIRS}
+    #     DEFINITIONS ${DYNAMIC_TEST_DEFINITIONS})
     add_executable (${TARGET} ${TARGET_SOURCE})
     target_link_libraries (${TARGET} ${TARGET}_fortran ${Fortran_TEST_LIBRARIES})
     target_include_directories(${TARGET} PRIVATE ${Fortran_TEST_INCLUDE_DIRS})

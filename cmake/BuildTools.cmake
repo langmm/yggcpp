@@ -1,3 +1,6 @@
+include(CheckLanguage)
+include(ExternalProject)
+
 function(set_environment_vars)
   set(oneValueArgs EXISTING KEYPREFIX)
   set(options END_VARS)
@@ -375,6 +378,139 @@ function(predict_target_filename target library_type language output_var)
   set(${output_var} "${OUTPUT}" PARENT_SCOPE)
 endfunction()
 
+function(find_compiler_external language)
+  set(oneValueArgs GENERATOR)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  if(NOT ARGS_GENERATOR)
+    set(ARGS_GENERATOR "${CMAKE_GENERATOR}")
+  endif()
+  string(REPLACE " " "_" GENSTR "${ARGS_GENERATOR}")
+  set(tmp_dir "${CMAKE_CURRENT_BINARY_DIR}/_check_for_${language}_${GENSTR}")
+  message(DEBUG "find_compiler_external(${language} GENERATOR ${ARGS_GENERATOR}): tmp_dir = ${tmp_dir}")
+  set(fcompiler "${tmp_dir}/${language}_compiler")
+  file(MAKE_DIRECTORY "${tmp_dir}")
+  configure_file(
+    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/check_language_external.CMakeLists.in
+    ${tmp_dir}/CMakeLists.txt
+    @ONLY)
+  message(STATUS "Looking for ${language} compiler using \"${ARGS_GENERATOR}\" generator")
+  execute_process(
+    COMMAND ${CMAKE_COMMAND} "-G${ARGS_GENERATOR}" -B . -S .
+    WORKING_DIRECTORY ${tmp_dir}
+    RESULT_VARIABLE out)
+  if (EXISTS ${fcompiler})
+    file(READ ${fcompiler} CONTENTS)
+    set(CMAKE_${language}_COMPILER ${CONTENTS} PARENT_SCOPE)
+  endif()
+endfunction()
+
+function(check_language_external language)
+  set(options REQUIRED)
+  set(oneValueArgs OUTPUT_VARIABLE GENERATOR)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  find_compiler_external(${language})
+  if((NOT CMAKE_${language}_COMPILER) AND MSVC AND
+     language STREQUAL "Fortran")
+    find_gnu_fortran(SKIP_CURRENT_GENERATOR)
+    if(GNU_FORTRAN)
+      set(CMAKE_${language}_COMPILER "${GNU_FORTRAN}")
+      if(ARGS_GENERATOR)
+        set(${ARGS_GENERATOR} "${GNU_FORTRAN_GENERATOR}" PARENT_SCOPE)
+      endif()
+    endif()
+  endif()
+  if(NOT CMAKE_${language}_COMPILER AND ARGS_REQUIRED)
+    message(FATAL_ERROR "Could not locate a ${language} compiler")
+  endif()
+  set(CMAKE_${language}_COMPILER ${CMAKE_${language}_COMPILER} PARENT_SCOPE)
+  if(CMAKE_${language}_COMPILER AND ARGS_OUTPUT_VARIABLE)
+    set(${ARGS_OUTPUT_VARIABLE} ON PARENT_SCOPE)
+  endif()
+endfunction()
+
+function(find_gnu_fortran)
+  set(options REQUIRED SKIP_CURRENT_GENERATOR)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  # foreach(igen "Ninja" "MinGW Makefiles")
+  foreach(igen "MinGW Makefiles")
+    if(ARGS_SKIP_CURRENT_GENERATOR
+       AND igen STREQUAL "${CMAKE_GENERATOR}")
+      continue()
+    endif()
+    find_compiler_external(Fortran GENERATOR "${igen}")
+    if(CMAKE_${language}_COMPILER)
+      set(GNU_FORTRAN "${CMAKE_${language}_COMPILER}")
+      set(GNU_FORTRAN_GENERATOR "${igen}")
+      break()
+    endif()
+  endforeach()
+  if(NOT GNU_FORTRAN)
+    find_mingw_gfortran()
+    if(MINGW_GFORTRAN)
+      set(GNU_FORTRAN "${MINGW_GFORTRAN}")
+      set(GNU_FORTRAN_GENERATOR "MinGW Makefiles")
+    endif()
+  endif()
+  if(GNU_FORTRAN)
+    get_filename_component(GNU_PATH ${GNU_FORTRAN} PATH)
+    file(TO_NATIVE_PATH "${GNU_PATH}" GNU_PATH)
+    string(REPLACE "\\" "\\\\" GNU_PATH "${GNU_PATH}")
+    set(GNU_FORTRAN "${GNU_FORTRAN}" PARENT_SCOPE)
+    set(GNU_FORTRAN_GENERATOR "${GNU_FORTRAN_GENERATOR}" PARENT_SCOPE)
+    set(GNU_PATH "${GNU_PATH}" PARENT_SCOPE)
+    message(DEBUG "GNU_FORTRAN = ${GNU_FORTRAN}")
+    message(DEBUG "GNU_FORTRAN_GENERATOR = ${GNU_FORTRAN_GENERATOR}")
+    message(DEBUG "GNU_PATH = ${GNU_PATH}")
+  elseif(ARGS_REQUIRED)
+    message(FATAL_ERROR
+      "GNU fortran not found, please install gfortran via MinGW "
+      "with the gfortran option. This is required to build.")
+  endif()
+endfunction()
+
+function(find_mingw_gfortran)
+  set(options REQUIRED)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  find_program(MINGW_GFORTRAN
+    NAMES gfortran
+    PATHS
+      c:/MinGW/bin
+      "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\MinGW;InstallLocation]/bin"
+    )
+  if(NOT MINGW_GFORTRAN)
+    if (ARGS_REQUIRED)
+      message(FATAL_ERROR
+        "gfortran not found, please install MinGW with the gfortran option."
+        "Or set the cache variable MINGW_GFORTRAN to the full path. "
+        " This is required to build")
+    endif()
+    return()
+  endif()
+
+  # Validate the MinGW gfortran we found.
+  if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    set(_mingw_target "Target:.*64.*mingw")
+  else()
+    set(_mingw_target "Target:.*mingw32")
+  endif()
+  execute_process(COMMAND "${MINGW_GFORTRAN}" -v
+    ERROR_VARIABLE out ERROR_STRIP_TRAILING_WHITESPACE)
+  if(NOT "${out}" MATCHES "${_mingw_target}")
+    string(REPLACE "\n" "\n  " out "  ${out}")
+    if (ARGS_REQUIRED)
+      message(FATAL_ERROR
+        "MINGW_GFORTRAN is set to\n"
+        "  ${MINGW_GFORTRAN}\n"
+        "which is not a MinGW gfortran for this architecture.  "
+        "The output from -v does not match \"${_mingw_target}\":\n"
+        "${out}\n"
+        "Set MINGW_GFORTRAN to a proper MinGW gfortran for this architecture."
+      )
+    endif()
+  endif()
+  set(MINGW_GFORTRAN ${MINGW_GFORTRAN} PARENT_SCOPE)
+endfunction()
+
 function(setup_external_config lists_dir)
   set(options DONT_SET_COMMAND)
   set(oneValueArgs GENERATOR BUILD_DIR SOURCE_DIR FILENAME)
@@ -453,28 +589,56 @@ endfunction()
 function(add_mixed_language_library target library_type)
   include(GeneralTools)
   set(options FORCE_EXTERNAL)
-  set(oneValueArgs LINKER_LANGUAGE BASE_LANGUAGE GENERATOR)
+  set(oneValueArgs LINKER_LANGUAGE BASE_LANGUAGE)
   set(multiValueArgs LANGUAGES SOURCES LIBRARIES INCLUDES DEFINITIONS
-      PROPERTIES COMPILE_FLAGS CONFIG_ARGUMENTS BUILD_ARGUMENTS
-      PRESERVE_VARIABLES)
+      PROPERTIES COMPILE_FLAGS)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  if(NOT ARGS_SOURCES)
+    set(ARGS_SOURCES ${ARGS_UNPARSED_ARGUMENTS})
+  endif()
+  message(DEBUG "add_mixed_language_library[${target}]: SOURCES = ${ARGS_SOURCES}")
   sort_files_by_language(
-    SOURCES ${ARGS_SOURCES}
+    SRC SOURCES ${ARGS_SOURCES}
     OUTPUT_LANGUAGES SOURCE_LANGUAGES
   )
   if(NOT ARGS_LANGUAGES)
     set(ARGS_LANGUAGES ${SOURCE_LANGUAGES})
   endif()
-  if(NOT (ARGS_BASE_LANGUAGE OR ARGS_LINKER_LANGUAGE))
-    message(FATAL_ERROR "Neither BASE_LANGUAGE or LINKER_LANGUAGE provided")
-  elseif(NOT ARGS_BASE_LANGUAGE)
-    set(ARGS_BASE_LANGUAGE ${ARGS_LINKER_LANGUAGE})
-  elseif(NOT ARGS_LINKER_LANGUAGE)
-    set(ARGS_LINKER_LANGUAGE ${ARGS_BASE_LANGUAGE})
+  list(FIND ARGS_LANGUAGES "Fortran" Fortran_IDX)
+  list(FIND ARGS_LANGUAGES "CXX" CXX_IDX)
+  list(FIND ARGS_LANGUAGES "C" C_IDX)
+  if((MSVC OR FORCE_SPLIT_CXXFortran) AND (NOT Fortran_IDX EQUAL -1))
+    set(ARGS_FORCE_EXTERNAL ON)
   endif()
 
+  if((NOT ARGS_LINKER_LANGUAGE) AND (NOT CXX_IDX EQUAL -1))
+    set(ARGS_LINKER_LANGUAGE CXX)
+  endif()
+  if(NOT ARGS_BASE_LANGUAGE)
+    list(LENGTH ARGS_LANGUAGES LANGUAGE_COUNT)
+    if(LANGUAGE_COUNT EQUAL 1)
+      if(ARGS_FORCE_EXTERNAL)
+        set(ARGS_BASE_LANGUAGE C)
+      else()
+        set(ARGS_BASE_LANGUAGE ${ARGS_LANGUAGES})
+      endif()
+    else()
+      if(NOT C_IDX EQUAL -1)
+        set(ARGS_BASE_LANGUAGE C)
+      else()
+        list(GET ARGS_LANGUAGES 0 ARGS_BASE_LANGUAGE)
+      endif()
+    endif()
+  endif()
+
+  list(FIND ARGS_LANGUAGES ${ARGS_BASE_LANGUAGE} BASE_LANGUAGE_IDX)
+  if(BASE_LANGUAGE_IDX EQUAL -1)
+    list(APPEND ARGS_LANGUAGES ${ARGS_BASE_LANGUAGE})
+  endif()
+  message(DEBUG "add_mixed_language_library[${target}]: LANGUAGES = ${ARGS_LANGUAGES}")
+  
   foreach(ilanguage IN LISTS ARGS_LANGUAGES)
-    if(NOT SOURCES_${ilanguage})
+    if(NOT SRC_${ilanguage})
       # Add dummy source files for missing languages
       set(iext)
       language2srcext(${ilanguage} iext)
@@ -484,14 +648,17 @@ function(add_mixed_language_library target library_type)
         ${dummy_src}
         @ONLY
       )
-      list(APPEND SOURCES_${ilanguage} ${dummy_src})
+      list(APPEND SRC_${ilanguage} ${dummy_src})
     endif()
+    message(DEBUG "add_mixed_language_library[${target}]: SOURCES_${ilanguage} = ${SRC_${ilanguage}}")
   endforeach()
-  
+
+  # Base library that external libraries or sources will be added to
+  # from the other languages
   add_internal_library(
     ${target} ${library_type}
     LANGUAGE ${ARGS_BASE_LANGUAGE}
-    SOURCES ${SOURCES_${ARGS_BASE_LANGUAGE}}
+    SOURCES ${SRC_${ARGS_BASE_LANGUAGE}}
     LIBRARIES ${ARGS_LIBRARIES}
     INCLUDES ${ARGS_INCLUDES}
     DEFINITIONS ${ARGS_DEFINITIONS}
@@ -521,9 +688,10 @@ function(add_mixed_language_library target library_type)
              Fortran_STANDARD_REQUIRED ON
              Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
       endif()
+      set(CMAKE_${ilanguage}_OUTPUT_EXTENSION ${CMAKE_${ARGS_BASE_LANGUAGE}_OUTPUT_EXTENSION})
       add_external_library(
         ${${ilanguage}_target} OBJECT LANGUAGE ${ilanguage}
-        SOURCES ${SOURCES_${ilanguage}}
+        SOURCES ${SRC_${ilanguage}}
         LIBRARIES ${ARGS_LIBRARIES}
         INCLUDES ${ARGS_INCLUDES}
         DEFINITIONS ${ARGS_DEFINITIONS}
@@ -561,7 +729,7 @@ function(add_mixed_language_library target library_type)
         FortranCInterface_VERIFY()
         FortranCInterface_VERIFY(CXX)
         set_source_files_properties(
-          ${SOURCES_${ilanguage}}
+          ${SRC_${ilanguage}}
           PROPERTIES
           COMPILE_FLAGS "-cpp -fPIC"
           Fortran_STANDARD 2003
@@ -569,7 +737,7 @@ function(add_mixed_language_library target library_type)
           Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         )
       endif()
-      target_sources(${target} PRIVATE ${SOURCES_${ilanguage}})
+      target_sources(${target} PRIVATE ${SRC_${ilanguage}})
     endif()
   endforeach()
 endfunction()
@@ -713,6 +881,7 @@ function(add_external_library target library_type)
       else()
         set(ARGS_PREPEND_PATH "${GNU_PATH}")
       endif()
+      set(ARGS_GENERATOR ${GNU_FORTRAN_GENERATOR})
       list(APPEND ARGS_CONFIG_ARGUMENTS
            -DCMAKE_Fortran_COMPILER:PATH=${GNU_FORTRAN}
            -DBUILD_SHARED_LIBS=ON
@@ -732,6 +901,7 @@ function(add_external_library target library_type)
     find_gfortran_implicit_libraries(
       ${target} "${external_target_file}"
       LISTS_DIR "${ARGS_LISTS_DIR}"
+      GENERATOR ${ARGS_GENERATOR}
       ARGUMENTS ${ARGS_CONFIG_ARGUMENTS}
       PRESERVE_VARIABLES ${ARGS_PRESERVE_VARIABLES}
     )
@@ -810,9 +980,9 @@ function(add_import_library target library_type library)
   if(ARGS_DEPENDENCIES)
     add_dependencies(${target} ${ARGS_DEPENDENCIES})
   endif()
-  if(library_type STREQUAL "OBJECT" AND NOT ARGS_OBJECTS)
-    message(FATAL_ERROR "No OBJECTS provided for OBJECT IMPORT library")
-  endif()
+  # if(library_type STREQUAL "OBJECT" AND NOT ARGS_OBJECTS)
+  #   message(FATAL_ERROR "No OBJECTS provided for OBJECT IMPORT library")
+  # endif()
   set_target_properties(
     ${target} PROPERTIES
     IMPORTED_LOCATION ${library}

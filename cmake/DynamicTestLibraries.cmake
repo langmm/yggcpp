@@ -135,29 +135,36 @@ function(add_dynamic_test_library TARGET)
     set(YGGTEST_DYNAMIC_DIR_SET 1)
     cmake_path(GET CMAKE_BINARY_DIR PARENT_PATH YGGTEST_DYNAMIC_DIR)
   endif()
-  if ((ARGS_LANGUAGE STREQUAL "Fortran") AND (FORCE_SPLIT_CXXFortran OR MSVC))
-    include(YggAddFortranSubdirectory)
-    add_mixed_fortran_library(
-      ${TARGET} SHARED LANGUAGE CXX
-      SOURCES ${ARGS_SOURCES}
-      LIBRARIES ${ARGS_LIBRARIES}
-      INCLUDES ${ARGS_INCLUDES}
-    )
-  else()
-    add_library(${TARGET} SHARED ${ARGS_SOURCES})
-    if (ARGS_LANGUAGE STREQUAL "Fortran")
-      set_target_properties(${TARGET} PROPERTIES LINKER_LANGUAGE CXX)
-    endif()
-    if (ARGS_LIBRARIES)
-      target_link_libraries(${TARGET} PUBLIC ${ARGS_LIBRARIES})
-    endif()
-    if (ARGS_INCLUDES)
-      target_include_directories(${TARGET} PUBLIC ${ARGS_INCLUDES})
-    endif()
-  endif()
-  if (WIN32 AND NOT ARGS_LANGUAGE STREQUAL "Fortran")
-    set_target_properties(${TARGET} PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
-  endif()
+  include(BuildTools)
+  add_mixed_language_library(
+    ${TARGET} SHARED LINKER_LANGUAGE CXX
+    SOURCES ${ARGS_SOURCES}
+    LIBRARIES ${ARGS_LIBRARIES}
+    INCLUDES ${ARGS_INCLUDES}
+  )
+  # if ((ARGS_LANGUAGE STREQUAL "Fortran") AND (FORCE_SPLIT_CXXFortran OR MSVC))
+  #   include(YggAddFortranSubdirectory)
+  #   add_mixed_fortran_library(
+  #     ${TARGET} SHARED LANGUAGE CXX
+  #     SOURCES ${ARGS_SOURCES}
+  #     LIBRARIES ${ARGS_LIBRARIES}
+  #     INCLUDES ${ARGS_INCLUDES}
+  #   )
+  # else()
+  #   add_library(${TARGET} SHARED ${ARGS_SOURCES})
+  #   if (ARGS_LANGUAGE STREQUAL "Fortran")
+  #     set_target_properties(${TARGET} PROPERTIES LINKER_LANGUAGE CXX)
+  #   endif()
+  #   if (ARGS_LIBRARIES)
+  #     target_link_libraries(${TARGET} PUBLIC ${ARGS_LIBRARIES})
+  #   endif()
+  #   if (ARGS_INCLUDES)
+  #     target_include_directories(${TARGET} PUBLIC ${ARGS_INCLUDES})
+  #   endif()
+  # endif()
+  # if (WIN32 AND NOT ARGS_LANGUAGE STREQUAL "Fortran")
+  #   set_target_properties(${TARGET} PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
+  # endif()
   include(CheckDLL)
   show_symbols(${TARGET})
   add_custom_command(

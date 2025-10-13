@@ -205,6 +205,17 @@ function(find_package_pkgconfig name)
     propagate_cmake_library_variables("^${name}*" ${ARGS_ADDITIONAL_PROPERTIES})
 endfunction()
 
+function(find_implib_from_dll dll VAR)
+  get_filename_component(BIN_DIR ${dll} DIRECTORY)
+  get_filename_component(PREFIX_DIR ${BIN_DIR} DIRECTORY)
+  get_filename_component(BASE_NAME ${dll} NAME_WLE)
+  find_library(
+    implib
+    NAMES ${BASE_NAME}
+    PATHS ${PREFIX_DIR}/lib
+  )
+  set(${VAR} ${implib} PARENT_SCOPE)
+endfunction()
 
 function(find_package_zmq)
     find_package_pkgconfig(ZeroMQ LIBNAMES zmq libzmq libzmq-static
@@ -216,37 +227,58 @@ function(find_package_zmq)
     endif()
 
     if (ZeroMQ_FOUND)
-        message(STATUS "ZeroMQ found")
-        if (WIN32 AND ZeroMQ_LIBRARY)
+        if (WIN32 AND ZeroMQ_LIBRARY AND NOT TARGET ${ZeroMQ_LIBRARY})
             string(FIND ${ZeroMQ_LIBRARY} ".dll" ZeroMQ_DLL_POS)
             if (NOT "${ZeroMQ_DLL_POS}" STREQUAL "-1")
-                get_filename_component(ZeroMQ_BIN_DIR ${ZeroMQ_LIBRARY} DIRECTORY)
-                get_filename_component(ZeroMQ_PREFIX_DIR ${ZeroMQ_BIN_DIR} DIRECTORY)
-                get_filename_component(ZeroMQ_BASE_NAME ${ZeroMQ_LIBRARY} NAME_WLE)
-                find_library(ZeroMQ_LIBRARY_LIB
-                    NAMES ${ZeroMQ_BASE_NAME}
-                    PATHS ${ZeroMQ_PREFIX_DIR}/lib)
-                set(ZeroMQ_LIBRARY ${ZeroMQ_LIBRARY_LIB})
- 	        message(DEBUG "Updated ZeroMQ_LIBRARY = ${ZeroMQ_LIBRARY}")
+                message(DEBUG "Located ZeroMQ DLL: ${ZeroMQ_LIBRARY}")
+                find_implib_from_dll(${ZeroMQ_LIBRARY} ZeroMQ_IMPLIB)
+                message(DEBUG "Located ZeroMQ IMP: ${ZeroMQ_IMPLIB}")
+                # set(ZeroMQ_LIBRARY ${ZeroMQ_IMPLIB})
+ 	        # message(DEBUG "Updated ZeroMQ_LIBRARY = ${ZeroMQ_LIBRARY}")
 		# set(create_interface ON)
             endif()
         endif()
-        if (ZeroMQ_STATIC_LIBRARY AND NOT ZeroMQ_LIBRARY)
+        if(ZeroMQ_LIBRARY AND TARGET ${ZeroMQ_LIBRARY})
+            message(DEBUG "ZeroMQ_LIBRARY is TARGET ${ZeroMQ_LIBRARY}")
+        elseif(TARGET libzmq)
+            message(DEBUG "libzmq target exists (ZeroMQ_LIBRARY = ${ZeroMQ_LIBRARY})")
+            set(ZeroMQ_LIBRARY libzmq)
+        elseif(TARGET libzmq-static)
+            message(DEBUG "libzmq-static target exists (ZeroMQ_LIBRARY = ${ZeroMQ_LIBRARY})")
+            # add_library(libzmq INTERFACE IMPORTED GLOBAL)
+	    # set_target_properties(
+            #     libzmq PROPERTIES
+            #     INTERFACE_LINK_LIBRARIES libzmq-static
+            # )
+            set(ZeroMQ_LIBRARY libzmq-static)
+        else()
+            message(DEBUG "Creating libzmq interface target")
             add_library(libzmq INTERFACE IMPORTED GLOBAL)
-	    set_target_properties(libzmq PROPERTIES
-	                          INTERFACE_LINK_LIBRARIES libzmq-static)
-	    set(ZeroMQ_LIBRARY libzmq-static)
-        elseif (NOT ZeroMQ_LIBRARY)
-	    set(ZeroMQ_LIBRARY libzmq)
+	    set_target_properties(
+                libzmq PROPERTIES
+                IMPORTED_LOCATION ${ZeroMQ_LIBRARY}
+                # INTERFACE_LINK_LIBRARIES ${ZeroMQ_LIBRARY}
+                INTERFACE_INCLUDE_DIRECTORIES ${ZeroMQ_INCLUDE_DIR}
+            )
+            if(ZeroMQ_IMPLIB)
+              set_target_properties(
+                  libzmq PROPERTIES
+                  IMPORTED_IMPLIB ${ZeroMQ_IMPLIB}
+              )
+            endif()
+            set(ZeroMQ_LIBRARY libzmq)
         endif()
-	if (create_interface)
-	    if (NOT TARGET libzmq)
-                add_library(libzmq INTERFACE IMPORTED GLOBAL)
-	    endif()
-	    set_target_properties(libzmq PROPERTIES
-	                          INTERFACE_LINK_LIBRARIES ${ZeroMQ_LIBRARY}
-				  INTERFACE_INCLUDE_DIRECTORIES ${ZeroMQ_INCLUDE_DIR})
-        endif()
+        
+	# if (create_interface)
+	#     if (NOT TARGET libzmq)
+        #         add_library(libzmq INTERFACE IMPORTED GLOBAL)
+	#     endif()
+	#     set_target_properties(
+        #         libzmq PROPERTIES
+        #         INTERFACE_LINK_LIBRARIES ${ZeroMQ_LIBRARY}
+        #         INTERFACE_INCLUDE_DIRECTORIES ${ZeroMQ_INCLUDE_DIR}
+        #     )
+        # endif()
     endif()
     set(ZeroMQ_FOUND ${ZeroMQ_FOUND} PARENT_SCOPE)
     set(ZeroMQ_LIBRARY ${ZeroMQ_LIBRARY} PARENT_SCOPE)

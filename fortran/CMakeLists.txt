@@ -1,4 +1,4 @@
-include(YggAddFortranSubdirectory)
+include(BuildTools)
 check_language_external(Fortran)
 if (NOT CMAKE_Fortran_COMPILER)
   if (YGG_Fortran_REQUIRED)
@@ -19,8 +19,20 @@ set(SOURCES_Fortran c_wrappers.c YggInterface.F90)
 if (YGG_Fortran_WRAP_C_ENUMS)
     list(APPEND SOURCES_Fortran c_wrappers_enums.c)
 endif()
-add_mixed_fortran_library(${YGG_TARGET_Fortran} SHARED
-                          LANGUAGE CXX ${SOURCES_Fortran})
+set(FORCE_EXTERNAL)
+if(FORCE_SPLIT_CXXFortran)
+  set(FORCE_EXTERNAL FORCE_EXTERNAL)
+endif()
+add_mixed_language_library(
+  ${YGG_TARGET_Fortran} SHARED
+  LINKER_LANGUAGE CXX
+  BASE_LANGUAGE C
+  SOURCES ${SOURCES_Fortran}
+  ${FORCE_EXTERNAL}
+)
+
+# add_mixed_fortran_library(${YGG_TARGET_Fortran} SHARED
+#                           LANGUAGE CXX ${SOURCES_Fortran})
 add_library(YggInterface::Fortran ALIAS ${YGG_TARGET_Fortran})
 if (YGG_Fortran_WRAP_C_ENUMS)
     target_compile_options(
