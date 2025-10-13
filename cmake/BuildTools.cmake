@@ -1,6 +1,3 @@
-include(CheckLanguage)
-include(ExternalProject)
-
 function(set_environment_vars)
   set(oneValueArgs EXISTING KEYPREFIX)
   set(options END_VARS)
@@ -923,6 +920,7 @@ function(add_external_library target library_type)
   set(external_target_name ${target}_build)
   message(STATUS "CONFIGURE_COMMAND = ${CONFIGURE_COMMAND}")
   message(STATUS "BUILD_COMMAND = ${BUILD_COMMAND}")
+  include(ExternalProject)
   externalproject_add(
     ${external_target_name}
     SOURCE_DIR ${ARGS_SOURCE_DIR}
