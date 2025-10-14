@@ -1,5 +1,0 @@
-set(GNU_PATH "@GNU_PATH@")
-if(GNU_PATH)
-  set(ENV{PATH} "@GNU_PATH@\;$ENV{PATH}")
-endif()
-execute_process(COMMAND "@CMAKE_COMMAND@" --build . )

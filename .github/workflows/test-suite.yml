@@ -623,17 +623,17 @@ jobs:
         if: matrix.with-asan == false && matrix.os != 'windows-latest'
         shell: bash -l {0}
         run: |
-          ./run_tests.sh --speed --config Release ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} --verbose --comm IPC_COMM
+          ./run_tests.sh --speed --config Release ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} --verbose --comm IPC
       - name: Run speed tests (zmq)
         if: matrix.with-asan == false && matrix.install-zmq
         shell: bash -l {0}
         run: |
-          ./run_tests.sh --speed --config Release ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} --verbose --comm ZMQ_COMM
+          ./run_tests.sh --speed --config Release ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} --verbose --comm ZMQ
       - name: Run speed tests (rmq)
         if: matrix.with-asan == false && matrix.install-rmq && matrix.python-install != 'conda'
         shell: bash -l {0}
         run: |
-          ./run_tests.sh --speed --config Release ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} --verbose --comm RMQ_COMM
+          ./run_tests.sh --speed --config Release ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} --verbose --comm RMQ
 
       ###################################
       # Docs tests

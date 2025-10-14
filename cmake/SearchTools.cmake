@@ -168,6 +168,7 @@ function(find_package_generic name)
     list(APPEND SEARCH_ARGS ${ARGS_UNPARSED_ARGUMENTS})
   endif()
 
+  set(BRUTE_SEARCH_PERFORMED OFF)
   foreach(method IN LISTS ARGS_SEARCH_ORDER)
     if(ARGS_NO_${method})
       continue()
@@ -181,6 +182,8 @@ function(find_package_generic name)
       find_package_conda(${name} ${SEARCH_ARGS})
     elseif(method STREQUAL "PKGCONFIG")
       find_package_pkgconfig(${name} ${SEARCH_ARGS})
+    elseif(method STREQUAL "BRUTE")
+      find_package_brute(${name} ${SEARCH_ARGS})
     else()
       message(FATAL_ERROR "Unsupported method \"${method}\"")
     endif()
@@ -189,6 +192,10 @@ function(find_package_generic name)
       break()
     endif()
   endforeach()
+
+  if((NOT ${name}_FOUND) AND (NOT ${name}_BRUTE_SEARCH_PERFORMED))
+    find_package_brute(${name} ${SEARCH_ARGS})
+  endif()
 
   if(ARGS_REQUIRED AND NOT ${name}_FOUND)
     message(FATAL_ERROR "Failed to find package \"${name}\"")
@@ -364,6 +371,7 @@ function(find_package_brute name)
   if(ARGS_REQUIRED AND NOT ${name}_FOUND)
     message(STATUS "Failed to find package \"${name}\"")
   endif()
+  set(${name}_BRUTE_SEARCH_PERFORMED ON)
   propagate_cmake_library_variables("^${name}*")
 endfunction()
 
@@ -408,8 +416,8 @@ function(find_package_pkgconfig name)
   set(pkg_check_args)
   if(ARGS_REQUIRED)
     list(APPEND pkg_check_args REQUIRED)
-  else()
-    list(APPEND pkg_check_args QUIET)
+  # else()
+  #   list(APPEND pkg_check_args QUIET)
   endif()
   # if(ARGS_IMPORTED_TARGET)
   #   list(APPEND pkg_check_args IMPORTED_TARGET ${ARGS_IMPORTED_TARGET})
@@ -418,14 +426,10 @@ function(find_package_pkgconfig name)
   #   endif()
   # endif()
   pkg_check_modules(PC_${name} ${pkg_check_args} ${ARGS_LIBNAMES})
+  message(DEBUG "PC_${name}_FOUND = ${PC_${name}_FOUND}")
 
   if(PC_${name}_FOUND)
     ## use the hints from above to find where 'lib*' & '*.h' are located
-    find_package_brute(
-      ${name} LIBNAMES ${ARGS_LIBNAMES} HEADER ${ARGS_HEADER}
-      HEADER_SEARCH_PATH ${PC_${name}_INCLUDE_DIRS}
-      LIBRARY_SEARCH_PATH ${PC_${name}_LIBRARY_DIRS}
-    )
     dump_cmake_variables(REGEX "^PC_${name}*" OUTPUT_VAR PC_VARS VERBOSE)
     foreach(pcvar IN LISTS PC_VARS)
       string(REPLACE "PC_${name}" "${name}" ivar "${pcvar}")
@@ -434,10 +438,15 @@ function(find_package_pkgconfig name)
     if(TARGET PkgConfig::PC_${name})
       add_library(${name} ALIAS PkgConfig::PC_${name})
     endif()
-    if(NOT ${name}_FOUND)
+    if(PC_${name}_FOUND AND NOT ${name}_FOUND)
       message(FATAL_ERROR "Error setting variables from PC vars")
     endif()
   endif()
+  find_package_brute(
+    ${name} LIBNAMES ${ARGS_LIBNAMES} HEADER ${ARGS_HEADER}
+    HEADER_SEARCH_PATH ${PC_${name}_INCLUDE_DIRS}
+    LIBRARY_SEARCH_PATH ${PC_${name}_LIBRARY_DIRS}
+  )
   if(${name}_FOUND AND ARGS_IMPORTED_TARGET)
     create_interface_library(
       ${name} TARGET ${ARGS_IMPORTED_TARGET}
