@@ -130,14 +130,14 @@ jobs:
         if: matrix.os == 'ubuntu-latest' && matrix.python-install == 'pip'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libc6-dbg gdb valgrind lcov libcmocka-dev gfortran graphviz doxygen>=1.9.2
+          sudo apt-get install -y libc6-dbg gdb valgrind lcov libcmocka-dev gfortran graphviz doxygen>=1.9.2 libcurl-dev
           sudo apt upgrade --fix-missing
           valgrind --version
       - name: Install dependencies on Mac
         if: matrix.os == 'macos-latest' && matrix.python-install == 'pip'
         run: |
           # brew link --overwrite python@3.11
-          brew install cmocka lcov gnutls graphviz doxygen>=1.9.2 # llvm
+          brew install cmocka lcov gnutls graphviz doxygen>=1.9.2 curl # llvm
           # Required for compiling with clang & gfortran
           echo "FC=$(which gfortran-12)" >> "$GITHUB_ENV"
       # - name: Set vcpkg triplet on Windows (mingw)
@@ -327,7 +327,6 @@ jobs:
         run: |
           echo "CMAKE_ARGS_TEST=${{ env.CMAKE_ARGS_TEST }} -DREQUIRE_RMQ=ON" >> "$GITHUB_ENV"
       - name: REST config flags
-        if: matrix.os != 'windows-latest'  # TODO: Verify curl installed for windows pip builds
         shell: bash -l {0}
         run: |
           echo "CMAKE_ARGS_TEST=${{ env.CMAKE_ARGS_TEST }} -DREQUIRE_REST=ON" >> "$GITHUB_ENV"
