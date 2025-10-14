@@ -715,6 +715,7 @@ function(add_mixed_language_library target library_type)
         ${target} PRIVATE "$<TARGET_OBJECTS:${${ilanguage}_target}>"
       )
       if (WIN32)
+        include(CreateMSVCLib)
         create_lib_for_target(
           ${target} SOURCE_TARGET ${${ilanguage}_target}
         )

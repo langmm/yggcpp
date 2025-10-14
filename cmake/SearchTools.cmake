@@ -305,6 +305,9 @@ function(find_package_generic name)
     if(${name}_FOUND)
       message(DEBUG "${name} found using ${method}")
       break()
+    else()
+      message(DEBUG "${name} could not be found using ${method}")
+      dump_cmake_variables(REGEX "^${name}*" LOG_LEVEL DEBUG)
     endif()
   endforeach()
 
@@ -346,19 +349,26 @@ function(find_package_brute name)
   endif()
 
   if(NOT ${name}_INCLUDE_DIR)
-    find_path(
-      ${name}_INCLUDE_DIR
-      NAMES ${ARGS_HEADER}
-      PATHS ${ARGS_HEADER_SEARCH_PATH}
-    )
+    if(ARGS_HEADER_SEARCH_PATH)
+      find_path(
+        ${name}_INCLUDE_DIR
+        NAMES ${ARGS_HEADER}
+        PATHS ${ARGS_HEADER_SEARCH_PATH}
+      )
+    else()
+      find_path(
+        ${name}_INCLUDE_DIR
+        NAMES ${ARGS_HEADER}
+      )
+    endif()
     if(${name}_INCLUDE_DIR STREQUAL "${name}_INCLUDE_DIR-NOTFOUND")
       message(DEBUG "Failed to find ${name}_INCLUDE_DIR")
-      foreach(dir IN LISTS ARGS_HEADER_SEARCH_PATH)
-        execute_process(
-          COMMAND ls ${dir}
-          COMMAND_ECHO STDOUT
-        )
-      endforeach()
+      # foreach(dir IN LISTS ARGS_HEADER_SEARCH_PATH)
+      #   execute_process(
+      #     COMMAND ls ${dir}
+      #     COMMAND_ECHO STDOUT
+      #   )
+      # endforeach()
       set(${name}_INCLUDE_DIR)
     elseif(NOT ${name}_INCLUDE_DIRS)
       set(${name}_INCLUDE_DIRS ${${name}_INCLUDE_DIR})
@@ -366,20 +376,28 @@ function(find_package_brute name)
   endif()
 
   if(NOT ${name}_LIBRARY)
-    find_library(
-      ${name}_LIBRARY
-      NAMES ${ARGS_LIBNAMES}
-      PATHS ${ARGS_LIBRARY_SEARCH_PATH}
-      NO_CACHE
-    )
+    if(ARGS_LIBRARY_SEARCH_PATH)
+      find_library(
+        ${name}_LIBRARY
+        NAMES ${ARGS_LIBNAMES}
+        PATHS ${ARGS_LIBRARY_SEARCH_PATH}
+        NO_CACHE
+      )
+    else()
+      find_library(
+        ${name}_LIBRARY
+        NAMES ${ARGS_LIBNAMES}
+        NO_CACHE
+      )
+    endif()
     if(${name}_LIBRARY STREQUAL "${name}_LIBRARY-NOTFOUND")
       message(DEBUG "Failed to find ${name}_LIBRARY")
-      foreach(dir IN LISTS ARGS_LIBRARY_SEARCH_PATH)
-        execute_process(
-          COMMAND ls ${dir}
-          COMMAND_ECHO STDOUT
-        )
-      endforeach()
+      # foreach(dir IN LISTS ARGS_LIBRARY_SEARCH_PATH)
+      #   execute_process(
+      #     COMMAND ls ${dir}
+      #     COMMAND_ECHO STDOUT
+      #   )
+      # endforeach()
       set(${name}_LIBRARY)
     endif()
   endif()
@@ -440,20 +458,25 @@ function(find_package_pkgconfig name)
   endif()
 
   find_package(PkgConfig)
-  set(pkg_check_args)
+  if(NOT PkgConfig_FOUND)
+    message(DEBUG "Could not locate PkgConfig")
+    return()
+  endif()
+  set(ARGS_PKGCONFIG)
   if(ARGS_REQUIRED)
-    list(APPEND pkg_check_args REQUIRED)
+    list(APPEND ARGS_PKGCONFIG REQUIRED)
   # else()
-  #   list(APPEND pkg_check_args QUIET)
+  #   list(APPEND ARGS_PKGCONFIG QUIET)
   endif()
   # if(ARGS_IMPORTED_TARGET)
-  #   list(APPEND pkg_check_args IMPORTED_TARGET ${ARGS_IMPORTED_TARGET})
+  #   list(APPEND ARGS_PKGCONFIG IMPORTED_TARGET ${ARGS_IMPORTED_TARGET})
   #   if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.13")
-  #     list(APPEND pkg_check_args GLOBAL)
+  #     list(APPEND ARGS_PKGCONFIG GLOBAL)
   #   endif()
   # endif()
   set(PN "PC_${name}")
-  pkg_check_modules(${PN} ${pkg_check_args} ${ARGS_LIBNAMES})
+  list(APPEND ARGS_PKGCONFIG ${ARGS_LIBNAMES})
+  pkg_search_module(${PN} ${ARGS_PKGCONFIG})
   if((NOT ${PN}_FOUND) AND ${PN}_STATIC_FOUND)
     # TODO: Finalize this separately & add alias?
     message(DEBUG "Using located static library for ${name}")
