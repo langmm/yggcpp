@@ -11,7 +11,7 @@ fi
 cd conda_build
 cmake ${CMAKE_ARGS} \
       -G "Ninja" \
-      -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON \
+      -D VERBOSE:BOOL=ON \
       -D Python3_EXECUTABLE=$PYTHON \
       -D BUILD_CXX_LIBRARY:BOOL=ON \
       -D BUILD_Python_LIBRARY:BOOL=OFF \

@@ -142,76 +142,24 @@ function(find_package_python)
     propagate_cmake_library_variables("^Python*")
 endfunction()
 
-function(find_package_generic name)
-  set(options REQUIRED NO_DEFAULT NO_PKGCONFIG NO_CONDA)
+function(finalize_package name)
   set(oneValueArgs HEADER IMPORTED_TARGET)
-  set(multiValueArgs LIBNAMES SEARCH_ORDER ADDITIONAL_PROPERTIES)
+  set(multiValueArgs LIBNAMES)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-  if (NOT ARGS_LIBNAMES)
-    list(APPEND ARGS_LIBNAMES ${name})
-  endif()
-  if (NOT ARGS_HEADER)
-    list(GET ARGS_LIBNAMES 0 FIRST_NAME)
-    set(ARGS_HEADER ${FIRST_NAME}.h)
-  endif()
-  if(NOT ARGS_SEARCH_ORDER)
-    set(ARGS_SEARCH_ORDER DEFAULT PKGCONFIG CONDA)
-  endif()
-  set(SEARCH_ARGS LIBNAMES ${LIBNAMES} HEADER ${HEADER})
-  if(ARGS_IMPORTED_TARGET)
-    list(APPEND SEARCH_ARGS IMPORTED_TARGET ${ARGS_IMPORTED_TARGET})
-  endif()
-  if(ARGS_ADDITIONAL_PROPERTIES)
-    list(APPEND SEARCH_ARGS ADDITIONAL_PROPERTIES ${ARGS_ADDITIONAL_PROPERTIES})
-  endif()
-  if(ARGS_UNPARSED_ARGUMENTS)
-    list(APPEND SEARCH_ARGS ${ARGS_UNPARSED_ARGUMENTS})
-  endif()
-
-  set(BRUTE_SEARCH_PERFORMED OFF)
-  foreach(method IN LISTS ARGS_SEARCH_ORDER)
-    if(ARGS_NO_${method})
-      continue()
-    endif()
-    message(DEBUG "Searching for ${name} using ${method}")
-    if(method STREQUAL "DEFAULT")
-      find_package(${name} ${ARGS_UNPARSED_ARGUMENTS})
-    elseif(method STREQUAL "DEFAULT_CONFIG")
-      find_package(${name} CONFIG ${ARGS_UNPARSED_ARGUMENTS})
-    elseif(method STREQUAL "CONDA")
-      find_package_conda(${name} ${SEARCH_ARGS})
-    elseif(method STREQUAL "PKGCONFIG")
-      find_package_pkgconfig(${name} ${SEARCH_ARGS})
-    elseif(method STREQUAL "BRUTE")
-      find_package_brute(${name} ${SEARCH_ARGS})
-    else()
-      message(FATAL_ERROR "Unsupported method \"${method}\"")
-    endif()
-    if(${name}_FOUND)
-      message(DEBUG "${name} found using ${method}")
-      break()
-    endif()
-  endforeach()
-
-  if((NOT ${name}_FOUND) AND (NOT ${name}_BRUTE_SEARCH_PERFORMED))
-    find_package_brute(${name} ${SEARCH_ARGS})
-  endif()
-
-  if(ARGS_REQUIRED AND NOT ${name}_FOUND)
-    message(FATAL_ERROR "Failed to find package \"${name}\"")
-  endif()
-
-  if(${name}_CONFIG)
-    include(${${name}_CONFIG})
-  endif()
-  
   if(${name}_FOUND AND ARGS_IMPORTED_TARGET)
     create_interface_library(
       ${name} TARGET ${ARGS_IMPORTED_TARGET}
       LIBNAMES ${ARGS_LIBNAMES}
     )
   endif()
-  dump_cmake_variables(REGEX "^${name}*" LOG_LEVEL DEBUG)
+  if(${name}_FOUND AND NOT TARGET ${name}_LIBRARY)
+    foreach(itarget ${ARGS_IMPORTED_TARGET} ${name} ${ARGS_LIBNAMES})
+      if(TARGET ${itarget})
+        set(${name}_LIBRARY ${itarget})
+        break()
+      endif()
+    endforeach()
+  endif()
   propagate_cmake_library_variables("^${name}*" ${ARGS_ADDITIONAL_PROPERTIES})
 endfunction()
 
@@ -226,20 +174,17 @@ function(create_interface_library package)
   # From current scope variables
   if(TARGET ${target})
     message(DEBUG "${target} is already a target")
-    set(${package}_LIBRARY ${target} PARENT_SCOPE)
     return()
   endif()
   if(${package}_LIBRARY AND TARGET ${${package}_LIBRARY})
     message(DEBUG "Creating target \"${target}\" by aliassing \"${${package}_LIBRARY}\"")
     add_library(${target} ALIAS ${${package}_LIBRARY})
-    set(${package}_LIBRARY ${target} PARENT_SCOPE)
     return()
   endif()
   foreach(ilib IN LISTS ARGS_LIBNAMES)
     if(TARGET ${ilib})
       message(DEBUG "Creating target \"${target}\" by aliassing \"${ilib}\"")
       add_library(${target} ALIAS ${ilib})
-      set(${package}_LIBRARY ${target} PARENT_SCOPE)
       return()
     endif()
   endforeach()
@@ -308,7 +253,80 @@ function(create_interface_library package)
       # ${${package}_CFLAGS_OTHER}  # Not required
     )
   endif()
-  set(${package}_LIBRARY ${target} PARENT_SCOPE)
+  propagate_cmake_library_variables("^${name}*")
+endfunction()
+
+function(find_package_generic name)
+  set(options REQUIRED NO_DEFAULT NO_PKGCONFIG NO_CONDA)
+  set(oneValueArgs HEADER IMPORTED_TARGET)
+  set(multiValueArgs LIBNAMES SEARCH_ORDER ADDITIONAL_PROPERTIES)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  if (NOT ARGS_LIBNAMES)
+    list(APPEND ARGS_LIBNAMES ${name})
+  endif()
+  if (NOT ARGS_HEADER)
+    list(GET ARGS_LIBNAMES 0 FIRST_NAME)
+    set(ARGS_HEADER ${FIRST_NAME}.h)
+  endif()
+  if(NOT ARGS_SEARCH_ORDER)
+    set(ARGS_SEARCH_ORDER DEFAULT PKGCONFIG CONDA)
+  endif()
+  set(SEARCH_ARGS LIBNAMES ${LIBNAMES} HEADER ${HEADER})
+  if(ARGS_IMPORTED_TARGET)
+    list(APPEND SEARCH_ARGS IMPORTED_TARGET ${ARGS_IMPORTED_TARGET})
+  endif()
+  if(ARGS_ADDITIONAL_PROPERTIES)
+    list(APPEND SEARCH_ARGS ADDITIONAL_PROPERTIES ${ARGS_ADDITIONAL_PROPERTIES})
+  endif()
+  if(ARGS_UNPARSED_ARGUMENTS)
+    list(APPEND SEARCH_ARGS ${ARGS_UNPARSED_ARGUMENTS})
+  endif()
+  message(DEBUG "find_package_generic[${name}]: HEADER = ${ARGS_HEADER}, LIBNAMES = ${ARGS_LIBNAMES}, SEARCH_ORDER = ${ARGS_SEARCH_ORDER}, UNPARSED_ARGUMENTS = ${ARGS_UNPARSED_ARGUMENTS}")
+
+  foreach(method IN LISTS ARGS_SEARCH_ORDER)
+    if(ARGS_NO_${method})
+      continue()
+    endif()
+    message(DEBUG "Searching for ${name} using ${method}")
+    if(method STREQUAL "DEFAULT")
+      find_package(${name} ${ARGS_UNPARSED_ARGUMENTS})
+    elseif(method STREQUAL "DEFAULT_CONFIG")
+      find_package(${name} CONFIG ${ARGS_UNPARSED_ARGUMENTS})
+    elseif(method STREQUAL "CONDA")
+      find_package_conda(${name} ${SEARCH_ARGS})
+    elseif(method STREQUAL "PKGCONFIG")
+      find_package_pkgconfig(${name} ${SEARCH_ARGS})
+    elseif(method STREQUAL "BRUTE")
+      find_package_brute(${name} ${SEARCH_ARGS})
+    else()
+      message(FATAL_ERROR "Unsupported method \"${method}\"")
+    endif()
+    if(${name}_FOUND)
+      message(DEBUG "${name} found using ${method}")
+      break()
+    endif()
+  endforeach()
+
+  if((NOT ${name}_FOUND) AND (NOT ${name}_BRUTE_SEARCH_PERFORMED))
+    find_package_brute(${name} ${SEARCH_ARGS})
+  endif()
+
+  if(ARGS_REQUIRED AND NOT ${name}_FOUND)
+    message(FATAL_ERROR "Failed to find package \"${name}\"")
+  endif()
+
+  if(${name}_CONFIG)
+    include(${${name}_CONFIG})
+  endif()
+
+  finalize_package(
+    ${name}
+    HEADER ${ARGS_HEADER}
+    LIBNAMES ${ARGS_LIBNAMES}
+    IMPORTED_TARGET ${ARGS_IMPORTED_TARGET}
+  )
+  dump_cmake_variables(REGEX "^${name}*" LOG_LEVEL DEBUG)
+  propagate_cmake_library_variables("^${name}*" ${ARGS_ADDITIONAL_PROPERTIES})
 endfunction()
 
 function(find_package_brute name)
@@ -324,54 +342,60 @@ function(find_package_brute name)
     set(ARGS_HEADER ${FIRST_NAME}.h)
   endif()
 
-  find_path(
-    ${name}_INCLUDE_DIR
-    NAMES ${ARGS_HEADER}
-    PATHS ${ARGS_HEADER_SEARCH_PATH}
-  )
-  if(${name}_INCLUDE_DIR STREQUAL "${name}_INCLUDE_DIR-NOTFOUND")
-    message(DEBUG "Failed to find ${name}_INCLUDE_DIR")
-    foreach(dir IN LISTS ARGS_HEADER_SEARCH_PATH)
-      execute_process(
-        COMMAND ls ${dir}
-        COMMAND_ECHO STDOUT
-      )
-    endforeach()
-    set(${name}_INCLUDE_DIR)
-  else()
-    set(${name}_INCLUDE_DIRS ${${name}_INCLUDE_DIR})
+  if(NOT ${name}_INCLUDE_DIR)
+    find_path(
+      ${name}_INCLUDE_DIR
+      NAMES ${ARGS_HEADER}
+      PATHS ${ARGS_HEADER_SEARCH_PATH}
+    )
+    if(${name}_INCLUDE_DIR STREQUAL "${name}_INCLUDE_DIR-NOTFOUND")
+      message(DEBUG "Failed to find ${name}_INCLUDE_DIR")
+      foreach(dir IN LISTS ARGS_HEADER_SEARCH_PATH)
+        execute_process(
+          COMMAND ls ${dir}
+          COMMAND_ECHO STDOUT
+        )
+      endforeach()
+      set(${name}_INCLUDE_DIR)
+    elseif(NOT ${name}_INCLUDE_DIRS)
+      set(${name}_INCLUDE_DIRS ${${name}_INCLUDE_DIR})
+    endif()
   endif()
-  find_library(
-    ${name}_LIBRARY
-    NAMES ${ARGS_LIBNAMES}
-    PATHS ${ARGS_LIBRARY_SEARCH_PATH}
-    NO_CACHE
-  )
-  if(${name}_LIBRARY STREQUAL "${name}_LIBRARY-NOTFOUND")
-    message(DEBUG "Failed to find ${name}_LIBRARY")
-    foreach(dir IN LISTS ARGS_LIBRARY_SEARCH_PATH)
-      execute_process(
-        COMMAND ls ${dir}
-        COMMAND_ECHO STDOUT
-      )
-    endforeach()
-    set(${name}_LIBRARY)
+
+  if(NOT ${name}_LIBRARY)
+    find_library(
+      ${name}_LIBRARY
+      NAMES ${ARGS_LIBNAMES}
+      PATHS ${ARGS_LIBRARY_SEARCH_PATH}
+      NO_CACHE
+    )
+    if(${name}_LIBRARY STREQUAL "${name}_LIBRARY-NOTFOUND")
+      message(DEBUG "Failed to find ${name}_LIBRARY")
+      foreach(dir IN LISTS ARGS_LIBRARY_SEARCH_PATH)
+        execute_process(
+          COMMAND ls ${dir}
+          COMMAND_ECHO STDOUT
+        )
+      endforeach()
+      set(${name}_LIBRARY)
+    endif()
   endif()
 
   if(${name}_INCLUDE_DIR AND ${name}_LIBRARY)
     set(${name}_FOUND ON)
   endif()
 
-  if(${name}_FOUND AND ARGS_IMPORTED_TARGET)
-    create_interface_library(
-      ${name} TARGET ${ARGS_IMPORTED_TARGET}
-      LIBNAMES ${ARGS_LIBNAMES}
-    )
-  endif()
   if(ARGS_REQUIRED AND NOT ${name}_FOUND)
     message(STATUS "Failed to find package \"${name}\"")
   endif()
   set(${name}_BRUTE_SEARCH_PERFORMED ON)
+  
+  finalize_package(
+    ${name}
+    HEADER ${ARGS_HEADER}
+    LIBNAMES ${ARGS_LIBNAMES}
+    IMPORTED_TARGET ${ARGS_IMPORTED_TARGET}
+  )
   propagate_cmake_library_variables("^${name}*")
 endfunction()
 
@@ -390,8 +414,8 @@ function(find_package_conda name)
     endif()
     find_package_brute(
       ${name} ${ARGN}
+      HEADER_SEARCH_PATH ${INCLUDE_DIRS}
       LIBRARY_SEARCH_PATH ${LIBRARY_DIRS}
-      HEADER_SEARCH_PATH ${LIBRARY_DIRS}
     )
   endif()
 
@@ -427,13 +451,15 @@ function(find_package_pkgconfig name)
   # endif()
   pkg_check_modules(PC_${name} ${pkg_check_args} ${ARGS_LIBNAMES})
   message(DEBUG "PC_${name}_FOUND = ${PC_${name}_FOUND}")
+  message(DEBUG "PC_${name}_INCLUDE_DIRS = ${PC_${name}_INCLUDE_DIRS}")
+  message(DEBUG "PC_${name}_LIBRARY_DIRS = ${PC_${name}_LIBRARY_DIRS}")
 
   if(PC_${name}_FOUND)
     ## use the hints from above to find where 'lib*' & '*.h' are located
     dump_cmake_variables(REGEX "^PC_${name}*" OUTPUT_VAR PC_VARS VERBOSE)
     foreach(pcvar IN LISTS PC_VARS)
       string(REPLACE "PC_${name}" "${name}" ivar "${pcvar}")
-      set(${ivar} "${pcvar}")
+      set(${ivar} "${${pcvar}}")
     endforeach()
     if(TARGET PkgConfig::PC_${name})
       add_library(${name} ALIAS PkgConfig::PC_${name})
@@ -444,15 +470,15 @@ function(find_package_pkgconfig name)
   endif()
   find_package_brute(
     ${name} LIBNAMES ${ARGS_LIBNAMES} HEADER ${ARGS_HEADER}
-    HEADER_SEARCH_PATH ${PC_${name}_INCLUDE_DIRS}
-    LIBRARY_SEARCH_PATH ${PC_${name}_LIBRARY_DIRS}
+    HEADER_SEARCH_PATH ${PC_${name}_INCLUDE_DIRS} ${PC_${name}_INCLUDE_DIRS}/*
+    LIBRARY_SEARCH_PATH ${PC_${name}_LIBRARY_DIRS} ${PC_${name}_LIBRARY_DIRS}/*
   )
-  if(${name}_FOUND AND ARGS_IMPORTED_TARGET)
-    create_interface_library(
-      ${name} TARGET ${ARGS_IMPORTED_TARGET}
-      LIBNAMES ${ARGS_LIBNAMES}
-    )
-  endif()
+  finalize_package(
+    ${name}
+    HEADER ${ARGS_HEADER}
+    LIBNAMES ${ARGS_LIBNAMES}
+    IMPORTED_TARGET ${ARGS_IMPORTED_TARGET}
+  )
   propagate_cmake_library_variables("^${name}*" ${ARGS_ADDITIONAL_PROPERTIES})
 endfunction()
 
