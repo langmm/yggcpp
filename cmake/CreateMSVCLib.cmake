@@ -92,7 +92,7 @@ function(create_lib_for_target target)
   
   add_custom_command(
     TARGET ${target}
-    DEPENDS ${src_target}
+    # DEPENDS ${src_target}
     PRE_LINK
     COMMAND ${CMAKE_COMMAND} -E echo "TARGET_OBJECTS for ${src_target} $<TARGET_OBJECTS:${src_target}>"
     COMMAND dlltool --export-all-symbols -z $<TARGET_FILE_DIR:${target}>\\${deffile} $<TARGET_OBJECTS:${src_target}>

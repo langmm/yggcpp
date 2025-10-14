@@ -161,6 +161,13 @@ function(finalize_package name)
       endif()
     endforeach()
   endif()
+  if(${name}_FOUND AND ${name}_LIBRARY AND (NOT ${name}_LIBRARY_DIR) AND
+     (EXISTS ${${name}_LIBRARY}))
+    cmake_path(
+      REMOVE_FILENAME ${name}_LIBRARY
+      OUTPUT_VARIABLE ${name}_LIBRARY_DIR
+    )
+  endif()
   propagate_cmake_library_variables("^${name}*" ${ARGS_ADDITIONAL_PROPERTIES})
 endfunction()
 
@@ -279,6 +286,9 @@ function(find_package_generic name)
   if(NOT ARGS_SEARCH_ORDER)
     set(ARGS_SEARCH_ORDER DEFAULT PKGCONFIG CONDA)
   endif()
+  # if(NOT ARGS_IMPORTED_TARGET)
+  #   set(ARGS_IMPORTED_TARGET ${name})
+  # endif()
   set(SEARCH_ARGS LIBNAMES ${ARGS_LIBNAMES} HEADER ${ARGS_HEADER})
   if(ARGS_IMPORTED_TARGET)
     list(APPEND SEARCH_ARGS IMPORTED_TARGET ${ARGS_IMPORTED_TARGET})
@@ -563,67 +573,6 @@ function(find_dll_from_implib implib VAR)
     set(${VAR} ${dll} PARENT_SCOPE)
   endif()
 endfunction()
-
-function(find_package_zmq)
-  set(options REQUIRED)
-  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-
-  set(LIBNAMES zmq libzmq libzmq-static)
-  set(HEADER zmq.h)
-  set(IMPORTED_TARGET ZeroMQ)
-  set(SEARCH_ARGS LIBNAMES ${LIBNAMES} HEADER ${HEADER}
-      IMPORTED_TARGET ${IMPORTED_TARGET})
-  if(WIN32)
-    set(ARGS_REQUIRED ON)  # Force error
-  endif()
-  if(ARGS_REQUIRED)
-    list(APPEND SEARCH_ARGS REQUIRED)
-  endif()
-
-  # Conda version has CMake config, but source code uses pkg-config
-  find_package_generic(
-    ZeroMQ ${SEARCH_ARGS}
-    SEARCH_ORDER DEFAULT_CONFIG CONDA PKGCONFIG
-  )
-
-  # if (ZeroMQ_FOUND)
-  #   if (WIN32 AND ZeroMQ_LIBRARY AND NOT TARGET ${ZeroMQ_LIBRARY})
-  #     string(FIND ${ZeroMQ_LIBRARY} ".dll" ZeroMQ_DLL_POS)
-  #     if (NOT "${ZeroMQ_DLL_POS}" STREQUAL "-1")
-  #       message(DEBUG "Located ZeroMQ DLL: ${ZeroMQ_LIBRARY}")
-  #       find_implib_from_dll(${ZeroMQ_LIBRARY} ZeroMQ_IMPLIB)
-  #       message(DEBUG "Located ZeroMQ IMP: ${ZeroMQ_IMPLIB}")
-  #     endif()
-  #   endif()
-  #   if(TARGET ZeroMQ)
-  #     message(DEBUG "ZeroMQ is already TARGET")
-  #   elseif(ZeroMQ_LIBRARY AND TARGET ${ZeroMQ_LIBRARY})
-  #     message(DEBUG "ZeroMQ_LIBRARY is TARGET ${ZeroMQ_LIBRARY}")
-  #     add_library(ZeroMQ ALIAS ${ZeroQM_LIBRARY})
-  #   elseif(TARGET libzmq)
-  #     message(DEBUG "libzmq target exists (ZeroMQ_LIBRARY = ${ZeroMQ_LIBRARY})")
-  #     add_library(ZeroMQ ALIAS libzmq)
-  #   elseif(TARGET libzmq-static)
-  #     message(DEBUG "libzmq-static target exists (ZeroMQ_LIBRARY = ${ZeroMQ_LIBRARY})")
-  #     add_library(ZeroMQ ALIAS libzmq-static)
-  #   else()
-  #     message(DEBUG "Creating ZeroMQ interface target ZeroMQ_LIBRARY = ${ZeroMQ_LIBRARY}, ZeroMQ_IMPLIB = ${ZeroMQ_IMPLIB}")
-  #     create_interface_library(ZeroMQ)
-  #     # if(ZeroMQ_IMPLIB)
-  #     #   set_target_properties(
-  #     #       ZeroMQ PROPERTIES
-  #     #       IMPORTED_IMPLIB ${ZeroMQ_IMPLIB}
-  #     #   )
-  #     # endif()
-  #   endif()
-  # endif()
-  # set(ZeroMQ_FOUND ${ZeroMQ_FOUND} PARENT_SCOPE)
-  # set(ZeroMQ_LIBRARY ${ZeroMQ_LIBRARY} PARENT_SCOPE)
-  # set(ZeroMQ_STATIC_LIBRARY ${ZeroMQ_STATIC_LIBRARY} PARENT_SCOPE)
-  # set(ZeroMQ_INCLUDE_DIR ${ZeroMQ_INCLUDE_DIR} PARENT_SCOPE)
-  propagate_cmake_library_variables("^ZeroMQ*")
-endfunction()
-
 
 function(check_suffixes filename output)
   set(multiValueArgs INCLUDE IGNORE)

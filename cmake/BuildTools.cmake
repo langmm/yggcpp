@@ -919,6 +919,7 @@ function(add_external_library target library_type)
     ARGUMENTS ${ARGS_BUILD_ARGUMENTS}
   )
   set(external_target_name ${target}_build)
+  message(STATUS "GENERATOR = ${ARGS_GENERATOR}")
   message(STATUS "CONFIGURE_COMMAND = ${CONFIGURE_COMMAND}")
   message(STATUS "BUILD_COMMAND = ${BUILD_COMMAND}")
   include(ExternalProject)
