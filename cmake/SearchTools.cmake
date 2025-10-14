@@ -512,7 +512,7 @@ function(find_package_pkgconfig name)
 
   if(${PN}_FOUND)
     ## use the hints from above to find where 'lib*' & '*.h' are located
-    # dump_cmake_variables(REGEX "^${PN}*" OUTPUT_VAR PC_VARS VERBOSE)
+    dump_cmake_variables(REGEX "^${PN}*" OUTPUT_VAR PC_VARS)
     foreach(pcvar IN LISTS PC_VARS)
       string(REPLACE "${PN}" "${name}" ivar "${pcvar}")
       set(${ivar} "${${pcvar}}")
