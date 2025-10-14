@@ -208,14 +208,14 @@ function(create_interface_library package)
         endif()
       endif()
     endif()
-    set_target_properties(
-      ${target} PROPERTIES
+    set_property(
+      TARGET ${target} PROPERTY
       IMPORTED_LOCATION ${${package}_LIBRARY}
     )
   endif()
   if(WIN32 AND ${package}_IMPLIB)
-    set_target_properties(
-      ${target} PROPERTIES
+    set_property(
+      TARGET ${target} PROPERTY
       IMPORTED_IMPLIB ${${package}_IMPLIB}
     )
   endif()
@@ -223,33 +223,33 @@ function(create_interface_library package)
     add_dependencies(${target} ${${package}_LIBRARIES})
   endif()
   if(${package}_LIBRARY_DIRS)
-    set_target_properties(
-      ${target} PROPERTIES
+    set_property(
+      TARGET ${target} PROPERTY
       INTERFACE_LINK_DIRECTORIES ${${package}_LIBRARY_DIRS}
     )
   endif()
   if(${package}_LINK_LIBRARIES)
-    set_target_properties(
-      ${target} PROPERTIES
+    set_property(
+      TARGET ${target} PROPERTY
       INTERFACE_LINK_LIBRARIES ${${package}_LINK_LIBRARIES}
     )
   endif()
   if(${package}_LDFLAGS)
-    set_target_properties(
-      ${target} PROPERTIES
+    set_property(
+      TARGET ${target} PROPERTY
       INTERFACE_LINK_OPTIONS ${${package}_LDFLAGS}
       # ${${package}_LDFLAGS_OTHER}  # Not required
     )
   endif()
   if(${package}_INCLUDE_DIRS)
-    set_target_properties(
-      ${target} PROPERTIES
+    set_property(
+      TARGET ${target} PROPERTY
       INTERFACE_INCLUDE_DIRECTORIES ${${package}_INCLUDE_DIRS}
     )
   endif()
   if(${package}_CFLAGS)
-    set_target_properties(
-      ${target} PROPERTIES
+    set_property(
+      TARGET ${target} PROPERTY
       INTERFACE_COMPILE_OPTIONS ${${package}_CFLAGS}
       # ${${package}_CFLAGS_OTHER}  # Not required
     )

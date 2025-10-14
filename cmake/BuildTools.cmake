@@ -982,31 +982,31 @@ function(add_import_library target library_type library)
   # if(library_type STREQUAL "OBJECT" AND NOT ARGS_OBJECTS)
   #   message(FATAL_ERROR "No OBJECTS provided for OBJECT IMPORT library")
   # endif()
-  set_target_properties(
-    ${target} PROPERTIES
+  set_property(
+    TARGET ${target} PROPERTY
     IMPORTED_LOCATION ${library}
   )
   if(ARGS_LINK_DIRECTORIES)
-    set_target_properties(
-      ${target} PROPERTIES
+    set_property(
+      TARGET ${target} PROPERTY
       INTERFACE_LINK_DIRECTORIES ${ARGS_LINK_DIRECTORIES}
     )
   endif()
   if(ARGS_OBJECTS)
     set_property(
-      TARGET ${target}
+      TARGET ${target} PROPERTY
       PROPERTY IMPORTED_OBJECTS ${ARGS_OBJECTS}
     )
   endif()
   if(ARGS_LIBRARIES)
-    set_target_properties(
-      ${target} PROPERTIES
+    set_property(
+      TARGET ${target} PROPERTY
       INTERFACE_LINK_LIBRARIES ${ARGS_LIBRARIES}
     )
   endif()
   if(ARGS_DEFINITIONS)
-    set_target_properties(
-      ${target} PROPERTIES
+    set_property(
+      TARGET ${target} PROPERTY
       INTERFACE_COMPILE_DEFINITIONS "${ARGS_DEFINITIONS}"
     )
   endif()
@@ -1017,8 +1017,8 @@ function(add_import_library target library_type library)
     if(NOT ARGS_IMPORT_LIBRARY)
       message(FATAL_ERROR "IMPORT_LIBRARY must be defined for windows build")
     endif()
-    set_target_properties(
-      ${target} PROPERTIES
+    set_property(
+      TARGET ${target} PROPERTY
       IMPORTED_IMPLIB ${ARGS_IMPORT_LIBRARY}
     )
   endif()
