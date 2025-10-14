@@ -152,10 +152,11 @@ function(finalize_package name)
       LIBNAMES ${ARGS_LIBNAMES}
     )
   endif()
-  if(${name}_FOUND AND NOT TARGET ${name}_LIBRARY)
-    foreach(itarget ${ARGS_IMPORTED_TARGET} ${name} ${ARGS_LIBNAMES})
+  if(${name}_FOUND AND NOT ${name}_LIBRARY_TARGET)
+    foreach(itarget ${ARGS_IMPORTED_TARGET} ${name}
+            ${ARGS_LIBNAMES} ${${name}_LIBRARY})
       if(TARGET ${itarget})
-        set(${name}_LIBRARY ${itarget})
+        set(${name}_LIBRARY_TARGET ${itarget})
         break()
       endif()
     endforeach()
@@ -307,16 +308,18 @@ function(find_package_generic name)
     endif()
   endforeach()
 
+  if(${name}_CONFIG)
+    message(DEBUG "${name}_CONFIG = ${${name}_CONFIG}")
+    include(${${name}_CONFIG})
+  endif()
+
   if((NOT ${name}_FOUND) AND (NOT ${name}_BRUTE_SEARCH_PERFORMED))
+    message(DEBUG "Final brute force effort to find ${name}")
     find_package_brute(${name} ${SEARCH_ARGS})
   endif()
 
   if(ARGS_REQUIRED AND NOT ${name}_FOUND)
     message(FATAL_ERROR "Failed to find package \"${name}\"")
-  endif()
-
-  if(${name}_CONFIG)
-    include(${${name}_CONFIG})
   endif()
 
   finalize_package(
@@ -449,29 +452,41 @@ function(find_package_pkgconfig name)
   #     list(APPEND pkg_check_args GLOBAL)
   #   endif()
   # endif()
-  pkg_check_modules(PC_${name} ${pkg_check_args} ${ARGS_LIBNAMES})
-  message(DEBUG "PC_${name}_FOUND = ${PC_${name}_FOUND}")
-  message(DEBUG "PC_${name}_INCLUDE_DIRS = ${PC_${name}_INCLUDE_DIRS}")
-  message(DEBUG "PC_${name}_LIBRARY_DIRS = ${PC_${name}_LIBRARY_DIRS}")
+  set(PN "PC_${name}")
+  pkg_check_modules(${PN} ${pkg_check_args} ${ARGS_LIBNAMES})
+  if((NOT ${PN}_FOUND) AND ${PN}_STATIC_FOUND)
+    # TODO: Finalize this separately & add alias?
+    message(DEBUG "Using located static library for ${name}")
+    set(PN "${PN}_STATIC")
+  endif()
+  message(DEBUG "${PN}_FOUND = ${${PN}_FOUND}")
+  message(DEBUG "${PN}_INCLUDE_DIRS = ${${PN}_INCLUDE_DIRS}")
+  message(DEBUG "${PN}_LIBRARY_DIRS = ${${PN}_LIBRARY_DIRS}")
 
-  if(PC_${name}_FOUND)
+  if(${PN}_FOUND)
     ## use the hints from above to find where 'lib*' & '*.h' are located
-    dump_cmake_variables(REGEX "^PC_${name}*" OUTPUT_VAR PC_VARS VERBOSE)
+    dump_cmake_variables(REGEX "^${PN}*" OUTPUT_VAR PC_VARS VERBOSE)
     foreach(pcvar IN LISTS PC_VARS)
-      string(REPLACE "PC_${name}" "${name}" ivar "${pcvar}")
+      string(REPLACE "${PN}" "${name}" ivar "${pcvar}")
       set(${ivar} "${${pcvar}}")
     endforeach()
-    if(TARGET PkgConfig::PC_${name})
-      add_library(${name} ALIAS PkgConfig::PC_${name})
+    if(TARGET PkgConfig::${PN})
+      add_library(${name} ALIAS PkgConfig::${PN})
     endif()
-    if(PC_${name}_FOUND AND NOT ${name}_FOUND)
+    if(${PN}_FOUND AND NOT ${name}_FOUND)
       message(FATAL_ERROR "Error setting variables from PC vars")
     endif()
   endif()
+  if(${PN}_INCLUDE_DIRS)
+    list(APPEND HEADER_SEARCH_PATH ${${PN}_INCLUDE_DIRS} ${${PN}_INCLUDE_DIRS}/*)
+  endif()
+  if(${PN}_LIBRARY_DIRS)
+    list(APPEND LIBRARY_SEARCH_PATH ${${PN}_LIBRARY_DIRS} ${${PN}_LIBRARY_DIRS}/*)
+  endif()
   find_package_brute(
     ${name} LIBNAMES ${ARGS_LIBNAMES} HEADER ${ARGS_HEADER}
-    HEADER_SEARCH_PATH ${PC_${name}_INCLUDE_DIRS} ${PC_${name}_INCLUDE_DIRS}/*
-    LIBRARY_SEARCH_PATH ${PC_${name}_LIBRARY_DIRS} ${PC_${name}_LIBRARY_DIRS}/*
+    HEADER_SEARCH_PATH ${HEADER_SEARCH_PATH}
+    LIBRARY_SEARCH_PATH ${LIBRARY_SEARCH_PATH}
   )
   finalize_package(
     ${name}
