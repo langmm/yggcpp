@@ -29,10 +29,13 @@ requirements:
     - if: win
       then:
         - make
-        # - m2w64-make
-        # - ${{ compiler('m2w64_fortran') }}
+        - ${{ stdlib('m2w64_c') }}
+        - ${{ compiler('m2w64_c') }}
+        - ${{ compiler('m2w64_cxx') }}
+        - ${{ compiler('m2w64_fortran') }}
     - ninja
     - numpy >=1.13.0
+    - pkgconfig
     - ${{ stdlib('c') }}
     - ${{ compiler('c') }}
     - ${{ compiler('cxx') }}

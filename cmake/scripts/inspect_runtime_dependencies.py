@@ -70,7 +70,7 @@ class ToolBase(metaclass=ToolMeta):
         if self.cmake_runtimes:
             for cmake_runtime in self.cmake_runtimes:
                 if cmake_runtime.endswith(x):
-                    return x + ' [CMAKE RUNTIME]'
+                    return cmake_runtime + ' [CMAKE RUNTIME]'
         return out
 
     @classmethod

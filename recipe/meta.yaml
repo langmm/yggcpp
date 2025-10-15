@@ -27,6 +27,7 @@ requirements:
     # - m2w64-make  # [win]
     - ninja
     - numpy >=1.13.0
+    - pkgconfig
     - python                                 # [build_platform != target_platform]
     - scikit-build-core
     - setuptools_scm
