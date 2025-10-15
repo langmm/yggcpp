@@ -82,14 +82,25 @@ function(show_runtimes target)
       COMMAND_EXPAND_LISTS
     )
   endif()
-  add_custom_command(
-    TARGET ${after_target}
-    POST_BUILD
-    COMMAND python
-    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/inspect_runtime_dependencies.py
-    $<TARGET_FILE:${target}> --tool=${TOOLNAME}
-    COMMAND_EXPAND_LISTS
-  )
+  if (WIN32)
+    add_custom_command(
+      TARGET ${after_target}
+      POST_BUILD
+      COMMAND python
+      ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/scripts/inspect_runtime_dependencies.py
+      $<TARGET_FILE:${target}> --tool=${TOOLNAME} --cmake-runtimes=$<TARGET_RUNTIME_DLLS:${target}>
+      COMMAND_EXPAND_LISTS
+    )
+  else()
+    add_custom_command(
+      TARGET ${after_target}
+      POST_BUILD
+      COMMAND python
+      ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/scripts/inspect_runtime_dependencies.py
+      $<TARGET_FILE:${target}> --tool=${TOOLNAME}
+      COMMAND_EXPAND_LISTS
+    )
+  endif()
 endfunction()
 
 function(show_symbols target)

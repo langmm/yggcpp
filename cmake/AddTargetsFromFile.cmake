@@ -10,8 +10,32 @@ function(select_targets output_var)
   set(${output_var} ${targets} PARENT_SCOPE)
 endfunction()
 
+function(generate_implicit_libraries_file language target_file)
+  set(multiValueArgs EXTRA_LIBRARIES EXTRA_DIRECTORIES)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  foreach(ilanguage C CXX Fortran)
+    message(STATUS "TODO-EXTERNAL CMAKE_${ilanguage}_IMPLICIT_LINK_LIBRARIES = ${CMAKE_${ilanguage}_IMPLICIT_LINK_LIBRARIES}")
+  endforeach()
+  message(DEBUG "CMAKE_${language}_IMPLICIT_LINK_LIBRARIES = ${CMAKE_${language}_IMPLICIT_LINK_LIBRARIES}")
+  foreach(ilib IN LISTS CMAKE_${language}_IMPLICIT_LINK_LIBRARIES)
+    if(ilib STREQUAL "gfortran" OR ilib STREQUAL "gcc" OR
+       ilib STREQUAL "c++" OR ilib STREQUAL "stdc++" OR
+       ilib STREQUAL "stdc")
+      list(APPEND EXTRA_LIBRARIES ${ilib})
+    endif()
+  endforeach()
+  # list(APPEND EXTRA_LIBRARIES ${CMAKE_${language}_IMPLICIT_LINK_LIBRARIES})
+  list(APPEND EXTRA_DIRECTORIES ${CMAKE_${language}_IMPLICIT_LINK_DIRECTORIES})
+  generate_target_file(
+    ${target_file} NO_CONFIG
+    EXTRA_LIBRARIES ${ARGS_EXTRA_LIBRARIES}
+    EXTRA_DIRECTORIES ${ARGS_EXTRA_DIRECTORIES}
+    ${ARGS_UNPARSED_ARGUMENTS}
+  )
+endfunction()
+
 function(generate_target_file target_file)
-  include(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/SearchTools.cmake)
+  include(SearchTools)
   set(options NO_CONFIG CREATE_LIB FULL_LIBRARIES)
   set(oneValueArgs OUTPUT_VAR DIRECTORY CUSTOM_TARGET)
   set(multiValueArgs TARGETS EXTRA_LIBRARIES EXTRA_DIRECTORIES

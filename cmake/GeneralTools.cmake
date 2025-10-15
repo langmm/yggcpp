@@ -1,3 +1,11 @@
+function(get_path_sep VAR)
+  if(WIN32)
+    set(${VAR} "\;" PARENT_SCOPE)
+  else()
+    set(${VAR} "\:" PARENT_SCOPE)
+  endif()
+endfunction()
+
 function(extension2language EXT VAR)
   if(EXT STREQUAL ".c")
     set(${VAR} C PARENT_SCOPE)
@@ -18,6 +26,18 @@ function(extension2language EXT VAR)
     else()
       message(ERROR "Support for extension \"${EXT}\" not implemented")
     endif()
+  endif()
+endfunction()
+
+function(language2compilerenv language VAR)
+  if(language STREQUAL C)
+    set(${VAR} "CC" PARENT_SCOPE)
+  elseif(language STREQUAL CXX)
+    set(${VAR} "CXX" PARENT_SCOPE)
+  elseif(language STREQUAL Fortran)
+    set(${VAR} "FC" PARENT_SCOPE)
+  else()
+    message(ERROR "Support for language \"${language}\" not implemented")
   endif()
 endfunction()
 
@@ -47,8 +67,24 @@ function(file2language TARGET VAR)
   set(${VAR} ${${VAR}} PARENT_SCOPE)
 endfunction()
 
+function(get_supported_generators VAR)
+  set(output "${CMAKE_GENERATOR}")
+  execute_process(
+    COMMAND python ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/scripts/check_generators.py
+    OUTPUT_VARIABLE RAW_OUTPUT
+    COMMAND_ERROR_IS_FATAL ANY
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+  foreach(iout IN LISTS RAW_OUTPUT)
+    if(NOT iout STREQUAL "${CMAKE_GENERATOR}")
+      list(APPEND output ${iout})
+    endif()
+  endforeach()
+  set(${VAR} ${output} PARENT_SCOPE)
+endfunction()
+
 function(get_supported_languages VAR)
-  set(option COMPILED)
+  set(options COMPILED)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
   if(ARGS_COMPILED)
     set(${VAR} C CXX Fortran)

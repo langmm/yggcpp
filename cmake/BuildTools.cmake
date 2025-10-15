@@ -10,13 +10,11 @@ function(set_environment_vars)
     set(ARGS_KEYPREFIX ENVKEY_)
   endif()
   string(LENGTH "${ARGS_KEYPREFIX}" KEYPREFIX_LENGTH)
+  set(existing)
   foreach(x IN LISTS ARGS_VARS)
     if ("${x}" MATCHES "${ARGS_KEYPREFIX}*")
       if(ikey)
-        if (ARGS_EXISTING)
-	  list(APPEND ARGS_EXISTING "${ARGS_KEYPREFIX}${ikey}"
-	       "$ENV{${ikey}}")
-	endif()
+        list(APPEND existing "${ARGS_KEYPREFIX}${ikey}" "$ENV{${ikey}}")
 	string(REPLACE ";" " " ival "${ival}")
 	set(ENV{${ikey}} "${ival}")
       endif()
@@ -27,11 +25,79 @@ function(set_environment_vars)
     endif()
   endforeach()
   if(ikey)
-    if (ARGS_EXISTING)
-      list(APPEND ARGS_EXISTING "${ARGS_KEYPREFIX}${ikey}" "$ENV{${ikey}}")
-    endif()
+    list(APPEND existing "${ARGS_KEYPREFIX}${ikey}" "$ENV{${ikey}}")
     string(REPLACE ";" " " ival "${ival}")
     set(ENV{${ikey}} "${ival}")
+  endif()
+  if(ARGS_EXISTING)
+    set(${ARGS_EXISTING} ${existing} PARENT_SCOPE)
+  endif()
+endfunction()
+
+function(execute_process_with_env)
+  set(options ENV_VARS_END)
+  set(oneValueArgs ENV_VAR_PREFIX RESULT_VARIABLE)
+  set(multiValueArgs COMMAND ENV_VARS ENV_VARS_CLEAR CLEAR_COMPILERS
+      PREPEND_PATH APPEND_PATH)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  if(NOT ARGS_COMMAND)
+    message(FATAL_ERROR "COMMAND not provided")
+  endif()
+  if(NOT ARGS_ENV_VAR_PREFIX)
+    if(ARGS_ENV_VARS)
+      message(FATAL_ERROR "ENV_VARS provided, but no ENV_VAR_PREFIX")
+    else()
+      set(ARGS_ENV_VAR_PREFIX "ENVK_")
+    endif()
+  endif()
+  if(ARGS_PREPEND_PATH OR ARGS_APPEND_PATH)
+    set(UPDATED_PATH "$ENV{PATH}")
+  endif()
+  include(GeneralTools)
+  get_path_sep(PATH_SEP)
+  if(ARGS_PREPEND_PATH)
+    string(REPLACE ";" "${PATH_SEP}" ARGS_PREPEND_PATH "${ARGS_PREPEND_PATH}")
+    set(UPDATED_PATH "${ARGS_PREPEND_PATH}${PATH_SEP}${UPDATED_PATH}")
+  endif()
+  if(ARGS_APPEND_PATH)
+    string(REPLACE ";" "${PATH_SEP}" ARGS_APPEND_PATH "${ARGS_APPEND_PATH}")
+    set(UPDATED_PATH "${UPDATED_PATH}${PATH_SEP}${APPEND_PATH}")
+  endif()
+  if(UPDATED_PATH)
+    list(APPEND ARGS_ENV_VARS "${ARGS_ENV_VAR_PREFIX}PATH" "${UPDATED_PATH}")
+  endif()
+  foreach(ilanguage IN LISTS ARGS_CLEAR_COMPILERS)
+    language2compilerenv(${ilanguage} ienv)
+    list(APPEND ARGS_ENV_VARS_CLEAR ${ienv})
+  endforeach()
+  foreach(var IN LISTS ARGS_ENV_VARS_CLEAR)
+    list(APPEND ARGS_ENV_VARS "${ARGS_ENV_VAR_PREFIX}${var}" "")
+  endforeach()
+  if(ARGS_ENV_VARS)
+    message(DEBUG "ENV_VARS = ${ARGS_ENV_VARS}")
+    message(DEBUG "ENV_VAR_PREFIX = ${ARGS_ENV_VAR_PREFIX}")
+    set_environment_vars(
+      VARS ${ARGS_ENV_VARS} END_VARS
+      KEYPREFIX ${ARGS_ENV_VAR_PREFIX}
+      EXISTING REPLACED_ENV_VARS
+    )
+    message(DEBUG "REPLACED_ENV_VARS = ${REPLACED_ENV_VARS}")
+  endif()
+  execute_process(
+    COMMAND ${ARGS_COMMAND}
+    RESULT_VARIABLE ret
+    ${ARGS_UNPARSED_ARGUMENTS}
+  )
+  if(ARGS_ENV_VARS)
+    set_environment_vars(
+      VARS ${REPLACED_ENV_VARS} END_VARS
+      KEYPREFIX ${ARGS_ENV_VAR_PREFIX}
+    )
+  endif()
+  if(ARGS_RESULT_VARIABLE)
+    set(${RESULT_VARIABLE} ${ret} PARENT_SCOPE)
+  elseif(NOT ret EQUAL 0)
+    message(FATAL_ERROR "Failed to run ${ARGS_COMMAND}")
   endif()
 endfunction()
 
@@ -376,94 +442,161 @@ function(predict_target_filename target library_type language output_var)
 endfunction()
 
 function(find_compiler_external language)
+  set(options REQUIRED SKIP_CURRENT_GENERATOR DONT_CLEAR_OTHER_COMPILERS)
   set(oneValueArgs GENERATOR)
+  set(multiValueArgs TRY_GENERATORS CLEAR_COMPILERS)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  include(GeneralTools)
+  if(NOT ARGS_DONT_CLEAR_OTHER_COMPILERS)
+    get_supported_languages(COMPILED_LANGUAGES COMPILED)
+    foreach(ilanguage IN LISTS COMPILED_LANGUAGES)
+      if(NOT ilanguage STREQUAL "${ARGS_LANGUAGE}")
+        list(FIND ARGS_CLEAR_COMPILERS "${ilanguage}" ilanguage_IDX)
+        if(ilanguage_IDX EQUAL -1)
+          list(APPEND ARGS_CLEAR_COMPILERS ${ilanguage})
+        endif()
+      endif()
+    endforeach()
+    set(ARGS_DONT_CLEAR_OTHER_COMPILERS ON)
+  endif()
+  if(ARGS_CLEAR_COMPILERS)
+    list(APPEND CLEAR_COMPILERS ${ARGS_CLEAR_COMPILERS})
+  endif()
+  if(ARGS_TRY_GENERATORS)
+    if(ARGS_TRY_GENERATORS STREQUAL "ALL")
+      get_supported_generators(ARGS_TRY_GENERATORS)
+    endif()
+    list(APPEND ARGS_UNPARSED_ARGUMENTS DONT_CLEAR_OTHER_COMPILERS)
+    foreach(igen IN LISTS ARGS_TRY_GENERATORS)
+      if(ARGS_SKIP_CURRENT_GENERATOR
+         AND igen STREQUAL "${CMAKE_GENERATOR}")
+        continue()
+      endif()
+      message(DEBUG "Trying generator \"${igen}\"")
+      find_compiler_external(
+        ${language} GENERATOR "${igen}"
+        ${ARGS_UNPARSED_ARGUMENTS}
+      )
+      if(CMAKE_${language}_EXTERNAL_COMPILER)
+        set(CMAKE_${language}_EXTERNAL_COMPILER ${CMAKE_${language}_EXTERNAL_COMPILER} PARENT_SCOPE)
+        set(CMAKE_${language}_EXTERNAL_GENERATOR "${CMAKE_${language}_EXTERNAL_GENERATOR}" PARENT_SCOPE)
+        return()
+      endif()
+    endforeach()
+    if(WIN32 AND language STREQUAL "Fortran" AND
+       (NOT NOT CMAKE_${language}_EXTERNAL_COMPILER))
+      find_mingw_gfortran()
+      if(MINGW_GFORTRAN)
+        set(CMAKE_${language}_EXTERNAL_COMPILER "${MINGW_GFORTRAN}" PARENT_SCOPE)
+        set(CMAKE_${language}_EXTERNAL_GENERATOR "MinGW Makefiles" PARENT_SCOPE)
+        return()
+      endif()
+    endif()
+    if(ARGS_REQUIRED AND NOT CMAKE_${language}_EXTERNAL_COMPILER)
+      message(FATAL_ERROR "Failed to locate a ${language} compiler (Tried generators: ${ARGS_TRY_GENERATORS})")
+    endif()
+    return()
+  endif()
   if(NOT ARGS_GENERATOR)
     set(ARGS_GENERATOR "${CMAKE_GENERATOR}")
   endif()
   string(REPLACE " " "_" GENSTR "${ARGS_GENERATOR}")
-  set(tmp_dir "${CMAKE_CURRENT_BINARY_DIR}/_check_for_${language}_${GENSTR}")
-  message(DEBUG "find_compiler_external(${language} GENERATOR ${ARGS_GENERATOR}): tmp_dir = ${tmp_dir}")
-  set(fcompiler "${tmp_dir}/${language}_compiler")
-  file(MAKE_DIRECTORY "${tmp_dir}")
-  configure_file(
-    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/check_language_external.CMakeLists.in
-    ${tmp_dir}/CMakeLists.txt
-    @ONLY)
-  message(STATUS "Looking for ${language} compiler using \"${ARGS_GENERATOR}\" generator")
-  execute_process(
-    COMMAND ${CMAKE_COMMAND} "-G${ARGS_GENERATOR}" -B . -S .
-    WORKING_DIRECTORY ${tmp_dir}
-    RESULT_VARIABLE out)
-  if (EXISTS ${fcompiler})
-    file(READ ${fcompiler} CONTENTS)
-    set(CMAKE_${language}_COMPILER ${CONTENTS} PARENT_SCOPE)
+  set(IDSTR "${language}_${GENSTR}")
+  set(cached_compiler_var "_${IDSTR}_COMPILER")
+  if(NOT DEFINED CACHE{${cached_compiler_var}})
+    set(tmp_dir "${CMAKE_CURRENT_BINARY_DIR}/_check_for_${IDSTR}")
+    message(DEBUG "find_compiler_external(${language} GENERATOR ${ARGS_GENERATOR}): tmp_dir = ${tmp_dir}")
+    set(fcompiler "${tmp_dir}/${IDSTR}_compiler")
+    file(MAKE_DIRECTORY "${tmp_dir}")
+    configure_file(
+      ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/check_language_external.CMakeLists.in
+      ${tmp_dir}/CMakeLists.txt
+      @ONLY)
+    message(STATUS "Looking for ${language} compiler using \"${ARGS_GENERATOR}\" generator")
+    execute_process_with_env(
+      COMMAND ${CMAKE_COMMAND} "-G${ARGS_GENERATOR}" -B . -S .
+      WORKING_DIRECTORY ${tmp_dir}
+      RESULT_VARIABLE out
+      ${ARGS_UNPARSED_ARGUMENTS}
+    )
+    if (EXISTS ${fcompiler})
+      file(READ ${fcompiler} ${cached_compiler_var})
+    endif()
+    set(${cached_compiler_var} "${${cached_compiler_var}}" CACHE INTERNAL "Compiler result from find_compiler_external for LANGUAGE = ${language} and GENERATOR = ${ARGS_GENERATOR}")
+  endif()
+  if(${cached_compiler_var})
+    set(CMAKE_${language}_EXTERNAL_COMPILER ${${cached_compiler_var}} PARENT_SCOPE)
+    set(CMAKE_${language}_EXTERNAL_GENERATOR "${ARGS_GENERATOR}" PARENT_SCOPE)
+  elseif(ARGS_REQUIRED)
+    message(FATAL_ERROR "Failed to locate a ${language} external compiler (CMAKE_GENERATOR = \"${ARGS_GENERATOR}\")")
   endif()
 endfunction()
 
 function(check_language_external language)
-  set(options REQUIRED)
   set(oneValueArgs OUTPUT_VARIABLE GENERATOR)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-  find_compiler_external(${language})
-  if((NOT CMAKE_${language}_COMPILER) AND MSVC AND
-     language STREQUAL "Fortran")
-    find_gnu_fortran(SKIP_CURRENT_GENERATOR)
-    if(GNU_FORTRAN)
-      set(CMAKE_${language}_COMPILER "${GNU_FORTRAN}")
-      if(ARGS_GENERATOR)
-        set(${ARGS_GENERATOR} "${GNU_FORTRAN_GENERATOR}" PARENT_SCOPE)
-      endif()
-    endif()
-  endif()
-  if(NOT CMAKE_${language}_COMPILER AND ARGS_REQUIRED)
-    message(FATAL_ERROR "Could not locate a ${language} compiler")
-  endif()
-  set(CMAKE_${language}_COMPILER ${CMAKE_${language}_COMPILER} PARENT_SCOPE)
-  if(CMAKE_${language}_COMPILER AND ARGS_OUTPUT_VARIABLE)
+  find_compiler_external(
+    ${language} TRY_GENERATORS ALL
+    ${ARGS_UNPARSED_ARGUMENTS}
+  )
+  set(CMAKE_${language}_COMPILER ${CMAKE_${language}_EXTERNAL_COMPILER} PARENT_SCOPE)
+  set(CMAKE_${language}_EXTERNAL_COMPILER ${CMAKE_${language}_EXTERNAL_COMPILER} PARENT_SCOPE)
+  set(CMAKE_${language}_EXTERNAL_GENERATOR ${CMAKE_${language}_EXTERNAL_GENERATOR} PARENT_SCOPE)
+  if(CMAKE_${language}_EXTERNAL_COMPILER AND ARGS_OUTPUT_VARIABLE)
     set(${ARGS_OUTPUT_VARIABLE} ON PARENT_SCOPE)
+  endif()
+  if(CMAKE_${language}_EXTERNAL_GENERATOR AND ARGS_GENERATOR)
+    set(${ARGS_GENERATOR} "${CMAKE_${language}_EXTERNAL_GENERATOR}" PARENT_SCOPE)
   endif()
 endfunction()
 
-function(find_gnu_fortran)
-  set(options REQUIRED SKIP_CURRENT_GENERATOR)
-  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-  # foreach(igen "Ninja" "MinGW Makefiles")
-  foreach(igen "MinGW Makefiles")
-    if(ARGS_SKIP_CURRENT_GENERATOR
-       AND igen STREQUAL "${CMAKE_GENERATOR}")
-      continue()
-    endif()
-    find_compiler_external(Fortran GENERATOR "${igen}")
-    if(CMAKE_${language}_COMPILER)
-      set(GNU_FORTRAN "${CMAKE_${language}_COMPILER}")
-      set(GNU_FORTRAN_GENERATOR "${igen}")
-      break()
-    endif()
-  endforeach()
-  if(NOT GNU_FORTRAN)
-    find_mingw_gfortran()
-    if(MINGW_GFORTRAN)
-      set(GNU_FORTRAN "${MINGW_GFORTRAN}")
-      set(GNU_FORTRAN_GENERATOR "MinGW Makefiles")
-    endif()
-  endif()
-  if(GNU_FORTRAN)
-    get_filename_component(GNU_PATH ${GNU_FORTRAN} PATH)
-    file(TO_NATIVE_PATH "${GNU_PATH}" GNU_PATH)
-    string(REPLACE "\\" "\\\\" GNU_PATH "${GNU_PATH}")
-    set(GNU_FORTRAN "${GNU_FORTRAN}" PARENT_SCOPE)
-    set(GNU_FORTRAN_GENERATOR "${GNU_FORTRAN_GENERATOR}" PARENT_SCOPE)
-    set(GNU_PATH "${GNU_PATH}" PARENT_SCOPE)
-    message(DEBUG "GNU_FORTRAN = ${GNU_FORTRAN}")
-    message(DEBUG "GNU_FORTRAN_GENERATOR = ${GNU_FORTRAN_GENERATOR}")
-    message(DEBUG "GNU_PATH = ${GNU_PATH}")
-  elseif(ARGS_REQUIRED)
-    message(FATAL_ERROR
-      "GNU fortran not found, please install gfortran via MinGW "
-      "with the gfortran option. This is required to build.")
-  endif()
-endfunction()
+# function(find_gnu_fortran)
+#   set(options REQUIRED)
+#   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+#   find_compiler_external(
+#     Fortran TRY_GENERATORS "MinGW Makefiles"  # "Ninja"
+#     ${ARGS_UNPARSED_ARGUMENTS}
+#   )
+#   if(CMAKE_${language}_COMPILER)
+#     set(GNU_FORTRAN "${CMAKE_${language}_COMPILER}")
+#     set(GNU_FORTRAN_GENERATOR "${CMAKE_${language}_EXTERNAL_GENERATOR}")
+#   endif()
+#   # foreach(igen "Ninja" "MinGW Makefiles")
+#   # foreach(igen "MinGW Makefiles")
+#   #   if(ARGS_SKIP_CURRENT_GENERATOR
+#   #      AND igen STREQUAL "${CMAKE_GENERATOR}")
+#   #     continue()
+#   #   endif()
+#   #   find_compiler_external(Fortran GENERATOR "${igen}")
+#   #   if(CMAKE_${language}_COMPILER)
+#   #     set(GNU_FORTRAN "${CMAKE_${language}_COMPILER}")
+#   #     set(GNU_FORTRAN_GENERATOR "${igen}")
+#   #     break()
+#   #   endif()
+#   # endforeach()
+#   if(NOT GNU_FORTRAN)
+#     find_mingw_gfortran()
+#     if(MINGW_GFORTRAN)
+#       set(GNU_FORTRAN "${MINGW_GFORTRAN}")
+#       set(GNU_FORTRAN_GENERATOR "MinGW Makefiles")
+#     endif()
+#   endif()
+#   if(GNU_FORTRAN)
+#     get_filename_component(GNU_PATH ${GNU_FORTRAN} PATH)
+#     file(TO_NATIVE_PATH "${GNU_PATH}" GNU_PATH)
+#     string(REPLACE "\\" "\\\\" GNU_PATH "${GNU_PATH}")
+#     set(GNU_FORTRAN "${GNU_FORTRAN}" PARENT_SCOPE)
+#     set(GNU_FORTRAN_GENERATOR "${GNU_FORTRAN_GENERATOR}" PARENT_SCOPE)
+#     set(GNU_PATH "${GNU_PATH}" PARENT_SCOPE)
+#     message(DEBUG "GNU_FORTRAN = ${GNU_FORTRAN}")
+#     message(DEBUG "GNU_FORTRAN_GENERATOR = ${GNU_FORTRAN_GENERATOR}")
+#     message(DEBUG "GNU_PATH = ${GNU_PATH}")
+#   elseif(ARGS_REQUIRED)
+#     message(FATAL_ERROR
+#       "GNU fortran not found, please install gfortran via MinGW "
+#       "with the gfortran option. This is required to build.")
+#   endif()
+# endfunction()
 
 function(find_mingw_gfortran)
   set(options REQUIRED)
@@ -508,10 +641,51 @@ function(find_mingw_gfortran)
   set(MINGW_GFORTRAN ${MINGW_GFORTRAN} PARENT_SCOPE)
 endfunction()
 
+function(setup_external_function function)
+  set(option INCLUDE)
+  set(oneValueArgs MODULE DEST DEST_DIR OUTPUT_COMMAND)
+  set(multiValueArgs ARGUMENTS PRESERVE_VARIABLES)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  list(APPEND ARGS_PRESERVE_VARIABLES
+       CMAKE_VERBOSE_MAKEFILE CMAKE_MESSAGE_LOG_LEVEL)
+  if(ARGS_UNPARSED_ARGUMENTS)
+    list(APPEND ARGS_ARGUMENTS ${ARGS_UNPARSED_ARGUMENTS})
+  endif()
+  if(NOT ARGS_DEST_DIR)
+    set(ARGS_DEST_DIR ${CMAKE_CURRENT_BINARY_DIR})
+  endif()
+  if(NOT ARGS_DEST)
+    if(NOT ARGS_INCLUDE)
+      message(FATAL_ERROR "Neither DEST or INCLUDE set")
+    endif()
+    cmake_path(
+      APPEND ARGS_DEST_DIR "call_${function}.cmake"
+      OUTPUT_VARIABLE ARGS_DEST
+    )
+  endif()
+  set(ARGS_FUNCTION ${function})
+  configure_file(
+    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/external_function.cmake.in
+    ${ARGS_DEST}
+    @ONLY
+  )
+  if(ARGS_INCLUDE)
+    include(${ARGS_DEST})
+  endif()
+  if(ARGS_OUTPUT_COMMAND)
+    set(OUTPUT_COMMAND ${CMAKE_COMMAND})
+    foreach(var IN LISTS ARGS_PRESERVE_VARIABLES)
+      list(APPEND OUTPUT_COMMAND "-D${var}=${${var}}")
+    endforeach()
+    list(APPEND OUTPUT_COMMAND -P ${ARGS_DEST})
+    set(${ARGS_OUTPUT_COMMAND} ${OUTPUT_COMMAND} PARENT_SCOPE)
+  endif()
+endfunction()
+
 function(setup_external_config lists_dir)
   set(options DONT_SET_COMMAND)
   set(oneValueArgs GENERATOR BUILD_DIR SOURCE_DIR FILENAME)
-  set(multiValueArgs ARGUMENTS PRESERVE_VARIABLES)
+  set(multiValueArgs ARGUMENTS PRESERVE_VARIABLES CLEAR_COMPILERS)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
   if(NOT ARGS_GENERATOR)
     set(ARGS_GENERATOR "${CMAKE_GENERATOR}")
@@ -525,6 +699,9 @@ function(setup_external_config lists_dir)
   if(NOT ARGS_FILENAME)
     set(ARGS_FILENAME "external_config.cmake")
   endif()
+  if(ARGS_CLEAR_COMPILERS)
+    list(APPEND ARGS_UNPARSED_ARGUMENTS CLEAR_COMPILERS ${ARGS_CLEAR_COMPILERS})
+  endif()
   list(APPEND ARGS_PRESERVE_VARIABLES
        CMAKE_VERBOSE_MAKEFILE CMAKE_MESSAGE_LOG_LEVEL)
   foreach(language C CXX Fortran)
@@ -533,35 +710,38 @@ function(setup_external_config lists_dir)
   foreach(var IN LISTS ARGS_PRESERVE_VARIABLES)
     list(APPEND ARGS_ARGUMENTS "-D${var}=${${var}}")
   endforeach()
-  configure_file(
-    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/external_config.cmake.in
-    ${lists_dir}/${ARGS_FILENAME}
-    @ONLY
+  set(EXTERNAL_COMMAND "${CMAKE_COMMAND}"
+      "-G${ARGS_GENERATOR}" "-S${ARGS_SOURCE_DIR}" "-B${ARGS_BUILD_DIR}"
+      ${ARGS_ARGUMENTS})
+  setup_external_function(
+    "execute_process_with_env" MODULE "BuildTools"
+    DEST ${lists_dir}/${ARGS_FILENAME}
+    OUTPUT_COMMAND CONFIGURE_COMMAND
+    ARGUMENTS COMMAND ${EXTERNAL_COMMAND}
+    ${ARGS_UNPARSED_ARGUMENTS}
   )
   if(NOT ARGS_DONT_SET_COMMAND)
-    set(CONFIGURE_COMMAND
-      ${CMAKE_COMMAND} -P ${lists_dir}/${ARGS_FILENAME}
-      PARENT_SCOPE)
+    set(CONFIGURE_COMMAND ${CONFIGURE_COMMAND} PARENT_SCOPE)
   endif()
 endfunction()
 
 function(setup_external_build build_dir)
   set(options DONT_SET_COMMAND)
-  set(oneValueArgs PREPEND_PATH FILENAME)
+  set(oneValueArgs FILENAME)
   set(multiValueArgs ARGUMENTS)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
   if(NOT ARGS_FILENAME)
     set(ARGS_FILENAME "external_build.cmake")
   endif()
-  configure_file(
-    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/external_build.cmake.in
-    ${build_dir}/${ARGS_FILENAME}
-    @ONLY
+  setup_external_function(
+    "execute_process_with_env" MODULE "BuildTools"
+    DEST ${build_dir}/${ARGS_FILENAME}
+    OUTPUT_COMMAND BUILD_COMMAND
+    ARGUMENTS COMMAND "${CMAKE_COMMAND}" "--build" "."
+    ${ARGS_ARGUMENTS} ${ARGS_UNPARSED_ARGUMENTS}
   )
   if(NOT ARGS_DONT_SET_COMMAND)
-    set(BUILD_COMMAND
-      ${CMAKE_COMMAND} -P ${build_dir}/${ARGS_FILENAME}
-      PARENT_SCOPE)
+    set(BUILD_COMMAND ${BUILD_COMMAND} PARENT_SCOPE)
   endif()
 endfunction()
 
@@ -806,9 +986,7 @@ function(add_external_library target library_type)
   set(multiValueArgs SOURCES LIBRARIES INCLUDES DEFINITIONS PROPERTIES
       COMPILE_FLAGS CONFIG_ARGUMENTS BUILD_ARGUMENTS PRESERVE_VARIABLES)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-  if(NOT ARGS_GENERATOR)
-    set(ARGS_GENERATOR "${CMAKE_GENERATOR}")
-  endif()
+  include(GeneralTools)
   if(NOT ARGS_LISTS_DIR)
     # In root build to keep paths sorter on windows
     # set(ARGS_LISTS_DIR "${CMAKE_CURRENT_BINARY_DIR}/${target}")
@@ -821,7 +999,6 @@ function(add_external_library target library_type)
     set(ARGS_BUILD_DIR "${ARGS_LISTS_DIR}")
   endif()
   if(NOT ARGS_LANGUAGE)
-    include(GeneralTools)
     if(NOT ARGS_SOURCES)
       message(FATAL_ERROR "LANGUAGE not set and SOURCES not provided")
     endif()
@@ -858,6 +1035,16 @@ function(add_external_library target library_type)
   file(MAKE_DIRECTORY "${ARGS_BUILD_DIR}")
   file(MAKE_DIRECTORY "${ARGS_SOURCE_DIR}")
   
+  set(OTHER_LANGUAGES)
+  get_supported_languages(COMPILED_LANGUAGES COMPILED)
+  foreach(ilanguage IN LISTS COMPILED_LANGUAGES)
+    message(STATUS "TODO-INTERNAL: CMAKE_${ilanguage}_IMPLICIT_LINK_LIBRARIES = ${CMAKE_${ilanguage}_IMPLICIT_LINK_LIBRARIES}")
+    if(ilanguage STREQUAL "${ARGS_LANGUAGE}")
+      continue()
+    endif()
+    list(APPEND OTHER_LANGUAGES ${ilanguage})
+  endforeach()
+  
   # Collect targets & save to file that can be loaded
   include(AddTargetsFromFile)
   select_targets(targets LIBRARIES ${ARGS_LIBRARIES})
@@ -868,51 +1055,47 @@ function(add_external_library target library_type)
     CUSTOM_TARGET "generate_target_file_${target}"
     VERBOSE
   )
-  
-  if(ARGS_LANGUAGE STREQUAL "Fortran")
-    set(findfort_dir "${ARGS_LISTS_DIR}/findfort")
-    file(MAKE_DIRECTORY "${findfort_dir}")
-    if(MSVC)
-      find_gnu_fortran(REQUIRED)
-      if(ARGS_PREPEND_PATH)
-        set(ARGS_PREPEND_PATH "${GNU_PATH}\;${ARGS_PREPEND_PATH}")
-      else()
-        set(ARGS_PREPEND_PATH "${GNU_PATH}")
-      endif()
-      set(ARGS_GENERATOR ${GNU_FORTRAN_GENERATOR})
-      list(APPEND ARGS_CONFIG_ARGUMENTS
-           -DCMAKE_Fortran_COMPILER:PATH=${GNU_FORTRAN}
-           -DBUILD_SHARED_LIBS=ON
-           -DMSVC_AND_GNU_BUILD=ON
-           -DCMAKE_GNUtoMS=ON)
-    endif()
+
+  if(ARGS_GENERATOR)
+    find_compiler_external(${ARGS_LANGUAGE} REQUIRED TRY_GENERATORS ALL)
+  else()
+    find_compiler_external(${ARGS_LANGUAGE} REQUIRED GENERATOR ${ARGS_GENERATOR})
+    set(ARGS_GENERATOR "${CMAKE_${ARGS_LANGUAGE}_EXTERNAL_GENERATOR}")
   endif()
+  list(APPEND ARGS_CONFIG_ARGUMENTS
+       "-DCMAKE_${ARGS_LANGUAGE}_COMPILER:PATH=${CMAKE_${ARGS_LANGUAGE}_EXTERNAL_COMPILER}")
+  get_filename_component(COMPILER_PATH ${CMAKE_${ARGS_LANGUAGE}_EXTERNAL_COMPILER} PATH)
+  file(TO_NATIVE_PATH "${COMPILER_PATH}" COMPILER_PATH)
+  string(REPLACE "\\" "\\\\" COMPILER_PATH "${COMPILER_PATH}")
+  message(DEBUG "COMPILER_PATH = ${COMPILER_PATH}")
+  list(APPEND ARGS_PREPEND_PATH "${COMPILER_PATH}")
+  if(ARGS_LANGUAGE STREQUAL "Fortran" AND MSVC)
+    # "${CMAKE_${ARGS_LANGUAGE}_EXTERNAL_COMPILER}" MATCHES "gfortran")
+    if(NOT "${CMAKE_${ARGS_LANGUAGE}_EXTERNAL_COMPILER}" MATCHES "gfortran")
+      message(FATAL_ERROR "Need gfortran with MSVC ${CMAKE_${ARGS_LANGUAGE}_EXTERNAL_COMPILER}")
+    endif()
+    list(APPEND ARGS_CONFIG_ARGUMENTS
+         -DBUILD_SHARED_LIBS=ON
+         -DMSVC_AND_GNU_BUILD=ON
+         -DCMAKE_GNUtoMS=ON)
+  endif()
+  cmake_path(
+    APPEND "${ARGS_SOURCE_DIR}" "${target}.external_targets"
+    OUTPUT_VARIABLE external_target_file
+  )
+  list(APPEND EXTERNAL_PRODUCTS ${external_target_file})
   configure_file(
     ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/external.CMakeLists.in
     ${ARGS_SOURCE_DIR}/CMakeLists.txt
     @ONLY
   )
-  set(external_target_file)
-  if(ARGS_LANGUAGE STREQUAL "Fortran")
-    cmake_path(APPEND external_target_file "${ARGS_SOURCE_DIR}"
-               "${target}.external_targets")
-    find_gfortran_implicit_libraries(
-      ${target} "${external_target_file}"
-      LISTS_DIR "${ARGS_LISTS_DIR}"
-      GENERATOR ${ARGS_GENERATOR}
-      ARGUMENTS ${ARGS_CONFIG_ARGUMENTS}
-      PRESERVE_VARIABLES ${ARGS_PRESERVE_VARIABLES}
-    )
-    list(APPEND EXTERNAL_PRODUCTS ${external_target_file})
-  else()
-    message(FATAL_ERROR "Generic generation of implicit libraries not yet implmented")
-  endif()
   setup_external_config(
     ${ARGS_LISTS_DIR} GENERATOR ${ARGS_GENERATOR}
     SOURCE_DIR ${ARGS_SOURCE_DIR}
     BUILD_DIR ${ARGS_BUILD_DIR}
     ARGUMENTS ${ARGS_CONFIG_ARGUMENTS}
     PRESERVE_VARIABLES ${ARGS_PRESERVE_VARIABLES}
+    CLEAR_COMPILERS ${OTHER_LANGUAGES}
   )
   setup_external_build(
     ${ARGS_BUILD_DIR} PREPEND_PATH ${ARGS_PREPEND_PATH}
@@ -1111,25 +1294,26 @@ function(copy_target_files target destination)
   endforeach()  
 endfunction()
 
-function(find_gfortran_implicit_libraries target filename)
-  set(oneValueArgs LISTS_DIR)
-  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-  if(NOT ARGS_LISTS_DIR)
-    set(ARGS_LISTS_DIR "${CMAKE_BINARY_DIR}/${target}")
-  endif()
-  set(target_name ${target})
-  set(external_target_file ${filename})
-  set(findfort_dir "${ARGS_LISTS_DIR}/findfort")
-  file(MAKE_DIRECTORY "${findfort_dir}")
-  configure_file(
-    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/find_gfortran.CMakeLists.in
-    ${findfort_dir}/CMakeLists.txt
-    @ONLY
-  )
-  setup_external_config(
-    ${findfort_dir} SOURCE_DIR ${findfort_dir} BUILD_DIR ${findfort_dir}
-    FILENAME external_find_fortran.cmake
-    ${ARGS_UNPARSED_ARGUMENTS}
-  )
-  include(${findfort_dir}/external_find_fortran.cmake)
-endfunction()
+# function(find_gfortran_implicit_libraries target filename)
+#   set(oneValueArgs LISTS_DIR)
+#   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+#   if(NOT ARGS_LISTS_DIR)
+#     set(ARGS_LISTS_DIR "${CMAKE_BINARY_DIR}/${target}")
+#   endif()
+#   set(target_name ${target})
+#   set(external_target_file ${filename})
+#   set(findfort_dir "${ARGS_LISTS_DIR}/findfort")
+#   file(MAKE_DIRECTORY "${findfort_dir}")
+#   configure_file(
+#     ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/find_gfortran.CMakeLists.in
+#     ${findfort_dir}/CMakeLists.txt
+#     @ONLY
+#   )
+#   setup_external_config(
+#     ${findfort_dir} SOURCE_DIR ${findfort_dir} BUILD_DIR ${findfort_dir}
+#     FILENAME external_find_fortran.cmake
+#     CLEAR_COMPILERS C CXX
+#     ${ARGS_UNPARSED_ARGUMENTS}
+#   )
+#   include(${findfort_dir}/external_find_fortran.cmake)
+# endfunction()

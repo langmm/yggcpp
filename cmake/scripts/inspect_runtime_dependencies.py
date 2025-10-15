@@ -35,8 +35,9 @@ class ToolBase(metaclass=ToolMeta):
 
     name = None
 
-    def __init__(self, target):
+    def __init__(self, target, cmake_runtimes=None):
         self.target = os.path.abspath(target)
+        self.cmake_runtimes = cmake_runtimes
 
     @classmethod
     def _run(cls, cmd):
@@ -66,6 +67,10 @@ class ToolBase(metaclass=ToolMeta):
                 return x + ' [VIRTUAL]'
             except OSError:
                 pass
+        if self.cmake_runtimes:
+            for cmake_runtime in self.cmake_runtimes:
+                if cmake_runtime.endswith(x):
+                    return x + ' [CMAKE RUNTIME]'
         return out
 
     @classmethod
@@ -180,7 +185,13 @@ def inspect(args):
             args.tool = 'ldd'
         elif _platform == 'win':
             args.tool = 'dumpbin'
-    tool = _tool_registry[args.tool](args.target)
+    if args.cmake_runtimes:
+        args.cmake_runtimes = [
+            x.strip() for x in args.cmake_runtimes.split(';')
+        ]
+    tool = _tool_registry[args.tool](
+        args.target, cmake_runtimes=args.cmake_runtimes
+    )
     deps = tool.runtime_libraries
     hsep = 80 * '=' + '\n'
     print(f'{hsep}Runtime dependencies for {tool.target}\n{hsep}'
@@ -206,6 +217,11 @@ if __name__ == "__main__":
         help=("Name of the tool that should be used to extract "
               "runtime library dependencies from an executable or "
               "dynamic/shared library")
+    )
+    parser.add_argument(
+        "--cmake-runtimes", type=str,
+        help=("Result of TARGET_RUNTIME_DLLS cmake generator expression "
+              "for the target"),
     )
     args = parser.parse_args()
     inspect(args)

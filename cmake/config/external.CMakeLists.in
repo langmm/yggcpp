@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION @CMAKE_MINIMUM_REQUIRED_VERSION@)
 project(@target@_PROJECT)
 enable_language(@ARGS_LANGUAGE@)
-set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};@CMAKE_CURRENT_FUNCTION_LIST_DIR@")
+list(APPEND CMAKE_MODULE_PATH "@CMAKE_CURRENT_FUNCTION_LIST_DIR@")
 set(EXTERNAL_BUILD_DIR "@CMAKE_CURRENT_BINARY_DIR@")
 set(target @target@)
 set(library_type @library_type@)
@@ -9,6 +9,7 @@ set(final_library_type ${library_type})
 if(library_type STREQUAL "OBJECT")
   set(final_library_type STATIC)
 endif()
+set(external_target_file "@external_target_file@")
 
 include(BuildTools)
 add_internal_library(
@@ -22,6 +23,17 @@ add_internal_library(
   PROPERTIES @ARGS_PROPERTIES@
   TARGETS_FILE @target_file@
 )
+if(external_target_file)
+  include(AddTargetsFromFile)
+  # TODO: Find stdc++ library for fortran?
+  set(generate_args)
+  if (MSVC_AND_GNU_BUILD)
+    set(generate_args FULL_LIBRARIES) # CREATE_LIB)
+  endif()
+  generate_implicit_libraries_file(
+    @ARGS_LANGUAGE@ ${external_target_file} ${generate_args}
+  )
+endif()
 
 # set(COPY_COMPONENTS OBJECTS)
 # if(NOT library_type STREQUAL "OBJECT")

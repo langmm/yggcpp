@@ -146,6 +146,12 @@ function(finalize_package name)
   set(oneValueArgs HEADER IMPORTED_TARGET)
   set(multiValueArgs LIBNAMES)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  if(${name}_FOUND AND (NOT ${name}_LIBRARY) AND ${name}_LIBRARIES)
+    list(LENGTH ${name}_LIBRARIES NLIBS)
+    if(NLIBS EQUAL 1)
+      set(${name}_LIBRARY ${${name}_LIBRARIES})
+    endif()
+  endif()
   if(${name}_FOUND AND ARGS_IMPORTED_TARGET)
     create_interface_library(
       ${name} TARGET ${ARGS_IMPORTED_TARGET}
