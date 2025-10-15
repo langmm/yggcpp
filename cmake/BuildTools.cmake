@@ -1068,9 +1068,9 @@ function(add_external_library target library_type)
   )
 
   if(ARGS_GENERATOR)
-    find_compiler_external(${ARGS_LANGUAGE} REQUIRED TRY_GENERATORS ALL)
-  else()
     find_compiler_external(${ARGS_LANGUAGE} REQUIRED GENERATOR ${ARGS_GENERATOR})
+  else()
+    find_compiler_external(${ARGS_LANGUAGE} REQUIRED TRY_GENERATORS ALL)
     set(ARGS_GENERATOR "${CMAKE_${ARGS_LANGUAGE}_EXTERNAL_GENERATOR}")
   endif()
   list(APPEND ARGS_CONFIG_ARGUMENTS

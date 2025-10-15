@@ -1,4 +1,4 @@
-name: rapidjson
+name: yggcpp
 channels:
   - conda-forge
 dependencies:

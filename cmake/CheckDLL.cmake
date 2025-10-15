@@ -88,7 +88,7 @@ function(show_runtimes target)
       POST_BUILD
       COMMAND python
       ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/scripts/inspect_runtime_dependencies.py
-      $<TARGET_FILE:${target}> --tool=${TOOLNAME} --cmake-runtimes=$<TARGET_RUNTIME_DLLS:${target}>
+      $<TARGET_FILE:${target}> --tool ${TOOLNAME} --cmake-runtimes $<TARGET_RUNTIME_DLLS:${target}>
       COMMAND_EXPAND_LISTS
     )
   else()

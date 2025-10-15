@@ -247,12 +247,13 @@ jobs:
         if: matrix.python-install == 'conda'
         uses: conda-incubator/setup-miniconda@v3
         with:
-          activate-environment: yggdrasil
+          activate-environment: yggcpp
           environment-file: environment.yml
           auto-update-conda: true
           python-version: ${{ env.PYTHONVERSION }}
           channels: conda-forge
           channel-priority: strict
+          conda-remove-defaults: "true"
           miniforge-version: latest
       - name: Install doxgen on unix systems
         if: matrix.os != 'windows-latest' && matrix.python-install == 'conda'
