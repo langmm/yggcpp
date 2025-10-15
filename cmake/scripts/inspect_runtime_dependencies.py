@@ -185,10 +185,6 @@ def inspect(args):
             args.tool = 'ldd'
         elif _platform == 'win':
             args.tool = 'dumpbin'
-    if args.cmake_runtimes:
-        args.cmake_runtimes = [
-            x.strip() for x in args.cmake_runtimes.split(';')
-        ]
     tool = _tool_registry[args.tool](
         args.target, cmake_runtimes=args.cmake_runtimes
     )
@@ -219,7 +215,7 @@ if __name__ == "__main__":
               "dynamic/shared library")
     )
     parser.add_argument(
-        "--cmake-runtimes", type=str,
+        "--cmake-runtimes", nargs='*', type=str,
         help=("Result of TARGET_RUNTIME_DLLS cmake generator expression "
               "for the target"),
     )

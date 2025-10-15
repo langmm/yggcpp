@@ -53,12 +53,6 @@ function (add_fortran_test_executable TARGET)
 	INCLUDES ${Fortran_TEST_INCLUDE_DIRS}
 	DEFINITIONS ${DYNAMIC_TEST_DEFINITIONS}
     )
-    # add_mixed_fortran_library(
-    #     ${TARGET}_fortran SHARED
-    #     LANGUAGE CXX ${TEST_FILES}
-    #     LIBRARIES ${Fortran_TEST_LIBRARIES}
-    #     INCLUDES ${Fortran_TEST_INCLUDE_DIRS}
-    #     DEFINITIONS ${DYNAMIC_TEST_DEFINITIONS})
     add_executable (${TARGET} ${TARGET_SOURCE})
     target_link_libraries (${TARGET} ${TARGET}_fortran ${Fortran_TEST_LIBRARIES})
     target_include_directories(${TARGET} PRIVATE ${Fortran_TEST_INCLUDE_DIRS})
