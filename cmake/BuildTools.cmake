@@ -466,16 +466,11 @@ function(find_compiler_external language)
     set(CMAKE_${language}_EXTERNAL_GENERATOR)
   endif()
   include(GeneralTools)
-  if(NOT ARGS_DONT_CLEAR_OTHER_COMPILERS)
-    get_supported_languages(COMPILED_LANGUAGES COMPILED)
-    foreach(ilanguage IN LISTS COMPILED_LANGUAGES)
-      if(NOT ilanguage STREQUAL "${ARGS_LANGUAGE}")
-        list(FIND ARGS_CLEAR_COMPILERS "${ilanguage}" ilanguage_IDX)
-        if(ilanguage_IDX EQUAL -1)
-          list(APPEND ARGS_CLEAR_COMPILERS ${ilanguage})
-        endif()
-      endif()
-    endforeach()
+  if(NOT (ARGS_DONT_CLEAR_OTHER_COMPILERS OR ARGS_CLEAR_COMPILERS))
+    get_supported_languages(
+      ARGS_CLEAR_COMPILERS COMPILED
+      EXCLUDE ${language} ${ARGS_CLEAR_COMPILERS}
+    )
     set(ARGS_DONT_CLEAR_OTHER_COMPILERS ON)
   endif()
   if(ARGS_CLEAR_COMPILERS)
@@ -1056,15 +1051,11 @@ function(add_external_library target library_type)
   file(MAKE_DIRECTORY "${ARGS_BUILD_DIR}")
   file(MAKE_DIRECTORY "${ARGS_SOURCE_DIR}")
   
-  set(OTHER_LANGUAGES)
-  get_supported_languages(COMPILED_LANGUAGES COMPILED)
-  foreach(ilanguage IN LISTS COMPILED_LANGUAGES)
-    message(STATUS "TODO-INTERNAL: CMAKE_${ilanguage}_IMPLICIT_LINK_LIBRARIES = ${CMAKE_${ilanguage}_IMPLICIT_LINK_LIBRARIES}")
-    if(ilanguage STREQUAL "${ARGS_LANGUAGE}")
-      continue()
-    endif()
-    list(APPEND OTHER_LANGUAGES ${ilanguage})
-  endforeach()
+  get_supported_languages(
+    OTHER_LANGUAGES COMPILED
+    EXCLUDE ${ARGS_LANGUAGE}
+  )
+  show_implicit_libraries(PREFIX "TODO-INTERNAL: ")
   
   # Collect targets & save to file that can be loaded
   include(AddTargetsFromFile)
