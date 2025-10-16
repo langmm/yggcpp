@@ -170,7 +170,7 @@ endif()
 
 add_yggdrasil_option(
   REST COMM DEPENDENCY CURL
-  # SEARCH_ARGS USING_PKGCONFIG LIBNAMES curl HEADER curl.h
+  # SEARCH_ARGS LIBNAMES curl HEADER curl.h
 )
 
 ##########

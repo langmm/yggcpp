@@ -1,92 +1,76 @@
 function(embed_language LANGUAGE)
   include(AddYggInterface)
   set(options DISABLE_BY_DEFAULT VERBOSE)
-  set(oneValueArgs INCLUDE_DIRS_VAR LIBRARY_VAR LIBRARY_DIR_VAR
-      FIND_METHOD DEPENDENCY)
-  set(multiValueArgs DEFINITIONS FIND_ARGS DEPENDENCY_PROPERTIES)
+  set(oneValueArgs FIND_METHOD DEPENDENCY)
+  set(multiValueArgs FIND_ARGS LIBRARIES LIBRARIES_Python
+      LIBRARY_DIRS INCLUDE_DIRS DEFINITIONS DEFINITIONS_MISSING
+      DEPENDENCY_PROPERTIES SEARCH_ARGS)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  check_no_unparsed(ARGS)
   set(DEFAULT_ENABLED ON)
   if (ARGS_DISABLE_BY_DEFAULT)
     set(DEFAULT_ENABLED OFF)
   endif()
   option(YGG_EMBED_${LANGUAGE} "Build interfaces to support ${LANGUAGE} embedding" ${DEFAULT_ENABLED})
-  if (NOT ARGS_INCLUDE_DIRS_VAR)
-    set(ARGS_INCLUDE_DIRS_VAR ${LANGUAGE}_INCLUDE_DIRS)
-  endif()
-  if (NOT ARGS_LIBRARY_VAR)
-    set(ARGS_LIBRARY_VAR ${LANGUAGE}_LIBRARY)
-  endif()
-  if (NOT ARGS_LIBRARY_DIR_VAR)
-    set(ARGS_LIBRARY_DIR_VAR ${LANGUAGE}_LIBRARY_DIR)
-  endif()
-  if (NOT ARGS_DEPENDENCY)
-    set(ARGS_DEPENDENCY ${LANGUAGE})
-  endif()
+  option(YGG_EMBED_${LANGUAGE}_REQUIRED "Require support for ${LANGUAGE} embedding" OFF)
+  set_default(ARGS_DEPENDENCY ${LANGUAGE})
   string(TOUPPER ${LANGUAGE} LANGUAGE_UPPER)
-  if (NOT YGG_EMBED_${LANGUAGE})
-    message(STATUS "${LANGUAGE} embedding disabled")
-    list(APPEND YGG_INSTALL_DEFS -DYGGDRASIL_DISABLE_EMBEDDED_${LANGUAGE_UPPER})
-    if (LANGUAGE STREQUAL "Python")
-      list(APPEND YGG_INSTALL_DEFS -DYGGDRASIL_DISABLE_PYTHON_C_API)
-    endif()
-  else()
-    if (LANGUAGE STREQUAL "Python")
-      list(APPEND ARGS_DEPENDENCY_PROPERTIES Python_PREFIX Python_FOUND)
-      if (Python_PREFIX)
-        set(ARGS_DEPENDENCY ${Python_PREFIX})
-      endif()
-    endif()
+  list(APPEND ARGS_DEFINITIONS "-DYGG_EMBED_${LANGUAGE_UPPER}")
+  list(APPEND ARGS_DEFINITIONS_MISSING
+       "-DYGGDRASIL_DISABLE_EMBEDDED_${LANGUAGE_UPPER}")
+  if (LANGUAGE STREQUAL "Python")
+    list(APPEND ARGS_DEFINITIONS_MISSING
+         -DYGGDRASIL_DISABLE_PYTHON_C_API)
+  endif()
+  if(YGG_EMBED_${LANGUAGE})
     if (ARGS_FIND_METHOD)
-      cmake_language(CALL ${ARGS_FIND_METHOD} ${ARGS_FIND_ARGS})
+      message(FATAL_ERROR "Deprecated FIND_METHOD")
+      # cmake_language(CALL ${ARGS_FIND_METHOD} ${ARGS_FIND_ARGS})
+      # if(NOT ${ARGS_DEPENDENCY}_FOUND)
+      #   message(STATUS "${LANGUAGE} not found, embedding will be disabled")
+      #   set(YGG_EMBED_${LANGUAGE} OFF)
+      # endif()
     else()
-      find_yggdrasil_dependency(
-        ${ARGS_DEPENDENCY}
-	ADDITIONAL_PROPERTIES ${ARGS_DEPENDENCY_PROPERTIES}
+      collect_arguments(
+        FIND_ARGS ARGS "${options}"
+        LIBRARIES LIBRARIES_Python
+        LIBRARY_DIRS INCLUDE_DIRS DEFINITIONS DEFINITIONS_MISSING
+        DEPENDENCY_PROPERTIES SEARCH_ARGS
+      )
+      add_yggdrasil_dependency(
+        ${ARGS_DEPENDENCY} ${FIND_ARGS}
+        OPTIONS_MISSING "YGG_EMBED_${LANGUAGE}"
+        DOC_MISSING "\"${ARGS_DEPENDENCY}\" not found, embedding of \"${LANGUAGE}\" will be disabled"
       )
     endif()
-    if(${ARGS_DEPENDENCY}_FOUND)
-      list(APPEND YGG_INSTALL_DEPS ${ARGS_DEPENDENCY})
-      list(APPEND YGG_INSTALL_DEFS -DYGG_EMBED_${LANGUAGE_UPPER})
-      if (${ARGS_INCLUDE_DIRS_VAR})
-        list(APPEND DEPS_INCLUDE_DIRS ${${ARGS_INCLUDE_DIRS_VAR}})
-      endif()
-      if (${ARGS_LIBRARY_VAR})
-        list(APPEND DEPS_LIBRARIES ${${ARGS_LIBRARY_VAR}})
-      endif()
-      if (${ARGS_LIBRARY_DIR_VAR})
-        list(APPEND DEPS_LIBRARY_DIRS ${${ARGS_LIBRARY_DIR_VAR}})
-      endif()
-      if (ARGS_DEFINITIONS)
-        list(APPEND YGG_INSTALL_DEFS ${ARGS_DEFINITIONS})
-      endif()
-      if (LANGUAGE STREQUAL "Python")
-        list(APPEND DEPS_LIBRARIES ${Python_PREFIX}::NumPy)
-	list(APPEND DEPS_LIBRARIES_Python ${Python_PREFIX}::Python)
-      endif()
-    else()
-      message(STATUS "${LANGUAGE} not found, embedding will be disabled")
-      set(YGG_EMBED_${LANGUAGE} OFF)
-      list(APPEND YGG_INSTALL_DEFS -DYGGDRASIL_DISABLE_EMBEDDED_${LANGUAGE_UPPER})
-      if (LANGUAGE STREQUAL "Python")
-        list(APPEND YGG_INSTALL_DEFS -DYGGDRASIL_DISABLE_PYTHON_C_API)
-      endif()
-    endif()
-    propagate_cmake_library_variables(
-      "^${ARGS_DEPENDENCY}*" ${ARGS_DEPENDENCY_PROPERTIES}
+    
+    propagate_cmake_variables_prefix(
+      "${ARGS_DEPENDENCY}" ${ARGS_DEPENDENCY_PROPERTIES}
     )
     if(ARGS_VERBOSE)
-      dump_cmake_variables(REGEX "^${ARGS_DEPENDENCY}*" VERBOSE)
+      dump_cmake_variables(PREFIX "${ARGS_DEPENDENCY}" VERBOSE)
     endif()
+  else()
+    message(STATUS "${LANGUAGE} embedding disabled")
+    list(APPEND YGG_INSTALL_DEFS ${ARGS_DEFINITIONS_MISSING})
   endif()
-  list(APPEND YGG_EMBEDDED_LANGUAGES ${LANGUAGE})
+  if(YGG_EMBED_${LANGUAGE})
+    list(APPEND YGG_EMBEDDED_LANGUAGES_AVAILABLE ${LANGUAGE})
+  elseif(YGG_EMBED_${LANGUAGE}_REQUIRED)
+    message(WARNING "Embedded language \"${LANGUAGE}\" required, but not enabled")
+  endif()
+  list(APPEND YGG_EMBEDDED_LANGUAGES_SUPPORTED ${LANGUAGE})
   propagate_cmake_variables(
-    YGG_EMBEDDED_LANGUAGES
     YGG_EMBED_${LANGUAGE}
-    DEPS_INCLUDE_DIRS
+    YGG_EMBED_${LANGUAGE}_REQUIRED
+    YGG_INSTALL_DEPS
+    YGG_INSTALL_DEFS
+    YGG_INSTALL_CONFIG
     DEPS_LIBRARIES
     DEPS_LIBRARIES_Python
     DEPS_LIBRARY_DIRS
-    YGG_INSTALL_DEPS
-    YGG_INSTALL_DEFS
+    DEPS_INCLUDE_DIRS
+    YGG_EMBEDDED_LANGUAGES_SUPPORTED
+    YGG_EMBEDDED_LANGUAGES_AVAILABLE
   )
 endfunction()

@@ -9,7 +9,7 @@ set(YGG_LANGUAGES_AVAILABLE "@YGG_LANGUAGES_AVAILABLE@")
 set(YGG_INSTALL_DEPS "@YGG_INSTALL_DEPS@")
 set(YGG_INSTALL_CONFIG "@YGG_INSTALL_CONFIG@")
 foreach(dep IN LISTS YGG_INSTALL_DEPS)
-  if (dep STREQUAL "Python3" OR dep STREQUAL "Python" OR
+  if (dep MATCHES "Python" OR
       dep STREQUAL "ZeroMQ" OR
       dep STREQUAL "rabbitmq-c")
     find_yggdrasil_dependency(${dep} FOR_PACKAGE_CONFIG)

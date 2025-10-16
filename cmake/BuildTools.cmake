@@ -1004,7 +1004,7 @@ function(add_internal_library target library_type)
 endfunction()
 
 function(add_external_library target library_type)
-  set(oneValueArgs GENERATOR PREPEND_PATH LANGUAGE
+  set(oneValueArgs GENERATOR PREPEND_PATH LANGUAGE LINKER_LANGUAGE
       LISTS_DIR BUILD_DIR SOURCE_DIR)
   set(multiValueArgs SOURCES LIBRARIES INCLUDES DEFINITIONS PROPERTIES
       COMPILE_FLAGS CONFIG_ARGUMENTS BUILD_ARGUMENTS PRESERVE_VARIABLES)
@@ -1031,6 +1031,7 @@ function(add_external_library target library_type)
   set(final_library_type ${library_type})
   if(library_type STREQUAL "OBJECT")
     set(final_library_type STATIC)
+    set(ARGS_LINKER_LANGUAGE)  # Prevent enabling unrequired language
   endif()
 
   # Get source & object file names

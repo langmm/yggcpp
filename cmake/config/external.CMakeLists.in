@@ -2,21 +2,18 @@ cmake_minimum_required(VERSION @CMAKE_MINIMUM_REQUIRED_VERSION@)
 list(APPEND CMAKE_MODULE_PATH "@CMAKE_CURRENT_FUNCTION_LIST_DIR@")
 include(GeneralTools)
 show_build_info(PREFIX "EXTERNAL @target@: ")
-project(@target@_PROJECT)
-enable_language(@ARGS_LANGUAGE@)
+project(@target@_PROJECT LANGUAGES @ARGS_LANGUAGE@ @ARGS_LINKER_LANGUAGE@)
 set(EXTERNAL_BUILD_DIR "@CMAKE_CURRENT_BINARY_DIR@")
 set(target @target@)
 set(library_type @library_type@)
-set(final_library_type ${library_type})
-if(library_type STREQUAL "OBJECT")
-  set(final_library_type STATIC)
-endif()
+set(final_library_type @final_library_type@)
 set(external_target_file "@external_target_file@")
 
 include(BuildTools)
 add_internal_library(
   ${target} ${final_library_type}
   LANGUAGE @ARGS_LANGUAGE@
+  LINKER_LANGUAGE @ARGS_LINKER_LANGUAGE@
   SOURCES @EXTERNAL_SOURCES@
   LIBRARIES @ARGS_LIBRARIES@
   INCLUDES @ARGS_INCLUDES@

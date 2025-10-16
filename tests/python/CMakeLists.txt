@@ -1,7 +1,7 @@
 message(STATUS "Python TESTING ON")
 include(CTest)
 include(SearchTools)
-find_package_python()
+find_package_generic(Python COMPONENTS Interpreter)
 enable_testing()
 list(APPEND PYTEST_ARGS -sv)
 if (NOT YGGTEST_DYNAMIC_DIR)

@@ -1,3 +1,5 @@
+include(GeneralTools)
+
 function(install_language_dependency NAME LANGUAGE)
   if(LANGUAGE STREQUAL "Julia")
     find_yggdrasil_dependency(Julia)
@@ -24,69 +26,147 @@ function(install_language_dependency NAME LANGUAGE)
   endif()
 endfunction()
 
-function(find_yggdrasil_dependency NAME)
+function(add_yggdrasil_dependency name)
+  include(SearchTools)
+  set(oneValueArgs INCLUDE_DIRS_VAR LIBRARY_VAR LIBRARY_DIR_VAR
+      DOC_MISSING)
+  set(multiValueArgs LIBRARIES LIBRARIES_Python LIBRARY_DIRS INCLUDE_DIRS
+      DEFINITIONS DEFINITIONS_MISSING SEARCH_ARGS OPTIONS_MISSING)
+  _initialize_find_package(ON ${ARGN})
+  if(name MATCHES "Python" AND NOT ARGS_LIBRARIES)
+    list(APPEND ARGS_LIBRARIES ${Python_PREFIX}::NumPy)
+    list(APPEND ARGS_LIBRARIES_Python ${Python_PREFIX}::Python)
+  endif()
+  if(ARGS_LIBRARIES OR ARGS_LIBRARIES_Python)
+    if(ARGS_REQUIRED_TARGETS)
+      message(WARNING "Both REQUIRED_TARGETS and LIBRARIES/LIBRARIES_Python were provided")
+    else()
+      set(ARGS_REQUIRED_TARGETS ${ARGS_LIBRARIES} ${ARGS_LIBRARIES_Python})
+    endif()
+  endif()
+  if(NOT ${ARGS_FOUND_VAR})
+    collect_package_arguments(FIND_ARGS ARGS "${options}")
+    find_yggdrasil_dependency(
+      ${name} ${FIND_ARGS} ${ARGS_SEARCH_ARGS}
+    )
+    if(${ARGS_FOUND_VAR})
+      message(STATUS "${name} found")
+    else()
+      message(STATUS "NO ${name}")
+    endif()
+  endif()
+  if(${ARGS_FOUND_VAR})
+    if(NOT ARGS_INCLUDE_DIRS_VAR)
+      if(${name}_INCLUDE_DIRS)
+        set(ARGS_INCLUDE_DIRS_VAR ${name}_INCLUDE_DIRS)
+      elseif(${name}_INCLUDE_DIR)
+        set(ARGS_INCLUDE_DIRS_VAR ${name}_INCLUDE_DIR)
+      endif()
+    endif()
+    if(NOT ARGS_LIBRARY_VAR)
+      if(${name}_LIBRARY_TARGET)
+        set(ARGS_LIBRARY_VAR ${name}_LIBRARY_TARGET)
+      elseif(${name}_LIBRARY)
+        set(ARGS_LIBRARY_VAR ${name}_LIBRARY)
+      elseif(${name}_LIBRARIES)
+        message(WARNING "No single library for dependency \"${name}\", adding multiple")
+        set(ARGS_LIBRARY_VAR ${name}_LIBRARIES)
+      endif()
+    endif()
+    if((NOT ARGS_LIBRARY_DIR_VAR) AND ${name}_LIBRARY_DIR)
+      set(ARGS_LIBRARY_DIR_VAR ${name}_LIBRARY_DIR)
+    endif()
+    list(APPEND YGG_INSTALL_DEPS ${name})
+    if(ARGS_DEFINITIONS)
+      list(APPEND YGG_INSTALL_DEFS ${ARGS_DEFINITIONS})
+    endif()
+    if(ARGS_LIBRARIES)
+      list(APPEND DEPS_LIBRARIES ${ARGS_LIBRARIES})
+    elseif(${ARGS_LIBRARY_VAR})
+      list(APPEND DEPS_LIBRARIES ${${ARGS_LIBRARY_VAR}})
+    endif()
+    if(ARGS_LIBRARIES_Python)
+      list(APPEND DEPS_LIBRARIES_Python ${ARGS_LIBRARIES_Python})
+    endif()
+    if(ARGS_LIBRARY_DIRS)
+      list(APPEND DEPS_LIBRARY_DIRS ${ARGS_LIBRARY_DIRS})
+    endif()
+    if(${ARGS_LIBRARY_DIR_VAR})
+      list(APPEND DEPS_LIBRARY_DIRS ${${ARGS_LIBRARY_DIR_VAR}})
+    endif()
+    if(ARGS_INCLUDE_DIRS)
+      list(APPEND DEPS_INCLUDE_DIRS ${ARGS_INCLUDE_DIRS})
+    endif()
+    if(ARGS_INCLUDE_DIRS_VAR)
+      list(APPEND DEPS_INCLUDE_DIRS ${${ARGS_INCLUDE_DIRS_VAR}})
+    endif()
+  else()
+    if(ARGS_DOC_MISSING)
+      message(STATUS "${ARGS_DOC_MISSING}")
+    endif()
+    if(ARGS_OPTIONS_MISSING)
+      set(${ARGS_OPTIONS_MISSING} OFF PARENT_SCOPE)
+    endif()
+    if(ARGS_DEFINITIONS_MISSING)
+      list(APPEND YGG_INSTALL_DEFS ${ARGS_DEFINITIONS_MISSING})
+    endif()
+  endif()
+  _propagate_cmake_variables_package(
+    YGG_INSTALL_DEPS
+    YGG_INSTALL_DEFS
+    YGG_INSTALL_CONFIG
+    DEPS_LIBRARIES
+    DEPS_LIBRARIES_Python
+    DEPS_LIBRARY_DIRS
+    DEPS_INCLUDE_DIRS
+  )
+endfunction()
+
+function(find_yggdrasil_dependency name)
   include(SearchTools)
   set(options FOR_PACKAGE_CONFIG VERBOSE)
   set(oneValueArgs LANGUAGE LANGUAGE_DEPENDENCY)
-  set(multiValueArgs ADDITIONAL_PROPERTIES SEARCH_ORDER)
-  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-  if(NOT ARGS_LANGUAGE_DEPENDENCY)
-    set(ARGS_LANGUAGE_DEPENDENCY ${NAME})
-  endif()
-  if(NAME STREQUAL "rabbitmq-c")
-    list(APPEND ARGS_UNPARSED_ARGUMENTS
-         HEADER amqp.h LIBNAMES rabbitmq
-         IMPORTED_TARGET rabbitmq::rabbitmq)
-    if(NOT ARGS_SEARCH_ORDER)
-      set(ARGS_SEARCH_ORDER DEFAULT_CONFIG CONDA PKGCONFIG)
-    endif()
-  elseif(NAME STREQUAL "ZeroMQ")
-    list(APPEND ARGS_UNPARSED_ARGUMENTS
-         HEADER zmq.h
-         LIBNAMES zmq libzmq libzmq-static
-         IMPORTED_TARGET ZeroMQ)
+  set(multiValueArgs SEARCH_ORDER COMPONENTS)
+  _initialize_find_package(ON ${ARGN})
+  set_default(ARGS_LANGUAGE_DEPENDENCY ${name})
+  if(name STREQUAL "rabbitmq-c")
+    set_default(ARGS_HEADER amqp.h)
+    set_default(ARGS_LIBNAMES rabbitmq)
+    set_default(ARGS_IMPORTED_TARGET rabbitmq::rabbitmq)
+    set_default(ARGS_SEARCH_ORDER DEFAULT_CONFIG CONDA PKGCONFIG)
+  elseif(name STREQUAL "ZeroMQ")
+    set_default(ARGS_HEADER zmq.h)
+    set_default(ARGS_LIBNAMES zmq libzmq libzmq-static)
+    set_default(ARGS_IMPORTED_TARGET ZeroMQ)
+    set_default(ARGS_SEARCH_ORDER DEFAULT_CONFIG CONDA PKGCONFIG)
     if(WIN32)
-      list(APPEND ARGS_UNPARSED_ARGUMENTS REQUIRED)
+      set(ARGS_REQUIRED REQUIRED)
     endif()
-    if(NOT ARGS_SEARCH_ORDER)
-      set(ARGS_SEARCH_ORDER DEFAULT_CONFIG CONDA PKGCONFIG)
-    endif()
+  elseif(name MATCHES "Python")
+    set_default(ARGS_COMPONENTS Interpreter Development NumPy)
+    set_default(ARGS_SEARCH_ORDER DEFAULT)
   elseif(ARGS_FOR_PACKAGE_CONFIG)
-    if(NOT ARGS_SEARCH_ORDER)
-      set(ARGS_SEARCH_ORDER DEFAULT)
-    endif()
+    set_default(ARGS_SEARCH_ORDER DEFAULT)
   endif()
-  if(ARGS_SEARCH_ORDER)
-    list(APPEND ARGS_UNPARSED_ARGUMENTS SEARCH_ORDER ${ARGS_SEARCH_ORDER})
-  endif()
-  
-  if(NAME STREQUAL "Python3" OR NAME STREQUAL "Python")
-    if(ARGS_FOR_PACKAGE_CONFIG)
-      set(Python_PREFIX ${NAME})
-      list(APPEND ARGS_ADDITIONAL_PROPERTIES Python_PREFIX Python_FOUND)
-    endif()
-    find_package_python()
-  else()
-    find_package_generic(${NAME} ${ARGS_UNPARSED_ARGUMENTS})
-  endif()
-  if(ARGS_LANGUAGE AND NOT ${name}_FOUND)
+  collect_package_arguments(
+    FIND_ARGS ARGS "${options}"
+    SEARCH_ORDER COMPONENTS
+  )
+  find_package_generic(${name} ${FIND_ARGS})
+  if(ARGS_LANGUAGE AND NOT ${ARGS_FOUND_VAR})
     install_language_dependency(
       ${ARGS_LANGUAGE_DEPENDENCY} ${ARGS_LANGUAGE}
     )
-    if(ARGS_FOR_PACKAGE_CONFIG)
-      list(APPEND RECURSE_TOKENS FOR_PACKAGE_CONFIG)
-    endif()
-    if(ARGS_ADDITIONAL_PROPERTIES)
-      list(APPEND RECURSE_TOKENS ADDITIONAL_PROPERTIES ${ARGS_ADDITIONAL_PROPERTIES})
-    endif()
-    find_yggdrasil_dependency(
-      ${NAME} ${RECURSE_TOKENS}
-      ${ARGS_UNPARSED_ARGUMENTS}
+    collect_arguments(
+      RECURSE_TOKENS ARGS "${options}"
+      FOR_PACKAGE_CONFIG
     )
+    list(APPEND RECURSE_TOKENS ${FIND_ARGS})
+    find_yggdrasil_dependency(${name} ${RECURSE_TOKENS})
   endif()
-  propagate_cmake_library_variables("^${NAME}*" ${ARGS_ADDITIONAL_PROPERTIES})
+  _propagate_cmake_variables_package()
   if(ARGS_VERBOSE)
-    dump_cmake_variables(REGEX "${NAME}*" VERBOSE)
+    dump_cmake_variables(PREFIX "${ARGS_VAR_PREFIX}" VERBOSE)
   endif()
 endfunction()
 
@@ -138,8 +218,8 @@ function(add_yggdrasil_interface LANGUAGE)
   if(ARGS_DEPENDENCY AND BUILD_${LANGUAGE}_LIBRARY)
     find_yggdrasil_dependency(
       ${ARGS_DEPENDENCY} LANGUAGE ${LANGUAGE}
-      ADDITIONAL_PROPERTIES ${ARGS_DEPENDENCY_PROPERTIES}
       LANGUAGE_DEPENDENCY ${ARGS_LANGUAGE_DEPENDENCY}
+      ADDITIONAL_PROPERTIES ${ARGS_DEPENDENCY_PROPERTIES}
     )
     if(NOT ${ARGS_DEPENDENCY}_FOUND)
       message(STATUS "${LANGUAGE} dependency ${ARGS_DEPENDENCY} not found, ${LANGUAGE} interface will not be built")
@@ -174,15 +254,22 @@ function(add_yggdrasil_option NAME)
   include(SearchTools)
   set(options COMM DISABLE_BY_DEFAULT NO_DEPENDENCY)
   set(oneValueArgs DEPENDENCY DEFAULT FOUND_VAR)
-  set(multiValueArgs SUPPORTED_OS LIBRARIES LIBRARY_DIRS
-      INCLUDE_DIRS DEFINITIONS DEPENDENCY_PROPERTIES SEARCH_ARGS)
+  set(multiValueArgs SUPPORTED_OS LIBRARIES LIBRARIES_Python
+      LIBRARY_DIRS INCLUDE_DIRS DEFINITIONS DEFINITIONS_MISSING
+      DEPENDENCY_PROPERTIES SEARCH_ARGS)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  check_no_unparsed(ARGS)
+  set(ARGS_ADDITIONAL_PROPERTIES ${ARGS_DEPENDENCY_PROPERTIES})
   set(DEFAULT_ENABLED ON)
   if (ARGS_DISABLE_BY_DEFAULT)
     set(DEFAULT_ENABLED OFF)
   endif()
+  # TODO: Add "YGG_" prefix to these options
   option(ENABLE_${NAME} "Enable ${NAME} support" ${DEFAULT_ENABLED})
   option(REQUIRE_${NAME} "Require ${NAME} support" OFF)
+  if(ARGS_COMM)
+    list(APPEND ARGS_DEFINITIONS -D${NAME}INSTALLED)
+  endif()
   if(ENABLE_${NAME} AND ARGS_SUPPORTED_OS)
     set(ENABLE_${NAME} OFF)
     foreach(item ${ARGS_SUPPORTED_OS})
@@ -194,66 +281,41 @@ function(add_yggdrasil_option NAME)
       message(STATUS "${NAME} support not available on the current OS")
     endif()
   endif()
-  if((NOT ARGS_DEPENDENCY) AND (NOT ARGS_NO_DEPENDENCY))
-    set(ARGS_DEPENDENCY ${NAME})
+  if(NOT ARGS_NO_DEPENDENCY)
+    set_default(ARGS_DEPENDENCY ${NAME})
   endif()
-  if(NOT ARGS_FOUND_VAR)
-    set(ARGS_FOUND_VAR ${ARGS_DEPENDENCY}_FOUND)
+  set_default(ARGS_FOUND_VAR ${ARGS_DEPENDENCY}_FOUND)
+  if(ENABLE_${NAME})
+    if(NOT ARGS_DEPENDENCY)
+      if(ARGS_DEFINITIONS)
+        list(APPEND YGG_INSTALL_DEFS ${ARGS_DEFINITIONS})
+      endif()
+    elseif(NOT ${ARGS_FOUND_VAR})
+      collect_arguments(
+        FIND_ARGS ARGS "${options}"
+        FOUND_VAR LIBRARIES LIBRARIES_Python
+        LIBRARY_DIRS INCLUDE_DIRS DEFINITIONS DEFINITIONS_MISSING
+        ADDITIONAL_PROPERTIES SEARCH_ARGS
+      )
+      add_yggdrasil_dependency(
+        ${ARGS_DEPENDENCY} ${FIND_ARGS}
+        OPTIONS_MISSING ENABLE_${NAME}
+        DOC_MISSING "\"${ARGS_DEPENDENCY}\" not found, support for \"${NAME}\" will be disabled"
+      )
+      propagate_cmake_variables_prefix(
+        "${ARGS_DEPENDENCY}" ${ARGS_DEPENDENCY_PROPERTIES}
+      )
+    endif()
+  else()
+    message(STATUS "${NAME} support disabled")
+    list(APPEND YGG_INSTALL_DEFS ${ARGS_DEFINITIONS_MISSING})
   endif()
   if(ENABLE_${NAME})
-    if(ARGS_DEPENDENCY AND NOT ${ARGS_FOUND_VAR})
-      find_yggdrasil_dependency(
-        ${ARGS_DEPENDENCY}
-	ADDITIONAL_PROPERTIES ${ARGS_DEPENDENCY_PROPERTIES}
-	${ARGS_SEARCH_ARGS}
-      )
-      propagate_cmake_library_variables(
-        "^${ARGS_DEPENDENCY}*" ${ARGS_DEPENDENCY_PROPERTIES}
-      )
-      if(${ARGS_FOUND_VAR})
-        message(STATUS "${ARGS_DEPENDENCY} found")
-        list(APPEND YGG_INSTALL_DEPS ${ARGS_DEPENDENCY})
-	if(ARGS_DEFINITIONS)
-	  list(APPEND YGG_INSTALL_DEFS ${ARGS_DEFINITIONS})
-	endif()
-	if(ARGS_LIBRARIES)
-	  list(APPEND DEPS_LIBRARIES ${ARGS_LIBRARIES})
-	elseif(${ARGS_DEPENDENCY}_LIBRARY_TARGET)
-          list(APPEND DEPS_LIBRARIES ${${ARGS_DEPENDENCY}_LIBRARY_TARGET})
-	elseif(${ARGS_DEPENDENCY}_LIBRARY)
-          list(APPEND DEPS_LIBRARIES ${${ARGS_DEPENDENCY}_LIBRARY})
-        elseif(${ARGS_DEPENDENCY}_LIBRARIES)
-          message(WARNING "No single library for dependency \"${ARGS_DEPENDENCY}\", adding multiple")
-          list(APPEND DEPS_LIBRARIES ${${ARGS_DEPENDENCY}_LIBRARIES})
-	endif()
-	if(ARGS_LIBRARY_DIRS)
-	  list(APPEND DEPS_LIBRARY_DIRS ${ARGS_LIBRARY_DIRS})
-	endif()
-	if(${ARGS_DEPENDENCY}_LIBRARY_DIR)
-	  list(APPEND DEPS_LIBRARY_DIRS ${${ARGS_DEPENDENCY}_LIBRARY_DIR})
-	endif()
-	if(ARGS_INCLUDE_DIRS)
-	  list(APPEND DEPS_INCLUDE_DIRS ${ARGS_INCLUDE_DIRS})
-	endif()
-	if(${ARGS_DEPENDENCY}_INCLUDE_DIR)
-          list(APPEND DEPS_INCLUDE_DIRS ${${ARGS_DEPENDENCY}_INCLUDE_DIR})
-	endif()
-      else()
-        message(STATUS "NO ${ARGS_DEPENDENCY}")
-	set(ENABLE_${NAME} OFF)
-      endif()
+    list(APPEND YGG_OPTIONS_AVAILABLE ${NAME})
+    if(ARGS_COMM)
+      list(APPEND YGG_COMMS_AVAILABLE ${NAME})
     endif()
-    if(ENABLE_${NAME})
-      list(APPEND YGG_OPTIONS_AVAILABLE ${NAME})
-      if(ARGS_COMM)
-        list(APPEND YGG_INSTALL_DEFS -D${NAME}INSTALLED)
-        list(APPEND YGG_COMMS_AVAILABLE ${NAME})
-      endif()
-    endif()
-  else(ENABLE_${NAME})
-    message(STATUS "No ${NAME} support will be available")
-  endif(ENABLE_${NAME})
-  if(REQUIRE_${NAME} AND NOT ENABLE_${NAME})
+  elseif(REQUIRE_${NAME})
     message(WARNING "${NAME} required, but not enabled")
   endif()
   list(APPEND YGG_OPTIONS_SUPPORTED ${NAME})
@@ -264,11 +326,19 @@ function(add_yggdrasil_option NAME)
     unset(DEFAULT_COMM CACHE)
   endif()
   propagate_cmake_variables(
-    ENABLE_${NAME} REQUIRE_${NAME}
-    YGG_INSTALL_DEPS YGG_INSTALL_DEFS YGG_INSTALL_CONFIG
-    DEPS_LIBRARIES DEPS_LIBRARY_DIRS DEPS_INCLUDE_DIRS
-    YGG_COMMS_AVAILABLE YGG_COMMS_SUPPORTED
-    YGG_OPTIONS_AVAILABLE YGG_OPTIONS_SUPPORTED
+    ENABLE_${NAME}
+    REQUIRE_${NAME}
+    YGG_INSTALL_DEPS
+    YGG_INSTALL_DEFS
+    YGG_INSTALL_CONFIG
+    DEPS_LIBRARIES
+    DEPS_LIBRARIES_Python
+    DEPS_LIBRARY_DIRS
+    DEPS_INCLUDE_DIRS
+    YGG_COMMS_AVAILABLE
+    YGG_COMMS_SUPPORTED
+    YGG_OPTIONS_AVAILABLE
+    YGG_OPTIONS_SUPPORTED
   )
 endfunction()
 

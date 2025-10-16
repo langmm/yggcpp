@@ -1,164 +1,260 @@
-function(dump_cmake_variables)
-  set(options VERBOSE)
-  set(oneValueArgs REGEX OUTPUT_VAR LOG_LEVEL)
-  set(multiValueArgs VARIABLES)
+include(GeneralTools)
+
+macro(_initialize_find_package NO_UNPARSED)
+  list(APPEND options REQUIRED)
+  list(APPEND oneValueArgs FOUND_VAR VAR_PREFIX HEADER IMPORTED_TARGET)
+  list(APPEND multiValueArgs LIBNAMES REQUIRED_TARGETS
+       ADDITIONAL_PROPERTIES)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-  if(NOT ARGS_LOG_LEVEL)
-    set(ARGS_LOG_LEVEL STATUS)
+  if(NO_UNPARSED)
+    check_no_unparsed(ARGS)
   endif()
-  if(ARGS_VARIABLES)
-    set(_variableNames ${ARGS_VARIABLES})
+  set_options_to_names(ARGS "${options}")
+  if(name MATCHES "Python")
+    set_default(ARGS_VAR_PREFIX "Python")
+    if(Python_PREFIX AND (NOT name STREQUAL "${Python_PREFIX}"))
+      set(name "${Python_PREFIX}")
+    endif()
+    setup_python_search(PREFIX "${name}")
   else()
-    get_cmake_property(_variableNames VARIABLES)
+    set_default(ARGS_VAR_PREFIX "${name}")
   endif()
-  list (SORT _variableNames)
-  if(NOT ARGS_OUTPUT_VAR)
-    set(ARGS_VERBOSE ON)
+  set_default(ARGS_FOUND_VAR "${name}_FOUND")
+  set_default(ARGS_LIBNAMES ${name})
+  # set_default(ARGS_IMPORTED_TARGET ${name})
+  if (NOT ARGS_HEADER)
+    list(GET ARGS_LIBNAMES 0 FIRST_NAME)
+    set(ARGS_HEADER ${FIRST_NAME}.h)
   endif()
-  foreach (_variableName ${_variableNames})
-    if (ARGS_REGEX)
-      unset(MATCHED)
-      string(REGEX MATCH ${ARGS_REGEX} MATCHED ${_variableName})
-      if (NOT MATCHED)
-        continue()
-      endif()
-    endif()
-    if (ARGS_VERBOSE)
-      message(${ARGS_LOG_LEVEL} "${_variableName}=${${_variableName}}")
-    endif()
-    if (ARGS_OUTPUT_VAR)
-      list(APPEND ${ARGS_OUTPUT_VAR} ${_variableName})
-    endif()
-  endforeach()
-  if (ARGS_OUTPUT_VAR)
-    set(${ARGS_OUTPUT_VAR} ${${ARGS_OUTPUT_VAR}} PARENT_SCOPE)
-  endif()
-endfunction()
-
-macro(propagate_cmake_variables)
-  set(_temp_package_vars "${ARGN}")
-  foreach (_variableName IN LISTS _temp_package_vars)
-    set(${_variableName} ${${_variableName}} PARENT_SCOPE)
-  endforeach()
 endmacro()
 
-macro(propagate_cmake_library_variables NAME)
-  set(_temp_package_vars "${ARGN}")
-  dump_cmake_variables(
-    REGEX ${NAME} OUTPUT_VAR _temp_package_vars
+macro(_propagate_cmake_variables_package)
+  if(${ARGS_FOUND_VAR})
+    propagate_cmake_variables_prefix("${ARGS_VAR_PREFIX}" ${ARGS_ADDITIONAL_PROPERTIES} ${ARGN})
+  else()
+    set(${ARGS_FOUND_VAR} OFF PARENT_SCOPE)
+  endif()
+endmacro()
+
+macro(_finalize_find_package)
+  collect_package_arguments(FINALIZE_ARGS ARGS "${options}")
+  finalize_package(${name} ${FINALIZE_ARGS})
+  _propagate_cmake_variables_package()
+endmacro()
+
+function(collect_package_arguments VAR PREFIX options)
+  collect_arguments(
+    ${VAR} ${PREFIX} "${options}"
+    REQUIRED FOUND_VAR VAR_PREFIX HEADER IMPORTED_TARGET
+    LIBNAMES REQUIRED_TARGETS
+    ${ARGN}
+    ADDITIONAL_PROPERTIES  # Must be last to ensure it dosn't absorb vars
   )
-  foreach (_variableName IN LISTS _temp_package_vars)
-    set(${_variableName} ${${_variableName}} PARENT_SCOPE)
-  endforeach()
-endmacro()
+  set(${VAR} "${${VAR}}" PARENT_SCOPE)
+endfunction()
 
 function(add_library_python target)
-    if (NOT Python_PREFIX)
-      set(Python_PREFIX Python)
-      set(Python_PREFIX Python PARENT_SCOPE)
-    endif()
-    cmake_parse_arguments(
-      ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-    if (Python_PREFIX STREQUAL "Python3")
-      Python3_add_library(${target} ${ARGS_UNPARSED_ARGUMENTS})
-    else()
-      Python_add_library(${target} ${ARGS_UNPARSED_ARGUMENTS})
-    endif()
+  if (NOT Python_PREFIX)
+    set(Python_PREFIX Python)
+    set(Python_PREFIX Python PARENT_SCOPE)
+  endif()
+  cmake_parse_arguments(
+    ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  if (Python_PREFIX STREQUAL "Python3")
+    Python3_add_library(${target} ${ARGS_UNPARSED_ARGUMENTS})
+  else()
+    Python_add_library(${target} ${ARGS_UNPARSED_ARGUMENTS})
+  endif()
 endfunction()
 
-function(find_package_python)
-    # needed on GitHub Actions CI: actions/setup-python does not touch registry/frameworks on Windows/macOS
-    # this mirrors PythonInterp behavior which did not consult registry/frameworks first
-    if (NOT Python_PREFIX)
-      set(Python_PREFIX Python)
-      set(Python_PREFIX Python PARENT_SCOPE)
-    endif()
-    if (NOT DEFINED ${Python_PREFIX}_FIND_REGISTRY)
-        set(${Python_PREFIX}_FIND_REGISTRY "LAST")
-    endif ()
-    if (NOT DEFINED ${Python_PREFIX}_FIND_FRAMEWORK)
-        set(${Python_PREFIX}_FIND_FRAMEWORK "LAST")
-    endif ()
-    if(${Python_PREFIX}_EXECUTABLE)
-        message(DEBUG "Python executable provided ${${Python_PREFIX}_EXECUTABLE}")
-        if(NOT ${Python_PREFIX}_NumPy_INCLUDE_DIRS)
-	    execute_process(
-	      COMMAND ${${Python_PREFIX}_EXECUTABLE} -c "import numpy; print(numpy.get_include())"
-	      OUTPUT_VARIABLE ${Python_PREFIX}_NumPy_INCLUDE_DIRS
-	      RESULT_VARIABLE NUMPY_NOT_FOUND)
-            if(NUMPY_NOT_FOUND)
-                message(FATAL_ERROR "Numpy include dirs not found")
-            endif()
-        endif()
+# function(find_package_python)
+#     # needed on GitHub Actions CI: actions/setup-python does not touch registry/frameworks on Windows/macOS
+#     # this mirrors PythonInterp behavior which did not consult registry/frameworks first
+#     if (NOT Python_PREFIX)
+#       set(Python_PREFIX Python)
+#       set(Python_PREFIX Python PARENT_SCOPE)
+#     endif()
+#     if (NOT DEFINED ${Python_PREFIX}_FIND_REGISTRY)
+#         set(${Python_PREFIX}_FIND_REGISTRY "LAST")
+#     endif ()
+#     if (NOT DEFINED ${Python_PREFIX}_FIND_FRAMEWORK)
+#         set(${Python_PREFIX}_FIND_FRAMEWORK "LAST")
+#     endif ()
+#     if(${Python_PREFIX}_EXECUTABLE)
+#         message(DEBUG "Python executable provided ${${Python_PREFIX}_EXECUTABLE}")
+#         if(NOT ${Python_PREFIX}_NumPy_INCLUDE_DIRS)
+# 	    execute_process(
+# 	      COMMAND ${${Python_PREFIX}_EXECUTABLE} -c "import numpy; print(numpy.get_include())"
+# 	      OUTPUT_VARIABLE ${Python_PREFIX}_NumPy_INCLUDE_DIRS
+# 	      RESULT_VARIABLE NUMPY_NOT_FOUND)
+#             if(NUMPY_NOT_FOUND)
+#                 message(FATAL_ERROR "Numpy include dirs not found")
+#             endif()
+#         endif()
+#     else()
+#         if(NOT ${Python_PREFIX}_ROOT_DIR)
+#             if(CONDA_PREFIX)
+#                 set(${Python_PREFIX}_ROOT_DIR "${CONDA_PREFIX}")
+#             else()
+#                 if(${Python_PREFIX}_EXECUTABLE)
+# 		    execute_process(
+# 		      COMMAND ${${Python_PREFIX}_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('base'))"
+# 		      OUTPUT_VARIABLE Python_ROOT
+# 		      RESULT_VARIABLE ROOT_NOT_FOUND)
+#                     if(ROOT_NOT_FOUND)
+#                         message(FATAL_ERROR "Python root not found")
+#                     endif()
+# 	            set(${Python_PREFIX}_ROOT_DIR "${Python_ROOT}")
+#                 endif()
+#             endif()
+#         endif()
+#     endif()
+#     if(${Python_PREFIX}_EXECUTABLE OR ${Python_PREFIX}_ROOT_DIR)
+#         # Force use of specified installation, should be enabled by
+# 	# default for CMP0094=NEW and CMake >= 3.15
+#         if(NOT ${Python_PREFIX}_FIND_STRATEGY)
+#             set(${Python_PREFIX}_FIND_STRATEGY LOCATION)
+#         endif()
+#     endif()
+#     if(${Python_PREFIX}_ROOT_DIR)
+#         message(DEBUG "Python root directory is ${${Python_PREFIX}_ROOT_DIR}")
+#         if (NOT ${Python_PREFIX}_ROOT)
+#             set(${Python_PREFIX}_ROOT ${${Python_PREFIX}_ROOT_DIR})
+#         endif()
+#     endif()
+#     find_package(${Python_PREFIX} COMPONENTS Interpreter Development NumPy REQUIRED)
+#     if(NOT ${Python_PREFIX}_NumPy_FOUND)
+#         message(FATAL_ERROR "NumPy headers not found")
+#     endif()
+#     if(NOT ${Python_PREFIX}_FOUND)
+#         message(FATAL_ERROR "Python libraries not found")
+#     endif()
+#     if (APPLE AND ${Python_PREFIX}_EXECUTABLE)
+#       execute_process(
+#         COMMAND realpath ${${Python_PREFIX}_EXECUTABLE}
+# 	OUTPUT_VARIABLE ${Python_PREFIX}_EXECUTABLE_FULL
+# 	RESULT_VARIABLE ERROR_IN_FULL
+# 	OUTPUT_STRIP_TRAILING_WHITESPACE)
+#       if ((NOT ERROR_IN_FULL) AND (NOT ${Python_PREFIX}_EXECUTABLE STREQUAL "${${Python_PREFIX}_EXECUTABLE_FULL}"))
+#         set(${Python_PREFIX}_EXECUTABLE ${${Python_PREFIX}_EXECUTABLE_FULL})
+#       endif()
+#     endif()
+#     message(STATUS "${Python_PREFIX}_EXECUTABLE = ${${Python_PREFIX}_EXECUTABLE}")
+#     propagate_cmake_variables_prefix("Python")
+# endfunction()
+
+function(setup_python_search)
+  # needed on GitHub Actions CI: actions/setup-python does not touch registry/frameworks on Windows/macOS
+  # this mirrors PythonInterp behavior which did not consult registry/frameworks first
+  set(oneValueArgs PREFIX)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  check_no_unparsed(ARGS)
+  if(NOT ARGS_PREFIX)
+    if(Python_PREFIX)
+      set(ARGS_PREFIX "${Python_PREFIX}")
     else()
-        if(NOT ${Python_PREFIX}_ROOT_DIR)
-            if(CONDA_PREFIX)
-                set(${Python_PREFIX}_ROOT_DIR "${CONDA_PREFIX}")
-            else()
-                if(${Python_PREFIX}_EXECUTABLE)
-		    execute_process(
-		      COMMAND ${${Python_PREFIX}_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('base'))"
-		      OUTPUT_VARIABLE Python_ROOT
-		      RESULT_VARIABLE ROOT_NOT_FOUND)
-                    if(ROOT_NOT_FOUND)
-                        message(FATAL_ERROR "Python root not found")
-                    endif()
-	            set(${Python_PREFIX}_ROOT_DIR "${Python_ROOT}")
-                endif()
-            endif()
-        endif()
+      set(ARGS_PREFIX "Python")
     endif()
-    if(${Python_PREFIX}_EXECUTABLE OR ${Python_PREFIX}_ROOT_DIR)
-        # Force use of specified installation, should be enabled by
-	# default for CMP0094=NEW and CMake >= 3.15
-        if(NOT ${Python_PREFIX}_FIND_STRATEGY)
-            set(${Python_PREFIX}_FIND_STRATEGY LOCATION)
-        endif()
-    endif()
-    if(${Python_PREFIX}_ROOT_DIR)
-        message(DEBUG "Python root directory is ${${Python_PREFIX}_ROOT_DIR}")
-        if (NOT ${Python_PREFIX}_ROOT)
-            set(${Python_PREFIX}_ROOT ${${Python_PREFIX}_ROOT_DIR})
-        endif()
-    endif()
-    find_package(${Python_PREFIX} COMPONENTS Interpreter Development NumPy REQUIRED)
-    if(NOT ${Python_PREFIX}_NumPy_FOUND)
-        message(FATAL_ERROR "NumPy headers not found")
-    endif()
-    if(NOT ${Python_PREFIX}_FOUND)
-        message(FATAL_ERROR "Python libraries not found")
-    endif()
-    if (APPLE AND ${Python_PREFIX}_EXECUTABLE)
+  endif()
+
+  if(${ARGS_PREFIX}_SETUP_PYTHON_SEARCH_PERFORMED)
+    return()
+  endif()
+  
+  if (NOT DEFINED ${ARGS_PREFIX}_FIND_REGISTRY)
+    set(${ARGS_PREFIX}_FIND_REGISTRY "LAST")
+  endif ()
+  if (NOT DEFINED ${ARGS_PREFIX}_FIND_FRAMEWORK)
+    set(${ARGS_PREFIX}_FIND_FRAMEWORK "LAST")
+  endif ()
+  if(${ARGS_PREFIX}_EXECUTABLE)
+    if(NOT ${ARGS_PREFIX}_NumPy_INCLUDE_DIRS)
       execute_process(
-        COMMAND realpath ${${Python_PREFIX}_EXECUTABLE}
-	OUTPUT_VARIABLE ${Python_PREFIX}_EXECUTABLE_FULL
-	RESULT_VARIABLE ERROR_IN_FULL
-	OUTPUT_STRIP_TRAILING_WHITESPACE)
-      if ((NOT ERROR_IN_FULL) AND (NOT ${Python_PREFIX}_EXECUTABLE STREQUAL "${${Python_PREFIX}_EXECUTABLE_FULL}"))
-        set(${Python_PREFIX}_EXECUTABLE ${${Python_PREFIX}_EXECUTABLE_FULL})
+        COMMAND ${${ARGS_PREFIX}_EXECUTABLE} -c "import numpy; print(numpy.get_include())"
+        OUTPUT_VARIABLE ${ARGS_PREFIX}_NumPy_INCLUDE_DIRS
+        RESULT_VARIABLE NUMPY_NOT_FOUND
+      )
+      if(NUMPY_NOT_FOUND)
+        set(${ARGS_PREFIX}_NumPy_INCLUDE_DIRS)
+        message(FATAL_ERROR "Numpy include dirs not found")
       endif()
     endif()
-    message(STATUS "${Python_PREFIX}_EXECUTABLE = ${${Python_PREFIX}_EXECUTABLE}")
-    propagate_cmake_library_variables("^Python*")
+  endif()
+  if(NOT ${ARGS_PREFIX}_ROOT_DIR)
+    if(CONDA_PREFIX)
+      set(${ARGS_PREFIX}_ROOT_DIR "${CONDA_PREFIX}")
+    elseif(${ARGS_PREFIX}_EXECUTABLE)
+      execute_process(
+        COMMAND ${${ARGS_PREFIX}_EXECUTABLE} -c "import sysconfig; print(sysconfig.get_config_var('base'))"
+        OUTPUT_VARIABLE ${ARGS_PREFIX}_ROOT_DIR
+        RESULT_VARIABLE ROOT_NOT_FOUND
+      )
+      if(ROOT_NOT_FOUND)
+        set(${ARGS_PREFIX}_ROOT_DIR)
+      endif()
+    endif()
+  endif()
+  if(${ARGS_PREFIX}_EXECUTABLE OR ${ARGS_PREFIX}_ROOT_DIR)
+    # Force use of specified installation, should be enabled by
+    # default for CMP0094=NEW and CMake >= 3.15
+    if(NOT ${ARGS_PREFIX}_FIND_STRATEGY)
+      set(${ARGS_PREFIX}_FIND_STRATEGY LOCATION)
+    endif()
+  endif()
+  if(${ARGS_PREFIX}_EXECUTABLE)
+    message(DEBUG "Python executable provided ${${ARGS_PREFIX}_EXECUTABLE}")
+  endif()
+  if(${ARGS_PREFIX}_ROOT_DIR)
+    message(DEBUG "Python root directory is ${${ARGS_PREFIX}_ROOT_DIR}")
+    if(NOT ${ARGS_PREFIX}_ROOT)
+      set(${ARGS_PREFIX}_ROOT ${${ARGS_PREFIX}_ROOT_DIR})
+    endif()
+  endif()
+  set(${ARGS_PREFIX}_SETUP_PYTHON_SEARCH_PERFORMED ON)
+  propagate_cmake_variables_prefix("${ARGS_PREFIX}")
 endfunction()
 
 function(finalize_package name)
-  set(oneValueArgs HEADER IMPORTED_TARGET)
-  set(multiValueArgs LIBNAMES)
-  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-  if(${name}_FOUND AND (NOT ${name}_LIBRARY) AND ${name}_LIBRARIES)
+  set(options)
+  set(oneValueArgs)
+  set(multiValueArgs)
+  _initialize_find_package(ON ${ARGN})
+  if(${name}_CONFIG)
+    message(DEBUG "${name}_CONFIG = ${${name}_CONFIG}")
+    include(${${name}_CONFIG})
+  endif()
+  if(${ARGS_FOUND_VAR} AND name MATCHES "Python")
+    list(FIND ARGS_COMPONENTS "NumPy" IDX_NUMPY)
+    if((NOT IDX_NUMPY EQUAL -1) AND (NOT ${name}_NumPy_FOUND))
+      message(DEBUG "NumPy headers not found for ${name}")
+      set(${ARGS_FOUND_VAR} OFF)
+    elseif(APPLE AND ${name}_EXECUTABLE)
+      execute_process(
+        COMMAND realpath ${${name}_EXECUTABLE}
+	OUTPUT_VARIABLE ${name}_EXECUTABLE_FULL
+	RESULT_VARIABLE ERROR_IN_FULL
+	OUTPUT_STRIP_TRAILING_WHITESPACE
+      )
+      if ((NOT ERROR_IN_FULL) AND (NOT ${name}_EXECUTABLE STREQUAL "${${name}_EXECUTABLE_FULL}"))
+        set(${name}_EXECUTABLE ${${name}_EXECUTABLE_FULL})
+      endif()
+    endif()
+    set(Python_FOUND ON)
+    set(Python_FOUND_PREFIX "${name}")
+  endif()
+  if(${ARGS_FOUND_VAR} AND (NOT ${name}_LIBRARY) AND ${name}_LIBRARIES)
     list(LENGTH ${name}_LIBRARIES NLIBS)
     if(NLIBS EQUAL 1)
       set(${name}_LIBRARY ${${name}_LIBRARIES})
     endif()
   endif()
-  if(${name}_FOUND AND ARGS_IMPORTED_TARGET)
+  if(${ARGS_FOUND_VAR} AND ARGS_IMPORTED_TARGET)
     create_interface_library(
       ${name} TARGET ${ARGS_IMPORTED_TARGET}
       LIBNAMES ${ARGS_LIBNAMES}
     )
   endif()
-  if(${name}_FOUND AND NOT ${name}_LIBRARY_TARGET)
+  if(${ARGS_FOUND_VAR} AND NOT ${name}_LIBRARY_TARGET)
     foreach(itarget ${ARGS_IMPORTED_TARGET} ${name}
             ${ARGS_LIBNAMES} ${${name}_LIBRARY})
       if(TARGET ${itarget})
@@ -167,14 +263,26 @@ function(finalize_package name)
       endif()
     endforeach()
   endif()
-  if(${name}_FOUND AND ${name}_LIBRARY AND (NOT ${name}_LIBRARY_DIR) AND
+  if(${ARGS_FOUND_VAR} AND ${name}_LIBRARY AND (NOT ${name}_LIBRARY_DIR) AND
      (EXISTS ${${name}_LIBRARY}))
     cmake_path(
       REMOVE_FILENAME ${name}_LIBRARY
       OUTPUT_VARIABLE ${name}_LIBRARY_DIR
     )
   endif()
-  propagate_cmake_library_variables("^${name}*" ${ARGS_ADDITIONAL_PROPERTIES})
+  if(${ARGS_FOUND_VAR} AND ARGS_REQUIRED_TARGETS)
+    foreach(ilib IN LISTS ARGS_REQUIRED_TARGETS)
+      if(NOT TARGET ${ilib})
+        message(DEBUG "Required target \"${ilib}\" does not exist")
+        set(${ARGS_FOUND_VAR} OFF)
+        break()
+      endif()
+    endforeach()
+  endif()
+  if(ARGS_REQUIRED AND NOT ${ARGS_FOUND_VAR})
+    message(FATAL_ERROR "Failed to find package \"${name}\"")
+  endif()
+  propagate_cmake_variables_prefix("${ARGS_VAR_PREFIX}" ${ARGS_ADDITIONAL_PROPERTIES})
 endfunction()
 
 function(create_interface_library package)
@@ -241,10 +349,11 @@ function(create_interface_library package)
       INTERFACE_LINK_DIRECTORIES ${${package}_LIBRARY_DIRS}
     )
   endif()
-  if(${package}_LINK_LIBRARIES)
+  if(${package}_LIBRARY OR ${package}_LINK_LIBRARIES)
     set_property(
       TARGET ${target} PROPERTY
-      INTERFACE_LINK_LIBRARIES ${${package}_LINK_LIBRARIES}
+      INTERFACE_LINK_LIBRARIES
+      ${${package}_LIBRARY} ${${package}_LINK_LIBRARIES}
     )
   endif()
   if(${package}_LDFLAGS)
@@ -267,45 +376,38 @@ function(create_interface_library package)
       # ${${package}_CFLAGS_OTHER}  # Not required
     )
   endif()
-  propagate_cmake_library_variables("^${name}*")
+  propagate_cmake_variables_prefix("${package}")
 endfunction()
 
 function(find_package_default name)
-  find_package(${name} ${ARGN})
-  if(${name}_FOUND)
-    propagate_cmake_library_variables("^${name}*")
-  endif()
+  set(options)
+  set(oneValueArgs)
+  set(multiValueArgs)
+  _initialize_find_package(OFF ${ARGN})
+  find_package(${name} ${ARGS_REQUIRED} ${ARGS_UNPARSED_ARGUMENTS})
+  _finalize_find_package()
 endfunction()
 
 function(find_package_generic name)
-  set(options REQUIRED NO_DEFAULT NO_PKGCONFIG NO_CONDA)
-  set(oneValueArgs HEADER IMPORTED_TARGET)
-  set(multiValueArgs LIBNAMES SEARCH_ORDER ADDITIONAL_PROPERTIES)
-  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-  if (NOT ARGS_LIBNAMES)
-    list(APPEND ARGS_LIBNAMES ${name})
-  endif()
-  if (NOT ARGS_HEADER)
-    list(GET ARGS_LIBNAMES 0 FIRST_NAME)
-    set(ARGS_HEADER ${FIRST_NAME}.h)
-  endif()
-  if(NOT ARGS_SEARCH_ORDER)
-    set(ARGS_SEARCH_ORDER DEFAULT PKGCONFIG CONDA)
-  endif()
-  # if(NOT ARGS_IMPORTED_TARGET)
-  #   set(ARGS_IMPORTED_TARGET ${name})
-  # endif()
-  set(SEARCH_ARGS LIBNAMES ${ARGS_LIBNAMES} HEADER ${ARGS_HEADER})
-  if(ARGS_IMPORTED_TARGET)
-    list(APPEND SEARCH_ARGS IMPORTED_TARGET ${ARGS_IMPORTED_TARGET})
-  endif()
-  if(ARGS_ADDITIONAL_PROPERTIES)
-    list(APPEND SEARCH_ARGS ADDITIONAL_PROPERTIES ${ARGS_ADDITIONAL_PROPERTIES})
-  endif()
-  if(ARGS_UNPARSED_ARGUMENTS)
-    list(APPEND SEARCH_ARGS ${ARGS_UNPARSED_ARGUMENTS})
-  endif()
-  message(DEBUG "find_package_generic[${name}]: HEADER = ${ARGS_HEADER}, LIBNAMES = ${ARGS_LIBNAMES}, SEARCH_ORDER = ${ARGS_SEARCH_ORDER}, UNPARSED_ARGUMENTS = ${ARGS_UNPARSED_ARGUMENTS}")
+  set(options NO_DEFAULT NO_DEFAULT_CONFIG NO_PKGCONFIG NO_CONDA NO_BRUTE)
+  set(oneValueArgs)
+  set(multiValueArgs SEARCH_ORDER COMPONENTS
+      HINTS PATHS HEADER_HINTS HEADER_PATHS)
+  _initialize_find_package(ON ${ARGN})
+  set_default(ARGS_SEARCH_ORDER DEFAULT PKGCONFIG CONDA)
+  collect_package_arguments(BASE_ARGS ARGS "${options}")
+  collect_arguments(
+    SEARCH_ARGS ARGS "${options}"
+    HINTS HEADER_HINTS
+    PATHS HEADER_PATHS
+  )
+  list(APPEND SEARCH_ARGS ${BASE_ARGS})
+  collect_arguments(
+    DEFAULT_ARGS ARGS "${options}"
+    COMPONENTS PATHS HINTS
+  )
+  list(APPEND DEFAULT_ARGS ${BASE_ARGS})
+  message(DEBUG "find_package_generic[${name}]: HEADER = ${ARGS_HEADER}, LIBNAMES = ${ARGS_LIBNAMES}, SEARCH_ORDER = ${ARGS_SEARCH_ORDER}, DEFAULT_ARGS = ${DEFAULT_ARGS}, SEARCH_ARGS = ${SEARCH_ARGS}, REQUIRED_TARGETS = ${ARGS_REQUIRED_TARGETS}")
 
   foreach(method IN LISTS ARGS_SEARCH_ORDER)
     if(ARGS_NO_${method})
@@ -313,9 +415,9 @@ function(find_package_generic name)
     endif()
     message(DEBUG "Searching for ${name} using ${method}")
     if(method STREQUAL "DEFAULT")
-      find_package_default(${name} ${ARGS_UNPARSED_ARGUMENTS})
+      find_package_default(${name} ${DEFAULT_ARGS})
     elseif(method STREQUAL "DEFAULT_CONFIG")
-      find_package_default(${name} CONFIG ${ARGS_UNPARSED_ARGUMENTS})
+      find_package_default(${name} CONFIG ${DEFAULT_ARGS})
     elseif(method STREQUAL "CONDA")
       find_package_conda(${name} ${SEARCH_ARGS})
     elseif(method STREQUAL "PKGCONFIG")
@@ -325,7 +427,7 @@ function(find_package_generic name)
     else()
       message(FATAL_ERROR "Unsupported method \"${method}\"")
     endif()
-    if(${name}_FOUND)
+    if(${ARGS_FOUND_VAR})
       message(DEBUG "${name} found using ${method}")
       break()
     else()
@@ -339,53 +441,43 @@ function(find_package_generic name)
     include(${${name}_CONFIG})
   endif()
 
-  if((NOT ${name}_FOUND) AND (NOT ${name}_BRUTE_SEARCH_PERFORMED))
+  if((NOT ${ARGS_FOUND_VAR}) AND (NOT ARGS_NO_BRUTE) AND
+     (NOT ${name}_BRUTE_SEARCH_PERFORMED))
     message(DEBUG "Final brute force effort to find ${name}")
     find_package_brute(${name} ${SEARCH_ARGS})
   endif()
 
-  if(ARGS_REQUIRED AND NOT ${name}_FOUND)
-    message(FATAL_ERROR "Failed to find package \"${name}\"")
-  endif()
-
-  finalize_package(
-    ${name}
-    HEADER ${ARGS_HEADER}
-    LIBNAMES ${ARGS_LIBNAMES}
-    IMPORTED_TARGET ${ARGS_IMPORTED_TARGET}
-  )
-  dump_cmake_variables(REGEX "^${name}*" LOG_LEVEL DEBUG)
-  if(${name}_FOUND)
-    propagate_cmake_library_variables("^${name}*" ${ARGS_ADDITIONAL_PROPERTIES})
-  endif()
+  # _finalize_find_package()
+  _propagate_cmake_variables_package()
+  dump_cmake_variables(PREFIX "${ARGS_VAR_PREFIX}" LOG_LEVEL DEBUG)
 endfunction()
 
 function(find_package_brute name)
-  set(options REQUIRED)
-  set(oneValueArgs HEADER IMPORTED_TARGET)
-  set(multiValueArgs LIBNAMES LIBRARY_SEARCH_PATH HEADER_SEARCH_PATH)
-  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-  if (NOT ARGS_LIBNAMES)
-    list(APPEND ARGS_LIBNAMES ${name})
-  endif()
-  if (NOT ARGS_HEADER)
-    list(GET ARGS_LIBNAMES 0 FIRST_NAME)
-    set(ARGS_HEADER ${FIRST_NAME}.h)
-  endif()
+  set(optionsFind NO_PACKAGE_ROOT_PATH NO_CMAKE_PATH
+      NO_CMAKE_ENVIRONMENT_PATH NO_SYSTEM_ENVIRONMENT_PATH
+      NO_CMAKE_SYSTEM_PATH NO_CMAKE_INSTALL_PREFIX
+      CMAKE_FIND_ROOT_PATH_BOTH ONLY_CMAKE_FIND_ROOT_PATH
+      NO_CMAKE_FIND_ROOT_PATH)  # NO_CACHE
+  set(oneValueArgsFind REGISTRY_VIEW VALIDATOR DOC)
+  set(multiValueArgsFind PATH_SUFFIXES)
+  set(options ${optionsFind})
+  set(oneValueArgs ${oneValueArgsFind})
+  set(multiValueArgs PATHS HINTS HEADER_PATHS HEADER_HINTS
+      ${multiValueArgsFind})
+  _initialize_find_package(ON ${ARGN})
+  collect_arguments(
+    FIND_ARGS ARGS "${options}"
+    ${optionsFind} ${oneValueArgsFind} ${multiValueArgsFind}
+  )
 
   if(NOT ${name}_INCLUDE_DIR)
-    if(ARGS_HEADER_SEARCH_PATH)
-      find_path(
-        ${name}_INCLUDE_DIR
-        NAMES ${ARGS_HEADER}
-        PATHS ${ARGS_HEADER_SEARCH_PATH}
-      )
-    else()
-      find_path(
-        ${name}_INCLUDE_DIR
-        NAMES ${ARGS_HEADER}
-      )
-    endif()
+    find_path(
+      ${name}_INCLUDE_DIR
+      NAMES ${ARGS_HEADER}
+      PATHS ${ARGS_HEADER_PATHS}
+      HINTS ${ARGS_HEADER_HINTS}
+      ${FIND_ARGS}
+    )
     if(${name}_INCLUDE_DIR STREQUAL "${name}_INCLUDE_DIR-NOTFOUND")
       message(DEBUG "Failed to find ${name}_INCLUDE_DIR")
       # foreach(dir IN LISTS ARGS_HEADER_SEARCH_PATH)
@@ -401,20 +493,14 @@ function(find_package_brute name)
   endif()
 
   if(NOT ${name}_LIBRARY)
-    if(ARGS_LIBRARY_SEARCH_PATH)
-      find_library(
-        ${name}_LIBRARY
-        NAMES ${ARGS_LIBNAMES}
-        PATHS ${ARGS_LIBRARY_SEARCH_PATH}
-        NO_CACHE
-      )
-    else()
-      find_library(
-        ${name}_LIBRARY
-        NAMES ${ARGS_LIBNAMES}
-        NO_CACHE
-      )
-    endif()
+    find_library(
+      ${name}_LIBRARY
+      NAMES ${ARGS_LIBNAMES}
+      PATHS ${ARGS_PATHS}
+      HINTS ${ARGS_HINTS}
+      NO_CACHE
+      ${FIND_ARGS}
+    )
     if(${name}_LIBRARY STREQUAL "${name}_LIBRARY-NOTFOUND")
       message(DEBUG "Failed to find ${name}_LIBRARY")
       # foreach(dir IN LISTS ARGS_LIBRARY_SEARCH_PATH)
@@ -428,27 +514,20 @@ function(find_package_brute name)
   endif()
 
   if(${name}_INCLUDE_DIR AND ${name}_LIBRARY)
-    set(${name}_FOUND ON)
+    set(${ARGS_FOUND_VAR} ON)
   endif()
+  set(${name}_BRUTE_SEARCH_PERFORMED ON PARENT_SCOPE)
 
-  if(ARGS_REQUIRED AND NOT ${name}_FOUND)
-    message(STATUS "Failed to find package \"${name}\"")
-  endif()
-  set(${name}_BRUTE_SEARCH_PERFORMED ON)
-  
-  finalize_package(
-    ${name}
-    HEADER ${ARGS_HEADER}
-    LIBNAMES ${ARGS_LIBNAMES}
-    IMPORTED_TARGET ${ARGS_IMPORTED_TARGET}
-  )
-  if(${name}_FOUND)
-    propagate_cmake_library_variables("^${name}*")
-  endif()
+  _finalize_find_package()
+
 endfunction()
 
 function(find_package_conda name)
-  if (NOT CONDA_PREFIX)
+  set(oneValueArgs VAR_PREFIX)
+  set(multiValueArgs ADDITIONAL_PROPERTIES PATHS HEADER_PATHS)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  set_default(ARGS_VAR_PREFIX "${name}")
+  if(NOT CONDA_PREFIX)
     cmake_path(SET CONDA_PREFIX "$ENV{CONDA_PREFIX}")
   endif()
 
@@ -460,31 +539,28 @@ function(find_package_conda name)
       set(INCLUDE_DIRS "${CONDA_PREFIX}/include")
       set(LIBRARY_DIRS "${CONDA_PREFIX}/lib")
     endif()
+    # set(ARGS_PATHS "${LIBRARY_DIRS}" ${ARGS_PATHS})
+    # set(ARGS_HEADER_PATHS "${INCLUDE_DIRS}" ${ARGS_HEADER_PATHS})
+    list(APPEND ARGS_PATHS "${LIBRARY_DIRS}")
+    list(APPEND ARGS_HEADER_PATHS "${INCLUDE_DIRS}")
     find_package_brute(
-      ${name} ${ARGN}
-      HEADER_SEARCH_PATH ${INCLUDE_DIRS}
-      LIBRARY_SEARCH_PATH ${LIBRARY_DIRS}
+      ${name} ${ARGS_UNPARSED_ARGUMENTS}
+      VAR_PREFIX ${ARGS_VAR_PREFIX}
+      PATHS ${ARGS_PATHS}
+      HEADER_PATHS ${ARGS_HEADER_PATHS}
+      ADDITIONAL_PROPERTIES ${ARGS_ADDITIONAL_PROPERTIES}
     )
+    set(${name}_BRUTE_SEARCH_PERFORMED ON PARENT_SCOPE)
   endif()
 
-  if(${name}_FOUND)
-    propagate_cmake_library_variables("^${name}*")
-  endif()
+  _propagate_cmake_variables_package()
 endfunction()
 
 function(find_package_pkgconfig name)
-  set(options REQUIRED)
-  set(oneValueArgs HEADER IMPORTED_TARGET)
-  set(multiValueArgs LIBNAMES ADDITIONAL_PROPERTIES)
-  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-  
-  if (NOT ARGS_LIBNAMES)
-    list(APPEND ARGS_LIBNAMES ${name})
-  endif()
-  if (NOT ARGS_HEADER)
-    list(GET ARGS_LIBNAMES 0 FIRST_NAME)
-    set(ARGS_HEADER ${FIRST_NAME}.h)
-  endif()
+  set(options)
+  set(oneValueArgs)
+  set(multiValueArgs PATHS HEADER_PATHS)
+  _initialize_find_package(OFF ${ARGN})
 
   find_package(PkgConfig)
   if(NOT PkgConfig_FOUND)
@@ -492,12 +568,10 @@ function(find_package_pkgconfig name)
     return()
   endif()
   set(PN "PC_${name}")
-  set(ARGS_PKGCONFIG ${PN})
-  if(ARGS_REQUIRED)
-    list(APPEND ARGS_PKGCONFIG REQUIRED)
-  # else()
+  set(ARGS_PKGCONFIG ${PN} ${ARGS_REQUIRED})
+  # if(NOT ARGS_REQUIRED)
   #   list(APPEND ARGS_PKGCONFIG QUIET)
-  endif()
+  # endif()
   # if(ARGS_IMPORTED_TARGET)
   #   list(APPEND ARGS_PKGCONFIG IMPORTED_TARGET ${ARGS_IMPORTED_TARGET})
   #   if(CMAKE_VERSION VERSION_GREATER_EQUAL "3.13")
@@ -505,7 +579,6 @@ function(find_package_pkgconfig name)
   #   endif()
   # endif()
   list(APPEND ARGS_PKGCONFIG ${ARGS_LIBNAMES})
-  message(DEBUG "ARGS_PKGCONFIG = ${ARGS_PKGCONFIG}")
   pkg_search_module(${ARGS_PKGCONFIG})
   if((NOT ${PN}_FOUND) AND ${PN}_STATIC_FOUND)
     # TODO: Finalize this separately & add alias?
@@ -518,38 +591,29 @@ function(find_package_pkgconfig name)
 
   if(${PN}_FOUND)
     ## use the hints from above to find where 'lib*' & '*.h' are located
-    dump_cmake_variables(REGEX "^${PN}*" OUTPUT_VAR PC_VARS)
-    foreach(pcvar IN LISTS PC_VARS)
-      string(REPLACE "${PN}" "${name}" ivar "${pcvar}")
-      set(${ivar} "${${pcvar}}")
-    endforeach()
+    copy_cmake_variables("${PN}" "${name}")
     if(TARGET PkgConfig::${PN})
       add_library(${name} ALIAS PkgConfig::${PN})
     endif()
-    if(${PN}_FOUND AND NOT ${name}_FOUND)
-      message(FATAL_ERROR "Error setting variables from PC vars")
+    if(${PN}_FOUND AND NOT ${ARGS_FOUND_VAR})
+      message(FATAL_ERROR "Error setting variables from PC vars. ${PN}_FOUND set, but ${ARGS_FOUND_VAR} is not (name = ${name})")
     endif()
   endif()
   if(${PN}_INCLUDE_DIRS)
-    list(APPEND HEADER_SEARCH_PATH ${${PN}_INCLUDE_DIRS} ${${PN}_INCLUDE_DIRS}/*)
+    list(APPEND ARGS_HEADER_PATHS ${${PN}_INCLUDE_DIRS} ${${PN}_INCLUDE_DIRS}/*)
   endif()
   if(${PN}_LIBRARY_DIRS)
-    list(APPEND LIBRARY_SEARCH_PATH ${${PN}_LIBRARY_DIRS} ${${PN}_LIBRARY_DIRS}/*)
+    list(APPEND ARGS_PATHS ${${PN}_LIBRARY_DIRS} ${${PN}_LIBRARY_DIRS}/*)
   endif()
+  collect_package_arguments(
+    FIND_ARGS ARGS "${options}"
+    PATHS HEADER_PATHS
+  )
   find_package_brute(
-    ${name} LIBNAMES ${ARGS_LIBNAMES} HEADER ${ARGS_HEADER}
-    HEADER_SEARCH_PATH ${HEADER_SEARCH_PATH}
-    LIBRARY_SEARCH_PATH ${LIBRARY_SEARCH_PATH}
+    ${name} ${ARGS_UNPARSED_ARGUMENTS} ${FIND_ARGS}
   )
-  finalize_package(
-    ${name}
-    HEADER ${ARGS_HEADER}
-    LIBNAMES ${ARGS_LIBNAMES}
-    IMPORTED_TARGET ${ARGS_IMPORTED_TARGET}
-  )
-  if(${name}_FOUND)
-    propagate_cmake_library_variables("^${name}*" ${ARGS_ADDITIONAL_PROPERTIES})
-  endif()
+  set(${name}_BRUTE_SEARCH_PERFORMED ON PARENT_SCOPE)
+  _propagate_cmake_variables_package()
 endfunction()
 
 function(find_implib_from_dll dll VAR)
