@@ -83,6 +83,7 @@ function(execute_process_with_env)
     )
     message(DEBUG "REPLACED_ENV_VARS = ${REPLACED_ENV_VARS}")
   endif()
+  message(STATUS "execute_process_with_env: ARGS_COMMAND = ${ARGS_COMMAND}")
   execute_process(
     COMMAND ${ARGS_COMMAND}
     RESULT_VARIABLE ret
@@ -541,6 +542,9 @@ function(find_compiler_external language)
   if(${cached_compiler_var})
     set(CMAKE_${language}_EXTERNAL_COMPILER ${${cached_compiler_var}})
     set(CMAKE_${language}_EXTERNAL_GENERATOR "${ARGS_GENERATOR}")
+    message(STATUS "Located external compiler for ${language}")
+    message(STATUS "CMAKE_${language}_EXTERNAL_COMPILER = ${CMAKE_${language}_EXTERNAL_COMPILER}")
+    message(STATUS "CMAKE_${language}_EXTERNAL_GENERATOR = ${CMAKE_${language}_EXTERNAL_GENERATOR}")
   elseif(ARGS_REQUIRED)
     message(FATAL_ERROR "Failed to locate a ${language} external compiler (CMAKE_GENERATOR = \"${ARGS_GENERATOR}\")")
   endif()
@@ -658,6 +662,7 @@ function(find_mingw_gfortran)
 endfunction()
 
 function(setup_external_function function)
+  include(GeneralTools)
   set(option INCLUDE)
   set(oneValueArgs MODULE DEST DEST_DIR OUTPUT_COMMAND)
   set(multiValueArgs ARGUMENTS PRESERVE_VARIABLES)
@@ -679,7 +684,9 @@ function(setup_external_function function)
       OUTPUT_VARIABLE ARGS_DEST
     )
   endif()
+  
   set(ARGS_FUNCTION ${function})
+  protect_spaces(ARGS_ARGUMENTS)
   configure_file(
     ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/external_function.cmake.in
     ${ARGS_DEST}

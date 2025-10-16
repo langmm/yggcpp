@@ -90,4 +90,4 @@ endif()
 
 include(CheckDLL)
 show_runtimes(${YGG_TARGET_Fortran})
-show_symbols(${YGG_TARGET_Fortran})
+# show_symbols(${YGG_TARGET_Fortran})
