@@ -482,6 +482,21 @@ dump_cmake_variables(
   YGG_OPTIONS_SUPPORTED YGG_COMMS_SUPPORTED YGG_COMMS_AVAILABLE
   YGG_LANGUAGES_SUPPORTED YGG_LANGUAGES_AVAILABLE YGG_RPATH
 )
+foreach(ilib IN LISTS DEPS_LIBRARIES DEPS_LIBRARIES_Python)
+  if(TARGET ${ilib})
+    get_target_property(ilink_libraries ${ilib} INTERFACE_LINK_LIBRARIES)
+    get_target_property(iimport_location ${ilib} IMPORTED_LOCATION)
+    if(ilink_libraries STREQUAL "ilink_libraries-NOT-FOUND")
+      set(ilink_libraries)
+    endif()
+    if(iimport_location STREQUAL "iimport_location-NOT-FOUND")
+      set(iimport_location)
+    endif()
+    message(DEBUG "TARGET DEP LIBRARIES ${ilib}: \"${iimport_location}\", \"${ilink_libraries}\"")
+  else()
+    message(DEBUG "TARGET DEP LIBRARIES DIRECT: ${ilib}")
+  endif()
+endforeach()
 
 ######################
 # Create C++ Library #

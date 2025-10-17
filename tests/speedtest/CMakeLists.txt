@@ -13,7 +13,8 @@ set(SPEED_TEST_N_MSG ${N_MSG})
 set(SPEED_TEST_S_MSG ${S_MSG})
 set(SPEED_TEST_COMM "${COMM}_COMM")
 set(SPEED_TEST_DIR ${CMAKE_CURRENT_BINARY_DIR})
-list(APPEND CMAKE_COMMAND_ARGS_TO_COPY YggInterface_DIR CMAKE_PREFIX_PATH ${Python_PREFIX}_ROOT_DIR CMAKE_VERBOSE_MAKEFILE)
+list(APPEND CMAKE_COMMAND_ARGS_TO_COPY YggInterface_DIR CMAKE_PREFIX_PATH
+     CMAKE_VERBOSE_MAKEFILE)
 
 function(add_speed_test LANGUAGE LANGUAGE_EXT)
   if (NOT ENABLE_${LANGUAGE})
@@ -29,7 +30,7 @@ function(add_speed_test LANGUAGE LANGUAGE_EXT)
   configure_file(speedtest.${LANGUAGE_EXT}.in
                  ${OUTPUT_FILE} @ONLY)
   if (LANGUAGE STREQUAL "Python")
-    # find_yggdrasil_dependency(${LANGUAGE} REQUIRED)
+    find_yggdrasil_dependency(${LANGUAGE} REQUIRED)
     if(LANGUAGE STREQUAL "Python")
       set(Python_EXECUTABLE ${${Python_PREFIX}_EXECUTABLE})
     endif()
@@ -41,6 +42,7 @@ function(add_speed_test LANGUAGE LANGUAGE_EXT)
       NAME speedtest_${LANGUAGE}
       COMMAND ${${LANGUAGE}_EXECUTABLE} ${OUTPUT_FILE}
     )
+    list(APPEND CMAKE_COMMAND_ARGS_TO_COPY ${Python_PREFIX}_ROOT_DIR)
     return()
   endif()
   check_language_external(${LANGUAGE} REQUIRED OUTPUT_VARIABLE external)
