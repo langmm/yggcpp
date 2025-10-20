@@ -82,6 +82,8 @@ bool AsyncBuffer::insert(utils::Header& header, size_t idx,
 	" (send = " << for_send << ")" << std::endl;
     cv.notify_all();
   }
+#else // THREADSINSTALLED
+  UNUSED(dont_notify);
 #endif // THREADSINSTALLED
   return true;
 }
@@ -108,8 +110,12 @@ bool AsyncBuffer::get(utils::Header& header, size_t idx,
     out = header.CopyFrom(buffer[idx]);
   if (out && erase) {
     buffer.erase(buffer.begin() + idx);
+#ifdef THREADSINSTALLED
     if (!dont_notify)
       cv.notify_all();
+#else // THREADSINSTALLED
+    UNUSED(dont_notify);
+#endif // THREADSINSTALLED
   }
   return out;
 }
@@ -327,6 +333,7 @@ void AsyncBacklog::on_thread(AsyncComm* parent) {
 int AsyncBacklog::signon_status() {
   if (is_closing())
     return SIGNON_ERROR;
+#ifdef THREADSINSTALLED
   if (!(status.load() & THREAD_IS_CLIENT))
     return SIGNON_COMPLETE;
   if (!(status.load() & THREAD_SIGNON_SENT))
@@ -334,7 +341,6 @@ int AsyncBacklog::signon_status() {
   // Don't early exit to allow update to THREAD_HAS_RESPONSE
   if (status.load() & THREAD_SIGNON_RECV)
     return SIGNON_COMPLETE;
-#ifdef THREADSINSTALLED
   const std::lock_guard<std::mutex> comm_lock(mutex);
   if (is_closing() || !(comm)) {
     return SIGNON_ERROR;
@@ -596,10 +602,10 @@ int AsyncComm::wait_for_recv(const int64_t& tout) const {
     goto cleanup;
   }
   ret = nmsg(RECV);
+ cleanup:
 #else // THREADSINSTALLED
   ret = CommBase::wait_for_recv(tout);
 #endif // THREADSINSTALLED
- cleanup:
   YGGCOMM_PYGIL_ALLOW_THREADS_END(wait_for_recv, -1)
   return ret;
 }

@@ -880,9 +880,9 @@ function(add_external_library target library_type)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
   include(GeneralTools)
   if(NOT ARGS_LISTS_DIR)
+    set(ARGS_LISTS_DIR "${CMAKE_CURRENT_BINARY_DIR}/${target}")
     # In root build to keep paths sorter on windows
-    # set(ARGS_LISTS_DIR "${CMAKE_CURRENT_BINARY_DIR}/${target}")
-    set(ARGS_LISTS_DIR "${CMAKE_BINARY_DIR}/${target}")
+    # set(ARGS_LISTS_DIR "${CMAKE_BINARY_DIR}/${target}")
   endif()
   if(NOT ARGS_SOURCE_DIR)
     set(ARGS_SOURCE_DIR "${ARGS_LISTS_DIR}/src")
@@ -900,7 +900,7 @@ function(add_external_library target library_type)
   set(final_library_type ${library_type})
   if(library_type STREQUAL "OBJECT")
     set(final_library_type STATIC)
-    set(ARGS_LINKER_LANGUAGE)  # Prevent enabling unrequired language
+    # set(ARGS_LINKER_LANGUAGE)  # Prevent enabling unrequired language
   endif()
 
   # Get source & object file names

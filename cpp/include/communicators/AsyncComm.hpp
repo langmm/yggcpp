@@ -101,11 +101,11 @@ namespace YggInterface {
        */
       bool pop(utils::Header& header, size_t idx=0,
 	       bool dont_notify=false);
+#ifdef THREADSINSTALLED
       /**
        * @brief Notify all threads waiting on the buffer.
        */
       void notify() { cv.notify_all(); }
-#ifdef THREADSINSTALLED
       /**
        * @brief Check if a message is waiting in the buffer.
        * @param[in] id ID of message that should be checked for in the
