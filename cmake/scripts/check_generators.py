@@ -8,5 +8,8 @@ if __name__ == "__main__":
         capture_output=True, shell=True, check=True,
     ).stdout.decode('utf-8')
     data = json.loads(output)
-    generators = [x['name'] for x in data['generators']]
+    generators = [
+        'Ninja' if x['name'] == 'Ninja Multi-Config' else x['name']
+        for x in data['generators']
+    ]
     print(";".join(generators))
