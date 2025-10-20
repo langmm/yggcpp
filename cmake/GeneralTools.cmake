@@ -86,7 +86,7 @@ macro(propagate_cmake_variables_prefix NAME)
 endmacro()
 
 function(copy_cmake_variables src_prefix dst_prefix)
-  dump_cmake_variables(REGEX "^${src_prefix}" OUTPUT_VAR SRC_VARS)
+  dump_cmake_variables(PREFIX "${src_prefix}" OUTPUT_VAR SRC_VARS)
   foreach(srcvar IN LISTS SRC_VARS)
     string(REPLACE "${src_prefix}" "${dst_prefix}" dstvar "${srcvar}")
     set(${dstvar} "${${srcvar}}")
