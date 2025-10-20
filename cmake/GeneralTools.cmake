@@ -91,7 +91,7 @@ function(copy_cmake_variables src_prefix dst_prefix)
     string(REPLACE "${src_prefix}" "${dst_prefix}" dstvar "${srcvar}")
     set(${dstvar} "${${srcvar}}")
   endforeach()
-  propagate_cmake_variables_prefix(dst_prefix)
+  propagate_cmake_variables_prefix("${dst_prefix}")
 endfunction()
 
 function(set_default var)
@@ -285,13 +285,13 @@ function(file2language TARGET VAR)
 endfunction()
 
 function(get_supported_generators VAR)
-  set(output "${CMAKE_GENERATOR}")
   execute_process(
     COMMAND python ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/scripts/check_generators.py
     OUTPUT_VARIABLE RAW_OUTPUT
     COMMAND_ERROR_IS_FATAL ANY
     OUTPUT_STRIP_TRAILING_WHITESPACE
   )
+  set(output "${CMAKE_GENERATOR}")
   foreach(iout IN LISTS RAW_OUTPUT)
     if(NOT iout STREQUAL "${CMAKE_GENERATOR}")
       list(APPEND output ${iout})
