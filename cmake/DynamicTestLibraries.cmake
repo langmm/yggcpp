@@ -166,7 +166,7 @@ function(add_dynamic_test_library TARGET)
   #   set_target_properties(${TARGET} PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
   # endif()
   include(CheckDLL)
-  show_symbols(${TARGET})
+  # show_symbols(${TARGET})
   add_custom_command(
     TARGET ${TARGET}
     POST_BUILD
