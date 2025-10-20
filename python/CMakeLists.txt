@@ -53,8 +53,9 @@ if (NOT SKBUILD)
       KEYPREFIX "ENVK_"
       ENV ENVK_CMAKE_ARGS ${Python_CMAKE_ARGS} END_ENV
       COMMENT "build Python via pip"
-      DEPENDS ${DEPENDS_PY})
-      # OUTPUT ${${Python_PREFIX}_SITELIB}/YggInterface/__init__.py)
+      DEPENDS ${DEPENDS_PY}
+      # OUTPUT ${${Python_PREFIX}_SITELIB}/YggInterface/__init__.py
+    )
   endif()
   return()
 endif()

@@ -8,10 +8,20 @@ function(add_custom_command_env target)
   if (ARGS_ENV AND NOT ARGS_END_ENV)
     message(FATAL_ERROR "If ENV provided, END_ENV must be as well.")
   endif()
-  configure_file(
-    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/execute_env.cmake.in
-    ${CMAKE_CURRENT_BINARY_DIR}/execute_env.cmake
-    @ONLY)
+  # TODO: Replace use of execute_env.cmake.in
+  setup_external_function(
+    "execute_process_with_env" MODULE "BuildTools"
+    DEST ${CMAKE_CURRENT_BINARY_DIR}/execute_env.cmake
+    OUTPUT_COMMAND PROCESS_COMMAND
+    ARGUMENTS COMMAND ${ARGS_COMMAND}
+    ENV_VAR_PREFIX ${ARGS_KEYPREFIX}
+    ENV_VARS ${ARGS_ENV} ENV_VARS_END
+    COMMAND_ECHO STDOUT
+  )
+  # configure_file(
+  #   ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/execute_env.cmake.in
+  #   ${CMAKE_CURRENT_BINARY_DIR}/execute_env.cmake
+  #   @ONLY)
   if (ARGS_OUTPUT)
     add_custom_command(
       OUTPUT ${ARGS_OUTPUT}

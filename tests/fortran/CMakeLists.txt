@@ -80,7 +80,7 @@ function (add_fortran_test_executable TARGET)
     include(CheckDLL)
     show_runtimes(${TARGET})
     show_runtimes(${TARGET}_fortran AFTER_TARGET ${TARGET})
-    show_symbols(${TARGET}_fortran AFTER_TARGET ${TARGET})
+    # show_symbols(${TARGET}_fortran AFTER_TARGET ${TARGET})
     copy_required_runtimes(
       ${TARGET} DEPENDENCIES
       YggInterface YggInterface_fortran ${TARGET}_fortran
