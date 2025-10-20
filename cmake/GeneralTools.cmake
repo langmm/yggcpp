@@ -1,7 +1,11 @@
 # https://stackoverflow.com/questions/32183975/how-to-print-all-the-properties-of-a-target-in-cmake
 # Get all propreties that cmake supports
 if(NOT CMAKE_PROPERTY_LIST)
-  execute_process(COMMAND cmake --help-property-list OUTPUT_VARIABLE CMAKE_PROPERTY_LIST)
+  execute_process(
+    COMMAND cmake --help-property-list
+    OUTPUT_VARIABLE CMAKE_PROPERTY_LIST
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
 
   # Convert command output into a CMake list
   string(REGEX REPLACE ";" "\\\\;" CMAKE_PROPERTY_LIST "${CMAKE_PROPERTY_LIST}")
@@ -337,7 +341,11 @@ function(show_build_info)
   if(ARGS_PREFIX)
     list(APPEND ARGS_UNPARSED_ARGUMENTS PREFIX ${ARGS_PREFIX})
   endif()
-  message(${ARGS_LOG_LEVEL} "${ARGS_PREFIX}CMAKE_GENERATOR = ${CMAKE_GENERATOR}")
+  set(BASE_ARGUMENTS CMAKE_GENERATOR CMAKE_VERBOSE_MAKEFILE
+      CMAKE_MESSAGE_LOG_LEVEL)
+  foreach(iarg IN LISTS BASE_ARGUMENTS)
+    message(${ARGS_LOG_LEVEL} "${ARGS_PREFIX}${iarg} = ${${iarg}}")
+  endforeach()
   show_compiler_env_vars(${ARGS_UNPARSED_ARGUMENTS})
   show_compilers(${ARGS_UNPARSED_ARGUMENTS})
   show_implicit_libraries(${ARGS_UNPARSED_ARGUMENTS})
@@ -505,7 +513,8 @@ endfunction()
 function(execute_process_with_env)
   set(options ENV_VARS_END)
   set(oneValueArgs ENV_VAR_PREFIX RESULT_VARIABLE COMMENT
-      TIMEOUT WORKING_DIRECTORY)
+      TIMEOUT WORKING_DIRECTORY OUTPUT_VARIABLE ERROR_VARIABLE
+      ECHO_OUTPUT_VARIABLE ECHO_ERROR_VARIABLE)
   set(multiValueArgs COMMAND ENV_VARS ENV_VARS_CLEAR CLEAR_COMPILERS
       PREPEND_PATH APPEND_PATH)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -558,6 +567,8 @@ function(execute_process_with_env)
   collect_arguments(
     PROCESS_ARGS ARGS "${options}"
     TIMEOUT WORKING_DIRECTORY
+    OUTPUT_VARIABLE ERROR_VARIABLE
+    ECHO_OUTPUT_VARIABLE ECHO_ERROR_VARIABLE
   )
   execute_process(
     COMMAND ${ARGS_COMMAND}
@@ -571,6 +582,11 @@ function(execute_process_with_env)
       KEYPREFIX ${ARGS_ENV_VAR_PREFIX}
     )
   endif()
+  foreach(ivar OUTPUT_VARIABLE ERROR_VARIABLE)
+    if(ARGS_${ivar})
+      set(${ARGS_${ivar}} ${${ARGS_${ivar}}} PARENT_SCOPE)
+    endif()
+  endforeach()
   if(ARGS_RESULT_VARIABLE)
     set(${RESULT_VARIABLE} ${ret} PARENT_SCOPE)
   elseif(NOT ret EQUAL 0)

@@ -755,7 +755,7 @@ function(add_mixed_language_library target library_type)
         list(APPEND ARGS_PROPERTIES
              Fortran_STANDARD 2003
              Fortran_STANDARD_REQUIRED ON
-             Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+             Fortran_MODULE_DIRECTORY .)  # ${CMAKE_CURRENT_BINARY_DIR})
       endif()
       set(CMAKE_${ilanguage}_OUTPUT_EXTENSION ${CMAKE_${ARGS_BASE_LANGUAGE}_OUTPUT_EXTENSION})
       add_external_library(
@@ -820,7 +820,7 @@ function(add_internal_library target library_type)
   if(NOT ARGS_SOURCES)
     set(ARGS_SOURCES ${ARGS_UNPARSED_ARGUMENTS})
   endif()
-  message(DEBUG "${target} ${ARGS_LANGUAGE} ${library_type}")
+  message(DEBUG "${target}: ${ARGS_LANGUAGE} ${library_type}")
   message(DEBUG "${target}: SOURCES = ${ARGS_SOURCES}")
   if(ARGS_LANGUAGE)
     enable_language(${ARGS_LANGUAGE})
@@ -1118,7 +1118,6 @@ function(copy_target_files target destination)
   endif()
   message(DEBUG "copy_target_files: TARGET = ${target}")
   message(DEBUG "copy_target_files: TARGET_TYPE = ${ARGS_TARGET_TYPE}")
-  message(DEBUG "copy_target_files: TARGET_LANGUAGE = ${ARGS_TARGET_LANGUAGE}")
   if(NOT ARGS_COMPONENTS)
     if(ARGS_TARGET_TYPE STREQUAL "OBJECT_LIBRARY"
        OR ARGS_TARGET_TYPE STREQUAL "OBJECT")

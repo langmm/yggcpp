@@ -23,6 +23,7 @@ function(generate_implicit_libraries_file language target_file)
       list(APPEND ARGS_EXTRA_LIBRARIES ${ilib})
     endif()
   endforeach()
+  list(REMOVE_DUPLICATES ARGS_EXTRA_LIBRARIES)
   # list(APPEND ARGS_EXTRA_LIBRARIES ${CMAKE_${language}_IMPLICIT_LINK_LIBRARIES})
   list(APPEND ARGS_EXTRA_DIRECTORIES ${CMAKE_${language}_IMPLICIT_LINK_DIRECTORIES})
   generate_target_file(
