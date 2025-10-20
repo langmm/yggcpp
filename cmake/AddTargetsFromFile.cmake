@@ -20,11 +20,11 @@ function(generate_implicit_libraries_file language target_file)
     if(ilib STREQUAL "gfortran" OR ilib STREQUAL "gcc" OR
        ilib STREQUAL "c++" OR ilib STREQUAL "stdc++" OR
        ilib STREQUAL "stdc")
-      list(APPEND EXTRA_LIBRARIES ${ilib})
+      list(APPEND ARGS_EXTRA_LIBRARIES ${ilib})
     endif()
   endforeach()
-  # list(APPEND EXTRA_LIBRARIES ${CMAKE_${language}_IMPLICIT_LINK_LIBRARIES})
-  list(APPEND EXTRA_DIRECTORIES ${CMAKE_${language}_IMPLICIT_LINK_DIRECTORIES})
+  # list(APPEND ARGS_EXTRA_LIBRARIES ${CMAKE_${language}_IMPLICIT_LINK_LIBRARIES})
+  list(APPEND ARGS_EXTRA_DIRECTORIES ${CMAKE_${language}_IMPLICIT_LINK_DIRECTORIES})
   generate_target_file(
     ${target_file} NO_CONFIG
     EXTRA_LIBRARIES ${ARGS_EXTRA_LIBRARIES}
