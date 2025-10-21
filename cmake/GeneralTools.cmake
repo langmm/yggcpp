@@ -241,10 +241,8 @@ function(restore_spaces VAR)
   if(NOT _ARGS_OUTPUT_VAR)
     set(_ARGS_OUTPUT_VAR ${VAR})
   endif()
-  message(STATUS "restore_spaces: BEFORE ${VAR} = ${${VAR}}")
   set(PLACEHOLDER "~SPACE~")
   string(REPLACE "${PLACEHOLDER}" " " out "${${VAR}}")
-  message(STATUS "restore_spaces: AFTER  ${_ARGS_OUTPUT_VAR} = ${out}")
   set(${_ARGS_OUTPUT_VAR} ${out} PARENT_SCOPE)
 endfunction()
 
@@ -254,10 +252,8 @@ function(protect_spaces VAR)
   if(NOT _ARGS_OUTPUT_VAR)
     set(_ARGS_OUTPUT_VAR ${VAR})
   endif()
-  message(STATUS "protect_spaces: BEFORE ${VAR} = ${${VAR}}")
   set(PLACEHOLDER "~SPACE~")
   string(REPLACE " " "${PLACEHOLDER}" out "${${VAR}}")
-  message(STATUS "protect_spaces: AFTER  ${_ARGS_OUTPUT_VAR} = ${out}")
   set(${_ARGS_OUTPUT_VAR} ${out} PARENT_SCOPE)
 endfunction()
 
@@ -572,9 +568,6 @@ function(add_custom_command_function function)
     MODULE DEST DEST_DIR PRESERVE_VARIABLES
     FUNCTION_ARGUMENTS COMMAND_ARGUMENTS
   )
-  list(LENGTH ARGS_COMMAND_ARGUMENTS N_COMMAND_ARGUMENTS)
-  message(STATUS "ARGS_COMMAND_ARGUMENTS = ${ARGS_COMMAND_ARGUMENTS}")
-  message(STATUS "N_COMMAND_ARGUMENTS = ${N_COMMAND_ARGUMENTS}")
   collect_arguments(
     COMMAND_ARGS ARGS "${options}"
     COMMAND_EXPAND_LISTS USES_TERMINAL

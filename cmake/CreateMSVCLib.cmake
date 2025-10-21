@@ -1,10 +1,22 @@
 include(GeneralTools)
 
 macro(_initialize_file_transform name src_ext dst_ext)
+  list(APPEND options VERBOSE)
   list(APPEND oneValueArgs DESTINATION DESTINATION_DIR OUTPUT)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  set(RESULT_ALT)
   if((NOT SOURCE) AND ARGS_SOURCES)
     list(GET ARGS_SOURCES 0 SOURCE)
+  endif()
+  if(CMAKE_VERBOSE_MAKEFILE)
+    set(ARGS_VERBOSE ON)  # TODO: Remove this once debugging complete
+  endif()
+  if(ARGS_VERBOSE)
+    set(ARGS_VERBOSE VERBOSE)
+    set(FLAG_VERBOSE "-v")
+  else()
+    set(ARGS_VERBOSE)
+    set(FLAG_VERBOSE)
   endif()
   if(NOT SOURCE)
     message(FATAL_ERROR "${name}: SOURCE not set")
@@ -55,7 +67,14 @@ endmacro()
 
 macro(_finalize_file_transform name created)
   if(NOT EXISTS "${ARGS_DESTINATION}")
-    message(FATAL_ERROR "${name}: Failed to create \"${ARGS_DESTINATION}\"")
+    if(RESULT_ALT AND (EXISTS "${RESULT_ALT}"))
+      message(DEBUG "${name}: Copying \"${RESULT_ALT}\" to \"${ARGS_DESTINATION}\"")
+      # TODO: Find more generic method of copy
+      file(READ "${RESULT_ALT}" CONTENTS)
+      file(WRITE "${ARGS_DESTINATION}" "${CONTENTS}")
+    else()
+      message(FATAL_ERROR "${name}: Failed to create \"${ARGS_DESTINATION}\"")
+    endif()
   endif()
   if(created)
     message(STATUS "${name}: Created \"${ARGS_DESTINATION}\"")
@@ -82,8 +101,7 @@ function(obj2def)
   set_default(ARGS_COMMAND_ECHO STDOUT)
   message(DEBUG "obj2def: SOURCES = ${ARGS_SOURCES}")
   execute_process(
-    COMMAND dlltool -v --export-all-symbols -z "${ARGS_DESTINATION}" ${ARGS_SOURCES}
-    COMMAND_EXPAND_LISTS
+    COMMAND dlltool ${FLAG_VERBOSE} --export-all-symbols -z "${ARGS_DESTINATION}" ${ARGS_SOURCES}
     COMMAND_ERROR_IS_FATAL ${ARGS_COMMAND_ERROR_IS_FATAL}
     COMMAND_ECHO ${ARGS_COMMAND_ECHO}
     ${ARGS_UNPARSED_ARGUMENTS}
@@ -122,11 +140,6 @@ function(dll2def SOURCE)
       ${ARGS_UNPARSED_ARGUMENTS}
     )
   endif()
-  if((NOT EXISTS "${ARGS_DESTINATION}") AND (EXISTS "${RESULT_ALT}"))
-    message(DEBUG "dll2def: Copying \"${RESULT_ALT}\" to \"${ARGS_DESTINATION}\"")
-    file(READ "${RESULT_ALT}" CONTENTS)
-    file(WRITE "${ARGS_DESTINATION}" "${CONTENTS}")
-  endif()
   _finalize_file_transform(dll2def ON)
 endfunction()
 
@@ -148,7 +161,7 @@ function(target2def SOURCE)
     TARGET ${ARGS_EVENT_TARGET} ${EVENT_TYPE}
     COMMAND_ARGUMENTS -DTARGET_OBJECTS=$<JOIN:$<TARGET_OBJECTS:${SOURCE}>,$<SEMICOLON>>
     FUNCTION_ARGUMENTS SOURCES "\$\{TARGET_OBJECTS\}"
-      DESTINATION "${ARGS_DESTINATION}"
+      DESTINATION "${ARGS_DESTINATION}" ${ARGS_VERBOSE}
     BYPRODUCTS "${ARGS_DESTINATION}"
     VERBATIM COMMAND_EXPAND_LISTS
     ${ARGS_UNPARSED_ARGUMENTS}
@@ -165,9 +178,9 @@ function(create_mingw_dlla_from_dll SOURCE)
   _initialize_file_transform(
     create_mingw_dlla_from_dll ".dll" ".dll.a" ${ARGN}
   )
-  dll2def("${SOURCE}" OUTPUT SOURCE_DEF)
+  dll2def("${SOURCE}" OUTPUT SOURCE_DEF ${ARGS_VERBOSE})
   create_mingw_dlla_from_def(
-    ${SOURCE_DEF} DESTINATION "${ARGS_DESTINATION}"
+    ${SOURCE_DEF} DESTINATION "${ARGS_DESTINATION}" ${ARGS_VERBOSE}
   )
   _finalize_file_transform(
     create_mingw_dlla_from_dll ON
@@ -184,7 +197,7 @@ function(create_mingw_dlla_from_def SOURCE)
   set_default(ARGS_COMMAND_ERROR_IS_FATAL ANY)
   set_default(ARGS_COMMAND_ECHO STDOUT)
   execute_process(
-    COMMAND dlltool -v -U -d "${SOURCE}" -l "${ARGS_DESTINATION}"
+    COMMAND dlltool ${FLAG_VERBOSE} -U -d "${SOURCE}" -l "${ARGS_DESTINATION}"
     COMMAND_ERROR_IS_FATAL ${ARGS_COMMAND_ERROR_IS_FATAL}
     COMMAND_ECHO ${ARGS_COMMAND_ECHO}
     ${ARGS_UNPARSED_ARGUMENTS}
@@ -201,9 +214,9 @@ function(create_msvc_lib_from_dll SOURCE)
   _initialize_file_transform(
     create_msvc_lib_from_dll ".dll" ".lib" ${ARGN}
   )
-  dll2def("${SOURCE}" OUTPUT SOURCE_DEF)
+  dll2def("${SOURCE}" OUTPUT SOURCE_DEF ${ARGS_VERBOSE})
   create_msvc_lib_from_def(
-    ${SOURCE_DEF} DESTINATION "${ARGS_DESTINATION}"
+    ${SOURCE_DEF} DESTINATION "${ARGS_DESTINATION}" ${ARGS_VERBOSE}
   )
   _finalize_file_transform(
     create_msvc_lib_from_dll ON
@@ -219,8 +232,11 @@ function(create_msvc_lib_from_def SOURCE)
   )
   set_default(ARGS_COMMAND_ERROR_IS_FATAL ANY)
   set_default(ARGS_COMMAND_ECHO STDOUT)
+  if(ARGS_VERBOSE)
+    set(FLAG_VERBOSE "/VERBOSE")
+  endif()
   execute_process(
-    COMMAND LIB "/DEF:${SOURCE}" "/OUT:${ARGS_DESTINATION}"
+    COMMAND LIB ${FLAG_VERBOSE} "/DEF:${SOURCE}" "/OUT:${ARGS_DESTINATION}"
     COMMAND_ERROR_IS_FATAL ${ARGS_COMMAND_ERROR_IS_FATAL}
     COMMAND_ECHO ${ARGS_COMMAND_ECHO}
     ${ARGS_UNPARSED_ARGUMENTS}
@@ -228,6 +244,45 @@ function(create_msvc_lib_from_def SOURCE)
   _finalize_file_transform(
     create_msvc_lib_from_def ON
   )
+endfunction()
+
+function(create_msvc_lib_from_name name)
+  set(options)
+  set(oneValueArgs)
+  set(multiValueArgs DIRECTORIES)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  if(ARGS_DIRECTORIES)
+    find_library(SOURCE ${name} PATHS ${ARGS_DIRECTORIES})
+  else()
+    find_library(SOURCE ${name})
+  endif()
+  if(SOURCE STREQUAL "SOURCE-NOTFOUND")
+    message(FATAL_ERROR "create_msvc_lib_from_name: Failed to find library \"${name}\"")
+  endif()
+  if(SOURCE MATCHES ".*\\.lib$")
+    set(RESULT_ALT ${SOURCE})
+  elseif(SOURCE MATCHES ".*\\.dll\\.a$")
+    set(SOURCE_DLLA "${SOURCE}")
+    find_library_suffix(
+      SOURCE ${name} SHARED
+      PATHS ${ARGS_DIRECTORIES}
+    )
+    if(SOURCE STREQUAL "SOURCE-NOTFOUND")
+      message(FATAL_ERROR "create_msvc_lib_from_name: Failed to find DLL for library \"${name}\"")
+    endif()
+  endif()
+  # TODO: Handle case where dll/lib is found first
+  _initialize_file_transform(
+    create_msvc_lib_from_name ".dll" ".lib"
+  )
+  if(SOURCE MATCHES ".*\\.dll$")
+    collect_arguments(
+      NESTED_ARGS ARGS "${options}"
+      DESTINATION DESTINATION_DIR OUTPUT VERBOSE
+    )
+    create_msvc_lib_from_dll(${SOURCE} ${NESTED_ARGS})
+  endif()
+  _finalize_file_transform(create_msvc_lib_from_name ON)
 endfunction()
 
 function(convert_dlla_to_lib libname)
