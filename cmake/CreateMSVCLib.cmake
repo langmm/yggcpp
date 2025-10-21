@@ -1,5 +1,150 @@
+function(convert_library_mingw2msvc src)
+  set(oneValueArgs TARGET)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+endfunction()
+
+macro(_initialize_file_transform name src_ext dst_ext)
+  set(oneValueArgs DESTINATION DESTINATION_DIR OUTPUT)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  message(DEBUG "${name}: SOURCE = ${SOURCE}")
+  if(NOT EXISTS "${SOURCE}")
+    message(FATAL_ERROR "${name}: SOURCE file does not exist: \"${SOURCE}\"")
+  endif()
+  if(NOT ARGS_DESTINATION_DIR)
+    if(ARGS_DESTINATION)
+      cmake_path(GET ARGS_DESTINATION PARENT_PATH ARGS_DESTINATION_DIR)
+    endif()
+    if(NOT ARGS_DESTINATION_DIR)
+      set(ARGS_DESTINATION_DIR "${CMAKE_CURRENT_BINARY_DIR}")
+    endif()
+  endif()
+  cmake_path(GET SOURCE FILENAME SOURCE_BASE)
+  if(NOT ARGS_DESTINATION)
+    string(REPLACE "${src_ext}" "${dst_ext}" RESULT_BASE "${SOURCE_BASE}")
+    cmake_path(APPEND ARGS_DESTINATION_DIR "${RESULT_BASE}"
+               OUTPUT_VARIABLE ARGS_DESTINATION)
+  endif()
+  if(EXISTS "${ARGS_DESTINATION}")
+    _finalize_file_transform(${name} OFF)
+    return()
+  endif()
+endmacro()
+
+macro(_finalize_file_transform name created)
+  if(NOT EXISTS "${ARGS_DESTINATION}")
+    message(FATAL_ERROR "${name}: Failed to create \"${ARGS_DESTINATION}\"")
+  endif()
+  if(created)
+    message(STATUS "${name}: Created \"${ARGS_DESTINATION}\"")
+  endif()
+  if(ARGS_OUTPUT)
+    set(${ARGS_OUTPUT} "${ARGS_DESTINATION}" PARENT_SCOPE)
+  endif()
+endmacro()
+
+function(dll2def SOURCE)
+  set(oneValueArgs DESTINATION OUTPUT)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  if(NOT EXISTS "${SOURCE}")
+    message(FATAL_ERROR ".dll file does not exist: \"${SOURCE}\"")
+  endif()
+  string(REPLACE ".dll" ".def" RESULT "${SOURCE}")
+  message(DEBUG "create_msvc_lib_from_def: ${SOURCE}")
+  cmake_path(GET SOURCE FILENAME SOURCE_BASE)
+  cmake_path(GET SOURCE PARENT_PATH SOURCE_DIR)
+  cmake_path(GET RESULT FILENAME RESULT_BASE)
+  string(REGEX REPLACE "^lib" "" RESULT_BASE_ALT "${RESULT_BASE}")
+  cmake_path(APPEND SOURCE_DIR "${RESULT_BASE_ALT}"
+             OUTPUT_VARIABLE RESULT_ALT)
+  if(ARGS_DESTINATION AND EXISTS "${ARGS_DESTINATION}")
+    message(DEBUG "dll2def: DESTINATION already exists \"${ARGS_DESTINATION}\"")
+    set(RESULT "${ARGS_DESTINATION}")
+  elseif(EXISTS "${RESULT_ALT}")
+    set(RESULT "${RESULT_ALT}")
+    message(DEBUG "dll2def: RESULT already exists \"${RESULT}\"")
+  elseif(EXISTS "${RESULT}")
+    message(DEBUG "dll2def: RESULT already exists \"${RESULT}\"")
+  else()
+    execute_process(
+      COMMAND gendef "${SOURCE_BASE}"
+      WORKING_DIRECTORY "${SOURCE_DIR}")
+      ${ARGS_UNPARSED_ARGUMENTS}
+    )
+    if(NOT ((EXISTS "${RESULT}") OR (EXISTS "${RESULT_ALT}")))
+      message(FATAL_ERROR "dll2def: Failed to create .def file \"${RESULT}\"")
+    endif()
+    if((NOT EXISTS "${RESULT}") AND (EXISTS "${RESULT_ALT}"))
+      set(RESULT "${RESULT_ALT}")
+    endif()
+    message(DEBUG "dll2def: Created .def file \"${RESULT}\"")
+  endif()
+  if(NOT ARGS_DESTINATION)
+    set(ARGS_DESTINATION "${RESULT}")
+  elseif(NOT ARGS_DESTINATION STREQUAL "${RESULT}")
+    message(DEBUG "dll2def: Copying \"${RESULT}\" to \"${ARGS_DESTINATION}\"")
+    file(READ "${RESULT}" CONTENTS)
+    file(WRITE "${ARGS_DESTINATION}" "${CONTENTS}")
+    
+  endif()
+  if(ARGS_OUTPUT)
+    set(${ARGS_OUTPUT} "${ARGS_DESTINATION}" PARENT_SCOPE)
+  endif()
+endfunction()
+
+function(create_mingw_dlla_from_dll SOURCE)
+  _initialize_file_transform(
+    create_mingw_dlla_from_dll ".dll" ".dll.a" ${ARGN}
+  )
+  dll2def("${SOURCE}" OUTPUT SOURCE_DEF)
+  create_mingw_dlla_from_def(
+    ${SOURCE_DEF} DESTINATION "${ARGS_DESTINATION}"
+  )
+  _finalize_file_transform(
+    create_mingw_dlla_from_dll ON
+  )
+endfunction()
+
+function(create_mingw_dlla_from_def SOURCE)
+  _initialize_file_transform(
+    create_mingw_dlla_from_def ".def" ".dll.a" ${ARGN}
+  )
+  execute_process(
+    COMMAND dlltool -U -d "${SOURCE}" -l "${ARGS_DESTINATION}"
+    ${ARGS_UNPARSED_ARGUMENTS}
+  )
+  _finalize_file_transform(
+    create_mingw_dlla_from_def ON
+  )
+endfunction()
+
+function(create_msvc_lib_from_dll SOURCE)
+  _initialize_file_transform(
+    create_msvc_lib_from_dll ".dll" ".lib" ${ARGN}
+  )
+  dll2def("${SOURCE}" OUTPUT SOURCE_DEF)
+  create_msvc_lib_from_def(
+    ${SOURCE_DEF} DESTINATION "${ARGS_DESTINATION}"
+  )
+  _finalize_file_transform(
+    create_msvc_lib_from_dll ON
+  )
+endfunction()
+
+function(create_msvc_lib_from_def SOURCE)
+  _initialize_file_transform(
+    create_msvc_lib_from_def ".def" ".lib" ${ARGN}
+  )
+  execute_process(
+    COMMAND LIB "/DEF:${SOURCE}" "/OUT:${ARGS_DESTINATION}"
+    ${ARGS_UNPARSED_ARGUMENTS}
+  )
+  _finalize_file_transform(
+    create_msvc_lib_from_def ON
+  )
+endfunction()
+
 function(convert_dlla_to_lib libname)
-  include(${CMAKE_CURRENT_FUNCTION_LIST_DIR}/SearchTools.cmake)
+  include(SearchTools)
   if (NOT WIN32)
     return()
   endif()

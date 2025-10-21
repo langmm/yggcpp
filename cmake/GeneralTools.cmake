@@ -516,6 +516,148 @@ function(set_environment_vars)
   endif()
 endfunction()
 
+function(setup_external_function function)
+  set(option INCLUDE CUSTOM_TARGET)
+  set(oneValueArgs MODULE DEST DEST_DIR OUTPUT_COMMAND)
+  set(multiValueArgs ARGUMENTS PRESERVE_VARIABLES)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  list(APPEND ARGS_PRESERVE_VARIABLES
+       CMAKE_VERBOSE_MAKEFILE CMAKE_MESSAGE_LOG_LEVEL)
+  if(ARGS_UNPARSED_ARGUMENTS)
+    list(APPEND ARGS_ARGUMENTS ${ARGS_UNPARSED_ARGUMENTS})
+  endif()
+  if(NOT ARGS_DEST_DIR)
+    set(ARGS_DEST_DIR ${CMAKE_CURRENT_BINARY_DIR})
+  endif()
+  if(NOT ARGS_DEST)
+    if(NOT (ARGS_INCLUDE OR ARGS_CUSTOM_TARGET OR ARGS_OUTPUT_COMMAND))
+      message(FATAL_ERROR "Neither DEST, INCLUDE, OUTPUT_COMMAND, or CUSTOM_TARGET set")
+    endif()
+    cmake_path(
+      APPEND ARGS_DEST_DIR "call_${function}.cmake"
+      OUTPUT_VARIABLE ARGS_DEST
+    )
+  endif()
+  
+  set(ARGS_FUNCTION ${function})
+  protect_spaces(ARGS_ARGUMENTS)
+  configure_file(
+    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/external_function.cmake.in
+    ${ARGS_DEST}
+    @ONLY
+  )
+  if(ARGS_INCLUDE)
+    if(ARGS_CUSTOM_TARGET)
+      message(FATAL_ERROR "Both INCLUDE and CUSTOM_TARGET set")
+    endif()
+    include(${ARGS_DEST})
+  endif()
+  set(OUTPUT_COMMAND ${CMAKE_COMMAND})
+  foreach(var IN LISTS ARGS_PRESERVE_VARIABLES)
+    list(APPEND OUTPUT_COMMAND "-D${var}=${${var}}")
+  endforeach()
+  list(APPEND OUTPUT_COMMAND -P ${ARGS_DEST})
+  if(ARGS_OUTPUT_COMMAND)
+    set(${ARGS_OUTPUT_COMMAND} ${OUTPUT_COMMAND} PARENT_SCOPE)
+  endif()
+  if(ARGS_CUSTOM_TARGET)
+    add_custom_target(
+      ${ARGS_CUSTOM_TARGET}
+      COMMAND ${OUTPUT_COMMAND}
+    )
+  endif()
+endfunction()
+
+function(execute_process_generic)
+  set(oneValueArgs TARGET OUTPUT_VARIABLE ERROR_VARIABLE RESULT_VARIABLE)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  foreach(ivar OUTPUT_VARIABLE ERROR_VARIABLE RESULT_VARIABLE)
+    if(ARGS_${ivar})
+      list(APPEND ARGS_UNPARSED_ARGUMENTS ${ivar} ${ARGS_${ivar}})
+    endif()
+  endforeach()
+  if(ARGS_TARGET)
+    execute_process_as_target(${ARGS_TARGET} ${ARGS_UNPARSED_ARGUMENTS})
+  else()
+    execute_process_with_env(${ARGS_UNPARSED_ARGUMENTS})
+    foreach(ivar OUTPUT_VARIABLE ERROR_VARIABLE RESULT_VARIABLE)
+      if(ARGS_${ivar})
+        set(${ARGS_${ivar}} ${${ARGS_${ivar}}} PARENT_SCOPE)
+      endif()
+    endforeach()
+  endif()
+endfunction()
+
+function(execute_process_as_target target)
+  set(options ALL VERBATIM USES_TERMINAL COMMAND_EXPAND_LISTS
+      # execute_process_with_env arguments
+      ENV_VARS_END)
+  set(oneValueArgs OUTPUT
+      # execute_process_with_env arguments
+      ENV_VAR_PREFIX COMMENT
+      TIMEOUT WORKING_DIRECTORY
+      OUTPUT_VARIABLE ERROR_VARIABLE RESULT_VARIABLE
+      ECHO_OUTPUT_VARIABLE ECHO_ERROR_VARIABLE)
+  set(multiValueArgs DEPENDS BYPRODUCTS
+      # execute_process_with_env arguments
+      COMMAND ENV_VARS ENV_VARS_CLEAR CLEAR_COMPILERS
+      PREPEND_PATH APPEND_PATH)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  check_no_unparsed()
+  foreach(ivar OUTPUT_VARIABLE ERROR_VARIABLE RESULT_VARIABLE)
+    if(ARGS_${ivar})
+      message(FATAL_ERROR "\"${var}\" invalid when running process as a custom target (\"${target}\") as the process will not be executed until build time")
+      list(APPEND ARGS_UNPARSED_ARGUMENTS ${ivar} ${ARGS_${ivar}})
+    endif()
+  endforeach()
+  if(ARGS_ALL)
+    set(ARGS_ALL ALL)
+  else()
+    set(ARGS_ALL)
+  endif()
+  collect_arguments(
+    PROCESS_ARGS ARGS "${options}"
+    COMMENT WORKING_DIRECTORY COMMAND
+  )
+  collect_arguments(
+    EXECUTE_ARGS ARGS "${options}"
+    TIMEOUT ECHO_OUTPUT_VARIABLE ECHO_ERROR_VARIABLE
+    ENV_VAR_PREFIX ENV_VARS ENV_VARS_CLEAR CLEAR_COMPILERS
+    PREPEND_PATH APPEND_PATH
+  )
+  collect_arguments(
+    COMMAND_ARGS ARGS "${options}"
+    VERBATIM USES_TERMINAL COMMAND_EXPAND_LISTS
+    DEPENDS BYPRODUCTS
+  )
+  if(EXECUTE_ARGS)
+    setup_external_function(
+      "execute_process_with_env" MODULE "GeneralTools"
+      DEST ${CMAKE_CURRENT_BINARY_DIR}/execute_${target}.cmake
+      OUTPUT_COMMAND TARGET_COMMAND
+      ARGUMENTS ${PROCESS_ARGS} ${EXECUTE_ARGS}
+    )
+    list(APPEND COMMAND_ARGS COMMAND ${TARGET_COMMAND})
+  else()
+    list(APPEND COMMAND_ARGS ${PROCESS_ARGS})
+  endif()
+  if(ARGS_OUTPUT)
+    add_custom_command(
+      OUTPUT ${ARGS_OUTPUT}
+      ${COMMAND_ARGS}
+    )
+    add_custom_target(
+      ${target} ${ARGS_ALL}
+      DEPENDS ${ARGS_OUTPUT}
+    )
+  else()
+    add_custom_target(
+      ${target} ${ARGS_ALL}
+      ${COMMAND_ARGS}
+    )
+  endif()
+endfunction()
+
 function(execute_process_with_env)
   set(options ENV_VARS_END)
   set(oneValueArgs ENV_VAR_PREFIX RESULT_VARIABLE COMMENT
@@ -588,15 +730,15 @@ function(execute_process_with_env)
       KEYPREFIX ${ARGS_ENV_VAR_PREFIX}
     )
   endif()
-  foreach(ivar OUTPUT_VARIABLE ERROR_VARIABLE)
+  if(ARGS_RESULT_VARIABLE)
+    set(${ARGS_RESULT_VARIABLE} ${ret})
+  elseif(NOT ret EQUAL 0)
+    message(FATAL_ERROR "Failed to run ${ARGS_COMMAND}")
+  endif()
+  foreach(ivar OUTPUT_VARIABLE ERROR_VARIABLE RESULT_VARIABLE)
     if(ARGS_${ivar})
       set(${ARGS_${ivar}} ${${ARGS_${ivar}}} PARENT_SCOPE)
     endif()
   endforeach()
-  if(ARGS_RESULT_VARIABLE)
-    set(${RESULT_VARIABLE} ${ret} PARENT_SCOPE)
-  elseif(NOT ret EQUAL 0)
-    message(FATAL_ERROR "Failed to run ${ARGS_COMMAND}")
-  endif()
 endfunction()
 
