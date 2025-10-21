@@ -43,12 +43,15 @@ function(add_speed_test LANGUAGE LANGUAGE_EXT)
     # list(APPEND CMAKE_COMMAND_ARGS_TO_COPY ${Python_PREFIX}_ROOT_DIR)
     return()
   endif()
-  check_language_external(${LANGUAGE} REQUIRED OUTPUT_VARIABLE external)
-  get_external_compiler_path(${LANGUAGE} paths)
-  if (external)
-    list(APPEND CMAKE_COMMAND_ARGS -DCMAKE_${LANGUAGE}_COMPILER:PATH=${CMAKE_${LANGUAGE}_EXTERNAL_COMPILER})
-    list(APPEND CMAKE_COMMAND_ARGS "-G${CMAKE_${LANGUAGE}_EXTERNAL_GENERATOR}")
-  endif()
+  find_compiler_external(
+    ${LANGUAGE} REQUIRED
+    OUTPUT_COMPILER EXTERNAL_COMPILER
+    OUTPUT_GENERATOR EXTERNAL_GENERATOR
+  )
+  get_native_directory("${EXTERNAL_COMPILER}" paths)
+  list(APPEND CMAKE_COMMAND_ARGS
+       "-DCMAKE_${LANGUAGE}_COMPILER:PATH=${EXTERNAL_COMPILER}"
+       "-G${EXTERNAL_GENERATOR}")
   cmakevars2cmakecliargs(CMAKE_COMMAND_ARGS ${CMAKE_COMMAND_ARGS_TO_COPY})
   configure_and_build(
     CMakeLists.txt.in

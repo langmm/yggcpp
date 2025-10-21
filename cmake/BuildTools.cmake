@@ -511,9 +511,9 @@ endfunction()
 
 function(check_language_external language)
   set(options REQUIRED SKIP_CURRENT_GENERATOR DONT_CLEAR_OTHER_COMPILERS
-      OVERWRITE OUTPUT_VARIABLE OUTPUT_GENERATOR)
+      OVERWRITE OUTPUT_GENERATOR)
   # Ensure uses replace GENERATOR with OUTPUT_GENERATOR
-  set(oneValueArgs TIMEOUT LINKER_LANGUAGE ID)
+  set(oneValueArgs TIMEOUT LINKER_LANGUAGE ID OUTPUT_VARIABLE)
   # set(oneValueArgs GENERATOR TIMEOUT LINKER_LANGUAGE ID)
   set(multiValueArgs TRY_GENERATORS CLEAR_COMPILERS)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -809,12 +809,12 @@ function(add_mixed_language_library target library_type)
       target_sources(
         ${target} PRIVATE "$<TARGET_OBJECTS:${${ilanguage}_target}>"
       )
-      if (WIN32)
-        include(CreateMSVCLib)
-        create_lib_for_target(
-          ${target} SOURCE_TARGET ${${ilanguage}_target}
-        )
-      endif()
+      # if (WIN32)
+      #   include(CreateMSVCLib)
+      #   create_lib_for_target(
+      #     ${target} SOURCE_TARGET ${${ilanguage}_target}
+      #   )
+      # endif()
     else()
       enable_language(${ilanguage})
       if(ilanguage STREQUAL "Fortran")
@@ -996,6 +996,7 @@ function(add_external_library target library_type)
   get_native_directory("${EXTERNAL_COMPILER}" COMPILER_PATH)
   message(DEBUG "COMPILER_PATH = ${COMPILER_PATH}")
   list(APPEND ARGS_PREPEND_PATH "${COMPILER_PATH}")
+  set(external_def_file)
   if(ARGS_LANGUAGE STREQUAL "Fortran" AND MSVC)
     # EXTERNAL_COMPILER MATCHES "gfortran")
     if(NOT EXTERNAL_COMPILER MATCHES "gfortran")
@@ -1005,12 +1006,21 @@ function(add_external_library target library_type)
          -DBUILD_SHARED_LIBS=ON
          -DMSVC_AND_GNU_BUILD=ON
          -DCMAKE_GNUtoMS=ON)
+    cmake_path(
+      # This version matches the original
+      APPEND CMAKE_CURRENT_BINARY_DIR "${ARGS_PARENT_TARGET}.def"
+      OUTPUT_VARIABLE external_def_file
+      # This version allows for multiple defs (multiple external libraries)
+      # APPEND "${ARGS_SOURCE_DIR}" "${target}.def"
+      # OUTPUT_VARIABLE external_def_file
+    )
   endif()
   cmake_path(
     APPEND "${ARGS_SOURCE_DIR}" "${target}.external_targets"
     OUTPUT_VARIABLE external_target_file
   )
-  list(APPEND EXTERNAL_PRODUCTS ${external_target_file})
+  list(APPEND EXTERNAL_PRODUCTS ${external_target_file}
+       ${external_def_file})
   configure_file(
     ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/external.CMakeLists.in
     ${ARGS_SOURCE_DIR}/CMakeLists.txt
@@ -1073,15 +1083,18 @@ function(add_external_library target library_type)
     DEFINITIONS ${ARGS_DEFINITIONS}
     LINK_DIRECTORIES ${CMAKE_CURRENT_BINARY_DIR}
     TARGETS_FILE ${external_target_file}
+    DEF_FILE ${external_def_file}
     IMPORT_LIBRARY ${IMPNAME}
   )
 endfunction()
 
 function(add_import_library target library_type library)
   set(options GLOBAL)
-  set(oneValueArgs TARGETS_FILE IMPORT_LIBRARY)
+  set(oneValueArgs TARGETS_FILE IMPORT_LIBRARY DEF_FILE)
   set(multiValueArgs LIBRARIES DEFINITIONS DEPENDENCIES OBJECTS
-      LINK_DIRECTORIES)
+      COMPILE_DEFINITIONS COMPILE_OPTIONS
+      LINK_DIRECTORIES LINK_LIBRARIES LINK_OPTIONS
+      INCLUDE_DIRECTORIES)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
   if(ARGS_GLOBAL)
     set(ARGS_GLOBAL GLOBAL)
@@ -1093,37 +1106,38 @@ function(add_import_library target library_type library)
   # if(library_type STREQUAL "OBJECT" AND NOT ARGS_OBJECTS)
   #   message(FATAL_ERROR "No OBJECTS provided for OBJECT IMPORT library")
   # endif()
+  if(ARGS_DEF_FILE)
+    list(APPEND ARGS_LINK_OPTIONS "/DEF:${ARGS_DEF_FILE}")
+  endif()
+  if(ARGS_LIBRARIES)
+    list(APPEND ARGS_LINK_LIBRARIES ${ARGS_LIBRARIES})
+  endif()
+  if(ARGS_DEFINITIONS)
+    list(APPEND ARGS_COMPILE_DEFINITIONS ${ARGS_DEFINITIONS})
+  endif()
   set_property(
     TARGET ${target} PROPERTY
     IMPORTED_LOCATION ${library}
   )
-  if(ARGS_LINK_DIRECTORIES)
-    set_property(
-      TARGET ${target} PROPERTY
-      INTERFACE_LINK_DIRECTORIES ${ARGS_LINK_DIRECTORIES}
-    )
-  endif()
   if(ARGS_OBJECTS)
     set_property(
       TARGET ${target} PROPERTY
       PROPERTY IMPORTED_OBJECTS ${ARGS_OBJECTS}
     )
   endif()
-  if(ARGS_LIBRARIES)
-    set_property(
-      TARGET ${target} PROPERTY
-      INTERFACE_LINK_LIBRARIES ${ARGS_LIBRARIES}
-    )
-  endif()
-  if(ARGS_DEFINITIONS)
-    set_property(
-      TARGET ${target} PROPERTY
-      INTERFACE_COMPILE_DEFINITIONS "${ARGS_DEFINITIONS}"
-    )
-  endif()
   if(ARGS_TARGETS_FILE)
     target_link_from_file(${target} IMPORTED ${ARGS_TARGETS_FILE})
   endif()
+  foreach(ivar COMPILE_DEFINITIONS COMPILE_OPTIONS
+          LINK_DIRECTORIES LINK_LIBRARIES LINK_OPTIONS
+          INCLUDE_DIRECTORIES)
+    if(ARGS_${ivar})
+      set_property(
+        TARGET ${target} PROPERTY
+        INTERFACE_${ivar} "${ARGS_${ivar}}"
+      )
+    endif()
+  endforeach()
   if(WIN32 AND ${library_type} STREQUAL "SHARED")
     if(NOT ARGS_IMPORT_LIBRARY)
       message(FATAL_ERROR "IMPORT_LIBRARY must be defined for windows build")

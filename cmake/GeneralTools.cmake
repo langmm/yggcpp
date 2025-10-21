@@ -98,6 +98,48 @@ function(copy_cmake_variables src_prefix dst_prefix)
   propagate_cmake_variables_prefix("${dst_prefix}")
 endfunction()
 
+function(check_set PREFIX REASON)
+  foreach(ivar ${ARGN})
+    if(NOT ${PREFIX}_${ivar})
+      message(FATAL_ERROR "Argument \"${ivar}\" required${REASON}")
+    endif()
+  endforeach()
+endfunction()
+
+function(check_not_set PREFIX REASON)
+  foreach(ivar ${ARGN})
+    if(${PREFIX}_${ivar})
+      message(FATAL_ERROR "Argument \"${ivar}\" not allowed${REASON}")
+    endif()
+  endforeach()
+endfunction()
+
+function(check_exclusive_options PREFIX)
+  set(options REQUIRED)
+  set(oneValueArgs OUTPUT)
+  set(multiValueArgs NAMES)
+  cmake_parse_arguments(EXCL "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  if(EXCL_UNPARSED_ARGUMENTS)
+    list(APPEND EXCL_NAMES EXCL_UNPARSED_ARGUMENTS)
+  endif()
+  collect_arguments(
+    SET_NAMES "${PREFIX}" "${EXCL_NAMES}"
+    ${EXCL_NAMES}
+  )
+  list(LENGTH SET_NAMES NSET)
+  if(NSET EQUAL 0)
+    if(EXCL_REQUIRED)
+      message(FATAL_ERROR "No option set from ${EXCL_NAMES}")
+    endif()
+  elseif(NSET EQUAL 1)
+    if(EXCL_OUTPUT)
+      set(${EXCL_OUTPUT} "${SET_NAMES}" PARENT_SCOPE)
+    endif()
+  else()
+    message(FATAL_ERROR "Conflicting options provided: ${SET_NAMES}")
+  endif()
+endfunction()
+
 function(set_default var)
   if(NOT ${var})
     set(${var} "${ARGN}" PARENT_SCOPE)
@@ -516,13 +558,70 @@ function(set_environment_vars)
   endif()
 endfunction()
 
+function(add_custom_command_function function)
+  set(options PRE_BUILD PRE_LINK POST_BUILD
+      COMMAND_EXPAND_LISTS USES_TERMINAL)
+  set(oneValueArgs MODULE DEST DEST_DIR
+      TARGET COMMENT WORKING_DIRECTORY)
+  set(multiValueArgs FUNCTION_ARGUMENTS
+      PRESERVE_VARIABLES COMMAND_ARGUMENTS
+      BYPRODUCTS DEPENDS OUTPUT)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  collect_arguments(
+    FUNCTION_ARGS ARGS "${options}"
+    MODULE DEST DEST_DIR PRESERVE_VARIABLES
+    FUNCTION_ARGUMENTS COMMAND_ARGUMENTS
+  )
+  list(LENGTH ARGS_COMMAND_ARGUMENTS N_COMMAND_ARGUMENTS)
+  message(STATUS "ARGS_COMMAND_ARGUMENTS = ${ARGS_COMMAND_ARGUMENTS}")
+  message(STATUS "N_COMMAND_ARGUMENTS = ${N_COMMAND_ARGUMENTS}")
+  collect_arguments(
+    COMMAND_ARGS ARGS "${options}"
+    COMMAND_EXPAND_LISTS USES_TERMINAL
+    COMMENT WORKING_DIRECTORY
+    BYPRODUCTS DEPENDS
+  )
+  setup_external_function(
+    ${function}
+    OUTPUT_COMMAND CUSTOM_COMMAND
+    ${FUNCTION_ARGS}
+  )
+  list(APPEND COMMAND_ARGS COMMAND ${CUSTOM_COMMAND})
+  message(STATUS "CUSTOM_COMMAND = ${CUSTOM_COMMAND}")
+  if(ARGS_TARGET)
+    check_exclusive_options(
+      ARGS REQUIRED OUTPUT ARGS_EVENT
+      NAMES PRE_BUILD PRE_LINK POST_BUILD
+    )
+    check_not_set(ARGS " when TARGET provided" DEPENDS OUTPUT)
+    add_custom_command(
+      TARGET ${ARGS_TARGET} ${ARGS_EVENT}
+      ${COMMAND_ARGS}
+    )
+  else()
+    check_set(ARGS " when TARGET not provided" OUTPUT)
+    check_not_set(
+      ARGS " when TARGET not provided"
+      PRE_BUILD PRE_LINK POST_BUILD
+    )
+    add_custom_command(
+      OUTPUT ${ARGS_OUTPUT}
+      ${COMMAND_ARGS}
+    )
+  endif()
+endfunction()
+
 function(setup_external_function function)
-  set(option INCLUDE CUSTOM_TARGET)
+  set(options INCLUDE)
   set(oneValueArgs MODULE DEST DEST_DIR OUTPUT_COMMAND)
-  set(multiValueArgs ARGUMENTS PRESERVE_VARIABLES)
+  set(multiValueArgs ARGUMENTS PRESERVE_VARIABLES COMMAND_ARGUMENTS
+      FUNCTION_ARGUMENTS)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
   list(APPEND ARGS_PRESERVE_VARIABLES
        CMAKE_VERBOSE_MAKEFILE CMAKE_MESSAGE_LOG_LEVEL)
+  if(ARGS_FUNCTION_ARGUMENTS)
+    list(APPEND ARGS_ARGUMENTS ${ARGS_FUNCTION_ARGUMENTS})
+  endif()
   if(ARGS_UNPARSED_ARGUMENTS)
     list(APPEND ARGS_ARGUMENTS ${ARGS_UNPARSED_ARGUMENTS})
   endif()
@@ -530,8 +629,8 @@ function(setup_external_function function)
     set(ARGS_DEST_DIR ${CMAKE_CURRENT_BINARY_DIR})
   endif()
   if(NOT ARGS_DEST)
-    if(NOT (ARGS_INCLUDE OR ARGS_CUSTOM_TARGET OR ARGS_OUTPUT_COMMAND))
-      message(FATAL_ERROR "Neither DEST, INCLUDE, OUTPUT_COMMAND, or CUSTOM_TARGET set")
+    if(NOT (ARGS_INCLUDE OR ARGS_OUTPUT_COMMAND))
+      message(FATAL_ERROR "Neither DEST, INCLUDE or OUTPUT_COMMAND set")
     endif()
     cmake_path(
       APPEND ARGS_DEST_DIR "call_${function}.cmake"
@@ -547,24 +646,15 @@ function(setup_external_function function)
     @ONLY
   )
   if(ARGS_INCLUDE)
-    if(ARGS_CUSTOM_TARGET)
-      message(FATAL_ERROR "Both INCLUDE and CUSTOM_TARGET set")
-    endif()
     include(${ARGS_DEST})
   endif()
-  set(OUTPUT_COMMAND ${CMAKE_COMMAND})
+  set(OUTPUT_COMMAND ${CMAKE_COMMAND} ${ARGS_COMMAND_ARGUMENTS})
   foreach(var IN LISTS ARGS_PRESERVE_VARIABLES)
     list(APPEND OUTPUT_COMMAND "-D${var}=${${var}}")
   endforeach()
   list(APPEND OUTPUT_COMMAND -P ${ARGS_DEST})
   if(ARGS_OUTPUT_COMMAND)
     set(${ARGS_OUTPUT_COMMAND} ${OUTPUT_COMMAND} PARENT_SCOPE)
-  endif()
-  if(ARGS_CUSTOM_TARGET)
-    add_custom_target(
-      ${ARGS_CUSTOM_TARGET}
-      COMMAND ${OUTPUT_COMMAND}
-    )
   endif()
 endfunction()
 

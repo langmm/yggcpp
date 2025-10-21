@@ -9,6 +9,7 @@ set(target @target@)
 set(library_type @library_type@)
 set(final_library_type @final_library_type@)
 set(external_target_file "@external_target_file@")
+set(external_def_file "@external_def_file@")
 
 include(BuildTools)
 add_internal_library(
@@ -56,4 +57,9 @@ if(NOT library_type STREQUAL "OBJECT")
     ${target} ${EXTERNAL_BUILD_DIR}
     COMPONENTS LIBRARY
   )
+endif()
+
+if(external_def_file)
+  include(CreateMSVCLib)
+  target2def(${target} DESTINATION ${external_def_file})
 endif()

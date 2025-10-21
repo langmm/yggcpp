@@ -1,14 +1,25 @@
-function(convert_library_mingw2msvc src)
-  set(oneValueArgs TARGET)
-  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-endfunction()
+include(GeneralTools)
 
 macro(_initialize_file_transform name src_ext dst_ext)
-  set(oneValueArgs DESTINATION DESTINATION_DIR OUTPUT)
+  list(APPEND oneValueArgs DESTINATION DESTINATION_DIR OUTPUT)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  if((NOT SOURCE) AND ARGS_SOURCES)
+    list(GET ARGS_SOURCES 0 SOURCE)
+  endif()
+  if(NOT SOURCE)
+    message(FATAL_ERROR "${name}: SOURCE not set")
+  endif()
+  set(SRC_EXT "${src_ext}")
+  set(DST_EXT "${dst_ext}")
   message(DEBUG "${name}: SOURCE = ${SOURCE}")
-  if(NOT EXISTS "${SOURCE}")
-    message(FATAL_ERROR "${name}: SOURCE file does not exist: \"${SOURCE}\"")
+  if(SRC_EXT)
+    if(NOT EXISTS "${SOURCE}")
+      message(FATAL_ERROR "${name}: SOURCE file does not exist: \"${SOURCE}\"")
+    endif()
+  else()
+    if(NOT TARGET "${SOURCE}")
+      message(FATAL_ERROR "${name}: SOURCE is not a target: \"${SOURCE}\"")
+    endif()
   endif()
   if(NOT ARGS_DESTINATION_DIR)
     if(ARGS_DESTINATION)
@@ -18,12 +29,24 @@ macro(_initialize_file_transform name src_ext dst_ext)
       set(ARGS_DESTINATION_DIR "${CMAKE_CURRENT_BINARY_DIR}")
     endif()
   endif()
-  cmake_path(GET SOURCE FILENAME SOURCE_BASE)
+  if(SRC_EXT)
+    cmake_path(GET SOURCE FILENAME SOURCE_BASE)
+  else()
+    set(SOURCE_BASE "${SOURCE}")
+  endif()
   if(NOT ARGS_DESTINATION)
-    string(REPLACE "${src_ext}" "${dst_ext}" RESULT_BASE "${SOURCE_BASE}")
+    set(ARGS_DESTINATION_IS_DEFAULT ON)
+    if(SRC_EXT)
+      string(REPLACE "${SRC_EXT}" "${DST_EXT}"
+             RESULT_BASE "${SOURCE_BASE}")
+    else()
+      set(RESULT_BASE "${SOURCE_BASE}${DST_EXT}")
+    endif()
     cmake_path(APPEND ARGS_DESTINATION_DIR "${RESULT_BASE}"
                OUTPUT_VARIABLE ARGS_DESTINATION)
   endif()
+  message(DEBUG "${name}: DESTINATION = ${ARGS_DESTINATION}")
+  message(DEBUG "${name}: UNPARSED_ARGUMENTS = ${ARGS_UNPARSED_ARGUMENTS}")
   if(EXISTS "${ARGS_DESTINATION}")
     _finalize_file_transform(${name} OFF)
     return()
@@ -42,56 +65,103 @@ macro(_finalize_file_transform name created)
   endif()
 endmacro()
 
-function(dll2def SOURCE)
-  set(oneValueArgs DESTINATION OUTPUT)
-  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-  if(NOT EXISTS "${SOURCE}")
-    message(FATAL_ERROR ".dll file does not exist: \"${SOURCE}\"")
+function(obj2def)
+  set(options)
+  set(oneValueArgs COMMAND_ERROR_IS_FATAL COMMAND_ECHO)
+  set(multiValueArgs SOURCES)
+  if(WIN32)
+    _initialize_file_transform(
+      obj2def ".obj" ".def" ${ARGN}
+    )
+  else()
+    _initialize_file_transform(
+      obj2def ".o" ".def" ${ARGN}
+    )
   endif()
-  string(REPLACE ".dll" ".def" RESULT "${SOURCE}")
-  message(DEBUG "create_msvc_lib_from_def: ${SOURCE}")
-  cmake_path(GET SOURCE FILENAME SOURCE_BASE)
-  cmake_path(GET SOURCE PARENT_PATH SOURCE_DIR)
-  cmake_path(GET RESULT FILENAME RESULT_BASE)
+  set_default(ARGS_COMMAND_ERROR_IS_FATAL ANY)
+  set_default(ARGS_COMMAND_ECHO STDOUT)
+  message(DEBUG "obj2def: SOURCES = ${ARGS_SOURCES}")
+  execute_process(
+    COMMAND dlltool -v --export-all-symbols -z "${ARGS_DESTINATION}" ${ARGS_SOURCES}
+    COMMAND_EXPAND_LISTS
+    COMMAND_ERROR_IS_FATAL ${ARGS_COMMAND_ERROR_IS_FATAL}
+    COMMAND_ECHO ${ARGS_COMMAND_ECHO}
+    ${ARGS_UNPARSED_ARGUMENTS}
+  )
+  _finalize_file_transform(obj2def ON)
+endfunction()
+
+function(dll2def SOURCE)
+  set(options)
+  set(oneValueArgs COMMAND_ERROR_IS_FATAL COMMAND_ECHO)
+  set(multiValueArgs)
+  _initialize_file_transform(
+    dll2def ".dll" ".def" ${ARGN}
+  )
+  set_default(ARGS_COMMAND_ERROR_IS_FATAL ANY)
+  set_default(ARGS_COMMAND_ECHO STDOUT)
+  # cmake_path(GET SOURCE FILENAME SOURCE_BASE)
+  # cmake_path(GET SOURCE PARENT_PATH SOURCE_DIR)
+  cmake_path(GET ARGS_DESTINATION FILENAME RESULT_BASE)
   string(REGEX REPLACE "^lib" "" RESULT_BASE_ALT "${RESULT_BASE}")
-  cmake_path(APPEND SOURCE_DIR "${RESULT_BASE_ALT}"
+  cmake_path(APPEND ARGS_DESTINATION_DIR "${RESULT_BASE_ALT}"
              OUTPUT_VARIABLE RESULT_ALT)
-  if(ARGS_DESTINATION AND EXISTS "${ARGS_DESTINATION}")
-    message(DEBUG "dll2def: DESTINATION already exists \"${ARGS_DESTINATION}\"")
-    set(RESULT "${ARGS_DESTINATION}")
-  elseif(EXISTS "${RESULT_ALT}")
-    set(RESULT "${RESULT_ALT}")
-    message(DEBUG "dll2def: RESULT already exists \"${RESULT}\"")
-  elseif(EXISTS "${RESULT}")
-    message(DEBUG "dll2def: RESULT already exists \"${RESULT}\"")
+  if(EXISTS "${RESULT_ALT}")
+    if(ARGS_DESTINATION_IS_DEFAULT)
+      set(ARGS_DESTINATION "${RESULT_ALT}")
+      _finalize_file_transform(dll2def OFF)
+      return()
+    endif()
+    message(DEBUG "dll2def: File already exists under a different name \"${RESULT_ALT}\"")
   else()
     execute_process(
-      COMMAND gendef "${SOURCE_BASE}"
-      WORKING_DIRECTORY "${SOURCE_DIR}")
+      COMMAND gendef "${SOURCE}"
+      WORKING_DIRECTORY "${ARGS_DESTINATION_DIR}"
+      COMMAND_ERROR_IS_FATAL ${ARGS_COMMAND_ERROR_IS_FATAL}
+      COMMAND_ECHO ${ARGS_COMMAND_ECHO}
       ${ARGS_UNPARSED_ARGUMENTS}
     )
-    if(NOT ((EXISTS "${RESULT}") OR (EXISTS "${RESULT_ALT}")))
-      message(FATAL_ERROR "dll2def: Failed to create .def file \"${RESULT}\"")
-    endif()
-    if((NOT EXISTS "${RESULT}") AND (EXISTS "${RESULT_ALT}"))
-      set(RESULT "${RESULT_ALT}")
-    endif()
-    message(DEBUG "dll2def: Created .def file \"${RESULT}\"")
   endif()
-  if(NOT ARGS_DESTINATION)
-    set(ARGS_DESTINATION "${RESULT}")
-  elseif(NOT ARGS_DESTINATION STREQUAL "${RESULT}")
-    message(DEBUG "dll2def: Copying \"${RESULT}\" to \"${ARGS_DESTINATION}\"")
-    file(READ "${RESULT}" CONTENTS)
+  if((NOT EXISTS "${ARGS_DESTINATION}") AND (EXISTS "${RESULT_ALT}"))
+    message(DEBUG "dll2def: Copying \"${RESULT_ALT}\" to \"${ARGS_DESTINATION}\"")
+    file(READ "${RESULT_ALT}" CONTENTS)
     file(WRITE "${ARGS_DESTINATION}" "${CONTENTS}")
-    
   endif()
+  _finalize_file_transform(dll2def ON)
+endfunction()
+
+function(target2def SOURCE)
+  set(options)
+  set(oneValueArgs EVENT_TARGET)
+  set(multiValueArgs)
+  _initialize_file_transform(
+    target2def "" ".def" ${ARGN}
+  )
+  if(ARGS_EVENT_TARGET)
+    set(EVENT_TYPE PRE_LINK)
+  else()
+    set(ARGS_EVENT_TARGET ${SOURCE})
+    set(EVENT_TYPE POST_BUILD)
+  endif()
+  add_custom_command_function(
+    obj2def MODULE CreateMSVCLib
+    TARGET ${ARGS_EVENT_TARGET} ${EVENT_TYPE}
+    COMMAND_ARGUMENTS -DTARGET_OBJECTS=$<JOIN:$<TARGET_OBJECTS:${SOURCE}>,$<SEMICOLON>>
+    FUNCTION_ARGUMENTS SOURCES "\$\{TARGET_OBJECTS\}"
+      DESTINATION "${ARGS_DESTINATION}"
+    BYPRODUCTS "${ARGS_DESTINATION}"
+    VERBATIM COMMAND_EXPAND_LISTS
+    ${ARGS_UNPARSED_ARGUMENTS}
+  )
   if(ARGS_OUTPUT)
     set(${ARGS_OUTPUT} "${ARGS_DESTINATION}" PARENT_SCOPE)
   endif()
 endfunction()
 
 function(create_mingw_dlla_from_dll SOURCE)
+  set(options)
+  set(oneValueArgs)
+  set(multiValueArgs)
   _initialize_file_transform(
     create_mingw_dlla_from_dll ".dll" ".dll.a" ${ARGN}
   )
@@ -105,11 +175,18 @@ function(create_mingw_dlla_from_dll SOURCE)
 endfunction()
 
 function(create_mingw_dlla_from_def SOURCE)
+  set(options)
+  set(oneValueArgs COMMAND_ERROR_IS_FATAL COMMAND_ECHO)
+  set(multiValueArgs)
   _initialize_file_transform(
     create_mingw_dlla_from_def ".def" ".dll.a" ${ARGN}
   )
+  set_default(ARGS_COMMAND_ERROR_IS_FATAL ANY)
+  set_default(ARGS_COMMAND_ECHO STDOUT)
   execute_process(
-    COMMAND dlltool -U -d "${SOURCE}" -l "${ARGS_DESTINATION}"
+    COMMAND dlltool -v -U -d "${SOURCE}" -l "${ARGS_DESTINATION}"
+    COMMAND_ERROR_IS_FATAL ${ARGS_COMMAND_ERROR_IS_FATAL}
+    COMMAND_ECHO ${ARGS_COMMAND_ECHO}
     ${ARGS_UNPARSED_ARGUMENTS}
   )
   _finalize_file_transform(
@@ -118,6 +195,9 @@ function(create_mingw_dlla_from_def SOURCE)
 endfunction()
 
 function(create_msvc_lib_from_dll SOURCE)
+  set(options)
+  set(oneValueArgs)
+  set(multiValueArgs)
   _initialize_file_transform(
     create_msvc_lib_from_dll ".dll" ".lib" ${ARGN}
   )
@@ -131,11 +211,18 @@ function(create_msvc_lib_from_dll SOURCE)
 endfunction()
 
 function(create_msvc_lib_from_def SOURCE)
+  set(options)
+  set(oneValueArgs COMMAND_ERROR_IS_FATAL COMMAND_ECHO)
+  set(multiValueArgs)
   _initialize_file_transform(
     create_msvc_lib_from_def ".def" ".lib" ${ARGN}
   )
+  set_default(ARGS_COMMAND_ERROR_IS_FATAL ANY)
+  set_default(ARGS_COMMAND_ECHO STDOUT)
   execute_process(
     COMMAND LIB "/DEF:${SOURCE}" "/OUT:${ARGS_DESTINATION}"
+    COMMAND_ERROR_IS_FATAL ${ARGS_COMMAND_ERROR_IS_FATAL}
+    COMMAND_ECHO ${ARGS_COMMAND_ECHO}
     ${ARGS_UNPARSED_ARGUMENTS}
   )
   _finalize_file_transform(
@@ -213,7 +300,7 @@ function(convert_dlla_to_lib libname)
       endif()
     endif()
   endif()
-  execute_process(COMMAND dlltool -d ${deffile} -D ${dllfile} -l ${libfile} -e ${expfile} COMMAND_ERROR_IS_FATAL ANY)
+  execute_process(COMMAND dlltool -v -d ${deffile} -D ${dllfile} -l ${libfile} -e ${expfile} COMMAND_ERROR_IS_FATAL ANY)
   if(NOT EXISTS "${libfile}")
     message(FATAL_ERROR "Failed to create .lib file ${libfile}")
   else()
@@ -240,7 +327,7 @@ function(create_lib_for_target target)
     # DEPENDS ${src_target}
     PRE_LINK
     COMMAND ${CMAKE_COMMAND} -E echo "TARGET_OBJECTS for ${src_target} $<TARGET_OBJECTS:${src_target}>"
-    COMMAND dlltool --export-all-symbols -z $<TARGET_FILE_DIR:${target}>\\${deffile} $<TARGET_OBJECTS:${src_target}>
+    COMMAND dlltool -v --export-all-symbols -z $<TARGET_FILE_DIR:${target}>\\${deffile} $<TARGET_OBJECTS:${src_target}>
     BYPRODUCTS ${deffile}
     COMMAND_EXPAND_LISTS)
   # add_custom_command(
@@ -248,7 +335,7 @@ function(create_lib_for_target target)
   #   POST_BUILD
   #   COMMAND ${CMAKE_COMMAND} -E echo "TARGET_IMPORT_FILE for ${target} $<TARGET_IMPORT_FILE:${target}>"
   #   COMMAND LIB /DEF:$<TARGET_FILE_DIR:${target}>\\${deffile} /NAME:$<PATH:GET_FILENAME,$<TARGET_FILE:${target}>> /OUT:$<PATH:REPLACE_EXTENSION,$<TARGET_IMPORT_FILE:${target}>,.lib>
-  #   # COMMAND dlltool -d ${deffile} -D ${dllfile} -l ${libfile}
+  #   # COMMAND dlltool -v -d ${deffile} -D ${dllfile} -l ${libfile}
   #   COMMAND_EXPAND_LISTS)
   # set_source_files_properties(
   #   ${deffile}
