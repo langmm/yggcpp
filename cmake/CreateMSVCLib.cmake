@@ -69,9 +69,9 @@ macro(_finalize_file_transform name created)
   if(NOT EXISTS "${ARGS_DESTINATION}")
     if(RESULT_ALT AND (EXISTS "${RESULT_ALT}"))
       message(DEBUG "${name}: Copying \"${RESULT_ALT}\" to \"${ARGS_DESTINATION}\"")
-      # TODO: Find more generic method of copy
-      file(READ "${RESULT_ALT}" CONTENTS)
-      file(WRITE "${ARGS_DESTINATION}" "${CONTENTS}")
+      # TODO: use configure_file to create cmake dependency?
+      # configure_file("${RESULT_ALT}" "${ARGS_DESTINATION}" COPYONLY)
+      file(COPY_FILE "${RESULT_ALT}" "${ARGS_DESTINATION}")
     else()
       message(FATAL_ERROR "${name}: Failed to create \"${ARGS_DESTINATION}\"")
     endif()
@@ -379,12 +379,12 @@ function(create_lib_for_target target)
   
   add_custom_command(
     TARGET ${target}
-    # DEPENDS ${src_target}
     PRE_LINK
     COMMAND ${CMAKE_COMMAND} -E echo "TARGET_OBJECTS for ${src_target} $<TARGET_OBJECTS:${src_target}>"
     COMMAND dlltool -v --export-all-symbols -z $<TARGET_FILE_DIR:${target}>\\${deffile} $<TARGET_OBJECTS:${src_target}>
     BYPRODUCTS ${deffile}
-    COMMAND_EXPAND_LISTS)
+    COMMAND_EXPAND_LISTS
+  )
   # add_custom_command(
   #   TARGET ${target}
   #   POST_BUILD

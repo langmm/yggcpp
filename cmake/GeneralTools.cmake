@@ -485,13 +485,14 @@ function(select_files_by_language language destination)
 endfunction()
 
 function(inspect_target name)
-  set(oneValueArgs LOG_LEVEL)
+  set(oneValueArgs LOG_LEVEL PREFIX)
   set(multiValueArgs PROPERTIES)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
   if(NOT TARGET ${name})
     message(FATAL_ERROR "\"${name}\" is not a target")
   endif()
   set_default(ARGS_LOG_LEVEL STATUS)
+  get_property(was_set TARGET ${name} PROPERTY IMPORTED SET)
   if(NOT ARGS_PROPERTIES)
     list(
       APPEND ARGS_PROPERTIES TYPE IMPORTED
@@ -499,12 +500,14 @@ function(inspect_target name)
     )
     list(REMOVE_DUPLICATES ARGS_PROPERTIES)
   endif()
-  message(${ARGS_LOG_LEVEL} "Inspecting target \"${name}\"")
+  message(${ARGS_LOG_LEVEL} "${ARGS_PREFIX}Inspecting target \"${name}\"")
   foreach(property IN LISTS ARGS_PROPERTIES)
     string(REPLACE "<CONFIG>" "${CMAKE_BUILD_TYPE}" property ${property})
-    # if(property STREQUAL "LOCATION" OR property MATCHES "^LOCATION_" OR property MATCHES "_LOCATION$")
-    #   continue()
-    # endif()
+    if((NOT IMPORTED) AND (property STREQUAL "LOCATION" OR
+                           property MATCHES "^LOCATION_" OR
+                           property MATCHES "_LOCATION$"))
+      continue()
+    endif()
     
     if(property MATCHES "<LANG>")
       continue()
@@ -556,13 +559,29 @@ endfunction()
 
 function(add_custom_command_function function)
   set(options PRE_BUILD PRE_LINK POST_BUILD
-      COMMAND_EXPAND_LISTS USES_TERMINAL)
+      COMMAND_EXPAND_LISTS USES_TERMINAL VERBATIM)
   set(oneValueArgs MODULE DEST DEST_DIR
       TARGET COMMENT WORKING_DIRECTORY)
-  set(multiValueArgs FUNCTION_ARGUMENTS
+  set(multiValueArgs FUNCTION_ARGUMENTS GENERATED_FUNCTION_ARGUMENTS
       PRESERVE_VARIABLES COMMAND_ARGUMENTS
       BYPRODUCTS DEPENDS OUTPUT)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  set(ikey)
+  set(ival)
+  foreach(iarg ${ARGS_GENERATED_FUNCTION_ARGUMENTS})
+    if(NOT ikey)
+      set(ikey "${iarg}")
+    else()
+      set(ival "${iarg}")
+      list(APPEND ARGS_COMMAND_ARGUMENTS "-DGENERATED_${ikey}=${ival}")
+      list(APPEND ARGS_FUNCTION_ARGUMENTS ${ikey} "\$\{GENERATED_${ikey}\}")
+      set(ikey)
+      set(ival)
+    endif()
+  endforeach()
+  if(ikey)
+    message(FATAL_ERROR "Error processing GENERATED_FUNCTION_ARGUMENTS: ${ARGS_GENERATED_FUNCTION_ARGUMENTS}")
+  endif()
   collect_arguments(
     FUNCTION_ARGS ARGS "${options}"
     MODULE DEST DEST_DIR PRESERVE_VARIABLES
@@ -570,7 +589,7 @@ function(add_custom_command_function function)
   )
   collect_arguments(
     COMMAND_ARGS ARGS "${options}"
-    COMMAND_EXPAND_LISTS USES_TERMINAL
+    COMMAND_EXPAND_LISTS USES_TERMINAL VERBATIM
     COMMENT WORKING_DIRECTORY
     BYPRODUCTS DEPENDS
   )
@@ -580,7 +599,7 @@ function(add_custom_command_function function)
     ${FUNCTION_ARGS}
   )
   list(APPEND COMMAND_ARGS COMMAND ${CUSTOM_COMMAND})
-  message(STATUS "CUSTOM_COMMAND = ${CUSTOM_COMMAND}")
+  message(DEBUG "CUSTOM_COMMAND = ${CUSTOM_COMMAND}")
   if(ARGS_TARGET)
     check_exclusive_options(
       ARGS REQUIRED OUTPUT ARGS_EVENT
@@ -625,8 +644,9 @@ function(setup_external_function function)
     if(NOT (ARGS_INCLUDE OR ARGS_OUTPUT_COMMAND))
       message(FATAL_ERROR "Neither DEST, INCLUDE or OUTPUT_COMMAND set")
     endif()
+    string(RANDOM DEST_ID)  # Allow user to specify?
     cmake_path(
-      APPEND ARGS_DEST_DIR "call_${function}.cmake"
+      APPEND ARGS_DEST_DIR "call_${function}_${DEST_ID}.cmake"
       OUTPUT_VARIABLE ARGS_DEST
     )
   endif()

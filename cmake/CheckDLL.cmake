@@ -1,3 +1,5 @@
+include(GeneralTools)
+
 function(copy_required_runtimes TARGET)
   set(oneValueArgs DESTINATION DESTINATION_TARGET)
   set(multiValueArgs DEPENDENCIES)
@@ -33,6 +35,7 @@ function(show_runtimes target)
   set(options IMPORTED)
   set(oneValueArgs AFTER_TARGET)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  inspect_target(${target})
   if (ARGS_AFTER_TARGET)
     set(after_target ${ARGS_AFTER_TARGET})
   else()

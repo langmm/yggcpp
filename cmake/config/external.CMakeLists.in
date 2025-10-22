@@ -4,10 +4,12 @@ include(GeneralTools)
 show_build_info(PREFIX "EXTERNAL @target@: ")
 project(@target@_PROJECT LANGUAGES @ARGS_LANGUAGE@ @ARGS_LINKER_LANGUAGE@)
 show_build_info(PREFIX "EXTERNAL @target@: ")
-set(EXTERNAL_BUILD_DIR "@CMAKE_CURRENT_BINARY_DIR@")
+set(INTERNAL_BUILD_DIR "@CMAKE_CURRENT_BINARY_DIR@")
+set(INTERNAL_SOURCE_DIR "@CMAKE_CURRENT_SOURCE_DIR@")
 set(target @target@)
 set(library_type @library_type@)
 set(final_library_type @final_library_type@)
+set(internal_target_file "@internal_target_file@")
 set(external_target_file "@external_target_file@")
 set(external_def_file "@external_def_file@")
 
@@ -22,8 +24,10 @@ add_internal_library(
   DEFINITIONS @ARGS_DEFINITIONS@
   COMPILE_FLAGS @ARGS_COMPILE_FLAGS@
   PROPERTIES @ARGS_PROPERTIES@
-  TARGETS_FILE @target_file@
+  TARGETS_FILE ${internal_target_file}
 )
+
+# Create a list of libraries implicitly linked by the compiler
 if(external_target_file)
   include(AddTargetsFromFile)
   # TODO: Find stdc++ library for fortran?
@@ -36,30 +40,18 @@ if(external_target_file)
   )
 endif()
 
-# set(COPY_COMPONENTS OBJECTS)
-# if(NOT library_type STREQUAL "OBJECT")
-#   list(APPEND COPY_COMPONENTS LIBRARY)
-# endif()
-# if(language STREQUAL "Fortran")
-#   list(APPEND COPY_COMPONENTS FORTRAN_MOD)
-# endif()
-# copy_target_files(
-#   ${target} ${EXTERNAL_BUILD_DIR}
-#   COMPONENTS ${COPY_COMPONENTS}
-# )
+inspect_target(${target} PREFIX "EXTERNAL ${target}: ")
 
-copy_target_files(
-  ${target} ${CMAKE_CURRENT_BINARY_DIR}
-  COMPONENTS OBJECTS
-)
-if(NOT library_type STREQUAL "OBJECT")
+if(library_type STREQUAL "OBJECT")
+  # Ensure that the object files are in the build directory
   copy_target_files(
-    ${target} ${EXTERNAL_BUILD_DIR}
-    COMPONENTS LIBRARY
+    ${target} "${CMAKE_CURRENT_BINARY_DIR}"
+    COMPONENTS OBJECTS
   )
-endif()
 
-if(external_def_file)
-  include(CreateMSVCLib)
-  target2def(${target} DESTINATION ${external_def_file})
+  # Create .def file for objects
+  if(WIN32)
+    include(CreateMSVCLib)
+    target2def(${target})
+  endif()
 endif()

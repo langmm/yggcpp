@@ -772,13 +772,6 @@ function(add_mixed_language_library target library_type)
       )
     endif()
     if(${ilanguage}_external)
-      # if(ilanguage STREQUAL "Fortran")
-      #   list(APPEND ARGS_COMPILE_FLAGS -fPIC -cpp)
-      #   list(APPEND ARGS_PROPERTIES
-      #        Fortran_STANDARD 2003
-      #        Fortran_STANDARD_REQUIRED ON
-      #        Fortran_MODULE_DIRECTORY .)  # ${CMAKE_CURRENT_BINARY_DIR})
-      # endif()
       set(CMAKE_${ilanguage}_OUTPUT_EXTENSION ${CMAKE_${ARGS_BASE_LANGUAGE}_OUTPUT_EXTENSION})
       add_external_library(
         ${${ilanguage}_target} OBJECT LANGUAGE ${ilanguage}
@@ -791,13 +784,13 @@ function(add_mixed_language_library target library_type)
         LINKER_LANGUAGE ${ARGS_LINKER_LANGUAGE}
         PARENT_TARGET ${target}
       )
-      if(ilanguage STREQUAL "Fortran")
-        copy_target_files(
-          ${${ilanguage}_target} ${CMAKE_CURRENT_BINARY_DIR}
-          EVENT_TARGET ${target} EVENT_TYPE PRE_LINK
-          COMPONENTS FORTRAN_MOD
-        )
-      endif()
+      copy_target_files(
+        ${${ilanguage}_target} ${CMAKE_CURRENT_BINARY_DIR}
+        EVENT_TARGET ${target} EVENT_TYPE PRE_LINK
+        TARGET_TYPE OBJECT
+        TARGET_LANGUAGE ${ilanguage}
+        EXCLUDE_COMPONENTS OBJECTS
+      )
       target_link_libraries(
         ${target} PRIVATE
         $<TARGET_PROPERTY:${${ilanguage}_target},INTERFACE_LINK_LIBRARIES>
@@ -809,12 +802,12 @@ function(add_mixed_language_library target library_type)
       target_sources(
         ${target} PRIVATE "$<TARGET_OBJECTS:${${ilanguage}_target}>"
       )
-      # if (WIN32)
-      #   include(CreateMSVCLib)
-      #   create_lib_for_target(
-      #     ${target} SOURCE_TARGET ${${ilanguage}_target}
-      #   )
-      # endif()
+      if(WIN32 AND MSVC)
+        target_link_options(
+          ${target} PRIVATE
+          /DEF:$<TARGET_PROPERTY:${${ilanguage}_target},MSVC_DEF_FILE>
+        )
+      endif()
     else()
       enable_language(${ilanguage})
       if(ilanguage STREQUAL "Fortran")
@@ -835,20 +828,33 @@ function(add_mixed_language_library target library_type)
   endforeach()
 endfunction()
 
+macro(parse_properties)
+  set(propertyValueArgs Fortran_MODULE_DIRECTORY
+      Fortran_STANDARD Fortran_STANDARD_REQUIRED)
+  cmake_parse_arguments(PROPS "" "${propertyValueArgs}" "" ${ARGS_PROPERTIES})
+endmacro()
+
+macro(set_default_property name value)
+  if(NOT PROPS_${name})
+    set(PROPS_${name} "${value}")
+    list(APPEND ARGS_PROPERTIES ${name} "${PROPS_${name}}")
+  endif()
+endmacro()
+
 function(add_internal_library target library_type)
   set(oneValueArgs LANGUAGE LINKER_LANGUAGE TARGETS_FILE)
   set(multiValueArgs SOURCES LIBRARIES INCLUDES DEFINITIONS PROPERTIES
       COMPILE_FLAGS)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  parse_properties()
   if(NOT ARGS_SOURCES)
     set(ARGS_SOURCES ${ARGS_UNPARSED_ARGUMENTS})
   endif()
   if(ARGS_LANGUAGE STREQUAL "Fortran")
     list(APPEND ARGS_COMPILE_FLAGS -fPIC -cpp)
-    list(APPEND ARGS_PROPERTIES
-         Fortran_STANDARD 2003
-         Fortran_STANDARD_REQUIRED ON
-         Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+    set_default_property(Fortran_STANDARD 2003)
+    set_default_property(Fortran_STANDARD_REQUIRED ON)
+    set_default_property(Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
   endif()
   message(DEBUG "${target}: ${ARGS_LANGUAGE} ${library_type}")
   message(DEBUG "${target}: SOURCES = ${ARGS_SOURCES}")
@@ -904,10 +910,11 @@ endfunction()
 
 function(add_external_library target library_type)
   set(oneValueArgs GENERATOR PREPEND_PATH LANGUAGE LINKER_LANGUAGE
-      LISTS_DIR BUILD_DIR SOURCE_DIR PARENT_TARGET)
+      LISTS_DIR BUILD_DIR SOURCE_DIR PARENT_TARGET COPY_SOURCES)
   set(multiValueArgs SOURCES LIBRARIES INCLUDES DEFINITIONS PROPERTIES
       COMPILE_FLAGS CONFIG_ARGUMENTS BUILD_ARGUMENTS PRESERVE_VARIABLES)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  parse_properties()
   include(GeneralTools)
   if(NOT ARGS_LISTS_DIR)
     set(ARGS_LISTS_DIR "${CMAKE_CURRENT_BINARY_DIR}/${target}")
@@ -919,6 +926,9 @@ function(add_external_library target library_type)
   endif()
   if(NOT ARGS_BUILD_DIR)
     set(ARGS_BUILD_DIR "${ARGS_LISTS_DIR}")
+  endif()
+  if(ARGS_LANGUAGE STREQUAL "Fortran")
+    set_default_property(Fortran_MODULE_DIRECTORY "${ARGS_BUILD_DIR}")
   endif()
   if(NOT ARGS_LANGUAGE)
     if(NOT ARGS_SOURCES)
@@ -937,16 +947,43 @@ function(add_external_library target library_type)
   set(EXTERNAL_SOURCES)
   foreach(src IN LISTS ARGS_SOURCES)
     if(NOT IS_ABSOLUTE "${src}")
-      cmake_path(APPEND CMAKE_CURRENT_SOURCE_DIR ${src} OUTPUT_VARIABLE src)
-      cmake_path(ABSOLUTE_PATH src NORMALIZE)
+      cmake_path(
+        ABSOLUTE_PATH src
+        BASE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}" NORMALIZE
+        OUTPUT_VARIABLE src
+      )
     endif()
-    list(APPEND EXTERNAL_SOURCES ${src})
+    if(ARGS_COPY_SOURCES)
+      cmake_path(
+        RELATIVE_PATH src
+        BASE_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        OUTPUT_VARIABLE srcbase
+      )
+      cmake_path(
+        ABSOLUTE_PATH srcbase
+        BASE_DIRECTORY "${ARGS_SOURCE_DIR}"
+        OUTPUT_VARIABLE srclocal
+      )
+      configure_file("${src}" "${srclocal}" COPYONLY)
+      set(src "${srclocal}")
+    endif()
+    # list(APPEND EXTERNAL_SOURCES "${src}")
+    cmake_path(
+      RELATIVE_PATH src
+      BASE_DIRECTORY "${ARGS_SOURCE_DIR}"
+      OUTPUT_VARIABLE srcbase
+    )
+    list(APPEND EXTERNAL_SOURCES "${srcbase}")
   endforeach()
   message(DEBUG "EXTERNAL_SOURCES = ${EXTERNAL_SOURCES}")
   set(EXTERNAL_OBJECTS)
-  foreach(src IN LISTS EXTERNAL_SOURCES)
+  foreach(src IN LISTS ARGS_SOURCES)
     cmake_path(GET src FILENAME src_base)
-    cmake_path(APPEND obj "${ARGS_BUILD_DIR}" "${src_base}${CMAKE_${ARGS_LANGUAGE}_OUTPUT_EXTENSION}")
+    cmake_path(
+      APPEND ARGS_BUILD_DIR
+      "${src_base}${CMAKE_${ARGS_LANGUAGE}_OUTPUT_EXTENSION}"
+      OUTPUT_VARIABLE obj
+    )
     list(APPEND EXTERNAL_OBJECTS ${obj})
   endforeach()
   message(DEBUG "EXTERNAL_OBJECTS = ${EXTERNAL_OBJECTS}")
@@ -968,7 +1005,7 @@ function(add_external_library target library_type)
   generate_target_file(
     "${target}.targets" TARGETS ${targets}
     DIRECTORY ${ARGS_SOURCE_DIR}
-    OUTPUT_VAR target_file
+    OUTPUT_VAR internal_target_file
     CUSTOM_TARGET "generate_target_file_${target}"
     VERBOSE
   )
@@ -1006,13 +1043,14 @@ function(add_external_library target library_type)
          -DBUILD_SHARED_LIBS=ON
          -DMSVC_AND_GNU_BUILD=ON
          -DCMAKE_GNUtoMS=ON)
+  endif()
+  if(WIN32)
     cmake_path(
       # This version matches the original
-      APPEND CMAKE_CURRENT_BINARY_DIR "${ARGS_PARENT_TARGET}.def"
+      # APPEND CMAKE_CURRENT_BINARY_DIR "${ARGS_PARENT_TARGET}.def"
+      # This version allows for multiple defs
+      APPEND "${ARGS_BUILD_DIR}" "${target}.def"
       OUTPUT_VARIABLE external_def_file
-      # This version allows for multiple defs (multiple external libraries)
-      # APPEND "${ARGS_SOURCE_DIR}" "${target}.def"
-      # OUTPUT_VARIABLE external_def_file
     )
   endif()
   cmake_path(
@@ -1086,6 +1124,12 @@ function(add_external_library target library_type)
     DEF_FILE ${external_def_file}
     IMPORT_LIBRARY ${IMPNAME}
   )
+  if(ARGS_LANGUAGE STREQUAL "Fortran")
+    set_property(
+      TARGET ${target} PROPERTY
+      Fortran_MODULE_DIRECTORY "${PROPS_Fortran_MODULE_DIRECTORY}"
+    )
+  endif()
 endfunction()
 
 function(add_import_library target library_type library)
@@ -1094,7 +1138,7 @@ function(add_import_library target library_type library)
   set(multiValueArgs LIBRARIES DEFINITIONS DEPENDENCIES OBJECTS
       COMPILE_DEFINITIONS COMPILE_OPTIONS
       LINK_DIRECTORIES LINK_LIBRARIES LINK_OPTIONS
-      INCLUDE_DIRECTORIES)
+      INCLUDE_DIRECTORIES PROPERTIES)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
   if(ARGS_GLOBAL)
     set(ARGS_GLOBAL GLOBAL)
@@ -1108,6 +1152,7 @@ function(add_import_library target library_type library)
   # endif()
   if(ARGS_DEF_FILE)
     list(APPEND ARGS_LINK_OPTIONS "/DEF:${ARGS_DEF_FILE}")
+    list(APPEND ARGS_PROPERTIES MSVC_DEF_FILE "${ARGS_DEF_FILE}")
   endif()
   if(ARGS_LIBRARIES)
     list(APPEND ARGS_LINK_LIBRARIES ${ARGS_LIBRARIES})
@@ -1147,17 +1192,79 @@ function(add_import_library target library_type library)
       IMPORTED_IMPLIB ${ARGS_IMPORT_LIBRARY}
     )
   endif()
+  if(ARGS_PROPERTIES)
+    set_target_properties(${target} PROPERTIES ${ARGS_PROPERTIES})
+  endif()
+endfunction()
+
+function(copy_files destination)
+  set(options REQUIRED)
+  set(oneValueArgs REPLACE_EXTENSION OUTPUT REGEX_REPLACE REPLACE REPLACEMENT
+      SOURCE_DIRECTORY SOURCE_REGEX)
+  set(multiValueArgs SOURCES)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  set(ARGS_REQUIRED ON)  # TODO: Temporary
+  check_exclusive_options(ARGS REGEX_REPLACE REPLACE)
+  if(ARGS_REGEX_REPLACE OR ARGS_REPLACE)
+    check_set(ARGS " if REGEX_REPLACE or REPLACE provided" REPLACEMENT)
+  endif()
+  set(result)
+  list(APPEND ARGS_SOURCES ${ARGS_UNPARSED_ARGUMENTS})
+  if(ARGS_SOURCE_REGEX)
+    if(ARGS_SOURCE_DIRECTORY)
+      cmake_path(APPEND ARGS_SOURCE_DIRECTORY "${ARGS_SOURCE_REGEX}"
+                 OUTPUT_VARIABLE ARGS_SOURCE_REGEX)
+    endif()
+    file(GLOB NEW_SOURCES LIST_DIRECTORIES false "${ARGS_SOURCE_REGEX}")
+    if(NOT NEW_SOURCES)
+      if(ARGS_REQUIRED)
+        message(FATAL_ERROR "No sources found matchin \"${ARGS_SOURCE_REGEX}\"")
+      endif()
+    endif()
+    list(APPEND ARGS_SOURCES ${NEW_SOURCES})
+  endif()
+  if(ARGS_REQUIRED AND NOT ARGS_SOURCES)
+    message(FATAL_ERROR "No sources provided")
+  endif()
+  message(DEBUG "Copying files to \"${destination}\": ${ARGS_SOURCES}")
+  foreach(isrc ${ARGS_SOURCES})
+    file(COPY "${isrc}" DESTINATION "${destination}")
+    cmake_path(GET isrc FILENAME isrcbase)
+    set(idstbase "${isrcbase}")
+    cmake_path(APPEND destination "${idstbase}"
+               OUTPUT_VARIABLE idst0)
+    if(ARGS_REPLACE_EXTENSION)
+      cmake_path(GET isrc EXTENSION iext)
+      string(REPLACE "${iext}" "${ARGS_REPLACE_EXTENSION}"
+             idstbase "${idstbase}")
+    endif()
+    if(ARGS_REGEX_REPLACE)
+      string(REGEX REPLACE
+             "${ARGS_REGEX_REPLACE}" "${ARGS_REPLACEMENT}"
+             idstbase "${idstbase}")
+    elseif(ARGS_REPLACE)
+      string(REPLACE
+             "${ARGS_REPLACE}" "${ARGS_REPLACEMENT}"
+             idstbase "${idstbase}")
+    endif()
+    cmake_path(APPEND destination "${idstbase}"
+               OUTPUT_VARIABLE idst)
+    if(NOT idst STREQUAL "${idst0}")
+      file(RENAME "${idst0}" "${idst}")
+    endif()
+    list(APPEND result "${idst}")
+  endforeach()
+  message(DEBUG "Copied the following to \"${destination}\": ${ARGS_SOURCES}")
+  message(DEBUG "Created files: ${result}")
+  if(ARGS_OUTPUT)
+    set(${ARGS_OUTPUT} "${result}" PARENT_SCOPE)
+  endif()
 endfunction()
 
 function(copy_target_files target destination)
   set(oneValueArgs TARGET_TYPE TARGET_LANGUAGE EVENT_TARGET EVENT_TYPE)
-  set(multiValueArgs COMPONENTS)
+  set(multiValueArgs COMPONENTS EXCLUDE_COMPONENTS)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-  configure_file(
-    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/copy_obj.cmake.in
-    ${destination}/copy_obj.cmake
-    @ONLY
-  )
   if(NOT ARGS_TARGET_TYPE)
     get_target_property(ARGS_TARGET_TYPE ${target} TYPE)
   endif()
@@ -1172,88 +1279,99 @@ function(copy_target_files target destination)
   endif()
   message(DEBUG "copy_target_files: TARGET = ${target}")
   message(DEBUG "copy_target_files: TARGET_TYPE = ${ARGS_TARGET_TYPE}")
+  message(DEBUG "copy_target_files: TARGET_LANGUAGE = ${ARGS_TARGET_LANGUAGE}")
+  message(DEBUG "copy_target_files: COMPONENTS = ${ARGS_COMPONENTS}")
   if(NOT ARGS_COMPONENTS)
     if(ARGS_TARGET_TYPE STREQUAL "OBJECT_LIBRARY"
        OR ARGS_TARGET_TYPE STREQUAL "OBJECT")
       list(APPEND ARGS_COMPONENTS OBJECTS)
+      if(WIN32)
+        list(APPEND ARGS_COMPONENTS DEF)
+      endif()
     else()
       list(APPEND ARGS_COMPONENTS LIBRARY)
+      if(WIN32)
+        list(APPEND ARGS_COMPONENTS DEF)
+        if(ARGS_TARGET_TYPE STREQUAL "SHARED_LIBRARY"
+           OR ARGS_TARGET_TYPE STREQUAL "SHARED")
+          list(APPEND ARGS_COMPONENTS IMPORT_LIBRARY)
+        endif()
+      endif()
     endif()
     if(ARGS_TARGET_LANGUAGE STREQUAL "Fortran")
       list(APPEND ARGS_COMPONENTS FORTRAN_MOD)
     endif()
   endif()
   foreach(component IN LISTS ARGS_COMPONENTS)
+    if(ARGS_EXCLUDE_COMPONENTS)
+      list(FIND ARGS_EXCLUDE_COMPONENTS "${component}" IDX_COMPONENT)
+      if(NOT IDX_COMPONENT EQUAL -1)
+        continue()
+      endif()
+    endif()
     if(component STREQUAL "OBJECTS")
       set(OBJECT_EVENT_TYPE ${ARGS_EVENT_TYPE})
       if(ARGS_EVENT_TARGET STREQUAL "${target}")
         set(OBJECT_EVENT_TYPE PRE_LINK)
       endif()
-      add_custom_command(
+      add_custom_command_function(
+        copy_files MODULE BuildTools
         TARGET ${ARGS_EVENT_TARGET} ${OBJECT_EVENT_TYPE}
-        COMMAND ${CMAKE_COMMAND} -E echo "OBJS=$<JOIN:$<TARGET_OBJECTS:${target}>,\;>"
-        COMMAND ${CMAKE_COMMAND} "-DOBJS=$<JOIN:$<TARGET_OBJECTS:${target}>,\;>" -P ${destination}/copy_obj.cmake
-        VERBATIM COMMAND_EXPAND_LISTS
+        COMMENT "Copy object files for target \"${target}\""
+        FUNCTION_ARGUMENTS ${destination}
+        GENERATED_FUNCTION_ARGUMENTS
+          SOURCES $<JOIN:$<TARGET_OBJECTS:${target}>,$<SEMICOLON>>
+        VERBATIM
       )
     elseif(component STREQUAL "FORTRAN_MOD")
-      configure_file(
-        ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/copy_mod.cmake.in
-        ${destination}/copy_mod.cmake
-        @ONLY
-      )
-      add_custom_command(
+      add_custom_command_function(
+        copy_files MODULE BuildTools
         TARGET ${ARGS_EVENT_TARGET} ${ARGS_EVENT_TYPE}
-        COMMAND ${CMAKE_COMMAND} -E echo "OBJS=\"$<JOIN:$<TARGET_OBJECTS:${target}>,\;>\""
-        COMMAND ${CMAKE_COMMAND} "-DOBJS=\"$<JOIN:$<TARGET_OBJECTS:${target}>,\;>\"" -P ${destination}/copy_mod.cmake
-        COMMAND_EXPAND_LISTS
+        COMMENT "Copy .mod files for target \"${target}\""
+        FUNCTION_ARGUMENTS ${destination} SOURCE_REGEX "*.mod"
+        GENERATED_FUNCTION_ARGUMENTS
+          SOURCE_DIRECTORY $<TARGET_PROPERTY:${target},Fortran_MODULE_DIRECTORY>
+        VERBATIM COMMAND_EXPAND_LISTS
+      )
+    elseif(component STREQUAL "DEF")
+      add_custom_command_function(
+        copy_files MODULE BuildTools
+        TARGET ${ARGS_EVENT_TARGET} ${ARGS_EVENT_TYPE}
+        COMMENT "Copy .def files for target \"${target}\""
+        FUNCTION_ARGUMENTS ${destination} SOURCE_REGEX "*.def"
+        GENERATED_FUNCTION_ARGUMENTS
+          SOURCE_DIRECTORY $<TARGET_PROPERTY:${target},LIBRARY_OUTPUT_DIRECTORY>
+        VERBATIM COMMAND_EXPAND_LISTS
       )
     elseif(component STREQUAL "LIBRARY")
+      # add_custom_command_function(
+      #   copy_files MODULE BuildTools
+      #   TARGET ${ARGS_EVENT_TARGET} ${ARGS_EVENT_TYPE}
+      #   COMMENT "Copy library file for target \"${target}\""
+      #   FUNCTION_ARGUMENTS ${destination}
+      #   GENERATED_FUNCTION_ARGUMENTS
+      #     SOURCES $<TARGET_FILE:${target}>
+      # )
       add_custom_command(
         TARGET ${ARGS_EVENT_TARGET} ${ARGS_EVENT_TYPE}
         COMMAND ${CMAKE_COMMAND} -E echo "External TARGET_FILE ${target}: $<TARGET_FILE:${target}>"
         COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${target}>" ${destination}
       )
-      if (WIN32 AND (ARGS_TARGET_TYPE STREQUAL "SHARED_LIBRARY"
-                     OR ARGS_TARGET_TYPE STREQUAL "SHARED"))
-        if (CMAKE_GNUtoMS)
-          add_custom_command(
-            TARGET ${ARGS_EVENT_TARGET} ${ARGS_EVENT_TYPE}
-            COMMAND ${CMAKE_COMMAND} -E echo "External TARGET_LIB_FILE ${target}: $<PATH:REPLACE_EXTENSION,$<TARGET_IMPORT_FILE:${target}>,.lib>"
-            COMMAND ${CMAKE_COMMAND} -E copy "$<PATH:REPLACE_EXTENSION,$<TARGET_IMPORT_FILE:${target}>,.lib>" ${destination}
-          )
-        endif()
+    elseif(component STREQUAL "IMPORT_LIBRARY")
+      if (CMAKE_GNUtoMS)
         add_custom_command(
           TARGET ${ARGS_EVENT_TARGET} ${ARGS_EVENT_TYPE}
-          COMMAND ${CMAKE_COMMAND} -E echo "External TARGET_IMPORT_FILE ${target}: $<TARGET_IMPORT_FILE:${target}>"
-          COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_IMPORT_FILE:${target}>" ${destination}
+          COMMAND ${CMAKE_COMMAND} -E echo "External TARGET_LIB_FILE ${target}: $<PATH:REPLACE_EXTENSION,$<TARGET_IMPORT_FILE:${target}>,.lib>"
+          COMMAND ${CMAKE_COMMAND} -E copy "$<PATH:REPLACE_EXTENSION,$<TARGET_IMPORT_FILE:${target}>,.lib>" ${destination}
         )
       endif()
+      add_custom_command(
+        TARGET ${ARGS_EVENT_TARGET} ${ARGS_EVENT_TYPE}
+        COMMAND ${CMAKE_COMMAND} -E echo "External TARGET_IMPORT_FILE ${target}: $<TARGET_IMPORT_FILE:${target}>"
+        COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_IMPORT_FILE:${target}>" ${destination}
+      )
     else()
       message(FATAL_ERROR "Unsupported component \"${component}\"")
     endif()
   endforeach()  
 endfunction()
-
-# function(find_gfortran_implicit_libraries target filename)
-#   set(oneValueArgs LISTS_DIR)
-#   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-#   if(NOT ARGS_LISTS_DIR)
-#     set(ARGS_LISTS_DIR "${CMAKE_BINARY_DIR}/${target}")
-#   endif()
-#   set(target_name ${target})
-#   set(external_target_file ${filename})
-#   set(findfort_dir "${ARGS_LISTS_DIR}/findfort")
-#   file(MAKE_DIRECTORY "${findfort_dir}")
-#   configure_file(
-#     ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/find_gfortran.CMakeLists.in
-#     ${findfort_dir}/CMakeLists.txt
-#     @ONLY
-#   )
-#   setup_external_config(
-#     ${findfort_dir} SOURCE_DIR ${findfort_dir} BUILD_DIR ${findfort_dir}
-#     FILENAME external_find_fortran.cmake
-#     CLEAR_COMPILERS C CXX
-#     ${ARGS_UNPARSED_ARGUMENTS}
-#   )
-#   include(${findfort_dir}/external_find_fortran.cmake)
-# endfunction()
