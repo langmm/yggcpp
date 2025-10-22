@@ -1,4 +1,5 @@
 include(GeneralTools)
+include(SearchTools)
 
 macro(_initialize_file_transform name src_ext dst_ext)
   list(APPEND options VERBOSE)
@@ -104,8 +105,9 @@ function(obj2def)
   set_default(ARGS_COMMAND_ERROR_IS_FATAL ANY)
   set_default(ARGS_COMMAND_ECHO STDOUT)
   message(DEBUG "obj2def: SOURCES = ${ARGS_SOURCES}")
+  find_program_generic(DLLTOOL dlltool REQUIRED)
   execute_process(
-    COMMAND dlltool ${FLAG_VERBOSE} --export-all-symbols -z "${ARGS_DESTINATION}" ${ARGS_SOURCES}
+    COMMAND "${DLLTOOL}" ${FLAG_VERBOSE} --export-all-symbols -z "${ARGS_DESTINATION}" ${ARGS_SOURCES}
     COMMAND_ERROR_IS_FATAL ${ARGS_COMMAND_ERROR_IS_FATAL}
     COMMAND_ECHO ${ARGS_COMMAND_ECHO}
     ${ARGS_UNPARSED_ARGUMENTS}
@@ -136,8 +138,9 @@ function(dll2def SOURCE)
     endif()
     message(DEBUG "dll2def: File already exists under a different name \"${RESULT_ALT}\"")
   else()
+    find_program_generic(GENDEF gendef REQUIRED)
     execute_process(
-      COMMAND gendef "${SOURCE}"
+      COMMAND "${GENDEF}" "${SOURCE}"
       WORKING_DIRECTORY "${ARGS_DESTINATION_DIR}"
       COMMAND_ERROR_IS_FATAL ${ARGS_COMMAND_ERROR_IS_FATAL}
       COMMAND_ECHO ${ARGS_COMMAND_ECHO}
@@ -200,8 +203,9 @@ function(create_mingw_dlla_from_def SOURCE)
   )
   set_default(ARGS_COMMAND_ERROR_IS_FATAL ANY)
   set_default(ARGS_COMMAND_ECHO STDOUT)
+  find_program_generic(DLLTOOL dlltool REQUIRED)
   execute_process(
-    COMMAND dlltool ${FLAG_VERBOSE} -U -d "${SOURCE}" -l "${ARGS_DESTINATION}"
+    COMMAND "${DLLTOOL}" ${FLAG_VERBOSE} -U -d "${SOURCE}" -l "${ARGS_DESTINATION}"
     COMMAND_ERROR_IS_FATAL ${ARGS_COMMAND_ERROR_IS_FATAL}
     COMMAND_ECHO ${ARGS_COMMAND_ECHO}
     ${ARGS_UNPARSED_ARGUMENTS}
@@ -263,9 +267,7 @@ function(create_msvc_lib_from_name name)
   if(SOURCE STREQUAL "SOURCE-NOTFOUND")
     message(FATAL_ERROR "create_msvc_lib_from_name: Failed to find library \"${name}\"")
   endif()
-  if(SOURCE MATCHES ".*\\.lib$")
-    set(RESULT_ALT ${SOURCE})
-  elseif(SOURCE MATCHES ".*\\.dll\\.a$")
+  if(SOURCE MATCHES ".*\\.dll\\.a$")
     set(SOURCE_DLLA "${SOURCE}")
     find_library_suffix(
       SOURCE ${name} SHARED
@@ -275,11 +277,12 @@ function(create_msvc_lib_from_name name)
       message(FATAL_ERROR "create_msvc_lib_from_name: Failed to find DLL for library \"${name}\"")
     endif()
   endif()
-  # TODO: Handle case where dll/lib is found first
   _initialize_file_transform(
     create_msvc_lib_from_name ".dll" ".lib"
   )
-  if(SOURCE MATCHES ".*\\.dll$")
+  if(SOURCE MATCHES ".*\\.lib$")
+    set(RESULT_ALT ${SOURCE})
+  elseif(SOURCE MATCHES ".*\\.dll$")
     collect_arguments(
       NESTED_ARGS ARGS "${options}"
       DESTINATION DESTINATION_DIR OUTPUT VERBOSE
@@ -289,127 +292,127 @@ function(create_msvc_lib_from_name name)
   _finalize_file_transform(create_msvc_lib_from_name ON)
 endfunction()
 
-function(convert_dlla_to_lib libname)
-  include(SearchTools)
-  if (NOT WIN32)
-    return()
-  endif()
-  set(oneValueArgs OUTPUT)
-  set(multiValueArgs DIRECTORIES)
-  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-  set(dllavarname ${libname}_dlla)
-  if(ARGS_DIRECTORIES)
-    find_library(${dllavarname} ${libname} PATHS ${ARGS_DIRECTORIES})
-  else()
-    find_library(${dllavarname} ${libname})
-  endif()
-  set(dllafile "${${dllavarname}}")
-  if(NOT dllafile MATCHES ".*\\.dll\\.a$")
-    if (ARGS_OUTPUT)
-      set(${ARGS_OUTPUT} ${dllafile} PARENT_SCOPE)
-    endif()
-    return()
-  endif()
-  set(dllvarname ${libname}_dll)
-  set(${dllvarname})
-  find_library_suffix(${dllvarname} ${libname} SHARED
-                      PATHS ${ARGS_DIRECTORIES})
-  set(dllfile "${${dllvarname}}")
-  if (dllfile STREQUAL "${dllvarname}-NOTFOUND")
-    message(STATUS "DDLA2LIB: Could not find ${libname} dll")
-    if (ARGS_OUTPUT)
-      set(${ARGS_OUTPUT} ${dllafile} PARENT_SCOPE)
-    endif()
-    return()
-  endif()
-  string(REPLACE ".dll.a" ".lib" libfile "${dllafile}")
-  string(REPLACE ".dll" ".def" deffile "${dllfile}")
-  string(REPLACE ".dll" ".exp" expfile "${dllfile}")
-  cmake_path(GET libfile FILENAME libbase)
-  cmake_path(GET libfile PARENT_PATH libdir)
-  string(REGEX REPLACE "^lib" "" libbase_alt ${libbase})
-  cmake_path(APPEND libdir ${libbase_alt} OUTPUT_VARIABLE libfile_alt)
-  if(NOT EXISTS "${libfile}")
-    set(libfile ${libfile_alt})
-  endif()
-  if (ARGS_OUTPUT)
-    set(${ARGS_OUTPUT} ${libfile} PARENT_SCOPE)
-  endif()
-  if(EXISTS "${libfile}")
-    message(STATUS "DLLA2LIB: ${libfile} already exists")
-    return()
-  endif()
-  if(EXISTS "${deffile}")
-    message(STATUS "DLLA2LIB: ${deffile} already exists")
-  else()
-    cmake_path(GET dllfile FILENAME dllbase)
-    cmake_path(GET dllfile PARENT_PATH dlldir)
-    cmake_path(GET deffile FILENAME defbase)
-    string(REGEX REPLACE "^lib" "" defbase_alt ${defbase})
-    cmake_path(APPEND dlldir ${defbase_alt} OUTPUT_VARIABLE deffile_alt)
-    execute_process(COMMAND gendef ${dllbase}
-                    WORKING_DIRECTORY ${dlldir}
-	            COMMAND_ERROR_IS_FATAL ANY)
-    if(NOT EXISTS "${deffile}")
-      if(EXISTS "${deffile_alt}")
-        message(STATUS "DLLA2LIB: Stripped def file exists: ${deffile_alt}")
-	set(deffile ${deffile_alt})
-      else()
-        message(FATAL_ERROR "Failed to create .def file ${deffile}")
-      endif()
-    endif()
-  endif()
-  execute_process(COMMAND dlltool -v -d ${deffile} -D ${dllfile} -l ${libfile} -e ${expfile} COMMAND_ERROR_IS_FATAL ANY)
-  if(NOT EXISTS "${libfile}")
-    message(FATAL_ERROR "Failed to create .lib file ${libfile}")
-  else()
-    message(STATUS "DLLA2LIB: Created ${libfile}")
-  endif()
-endfunction()
+# function(convert_dlla_to_lib libname)
+#   include(SearchTools)
+#   if (NOT WIN32)
+#     return()
+#   endif()
+#   set(oneValueArgs OUTPUT)
+#   set(multiValueArgs DIRECTORIES)
+#   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+#   set(dllavarname ${libname}_dlla)
+#   if(ARGS_DIRECTORIES)
+#     find_library(${dllavarname} ${libname} PATHS ${ARGS_DIRECTORIES})
+#   else()
+#     find_library(${dllavarname} ${libname})
+#   endif()
+#   set(dllafile "${${dllavarname}}")
+#   if(NOT dllafile MATCHES ".*\\.dll\\.a$")
+#     if (ARGS_OUTPUT)
+#       set(${ARGS_OUTPUT} ${dllafile} PARENT_SCOPE)
+#     endif()
+#     return()
+#   endif()
+#   set(dllvarname ${libname}_dll)
+#   set(${dllvarname})
+#   find_library_suffix(${dllvarname} ${libname} SHARED
+#                       PATHS ${ARGS_DIRECTORIES})
+#   set(dllfile "${${dllvarname}}")
+#   if (dllfile STREQUAL "${dllvarname}-NOTFOUND")
+#     message(STATUS "DDLA2LIB: Could not find ${libname} dll")
+#     if (ARGS_OUTPUT)
+#       set(${ARGS_OUTPUT} ${dllafile} PARENT_SCOPE)
+#     endif()
+#     return()
+#   endif()
+#   string(REPLACE ".dll.a" ".lib" libfile "${dllafile}")
+#   string(REPLACE ".dll" ".def" deffile "${dllfile}")
+#   string(REPLACE ".dll" ".exp" expfile "${dllfile}")
+#   cmake_path(GET libfile FILENAME libbase)
+#   cmake_path(GET libfile PARENT_PATH libdir)
+#   string(REGEX REPLACE "^lib" "" libbase_alt ${libbase})
+#   cmake_path(APPEND libdir ${libbase_alt} OUTPUT_VARIABLE libfile_alt)
+#   if(NOT EXISTS "${libfile}")
+#     set(libfile ${libfile_alt})
+#   endif()
+#   if (ARGS_OUTPUT)
+#     set(${ARGS_OUTPUT} ${libfile} PARENT_SCOPE)
+#   endif()
+#   if(EXISTS "${libfile}")
+#     message(STATUS "DLLA2LIB: ${libfile} already exists")
+#     return()
+#   endif()
+#   if(EXISTS "${deffile}")
+#     message(STATUS "DLLA2LIB: ${deffile} already exists")
+#   else()
+#     cmake_path(GET dllfile FILENAME dllbase)
+#     cmake_path(GET dllfile PARENT_PATH dlldir)
+#     cmake_path(GET deffile FILENAME defbase)
+#     string(REGEX REPLACE "^lib" "" defbase_alt ${defbase})
+#     cmake_path(APPEND dlldir ${defbase_alt} OUTPUT_VARIABLE deffile_alt)
+#     execute_process(COMMAND gendef ${dllbase}
+#                     WORKING_DIRECTORY ${dlldir}
+# 	            COMMAND_ERROR_IS_FATAL ANY)
+#     if(NOT EXISTS "${deffile}")
+#       if(EXISTS "${deffile_alt}")
+#         message(STATUS "DLLA2LIB: Stripped def file exists: ${deffile_alt}")
+# 	set(deffile ${deffile_alt})
+#       else()
+#         message(FATAL_ERROR "Failed to create .def file ${deffile}")
+#       endif()
+#     endif()
+#   endif()
+#   execute_process(COMMAND dlltool -v -d ${deffile} -D ${dllfile} -l ${libfile} -e ${expfile} COMMAND_ERROR_IS_FATAL ANY)
+#   if(NOT EXISTS "${libfile}")
+#     message(FATAL_ERROR "Failed to create .lib file ${libfile}")
+#   else()
+#     message(STATUS "DLLA2LIB: Created ${libfile}")
+#   endif()
+# endfunction()
 
-function(create_lib_for_target target)
-  if (NOT MSVC)
-    return()
-  endif()
-  set(oneValueArgs SOURCE_TARGET)
-  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-  if (ARGS_SOURCE_TARGET)
-    set(src_target ${ARGS_SOURCE_TARGET})
-  else()
-    set(src_target ${target})
-  endif()
-  # set(expfile "${target}.exp")
-  set(deffile "${target}.def")
+# function(create_lib_for_target target)
+#   if (NOT MSVC)
+#     return()
+#   endif()
+#   set(oneValueArgs SOURCE_TARGET)
+#   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+#   if (ARGS_SOURCE_TARGET)
+#     set(src_target ${ARGS_SOURCE_TARGET})
+#   else()
+#     set(src_target ${target})
+#   endif()
+#   # set(expfile "${target}.exp")
+#   set(deffile "${target}.def")
   
-  add_custom_command(
-    TARGET ${target}
-    PRE_LINK
-    COMMAND ${CMAKE_COMMAND} -E echo "TARGET_OBJECTS for ${src_target} $<TARGET_OBJECTS:${src_target}>"
-    COMMAND dlltool -v --export-all-symbols -z $<TARGET_FILE_DIR:${target}>\\${deffile} $<TARGET_OBJECTS:${src_target}>
-    BYPRODUCTS ${deffile}
-    COMMAND_EXPAND_LISTS
-  )
-  # add_custom_command(
-  #   TARGET ${target}
-  #   POST_BUILD
-  #   COMMAND ${CMAKE_COMMAND} -E echo "TARGET_IMPORT_FILE for ${target} $<TARGET_IMPORT_FILE:${target}>"
-  #   COMMAND LIB /DEF:$<TARGET_FILE_DIR:${target}>\\${deffile} /NAME:$<PATH:GET_FILENAME,$<TARGET_FILE:${target}>> /OUT:$<PATH:REPLACE_EXTENSION,$<TARGET_IMPORT_FILE:${target}>,.lib>
-  #   # COMMAND dlltool -v -d ${deffile} -D ${dllfile} -l ${libfile}
-  #   COMMAND_EXPAND_LISTS)
-  # set_source_files_properties(
-  #   ${deffile}
-  #   PROPERTIES
-  #   HEADER_FILE_ONLY true
-  #   GENERATED true)
-  # set_source_files_properties(
-  #   ${expfile}
-  #   PROPERTIES
-  #   EXTERNAL_OBJECT true
-  #   GENERATED true)
-  if(MSVC)
-    target_link_options(${target} PRIVATE /DEF:$<TARGET_FILE_DIR:${target}>\\${deffile})
-    # target_sources(${target} PRIVATE ${expfile})
-  else()
-    # target_sources(${target} PRIVATE ${deffile} ${expfile})
-  endif()
-endfunction()
+#   add_custom_command(
+#     TARGET ${target}
+#     PRE_LINK
+#     COMMAND ${CMAKE_COMMAND} -E echo "TARGET_OBJECTS for ${src_target} $<TARGET_OBJECTS:${src_target}>"
+#     COMMAND dlltool -v --export-all-symbols -z $<TARGET_FILE_DIR:${target}>\\${deffile} $<TARGET_OBJECTS:${src_target}>
+#     BYPRODUCTS ${deffile}
+#     COMMAND_EXPAND_LISTS
+#   )
+#   # add_custom_command(
+#   #   TARGET ${target}
+#   #   POST_BUILD
+#   #   COMMAND ${CMAKE_COMMAND} -E echo "TARGET_IMPORT_FILE for ${target} $<TARGET_IMPORT_FILE:${target}>"
+#   #   COMMAND LIB /DEF:$<TARGET_FILE_DIR:${target}>\\${deffile} /NAME:$<PATH:GET_FILENAME,$<TARGET_FILE:${target}>> /OUT:$<PATH:REPLACE_EXTENSION,$<TARGET_IMPORT_FILE:${target}>,.lib>
+#   #   # COMMAND dlltool -v -d ${deffile} -D ${dllfile} -l ${libfile}
+#   #   COMMAND_EXPAND_LISTS)
+#   # set_source_files_properties(
+#   #   ${deffile}
+#   #   PROPERTIES
+#   #   HEADER_FILE_ONLY true
+#   #   GENERATED true)
+#   # set_source_files_properties(
+#   #   ${expfile}
+#   #   PROPERTIES
+#   #   EXTERNAL_OBJECT true
+#   #   GENERATED true)
+#   if(MSVC)
+#     target_link_options(${target} PRIVATE /DEF:$<TARGET_FILE_DIR:${target}>\\${deffile})
+#     # target_sources(${target} PRIVATE ${expfile})
+#   else()
+#     # target_sources(${target} PRIVATE ${deffile} ${expfile})
+#   endif()
+# endfunction()

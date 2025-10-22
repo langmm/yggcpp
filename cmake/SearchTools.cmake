@@ -77,6 +77,42 @@ function(add_library_python target)
   endif()
 endfunction()
 
+function(find_program_generic VAR name)
+  set(options REQUIRED)
+  set(oneValueArgs)
+  set(multiValueArgs HINTS)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  set_options_to_names(ARGS "${options}")
+  if(NOT CONDA_PREFIX)
+    cmake_path(SET CONDA_PREFIX "$ENV{CONDA_PREFIX}")
+  endif()
+  if(CONDA_PREFIX)
+    set(NAMES ${name})
+    if(WIN32)
+      list(PREPEND NAMES "x86_64-w64-mingw32-${name}")
+    endif()
+    list(PREPEND ARGS_HINTS "${CONDA_PREFIX}")
+    find_program(
+      ${VAR} NAMES ${NAMES} ${ARGS_UNPARSED_ARGUMENTS}
+      HINTS ${ARGS_HINTS}
+      NO_DEFAULT_PATH
+      NO_CACHE
+    )
+    if(${VAR} STREQUAL "${VAR}-NOTFOUND")
+      set(${VAR})
+    endif()
+  endif()
+  if(NOT ${VAR})
+    find_program(
+      ${VAR} ${name} ${ARGS_REQUIRED} ${ARGS_UNPARSED_ARGUMENTS}
+      HINTS ${ARGS_HINTS}
+      NO_CACHE
+    )
+  endif()
+  set(${VAR} "${${VAR}}" PARENT_SCOPE)
+  message(DEBUG "find_program_generic[${name}] = ${VAR}")
+endfunction()
+
 # function(find_package_python)
 #     # needed on GitHub Actions CI: actions/setup-python does not touch registry/frameworks on Windows/macOS
 #     # this mirrors PythonInterp behavior which did not consult registry/frameworks first

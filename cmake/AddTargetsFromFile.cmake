@@ -47,8 +47,12 @@ function(generate_target_file target_file)
   if (ARGS_CREATE_LIB AND ARGS_EXTRA_LIBRARIES)
     include(CreateMSVCLib)
     foreach(lib IN LISTS ARGS_EXTRA_LIBRARIES)
-      convert_dlla_to_lib(${lib} OUTPUT libfile
-                          DIRECTORIES ${ARGS_EXTRA_DIRECTORIES})
+      create_msvc_lib_from_name(
+        ${lib} OUTPUT libfile
+        DIRECTORIES ${ARGS_EXTRA_DIRECTORIES}
+      )
+      # convert_dlla_to_lib(${lib} OUTPUT libfile
+      #                     DIRECTORIES ${ARGS_EXTRA_DIRECTORIES})
       if (ARGS_FULL_LIBRARIES AND libfile)
         list(APPEND full_libraries ${libfile})
       else()

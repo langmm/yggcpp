@@ -1045,7 +1045,8 @@ function(add_external_library target library_type)
          -DCMAKE_GNUtoMS=ON)
   endif()
   if(WIN32)
-    find_program(DLLTOOL_PATH dlltool REQUIRED)
+    include(SearchTools)
+    find_program_generic(DLLTOOL_PATH dlltool REQUIRED)
     message(STATUS "DLLTOOL_PATH = ${DLLTOOL_PATH}")
     cmake_path(
       # This version matches the original
