@@ -52,13 +52,11 @@ class ToolBase(metaclass=ToolMeta):
         return [x for x in self.extract_libraries(raw_output) if x]
 
     def search(self, x):
-        if os.path.isfile(x):
-            return x
         paths = ['PATH', 'LD_LIBRARY_PATH', 'DYLD_LIBRARY_PATH']
         for path in paths:
             if path not in os.environ:
                 continue
-            out = shutil.which(x, path=os.environ[path])
+            out = shutil.which(x, path=os.environ[path], mode=os.F_OK)
             if out is not None:
                 return out
         if _library_ext in x:
@@ -71,6 +69,8 @@ class ToolBase(metaclass=ToolMeta):
             for cmake_runtime in self.cmake_runtimes:
                 if cmake_runtime.endswith(x):
                     return cmake_runtime + ' [CMAKE RUNTIME]'
+        if os.path.isfile(x):
+            return os.path.abspath(x) + ' [CURRENT DIRECTORY]'
         return out
 
     @classmethod
