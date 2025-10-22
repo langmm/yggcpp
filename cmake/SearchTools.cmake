@@ -91,7 +91,18 @@ function(find_program_generic VAR name)
     if(WIN32)
       list(PREPEND NAMES "x86_64-w64-mingw32-${name}")
     endif()
-    list(PREPEND ARGS_HINTS "${CONDA_PREFIX}")
+    if (WIN32)
+      cmake_path(
+        APPEND CONDA_PREFIX bin
+        OUTPUT_VARIABLE CONDA_BIN
+      )
+    else()
+      cmake_path(
+        APPEND CONDA_PREFIX Library bin
+        OUTPUT_VARIABLE CONDA_BIN
+      )
+    endif()
+    list(PREPEND ARGS_HINTS "${CONDA_BIN}")
     find_program(
       ${VAR} NAMES ${NAMES} ${ARGS_UNPARSED_ARGUMENTS}
       HINTS ${ARGS_HINTS}
@@ -100,6 +111,8 @@ function(find_program_generic VAR name)
     )
     if(${VAR} STREQUAL "${VAR}-NOTFOUND")
       set(${VAR})
+    else()
+      message(DEBUG "find_program_generic[${name}] = ${${VAR}} [CONDA]")
     endif()
   endif()
   if(NOT ${VAR})
@@ -110,7 +123,7 @@ function(find_program_generic VAR name)
     )
   endif()
   set(${VAR} "${${VAR}}" PARENT_SCOPE)
-  message(DEBUG "find_program_generic[${name}] = ${VAR}")
+  message(DEBUG "find_program_generic[${name}] = ${${VAR}}")
 endfunction()
 
 # function(find_package_python)

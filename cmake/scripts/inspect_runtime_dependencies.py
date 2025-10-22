@@ -189,9 +189,15 @@ def inspect(args):
         args.target, cmake_runtimes=args.cmake_runtimes
     )
     deps = tool.runtime_libraries
-    hsep = 80 * '=' + '\n'
+    hsep_nonewline = 80 * '='
+    hsep = hsep_nonewline + '\n'
     print(f'{hsep}Runtime dependencies for {tool.target}\n{hsep}'
           + '\n'.join(deps))
+    print(f'{hsep}Search PATHS for {tool.target}\n{hsep_nonewline}')
+    for path in ['PATH', 'LD_LIBRARY_PATH', 'DYLD_LIBRARY_PATH']:
+        if path not in os.environ:
+            continue
+        print(f"{path} = \"{os.environ[path]}\"")
     out = {x: tool.search(x) for x in deps}
     key_len = len(max(out.keys(), key=len)) + 4
     message = []
