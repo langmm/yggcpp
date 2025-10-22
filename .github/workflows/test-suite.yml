@@ -274,14 +274,15 @@ jobs:
         if: matrix.os == 'windows-latest' && matrix.python-install == 'conda' && matrix.windows-compiler == 'mingw'
         shell: bash -l {0}
         run: |
-          conda install m2w64-sysroot m2w64-gcc m2w64-gcc-fortran libpython -y
+          conda install gcc gfortran bintools m2w64-sysroot_win-64 libpython -y
           # conda install m2w64-gcc m2w64-gcc-fortran m2w64-toolchain_win-64 libpython -c msys2 -y  # winpthreads
           # conda install m2w64-gcc-libs m2w64-gcc-libs-core m2w64-gcc-libgfortran m2w64-libwinpthread-git msys2-conda-epoch -c msys2 -y
       - name: Install MinGW on windows for Fortran (msvc)
         if: matrix.os == 'windows-latest' && matrix.python-install == 'conda' && matrix.windows-compiler == 'msvc'
         shell: bash -l {0}
         run: |
-          conda install m2w64-gcc-fortran libpython -y
+          conda install gfortran bintools libpython -y
+          # conda install m2w64-gcc-fortran libpython binutils -y
       - name: Install ZeroMQ (conda)
         if: matrix.python-install == 'conda' && matrix.install-zmq
         shell: bash -l {0}

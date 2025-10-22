@@ -19,6 +19,7 @@ build:
 
 requirements:
   build:
+    - binutils                               # [win]
     - cmake >=3.16
     - cross-python_{{ target_platform }}     # [build_platform != target_platform]
     - hatch-fancy-pypi-readme
