@@ -47,7 +47,7 @@ function(add_yggdrasil_dependency name)
   if(NOT ${ARGS_FOUND_VAR})
     collect_package_arguments(FIND_ARGS ARGS "${options}")
     find_yggdrasil_dependency(
-      ${name} ${FIND_ARGS} ${ARGS_SEARCH_ARGS}
+      ${name} ${FIND_ARGS} SEARCH_ARGS ${ARGS_SEARCH_ARGS}
     )
     if(${ARGS_FOUND_VAR})
       message(STATUS "${name} found")
@@ -126,7 +126,7 @@ function(find_yggdrasil_dependency name)
   include(SearchTools)
   set(options FOR_PACKAGE_CONFIG VERBOSE)
   set(oneValueArgs LANGUAGE LANGUAGE_DEPENDENCY)
-  set(multiValueArgs SEARCH_ORDER COMPONENTS)
+  set(multiValueArgs SEARCH_ORDER COMPONENTS SEARCH_ARGS)
   _initialize_find_package(ON ${ARGN})
   set(ARGS_GLOBAL ON)
   set_default(ARGS_LANGUAGE_DEPENDENCY ${name})
@@ -147,6 +147,9 @@ function(find_yggdrasil_dependency name)
     FIND_ARGS ARGS "${options}"
     SEARCH_ORDER COMPONENTS
   )
+  if(ARGS_SEARCH_ARGS)
+    list(APPEND FIND_ARGS BRUTE_SEARCH_ARGS ${ARGS_SEARCH_ARGS})
+  endif()
   find_package_generic(${name} ${FIND_ARGS})
   if(ARGS_LANGUAGE AND NOT ${ARGS_FOUND_VAR})
     install_language_dependency(

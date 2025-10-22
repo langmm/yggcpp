@@ -1212,13 +1212,17 @@ function(copy_files destination)
   list(APPEND ARGS_SOURCES ${ARGS_UNPARSED_ARGUMENTS})
   if(ARGS_SOURCE_REGEX)
     if(ARGS_SOURCE_DIRECTORY)
+      if(NOT IS_DIRECTORY "${ARGS_SOURCE_DIRECTORY}")
+        cmake_path(GET ARGS_SOURCE_DIRECTORY
+                   PARENT_PATH ARGS_SOURCE_DIRECTORY)
+      endif()
       cmake_path(APPEND ARGS_SOURCE_DIRECTORY "${ARGS_SOURCE_REGEX}"
                  OUTPUT_VARIABLE ARGS_SOURCE_REGEX)
     endif()
     file(GLOB NEW_SOURCES LIST_DIRECTORIES false "${ARGS_SOURCE_REGEX}")
     if(NOT NEW_SOURCES)
       if(ARGS_REQUIRED)
-        message(FATAL_ERROR "No sources found matchin \"${ARGS_SOURCE_REGEX}\"")
+        message(FATAL_ERROR "No sources found matching \"${ARGS_SOURCE_REGEX}\"")
       endif()
     endif()
     list(APPEND ARGS_SOURCES ${NEW_SOURCES})
@@ -1334,13 +1338,19 @@ function(copy_target_files target destination)
         VERBATIM COMMAND_EXPAND_LISTS
       )
     elseif(component STREQUAL "DEF")
+      if(ARGS_TARGET_TYPE STREQUAL "OBJECT_LIBRARY"
+         OR ARGS_TARGET_TYPE STREQUAL "OBJECT")
+        set(GENERATE_DIRECTORY "$<LIST:GET,$<TARGET_OBJECTS:${target}>,0>")
+      else()
+        set(GENERATE_DIRECTORY "$<TARGET_FILE_DIR:${target}>")
+      endif()
       add_custom_command_function(
         copy_files MODULE BuildTools
         TARGET ${ARGS_EVENT_TARGET} ${ARGS_EVENT_TYPE}
         COMMENT "Copy .def files for target \"${target}\""
         FUNCTION_ARGUMENTS ${destination} SOURCE_REGEX "*.def"
         GENERATED_FUNCTION_ARGUMENTS
-          SOURCE_DIRECTORY $<TARGET_PROPERTY:${target},LIBRARY_OUTPUT_DIRECTORY>
+          SOURCE_DIRECTORY ${GENERATE_DIRECTORY}
         VERBATIM COMMAND_EXPAND_LISTS
       )
     elseif(component STREQUAL "LIBRARY")
@@ -1351,6 +1361,7 @@ function(copy_target_files target destination)
       #   FUNCTION_ARGUMENTS ${destination}
       #   GENERATED_FUNCTION_ARGUMENTS
       #     SOURCES $<TARGET_FILE:${target}>
+      #     # $<TARGET_IMPORT_FILE:${target}>
       # )
       add_custom_command(
         TARGET ${ARGS_EVENT_TARGET} ${ARGS_EVENT_TYPE}

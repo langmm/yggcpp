@@ -34,6 +34,7 @@ option(YGG_BUILD_THIRDPARTY_GTEST "Use gtest installation in 'thirdpart/gtest' b
 option(YGG_SKIP_VALGRIND_TESTS "Disable valgrind tests" OFF)
 option(WRAP_RAPIDJSON_FOR_DLL "Build yggdrasil using a wrapper for rapidjson to force it into a DLL (enabled automatically when compiling with MSVC" OFF)
 option(GENERATE_RAPIDJSON_WRAPPER "Generate the rapidjson wrapper from the C++ interface" OFF)
+option(GENERATE_INTERFACE "Generate the interface" OFF)
 option(YGG_LINK_Python_TO_CXX "Link the Python extension to the C++ wrapper as a library" OFF)
 option(YGG_BUILD_DOCS "Build documentation (requires Doxygen)" OFF)
 option(DOXYGEN_CHECK_MISSING "Raise an error if documentation is missing" OFF)
@@ -448,22 +449,24 @@ endif()
 # Generate data types interface in C & Fortran #
 ################################################
 
-python_code_generation(
-  cfort utils/generate_generic
-  ENTRY_POINT -m generate_generic.runner
-  ARGUMENTS ${GENERATE_DATATYPES_ARGS}
-  WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/utils
-  SOURCES
-  cpp/include/YggInterface.h
-  cpp/include/communicators/comm_t.hpp
-  BYPRODUCTS
-  cpp/src/datatypes/dtype_t.cpp
-  cpp/include/datatypes/dtype_t.h
-  fortran/YggInterface.F90
-  fortran/YggInterface_cdef.F90
-  fortran/c_wrappers.c
-  fortran/YggInterface_interfaces.F90
-)
+if(GENERATE_INTERFACE)
+  python_code_generation(
+    cfort utils/generate_generic
+    ENTRY_POINT -m generate_generic.runner
+    ARGUMENTS ${GENERATE_DATATYPES_ARGS}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/utils
+    SOURCES
+    cpp/include/YggInterface.h
+    cpp/include/communicators/comm_t.hpp
+    BYPRODUCTS
+    cpp/src/datatypes/dtype_t.cpp
+    cpp/include/datatypes/dtype_t.h
+    fortran/YggInterface.F90
+    fortran/YggInterface_cdef.F90
+    fortran/c_wrappers.c
+    fortran/YggInterface_interfaces.F90
+  )
+endif()
 
 ######################
 # Debug messages     #
