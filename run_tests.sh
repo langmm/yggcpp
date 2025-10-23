@@ -111,7 +111,7 @@ while [[ $# -gt 0 ]]; do
 	    shift # past argument with no value
 	    ;;
 	--local-rj )
-	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DRAPIDJSON_INCLUDE_DIRS=/Users/langmm/rapidjson/include"
+	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DRAPIDJSON_INCLUDE_DIRS=/Users/langmm/yggdrasil_rapidjson/include"
 	    shift # past argument with no value
 	    ;;
 	--config )

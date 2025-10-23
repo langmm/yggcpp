@@ -71,3 +71,17 @@ jobs:
       #   with:
       #     upload-artifact: false
       #     build-args: --output-dir $HOME/local_channel/ --variant python=${{ matrix.python-version }}
+
+
+  all_recipes_built:
+    runs-on: ubuntu-latest
+    name: All recipes were successfully built
+    needs: [build_conda_recipe]
+    if: always()
+    steps:
+      - name: All tests ok
+        if: ${{ !(contains(needs.*.result, 'failure')) }}
+        run: exit 0
+      - name: Some tests failed
+        if: ${{ contains(needs.*.result, 'failure') }}
+        run: exit 1
