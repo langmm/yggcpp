@@ -42,7 +42,7 @@
   sComm.copySchema(&rComm);			\
   init
 #define INIT_SCHEMA(schema, init)		\
-  rapidjson::Document s;			\
+  yggdrasil_rapidjson::Document s;			\
   s.Parse(schema);				\
   init;						\
   TRANSFER_INPUT_TYPE(EXPECT_TRUE(s.IsObject()))
@@ -50,8 +50,8 @@
   init;						\
   sComm.addFormat(format_str, as_array)
 #define INIT_SCHEMA_RPC(init, schema1, schema2)	\
-  rapidjson::Document s1;			\
-  rapidjson::Document s2;			\
+  yggdrasil_rapidjson::Document s1;			\
+  yggdrasil_rapidjson::Document s2;			\
   s1.Parse(schema1);				\
   s2.Parse(schema2);				\
   init;						\

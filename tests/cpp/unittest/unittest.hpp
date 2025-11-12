@@ -68,11 +68,11 @@ public:
 #pragma GCC diagnostic pop
 #endif
 
-// Not using noexcept for testing RAPIDJSON_ASSERT()
-#define RAPIDJSON_HAS_CXX11_NOEXCEPT 0
+// Not using noexcept for testing YGGDRASIL_RAPIDJSON_ASSERT()
+#define YGGDRASIL_RAPIDJSON_HAS_CXX11_NOEXCEPT 0
 
 #ifndef YGG_ASSERT
-#define YGG_ASSERT(x) (!(x) ? throw AssertException(RAPIDJSON_STRINGIFY(x)) : (void)0u)
+#define YGG_ASSERT(x) (!(x) ? throw AssertException(YGGDRASIL_RAPIDJSON_STRINGIFY(x)) : (void)0u)
 #ifndef YGG_ASSERT_THROWS
 #define YGG_ASSERT_THROWS
 #endif

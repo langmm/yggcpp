@@ -42,8 +42,8 @@ TEST(Metadata, SetAndGet) {
   EXPECT_FALSE(metadata.GetSchemaBool("test_bool", out_bool));
   EXPECT_FALSE(metadata.GetSchemaString("test_string", out_string));
   // Set errors
-  rapidjson::Value a(true);
-  rapidjson::Value b(true);
+  yggdrasil_rapidjson::Value a(true);
+  yggdrasil_rapidjson::Value b(true);
   EXPECT_FALSE(metadata.SetMetaInt("test_int", 1));
   EXPECT_FALSE(metadata.SetMetaUint("test_uint", 1u));
   EXPECT_FALSE(metadata.SetMetaBool("test_bool", true));
@@ -98,7 +98,7 @@ TEST(Metadata, SetAndGet) {
   TEST_SET_METHOD(Schema, String, std::string, "hello");
   TEST_SET_METHOD_STRING(Schema);
   TEST_SET_METHOD_VALUE(Schema);
-  rapidjson::Value* x_root = metadata.getSchema();
+  yggdrasil_rapidjson::Value* x_root = metadata.getSchema();
   EXPECT_TRUE(metadata.SetSchemaValue("test_value2", b, x_root));
   // Get errors on missing var
   EXPECT_FALSE(metadata.GetMetaInt("invalid", out_int));
@@ -148,7 +148,7 @@ TEST(Metadata, SetAndGet) {
 				 (*metadata.getMeta())["test_id1"]));
   EXPECT_TRUE(metadata.GetMetaBool("test_value", out_bool));
   EXPECT_TRUE(out_bool);
-  rapidjson::Value c(false);
+  yggdrasil_rapidjson::Value c(false);
   EXPECT_TRUE(metadata.SetValue("test_value", c, *metadata.getMeta()));
   EXPECT_TRUE(metadata.GetMetaBool("test_value", out_bool));
   EXPECT_FALSE(out_bool);
@@ -604,7 +604,7 @@ TEST(Metadata, fromMetadata) {
 }
 
 TEST(Metadata, fromEncode) {
-  rapidjson::Value v(true);
+  yggdrasil_rapidjson::Value v(true);
   YggInterface::utils::Metadata x;
   x.fromSchema("{\"type\": \"boolean\"}");
   YggInterface::utils::Metadata y;
@@ -613,7 +613,7 @@ TEST(Metadata, fromEncode) {
 }
 
 TEST(Metadata, deserialize_errors) {
-  rapidjson::VarArgList va;
+  yggdrasil_rapidjson::VarArgList va;
   YggInterface::utils::Metadata x;
   EXPECT_EQ(x.deserialize("", va), -1);
   bool dst = false, dst2 = false;
@@ -630,7 +630,7 @@ TEST(Metadata, deserialize_errors) {
 }
 
 TEST(Metadata, serialize_errors) {
-  rapidjson::VarArgList va;
+  yggdrasil_rapidjson::VarArgList va;
   YggInterface::utils::Metadata x;
   char* buf = (char*)(x.GetAllocator().Malloc(sizeof(char)));
   size_t len = 1;
@@ -660,7 +660,7 @@ TEST(Metadata, serialize_errors) {
 
 TEST(Header, Utilities) {
   YggInterface::utils::Header header;
-  rapidjson::StringBuffer buf;
+  yggdrasil_rapidjson::StringBuffer buf;
   EXPECT_TRUE(header.formatBuffer(buf));
   EXPECT_EQ(buf.GetLength(), 0);
   EXPECT_EQ(header.format(), 0);

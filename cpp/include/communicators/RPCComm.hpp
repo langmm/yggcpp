@@ -52,7 +52,7 @@ public:
    *   JSON objects.
    * @return true if successful, false otherwise.
    */
-  YGG_API bool addResponseSchema(const rapidjson::Value& s,
+  YGG_API bool addResponseSchema(const yggdrasil_rapidjson::Value& s,
 				 bool use_generic=false);
   /**
    * @brief Add a schema to the response communicator(s).

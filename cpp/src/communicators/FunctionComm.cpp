@@ -277,8 +277,8 @@ FunctionWrapper::~FunctionWrapper() {
   }
 }
 
-bool FunctionWrapper::_call(const rapidjson::Document& data_send,
-			    rapidjson::Document& data_recv) {
+bool FunctionWrapper::_call(const yggdrasil_rapidjson::Document& data_send,
+			    yggdrasil_rapidjson::Document& data_recv) {
   if (!func) {
     log_error() << "_call: Function not initialized" << std::endl;
     return false;
@@ -307,7 +307,7 @@ bool FunctionWrapper::_call(const rapidjson::Document& data_send,
   return false;
 }
 
-bool FunctionWrapper::send(const rapidjson::Document& data, bool is_eof) {
+bool FunctionWrapper::send(const yggdrasil_rapidjson::Document& data, bool is_eof) {
   bool out = false;
   CALL_ALIASED_FUNCTION_WRAPPER(send(data, is_eof), out) {
     YGG_THREAD_SAFE_BEGIN(functions) {
@@ -324,7 +324,7 @@ bool FunctionWrapper::send(const rapidjson::Document& data, bool is_eof) {
   return out;
 }
 
-bool FunctionWrapper::recv(rapidjson::Document& data) {
+bool FunctionWrapper::recv(yggdrasil_rapidjson::Document& data) {
   bool out = false;
   CALL_ALIASED_FUNCTION_WRAPPER(recv(data), out) {
     YGG_THREAD_SAFE_BEGIN(functions) {
@@ -414,7 +414,7 @@ int FunctionComm::send_single(utils::Header& header) {
   if (header.on_send() < 0)
     return -1;
   bool is_eof = (header.flags & HEAD_FLAG_EOF);
-  rapidjson::Document doc;
+  yggdrasil_rapidjson::Document doc;
   // TODO: Copy full message with header?
   // if (is_eof) {
   //   doc.SetString(YGG_MSG_EOF, YGG_MSG_EOF_LEN, doc.GetAllocator());

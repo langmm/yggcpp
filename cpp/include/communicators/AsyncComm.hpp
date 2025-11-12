@@ -415,7 +415,7 @@ namespace YggInterface {
        *   JSON objects.
        * @return true if successful, flase otherwise.
        */
-      YGG_API bool addResponseSchema(const rapidjson::Value& s,
+      YGG_API bool addResponseSchema(const yggdrasil_rapidjson::Value& s,
 				     bool use_generic=false);
       /**
        * @brief Add a schema to an RPC response communicator(s).

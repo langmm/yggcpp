@@ -300,9 +300,9 @@ TEST(ClientComm, call) {
   req_recv = req_send;
   req_recv_fmt = "\"" + req_recv + "\"";
   res_recv_len = res_send.size() + 1;
-  rapidjson::Document req_send_doc, res_recv_doc;
+  yggdrasil_rapidjson::Document req_send_doc, res_recv_doc;
   req_send_doc.SetString(req_send.c_str(),
-			 static_cast<rapidjson::SizeType>(req_send.size()),
+			 static_cast<yggdrasil_rapidjson::SizeType>(req_send.size()),
 			 req_send_doc.GetAllocator());
   cc.addStashedRequest(req_recv_fmt, true);
   EXPECT_GE(cc.server_comm->sendVar(res_send), 0);

@@ -760,7 +760,7 @@ RESPONSE_SCHEMA(addResponseSchema, fromSchema,
 		(const std::string& s, bool use_generic),
 		(s, use_generic))
 RESPONSE_SCHEMA(addResponseSchema, fromSchema,
-		(const rapidjson::Value& s, bool use_generic),
+		(const yggdrasil_rapidjson::Value& s, bool use_generic),
 		(s, use_generic))
 RESPONSE_SCHEMA(addResponseSchema, fromMetadata,
 		(const utils::Metadata& metadata, bool use_generic),

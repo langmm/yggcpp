@@ -159,8 +159,8 @@ class CTypeBaseUnit(CodeUnit):
         r'(?:(?:int)|(?:double)|(?:char)|'
         r'(?:unsigned)|(?:long)|(?:short)))|'
         r'(?:(?!(?:return)|(?:operator)|'
-        r'(?:RAPIDJSON\_DISABLEIF\_RETURN)|'
-        r'(?:RAPIDJSON\_ENABLEIF\_RETURN))\w+))'
+        r'(?:YGGDRASIL\_RAPIDJSON\_DISABLEIF\_RETURN)|'
+        r'(?:YGGDRASIL\_RAPIDJSON\_ENABLEIF\_RETURN))\w+))'
     )
     _fstring_cond = r'{name}'
 
@@ -350,7 +350,7 @@ class CXXReturnMacro(CodeUnit):
     _properties = ['type']
     _properties_optional = []  # 'type', 'retmacro', 'cond']
     _regex_fstring = (
-        # r'(?P<retmacro>RAPIDJSON\_(?:(?:DIS)|(?:EN))ABLEIF\_RETURN\('
+        # r'(?P<retmacro>YGGDRASIL\_RAPIDJSON\_(?:(?:DIS)|(?:EN))ABLEIF\_RETURN\('
         # r'\s*\((?P<cond>.+)\)\s*\,\s*\(\s*)?'
         r'(?P<type>{NG:type})'
         # r'(?(retmacro)(?:\s*\)\s*\)))' #?
@@ -370,7 +370,7 @@ class CFunctionUnit(FunctionUnit):
         r'(?:\s*{NG:var}\s*(?:\,))*\s*{NG:var})?)'
         r'(?:(?:\s*\,)?'
         r'(?P<va_args>\.\.\.)|'
-        r'(?P<argmacro>RAPIDJSON\_(?:(?:DIS)|(?:EN))ABLEIF\(.+?\))'
+        r'(?P<argmacro>YGGDRASIL\_RAPIDJSON\_(?:(?:DIS)|(?:EN))ABLEIF\(.+?\))'
         r')?\s*'
         r'\))'
         r'(?:\s+\w+)?'
@@ -388,7 +388,7 @@ class CFunctionUnit(FunctionUnit):
     ]
     _properties_optional = FunctionUnit._properties_optional + [
         'docs', 'api', 'static', 'inline', 'va_args', 'body',
-        'preprocess_contexts', 'rapidjson_type',
+        'preprocess_contexts', 'yggdrasil_rapidjson_type',
         'retmacro', 'argmacro',
     ]
     member_context = ('{', '}')

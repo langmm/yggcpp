@@ -7,7 +7,7 @@
 #include "utils/logging.hpp"
 #include "utils/serialization.hpp"
 #include "communicators/Workers.hpp"
-#include "utils/rapidjson_wrapper.hpp"
+#include "utils/yggdrasil_rapidjson_wrapper.hpp"
 #include "communicators/CommContext.hpp"
 
 /*! @brief Set if the comm is the receiving comm for a client/server request connection */
@@ -512,7 +512,7 @@ public:									\
   }
 
 
-using namespace rapidjson;
+using namespace yggdrasil_rapidjson;
 
 namespace YggInterface {
 
@@ -645,7 +645,7 @@ public:
         expect a generic object in all future send calls.
       @returns int Values >= 0 indicate success.
      */
-    YGG_API virtual int send(const rapidjson::Document& data, bool not_generic=false);
+    YGG_API virtual int send(const yggdrasil_rapidjson::Document& data, bool not_generic=false);
     /**
       @brief Send a rapidjson value through the communicator.
       @param[in] data Message.
@@ -653,7 +653,7 @@ public:
         expect a generic object in all future send calls.
       @returns int Values >= 0 indicate success.
      */
-    YGG_API int send(const rapidjson::Value& data, bool not_generic=false);
+    YGG_API int send(const yggdrasil_rapidjson::Value& data, bool not_generic=false);
     /**
       @brief Send a set of objects through the communicator.
       @tparam T Type of first object being sent in message.
@@ -664,14 +664,14 @@ public:
     */
     template<typename T, typename... Args>
     YGG_API_DEF int sendVar(const T& data, Args... args) {
-      rapidjson::Document doc(rapidjson::kArrayType);
+      yggdrasil_rapidjson::Document doc(yggdrasil_rapidjson::kArrayType);
       return _sendVA(0, doc, data, args...);
     }
 private:
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 #define HANDLE_SEND_BEFORE_			\
   UNUSED(i);					\
-  rapidjson::Value v
+  yggdrasil_rapidjson::Value v
 #define HANDLE_SEND_AFTER_			\
   doc.PushBack(v, doc.GetAllocator());		\
   i++
@@ -679,13 +679,13 @@ private:
   return _sendVA(i, doc, args...)
 #define HANDLE_SEND_LAST_(single)		\
   if (doc.Size() == 1) {			\
-    rapidjson::Document tmp;			\
+    yggdrasil_rapidjson::Document tmp;			\
     tmp.Swap(doc[0]);			\
     return send(tmp, single);			\
   }						\
   return send(doc, single)
 #define HANDLE_SEND_(set, adv, single, ...)			\
-  int _sendVA(int i, rapidjson::Document& doc, __VA_ARGS__) {	\
+  int _sendVA(int i, yggdrasil_rapidjson::Document& doc, __VA_ARGS__) {	\
     HANDLE_SEND_BEFORE_;					\
     set;							\
     HANDLE_SEND_AFTER_;						\
@@ -693,7 +693,7 @@ private:
     HANDLE_SEND_LAST_(single);					\
   }								\
   template<typename... Args>					\
-  int _sendVA(int i, rapidjson::Document& doc, __VA_ARGS__,	\
+  int _sendVA(int i, yggdrasil_rapidjson::Document& doc, __VA_ARGS__,	\
 	      Args... args) {					\
     HANDLE_SEND_BEFORE_;					\
     set;							\
@@ -703,7 +703,7 @@ private:
   }
 #define HANDLE_SEND_TMP_(tmp, set, adv, single, ...)	\
   template<tmp>						\
-  int _sendVA(int i, rapidjson::Document& doc, __VA_ARGS__) {	\
+  int _sendVA(int i, yggdrasil_rapidjson::Document& doc, __VA_ARGS__) {	\
     HANDLE_SEND_BEFORE_;					\
     set;							\
     HANDLE_SEND_AFTER_;						\
@@ -711,7 +711,7 @@ private:
     HANDLE_SEND_LAST_(single);					\
   }								\
   template<tmp, typename... Args>				\
-  int _sendVA(int i, rapidjson::Document& doc, __VA_ARGS__,	\
+  int _sendVA(int i, yggdrasil_rapidjson::Document& doc, __VA_ARGS__,	\
 	      Args... args) {					\
     HANDLE_SEND_BEFORE_;					\
     set;							\
@@ -721,8 +721,8 @@ private:
   }
 #define HANDLE_SEND_TMP_COND_(tmp, set, cond, adv, single, ...)	\
   template<tmp>						\
-  RAPIDJSON_ENABLEIF_RETURN(cond, (int))			\
-  _sendVA(int i, rapidjson::Document& doc, __VA_ARGS__) {	\
+  YGGDRASIL_RAPIDJSON_ENABLEIF_RETURN(cond, (int))			\
+  _sendVA(int i, yggdrasil_rapidjson::Document& doc, __VA_ARGS__) {	\
     HANDLE_SEND_BEFORE_;					\
     set;							\
     HANDLE_SEND_AFTER_;						\
@@ -730,8 +730,8 @@ private:
     HANDLE_SEND_LAST_(single);					\
   }								\
   template<tmp, typename... Args>				\
-  RAPIDJSON_ENABLEIF_RETURN(cond, (int))			\
-  _sendVA(int i, rapidjson::Document& doc, __VA_ARGS__,	\
+  YGGDRASIL_RAPIDJSON_ENABLEIF_RETURN(cond, (int))			\
+  _sendVA(int i, yggdrasil_rapidjson::Document& doc, __VA_ARGS__,	\
 	  Args... args) {					\
     HANDLE_SEND_BEFORE_;					\
     set;							\
@@ -744,40 +744,40 @@ private:
     (internal::NotExpr<
      internal::OrExpr<internal::IsSame<T, char*>,
      internal::OrExpr<internal::IsSame<T, char[]>, 
-     internal::OrExpr<internal::IsSame<T, rapidjson::Document>,
+     internal::OrExpr<internal::IsSame<T, yggdrasil_rapidjson::Document>,
      internal::IsPointer<T> > > > >),
     , true, const T& data)
   HANDLE_SEND_(
-    v.SetString(data, static_cast<rapidjson::SizeType>(len),
+    v.SetString(data, static_cast<yggdrasil_rapidjson::SizeType>(len),
 		doc.GetAllocator()),
     i++, true, const char*& data, const size_t& len)
   HANDLE_SEND_(
-    v.SetString(data, static_cast<rapidjson::SizeType>(strlen(data)),
+    v.SetString(data, static_cast<yggdrasil_rapidjson::SizeType>(strlen(data)),
 		doc.GetAllocator()),
     , false, const char*& data)
   HANDLE_SEND_TMP_(
     size_t N,
-    v.SetString(data, static_cast<rapidjson::SizeType>(N),
+    v.SetString(data, static_cast<yggdrasil_rapidjson::SizeType>(N),
 		doc.GetAllocator()),
     , false, const char (&data)[N])
   HANDLE_SEND_(
     v.CopyFrom(data, doc.GetAllocator(), true),
-    , false, const rapidjson::Document& data)
+    , false, const yggdrasil_rapidjson::Document& data)
   HANDLE_SEND_TMP_COND_(
     typename T, v.Set1DArray(data,
-			     static_cast<rapidjson::SizeType>(len),
+			     static_cast<yggdrasil_rapidjson::SizeType>(len),
 			     doc.GetAllocator()),
     (internal::AndExpr<internal::IsPointer<T>,
      internal::NotExpr<internal::IsSame<T, char*> > >),
     i++, true, const T& data, const size_t& len)
   HANDLE_SEND_TMP_COND_(
     typename T, v.SetNDArray(data, shape,
-			     static_cast<rapidjson::SizeType>(ndim),
+			     static_cast<yggdrasil_rapidjson::SizeType>(ndim),
 			     doc.GetAllocator()),
     (internal::AndExpr<internal::IsPointer<T>,
      internal::NotExpr<internal::IsSame<T, char*> > >),
     i += 2, true, const T& data,
-    const rapidjson::SizeType& ndim,
+    const yggdrasil_rapidjson::SizeType& ndim,
     const size_t*& shape)
 #undef HANDLE_SEND_BEFORE_
 #undef HANDLE_SEND_AFTER_
@@ -812,7 +812,7 @@ public:
 	C/C++ ordering.
       @returns int Values >= 0 indicate success.
      */
-    YGG_API int send_dict(const rapidjson::Document& data,
+    YGG_API int send_dict(const yggdrasil_rapidjson::Document& data,
 			  std::vector<std::string> key_order={},
 			  size_t dim = 1);
 
@@ -825,7 +825,7 @@ public:
         C/C++ ordering.
       @returns int Values >= 0 indicate success.
      */
-    YGG_API int send_array(const rapidjson::Document& data,
+    YGG_API int send_array(const yggdrasil_rapidjson::Document& data,
 			   std::vector<std::string> key_order={},
 			   size_t dim = 1);
 
@@ -871,14 +871,14 @@ public:
      */
     YGG_API virtual long recv_raw(utils::Header& head);
     /**
-      @brief Receive a message as a rapidjson::Document.
+      @brief Receive a message as a yggdrasil_rapidjson::Document.
       @param[out] data rapidjson document to populate with received data.
       @param[in] not_generic If true, the datatype will not be updated to
         expect a generic object in all future recv calls.
       @returns -1 if message could not be received. Length of the
         received message if message was received.
     */
-    YGG_API virtual long recv(rapidjson::Document& data, bool not_generic=false);
+    YGG_API virtual long recv(yggdrasil_rapidjson::Document& data, bool not_generic=false);
     /**
       @brief Receive a series of objects from the communicator.
       @tparam T Type of first object being received.
@@ -890,7 +890,7 @@ public:
     */
     template<typename T, typename... Args>
     YGG_API_DEF long recvVar(T& data, Args... args) {
-      rapidjson::Document doc;
+      yggdrasil_rapidjson::Document doc;
       long out = recv(doc, true);
       if (out < 0) return out;
       return _recvVA(0, false, doc, data, args...);
@@ -907,7 +907,7 @@ public:
     */
     template<typename T, typename... Args>
     YGG_API_DEF long recvVarRealloc(T& data, Args... args) {
-      rapidjson::Document doc;
+      yggdrasil_rapidjson::Document doc;
       long out = recv(doc, true);
       if (out < 0) return out;
       return _recvVA(0, true, doc, data, args...);
@@ -919,7 +919,7 @@ private:
   bool was_array = doc.IsArray();					\
   UNUSED(was_array);							\
   if (!doc.IsArray()) {							\
-    rapidjson::Value tmp;						\
+    yggdrasil_rapidjson::Value tmp;						\
     tmp.Swap(doc);							\
     doc.SetArray();							\
     doc.PushBack(tmp, doc.GetAllocator());				\
@@ -956,7 +956,7 @@ private:
   }									\
   return i
 #define HANDLE_RECV_(check, set, adv, Tname, after, ...)		\
-  long _recvVA(int i, bool allow_realloc, rapidjson::Document& doc,	\
+  long _recvVA(int i, bool allow_realloc, yggdrasil_rapidjson::Document& doc,	\
 	       __VA_ARGS__) {						\
     HANDLE_RECV_BEFORE_;						\
     HANDLE_RECV_CHECK_(check, Tname);					\
@@ -968,7 +968,7 @@ private:
     return i;								\
   }									\
   template<typename... Args>						\
-  long _recvVA(int i, bool allow_realloc, rapidjson::Document& doc,	\
+  long _recvVA(int i, bool allow_realloc, yggdrasil_rapidjson::Document& doc,	\
 	       __VA_ARGS__, Args... args) {				\
     HANDLE_RECV_BEFORE_;						\
     HANDLE_RECV_CHECK_(check, Tname);					\
@@ -980,8 +980,8 @@ private:
   }
 #define HANDLE_RECV_TMP_(cond, check, set, adv, after, ...)		\
   template<typename T>							\
-  RAPIDJSON_ENABLEIF_RETURN(cond, (long))				\
-    _recvVA(int i, bool allow_realloc, rapidjson::Document& doc,	\
+  YGGDRASIL_RAPIDJSON_ENABLEIF_RETURN(cond, (long))				\
+    _recvVA(int i, bool allow_realloc, yggdrasil_rapidjson::Document& doc,	\
 	    __VA_ARGS__) {						\
     HANDLE_RECV_BEFORE_;						\
     HANDLE_RECV_CHECK_(check, typeid(T).name());			\
@@ -993,8 +993,8 @@ private:
     return i;								\
   }									\
   template<typename T, typename... Args>				\
-  RAPIDJSON_ENABLEIF_RETURN(cond, (long))				\
-    _recvVA(int i, bool allow_realloc, rapidjson::Document& doc,	\
+  YGGDRASIL_RAPIDJSON_ENABLEIF_RETURN(cond, (long))				\
+    _recvVA(int i, bool allow_realloc, yggdrasil_rapidjson::Document& doc,	\
 	    __VA_ARGS__, Args... args) {				\
     HANDLE_RECV_BEFORE_;						\
     HANDLE_RECV_CHECK_(check, typeid(T).name());			\
@@ -1020,9 +1020,9 @@ private:
 	       char*& data, size_t& len)
   HANDLE_RECV_((i >= 0),
 	       data.CopyFrom(doc[0], data.GetAllocator(), true),
-	       , "rapidjson::Document",
+	       , "yggdrasil_rapidjson::Document",
 	       if (i == 1 && (doc.Size() > 0 || was_array)) {
-		 rapidjson::Value tmp;
+		 yggdrasil_rapidjson::Value tmp;
 		 data.Swap(tmp);
 		 data.SetArray();
 		 data.Reserve(doc.Size() + 1, data.GetAllocator());
@@ -1033,13 +1033,13 @@ private:
 		   doc.Erase(doc.Begin());
 		 }
 	       }
-	       ,rapidjson::Document& data)
-// #endif // WRAP_RAPIDJSON_FOR_DLL
+	       ,yggdrasil_rapidjson::Document& data)
+// #endif // WRAP_YGGDRASIL_RAPIDJSON_FOR_DLL
   HANDLE_RECV_TMP_((internal::NotExpr<
 		    internal::OrExpr<YGGDRASIL_IS_ANY_SCALAR(T),
 		    internal::OrExpr<internal::IsSame<T, char*>,
 		    internal::OrExpr<internal::IsSame<T, char[]>, 
-		    internal::OrExpr<internal::IsSame<T, rapidjson::Document>,
+		    internal::OrExpr<internal::IsSame<T, yggdrasil_rapidjson::Document>,
 		    internal::IsPointer<T> > > > > >),
 		   doc[0].Is<T>(),
 		   doc[0].Get(data);
@@ -1071,14 +1071,14 @@ private:
 				       doc[0].GetString(),
 				       static_cast<size_t>(doc[0].GetStringLength()),
 				       allow_realloc) < 0) { return -1; }
-		   const rapidjson::Value& doc_shape = doc[0].GetShape();
+		   const yggdrasil_rapidjson::Value& doc_shape = doc[0].GetShape();
 		   if (utils::copyData(shape, ndim * sizeof(size_t),
 				       (size_t*)NULL,
 				       static_cast<size_t>(doc_shape.Size()) * sizeof(size_t),
 				       allow_realloc) < 0) { return -1; }
 		   ndim = static_cast<size_t>(doc_shape.Size());
 		   for (size_t ii = 0; ii < ndim; ii++) {
-		     shape[ii] = static_cast<size_t>(doc_shape[static_cast<rapidjson::SizeType>(ii)].GetUint());
+		     shape[ii] = static_cast<size_t>(doc_shape[static_cast<yggdrasil_rapidjson::SizeType>(ii)].GetUint());
 		   },
 		   i++, , T& data, size_t& ndim, size_t*& shape)
   HANDLE_RECV_TMP_((YGGDRASIL_IS_ANY_SCALAR(T)),
@@ -1144,7 +1144,7 @@ public:
       @returns -1 if message could not be received. Length of the
         received message if message was received.
      */
-    YGG_API long recv_dict(rapidjson::Document& data,
+    YGG_API long recv_dict(yggdrasil_rapidjson::Document& data,
 			   std::vector<std::string> key_order={},
 			   size_t dim = 1);
 
@@ -1158,7 +1158,7 @@ public:
       @returns -1 if message could not be received. Length of the
         received message if message was received.
      */
-    YGG_API long recv_array(rapidjson::Document& data,
+    YGG_API long recv_array(yggdrasil_rapidjson::Document& data,
 			    std::vector<std::string> key_order={},
 			    size_t dim = 1);
     
@@ -1228,7 +1228,7 @@ public:
       @return Integer specifying if the receive was succesful.
         Values >= 0 indicate success.
      */
-    YGG_API long vRecv(rapidjson::VarArgList& ap);
+    YGG_API long vRecv(yggdrasil_rapidjson::VarArgList& ap);
     /**
       @brief Send a message containing a list of variable arguments.
       @param[in] ap Variable argument list that message will be
@@ -1236,7 +1236,7 @@ public:
       @return Integer specifying if the send was succesful.
         Values >= 0 indicate success.
      */
-    YGG_API int vSend(rapidjson::VarArgList& ap);
+    YGG_API int vSend(yggdrasil_rapidjson::VarArgList& ap);
 
     /**
       @brief Send a request and receive a response in the forms of
@@ -1247,8 +1247,8 @@ public:
       @return Integer specifying if the send and receive were succesful.
         Values >= 0 indicate success.
     */
-    YGG_API long call(const rapidjson::Document& sendData,
-		      rapidjson::Document& recvData);
+    YGG_API long call(const yggdrasil_rapidjson::Document& sendData,
+		      yggdrasil_rapidjson::Document& recvData);
     /**
       @brief Send a request and receive a response in the forms of
         rapidjson Documents.
@@ -1258,8 +1258,8 @@ public:
       @return Integer specifying if the send and receive were succesful.
         Values >= 0 indicate success.
     */
-    long callVar(const rapidjson::Document& sendData,
-		 rapidjson::Document& recvData) {
+    long callVar(const yggdrasil_rapidjson::Document& sendData,
+		 yggdrasil_rapidjson::Document& recvData) {
       return call(sendData, recvData);
     }
   
@@ -1272,7 +1272,7 @@ public:
       @return Integer specifying if the send and receive were succesful.
         Values >= 0 indicate success.
     */
-    YGG_API virtual long vCall(rapidjson::VarArgList& ap);
+    YGG_API virtual long vCall(yggdrasil_rapidjson::VarArgList& ap);
       
     /**
       @brief Get the number of messages in the communicator.
@@ -1459,7 +1459,7 @@ public:
      * @param dir Direction of comm to set the schema for (RPC only).
      * @return true if successful, false otherwise.
      */
-    YGG_API bool addSchema(const rapidjson::Value& s,
+    YGG_API bool addSchema(const yggdrasil_rapidjson::Value& s,
 			   bool isMetadata = false,
 			   const DIRECTION dir=NONE);
     /**
@@ -1529,7 +1529,7 @@ private:
     //  * @param[in] ap The list to deserialize in to
     //  * @return 0 on success
     //  */
-    // int deserialize(const char* buf, rapidjson::VarArgList& ap);
+    // int deserialize(const char* buf, yggdrasil_rapidjson::VarArgList& ap);
     // /*
     //  * @brief Serialize the arg list into the buffer
     //  * @param[out] buf The buffer to fill
@@ -1538,7 +1538,7 @@ private:
     //  * @return The size of buf
     //  */
     // int serialize(char*& buf, size_t& buf_siz,
-    // 		  rapidjson::VarArgList& ap);
+    // 		  yggdrasil_rapidjson::VarArgList& ap);
     
 protected:
 
@@ -1607,8 +1607,8 @@ protected:
      *   C/C++ ordering.
      * @return true if successful, false otherwise.
      */
-    bool _coerce_to_dict(const rapidjson::Document& src,
-			 rapidjson::Document& dst,
+    bool _coerce_to_dict(const yggdrasil_rapidjson::Document& src,
+			 yggdrasil_rapidjson::Document& dst,
 			 const DIRECTION dir,
 			 std::vector<std::string> key_order={},
 			 size_t dim=1);
@@ -1623,8 +1623,8 @@ protected:
      *   C/C++ ordering.
      * @return true if successful, false otherwise.
      */
-    bool _coerce_to_array(const rapidjson::Document& src,
-			  rapidjson::Document& dst,
+    bool _coerce_to_array(const yggdrasil_rapidjson::Document& src,
+			  yggdrasil_rapidjson::Document& dst,
 			  const DIRECTION dir,
 			  std::vector<std::string> key_order={},
 			  size_t dim=1);
@@ -1794,7 +1794,7 @@ protected:
     //  * @param[in] dir The communication direction
     //  * @return Always returns 1
     //  */
-    // int update_datatype(const rapidjson::Value& new_schema,
+    // int update_datatype(const yggdrasil_rapidjson::Value& new_schema,
     //                     const DIRECTION dir);
     /**
      * @brief Clear the given data
@@ -1803,7 +1803,7 @@ protected:
      */
     template<typename T>
     void zeroData(const T* data,
-		  RAPIDJSON_ENABLEIF((internal::OrExpr<YGGDRASIL_IS_ANY_SCALAR(T), internal::IsSame<T, bool> >))) {
+		  YGGDRASIL_RAPIDJSON_ENABLEIF((internal::OrExpr<YGGDRASIL_IS_ANY_SCALAR(T), internal::IsSame<T, bool> >))) {
       memset(const_cast<T*>(data), 0, sizeof(T));
     }
     /**
@@ -1812,7 +1812,7 @@ protected:
      */
     template<typename T>
     void zeroData(const T*,
-		  RAPIDJSON_DISABLEIF((internal::OrExpr<YGGDRASIL_IS_ANY_SCALAR(T),
+		  YGGDRASIL_RAPIDJSON_DISABLEIF((internal::OrExpr<YGGDRASIL_IS_ANY_SCALAR(T),
                   internal::IsSame<T, bool> >))) {}
     /*
      * @brief If dir is RECV, then clear the data, if dir is SEND then copy the data into the document
@@ -1845,7 +1845,7 @@ protected:
      * @param[in] dir The communications direction
      * @return The schema
      */
-    rapidjson::Value* getSchema(const DIRECTION dir=NONE) {
+    yggdrasil_rapidjson::Value* getSchema(const DIRECTION dir=NONE) {
       return getMetadata(dir).getSchema();
     }
     /**

@@ -1,5 +1,5 @@
 #pragma once
-#include "utils/rapidjson_wrapper.hpp"
+#include "utils/yggdrasil_rapidjson_wrapper.hpp"
 
 
 namespace YggInterface {
@@ -814,26 +814,26 @@ namespace YggInterface {
 
         switch (usecLength) {
             case 9: if (!isdigit(str[17])) { return false; }
-		RAPIDJSON_DELIBERATE_FALLTHROUGH;
+		YGGDRASIL_RAPIDJSON_DELIBERATE_FALLTHROUGH;
             case 8: if (!isdigit(str[16])) { return false; }
-		RAPIDJSON_DELIBERATE_FALLTHROUGH;
+		YGGDRASIL_RAPIDJSON_DELIBERATE_FALLTHROUGH;
             case 7: if (!isdigit(str[15])) { return false; }
-		RAPIDJSON_DELIBERATE_FALLTHROUGH;
+		YGGDRASIL_RAPIDJSON_DELIBERATE_FALLTHROUGH;
             case 6: if (!isdigit(str[14])) { return false; }
 		usecs += digit(14);
-		RAPIDJSON_DELIBERATE_FALLTHROUGH;
+		YGGDRASIL_RAPIDJSON_DELIBERATE_FALLTHROUGH;
             case 5: if (!isdigit(str[13])) { return false; }
 		usecs += digit(13)*10;
-		RAPIDJSON_DELIBERATE_FALLTHROUGH;
+		YGGDRASIL_RAPIDJSON_DELIBERATE_FALLTHROUGH;
             case 4: if (!isdigit(str[12])) { return false; }
 		usecs += digit(12)*100;
-		RAPIDJSON_DELIBERATE_FALLTHROUGH;
+		YGGDRASIL_RAPIDJSON_DELIBERATE_FALLTHROUGH;
             case 3: if (!isdigit(str[11])) { return false; }
 		usecs += digit(11)*1000;
-		RAPIDJSON_DELIBERATE_FALLTHROUGH;
+		YGGDRASIL_RAPIDJSON_DELIBERATE_FALLTHROUGH;
             case 2: if (!isdigit(str[10])) { return false; }
 		usecs += digit(10)*10000;
-		RAPIDJSON_DELIBERATE_FALLTHROUGH;
+		YGGDRASIL_RAPIDJSON_DELIBERATE_FALLTHROUGH;
             case 1: if (!isdigit(str[9])) { return false; }
 		usecs += digit(9)*100000;
         }
@@ -1022,7 +1022,7 @@ namespace YggInterface {
     template <typename YggSchemaValueType>
     bool YggdrasilString(const char* str, SizeType length, bool, YggSchemaValueType& schema) {
 	WrapT* value = NULL;
-	RAPIDJSON_DEFAULT_ALLOCATOR allocator;
+	YGGDRASIL_RAPIDJSON_DEFAULT_ALLOCATOR allocator;
 	Value* x = new Value(str, length, allocator, schema);
 	if (x->HasUnits()) {
 	    WrapT* type = NULL;
@@ -1031,7 +1031,7 @@ namespace YggInterface {
 	    } else {
 		type = (WrapT*)&QuantityArray_Type;
 	    }
-	    RAPIDJSON_DEFAULT_ALLOCATOR allocator;
+	    YGGDRASIL_RAPIDJSON_DEFAULT_ALLOCATOR allocator;
 	    WrapT* arr = x->GetPythonObjectRaw();
 	    WrapT* units = wrapped_string(x->GetUnits().GetString(),
 					  x->GetUnits().GetStringLength());

@@ -99,7 +99,7 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggInput(const char *name, const rapidjson::Document& schema,
+  YggInput(const char *name, const yggdrasil_rapidjson::Document& schema,
 	   FLAG_TYPE flags = 0, const COMM_TYPE commtype = DEFAULT_COMM) :
     WrapComm(name, RECV, flags | COMM_FLAG_INTERFACE, commtype) {
     if (!this->addSchema(schema))
@@ -117,7 +117,7 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggInput(const std::string& name, const rapidjson::Document& schema,
+  YggInput(const std::string& name, const yggdrasil_rapidjson::Document& schema,
 	   FLAG_TYPE flags = 0, const COMM_TYPE commtype = DEFAULT_COMM) :
     WrapComm(name, RECV, flags | COMM_FLAG_INTERFACE, commtype) {
     if (!this->addSchema(schema))
@@ -215,7 +215,7 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggOutput(const char *name, rapidjson::Document& schema,
+  YggOutput(const char *name, yggdrasil_rapidjson::Document& schema,
 	    FLAG_TYPE flags = 0, const COMM_TYPE commtype = DEFAULT_COMM) :
     WrapComm(name, SEND, flags | COMM_FLAG_INTERFACE, commtype) {
     if (!this->addSchema(schema))
@@ -233,7 +233,7 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggOutput(const std::string& name, rapidjson::Document& schema,
+  YggOutput(const std::string& name, yggdrasil_rapidjson::Document& schema,
 	    FLAG_TYPE flags = 0, const COMM_TYPE commtype = DEFAULT_COMM) :
     WrapComm(name, SEND, flags | COMM_FLAG_INTERFACE, commtype) {
     if (!this->addSchema(schema))
@@ -343,8 +343,8 @@ public:
       for the response communicator. Defaults to DEFAULT_COMM that is
       set based on the available packages at compilation.
    */
-  YggRpcServer(const std::string& name, const rapidjson::Document& inType,
-	       const rapidjson::Document& outType, FLAG_TYPE flags = 0,
+  YggRpcServer(const std::string& name, const yggdrasil_rapidjson::Document& inType,
+	       const yggdrasil_rapidjson::Document& outType, FLAG_TYPE flags = 0,
 	       const COMM_TYPE request_commtype = DEFAULT_COMM,
 	       const COMM_TYPE response_commtype = DEFAULT_COMM) :
     ServerComm(name, flags | COMM_FLAG_INTERFACE,
@@ -477,8 +477,8 @@ public:
       used for response communicators. Defaults to DEFAULT_COMM that is
       set based on the available packages at compilation.
    */
-  YggRpcClient(const std::string& name, const rapidjson::Document& outType,
-	       const rapidjson::Document& inType, FLAG_TYPE flags = 0,
+  YggRpcClient(const std::string& name, const yggdrasil_rapidjson::Document& outType,
+	       const yggdrasil_rapidjson::Document& inType, FLAG_TYPE flags = 0,
 	       const COMM_TYPE request_commtype = DEFAULT_COMM,
 	       const COMM_TYPE response_commtype = DEFAULT_COMM) :
     ClientComm(name, flags | COMM_FLAG_INTERFACE,
@@ -533,10 +533,10 @@ public:
       this->throw_error("Invalid time schema");  // GCOV_EXCL_LINE
     if (t_units.size() > 0) {
       (*(this->getMetadata().getSchema()))["items"][0].AddMember(
-	 rapidjson::Value("units", 5,
+	 yggdrasil_rapidjson::Value("units", 5,
 			  this->getMetadata().GetAllocator()).Move(),
-	 rapidjson::Value(t_units.c_str(),
-			  static_cast<rapidjson::SizeType>(t_units.size()),
+	 yggdrasil_rapidjson::Value(t_units.c_str(),
+			  static_cast<yggdrasil_rapidjson::SizeType>(t_units.size()),
 			  this->getMetadata().GetAllocator()).Move(),
 	 this->getMetadata().GetAllocator());
     }
@@ -997,7 +997,7 @@ public:
 
 
 /*!
-  @brief Output communicator that can be used to send rapidjson::Document
+  @brief Output communicator that can be used to send yggdrasil_rapidjson::Document
     objects to other models/files in a Yggdrasil integration.
  */
 class YggGenericOutput : public YggOutput {
@@ -1040,7 +1040,7 @@ public:
 
 /*!
   @brief Input communicator that can be used to receive
-    rapidjson::Document objects from other models/files in a
+    yggdrasil_rapidjson::Document objects from other models/files in a
     Yggdrasil integration.
  */
 class YggGenericInput : public YggInput {
@@ -1082,7 +1082,7 @@ public:
 
 
 /*!
-  @brief Output communicator that can be used to send rapidjson::Document
+  @brief Output communicator that can be used to send yggdrasil_rapidjson::Document
     objects to other models/files in a Yggdrasil integration.
  */
 class YggAnyOutput : public YggOutput {
@@ -1125,7 +1125,7 @@ public:
 
 /*!
   @brief Input communicator that can be used to receive
-    rapidjson::Document objects from other models/files in a
+    yggdrasil_rapidjson::Document objects from other models/files in a
     Yggdrasil integration.
  */
 class YggAnyInput : public YggInput {
@@ -1167,7 +1167,7 @@ public:
 
 
 /*!
-  @brief Output communicator that can be used to send rapidjson::Document
+  @brief Output communicator that can be used to send yggdrasil_rapidjson::Document
     array type objects to other models/files in a Yggdrasil integration.
  */
 class YggJSONArrayOutput : public YggOutput {
@@ -1210,7 +1210,7 @@ public:
 
 /*!
   @brief Input communicator that can be used to receive
-    rapidjson::Document array type objects from other models/files in a
+    yggdrasil_rapidjson::Document array type objects from other models/files in a
     Yggdrasil integration.
  */
 class YggJSONArrayInput : public YggInput {
@@ -1251,7 +1251,7 @@ public:
 
 
 /*!
-  @brief Output communicator that can be used to send rapidjson::Document
+  @brief Output communicator that can be used to send yggdrasil_rapidjson::Document
     object type objects to other models/files in a Yggdrasil integration.
  */
 class YggJSONObjectOutput : public YggOutput {
@@ -1294,7 +1294,7 @@ public:
 
 /*!
   @brief Input communicator that can be used to receive
-    rapidjson::Document object type objects from other models/files in a
+    yggdrasil_rapidjson::Document object type objects from other models/files in a
     Yggdrasil integration.
  */
 class YggJSONObjectInput : public YggInput {

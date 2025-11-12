@@ -11,8 +11,8 @@ using namespace YggInterface::communicator;
 using namespace YggInterface::mock;
 
 
-bool example_model_function(const rapidjson::Document& data_send,
-			    rapidjson::Document& data_recv) {
+bool example_model_function(const yggdrasil_rapidjson::Document& data_send,
+			    yggdrasil_rapidjson::Document& data_recv) {
   std::cerr << "IN example_model_function: " << data_send << std::endl;
   if (!data_send.IsString())
     return false;

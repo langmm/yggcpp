@@ -1,9 +1,9 @@
 // defined(YggInterface_py_EXPORTS)
 #ifndef YGG_LINK_PYTHON_TO_CPP
-#define RAPIDJSON_FORCE_IMPORT_ARRAY
+#define YGGDRASIL_RAPIDJSON_FORCE_IMPORT_ARRAY
 #endif // YGG_LINK_PYTHON_TO_CPP
-#include "rapidjson/pyrj_c.h"
-#include "utils/rapidjson_wrapper.hpp"
+#include "yggdrasil_rapidjson/pyrj_c.h"
+#include "utils/yggdrasil_rapidjson_wrapper.hpp"
 
 #define DO_NOTHING()
 #define UNPACK_BKTS(...)			\
@@ -13,60 +13,60 @@
 #define ADD_BKTS(X)				\
   <UNPACK_MACRO X>
 
-#ifdef WRAP_RAPIDJSON_FOR_DLL
+#ifdef WRAP_YGGDRASIL_RAPIDJSON_FOR_DLL
 
 namespace wrap {
-  namespace rapidjson {
+  namespace YGGDRASIL_RAPIDJSON_NAMESPACE {
     namespace internal {
-      using namespace ::rapidjson::internal;
+      using namespace ::YGGDRASIL_RAPIDJSON_NAMESPACE::internal;
     }
   }
-  using namespace ::rapidjson;
-  using ::rapidjson::ObjWavefront;
-#include "rapidjson/document.h"
-#include "rapidjson/prettywriter.h"
-#include "rapidjson/schema.h"
-#include "rapidjson/pyrj.h"
+  using namespace ::YGGDRASIL_RAPIDJSON_NAMESPACE;
+  using ::YGGDRASIL_RAPIDJSON_NAMESPACE::ObjWavefront;
+#include "yggdrasil_rapidjson/document.h"
+#include "yggdrasil_rapidjson/prettywriter.h"
+#include "yggdrasil_rapidjson/schema.h"
+#include "yggdrasil_rapidjson/pyrj.h"
 #undef UTF8
 }
 
-bool rapidjson::global_PyGILState(bool release) {
+bool yggdrasil_rapidjson::global_PyGILState(bool release) {
   return RJ_WNS::global_PyGILState(release);
 }
-bool rapidjson::global_PyThreadState(bool restore) {
+bool yggdrasil_rapidjson::global_PyThreadState(bool restore) {
   return RJ_WNS::global_PyThreadState(restore);
 }
 
-std::string rapidjson::init_numpy_API() {
+std::string yggdrasil_rapidjson::init_numpy_API() {
   return RJ_WNS::init_numpy_API();
 }
-std::string rapidjson::initialize_python(const std::string error_prefix,
+std::string yggdrasil_rapidjson::initialize_python(const std::string error_prefix,
 					 bool dont_raise) {
   return RJ_WNS::initialize_python(error_prefix, dont_raise);
 }
-void rapidjson::finalize_python(const std::string error_prefix) {
+void yggdrasil_rapidjson::finalize_python(const std::string error_prefix) {
   RJ_WNS::finalize_python(error_prefix);
 }
-PyObject* rapidjson::import_python_class(const char* module_name,
+PyObject* yggdrasil_rapidjson::import_python_class(const char* module_name,
 					 const char* class_name,
 					 const std::string error_prefix,
 					 const bool ignore_error) {
   return RJ_WNS::import_python_class(module_name, class_name,
 				     error_prefix, ignore_error);
 }
-PyObject* rapidjson::import_python_object(const char* module_class,
+PyObject* yggdrasil_rapidjson::import_python_object(const char* module_class,
 					  const std::string error_prefix,
 					  const bool ignore_error) {
   return RJ_WNS::import_python_object(module_class,
 				      error_prefix, ignore_error);
 }
 
-using namespace rapidjson;
+using namespace yggdrasil_rapidjson;
 
 #define MEMBER							\
-  RJ_WNS::GenericMember<UTF8<>, RAPIDJSON_DEFAULT_ALLOCATOR>
+  RJ_WNS::GenericMember<UTF8<>, YGGDRASIL_RAPIDJSON_DEFAULT_ALLOCATOR>
 #define MEMBER_ITERATOR(C)						\
-  RJ_WNS::GenericMemberIterator<C, UTF8<>, RAPIDJSON_DEFAULT_ALLOCATOR>
+  RJ_WNS::GenericMemberIterator<C, UTF8<>, YGGDRASIL_RAPIDJSON_DEFAULT_ALLOCATOR>
 
 #define WRAP_CONSTRUCTOR_TEMP(cls, tempT, temp, argsT, args)		\
   ADD_BKTS_T(tempT)							\
@@ -168,11 +168,11 @@ WrapperBase<T>::~WrapperBase() {
 }
 
 #define WRAPPER_CLASS(base)						\
-  namespace rapidjson {							\
+  namespace YGGDRASIL_RAPIDJSON_NAMESPACE {                             \
     template class WrapperBase<RJ_WNS::base>;				\
   }
 #define WRAPPER_CLASS_TEMP(base)					\
-  namespace rapidjson {							\
+  namespace YGGDRASIL_RAPIDJSON_NAMESPACE {                             \
     template class WrapperBase<UNPACK_BKTS base >;			\
   }
 #define WRAPPER_METHODS_MOVE_CONSTRUCTOR_BASE(cls, base, tempT, temp, macroB, macroT, macro) \
@@ -445,7 +445,7 @@ WValue::WValue(RJ_WNS::Document* val) :
   template <typename Handler>
   WRAP_METHOD(WValue, Accept, (Handler& handler, bool skip_yggdrasil),
 	      (handler, skip_yggdrasil), bool, const);
-  WRAP_METHOD(WValue, GetType, (), (), rapidjson::Type, const);
+  WRAP_METHOD(WValue, GetType, (), (), yggdrasil_rapidjson::Type, const);
   WRAP_METHOD_SELF(WValue, SetNull, (), (), );
   WRAP_METHOD(WValue, IsNull, (), (), bool, const);
   WRAP_METHOD(WValue, IsFalse, (), (), bool, const);
@@ -623,8 +623,8 @@ WValue::WValue(RJ_WNS::Document* val) :
   // Array methods
   WRAP_METHOD(WValue, IsArray, (), (), bool, const);
   WRAP_METHOD_SELF(WValue, SetArray, (), (), );
-  WRAP_METHOD(WValue, Size, (), (), rapidjson::SizeType, const);
-  WRAP_METHOD(WValue, Capacity, (), (), rapidjson::SizeType, const);
+  WRAP_METHOD(WValue, Size, (), (), yggdrasil_rapidjson::SizeType, const);
+  WRAP_METHOD(WValue, Capacity, (), (), yggdrasil_rapidjson::SizeType, const);
   WRAP_METHOD(WValue, Empty, (), (), bool, const);
   WRAP_METHOD_SELF(WValue, Reserve, (SizeType newCapacity,
 				     WValue::Allocator &allocator),
@@ -654,17 +654,17 @@ WValue::WValue(RJ_WNS::Document* val) :
   // Object methods
   WRAP_METHOD(WValue, IsObject, (), (), bool, const);
   WRAP_METHOD_SELF(WValue, SetObject, (), (), );
-  WRAP_METHOD(WValue, MemberCount, (), (), rapidjson::SizeType, const);
-  WRAP_METHOD(WValue, MemberCapacity, (), (), rapidjson::SizeType, const);
+  WRAP_METHOD(WValue, MemberCount, (), (), yggdrasil_rapidjson::SizeType, const);
+  WRAP_METHOD(WValue, MemberCapacity, (), (), yggdrasil_rapidjson::SizeType, const);
   WRAP_METHOD(WValue, ObjectEmpty, (), (), bool, const);
-#if RAPIDJSON_HAS_STDSTRING
+#if YGGDRASIL_RAPIDJSON_HAS_STDSTRING
   WRAP_METHOD(WValue, HasMember, (const std::basic_string<Ch>& name), (name), bool, const);
 #endif
   WRAP_METHOD(WValue, HasMember, (const WValue::Ch* name), (name), bool, const);
   WRAP_METHOD(WValue, HasMember, (const WValue& name), (*(name.val_)),
 	      bool, const);
   template <typename T>
-  RAPIDJSON_DISABLEIF_RETURN(
+  YGGDRASIL_RAPIDJSON_DISABLEIF_RETURN(
     (internal::NotExpr<
      internal::IsSame<typename internal::RemoveConst<T>::Type,
      typename WValue::Ch> >),
@@ -673,7 +673,7 @@ WValue::WValue(RJ_WNS::Document* val) :
     return INDEX_METHOD;
   }
   template <typename T>
-  RAPIDJSON_DISABLEIF_RETURN(
+  YGGDRASIL_RAPIDJSON_DISABLEIF_RETURN(
     (internal::NotExpr<
      internal::IsSame<typename internal::RemoveConst<T>::Type,
      typename WValue::Ch> >),
@@ -711,7 +711,7 @@ WValue::WValue(RJ_WNS::Document* val) :
 		   (*(name.val_), value.val_->Move(), allocator), );
   WRAP_METHOD(WValue, RemoveMember, (const WValue::Ch* name),
 	      (name), bool, );
-#if RAPIDJSON_HAS_STDSTRING
+#if YGGDRASIL_RAPIDJSON_HAS_STDSTRING
   WRAP_METHOD(WValue, RemoveMember, (const std::basic_string<WValue::Ch>& name),
 	      (name), bool, );
 #endif
@@ -734,7 +734,7 @@ WValue::WValue(RJ_WNS::Document* val) :
   WRAP_METHOD_CAST_MITER(WValue, FindMember, (const WValue& name),
 			 (*(name.val_)),
 			 WValue::ConstMemberIterator, const);
-#if RAPIDJSON_HAS_STDSTRING
+#if YGGDRASIL_RAPIDJSON_HAS_STDSTRING
   WRAP_METHOD_CAST_MITER(WValue, FindMember,
 			 (const std::basic_string<Ch>& name), (name),
 			 WValue::ConstMemberIterator, const);
@@ -750,7 +750,7 @@ WValue::WValue(RJ_WNS::Document* val) :
 			  WRAP_MEMBER_ITERATOR(last)),
 			 WValue::ConstMemberIterator, );
   WRAP_METHOD(WValue, EraseMember, (const Ch* name), (name), bool, );
-#if RAPIDJSON_HAS_STDSTRING
+#if YGGDRASIL_RAPIDJSON_HAS_STDSTRING
   WRAP_METHOD(WValue, EraseMember, (const std::basic_string<Ch>& name),
 	      (name), bool, );
 #endif
@@ -769,21 +769,21 @@ WValue::WValue(RJ_WNS::Document* val) :
   WRAP_METHOD(WValue, IsObjWavefront, (), (), bool, const);
   WRAP_METHOD(WValue, IsPly, (), (), bool, const);
   WRAP_METHOD(WValue, GetObjWavefront, (), (),
-	      rapidjson::ObjWavefront, const);
+	      yggdrasil_rapidjson::ObjWavefront, const);
   WRAP_METHOD(WValue, GetObjWavefront,
-	      (rapidjson::ObjWavefront& x), (x), void, const);
-  WRAP_METHOD(WValue, GetPly, (), (), rapidjson::Ply, const);
-  WRAP_METHOD(WValue, GetPly, (rapidjson::Ply& x), (x), void, const);
+	      (yggdrasil_rapidjson::ObjWavefront& x), (x), void, const);
+  WRAP_METHOD(WValue, GetPly, (), (), yggdrasil_rapidjson::Ply, const);
+  WRAP_METHOD(WValue, GetPly, (yggdrasil_rapidjson::Ply& x), (x), void, const);
   WRAP_METHOD_SELF(WValue, SetObjWavefront,
-		   (rapidjson::ObjWavefront x,
+		   (yggdrasil_rapidjson::ObjWavefront x,
 		    WValue::Allocator& allocator),
 		   (x, allocator), );
   WRAP_METHOD_SELF(WValue, SetObj,
-		   (rapidjson::ObjWavefront x,
+		   (yggdrasil_rapidjson::ObjWavefront x,
 		    WValue::Allocator& allocator),
 		   (x, allocator), );
   WRAP_METHOD_SELF(WValue, SetPly,
-		   (rapidjson::Ply x, WValue::Allocator& allocator),
+		   (yggdrasil_rapidjson::Ply x, WValue::Allocator& allocator),
 		   (x, allocator), );
   // Yggdrasil methods
   WRAP_METHOD(WValue, IsYggdrasil, (), (), bool, const);
@@ -888,9 +888,9 @@ WValue::WValue(RJ_WNS::Document* val) :
   WRAP_GET_STRING(StringSubType);
   WRAP_GET_STRING(NullSubType);
 
-namespace rapidjson {
+namespace yggdrasil_rapidjson {
   std::ostream & operator << (std::ostream &out, const WValue& p) {
-    return ::wrap::rapidjson::operator<<(out, *(p.val_));
+    return ::wrap::yggdrasil_rapidjson::operator<<(out, *(p.val_));
   }
   
 }
@@ -909,7 +909,7 @@ WDocument::WDocument(RJ_WNS::Document&& doc) :
 WDocument::WDocument(Type type) :
   WDocument(new RJ_WNS::Document(type))
 { created_val = true; }
-#if RAPIDJSON_HAS_CXX11_RVALUE_REFS
+#if YGGDRASIL_RAPIDJSON_HAS_CXX11_RVALUE_REFS
 WDocument::WDocument(WDocument&& rhs) :
   WValue(std::forward<WValue>(rhs)) {}
 WDocument& WDocument::operator=(WDocument&& rhs) {
@@ -949,10 +949,10 @@ bool WDocument::SetVarArgs(WValue& schema, VarArgList& ap) const {
 }
 bool WDocument::SetVarArgs(WValue* schema, ...) const {
   size_t nargs = CountVarArgs(*schema, true);
-  RAPIDJSON_BEGIN_VAR_ARGS(ap, schema, &nargs, false);
+  YGGDRASIL_RAPIDJSON_BEGIN_VAR_ARGS(ap, schema, &nargs, false);
   bool out = val_->ApplyVarArgs(*(schema->val_), ap,
 				kSetVarArgsFlag, this);
-  RAPIDJSON_END_VAR_ARGS(ap);
+  YGGDRASIL_RAPIDJSON_END_VAR_ARGS(ap);
   return out;
 }
 bool WDocument::SetVarArgsRealloc(WValue& schema, VarArgList& ap) const {
@@ -960,10 +960,10 @@ bool WDocument::SetVarArgsRealloc(WValue& schema, VarArgList& ap) const {
 }
 bool WDocument::SetVarArgsRealloc(WValue* schema, ...) const {
   size_t nargs = CountVarArgs(*schema, true);
-  RAPIDJSON_BEGIN_VAR_ARGS(ap, schema, &nargs, true);
+  YGGDRASIL_RAPIDJSON_BEGIN_VAR_ARGS(ap, schema, &nargs, true);
   bool out = val_->ApplyVarArgs(*(schema->val_), ap,
 				kSetVarArgsFlag, this);
-  RAPIDJSON_END_VAR_ARGS(ap);
+  YGGDRASIL_RAPIDJSON_END_VAR_ARGS(ap);
   return out;
 }
 bool WDocument::GetVarArgs(WValue& schema, VarArgList& ap) {
@@ -971,10 +971,10 @@ bool WDocument::GetVarArgs(WValue& schema, VarArgList& ap) {
 }
 bool WDocument::GetVarArgs(WValue* schema, ...) {
   size_t nargs = CountVarArgs(*schema, false);
-  RAPIDJSON_BEGIN_VAR_ARGS(ap, schema, &nargs, false);
+  YGGDRASIL_RAPIDJSON_BEGIN_VAR_ARGS(ap, schema, &nargs, false);
   bool out = val_->ApplyVarArgs(*(schema->val_), ap,
 				kGetVarArgsFlag, this);
-  RAPIDJSON_END_VAR_ARGS(ap);
+  YGGDRASIL_RAPIDJSON_END_VAR_ARGS(ap);
   return out;
 }
   WRAP_METHOD(WDocument, RawNumber,
@@ -1058,7 +1058,7 @@ typename IteratorWrapperBase<T, Const>::Reference IteratorWrapperBase<T, Const>:
   return parent_->childRef(const_cast<typename IteratorWrapperBase<T, Const>::PlainTypeBase*>(&(ptr_[n])));
 }
 
-namespace rapidjson {
+namespace yggdrasil_rapidjson {
   template class IteratorWrapperBase<WValue, true>;
   template class IteratorWrapperBase<WValue, false>;
   template class IteratorWrapperBase<WMember, true>;
@@ -1134,7 +1134,7 @@ namespace rapidjson {
    TargetEncoding, StackAllocator,				\
    writeFlags)
 
-  WRAPPER_CLASS_TEMP((RJ_WNS::PrettyWriter<rapidjson::StringBuffer>))
+  WRAPPER_CLASS_TEMP((RJ_WNS::PrettyWriter<yggdrasil_rapidjson::StringBuffer>))
   WRAPPER_METHODS_TEMP(WPrettyWriter, (WRAPPED_WRITER),
 		       WRAPPED_WRITER_TEMP_ARGS_T,
 		       WRAPPED_WRITER_TEMP_ARGS);
@@ -1170,8 +1170,8 @@ namespace rapidjson {
 			WRAPPED_WRITER_TEMP_ARGS,
 			(bool readable), (readable), void, );
 
-namespace rapidjson {
-  template class WPrettyWriter<rapidjson::StringBuffer>;
+namespace yggdrasil_rapidjson {
+  template class WPrettyWriter<yggdrasil_rapidjson::StringBuffer>;
 }
 
 #undef WRAPPED_WRITER
@@ -1217,22 +1217,22 @@ namespace rapidjson {
   template bool WValue::Accept<type>(type& handler,		       \
 				     bool skip_yggdrasil) const
 #define SPECIALIZE_ACCEPT_WRAP(type)		\
-  SPECIALIZE_ACCEPT(::wrap::rapidjson::type)
+  SPECIALIZE_ACCEPT(::wrap::yggdrasil_rapidjson::type)
 
-SPECIALIZE_ACCEPT(PrettyWriter<rapidjson::StringBuffer>);
-SPECIALIZE_ACCEPT(Writer<rapidjson::StringBuffer>);
+SPECIALIZE_ACCEPT(PrettyWriter<yggdrasil_rapidjson::StringBuffer>);
+SPECIALIZE_ACCEPT(Writer<yggdrasil_rapidjson::StringBuffer>);
 SPECIALIZE_ACCEPT(SchemaEncoder);
 SPECIALIZE_ACCEPT(Document);
 
 #undef SPECIALIZE_ACCEPT
 #undef SPECIALIZE_ACCEPT_WRAP
 
-template RAPIDJSON_DISABLEIF_RETURN(
+template YGGDRASIL_RAPIDJSON_DISABLEIF_RETURN(
   (internal::NotExpr<
    internal::IsSame<typename internal::RemoveConst<const WValue::Ch>::Type,
    typename WValue::Ch> >),
   (WValue&)) WValue::operator[]<const WValue::Ch>(const WValue::Ch* name);
-template RAPIDJSON_DISABLEIF_RETURN(
+template YGGDRASIL_RAPIDJSON_DISABLEIF_RETURN(
   (internal::NotExpr<
    internal::IsSame<typename internal::RemoveConst<const WValue::Ch>::Type,
    typename WValue::Ch> >),
@@ -1343,7 +1343,7 @@ SPECIALIZE_SCALAR_BUILTIN(float);
 SPECIALIZE_SCALAR_BUILTIN(double);
 typedef const typename WValue::Ch* StringType;
 SPECIALIZE_BASE(StringType, StringType);
-#ifdef RAPIDJSON_HAS_STDSTRING
+#ifdef YGGDRASIL_RAPIDJSON_HAS_STDSTRING
 SPECIALIZE(std::basic_string<typename WValue::Ch>);
 #endif
 // ValueType::Array
@@ -1366,8 +1366,8 @@ SPECIALIZE_SCALAR(std::complex<long double>);
 typedef PyObject* _PyObject_yggptr;
 SPECIALIZE(_PyObject_yggptr);
 #endif
-SPECIALIZE(rapidjson::Ply);
-SPECIALIZE(rapidjson::ObjWavefront);
+SPECIALIZE(yggdrasil_rapidjson::Ply);
+SPECIALIZE(yggdrasil_rapidjson::ObjWavefront);
 // vector
 // map
 
@@ -1375,13 +1375,13 @@ SPECIALIZE(rapidjson::ObjWavefront);
 #undef SPECIALIZE
 #undef SPECIALIZE_BASE
 
-#else // WRAP_RAPIDJSON_FOR_DLL
-#include "rapidjson/pyrj.h"
-#endif // WRAP_RAPIDJSON_FOR_DLL
+#else // WRAP_YGGDRASIL_RAPIDJSON_FOR_DLL
+#include "yggdrasil_rapidjson/pyrj.h"
+#endif // WRAP_YGGDRASIL_RAPIDJSON_FOR_DLL
 
 #ifndef YGG_LINK_PYTHON_TO_CPP
-#define RAPIDJSON_WRAPPER_DEFS_
-#include "utils/rapidjson_wrapper.defs"
+#define YGGDRASIL_RAPIDJSON_WRAPPER_DEFS_
+#include "utils/yggdrasil_rapidjson_wrapper.defs"
 #endif
 
 
@@ -1389,7 +1389,7 @@ using namespace YggInterface::utils;
 
 FilterBase::FilterBase() {}
 FilterBase::~FilterBase() {}
-bool FilterBase::operator()(const rapidjson::Document&) {
+bool FilterBase::operator()(const yggdrasil_rapidjson::Document&) {
   ygglog_throw_error("FilterBase: operator() must be overridden");
   return false;
 }
@@ -1400,7 +1400,7 @@ FilterBase* FilterBase::copy() const {
 
 TransformBase::TransformBase() {}
 TransformBase::~TransformBase() {}
-bool TransformBase::operator()(rapidjson::Document&) {
+bool TransformBase::operator()(yggdrasil_rapidjson::Document&) {
   ygglog_throw_error("TransformBase: operator() must be overridden");
   return false;
 }
@@ -1411,7 +1411,7 @@ TransformBase* TransformBase::copy() const {
 
 FilterClass::FilterClass(filterFunc func) :
   FilterBase(), func_(func) {}
-bool FilterClass::operator()(const rapidjson::Document& doc) {
+bool FilterClass::operator()(const yggdrasil_rapidjson::Document& doc) {
   return func_(doc);
 }
 FilterBase* FilterClass::copy() const {
@@ -1420,7 +1420,7 @@ FilterBase* FilterClass::copy() const {
 
 TransformClass::TransformClass(const transformFunc& func) :
   TransformBase(), func_(func) {}
-bool TransformClass::operator()(rapidjson::Document& doc) {
+bool TransformClass::operator()(yggdrasil_rapidjson::Document& doc) {
   return func_(doc);
 }
 TransformBase* TransformClass::copy() const {
@@ -1429,7 +1429,7 @@ TransformBase* TransformClass::copy() const {
 
 PyFilterClass::PyFilterClass(const PyObject* func) :
   FilterBase(), PyBaseFunc(func) {}
-bool PyFilterClass::operator()(const rapidjson::Document& doc) {
+bool PyFilterClass::operator()(const yggdrasil_rapidjson::Document& doc) {
   return PyBaseFunc::_call(doc);
 }
 FilterBase* PyFilterClass::copy() const {
@@ -1443,7 +1443,7 @@ FilterBase* PyFilterClass::copy() const {
 
 PyTransformClass::PyTransformClass(const PyObject* func) :
   TransformBase(), PyBaseFunc(func) {}
-bool PyTransformClass::operator()(rapidjson::Document& doc) {
+bool PyTransformClass::operator()(yggdrasil_rapidjson::Document& doc) {
   return PyBaseFunc::_call(doc, &doc);
 }
 TransformBase* PyTransformClass::copy() const {
@@ -1470,8 +1470,8 @@ PyBaseFunc::~PyBaseFunc() {
   Py_DECREF(func_);
   YGGDRASIL_PYGIL_END;
 }
-bool PyBaseFunc::_call(const rapidjson::Document& doc,
-		       rapidjson::Document* out) {
+bool PyBaseFunc::_call(const yggdrasil_rapidjson::Document& doc,
+		       yggdrasil_rapidjson::Document* out) {
   bool res = false;
   std::string err;
   PyObject *pyDoc = NULL, *args = NULL, *resPy = NULL;
@@ -1523,8 +1523,8 @@ PyBaseFunc::PyBaseFunc(const PyObject*) {
   ygglog_throw_error("PyBaseFunc: Python API disabled");
 }
 PyBaseFunc::~PyBaseFunc() {}
-bool PyBaseFunc::_call(const rapidjson::Document&,
-		       rapidjson::Document*) {
+bool PyBaseFunc::_call(const yggdrasil_rapidjson::Document&,
+		       yggdrasil_rapidjson::Document*) {
   ygglog_throw_error("PyBaseFunc: Python API disabled");
   return false;
 }

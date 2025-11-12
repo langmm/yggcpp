@@ -17,9 +17,9 @@
 
 #include <Python.h>
 #ifdef YGG_LINK_PYTHON_TO_CPP
-#define RAPIDJSON_FORCE_IMPORT_ARRAY
+#define YGGDRASIL_RAPIDJSON_FORCE_IMPORT_ARRAY
 #endif
-#include "utils/rapidjson_wrapper.hpp"
+#include "utils/yggdrasil_rapidjson_wrapper.hpp"
 #include "utils.cpp"
 #include "communicators.cpp"
 

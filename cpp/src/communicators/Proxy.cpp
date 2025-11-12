@@ -99,7 +99,7 @@ long Proxy::on_message() {
   if (status.load() & THREAD_CLOSING)
     return -1;
   if (icomm->nmsg() > 0) {
-    rapidjson::Document msg;
+    yggdrasil_rapidjson::Document msg;
     out = icomm->recvVar(msg);
     if (out == -2) {
       out = ocomm->send_eof();

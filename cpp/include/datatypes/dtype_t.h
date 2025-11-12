@@ -3,7 +3,7 @@
 #include "utils/tools.hpp"
 #include "utils/enums.hpp"
 #include "utils/complex_type.hpp"
-#include "rapidjson/pyrj_c.h"
+#include "yggdrasil_rapidjson/pyrj_c.h"
 #ifdef __cplusplus
 #include <cstdlib>
 #else
@@ -16,19 +16,19 @@
 extern "C" {
 #endif
 
-/*! @brief C-friendly definition of rapidjson::Document. */
+/*! @brief C-friendly definition of yggdrasil_rapidjson::Document. */
 typedef struct dtype_t {
   void *metadata; //!< Pointer to wrapped Metadata object.
 } dtype_t;
 
-/*! @brief C-friendly wrapper for rapidjson::Document. */
+/*! @brief C-friendly wrapper for yggdrasil_rapidjson::Document. */
 typedef struct generic_t {
-  void *obj; //!< Pointer to rapidjson::Document.
+  void *obj; //!< Pointer to yggdrasil_rapidjson::Document.
 } generic_t;
 
-/*! @brief C-friendly wrapper for rapidjson::Value. */
+/*! @brief C-friendly wrapper for yggdrasil_rapidjson::Value. */
 typedef struct generic_ref_t {
-  void *obj; //!< Pointer to rapidjson::Value.
+  void *obj; //!< Pointer to yggdrasil_rapidjson::Value.
   void *allocator; //!< Pointer to rapidjson Allocator used to allocated obj.
 } generic_ref_t;
 
@@ -57,12 +57,12 @@ typedef generic_t python_instance_t;
 
 /*! @brief Obj structure. */
 typedef struct obj_t {
-  void* obj; //!< Pointer to rapidjson::ObjWavefront instance.
+  void* obj; //!< Pointer to yggdrasil_rapidjson::ObjWavefront instance.
 } obj_t;
 
 /*! @brief Ply structure. */
 typedef struct ply_t {
-  void* obj; //!< Pointer to rapidjson::Ply instance.
+  void* obj; //!< Pointer to yggdrasil_rapidjson::Ply instance.
 } ply_t;
 
 /*! @brief C function type */
@@ -126,7 +126,7 @@ YGG_API generic_t init_generic_map();
 /*!
   @brief Initialize a generic object from a JSON string.
   @param[in] json JSON encoded string.
-  @returns New generic object structure wrapping a rapidjson::Document
+  @returns New generic object structure wrapping a yggdrasil_rapidjson::Document
     instance.
  */
 YGG_API generic_t init_generic_json(const char* json);
@@ -134,7 +134,7 @@ YGG_API generic_t init_generic_json(const char* json);
 /*!
   @brief Initialize a generic object from a JSON string.
   @param[in] schema JSON encoded schema describing object to generate.
-  @returns New generic object structure wrapping a rapidjson::Document
+  @returns New generic object structure wrapping a yggdrasil_rapidjson::Document
     instance.
  */
 YGG_API generic_t init_generic_generate(const char* schema);
@@ -647,14 +647,14 @@ YGG_API dtype_t create_dtype_any(const bool use_generic);
 
 
 /*
-  @brief Wrapper for freeing rapidjson::Document class.
-  @param[in] obj Pointer to rapidjson::Document.
+  @brief Wrapper for freeing yggdrasil_rapidjson::Document class.
+  @param[in] obj Pointer to yggdrasil_rapidjson::Document.
   @returns int 0 if free was successfull, -1 if there was an error.
 */
 /* YGG_API int destroy_document(void** obj); */
   
 /*!
-  @brief Wrapper for freeing rapidjson::Document class wrapper struct.
+  @brief Wrapper for freeing yggdrasil_rapidjson::Document class wrapper struct.
   @param[in] dtype Wrapper struct for C++ Metadata.
   @returns int 0 if free was successfull, -1 if there was an error.
 */
@@ -714,9 +714,9 @@ YGG_API void display_dtype(const dtype_t dtype, const char* indent);
    */
   YGG_API void free_obj(obj_t *p);
   /**
-   * @brief Set parameters from a rapidjson::ObjWavefront object.
+   * @brief Set parameters from a yggdrasil_rapidjson::ObjWavefront object.
    * @param[in,out] x Structure to modify.
-   * @param[in] obj rapidjson::ObjWavefront object to copy.
+   * @param[in] obj yggdrasil_rapidjson::ObjWavefront object to copy.
    * @param[in] copy If 1, the provided object will be copied, otherwise
    *   the pointer will be added to the structured directly and it will
    *   be freed on destruction.
@@ -773,9 +773,9 @@ YGG_API void display_dtype(const dtype_t dtype, const char* indent);
    */
   YGG_API void free_ply(ply_t *p);
   /**
-   * @brief Set parameters from a rapidjson::Ply object.
+   * @brief Set parameters from a yggdrasil_rapidjson::Ply object.
    * @param[in,out] x Structure to modify.
-   * @param[in] ply rapidjson::Ply object to copy.
+   * @param[in] ply yggdrasil_rapidjson::Ply object to copy.
    * @param[in] copy If 1, the provided object will be copied, otherwise
    *   the pointer will be added to the structured directly and it will
    *   be freed on destruction.

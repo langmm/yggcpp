@@ -7,7 +7,7 @@
 #endif
 
 #include "utils/tools.hpp"
-#include "utils/rapidjson_wrapper.hpp"
+#include "utils/yggdrasil_rapidjson_wrapper.hpp"
 #include "utils/logging.hpp"
 #include "utils/enums.hpp"
 #include "utils/enums_maps.hpp"
@@ -46,18 +46,18 @@
   YGG_API std::string string_embedded(const void* x) const override;	\
   /** \copydoc YggInterface::utils::EmbeddedLanguageBase::eval */	\
   YGG_API bool eval(const std::string& expr,				\
-		    rapidjson::Document& result) const override;	\
+		    yggdrasil_rapidjson::Document& result) const override;	\
   /** \copydoc YggInterface::utils::EmbeddedLanguageBase::convert_to */	\
-  YGG_API bool convert_to(const rapidjson::Value& v_in, void*& v_out,\
+  YGG_API bool convert_to(const yggdrasil_rapidjson::Value& v_in, void*& v_out,\
 			  bool dont_preserve = false) const;		\
   /** \copydoc YggInterface::utils::EmbeddedLanguageBase::convert_from */ \
-  YGG_API bool convert_from(const void*& v_in, rapidjson::Value& v_out,\
-			    rapidjson::Value::AllocatorType& allocator) const; \
+  YGG_API bool convert_from(const void*& v_in, yggdrasil_rapidjson::Value& v_out,\
+			    yggdrasil_rapidjson::Value::AllocatorType& allocator) const; \
   /** \copydoc YggInterface::utils::EmbeddedLanguageBase::load_function */ \
   YGG_API void* load_function(const std::string& name) const override;	\
   /** \copydoc YggInterface::utils::EmbeddedLanguageBase::call_function */ \
-  YGG_API bool call_function(void* func, const rapidjson::Document& args,\
-			     rapidjson::Document& result) const override
+  YGG_API bool call_function(void* func, const yggdrasil_rapidjson::Document& args,\
+			     yggdrasil_rapidjson::Document& result) const override
 #define EMBEDED_LANGUAGE_DEFN_ENABLED(cls, emT, lang, ext)		\
   cls::cls() : EmbeddedLanguageBase(lang, #ext) {}			\
   bool cls::is_enabled() const {					\
@@ -104,16 +104,16 @@
     LOG_DISABLED();							\
     return "";								\
   }									\
-  bool cls::eval(const std::string&, rapidjson::Document&) const {	\
+  bool cls::eval(const std::string&, yggdrasil_rapidjson::Document&) const {	\
     LOG_DISABLED();							\
     return false;							\
   }									\
-  bool cls::convert_to(const rapidjson::Value&, void*&, bool) const {	\
+  bool cls::convert_to(const yggdrasil_rapidjson::Value&, void*&, bool) const {	\
     LOG_DISABLED();							\
     return false;							\
   }									\
-  bool cls::convert_from(const void*&, rapidjson::Value&,		\
-			 rapidjson::Value::AllocatorType&) const {	\
+  bool cls::convert_from(const void*&, yggdrasil_rapidjson::Value&,		\
+			 yggdrasil_rapidjson::Value::AllocatorType&) const {	\
     LOG_DISABLED();							\
     return false;							\
   }									\
@@ -121,8 +121,8 @@
     LOG_DISABLED();							\
     return NULL;							\
   }									\
-  bool cls::call_function(void*, const rapidjson::Document&,		\
-			  rapidjson::Document&) const {			\
+  bool cls::call_function(void*, const yggdrasil_rapidjson::Document&,		\
+			  yggdrasil_rapidjson::Document&) const {			\
     LOG_DISABLED();							\
     return false;							\
   }
@@ -317,7 +317,7 @@ namespace YggInterface {
        *   otherwise.
        */
       YGG_API virtual bool eval(const std::string& expr,
-				rapidjson::Document& result) const {
+				yggdrasil_rapidjson::Document& result) const {
 	UNUSED(expr); // GCOVR_EXCL_START
 	UNUSED(result);
 	log_error() << "eval of base class called, must be overridden" << std::endl;
@@ -331,7 +331,7 @@ namespace YggInterface {
        *   value against cleanup.
        * @returns true if the conversion was successful, false otherwise.
        */
-      YGG_API bool convert_to(const rapidjson::Value& v_in,
+      YGG_API bool convert_to(const yggdrasil_rapidjson::Value& v_in,
 			      void*& v_out,
 			      bool dont_preserve=false) const {
 	UNUSED(v_in); // GCOVR_EXCL_START
@@ -349,8 +349,8 @@ namespace YggInterface {
        * @returns true if the conversion was successful, false otherwise.
        */
       YGG_API bool convert_from(const void*& v_in,
-				rapidjson::Value& v_out,
-				rapidjson::Value::AllocatorType& allocator) const {
+				yggdrasil_rapidjson::Value& v_out,
+				yggdrasil_rapidjson::Value::AllocatorType& allocator) const {
 	UNUSED(v_in); // GCOVR_EXCL_START
 	UNUSED(v_out);
 	UNUSED(allocator);
@@ -377,8 +377,8 @@ namespace YggInterface {
        * @returns true if the call is successful, false otherwise.
        */
       YGG_API virtual bool call_function(void* func,
-					 const rapidjson::Document& args,
-					 rapidjson::Document& result) const {
+					 const yggdrasil_rapidjson::Document& args,
+					 yggdrasil_rapidjson::Document& result) const {
 	UNUSED(func); // GCOVR_EXCL_START
 	UNUSED(args);
 	UNUSED(result);

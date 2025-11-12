@@ -473,8 +473,8 @@ class CFile(AmendedFile):
     }
     cpp_types = {
         'complex': "std::complex<{X}>",
-        'obj': 'rapidjson::ObjWavefront',
-        'ply': 'rapidjson::Ply',
+        'obj': 'yggdrasil_rapidjson::ObjWavefront',
+        'ply': 'yggdrasil_rapidjson::Ply',
     }
     idx_types = {
         'array': 'const size_t',
@@ -532,7 +532,8 @@ class CFile(AmendedFile):
                 '<< std::endl;\n'
                 '  return out;\n'
                 '}}\n'
-                'rapidjson::Value* d = (rapidjson::Value*)(x.obj);\n'
+                'yggdrasil_rapidjson::Value* d = '
+                '(yggdrasil_rapidjson::Value*)(x.obj);\n'
                 'if (!{check}) {{\n'
                 '  YggLogError << "{function}: Generic object is not '
                 '{name}{message}: " << '
@@ -564,7 +565,8 @@ class CFile(AmendedFile):
                 '<< std::endl;\n'
                 '  return out;\n'
                 '}}\n'
-                'rapidjson::Value* d = (rapidjson::Value*)(x.obj);\n'
+                'yggdrasil_rapidjson::Value* d = '
+                '(yggdrasil_rapidjson::Value*)(x.obj);\n'
                 '{set};\n'
                 'out = GENERIC_SUCCESS_;\n'
                 'TRY_END'
@@ -630,7 +632,8 @@ class CFile(AmendedFile):
                 '<< std::endl;\n'
                 '  return out;\n'
                 '}}\n'
-                'rapidjson::Value* d = (rapidjson::Value*)(x.obj);\n'
+                'yggdrasil_rapidjson::Value* d = '
+                '(yggdrasil_rapidjson::Value*)(x.obj);\n'
                 'if (!{check}) {{\n'
                 '  YggLogError << "{function}: Generic object is not '
                 '{name}{message}: " << '
@@ -863,26 +866,27 @@ class CFile(AmendedFile):
                 'out.im = tmp.imag()'),
             'scalar': 'out = d->GetScalar<{scalar_cpp_type}>()',
             '1darray': (
-                'rapidjson::SizeType nelements = 0;\n'
+                'yggdrasil_rapidjson::SizeType nelements = 0;\n'
                 'value[0] = ({scalar_type}*)(d->Get1DArray<'
                 '{scalar_cpp_type}>(nelements, '
                 'generic_ref_allocator(x)));\n'
                 'out = (size_t)nelements'),
             'ndarray': (
-                'rapidjson::SizeType ndim = 0;\n'
-                'rapidjson::SizeType* rjshape = NULL;\n'
+                'yggdrasil_rapidjson::SizeType ndim = 0;\n'
+                'yggdrasil_rapidjson::SizeType* rjshape = NULL;\n'
                 'value[0] = ({scalar_type}*)(d->GetNDArray<'
                 '{scalar_cpp_type}>('
                 'rjshape, ndim, generic_ref_allocator(x)));\n'
                 'shape[0] = (size_t*)(generic_ref_allocator(x).'
                 'Malloc(ndim * sizeof(size_t)));\n'
-                'for (rapidjson::SizeType i = 0; i < ndim; i++) {{\n'
+                'for (yggdrasil_rapidjson::SizeType i = 0; i < ndim; i++) {{\n'
                 '  (*shape)[i] = rjshape[i];\n'
                 '}}\n'
                 'generic_ref_allocator(x).Free(rjshape);\n'
                 'out = (size_t)ndim'),
             'generic': (
-                'rapidjson::Document* cpy = new rapidjson::Document();\n'
+                'yggdrasil_rapidjson::Document* cpy = new '
+                'yggdrasil_rapidjson::Document();\n'
                 'cpy->CopyFrom(*d, cpy->GetAllocator(), true);\n'
                 'out.obj = (void*)cpy'),
             'python': 'out.obj = d->GetPythonObjectRaw()',
@@ -915,7 +919,7 @@ class CFile(AmendedFile):
                 'array");\n'
                 '}}\n'
                 'memcpy(value[0], new_data, nbytes);\n'
-                'const rapidjson::Value& rjshape = d->GetShape();\n'
+                'const yggdrasil_rapidjson::Value& rjshape = d->GetShape();\n'
                 'out = (size_t)(rjshape.Size());\n'
                 'shape[0] = (size_t*)(generic_ref_allocator(x).Realloc('
                 'shape[0], 0, out * sizeof(size_t)));\n'
@@ -924,7 +928,7 @@ class CFile(AmendedFile):
                 'shape.");\n'
                 '}}\n'
                 'size_t i = 0;\n'
-                'for (rapidjson::Value::ConstValueIterator it = '
+                'for (yggdrasil_rapidjson::Value::ConstValueIterator it = '
                 'rjshape.Begin();\n'
                 '     it != rjshape.End(); it++, i++) {{\n'
                 '  shape[0][i] = (size_t)(it->GetInt());\n'
@@ -945,24 +949,25 @@ class CFile(AmendedFile):
             'scalar': 'd->SetScalar(value, units, generic_allocator(x))',
             '1darray': (
                 'd->Set1DArray(({scalar_cpp_type}*)value, '
-                '(rapidjson::SizeType)length, '
+                '(yggdrasil_rapidjson::SizeType)length, '
                 'units, generic_allocator(x))'),
             'ndarray': (
-                'rapidjson::SizeType* rjshape = (rapidjson::SizeType*)'
+                'yggdrasil_rapidjson::SizeType* rjshape = '
+                '(yggdrasil_rapidjson::SizeType*)'
                 '(generic_allocator(x).Malloc(ndim * '
-                'sizeof(rapidjson::SizeType)));\n'
+                'sizeof(yggdrasil_rapidjson::SizeType)));\n'
                 'for (size_t i = 0; i < ndim; i++) {{\n'
-                '  rjshape[i] = (rapidjson::SizeType)(shape[i]);'
+                '  rjshape[i] = (yggdrasil_rapidjson::SizeType)(shape[i]);'
                 '}}\n'
                 'd->SetNDArray(({scalar_cpp_type}*)value, '
-                'rjshape, (rapidjson::SizeType)ndim, '
+                'rjshape, (yggdrasil_rapidjson::SizeType)ndim, '
                 'units, generic_allocator(x));\n'
                 'generic_allocator(x).Free(rjshape);'),
             'complex': (
                 'd->SetScalar({scalar_cpp_type}(value.re, value.im), '
                 'units, generic_allocator(x))'),
             'generic': (
-                'd->CopyFrom(*((rapidjson::Value*)(value.obj)), '
+                'd->CopyFrom(*((yggdrasil_rapidjson::Value*)(value.obj)), '
                 'generic_allocator(x), true)'),
             'python': (
                 'd->SetPythonObjectRaw(value.obj, '
@@ -971,31 +976,35 @@ class CFile(AmendedFile):
                 'd->Set{geom_name}(*(({cpp_type}*)(value.obj)), '
                 'generic_allocator(x))'),
             'schema': (
-                'd->SetSchema(*((rapidjson::Value*)(value.obj)), '
+                'd->SetSchema(*((yggdrasil_rapidjson::Value*)(value.obj)), '
                 'generic_allocator(x))'),
             'raw_varient': (
-                'rapidjson::Document schema(rapidjson::kObjectType);\n'
-                'schema.AddMember(rapidjson::Document::GetTypeString(),\n'
-                '                 rapidjson::Value("{name}", {name_len},\n'
+                'yggdrasil_rapidjson::Document schema('
+                'yggdrasil_rapidjson::kObjectType);\n'
+                'schema.AddMember('
+                'yggdrasil_rapidjson::Document::GetTypeString(),\n'
+                '                 yggdrasil_rapidjson::Value('
+                '"{name}", {name_len},\n'
                 '                    schema.GetAllocator()).Move(),\n'
                 '                 schema.GetAllocator());\n'
-                'schema.AddMember(rapidjson::Document::GetSubTypeString(),\n'
+                'schema.AddMember('
+                'yggdrasil_rapidjson::Document::GetSubTypeString(),\n'
                 '                 '
-                'rapidjson::Value(subtype, STRLEN_RJ(subtype),\n'
+                'yggdrasil_rapidjson::Value(subtype, STRLEN_RJ(subtype),\n'
                 '                                  '
                 'schema.GetAllocator()).Move(),\n'
                 '                 schema.GetAllocator());\n'
                 'schema.AddMember('
-                'rapidjson::Document::GetPrecisionString(),\n'
+                'yggdrasil_rapidjson::Document::GetPrecisionString(),\n'
                 '                 '
-                'rapidjson::Value((unsigned)precision).Move(),\n'
+                'yggdrasil_rapidjson::Value((unsigned)precision).Move(),\n'
                 '                 '
                 'schema.GetAllocator());\n'
                 'if (units && strlen(units) > 0) {{\n'
                 '  schema.AddMember('
-                'rapidjson::Document::GetUnitsString(),\n'
+                'yggdrasil_rapidjson::Document::GetUnitsString(),\n'
                 '                   '
-                'rapidjson::Value(units, STRLEN_RJ(units),\n'
+                'yggdrasil_rapidjson::Value(units, STRLEN_RJ(units),\n'
                 '                                    '
                 'schema.GetAllocator()).Move(),\n'
                 '                   schema.GetAllocator());\n'
@@ -1017,26 +1026,28 @@ class CFile(AmendedFile):
             'default': '',
             'raw_scalar': 'size_t length = 1;\n',
             'raw_1darray': (
-                'rapidjson::Value rjshape(rapidjson::kArrayType);\n'
+                'yggdrasil_rapidjson::Value '
+                'rjshape(yggdrasil_rapidjson::kArrayType);\n'
                 'rjshape.PushBack('
-                'rapidjson::Value((unsigned)length).Move(),\n'
+                'yggdrasil_rapidjson::Value((unsigned)length).Move(),\n'
                 '                 schema.GetAllocator());\n'
                 'schema.AddMember('
-                'rapidjson::Document::GetShapeString(), rjshape,\n'
+                'yggdrasil_rapidjson::Document::GetShapeString(), rjshape,\n'
                 '                 schema.GetAllocator());\n'),
             'raw_ndarray': (
-                'rapidjson::Value rjshape(rapidjson::kArrayType);\n'
+                'yggdrasil_rapidjson::Value '
+                'rjshape(yggdrasil_rapidjson::kArrayType);\n'
                 'size_t length = 1;\n'
                 'if (ndim <= 0)\n'
                 '  length = 0;\n'
                 'for (size_t i = 0; i < ndim; i++) {{\n'
                 '  rjshape.PushBack('
-                'rapidjson::Value((unsigned)(shape[i])).Move(),\n'
+                'yggdrasil_rapidjson::Value((unsigned)(shape[i])).Move(),\n'
                 '                   schema.GetAllocator());\n'
                 '  length *= shape[i];\n'
                 '}}\n'
                 'schema.AddMember('
-                'rapidjson::Document::GetShapeString(), rjshape,\n'
+                'yggdrasil_rapidjson::Document::GetShapeString(), rjshape,\n'
                 '                 schema.GetAllocator());\n'),
         },
         'message': {
@@ -1068,13 +1079,13 @@ class CFile(AmendedFile):
             'ndarray': 'd->IsNDArray<{scalar_cpp_type}>()',
             'raw_scalar': (
                 '(d->IsType("{name}") && d->IsSubType(subtype, '
-                'static_cast<rapidjson::SizeType>(precision)))'),
+                'static_cast<yggdrasil_rapidjson::SizeType>(precision)))'),
             'raw_1darray': (
                 '(d->IsType("{name}") && d->IsSubType(subtype, '
-                'static_cast<rapidjson::SizeType>(precision)))'),
+                'static_cast<yggdrasil_rapidjson::SizeType>(precision)))'),
             'raw_ndarray': (
                 '(d->IsType("{name}") && d->IsSubType(subtype, '
-                'static_cast<rapidjson::SizeType>(precision)))'),
+                'static_cast<yggdrasil_rapidjson::SizeType>(precision)))'),
             'item': 'd->IsType(type)',
             'item_nbytes': 'd->IsType(type)',
         },

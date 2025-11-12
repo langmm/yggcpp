@@ -6,44 +6,44 @@
 #include "communicators/Proxy.hpp"
 
 static inline
-bool example_filter(const rapidjson::Document& msg) {
+bool example_filter(const yggdrasil_rapidjson::Document& msg) {
   return (msg.GetInt() == 1);
 }
 
 static inline
-bool example_transform(rapidjson::Document& msg) {
+bool example_transform(yggdrasil_rapidjson::Document& msg) {
   if (!(msg.IsInt() && msg.GetInt() < 4))
     return false;
   std::string msg_str = std::to_string(msg.GetInt());
   msg.SetString(msg_str.c_str(),
-		static_cast<rapidjson::SizeType>(msg_str.size()),
+		static_cast<yggdrasil_rapidjson::SizeType>(msg_str.size()),
 		msg.GetAllocator());
   return true;
 }
 
 static inline
-bool example_filter_error(const rapidjson::Document& msg) {
+bool example_filter_error(const yggdrasil_rapidjson::Document& msg) {
   if (!msg.IsNull())
     throw std::runtime_error("Test error");
   return false;
 }
 
 static inline
-bool example_transform_error(rapidjson::Document& msg) {
+bool example_transform_error(yggdrasil_rapidjson::Document& msg) {
   if (!msg.IsNull())
     throw std::runtime_error("Test error");
   return false;
 }
 
 // static inline
-// bool error_filter(const rapidjson::Document& msg) {
+// bool error_filter(const yggdrasil_rapidjson::Document& msg) {
 //   UNUSED(msg);
 //   throw std::runtime_error("error_filter");
 //   return true;
 // }
 
 // static inline
-// bool error_transform(rapidjson::Document& msg) {
+// bool error_transform(yggdrasil_rapidjson::Document& msg) {
 //   UNUSED(msg);
 //   throw std::runtime_error("error_transform");
 //   return true;
@@ -168,55 +168,55 @@ bool example_transform_error(rapidjson::Document& msg) {
   char* c_recv = NULL
 
 #define INIT_DATA_PLY						\
-  rapidjson::Document sd;					\
-  rapidjson::Document result;					\
+  yggdrasil_rapidjson::Document sd;					\
+  yggdrasil_rapidjson::Document result;					\
   sd.Parse("{\"type\": \"ply\"}");				\
-  rapidjson::SchemaDocument s(sd);				\
-  rapidjson::SchemaValidator validator(s);			\
+  yggdrasil_rapidjson::SchemaDocument s(sd);				\
+  yggdrasil_rapidjson::SchemaValidator validator(s);			\
   validator.GenerateData(result);				\
-  rapidjson::Ply data_send = result.GetPly();			\
-  rapidjson::Ply data_recv
+  yggdrasil_rapidjson::Ply data_send = result.GetPly();			\
+  yggdrasil_rapidjson::Ply data_recv
 #define INIT_DATA_OBJ						\
-  rapidjson::Document sd;					\
-  rapidjson::Document result;					\
+  yggdrasil_rapidjson::Document sd;					\
+  yggdrasil_rapidjson::Document result;					\
   sd.Parse("{\"type\": \"obj\"}");				\
-  rapidjson::SchemaDocument s(sd);				\
-  rapidjson::SchemaValidator validator(s);			\
+  yggdrasil_rapidjson::SchemaDocument s(sd);				\
+  yggdrasil_rapidjson::SchemaValidator validator(s);			\
   validator.GenerateData(result);				\
-  rapidjson::ObjWavefront data_send = result.GetObjWavefront();	\
-  rapidjson::ObjWavefront data_recv
+  yggdrasil_rapidjson::ObjWavefront data_send = result.GetObjWavefront();	\
+  yggdrasil_rapidjson::ObjWavefront data_recv
 #define INIT_DATA_GEOM_C(name, c_name)				\
-  rapidjson::Document sd;					\
-  rapidjson::Document result;					\
+  yggdrasil_rapidjson::Document sd;					\
+  yggdrasil_rapidjson::Document result;					\
   sd.Parse("{\"type\": \"" #c_name "\"}");			\
-  rapidjson::SchemaDocument s(sd);				\
-  rapidjson::SchemaValidator validator(s);			\
+  yggdrasil_rapidjson::SchemaDocument s(sd);				\
+  yggdrasil_rapidjson::SchemaValidator validator(s);			\
   validator.GenerateData(result);				\
   c_name ## _t data_send = init_ ## c_name();			\
   c_name ## _t data_recv = init_ ## c_name();			\
-  rapidjson::name* data_send_x = new rapidjson::name();		\
-  rapidjson::name* data_recv_x = new rapidjson::name();		\
+  yggdrasil_rapidjson::name* data_send_x = new yggdrasil_rapidjson::name();		\
+  yggdrasil_rapidjson::name* data_recv_x = new yggdrasil_rapidjson::name();		\
   result.Get(*data_send_x);					\
   data_send.obj = (void*)data_send_x;				\
   data_recv.obj = (void*)data_recv_x
 
 
 #define INIT_DATA_SCHEMA(schema)				\
-  rapidjson::Document sd;					\
-  rapidjson::Document data_send;				\
+  yggdrasil_rapidjson::Document sd;					\
+  yggdrasil_rapidjson::Document data_send;				\
   sd.Parse(schema);						\
-  rapidjson::SchemaDocument s(sd);				\
-  rapidjson::SchemaValidator validator(s);			\
+  yggdrasil_rapidjson::SchemaDocument s(sd);				\
+  yggdrasil_rapidjson::SchemaValidator validator(s);			\
   validator.GenerateData(data_send);				\
-  rapidjson::Document data_recv
+  yggdrasil_rapidjson::Document data_recv
 
 #define INIT_DATA_SCHEMA_C(schema)					\
-  rapidjson::Document sd;						\
-  rapidjson::Document* data_send_doc = new rapidjson::Document();	\
-  rapidjson::Document* data_recv_doc = new rapidjson::Document();	\
+  yggdrasil_rapidjson::Document sd;						\
+  yggdrasil_rapidjson::Document* data_send_doc = new yggdrasil_rapidjson::Document();	\
+  yggdrasil_rapidjson::Document* data_recv_doc = new yggdrasil_rapidjson::Document();	\
   sd.Parse(schema);							\
-  rapidjson::SchemaDocument s(sd);					\
-  rapidjson::SchemaValidator validator(s);				\
+  yggdrasil_rapidjson::SchemaDocument s(sd);					\
+  yggdrasil_rapidjson::SchemaValidator validator(s);				\
   validator.GenerateData(*data_send_doc);				\
   generic_t data_send = init_generic();					\
   data_send.obj = (void*)data_send_doc;					\
@@ -260,8 +260,8 @@ bool example_transform_error(rapidjson::Document& msg) {
   free(c_recv)
 
 #define COMP_DATA_GEOM_C(name)				\
-  EXPECT_EQ((*((rapidjson::name*)(data_send.obj))),	\
-	    (*((rapidjson::name*)(data_recv.obj))))
+  EXPECT_EQ((*((yggdrasil_rapidjson::name*)(data_send.obj))),	\
+	    (*((yggdrasil_rapidjson::name*)(data_recv.obj))))
 
 #define SEND_NARGS_TRIPLE			\
   (4, a_send, b_send, c_send, nc_send)
@@ -612,7 +612,7 @@ bool example_transform_error(rapidjson::Document& msg) {
   COMM_SERI_TEST_LARGE(cls)
 
 #define DO_FUNCTION_CALL_EXCHANGE				\
-  rapidjson::Document data_send, data_recv, data_exp;		\
+  yggdrasil_rapidjson::Document data_send, data_recv, data_exp;		\
   data_send.SetString("alpha", 5, data_send.GetAllocator());	\
   data_exp.SetInt(5);						\
   EXPECT_EQ(rComm.nmsg(), 0);					\

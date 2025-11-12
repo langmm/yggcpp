@@ -104,7 +104,7 @@ int ForkTines::send(YggInterface::utils::Header& head,
   YggInterface::utils::Metadata& meta = parent.getMetadata(SEND);
   bool is_eof = (head.flags & HEAD_FLAG_EOF);
   bool tmpdoc_created = false;
-  rapidjson::Document* tmp = &(head.doc);
+  yggdrasil_rapidjson::Document* tmp = &(head.doc);
   int out = 1;
   if ((!is_eof) && !(head.flags & HEAD_FLAG_DOC_SET)) {
     log_error() << "send: Document not set" << std::endl;
@@ -135,7 +135,7 @@ int ForkTines::send(YggInterface::utils::Header& head,
     goto cleanup;
   } else if (forktype == FORK_COMPOSITE) {
     if (!(tmp->IsArray())) {
-      tmp = new rapidjson::Document(rapidjson::kNullType);
+      tmp = new yggdrasil_rapidjson::Document(yggdrasil_rapidjson::kNullType);
       tmpdoc_created = true;
       if (!parent._coerce_to_array(head.doc, *tmp, SEND)) {
 	log_error() << "send: Cannot split message for composite: " << head.doc << std::endl;
@@ -165,7 +165,7 @@ int ForkTines::send(YggInterface::utils::Header& head,
 	  goto cleanup;  // GCOV_EXCL_LINE
 	}
       }
-      if ((*it)->send((*tmp)[static_cast<rapidjson::SizeType>(i)]) < 0) {
+      if ((*it)->send((*tmp)[static_cast<yggdrasil_rapidjson::SizeType>(i)]) < 0) {
 	out = -1;
 	goto cleanup;
       }
@@ -197,7 +197,7 @@ long ForkTines::recv(YggInterface::utils::Header& head,
     std::string ival;
     for (typename std::vector<Comm_t*>::iterator it = comms.begin();
 	 it != comms.end(); it++, i++) {
-      rapidjson::Document idoc;
+      yggdrasil_rapidjson::Document idoc;
       long iout = (*it)->recv(idoc);
       if ((is_eof && iout != -2) ||
 	  (iout == -2 && !is_eof && i > 0)) {

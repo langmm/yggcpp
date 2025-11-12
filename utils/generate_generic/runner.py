@@ -13,23 +13,24 @@ if __name__ == "__main__":
     from generate_generic import generate
     from generate_generic.interface import get_interface_file
     parser = argparse.ArgumentParser(
-        "Generate interfaces for rapidjson::Document in C & Fortran")
+        "Generate interfaces for yggdrasil_rapidjson::Document in C & Fortran")
     parser.add_argument("--debug", action="store_true",
                         help="Dont't actually write out to files")
     parser.add_argument("--language", type=str,
                         help="Language to generate")
     parser.add_argument("--verbose", action="store_true",
                         help="Display information during parsing/generation")
-    parser.add_argument("--wrap-rapidjson", action="store_true",
+    parser.add_argument("--wrap-yggdrasil-rapidjson", action="store_true",
                         help=("Create an interface that uses the wrapped "
-                              "rapidjson api"))
-    parser.add_argument("--rapidjson-include-dirs", type=str,
-                        help="Path to rapidjson include")
+                              "yggdrasil_rapidjson api"))
+    parser.add_argument("--yggdrasil-rapidjson-include-dirs", type=str,
+                        help="Path to yggdrasil_rapidjson include")
     args = parser.parse_args()
     if args.language:
         x = get_interface_file(args.language)(
-            wrap_rapidjson=args.wrap_rapidjson,
-            rapidjson_include_dirs=args.rapidjson_include_dirs,
+            wrap_yggdrasil_rapidjson=args.wrap_yggdrasil_rapidjson,
+            yggdrasil_rapidjson_include_dirs=(
+                args.yggdrasil_rapidjson_include_dirs),
         )
         x.generate(debug=args.debug, verbose=args.verbose)
     else:

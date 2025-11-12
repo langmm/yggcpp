@@ -9,7 +9,7 @@
 #endif
 #include "utils/constants.hpp"
 #include "utils/enums.hpp"
-#include "utils/rapidjson_wrapper.hpp"
+#include "utils/yggdrasil_rapidjson_wrapper.hpp"
 
 #include <cstring>
 #include <cstdlib>
@@ -78,7 +78,7 @@ public:
    */
   YGG_API virtual ~Metadata();
   // Metadata(Metadata& rhs);
-#if RAPIDJSON_HAS_CXX11_RVALUE_REFS
+#if YGGDRASIL_RAPIDJSON_HAS_CXX11_RVALUE_REFS
     /*!
      * @brief Copy constructor
      * @param[in] rhs The Metadata instance to copy
@@ -90,7 +90,7 @@ public:
    * @return The new instance
    */
   YGG_API Metadata& operator=(Metadata&& rhs) noexcept ;
-#endif // RAPIDJSON_HAS_CXX11_RVALUE_REFS
+#endif // YGGDRASIL_RAPIDJSON_HAS_CXX11_RVALUE_REFS
   /*!
    * @brief Assignment operator
    * @param[in] rhs The Metadata instance to assign to this instance
@@ -153,7 +153,7 @@ public:
    * @param[in] use_generic If true then initialize the schema with generic values first
    * @return true if successful, false otherwise.
    */
-  YGG_API bool fromSchema(const rapidjson::Value& new_schema,
+  YGG_API bool fromSchema(const yggdrasil_rapidjson::Value& new_schema,
 			  bool isMetadata = false,
 			  bool use_generic = false);
   /*!
@@ -177,7 +177,7 @@ public:
    */
   // template<typename T>
   // bool fromData(const T& data) {
-  //   rapidjson::Document d;
+  //   yggdrasil_rapidjson::Document d;
   //   d.Set(data, d.GetAllocator());
   //   bool has_type = hasType();
   //   bool out = fromData(d);
@@ -191,7 +191,7 @@ public:
    * @param[in] before_transforms If true, the the pre-transform schema
    * @return true if successful, false otherwise.
    */
-  YGG_API bool fromData(const rapidjson::Document& data,
+  YGG_API bool fromData(const yggdrasil_rapidjson::Document& data,
 			bool before_transforms=false);
   /*!
    * @brief Set the schema type
@@ -250,7 +250,7 @@ public:
 			    const size_t* shape=NULL,
 			    const char* units=NULL,
 			    bool use_generic=false,
-			    rapidjson::Value* subSchema = NULL);
+			    yggdrasil_rapidjson::Value* subSchema = NULL);
   /*!
    * @brief Initialize the instance from a format string
    * @param[in] format_str The format string to use
@@ -299,7 +299,7 @@ public:
    * @param[in] use_generic If true then initialize with generic values
    * @return true if successful, false otherwise.
    */
-  YGG_API bool fromEncode(const rapidjson::Value& document,
+  YGG_API bool fromEncode(const yggdrasil_rapidjson::Value& document,
 			  bool use_generic = false);
   /*!
    * @brief Set the metadata from the encoded schema in a Python object
@@ -381,7 +381,7 @@ public:
    * @brief Get an allocator for the metadata.
    * @return An allocator
    */
-  YGG_API RAPIDJSON_DEFAULT_ALLOCATOR& GetAllocator();
+  YGG_API YGGDRASIL_RAPIDJSON_DEFAULT_ALLOCATOR& GetAllocator();
   /*!
    * @brief Determine if the schema is a generic one
    * @return true if the schema is generic, false otherwise
@@ -431,7 +431,7 @@ public:
    * @brief Initialize the schema based on the metadata
    * @return A pointer to the initialized schema section in the metadata
    */
-  YGG_API rapidjson::Value* initSchema();
+  YGG_API yggdrasil_rapidjson::Value* initSchema();
   /*!
    * @brief Allocate and initialize the metadata
    */
@@ -443,7 +443,7 @@ public:
    * @return Always returns true
    */
   YGG_API bool addItem(const Metadata& other,
-		       rapidjson::Value* subSchema=nullptr);
+		       yggdrasil_rapidjson::Value* subSchema=nullptr);
   /*!
    * @brief Add a member to the subschema from the Metadata
    * @param[in] name The name of the member to add
@@ -452,31 +452,31 @@ public:
    * @return Always returns true
    */
   YGG_API bool addMember(const std::string& name, const Metadata& other,
-			 rapidjson::Value* subSchema=nullptr);
+			 yggdrasil_rapidjson::Value* subSchema=nullptr);
   /*!
    * @brief Get the metadata
    * @return The metadata
    */
-  YGG_API rapidjson::Value* getMeta();
+  YGG_API yggdrasil_rapidjson::Value* getMeta();
   /*!
    * @brief Get a const version of the metadata
    * @return The metadata (const)
    */
-  YGG_API const rapidjson::Value* getMeta() const;
+  YGG_API const yggdrasil_rapidjson::Value* getMeta() const;
   /*!
    * @brief Get the schema section of the metadata
    * @param[in] required If true, an error will be logged if the
    *   metadata does not contain a schema section
    * @return The schema
    */
-  YGG_API rapidjson::Value* getSchema(bool required=false);
+  YGG_API yggdrasil_rapidjson::Value* getSchema(bool required=false);
   /*!
    * @brief Get a const version of the schema section of the metadata
    * @param[in] required If true, an error will be logged if the
    *   metadata does not contain a schema section
    * @return The schema (const)
    */
-  YGG_API const rapidjson::Value* getSchema(bool required=false) const;
+  YGG_API const yggdrasil_rapidjson::Value* getSchema(bool required=false) const;
   /*!
    * @brief Set the value of the given item. If the item does not exist it will be added to the subschema.
    * @param[in] name The name of the item to set the value for
@@ -484,8 +484,8 @@ public:
    * @param[in] subSchema The subschema to use.
    * @return true if successful, false otherwise
    */
-  YGG_API bool SetValue(const std::string& name, rapidjson::Value& x,
-			rapidjson::Value& subSchema);
+  YGG_API bool SetValue(const std::string& name, yggdrasil_rapidjson::Value& x,
+			yggdrasil_rapidjson::Value& subSchema);
 #define GET_VECTOR_METHOD_(type_out, method)				\
   /** @brief Get a property in a subschema as a vector */		\
   /** @param[in] name Name of property to get */			\
@@ -494,7 +494,7 @@ public:
   /** @return true if successful, false otherwise */			\
   YGG_API bool GetVector ## method(const std::string& name,		\
 				   std::vector<type_out>& x,		\
-				   const rapidjson::Value& subSchema) const; \
+				   const yggdrasil_rapidjson::Value& subSchema) const; \
   /** @brief Get a property in the metadata as a vector */		\
   /** @param[in] name Name of property to get */			\
   /** @param[out] x Vector to assign to the property */			\
@@ -508,7 +508,7 @@ public:
   /** @return true if successful, false otherwise */			\
   YGG_API bool GetSchemaVector ## method(const std::string& name,	\
 					 std::vector<type_out>& x,	\
-					 const rapidjson::Value* subSchema = NULL) const
+					 const yggdrasil_rapidjson::Value* subSchema = NULL) const
 #define GET_METHOD_(type_out, method)					\
   /** @brief Get a property in a subschema */				\
   /** @param[in] name Name of property to get */			\
@@ -517,7 +517,7 @@ public:
   /** @return true if successful, false otherwise */			\
   YGG_API bool Get ## method(const std::string& name,			\
 			     type_out& out,				\
-			     const rapidjson::Value& subSchema		\
+			     const yggdrasil_rapidjson::Value& subSchema		\
 			     ) const;					\
   /** @brief Get an optional property in a subschema */			\
   /** @param[in] name Name of property to get */			\
@@ -528,7 +528,7 @@ public:
   YGG_API bool Get ## method ## Optional(const std::string& name,	\
 					 type_out& out,			\
 					 type_out defV,			\
-					 const rapidjson::Value& subSchema \
+					 const yggdrasil_rapidjson::Value& subSchema \
 					 ) const;			\
   /** @brief Get a property from the metadata */			\
   /** @param[in] name Name of property to get */			\
@@ -552,7 +552,7 @@ public:
   /** @return true if successful, false otherwise */			\
   YGG_API bool GetSchema ## method(const std::string& name,		\
 				   type_out& out,			\
-				   const rapidjson::Value* subSchema = NULL \
+				   const yggdrasil_rapidjson::Value* subSchema = NULL \
 				   ) const;				\
   /** @brief Get an optional property from the schema section of the metadata */ \
   /** @param[in] name Name of property to get */			\
@@ -563,7 +563,7 @@ public:
   YGG_API bool GetSchema ## method ## Optional(const std::string& name,	\
 					       type_out& out,		\
 					       type_out defV,		\
-					       const rapidjson::Value* subSchema = NULL) const
+					       const yggdrasil_rapidjson::Value* subSchema = NULL) const
 #define SET_VECTOR_METHOD_(type_in, method, setargs)			\
   /** @brief Set a property in a subschema to a vector */		\
   /** @param[in] name Name of property to set */			\
@@ -572,7 +572,7 @@ public:
   /** @return true if successful, false otherwise */			\
   YGG_API bool SetVector ## method(const std::string& name,		\
 				   const std::vector<type_in>& x,	\
-				   rapidjson::Value& subSchema);	\
+				   yggdrasil_rapidjson::Value& subSchema);	\
   /** @brief Set a property in the metadata to a vector */		\
   /** @param[in] name Name of property to set */			\
   /** @param[in] x Vector to assign to the property */			\
@@ -586,7 +586,7 @@ public:
   /** @return true if successful, false otherwise */			\
   YGG_API bool SetSchemaVector ## method(const std::string& name,	\
 					 const std::vector<type_in>& x,	\
-					 rapidjson::Value* subSchema = NULL)
+					 yggdrasil_rapidjson::Value* subSchema = NULL)
 #define SET_METHOD_(type_in, method, setargs)				\
   /** @brief Set a property in a subschema */				\
   /** @param[in] name Name of property to set */			\
@@ -594,7 +594,7 @@ public:
   /** @param[in] subSchema Subschema to assign the property to */	\
   /** @return true if successful, false otherwise */			\
   YGG_API bool Set ## method(const std::string& name, type_in x,	\
-			     rapidjson::Value& subSchema);		\
+			     yggdrasil_rapidjson::Value& subSchema);		\
   /** @brief Set a property in the metadata */				\
   /** @param[in] name Name of property to set */			\
   /** @param[in] x Value to assign to the property */			\
@@ -606,7 +606,7 @@ public:
   /** @param[in] subSchema Subschema to use in place of the schema section in the metadata */ \
   /** @return true if successful, false otherwise */			\
   YGG_API bool SetSchema ## method(const std::string& name, type_in x,	\
-				   rapidjson::Value* subSchema = NULL)
+				   yggdrasil_rapidjson::Value* subSchema = NULL)
 #define GET_SET_METHOD_(type_in, type_out, type_vect, method, setargs)	\
   GET_METHOD_(type_out, method);					\
   GET_VECTOR_METHOD_(type_vect, method);				\
@@ -616,7 +616,7 @@ public:
   GET_SET_METHOD_(uint64_t, uint64_t, uint64_t, Uint, (x));
   GET_SET_METHOD_(bool, bool, bool, Bool, (x));
   GET_SET_METHOD_(const std::string&, const char*, std::string, String,
-		  (x.c_str(), (rapidjson::SizeType)(x.size()),
+		  (x.c_str(), (yggdrasil_rapidjson::SizeType)(x.size()),
 		   metadata.GetAllocator()));
   GET_METHOD_(unsigned, Uint);
   GET_METHOD_(int32_t, Uint);
@@ -633,7 +633,7 @@ public:
    * @return true if successful, false otherwise
    */
   YGG_API bool SetMetaValue(const std::string& name,
-			    rapidjson::Value& x);
+			    yggdrasil_rapidjson::Value& x);
   /*!
    * @brief Set the value of the named schema item
    * @param[in] name The name of the item to set
@@ -642,8 +642,8 @@ public:
    * @return true if successful, false otherwise
    */
   YGG_API bool SetSchemaValue(const std::string& name,
-			      rapidjson::Value& x,
-			      rapidjson::Value* subSchema = NULL);
+			      yggdrasil_rapidjson::Value& x,
+			      yggdrasil_rapidjson::Value* subSchema = NULL);
   /*!
    * @brief Set the named schema item from the given Metadata instnace
    * @param[in] name The name of the item to set the value for
@@ -677,27 +677,27 @@ public:
    * @param[in] msg Message to pass through filters.
    * @return true if message should be filtered.
    */
-  YGG_API bool filter(const rapidjson::Document& msg);
+  YGG_API bool filter(const yggdrasil_rapidjson::Document& msg);
   /*!
    * @brief Evaluate transforms for a message.
    * @param[in,out] msg Message to transform.
    * @return true if successful, false otherwise.
    */
-  YGG_API bool transform(rapidjson::Document& msg);
+  YGG_API bool transform(yggdrasil_rapidjson::Document& msg);
   /*!
    * @brief Deserialize a message into a variable argument list.
    * @param[in] data Message.
    * @param[out] ap Variable argument list.
    * @return 0 if succesful
    */
-  YGG_API int deserialize_args(const rapidjson::Document& data,
-			       rapidjson::VarArgList& ap);
+  YGG_API int deserialize_args(const yggdrasil_rapidjson::Document& data,
+			       yggdrasil_rapidjson::VarArgList& ap);
   /*!
    * @brief Update the metaschema and message following deserialization.
    * @param[in,out] d Message.
    * @return 0 if succesful
    */
-  YGG_API int deserialize_updates(rapidjson::Document& d);
+  YGG_API int deserialize_updates(yggdrasil_rapidjson::Document& d);
   /*!
    * @brief Deserialize a message into a rapidjson document.
    * @param[in] buf Message buffer to deserialize.
@@ -706,7 +706,7 @@ public:
    *   and the datatype should not be updated.
    * @return 0 if successful
    */
-  YGG_API int deserialize(const char* buf, rapidjson::Document& data,
+  YGG_API int deserialize(const char* buf, yggdrasil_rapidjson::Document& data,
 			  bool temporary = false);
   /*!
    * @brief Deserialize the buffer into an arg list
@@ -724,21 +724,21 @@ public:
    * @param[out] ap The va_arg list to use
    * @return 0 if successful
    */
-  YGG_API int deserialize(const char* buf, rapidjson::VarArgList& ap);
+  YGG_API int deserialize(const char* buf, yggdrasil_rapidjson::VarArgList& ap);
   /*!
    * @brief Create a rapidjson document from a variable argument list.
    * @param[out] data Destination document.
    * @param[in] ap Variable argument list.
    * @return The number of variable arguments added to the document.
    */
-  YGG_API int serialize_args(rapidjson::Document& data,
-			     rapidjson::VarArgList& ap);
+  YGG_API int serialize_args(yggdrasil_rapidjson::Document& data,
+			     yggdrasil_rapidjson::VarArgList& ap);
   /*!
    * @brief Update the metaschema and message prior to serialization.
    * @param[in,out] d Message.
    * @return The number of elements
    */
-  YGG_API int serialize_updates(rapidjson::Document& d);
+  YGG_API int serialize_updates(yggdrasil_rapidjson::Document& d);
   /*!
    * @brief Serialize a rapidjson document into a buffer.
    * @param[out] buf Destination buffer (assumed to be reallocatable).
@@ -750,7 +750,7 @@ public:
    * @return The size of buf
    */
   YGG_API int serialize(char **buf, size_t *buf_siz,
-			rapidjson::Document& data,
+			yggdrasil_rapidjson::Document& data,
 			bool temporary = false);
   /*!
    * @brief Serialize the arg list into the buffer
@@ -769,7 +769,7 @@ public:
    * @return The size of buf
    */
   YGG_API int serialize(char **buf, size_t *buf_siz,
-			rapidjson::VarArgList& ap);
+			yggdrasil_rapidjson::VarArgList& ap);
   /*!
    * @brief Set the field names stored in the metadata.
    * @param[in] x Vector of field names.
@@ -805,7 +805,7 @@ public:
    * @param[in] indent The indentation to use for different levels
    */
   YGG_API virtual void Display(const char* indent="") const;
-  rapidjson::Document metadata;            /**< The metadata */
+  yggdrasil_rapidjson::Document metadata;            /**< The metadata */
   Metadata* raw_schema;                    /**< Metadata for messages prior to transformation */
   std::vector<FilterBase*> filters;        /**< Filters for messages */
   std::vector<TransformBase*> transforms;  /**< Transformations for messages */
@@ -833,7 +833,7 @@ public:
    */
   YGG_API Header(const char* buf, const size_t &len,
 		 YggInterface::communicator::Comm_t* comm,
-		 const rapidjson::Document* doc = nullptr);
+		 const yggdrasil_rapidjson::Document* doc = nullptr);
   /*!
    * @brief Constructor for receiving data
    * @param[in] buf The buffer where the data will be put
@@ -842,7 +842,7 @@ public:
    */
   YGG_API Header(char*& buf, const size_t &len, bool allow_realloc);
   YGG_API ~Header() override;
-#if RAPIDJSON_HAS_CXX11_RVALUE_REFS
+#if YGGDRASIL_RAPIDJSON_HAS_CXX11_RVALUE_REFS
   /*!
    * @brief Copy constructor
    * @param[in] rhs The Header instance to copy
@@ -854,7 +854,7 @@ public:
    * @return The new instance
    */
   YGG_API Header& operator=(Header&& rhs) noexcept ;
-#endif // RAPIDJSON_HAS_CXX11_RVALUE_REFS
+#endif // YGGDRASIL_RAPIDJSON_HAS_CXX11_RVALUE_REFS
   /*!
    * @brief Assignment operator
    * @param[in] rhs The Header instance to move to this one
@@ -949,7 +949,7 @@ public:
     @brief Set the document associated with this header.
     @param[in] x Document to set.
    */
-  YGG_API void setDoc(const rapidjson::Document& x);
+  YGG_API void setDoc(const yggdrasil_rapidjson::Document& x);
 
   /*!
     @brief Set flags based on a message's contents.
@@ -997,7 +997,7 @@ public:
    * @param[in] metaOnly If true, then only work on the metadata
    * @return true if successful, false otherwise
    */
-  YGG_API bool formatBuffer(rapidjson::StringBuffer& buffer,
+  YGG_API bool formatBuffer(yggdrasil_rapidjson::StringBuffer& buffer,
 			    bool metaOnly=false);
   /*!
    * @brief Write this instance to the terminal
@@ -1030,7 +1030,7 @@ public:
     return data[0] + static_cast<long>(offset);
   }
 
-  rapidjson::Document doc; /**< Data document */
+  yggdrasil_rapidjson::Document doc; /**< Data document */
   char* data_;       /**< Internal data storage */
   char** data;       /**< Internal data storage */
   size_t size_data;  /**< Size of the data */

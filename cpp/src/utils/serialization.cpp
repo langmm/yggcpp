@@ -55,8 +55,8 @@ int YggInterface::utils::split_head_body(const char *buf,
 template <typename ValueT>
 std::string YggInterface::utils::document2string(ValueT& rhs,
 						  const char* indent) {
-  rapidjson::StringBuffer sb;
-  rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(sb, nullptr, strlen(indent));
+  yggdrasil_rapidjson::StringBuffer sb;
+  yggdrasil_rapidjson::PrettyWriter<yggdrasil_rapidjson::StringBuffer> writer(sb, nullptr, strlen(indent));
   writer.SetYggdrasilMode(true);
   rhs.Accept(writer);
   return sb.GetString();
@@ -92,7 +92,7 @@ long YggInterface::utils::copyData(T*& dst, const size_t dst_len,
 //////////////
 
 Metadata::Metadata() :
-  metadata(rapidjson::kObjectType), raw_schema(nullptr),
+  metadata(yggdrasil_rapidjson::kObjectType), raw_schema(nullptr),
   filters(), transforms(), skip_last(false) {}
 bool Metadata::_init(bool use_generic) {
   if (!Normalize())
@@ -103,7 +103,7 @@ bool Metadata::_init(bool use_generic) {
   return true;
 }
 // Metadata::Metadata(Metadata& rhs) :
-//   metadata(rapidjson::kObjectType),
+//   metadata(yggdrasil_rapidjson::kObjectType),
 //   filters(), transforms(), skip_last(false) {
 //   *this = rhs;
 //   metadata = rhs.metadata;
@@ -113,7 +113,7 @@ Metadata::~Metadata() {
   reset_filters();
   reset_transforms();
 }
-#if RAPIDJSON_HAS_CXX11_RVALUE_REFS
+#if YGGDRASIL_RAPIDJSON_HAS_CXX11_RVALUE_REFS
 Metadata::Metadata(Metadata&& rhs) noexcept :
   metadata(), raw_schema(NULL),
   filters(), transforms(), skip_last(false) {
@@ -127,7 +127,7 @@ Metadata::Metadata(Metadata&& rhs) noexcept :
 Metadata& Metadata::operator=(Metadata&& rhs) noexcept {
   return *this = rhs.Move();
 }
-#endif // RAPIDJSON_HAS_CXX11_RVALUE_REFS
+#endif // YGGDRASIL_RAPIDJSON_HAS_CXX11_RVALUE_REFS
 Metadata& Metadata::operator=(Metadata& rhs) {
   metadata.Swap(rhs.metadata);
   std::swap(raw_schema, rhs.raw_schema);
@@ -197,7 +197,7 @@ void Metadata::reset() {
   reset_transforms();
   skip_last = false;
 }
-bool Metadata::fromSchema(const rapidjson::Value& new_schema,
+bool Metadata::fromSchema(const yggdrasil_rapidjson::Value& new_schema,
 			  bool isMetadata, bool use_generic) {
   if (isMetadata) {
     metadata.CopyFrom(new_schema, metadata.GetAllocator(), true);
@@ -205,28 +205,28 @@ bool Metadata::fromSchema(const rapidjson::Value& new_schema,
   } else if (!hasType()) {
     if (!use_generic)
       use_generic = isGeneric();
-    rapidjson::Value* schema = initSchema();
+    yggdrasil_rapidjson::Value* schema = initSchema();
     if (schema->MemberCount() == 0) {
       schema->CopyFrom(new_schema, metadata.GetAllocator(), true);
     } else {
-      for (typename rapidjson::Value::ConstMemberIterator it = new_schema.MemberBegin();
+      for (typename yggdrasil_rapidjson::Value::ConstMemberIterator it = new_schema.MemberBegin();
 	   it != new_schema.MemberEnd(); it++) {
 	if (schema->HasMember(it->name)) {
 	  (*schema)[it->name.GetString()].CopyFrom(it->value, metadata.GetAllocator(), true);
 	} else {
-	  schema->AddMember(rapidjson::Value(it->name, metadata.GetAllocator(), true).Move(),
-			    rapidjson::Value(it->value, metadata.GetAllocator(), true).Move(),
+	  schema->AddMember(yggdrasil_rapidjson::Value(it->name, metadata.GetAllocator(), true).Move(),
+			    yggdrasil_rapidjson::Value(it->value, metadata.GetAllocator(), true).Move(),
 			    metadata.GetAllocator());
 	}
       }
     }
     return _init(use_generic);
   } else {
-    rapidjson::Value* schema = getSchema(true);
-    rapidjson::SchemaDocument sd_old(*schema);
-    rapidjson::SchemaNormalizer n(sd_old);
+    yggdrasil_rapidjson::Value* schema = getSchema(true);
+    yggdrasil_rapidjson::SchemaDocument sd_old(*schema);
+    yggdrasil_rapidjson::SchemaNormalizer n(sd_old);
     if (!n.Compare(new_schema)) {
-      rapidjson::Value err;
+      yggdrasil_rapidjson::Value err;
       n.GetErrorMsg(err, metadata.GetAllocator());
       log_debug() << "fromSchema: Schemas incompatible:" << std::endl <<
 	"old:" << std::endl << *schema << std::endl <<
@@ -238,27 +238,27 @@ bool Metadata::fromSchema(const rapidjson::Value& new_schema,
   return true;
 }
 bool Metadata::Normalize() {
-  rapidjson::Document s(rapidjson::kObjectType);
+  yggdrasil_rapidjson::Document s(yggdrasil_rapidjson::kObjectType);
 #define ADD_OBJECT_(x, name, len)					\
-  x.AddMember(rapidjson::Value("type", 4, s.GetAllocator()).Move(),	\
-	      rapidjson::Value("object", 6, s.GetAllocator()).Move(),	\
+  x.AddMember(yggdrasil_rapidjson::Value("type", 4, s.GetAllocator()).Move(),	\
+	      yggdrasil_rapidjson::Value("object", 6, s.GetAllocator()).Move(),	\
 	      s.GetAllocator());					\
-  x.AddMember(rapidjson::Value("properties", 10,			\
+  x.AddMember(yggdrasil_rapidjson::Value("properties", 10,			\
 			       s.GetAllocator()).Move(),		\
-	      rapidjson::Value(rapidjson::kObjectType).Move(),		\
+	      yggdrasil_rapidjson::Value(yggdrasil_rapidjson::kObjectType).Move(),		\
 	      s.GetAllocator());					\
-  x["properties"].AddMember(rapidjson::Value(#name, len,		\
+  x["properties"].AddMember(yggdrasil_rapidjson::Value(#name, len,		\
 					     s.GetAllocator()).Move(),	\
-			    rapidjson::Value(rapidjson::kObjectType).Move(), \
+			    yggdrasil_rapidjson::Value(yggdrasil_rapidjson::kObjectType).Move(), \
 			    s.GetAllocator())
   ADD_OBJECT_(s, serializer, 10);
   ADD_OBJECT_(s["properties"]["serializer"], datatype, 8);
 #undef ADD_OBJECT_
   s["properties"]["serializer"]["properties"]["datatype"].AddMember(
-       rapidjson::Value("type", 4, s.GetAllocator()).Move(),
-       rapidjson::Value("schema", 6, s.GetAllocator()).Move(),
+       yggdrasil_rapidjson::Value("type", 4, s.GetAllocator()).Move(),
+       yggdrasil_rapidjson::Value("schema", 6, s.GetAllocator()).Move(),
        s.GetAllocator());
-  rapidjson::StringBuffer sb;
+  yggdrasil_rapidjson::StringBuffer sb;
   if (!metadata.Normalize(s, &sb)) {
     log_error() << "Normalize: Failed to normalize schema:" <<
       std::endl << metadata << std::endl << "error =" << std::endl <<
@@ -269,7 +269,7 @@ bool Metadata::Normalize() {
 }
 
 bool Metadata::fromSchema(const std::string& schemaStr, bool use_generic) {
-  rapidjson::Document d;
+  yggdrasil_rapidjson::Document d;
   d.Parse(schemaStr.c_str());
   if (d.HasParseError()) {
     log_error() << "fromSchema: Error parsing string: " <<
@@ -279,21 +279,21 @@ bool Metadata::fromSchema(const std::string& schemaStr, bool use_generic) {
   if (!fromSchema(d, false, use_generic))
     return false;
   if (hasType()) {
-    rapidjson::Value* schema = getSchema(true);
-    typename rapidjson::Value::MemberIterator it = schema->FindMember(rapidjson::Document::GetTypeString());
+    yggdrasil_rapidjson::Value* schema = getSchema(true);
+    typename yggdrasil_rapidjson::Value::MemberIterator it = schema->FindMember(yggdrasil_rapidjson::Document::GetTypeString());
     if ((!isGeneric()) &&
 	it != schema->MemberEnd() &&
-	(it->value == rapidjson::Document::GetObjectString() ||
-	 it->value == rapidjson::Document::GetSchemaString() ||
-	 it->value == rapidjson::Document::GetPythonInstanceString() ||
-	 it->value == rapidjson::Document::GetAnyString() ||
-	 (it->value == rapidjson::Document::GetArrayString() &&
-	  !schema->HasMember(rapidjson::Document::GetItemsString()))))
+	(it->value == yggdrasil_rapidjson::Document::GetObjectString() ||
+	 it->value == yggdrasil_rapidjson::Document::GetSchemaString() ||
+	 it->value == yggdrasil_rapidjson::Document::GetPythonInstanceString() ||
+	 it->value == yggdrasil_rapidjson::Document::GetAnyString() ||
+	 (it->value == yggdrasil_rapidjson::Document::GetArrayString() &&
+	  !schema->HasMember(yggdrasil_rapidjson::Document::GetItemsString()))))
       return setGeneric();
   }
   return true;
 }
-bool Metadata::fromData(const rapidjson::Document& data,
+bool Metadata::fromData(const yggdrasil_rapidjson::Document& data,
 			bool before_transforms) {
   if (before_transforms) {
     if (!raw_schema) {
@@ -301,7 +301,7 @@ bool Metadata::fromData(const rapidjson::Document& data,
     }
     return raw_schema->fromData(data);
   }
-  rapidjson::SchemaEncoder encoder(!hasType());
+  yggdrasil_rapidjson::SchemaEncoder encoder(!hasType());
   if (!data.Accept(encoder))
     return false;  // GCOV_EXCL_LINE
   return fromSchema(encoder.GetSchema());
@@ -331,7 +331,7 @@ bool Metadata::fromNDArray(const std::string& subtype, size_t precision,
 bool Metadata::_fromNDArray(const std::string& subtype, size_t precision,
 			    const size_t ndim, const size_t* shape,
 			    const char* units, bool use_generic,
-			    rapidjson::Value* subSchema) {
+			    yggdrasil_rapidjson::Value* subSchema) {
   if (subtype == "bytes") {
     if (!SetSchemaString("subtype", "string", subSchema)) return false;
   } else if (subtype == "unicode") {
@@ -344,9 +344,9 @@ bool Metadata::_fromNDArray(const std::string& subtype, size_t precision,
     if (!SetSchemaUint("precision", precision, subSchema)) return false;
   if (ndim > 0) {
     if (shape != nullptr) {
-      rapidjson::Value shp(rapidjson::kArrayType);
+      yggdrasil_rapidjson::Value shp(yggdrasil_rapidjson::kArrayType);
       for (size_t i = 0; i < ndim; i++) {
-	shp.PushBack(rapidjson::Value((uint64_t)(shape[i])).Move(),
+	shp.PushBack(yggdrasil_rapidjson::Value((uint64_t)(shape[i])).Move(),
 		     GetAllocator());
       }
       if (!SetSchemaValue("shape", shp, subSchema)) return false;
@@ -367,14 +367,14 @@ bool Metadata::fromFormat(const std::string& format_str, bool as_array,
 			  bool use_generic) {
   initSchema();
   metadata["serializer"].AddMember(
-      rapidjson::Value("format_str", 10, GetAllocator()).Move(),
-      rapidjson::Value(format_str.c_str(),
-		       (rapidjson::SizeType)(format_str.size()),
+      yggdrasil_rapidjson::Value("format_str", 10, GetAllocator()).Move(),
+      yggdrasil_rapidjson::Value(format_str.c_str(),
+		       (yggdrasil_rapidjson::SizeType)(format_str.size()),
 		       GetAllocator()).Move(),
       GetAllocator());
   if (!SetSchemaString("type", "array"))
     return false;
-  rapidjson::Value items(rapidjson::kArrayType);
+  yggdrasil_rapidjson::Value items(yggdrasil_rapidjson::kArrayType);
   log_debug() << "fromFormat: " << format_str << std::endl;
   // Loop over string
   int mres;
@@ -471,7 +471,7 @@ bool Metadata::fromFormat(const std::string& format_str, bool as_array,
     }
     log_debug() << "fromFormat: isubtype = " << isubtype << ", iprecision = " <<
       iprecision << ", ifmt = " << ifmt << std::endl;
-    rapidjson::Value item(rapidjson::kObjectType);
+    yggdrasil_rapidjson::Value item(yggdrasil_rapidjson::kObjectType);
     if (!SetString("type", element_type, item))
       return false;
     _fromNDArray(isubtype, iprecision, 0, nullptr, nullptr, false, &item);
@@ -490,7 +490,7 @@ bool Metadata::fromFormat(const std::string& format_str, bool as_array,
   if (!set_field_units(field_units))
     return false;  // GCOV_EXCL_LINE
   // if (nItems == 1) {
-  //   typename rapidjson::Document::ValueType tmp;
+  //   typename yggdrasil_rapidjson::Document::ValueType tmp;
   //   metadata["serializer"]["datatype"].Swap(tmp);
   //   metadata["serializer"]["datatype"].Swap(tmp["items"][0]);
   //   metadata["serializer"].RemoveMember("format_str");
@@ -530,15 +530,15 @@ bool Metadata::fromMetadata(const char* head, const size_t headsiz,
 bool Metadata::fromMetadata(const std::string& head, bool use_generic) {
   return fromMetadata(head.c_str(), head.size(), use_generic);
 }
-bool Metadata::fromEncode(const rapidjson::Value& document,
+bool Metadata::fromEncode(const yggdrasil_rapidjson::Value& document,
 			  bool use_generic) {
-  rapidjson::SchemaEncoder encoder(true);
+  yggdrasil_rapidjson::SchemaEncoder encoder(true);
   document.Accept(encoder);
   return fromSchema(encoder.GetSchema(), false, use_generic);
 }
 bool Metadata::fromEncode(PyObject* pyobj, bool use_generic) {
-  rapidjson::Value::AllocatorType allocator;
-  rapidjson::Value d(pyobj, allocator);
+  yggdrasil_rapidjson::Value::AllocatorType allocator;
+  yggdrasil_rapidjson::Value d(pyobj, allocator);
   return fromEncode(d, use_generic);
 }
 bool Metadata::addFilter(const FilterBase* new_filter) {
@@ -575,11 +575,11 @@ bool Metadata::addTransform(const transformFunc& new_transform) {
   transforms.push_back(new TransformClass(new_transform));
   return true;
 }
-rapidjson::Document::AllocatorType& Metadata::GetAllocator() {
+yggdrasil_rapidjson::Document::AllocatorType& Metadata::GetAllocator() {
   return metadata.GetAllocator();
 }
 bool Metadata::isGeneric() const {
-  const rapidjson::Value* schema = getSchema();
+  const yggdrasil_rapidjson::Value* schema = getSchema();
   return (schema &&
 	  ((schema->HasMember("use_generic") &&
 	   (*schema)["use_generic"].IsBool() &&
@@ -604,7 +604,7 @@ bool Metadata::empty() const {
   return ((!metadata.IsObject()) || (metadata.MemberCount() == 0));
 }
 bool Metadata::hasType() const {
-  const rapidjson::Value* schema = getSchema();
+  const yggdrasil_rapidjson::Value* schema = getSchema();
   return (schema && schema->HasMember("type"));
 }
 bool Metadata::hasSubtype() const {
@@ -625,18 +625,18 @@ const char* Metadata::subtypeName() const {
     return "";
   return (*getSchema(true))["subtype"].GetString();
 }
-rapidjson::Value* Metadata::initSchema() {
-  rapidjson::Value* out = getSchema();
+yggdrasil_rapidjson::Value* Metadata::initSchema() {
+  yggdrasil_rapidjson::Value* out = getSchema();
   if (!out) {
     if (!metadata.HasMember("serializer"))
       metadata.AddMember(
-	  rapidjson::Value("serializer", 10).Move(),
-	  rapidjson::Value(rapidjson::kObjectType).Move(),
+	  yggdrasil_rapidjson::Value("serializer", 10).Move(),
+	  yggdrasil_rapidjson::Value(yggdrasil_rapidjson::kObjectType).Move(),
 	  metadata.GetAllocator());
     if (!metadata["serializer"].HasMember("datatype"))
       metadata["serializer"].AddMember(
-	  rapidjson::Value("datatype", 8).Move(),
-	  rapidjson::Value(rapidjson::kObjectType).Move(),
+	  yggdrasil_rapidjson::Value("datatype", 8).Move(),
+	  yggdrasil_rapidjson::Value(yggdrasil_rapidjson::kObjectType).Move(),
 	  metadata.GetAllocator());
     out = getSchema(true);
   }
@@ -644,29 +644,29 @@ rapidjson::Value* Metadata::initSchema() {
 }
 void Metadata::initMeta() {
   if (!metadata.HasMember("__meta__")) {
-    rapidjson::Value meta(rapidjson::kObjectType);
-    metadata.AddMember(rapidjson::Value("__meta__", 8).Move(),
+    yggdrasil_rapidjson::Value meta(yggdrasil_rapidjson::kObjectType);
+    metadata.AddMember(yggdrasil_rapidjson::Value("__meta__", 8).Move(),
 		       meta, metadata.GetAllocator());
   }
 }
 bool Metadata::addItem(const Metadata& other,
-		       rapidjson::Value* subSchema) {
+		       yggdrasil_rapidjson::Value* subSchema) {
   if (!subSchema)
     subSchema = getSchema(true);
-  const rapidjson::Value* other_schema = other.getSchema(true);
+  const yggdrasil_rapidjson::Value* other_schema = other.getSchema(true);
   if (!other_schema) {
     log_error() << "addItem: item does not have schema" << std::endl;
     return false;
   }
   if (!(subSchema && subSchema->IsObject() &&
 	subSchema->HasMember("type") &&
-	(*subSchema)["type"] == rapidjson::Document::GetArrayString())) {
+	(*subSchema)["type"] == yggdrasil_rapidjson::Document::GetArrayString())) {
     log_error() << "addItem: schema is not for an array." << std::endl;
     return false;
   }
   if (!subSchema->HasMember("items"))
     subSchema->AddMember("items",
-			 rapidjson::Value(rapidjson::kArrayType).Move(),
+			 yggdrasil_rapidjson::Value(yggdrasil_rapidjson::kArrayType).Move(),
 			 GetAllocator());
   if (!(subSchema &&
 	subSchema->HasMember("items") &&
@@ -674,13 +674,13 @@ bool Metadata::addItem(const Metadata& other,
     log_error() << "addItem: schema does not have items array" << std::endl;
     return false;
   }
-  rapidjson::Value item;
+  yggdrasil_rapidjson::Value item;
   item.CopyFrom(*other_schema, GetAllocator(), true);
   (*subSchema)["items"].PushBack(item, GetAllocator());
   return true;
 }
 bool Metadata::addMember(const std::string& name, const Metadata& other,
-			 rapidjson::Value* subSchema) {
+			 yggdrasil_rapidjson::Value* subSchema) {
   if (!subSchema)
     subSchema = getSchema(true);
   if (!other.getSchema(true)) {
@@ -689,13 +689,13 @@ bool Metadata::addMember(const std::string& name, const Metadata& other,
   }
   if (!(subSchema && subSchema->IsObject() &&
 	subSchema->HasMember("type") &&
-	(*subSchema)["type"] == rapidjson::Document::GetObjectString())) {
+	(*subSchema)["type"] == yggdrasil_rapidjson::Document::GetObjectString())) {
     log_error() << "addMember: schema is not for an object." << std::endl;
     return false;
   }
   if (!subSchema->HasMember("properties"))
     subSchema->AddMember("properties",
-			 rapidjson::Value(rapidjson::kObjectType).Move(),
+			 yggdrasil_rapidjson::Value(yggdrasil_rapidjson::kObjectType).Move(),
 			 GetAllocator());
   // if (!(subSchema &&
   // 	subSchema->HasMember("properties") &&
@@ -703,34 +703,34 @@ bool Metadata::addMember(const std::string& name, const Metadata& other,
   //   log_error() << "addMember: schema does not have properties" << std::endl;
   //   return false;
   // }
-  rapidjson::Value item;
+  yggdrasil_rapidjson::Value item;
   item.CopyFrom(*(other.getSchema(true)), GetAllocator(), true);
   if ((*subSchema)["properties"].HasMember(name.c_str())) {
     (*subSchema)["properties"][name.c_str()].Swap(item);
   } else {
     (*subSchema)["properties"].AddMember(
-	 rapidjson::Value(name.c_str(),
-			  (rapidjson::SizeType)(name.size()),
+	 yggdrasil_rapidjson::Value(name.c_str(),
+			  (yggdrasil_rapidjson::SizeType)(name.size()),
 			  GetAllocator()).Move(),
 	 item, GetAllocator());
   }
   return true;
 }
-rapidjson::Value* Metadata::getMeta() {
+yggdrasil_rapidjson::Value* Metadata::getMeta() {
   if (!(metadata.IsObject() && metadata.HasMember("__meta__"))) {
     log_error() << "getMeta: No __meta__ in metadata" << std::endl;
     return nullptr;
   }
   return &(metadata["__meta__"]);
 }
-const rapidjson::Value* Metadata::getMeta() const {
+const yggdrasil_rapidjson::Value* Metadata::getMeta() const {
   if (!(metadata.IsObject() && metadata.HasMember("__meta__"))) {
     log_error() << "getMeta: No __meta__ in metadata" << std::endl;
     return nullptr;
   }
   return &(metadata["__meta__"]);
 }
-rapidjson::Value* Metadata::getSchema(bool required) {
+yggdrasil_rapidjson::Value* Metadata::getSchema(bool required) {
   if (metadata.HasMember("serializer") &&
       metadata["serializer"].IsObject() &&
       metadata["serializer"].HasMember("datatype") &&
@@ -742,7 +742,7 @@ rapidjson::Value* Metadata::getSchema(bool required) {
     return nullptr;
   }
 }
-const rapidjson::Value* Metadata::getSchema(bool required) const {
+const yggdrasil_rapidjson::Value* Metadata::getSchema(bool required) const {
   if (metadata.HasMember("serializer") &&
       metadata["serializer"].IsObject() &&
       metadata["serializer"].HasMember("datatype") &&
@@ -754,8 +754,8 @@ const rapidjson::Value* Metadata::getSchema(bool required) const {
     return nullptr;
   }
 }
-bool Metadata::SetValue(const std::string& name, rapidjson::Value& x,
-			rapidjson::Value& subSchema) {
+bool Metadata::SetValue(const std::string& name, yggdrasil_rapidjson::Value& x,
+			yggdrasil_rapidjson::Value& subSchema) {
   if (!subSchema.IsObject()) {
     log_error() << "SetValue: subSchema is not an object" << std::endl;
     return false;
@@ -764,8 +764,8 @@ bool Metadata::SetValue(const std::string& name, rapidjson::Value& x,
     subSchema[name.c_str()].Swap(x);
   } else {
     subSchema.AddMember(
-	rapidjson::Value(name.c_str(),
-			 (rapidjson::SizeType)(name.size()),
+	yggdrasil_rapidjson::Value(name.c_str(),
+			 (yggdrasil_rapidjson::SizeType)(name.size()),
 			 GetAllocator()).Move(),
 	x, GetAllocator());
   }
@@ -774,7 +774,7 @@ bool Metadata::SetValue(const std::string& name, rapidjson::Value& x,
 #define GET_VECTOR_METHOD_(type_out, method)				\
   bool Metadata::GetVector ## method(const std::string& name,		\
 				     std::vector<type_out>& xvect,	\
-				     const rapidjson::Value& subSchema) const {	\
+				     const yggdrasil_rapidjson::Value& subSchema) const {	\
     if (!(subSchema.HasMember(name.c_str()))) {				\
       log_error() << "GetVector" << #method << ": No " << name << " information in the schema." << std::endl; \
       return false;							\
@@ -783,7 +783,7 @@ bool Metadata::SetValue(const std::string& name, rapidjson::Value& x,
       log_error() << "GetVector" << #method << ": " << name << " is not " << #type_out << std::endl; \
       return false;							\
     }									\
-    for (rapidjson::SizeType i = 0; i < subSchema[name.c_str()].Size();	i++) { \
+    for (yggdrasil_rapidjson::SizeType i = 0; i < subSchema[name.c_str()].Size();	i++) { \
       if (!(subSchema[name.c_str()][i].Is ## method())) {		\
 	log_error() << "GetVector" << #method << ": element " << i << " in " << name << " is not " << #type_out << std::endl; \
 	return false;							\
@@ -794,13 +794,13 @@ bool Metadata::SetValue(const std::string& name, rapidjson::Value& x,
   }									\
   bool Metadata::GetMetaVector ## method(const std::string& name,		\
 					 std::vector<type_out>& xvect) const { \
-    const rapidjson::Value* subSchema = getMeta();			\
+    const yggdrasil_rapidjson::Value* subSchema = getMeta();			\
     if (!subSchema) return false;					\
     return GetVector ## method(name, xvect, *subSchema);		\
   }									\
   bool Metadata::GetSchemaVector ## method(const std::string& name,	\
 					   std::vector<type_out>& xvect, \
-					   const rapidjson::Value* subSchema \
+					   const yggdrasil_rapidjson::Value* subSchema \
 					   ) const {			\
     if (subSchema == NULL) {						\
       subSchema = getSchema(true);					\
@@ -811,7 +811,7 @@ bool Metadata::SetValue(const std::string& name, rapidjson::Value& x,
 #define GET_METHOD_(type_out, method)					\
   bool Metadata::Get ## method(const std::string& name,			\
 			       type_out& out,				\
-			       const rapidjson::Value& subSchema) const { \
+			       const yggdrasil_rapidjson::Value& subSchema) const { \
     if (!(subSchema.HasMember(name.c_str()))) {				\
       log_error() << "Get" << #method << ": No " << name << " information in the schema." << std::endl; \
       return false;							\
@@ -826,7 +826,7 @@ bool Metadata::SetValue(const std::string& name, rapidjson::Value& x,
   bool Metadata::Get ## method ## Optional(const std::string& name,	\
 					   type_out& out,		\
 					   type_out defV,		\
-					   const rapidjson::Value& subSchema \
+					   const yggdrasil_rapidjson::Value& subSchema \
 					   ) const {			\
     if (!(subSchema.HasMember(name.c_str()))) {				\
       out = defV;							\
@@ -841,7 +841,7 @@ bool Metadata::SetValue(const std::string& name, rapidjson::Value& x,
   }									\
   bool Metadata::GetMeta ## method(const std::string& name,		\
 				   type_out& out) const {		\
-    const rapidjson::Value* subSchema = getMeta();			\
+    const yggdrasil_rapidjson::Value* subSchema = getMeta();			\
     if (!subSchema) return false;					\
     return Get ## method(name, out, *subSchema);			\
   }									\
@@ -852,13 +852,13 @@ bool Metadata::SetValue(const std::string& name, rapidjson::Value& x,
       out = defV;							\
       return true;							\
     }									\
-    const rapidjson::Value* subSchema = getMeta();			\
+    const yggdrasil_rapidjson::Value* subSchema = getMeta();			\
     if (!subSchema) return false;					\
     return Get ## method ## Optional(name, out, defV, *subSchema);	\
   }									\
   bool Metadata::GetSchema ## method(const std::string& name,	\
 				     type_out& out,			\
-				     const rapidjson::Value* subSchema	\
+				     const yggdrasil_rapidjson::Value* subSchema	\
 				     ) const {				\
     if (subSchema == NULL) {						\
       subSchema = getSchema(true);					\
@@ -869,7 +869,7 @@ bool Metadata::SetValue(const std::string& name, rapidjson::Value& x,
   bool Metadata::GetSchema ## method ## Optional(const std::string& name, \
 						 type_out& out,		\
 						 type_out defV,		\
-						 const rapidjson::Value* subSchema) const { \
+						 const yggdrasil_rapidjson::Value* subSchema) const { \
     if (subSchema == NULL) {						\
       subSchema = getSchema();						\
       if (subSchema == NULL) {						\
@@ -883,20 +883,20 @@ bool Metadata::SetValue(const std::string& name, rapidjson::Value& x,
 #define SET_VECTOR_METHOD_(type_in, method, setargs)			\
   bool Metadata::SetVector ## method(const std::string& name,		\
 				     const std::vector<type_in>& xvect,	\
-				     rapidjson::Value& subSchema) {	\
-    rapidjson::Value xvect_val(rapidjson::kArrayType);			\
+				     yggdrasil_rapidjson::Value& subSchema) {	\
+    yggdrasil_rapidjson::Value xvect_val(yggdrasil_rapidjson::kArrayType);			\
     for (typename std::vector<type_in>::const_iterator it = xvect.cbegin(); \
 	 it != xvect.cend(); it++) {					\
       const type_in& x = *it;						\
-      rapidjson::Value x_val setargs;					\
+      yggdrasil_rapidjson::Value x_val setargs;					\
       xvect_val.PushBack(x_val, metadata.GetAllocator());		\
     }									\
     if (subSchema.HasMember(name.c_str())) {				\
       subSchema[name.c_str()].Swap(xvect_val);				\
     } else {								\
       subSchema.AddMember(						\
-	rapidjson::Value(name.c_str(),		\
-			 (rapidjson::SizeType)(name.size()),		\
+	yggdrasil_rapidjson::Value(name.c_str(),		\
+			 (yggdrasil_rapidjson::SizeType)(name.size()),		\
 			 metadata.GetAllocator()).Move(),		\
 	xvect_val, metadata.GetAllocator());				\
     }									\
@@ -904,13 +904,13 @@ bool Metadata::SetValue(const std::string& name, rapidjson::Value& x,
     }									\
   bool Metadata::SetMetaVector ## method(const std::string& name,	\
 					 const std::vector<type_in>& xvect) { \
-    rapidjson::Value* subSchema = getMeta();				\
+    yggdrasil_rapidjson::Value* subSchema = getMeta();				\
     if (!subSchema) return false;					\
     return SetVector ## method(name, xvect, *subSchema);		\
   }									\
   bool Metadata::SetSchemaVector ## method(const std::string& name,	\
 					   const std::vector<type_in>& xvect, \
-					   rapidjson::Value* subSchema) { \
+					   yggdrasil_rapidjson::Value* subSchema) { \
     if (subSchema == NULL) {						\
       subSchema = getSchema(true);					\
       if (!subSchema) return false;					\
@@ -919,26 +919,26 @@ bool Metadata::SetValue(const std::string& name, rapidjson::Value& x,
   }
 #define SET_METHOD_(type_in, method, setargs)				\
   bool Metadata::Set ## method(const std::string& name, type_in x,	\
-			       rapidjson::Value& subSchema) {		\
-    rapidjson::Value x_val setargs;					\
+			       yggdrasil_rapidjson::Value& subSchema) {		\
+    yggdrasil_rapidjson::Value x_val setargs;					\
     if (subSchema.HasMember(name.c_str())) {				\
       subSchema[name.c_str()].Swap(x_val);				\
     } else {								\
       subSchema.AddMember(						\
-	rapidjson::Value(name.c_str(),		\
-			 (rapidjson::SizeType)(name.size()),		\
+	yggdrasil_rapidjson::Value(name.c_str(),		\
+			 (yggdrasil_rapidjson::SizeType)(name.size()),		\
 			 metadata.GetAllocator()).Move(),		\
 	x_val, metadata.GetAllocator());				\
     }									\
     return true;							\
   }									\
   bool Metadata::SetMeta ## method(const std::string& name, type_in x) { \
-    rapidjson::Value* subSchema = getMeta();				\
+    yggdrasil_rapidjson::Value* subSchema = getMeta();				\
     if (!subSchema) return false;					\
     return Set ## method(name, x, *subSchema);				\
   }									\
   bool Metadata::SetSchema ## method(const std::string& name, type_in x, \
-				     rapidjson::Value* subSchema) {	\
+				     yggdrasil_rapidjson::Value* subSchema) {	\
     if (subSchema == NULL) {						\
       subSchema = getSchema(true);					\
       if (!subSchema) return false;					\
@@ -954,7 +954,7 @@ GET_SET_METHOD_(int, int, int, Int, (x));
 GET_SET_METHOD_(uint64_t, uint64_t, uint64_t, Uint, (x));
 GET_SET_METHOD_(bool, bool, bool, Bool, (x));
 GET_SET_METHOD_(const std::string&, const char*, std::string, String,
-		(x.c_str(), (rapidjson::SizeType)(x.size()),
+		(x.c_str(), (yggdrasil_rapidjson::SizeType)(x.size()),
 		 metadata.GetAllocator()));
 GET_METHOD_(unsigned, Uint);
 GET_METHOD_(int32_t, Uint);
@@ -964,13 +964,13 @@ GET_METHOD_(std::string, String);
 #undef SET_METHOD_
 #undef SET_VECTOR_METHOD_
 #undef GET_VECTOR_METHOD_
-bool Metadata::SetMetaValue(const std::string& name, rapidjson::Value& x) {
-  rapidjson::Value* subSchema = getMeta();
+bool Metadata::SetMetaValue(const std::string& name, yggdrasil_rapidjson::Value& x) {
+  yggdrasil_rapidjson::Value* subSchema = getMeta();
   if (!subSchema) return false;
   return SetValue(name, x, *subSchema);
 }
-bool Metadata::SetSchemaValue(const std::string& name, rapidjson::Value& x,
-			      rapidjson::Value* subSchema) {
+bool Metadata::SetSchemaValue(const std::string& name, yggdrasil_rapidjson::Value& x,
+			      yggdrasil_rapidjson::Value* subSchema) {
   if (subSchema == NULL) {
     subSchema = getSchema(true);
     if (!subSchema) return false;
@@ -979,12 +979,12 @@ bool Metadata::SetSchemaValue(const std::string& name, rapidjson::Value& x,
 }
 bool Metadata::SetSchemaMetadata(const std::string& name,
 				 const Metadata& other) {
-  const rapidjson::Value* other_schema = other.getSchema(true);
+  const yggdrasil_rapidjson::Value* other_schema = other.getSchema(true);
   if (!other_schema) {
     log_error() << "SetSchemaMetadata: Value has no datatype" << std::endl;
     return false;
   }
-  rapidjson::Value x;
+  yggdrasil_rapidjson::Value x;
   x.CopyFrom(*other_schema, GetAllocator(), true);
   return SetSchemaValue(name, x);
 }
@@ -1010,7 +1010,7 @@ bool Metadata::checkFilter() {
   skip_last = false;
   return out;
 }
-bool Metadata::filter(const rapidjson::Document& msg) {
+bool Metadata::filter(const yggdrasil_rapidjson::Document& msg) {
   skip_last = false;
   for (std::vector<FilterBase*>::iterator it = filters.begin();
        it != filters.end(); it++) {
@@ -1021,7 +1021,7 @@ bool Metadata::filter(const rapidjson::Document& msg) {
   }
   return skip_last;
 }
-bool Metadata::transform(rapidjson::Document& msg) {
+bool Metadata::transform(yggdrasil_rapidjson::Document& msg) {
   for (std::vector<TransformBase*>::iterator it = transforms.begin();
        it != transforms.end(); it++) {
     if (!(*it)->operator()(msg))
@@ -1029,10 +1029,10 @@ bool Metadata::transform(rapidjson::Document& msg) {
   }
   return true;
 }
-int Metadata::deserialize_args(const rapidjson::Document& data,
-			       rapidjson::VarArgList& ap) {
+int Metadata::deserialize_args(const yggdrasil_rapidjson::Document& data,
+			       yggdrasil_rapidjson::VarArgList& ap) {
   size_t nargs_orig = ap.get_nargs();
-  rapidjson::Value* schema = getSchema(true);
+  yggdrasil_rapidjson::Value* schema = getSchema(true);
   log_debug() << "deserialize_args: data = " << data <<
     ", schema = " << *schema << std::endl;
   if (!data.SetVarArgs(*schema, ap)) {
@@ -1041,7 +1041,7 @@ int Metadata::deserialize_args(const rapidjson::Document& data,
   }
   return (int)(nargs_orig - ap.get_nargs());
 }
-int Metadata::deserialize_updates(rapidjson::Document& d) {
+int Metadata::deserialize_updates(yggdrasil_rapidjson::Document& d) {
   bool has_raw_schema = (raw_schema != NULL);
   if (transforms.size() > 0) {
     log_debug() << "deserialize: Before transformations " << d << std::endl;
@@ -1073,8 +1073,8 @@ int Metadata::deserialize_updates(rapidjson::Document& d) {
       return -1;           // GCOV_EXCL_LINE
     }
   } else {
-    rapidjson::StringBuffer sb;
-    rapidjson::Value* schema = getSchema(true);
+    yggdrasil_rapidjson::StringBuffer sb;
+    yggdrasil_rapidjson::Value* schema = getSchema(true);
     if (!d.Normalize(*schema, &sb)) {
       log_error() <<
 	"deserialize: Error normalizing document:" <<
@@ -1097,14 +1097,14 @@ int Metadata::deserialize_updates(rapidjson::Document& d) {
   }
   return 1;
 }
-int Metadata::deserialize(const char* buf, rapidjson::Document& d,
+int Metadata::deserialize(const char* buf, yggdrasil_rapidjson::Document& d,
 			  bool temporary) {
   // Order is: deserialize, set pre-transform schema, transform data,
   //   set schema/normalize data, filter
-  rapidjson::StringStream s(buf);
+  yggdrasil_rapidjson::StringStream s(buf);
   d.ParseStream(s);
   if (d.HasParseError()) {
-    log_error() << "deserialize: Error parsing JSON at " << d.GetErrorOffset() << ": " << rapidjson::GetParseError_En(d.GetParseError()) << std::endl;
+    log_error() << "deserialize: Error parsing JSON at " << d.GetErrorOffset() << ": " << yggdrasil_rapidjson::GetParseError_En(d.GetParseError()) << std::endl;
     return -1;
   }
   if (!temporary) {
@@ -1113,7 +1113,7 @@ int Metadata::deserialize(const char* buf, rapidjson::Document& d,
   return 1;
 }
 int Metadata::deserialize(const char* buf, size_t nargs, int allow_realloc, ...) {
-  rapidjson::VarArgList va(nargs, allow_realloc);
+  yggdrasil_rapidjson::VarArgList va(nargs, allow_realloc);
   va_start(va.va, allow_realloc);
   int out = deserialize(buf, va);
   if (out >= 0 && va.get_nargs() != 0) {
@@ -1123,13 +1123,13 @@ int Metadata::deserialize(const char* buf, size_t nargs, int allow_realloc, ...)
   }
   return out;
 }
-int Metadata::deserialize(const char* buf, rapidjson::VarArgList& ap) {
+int Metadata::deserialize(const char* buf, yggdrasil_rapidjson::VarArgList& ap) {
   size_t nargs_orig = ap.get_nargs();
-  rapidjson::Document d;
+  yggdrasil_rapidjson::Document d;
   int ret = deserialize(buf, d);
   if (ret <= 0)
     return ret;
-  rapidjson::Value* schema = getSchema(true);
+  yggdrasil_rapidjson::Value* schema = getSchema(true);
   log_debug() << "deserialize: before SetVarArgs: " << *schema << std::endl;
   if (!d.SetVarArgs(*schema, ap)) {
     log_error() << "deserialize: Error setting arguments from JSON document" << std::endl;
@@ -1137,10 +1137,10 @@ int Metadata::deserialize(const char* buf, rapidjson::VarArgList& ap) {
   }
   return (int)(nargs_orig - ap.get_nargs());
 }
-int Metadata::serialize_args(rapidjson::Document& data,
-			     rapidjson::VarArgList& ap) {
+int Metadata::serialize_args(yggdrasil_rapidjson::Document& data,
+			     yggdrasil_rapidjson::VarArgList& ap) {
   Metadata tmp;
-  rapidjson::Value* s = getSchema();
+  yggdrasil_rapidjson::Value* s = getSchema();
   if (!hasType()) {
     if (isGeneric()) {
       tmp.fromType("any", true);
@@ -1157,15 +1157,15 @@ int Metadata::serialize_args(rapidjson::Document& data,
   log_debug() << "serialize_args: " << data << std::endl;
   return 1;
 }
-int Metadata::serialize_updates(rapidjson::Document& d) {
+int Metadata::serialize_updates(yggdrasil_rapidjson::Document& d) {
   int hasT = hasType();
   if (!hasT) {
     if (!fromData(d)) {
       return -1;
     }
   } else {
-    rapidjson::StringBuffer sb;
-    rapidjson::Value* schema = getSchema(true);
+    yggdrasil_rapidjson::StringBuffer sb;
+    yggdrasil_rapidjson::Value* schema = getSchema(true);
     if (!d.Normalize(*schema, &sb)) {
       log_error() << "serialize: Error normalizing document:" <<
 	std::endl << sb.GetString() <<
@@ -1207,7 +1207,7 @@ int Metadata::serialize_updates(rapidjson::Document& d) {
   return 1;
 }
 int Metadata::serialize(char **buf, size_t *buf_siz,
-			rapidjson::Document& d,
+			yggdrasil_rapidjson::Document& d,
 			bool temporary) {
   // Order is: set schema/normalize data, transform data,
   //   set post-transform schema, filter, serialize
@@ -1216,8 +1216,8 @@ int Metadata::serialize(char **buf, size_t *buf_siz,
     if (iout <= 0)
       return iout;
   }
-  rapidjson::StringBuffer buffer;
-  rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+  yggdrasil_rapidjson::StringBuffer buffer;
+  yggdrasil_rapidjson::Writer<yggdrasil_rapidjson::StringBuffer> writer(buffer);
   d.Accept(writer);
   if ((size_t)(buffer.GetLength() + 1) > buf_siz[0]) {
     char* buf_t = nullptr;
@@ -1239,7 +1239,7 @@ int Metadata::serialize(char **buf, size_t *buf_siz,
   return static_cast<int>(buffer.GetLength());
 }
 int Metadata::serialize(char **buf, size_t *buf_siz, size_t nargs, ...) {
-  rapidjson::VarArgList va(nargs);
+  yggdrasil_rapidjson::VarArgList va(nargs);
   va_start(va.va, nargs);
   int out = serialize(buf, buf_siz, va);
   if (out >= 0 && va.get_nargs() != 0) {
@@ -1249,8 +1249,8 @@ int Metadata::serialize(char **buf, size_t *buf_siz, size_t nargs, ...) {
   return out;
 }
 int Metadata::serialize(char **buf, size_t *buf_siz,
-			rapidjson::VarArgList& ap) {
-  rapidjson::Document d;
+			yggdrasil_rapidjson::VarArgList& ap) {
+  yggdrasil_rapidjson::Document d;
   if (serialize_args(d, ap) < 0)
     return -1;
   return serialize(buf, buf_siz, d);
@@ -1266,10 +1266,10 @@ bool Metadata::set_field_names(const std::vector<std::string>& x,
       metadata["serializer"].HasMember("field_names"))
     return true;
   if (hasType() &&
-      (*getSchema(true))["type"] == rapidjson::Value::GetArrayString() &&
+      (*getSchema(true))["type"] == yggdrasil_rapidjson::Value::GetArrayString() &&
       (*getSchema(true)).HasMember("items") &&
       (*getSchema(true))["items"].IsArray()) {
-    rapidjson::Value& items = (*getSchema(true))["items"];
+    yggdrasil_rapidjson::Value& items = (*getSchema(true))["items"];
     if (x.size() != static_cast<size_t>(items.Size())) {
       log_error() << "set_field_names: Number of field_names (" <<
 	x.size() << ") does not match the number of format " <<
@@ -1279,14 +1279,14 @@ bool Metadata::set_field_names(const std::vector<std::string>& x,
     }
     for (size_t i = 0; i < x.size(); i++) {
       if (!SetString("title", x[i],
-		     items[static_cast<rapidjson::SizeType>(i)]))
+		     items[static_cast<yggdrasil_rapidjson::SizeType>(i)]))
 	return false; // GCOV_EXCL_LINE
     }
   }
   if (!metadata.HasMember("serializer"))
     metadata.AddMember(
-	  rapidjson::Value("serializer", 10).Move(),
-	  rapidjson::Value(rapidjson::kObjectType).Move(),
+	  yggdrasil_rapidjson::Value("serializer", 10).Move(),
+	  yggdrasil_rapidjson::Value(yggdrasil_rapidjson::kObjectType).Move(),
 	  metadata.GetAllocator());
   if (!SetVectorString("field_names", x, metadata["serializer"]))
     return false; // GCOV_EXCL_LINE
@@ -1303,10 +1303,10 @@ bool Metadata::set_field_units(const std::vector<std::string>& x,
       metadata["serializer"].HasMember("field_units"))
     return true;
   if (hasType() &&
-      (*getSchema(true))["type"] == rapidjson::Value::GetArrayString() &&
+      (*getSchema(true))["type"] == yggdrasil_rapidjson::Value::GetArrayString() &&
       (*getSchema(true)).HasMember("items") &&
       (*getSchema(true))["items"].IsArray()) {
-    rapidjson::Value& items = (*getSchema(true))["items"];
+    yggdrasil_rapidjson::Value& items = (*getSchema(true))["items"];
     if (x.size() != static_cast<size_t>(items.Size())) {
       log_error() << "set_field_units: Number of field_units (" <<
 	x.size() << ") does not match the number of format " <<
@@ -1316,14 +1316,14 @@ bool Metadata::set_field_units(const std::vector<std::string>& x,
     }
     for (size_t i = 0; i < x.size(); i++) {
       if (!SetString("units", x[i],
-		     items[static_cast<rapidjson::SizeType>(i)]))
+		     items[static_cast<yggdrasil_rapidjson::SizeType>(i)]))
 	return false; // GCOV_EXCL_LINE
     }
   }
   if (!metadata.HasMember("serializer"))
     metadata.AddMember(
-	  rapidjson::Value("serializer", 10).Move(),
-	  rapidjson::Value(rapidjson::kObjectType).Move(),
+	  yggdrasil_rapidjson::Value("serializer", 10).Move(),
+	  yggdrasil_rapidjson::Value(yggdrasil_rapidjson::kObjectType).Move(),
 	  metadata.GetAllocator());
   if (!SetVectorString("field_units", x, metadata["serializer"]))
     return false; // GCOV_EXCL_LINE
@@ -1337,11 +1337,11 @@ bool Metadata::get_field_names(std::vector<std::string>& out) {
     return GetVectorString("field_names", out, metadata["serializer"]);
   }
   if (hasType() &&
-      (*getSchema(true))["type"] == rapidjson::Value::GetArrayString() &&
+      (*getSchema(true))["type"] == yggdrasil_rapidjson::Value::GetArrayString() &&
       (*getSchema(true)).HasMember("items") &&
       (*getSchema(true))["items"].IsArray()) {
-    rapidjson::Value& items = (*getSchema(true))["items"];
-    for (rapidjson::SizeType i = 0; i < items.Size(); i++) {
+    yggdrasil_rapidjson::Value& items = (*getSchema(true))["items"];
+    for (yggdrasil_rapidjson::SizeType i = 0; i < items.Size(); i++) {
       if (!(items[i].HasMember("title") && items[i]["title"].IsString())) {
 	out.clear();
 	return true;
@@ -1360,11 +1360,11 @@ bool Metadata::get_field_units(std::vector<std::string>& out) {
     return GetVectorString("field_units", out, metadata["serializer"]);
   }
   if (hasType() &&
-      (*getSchema(true))["type"] == rapidjson::Value::GetArrayString() &&
+      (*getSchema(true))["type"] == yggdrasil_rapidjson::Value::GetArrayString() &&
       (*getSchema(true)).HasMember("items") &&
       (*getSchema(true))["items"].IsArray()) {
-    rapidjson::Value& items = (*getSchema(true))["items"];
-    for (rapidjson::SizeType i = 0; i < items.Size(); i++) {
+    yggdrasil_rapidjson::Value& items = (*getSchema(true))["items"];
+    for (yggdrasil_rapidjson::SizeType i = 0; i < items.Size(); i++) {
       if (!(items[i].HasMember("units") && items[i]["units"].IsString())) {
 	out.clear();
 	return true;
@@ -1395,7 +1395,7 @@ Header::Header(bool own_data) :
 }
 Header::Header(const char* buf, const size_t &len,
 	       YggInterface::communicator::Comm_t* comm,
-	       const rapidjson::Document* doc0) :
+	       const yggdrasil_rapidjson::Document* doc0) :
   Header() {
   if (doc0)
     setDoc(*doc0);
@@ -1418,7 +1418,7 @@ Header::Header(char*& buf, const size_t &len, bool allow_realloc) :
 Header::~Header() {
   reset();
 }
-#if RAPIDJSON_HAS_CXX11_RVALUE_REFS
+#if YGGDRASIL_RAPIDJSON_HAS_CXX11_RVALUE_REFS
 Header::Header(Header&& rhs) noexcept :
   Metadata(std::forward<Metadata>(rhs)),
   doc(), data_(nullptr), data(nullptr),
@@ -1431,7 +1431,7 @@ Header::Header(Header&& rhs) noexcept :
 Header& Header::operator=(Header&& rhs) noexcept {
   return *this = rhs.Move();
 }
-#endif // RAPIDJSON_HAS_CXX11_RVALUE_REFS
+#endif // YGGDRASIL_RAPIDJSON_HAS_CXX11_RVALUE_REFS
 Header& Header::operator=(Header& rhs) {
   if (data && !(flags & HEAD_FLAG_OWNSDATA))
     log_debug() << "operator=: Supplied buffer will be displaced by move" << std::endl;
@@ -1577,7 +1577,7 @@ bool Header::CopyFrom(const Header& rhs) {
   return RawAssign(rhs, true);
 }
 
-void Header::setDoc(const rapidjson::Document& x) {
+void Header::setDoc(const yggdrasil_rapidjson::Document& x) {
   flags |= HEAD_FLAG_DOC_SET;
   doc.CopyFrom(x, doc.GetAllocator(), true);
 }
@@ -1624,7 +1624,7 @@ bool Header::for_send(Metadata* metadata0, const char* msg,
   }
   if (metadata0 != nullptr && !(flags & (HEAD_FLAG_CLIENT_SIGNON |
 					 HEAD_FLAG_SERVER_SIGNON))) {
-    rapidjson::Value* metadata0_schema = metadata0->getSchema();
+    yggdrasil_rapidjson::Value* metadata0_schema = metadata0->getSchema();
     if (metadata0->raw_schema && metadata0_schema)
       metadata0_schema->Swap(*(metadata0->raw_schema->getSchema(true)));
     bool out = fromMetadata(*metadata0);
@@ -1723,13 +1723,13 @@ long Header::on_recv(const char* msg, const size_t& msg_siz) {
   return ret;
 }
 
-bool Header::formatBuffer(rapidjson::StringBuffer& buffer, bool metaOnly) {
+bool Header::formatBuffer(yggdrasil_rapidjson::StringBuffer& buffer, bool metaOnly) {
   buffer.Clear();
   if (empty()) {
     log_debug() << "formatBuffer: Empty metadata" << std::endl;
     return true;
   }
-  rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+  yggdrasil_rapidjson::Writer<yggdrasil_rapidjson::StringBuffer> writer(buffer);
   bool in_data = false;
   if (!GetMetaBoolOptional("in_data", in_data, false))
     return false; // GCOV_EXCL_LINE
@@ -1747,14 +1747,14 @@ bool Header::formatBuffer(rapidjson::StringBuffer& buffer, bool metaOnly) {
     }
     if (in_data) {
       bool hasMeta = metadata.HasMember("__meta__");
-      rapidjson::Value tmp;
+      yggdrasil_rapidjson::Value tmp;
       if (hasMeta) {
 	tmp.Swap(metadata["__meta__"]);
 	metadata.RemoveMember("__meta__");
       }
       metadata.Accept(writer);
       if (hasMeta) {
-	metadata.AddMember(rapidjson::Value("__meta__", 8).Move(),
+	metadata.AddMember(yggdrasil_rapidjson::Value("__meta__", 8).Move(),
 			   tmp, GetAllocator());
       }
     } else {
@@ -1810,7 +1810,7 @@ int Header::format() {
 			    HEAD_FLAG_CLIENT_SIGNON |
 			    HEAD_FLAG_SERVER_SIGNON));
   size_raw = size_data;
-  rapidjson::StringBuffer buffer_body;
+  yggdrasil_rapidjson::StringBuffer buffer_body;
   std::string sep(MSG_HEAD_SEP);
   if (flags & HEAD_META_IN_DATA) {
     if (!SetMetaBool("in_data", true))
@@ -1821,7 +1821,7 @@ int Header::format() {
   }
   if (!SetMetaUint("size", size_data))
     return -1; // GCOV_EXCL_LINE
-  rapidjson::StringBuffer buffer;
+  yggdrasil_rapidjson::StringBuffer buffer;
   if (!formatBuffer(buffer, metaOnly))
     return -1; // GCOV_EXCL_LINE
   size_head = static_cast<size_t>(buffer.GetLength()) + 2 * sep.size();
@@ -1887,7 +1887,7 @@ bool Header::finalize_recv() {
   log_debug() << "finalize_recv: begin" << std::endl;
   size_t sind, eind;
   if (find_match_c(MSG_HEAD_SEP, *data, &sind, &eind) > 0) {
-    rapidjson::Document type_doc;
+    yggdrasil_rapidjson::Document type_doc;
     type_doc.Parse(*data, sind);
     if (type_doc.HasParseError()) {
       log_error() << "finalize_recv: Error parsing datatype in data" << std::endl;

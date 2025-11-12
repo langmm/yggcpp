@@ -3,7 +3,7 @@
 #include "communicators/comms.hpp"
 #include "utils/logging.hpp"
 #include "utils/tools.hpp"
-#include "utils/rapidjson_wrapper.hpp"
+#include "utils/yggdrasil_rapidjson_wrapper.hpp"
 
 extern "C" {
 
@@ -274,7 +274,7 @@ int pcommSend(const comm_t comm, const size_t nargs,
   _BEGIN_CPP {
     if (!comm.comm)
       ygglog_throw_error("pcommSend: Comm is not initialized");
-    rapidjson::VarArgList ap(nargs, ptrs, false, for_fortran);
+    yggdrasil_rapidjson::VarArgList ap(nargs, ptrs, false, for_fortran);
     YggLogDebug << "pcommSend: nargs = " << nargs << std::endl;
     int ret = static_cast<YggInterface::communicator::Comm_t*>(comm.comm)->vSend(ap);
     YGGC_END_VAR_ARGS(ap);
@@ -286,7 +286,7 @@ long pcommRecv(comm_t comm, const int allow_realloc, const size_t nargs,
   _BEGIN_CPP {
     if (!comm.comm)
       ygglog_throw_error("pcommRecv: Comm is not initialized");
-    rapidjson::VarArgList ap(nargs, ptrs, allow_realloc, for_fortran);
+    yggdrasil_rapidjson::VarArgList ap(nargs, ptrs, allow_realloc, for_fortran);
     YggLogDebug << "pcommRecv: nargs = " << nargs << std::endl;
     long ret = static_cast<YggInterface::communicator::Comm_t*>(comm.comm)->vRecv(ap);
     YGGC_END_VAR_ARGS(ap);
@@ -298,7 +298,7 @@ long pcommCall(comm_t comm, const int allow_realloc, const size_t nargs,
   _BEGIN_CPP {
     if (!comm.comm)
       ygglog_throw_error("pcommCall: Comm is not initialized");
-    rapidjson::VarArgList ap(nargs, ptrs, allow_realloc, for_fortran);
+    yggdrasil_rapidjson::VarArgList ap(nargs, ptrs, allow_realloc, for_fortran);
     YggLogDebug << "pcommCall: nargs = " << nargs << std::endl;
     long ret = static_cast<YggInterface::communicator::Comm_t*>(comm.comm)->vCall(ap);
     YGGC_END_VAR_ARGS(ap);

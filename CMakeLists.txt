@@ -15,9 +15,9 @@ else()
     PROJECT(YggInterface VERSION "${LIB_VERSION_STRING}")
 endif()
 
-if (NOT DEFAULT_RAPIDJSON_INCLUDE_DIRS)
+if (NOT DEFAULT_YGGDRASIL_RAPIDJSON_INCLUDE_DIRS)
   cmake_path(APPEND CMAKE_CURRENT_SOURCE_DIR cpp include rapidjson include
-             OUTPUT_VARIABLE DEFAULT_RAPIDJSON_INCLUDE_DIRS)
+             OUTPUT_VARIABLE DEFAULT_YGGDRASIL_RAPIDJSON_INCLUDE_DIRS)
 endif()
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(ygg_options)
@@ -32,8 +32,8 @@ option(YGG_BUILD_TESTS "Build tests" OFF)
 option(YGG_ENABLE_COVERAGE "Enable coverage reporting" OFF)
 option(YGG_BUILD_THIRDPARTY_GTEST "Use gtest installation in 'thirdpart/gtest' by default if available" ON)
 option(YGG_SKIP_VALGRIND_TESTS "Disable valgrind tests" OFF)
-option(WRAP_RAPIDJSON_FOR_DLL "Build yggdrasil using a wrapper for rapidjson to force it into a DLL (enabled automatically when compiling with MSVC" OFF)
-option(GENERATE_RAPIDJSON_WRAPPER "Generate the rapidjson wrapper from the C++ interface" OFF)
+option(WRAP_YGGDRASIL_RAPIDJSON_FOR_DLL "Build yggdrasil using a wrapper for yggdrasil_rapidjson to force it into a DLL (enabled automatically when compiling with MSVC" OFF)
+option(GENERATE_YGGDRASIL_RAPIDJSON_WRAPPER "Generate the yggdrasil_rapidjson wrapper from the C++ interface" OFF)
 option(GENERATE_INTERFACE "Generate the interface" OFF)
 option(YGG_LINK_Python_TO_CXX "Link the Python extension to the C++ wrapper as a library" OFF)
 option(YGG_BUILD_DOCS "Build documentation (requires Doxygen)" OFF)
@@ -54,19 +54,19 @@ endif("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
 
 if(WIN32)
   if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    set(WRAP_RAPIDJSON_FOR_DLL ON)
+    set(WRAP_YGGDRASIL_RAPIDJSON_FOR_DLL ON)
   # else()
   #     set(YGG_LINK_Python_TO_CXX ON)
   endif()
 endif()
 
-if(WRAP_RAPIDJSON_FOR_DLL)
+if(WRAP_YGGDRASIL_RAPIDJSON_FOR_DLL)
     set(YGG_LINK_Python_TO_CXX OFF)
-    list(APPEND YGG_INSTALL_DEFS -DWRAP_RAPIDJSON_FOR_DLL)
+    list(APPEND YGG_INSTALL_DEFS -DWRAP_YGGDRASIL_RAPIDJSON_FOR_DLL)
 endif()
 
 list(APPEND YGG_INSTALL_DEFS
-     -DRAPIDJSON_YGGDRASIL -DRAPIDJSON_HAS_STDSTRING
+     -DYGGDRASIL_RAPIDJSON_HAS_STDSTRING
      -DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
      -D_USE_MATH_DEFINES)
 
@@ -420,28 +420,28 @@ python_code_generation(
   fortran/YggInterface_enums.F90
 )
 
-##############################
-# Generate rapidjson wrapper #
-##############################
+########################################
+# Generate yggdrasil_rapidjson wrapper #
+########################################
 
 set(GENERATE_RJWRAPPER_ARGS)
-# if(WRAP_RAPIDJSON_FOR_DLL)
-#   list(APPEND GENERATE_RJWRAPPER_ARGS --wrap-rapidjson)
+# if(WRAP_YGGDRASIL_RAPIDJSON_FOR_DLL)
+#   list(APPEND GENERATE_RJWRAPPER_ARGS --wrap-yggdrasil-rapidjson)
 # endif()
-if(RAPIDJSON_INCLUDE_DIRS)
-  list(APPEND GENERATE_RJWRAPPER_ARGS --rapidjson-include-dirs=${RAPIDJSON_INCLUDE_DIRS})
+if(YGGDRASIL_RAPIDJSON_INCLUDE_DIRS)
+  list(APPEND GENERATE_RJWRAPPER_ARGS --yggdrasil-rapidjson-include-dirs=${YGGDRASIL_RAPIDJSON_INCLUDE_DIRS})
 endif()
-if(GENERATE_RAPIDJSON_WRAPPER)
+if(GENERATE_YGGDRASIL_RAPIDJSON_WRAPPER)
   python_code_generation(
     rjwrapper utils/generate_generic
     ENTRY_POINT -m generate_generic.runner
     ARGUMENTS --language=rjwrapper ${GENERATE_RJWRAPPER_ARGS}
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/utils
     SOURCES
-    ${RAPIDJSON_INCLUDE_DIRS}/rapidjson/document.h
+    ${YGGDRASIL_RAPIDJSON_INCLUDE_DIRS}/yggdrasil_rapidjson/document.h
     BYPRODUCTS
-    ${CMAKE_SOURCE_DIR}/cpp/include/utils/rapidjson_wrapper2.hpp
-    ${CMAKE_SOURCE_DIR}/cpp/src/utils/rapidjson_wrapper2.cpp
+    ${CMAKE_SOURCE_DIR}/cpp/include/utils/yggdrasil_rapidjson_wrapper2.hpp
+    ${CMAKE_SOURCE_DIR}/cpp/src/utils/yggdrasil_rapidjson_wrapper2.cpp
   )
 endif()
 

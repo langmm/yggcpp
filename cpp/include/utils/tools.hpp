@@ -99,13 +99,13 @@
   }
 
 #define YGGCPP_BEGIN_VAR_ARGS(name, first_arg, nargs, realloc)	\
-  rapidjson::VarArgList name(nargs, realloc);			\
+  yggdrasil_rapidjson::VarArgList name(nargs, realloc);			\
   va_start(name.va, first_arg)
 #define YGGCPP_END_VAR_ARGS(name)		\
   if (name.get_nargs() != 0)			\
     YggLogError << name.get_nargs() << " arguments unused" << std::endl
 #define YGGC_BEGIN_VAR_ARGS(name, first_arg, nargs, realloc)	\
-  rapidjson::VarArgList name(&nargs, realloc, true);		\
+  yggdrasil_rapidjson::VarArgList name(&nargs, realloc, true);		\
   va_start(name.va, first_arg)
 #define YGGC_END_VAR_ARGS(name)		\
   if (name.get_nargs() != 0)			\

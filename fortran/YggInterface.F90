@@ -3054,7 +3054,7 @@ contains
   end function init_generic_map
   !> @brief Initialize a generic object from a JSON string.
   !> @param[in] json JSON encoded string.
-  !> @returns New generic object structure wrapping a rapidjson::Document
+  !> @returns New generic object structure wrapping a yggdrasil_rapidjson::Document
   !>   instance.
   function init_generic_json(json) &
        result(out)
@@ -3068,7 +3068,7 @@ contains
   end function init_generic_json
   !> @brief Initialize a generic object from a JSON string.
   !> @param[in] schema JSON encoded schema describing object to generate.
-  !> @returns New generic object structure wrapping a rapidjson::Document
+  !> @returns New generic object structure wrapping a yggdrasil_rapidjson::Document
   !>   instance.
   function init_generic_generate(schema) &
        result(out)
@@ -3899,7 +3899,7 @@ contains
     c_use_generic = use_generic
     out = create_dtype_any_c(c_use_generic)
   end function create_dtype_any
-  !> @brief Wrapper for freeing rapidjson::Document class wrapper struct.
+  !> @brief Wrapper for freeing yggdrasil_rapidjson::Document class wrapper struct.
   !> @param[in] dtype Wrapper struct for C++ Metadata.
   !> @returns int 0 if free was successfull, -1 if there was an error.
   function destroy_dtype(dtype) &

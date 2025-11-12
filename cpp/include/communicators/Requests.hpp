@@ -538,7 +538,7 @@ public:
      *   JSON objects.
      * @return true if successful, false otherwise.
      */
-    bool addResponseSchema(const rapidjson::Value& s,
+    bool addResponseSchema(const yggdrasil_rapidjson::Value& s,
 			   bool use_generic=false) {
       return response_metadata.fromSchema(s, use_generic);
     }

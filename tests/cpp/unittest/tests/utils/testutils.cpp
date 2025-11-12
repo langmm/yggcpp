@@ -310,14 +310,14 @@ TEST(utils, import_numpy_arrays) {
 
 TEST(utils, FilterBase) {
   FilterBase x;
-  rapidjson::Document doc;
+  yggdrasil_rapidjson::Document doc;
   EXPECT_THROW(x(doc), std::exception);
   EXPECT_THROW(x.copy(), std::exception);
 }
   
 TEST(utils, TransformBase) {
   TransformBase x;
-  rapidjson::Document doc;
+  yggdrasil_rapidjson::Document doc;
   EXPECT_THROW(x(doc), std::exception);
   EXPECT_THROW(x.copy(), std::exception);
 }

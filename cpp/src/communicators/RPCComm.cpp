@@ -70,7 +70,7 @@ bool RPCComm::addResponseSchema(const std::string& s, bool use_generic) {
   }
   return requests.addResponseSchema(s, use_generic);
 }
-bool RPCComm::addResponseSchema(const rapidjson::Value& s,
+bool RPCComm::addResponseSchema(const yggdrasil_rapidjson::Value& s,
 				bool use_generic) {
   if (global_comm) {
     return (dynamic_cast<RPCComm*>(global_comm))->addResponseSchema(s, use_generic);

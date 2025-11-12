@@ -16,9 +16,9 @@ namespace YggInterface {
   namespace communicator {
 
     /** @brief C++ function type using C++ types */
-    typedef std::function<bool(const rapidjson::Document&, rapidjson::Document&)> cxx_function;
+    typedef std::function<bool(const yggdrasil_rapidjson::Document&, yggdrasil_rapidjson::Document&)> cxx_function;
     /** @brief C++ function type using C description */
-    typedef bool cxx_function_alt (const rapidjson::Document&, rapidjson::Document&);
+    typedef bool cxx_function_alt (const yggdrasil_rapidjson::Document&, yggdrasil_rapidjson::Document&);
 
     /**
      * @brief Dynamic library wrapper.
@@ -124,13 +124,13 @@ namespace YggInterface {
        *   copy it directly to the receive backlog.
        * @returns true on success, false otherwise.
        */
-      bool send(const rapidjson::Document& data, bool is_eof=false);
+      bool send(const yggdrasil_rapidjson::Document& data, bool is_eof=false);
       /**
        * @brief Receive a message from the function.
        * @param[in,out] data Document to receive message into.
        * @returns true on success, false otherwise.
        */
-      bool recv(rapidjson::Document& data);
+      bool recv(yggdrasil_rapidjson::Document& data);
       /**
        * @brief Get the number of messages in the receive backlog.
        * @return Number of messages in backlog.
@@ -150,7 +150,7 @@ namespace YggInterface {
     private:
       DynamicLibrary* library; /**< Library containing the function */
       void* func;          /**< Pointer to the function */
-      std::vector<rapidjson::Document> recv_backlog; /**< Backlog of function call results */
+      std::vector<yggdrasil_rapidjson::Document> recv_backlog; /**< Backlog of function call results */
       
       /**
        * Call the wrapped method.
@@ -159,8 +159,8 @@ namespace YggInterface {
        *   be stored.
        * @returns true on success, false otherwise.
        */
-      bool _call(const rapidjson::Document& data_send,
-		 rapidjson::Document& data_recv);
+      bool _call(const yggdrasil_rapidjson::Document& data_send,
+		 yggdrasil_rapidjson::Document& data_recv);
     };
 
     /**

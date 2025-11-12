@@ -95,7 +95,7 @@ while [[ $# -gt 0 ]]; do
 	    shift # past argument with no value
 	    ;;
 	--rj-wrapper )
-	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DWRAP_RAPIDJSON_FOR_DLL=1"
+	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DWRAP_YGGDRASIL_RAPIDJSON_FOR_DLL=1"
 	    shift # past argument with no value
 	    ;;
 	--python-link-cpp )
@@ -111,7 +111,7 @@ while [[ $# -gt 0 ]]; do
 	    shift # past argument with no value
 	    ;;
 	--local-rj )
-	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DRAPIDJSON_INCLUDE_DIRS=/Users/langmm/yggdrasil_rapidjson/include"
+	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYGGDRASIL_RAPIDJSON_INCLUDE_DIRS=/Users/langmm/yggdrasil_rapidjson/include"
 	    shift # past argument with no value
 	    ;;
 	--config )

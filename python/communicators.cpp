@@ -194,7 +194,7 @@ PyObject* commMeta_new(PyTypeObject *type, PyObject* args, PyObject* kwds) {
   s->v = NULL;
   pyComm_t* comm = (pyComm_t*)commPy;
   if (for_datatype < 0) for_datatype = 0;
-  rapidjson::Value* v = NULL;
+  yggdrasil_rapidjson::Value* v = NULL;
   
   if (for_datatype)
     v = comm->comm->getMetadata().getSchema();
@@ -222,7 +222,7 @@ PyObject* commMeta_str(PyObject* self) {
   if (!s->v) {
     return PyObject_Str(Py_None);
   }
-  PyObject* pyVal = ((rapidjson::Value*)(s->v))->GetPythonObjectRaw();
+  PyObject* pyVal = ((yggdrasil_rapidjson::Value*)(s->v))->GetPythonObjectRaw();
   if (pyVal == NULL) {
     // TODO: rapidjson error
     return NULL;
@@ -249,7 +249,7 @@ PyObject* commMeta_repr(PyObject* self) {
 }
 Py_ssize_t commMeta_size(PyObject* self) {
   commMeta* s = (commMeta*)self;
-  rapidjson::Value* v = (rapidjson::Value*)(s->v);
+  yggdrasil_rapidjson::Value* v = (yggdrasil_rapidjson::Value*)(s->v);
   long size = 0;
   if (v->IsArray()) {
     size = static_cast<long>(v->Size());
@@ -263,8 +263,8 @@ Py_ssize_t commMeta_size(PyObject* self) {
 }
 PyObject* commMeta_subscript(PyObject* self, PyObject* key) {
   commMeta* s = (commMeta*)self;
-  rapidjson::Value* v = (rapidjson::Value*)(s->v);
-  rapidjson::Value* vsub = NULL;
+  yggdrasil_rapidjson::Value* v = (yggdrasil_rapidjson::Value*)(s->v);
+  yggdrasil_rapidjson::Value* vsub = NULL;
   PyObject* out = NULL;
   if (v->IsArray()) {
     if (!PyLong_Check(key)) {
@@ -280,7 +280,7 @@ PyObject* commMeta_subscript(PyObject* self, PyObject* key) {
 		   idx, static_cast<long>(v->Size()));
       return NULL;
     }
-    vsub = &v[static_cast<rapidjson::SizeType>(idx)];
+    vsub = &v[static_cast<yggdrasil_rapidjson::SizeType>(idx)];
   } else if (v->IsObject()) {
     if (!PyUnicode_Check(key)) {
       PyErr_SetString(PyExc_TypeError, "Key for object must be a string");
@@ -316,8 +316,8 @@ PyObject* commMeta_subscript(PyObject* self, PyObject* key) {
 int commMeta_subscript_ass(PyObject *self, PyObject *key, PyObject *value) {
   commMeta* s = (commMeta*)self;
   pyComm_t* comm = (pyComm_t*)(s->comm);
-  rapidjson::Value* v = (rapidjson::Value*)(s->v);
-  rapidjson::Value vsub(value, comm->comm->getMetadata().GetAllocator());
+  yggdrasil_rapidjson::Value* v = (yggdrasil_rapidjson::Value*)(s->v);
+  yggdrasil_rapidjson::Value vsub(value, comm->comm->getMetadata().GetAllocator());
   if (v->IsArray()) {
     if (!PyLong_Check(key)) {
       PyErr_SetString(PyExc_TypeError, "Key for array must be an integer");
@@ -332,7 +332,7 @@ int commMeta_subscript_ass(PyObject *self, PyObject *key, PyObject *value) {
 		   idx, static_cast<long>(v->Size()));
       return -1;
     }
-    vsub.Swap(v[static_cast<rapidjson::SizeType>(idx)]);
+    vsub.Swap(v[static_cast<yggdrasil_rapidjson::SizeType>(idx)]);
   } else if (v->IsObject()) {
     if (!PyUnicode_Check(key)) {
       PyErr_SetString(PyExc_TypeError, "Key for object must be a string");
@@ -344,7 +344,7 @@ int commMeta_subscript_ass(PyObject *self, PyObject *key, PyObject *value) {
     if (v->HasMember(keyS)) {
       vsub.Swap(v->FindMember(keyS)->value);
     } else {
-      rapidjson::Value keyJ(keyS,
+      yggdrasil_rapidjson::Value keyJ(keyS,
 			    comm->comm->getMetadata().GetAllocator());
       v->AddMember(keyJ, vsub, comm->comm->getMetadata().GetAllocator());
     }
@@ -357,8 +357,8 @@ int commMeta_subscript_ass(PyObject *self, PyObject *key, PyObject *value) {
 int commMeta_contains(PyObject* self, PyObject* value) {
   commMeta* s = (commMeta*)self;
   pyComm_t* comm = (pyComm_t*)(s->comm);
-  rapidjson::Value* v = (rapidjson::Value*)(s->v);
-  rapidjson::Value vsub(value, comm->comm->getMetadata().GetAllocator());
+  yggdrasil_rapidjson::Value* v = (yggdrasil_rapidjson::Value*)(s->v);
+  yggdrasil_rapidjson::Value vsub(value, comm->comm->getMetadata().GetAllocator());
   if (v->IsArray()) {
     return static_cast<int>(v->Contains(vsub));
   } else if (v->IsObject()) {
@@ -379,7 +379,7 @@ int commMeta_update_raw(PyObject* self, PyObject* dict) {
   if (dict != NULL) {
     commMeta* s = (commMeta*)self;
     pyComm_t* comm = (pyComm_t*)(s->comm);
-    rapidjson::Value* v = (rapidjson::Value*)(s->v);
+    yggdrasil_rapidjson::Value* v = (yggdrasil_rapidjson::Value*)(s->v);
     if (!v->IsObject()) {
       PyErr_SetString(PyExc_TypeError, "rapidjson instance is not an object");
       return -1;
@@ -388,7 +388,7 @@ int commMeta_update_raw(PyObject* self, PyObject* dict) {
       PyErr_SetString(PyExc_TypeError, "Supplied value must be a dictionary");
       return -1;
     }
-    rapidjson::Value vsub;
+    yggdrasil_rapidjson::Value vsub;
     PyObject *key, *value;
     Py_ssize_t pos = 0;
     while (PyDict_Next(dict, &pos, &key, &value)) {
@@ -404,7 +404,7 @@ int commMeta_update_raw(PyObject* self, PyObject* dict) {
       if (v->HasMember(keyS)) {
 	vsub.Swap(v->FindMember(keyS)->value);
       } else {
-	rapidjson::Value keyJ(keyS,
+	yggdrasil_rapidjson::Value keyJ(keyS,
 			      comm->comm->getMetadata().GetAllocator());
 	v->AddMember(keyJ, vsub,
 		     comm->comm->getMetadata().GetAllocator());
@@ -427,7 +427,7 @@ PyObject* commMeta_update(PyObject* self, PyObject* args, PyObject* kwargs) {
 PyObject* commMeta_append(PyObject* self, PyObject* args) {
   commMeta* s = (commMeta*)self;
   pyComm_t* comm = (pyComm_t*)(s->comm);
-  rapidjson::Value* v = (rapidjson::Value*)(s->v);
+  yggdrasil_rapidjson::Value* v = (yggdrasil_rapidjson::Value*)(s->v);
   if (!v->IsArray()) {
     PyErr_SetString(PyExc_TypeError, "rapidjson instance is not an array");
     return NULL;
@@ -436,17 +436,17 @@ PyObject* commMeta_append(PyObject* self, PyObject* args) {
   if (!PyArg_ParseTuple(args, "O", &other)) {
     return NULL;
   }
-  rapidjson::Value vsub(other, comm->comm->getMetadata().GetAllocator());
+  yggdrasil_rapidjson::Value vsub(other, comm->comm->getMetadata().GetAllocator());
   v->PushBack(vsub, comm->comm->getMetadata().GetAllocator());
   Py_RETURN_NONE;
 }
 PyObject* commMeta_richcompare(PyObject *self, PyObject *other, int op) {
   commMeta* s = (commMeta*)self;
-  rapidjson::Value* v = (rapidjson::Value*)(s->v);
+  yggdrasil_rapidjson::Value* v = (yggdrasil_rapidjson::Value*)(s->v);
   PyObject* lhs = v->GetPythonObjectRaw();
   PyObject* rhs = NULL;
   if (PyObject_IsInstance(other, (PyObject*)(&commMetaType))) {
-    rhs = ((rapidjson::Value*)(((commMeta*)other)->v))->GetPythonObjectRaw();
+    rhs = ((yggdrasil_rapidjson::Value*)(((commMeta*)other)->v))->GetPythonObjectRaw();
   } else {
     Py_INCREF(other);
     rhs = other;
@@ -679,10 +679,10 @@ static int _parse_direction(PyObject* dirnPy, int& dirn) {
 			    false, true);
 }
 
-static int _parse_schema(PyObject* schemaPy, rapidjson::Document& schema) {
+static int _parse_schema(PyObject* schemaPy, yggdrasil_rapidjson::Document& schema) {
   if (schemaPy != NULL) {
     if (!schema.SetPythonObjectRaw(schemaPy, schema.GetAllocator())) {
-      PyErr_SetString(PyExc_ValueError, "Error converting schema to rapidjson::Document");
+      PyErr_SetString(PyExc_ValueError, "Error converting schema to yggdrasil_rapidjson::Document");
       return -1;
     }
   }
@@ -808,7 +808,7 @@ static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds) {
     PyObject* filterPy = NULL;
     PyObject* transformPy = NULL;
     int dirn = DIRECTION::SEND;
-    rapidjson::Document datatype, metadata;
+    yggdrasil_rapidjson::Document datatype, metadata;
     int commtype = COMM_TYPE::DEFAULT_COMM;
     long long flags = 0;
     unsigned int ncomm = 0;
@@ -841,7 +841,7 @@ static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds) {
     std::vector<PyObject*> response_filter;
     std::vector<PyObject*> response_transform;
     int response_dirn = DIRECTION::NONE;
-    rapidjson::Document response_datatype, response_metadata;
+    yggdrasil_rapidjson::Document response_datatype, response_metadata;
     int dont_open = 0;
     static char const* kwlist[] = {
       "name",
@@ -1126,7 +1126,7 @@ PyObject* Comm_t_str(PyObject* self) {
 
 PyObject* Comm_t_send(PyObject* self, PyObject* arg) {
     pyComm_t* s = (pyComm_t*)self;
-    rapidjson::Document doc;
+    yggdrasil_rapidjson::Document doc;
     if (PyTuple_Size(arg) == 1) {
       PyObject* arg0 = PyTuple_GetItem(arg, 0);
       if (arg0 == NULL) {
@@ -1148,7 +1148,7 @@ PyObject* Comm_t_send(PyObject* self, PyObject* arg) {
 
 PyObject* Comm_t_recv(PyObject* self, PyObject*) {
     pyComm_t* s = (pyComm_t*)self;
-    rapidjson::Document doc;
+    yggdrasil_rapidjson::Document doc;
     long flag = -1;
     Py_BEGIN_ALLOW_THREADS
     flag = s->comm->recvVar(doc);
@@ -1182,7 +1182,7 @@ PyObject* Comm_t_send_eof(PyObject* self, PyObject*) {
 
 static PyObject* Comm_t_send_dict(PyObject* self, PyObject* arg, PyObject* kwargs) {
   pyComm_t* s = (pyComm_t*)self;
-  rapidjson::Document doc;
+  yggdrasil_rapidjson::Document doc;
   PyObject* key_orderPy = NULL;
   std::vector<std::string> key_order;
   size_t dim = 1;
@@ -1224,7 +1224,7 @@ static PyObject* Comm_t_send_dict(PyObject* self, PyObject* arg, PyObject* kwarg
 
 static PyObject* Comm_t_recv_dict(PyObject* self, PyObject* arg, PyObject* kwargs) {
   pyComm_t* s = (pyComm_t*)self;
-  rapidjson::Document doc;
+  yggdrasil_rapidjson::Document doc;
   PyObject* key_orderPy = NULL;
   std::vector<std::string> key_order;
   size_t dim = 1;
@@ -1262,7 +1262,7 @@ static PyObject* Comm_t_recv_dict(PyObject* self, PyObject* arg, PyObject* kwarg
 
 static PyObject* Comm_t_send_array(PyObject* self, PyObject* arg, PyObject* kwargs) {
   pyComm_t* s = (pyComm_t*)self;
-  rapidjson::Document doc;
+  yggdrasil_rapidjson::Document doc;
   PyObject* key_orderPy = NULL;
   std::vector<std::string> key_order;
   size_t dim = 1;
@@ -1304,7 +1304,7 @@ static PyObject* Comm_t_send_array(PyObject* self, PyObject* arg, PyObject* kwar
 
 static PyObject* Comm_t_recv_array(PyObject* self, PyObject* arg, PyObject* kwargs) {
   pyComm_t* s = (pyComm_t*)self;
-  rapidjson::Document doc;
+  yggdrasil_rapidjson::Document doc;
   PyObject* key_orderPy = NULL;
   std::vector<std::string> key_order;
   size_t dim = 1;
@@ -1342,7 +1342,7 @@ static PyObject* Comm_t_recv_array(PyObject* self, PyObject* arg, PyObject* kwar
 
 static PyObject* Comm_t_call(PyObject* self, PyObject* arg) {
   pyComm_t* s = (pyComm_t*)self;
-  rapidjson::Document doc_send, doc_recv;
+  yggdrasil_rapidjson::Document doc_send, doc_recv;
   if (PyTuple_Size(arg) == 1) {
     PyObject* arg0 = PyTuple_GetItem(arg, 0);
     if (arg0 == NULL) {
@@ -1705,7 +1705,7 @@ int Comm_t_metadata_set(PyObject* self, PyObject* value, void*) {
     PyErr_SetString(PyExc_TypeError, "Metadata must be a dictionary");
     return -1;
   }
-  rapidjson::Document doc;
+  yggdrasil_rapidjson::Document doc;
   doc.SetPythonObjectRaw(value, doc.GetAllocator());
   if (!doc.IsObject()) {
     PyErr_SetString(PyExc_ValueError, "Error converting provided dictionary to a rapidjson Object");
@@ -1749,7 +1749,7 @@ int Comm_t_datatype_set(PyObject* self, PyObject* value, void*) {
     PyErr_SetString(PyExc_TypeError, "Datatype must be a dictionary");
     return -1;
   }
-  rapidjson::Document doc;
+  yggdrasil_rapidjson::Document doc;
   doc.SetPythonObjectRaw(value, doc.GetAllocator());
   if (!doc.IsObject()) {
     PyErr_SetString(PyExc_ValueError, "Error converting provided dictionary to a rapidjson Object");

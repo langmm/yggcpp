@@ -1,15 +1,15 @@
 #include "communicators/comms.hpp"
 #include "utils/tools.hpp"
-#include "utils/rapidjson_wrapper.hpp"
+#include "utils/yggdrasil_rapidjson_wrapper.hpp"
 #include "utils/embedded_python.hpp"
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 int YggInterface::communicator::global_scope_comm = 0;
-#ifdef RAPIDJSON_YGGDRASIL_PYTHON
+#ifdef YGGDRASIL_RAPIDJSON_PYTHON_WRAPPER
 std::shared_ptr<YggInterface::communicator::CommContext> YggInterface::communicator::global_context(NULL);
-#else // RAPIDJSON_YGGDRASIL_PYTHON
+#else // YGGDRASIL_RAPIDJSON_PYTHON_WRAPPER
 std::shared_ptr<YggInterface::communicator::CommContext> YggInterface::communicator::global_context(new YggInterface::communicator::CommContext());
-#endif // RAPIDJSON_YGGDRASIL_PYTHON
+#endif // YGGDRASIL_RAPIDJSON_PYTHON_WRAPPER
 #endif // DOXYGEN_SHOULD_SKIP_THIS
 
 using namespace YggInterface::communicator;
@@ -148,12 +148,12 @@ void CommContext::cleanup(CLEANUP_MODE mode) {
     log_debug() << "cleanup: Cleanup complete" << std::endl;
     cleanup_mode_ = prev_mode;
   } YGG_THREAD_SAFE_END;
-#ifndef RAPIDJSON_YGGDRASIL_PYTHON
+#ifndef YGGDRASIL_RAPIDJSON_PYTHON_WRAPPER
   if ((!for_testing_) && utils::YggdrasilLogger::_ygg_error_flag) {
     log_debug() << "cleanup: Error code set" << std::endl;
     _exit(utils::YggdrasilLogger::_ygg_error_flag);
   }
-#endif // RAPIDJSON_YGGDRASIL_PYTHON
+#endif // YGGDRASIL_RAPIDJSON_PYTHON_WRAPPER
 }
 
 std::map<LANGUAGE, bool> CommContext::disable_embedded_languages(const std::map<LANGUAGE, bool>& languages) const {

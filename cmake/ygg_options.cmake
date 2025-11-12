@@ -56,9 +56,9 @@ endif()
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-if (NOT DEFAULT_RAPIDJSON_INCLUDE_DIRS)
+if (NOT DEFAULT_YGGDRASIL_RAPIDJSON_INCLUDE_DIRS)
   cmake_path(APPEND CMAKE_CURRENT_SOURCE_DIR rapidjson include
-             OUTPUT_VARIABLE DEFAULT_RAPIDJSON_INCLUDE_DIRS)
+             OUTPUT_VARIABLE DEFAULT_YGGDRASIL_RAPIDJSON_INCLUDE_DIRS)
 endif()
 
 option(YGGDRASIL_DISABLE_Python_C_API "Disable the Python C API" OFF)
@@ -67,8 +67,8 @@ option(YGG_BUILD_ASAN "Build with address sanitizer (gcc/clang)" OFF)
 option(YGG_BUILD_UBSAN "Build with undefined behavior sanitizer (gcc/clang)" OFF)
 option(YGG_ENABLE_INSTRUMENTATION_OPT "Build yggdrasil with -march or -mcpu options" ON)
 option(YGG_DEBUG_LEVEL "Level that should be used for logging" OFF)
-set(RAPIDJSON_INCLUDE_DIRS "${DEFAULT_RAPIDJSON_INCLUDE_DIRS}" CACHE PATH "Path to the rapidjson include directory containing the headers that should be used")
-option(RAPIDJSON_CHECK_PYREFS "Turn on reference counting in rapidjson for Python objects" OFF)
+set(YGGDRASIL_RAPIDJSON_INCLUDE_DIRS "${DEFAULT_YGGDRASIL_RAPIDJSON_INCLUDE_DIRS}" CACHE PATH "Path to the yggdrasil_rapidjson include directory containing the headers that should be used")
+option(YGGDRASIL_RAPIDJSON_CHECK_PYREFS "Turn on reference counting in yggdrasil_rapidjson for Python objects" OFF)
 option(VERBOSE "Turn on debug messages and verbose makefile" OFF)
 
 if(VERBOSE)
@@ -76,19 +76,19 @@ if(VERBOSE)
   set(CMAKE_MESSAGE_LOG_LEVEL DEBUG)
 endif()
 
-message(STATUS "RAPIDJSON_INCLUDE_DIRS = ${RAPIDJSON_INCLUDE_DIRS}")
-if (NOT EXISTS ${RAPIDJSON_INCLUDE_DIRS})
-  message(FATAL_ERROR "RapidJSON sources not found: if you cloned "
+message(STATUS "YGGDRASIL_RAPIDJSON_INCLUDE_DIRS = ${YGGDRASIL_RAPIDJSON_INCLUDE_DIRS}")
+if (NOT EXISTS ${YGGDRASIL_RAPIDJSON_INCLUDE_DIRS})
+  message(FATAL_ERROR "YggdrasilRapidJSON sources not found: if you cloned "
                       " the git repository, you should initialize"
-                      " the rapidjson submodule as explained in the"
+                      " the yggdrasil_rapidjson submodule as explained in the"
                       " README.rst; in all other cases you may"
                       " want to report the issue.")
 endif()
 
 set(Python_PREFIX Python3)
 
-if (RAPIDJSON_CHECK_PYREFS)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DRAPIDJSON_CHECK_PYREFS")
+if (YGGDRASIL_RAPIDJSON_CHECK_PYREFS)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DYGGDRASIL_RAPIDJSON_CHECK_PYREFS")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DPy_DEBUG")
 endif()
 

@@ -49,11 +49,11 @@ TEST(ForkComm, elf_errors_composite) {
 		 COMM_FLAG_SET_OPP_ENV | COMM_FLAG_FORK_COMPOSITE,
 		 DEFAULT_COMM, 2);
   YggInput rComm("fork", COMM_FLAG_FORK_COMPOSITE);
-  rapidjson::Document sData(rapidjson::kArrayType), rData;
-  sData.PushBack(rapidjson::Value("hello", 5,
+  yggdrasil_rapidjson::Document sData(yggdrasil_rapidjson::kArrayType), rData;
+  sData.PushBack(yggdrasil_rapidjson::Value("hello", 5,
 				  sData.GetAllocator()).Move(),
 		 sData.GetAllocator());
-  sData.PushBack(rapidjson::Value(5.0).Move(),
+  sData.PushBack(yggdrasil_rapidjson::Value(5.0).Move(),
 		 sData.GetAllocator());
   EXPECT_GE(sComm.sendVar(sData), 0);
   EXPECT_EQ(rComm.nmsg(), 1);
@@ -127,19 +127,19 @@ TEST(ForkComm, composite_pattern) {
 		 COMM_FLAG_SET_OPP_ENV | COMM_FLAG_FORK_COMPOSITE,
 		 DEFAULT_COMM, 2);
   YggInput rComm("fork", COMM_FLAG_FORK_COMPOSITE);
-  rapidjson::Document invalidData;
+  yggdrasil_rapidjson::Document invalidData;
   invalidData.SetInt(5);
-  rapidjson::Document sData(rapidjson::kArrayType);
-  sData.PushBack(rapidjson::Value("hello", 5, sData.GetAllocator()).Move(),
+  yggdrasil_rapidjson::Document sData(yggdrasil_rapidjson::kArrayType);
+  sData.PushBack(yggdrasil_rapidjson::Value("hello", 5, sData.GetAllocator()).Move(),
 		 sData.GetAllocator());
   EXPECT_EQ(sComm.sendVar(invalidData), -1);
   // TODO: Check type when updating metadata
   sComm.getMetadata().reset();
   EXPECT_EQ(sComm.sendVar(sData), -1);
   sComm.getMetadata().reset();
-  sData.PushBack(rapidjson::Value(5.0).Move(),
+  sData.PushBack(yggdrasil_rapidjson::Value(5.0).Move(),
 		 sData.GetAllocator());
-  rapidjson::Document rData;
+  yggdrasil_rapidjson::Document rData;
   EXPECT_GE(sComm.sendVar(sData), 0);
   EXPECT_EQ(rComm.nmsg(), 1);
   EXPECT_EQ(rComm.nmsg(SEND), 0);
@@ -235,10 +235,10 @@ TEST(ForkComm, filter_recv) {
 		 DEFAULT_COMM, 2);
   YggInput rComm("fork", COMM_FLAG_FORK_CYCLE);
   EXPECT_TRUE(rComm.getMetadata().addFilter(example_filter));
-  rapidjson::Document sData(rapidjson::kArrayType), rData, eData;
+  yggdrasil_rapidjson::Document sData(yggdrasil_rapidjson::kArrayType), rData, eData;
   eData.SetInt(2);
-  sData.PushBack(rapidjson::Value(1).Move(), sData.GetAllocator());
-  sData.PushBack(rapidjson::Value(2).Move(), sData.GetAllocator());
+  sData.PushBack(yggdrasil_rapidjson::Value(1).Move(), sData.GetAllocator());
+  sData.PushBack(yggdrasil_rapidjson::Value(2).Move(), sData.GetAllocator());
   EXPECT_GE(sComm.sendVar(sData), 0);
   EXPECT_EQ(rComm.nmsg(), 2);
   EXPECT_GT(rComm.recvVar(rData), 0);
@@ -250,7 +250,7 @@ TEST(ForkComm, coerce_composite) {
 		 COMM_FLAG_SET_OPP_ENV | COMM_FLAG_FORK_COMPOSITE,
 		 DEFAULT_COMM, 2);
   YggInput rComm("fork", COMM_FLAG_FORK_COMPOSITE);
-  rapidjson::Document sData, rData;
+  yggdrasil_rapidjson::Document sData, rData;
   sData.Parse("{\"a\": \"a\", \"b\": 1}");
   EXPECT_GE(sComm.sendVar(sData), 0);
   EXPECT_EQ(rComm.nmsg(), 1);
@@ -266,7 +266,7 @@ TEST(ForkComm, coerce_composite_error) {
 		 COMM_FLAG_SET_OPP_ENV | COMM_FLAG_FORK_COMPOSITE,
 		 DEFAULT_COMM, 2);
   YggInput rComm("fork", COMM_FLAG_FORK_COMPOSITE);
-  rapidjson::Document sData, rData;
+  yggdrasil_rapidjson::Document sData, rData;
   sData.Parse("{\"a\": \"a\", \"b\": 1, \"c\": 5.0}");
   EXPECT_LT(sComm.sendVar(sData), 0);
   EXPECT_GE(sComm.send_eof(), 0);

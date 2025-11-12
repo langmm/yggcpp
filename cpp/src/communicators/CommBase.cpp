@@ -1,5 +1,5 @@
 #include "communicators/comms.hpp"
-#include "utils/rapidjson_wrapper.hpp"
+#include "utils/yggdrasil_rapidjson_wrapper.hpp"
 #include "utils/enums_utils.hpp"
 
 using namespace YggInterface::communicator;
@@ -127,17 +127,17 @@ bool Comm_t::operator==(const Comm_t& rhs) const {
 	  getLanguage() == rhs.getLanguage());
 }
 
-bool Comm_t::_coerce_to_dict(const rapidjson::Document& src,
-			     rapidjson::Document& dst,
+bool Comm_t::_coerce_to_dict(const yggdrasil_rapidjson::Document& src,
+			     yggdrasil_rapidjson::Document& dst,
 			     const DIRECTION dir,
 			     std::vector<std::string> key_order,
 			     size_t dim) {
   switch (src.GetType()) {
-  case (rapidjson::kObjectType):
+  case (yggdrasil_rapidjson::kObjectType):
     dst.CopyFrom(src, dst.GetAllocator(), true);
     break;
-  case (rapidjson::kArrayType):
-  case (rapidjson::kStringType):
+  case (yggdrasil_rapidjson::kArrayType):
+  case (yggdrasil_rapidjson::kStringType):
     if (src.IsArray() || src.IsNDArray()) {
       size_t src_size = 0;
       if (src.IsArray())
@@ -145,14 +145,14 @@ bool Comm_t::_coerce_to_dict(const rapidjson::Document& src,
       else if (src.Is1DArray())
 	src_size = static_cast<size_t>(src.GetNElements());
       else {
-	const rapidjson::Value& shape = src.GetShape();
+	const yggdrasil_rapidjson::Value& shape = src.GetShape();
 	if (dim >= static_cast<size_t>(shape.Size())) {
 	  log_error() << "coerce_to_dict: dim " << dim << " exceeds the " <<
 	    "number of dimensions (" << shape.Size() << ") in the " <<
 	    "array" << std::endl;
 	  return false;
 	}
-	src_size = static_cast<size_t>(shape[static_cast<rapidjson::SizeType>(dim)].GetUint64());
+	src_size = static_cast<size_t>(shape[static_cast<yggdrasil_rapidjson::SizeType>(dim)].GetUint64());
       }
       if (key_order.empty() &&
 	  !this->getMetadata(dir).get_field_names(key_order)) {
@@ -172,7 +172,7 @@ bool Comm_t::_coerce_to_dict(const rapidjson::Document& src,
 	return false;
       dst.SetObject();
       for (size_t i = 0; i < src_size; i++) {
-	rapidjson::Value val;
+	yggdrasil_rapidjson::Value val;
 	if (src.IsArray()) {
 	  val.CopyFrom(src[static_cast<SizeType>(i)],
 		       dst.GetAllocator(), true);
@@ -192,16 +192,16 @@ bool Comm_t::_coerce_to_dict(const rapidjson::Document& src,
 	    return false; // GCOVR_EXCL_STOP
 	  }
 	}
-	dst.AddMember(rapidjson::Value(key_order[i].c_str(),
+	dst.AddMember(yggdrasil_rapidjson::Value(key_order[i].c_str(),
 				       static_cast<SizeType>(key_order[i].size()),
 				       dst.GetAllocator()).Move(),
 		      val, dst.GetAllocator());
       }
       break;
     }
-    RAPIDJSON_DELIBERATE_FALLTHROUGH;
+    YGGDRASIL_RAPIDJSON_DELIBERATE_FALLTHROUGH;
   default:
-    rapidjson::Value val;
+    yggdrasil_rapidjson::Value val;
     val.CopyFrom(src, dst.GetAllocator(), true);
     dst.SetObject();
     dst.AddMember("f0", val, dst.GetAllocator());
@@ -247,46 +247,46 @@ void Comm_t::unsetOppEnv() const {
   unsetenv(opp_comm.c_str());
 }
 
-bool Comm_t::_coerce_to_array(const rapidjson::Document& src,
-			      rapidjson::Document& dst,
+bool Comm_t::_coerce_to_array(const yggdrasil_rapidjson::Document& src,
+			      yggdrasil_rapidjson::Document& dst,
 			      const DIRECTION dir,
 			      std::vector<std::string> key_order,
 			      size_t dim) {
   switch (src.GetType()) {
-  case (rapidjson::kObjectType):
+  case (yggdrasil_rapidjson::kObjectType):
     if (key_order.empty() &&
 	!this->getMetadata(dir).get_field_names(key_order)) {
       return false;
     }
     if (key_order.empty()) {
-      for (typename rapidjson::Value::ConstMemberIterator it = src.MemberBegin();
+      for (typename yggdrasil_rapidjson::Value::ConstMemberIterator it = src.MemberBegin();
 	   it != src.MemberEnd(); it++)
 	key_order.push_back(it->name.GetString());
     }
     if (!this->getMetadata(dir).set_field_names(key_order))
       return false;
     dst.SetArray();
-    dst.Reserve(static_cast<rapidjson::SizeType>(key_order.size()),
+    dst.Reserve(static_cast<yggdrasil_rapidjson::SizeType>(key_order.size()),
 		dst.GetAllocator());
     for (size_t i = 0; i < key_order.size(); i++) {
-      typename rapidjson::Value::ConstMemberIterator it = src.FindMember(key_order[i]);
+      typename yggdrasil_rapidjson::Value::ConstMemberIterator it = src.FindMember(key_order[i]);
       if (it == src.MemberEnd()) {
 	log_error() << "coerce_to_array: key '" << key_order[i] << "'" <<
 	  " is not present" << std::endl;
 	return false;
       }
-      rapidjson::Value item(it->value, dst.GetAllocator(), true);
+      yggdrasil_rapidjson::Value item(it->value, dst.GetAllocator(), true);
       if (item.IsNDArray()) {
-	rapidjson::Value field_name(key_order[i].c_str(),
-				    static_cast<rapidjson::SizeType>(key_order[i].size()),
+	yggdrasil_rapidjson::Value field_name(key_order[i].c_str(),
+				    static_cast<yggdrasil_rapidjson::SizeType>(key_order[i].size()),
 				    dst.GetAllocator());
-	item.AddSchemaMember(rapidjson::Document::GetTitleString(), field_name);
+	item.AddSchemaMember(yggdrasil_rapidjson::Document::GetTitleString(), field_name);
       }
       dst.PushBack(item, dst.GetAllocator());
     }
     break;
-  case (rapidjson::kArrayType):
-  case (rapidjson::kStringType):
+  case (yggdrasil_rapidjson::kArrayType):
+  case (yggdrasil_rapidjson::kStringType):
     if (src.IsArray() || src.IsNDArray()) {
       size_t src_size = 0;
       if (src.IsArray()) {
@@ -298,14 +298,14 @@ bool Comm_t::_coerce_to_array(const rapidjson::Document& src,
 	  src_size = static_cast<size_t>(src.GetNElements());
 	}
       } else {
-	const rapidjson::Value& shape = src.GetShape();
+	const yggdrasil_rapidjson::Value& shape = src.GetShape();
 	if (dim >= static_cast<size_t>(shape.Size())) {
 	  log_error() << "coerce_to_array: dim " << dim << " exceeds the " <<
 	    "number of dimensions (" << shape.Size() << ") in the " <<
 	    "array" << std::endl;
 	  return false;
 	}
-	src_size = static_cast<size_t>(shape[static_cast<rapidjson::SizeType>(dim)].GetUint64());
+	src_size = static_cast<size_t>(shape[static_cast<yggdrasil_rapidjson::SizeType>(dim)].GetUint64());
       }
       if (key_order.empty() &&
 	  !this->getMetadata(dir).get_field_names(key_order)) {
@@ -324,10 +324,10 @@ bool Comm_t::_coerce_to_array(const rapidjson::Document& src,
       if (!this->getMetadata(dir).set_field_names(key_order))
 	return false;
       dst.SetArray();
-      dst.Reserve(static_cast<rapidjson::SizeType>(src_size),
+      dst.Reserve(static_cast<yggdrasil_rapidjson::SizeType>(src_size),
 		  dst.GetAllocator());
       for (size_t i = 0; i < src_size; i++) {
-	rapidjson::Value val;
+	yggdrasil_rapidjson::Value val;
 	if (src.IsArray()) {
 	  val.CopyFrom(src[static_cast<SizeType>(i)],
 		       dst.GetAllocator(), true);
@@ -350,18 +350,18 @@ bool Comm_t::_coerce_to_array(const rapidjson::Document& src,
 	  }
 	}
 	if (val.IsNDArray()) {
-	  rapidjson::Value field_name(key_order[i].c_str(),
+	  yggdrasil_rapidjson::Value field_name(key_order[i].c_str(),
 				      static_cast<SizeType>(key_order[i].size()),
 				      dst.GetAllocator());
-	  val.AddSchemaMember(rapidjson::Document::GetTitleString(), field_name);
+	  val.AddSchemaMember(yggdrasil_rapidjson::Document::GetTitleString(), field_name);
 	}
 	dst.PushBack(val, dst.GetAllocator());
       }
       break;
     }
-    RAPIDJSON_DELIBERATE_FALLTHROUGH;
+    YGGDRASIL_RAPIDJSON_DELIBERATE_FALLTHROUGH;
   default:
-    rapidjson::Value val;
+    yggdrasil_rapidjson::Value val;
     val.CopyFrom(src, dst.GetAllocator(), true);
     dst.SetArray();
     dst.PushBack(val, dst.GetAllocator());
@@ -399,8 +399,8 @@ std::vector<std::string> Comm_t::get_status_message(
       out.push_back(flagsPrefix + it->second);
   }
   out.push_back(prefix + "]");
-  rapidjson::StringBuffer sb;
-  rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(sb, nullptr, 4 * (nindent + 2));
+  yggdrasil_rapidjson::StringBuffer sb;
+  yggdrasil_rapidjson::PrettyWriter<yggdrasil_rapidjson::StringBuffer> writer(sb, nullptr, 4 * (nindent + 2));
   writer.SetIndent(' ', 4);
   writer.SetYggdrasilMode(true);
   getMetadata().metadata.Accept(writer);
@@ -540,7 +540,7 @@ bool Comm_t::PyGIL_restore(bool force) const {
 bool Comm_t::addSchema(const Metadata& s, const DIRECTION dir) {
   return getMetadata(dir).fromMetadata(s);
 }
-bool Comm_t::addSchema(const rapidjson::Value& s, bool isMetadata,
+bool Comm_t::addSchema(const yggdrasil_rapidjson::Value& s, bool isMetadata,
 		       const DIRECTION dir) {
   return getMetadata(dir).fromSchema(s, isMetadata);
 }
@@ -827,11 +827,11 @@ int Comm_t::send_raw(Header& head) {
   YGGCOMM_PYGIL_ALLOW_THREADS_END(send_raw, -1)
   return ret;
 }
-int Comm_t::send(const rapidjson::Document& data, bool not_generic) {
+int Comm_t::send(const yggdrasil_rapidjson::Document& data, bool not_generic) {
   char* buf = NULL;
   size_t buf_siz = 0;
   int ret = -1, msg_siz = 0;
-  rapidjson::Document d;
+  yggdrasil_rapidjson::Document d;
   log_debug() << "send: begin" << std::endl;
   YggInterface::utils::Metadata& meta = getMetadata(SEND);
   if (!(meta.hasType() || not_generic))
@@ -858,8 +858,8 @@ int Comm_t::send(const rapidjson::Document& data, bool not_generic) {
  cleanup:
   return ret;
 }
-int Comm_t::send(const rapidjson::Value& data, bool not_generic) {
-  rapidjson::Document tmp;
+int Comm_t::send(const yggdrasil_rapidjson::Value& data, bool not_generic) {
+  yggdrasil_rapidjson::Document tmp;
   tmp.CopyFrom(data, tmp.GetAllocator(), true);
   return send(tmp, not_generic);
 }
@@ -867,18 +867,18 @@ int Comm_t::send(const char *data, const size_t &len) {
   std::string data_str(data, len);
   return sendVar(data_str);
 }
-int Comm_t::send_dict(const rapidjson::Document& data,
+int Comm_t::send_dict(const yggdrasil_rapidjson::Document& data,
 		      std::vector<std::string> key_order,
 		      size_t dim) {
-  rapidjson::Document tmp;
+  yggdrasil_rapidjson::Document tmp;
   if (!_coerce_to_dict(data, tmp, SEND, key_order, dim))
     return -1;
   return send(tmp);
 }
-int Comm_t::send_array(const rapidjson::Document& data,
+int Comm_t::send_array(const yggdrasil_rapidjson::Document& data,
 		       std::vector<std::string> key_order,
 		       size_t dim) {
-  rapidjson::Document tmp;
+  yggdrasil_rapidjson::Document tmp;
   if (!_coerce_to_array(data, tmp, SEND, key_order, dim))
     return -1;
   return send(tmp);
@@ -1020,7 +1020,7 @@ long Comm_t::recv_raw(Header& head) {
   YGGCOMM_PYGIL_ALLOW_THREADS_END(recv_raw, -1)
   return ret;
 }
-long Comm_t::recv(rapidjson::Document& data, bool not_generic) {
+long Comm_t::recv(yggdrasil_rapidjson::Document& data, bool not_generic) {
   long ret = -1;
   log_debug() << "recv: begin" << std::endl;
   char* buf = NULL;
@@ -1077,20 +1077,20 @@ long Comm_t::recv(char*& data, const size_t &len,
   return out;
 }
 
-long Comm_t::recv_dict(rapidjson::Document& data,
+long Comm_t::recv_dict(yggdrasil_rapidjson::Document& data,
 		       std::vector<std::string> key_order,
 		       size_t dim) {
-  rapidjson::Document tmp;
+  yggdrasil_rapidjson::Document tmp;
   long out = recv(tmp);
   if (out >= 0 && !_coerce_to_dict(tmp, data, RECV, key_order, dim))
     return -1;
   return out;
 }
 
-long Comm_t::recv_array(rapidjson::Document& data,
+long Comm_t::recv_array(yggdrasil_rapidjson::Document& data,
 			std::vector<std::string> key_order,
 			size_t dim) {
-  rapidjson::Document tmp;
+  yggdrasil_rapidjson::Document tmp;
   long out = recv(tmp);
   if (out >= 0 && !_coerce_to_array(tmp, data, RECV, key_order, dim))
     return -1;
@@ -1142,7 +1142,7 @@ YggInterface::utils::Metadata& Comm_t::getMetadata(const DIRECTION dir) {
   return metadata;
 }
 
-// int Comm_t::update_datatype(const rapidjson::Value& new_schema,
+// int Comm_t::update_datatype(const yggdrasil_rapidjson::Value& new_schema,
 // 			    const DIRECTION dir) {
 //   YggInterface::utils::Metadata& meta = getMetadata(dir);
 //   if (!meta.fromSchema(new_schema))
@@ -1150,7 +1150,7 @@ YggInterface::utils::Metadata& Comm_t::getMetadata(const DIRECTION dir) {
 //   return 1;
 // }
 
-// int Comm_t::deserialize(const char* buf, rapidjson::VarArgList& ap) {
+// int Comm_t::deserialize(const char* buf, yggdrasil_rapidjson::VarArgList& ap) {
 //   YggInterface::utils::Metadata& meta = getMetadata(RECV);
 //   if (!meta.hasType()) {
 //     log_error() << "deserialize: No datatype" << std::endl;
@@ -1163,7 +1163,7 @@ YggInterface::utils::Metadata& Comm_t::getMetadata(const DIRECTION dir) {
 // }
 
 // int Comm_t::serialize(char*& buf, size_t& buf_siz,
-// 		      rapidjson::VarArgList& ap) {
+// 		      yggdrasil_rapidjson::VarArgList& ap) {
 //   YggInterface::utils::Metadata& meta = getMetadata(SEND);
 //   if (!meta.hasType()) {
 //     log_error() << "serialize: No datatype" << std::endl;
@@ -1175,9 +1175,9 @@ YggInterface::utils::Metadata& Comm_t::getMetadata(const DIRECTION dir) {
 //   return ret;
 // }
 
-long Comm_t::vRecv(rapidjson::VarArgList& ap) {
+long Comm_t::vRecv(yggdrasil_rapidjson::VarArgList& ap) {
     log_debug() << "vRecv: begin" << std::endl;
-    rapidjson::Document data;
+    yggdrasil_rapidjson::Document data;
     size_t nargs_orig = ap.get_nargs();
     long ret = recv(data, true);
     if (ret < 0) {
@@ -1196,10 +1196,10 @@ long Comm_t::vRecv(rapidjson::VarArgList& ap) {
     log_debug() << "vRecv: returns " << ret << std::endl;
     return ret;
 }
-int Comm_t::vSend(rapidjson::VarArgList& ap) {
+int Comm_t::vSend(yggdrasil_rapidjson::VarArgList& ap) {
   log_debug() << "vSend: begin" << std::endl;
   YggInterface::utils::Metadata& meta = getMetadata(SEND);
-  rapidjson::Document data;
+  yggdrasil_rapidjson::Document data;
   size_t nargs_orig = ap.get_nargs();
   if (meta.serialize_args(data, ap) < 0) {
     log_error() << "vSend: Error extracting arguments" << std::endl;
@@ -1211,8 +1211,8 @@ int Comm_t::vSend(rapidjson::VarArgList& ap) {
   log_debug() << "vSend: returns " << ret << std::endl;
   return ret;
 }
-long Comm_t::call(const rapidjson::Document& sendData,
-		  rapidjson::Document& recvData) {
+long Comm_t::call(const yggdrasil_rapidjson::Document& sendData,
+		  yggdrasil_rapidjson::Document& recvData) {
   if (!(flags & COMM_FLAG_CLIENT)) {
     log_error() << "call: Communicator is not a client." << std::endl;
     return -1;
@@ -1223,13 +1223,13 @@ long Comm_t::call(const rapidjson::Document& sendData,
   }
   return recv(recvData);
 }
-long Comm_t::vCall(rapidjson::VarArgList& ap) {
+long Comm_t::vCall(yggdrasil_rapidjson::VarArgList& ap) {
   if (!(flags & COMM_FLAG_CLIENT)) {
     log_error() << "vCall: Communicator is not a client." << std::endl;
     return -1;
   }
   size_t send_nargs = 0;
-  rapidjson::Document tmp;
+  yggdrasil_rapidjson::Document tmp;
   YggInterface::utils::Metadata& meta_send = getMetadata(SEND);
   if (meta_send.hasType()) {
     send_nargs = tmp.CountVarArgs(*(meta_send.getSchema()), false);

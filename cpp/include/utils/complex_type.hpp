@@ -2,7 +2,7 @@
 #ifdef __cplusplus
 #include <limits>
 #include <vector>
-#include "rapidjson/internal/meta.h"
+#include "yggdrasil_rapidjson/internal/meta.h"
 #endif // __cplusplus
 
 #ifdef USE_OSR_YGG
@@ -151,22 +151,22 @@ using EnableForComplex = typename std::enable_if<is_complex<Type>::value, ReType
 
 #ifdef YGGDRASIL_LONG_DOUBLE_AVAILABLE
 #define YGGDRASIL_IS_COMPLEX_TYPE_(T)                                    \
-  rapidjson::internal::OrExpr<rapidjson::internal::IsSame<T,complex_float_t >, \
-    rapidjson::internal::OrExpr<rapidjson::internal::IsSame<T,complex_double_t >, \
-    rapidjson::internal::OrExpr<rapidjson::internal::IsSame<T,complex_long_double_t >,            \
-    rapidjson::internal::OrExpr<rapidjson::internal::IsSame<T,std::complex<double> >, \
-    rapidjson::internal::OrExpr<rapidjson::internal::IsSame<T,std::complex<double> >, \
-    rapidjson::internal::IsSame<T,std::complex<long double> > > > > > >
+  yggdrasil_rapidjson::internal::OrExpr<yggdrasil_rapidjson::internal::IsSame<T,complex_float_t >, \
+    yggdrasil_rapidjson::internal::OrExpr<yggdrasil_rapidjson::internal::IsSame<T,complex_double_t >, \
+    yggdrasil_rapidjson::internal::OrExpr<yggdrasil_rapidjson::internal::IsSame<T,complex_long_double_t >,            \
+    yggdrasil_rapidjson::internal::OrExpr<yggdrasil_rapidjson::internal::IsSame<T,std::complex<double> >, \
+    yggdrasil_rapidjson::internal::OrExpr<yggdrasil_rapidjson::internal::IsSame<T,std::complex<double> >, \
+    yggdrasil_rapidjson::internal::IsSame<T,std::complex<long double> > > > > > >
 #else // YGGDRASIL_LONG_DOUBLE_AVAILABLE
 #define YGGDRASIL_IS_COMPLEX_TYPE_(T)                                    \
-  rapidjson::internal::OrExpr<rapidjson::internal::IsSame<T,complex_float_t >, \
-    rapidjson::internal::OrExpr<rapidjson::internal::IsSame<T,complex_double_t >, \
-    rapidjson::internal::OrExpr<rapidjson::internal::IsSame<T,std::complex<float> >,            \
-    rapidjson::internal::IsSame<T,std::complex<double> > > > >
+  yggdrasil_rapidjson::internal::OrExpr<yggdrasil_rapidjson::internal::IsSame<T,complex_float_t >, \
+    yggdrasil_rapidjson::internal::OrExpr<yggdrasil_rapidjson::internal::IsSame<T,complex_double_t >, \
+    yggdrasil_rapidjson::internal::OrExpr<yggdrasil_rapidjson::internal::IsSame<T,std::complex<float> >,            \
+    yggdrasil_rapidjson::internal::IsSame<T,std::complex<double> > > > >
 #endif // YGGDRASIL_LONG_DOUBLE_AVAILABLE
 
 template<typename T>
-RAPIDJSON_ENABLEIF_RETURN((YGGDRASIL_IS_COMPLEX_TYPE_(T)), (std::ostream&))
+YGGDRASIL_RAPIDJSON_ENABLEIF_RETURN((YGGDRASIL_IS_COMPLEX_TYPE_(T)), (std::ostream&))
   operator<<(std::ostream& out, const T& x) {
     out.setf(std::ios::fixed);
     if (sizeof(x.re) == sizeof(float)) {
@@ -182,14 +182,14 @@ RAPIDJSON_ENABLEIF_RETURN((YGGDRASIL_IS_COMPLEX_TYPE_(T)), (std::ostream&))
 }
 
 template<typename T>
-RAPIDJSON_ENABLEIF_RETURN((YGGDRASIL_IS_COMPLEX_TYPE_(T)), (std::istream&))
+YGGDRASIL_RAPIDJSON_ENABLEIF_RETURN((YGGDRASIL_IS_COMPLEX_TYPE_(T)), (std::istream&))
   operator>>(std::istream& in, T& x) {
     char c;
     return in >> c >> x.re >> c >> x.im >> c;
 }
 
 template<typename T>
-RAPIDJSON_ENABLEIF_RETURN((YGGDRASIL_IS_COMPLEX_TYPE_(T)), (T))
+YGGDRASIL_RAPIDJSON_ENABLEIF_RETURN((YGGDRASIL_IS_COMPLEX_TYPE_(T)), (T))
   operator+(const T& a, const T& b) {
     T c;
     c.re = a.re + b.re;
@@ -198,7 +198,7 @@ RAPIDJSON_ENABLEIF_RETURN((YGGDRASIL_IS_COMPLEX_TYPE_(T)), (T))
 }
 
 template<typename T, typename F>
-RAPIDJSON_ENABLEIF_RETURN((YGGDRASIL_IS_COMPLEX_TYPE_(T)), (T))
+YGGDRASIL_RAPIDJSON_ENABLEIF_RETURN((YGGDRASIL_IS_COMPLEX_TYPE_(T)), (T))
   operator+(const T&a, const F v) {
     T c;
     c.re = a.re + v;
@@ -207,7 +207,7 @@ RAPIDJSON_ENABLEIF_RETURN((YGGDRASIL_IS_COMPLEX_TYPE_(T)), (T))
 }
 
 template<typename T>
-RAPIDJSON_ENABLEIF_RETURN((YGGDRASIL_IS_COMPLEX_TYPE_(T)), (T))
+YGGDRASIL_RAPIDJSON_ENABLEIF_RETURN((YGGDRASIL_IS_COMPLEX_TYPE_(T)), (T))
   operator-(const T& a, const T& b) {
     T c;
     c.re = a.re - b.re;
@@ -216,7 +216,7 @@ RAPIDJSON_ENABLEIF_RETURN((YGGDRASIL_IS_COMPLEX_TYPE_(T)), (T))
 }
 
 template<typename T, typename F>
-RAPIDJSON_ENABLEIF_RETURN((YGGDRASIL_IS_COMPLEX_TYPE_(T)), (T))
+YGGDRASIL_RAPIDJSON_ENABLEIF_RETURN((YGGDRASIL_IS_COMPLEX_TYPE_(T)), (T))
   operator-(const T&a, const F v) {
     T c;
     c.re = a.re - v;
@@ -224,7 +224,7 @@ RAPIDJSON_ENABLEIF_RETURN((YGGDRASIL_IS_COMPLEX_TYPE_(T)), (T))
     return c;
 }
 template<typename T>
-RAPIDJSON_ENABLEIF_RETURN((YGGDRASIL_IS_COMPLEX_TYPE_(T)), (T))
+YGGDRASIL_RAPIDJSON_ENABLEIF_RETURN((YGGDRASIL_IS_COMPLEX_TYPE_(T)), (T))
   operator*(const T& a, const T& b) {
     T c;
     c.re = (a.re * b.re - a.im * b.im);
@@ -233,7 +233,7 @@ RAPIDJSON_ENABLEIF_RETURN((YGGDRASIL_IS_COMPLEX_TYPE_(T)), (T))
 }
 
 template<typename T, typename F>
-RAPIDJSON_ENABLEIF_RETURN((YGGDRASIL_IS_COMPLEX_TYPE_(T)), (T))
+YGGDRASIL_RAPIDJSON_ENABLEIF_RETURN((YGGDRASIL_IS_COMPLEX_TYPE_(T)), (T))
   operator*(const T&a, const F v) {
     T c;
     c.re = a.re * v;
@@ -241,7 +241,7 @@ RAPIDJSON_ENABLEIF_RETURN((YGGDRASIL_IS_COMPLEX_TYPE_(T)), (T))
     return c;
 }
 template<typename T>
-RAPIDJSON_ENABLEIF_RETURN((YGGDRASIL_IS_COMPLEX_TYPE_(T)), (T))
+YGGDRASIL_RAPIDJSON_ENABLEIF_RETURN((YGGDRASIL_IS_COMPLEX_TYPE_(T)), (T))
   operator/(const T& a, const T& b) {
     T c;
 #ifdef YGGDRASIL_LONG_DOUBLE_AVAILABLE
@@ -255,7 +255,7 @@ RAPIDJSON_ENABLEIF_RETURN((YGGDRASIL_IS_COMPLEX_TYPE_(T)), (T))
 }
 
 template<typename T, typename F>
-RAPIDJSON_ENABLEIF_RETURN((YGGDRASIL_IS_COMPLEX_TYPE_(T)), (T))
+YGGDRASIL_RAPIDJSON_ENABLEIF_RETURN((YGGDRASIL_IS_COMPLEX_TYPE_(T)), (T))
   operator/(const T&a, const F v) {
     T c;
     c.re = a.re / v;
@@ -265,14 +265,14 @@ RAPIDJSON_ENABLEIF_RETURN((YGGDRASIL_IS_COMPLEX_TYPE_(T)), (T))
 
 
 template<typename T>
-RAPIDJSON_ENABLEIF_RETURN((rapidjson::internal::IsSame<T, complex_float_t>), (bool))
+YGGDRASIL_RAPIDJSON_ENABLEIF_RETURN((yggdrasil_rapidjson::internal::IsSame<T, complex_float_t>), (bool))
 operator==(const T& a, const T& b) {
   return (std::abs(a.re - b.re) < pow(10, -(std::numeric_limits<float>::digits10 - 1))) &&
     (std::abs(a.im - b.im) < pow(10, -(std::numeric_limits<float>::digits10 - 1)));
 }
 
 template<typename T>
-RAPIDJSON_ENABLEIF_RETURN((rapidjson::internal::IsSame<T, complex_double_t>), (bool))
+YGGDRASIL_RAPIDJSON_ENABLEIF_RETURN((yggdrasil_rapidjson::internal::IsSame<T, complex_double_t>), (bool))
 operator==(const T& a, const T& b) {
   return (std::abs(a.re - b.re) < pow(10, -(std::numeric_limits<double>::digits10 - 1))) &&
     (std::abs(a.im - b.im) < pow(10, -(std::numeric_limits<double>::digits10 - 1)));
@@ -280,7 +280,7 @@ operator==(const T& a, const T& b) {
 
 #ifdef YGGDRASIL_LONG_DOUBLE_AVAILABLE
 template<typename T>
-RAPIDJSON_ENABLEIF_RETURN((rapidjson::internal::IsSame<T, complex_long_double_t>), (bool))
+YGGDRASIL_RAPIDJSON_ENABLEIF_RETURN((yggdrasil_rapidjson::internal::IsSame<T, complex_long_double_t>), (bool))
 operator==(const T& a, const T& b) {
     return (abs(a.re - b.re) < pow(10, -(std::numeric_limits<long double>::digits10 - 1))) &&
            (abs(a.im - b.im) < pow(10, -(std::numeric_limits<long double>::digits10 - 1)));
@@ -288,20 +288,20 @@ operator==(const T& a, const T& b) {
 #endif // YGGDRASIL_LONG_DOUBLE_AVAILABLE
 
 template<typename T>
-RAPIDJSON_ENABLEIF_RETURN((YGGDRASIL_IS_COMPLEX_TYPE_(T)), (bool))
+YGGDRASIL_RAPIDJSON_ENABLEIF_RETURN((YGGDRASIL_IS_COMPLEX_TYPE_(T)), (bool))
   operator!=(const T& a, const T& b) {
     return !(a==b);
 }
 
 template<typename T>
-RAPIDJSON_ENABLEIF_RETURN((YGGDRASIL_IS_COMPLEX_TYPE_(T)), (complex_float_t))
+YGGDRASIL_RAPIDJSON_ENABLEIF_RETURN((YGGDRASIL_IS_COMPLEX_TYPE_(T)), (complex_float_t))
   complex_f(const T& a) {
     complex_float_t f = {static_cast<float>(a.re), static_cast<float>(a.im)};
     return f;
 }
 
 template<typename T>
-RAPIDJSON_ENABLEIF_RETURN((YGGDRASIL_IS_COMPLEX_TYPE_(T)), (complex_double_t))
+YGGDRASIL_RAPIDJSON_ENABLEIF_RETURN((YGGDRASIL_IS_COMPLEX_TYPE_(T)), (complex_double_t))
   complex_d(const T& a) {
     complex_double_t f = {static_cast<double>(a.re), static_cast<double>(a.im)};
     return f;
@@ -309,7 +309,7 @@ RAPIDJSON_ENABLEIF_RETURN((YGGDRASIL_IS_COMPLEX_TYPE_(T)), (complex_double_t))
 
 #ifdef YGGDRASIL_LONG_DOUBLE_AVAILABLE
 template<typename T>
-RAPIDJSON_ENABLEIF_RETURN((YGGDRASIL_IS_COMPLEX_TYPE_(T)), (complex_long_double_t))
+YGGDRASIL_RAPIDJSON_ENABLEIF_RETURN((YGGDRASIL_IS_COMPLEX_TYPE_(T)), (complex_long_double_t))
   complex_ld(const T& a) {
     complex_long_double_t f = {static_cast<long double>(a.re), static_cast<long double>(a.im)};
     return f;

@@ -558,11 +558,11 @@ TEST(dtype, PythonInit) {
 }
 
 #ifndef YGGDRASIL_DISABLE_PYTHON_C_API
-#ifdef RAPIDJSON_DONT_IMPORT_NUMPY
+#ifdef YGGDRASIL_RAPIDJSON_DONT_IMPORT_NUMPY
 #define CHECK_ARRAY_API EXPECT_FALSE(YggInterface::utils::numpy_arrays_imported())
-#else // RAPIDJSON_DONT_IMPORT_NUMPY
+#else // YGGDRASIL_RAPIDJSON_DONT_IMPORT_NUMPY
 #define CHECK_ARRAY_API EXPECT_TRUE(YggInterface::utils::numpy_arrays_imported())
-#endif // RAPIDJSON_DONT_IMPORT_NUMPY
+#endif // YGGDRASIL_RAPIDJSON_DONT_IMPORT_NUMPY
 #define DO_PYTHON(name)							\
   TEST(generic_t, name) {						\
     CHECK_ARRAY_API;							\
@@ -588,7 +588,7 @@ DO_PYTHON(function)
 DO_PYTHON(instance)
 #undef DO_PYTHON
 TEST(dtype_t, create_dtype_python) {
-  rapidjson::Document x, y;
+  yggdrasil_rapidjson::Document x, y;
   x.Parse("{\"a\": 1, \"b\": \"hello\"}");
   PyObject* py_x = x.GetPythonObjectRaw();
   dtype_t dt1 = create_dtype_python(py_x, true);

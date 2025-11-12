@@ -71,9 +71,9 @@ using namespace YggInterface::communicator;
 		      INIT_DATA_GEOM_C(cpp_name, c_name),		\
 		      COMP_DATA_GEOM_C(cpp_name),			\
 		      yggSend, (data_send),				\
-		      sendVar, (*((rapidjson::cpp_name*)(data_send.obj))), \
+		      sendVar, (*((yggdrasil_rapidjson::cpp_name*)(data_send.obj))), \
 		      yggRecv, (&data_recv),				\
-		      recvVar, (*((rapidjson::cpp_name*)(data_recv.obj))), \
+		      recvVar, (*((yggdrasil_rapidjson::cpp_name*)(data_recv.obj))), \
 		      free_ ## c_name(&data_send); free_ ## c_name(&data_recv))
 #define INTERFACE_TEST_SCHEMA(name, schema)				\
   INTERFACE_TEST_BASE(name,						\

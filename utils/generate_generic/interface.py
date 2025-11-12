@@ -73,7 +73,7 @@ class InterfaceFileBase(metaclass=InterfaceFileMeta):
     module = []
     disable_api = False
     ignored_preprocess_contexts = [
-        'def RAPIDJSON_YGGDRASIL',
+        'ndef DISABLE_YGGDRASIL_RAPIDJSON',
     ]
     depends_on = []
     _provided_types = []
@@ -332,17 +332,18 @@ class InterfaceFileBase(metaclass=InterfaceFileMeta):
         unit.add_members(members)
 
 
-class RapidjsonInterfaceFileMixin:
+class YggdrasilRapidjsonInterfaceFileMixin:
 
     language = 'cxx'
     disable_api = True
 
     def __init__(self, **kwargs):
-        self.wrap_rapidjson = kwargs.get('wrap_rapidjson', False)
+        self.wrap_yggdrasil_rapidjson = kwargs.get(
+            'wrap_yggdrasil_rapidjson', False)
         super().__init__(**kwargs)
 
     @classmethod
-    def load(cls, filename=None, rapidjson_include_dirs=None,
+    def load(cls, filename=None, yggdrasil_rapidjson_include_dirs=None,
              preprocess_kws=None, **kwargs):
         if filename is None:
             filename = cls.filename
@@ -351,25 +352,25 @@ class RapidjsonInterfaceFileMixin:
         preprocess_kws.setdefault('remove_tokens', [])
         preprocess_kws['remove_tokens'] = preprocess_kws['remove_tokens'] + [
             ContextToken(
-                r'RAPIDJSON\_(?:(?:DIS)|(?:EN))ABLEIF\_RETURN\('
+                r'YGGDRASIL\_RAPIDJSON\_(?:(?:DIS)|(?:EN))ABLEIF\_RETURN\('
                 r'\s*\([^\{]+(?:\n[^\{]*)*\)\s*\,\s*\(\s*',
                 r'\s*\)\s*\)(?:[ \t]*$\n)?',
                 name='return_macro', use_regex=True, recursive=False,
                 exclusive=True,
             )
         ]
-        if rapidjson_include_dirs is None:
-            rapidjson_include_dirs = os.path.join(
+        if yggdrasil_rapidjson_include_dirs is None:
+            yggdrasil_rapidjson_include_dirs = os.path.join(
                 'cpp', 'include', 'rapidjson', 'include')
         if not os.path.isabs(filename):
-            filename = os.path.join(rapidjson_include_dirs, filename)
+            filename = os.path.join(yggdrasil_rapidjson_include_dirs, filename)
         return super().load(filename=filename,
                             preprocess_kws=preprocess_kws,
                             **kwargs)
 
 
-class RapidjsonInterfaceFileBase(RapidjsonInterfaceFileMixin,
-                                 InterfaceFileBase):
+class YggdrasilRapidjsonInterfaceFileBase(YggdrasilRapidjsonInterfaceFileMixin,
+                                          InterfaceFileBase):
 
     _replaced_types = {
         None: {
@@ -377,17 +378,18 @@ class RapidjsonInterfaceFileBase(RapidjsonInterfaceFileMixin,
         },
     }
     _added_containers = {
-        None: ('module', {'name': 'rapidjson'}),
+        None: ('module', {'name': 'yggdrasil_rapidjson'}),
     }
 
 
-class RapidjsonDocumentFile(RapidjsonInterfaceFileBase):
+class YggdrasilRapidjsonDocumentFile(YggdrasilRapidjsonInterfaceFileBase):
 
-    name = 'rapidjson_document'
-    filename = os.path.join('rapidjson', 'document.h')
+    name = 'yggdrasil_rapidjson_document'
+    filename = os.path.join('yggdrasil_rapidjson', 'document.h')
     depends_on = [
-        'rapidjson_enum', 'rapidjson_ply', 'rapidjson_obj',
-        'rapidjson_units',
+        'yggdrasil_rapidjson_enum',
+        'yggdrasil_rapidjson_ply', 'yggdrasil_rapidjson_obj',
+        'yggdrasil_rapidjson_units',
     ]
     _provided_types = [
         'GenericValue', 'Value',
@@ -442,7 +444,7 @@ class RapidjsonDocumentFile(RapidjsonInterfaceFileBase):
 
     @property
     def removed_members(self):
-        out = super(RapidjsonDocumentFile, self).removed_members
+        out = super(YggdrasilRapidjsonDocumentFile, self).removed_members
         for x in self.unit.properties['members']:
             for m in x.properties.get('members', []):
                 if ((m.unit_type == 'constructor'
@@ -561,9 +563,10 @@ class RapidjsonDocumentFile(RapidjsonInterfaceFileBase):
             return
         ValueType = CXXTypeUnit.parse('Value')
         EncodingType = CXXTypeUnit.parse('UTF8<>')
-        AllocatorType = CXXTypeUnit.parse('RAPIDJSON_DEFAULT_ALLOCATOR')
+        AllocatorType = CXXTypeUnit.parse(
+            'YGGDRASIL_RAPIDJSON_DEFAULT_ALLOCATOR')
         StackAllocatorType = CXXTypeUnit.parse(
-            'RAPIDJSON_DEFAULT_STACK_ALLOCATOR')
+            'YGGDRASIL_RAPIDJSON_DEFAULT_STACK_ALLOCATOR')
         name_base = unit.properties['name'].split('Generic')[-1]
         new_name = name_base
         kws = {}
@@ -654,19 +657,19 @@ class RapidjsonDocumentFile(RapidjsonInterfaceFileBase):
     @property
     def final_modified_members(self):
         out = {}
-        out[('rapidjson', None, None)] = [
+        out[('yggdrasil_rapidjson', None, None)] = [
             self._wrap_value_returns,
             # self._specialize_method_template,
         ]
-        if getattr(self, 'wrap_rapidjson', False):
-            out[('rapidjson', None, None)].append(
+        if getattr(self, 'wrap_yggdrasil_rapidjson', False):
+            out[('yggdrasil_rapidjson', None, None)].append(
                 self._wrap_returned_references)
-        out[('rapidjson', None)] = [self._specialize_class_template]
+        out[('yggdrasil_rapidjson', None)] = [self._specialize_class_template]
         return out
 
     @property
     def added_properties(self):
-        out = super(RapidjsonDocumentFile, self).added_properties
+        out = super(YggdrasilRapidjsonDocumentFile, self).added_properties
         out[('GenericDocument', )] = {
             'base_class_unit': self._get_unit(('GenericValue', )),
             'type_constructors': [
@@ -677,10 +680,10 @@ class RapidjsonDocumentFile(RapidjsonInterfaceFileBase):
         return out
 
 
-class RapidjsonEnumFile(RapidjsonInterfaceFileBase):
+class YggdrasilRapidjsonEnumFile(YggdrasilRapidjsonInterfaceFileBase):
 
-    name = 'rapidjson_enum'
-    filename = os.path.join('rapidjson', 'rapidjson.h')
+    name = 'yggdrasil_rapidjson_enum'
+    filename = os.path.join('yggdrasil_rapidjson', 'yggdrasil_rapidjson.h')
     _provided_types = ['Type', 'YggSubType', 'YggEncodingType']
     _selected_members = {
         None: {
@@ -697,11 +700,11 @@ class RapidjsonEnumFile(RapidjsonInterfaceFileBase):
     }
 
 
-class RapidjsonUnitsFile(RapidjsonInterfaceFileBase):
+class YggdrasilRapidjsonUnitsFile(YggdrasilRapidjsonInterfaceFileBase):
 
     # disabled = True
-    name = 'rapidjson_units'
-    filename = os.path.join('rapidjson', 'units.h')
+    name = 'yggdrasil_rapidjson_units'
+    filename = os.path.join('yggdrasil_rapidjson', 'units.h')
     _provided_types = [
         'Quantity', 'QuantityArray', 'UnitsType',
         'GenericUnits', 'GenericQuantity', 'GenericQuantityArray',
@@ -725,16 +728,16 @@ class RapidjsonUnitsFile(RapidjsonInterfaceFileBase):
     @property
     def final_modified_members(self):
         out = {}
-        out[('rapidjson', 'units', None)] = [
-            RapidjsonDocumentFile._specialize_class_template]
+        out[('yggdrasil_rapidjson', 'units', None)] = [
+            YggdrasilRapidjsonDocumentFile._specialize_class_template]
         return out
 
 
-class RapidjsonObjFile(RapidjsonInterfaceFileBase):
+class YggdrasilRapidjsonObjFile(YggdrasilRapidjsonInterfaceFileBase):
 
     disabled = True
-    name = 'rapidjson_obj'
-    filename = os.path.join('rapidjson', 'obj.h')
+    name = 'yggdrasil_rapidjson_obj'
+    filename = os.path.join('yggdrasil_rapidjson', 'obj.h')
     _provided_types = ['ObjWavefront']
     _removed_properties = {
         ('ObjWavefront', ): [
@@ -748,11 +751,11 @@ class RapidjsonObjFile(RapidjsonInterfaceFileBase):
     }
 
 
-class RapidjsonPlyFile(RapidjsonInterfaceFileBase):
+class YggdrasilRapidjsonPlyFile(YggdrasilRapidjsonInterfaceFileBase):
 
     disabled = True
-    name = 'rapidjson_ply'
-    filename = os.path.join('rapidjson', 'ply.h')
+    name = 'yggdrasil_rapidjson_ply'
+    filename = os.path.join('yggdrasil_rapidjson', 'ply.h')
     _provided_types = ['Ply']
     _removed_properties = {
         ('Ply', ): [
@@ -766,11 +769,11 @@ class RapidjsonPlyFile(RapidjsonInterfaceFileBase):
     }
 
 
-class RapidjsonSchemaFile(RapidjsonInterfaceFileBase):
+class YggdrasilRapidjsonSchemaFile(YggdrasilRapidjsonInterfaceFileBase):
 
     disabled = True
-    name = 'rapidjson_schema'
-    filename = os.path.join('rapidjson', 'schema.h')
+    name = 'yggdrasil_rapidjson_schema'
+    filename = os.path.join('yggdrasil_rapidjson', 'schema.h')
     _provided_types = [
         'GenericSchemaDocument', 'GenericSchemaValidator',
         'GenericSchemaNormalizer', 'GenericSchemaEncoder',
@@ -791,7 +794,7 @@ class CommBaseFile(InterfaceFileBase):
     name = 'commbase'
     filename = os.path.join(
         'cpp', 'include', 'communicators', 'CommBase.hpp')
-    depends_on = ['enum', 'rapidjson_document']
+    depends_on = ['enum', 'yggdrasil_rapidjson_document']
     _provided_types = ['Comm_t']
     _selected_members = {
         ('YggInterface', 'communicator'): {
@@ -951,19 +954,21 @@ class YggInterfaceFile(CollectedInterfaceFileBase):
 
     filename = os.path.join('cpp', 'include', 'YggInterface.hpp')
     _related_files = [
-        'rapidjson_document',
-        'rapidjson_enum',
-        'rapidjson_units',
-        'rapidjson_obj', 'rapidjson_ply',
+        'yggdrasil_rapidjson_document',
+        'yggdrasil_rapidjson_enum',
+        'yggdrasil_rapidjson_units',
+        'yggdrasil_rapidjson_obj', 'yggdrasil_rapidjson_ply',
         'commbase', 'wrapcomm', 'enum',
     ]
     _modules = {
-        'rapidjson': {
-            'base_unit': 'rapidjson_document',
-            'base_unit_module': ('rapidjson', ),
+        'yggdrasil_rapidjson': {
+            'base_unit': 'yggdrasil_rapidjson_document',
+            'base_unit_module': ('yggdrasil_rapidjson', ),
             'draw_from': [
-                'rapidjson_enum', 'rapidjson_obj', 'rapidjson_ply',
-                'rapidjson_units', 'rapidjson_document',
+                'yggdrasil_rapidjson_enum',
+                'yggdrasil_rapidjson_obj', 'yggdrasil_rapidjson_ply',
+                'yggdrasil_rapidjson_units',
+                'yggdrasil_rapidjson_document',
             ],
         },
         'YggInterface': {
@@ -975,27 +980,28 @@ class YggInterfaceFile(CollectedInterfaceFileBase):
             'draw_from_module': {
                 'enum': None,
             },
-            'types_from': ['rapidjson'],
+            'types_from': ['yggdrasil_rapidjson'],
         },
     }
 
 
-class RapidjsonInterfaceFile(RapidjsonInterfaceFileMixin,
-                             CollectedInterfaceFileBase):
+class YggdrasilRapidjsonInterfaceFile(YggdrasilRapidjsonInterfaceFileMixin,
+                                      CollectedInterfaceFileBase):
 
-    filename = os.path.join('rapidjson', 'document.h')
+    filename = os.path.join('yggdrasil_rapidjson', 'document.h')
     _related_files = [
-        'rapidjson_document',
-        'rapidjson_units',
-        'rapidjson_obj', 'rapidjson_ply',
+        'yggdrasil_rapidjson_document',
+        'yggdrasil_rapidjson_units',
+        'yggdrasil_rapidjson_obj', 'yggdrasil_rapidjson_ply',
     ]
     _modules = {
-        'rapidjson': {
-            'base_unit': 'rapidjson_document',
-            'base_unit_module': ('rapidjson', ),
+        'yggdrasil_rapidjson': {
+            'base_unit': 'yggdrasil_rapidjson_document',
+            'base_unit_module': ('yggdrasil_rapidjson', ),
             'draw_from': [
-                'rapidjson_obj', 'rapidjson_ply',
-                'rapidjson_units', 'rapidjson_document',
+                'yggdrasil_rapidjson_obj', 'yggdrasil_rapidjson_ply',
+                'yggdrasil_rapidjson_units',
+                'yggdrasil_rapidjson_document',
             ],
         },
     }
@@ -1007,7 +1013,8 @@ class Interface(GeneratedFile, metaclass=GeneratedInterfaceFileMeta):
     modifications = {}
 
     def __init__(self, *args, **kwargs):
-        for k in ['wrap_rapidjson', 'rapidjson_include_dirs']:
+        for k in ['wrap_yggdrasil_rapidjson',
+                  'yggdrasil_rapidjson_include_dirs']:
             setattr(self, k, kwargs.pop(k, None))
         super(Interface, self).__init__(*args, **kwargs)
 
@@ -1015,7 +1022,8 @@ class Interface(GeneratedFile, metaclass=GeneratedInterfaceFileMeta):
         verbose = kwargs.get('verbose', False)
         wrap_kwargs = kwargs.pop('wrap_kwargs', {})
         base_kwargs = kwargs.pop('base_kwargs', {})
-        for k in ['wrap_rapidjson', 'rapidjson_include_dirs']:
+        for k in ['wrap_yggdrasil_rapidjson',
+                  'yggdrasil_rapidjson_include_dirs']:
             if getattr(self, k) is not None:
                 base_kwargs[k] = getattr(self, k)
         base_kwargs['modifications'] = copy.deepcopy(
@@ -1043,28 +1051,29 @@ class RJWrapperInterface(Interface):
 
     def __init__(self, **kwargs):
         header = os.path.join(
-            'cpp', 'include', 'utils', 'rapidjson_wrapper2.hpp')
+            'cpp', 'include', 'utils', 'yggdrasil_rapidjson_wrapper2.hpp')
         src = os.path.join(
-            'cpp', 'src', 'utils', 'rapidjson_wrapper2.cpp')
+            'cpp', 'src', 'utils', 'yggdrasil_rapidjson_wrapper2.cpp')
         added = {
             'source': GeneratedFile(src, language='rjwrapper_source')}
         super(RJWrapperInterface, self).__init__(
             header, language='rjwrapper', added=added, **kwargs)
 
     def generate(self, *args, **kwargs):
-        kwargs.setdefault('interface_file_class', RapidjsonInterfaceFile)
+        kwargs.setdefault('interface_file_class',
+                          YggdrasilRapidjsonInterfaceFile)
         return super(RJWrapperInterface, self).generate(*args, **kwargs)
 
     def from_unit(self, *args, **kwargs):
         out = super(RJWrapperInterface, self).from_unit(*args, **kwargs)
         new_members = [
             CMacroUnit.parse(
-                '#define RAPIDJSON_DEFAULT_ALLOCATOR ::RAPIDJSON'
-                '_NAMESPACE::MemoryPoolAllocator< ::RAPIDJSON_NA'
-                'MESPACE::CrtAllocator >'),
+                '#define YGGDRASIL_RAPIDJSON_DEFAULT_ALLOCATOR '
+                '::YGGDRASIL_RAPIDJSON_NAMESPACE::MemoryPoolAllocator'
+                '< ::YGGDRASIL_RAPIDJSON_NAMESPACE::CrtAllocator >'),
             CMacroUnit.parse(
-                '#define RAPIDJSON_DEFAULT_STACK_ALLOCATOR ::RAP'
-                'IDJSON_NAMESPACE::CrtAllocator'),
+                '#define YGGDRASIL_RAPIDJSON_DEFAULT_STACK_ALLOCATOR '
+                '::YGGDRASIL_RAPIDJSON_NAMESPACE::CrtAllocator'),
         ]
         out.properties['defines'] = new_members + out.properties.get(
             'defines', [])
@@ -1074,16 +1083,16 @@ class RJWrapperInterface(Interface):
         out = super(RJWrapperInterface, self).modify_base(base)
         out.properties.setdefault('includes', [])
         local_includes = [
-            "rapidjson/rapidjson.h",
-            "rapidjson/allocators.h",
-            "rapidjson/units.h",
-            "rapidjson/ply.h",
-            "rapidjson/obj.h",
+            "yggdrasil_rapidjson/yggdrasil_rapidjson.h",
+            "yggdrasil_rapidjson/allocators.h",
+            "yggdrasil_rapidjson/units.h",
+            "yggdrasil_rapidjson/ply.h",
+            "yggdrasil_rapidjson/obj.h",
         ]
         for k in local_includes:
             out.properties['includes'].append(
                 CImportUnit(name=k, local_ctx=True))
-        for unit in out['rapidjson'].properties['members']:
+        for unit in out['yggdrasil_rapidjson'].properties['members']:
             new_members = []
             if unit.properties['name'].endswith(('Array', 'Object')):
                 new_members += [

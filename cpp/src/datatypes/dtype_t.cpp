@@ -1,10 +1,10 @@
 #include "datatypes/dtype_t.hpp"
 #include "utils/serialization.hpp"
 #include "utils/tools.hpp"
-#include "utils/rapidjson_wrapper.hpp"
+#include "utils/yggdrasil_rapidjson_wrapper.hpp"
 
 #define STRLEN_RJ(var)				\
-  static_cast<rapidjson::SizeType>(strlen(var))
+  static_cast<yggdrasil_rapidjson::SizeType>(strlen(var))
 
 #define _GET_METADATA(name, in, err)		\
   if (in.metadata == NULL) {			\
@@ -18,22 +18,22 @@
   YggInterface::utils::Metadata* name = ((YggInterface::utils::Metadata*)(in.metadata))
 
 // C++ functions
-rapidjson::Document::AllocatorType& generic_allocator(generic_t& x) {
+yggdrasil_rapidjson::Document::AllocatorType& generic_allocator(generic_t& x) {
   assert(is_generic_init(x));
   // if (!is_generic_init(x))
   //   ygglog_throw_error("generic_allocator: Not initialized");
-  return ((rapidjson::Document*)(x.obj))->GetAllocator();
+  return ((yggdrasil_rapidjson::Document*)(x.obj))->GetAllocator();
 }; // GCOVR_EXCL_LINE
 
-rapidjson::Document::AllocatorType& generic_ref_allocator(generic_ref_t& x) {
+yggdrasil_rapidjson::Document::AllocatorType& generic_ref_allocator(generic_ref_t& x) {
   assert(is_generic_ref_init(x));
   // if (!is_generic_ref_init(x))
   //   ygglog_throw_error("generic_ref_allocator: Not initialized");
-  return *((rapidjson::Document::AllocatorType*)(x.allocator));
+  return *((yggdrasil_rapidjson::Document::AllocatorType*)(x.allocator));
 }; // GCOVR_EXCL_LINE
 
-// rapidjson::Document::AllocatorType& dtype_allocator(dtype_t& x) {
-//   rapidjson::Document* s = NULL;
+// yggdrasil_rapidjson::Document::AllocatorType& dtype_allocator(dtype_t& x) {
+//   yggdrasil_rapidjson::Document* s = NULL;
 //   if (x.metadata != NULL)
 //     return ((YggInterface::utils::Metadata*)x.metadata)->GetAllocator();
 //   else
@@ -41,33 +41,33 @@ rapidjson::Document::AllocatorType& generic_ref_allocator(generic_ref_t& x) {
 //   return s->GetAllocator();
 // };
 
-ply_t Ply2ply(rapidjson::Ply& x) {
+ply_t Ply2ply(yggdrasil_rapidjson::Ply& x) {
   ply_t out = init_ply();
   set_ply(&out, (void*)(&x), 1);
   return out;
 };
 
-rapidjson::Ply ply2Ply(ply_t x) {
+yggdrasil_rapidjson::Ply ply2Ply(ply_t x) {
   if (x.obj == NULL) {
-    return rapidjson::Ply();
+    return yggdrasil_rapidjson::Ply();
   } else {
-    rapidjson::Ply* obj = (rapidjson::Ply*)(x.obj);
-    return rapidjson::Ply(*obj);
+    yggdrasil_rapidjson::Ply* obj = (yggdrasil_rapidjson::Ply*)(x.obj);
+    return yggdrasil_rapidjson::Ply(*obj);
   }
 };
 
-obj_t ObjWavefront2obj(rapidjson::ObjWavefront& x) {
+obj_t ObjWavefront2obj(yggdrasil_rapidjson::ObjWavefront& x) {
   obj_t out = init_obj();
   set_obj(&out, (void*)(&x), 1);
   return out;
 };
 
-rapidjson::ObjWavefront obj2ObjWavefront(obj_t x) {
+yggdrasil_rapidjson::ObjWavefront obj2ObjWavefront(obj_t x) {
   if (x.obj == NULL) {
-    return rapidjson::ObjWavefront();
+    return yggdrasil_rapidjson::ObjWavefront();
   } else {
-    rapidjson::ObjWavefront* obj = (rapidjson::ObjWavefront*)(x.obj);
-    return rapidjson::ObjWavefront(*obj);
+    yggdrasil_rapidjson::ObjWavefront* obj = (yggdrasil_rapidjson::ObjWavefront*)(x.obj);
+    return yggdrasil_rapidjson::ObjWavefront(*obj);
   }
 };
 
@@ -77,7 +77,7 @@ extern "C" {
   // int destroy_document(void** obj) {
   //   if (obj == NULL || obj[0] == NULL)
   //     return 0;
-  //   rapidjson::Document* s = (rapidjson::Document*)(*obj);
+  //   yggdrasil_rapidjson::Document* s = (yggdrasil_rapidjson::Document*)(*obj);
   //   delete s;
   //   obj[0] = NULL;
   //   return 0;
@@ -110,49 +110,49 @@ extern "C" {
     out.obj = parent.obj;
     out.allocator = NULL;
     if (parent.obj != NULL)
-      out.allocator = (void*)(&(((rapidjson::Document*)(parent.obj))->GetAllocator()));
+      out.allocator = (void*)(&(((yggdrasil_rapidjson::Document*)(parent.obj))->GetAllocator()));
     return out;
   }
 
   generic_t init_generic_null() {
     generic_t out = init_generic();
-    rapidjson::Document* x = new rapidjson::Document(rapidjson::kNullType);
+    yggdrasil_rapidjson::Document* x = new yggdrasil_rapidjson::Document(yggdrasil_rapidjson::kNullType);
     out.obj = (void*)x;
     return out;
   }
 
   generic_t init_generic_array() {
     generic_t out = init_generic();
-    rapidjson::Document* x = new rapidjson::Document(rapidjson::kArrayType);
+    yggdrasil_rapidjson::Document* x = new yggdrasil_rapidjson::Document(yggdrasil_rapidjson::kArrayType);
     out.obj = (void*)x;
     return out;
   }
 
   generic_t init_generic_map() {
     generic_t out = init_generic();
-    rapidjson::Document* x = new rapidjson::Document(rapidjson::kObjectType);
+    yggdrasil_rapidjson::Document* x = new yggdrasil_rapidjson::Document(yggdrasil_rapidjson::kObjectType);
     out.obj = (void*)x;
     return out;
   }
 
   generic_t init_generic_json(const char* json) {
     generic_t out = init_generic();
-    out.obj = (void*)(new rapidjson::Document());
+    out.obj = (void*)(new yggdrasil_rapidjson::Document());
     generic_set_json(out, json);
     return out;
   }
 
   generic_t init_generic_generate(const char* schema) {
     generic_t out = init_generic();
-    rapidjson::Document sd;
+    yggdrasil_rapidjson::Document sd;
     sd.Parse(schema);
     if (sd.HasParseError()) {
       destroy_generic(&out);
       return out;
     }
-    rapidjson::SchemaDocument s(sd);
-    rapidjson::SchemaValidator validator(s);
-    rapidjson::Document* x = new rapidjson::Document();
+    yggdrasil_rapidjson::SchemaDocument s(sd);
+    yggdrasil_rapidjson::SchemaValidator validator(s);
+    yggdrasil_rapidjson::Document* x = new yggdrasil_rapidjson::Document();
     validator.GenerateData(*x);
     out.obj = (void*)x;
     return out;
@@ -171,12 +171,12 @@ extern "C" {
     if (x != NULL) {
       if (x->obj != NULL) {
 	try {
-	  rapidjson::Document* obj = (rapidjson::Document*)(x->obj);
+	  yggdrasil_rapidjson::Document* obj = (yggdrasil_rapidjson::Document*)(x->obj);
 	  delete obj;
 	  obj = nullptr;
 	  x->obj = NULL;
 	} catch (...) {
-	  YggLogError << "destroy_generic: C++ exception thrown in destructor for rapidjson::Document." << std::endl;
+	  YggLogError << "destroy_generic: C++ exception thrown in destructor for yggdrasil_rapidjson::Document." << std::endl;
 	  ret = -1;
 	}
       }
@@ -194,8 +194,8 @@ extern "C" {
       if (!is_generic_init(src)) {
 	ygglog_throw_error("copy_generic: Generic object class is NULL.");
       }
-      rapidjson::Document* doc = new rapidjson::Document();
-      doc->CopyFrom(*((const rapidjson::Value*)(src.obj)),
+      yggdrasil_rapidjson::Document* doc = new yggdrasil_rapidjson::Document();
+      doc->CopyFrom(*((const yggdrasil_rapidjson::Value*)(src.obj)),
 		    doc->GetAllocator(), true);
       dst->obj = (void*)doc;
     } catch(...) {
@@ -218,15 +218,15 @@ extern "C" {
     }
     display_generic(a);
     display_generic(b);
-    return ((*((rapidjson::Document*)(a.obj))) ==
-	    (*((rapidjson::Document*)(b.obj))));
+    return ((*((yggdrasil_rapidjson::Document*)(a.obj))) ==
+	    (*((yggdrasil_rapidjson::Document*)(b.obj))));
   }
   
   void display_generic(const generic_t x) {
     try {
       if (!x.obj)
 	ygglog_throw_error("display_generic: Object is NULL.");
-      std::cout << *((rapidjson::Document*)(x.obj)) << std::endl;
+      std::cout << *((yggdrasil_rapidjson::Document*)(x.obj)) << std::endl;
     } catch (...) {
       YggLogError << "display_generic: C++ exception thrown." << std::endl;
     }
@@ -241,7 +241,7 @@ extern "C" {
       if (!is_generic_init(x)) {
 	ygglog_throw_error("generic_set_json: Object is NULL.");
       }
-      rapidjson::Document* x_obj = (rapidjson::Document*)(x.obj);
+      yggdrasil_rapidjson::Document* x_obj = (yggdrasil_rapidjson::Document*)(x.obj);
       x_obj->SetNull();
       x_obj->Parse(json);
       if (x_obj->HasParseError()) {
@@ -263,12 +263,12 @@ extern "C" {
       if (!is_generic_init(x)) {
 	ygglog_throw_error("add_generic_array: New element is NULL.");
       }
-      rapidjson::Value* arr_obj = (rapidjson::Value*)(arr.obj);
-      const rapidjson::Value* x_obj = (const rapidjson::Value*)(x.obj);
+      yggdrasil_rapidjson::Value* arr_obj = (yggdrasil_rapidjson::Value*)(arr.obj);
+      const yggdrasil_rapidjson::Value* x_obj = (const yggdrasil_rapidjson::Value*)(x.obj);
       if (!arr_obj->IsArray()) {
 	ygglog_throw_error("add_generic_array: Document is not an array.");
       }
-      rapidjson::Value cpy(*x_obj, generic_allocator(arr), true);
+      yggdrasil_rapidjson::Value cpy(*x_obj, generic_allocator(arr), true);
       arr_obj->PushBack(cpy, generic_allocator(arr));
     } catch (...) {
       YggLogError << "add_generic_array: C++ exception thrown." << std::endl;
@@ -286,16 +286,16 @@ extern "C" {
       if (!is_generic_init(x)) {
 	ygglog_throw_error("set_generic_array: New element is NULL.");
       }
-      rapidjson::Value* arr_obj = (rapidjson::Value*)(arr.obj);
-      const rapidjson::Value* x_obj = (const rapidjson::Value*)(x.obj);
+      yggdrasil_rapidjson::Value* arr_obj = (yggdrasil_rapidjson::Value*)(arr.obj);
+      const yggdrasil_rapidjson::Value* x_obj = (const yggdrasil_rapidjson::Value*)(x.obj);
       if (!arr_obj->IsArray()) {
 	ygglog_throw_error("set_generic_array: Document is not an array.");
       }
       if (arr_obj->Size() > i) {
-	(*arr_obj)[i].CopyFrom(*((rapidjson::Value*)x_obj),
+	(*arr_obj)[i].CopyFrom(*((yggdrasil_rapidjson::Value*)x_obj),
 			       generic_allocator(arr), true);
       } else {
-	rapidjson::Value cpy(*((rapidjson::Value*)x_obj),
+	yggdrasil_rapidjson::Value cpy(*((yggdrasil_rapidjson::Value*)x_obj),
 			     generic_allocator(arr), true);
 	arr_obj->PushBack(cpy, generic_allocator(arr));
       }
@@ -313,7 +313,7 @@ extern "C" {
       if (!is_generic_init(arr)) {
 	ygglog_throw_error("get_generic_array_ref: Array is NULL.");
       }
-      const rapidjson::Value* arr_obj = (const rapidjson::Value*)(arr.obj);
+      const yggdrasil_rapidjson::Value* arr_obj = (const yggdrasil_rapidjson::Value*)(arr.obj);
       if (!arr_obj->IsArray()) {
 	ygglog_throw_error("get_generic_array_ref: Document is not an array.");
       }
@@ -332,8 +332,8 @@ extern "C" {
     if (get_generic_array_ref(arr, i, &tmp) != GENERIC_SUCCESS_)
       return GENERIC_ERROR_;
     x[0] = init_generic();
-    rapidjson::Value* src = (rapidjson::Value*)(tmp.obj);
-    rapidjson::Document* cpy = new rapidjson::Document();
+    yggdrasil_rapidjson::Value* src = (yggdrasil_rapidjson::Value*)(tmp.obj);
+    yggdrasil_rapidjson::Document* cpy = new yggdrasil_rapidjson::Document();
     cpy->CopyFrom(*src, cpy->GetAllocator(), true);
     x[0].obj = (void*)cpy;
     return GENERIC_SUCCESS_;
@@ -348,17 +348,17 @@ extern "C" {
       if (!is_generic_init(x)) {
 	ygglog_throw_error("set_generic_object: New element is NULL.");
       }
-      rapidjson::Value* arr_obj = (rapidjson::Value*)(arr.obj);
-      rapidjson::Value* x_obj = (rapidjson::Value*)(x.obj);
+      yggdrasil_rapidjson::Value* arr_obj = (yggdrasil_rapidjson::Value*)(arr.obj);
+      yggdrasil_rapidjson::Value* x_obj = (yggdrasil_rapidjson::Value*)(x.obj);
       if (!arr_obj->IsObject()) {
 	ygglog_throw_error("set_generic_object: Document is not an object.");
       }
       if (arr_obj->HasMember(k)) {
-	(*arr_obj)[k].CopyFrom(*((rapidjson::Value*)x_obj),
+	(*arr_obj)[k].CopyFrom(*((yggdrasil_rapidjson::Value*)x_obj),
 			       generic_allocator(arr), true);
       } else {
-	rapidjson::Value key(k, STRLEN_RJ(k), generic_allocator(arr));
-	rapidjson::Value cpy(*((rapidjson::Value*)x_obj),
+	yggdrasil_rapidjson::Value key(k, STRLEN_RJ(k), generic_allocator(arr));
+	yggdrasil_rapidjson::Value cpy(*((yggdrasil_rapidjson::Value*)x_obj),
 			     generic_allocator(arr), true);
 	arr_obj->AddMember(key, cpy, generic_allocator(arr));
       }
@@ -376,7 +376,7 @@ extern "C" {
       if (!is_generic_init(arr)) {
 	ygglog_throw_error("get_generic_object_ref: Object is NULL.");
       }
-      const rapidjson::Value* arr_obj = (const rapidjson::Value*)(arr.obj);
+      const yggdrasil_rapidjson::Value* arr_obj = (const yggdrasil_rapidjson::Value*)(arr.obj);
       if (!arr_obj->IsObject()) {
 	ygglog_throw_error("get_generic_object_ref: Document is not an object.");
       }
@@ -395,8 +395,8 @@ extern "C" {
     if (get_generic_object_ref(arr, k, &tmp) != GENERIC_SUCCESS_)
       return GENERIC_ERROR_;
     x[0] = init_generic();
-    rapidjson::Value* src = (rapidjson::Value*)(tmp.obj);
-    rapidjson::Document* cpy = new rapidjson::Document();
+    yggdrasil_rapidjson::Value* src = (yggdrasil_rapidjson::Value*)(tmp.obj);
+    yggdrasil_rapidjson::Document* cpy = new yggdrasil_rapidjson::Document();
     cpy->CopyFrom(*src, cpy->GetAllocator(), true);
     x[0].obj = (void*)cpy;
     return GENERIC_SUCCESS_;
@@ -409,7 +409,7 @@ extern "C" {
       if (!is_generic_init(x)) {
 	ygglog_throw_error("generic_map_has_key: Object is NULL.");
       }
-      const rapidjson::Value* x_obj = (const rapidjson::Value*)(x.obj);
+      const yggdrasil_rapidjson::Value* x_obj = (const yggdrasil_rapidjson::Value*)(x.obj);
       if (!x_obj->IsObject()) {
 	ygglog_throw_error("generic_map_has_key: Document is not an object.");
       }
@@ -427,14 +427,14 @@ extern "C" {
       if (!is_generic_init(x)) {
 	ygglog_throw_error("generic_map_get_keys: Object is NULL.");
       }
-      rapidjson::Value* x_obj = (rapidjson::Value*)(x.obj);
+      yggdrasil_rapidjson::Value* x_obj = (yggdrasil_rapidjson::Value*)(x.obj);
       if (!x_obj->IsObject()) {
 	ygglog_throw_error("generic_map_get_keys: Document is not an object.");
       }
       out = (size_t)(x_obj->MemberCount());
       keys[0] = (char**)(generic_allocator(x).Malloc(out * sizeof(char*)));
       size_t i = 0;
-      for (rapidjson::Document::ConstMemberIterator it = x_obj->MemberBegin();
+      for (yggdrasil_rapidjson::Document::ConstMemberIterator it = x_obj->MemberBegin();
 	   it != x_obj->MemberEnd(); it++, i++) {
 	keys[0][i] = (char*)(generic_allocator(x).Malloc(sizeof(char) * (it->name.GetStringLength() + 1)));
 	strcpy(keys[0][i], it->name.GetString());
@@ -720,7 +720,7 @@ extern "C" {
       }
       if (nitems > 0) {
 	if (!metadata->SetSchemaValue(
-	      "items", rapidjson::Value(rapidjson::kArrayType).Move())) {
+	      "items", yggdrasil_rapidjson::Value(yggdrasil_rapidjson::kArrayType).Move())) {
 	  destroy_dtype(&out);  // GCOV_EXCL_LINE
 	  return out;  // GCOV_EXCL_LINE
 	}
@@ -755,7 +755,7 @@ extern "C" {
       }
       if (nitems > 0) {
 	if (!metadata->SetSchemaValue(
-	       "properties", rapidjson::Value(rapidjson::kObjectType).Move())) {
+	       "properties", yggdrasil_rapidjson::Value(yggdrasil_rapidjson::kObjectType).Move())) {
 	  destroy_dtype(&out);  // GCOV_EXCL_LINE
 	  return out;  // GCOV_EXCL_LINE
 	}
@@ -868,13 +868,13 @@ extern "C" {
   name ## _t generate_ ## name() {					\
     name ## _t x;							\
     x.obj = NULL;							\
-    rapidjson::Document sd;						\
+    yggdrasil_rapidjson::Document sd;						\
     sd.Parse("{\"type\": \"" #name "\"}");				\
-    rapidjson::SchemaDocument s(sd);					\
-    rapidjson::SchemaValidator validator(s);				\
-    rapidjson::Document xx;						\
+    yggdrasil_rapidjson::SchemaDocument s(sd);					\
+    yggdrasil_rapidjson::SchemaValidator validator(s);				\
+    yggdrasil_rapidjson::Document xx;						\
     validator.GenerateData(xx);						\
-    rapidjson::cpp_type* obj = new rapidjson::cpp_type();		\
+    yggdrasil_rapidjson::cpp_type* obj = new yggdrasil_rapidjson::cpp_type();		\
     xx.Get ## cpp_type(*obj);						\
     x.obj = (void*)obj;							\
     return x;								\
@@ -882,7 +882,7 @@ extern "C" {
   void free_ ## name(name ## _t *p) {					\
     if (p != NULL) {							\
       if (p->obj != NULL) {						\
-	rapidjson::cpp_type* obj = (rapidjson::cpp_type*)(p->obj);	\
+	yggdrasil_rapidjson::cpp_type* obj = (yggdrasil_rapidjson::cpp_type*)(p->obj);	\
 	p->obj = NULL;							\
 	delete obj;							\
 	obj = nullptr;							\
@@ -893,8 +893,8 @@ extern "C" {
     if (x == NULL)							\
       return;								\
     if (copy && obj != NULL) {						\
-      rapidjson::cpp_type* objw = (rapidjson::cpp_type*)obj;		\
-      rapidjson::cpp_type* cpy = new rapidjson::cpp_type(*objw);	\
+      yggdrasil_rapidjson::cpp_type* objw = (yggdrasil_rapidjson::cpp_type*)obj;		\
+      yggdrasil_rapidjson::cpp_type* cpy = new yggdrasil_rapidjson::cpp_type(*objw);	\
       x->obj = cpy;							\
     } else {								\
       x->obj = obj;							\
@@ -909,7 +909,7 @@ extern "C" {
     if (p.obj == NULL) {						\
       printf("%sNULL\n", indent);					\
     } else {								\
-      rapidjson::cpp_type* obj = (rapidjson::cpp_type*)(p.obj);		\
+      yggdrasil_rapidjson::cpp_type* obj = (yggdrasil_rapidjson::cpp_type*)(p.obj);		\
       std::string s_indent(indent);					\
       std::string s = obj->as_string(s_indent);				\
       printf("%s%s\n", indent, s.c_str());				\
@@ -923,15 +923,15 @@ extern "C" {
       YggLogError << "nelements_" << #name << ": " << #cpp_type << " object is NULL." << std::endl; \
       return -1;							\
     }									\
-    rapidjson::cpp_type* p_obj = (rapidjson::cpp_type*)(p.obj);		\
+    yggdrasil_rapidjson::cpp_type* p_obj = (yggdrasil_rapidjson::cpp_type*)(p.obj);		\
     size_t N = p_obj->count_elements(std::string(name));		\
     return static_cast<int>(N);						\
   }									\
   bool compare_ ## name(const name ## _t a, const name ## _t b) {	\
     if (a.obj == NULL || b.obj == NULL)					\
       return (a.obj == b.obj);						\
-    rapidjson::cpp_type* a_obj = (rapidjson::cpp_type*)(a.obj);		\
-    rapidjson::cpp_type* b_obj = (rapidjson::cpp_type*)(b.obj);		\
+    yggdrasil_rapidjson::cpp_type* a_obj = (yggdrasil_rapidjson::cpp_type*)(a.obj);		\
+    yggdrasil_rapidjson::cpp_type* b_obj = (yggdrasil_rapidjson::cpp_type*)(b.obj);		\
     return ((*a_obj) == (*b_obj));					\
   }
 
@@ -958,7 +958,7 @@ size_t generic_array_get_size(generic_t x) {
       YggLogError << "generic_array_get_size: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsArray()) {
       YggLogError << "generic_array_get_size: Generic object is not array: " << (*d) << std::endl;
       return out;
@@ -976,7 +976,7 @@ size_t generic_object_get_size(generic_t x) {
       YggLogError << "generic_object_get_size: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsObject()) {
       YggLogError << "generic_object_get_size: Generic object is not object: " << (*d) << std::endl;
       return out;
@@ -994,7 +994,7 @@ int generic_set_null(generic_t x, const void* value) {
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     d->SetNull(); UNUSED(value);
     out = GENERIC_SUCCESS_;
   } catch(...) {
@@ -1009,7 +1009,7 @@ int generic_set_bool(generic_t x, const bool value) {
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     d->SetBool(value);
     out = GENERIC_SUCCESS_;
   } catch(...) {
@@ -1024,7 +1024,7 @@ int generic_set_integer(generic_t x, const int value) {
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     d->SetInt(value);
     out = GENERIC_SUCCESS_;
   } catch(...) {
@@ -1039,7 +1039,7 @@ int generic_set_number(generic_t x, const double value) {
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     d->SetDouble(value);
     out = GENERIC_SUCCESS_;
   } catch(...) {
@@ -1054,7 +1054,7 @@ int generic_set_string(generic_t x, const char* value) {
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     d->SetString(value, STRLEN_RJ(value), generic_allocator(x));
     out = GENERIC_SUCCESS_;
   } catch(...) {
@@ -1069,7 +1069,7 @@ int generic_set_item(generic_t x, const char* type, void* value) {
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->SetDataPtr(type, value, generic_allocator(x))) {
       YggLogError << "generic_set_item: Error setting data pointer" << std::endl;
       return GENERIC_ERROR_;
@@ -1087,8 +1087,8 @@ int generic_set_array(generic_t x, const generic_t value) {
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    d->CopyFrom(*((rapidjson::Value*)(value.obj)), generic_allocator(x), true);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    d->CopyFrom(*((yggdrasil_rapidjson::Value*)(value.obj)), generic_allocator(x), true);
     out = GENERIC_SUCCESS_;
   } catch(...) {
     YggLogError << "generic_set_array: C++ exception thrown" << std::endl;
@@ -1102,8 +1102,8 @@ int generic_set_object(generic_t x, const generic_t value) {
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    d->CopyFrom(*((rapidjson::Value*)(value.obj)), generic_allocator(x), true);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    d->CopyFrom(*((yggdrasil_rapidjson::Value*)(value.obj)), generic_allocator(x), true);
     out = GENERIC_SUCCESS_;
   } catch(...) {
     YggLogError << "generic_set_object: C++ exception thrown" << std::endl;
@@ -1117,8 +1117,8 @@ int generic_set_ply(generic_t x, const ply_t value) {
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    d->SetPly(*((rapidjson::Ply*)(value.obj)), generic_allocator(x));
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    d->SetPly(*((yggdrasil_rapidjson::Ply*)(value.obj)), generic_allocator(x));
     out = GENERIC_SUCCESS_;
   } catch(...) {
     YggLogError << "generic_set_ply: C++ exception thrown" << std::endl;
@@ -1132,8 +1132,8 @@ int generic_set_obj(generic_t x, const obj_t value) {
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    d->SetObjWavefront(*((rapidjson::ObjWavefront*)(value.obj)), generic_allocator(x));
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    d->SetObjWavefront(*((yggdrasil_rapidjson::ObjWavefront*)(value.obj)), generic_allocator(x));
     out = GENERIC_SUCCESS_;
   } catch(...) {
     YggLogError << "generic_set_obj: C++ exception thrown" << std::endl;
@@ -1147,7 +1147,7 @@ int generic_set_python_class(generic_t x, const python_t value) {
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     d->SetPythonObjectRaw(value.obj, generic_allocator(x));
     out = GENERIC_SUCCESS_;
   } catch(...) {
@@ -1162,7 +1162,7 @@ int generic_set_python_function(generic_t x, const python_t value) {
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     d->SetPythonObjectRaw(value.obj, generic_allocator(x));
     out = GENERIC_SUCCESS_;
   } catch(...) {
@@ -1177,7 +1177,7 @@ int generic_set_python_instance(generic_t x, const python_t value) {
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     d->SetPythonObjectRaw(value.obj, generic_allocator(x));
     out = GENERIC_SUCCESS_;
   } catch(...) {
@@ -1192,22 +1192,22 @@ int generic_set_scalar(generic_t x, const void* value, const char* subtype, cons
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    rapidjson::Document schema(rapidjson::kObjectType);
-    schema.AddMember(rapidjson::Document::GetTypeString(),
-                     rapidjson::Value("scalar", 6,
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Document schema(yggdrasil_rapidjson::kObjectType);
+    schema.AddMember(yggdrasil_rapidjson::Document::GetTypeString(),
+                     yggdrasil_rapidjson::Value("scalar", 6,
                         schema.GetAllocator()).Move(),
                      schema.GetAllocator());
-    schema.AddMember(rapidjson::Document::GetSubTypeString(),
-                     rapidjson::Value(subtype, STRLEN_RJ(subtype),
+    schema.AddMember(yggdrasil_rapidjson::Document::GetSubTypeString(),
+                     yggdrasil_rapidjson::Value(subtype, STRLEN_RJ(subtype),
                                       schema.GetAllocator()).Move(),
                      schema.GetAllocator());
-    schema.AddMember(rapidjson::Document::GetPrecisionString(),
-                     rapidjson::Value((unsigned)precision).Move(),
+    schema.AddMember(yggdrasil_rapidjson::Document::GetPrecisionString(),
+                     yggdrasil_rapidjson::Value((unsigned)precision).Move(),
                      schema.GetAllocator());
     if (units && strlen(units) > 0) {
-      schema.AddMember(rapidjson::Document::GetUnitsString(),
-                       rapidjson::Value(units, STRLEN_RJ(units),
+      schema.AddMember(yggdrasil_rapidjson::Document::GetUnitsString(),
+                       yggdrasil_rapidjson::Value(units, STRLEN_RJ(units),
                                         schema.GetAllocator()).Move(),
                        schema.GetAllocator());
     }
@@ -1228,7 +1228,7 @@ int generic_set_int8(generic_t x, const int8_t value, const char* units) {
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     d->SetScalar(value, units, generic_allocator(x));
     out = GENERIC_SUCCESS_;
   } catch(...) {
@@ -1243,7 +1243,7 @@ int generic_set_int16(generic_t x, const int16_t value, const char* units) {
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     d->SetScalar(value, units, generic_allocator(x));
     out = GENERIC_SUCCESS_;
   } catch(...) {
@@ -1258,7 +1258,7 @@ int generic_set_int32(generic_t x, const int32_t value, const char* units) {
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     d->SetScalar(value, units, generic_allocator(x));
     out = GENERIC_SUCCESS_;
   } catch(...) {
@@ -1273,7 +1273,7 @@ int generic_set_int64(generic_t x, const int64_t value, const char* units) {
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     d->SetScalar(value, units, generic_allocator(x));
     out = GENERIC_SUCCESS_;
   } catch(...) {
@@ -1288,7 +1288,7 @@ int generic_set_uint8(generic_t x, const uint8_t value, const char* units) {
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     d->SetScalar(value, units, generic_allocator(x));
     out = GENERIC_SUCCESS_;
   } catch(...) {
@@ -1303,7 +1303,7 @@ int generic_set_uint16(generic_t x, const uint16_t value, const char* units) {
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     d->SetScalar(value, units, generic_allocator(x));
     out = GENERIC_SUCCESS_;
   } catch(...) {
@@ -1318,7 +1318,7 @@ int generic_set_uint32(generic_t x, const uint32_t value, const char* units) {
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     d->SetScalar(value, units, generic_allocator(x));
     out = GENERIC_SUCCESS_;
   } catch(...) {
@@ -1333,7 +1333,7 @@ int generic_set_uint64(generic_t x, const uint64_t value, const char* units) {
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     d->SetScalar(value, units, generic_allocator(x));
     out = GENERIC_SUCCESS_;
   } catch(...) {
@@ -1348,7 +1348,7 @@ int generic_set_float(generic_t x, const float value, const char* units) {
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     d->SetScalar(value, units, generic_allocator(x));
     out = GENERIC_SUCCESS_;
   } catch(...) {
@@ -1363,7 +1363,7 @@ int generic_set_double(generic_t x, const double value, const char* units) {
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     d->SetScalar(value, units, generic_allocator(x));
     out = GENERIC_SUCCESS_;
   } catch(...) {
@@ -1378,7 +1378,7 @@ int generic_set_complex_float(generic_t x, const complex_float_t value, const ch
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     d->SetScalar(std::complex<float>(value.re, value.im), units, generic_allocator(x));
     out = GENERIC_SUCCESS_;
   } catch(...) {
@@ -1393,7 +1393,7 @@ int generic_set_complex_double(generic_t x, const complex_double_t value, const 
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     d->SetScalar(std::complex<double>(value.re, value.im), units, generic_allocator(x));
     out = GENERIC_SUCCESS_;
   } catch(...) {
@@ -1408,29 +1408,29 @@ int generic_set_1darray(generic_t x, const void* value, const char* subtype, con
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    rapidjson::Document schema(rapidjson::kObjectType);
-    schema.AddMember(rapidjson::Document::GetTypeString(),
-                     rapidjson::Value("1darray", 7,
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Document schema(yggdrasil_rapidjson::kObjectType);
+    schema.AddMember(yggdrasil_rapidjson::Document::GetTypeString(),
+                     yggdrasil_rapidjson::Value("1darray", 7,
                         schema.GetAllocator()).Move(),
                      schema.GetAllocator());
-    schema.AddMember(rapidjson::Document::GetSubTypeString(),
-                     rapidjson::Value(subtype, STRLEN_RJ(subtype),
+    schema.AddMember(yggdrasil_rapidjson::Document::GetSubTypeString(),
+                     yggdrasil_rapidjson::Value(subtype, STRLEN_RJ(subtype),
                                       schema.GetAllocator()).Move(),
                      schema.GetAllocator());
-    schema.AddMember(rapidjson::Document::GetPrecisionString(),
-                     rapidjson::Value((unsigned)precision).Move(),
+    schema.AddMember(yggdrasil_rapidjson::Document::GetPrecisionString(),
+                     yggdrasil_rapidjson::Value((unsigned)precision).Move(),
                      schema.GetAllocator());
     if (units && strlen(units) > 0) {
-      schema.AddMember(rapidjson::Document::GetUnitsString(),
-                       rapidjson::Value(units, STRLEN_RJ(units),
+      schema.AddMember(yggdrasil_rapidjson::Document::GetUnitsString(),
+                       yggdrasil_rapidjson::Value(units, STRLEN_RJ(units),
                                         schema.GetAllocator()).Move(),
                        schema.GetAllocator());
     }
-    rapidjson::Value rjshape(rapidjson::kArrayType);
-    rjshape.PushBack(rapidjson::Value((unsigned)length).Move(),
+    yggdrasil_rapidjson::Value rjshape(yggdrasil_rapidjson::kArrayType);
+    rjshape.PushBack(yggdrasil_rapidjson::Value((unsigned)length).Move(),
                      schema.GetAllocator());
-    schema.AddMember(rapidjson::Document::GetShapeString(), rjshape,
+    schema.AddMember(yggdrasil_rapidjson::Document::GetShapeString(), rjshape,
                      schema.GetAllocator());
     d->SetYggdrasilString((char*)value, precision * length,
                           generic_allocator(x),
@@ -1448,8 +1448,8 @@ int generic_set_1darray_int8(generic_t x, const int8_t* value, const size_t leng
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    d->Set1DArray((int8_t*)value, (rapidjson::SizeType)length, units, generic_allocator(x));
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    d->Set1DArray((int8_t*)value, (yggdrasil_rapidjson::SizeType)length, units, generic_allocator(x));
     out = GENERIC_SUCCESS_;
   } catch(...) {
     YggLogError << "generic_set_1darray_int8: C++ exception thrown" << std::endl;
@@ -1463,8 +1463,8 @@ int generic_set_1darray_int16(generic_t x, const int16_t* value, const size_t le
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    d->Set1DArray((int16_t*)value, (rapidjson::SizeType)length, units, generic_allocator(x));
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    d->Set1DArray((int16_t*)value, (yggdrasil_rapidjson::SizeType)length, units, generic_allocator(x));
     out = GENERIC_SUCCESS_;
   } catch(...) {
     YggLogError << "generic_set_1darray_int16: C++ exception thrown" << std::endl;
@@ -1478,8 +1478,8 @@ int generic_set_1darray_int32(generic_t x, const int32_t* value, const size_t le
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    d->Set1DArray((int32_t*)value, (rapidjson::SizeType)length, units, generic_allocator(x));
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    d->Set1DArray((int32_t*)value, (yggdrasil_rapidjson::SizeType)length, units, generic_allocator(x));
     out = GENERIC_SUCCESS_;
   } catch(...) {
     YggLogError << "generic_set_1darray_int32: C++ exception thrown" << std::endl;
@@ -1493,8 +1493,8 @@ int generic_set_1darray_int64(generic_t x, const int64_t* value, const size_t le
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    d->Set1DArray((int64_t*)value, (rapidjson::SizeType)length, units, generic_allocator(x));
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    d->Set1DArray((int64_t*)value, (yggdrasil_rapidjson::SizeType)length, units, generic_allocator(x));
     out = GENERIC_SUCCESS_;
   } catch(...) {
     YggLogError << "generic_set_1darray_int64: C++ exception thrown" << std::endl;
@@ -1508,8 +1508,8 @@ int generic_set_1darray_uint8(generic_t x, const uint8_t* value, const size_t le
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    d->Set1DArray((uint8_t*)value, (rapidjson::SizeType)length, units, generic_allocator(x));
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    d->Set1DArray((uint8_t*)value, (yggdrasil_rapidjson::SizeType)length, units, generic_allocator(x));
     out = GENERIC_SUCCESS_;
   } catch(...) {
     YggLogError << "generic_set_1darray_uint8: C++ exception thrown" << std::endl;
@@ -1523,8 +1523,8 @@ int generic_set_1darray_uint16(generic_t x, const uint16_t* value, const size_t 
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    d->Set1DArray((uint16_t*)value, (rapidjson::SizeType)length, units, generic_allocator(x));
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    d->Set1DArray((uint16_t*)value, (yggdrasil_rapidjson::SizeType)length, units, generic_allocator(x));
     out = GENERIC_SUCCESS_;
   } catch(...) {
     YggLogError << "generic_set_1darray_uint16: C++ exception thrown" << std::endl;
@@ -1538,8 +1538,8 @@ int generic_set_1darray_uint32(generic_t x, const uint32_t* value, const size_t 
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    d->Set1DArray((uint32_t*)value, (rapidjson::SizeType)length, units, generic_allocator(x));
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    d->Set1DArray((uint32_t*)value, (yggdrasil_rapidjson::SizeType)length, units, generic_allocator(x));
     out = GENERIC_SUCCESS_;
   } catch(...) {
     YggLogError << "generic_set_1darray_uint32: C++ exception thrown" << std::endl;
@@ -1553,8 +1553,8 @@ int generic_set_1darray_uint64(generic_t x, const uint64_t* value, const size_t 
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    d->Set1DArray((uint64_t*)value, (rapidjson::SizeType)length, units, generic_allocator(x));
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    d->Set1DArray((uint64_t*)value, (yggdrasil_rapidjson::SizeType)length, units, generic_allocator(x));
     out = GENERIC_SUCCESS_;
   } catch(...) {
     YggLogError << "generic_set_1darray_uint64: C++ exception thrown" << std::endl;
@@ -1568,8 +1568,8 @@ int generic_set_1darray_float(generic_t x, const float* value, const size_t leng
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    d->Set1DArray((float*)value, (rapidjson::SizeType)length, units, generic_allocator(x));
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    d->Set1DArray((float*)value, (yggdrasil_rapidjson::SizeType)length, units, generic_allocator(x));
     out = GENERIC_SUCCESS_;
   } catch(...) {
     YggLogError << "generic_set_1darray_float: C++ exception thrown" << std::endl;
@@ -1583,8 +1583,8 @@ int generic_set_1darray_double(generic_t x, const double* value, const size_t le
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    d->Set1DArray((double*)value, (rapidjson::SizeType)length, units, generic_allocator(x));
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    d->Set1DArray((double*)value, (yggdrasil_rapidjson::SizeType)length, units, generic_allocator(x));
     out = GENERIC_SUCCESS_;
   } catch(...) {
     YggLogError << "generic_set_1darray_double: C++ exception thrown" << std::endl;
@@ -1598,8 +1598,8 @@ int generic_set_1darray_complex_float(generic_t x, const complex_float_t* value,
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    d->Set1DArray((std::complex<float>*)value, (rapidjson::SizeType)length, units, generic_allocator(x));
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    d->Set1DArray((std::complex<float>*)value, (yggdrasil_rapidjson::SizeType)length, units, generic_allocator(x));
     out = GENERIC_SUCCESS_;
   } catch(...) {
     YggLogError << "generic_set_1darray_complex_float: C++ exception thrown" << std::endl;
@@ -1613,8 +1613,8 @@ int generic_set_1darray_complex_double(generic_t x, const complex_double_t* valu
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    d->Set1DArray((std::complex<double>*)value, (rapidjson::SizeType)length, units, generic_allocator(x));
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    d->Set1DArray((std::complex<double>*)value, (yggdrasil_rapidjson::SizeType)length, units, generic_allocator(x));
     out = GENERIC_SUCCESS_;
   } catch(...) {
     YggLogError << "generic_set_1darray_complex_double: C++ exception thrown" << std::endl;
@@ -1628,35 +1628,35 @@ int generic_set_ndarray(generic_t x, const void* value, const char* subtype, con
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    rapidjson::Document schema(rapidjson::kObjectType);
-    schema.AddMember(rapidjson::Document::GetTypeString(),
-                     rapidjson::Value("ndarray", 7,
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Document schema(yggdrasil_rapidjson::kObjectType);
+    schema.AddMember(yggdrasil_rapidjson::Document::GetTypeString(),
+                     yggdrasil_rapidjson::Value("ndarray", 7,
                         schema.GetAllocator()).Move(),
                      schema.GetAllocator());
-    schema.AddMember(rapidjson::Document::GetSubTypeString(),
-                     rapidjson::Value(subtype, STRLEN_RJ(subtype),
+    schema.AddMember(yggdrasil_rapidjson::Document::GetSubTypeString(),
+                     yggdrasil_rapidjson::Value(subtype, STRLEN_RJ(subtype),
                                       schema.GetAllocator()).Move(),
                      schema.GetAllocator());
-    schema.AddMember(rapidjson::Document::GetPrecisionString(),
-                     rapidjson::Value((unsigned)precision).Move(),
+    schema.AddMember(yggdrasil_rapidjson::Document::GetPrecisionString(),
+                     yggdrasil_rapidjson::Value((unsigned)precision).Move(),
                      schema.GetAllocator());
     if (units && strlen(units) > 0) {
-      schema.AddMember(rapidjson::Document::GetUnitsString(),
-                       rapidjson::Value(units, STRLEN_RJ(units),
+      schema.AddMember(yggdrasil_rapidjson::Document::GetUnitsString(),
+                       yggdrasil_rapidjson::Value(units, STRLEN_RJ(units),
                                         schema.GetAllocator()).Move(),
                        schema.GetAllocator());
     }
-    rapidjson::Value rjshape(rapidjson::kArrayType);
+    yggdrasil_rapidjson::Value rjshape(yggdrasil_rapidjson::kArrayType);
     size_t length = 1;
     if (ndim <= 0)
       length = 0;
     for (size_t i = 0; i < ndim; i++) {
-      rjshape.PushBack(rapidjson::Value((unsigned)(shape[i])).Move(),
+      rjshape.PushBack(yggdrasil_rapidjson::Value((unsigned)(shape[i])).Move(),
                        schema.GetAllocator());
       length *= shape[i];
     }
-    schema.AddMember(rapidjson::Document::GetShapeString(), rjshape,
+    schema.AddMember(yggdrasil_rapidjson::Document::GetShapeString(), rjshape,
                      schema.GetAllocator());
     d->SetYggdrasilString((char*)value, precision * length,
                           generic_allocator(x),
@@ -1674,11 +1674,11 @@ int generic_set_ndarray_int8(generic_t x, const int8_t* value, const size_t ndim
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    rapidjson::SizeType* rjshape = (rapidjson::SizeType*)(generic_allocator(x).Malloc(ndim * sizeof(rapidjson::SizeType)));
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::SizeType* rjshape = (yggdrasil_rapidjson::SizeType*)(generic_allocator(x).Malloc(ndim * sizeof(yggdrasil_rapidjson::SizeType)));
     for (size_t i = 0; i < ndim; i++) {
-      rjshape[i] = (rapidjson::SizeType)(shape[i]);}
-    d->SetNDArray((int8_t*)value, rjshape, (rapidjson::SizeType)ndim, units, generic_allocator(x));
+      rjshape[i] = (yggdrasil_rapidjson::SizeType)(shape[i]);}
+    d->SetNDArray((int8_t*)value, rjshape, (yggdrasil_rapidjson::SizeType)ndim, units, generic_allocator(x));
     generic_allocator(x).Free(rjshape);;
     out = GENERIC_SUCCESS_;
   } catch(...) {
@@ -1693,11 +1693,11 @@ int generic_set_ndarray_int16(generic_t x, const int16_t* value, const size_t nd
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    rapidjson::SizeType* rjshape = (rapidjson::SizeType*)(generic_allocator(x).Malloc(ndim * sizeof(rapidjson::SizeType)));
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::SizeType* rjshape = (yggdrasil_rapidjson::SizeType*)(generic_allocator(x).Malloc(ndim * sizeof(yggdrasil_rapidjson::SizeType)));
     for (size_t i = 0; i < ndim; i++) {
-      rjshape[i] = (rapidjson::SizeType)(shape[i]);}
-    d->SetNDArray((int16_t*)value, rjshape, (rapidjson::SizeType)ndim, units, generic_allocator(x));
+      rjshape[i] = (yggdrasil_rapidjson::SizeType)(shape[i]);}
+    d->SetNDArray((int16_t*)value, rjshape, (yggdrasil_rapidjson::SizeType)ndim, units, generic_allocator(x));
     generic_allocator(x).Free(rjshape);;
     out = GENERIC_SUCCESS_;
   } catch(...) {
@@ -1712,11 +1712,11 @@ int generic_set_ndarray_int32(generic_t x, const int32_t* value, const size_t nd
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    rapidjson::SizeType* rjshape = (rapidjson::SizeType*)(generic_allocator(x).Malloc(ndim * sizeof(rapidjson::SizeType)));
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::SizeType* rjshape = (yggdrasil_rapidjson::SizeType*)(generic_allocator(x).Malloc(ndim * sizeof(yggdrasil_rapidjson::SizeType)));
     for (size_t i = 0; i < ndim; i++) {
-      rjshape[i] = (rapidjson::SizeType)(shape[i]);}
-    d->SetNDArray((int32_t*)value, rjshape, (rapidjson::SizeType)ndim, units, generic_allocator(x));
+      rjshape[i] = (yggdrasil_rapidjson::SizeType)(shape[i]);}
+    d->SetNDArray((int32_t*)value, rjshape, (yggdrasil_rapidjson::SizeType)ndim, units, generic_allocator(x));
     generic_allocator(x).Free(rjshape);;
     out = GENERIC_SUCCESS_;
   } catch(...) {
@@ -1731,11 +1731,11 @@ int generic_set_ndarray_int64(generic_t x, const int64_t* value, const size_t nd
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    rapidjson::SizeType* rjshape = (rapidjson::SizeType*)(generic_allocator(x).Malloc(ndim * sizeof(rapidjson::SizeType)));
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::SizeType* rjshape = (yggdrasil_rapidjson::SizeType*)(generic_allocator(x).Malloc(ndim * sizeof(yggdrasil_rapidjson::SizeType)));
     for (size_t i = 0; i < ndim; i++) {
-      rjshape[i] = (rapidjson::SizeType)(shape[i]);}
-    d->SetNDArray((int64_t*)value, rjshape, (rapidjson::SizeType)ndim, units, generic_allocator(x));
+      rjshape[i] = (yggdrasil_rapidjson::SizeType)(shape[i]);}
+    d->SetNDArray((int64_t*)value, rjshape, (yggdrasil_rapidjson::SizeType)ndim, units, generic_allocator(x));
     generic_allocator(x).Free(rjshape);;
     out = GENERIC_SUCCESS_;
   } catch(...) {
@@ -1750,11 +1750,11 @@ int generic_set_ndarray_uint8(generic_t x, const uint8_t* value, const size_t nd
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    rapidjson::SizeType* rjshape = (rapidjson::SizeType*)(generic_allocator(x).Malloc(ndim * sizeof(rapidjson::SizeType)));
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::SizeType* rjshape = (yggdrasil_rapidjson::SizeType*)(generic_allocator(x).Malloc(ndim * sizeof(yggdrasil_rapidjson::SizeType)));
     for (size_t i = 0; i < ndim; i++) {
-      rjshape[i] = (rapidjson::SizeType)(shape[i]);}
-    d->SetNDArray((uint8_t*)value, rjshape, (rapidjson::SizeType)ndim, units, generic_allocator(x));
+      rjshape[i] = (yggdrasil_rapidjson::SizeType)(shape[i]);}
+    d->SetNDArray((uint8_t*)value, rjshape, (yggdrasil_rapidjson::SizeType)ndim, units, generic_allocator(x));
     generic_allocator(x).Free(rjshape);;
     out = GENERIC_SUCCESS_;
   } catch(...) {
@@ -1769,11 +1769,11 @@ int generic_set_ndarray_uint16(generic_t x, const uint16_t* value, const size_t 
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    rapidjson::SizeType* rjshape = (rapidjson::SizeType*)(generic_allocator(x).Malloc(ndim * sizeof(rapidjson::SizeType)));
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::SizeType* rjshape = (yggdrasil_rapidjson::SizeType*)(generic_allocator(x).Malloc(ndim * sizeof(yggdrasil_rapidjson::SizeType)));
     for (size_t i = 0; i < ndim; i++) {
-      rjshape[i] = (rapidjson::SizeType)(shape[i]);}
-    d->SetNDArray((uint16_t*)value, rjshape, (rapidjson::SizeType)ndim, units, generic_allocator(x));
+      rjshape[i] = (yggdrasil_rapidjson::SizeType)(shape[i]);}
+    d->SetNDArray((uint16_t*)value, rjshape, (yggdrasil_rapidjson::SizeType)ndim, units, generic_allocator(x));
     generic_allocator(x).Free(rjshape);;
     out = GENERIC_SUCCESS_;
   } catch(...) {
@@ -1788,11 +1788,11 @@ int generic_set_ndarray_uint32(generic_t x, const uint32_t* value, const size_t 
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    rapidjson::SizeType* rjshape = (rapidjson::SizeType*)(generic_allocator(x).Malloc(ndim * sizeof(rapidjson::SizeType)));
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::SizeType* rjshape = (yggdrasil_rapidjson::SizeType*)(generic_allocator(x).Malloc(ndim * sizeof(yggdrasil_rapidjson::SizeType)));
     for (size_t i = 0; i < ndim; i++) {
-      rjshape[i] = (rapidjson::SizeType)(shape[i]);}
-    d->SetNDArray((uint32_t*)value, rjshape, (rapidjson::SizeType)ndim, units, generic_allocator(x));
+      rjshape[i] = (yggdrasil_rapidjson::SizeType)(shape[i]);}
+    d->SetNDArray((uint32_t*)value, rjshape, (yggdrasil_rapidjson::SizeType)ndim, units, generic_allocator(x));
     generic_allocator(x).Free(rjshape);;
     out = GENERIC_SUCCESS_;
   } catch(...) {
@@ -1807,11 +1807,11 @@ int generic_set_ndarray_uint64(generic_t x, const uint64_t* value, const size_t 
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    rapidjson::SizeType* rjshape = (rapidjson::SizeType*)(generic_allocator(x).Malloc(ndim * sizeof(rapidjson::SizeType)));
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::SizeType* rjshape = (yggdrasil_rapidjson::SizeType*)(generic_allocator(x).Malloc(ndim * sizeof(yggdrasil_rapidjson::SizeType)));
     for (size_t i = 0; i < ndim; i++) {
-      rjshape[i] = (rapidjson::SizeType)(shape[i]);}
-    d->SetNDArray((uint64_t*)value, rjshape, (rapidjson::SizeType)ndim, units, generic_allocator(x));
+      rjshape[i] = (yggdrasil_rapidjson::SizeType)(shape[i]);}
+    d->SetNDArray((uint64_t*)value, rjshape, (yggdrasil_rapidjson::SizeType)ndim, units, generic_allocator(x));
     generic_allocator(x).Free(rjshape);;
     out = GENERIC_SUCCESS_;
   } catch(...) {
@@ -1826,11 +1826,11 @@ int generic_set_ndarray_float(generic_t x, const float* value, const size_t ndim
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    rapidjson::SizeType* rjshape = (rapidjson::SizeType*)(generic_allocator(x).Malloc(ndim * sizeof(rapidjson::SizeType)));
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::SizeType* rjshape = (yggdrasil_rapidjson::SizeType*)(generic_allocator(x).Malloc(ndim * sizeof(yggdrasil_rapidjson::SizeType)));
     for (size_t i = 0; i < ndim; i++) {
-      rjshape[i] = (rapidjson::SizeType)(shape[i]);}
-    d->SetNDArray((float*)value, rjshape, (rapidjson::SizeType)ndim, units, generic_allocator(x));
+      rjshape[i] = (yggdrasil_rapidjson::SizeType)(shape[i]);}
+    d->SetNDArray((float*)value, rjshape, (yggdrasil_rapidjson::SizeType)ndim, units, generic_allocator(x));
     generic_allocator(x).Free(rjshape);;
     out = GENERIC_SUCCESS_;
   } catch(...) {
@@ -1845,11 +1845,11 @@ int generic_set_ndarray_double(generic_t x, const double* value, const size_t nd
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    rapidjson::SizeType* rjshape = (rapidjson::SizeType*)(generic_allocator(x).Malloc(ndim * sizeof(rapidjson::SizeType)));
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::SizeType* rjshape = (yggdrasil_rapidjson::SizeType*)(generic_allocator(x).Malloc(ndim * sizeof(yggdrasil_rapidjson::SizeType)));
     for (size_t i = 0; i < ndim; i++) {
-      rjshape[i] = (rapidjson::SizeType)(shape[i]);}
-    d->SetNDArray((double*)value, rjshape, (rapidjson::SizeType)ndim, units, generic_allocator(x));
+      rjshape[i] = (yggdrasil_rapidjson::SizeType)(shape[i]);}
+    d->SetNDArray((double*)value, rjshape, (yggdrasil_rapidjson::SizeType)ndim, units, generic_allocator(x));
     generic_allocator(x).Free(rjshape);;
     out = GENERIC_SUCCESS_;
   } catch(...) {
@@ -1864,11 +1864,11 @@ int generic_set_ndarray_complex_float(generic_t x, const complex_float_t* value,
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    rapidjson::SizeType* rjshape = (rapidjson::SizeType*)(generic_allocator(x).Malloc(ndim * sizeof(rapidjson::SizeType)));
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::SizeType* rjshape = (yggdrasil_rapidjson::SizeType*)(generic_allocator(x).Malloc(ndim * sizeof(yggdrasil_rapidjson::SizeType)));
     for (size_t i = 0; i < ndim; i++) {
-      rjshape[i] = (rapidjson::SizeType)(shape[i]);}
-    d->SetNDArray((std::complex<float>*)value, rjshape, (rapidjson::SizeType)ndim, units, generic_allocator(x));
+      rjshape[i] = (yggdrasil_rapidjson::SizeType)(shape[i]);}
+    d->SetNDArray((std::complex<float>*)value, rjshape, (yggdrasil_rapidjson::SizeType)ndim, units, generic_allocator(x));
     generic_allocator(x).Free(rjshape);;
     out = GENERIC_SUCCESS_;
   } catch(...) {
@@ -1883,11 +1883,11 @@ int generic_set_ndarray_complex_double(generic_t x, const complex_double_t* valu
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    rapidjson::SizeType* rjshape = (rapidjson::SizeType*)(generic_allocator(x).Malloc(ndim * sizeof(rapidjson::SizeType)));
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::SizeType* rjshape = (yggdrasil_rapidjson::SizeType*)(generic_allocator(x).Malloc(ndim * sizeof(yggdrasil_rapidjson::SizeType)));
     for (size_t i = 0; i < ndim; i++) {
-      rjshape[i] = (rapidjson::SizeType)(shape[i]);}
-    d->SetNDArray((std::complex<double>*)value, rjshape, (rapidjson::SizeType)ndim, units, generic_allocator(x));
+      rjshape[i] = (yggdrasil_rapidjson::SizeType)(shape[i]);}
+    d->SetNDArray((std::complex<double>*)value, rjshape, (yggdrasil_rapidjson::SizeType)ndim, units, generic_allocator(x));
     generic_allocator(x).Free(rjshape);;
     out = GENERIC_SUCCESS_;
   } catch(...) {
@@ -1902,8 +1902,8 @@ int generic_set_schema(generic_t x, const generic_t value) {
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    d->SetSchema(*((rapidjson::Value*)(value.obj)), generic_allocator(x));
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    d->SetSchema(*((yggdrasil_rapidjson::Value*)(value.obj)), generic_allocator(x));
     out = GENERIC_SUCCESS_;
   } catch(...) {
     YggLogError << "generic_set_schema: C++ exception thrown" << std::endl;
@@ -1917,8 +1917,8 @@ int generic_set_any(generic_t x, const generic_t value) {
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    d->CopyFrom(*((rapidjson::Value*)(value.obj)), generic_allocator(x), true);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    d->CopyFrom(*((yggdrasil_rapidjson::Value*)(value.obj)), generic_allocator(x), true);
     out = GENERIC_SUCCESS_;
   } catch(...) {
     YggLogError << "generic_set_any: C++ exception thrown" << std::endl;
@@ -2153,7 +2153,7 @@ void* generic_ref_get_null(generic_ref_t x) {
       YggLogError << "generic_ref_get_null: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsNull()) {
       YggLogError << "generic_ref_get_null: Generic object is not null: " << (*d) << std::endl;
       return out;
@@ -2172,7 +2172,7 @@ bool generic_ref_get_bool(generic_ref_t x) {
       YggLogError << "generic_ref_get_bool: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsBool()) {
       YggLogError << "generic_ref_get_bool: Generic object is not bool: " << (*d) << std::endl;
       return out;
@@ -2191,7 +2191,7 @@ int generic_ref_get_integer(generic_ref_t x) {
       YggLogError << "generic_ref_get_integer: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsInt()) {
       YggLogError << "generic_ref_get_integer: Generic object is not integer: " << (*d) << std::endl;
       return out;
@@ -2210,7 +2210,7 @@ double generic_ref_get_number(generic_ref_t x) {
       YggLogError << "generic_ref_get_number: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsNumber()) {
       YggLogError << "generic_ref_get_number: Generic object is not number: " << (*d) << std::endl;
       return out;
@@ -2229,7 +2229,7 @@ const char* generic_ref_get_string(generic_ref_t x) {
       YggLogError << "generic_ref_get_string: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsString()) {
       YggLogError << "generic_ref_get_string: Generic object is not string: " << (*d) << std::endl;
       return out;
@@ -2248,7 +2248,7 @@ void* generic_ref_get_item(generic_ref_t x, const char* type) {
       YggLogError << "generic_ref_get_item: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsType(type)) {
       YggLogError << "generic_ref_get_item: Generic object is not item: " << (*d) << std::endl;
       return out;
@@ -2268,7 +2268,7 @@ int generic_ref_get_item_nbytes(generic_ref_t x, const char* type) {
       YggLogError << "generic_ref_get_item_nbytes: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsType(type)) {
       YggLogError << "generic_ref_get_item_nbytes: Generic object is not item_nbytes: " << (*d) << std::endl;
       return out;
@@ -2287,12 +2287,12 @@ generic_t generic_ref_get_array(generic_ref_t x) {
       YggLogError << "generic_ref_get_array: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsArray()) {
       YggLogError << "generic_ref_get_array: Generic object is not array: " << (*d) << std::endl;
       return out;
     }
-    rapidjson::Document* cpy = new rapidjson::Document();
+    yggdrasil_rapidjson::Document* cpy = new yggdrasil_rapidjson::Document();
     cpy->CopyFrom(*d, cpy->GetAllocator(), true);
     out.obj = (void*)cpy;
   } catch(...) {
@@ -2308,12 +2308,12 @@ generic_t generic_ref_get_object(generic_ref_t x) {
       YggLogError << "generic_ref_get_object: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsObject()) {
       YggLogError << "generic_ref_get_object: Generic object is not object: " << (*d) << std::endl;
       return out;
     }
-    rapidjson::Document* cpy = new rapidjson::Document();
+    yggdrasil_rapidjson::Document* cpy = new yggdrasil_rapidjson::Document();
     cpy->CopyFrom(*d, cpy->GetAllocator(), true);
     out.obj = (void*)cpy;
   } catch(...) {
@@ -2329,12 +2329,12 @@ ply_t generic_ref_get_ply(generic_ref_t x) {
       YggLogError << "generic_ref_get_ply: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsPly()) {
       YggLogError << "generic_ref_get_ply: Generic object is not ply: " << (*d) << std::endl;
       return out;
     }
-    rapidjson::Ply tmp;
+    yggdrasil_rapidjson::Ply tmp;
     d->GetPly(tmp);
     set_ply(&out, (void*)(&tmp), 1);
   } catch(...) {
@@ -2350,12 +2350,12 @@ obj_t generic_ref_get_obj(generic_ref_t x) {
       YggLogError << "generic_ref_get_obj: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsObjWavefront()) {
       YggLogError << "generic_ref_get_obj: Generic object is not obj: " << (*d) << std::endl;
       return out;
     }
-    rapidjson::ObjWavefront tmp;
+    yggdrasil_rapidjson::ObjWavefront tmp;
     d->GetObjWavefront(tmp);
     set_obj(&out, (void*)(&tmp), 1);
   } catch(...) {
@@ -2371,7 +2371,7 @@ python_t generic_ref_get_python_class(generic_ref_t x) {
       YggLogError << "generic_ref_get_python_class: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsPythonClass()) {
       YggLogError << "generic_ref_get_python_class: Generic object is not python_class: " << (*d) << std::endl;
       return out;
@@ -2390,7 +2390,7 @@ python_t generic_ref_get_python_function(generic_ref_t x) {
       YggLogError << "generic_ref_get_python_function: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsPythonFunction()) {
       YggLogError << "generic_ref_get_python_function: Generic object is not python_function: " << (*d) << std::endl;
       return out;
@@ -2409,7 +2409,7 @@ python_t generic_ref_get_python_instance(generic_ref_t x) {
       YggLogError << "generic_ref_get_python_instance: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsPythonInstance()) {
       YggLogError << "generic_ref_get_python_instance: Generic object is not python_instance: " << (*d) << std::endl;
       return out;
@@ -2428,8 +2428,8 @@ void* generic_ref_get_scalar(generic_ref_t x, const char* subtype, const size_t 
       YggLogError << "generic_ref_get_scalar: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    if (!(d->IsType("scalar") && d->IsSubType(subtype, static_cast<rapidjson::SizeType>(precision)))) {
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    if (!(d->IsType("scalar") && d->IsSubType(subtype, static_cast<yggdrasil_rapidjson::SizeType>(precision)))) {
       YggLogError << "generic_ref_get_scalar: Generic object is not scalar of subtype '" << std::string(subtype) << "' with precision " << precision << ": " << (*d) << std::endl;
       return out;
     }
@@ -2447,7 +2447,7 @@ int8_t generic_ref_get_int8(generic_ref_t x) {
       YggLogError << "generic_ref_get_int8: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsScalar<int8_t>()) {
       YggLogError << "generic_ref_get_int8: Generic object is not int8: " << (*d) << std::endl;
       return out;
@@ -2466,7 +2466,7 @@ int16_t generic_ref_get_int16(generic_ref_t x) {
       YggLogError << "generic_ref_get_int16: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsScalar<int16_t>()) {
       YggLogError << "generic_ref_get_int16: Generic object is not int16: " << (*d) << std::endl;
       return out;
@@ -2485,7 +2485,7 @@ int32_t generic_ref_get_int32(generic_ref_t x) {
       YggLogError << "generic_ref_get_int32: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsScalar<int32_t>()) {
       YggLogError << "generic_ref_get_int32: Generic object is not int32: " << (*d) << std::endl;
       return out;
@@ -2504,7 +2504,7 @@ int64_t generic_ref_get_int64(generic_ref_t x) {
       YggLogError << "generic_ref_get_int64: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsScalar<int64_t>()) {
       YggLogError << "generic_ref_get_int64: Generic object is not int64: " << (*d) << std::endl;
       return out;
@@ -2523,7 +2523,7 @@ uint8_t generic_ref_get_uint8(generic_ref_t x) {
       YggLogError << "generic_ref_get_uint8: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsScalar<uint8_t>()) {
       YggLogError << "generic_ref_get_uint8: Generic object is not uint8: " << (*d) << std::endl;
       return out;
@@ -2542,7 +2542,7 @@ uint16_t generic_ref_get_uint16(generic_ref_t x) {
       YggLogError << "generic_ref_get_uint16: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsScalar<uint16_t>()) {
       YggLogError << "generic_ref_get_uint16: Generic object is not uint16: " << (*d) << std::endl;
       return out;
@@ -2561,7 +2561,7 @@ uint32_t generic_ref_get_uint32(generic_ref_t x) {
       YggLogError << "generic_ref_get_uint32: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsScalar<uint32_t>()) {
       YggLogError << "generic_ref_get_uint32: Generic object is not uint32: " << (*d) << std::endl;
       return out;
@@ -2580,7 +2580,7 @@ uint64_t generic_ref_get_uint64(generic_ref_t x) {
       YggLogError << "generic_ref_get_uint64: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsScalar<uint64_t>()) {
       YggLogError << "generic_ref_get_uint64: Generic object is not uint64: " << (*d) << std::endl;
       return out;
@@ -2599,7 +2599,7 @@ float generic_ref_get_float(generic_ref_t x) {
       YggLogError << "generic_ref_get_float: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsScalar<float>()) {
       YggLogError << "generic_ref_get_float: Generic object is not float: " << (*d) << std::endl;
       return out;
@@ -2618,7 +2618,7 @@ double generic_ref_get_double(generic_ref_t x) {
       YggLogError << "generic_ref_get_double: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsScalar<double>()) {
       YggLogError << "generic_ref_get_double: Generic object is not double: " << (*d) << std::endl;
       return out;
@@ -2638,7 +2638,7 @@ complex_float_t generic_ref_get_complex_float(generic_ref_t x) {
       YggLogError << "generic_ref_get_complex_float: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsScalar<std::complex<float>>()) {
       YggLogError << "generic_ref_get_complex_float: Generic object is not complex_float: " << (*d) << std::endl;
       return out;
@@ -2660,7 +2660,7 @@ complex_double_t generic_ref_get_complex_double(generic_ref_t x) {
       YggLogError << "generic_ref_get_complex_double: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsScalar<std::complex<double>>()) {
       YggLogError << "generic_ref_get_complex_double: Generic object is not complex_double: " << (*d) << std::endl;
       return out;
@@ -2681,8 +2681,8 @@ size_t generic_ref_get_1darray(generic_ref_t x, const char* subtype, const size_
       YggLogError << "generic_ref_get_1darray: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    if (!(d->IsType("1darray") && d->IsSubType(subtype, static_cast<rapidjson::SizeType>(precision)))) {
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    if (!(d->IsType("1darray") && d->IsSubType(subtype, static_cast<yggdrasil_rapidjson::SizeType>(precision)))) {
       YggLogError << "generic_ref_get_1darray: Generic object is not 1darray of subtype '" << std::string(subtype) << "' with precision " << precision << ": " << (*d) << std::endl;
       return out;
     }
@@ -2708,12 +2708,12 @@ size_t generic_ref_get_1darray_int8(generic_ref_t x, int8_t** value) {
       YggLogError << "generic_ref_get_1darray_int8: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->Is1DArray<int8_t>()) {
       YggLogError << "generic_ref_get_1darray_int8: Generic object is not 1darray_int8: " << (*d) << std::endl;
       return out;
     }
-    rapidjson::SizeType nelements = 0;
+    yggdrasil_rapidjson::SizeType nelements = 0;
     value[0] = (int8_t*)(d->Get1DArray<int8_t>(nelements, generic_ref_allocator(x)));
     out = (size_t)nelements;
   } catch(...) {
@@ -2729,12 +2729,12 @@ size_t generic_ref_get_1darray_int16(generic_ref_t x, int16_t** value) {
       YggLogError << "generic_ref_get_1darray_int16: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->Is1DArray<int16_t>()) {
       YggLogError << "generic_ref_get_1darray_int16: Generic object is not 1darray_int16: " << (*d) << std::endl;
       return out;
     }
-    rapidjson::SizeType nelements = 0;
+    yggdrasil_rapidjson::SizeType nelements = 0;
     value[0] = (int16_t*)(d->Get1DArray<int16_t>(nelements, generic_ref_allocator(x)));
     out = (size_t)nelements;
   } catch(...) {
@@ -2750,12 +2750,12 @@ size_t generic_ref_get_1darray_int32(generic_ref_t x, int32_t** value) {
       YggLogError << "generic_ref_get_1darray_int32: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->Is1DArray<int32_t>()) {
       YggLogError << "generic_ref_get_1darray_int32: Generic object is not 1darray_int32: " << (*d) << std::endl;
       return out;
     }
-    rapidjson::SizeType nelements = 0;
+    yggdrasil_rapidjson::SizeType nelements = 0;
     value[0] = (int32_t*)(d->Get1DArray<int32_t>(nelements, generic_ref_allocator(x)));
     out = (size_t)nelements;
   } catch(...) {
@@ -2771,12 +2771,12 @@ size_t generic_ref_get_1darray_int64(generic_ref_t x, int64_t** value) {
       YggLogError << "generic_ref_get_1darray_int64: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->Is1DArray<int64_t>()) {
       YggLogError << "generic_ref_get_1darray_int64: Generic object is not 1darray_int64: " << (*d) << std::endl;
       return out;
     }
-    rapidjson::SizeType nelements = 0;
+    yggdrasil_rapidjson::SizeType nelements = 0;
     value[0] = (int64_t*)(d->Get1DArray<int64_t>(nelements, generic_ref_allocator(x)));
     out = (size_t)nelements;
   } catch(...) {
@@ -2792,12 +2792,12 @@ size_t generic_ref_get_1darray_uint8(generic_ref_t x, uint8_t** value) {
       YggLogError << "generic_ref_get_1darray_uint8: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->Is1DArray<uint8_t>()) {
       YggLogError << "generic_ref_get_1darray_uint8: Generic object is not 1darray_uint8: " << (*d) << std::endl;
       return out;
     }
-    rapidjson::SizeType nelements = 0;
+    yggdrasil_rapidjson::SizeType nelements = 0;
     value[0] = (uint8_t*)(d->Get1DArray<uint8_t>(nelements, generic_ref_allocator(x)));
     out = (size_t)nelements;
   } catch(...) {
@@ -2813,12 +2813,12 @@ size_t generic_ref_get_1darray_uint16(generic_ref_t x, uint16_t** value) {
       YggLogError << "generic_ref_get_1darray_uint16: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->Is1DArray<uint16_t>()) {
       YggLogError << "generic_ref_get_1darray_uint16: Generic object is not 1darray_uint16: " << (*d) << std::endl;
       return out;
     }
-    rapidjson::SizeType nelements = 0;
+    yggdrasil_rapidjson::SizeType nelements = 0;
     value[0] = (uint16_t*)(d->Get1DArray<uint16_t>(nelements, generic_ref_allocator(x)));
     out = (size_t)nelements;
   } catch(...) {
@@ -2834,12 +2834,12 @@ size_t generic_ref_get_1darray_uint32(generic_ref_t x, uint32_t** value) {
       YggLogError << "generic_ref_get_1darray_uint32: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->Is1DArray<uint32_t>()) {
       YggLogError << "generic_ref_get_1darray_uint32: Generic object is not 1darray_uint32: " << (*d) << std::endl;
       return out;
     }
-    rapidjson::SizeType nelements = 0;
+    yggdrasil_rapidjson::SizeType nelements = 0;
     value[0] = (uint32_t*)(d->Get1DArray<uint32_t>(nelements, generic_ref_allocator(x)));
     out = (size_t)nelements;
   } catch(...) {
@@ -2855,12 +2855,12 @@ size_t generic_ref_get_1darray_uint64(generic_ref_t x, uint64_t** value) {
       YggLogError << "generic_ref_get_1darray_uint64: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->Is1DArray<uint64_t>()) {
       YggLogError << "generic_ref_get_1darray_uint64: Generic object is not 1darray_uint64: " << (*d) << std::endl;
       return out;
     }
-    rapidjson::SizeType nelements = 0;
+    yggdrasil_rapidjson::SizeType nelements = 0;
     value[0] = (uint64_t*)(d->Get1DArray<uint64_t>(nelements, generic_ref_allocator(x)));
     out = (size_t)nelements;
   } catch(...) {
@@ -2876,12 +2876,12 @@ size_t generic_ref_get_1darray_float(generic_ref_t x, float** value) {
       YggLogError << "generic_ref_get_1darray_float: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->Is1DArray<float>()) {
       YggLogError << "generic_ref_get_1darray_float: Generic object is not 1darray_float: " << (*d) << std::endl;
       return out;
     }
-    rapidjson::SizeType nelements = 0;
+    yggdrasil_rapidjson::SizeType nelements = 0;
     value[0] = (float*)(d->Get1DArray<float>(nelements, generic_ref_allocator(x)));
     out = (size_t)nelements;
   } catch(...) {
@@ -2897,12 +2897,12 @@ size_t generic_ref_get_1darray_double(generic_ref_t x, double** value) {
       YggLogError << "generic_ref_get_1darray_double: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->Is1DArray<double>()) {
       YggLogError << "generic_ref_get_1darray_double: Generic object is not 1darray_double: " << (*d) << std::endl;
       return out;
     }
-    rapidjson::SizeType nelements = 0;
+    yggdrasil_rapidjson::SizeType nelements = 0;
     value[0] = (double*)(d->Get1DArray<double>(nelements, generic_ref_allocator(x)));
     out = (size_t)nelements;
   } catch(...) {
@@ -2918,12 +2918,12 @@ size_t generic_ref_get_1darray_complex_float(generic_ref_t x, complex_float_t** 
       YggLogError << "generic_ref_get_1darray_complex_float: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->Is1DArray<std::complex<float>>()) {
       YggLogError << "generic_ref_get_1darray_complex_float: Generic object is not 1darray_complex_float: " << (*d) << std::endl;
       return out;
     }
-    rapidjson::SizeType nelements = 0;
+    yggdrasil_rapidjson::SizeType nelements = 0;
     value[0] = (complex_float_t*)(d->Get1DArray<std::complex<float>>(nelements, generic_ref_allocator(x)));
     out = (size_t)nelements;
   } catch(...) {
@@ -2939,12 +2939,12 @@ size_t generic_ref_get_1darray_complex_double(generic_ref_t x, complex_double_t*
       YggLogError << "generic_ref_get_1darray_complex_double: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->Is1DArray<std::complex<double>>()) {
       YggLogError << "generic_ref_get_1darray_complex_double: Generic object is not 1darray_complex_double: " << (*d) << std::endl;
       return out;
     }
-    rapidjson::SizeType nelements = 0;
+    yggdrasil_rapidjson::SizeType nelements = 0;
     value[0] = (complex_double_t*)(d->Get1DArray<std::complex<double>>(nelements, generic_ref_allocator(x)));
     out = (size_t)nelements;
   } catch(...) {
@@ -2960,8 +2960,8 @@ size_t generic_ref_get_ndarray(generic_ref_t x, const char* subtype, const size_
       YggLogError << "generic_ref_get_ndarray: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    if (!(d->IsType("ndarray") && d->IsSubType(subtype, static_cast<rapidjson::SizeType>(precision)))) {
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    if (!(d->IsType("ndarray") && d->IsSubType(subtype, static_cast<yggdrasil_rapidjson::SizeType>(precision)))) {
       YggLogError << "generic_ref_get_ndarray: Generic object is not ndarray of subtype '" << std::string(subtype) << "' with precision " << precision << ": " << (*d) << std::endl;
       return out;
     }
@@ -2973,14 +2973,14 @@ size_t generic_ref_get_ndarray(generic_ref_t x, const char* subtype, const size_
       ygglog_throw_error("generic_ref_get_ndarray: Failed to reallocate array");
     }
     memcpy(value[0], new_data, nbytes);
-    const rapidjson::Value& rjshape = d->GetShape();
+    const yggdrasil_rapidjson::Value& rjshape = d->GetShape();
     out = (size_t)(rjshape.Size());
     shape[0] = (size_t*)(generic_ref_allocator(x).Realloc(shape[0], 0, out * sizeof(size_t)));
     if (shape[0] == NULL) {
       ygglog_throw_error("generic_ref_get_ndarray: Failed to reallocate shape.");
     }
     size_t i = 0;
-    for (rapidjson::Value::ConstValueIterator it = rjshape.Begin();
+    for (yggdrasil_rapidjson::Value::ConstValueIterator it = rjshape.Begin();
          it != rjshape.End(); it++, i++) {
       shape[0][i] = (size_t)(it->GetInt());
     };
@@ -2997,16 +2997,16 @@ size_t generic_ref_get_ndarray_int8(generic_ref_t x, int8_t** value, size_t** sh
       YggLogError << "generic_ref_get_ndarray_int8: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsNDArray<int8_t>()) {
       YggLogError << "generic_ref_get_ndarray_int8: Generic object is not ndarray_int8: " << (*d) << std::endl;
       return out;
     }
-    rapidjson::SizeType ndim = 0;
-    rapidjson::SizeType* rjshape = NULL;
+    yggdrasil_rapidjson::SizeType ndim = 0;
+    yggdrasil_rapidjson::SizeType* rjshape = NULL;
     value[0] = (int8_t*)(d->GetNDArray<int8_t>(rjshape, ndim, generic_ref_allocator(x)));
     shape[0] = (size_t*)(generic_ref_allocator(x).Malloc(ndim * sizeof(size_t)));
-    for (rapidjson::SizeType i = 0; i < ndim; i++) {
+    for (yggdrasil_rapidjson::SizeType i = 0; i < ndim; i++) {
       (*shape)[i] = rjshape[i];
     }
     generic_ref_allocator(x).Free(rjshape);
@@ -3024,16 +3024,16 @@ size_t generic_ref_get_ndarray_int16(generic_ref_t x, int16_t** value, size_t** 
       YggLogError << "generic_ref_get_ndarray_int16: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsNDArray<int16_t>()) {
       YggLogError << "generic_ref_get_ndarray_int16: Generic object is not ndarray_int16: " << (*d) << std::endl;
       return out;
     }
-    rapidjson::SizeType ndim = 0;
-    rapidjson::SizeType* rjshape = NULL;
+    yggdrasil_rapidjson::SizeType ndim = 0;
+    yggdrasil_rapidjson::SizeType* rjshape = NULL;
     value[0] = (int16_t*)(d->GetNDArray<int16_t>(rjshape, ndim, generic_ref_allocator(x)));
     shape[0] = (size_t*)(generic_ref_allocator(x).Malloc(ndim * sizeof(size_t)));
-    for (rapidjson::SizeType i = 0; i < ndim; i++) {
+    for (yggdrasil_rapidjson::SizeType i = 0; i < ndim; i++) {
       (*shape)[i] = rjshape[i];
     }
     generic_ref_allocator(x).Free(rjshape);
@@ -3051,16 +3051,16 @@ size_t generic_ref_get_ndarray_int32(generic_ref_t x, int32_t** value, size_t** 
       YggLogError << "generic_ref_get_ndarray_int32: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsNDArray<int32_t>()) {
       YggLogError << "generic_ref_get_ndarray_int32: Generic object is not ndarray_int32: " << (*d) << std::endl;
       return out;
     }
-    rapidjson::SizeType ndim = 0;
-    rapidjson::SizeType* rjshape = NULL;
+    yggdrasil_rapidjson::SizeType ndim = 0;
+    yggdrasil_rapidjson::SizeType* rjshape = NULL;
     value[0] = (int32_t*)(d->GetNDArray<int32_t>(rjshape, ndim, generic_ref_allocator(x)));
     shape[0] = (size_t*)(generic_ref_allocator(x).Malloc(ndim * sizeof(size_t)));
-    for (rapidjson::SizeType i = 0; i < ndim; i++) {
+    for (yggdrasil_rapidjson::SizeType i = 0; i < ndim; i++) {
       (*shape)[i] = rjshape[i];
     }
     generic_ref_allocator(x).Free(rjshape);
@@ -3078,16 +3078,16 @@ size_t generic_ref_get_ndarray_int64(generic_ref_t x, int64_t** value, size_t** 
       YggLogError << "generic_ref_get_ndarray_int64: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsNDArray<int64_t>()) {
       YggLogError << "generic_ref_get_ndarray_int64: Generic object is not ndarray_int64: " << (*d) << std::endl;
       return out;
     }
-    rapidjson::SizeType ndim = 0;
-    rapidjson::SizeType* rjshape = NULL;
+    yggdrasil_rapidjson::SizeType ndim = 0;
+    yggdrasil_rapidjson::SizeType* rjshape = NULL;
     value[0] = (int64_t*)(d->GetNDArray<int64_t>(rjshape, ndim, generic_ref_allocator(x)));
     shape[0] = (size_t*)(generic_ref_allocator(x).Malloc(ndim * sizeof(size_t)));
-    for (rapidjson::SizeType i = 0; i < ndim; i++) {
+    for (yggdrasil_rapidjson::SizeType i = 0; i < ndim; i++) {
       (*shape)[i] = rjshape[i];
     }
     generic_ref_allocator(x).Free(rjshape);
@@ -3105,16 +3105,16 @@ size_t generic_ref_get_ndarray_uint8(generic_ref_t x, uint8_t** value, size_t** 
       YggLogError << "generic_ref_get_ndarray_uint8: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsNDArray<uint8_t>()) {
       YggLogError << "generic_ref_get_ndarray_uint8: Generic object is not ndarray_uint8: " << (*d) << std::endl;
       return out;
     }
-    rapidjson::SizeType ndim = 0;
-    rapidjson::SizeType* rjshape = NULL;
+    yggdrasil_rapidjson::SizeType ndim = 0;
+    yggdrasil_rapidjson::SizeType* rjshape = NULL;
     value[0] = (uint8_t*)(d->GetNDArray<uint8_t>(rjshape, ndim, generic_ref_allocator(x)));
     shape[0] = (size_t*)(generic_ref_allocator(x).Malloc(ndim * sizeof(size_t)));
-    for (rapidjson::SizeType i = 0; i < ndim; i++) {
+    for (yggdrasil_rapidjson::SizeType i = 0; i < ndim; i++) {
       (*shape)[i] = rjshape[i];
     }
     generic_ref_allocator(x).Free(rjshape);
@@ -3132,16 +3132,16 @@ size_t generic_ref_get_ndarray_uint16(generic_ref_t x, uint16_t** value, size_t*
       YggLogError << "generic_ref_get_ndarray_uint16: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsNDArray<uint16_t>()) {
       YggLogError << "generic_ref_get_ndarray_uint16: Generic object is not ndarray_uint16: " << (*d) << std::endl;
       return out;
     }
-    rapidjson::SizeType ndim = 0;
-    rapidjson::SizeType* rjshape = NULL;
+    yggdrasil_rapidjson::SizeType ndim = 0;
+    yggdrasil_rapidjson::SizeType* rjshape = NULL;
     value[0] = (uint16_t*)(d->GetNDArray<uint16_t>(rjshape, ndim, generic_ref_allocator(x)));
     shape[0] = (size_t*)(generic_ref_allocator(x).Malloc(ndim * sizeof(size_t)));
-    for (rapidjson::SizeType i = 0; i < ndim; i++) {
+    for (yggdrasil_rapidjson::SizeType i = 0; i < ndim; i++) {
       (*shape)[i] = rjshape[i];
     }
     generic_ref_allocator(x).Free(rjshape);
@@ -3159,16 +3159,16 @@ size_t generic_ref_get_ndarray_uint32(generic_ref_t x, uint32_t** value, size_t*
       YggLogError << "generic_ref_get_ndarray_uint32: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsNDArray<uint32_t>()) {
       YggLogError << "generic_ref_get_ndarray_uint32: Generic object is not ndarray_uint32: " << (*d) << std::endl;
       return out;
     }
-    rapidjson::SizeType ndim = 0;
-    rapidjson::SizeType* rjshape = NULL;
+    yggdrasil_rapidjson::SizeType ndim = 0;
+    yggdrasil_rapidjson::SizeType* rjshape = NULL;
     value[0] = (uint32_t*)(d->GetNDArray<uint32_t>(rjshape, ndim, generic_ref_allocator(x)));
     shape[0] = (size_t*)(generic_ref_allocator(x).Malloc(ndim * sizeof(size_t)));
-    for (rapidjson::SizeType i = 0; i < ndim; i++) {
+    for (yggdrasil_rapidjson::SizeType i = 0; i < ndim; i++) {
       (*shape)[i] = rjshape[i];
     }
     generic_ref_allocator(x).Free(rjshape);
@@ -3186,16 +3186,16 @@ size_t generic_ref_get_ndarray_uint64(generic_ref_t x, uint64_t** value, size_t*
       YggLogError << "generic_ref_get_ndarray_uint64: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsNDArray<uint64_t>()) {
       YggLogError << "generic_ref_get_ndarray_uint64: Generic object is not ndarray_uint64: " << (*d) << std::endl;
       return out;
     }
-    rapidjson::SizeType ndim = 0;
-    rapidjson::SizeType* rjshape = NULL;
+    yggdrasil_rapidjson::SizeType ndim = 0;
+    yggdrasil_rapidjson::SizeType* rjshape = NULL;
     value[0] = (uint64_t*)(d->GetNDArray<uint64_t>(rjshape, ndim, generic_ref_allocator(x)));
     shape[0] = (size_t*)(generic_ref_allocator(x).Malloc(ndim * sizeof(size_t)));
-    for (rapidjson::SizeType i = 0; i < ndim; i++) {
+    for (yggdrasil_rapidjson::SizeType i = 0; i < ndim; i++) {
       (*shape)[i] = rjshape[i];
     }
     generic_ref_allocator(x).Free(rjshape);
@@ -3213,16 +3213,16 @@ size_t generic_ref_get_ndarray_float(generic_ref_t x, float** value, size_t** sh
       YggLogError << "generic_ref_get_ndarray_float: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsNDArray<float>()) {
       YggLogError << "generic_ref_get_ndarray_float: Generic object is not ndarray_float: " << (*d) << std::endl;
       return out;
     }
-    rapidjson::SizeType ndim = 0;
-    rapidjson::SizeType* rjshape = NULL;
+    yggdrasil_rapidjson::SizeType ndim = 0;
+    yggdrasil_rapidjson::SizeType* rjshape = NULL;
     value[0] = (float*)(d->GetNDArray<float>(rjshape, ndim, generic_ref_allocator(x)));
     shape[0] = (size_t*)(generic_ref_allocator(x).Malloc(ndim * sizeof(size_t)));
-    for (rapidjson::SizeType i = 0; i < ndim; i++) {
+    for (yggdrasil_rapidjson::SizeType i = 0; i < ndim; i++) {
       (*shape)[i] = rjshape[i];
     }
     generic_ref_allocator(x).Free(rjshape);
@@ -3240,16 +3240,16 @@ size_t generic_ref_get_ndarray_double(generic_ref_t x, double** value, size_t** 
       YggLogError << "generic_ref_get_ndarray_double: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsNDArray<double>()) {
       YggLogError << "generic_ref_get_ndarray_double: Generic object is not ndarray_double: " << (*d) << std::endl;
       return out;
     }
-    rapidjson::SizeType ndim = 0;
-    rapidjson::SizeType* rjshape = NULL;
+    yggdrasil_rapidjson::SizeType ndim = 0;
+    yggdrasil_rapidjson::SizeType* rjshape = NULL;
     value[0] = (double*)(d->GetNDArray<double>(rjshape, ndim, generic_ref_allocator(x)));
     shape[0] = (size_t*)(generic_ref_allocator(x).Malloc(ndim * sizeof(size_t)));
-    for (rapidjson::SizeType i = 0; i < ndim; i++) {
+    for (yggdrasil_rapidjson::SizeType i = 0; i < ndim; i++) {
       (*shape)[i] = rjshape[i];
     }
     generic_ref_allocator(x).Free(rjshape);
@@ -3267,16 +3267,16 @@ size_t generic_ref_get_ndarray_complex_float(generic_ref_t x, complex_float_t** 
       YggLogError << "generic_ref_get_ndarray_complex_float: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsNDArray<std::complex<float>>()) {
       YggLogError << "generic_ref_get_ndarray_complex_float: Generic object is not ndarray_complex_float: " << (*d) << std::endl;
       return out;
     }
-    rapidjson::SizeType ndim = 0;
-    rapidjson::SizeType* rjshape = NULL;
+    yggdrasil_rapidjson::SizeType ndim = 0;
+    yggdrasil_rapidjson::SizeType* rjshape = NULL;
     value[0] = (complex_float_t*)(d->GetNDArray<std::complex<float>>(rjshape, ndim, generic_ref_allocator(x)));
     shape[0] = (size_t*)(generic_ref_allocator(x).Malloc(ndim * sizeof(size_t)));
-    for (rapidjson::SizeType i = 0; i < ndim; i++) {
+    for (yggdrasil_rapidjson::SizeType i = 0; i < ndim; i++) {
       (*shape)[i] = rjshape[i];
     }
     generic_ref_allocator(x).Free(rjshape);
@@ -3294,16 +3294,16 @@ size_t generic_ref_get_ndarray_complex_double(generic_ref_t x, complex_double_t*
       YggLogError << "generic_ref_get_ndarray_complex_double: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsNDArray<std::complex<double>>()) {
       YggLogError << "generic_ref_get_ndarray_complex_double: Generic object is not ndarray_complex_double: " << (*d) << std::endl;
       return out;
     }
-    rapidjson::SizeType ndim = 0;
-    rapidjson::SizeType* rjshape = NULL;
+    yggdrasil_rapidjson::SizeType ndim = 0;
+    yggdrasil_rapidjson::SizeType* rjshape = NULL;
     value[0] = (complex_double_t*)(d->GetNDArray<std::complex<double>>(rjshape, ndim, generic_ref_allocator(x)));
     shape[0] = (size_t*)(generic_ref_allocator(x).Malloc(ndim * sizeof(size_t)));
-    for (rapidjson::SizeType i = 0; i < ndim; i++) {
+    for (yggdrasil_rapidjson::SizeType i = 0; i < ndim; i++) {
       (*shape)[i] = rjshape[i];
     }
     generic_ref_allocator(x).Free(rjshape);
@@ -3321,12 +3321,12 @@ generic_t generic_ref_get_schema(generic_ref_t x) {
       YggLogError << "generic_ref_get_schema: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsSchema()) {
       YggLogError << "generic_ref_get_schema: Generic object is not schema: " << (*d) << std::endl;
       return out;
     }
-    rapidjson::Document* cpy = new rapidjson::Document();
+    yggdrasil_rapidjson::Document* cpy = new yggdrasil_rapidjson::Document();
     cpy->CopyFrom(*d, cpy->GetAllocator(), true);
     out.obj = (void*)cpy;
   } catch(...) {
@@ -3342,12 +3342,12 @@ generic_t generic_ref_get_any(generic_ref_t x) {
       YggLogError << "generic_ref_get_any: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!true) {
       YggLogError << "generic_ref_get_any: Generic object is not any: " << (*d) << std::endl;
       return out;
     }
-    rapidjson::Document* cpy = new rapidjson::Document();
+    yggdrasil_rapidjson::Document* cpy = new yggdrasil_rapidjson::Document();
     cpy->CopyFrom(*d, cpy->GetAllocator(), true);
     out.obj = (void*)cpy;
   } catch(...) {
@@ -6419,7 +6419,7 @@ int generic_set_long_double(generic_t x, const long double value, const char* un
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     d->SetScalar(value, units, generic_allocator(x));
     out = GENERIC_SUCCESS_;
   } catch(...) {
@@ -6434,7 +6434,7 @@ int generic_set_complex_long_double(generic_t x, const complex_long_double_t val
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     d->SetScalar(std::complex<long double>(value.re, value.im), units, generic_allocator(x));
     out = GENERIC_SUCCESS_;
   } catch(...) {
@@ -6449,8 +6449,8 @@ int generic_set_1darray_long_double(generic_t x, const long double* value, const
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    d->Set1DArray((long double*)value, (rapidjson::SizeType)length, units, generic_allocator(x));
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    d->Set1DArray((long double*)value, (yggdrasil_rapidjson::SizeType)length, units, generic_allocator(x));
     out = GENERIC_SUCCESS_;
   } catch(...) {
     YggLogError << "generic_set_1darray_long_double: C++ exception thrown" << std::endl;
@@ -6464,8 +6464,8 @@ int generic_set_1darray_complex_long_double(generic_t x, const complex_long_doub
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    d->Set1DArray((std::complex<long double>*)value, (rapidjson::SizeType)length, units, generic_allocator(x));
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    d->Set1DArray((std::complex<long double>*)value, (yggdrasil_rapidjson::SizeType)length, units, generic_allocator(x));
     out = GENERIC_SUCCESS_;
   } catch(...) {
     YggLogError << "generic_set_1darray_complex_long_double: C++ exception thrown" << std::endl;
@@ -6479,11 +6479,11 @@ int generic_set_ndarray_long_double(generic_t x, const long double* value, const
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    rapidjson::SizeType* rjshape = (rapidjson::SizeType*)(generic_allocator(x).Malloc(ndim * sizeof(rapidjson::SizeType)));
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::SizeType* rjshape = (yggdrasil_rapidjson::SizeType*)(generic_allocator(x).Malloc(ndim * sizeof(yggdrasil_rapidjson::SizeType)));
     for (size_t i = 0; i < ndim; i++) {
-      rjshape[i] = (rapidjson::SizeType)(shape[i]);}
-    d->SetNDArray((long double*)value, rjshape, (rapidjson::SizeType)ndim, units, generic_allocator(x));
+      rjshape[i] = (yggdrasil_rapidjson::SizeType)(shape[i]);}
+    d->SetNDArray((long double*)value, rjshape, (yggdrasil_rapidjson::SizeType)ndim, units, generic_allocator(x));
     generic_allocator(x).Free(rjshape);;
     out = GENERIC_SUCCESS_;
   } catch(...) {
@@ -6498,11 +6498,11 @@ int generic_set_ndarray_complex_long_double(generic_t x, const complex_long_doub
       YggLogError << "Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
-    rapidjson::SizeType* rjshape = (rapidjson::SizeType*)(generic_allocator(x).Malloc(ndim * sizeof(rapidjson::SizeType)));
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::SizeType* rjshape = (yggdrasil_rapidjson::SizeType*)(generic_allocator(x).Malloc(ndim * sizeof(yggdrasil_rapidjson::SizeType)));
     for (size_t i = 0; i < ndim; i++) {
-      rjshape[i] = (rapidjson::SizeType)(shape[i]);}
-    d->SetNDArray((std::complex<long double>*)value, rjshape, (rapidjson::SizeType)ndim, units, generic_allocator(x));
+      rjshape[i] = (yggdrasil_rapidjson::SizeType)(shape[i]);}
+    d->SetNDArray((std::complex<long double>*)value, rjshape, (yggdrasil_rapidjson::SizeType)ndim, units, generic_allocator(x));
     generic_allocator(x).Free(rjshape);;
     out = GENERIC_SUCCESS_;
   } catch(...) {
@@ -6542,7 +6542,7 @@ long double generic_ref_get_long_double(generic_ref_t x) {
       YggLogError << "generic_ref_get_long_double: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsScalar<long double>()) {
       YggLogError << "generic_ref_get_long_double: Generic object is not long_double: " << (*d) << std::endl;
       return out;
@@ -6562,7 +6562,7 @@ complex_long_double_t generic_ref_get_complex_long_double(generic_ref_t x) {
       YggLogError << "generic_ref_get_complex_long_double: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsScalar<std::complex<long double>>()) {
       YggLogError << "generic_ref_get_complex_long_double: Generic object is not complex_long_double: " << (*d) << std::endl;
       return out;
@@ -6583,12 +6583,12 @@ size_t generic_ref_get_1darray_long_double(generic_ref_t x, long double** value)
       YggLogError << "generic_ref_get_1darray_long_double: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->Is1DArray<long double>()) {
       YggLogError << "generic_ref_get_1darray_long_double: Generic object is not 1darray_long_double: " << (*d) << std::endl;
       return out;
     }
-    rapidjson::SizeType nelements = 0;
+    yggdrasil_rapidjson::SizeType nelements = 0;
     value[0] = (long double*)(d->Get1DArray<long double>(nelements, generic_ref_allocator(x)));
     out = (size_t)nelements;
   } catch(...) {
@@ -6604,12 +6604,12 @@ size_t generic_ref_get_1darray_complex_long_double(generic_ref_t x, complex_long
       YggLogError << "generic_ref_get_1darray_complex_long_double: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->Is1DArray<std::complex<long double>>()) {
       YggLogError << "generic_ref_get_1darray_complex_long_double: Generic object is not 1darray_complex_long_double: " << (*d) << std::endl;
       return out;
     }
-    rapidjson::SizeType nelements = 0;
+    yggdrasil_rapidjson::SizeType nelements = 0;
     value[0] = (complex_long_double_t*)(d->Get1DArray<std::complex<long double>>(nelements, generic_ref_allocator(x)));
     out = (size_t)nelements;
   } catch(...) {
@@ -6625,16 +6625,16 @@ size_t generic_ref_get_ndarray_long_double(generic_ref_t x, long double** value,
       YggLogError << "generic_ref_get_ndarray_long_double: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsNDArray<long double>()) {
       YggLogError << "generic_ref_get_ndarray_long_double: Generic object is not ndarray_long_double: " << (*d) << std::endl;
       return out;
     }
-    rapidjson::SizeType ndim = 0;
-    rapidjson::SizeType* rjshape = NULL;
+    yggdrasil_rapidjson::SizeType ndim = 0;
+    yggdrasil_rapidjson::SizeType* rjshape = NULL;
     value[0] = (long double*)(d->GetNDArray<long double>(rjshape, ndim, generic_ref_allocator(x)));
     shape[0] = (size_t*)(generic_ref_allocator(x).Malloc(ndim * sizeof(size_t)));
-    for (rapidjson::SizeType i = 0; i < ndim; i++) {
+    for (yggdrasil_rapidjson::SizeType i = 0; i < ndim; i++) {
       (*shape)[i] = rjshape[i];
     }
     generic_ref_allocator(x).Free(rjshape);
@@ -6652,16 +6652,16 @@ size_t generic_ref_get_ndarray_complex_long_double(generic_ref_t x, complex_long
       YggLogError << "generic_ref_get_ndarray_complex_long_double: Generic object is not initialized" << std::endl;
       return out;
     }
-    rapidjson::Value* d = (rapidjson::Value*)(x.obj);
+    yggdrasil_rapidjson::Value* d = (yggdrasil_rapidjson::Value*)(x.obj);
     if (!d->IsNDArray<std::complex<long double>>()) {
       YggLogError << "generic_ref_get_ndarray_complex_long_double: Generic object is not ndarray_complex_long_double: " << (*d) << std::endl;
       return out;
     }
-    rapidjson::SizeType ndim = 0;
-    rapidjson::SizeType* rjshape = NULL;
+    yggdrasil_rapidjson::SizeType ndim = 0;
+    yggdrasil_rapidjson::SizeType* rjshape = NULL;
     value[0] = (complex_long_double_t*)(d->GetNDArray<std::complex<long double>>(rjshape, ndim, generic_ref_allocator(x)));
     shape[0] = (size_t*)(generic_ref_allocator(x).Malloc(ndim * sizeof(size_t)));
-    for (rapidjson::SizeType i = 0; i < ndim; i++) {
+    for (yggdrasil_rapidjson::SizeType i = 0; i < ndim; i++) {
       (*shape)[i] = rjshape[i];
     }
     generic_ref_allocator(x).Free(rjshape);

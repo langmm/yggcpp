@@ -8,7 +8,9 @@ if(SKBUILD AND YGG_LINK_Python_TO_CXX AND NOT YGGDRASIL_DISABLE_Python_C_API)
     add_library_python(${YGG_TARGET_CXX} SHARED ${SOURCES_CXX})
     target_compile_options(
         ${YGG_TARGET_CXX} PUBLIC
- 	-DRAPIDJSON_YGGDRASIL_Python -DYGG_LINK_Python_TO_CXX)
+ 	-DYGGDRASIL_RAPIDJSON_PYTHON_WRAPPER
+        -DYGG_LINK_Python_TO_CXX
+    )
 else()
     add_library(${YGG_TARGET_CXX} SHARED ${SOURCES_CXX})
     add_library(YggInterface::CXX ALIAS ${YGG_TARGET_CXX})
@@ -27,7 +29,7 @@ else()
     endif()
     if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
         target_link_options(${YGG_TARGET_CXX}
-	    PRIVATE /INCLUDE:rapidjson_ARRAY_API)
+	    PRIVATE /INCLUDE:yggdrasil_rapidjson_ARRAY_API)
     endif()
     list(APPEND YGG_INSTALL_TARGETS ${YGG_TARGET_CXX})
     set(YGG_INSTALL_TARGETS ${YGG_INSTALL_TARGETS} PARENT_SCOPE)
@@ -50,7 +52,7 @@ target_link_libraries(
 target_include_directories(
     ${YGG_TARGET_CXX} PUBLIC ${DEPS_INCLUDE_DIRS}
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<BUILD_INTERFACE:${RAPIDJSON_INCLUDE_DIRS}>
+    $<BUILD_INTERFACE:${YGGDRASIL_RAPIDJSON_INCLUDE_DIRS}>
     $<INSTALL_INTERFACE:include/YggInterface>
     $<INSTALL_INTERFACE:include/YggInterface/rapidjson/include>)
 target_compile_definitions(

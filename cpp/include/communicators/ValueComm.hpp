@@ -31,10 +31,10 @@ namespace YggInterface {
        */
       template<typename T>
       void update(const T& val, int N) {
-	rapidjson::Document d;
+	yggdrasil_rapidjson::Document d;
 	d.Set(val, d.GetAllocator());
-	rapidjson::StringBuffer buffer;
-	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+	yggdrasil_rapidjson::StringBuffer buffer;
+	yggdrasil_rapidjson::Writer<yggdrasil_rapidjson::StringBuffer> writer(buffer);
 	d.Accept(writer);
 	count = N;
 	value.assign(static_cast<const char*>(buffer.GetString()),

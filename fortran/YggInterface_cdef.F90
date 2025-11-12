@@ -838,7 +838,7 @@
      end function init_generic_map_c
      !> @brief Initialize a generic object from a JSON string.
      !> @param[in] json JSON encoded string.
-     !> @returns New generic object structure wrapping a rapidjson::Document
+     !> @returns New generic object structure wrapping a yggdrasil_rapidjson::Document
      !>   instance.
      function init_generic_json_c(json) &
           result(out) &
@@ -851,7 +851,7 @@
      end function init_generic_json_c
      !> @brief Initialize a generic object from a JSON string.
      !> @param[in] schema JSON encoded schema describing object to generate.
-     !> @returns New generic object structure wrapping a rapidjson::Document
+     !> @returns New generic object structure wrapping a yggdrasil_rapidjson::Document
      !>   instance.
      function init_generic_generate_c(schema) &
           result(out) &
@@ -1534,7 +1534,7 @@
        logical(kind = c_bool), value, intent(in) :: use_generic
        type(yggdtype) :: out
      end function create_dtype_any_c
-     !> @brief Wrapper for freeing rapidjson::Document class wrapper struct.
+     !> @brief Wrapper for freeing yggdrasil_rapidjson::Document class wrapper struct.
      !> @param[in] dtype Wrapper struct for C++ Metadata.
      !> @returns int 0 if free was successfull, -1 if there was an error.
      function destroy_dtype_c(dtype) &
@@ -1595,9 +1595,9 @@
        implicit none
        type(c_ptr), value :: p
      end subroutine free_obj_c
-     !> @brief Set parameters from a rapidjson::ObjWavefront object.
+     !> @brief Set parameters from a yggdrasil_rapidjson::ObjWavefront object.
      !> @param[in,out] x Structure to modify.
-     !> @param[in] obj rapidjson::ObjWavefront object to copy.
+     !> @param[in] obj yggdrasil_rapidjson::ObjWavefront object to copy.
      !> @param[in] copy If 1, the provided object will be copied, otherwise
      !>   the pointer will be added to the structured directly and it will
      !>   be freed on destruction.
@@ -1694,9 +1694,9 @@
        implicit none
        type(c_ptr), value :: p
      end subroutine free_ply_c
-     !> @brief Set parameters from a rapidjson::Ply object.
+     !> @brief Set parameters from a yggdrasil_rapidjson::Ply object.
      !> @param[in,out] x Structure to modify.
-     !> @param[in] ply rapidjson::Ply object to copy.
+     !> @param[in] ply yggdrasil_rapidjson::Ply object to copy.
      !> @param[in] copy If 1, the provided object will be copied, otherwise
      !>   the pointer will be added to the structured directly and it will
      !>   be freed on destruction.

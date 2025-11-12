@@ -8,7 +8,7 @@ using namespace YggInterface::utils;
 #define YGG_EMBED_PYTHON_GIL_END YGGDRASIL_PYGIL_END
 
 /*
-#ifdef RAPIDJSON_YGGDRASIL_PYTHON
+#ifdef YGGDRASIL_RAPIDJSON_PYTHON_WRAPPER
 #define YGG_EMBED_PYTHON_GIL_BEGIN		\
   PyGILState_STATE gstate;			\
   bool _prev_with_gil = _with_gil;		\
@@ -93,7 +93,7 @@ std::string EmbeddedPython::string_embedded(const void* x) const {
   return out;
 }
 bool EmbeddedPython::eval(const std::string& expr,
-			  rapidjson::Document& result) const {
+			  yggdrasil_rapidjson::Document& result) const {
   PyObject *expr_py = NULL, *globals = NULL, *locals = NULL,
     *result_ = NULL;
   bool out = false;
@@ -113,7 +113,7 @@ bool EmbeddedPython::eval(const std::string& expr,
   YGG_EMBED_PYTHON_GIL_END;
   return out;
 }
-bool EmbeddedPython::convert_to(const rapidjson::Value& v_in,
+bool EmbeddedPython::convert_to(const yggdrasil_rapidjson::Value& v_in,
 				void*& v_out0, bool) const {
   YGG_EMBED_PYTHON_GIL_BEGIN;
   v_out0 = NULL;
@@ -124,8 +124,8 @@ bool EmbeddedPython::convert_to(const rapidjson::Value& v_in,
   return true;
 }
 bool EmbeddedPython::convert_from(const void*& v_in0,
-				  rapidjson::Value& v_out,
-				  rapidjson::Value::AllocatorType& allocator) const {
+				  yggdrasil_rapidjson::Value& v_out,
+				  yggdrasil_rapidjson::Value::AllocatorType& allocator) const {
   YGG_EMBED_PYTHON_GIL_BEGIN;
   bool out = false;
   PyObject* v_in = (PyObject*)v_in0;
@@ -146,8 +146,8 @@ void* EmbeddedPython::load_function(const std::string& name) const {
   return out;
 }
 bool EmbeddedPython::call_function(void* func,
-				   const rapidjson::Document& args,
-				   rapidjson::Document& result) const {
+				   const yggdrasil_rapidjson::Document& args,
+				   yggdrasil_rapidjson::Document& result) const {
   bool out = false;
   void* args_list = NULL;
   PyObject *args_ = NULL, *kwargs = NULL, *result_ = NULL,

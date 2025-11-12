@@ -127,10 +127,10 @@ void* realloc(void*, size_t) {
 //   return NULL;
 // }
   
-// namespace rapidjson {
+// namespace yggdrasil_rapidjson {
 // namespace MemoryPoolAllocator {
 //   void* Realloc(void*, size_t, size_t) {
-//     std::cerr << "MOCK RAPIDJSON REALLOC" << std::endl;
+//     std::cerr << "MOCK YGGDRASIL_RAPIDJSON REALLOC" << std::endl;
 //     return NULL;
 //   }
 // }
