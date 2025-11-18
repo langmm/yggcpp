@@ -12,6 +12,7 @@ dependencies:
   # - zeromq
   - lcov
   - libcurl
+  - ninja
   - cmake
   - openmpi
   - llvm-openmp

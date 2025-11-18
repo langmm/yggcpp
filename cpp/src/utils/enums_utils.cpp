@@ -1,5 +1,6 @@
 #include "utils/enums_utils.hpp"
 #include "utils/enums.hpp"
+#include "utils/tools.hpp"
 #include <istream>
 #include <iostream>
 #include <algorithm>
@@ -20,3 +21,9 @@ std::string YggInterface::utils::str_tolower(const std::string& inStr) {
 		 [](unsigned char c) { return std::tolower(c); });
   return outStr;
 }
+
+std::string YggInterface::utils::getenv(const ENV_VAR& env) {
+  std::string name = ENV_VAR_map().find(env)->second;
+  return YggInterface::utils::getenv(name);
+}
+

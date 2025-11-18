@@ -235,6 +235,13 @@ YGG_API std::string get_thread_id();
 
 
 /*!
+  @brief Get an environment variable as a string.
+  @param[in] name Environment variable name.
+  @returns Environment variable contents, empty if not set.
+*/
+YGG_API std::string getenv(const std::string& name);
+
+/*!
   @brief Get the length (in bytes) of a character array containing 4 byte
   unicode characters.
   @param[in] strarg char* Pointer to character array.

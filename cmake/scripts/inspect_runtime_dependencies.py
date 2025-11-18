@@ -175,7 +175,9 @@ class ToolBase(metaclass=ToolMeta):
         if root is None:
             root = out
         for xx in self.runtime_libraries:
-            if root.find(xx) or xx == out.name:
+            if xx == out.name:
+                continue
+            if root.find(xx):
                 out.children[xx] = SearchResult(xx, 'RECURSIVE')
                 continue
             out.children[xx] = self.search(xx)
@@ -184,7 +186,12 @@ class ToolBase(metaclass=ToolMeta):
                 if not (x.path and os.path.isfile(x.path)):
                     continue
                 tool = type(self)(x.path)
-                tool.add_children(x, root=root, recurse=True)
+                try:
+                    tool.add_children(x, root=root, recurse=True)
+                except RecursionError:
+                    if x.method is None:
+                        x.method = ''
+                    x.method += ' RECURSION_ERROR'
 
     def search(self, x):
         for path in self.search_paths:

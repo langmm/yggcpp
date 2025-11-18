@@ -10,6 +10,7 @@ namespace YggInterface {
     const std::map<const COMM_TYPE, const std::string>& COMM_TYPE_cls_map();
     const std::map<const DIRECTION, const std::string>& DIRECTION_map();
     const std::map<const CLEANUP_MODE, const std::string>& CLEANUP_MODE_map();
+    const std::map<const ENV_VAR, const std::string>& ENV_VAR_map();
     const std::map<const COMM_FLAG, const std::string>& COMM_FLAG_map();
     const std::map<const COMM_FLAG, const std::string>& FILE_FLAG_map();
     const std::map<const LANGUAGE, const std::string>& LANGUAGE_map();

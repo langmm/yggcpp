@@ -1729,13 +1729,9 @@ protected:
      *    if it does not exist.
      */
     static std::string getEnvVar(const std::string& name) {
-      std::string out;
-      char* temp = std::getenv(name.c_str());
-      if (!temp) {
-	temp = std::getenv(altEnvName(name).c_str());
-      }
-      if (temp)
-	out.assign(temp);
+      std::string out = utils::getenv(name);
+      if (out.empty())
+        out = utils::getenv(altEnvName(name));
       return out;
     }
 

@@ -6,6 +6,14 @@
 #include "utils/yggdrasil_rapidjson_wrapper.hpp"
 
 
+std::string YggInterface::utils::getenv(const std::string& name) {
+  std::string out;
+  char* temp = std::getenv(name.c_str());
+  if (temp)
+    out.assign(temp);
+  return out;
+}
+
 std::string YggInterface::utils::get_thread_id() {
   YGG_THREAD_LOCAL std::string out;
 #ifdef _OPENMP

@@ -42,10 +42,10 @@ bool YggdrasilLogger::eval() {
 }
 std::string YggdrasilLogger::_getLogPretex() {
   std::string out = std::to_string(ygg_getpid()) + ":" + get_thread_id() + " ";
-  char *model_name = getenv("YGG_MODEL_NAME");
+  char *model_name = std::getenv("YGG_MODEL_NAME");
   if (model_name != nullptr) {
     out += model_name;
-    char *model_copy = getenv("YGG_MODEL_COPY");
+    char *model_copy = std::getenv("YGG_MODEL_COPY");
     if (model_copy != nullptr) {
       out += "_copy" + std::string(model_copy);
     }

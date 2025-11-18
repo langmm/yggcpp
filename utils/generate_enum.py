@@ -24,6 +24,7 @@ no_fortran = [
     'SIGNON_STATUS',
     'THREAD_STATUS',
     'FORK_TYPE',
+    'ENV_VAR',
 ]
 no_fortran_item = {
     'COMM_FLAG': ['COMM_FLAG_MAX'],

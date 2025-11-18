@@ -50,6 +50,19 @@ enum CLEANUP_MODE {
   CLEANUP_COMMS    //!< Only cleanup comms, not ZMQ or Python
 };
 
+/**
+ * Environment variables
+ */
+enum ENV_VAR {
+  YGG_DEFAULT_COMM,          //!< Default communicator that should be used
+  YGG_THREADING,             //!< Communicators should be set up to allow threading
+  YGG_MODEL_NAME,            //!< The current model's name
+  YGG_MODEL_LANGUAGE,        //!< The current model's language
+  YGG_SERVER_INPUT,          //!< Name of the input comm that should be used as part of a server comm for receiving requests
+  YGG_SERVER_OUTPUT,         //!< Name of the output comm that should be used as part of a server comm for sending responses
+  YGG_BROKER_SERVER_ADDRESS  //!< Address of the broker to use
+};
+
 /*!
   @brief Bit flags describing the communicator.
   

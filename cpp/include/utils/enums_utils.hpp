@@ -61,5 +61,13 @@ namespace YggInterface {
       }
       return out;
     }
+    
+    /*!
+      @brief Get an environment variable from the enum version.
+      @param[in] env Environment enum value.
+      @returns Environment variable contents, empty if not set.
+    */
+    YGG_API std::string getenv(const ENV_VAR& env);
+
   }
 }

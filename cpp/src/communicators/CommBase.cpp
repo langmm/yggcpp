@@ -76,7 +76,7 @@ void Comm_t::_before_open(const SupplementCommArgs& supp) {
     utils::strBitFlags(flags, COMM_FLAG_map(), "    ") << "]" << std::endl;
 
   thread_id = get_thread_id();
-  char *allow_threading = getenv("YGG_THREADING");
+  char *allow_threading = std::getenv("YGG_THREADING");
   if (allow_threading)
     flags |= COMM_FLAG_ALLOW_MULTIPLE_COMMS;
   char *model_name = std::getenv("YGG_MODEL_NAME");

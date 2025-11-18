@@ -34,6 +34,18 @@
   end enum
 
 
+  enum, bind( C )
+     enumerator :: &
+        YGG_DEFAULT_COMM = 0, &
+        YGG_THREADING = 1, &
+        YGG_MODEL_NAME = 2, &
+        YGG_MODEL_LANGUAGE = 3, &
+        YGG_SERVER_INPUT = 4, &
+        YGG_SERVER_OUTPUT = 5, &
+        YGG_BROKER_SERVER_ADDRESS = 6
+  end enum
+
+
   integer(kind=int64), parameter :: COMM_FLAG_VALID = 1_int64
   integer(kind=int64), parameter :: COMM_FLAG_GLOBAL = 2_int64
   integer(kind=int64), parameter :: COMM_FLAG_WORKER = 4_int64

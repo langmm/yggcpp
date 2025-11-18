@@ -58,6 +58,19 @@ const std::map<const CLEANUP_MODE, const std::string>& YggInterface::utils::CLEA
   return map;
 };
 
+const std::map<const ENV_VAR, const std::string>& YggInterface::utils::ENV_VAR_map() {
+  static const std::map<const ENV_VAR, const std::string> map {
+    {YGG_DEFAULT_COMM         , "YGG_DEFAULT_COMM"         },
+    {YGG_THREADING            , "YGG_THREADING"            },
+    {YGG_MODEL_NAME           , "YGG_MODEL_NAME"           },
+    {YGG_MODEL_LANGUAGE       , "YGG_MODEL_LANGUAGE"       },
+    {YGG_SERVER_INPUT         , "YGG_SERVER_INPUT"         },
+    {YGG_SERVER_OUTPUT        , "YGG_SERVER_OUTPUT"        },
+    {YGG_BROKER_SERVER_ADDRESS, "YGG_BROKER_SERVER_ADDRESS"},
+  };
+  return map;
+};
+
 const std::map<const COMM_FLAG, const std::string>& YggInterface::utils::COMM_FLAG_map() {
   static const std::map<const COMM_FLAG, const std::string> map {
     {COMM_FLAG_VALID               , "VALID"               },
