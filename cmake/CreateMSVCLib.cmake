@@ -102,13 +102,16 @@ function(obj2def)
       obj2def ".o" ".def" ${ARGN}
     )
   endif()
-  set_default(ARGS_COMMAND_ERROR_IS_FATAL ANY)
+  # set_default(ARGS_COMMAND_ERROR_IS_FATAL ANY)
   set_default(ARGS_COMMAND_ECHO STDOUT)
   message(DEBUG "obj2def: SOURCES = ${ARGS_SOURCES}")
   find_program_generic(DLLTOOL dlltool REQUIRED)
+  if(ARGS_COMMAND_ERROR_IS_FATAL)
+    list(APPEND ARGS_UNPARSED_ARGUMENTS
+         COMMAND_ERROR_IS_FATAL ${ARGS_COMMAND_ERROR_IS_FATAL})
+  endif()
   execute_process(
     COMMAND "${DLLTOOL}" ${FLAG_VERBOSE} --export-all-symbols -z "${ARGS_DESTINATION}" ${ARGS_SOURCES}
-    COMMAND_ERROR_IS_FATAL ${ARGS_COMMAND_ERROR_IS_FATAL}
     COMMAND_ECHO ${ARGS_COMMAND_ECHO}
     RESULT_VARIABLE RET
     OUTPUT_VARIABLE RET_OUTPUT

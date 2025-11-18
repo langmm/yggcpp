@@ -48,7 +48,6 @@ class SearchResult:
     r"""Class for storing search results."""
 
     def __init__(self, name, path=None, method=None, children=None):
-                 # tool=None, tooltype=None):
         if isinstance(name, list):
             assert all([path is None, method is None, children is None])
             children = OrderedDict([(x.name, x) for x in children])
@@ -59,22 +58,6 @@ class SearchResult:
         self.path = path
         self.method = method
         self.children = children
-        # self._tool = tool
-        # self._tooltype = tooltype
-
-    # @cached_property
-    # def tooltype(self):
-    #     if not self._tooltype:
-    #         self._tooltype = select_tool()
-    #     if isinstance(self._tooltype, str):
-    #         return _tool_registry[self._tooltype]
-    #     return self._tooltype
-
-    # @cached_property
-    # def tool(self):
-    #     if self._tool:
-    #         return self._tool
-    #     return self.tooltype(self.path)
 
     def find(self, x):
         if x == self.name:
@@ -257,6 +240,8 @@ class DumpbinTool(ToolBase):
 
     @classmethod
     def command(cls, target):
+        if ' ' in target:
+            target = f'"{target}"'
         return f"dumpbin /dependents {target}"
 
     @classmethod

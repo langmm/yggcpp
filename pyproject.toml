@@ -52,5 +52,5 @@ build.verbose = true
 editable.verbose = true
 
 # [tool.setuptools_scm]
-# write_to = "_version.py"
-# git_describe_command = "git describe --tags --abbrev=0"
+# version_file = "_version.py"
+# scm.git.describe_command = "git describe --tags --abbrev=0"

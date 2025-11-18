@@ -95,7 +95,7 @@ tests:
       include:
         - YggInterface/YggInterface.hpp
         - YggInterface/YggInterface.h
-        - YggInterface/rapidjson/include/rapidjson/rapidjson.h
+        - YggInterface/rapidjson/include/yggdrasil_rapidjson/yggdrasil_rapidjson.h
         - YggInterface/ygginterface.mod
   - python:
       imports:
