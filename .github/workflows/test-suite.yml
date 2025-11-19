@@ -139,7 +139,7 @@ jobs:
           # brew link --overwrite python@3.11
           brew install cmocka lcov gnutls graphviz doxygen>=1.9.2 curl # llvm
           # Required for compiling with clang & gfortran on GHA
-          echo "FC=$(which gfortran-15)" >> "$GITHUB_ENV"
+          echo "FC=$(which gfortran-13)" >> "$GITHUB_ENV"
       # - name: Set vcpkg triplet on Windows (mingw)
       #   if: matrix.os == 'windows-latest' && matrix.windows-compiler == 'mingw'
       #   shell: bash -l {0}
@@ -242,7 +242,7 @@ jobs:
       ###################################
       - name: Set up MSVC Compiler on windows
         uses: ilammy/msvc-dev-cmd@v1
-        if: matrix.os == 'windows-latest' # && matrix.python-install == 'conda'
+        if: matrix.os == 'windows-latest'
       - name: Set up miniconda test environment
         if: matrix.python-install == 'conda'
         uses: conda-incubator/setup-miniconda@v3
@@ -270,17 +270,27 @@ jobs:
         shell: bash -l {0}
         run: |
           conda install c-compiler cxx-compiler fortran-compiler
-      - name: Install MinGW on windows for Fortran (mingw)
-        if: matrix.os == 'windows-latest' && matrix.python-install == 'conda' && matrix.windows-compiler == 'mingw'
-        shell: bash -l {0}
-        run: |
-          conda install gcc gxx gfortran binutils m2w64-sysroot_win-64 libpython -y
-      - name: Install MinGW on windows for Fortran (msvc)
+      - name: Install compilers using conda on Windows for MSVC
         if: matrix.os == 'windows-latest' && matrix.python-install == 'conda' && matrix.windows-compiler == 'msvc'
         shell: bash -l {0}
         run: |
+          conda install c-compiler cxx-compiler
+      - name: Install MinGW on windows for Fortran
+        if: matrix.os == 'windows-latest' && matrix.python-install == 'conda'
+        shell: bash -l {0}
+        run: |
           conda install gcc gxx gfortran binutils libpython -y
-          # conda install m2w64-gcc-fortran libpython binutils -y
+      # - name: Install MinGW on windows for Fortran (mingw)
+      #   if: matrix.os == 'windows-latest' && matrix.python-install == 'conda' && matrix.windows-compiler == 'mingw'
+      #   shell: bash -l {0}
+      #   run: |
+      #     conda install gcc gxx gfortran binutils m2w64-sysroot_win-64 libpython -y
+      # - name: Install MinGW on windows for Fortran (msvc)
+      #   if: matrix.os == 'windows-latest' && matrix.python-install == 'conda' && matrix.windows-compiler == 'msvc'
+      #   shell: bash -l {0}
+      #   run: |
+      #     conda install gcc gxx gfortran binutils libpython -y
+      #     # conda install m2w64-gcc-fortran libpython binutils -y
       - name: Install ZeroMQ (conda)
         if: matrix.python-install == 'conda' && matrix.install-zmq
         shell: bash -l {0}
@@ -291,6 +301,15 @@ jobs:
       #   shell: bash -l {0}
       #   run: |
       #     conda install librabbitmq -y
+
+      ###################################
+      # GENERIC SETUP
+      ###################################
+      # - name: Explicitly set MSVC compiler
+      #   if: matrix.os == 'windows-latest' && matrix.windows-compiler == 'msvc'
+      #   run: |
+      #     echo "CC=cl" >> "$GITHUB_ENV"
+      #     echo "CXX=cl" >> "$GITHUB_ENV"
 
       ###################################
       # SET CONFIG FLAGS

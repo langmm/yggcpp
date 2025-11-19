@@ -165,7 +165,7 @@ function yggarg_scalar_character(x) result (y)
   type(yggptr) :: y
   character(len=*), target :: x
   character(len=len(x)), pointer :: xp
-  character, dimension(len(x)) :: tmp
+  ! character, dimension(len(x) + 1) :: tmp
   integer :: i
   y = yggarg_scalar_init(x)
   xp => x
@@ -175,14 +175,16 @@ function yggarg_scalar_character(x) result (y)
   do i = 1, len(x)
      y%data_character_unit(i) = x(i:i)
   end do
-  if (len_trim(x).lt.len(x)) then
-     y%data_character_unit(len_trim(x) + 1) = c_null_char
-  end if
+  y%data_character_unit(len_trim(x) + 1) = c_null_char
   ! Required on mac to prevent empty allocated array of characters for
   ! gfortran 14. Possibly related to
   ! https://gcc.gnu.org/bugzilla/show_bug.cgi?id=117763
   ! but it is not clear why this fixes it
-  tmp = y%data_character_unit
+  write(*, *) "THIS MESSAGE IS REQUIRED TO PREVENT BUG IN GFORTRAN THAT LEAVES AN ALLOCATED ARRAY OF CHARACTERS EMPTY: original = ", x, ", allocated copy = ", y%data_character_unit
+  ! do i = 1, len(x)
+  !    tmp(i) = y%data_character_unit(i)
+  ! end do
+  ! tmp = y%data_character_unit
   y%ptr = c_loc(y%data_character_unit(1))
   y%nbytes = len(x)
 end function yggarg_scalar_character
