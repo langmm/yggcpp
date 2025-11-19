@@ -307,6 +307,7 @@ jobs:
       ###################################
       - name: Explicitly set MSVC compiler
         if: matrix.os == 'windows-latest' && matrix.windows-compiler == 'msvc'
+        shell: bash -l {0}
         run: |
           echo "CC=cl" >> "$GITHUB_ENV"
           echo "CXX=cl" >> "$GITHUB_ENV"

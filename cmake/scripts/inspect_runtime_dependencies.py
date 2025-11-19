@@ -149,7 +149,10 @@ class ToolBase(metaclass=ToolMeta):
     @cached_property
     def search_results(self):
         out = SearchResult(None)
-        self.add_children(out, root=out, recurse=self.recurse)
+        try:
+            self.add_children(out, root=out, recurse=self.recurse)
+        except RecursionError:
+            pass
         return out
 
     @cached_property
@@ -186,12 +189,7 @@ class ToolBase(metaclass=ToolMeta):
                 if not (x.path and os.path.isfile(x.path)):
                     continue
                 tool = type(self)(x.path)
-                try:
-                    tool.add_children(x, root=root, recurse=True)
-                except RecursionError:
-                    if x.method is None:
-                        x.method = ''
-                    x.method += ' RECURSION_ERROR'
+                tool.add_children(x, root=root, recurse=True)
 
     def search(self, x):
         for path in self.search_paths:
