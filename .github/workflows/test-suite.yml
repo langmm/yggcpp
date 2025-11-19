@@ -438,6 +438,11 @@ jobs:
           DLL_DIRECTORY="C:\mingw64\bin"
           ls ${DLL_DIRECTORY}
           echo "${DLL_DIRECTORY}" >> $GITHUB_PATH
+      - name: Check dependencies of dlltool (MINGW)
+        if: matrix.os == 'windows-latest' && matrix.python-install == 'pip' && matrix.windows-compiler == 'mingw'
+        shell: bash -l {0}
+        run: |
+          python cmake/scripts/inspect_runtime_dependencies.py --recurse dlltool
       - name: Vcpkg library paths on Windows (Powershell)
         if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
         run: |

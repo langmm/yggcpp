@@ -47,7 +47,8 @@ def select_tool():
 class SearchResult:
     r"""Class for storing search results."""
 
-    def __init__(self, name, path=None, method=None, children=None):
+    def __init__(self, name, path=None, method=None, children=None,
+                 depth=0):
         if isinstance(name, list):
             assert all([path is None, method is None, children is None])
             children = OrderedDict([(x.name, x) for x in children])
@@ -58,6 +59,7 @@ class SearchResult:
         self.path = path
         self.method = method
         self.children = children
+        self.depth = depth
 
     def find(self, x):
         if x == self.name:
@@ -80,6 +82,7 @@ class SearchResult:
                 self.name + ((pad - len(self.name)) * ' ')
                 + str(self.path)
                 + (f' [{self.method}]' if self.method else '')
+                + (f' - {self.depth}' if self.depth > 0 else '')
             )
         for x in self.children.values():
             out += [
@@ -95,12 +98,21 @@ class ToolBase(metaclass=ToolMeta):
     r"""Base class for inspection tools."""
 
     name = None
-    search_paths = ['PATH', 'LD_LIBRARY_PATH', 'DYLD_LIBRARY_PATH']
+    search_paths = ['PATH', 'LD_LIBRARY_PATH', 'DYLD_LIBRARY_PATH',
+                    'CONDA_PREFIX']
     hsep = 80 * '='
     hsepn = (80 * '=') + '\n'
+    max_depth = 10
 
     def __init__(self, target, cmake_runtimes=None, recurse=False):
-        self.target = os.path.abspath(target)
+        if os.path.isfile(target):
+            target = os.path.abspath(target)
+        else:
+            target = self.search(target)
+            if target.path is None:
+                raise ValueError(f"Could not find target \"{target.name}\"")
+            target = target.path
+        self.target = target
         self.cmake_runtimes = cmake_runtimes
         self.recurse = recurse
 
@@ -173,10 +185,11 @@ class ToolBase(metaclass=ToolMeta):
         tool.add_children(out, root=root, recurse=True)
         return out
 
-    def add_children(self, out, root=None, recurse=False):
+    def add_children(self, out, root=None, recurse=False, depth=0):
         # print(out.name, self.runtime_libraries)
         if root is None:
             root = out
+        out.depth = depth
         for xx in self.runtime_libraries:
             if xx == out.name:
                 continue
@@ -184,18 +197,27 @@ class ToolBase(metaclass=ToolMeta):
                 out.children[xx] = SearchResult(xx, 'RECURSIVE')
                 continue
             out.children[xx] = self.search(xx)
-        if recurse:
+        if recurse and depth < self.max_depth:
             for x in out.children.values():
                 if not (x.path and os.path.isfile(x.path)):
                     continue
                 tool = type(self)(x.path)
-                tool.add_children(x, root=root, recurse=True)
+                tool.add_children(x, root=root, recurse=True,
+                                  depth=(depth + 1))
 
     def search(self, x):
         for path in self.search_paths:
             if path not in os.environ:
                 continue
-            out = shutil.which(x, path=os.environ[path], mode=os.F_OK)
+            path_value = os.environ[path]
+            if path == 'CONDA_PREFIX':
+                prefix = path_value
+                path_value = [os.path.join(prefix, 'bin')]
+                if _platform == 'win':
+                    path_value.append(
+                        os.path.join(prefix, 'Library', 'bin'))
+                path_value = os.pathsep.join(path_value)
+            out = shutil.which(x, path=path_value, mode=os.F_OK)
             if out is not None:
                 return SearchResult(x, out, method=path)
         if _library_ext in x:
@@ -274,8 +296,8 @@ class OtoolTool(ToolBase):
         ]
 
     def search(self, x):
-        rpaths = self.rpaths
         if '@rpath/' in x:
+            rpaths = self.rpaths
             for rpath in rpaths:
                 xalt = x.replace('@rpath', rpath)
                 if os.path.isfile(xalt):

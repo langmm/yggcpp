@@ -90,15 +90,13 @@ function(find_program_generic VAR name)
     set(NAMES ${name})
     if(WIN32)
       list(PREPEND NAMES "x86_64-w64-mingw32-${name}")
-    endif()
-    if (WIN32)
       cmake_path(
-        APPEND CONDA_PREFIX bin
+        APPEND CONDA_PREFIX Library bin
         OUTPUT_VARIABLE CONDA_BIN
       )
     else()
       cmake_path(
-        APPEND CONDA_PREFIX Library bin
+        APPEND CONDA_PREFIX bin
         OUTPUT_VARIABLE CONDA_BIN
       )
     endif()
