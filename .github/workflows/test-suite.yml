@@ -305,11 +305,11 @@ jobs:
       ###################################
       # GENERIC SETUP
       ###################################
-      # - name: Explicitly set MSVC compiler
-      #   if: matrix.os == 'windows-latest' && matrix.windows-compiler == 'msvc'
-      #   run: |
-      #     echo "CC=cl" >> "$GITHUB_ENV"
-      #     echo "CXX=cl" >> "$GITHUB_ENV"
+      - name: Explicitly set MSVC compiler
+        if: matrix.os == 'windows-latest' && matrix.windows-compiler == 'msvc'
+        run: |
+          echo "CC=cl" >> "$GITHUB_ENV"
+          echo "CXX=cl" >> "$GITHUB_ENV"
 
       ###################################
       # SET CONFIG FLAGS

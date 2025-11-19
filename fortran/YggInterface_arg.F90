@@ -180,7 +180,9 @@ function yggarg_scalar_character(x) result (y)
   ! gfortran 14. Possibly related to
   ! https://gcc.gnu.org/bugzilla/show_bug.cgi?id=117763
   ! but it is not clear why this fixes it
-  write(*, *) "THIS MESSAGE IS REQUIRED TO PREVENT BUG IN GFORTRAN THAT LEAVES AN ALLOCATED ARRAY OF CHARACTERS EMPTY: original = ", x, ", allocated copy = ", y%data_character_unit
+  write(*, *) "THIS MESSAGE IS REQUIRED TO PREVENT BUG IN GFORTRAN &
+       THAT LEAVES AN ALLOCATED ARRAY OF CHARACTERS EMPTY: &
+       original = ", x, ", allocated copy = ", y%data_character_unit
   ! do i = 1, len(x)
   !    tmp(i) = y%data_character_unit(i)
   ! end do
