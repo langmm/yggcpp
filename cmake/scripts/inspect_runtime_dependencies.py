@@ -160,7 +160,7 @@ class ToolBase(metaclass=ToolMeta):
 
     @cached_property
     def search_results(self):
-        out = SearchResult(None)
+        out = SearchResult(self.target, self.target)
         try:
             self.add_children(out, root=out, recurse=self.recurse)
         except RecursionError:
@@ -193,10 +193,11 @@ class ToolBase(metaclass=ToolMeta):
         for xx in self.runtime_libraries:
             if xx == out.name:
                 continue
-            if root.find(xx):
+            if depth > 0 and root.find(xx):
                 out.children[xx] = SearchResult(xx, 'RECURSIVE')
-                continue
-            out.children[xx] = self.search(xx)
+            else:
+                out.children[xx] = self.search(xx)
+            out.children[xx].depth = depth + 1
         if recurse and depth < self.max_depth:
             for x in out.children.values():
                 if not (x.path and os.path.isfile(x.path)):
@@ -220,6 +221,11 @@ class ToolBase(metaclass=ToolMeta):
             out = shutil.which(x, path=path_value, mode=os.F_OK)
             if out is not None:
                 return SearchResult(x, out, method=path)
+        for path in self.search_paths:
+            for d in path_value.split(os.pathsep):
+                ptry = os.path.join(d, x)
+                if os.path.isfile(ptry):
+                    return SearchResult(x, ptry, method=f'{path}-DIRECT')
         if _library_ext in x:
             try:
                 ctypes.CDLL(x)
@@ -295,7 +301,7 @@ class OtoolTool(ToolBase):
             raw_output.split(':', 1)[-1].splitlines()
         ]
 
-    def search(self, x):
+    def search(self, x, **kwargs):
         if '@rpath/' in x:
             rpaths = self.rpaths
             for rpath in rpaths:
@@ -304,8 +310,8 @@ class OtoolTool(ToolBase):
                     return SearchResult(x, xalt)
             print(f"Failed to resolve rpath: {x} "
                   f"(rpaths = {rpaths})")
-            return self.search(x.replace('@rpath/', ''))
-        return super(OtoolTool, self).search(x)
+            return self.search(x.replace('@rpath/', ''), **kwargs)
+        return super(OtoolTool, self).search(x, **kwargs)
 
     @cached_property
     def rpaths(self):

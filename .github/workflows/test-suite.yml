@@ -431,15 +431,18 @@ jobs:
           # This isn't necessary, but it speeds up the build
           echo "C:\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
       - name: Mingw library paths on Windows (Bash)
-        if: matrix.os == 'windows-latest' && matrix.python-install == 'pip' # && matrix.windows-compiler == 'mingw'
+        if: matrix.os == 'windows-latest' && matrix.python-install == 'pip'
         shell: bash -l {0}
         run: |
+          MINGW_BIN_DIRECTORY="C:\mingw64\bin"
+          echo "ls MINGW_BIN_DIRECTORY = ${MINGW_BIN_DIRECTORY}"
+          ls ${MINGW_BIN_DIRECTORY}
+          echo "MINGW_BIN_DIRECTORY=${MINGW_BIN_DIRECTORY}" >> "$GITHUB_ENV"
+          echo "MINGW_PTHREAD_ROOT=${MINGW_BIN_DIRECTORY}" >>  "$GITHUB_ENV"
           # This isn't necessary, but it speeds up the build
-          DLL_DIRECTORY="C:\mingw64\bin"
-          ls ${DLL_DIRECTORY}
-          echo "${DLL_DIRECTORY}" >> $GITHUB_PATH
+          echo "${MINGW_BIN_DIRECTORY}" >> $GITHUB_PATH
       - name: Check dependencies of dlltool (MINGW)
-        if: matrix.os == 'windows-latest' && matrix.python-install == 'pip' && matrix.windows-compiler == 'mingw'
+        if: matrix.os == 'windows-latest' && matrix.python-install == 'pip'
         shell: bash -l {0}
         run: |
           python cmake/scripts/inspect_runtime_dependencies.py --recurse dlltool

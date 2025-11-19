@@ -1,9 +1,5 @@
 @setlocal
 
-set "SKBUILD_CMAKE_ARGS=-G Ninja"
-%PYTHON% -m pip install . --no-deps --ignore-installed -vvv --no-build-isolation
-if errorlevel 1 exit 1
-
 mkdir conda_build
 cd conda_build
 
@@ -23,6 +19,10 @@ cmake --build .
 if errorlevel 1 exit 1
 
 cmake --install .
+if errorlevel 1 exit 1
+
+set "SKBUILD_CMAKE_ARGS=-G Ninja"
+%PYTHON% -m pip install . --no-deps --ignore-installed -vvv --no-build-isolation
 if errorlevel 1 exit 1
 
 @endlocal
