@@ -279,7 +279,7 @@ jobs:
         if: matrix.os == 'windows-latest' && matrix.python-install == 'conda'
         shell: bash -l {0}
         run: |
-          conda install gcc gxx gfortran binutils libpython -y
+          conda install gcc gxx gfortran "binutils<2.45" libpython -y
       # - name: Install MinGW on windows for Fortran (mingw)
       #   if: matrix.os == 'windows-latest' && matrix.python-install == 'conda' && matrix.windows-compiler == 'mingw'
       #   shell: bash -l {0}

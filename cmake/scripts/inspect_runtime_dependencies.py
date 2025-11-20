@@ -277,6 +277,8 @@ class DumpbinTool(ToolBase):
 
     @classmethod
     def extract_libraries(cls, raw_output):
+        if 'dependencies:' not in raw_output:
+            return []
         return [
             x.strip() for x in
             raw_output.split('dependencies:')[-1].split(

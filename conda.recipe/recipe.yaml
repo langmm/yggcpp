@@ -28,7 +28,7 @@ requirements:
     - libcurl
     - if: win
       then:
-        - binutils
+        - binutils <2.43
         - make
         - ${{ stdlib('m2w64_c') }}
         - ${{ compiler('m2w64_c') }}
