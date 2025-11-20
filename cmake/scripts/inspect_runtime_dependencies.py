@@ -104,7 +104,8 @@ class ToolBase(metaclass=ToolMeta):
     hsepn = (80 * '=') + '\n'
     max_depth = 10
 
-    def __init__(self, target, cmake_runtimes=None, recurse=False):
+    def __init__(self, target, cmake_runtimes=None, recurse=False,
+                 verbose=False, depth=0):
         if os.path.isfile(target):
             target = os.path.abspath(target)
         else:
@@ -115,6 +116,8 @@ class ToolBase(metaclass=ToolMeta):
         self.target = target
         self.cmake_runtimes = cmake_runtimes
         self.recurse = recurse
+        self.verbose = verbose
+        self.depth = depth
 
     @classmethod
     def _run(cls, cmd):
@@ -162,7 +165,7 @@ class ToolBase(metaclass=ToolMeta):
     def search_results(self):
         out = SearchResult(self.target, self.target)
         try:
-            self.add_children(out, root=out, recurse=self.recurse)
+            self.add_children(out, root=out)
         except RecursionError:
             pass
         return out
@@ -173,23 +176,17 @@ class ToolBase(metaclass=ToolMeta):
         raw_output = self._run(cmd)
         return [x for x in self.extract_libraries(raw_output) if x]
 
-    def recursive_search(self, x, root=None):
-        if root is not None and root.find(x):
-            return SearchResult(x, 'RECURSIVE')
-        out = self.search(x)
-        if not (out.path and os.path.isfile(out.path)):
-            return out
-        if root is None:
-            root = out
-        tool = type(self)(out.path)
-        tool.add_children(out, root=root, recurse=True)
-        return out
+    def _create_child(self, *args, **kwargs):
+        kwargs.setdefault('verbose', self.verbose)
+        kwargs.setdefault('recurse', self.recurse)
+        kwargs.setdefault('depth', self.depth + 1)
+        return type(self)(*args, **kwargs)
 
-    def add_children(self, out, root=None, recurse=False, depth=0):
+    def add_children(self, out, root=None, depth=0):
         # print(out.name, self.runtime_libraries)
         if root is None:
             root = out
-        out.depth = depth
+        out.depth = self.depth
         for xx in self.runtime_libraries:
             if xx == out.name:
                 continue
@@ -197,14 +194,15 @@ class ToolBase(metaclass=ToolMeta):
                 out.children[xx] = SearchResult(xx, 'RECURSIVE')
             else:
                 out.children[xx] = self.search(xx)
-            out.children[xx].depth = depth + 1
-        if recurse and depth < self.max_depth:
+            out.children[xx].depth = self.depth + 1
+        if self.verbose:
+            print(f"{self.hsep}\nPARTIAL SEARCH:\n{out.format()}")
+        if self.recurse and self.depth < self.max_depth:
             for x in out.children.values():
                 if not (x.path and os.path.isfile(x.path)):
                     continue
-                tool = type(self)(x.path)
-                tool.add_children(x, root=root, recurse=True,
-                                  depth=(depth + 1))
+                tool = self._create_child(x.path)
+                tool.add_children(x, root=root)
 
     def search(self, x):
         for path in self.search_paths:
@@ -353,7 +351,7 @@ def inspect(args):
         args.tool = select_tool()
     tool = _tool_registry[args.tool](
         args.target, cmake_runtimes=args.cmake_runtimes,
-        recurse=args.recurse,
+        recurse=args.recurse, verbose=args.verbose,
     )
     print(tool.formatted_runtime_libraries)
     print(tool.formatted_search_paths)
@@ -381,7 +379,11 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--recurse", action="store_true",
-        help=("Show runtime dependencies of runtime dependencies"),
+        help="Show runtime dependencies of runtime dependencies",
+    )
+    parser.add_argument(
+        "--verbose", action="store_true",
+        help="Show runtime dependencies as they are added",
     )
     args = parser.parse_args()
     inspect(args)

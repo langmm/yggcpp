@@ -12,6 +12,7 @@ cmake %CMAKE_ARGS% ^
       -D BUILD_Fortran_LIBRARY:BOOL=ON ^
       -D YGG_CXX_REQUIRED:BOOL=ON ^
       -D YGG_Fortran_REQUIRED:BOOL=ON ^
+      -D CMAKE_BUILD_PARALLEL_LEVEL=1 ^
       ..
 if errorlevel 1 exit 1
 
