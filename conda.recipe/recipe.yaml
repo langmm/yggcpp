@@ -23,8 +23,8 @@ requirements:
     - if: build_platform != host_platform
       then:
         - cross-python_${{ host_platform }}
-        - python
-        - numpy >=1.13.0
+    - python
+    - numpy >=1.13.0
     - cmake >=3.16
     - libcurl
     - if: win
