@@ -52,9 +52,7 @@ target_link_libraries(
 target_include_directories(
     ${YGG_TARGET_CXX} PUBLIC ${DEPS_INCLUDE_DIRS}
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<BUILD_INTERFACE:${YGGDRASIL_RAPIDJSON_INCLUDE_DIRS}>
-    $<INSTALL_INTERFACE:include/YggInterface>
-    $<INSTALL_INTERFACE:include/YggInterface/rapidjson/include>)
+    $<INSTALL_INTERFACE:include/YggInterface>)
 target_compile_definitions(
     ${YGG_TARGET_CXX} PUBLIC ${YGG_INSTALL_DEFS})
 target_compile_options(

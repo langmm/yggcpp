@@ -175,6 +175,9 @@ static PyTypeObject commMetaType = {
 #if (PY_MAJOR_VERSION > 3 || (PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION >= 12))
 	0,                         /* tp_watched */
 #endif
+#if (PY_MAJOR_VERSION > 3 || (PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION >= 13))
+	0,                         /* tp_versions_used */
+#endif
 };
 
 PyObject* commMeta_new(PyTypeObject *type, PyObject* args, PyObject* kwds) {
@@ -616,6 +619,9 @@ static PyTypeObject Comm_tType = {
 #endif
 #if (PY_MAJOR_VERSION > 3 || (PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION >= 12))
 	0,                         /* tp_watched */
+#endif
+#if (PY_MAJOR_VERSION > 3 || (PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION >= 13))
+	0,                         /* tp_versions_used */
 #endif
 };
 

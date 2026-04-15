@@ -27,7 +27,7 @@ requirements:
     - make  # [win]
     # - m2w64-make  # [win]
     - ninja
-    - numpy >=1.13.0
+    - numpy >=1.13.0                         # [build_platform != target_platform]
     - pkgconfig
     - python                                 # [build_platform != target_platform]
     - scikit-build-core
@@ -78,7 +78,6 @@ test:
     - test -f $PREFIX/lib/cmake/YggInterface/YggInterfaceConfigVersion.cmake  # [unix]
     - test -f $PREFIX/include/YggInterface/YggInterface.hpp  # [unix]
     - test -f $PREFIX/include/YggInterface/YggInterface.h    # [unix]
-    - test -f $PREFIX/include/YggInterface/rapidjson/include/yggdrasil_rapidjson/yggdrasil_rapidjson.h  # [unix]
     - test -f $PREFIX/lib/libYggInterface.so.{{ version_major }}  # [linix]
     - test -f $PREFIX/lib/libYggInterface_fortran.so.{{ version_major }}  # [linix]
     - test -f $PREFIX/lib/libYggInterface.{{ version_major }}.dylib        # [osx]
@@ -88,7 +87,6 @@ test:
     - if not exist %LIBRARY_PREFIX%\\cmake\\YggInterfaceConfigVersion.cmake exit 1  # [win]
     - if not exist %LIBRARY_PREFIX%\\include\\YggInterface\\YggInterface.hpp  # [win]
     - if not exist %LIBRARY_PREFIX%\\include\\YggInterface\\YggInterface.h  # [win]
-    - if not exist %LIBRARY_PREFIX%\\include\\YggInterface\\rapidjson\\include\\yggdrasil_rapidjson\\yggdrasil_rapidjson.h exit 1  # [win]
     - if not exist %LIBRARY_BIN%\\YggInterface.{{ version_major }}.dll exit 1  # [win]
     - if not exist %LIBRARY_BIN%\\YggInterface_fortran.{{ version_major }}.dll exit 1  # [win]
     - if not exist %LIBRARY_PREFIX%\\include\\YggInterface\\ygginterface.mod exit 1  # [win]

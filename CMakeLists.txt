@@ -108,6 +108,12 @@ if(CONDA_PREFIX)
     message(STATUS "CONDA_PREFIX = ${CONDA_PREFIX}")
 endif()
 
+if(YggdrasilRapidJSON_FOUND)
+    list(APPEND DEPS_LIBRARIES YggdrasilRapidJSON)
+else()
+    list(APPEND DEPS_INCLUDE_DIRS ${YGGDRASIL_RAPIDJSON_INCLUDE_DIRS})
+endif()
+
 ##########
 # ZeroMQ #
 ##########

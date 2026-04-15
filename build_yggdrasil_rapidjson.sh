@@ -1,10 +1,10 @@
-#!/bin/sh
-set -euo pipefail
+#!/bin/bash
+set -e
 
-if [ ! -d yggdrasil_rapidjson ]; then
+if [ ! -d yggdrasil-rapidjson ]; then
     git clone https://github.com/cropsinsilico/yggdrasil-rapidjson.git
 fi
-cd yggdrasil_rapidjson
+cd yggdrasil-rapidjson
 if [ ! -d build ]; then
     mkdir build
 fi

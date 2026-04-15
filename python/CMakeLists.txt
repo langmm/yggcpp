@@ -70,8 +70,7 @@ add_library_python(${YGG_TARGET_PY} MODULE ${SOURCES_PY})
 target_include_directories(
           ${YGG_TARGET_PY} PUBLIC
           ${DEPS_INCLUDE_DIRS}
-	  ${PARENT_SOURCE_DIR}/cpp/include
-	  ${YGGDRASIL_RAPIDJSON_INCLUDE_DIRS})
+	  ${PARENT_SOURCE_DIR}/cpp/include)
 if(YGG_LINK_Python_TO_CXX)
     target_link_libraries(${YGG_TARGET_PY} PUBLIC ${YGG_TARGET_CXX})
 else()
