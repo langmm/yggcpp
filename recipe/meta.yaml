@@ -43,6 +43,7 @@ requirements:
     - llvm-openmp
     - openmpi
     - sysv_ipc  # [not win]
+    - yggdrasil-rapidjson
     - zeromq
   host:
     - hatch-fancy-pypi-readme

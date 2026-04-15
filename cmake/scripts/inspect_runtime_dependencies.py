@@ -102,7 +102,7 @@ class ToolBase(metaclass=ToolMeta):
                     'CONDA_PREFIX']
     hsep = 80 * '='
     hsepn = (80 * '=') + '\n'
-    max_depth = 10
+    max_depth = 5
 
     def __init__(self, target, cmake_runtimes=None, recurse=False,
                  verbose=False, depth=0):
@@ -118,6 +118,10 @@ class ToolBase(metaclass=ToolMeta):
         self.recurse = recurse
         self.verbose = verbose
         self.depth = depth
+
+    @classmethod
+    def which(cls):
+        return shutil.which(cls.name)
 
     @classmethod
     def _run(cls, cmd):
@@ -355,6 +359,7 @@ def inspect(args):
         args.target, cmake_runtimes=args.cmake_runtimes,
         recurse=args.recurse, verbose=args.verbose,
     )
+    print(f'{tool.name}: {tool.which()}')
     print(tool.formatted_runtime_libraries)
     print(tool.formatted_search_paths)
     print(tool.formatted_search_results)

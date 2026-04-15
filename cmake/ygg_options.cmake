@@ -56,18 +56,13 @@ endif()
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-if (NOT DEFAULT_YGGDRASIL_RAPIDJSON_INCLUDE_DIRS)
-  cmake_path(APPEND CMAKE_CURRENT_SOURCE_DIR rapidjson include
-             OUTPUT_VARIABLE DEFAULT_YGGDRASIL_RAPIDJSON_INCLUDE_DIRS)
-endif()
-
 option(YGGDRASIL_DISABLE_Python_C_API "Disable the Python C API" OFF)
 option(YGGDRASIL_PYGIL_NO_MANAGEMENT "Disable any handling of the Python GIL" OFF)
 option(YGG_BUILD_ASAN "Build with address sanitizer (gcc/clang)" OFF)
 option(YGG_BUILD_UBSAN "Build with undefined behavior sanitizer (gcc/clang)" OFF)
 option(YGG_ENABLE_INSTRUMENTATION_OPT "Build yggdrasil with -march or -mcpu options" ON)
 option(YGG_DEBUG_LEVEL "Level that should be used for logging" OFF)
-set(YGGDRASIL_RAPIDJSON_INCLUDE_DIRS "${DEFAULT_YGGDRASIL_RAPIDJSON_INCLUDE_DIRS}" CACHE PATH "Path to the yggdrasil_rapidjson include directory containing the headers that should be used")
+set(YGGDRASIL_RAPIDJSON_INCLUDE_DIRS "" CACHE PATH "Path to the yggdrasil_rapidjson include directory containing the headers that should be used")
 option(YGGDRASIL_RAPIDJSON_CHECK_PYREFS "Turn on reference counting in yggdrasil_rapidjson for Python objects" OFF)
 option(VERBOSE "Turn on debug messages and verbose makefile" OFF)
 
@@ -76,13 +71,19 @@ if(VERBOSE)
   set(CMAKE_MESSAGE_LOG_LEVEL DEBUG)
 endif()
 
+######################
+# YggdrasilRapidJSON #
+######################
+
+if (NOT YGGDRASIL_RAPIDJSON_INCLUDE_DIRS)
+    find_package(YggdrasilRapidJSON REQUIRED)
+    message(STATUS "YggdrasilRapidJSON_INCLUDE_DIRS = ${YggdrasilRapidJSON_INCLUDE_DIRS}")
+    set(YGGDRASIL_RAPIDJSON_INCLUDE_DIRS "${YggdrasilRapidJSON_INCLUDE_DIRS}")
+endif()
+
 message(STATUS "YGGDRASIL_RAPIDJSON_INCLUDE_DIRS = ${YGGDRASIL_RAPIDJSON_INCLUDE_DIRS}")
 if (NOT EXISTS ${YGGDRASIL_RAPIDJSON_INCLUDE_DIRS})
-  message(FATAL_ERROR "YggdrasilRapidJSON sources not found: if you cloned "
-                      " the git repository, you should initialize"
-                      " the yggdrasil_rapidjson submodule as explained in the"
-                      " README.rst; in all other cases you may"
-                      " want to report the issue.")
+    message(FATAL_ERROR "YggdrasilRapidJSON does not exist at the specified location \"${YGGDRASIL_RAPIDJSON_INCLUDE_DIRS}\"")
 endif()
 
 set(Python_PREFIX Python3)
