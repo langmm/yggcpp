@@ -463,6 +463,7 @@ class CFile(AmendedFile):
             'string_realloc': 'char**',
             'string_array': 'const char**',
             'registered_function': 'c_function',
+            'state_function': 'c_state_function',
             'commflag': 'FLAG_TYPE',
             'pointer': 'void*',
             'timeout': 'int64_t',
@@ -1421,7 +1422,7 @@ class CFile(AmendedFile):
             if (('*' in x['type'] and ((x['type'] in self.char_types
                                         and x.get('is_return', False))
                                        or x['type'] not in self.char_types)
-                 or x['type'] == 'c_function')):
+                 or x['type'] in ['c_function', 'c_state_function'])):
                 x['base'] = 'void'
                 x['ptr'] = '*'
                 self.complete_fortran_arg(x, kwargs)
@@ -1483,6 +1484,7 @@ class FortranFile(AmendedFile):
     ]
     iso_types = {'void*': 'c_ptr', 'bool': 'c_bool',
                  'c_function': 'c_funptr',
+                 'c_state_function': 'c_funcptr',
                  'long double': 'c_long_double',
                  'complex_float_t': 'c_float_complex',
                  'complex_double_t': 'c_double_complex',
@@ -1762,6 +1764,7 @@ class FortranFile(AmendedFile):
             'string_realloc': 'yggchar_r',
             'string_array': 'character(len={length}), dimension(:)',
             'registered_function': 'type(c_funptr)',
+            'state_function': 'type(c_funptr)',
             'commflag': 'integer(kind=int64)',
             'pointer': 'type(c_ptr)',
             'timeout': 'integer(kind=int64)',

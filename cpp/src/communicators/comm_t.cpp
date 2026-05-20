@@ -321,4 +321,12 @@ void global_scope_comm_off_c() {
   YggInterface::communicator::global_scope_comm_off();
 }
 
+int reply_to_state_requests(c_state_function fget,
+                            c_state_function fset,
+                            c_state_function fact) {
+  _BEGIN_CPP {
+    return static_cast<int>(YggInterface::communicator::replyToStateRequests(fget, fset, fact));
+  } _END_CPP(reply_to_state_requests, -1);
+}
+  
 }

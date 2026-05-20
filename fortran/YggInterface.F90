@@ -2706,6 +2706,48 @@ contains
     out = ygg_json_object_input_c(c_name)
     deallocate(c_name)
   end function ygg_json_object_input
+  !> @brief Send a message to a global communicator based on the comm name.
+  !> @param[in] name Name of the communicator.
+  !> @param[in] data Message data to send.
+  !> @returns int Values >= 0 indicate success.
+  function ygg_send_with_name(name, data) &
+       result(out)
+    implicit none
+    character(len = *), intent(in) :: name
+    type(ygggeneric), value, intent(in) :: data
+    logical :: out
+    character(kind = c_char), dimension(:), allocatable :: c_name
+    integer(kind = c_int) :: c_out
+    c_name = convert_string_f2c(name)
+    c_out = ygg_send_with_name_c(c_name, data)
+    deallocate(c_name)
+    out = (c_out.ge.0)
+  end function ygg_send_with_name
+  !> @brief Receive a message from a global communicator based on the comm
+  !>   name.
+  !> @param[in] name Name of the communicator.
+  !> @param[out] data Reference to memory where the received data should be
+  !>   stored.
+  !> @return Integer specifying if the receive was succesful. Values >= 0
+  !>   indicate success.
+  function ygg_recv_with_name(name, data) &
+       result(out)
+    implicit none
+    character(len = *), intent(in) :: name
+    type(ygggeneric), target :: data
+    logical :: out
+    type(ygggeneric), pointer :: data_ptr
+    character(kind = c_char), dimension(:), allocatable :: c_name
+    type(c_ptr) :: c_data
+    integer(kind = c_long) :: c_out
+    c_name = convert_string_f2c(name)
+    data_ptr => data
+    c_data = c_loc(data_ptr)
+    c_out = ygg_recv_with_name_c(c_name, c_data)
+    deallocate(c_name)
+    nullify(data_ptr)
+    out = (c_out.ge.0)
+  end function ygg_recv_with_name
   !> @brief Write a log message at the ERROR level. This will also cause
   !>   the calling model to return an error code on exit.
   !> @param[in] fmt Log message.
@@ -2992,6 +3034,23 @@ contains
     implicit none
     call unset_global_comm_c()
   end subroutine unset_global_comm
+  !> @brief Allow other models to set requests to inspect or modify the
+  !>   state.
+  !> @param[in] fget Function that should be used to get state variables.
+  !> @param[in] fset Function that should be used to set state variables.
+  !> @param[in] fact Function that should be used to perform actions.
+  !> @return 1 if successful, 0 otherwise.
+  function reply_to_state_requests(fget, fset, fact) &
+       result(out)
+    implicit none
+    type(c_funptr), value :: fget
+    type(c_funptr), value :: fset
+    type(c_funptr), value :: fact
+    integer :: out
+    integer(kind = c_int) :: c_out
+    c_out = reply_to_state_requests_c(fget, fset, fact)
+    out = c_out
+  end function reply_to_state_requests
   !> @brief Get the length of a C string stored in a pointer.
   !> @param[in] x String pointer.
   !> @returns Length of the string.

@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <sstream>
 #include <chrono>
+#include <stdexcept>
 #ifdef _WIN32
 #define localtime_r(_Time, _Tm) localtime_s(_Tm, _Time)
 #endif
@@ -19,6 +20,17 @@
 #endif
 
 namespace YggInterface {
+  
+  /*!
+   * @brief Class for yggdrasil specific runtime errors.
+   * @param[in] message Error message.
+   */
+  class YggdrasilRuntimeError : public std::runtime_error {
+  public:
+    YggdrasilRuntimeError(char const* const message) throw();
+    YggdrasilRuntimeError(const std::string& message) throw();
+  };
+  
 namespace utils {
   /*!
    * @brief Class for logging

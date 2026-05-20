@@ -1324,7 +1324,7 @@ public:
       @brief Determine if the communicator is global.
       @return true if it is global, false otherwise.
      */
-    YGG_API_DEF bool global() const { return flags & COMM_FLAG_GLOBAL; }
+    YGG_API_DEF bool global() const { return flags & COMM_FLAG_GLOBAL_WRAPPED; }
     /**
       @brief Determine if the communicator is async.
       @return true if it is async, false otherwise.

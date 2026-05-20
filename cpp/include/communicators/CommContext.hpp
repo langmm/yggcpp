@@ -117,11 +117,14 @@ namespace YggInterface {
        * @param[in] name The name of the communicator to find
        * @param[in] dir The direction of the communicator to find
        * @param[in] type The type of cummunicator to find
+       * @param[in] global_scope If true, look for a global comm even if
+       *  global_scope_comm is not set.
        * @return The communicator or NULL if none was found
        */
       YGG_API Comm_t* find_registered_comm(const std::string& name,
 					   const DIRECTION dir,
-					   const COMM_TYPE type);
+					   const COMM_TYPE type,
+                                           bool global_scope = false);
       /**
        * @brief Register a function.
        * @param[in] x Function wrapper containing function to register.

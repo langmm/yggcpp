@@ -72,7 +72,8 @@ void Comm_t::_before_open(const SupplementCommArgs& supp) {
   if (direction == NONE)
     flags &= ~COMM_FLAG_VALID;
 
-  log_debug() << "before_open: flags = [" << std::endl <<
+  log_debug() << "before_open: type = " << COMM_TYPE_cls2str(type) <<
+    ", flags = [" << std::endl <<
     utils::strBitFlags(flags, COMM_FLAG_map(), "    ") << "]" << std::endl;
 
   thread_id = get_thread_id();
@@ -433,8 +434,8 @@ bool Comm_t::create_global_scope_comm(const SupplementCommArgs& supp) {
   COMM_TYPE global_type = getType();
   std::string global_name = name;
   DIRECTION global_direction = direction;
-  bool is_server = false;
-  int prev_global_scope_comm = get_global_scope_comm();
+  if (get_global_scope_comm())
+    flags |= COMM_FLAG_GLOBAL;
   if (global_type != SERVER_COMM && global_type != CLIENT_COMM &&
       !name.empty()) {
     char* server_var = NULL;
@@ -447,7 +448,6 @@ bool Comm_t::create_global_scope_comm(const SupplementCommArgs& supp) {
       log_debug() << "create_global_scope_comm: " << name <<
 	" is piecemeal server (server_var = " << server_var <<
 	")" << std::endl;
-      is_server = true;
       global_type = SERVER_COMM;
       char* model_name = std::getenv("YGG_MODEL_NAME");
       if (global_direction == SEND) {
@@ -457,32 +457,41 @@ bool Comm_t::create_global_scope_comm(const SupplementCommArgs& supp) {
       }
       if (model_name)
 	global_name.assign(model_name);
-      global_scope_comm_on();
+      flags |= COMM_FLAG_GLOBAL;
     }
   }
-  if (name.empty() || (!get_global_scope_comm()) ||
-      (flags & (COMM_FLAG_GLOBAL | COMM_FLAG_WORKER |
+  if ((flags & COMM_FLAG_WRAPPER) &&
+      !(global_type == SERVER_COMM || global_type == CLIENT_COMM)) {
+    log_debug() << "create_global_scope_comm: COMM_FLAG_WRAPPER for non-server/client: " << COMM_TYPE_cls2str(global_type) << std::endl;
+  }
+  if (name.empty() || (!(flags & COMM_FLAG_GLOBAL)) ||
+      (flags & (COMM_FLAG_GLOBAL_WRAPPED | COMM_FLAG_WORKER |
 		COMM_FLAG_CLIENT_RESPONSE |
 		COMM_FLAG_SERVER_RESPONSE)) ||
       // Allow server/client to be stored as a global_comm
       ((flags & COMM_FLAG_WRAPPER) &&
-       !(global_type == SERVER_COMM || global_type == CLIENT_COMM)))
+       !(global_type == SERVER_COMM || global_type == CLIENT_COMM))) {
+    flags = (flags & ~COMM_FLAG_GLOBAL);
     return false;
-  log_debug() << "create_global_scope_comm: " << global_name << " (dir="
-	      << global_direction << ") is a global communicator ("
-	      << "global_scope_comm = " << get_global_scope_comm() << ")"
-	      << std::endl;
+  }
+  log_debug() << "create_global_scope_comm: " << global_name <<
+    " (type=" << COMM_TYPE_cls2str(global_type) << ", dir=" <<
+    DIRECTION2str(global_direction) << ") is a global communicator (" <<
+    "global_scope_comm = " << get_global_scope_comm() << ")" <<
+    std::endl;
   global_comm = ctx->find_registered_comm(global_name,
 					  global_direction,
-					  global_type);
+					  global_type,
+                                          true);
   if (!global_comm) {
     log_debug() << "create_global_scope_comm: Creating global comm \""
-	      << global_name << "\"" << std::endl;
+                << global_name << "\"" << std::endl;
     Address global_address;
     if (address.valid())
       global_address.address(address.address());
     global_comm = new_Comm_t(global_direction, global_type, global_name,
-			     global_address, flags | COMM_FLAG_GLOBAL,
+			     global_address,
+                             (flags | COMM_FLAG_GLOBAL_WRAPPED) & ~COMM_FLAG_GLOBAL,
 			     supp);
     log_debug() << "create_global_scope_comm: Created global comm \""
 	      << global_name << "\"" << std::endl;
@@ -491,9 +500,7 @@ bool Comm_t::create_global_scope_comm(const SupplementCommArgs& supp) {
 	      << global_name << "\"" << std::endl;
   }
   address.address(global_comm->address.address());
-  flags = global_comm->flags & ~COMM_FLAG_GLOBAL;
-  if (is_server)
-    set_global_scope_comm(prev_global_scope_comm);
+  flags = (global_comm->flags & ~COMM_FLAG_GLOBAL_WRAPPED) | COMM_FLAG_GLOBAL;
   return true;
 }
 

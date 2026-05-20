@@ -62,33 +62,33 @@ WrapComm::WrapComm(const std::string name,
 		   const utils::Address &address,
 		   const DIRECTION direction,
 		   FLAG_TYPE flgs, const COMM_TYPE type,
-		   const COMM_TYPE wraptyp,
+                   FLAG_TYPE wrapflgs, const COMM_TYPE wraptyp,
 		   const SupplementCommArgs& wrapspp) :
   CommBase(name, address, direction, flgs | COMM_FLAG_WRAPPER,
 	   type, wrapspp),
-  wraptype(wraptyp), wrapsupp(wrapspp) {
+  wrapflags(wrapflgs | flgs), wraptype(wraptyp), wrapsupp(wrapspp) {
   if (wraptype == NULL_COMM)
     wraptype = type;
   ADD_CONSTRUCTOR_OPEN(WrapComm)
 }
 WrapComm::WrapComm(const std::string nme,
-		   const DIRECTION dirn, FLAG_TYPE flgs,
-		   const COMM_TYPE type,
-		   const COMM_TYPE wraptype,
+		   const DIRECTION dirn,
+		   FLAG_TYPE flgs, const COMM_TYPE type,
+		   FLAG_TYPE wrapflgs, const COMM_TYPE wraptype,
 		   const SupplementCommArgs& wrapsupp) :
   WrapComm(nme, utils::blankAddress, dirn, flgs, type,
-	   wraptype, wrapsupp) {}
+	   wrapflgs, wraptype, wrapsupp) {}
 WrapComm::WrapComm(const utils::Address &addr,
-		   const DIRECTION dirn, FLAG_TYPE flgs,
-		   const COMM_TYPE type,
-		   const COMM_TYPE wraptype,
+		   const DIRECTION dirn,
+		   FLAG_TYPE flgs, const COMM_TYPE type,
+		   FLAG_TYPE wrapflgs, const COMM_TYPE wraptype,
 		   const SupplementCommArgs& wrapsupp) :
-  WrapComm("", addr, dirn, flgs, type, wraptype, wrapsupp) {}
+  WrapComm("", addr, dirn, flgs, type, wrapflgs, wraptype, wrapsupp) {}
 WrapComm::WrapComm(Comm_t* comm) :
   WrapComm(comm->getName(), utils::Address(comm->getAddress()),
 	   comm->getDirection(),
 	   comm->getFlags() | COMM_FLAG_DELAYED_OPEN,
-	   comm->getType(), NULL_COMM, wrapsupp) {
+	   comm->getType(), 0, NULL_COMM, wrapsupp) {
   handle = comm;
   fromComm();
 }
@@ -129,15 +129,17 @@ void WrapComm::fromComm() {
   if (handle) {
     if (type == DEFAULT_COMM)
       setType(handle->getType());
-    else
-      handle->setType(type);
+    // else
+    //   handle->setType(type);
     this->name = handle->getName();
     this->direction = handle->getDirection();
     set_timeout_recv(handle->get_timeout_recv());
     updateMaxMsgSize(handle->getMaxMsgSize());
     address.address(handle->getAddress());
     updateMsgBufSize(handle->getMsgBufSize());
-    getFlags() |= handle->getFlags();
+    wrapflags = handle->getFlags();
+    wraptype = handle->getType();
+    getFlags() |= (wrapflags | COMM_FLAG_WRAPPER);
   }
 }
 

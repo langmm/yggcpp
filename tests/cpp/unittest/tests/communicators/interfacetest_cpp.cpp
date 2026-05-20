@@ -374,6 +374,70 @@ TEST(YggInterface, GlobalServerPiecemeal) {
   ygg_cleanup(CLEANUP_COMMS);
 }
 
+bool example_state_fget(const std::string& name,
+                        yggdrasil_rapidjson::Document& doc) {
+  if (name == "A")
+    doc.SetInt(5);
+  else if (name == "B")
+    doc.SetString("hello", 5, doc.GetAllocator());
+  else
+    return false;
+  return true;
+}
+bool example_state_fset(const std::string& name,
+                        yggdrasil_rapidjson::Document& doc) {
+  if (name == "A") {
+    if (!(doc.IsInt() && doc.GetInt() == 5))
+      return false;
+  } else if (name == "B") {
+    if (!(doc.IsString() && std::string(doc.GetString()) == "hello"))
+      return false;
+  } else {
+    return false;
+  }
+  return true;
+}
+
+TEST(YggInterface, yggStateInterface) {
+  {
+    ClientComm sComm("state", COMM_FLAG_SET_OPP_ENV | COMM_FLAG_ASYNC);
+    sComm.addSchema("{\"type\": \"any\"}", false, SEND);
+    sComm.addSchema("{\"type\": \"any\"}", false, RECV);
+    // Initialize so messages can be sent
+    {
+      ServerComm rComm("state", COMM_FLAG_INTERFACE | COMM_FLAG_GLOBAL);  // | COMM_FLAG_ASYNC);
+      rComm.addSchema("{\"type\": \"any\"}", false, SEND);
+      rComm.addSchema("{\"type\": \"any\"}", false, RECV);
+      DO_RPC_SIGNON;
+    }
+    yggdrasil_rapidjson::Document msg;
+    msg.Parse("[\"set\", \"A\", 5]");
+    EXPECT_GE(sComm.send(msg), 0);
+    msg.Parse("[\"get\", \"A\"]");
+    EXPECT_GE(sComm.send(msg), 0);
+    msg.Parse("[\"act\", \"B\", \"hello\"]");
+    EXPECT_GE(sComm.send(msg), 0);
+    msg.Parse("[\"invalid\", \"C\"]");
+    EXPECT_GE(sComm.send(msg), 0);
+    msg.Parse("[\"resume\"]");
+    EXPECT_GE(sComm.send(msg), 0);
+    EXPECT_TRUE(yggStateInterface(&example_state_fget, &example_state_fset,
+                                  &example_state_fset));
+    yggdrasil_rapidjson::Document reply;
+    EXPECT_GE(sComm.recv(reply), 0); // set
+    EXPECT_TRUE(example_state_fset("A", reply));
+    EXPECT_GE(sComm.recv(reply), 0); // get
+    EXPECT_TRUE(example_state_fset("A", reply));
+    EXPECT_GE(sComm.recv(reply), 0); // act
+    EXPECT_TRUE(example_state_fset("B", reply));
+    EXPECT_GE(sComm.recv(reply), 0); // error
+    EXPECT_TRUE(reply.IsString() && std::string(reply.GetString()) == "error");
+    EXPECT_GE(sComm.recv(reply), 0); // resume
+    EXPECT_TRUE(reply.IsString() && std::string(reply.GetString()) == "ok");
+  }
+  ygg_cleanup(CLEANUP_COMMS);
+}
+
 #undef INTERFACE_TEST_SCHEMA
 #undef INTERFACE_TEST_NOARGS
 #undef INTERFACE_TEST

@@ -75,6 +75,7 @@ const std::map<const COMM_FLAG, const std::string>& YggInterface::utils::COMM_FL
   static const std::map<const COMM_FLAG, const std::string> map {
     {COMM_FLAG_VALID               , "VALID"               },
     {COMM_FLAG_GLOBAL              , "GLOBAL"              },
+    {COMM_FLAG_GLOBAL_WRAPPED      , "GLOBAL_WRAPPED"      },
     {COMM_FLAG_WORKER              , "WORKER"              },
     {COMM_FLAG_DELAYED_OPEN        , "DELAYED_OPEN"        },
     {COMM_FLAG_CLIENT              , "CLIENT"              },
@@ -212,4 +213,46 @@ const std::map<const FUNCTION_FLAGS, const std::string>& YggInterface::utils::FU
   };
   return map;
 };
+
+std::string YggInterface::utils::COMM_TYPE2str(const COMM_TYPE key) {  return YggInterface::utils::COMM_TYPE_map().find(key)->second;
+}
+
+std::string YggInterface::utils::COMM_TYPE_cls2str(const COMM_TYPE key) {  return YggInterface::utils::COMM_TYPE_cls_map().find(key)->second;
+}
+
+std::string YggInterface::utils::DIRECTION2str(const DIRECTION key) {  return YggInterface::utils::DIRECTION_map().find(key)->second;
+}
+
+std::string YggInterface::utils::CLEANUP_MODE2str(const CLEANUP_MODE key) {  return YggInterface::utils::CLEANUP_MODE_map().find(key)->second;
+}
+
+std::string YggInterface::utils::ENV_VAR2str(const ENV_VAR key) {  return YggInterface::utils::ENV_VAR_map().find(key)->second;
+}
+
+std::string YggInterface::utils::COMM_FLAG2str(const COMM_FLAG key) {  return YggInterface::utils::COMM_FLAG_map().find(key)->second;
+}
+
+std::string YggInterface::utils::FILE_FLAG2str(const COMM_FLAG key) {  return YggInterface::utils::FILE_FLAG_map().find(key)->second;
+}
+
+std::string YggInterface::utils::LANGUAGE2str(const LANGUAGE key) {  return YggInterface::utils::LANGUAGE_map().find(key)->second;
+}
+
+std::string YggInterface::utils::HeadFlags2str(const HeadFlags key) {  return YggInterface::utils::HeadFlags_map().find(key)->second;
+}
+
+std::string YggInterface::utils::HEAD_RESET_MODE2str(const HEAD_RESET_MODE key) {  return YggInterface::utils::HEAD_RESET_MODE_map().find(key)->second;
+}
+
+std::string YggInterface::utils::SIGNON_STATUS2str(const SIGNON_STATUS key) {  return YggInterface::utils::SIGNON_STATUS_map().find(key)->second;
+}
+
+std::string YggInterface::utils::THREAD_STATUS2str(const THREAD_STATUS key) {  return YggInterface::utils::THREAD_STATUS_map().find(key)->second;
+}
+
+std::string YggInterface::utils::FORK_TYPE2str(const FORK_TYPE key) {  return YggInterface::utils::FORK_TYPE_map().find(key)->second;
+}
+
+std::string YggInterface::utils::FUNCTION_FLAGS2str(const FUNCTION_FLAGS key) {  return YggInterface::utils::FUNCTION_FLAGS_map().find(key)->second;
+}
 

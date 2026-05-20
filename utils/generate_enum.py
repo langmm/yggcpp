@@ -105,6 +105,41 @@ def parse(src=None, verbose=False):
     return out
 
 
+def generate_enum2str(name, tname=None, in_header=False,
+                      lines_decl=None):
+    if tname is None:
+        tname = name
+    if lines_decl is None:
+        lines_decl = []
+    func_name_decl = f"{name}2str"
+    func_name = func_name_decl
+    func_map = f"{name}_map"
+    if not in_header:
+        func_name = f"YggInterface::utils::{func_name}"
+        func_map = f"YggInterface::utils::{func_map}"
+    func_decl = (
+        f"std::string {func_name}(const {tname} key)")
+    lines = [
+        f"{func_decl} {{"
+        f"  return {func_map}().find(key)->second;",
+        "}",
+        ""
+    ]
+    lines_decl.append(
+        f"{func_decl};".replace(func_name, func_name_decl)
+    )
+    if name == 'COMM_TYPE':
+        lines += generate_enum2str(name + '_cls', tname=name,
+                                   in_header=in_header,
+                                   lines_decl=lines_decl)
+    elif name == 'COMM_FLAG':
+        for sub in ['FILE_FLAG']:
+            lines += generate_enum2str(sub, tname=name,
+                                       in_header=in_header,
+                                       lines_decl=lines_decl)
+    return lines
+
+
 def generate_map(name, members, tname=None, in_header=False,
                  lines_decl=None):
     if tname is None:
@@ -183,6 +218,12 @@ def generate_maps(enums, dst_header=None, dst_src=None, verbose=False):
             continue
         ilines_decl = []
         lines += generate_map(k, v, lines_decl=ilines_decl)
+        lines_decl += ['    ' + x for x in ilines_decl]
+    for k, v in enums.items():
+        if k in no_map:
+            continue
+        ilines_decl = []
+        lines += generate_enum2str(k, lines_decl=ilines_decl)
         lines_decl += ['    ' + x for x in ilines_decl]
     lines_decl += [
         '  }',

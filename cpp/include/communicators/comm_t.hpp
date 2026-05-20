@@ -342,6 +342,22 @@ YGG_API long pcommCall(comm_t comm, const int allow_realloc,
 YGG_API void global_scope_comm_on_c();
 YGG_API void global_scope_comm_off_c();
 
+/** @brief Type used for methods to modified state */
+typedef bool (*c_state_function)(const char*, generic_t);
+
+/**
+ * @brief Allow other models to set requests to inspect or modify the
+ *  state.
+ * @param[in] fget Function that should be used to get state variables.
+ * @param[in] fset Function that should be used to set state variables.
+ * @param[in] fact Function that should be used to perform actions.
+ * @return 1 if successful, 0 otherwise.
+ */
+YGG_API int reply_to_state_requests(c_state_function fget,
+                                    c_state_function fset,
+                                    c_state_function fact);
+
+
 #ifdef __cplusplus
 }
 #endif

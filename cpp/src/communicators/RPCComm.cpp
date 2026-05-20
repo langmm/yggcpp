@@ -8,8 +8,8 @@ RPCComm::RPCComm(const std::string &name, const utils::Address& address,
 		 int flgs, DIRECTION dir, DIRECTION req_dir,
 		 const COMM_TYPE type,
 		 const SupplementCommArgs& supp) :
-  WrapComm(name, address, dir, supp.request_flags | flgs, type,
-	   supp.request_commtype, supp),
+  WrapComm(name, address, dir, flgs, type,
+	   supp.request_flags, supp.request_commtype, supp),
   requests(req_dir,
 	   supp.response_flags |
 	   (flgs & (COMM_FLAG_ALLOW_MULTIPLE_COMMS |

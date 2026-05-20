@@ -226,6 +226,12 @@ comm_t ygg_json_object_output_f(const char* name) {
 comm_t ygg_json_object_input_f(const char* name) {
   return yggJSONObjectInput(name);
 }
+int ygg_send_with_name_f(const char* name, const generic_t data) {
+  return yggSendWithName(name, data);
+}
+long ygg_recv_with_name_f(const char* name, void* data) {
+  return yggRecvWithName(name, (generic_t*)data);
+}
 void ygglog_error_f(const char* fmt) {
   ygglog_error(fmt);
 }
@@ -291,6 +297,9 @@ void set_global_comm_f() {
 }
 void unset_global_comm_f() {
   global_scope_comm_off_c();
+}
+int reply_to_state_requests_f(void* fget, void* fset, void* fact) {
+  return reply_to_state_requests((c_state_function)fget, (c_state_function)fset, (c_state_function)fact);
 }
 size_t pointer_strlen_f(const void* x) {
   return pointer_strlen(x);

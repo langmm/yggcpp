@@ -1167,6 +1167,50 @@ comm_t yggJSONObjectInput(const char *name) {
 #define yggMapInput yggJSONObjectInput
 
 
+/*!
+  @brief Send a message to a global communicator based on the comm name.
+  @param[in] name Name of the communicator.
+  @param[in] data Message data to send.
+  @returns int Values >= 0 indicate success.
+ */
+static inline
+int yggSendWithName(const char* name, const generic_t data) {
+  comm_t comm;
+  WITH_GLOBAL_SCOPE(comm = yggGenericOutput(name));
+  int out = yggSend(comm, data);
+  free_comm(&comm);
+  return out;
+}
+
+/*!
+  @brief Receive a message from a global communicator based on the comm
+    name.
+  @param[in] name Name of the communicator.
+  @param[out] data Reference to memory where the received data should be
+    stored.
+  @return Integer specifying if the receive was succesful. Values >= 0
+    indicate success.
+ */
+static inline
+long yggRecvWithName(const char* name, generic_t* data) {
+  comm_t comm;
+  WITH_GLOBAL_SCOPE(comm = yggGenericInput(name));
+  long out = yggRecv(comm, data);
+  free_comm(&comm);
+  return out;
+}
+
+/*!
+  @brief Allow other models to set requests to inspect or modify the
+    state.
+  @param[in] fget Function that should be used to get state variables.
+  @param[in] fset Function that should be used to set state variables.
+  @param[in] fact Function that should be used to perform actions.
+  @return 1 if successful, 0 otherwise.
+ */
+#define yggStateInterface reply_to_state_requests
+  
+
 #ifdef __cplusplus /* If this is a C++ compiler, end C linkage */
 }
 #endif

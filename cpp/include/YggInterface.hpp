@@ -14,6 +14,21 @@
 using namespace YggInterface::communicator;
 
 /*!
+  @brief Allow other models to set requests to inspect or modify the
+    state.
+  @param[in] fget Function that should be used to get state variables.
+  @param[in] fset Function that should be used to set state variables.
+  @param[in] fact Function that should be used to perform actions.
+  @param[in] name Name of the communicator to use for requests.
+  @param[in] flags Bit flags to set communicator properties.
+  @param[in] commtype Type of communicator that should be used. Defaults
+    to DEFAULT_COMM that is set based on the available packages at
+    compilation.
+  @return true if successful, false otherwise.
+ */
+#define yggStateInterface replyToStateRequests
+
+/*!
   @brief Input communicator that can be used to receive messages from
     other models/files in a Yggdrasil integration.
  */
@@ -1333,6 +1348,47 @@ public:
   }
   
 };
+
+/*!
+  @brief Send a message to a global communicator based on the comm name.
+  @tparam T Type of message.
+  @param[in] name Name of the communicator.
+  @param[in] data Message data to send.
+  @param[in] flags Bit flags to set communicator properties.
+  @param[in] commtype Type of communicator that should be used. Defaults
+    to DEFAULT_COMM that is set based on the available packages at
+    compilation.
+  @returns int Values >= 0 indicate success.
+ */
+template<typename T>
+int yggSendWithName(const std::string& name, const T& data,
+                    FLAG_TYPE flags = 0,
+                    const COMM_TYPE commtype = DEFAULT_COMM) {
+  YggOutput comm(name, flags | COMM_FLAG_GLOBAL, commtype);
+  return comm.send(data);
+}
+
+/*!
+  @brief Receive a message from a global communicator based on the comm
+    name.
+  @tparam T Type of message being received.
+  @param[in] name Name of the communicator.
+  @param[out] data Reference to memory where the received data should be
+    stored.
+  @param[in] flags Bit flags to set communicator properties.
+  @param[in] commtype Type of communicator that should be used. Defaults
+    to DEFAULT_COMM that is set based on the available packages at
+    compilation.
+  @return Integer specifying if the receive was succesful. Values >= 0
+    indicate success.
+ */
+template<typename T>
+long yggRecvWithName(const std::string& name, T& data,
+                     FLAG_TYPE flags = 0,
+                     const COMM_TYPE commtype = DEFAULT_COMM) {
+  YggInput comm(name, flags | COMM_FLAG_GLOBAL, commtype);
+  return comm.recv(data);
+}
 
 /*! \mainpage
  *

@@ -183,27 +183,34 @@ std::map<LANGUAGE, bool> CommContext::enable_embedded_languages(const std::map<L
 void CommContext::register_comm(Comm_t* x) {
   if (x->getFlags() & COMM_FLAG_ASYNC_WRAPPED)
     return;
-  log_debug() << "register_comm: Registering " << x->name << ", " << x->address.address() << std::endl;
+  log_debug() << "register_comm: Registering " << x->name << ", " <<
+    utils::COMM_TYPE2str(x->getType()) << ", " <<
+    x->address.address() << std::endl;
   YGG_THREAD_SAFE_BEGIN_LOCAL(comms) {
     x->index_in_register = registry_.size();
     registry_.push_back(x);
   } YGG_THREAD_SAFE_END;
   log_debug() << "register_comm: Registered " << x->name << ", " <<
+    utils::COMM_TYPE2str(x->getType()) << ", " <<
     x->address.address() << " (idx = " << x->index_in_register <<
-    ", global = " << (x->flags & COMM_FLAG_GLOBAL) << ")" << std::endl;
+    ", global = " << (x->flags & COMM_FLAG_GLOBAL_WRAPPED) << ")" << std::endl;
 }
 
 Comm_t* CommContext::find_registered_comm(const std::string& name,
 					  const DIRECTION dir,
-					  const COMM_TYPE type) {
+					  const COMM_TYPE type,
+                                          bool global_scope) {
   Comm_t* out = NULL;
   assert(!name.empty());
-  log_debug() << "find_registered_comm: global_scope_comm = " <<
-    global_scope_comm << std::endl;
+  if (!global_scope)
+    global_scope = (bool)global_scope_comm;
+  log_debug() << "find_registered_comm: global_scope = " <<
+    global_scope << std::endl;
   YGG_THREAD_SAFE_BEGIN_LOCAL(comms) {
-    if (global_scope_comm) {
+    if (global_scope) {
       log_debug() << "find_registered_comm: Checking for match to (" <<
-	name << ", " << dir << ", " << type << ") amongst " <<
+	name << ", " << utils::DIRECTION2str(dir) << ", " <<
+        utils::COMM_TYPE2str(type) << ") amongst " <<
 	registry_.size() << " registered comms" << std::endl;
       for (std::vector<Comm_t*>::iterator it = registry_.begin();
 	   it != registry_.end(); it++) {
@@ -212,18 +219,23 @@ Comm_t* CommContext::find_registered_comm(const std::string& name,
 	    ((*it)->direction == dir) &&
 	    ((*it)->type == type)) {
 	  log_debug() << "find_registered_comm: Found match for (" <<
-	    name << ", " << dir << ", " << type << ")" << std::endl;
+	    name << ", " << utils::DIRECTION2str(dir) << ", " <<
+            utils::COMM_TYPE2str(type) << ")" << std::endl;
 	  out = *it;
 	  break;
 	}
 	if (*it) {
 	  log_debug() << "find_registered_comm: No match for (" <<
-	    name << ", " << dir << ", " << type << ") against (" <<
-	    (*it)->name << ", " << (*it)->direction << ", " <<
-	    (*it)->type << ") global = " << (*it)->global() << std::endl;
+	    name << ", " << utils::DIRECTION2str(dir) << ", " <<
+            utils::COMM_TYPE2str(type) << ") against (" <<
+	    (*it)->name << ", " <<
+            utils::DIRECTION2str((*it)->direction) << ", " <<
+	    utils::COMM_TYPE2str((*it)->type) << ") global = " <<
+            (*it)->global() << std::endl;
 	} else {
 	  log_debug() << "find_registered_comm: No match for (" <<
-	    name << ", " << dir << ", " << type << ") against (null)" <<
+	    name << ", " << utils::DIRECTION2str(dir) << ", " <<
+            utils::COMM_TYPE2str(type) << ") against (null)" <<
 	    std::endl;
 	}
       }

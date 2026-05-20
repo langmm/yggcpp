@@ -4,8 +4,14 @@
 #include <utility>
 
 namespace YggInterface {
-namespace utils {
+
+  YggdrasilRuntimeError::YggdrasilRuntimeError(char const* const message) throw()
+    : std::runtime_error(message) {}
+  YggdrasilRuntimeError::YggdrasilRuntimeError(const std::string& message) throw()
+    : YggdrasilRuntimeError(message.c_str()) {}
   
+namespace utils {
+
 int YggdrasilLogger::_ygg_error_flag = 0;
 YggdrasilLogger::YggdrasilLogger(std::string nme, size_t lvl, bool is_err) :
   name(nme), level(lvl), is_error(is_err), ss(), t(std::chrono::system_clock::now()) {
@@ -56,7 +62,7 @@ std::string YggdrasilLogger::_getLogPretex() {
 
 void YggLogThrowError(const std::string& msg) {
   YggLogError << msg << std::endl;
-  throw std::exception();
+  throw YggdrasilRuntimeError(msg);
 }
 
 std::string string_format(const std::string fmt, ...) {

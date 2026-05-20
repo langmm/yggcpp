@@ -85,39 +85,39 @@ enum COMM_FLAG
   {
   COMM_FLAG_VALID           = 0x00000001LL, //!< Comm is initialized
   COMM_FLAG_GLOBAL          = 0x00000002LL, //!< Comm is global
-  COMM_FLAG_WORKER          = 0x00000004LL, //!< Comm is a worker
-  COMM_FLAG_DELAYED_OPEN    = 0x00000008LL, //!< Comm will not be opened when created
-  COMM_FLAG_CLIENT          = 0x00000010LL, //!< Comm is a client
-  COMM_FLAG_SERVER          = 0x00000020LL, //!< Comm is a server
-  COMM_FLAG_CLIENT_RESPONSE = 0x00000040LL, //!< Comm is a client response
-  COMM_FLAG_SERVER_RESPONSE = 0x00000080LL, //!< Comm is a server response
-  COMM_FLAG_ALWAYS_SEND_HEADER   = 0x00000100LL, //!< Comm should always include a header in messages
-  COMM_FLAG_ALLOW_MULTIPLE_COMMS = 0x00000200LL, //!< Comm should connect in a way that allow multiple connections
-  COMM_FLAG_USED_SENT       = 0x00000400LL, //!< Comm has sent messages
-  COMM_FLAG_USED_RECV       = 0x00000800LL, //!< Comm has received messages
-  COMM_FLAG_EOF_SENT        = 0x00001000LL, //!< EOF has been sent
-  COMM_FLAG_EOF_RECV        = 0x00002000LL, //!< EOF has been received
-  COMM_FLAG_CLOSE_ON_EOF_RECV    = 0x00004000LL, //!< Comm will close on EOF recv
-  COMM_FLAG_CLOSE_ON_EOF_SEND    = 0x00008000LL, //!< Comm will close on EOF recv
-  COMM_FLAG_INTERFACE       = 0x00010000LL, //!< Comm is an interface comm
-  COMM_FLAG_DELETE          = 0x00020000LL, //!< Comm needs to be deleted
-  COMM_FLAG_ASYNC           = 0x00040000LL, //!< Comm is asynchronous
-  COMM_FLAG_ASYNC_WRAPPED   = 0x00080000LL, //!< Comm is wrapped by an asynchronous comm
-  COMM_FLAG_SET_OPP_ENV     = 0x00100000LL, //!< Set environment variables for opposite communicator
-  COMM_FLAG_WRAPPER         = 0x00200000LL, //!< Communicator is a wrapper
-  COMM_FLAG_FORK            = 0x00400000LL, //!< Forked communicator
-  COMM_FLAG_FORK_CYCLE      = 0x00800000LL, //!< Forked communicator cycle
-  COMM_FLAG_FORK_BROADCAST  = 0x01000000LL, //!< Forked communicator broadcast
-  COMM_FLAG_FORK_COMPOSITE  = 0x02000000LL, //!< Forked communicator composite
-  COMM_FLAG_FORK_TINE       = 0x04000000LL, //!< Forked communicator tine.
-  COMM_FLAG_DONT_SERIALIZE  = 0x08000000LL, //!< Communicator does not required serialization
-  COMM_FLAG_REQUIRES_PYGIL  = 0x10000000LL, //!< Communicator requires Python GIL
+  COMM_FLAG_GLOBAL_WRAPPED  = 0x00000004LL, //!< Comm is a registered global comm that can be reused
+  COMM_FLAG_WORKER          = 0x00000008LL, //!< Comm is a worker
+  COMM_FLAG_DELAYED_OPEN    = 0x00000010LL, //!< Comm will not be opened when created
+  COMM_FLAG_CLIENT          = 0x00000020LL, //!< Comm is a client
+  COMM_FLAG_SERVER          = 0x00000040LL, //!< Comm is a server
+  COMM_FLAG_CLIENT_RESPONSE = 0x00000080LL, //!< Comm is a client response
+  COMM_FLAG_SERVER_RESPONSE = 0x00000100LL, //!< Comm is a server response
+  COMM_FLAG_ALWAYS_SEND_HEADER   = 0x00000200LL, //!< Comm should always include a header in messages
+  COMM_FLAG_ALLOW_MULTIPLE_COMMS = 0x00000400LL, //!< Comm should connect in a way that allow multiple connections
+  COMM_FLAG_USED_SENT       = 0x00000800LL, //!< Comm has sent messages
+  COMM_FLAG_USED_RECV       = 0x00001000LL, //!< Comm has received messages
+  COMM_FLAG_EOF_SENT        = 0x00002000LL, //!< EOF has been sent
+  COMM_FLAG_EOF_RECV        = 0x00004000LL, //!< EOF has been received
+  COMM_FLAG_CLOSE_ON_EOF_RECV    = 0x00008000LL, //!< Comm will close on EOF recv
+  COMM_FLAG_CLOSE_ON_EOF_SEND    = 0x00010000LL, //!< Comm will close on EOF recv
+  COMM_FLAG_INTERFACE       = 0x00020000LL, //!< Comm is an interface comm
+  COMM_FLAG_DELETE          = 0x00040000LL, //!< Comm needs to be deleted
+  COMM_FLAG_ASYNC           = 0x00080000LL, //!< Comm is asynchronous
+  COMM_FLAG_ASYNC_WRAPPED   = 0x00100000LL, //!< Comm is wrapped by an asynchronous comm
+  COMM_FLAG_SET_OPP_ENV     = 0x00200000LL, //!< Set environment variables for opposite communicator
+  COMM_FLAG_WRAPPER         = 0x00400000LL, //!< Communicator is a wrapper
+  COMM_FLAG_FORK            = 0x00800000LL, //!< Forked communicator
+  COMM_FLAG_FORK_CYCLE      = 0x01000000LL, //!< Forked communicator cycle
+  COMM_FLAG_FORK_BROADCAST  = 0x02000000LL, //!< Forked communicator broadcast
+  COMM_FLAG_FORK_COMPOSITE  = 0x04000000LL, //!< Forked communicator composite
+  COMM_FLAG_FORK_TINE       = 0x08000000LL, //!< Forked communicator tine.
+  COMM_FLAG_DONT_SERIALIZE  = 0x10000000LL, //!< Communicator does not required serialization
+  COMM_FLAG_REQUIRES_PYGIL  = 0x20000000LL, //!< Communicator requires Python GIL
   // Type specific flags
   // File flags
   FILE_FLAG_APPEND          = 0x0000100000000000LL, //!< Append sent messages to the end of the file
   FILE_FLAG_BINARY          = 0x0000200000000000LL, //!< Open file in binary mode
   FILE_FLAG_READLINE        = 0x0000400000000000LL, //!< Read file contents line by line
-
   COMM_FLAG_MAX             = 0x4000000000000000LL
 };
 

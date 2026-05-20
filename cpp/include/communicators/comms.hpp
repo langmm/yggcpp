@@ -16,3 +16,4 @@
 #include "communicators/RESTComm.hpp"
 #include "communicators/BufferComm.hpp"
 #include "communicators/FunctionComm.hpp"
+#include "communicators/StateInterface.hpp"

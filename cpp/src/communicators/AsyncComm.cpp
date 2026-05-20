@@ -249,11 +249,20 @@ void AsyncBacklog::on_thread(AsyncComm* parent) {
     DIRECTION direction = parent->getDirection();
     {
       const std::lock_guard<std::mutex> comm_lock(mutex);
-      log_debug() << "on_thread: Creating comm on thread" << std::endl;
-      FLAG_TYPE flgs_comm = (parent->getFlags() & ~COMM_FLAG_ASYNC) | COMM_FLAG_ASYNC_WRAPPED;
+      FLAG_TYPE flgs_comm = (parent->getFlags() & ~COMM_FLAG_ASYNC
+                             & ~COMM_FLAG_GLOBAL) | COMM_FLAG_ASYNC_WRAPPED;
+      COMM_TYPE comm_type = parent->getCommType();
+      // Must find client/server by flags because this will be called
+      // while the parent class is still being initialized?
+      // if (flgs_comm & COMM_FLAG_CLIENT)
+      //   comm_type = CLIENT_COMM;
+      // else if (flgs_comm & COMM_FLAG_SERVER)
+      //   comm_type = SERVER_COMM;
+      log_debug() << "on_thread: Creating " << COMM_TYPE2str(comm_type) <<
+        " comm on thread" << std::endl;
       Address addr(parent->getAddress());
       comm = new_Comm_t(direction,
-			parent->getCommType(),
+                        comm_type,
 			parent->getName(),
 			addr, flgs_comm, 0,
 			parent->request_commtype,
@@ -272,7 +281,7 @@ void AsyncBacklog::on_thread(AsyncComm* parent) {
 	  set_status(THREAD_SIGNON_SENT | THREAD_SIGNON_RECV, true);
 	}
 	set_status(THREAD_STARTED);
-	log_debug() << "on_thread: Created comm on thread" << std::endl;
+	log_debug() << "on_thread: Created " << COMM_TYPE2str(comm->getCommType()) << " comm on thread" << std::endl;
       } else {
 	log_error() << "on_thread: Failed to create comm on thread" << std::endl;
 	backlog.close();
@@ -389,6 +398,8 @@ bool AsyncBacklog::wait_for_signon() {
 	return false;
       }
       ClientComm* cli = dynamic_cast<ClientComm*>(comm);
+      if(!cli)
+        return false;
       if (status == SIGNON_WAITING) {
 	log_debug() << "wait_for_signon: Sign-on after " <<
 	  iloop << " loops (" << (iloop / interval) + 1 <<
@@ -725,8 +736,15 @@ bool AsyncComm::create_header_send(Header& header) {
     log_error() << "create_header_send: Comm is closed" << std::endl;
     return false;
   }
+  if (type == CLIENT_COMM && handle->comm->getCommType() != CLIENT_COMM) {
+    log_error() << "Top level type is client, but the thread's comm type is " << COMM_TYPE2str(handle->comm->getCommType()) << std::endl;
+    return false;
+  }
   if (type == CLIENT_COMM &&
       !(header.flags & (HEAD_FLAG_EOF | HEAD_FLAG_CLIENT_SIGNON))) {
+    ClientComm* client_comm = dynamic_cast<ClientComm*>(handle->comm);
+    if (!client_comm)
+      return false;
     if (!dynamic_cast<ClientComm*>(handle->comm)->send_signon(0, 3, this))
       return false;
     log_debug() << "AsyncComm::create_header_send: Sent signon" << std::endl;

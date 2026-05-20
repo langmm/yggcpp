@@ -251,6 +251,23 @@ comm_t ygg_json_object_output_f(const char* name);
  */
 comm_t ygg_json_object_input_f(const char* name);
 /**
+ * @brief Send a message to a global communicator based on the comm name.
+ * @param[in] name Name of the communicator.
+ * @param[in] data Message data to send.
+ * @returns int Values >= 0 indicate success.
+ */
+int ygg_send_with_name_f(const char* name, const generic_t data);
+/**
+ * @brief Receive a message from a global communicator based on the comm
+ *   name.
+ * @param[in] name Name of the communicator.
+ * @param[out] data Reference to memory where the received data should be
+ *   stored.
+ * @return Integer specifying if the receive was succesful. Values >= 0
+ *   indicate success.
+ */
+long ygg_recv_with_name_f(const char* name, void* data);
+/**
  * @brief Write a log message at the ERROR level. This will also cause
  *   the calling model to return an error code on exit.
  * @param[in] fmt Log message.
@@ -394,6 +411,15 @@ long pcomm_recv_f(comm_t comm, const int allow_realloc, const size_t nargs, void
 long pcomm_call_f(comm_t comm, const int allow_realloc, const size_t nargs, void* ptrs, const int for_fortran);
 void set_global_comm_f();
 void unset_global_comm_f();
+/**
+ * @brief Allow other models to set requests to inspect or modify the
+ *   state.
+ * @param[in] fget Function that should be used to get state variables.
+ * @param[in] fset Function that should be used to set state variables.
+ * @param[in] fact Function that should be used to perform actions.
+ * @return 1 if successful, 0 otherwise.
+ */
+int reply_to_state_requests_f(void* fget, void* fset, void* fact);
 /**
  * @brief Get the length of a C string stored in a pointer.
  * @param[in] x String pointer.

@@ -53,6 +53,8 @@ namespace YggInterface {
        * @param[in] direction Enuerated direction for this instance
        * @param[in] flgs Bitwise flags describing the communicator
        * @param[in] type The communicator type
+       * @param[in] wrapflgs Bitwise flags describing the wrapped
+       *   communicator.
        * @param[in] wraptype enumerated type of wrapped communicator to
        *   created if different from type
        * @param[in] wrapsupp Supplementary comm parameters for the wrapped
@@ -64,6 +66,7 @@ namespace YggInterface {
 				const DIRECTION direction = NONE,
 				FLAG_TYPE flgs = 0,
 				const COMM_TYPE type = DEFAULT_COMM,
+                                FLAG_TYPE wrapflgs = 0,
 				const COMM_TYPE wraptype = NULL_COMM,
 				const SupplementCommArgs& wrapsupp=SupplementCommArgs());
       /**
@@ -73,6 +76,8 @@ namespace YggInterface {
        * @param[in] dirn Enuerated direction for this instance
        * @param[in] flgs Bitwise flags describing the communicator
        * @param[in] type The communicator type
+       * @param[in] wrapflgs Bitwise flags describing the wrapped
+       *   communicator.
        * @param[in] wraptype enumerated type of wrapped communicator to
        *   created if different from type
        * @param[in] wrapsupp Supplementary comm parameters for the wrapped
@@ -82,6 +87,7 @@ namespace YggInterface {
 				const DIRECTION dirn,
 				FLAG_TYPE flgs = 0,
 				const COMM_TYPE type = DEFAULT_COMM,
+                                FLAG_TYPE wrapflgs = 0,
 				const COMM_TYPE wraptype = NULL_COMM,
 				const SupplementCommArgs& wrapsupp=SupplementCommArgs());
       /**
@@ -91,6 +97,8 @@ namespace YggInterface {
        * @param[in] dirn Enuerated direction for this instance
        * @param[in] flgs Bitwise flags describing the communicator
        * @param[in] type The communicator type
+       * @param[in] wrapflgs Bitwise flags describing the wrapped
+       *   communicator.
        * @param[in] wraptype enumerated type of wrapped communicator to
        *   created if different from type
        * @param[in] wrapsupp Supplementary comm parameters for the wrapped
@@ -101,6 +109,7 @@ namespace YggInterface {
 				const DIRECTION dirn,
 				FLAG_TYPE flgs = 0,
 				const COMM_TYPE type = DEFAULT_COMM,
+                                FLAG_TYPE wrapflgs = 0,
 				const COMM_TYPE wraptype = NULL_COMM,
 				const SupplementCommArgs& wrapsupp=SupplementCommArgs());
       /**
@@ -209,6 +218,7 @@ namespace YggInterface {
 		  (header), out = nullptr, Comm_t*, override);
       
     public:
+      int wrapflags; /**< Flags for wrapped communicator */
       COMM_TYPE wraptype; /**< Wrapped communicator type */
       SupplementCommArgs wrapsupp; /**< Supplemental parameters for the wrapped comm */
     };

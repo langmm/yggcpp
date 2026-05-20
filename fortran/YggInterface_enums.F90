@@ -48,33 +48,34 @@
 
   integer(kind=int64), parameter :: COMM_FLAG_VALID = 1_int64
   integer(kind=int64), parameter :: COMM_FLAG_GLOBAL = 2_int64
-  integer(kind=int64), parameter :: COMM_FLAG_WORKER = 4_int64
-  integer(kind=int64), parameter :: COMM_FLAG_DELAYED_OPEN = 8_int64
-  integer(kind=int64), parameter :: COMM_FLAG_CLIENT = 16_int64
-  integer(kind=int64), parameter :: COMM_FLAG_SERVER = 32_int64
-  integer(kind=int64), parameter :: COMM_FLAG_CLIENT_RESPONSE = 64_int64
-  integer(kind=int64), parameter :: COMM_FLAG_SERVER_RESPONSE = 128_int64
-  integer(kind=int64), parameter :: COMM_FLAG_ALWAYS_SEND_HEADER = 256_int64
-  integer(kind=int64), parameter :: COMM_FLAG_ALLOW_MULTIPLE_COMMS = 512_int64
-  integer(kind=int64), parameter :: COMM_FLAG_USED_SENT = 1024_int64
-  integer(kind=int64), parameter :: COMM_FLAG_USED_RECV = 2048_int64
-  integer(kind=int64), parameter :: COMM_FLAG_EOF_SENT = 4096_int64
-  integer(kind=int64), parameter :: COMM_FLAG_EOF_RECV = 8192_int64
-  integer(kind=int64), parameter :: COMM_FLAG_CLOSE_ON_EOF_RECV = 16384_int64
-  integer(kind=int64), parameter :: COMM_FLAG_CLOSE_ON_EOF_SEND = 32768_int64
-  integer(kind=int64), parameter :: COMM_FLAG_INTERFACE = 65536_int64
-  integer(kind=int64), parameter :: COMM_FLAG_DELETE = 131072_int64
-  integer(kind=int64), parameter :: COMM_FLAG_ASYNC = 262144_int64
-  integer(kind=int64), parameter :: COMM_FLAG_ASYNC_WRAPPED = 524288_int64
-  integer(kind=int64), parameter :: COMM_FLAG_SET_OPP_ENV = 1048576_int64
-  integer(kind=int64), parameter :: COMM_FLAG_WRAPPER = 2097152_int64
-  integer(kind=int64), parameter :: COMM_FLAG_FORK = 4194304_int64
-  integer(kind=int64), parameter :: COMM_FLAG_FORK_CYCLE = 8388608_int64
-  integer(kind=int64), parameter :: COMM_FLAG_FORK_BROADCAST = 16777216_int64
-  integer(kind=int64), parameter :: COMM_FLAG_FORK_COMPOSITE = 33554432_int64
-  integer(kind=int64), parameter :: COMM_FLAG_FORK_TINE = 67108864_int64
-  integer(kind=int64), parameter :: COMM_FLAG_DONT_SERIALIZE = 134217728_int64
-  integer(kind=int64), parameter :: COMM_FLAG_REQUIRES_PYGIL = 268435456_int64
+  integer(kind=int64), parameter :: COMM_FLAG_GLOBAL_WRAPPED = 4_int64
+  integer(kind=int64), parameter :: COMM_FLAG_WORKER = 8_int64
+  integer(kind=int64), parameter :: COMM_FLAG_DELAYED_OPEN = 16_int64
+  integer(kind=int64), parameter :: COMM_FLAG_CLIENT = 32_int64
+  integer(kind=int64), parameter :: COMM_FLAG_SERVER = 64_int64
+  integer(kind=int64), parameter :: COMM_FLAG_CLIENT_RESPONSE = 128_int64
+  integer(kind=int64), parameter :: COMM_FLAG_SERVER_RESPONSE = 256_int64
+  integer(kind=int64), parameter :: COMM_FLAG_ALWAYS_SEND_HEADER = 512_int64
+  integer(kind=int64), parameter :: COMM_FLAG_ALLOW_MULTIPLE_COMMS = 1024_int64
+  integer(kind=int64), parameter :: COMM_FLAG_USED_SENT = 2048_int64
+  integer(kind=int64), parameter :: COMM_FLAG_USED_RECV = 4096_int64
+  integer(kind=int64), parameter :: COMM_FLAG_EOF_SENT = 8192_int64
+  integer(kind=int64), parameter :: COMM_FLAG_EOF_RECV = 16384_int64
+  integer(kind=int64), parameter :: COMM_FLAG_CLOSE_ON_EOF_RECV = 32768_int64
+  integer(kind=int64), parameter :: COMM_FLAG_CLOSE_ON_EOF_SEND = 65536_int64
+  integer(kind=int64), parameter :: COMM_FLAG_INTERFACE = 131072_int64
+  integer(kind=int64), parameter :: COMM_FLAG_DELETE = 262144_int64
+  integer(kind=int64), parameter :: COMM_FLAG_ASYNC = 524288_int64
+  integer(kind=int64), parameter :: COMM_FLAG_ASYNC_WRAPPED = 1048576_int64
+  integer(kind=int64), parameter :: COMM_FLAG_SET_OPP_ENV = 2097152_int64
+  integer(kind=int64), parameter :: COMM_FLAG_WRAPPER = 4194304_int64
+  integer(kind=int64), parameter :: COMM_FLAG_FORK = 8388608_int64
+  integer(kind=int64), parameter :: COMM_FLAG_FORK_CYCLE = 16777216_int64
+  integer(kind=int64), parameter :: COMM_FLAG_FORK_BROADCAST = 33554432_int64
+  integer(kind=int64), parameter :: COMM_FLAG_FORK_COMPOSITE = 67108864_int64
+  integer(kind=int64), parameter :: COMM_FLAG_FORK_TINE = 134217728_int64
+  integer(kind=int64), parameter :: COMM_FLAG_DONT_SERIALIZE = 268435456_int64
+  integer(kind=int64), parameter :: COMM_FLAG_REQUIRES_PYGIL = 536870912_int64
   integer(kind=int64), parameter :: FILE_FLAG_APPEND = 17592186044416_int64
   integer(kind=int64), parameter :: FILE_FLAG_BINARY = 35184372088832_int64
   integer(kind=int64), parameter :: FILE_FLAG_READLINE = 70368744177664_int64

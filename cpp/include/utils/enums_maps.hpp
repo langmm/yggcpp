@@ -20,5 +20,19 @@ namespace YggInterface {
     const std::map<const THREAD_STATUS, const std::string>& THREAD_STATUS_map();
     const std::map<const FORK_TYPE, const std::string>& FORK_TYPE_map();
     const std::map<const FUNCTION_FLAGS, const std::string>& FUNCTION_FLAGS_map();
+    std::string COMM_TYPE2str(const COMM_TYPE key);
+    std::string COMM_TYPE_cls2str(const COMM_TYPE key);
+    std::string DIRECTION2str(const DIRECTION key);
+    std::string CLEANUP_MODE2str(const CLEANUP_MODE key);
+    std::string ENV_VAR2str(const ENV_VAR key);
+    std::string COMM_FLAG2str(const COMM_FLAG key);
+    std::string FILE_FLAG2str(const COMM_FLAG key);
+    std::string LANGUAGE2str(const LANGUAGE key);
+    std::string HeadFlags2str(const HeadFlags key);
+    std::string HEAD_RESET_MODE2str(const HEAD_RESET_MODE key);
+    std::string SIGNON_STATUS2str(const SIGNON_STATUS key);
+    std::string THREAD_STATUS2str(const THREAD_STATUS key);
+    std::string FORK_TYPE2str(const FORK_TYPE key);
+    std::string FUNCTION_FLAGS2str(const FUNCTION_FLAGS key);
   }
 }

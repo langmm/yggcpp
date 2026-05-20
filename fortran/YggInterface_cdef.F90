@@ -508,6 +508,36 @@
        character(kind = c_char), dimension(*), intent(in) :: name
        type(yggcomm) :: out
      end function ygg_json_object_input_c
+     !> @brief Send a message to a global communicator based on the comm name.
+     !> @param[in] name Name of the communicator.
+     !> @param[in] data Message data to send.
+     !> @returns int Values >= 0 indicate success.
+     function ygg_send_with_name_c(name, data) &
+          result(out) &
+          bind(c, name="ygg_send_with_name_f")
+       use, intrinsic :: iso_c_binding, only: c_char, c_int
+       import :: ygggeneric
+       implicit none
+       character(kind = c_char), dimension(*), intent(in) :: name
+       type(ygggeneric), value, intent(in) :: data
+       integer(kind = c_int) :: out
+     end function ygg_send_with_name_c
+     !> @brief Receive a message from a global communicator based on the comm
+     !>   name.
+     !> @param[in] name Name of the communicator.
+     !> @param[out] data Reference to memory where the received data should be
+     !>   stored.
+     !> @return Integer specifying if the receive was succesful. Values >= 0
+     !>   indicate success.
+     function ygg_recv_with_name_c(name, data) &
+          result(out) &
+          bind(c, name="ygg_recv_with_name_f")
+       use, intrinsic :: iso_c_binding, only: c_char, c_long, c_ptr
+       implicit none
+       character(kind = c_char), dimension(*), intent(in) :: name
+       type(c_ptr), value :: data
+       integer(kind = c_long) :: out
+     end function ygg_recv_with_name_c
      !> @brief Write a log message at the ERROR level. This will also cause
      !>   the calling model to return an error code on exit.
      !> @param[in] fmt Log message.
@@ -774,6 +804,22 @@
           bind(c, name="unset_global_comm_f")
        implicit none
      end subroutine unset_global_comm_c
+     !> @brief Allow other models to set requests to inspect or modify the
+     !>   state.
+     !> @param[in] fget Function that should be used to get state variables.
+     !> @param[in] fset Function that should be used to set state variables.
+     !> @param[in] fact Function that should be used to perform actions.
+     !> @return 1 if successful, 0 otherwise.
+     function reply_to_state_requests_c(fget, fset, fact) &
+          result(out) &
+          bind(c, name="reply_to_state_requests_f")
+       use, intrinsic :: iso_c_binding, only: c_funptr, c_int
+       implicit none
+       type(c_funptr), value :: fget
+       type(c_funptr), value :: fset
+       type(c_funptr), value :: fact
+       integer(kind = c_int) :: out
+     end function reply_to_state_requests_c
      !> @brief Get the length of a C string stored in a pointer.
      !> @param[in] x String pointer.
      !> @returns Length of the string.
