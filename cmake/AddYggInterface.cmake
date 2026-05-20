@@ -228,8 +228,10 @@ function(add_yggdrasil_interface LANGUAGE)
     message(STATUS "Building ${LANGUAGE} interface")
     add_subdirectory(${ARGS_DIRECTORY})
     list(APPEND YGG_LANGUAGES_AVAILABLE ${LANGUAGE})
+    set(${YGG_TARGET_${LANGUAGE}}_LANGUAGES ${LANGUAGE})
     if(LANGUAGE STREQUAL "CXX")
       list(APPEND YGG_LANGUAGES_AVAILABLE C)
+      list(APPEND ${YGG_TARGET_${LANGUAGE}}_LANGUAGES C)
     endif()
   elseif(YGG_${LANGUAGE}_REQUIRED)
     message(FATAL_ERROR "${LANGUAGE} interface cannot be built")
@@ -242,6 +244,7 @@ function(add_yggdrasil_interface LANGUAGE)
     BUILD_${LANGUAGE}_LIBRARY YGG_BUILD_${LANGUAGE}_TESTS
     YGG_${LANGUAGE}_REQUIRED YGG_TARGET_${LANGUAGE}
     YGG_BUILD_TESTS YGG_BUILD_THIRDPARTY_GTEST
+    ${YGG_TARGET_${LANGUAGE}}_LANGUAGES
   )
   if (YGG_Fortran_MOD_DIR)
     set(YGG_Fortran_MOD_DIR "${YGG_Fortran_MOD_DIR}" PARENT_SCOPE)

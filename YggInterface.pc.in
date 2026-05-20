@@ -1,9 +1,6 @@
-libdir=@CMAKE_INSTALL_FULL_LIBDIR@
-includedir=@CMAKE_INSTALL_FULL_INCLUDEDIR@
-
 Name: @TARGET@
-Description: Interface library for yggdrasil integrations
+Description: Interface library for @TARGET_COMPILE_LANGUAGE@ models in yggdrasil integrations
 Version: @PROJECT_VERSION@
 URL: https://github.com/langmm/yggcpp
-Libs: -L${libdir} -l@TARGET@ @TARGET_LINK_LIBRARIES@
-Cflags: -I${includedir} @TARGET_COMPILE_OPTIONS@
+Libs: @TARGET_LINK_OPTIONS@
+Cflags: @TARGET_COMPILE_OPTIONS@
