@@ -34,11 +34,70 @@ function(install_cmake_modules)
   endif()
 endfunction()
 
+function(install_pkgconfig)
+  set(oneValueArgs PROJECT_NAME PROJECT_VERSION TEMPLATE
+      INSTALL_PREFIX INSTALL_LIBDIR INSTALL_INCLUDEDIR
+      INSTALL_PKGCONFIGDIR)
+  set(multiValueArgs TARGETS)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  if(ARGS_PROJECT_NAME)
+    set(PROJECT_NAME ${ARGS_PROJECT_NAME})
+  endif()
+  if(ARGS_PROJECT_VERSION)
+    set(PROJECT_VERSION ${ARGS_PROJECT_VERSION})
+  endif()
+  if(NOT ARGS_TARGETS)
+    list(APPEND ARGS_TARGETS ${PROJECT_NAME})
+  endif()
+  if(NOT ARGS_TEMPLATE)
+    cmake_path(
+      APPEND CMAKE_CURRENT_SOURCE_DIR "${PROJECT_NAME}.pc.in"
+      OUTPUT_VARIABLE ARGS_TEMPLATE
+    )
+  endif()
+  set(FILES)
+  foreach(TARGET IN LISTS ARGS_TARGETS)
+    foreach(name INCLUDE_DIRECTORIES COMPILE_OPTIONS LINK_LIBRARIES
+            LINK_DIRECTORIES LINK_OPTIONS)
+      get_target_property(
+        TARGET_${name}
+        ${TARGET} INTERFACE_${name}
+      )
+      message(STATUS "${TARGET}-${name}: ${TARGET_${name}}")
+    endforeach()
+    cmake_path(
+      APPEND CMAKE_CURRENT_BINARY_DIR "${TARGET}.pc"
+      OUTPUT_VARIABLE dst
+    )
+    configure_file(${ARGS_TEMPLATE} ${dst} @ONLY)
+    list(APPEND FILES ${dst})
+  endforeach()
+  if(NOT ARGS_INSTALL_LIBDIR)
+    cmake_path(
+      APPEND ARGS_INSTALL_PREFIX ${CMAKE_INSTALL_LIBDIR}
+      OUTPUT_VARIABLE ARGS_INSTALL_LIBDIR
+    )
+  endif()
+  if(NOT ARGS_INSTALL_PKGCONFIG_DIR)
+    cmake_path(
+      APPEND ARGS_INSTALL_LIBDIR pkgconfig
+      OUTPUT_VARIABLE ARGS_INSTALL_PKGCONFIG_DIR
+    )
+  endif()
+  install(
+    FILES ${FILES}
+    DESTINATION ${ARGS_INSTALL_PKGCONFIG_DIR}
+    COMPONENT pkgconfig
+  )
+endfunction()
+
 function(complete_install PROJECT)
   include(GNUInstallDirs)
-  set(options DONT_INSTALL_CMAKE_PACKAGING DONT_INSTALL_HEADERS
+  set(options DONT_INSTALL_CMAKE_PACKAGING
+      DONT_INSTALL_PKGCONFIG_PACKAGING DONT_INSTALL_HEADERS
       DONT_INSTALL_TARGETS DONT_INSTALL_DOCS NESTED_INCLUDEDIR)
-  set(oneValueArgs EXPORT VERSION COMPONENT CONFIG_TEMPLATE
+  set(oneValueArgs EXPORT VERSION COMPONENT
+      CONFIG_TEMPLATE PKGCONFIG_TEMPLATE
       INSTALL_PREFIX INSTALL_LIBDIR INSTALL_BINDIR
       INSTALL_INCLUDEDIR INSTALL_CMAKEDIR INSTALL_DOCDIR
       MODULE_DIR MODULES_INCLUDE_PATTERN MODULES_EXCLUDE_PATTERN
@@ -133,6 +192,20 @@ function(complete_install PROJECT)
         ${COMPONENT_ARGS}
       )
     endif()
+  endif()
+
+  ###################################
+  # pkg-config file
+  ###################################
+
+  if(NOT ARGS_DONT_INSTALL_PKGCONFIG_PACKAGING)
+    install_pkgconfig(
+      PROJECT_NAME ${PROJECT}
+      TEMPLATE ${ARGS_PKGCONFIG_TEMPLATE}
+      INSTALL_PREFIX ${ARGS_INSTALL_PREFIX}
+      INSTALL_LIBDIR ${ARGS_INSTALL_LIBDIR}
+      INSTALL_INCLUDEDIR ${ARGS_INSTALL_INCLUDEDIR}
+    )
   endif()
 
   ###################################
