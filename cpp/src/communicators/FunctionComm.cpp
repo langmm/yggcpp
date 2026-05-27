@@ -156,25 +156,31 @@ void* DynamicLibrary::function(const std::string& name) {
 /////////////////////////////////////////////////////////
 
 FunctionWrapper::FunctionWrapper(const std::string& f,
-				 bool pointer_provided,
+                                 void* ptr, const LANGUAGE lang,
 				 const LANGUAGE calling_lang,
 				 int flags0) :
-  LogBase(), address(f), language(NO_LANGUAGE),
+  LogBase(), address(f), language(lang),
   calling_language(calling_lang), flags(flags0), commflags(0),
-  library(nullptr), func(nullptr), recv_backlog() {
+  library(nullptr), func(ptr), recv_backlog() {
   std::vector<std::string> parts = split(address, "::", 1);
-  if (parts.size() != 2)
-    throw_error("FunctionWrapper: Error parsing function address \""
-		+ address + "\"");
-  if (!enum_value_search(LANGUAGE_map(), parts[0], language, true)) {
-    throw_error("FunctionWrapper: Could not find language in "
-		+ address + " (language part = " + parts[0] + ")");
+  if (language == NO_LANGUAGE) {
+    if (parts.size() != 2)
+      throw_error("FunctionWrapper: Error parsing function address \""
+                  + address + "\"");
+    if (!enum_value_search(LANGUAGE_map(), parts[0], language, true)) {
+      throw_error("FunctionWrapper: Could not find language in "
+                  + address + " (language part = " + parts[0] + ")");
+    }
+  } else {
+    if (parts.size() != 2 && address.size() > 0) {
+      address = LANGUAGE2str(language) + "::" + address;
+    }
   }
   switch (language) {
   case CXX_LANGUAGE:
   case C_LANGUAGE:
   case FORTRAN_LANGUAGE: {
-    if (!pointer_provided) {
+    if (!func) {
       std::vector<std::string> libparts = split(parts[1], "::", 1, true);
       if (libparts.size() != 2)
 	throw_error("FunctionWrapper: Error parsing function address for library name \""
@@ -197,33 +203,32 @@ FunctionWrapper::FunctionWrapper(const std::string& f,
     if ((flags & FUNCTION_EMBEDDED) && (flags & FUNCTION_ON_ASYNC)) {
       throw_error("Cannot load an embedded function from a thread other than the one that owns the global context");
     }
-    func = global_context->embed_registry_[language]->load_function(parts[1]);
+    if (!func)
+      func = global_context->embed_registry_[language]->load_function(parts[1]);
     break;
   }
   // case JAVA_LANGUAGE: {
   // }
   default: {
     throw_error("FunctionWrapper: Unsupported language \""
-		+ LANGUAGE_map().find(language)->second + "\"");
+		+ LANGUAGE2str(language) + "\"");
   }
   }
-  if ((!func) && (!pointer_provided))
+  if (!func)
     throw_error("FunctionWrapper: Failed to initialize "
-		+ LANGUAGE_map().find(language)->second + " function: "
+		+ LANGUAGE2str(language) + " function: "
 		+ parts[1]);
 }
 
 FunctionWrapper::FunctionWrapper(const std::string& name,
 				 cxx_function& f, int flags) :
-  FunctionWrapper(name, true, NO_LANGUAGE, flags) {
-  func = (void*)(new cxx_function(f));
-}
+  FunctionWrapper(name, (void*)(new cxx_function(f)),
+                  CXX_LANGUAGE, NO_LANGUAGE, flags) {}
 
 FunctionWrapper::FunctionWrapper(const std::string& name,
 				 c_function& f, int flags) :
-  FunctionWrapper(name, true, NO_LANGUAGE, flags) {
-  func = (void*)(f);
-}
+  FunctionWrapper(name, (void*)(f),
+                  C_LANGUAGE, NO_LANGUAGE, flags) {}
 
 FunctionWrapper::FunctionWrapper(const FunctionWrapper& rhs,
 				 const LANGUAGE calling_lang,
@@ -275,6 +280,11 @@ FunctionWrapper::~FunctionWrapper() {
 	throw_error("FunctionWrapper: Error finalizing embedded language on thread for weakref");
     } YGG_THREAD_SAFE_END;
   }
+}
+
+bool FunctionWrapper::operator()(const yggdrasil_rapidjson::Document& data_send,
+                                 yggdrasil_rapidjson::Document& data_recv) {
+  return _call(data_send, data_recv);
 }
 
 bool FunctionWrapper::_call(const yggdrasil_rapidjson::Document& data_send,

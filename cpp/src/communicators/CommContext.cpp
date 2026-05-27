@@ -297,7 +297,8 @@ FunctionWrapper* CommContext::create_registered_function(const std::string& name
     throw_error("create_registered_function: Failed to get function wrapper given empty address");
   log_debug() << "create_registered_function: Creating function " <<
     "wrapper for " << name << std::endl;
-  handle = new FunctionWrapper(name, false, calling_lang, flags);
+  handle = new FunctionWrapper(name, nullptr, NO_LANGUAGE, calling_lang,
+                               flags);
   register_function(handle);
   return handle;
 }

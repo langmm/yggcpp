@@ -1,92 +1,137 @@
 #include "communicators/StateInterface.hpp"
 #include "utils/yggdrasil_rapidjson_wrapper.hpp"
+#include "communicators/FunctionComm.hpp"
 
 using namespace YggInterface::communicator;
 
-
-StateInterface::StateFunctionPtr
-StateInterface::_ensure_ptr(typename StateInterface::StateFunctionPtr ptr) {
-  return ptr;
+StateFunction::StateFunction() {}
+StateFunction::~StateFunction() {}
+bool StateFunction::operator()(const std::string&,
+                               yggdrasil_rapidjson::Document&) {
+  return false;
 }
-StateInterface::StateFunctionPtr
-StateInterface::_ensure_ptr(typename StateInterface::StateFunctionRefPtr ptr) {
-  if(!ptr)
-    return nullptr;
-  return new StateInterface::StateFunction(*ptr);
-}
-StateInterface::StateFunctionPtr
-StateInterface::_ensure_ptr(typename StateInterface::StateFunction& ptr) {
-  return new StateInterface::StateFunction(ptr);
+StateFunction* StateFunction::copy() const {
+  return new StateFunction();
 }
 
-StateInterface::StateInterface(typename StateInterface::StateFunctionPtr fget,
-                               typename StateInterface::StateFunctionPtr fset,
-                               typename StateInterface::StateFunctionPtr fact,
-                               const std::string& name,
-                               FLAG_TYPE flags,
-                               const COMM_TYPE request_commtype,
-                               const COMM_TYPE reply_commtype) :
-  LogBase(),
-  comm(name, flags, SERVER_COMM, 0, request_commtype, reply_commtype),
-  _created(false),
-  _get(fget), _set(fset), _act(fact),
-  _get_c(nullptr), _set_c(nullptr), _act_c(nullptr) {
-  comm.addSchema("{\"type\": \"any\"}", false, SEND);
-  comm.addSchema("{\"type\": \"any\"}", false, RECV);
+CXXStateFunction::CXXStateFunction(typename CXXStateFunction::FunctionTypePtr ptr) :
+  StateFunction(), _created(false), _ptr(ptr) {}
+CXXStateFunction::CXXStateFunction(typename CXXStateFunction::FunctionType& func) :
+  StateFunction(), _created(true),
+  _ptr(new CXXStateFunction::FunctionType(func)) {}
+CXXStateFunction::CXXStateFunction(typename CXXStateFunction::FunctionPtr ptr) :
+  StateFunction(), _created(true), _ptr(nullptr) {
+  if (ptr)
+    _ptr = new CXXStateFunction::FunctionType(*ptr);
+}
+CXXStateFunction::~CXXStateFunction() {
+  if (_created && _ptr)
+    delete _ptr;
+  _ptr = nullptr;
+}
+bool CXXStateFunction::operator()(const std::string& name,
+                                  yggdrasil_rapidjson::Document& data) {
+  if (!_ptr) return false;
+  return (*_ptr)(name, data);
+}
+StateFunction* CXXStateFunction::copy() const {
+  if (!_ptr) return new CXXStateFunction();
+  return new CXXStateFunction(*_ptr);
 }
 
-StateInterface::StateInterface(typename StateInterface::StateFunction& fget,
-                               typename StateInterface::StateFunction& fset,
-                               typename StateInterface::StateFunction& fact,
-                               const std::string& name,
-                               FLAG_TYPE flags,
-                               const COMM_TYPE request_commtype,
-                               const COMM_TYPE reply_commtype) :
-  StateInterface(StateInterface::_ensure_ptr(fget),
-                 StateInterface::_ensure_ptr(fset),
-                 StateInterface::_ensure_ptr(fact),
-                 name, flags, request_commtype, reply_commtype) {}
+CStateFunction::CStateFunction(typename CStateFunction::FunctionPtr ptr) :
+  StateFunction(), _ptr(ptr) {}
+CStateFunction::~CStateFunction() {}
+bool CStateFunction::operator()(const std::string& name,
+                                yggdrasil_rapidjson::Document& data) {
+  if (!_ptr) return false;
+  const char* name_c = name.c_str();
+  generic_t data_c;
+  data_c.obj = (void*)(&data);
+  return (_ptr(name_c, data_c) > 0);
+}
+StateFunction* CStateFunction::copy() const {
+  return new CStateFunction(_ptr);
+}
 
-StateInterface::StateInterface(typename StateInterface::StateFunctionRefPtr fget,
-                               typename StateInterface::StateFunctionRefPtr fset,
-                               typename StateInterface::StateFunctionRefPtr fact,
-                               const std::string& name,
-                               FLAG_TYPE flags,
-                               const COMM_TYPE request_commtype,
-                               const COMM_TYPE reply_commtype) :
-  StateInterface(StateInterface::_ensure_ptr(fget),
-                 StateInterface::_ensure_ptr(fset),
-                 StateInterface::_ensure_ptr(fact),
-                 name, flags, request_commtype, reply_commtype) {}
+EmbeddedStateFunction::EmbeddedStateFunction(void* ptr,
+                                             const LANGUAGE& language) :
+  StateFunction(), _ptr(nullptr) {
+  if (ptr)
+    _ptr = new FunctionWrapper("", ptr, language);
+}
+EmbeddedStateFunction::EmbeddedStateFunction(FunctionWrapper& func) :
+  StateFunction(), _ptr(new FunctionWrapper(func)) {}
+EmbeddedStateFunction::EmbeddedStateFunction(FunctionWrapper* ptr) :
+  StateFunction(), _ptr(nullptr) {
+  if (ptr)
+    _ptr = new FunctionWrapper(*ptr);
+}
+EmbeddedStateFunction::~EmbeddedStateFunction() {
+  if (_ptr) {
+    delete _ptr;
+    _ptr = nullptr;
+  }
+}
+bool EmbeddedStateFunction::operator()(const std::string& name,
+                                       yggdrasil_rapidjson::Document& data) {
+  if (_ptr) return false;
+  yggdrasil_rapidjson::Document data_send, data_recv;
+  yggdrasil_rapidjson::Document::AllocatorType& allocator = data_send.GetAllocator();
+  data_send.SetArray();
+  data_send.PushBack(yggdrasil_rapidjson::Value(name.c_str(),
+                                                name.size(),
+                                                allocator).Move(),
+                     allocator);
+  data_send.PushBack(yggdrasil_rapidjson::Value(data, allocator, true).Move(),
+                     allocator);
+  bool out = _ptr->operator()(data_send, data_recv);
+  if (out) {
+    data.SetNull();
+    data.CopyFrom(data_recv, data.GetAllocator(), true);
+  }
+  return out;
+}
+StateFunction* EmbeddedStateFunction::copy() const {
+  return new EmbeddedStateFunction(_ptr);
+}
 
-StateInterface::StateInterface(typename StateInterface::CStateFunctionPtr fget,
-                               typename StateInterface::CStateFunctionPtr fset,
-                               typename StateInterface::CStateFunctionPtr fact,
-                               const std::string& name,
-                               FLAG_TYPE flags,
-                               const COMM_TYPE request_commtype,
-                               const COMM_TYPE reply_commtype) :
-  StateInterface((StateInterface::StateFunctionPtr)nullptr,
-                 (StateInterface::StateFunctionPtr)nullptr,
-                 (StateInterface::StateFunctionPtr)nullptr,
-                 name, flags, request_commtype, reply_commtype) {
-  _get_c = fget;
-  _set_c = fset;
-  _act_c = fact;
+StateFunction* StateInterface::_wrap_func(StateFunction* func) {
+  if (!func) return new CXXStateFunction();
+  return func->copy();
+}
+StateFunction* StateInterface::_wrap_func(typename CXXStateFunction::FunctionType& func) {
+  return new CXXStateFunction(func);
+}
+StateFunction* StateInterface::_wrap_func(typename CXXStateFunction::FunctionTypePtr func) {
+  return new CXXStateFunction(func);
+}
+StateFunction* StateInterface::_wrap_func(typename CXXStateFunction::FunctionPtr func) {
+  return new CXXStateFunction(func);
+}
+StateFunction* StateInterface::_wrap_func(typename CStateFunction::FunctionPtr func) {
+  return new CStateFunction(func);
+}
+StateFunction* StateInterface::_wrap_func(FunctionWrapper& func) {
+  return new EmbeddedStateFunction(func);
+}
+StateFunction* StateInterface::_wrap_func(typename EmbeddedStateFunction::FunctionPtr func) {
+  return new EmbeddedStateFunction(func);
+}
+StateFunction* StateInterface::_wrap_func(void* ptr, const LANGUAGE& language) {
+  return new EmbeddedStateFunction(ptr, language);
 }
 
 StateInterface::~StateInterface() {
-  if (_created) {
 #define CLEAR_FUNC(name)                        \
-    if (name) {                                 \
-      delete name;                              \
-      name = nullptr;                           \
-    }
-    CLEAR_FUNC(_get)
-    CLEAR_FUNC(_set)
-    CLEAR_FUNC(_act)
-#undef CLEAR_FUNC
+  if (name) {                                   \
+    delete name;                                \
+    name = nullptr;                             \
   }
+  CLEAR_FUNC(_get)
+  CLEAR_FUNC(_set)
+  CLEAR_FUNC(_act)
+#undef CLEAR_FUNC
 }
 
 std::string StateInterface::logInst() const {
@@ -94,6 +139,7 @@ std::string StateInterface::logInst() const {
 }
 
 bool StateInterface::reply_to_requests() {
+  if (_complete) return true;
   bool flag = true;
   yggdrasil_rapidjson::Document request, reply;
   std::string name, command;
@@ -116,6 +162,14 @@ bool StateInterface::reply_to_requests() {
     command = request[0].GetString();
     if (command == "resume") {
       log_debug() << "Resuming" << std::endl;
+      break;
+    } else if (command == "terminate" || command == "error") {
+      log_debug() << "Terminating" << std::endl;
+      flag = false;
+      break;
+    } else if (command == "complete") {
+      log_debug() << "Continuing without pause" << std::endl;
+      _complete = true;
       break;
     }
     if (!(request.Size() >= 2 && request[1].IsString())) {
@@ -183,50 +237,28 @@ bool StateInterface::reply_to_requests() {
   return flag;
 }
 
-bool StateInterface::_call_c(typename StateInterface::CStateFunctionPtr func,
-                             const std::string& name,
-                             yggdrasil_rapidjson::Document& data) {
-  const char* name_c = name.c_str();
-  generic_t data_c;
-  data_c.obj = (void*)(&data);
-  return (func(name_c, data_c) > 0);
-}
+// TODO: Add error to data?
+#define CALL_FUNC(func)                         \
+  if (!func) return false;                      \
+  try {                                         \
+    return func->operator()(name, data);        \
+  } catch (...) {                               \
+    return false;                               \
+  }
 
 bool StateInterface::get(const std::string& name,
                          yggdrasil_rapidjson::Document& data) {
-  try {
-    if (_get) return (*_get)(name, data);
-    if (_get_c) return _call_c(_get_c, name, data);
-  } catch (...) {
-    log_info() << "Error in call to user provided get function" << std::endl;
-    return false;
-  }
-  log_info() << "No function defined for getting state variables" << std::endl;
-  return false;
+  CALL_FUNC(_get)
 }
 
 bool StateInterface::set(const std::string& name,
                          yggdrasil_rapidjson::Document& data) {
-  try {
-    if (_set) return (*_set)(name, data);
-    if (_set_c) return _call_c(_set_c, name, data);
-  } catch (...) {
-    log_info() << "Error in call to user provided set function" << std::endl;
-    return false;
-  }
-  log_info() << "No function defined for setting state variables" << std::endl;
-  return false;
+  CALL_FUNC(_set)
 }
 
 bool StateInterface::act(const std::string& name,
                          yggdrasil_rapidjson::Document& data) {
-  try {
-    if (_act) return (*_act)(name, data);
-    if (_act_c) return _call_c(_act_c, name, data);
-  } catch (...) {
-    log_info() << "Error in call to user provided act function" << std::endl;
-    return false;
-  }
-  log_info() << "No function defined for performing actions" << std::endl;
-  return false;
+  CALL_FUNC(_act)
 }
+
+#undef CALL_FUNC

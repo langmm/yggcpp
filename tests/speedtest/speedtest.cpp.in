@@ -1,4 +1,4 @@
-#include <YggInterface.hpp>
+#include <YggInterface/YggInterface.hpp>
 
 #define SPEED_TEST_N_MSG @SPEED_TEST_N_MSG@
 #define SPEED_TEST_S_MSG @SPEED_TEST_S_MSG@

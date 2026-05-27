@@ -78,13 +78,14 @@ namespace YggInterface {
       /**
        * Constructor for wrapping a model imported based on a string.
        * @param[in] f Function name and import information.
-       * @param[in] pointer_provided If true, the constructor is being
-       *   called with an explicit function pointer.
+       * @param[in] ptr Explicit pointer to a function.
+       * @param[in] language Function language.
        * @param[in] calling_language Language calling the function.
        * @param[in] flags Bitwise flags describing the function.
        */
       FunctionWrapper(const std::string& f,
-		      bool pointer_provided=false,
+                      void* ptr=nullptr,
+                      const LANGUAGE language=NO_LANGUAGE,
 		      const LANGUAGE calling_language=NO_LANGUAGE,
 		      int flags=0);
       /**
@@ -140,6 +141,16 @@ namespace YggInterface {
        * @brief Clear any message in the receive backlog.
        */
       void clear();
+      
+      /**
+       * Call the wrapped method.
+       * @param[in] data_send Message containing function arguments.
+       * @param[in,out] data_recv Document where function results should
+       *   be stored.
+       * @returns true on success, false otherwise.
+       */
+      bool operator()(const yggdrasil_rapidjson::Document& data_send,
+                      yggdrasil_rapidjson::Document& data_recv);
       
       std::string address; /**< Name of the function */
       LANGUAGE language;   /**< Language the function is written in */

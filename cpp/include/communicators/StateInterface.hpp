@@ -14,17 +14,118 @@ namespace communicator {
 
 
 /**
+   @brief Virtual base class for implementing the function signature
+     expected by StateInterface.
+ */
+class StateFunction {
+public:
+  /** @brief Constructor */
+  YGG_API StateFunction();
+  /** @brief Destructor */
+  YGG_API virtual ~StateFunction();
+  /**
+   * @brief Call the function.
+   * @param[in] name Name of state variable/action.
+   * @param[in,out] data Value for set/get/action.
+   * @return true if successful, false otherwise
+   */
+  YGG_API virtual bool operator()(const std::string& name,
+                                  yggdrasil_rapidjson::Document& data);
+  /**
+   * @brief Return a copy of this function
+   * @return Copy
+   */
+  YGG_API virtual StateFunction* copy() const;
+};
+
+/** @brief Wrapper for a C++ function handle */
+class CXXStateFunction : public StateFunction {
+public:
+  typedef std::function<bool(const std::string&, yggdrasil_rapidjson::Document&)> FunctionType;
+  /** Type for pointer to function handles */
+  typedef bool (*FunctionPtr)(const std::string&, yggdrasil_rapidjson::Document&);
+  typedef FunctionType* FunctionTypePtr; /**< Pointer to function handle */
+  /** @brief Constructor from pointer to function handle */
+  YGG_API CXXStateFunction(FunctionTypePtr ptr = nullptr);
+  /** @brief Constructor from function handle */
+  YGG_API CXXStateFunction(FunctionType& func);
+  /** @brief Constructor from function pointer */
+  YGG_API CXXStateFunction(FunctionPtr ptr);
+  /** @brief Destructor */
+  YGG_API ~CXXStateFunction() override;
+  /** \copydoc StateFunction::operator() */
+  YGG_API bool operator()(const std::string& name,
+                          yggdrasil_rapidjson::Document& data) override;
+  /** \copydoc StateFunction::copy */
+  YGG_API StateFunction* copy() const override;
+private:
+  bool _created; /**< Marker for if the function was created */
+  FunctionTypePtr _ptr; /**< Pointer to function handle */
+};
+
+/** @brief Wrapper for a C function handle */
+class CStateFunction : public StateFunction {
+public:
+  typedef bool (*FunctionPtr)(const char*, generic_t);
+  /** @brief Constructor from function pointer */
+  YGG_API CStateFunction(FunctionPtr ptr);
+  /** @brief Destructor */
+  YGG_API ~CStateFunction() override;
+  /** \copydoc StateFunction::operator() */
+  YGG_API bool operator()(const std::string& name,
+                          yggdrasil_rapidjson::Document& data) override;
+  /** \copydoc StateFunction::copy */
+  YGG_API StateFunction* copy() const override;
+  
+private:
+  FunctionPtr _ptr; /**< Pointer to function handle */
+};
+
+/** @brief Wrapper for an embedded language function handle */
+class EmbeddedStateFunction : public StateFunction {
+public:
+  typedef FunctionWrapper* FunctionPtr;
+  /**
+     @brief Constructor from an embedded function
+     @param[in] func Embedded function.
+   */
+  YGG_API EmbeddedStateFunction(FunctionWrapper& func);
+  /**
+     @brief Constructor from an embedded function
+     @param[in] ptr Pointer to embedded function.
+   */
+  YGG_API EmbeddedStateFunction(FunctionPtr ptr);
+  /**
+     @brief Constructor from an embedded function pointer
+     @param[in] ptr Pointer to function in embedded language
+     @param[in] language Embedded language of ptr
+  */
+  YGG_API EmbeddedStateFunction(void* ptr, const LANGUAGE& language);
+  /** @brief Destructor */
+  YGG_API ~EmbeddedStateFunction() override;
+  /** \copydoc StateFunction::operator() */
+  YGG_API bool operator()(const std::string& name,
+                          yggdrasil_rapidjson::Document& data) override;
+  /** \copydoc StateFunction::copy */
+  YGG_API StateFunction* copy() const override;
+private:
+  FunctionPtr _ptr;
+};
+  
+/**
    @brief Class for interfacing with a model's state.
  */
 class StateInterface : public YggInterface::utils::LogBase {
+private:
+  static StateFunction* _wrap_func(StateFunction* func);
+  static StateFunction* _wrap_func(typename CXXStateFunction::FunctionType& func);
+  static StateFunction* _wrap_func(typename CXXStateFunction::FunctionTypePtr func);
+  static StateFunction* _wrap_func(typename CXXStateFunction::FunctionPtr func);
+  static StateFunction* _wrap_func(typename CStateFunction::FunctionPtr func);
+  static StateFunction* _wrap_func(FunctionWrapper& func);
+  static StateFunction* _wrap_func(typename EmbeddedStateFunction::FunctionPtr func);
+  static StateFunction* _wrap_func(void* ptr, const LANGUAGE& language);
 public:
-  /** Type for function handles */
-  typedef std::function<bool(const std::string&, yggdrasil_rapidjson::Document&)> StateFunction;
-  /** Type for pointer to function handles */
-  typedef bool (*StateFunctionRefPtr)(const std::string&, yggdrasil_rapidjson::Document&);
-  typedef StateFunction* StateFunctionPtr; /**< Pointer to function handle */
-  typedef bool (*CStateFunctionPtr)(const char*, generic_t);
-    
   StateInterface(const StateInterface& other) = delete;
   StateInterface& operator=(const StateInterface&) = delete;
   
@@ -38,69 +139,22 @@ public:
      @param[in] flags Communicator flags.
      @param[in] request_commtype Type of communicator to use for requests.
      @param[in] reply_commtype Type of communicator to use for replies.
-   */
-  YGG_API StateInterface(StateFunctionPtr fget = nullptr,
-                         StateFunctionPtr fset = nullptr,
-                         StateFunctionPtr fact = nullptr,
-                         const std::string& name = "state",
-                         FLAG_TYPE flags = 0,
-                         const COMM_TYPE request_commtype = DEFAULT_COMM,
-                         const COMM_TYPE reply_commtype = DEFAULT_COMM);
-
-  /**
-     Create a state interface from external functions.
-     @param[in] fget Function that should be used to get state variables.
-     @param[in] fset Function that should be used to set state variables.
-     @param[in] fact Function that should be used to perform actions.
-     @param[in] name Name of the server communicator that should be used
-       to receive requests.
-     @param[in] flags Communicator flags.
-     @param[in] request_commtype Type of communicator to use for requests.
-     @param[in] reply_commtype Type of communicator to use for replies.
-   */
-  YGG_API StateInterface(StateFunction& fget,
-                         StateFunction& fset,
-                         StateFunction& fact,
-                         const std::string& name = "state",
-                         FLAG_TYPE flags = 0,
-                         const COMM_TYPE request_commtype = DEFAULT_COMM,
-                         const COMM_TYPE reply_commtype = DEFAULT_COMM);
-  /**
-     Create a state interface from external functions.
-     @param[in] fget Function that should be used to get state variables.
-     @param[in] fset Function that should be used to set state variables.
-     @param[in] fact Function that should be used to perform actions.
-     @param[in] name Name of the server communicator that should be used
-       to receive requests.
-     @param[in] flags Communicator flags.
-     @param[in] request_commtype Type of communicator to use for requests.
-     @param[in] reply_commtype Type of communicator to use for replies.
-   */
-  YGG_API StateInterface(StateFunctionRefPtr fget = nullptr,
-                         StateFunctionRefPtr fset = nullptr,
-                         StateFunctionRefPtr fact = nullptr,
-                         const std::string& name = "state",
-                         FLAG_TYPE flags = 0,
-                         const COMM_TYPE request_commtype = DEFAULT_COMM,
-                         const COMM_TYPE reply_commtype = DEFAULT_COMM);
-  /**
-     Create a state interface from external C functions.
-     @param[in] fget C function that should be used to get state variables.
-     @param[in] fset C function that should be used to set state variables.
-     @param[in] fact C function that should be used to perform actions.
-     @param[in] name Name of the server communicator that should be used
-       to receive requests.
-     @param[in] flags Communicator flags.
-     @param[in] request_commtype Type of communicator to use for requests.
-     @param[in] reply_commtype Type of communicator to use for replies.
-   */
-  YGG_API StateInterface(CStateFunctionPtr fget,
-                         CStateFunctionPtr fset,
-                         CStateFunctionPtr fact,
-                         const std::string& name = "state",
-                         FLAG_TYPE flags = 0,
-                         const COMM_TYPE request_commtype = DEFAULT_COMM,
-                         const COMM_TYPE reply_commtype = DEFAULT_COMM);
+  */
+  template<typename Tget, typename Tset, typename Tact>
+  YGG_API_DEF StateInterface(Tget fget, Tset fset, Tact fact,
+                             const std::string& name = "state",
+                             FLAG_TYPE flags = 0,
+                             const COMM_TYPE request_commtype = DEFAULT_COMM,
+                             const COMM_TYPE reply_commtype = DEFAULT_COMM) :
+    LogBase(),
+    comm(name, flags, SERVER_COMM, 0, request_commtype, reply_commtype),
+    _complete(false),
+    _get(_wrap_func(fget)),
+    _set(_wrap_func(fset)),
+    _act(_wrap_func(fact)) {
+    comm.addSchema("{\"type\": \"any\"}", false, SEND);
+    comm.addSchema("{\"type\": \"any\"}", false, RECV);
+  }
   /** @brief Destructor */
   YGG_API ~StateInterface();
   /** \copydoc YggInterface::utils::LogBase::logClass */
@@ -143,20 +197,11 @@ public:
                            yggdrasil_rapidjson::Document& param);
 
 private:
-  static StateFunctionPtr _ensure_ptr(StateFunctionPtr ptr);
-  static StateFunctionPtr _ensure_ptr(StateFunctionRefPtr ptr);
-  static StateFunctionPtr _ensure_ptr(StateFunction& ptr);
-  bool _call_c(CStateFunctionPtr func,
-               const std::string& name,
-               yggdrasil_rapidjson::Document& data);
   ServerComm comm; /**< Server communicator. */
-  bool _created; /**< Marker for if the functions were created */
-  StateFunctionPtr _get; /**< External function to get state */
-  StateFunctionPtr _set; /**< External function to set state */
-  StateFunctionPtr _act; /**< External function to act state */
-  CStateFunctionPtr _get_c; /**< External C function to get state */
-  CStateFunctionPtr _set_c; /**< External C function to set state */
-  CStateFunctionPtr _act_c; /**< External C function to act state */
+  bool _complete; /**< Set to true when client requests the simulation run to completion without further stops to interact with the state */
+  StateFunction* _get; /**< External function to get a state variable */
+  StateFunction* _set; /**< External function to set a state variable */
+  StateFunction* _act; /**< External function to act on state */
 };
 
 /**
@@ -173,50 +218,16 @@ private:
  *   compilation.
  * @return true if successful, false otherwise.
  */
-template<typename T>
-YGG_API_DEF bool replyToStateRequests(T fget = nullptr,
-                                     T fset = nullptr,
-                                     T fact = nullptr,
-                                     const std::string& name="state",
-                                     FLAG_TYPE flags = 0,
-                                     const COMM_TYPE commtype = DEFAULT_COMM) {
+template<typename Tget, typename Tset, typename Tact>
+YGG_API_DEF bool replyToStateRequests(Tget fget, Tset fset, Tact fact,
+                                      const std::string& name="state",
+                                      FLAG_TYPE flags = 0,
+                                      const COMM_TYPE commtype = DEFAULT_COMM) {
   StateInterface state(fget, fset, fact, name,
                        flags | COMM_FLAG_INTERFACE | COMM_FLAG_GLOBAL,
-                       commtype);
+                       commtype, commtype);
   return state.reply_to_requests();
 }
-
-// /**
-//    @brief Wrapper for C function to modify state.
-//  */
-// class CStateFunction {
-// public:
-//   typedef bool (*CStateFunctionType)(const char*, generic_t);
-//   typedef typename StateInterface::StateFunctionPtr StateFunction;
-//   /**
-//      @brief Constructor.
-//      @param[in] func C function pointer.
-//    */
-//   YGG_API CStateFunction(CStateFunctionType func);
-//   /**
-//      @brief Call the wrapped function.
-//      @param[in] name Name.
-//      @param[out] data Data.
-//      @returns true if successful, false otherwise.
-//    */
-//   YGG_API bool operator()(const std::string& name,
-//                           yggdrasil_rapidjson::Document& data);
-
-//   YGG_API StateFunctionPtr getStateFunctionPtr();
-
-// private:
-//   CStateFunctionType _func_c; /** C function pointer */
-//   StateFunctionPtr _func; /** C++ function pointer */
-// };
-
-// class CStateInterface : public StateInterface {
-//   typedef bool (*CStateFunctionType)(const char*, generic_t);
-// };
-
+  
 }
 }

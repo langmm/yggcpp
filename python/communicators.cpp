@@ -68,6 +68,14 @@ static PyObject* commMeta_update(PyObject* self, PyObject* args, PyObject* kwarg
 static PyObject* commMeta_append(PyObject* self, PyObject* args);
 static PyObject* commMeta_richcompare(PyObject *self, PyObject *other, int op);
 
+static PyObject* replyToStateRequestsPy(PyObject* self, PyObject* args, PyObject* kwargs);
+/*
+static void StateInterface_dealloc(PyObject* self);
+static int StateInterface_init(PyObject* self, PyObject* args, PyObject* kwds);
+static PyObject* StateInterface_new(PyTypeObject *type, PyObject* args, PyObject* kwds);
+static PyObject* StateInterface_reply_to_requests(PyObject* self, PyObject* args, PyObject* kwargs);
+ */
+
 static PyObject* is_comm_installed(PyObject* self, PyObject* args, PyObject* kwargs);
 
 
@@ -1835,6 +1843,47 @@ static PyObject* is_comm_installed(PyObject*, PyObject* args, PyObject* kwargs) 
     PyErr_WarnEx(PyExc_DeprecationWarning, "'language' is deprecated as all communicators are based on the same C++ interface", 1);
   }
   if (YggInterface::communicator::is_commtype_installed((COMM_TYPE)commtype)) {
+    Py_RETURN_TRUE;
+  }
+  Py_RETURN_FALSE;
+}
+
+PyDoc_STRVAR(replyToStateRequests_docstring,
+             "replyToStateRequests(fget=None, fset=None, fact=None, name=\"state\")\n"
+             "\n"
+             "Reply to requests from other models to set, get, or act on the model's internal state until \"resume\" or \"terminate\" is received");
+
+static PyObject* replyToStateRequestsPy(PyObject*, PyObject* args, PyObject* kwargs) {
+  PyObject *fgetPy = NULL, *fsetPy = NULL, *factPy = NULL, *commtypePy = NULL;
+  int commtype = 0;
+  const char* name = NULL;
+  static char const* kwlist[] = {
+    "fget",
+    "fset",
+    "fact",
+    "name",
+    "commtype",
+    NULL
+  };
+  if (!PyArg_ParseTupleAndKeywords(args, kwargs,
+				   "|OOOsO", (char**)kwlist,
+				   &fgetPy, &fsetPy, &factPy, &name, &commtypePy))
+    return NULL;
+  if (_parse_commtype(commtypePy, commtype) < 0)
+    return NULL;
+  YggInterface::communicator::EmbeddedStateFunction
+    fget(fgetPy, PYTHON_LANGUAGE),
+    fset(fsetPy, PYTHON_LANGUAGE),
+    fact(factPy, PYTHON_LANGUAGE);
+  bool res = false;
+  Py_BEGIN_ALLOW_THREADS
+  res = YggInterface::communicator::replyToStateRequests(&fget,
+                                                         &fset,
+                                                         &fact,
+                                                         name, 0,
+                                                         (COMM_TYPE)commtype);
+  Py_END_ALLOW_THREADS
+  if (res) {
     Py_RETURN_TRUE;
   }
   Py_RETURN_FALSE;

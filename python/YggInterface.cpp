@@ -62,6 +62,8 @@ static struct PyModuleDef_Slot slots[] = {
 static PyMethodDef functions[] = {
   {"is_comm_installed", (PyCFunction) is_comm_installed,
    METH_VARARGS | METH_KEYWORDS, is_comm_installed_docstring},
+  {"replyToStateRequestsPy", (PyCFunction) replyToStateRequestsPy,
+   METH_VARARGS | METH_KEYWORDS, replyToStateRequests_docstring},
   {NULL, NULL, 0, NULL} /* sentinel */
 };
 #ifdef __GNUC__
