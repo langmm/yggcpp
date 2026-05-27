@@ -375,7 +375,6 @@ function(complete_install PROJECT)
         DIRECTORY ${ARGS_HEADER_DIR}
         DESTINATION ${ARGS_INSTALL_INCLUDEDIR}
         ${COMPONENT_ARGS}
-        FILES_MATCHING PATTERN "*~" EXCLUDE
       )
     endif()
   endif()

@@ -38,6 +38,13 @@ StateFunction* CXXStateFunction::copy() const {
   if (!_ptr) return new CXXStateFunction();
   return new CXXStateFunction(*_ptr);
 }
+CXXStateFunction::CXXStateFunction(const CXXStateFunction& other) :
+  CXXStateFunction(other._ptr) {}
+CXXStateFunction& CXXStateFunction::operator=(const CXXStateFunction& other) {
+  this->~CXXStateFunction();
+  new (this) CXXStateFunction(other);
+  return *this;
+}
 
 CStateFunction::CStateFunction(typename CStateFunction::FunctionPtr ptr) :
   StateFunction(), _ptr(ptr) {}
@@ -52,6 +59,13 @@ bool CStateFunction::operator()(const std::string& name,
 }
 StateFunction* CStateFunction::copy() const {
   return new CStateFunction(_ptr);
+}
+CStateFunction::CStateFunction(const CStateFunction& other) :
+  CStateFunction(other._ptr) {}
+CStateFunction& CStateFunction::operator=(const CStateFunction& other) {
+  this->~CStateFunction();
+  new (this) CStateFunction(other);
+  return *this;
 }
 
 EmbeddedStateFunction::EmbeddedStateFunction(void* ptr,
@@ -94,6 +108,13 @@ bool EmbeddedStateFunction::operator()(const std::string& name,
 }
 StateFunction* EmbeddedStateFunction::copy() const {
   return new EmbeddedStateFunction(_ptr);
+}
+EmbeddedStateFunction::EmbeddedStateFunction(const EmbeddedStateFunction& other) :
+  EmbeddedStateFunction(other._ptr) {}
+EmbeddedStateFunction& EmbeddedStateFunction::operator=(const EmbeddedStateFunction& other) {
+  this->~EmbeddedStateFunction();
+  new (this) EmbeddedStateFunction(other);
+  return *this;
 }
 
 StateFunction* StateInterface::_wrap_func(StateFunction* func) {

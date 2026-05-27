@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+INSTALL_DIR="$(pwd)/_install"
+
 if [ ! -d yggdrasil-rapidjson ]; then
     git clone https://github.com/cropsinsilico/yggdrasil-rapidjson.git
 fi
@@ -16,6 +18,8 @@ Python_NumPy_INCLUDE_DIR="$(${PYTHON} -c 'import numpy; print(numpy.get_include(
 CMAKE_ARGS+=" -DPython3_EXECUTABLE:PATH=${PYTHON}"
 CMAKE_ARGS+=" -DPython3_INCLUDE_DIR:PATH=${Python_INCLUDE_DIR}"
 CMAKE_ARGS+=" -DPython3_NumPy_INCLUDE_DIR=${Python_NumPy_INCLUDE_DIR}"
+CMAKE_ARGS+=" -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}"
+
 
 cmake -B build -S . \
       -G "Ninja" \
@@ -26,4 +30,4 @@ cmake -B build -S . \
       -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON \
       ${CMAKE_ARGS}
 cmake --build build
-cmake --install build
+cmake --install build --prefix "$INSTALL_DIR"

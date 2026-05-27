@@ -2,6 +2,7 @@ set -e
 
 LANGUAGE=""
 REBUILD=""
+REINSTALL=""
 DONT_BUILD=""
 DO_C=""
 DO_CXX=""
@@ -57,6 +58,10 @@ while [[ $# -gt 0 ]]; do
 	    ;;
 	--rebuild )
 	    REBUILD="TRUE"
+	    shift
+	    ;;
+	--reinstall )
+	    REINSTALL="TRUE"
 	    shift
 	    ;;
 	--dont-build )
@@ -286,14 +291,16 @@ if [ -n "$REBUILD" ]; then
     if [ -d "_skbuild" ]; then
 	rm -rf "_skbuild"
     fi
-    if [ -d "$INSTALL_DIR" ]; then
-	rm -rf "$INSTALL_DIR"
-    fi
     if [ -f "cpp/src/pyYggdrasil/pyYggdrasil.cpython-39-darwin.so" ]; then
 	rm "cpp/src/pyYggdrasil/pyYggdrasil.cpython-39-darwin.so"
     fi
     if [ -f "cpp/src/pyYggdrasil/lib/libYggInterface_py.dylib" ]; then
 	rm "cpp/src/pyYggdrasil/lib/libYggInterface_py.dylib"
+    fi
+fi
+if [ -n "$REINSTALL" ]; then
+    if [ -d "$INSTALL_DIR" ]; then
+	rm -rf "$INSTALL_DIR"
     fi
 fi
 if [ ! -d "$BUILD_DIR" ]; then

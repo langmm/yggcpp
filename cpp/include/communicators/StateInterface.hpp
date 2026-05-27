@@ -58,6 +58,10 @@ public:
                           yggdrasil_rapidjson::Document& data) override;
   /** \copydoc StateFunction::copy */
   YGG_API StateFunction* copy() const override;
+  /** @brief Copy constructor */
+  YGG_API CXXStateFunction(const CXXStateFunction& other);
+  /** @brief Assignment operator */
+  YGG_API CXXStateFunction& operator=(const CXXStateFunction& other);
 private:
   bool _created; /**< Marker for if the function was created */
   FunctionTypePtr _ptr; /**< Pointer to function handle */
@@ -76,6 +80,10 @@ public:
                           yggdrasil_rapidjson::Document& data) override;
   /** \copydoc StateFunction::copy */
   YGG_API StateFunction* copy() const override;
+  /** @brief Copy constructor */
+  YGG_API CStateFunction(const CStateFunction& other);
+  /** @brief Assignment operator */
+  YGG_API CStateFunction& operator=(const CStateFunction& other);
   
 private:
   FunctionPtr _ptr; /**< Pointer to function handle */
@@ -108,6 +116,10 @@ public:
                           yggdrasil_rapidjson::Document& data) override;
   /** \copydoc StateFunction::copy */
   YGG_API StateFunction* copy() const override;
+  /** @brief Copy constructor */
+  YGG_API EmbeddedStateFunction(const EmbeddedStateFunction& other);
+  /** @brief Assignment operator */
+  YGG_API EmbeddedStateFunction& operator=(const EmbeddedStateFunction& other);
 private:
   FunctionPtr _ptr;
 };
