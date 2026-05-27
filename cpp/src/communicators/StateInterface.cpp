@@ -55,7 +55,9 @@ bool CStateFunction::operator()(const std::string& name,
   const char* name_c = name.c_str();
   generic_t data_c;
   data_c.obj = (void*)(&data);
-  return (_ptr(name_c, data_c) > 0);
+  if (_ptr(name_c, data_c) > 0)
+    return true;
+  return false;
 }
 StateFunction* CStateFunction::copy() const {
   return new CStateFunction(_ptr);
