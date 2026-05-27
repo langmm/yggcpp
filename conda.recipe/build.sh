@@ -1,8 +1,9 @@
 #!/bin/sh
 set -euo pipefail
 
-Python_INCLUDE_DIR="$(python -c 'import sysconfig; print(sysconfig.get_path("include"))')"
-Python_NumPy_INCLUDE_DIR="$(python -c 'import numpy; print(numpy.get_include())')"
+PYTHON=${PYTHON:-python}
+Python_INCLUDE_DIR="$(${PYTHON} -c 'import sysconfig; print(sysconfig.get_path("include"))')"
+Python_NumPy_INCLUDE_DIR="$(${PYTHON} -c 'import numpy; print(numpy.get_include())')"
 
 CMAKE_ARGS+=" -DPython3_EXECUTABLE:PATH=${PYTHON}"
 CMAKE_ARGS+=" -DPython3_INCLUDE_DIR:PATH=${Python_INCLUDE_DIR}"
@@ -16,7 +17,7 @@ if [ ! -d conda_build ]; then
     mkdir conda_build
 fi
 
-cmake -B conda_build -S .. \
+cmake -B conda_build -S ${SRC_DIR} \
       -G "Ninja" \
       -D VERBOSE:BOOL=ON \
       -D BUILD_CXX_LIBRARY:BOOL=ON \
@@ -25,5 +26,5 @@ cmake -B conda_build -S .. \
       -D YGG_CXX_REQUIRED:BOOL=ON \
       -D YGG_Fortran_REQUIRED:BOOL=ON \
       ${CMAKE_ARGS}
-cmake --build conda_build
+cmake --build conda_build -j${CPU_COUNT}
 cmake --install conda_build

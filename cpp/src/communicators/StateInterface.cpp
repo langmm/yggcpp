@@ -231,9 +231,9 @@ bool StateInterface::reply_to_requests() {
   do_reply:
     if (reply.Empty()) {
       if (flag)
-        reply.SetString("ok", allocator);
+        reply.SetString("ok", 2, allocator);
       else
-        reply.SetString("error", allocator);
+        reply.SetString("error", 5, allocator);
     }
     if (comm.send(reply) < 0) {
       log_error() << "Failed to send reply to request: " <<
@@ -246,9 +246,9 @@ bool StateInterface::reply_to_requests() {
   }
   if (reply.Empty()) {
     if (flag)
-      reply.SetString("ok", allocator);
+      reply.SetString("ok", 2, allocator);
     else
-      reply.SetString("error", allocator);
+      reply.SetString("error", 5, allocator);
   }
   flag = (comm.send(reply) >= 0);
  cleanup:
