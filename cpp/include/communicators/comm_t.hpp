@@ -343,7 +343,7 @@ YGG_API void global_scope_comm_on_c();
 YGG_API void global_scope_comm_off_c();
 
 /** @brief Type used for methods to modified state */
-typedef bool (*c_state_function)(const char*, generic_t);
+typedef int (*c_state_function)(const char*, generic_t);
 
 /**
  * @brief Allow other models to set requests to inspect or modify the

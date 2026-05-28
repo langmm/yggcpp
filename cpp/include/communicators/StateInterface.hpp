@@ -70,7 +70,7 @@ private:
 /** @brief Wrapper for a C function handle */
 class CStateFunction : public StateFunction {
 public:
-  typedef bool (*FunctionPtr)(const char*, generic_t);
+  typedef int (*FunctionPtr)(const char*, generic_t);
   /** @brief Constructor from function pointer */
   YGG_API CStateFunction(FunctionPtr ptr);
   /** @brief Destructor */
