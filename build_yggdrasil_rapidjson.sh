@@ -28,5 +28,5 @@ cmake -B build -S . \
       -D YGGDRASIL_RAPIDJSON_BUILD_DOC:BOOL=OFF \
       -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON \
       ${CMAKE_ARGS}
-cmake --build build --component dev
-cmake --install build  # --prefix "$INSTALL_DIR"
+cmake --build build
+cmake --install build --component dev  # --prefix "$INSTALL_DIR"
