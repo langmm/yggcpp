@@ -41,6 +41,7 @@ requirements:
     - {{ compiler('m2w64_cxx') }}            # [win]
     - {{ compiler('m2w64_fortran') }}        # [win]
     - llvm-openmp
+    - objconv                                # [win]
     - openmpi
     - sysv_ipc  # [not win]
     - yggdrasil-rapidjson

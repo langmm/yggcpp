@@ -13,6 +13,10 @@ set(internal_target_file "@internal_target_file@")
 set(external_target_file "@external_target_file@")
 set(external_def_file "@external_def_file@")
 
+if(CMAKE_GNUtoMS)
+  set(CMAKE_@ARGS_LANGUAGE@_OUTPUT_EXTENSION ".elf.obj")
+endif()
+
 include(BuildTools)
 add_internal_library(
   ${target} ${final_library_type}
@@ -43,15 +47,17 @@ endif()
 inspect_target(${target} PREFIX "EXTERNAL ${target}: ")
 
 if(library_type STREQUAL "OBJECT")
+
   # Ensure that the object files are in the build directory
   copy_target_files(
     ${target} "${CMAKE_CURRENT_BINARY_DIR}"
     COMPONENTS OBJECTS
   )
-
+  
   # Create .def file for objects
   if(WIN32)
     include(CreateMSVCLib)
     target2def(${target})
   endif()
+
 endif()

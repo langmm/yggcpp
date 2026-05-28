@@ -1203,7 +1203,7 @@ endfunction()
 function(copy_files destination)
   set(options REQUIRED)
   set(oneValueArgs REPLACE_EXTENSION OUTPUT REGEX_REPLACE REPLACE REPLACEMENT
-      SOURCE_DIRECTORY SOURCE_REGEX)
+      SOURCE_DIRECTORY SOURCE_REGEX CONV_MODULE CONV_FUNC)
   set(multiValueArgs SOURCES)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
   set(ARGS_REQUIRED ON)  # TODO: Temporary
@@ -1235,13 +1235,30 @@ function(copy_files destination)
   endif()
   message(DEBUG "Copying files to \"${destination}\": ${ARGS_SOURCES}")
   foreach(isrc ${ARGS_SOURCES})
-    file(COPY "${isrc}" DESTINATION "${destination}")
-    cmake_path(GET isrc FILENAME isrcbase)
-    set(idstbase "${isrcbase}")
-    cmake_path(APPEND destination "${idstbase}"
-               OUTPUT_VARIABLE idst0)
+    if(ARGS_CONV_FUNC)
+      if(ARGS_CONV_MODULE)
+        include(${ARGS_CONV_MODULE})
+      endif()
+      # setup_external_function(
+      #   ${ARGS_CONV_FUNC}
+      #   OUTPUT_COMMAND CALL_CONV_FUNC
+      #   ${isrc} DESTINATION_DIR "${destination}"
+      # )
+      cmake_language(
+        CALL ${ARGS_CONV_FUNC}
+        ${isrc} DESTINATION_DIR "${destination}"
+        OUTPUT idst0
+      )
+      message(DEBUG "Used ${ARGS_CONV_FUNC} to convert ${isrc} to ${idst0}")
+    else()
+      file(COPY "${isrc}" DESTINATION "${destination}")
+      cmake_path(GET isrc FILENAME isrcbase)
+      cmake_path(APPEND destination "${isrcbase}"
+                 OUTPUT_VARIABLE idst0)
+    endif()
+    cmake_path(GET idst0 FILENAME idstbase)
     if(ARGS_REPLACE_EXTENSION)
-      cmake_path(GET isrc EXTENSION iext)
+      cmake_path(GET idstbase EXTENSION iext)
       string(REPLACE "${iext}" "${ARGS_REPLACE_EXTENSION}"
              idstbase "${idstbase}")
     endif()
@@ -1321,11 +1338,19 @@ function(copy_target_files target destination)
       if(ARGS_EVENT_TARGET STREQUAL "${target}")
         set(OBJECT_EVENT_TYPE PRE_LINK)
       endif()
+      set(ADDED_ARGS)
+      if(CMAKE_GNUtoMS)
+        # Convert ELF object files to COFF
+        list(APPEND ADDED_ARGS
+             REPLACE_EXTENSION ".obj"
+             CONV_FUNC elf2coff
+             CONV_MODULE CreateMSVCLib)
+      endif()
       add_custom_command_function(
         copy_files MODULE BuildTools
         TARGET ${ARGS_EVENT_TARGET} ${OBJECT_EVENT_TYPE}
         COMMENT "Copy object files for target \"${target}\""
-        FUNCTION_ARGUMENTS ${destination}
+        FUNCTION_ARGUMENTS ${destination} ${ADDED_ARGS}
         GENERATED_FUNCTION_ARGUMENTS
           SOURCES $<JOIN:$<TARGET_OBJECTS:${target}>,$<SEMICOLON>>
         VERBATIM

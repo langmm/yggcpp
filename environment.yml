@@ -14,6 +14,7 @@ dependencies:
   - libcurl
   - ninja
   - cmake
+  - objconv
   - openmpi
   - llvm-openmp
   - pytest
