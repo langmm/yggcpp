@@ -334,6 +334,9 @@ bool Metadata::_fromNDArray(const std::string& subtype, size_t precision,
 			    yggdrasil_rapidjson::Value* subSchema) {
   if (subtype == "bytes") {
     if (!SetSchemaString("subtype", "string", subSchema)) return false;
+  } else if (subtype == "string") {
+    if (!SetSchemaString("subtype", "string", subSchema)) return false;
+    if (!SetSchemaString("encoding", "ASCII", subSchema)) return false;
   } else if (subtype == "unicode") {
     if (!SetSchemaString("subtype", "string", subSchema)) return false;
     if (!SetSchemaString("encoding", "UTF8", subSchema)) return false; // UCS4?

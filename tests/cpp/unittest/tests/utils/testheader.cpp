@@ -311,7 +311,8 @@ TEST(Metadata, fromFormat) {
 		 "    {"
 		 "      \"type\": \"scalar\","
 		 "      \"subtype\": \"string\","
-		 "      \"precision\": 5"
+		 "      \"precision\": 5,"
+                 "      \"encoding\": \"ASCII\""
 		 "    }"
 		 "  ]"
 		 "}"));
@@ -340,7 +341,8 @@ TEST(Metadata, fromFormat) {
 		 "    {"
 		 "      \"type\": \"ndarray\","
 		 "      \"subtype\": \"string\","
-		 "      \"precision\": 5"
+		 "      \"precision\": 5,"
+                 "      \"encoding\": \"ASCII\""
 		 "    }"
 		 "  ]"
 		 "}"));
@@ -561,6 +563,7 @@ TEST(Metadata, fromFormatNameUnits) {
 		 "      \"type\": \"scalar\","
 		 "      \"subtype\": \"string\","
 		 "      \"precision\": 5,"
+                 "      \"encoding\": \"ASCII\","
 		 "      \"title\": \"name\","
 		 "      \"units\": \"n/a\""
 		 "    }"
