@@ -23,11 +23,10 @@ CMAKE_ARGS+=" -DPython3_NumPy_INCLUDE_DIR=${Python_NumPy_INCLUDE_DIR}"
 
 cmake -B build -S . \
       -G "Ninja" \
-      -D YGGDRASIL_RAPIDJSON_HAS_STDSTRING:BOOL=ON \
       -D YGGDRASIL_RAPIDJSON_BUILD_TESTS:BOOL=OFF \
       -D YGGDRASIL_RAPIDJSON_BUILD_EXAMPLES:BOOL=OFF \
       -D YGGDRASIL_RAPIDJSON_BUILD_DOC:BOOL=OFF \
       -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON \
       ${CMAKE_ARGS}
-cmake --build build
+cmake --build build --component dev
 cmake --install build  # --prefix "$INSTALL_DIR"
