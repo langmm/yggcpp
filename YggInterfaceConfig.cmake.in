@@ -8,6 +8,10 @@ set(YGG_LANGUAGES_SUPPORTED "@YGG_LANGUAGES_SUPPORTED@")
 set(YGG_LANGUAGES_AVAILABLE "@YGG_LANGUAGES_AVAILABLE@")
 set(YGG_INSTALL_DEPS "@YGG_INSTALL_DEPS@")
 set(YGG_INSTALL_CONFIG "@YGG_INSTALL_CONFIG@")
+
+include(${CMAKE_CURRENT_LIST_DIR}/YggInterfaceMacros.cmake)
+ygginterface_options_import()
+
 foreach(dep IN LISTS YGG_INSTALL_DEPS)
   if (dep MATCHES "Python" OR
       dep STREQUAL "ZeroMQ" OR
@@ -17,8 +21,9 @@ foreach(dep IN LISTS YGG_INSTALL_DEPS)
     find_dependency(${dep})
   endif()
 endforeach()
-parse_yggdrasil_cmake_config()
+
 include(${CMAKE_CURRENT_LIST_DIR}/YggInterfaceTargets.cmake)
+
 if (TARGET YggInterface::YggInterface)
   add_library(YggInterface::CXX ALIAS YggInterface::YggInterface)
   add_library(YggInterface::C ALIAS YggInterface::YggInterface)

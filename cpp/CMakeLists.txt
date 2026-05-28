@@ -6,11 +6,6 @@ endif()
 set(YGG_TARGET_CXX ${YGG_TARGET_CXX} PARENT_SCOPE)
 if(SKBUILD AND YGG_LINK_Python_TO_CXX AND NOT YGGDRASIL_DISABLE_Python_C_API)
     add_library_python(${YGG_TARGET_CXX} SHARED ${SOURCES_CXX})
-    target_compile_options(
-        ${YGG_TARGET_CXX} PUBLIC
- 	-DYGGDRASIL_RAPIDJSON_PYTHON_WRAPPER
-        -DYGG_LINK_Python_TO_CXX
-    )
 else()
     add_library(${YGG_TARGET_CXX} SHARED ${SOURCES_CXX})
     add_library(YggInterface::CXX ALIAS ${YGG_TARGET_CXX})
@@ -52,6 +47,7 @@ target_link_libraries(
 target_include_directories(
     ${YGG_TARGET_CXX} PUBLIC ${DEPS_INCLUDE_DIRS}
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
     $<INSTALL_INTERFACE:include/YggInterface>)
 target_compile_definitions(
     ${YGG_TARGET_CXX} PUBLIC ${YGG_INSTALL_DEFS})

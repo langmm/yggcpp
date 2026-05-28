@@ -1414,3 +1414,20 @@ function(copy_target_files target destination)
     endif()
   endforeach()  
 endfunction()
+
+function(strip_python TARGET)
+  set(oneValueArgs CREATE_TARGET)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  if(ARGS_CREATE_TARGET)
+  endif()
+  # TODO: Check that target is interface?
+  get_target_property(
+    ${TARGET}_LINK_LIBRARIES
+    ${TARGET} INTERFACE_LINK_LIBRARIES
+  )
+  list(FILTER ${TARGET}_LINK_LIBRARIES EXCLUDE REGEX ".+Python$")
+  set_target_properties(
+    ${TARGET} PROPERTIES
+    INTERFACE_LINK_LIBRARIES "${${TARGET}_LINK_LIBRARIES}"
+  )
+endfunction()

@@ -124,8 +124,12 @@ int RMQConnection::init() {
   if (queue_name.rfind("amq.", 0) == 0)
     passive = 1;
   amqp_queue_declare_ok_t *r = amqp_queue_declare(
-    conn, channel, STR2RMQBYTES(queue_name), passive,
-    0, 0, 1, amqp_empty_table);
+    conn, channel, STR2RMQBYTES(queue_name),
+    passive, // passive
+    0, // durable
+    1, // exclusive
+    1, // auto-delete
+    amqp_empty_table);
   RMQSTATUS_REPLY_(amqp_get_rpc_reply(conn),
 		   ("init: Failed to declare a queue: " + queue_name));
   if (queue_name.empty()) {
@@ -171,7 +175,11 @@ int RMQConnection::nmsg(DIRECTION) const {
   // Passive queue declare to get message count
   amqp_queue_declare_ok_t *r = amqp_queue_declare(
     conn, channel, STR2RMQBYTES(queue_name),
-    1, 0, 0, 1, amqp_empty_table);
+    1, // passive
+    0, // durable
+    1, // exclusive
+    1, // auto-delete
+    amqp_empty_table);
   if (!r) {
     log_error() << "nmsg: Error in amqp_queue_declare" << std::endl;
     return -1;

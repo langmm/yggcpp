@@ -1,0 +1,144 @@
+# This file provides macros for compilation options that might be used
+# by dependent packages and uses macros from the YggdrasilRapidJSON
+# library configuration file if it is found
+
+macro(ygginterface_options OUTPUT_VARIABLE)
+  set(${OUTPUT_VARIABLE})
+  if(YggdrasilRapidJSON_FOUND AND YggdrasilRapidJSON_VERSION VERSION_GREATER "1.1.0.2")
+    yggdrasil_rapidjson_options(${OUTPUT_VARIABLE})
+  else()
+    list(
+      APPEND ${OUTPUT_VARIABLE}
+      YGGDRASIL_RAPIDJSON_PYTHON_WRAPPER
+    )
+  endif()
+  list(
+    APPEND ${OUTPUT_VARIABLE}
+    YGG_BUILD_ASAN
+    YGG_BUILD_UBSAN
+    YGG_ENABLE_INSTRUMENTATION_OPT
+    YGG_DEBUG_LEVEL
+    YGGDRASIL_RAPIDJSON_INCLUDE_DIRS
+    YGG_DEFAULT_COMM
+    YGG_LINK_Python_TO_CXX
+    WRAP_YGGDRASIL_RAPIDJSON_FOR_DLL
+  )
+endmacro()
+
+macro(ygginterface_options_values OUTPUT_VARIABLE)
+  ygginterface_options(YGGINTERFACE_OPTIONS_NAMES)
+  set(${OUTPUT_VARIABLE})
+  foreach(var IN LISTS YGGINTERFACE_OPTIONS_NAMES)
+    list(APPEND ${OUTPUT_VARIABLE} ${var} "${${var}}")
+    message(STATUS "${OUTPUT_VARIABLE} = ${${OUTPUT_VARIABLE}}")
+  endforeach()
+endmacro()
+
+macro(ygginterface_options_export)
+  ygginterface_options_values(YGG_INSTALL_CONFIG)
+endmacro()
+
+macro(ygginterface_options_import)
+  list(LENGTH YGG_INSTALL_CONFIG N_YGG_INSTALL_CONFIG)
+  foreach(i RANGE 0 ${N_YGG_INSTALL_CONFIG}-2 2)
+    if(${i} GREATER_EQUAL ${N_YGG_INSTALL_CONFIG})
+      break()
+    endif()
+    math(EXPR ip1 "${i}+1")
+    list(GET YGG_INSTALL_CONFIG ${i} ikey)
+    list(GET YGG_INSTALL_CONFIG ${ip1} ival)
+    set(${ikey} ${ival})
+  endforeach()
+endmacro()
+
+macro(ygginterface_options_create)
+  option(YGG_BUILD_ASAN "Build with address sanitizer (gcc/clang)" OFF)
+  option(YGG_BUILD_UBSAN "Build with undefined behavior sanitizer (gcc/clang)" OFF)
+  option(YGG_ENABLE_INSTRUMENTATION_OPT "Build yggdrasil with -march or -mcpu options" ON)
+  option(YGG_DEBUG_LEVEL "Level that should be used for logging" OFF)
+  set(YGGDRASIL_RAPIDJSON_INCLUDE_DIRS "" CACHE PATH "Path to the yggdrasil_rapidjson include directory containing the headers that should be used")
+  set(YGG_DEFAULT_COMM "ZMQ" CACHE STRING "Default communicator")
+  option(YGG_LINK_Python_TO_CXX "Link the Python extension to the C++ interface library" OFF)
+  option(WRAP_YGGDRASIL_RAPIDJSON_FOR_DLL "Build yggdrasil using a wrapper for yggdrasil_rapidjson to force it into a DLL (enabled automatically when compiling with MSVC" OFF)
+  # TODO
+  if(NOT YGGDRASIL_RAPIDJSON_INCLUDE_DIRS)
+    find_package(YggdrasilRapidJSON)
+    message(STATUS "YggdrasilRapidJSON_VERSION = ${YggdrasilRapidJSON_VERSION}")
+  endif()
+  if(YggdrasilRapidJSON_FOUND AND YggdrasilRapidJSON_VERSION VERSION_GREATER "1.1.0.2")
+    yggdrasil_rapidjson_options_create()
+  else()
+    option(YGGDRASIL_RAPIDJSON_PYTHON_WRAPPER "Set flags to use YggdrasilRapidJSON as part of a Python C extension" OFF)
+  endif()
+endmacro()
+
+macro(ygginterface_options_config OUTPUT_PREFIX)
+  foreach(flag BUILD_ASAN BUILD_UBSAN ENABLE_INSTRUMENTATION_OPT)
+    set(YGGDRASIL_RAPIDJSON_${flag} ${YGG_${flag}})
+  endforeach()
+  if(WIN32 AND CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    set(WRAP_YGGDRASIL_RAPIDJSON_FOR_DLL ON)
+  endif()
+  if(WRAP_YGGDRASIL_RAPIDJSON_FOR_DLL)
+    set(YGG_LINK_Python_TO_CXX OFF)
+  endif()
+  if(YggdrasilRapidJSON_FOUND AND YggdrasilRapidJSON_VERSION VERSION_GREATER "1.1.0.2")
+    yggdrasil_rapidjson_options_config(${OUTPUT_PREFIX})
+  else()
+    if(YGGDRASIL_RAPIDJSON_PYTHON_WRAPPER)
+      list(
+        APPEND ${OUTPUT_PREFIX}_PUBLIC_COMPILE_FLAGS
+        -DYGGDRASIL_RAPIDJSON_PYTHON_WRAPPER
+      )
+    endif()
+  endif()
+  if(YGG_DEBUG_LEVEL)
+    list(
+      APPEND ${OUTPUT_PREFIX}_PUBLIC_COMPILE_FLAGS
+      -DYGG_DEBUG=${YGG_DEBUG_LEVEL}
+    )
+  endif()
+  if(YGGDRASIL_RAPIDJSON_INCLUDE_DIRS)
+    list(
+      APPEND ${OUTPUT_PREFIX}_INCLUDE_DIRECTORIES
+      "${YGGDRASIL_RAPIDJSON_INCLUDE_DIRS}"
+    )
+    list(
+      APPEND ${OUTPUT_PREFIX}_PUBLIC_COMPILE_FLAGS
+      -DYGGDRASIL_RAPIDJSON_HAS_STDSTRING
+      -DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
+      -D_USE_MATH_DEFINES
+    )
+  else()
+    find_package(YggdrasilRapidJSON REQUIRED)
+    # Remove Python as dependency so that this target can be used
+    # as part of a Python C extension
+    include(BuildTools)
+    strip_python(YggdrasilRapidJSON)
+    list(
+      APPEND ${OUTPUT_PREFIX}_LIBRARIES
+      YggdrasilRapidJSON
+    )
+  endif()
+  if((NOT YGG_DEFAULT_COMM) AND YGG_COMMS_AVAILABLE)
+    list(GET YGG_COMMS_AVAILABLE 0 YGG_DEFAULT_COMM)
+  endif()
+  if(YGG_DEFAULT_COMM)
+    list(
+      APPEND ${OUTPUT_PREFIX}_PUBLIC_COMPILE_FLAGS
+      -DDEFAULT_COMM_PREFIX=${YGG_DEFAULT_COMM}
+    )
+  endif()
+  if(YGG_LINK_Python_TO_CXX)
+    list(
+      APPEND ${OUTPUT_PREFIX}_PUBLIC_COMPILE_FLAGS
+      -DYGG_LINK_PYTHON_TO_CPP
+    )
+  endif()
+  if(WRAP_YGGDRASIL_RAPIDJSON_FOR_DLL)
+    list(
+      APPEND ${OUTPUT_PREFIX}_PUBLIC_COMPILE_FLAGS
+      -DWRAP_YGGDRASIL_RAPIDJSON_FOR_DLL
+    )
+  endif()
+endmacro()

@@ -542,6 +542,8 @@ jobs:
         run: |
           echo "PYTHON=${PYTHON}"
           ./build_yggdrasil_rapidjson.sh
+          echo "CMAKE_ARGS_NO_PYTHON=${{ env.CMAKE_ARGS_NO_PYTHON }} \"-DCMAKE_PREFIX_PATH=${{ github.workspace }}\\_install\"" >> "$GITHUB_ENV"
+          echo "PYTHON_CONFIG_FLAGS=${{ env.PYTHON_CONFIG_FLAGS }} --config-settings=cmake.define.CMAKE_PREFIX_PATH=\"${{ github.workspace }}\\_install\"" >> "$GITHUB_ENV"
 
       ###################################
       # Configure

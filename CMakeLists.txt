@@ -12,55 +12,37 @@ cmake_policy(SET CMP0048 NEW)
 PROJECT(YggInterface VERSION "${LIB_VERSION_STRING}")
 
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
 include(ygg_options)
 include(AddYggInterface)
 include(BuildTools)
 
 option(YGG_Python_LIBRARY_WRAP "Build the Yggdrasil Python interface library by wrapping the C++ module" ON)
 option(ALLOW_SKBUILD_NONPython "Allow the non-Python interfaces (C/C++/Fortran) to be built from SKBUILD" OFF)
-set(DEFAULT_COMM "ZMQ" CACHE STRING "Default communicator")
 option(YGG_BUILD_TESTS "Build tests" OFF)
 # option(YGG_TEST_WITH_LLDB "Run tests with lldb" OFF)
 option(YGG_ENABLE_COVERAGE "Enable coverage reporting" OFF)
 option(YGG_BUILD_THIRDPARTY_GTEST "Use gtest installation in 'thirdpart/gtest' by default if available" ON)
 option(YGG_SKIP_VALGRIND_TESTS "Disable valgrind tests" OFF)
-option(WRAP_YGGDRASIL_RAPIDJSON_FOR_DLL "Build yggdrasil using a wrapper for yggdrasil_rapidjson to force it into a DLL (enabled automatically when compiling with MSVC" OFF)
 option(GENERATE_YGGDRASIL_RAPIDJSON_WRAPPER "Generate the yggdrasil_rapidjson wrapper from the C++ interface" OFF)
 option(GENERATE_INTERFACE "Generate the interface" OFF)
-option(YGG_LINK_Python_TO_CXX "Link the Python extension to the C++ wrapper as a library" OFF)
 option(YGG_BUILD_DOCS "Build documentation (requires Doxygen)" OFF)
 option(DOXYGEN_CHECK_MISSING "Raise an error if documentation is missing" OFF)
 option(YGG_PATCH_MINGW53_THREAD "Patch the MinGW 5.3.0 thread header" OFF)
 option(YGG_Fortran_WRAP_C_ENUMS "Wrap the int64_t enumerators in a C layer for binding in Fortran" OFF)
 
-list(APPEND DEPS_PUBLIC_C_COMPILE_FLAGS ${ASAN_COMPILE_FLAGS})
-list(APPEND DEPS_PUBLIC_CXX_COMPILE_FLAGS ${ASAN_COMPILE_FLAGS})
-list(APPEND DEPS_PUBLIC_C_LINK_FLAGS ${ASAN_LINK_FLAGS})
-list(APPEND DEPS_PUBLIC_CXX_LINK_FLAGS ${ASAN_LINK_FLAGS})
+
+##################################
+# Option dependent configuration #
+##################################
+
+ygginterface_options_config(DEPS)
 
 include(FetchContent)
 
 if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
     message(FATAL_ERROR "In-source build prohibited.")
 endif("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
-
-if(WIN32)
-  if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    set(WRAP_YGGDRASIL_RAPIDJSON_FOR_DLL ON)
-  # else()
-  #     set(YGG_LINK_Python_TO_CXX ON)
-  endif()
-endif()
-
-if(WRAP_YGGDRASIL_RAPIDJSON_FOR_DLL)
-    set(YGG_LINK_Python_TO_CXX OFF)
-    list(APPEND YGG_INSTALL_DEFS -DWRAP_YGGDRASIL_RAPIDJSON_FOR_DLL)
-endif()
-
-list(APPEND YGG_INSTALL_DEFS
-     -DYGGDRASIL_RAPIDJSON_HAS_STDSTRING
-     -DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
-     -D_USE_MATH_DEFINES)
 
 list(APPEND YGG_TEST_ENV "YGG_MODEL_INDEX=123")
 
@@ -104,10 +86,24 @@ if(CONDA_PREFIX)
     message(STATUS "CONDA_PREFIX = ${CONDA_PREFIX}")
 endif()
 
-if(YggdrasilRapidJSON_FOUND)
-    list(APPEND DEPS_LIBRARIES YggdrasilRapidJSON)
-else()
-    list(APPEND DEPS_INCLUDE_DIRS ${YGGDRASIL_RAPIDJSON_INCLUDE_DIRS})
+######################
+# YggdrasilRapidJSON #
+######################
+
+if(NOT YGGDRASIL_RAPIDJSON_INCLUDE_DIRS)
+  add_yggdrasil_dependency(
+    YggdrasilRapidJSON
+    LIBRARIES YggdrasilRapidJSON
+    REQUIRED
+  )
+  get_target_property(
+    YggdrasilRapidJSON_LINK_LIBRARIES
+    YggdrasilRapidJSON INTERFACE_LINK_LIBRARIES
+  )
+  list(FILTER YggdrasilRapidJSON_LINK_LIBRARIES INCLUDE REGEX ".+Python$")
+  if(YggdrasilRapidJSON_LINK_LIBRARIES)
+    message(FATAL_ERROR "YggdrasilRapidJSON_LINK_LIBRARIES = ${YggdrasilRapidJSON_LINK_LIBRARIES}")
+  endif()
 endif()
 
 ##########
@@ -268,9 +264,7 @@ add_yggdrasil_option(MPI COMM LIBRARIES MPI::MPI_CXX)
 
 include(EmbedLanguage)
 
-if(YGGDRASIL_DISABLE_Python_C_API)
-    list(APPEND YGG_INSTALL_DEFS -DYGGDRASIL_DISABLE_PYTHON_C_API)
-else()
+if(NOT YGGDRASIL_DISABLE_Python_C_API)
     embed_language(Python)
 
     # There is an issue with embedding Python on Windows in conda environments
@@ -279,20 +273,15 @@ else()
         list(APPEND YGG_TEST_ENV "PYTHONHOME=${${Python_PREFIX}_RUNTIME_LIBRARY_DIRS}")
     endif()
     
-    if(YGGDRASIL_PYGIL_NO_MANAGEMENT)
-      list(APPEND YGG_INSTALL_DEFS -DYGGDRASIL_PYGIL_NO_MANAGEMENT)
-    endif()
 endif()
 
 #######################
 # Select default comm #
 #######################
 
-if((NOT DEFAULT_COMM) AND YGG_COMMS_AVAILABLE)
-  list(GET YGG_COMMS_AVAILABLE 0 DEFAULT_COMM)
-endif()
-if(DEFAULT_COMM)
-  list(APPEND YGG_INSTALL_DEFS -DDEFAULT_COMM_PREFIX=${DEFAULT_COMM})
+if((NOT YGG_DEFAULT_COMM) AND YGG_COMMS_AVAILABLE)
+  list(GET YGG_COMMS_AVAILABLE 0 YGG_DEFAULT_COMM)
+  list(APPEND YGG_INSTALL_DEFS -DDEFAULT_COMM_PREFIX=${YGG_DEFAULT_COMM})
 endif()
 
 ###################
@@ -319,11 +308,6 @@ endif ()
 # if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 #     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_GLIBCXX_DEBUG")
 # endif()
-if (YGG_DEBUG_LEVEL)
-  set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DYGG_DEBUG=${YGG_DEBUG_LEVEL}")
-  set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DYGG_DEBUG=${YGG_DEBUG_LEVEL}")
-  set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -DYGG_DEBUG=${YGG_DEBUG_LEVEL}")
-endif()
 
 message(DEBUG "DEPS_INCLUDE_DIRS = ${DEPS_INCLUDE_DIRS}")
 message(DEBUG "DEPS_LIBRARIES = ${DEPS_LIBRARIES}")
@@ -472,7 +456,9 @@ endif()
 
 dump_cmake_variables(
   LOG_LEVEL DEBUG VARIABLES
+  DEPS_PUBLIC_COMPILE_FLAGS
   DEPS_PUBLIC_C_COMPILE_FLAGS DEPS_PUBLIC_CXX_COMPILE_FLAGS
+  DEPS_PUBLIC_LINK_FLAGS
   DEPS_PUBLIC_C_LINK_FLAGS DEPS_PUBLIC_CXX_LINK_FLAGS
   DEPS_LIBRARIES DEPS_LIBRARIES_PRIVATE
   DEPS_PUBLIC_C_LIBS DEPS_PUBLIC_CXX_LIBS
@@ -536,6 +522,7 @@ if(NOT YGG_BUILD_DOCS)
 endif()
 if(YGG_INSTALL_TARGETS)
   message(STATUS "Install enabled")
+  ygginterface_options_export()
   complete_install(
     ${PROJECT_NAME} TARGETS ${YGG_INSTALL_TARGETS}
     VERSION ${LIB_VERSION_STRING}

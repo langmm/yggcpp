@@ -12,11 +12,13 @@ cmake_path(GET CMAKE_CURRENT_BINARY_DIR PARENT_PATH PARENT_BINARY_DIR)
 
 if (NOT SKBUILD)
   if (BUILD_Python_LIBRARY AND NOT YGGDRASIL_DISABLE_Python_C_API)
-    set(Python_COPY_ARGS
-        DEFAULT_COMM YGG_ENABLE_COVERAGE
-	YGG_SKIP_VALGRIND_TESTS YGG_BUILD_ASAN YGG_BUILD_UBSAN
-	YGG_ENABLE_INSTRUMENTATION_OPT WRAP_YGGDRASIL_RAPIDJSON_FOR_DLL
-	YGG_DEBUG_LEVEL YGGDRASIL_RAPIDJSON_INCLUDE_DIRS)
+    set(YGGDRASIL_RAPIDJSON_PYTHON_WRAPPER ON)
+    ygginterface_options(Python_COPY_ARGS)
+    list(
+      APPEND Python_COPY_ARGS
+      YGG_ENABLE_COVERAGE
+      YGG_SKIP_VALGRIND_TESTS
+    )
     foreach(lang ${YGG_EMBEDDED_LANGUAGES})
       list(APPEND Python_COPY_ARGS YGG_EMBED_${lang})
     endforeach()
@@ -74,27 +76,36 @@ target_include_directories(
 if(YGG_LINK_Python_TO_CXX)
     target_link_libraries(${YGG_TARGET_PY} PUBLIC ${YGG_TARGET_CXX})
 else()
-    target_link_libraries(${YGG_TARGET_PY} PUBLIC
-                          ${DEPS_LIBRARIES} ${DEPS_PUBLIC_CXX_LIBS})
-    target_link_libraries(${YGG_TARGET_PY} PUBLIC
-                          ${DEPS_LIBRARIES_PRIVATE})
-endif()
-target_compile_options(
-    ${YGG_TARGET_PY} PUBLIC
-    ${YGG_INSTALL_DEFS}
-    -DYGGDRASIL_RAPIDJSON_PYTHON_WRAPPER
-)
-if(YGG_Python_LIBRARY_WRAP)
-    target_compile_options(${YGG_TARGET_PY} PRIVATE
-              -DYGG_PYTHON_LIBRARY_WRAP)
-endif()
-if (ASAN_COMPILE_FLAGS)
+    target_link_libraries(
+      ${YGG_TARGET_PY} PUBLIC
+      ${DEPS_LIBRARIES} ${DEPS_PUBLIC_CXX_LIBS}
+    )
+    target_link_libraries(
+      ${YGG_TARGET_PY} PUBLIC
+      ${DEPS_LIBRARIES_PRIVATE}
+    )
+    target_include_directories(
+       ${YGG_TARGET_PY} PUBLIC ${DEPS_INCLUDE_DIRS}
+    )
+    target_compile_definitions(
+      ${YGG_TARGET_PY} PUBLIC ${YGG_INSTALL_DEFS}
+    )
     target_compile_options(
-      ${YGG_TARGET_PY} PUBLIC ${ASAN_COMPILE_FLAGS})
-endif()
-if (ASAN_LINK_FLAGS)
+      ${YGG_TARGET_PY} PUBLIC
+      ${DEPS_PUBLIC_COMPILE_FLAGS} ${DEPS_PUBLIC_CXX_COMPILE_FLAGS}
+    )
     target_link_options(
-      ${YGG_TARGET_PY} PUBLIC ${ASAN_LINK_FLAGS})
+      ${YGG_TARGET_PY} PUBLIC
+      ${DEPS_PUBLIC_LINK_FLAGS} ${DEPS_PUBLIC_CXX_LINK_FLAGS}
+    )
+endif()
+if(NOT YGGDRASIL_RAPIDJSON_PYTHON_WRAPPER)
+  message(FATAL_ERROR "YGGDRASIL_RAPIDJSON_PYTHON_WRAPPER not set")
+endif()
+if(YGG_Python_LIBRARY_WRAP)
+    target_compile_options(
+      ${YGG_TARGET_PY} PRIVATE -DYGG_PYTHON_LIBRARY_WRAP
+    )
 endif()
 
 if (NOT YGG_LINK_Python_TO_CXX)
@@ -121,11 +132,6 @@ if(YGG_LINK_Python_TO_CXX)
   install(TARGETS ${YGG_TARGET_PY}
   	  LIBRARY DESTINATION ${${Python_PREFIX}_INSTALL_DIR})
 else()
-  target_compile_definitions(
-    ${YGG_TARGET_PY} PUBLIC ${YGG_INSTALL_DEFS})
-  target_compile_options(
-    ${YGG_TARGET_PY} PUBLIC ${DEPS_PUBLIC_COMPILE_FLAGS}
-    ${DEPS_PUBLIC_CXX_COMPILE_FLAGS})
   install(TARGETS ${YGG_TARGET_PY}
           LIBRARY DESTINATION ${${Python_PREFIX}_INSTALL_DIR}
 	  RUNTIME DESTINATION ${${Python_PREFIX}_INSTALL_DIR})
