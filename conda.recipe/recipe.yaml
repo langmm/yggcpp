@@ -31,7 +31,6 @@ requirements:
       then:
         - binutils <2.43
         - make
-        - objconv
         - ${{ stdlib('m2w64_c') }}
         - ${{ compiler('m2w64_c') }}
         - ${{ compiler('m2w64_cxx') }}

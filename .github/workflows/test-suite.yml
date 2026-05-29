@@ -312,6 +312,8 @@ jobs:
         run: |
           echo "CC=cl" >> "$GITHUB_ENV"
           echo "CXX=cl" >> "$GITHUB_ENV"
+          tar -xvf utils/objconv.zip
+          cp utils/objconv/objconv.exe objconv.exe
 
       ###################################
       # SET CONFIG FLAGS

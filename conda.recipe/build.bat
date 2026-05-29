@@ -1,6 +1,9 @@
 @setlocal EnableDelayedExpansion
 @echo on
 
+tar -xvf "utils\objconv.zip"
+copy "utils\objconv\objconv.exe" "objconv.exe"
+
 mkdir conda_build
 
 cmake -B conda_build -S %SRC_DIR% ^
