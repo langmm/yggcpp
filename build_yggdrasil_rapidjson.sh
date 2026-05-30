@@ -29,4 +29,4 @@ cmake -B build -S . \
       -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON \
       ${CMAKE_ARGS}
 cmake --build build
-cmake --install build --component --prefix "$INSTALL_DIR"
+cmake --install build --prefix "$INSTALL_DIR"

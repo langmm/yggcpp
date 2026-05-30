@@ -19,7 +19,10 @@ macro(_initialize_file_transform name src_ext dst_ext)
         ${options} ${oneValueArgs} ${multiValueArgs}
       )
       foreach(isrc IN LISTS ARGS_SOURCES)
-        ${name}(ARGS_SOURCES ${isrc} ${RECURSION_ARGS})
+        cmake_language(
+          CALL ${name}
+          ARGS_SOURCES ${isrc} ${RECURSION_ARGS}
+        )
       endforeach()
       return()
     endif()

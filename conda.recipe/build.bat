@@ -1,8 +1,7 @@
 @setlocal EnableDelayedExpansion
 @echo on
 
-tar -xvf "utils\objconv.zip"
-copy "utils\objconv\objconv.exe" "objconv.exe"
+powershell -command "Expand-Archive -Path utils\objconv.zip -DestinationPath ."
 
 mkdir conda_build
 

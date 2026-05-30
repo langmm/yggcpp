@@ -31,13 +31,21 @@ if (NOT SKBUILD)
     list(APPEND Python_CMAKE_ARGS
          -DBUILD_CXX_LIBRARY=OFF -DBUILD_Fortran_LIBRARY=OFF)
     if (CMAKE_PREFIX_PATH)
+      set(CMAKE_PREFIX_PATH_SAFE "${CMAKE_PREFIX_PATH}")
+      if(WIN32)
+        string(REPLACE "\\" "/" CMAKE_PREFIX_PATH_SAFE "${CMAKE_PREFIX_PATH}")
+      endif()
       list(APPEND Python_BUILD_ARGS
-        --config-settings=cmake.define.CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH})
+        --config-settings=cmake.define.CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH_SAFE})
     endif()
     if (${Python_PREFIX}_ROOT_DIR)
+      set(${Python_PREFIX}_ROOT_DIR_SAFE "${${Python_PREFIX}_ROOT_DIR}")
+      if(WIN32)
+        string(REPLACE "\\" "/" ${Python_PREFIX}_ROOT_DIR_SAFE "${${Python_PREFIX}_ROOT_DIR}")
+      endif()
       list(APPEND Python_BUILD_ARGS
-        --config-settings=cmake.define.Python3_ROOT_DIR=${${Python_PREFIX}_ROOT_DIR}
-        --config-settings=cmake.define.Python_ROOT_DIR=${${Python_PREFIX}_ROOT_DIR})
+        --config-settings=cmake.define.Python3_ROOT_DIR=${${Python_PREFIX}_ROOT_DIR_SAFE}
+        --config-settings=cmake.define.Python_ROOT_DIR=${${Python_PREFIX}_ROOT_DIR_SAFE})
     endif()
     message(STATUS "Building Python with CMAKE_ARGS = ${Python_CMAKE_ARGS}")
 
