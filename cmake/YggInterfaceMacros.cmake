@@ -4,13 +4,8 @@
 
 macro(ygginterface_options OUTPUT_VARIABLE)
   set(${OUTPUT_VARIABLE})
-  if(YggdrasilRapidJSON_FOUND AND YggdrasilRapidJSON_VERSION VERSION_GREATER "1.1.0.2")
+  if(YggdrasilRapidJSON_FOUND)
     yggdrasil_rapidjson_options(${OUTPUT_VARIABLE})
-  else()
-    list(
-      APPEND ${OUTPUT_VARIABLE}
-      YGGDRASIL_RAPIDJSON_PYTHON_WRAPPER
-    )
   endif()
   list(
     APPEND ${OUTPUT_VARIABLE}
@@ -65,10 +60,8 @@ macro(ygginterface_options_create)
     find_package(YggdrasilRapidJSON)
     message(STATUS "YggdrasilRapidJSON_VERSION = ${YggdrasilRapidJSON_VERSION}")
   endif()
-  if(YggdrasilRapidJSON_FOUND AND YggdrasilRapidJSON_VERSION VERSION_GREATER "1.1.0.2")
+  if(YggdrasilRapidJSON_FOUND)
     yggdrasil_rapidjson_options_create()
-  else()
-    option(YGGDRASIL_RAPIDJSON_PYTHON_WRAPPER "Set flags to use YggdrasilRapidJSON as part of a Python C extension" OFF)
   endif()
 endmacro()
 
@@ -85,15 +78,8 @@ macro(ygginterface_options_config OUTPUT_PREFIX)
   if(SKBUILD)
     set(YGGDRASIL_RAPIDJSON_PYTHON_WRAPPER ON)
   endif()
-  if(YggdrasilRapidJSON_FOUND AND YggdrasilRapidJSON_VERSION VERSION_GREATER "1.1.0.2")
+  if(YggdrasilRapidJSON_FOUND)
     yggdrasil_rapidjson_options_config(${OUTPUT_PREFIX})
-  else()
-    if(YGGDRASIL_RAPIDJSON_PYTHON_WRAPPER)
-      list(
-        APPEND ${OUTPUT_PREFIX}_PUBLIC_COMPILE_FLAGS
-        -DYGGDRASIL_RAPIDJSON_PYTHON_WRAPPER
-      )
-    endif()
   endif()
   if(YGG_DEBUG_LEVEL)
     list(
