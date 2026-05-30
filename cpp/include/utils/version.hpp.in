@@ -1,0 +1,36 @@
+///////////////////////////////////////////////////////////////////////////////
+// @MACRO_PREFIX@_VERSION_STRING
+//
+#ifndef @MACRO_PREFIX@_VERSION_H_
+#define @MACRO_PREFIX@_VERSION_H_
+
+//!@cond @MACRO_PREFIX@_HIDDEN_FROM_DOXYGEN
+// token stringification
+#define @MACRO_PREFIX@_STRINGIFY(x) @MACRO_PREFIX@_DO_STRINGIFY(x)
+#define @MACRO_PREFIX@_DO_STRINGIFY(x) #x
+//!@endcond
+
+/*! \def @MACRO_PREFIX@_MAJOR_VERSION
+    \ingroup @MACRO_PREFIX@_CONFIG
+    \brief Major version of @PROJECT_NAME@
+*/
+/*! \def @MACRO_PREFIX@_MINOR_VERSION
+    \ingroup @MACRO_PREFIX@_CONFIG
+    \brief Minor version of @PROJECT_NAME@
+*/
+/*! \def @MACRO_PREFIX@_PATCH_VERSION
+    \ingroup @MACRO_PREFIX@_CONFIG
+    \brief Patch version of @PROJECT_NAME@
+    that this version of YggdrasilRapidJSON is based on.
+*/
+/*! \def @MACRO_PREFIX@_VERSION_STRING
+    \ingroup @MACRO_PREFIX@_CONFIG
+    \brief Version of @PROJECT_NAME@ in "<major>.<minor>.<patch>" string format.
+*/
+#define @MACRO_PREFIX@_MAJOR_VERSION @MAJOR_VERSION@
+#define @MACRO_PREFIX@_MINOR_VERSION @MINOR_VERSION@
+#define @MACRO_PREFIX@_PATCH_VERSION @PATCH_VERSION@
+#define @MACRO_PREFIX@_VERSION_STRING \
+  @MACRO_PREFIX@_STRINGIFY(@MACRO_PREFIX@_MAJOR_VERSION.@MACRO_PREFIX@_MINOR_VERSION.@MACRO_PREFIX@_PATCH_VERSION)
+
+#endif // @MACRO_PREFIX@_VERSION_H_

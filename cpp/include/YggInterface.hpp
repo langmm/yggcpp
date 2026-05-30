@@ -6,6 +6,7 @@
 #endif
 
 #include "communicators/comms.hpp"
+#include "utils/version.hpp"
 
 /*! @brief Memory to keep track of global scope comms. */
 #define WITH_GLOBAL_SCOPE(COMM) global_scope_comm_on(); COMM; global_scope_comm_off()

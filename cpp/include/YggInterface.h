@@ -11,6 +11,7 @@
 #include "datatypes/dtype_t.h"
 #include "utils/constants.hpp"
 #include "utils/enums.hpp"
+#include "utils/version.hpp"
 #include <stdio.h>
 
 #ifdef __cplusplus /* If this is a C++ compiler, use C linkage */

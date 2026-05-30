@@ -2,16 +2,17 @@ cmake_minimum_required(VERSION 3.18)
 message(DEBUG "TOP LEVEL CMAKE_GENERATOR=${CMAKE_GENERATOR}")
 
 SET(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules")
+set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-set(LIB_MAJOR_VERSION "0")
-set(LIB_MINOR_VERSION "1")
-set(LIB_PATCH_VERSION "0")
-set(LIB_VERSION_STRING "${LIB_MAJOR_VERSION}.${LIB_MINOR_VERSION}.${LIB_PATCH_VERSION}")
+set(YGGINTERFACE_VERSION "" CACHE STRING "Version to use instead of the git tag version")
+include(YggInterfaceMacros)
+if(NOT YGGINTERFACE_VERSION)
+  ygginterface_gitversion(YGGINTERFACE_VERSION "0.1.0")
+endif()
+message(STATUS "YGGINTERFACE_VERSION = ${YGGINTERFACE_VERSION}")
 
 cmake_policy(SET CMP0048 NEW)
-PROJECT(YggInterface VERSION "${LIB_VERSION_STRING}")
-
-set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+PROJECT(YggInterface VERSION "${YGGINTERFACE_VERSION}")
 
 include(ygg_options)
 include(AddYggInterface)
@@ -382,6 +383,17 @@ function(cover_test target)
   endif(YGG_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang|ARMClang")
 endfunction()
 
+###########################
+# Regenerate version file #
+###########################
+
+ygginterface_version_header(
+  YGGINTERFACE
+  ${PROJECT_VERSION}
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/include/utils/version.hpp.in
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/include/utils/version.hpp
+)
+
 #########################
 # Regenerate enum files #
 #########################
@@ -525,7 +537,7 @@ if(YGG_INSTALL_TARGETS)
   ygginterface_options_export()
   complete_install(
     ${PROJECT_NAME} TARGETS ${YGG_INSTALL_TARGETS}
-    VERSION ${LIB_VERSION_STRING}
+    VERSION ${YGGINTERFACE_VERSION}
     HEADERS ${YGG_INSTALL_INCLUDES}
     HEADER_DIR cpp/include/ NESTED_INCLUDEDIR
     MODULE_DIR "${CMAKE_CURRENT_LIST_DIR}/cmake"

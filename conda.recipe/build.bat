@@ -12,6 +12,7 @@ cmake -B conda_build -S %SRC_DIR% ^
       -D BUILD_Fortran_LIBRARY:BOOL=ON ^
       -D YGG_CXX_REQUIRED:BOOL=ON ^
       -D YGG_Fortran_REQUIRED:BOOL=ON ^
+      -D YGGINTERFACE_VERSION=%PKG_VERSION% ^
       -D CMAKE_BUILD_PARALLEL_LEVEL=1 ^
       -D VERBOSE:BOOL=ON ^
       -D "Python3_EXECUTABLE:FILEPATH=%PYTHON%" ^
