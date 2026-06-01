@@ -41,26 +41,48 @@ public:
 /** @brief Wrapper for a C++ function handle */
 class CXXStateFunction : public StateFunction {
 public:
+  /** @brief C++ std::function wrapper of function handle */
   typedef std::function<bool(const std::string&, yggdrasil_rapidjson::Document&)> FunctionType;
-  /** Type for pointer to function handles */
+  /** @brief Type for pointer to C++ function handles */
   typedef bool (*FunctionPtr)(const std::string&, yggdrasil_rapidjson::Document&);
   typedef FunctionType* FunctionTypePtr; /**< Pointer to function handle */
-  /** @brief Constructor from pointer to function handle */
+  /**
+   * @brief Constructor from pointer to function handle
+   * @param[in] ptr Pointer to function that should be wrapped.
+   */
   YGG_API CXXStateFunction(FunctionTypePtr ptr = nullptr);
-  /** @brief Constructor from function handle */
+  /**
+   * @brief Constructor from function handle.
+   * @param[in] func Function to wrap.
+   */
   YGG_API CXXStateFunction(FunctionType& func);
-  /** @brief Constructor from function pointer */
+  /**
+   * @brief Constructor from function pointer.
+   * @param[in] ptr Pointer to function that should be wrapped.
+   */
   YGG_API CXXStateFunction(FunctionPtr ptr);
   /** @brief Destructor */
   YGG_API ~CXXStateFunction() override;
-  /** \copydoc StateFunction::operator() */
+  /**
+   * @brief Call the function.
+   * @param[in] name Name of state variable/action.
+   * @param[in,out] data Value for set/get/action.
+   * @return true if successful, false otherwise
+   */
   YGG_API bool operator()(const std::string& name,
                           yggdrasil_rapidjson::Document& data) override;
   /** \copydoc StateFunction::copy */
   YGG_API StateFunction* copy() const override;
-  /** @brief Copy constructor */
+  /**
+   * @brief Copy constructor
+   * @param[in] other CXXStateFunction instance to copy.
+   */
   YGG_API CXXStateFunction(const CXXStateFunction& other);
-  /** @brief Assignment operator */
+  /**
+   * @brief Assignment operator
+   * @param[in] other CXXStateFunction instance to copy into this one.
+   * @returns Updated reference to this instance.
+   */
   YGG_API CXXStateFunction& operator=(const CXXStateFunction& other);
 private:
   bool _created; /**< Marker for if the function was created */
@@ -70,19 +92,35 @@ private:
 /** @brief Wrapper for a C function handle */
 class CStateFunction : public StateFunction {
 public:
+  /** @brief C function handle type */
   typedef int (*FunctionPtr)(const char*, generic_t);
-  /** @brief Constructor from function pointer */
+  /**
+   * @brief Constructor from function pointer
+   * @param[in] ptr Pointer to C function handle.
+   */
   YGG_API CStateFunction(FunctionPtr ptr);
   /** @brief Destructor */
   YGG_API ~CStateFunction() override;
-  /** \copydoc StateFunction::operator() */
+  /**
+   * @brief Call the function.
+   * @param[in] name Name of state variable/action.
+   * @param[in,out] data Value for set/get/action.
+   * @return true if successful, false otherwise
+   */
   YGG_API bool operator()(const std::string& name,
                           yggdrasil_rapidjson::Document& data) override;
   /** \copydoc StateFunction::copy */
   YGG_API StateFunction* copy() const override;
-  /** @brief Copy constructor */
+  /**
+   * @brief Copy constructor
+   * @param[in] other CStateFunction instance to copy.
+   */
   YGG_API CStateFunction(const CStateFunction& other);
-  /** @brief Assignment operator */
+  /**
+   * @brief Assignment operator
+   * @param[in] other CStateFunction instance to copy into this one.
+   * @returns Updated reference to this instance.
+   */
   YGG_API CStateFunction& operator=(const CStateFunction& other);
   
 private:
@@ -92,6 +130,7 @@ private:
 /** @brief Wrapper for an embedded language function handle */
 class EmbeddedStateFunction : public StateFunction {
 public:
+  /** @brief Pointer to embedded function wrapper */
   typedef FunctionWrapper* FunctionPtr;
   /**
      @brief Constructor from an embedded function
@@ -111,17 +150,29 @@ public:
   YGG_API EmbeddedStateFunction(void* ptr, const LANGUAGE& language);
   /** @brief Destructor */
   YGG_API ~EmbeddedStateFunction() override;
-  /** \copydoc StateFunction::operator() */
+  /**
+   * @brief Call the function.
+   * @param[in] name Name of state variable/action.
+   * @param[in,out] data Value for set/get/action.
+   * @return true if successful, false otherwise
+   */
   YGG_API bool operator()(const std::string& name,
                           yggdrasil_rapidjson::Document& data) override;
   /** \copydoc StateFunction::copy */
   YGG_API StateFunction* copy() const override;
-  /** @brief Copy constructor */
+  /**
+   * @brief Copy constructor
+   * @param[in] other EmbeddedStateFunction instance to copy.
+   */
   YGG_API EmbeddedStateFunction(const EmbeddedStateFunction& other);
-  /** @brief Assignment operator */
+  /**
+   * @brief Assignment operator
+   * @param[in] other EmbeddedStateFunction instance to copy into this one.
+   * @returns Updated reference to this instance.
+   */
   YGG_API EmbeddedStateFunction& operator=(const EmbeddedStateFunction& other);
 private:
-  FunctionPtr _ptr;
+  FunctionPtr _ptr; /**< Wrapped function pointer. */
 };
   
 /**
@@ -129,28 +180,48 @@ private:
  */
 class StateInterface : public YggInterface::utils::LogBase {
 private:
+  /**
+   * @brief Helper method to wrap different supported function types.
+   * @param[in] func Function to wrap.
+   * @returns New StateFunction instance wrapping func.
+   */
   static StateFunction* _wrap_func(StateFunction* func);
+  /** \copydoc StateInterface::_wrap_func */
   static StateFunction* _wrap_func(typename CXXStateFunction::FunctionType& func);
+  /** \copydoc StateInterface::_wrap_func */
   static StateFunction* _wrap_func(typename CXXStateFunction::FunctionTypePtr func);
+  /** \copydoc StateInterface::_wrap_func */
   static StateFunction* _wrap_func(typename CXXStateFunction::FunctionPtr func);
+  /** \copydoc StateInterface::_wrap_func */
   static StateFunction* _wrap_func(typename CStateFunction::FunctionPtr func);
+  /** \copydoc StateInterface::_wrap_func */
   static StateFunction* _wrap_func(FunctionWrapper& func);
+  /** \copydoc StateInterface::_wrap_func */
   static StateFunction* _wrap_func(typename EmbeddedStateFunction::FunctionPtr func);
+  /**
+   * @brief Helper method to wrap an embedded function pointer.
+   * @param[in] ptr Pointer to embedded function.
+   * @param[in] language Language of the embedded function pointer.
+   * @returns New StateFunction instance wrapping ptr.
+   */
   static StateFunction* _wrap_func(void* ptr, const LANGUAGE& language);
 public:
   StateInterface(const StateInterface& other) = delete;
   StateInterface& operator=(const StateInterface&) = delete;
   
   /**
-     Create a state interface from external functions.
-     @param[in] fget Function that should be used to get state variables.
-     @param[in] fset Function that should be used to set state variables.
-     @param[in] fact Function that should be used to perform actions.
-     @param[in] name Name of the server communicator that should be used
-       to receive requests.
-     @param[in] flags Communicator flags.
-     @param[in] request_commtype Type of communicator to use for requests.
-     @param[in] reply_commtype Type of communicator to use for replies.
+   * @brief Create a state interface from external functions.
+   * @tparam Tget Type of the fget function.
+   * @tparam Tset Type of the fset function.
+   * @tparam Tact Type of the fact function.
+   * @param[in] fget Function that should be used to get state variables.
+   * @param[in] fset Function that should be used to set state variables.
+   * @param[in] fact Function that should be used to perform actions.
+   * @param[in] name Name of the server communicator that should be used
+   *   to receive requests.
+   * @param[in] flags Communicator flags.
+   * @param[in] request_commtype Type of communicator to use for requests.
+   * @param[in] reply_commtype Type of communicator to use for replies.
   */
   template<typename Tget, typename Tset, typename Tact>
   YGG_API_DEF StateInterface(Tget fget, Tset fset, Tact fact,
@@ -175,35 +246,35 @@ public:
   YGG_API std::string logInst() const override;
 
   /**
-     @brief Continuous receiving requests until the resume command is
-       received.
-     @returns true if successful, false otherwise.
+   * @brief Continuous receiving requests until the resume command is
+   *   received.
+   * @returns true if successful, false otherwise.
    */
   YGG_API virtual bool reply_to_requests();
 
   /**
-     @brief Get a state variable.
-     @param[in] name State variable name.
-     @param[out] data Destination that state variable should be stored in
-     @returns true if successful, false otherwise.
+   * @brief Get a state variable.
+   * @param[in] name State variable name.
+   * @param[out] data Destination that state variable should be stored in
+   * @returns true if successful, false otherwise.
    */
   YGG_API virtual bool get(const std::string& name,
                            yggdrasil_rapidjson::Document& data);
   
   /**
-     @brief Set a state variable.
-     @param[in] name State variable name.
-     @param[in] data Data that state variable should be set to.
-     @returns true if successful, false otherwise.
+   * @brief Set a state variable.
+   * @param[in] name State variable name.
+   * @param[in] data Data that state variable should be set to.
+   * @returns true if successful, false otherwise.
    */
   YGG_API virtual bool set(const std::string& name,
                            yggdrasil_rapidjson::Document& data);
 
   /**
-     @brief Perform an action.
-     @param[in] name Action name.
-     @param[in] param Data that state variable should be set to.
-     @returns true if successful, false otherwise.
+   * @brief Perform an action.
+   * @param[in] name Action name.
+   * @param[in] param Data that state variable should be set to.
+   * @returns true if successful, false otherwise.
    */
   YGG_API virtual bool act(const std::string& name,
                            yggdrasil_rapidjson::Document& param);
@@ -219,7 +290,9 @@ private:
 /**
  * @brief Allow other models to set requests to inspect or modify the
  *  state.
- * @tparam T Function type.
+ * @tparam Tget Type of the fget function.
+ * @tparam Tset Type of the fset function.
+ * @tparam Tact Type of the fact function.
  * @param[in] fget Function that should be used to get state variables.
  * @param[in] fset Function that should be used to set state variables.
  * @param[in] fact Function that should be used to perform actions.

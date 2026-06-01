@@ -1048,6 +1048,7 @@ function(add_external_library target library_type)
          -DBUILD_SHARED_LIBS=ON
          -DMSVC_AND_GNU_BUILD=ON
          -DCMAKE_GNUtoMS=ON)
+    set(OUTPUT_EXTENSION_OVERRIDE  ".elf.o")
   endif()
   if(WIN32)
     include(SearchTools)
@@ -1067,6 +1068,13 @@ function(add_external_library target library_type)
   )
   list(APPEND EXTERNAL_PRODUCTS ${external_target_file}
        ${external_def_file})
+  if(OUTPUT_EXTENSION_OVERRIDE)
+    configure_file(
+      ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/external_ext_overrides.cmake.in
+      ${ARGS_SOURCE_DIR}/external_ext_overrides.cmake
+      @ONLY
+    )
+  endif()
   configure_file(
     ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/external.CMakeLists.in
     ${ARGS_SOURCE_DIR}/CMakeLists.txt

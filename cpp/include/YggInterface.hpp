@@ -14,6 +14,8 @@
 
 using namespace YggInterface::communicator;
 
+namespace YggInterface {
+
 /*!
   @brief Allow other models to set requests to inspect or modify the
     state.
@@ -1450,3 +1452,5 @@ long yggRecvWithName(const std::string& name, T& data,
  *
  *     -DCMAKE_BUILD_TYPE=Release
  */
+  
+}

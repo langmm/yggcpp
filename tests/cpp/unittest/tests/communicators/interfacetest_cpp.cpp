@@ -2,6 +2,8 @@
 #include "YggInterface.hpp"
 #include "commtest.hpp"
 
+using namespace YggInterface;
+
 #define INIT_INPUT_BASE(cls, cls_args, alt, alt_args)	\
   std::cerr << "before sComm" << std::endl;		\
   alt sComm alt_args;					\

@@ -21,13 +21,21 @@
 
 namespace YggInterface {
   
-  /*!
+  /**
    * @brief Class for yggdrasil specific runtime errors.
    * @param[in] message Error message.
    */
   class YggdrasilRuntimeError : public std::runtime_error {
   public:
+    /**
+     * @brief Constructor from a C-style string
+     * @param[in] message Error message.
+     */
     YggdrasilRuntimeError(char const* const message) throw();
+    /**
+     * @brief Constructor from a C++ string.
+     * @param[in] message Error message.
+     */
     YggdrasilRuntimeError(const std::string& message) throw();
   };
   
