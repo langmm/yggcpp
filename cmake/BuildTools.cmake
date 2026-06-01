@@ -1069,6 +1069,7 @@ function(add_external_library target library_type)
   list(APPEND EXTERNAL_PRODUCTS ${external_target_file}
        ${external_def_file})
   if(OUTPUT_EXTENSION_OVERRIDE)
+    message(STATUS "OUTPUT_EXTENSION_OVERRIDE = ${OUTPUT_EXTENSION_OVERRIDE} [INTERNAL]")
     configure_file(
       ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/external_ext_overrides.cmake.in
       ${ARGS_SOURCE_DIR}/external_ext_overrides.cmake
