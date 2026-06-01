@@ -22,8 +22,13 @@ set(external_target_file "@external_target_file@")
 set(external_def_file "@external_def_file@")
 
 if(CMAKE_GNUtoMS)
-  set(CMAKE_@ARGS_LANGUAGE@_OUTPUT_EXTENSION ".elf.obj")
+  if(NOT CMAKE_@ARGS_LANGUAGE@_OUTPUT_EXTENSION)
+    set(CMAKE_@ARGS_LANGUAGE@_OUTPUT_EXTENSION ".o")
+  endif()
+  set(CMAKE_@ARGS_LANGUAGE@_OUTPUT_EXTENSION ".elf.${CMAKE_@ARGS_LANGUAGE@_OUTPUT_EXTENSION}")
 endif()
+message(STATUS "CMAKE_@ARGS_LANGUAGE@_OUTPUT_EXTENSION = ${CMAKE_@ARGS_LANGUAGE@_OUTPUT_EXTENSION}")
+message(STATUS "CMAKE_@ARGS_LANGUAGE@_INTERNAL_OUTPUT_EXTENSION = ${CMAKE_@ARGS_LANGUAGE@_INTERNAL_OUTPUT_EXTENSION}")
 
 include(BuildTools)
 add_internal_library(
@@ -59,6 +64,7 @@ if(library_type STREQUAL "OBJECT")
   # Ensure that the object files are in the build directory
   copy_target_files(
     ${target} "${CMAKE_CURRENT_BINARY_DIR}"
+    OBJECT_EXT ${CMAKE_@ARGS_LANGUAGE@_INTERNAL_OUTPUT_EXTENSION}
     COMPONENTS OBJECTS
   )
   

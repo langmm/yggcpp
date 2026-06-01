@@ -78,7 +78,7 @@ EmbeddedStateFunction::EmbeddedStateFunction(void* ptr,
 }
 EmbeddedStateFunction::EmbeddedStateFunction(FunctionWrapper& func) :
   StateFunction(), _ptr(new FunctionWrapper(func)) {}
-EmbeddedStateFunction::EmbeddedStateFunction(FunctionWrapper* ptr) :
+EmbeddedStateFunction::EmbeddedStateFunction(typename EmbeddedStateFunction::FunctionPtr ptr) :
   StateFunction(), _ptr(nullptr) {
   if (ptr)
     _ptr = new FunctionWrapper(*ptr);

@@ -74,7 +74,7 @@ while [[ $# -gt 0 ]]; do
 	    shift # past argument with no value
 	    ;;
 	--using-ipc )
-	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DDEFAULT_COMM=IPC"
+	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYGG_DEFAULT_COMM=IPC"
 	    shift # past argument with no value
 	    ;;
 	--with-lldb )

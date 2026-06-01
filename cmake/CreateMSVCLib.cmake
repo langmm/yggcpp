@@ -8,7 +8,7 @@ macro(_initialize_file_transform name src_ext dst_ext)
   set(RESULT_ALT)
   if((NOT SOURCE) AND ARGS_SOURCES)
     list(LENGTH ARGS_SOURCES N_SOURCES)
-    if(N_SOURCES GT 1 AND NOT ALLOW_MULTIPLE_SOURCES)
+    if(${N_SOURCES} GREATER 1 AND NOT ALLOW_MULTIPLE_SOURCES)
       if(ARGS_DESTINATION)
         message(FATAL_ERROR "Multiple sources (${ARGS_SOURCES}) provided for one destination (${ARGS_DESTINATION})")
       endif()
@@ -120,17 +120,20 @@ function(elf2coff SOURCE)
   set(multiValueArgs)
   set(FLAG_VERBOSE "-v2")
   _initialize_file_transform(
-    elf2coff ".elf.obj" ".coff.obj" ${ARGN}
+    elf2coff ".elf.o" ".obj" ${ARGN}
   )
   set_default(ARGS_COMMAND_ECHO STDOUT)
-  message(STATUS "CMAKE_SOURCE_DIR = ${CMAKE_SOURCE_DIR}")
-  message(STATUS "INTERNAL_TOP_SOURCE_DIR = ${INTERNAL_TOP_SOURCE_DIR}")
   cmake_path(
     APPEND INTERNAL_TOP_SOURCE_DIR "objconv.exe"
     OUTPUT_VARIABLE LOCAL_OBJCONV
   )
   if(EXISTS ${LOCAL_OBJCONV})
     message(STATUS "Local objconv exists: ${LOCAL_OBJCONV}")
+    find_program_generic(
+      OBJCONV objconv
+      HINTS ${CMAKE_SOURCE_DIR} ${INTERNAL_TOP_SOURCE_DIR}
+    )
+    message(STATUS "find_program OBJCONV = ${OBJCONV}")
     set(OBJCONV "${LOCAL_OBJCONV}")
   else()
     message(STATUS "Local objconv does NOT exist: ${LOCAL_OBJCONV}")

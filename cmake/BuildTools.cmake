@@ -619,7 +619,7 @@ function(setup_external_config lists_dir)
   list(APPEND ARGS_PRESERVE_VARIABLES
        CMAKE_VERBOSE_MAKEFILE CMAKE_MESSAGE_LOG_LEVEL)
   foreach(language C CXX Fortran)
-    list(APPEND ARGS_PRESERVE_VARIABLES "CMAKE_${language}_OUTPUT_EXTENSION")
+    list(APPEND ARGS_PRESERVE_VARIABLES "CMAKE_${language}_INTERNAL_OUTPUT_EXTENSION")
   endforeach()
   foreach(var IN LISTS ARGS_PRESERVE_VARIABLES)
     list(APPEND ARGS_ARGUMENTS "-D${var}=${${var}}")
@@ -772,7 +772,8 @@ function(add_mixed_language_library target library_type)
       )
     endif()
     if(${ilanguage}_external)
-      set(CMAKE_${ilanguage}_OUTPUT_EXTENSION ${CMAKE_${ARGS_BASE_LANGUAGE}_OUTPUT_EXTENSION})
+      set(CMAKE_${ilanguage}_INTERNAL_OUTPUT_EXTENSION
+          ${CMAKE_${ARGS_BASE_LANGUAGE}_OUTPUT_EXTENSION})
       add_external_library(
         ${${ilanguage}_target} OBJECT LANGUAGE ${ilanguage}
         SOURCES ${SRC_${ilanguage}}
@@ -937,6 +938,10 @@ function(add_external_library target library_type)
     list(GET SOURCES 0 FIRST_SOURCE)
     file2language(${FIRST_SOURCE} ARGS_LANGUAGE)
   endif()
+  if(NOT CMAKE_${ARGS_LANGUAGE}_INTERNAL_OUTPUT_EXTENSION)
+    set(CMAKE_${ARGS_LANGUAGE}_INTERNAL_OUTPUT_EXTENSION
+        ${CMAKE_${ARGS_LANGUAGE}_OUTPUT_EXTENSION})
+  endif()
   set(final_library_type ${library_type})
   if(library_type STREQUAL "OBJECT")
     set(final_library_type STATIC)
@@ -981,7 +986,7 @@ function(add_external_library target library_type)
     cmake_path(GET src FILENAME src_base)
     cmake_path(
       APPEND ARGS_BUILD_DIR
-      "${src_base}${CMAKE_${ARGS_LANGUAGE}_OUTPUT_EXTENSION}"
+      "${src_base}${CMAKE_${ARGS_LANGUAGE}_INTERNAL_OUTPUT_EXTENSION}"
       OUTPUT_VARIABLE obj
     )
     list(APPEND EXTERNAL_OBJECTS ${obj})
@@ -1258,7 +1263,7 @@ function(copy_files destination)
     endif()
     cmake_path(GET idst0 FILENAME idstbase)
     if(ARGS_REPLACE_EXTENSION)
-      cmake_path(GET idstbase EXTENSION iext)
+      cmake_path(GET idstbase EXTENSION LAST_ONLY iext)
       string(REPLACE "${iext}" "${ARGS_REPLACE_EXTENSION}"
              idstbase "${idstbase}")
     endif()
@@ -1286,7 +1291,8 @@ function(copy_files destination)
 endfunction()
 
 function(copy_target_files target destination)
-  set(oneValueArgs TARGET_TYPE TARGET_LANGUAGE EVENT_TARGET EVENT_TYPE)
+  set(oneValueArgs TARGET_TYPE TARGET_LANGUAGE EVENT_TARGET EVENT_TYPE
+      OBJECT_EXT)
   set(multiValueArgs COMPONENTS EXCLUDE_COMPONENTS)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
   if(NOT ARGS_TARGET_TYPE)
@@ -1300,6 +1306,9 @@ function(copy_target_files target destination)
   endif()
   if(NOT ARGS_EVENT_TYPE)
     set(ARGS_EVENT_TYPE POST_BUILD)
+  endif()
+  if(NOT ARGS_OBJECT_EXT)
+    set(ARGS_OBJECT_EXT ${CMAKE_${TARGET_LANGUAGE}_OUTPUT_EXTENSION})
   endif()
   message(DEBUG "copy_target_files: TARGET = ${target}")
   message(DEBUG "copy_target_files: TARGET_TYPE = ${ARGS_TARGET_TYPE}")
@@ -1339,10 +1348,13 @@ function(copy_target_files target destination)
         set(OBJECT_EVENT_TYPE PRE_LINK)
       endif()
       set(ADDED_ARGS)
+      if(NOT "${ARGS_OBJECT_EXT}" STREQUAL "${CMAKE_${TARGET_LANGUAGE}_OUTPUT_EXTENSION}")
+        list(APPEND ADDED_ARGS
+             REPLACE_EXTENSION ${ARGS_OBJECT_EXT})
+      endif()
       if(CMAKE_GNUtoMS)
         # Convert ELF object files to COFF
         list(APPEND ADDED_ARGS
-             REPLACE_EXTENSION ".obj"
              CONV_FUNC elf2coff
              CONV_MODULE CreateMSVCLib)
       endif()

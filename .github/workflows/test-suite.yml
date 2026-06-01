@@ -139,6 +139,9 @@ jobs:
           # brew link --overwrite python@3.11
           brew install cmocka lcov gnutls graphviz doxygen>=1.9.2 curl # llvm
           # Required for compiling with clang & gfortran on GHA
+          echo "FC13=$(which gfortran-13)"
+          echo "FC14=$(which gfortran-14)"
+          echo "FC15=$(which gfortran-15)"
           echo "FC=$(which gfortran-13)" >> "$GITHUB_ENV"
       # - name: Set vcpkg triplet on Windows (mingw)
       #   if: matrix.os == 'windows-latest' && matrix.windows-compiler == 'mingw'
@@ -441,7 +444,7 @@ jobs:
         shell: bash -l {0}
         run: |
           echo "PYTHON=${PYTHON}"
-          ./build_yggdrasil_rapidjson.sh --install-dir ${{ github.workspace }}/../_install
+          ./build_yggdrasil_rapidjson.sh --install-dir $(pwd)/../_install
           echo "CMAKE_ARGS_NO_PYTHON=${{ env.CMAKE_ARGS_NO_PYTHON }} \"-DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\\_install\" \"-DCMAKE_PREFIX_PATH=${VCPKG_INSTALLATION_ROOT}\installed\\${VCPKG_TRIPLET};${{ github.workspace }}\\..\\_install\"" >> "$GITHUB_ENV"
           echo "PYTHON_CONFIG_FLAGS=${{ env.PYTHON_CONFIG_FLAGS }} --config-settings=cmake.define.Python3_ROOT_DIR=${{ env.pythonLocation }} --config-settings=cmake.define.Python_ROOT_DIR=${{ env.pythonLocation }} --config-settings=cmake.define.CMAKE_PREFIX_PATH=\"${VCPKG_INSTALLATION_ROOT}\installed\\${VCPKG_TRIPLET};${{ github.workspace }}\\..\\_install\"" >> "$GITHUB_ENV"
      
