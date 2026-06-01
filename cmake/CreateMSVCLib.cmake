@@ -124,8 +124,9 @@ function(elf2coff SOURCE)
   )
   set_default(ARGS_COMMAND_ECHO STDOUT)
   message(STATUS "CMAKE_SOURCE_DIR = ${CMAKE_SOURCE_DIR}")
+  message(STATUS "CMAKE_ORIGINAL_SOURCE_DIR = ${CMAKE_ORIGINAL_SOURCE_DIR}")
   cmake_path(
-    APPEND CMAKE_SOURCE_DIR "objconv.exe"
+    APPEND CMAKE_ORIGINAL_SOURCE_DIR "objconv.exe"
     OUTPUT_VARIABLE LOCAL_OBJCONV
   )
   if(EXISTS ${LOCAL_OBJCONV})
@@ -135,7 +136,7 @@ function(elf2coff SOURCE)
     message(STATUS "Local objconv does NOT exist: ${LOCAL_OBJCONV}")
     find_program_generic(
       OBJCONV objconv REQUIRED
-      HINTS ${CMAKE_SOURCE_DIR}
+      HINTS ${CMAKE_SOURCE_DIR} ${CMAKE_ORIGINAL_SOURCE_DIR}
     )
   endif()
   if(ARGS_COMMAND_ERROR_IS_FATAL)
