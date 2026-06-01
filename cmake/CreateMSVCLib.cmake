@@ -123,24 +123,22 @@ function(elf2coff SOURCE)
     elf2coff ".elf.o" ".obj" ${ARGN}
   )
   set_default(ARGS_COMMAND_ECHO STDOUT)
-  cmake_path(
-    APPEND INTERNAL_TOP_SOURCE_DIR "objconv.exe"
-    OUTPUT_VARIABLE LOCAL_OBJCONV
+  find_program_generic(
+    OBJCONV objconv  # REQUIRED
+    HINTS ${CMAKE_SOURCE_DIR} ${INTERNAL_TOP_SOURCE_DIR}
   )
-  if(EXISTS ${LOCAL_OBJCONV})
-    message(STATUS "Local objconv exists: ${LOCAL_OBJCONV}")
-    find_program_generic(
-      OBJCONV objconv
-      HINTS ${CMAKE_SOURCE_DIR} ${INTERNAL_TOP_SOURCE_DIR}
+  message(STATUS "find_program OBJCONV = ${OBJCONV}")
+  if(OBJCONV STREQUAL "OBJCONV-NOTFOUND" OR NOT OBJCONV)
+    cmake_path(
+      APPEND INTERNAL_TOP_SOURCE_DIR "objconv.exe"
+      OUTPUT_VARIABLE LOCAL_OBJCONV
     )
-    message(STATUS "find_program OBJCONV = ${OBJCONV}")
-    set(OBJCONV "${LOCAL_OBJCONV}")
-  else()
-    message(STATUS "Local objconv does NOT exist: ${LOCAL_OBJCONV}")
-    find_program_generic(
-      OBJCONV objconv REQUIRED
-      HINTS ${CMAKE_SOURCE_DIR} ${INTERNAL_TOP_SOURCE_DIR}
-    )
+    if(EXISTS ${LOCAL_OBJCONV})
+      message(STATUS "Local objconv exists: ${LOCAL_OBJCONV}")
+      set(OBJCONV "${LOCAL_OBJCONV}")
+    else()
+      message(FATAL_ERROR "Local objconv does NOT exist: ${LOCAL_OBJCONV}")
+    endif()
   endif()
   if(ARGS_COMMAND_ERROR_IS_FATAL)
     list(APPEND ARGS_UNPARSED_ARGUMENTS
