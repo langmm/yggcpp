@@ -126,8 +126,8 @@ int RMQConnection::init() {
   amqp_queue_declare_ok_t *r = amqp_queue_declare(
     conn, channel, STR2RMQBYTES(queue_name),
     passive, // passive
-    0, // durable
-    1, // exclusive
+    1, // durable
+    0, // exclusive
     1, // auto-delete
     amqp_empty_table);
   RMQSTATUS_REPLY_(amqp_get_rpc_reply(conn),
@@ -176,8 +176,8 @@ int RMQConnection::nmsg(DIRECTION) const {
   amqp_queue_declare_ok_t *r = amqp_queue_declare(
     conn, channel, STR2RMQBYTES(queue_name),
     1, // passive
-    0, // durable
-    1, // exclusive
+    1, // durable
+    0, // exclusive
     1, // auto-delete
     amqp_empty_table);
   if (!r) {

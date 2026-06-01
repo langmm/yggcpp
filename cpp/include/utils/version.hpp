@@ -11,20 +11,16 @@
 //!@endcond
 
 /*! \def YGGINTERFACE_MAJOR_VERSION
-    \ingroup YGGINTERFACE_CONFIG
     \brief Major version of YggInterface
 */
 /*! \def YGGINTERFACE_MINOR_VERSION
-    \ingroup YGGINTERFACE_CONFIG
     \brief Minor version of YggInterface
 */
 /*! \def YGGINTERFACE_PATCH_VERSION
-    \ingroup YGGINTERFACE_CONFIG
     \brief Patch version of YggInterface
     that this version of YggdrasilRapidJSON is based on.
 */
 /*! \def YGGINTERFACE_VERSION_STRING
-    \ingroup YGGINTERFACE_CONFIG
     \brief Version of YggInterface in "<major>.<minor>.<patch>" string format.
 */
 #define YGGINTERFACE_MAJOR_VERSION 0

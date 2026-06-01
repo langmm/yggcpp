@@ -2,6 +2,18 @@
 set -e
 
 INSTALL_DIR="$(pwd)/_install"
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --install-dir )
+            INSTALL_DIR="$2"
+            shift
+            shift
+            ;;
+        *)
+            shift
+            ;;
+    esac
+done
 
 if [ ! -d yggdrasil-rapidjson ]; then
     git clone https://github.com/cropsinsilico/yggdrasil-rapidjson.git

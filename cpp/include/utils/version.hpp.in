@@ -11,20 +11,16 @@
 //!@endcond
 
 /*! \def @MACRO_PREFIX@_MAJOR_VERSION
-    \ingroup @MACRO_PREFIX@_CONFIG
     \brief Major version of @PROJECT_NAME@
 */
 /*! \def @MACRO_PREFIX@_MINOR_VERSION
-    \ingroup @MACRO_PREFIX@_CONFIG
     \brief Minor version of @PROJECT_NAME@
 */
 /*! \def @MACRO_PREFIX@_PATCH_VERSION
-    \ingroup @MACRO_PREFIX@_CONFIG
     \brief Patch version of @PROJECT_NAME@
     that this version of YggdrasilRapidJSON is based on.
 */
 /*! \def @MACRO_PREFIX@_VERSION_STRING
-    \ingroup @MACRO_PREFIX@_CONFIG
     \brief Version of @PROJECT_NAME@ in "<major>.<minor>.<patch>" string format.
 */
 #define @MACRO_PREFIX@_MAJOR_VERSION @MAJOR_VERSION@
