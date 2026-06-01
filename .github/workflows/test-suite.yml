@@ -544,7 +544,15 @@ jobs:
           python -c "import numpy; print(numpy.get_include())"
 
       - name: Install YggdrasilRapidJSON from source
-        if: matrix.python-install == 'pip'
+        if: matrix.python-install == 'pip' && !(matrix.python-install == 'pip' && matrix.os == 'windows-latest')
+        shell: bash -l {0}
+        run: |
+          echo "PYTHON=${PYTHON}"
+          cd ../
+          ./build_yggdrasil_rapidjson.sh
+          echo "CMAKE_PREFIX_PATH=$(pwd)/_install" >> "$GITHUB_ENV"
+      - name: Install YggdrasilRapidJSON from source
+        if: matrix.python-install == 'pip' && matrix.python-install == 'pip' && matrix.os == 'windows-latest'
         shell: bash -l {0}
         run: |
           echo "PYTHON=${PYTHON}"

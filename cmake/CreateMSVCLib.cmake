@@ -123,10 +123,21 @@ function(elf2coff SOURCE)
     elf2coff ".elf.obj" ".coff.obj" ${ARGN}
   )
   set_default(ARGS_COMMAND_ECHO STDOUT)
-  find_program_generic(
-    OBJCONV objconv REQUIRED
-    HINTS ${CMAKE_SOURCE_DIR}
+  message(STATUS "CMAKE_SOURCE_DIR = ${CMAKE_SOURCE_DIR}")
+  cmake_path(
+    APPEND CMAKE_SOURCE_DIR "objconv.exe"
+    OUTPUT_VARIABLE LOCAL_OBJCONV
   )
+  if(EXISTS ${LOCAL_OBJCONV})
+    message(STATUS "Local objconv exists: ${LOCAL_OBJCONV}")
+    set(OBJCONV "${LOCAL_OBJCONV}")
+  else()
+    message(STATUS "Local objconv does NOT exist: ${LOCAL_OBJCONV}")
+    find_program_generic(
+      OBJCONV objconv REQUIRED
+      HINTS ${CMAKE_SOURCE_DIR}
+    )
+  endif()
   if(ARGS_COMMAND_ERROR_IS_FATAL)
     list(APPEND ARGS_UNPARSED_ARGUMENTS
          COMMAND_ERROR_IS_FATAL ${ARGS_COMMAND_ERROR_IS_FATAL})
