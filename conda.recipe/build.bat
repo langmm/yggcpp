@@ -1,7 +1,8 @@
 @setlocal EnableDelayedExpansion
 @echo on
 
-powershell -command "Expand-Archive -Path utils\objconv.zip -DestinationPath ."
+powershell -command "Expand-Archive -Path utils\objconv.zip -DestinationPath .\ -Verbose"
+powershell -command "Get-ChildItem -Path .\"
 
 mkdir conda_build
 

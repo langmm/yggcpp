@@ -123,7 +123,10 @@ function(elf2coff SOURCE)
     elf2coff ".elf.obj" ".coff.obj" ${ARGN}
   )
   set_default(ARGS_COMMAND_ECHO STDOUT)
-  find_program_generic(OBJCONV objconv REQUIRED)
+  find_program_generic(
+    OBJCONV objconv REQUIRED
+    HINTS ${CMAKE_SOURCE_DIR}
+  )
   if(ARGS_COMMAND_ERROR_IS_FATAL)
     list(APPEND ARGS_UNPARSED_ARGUMENTS
          COMMAND_ERROR_IS_FATAL ${ARGS_COMMAND_ERROR_IS_FATAL})

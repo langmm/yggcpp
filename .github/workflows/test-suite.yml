@@ -431,7 +431,7 @@ jobs:
         if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
         shell: bash -l {0}
         run: |
-          echo "CMAKE_PREFIX_PATH=${{ env.CMAKE_PREFIX_PATH }};${VCPKG_INSTALLATION_ROOT}\installed\\${VCPKG_TRIPLET}" >> "$GITHUB_ENV"
+          echo "CMAKE_PREFIX_PATH=${VCPKG_INSTALLATION_ROOT}\installed\\${VCPKG_TRIPLET}" >> "$GITHUB_ENV"
           echo "CMAKE_ARGS_NO_PYTHON=${{ env.CMAKE_ARGS_NO_PYTHON }} \"-DCMAKE_INSTALL_PREFIX=${{ github.workspace }}\\_install\"" >> "$GITHUB_ENV"
           echo "PYTHON_CONFIG_FLAGS=${{ env.PYTHON_CONFIG_FLAGS }} --config-settings=cmake.define.Python3_ROOT_DIR=${{ env.pythonLocation }} --config-settings=cmake.define.Python_ROOT_DIR=${{ env.pythonLocation }}" >> "$GITHUB_ENV"
      
@@ -574,13 +574,13 @@ jobs:
           mkdir build
           cd build
           which cmake
-          cmake .. ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} ${{ env.CMAKE_ARGS_TEST }} -D"${{ env.CMAKE_PREFIX_PATH }}"
+          cmake .. ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} ${{ env.CMAKE_ARGS_TEST }}
       - name: Configure (PIP)
         if: matrix.python-install == 'pip'
         run: |
           mkdir build
           cd build
-          cmake .. ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} ${{ env.CMAKE_ARGS_TEST }} -D"${{ env.CMAKE_PREFIX_PATH }}"
+          cmake .. ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} ${{ env.CMAKE_ARGS_TEST }}
       
       ###################################
       # Build CXX & C
@@ -637,11 +637,11 @@ jobs:
         if: matrix.python-install == 'conda'
         shell: bash -l {0}
         run: |
-          python -m pip install . -v ${{ env.PYTHON_CONFIG_FLAGS }} --config-settings=cmake.define.CMAKE_PREFIX_PATH=${{ env.CMAKE_PREFIX_PATH }}
+          python -m pip install . -v ${{ env.PYTHON_CONFIG_FLAGS }}
       - name: Build Python (PIP)
         if: matrix.python-install == 'pip'
         run: |
-          python -m pip install . -v ${{ env.PYTHON_CONFIG_FLAGS }} --config-settings=cmake.define.CMAKE_PREFIX_PATH=${{ env.CMAKE_PREFIX_PATH }}
+          python -m pip install . -v ${{ env.PYTHON_CONFIG_FLAGS }}
       - name: Unset CMAKE_ARGS for Python build
         shell: bash -l {0}
         run: |
@@ -692,22 +692,22 @@ jobs:
         shell: bash -l {0}
         run: |
           echo "PATH=$PATH"
-          ./run_tests.sh --rebuild --speed --config Release ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} -D"${{ env.CMAKE_PREFIX_PATH }}" --verbose
+          ./run_tests.sh --rebuild --speed --config Release ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} --verbose
       - name: Run speed tests (ipc)
         if: matrix.with-asan == false && matrix.os != 'windows-latest'
         shell: bash -l {0}
         run: |
-          ./run_tests.sh --speed --config Release ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} -D"${{ env.CMAKE_PREFIX_PATH }}" --verbose --comm IPC
+          ./run_tests.sh --speed --config Release ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} --verbose --comm IPC
       - name: Run speed tests (zmq)
         if: matrix.with-asan == false && matrix.install-zmq
         shell: bash -l {0}
         run: |
-          ./run_tests.sh --speed --config Release ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} -D"${{ env.CMAKE_PREFIX_PATH }}" --verbose --comm ZMQ
+          ./run_tests.sh --speed --config Release ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} --verbose --comm ZMQ
       - name: Run speed tests (rmq)
         if: matrix.with-asan == false && matrix.install-rmq && matrix.python-install != 'conda'
         shell: bash -l {0}
         run: |
-          ./run_tests.sh --speed --config Release ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} -D"${{ env.CMAKE_PREFIX_PATH }}" --verbose --comm RMQ
+          ./run_tests.sh --speed --config Release ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} --verbose --comm RMQ
 
       ###################################
       # Docs tests
