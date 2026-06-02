@@ -1048,7 +1048,7 @@ function(add_external_library target library_type)
          -DBUILD_SHARED_LIBS=ON
          -DMSVC_AND_GNU_BUILD=ON
          -DCMAKE_GNUtoMS=ON)
-    set(OUTPUT_EXTENSION_OVERRIDE  ".elf.o")
+    # set(OUTPUT_EXTENSION_OVERRIDE  ".elf.o")
   endif()
   if(WIN32)
     include(SearchTools)
@@ -1253,11 +1253,6 @@ function(copy_files destination)
       if(ARGS_CONV_MODULE)
         include(${ARGS_CONV_MODULE})
       endif()
-      # setup_external_function(
-      #   ${ARGS_CONV_FUNC}
-      #   OUTPUT_COMMAND CALL_CONV_FUNC
-      #   ${isrc} DESTINATION_DIR "${destination}"
-      # )
       cmake_language(
         CALL ${ARGS_CONV_FUNC}
         ${isrc} DESTINATION_DIR "${destination}"
@@ -1361,16 +1356,17 @@ function(copy_target_files target destination)
         list(APPEND ADDED_ARGS
              REPLACE_EXTENSION ${ARGS_OBJECT_EXT})
       endif()
-      if(CMAKE_GNUtoMS)
-        # Convert ELF object files to COFF
-        list(APPEND ADDED_ARGS
-             CONV_FUNC elf2coff
-             CONV_MODULE CreateMSVCLib)
-      endif()
+      # if(CMAKE_GNUtoMS)
+      #   # Convert ELF object files to COFF
+      #   list(APPEND ADDED_ARGS
+      #        CONV_FUNC elf2coff
+      #        CONV_MODULE CreateMSVCLib)
+      # endif()
       add_custom_command_function(
         copy_files MODULE BuildTools
         TARGET ${ARGS_EVENT_TARGET} ${OBJECT_EVENT_TYPE}
         COMMENT "Copy object files for target \"${target}\""
+        IDSTR "${target}_OBJECTS"
         FUNCTION_ARGUMENTS ${destination} ${ADDED_ARGS}
         GENERATED_FUNCTION_ARGUMENTS
           SOURCES $<JOIN:$<TARGET_OBJECTS:${target}>,$<SEMICOLON>>
@@ -1381,6 +1377,7 @@ function(copy_target_files target destination)
         copy_files MODULE BuildTools
         TARGET ${ARGS_EVENT_TARGET} ${ARGS_EVENT_TYPE}
         COMMENT "Copy .mod files for target \"${target}\""
+        IDSTR "${target}_FORTRAN_MOD"
         FUNCTION_ARGUMENTS ${destination} SOURCE_REGEX "*.mod"
         GENERATED_FUNCTION_ARGUMENTS
           SOURCE_DIRECTORY $<TARGET_PROPERTY:${target},Fortran_MODULE_DIRECTORY>
@@ -1397,6 +1394,7 @@ function(copy_target_files target destination)
         copy_files MODULE BuildTools
         TARGET ${ARGS_EVENT_TARGET} ${ARGS_EVENT_TYPE}
         COMMENT "Copy .def files for target \"${target}\""
+        IDSTR "${target}_DEF"
         FUNCTION_ARGUMENTS ${destination} SOURCE_REGEX "*.def"
         GENERATED_FUNCTION_ARGUMENTS
           SOURCE_DIRECTORY ${GENERATE_DIRECTORY}
@@ -1407,6 +1405,7 @@ function(copy_target_files target destination)
       #   copy_files MODULE BuildTools
       #   TARGET ${ARGS_EVENT_TARGET} ${ARGS_EVENT_TYPE}
       #   COMMENT "Copy library file for target \"${target}\""
+      #   IDSTR "${target}_LIB"
       #   FUNCTION_ARGUMENTS ${destination}
       #   GENERATED_FUNCTION_ARGUMENTS
       #     SOURCES $<TARGET_FILE:${target}>

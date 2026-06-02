@@ -561,7 +561,7 @@ function(add_custom_command_function function)
   set(options PRE_BUILD PRE_LINK POST_BUILD
       COMMAND_EXPAND_LISTS USES_TERMINAL VERBATIM)
   set(oneValueArgs MODULE DEST DEST_DIR
-      TARGET COMMENT WORKING_DIRECTORY)
+      TARGET COMMENT WORKING_DIRECTORY IDSTR)
   set(multiValueArgs FUNCTION_ARGUMENTS GENERATED_FUNCTION_ARGUMENTS
       PRESERVE_VARIABLES COMMAND_ARGUMENTS
       BYPRODUCTS DEPENDS OUTPUT)
@@ -584,7 +584,7 @@ function(add_custom_command_function function)
   endif()
   collect_arguments(
     FUNCTION_ARGS ARGS "${options}"
-    MODULE DEST DEST_DIR PRESERVE_VARIABLES
+    MODULE DEST DEST_DIR PRESERVE_VARIABLES IDSTR
     FUNCTION_ARGUMENTS COMMAND_ARGUMENTS
   )
   collect_arguments(
@@ -625,7 +625,7 @@ endfunction()
 
 function(setup_external_function function)
   set(options INCLUDE)
-  set(oneValueArgs MODULE DEST DEST_DIR OUTPUT_COMMAND)
+  set(oneValueArgs MODULE DEST DEST_DIR OUTPUT_COMMAND IDSTR)
   set(multiValueArgs ARGUMENTS PRESERVE_VARIABLES COMMAND_ARGUMENTS
       FUNCTION_ARGUMENTS)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -645,6 +645,9 @@ function(setup_external_function function)
       message(FATAL_ERROR "Neither DEST, INCLUDE or OUTPUT_COMMAND set")
     endif()
     string(RANDOM DEST_ID)  # Allow user to specify?
+    if(ARGS_IDSTR)
+      set(DEST_ID "${ARGS_IDSTR}_${DEST_ID}")
+    endif()
     cmake_path(
       APPEND ARGS_DEST_DIR "call_${function}_${DEST_ID}.cmake"
       OUTPUT_VARIABLE ARGS_DEST

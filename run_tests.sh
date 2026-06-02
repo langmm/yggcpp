@@ -314,19 +314,23 @@ if [ -n "$DO_SKBUILD" ]; then
 	-v .
 else
     cd $BUILD_DIR
+    if [[ "$TEST_TYPE" == "c" ]] || [[ "$TEST_TYPE" == "cxx" ]] || [[ "$TEST_TYPE" == "fortran" ]] || [[ "$TEST_TYPE" == "python" ]]; then
+	TEST_TYPE="unit"
+    fi
+    if [[ "$TEST_TYPE" == "unit" ]] && [ ! -n "$DONT_TEST" ]; then
+	if [ -n "$WITH_ASAN" ] && [ ! -n "$DYLD_INSERT_LIBRARIES" ]; then
+            DYLD_INSERT_LIBRARIES=$(clang -print-file-name=libclang_rt.asan_osx_dynamic.dylib)
+	    export DYLD_INSERT_LIBRARIES=$(clang -print-file-name=libclang_rt.asan_osx_dynamic.dylib)
+            echo "Set DYLD_INSERT_LIBRARIES to ${DYLD_INSERT_LIBRARIES}"
+	fi
+    fi
     if [ ! -n "$DONT_BUILD" ]; then
 	cmake .. $CMAKE_FLAGS $CMAKE_FLAGS_LIB
 	cmake --build . $CONFIG_FLAGS
 	# Need install here to ensure that cmake config files are in place
 	cmake --install . --prefix "$INSTALL_DIR" $CONFIG_FLAGS
     fi
-    if [[ "$TEST_TYPE" == "c" ]] || [[ "$TEST_TYPE" == "cxx" ]] || [[ "$TEST_TYPE" == "fortran" ]] || [[ "$TEST_TYPE" == "python" ]]; then
-	TEST_TYPE="unit"
-    fi
     if [[ "$TEST_TYPE" == "unit" ]] && [ ! -n "$DONT_TEST" ]; then
-	if [ -n "$WITH_ASAN" ] && [ ! -n "$DYLD_INSERT_LIBRARIES" ]; then
-	    export DYLD_INSERT_LIBRARIES=$(clang -print-file-name=libclang_rt.asan_osx_dynamic.dylib)
-	fi
 	if [ -n "$WITH_LLDB" ]; then
 	    if [ -n "$DO_Fortran" ]; then
 		lldb -o 'run' -o 'quit' tests/fortran/fortran_testsuite -- test_ygg_input_1_

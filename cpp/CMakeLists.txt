@@ -37,49 +37,15 @@ include(GenerateExportHeaderYggdrasil)
 generate_export_header_yggdrasil(${YGG_TARGET_CXX} ${EXPORT_HEADER_ARGS})
 set(YGG_INSTALL_INCLUDES ${YGG_INSTALL_INCLUDES} PARENT_SCOPE)
 
-target_link_libraries(
-    ${YGG_TARGET_CXX} PRIVATE ${DEPS_LIBRARIES_PRIVATE})
-target_link_libraries(
-    ${YGG_TARGET_CXX} PUBLIC ${DEPS_LIBRARIES}
-    "$<$<LINK_LANGUAGE:C>:${DEPS_PUBLIC_C_LIBS}>"
-    "$<$<LINK_LANGUAGE:CXX>:${DEPS_PUBLIC_CXX_LIBS}>"
-    "$<$<LINK_LANGUAGE:Fortran>:${DEPS_PUBLIC_Fortran_LIBS}>")
+ygginterface_target_config(${YGG_TARGET_CXX} PUBLIC DEPS)
 target_include_directories(
-    ${YGG_TARGET_CXX} PUBLIC ${DEPS_INCLUDE_DIRS}
+    ${YGG_TARGET_CXX} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
-    $<INSTALL_INTERFACE:include/YggInterface>)
-target_compile_definitions(
-    ${YGG_TARGET_CXX} PUBLIC ${YGG_INSTALL_DEFS})
-target_compile_options(
-    ${YGG_TARGET_CXX} PUBLIC ${DEPS_PUBLIC_COMPILE_FLAGS}
-    "$<$<COMPILE_LANGUAGE:C>:${DEPS_PUBLIC_C_COMPILE_FLAGS}>"
-    "$<$<COMPILE_LANGUAGE:CXX>:${DEPS_PUBLIC_CXX_COMPILE_FLAGS}>"
-    "$<$<COMPILE_LANGUAGE:Fortran>:${DEPS_PUBLIC_Fortran_COMPILE_FLAGS}>")
-target_link_options(
-    ${YGG_TARGET_CXX} PUBLIC ${DEPS_PUBLIC_LINK_FLAGS}
-    "$<$<LINK_LANGUAGE:C>:${DEPS_PUBLIC_C_LINK_FLAGS}>"
-    "$<$<LINK_LANGUAGE:CXX>:${DEPS_PUBLIC_CXX_LINK_FLAGS}>"
-    "$<$<LINK_LANGUAGE:Fortran>:${DEPS_PUBLIC_Fortran_LINK_FLAGS}>")
-target_compile_features(
-    ${YGG_TARGET_CXX} PUBLIC cxx_std_14)
-
-if (COVERAGE_C_COMPILE_FLAGS)
-    target_compile_options(
-        ${YGG_TARGET_CXX} PUBLIC
-	"$<$<COMPILE_LANGUAGE:C>:${COVERAGE_C_COMPILE_FLAGS}>"
-	"$<$<COMPILE_LANGUAGE:CXX>:${COVERAGE_C_COMPILE_FLAGS}>")
-endif()
-if (COVERAGE_C_LINK_FLAGS)
-    target_link_options(
-        ${YGG_TARGET_CXX} PUBLIC
-	"$<$<LINK_LANGUAGE:C>:${COVERAGE_C_LINK_FLAGS}>"
-	"$<$<LINK_LANGUAGE:CXX>:${COVERAGE_C_LINK_FLAGS}>")
-endif()
-if (COVERAGE_C_LIBRARIES)
-    target_link_libraries(
-        ${YGG_TARGET_CXX} PRIVATE ${COVERAGE_C_LIBRARIES})
-endif()
+    $<INSTALL_INTERFACE:include/YggInterface>
+)
+target_compile_definitions(${YGG_TARGET_CXX} PUBLIC ${YGG_INSTALL_DEFS})
+target_compile_features(${YGG_TARGET_CXX} PUBLIC cxx_std_14)
 
 include(AddYggInterface)
 add_library_dirs_to_rpath(${YGG_TARGET_CXX})

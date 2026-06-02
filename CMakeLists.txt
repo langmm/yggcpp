@@ -22,7 +22,6 @@ option(YGG_Python_LIBRARY_WRAP "Build the Yggdrasil Python interface library by 
 option(ALLOW_SKBUILD_NONPython "Allow the non-Python interfaces (C/C++/Fortran) to be built from SKBUILD" OFF)
 option(YGG_BUILD_TESTS "Build tests" OFF)
 # option(YGG_TEST_WITH_LLDB "Run tests with lldb" OFF)
-option(YGG_ENABLE_COVERAGE "Enable coverage reporting" OFF)
 option(YGG_BUILD_THIRDPARTY_GTEST "Use gtest installation in 'thirdpart/gtest' by default if available" ON)
 option(YGG_SKIP_VALGRIND_TESTS "Disable valgrind tests" OFF)
 option(GENERATE_YGGDRASIL_RAPIDJSON_WRAPPER "Generate the yggdrasil_rapidjson wrapper from the C++ interface" OFF)
@@ -345,43 +344,6 @@ endif()
 if(YGG_LINK_Python_TO_CXX AND (BUILD_Python_LIBRARY OR SKBUILD))
   set(BUILD_CXX_LIBRARY ON)
 endif()
-
-##################
-# Coverage       #
-##################
-
-if(YGG_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang|ARMClang")
-  find_program(GCOVR_FOUND gcovr)
-  if (GCOVR_FOUND)
-    message(STATUS "COVERAGE ON")
-    set(COVERAGE_DIR ${CMAKE_BINARY_DIR}/coverage)
-    file(MAKE_DIRECTORY ${COVERAGE_DIR})
-    list(APPEND COVERAGE_C_COMPILE_FLAGS -g -O0 --coverage -fno-inline -fprofile-arcs -ftest-coverage)
-    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|ARMClang")
-      set(CTEST_COVERAGE_COMMAND "llvm-cov")
-      set(CTEST_COVERAGE_EXTRA_FLAGS "gcov")
-      list(APPEND COVERAGE_C_COMPILE_FLAGS -fprofile-instr-generate -fcoverage-mapping)
-    else()
-      list(APPEND COVERAGE_C_LIBRARIES gcov)
-      set(CTEST_COVERAGE_COMMAND "gcov")
-      set(CTEST_COVERAGE_EXTRA_FLAGS "")
-      list(APPEND COVERAGE_C_COMPILE_FLAGS -fno-inline-small-functions -fno-default-inline)
-    endif()
-    set(COVERAGE_C_LINK_FLAGS ${COVERAGE_C_COMPILE_FLAGS})
-  else()
-    message(STATUS "Could not find gcovr, coverage disabled")
-    set(YGG_ENABLE_COVERAGE OFF)
-  endif()
-endif(YGG_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang|ARMClang")
-
-function(cover_test target)
-  if(YGG_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang|ARMClang")
-    add_test(NAME ${target}_coverage
-             COMMAND sh -c "gcovr --root=${CMAKE_SOURCE_DIR} --gcov-executable=\"${CTEST_COVERAGE_COMMAND} ${CTEST_COVERAGE_EXTRA_FLAGS}\" --coveralls=${COVERAGE_DIR}/coverage.info --html-details=${COVERAGE_DIR}/coverage.html --exclude=tests/ --exclude=thirdparty/ --filter=${CMAKE_SOURCE_DIR} -v ${CMAKE_BINARY_DIR}"
-             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-    set_tests_properties(${target}_coverage PROPERTIES DEPENDS "${target}")
-  endif(YGG_ENABLE_COVERAGE AND CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang|ARMClang")
-endfunction()
 
 ###########################
 # Regenerate version file #

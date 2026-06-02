@@ -16,7 +16,6 @@ if (NOT SKBUILD)
     ygginterface_options(Python_COPY_ARGS)
     list(
       APPEND Python_COPY_ARGS
-      YGG_ENABLE_COVERAGE
       YGG_SKIP_VALGRIND_TESTS
     )
     foreach(lang ${YGG_EMBEDDED_LANGUAGES})
