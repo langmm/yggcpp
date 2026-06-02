@@ -68,9 +68,9 @@ function(add_speed_test LANGUAGE LANGUAGE_EXT)
   else()
     list(APPEND TEST_ENV "FAKE_ENV=test")
   endif()
-  if (WIN32 AND ${Python_PREFIX}_ROOT_DIR)
-    list(APPEND NEW_PATHS ${${Python_PREFIX}_ROOT_DIR})
-  endif()
+  # if (WIN32 AND ${Python_PREFIX}_ROOT_DIR)
+  #   list(APPEND NEW_PATHS ${${Python_PREFIX}_ROOT_DIR})
+  # endif()
   set_tests_runtime_paths(
     speedtest_${LANGUAGE}
     PATHS ${NEW_PATHS}

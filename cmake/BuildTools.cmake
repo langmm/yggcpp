@@ -1047,7 +1047,8 @@ function(add_external_library target library_type)
     list(APPEND ARGS_CONFIG_ARGUMENTS
          -DBUILD_SHARED_LIBS=ON
          -DMSVC_AND_GNU_BUILD=ON
-         -DCMAKE_GNUtoMS=ON)
+         -DCMAKE_GNUtoMS=ON
+         "-DCMAKE_Fortran_FLAGS_INIT:STRING= -mabi=ms -m64 ")
     # set(OUTPUT_EXTENSION_OVERRIDE  ".elf.o")
   endif()
   if(WIN32)
