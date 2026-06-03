@@ -32,13 +32,19 @@ class ToolMeta(type):
         return cls
 
 
-def select_tool():
+def select_tool(mode='dependencies'):
     if _platform == 'osx':
         tool = 'otool'
     elif _platform == 'linux':
-        tool = 'ldd'
+        if mode == 'objects':
+            tool = 'objdump'
+        else:
+            tool = 'ldd'
     elif _platform == 'win':
-        tool = 'dumpbin'
+        if mode == 'objects':
+            tool = 'objconv'
+        else:
+            tool = 'dumpbin'
     else:
         raise RuntimeError(f'Could not determine a tool for '
                            f'platform \"${_platform}\"')
@@ -104,21 +110,23 @@ class ToolBase(metaclass=ToolMeta):
     hsep = 80 * '='
     hsepn = (80 * '=') + '\n'
     max_depth = 5
+    object_flags = {}
 
     def __init__(self, target, cmake_runtimes=None, recurse=False,
                  verbose=False, depth=0):
-        if os.path.isfile(target):
-            target = os.path.abspath(target)
-        else:
-            target = self.search(target)
-            if target.path is None:
-                raise ValueError(f"Could not find target \"{target.name}\"")
-            target = target.path
         self.target = target
         self.cmake_runtimes = cmake_runtimes
         self.recurse = recurse
         self.verbose = verbose
         self.depth = depth
+        if os.path.isfile(self.target):
+            self.target = os.path.abspath(self.target)
+        else:
+            self.target = self.search(self.target)
+            if self.target.path is None:
+                raise ValueError(
+                    f"Could not find target \"{self.target.name}\"")
+            self.target = self.target.path
 
     @classmethod
     def which(cls):
@@ -167,6 +175,16 @@ class ToolBase(metaclass=ToolMeta):
         return out
 
     @cached_property
+    def formatted_object_contents(self):
+        out = (
+            f'{self.hsep}\nObject contents for {self.target}\n'
+            f'{self.hsep}\n'
+        )
+        for k, v in self.object_contents.items():
+            out += f"\n{k}\n{v}\n"
+        return out
+
+    @cached_property
     def search_results(self):
         out = SearchResult(self.target, self.target)
         try:
@@ -186,6 +204,19 @@ class ToolBase(metaclass=ToolMeta):
                           f"output={e.output}, "
                           f"stdout={e.stdout}, stderr={e.stderr}")
             return []
+
+    @cached_property
+    def object_contents(self):
+        out = {}
+        for method in ["header", "sections"]:
+            cmd = self.object_command(self.target, method)
+            try:
+                out[method] = self._run(cmd)
+            except subprocess.CalledProcessError as e:
+                warnings.warn(f"Error running {cmd}: {e}. "
+                              f"output={e.output}, "
+                              f"stdout={e.stdout}, stderr={e.stderr}")
+        return out
 
     def _create_child(self, *args, **kwargs):
         kwargs.setdefault('verbose', self.verbose)
@@ -252,6 +283,12 @@ class ToolBase(metaclass=ToolMeta):
         return SearchResult(x)
 
     @classmethod
+    def object_command(cls, target, method):
+        if method in cls.object_flags:
+            return f"{cls.name} {cls.object_flags[method]} {target}"
+        raise NotImplementedError
+
+    @classmethod
     def command(cls, target):
         raise NotImplementedError
 
@@ -259,6 +296,18 @@ class ToolBase(metaclass=ToolMeta):
     def extract_libraries(cls, raw_output):
         raise NotImplementedError
 
+
+class ObjconvTool(ToolBase):
+
+    name = 'objconv'
+    object_flags = {
+        'header': '-df',
+        'sections': '-dh',
+        'symbols': '-ds',
+        'relocation': '-dr',
+        'strings': '-dn',
+    }
+        
 
 class ObjdumpTool(ToolBase):
 
@@ -300,6 +349,13 @@ class DumpbinTool(ToolBase):
 class OtoolTool(ToolBase):
 
     name = 'otool'
+    object_flags = {
+        'header': '-h',
+        'sections': '-f',
+        'symbols': '-d',
+        'relocation': '-r',
+        'strings': '-t',
+    }
 
     @classmethod
     def command(cls, target):
@@ -361,30 +417,45 @@ class LddTool(ToolBase):
 
 def inspect(args):
     if not args.tool:
-        args.tool = select_tool()
-    tool = _tool_registry[args.tool](
-        args.target, cmake_runtimes=args.cmake_runtimes,
-        recurse=args.recurse, verbose=args.verbose,
-    )
-    print(f'{tool.name}: {tool.which()}')
-    print(tool.formatted_runtime_libraries)
-    print(tool.formatted_search_paths)
-    print(tool.formatted_search_results)
-    # import pdb; pdb.set_trace()
-    return tool.search_results
+        args.tool = select_tool(mode=args.mode)
+    out = {}
+    for target in args.target:
+        print(f"TARGET: {target}")
+        tool = _tool_registry[args.tool](
+            target, cmake_runtimes=args.cmake_runtimes,
+            recurse=args.recurse, verbose=args.verbose,
+        )
+        print(f'{tool.name}: {tool.which()}')
+        if args.mode == "dependencies":
+            print(tool.formatted_runtime_libraries)
+            print(tool.formatted_search_paths)
+            print(tool.formatted_search_results)
+            out[target] = tool.search_results
+        elif args.mode == "objects":
+            print(tool.formatted_object_contents)
+            out[target] = tool.object_contents
+        else:
+            raise NotImplementedError(args.mode)
+    return out
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Locate runtime dependencies")
     parser.add_argument(
-        "target", type=str,
-        help="Path to executable or library that should be inspected",
+        "target", type=str, nargs="+",
+        help=("Path to one or more object files, executables or "
+              "libraries that should be inspected"),
     )
     parser.add_argument(
         "--tool", type=str, choices=sorted(list(_tool_registry.keys())),
         help=("Name of the tool that should be used to extract "
               "runtime library dependencies from an executable or "
               "dynamic/shared library")
+    )
+    parser.add_argument(
+        "--mode", type=str, default="dependencies",
+        choices=["dependencies", "objects"],
+        help="Inspection mode",
     )
     parser.add_argument(
         "--cmake-runtimes", nargs='*', type=str,

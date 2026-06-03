@@ -1069,6 +1069,7 @@ function(add_external_library target library_type)
   )
   list(APPEND EXTERNAL_PRODUCTS ${external_target_file}
        ${external_def_file})
+  message(STATUS "external_target_file = ${external_target_file}")
   if(OUTPUT_EXTENSION_OVERRIDE)
     message(STATUS "OUTPUT_EXTENSION_OVERRIDE = ${OUTPUT_EXTENSION_OVERRIDE} [INTERNAL]")
     configure_file(
@@ -1188,6 +1189,7 @@ function(add_import_library target library_type library)
       PROPERTY IMPORTED_OBJECTS ${ARGS_OBJECTS}
     )
   endif()
+  message(STATUS "ARGS_TARGETS_FILE = ${ARGS_TARGETS_FILE}")
   if(ARGS_TARGETS_FILE)
     target_link_from_file(${target} IMPORTED ${ARGS_TARGETS_FILE})
   endif()

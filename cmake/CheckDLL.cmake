@@ -31,6 +31,23 @@ function(copy_required_runtimes TARGET)
   endif()
 endfunction()
 
+function(check_object file after_target)
+  set(oneValueArgs TOOLNAME)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  set(ADD_ARGS --mode=objects)
+  if(ARGS_TOOLNAME)
+    list(APPEND ADD_ARGS "--tool=${ARGS_TOOLNAME}")
+  endif()
+  add_custom_command(
+    TARGET ${after_target}
+    POST_BUILD
+    COMMAND python
+    ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/scripts/inspect_runtime_dependencies.py
+    ${file} ${ADD_ARGS}
+    COMMAND_EXPAND_LISTS
+  )
+endfunction()
+
 function(show_runtimes target)
   set(options IMPORTED)
   set(oneValueArgs AFTER_TARGET)
