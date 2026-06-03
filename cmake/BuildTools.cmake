@@ -364,10 +364,11 @@ function(find_compiler_external language)
   set(options REQUIRED SKIP_CURRENT_GENERATOR DONT_CLEAR_OTHER_COMPILERS
       OVERWRITE)
   set(oneValueArgs GENERATOR TIMEOUT LINKER_LANGUAGE ID
-      OUTPUT_COMPILER OUTPUT_LINKER OUTPUT_GENERATOR)
+      OUTPUT_COMPILER OUTPUT_LINKER OUTPUT_GENERATOR
+      OUTPUT_IMPLICIT_LIBRARIES)
   set(multiValueArgs TRY_GENERATORS CLEAR_COMPILERS)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-  set(EXTERNAL_VARIABLES COMPILER LINKER GENERATOR)
+  set(EXTERNAL_VARIABLES COMPILER LINKER GENERATOR IMPLICIT_LIBRARIES)
   if(ARGS_LINKER_LANGUAGE AND (ARGS_LINKER_LANGUAGE STREQUAL "${language}"))
     set(ARGS_LINKER_LANGUAGE)
   endif()
@@ -463,11 +464,13 @@ function(find_compiler_external language)
   set(IDSTR "${ARGS_ID}_${GENSTR}")
   set(cached_compiler_var "_${IDSTR}_COMPILER")
   set(cached_linker_var "_${IDSTR}_LINKER")
+  set(cached_implicitlib_var "_${IDSTR}_IMPLICIT_LIBRARIES")
   if(NOT DEFINED CACHE{${cached_compiler_var}})
     set(tmp_dir "${CMAKE_CURRENT_BINARY_DIR}/_check_for_${IDSTR}")
     message(DEBUG "find_compiler_external(${language} GENERATOR ${ARGS_GENERATOR}): tmp_dir = ${tmp_dir}")
     set(fcompiler "${tmp_dir}/${IDSTR}_compiler")
     set(flinker "${tmp_dir}/${IDSTR}_linker")
+    set(fimplicitlibs "${tmp_dir}/${IDSTR}_implicitlibs")
     file(MAKE_DIRECTORY "${tmp_dir}")
     configure_file(
       ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/check_language_external.CMakeLists.in
@@ -486,14 +489,19 @@ function(find_compiler_external language)
       if(EXISTS ${flinker})
         file(READ ${flinker} ${cached_linker_var})
       endif()
+      if(EXISTS ${fimplicitlibs})
+        set(${cached_implicitlib_var} ${fimplicitlibs})
+      endif()
     endif()
     set(${cached_compiler_var} "${${cached_compiler_var}}" CACHE INTERNAL "Compiler result from find_compiler_external for LANGUAGE = ${language}, LINKER_LANGUAGE = ${ARGS_LINKER_LANGUAGE}, and GENERATOR = ${ARGS_GENERATOR}")
     set(${cached_linker_var} "${${cached_linker_var}}" CACHE INTERNAL "Linker result from find_compiler_external for LANGUAGE = ${language}, LINKER_LANGUAGE = ${ARGS_LINKER_LANGUAGE}, and GENERATOR = ${ARGS_GENERATOR}")
+    set(${cached_implicitlib_var} "${${cached_implicitlib_var}}" CACHE INTERNAL "File containing implicit libraries automatically linked by the compiler for LANGUAGE = ${language}, LINKER_LANGUAGE = ${ARGS_LINKER_LANGUAGE}, and GENERATOR = ${ARGS_GENERATOR}")
   endif()
   if(${cached_compiler_var})
     set(CMAKE_${ARGS_ID}_COMPILER ${${cached_compiler_var}})
     set(CMAKE_${ARGS_ID}_LINKER ${${cached_linker_var}})
     set(CMAKE_${ARGS_ID}_GENERATOR "${ARGS_GENERATOR}")
+    set(CMAKE_${ARGS_ID}_IMPLICIT_LIBRARIES "${${cached_implicitlib_var}}")
     message(STATUS "Located external compiler for ${language} (GENERATOR=${ARGS_GENERATOR}, LINKER_LANGUAGE=${ARGS_LINKER_LANGUAGE})")
     foreach(ivar ${EXTERNAL_VARIABLES})
       message(STATUS "CMAKE_${ARGS_ID}_${ivar} = ${CMAKE_${ARGS_ID}_${ivar}}")
@@ -544,6 +552,7 @@ function(check_language_external language)
   set(CMAKE_${language}_COMPILER ${CMAKE_${ARGS_ID}_COMPILER} PARENT_SCOPE)
   set(CMAKE_${ARGS_ID}_COMPILER ${CMAKE_${ARGS_ID}_COMPILER} PARENT_SCOPE)
   set(CMAKE_${ARGS_ID}_GENERATOR ${CMAKE_${ARGS_ID}_GENERATOR} PARENT_SCOPE)
+  set(CMAKE_${ARGS_ID}_IMPLICIT_LIBRARIES ${CMAKE_${ARGS_ID}_IMPLICIT_LIBRARIES} PARENT_SCOPE)
   if(CMAKE_${ARGS_ID}_COMPILER AND ARGS_OUTPUT_VARIABLE)
     set(${ARGS_OUTPUT_VARIABLE} ON PARENT_SCOPE)
   endif()
@@ -1020,6 +1029,7 @@ function(add_external_library target library_type)
       ${ARGS_LANGUAGE} REQUIRED GENERATOR ${ARGS_GENERATOR}
       OUTPUT_COMPILER EXTERNAL_COMPILER
       OUTPUT_LINKER EXTERNAL_LINKER
+      OUTPUT_IMPLICIT_LIBRARIES EXTERNAL_IMPLICIT_LIBRARIES
     )
   else()
     find_compiler_external(
@@ -1027,6 +1037,7 @@ function(add_external_library target library_type)
       OUTPUT_GENERATOR ARGS_GENERATOR
       OUTPUT_COMPILER EXTERNAL_COMPILER
       OUTPUT_LINKER EXTERNAL_LINKER
+      OUTPUT_IMPLICIT_LIBRARIES EXTERNAL_IMPLICIT_LIBRARIES
     )
   endif()
   list(APPEND ARGS_CONFIG_ARGUMENTS
@@ -1063,13 +1074,17 @@ function(add_external_library target library_type)
       OUTPUT_VARIABLE external_def_file
     )
   endif()
-  cmake_path(
-    APPEND ARGS_BUILD_DIR "${target}.external_targets"
-    OUTPUT_VARIABLE external_target_file
-  )
-  list(APPEND EXTERNAL_PRODUCTS ${external_target_file}
-       ${external_def_file})
+  # cmake_path(
+  #   APPEND ARGS_BUILD_DIR "${target}.external_targets"
+  #   OUTPUT_VARIABLE external_target_file
+  # )
+  # set(external_target_file "${EXTERNAL_IMPLICIT_LIBRARIES}")
+  list(APPEND EXTERNAL_PRODUCTS ${external_def_file})
+  if(external_target_file)
+    list(APPEND EXTERNAL_PRODUCTS ${external_target_file})
+  endif()
   message(STATUS "external_target_file = ${external_target_file}")
+  message(STATUS "EXTERNAL_IMPLICIT_LIBRARIES = ${EXTERNAL_IMPLICIT_LIBRARIES}")
   if(OUTPUT_EXTENSION_OVERRIDE)
     message(STATUS "OUTPUT_EXTENSION_OVERRIDE = ${OUTPUT_EXTENSION_OVERRIDE} [INTERNAL]")
     configure_file(
@@ -1139,7 +1154,8 @@ function(add_external_library target library_type)
     LIBRARIES ${ARGS_LIBRARIES}
     DEFINITIONS ${ARGS_DEFINITIONS}
     LINK_DIRECTORIES ${CMAKE_CURRENT_BINARY_DIR}
-    TARGETS_FILE ${external_target_file}
+    TARGETS_FILE ${EXTERNAL_IMPLICIT_LIBRARIES}
+    # TARGETS_FILE ${external_target_file}
     DEF_FILE ${external_def_file}
     IMPORT_LIBRARY ${IMPNAME}
   )
