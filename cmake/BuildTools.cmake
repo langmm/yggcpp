@@ -1064,7 +1064,7 @@ function(add_external_library target library_type)
     )
   endif()
   cmake_path(
-    APPEND "${ARGS_SOURCE_DIR}" "${target}.external_targets"
+    APPEND ARGS_BUILD_DIR "${target}.external_targets"
     OUTPUT_VARIABLE external_target_file
   )
   list(APPEND EXTERNAL_PRODUCTS ${external_target_file}
@@ -1189,7 +1189,6 @@ function(add_import_library target library_type library)
       PROPERTY IMPORTED_OBJECTS ${ARGS_OBJECTS}
     )
   endif()
-  message(STATUS "ARGS_TARGETS_FILE = ${ARGS_TARGETS_FILE}")
   if(ARGS_TARGETS_FILE)
     target_link_from_file(${target} IMPORTED ${ARGS_TARGETS_FILE})
   endif()

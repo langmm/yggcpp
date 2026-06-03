@@ -195,7 +195,10 @@ class ToolBase(metaclass=ToolMeta):
 
     @cached_property
     def runtime_libraries(self):
-        cmd = self.command(self.target)
+        if ' ' in self.target:
+            cmd = self.command(f"\"{self.target}\"")
+        else:
+            cmd = self.command(self.target)
         try:
             raw_output = self._run(cmd)
             return [x for x in self.extract_libraries(raw_output) if x]
@@ -209,7 +212,10 @@ class ToolBase(metaclass=ToolMeta):
     def object_contents(self):
         out = {}
         for method in ["header", "sections"]:
-            cmd = self.object_command(self.target, method)
+            if ' ' in self.target:
+                cmd = self.object_command(f"\"{self.target}\"", method)
+            else:
+                cmd = self.object_command(self.target, method)
             try:
                 out[method] = self._run(cmd)
             except subprocess.CalledProcessError as e:

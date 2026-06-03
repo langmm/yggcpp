@@ -55,6 +55,7 @@ if(external_target_file)
   generate_implicit_libraries_file(
     @ARGS_LANGUAGE@ ${external_target_file} ${generate_args}
   )
+  message(STATUS "Created external_target_file ${external_target_file}")
 endif()
 
 inspect_target(${target} PREFIX "EXTERNAL ${target}: ")
