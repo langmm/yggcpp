@@ -329,6 +329,80 @@ function(python_code_generation NAME SCRIPT)
   endif()
 endfunction()
 
+function(predict_target_component_filename target component output_var)
+  set(options SINGLE_VALUE)
+  set(oneValueArgs BUILD_DIR TARGET_LANGUAGE TARGET_TYPE)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  if(NOT ARGS_BUILD_DIR)
+    set(ARGS_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}")
+  endif()
+  if(NOT ARGS_TARGET_LANGUAGE)
+    get_target_property(ARGS_TARGET_LANGUAGE ${target} LANGUAGE)
+  endif()
+  if(NOT ARGS_TARGET_TYPE)
+    get_target_property(ARGS_TARGET_TYPE ${target} TYPE)
+  endif()
+  if(ARGS_TARGET_TYPE STREQUAL "OBJECT" OR
+     ARGS_TARGET_TYPE STREQUAL "STATIC" OR
+     ARGS_TARGET_TYPE STREQUAL "SHARED" OR
+     ARGS_TARGET_TYPE STREQUAL "IMPORT")
+    set(ARGS_TARGET_TYPE "${ARGS_TARGET_TYPE}_LIBRARY")
+  endif()
+  if(component STREQUAL "OBJECTS" OR
+     component STREQUAL "OBJECT_LIBRARY")
+    get_target_property(TARGET_SOURCES ${target} SOURCES)
+    set(${output_var})
+    foreach(src IN LISTS TARGET_SOURCES)
+      cmake_path(GET src FILENAME srcbase)
+      cmake_path(
+        APPEND ARGS_BUILD_DIR
+        "${srcbase}${CMAKE_${ARGS_TARGET_LANGUAGE}_OUTPUT_EXTENSION}"
+        OUTPUT_VARIABLE obj
+      )
+      list(APPEND ${output_var} "${obj}")
+    endforeach()
+  elseif(component STREQUAL "FORTRAN_MOD")
+    cmake_path(
+      APPEND ARGS_BUILD_DIR "${target}.mod"
+      OUTPUT_VARIABLE ${output_var}
+    )
+  elseif(component STREQUAL "DEF")
+    cmake_path(
+      APPEND ARGS_BUILD_DIR "${target}.def"
+      OUTPUT_VARIABLE ${output_var}
+    )
+  elseif(component STREQUAL "LIBRARY"
+         OR component STREQUAL "STATIC_LIBRARY"
+         OR component STREQUAL "SHARED_LIBRARY"
+         OR component STREQUAL "IMPORT_LIBRARY"
+         OR component STREQUAL "EXECUTABLE")
+    if(component STREQUAL "LIBRARY")
+      set(COMPONENT_TYPE "${ARGS_TARGET_TYPE}")
+    else()
+      set(COMPONENT_TYPE "${component}")
+    endif()
+    set(LIBRARY_PREFIX "${CMAKE_${COMPONENT_TYPE}_PREFIX_${ARGS_TARGET_LANGUAGE}}")
+    set(LIBRARY_SUFFIX "${CMAKE_${COMPONENT_TYPE}_SUFFIX_${ARGS_TARGET_LANGUAGE}}")
+    if(NOT LIBRARY_PREFIX)
+      set(LIBRARY_PREFIX "${CMAKE_${COMPONENT_TYPE}_PREFIX}")
+    endif()
+    if(NOT LIBRARY_SUFFIX)
+      set(LIBRARY_SUFFIX "${CMAKE_${COMPONENT_TYPE}_SUFFIX}")
+    endif()
+    cmake_path(
+      APPEND ARGS_BUILD_DIR
+      "${LIBRARY_PREFIX}${target}${LIBRARY_SUFFIX}"
+      OUTPUT_VARIABLE ${output_var}
+    )
+  else()
+    message(FATAL_ERROR "Unsupported component \"${component}\"")
+  endif()
+  if(ARGS_SINGLE_VALUE)
+    list(GET ${output_var} 0 ${output_var})
+  endif()
+  set(${output_var} ${${output_var}} PARENT_SCOPE)
+endfunction()
+
 function(predict_target_filename target library_type language output_var)
   set(oneValueArgs BUILD_DIR)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -358,6 +432,46 @@ function(get_native_directory PATH OUTPUT_VAR)
   file(TO_NATIVE_PATH "${DIRECTORY}" DIRECTORY)
   string(REPLACE "\\" "\\\\" DIRECTORY "${DIRECTORY}")
   set(${VAR} ${DIRECTORY} PARENT_SCOPE)
+endfunction()
+
+function(get_implicit_libraries language output_var)
+  set(options FULL_LIBRARIES LANGUAGE_ONLY CREATE_LIB)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  message(DEBUG "CMAKE_${language}_IMPLICIT_LINK_LIBRARIES = ${CMAKE_${language}_IMPLICIT_LINK_LIBRARIES}")
+  set(${output_var})
+  foreach(ilib IN LISTS CMAKE_${language}_IMPLICIT_LINK_LIBRARIES)
+    if((NOT ARGS_LANGUAGE_ONLY) OR
+       ilib STREQUAL "gfortran" OR ilib STREQUAL "gcc" OR
+       ilib STREQUAL "c++" OR ilib STREQUAL "stdc++" OR
+       ilib STREQUAL "stdc")
+      list(APPEND ${output_var} ${ilib})
+    endif()
+  endforeach()
+  list(REMOVE_DUPLICATES ${output_var})
+  if(${output_var} AND ARGS_CREATE_LIB)
+    include(CreateMSVCLib)
+    set(full_libraries)
+    foreach(lib IN LISTS ${output_var})
+      create_msvc_lib_from_name(${lib} OUTPUT libfile)
+      # convert_dlla_to_lib(${lib} OUTPUT libfile)
+      if(ARGS_FULL_LIBRARIES AND libfile)
+        list(APPEND full_libraries ${libfile})
+      endif()
+    endforeach()
+    if(ARGS_FULL_LIBRARIES)
+      set(${output_var} ${full_libraries})
+    endif()
+  elseif(${output_var} AND ARGS_FULL_LIBRARIES)
+    include(SearchTools)
+    find_libraries(
+      LIBRARIES ${${output_var}}
+      OUTPUT ${output_var}
+      MISSING libnames
+    )
+    list(APPEND ${output_var} ${libnames})
+  endif()
+  message(DEBUG "get_implicit_libraries: ${output_var} = ${${output_var}}")
+  set(${output_var} ${${output_var}} PARENT_SCOPE)
 endfunction()
 
 function(find_compiler_external language)
@@ -802,22 +916,25 @@ function(add_mixed_language_library target library_type)
         EXCLUDE_COMPONENTS OBJECTS
       )
       target_link_libraries(
-        ${target} PRIVATE
-        $<TARGET_PROPERTY:${${ilanguage}_target},INTERFACE_LINK_LIBRARIES>
+        ${target} PRIVATE ${${ilanguage}_target}
       )
-      target_link_directories(
-        ${target} PRIVATE
-        $<TARGET_PROPERTY:${${ilanguage}_target},INTERFACE_LINK_DIRECTORIES>
-      )
-      target_sources(
-        ${target} PRIVATE "$<TARGET_OBJECTS:${${ilanguage}_target}>"
-      )
-      if(WIN32 AND MSVC)
-        target_link_options(
-          ${target} PRIVATE
-          /DEF:$<TARGET_PROPERTY:${${ilanguage}_target},MSVC_DEF_FILE>
-        )
-      endif()
+      # target_link_libraries(
+      #   ${target} PRIVATE
+      #   $<TARGET_PROPERTY:${${ilanguage}_target},INTERFACE_LINK_LIBRARIES>
+      # )
+      # target_link_directories(
+      #   ${target} PRIVATE
+      #   $<TARGET_PROPERTY:${${ilanguage}_target},INTERFACE_LINK_DIRECTORIES>
+      # )
+      # target_sources(
+      #   ${target} PRIVATE "$<TARGET_OBJECTS:${${ilanguage}_target}>"
+      # )
+      # if(WIN32 AND MSVC)
+      #   target_link_options(
+      #     ${target} PRIVATE
+      #     /DEF:$<TARGET_PROPERTY:${${ilanguage}_target},MSVC_DEF_FILE>
+      #   )
+      # endif()
     else()
       enable_language(${ilanguage})
       if(ilanguage STREQUAL "Fortran")
@@ -952,10 +1069,10 @@ function(add_external_library target library_type)
         ${CMAKE_${ARGS_LANGUAGE}_OUTPUT_EXTENSION})
   endif()
   set(final_library_type ${library_type})
-  if(library_type STREQUAL "OBJECT")
-    set(final_library_type STATIC)
-    # set(ARGS_LINKER_LANGUAGE)  # Prevent enabling unrequired language
-  endif()
+  # if(library_type STREQUAL "OBJECT")
+  #   set(final_library_type STATIC)
+  #   # set(ARGS_LINKER_LANGUAGE)  # Prevent enabling unrequired language
+  # endif()
 
   # Get source & object file names
   set(EXTERNAL_SOURCES)
@@ -1023,6 +1140,20 @@ function(add_external_library target library_type)
     CUSTOM_TARGET "generate_target_file_${target}"
     VERBOSE
   )
+  # TODO: This dosn't currently work as YggInterface_fortran depends on
+  # other dependencies via YggInterface (e.g. Python, MPI)
+  set(internal_target_export_file)
+  # if(targets)
+  #   cmake_path(
+  #     APPEND ARGS_SOURCE_DIR "${target}.internal_target.cmake"
+  #     OUTPUT_VARIABLE internal_target_export_file
+  #   )
+  # endif()
+  if(internal_target_export_file)
+    export_targets_to_file(
+      "${internal_target_export_file}" TARGETS ${targets}
+    )
+  endif()
 
   if(ARGS_GENERATOR)
     find_compiler_external(
@@ -1066,24 +1197,22 @@ function(add_external_library target library_type)
     include(SearchTools)
     find_program_generic(DLLTOOL_PATH dlltool REQUIRED)
     message(STATUS "DLLTOOL_PATH = ${DLLTOOL_PATH}")
-    cmake_path(
-      # This version matches the original
-      # APPEND CMAKE_CURRENT_BINARY_DIR "${ARGS_PARENT_TARGET}.def"
-      # This version allows for multiple defs
-      APPEND "${ARGS_BUILD_DIR}" "${target}.def"
-      OUTPUT_VARIABLE external_def_file
+    predict_target_component_filename(
+      ${target} DEF external_def_file
+      TARGET_TYPE ${library_type}
+      TARGET_LANGUAGE ${LANGUAGE}
+      BUILD_DIR "${ARGS_BUILD_DIR}"
     )
   endif()
-  # cmake_path(
-  #   APPEND ARGS_BUILD_DIR "${target}.external_targets"
-  #   OUTPUT_VARIABLE external_target_file
-  # )
-  # set(external_target_file "${EXTERNAL_IMPLICIT_LIBRARIES}")
+  cmake_path(
+    APPEND ARGS_BUILD_DIR "${target}.external_target.cmake"
+    OUTPUT_VARIABLE external_target_export_file
+  )
   list(APPEND EXTERNAL_PRODUCTS ${external_def_file})
-  if(external_target_file)
-    list(APPEND EXTERNAL_PRODUCTS ${external_target_file})
+  if(external_target_export_file)
+    list(APPEND EXTERNAL_PRODUCTS ${external_target_export_file})
   endif()
-  message(STATUS "external_target_file = ${external_target_file}")
+  message(STATUS "external_target_export_file = ${external_target_export_file}")
   message(STATUS "EXTERNAL_IMPLICIT_LIBRARIES = ${EXTERNAL_IMPLICIT_LIBRARIES}")
   if(OUTPUT_EXTENSION_OVERRIDE)
     message(STATUS "OUTPUT_EXTENSION_OVERRIDE = ${OUTPUT_EXTENSION_OVERRIDE} [INTERNAL]")
@@ -1128,13 +1257,16 @@ function(add_external_library target library_type)
   )
   
   # create import library for other projects to link to
-  predict_target_filename(
-    ${target} ${final_library_type} ${ARGS_LANGUAGE} LIBNAME
+  predict_target_component_filename(
+    ${target} LIBRARY LIBNAME
+    TARGET_TYPE ${final_library_type}
+    TARGET_LANGUAGE ${ARGS_LANGUAGE}
     BUILD_DIR ${ARGS_BUILD_DIR}
   )
   if(WIN32 AND ${library_type} STREQUAL "SHARED")
-    predict_target_filename(
-      ${target} IMPORT ${ARGS_LANGUAGE} IMPNAME
+    predict_target_component_filename(
+      ${target} IMPORT_LIBRARY IMPNAME
+      TARGET_LANGUAGE ${ARGS_LANGUAGE}
       BUILD_DIR ${ARGS_BUILD_DIR}
     )
   endif()
@@ -1155,7 +1287,6 @@ function(add_external_library target library_type)
     DEFINITIONS ${ARGS_DEFINITIONS}
     LINK_DIRECTORIES ${CMAKE_CURRENT_BINARY_DIR}
     TARGETS_FILE ${EXTERNAL_IMPLICIT_LIBRARIES}
-    # TARGETS_FILE ${external_target_file}
     DEF_FILE ${external_def_file}
     IMPORT_LIBRARY ${IMPNAME}
   )
@@ -1336,9 +1467,13 @@ function(copy_target_files target destination)
   message(DEBUG "copy_target_files: TARGET_TYPE = ${ARGS_TARGET_TYPE}")
   message(DEBUG "copy_target_files: TARGET_LANGUAGE = ${ARGS_TARGET_LANGUAGE}")
   message(DEBUG "copy_target_files: COMPONENTS = ${ARGS_COMPONENTS}")
+  set(IS_OBJECT_LIBRARY OFF)
+  if(ARGS_TARGET_TYPE STREQUAL "OBJECT_LIBRARY"
+     OR ARGS_TARGET_TYPE STREQUAL "OBJECT")
+    set(IS_OBJECT_LIBRARY ON)
+  endif()
   if(NOT ARGS_COMPONENTS)
-    if(ARGS_TARGET_TYPE STREQUAL "OBJECT_LIBRARY"
-       OR ARGS_TARGET_TYPE STREQUAL "OBJECT")
+    if(IS_OBJECT_LIBRARY)
       list(APPEND ARGS_COMPONENTS OBJECTS)
       if(WIN32)
         list(APPEND ARGS_COMPONENTS DEF)
@@ -1357,6 +1492,7 @@ function(copy_target_files target destination)
       list(APPEND ARGS_COMPONENTS FORTRAN_MOD)
     endif()
   endif()
+  set(COMMAND_ARGS TARGET ${ARGS_EVENT_TARGET} ${ARGS_EVENT_TYPE})
   foreach(component IN LISTS ARGS_COMPONENTS)
     if(ARGS_EXCLUDE_COMPONENTS)
       list(FIND ARGS_EXCLUDE_COMPONENTS "${component}" IDX_COMPONENT)
@@ -1364,10 +1500,19 @@ function(copy_target_files target destination)
         continue()
       endif()
     endif()
+    predict_target_component_filename(
+      ${target} ${component} component_output
+      BUILD_DIR "${destination}" SINGLE_VALUE
+      TARGET_LANGUAGE ${ARGS_TARGET_LANGUAGE}
+      TARGET_TYPE ${ARGS_TARGET_TYPE}
+    )
+    set(COMPONENT_COMMAND_ARGS ${COMMAND_ARGS}
+        OUTPUT "${component_output}")
+    message(STATUS "COPY ${component}: ${COMPONENT_COMMAND_ARGS}")
     if(component STREQUAL "OBJECTS")
-      set(OBJECT_EVENT_TYPE ${ARGS_EVENT_TYPE})
-      if(ARGS_EVENT_TARGET STREQUAL "${target}")
-        set(OBJECT_EVENT_TYPE PRE_LINK)
+      if(ARGS_EVENT_TARGET STREQUAL "${target}"
+         AND NOT IS_OBJECT_LIBRARY)
+        set(COMPONENT_COMMAND_ARGS TARGET ${ARGS_EVENT_TARGET} PRE_LINK)
       endif()
       set(ADDED_ARGS)
       if(NOT "${ARGS_OBJECT_EXT}" STREQUAL "${CMAKE_${TARGET_LANGUAGE}_OUTPUT_EXTENSION}")
@@ -1382,7 +1527,7 @@ function(copy_target_files target destination)
       # endif()
       add_custom_command_function(
         copy_files MODULE BuildTools
-        TARGET ${ARGS_EVENT_TARGET} ${OBJECT_EVENT_TYPE}
+        ${COMPONENT_COMMAND_ARGS}
         COMMENT "Copy object files for target \"${target}\""
         IDSTR "${target}_OBJECTS"
         FUNCTION_ARGUMENTS ${destination} ${ADDED_ARGS}
@@ -1393,7 +1538,7 @@ function(copy_target_files target destination)
     elseif(component STREQUAL "FORTRAN_MOD")
       add_custom_command_function(
         copy_files MODULE BuildTools
-        TARGET ${ARGS_EVENT_TARGET} ${ARGS_EVENT_TYPE}
+        ${COMPONENT_COMMAND_ARGS}
         COMMENT "Copy .mod files for target \"${target}\""
         IDSTR "${target}_FORTRAN_MOD"
         FUNCTION_ARGUMENTS ${destination} SOURCE_REGEX "*.mod"
@@ -1402,15 +1547,14 @@ function(copy_target_files target destination)
         VERBATIM COMMAND_EXPAND_LISTS
       )
     elseif(component STREQUAL "DEF")
-      if(ARGS_TARGET_TYPE STREQUAL "OBJECT_LIBRARY"
-         OR ARGS_TARGET_TYPE STREQUAL "OBJECT")
+      if(IS_OBJECT_LIBRARY)
         set(GENERATE_DIRECTORY "$<LIST:GET,$<TARGET_OBJECTS:${target}>,0>")
       else()
         set(GENERATE_DIRECTORY "$<TARGET_FILE_DIR:${target}>")
       endif()
       add_custom_command_function(
         copy_files MODULE BuildTools
-        TARGET ${ARGS_EVENT_TARGET} ${ARGS_EVENT_TYPE}
+        ${COMPONENT_COMMAND_ARGS}
         COMMENT "Copy .def files for target \"${target}\""
         IDSTR "${target}_DEF"
         FUNCTION_ARGUMENTS ${destination} SOURCE_REGEX "*.def"
@@ -1421,7 +1565,7 @@ function(copy_target_files target destination)
     elseif(component STREQUAL "LIBRARY")
       # add_custom_command_function(
       #   copy_files MODULE BuildTools
-      #   TARGET ${ARGS_EVENT_TARGET} ${ARGS_EVENT_TYPE}
+      #   ${COMPONENT_COMMAND_ARGS}
       #   COMMENT "Copy library file for target \"${target}\""
       #   IDSTR "${target}_LIB"
       #   FUNCTION_ARGUMENTS ${destination}
@@ -1430,20 +1574,20 @@ function(copy_target_files target destination)
       #     # $<TARGET_IMPORT_FILE:${target}>
       # )
       add_custom_command(
-        TARGET ${ARGS_EVENT_TARGET} ${ARGS_EVENT_TYPE}
+        ${COMMAND_ARGS}
         COMMAND ${CMAKE_COMMAND} -E echo "External TARGET_FILE ${target}: $<TARGET_FILE:${target}>"
         COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:${target}>" ${destination}
       )
     elseif(component STREQUAL "IMPORT_LIBRARY")
       if (CMAKE_GNUtoMS)
         add_custom_command(
-          TARGET ${ARGS_EVENT_TARGET} ${ARGS_EVENT_TYPE}
+          ${COMMAND_ARGS}
           COMMAND ${CMAKE_COMMAND} -E echo "External TARGET_LIB_FILE ${target}: $<PATH:REPLACE_EXTENSION,$<TARGET_IMPORT_FILE:${target}>,.lib>"
           COMMAND ${CMAKE_COMMAND} -E copy "$<PATH:REPLACE_EXTENSION,$<TARGET_IMPORT_FILE:${target}>,.lib>" ${destination}
         )
       endif()
       add_custom_command(
-        TARGET ${ARGS_EVENT_TARGET} ${ARGS_EVENT_TYPE}
+        ${COMMAND_ARGS}
         COMMAND ${CMAKE_COMMAND} -E echo "External TARGET_IMPORT_FILE ${target}: $<TARGET_IMPORT_FILE:${target}>"
         COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_IMPORT_FILE:${target}>" ${destination}
       )

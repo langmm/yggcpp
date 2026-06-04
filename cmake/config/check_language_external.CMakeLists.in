@@ -12,6 +12,7 @@ set(COMPILER_VAR "CMAKE_${LANGUAGE}_COMPILER")
 set(LINKER_FILE "@flinker@")
 set(LINKER_VAR "CMAKE_${LINKER_LANGUAGE}_LINKER")
 set(IMPLICIT_LIBRARIES_FILE "@fimplicitlibs@")
+set(INTERNAL_MSVC @MSVC@)
 if(${COMPILER_VAR})
   message(STATUS "Located external compiler for ${LANGUAGE}")
   message(STATUS "${COMPILER_VAR} = ${${COMPILER_VAR}}")
@@ -22,9 +23,14 @@ if(${COMPILER_VAR})
   if(IMPLICIT_LIBRARIES_FILE)
     message(STATUS "IMPLICIT_LIBRARIES_FILE = ${IMPLICIT_LIBRARIES_FILE}")
     include(AddTargetsFromFile)
+    message(STATUS "CMAKE_${LANGUAGE}_COMPILER_ID = ${CMAKE_${LANGUAGE}_COMPILER_ID}")
+    set(generate_args)
+    if(INTERNAL_MSVC AND CMAKE_${LANGUAGE}_COMPILER_ID STREQUAL "GNU")
+      list(APPEND generate_args FULL_LIBRARIES)
+    endif()
     generate_implicit_libraries_file(
       ${LANGUAGE} ${IMPLICIT_LIBRARIES_FILE}
-      FULL_LIBRARIES
+      ${generate_args}
     )
   else()
     message(STATUS "IMPLICIT_LIBRARIES_FILE not set")

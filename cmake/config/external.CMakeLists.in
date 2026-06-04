@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION @CMAKE_MINIMUM_REQUIRED_VERSION@)
 list(APPEND CMAKE_MODULE_PATH "@CMAKE_CURRENT_FUNCTION_LIST_DIR@")
 include(GeneralTools)
+include(AddTargetsFromFile)
 set(OUTPUT_EXTENSION_OVERRIDE "@OUTPUT_EXTENSION_OVERRIDE@")
 message(STATUS "OUTPUT_EXTENSION_OVERRIDE = ${OUTPUT_EXTENSION_OVERRIDE} [EXTERNAL]")
 if(OUTPUT_EXTENSION_OVERRIDE)
@@ -25,10 +26,18 @@ set(target @target@)
 set(library_type @library_type@)
 set(final_library_type @final_library_type@)
 set(internal_target_file "@internal_target_file@")
-set(external_target_file "@external_target_file@")
+set(internal_target_export_file "@internal_target_export_file@")
+set(external_target_export_file "@external_target_export_file@")
 set(external_def_file "@external_def_file@")
 message(STATUS "CMAKE_@ARGS_LANGUAGE@_OUTPUT_EXTENSION = ${CMAKE_@ARGS_LANGUAGE@_OUTPUT_EXTENSION}")
 message(STATUS "CMAKE_@ARGS_LANGUAGE@_INTERNAL_OUTPUT_EXTENSION = ${CMAKE_@ARGS_LANGUAGE@_INTERNAL_OUTPUT_EXTENSION}")
+
+if(internal_target_export_file)
+  import_targets_from_file(
+    "${internal_target_export_file}" IMPORTED_TARGETS internal_targets
+  )
+  message(DEBUG "EXTERNAL ${target}: internal_targets = ${internal_targets} (from ${internal_target_export_file})")
+endif()
 
 include(BuildTools)
 add_internal_library(
@@ -44,27 +53,21 @@ add_internal_library(
   TARGETS_FILE ${internal_target_file}
 )
 
-# Create a list of libraries implicitly linked by the compiler
-if(external_target_file)
-  include(AddTargetsFromFile)
-  # TODO: Find stdc++ library for fortran?
-  set(generate_args)
-  if (MSVC_AND_GNU_BUILD)
-    set(generate_args FULL_LIBRARIES) # CREATE_LIB)
-  endif()
-  generate_implicit_libraries_file(
-    @ARGS_LANGUAGE@ ${external_target_file} ${generate_args}
-  )
-  message(STATUS "Created external_target_file ${external_target_file}")
-endif()
-
 inspect_target(${target} PREFIX "EXTERNAL ${target}: ")
 
 if(library_type STREQUAL "OBJECT")
 
+  get_implicit_libraries(
+    @ARGS_LANGUAGE@ implicit_libs
+    LANGUAGE_ONLY FULL_LIBRARIES
+  )
+  target_link_libraries(${target} PUBLIC ${implicit_libs})
+
   # Ensure that the object files are in the build directory
   copy_target_files(
     ${target} "${CMAKE_CURRENT_BINARY_DIR}"
+    TARGET_LANGUAGE @ARGS_LANGUAGE@
+    TARGET_TYPE ${final_library_type}
     # OBJECT_EXT ${CMAKE_@ARGS_LANGUAGE@_INTERNAL_OUTPUT_EXTENSION}
     COMPONENTS OBJECTS
   )
@@ -72,7 +75,18 @@ if(library_type STREQUAL "OBJECT")
   # Create .def file for objects
   if(WIN32)
     include(CreateMSVCLib)
-    target2def(${target})
+    target2def(${target} OUTPUT DEF_FILE)
+    set_property(
+      TARGET ${target} PROPERTY
+      MSVC_DEF_FILE "${DEF_FILE}"
+    )
+    target_link_options(${target} PUBLIC "/DEF:${DEF_FILE}")
   endif()
 
+endif()
+
+if(external_target_export_file)
+  export_targets_to_file(
+    "${external_target_export_file}" TARGETS ${target}
+  )
 endif()

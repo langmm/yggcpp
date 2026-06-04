@@ -13,6 +13,25 @@ if(NOT CMAKE_PROPERTY_LIST)
   list(REMOVE_DUPLICATES CMAKE_PROPERTY_LIST)
 endif()
 
+function(split_string INPUT PATTERN OUTPUT)
+  set(rem "${INPUT}")
+  set(idx 0)
+  set(parts)
+  string(LENGTH "${PATTERN}" PATTERN_LEN)
+  while(NOT ${idx} EQUAL "-1")
+    string(FIND "${rem}" "${PATTERN}" idx)
+    if(${idx} EQUAL "-1")
+      list(APPEND parts "${rem}")
+    else()
+      string(SUBSTRING "${rem}" 0 ${idx} part)
+      list(APPEND parts "${part}")
+      math(EXPR idxp1 "${idx}+${PATTERN_LEN}")
+      string(SUBSTRING "${rem}" ${idxp1} -1 rem)
+    endif()
+  endwhile()
+  set(${OUTPUT} ${parts} PARENT_SCOPE)
+endfunction()
+
 function(dump_cmake_variables)
   set(options VERBOSE)
   set(oneValueArgs REGEX PREFIX OUTPUT_VAR LOG_LEVEL)
@@ -109,7 +128,7 @@ endfunction()
 function(check_not_set PREFIX REASON)
   foreach(ivar ${ARGN})
     if(${PREFIX}_${ivar})
-      message(FATAL_ERROR "Argument \"${ivar}\" not allowed${REASON}")
+      message(FATAL_ERROR "Argument \"${ivar}=${${PREFIX}_${ivar}}\" not allowed${REASON}")
     endif()
   endforeach()
 endfunction()
@@ -558,7 +577,7 @@ function(set_environment_vars)
 endfunction()
 
 function(add_custom_command_function function)
-  set(options PRE_BUILD PRE_LINK POST_BUILD
+  set(options PRE_BUILD PRE_LINK POST_BUILD FORCE_OUTPUT
       COMMAND_EXPAND_LISTS USES_TERMINAL VERBATIM)
   set(oneValueArgs MODULE DEST DEST_DIR
       TARGET COMMENT WORKING_DIRECTORY IDSTR)
@@ -566,6 +585,10 @@ function(add_custom_command_function function)
       PRESERVE_VARIABLES COMMAND_ARGUMENTS
       BYPRODUCTS DEPENDS OUTPUT)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  check_exclusive_options(
+    ARGS OUTPUT ARGS_EVENT
+    NAMES PRE_BUILD PRE_LINK POST_BUILD
+  )
   set(ikey)
   set(ival)
   foreach(iarg ${ARGS_GENERATED_FUNCTION_ARGUMENTS})
@@ -579,8 +602,34 @@ function(add_custom_command_function function)
       set(ival)
     endif()
   endforeach()
+  if(NOT ARGS_IDSTR)
+    string(RANDOM ARGS_IDSTR)  # Allow user to specify?
+    if(ARGS_TARGET)
+      set(ARGS_IDSTR "${ARGS_TARGET}_${ARGS_IDSTR}")
+    endif()
+  endif()
   if(ikey)
     message(FATAL_ERROR "Error processing GENERATED_FUNCTION_ARGUMENTS: ${ARGS_GENERATED_FUNCTION_ARGUMENTS}")
+  endif()
+  if(ARGS_TARGET)
+    get_target_property(TARGET_TYPE ${ARGS_TARGET} TYPE)
+    if(TARGET_TYPE STREQUAL "OBJECT_LIBRARY")
+      set(ARGS_FORCE_OUTPUT ON)
+      if(NOT ARGS_OUTPUT)
+        if(NOT ARGS_BYPRODUCTS)
+          message(FATAL_ERROR "OUTPUT/BYPRODUCTS required for custom command on OBJECT_LIBRARY target ${ARGS_TARGET}")
+        endif()
+        set(ARGS_OUTPUT ${ARGS_BYPRODUCTS})
+      endif()
+      list(APPEND ARGS_DEPENDS ${ARGS_TARGET} "$<TARGET_OBJECTS:${ARGS_TARGET}>")
+      set(ARGS_TARGET)
+      set(ARGS_EVENT)
+    else()
+      if(ARGS_OUTPUT)
+        list(APPEND ARGS_BYPRODUCTS ${ARGS_OUTPUT})
+        set(ARGS_OUTPUT)
+      endif()
+    endif()
   endif()
   collect_arguments(
     FUNCTION_ARGS ARGS "${options}"
@@ -601,10 +650,9 @@ function(add_custom_command_function function)
   list(APPEND COMMAND_ARGS COMMAND ${CUSTOM_COMMAND})
   message(DEBUG "CUSTOM_COMMAND = ${CUSTOM_COMMAND}")
   if(ARGS_TARGET)
-    check_exclusive_options(
-      ARGS REQUIRED OUTPUT ARGS_EVENT
-      NAMES PRE_BUILD PRE_LINK POST_BUILD
-    )
+    if(NOT ARGS_EVENT)
+      set(ARGS_EVENT POST_BUILD)
+    endif()
     check_not_set(ARGS " when TARGET provided" DEPENDS OUTPUT)
     add_custom_command(
       TARGET ${ARGS_TARGET} ${ARGS_EVENT}
@@ -613,13 +661,17 @@ function(add_custom_command_function function)
   else()
     check_set(ARGS " when TARGET not provided" OUTPUT)
     check_not_set(
-      ARGS " when TARGET not provided"
-      PRE_BUILD PRE_LINK POST_BUILD
+      ARGS " when TARGET not provided" ARGS_EVENT
     )
     add_custom_command(
       OUTPUT ${ARGS_OUTPUT}
       ${COMMAND_ARGS}
     )
+    if(ARGS_FORCE_OUTPUT)
+      add_custom_target(
+        ${ARGS_IDSTR} ALL DEPENDS ${ARGS_OUTPUT}      
+      )
+    endif()
   endif()
 endfunction()
 

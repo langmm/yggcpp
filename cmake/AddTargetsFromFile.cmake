@@ -10,6 +10,118 @@ function(select_targets output_var)
   set(${output_var} ${targets} PARENT_SCOPE)
 endfunction()
 
+function(generate_file filename contents)
+  set(options NO_CONFIG ALLOW_EMPTY)
+  set(oneValueArgs OUTPUT_VAR DIRECTORY CUSTOM_TARGET)
+  set(multiValueArgs)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  if(NOT ARGS_DIRECTORY)
+    set(ARGS_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+  endif()
+  if(NOT IS_ABSOLUTE "${filename}")
+    cmake_path(
+      APPEND ARGS_DIRECTORY "${filename}"
+      OUTPUT_VARIABLE filename
+    )
+  endif()
+  if(NOT (contents OR ARGS_ALLOW_EMPTY OR ARGS_CUSTOM_TARGET))
+    if(ARGS_OUTPUT_VAR)
+      set(${ARGS_OUTPUT_VAR} "" PARENT_SCOPE)
+    endif()
+    message(DEBUG "${filename} will not be generated because it would be empty")
+    return()
+  endif()
+  message(DEBUG "Generating ${filename} with CONTENTS = ${contents}")
+  if(ARGS_NO_CONFIG)
+    file(
+      GENERATE OUTPUT "${filename}"
+      CONTENT "${contents}"
+    )
+  else()
+    file(
+      GENERATE OUTPUT "${filename}.$<CONFIG>"
+      CONTENT "${contents}"
+    )
+    add_custom_command(
+      COMMAND ${CMAKE_COMMAND} "-E" "copy_if_different" "${filename}.$<CONFIG>" "${filename}"
+      VERBATIM
+      # PRE_BUILD Not supported by this version of add_custom_command
+      DEPENDS  "${filename}.$<CONFIG>"
+      OUTPUT   "${filename}"
+      COMMENT  "creating ${filename} file ({event: PRE_BUILD}, {filename: ${filename}})"
+    )
+  endif()
+  if(ARGS_OUTPUT_VAR)
+    set(${ARGS_OUTPUT_VAR} ${filename} PARENT_SCOPE)
+  endif()
+  if(ARGS_CUSTOM_TARGET)
+    add_custom_target("${ARGS_CUSTOM_TARGET}" DEPENDS ${filename})
+  endif()
+endfunction()
+
+function(inspect_exports_file filename output_var)
+  set(libregex "add_library\\([ \t\r\n]*([A-Za-z0-9_]+)[ \t\r\n]+.+\\)")
+  file(STRINGS "${filename}" matches REGEX "${libregex}")
+  foreach(match IN LISTS matches)
+    string(REGEX MATCH "${libregex}" x "${match}")
+    list(APPEND ${output_var} ${CMAKE_MATCH_1})
+  endforeach()
+  set(${output_var} ${${output_var}} PARENT_SCOPE)
+endfunction()
+
+function(get_local_dependencies target output_var)
+  set(options DONT_RECURSE)
+  set(oneValueArgs)
+  set(multiValueArgs)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  get_target_property(target_deps ${target} INTERFACE_LINK_LIBRARIES)
+  foreach(dep IN LISTS target_deps)
+    if(NOT TARGET ${dep})
+      continue()
+    endif()
+    get_target_property(dep_imported ${dep} IMPORTED)
+    if(dep_imported)
+      continue()
+    endif()
+    list(APPEND ${output_var} ${dep})
+    if(NOT ARGS_DONT_RECURSE)
+      get_local_dependencies(${dep} ${output_var})
+    endif()
+  endforeach()
+  set(${output_var} ${${output_var}} PARENT_SCOPE)
+endfunction()
+
+function(export_targets_to_file filename)
+  set(options)
+  set(oneValueArgs)
+  set(multiValueArgs TARGETS)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  set(targets ${ARGS_TARGETS})
+  message(STATUS "ARGS_TARGETS = ${ARGS_TARGETS}")
+  foreach(target IN LISTS ARGS_TARGETS)
+    get_local_dependencies(${target} targets)
+  endforeach()
+  list(REMOVE_DUPLICATES targets)
+  message(DEBUG "export_targets_to_file: targets = ${targets}")
+  export(
+    TARGETS ${targets}
+    FILE "${filename}"
+    # EXPORT_LINK_INTERFACE_LIBRARIES
+  )
+endfunction()
+
+function(import_targets_from_file filename)
+  set(options)
+  set(oneValueArgs IMPORTED_TARGETS)
+  set(multiValueArgs)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  include(${filename})
+  if(ARGS_IMPORTED_TARGETS)
+    inspect_exports_file(${filename} ${ARGS_IMPORTED_TARGETS})
+    set(${ARGS_IMPORTED_TARGETS} ${${ARGS_IMPORTED_TARGETS}} PARENT_SCOPE)
+  endif()
+endfunction()
+
 function(generate_implicit_libraries_file language target_file)
   set(multiValueArgs EXTRA_LIBRARIES EXTRA_DIRECTORIES)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -36,14 +148,17 @@ endfunction()
 
 function(generate_target_file target_file)
   include(SearchTools)
-  set(options NO_CONFIG CREATE_LIB FULL_LIBRARIES)
+  set(options NO_CONFIG ALLOW_EMPTY CREATE_LIB FULL_LIBRARIES)
   set(oneValueArgs OUTPUT_VAR DIRECTORY CUSTOM_TARGET)
   set(multiValueArgs TARGETS EXTRA_LIBRARIES EXTRA_DIRECTORIES
       FULL_LIBRARY_SUFFIXES FULL_LIBRARY_IGNORE_SUFFIXES)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-  if (ARGS_DIRECTORY)
-    cmake_path(APPEND target_file ${ARGS_DIRECTORY} ${target_file})
-  endif()
+  collect_arguments(
+    FILE_ARGS ARGS "${options}"
+    NO_CONFIG ALLOW_EMPTY OUTPUT_VAR DIRECTORY CUSTOM_TARGET
+  )
+  message(STATUS "${target_file}: ARGS_TARGETS = ${ARGS_TARGETS}")
+  list(APPEND FILE_ARGS ${ARGS_UNPARSED_ARGUMENTS})
   if (ARGS_CREATE_LIB AND ARGS_EXTRA_LIBRARIES)
     include(CreateMSVCLib)
     foreach(lib IN LISTS ARGS_EXTRA_LIBRARIES)
@@ -69,49 +184,16 @@ function(generate_target_file target_file)
   else()
     set(libnames ${ARGS_EXTRA_LIBRARIES})
   endif()
-  set(CONTENTS "LIBRARIES;${libnames};FULL_LIBRARIES;${full_libraries};DIRECTORIES;${ARGS_EXTRA_DIRECTORIES}")
-  if(NOT IS_ABSOLUTE "${target_file}")
-    cmake_path(
-      APPEND CMAKE_CURRENT_BINARY_DIR
-      "${target_file}" OUTPUT_VARIABLE target_file
-    )
-  endif()
+  set(CONTENTS)
   if(ARGS_TARGETS OR libnames OR full_libraries OR ARGS_EXTRA_DIRECTORIES)
-    message(DEBUG "Generating target file ${target_file} with TARGETS = ${ARGS_TARGETS} AND CONTENTS = ${CONTENTS}")
-    if(ARGS_NO_CONFIG)
-      if(ARGS_TARGETS)
-        file(GENERATE OUTPUT "${target_file}"
-             CONTENT "${CONTENTS};LIBRARIES;${ARGS_TARGETS};DIRECTORIES;$<TARGET_FILE_DIR:${ARGS_TARGETS}>")
-      else()
-        file(GENERATE OUTPUT "${target_file}"
-             CONTENT "${CONTENTS}")
-      endif()
-    else()
-      if(ARGS_TARGETS)
-        file(GENERATE OUTPUT "${target_file}.$<CONFIG>"
-             CONTENT "${CONTENTS};LIBRARIES;${ARGS_TARGETS};DIRECTORIES;$<TARGET_FILE_DIR:${ARGS_TARGETS}>")
-      else()
-        file(GENERATE OUTPUT "${target_file}.$<CONFIG>"
-             CONTENT "${CONTENTS}")
-      endif()
+    set(CONTENTS "LIBRARIES;${libnames};FULL_LIBRARIES;${full_libraries};DIRECTORIES;${ARGS_EXTRA_DIRECTORIES}")
+    if(ARGS_TARGETS)
+      set(CONTENTS "${CONTENTS};LIBRARIES;${ARGS_TARGETS};DIRECTORIES;$<TARGET_FILE_DIR:${ARGS_TARGETS}>")
     endif()
-    if(NOT ARGS_NO_CONFIG)
-      add_custom_command(
-        COMMAND ${CMAKE_COMMAND} "-E" "copy_if_different" "${target_file}.$<CONFIG>" "${target_file}"
-	VERBATIM
-        # PRE_BUILD Not supported by this version of add_custom_command
-	DEPENDS  "${target_file}.$<CONFIG>"
-	OUTPUT   "${target_file}"
-	COMMENT  "creating ${target_file} file ({event: PRE_BUILD}, {filename: ${target_file}})")
-    endif()
-  else()
-    set(target_file)
   endif()
-  if (ARGS_OUTPUT_VAR)
-    set(${ARGS_OUTPUT_VAR} ${target_file} PARENT_SCOPE)
-  endif()
-  if (ARGS_CUSTOM_TARGET)
-    add_custom_target("${ARGS_CUSTOM_TARGET}" DEPENDS ${target_file})
+  generate_file("${target_file}" "${CONTENTS}" ${FILE_ARGS})
+  if(ARGS_OUTPUT_VAR)
+    set(${OUTPUT_VAR} "${${ARGS_OUTPUT_VAR}}" PARENT_SCOPE)
   endif()
 endfunction()
 

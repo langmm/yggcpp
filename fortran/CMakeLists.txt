@@ -40,10 +40,13 @@ if (YGG_Fortran_WRAP_C_ENUMS)
 endif()
 
 # Configure Fortran wrapper
-set_target_properties(${YGG_TARGET_Fortran} PROPERTIES
-                      VERSION ${PROJECT_VERSION}
-                      SOVERSION ${PROJECT_VERSION_MAJOR}
-                      OUTPUT_NAME ${YGG_TARGET_Fortran})
+set_target_properties(
+  ${YGG_TARGET_Fortran} PROPERTIES
+  VERSION ${PROJECT_VERSION}
+  SOVERSION ${PROJECT_VERSION_MAJOR}
+  DLL_NAME_WITH_SOVERSION ON
+  OUTPUT_NAME ${YGG_TARGET_Fortran}
+)
 target_include_directories(${YGG_TARGET_Fortran} PUBLIC
                            "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>")
 target_link_libraries(${YGG_TARGET_Fortran} PUBLIC YggInterface)
