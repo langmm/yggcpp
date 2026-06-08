@@ -1192,14 +1192,15 @@ function(add_external_library target library_type)
     predict_target_component_filename(
       ${target} DEF external_def_file
       TARGET_TYPE ${library_type}
-      TARGET_LANGUAGE ${LANGUAGE}
+      TARGET_LANGUAGE ${ARGS_LANGUAGE}
       BUILD_DIR "${ARGS_BUILD_DIR}"
     )
   endif()
-  cmake_path(
-    APPEND ARGS_BUILD_DIR "${target}.external_target.cmake"
-    OUTPUT_VARIABLE external_target_export_file
-  )
+  set(external_target_export_file)
+  # cmake_path(
+  #   APPEND ARGS_BUILD_DIR "${target}.external_target.cmake"
+  #   OUTPUT_VARIABLE external_target_export_file
+  # )
   list(APPEND EXTERNAL_PRODUCTS ${external_def_file})
   if(external_target_export_file)
     list(APPEND EXTERNAL_PRODUCTS ${external_target_export_file})

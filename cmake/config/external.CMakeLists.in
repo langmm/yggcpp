@@ -58,15 +58,17 @@ inspect_target(${target} PREFIX "EXTERNAL ${target}: ")
 
 if(library_type STREQUAL "OBJECT")
 
-  set(implicit_args LANGUAGE_ONLY)
-  if(INTERNAL_MSVC AND CMAKE_@ARGS_LANGUAGE@_COMPILER_ID STREQUAL "GNU")
-    list(APPEND implicit_args FULL_LIBRARIES)  # CREATE_MSVC_IMPORT
+  if(external_target_export_file)
+    set(implicit_args LANGUAGE_ONLY)
+    if(INTERNAL_MSVC AND CMAKE_@ARGS_LANGUAGE@_COMPILER_ID STREQUAL "GNU")
+      list(APPEND implicit_args FULL_LIBRARIES)  # CREATE_MSVC_IMPORT
+    endif()
+    get_implicit_libraries(
+      @ARGS_LANGUAGE@ implicit_libs
+      ${implicit_args}
+    )
+    target_link_libraries(${target} PUBLIC ${implicit_libs})
   endif()
-  get_implicit_libraries(
-    @ARGS_LANGUAGE@ implicit_libs
-    ${implicit_args}
-  )
-  target_link_libraries(${target} PUBLIC ${implicit_libs})
 
   # Ensure that the object files are in the build directory
   copy_target_files(
@@ -81,11 +83,13 @@ if(library_type STREQUAL "OBJECT")
   if(WIN32)
     include(CreateMSVCLib)
     target2def(${target} OUTPUT DEF_FILE)
-    set_property(
-      TARGET ${target} PROPERTY
-      MSVC_DEF_FILE "${DEF_FILE}"
-    )
-    target_link_options(${target} PUBLIC "/DEF:${DEF_FILE}")
+    if(external_target_export_file)
+      set_property(
+        TARGET ${target} PROPERTY
+        MSVC_DEF_FILE "${DEF_FILE}"
+      )
+      target_link_options(${target} PUBLIC "/DEF:${DEF_FILE}")
+    endif()
   endif()
 
 endif()
