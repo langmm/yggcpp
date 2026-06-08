@@ -79,10 +79,10 @@ tests:
           then:
             - Library/cmake/YggInterfaceConfig.cmake
             - Library/cmake/YggInterfaceConfigVersion.cmake
-            - Library/lib/libYggInterface.${{ version_major }}.lib
-            - Library/lib/libYggInterface_fortran.${{ version_major }}.lib
-            - Library/bin/libYggInterface.${{ version_major }}.dll
-            - Library/bin/libYggInterface_fortran.${{ version_major }}.dll
+            - Library/lib/libYggInterface-${{ version_major }}.lib
+            - Library/lib/libYggInterface_fortran-${{ version_major }}.lib
+            - Library/bin/libYggInterface-${{ version_major }}.dll
+            - Library/bin/libYggInterface_fortran-${{ version_major }}.dll
         - if: unix
           then:
             - lib/cmake/YggInterface/YggInterfaceConfig.cmake

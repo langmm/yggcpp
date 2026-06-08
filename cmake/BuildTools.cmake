@@ -1033,6 +1033,7 @@ function(add_external_library target library_type)
   set(multiValueArgs SOURCES LIBRARIES INCLUDES DEFINITIONS PROPERTIES
       COMPILE_FLAGS CONFIG_ARGUMENTS BUILD_ARGUMENTS PRESERVE_VARIABLES)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  set(CMAKE_MESSAGE_LOG_LEVEL DEBUG)  # TODO: Remove this
   parse_properties()
   include(GeneralTools)
   if(NOT ARGS_LISTS_DIR)
