@@ -117,6 +117,25 @@ tests:
     files:
       source:
         - tests/
+  - script:
+      - if: unix
+        then:
+          - run_test.sh
+      - if: win
+        then:
+          - run_test.bat
+    requirements:
+      run:
+        - flask
+        - ninja
+        - cmake
+        - ${{ stdlib('c') }}
+        - ${{ compiler('c') }}
+        - ${{ compiler('cxx') }}
+        - ${{ compiler('fortran') }}
+    files:
+      source:
+        - tests/
 
 about:
   homepage: https://github.com/langmm/yggcpp
