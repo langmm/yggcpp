@@ -25,6 +25,7 @@ set(INTERNAL_SOURCE_DIR "@CMAKE_CURRENT_SOURCE_DIR@")
 set(target @target@)
 set(library_type @library_type@)
 set(final_library_type @final_library_type@)
+set(INTERNAL_MSVC @MSVC@)
 set(internal_target_file "@internal_target_file@")
 set(internal_target_export_file "@internal_target_export_file@")
 set(external_target_export_file "@external_target_export_file@")
@@ -57,9 +58,13 @@ inspect_target(${target} PREFIX "EXTERNAL ${target}: ")
 
 if(library_type STREQUAL "OBJECT")
 
+  set(implicit_args LANGUAGE_ONLY)
+  if(INTERNAL_MSVC AND CMAKE_@ARGS_LANGUAGE@_COMPILER_ID STREQUAL "GNU")
+    list(APPEND implicit_args FULL_LIBRARIES)  # CREATE_MSVC_IMPORT
+  endif()
   get_implicit_libraries(
     @ARGS_LANGUAGE@ implicit_libs
-    LANGUAGE_ONLY FULL_LIBRARIES
+    ${implicit_args}
   )
   target_link_libraries(${target} PUBLIC ${implicit_libs})
 

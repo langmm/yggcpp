@@ -123,18 +123,15 @@ function(import_targets_from_file filename)
 endfunction()
 
 function(generate_implicit_libraries_file language target_file)
+  set(options LANGUAGE_ONLY)
   set(multiValueArgs EXTRA_LIBRARIES EXTRA_DIRECTORIES)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  set_options_to_names(ARGS LANGUAGE_ONLY)
   include(GeneralTools)
+  include(BuildTools)
   show_implicit_libraries(PREFIX "TODO-EXTERNAL: ")
-  message(DEBUG "CMAKE_${language}_IMPLICIT_LINK_LIBRARIES = ${CMAKE_${language}_IMPLICIT_LINK_LIBRARIES}")
-  foreach(ilib IN LISTS CMAKE_${language}_IMPLICIT_LINK_LIBRARIES)
-    if(ilib STREQUAL "gfortran" OR ilib STREQUAL "gcc" OR
-       ilib STREQUAL "c++" OR ilib STREQUAL "stdc++" OR
-       ilib STREQUAL "stdc")
-      list(APPEND ARGS_EXTRA_LIBRARIES ${ilib})
-    endif()
-  endforeach()
+  get_implicit_libraries(${language} implicitlibs ${ARGS_LANGUAGE_ONLY})
+  list(APPEND ARGS_EXTRA_LIBRARIES ${implicitlibs})
   list(REMOVE_DUPLICATES ARGS_EXTRA_LIBRARIES)
   # list(APPEND ARGS_EXTRA_LIBRARIES ${CMAKE_${language}_IMPLICIT_LINK_LIBRARIES})
   list(APPEND ARGS_EXTRA_DIRECTORIES ${CMAKE_${language}_IMPLICIT_LINK_DIRECTORIES})
@@ -148,39 +145,30 @@ endfunction()
 
 function(generate_target_file target_file)
   include(SearchTools)
-  set(options NO_CONFIG ALLOW_EMPTY CREATE_LIB FULL_LIBRARIES)
+  set(options NO_CONFIG ALLOW_EMPTY CREATE_MSVC_IMPORT FULL_LIBRARIES)
   set(oneValueArgs OUTPUT_VAR DIRECTORY CUSTOM_TARGET)
   set(multiValueArgs TARGETS EXTRA_LIBRARIES EXTRA_DIRECTORIES
       FULL_LIBRARY_SUFFIXES FULL_LIBRARY_IGNORE_SUFFIXES)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  if(NOT WIN32)
+    set(ARGS_CREATE_MSVC_IMPORT OFF)
+  endif()
+  set_options_to_names(ARGS CREATE_MSVC_IMPORT)
   collect_arguments(
     FILE_ARGS ARGS "${options}"
     NO_CONFIG ALLOW_EMPTY OUTPUT_VAR DIRECTORY CUSTOM_TARGET
   )
   message(STATUS "${target_file}: ARGS_TARGETS = ${ARGS_TARGETS}")
   list(APPEND FILE_ARGS ${ARGS_UNPARSED_ARGUMENTS})
-  if (ARGS_CREATE_LIB AND ARGS_EXTRA_LIBRARIES)
-    include(CreateMSVCLib)
-    foreach(lib IN LISTS ARGS_EXTRA_LIBRARIES)
-      create_msvc_lib_from_name(
-        ${lib} OUTPUT libfile
-        DIRECTORIES ${ARGS_EXTRA_DIRECTORIES}
-      )
-      # convert_dlla_to_lib(${lib} OUTPUT libfile
-      #                     DIRECTORIES ${ARGS_EXTRA_DIRECTORIES})
-      if (ARGS_FULL_LIBRARIES AND libfile)
-        list(APPEND full_libraries ${libfile})
-      else()
-        list(APPEND libnames ${lib})
-      endif()
-    endforeach()
-  elseif (ARGS_FULL_LIBRARIES AND ARGS_EXTRA_LIBRARIES)
-    find_libraries(LIBRARIES ${ARGS_EXTRA_LIBRARIES}
-                   DIRECTORIES ${ARGS_EXTRA_DIRECTORIES}
-		   OUTPUT full_libraries
-		   MISSING libnames
-		   INCLUDE_SUFFIXES ${ARGS_FULL_LIBRARY_SUFFIXES}
-		   IGNORE_SUFFIXES ${ARGS_FULL_LIBRARY_IGNORE_SUFFIXES})
+  if(ARGS_EXTRA_LIBRARIES AND (ARGS_FULL_LIBRARIES OR ARGS_CREATE_MSVC_IMPORT))
+    find_libraries(
+      LIBRARIES ${ARGS_EXTRA_LIBRARIES}
+      DIRECTORIES ${ARGS_EXTRA_DIRECTORIES}
+      OUTPUT full_libraries
+      MISSING libnames ${ARGS_CREATE_MSVC_IMPORT}
+      INCLUDE_SUFFIXES ${ARGS_FULL_LIBRARY_SUFFIXES}
+      IGNORE_SUFFIXES ${ARGS_FULL_LIBRARY_IGNORE_SUFFIXES}
+    )
   else()
     set(libnames ${ARGS_EXTRA_LIBRARIES})
   endif()

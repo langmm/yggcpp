@@ -435,9 +435,13 @@ function(get_native_directory PATH OUTPUT_VAR)
 endfunction()
 
 function(get_implicit_libraries language output_var)
-  set(options FULL_LIBRARIES LANGUAGE_ONLY CREATE_LIB)
+  set(options FULL_LIBRARIES LANGUAGE_ONLY CREATE_MSVC_IMPORT)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
   message(DEBUG "CMAKE_${language}_IMPLICIT_LINK_LIBRARIES = ${CMAKE_${language}_IMPLICIT_LINK_LIBRARIES}")
+  if(NOT WIN32)
+    set(ARGS_CREATE_MSVC_IMPORT OFF)
+  endif()
+  set_options_to_names(ARGS CREATE_MSVC_IMPORT)
   set(${output_var})
   foreach(ilib IN LISTS CMAKE_${language}_IMPLICIT_LINK_LIBRARIES)
     if((NOT ARGS_LANGUAGE_ONLY) OR
@@ -448,27 +452,15 @@ function(get_implicit_libraries language output_var)
     endif()
   endforeach()
   list(REMOVE_DUPLICATES ${output_var})
-  if(${output_var} AND ARGS_CREATE_LIB)
-    include(CreateMSVCLib)
-    set(full_libraries)
-    foreach(lib IN LISTS ${output_var})
-      create_msvc_lib_from_name(${lib} OUTPUT libfile)
-      # convert_dlla_to_lib(${lib} OUTPUT libfile)
-      if(ARGS_FULL_LIBRARIES AND libfile)
-        list(APPEND full_libraries ${libfile})
-      endif()
-    endforeach()
-    if(ARGS_FULL_LIBRARIES)
-      set(${output_var} ${full_libraries})
-    endif()
-  elseif(${output_var} AND ARGS_FULL_LIBRARIES)
+  if(${output_var} AND (ARGS_FULL_LIBRARIES OR ARGS_CREATE_MSVC_IMPORT))
     include(SearchTools)
     find_libraries(
       LIBRARIES ${${output_var}}
-      OUTPUT ${output_var}
+      DIRECTORIES ${CMAKE_${language}_IMPLICIT_LINK_DIRECTORIES}
+      OUTPUT full_libraries
       MISSING libnames
+      ${ARGS_CREATE_MSVC_IMPORT}
     )
-    list(APPEND ${output_var} ${libnames})
   endif()
   message(DEBUG "get_implicit_libraries: ${output_var} = ${${output_var}}")
   set(${output_var} ${${output_var}} PARENT_SCOPE)

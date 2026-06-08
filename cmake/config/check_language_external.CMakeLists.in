@@ -24,13 +24,13 @@ if(${COMPILER_VAR})
     message(STATUS "IMPLICIT_LIBRARIES_FILE = ${IMPLICIT_LIBRARIES_FILE}")
     include(AddTargetsFromFile)
     message(STATUS "CMAKE_${LANGUAGE}_COMPILER_ID = ${CMAKE_${LANGUAGE}_COMPILER_ID}")
-    set(generate_args)
+    set(implicit_args LANGUAGE_ONLY)
     if(INTERNAL_MSVC AND CMAKE_${LANGUAGE}_COMPILER_ID STREQUAL "GNU")
-      list(APPEND generate_args FULL_LIBRARIES)
+      list(APPEND implicit_args FULL_LIBRARIES)  # CREATE_MSVC_IMPORT
     endif()
     generate_implicit_libraries_file(
       ${LANGUAGE} ${IMPLICIT_LIBRARIES_FILE}
-      ${generate_args}
+      ${implicit_args}
     )
   else()
     message(STATUS "IMPLICIT_LIBRARIES_FILE not set")
