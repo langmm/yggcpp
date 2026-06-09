@@ -19,6 +19,8 @@ build:
   string: py${{ python | version_to_buildstring }}h${{ hash }}_${{ build_number }}
 
 requirements:
+  run_exports:
+    - ${{ pin_subpackage('ygginterface', exact=True) }}
   build:
     - if: build_platform != host_platform
       then:
@@ -65,12 +67,14 @@ requirements:
     - setuptools_scm
     - if: unix
       then: sysv_ipc
+    - yggdrasil-rapidjson
     - zeromq
   run:
     # - if: unix
     #   then:
     #     - ${{ stdlib('c') }}
     - python
+    - yggdrasil-rapidjson
 
 tests:
   - package_contents:

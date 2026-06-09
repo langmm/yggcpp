@@ -25,7 +25,6 @@ function(add_speed_test LANGUAGE LANGUAGE_EXT)
   include(TestTools)
   include(BuildTools)
   include(AddYggInterface)
-  check_yggdrasil_option(${LANGUAGE} TYPE LANGUAGE REQUIRED)
   check_yggdrasil_option(${COMM} TYPE COMM REQUIRED)
   set(OUTPUT_FILE "${LANGUAGE}/speedtest.${LANGUAGE_EXT}")
   configure_file(speedtest.${LANGUAGE_EXT}.in
@@ -44,6 +43,7 @@ function(add_speed_test LANGUAGE LANGUAGE_EXT)
     # list(APPEND CMAKE_COMMAND_ARGS_TO_COPY ${Python_PREFIX}_ROOT_DIR)
     return()
   endif()
+  check_yggdrasil_option(${LANGUAGE} TYPE LANGUAGE REQUIRED)
   find_compiler_external(
     ${LANGUAGE} REQUIRED
     OUTPUT_COMPILER EXTERNAL_COMPILER
