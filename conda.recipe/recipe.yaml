@@ -124,10 +124,10 @@ tests:
   - script:
       - if: unix
         then:
-          - run_test.sh
+          - tests/run_test.sh
       - if: win
         then:
-          - run_test.bat
+          - tests/run_test.bat
     requirements:
       run:
         - flask

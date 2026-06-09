@@ -33,6 +33,7 @@
 #include <cstdarg>
 #include <cerrno>
 #include <ctime>
+#include <cstring>
 #ifdef THREADSINSTALLED
 #include <thread>
 #include <chrono>
@@ -71,6 +72,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <string.h>
 
 #endif // __cplusplus
 

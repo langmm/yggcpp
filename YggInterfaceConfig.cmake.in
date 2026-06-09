@@ -15,7 +15,8 @@ ygginterface_options_import()
 foreach(dep IN LISTS YGG_INSTALL_DEPS)
   if (dep MATCHES "Python" OR
       dep STREQUAL "ZeroMQ" OR
-      dep STREQUAL "rabbitmq-c")
+      dep STREQUAL "rabbitmq-c" OR
+      dep STREQUAL "CURL")
     find_yggdrasil_dependency(${dep} FOR_PACKAGE_CONFIG)
   else()
     find_dependency(${dep})

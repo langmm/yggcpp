@@ -36,6 +36,7 @@ option(YGG_Fortran_WRAP_C_ENUMS "Wrap the int64_t enumerators in a C layer for b
 # Option dependent configuration #
 ##################################
 
+ygginterface_options_config_init(DEPS)
 ygginterface_options_config(DEPS)
 
 include(FetchContent)
@@ -309,9 +310,7 @@ endif ()
 #     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_GLIBCXX_DEBUG")
 # endif()
 
-message(DEBUG "DEPS_INCLUDE_DIRS = ${DEPS_INCLUDE_DIRS}")
-message(DEBUG "DEPS_LIBRARIES = ${DEPS_LIBRARIES}")
-message(DEBUG "DEPS_LIBRARY_DIRS = ${DEPS_LIBRARY_DIRS}")
+ygginterface_config_show(DEPS DEBUG)
 
 ############################
 # Handle interdependencies #

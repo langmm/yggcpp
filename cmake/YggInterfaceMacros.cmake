@@ -46,6 +46,83 @@ macro(ygginterface_options_import)
   endforeach()
 endmacro()
 
+macro(ygginterface_options_config_vars PREFIX)
+  if(COMMAND yggdrasil_rapidjson_config_vars)
+    yggdrasil_rapidjson_config_vars(${PREFIX})
+  else()
+  set(${PREFIX}_CONFIG_VARS)
+  foreach(suffix LIBRARIES INCLUDE_DIRS COMPILE_FLAGS LINK_FLAGS)
+    list(
+      APPEND ${PREFIX}_CONFIG_VARS
+      ${PREFIX}_${suffix}
+      ${PREFIX}_PUBLIC_${suffix}
+      ${PREFIX}_PRIVATE_${suffix}
+    )
+    set(suffix_lang ${suffix})
+    if(suffix STREQUAL "LIBRARIES")
+      set(suffix_lang "LIBS")
+    endif()
+    foreach(lang C CXX Fortran)
+      list(
+        APPEND ${PREFIX}_CONFIG_VARS
+        ${PREFIX}_PUBLIC_${lang}_${suffix_lang}
+        ${PREFIX}_PRIVATE_${lang}_${suffix_lang}
+      )
+    endforeach()
+  endforeach()
+  endif()
+endmacro()
+
+macro(ygginterface_options_config_init PREFIX)
+  if(COMMAND yggdrasil_rapidjson_config_init)
+    yggdrasil_rapidjson_config_init(${PREFIX})
+  else()
+    ygginterface_options_config_vars(${PREFIX})
+    foreach(var IN LISTS ${PREFIX}_CONFIG_VARS)
+      set(${var})
+    endforeach()
+  endif()
+endmacro()
+
+macro(ygginterface_options_config_accum PREFIX)
+  foreach(suffix LIBRARIES INCLUDE_DIRS COMPILE_FLAGS LINK_FLAGS)
+    set(${PREFIX}_ALL_PUBLIC_${suffix} ${${PREFIX}_PUBLIC_${suffix}}
+        ${${PREFIX}_${suffix}})
+    set(${PREFIX}_ALL_PRIVATE_${suffix} ${${PREFIX}_PRIVATE_${suffix}})
+    if(suffix STREQUAL "LIBRARIES" OR suffix STREQUAL "LINK_FLAGS")
+      set(gentype "LINK")
+    else()
+      set(gentype "COMPILE")
+    endif()
+    set(suffix_lang ${suffix})
+    if(suffix STREQUAL "LIBRARIES")
+      set(suffix_lang "LIBS")
+    endif()
+    foreach(lang C CXX Fortran)
+      set(kpublic ${PREFIX}_PUBLIC_${lang}_${suffix_lang})
+      set(kprivate ${PREFIX}_PRIVATE_${lang}_${suffix_lang})
+      if(${kpublic})
+        list(
+          APPEND ${PREFIX}_ALL_PUBLIC_${suffix}
+          "$<$<${gentype}_LANGUAGE:${lang}>:${${kpublic}}>"
+        )
+      endif()
+      if(${kprivate})
+        list(
+          APPEND ${PREFIX}_ALL_PRIVATE_${suffix}
+          "$<$<${gentype}_LANGUAGE:${lang}>:${${kprivate}}>"
+        )
+      endif()
+    endforeach()
+  endforeach()
+endmacro()
+
+macro(ygginterface_config_show PREFIX LEVEL)
+  foreach(var IN LISTS ${PREFIX}_CONFIG_VARS)
+    message(${LEVEL} "${var} = ${${var}}")
+  endforeach()
+endmacro()
+
 macro(ygginterface_options_create)
   option(YGG_BUILD_ASAN "Build with address sanitizer (gcc/clang)" OFF)
   option(YGG_BUILD_UBSAN "Build with undefined behavior sanitizer (gcc/clang)" OFF)
@@ -70,46 +147,54 @@ macro(ygginterface_target_config TARGET TYPE PREFIX)
   if(COMMAND yggdrasil_rapidjson_target_config)
     yggdrasil_rapidjson_target_config(${TARGET} ${TYPE} ${PREFIX})
   else()
-    target_link_libraries(
-      ${TARGET} ${TYPE} ${${PREFIX}_LIBRARIES}
-      ${${PREFIX}_PUBLIC_LIBRARIES}
-      "$<$<LINK_LANGUAGE:C>:${${PREFIX}_PUBLIC_C_LIBS}>"
-      "$<$<LINK_LANGUAGE:CXX>:${${PREFIX}_PUBLIC_CXX_LIBS}>"
-      "$<$<LINK_LANGUAGE:Fortran>:${${PREFIX}_PUBLIC_Fortran_LIBS}>"
-    )
-    target_include_directories(
-      ${TARGET} ${TYPE} ${${PREFIX}_INCLUDE_DIRS}
-    )
-    target_compile_options(
-      ${TARGET} ${TYPE} ${${PREFIX}_PUBLIC_COMPILE_FLAGS}
-      "$<$<COMPILE_LANGUAGE:C>:${${PREFIX}_PUBLIC_C_COMPILE_FLAGS}>"
-      "$<$<COMPILE_LANGUAGE:CXX>:${${PREFIX}_PUBLIC_CXX_COMPILE_FLAGS}>"
-      "$<$<COMPILE_LANGUAGE:Fortran>:${${PREFIX}_PUBLIC_Fortran_COMPILE_FLAGS}>"
-    )
-    target_link_options(
-      ${TARGET} ${TYPE} ${${PREFIX}_PUBLIC_LINK_FLAGS}
-      "$<$<LINK_LANGUAGE:C>:${${PREFIX}_PUBLIC_C_LINK_FLAGS}>"
-      "$<$<LINK_LANGUAGE:CXX>:${${PREFIX}_PUBLIC_CXX_LINK_FLAGS}>"
-      "$<$<LINK_LANGUAGE:Fortran>:${${PREFIX}_PUBLIC_Fortran_LINK_FLAGS}>"
-    )
-    if(NOT TYPE STREQUAL "INTERFACE")
+    ygginterface_config_show(${PREFIX} DEBUG)
+    ygginterface_options_config_accum(${PREFIX})
+    if(${PREFIX}_ALL_PUBLIC_LIBRARIES)
       target_link_libraries(
-        ${TARGET} PRIVATE ${${PREFIX}_PRIVATE_LIBRARIES}
+        ${TARGET} ${TYPE} ${${PREFIX}_ALL_PUBLIC_LIBRARIES}
       )
-      # target_include_directories(
-      #   ${TARGET} PRIVATE ${${PREFIX}_PRIVATE_INCLUDE_DIRS}
-      # )
-      # target_compile_options(
-      #   ${TARGET} PRIVATE ${${PREFIX}_PRIVATE_COMPILE_FLAGS}
-      # )
-      # target_link_options(
-      #   ${TARGET} PRIVATE ${${PREFIX}_PRIVATE_LINK_FLAGS}
-      # )
+    endif()
+    if(${PREFIX}_ALL_PUBLIC_INCLUDE_DIRS)
+      target_include_directories(
+        ${TARGET} ${TYPE} ${${PREFIX}_ALL_PUBLIC_INCLUDE_DIRS}
+      )
+    endif()
+    if(${PREFIX}_ALL_PUBLIC_COMPILE_FLAGS)
+      target_compile_options(
+        ${TARGET} ${TYPE} ${${PREFIX}_ALL_PUBLIC_COMPILE_FLAGS}
+      )
+    endif()
+    if(${PREFIX}_ALL_PUBLIC_LINK_FLAGS)
+      target_link_options(
+        ${TARGET} ${TYPE} ${${PREFIX}_ALL_PUBLIC_LINK_FLAGS}
+      )
+    endif()
+    if(NOT ("${TYPE}" STREQUAL "INTERFACE"))
+      if(${PREFIX}_ALL_PRIVATE_LIBRARIES)
+        target_link_libraries(
+          ${TARGET} PRIVATE ${${PREFIX}_ALL_PRIVATE_LIBRARIES}
+        )
+      endif()
+      if(${PREFIX}_ALL_PRIVATE_INCLUDE_DIRS)
+        target_include_directories(
+          ${TARGET} PRIVATE ${${PREFIX}_ALL_PRIVATE_INCLUDE_DIRS}
+        )
+      endif()
+      if(${PREFIX}_ALL_PRIVATE_COMPILE_FLAGS)
+        target_compile_options(
+          ${TARGET} PRIVATE ${${PREFIX}_ALL_PRIVATE_COMPILE_FLAGS}
+        )
+      endif()
+      if(${PREFIX}_ALL_PRIVATE_LINK_FLAGS)
+        target_link_options(
+          ${TARGET} PRIVATE ${${PREFIX}_ALL_PRIVATE_LINK_FLAGS}
+        )
+      endif()
     endif()
   endif()
 endmacro()
 
-macro(ygginterface_options_config OUTPUT_PREFIX)
+macro(ygginterface_options_config PREFIX)
   foreach(flag BUILD_ASAN BUILD_UBSAN ENABLE_INSTRUMENTATION_OPT)
     set(YGGDRASIL_RAPIDJSON_${flag} ${YGG_${flag}})
   endforeach()
@@ -124,21 +209,21 @@ macro(ygginterface_options_config OUTPUT_PREFIX)
     set(YGGDRASIL_RAPIDJSON_PYTHON_WRAPPER ON)
   endif()
   if(YggdrasilRapidJSON_FOUND)
-    yggdrasil_rapidjson_options_config(${OUTPUT_PREFIX})
+    yggdrasil_rapidjson_options_config(${PREFIX})
   endif()
   if(YGG_DEBUG_LEVEL)
     list(
-      APPEND ${OUTPUT_PREFIX}_PUBLIC_COMPILE_FLAGS
+      APPEND ${PREFIX}_PUBLIC_COMPILE_FLAGS
       -DYGG_DEBUG=${YGG_DEBUG_LEVEL}
     )
   endif()
   if(YGGDRASIL_RAPIDJSON_INCLUDE_DIRS)
     list(
-      APPEND ${OUTPUT_PREFIX}_INCLUDE_DIRECTORIES
+      APPEND ${PREFIX}_INCLUDE_DIRECTORIES
       "${YGGDRASIL_RAPIDJSON_INCLUDE_DIRS}"
     )
     list(
-      APPEND ${OUTPUT_PREFIX}_PUBLIC_COMPILE_FLAGS
+      APPEND ${PREFIX}_PUBLIC_COMPILE_FLAGS
       -DYGGDRASIL_RAPIDJSON_HAS_STDSTRING
       -DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION
       -D_USE_MATH_DEFINES
@@ -150,33 +235,33 @@ macro(ygginterface_options_config OUTPUT_PREFIX)
     include(BuildTools)
     strip_python(YggdrasilRapidJSON)
     list(
-      APPEND ${OUTPUT_PREFIX}_PUBLIC_LIBRARIES
+      APPEND ${PREFIX}_PUBLIC_LIBRARIES
       YggdrasilRapidJSON
     )
     if((YGG_BUILD_ASAN OR YGG_BUILD_UBSAN)
        AND NOT COMMAND yggdrasil_rapidjson_target_config)
       # This can be removed after rapidjson updated
-      list(REMOVE_ITEM ${OUTPUT_PREFIX}_PUBLIC_COMPILE_FLAGS
-           ${${OUTPUT_PREFIX}_ASAN_COMPILE_FLAGS})
-      list(REMOVE_ITEM ${OUTPUT_PREFIX}_PUBLIC_LINK_FLAGS
-           ${${OUTPUT_PREFIX}_ASAN_COMPILE_FLAGS})
+      list(REMOVE_ITEM ${PREFIX}_PUBLIC_COMPILE_FLAGS
+           ${${PREFIX}_ASAN_COMPILE_FLAGS})
+      list(REMOVE_ITEM ${PREFIX}_PUBLIC_LINK_FLAGS
+           ${${PREFIX}_ASAN_COMPILE_FLAGS})
       # Compilation flags are same as link flags for ASAN & UBSAN
       foreach(suffix PUBLIC_C_COMPILE_FLAGS PUBLIC_CXX_COMPILE_FLAGS
               PUBLIC_C_LINK_FLAGS PUBLIC_CXX_LINK_FLAGS)
         list(
-          APPEND ${OUTPUT_PREFIX}_${suffix}
-          ${${OUTPUT_PREFIX}_ASAN_COMPILE_FLAGS}
+          APPEND ${PREFIX}_${suffix}
+          ${${PREFIX}_ASAN_COMPILE_FLAGS}
         )
       endforeach()
       if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         execute_process(
           COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=libclang_rt.asan_osx_dynamic.dylib
           WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-          OUTPUT_VARIABLE ${OUTPUT_PREFIX}_ASAN_LIB
-          RESULT_VARIABLE ${OUTPUT_PREFIX}_ASAN_RESULT
+          OUTPUT_VARIABLE ${PREFIX}_ASAN_LIB
+          RESULT_VARIABLE ${PREFIX}_ASAN_RESULT
         )
-        if(${OUTPUT_PREFIX}_ASAN_RESULT)
-          set(${OUTPUT_PREFIX}_ASAN_LIB)
+        if(${PREFIX}_ASAN_RESULT)
+          set(${PREFIX}_ASAN_LIB)
         endif()
       endif()
     endif()
@@ -186,19 +271,19 @@ macro(ygginterface_options_config OUTPUT_PREFIX)
   endif()
   if(YGG_DEFAULT_COMM)
     list(
-      APPEND ${OUTPUT_PREFIX}_PUBLIC_COMPILE_FLAGS
+      APPEND ${PREFIX}_PUBLIC_COMPILE_FLAGS
       -DDEFAULT_COMM_PREFIX=${YGG_DEFAULT_COMM}
     )
   endif()
   if(YGG_LINK_Python_TO_CXX)
     list(
-      APPEND ${OUTPUT_PREFIX}_PUBLIC_COMPILE_FLAGS
+      APPEND ${PREFIX}_PUBLIC_COMPILE_FLAGS
       -DYGG_LINK_PYTHON_TO_CPP
     )
   endif()
   if(WRAP_YGGDRASIL_RAPIDJSON_FOR_DLL)
     list(
-      APPEND ${OUTPUT_PREFIX}_PUBLIC_COMPILE_FLAGS
+      APPEND ${PREFIX}_PUBLIC_COMPILE_FLAGS
       -DWRAP_YGGDRASIL_RAPIDJSON_FOR_DLL
     )
   endif()
@@ -209,36 +294,36 @@ macro(ygginterface_options_config OUTPUT_PREFIX)
       message(STATUS "COVERAGE ON")
       set(COVERAGE_DIR ${CMAKE_BINARY_DIR}/coverage)
       file(MAKE_DIRECTORY ${COVERAGE_DIR})
-      list(APPEND ${OUTPUT_PREFIX}_COVERAGE_COMPILE_FLAGS -g -O0 --coverage -fno-inline -fprofile-arcs -ftest-coverage)
+      list(APPEND ${PREFIX}_COVERAGE_COMPILE_FLAGS -g -O0 --coverage -fno-inline -fprofile-arcs -ftest-coverage)
       if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|ARMClang")
         set(CTEST_COVERAGE_COMMAND "llvm-cov")
         set(CTEST_COVERAGE_EXTRA_FLAGS "gcov")
-        list(APPEND ${OUTPUT_PREFIX}_COVERAGE_COMPILE_FLAGS -fprofile-instr-generate -fcoverage-mapping)
+        list(APPEND ${PREFIX}_COVERAGE_COMPILE_FLAGS -fprofile-instr-generate -fcoverage-mapping)
       else()
-        list(APPEND ${OUTPUT_PREFIX}_COVERAGE_LIBRARIES gcov)
+        list(APPEND ${PREFIX}_COVERAGE_LIBRARIES gcov)
         set(CTEST_COVERAGE_COMMAND "gcov")
         set(CTEST_COVERAGE_EXTRA_FLAGS "")
-        list(APPEND ${OUTPUT_PREFIX}_COVERAGE_COMPILE_FLAGS -fno-inline-small-functions -fno-default-inline)
+        list(APPEND ${PREFIX}_COVERAGE_COMPILE_FLAGS -fno-inline-small-functions -fno-default-inline)
       endif()
     else()
       message(STATUS "Could not find gcovr, coverage disabled")
       set(YGG_ENABLE_COVERAGE OFF)
     endif()
   endif()
-  if(${OUTPUT_PREFIX}_COVERAGE_COMPILE_FLAGS)
+  if(${PREFIX}_COVERAGE_COMPILE_FLAGS)
     # Compilation flags are same as link flags for coverage
     foreach(suffix PUBLIC_C_COMPILE_FLAGS PUBLIC_CXX_COMPILE_FLAGS
             PUBLIC_C_LINK_FLAGS PUBLIC_CXX_LINK_FLAGS)
       list(
-        APPEND ${OUTPUT_PREFIX}_${suffix}
-        ${${OUTPUT_PREFIX}_COVERAGE_COMPILE_FLAGS}
+        APPEND ${PREFIX}_${suffix}
+        ${${PREFIX}_COVERAGE_COMPILE_FLAGS}
       )
     endforeach()
   endif()
-  if(${OUTPUT_PREFIX}_COVERAGE_LIBRARIES)
+  if(${PREFIX}_COVERAGE_LIBRARIES)
     list(
-      APPEND ${OUTPUT_PREFIX}_PRIVATE_LIBRARIES
-      ${${OUTPUT_PREFIX}_COVERAGE_LIBRARIES}
+      APPEND ${PREFIX}_PRIVATE_LIBRARIES
+      ${${PREFIX}_COVERAGE_LIBRARIES}
     )
   endif()
 endmacro()
