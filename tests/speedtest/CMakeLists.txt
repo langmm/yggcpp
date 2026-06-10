@@ -40,19 +40,18 @@ function(add_speed_test LANGUAGE LANGUAGE_EXT)
       NAME speedtest_${LANGUAGE}
       COMMAND ${${LANGUAGE}_EXECUTABLE} ${OUTPUT_FILE}
     )
-    # list(APPEND CMAKE_COMMAND_ARGS_TO_COPY ${Python_PREFIX}_ROOT_DIR)
     return()
   endif()
   check_yggdrasil_option(${LANGUAGE} TYPE LANGUAGE REQUIRED)
-  find_compiler_external(
-    ${LANGUAGE} REQUIRED
-    OUTPUT_COMPILER EXTERNAL_COMPILER
-    OUTPUT_GENERATOR EXTERNAL_GENERATOR
-  )
-  get_native_directory("${EXTERNAL_COMPILER}" paths)
-  list(APPEND CMAKE_COMMAND_ARGS
-       "-DCMAKE_${LANGUAGE}_COMPILER:PATH=${EXTERNAL_COMPILER}"
-       "-G${EXTERNAL_GENERATOR}")
+  # find_compiler_external(
+  #   ${LANGUAGE} REQUIRED
+  #   OUTPUT_COMPILER EXTERNAL_COMPILER
+  #   OUTPUT_GENERATOR EXTERNAL_GENERATOR
+  # )
+  # get_native_directory("${EXTERNAL_COMPILER}" paths)
+  # list(APPEND CMAKE_COMMAND_ARGS
+  #      "-DCMAKE_${LANGUAGE}_COMPILER:PATH=${EXTERNAL_COMPILER}"
+  #      "-G${EXTERNAL_GENERATOR}")
   cmakevars2cmakecliargs(CMAKE_COMMAND_ARGS ${CMAKE_COMMAND_ARGS_TO_COPY})
   configure_and_build(
     CMakeLists.txt.in

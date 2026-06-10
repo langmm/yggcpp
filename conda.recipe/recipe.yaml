@@ -137,6 +137,14 @@ tests:
         - ${{ compiler('c') }}
         - ${{ compiler('cxx') }}
         - ${{ compiler('fortran') }}
+        - if: win
+          then:
+            - binutils <2.43
+            - make
+            - ${{ stdlib('m2w64_c') }}
+            - ${{ compiler('m2w64_c') }}
+            - ${{ compiler('m2w64_cxx') }}
+            - ${{ compiler('m2w64_fortran') }}
     files:
       source:
         - tests/
