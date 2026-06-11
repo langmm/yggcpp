@@ -18,12 +18,13 @@ if(${COMPILER_VAR})
   set(CONTENTS)
   dump_cmake_variables(
     OUTPUT_VAR CONTENTS
-    OUTPUT_PATTERN "<key>=<value>\n"
+    OUTPUT_PATTERN "<key>=<value>"
     VARIABLES ${OUTPUT_VARS}
-    VERBOSE
+    VERBOSE  # LOG_LEVEL DEBUG
   )
   if(OUTPUT_FILE)
-    file(WRITE ${OUTPUT_FILE} ${CONTENTS})
+    message(STATUS "DUMPING VARS TO ${OUTPUT_FILE}:\n    ${CONTENTS}")
+    file(WRITE ${OUTPUT_FILE} "${CONTENTS}")
   endif()
   if(IMPLICIT_LIBRARIES_FILE)
     message(STATUS "IMPLICIT_LIBRARIES_FILE = ${IMPLICIT_LIBRARIES_FILE}")

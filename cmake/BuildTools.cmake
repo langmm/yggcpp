@@ -533,6 +533,7 @@ function(find_compiler_external language)
     APPEND EXTERNAL_VARIABLES
     CMAKE_GENERATOR CMAKE_LINKER IMPLICIT_LIBRARIES_FILE
     CMAKE_${language}_COMPILER
+    CMAKE_${language}_COMPILER_LINKER
     CMAKE_${language}_LINK_EXECUTABLE
     CMAKE_${language}_IMPLICIT_LINK_LIBRARIES
     CMAKE_${language}_IMPLICIT_LINK_DIRECTORIES
@@ -541,6 +542,7 @@ function(find_compiler_external language)
     list(
       APPEND EXTERNAL_VARIABLES
       CMAKE_${ARGS_LINKER_LANGUAGE}_COMPILER
+      CMAKE_${ARGS_LINKER_LANGUAGE}_COMPILER_LINKER
       CMAKE_${ARGS_LINKER_LANGUAGE}_LINK_EXECUTABLE
       CMAKE_${ARGS_LINKER_LANGUAGE}_IMPLICIT_LINK_LIBRARIES
       CMAKE_${ARGS_LINKER_LANGUAGE}_IMPLICIT_LINK_DIRECTORIES
@@ -648,7 +650,7 @@ function(find_compiler_external language)
       )
     endif()
     execute_process_with_env(
-      COMMAND ${CMAKE_COMMAND} "-G${ARGS_GENERATOR}" -B . -S . ${COMMAND_ARGS}
+      COMMAND ${CMAKE_COMMAND} -G "${ARGS_GENERATOR}" -B . -S . ${COMMAND_ARGS}
       WORKING_DIRECTORY ${tmp_dir}
       RESULT_VARIABLE out
       ${PROCESS_ARGS}
@@ -666,14 +668,12 @@ function(find_compiler_external language)
           CACHE INTERNAL "Variables set by ${DESCRIPTION}")
       set(${cached_output_var} "${${cached_output_var}}"
           CACHE INTERNAL "Results from ${DESCRIPTION}")
-      set(${cached_implicitlib_var} "${${cached_implicitlib_var}}"
-          CACHE INTERNAL "File containing implicit libraries identified by ${DESCRIPTION}")
     endif()
   endif()
   if(${cached_output_var})
     load_cmake_variables(
       "${${cached_output_var}}"
-      PATTERN "<key>=<value>\n"
+      PATTERN "<key>=<value>"
       SUFFIX "_${ARGS_ID}"
       VARIABLES ${EXTERNAL_VARIABLES}
       VERBOSE  # LOG_LEVEL DEBUG
@@ -807,7 +807,9 @@ function(setup_external_config lists_dir)
     list(APPEND ARGS_ARGUMENTS "-D${var}=${${var}}")
   endforeach()
   set(EXTERNAL_COMMAND "${CMAKE_COMMAND}"
-      "-G${ARGS_GENERATOR}" "-S${ARGS_SOURCE_DIR}" "-B${ARGS_BUILD_DIR}"
+      -G "${ARGS_GENERATOR}"
+      -S "${ARGS_SOURCE_DIR}"
+      -B "${ARGS_BUILD_DIR}"
       ${ARGS_ARGUMENTS})
   setup_external_function(
     "execute_process_with_env" MODULE "GeneralTools"
