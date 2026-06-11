@@ -7,7 +7,7 @@ powershell -command "Get-ChildItem -Path .\"
 mkdir conda_build
 
 cmake -B conda_build -S %SRC_DIR% ^
-      -G "Ninja" ^
+      -G Ninja ^
       -D BUILD_CXX_LIBRARY:BOOL=ON ^
       -D BUILD_Python_LIBRARY:BOOL=OFF ^
       -D BUILD_Fortran_LIBRARY:BOOL=ON ^

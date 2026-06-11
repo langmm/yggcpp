@@ -4,7 +4,7 @@ set "builddir=build_speed"
 if not exist "!builddir!" mkdir "!builddir!"
 if !errorlevel! neq 0 exit /b !errorlevel!
 cd "!builddir!"
-cmake -G "Ninja" ^
+cmake -G Ninja ^
       -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON ^
       ..\\tests\\speedtest
 if !errorlevel! neq 0 exit /b !errorlevel!

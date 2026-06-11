@@ -160,20 +160,31 @@ function(configure_and_build CONFIG_FILE)
     COMMAND ${CMAKE_COMMAND} ${ARGS_SOURCE_DIR} ${ARGS_CMAKE_COMMAND_ARGS}
     WORKING_DIRECTORY ${ARGS_BUILD_DIR}
     COMMAND_ECHO STDOUT
-    RESULT_VARIABLE ret)
+    RESULT_VARIABLE ret
+    OUTPUT_VARIABLE COMMAND_OUTPUT
+    ERROR_VARIABLE COMMAND_OUTPUT
+    ECHO_OUTPUT_VARIABLE
+    ECHO_ERROR_VARIABLE
+  )
   if (NOT ret EQUAL 0)
-    message(FATAL_ERROR "Failed to configure ${OUTPUT_FILE}")
+    message(FATAL_ERROR "Failed to configure ${OUTPUT_FILE}: ${COMMAND_OUTPUT}")
   endif()
+  set(COMMAND_OUTPUT)
   execute_process(
     COMMAND ${CMAKE_COMMAND} --build . --config Release
     WORKING_DIRECTORY ${ARGS_BUILD_DIR}
     COMMAND_ECHO STDOUT
-    RESULT_VARIABLE ret)
+    RESULT_VARIABLE ret
+    OUTPUT_VARIABLE COMMAND_OUTPUT
+    ERROR_VARIABLE COMMAND_OUTPUT
+    ECHO_OUTPUT_VARIABLE
+    ECHO_ERROR_VARIABLE
+  )
   if(old_paths)
     set(ENV{PATH} "${old_paths}")
   endif()
   if (NOT ret EQUAL 0)
-    message(FATAL_ERROR "Failed to build ${OUTPUT_FILE}")
+    message(FATAL_ERROR "Failed to build ${OUTPUT_FILE}: ${COMMAND_OUTPUT}")
   endif()
 endfunction()
 

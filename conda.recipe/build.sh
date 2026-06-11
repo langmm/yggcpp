@@ -18,7 +18,7 @@ if [ ! -d conda_build ]; then
 fi
 
 cmake -B conda_build -S ${SRC_DIR} \
-      -G "Ninja" \
+      -G Ninja \
       -D VERBOSE:BOOL=ON \
       -D BUILD_CXX_LIBRARY:BOOL=ON \
       -D BUILD_Python_LIBRARY:BOOL=OFF \

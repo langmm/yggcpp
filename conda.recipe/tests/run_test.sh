@@ -7,7 +7,7 @@ fi
 
 cd build_speed
 
-cmake -G "Ninja" ../tests/speedtest
+cmake -G Ninja ../tests/speedtest
 
 cmake --build .
 ctest
