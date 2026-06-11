@@ -12,6 +12,20 @@ set(YGG_INSTALL_CONFIG "@YGG_INSTALL_CONFIG@")
 include(${CMAKE_CURRENT_LIST_DIR}/YggInterfaceMacros.cmake)
 ygginterface_options_import()
 
+if(NOT CMAKE_CXX_COMPILER)
+  include(CheckLanguage)
+  check_language(CXX)
+  if(CMAKE_CXX_COMPILER)
+    enable_language(CXX)
+  elseif(CMAKE_Fortran_COMPILER AND WIN32)
+    include(${CMAKE_CURRENT_LIST_DIR}/BuildTools.cmake)
+    check_language_external(CXX)
+  endif()
+  if(NOT CMAKE_CXX_COMPILER)
+    message(FATAL_ERROR "CXX linker required for linking against YggInterface")
+  endif()
+endif()
+
 foreach(dep IN LISTS YGG_INSTALL_DEPS)
   if (dep MATCHES "Python" OR
       dep STREQUAL "ZeroMQ" OR
