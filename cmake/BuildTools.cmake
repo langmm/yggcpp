@@ -477,15 +477,31 @@ function(get_implicit_libraries language output_var)
   set(${output_var} ${${output_var}} PARENT_SCOPE)
 endfunction()
 
+macro(find_compiler_external_propagate_vars IDSTR)
+  set(${IDSTR}_VARIABLES ${EXTERNAL_VARIABLES} PARENT_SCOPE)
+  set(CMAKE_${IDSTR}_COMPILER ${CMAKE_${language}_COMPILER_${IDSTR}})
+  set(CMAKE_${IDSTR}_LINKER ${CMAKE_LINKER_${IDSTR}})
+  set(CMAKE_${IDSTR}_GENERATOR ${CMAKE_GENERATOR_${IDSTR}})
+  set(CMAKE_${IDSTR}_IMPLICIT_LIBRARIES ${IMPLICIT_LIBRARIES_FILE_${IDSTR}})
+  foreach(ivar ${EXTERNAL_VARIABLES})
+    set(${ivar}_${IDSTR} "${${ivar}_${IDSTR}}" PARENT_SCOPE)
+  endforeach()
+  foreach(ivar COMPILER LINKER GENERATOR IMPLICIT_LIBRARIES)
+    set(CMAKE_${IDSTR}_${ivar} "${CMAKE_${IDSTR}_${ivar}}" PARENT_SCOPE)
+    if(ARGS_OUTPUT_${ivar})
+      set(${ARGS_OUTPUT_${ivar}} "${CMAKE_${IDSTR}_${ivar}}" PARENT_SCOPE)
+    endif()
+  endforeach()
+endmacro()
+
 function(find_compiler_external language)
   set(options REQUIRED SKIP_CURRENT_GENERATOR DONT_CLEAR_OTHER_COMPILERS
       OVERWRITE)
   set(oneValueArgs GENERATOR TIMEOUT LINKER_LANGUAGE ID
       OUTPUT_COMPILER OUTPUT_LINKER OUTPUT_GENERATOR
-      OUTPUT_IMPLICIT_LIBRARIES)
-  set(multiValueArgs TRY_GENERATORS CLEAR_COMPILERS)
+      OUTPUT_IMPLICIT_LIBRARIES FORCE_COMPILER)
+  set(multiValueArgs TRY_GENERATORS CLEAR_COMPILERS OUTPUT_VARS)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-  set(EXTERNAL_VARIABLES COMPILER LINKER GENERATOR IMPLICIT_LIBRARIES)
   if(ARGS_LINKER_LANGUAGE AND (ARGS_LINKER_LANGUAGE STREQUAL "${language}"))
     set(ARGS_LINKER_LANGUAGE)
   endif()
@@ -496,21 +512,45 @@ function(find_compiler_external language)
       set(ARGS_ID "${language}_EXTERNAL")
     endif()
   endif()
-  if((NOT ARGS_OVERWRITE) AND
-     CMAKE_${ARGS_ID}_COMPILER AND
-     ((NOT ARGS_LINKER_LANGUAGE) OR CMAKE_${ARGS_ID}_LINKER))
-    foreach(ivar ${EXTERNAL_VARIABLES})
-      if(ARGS_OUTPUT_${ivar})
-        set(${ARGS_OUTPUT_${ivar}} "${CMAKE_${ARGS_ID}_${ivar}}" PARENT_SCOPE)
+  set(EXTERNAL_VARIABLES ${${ARGS_ID}_VARIABLES})
+  if(ARGS_OUTPUT_VARS AND NOT EXTERNAL_VARIABLES)
+    set(ARGS_OVERWRITE ON)
+    set(EXTERNAL_VARIABLES ${ARGS_OUTPUT_VARS})
+  else()
+    foreach(var IN LISTS ARGS_OUTPUT_VARS)
+      if(NOT "${var}" IN_LIST EXTERNAL_VARIABLES)
+        set(ARGS_OVERWRITE ON)
+        list(APPEND EXTERNAL_VARIABLES ${ARGS_OUTPUT_VARS})
+        break()
       endif()
     endforeach()
+  endif()
+  if((NOT ARGS_OVERWRITE) AND EXTERNAL_VARIABLES)
+    find_compiler_external_propagate_vars(${ARGS_ID})
     return()
   endif()
-  if(ARGS_OVERWRITE)
-    foreach(ivar ${EXTERNAL_VARIABLES)
-      set(CMAKE_${ARGS_ID}_${ivar})
-    endforeach()
+  list(
+    APPEND EXTERNAL_VARIABLES
+    CMAKE_GENERATOR CMAKE_LINKER IMPLICIT_LIBRARIES_FILE
+    CMAKE_${language}_COMPILER
+    CMAKE_${language}_LINK_EXECUTABLE
+    CMAKE_${language}_IMPLICIT_LINK_LIBRARIES
+    CMAKE_${language}_IMPLICIT_LINK_DIRECTORIES
+  )
+  if(ARGS_LINKER_LANGUAGE)
+    list(
+      APPEND EXTERNAL_VARIABLES
+      CMAKE_${ARGS_LINKER_LANGUAGE}_COMPILER
+      CMAKE_${ARGS_LINKER_LANGUAGE}_LINK_EXECUTABLE
+      CMAKE_${ARGS_LINKER_LANGUAGE}_IMPLICIT_LINK_LIBRARIES
+      CMAKE_${ARGS_LINKER_LANGUAGE}_IMPLICIT_LINK_DIRECTORIES
+    )
   endif()
+  list(REMOVE_DUPLICATES EXTERNAL_VARIABLES)
+  set(${ARGS_ID}_VARIABLES)
+  foreach(ivar ${EXTERNAL_VARIABLES})
+    set(${ivar}_${ARGS_ID})
+  endforeach()
   include(GeneralTools)
   if(NOT (ARGS_DONT_CLEAR_OTHER_COMPILERS OR ARGS_CLEAR_COMPILERS))
     get_supported_languages(
@@ -532,7 +572,9 @@ function(find_compiler_external language)
     collect_arguments(
       CHILD_ARGS ARGS "${options}"
       LINKER_LANGUAGE ID DONT_CLEAR_OTHER_COMPILERS
+      FORCE_COMPILER
     )
+    list(APPEND CHILD_ARGS OUTPUT_VARS ${EXTERNAL_VARIABLES})
     if(ARGS_TRY_GENERATORS STREQUAL "ALL")
       get_supported_generators(ARGS_TRY_GENERATORS)
     endif()
@@ -546,27 +588,32 @@ function(find_compiler_external language)
         ${language} GENERATOR "${igen}"
         ${CHILD_ARGS} ${PROCESS_ARGS} ${ARGS_UNPARSED_ARGUMENTS}
       )
-      if(CMAKE_${ARGS_ID}_COMPILER)
-        foreach(ivar ${EXTERNAL_VARIABLES})
-          set(CMAKE_${ARGS_ID}_${ivar} "${CMAKE_${ARGS_ID}_${ivar}}" PARENT_SCOPE)
-          if(ARGS_OUTPUT_${ivar})
-            set(${ARGS_OUTPUT_${ivar}} "${CMAKE_${ARGS_ID}_${ivar}}" PARENT_SCOPE)
-          endif()
-        endforeach()
+      if(${ARGS_ID}_VARIABLES)
+        find_compiler_external_propagate_vars(${ARGS_ID})
         return()
       endif()
     endforeach()
     if(WIN32 AND language STREQUAL "Fortran" AND
-       (NOT CMAKE_${ARGS_ID}_COMPILER))
+       (NOT ${ARGS_ID}_VARIABLES) AND (NOT ARGS_FORCE_COMPILER))
+      # TODO: Update this for other variables
       find_mingw_gfortran(LINKER_LANGUAGE ${ARGS_LINKER_LANGUAGE})
-      if(MINGW_GFORTRAN)
-        set(CMAKE_${ARGS_ID}_COMPILER "${MINGW_GFORTRAN}" PARENT_SCOPE)
-        set(CMAKE_${ARGS_ID}_LINKER "" PARENT_SCOPE)  # TODO
-        set(CMAKE_${ARGS_ID}_GENERATOR "MinGW Makefiles" PARENT_SCOPE)
+      find_compiler_external(
+        ${language} GENERATOR "MinGW Makefiles"
+        FORCE_COMPILER "${MINGW_GFORTRAN}"
+        ${CHILD_ARGS} ${PROCESS_ARGS} ${ARGS_UNPARSED_ARGUMENTS}
+      )
+      if(${ARGS_ID}_VARIABLES)
+        find_compiler_external_propagate_vars(${ARGS_ID})
         return()
       endif()
+      # if(MINGW_GFORTRAN)
+      #   set(CMAKE_${ARGS_ID}_COMPILER "${MINGW_GFORTRAN}" PARENT_SCOPE)
+      #   set(CMAKE_${ARGS_ID}_LINKER "" PARENT_SCOPE)  # TODO
+      #   set(CMAKE_${ARGS_ID}_GENERATOR "MinGW Makefiles" PARENT_SCOPE)
+      #   return()
+      # endif()
     endif()
-    if(ARGS_REQUIRED AND NOT CMAKE_${ARGS_ID}_COMPILER)
+    if(ARGS_REQUIRED AND NOT ${ARGS_ID}_VARIABLES)
       message(FATAL_ERROR "Failed to locate a ${language} compiler (Tried generators: ${ARGS_TRY_GENERATORS})")
     endif()
     return()
@@ -579,14 +626,13 @@ function(find_compiler_external language)
   endif()
   string(REPLACE " " "_" GENSTR "${ARGS_GENERATOR}")
   set(IDSTR "${ARGS_ID}_${GENSTR}")
-  set(cached_compiler_var "_${IDSTR}_COMPILER")
-  set(cached_linker_var "_${IDSTR}_LINKER")
-  set(cached_implicitlib_var "_${IDSTR}_IMPLICIT_LIBRARIES")
-  if(NOT DEFINED CACHE{${cached_compiler_var}})
+  set(cached_external_var "_${IDSTR}_EXTERNAL_VARIABLES")
+  set(cached_output_var "_${IDSTR}_OUTPUT")
+  if((NOT DEFINED CACHE{${cached_output_var}}) OR
+     (NOT ${cached_external_var} STREQUAL "${EXTERNAL_VARIABLES}"))
     set(tmp_dir "${CMAKE_CURRENT_BINARY_DIR}/_check_for_${IDSTR}")
     message(DEBUG "find_compiler_external(${language} GENERATOR ${ARGS_GENERATOR}): tmp_dir = ${tmp_dir}")
-    set(fcompiler "${tmp_dir}/${IDSTR}_compiler")
-    set(flinker "${tmp_dir}/${IDSTR}_linker")
+    set(foutput "${tmp_dir}/${IDSTR}_output")
     set(fimplicitlibs "${tmp_dir}/${IDSTR}_implicitlibs")
     file(MAKE_DIRECTORY "${tmp_dir}")
     configure_file(
@@ -594,44 +640,54 @@ function(find_compiler_external language)
       ${tmp_dir}/CMakeLists.txt
       @ONLY)
     message(STATUS "Looking for ${language} compiler using \"${ARGS_GENERATOR}\" generator")
+    set(COMMAND_ARGS)
+    if(ARGS_FORCE_COMPILER)
+      list(
+        APPEND COMMAND_ARGS
+        "-DCMAKE_${language}_COMPILER=${ARGS_FORCE_COMPILER}"
+      )
+    endif()
     execute_process_with_env(
-      COMMAND ${CMAKE_COMMAND} "-G${ARGS_GENERATOR}" -B . -S .
+      COMMAND ${CMAKE_COMMAND} "-G${ARGS_GENERATOR}" -B . -S . ${COMMAND_ARGS}
       WORKING_DIRECTORY ${tmp_dir}
       RESULT_VARIABLE out
       ${PROCESS_ARGS}
       ${ARGS_UNPARSED_ARGUMENTS}
     )
-    if (EXISTS ${fcompiler})
-      file(READ ${fcompiler} ${cached_compiler_var})
-      if(EXISTS ${flinker})
-        file(READ ${flinker} ${cached_linker_var})
-      endif()
-      if(EXISTS ${fimplicitlibs})
-        set(${cached_implicitlib_var} ${fimplicitlibs})
-      endif()
+    set(${cached_external_var})
+    set(${cached_output_var})
+    if(EXISTS ${foutput})
+      set(${cached_external_var} "${EXTERNAL_VARIABLES}")
+      file(READ ${foutput} ${cached_output_var})
     endif()
-    set(${cached_compiler_var} "${${cached_compiler_var}}" CACHE INTERNAL "Compiler result from find_compiler_external for LANGUAGE = ${language}, LINKER_LANGUAGE = ${ARGS_LINKER_LANGUAGE}, and GENERATOR = ${ARGS_GENERATOR}")
-    set(${cached_linker_var} "${${cached_linker_var}}" CACHE INTERNAL "Linker result from find_compiler_external for LANGUAGE = ${language}, LINKER_LANGUAGE = ${ARGS_LINKER_LANGUAGE}, and GENERATOR = ${ARGS_GENERATOR}")
-    set(${cached_implicitlib_var} "${${cached_implicitlib_var}}" CACHE INTERNAL "File containing implicit libraries automatically linked by the compiler for LANGUAGE = ${language}, LINKER_LANGUAGE = ${ARGS_LINKER_LANGUAGE}, and GENERATOR = ${ARGS_GENERATOR}")
+    if(NOT DEFINED CACHE{${cached_output_var}})
+      set(DESCRIPTION "find_compiler_external for LANGUAGE = ${language}, LINKER_LANGUAGE = ${ARGS_LINKER_LANGUAGE}, and GENERATOR = ${ARGS_GENERATOR}")
+      set(${cached_external_var} "${${cached_external_var}}"
+          CACHE INTERNAL "Variables set by ${DESCRIPTION}")
+      set(${cached_output_var} "${${cached_output_var}}"
+          CACHE INTERNAL "Results from ${DESCRIPTION}")
+      set(${cached_implicitlib_var} "${${cached_implicitlib_var}}"
+          CACHE INTERNAL "File containing implicit libraries identified by ${DESCRIPTION}")
+    endif()
   endif()
-  if(${cached_compiler_var})
-    set(CMAKE_${ARGS_ID}_COMPILER ${${cached_compiler_var}})
-    set(CMAKE_${ARGS_ID}_LINKER ${${cached_linker_var}})
-    set(CMAKE_${ARGS_ID}_GENERATOR "${ARGS_GENERATOR}")
-    set(CMAKE_${ARGS_ID}_IMPLICIT_LIBRARIES "${${cached_implicitlib_var}}")
+  if(${cached_output_var})
+    load_cmake_variables(
+      "${${cached_output_var}}"
+      PATTERN "<key>=<value>\n"
+      SUFFIX "_${ARGS_ID}"
+      VARIABLES ${EXTERNAL_VARIABLES}
+      VERBOSE  # LOG_LEVEL DEBUG
+    )
     message(STATUS "Located external compiler for ${language} (GENERATOR=${ARGS_GENERATOR}, LINKER_LANGUAGE=${ARGS_LINKER_LANGUAGE})")
-    foreach(ivar ${EXTERNAL_VARIABLES})
-      message(STATUS "CMAKE_${ARGS_ID}_${ivar} = ${CMAKE_${ARGS_ID}_${ivar}}")
-    endforeach()
   elseif(ARGS_REQUIRED)
     message(FATAL_ERROR "Failed to locate a ${language} external compiler (CMAKE_GENERATOR = \"${ARGS_GENERATOR}\")")
   endif()
-  foreach(ivar ${EXTERNAL_VARIABLES})
-    set(CMAKE_${ARGS_ID}_${ivar} "${CMAKE_${ARGS_ID}_${ivar}}" PARENT_SCOPE)
-    if(ARGS_OUTPUT_${ivar})
-      set(${ARGS_OUTPUT_${ivar}} "${CMAKE_${ARGS_ID}_${ivar}}" PARENT_SCOPE)
-    endif()
-  endforeach()
+  find_compiler_external_propagate_vars(${ARGS_ID})
+  if(${cached_output_var})
+    foreach(ivar COMPILER LINKER GENERATOR IMPLICIT_LIBRARIES)
+      message(STATUS "CMAKE_${ARGS_ID}_${ivar} = ${CMAKE_${ARGS_ID}_${ivar}}")
+    endforeach()
+  endif()
 endfunction()
 
 function(check_language_external language)
