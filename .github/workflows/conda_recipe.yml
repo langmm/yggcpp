@@ -17,7 +17,11 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: ["3.11"]
-        builder: [conda, rattler]
+        builder: [rattler]
+        include:
+          - os: windows-latest
+            python-version: "3.11"
+            builder: rattler-m2w64
       fail-fast: false
     steps:
       - name: Check out repository code
@@ -41,14 +45,7 @@ jobs:
           channel-priority: strict
           miniforge-version: latest
           conda-remove-defaults: true
-      - name: Install conda-build
-        if: matrix.builder == 'conda'
-        run: |
-          conda info
-          conda list
-          conda install conda-build cmake numpy -y
       - name: Install rattler-build
-        if: matrix.builder == 'rattler'
         run: |
           conda info
           conda list
@@ -57,14 +54,14 @@ jobs:
         run: |
           conda info
           conda list
-      - name: Build conda recipe (using conda-build)
-        if: matrix.builder == 'conda'
-        run: |
-          conda-build --no-anaconda-upload --output-folder $HOME/local_channel/ --python ${{ matrix.python-version }} recipe/
       - name: Build conda recipe (using rattler-build)
         if: matrix.builder == 'rattler'
         run: |
           rattler-build build --recipe "conda.recipe/recipe.yaml" --output-dir $HOME/local_channel/ --variant python=${{ matrix.python-version }}
+      - name: Build conda recipe (using rattler-build)
+        if: matrix.builder == 'rattler-m2w64'
+        run: |
+          rattler-build build --recipe "conda.recipe/recipe-m2w64.yaml" --output-dir $HOME/local_channel/ --variant python=${{ matrix.python-version }}
       # - name: Build conda recipe (using rattler-build action)
       #   uses: prefix-dev/rattler-build-action@v0.2.34
       #   if: matrix.builder == 'rattler'
