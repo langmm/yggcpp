@@ -275,7 +275,7 @@ if(NOT YGGDRASIL_DISABLE_Python_C_API)
     # There is an issue with embedding Python on Windows in conda environments
     # https://github.com/ContinuumIO/anaconda-issues/issues/11374
     if(WIN32)
-        list(APPEND YGG_TEST_ENV "PYTHONHOME=${${Python_PREFIX}_RUNTIME_LIBRARY_DIRS}")
+        list(APPEND YGG_TEST_ENV "PYTHONHOME=${Python3_RUNTIME_LIBRARY_DIRS}")
     endif()
     
 endif()

@@ -59,8 +59,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include(YggInterfaceMacros)
 ygginterface_options_create()
 
-set(Python_PREFIX Python3)
-
 if(NOT WIN32)
     find_program(CCACHE_FOUND ccache)
     if(CCACHE_FOUND)

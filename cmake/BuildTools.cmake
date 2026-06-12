@@ -320,11 +320,11 @@ function(python_code_generation NAME SCRIPT)
       list(APPEND ARGS_UNPARSED_ARGUMENTS_CMD ${src})
     endforeach()
   endif()
-  if (${Python_PREFIX}_EXECUTABLE)
+  if (Python3_EXECUTABLE)
     message(STATUS "Calling python script ${SCRIPT}")
     if (ARGS_BYPRODUCTS)
       add_custom_command(
-        COMMAND ${${Python_PREFIX}_EXECUTABLE} ${ARGS_ENTRY_POINT}
+        COMMAND ${Python3_EXECUTABLE} ${ARGS_ENTRY_POINT}
         ${ARGS_ARGUMENTS}
         ${ARGS_UNPARSED_ARGUMENTS_CMD}
       )
@@ -332,7 +332,7 @@ function(python_code_generation NAME SCRIPT)
     else()
       add_custom_target(
         ${NAME}
-        COMMAND ${${Python_PREFIX}_EXECUTABLE} ${ARGS_ENTRY_POINT}
+        COMMAND ${Python3_EXECUTABLE} ${ARGS_ENTRY_POINT}
         ${ARGS_ARGUMENTS}
         ${ARGS_UNPARSED_ARGUMENTS}
       )

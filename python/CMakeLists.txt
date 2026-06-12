@@ -37,33 +37,33 @@ if (NOT SKBUILD)
       list(APPEND Python_BUILD_ARGS
         --config-settings=cmake.define.CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH_SAFE})
     endif()
-    if (${Python_PREFIX}_ROOT_DIR)
-      set(${Python_PREFIX}_ROOT_DIR_SAFE "${${Python_PREFIX}_ROOT_DIR}")
+    if (Python3_ROOT_DIR)
+      set(Python3_ROOT_DIR_SAFE "${Python3_ROOT_DIR}")
       if(WIN32)
-        string(REPLACE "\\" "/" ${Python_PREFIX}_ROOT_DIR_SAFE "${${Python_PREFIX}_ROOT_DIR}")
+        string(REPLACE "\\" "/" Python3_ROOT_DIR_SAFE "${Python3_ROOT_DIR}")
       endif()
       list(APPEND Python_BUILD_ARGS
-        --config-settings=cmake.define.Python3_ROOT_DIR=${${Python_PREFIX}_ROOT_DIR_SAFE}
-        --config-settings=cmake.define.Python_ROOT_DIR=${${Python_PREFIX}_ROOT_DIR_SAFE})
+        --config-settings=cmake.define.Python3_ROOT_DIR=${Python3_ROOT_DIR_SAFE}
+        --config-settings=cmake.define.Python_ROOT_DIR=${Python3_ROOT_DIR_SAFE})
     endif()
     message(STATUS "Building Python with CMAKE_ARGS = ${Python_CMAKE_ARGS}")
 
     include(BuildTools)
     set(DEPENDS_PY ${SOURCES_PY} ${CMAKE_CURRENT_SOURCE_DIR}/YggInterface/__init__.py)
-    message(STATUS "Python_OUTPUT = ${${Python_PREFIX}_SITELIB}/YggInterface/__init__.py")
-    if (EXISTS "${${Python_PREFIX}_SITELIB}/YggInterface/__init__.py")
+    message(STATUS "Python_OUTPUT = ${Python3_SITELIB}/YggInterface/__init__.py")
+    if (EXISTS "${Python3_SITELIB}/YggInterface/__init__.py")
       message(STATUS "Python_OUTPUT EXISTS")
     else()
       message(STATUS "Python_OUTPUT DOES NOT EXIST")
     endif()
     add_custom_command_env(
       YggInterface_python
-      COMMAND ${${Python_PREFIX}_EXECUTABLE} -m pip install ${PARENT_SOURCE_DIR} -v ${Python_BUILD_ARGS}
+      COMMAND ${Python3_EXECUTABLE} -m pip install ${PARENT_SOURCE_DIR} -v ${Python_BUILD_ARGS}
       KEYPREFIX "ENVK_"
       ENV ENVK_CMAKE_ARGS ${Python_CMAKE_ARGS} END_ENV
       COMMENT "build Python via pip"
       DEPENDS ${DEPENDS_PY}
-      # OUTPUT ${${Python_PREFIX}_SITELIB}/YggInterface/__init__.py
+      # OUTPUT ${Python3_SITELIB}/YggInterface/__init__.py
     )
   endif()
   return()
@@ -75,7 +75,7 @@ if (NOT SKBUILD STREQUAL "2")
   message(FATAL_ERROR "Python interface must be built using scikit-build-core")
 endif()
 
-add_library_python(${YGG_TARGET_PY} MODULE ${SOURCES_PY})
+Python3_add_library(${YGG_TARGET_PY} MODULE ${SOURCES_PY})
 target_include_directories(
           ${YGG_TARGET_PY} PUBLIC
           ${DEPS_INCLUDE_DIRS}
@@ -125,11 +125,11 @@ if (NOT YGG_LINK_Python_TO_CXX)
     set(YGG_INSTALL_INCLUDES ${YGG_INSTALL_INCLUDES} PARENT_SCOPE)
 endif()
 
-if(NOT ${Python_PREFIX}_INSTALL_DIR)
-  set(${Python_PREFIX}_INSTALL_DIR ".")
+if(NOT Python3_INSTALL_DIR)
+  set(Python3_INSTALL_DIR ".")
 endif()
 
-set(YGG_CXX_LIBRARY_DEST "${${Python_PREFIX}_INSTALL_DIR}")
+set(YGG_CXX_LIBRARY_DEST "${Python3_INSTALL_DIR}")
 
 if(YGG_LINK_Python_TO_CXX)
   install(TARGETS ${YGG_TARGET_CXX}
@@ -137,11 +137,11 @@ if(YGG_LINK_Python_TO_CXX)
 	  PUBLIC_HEADER DESTINATION ${YGG_CXX_LIBRARY_DEST}
 	  RUNTIME DESTINATION ${YGG_CXX_LIBRARY_DEST})
   install(TARGETS ${YGG_TARGET_PY}
-  	  LIBRARY DESTINATION ${${Python_PREFIX}_INSTALL_DIR})
+  	  LIBRARY DESTINATION ${Python3_INSTALL_DIR})
 else()
   install(TARGETS ${YGG_TARGET_PY}
-          LIBRARY DESTINATION ${${Python_PREFIX}_INSTALL_DIR}
-	  RUNTIME DESTINATION ${${Python_PREFIX}_INSTALL_DIR})
+          LIBRARY DESTINATION ${Python3_INSTALL_DIR}
+	  RUNTIME DESTINATION ${Python3_INSTALL_DIR})
 endif()
 
 include(AddYggInterface)
