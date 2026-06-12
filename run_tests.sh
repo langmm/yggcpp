@@ -11,7 +11,8 @@ DO_Python=""
 DO_DOCS=""
 DO_SKBUILD=""
 WITH_ASAN=""
-CMAKE_FLAGS="-DVERBOSE:BOOL=ON -DYGG_SKIP_VALGRIND_TESTS=ON -DGENERATE_INTERFACE=ON"
+QUIET=""
+CMAKE_FLAGS="-DYGG_SKIP_VALGRIND_TESTS=ON -DGENERATE_INTERFACE=ON"
 CMAKE_FLAGS_LIB=""
 CMAKE_FLAGS_SPEED=""
 CMAKE_FLAGS_DOCS=""
@@ -94,6 +95,10 @@ while [[ $# -gt 0 ]]; do
 	    ;;
 	--dont-test )
 	    DONT_TEST="TRUE"
+	    shift # past argument with no value
+	    ;;
+        --quiet )
+            QUIET="TRUE"
 	    shift # past argument with no value
 	    ;;
 	--verbose )
@@ -188,6 +193,10 @@ while [[ $# -gt 0 ]]; do
 	    ;;
     esac
 done
+
+if [ ! -n "$QUIET" ]; then
+    CMAKE_FLAGS="${CMAKE_FLAGS} -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DCMAKE_MESSAGE_LOG_LEVEL:STRING=DEBUG"
+fi
 
 if [ -n "$INSTALL_DIR" ]; then
     CMAKE_FLAGS="${CMAKE_FLAGS} -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR}"

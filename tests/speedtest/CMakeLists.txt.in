@@ -5,6 +5,7 @@ set(LANG @LANGUAGE@)
 # else()
 #   project(SpeedTest@LANGUAGE@ @LANGUAGE@ CXX)
 # endif()
+option(YGG_INSPECT_TARGETS "Inspect the executables and libraries that are built" OFF)
 
 find_package(YggInterface REQUIRED)
 
@@ -13,5 +14,7 @@ add_executable(speedtest_@LANGUAGE@ speedtest.@LANGUAGE_EXT@)
 #                       LINKER_LANGUAGE @LANGUAGE@)
 target_link_libraries(speedtest_@LANGUAGE@ PRIVATE
                       YggInterface::@LANGUAGE@)
-include(CheckDLL)
-show_runtimes(speedtest_@LANGUAGE@)
+if(YGG_INSPECT_TARGETS)
+  include(CheckDLL)
+  show_runtimes(speedtest_@LANGUAGE@)
+endif()

@@ -8,14 +8,15 @@ mkdir conda_build
 
 cmake -B conda_build -S %SRC_DIR% ^
       -G Ninja ^
+      -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON ^
+      -D CMAKE_MESSAGE_LOG_LEVEL:STRING=DEBUG ^
+      -D CMAKE_BUILD_PARALLEL_LEVEL=1 ^
       -D BUILD_CXX_LIBRARY:BOOL=ON ^
       -D BUILD_Python_LIBRARY:BOOL=OFF ^
       -D BUILD_Fortran_LIBRARY:BOOL=ON ^
       -D YGG_CXX_REQUIRED:BOOL=ON ^
       -D YGG_Fortran_REQUIRED:BOOL=ON ^
       -D YGGINTERFACE_VERSION=%PKG_VERSION% ^
-      -D CMAKE_BUILD_PARALLEL_LEVEL=1 ^
-      -D VERBOSE:BOOL=ON ^
       -D "Python3_EXECUTABLE:FILEPATH=%PYTHON%" ^
       %CMAKE_ARGS% || goto :error
 cmake --build conda_build -j%CPU_COUNT% || goto :error

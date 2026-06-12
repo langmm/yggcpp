@@ -19,7 +19,8 @@ fi
 
 cmake -B conda_build -S ${SRC_DIR} \
       -G Ninja \
-      -D VERBOSE:BOOL=ON \
+      -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON \
+      -D CMAKE_MESSAGE_LOG_LEVEL:STRING=DEBUG \
       -D BUILD_CXX_LIBRARY:BOOL=ON \
       -D BUILD_Python_LIBRARY:BOOL=OFF \
       -D BUILD_Fortran_LIBRARY:BOOL=ON \

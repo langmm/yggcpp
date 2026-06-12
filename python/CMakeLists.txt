@@ -149,5 +149,7 @@ add_library_dirs_to_rpath(
   ${YGG_TARGET_PY} DESTINATION ${YGG_CXX_LIBRARY_DEST}
 )
 
-include(CheckDLL)
-show_runtimes(${YGG_TARGET_PY})
+if(YGG_INSPECT_TARGETS)
+  include(CheckDLL)
+  show_runtimes(${YGG_TARGET_PY})
+endif()

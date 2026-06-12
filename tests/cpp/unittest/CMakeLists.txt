@@ -61,7 +61,7 @@ set_ygg_test_env(
   FOR_GTEST_DISCOVER_TESTS
 )
 list(LENGTH unittest_properties unittest_properties_LEN)
-message(STATUS "unittest_properties = ${unittest_properties}, LEN=${unittest_properties_LEN}")
+message(DEBUG "unittest_properties = ${unittest_properties}, LEN=${unittest_properties_LEN}")
 gtest_discover_tests(unittest DISCOVERY_MODE PRE_TEST
                      WORKING_DIRECTORY ${PARENT_BINARY_DIR}
                      TEST_LIST ygg_test_list
@@ -87,7 +87,9 @@ else ()
 endif()
 
 include(CheckDLL)
-show_runtimes(unittest)
+if(YGG_INSPECT_TARGETS)
+  show_runtimes(unittest)
+endif()
 copy_required_runtimes(unittest DEPENDENCIES ${YGG_TARGET_CXX})
 
 if(NOT MSVC)

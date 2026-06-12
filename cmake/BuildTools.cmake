@@ -680,7 +680,7 @@ function(find_compiler_external language)
       PATTERN "<key>=<value>"
       SUFFIX "_${ARGS_ID}"
       VARIABLES ${EXTERNAL_VARIABLES}
-      VERBOSE  # LOG_LEVEL DEBUG
+      VERBOSE LOG_LEVEL DEBUG
     )
     message(STATUS "Located external compiler for ${language} (GENERATOR=${ARGS_GENERATOR}, LINKER_LANGUAGE=${ARGS_LINKER_LANGUAGE})")
   elseif(ARGS_REQUIRED)
@@ -689,7 +689,7 @@ function(find_compiler_external language)
   find_compiler_external_propagate_vars(${ARGS_ID})
   if(${cached_output_var})
     foreach(ivar COMPILER LINKER GENERATOR IMPLICIT_LIBRARIES)
-      message(STATUS "CMAKE_${ARGS_ID}_${ivar} = ${CMAKE_${ARGS_ID}_${ivar}}")
+      message(DEBUG "CMAKE_${ARGS_ID}_${ivar} = ${CMAKE_${ARGS_ID}_${ivar}}")
     endforeach()
   endif()
 endfunction()
@@ -747,7 +747,7 @@ function(check_language_external language)
     # append_language_vars(${language} ENABLE_VARS)
     # foreach(var IN LISTS ENABLE_VARS)
     #   set(${var} "${${var}_${ARGS_ID}}" PARENT_SCOPE)
-    #   message(STATUS "EXTERNAL ENABLE: ${var} = ${${var}_${ARGS_ID}}")
+    #   message(DEBUG "EXTERNAL ENABLE: ${var} = ${${var}_${ARGS_ID}}")
     # endforeach()
   endif()
   if(CMAKE_${language}_COMPILER_${ARGS_ID} AND ARGS_OUTPUT_VARIABLE)
@@ -1123,7 +1123,6 @@ function(add_external_library target library_type)
   set(multiValueArgs SOURCES LIBRARIES INCLUDES DEFINITIONS PROPERTIES
       COMPILE_FLAGS CONFIG_ARGUMENTS BUILD_ARGUMENTS PRESERVE_VARIABLES)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-  set(CMAKE_MESSAGE_LOG_LEVEL DEBUG)  # TODO: Remove this
   parse_properties()
   include(GeneralTools)
   if(NOT ARGS_LISTS_DIR)
@@ -1279,7 +1278,7 @@ function(add_external_library target library_type)
   if(WIN32)
     include(SearchTools)
     find_program_generic(DLLTOOL_PATH dlltool REQUIRED)
-    message(STATUS "DLLTOOL_PATH = ${DLLTOOL_PATH}")
+    message(DEBUG "DLLTOOL_PATH = ${DLLTOOL_PATH}")
     predict_target_component_filename(
       ${target} DEF external_def_file
       TARGET_TYPE ${library_type}
@@ -1296,10 +1295,10 @@ function(add_external_library target library_type)
   if(external_target_export_file)
     list(APPEND EXTERNAL_PRODUCTS ${external_target_export_file})
   endif()
-  message(STATUS "external_target_export_file = ${external_target_export_file}")
-  message(STATUS "EXTERNAL_IMPLICIT_LIBRARIES = ${EXTERNAL_IMPLICIT_LIBRARIES}")
+  message(DEBUG "external_target_export_file = ${external_target_export_file}")
+  message(DEBUG "EXTERNAL_IMPLICIT_LIBRARIES = ${EXTERNAL_IMPLICIT_LIBRARIES}")
   if(OUTPUT_EXTENSION_OVERRIDE)
-    message(STATUS "OUTPUT_EXTENSION_OVERRIDE = ${OUTPUT_EXTENSION_OVERRIDE} [INTERNAL]")
+    message(DEBUG "OUTPUT_EXTENSION_OVERRIDE = ${OUTPUT_EXTENSION_OVERRIDE} [INTERNAL]")
     configure_file(
       ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/external_ext_overrides.cmake.in
       ${ARGS_SOURCE_DIR}/external_ext_overrides.cmake
@@ -1324,9 +1323,9 @@ function(add_external_library target library_type)
     ARGUMENTS ${ARGS_BUILD_ARGUMENTS}
   )
   set(external_target_name ${target}_build)
-  message(STATUS "GENERATOR = ${ARGS_GENERATOR}")
-  message(STATUS "CONFIGURE_COMMAND = ${CONFIGURE_COMMAND}")
-  message(STATUS "BUILD_COMMAND = ${BUILD_COMMAND}")
+  message(DEBUG "GENERATOR = ${ARGS_GENERATOR}")
+  message(DEBUG "CONFIGURE_COMMAND = ${CONFIGURE_COMMAND}")
+  message(DEBUG "BUILD_COMMAND = ${BUILD_COMMAND}")
   include(ExternalProject)
   externalproject_add(
     ${external_target_name}
@@ -1593,7 +1592,7 @@ function(copy_target_files target destination)
     )
     set(COMPONENT_COMMAND_ARGS ${COMMAND_ARGS}
         OUTPUT "${component_output}")
-    message(STATUS "COPY ${component}: ${COMPONENT_COMMAND_ARGS}")
+    message(DEBUG "COPY ${component}: ${COMPONENT_COMMAND_ARGS}")
     if(component STREQUAL "OBJECTS")
       if(ARGS_EVENT_TARGET STREQUAL "${target}"
          AND NOT IS_OBJECT_LIBRARY)

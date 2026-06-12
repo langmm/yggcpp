@@ -12,33 +12,35 @@ set(IMPLICIT_LIBRARIES_FILE "@fimplicitlibs@")
 set(INTERNAL_MSVC @MSVC@)
 set(OUTPUT_VARS @EXTERNAL_VARIABLES@)
 # dump_cmake_variables(
-#   VERBOSE PREFIX "CMAKE_"
+#   VERBOSE LOG_LEVEL DEBUG
+#   PREFIX "CMAKE_"
 #   EXCLUDE_PREFIX "CMAKE_${LANGUAGE}_"
 # )
 # dump_cmake_variables(
+#   VERBOSE LOG_LEVEL DEBUG
 #   OUTPUT_VAR OUTPUT_VARS
-#   VERBOSE PREFIX "CMAKE_${LANGUAGE}_"
+#   PREFIX "CMAKE_${LANGUAGE}_"
 # )
 
 if(${COMPILER_VAR})
-  message(STATUS "Located external compiler for ${LANGUAGE}")
-  message(STATUS "${COMPILER_VAR} = ${${COMPILER_VAR}}")
-  message(STATUS "CMAKE_GENERATOR = ${CMAKE_GENERATOR}")
+  message(DEBUG "Located external compiler for ${LANGUAGE}")
+  message(DEBUG "${COMPILER_VAR} = ${${COMPILER_VAR}}")
+  message(DEBUG "CMAKE_GENERATOR = ${CMAKE_GENERATOR}")
   set(CONTENTS)
   dump_cmake_variables(
     OUTPUT_VAR CONTENTS
     OUTPUT_PATTERN "<key>=<value>"
     VARIABLES ${OUTPUT_VARS}
-    VERBOSE  # LOG_LEVEL DEBUG
+    VERBOSE LOG_LEVEL DEBUG
   )
   if(OUTPUT_FILE)
-    message(STATUS "DUMPING VARS TO ${OUTPUT_FILE}:\n    ${CONTENTS}")
+    message(DEBUG "DUMPING VARS TO ${OUTPUT_FILE}:\n    ${CONTENTS}")
     file(WRITE ${OUTPUT_FILE} "${CONTENTS}")
   endif()
   if(IMPLICIT_LIBRARIES_FILE)
-    message(STATUS "IMPLICIT_LIBRARIES_FILE = ${IMPLICIT_LIBRARIES_FILE}")
+    message(DEBUG "IMPLICIT_LIBRARIES_FILE = ${IMPLICIT_LIBRARIES_FILE}")
     include(AddTargetsFromFile)
-    message(STATUS "CMAKE_${LANGUAGE}_COMPILER_ID = ${CMAKE_${LANGUAGE}_COMPILER_ID}")
+    message(DEBUG "CMAKE_${LANGUAGE}_COMPILER_ID = ${CMAKE_${LANGUAGE}_COMPILER_ID}")
     set(implicit_args LANGUAGE_ONLY)
     if(INTERNAL_MSVC AND CMAKE_${LANGUAGE}_COMPILER_ID STREQUAL "GNU")
       list(APPEND implicit_args FULL_LIBRARIES)  # CREATE_MSVC_IMPORT
@@ -48,6 +50,6 @@ if(${COMPILER_VAR})
       ${implicit_args}
     )
   else()
-    message(STATUS "IMPLICIT_LIBRARIES_FILE not set")
+    message(DEBUG "IMPLICIT_LIBRARIES_FILE not set")
   endif()
 endif()

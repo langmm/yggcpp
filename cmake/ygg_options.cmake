@@ -48,7 +48,7 @@ endif()
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif()
-message(STATUS "CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
+message(DEBUG "CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
 
 if (WIN32)
    set(CMAKE_CXX_EXTENSIONS OFF)
@@ -58,12 +58,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include(YggInterfaceMacros)
 ygginterface_options_create()
-option(VERBOSE "Turn on debug messages and verbose makefile" OFF)
-
-if(VERBOSE)
-  set(CMAKE_VERBOSE_MAKEFILE ON)
-  set(CMAKE_MESSAGE_LOG_LEVEL DEBUG)
-endif()
 
 set(Python_PREFIX Python3)
 

@@ -1,3 +1,6 @@
+# Options to make build super verbose
+# -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON
+# -DCMAKE_MESSAGE_LOG_LEVEL:STRING=DEBUG
 cmake_minimum_required(VERSION 3.18)
 message(DEBUG "TOP LEVEL CMAKE_GENERATOR=${CMAKE_GENERATOR}")
 
@@ -30,6 +33,7 @@ option(YGG_BUILD_DOCS "Build documentation (requires Doxygen)" OFF)
 option(DOXYGEN_CHECK_MISSING "Raise an error if documentation is missing" OFF)
 option(YGG_PATCH_MINGW53_THREAD "Patch the MinGW 5.3.0 thread header" OFF)
 option(YGG_Fortran_WRAP_C_ENUMS "Wrap the int64_t enumerators in a C layer for binding in Fortran" OFF)
+option(YGG_INSPECT_TARGETS "Inspect the executables and libraries that are built" OFF)
 
 
 ##################################
@@ -84,7 +88,7 @@ endif()
 
 cmake_path(SET CONDA_PREFIX "$ENV{CONDA_PREFIX}")
 if(CONDA_PREFIX)
-    message(STATUS "CONDA_PREFIX = ${CONDA_PREFIX}")
+    message(DEBUG "CONDA_PREFIX = ${CONDA_PREFIX}")
 endif()
 
 ######################
@@ -157,7 +161,7 @@ if (rabbitmq-c_FOUND)
     list(APPEND DEPS_PUBLIC_C_COMPILE_FLAGS -DYGG_RMQ_NOINCLUDEDIR)
     list(APPEND DEPS_PUBLIC_CXX_COMPILE_FLAGS -DYGG_RMQ_NOINCLUDEDIR)
   endif()
-  dump_cmake_variables(REGEX "rabbitmq*" VERBOSE)
+  dump_cmake_variables(REGEX "rabbitmq*" VERBOSE LOG_LEVEL DEBUG)
 endif()
 
 ########
@@ -494,7 +498,7 @@ if(NOT YGG_BUILD_DOCS)
   list(APPEND CONDITIONAL_INSTALL_ARGS DONT_INSTALL_DOCS)
 endif()
 if(YGG_INSTALL_TARGETS)
-  message(STATUS "Install enabled")
+  message(DEBUG "Install enabled")
   ygginterface_options_export()
   complete_install(
     ${PROJECT_NAME} TARGETS ${YGG_INSTALL_TARGETS}
@@ -507,7 +511,7 @@ if(YGG_INSTALL_TARGETS)
     DOC_DIR ${DOXYGEN_BUILD_DIR}/
   )
 else()
-  message(STATUS "Install disabled")
+  message(DEBUG "Install disabled")
 endif()
     
 #########

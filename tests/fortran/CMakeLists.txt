@@ -10,7 +10,6 @@ include(DynamicTestLibraries)
 set(Fortran_TEST_LIBRARIES ${YGG_TARGET_Fortran})
 set(Fortran_TEST_INCLUDE_DIRS ${YGG_Fortran_MOD_DIR})
 set(WORKING_DIR "${CMAKE_CURRENT_BINARY_DIR}")
-message(STATUS "WORKING_DIR = ${WORKING_DIR}")
 
 function (mangle_fortran_name CNAME FNAME)
     set (TMP)
@@ -78,9 +77,11 @@ function (add_fortran_test_executable TARGET)
     # message(FATAL_ERROR "ftest_properties = ${ftest_properties}, LEN=${ftest_properties_LEN}")
 
     include(CheckDLL)
-    show_runtimes(${TARGET})
-    show_runtimes(${TARGET}_fortran AFTER_TARGET ${TARGET})
-    # show_symbols(${TARGET}_fortran AFTER_TARGET ${TARGET})
+    if(YGG_INSPECT_TARGETS)
+      show_runtimes(${TARGET})
+      show_runtimes(${TARGET}_fortran AFTER_TARGET ${TARGET})
+      # show_symbols(${TARGET}_fortran AFTER_TARGET ${TARGET})
+    endif()
     copy_required_runtimes(
       ${TARGET} DEPENDENCIES
       YggInterface YggInterface_fortran ${TARGET}_fortran

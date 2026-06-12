@@ -200,7 +200,7 @@ endfunction()
 #         set(${Python_PREFIX}_EXECUTABLE ${${Python_PREFIX}_EXECUTABLE_FULL})
 #       endif()
 #     endif()
-#     message(STATUS "${Python_PREFIX}_EXECUTABLE = ${${Python_PREFIX}_EXECUTABLE}")
+#     message(DEBUG "${Python_PREFIX}_EXECUTABLE = ${${Python_PREFIX}_EXECUTABLE}")
 #     propagate_cmake_variables_prefix("Python")
 # endfunction()
 
@@ -1038,7 +1038,7 @@ function(find_libraries)
     if(${x}_FOUND STREQUAL "${x}_FOUND-NOTFOUND")
       list(APPEND LIBS_MISS ${x})
     else()
-      message(STATUS "Looking for ${x}: ${x}_FOUND = ${${x}_FOUND}")
+      message(DEBUG "Looking for ${x}: ${x}_FOUND = ${${x}_FOUND}")
       check_suffixes(${${x}_FOUND} add_x
                      INCLUDE ${ARGS_INCLUDE_SUFFIXES}
 		     IGNORE ${ARGS_IGNORE_SUFFIXES})

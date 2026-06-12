@@ -8,7 +8,7 @@ find_package(GTestSrc)
 
 # find_package(cmocka)
 # if(cmocka_FOUND)
-#     message(STATUS "Found CMOCKA")
+#     message(DEBUG "Found CMOCKA")
 # else()
 #     include(FetchContent)
 #     FetchContent_Declare(
@@ -20,10 +20,10 @@ find_package(GTestSrc)
 # endif()
 
 if(GTESTSRC_FOUND)
-    message(STATUS "Found GTestSrc")
-    message(STATUS "GTEST_SOURCE_DIR = ${GTEST_SOURCE_DIR}")
-    message(STATUS "GTEST_INCLUDE_DIR = ${GTEST_INCLUDE_DIR}")
-    message(STATUS "GTEST_LIBRARY = ${GTEST_LIBRARY}")
+    message(DEBUG "Found GTestSrc")
+    message(DEBUG "GTEST_SOURCE_DIR = ${GTEST_SOURCE_DIR}")
+    message(DEBUG "GTEST_INCLUDE_DIR = ${GTEST_INCLUDE_DIR}")
+    message(DEBUG "GTEST_LIBRARY = ${GTEST_LIBRARY}")
 
     if (WIN32 AND (NOT CYGWIN) AND (NOT MINGW))
         set(gtest_disable_pthreads ON)
