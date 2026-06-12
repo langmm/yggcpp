@@ -167,7 +167,7 @@ function(configure_and_build CONFIG_FILE)
     ECHO_ERROR_VARIABLE
   )
   if (NOT ret EQUAL 0)
-    message(FATAL_ERROR "Failed to configure ${OUTPUT_FILE}: ${COMMAND_OUTPUT}")
+    message(FATAL_ERROR "Failed to configure ${OUTPUT_FILE}")
   endif()
   set(COMMAND_OUTPUT)
   execute_process(
@@ -184,7 +184,7 @@ function(configure_and_build CONFIG_FILE)
     set(ENV{PATH} "${old_paths}")
   endif()
   if (NOT ret EQUAL 0)
-    message(FATAL_ERROR "Failed to build ${OUTPUT_FILE}: ${COMMAND_OUTPUT}")
+    message(FATAL_ERROR "Failed to build ${OUTPUT_FILE}")
   endif()
 endfunction()
 

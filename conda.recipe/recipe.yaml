@@ -133,10 +133,12 @@ tests:
         - flask
         - ninja
         - cmake
-        - ${{ stdlib('c') }}
-        - ${{ compiler('c') }}
-        - ${{ compiler('cxx') }}
-        - ${{ compiler('fortran') }}
+        - if: unix
+          then:
+            - ${{ stdlib('c') }}
+            - ${{ compiler('c') }}
+            - ${{ compiler('cxx') }}
+            - ${{ compiler('fortran') }}
         - if: win
           then:
             - binutils <2.43

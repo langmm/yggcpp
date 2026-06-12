@@ -4,6 +4,7 @@ LANGUAGE=""
 REBUILD=""
 REINSTALL=""
 DONT_BUILD=""
+DONT_BUILD_TEST=""
 DO_C=""
 DO_CXX=""
 DO_Fortran=""
@@ -71,6 +72,10 @@ while [[ $# -gt 0 ]]; do
 	    DONT_BUILD="TRUE"
 	    shift # past argument with no value
 	    ;;
+	--dont-build-test )
+	    DONT_BUILD_TEST="TRUE"
+	    shift # past argument with no value
+	    ;;
 	--with-asan )
 	    WITH_ASAN="TRUE"
 	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYGG_BUILD_ASAN=ON -DYGG_BUILD_UBSAN=ON"
@@ -92,6 +97,7 @@ while [[ $# -gt 0 ]]; do
 	    DO_SYMBOLS="TRUE"
 	    DONT_TEST="TRUE"
 	    DONT_BUILD="TRUE"
+	    DONT_BUILD_TEST="TRUE"
 	    shift # past argument with no value
 	    ;;
 	--dont-test )
@@ -151,6 +157,7 @@ while [[ $# -gt 0 ]]; do
 	    DO_DOCS="TRUE"
 	    DONT_TEST="TRUE"
 	    DONT_BUILD="TRUE"
+	    DONT_BUILD_TEST="TRUE"
 	    shift
 	    ;;
 	--skbuild-all )
@@ -378,7 +385,7 @@ CMAKE_FLAGS_SPEED="${CMAKE_FLAGS_SPEED} -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
 CMAKE_FLAGS_DOCS="${CMAKE_FLAGS_DOCS} -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}"
 
 if [[ "$TEST_TYPE" == "speed" ]]; then
-    if [ ! -n "$DONT_BUILD" ]; then
+    if [ ! -n "$DONT_BUILD_TEST" ]; then
 	if [ -d "${BUILD_DIR}_speed" ]; then
 	    rm -rf ${BUILD_DIR}_speed
 	fi
@@ -390,7 +397,7 @@ if [[ "$TEST_TYPE" == "speed" ]]; then
     if [ -n "$WITH_ASAN" ] && [ ! -n "$DYLD_INSERT_LIBRARIES" ]; then
 	export DYLD_INSERT_LIBRARIES=$(clang -print-file-name=libclang_rt.asan_osx_dynamic.dylib)
     fi
-    if [ ! -n "$DONT_BUILD" ]; then
+    if [ ! -n "$DONT_BUILD_TEST" ]; then
 	cmake ../tests/speedtest "-DYggInterface_DIR=$INSTALL_DIR/lib/cmake/YggInterface" -DN_MSG=$N_MSG -DS_MSG=$S_MSG -DCOMM=$COMM $CMAKE_FLAGS $CMAKE_FLAGS_SPEED
 	cmake --build .
     fi
