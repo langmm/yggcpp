@@ -11,6 +11,15 @@ set(COMPILER_VAR "CMAKE_${LANGUAGE}_COMPILER")
 set(IMPLICIT_LIBRARIES_FILE "@fimplicitlibs@")
 set(INTERNAL_MSVC @MSVC@)
 set(OUTPUT_VARS @EXTERNAL_VARIABLES@)
+# dump_cmake_variables(
+#   VERBOSE PREFIX "CMAKE_"
+#   EXCLUDE_PREFIX "CMAKE_${LANGUAGE}_"
+# )
+# dump_cmake_variables(
+#   OUTPUT_VAR OUTPUT_VARS
+#   VERBOSE PREFIX "CMAKE_${LANGUAGE}_"
+# )
+
 if(${COMPILER_VAR})
   message(STATUS "Located external compiler for ${LANGUAGE}")
   message(STATUS "${COMPILER_VAR} = ${${COMPILER_VAR}}")

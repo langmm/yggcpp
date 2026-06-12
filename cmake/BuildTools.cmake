@@ -477,6 +477,22 @@ function(get_implicit_libraries language output_var)
   set(${output_var} ${${output_var}} PARENT_SCOPE)
 endfunction()
 
+macro(append_language_vars language OUTPUT)
+  list(
+    APPEND ${OUTPUT}
+    CMAKE_${language}_COMPILER
+    CMAKE_${language}_COMPILER_ID
+    CMAKE_${language}_COMPILER_VERSION
+    CMAKE_${language}_COMPILER_WORKS
+    CMAKE_${language}_COMPILER_LOADED
+    CMAKE_${language}_SOURCE_FILE_EXTENSIONS
+    CMAKE_${language}_COMPILER_LINKER
+    CMAKE_${language}_LINK_EXECUTABLE
+    CMAKE_${language}_IMPLICIT_LINK_LIBRARIES
+    CMAKE_${language}_IMPLICIT_LINK_DIRECTORIES
+  )
+endmacro()
+
 macro(find_compiler_external_propagate_vars IDSTR)
   set(${IDSTR}_VARIABLES ${EXTERNAL_VARIABLES} PARENT_SCOPE)
   set(CMAKE_${IDSTR}_COMPILER ${CMAKE_${language}_COMPILER_${IDSTR}})
@@ -532,22 +548,10 @@ function(find_compiler_external language)
   list(
     APPEND EXTERNAL_VARIABLES
     CMAKE_GENERATOR CMAKE_LINKER IMPLICIT_LIBRARIES_FILE
-    CMAKE_${language}_COMPILER
-    CMAKE_${language}_COMPILER_LINKER
-    CMAKE_${language}_LINK_EXECUTABLE
-    CMAKE_${language}_IMPLICIT_LINK_LIBRARIES
-    CMAKE_${language}_IMPLICIT_LINK_DIRECTORIES
   )
-  if(ARGS_LINKER_LANGUAGE)
-    list(
-      APPEND EXTERNAL_VARIABLES
-      CMAKE_${ARGS_LINKER_LANGUAGE}_COMPILER
-      CMAKE_${ARGS_LINKER_LANGUAGE}_COMPILER_LINKER
-      CMAKE_${ARGS_LINKER_LANGUAGE}_LINK_EXECUTABLE
-      CMAKE_${ARGS_LINKER_LANGUAGE}_IMPLICIT_LINK_LIBRARIES
-      CMAKE_${ARGS_LINKER_LANGUAGE}_IMPLICIT_LINK_DIRECTORIES
-    )
-  endif()
+  foreach(ilang ${language} ${ARGS_LINKER_LANGUAGE})
+    append_language_vars(${ilang} EXTERNAL_VARIABLES)
+  endforeach()
   list(REMOVE_DUPLICATES EXTERNAL_VARIABLES)
   set(${ARGS_ID}_VARIABLES)
   foreach(ivar ${EXTERNAL_VARIABLES})
@@ -690,11 +694,17 @@ function(find_compiler_external language)
   endif()
 endfunction()
 
+macro(enable_language_external language)
+  check_language_external(${language} ENABLE ${ARGN})
+endmacro()
+
 function(check_language_external language)
   set(options REQUIRED SKIP_CURRENT_GENERATOR DONT_CLEAR_OTHER_COMPILERS
-      OVERWRITE OUTPUT_GENERATOR)
+      OVERWRITE ENABLE)
   # Ensure uses replace GENERATOR with OUTPUT_GENERATOR
-  set(oneValueArgs TIMEOUT LINKER_LANGUAGE ID OUTPUT_VARIABLE)
+  set(oneValueArgs TIMEOUT LINKER_LANGUAGE ID OUTPUT_VARIABLE
+      OUTPUT_COMPILER OUTPUT_LINKER OUTPUT_GENERATOR
+      OUTPUT_IMPLICIT_LIBRARIES)
   # set(oneValueArgs GENERATOR TIMEOUT LINKER_LANGUAGE ID)
   set(multiValueArgs TRY_GENERATORS CLEAR_COMPILERS)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -712,6 +722,9 @@ function(check_language_external language)
       set(ARGS_ID "${language}_EXTERNAL")
     endif()
   endif()
+  if(NOT ARGS_OUTPUT_COMPILER)
+    set(ARGS_OUTPUT_COMPILER CMAKE_${language}_COMPILER)
+  endif()
   collect_arguments(
     FIND_ARGS ARGS "${options}"
     REQUIRED SKIP_CURRENT_GENERATOR DONT_CLEAR_OTHER_COMPILERS
@@ -722,15 +735,23 @@ function(check_language_external language)
     ${language} ${FIND_ARGS}
     ${ARGS_UNPARSED_ARGUMENTS}
   )
-  set(CMAKE_${language}_COMPILER ${CMAKE_${ARGS_ID}_COMPILER} PARENT_SCOPE)
-  set(CMAKE_${ARGS_ID}_COMPILER ${CMAKE_${ARGS_ID}_COMPILER} PARENT_SCOPE)
-  set(CMAKE_${ARGS_ID}_GENERATOR ${CMAKE_${ARGS_ID}_GENERATOR} PARENT_SCOPE)
-  set(CMAKE_${ARGS_ID}_IMPLICIT_LIBRARIES ${CMAKE_${ARGS_ID}_IMPLICIT_LIBRARIES} PARENT_SCOPE)
-  if(CMAKE_${ARGS_ID}_COMPILER AND ARGS_OUTPUT_VARIABLE)
-    set(${ARGS_OUTPUT_VARIABLE} ON PARENT_SCOPE)
+  set(EXTERNAL_VARIABLES ${${ARGS_ID}_VARIABLES})
+  find_compiler_external_propagate_vars(${ARGS_ID})
+  if(ARGS_ENABLE)
+    message(FATAL_ERROR "Cannot enable external language \"${language}\"")
+    # TODO: No way to modify the cmake internal ENABLED_LANGUAGES
+    # if(NOT CMAKE_${language}_COMPILER_${ARGS_ID})
+    #   message(FATAL_ERROR "Cannot enable language ${language} as a compiler could not be located")
+    # endif()
+    # set(ENABLE_VARS)
+    # append_language_vars(${language} ENABLE_VARS)
+    # foreach(var IN LISTS ENABLE_VARS)
+    #   set(${var} "${${var}_${ARGS_ID}}" PARENT_SCOPE)
+    #   message(STATUS "EXTERNAL ENABLE: ${var} = ${${var}_${ARGS_ID}}")
+    # endforeach()
   endif()
-  if(CMAKE_${ARGS_ID}_GENERATOR AND ARGS_OUTPUT_GENERATOR)
-    set(${ARGS_OUTPUT_GENERATOR} "${CMAKE_${ARGS_ID}_GENERATOR}" PARENT_SCOPE)
+  if(CMAKE_${language}_COMPILER_${ARGS_ID} AND ARGS_OUTPUT_VARIABLE)
+    set(${ARGS_OUTPUT_VARIABLE} ON PARENT_SCOPE)
   endif()
 endfunction()
 
