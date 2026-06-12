@@ -29,6 +29,7 @@ S_MSG="100"
 COMM="DEFAULT"
 INSTALL_DIR="$(pwd)/_install"
 BUILD_DIR="build"
+GENERATOR=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -175,6 +176,16 @@ while [[ $# -gt 0 ]]; do
 	    shift
 	    shift
 	    ;;
+        -G )
+            GENERATOR="$2"
+	    shift
+	    shift
+	    ;;
+        -D )
+            CMAKE_FLAGS="${CMAKE_FLAGS} -D$2"
+	    shift
+	    shift
+	    ;;
 	-DCMAKE_PREFIX_PATH=* )
 	    new_path=${1#"-DCMAKE_PREFIX_PATH="}
 	    if [ -n "$CMAKE_PREFIX_PATH" ]; then
@@ -193,6 +204,10 @@ while [[ $# -gt 0 ]]; do
 	    ;;
     esac
 done
+
+if [ -n "$GENERATOR" ]; then
+    CMAKE_FLAGS="-G ${GENERATOR} ${CMAKE_FLAGS}"
+fi
 
 if [ ! -n "$QUIET" ]; then
     CMAKE_FLAGS="${CMAKE_FLAGS} -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DCMAKE_MESSAGE_LOG_LEVEL:STRING=DEBUG"

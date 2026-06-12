@@ -586,7 +586,7 @@ python_t init_python_f();
  */
 void free_python_f(void* x);
 /**
- * @brief Copy a Python object structure (NOTE: this dosn't copy the
+ * @brief Copy a Python object structure (NOTE: this does not copy the
  *   underlying Python object but does increment the reference count).
  * @param[in] x Structure containing Python object to copy.
  * @returns python_t Copy of x.
