@@ -34,6 +34,14 @@ if(NOT CMAKE_CXX_COMPILER)
       set(CMAKE_CXX_LINKER_TYPE MSVC)
       set(CMAKE_Fortran_LINKER_TYPE MSVC)
       set(CMAKE_LINKER_TYPE MSVC)
+      cmake_path(GET CMAKE_CXX_COMPILER PARENT_PATH MSVC_BIN_PATH)
+      foreach(ilang C CXX Fortran)
+        set(CMAKE_${ilang}_LINKER_TYPE MSVC)
+      endforeach()
+      cmake_path(
+        APPEND MSVC_BIN_PATH "link.exe"
+        OUTPUT_VARIABLE CMAKE_LINKER
+      )
     endif()
   endif()
   if(CMAKE_CXX_COMPILER)
