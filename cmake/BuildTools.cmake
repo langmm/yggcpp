@@ -250,30 +250,6 @@ function(configure_path_injection)
   endif()
 endfunction()
 
-
-function(cmakevar2cmakecliarg opt OUTPUT_LIST_VARIABLE)
-  if(NOT ${opt})
-    return()
-  endif()
-  list(LENGTH ${opt} opt_len)
-  if (opt_len GREATER 1)
-    list(JOIN ${opt} "\\\\;" tmp)
-    set(OUT -D${opt}=${tmp})
-  else()
-    set(OUT -D${opt}=${${opt}})
-  endif()
-  list(APPEND ${OUTPUT_LIST_VARIABLE} ${OUT})
-  set(${OUTPUT_LIST_VARIABLE} "${${OUTPUT_LIST_VARIABLE}}" PARENT_SCOPE)
-endfunction()
-
-
-function(cmakevars2cmakecliargs OUTPUT_LIST_VARIABLE)
-  foreach(opt ${ARGN})
-    cmakevar2cmakecliarg(${opt} ${OUTPUT_LIST_VARIABLE})
-  endforeach()
-  set(${OUTPUT_LIST_VARIABLE} "${${OUTPUT_LIST_VARIABLE}}" PARENT_SCOPE)
-endfunction()
-
 function(python_code_generation NAME SCRIPT)
   # TODO: Conditional generation on sources
   set(oneValueArgs WORKING_DIRECTORY)
@@ -820,13 +796,12 @@ function(setup_external_config lists_dir)
     list(APPEND ARGS_UNPARSED_ARGUMENTS CLEAR_COMPILERS ${ARGS_CLEAR_COMPILERS})
   endif()
   list(APPEND ARGS_PRESERVE_VARIABLES
-       CMAKE_VERBOSE_MAKEFILE CMAKE_MESSAGE_LOG_LEVEL)
+       CMAKE_VERBOSE_MAKEFILE CMAKE_MESSAGE_LOG_LEVEL
+       CMAKE_BUILD_PARALLEL_LEVEL)
   foreach(language C CXX Fortran)
     list(APPEND ARGS_PRESERVE_VARIABLES "CMAKE_${language}_INTERNAL_OUTPUT_EXTENSION")
   endforeach()
-  foreach(var IN LISTS ARGS_PRESERVE_VARIABLES)
-    list(APPEND ARGS_ARGUMENTS "-D${var}=${${var}}")
-  endforeach()
+  cmakevars2cmakecliargs(ARGS_ARGUMENTS ${ARGS_PRESERVE_VARIABLES})
   set(EXTERNAL_COMMAND "${CMAKE_COMMAND}"
       -G "${ARGS_GENERATOR}"
       -S "${ARGS_SOURCE_DIR}"

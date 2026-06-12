@@ -13,10 +13,13 @@ cmake_path(GET CMAKE_CURRENT_BINARY_DIR PARENT_PATH PARENT_BINARY_DIR)
 if (NOT SKBUILD)
   if (BUILD_Python_LIBRARY AND NOT YGGDRASIL_DISABLE_Python_C_API)
     set(YGGDRASIL_RAPIDJSON_PYTHON_WRAPPER ON)
+    include(BuildTools)
     ygginterface_options(Python_COPY_ARGS)
     list(
       APPEND Python_COPY_ARGS
       YGG_SKIP_VALGRIND_TESTS
+      CMAKE_VERBOSE_MAKEFILE
+      CMAKE_MESSAGE_LOG_LEVEL
     )
     foreach(lang ${YGG_EMBEDDED_LANGUAGES})
       list(APPEND Python_COPY_ARGS YGG_EMBED_${lang})
@@ -24,9 +27,7 @@ if (NOT SKBUILD)
     foreach(opt ${YGG_OPTIONS_SUPPORTED})
       list(APPEND Python_COPY_ARGS ENABLE_${opt})
     endforeach()
-    foreach(opt IN LISTS Python_COPY_ARGS)
-      list(APPEND Python_CMAKE_ARGS "-D${opt}=${${opt}}")
-    endforeach()
+    cmakevars2cmakecliargs(Python_CMAKE_ARGS ${Python_COPY_ARGS})
     list(APPEND Python_CMAKE_ARGS
          -DBUILD_CXX_LIBRARY=OFF -DBUILD_Fortran_LIBRARY=OFF)
     if (CMAKE_PREFIX_PATH)
@@ -43,18 +44,16 @@ if (NOT SKBUILD)
         string(REPLACE "\\" "/" Python3_ROOT_DIR_SAFE "${Python3_ROOT_DIR}")
       endif()
       list(APPEND Python_BUILD_ARGS
-        --config-settings=cmake.define.Python3_ROOT_DIR=${Python3_ROOT_DIR_SAFE}
-        --config-settings=cmake.define.Python_ROOT_DIR=${Python3_ROOT_DIR_SAFE})
+        --config-settings=cmake.define.Python3_ROOT_DIR=${Python3_ROOT_DIR_SAFE})
     endif()
     message(STATUS "Building Python with CMAKE_ARGS = ${Python_CMAKE_ARGS}")
 
-    include(BuildTools)
     set(DEPENDS_PY ${SOURCES_PY} ${CMAKE_CURRENT_SOURCE_DIR}/YggInterface/__init__.py)
-    message(STATUS "Python_OUTPUT = ${Python3_SITELIB}/YggInterface/__init__.py")
+    message(DEBUG "Python_OUTPUT = ${Python3_SITELIB}/YggInterface/__init__.py")
     if (EXISTS "${Python3_SITELIB}/YggInterface/__init__.py")
-      message(STATUS "Python_OUTPUT EXISTS")
+      message(DEBUG "Python_OUTPUT EXISTS")
     else()
-      message(STATUS "Python_OUTPUT DOES NOT EXIST")
+      message(DEBUG "Python_OUTPUT DOES NOT EXIST")
     endif()
     add_custom_command_env(
       YggInterface_python

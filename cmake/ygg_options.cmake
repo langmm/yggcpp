@@ -47,6 +47,11 @@ endif()
 # compile in release with debug info mode by default
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
+else()
+  message(DEBUG "CMAKE_BUILD_TYPE was already set to ${CMAKE_BUILD_TYPE}")
+endif()
+if(SKBUILD AND CMAKE_BUILD_TYPE STREQUAL "DEBUG")
+  message(FATAL_ERROR "Building Python package with debug symbols disabled")
 endif()
 message(DEBUG "CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
 

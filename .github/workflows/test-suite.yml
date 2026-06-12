@@ -340,7 +340,8 @@ jobs:
         if: matrix.os == 'windows-latest'
         shell: bash -l {0}
         run: |
-          echo "CMAKE_ARGS_TEST=${{ env.CMAKE_ARGS_TEST }} -DCMAKE_BUILD_PARALLEL_LEVEL=1 -DYGG_INSPECT_TARGETS:BOOL=ON" >> "$GITHUB_ENV"
+          echo "CMAKE_ARGS_BASE=${{ env.CMAKE_ARGS_BASE }} -DCMAKE_BUILD_PARALLEL_LEVEL=1 -DYGG_INSPECT_TARGETS:BOOL=ON" >> "$GITHUB_ENV"
+          # echo "CMAKE_ARGS_TEST=${{ env.CMAKE_ARGS_TEST }} -DCMAKE_BUILD_PARALLEL_LEVEL=1 -DYGG_INSPECT_TARGETS:BOOL=ON" >> "$GITHUB_ENV"
           
       # Set flags so there is an error if a dependency isn't found
       - name: Temporary flags to disable optional features on windows

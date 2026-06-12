@@ -13,6 +13,24 @@ if(NOT CMAKE_PROPERTY_LIST)
   list(REMOVE_DUPLICATES CMAKE_PROPERTY_LIST)
 endif()
 
+macro(cmakevar2cmakecliarg opt OUTPUT_LIST_VARIABLE)
+  if("${opt}" AND NOT ${OUTPUT_LIST_VARIABLE} MATCHES "-D${opt}=")
+    list(LENGTH ${opt} opt_len)
+    if (opt_len GREATER 1)
+      list(JOIN ${opt} "\\\\;" tmp)
+      list(APPEND ${OUTPUT_LIST_VARIABLE} "-D${opt}=${tmp}")
+    else()
+      list(APPEND ${OUTPUT_LIST_VARIABLE} "-D${opt}=${${opt}}")
+    endif()
+  endif()
+endmacro()
+
+macro(cmakevars2cmakecliargs OUTPUT_LIST_VARIABLE)
+  foreach(opt ${ARGN})
+    cmakevar2cmakecliarg(${opt} ${OUTPUT_LIST_VARIABLE})
+  endforeach()
+endmacro()
+
 function(split_string INPUT PATTERN OUTPUT)
   set(rem "${INPUT}")
   set(idx 0)
@@ -492,6 +510,7 @@ function(show_build_info)
     CMAKE_GENERATOR
     CMAKE_VERBOSE_MAKEFILE
     CMAKE_MESSAGE_LOG_LEVEL
+    CMAKE_BUILD_PARALLEL_LEVEL
     CMAKE_GNUtoMS
     MSVC_AND_GNU_BUILD
   )
@@ -772,7 +791,8 @@ function(setup_external_function function)
       FUNCTION_ARGUMENTS)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
   list(APPEND ARGS_PRESERVE_VARIABLES
-       CMAKE_VERBOSE_MAKEFILE CMAKE_MESSAGE_LOG_LEVEL)
+       CMAKE_VERBOSE_MAKEFILE CMAKE_MESSAGE_LOG_LEVEL
+       CMAKE_BUILD_PARALLEL_LEVEL)
   if(ARGS_FUNCTION_ARGUMENTS)
     list(APPEND ARGS_ARGUMENTS ${ARGS_FUNCTION_ARGUMENTS})
   endif()
@@ -807,9 +827,7 @@ function(setup_external_function function)
     include(${ARGS_DEST})
   endif()
   set(OUTPUT_COMMAND ${CMAKE_COMMAND} ${ARGS_COMMAND_ARGUMENTS})
-  foreach(var IN LISTS ARGS_PRESERVE_VARIABLES)
-    list(APPEND OUTPUT_COMMAND "-D${var}=${${var}}")
-  endforeach()
+  cmakevars2cmakecliargs(OUTPUT_COMMAND ${ARGS_PRESERVE_VARIABLES})
   list(APPEND OUTPUT_COMMAND -P ${ARGS_DEST})
   if(ARGS_OUTPUT_COMMAND)
     set(${ARGS_OUTPUT_COMMAND} ${OUTPUT_COMMAND} PARENT_SCOPE)
