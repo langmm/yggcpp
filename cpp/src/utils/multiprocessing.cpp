@@ -48,6 +48,11 @@ int IPCBase::local_destroy() {
   return 0;
 }
 
+int IPCBase::local_cleanup() { return 0; }
+int IPCBase::cleanup() { return local_cleanup(); }
+int IPCBase::destroy() { return local_destroy(); }
+int IPCBase::nproc() const { return 1; }
+
 #ifdef _WIN32
 
 #define WIN32_DESTRUCTOR(cls)			\

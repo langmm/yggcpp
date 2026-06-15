@@ -55,12 +55,12 @@ namespace YggInterface {
        * @brief Cleanup C++ interface for this instance, but not the base
        * @return -1 on error
        */
-      YGG_API int local_cleanup() { return 0; }
+      YGG_API int local_cleanup();
       /**
        * @brief Cleanup C++ interface for this instance
        * @return -1 on error
        */
-      YGG_API virtual int cleanup() { return local_cleanup(); }
+      YGG_API virtual int cleanup();
       /**
        * @brief Destroy the instance for this class only
        * @return -1 on error
@@ -70,12 +70,12 @@ namespace YggInterface {
        * @brief Destroy the instance
        * @return -1 on error
        */
-      YGG_API virtual int destroy() { return local_destroy(); }
+      YGG_API virtual int destroy();
       /**
        * @brief Get the number of processes using the instance
        * @return Number of processes, -1 indicates an error.
        */
-      YGG_API int nproc() const { return 1; }
+      YGG_API int nproc() const;
       
       std::string address;      /**< Unique identifier for the handle */
       bool preserve_address;    /**< If true, preserve the underlying file after destruction */
