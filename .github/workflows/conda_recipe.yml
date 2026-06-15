@@ -18,10 +18,10 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: ["3.11"]
         builder: [rattler]
-        # include:
-        #   - os: windows-latest
-        #     python-version: "3.11"
-        #     builder: rattler-m2w64
+        include:
+          - os: windows-latest
+            python-version: "3.11"
+            builder: rattler-m2w64
       fail-fast: false
     steps:
       - name: Check out repository code
