@@ -14,16 +14,19 @@ function(set_tests_environment TEST_NAME)
     set(ARGS_DIRECTORY .)
   endif()
   message(DEBUG "ARGS_VARIABLES = ${ARGS_VARIABLES}")
-  if(ARGS_FOR_GTEST_DISCOVER_TESTS)
-    if(NOT ARGS_OUTPUT_PROPERTIES)
-      message(FATAL_ERROR "OUTPUT_PROPERTIES must be provided for tests discovered via gtest_discover_tests as set_tests_properties will not work")
-    endif()
-    foreach(var ${ARGS_VARIABLES})
-      list(APPEND properties ENVIRONMENT "${var}")
-    endforeach()
-  else()
-    set(properties "${ARGS_VARIABLES}")
+  package_key_value_list(ARGS_VARIABLES)
+  message(DEBUG "ARGS_VARIABLES[PKG] = ${ARGS_VARIABLES}")
+  if(ARGS_FOR_GTEST_DISCOVER_TESTS AND NOT ARGS_OUTPUT_PROPERTIES)
+    message(FATAL_ERROR "OUTPUT_PROPERTIES must be provided for tests discovered via gtest_discover_tests as set_tests_properties will not work")
   endif()
+  set(ARGS_PACKAGE_VALUE_LIST PATTERN_REPLACE_SEMICOLON "\\;")
+  if(ARGS_FOR_GTEST_DISCOVER_TESTS)
+    list(APPEND ARGS_PACKAGE_VALUE_LIST APPEND_BEFORE ENVIRONMENT)
+  endif()
+  package_key_value_list(
+    ARGS_VARIABLES OUTPUT_VAR properties APPEND
+    ${ARGS_PACKAGE_VALUE_LIST}
+  )
   message(STATUS "Setting \'${TEST_NAME}\' test properties: ${properties}")
   if(ARGS_OUTPUT_PROPERTIES)
     set(${ARGS_OUTPUT_PROPERTIES} "${properties}")
@@ -37,9 +40,7 @@ function(set_tests_environment TEST_NAME)
     list(LENGTH properties properties_LEN)
     message(DEBUG "Calling set_tests_properties ${properties} [len = ${properties_LEN}]")
     if (ARGS_FOR_GTEST_DISCOVER_TESTS)
-      set_tests_properties(
-        ${TEST_NAME} PROPERTIES ${properties}
-      )
+      message(FATAL_ERROR "OUTPUT_PROPERTIES must be provided for tests discovered via gtest_discover_tests as set_tests_properties will not work")
     else()
       set_tests_properties(
         ${TEST_NAME} PROPERTIES ENVIRONMENT "${properties}"
@@ -50,10 +51,10 @@ function(set_tests_environment TEST_NAME)
   # being available during test discovery on windows
   # https://gitlab.kitware.com/cmake/cmake/-/issues/21453
   if(WIN32 AND NOT MSVC)
-    string(REPLACE "\\" "\\\\" ARGS_VARIABLES "${ARGS_VARIABLES}")
+    # string(REPLACE "\\" "\\\\" ARGS_VARIABLES "${ARGS_VARIABLES}")
     configure_env_injection(
       DIRECTORY ${ARGS_DIRECTORY}
-      VARIABLES ${ARGS_VARIABLES}
+      VARIABLES "${ARGS_VARIABLES}"
     )
   endif()
 endfunction()
@@ -72,14 +73,11 @@ function(set_tests_runtime_paths TEST_NAME)
       list(APPEND ARGS_PATHS ${d})
     endforeach()
   endif()
-  if(NOT ARGS_ESCAPE_LEVEL)
-    set(ARGS_ESCAPE_LEVEL 0)
-  endif()
-  math(EXPR ARGS_ESCAPE_LEVEL "${ARGS_ESCAPE_LEVEL}+3")
-  if(ARGS_FOR_GTEST_DISCOVER_TESTS)
-    math(EXPR ARGS_ESCAPE_LEVEL "${ARGS_ESCAPE_LEVEL}+1")
-  endif()
-  # if(ARGS_OUTPUT_PROPERTIES)
+  # if(NOT ARGS_ESCAPE_LEVEL)
+  #   set(ARGS_ESCAPE_LEVEL 0)
+  # endif()
+  # math(EXPR ARGS_ESCAPE_LEVEL "${ARGS_ESCAPE_LEVEL}+3")
+  # if(ARGS_FOR_GTEST_DISCOVER_TESTS)
   #   math(EXPR ARGS_ESCAPE_LEVEL "${ARGS_ESCAPE_LEVEL}+1")
   # endif()
   if(ARGS_PATHS)
@@ -94,7 +92,7 @@ function(set_tests_runtime_paths TEST_NAME)
       ${PREPEND_TOKEN}
       OUTPUT_VARIABLE UPDATED_PATHS
       PATHS ${ARGS_PATHS}
-      ESCAPE_LEVEL ${ARGS_ESCAPE_LEVEL}
+      # ESCAPE_LEVEL ${ARGS_ESCAPE_LEVEL}
     )
     list(APPEND ARGS_ADDITIONAL_ENV_VARIABLES "${ARGS_PATH_VARIABLE}=${UPDATED_PATHS}")
   endif()
@@ -109,7 +107,7 @@ function(set_tests_runtime_paths TEST_NAME)
     set_tests_environment(
       ${TEST_NAME}
       ${ARGS_UNPARSED_ARGUMENTS}
-      VARIABLES ${ARGS_ADDITIONAL_ENV_VARIABLES}
+      VARIABLES "${ARGS_ADDITIONAL_ENV_VARIABLES}"
     )
   endif()
   if(ARGS_OUTPUT_PROPERTIES)
