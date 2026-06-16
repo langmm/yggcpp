@@ -293,6 +293,12 @@ function(complete_install PROJECT)
   if(NOT ARGS_EXPORT)
     set(ARGS_EXPORT ${PROJECT}Targets)
   endif()
+  if(WIN32 AND NOT MSVC)
+    cmake_path(
+      APPEND ARGS_INSTALL_PREFIX Library
+      OUTPUT_VARIABLE ARGS_INSTALL_PREFIX
+    )
+  endif()
   if(NOT ARGS_INSTALL_LIBDIR)
     cmake_path(
       APPEND ARGS_INSTALL_PREFIX ${CMAKE_INSTALL_LIBDIR}
