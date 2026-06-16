@@ -1,7 +1,7 @@
 set(ENV_VARS "@ENV_VARS@")
 list(LENGTH ENV_VARS ENV_VARS_LEN)
 message(STATUS "Injecting ${ENV_VARS_LEN} ENV_VARS = ${ENV_VARS}")
-include(GeneralTools)
+include(@CMAKE_CURRENT_FUNCTION_LIST_DIR@/GeneralTools.cmake)
 load_cmake_variables(
   "${ENV_VARS}" ENV
   VERBOSE LOG_LEVEL DEBUG
