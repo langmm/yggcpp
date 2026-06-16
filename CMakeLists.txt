@@ -2,6 +2,19 @@
 # -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON
 # -DCMAKE_MESSAGE_LOG_LEVEL:STRING=DEBUG
 cmake_minimum_required(VERSION 3.18)
+if(POLICY CMP0048)
+  # Project manages VERSION, OLD behavior removed in 4.0
+  cmake_policy(SET CMP0048 NEW)
+endif()
+if(POLICY CMP0135)
+  # ExternalProject_Add set timestamp of extracted files to the
+  # time at extraction
+  cmake_policy(SET CMP0135 NEW)
+endif()
+if(POLICY CMP0094)  # https://cmake.org/cmake/help/latest/policy/CMP0094.html
+  cmake_policy(SET CMP0094 NEW)  # FindPython should return the first matching Python
+endif()
+
 message(DEBUG "TOP LEVEL CMAKE_GENERATOR=${CMAKE_GENERATOR}")
 
 SET(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules")
@@ -14,10 +27,43 @@ if(NOT YGGINTERFACE_VERSION)
 endif()
 message(STATUS "YGGINTERFACE_VERSION = ${YGGINTERFACE_VERSION}")
 
-cmake_policy(SET CMP0048 NEW)
+# compile in release with debug info mode by default
+if(NOT CMAKE_BUILD_TYPE)
+  # This must be before the project call or the default Debug value used
+  # by the Ninja generator will be used
+  # https://discourse.cmake.org/t/how-to-deal-with-ninja-setting-cmake-build-type-to-debug/281
+  set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
+endif()
+
 PROJECT(YggInterface VERSION "${YGGINTERFACE_VERSION}")
 
-include(ygg_options)
+if (SKBUILD)
+  message(STATUS "SKBUILD_PROJECT_NAME = ${SKBUILD_PROJECT_NAME}")
+  message(STATUS "SKBUILD_PROJECT_VERSION = ${SKBUILD_PROJECT_VERSION}")
+  if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+    message(FATAL_ERROR "Building Python package with debug symbols disabled")
+  endif()
+  if (WIN32)
+    set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+  endif()
+endif()
+
+if (APPLE AND "$ENV{SDKROOT}")
+  SET(CMAKE_OSX_SYSROOT "$ENV{SDKROOT}")
+endif()
+if (UNIX)
+  include(GNUInstallDirs)
+endif()
+if (WIN32)
+   set(CMAKE_CXX_EXTENSIONS OFF)
+endif()
+
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+include(YggInterfaceMacros)
+ygginterface_options_create()
+
 include(AddYggInterface)
 include(BuildTools)
 
@@ -35,6 +81,54 @@ option(YGG_PATCH_MINGW53_THREAD "Patch the MinGW 5.3.0 thread header" OFF)
 option(YGG_Fortran_WRAP_C_ENUMS "Wrap the int64_t enumerators in a C layer for binding in Fortran" OFF)
 option(YGG_INSPECT_TARGETS "Inspect the executables and libraries that are built" OFF)
 
+
+if(NOT WIN32)
+    find_program(CCACHE_FOUND ccache)
+    if(CCACHE_FOUND)
+        set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
+        set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
+        if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Qunused-arguments -fcolor-diagnostics")
+        endif()
+    endif(CCACHE_FOUND)
+endif()
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    if (WIN32)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wa,-mbig-obj")
+    endif()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror")
+    set(EXTRA_CXX_FLAGS -Weffc++ -Wswitch-default -Wfloat-equal -Wconversion -Wsign-conversion)
+elseif (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    if(NOT CMAKE_CROSSCOMPILING)
+      if(CMAKE_SYSTEM_PROCESSOR STREQUAL "powerpc" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "ppc" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "ppc64" OR CMAKE_SYSTEM_PROCESSOR STREQUAL "ppc64le")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=native")
+      else()
+        if(CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "arm64")
+	  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=apple-m1")
+	else()
+          #FIXME: x86 is -march=native, but doesn't mean every arch is this option. To keep original project's compatibility, I leave this except POWER.
+          set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native")
+        endif()
+      endif()
+    endif()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wno-missing-field-initializers")
+    set(EXTRA_CXX_FLAGS -Weffc++ -Wswitch-default -Wfloat-equal -Wconversion -Wimplicit-fallthrough)
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    add_definitions(-D_CRT_SECURE_NO_WARNINGS=1)
+    add_definitions(-DNOMINMAX)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc /bigobj /Zm10")
+    # Always compile with /WX
+    if(CMAKE_CXX_FLAGS MATCHES "/WX-")
+        string(REGEX REPLACE "/WX-" "/WX" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    else()
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /WX")
+    endif()
+elseif (CMAKE_CXX_COMPILER_ID MATCHES "XL")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -qarch=auto")
+endif()
+
+ADD_DEFINITIONS(-D_CRT_SECURE_NO_WARNINGS)
 
 ##################################
 # Option dependent configuration #

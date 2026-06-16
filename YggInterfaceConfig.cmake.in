@@ -37,7 +37,7 @@ if(NOT CMAKE_CXX_COMPILER)
       message(STATUS "GNU_BIN_PATH = ${GNU_BIN_PATH}")
       include(${CMAKE_CURRENT_LIST_DIR}/BuildTools.cmake)
       include(${CMAKE_CURRENT_LIST_DIR}/SearchTools.cmake)
-      set(CMAKE_GNUtoMS ON)
+      # set(CMAKE_GNUtoMS ON)
       check_language_external(
         CXX OUTPUT_COMPILER EXTERNAL_COMPILER
         OUTPUT_LINKER EXTERNAL_LINKER
@@ -51,6 +51,7 @@ if(NOT CMAKE_CXX_COMPILER)
       message(STATUS "EXTERNAL_LINKER = ${EXTERNAL_LINKER}")
       message(STATUS "GNU_CXX_COMPILER = ${GNU_CXX_COMPILER}")
       set(CMAKE_LINKER_TYPE MSVC)
+      set(CMAKE_LINKER_MSVC "${EXTERNAL_LINKER}")
       foreach(ilang C CXX Fortran)
         set(CMAKE_${ilang}_LINKER_TYPE ${CMAKE_LINKER_TYPE})
       endforeach()
