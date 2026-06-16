@@ -477,6 +477,9 @@ macro(find_compiler_external_propagate_vars IDSTR)
   set(CMAKE_${IDSTR}_IMPLICIT_LIBRARIES ${IMPLICIT_LIBRARIES_FILE_${IDSTR}})
   foreach(ivar ${EXTERNAL_VARIABLES})
     set(${ivar}_${IDSTR} "${${ivar}_${IDSTR}}" PARENT_SCOPE)
+    if(ARGS_OUTPUT_${ivar})
+      set(${ARGS_OUTPUT_${ivar}} "${${ivar}_${IDSTR}}" PARENT_SCOPE)
+    endif()
   endforeach()
   foreach(ivar COMPILER LINKER GENERATOR IMPLICIT_LIBRARIES)
     set(CMAKE_${IDSTR}_${ivar} "${CMAKE_${IDSTR}_${ivar}}" PARENT_SCOPE)
@@ -489,9 +492,9 @@ endmacro()
 function(find_compiler_external language)
   set(options REQUIRED SKIP_CURRENT_GENERATOR DONT_CLEAR_OTHER_COMPILERS
       OVERWRITE)
-  set(oneValueArgs GENERATOR TIMEOUT LINKER_LANGUAGE ID
+  set(oneValueArgs GENERATOR TIMEOUT LINKER_LANGUAGE ID FORCE_COMPILER
       OUTPUT_COMPILER OUTPUT_LINKER OUTPUT_GENERATOR
-      OUTPUT_IMPLICIT_LIBRARIES FORCE_COMPILER)
+      OUTPUT_IMPLICIT_LIBRARIES OUTPUT_MSVC)
   set(multiValueArgs TRY_GENERATORS CLEAR_COMPILERS OUTPUT_VARS)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
   if(ARGS_LINKER_LANGUAGE AND (ARGS_LINKER_LANGUAGE STREQUAL "${language}"))
@@ -523,7 +526,7 @@ function(find_compiler_external language)
   endif()
   list(
     APPEND EXTERNAL_VARIABLES
-    CMAKE_GENERATOR CMAKE_LINKER IMPLICIT_LIBRARIES_FILE
+    CMAKE_GENERATOR CMAKE_LINKER IMPLICIT_LIBRARIES_FILE MSVC
   )
   foreach(ilang ${language} ${ARGS_LINKER_LANGUAGE})
     append_language_vars(${ilang} EXTERNAL_VARIABLES)
