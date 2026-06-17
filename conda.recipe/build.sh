@@ -26,4 +26,4 @@ cmake -B conda_build -S ${SRC_DIR} \
       -D YGGINTERFACE_VERSION=${PKG_VERSION} \
       ${CMAKE_ARGS}
 cmake --build conda_build -j${CPU_COUNT}
-cmake --install conda_build
+cmake --install conda_build --prefix ${PREFIX}

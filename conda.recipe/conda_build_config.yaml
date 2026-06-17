@@ -8,7 +8,7 @@ c_stdlib_version:
 toolchain_variant:
   - ""                          # [unix]
   - vs                          # [win]
-  - m2w64                       # [win]
+  # - m2w64                       # [win]
 m2w64_c_stdlib:                 # [win]
   - m2w64-sysroot               # [win]
 m2w64_c_stdlib_version:         # [win]

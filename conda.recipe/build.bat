@@ -21,7 +21,7 @@ cmake -B conda_build -S %SRC_DIR% ^
       %CMAKE_ARGS% || goto :error
 cmake --build conda_build -j%CPU_COUNT% || goto :error
 rem cmake --build conda_build || goto :error
-cmake --install conda_build || goto :error
+cmake --install conda_build --prefix %PREFIX% || goto :error
 
 goto :eof
 
