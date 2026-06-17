@@ -249,7 +249,7 @@ jobs:
         if: matrix.os == 'windows-latest'
       - name: Set up miniconda test environment
         if: matrix.python-install == 'conda'
-        uses: conda-incubator/setup-miniconda@v3
+        uses: conda-incubator/setup-miniconda@v4
         with:
           activate-environment: yggcpp
           environment-file: environment.yml
