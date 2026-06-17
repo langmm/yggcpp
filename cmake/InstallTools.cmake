@@ -293,6 +293,7 @@ function(complete_install PROJECT)
   if(NOT ARGS_EXPORT)
     set(ARGS_EXPORT ${PROJECT}Targets)
   endif()
+  message(STATUS "ARGS_INSTALL_PREFIX = ${ARGS_INSTALL_PREFIX}")
   set(LIBRARY_PREFIX ${ARGS_INSTALL_PREFIX})
   # if(WIN32 AND NOT MSVC)
   #   cmake_path(

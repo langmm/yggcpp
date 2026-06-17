@@ -205,6 +205,10 @@ function(configure_env_injection)
   endif()
   message(DEBUG "configure_env_injection2 ARGS_VARIABLES = ${ARGS_VARIABLES}")
   package_key_value_list(ARGS_VARIABLES OUTPUT_VAR ENV_VARS)
+  message(DEBUG "configure_env_injection ENV_VARS = ${ENV_VARS}")
+  # Prevent backslashes in windows paths from being escaped during
+  # configuration
+  string(REPLACE "\\" "\\\\" ENV_VARS "${ENV_VARS}")
   # string(REPLACE "\\" "\\\\\\\\" ENV_VARS "${ARGS_VARIABLES}")
   message(DEBUG "configure_env_injection ENV_VARS = ${ENV_VARS}")
   configure_file(

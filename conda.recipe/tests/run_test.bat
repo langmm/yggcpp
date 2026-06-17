@@ -5,6 +5,7 @@ if not exist "!builddir!" mkdir "!builddir!"
 if !errorlevel! neq 0 exit /b !errorlevel!
 cd "!builddir!"
 cmake -G Ninja ^
+      -D ENABLE_Python:BOOL=OFF ^
       -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON ^
       -D CMAKE_MESSAGE_LOG_LEVEL:STRING=DEBUG ^
       -D CMAKE_BUILD_PARALLEL_LEVEL=1 ^

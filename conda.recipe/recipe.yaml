@@ -5,155 +5,218 @@ context:
   version_major: "0"
   build_number: 0
 
-package:
+recipe:
   name: ${{ name|lower }}
   version: ${{ version }}
 
 source:
-  # url: https://pypi.io/packages/source/${{ name[0] }}/${{ name }}/${{ python_name }}-${{ version }}.tar.gz
+  # url: https://github.com/langmm/yggcpp/archive/refs/tags/v${{ version }}.tar.gz
   # sha256: 
   path: ../
 
 build:
   number: ${{ build_number }}
-  string: py${{ python | version_to_buildstring }}h${{ hash }}_${{ build_number }}
+  string: v${{ version | version_to_buildstring }}${{ toolchain_variant }}_py${{ python | version_to_buildstring }}_h${{ hash }}_${{ build_number }}
+  variant:
+    down_prioritize_variant: ${{ 1 if toolchain_variant == "m2w64" else 0 }}
 
-requirements:
-  run_exports:
-    - ${{ pin_subpackage('ygginterface', exact=True) }}
-  build:
-    - if: build_platform != host_platform
-      then:
-        - cross-python_${{ host_platform }}
-    - python
-    - numpy >=1.13.0
-    - cmake >=3.16
-    - libcurl
-    - if: win
-      then:
-        - binutils <2.43
-        - make
-        - ${{ stdlib('m2w64_c') }}
-        - ${{ compiler('m2w64_c') }}
-        - ${{ compiler('m2w64_cxx') }}
-        - ${{ compiler('m2w64_fortran') }}
-    - ninja
-    - pkgconfig
-    - ${{ stdlib('c') }}
-    - ${{ compiler('c') }}
-    - ${{ compiler('cxx') }}
-    - ${{ compiler('fortran') }}
-    # - if: unix
-    #   then:
-    #     - ${{ compiler('fortran') }}
-    - libcurl
-    - llvm-openmp
-    - openmpi
-    - if: unix
-      then: sysv_ipc
-    - yggdrasil-rapidjson
-    - zeromq
-  host:
-    - hatch-fancy-pypi-readme
-    - llvm-openmp
-    - if: win
-      then: make
-    - ninja
-    - numpy >=1.13.0
-    - openmpi
-    - pip
-    - python
-    - scikit-build-core
-    - setuptools_scm
-    - if: unix
-      then: sysv_ipc
-    - yggdrasil-rapidjson
-    - zeromq
-  run:
-    # - if: unix
-    #   then:
-    #     - ${{ stdlib('c') }}
-    - python
-    - yggdrasil-rapidjson
-
-tests:
-  - package_contents:
-      files:
-        - if: win
+outputs:
+  - package:
+      name: ygginterface-libs
+    build:
+      script: build
+    requirements:
+      run_exports:
+        - ${{ pin_subpackage('ygginterface-libs', exact=True) }}
+      build:
+        - if: build_platform != host_platform
           then:
-            - Library/cmake/YggInterfaceConfig.cmake
-            - Library/cmake/YggInterfaceConfigVersion.cmake
-            - Library/lib/YggInterface.lib
-            - Library/lib/YggInterface_fortran.lib
-            - Library/bin/YggInterface-${{ version_major }}.dll
-            - Library/bin/YggInterface_fortran-${{ version_major }}.dll
+            - cross-python_${{ host_platform }}
+        - python
+        - numpy >=1.13.0
+        - cmake >=3.16
+        - libcurl
+        - llvm-openmp
+        - openmpi
+        - ninja
+        - pkgconfig
         - if: unix
-          then:
-            - lib/cmake/YggInterface/YggInterfaceConfig.cmake
-            - lib/cmake/YggInterface/YggInterfaceConfigVersion.cmake
-        - if: linux
-          then:
-            - lib/libYggInterface.so.${{ version_major }}
-            - lib/libYggInterface_fortran.so.${{ version_major }}
-        - if: osx
-          then:
-            - lib/libYggInterface.${{ version_major }}.dylib
-            - lib/libYggInterface_fortran.${{ version_major }}.dylib
-      include:
-        - YggInterface/YggInterface.hpp
-        - YggInterface/YggInterface.h
-        - YggInterface/ygginterface.mod
-  - python:
-      imports:
-        - YggInterface
-  - script:
-      - pytest -sv tests/python
-    requirements:
-      run:
-        - pytest
-        - flask
-        - ninja
-        - cmake
-        - ${{ stdlib('c') }}
-        - ${{ compiler('c') }}
-        - ${{ compiler('cxx') }}
-        - ${{ compiler('fortran') }}
-    files:
-      source:
-        - tests/
-  - script:
-      - if: unix
-        then:
-          - tests/run_test.sh
-      - if: win
-        then:
-          - tests/run_test.bat
-    requirements:
-      run:
-        - flask
-        - ninja
-        - cmake
-        - ${{ stdlib('c') }}
-        - ${{ compiler('c') }}
-        - ${{ compiler('cxx') }}
-        - ${{ compiler('fortran') }}
-        # - if: unix
-        #   then:
-        #     - ${{ stdlib('c') }}
-        #     - ${{ compiler('c') }}
-        #     - ${{ compiler('cxx') }}
-        #     - ${{ compiler('fortran') }}
+          then: sysv_ipc
+        - yggdrasil-rapidjson
+        - zeromq
         - if: win
           then:
             - binutils <2.43
-            - make
+            # - make
             - ${{ stdlib('m2w64_c') }}
             - ${{ compiler('m2w64_c') }}
             - ${{ compiler('m2w64_cxx') }}
             - ${{ compiler('m2w64_fortran') }}
-    files:
-      source:
-        - tests/
+        - if: toolchain_variant != "m2w64"
+          then:
+            - ${{ stdlib('c') }}
+            - ${{ compiler('c') }}
+            - ${{ compiler('cxx') }}
+            - ${{ compiler('fortran') }}
+      host:
+        - llvm-openmp
+        # - if: win
+        #   then: make
+        - ninja
+        - numpy >=1.13.0
+        - openmpi
+        - pip
+        - python
+        - if: unix
+          then: sysv_ipc
+        - yggdrasil-rapidjson
+        - zeromq
+      run:
+        - yggdrasil-rapidjson
+    tests:
+      - package_contents:
+          files:
+            - if: win
+              then:
+                - if: toolchain_variant == "m2w64"
+                  then:
+                    - lib/cmake/YggInterface/YggInterfaceConfig.cmake
+                    - lib/cmake/YggInterface/YggInterfaceConfigVersion.cmake
+                    - lib/libYggInterface.dll.a
+                    - bin/libYggInterface-${{ version_major }}.dll
+                    - lib/libYggInterface_fortran.dll.a
+                    - bin/libYggInterface_fortran-${{ version_major }}.dll
+                - if: toolchain_variant != "m2w64"
+                  then:
+                    - Library/cmake/YggInterfaceConfig.cmake
+                    - Library/cmake/YggInterfaceConfigVersion.cmake
+                    - Library/lib/YggInterface.lib
+                    - Library/bin/YggInterface-${{ version_major }}.dll
+                    - Library/lib/YggInterface_fortran.lib
+                    - Library/bin/YggInterface_fortran-${{ version_major }}.dll
+            - if: unix
+              then:
+                - lib/cmake/YggInterface/YggInterfaceConfig.cmake
+                - lib/cmake/YggInterface/YggInterfaceConfigVersion.cmake
+            - if: linux
+              then:
+                - lib/libYggInterface.so.${{ version_major }}
+                - lib/libYggInterface_fortran.so.${{ version_major }}
+            - if: osx
+              then:
+                - lib/libYggInterface.${{ version_major }}.dylib
+                - lib/libYggInterface_fortran.${{ version_major }}.dylib
+          include:
+            - YggInterface/YggInterface.hpp
+            - YggInterface/YggInterface.h
+            - YggInterface/ygginterface.mod
+      - script:
+          - if: unix
+            then:
+              - tests/run_test.sh
+          - if: win
+            then:
+              - tests/run_test.bat
+        requirements:
+          run:
+            - flask
+            - ninja
+            - cmake
+            - if: toolchain_variant != "m2w64"
+              then:
+                - ${{ stdlib('c') }}
+                - ${{ compiler('c') }}
+                - ${{ compiler('cxx') }}
+                - ${{ compiler('fortran') }}
+            - if: win  # toolchain_variant == "m2w64"
+              then:
+                - binutils <2.43
+                # - make
+                - ${{ stdlib('m2w64_c') }}
+                - ${{ compiler('m2w64_c') }}
+                - ${{ compiler('m2w64_cxx') }}
+            - if: win
+              then:
+                - ${{ compiler('m2w64_fortran') }}
+        files:
+          source:
+            - tests/
+        
+  - package:
+      name: ygginterface-python
+    build:
+      string: v${{ version | version_to_buildstring }}_py${{ python | version_to_buildstring }}_h${{ hash }}_${{ build_number }}
+      variant:
+        ignore_keys:
+          - toolchain_variant
+      script:
+        - if: unix
+          then:
+            - build_python.sh
+        - if: win
+          then:
+            - build_python.bat
+    requirements:
+      build:
+        - if: build_platform != host_platform
+          then:
+            - cross-python_${{ host_platform }}
+        - python
+        - numpy >=1.13.0
+        - cmake >=3.16
+        - libcurl
+        - ninja
+        - pkgconfig
+        - ${{ stdlib('c') }}
+        - ${{ compiler('c') }}
+        - ${{ compiler('cxx') }}
+        - libcurl
+        - llvm-openmp
+        - openmpi
+        - if: unix
+          then: sysv_ipc
+        - yggdrasil-rapidjson
+        - zeromq
+      host:
+        - hatch-fancy-pypi-readme
+        - llvm-openmp
+        - if: win
+          then: make
+        - ninja
+        - numpy >=1.13.0
+        - openmpi
+        - pip
+        - python
+        - scikit-build-core
+        - setuptools_scm
+        - if: unix
+          then: sysv_ipc
+        - yggdrasil-rapidjson
+        - zeromq
+      run:
+        - python
+    tests:
+      - python:
+          imports:
+            - YggInterface
+      - script:
+          - pytest -sv tests/python
+        requirements:
+          run:
+            - pytest
+            - flask
+        files:
+          source:
+            - tests/
+
+  - package:
+      name: ygginterface
+    build:
+      script:
+    requirements:
+      run:
+        - ${{ pin_subpackage('ygginterface-libs', exact=True) }}
+        - ${{ pin_subpackage('ygginterface-python', exact=True) }}
 
 about:
   homepage: https://github.com/langmm/yggcpp

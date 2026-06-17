@@ -23,9 +23,6 @@ cmake --build conda_build -j%CPU_COUNT% || goto :error
 rem cmake --build conda_build || goto :error
 cmake --install conda_build || goto :error
 
-set "SKBUILD_CMAKE_ARGS=-G Ninja"
-%PYTHON% -m pip install . --no-deps --ignore-installed -vvv --no-build-isolation || goto :error
-
 goto :eof
 
 :error

@@ -36,7 +36,7 @@ if (NOT SKBUILD)
         string(REPLACE "\\" "/" CMAKE_PREFIX_PATH_SAFE "${CMAKE_PREFIX_PATH}")
       endif()
       list(APPEND Python_BUILD_ARGS
-        --config-settings=cmake.define.CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH_SAFE})
+        "--config-settings=cmake.define.CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH_SAFE}")
     endif()
     if (Python3_ROOT_DIR)
       set(Python3_ROOT_DIR_SAFE "${Python3_ROOT_DIR}")
@@ -44,7 +44,7 @@ if (NOT SKBUILD)
         string(REPLACE "\\" "/" Python3_ROOT_DIR_SAFE "${Python3_ROOT_DIR}")
       endif()
       list(APPEND Python_BUILD_ARGS
-        --config-settings=cmake.define.Python3_ROOT_DIR=${Python3_ROOT_DIR_SAFE})
+        "--config-settings=cmake.define.Python3_ROOT_DIR=${Python3_ROOT_DIR_SAFE}")
     endif()
     message(STATUS "Building Python with CMAKE_ARGS = ${Python_CMAKE_ARGS}")
 

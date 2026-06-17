@@ -9,9 +9,6 @@ CMAKE_ARGS+=" -DPython3_EXECUTABLE:PATH=${PYTHON}"
 CMAKE_ARGS+=" -DPython3_INCLUDE_DIR:PATH=${Python_INCLUDE_DIR}"
 CMAKE_ARGS+=" -DPython3_NumPy_INCLUDE_DIR=${Python_NumPy_INCLUDE_DIR}"
 
-# Build Python interface via pip
-CMAKE_GENERATOR="Ninja" $PYTHON -m pip install . --no-deps --ignore-installed -vvv --no-build-isolation
-
 # Build C/CXX & Fortran libraries using cmake
 if [ ! -d conda_build ]; then
     mkdir conda_build
