@@ -47,7 +47,7 @@ outputs:
         - if: win
           then:
             - binutils <2.43
-            # - make
+            - make
             - ${{ stdlib('m2w64_c') }}
             - ${{ compiler('m2w64_c') }}
             - ${{ compiler('m2w64_cxx') }}
@@ -60,8 +60,8 @@ outputs:
             - ${{ compiler('fortran') }}
       host:
         - llvm-openmp
-        # - if: win
-        #   then: make
+        - if: win
+          then: make
         - ninja
         - numpy >=1.13.0
         - openmpi
@@ -80,11 +80,11 @@ outputs:
               then:
                 - if: toolchain_variant == "m2w64"
                   then:
-                    - lib/cmake/YggInterface/YggInterfaceConfig.cmake
-                    - lib/cmake/YggInterface/YggInterfaceConfigVersion.cmake
-                    - lib/libYggInterface.dll.a
+                    - Lib/cmake/YggInterface/YggInterfaceConfig.cmake
+                    - Lib/cmake/YggInterface/YggInterfaceConfigVersion.cmake
+                    - Lib/libYggInterface.dll.a
                     - bin/libYggInterface-${{ version_major }}.dll
-                    - lib/libYggInterface_fortran.dll.a
+                    - Lib/libYggInterface_fortran.dll.a
                     - bin/libYggInterface_fortran-${{ version_major }}.dll
                 - if: toolchain_variant != "m2w64"
                   then:
@@ -131,7 +131,7 @@ outputs:
             - if: win  # toolchain_variant == "m2w64"
               then:
                 - binutils <2.43
-                # - make
+                - make
                 - ${{ stdlib('m2w64_c') }}
                 - ${{ compiler('m2w64_c') }}
                 - ${{ compiler('m2w64_cxx') }}

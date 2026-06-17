@@ -80,10 +80,10 @@ tests:
       files:
         - if: win
           then:
-            - lib/cmake/YggInterfaceConfig.cmake
-            - lib/cmake/YggInterfaceConfigVersion.cmake
-            - lib/libYggInterface.dll.a
-            - lib/libYggInterface_fortran.dll.a
+            - Lib/cmake/YggInterfaceConfig.cmake
+            - Lib/cmake/YggInterfaceConfigVersion.cmake
+            - Lib/libYggInterface.dll.a
+            - Lib/libYggInterface_fortran.dll.a
             - bin/libYggInterface-${{ version_major }}.dll
             - bin/libYggInterface_fortran-${{ version_major }}.dll
         - if: unix
