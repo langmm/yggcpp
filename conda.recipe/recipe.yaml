@@ -92,6 +92,9 @@ outputs:
                     - bin/libYggInterface-${{ version_major }}.dll
                     - Lib/libYggInterface_fortran.dll.a
                     - bin/libYggInterface_fortran-${{ version_major }}.dll
+                    - include/YggInterface/YggInterface.hpp
+                    - include/YggInterface/YggInterface.h
+                    - include/YggInterface/ygginterface.mod
                 - if: toolchain_variant != "m2w64"
                   then:
                     - Library/cmake/YggInterface/YggInterfaceConfig.cmake
@@ -112,6 +115,9 @@ outputs:
               then:
                 - lib/libYggInterface.${{ version_major }}.dylib
                 - lib/libYggInterface_fortran.${{ version_major }}.dylib
+          lib:
+            - YggInterface
+            - YggInterface_fortran
           include:
             - YggInterface/YggInterface.hpp
             - YggInterface/YggInterface.h
@@ -151,7 +157,8 @@ outputs:
   - package:
       name: ygginterface-python
     build:
-      string: v${{ version | version_to_buildstring }}_py${{ python | version_to_buildstring }}_h${{ hash }}_${{ build_number }}
+      string: py${{ python | version_to_buildstring }}h${{ hash }}_${{ build_number }}
+      # string: v${{ version | version_to_buildstring }}_py${{ python | version_to_buildstring }}_h${{ hash }}_${{ build_number }}
       variant:
         ignore_keys:
           - toolchain_variant

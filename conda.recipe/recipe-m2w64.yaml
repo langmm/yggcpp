@@ -86,6 +86,9 @@ tests:
             - Lib/libYggInterface_fortran.dll.a
             - bin/libYggInterface-${{ version_major }}.dll
             - bin/libYggInterface_fortran-${{ version_major }}.dll
+            - include/YggInterface/YggInterface.hpp
+            - include/YggInterface/YggInterface.h
+            - include/YggInterface/ygginterface.mod
         - if: unix
           then:
             - lib/cmake/YggInterface/YggInterfaceConfig.cmake
@@ -98,12 +101,15 @@ tests:
           then:
             - lib/libYggInterface.${{ version_major }}.dylib
             - lib/libYggInterface_fortran.${{ version_major }}.dylib
+      lib:
+        - YggInterface
+        - YggInterface_fortran
       include:
-        - if: win
-          then:
-            - YggInterface/YggInterface.hpp
-            - YggInterface/YggInterface.h
-            - YggInterface/ygginterface.mod
+        # - if: win
+        #   then:
+        #     - YggInterface/YggInterface.hpp
+        #     - YggInterface/YggInterface.h
+        #     - YggInterface/ygginterface.mod
         - if: unix
           then:
             - YggInterface/YggInterface.hpp

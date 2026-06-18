@@ -80,7 +80,13 @@ class SearchResult:
         return max(key_len, max(x.padding() for x in
                                 self.children.values()))
 
-    def format(self, indent=1, pad=None, return_lines=False):
+    def format(self, indent=1, pad=None, return_lines=False,
+               include_methods=None, exclude_methods=None):
+        if not self.is_selected(include_methods=include_methods,
+                                exclude_methods=exclude_methods):
+            if return_lines:
+                return []
+            return ''
         if pad is None:
             pad = self.padding() + 4
         out = []
@@ -94,11 +100,29 @@ class SearchResult:
         for x in self.children.values():
             out += [
                 (indent * ' ') + iline for iline in
-                x.format(indent=indent, pad=pad, return_lines=True)
+                x.format(indent=indent, pad=pad, return_lines=True,
+                         include_methods=include_methods,
+                         exclude_methods=exclude_methods)
             ]
         if return_lines:
             return out
         return '\n'.join(out)
+
+    def is_selected(self, include_methods=None, exclude_methods=None):
+        if include_methods is None and exclude_methods is None:
+            return True
+        for v in self.children.values():
+            if v.is_selected(include_methods=include_methods,
+                             exclude_methods=exclude_methods):
+                return True
+        if exclude_methods is not None:
+            if ((self.method in exclude_methods
+                 or ("ANY" in exclude_methods and self.method))):
+                return False
+        if include_methods is not None:
+            return (self.method in include_methods
+                    or ("ANY" in include_methods and self.method))
+        return True
 
 
 class ToolBase(metaclass=ToolMeta):
@@ -113,11 +137,14 @@ class ToolBase(metaclass=ToolMeta):
     object_flags = {}
 
     def __init__(self, target, cmake_runtimes=None, recurse=False,
-                 verbose=False, depth=0):
+                 verbose=False, depth=0,
+                 include_methods=None, exclude_methods=None):
         self.target = target
         self.cmake_runtimes = cmake_runtimes
         self.recurse = recurse
         self.verbose = verbose
+        self.include_methods = include_methods
+        self.exclude_methods = exclude_methods
         self.depth = depth
         if os.path.isfile(self.target):
             self.target = os.path.abspath(self.target)
@@ -171,7 +198,10 @@ class ToolBase(metaclass=ToolMeta):
             f'{self.hsep}\nDependency locations for {self.target}\n'
             f'{self.hsep}\n'
         )
-        out += self.search_results.format()
+        out += self.search_results.format(
+            include_methods=self.include_methods,
+            exclude_methods=self.exclude_methods,
+        )
         return out
 
     @cached_property
@@ -210,7 +240,8 @@ class ToolBase(metaclass=ToolMeta):
     def escape_path(cls, path):
         if ' ' not in path:
             return path
-        return path.replace('\\', '\\\\').replace(' ', '\\ ')
+        return "\"" + path + "\""
+        # return path.replace('\\', '\\\\').replace(' ', '\\ ')
 
     @cached_property
     def object_contents(self):
@@ -284,10 +315,10 @@ class ToolBase(metaclass=ToolMeta):
             for cmake_runtime in self.cmake_runtimes:
                 if cmake_runtime.endswith(x):
                     return SearchResult(x, cmake_runtime,
-                                        method='CMAKE RUNTIME')
+                                        method='CMAKE-RUNTIME')
         if os.path.isfile(x):
             return SearchResult(x, os.path.abspath(x),
-                                method='CURRENT DIRECTORY')
+                                method='CURRENT-DIRECTORY')
         return SearchResult(x)
 
     @classmethod
@@ -381,7 +412,7 @@ class OtoolTool(ToolBase):
             for rpath in rpaths:
                 xalt = x.replace('@rpath', rpath)
                 if os.path.isfile(xalt):
-                    return SearchResult(x, xalt)
+                    return SearchResult(x, xalt, method='RPATH')
             print(f"Failed to resolve rpath: {x} "
                   f"(rpaths = {rpaths})")
             return self.search(x.replace('@rpath/', ''), **kwargs)
@@ -431,6 +462,8 @@ def inspect(args):
         tool = _tool_registry[args.tool](
             target, cmake_runtimes=args.cmake_runtimes,
             recurse=args.recurse, verbose=args.verbose,
+            include_methods=args.include_methods,
+            exclude_methods=args.exclude_methods,
         )
         print(f'{tool.name}: {tool.which()}')
         if args.mode == "dependencies":
@@ -476,6 +509,20 @@ if __name__ == "__main__":
     parser.add_argument(
         "--verbose", action="store_true",
         help="Show runtime dependencies as they are added",
+    )
+    parser.add_argument(
+        "--include-methods", action="extend", nargs="+",
+        help=(
+            "Only show libraries that were located using the specified "
+            "search method."
+        ),
+    )
+    parser.add_argument(
+        "--exclude-methods", action="extend", nargs="+",
+        help=(
+            "Don\'t show libraries that were located using the "
+            "specified search method."
+        ),
     )
     args = parser.parse_args()
     inspect(args)
