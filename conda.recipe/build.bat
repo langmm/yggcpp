@@ -6,6 +6,7 @@ powershell -command "Get-ChildItem -Path .\"
 
 mkdir conda_build
 
+rem set "CMAKE_INSTALL_PREFIX=%PREFIX%"
 cmake -B conda_build -S %SRC_DIR% ^
       -G Ninja ^
       -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON ^

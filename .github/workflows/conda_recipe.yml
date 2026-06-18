@@ -22,6 +22,9 @@ jobs:
           - os: windows-latest
             python-version: "3.11"
             builder: rattler-m2w64
+          - os: windows-latest
+            python-version: "3.11"
+            builder: rattler-unsplit
       fail-fast: false
     steps:
       - name: Check out repository code
@@ -63,6 +66,10 @@ jobs:
         if: matrix.builder == 'rattler-m2w64'
         run: |
           rattler-build build --recipe "conda.recipe/recipe-m2w64.yaml" --output-dir $HOME/local_channel/ --variant python=${{ matrix.python-version }}
+      - name: Build conda recipe (using rattler-build)
+        if: matrix.builder == 'rattler-unsplit'
+        run: |
+          rattler-build build --recipe "conda.recipe/recipe-unsplit.yaml" --output-dir $HOME/local_channel/ --variant python=${{ matrix.python-version }}
       # - name: Build conda recipe (using rattler-build action)
       #   uses: prefix-dev/rattler-build-action@v0.2.34
       #   if: matrix.builder == 'rattler'
