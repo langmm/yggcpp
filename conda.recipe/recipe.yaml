@@ -42,14 +42,6 @@ outputs:
         - numpy >=1.13.0
         - cmake >=3.16
         - libcurl
-        - llvm-openmp
-        - openmpi
-        - ninja
-        - pkgconfig
-        - if: unix
-          then: sysv_ipc
-        - yggdrasil-rapidjson
-        - zeromq
         - if: win
           then:
             - binutils <2.43
@@ -58,13 +50,23 @@ outputs:
             - ${{ compiler('m2w64_c') }}
             - ${{ compiler('m2w64_cxx') }}
             - ${{ compiler('m2w64_fortran') }}
+        - ninja
+        - pkgconfig
         - if: toolchain_variant != "m2w64"
           then:
             - ${{ stdlib('c') }}
             - ${{ compiler('c') }}
             - ${{ compiler('cxx') }}
             - ${{ compiler('fortran') }}
+        - libcurl
+        - llvm-openmp
+        - openmpi
+        - if: unix
+          then: sysv_ipc
+        - yggdrasil-rapidjson
+        - zeromq
       host:
+        - hatch-fancy-pypi-readme
         - llvm-openmp
         - if: win
           then: make
@@ -73,17 +75,21 @@ outputs:
         - openmpi
         - pip
         - python
+        - scikit-build-core
+        - setuptools_scm
         - if: unix
           then: sysv_ipc
         - yggdrasil-rapidjson
         - zeromq
       run:
+        - python
         - yggdrasil-rapidjson
     tests:
       - package_contents:
           files:
             - if: win
               then:
+                # Mingw install dosn't put things where rattler-build expects
                 - if: toolchain_variant == "m2w64"
                   then:
                     - Lib/cmake/YggInterface/YggInterfaceConfig.cmake
@@ -107,21 +113,17 @@ outputs:
               then:
                 - lib/cmake/YggInterface/YggInterfaceConfig.cmake
                 - lib/cmake/YggInterface/YggInterfaceConfigVersion.cmake
-            - if: linux
-              then:
-                - lib/libYggInterface.so.${{ version_major }}
-                - lib/libYggInterface_fortran.so.${{ version_major }}
-            - if: osx
-              then:
-                - lib/libYggInterface.${{ version_major }}.dylib
-                - lib/libYggInterface_fortran.${{ version_major }}.dylib
           lib:
-            - YggInterface
-            - YggInterface_fortran
+            - if: toolchain_variant != "m2w64"
+              then:
+                - YggInterface
+                - YggInterface_fortran
           include:
-            - YggInterface/YggInterface.hpp
-            - YggInterface/YggInterface.h
-            - YggInterface/ygginterface.mod
+            - if: toolchain_variant != "m2w64"
+              then:
+                - YggInterface/YggInterface.hpp
+                - YggInterface/YggInterface.h
+                - YggInterface/ygginterface.mod
       - script:
           - if: unix
             then:
@@ -139,7 +141,6 @@ outputs:
                 - ${{ stdlib('c') }}
                 - ${{ compiler('c') }}
                 - ${{ compiler('cxx') }}
-                - ${{ compiler('fortran') }}
             - if: win  # toolchain_variant == "m2w64"
               then:
                 - binutils <2.43
@@ -147,6 +148,9 @@ outputs:
                 - ${{ stdlib('m2w64_c') }}
                 - ${{ compiler('m2w64_c') }}
                 - ${{ compiler('m2w64_cxx') }}
+            - if: unix
+              then:
+                - ${{ compiler('fortran') }}
             - if: win
               then:
                 - ${{ compiler('m2w64_fortran') }}
