@@ -49,14 +49,21 @@ function(check_object file after_target)
 endfunction()
 
 function(show_runtimes target)
-  set(options IMPORTED)
+  set(options IMPORTED ONLY_MISSING)
   set(oneValueArgs AFTER_TARGET)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+  if(YGG_INSPECT_TARGETS_ONLY_MISSING)
+    set(ARGS_ONLY_MISSING ON)
+  endif()
   inspect_target(${target})
   if (ARGS_AFTER_TARGET)
     set(after_target ${ARGS_AFTER_TARGET})
   else()
     set(after_target ${target})
+  endif()
+  set(TOOLARGS --recurse)
+  if(ARGS_ONLY_MISSING)
+    list(APPEND TOOLARGS --exclude-methods ANY)
   endif()
   set(TOOLNAME)
   if (WIN32)
@@ -108,7 +115,7 @@ function(show_runtimes target)
       POST_BUILD
       COMMAND python
       ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/scripts/inspect_runtime_dependencies.py
-      $<TARGET_FILE:${target}> --tool ${TOOLNAME} --cmake-runtimes $<TARGET_RUNTIME_DLLS:${target}> --recurse
+      $<TARGET_FILE:${target}> --tool ${TOOLNAME} --cmake-runtimes $<TARGET_RUNTIME_DLLS:${target}> ${TOOLARGS}
       COMMAND_EXPAND_LISTS
     )
   else()
@@ -117,7 +124,7 @@ function(show_runtimes target)
       POST_BUILD
       COMMAND python
       ${CMAKE_CURRENT_FUNCTION_LIST_DIR}/scripts/inspect_runtime_dependencies.py
-      $<TARGET_FILE:${target}> --tool=${TOOLNAME} --recurse
+      $<TARGET_FILE:${target}> --tool=${TOOLNAME} ${TOOLARGS}
       COMMAND_EXPAND_LISTS
     )
   endif()

@@ -80,6 +80,10 @@ option(DOXYGEN_CHECK_MISSING "Raise an error if documentation is missing" OFF)
 option(YGG_PATCH_MINGW53_THREAD "Patch the MinGW 5.3.0 thread header" OFF)
 option(YGG_Fortran_WRAP_C_ENUMS "Wrap the int64_t enumerators in a C layer for binding in Fortran" OFF)
 option(YGG_INSPECT_TARGETS "Inspect the executables and libraries that are built" OFF)
+option(YGG_INSPECT_TARGETS_ONLY_MISSING "Show library links that cannot be resolved" OFF)
+if(YGG_INSPECT_TARGETS_ONLY_MISSING)
+  set(YGG_INSPECT_TARGETS ON)
+endif()
 
 
 if(NOT WIN32)

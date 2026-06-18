@@ -136,11 +136,6 @@ outputs:
             - flask
             - ninja
             - cmake
-            - if: toolchain_variant != "m2w64"
-              then:
-                - ${{ stdlib('c') }}
-                - ${{ compiler('c') }}
-                - ${{ compiler('cxx') }}
             - if: win  # toolchain_variant == "m2w64"
               then:
                 - binutils <2.43
@@ -148,12 +143,17 @@ outputs:
                 - ${{ stdlib('m2w64_c') }}
                 - ${{ compiler('m2w64_c') }}
                 - ${{ compiler('m2w64_cxx') }}
-            - if: unix
+            - if: toolchain_variant != "m2w64"
               then:
-                - ${{ compiler('fortran') }}
+                - ${{ stdlib('c') }}
+                - ${{ compiler('c') }}
+                - ${{ compiler('cxx') }}
             - if: win
               then:
                 - ${{ compiler('m2w64_fortran') }}
+            - if: unix
+              then:
+                - ${{ compiler('fortran') }}
         files:
           source:
             - tests/
