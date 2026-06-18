@@ -11,7 +11,7 @@ function(copy_required_runtimes TARGET)
     set(ARGS_DESTINATION "$<TARGET_FILE_DIR:${ARGS_DESTINATION_TARGET}>")
   endif()
   if (WIN32)
-    if (CONDA_PREFIX)
+    # if (CONDA_PREFIX)
       foreach(lib ${ARGS_DEPENDENCIES})
         add_custom_command(
           TARGET ${ARGS_DESTINATION_TARGET}
@@ -20,14 +20,14 @@ function(copy_required_runtimes TARGET)
           COMMAND_EXPAND_LISTS
         )
       endforeach()
-    else()
-      add_custom_command(
-          TARGET ${ARGS_DESTINATION_TARGET}
-          POST_BUILD
-          COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:${TARGET}> ${ARGS_DESTINATION}
-          COMMAND_EXPAND_LISTS
-      )
-    endif()
+    # else()
+    #   add_custom_command(
+    #       TARGET ${ARGS_DESTINATION_TARGET}
+    #       POST_BUILD
+    #       COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:${TARGET}> ${ARGS_DESTINATION}
+    #       COMMAND_EXPAND_LISTS
+    #   )
+    # endif()
   endif()
 endfunction()
 
