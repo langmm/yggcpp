@@ -80,8 +80,8 @@ tests:
       files:
         - if: win
           then:
-            - Lib/cmake/YggInterfaceConfig.cmake
-            - Lib/cmake/YggInterfaceConfigVersion.cmake
+            - Lib/cmake/YggInterface/YggInterfaceConfig.cmake
+            - Lib/cmake/YggInterface/YggInterfaceConfigVersion.cmake
             - Lib/libYggInterface.dll.a
             - Lib/libYggInterface_fortran.dll.a
             - bin/libYggInterface-${{ version_major }}.dll
@@ -101,9 +101,9 @@ tests:
       include:
         - if: win
           then:
-            - include/YggInterface/YggInterface.hpp
-            - include/YggInterface/YggInterface.h
-            - include/YggInterface/ygginterface.mod
+            - YggInterface/YggInterface.hpp
+            - YggInterface/YggInterface.h
+            - YggInterface/ygginterface.mod
         - if: unix
           then:
             - YggInterface/YggInterface.hpp

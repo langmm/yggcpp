@@ -24,7 +24,13 @@ outputs:
   - package:
       name: ygginterface-libs
     build:
-      script: build
+      script:
+        - if: unix
+          then:
+            - build.sh
+        - if: win
+          then:
+            - build.bat
     requirements:
       run_exports:
         - ${{ pin_subpackage('ygginterface-libs', exact=True) }}
@@ -88,8 +94,8 @@ outputs:
                     - bin/libYggInterface_fortran-${{ version_major }}.dll
                 - if: toolchain_variant != "m2w64"
                   then:
-                    - Library/cmake/YggInterfaceConfig.cmake
-                    - Library/cmake/YggInterfaceConfigVersion.cmake
+                    - Library/cmake/YggInterface/YggInterfaceConfig.cmake
+                    - Library/cmake/YggInterface/YggInterfaceConfigVersion.cmake
                     - Library/lib/YggInterface.lib
                     - Library/bin/YggInterface-${{ version_major }}.dll
                     - Library/lib/YggInterface_fortran.lib
