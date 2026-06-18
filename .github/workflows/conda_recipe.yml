@@ -15,14 +15,14 @@ jobs:
         shell: bash -el {0}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest, windows-2022]
         python-version: ["3.11"]
         builder: [rattler]
         include:
-          - os: windows-latest
+          - os: windows-2022
             python-version: "3.11"
             builder: rattler-m2w64
-          - os: windows-latest
+          - os: windows-2022
             python-version: "3.11"
             builder: rattler-unsplit
       fail-fast: false
@@ -35,9 +35,9 @@ jobs:
       ###################################
       # CONDA SETUP
       ###################################
-      # - name: Set up MSVC Compiler on windows
-      #   uses: ilammy/msvc-dev-cmd@v1
-      #   if: matrix.os == 'windows-latest'
+      - name: Set up MSVC Compiler on windows
+        uses: ilammy/msvc-dev-cmd@v1
+        if: matrix.os == 'windows-2022'
       - name: Set up miniconda test environment
         uses: conda-incubator/setup-miniconda@v4
         with:
