@@ -6,7 +6,9 @@ powershell -command "Get-ChildItem -Path .\"
 
 mkdir conda_build
 
-rem set "CMAKE_INSTALL_PREFIX=%PREFIX%"
+rem The following is set in CMAKE_ARGS by vc conda package during
+rem   activation if CONDA_BUILD == 1:
+rem     "CMAKE_INSTALL_PREFIX=%PREFIX%\Library"
 cmake -B conda_build -S %SRC_DIR% ^
       -G Ninja ^
       -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON ^
@@ -22,7 +24,7 @@ cmake -B conda_build -S %SRC_DIR% ^
       %CMAKE_ARGS% || goto :error
 cmake --build conda_build -j%CPU_COUNT% || goto :error
 rem cmake --build conda_build || goto :error
-cmake --install conda_build --prefix %PREFIX% || goto :error
+cmake --install conda_build || goto :error
 
 goto :eof
 

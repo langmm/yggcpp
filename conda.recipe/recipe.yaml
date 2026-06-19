@@ -86,43 +86,36 @@ outputs:
           files:
             - if: win
               then:
-                # Mingw install dosn't put things where rattler-build expects
+                - Library/cmake/YggInterface/YggInterfaceConfig.cmake
+                - Library/cmake/YggInterface/YggInterfaceConfigVersion.cmake
+                - Library/lib/pkgconfig/YggInterface.pc
                 - if: toolchain_variant == "m2w64"
                   then:
-                    - Lib/cmake/YggInterface/YggInterfaceConfig.cmake
-                    - Lib/cmake/YggInterface/YggInterfaceConfigVersion.cmake
-                    - Lib/libYggInterface.dll.a
-                    - bin/libYggInterface-${{ version_major }}.dll
-                    - Lib/libYggInterface_fortran.dll.a
-                    - bin/libYggInterface_fortran-${{ version_major }}.dll
-                    - include/YggInterface/YggInterface.hpp
-                    - include/YggInterface/YggInterface.h
-                    - include/YggInterface/ygginterface.mod
+                    - Library/lib/libYggInterface.dll.a
+                    - Library/bin/libYggInterface-${{ version_major }}.dll
+                    - Library/lib/libYggInterface_fortran.dll.a
+                    - Library/bin/libYggInterface_fortran-${{ version_major }}.dll
                 - if: toolchain_variant != "m2w64"
                   then:
-                    - cmake/YggInterface/YggInterfaceConfig.cmake
-                    - cmake/YggInterface/YggInterfaceConfigVersion.cmake
-                    - lib/pkgconfig/YggInterface.pc
-                    - lib/YggInterface.lib
-                    - bin/YggInterface-${{ version_major }}.dll
-                    - lib/YggInterface_fortran.lib
-                    - bin/YggInterface_fortran-${{ version_major }}.dll
+                    - Library/lib/YggInterface.lib
+                    - Library/bin/YggInterface-${{ version_major }}.dll
+                    - Library/lib/YggInterface_fortran.lib
+                    - Library/bin/YggInterface_fortran-${{ version_major }}.dll
             - if: unix
               then:
                 - lib/cmake/YggInterface/YggInterfaceConfig.cmake
                 - lib/cmake/YggInterface/YggInterfaceConfigVersion.cmake
                 - lib/pkgconfig/YggInterface.pc
           lib:
+            # rattler-build dosn't know to look for mingw style libraries
             - if: toolchain_variant != "m2w64"
               then:
                 - YggInterface
                 - YggInterface_fortran
           include:
-            - if: toolchain_variant != "m2w64"
-              then:
-                - YggInterface/YggInterface.hpp
-                - YggInterface/YggInterface.h
-                - YggInterface/ygginterface.mod
+            - YggInterface/YggInterface.hpp
+            - YggInterface/YggInterface.h
+            - YggInterface/ygginterface.mod
       - script:
           - if: unix
             then:
