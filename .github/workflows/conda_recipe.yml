@@ -49,17 +49,17 @@ jobs:
           miniforge-version: latest
           conda-remove-defaults: true
       - name: Install rattler-build
-        if: matrix.builder == 'rattler-unsplit'
+        # if: matrix.builder == 'rattler-unsplit'
         run: |
           conda info
           conda list
           conda install rattler-build -y
-      - name: Install rattler-build
-        if: matrix.builder != 'rattler-unsplit'
-        run: |
-          conda info
-          conda list
-          conda install "rattler-build<0.66" -y
+      # - name: Install rattler-build
+      #   if: matrix.builder != 'rattler-unsplit'
+      #   run: |
+      #     conda info
+      #     conda list
+      #     conda install "rattler-build<0.66" -y
       - name: Check conda installation
         run: |
           conda info

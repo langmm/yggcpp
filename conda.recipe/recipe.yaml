@@ -42,14 +42,6 @@ outputs:
         - numpy >=1.13.0
         - cmake >=3.16
         - libcurl
-        - if: win
-          then:
-            - binutils <2.43
-            - make
-            - ${{ stdlib('m2w64_c') }}
-            - ${{ compiler('m2w64_c') }}
-            - ${{ compiler('m2w64_cxx') }}
-            - ${{ compiler('m2w64_fortran') }}
         - ninja
         - pkgconfig
         - if: toolchain_variant != "m2w64"
@@ -58,6 +50,14 @@ outputs:
             - ${{ compiler('c') }}
             - ${{ compiler('cxx') }}
             - ${{ compiler('fortran') }}
+        - if: win  # toolchain_variant != "m2w64"
+          then:
+            - binutils <2.43
+            - make
+            - ${{ stdlib('m2w64_c') }}
+            - ${{ compiler('m2w64_c') }}
+            - ${{ compiler('m2w64_cxx') }}
+            - ${{ compiler('m2w64_fortran') }}
         - libcurl
         - llvm-openmp
         - openmpi
@@ -128,6 +128,12 @@ outputs:
             - flask
             - ninja
             - cmake
+            - if: toolchain_variant != "m2w64"
+              then:
+                - ${{ stdlib('c') }}
+                - ${{ compiler('c') }}
+                - ${{ compiler('cxx') }}
+                - ${{ compiler('fortran') }}
             - if: win  # toolchain_variant == "m2w64"
               then:
                 - binutils <2.43
@@ -135,17 +141,7 @@ outputs:
                 - ${{ stdlib('m2w64_c') }}
                 - ${{ compiler('m2w64_c') }}
                 - ${{ compiler('m2w64_cxx') }}
-            - if: toolchain_variant != "m2w64"
-              then:
-                - ${{ stdlib('c') }}
-                - ${{ compiler('c') }}
-                - ${{ compiler('cxx') }}
-            - if: win
-              then:
                 - ${{ compiler('m2w64_fortran') }}
-            - if: unix
-              then:
-                - ${{ compiler('fortran') }}
         files:
           source:
             - tests/

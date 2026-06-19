@@ -83,10 +83,10 @@ tests:
             - Library/cmake/YggInterfaceConfig.cmake
             - Library/cmake/YggInterface/YggInterfaceConfigVersion.cmake
             - Library/lib/pkgconfig/YggInterface.pc
-            - Library/lib/YggInterface.lib
-            - Library/lib/YggInterface_fortran.lib
-            - Library/bin/YggInterface.dll
-            - Library/bin/YggInterface_fortran.dll
+            - Library/lib/libYggInterface.dll.a
+            - Library/lib/libYggInterface_fortran.dll.a
+            - Library/bin/libYggInterface.dll
+            - Library/bin/libYggInterface_fortran.dll
         - if: unix
           then:
             - lib/cmake/YggInterface/YggInterfaceConfig.cmake
@@ -101,8 +101,14 @@ tests:
             - lib/libYggInterface.${{ version_major }}.dylib
             - lib/libYggInterface_fortran.${{ version_major }}.dylib
       lib:
-        - YggInterface
-        - YggInterface_fortran
+        - if: win
+          then:
+            - libYggInterface
+            - libYggInterface_fortran
+        - if: unix
+          then:
+            - YggInterface
+            - YggInterface_fortran
       include:
         - YggInterface/YggInterface.hpp
         - YggInterface/YggInterface.h

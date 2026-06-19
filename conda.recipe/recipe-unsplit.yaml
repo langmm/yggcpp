@@ -32,7 +32,7 @@ requirements:
     - if: win
       then:
         - binutils <2.43
-        - make
+        # - make
         - ${{ stdlib('m2w64_c') }}
         - ${{ compiler('m2w64_c') }}
         - ${{ compiler('m2w64_cxx') }}
@@ -56,8 +56,8 @@ requirements:
   host:
     - hatch-fancy-pypi-readme
     - llvm-openmp
-    - if: win
-      then: make
+    # - if: win
+    #   then: make
     - ninja
     - numpy >=1.13.0
     - openmpi
@@ -133,7 +133,7 @@ tests:
         - if: win
           then:
             - binutils <2.43
-            - make
+            # - make
             - ${{ stdlib('m2w64_c') }}
             - ${{ compiler('m2w64_c') }}
             - ${{ compiler('m2w64_cxx') }}
