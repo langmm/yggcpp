@@ -66,7 +66,6 @@ outputs:
         - yggdrasil-rapidjson
         - zeromq
       host:
-        - hatch-fancy-pypi-readme
         - llvm-openmp
         - if: win
           then: make
@@ -75,8 +74,6 @@ outputs:
         - openmpi
         - pip
         - python
-        - scikit-build-core
-        - setuptools_scm
         - if: unix
           then: sysv_ipc
         - yggdrasil-rapidjson
