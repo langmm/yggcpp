@@ -9,6 +9,7 @@ mkdir conda_build
 rem The following is set in CMAKE_ARGS by vc conda package during
 rem   activation if CONDA_BUILD == 1:
 rem     "CMAKE_INSTALL_PREFIX=%PREFIX%\Library"
+IF NOT DEFINED CMAKE_INSTALL_PREFIX (set CMAKE_INSTALL_PREFIX="%PREFIX%\Library")
 cmake -B conda_build -S %SRC_DIR% ^
       -G Ninja ^
       -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON ^

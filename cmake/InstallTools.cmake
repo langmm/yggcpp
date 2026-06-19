@@ -283,7 +283,8 @@ function(complete_install PROJECT)
   set(oneValueArgs EXPORT VERSION COMPONENT
       CONFIG_TEMPLATE PKGCONFIG_TEMPLATE MACROS_FILE
       INSTALL_PREFIX INSTALL_LIBDIR INSTALL_BINDIR
-      INSTALL_INCLUDEDIR INSTALL_CMAKEDIR INSTALL_DOCDIR
+      INSTALL_INCLUDEDIR INSTALL_CMAKEDIR INSTALL_CMAKEDIR_CONFIG
+      INSTALL_DOCDIR
       MODULE_DIR MODULES_INCLUDE_PATTERN MODULES_EXCLUDE_PATTERN
       MODULE_SCRIPT_DIR
       HEADER_DIR DOC_DIR CONFIG_TEMPLATE_DIR)
@@ -296,13 +297,13 @@ function(complete_install PROJECT)
   set(CONDA_BUILD "$ENV{CONDA_BUILD}")
   message(DEBUG "ARGS_INSTALL_PREFIX = ${ARGS_INSTALL_PREFIX}")
   message(DEBUG "CONDA_BUILD = ${CONDA_BUILD}") 
-  if(WIN32 AND (NOT MSVC) AND CONDA_BUILD AND
-     (NOT ARGS_INSTALL_PREFIX MATCHES ".+Library$"))
-    cmake_path(
-      APPEND ARGS_INSTALL_PREFIX Library
-      OUTPUT_VARIABLE ARGS_INSTALL_PREFIX
-    )
-  endif()
+  # if(WIN32 AND (NOT MSVC) AND CONDA_BUILD AND
+  #    (NOT ARGS_INSTALL_PREFIX MATCHES ".+Library$"))
+  #   cmake_path(
+  #     APPEND ARGS_INSTALL_PREFIX Library
+  #     OUTPUT_VARIABLE ARGS_INSTALL_PREFIX
+  #   )
+  # endif()
   if(NOT ARGS_INSTALL_LIBDIR)
     cmake_path(
       APPEND ARGS_INSTALL_PREFIX ${CMAKE_INSTALL_LIBDIR}
@@ -329,7 +330,7 @@ function(complete_install PROJECT)
     endif()
   endif()
   if(NOT ARGS_INSTALL_CMAKEDIR)
-    if(UNIX OR CYGWIN OR (WIN32 AND NOT MSVC))
+    if(UNIX OR CYGWIN)
       cmake_path(
         APPEND ARGS_INSTALL_LIBDIR cmake ${PROJECT}
         OUTPUT_VARIABLE ARGS_INSTALL_CMAKEDIR
@@ -339,6 +340,14 @@ function(complete_install PROJECT)
         APPEND ARGS_INSTALL_PREFIX cmake ${PROJECT}
         OUTPUT_VARIABLE ARGS_INSTALL_CMAKEDIR
       )
+      # Put config file in non-project directory so cmake can find it
+      # on windows
+      if(NOT ARGS_INSTALL_CMAKEDIR_CONFIG)
+        cmake_path(
+          APPEND ARGS_INSTALL_PREFIX cmake
+          OUTPUT_VARIABLE ARGS_INSTALL_CMAKEDIR_CONFIG
+        )
+      endif()
     endif()
   endif()
   if(NOT ARGS_INSTALL_DOCDIR)
@@ -452,14 +461,32 @@ function(complete_install PROJECT)
       endif()
     endif()
     if(ARGS_CONFIG_TEMPLATE)
+      if(ARGS_INSTALL_CMAKEDIR_CONFIG)
+        cmake_path(
+          RELATIVE_PATH ARGS_INSTALL_CMAKEDIR
+          BASE_DIRECTORY "${ARGS_INSTALL_CMAKEDIR_CONFIG}"
+          OUTPUT_VARIABLE YGG_CMAKE_MODULE_DIR
+        )
+      else()
+        set(YGG_CMAKE_MODULE_DIR)
+      endif()
       configure_file(
         ${ARGS_CONFIG_TEMPLATE}
         ${PROJECT}Config.cmake @ONLY
       )
-      list(
-        APPEND ARGS_MODULES_INCLUDE
-        "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT}Config.cmake"
-      )
+      set(CMAKE_CONFIG_FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT}Config.cmake" )
+      if(ARGS_INSTALL_CMAKEDIR_CONFIG)
+        # CMake does not search %PREFIX%/lib/cmake/<PROJECT>/ on Windows
+        # so the config file should be placed somewhere it can find and
+        # then pointed to the other package cmake modules
+        install(
+          FILES ${CMAKE_CONFIG_FILE}
+          DESTINATION ${ARGS_INSTALL_CMAKEDIR_CONFIG}
+          ${COMPONENT_ARGS}
+        )
+      else()
+        list(APPEND ARGS_MODULES_INCLUDE "${CMAKE_CONFIG_FILE}")
+      endif()
     endif()
     if(NOT ARGS_MACROS_FILE)
       set(MACROS_FILE_BASE "${PROJECT}Macros.cmake")

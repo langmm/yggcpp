@@ -107,18 +107,6 @@ tests:
         - YggInterface/YggInterface.hpp
         - YggInterface/YggInterface.h
         - YggInterface/ygginterface.mod
-  # - python:
-  #     imports:
-  #       - YggInterface
-  # - script:
-  #     - pytest -sv tests/python
-  #   requirements:
-  #     run:
-  #       - pytest
-  #       - flask
-  #   files:
-  #     source:
-  #       - tests/
   - script:
       - if: unix
         then:
