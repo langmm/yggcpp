@@ -86,8 +86,8 @@ tests:
             - Library/lib/pkgconfig/YggInterface.pc
             - Library/lib/YggInterface.lib
             - Library/lib/YggInterface_fortran.lib
-            - Library/bin/YggInterface-${{ version_major }}.dll
-            - Library/bin/YggInterface_fortran-${{ version_major }}.dll
+            - Library/bin/YggInterface.dll
+            - Library/bin/YggInterface_fortran.dll
         - if: unix
           then:
             - lib/cmake/YggInterface/YggInterfaceConfig.cmake
@@ -117,12 +117,6 @@ tests:
       run:
         - pytest
         - flask
-        - ninja
-        - cmake
-        - ${{ stdlib('c') }}
-        - ${{ compiler('c') }}
-        - ${{ compiler('cxx') }}
-        - ${{ compiler('fortran') }}
     files:
       source:
         - tests/

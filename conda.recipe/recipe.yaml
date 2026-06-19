@@ -92,15 +92,15 @@ outputs:
                 - if: toolchain_variant == "m2w64"
                   then:
                     - Library/lib/libYggInterface.dll.a
-                    - Library/bin/libYggInterface-${{ version_major }}.dll
+                    - Library/bin/libYggInterface.dll
                     - Library/lib/libYggInterface_fortran.dll.a
-                    - Library/bin/libYggInterface_fortran-${{ version_major }}.dll
+                    - Library/bin/libYggInterface_fortran.dll
                 - if: toolchain_variant != "m2w64"
                   then:
                     - Library/lib/YggInterface.lib
-                    - Library/bin/YggInterface-${{ version_major }}.dll
+                    - Library/bin/YggInterface.dll
                     - Library/lib/YggInterface_fortran.lib
-                    - Library/bin/YggInterface_fortran-${{ version_major }}.dll
+                    - Library/bin/YggInterface_fortran.dll
             - if: unix
               then:
                 - lib/cmake/YggInterface/YggInterfaceConfig.cmake

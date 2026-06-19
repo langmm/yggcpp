@@ -17,7 +17,7 @@ else()
         ${YGG_TARGET_CXX} PROPERTIES
         VERSION ${PROJECT_VERSION}
         SOVERSION ${PROJECT_VERSION_MAJOR}
-        DLL_NAME_WITH_SOVERSION ON
+        # DLL_NAME_WITH_SOVERSION ON
     )
     if (WIN32)
 	set_target_properties(${YGG_TARGET_CXX}

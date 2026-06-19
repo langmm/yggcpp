@@ -80,19 +80,18 @@ tests:
       files:
         - if: win
           then:
-            - Lib/cmake/YggInterface/YggInterfaceConfig.cmake
-            - Lib/cmake/YggInterface/YggInterfaceConfigVersion.cmake
-            - Lib/libYggInterface.dll.a
-            - Lib/libYggInterface_fortran.dll.a
-            - bin/libYggInterface-${{ version_major }}.dll
-            - bin/libYggInterface_fortran-${{ version_major }}.dll
-            - include/YggInterface/YggInterface.hpp
-            - include/YggInterface/YggInterface.h
-            - include/YggInterface/ygginterface.mod
+            - Library/cmake/YggInterface/YggInterfaceConfig.cmake
+            - Library/cmake/YggInterface/YggInterfaceConfigVersion.cmake
+            - Library/lib/pkgconfig/YggInterface.pc
+            - Library/lib/YggInterface.lib
+            - Library/lib/YggInterface_fortran.lib
+            - Library/bin/YggInterface.dll
+            - Library/bin/YggInterface_fortran.dll
         - if: unix
           then:
             - lib/cmake/YggInterface/YggInterfaceConfig.cmake
             - lib/cmake/YggInterface/YggInterfaceConfigVersion.cmake
+            - lib/pkgconfig/YggInterface.pc
         - if: linux
           then:
             - lib/libYggInterface.so.${{ version_major }}
@@ -102,16 +101,12 @@ tests:
             - lib/libYggInterface.${{ version_major }}.dylib
             - lib/libYggInterface_fortran.${{ version_major }}.dylib
       lib:
-        - if: unix
-          then:
-            - YggInterface
-            - YggInterface_fortran
+        - YggInterface
+        - YggInterface_fortran
       include:
-        - if: unix
-          then:
-            - YggInterface/YggInterface.hpp
-            - YggInterface/YggInterface.h
-            - YggInterface/ygginterface.mod
+        - YggInterface/YggInterface.hpp
+        - YggInterface/YggInterface.h
+        - YggInterface/ygginterface.mod
   # - python:
   #     imports:
   #       - YggInterface
