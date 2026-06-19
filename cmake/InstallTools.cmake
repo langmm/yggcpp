@@ -295,12 +295,12 @@ function(complete_install PROJECT)
   endif()
   message(STATUS "ARGS_INSTALL_PREFIX = ${ARGS_INSTALL_PREFIX}")
   set(LIBRARY_PREFIX ${ARGS_INSTALL_PREFIX})
-  if(WIN32 AND MSVC)  # NOT MSVC)
-    cmake_path(
-      APPEND ARGS_INSTALL_PREFIX Library
-      OUTPUT_VARIABLE LIBRARY_PREFIX
-    )
-  endif()
+  # if(WIN32 AND MSVC)  # NOT MSVC)
+  #   cmake_path(
+  #     APPEND ARGS_INSTALL_PREFIX Library
+  #     OUTPUT_VARIABLE LIBRARY_PREFIX
+  #   )
+  # endif()
   if(NOT ARGS_INSTALL_LIBDIR)
     cmake_path(
       APPEND LIBRARY_PREFIX ${CMAKE_INSTALL_LIBDIR}

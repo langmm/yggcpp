@@ -1,10 +1,18 @@
+c_compiler:
+  - gcc                         # [linux]
+  - clang                       # [osx]
+  - vs2017                      # [win]
 c_stdlib:
   - sysroot                     # [linux]
   - macosx_deployment_target    # [osx]
-  - vs2017                      # [win]
+  - vs                          # [win]
 c_stdlib_version:
   - 2.17                        # [linux]
   - 11                          # [osx]
+cxx_compiler:
+  - gxx                         # [linux]
+  - clangxx                     # [osx]
+  - vs2017                      # [win]
 fortran_compiler:
   - gfortran
 toolchain_variant:

@@ -100,16 +100,18 @@ outputs:
                     - include/YggInterface/ygginterface.mod
                 - if: toolchain_variant != "m2w64"
                   then:
-                    - Library/cmake/YggInterface/YggInterfaceConfig.cmake
-                    - Library/cmake/YggInterface/YggInterfaceConfigVersion.cmake
-                    - Library/lib/YggInterface.lib
-                    - Library/bin/YggInterface-${{ version_major }}.dll
-                    - Library/lib/YggInterface_fortran.lib
-                    - Library/bin/YggInterface_fortran-${{ version_major }}.dll
+                    - cmake/YggInterface/YggInterfaceConfig.cmake
+                    - cmake/YggInterface/YggInterfaceConfigVersion.cmake
+                    - lib/pkgconfig/YggInterface.pc
+                    - lib/YggInterface.lib
+                    - bin/YggInterface-${{ version_major }}.dll
+                    - lib/YggInterface_fortran.lib
+                    - bin/YggInterface_fortran-${{ version_major }}.dll
             - if: unix
               then:
                 - lib/cmake/YggInterface/YggInterfaceConfig.cmake
                 - lib/cmake/YggInterface/YggInterfaceConfigVersion.cmake
+                - lib/pkgconfig/YggInterface.pc
           lib:
             - if: toolchain_variant != "m2w64"
               then:
