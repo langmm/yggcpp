@@ -81,15 +81,15 @@ tests:
       files:
         - if: win
           then:
-            - %LIBRARY_PREFIX%/cmake/YggInterfaceConfig.cmake
-            - %LIBRARY_PREFIX%/cmake/YggInterfaceConfigVersion.cmake
-            - %LIBRARY_LIB%/YggInterface.lib
-            - %LIBRARY_LIB%/YggInterface_fortran.lib
-            - %LIBRARY_BIN%/YggInterface-${{ version_major }}.dll
-            - %LIBRARY_BIN%/YggInterface_fortran-${{ version_major }}.dll
-            - %LIBRARY_INC%/YggInterface/YggInterface.hpp
-            - %LIBRARY_INC%/YggInterface/YggInterface.h
-            - %LIBRARY_INC%/YggInterface/ygginterface.mod
+            - Library/cmake/YggInterface/YggInterfaceConfig.cmake
+            - Library/cmake/YggInterface/YggInterfaceConfigVersion.cmake
+            - Library/lib/YggInterface.lib
+            - Library/lib/YggInterface_fortran.lib
+            - Library/bin/YggInterface-${{ version_major }}.dll
+            - Library/bin/YggInterface_fortran-${{ version_major }}.dll
+            - Library/include/YggInterface/YggInterface.hpp
+            - Library/include/YggInterface/YggInterface.h
+            - Library/include/YggInterface/ygginterface.mod
         - if: unix
           then:
             - lib/cmake/YggInterface/YggInterfaceConfig.cmake

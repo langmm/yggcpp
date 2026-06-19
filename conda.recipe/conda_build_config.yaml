@@ -5,9 +5,11 @@ c_stdlib:
 c_stdlib_version:
   - 2.17                        # [linux]
   - 11                          # [osx]
+fortran_compiler:
+  - gfortran
 toolchain_variant:
-  - ""                          # [unix]
-  - m2w64                       # [win]
+  - ""
+  # - m2w64                       # [win]
 m2w64_c_stdlib:                 # [win]
   - m2w64-sysroot               # [win]
 m2w64_c_stdlib_version:         # [win]

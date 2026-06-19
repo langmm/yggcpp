@@ -53,14 +53,13 @@ jobs:
         run: |
           conda info
           conda list
-          conda install "rattler-build<=0.48.0" -y
+          conda install rattler-build -y
       - name: Install rattler-build
         if: matrix.builder != 'rattler-unsplit'
         run: |
           conda info
           conda list
-          # conda install "rattler-build<=0.48.0" -y
-          conda install rattler-build -y
+          conda install "rattler-build<=0.66.1" -y
       - name: Check conda installation
         run: |
           conda info
