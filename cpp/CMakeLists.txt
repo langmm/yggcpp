@@ -53,6 +53,6 @@ add_library_dirs_to_rpath(${YGG_TARGET_CXX})
 
 if(YGG_INSPECT_TARGETS)
   include(CheckDLL)
-  show_runtimes(${YGG_TARGET_CXX})
+  show_runtimes(${YGG_TARGET_CXX} SHOW_ALL)
   # show_symbols(${YGG_TARGET_CXX})
 endif()

@@ -81,7 +81,7 @@ tests:
       files:
         - if: win
           then:
-            - Library/cmake/YggInterface/YggInterfaceConfig.cmake
+            - Library/cmake/YggInterfaceConfig.cmake
             - Library/cmake/YggInterface/YggInterfaceConfigVersion.cmake
             - Library/lib/pkgconfig/YggInterface.pc
             - Library/lib/YggInterface.lib

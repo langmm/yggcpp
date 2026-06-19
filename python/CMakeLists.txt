@@ -34,7 +34,7 @@ if (NOT SKBUILD)
       set(CMAKE_PREFIX_PATH_SAFE "${CMAKE_PREFIX_PATH}")
       if(WIN32)
         string(REPLACE "\\" "/" CMAKE_PREFIX_PATH_SAFE "${CMAKE_PREFIX_PATH}")
-        string(REPLACE ";" "\\\\;" CMAKE_PREFIX_PATH_SAFE "${CMAKE_PREFIX_PATH_SAFE}")
+        string(REPLACE ";" "\\\\\\\\;" CMAKE_PREFIX_PATH_SAFE "${CMAKE_PREFIX_PATH_SAFE}")
       endif()
       list(APPEND Python_BUILD_ARGS
         "--config-settings=cmake.define.CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH_SAFE}")

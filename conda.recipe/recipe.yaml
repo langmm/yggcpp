@@ -86,7 +86,7 @@ outputs:
           files:
             - if: win
               then:
-                - Library/cmake/YggInterface/YggInterfaceConfig.cmake
+                - Library/cmake/YggInterfaceConfig.cmake
                 - Library/cmake/YggInterface/YggInterfaceConfigVersion.cmake
                 - Library/lib/pkgconfig/YggInterface.pc
                 - if: toolchain_variant == "m2w64"
