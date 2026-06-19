@@ -101,10 +101,6 @@ tests:
             - lib/libYggInterface.${{ version_major }}.dylib
             - lib/libYggInterface_fortran.${{ version_major }}.dylib
       lib:
-        - if: win
-          then:
-            - libYggInterface
-            - libYggInterface_fortran
         - if: unix
           then:
             - YggInterface

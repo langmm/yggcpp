@@ -32,7 +32,6 @@ requirements:
     - if: win
       then:
         - binutils <2.43
-        # - make
         - ${{ stdlib('m2w64_c') }}
         - ${{ compiler('m2w64_c') }}
         - ${{ compiler('m2w64_cxx') }}
@@ -56,8 +55,6 @@ requirements:
   host:
     - hatch-fancy-pypi-readme
     - llvm-openmp
-    # - if: win
-    #   then: make
     - ninja
     - numpy >=1.13.0
     - openmpi
@@ -70,9 +67,6 @@ requirements:
     - yggdrasil-rapidjson
     - zeromq
   run:
-    # - if: unix
-    #   then:
-    #     - ${{ stdlib('c') }}
     - python
     - yggdrasil-rapidjson
 
@@ -124,16 +118,9 @@ tests:
         - ${{ compiler('c') }}
         - ${{ compiler('cxx') }}
         - ${{ compiler('fortran') }}
-        # - if: unix
-        #   then:
-        #     - ${{ stdlib('c') }}
-        #     - ${{ compiler('c') }}
-        #     - ${{ compiler('cxx') }}
-        #     - ${{ compiler('fortran') }}
         - if: win
           then:
             - binutils <2.43
-            # - make
             - ${{ stdlib('m2w64_c') }}
             - ${{ compiler('m2w64_c') }}
             - ${{ compiler('m2w64_cxx') }}

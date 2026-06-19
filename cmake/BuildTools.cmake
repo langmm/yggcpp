@@ -987,11 +987,11 @@ function(add_mixed_language_library target library_type)
         ${target} PRIVATE ${${ilanguage}_target}
       )
       # target_link_libraries(
-      #   ${target} PRIVATE
+      #   ${target} PUBLIC
       #   $<TARGET_PROPERTY:${${ilanguage}_target},INTERFACE_LINK_LIBRARIES>
       # )
       # target_link_directories(
-      #   ${target} PRIVATE
+      #   ${target} PUBLIC
       #   $<TARGET_PROPERTY:${${ilanguage}_target},INTERFACE_LINK_DIRECTORIES>
       # )
       # target_sources(
