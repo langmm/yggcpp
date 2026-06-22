@@ -31,8 +31,6 @@ add_mixed_language_library(
   ${FORCE_EXTERNAL}
 )
 
-# add_mixed_fortran_library(${YGG_TARGET_Fortran} SHARED
-#                           LANGUAGE CXX ${SOURCES_Fortran})
 add_library(YggInterface::Fortran ALIAS ${YGG_TARGET_Fortran})
 if (YGG_Fortran_WRAP_C_ENUMS)
     target_compile_options(

@@ -161,10 +161,10 @@ if (TARGET YggInterface::YggInterface_fortran)
     message(STATUS "MSVC_CXX_STANDARD_LIBRARIES = ${MSVC_CXX_STANDARD_LIBRARIES}")
     target_link_libraries(
       YggInterface::YggInterface_fortran INTERFACE
-      ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}
+      # ${CMAKE_Fortran_IMPLICIT_LINK_LIBRARIES}
+      ${GNU_Fortran_IMPLICIT_LINK_LIBRARIES}
+      ${MSVC_CXX_STANDARD_LIBRARIES}
       $<IF:$<CONFIG:Debug>,ucrtd,ucrt>
-      # ${GNU_Fortran_IMPLICIT_LINK_LIBRARIES}
-      # ${MSVC_CXX_STANDARD_LIBRARIES}
     )
     target_link_directories(
       YggInterface::YggInterface_fortran INTERFACE
