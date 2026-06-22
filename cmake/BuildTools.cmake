@@ -456,6 +456,7 @@ function(get_implicit_libraries language output_var)
       MISSING libnames
       ${ARGS_CREATE_MSVC_IMPORT}
     )
+    set(${output_var} ${full_libraries} ${libnames})
   endif()
   message(DEBUG "get_implicit_libraries: ${output_var} = ${${output_var}}")
   set(${output_var} ${${output_var}} PARENT_SCOPE)
