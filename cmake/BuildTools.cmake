@@ -976,6 +976,7 @@ function(add_mixed_language_library target library_type)
         PROPERTIES ${ARGS_PROPERTIES}
         LINKER_LANGUAGE ${ARGS_LINKER_LANGUAGE}
         PARENT_TARGET ${target}
+        OUTPUT_IMPLICIT_LIBRARIES ${ilanguage}_external_implicit_libraries
       )
       copy_target_files(
         ${${ilanguage}_target} ${CMAKE_CURRENT_BINARY_DIR}
@@ -987,6 +988,12 @@ function(add_mixed_language_library target library_type)
       target_link_libraries(
         ${target} PRIVATE ${${ilanguage}_target}
       )
+      # if(${ilanguage}_external_implicit_libraries)
+      #   target_link_from_file(
+      #     ${target} PUBLIC
+      #     ${${ilanguage}_external_implicit_libraries}
+      #   )
+      # endif()
       # target_link_libraries(
       #   ${target} PUBLIC
       #   $<TARGET_PROPERTY:${${ilanguage}_target},INTERFACE_LINK_LIBRARIES>
@@ -1106,7 +1113,8 @@ endfunction()
 
 function(add_external_library target library_type)
   set(oneValueArgs GENERATOR PREPEND_PATH LANGUAGE LINKER_LANGUAGE
-      LISTS_DIR BUILD_DIR SOURCE_DIR PARENT_TARGET COPY_SOURCES)
+      LISTS_DIR BUILD_DIR SOURCE_DIR PARENT_TARGET COPY_SOURCES
+      OUTPUT_IMPLICIT_LIBRARIES)
   set(multiValueArgs SOURCES LIBRARIES INCLUDES DEFINITIONS PROPERTIES
       COMPILE_FLAGS CONFIG_ARGUMENTS BUILD_ARGUMENTS PRESERVE_VARIABLES)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -1360,6 +1368,9 @@ function(add_external_library target library_type)
     DEF_FILE ${external_def_file}
     IMPORT_LIBRARY ${IMPNAME}
   )
+  if(ARGS_OUTPUT_IMPLICIT_LIBRARIES)
+    set(${ARGS_OUTPUT_IMPLICIT_LIBRARIES} ${EXTERNAL_IMPLICIT_LIBRARIES} PARENT_SCOPE)
+  endif()
   if(ARGS_LANGUAGE STREQUAL "Fortran")
     set_property(
       TARGET ${target} PROPERTY
