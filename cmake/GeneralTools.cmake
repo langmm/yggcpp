@@ -1138,7 +1138,7 @@ function(execute_process_with_env)
   if(ARGS_COMMENT)
     message(DEBUG "execute_process_with_env: Running ${ARGS_COMMENT}")
   endif()
-  message(DEBUG "execute_process_with_env: ARGS_COMMAND = ${ARGS_COMMAND}")
+  message(STATUS "execute_process_with_env: ARGS_COMMAND = ${ARGS_COMMAND}")
   collect_arguments(
     PROCESS_ARGS ARGS "${options}"
     TIMEOUT WORKING_DIRECTORY
