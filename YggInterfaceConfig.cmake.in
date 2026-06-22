@@ -153,15 +153,16 @@ if (TARGET YggInterface::YggInterface_fortran)
     include(${YGG_CMAKE_MODULE_DIR}/BuildTools.cmake)
     get_implicit_libraries(
       Fortran GNU_Fortran_IMPLICIT_LINK_LIBRARIES
-      # LANGUAGE_ONLY
+      LANGUAGE_ONLY
       FULL_LIBRARIES
     )
-    set(MSVC_C_STANDARD_LIBRARIES ${CMAKE_CXX_STANDARD_LIBRARIES})
+    set(MSVC_CXX_STANDARD_LIBRARIES ${CMAKE_CXX_STANDARD_LIBRARIES})
     message(STATUS "GNU_Fortran_IMPLICIT_LINK_LIBRARIES = ${GNU_Fortran_IMPLICIT_LINK_LIBRARIES}")
-    message(STATUS "MSVC_C_STANDARD_LIBRARIES = ${MSVC_C_STANDARD_LIBRARIES}")
+    message(STATUS "MSVC_CXX_STANDARD_LIBRARIES = ${MSVC_CXX_STANDARD_LIBRARIES}")
     target_link_libraries(
       YggInterface::YggInterface_fortran INTERFACE
       ${GNU_Fortran_IMPLICIT_LINK_LIBRARIES}
+      ${MSVC_CXX_STANDARD_LIBRARIES}
     )
     target_link_directories(
       YggInterface::YggInterface_fortran INTERFACE

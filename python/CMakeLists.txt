@@ -34,12 +34,11 @@ if (NOT SKBUILD)
       set(CMAKE_PREFIX_PATH_SAFE "${CMAKE_PREFIX_PATH}")
       if(WIN32)
         string(REPLACE "\\" "/" CMAKE_PREFIX_PATH_SAFE "${CMAKE_PREFIX_PATH}")
-        string(REPLACE ";" "\\\\\\\\\\\\\\\\;" CMAKE_PREFIX_PATH_SAFE "${CMAKE_PREFIX_PATH_SAFE}")
+        string(REPLACE ";" "\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\;" CMAKE_PREFIX_PATH_SAFE "${CMAKE_PREFIX_PATH_SAFE}")
       endif()
       list(APPEND Python_BUILD_ARGS
         "--config-settings=cmake.define.CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH_SAFE}")
       message(DEBUG "CMAKE_PREFIX_PATH_SAFE = ${CMAKE_PREFIX_PATH_SAFE}")
-      message(DEBUG "Python_BUILD_ARGS = ${Python_BUILD_ARGS}")
     endif()
     if (Python3_ROOT_DIR)
       set(Python3_ROOT_DIR_SAFE "${Python3_ROOT_DIR}")
@@ -58,6 +57,7 @@ if (NOT SKBUILD)
     else()
       message(DEBUG "Python_OUTPUT DOES NOT EXIST")
     endif()
+    message(DEBUG "Python_BUILD_ARGS = ${Python_BUILD_ARGS}")
     add_custom_command_env(
       YggInterface_python
       COMMAND ${Python3_EXECUTABLE} -m pip install ${PARENT_SOURCE_DIR} -v ${Python_BUILD_ARGS}
