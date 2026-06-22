@@ -99,6 +99,8 @@ if(CMAKE_Fortran_COMPILER_ID MATCHES "GNU" AND
     message(STATUS "CMAKE_${ilang}_LINK_EXECUTABLE = ${CMAKE_${ilang}_LINK_EXECUTABLE}")
     message(STATUS "CMAKE_${ilang}_LINKER_TYPE = ${CMAKE_${ilang}_LINKER_TYPE}")
     message(STATUS "CMAKE_${ilang}_LINK_LIBRARY_SUFFIX = ${CMAKE_${ilang}_LINK_LIBRARY_SUFFIX}")
+    message(STATUS "CMAKE_${ilang}_IMPLICIT_LINK_LIBRARIES = ${CMAKE_${ilang}_IMPLICIT_LINK_LIBRARIES}")
+    message(STATUS "CMAKE_${ilang}_IMPLICIT_LINK_DIRECTORIES = ${CMAKE_${ilang}_IMPLICIT_LINK_DIRECTORIES}")
   endforeach()
   if(NOT CMAKE_CXX_LINK_LIBRARY_SUFFIX)
     set(CMAKE_CXX_LINK_LIBRARY_SUFFIX ".lib")
@@ -126,6 +128,22 @@ if (TARGET YggInterface::YggInterface)
   add_library(YggInterface::C ALIAS YggInterface::YggInterface)
 endif()
 if (TARGET YggInterface::YggInterface_fortran)
+  if(YGG_GNU_FORTRAN_AND_MSVC)
+    include(${YGG_CMAKE_MODULE_DIR}/BuildTools.cmake)
+    get_implicit_libraries(
+      Fortran GNU_Fortran_IMPLICIT_LINK_LIBRARIES
+      LANGUAGE_ONLY FULL_LIBRARIES
+    )
+    message(STATUS "GNU_Fortran_IMPLICIT_LINK_LIBRARIES = ${GNU_Fortran_IMPLICIT_LINK_LIBRARIES}")
+    target_link_libraries(
+      YggInterface::YggInterface_fortran INTERFACE
+      ${GNU_Fortran_IMPLICIT_LINK_LIBRARIES}
+    )
+    target_link_directories(
+      YggInterface::YggInterface_fortran INTERFACE
+      ${CMAKE_Fortran_IMPLICIT_LINK_DIRECTORIES}
+    )
+  endif()
   add_library(YggInterface::Fortran ALIAS
               YggInterface::YggInterface_fortran)
 endif()
