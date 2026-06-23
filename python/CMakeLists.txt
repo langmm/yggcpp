@@ -35,7 +35,8 @@ if (NOT SKBUILD)
       set(CMAKE_PREFIX_PATH_SAFE "${CMAKE_PREFIX_PATH}")
       if(WIN32)
         string(REPLACE "\\" "/" CMAKE_PREFIX_PATH_SAFE "${CMAKE_PREFIX_PATH}")
-        escape_char_repalcement(";" CMAKE_PREFIX_PATH_SAFE LEVEL 24)
+        # 24 leaves 3 backslashes
+        escape_char_repalcement(";" CMAKE_PREFIX_PATH_SAFE LEVEL 21)
         # string(REPLACE ";" "\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\;" CMAKE_PREFIX_PATH_SAFE "${CMAKE_PREFIX_PATH_SAFE}")
       endif()
       list(APPEND Python_BUILD_ARGS

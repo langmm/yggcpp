@@ -208,6 +208,17 @@ outputs:
         files:
           source:
             - tests/
+      - script:
+          - if: unix
+            then:
+              - tests/run_test_python.sh
+          - if: win
+            then:
+              - tests/run_test_python.bat
+        requirements:
+          run:
+            - cmake
+            - ninja
 
   - package:
       name: ygginterface

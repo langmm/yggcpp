@@ -8,8 +8,10 @@ fi
 cd build_speed
 
 cmake -G Ninja \
-      -D ENABLE_Python:BOOL=OFF \
-      -D COMM:STRING=ALL \
+      -D ENABLE_C:BOOL=OFF \
+      -D ENABLE_CXX:BOOL=OFF \
+      -D ENABLE_Fortran:BOOL=OFF \
+      -D ENABLE_Python:BOOL=ON \
       ../tests/speedtest 
 
 cmake --build .

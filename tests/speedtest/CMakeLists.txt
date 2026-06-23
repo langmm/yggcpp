@@ -18,26 +18,66 @@ list(APPEND CMAKE_COMMAND_ARGS_TO_COPY YggInterface_DIR CMAKE_PREFIX_PATH
      CMAKE_BUILD_PARALLEL_LEVEL YGG_INSPECT_TARGETS)
 
 function(add_speed_test LANGUAGE LANGUAGE_EXT)
+  set(options)
+  set(oneValueArgs COMM)
+  set(multiValueArgs)
+  cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
   if (NOT ENABLE_${LANGUAGE})
     return()
   endif()
-  find_package(YggInterface REQUIRED)
-  include(TestTools)
-  include(BuildTools)
-  check_yggdrasil_option(${COMM} TYPE COMM REQUIRED)
-  set(OUTPUT_FILE "${LANGUAGE}/speedtest.${LANGUAGE_EXT}")
+  if(LANGUAGE STREQUAL "Python")
+    # CMake package configuration files are not installed for only Python
+    find_package(YggInterface)
+  else()
+    find_package(YggInterface REQUIRED)
+  endif()
+  if(NOT YggInterface_FOUND)
+    set(YGG_COMMS_AVAILABLE ZMQ RMQ REST)
+    if(UNIX)
+      list(APPEND YGG_COMMS_AVAILABLE IPC)
+    endif()
+  endif()
+  if(ARGS_COMM)
+    set(COMM "${ARGS_COMM}")
+    set(SPEED_TEST_COMM "${ARGS_COMM}_COMM")
+  endif()
+  if(COMM STREQUAL "ALL")
+    foreach(icomm IN LISTS YGG_COMMS_AVAILABLE)
+      add_speed_test(
+        ${LANGUAGE} ${LANGUAGE_EXT}
+        COMM ${icomm}
+      )
+    endforeach()
+    return()
+  elseif(COMM STREQUAL "MPI" OR COMM STREQUAL "REST")
+    message(WARNING "${COMM} communicators requires additional setup beyond the scope of the simple speedtest as currently implemented")
+    return()
+  endif()
+  if(YggInterface_FOUND)
+    include(TestTools)
+    include(BuildTools)
+    check_yggdrasil_option(${COMM} TYPE COMM REQUIRED)
+  endif()
+  set(SOURCE_FILE "${LANGUAGE}_${COMM}/speedtest.${LANGUAGE_EXT}")
   configure_file(speedtest.${LANGUAGE_EXT}.in
-                 ${OUTPUT_FILE} @ONLY)
-  message(STATUS "ADD_SPEED_TEST: ${LANGUAGE}")
+                 ${SOURCE_FILE} @ONLY)
+  message(STATUS "ADD_SPEED_TEST: ${LANGUAGE} ${COMM}")
   if (LANGUAGE STREQUAL "Python")
-    find_yggdrasil_dependency(${LANGUAGE} REQUIRED)
+    if(YggInterface_FOUND)
+      find_yggdrasil_dependency(${LANGUAGE} REQUIRED)
+    else()
+      find_package(Python3 COMPONENTS Interpreter REQUIRED)
+      if(NOT ${LANGUAGE}_EXECUTABLE)
+        set(${LANGUAGE}_EXECUTABLE Python3_EXECUTABLE)
+      endif()
+    endif()
     message(STATUS "${LANGUAGE}_EXECUTABLE = ${${LANGUAGE}_EXECUTABLE}")
     if(NOT ${LANGUAGE}_EXECUTABLE)
       message(FATAL_ERROR "${LANGUAGE}_EXECUTABLE not set")
     endif()
     add_test(
-      NAME speedtest_${LANGUAGE}
-      COMMAND ${${LANGUAGE}_EXECUTABLE} ${OUTPUT_FILE}
+      NAME speedtest_${LANGUAGE}_${COMM}
+      COMMAND ${${LANGUAGE}_EXECUTABLE} ${SOURCE_FILE}
     )
     return()
   endif()
@@ -66,13 +106,7 @@ function(add_speed_test LANGUAGE LANGUAGE_EXT)
   if(WIN32 AND EXTERNAL_LINKER_MSVC AND NOT EXTERNAL_COMPILER_MSVC)
     list(
       APPEND CMAKE_COMMAND_ARGS
-      # "-DCMAKE_${LANGUAGE}_LINK_MODE=LINKER"
-      # "-DCMAKE_${LANGUAGE}_USING_LINKER_MSVC=${EXTERNAL_LINKER}"
-      # "-DCMAKE_CXX_LINK_MODE=LINKER"
-      # "-DCMAKE_LINKER_TYPE=MSVC"
       "-DCMAKE_LINKER_LINK=${EXTERNAL_LINKER}"
-      # "-DCMAKE_LINKER_MSVC=${EXTERNAL_LINKER}"
-      # "-DCMAKE_CXX_USING_LINKER_MSVC=${EXTERNAL_LINKER}"
     )
   endif()
   message(DEBUG "CMAKE_COMMAND_ARGS = ${CMAKE_COMMAND_ARGS}")
@@ -81,41 +115,23 @@ function(add_speed_test LANGUAGE LANGUAGE_EXT)
   message(DEBUG "EXTERNAL_GENERATOR = ${EXTERNAL_GENERATOR}")
   configure_and_build(
     CMakeLists.txt.in
-    SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/${LANGUAGE}
-    BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/${LANGUAGE}_build
+    SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/${LANGUAGE}_${COMM}
+    BUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/${LANGUAGE}_${COMM}_build
     PREPEND_PATHS ${paths}
     CMAKE_COMMAND_ARGS ${CMAKE_COMMAND_ARGS}
   )
-  add_test(NAME speedtest_${LANGUAGE}
-           COMMAND ${LANGUAGE}_build/speedtest_${LANGUAGE})
+  add_test(NAME speedtest_${LANGUAGE}_${COMM}
+           COMMAND ${LANGUAGE}_${COMM}_build/speedtest_${LANGUAGE})
   if(WIN32 AND Python3_RUNTIME_LIBRARY_DIRS)
     list(APPEND TEST_ENV "PYTHONHOME=${Python3_RUNTIME_LIBRARY_DIRS}")
   else()
     list(APPEND TEST_ENV "FAKE_ENV=test")
   endif()
   set_tests_runtime_paths(
-    speedtest_${LANGUAGE}
+    speedtest_${LANGUAGE}_${COMM}
     PATHS ${NEW_PATHS}
     ADDITIONAL_ENV_VARIABLES ${TEST_ENV}
     ADD_CMAKE_PREFIX_PATHS
-  )
-endfunction()
-
-function(add_speed_test_interp LANGUAGE LANGUAGE_EXT)
-  if (NOT ENABLE_${LANGUAGE})
-    return()
-  endif()
-  find_package(YggInterface REQUIRED)
-  find_yggdrasil_dependency(${LANGUAGE} REQUIRED)
-  set(OUTPUT_FILE "${LANGUAGE}/speedtest.${LANGUAGE_EXT}")
-  configure_file(speedtest.${LANGUAGE_EXT}.in
-                 ${OUTPUT_FILE} @ONLY)
-  if(LANGUAGE STREQUAL "Python")
-    set(Python_EXECUTABLE ${Python3_EXECUTABLE})
-  endif()
-  add_test(
-    NAME speedtest_${LANGUAGE}
-    COMMAND ${${LANGUAGE}_EXECUTABLE} ${OUTPUT_FILE}
   )
 endfunction()
 
