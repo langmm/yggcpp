@@ -161,7 +161,7 @@ if (TARGET YggInterface::YggInterface_fortran)
     message(STATUS "MSVC_CXX_STANDARD_LIBRARIES = ${MSVC_CXX_STANDARD_LIBRARIES}")
     list(
       APPEND CMAKE_EXE_LINKER_FLAGS
-      $<$<LINK_LANGUAGE:Fortran>:/SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup">
+      $<$<LINK_LANGUAGE:Fortran>:/SUBSYSTEM:CONSOLE;/ENTRY:mainCRTStartup>
     )
     target_link_libraries(
       YggInterface::YggInterface_fortran INTERFACE
