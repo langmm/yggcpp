@@ -219,6 +219,9 @@ outputs:
           run:
             - cmake
             - ninja
+        files:
+          source:
+            - tests/
 
   - package:
       name: ygginterface
