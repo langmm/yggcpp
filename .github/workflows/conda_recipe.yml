@@ -71,7 +71,8 @@ jobs:
       - name: Build conda recipe (using rattler-build)
         if: matrix.builder == 'rattler-m2w64'
         run: |
-          rattler-build build --recipe "conda.recipe/recipe-m2w64.yaml" --output-dir $HOME/local_channel/ --variant python=${{ matrix.python-version }} --no-build-id --no-include-recipe
+          # rattler-build build --recipe "conda.recipe/recipe-m2w64.yaml" --output-dir $HOME/local_channel/ --variant python=${{ matrix.python-version }} --no-build-id --no-include-recipe
+          rattler-build build --recipe "conda.recipe/recipe.yaml" --output-dir $HOME/local_channel/ --variant python=${{ matrix.python-version }} --variant toolchain_variant=m2w64 --no-build-id --no-include-recipe
       - name: Build conda recipe (using rattler-build)
         if: matrix.builder == 'rattler-unsplit'
         run: |

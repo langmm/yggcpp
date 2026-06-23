@@ -51,12 +51,12 @@ outputs:
             - ${{ compiler('m2w64_fortran') }}
         - ninja
         - pkgconfig
-        # - if: toolchain_variant != "m2w64"
-        #   then:
-        - ${{ stdlib('c') }}
-        - ${{ compiler('c') }}
-        - ${{ compiler('cxx') }}
-        - ${{ compiler('fortran') }}
+        - if: toolchain_variant != "m2w64"
+          then:
+            - ${{ stdlib('c') }}
+            - ${{ compiler('c') }}
+            - ${{ compiler('cxx') }}
+            - ${{ compiler('fortran') }}
         - libcurl
         - llvm-openmp
         - openmpi
@@ -65,21 +65,17 @@ outputs:
         - yggdrasil-rapidjson
         - zeromq
       host:
-        - hatch-fancy-pypi-readme
         - llvm-openmp
         - ninja
         - numpy >=1.13.0
         - openmpi
         - pip
         - python
-        - scikit-build-core
-        - setuptools_scm
         - if: unix
           then: sysv_ipc
         - yggdrasil-rapidjson
         - zeromq
       run:
-        - python
         - yggdrasil-rapidjson
     tests:
       - package_contents:
@@ -128,12 +124,12 @@ outputs:
             - flask
             - ninja
             - cmake
-            # - if: toolchain_variant != "m2w64"
-            #   then:
-            - ${{ stdlib('c') }}
-            - ${{ compiler('c') }}
-            - ${{ compiler('cxx') }}
-            - ${{ compiler('fortran') }}
+            - if: toolchain_variant != "m2w64"
+              then:
+                - ${{ stdlib('c') }}
+                - ${{ compiler('c') }}
+                - ${{ compiler('cxx') }}
+                - ${{ compiler('fortran') }}
             - if: win
               then:
                 - binutils <2.43
