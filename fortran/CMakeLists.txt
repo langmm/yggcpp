@@ -9,26 +9,42 @@ if (NOT CMAKE_Fortran_COMPILER)
   return()
 endif()
 
+option(YGG_Fortran_STANDALONE "Build Fortran interface as its own library, including the CXX sources rather than linking to the CXX interface library" OFF)
+
+cmake_path(GET CMAKE_CURRENT_SOURCE_DIR PARENT_PATH PARENT_SOURCE_DIR)
+cmake_path(
+  APPEND PARENT_SOURCE_DIR cpp
+  OUTPUT_VARIABLE SOURCE_DIR_CXX
+)
+cmake_path(
+  APPEND SOURCE_DIR_CXX include
+  OUTPUT_VARIABLE INCLUDE_DIR_CXX
+)
+
 set(YGG_TARGET_Fortran YggInterface_fortran)
 set(YGG_TARGET_Fortran ${YGG_TARGET_Fortran} PARENT_SCOPE)
 if ((NOT FORCE_SPLIT_CXXFortran) AND (NOT MSVC))
     enable_language(Fortran)
 endif()
 
+set(LIBRARY_ARGS)
 set(SOURCES_Fortran c_wrappers.c YggInterface.F90)
 if (YGG_Fortran_WRAP_C_ENUMS)
     list(APPEND SOURCES_Fortran c_wrappers_enums.c)
 endif()
-set(FORCE_EXTERNAL)
+if(YGG_Fortran_STANDALONE)
+  ygginterface_options_config_accum(DEPS)
+  list(APPEND SOURCES_Fortran ${SOURCES_CXX})
+endif()
 if(FORCE_SPLIT_CXXFortran)
-  set(FORCE_EXTERNAL FORCE_EXTERNAL)
+  list(APPEND LIBRARY_ARGS FORCE_EXTERNAL)
 endif()
 add_mixed_language_library(
   ${YGG_TARGET_Fortran} SHARED
   LINKER_LANGUAGE CXX
   BASE_LANGUAGE C
   SOURCES ${SOURCES_Fortran}
-  ${FORCE_EXTERNAL}
+  ${LIBRARY_ARGS}
 )
 
 add_library(YggInterface::Fortran ALIAS ${YGG_TARGET_Fortran})
@@ -45,11 +61,45 @@ set_target_properties(
   # DLL_NAME_WITH_SOVERSION ON
   OUTPUT_NAME ${YGG_TARGET_Fortran}
 )
-target_include_directories(${YGG_TARGET_Fortran} PUBLIC
-                           "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>")
-target_link_libraries(${YGG_TARGET_Fortran} PUBLIC YggInterface)
-target_include_directories(${YGG_TARGET_Fortran} PRIVATE
-                           ${DEPS_INCLUDE_DIRS})
+target_include_directories(
+  ${YGG_TARGET_Fortran} PUBLIC
+  "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
+)
+if(YGG_Fortran_STANDALONE)
+  target_link_libraries(
+    ${YGG_TARGET_Fortran} PUBLIC
+    ${DEPS_LIBRARIES_Python}
+  )
+  if(WIN32)
+    set_target_properties(
+      ${YGG_TARGET_Fortran} PROPERTIES
+      WINDOWS_EXPORT_ALL_SYMBOLS ON
+    )
+  endif()
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    target_link_options(
+      ${YGG_TARGET_Fortran} PRIVATE
+      /INCLUDE:yggdrasil_rapidjson_ARRAY_API
+    )
+  endif()
+  ygginterface_target_config(${YGG_TARGET_Fortran} PUBLIC DEPS)
+  target_include_directories(
+    ${YGG_TARGET_Fortran} PUBLIC
+    $<BUILD_INTERFACE:${INCLUDE_DIR_CXX}>
+    $<INSTALL_INTERFACE:include>
+    $<INSTALL_INTERFACE:include/YggInterface>
+  )
+  target_compile_definitions(${YGG_TARGET_Fortran} PUBLIC ${YGG_INSTALL_DEFS})
+  target_compile_features(${YGG_TARGET_Fortran} PUBLIC cxx_std_14)
+  include(AddYggInterface)
+  add_library_dirs_to_rpath(${YGG_TARGET_Fortran})
+else()
+  target_link_libraries(${YGG_TARGET_Fortran} PUBLIC YggInterface)
+endif()
+target_include_directories(
+  ${YGG_TARGET_Fortran} PRIVATE
+  ${DEPS_INCLUDE_DIRS}
+)
 list(APPEND YGG_INSTALL_TARGETS ${YGG_TARGET_Fortran})
 set(YGG_INSTALL_TARGETS ${YGG_INSTALL_TARGETS} PARENT_SCOPE)
 
@@ -58,13 +108,18 @@ if (MINGW)
     list(APPEND EXPORT_HEADER_ARGS EMPTY)
 endif()
 include(GenerateExportHeaderYggdrasil)
+if(YGG_Fortran_STANDALONE)
+  generate_export_header_yggdrasil(
+    ${YGG_TARGET_Fortran} ${EXPORT_HEADER_ARGS}
+  )
+  list(APPEND YGG_INSTALL_INCLUDES "${INCLUDE_DIR_CXX}/")
+endif()
 generate_export_header_yggdrasil(
     ${YGG_TARGET_Fortran}
     BASE_NAME FYGG_API
     EXPORT_MACRO_NAME FYGG_API
     EXPORT_FILE_NAME YggInterface_fortran_export.h
     ${EXPORT_HEADER_ARGS})
-set(YGG_INSTALL_INCLUDES ${YGG_INSTALL_INCLUDES} PARENT_SCOPE)
 
 # Install
 list(APPEND YGG_INSTALL_INCLUDES

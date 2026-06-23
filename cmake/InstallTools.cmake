@@ -395,9 +395,23 @@ function(complete_install PROJECT)
     endif()
   endif()
   if(NOT ARGS_DONT_INSTALL_HEADERS)
-    if(ARGS_HEADERS)
+    set(HEADER_FILES)
+    set(HEADER_DIRS)
+    foreach(header IN LISTS ARGS_HEADERS)
+      if(IS_DIRECTORY "${header}")
+        install(
+          DIRECTORY ${header}
+          DESTINATION ${ARGS_INSTALL_INCLUDEDIR}
+          ${COMPONENT_ARGS}
+        )
+        list(APPEND HEADER_DIRS "${header}")
+      else()
+        list(APPEND HEADER_FILES "${header}")
+      endif()
+    endforeach()
+    if(HEADER_FILES)
       install(
-        FILES ${ARGS_HEADERS}
+        FILES ${HEADER_FILES}
         DESTINATION ${ARGS_INSTALL_INCLUDEDIR}
         ${COMPONENT_ARGS}
       )

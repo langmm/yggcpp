@@ -936,6 +936,12 @@ function(add_mixed_language_library target library_type)
     message(DEBUG "add_mixed_language_library[${target}]: SOURCES_${ilanguage} = ${SRC_${ilanguage}}")
   endforeach()
 
+  # Add CXX files to C base
+  if(ARGS_BASE_LANGUAGE STREQUAL "C" AND (NOT CXX_IDX EQUAL -1))
+    list(APPEND SRC_C ${SRC_CXX})
+    set(SRC_CXX)
+  endif()
+
   # Base library that external libraries or sources will be added to
   # from the other languages
   add_internal_library(
@@ -951,7 +957,8 @@ function(add_mixed_language_library target library_type)
   )
 
   foreach(ilanguage IN LISTS ARGS_LANGUAGES)
-    if(ilanguage STREQUAL "${ARGS_BASE_LANGUAGE}")
+    if(ilanguage STREQUAL "${ARGS_BASE_LANGUAGE}"
+       OR (NOT SRC_${ilanguage}))
       continue()
     endif()
   

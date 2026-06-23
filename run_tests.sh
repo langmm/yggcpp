@@ -93,6 +93,11 @@ while [[ $# -gt 0 ]]; do
 	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DFORCE_SPLIT_CXXFortran=1"
 	    shift # past argument with no value
 	    ;;
+        --standalone-fortran )
+            CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYGG_Fortran_STANDALONE:BOOL=ON"
+            DO_Fortran="TRUE"
+	    shift # past argument with no value
+	    ;;
 	--symbols )
 	    DO_SYMBOLS="TRUE"
 	    DONT_TEST="TRUE"

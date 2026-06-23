@@ -440,7 +440,7 @@ ygginterface_config_show(DEPS DEBUG)
 #     set(BUILD_CXX_LIBRARY ON)
 #   endif()
 # endif()
-if(BUILD_Fortran_LIBRARY)
+if(BUILD_Fortran_LIBRARY AND NOT YGG_Fortran_STANDALONE)
   set(BUILD_CXX_LIBRARY ON)
 endif()
 if(YGG_LINK_Python_TO_CXX AND (BUILD_Python_LIBRARY OR SKBUILD))
@@ -591,19 +591,19 @@ add_yggdrasil_interface(Fortran)
 ##################
 
 include(InstallTools)
-message(DEBUG "YGG_INSTALL_TARGETS = ${YGG_INSTALL_TARGETS}")
 set(CONDITIONAL_INSTALL_ARGS)
 if(NOT YGG_BUILD_DOCS)
   list(APPEND CONDITIONAL_INSTALL_ARGS DONT_INSTALL_DOCS)
 endif()
 if(YGG_INSTALL_TARGETS)
-  message(DEBUG "Install enabled")
+  message(DEBUG "Install enabled: YGG_INSTALL_TARGETS = ${YGG_INSTALL_TARGETS}")
   ygginterface_options_export()
   complete_install(
     ${PROJECT_NAME} TARGETS ${YGG_INSTALL_TARGETS}
     VERSION ${YGGINTERFACE_VERSION}
     HEADERS ${YGG_INSTALL_INCLUDES}
-    HEADER_DIR cpp/include/ NESTED_INCLUDEDIR
+    # HEADER_DIR cpp/include/
+    NESTED_INCLUDEDIR
     MODULE_DIR "${CMAKE_CURRENT_LIST_DIR}/cmake"
     CONFIG_TEMPLATE_DIR ${CMAKE_CURRENT_LIST_DIR}/cmake/config
     MODULE_SCRIPT_DIR ${CMAKE_CURRENT_LIST_DIR}/cmake/scripts

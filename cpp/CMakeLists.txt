@@ -36,6 +36,7 @@ if (MINGW)
 endif()
 include(GenerateExportHeaderYggdrasil)
 generate_export_header_yggdrasil(${YGG_TARGET_CXX} ${EXPORT_HEADER_ARGS})
+list(APPEND YGG_INSTALL_INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/include/")
 set(YGG_INSTALL_INCLUDES ${YGG_INSTALL_INCLUDES} PARENT_SCOPE)
 
 ygginterface_target_config(${YGG_TARGET_CXX} PUBLIC DEPS)
