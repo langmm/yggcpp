@@ -72,6 +72,7 @@ endfunction()
 function(get_target_install_property OUTPUT_VAR TARGET PROPERTY)
   set(options APPEND RECURSIVE COMPLETE)
   set(oneValueArgs COMPILE_LANGUAGE LINK_LANGUAGE)
+  set(multiValueArgs LOCAL_TARGETS)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
   if(NOT ARGS_LINK_LANGUAGE)
     get_target_property(ARGS_LINK_LANGUAGE ${TARGET} LINKER_LANGUAGE)
@@ -92,6 +93,9 @@ function(get_target_install_property OUTPUT_VAR TARGET PROPERTY)
       LINK_LANGUAGE ${ARGS_LINK_LANGUAGE})
   if(ARGS_COMPLETE)
     list(APPEND RECURSIVE_ARGS COMPLETE)
+  endif()
+  if(ARGS_LOCAL_TARGETS)
+    list(APPEND RECURSIVE_ARGS LOCAL_TARGETS ${ARGS_LOCAL_TARGETS})
   endif()
   set(property_name "INTERFACE_${PROPERTY}")
   get_target_property(RAW_OUTPUT ${TARGET} ${property_name})
@@ -133,11 +137,16 @@ function(get_target_install_property OUTPUT_VAR TARGET PROPERTY)
       set(v ${vraw})
     endif()
     if(v AND PROPERTY STREQUAL "LINK_LIBRARIES" AND TARGET ${v})
-      get_target_property(v_location ${v} LOCATION)
-      if(v_location STREQUAL "v_location-NOTFOUND")
+      if("${v}" IN_LIST ARGS_LOCAL_TARGETS)
+        # TODO: Use predicted location?
         set(v)
       else()
-        set(v ${v_location})
+        get_target_property(v_location ${v} LOCATION)
+        if(v_location STREQUAL "v_location-NOTFOUND")
+          set(v)
+        else()
+          set(v ${v_location})
+        endif()
       endif()
     endif()
     if(v AND PROPERTY STREQUAL "LINK_OPTIONS"
@@ -215,8 +224,11 @@ function(install_pkgconfig)
   if(ARGS_PROJECT_VERSION)
     set(PROJECT_VERSION ${ARGS_PROJECT_VERSION})
   endif()
-  if(NOT ARGS_TARGETS)
+  if((NOT ARGS_TARGETS) AND (TARGET ${PROJECT_NAME}))
     list(APPEND ARGS_TARGETS ${PROJECT_NAME})
+  endif()
+  if(NOT ARGS_TARGETS)
+    message(FATAL_ERROR "No targets provided")
   endif()
   if(NOT ARGS_TEMPLATE)
     cmake_path(
@@ -239,6 +251,7 @@ function(install_pkgconfig)
         COMPILE_LANGUAGE ${TARGET_COMPILE_LANGUAGE}
         LINK_LANGUAGE ${TARGET_LINK_LANGUAGE}
         RECURSIVE COMPLETE APPEND
+        LOCAL_TARGETS ${ARGS_TARGETS}
       )
     endforeach()
     cmake_path(
@@ -405,6 +418,7 @@ function(complete_install PROJECT)
   if(NOT ARGS_DONT_INSTALL_PKGCONFIG_PACKAGING)
     install_pkgconfig(
       PROJECT_NAME ${PROJECT}
+      TARGETS ${ARGS_TARGETS}
       TEMPLATE ${ARGS_PKGCONFIG_TEMPLATE}
       INSTALL_PREFIX ${ARGS_INSTALL_PREFIX}
       INSTALL_LIBDIR ${ARGS_INSTALL_LIBDIR}
