@@ -21,8 +21,10 @@ cmake_path(
   OUTPUT_VARIABLE INCLUDE_DIR_CXX
 )
 
-set(YGG_TARGET_Fortran YggInterface_fortran)
-set(YGG_TARGET_Fortran ${YGG_TARGET_Fortran} PARENT_SCOPE)
+if(NOT YGG_TARGET_Fortran)
+  set(YGG_TARGET_Fortran YggInterface_fortran)
+  set(YGG_TARGET_Fortran ${YGG_TARGET_Fortran} PARENT_SCOPE)
+endif()
 if ((NOT FORCE_SPLIT_CXXFortran) AND (NOT MSVC))
     enable_language(Fortran)
 endif()
@@ -118,7 +120,7 @@ generate_export_header_yggdrasil(
     ${YGG_TARGET_Fortran}
     BASE_NAME FYGG_API
     EXPORT_MACRO_NAME FYGG_API
-    EXPORT_FILE_NAME YggInterface_fortran_export.h
+    EXPORT_FILE_NAME "${YGG_TARGET_Fortran}_export.h"
     ${EXPORT_HEADER_ARGS})
 
 # Install

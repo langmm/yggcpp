@@ -1,13 +1,13 @@
 #!/bin/sh
 set -euo pipefail
 
-if [ -n "$ENABLE_CXX" ]; then
+if [ ! -n "${ENABLE_CXX:-}" ]; then
     ENABLE_CXX="ON"
 fi
-if [ -n "$ENABLE_Fortran" ]; then
+if [ ! -n "${ENABLE_Fortran:-}" ]; then
     ENABLE_Fortran="ON"
 fi
-if [ -n "$ENABLE_Python" ]; then
+if [ ! -n "${ENABLE_Python:-}" ]; then
     ENABLE_Python="OFF"
 fi
 

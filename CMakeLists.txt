@@ -86,6 +86,10 @@ if(YGG_INSPECT_TARGETS_ONLY_MISSING)
   set(YGG_INSPECT_TARGETS ON)
 endif()
 
+# Set this early so they can be used in code generation
+set(YGG_TARGET_CXX YggInterface)
+set(YGG_TARGET_Fortran YggInterface_fortran)
+# set(YGG_TARGET_Fortran YggInterfaceFortran)
 
 if(NOT WIN32)
     find_program(CCACHE_FOUND ccache)
@@ -463,7 +467,10 @@ ygginterface_version_header(
 #########################
 
 if (YGG_Fortran_WRAP_C_ENUMS)
-  list(APPEND GENERATE_ENUM_ARGS --fortran-wrap-c-enums)
+  list(
+    APPEND GENERATE_ENUM_ARGS --fortran-wrap-c-enums
+    --fortran-target ${YGG_TARGET_Fortran}
+  )
 endif()
 python_code_generation(
   enum utils/generate_enum.py
@@ -508,6 +515,8 @@ endif()
 ################################################
 
 if(GENERATE_INTERFACE)
+  list(APPEND GENERATE_DATATYPES_ARGS
+       --fortran-target ${YGG_TARGET_Fortran})
   python_code_generation(
     cfort utils/generate_generic
     ENTRY_POINT -m generate_generic.runner
@@ -521,6 +530,7 @@ if(GENERATE_INTERFACE)
     cpp/include/datatypes/dtype_t.h
     fortran/YggInterface.F90
     fortran/YggInterface_cdef.F90
+    fortran/c_wrappers.h
     fortran/c_wrappers.c
     fortran/YggInterface_interfaces.F90
   )
@@ -584,7 +594,7 @@ add_yggdrasil_interface(Python DISABLE_BY_DEFAULT)
 if(CMAKE_Fortran_COMPILER AND WIN32)
   cmake_path(SET CMAKE_Fortran_COMPILER NORMALIZE ${CMAKE_Fortran_COMPILER})
 endif()
-add_yggdrasil_interface(Fortran)
+add_yggdrasil_interface(Fortran TARGET ${YGG_TARGET_Fortran})
 
 ##################
 # Install        #
@@ -600,6 +610,7 @@ if(YGG_INSTALL_TARGETS)
   ygginterface_options_export()
   complete_install(
     ${PROJECT_NAME} TARGETS ${YGG_INSTALL_TARGETS}
+    POSSIBLE_TARGETS ${YGG_INSTALL_TARGETS_SUPPORTED}
     VERSION ${YGGINTERFACE_VERSION}
     HEADERS ${YGG_INSTALL_INCLUDES}
     # HEADER_DIR cpp/include/
@@ -608,6 +619,7 @@ if(YGG_INSTALL_TARGETS)
     CONFIG_TEMPLATE_DIR ${CMAKE_CURRENT_LIST_DIR}/cmake/config
     MODULE_SCRIPT_DIR ${CMAKE_CURRENT_LIST_DIR}/cmake/scripts
     DOC_DIR ${DOXYGEN_BUILD_DIR}/
+    EXPORT_TARGETS_INDEPENDENTLY
   )
 else()
   message(DEBUG "Install disabled")

@@ -25,16 +25,11 @@ outputs:
       name: ygginterface-cxx
     build:
       script:
-        - if: unix
-          then:
-            - ENABLE_Fortran=OFF
-            - ENABLE_Python=OFF
-            - build.sh
-        - if: win
-          then:
-            - set ENABLE_Fortran=OFF
-            - set ENABLE_Python=OFF
-            - build.bat
+        env:
+          ENABLE_CXX: ON
+          ENABLE_Fortran: OFF
+          ENABLE_Python: OFF
+        file: build
     requirements:
       run_exports:
         - ${{ pin_subpackage('ygginterface-cxx', exact=True) }}
@@ -86,6 +81,8 @@ outputs:
               then:
                 - Library/cmake/YggInterfaceConfig.cmake
                 - Library/cmake/YggInterface/YggInterfaceConfigVersion.cmake
+                - Library/cmake/YggInterface/YggInterfaceTargets.cmake
+                - Library/cmake/YggInterface/YggInterfaceTargetsSplit-YggInterface.cmake
                 - Library/lib/pkgconfig/YggInterface.pc
                 - if: toolchain_variant == "m2w64"
                   then:
@@ -99,6 +96,8 @@ outputs:
               then:
                 - lib/cmake/YggInterface/YggInterfaceConfig.cmake
                 - lib/cmake/YggInterface/YggInterfaceConfigVersion.cmake
+                - lib/cmake/YggInterface/YggInterfaceConfigTargets.cmake
+                - lib/cmake/YggInterface/YggInterfaceConfigTargetsSplit-YggInterface.cmake
                 - lib/pkgconfig/YggInterface.pc
           lib:
             # rattler-build dosn't know to look for mingw style libraries
@@ -109,16 +108,11 @@ outputs:
             - YggInterface/YggInterface.hpp
             - YggInterface/YggInterface.h
       - script:
-          - if: unix
-            then:
-              - ENABLE_Fortran=OFF
-              - ENABLE_Python=OFF
-              - tests/run_test.sh
-          - if: win
-            then:
-              - set ENABLE_Fortran=OFF
-              - set ENABLE_Python=OFF
-              - tests/run_test.bat
+          env:
+            ENABLE_CXX: ON
+            ENABLE_Fortran: OFF
+            ENABLE_Python: OFF
+          file: tests/run_test
         requirements:
           run:
             - flask
@@ -143,18 +137,12 @@ outputs:
       name: ygginterface-fortran
     build:
       script:
-        - if: unix
-          then:
-            - ENABLE_CXX=OFF
-            - ENABLE_Python=OFF
-            - STANDALONE_Fortran=ON
-            - build.sh
-        - if: win
-          then:
-            - set ENABLE_CXX=OFF
-            - set ENABLE_Python=OFF
-            - set STANDALONE_Fortran=ON
-            - build.bat
+        env:
+          ENABLE_CXX: OFF
+          ENABLE_Fortran: ON
+          ENABLE_Python: OFF
+          STANDALONE_Fortran: ON
+        file: build
     requirements:
       run_exports:
         - ${{ pin_subpackage('ygginterface-fortran', exact=True) }}
@@ -208,7 +196,9 @@ outputs:
               then:
                 - Library/cmake/YggInterfaceConfig.cmake
                 - Library/cmake/YggInterface/YggInterfaceConfigVersion.cmake
-                - Library/lib/pkgconfig/YggInterface.pc
+                - Library/cmake/YggInterface/YggInterfaceTargets.cmake
+                - Library/cmake/YggInterface/YggInterfaceTargetsSplit-YggInterface_fortran.cmake
+                - Library/lib/pkgconfig/YggInterface_fortran.pc
                 - if: toolchain_variant == "m2w64"
                   then:
                     - Library/lib/libYggInterface_fortran.dll.a
@@ -221,7 +211,9 @@ outputs:
               then:
                 - lib/cmake/YggInterface/YggInterfaceConfig.cmake
                 - lib/cmake/YggInterface/YggInterfaceConfigVersion.cmake
-                - lib/pkgconfig/YggInterface.pc
+                - lib/cmake/YggInterface/YggInterfaceConfigTargets.cmake
+                - lib/cmake/YggInterface/YggInterfaceConfigTargetsSplit-YggInterface_fortran.cmake
+                - lib/pkgconfig/YggInterface_fortran.pc
           lib:
             # rattler-build dosn't know to look for mingw style libraries
             - if: toolchain_variant != "m2w64"
@@ -230,18 +222,11 @@ outputs:
           include:
             - YggInterface/ygginterface.mod
       - script:
-          - if: unix
-            then:
-              - ENABLE_CXX=OFF
-              - ENABLE_Python=OFF
-              - STANDALONE_Fortran=ON
-              - tests/run_test.sh
-          - if: win
-            then:
-              - set ENABLE_CXX=OFF
-              - set ENABLE_Python=OFF
-              - set STANDALONE_Fortran=ON
-              - tests/run_test.bat
+          env:
+            ENABLE_CXX: OFF
+            ENABLE_Fortran: ON
+            ENABLE_Python: OFF
+          file: tests/run_test
         requirements:
           run:
             - flask
@@ -273,18 +258,11 @@ outputs:
         ignore_keys:
           - toolchain_variant
       script:
-        - if: unix
-          then:
-            - ENABLE_CXX=OFF
-            - ENABLE_Fortran=OFF
-            - ENABLE_Python=ON
-            - build.sh
-        - if: win
-          then:
-            - set ENABLE_CXX=OFF
-            - set ENABLE_Fortran=OFF
-            - set ENABLE_Python=ON
-            - build.bat
+        env:
+          ENABLE_CXX: OFF
+          ENABLE_Fortran: OFF
+          ENABLE_Python: ON
+        file: build
     requirements:
       build:
         - if: build_platform != host_platform
@@ -336,18 +314,11 @@ outputs:
           source:
             - tests/
       - script:
-          - if: unix
-            then:
-              - ENABLE_CXX=OFF
-              - ENABLE_Fortran=OFF
-              - ENABLE_Python=ON
-              - tests/run_test.sh
-          - if: win
-            then:
-              - set ENABLE_CXX=OFF
-              - set ENABLE_Fortran=OFF
-              - set ENABLE_Python=ON
-              - tests/run_test.bat
+          env:
+            ENABLE_CXX: OFF
+            ENABLE_Fortran: OFF
+            ENABLE_Python: ON
+          file: tests/run_test
         requirements:
           run:
             - cmake

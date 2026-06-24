@@ -1,0 +1,9 @@
+foreach(_cmake_expected_target IN ITEMS @ARGS_POSSIBLE_TARGETS@)
+  set(_cmake_expected_target_file
+      "${CMAKE_CURRENT_LIST_DIR}/@CHILD_EXPORT_PREFIX@-${_cmake_expected_target}.cmake")
+  if(EXISTS "${_cmake_expected_target_file}")
+    include("${_cmake_expected_target_file}")
+  endif()
+endforeach()
+unset(_cmake_expected_target)
+unset(_cmake_expected_target_file)

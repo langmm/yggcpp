@@ -25,6 +25,8 @@ if __name__ == "__main__":
                               "yggdrasil_rapidjson api"))
     parser.add_argument("--yggdrasil-rapidjson-include-dirs", type=str,
                         help="Path to yggdrasil_rapidjson include")
+    parser.add_argument("--fortran-target", type=str,
+                        help="Name of the Fortran library")
     args = parser.parse_args()
     if args.language:
         x = get_interface_file(args.language)(
@@ -32,6 +34,7 @@ if __name__ == "__main__":
             yggdrasil_rapidjson_include_dirs=(
                 args.yggdrasil_rapidjson_include_dirs),
         )
-        x.generate(debug=args.debug, verbose=args.verbose)
+        x.generate(debug=args.debug, verbose=args.verbose,
+                   cliargs=args)
     else:
-        generate(debug=args.debug)
+        generate(debug=args.debug, verbose=args.verbose, cliargs=args)

@@ -3,7 +3,11 @@
 #pragma once
 #include <stdlib.h>
 #include <string.h>
+// START include_export: LINES IN THIS SECTION WERE GENERATED AND SHOULD NOT BE MODIFIED DIRECTLY
+//====================================================================
 #include "YggInterface_fortran_export.h"
+//====================================================================
+// END include_export: LINES IN THIS SECTION WERE GENERATED AND SHOULD NOT BE MODIFIED DIRECTLY
 #include "YggInterface.h"
 #ifdef YGG_FORTRAN_WRAP_ENUMS
 #include "c_wrappers_enums.h"

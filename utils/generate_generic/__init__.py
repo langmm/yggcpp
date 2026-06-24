@@ -14,6 +14,85 @@ from generate_generic.base import (
     _base_dir, get_file_unit_class, get_file_unit, camel2underscored)
 
 
+class GeneratedSection(object):
+    r"""Class for inserting a generated section."""
+
+    generated_flag = (
+        'LINES IN THIS SECTION WERE GENERATED AND SHOULD NOT BE '
+        'MODIFIED DIRECTLY'
+    )
+
+    def __init__(self, name, index=None, lines=None,
+                 indent_append='', comment='#', divider_char='='):
+        self.name = name
+        self.index = index
+        self.lines = lines
+        self.indent_append = indent_append
+        self.comment = comment
+        self.divider_char = divider_char
+        self.start_flag = (
+            '\n' + indent_append + comment + f' START {name}: '
+            + self.generated_flag
+        )
+        self.end_flag = (
+            indent_append + comment + f' END {name}: '
+            + self.generated_flag
+        )
+
+    @property
+    def contents(self):
+        r"""str: Section contents"""
+        divider = self.indent_append + self.comment + 68 * self.divider_char
+        lines = [self.start_flag, divider]
+        if self.lines:
+            lines += self.lines
+        lines += [divider, self.end_flag]
+        return '\n'.join(lines)
+
+    @classmethod
+    def from_file(cls, name, fileinst):
+        r"""Create the section by checking the contents of the generated
+        file.
+
+        Args:
+            name (str): Section name.
+            fileinst (GeneratedFile): Generated file that this section
+                is in.
+
+        Returns:
+            GeneratedSection: Generated section instance.
+
+        """
+        out = cls(name, indent_append=fileinst.indent_append,
+                  comment=fileinst.comment,
+                  divider_char=fileinst.divider_char)
+        if out.start_flag not in fileinst.contents:
+            print(f"START_FLAG: {out.start_flag}")
+            print(f"END_FLAG: {out.end_flag}")
+        assert out.start_flag in fileinst.contents
+        assert out.end_flag in fileinst.contents
+        index_start = fileinst.contents.index(out.start_flag)
+        index_end = (
+            fileinst.contents.index(out.end_flag) + len(out.end_flag)
+        )
+        section_len = index_end - index_start
+        out.index = index_start
+        out.lines = fileinst.contents[index_start:index_end].splitlines()[3:-2]
+        idx_insert = 0
+        for i, x in reversed(list(enumerate(fileinst.added_sections))):
+            if x.index <= index_start:
+                idx_insert = i + 1
+                break
+            else:
+                x.index -= section_len
+        fileinst.added_sections.insert(idx_insert, out)
+        fileinst.contents = (
+            fileinst.contents[:index_start]
+            + fileinst.contents[index_end:]
+        )
+        return out
+
+
 class GeneratedFile(object):
     r"""Base class for generating files."""
 
@@ -25,7 +104,7 @@ class GeneratedFile(object):
 
     def __init__(self, src, added=None, prefix_lines=None,
                  suffix_lines=None, language=None,
-                 from_unit_method=None):
+                 from_unit_method=None, sections=None):
         self.src = os.path.join(_base_dir, src)
         self.file_unit = get_file_unit_class(src, language=language)
         self.language = self.file_unit.language
@@ -46,6 +125,10 @@ class GeneratedFile(object):
         self.lines = []
         self.prefix_lines = prefix_lines
         self.suffix_lines = suffix_lines
+        self.added_sections = []
+        if sections:
+            for name in sections:
+                GeneratedSection.from_file(name, self)
 
     @property
     def indent(self):
@@ -54,6 +137,13 @@ class GeneratedFile(object):
     @property
     def comment(self):
         return self.file_unit.comment
+
+    def update_section(self, name, lines):
+        for section in self.added_sections:
+            if name == section.name:
+                section.lines = lines
+                return
+        raise KeyError(f"No section named \"{name}\"")
 
     def append(self, line):
         if not line:
@@ -69,7 +159,7 @@ class GeneratedFile(object):
         if line not in self.lines:
             self.lines.append(line)
 
-    def write(self, debug=False, verbose=False):
+    def write(self, debug=False, verbose=False, cliargs=None):
         prefix_lines = [
             self.flag,
             self.indent_append + self.comment + 68 * self.divider_char]
@@ -84,13 +174,21 @@ class GeneratedFile(object):
             if len(self.lines) == nprefix:
                 raise Exception(self.src)
         if debug or verbose:
-            print(f"\n{self.src}{new_content}")
+            section_content = '\n'.join(
+                [v.contents for v in self.added_sections]
+            )
+            print(f"\n{self.src}{section_content}{new_content}")
         if (not debug) and len(self.lines) > nprefix:
+            contents = self.contents
+            for v in self.added_sections[::-1]:
+                contents = (
+                    contents[:v.index] + v.contents + contents[v.index:]
+                )
             with open(self.src, 'w') as fd:
-                fd.write(self.contents + new_content)
+                fd.write(contents + new_content)
         for v in self.added.values():
             if isinstance(v, GeneratedFile):
-                v.write(debug=debug, verbose=verbose)
+                v.write(debug=debug, verbose=verbose, cliargs=cliargs)
 
     def generate(self, dont_write=False, **kwargs):
         if not dont_write:
@@ -1120,8 +1218,8 @@ class CFile(AmendedFile):
         '\n\n#undef GENERIC_SUCCESS_\n#undef GENERIC_ERROR_'
         '\n\n} // extern C\n')
 
-    def __init__(self, src=None, header=None, fortran=None,
-                 also_wrap=None):
+    def __init__(self, src=None, header=None, header_kwargs=None,
+                 fortran=None, also_wrap=None, **kwargs):
         if src is None:
             src = os.path.join('cpp', 'src', 'datatypes', 'dtype_t.cpp')
         if header is None:
@@ -1131,9 +1229,12 @@ class CFile(AmendedFile):
             also_wrap = [os.path.join('cpp', 'include', 'YggInterface.h'),
                          os.path.join('cpp', 'include', 'communicators',
                                       'comm_t.hpp')]
-        super(CFile, self).__init__('c', src)
+        super(CFile, self).__init__('c', src, **kwargs)
         if header:
-            self.added['header'] = CFile(header, header=False)
+            if header_kwargs is None:
+                header_kwargs = {}
+            self.added['header'] = CFile(header, header=False,
+                                         **header_kwargs)
             self.added['header'].file_suffix = (
                 '\n\n#ifdef __cplusplus\n}\n#endif\n')
             # '\n\n#endif /*init once*/\n')
@@ -1454,17 +1555,34 @@ class CFile(AmendedFile):
 
 class FortranWrapperFile(CFile):
 
-    def __init__(self, src=None, header=None):
+    def __init__(self, src=None, header=None, header_kwargs=None,
+                 **kwargs):
         if src is None:
             src = os.path.join('fortran', 'c_wrappers.c')
         if header is None:
             header = os.path.join('fortran', 'c_wrappers.h')
-        super(FortranWrapperFile, self).__init__(src=src, header=header)
+        if header_kwargs is None:
+            header_kwargs = {
+                'sections': ['include_export'],
+            }
+        super(FortranWrapperFile, self).__init__(
+            src=src, header=header, header_kwargs=header_kwargs,
+        )
         self.file_suffix = ''
 
     def add_method(self, kwargs, **kws):
         kwargs.setdefault('action', '')
         return super(FortranWrapperFile, self).add_method(kwargs, **kws)
+
+    def write(self, *args, **kwargs):
+        cliargs = kwargs.get("cliargs", None)
+        if cliargs and cliargs.fortran_target:
+            self.added["header"].update_section(
+                'include_export', [
+                    f"#include \"{cliargs.fortran_target}_export.h\""
+                ]
+            )
+        return super(FortranWrapperFile, self).write(*args, **kwargs)
 
 
 class FortranFile(AmendedFile):

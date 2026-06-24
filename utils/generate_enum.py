@@ -233,17 +233,20 @@ def generate_maps(enums, dst_header=None, dst_src=None, verbose=False):
     do_write(dst_header, lines_decl, verbose=verbose)
 
 
-def generate_fortran_c_header(enums, dst=None, verbose=False):
+def generate_fortran_c_header(enums, dst=None, fortran_target=None,
+                              verbose=False):
     if dst is None:
         dst = os.path.join(os.path.dirname(os.path.dirname(__file__)),
                            'fortran', 'c_wrappers_enums.h')
+    if fortran_target is None:
+        fortran_target = "YggInterface_fortran"
     lines = [
         '#ifndef YGG_FC_ENUM_WRAPPERS_H_',
         '#define YGG_FC_ENUM_WRAPPERS_H_',
         '',
         '#ifndef DOXYGEN_SHOULD_SKIP_THIS',
         '',
-        '#include "YggInterface_fortran_export.h"',
+        f'#include "{fortran_target}_export.h"',
         '',
         '#ifdef __cplusplus /* If this is a C++ compiler, use C linkage */',
         '#include <cstdint>',
@@ -389,12 +392,14 @@ def generate_fortran(enums, dst=None, verbose=False):
 def generate(src=None, dst_maps_header=None, dst_maps_src=None,
              dst_fortran=None,
              dst_fortran_c_header=None, dst_fortran_c_src=None,
-             fortran_wrap_c_enums=False, verbose=False):
+             fortran_wrap_c_enums=False, fortran_target=None,
+             verbose=False):
     enums = parse(src=src, verbose=verbose)
     generate_maps(enums, dst_header=dst_maps_header,
                   dst_src=dst_maps_src, verbose=verbose)
     if fortran_wrap_c_enums:
         generate_fortran_c_header(enums, dst=dst_fortran_c_header,
+                                  fortran_target=fortran_target,
                                   verbose=verbose)
         generate_fortran_c_src(enums, dst=dst_fortran_c_src,
                                verbose=verbose)
@@ -410,7 +415,11 @@ if __name__ == "__main__":
     parser.add_argument("--fortran-wrap-c-enums",
                         action="store_true",
                         help="Wrap enums for fortran in a C layer")
+    parser.add_argument("--fortran-target", type=str,
+                        default="YggInterface_fortran",
+                        help="Name of the Fortran library")
     parser.add_argument("--verbose", action="store_true")
     args = parser.parse_args()
     generate(fortran_wrap_c_enums=args.fortran_wrap_c_enums,
+             fortran_target=args.fortran_target,
              verbose=args.verbose)

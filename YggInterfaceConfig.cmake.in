@@ -144,11 +144,11 @@ endforeach()
 
 include(${YGG_CMAKE_MODULE_DIR}/YggInterfaceTargets.cmake)
 
-if (TARGET YggInterface::YggInterface)
-  add_library(YggInterface::CXX ALIAS YggInterface::YggInterface)
-  add_library(YggInterface::C ALIAS YggInterface::YggInterface)
+if (TARGET YggInterface::@YGG_TARGET_CXX@)
+  add_library(YggInterface::CXX ALIAS YggInterface::@YGG_TARGET_CXX@)
+  add_library(YggInterface::C ALIAS YggInterface::@YGG_TARGET_CXX@)
 endif()
-if (TARGET YggInterface::YggInterface_fortran)
+if (TARGET YggInterface::@YGG_TARGET_Fortran@)
   if(YGG_GNU_FORTRAN_AND_MSVC)
     include(${YGG_CMAKE_MODULE_DIR}/BuildTools.cmake)
     get_implicit_libraries(
@@ -161,16 +161,16 @@ if (TARGET YggInterface::YggInterface_fortran)
     message(STATUS "MSVC_CXX_STANDARD_LIBRARIES = ${MSVC_CXX_STANDARD_LIBRARIES}")
     # set(is_exec "$<STREQUAL:$<TARGET_PROPERTY:TYPE>,EXECUTABLE>")
     # target_compile_options(
-    #   YggInterface::YggInterface_fortran INTERFACE
+    #   YggInterface::@YGG_TARGET_Fortran@ INTERFACE
     #   "$<${is_exec}:-mconsole>"
     # )
     # target_link_options(
-    #   YggInterface::YggInterface_fortran INTERFACE
+    #   YggInterface::@YGG_TARGET_Fortran@ INTERFACE
     #   "$<${is_exec}:/SUBSYSTEM:CONSOLE>"
     #   "$<${is_exec}:/ENTRY:mainCRTStartup>"
     # )
     target_link_libraries(
-      YggInterface::YggInterface_fortran INTERFACE
+      YggInterface::@YGG_TARGET_Fortran@ INTERFACE
       ${GNU_Fortran_IMPLICIT_LINK_LIBRARIES}
       ${MSVC_CXX_STANDARD_LIBRARIES}
       $<IF:$<CONFIG:Debug>,ucrtd,ucrt>
@@ -178,11 +178,11 @@ if (TARGET YggInterface::YggInterface_fortran)
       $<IF:$<CONFIG:Debug>,vcruntimed,vcruntime>
     )
     target_link_directories(
-      YggInterface::YggInterface_fortran INTERFACE
+      YggInterface::@YGG_TARGET_Fortran@ INTERFACE
       ${CMAKE_Fortran_IMPLICIT_LINK_DIRECTORIES}
     )
   endif()
   add_library(YggInterface::Fortran ALIAS
-              YggInterface::YggInterface_fortran)
+              YggInterface::@YGG_TARGET_Fortran@)
 endif()
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} CACHE INTERNAL "CMAKE_MODULE_PATH")
