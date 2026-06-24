@@ -96,8 +96,8 @@ outputs:
               then:
                 - lib/cmake/YggInterface/YggInterfaceConfig.cmake
                 - lib/cmake/YggInterface/YggInterfaceConfigVersion.cmake
-                - lib/cmake/YggInterface/YggInterfaceConfigTargets.cmake
-                - lib/cmake/YggInterface/YggInterfaceConfigTargetsSplit-YggInterface.cmake
+                - lib/cmake/YggInterface/YggInterfaceTargets.cmake
+                - lib/cmake/YggInterface/YggInterfaceTargetsSplit-YggInterface.cmake
                 - lib/pkgconfig/YggInterface.pc
           lib:
             # rattler-build dosn't know to look for mingw style libraries
@@ -211,8 +211,8 @@ outputs:
               then:
                 - lib/cmake/YggInterface/YggInterfaceConfig.cmake
                 - lib/cmake/YggInterface/YggInterfaceConfigVersion.cmake
-                - lib/cmake/YggInterface/YggInterfaceConfigTargets.cmake
-                - lib/cmake/YggInterface/YggInterfaceConfigTargetsSplit-YggInterface_fortran.cmake
+                - lib/cmake/YggInterface/YggInterfaceTargets.cmake
+                - lib/cmake/YggInterface/YggInterfaceTargetsSplit-YggInterface_fortran.cmake
                 - lib/pkgconfig/YggInterface_fortran.pc
           lib:
             # rattler-build dosn't know to look for mingw style libraries

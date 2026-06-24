@@ -67,6 +67,14 @@ target_include_directories(
   ${YGG_TARGET_Fortran} PUBLIC
   "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
 )
+if(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC" AND
+   CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
+  # Use definition to pass knowledge via interface as custom
+  # target properties were only added in cmake 3.19
+  target_compile_definitions(
+    ${YGG_TARGET_Fortran} PUBLIC -DYGG_Fortran_GNU_AND_MSVC
+  )
+endif()
 if(YGG_Fortran_STANDALONE)
   target_link_libraries(
     ${YGG_TARGET_Fortran} PUBLIC
@@ -91,7 +99,9 @@ if(YGG_Fortran_STANDALONE)
     $<INSTALL_INTERFACE:include>
     $<INSTALL_INTERFACE:include/YggInterface>
   )
-  target_compile_definitions(${YGG_TARGET_Fortran} PUBLIC ${YGG_INSTALL_DEFS})
+  target_compile_definitions(
+    ${YGG_TARGET_Fortran} PUBLIC ${YGG_INSTALL_DEFS}
+  )
   target_compile_features(${YGG_TARGET_Fortran} PUBLIC cxx_std_14)
   include(AddYggInterface)
   add_library_dirs_to_rpath(${YGG_TARGET_Fortran})

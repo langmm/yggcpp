@@ -10,18 +10,70 @@ set(YGG_OPTIONS_SUPPORTED "@YGG_OPTIONS_SUPPORTED@")
 set(YGG_COMMS_SUPPORTED "@YGG_COMMS_SUPPORTED@")
 set(YGG_COMMS_AVAILABLE "@YGG_COMMS_AVAILABLE@")
 set(YGG_LANGUAGES_SUPPORTED "@YGG_LANGUAGES_SUPPORTED@")
-set(YGG_LANGUAGES_AVAILABLE "@YGG_LANGUAGES_AVAILABLE@")
+set(YGG_LANGUAGES_AVAILABLE)
 set(YGG_INSTALL_DEPS "@YGG_INSTALL_DEPS@")
 set(YGG_INSTALL_CONFIG "@YGG_INSTALL_CONFIG@")
-set(YGG_USING_MSVC_LINKER @MSVC@)
-set(YGG_GNU_FORTRAN_AND_MSVC OFF)
+set(YGG_Fortran_GNU_AND_MSVC OFF)
+set(YGG_Fortran_LINKS_TO_CXX OFF)
+set(YGG_TARGET_CXX "@YGG_TARGET_CXX@")
+set(YGG_TARGET_Fortran "@YGG_TARGET_Fortran@")
 
 include(${YGG_CMAKE_MODULE_DIR}/YggInterfaceMacros.cmake)
 ygginterface_options_import()
 
-message(STATUS "YGG_USING_MSVC_LINKER = ${YGG_USING_MSVC_LINKER}")
+include(${YGG_CMAKE_MODULE_DIR}/YggInterfaceTargets.cmake)
 
-if((NOT CMAKE_CXX_COMPILER) AND
+if(TARGET YggInterface::${YGG_TARGET_Fortran})
+  list(APPEND YGG_LANGUAGES_AVAILABLE Fortran)
+  if(CMAKE_Fortran_COMPILER_LOADED)
+    add_library(YggInterface::Fortran ALIAS
+                YggInterface::${YGG_TARGET_Fortran})
+    get_target_property(
+      YGG_Fortran_TARGET_DEFS YggInterface::${YGG_TARGET_Fortran}
+      INTERFACE_COMPILE_DEFINITIONS
+    )
+    get_target_property(
+      YGG_Fortran_TARGET_LIBS YggInterface::${YGG_TARGET_Fortran}
+      INTERFACE_LINK_LIBRARIES
+    )
+    message(STATUS "YGG_Fortran_TARGET_DEFS = ${YGG_Fortran_TARGET_DEFS}")
+    message(STATUS "YGG_Fortran_TARGET_LIBS = ${YGG_Fortran_TARGET_LIBS}")
+    if("-DYGG_Fortran_GNU_AND_MSVC" IN_LIST YGG_Fortran_TARGET_DEFS)
+      set(YGG_Fortran_GNU_AND_MSVC ON)
+    endif()
+    if("YggInterface" IN_LIST YGG_Fortran_TARGET_LIBS)
+      set(YGG_Fortran_LINKS_TO_CXX ON)
+    endif()
+    unset(YGG_Fortran_TARGET_DEFS)
+    unset(YGG_Fortran_TARGET_LIBS)
+    if(YGG_Fortran_GNU_AND_MSVC AND NOT CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
+      message(FATAL_ERROR "YggInterface::${YGG_TARGET_Fortran} was built using a mix of GNU & MSVC which requires the GNU fortran compiler & MSVC CXX linker")
+    endif()
+  endif()
+endif()
+if(TARGET YggInterface::${YGG_TARGET_CXX})
+  list(APPEND YGG_LANGUAGES_AVAILABLE CXX C)
+  if(CMAKE_C_COMPILER_LOADED OR CMAKE_CXX_COMPILER_LOADED OR
+     YGG_Fortran_LINKS_TO_CXX)
+    # TODO: Check linker?
+    add_library(YggInterface::CXX ALIAS YggInterface::${YGG_TARGET_CXX})
+    add_library(YggInterface::C ALIAS YggInterface::${YGG_TARGET_CXX})
+  endif()
+endif()
+find_yggdrasil_dependency(Python FOR_PACKAGE_CONFIG)
+if(Python3_EXECUTABLE)
+  execute_process(
+    COMMAND ${Python3_EXECUTABLE} -c "import YggInterface"
+    RESULT_VARIABLE Python_RET
+  )
+  if(Python_RET EQUAL 0)
+    list(APPEND YGG_LANGUAGES_AVAILABLE Python)
+  endif()
+endif()
+message(STATUS "YGG_Fortran_GNU_AND_MSVC = ${YGG_Fortran_GNU_AND_MSVC}")
+message(STATUS "YGG_Fortran_LINKS_TO_CXX = ${YGG_Fortran_LINKS_TO_CXX}")
+
+if((NOT CMAKE_CXX_COMPILER) AND YGG_Fortran_GNU_AND_MSVC AND
    CMAKE_Fortran_COMPILER_ID MATCHES "GNU" AND WIN32)
   message(STATUS "BEFORE check_language(CXX)")
   message(STATUS "CMAKE_LINKER_TYPE = ${CMAKE_LINKER_TYPE}")
@@ -40,7 +92,7 @@ if((NOT CMAKE_CXX_COMPILER) AND
     message(STATUS "CMAKE_${ilang}_LINKER_TYPE = ${CMAKE_${ilang}_LINKER_TYPE}")
   endforeach()
 endif()
-if(YGG_USING_MSVC_LINKER AND NOT (CMAKE_LINKER MATCHES "link\\.exe"))
+if(YGG_Fortran_GNU_AND_MSVC AND NOT (CMAKE_LINKER MATCHES "link\\.exe"))
   message(STATUS "Ensuring MSVC linker CMAKE_LINKER = ${CMAKE_LINKER}")
   message(STATUS "CMAKE_LINKER_LINK = ${CMAKE_LINKER_LINK}")
   include(${YGG_CMAKE_MODULE_DIR}/BuildTools.cmake)
@@ -54,64 +106,18 @@ if(YGG_USING_MSVC_LINKER AND NOT (CMAKE_LINKER MATCHES "link\\.exe"))
   set(CMAKE_LINKER_LINK "${EXTERNAL_LINKER}")
 endif()
 if(NOT CMAKE_CXX_COMPILER)
-  include(CheckLanguage)
-  check_language(CXX)
-  # if(CMAKE_Fortran_COMPILER_ID MATCHES "GNU" AND WIN32)
-  #   message(STATUS "AFTER check_language(CXX)")
-  #   message(STATUS "CMAKE_LINKER_TYPE = ${CMAKE_LINKER_TYPE}")
-  #   message(STATUS "CMAKE_LINKER = ${CMAKE_LINKER}")
-  #   message(STATUS "CMAKE_CXX_LINK_EXECUTABLE = ${CMAKE_CXX_LINK_EXECUTABLE}")
-  #   message(STATUS "YggInterfaceConfig: Checking for external CXX linker for use with GNU compiler on windows (MSVC=${MSVC}, CMAKE_CXX_COMPILER_ID=${CMAKE_CXX_COMPILER_ID})")
-  #   if(CMAKE_CXX_COMPILER MATCHES "cl\\.exe")
-  #     message(STATUS "Setting CMAKE_LINKER_TYPE to MSVC (previously CMAKE_LINKER_TYPE=${CMAKE_LINKER_TYPE}, CMAKE_CXX_LINKER_TYPE=${CMAKE_CXX_LINKER_TYPE}, CMAKE_Fortran_LINKER_TYPE=${CMAKE_Fortran_LINKER_TYPE})")
-  #     cmake_path(GET CMAKE_CXX_COMPILER PARENT_PATH MSVC_BIN_PATH)
-  #     cmake_path(GET CMAKE_Fortran_COMPILER PARENT_PATH GNU_BIN_PATH)
-  #     message(STATUS "MSVC_BIN_PATH = ${MSVC_BIN_PATH}")
-  #     message(STATUS "GNU_BIN_PATH = ${GNU_BIN_PATH}")
-  #     include(${YGG_CMAKE_MODULE_DIR}/BuildTools.cmake)
-  #     include(${YGG_CMAKE_MODULE_DIR}/SearchTools.cmake)
-  #     # set(CMAKE_GNUtoMS ON)
-  #     check_language_external(
-  #       CXX OUTPUT_COMPILER EXTERNAL_COMPILER
-  #       OUTPUT_LINKER EXTERNAL_LINKER
-  #     )
-  #     find_program(
-  #       GNU_CXX_COMPILER "g++"
-  #       PATHS "${GNU_BIN_PATH}"
-  #     )
-  #     message(STATUS "CMAKE_LINKER = ${CMAKE_LINKER}")
-  #     message(STATUS "EXTERNAL_COMPILER = ${EXTERNAL_COMPILER}")
-  #     message(STATUS "EXTERNAL_LINKER = ${EXTERNAL_LINKER}")
-  #     message(STATUS "GNU_CXX_COMPILER = ${GNU_CXX_COMPILER}")
-  #     set(CMAKE_LINKER_TYPE MSVC)
-  #     set(CMAKE_LINKER_MSVC "${EXTERNAL_LINKER}")
-  #     foreach(ilang C CXX Fortran)
-  #       set(CMAKE_${ilang}_LINKER_TYPE ${CMAKE_LINKER_TYPE})
-  #     endforeach()
-  #     cmake_path(
-  #       APPEND MSVC_BIN_PATH "link.exe"
-  #       OUTPUT_VARIABLE CMAKE_LINKER
-  #     )
-  #     message(STATUS "CMAKE_LINKER = ${CMAKE_LINKER}")
-  #   endif()
-  # endif()
-  # if(CMAKE_CXX_COMPILER)
-  message(STATUS "YggInterfaceConfig: LOCATED CMAKE_CXX_COMPILER = ${CMAKE_CXX_COMPILER}")
+  # CXX must be enabled to locate C++ dependencies
   message(STATUS "CMAKE_LINKER BEFORE ENABLE_LANGUAGE(CXX) = ${CMAKE_LINKER}")
   enable_language(CXX)
-  # endif()
   message(STATUS "CMAKE_CXX_COMPILER_ID = ${CMAKE_CXX_COMPILER_ID}")
-  message(STATUS "CMAKE_CXX_COMPILER_WORKS = ${CMAKE_CXX_COMPILER_WORKS}")
-  if(NOT CMAKE_CXX_COMPILER)
-    message(FATAL_ERROR "CXX linker required for linking against YggInterface")
+endif()
+if(YGG_Fortran_GNU_AND_MSVC AND NOT (CMAKE_LINKER MATCHES "link\\.exe"))
+  message(FATAL_ERROR "MSVC linker required for linking against Fortran interface target YggInterface::${YGG_TARGET_Fortran} (CMAKE_LINKER = ${CMAKE_LINKER})")
+endif()
+if(YGG_Fortran_GNU_AND_MSVC)
+  if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+    message(FATAL_ERROR "MSVC linker required for linking against Fortran interface target YggInterface::${YGG_TARGET_Fortran} (CMAKE_CXX_COMPILER_ID = ${CMAKE_CXX_COMPILER_ID})")
   endif()
-endif()
-if(YGG_USING_MSVC_LINKER AND NOT (CMAKE_LINKER MATCHES "link\\.exe"))
-  message(FATAL_ERROR "MSVC linker required for linking against YggInterface (CMAKE_LINKER = ${CMAKE_LINKER})")
-endif()
-if(CMAKE_Fortran_COMPILER_ID MATCHES "GNU" AND
-   CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-  set(YGG_GNU_FORTRAN_AND_MSVC ON)
   foreach(ilang C CXX Fortran)
     message(STATUS "CMAKE_${ilang}_COMPILER = ${CMAKE_${ilang}_COMPILER}")
     message(STATUS "CMAKE_${ilang}_COMPILER_LINKER = ${CMAKE_${ilang}_COMPILER_LINKER}")
@@ -131,6 +137,40 @@ if(CMAKE_Fortran_COMPILER_ID MATCHES "GNU" AND
   set(CMAKE_LINK_LIBRARY_SUFFIX "${CMAKE_CXX_LINK_LIBRARY_SUFFIX}")
 endif()
 
+if(YGG_Fortran_GNU_AND_MSVC)
+  include(${YGG_CMAKE_MODULE_DIR}/BuildTools.cmake)
+  get_implicit_libraries(
+    Fortran GNU_Fortran_IMPLICIT_LINK_LIBRARIES
+    LANGUAGE_ONLY
+      FULL_LIBRARIES
+  )
+  set(MSVC_CXX_STANDARD_LIBRARIES ${CMAKE_CXX_STANDARD_LIBRARIES})
+  message(STATUS "GNU_Fortran_IMPLICIT_LINK_LIBRARIES = ${GNU_Fortran_IMPLICIT_LINK_LIBRARIES}")
+  message(STATUS "MSVC_CXX_STANDARD_LIBRARIES = ${MSVC_CXX_STANDARD_LIBRARIES}")
+  # set(is_exec "$<STREQUAL:$<TARGET_PROPERTY:TYPE>,EXECUTABLE>")
+  # target_compile_options(
+  #   YggInterface::${YGG_TARGET_Fortran} INTERFACE
+  #   "$<${is_exec}:-mconsole>"
+  # )
+  # target_link_options(
+  #   YggInterface::${YGG_TARGET_Fortran} INTERFACE
+  #   "$<${is_exec}:/SUBSYSTEM:CONSOLE>"
+  #   "$<${is_exec}:/ENTRY:mainCRTStartup>"
+  # )
+  target_link_libraries(
+    YggInterface::${YGG_TARGET_Fortran} INTERFACE
+    ${GNU_Fortran_IMPLICIT_LINK_LIBRARIES}
+    ${MSVC_CXX_STANDARD_LIBRARIES}
+    $<IF:$<CONFIG:Debug>,ucrtd,ucrt>
+    $<IF:$<CONFIG:Debug>,msvcrtd,msvcrt>
+    $<IF:$<CONFIG:Debug>,vcruntimed,vcruntime>
+  )
+  target_link_directories(
+    YggInterface::${YGG_TARGET_Fortran} INTERFACE
+    ${CMAKE_Fortran_IMPLICIT_LINK_DIRECTORIES}
+  )
+endif()
+
 foreach(dep IN LISTS YGG_INSTALL_DEPS)
   if (dep MATCHES "Python" OR
       dep STREQUAL "ZeroMQ" OR
@@ -142,47 +182,4 @@ foreach(dep IN LISTS YGG_INSTALL_DEPS)
   endif()
 endforeach()
 
-include(${YGG_CMAKE_MODULE_DIR}/YggInterfaceTargets.cmake)
-
-if (TARGET YggInterface::@YGG_TARGET_CXX@)
-  add_library(YggInterface::CXX ALIAS YggInterface::@YGG_TARGET_CXX@)
-  add_library(YggInterface::C ALIAS YggInterface::@YGG_TARGET_CXX@)
-endif()
-if (TARGET YggInterface::@YGG_TARGET_Fortran@)
-  if(YGG_GNU_FORTRAN_AND_MSVC)
-    include(${YGG_CMAKE_MODULE_DIR}/BuildTools.cmake)
-    get_implicit_libraries(
-      Fortran GNU_Fortran_IMPLICIT_LINK_LIBRARIES
-      LANGUAGE_ONLY
-      FULL_LIBRARIES
-    )
-    set(MSVC_CXX_STANDARD_LIBRARIES ${CMAKE_CXX_STANDARD_LIBRARIES})
-    message(STATUS "GNU_Fortran_IMPLICIT_LINK_LIBRARIES = ${GNU_Fortran_IMPLICIT_LINK_LIBRARIES}")
-    message(STATUS "MSVC_CXX_STANDARD_LIBRARIES = ${MSVC_CXX_STANDARD_LIBRARIES}")
-    # set(is_exec "$<STREQUAL:$<TARGET_PROPERTY:TYPE>,EXECUTABLE>")
-    # target_compile_options(
-    #   YggInterface::@YGG_TARGET_Fortran@ INTERFACE
-    #   "$<${is_exec}:-mconsole>"
-    # )
-    # target_link_options(
-    #   YggInterface::@YGG_TARGET_Fortran@ INTERFACE
-    #   "$<${is_exec}:/SUBSYSTEM:CONSOLE>"
-    #   "$<${is_exec}:/ENTRY:mainCRTStartup>"
-    # )
-    target_link_libraries(
-      YggInterface::@YGG_TARGET_Fortran@ INTERFACE
-      ${GNU_Fortran_IMPLICIT_LINK_LIBRARIES}
-      ${MSVC_CXX_STANDARD_LIBRARIES}
-      $<IF:$<CONFIG:Debug>,ucrtd,ucrt>
-      $<IF:$<CONFIG:Debug>,msvcrtd,msvcrt>
-      $<IF:$<CONFIG:Debug>,vcruntimed,vcruntime>
-    )
-    target_link_directories(
-      YggInterface::@YGG_TARGET_Fortran@ INTERFACE
-      ${CMAKE_Fortran_IMPLICIT_LINK_DIRECTORIES}
-    )
-  endif()
-  add_library(YggInterface::Fortran ALIAS
-              YggInterface::@YGG_TARGET_Fortran@)
-endif()
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} CACHE INTERNAL "CMAKE_MODULE_PATH")
