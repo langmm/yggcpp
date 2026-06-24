@@ -159,16 +159,16 @@ if (TARGET YggInterface::YggInterface_fortran)
     set(MSVC_CXX_STANDARD_LIBRARIES ${CMAKE_CXX_STANDARD_LIBRARIES})
     message(STATUS "GNU_Fortran_IMPLICIT_LINK_LIBRARIES = ${GNU_Fortran_IMPLICIT_LINK_LIBRARIES}")
     message(STATUS "MSVC_CXX_STANDARD_LIBRARIES = ${MSVC_CXX_STANDARD_LIBRARIES}")
-    set(is_exec "$<STREQUAL:$<TARGET_PROPERTY:TYPE>,EXECUTABLE>")
-    target_compile_options(
-      YggInterface::YggInterface_fortran INTERFACE
-      "$<${is_exec}:-mconsole>"
-    )
-    target_link_options(
-      YggInterface::YggInterface_fortran INTERFACE
-      "$<${is_exec}:/SUBSYSTEM:CONSOLE>"
-      "$<${is_exec}:/ENTRY:mainCRTStartup>"
-    )
+    # set(is_exec "$<STREQUAL:$<TARGET_PROPERTY:TYPE>,EXECUTABLE>")
+    # target_compile_options(
+    #   YggInterface::YggInterface_fortran INTERFACE
+    #   "$<${is_exec}:-mconsole>"
+    # )
+    # target_link_options(
+    #   YggInterface::YggInterface_fortran INTERFACE
+    #   "$<${is_exec}:/SUBSYSTEM:CONSOLE>"
+    #   "$<${is_exec}:/ENTRY:mainCRTStartup>"
+    # )
     target_link_libraries(
       YggInterface::YggInterface_fortran INTERFACE
       ${GNU_Fortran_IMPLICIT_LINK_LIBRARIES}

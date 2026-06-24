@@ -17,14 +17,11 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-2022]
         python-version: ["3.11"]
-        builder: [rattler]
+        builder: [rattler, rattler-standalone]
         include:
           - os: windows-2022
             python-version: "3.11"
             builder: rattler-m2w64
-          - os: windows-2022
-            python-version: "3.11"
-            builder: rattler-unsplit
       fail-fast: false
     steps:
       - name: Check out repository code
@@ -49,17 +46,10 @@ jobs:
           miniforge-version: latest
           conda-remove-defaults: true
       - name: Install rattler-build
-        # if: matrix.builder == 'rattler-unsplit'
         run: |
           conda info
           conda list
           conda install rattler-build -y
-      # - name: Install rattler-build
-      #   if: matrix.builder != 'rattler-unsplit'
-      #   run: |
-      #     conda info
-      #     conda list
-      #     conda install "rattler-build<0.66" -y
       - name: Check conda installation
         run: |
           conda info
@@ -73,9 +63,9 @@ jobs:
         run: |
           rattler-build build --recipe "conda.recipe/recipe.yaml" --output-dir $HOME/local_channel/ --variant python=${{ matrix.python-version }} --variant toolchain_variant=m2w64 --no-build-id --no-include-recipe
       - name: Build conda recipe (using rattler-build)
-        if: matrix.builder == 'rattler-unsplit'
+        if: matrix.builder == 'rattler-standalone'
         run: |
-          rattler-build build --recipe "conda.recipe/recipe-unsplit.yaml" --output-dir $HOME/local_channel/ --variant python=${{ matrix.python-version }} --no-build-id --no-include-recipe
+          rattler-build build --recipe "conda.recipe/recipe-standalone.yaml" --output-dir $HOME/local_channel/ --variant python=${{ matrix.python-version }} --no-build-id --no-include-recipe
       # - name: Build conda recipe (using rattler-build action)
       #   uses: prefix-dev/rattler-build-action@v0.2.34
       #   if: matrix.builder == 'rattler'

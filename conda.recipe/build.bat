@@ -1,6 +1,11 @@
 @setlocal EnableDelayedExpansion
 @echo on
 
+IF NOT DEFINED ENABLE_CXX (set ENABLE_CXX=ON)
+IF NOT DEFINED ENABLE_Fortran (set ENABLE_Fortran=ON)
+IF NOT DEFINED ENABLE_Python (set ENABLE_Python=OFF)
+IF NOT DEFINED STANDALONE_Fortran (set STANDALONE_Fortran=OFF)
+
 powershell -command "Expand-Archive -Path utils\objconv.zip -DestinationPath .\ -Verbose"
 powershell -command "Get-ChildItem -Path .\"
 
@@ -15,11 +20,12 @@ cmake -B conda_build -S %SRC_DIR% ^
       -D CMAKE_VERBOSE_MAKEFILE:BOOL=ON ^
       -D CMAKE_MESSAGE_LOG_LEVEL:STRING=DEBUG ^
       -D CMAKE_BUILD_PARALLEL_LEVEL=1 ^
-      -D BUILD_CXX_LIBRARY:BOOL=ON ^
-      -D BUILD_Python_LIBRARY:BOOL=OFF ^
-      -D BUILD_Fortran_LIBRARY:BOOL=ON ^
-      -D YGG_CXX_REQUIRED:BOOL=ON ^
-      -D YGG_Fortran_REQUIRED:BOOL=ON ^
+      -D BUILD_CXX_LIBRARY:BOOL=%ENABLE_CXX% ^
+      -D BUILD_Fortran_LIBRARY:BOOL=%ENABLE_Fortran% ^
+      -D BUILD_Python_LIBRARY:BOOL=%ENABLE_Python% ^
+      -D YGG_Fortran_STANDALONE:BOOL=%STANDALONE_Fortran% ^
+      -D YGG_CXX_REQUIRED:BOOL=%ENABLE_CXX% ^
+      -D YGG_Fortran_REQUIRED:BOOL=%ENABLE_Fortran% ^
       -D YGGINTERFACE_VERSION=%PKG_VERSION% ^
       -D "Python3_EXECUTABLE:FILEPATH=%PYTHON%" ^
       %CMAKE_ARGS% || goto :error
