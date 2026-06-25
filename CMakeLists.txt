@@ -90,6 +90,7 @@ endif()
 set(YGG_TARGET_CXX YggInterface)
 set(YGG_TARGET_Fortran YggInterface_fortran)
 # set(YGG_TARGET_Fortran YggInterfaceFortran)
+var_dependency(YGG_TARGET_Fortran_NAME YGG_TARGET_Fortran)
 
 if(NOT WIN32)
     find_program(CCACHE_FOUND ccache)
@@ -476,7 +477,9 @@ python_code_generation(
   enum utils/generate_enum.py
   ARGUMENTS ${GENERATE_ENUM_ARGS}
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-  SOURCES cpp/include/utils/enums.hpp
+  SOURCES
+  cpp/include/utils/enums.hpp
+  ${YGG_TARGET_Fortran_NAME}
   BYPRODUCTS
   cpp/include/utils/enums_maps.hpp
   cpp/src/utils/enums_maps.cpp
@@ -525,6 +528,7 @@ if(GENERATE_INTERFACE)
     SOURCES
     cpp/include/YggInterface.h
     cpp/include/communicators/comm_t.hpp
+    ${YGG_TARGET_Fortran_NAME}
     BYPRODUCTS
     cpp/src/datatypes/dtype_t.cpp
     cpp/include/datatypes/dtype_t.h

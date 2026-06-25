@@ -199,14 +199,8 @@ outputs:
                 - Library/cmake/YggInterface/YggInterfaceTargets.cmake
                 - Library/cmake/YggInterface/YggInterfaceTargetsSplit-YggInterface_fortran.cmake
                 - Library/lib/pkgconfig/YggInterface_fortran.pc
-                - if: toolchain_variant == "m2w64"
-                  then:
-                    - Library/lib/libYggInterface_fortran.dll.a
-                    - Library/bin/libYggInterface_fortran.dll
-                - if: toolchain_variant != "m2w64"
-                  then:
-                    - Library/lib/YggInterface_fortran.lib
-                    - Library/bin/YggInterface_fortran.dll
+                - Library/lib/libYggInterface_fortran.dll.a
+                - Library/bin/libYggInterface_fortran.dll
             - if: unix
               then:
                 - lib/cmake/YggInterface/YggInterfaceConfig.cmake
@@ -216,7 +210,7 @@ outputs:
                 - lib/pkgconfig/YggInterface_fortran.pc
           lib:
             # rattler-build dosn't know to look for mingw style libraries
-            - if: toolchain_variant != "m2w64"
+            - if: unix
               then:
                 - YggInterface_fortran
           include:

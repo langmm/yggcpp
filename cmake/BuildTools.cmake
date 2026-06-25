@@ -281,6 +281,8 @@ function(python_code_generation NAME SCRIPT)
     if(NOT ARGS_WORKING_DIRECTORY)
       set(ARGS_WORKING_DIRECTORY ${SCRIPT})
     endif()
+  else()
+    list(APPEND ARGS_SOURCES ${SCRIPT})
   endif()
   if (ARGS_WORKING_DIRECTORY)
     cmake_path(ABSOLUTE_PATH ARGS_WORKING_DIRECTORY NORMALIZE)
@@ -1705,4 +1707,29 @@ function(strip_python TARGET)
     ${TARGET} PROPERTIES
     INTERFACE_LINK_LIBRARIES "${${TARGET}_LINK_LIBRARIES}"
   )
+endfunction()
+
+function(var_dependency OUTPUT)
+  set(names)
+  set(values)
+  foreach(name IN LISTS ARGN)
+    list(APPEND names ${name})
+    list(APPEND values "${${name}}")
+  endforeach()
+  if(NOT ${OUTPUT})
+    set(${OUTPUT} "${OUTPUT}")
+  endif()
+  configure_file(
+    "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/config/var_dependency.in"
+    "${${OUTPUT}}"
+    @ONLY
+  )
+  if(NOT IS_ABSOLUTE "${${OUTPUT}}")
+    cmake_path(
+      ABSOLUTE_PATH ${OUTPUT}
+      BASE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}" NORMALIZE
+      OUTPUT_VARIABLE ${OUTPUT}
+    )
+  endif()
+  set(${OUTPUT} "${${OUTPUT}}" PARENT_SCOPE)
 endfunction()

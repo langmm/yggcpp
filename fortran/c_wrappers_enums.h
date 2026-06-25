@@ -15,6 +15,7 @@ extern "C" {
 
   FYGG_API extern const int64_t COMM_FLAG_VALID_F;
   FYGG_API extern const int64_t COMM_FLAG_GLOBAL_F;
+  FYGG_API extern const int64_t COMM_FLAG_GLOBAL_WRAPPED_F;
   FYGG_API extern const int64_t COMM_FLAG_WORKER_F;
   FYGG_API extern const int64_t COMM_FLAG_DELAYED_OPEN_F;
   FYGG_API extern const int64_t COMM_FLAG_CLIENT_F;
@@ -35,14 +36,16 @@ extern "C" {
   FYGG_API extern const int64_t COMM_FLAG_ASYNC_WRAPPED_F;
   FYGG_API extern const int64_t COMM_FLAG_SET_OPP_ENV_F;
   FYGG_API extern const int64_t COMM_FLAG_WRAPPER_F;
+  FYGG_API extern const int64_t COMM_FLAG_FORK_F;
   FYGG_API extern const int64_t COMM_FLAG_FORK_CYCLE_F;
   FYGG_API extern const int64_t COMM_FLAG_FORK_BROADCAST_F;
   FYGG_API extern const int64_t COMM_FLAG_FORK_COMPOSITE_F;
   FYGG_API extern const int64_t COMM_FLAG_FORK_TINE_F;
+  FYGG_API extern const int64_t COMM_FLAG_DONT_SERIALIZE_F;
+  FYGG_API extern const int64_t COMM_FLAG_REQUIRES_PYGIL_F;
   FYGG_API extern const int64_t FILE_FLAG_APPEND_F;
   FYGG_API extern const int64_t FILE_FLAG_BINARY_F;
   FYGG_API extern const int64_t FILE_FLAG_READLINE_F;
-  FYGG_API extern const int64_t COMM_FLAG_MAX_F;
 
 
 #ifdef __cplusplus
