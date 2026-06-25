@@ -15,6 +15,7 @@ jobs:
         shell: bash -el {0}
     strategy:
       matrix:
+        # TODO: Revert to windows-latest
         os: [ubuntu-latest, macos-latest, windows-2022]
         python-version: ["3.11"]
         builder: [rattler, rattler-standalone]
@@ -22,6 +23,12 @@ jobs:
           - os: windows-2022
             python-version: "3.11"
             builder: rattler-m2w64
+          - os: windows-2022
+            python-version: "3.11"
+            builder: rattler-msvc-gnu
+          - os: windows-2022
+            python-version: "3.11"
+            builder: rattler-flang
       fail-fast: false
     steps:
       - name: Check out repository code
@@ -54,15 +61,27 @@ jobs:
         run: |
           conda info
           conda list
-      - name: Build conda recipe (using rattler-build)
+      - name: Build unified conda recipe (using rattler-build)
         if: matrix.builder == 'rattler'
         run: |
           rattler-build build --recipe "conda.recipe/recipe.yaml" --output-dir $HOME/local_channel/ --variant python=${{ matrix.python-version }} --no-build-id --no-include-recipe
-      - name: Build conda recipe (using rattler-build)
+      - name: Build unified conda recipe for m2w64 cxx_toolchain_variant (using rattler-build)
         if: matrix.builder == 'rattler-m2w64'
         run: |
-          rattler-build build --recipe "conda.recipe/recipe.yaml" --output-dir $HOME/local_channel/ --variant python=${{ matrix.python-version }} --variant toolchain_variant=m2w64 --no-build-id --no-include-recipe
-      - name: Build conda recipe (using rattler-build)
+          rattler-build build --recipe "conda.recipe/recipe.yaml" --output-dir $HOME/local_channel/ --variant python=${{ matrix.python-version }} --variant cxx_toolchain_variant=m2w64 --no-build-id --no-include-recipe
+      - name: Build conda standalone recipe for m2w64 cxx_toolchain_variant (using rattler-build)
+        if: matrix.builder == 'rattler-m2w64'
+        run: |
+          rattler-build build --recipe "conda.recipe/recipe-standalone.yaml" --output-dir $HOME/local_channel/ --variant python=${{ matrix.python-version }} --variant cxx_toolchain_variant=m2w64 --no-build-id --no-include-recipe
+      - name: Build standalone conda recipe with flang fortran compiler (using rattler-build)
+        if: matrix.builder == 'rattler-flang'
+        run: |
+          rattler-build build --recipe "conda.recipe/recipe-standalone.yaml" --output-dir $HOME/local_channel/ --variant python=${{ matrix.python-version }} --variant fortran_compiler=flang --no-build-id --no-include-recipe
+      - name: Build standalone conda recipe for MSVC/GNU fortran build (using rattler-build)
+        if: matrix.builder == 'rattler-msvc-gnu'
+        run: |
+          rattler-build build --recipe "conda.recipe/recipe-standalone.yaml" --output-dir $HOME/local_channel/ --variant python=${{ matrix.python-version }} --variant fortran_toolchain_varient=msvc_gnu --no-build-id --no-include-recipe
+      - name: Build standalone conda recipe (using rattler-build)
         if: matrix.builder == 'rattler-standalone'
         run: |
           rattler-build build --recipe "conda.recipe/recipe-standalone.yaml" --output-dir $HOME/local_channel/ --variant python=${{ matrix.python-version }} --no-build-id --no-include-recipe

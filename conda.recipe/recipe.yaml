@@ -16,9 +16,9 @@ source:
 
 build:
   number: ${{ build_number }}
-  string: v${{ version | version_to_buildstring }}${{ toolchain_variant }}_py${{ python | version_to_buildstring }}_h${{ hash }}_${{ build_number }}
+  string: v${{ version | version_to_buildstring }}${{ cxx_toolchain_variant }}_py${{ python | version_to_buildstring }}_h${{ hash }}_${{ build_number }}
   variant:
-    down_prioritize_variant: ${{ 1 if toolchain_variant == "m2w64" else 0 }}
+    down_prioritize_variant: ${{ 1 if cxx_toolchain_variant == "m2w64" else 0 }}
 
 outputs:
   - package:
@@ -51,7 +51,7 @@ outputs:
             - ${{ compiler('m2w64_fortran') }}
         - ninja
         - pkgconfig
-        - if: toolchain_variant != "m2w64"
+        - if: cxx_toolchain_variant != "m2w64"
           then:
             - ${{ stdlib('c') }}
             - ${{ compiler('c') }}
@@ -85,13 +85,13 @@ outputs:
                 - Library/cmake/YggInterfaceConfig.cmake
                 - Library/cmake/YggInterface/YggInterfaceConfigVersion.cmake
                 - Library/lib/pkgconfig/YggInterface.pc
-                - if: toolchain_variant == "m2w64"
+                - if: cxx_toolchain_variant == "m2w64"
                   then:
                     - Library/lib/libYggInterface.dll.a
                     - Library/bin/libYggInterface.dll
                     - Library/lib/libYggInterface_fortran.dll.a
                     - Library/bin/libYggInterface_fortran.dll
-                - if: toolchain_variant != "m2w64"
+                - if: cxx_toolchain_variant != "m2w64"
                   then:
                     - Library/lib/YggInterface.lib
                     - Library/bin/YggInterface.dll
@@ -104,7 +104,7 @@ outputs:
                 - lib/pkgconfig/YggInterface.pc
           lib:
             # rattler-build dosn't know to look for mingw style libraries
-            - if: toolchain_variant != "m2w64"
+            - if: cxx_toolchain_variant != "m2w64"
               then:
                 - YggInterface
                 - YggInterface_fortran
@@ -124,7 +124,7 @@ outputs:
             - flask
             - ninja
             - cmake
-            - if: toolchain_variant != "m2w64"
+            - if: cxx_toolchain_variant != "m2w64"
               then:
                 - ${{ stdlib('c') }}
                 - ${{ compiler('c') }}
@@ -148,7 +148,7 @@ outputs:
       # string: v${{ version | version_to_buildstring }}_py${{ python | version_to_buildstring }}_h${{ hash }}_${{ build_number }}
       variant:
         ignore_keys:
-          - toolchain_variant
+          - cxx_toolchain_variant
       script:
         - if: unix
           then:

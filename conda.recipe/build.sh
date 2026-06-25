@@ -13,6 +13,9 @@ fi
 if [ ! -n "${STANDALONE_Fortran:-}" ]; then
     STANDALONE_Fortran="OFF"
 fi
+if [ ! -n "${STANDALONE_Fortran_LINK_EXISTING_CXX:-}" ]; then
+    STANDALONE_Fortran_LINK_EXISTING_CXX="OFF"
+fi
 
 PYTHON=${PYTHON:-python}
 Python_INCLUDE_DIR="$(${PYTHON} -c 'import sysconfig; print(sysconfig.get_path("include"))')"
@@ -35,6 +38,7 @@ cmake -B conda_build -S ${SRC_DIR} \
       -D BUILD_Fortran_LIBRARY:BOOL=$ENABLE_Fortran \
       -D BUILD_Python_LIBRARY:BOOL=$ENABLE_Python \
       -D YGG_Fortran_STANDALONE:BOOL=$STANDALONE_Fortran \
+      -D YGG_Fortran_STANDALONE_LINK_EXISTING_CXX:BOOL=$STANDALONE_Fortran_LINK_EXISTING_CXX \
       -D YGG_CXX_REQUIRED:BOOL=$ENABLE_CXX \
       -D YGG_Fortran_REQUIRED:BOOL=$ENABLE_Fortran \
       -D YGGINTERFACE_VERSION=${PKG_VERSION} \

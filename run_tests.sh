@@ -12,6 +12,7 @@ DO_Python=""
 DO_DOCS=""
 DO_SKBUILD=""
 WITH_ASAN=""
+LOCAL_RJ=""
 QUIET=""
 CMAKE_FLAGS="-DYGG_SKIP_VALGRIND_TESTS=ON -DGENERATE_INTERFACE=ON"
 CMAKE_FLAGS_LIB=""
@@ -95,6 +96,7 @@ while [[ $# -gt 0 ]]; do
 	    ;;
         --standalone-fortran )
             CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYGG_Fortran_STANDALONE:BOOL=ON"
+            # CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYGG_Fortran_STANDALONE_LINK_EXISTING_CXX:BOOL=ON"
             DO_Fortran="TRUE"
 	    shift # past argument with no value
 	    ;;
@@ -134,7 +136,7 @@ while [[ $# -gt 0 ]]; do
 	    shift # past argument with no value
 	    ;;
 	--local-rj )
-	    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYGGDRASIL_RAPIDJSON_INCLUDE_DIRS=/Users/langmm/yggdrasil_rapidjson/include"
+            LOCAL_RJ="/Users/langmm/yggdrasil_rapidjson"
 	    shift # past argument with no value
 	    ;;
 	--config )
@@ -339,6 +341,9 @@ if [ -n "$REINSTALL" ]; then
     if [ -d "$INSTALL_DIR" ]; then
 	rm -rf "$INSTALL_DIR"
     fi
+fi
+if [ -n "$LOCAL_RJ" ]; then
+    ./build_yggdrasil_rapidjson.sh --rj-dir $LOCAL_RJ --install-dir ${INSTALL_DIR}
 fi
 if [ ! -d "$BUILD_DIR" ]; then
     mkdir $BUILD_DIR

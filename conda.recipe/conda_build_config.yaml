@@ -15,9 +15,12 @@ cxx_compiler:
   - vs2017                      # [win]
 fortran_compiler:
   - gfortran
-fortran_compiler_version:
-  - 14
-toolchain_variant:
+# fortran_compiler_version:
+#   - 14
+fortran_toolchain_variant:
+  - ""
+  - "m2w64"                     # [win]
+cxx_toolchain_variant:
   - ""
   # - m2w64                       # [win]
 m2w64_c_stdlib:                 # [win]

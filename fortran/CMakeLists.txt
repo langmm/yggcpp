@@ -10,6 +10,17 @@ if (NOT CMAKE_Fortran_COMPILER)
 endif()
 
 option(YGG_Fortran_STANDALONE "Build Fortran interface as its own library, including the CXX sources rather than linking to the CXX interface library" OFF)
+option(YGG_Fortran_STANDALONE_LINK_EXISTING_CXX "Link Fortran library against an existing installation of the CXX YggInterface library" OFF)
+if(YGG_Fortran_STANDALONE_LINK_EXISTING_CXX)
+  if(NOT TARGET ${YGG_TARGET_CXX})
+    find_package(YggInterface REQUIRED)
+    set(YGG_TARGET_CXX YggInterface::${YGG_TARGET_CXX})
+  endif()
+  set(YGG_Fortran_STANDALONE OFF)
+endif()
+if(NOT (YGG_Fortran_STANDALONE OR TARGET ${YGG_TARGET_CXX}))
+  message(FATAL_ERROR "YGG_Fortran_STANDALONE not set and CXX target not defined")
+endif()
 
 cmake_path(GET CMAKE_CURRENT_SOURCE_DIR PARENT_PATH PARENT_SOURCE_DIR)
 cmake_path(
@@ -106,7 +117,7 @@ if(YGG_Fortran_STANDALONE)
   include(AddYggInterface)
   add_library_dirs_to_rpath(${YGG_TARGET_Fortran})
 else()
-  target_link_libraries(${YGG_TARGET_Fortran} PUBLIC YggInterface)
+  target_link_libraries(${YGG_TARGET_Fortran} PUBLIC ${YGG_TARGET_CXX})
 endif()
 target_include_directories(
   ${YGG_TARGET_Fortran} PRIVATE
@@ -120,7 +131,7 @@ if (MINGW)
     list(APPEND EXPORT_HEADER_ARGS EMPTY)
 endif()
 include(GenerateExportHeaderYggdrasil)
-if(YGG_Fortran_STANDALONE)
+if(YGG_Fortran_STANDALONE OR YGG_Fortran_STANDALONE_LINK_EXISTING_CXX)
   generate_export_header_yggdrasil(
     ${YGG_TARGET_Fortran} ${EXPORT_HEADER_ARGS}
   )
