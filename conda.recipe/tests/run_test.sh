@@ -10,6 +10,9 @@ fi
 if [ ! -n "${ENABLE_Python:-}" ]; then
     ENABLE_Python="OFF"
 fi
+if [ ! -n "${ENABLE_RMQ:-}" ]; then
+    ENABLE_RMQ="OFF"
+fi
 
 if [ ! -d build_speed ]; then
     mkdir build_speed
@@ -22,6 +25,7 @@ cmake -G Ninja \
       -D ENABLE_CXX:BOOL=$ENABLE_CXX \
       -D ENABLE_Fortran:BOOL=$ENABLE_Fortran \
       -D ENABLE_Python:BOOL=$ENABLE_Python \
+      -D ENABLE_RMQ:BOOL=$ENABLE_RMQ \
       -D COMM:STRING=ALL \
       ../tests/speedtest 
 

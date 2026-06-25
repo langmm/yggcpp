@@ -5,6 +5,13 @@ option(ENABLE_CXX "Turn on CXX speed test" ON)
 option(ENABLE_C "Turn on C speed test" ON)
 option(ENABLE_Fortran "Turn on Fortran speed test" ON)
 option(ENABLE_Python "Turn on Python speed test" ON)
+
+option(ENABLE_ZMQ "Turn on ZeroMQ speed test" ON)
+option(ENABLE_IPC "Turn on IPC speed test" ON)
+option(ENABLE_RMQ "Turn on RabbitMQ speed test" ON)
+option(ENABLE_MPI "Turn on MPI API speed test" OFF)
+option(ENABLE_REST "Turn on REST API speed test" OFF)
+
 set(N_MSG 100 CACHE STRING "Number of messages that should be sent")
 set(S_MSG 100 CACHE STRING "Size of messages that should be sent")
 set(COMM "DEFAULT" CACHE STRING "Communicator type that should be used")
@@ -48,6 +55,8 @@ function(add_speed_test LANGUAGE LANGUAGE_EXT)
         COMM ${icomm}
       )
     endforeach()
+    return()
+  elseif(NOT ENABLE_${COMM})
     return()
   elseif(COMM STREQUAL "MPI" OR COMM STREQUAL "REST")
     message(WARNING "${COMM} communicators requires additional setup beyond the scope of the simple speedtest as currently implemented")
@@ -102,8 +111,6 @@ function(add_speed_test LANGUAGE LANGUAGE_EXT)
          "-DCMAKE_LINKER:PATH=${EXTERNAL_LINKER}"
          -G "${EXTERNAL_GENERATOR}")
     message(DEBUG "CMAKE_PREFIX_PATH = ${CMAKE_PREFIX_PATH}")
-    message(DEBUG "CMAKE_COMMAND_ARGS_TO_COPY = ${CMAKE_COMMAND_ARGS_TO_COPY}")
-    cmakevars2cmakecliargs(CMAKE_COMMAND_ARGS ${CMAKE_COMMAND_ARGS_TO_COPY})
     if(WIN32 AND EXTERNAL_LINKER_MSVC AND NOT EXTERNAL_COMPILER_MSVC)
       list(
         APPEND CMAKE_COMMAND_ARGS
@@ -114,6 +121,8 @@ function(add_speed_test LANGUAGE LANGUAGE_EXT)
     message(DEBUG "EXTERNAL_LINKER = ${EXTERNAL_LINKER}")
     message(DEBUG "EXTERNAL_GENERATOR = ${EXTERNAL_GENERATOR}")
   endif()
+  message(DEBUG "CMAKE_COMMAND_ARGS_TO_COPY = ${CMAKE_COMMAND_ARGS_TO_COPY}")
+  cmakevars2cmakecliargs(CMAKE_COMMAND_ARGS ${CMAKE_COMMAND_ARGS_TO_COPY})
   message(DEBUG "CMAKE_COMMAND_ARGS = ${CMAKE_COMMAND_ARGS}")
   configure_and_build(
     CMakeLists.txt.in
