@@ -43,7 +43,7 @@ if (NOT SKBUILD)
         # string(REPLACE ";" "\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\;" CMAKE_PREFIX_PATH_SAFE "${CMAKE_PREFIX_PATH_SAFE}")
       endif()
       list(APPEND Python_BUILD_ARGS
-        "--config-settings=\"cmake.define.CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH_SAFE}\"")
+        "\"--config-settings=cmake.define.CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH_SAFE}\"")
       message(DEBUG "CMAKE_PREFIX_PATH_SAFE = ${CMAKE_PREFIX_PATH_SAFE}")
     endif()
     if (Python3_ROOT_DIR)
