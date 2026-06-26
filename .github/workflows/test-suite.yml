@@ -335,7 +335,7 @@ jobs:
         shell: bash -l {0}
         run: |
           mkdir ../_install
-          echo "CMAKE_INSTALL_PREFIX=../_install" >> "$GITHUB_ENV"
+          echo "CMAKE_INSTALL_PREFIX=$(pwd)/../_install" >> "$GITHUB_ENV"
           # echo "CMAKE_INSTALL_PREFIX=${{ github.workspace }}/../_install" >> "$GITHUB_ENV"
       # - name: Set CMAKE_INSTALL_PREFIX for local install
       #   if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
