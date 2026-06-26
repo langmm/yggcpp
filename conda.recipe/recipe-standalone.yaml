@@ -29,6 +29,7 @@ outputs:
           - fortran_toolchain_variant
       script:
         env:
+          CMAKE_GENERATOR: Ninja
           ENABLE_CXX: ON
           ENABLE_Fortran: OFF
           ENABLE_Python: OFF
@@ -111,6 +112,7 @@ outputs:
             - YggInterface/YggInterface.h
       - script:
           env:
+            CMAKE_GENERATOR: Ninja
             ENABLE_CXX: ON
             ENABLE_Fortran: OFF
             ENABLE_Python: OFF
@@ -145,6 +147,7 @@ outputs:
           - cxx_toolchain_variant
       script:
         env:
+          CMAKE_GENERATOR: Ninja
           ENABLE_CXX: OFF
           ENABLE_Fortran: ON
           ENABLE_Python: OFF
@@ -237,6 +240,7 @@ outputs:
             - YggInterface/ygginterface.mod
       - script:
           env:
+            CMAKE_GENERATOR: Ninja
             ENABLE_CXX: OFF
             ENABLE_Fortran: ON
             ENABLE_Python: OFF
@@ -283,10 +287,11 @@ outputs:
           - fortran_toolchain_variant
       script:
         env:
+          CMAKE_GENERATOR: Ninja
           ENABLE_CXX: OFF
           ENABLE_Fortran: OFF
           ENABLE_Python: ON
-        file: build
+        file: build_python
     requirements:
       build:
         - if: build_platform != host_platform
@@ -339,6 +344,7 @@ outputs:
             - tests/
       - script:
           env:
+            CMAKE_GENERATOR: Ninja
             ENABLE_CXX: OFF
             ENABLE_Fortran: OFF
             ENABLE_Python: ON
@@ -366,6 +372,7 @@ outputs:
             - YggInterface
       - script:
           env:
+            CMAKE_GENERATOR: Ninja
             ENABLE_CXX: ON
             ENABLE_Fortran: ON
             ENABLE_Python: ON

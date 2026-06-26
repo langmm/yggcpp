@@ -326,7 +326,12 @@ jobs:
       # CMAKE ENV VARIABLES
       ###################################
       - name: Set CMAKE_INSTALL_PREFIX for local install
-        if: matrix.python-install == 'pip' && matrix.os != 'windows-latest'
+        if: matrix.python-install == 'conda'
+        shell: bash -l {0}
+        run: |
+          echo "CMAKE_INSTALL_PREFIX=$CONDA_PREFIX" >> "$GITHUB_ENV"
+      - name: Set CMAKE_INSTALL_PREFIX for local install
+        if: matrix.python-install == 'pip'  # && matrix.os != 'windows-latest'
         shell: bash -l {0}
         run: |
           mkdir ../_install
@@ -744,8 +749,8 @@ jobs:
           echo "CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}"
           mkdir build_speed
           cmake -B build_speed -S tests/speedtest -DCOMM=ALL
-          cmake --build .
-          ctest --output-on-failure -VV
+          cmake --build build_speed
+          ctest --test-dir build_speed --output-on-failure -VV
       # - name: Run speed tests (default)
       #   if: matrix.with-asan == false
       #   shell: bash -l {0}
