@@ -30,6 +30,6 @@ cmake -G Ninja \
       ../tests/speedtest 
 
 cmake --build .
-ctest
+ctest --output-on-failure -VV
 
 cd ..

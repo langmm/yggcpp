@@ -330,29 +330,34 @@ jobs:
         shell: bash -l {0}
         run: |
           mkdir ../_install
-          echo "CMAKE_INSTALL_PREFIX=${{ github.workspace }}/../_install" >> "$GITHUB_ENV"
-      - name: Set CMAKE_INSTALL_PREFIX for local install
-        if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
-        shell: bash -l {0}
-        run: |
-          mkdir ../_install
-          echo "CMAKE_INSTALL_PREFIX=${{ github.workspace }}\\..\\_install" >> "$GITHUB_ENV"
+          echo "CMAKE_INSTALL_PREFIX=../_install" >> "$GITHUB_ENV"
+          # echo "CMAKE_INSTALL_PREFIX=${{ github.workspace }}/../_install" >> "$GITHUB_ENV"
+      # - name: Set CMAKE_INSTALL_PREFIX for local install
+      #   if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
+      #   shell: bash -l {0}
+      #   run: |
+      #     mkdir ../_install
+      #     echo "CMAKE_INSTALL_PREFIX=${{ github.workspace }}\\..\\_install" >> "$GITHUB_ENV"
       - name: Install YggdrasilRapidJSON from source
         if: matrix.python-install == 'pip'
         shell: bash -l {0}
         run: |
           echo "PYTHON=${PYTHON}"
           ./build_yggdrasil_rapidjson.sh --install-dir ${{ env.CMAKE_INSTALL_PREFIX }}
-      - name: Set CMAKE_PREFIX_PATH for local install
+      - name: Set CMAKE_PREFIX_PATH for local install (Unix)
         if: matrix.python-install == 'pip' && matrix.os != 'windows-latest'
         shell: bash -l {0}
         run: |
-          echo "CMAKE_PREFIX_PATH=${VCPKG_INSTALLATION_ROOT}\installed\\${VCPKG_TRIPLET};${{ env.CMAKE_INSTALL_PREFIX }}" >> "$GITHUB_ENV"
-      - name: Set CMAKE_PREFIX_PATH for local install
+          echo "CMAKE_PREFIX_PATH=${{ env.CMAKE_INSTALL_PREFIX }}" >> "$GITHUB_ENV"
+          echo "PYTHON_CONFIG_FLAGS=${{ env.PYTHON_CONFIG_FLAGS }} --config-settings=cmake.define.CMAKE_PREFIX_PATH=${{ env.CMAKE_INSTALL_PREFIX }}" >> "$GITHUB_ENV"
+      # If any variables added to PYTHON_CONFIG_FLAGS, need to handle escaping quotes
+      - name: Set CMAKE_PREFIX_PATH for local install (Windows)
         if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
         shell: bash -l {0}
         run: |
-          echo "CMAKE_PREFIX_PATH=${{ env.CMAKE_INSTALL_PREFIX }}" >> "$GITHUB_ENV"
+          echo "CMAKE_PREFIX_PATH=${VCPKG_INSTALLATION_ROOT}\installed\\${VCPKG_TRIPLET};${{ env.CMAKE_INSTALL_PREFIX }}" >> "$GITHUB_ENV"
+          echo "PYTHON_CONFIG_FLAGS=${{ env.PYTHON_CONFIG_FLAGS }} --config-settings=cmake.define.Python3_ROOT_DIR=${{ env.pythonLocation }} --config-settings=cmake.define.CMAKE_PREFIX_PATH=\"${VCPKG_INSTALLATION_ROOT}\installed\\${VCPKG_TRIPLET};${{ env.CMAKE_INSTALL_PREFIX }}\"" >> "$GITHUB_ENV"
+          
 
       ###################################
       # SET CONFIG FLAGS
