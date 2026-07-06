@@ -62,7 +62,6 @@ endif()
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-include(YggInterfaceMacros)
 ygginterface_options_create()
 
 include(AddYggInterface)
@@ -199,20 +198,18 @@ endif()
 # YggdrasilRapidJSON #
 ######################
 
-if(NOT YGGDRASIL_RAPIDJSON_INCLUDE_DIRS)
-  add_yggdrasil_dependency(
-    YggdrasilRapidJSON
-    LIBRARIES YggdrasilRapidJSON
-    REQUIRED
-  )
-  get_target_property(
-    YggdrasilRapidJSON_LINK_LIBRARIES
-    YggdrasilRapidJSON INTERFACE_LINK_LIBRARIES
-  )
-  list(FILTER YggdrasilRapidJSON_LINK_LIBRARIES INCLUDE REGEX ".+Python$")
-  if(YggdrasilRapidJSON_LINK_LIBRARIES)
-    message(FATAL_ERROR "YggdrasilRapidJSON_LINK_LIBRARIES = ${YggdrasilRapidJSON_LINK_LIBRARIES}")
-  endif()
+add_yggdrasil_dependency(
+  YggdrasilRapidJSON
+  LIBRARIES YggdrasilRapidJSON
+  REQUIRED
+)
+get_target_property(
+  YggdrasilRapidJSON_LINK_LIBRARIES
+  YggdrasilRapidJSON INTERFACE_LINK_LIBRARIES
+)
+list(FILTER YggdrasilRapidJSON_LINK_LIBRARIES INCLUDE REGEX ".+Python$")
+if(YggdrasilRapidJSON_LINK_LIBRARIES)
+  message(FATAL_ERROR "YggdrasilRapidJSON_LINK_LIBRARIES = ${YggdrasilRapidJSON_LINK_LIBRARIES}")
 endif()
 
 ##########
@@ -497,9 +494,6 @@ set(GENERATE_RJWRAPPER_ARGS)
 # if(WRAP_YGGDRASIL_RAPIDJSON_FOR_DLL)
 #   list(APPEND GENERATE_RJWRAPPER_ARGS --wrap-yggdrasil-rapidjson)
 # endif()
-if(YGGDRASIL_RAPIDJSON_INCLUDE_DIRS)
-  list(APPEND GENERATE_RJWRAPPER_ARGS --yggdrasil-rapidjson-include-dirs=${YGGDRASIL_RAPIDJSON_INCLUDE_DIRS})
-endif()
 if(GENERATE_YGGDRASIL_RAPIDJSON_WRAPPER)
   python_code_generation(
     rjwrapper utils/generate_generic
@@ -507,7 +501,7 @@ if(GENERATE_YGGDRASIL_RAPIDJSON_WRAPPER)
     ARGUMENTS --language=rjwrapper ${GENERATE_RJWRAPPER_ARGS}
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/utils
     SOURCES
-    ${YGGDRASIL_RAPIDJSON_INCLUDE_DIRS}/yggdrasil_rapidjson/document.h
+    ${YggdrasilRapidJSON_INCLUDE_DIRS}/yggdrasil_rapidjson/document.h
     BYPRODUCTS
     ${CMAKE_SOURCE_DIR}/cpp/include/utils/yggdrasil_rapidjson_wrapper2.hpp
     ${CMAKE_SOURCE_DIR}/cpp/src/utils/yggdrasil_rapidjson_wrapper2.cpp
