@@ -353,6 +353,7 @@ jobs:
         if: matrix.python-install == 'pip' && matrix.os != 'windows-latest'
         shell: bash -l {0}
         run: |
+          echo "CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}"
           echo "CMAKE_PREFIX_PATH=${{ env.CMAKE_INSTALL_PREFIX }}" >> "$GITHUB_ENV"
           echo "PYTHON_CONFIG_FLAGS=${{ env.PYTHON_CONFIG_FLAGS }} --config-settings=cmake.define.CMAKE_PREFIX_PATH=${{ env.CMAKE_INSTALL_PREFIX }}" >> "$GITHUB_ENV"
       # If any variables added to PYTHON_CONFIG_FLAGS, need to handle escaping quotes
