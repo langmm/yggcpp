@@ -621,7 +621,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} ${{ env.CMAKE_ARGS_TEST }}
+          cmake .. ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} ${{ env.CMAKE_ARGS_TEST }} -DCMAKE_PREFIX_PATH=${{ env.CMAKE_PREFIX_PATH }}
       
       ###################################
       # Build CXX, C & Fortran
@@ -749,7 +749,7 @@ jobs:
           echo "CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}"
           echo "CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}"
           mkdir build_speed
-          cmake -B build_speed -S tests/speedtest -DCOMM=ALL
+          cmake -B build_speed -S tests/speedtest -DCOMM=ALL -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
           cmake --build build_speed
           ctest --test-dir build_speed --output-on-failure -VV
       # - name: Run speed tests (default)
