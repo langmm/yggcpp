@@ -20,6 +20,9 @@ set(SPEED_TEST_S_MSG ${S_MSG})
 set(SPEED_TEST_COMM "${COMM}_COMM")
 set(SPEED_TEST_DIR ${CMAKE_CURRENT_BINARY_DIR})
 option(YGG_INSPECT_TARGETS "Inspect the executables and libraries that are built" OFF)
+# TODO: Remove these once debugging done
+set(CMAKE_VERBOSE_MAKEFILE ON)
+set(CMAKE_MESSAGE_LOG_LEVEL DEBUG)
 list(APPEND CMAKE_COMMAND_ARGS_TO_COPY YggInterface_DIR
      CMAKE_GENERATOR CMAKE_PREFIX_PATH
      CMAKE_VERBOSE_MAKEFILE CMAKE_MESSAGE_LOG_LEVEL
@@ -147,7 +150,7 @@ function(add_speed_test LANGUAGE LANGUAGE_EXT)
   endif()
   set_tests_runtime_paths(
     speedtest_${LANGUAGE}_${COMM}
-    PATHS ${NEW_PATHS}
+    PATHS ${paths}
     ADDITIONAL_ENV_VARIABLES ${TEST_ENV}
     ADD_CMAKE_PREFIX_PATHS
   )
