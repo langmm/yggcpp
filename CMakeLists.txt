@@ -205,16 +205,18 @@ add_yggdrasil_dependency(
   LIBRARIES YggdrasilRapidJSON
   REQUIRED
 )
-if(YggdrasilRapidJSON_VERSION VERSION_LESS "1.1.0.6")
-  strip_python(YggdrasilRapidJSON)
-endif()
-get_target_property(
-  YggdrasilRapidJSON_LINK_LIBRARIES
-  YggdrasilRapidJSON INTERFACE_LINK_LIBRARIES
-)
-list(FILTER YggdrasilRapidJSON_LINK_LIBRARIES INCLUDE REGEX ".+Python$")
-if(YggdrasilRapidJSON_LINK_LIBRARIES)
-  message(FATAL_ERROR "YggdrasilRapidJSON_LINK_LIBRARIES = ${YggdrasilRapidJSON_LINK_LIBRARIES}")
+if(SKBUILD)
+  if(YggdrasilRapidJSON_VERSION VERSION_LESS "1.1.0.6")
+    strip_python(YggdrasilRapidJSON)
+  endif()
+  get_target_property(
+    YggdrasilRapidJSON_LINK_LIBRARIES
+    YggdrasilRapidJSON INTERFACE_LINK_LIBRARIES
+  )
+  list(FILTER YggdrasilRapidJSON_LINK_LIBRARIES INCLUDE REGEX ".+Python$")
+  if(YggdrasilRapidJSON_LINK_LIBRARIES)
+    message(FATAL_ERROR "YggdrasilRapidJSON_LINK_LIBRARIES = ${YggdrasilRapidJSON_LINK_LIBRARIES}")
+  endif()
 endif()
 
 ##########
