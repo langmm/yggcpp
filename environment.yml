@@ -18,4 +18,4 @@ dependencies:
   - llvm-openmp
   - pytest
   - flask
-  - yggdrasil-rapidjson
+  - yggdrasil-rapidjson >= 1.1.0.5

@@ -62,7 +62,7 @@ outputs:
         - openmpi
         - if: unix
           then: sysv_ipc
-        - yggdrasil-rapidjson
+        - yggdrasil-rapidjson >=1.1.0.5
         - zeromq
       host:
         - llvm-openmp
@@ -73,10 +73,10 @@ outputs:
         - python
         - if: unix
           then: sysv_ipc
-        - yggdrasil-rapidjson
+        - yggdrasil-rapidjson >=1.1.0.5
         - zeromq
       run:
-        - yggdrasil-rapidjson
+        - yggdrasil-rapidjson >=1.1.0.5
     tests:
       - package_contents:
           files:
@@ -175,7 +175,7 @@ outputs:
         - openmpi
         - if: unix
           then: sysv_ipc
-        - yggdrasil-rapidjson
+        - yggdrasil-rapidjson >=1.1.0.5
         - zeromq
       host:
         - hatch-fancy-pypi-readme
@@ -191,7 +191,7 @@ outputs:
         - setuptools_scm
         - if: unix
           then: sysv_ipc
-        - yggdrasil-rapidjson
+        - yggdrasil-rapidjson >=1.1.0.5
         - zeromq
       run:
         - python

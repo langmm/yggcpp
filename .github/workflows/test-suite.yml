@@ -331,18 +331,18 @@ jobs:
         run: |
           echo "CMAKE_INSTALL_PREFIX=$CONDA_PREFIX" >> "$GITHUB_ENV"
       - name: Set CMAKE_INSTALL_PREFIX for local install
-        if: matrix.python-install == 'pip'  # && matrix.os != 'windows-latest'
+        if: matrix.python-install == 'pip' && matrix.os != 'windows-latest'
         shell: bash -l {0}
         run: |
           mkdir ../_install
           echo "CMAKE_INSTALL_PREFIX=$(pwd)/../_install" >> "$GITHUB_ENV"
           # echo "CMAKE_INSTALL_PREFIX=${{ github.workspace }}/../_install" >> "$GITHUB_ENV"
-      # - name: Set CMAKE_INSTALL_PREFIX for local install
-      #   if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
-      #   shell: bash -l {0}
-      #   run: |
-      #     mkdir ../_install
-      #     echo "CMAKE_INSTALL_PREFIX=${{ github.workspace }}\\..\\_install" >> "$GITHUB_ENV"
+      - name: Set CMAKE_INSTALL_PREFIX for local install
+        if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
+        shell: bash -l {0}
+        run: |
+          mkdir ../_install
+          echo "CMAKE_INSTALL_PREFIX=${{ github.workspace }}\\..\\_install" >> "$GITHUB_ENV"
       - name: Install YggdrasilRapidJSON from source
         if: matrix.python-install == 'pip'
         shell: bash -l {0}
@@ -742,14 +742,25 @@ jobs:
       #   shell: bash -l {0}
       #   run: |
       #     echo "CMAKE_PREFIX_PATH=${{ env.CMAKE_PREFIX_PATH }};${{ env.CMAKE_INSTALL_PREFIX }}" >> "$GITHUB_ENV"
-      - name: Run speed tests
-        if: matrix.with-asan == false
+      - name: Configure speed tests (CONDA)
+        if: matrix.with-asan == false && matrix.python-install != 'pip'
+        shell: bash -l {0}
+        run: |
+          mkdir build_speed
+          cmake -B build_speed -S tests/speedtest -DCOMM=ALL
+      - name: Configure speed tests (PIP)
+        if: matrix.with-asan == false && matrix.python-install == 'pip'
         shell: bash -l {0}
         run: |
           echo "CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}"
           echo "CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}"
+          echo "LD_LIBRARY_PATH=${LD_LIBRARY_PATH}"
           mkdir build_speed
           cmake -B build_speed -S tests/speedtest -DCOMM=ALL -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
+      - name: Run speed tests
+        if: matrix.with-asan == false
+        shell: bash -l {0}
+        run: |
           cmake --build build_speed
           ctest --test-dir build_speed --output-on-failure -VV
       # - name: Run speed tests (default)

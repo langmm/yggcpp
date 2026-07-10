@@ -2,28 +2,14 @@
 # by dependent packages and uses macros from the YggdrasilRapidJSON
 # library configuration file
 
-macro(find_yggdrasil_rapidjson)
-  if(NOT YggdrasilRapidJSON_FOUND)
-    find_package(YggdrasilRapidJSON REQUIRED)
-    # if(NOT YggdrasilRapidJSON_FOUND)
-    #   message(STATUS "Could not locate the YggdrasilRapidJSON package via CMAKE_PREFIX_PATH, installing as an external project...")
-    #   foreach(suffix BUILD_EXAMPLES BUILD_TESTS BUILD_DOC)
-    #     if(NOT YGGDRASIL_RAPIDJSON_${suffix})
-    #       set(YGGDRASIL_RAPIDJSON_${suffix} OFF)
-    #     endif()
-    #   endforeach()
-    #   include(FetchContent)
-    #   FetchContent_Declare(
-    #     YggdrasilRapidJSON
-    #     GIT_REPOSITORY https://github.com/cropsinsilico/yggdrasil-rapidjson.git
-    #     GIT_TAG        origin/bug_fixes
-    #     # GIT_TAG        origin/yggdrasil
-    #   )
-    #   FetchContent_MakeAvailable(YggdrasilRapidJSON)
-    # endif()
-    message(STATUS "YggdrasilRapidJSON_VERSION = ${YggdrasilRapidJSON_VERSION}")
-  endif()
-endmacro()
+if(NOT COMMAND include_yggdrasil_rapidjson_macros)
+  file(
+    DOWNLOAD
+    "https://raw.githubusercontent.com/cropsinsilico/yggdrasil-rapidjson/refs/heads/bug_fixes/YggdrasilRapidJSONTools.cmake"
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/YggdrasilRapidJSONTools.cmake"
+  )
+  include(YggdrasilRapidJSONTools)
+endif()
 
 macro(ygginterface_options OUTPUT_VARIABLE)
   yggdrasil_rapidjson_options(${OUTPUT_VARIABLE})
@@ -50,8 +36,7 @@ macro(ygginterface_options_create)
   option(YGG_LINK_Python_TO_CXX "Link the Python extension to the C++ interface library" OFF)
   option(WRAP_YGGDRASIL_RAPIDJSON_FOR_DLL "Build yggdrasil using a wrapper for yggdrasil_rapidjson to force it into a DLL (enabled automatically when compiling with MSVC" OFF)
   option(YGGDRASIL_DISABLE_Python_C_API "Disable the Python C API in YggdrasilRapidJSON" OFF)
-  find_yggdrasil_rapidjson()
-  yggdrasil_rapidjson_options_create()
+  include_yggdrasil_rapidjson_macros()
 endmacro()
 
 macro(ygginterface_options_values OUTPUT_VARIABLE)
@@ -124,42 +109,10 @@ macro(ygginterface_options_config PREFIX)
       -DYGG_DEBUG=${YGG_DEBUG_LEVEL}
     )
   endif()
-  find_yggdrasil_rapidjson()
-  # Remove Python as dependency so that this target can be used
-  # as part of a Python C extension
-  include(BuildTools)
-  strip_python(YggdrasilRapidJSON)
   list(
     APPEND ${PREFIX}_PUBLIC_LIBRARIES
     YggdrasilRapidJSON
   )
-  if((YGG_BUILD_ASAN OR YGG_BUILD_UBSAN)
-     AND NOT COMMAND yggdrasil_rapidjson_target_config)
-    # This can be removed after rapidjson updated
-    list(REMOVE_ITEM ${PREFIX}_PUBLIC_COMPILE_FLAGS
-         ${${PREFIX}_ASAN_COMPILE_FLAGS})
-    list(REMOVE_ITEM ${PREFIX}_PUBLIC_LINK_FLAGS
-         ${${PREFIX}_ASAN_COMPILE_FLAGS})
-    # Compilation flags are same as link flags for ASAN & UBSAN
-    foreach(suffix PUBLIC_C_COMPILE_FLAGS PUBLIC_CXX_COMPILE_FLAGS
-            PUBLIC_C_LINK_FLAGS PUBLIC_CXX_LINK_FLAGS)
-      list(
-        APPEND ${PREFIX}_${suffix}
-        ${${PREFIX}_ASAN_COMPILE_FLAGS}
-      )
-    endforeach()
-    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-      execute_process(
-          COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=libclang_rt.asan_osx_dynamic.dylib
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-        OUTPUT_VARIABLE ${PREFIX}_ASAN_LIB
-        RESULT_VARIABLE ${PREFIX}_ASAN_RESULT
-      )
-      if(${PREFIX}_ASAN_RESULT)
-        set(${PREFIX}_ASAN_LIB)
-      endif()
-    endif()
-  endif()
   if((NOT YGG_DEFAULT_COMM) AND YGG_COMMS_AVAILABLE)
     list(GET YGG_COMMS_AVAILABLE 0 YGG_DEFAULT_COMM)
   endif()
@@ -223,7 +176,7 @@ macro(ygginterface_options_config PREFIX)
 endmacro()
 
 macro(ygginterface_gitversion OUTPUT_VARIABLE DEFAULT)
-  find_yggdrasil_rapidjson()
+  include_yggdrasil_rapidjson_macros()
   yggdrasil_rapidjson_gitversion(${OUTPUT_VARIABLE} ${DEFAULT})
 endmacro()
 

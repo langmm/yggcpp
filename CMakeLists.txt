@@ -14,6 +14,9 @@ endif()
 if(POLICY CMP0094)  # https://cmake.org/cmake/help/latest/policy/CMP0094.html
   cmake_policy(SET CMP0094 NEW)  # FindPython should return the first matching Python
 endif()
+if(SKBUILD)
+  set(YGGDRASIL_RAPIDJSON_PYTHON_WRAPPER ON)
+endif()
 
 message(DEBUG "TOP LEVEL CMAKE_GENERATOR=${CMAKE_GENERATOR}")
 message(DEBUG "CMAKE_PREFIX_PATH = ${CMAKE_PREFIX_PATH}")
@@ -21,11 +24,10 @@ message(DEBUG "CMAKE_PREFIX_PATH = ${CMAKE_PREFIX_PATH}")
 SET(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/CMakeModules")
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-set(YGGINTERFACE_VERSION "" CACHE STRING "Version to use instead of the git tag version")
 include(YggInterfaceMacros)
-if(NOT YGGINTERFACE_VERSION)
-  ygginterface_gitversion(YGGINTERFACE_VERSION "0.1.0")
-endif()
+
+ygginterface_gitversion(DEFAULT_YGGINTERFACE_VERSION "0.1.0")
+set(YGGINTERFACE_VERSION "${DEFAULT_YGGINTERFACE_VERSION}" CACHE STRING "Version to use instead of the git tag version")
 message(STATUS "YGGINTERFACE_VERSION = ${YGGINTERFACE_VERSION}")
 
 # compile in release with debug info mode by default
@@ -203,6 +205,9 @@ add_yggdrasil_dependency(
   LIBRARIES YggdrasilRapidJSON
   REQUIRED
 )
+if(YggdrasilRapidJSON_VERSION VERSION_LESS "1.1.0.6")
+  strip_python(YggdrasilRapidJSON)
+endif()
 get_target_property(
   YggdrasilRapidJSON_LINK_LIBRARIES
   YggdrasilRapidJSON INTERFACE_LINK_LIBRARIES
