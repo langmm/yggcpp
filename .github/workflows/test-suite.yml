@@ -747,7 +747,7 @@ jobs:
         shell: bash -l {0}
         run: |
           mkdir build_speed
-          cmake -B build_speed -S tests/speedtest -DCOMM=ALL
+          cmake -B build_speed -S tests/speedtest -DCOMM=ALL -DENABLE_Fortran=OFF
       - name: Configure speed tests (PIP)
         if: matrix.with-asan == false && matrix.python-install == 'pip'
         shell: bash -l {0}
@@ -756,7 +756,7 @@ jobs:
           echo "CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}"
           echo "LD_LIBRARY_PATH=${LD_LIBRARY_PATH}"
           mkdir build_speed
-          cmake -B build_speed -S tests/speedtest -DCOMM=ALL -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
+          cmake -B build_speed -S tests/speedtest -DCOMM=ALL "-DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}" -DENABLE_Fortran=OFF
       - name: Run speed tests
         if: matrix.with-asan == false
         shell: bash -l {0}

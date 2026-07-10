@@ -5,7 +5,7 @@
 if(NOT COMMAND include_yggdrasil_rapidjson_macros)
   file(
     DOWNLOAD
-    "https://raw.githubusercontent.com/cropsinsilico/yggdrasil-rapidjson/refs/heads/bug_fixes/YggdrasilRapidJSONTools.cmake"
+    "https://raw.githubusercontent.com/cropsinsilico/yggdrasil-rapidjson/refs/heads/yggdrasil/YggdrasilRapidJSONTools.cmake"
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/YggdrasilRapidJSONTools.cmake"
   )
   include(YggdrasilRapidJSONTools)
