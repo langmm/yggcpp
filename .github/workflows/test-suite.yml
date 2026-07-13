@@ -621,7 +621,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          cmake .. ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} ${{ env.CMAKE_ARGS_TEST }} -DCMAKE_PREFIX_PATH=${{ env.CMAKE_PREFIX_PATH }}
+          cmake .. ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} ${{ env.CMAKE_ARGS_TEST }} "-DCMAKE_PREFIX_PATH=${{ env.CMAKE_PREFIX_PATH }}"
       
       ###################################
       # Build CXX, C & Fortran
@@ -737,17 +737,12 @@ jobs:
       ###################################
       # Speed tests
       ###################################
-      # - name: Add install directory to CMAKE_PREFIX_PATH
-      #   if: matrix.python-install == 'pip'
-      #   shell: bash -l {0}
-      #   run: |
-      #     echo "CMAKE_PREFIX_PATH=${{ env.CMAKE_PREFIX_PATH }};${{ env.CMAKE_INSTALL_PREFIX }}" >> "$GITHUB_ENV"
       - name: Configure speed tests (CONDA)
         if: matrix.with-asan == false && matrix.python-install != 'pip'
         shell: bash -l {0}
         run: |
           mkdir build_speed
-          cmake -B build_speed -S tests/speedtest -DCOMM=ALL -DENABLE_Fortran=OFF
+          cmake -G Ninja -B build_speed -S tests/speedtest -DCOMM=ALL -DENABLE_Fortran=OFF
       - name: Configure speed tests (PIP)
         if: matrix.with-asan == false && matrix.python-install == 'pip'
         shell: bash -l {0}
@@ -756,13 +751,13 @@ jobs:
           echo "CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}"
           echo "LD_LIBRARY_PATH=${LD_LIBRARY_PATH}"
           mkdir build_speed
-          cmake -B build_speed -S tests/speedtest -DCOMM=ALL "-DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}" -DENABLE_Fortran=OFF
+          cmake -G Ninja -B build_speed -S tests/speedtest -DCOMM=ALL "-DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}" -DENABLE_Fortran=OFF
       - name: Run speed tests
         if: matrix.with-asan == false
         shell: bash -l {0}
         run: |
-          cmake --build build_speed
-          ctest --test-dir build_speed --output-on-failure -VV
+          cmake --build build_speed --config Release
+          ctest --test-dir build_speed --output-on-failure -VV -C Release
       # - name: Run speed tests (default)
       #   if: matrix.with-asan == false
       #   shell: bash -l {0}
