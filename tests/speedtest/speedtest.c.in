@@ -9,8 +9,10 @@ int main(int argc, char *argv[]) {
 	 SPEED_TEST_N_MSG, SPEED_TEST_S_MSG);
   yggInput_t icomm = init_comm_flags("speed", RECV, SPEED_TEST_COMM,
 				     COMM_FLAG_ASYNC | COMM_FLAG_SET_OPP_ENV);
+  printf("Created RECV for speedtest\n");
   yggOutput_t ocomm = init_comm_flags("speed", SEND, SPEED_TEST_COMM,
 				      COMM_FLAG_ASYNC);
+  printf("Created SEND for speedtest\n");
   dtype_t odtype = create_dtype_default("string", false);
   if (!comm_set_datatype(ocomm, &odtype)) {
     ygglog_error("Failure to set datatype\n");
