@@ -348,7 +348,8 @@ jobs:
         shell: bash -l {0}
         run: |
           echo "PYTHON=${PYTHON}"
-          ./build_yggdrasil_rapidjson.sh --install-dir ${{ env.CMAKE_INSTALL_PREFIX }}
+          # ./build_yggdrasil_rapidjson.sh --install-dir ${{ env.CMAKE_INSTALL_PREFIX }}
+          ./build_yggdrasil_rapidjson.sh --install-dir $(pwd)/../_install
       - name: Set CMAKE_PREFIX_PATH for local install (Unix)
         if: matrix.python-install == 'pip' && matrix.os != 'windows-latest'
         shell: bash -l {0}
