@@ -34,7 +34,8 @@ if [ ! -n "${INSTALL_DIR}" ]; then
 fi
 
 if [ ! -d ${RJ_DIR} ]; then
-    git clone --branch yggdrasil --recurse-submodules https://github.com/cropsinsilico/yggdrasil-rapidjson.git ${RJ_DIR}
+    git clone --branch bug_fixes --recurse-submodules https://github.com/cropsinsilico/yggdrasil-rapidjson.git ${RJ_DIR}
+    # git clone --branch yggdrasil --recurse-submodules https://github.com/cropsinsilico/yggdrasil-rapidjson.git ${RJ_DIR}
 fi
 if [ ! -d ${BUILD_DIR} ]; then
     mkdir ${BUILD_DIR}

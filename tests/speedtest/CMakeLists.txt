@@ -23,7 +23,7 @@ option(YGG_INSPECT_TARGETS "Inspect the executables and libraries that are built
 # TODO: Remove these once debugging done
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(CMAKE_MESSAGE_LOG_LEVEL DEBUG)
-list(APPEND CMAKE_COMMAND_ARGS_TO_COPY YggInterface_DIR
+list(APPEND CMAKE_COMMAND_ARGS_TO_COPY YggInterface_DIR YggdrasilRapidJSON_DIR
      CMAKE_GENERATOR CMAKE_PREFIX_PATH
      CMAKE_VERBOSE_MAKEFILE CMAKE_MESSAGE_LOG_LEVEL
      CMAKE_BUILD_PARALLEL_LEVEL YGG_INSPECT_TARGETS)
@@ -148,6 +148,11 @@ function(add_speed_test LANGUAGE LANGUAGE_EXT)
   else()
     list(APPEND TEST_ENV "FAKE_ENV=test")
   endif()
+  set_tests_properties(
+    speedtest_${LANGUAGE}_${COMM}
+    PROPERTIES
+    TIMEOUT 100
+  )
   set_tests_runtime_paths(
     speedtest_${LANGUAGE}_${COMM}
     PATHS ${paths}
