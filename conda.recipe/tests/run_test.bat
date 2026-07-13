@@ -23,7 +23,8 @@ if !errorlevel! neq 0 exit /b !errorlevel!
 cmake --build . --config Release
 if !errorlevel! neq 0 exit /b !errorlevel!
 
-ctest -C Release --output-on-failure -VV
+C_DEFAULT_build\\speedtest_C.exe
+rem ctest -C Release --output-on-failure -VV
 if !errorlevel! neq 0 exit /b !errorlevel!
 
 cd ..

@@ -91,6 +91,7 @@ DynamicLibrary::DynamicLibrary(LANGUAGE lang, const std::string& name,
 #endif
   for (std::vector<std::string>::iterator it = to_try.begin();
        it != to_try.end(); it++) {
+    log_debug() << "DynamicLibrary: trying to locate library with name \"" << *it << "\"" << std::endl;
     if (load(*it)) {
       address = *it;
       log_debug() << "DynamicLibrary: Loaded library \"" << address <<
