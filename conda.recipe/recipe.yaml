@@ -54,7 +54,7 @@ outputs:
         - libcurl
         - llvm-openmp
         - ninja
-        - numpy >=1.13.0
+        - numpy
         - openmpi
         - pkgconfig
         - python
@@ -65,7 +65,7 @@ outputs:
       host:
         - llvm-openmp
         - ninja
-        - numpy >=1.13.0
+        - numpy
         - openmpi
         - pip
         - python

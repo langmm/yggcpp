@@ -31,9 +31,11 @@ YggdrasilLogger::~YggdrasilLogger() {
     strftime(buf, sizeof(buf), "%X", &tstruct);
     const std::chrono::duration<double> tse = t.time_since_epoch();
     std::chrono::seconds::rep milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(tse).count() % 1000;
-    // TODO: Revert to using std::cout after debugging done
-    std::cerr << buf << "." << std::setfill('0') << std::setw(3) <<
+    ss.str("");
+    ss << buf << "." << std::setfill('0') << std::setw(3) <<
       milliseconds << " " << name << ": " << _getLogPretex() << out;
+    // TODO: Revert to using std::cout after debugging done
+    std::cerr << ss.str() << std::flush;
   }
 }
 bool YggdrasilLogger::eval() {
@@ -46,6 +48,7 @@ bool YggdrasilLogger::eval() {
 #endif
   return out;
 }
+
 std::string YggdrasilLogger::_getLogPretex() {
   std::string out = std::to_string(ygg_getpid()) + ":" + get_thread_id() + " ";
   char *model_name = std::getenv("YGG_MODEL_NAME");
