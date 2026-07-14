@@ -124,14 +124,17 @@ void ZMQSocket::init(int type0, utils::Address& addr,
 	//   std::to_string(_last_port + 1) + "-]";
 	int port = _last_port + 1;
 	int err = EADDRINUSE;
-	while (err == EADDRINUSE) {
+        int tries = 100;
+	while ((err == EADDRINUSE || err == 13) && tries > 0) {
 	  err = 0;
 	  endpoint = protocol + "://" + host + ":" + std::to_string(port);
 	  if (zmq_bind(handle, endpoint.c_str()) != 0) {
 	    err = zmq_errno();
-	    if (err != EADDRINUSE) {
-	      except_msg = "ZMQSocket::init: Error binding to address  " + endpoint + ": " + std::string(zmq_strerror(err));
+            tries--;
+	    if (tries <= 0 || (err != EADDRINUSE && err != 13)) {
+	      except_msg = "ZMQSocket::init: Error binding to address  " + endpoint + " [" + std::to_string(err) + "]: " + std::string(zmq_strerror(err));
 	    } else { // GCOVR_EXCL_LINE
+              log_debug() << "ZMQSocket::init: Error binding to address  " << endpoint << " [" << err << "]: " << std::string(zmq_strerror(err)) << ". Retrying with next port (" << tries << " tries remaining) ..." << std::endl;
 	      port++;
 	    }
 	  }
