@@ -755,6 +755,11 @@ jobs:
       ###################################
       # Speed tests
       ###################################
+      - name: Add install directory to path on Windows
+        if: matrix.python-install == 'pip' && matrix.os == 'windows-latest'
+        shell: bash -l {0}
+        run: |
+          echo "${CMAKE_INSTALL_PREFIX}\\bin" >> $GITHUB_PATH
       - name: Configure speed tests (CONDA)
         if: matrix.with-asan == false && matrix.python-install != 'pip'
         shell: bash -l {0}
@@ -776,27 +781,6 @@ jobs:
         run: |
           cmake --build build_speed --config Release
           ctest --test-dir build_speed --output-on-failure -VV -C Release
-      # - name: Run speed tests (default)
-      #   if: matrix.with-asan == false
-      #   shell: bash -l {0}
-      #   run: |
-      #     echo "PATH=$PATH"
-      #     ./run_tests.sh --rebuild --speed --config Release ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} --verbose
-      # - name: Run speed tests (ipc)
-      #   if: matrix.with-asan == false && matrix.os != 'windows-latest'
-      #   shell: bash -l {0}
-      #   run: |
-      #     ./run_tests.sh --speed --config Release ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} --verbose --comm IPC
-      # - name: Run speed tests (zmq)
-      #   if: matrix.with-asan == false && matrix.install-zmq
-      #   shell: bash -l {0}
-      #   run: |
-      #     ./run_tests.sh --speed --config Release ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} --verbose --comm ZMQ
-      # - name: Run speed tests (rmq)
-      #   if: matrix.with-asan == false && matrix.install-rmq && matrix.python-install != 'conda'
-      #   shell: bash -l {0}
-      #   run: |
-      #     ./run_tests.sh --speed --config Release ${{ env.CMAKE_ARGS_BASE }} ${{ env.CMAKE_ARGS_NO_PYTHON }} --verbose --comm RMQ
 
       ###################################
       # Docs tests

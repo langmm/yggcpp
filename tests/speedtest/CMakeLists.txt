@@ -157,7 +157,7 @@ function(add_speed_test LANGUAGE LANGUAGE_EXT)
     speedtest_${LANGUAGE}_${COMM}
     PATHS ${paths}
     ADDITIONAL_ENV_VARIABLES ${TEST_ENV}
-    ADD_CMAKE_PREFIX_PATHS
+    # ADD_CMAKE_PREFIX_PATHS
   )
 endfunction()
 

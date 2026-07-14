@@ -462,6 +462,7 @@ bool Comm_t::create_global_scope_comm(const SupplementCommArgs& supp) {
   }
   if ((flags & COMM_FLAG_WRAPPER) &&
       !(global_type == SERVER_COMM || global_type == CLIENT_COMM)) {
+    std::cerr << "HERE: " << name << std::endl;
     log_debug() << "create_global_scope_comm: COMM_FLAG_WRAPPER for non-server/client: " << COMM_TYPE_cls2str(global_type) << std::endl;
   }
   if (name.empty() || (!(flags & COMM_FLAG_GLOBAL)) ||
