@@ -53,10 +53,15 @@ namespace utils {
      */
     YGG_API YggdrasilLogger(std::string nme, size_t lvl, bool is_err=false);
     /*!
+     * @brief Move constructor
+     * @param[in] rhs Logger to move
+     */
+    YGG_API YggdrasilLogger(YggdrasilLogger&& rhs);
+    /*!
      * @brief Copy constructor
      * @param[in] rhs Logger to copy
      */
-    YGG_API YggdrasilLogger(YggdrasilLogger const & rhs);
+    // YGG_API YggdrasilLogger(YggdrasilLogger const & rhs);
     /*!
      * @brief Destructor
      */
@@ -64,7 +69,7 @@ namespace utils {
     std::string name;  /**< The logger name */
     size_t level;      /**< The minimum logging level */
     bool is_error;     /**< Is the logger used for errors */
-    std::stringstream ss;  /**< internal use */
+    std::ostringstream* ss;  /**< internal use */
     std::chrono::system_clock::time_point t; /**< Time for message */
     /*!
      * @brief Templated streaming operator
@@ -74,7 +79,8 @@ namespace utils {
      */
     template<typename T>
     YggdrasilLogger& operator << (const T& x) {
-      ss << x;
+      if (ss != nullptr)
+        (*ss) << x;
       return *this;
     }
     /*!
@@ -83,7 +89,8 @@ namespace utils {
      * @return Logger
      */
     YggdrasilLogger& operator << (std::ostream& (*x)(std::ostream&)) {
-      ss << x;
+      if (ss != nullptr)
+        (*ss) << x;
       return *this;
     }
     /*!

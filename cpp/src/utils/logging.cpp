@@ -14,15 +14,23 @@ namespace utils {
 
 int YggdrasilLogger::_ygg_error_flag = 0;
 YggdrasilLogger::YggdrasilLogger(std::string nme, size_t lvl, bool is_err) :
-  name(nme), level(lvl), is_error(is_err), ss(), t(std::chrono::system_clock::now()) {
+  name(nme), level(lvl), is_error(is_err), ss(nullptr), t(std::chrono::system_clock::now()) {
+  if (eval())
+    ss = new std::ostringstream();
 }
-YggdrasilLogger::YggdrasilLogger(YggdrasilLogger const & rhs) :
-  name(rhs.name), level(rhs.level), is_error(rhs.is_error), ss(rhs.ss.str()), t(rhs.t) {
-  level = 0;
+YggdrasilLogger::YggdrasilLogger(YggdrasilLogger&& rhs) :
+  name(rhs.name), level(rhs.level), is_error(rhs.is_error), ss(rhs.ss), t(rhs.t) {
+  rhs.ss = nullptr;
 }
+// YggdrasilLogger::YggdrasilLogger(YggdrasilLogger const & rhs) :
+//   name(rhs.name), level(rhs.level), is_error(rhs.is_error), ss(nullptr), t(rhs.t) {
+//   if (rhs.ss)
+//     ss << rhs.ss->str();
+//   level = 0;
+// }
 YggdrasilLogger::~YggdrasilLogger() {
-  std::string out = ss.str();
-  if (eval() && !out.empty()) {
+  if (ss != nullptr) {
+    std::string out = ss->str();
     time_t     now = std::chrono::system_clock::to_time_t(t); // time(0);
     struct tm  tstruct;
     char       buf[80];
@@ -31,11 +39,13 @@ YggdrasilLogger::~YggdrasilLogger() {
     strftime(buf, sizeof(buf), "%X", &tstruct);
     const std::chrono::duration<double> tse = t.time_since_epoch();
     std::chrono::seconds::rep milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(tse).count() % 1000;
-    ss.str("");
-    ss << buf << "." << std::setfill('0') << std::setw(3) <<
+    ss->str("");
+    (*ss) << buf << "." << std::setfill('0') << std::setw(3) <<
       milliseconds << " " << name << ": " << _getLogPretex() << out;
     // TODO: Revert to using std::cout after debugging done
-    std::cerr << ss.str() << std::flush;
+    std::cerr << ss->str() << std::flush;
+    delete ss;
+    ss = nullptr;
   }
 }
 bool YggdrasilLogger::eval() {
