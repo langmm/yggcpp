@@ -49,7 +49,7 @@ public:
    */
   explicit YggInput(const char *name, FLAG_TYPE flags = 0,
 		    const COMM_TYPE commtype = DEFAULT_COMM) :
-    WrapComm(name, RECV, flags | COMM_FLAG_INTERFACE, commtype) {
+    WrapComm(std::string(name), RECV, flags | COMM_FLAG_INTERFACE, commtype) {
   }
   
   /*!
