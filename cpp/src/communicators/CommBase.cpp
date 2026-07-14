@@ -86,6 +86,7 @@ void Comm_t::_before_open(const SupplementCommArgs& supp) {
     std::string prefix(model_name);
     prefix += ":";
     if (name.rfind(prefix, 0) != 0) {
+      std::cerr << "FROM PREFIX: " << prefix << ", " << name << std::endl;
       prefix += name;
       name = prefix;
     }
