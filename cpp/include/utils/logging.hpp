@@ -61,11 +61,6 @@ namespace utils {
      */
     YGG_API YggdrasilLogger(YggdrasilLogger&& rhs);
     /*!
-     * @brief Copy constructor
-     * @param[in] rhs Logger to copy
-     */
-    // YGG_API YggdrasilLogger(YggdrasilLogger const & rhs);
-    /*!
      * @brief Destructor
      */
     YGG_API ~YggdrasilLogger();

@@ -22,12 +22,6 @@ YggdrasilLogger::YggdrasilLogger(YggdrasilLogger&& rhs) :
   name(rhs.name), level(rhs.level), is_error(rhs.is_error), ss(rhs.ss), t(rhs.t) {
   rhs.ss = nullptr;
 }
-// YggdrasilLogger::YggdrasilLogger(YggdrasilLogger const & rhs) :
-//   name(rhs.name), level(rhs.level), is_error(rhs.is_error), ss(nullptr), t(rhs.t) {
-//   if (rhs.ss)
-//     ss << rhs.ss->str();
-//   level = 0;
-// }
 YggdrasilLogger::~YggdrasilLogger() {
   if (ss != nullptr) {
     std::string out = ss->str();
