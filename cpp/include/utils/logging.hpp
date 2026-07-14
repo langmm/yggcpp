@@ -44,6 +44,9 @@ namespace utils {
    * @brief Class for logging
    */
   class YggdrasilLogger {
+  private:
+    YggdrasilLogger(const YggdrasilLogger&) = delete;
+    YggdrasilLogger& operator=(const YggdrasilLogger&) = delete;
   public:
     /*!
      * @brief Construnctor
