@@ -63,7 +63,9 @@ public:
    */
   YggInput(const std::string& name, FLAG_TYPE flags = 0,
 	   const COMM_TYPE commtype = DEFAULT_COMM) :
-    WrapComm(name, RECV, flags | COMM_FLAG_INTERFACE, commtype) {}
+    WrapComm(name, RECV, flags | COMM_FLAG_INTERFACE, commtype) {
+    std::cerr << "YggInput: " << name << " -> " << this->name << std::endl;
+  }
 
   /*!
     @brief Constructor for YggInput with format.

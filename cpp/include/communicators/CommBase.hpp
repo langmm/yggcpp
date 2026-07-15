@@ -2192,6 +2192,7 @@ CommBase<H>::CommBase(const std::string &nme,
 		      const COMM_TYPE &t,
 		      const SupplementCommArgs& supp) :
   Comm_t(nme, addr, dirn, flgs, t, supp), handle(nullptr) {
+  std::cerr << "CommBase: " << nme << " -> " << this->name << std::endl;
   if (!(getFlags() & COMM_FLAG_DELAYED_OPEN))
     _open(false);
 }

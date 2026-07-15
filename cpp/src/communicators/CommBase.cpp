@@ -45,6 +45,7 @@ Comm_t::Comm_t(const std::string &nme,
   index_in_register(-1), thread_id(), metadata(),
   timeout_recv(YGG_MAX_TIME), workers(), global_comm(nullptr),
   language(NO_LANGUAGE), model(), partner_model() {
+  std::cerr << "Comm_t: " << nme << " -> " << name << std::endl;
   _before_open(supp);
 }
 

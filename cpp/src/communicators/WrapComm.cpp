@@ -58,15 +58,16 @@ WrapComm& WrapComm::Move() {
 //   return *this;
 // }
 
-WrapComm::WrapComm(const std::string name,
+WrapComm::WrapComm(const std::string nme,
 		   const utils::Address &address,
 		   const DIRECTION direction,
 		   FLAG_TYPE flgs, const COMM_TYPE type,
                    FLAG_TYPE wrapflgs, const COMM_TYPE wraptyp,
 		   const SupplementCommArgs& wrapspp) :
-  CommBase(name, address, direction, flgs | COMM_FLAG_WRAPPER,
+  CommBase(nme, address, direction, flgs | COMM_FLAG_WRAPPER,
 	   type, wrapspp),
   wrapflags(wrapflgs | flgs), wraptype(wraptyp), wrapsupp(wrapspp) {
+  std::cerr << "WrapComm[before open]: " << nme << " -> " << this->name << std::endl;
   if (wraptype == NULL_COMM)
     wraptype = type;
   ADD_CONSTRUCTOR_OPEN(WrapComm)
@@ -78,16 +79,14 @@ WrapComm::WrapComm(const std::string nme,
 		   const SupplementCommArgs& wrapsupp) :
   WrapComm(nme, utils::blankAddress, dirn, flgs, type,
 	   wrapflgs, wraptype, wrapsupp) {
-  std::cerr << "Constructor with name, but no address used [CORRECT]: " << this->name << std::endl;
+  std::cerr << "WrapComm: " << nme << " -> " << this->name << std::endl;
 }
 WrapComm::WrapComm(const utils::Address &addr,
 		   const DIRECTION dirn,
 		   FLAG_TYPE flgs, const COMM_TYPE type,
 		   FLAG_TYPE wrapflgs, const COMM_TYPE wraptype,
 		   const SupplementCommArgs& wrapsupp) :
-  WrapComm("", addr, dirn, flgs, type, wrapflgs, wraptype, wrapsupp) {
-  std::cerr << "Constructor with address, but no name used" << std::endl;
-}
+  WrapComm("", addr, dirn, flgs, type, wrapflgs, wraptype, wrapsupp) {}
 WrapComm::WrapComm(Comm_t* comm) :
   WrapComm(comm->getName(), utils::Address(comm->getAddress()),
 	   comm->getDirection(),
