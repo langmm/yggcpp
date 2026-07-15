@@ -64,7 +64,7 @@ WrapComm::WrapComm(const std::string &nme,
 		   FLAG_TYPE flgs, const COMM_TYPE type,
                    FLAG_TYPE wrapflgs, const COMM_TYPE wraptyp,
 		   const SupplementCommArgs& wrapspp) :
-  CommBase(nme, address, direction, flgs | COMM_FLAG_WRAPPER,
+  CommBase(std::move(nme), address, direction, flgs | COMM_FLAG_WRAPPER,
 	   type, wrapspp),
   wrapflags(wrapflgs | flgs), wraptype(wraptyp), wrapsupp(wrapspp) {
   std::cerr << "WrapComm[before open]: " << nme << " -> " << this->name << std::endl;

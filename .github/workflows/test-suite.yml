@@ -801,12 +801,12 @@ jobs:
       ###################################
       - name: Upload coverage report
         if: matrix.with-coverage == true && matrix.os != 'windows-2022'
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v7
         with:
           name: ${{ matrix.os }}-${{ matrix.python-install }}-${{ matrix.install-zmq }}-${{ matrix.install-mpi }}-${{ matrix.with-coverage }}-${{ matrix.with-asan }}-${{ matrix.with-elf }}-${{ matrix.with-valgrind }}
           token: ${{ secrets.CODECOV_TOKEN }}
-          file: coverage/coverage.info
-          functionalities: gcov
+          files: coverage/coverage.info
+          # functionalities: gcov
 
   all_tests_passed:
     runs-on: ubuntu-latest
