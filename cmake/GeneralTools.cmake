@@ -1,3 +1,7 @@
+if(POLICY CMP0057)  # IN_LIST operator
+  cmake_policy(SET CMP0057 NEW)
+endif()
+
 # https://stackoverflow.com/questions/32183975/how-to-print-all-the-properties-of-a-target-in-cmake
 # Get all propreties that cmake supports
 if(NOT CMAKE_PROPERTY_LIST)

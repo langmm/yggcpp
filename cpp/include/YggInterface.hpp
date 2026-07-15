@@ -54,17 +54,17 @@ public:
   
   /*!
     @brief Constructor for YggInput w/ C++ std::string.
-    @param[in] name Name of input channel. This should be named as a
+    @param[in] nme Name of input channel. This should be named as a
       model input the in YAML for the model calling it.
     @param[in] flags Bit flags to set communicator properties.
     @param[in] commtype Type of communicator that should be used. Defaults
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggInput(const std::string& name, FLAG_TYPE flags = 0,
+  YggInput(const std::string& nme, FLAG_TYPE flags = 0,
 	   const COMM_TYPE commtype = DEFAULT_COMM) :
-    WrapComm(name, RECV, flags | COMM_FLAG_INTERFACE, commtype) {
-    std::cerr << "YggInput: " << name << " -> " << this->name << std::endl;
+    WrapComm(nme, RECV, flags | COMM_FLAG_INTERFACE, commtype) {
+    std::cerr << "YggInput: " << nme << " -> " << this->name << std::endl;
   }
 
   /*!
