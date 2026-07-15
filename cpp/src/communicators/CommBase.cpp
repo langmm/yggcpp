@@ -39,7 +39,7 @@ Comm_t::Comm_t(const std::string &nme,
 	       FLAG_TYPE flgs,
 	       const COMM_TYPE &t,
 	       const SupplementCommArgs& supp) :
-  ctx(global_context), type(t), name(nme), address(addr),
+  ctx(global_context), type(t), name(std::move(nme)), address(addr),
   direction(dirn), flags(flgs),
   maxMsgSize(COMM_BASE_MAX_MSG_SIZE), msgBufSize(0),
   index_in_register(-1), thread_id(), metadata(),

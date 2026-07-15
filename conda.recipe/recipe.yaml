@@ -52,7 +52,7 @@ outputs:
             - ${{ compiler('cxx') }}
         - cmake >=3.16
         - libcurl
-        - llvm-openmp
+        # - llvm-openmp
         - ninja
         - numpy
         - openmpi
@@ -63,7 +63,7 @@ outputs:
         - yggdrasil-rapidjson >=1.1.0.5
         - zeromq
       host:
-        - llvm-openmp
+        # - llvm-openmp
         - ninja
         - numpy
         - openmpi
@@ -187,7 +187,7 @@ outputs:
             - ${{ compiler('m2w64_fortran') }}
         - cmake >=3.16
         - libcurl
-        - llvm-openmp
+        # - llvm-openmp
         - ninja
         - numpy >=1.13.0
         - openmpi
@@ -198,7 +198,7 @@ outputs:
         - yggdrasil-rapidjson >=1.1.0.5
         - zeromq
       host:
-        - llvm-openmp
+        # - llvm-openmp
         - ninja
         - numpy >=1.13.0
         - openmpi
@@ -305,7 +305,7 @@ outputs:
         - ${{ compiler('c') }}
         - ${{ compiler('cxx') }}
         - libcurl
-        - llvm-openmp
+        # - llvm-openmp
         - openmpi
         - if: unix
           then: sysv_ipc
@@ -313,7 +313,7 @@ outputs:
         - zeromq
       host:
         - hatch-fancy-pypi-readme
-        - llvm-openmp
+        # - llvm-openmp
         - ninja
         - numpy >=1.13.0
         - openmpi

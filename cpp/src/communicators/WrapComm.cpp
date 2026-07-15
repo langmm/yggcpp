@@ -71,6 +71,7 @@ WrapComm::WrapComm(const std::string &nme,
   if (wraptype == NULL_COMM)
     wraptype = type;
   ADD_CONSTRUCTOR_OPEN(WrapComm)
+  std::cerr << "WrapComm[after open]: " << nme << " -> " << this->name << std::endl;
 }
 WrapComm::WrapComm(const std::string &nme,
 		   const DIRECTION dirn,
