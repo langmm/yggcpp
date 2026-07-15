@@ -49,13 +49,14 @@ public:
    */
   YggInput(const std::string& nme, FLAG_TYPE flags = 0,
 	   const COMM_TYPE commtype = DEFAULT_COMM) :
-    WrapComm(nme, RECV, flags | COMM_FLAG_INTERFACE, commtype) {
+    WrapComm(nme, utils::blankAddress,
+             RECV, flags | COMM_FLAG_INTERFACE, commtype) {
     std::cerr << "YggInput: " << nme << " -> " << this->name << std::endl;
   }
 
   /*!
     @brief Constructor for YggInput with format.
-    @param[in] name Name of input channel. This should be named as a
+    @param[in] nme Name of input channel. This should be named as a
       model input the in YAML for the model calling it.
     @param[in] fmt Format string specifying the datatype of messages
       that will be received using this comm.
@@ -66,17 +67,18 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggInput(const std::string& name, const std::string& fmt,
+  YggInput(const std::string& nme, const std::string& fmt,
 	   bool as_array = false, FLAG_TYPE flags = 0,
 	   const COMM_TYPE commtype = DEFAULT_COMM) :
-    WrapComm(name, RECV, flags | COMM_FLAG_INTERFACE, commtype) {
+    WrapComm(nme, utils::blankAddress,
+             RECV, flags | COMM_FLAG_INTERFACE, commtype) {
     if (!this->addFormat(fmt, as_array))
       this->throw_error("Invalid format");  // GCOV_EXCL_LINE
   }    
 
   /*!
     @brief Constructor for YggInput with explicit datatype.
-    @param[in] name Name of input channel. This should be named as a
+    @param[in] nme Name of input channel. This should be named as a
       model input the in YAML for the model calling it.
     @param[in] schema Document containing JSON schema describing the type
       of data expected by the communicator.
@@ -85,9 +87,10 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggInput(const std::string& name, const yggdrasil_rapidjson::Document& schema,
+  YggInput(const std::string& nme, const yggdrasil_rapidjson::Document& schema,
 	   FLAG_TYPE flags = 0, const COMM_TYPE commtype = DEFAULT_COMM) :
-    WrapComm(name, RECV, flags | COMM_FLAG_INTERFACE, commtype) {
+    WrapComm(nme, utils::blankAddress,
+             RECV, flags | COMM_FLAG_INTERFACE, commtype) {
     if (!this->addSchema(schema))
       this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
   }
@@ -104,20 +107,21 @@ public:
   
   /*!
     @brief Constructor for YggOutput.
-    @param[in] name Name of output channel. This should be named as a
+    @param[in] nme Name of output channel. This should be named as a
       model output the in YAML for the model calling it.
     @param[in] flags Bit flags to set communicator properties.
     @param[in] commtype Type of communicator that should be used. Defaults
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggOutput(const std::string& name, FLAG_TYPE flags = 0,
+  YggOutput(const std::string& nme, FLAG_TYPE flags = 0,
 	    const COMM_TYPE commtype = DEFAULT_COMM) :
-    WrapComm(name, SEND, flags | COMM_FLAG_INTERFACE, commtype) {}
+    WrapComm(nme, utils::blankAddress,
+             SEND, flags | COMM_FLAG_INTERFACE, commtype) {}
   
   /*!
     @brief Constructor for YggOutput with format.
-    @param[in] name Name of output channel. This should be named as a
+    @param[in] nme Name of output channel. This should be named as a
       model output the in YAML for the model calling it.
     @param[in] fmt Format string specifying the datatype of messages
       that will be sent using this comm. If messages are sent to an
@@ -129,10 +133,11 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggOutput(const std::string& name, const std::string& fmt,
+  YggOutput(const std::string& nme, const std::string& fmt,
 	    bool as_array=false, FLAG_TYPE flags = 0,
 	    const COMM_TYPE commtype = DEFAULT_COMM) :
-    WrapComm(name, SEND, flags | COMM_FLAG_INTERFACE, commtype) {
+    WrapComm(nme, utils::blankAddress,
+             SEND, flags | COMM_FLAG_INTERFACE, commtype) {
     if (!this->addFormat(fmt, as_array))
       this->throw_error("Invalid format");  // GCOV_EXCL_LINE
   }
@@ -140,7 +145,7 @@ public:
 
   /*!
     @brief Constructor for YggOutput with explicit datatype.
-    @param[in] name Name of output channel. This should be named as a
+    @param[in] nme Name of output channel. This should be named as a
       model output the in YAML for the model calling it.
     @param[in] schema Document containing JSON schema describing the type
       of data expected by the communicator.
@@ -149,9 +154,10 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggOutput(const std::string& name, yggdrasil_rapidjson::Document& schema,
+  YggOutput(const std::string& nme, yggdrasil_rapidjson::Document& schema,
 	    FLAG_TYPE flags = 0, const COMM_TYPE commtype = DEFAULT_COMM) :
-    WrapComm(name, SEND, flags | COMM_FLAG_INTERFACE, commtype) {
+    WrapComm(nme, utils::blankAddress,
+             SEND, flags | COMM_FLAG_INTERFACE, commtype) {
     if (!this->addSchema(schema))
       this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
   }
@@ -165,6 +171,24 @@ public:
  */
 class YggRpcServer : public ServerComm {
 public:
+  /*!
+    @brief Constructor for YggRpcServer.
+    @param[in] name Name of server input channel. This should be named in
+      a model's 'server' field in the YAML or the name of the model with
+      'server' set to 'true'.
+    @param[in] flags Bit flags to set communicator properties.
+    @param[in] request_commtype Type of communicator that should be used
+      for the request communicator. Defaults to DEFAULT_COMM that is set
+      based on the available packages at compilation.
+    @param[in] response_commtype Type of communicator that should be used
+      for the response communicator. Defaults to DEFAULT_COMM that is
+      set based on the available packages at compilation.
+  */
+  YggRpcServer(const std::string& name, FLAG_TYPE flags = 0,
+               const COMM_TYPE request_commtype = DEFAULT_COMM,
+               const COMM_TYPE response_commtype = DEFAULT_COMM) :
+    ServerComm(name, flags | COMM_FLAG_INTERFACE,
+               SERVER_COMM, request_commtype, response_commtype) {}
 
   /*!
     @brief Constructor for YggRpcServer.
@@ -471,6 +495,19 @@ public:
     @brief Constructor for YggAsciiTableInput.
     @param[in] name Name of input channel. This should be named as a
       model input the in YAML for the model calling it.
+    @param[in] flags Bit flags to set communicator properties.
+    @param[in] commtype Type of communicator that should be used. Defaults
+      to DEFAULT_COMM that is set based on the available packages at
+      compilation.
+   */
+  YggAsciiTableInput(const std::string& name, FLAG_TYPE flags = 0,
+		     const COMM_TYPE commtype = DEFAULT_COMM) :
+    YggInput(name, flags, commtype) {}
+
+  /*!
+    @brief Constructor for YggAsciiTableInput.
+    @param[in] name Name of input channel. This should be named as a
+      model input the in YAML for the model calling it.
     @param[in] fmt Format string specifying the datatype of messages
       that will be received using this comm.
     @param[in] flags Bit flags to set communicator properties.
@@ -478,7 +515,7 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggAsciiTableInput(const std::string& name, const std::string& fmt = "",
+  YggAsciiTableInput(const std::string& name, const std::string& fmt,
 		     FLAG_TYPE flags = 0,
 		     const COMM_TYPE commtype = DEFAULT_COMM) :
     YggInput(name, fmt, false, flags, commtype) {}
@@ -530,7 +567,22 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggAsciiArrayInput(const std::string& name, const std::string& fmt = "",
+  YggAsciiArrayInput(const std::string& name, FLAG_TYPE flags = 0,
+                     const COMM_TYPE commtype = DEFAULT_COMM) :
+    YggInput(name, flags, commtype) {}
+
+  /*!
+    @brief Constructor for YggAsciiArrayInput.
+    @param[in] name Name of output channel. This should be named as a
+      model output the in YAML for the model calling it.
+    @param[in] fmt Format string specifying the datatype of messages
+      that will be received using this comm.
+    @param[in] flags Bit flags to set communicator properties.
+    @param[in] commtype Type of communicator that should be used. Defaults
+      to DEFAULT_COMM that is set based on the available packages at
+      compilation.
+   */
+  YggAsciiArrayInput(const std::string& name, const std::string& fmt,
 		     FLAG_TYPE flags = 0, const COMM_TYPE commtype = DEFAULT_COMM) :
     YggInput(name, fmt, true, flags, commtype) {}
 
