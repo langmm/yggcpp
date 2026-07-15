@@ -86,7 +86,9 @@ WrapComm::WrapComm(const utils::Address &addr,
 		   FLAG_TYPE flgs, const COMM_TYPE type,
 		   FLAG_TYPE wrapflgs, const COMM_TYPE wraptype,
 		   const SupplementCommArgs& wrapsupp) :
-  WrapComm("", addr, dirn, flgs, type, wrapflgs, wraptype, wrapsupp) {}
+  WrapComm("", addr, dirn, flgs, type, wrapflgs, wraptype, wrapsupp) {
+  std::cerr << "WrapComm: NO NAME" << std::endl;
+}
 WrapComm::WrapComm(Comm_t* comm) :
   WrapComm(comm->getName(), utils::Address(comm->getAddress()),
 	   comm->getDirection(),

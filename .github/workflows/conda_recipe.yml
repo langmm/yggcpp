@@ -42,6 +42,20 @@ jobs:
       - name: Set up MSVC Compiler on windows
         uses: ilammy/msvc-dev-cmd@v1
         if: matrix.os == 'windows-2022'
+      - name: Remove Strawberry Perl from PATH
+        if: matrix.os == 'windows-2022'
+        run: |
+          $env:PATH = $env:PATH -replace "C:\\Strawberry\\c\\bin;", ""
+          "PATH=$env:PATH" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Get-ChildItem -Path C:\Strawberry -Recurse | Remove-Item -force -recurse
+          Remove-Item C:\Strawberry -Force
+      - name: Remove Java_Temurin-Hotspot_jdk from PATH
+        if: matrix.os == 'windows-2022'
+        run: |
+          $env:PATH = $env:PATH -replace "C:\\hostedtoolcache\\windows\\Java_Temurin-Hotspot_jdk\\17.0.19-10\\x64\\bin;", ""
+          "PATH=$env:PATH" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Get-ChildItem -Path C:\hostedtoolcache\windows\Java_Temurin-Hotspot_jdk -Recurse | Remove-Item -force -recurse
+          Remove-Item C:\hostedtoolcache\windows\Java_Temurin-Hotspot_jdk -Force
       - name: Set up miniconda test environment
         uses: conda-incubator/setup-miniconda@v4
         with:
