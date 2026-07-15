@@ -61,7 +61,7 @@ namespace YggInterface {
        *   communicator
        * @see utils::Address
        */
-      YGG_API explicit WrapComm(const std::string name,
+      YGG_API explicit WrapComm(const std::string &name,
 				const utils::Address &address,
 				const DIRECTION direction = NONE,
 				FLAG_TYPE flgs = 0,
@@ -83,7 +83,7 @@ namespace YggInterface {
        * @param[in] wrapsupp Supplementary comm parameters for the wrapped
        *   communicator
        */
-      YGG_API explicit WrapComm(const std::string nme,
+      YGG_API explicit WrapComm(const std::string &nme,
 				const DIRECTION dirn,
 				FLAG_TYPE flgs = 0,
 				const COMM_TYPE type = DEFAULT_COMM,

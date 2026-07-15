@@ -58,7 +58,7 @@ WrapComm& WrapComm::Move() {
 //   return *this;
 // }
 
-WrapComm::WrapComm(const std::string nme,
+WrapComm::WrapComm(const std::string &nme,
 		   const utils::Address &address,
 		   const DIRECTION direction,
 		   FLAG_TYPE flgs, const COMM_TYPE type,
@@ -72,7 +72,7 @@ WrapComm::WrapComm(const std::string nme,
     wraptype = type;
   ADD_CONSTRUCTOR_OPEN(WrapComm)
 }
-WrapComm::WrapComm(const std::string nme,
+WrapComm::WrapComm(const std::string &nme,
 		   const DIRECTION dirn,
 		   FLAG_TYPE flgs, const COMM_TYPE type,
 		   FLAG_TYPE wrapflgs, const COMM_TYPE wraptype,

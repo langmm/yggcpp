@@ -1,7 +1,3 @@
-if(POLICY CMP0057)  # IN_LIST operator
-  cmake_policy(SET CMP0057 NEW)
-endif()
-
 # https://stackoverflow.com/questions/32183975/how-to-print-all-the-properties-of-a-target-in-cmake
 # Get all propreties that cmake supports
 if(NOT CMAKE_PROPERTY_LIST)
@@ -204,6 +200,10 @@ function(package_key_value_list INPUT_VAR)
 endfunction()
 
 function(load_cmake_variables CONTENTS)
+  cmake_policy(PUSH)
+  if(POLICY CMP0057)  # IN_LIST operator
+    cmake_policy(SET CMP0057 NEW)
+  endif()
   set(options VERBOSE REQUIRED ENV)
   set(oneValueArgs PREFIX SUFFIX LOG_LEVEL)
   set(multiValueArgs VARIABLES)
@@ -273,6 +273,7 @@ function(load_cmake_variables CONTENTS)
       message(FATAL_ERROR "Could not locate the following required variables: ${MISSING_VARIABLES}")
     endif()
   endif()
+  cmake_policy(POP)
 endfunction()
 
 function(dump_cmake_variables)
