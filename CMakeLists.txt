@@ -14,6 +14,9 @@ endif()
 if(POLICY CMP0094)  # https://cmake.org/cmake/help/latest/policy/CMP0094.html
   cmake_policy(SET CMP0094 NEW)  # FindPython should return the first matching Python
 endif()
+if(POLICY CMP0057)  # IN_LIST operator
+  cmake_policy(SET CMP0057 NEW)
+endif()
 if(SKBUILD)
   set(YGGDRASIL_RAPIDJSON_PYTHON_WRAPPER ON)
 endif()

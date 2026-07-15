@@ -375,9 +375,10 @@ jobs:
           CMAKE_BUILD_TYPE_TEST="Debug"
           echo "CMAKE_BUILD_TYPE_TEST=Debug" >> "$GITHUB_ENV"
           echo "CMAKE_ARGS_BASE=-G Ninja -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DCMAKE_MESSAGE_LOG_LEVEL:STRING=DEBUG" >> "$GITHUB_ENV"
-          echo "CMAKE_ARGS_NO_PYTHON=-DYGG_Fortran_REQUIRED=ON" >> "$GITHUB_ENV"
+          # echo "CMAKE_ARGS_NO_PYTHON=-DYGG_Fortran_REQUIRED=ON" >> "$GITHUB_ENV"
+          echo "CMAKE_ARGS_NO_PYTHON=-DBUILD_Fortran_LIBRARY=OFF" >> "$GITHUB_ENV"
           echo "CMAKE_ARGS_DOCS=" >> "$GITHUB_ENV"
-          echo "CMAKE_ARGS_TEST=-DYGG_BUILD_CXX_TESTS=ON -DYGG_BUILD_Fortran_TESTS=ON -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE_TEST} -DYGG_DEBUG_LEVEL=5" >> "$GITHUB_ENV"
+          echo "CMAKE_ARGS_TEST=-DYGG_BUILD_CXX_TESTS=ON -DYGG_BUILD_Fortran_TESTS=OF -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE_TEST} -DYGG_DEBUG_LEVEL=5" >> "$GITHUB_ENV"
           echo "CMAKE_ARGS_PYTHON=-DYGG_DEBUG_LEVEL=5" >> "$GITHUB_ENV"
           echo "TEST_FLAGS=-C ${CMAKE_BUILD_TYPE_TEST} --output-on-failure -VV" >> "$GITHUB_ENV"
 
@@ -644,13 +645,13 @@ jobs:
       ###################################
       # Build CXX, C & Fortran
       ###################################
-      - name: Build C++ & C (CONDA)
+      - name: Build C++, C, & Fortran Interfaces (CONDA)
         if: matrix.python-install == 'conda'
         shell: bash -l {0}
         run: |
           cd build
           cmake --build . --config ${{ env.CMAKE_BUILD_TYPE_TEST }}
-      - name: Build C++ & C (PIP)
+      - name: Build C++, C, & Fortran Interfaces (PIP)
         if: matrix.python-install == 'pip'
         run: |
           cd build
