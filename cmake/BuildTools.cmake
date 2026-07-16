@@ -900,10 +900,8 @@ function(add_mixed_language_library target library_type)
     set(ARGS_FORCE_EXTERNAL ON)
   endif()
   if(MSVC AND (NOT Fortran_IDX EQUAL -1) AND (NOT ARGS_FORCE_EXTERNAL))
-    check_language_external(
-      Fortran OUTPUT_COMPILER_ID EXTERNAL_FORTRAN_COMPILER_ID
-    )
-    if(EXTERNAL_FORTRAN_COMPILER_ID STREQUAL "GNU")
+    check_language_external(Fortran)
+    if(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")
       set(ARGS_FORCE_EXTERNAL ON)
     endif()
   endif()

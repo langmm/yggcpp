@@ -36,7 +36,8 @@ if(NOT YGG_TARGET_Fortran)
   set(YGG_TARGET_Fortran YggInterface_fortran)
   set(YGG_TARGET_Fortran ${YGG_TARGET_Fortran} PARENT_SCOPE)
 endif()
-if ((NOT FORCE_SPLIT_CXXFortran) AND (NOT MSVC))
+if(NOT (FORCE_SPLIT_CXXFortran OR
+        (MSVC AND CMAKE_Fortran_COMPILER_ID STREQUAL "GNU")))
     enable_language(Fortran)
 endif()
 
