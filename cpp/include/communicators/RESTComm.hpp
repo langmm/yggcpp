@@ -70,7 +70,7 @@ namespace YggInterface {
       DIRECTION direction;          /**< Connection direction */
       std::string model;            /**< Model to use in connection address */
 #ifdef RESTINSTALLED
-      CURL *curl;                   /**< Curl conneciton */
+      CURL *curl;                   /**< Curl connection */
     private:
       /**
        * @brief Log an error based on the provided curl code

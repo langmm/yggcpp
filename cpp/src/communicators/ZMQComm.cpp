@@ -1,4 +1,7 @@
 #include "communicators/ZMQComm.hpp"
+#ifdef ZMQINSTALLED
+#include <zmq.h>
+#endif
 #include "communicators/DefaultComm.hpp"
 #include "communicators/WrapComm.hpp"
 #include "utils/tools.hpp"

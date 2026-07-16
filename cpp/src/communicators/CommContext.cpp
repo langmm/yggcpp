@@ -1,4 +1,7 @@
 #include "communicators/comms.hpp"
+#ifdef ZMQINSTALLED
+#include <zmq.h>
+#endif
 #include "utils/tools.hpp"
 #include "utils/yggdrasil_rapidjson_wrapper.hpp"
 #include "utils/embedded_python.hpp"

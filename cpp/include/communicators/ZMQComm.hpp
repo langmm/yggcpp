@@ -2,10 +2,6 @@
 
 #include "communicators/CommBase.hpp"
 
-#ifdef ZMQINSTALLED
-#include <zmq.h>
-#endif
-
 #include <vector>
 #include <memory>
 namespace YggInterface {

@@ -28,6 +28,7 @@ endfunction()
 
 function(add_yggdrasil_dependency name)
   include(SearchTools)
+  set(options PRIVATE)
   set(oneValueArgs INCLUDE_DIRS_VAR LIBRARY_VAR LIBRARY_DIR_VAR
       DOC_MISSING)
   set(multiValueArgs LIBRARIES LIBRARIES_Python LIBRARY_DIRS INCLUDE_DIRS
@@ -92,17 +93,27 @@ function(add_yggdrasil_dependency name)
         set(ARGS_LIBRARY_DIR_VAR ${name}_LIBRARY_DIR)
       endif()
     endif()
-    list(APPEND YGG_INSTALL_DEPS ${name})
+    if(NOT ARGS_PRIVATE)
+      list(APPEND YGG_INSTALL_DEPS ${name})
+    endif()
     if(ARGS_DEFINITIONS)
       list(APPEND YGG_INSTALL_DEFS ${ARGS_DEFINITIONS})
     endif()
     if(ARGS_LIBRARIES)
-      list(APPEND DEPS_LIBRARIES ${ARGS_LIBRARIES})
+      if(ARGS_PRIVATE)
+        list(APPEND DEPS_PRIVATE_LIBRARIES ${ARGS_LIBRARIES})
+      else()
+        list(APPEND DEPS_PUBLIC_LIBRARIES ${ARGS_LIBRARIES})
+      endif()
     elseif(${ARGS_LIBRARY_VAR})
-      list(APPEND DEPS_LIBRARIES ${${ARGS_LIBRARY_VAR}})
+      if(ARGS_PRIVATE)
+        list(APPEND DEPS_PRIVATE_LIBRARIES ${${ARGS_LIBRARY_VAR}})
+      else()
+        list(APPEND DEPS_PUBLIC_LIBRARIES ${${ARGS_LIBRARY_VAR}})
+      endif()
     endif()
     if(ARGS_LIBRARIES_Python)
-      list(APPEND DEPS_LIBRARIES_Python ${ARGS_LIBRARIES_Python})
+      list(APPEND DEPS_Python_LIBRARIES ${ARGS_LIBRARIES_Python})
     endif()
     if(ARGS_LIBRARY_DIRS)
       list(APPEND DEPS_LIBRARY_DIRS ${ARGS_LIBRARY_DIRS})
@@ -131,8 +142,9 @@ function(add_yggdrasil_dependency name)
     YGG_INSTALL_DEPS
     YGG_INSTALL_DEFS
     YGG_INSTALL_CONFIG
-    DEPS_LIBRARIES
-    DEPS_LIBRARIES_Python
+    DEPS_PUBLIC_LIBRARIES
+    DEPS_PRIVATE_LIBRARIES
+    DEPS_Python_LIBRARIES
     DEPS_LIBRARY_DIRS
     DEPS_INCLUDE_DIRS
   )
@@ -283,7 +295,7 @@ endfunction()
 
 function(add_yggdrasil_option NAME)
   include(SearchTools)
-  set(options COMM DISABLE_BY_DEFAULT NO_DEPENDENCY)
+  set(options COMM DISABLE_BY_DEFAULT NO_DEPENDENCY PRIVATE)
   set(oneValueArgs DEPENDENCY DEFAULT FOUND_VAR)
   set(multiValueArgs SUPPORTED_OS LIBRARIES LIBRARIES_Python
       LIBRARY_DIRS INCLUDE_DIRS DEFINITIONS DEFINITIONS_MISSING
@@ -324,7 +336,7 @@ function(add_yggdrasil_option NAME)
     elseif(NOT ${ARGS_FOUND_VAR})
       collect_arguments(
         FIND_ARGS ARGS "${options}"
-        FOUND_VAR LIBRARIES LIBRARIES_Python
+        PRIVATE FOUND_VAR LIBRARIES LIBRARIES_Python
         LIBRARY_DIRS INCLUDE_DIRS DEFINITIONS DEFINITIONS_MISSING
         ADDITIONAL_PROPERTIES SEARCH_ARGS
       )
@@ -362,8 +374,9 @@ function(add_yggdrasil_option NAME)
     YGG_INSTALL_DEPS
     YGG_INSTALL_DEFS
     YGG_INSTALL_CONFIG
-    DEPS_LIBRARIES
-    DEPS_LIBRARIES_Python
+    DEPS_PUBLIC_LIBRARIES
+    DEPS_PRIVATE_LIBRARIES
+    DEPS_Python_LIBRARIES
     DEPS_LIBRARY_DIRS
     DEPS_INCLUDE_DIRS
     YGG_COMMS_AVAILABLE
@@ -392,7 +405,7 @@ function(add_library_dirs_to_rpath TARGET)
   if (ARGS_ADDITIONAL_DIRECTORIES)
     list(APPEND YGG_RPATH ${ARGS_ADDITIONAL_DIRECTORIES})
   endif()
-  # foreach(lib ${DEPS_LIBRARIES})
+  # foreach(lib ${DEPS_PUBLIC_LIBRARIES})
   #   if(EXISTS ${lib})
   #     cmake_path(REMOVE_FILENAME lib OUTPUT_VARIABLE dir)
   #     if (NOT dir IN_LIST YGG_RPATH)
@@ -401,7 +414,8 @@ function(add_library_dirs_to_rpath TARGET)
   #   endif()
   # endforeach()
   message(DEBUG "DEPS_LIBRARY_DIRS[${TARGET}] = ${DEPS_LIBRARY_DIRS}")
-  message(DEBUG "DEPS_LIBRARIES[${TARGET}] = ${DEPS_LIBRARIES}")
+  message(DEBUG "DEPS_PUBLIC_LIBRARIES[${TARGET}] = ${DEPS_PUBLIC_LIBRARIES}")
+  message(DEBUG "DEPS_PRIVATE_LIBRARIES[${TARGET}] = ${DEPS_PRIVATE_LIBRARIES}")
   message(DEBUG "YGG_RPATH[${TARGET}] = ${YGG_RPATH}")
   if (YGG_RPATH)
     if(APPLE)

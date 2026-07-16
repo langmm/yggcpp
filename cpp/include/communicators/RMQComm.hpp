@@ -91,7 +91,7 @@ namespace YggInterface {
       std::string address;          /**< Connection address */
       DIRECTION direction;          /**< Connection direction */
 #ifdef RMQINSTALLED
-      amqp_connection_state_t conn; /**< Conneciton */
+      amqp_connection_state_t conn; /**< Connection */
       amqp_socket_t* socket;        /**< Socket */
       amqp_channel_t channel;       /**< Channel */
 #endif // RMQINSTALLED

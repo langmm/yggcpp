@@ -99,11 +99,11 @@ if(YGG_LINK_Python_TO_CXX)
 else()
     target_link_libraries(
       ${YGG_TARGET_PY} PUBLIC
-      ${DEPS_LIBRARIES} ${DEPS_PUBLIC_CXX_LIBS}
+      ${DEPS_PUBLIC_LIBRARIES} ${DEPS_PUBLIC_CXX_LIBS}
     )
     target_link_libraries(
       ${YGG_TARGET_PY} PUBLIC
-      ${DEPS_LIBRARIES_PRIVATE}
+      ${DEPS_PRIVATE_LIBRARIES}
     )
     target_include_directories(
        ${YGG_TARGET_PY} PUBLIC ${DEPS_INCLUDE_DIRS}

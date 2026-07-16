@@ -825,6 +825,7 @@ function(select_files_by_language language destination)
 endfunction()
 
 function(inspect_target name)
+  set(options)
   set(oneValueArgs LOG_LEVEL PREFIX)
   set(multiValueArgs PROPERTIES)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})

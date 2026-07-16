@@ -90,7 +90,7 @@ endif()
 if(YGG_Fortran_STANDALONE)
   target_link_libraries(
     ${YGG_TARGET_Fortran} PUBLIC
-    ${DEPS_LIBRARIES_Python}
+    ${DEPS_Python_LIBRARIES}
   )
   if(WIN32)
     set_target_properties(

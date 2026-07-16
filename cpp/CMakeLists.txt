@@ -14,7 +14,8 @@ else()
     add_library(YggInterface::C ALIAS ${YGG_TARGET_CXX})
     target_link_libraries(
 	${YGG_TARGET_CXX} PUBLIC
-	${DEPS_LIBRARIES_Python})
+	${DEPS_Python_LIBRARIES}
+    )
     set_target_properties(
         ${YGG_TARGET_CXX} PROPERTIES
         VERSION ${PROJECT_VERSION}

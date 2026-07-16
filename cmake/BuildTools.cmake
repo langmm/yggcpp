@@ -715,9 +715,9 @@ function(check_language_external language)
   endif()
   if(NOT ARGS_OUTPUT_COMPILER)
     set(ARGS_OUTPUT_COMPILER CMAKE_${language}_COMPILER)
-  endif()
-  if(NOT ARGS_OUTPUT_COMPILER_ID)
-    set(ARGS_OUTPUT_COMPILER_ID CMAKE_${language}_COMPILER_ID)
+    if(NOT ARGS_OUTPUT_COMPILER_ID)
+      set(ARGS_OUTPUT_COMPILER_ID CMAKE_${language}_COMPILER_ID)
+    endif()
   endif()
   collect_arguments(
     FIND_ARGS ARGS "${options}"
@@ -1035,6 +1035,11 @@ function(add_mixed_language_library target library_type)
       # endif()
     else()
       enable_language(${ilanguage})
+      set(ILANG_COMPILE_FLAGS "-cpp")
+      if(CMAKE_Fortran_COMPILER_ID STREQUAL "GNU" OR
+         (CMAKE_Fortran_COMPILER_ID MATCHES "Flang" AND NOT WIN32))
+        set(ILANG_COMPILE_FLAGS "${ILANG_COMPILE_FLAGS} -fPIC")
+      endif()
       if(ilanguage STREQUAL "Fortran")
         include(FortranCInterface)
         FortranCInterface_VERIFY()
@@ -1042,7 +1047,7 @@ function(add_mixed_language_library target library_type)
         set_source_files_properties(
           ${SRC_${ilanguage}}
           PROPERTIES
-          COMPILE_FLAGS "-cpp -fPIC"
+          COMPILE_FLAGS "${ILANG_COMPILE_FLAGS}"
           Fortran_STANDARD 2003
           Fortran_STANDARD_REQUIRED ON
           Fortran_MODULE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
@@ -1076,7 +1081,7 @@ function(add_internal_library target library_type)
     set(ARGS_SOURCES ${ARGS_UNPARSED_ARGUMENTS})
   endif()
   if(ARGS_LANGUAGE STREQUAL "Fortran")
-    list(APPEND ARGS_COMPILE_FLAGS -fPIC -cpp)
+    list(APPEND ARGS_COMPILE_FLAGS -cpp)
     set_default_property(Fortran_STANDARD 2003)
     set_default_property(Fortran_STANDARD_REQUIRED ON)
     set_default_property(Fortran_MODULE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
@@ -1089,6 +1094,12 @@ function(add_internal_library target library_type)
   if(ARGS_LINKER_LANGUAGE AND
      (NOT ARGS_LANGUAGE STREQUAL "${ARGS_LINKER_LANGUAGE}"))
     enable_language(${ARGS_LINKER_LANGUAGE})
+  endif()
+  if(ARGS_LANGUAGE STREQUAL "Fortran" AND
+     (CMAKE_Fortran_COMPILER_ID STREQUAL "GNU" OR
+      (CMAKE_Fortran_COMPILER_ID MATCHES "Flang" AND NOT WIN32)))
+    # No fPIC for Flang on Windows
+    list(APPEND ARGS_COMPILE_FLAGS -fPIC)
   endif()
   add_library(${target} ${library_type} ${ARGS_SOURCES})
   if(ARGS_LINKER_LANGUAGE)

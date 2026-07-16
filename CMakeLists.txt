@@ -150,6 +150,7 @@ ADD_DEFINITIONS(-D_CRT_SECURE_NO_WARNINGS)
 ##################################
 
 ygginterface_options_config_init(DEPS)
+set(DEPS_Python_LIBRARIES)
 ygginterface_options_config(DEPS)
 
 include(FetchContent)
@@ -227,7 +228,7 @@ endif()
 # ZeroMQ #
 ##########
 
-add_yggdrasil_option(ZMQ COMM DEPENDENCY ZeroMQ)
+add_yggdrasil_option(ZMQ COMM DEPENDENCY ZeroMQ PRIVATE)
 
 ##################
 # IPC dependency #
@@ -320,7 +321,7 @@ add_yggdrasil_option(
 )
 if (CMAKE_THREAD_LIBS_INIT)
   message(DEBUG "CMAKE_THREAD_LIBS_INIT = ${CMAKE_THREAD_LIBS_INIT}")
-  list(APPEND DEPS_LIBRARIES ${CMAKE_THREAD_LIBS_INIT})
+  list(APPEND DEPS_PUBLIC_LIBRARIES ${CMAKE_THREAD_LIBS_INIT})
 endif()
 if (CMAKE_USE_PTHREADS_INIT)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
@@ -556,29 +557,36 @@ dump_cmake_variables(
   DEPS_PUBLIC_C_COMPILE_FLAGS DEPS_PUBLIC_CXX_COMPILE_FLAGS
   DEPS_PUBLIC_LINK_FLAGS
   DEPS_PUBLIC_C_LINK_FLAGS DEPS_PUBLIC_CXX_LINK_FLAGS
-  DEPS_LIBRARIES DEPS_LIBRARIES_PRIVATE
+  DEPS_PUBLIC_LIBRARIES DEPS_PRIVATE_LIBRARIES
   DEPS_PUBLIC_C_LIBS DEPS_PUBLIC_CXX_LIBS
   DEPS_PUBLIC_Fortran_LIBS
-  DEPS_LIBRARIES_Python
+  DEPS_Python_LIBRARIES
   DEPS_LIBRARY_DIRS DEPS_INCLUDE_DIRS
   YGG_INSTALL_DEPS YGG_INSTALL_DEFS
   YGG_OPTIONS_SUPPORTED YGG_COMMS_SUPPORTED YGG_COMMS_AVAILABLE
   YGG_LANGUAGES_SUPPORTED YGG_LANGUAGES_AVAILABLE YGG_RPATH
 )
-foreach(ilib IN LISTS DEPS_LIBRARIES DEPS_LIBRARIES_Python)
-  if(TARGET ${ilib})
-    get_target_property(ilink_libraries ${ilib} INTERFACE_LINK_LIBRARIES)
-    get_target_property(iimport_location ${ilib} IMPORTED_LOCATION)
-    if(ilink_libraries STREQUAL "ilink_libraries-NOT-FOUND")
-      set(ilink_libraries)
-    endif()
-    if(iimport_location STREQUAL "iimport_location-NOT-FOUND")
-      set(iimport_location)
-    endif()
-    message(DEBUG "TARGET DEP LIBRARIES ${ilib}: \"${iimport_location}\", \"${ilink_libraries}\"")
+foreach(libtype PUBLIC PRIVATE Python "")
+  if(libtype)
+    set(ilibvar DEPS_LIBRARIES)
   else()
-    message(DEBUG "TARGET DEP LIBRARIES DIRECT: ${ilib}")
+    set(ilibvar DEPS_${libtype}_LIBRARIES)
   endif()
+  foreach(ilib IN LISTS ${ilibvar})
+    if(TARGET ${ilib})
+      get_target_property(ilink_libraries ${ilib} INTERFACE_LINK_LIBRARIES)
+      get_target_property(iimport_location ${ilib} IMPORTED_LOCATION)
+      if(ilink_libraries STREQUAL "ilink_libraries-NOT-FOUND")
+        set(ilink_libraries)
+      endif()
+      if(iimport_location STREQUAL "iimport_location-NOT-FOUND")
+        set(iimport_location)
+      endif()
+      message(DEBUG "TARGET DEP LIBRARIES ${ilib}[${libtype}]: \"${iimport_location}\", \"${ilink_libraries}\"")
+    else()
+      message(DEBUG "TARGET DEP LIBRARIES DIRECT[${libtype}]: ${ilib}")
+    endif()
+  endforeach()
 endforeach()
 
 ######################
