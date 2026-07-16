@@ -96,7 +96,8 @@ function(add_speed_test LANGUAGE LANGUAGE_EXT)
     return()
   endif()
   check_yggdrasil_option(${LANGUAGE} TYPE LANGUAGE REQUIRED)
-  if(WIN32 AND LANGUAGE STREQUAL "Fortran")
+  if(WIN32 AND LANGUAGE STREQUAL "Fortran" AND
+     YGG_Fortran_GNU_AND_MSVC)
     find_compiler_external(
       ${LANGUAGE} REQUIRED
       OUTPUT_COMPILER EXTERNAL_COMPILER
