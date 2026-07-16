@@ -47,8 +47,8 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggInput(const std::string nme, FLAG_TYPE flags = 0,
-	   const COMM_TYPE commtype = DEFAULT_COMM);
+  YGG_API YggInput(const std::string nme, FLAG_TYPE flags = 0,
+                   const COMM_TYPE commtype = DEFAULT_COMM);
 
   /*!
     @brief Constructor for YggInput with format.
@@ -63,9 +63,9 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggInput(const std::string nme, const std::string fmt,
-	   bool as_array = false, FLAG_TYPE flags = 0,
-	   const COMM_TYPE commtype = DEFAULT_COMM);
+  YGG_API YggInput(const std::string nme, const std::string fmt,
+                   bool as_array = false, FLAG_TYPE flags = 0,
+                   const COMM_TYPE commtype = DEFAULT_COMM);
 
   /*!
     @brief Constructor for YggInput with explicit datatype.
@@ -78,8 +78,8 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggInput(const std::string nme, const yggdrasil_rapidjson::Document& schema,
-	   FLAG_TYPE flags = 0, const COMM_TYPE commtype = DEFAULT_COMM);
+  YGG_API YggInput(const std::string nme, const yggdrasil_rapidjson::Document& schema,
+                   FLAG_TYPE flags = 0, const COMM_TYPE commtype = DEFAULT_COMM);
 
 };
 

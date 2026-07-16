@@ -40,6 +40,7 @@ if(NOT CMAKE_BUILD_TYPE)
   # https://discourse.cmake.org/t/how-to-deal-with-ninja-setting-cmake-build-type-to-debug/281
   set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Choose the type of build, options are: Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif()
+message(STATUS "CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
 
 PROJECT(YggInterface VERSION "${YGGINTERFACE_VERSION}")
 
