@@ -584,7 +584,7 @@ endforeach()
 # Create C++ Library #
 ######################
 
-file(GLOB_RECURSE SOURCES_CXX "cpp/src/*.cpp")
+file(GLOB_RECURSE SOURCES_CXX "cpp/*.cpp")
 if (NOT SOURCES_CXX)
   message(FATAL_ERROR "Sources could not be located")
 endif()

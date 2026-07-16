@@ -48,11 +48,7 @@ public:
       compilation.
    */
   YggInput(const std::string nme, FLAG_TYPE flags = 0,
-	   const COMM_TYPE commtype = DEFAULT_COMM) :
-    WrapComm(std::move(nme), utils::blankAddress,
-             RECV, flags | COMM_FLAG_INTERFACE, commtype) {
-    std::cerr << "YggInput: " << nme << " -> " << this->name << std::endl;
-  }
+	   const COMM_TYPE commtype = DEFAULT_COMM);
 
   /*!
     @brief Constructor for YggInput with format.
@@ -69,12 +65,7 @@ public:
    */
   YggInput(const std::string nme, const std::string fmt,
 	   bool as_array = false, FLAG_TYPE flags = 0,
-	   const COMM_TYPE commtype = DEFAULT_COMM) :
-    WrapComm(nme, utils::blankAddress,
-             RECV, flags | COMM_FLAG_INTERFACE, commtype) {
-    if (!this->addFormat(fmt, as_array))
-      this->throw_error("Invalid format");  // GCOV_EXCL_LINE
-  }    
+	   const COMM_TYPE commtype = DEFAULT_COMM);
 
   /*!
     @brief Constructor for YggInput with explicit datatype.
@@ -88,12 +79,7 @@ public:
       compilation.
    */
   YggInput(const std::string nme, const yggdrasil_rapidjson::Document& schema,
-	   FLAG_TYPE flags = 0, const COMM_TYPE commtype = DEFAULT_COMM) :
-    WrapComm(nme, utils::blankAddress,
-             RECV, flags | COMM_FLAG_INTERFACE, commtype) {
-    if (!this->addSchema(schema))
-      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
-  }
+	   FLAG_TYPE flags = 0, const COMM_TYPE commtype = DEFAULT_COMM);
 
 };
 
