@@ -1271,11 +1271,11 @@ function(add_external_library target library_type)
   message(DEBUG "COMPILER_PATH = ${COMPILER_PATH}")
   list(APPEND ARGS_PREPEND_PATH "${COMPILER_PATH}")
   set(external_def_file)
-  if(ARGS_LANGUAGE STREQUAL "Fortran" AND MSVC)
-    # EXTERNAL_COMPILER MATCHES "gfortran")
-    if(NOT EXTERNAL_COMPILER MATCHES "gfortran")
-      message(FATAL_ERROR "Need gfortran with MSVC ${EXTERNAL_COMPILER}")
-    endif()
+  if(ARGS_LANGUAGE STREQUAL "Fortran" AND MSVC AND
+     EXTERNAL_COMPILER MATCHES "gfortran")
+    # if(NOT EXTERNAL_COMPILER MATCHES "gfortran")
+    #   message(FATAL_ERROR "Need gfortran with MSVC ${EXTERNAL_COMPILER}")
+    # endif()
     list(APPEND ARGS_CONFIG_ARGUMENTS
          -DBUILD_SHARED_LIBS=ON
          -DMSVC_AND_GNU_BUILD=ON

@@ -9,11 +9,11 @@ using namespace YggInterface;
 int main(int argc, char *argv[]) {
   std::cerr << "Sending " << SPEED_TEST_N_MSG <<
     " messages containing " << SPEED_TEST_S_MSG << " bytes" << std::endl;
-  std::string comm_name = "speed";
-  YggInput icomm(comm_name,
+  YggInput icomm("speed",
 		 COMM_FLAG::COMM_FLAG_ASYNC | COMM_FLAG::COMM_FLAG_SET_OPP_ENV,
 		 COMM_TYPE::SPEED_TEST_COMM);
-  YggOutput ocomm(comm_name, COMM_FLAG::COMM_FLAG_ASYNC,
+  YggOutput ocomm("speed",
+                  COMM_FLAG::COMM_FLAG_ASYNC,
 		  COMM_TYPE::SPEED_TEST_COMM);
   std::string omsg(SPEED_TEST_S_MSG, 'x');
   for (size_t i = 0; i < SPEED_TEST_N_MSG; i++) {

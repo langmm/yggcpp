@@ -25,6 +25,9 @@ jobs:
             builder: rattler-m2w64
           - os: windows-2022
             python-version: "3.11"
+            builder: rattler-m2w64-fortran
+          - os: windows-2022
+            python-version: "3.11"
             builder: rattler-msvc-gnu
           - os: windows-2022
             python-version: "3.11"
@@ -93,6 +96,10 @@ jobs:
         if: matrix.builder == 'rattler-m2w64'
         run: |
           rattler-build build --recipe "conda.recipe/recipe.yaml" --output-dir $HOME/local_channel/ --variant python=${{ matrix.python-version }} --variant cxx_toolchain_variant=m2w64 --variant fortran_toolchain_variant=m2w64 --no-build-id --no-include-recipe
+      - name: Build conda standalone recipe for m2w64 fortran_toolchain_variant (using rattler-build)
+        if: matrix.builder == 'rattler-m2w64-fortran'
+        run: |
+          rattler-build build --recipe "conda.recipe/recipe.yaml" --output-dir $HOME/local_channel/ --variant python=${{ matrix.python-version }} --variant fortran_toolchain_variant=m2w64 --no-build-id --no-include-recipe
       - name: Build standalone conda recipe with flang fortran compiler (using rattler-build)
         if: matrix.builder == 'rattler-flang'
         run: |

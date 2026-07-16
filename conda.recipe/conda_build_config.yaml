@@ -19,7 +19,7 @@ fortran_compiler:
 #   - 14
 fortran_toolchain_variant:
   - ""
-  - "m2w64"                     # [win]
+  # - "m2w64"                     # [win]
 cxx_toolchain_variant:
   - ""
   # - m2w64                       # [win]
