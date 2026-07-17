@@ -15,7 +15,9 @@ module YggInterface
 #endif
   integer(kind=c_int), bind(c, name="YGG_MSG_MAX_F") :: YGG_MSG_MAX
   real(8),  parameter :: PI_8  = 4 * atan (1.0_8)
+#ifndef _WIN32
   real(16), parameter :: PI_16 = 4 * atan (1.0_16)
+#endif
 
   include "YggInterface_enums.F90"
   ! include "YggInterface_interfaces.F90"
@@ -910,6 +912,61 @@ contains
   ! include "YggInterface_map.F90"
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
+  ! These must be explicit because the preprocess need to run to use a
+  ! different type on windows
+  subroutine yggassign_real16_1d_to_array(in, out)
+    type(real16_1d), intent(in) :: in
+#ifdef _WIN32
+    real(kind=8), dimension(:), allocatable :: out
+#else
+    real(kind=16), dimension(:), allocatable :: out
+#endif
+    integer :: i, in_size
+    in_size = size(in%x)
+    if (allocated(out)) then
+       deallocate(out)
+    end if
+    allocate(out(in_size))
+    do i = 1, in_size
+       out(i:i) = in%x(i)
+    end do
+  end subroutine yggassign_real16_1d_to_array
+  subroutine yggassign_real16_1d_from_array(in, out)
+#ifdef _WIN32
+    real(kind=8), dimension(:), target, intent(in) :: in
+#else
+    real(kind=16), dimension(:), target, intent(in) :: in
+#endif
+    type(real16_1d) :: out
+    out%x => in
+  end subroutine yggassign_real16_1d_from_array
+  subroutine yggassign_complex16_1d_to_array(in, out)
+    type(complex16_1d), intent(in) :: in
+#ifdef _WIN32
+    complex(kind=8), dimension(:), allocatable :: out
+#else
+    complex(kind=16), dimension(:), allocatable :: out
+#endif
+    integer :: i, in_size
+    in_size = size(in%x)
+    if (allocated(out)) then
+       deallocate(out)
+    end if
+    allocate(out(in_size))
+    do i = 1, in_size
+       out(i:i) = in%x(i)
+    end do
+  end subroutine yggassign_complex16_1d_to_array
+  subroutine yggassign_complex16_1d_from_array(in, out)
+#ifdef _WIN32
+    complex(kind=8), dimension(:), target, intent(in) :: in
+#else
+    complex(kind=16), dimension(:), target, intent(in) :: in
+#endif
+    type(complex16_1d) :: out
+    out%x => in
+  end subroutine yggassign_complex16_1d_from_array
+  
   subroutine ygguint1_assign(self, other)
     type(ygguint1), intent(inout) :: self
     integer, intent(in) :: other

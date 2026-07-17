@@ -98,9 +98,10 @@ if(YGG_LINK_Python_TO_CXX)
     target_link_libraries(${YGG_TARGET_PY} PUBLIC ${YGG_TARGET_CXX})
 else()
     ygginterface_options_config_copy(DEPS Python_DEPS)
-    ygginterface_options_filter(Python_DEPS LIBRARIES EXCLUDE ".+Python$")
-    # ygginterface_options_config_private2public(Python_DEPS)
+    # ygginterface_options_filter(Python_DEPS LIBRARIES EXCLUDE ".+Python$")
+    ygginterface_options_config_private2public(Python_DEPS)
     ygginterface_target_config(${YGG_TARGET_PY} PUBLIC Python_DEPS)
+    ygginterface_config_show(Python_DEPS STATUS)
     target_compile_definitions(
       ${YGG_TARGET_PY} PUBLIC ${YGG_INSTALL_DEFS}
     )

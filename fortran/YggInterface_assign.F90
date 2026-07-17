@@ -215,24 +215,6 @@ subroutine yggassign_real8_1d_from_array(in, out)
   type(real8_1d) :: out
   out%x => in
 end subroutine yggassign_real8_1d_from_array
-subroutine yggassign_real16_1d_to_array(in, out)
-  type(real16_1d), intent(in) :: in
-  real(kind=16), dimension(:), allocatable :: out
-  integer :: i, in_size
-  in_size = size(in%x)
-  if (allocated(out)) then
-     deallocate(out)
-  end if
-  allocate(out(in_size))
-  do i = 1, in_size
-     out(i:i) = in%x(i)
-  end do
-end subroutine yggassign_real16_1d_to_array
-subroutine yggassign_real16_1d_from_array(in, out)
-  real(kind=16), dimension(:), target, intent(in) :: in
-  type(real16_1d) :: out
-  out%x => in
-end subroutine yggassign_real16_1d_from_array
 ! COMPLEX
 subroutine yggassign_complex_1d_to_array(in, out)
   type(complex_1d), intent(in) :: in
@@ -288,24 +270,6 @@ subroutine yggassign_complex8_1d_from_array(in, out)
   type(complex8_1d) :: out
   out%x => in
 end subroutine yggassign_complex8_1d_from_array
-subroutine yggassign_complex16_1d_to_array(in, out)
-  type(complex16_1d), intent(in) :: in
-  complex(kind=16), dimension(:), allocatable :: out
-  integer :: i, in_size
-  in_size = size(in%x)
-  if (allocated(out)) then
-     deallocate(out)
-  end if
-  allocate(out(in_size))
-  do i = 1, in_size
-     out(i:i) = in%x(i)
-  end do
-end subroutine yggassign_complex16_1d_to_array
-subroutine yggassign_complex16_1d_from_array(in, out)
-  complex(kind=16), dimension(:), target, intent(in) :: in
-  type(complex16_1d) :: out
-  out%x => in
-end subroutine yggassign_complex16_1d_from_array
 ! LOGICAL
 subroutine yggassign_logical_1d_to_array(in, out)
   type(logical_1d), intent(in) :: in
