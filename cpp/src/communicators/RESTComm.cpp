@@ -1,5 +1,9 @@
 #include "communicators/RESTComm.hpp"
 
+#ifdef RESTINSTALLED
+#include <curl/curl.h>
+#endif // RESTINSTALLED
+
 using namespace YggInterface::communicator;
 using namespace YggInterface::utils;
 
@@ -15,16 +19,30 @@ size_t _writeHeader(void *ptr, size_t size, size_t nmemb, YggInterface::utils::H
   return size * nmemb;
 }
 
+#ifdef RESTINSTALLED
+bool _check_curl_error(CURLcode x) {
+  switch (x) {
+  case CURLE_OK:
+    return true;
+  default:
+    return false;
+  }
+}
+#endif // RESTINSTALLED
+
+class RESTConnection::ImplCURL {
+public:
+#ifdef RESTINSTALLED
+  CURL *curl;
+#endif // RESTINSTALLED
+};
+
 RESTConnection::RESTConnection(const std::string logInst, DIRECTION dir,
 			       const std::string& nme,
 			       const std::string& addr,
 			       const std::string& mod) :
   LogBase(), logInst_(logInst), name(nme), address(addr), direction(dir),
-  model(mod)
-#ifdef RESTINSTALLED
-  , curl(NULL)
-#endif // RESTINSTALLED
-{
+  model(mod), pImplCURL(std::make_unique<ImplCURL>()) {
   if (init() < 0) {
     throw_error("RESTConnection: Failed to initialize connection");
   }
@@ -41,9 +59,15 @@ RESTConnection::~RESTConnection() {
   }
 }
 #ifdef RESTINSTALLED
+#define CHECK_CURL_INIT(ret)                    \
+  if (!pImplCURL->curl) return ret;             \
+  CURL* curl = pImplCURL->curl
 #define CHECK_CURL_ERROR(method, context)	\
   {						\
-    if (!_check_curl_error(method, context)) {	\
+    CURLcode x = method;                        \
+    if (!_check_curl_error(x)) {                \
+      log_error() << context << ": " <<         \
+        curl_easy_strerror(x) << std::endl;     \
       return -1;				\
     }						\
   }
@@ -61,7 +85,8 @@ int RESTConnection::init() {
     address = host + "/" + client_id + "/" + model + "/" + name;
   }
 #define CHECK_ERROR(method) CHECK_CURL_ERROR(method, "init")
-  curl = curl_easy_init();
+  pImplCURL->curl = curl_easy_init();
+  CURL* curl = pImplCURL->curl;
   if (!curl) {
     log_error() << "init: Failed to create curl pointer" << std::endl;
     return -1;
@@ -70,8 +95,7 @@ int RESTConnection::init() {
   return 0;
 }
 int RESTConnection::close() {
-  if (!curl)
-    return 0;
+  CHECK_CURL_INIT(0);
 #define CHECK_ERROR(method) CHECK_CURL_ERROR(method, "close")
   curl_easy_reset(curl);
   std::string close_address = address + "/remove";
@@ -83,8 +107,7 @@ int RESTConnection::close() {
   return 0;
 }
 int RESTConnection::nmsg(DIRECTION) const {
-  if (!curl)
-    return -1;
+  CHECK_CURL_INIT(-1);
 #define CHECK_ERROR(method) CHECK_CURL_ERROR(method, "nmsg")
   curl_easy_reset(curl);
   std::string nmsg_address = address + "/size";
@@ -100,8 +123,7 @@ int RESTConnection::nmsg(DIRECTION) const {
   return std::stoi(response);
 }
 int RESTConnection::send(utils::Header& header) {
-  if (!curl)
-    return -1;
+  CHECK_CURL_INIT(-1);
 #define CHECK_ERROR(method) CHECK_CURL_ERROR(method, "send")
   curl_easy_reset(curl);
   struct curl_slist *list;
@@ -117,8 +139,7 @@ int RESTConnection::send(utils::Header& header) {
   return 1;
 }
 long RESTConnection::recv(utils::Header& header) {
-  if (!curl)
-    return -1;
+  CHECK_CURL_INIT(-1);
   size_t old_size = header.size_curr;
 #define CHECK_ERROR(method) CHECK_CURL_ERROR(method, "recv")
   curl_easy_reset(curl);
@@ -131,16 +152,7 @@ long RESTConnection::recv(utils::Header& header) {
   return static_cast<long>(header.size_curr - old_size);
 }
 
-bool RESTConnection::_check_curl_error(CURLcode x, const std::string& context) const {
-  switch (x) {
-  case CURLE_OK:
-    return true;
-  default:
-    log_error() << context << ": " << curl_easy_strerror(x) << std::endl;
-    return false;
-  }
-}
-
+#undef CHECK_CURL_INIT
 #undef CHECK_CURL_ERROR
 
 #else // RESTINSTALLED

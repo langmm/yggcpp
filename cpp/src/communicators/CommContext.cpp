@@ -2,6 +2,9 @@
 #ifdef ZMQINSTALLED
 #include <zmq.h>
 #endif
+#ifdef RESTINSTALLED
+#include <curl/curl.h>
+#endif // RESTINSTALLED
 #include "utils/tools.hpp"
 #include "utils/yggdrasil_rapidjson_wrapper.hpp"
 #include "utils/embedded_python.hpp"

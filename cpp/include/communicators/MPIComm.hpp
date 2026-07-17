@@ -18,8 +18,8 @@ public:
 #if defined(MPIINSTALLED) && defined(MPI_COMM_WORLD)
     explicit mpi_registry_t(MPI_Comm comm0) :
       comm(comm0), procs(), tag(0) {}
-        mpi_registry_t(const mpi_registry_t&) = delete;
-        mpi_registry_t& operator=(const mpi_registry_t&) = delete;
+    mpi_registry_t(const mpi_registry_t&) = delete;
+    mpi_registry_t& operator=(const mpi_registry_t&) = delete;
     virtual ~mpi_registry_t();
     virtual int Probe(int source, MPI_Status *status) const;
     virtual int Send(const void *buf, int count, MPI_Datatype datatype, int dest) const;

@@ -1,10 +1,6 @@
 #pragma once
 #include "communicators/CommBase.hpp"
 
-#ifdef RESTINSTALLED
-#include <curl/curl.h>
-#endif // RESTINSTALLED
-
 namespace YggInterface {
   namespace communicator {
 
@@ -69,16 +65,9 @@ namespace YggInterface {
       std::string address;          /**< Connection address */
       DIRECTION direction;          /**< Connection direction */
       std::string model;            /**< Model to use in connection address */
-#ifdef RESTINSTALLED
-      CURL *curl;                   /**< Curl connection */
     private:
-      /**
-       * @brief Log an error based on the provided curl code
-       * @param[in] x Curl result code
-       * @return true if not an error, false otherwise.
-       */
-      bool _check_curl_error(CURLcode x, const std::string& context) const;
-#endif // RESTINSTALLED
+      class ImplCURL;               /**< Forward declaration of CURL implementation */
+      std::unique_ptr<ImplCURL> pImplCURL; /**< Pointer to CURL implementation */
     };
     
     /**

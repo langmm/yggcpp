@@ -6,6 +6,9 @@
 #include "commtest.hpp"
 #include <stdio.h>
 
+#ifdef RESTINSTALLED
+#include <curl/curl.h>
+#endif // RESTINSTALLED
 
 using namespace YggInterface;
 using namespace YggInterface::communicator;

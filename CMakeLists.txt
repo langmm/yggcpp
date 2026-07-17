@@ -282,7 +282,7 @@ endif()
 ########
 
 add_yggdrasil_option(
-  REST COMM DEPENDENCY CURL
+  REST COMM DEPENDENCY CURL PRIVATE
   # SEARCH_ARGS LIBNAMES curl HEADER curl.h
 )
 
