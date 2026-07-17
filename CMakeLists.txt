@@ -205,6 +205,7 @@ endif()
 # YggdrasilRapidJSON #
 ######################
 
+message(DEBUG "YggdrasilRapidJSON_DIR = ${YggdrasilRapidJSON_DIR}")
 add_yggdrasil_dependency(
   YggdrasilRapidJSON
   LIBRARIES YggdrasilRapidJSON

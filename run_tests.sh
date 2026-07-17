@@ -304,8 +304,9 @@ fi
 # fi
 
 if [ -n "$LOCAL_RJ" ]; then
-    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYggdrasilRapidJSON_DIR=${INSTALL_DIR}"
-    CMAKE_FLAGS_SPEED="${CMAKE_FLAGS_SPEED} -DYggdrasilRapidJSON_DIR=${INSTALL_DIR}"
+    YggdrasilRapidJSON_DIR="${INSTALL_DIR}/lib/cmake/YggdrasilRapidJSON"
+    CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYggdrasilRapidJSON_DIR=${YggdrasilRapidJSON_DIR}"
+    CMAKE_FLAGS_SPEED="${CMAKE_FLAGS_SPEED} -DYggdrasilRapidJSON_DIR=${YggdrasilRapidJSON_DIR}"
     # CMAKE_FLAGS_LIB="${CMAKE_FLAGS_LIB} -DYGGDRASIL_RAPIDJSON_REPO_DIR=${LOCAL_RJ}"
 fi
 
@@ -355,7 +356,6 @@ if [ -n "$DO_SKBUILD" ]; then
 	--config-settings=cmake.define.ALLOW_SKBUILD_NONPython:BOOL=ON \
 	-v .
 else
-    cd $BUILD_DIR
     if [[ "$TEST_TYPE" == "c" ]] || [[ "$TEST_TYPE" == "cxx" ]] || [[ "$TEST_TYPE" == "fortran" ]] || [[ "$TEST_TYPE" == "python" ]]; then
 	TEST_TYPE="unit"
     fi
@@ -367,24 +367,42 @@ else
 	fi
     fi
     if [ ! -n "$DONT_BUILD" ]; then
-	cmake .. $CMAKE_FLAGS $CMAKE_FLAGS_LIB
-	cmake --build . $CONFIG_FLAGS
-	# Need install here to ensure that cmake config files are in place
-	cmake --install . --prefix "$INSTALL_DIR" $CONFIG_FLAGS
+        if [ -n "$DO_C" ] || [ -n "$DO_CXX" ] || [ -n "$DO_Fortran" ]; then
+            cd $BUILD_DIR
+	    cmake .. $CMAKE_FLAGS $CMAKE_FLAGS_LIB
+	    cmake --build . $CONFIG_FLAGS
+	    # Need install here to ensure that cmake config files are in place
+	    cmake --install . --prefix "$INSTALL_DIR" $CONFIG_FLAGS
+            cd ..
+        else
+            if [ -n "$DO_Python" ]; then
+                export CMAKE_ARGS="${CMAKE_FLAGS} ${CMAKE_FLAGS_LIB}"
+                pip install -v .
+            fi
+        fi
     fi
     if [[ "$TEST_TYPE" == "unit" ]] && [ ! -n "$DONT_TEST" ]; then
-	if [ -n "$WITH_LLDB" ]; then
-	    if [ -n "$DO_Fortran" ]; then
-		lldb -o 'run' -o 'quit' tests/fortran/fortran_testsuite -- test_ygg_input_1_
+        if [ -n "$DO_C" ] || [ -n "$DO_CXX" ] || [ -n "$DO_Fortran" ]; then
+            cd $BUILD_DIR
+	    if [ -n "$WITH_LLDB" ]; then
+	        if [ -n "$DO_Fortran" ]; then
+		    lldb -o 'run' -o 'quit' tests/fortran/fortran_testsuite -- test_ygg_input_1_
+	        else
+		    lldb -o 'run' -o 'quit' tests/cpp/unittest
+	        fi
 	    else
-		lldb -o 'run' -o 'quit' tests/cpp/unittest
+	        ctest $TEST_FLAGS --stop-on-failure
+	        # make test ARGS="--stop-on-failure"
 	    fi
-	else
-	    ctest $TEST_FLAGS --stop-on-failure
-	    # make test ARGS="--stop-on-failure"
-	fi
+            cd ..
+        else
+            if [ -n "$DO_Python" ]; then
+                cd tests
+                python -m pytest -vsx python/
+                cd ../
+            fi
+        fi
     fi
-    cd ..
 fi
 
 if [ -n "$PREFIX_PATH" ]; then

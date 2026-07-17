@@ -64,6 +64,53 @@ macro(ygginterface_options_import)
   endforeach()
 endmacro()
 
+function(ygginterface_config_vars_type_f PREFIX SUFFIX OUTPUT_VAR)
+  list(
+    APPEND ${OUTPUT_VAR}
+    ${PREFIX}_${SUFFIX}
+    ${PREFIX}_PUBLIC_${SUFFIX}
+    ${PREFIX}_PRIVATE_${SUFFIX}
+  )
+  set(suffix_lang ${SUFFIX})
+  if(suffix STREQUAL "LIBRARIES")
+    set(suffix_lang "LIBS")
+  endif()
+  foreach(lang C CXX Fortran)
+    list(
+      APPEND ${OUTPUT_VAR}
+      ${PREFIX}_PUBLIC_${lang}_${suffix_lang}
+      ${PREFIX}_PRIVATE_${lang}_${suffix_lang}
+    )
+  endforeach()
+  foreach(tool GNU Clang AppleClang MSVC)
+    list(
+      APPEND ${OUTPUT_VAR}
+      ${PREFIX}_PUBLIC_${tool}_${suffix_lang}
+      ${PREFIX}_PRIVATE_${tool}_${suffix_lang}
+    )
+    set(langlist C CXX)
+    if(tool STREQUAL "GNU")
+      list(APPEND langlist Fortran)
+    endif()
+    foreach(lang IN LISTS langlist)
+      list(
+        APPEND ${OUTPUT_VAR}
+        ${PREFIX}_PUBLIC_${tool}_${lang}_${suffix_lang}
+        ${PREFIX}_PRIVATE_${tool}_${lang}_${suffix_lang}
+      )
+    endforeach()
+  endforeach()
+  set(${OUTPUT_VAR} ${${OUTPUT_VAR}} PARENT_SCOPE)
+endfunction()
+
+macro(ygginterface_config_vars_type PREFIX SUFFIX OUTPUT_VAR)
+  if(COMMAND yggdrasil_rapidjson_config_vars_type)
+    yggdrasil_rapidjson_config_vars(${PREFIX} ${SUFFIX} ${OUTPUT_VAR})
+  else()
+    ygginterface_config_vars_type_f(${PREFIX} ${SUFFIX} ${OUTPUT_VAR})
+  endif()
+endmacro()
+
 macro(ygginterface_options_config_vars PREFIX)
   yggdrasil_rapidjson_config_vars(${PREFIX})
 endmacro()
@@ -75,6 +122,36 @@ endmacro()
 macro(ygginterface_options_config_cleanup PREFIX)
   yggdrasil_rapidjson_config_cleanup(${PREFIX})
 endmacro()
+
+function(ygginterface_options_config_copy SRC_PREFIX DST_PREFIX)
+  set(${DST_PREFIX}_CONFIG_VARS)
+  foreach(src IN LISTS ${SRC_PREFIX}_CONFIG_VARS)
+    string(REPLACE "${SRC_PREFIX}" "${DST_PREFIX}" dst "${src}")
+    list(APPEND ${DST_PREFIX}_CONFIG_VARS ${dst})
+    set(${dst} ${${src}} PARENT_SCOPE)
+  endforeach()
+  set(${DST_PREFIX}_CONFIG_VARS ${${DST_PREFIX}_CONFIG_VARS} PARENT_SCOPE)
+endfunction()
+
+function(ygginterface_options_config_private2public PREFIX)
+  foreach(src IN LISTS ${PREFIX}_CONFIG_VARS)
+    if(src MATCHES "^${PREFIX}_PRIVATE")
+      string(REPLACE "${PREFIX}_PRIVATE" "${PREFIX}_PUBLIC" dst "${src}")
+      list(APPEND ${dst} ${${src}})
+      set(${src})
+      set(${src} ${${src}} PARENT_SCOPE)
+      set(${dst} ${${dst}} PARENT_SCOPE)
+    endif()
+  endforeach()
+endfunction()
+
+function(ygginterface_options_filter PREFIX SUFFIX PREDICATE REGEX)
+  ygginterface_config_vars_type(${PREFIX} ${SUFFIX} CONFIG_VARS)
+  foreach(v IN LISTS CONFIG_VARS)
+    list(FILTER ${v} ${PREDICATE} "${REGEX}")
+    set(${v} ${${v}} PARENT_SCOPE)
+  endforeach()
+endfunction()
 
 macro(ygginterface_config_show PREFIX LEVEL)
   yggdrasil_rapidjson_config_show(${PREFIX} ${LEVEL})

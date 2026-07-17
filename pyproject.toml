@@ -55,3 +55,6 @@ cmake.build-type = "Release"
 # [tool.setuptools_scm]
 # version_file = "_version.py"
 # scm.git.describe_command = "git describe --tags --abbrev=0"
+
+[tool.pytest.ini_options]
+testpaths = "tests/python"

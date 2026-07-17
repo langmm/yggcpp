@@ -97,27 +97,12 @@ target_include_directories(
 if(YGG_LINK_Python_TO_CXX)
     target_link_libraries(${YGG_TARGET_PY} PUBLIC ${YGG_TARGET_CXX})
 else()
-    target_link_libraries(
-      ${YGG_TARGET_PY} PUBLIC
-      ${DEPS_PUBLIC_LIBRARIES} ${DEPS_PUBLIC_CXX_LIBS}
-    )
-    target_link_libraries(
-      ${YGG_TARGET_PY} PUBLIC
-      ${DEPS_PRIVATE_LIBRARIES}
-    )
-    target_include_directories(
-       ${YGG_TARGET_PY} PUBLIC ${DEPS_INCLUDE_DIRS}
-    )
+    ygginterface_options_config_copy(DEPS Python_DEPS)
+    ygginterface_options_filter(Python_DEPS LIBRARIES EXCLUDE ".+Python$")
+    # ygginterface_options_config_private2public(Python_DEPS)
+    ygginterface_target_config(${YGG_TARGET_PY} PUBLIC Python_DEPS)
     target_compile_definitions(
       ${YGG_TARGET_PY} PUBLIC ${YGG_INSTALL_DEFS}
-    )
-    target_compile_options(
-      ${YGG_TARGET_PY} PUBLIC
-      ${DEPS_PUBLIC_COMPILE_FLAGS} ${DEPS_PUBLIC_CXX_COMPILE_FLAGS}
-    )
-    target_link_options(
-      ${YGG_TARGET_PY} PUBLIC
-      ${DEPS_PUBLIC_LINK_FLAGS} ${DEPS_PUBLIC_CXX_LINK_FLAGS}
     )
 endif()
 if(NOT YGGDRASIL_RAPIDJSON_PYTHON_WRAPPER)
