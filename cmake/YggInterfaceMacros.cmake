@@ -104,11 +104,11 @@ function(ygginterface_config_vars_type_f PREFIX SUFFIX OUTPUT_VAR)
 endfunction()
 
 macro(ygginterface_config_vars_type PREFIX SUFFIX OUTPUT_VAR)
-  if(COMMAND yggdrasil_rapidjson_config_vars_type)
-    yggdrasil_rapidjson_config_vars(${PREFIX} ${SUFFIX} ${OUTPUT_VAR})
-  else()
+  # if(COMMAND yggdrasil_rapidjson_config_vars_type)
+  #   yggdrasil_rapidjson_config_vars_type(${PREFIX} ${SUFFIX} ${OUTPUT_VAR})
+  # else()
     ygginterface_config_vars_type_f(${PREFIX} ${SUFFIX} ${OUTPUT_VAR})
-  endif()
+  # endif()
 endmacro()
 
 macro(ygginterface_options_config_vars PREFIX)
@@ -117,6 +117,9 @@ endmacro()
 
 macro(ygginterface_options_config_init PREFIX)
   yggdrasil_rapidjson_config_init(${PREFIX})
+  if(NOT ${PREFIX}_CONFIG_VARS)  # Bug in older version of yggdrasil-rapidjson
+    ygginterface_options_config_vars(${PREFIX})
+  endif()
 endmacro()
 
 macro(ygginterface_options_config_cleanup PREFIX)
