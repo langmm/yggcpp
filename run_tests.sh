@@ -44,7 +44,7 @@ while [[ $# -gt 0 ]]; do
 	    DO_C="TRUE"
 	    shift # past argument with no value
 	    ;;
-	--cxx )
+	--cxx | --cpp )
 	    DO_CXX="TRUE"
 	    shift # past argument with no value
 	    ;;
@@ -399,7 +399,7 @@ else
             if [ -n "$DO_Python" ]; then
                 cd tests
                 python -m pytest -vsx python/
-                cd ../
+                cd ..
             fi
         fi
     fi
