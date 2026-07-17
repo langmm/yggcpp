@@ -243,7 +243,7 @@ add_yggdrasil_option(
 # RabbitMQ #
 ############
 
-add_yggdrasil_option(RMQ COMM DEPENDENCY rabbitmq-c)
+add_yggdrasil_option(RMQ COMM DEPENDENCY rabbitmq-c PRIVATE)
 if (rabbitmq-c_FOUND)
   # In v0.12.0 (v9.2.5 so), the include files were moved into a
   # dedicated rabbitmq-c directory. This is complicated by the
@@ -271,8 +271,8 @@ if (rabbitmq-c_FOUND)
   if ((NOT rabbitmq-c_VERSION) OR
       (rabbitmq-c_VERSION VERSION_GREATER "1.0.0") OR
       (rabbitmq-c_VERSION VERSION_LESS "0.12.0"))
-    list(APPEND DEPS_PUBLIC_C_COMPILE_FLAGS -DYGG_RMQ_NOINCLUDEDIR)
-    list(APPEND DEPS_PUBLIC_CXX_COMPILE_FLAGS -DYGG_RMQ_NOINCLUDEDIR)
+    list(APPEND DEPS_PRIVATE_C_COMPILE_FLAGS -DYGG_RMQ_NOINCLUDEDIR)
+    list(APPEND DEPS_PRIVATE_CXX_COMPILE_FLAGS -DYGG_RMQ_NOINCLUDEDIR)
   endif()
   dump_cmake_variables(REGEX "rabbitmq*" VERBOSE LOG_LEVEL DEBUG)
 endif()

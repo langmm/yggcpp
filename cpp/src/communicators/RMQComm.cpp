@@ -1,37 +1,101 @@
 #include "communicators/RMQComm.hpp"
 
+#ifdef RMQINSTALLED
+#ifdef YGG_RMQ_NOINCLUDEDIR
+#include <amqp.h>
+#include <amqp_tcp_socket.h>
+#else // YGG_RMQ_NOINCLUDEDIR
+#include <rabbitmq-c/amqp.h>
+#include <rabbitmq-c/tcp_socket.h>
+#endif // YGG_RMQ_NOINCLUDEDIR
+#endif // RMQINSTALLED
+
 using namespace YggInterface::communicator;
 using namespace YggInterface::utils;
 
 // TODO: Check that server can be connected
 
+#ifdef RMQINSTALLED
+bool _check_amqp_reply_error(amqp_rpc_reply_t x,
+                             std::string& msg) {
+  msg = "";
+  switch (x.reply_type) {
+  case AMQP_RESPONSE_NORMAL:
+    return true;
+  case AMQP_RESPONSE_NONE:
+    msg = "missing RPC reply type!";
+    break;
+  case AMQP_RESPONSE_LIBRARY_EXCEPTION:
+    msg = amqp_error_string2(x.library_error);
+    break;
+  case AMQP_RESPONSE_SERVER_EXCEPTION:
+    switch (x.reply.id) {
+    case AMQP_CONNECTION_CLOSE_METHOD: {
+      amqp_connection_close_t *m =
+	(amqp_connection_close_t *)x.reply.decoded;
+      msg = "server connection error " + std::to_string(m->reply_code)
+        + ", message: " + std::string((const char*)(m->reply_text.bytes));
+      break;
+    }
+    case AMQP_CHANNEL_CLOSE_METHOD: {
+      amqp_channel_close_t *m = (amqp_channel_close_t *)x.reply.decoded;
+      msg = "server channel error " + std::to_string(m->reply_code)
+        + ", message: " + std::string((const char*)(m->reply_text.bytes));
+      break;
+    }
+    default:
+      msg = "unknown server error, method id " + std::to_string(x.reply.id);
+      break;
+    }
+    break;
+  }
+  return false;
+}
+
 #define RMQSTATUS_(method, msg)						\
   {									\
-    if (!_check_amqp_error(method, msg)) {				\
+    int x = method;                                                     \
+    if (x < 0) {                                                        \
+      log_error() << msg << ": " << amqp_error_string2(x) << std::endl; \
       return -1;							\
     }									\
   }
-#define RMQSTATUS_REPLY_(method, msg)					\
+#define RMQSTATUS_REPLY_(method, context)                               \
   {									\
+    std::string msg;                                                    \
     if (!_check_amqp_reply_error(method, msg)) {			\
+      log_error() << context << ": " << msg << std::endl;               \
       return -1;							\
     }									\
   }
+
 #define ASSIGNSTR_RMQBYTES(dst, src)		\
   dst.assign(static_cast<const char*>(src))
 #define STR2RMQBYTES(src)			\
   ((src.empty()) ? amqp_empty_bytes : amqp_cstring_bytes(src.c_str()))
+
+#endif // RMQINSTALLED
+
+class RMQConnection::ImplAMQP {
+public:
+#ifdef RMQINSTALLED
+  ImplAMQP() :
+    conn(amqp_new_connection()), socket(NULL), channel(1) {}
+  amqp_connection_state_t conn; /**< Connection */
+  amqp_socket_t* socket;        /**< Socket */
+  amqp_channel_t channel;       /**< Channel */
+#endif // RMQINSTALLED
+};
+
 RMQConnection::RMQConnection(const std::string logInst, DIRECTION dir,
 			     const std::string& addr) :
   LogBase(), logInst_(logInst), address(addr), direction(dir),
-#ifdef RMQINSTALLED
-  conn(amqp_new_connection()), socket(NULL), channel(1),
-#endif // RMQINSTALLED
   url(""), host(""), user(""), password(""), port(-1), vhost(""),
-  exchange(""), queue_name("") {
+  exchange(""), queue_name(""),
+  pImplAMQP(std::make_unique<ImplAMQP>()) {
   if (init() < 0) {
 #ifdef RMQINSTALLED
-    amqp_destroy_connection(conn);
+    amqp_destroy_connection(pImplAMQP->conn);
 #endif // RMQINSTALLED
     throw_error("RMQConnection: Failed to initialize connection");
   }
@@ -104,33 +168,33 @@ int RMQConnection::init() {
     _format_address();
   }
   // TODO: Other types of sockets?
-  socket = amqp_tcp_socket_new(conn);
-  if (!socket) {
+  pImplAMQP->socket = amqp_tcp_socket_new(pImplAMQP->conn);
+  if (!pImplAMQP->socket) {
     log_error() << "init: Failed to create a new socket" << std::endl;
     return -1;
   }
-  RMQSTATUS_(amqp_socket_open(socket, host.c_str(), port),
+  RMQSTATUS_(amqp_socket_open(pImplAMQP->socket, host.c_str(), port),
 	     "init: Failed to open socket");
-  RMQSTATUS_REPLY_(amqp_login(conn, vhost.c_str(), 0, 131072, 0,
+  RMQSTATUS_REPLY_(amqp_login(pImplAMQP->conn, vhost.c_str(), 0, 131072, 0,
 			      AMQP_SASL_METHOD_PLAIN,
 			      user.c_str(), password.c_str()),
 			      // STR2RMQBYTES(user),
 			      // STR2RMQBYTES(password)),
 		   "init: Failed to complete login");
-  amqp_channel_open(conn, channel);
-  RMQSTATUS_REPLY_(amqp_get_rpc_reply(conn),
+  amqp_channel_open(pImplAMQP->conn, pImplAMQP->channel);
+  RMQSTATUS_REPLY_(amqp_get_rpc_reply(pImplAMQP->conn),
 		   "init: Failed to get rpc reply");
   amqp_boolean_t passive = 0;
   if (queue_name.rfind("amq.", 0) == 0)
     passive = 1;
   amqp_queue_declare_ok_t *r = amqp_queue_declare(
-    conn, channel, STR2RMQBYTES(queue_name),
+    pImplAMQP->conn, pImplAMQP->channel, STR2RMQBYTES(queue_name),
     passive, // passive
     1, // durable
     0, // exclusive
     1, // auto-delete
     amqp_empty_table);
-  RMQSTATUS_REPLY_(amqp_get_rpc_reply(conn),
+  RMQSTATUS_REPLY_(amqp_get_rpc_reply(pImplAMQP->conn),
 		   ("init: Failed to declare a queue: " + queue_name));
   if (queue_name.empty()) {
     ASSIGNSTR_RMQBYTES(queue_name, r->queue.bytes);
@@ -139,42 +203,44 @@ int RMQConnection::init() {
   log_debug() << "init: Declared queue \"" << queue_name <<
     "\" (passive = " << passive << ")" << std::endl;
   if (!exchange.empty()) {
-    amqp_queue_bind(conn, channel,
+    amqp_queue_bind(pImplAMQP->conn, pImplAMQP->channel,
 		    STR2RMQBYTES(queue_name),
 		    STR2RMQBYTES(exchange),
 		    STR2RMQBYTES(queue_name),
 		    amqp_empty_table);
-    RMQSTATUS_REPLY_(amqp_get_rpc_reply(conn),
+    RMQSTATUS_REPLY_(amqp_get_rpc_reply(pImplAMQP->conn),
 		     "init: Failed to bind to queue");
   }
   // if (direction == RECV) {
-  //   amqp_basic_consume(conn, channel,
+  //   amqp_basic_consume(pImplAMQP->conn, pImplAMQP->channel,
   // 		       STR2RMQBYTES(queue_name),
   // 		       amqp_empty_bytes, 0, 1, 0,
   // 		       amqp_empty_table);
-  //   RMQSTATUS_REPLY_(amqp_get_rpc_reply(conn),
+  //   RMQSTATUS_REPLY_(amqp_get_rpc_reply(pImplAMQP->conn),
   // 		     "init: Failed to begin consuming");
   // }
   return 0;
 }
 int RMQConnection::close() {
-  RMQSTATUS_REPLY_(amqp_channel_close(conn, channel, AMQP_REPLY_SUCCESS),
+  RMQSTATUS_REPLY_(amqp_channel_close(pImplAMQP->conn,
+                                      pImplAMQP->channel,
+                                      AMQP_REPLY_SUCCESS),
 		   "close: Error closing channel");
-  RMQSTATUS_REPLY_(amqp_connection_close(conn, AMQP_REPLY_SUCCESS),
+  RMQSTATUS_REPLY_(amqp_connection_close(pImplAMQP->conn,
+                                         AMQP_REPLY_SUCCESS),
 		   "close: Error closing connection");
-  RMQSTATUS_(amqp_destroy_connection(conn),
+  RMQSTATUS_(amqp_destroy_connection(pImplAMQP->conn),
 	     "close: Error destroying connection");
   return 0;
 }
 int RMQConnection::nmsg(DIRECTION) const {
-  // amqp_rpc_reply_t ret = amqp_basic_get(conn, channel,
+  // amqp_rpc_reply_t ret = amqp_basic_get(pImplAMQP->conn, pImplAMQP->channel,
   // 					STR2RMQBYTES(queue_name), 1);
-  // if (!_check_amqp_reply_error(ret, "nmsg: Failed to get nmsg"))
-  //   return -1;
+  // RMQSTATUS_REPLY_(ret, "nmsg: Failed to get nmsg");
   // return (int)(ret.reply.id == AMQP_BASIC_GET_OK_METHOD);
   // Passive queue declare to get message count
   amqp_queue_declare_ok_t *r = amqp_queue_declare(
-    conn, channel, STR2RMQBYTES(queue_name),
+    pImplAMQP->conn, pImplAMQP->channel, STR2RMQBYTES(queue_name),
     1, // passive
     1, // durable
     0, // exclusive
@@ -184,7 +250,7 @@ int RMQConnection::nmsg(DIRECTION) const {
     log_error() << "nmsg: Error in amqp_queue_declare" << std::endl;
     return -1;
   }
-  RMQSTATUS_REPLY_(amqp_get_rpc_reply(conn),
+  RMQSTATUS_REPLY_(amqp_get_rpc_reply(pImplAMQP->conn),
 		   ("nmsg: Failed to declare a passive queue: " + queue_name));
   int out = static_cast<int>(r->message_count);
   return out;
@@ -197,7 +263,8 @@ int RMQConnection::send(utils::Header& header) {
   properties.delivery_mode = AMQP_DELIVERY_NONPERSISTENT;
   message_bytes.len = header.size_msg;
   message_bytes.bytes = header.data_msg();
-  RMQSTATUS_(amqp_basic_publish(conn, channel,
+  RMQSTATUS_(amqp_basic_publish(pImplAMQP->conn,
+                                pImplAMQP->channel,
 				STR2RMQBYTES(exchange),
 				STR2RMQBYTES(queue_name),
 				1, 0, &properties, message_bytes),
@@ -206,18 +273,20 @@ int RMQConnection::send(utils::Header& header) {
 }
 long RMQConnection::recv(utils::Header& header) {
   amqp_message_t message;
-  amqp_rpc_reply_t rpc_reply = amqp_basic_get(conn, channel,
+  amqp_rpc_reply_t rpc_reply = amqp_basic_get(pImplAMQP->conn,
+                                              pImplAMQP->channel,
 					      STR2RMQBYTES(queue_name), 1);
-  if (!_check_amqp_reply_error(rpc_reply, "nmsg: Failed to get nmsg"))
-    return -1;
+  RMQSTATUS_REPLY_(rpc_reply, "nmsg: Failed to get nmsg");
   if (rpc_reply.reply.id != AMQP_BASIC_GET_OK_METHOD) {
     log_error() << "recv: No message waiting" << std::endl;
     return -1;
   }
   // amqp_envelope_t envelope;
-  // amqp_maybe_release_buffers(conn);
-  // RMQSTATUS_REPLY_(amqp_consume_message(conn, &envelope, NULL, 0),
-  RMQSTATUS_REPLY_(amqp_read_message(conn, channel, &message, 0),
+  // amqp_maybe_release_buffers(pImplAMQP->conn);
+  // RMQSTATUS_REPLY_(amqp_consume_message(pImplAMQP->conn, &envelope, NULL, 0),
+  RMQSTATUS_REPLY_(amqp_read_message(pImplAMQP->conn,
+                                     pImplAMQP->channel,
+                                     &message, 0),
 		   "recv: Failed to read message");
   long ret = header.on_recv(static_cast<const char*>(message.body.bytes),
 			    static_cast<size_t>(message.body.len));
@@ -238,51 +307,9 @@ void RMQConnection::_format_address() {
     _RMQ_PARAM_SEP + queue_name;
   log_debug() << "_format_address: " << address << std::endl;
 }
-bool RMQConnection::_check_amqp_error(int x, const std::string& context) const {
-  if (x < 0) {
-    log_error() << context << ": " << amqp_error_string2(x) << std::endl;
-    return false;
-  }
-  return true;
-}
-bool RMQConnection::_check_amqp_reply_error(amqp_rpc_reply_t x,
-					    const std::string& context) const {
-  switch (x.reply_type) {
-  case AMQP_RESPONSE_NORMAL:
-    return true;
-  case AMQP_RESPONSE_NONE:
-    log_error() << context << ": missing RPC reply type!" << std::endl;
-    break;
-  case AMQP_RESPONSE_LIBRARY_EXCEPTION:
-    log_error() << context << ": " << amqp_error_string2(x.library_error) << std::endl;
-    break;
-  case AMQP_RESPONSE_SERVER_EXCEPTION:
-    switch (x.reply.id) {
-    case AMQP_CONNECTION_CLOSE_METHOD: {
-      amqp_connection_close_t *m =
-	(amqp_connection_close_t *)x.reply.decoded;
-      log_error() << context << ": server connection error " <<
-	m->reply_code << ", message: " <<
-	(const char*)(m->reply_text.bytes) << std::endl;
-      break;
-    }
-    case AMQP_CHANNEL_CLOSE_METHOD: {
-      amqp_channel_close_t *m = (amqp_channel_close_t *)x.reply.decoded;
-      log_error() << context << ": server channel error " <<
-	m->reply_code << ", message: " <<
-	(const char*)(m->reply_text.bytes) << std::endl;
-      break;
-    }
-    default:
-      log_error() << context << ": unknown server error, method id " <<
-	x.reply.id << std::endl;
-      break;
-    }
-    break;
-  }
-  return false;
-}
 
+#undef RMQSTATUS_
+#undef RMQSTATUS_REPLY_
 
 #else // RMQINSTALLED
 int RMQConnection::init() { return -1; }

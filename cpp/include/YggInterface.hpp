@@ -40,19 +40,19 @@ public:
 
   /*!
     @brief Constructor for YggInput w/ C++ std::string.
-    @param[in] nme Name of input channel. This should be named as a
+    @param[in] name Name of input channel. This should be named as a
       model input the in YAML for the model calling it.
     @param[in] flags Bit flags to set communicator properties.
     @param[in] commtype Type of communicator that should be used. Defaults
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YGG_API YggInput(const std::string nme, FLAG_TYPE flags = 0,
+  YGG_API YggInput(const std::string name, FLAG_TYPE flags = 0,
                    const COMM_TYPE commtype = DEFAULT_COMM);
 
   /*!
     @brief Constructor for YggInput with format.
-    @param[in] nme Name of input channel. This should be named as a
+    @param[in] name Name of input channel. This should be named as a
       model input the in YAML for the model calling it.
     @param[in] fmt Format string specifying the datatype of messages
       that will be received using this comm.
@@ -63,13 +63,13 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YGG_API YggInput(const std::string nme, const std::string fmt,
+  YGG_API YggInput(const std::string name, const std::string fmt,
                    bool as_array = false, FLAG_TYPE flags = 0,
                    const COMM_TYPE commtype = DEFAULT_COMM);
 
   /*!
     @brief Constructor for YggInput with explicit datatype.
-    @param[in] nme Name of input channel. This should be named as a
+    @param[in] name Name of input channel. This should be named as a
       model input the in YAML for the model calling it.
     @param[in] schema Document containing JSON schema describing the type
       of data expected by the communicator.
@@ -78,8 +78,10 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YGG_API YggInput(const std::string nme, const yggdrasil_rapidjson::Document& schema,
-                   FLAG_TYPE flags = 0, const COMM_TYPE commtype = DEFAULT_COMM);
+  YGG_API YggInput(const std::string name,
+                   const yggdrasil_rapidjson::Document& schema,
+                   FLAG_TYPE flags = 0,
+                   const COMM_TYPE commtype = DEFAULT_COMM);
 
 };
 
@@ -93,21 +95,19 @@ public:
   
   /*!
     @brief Constructor for YggOutput.
-    @param[in] nme Name of output channel. This should be named as a
+    @param[in] name Name of output channel. This should be named as a
       model output the in YAML for the model calling it.
     @param[in] flags Bit flags to set communicator properties.
     @param[in] commtype Type of communicator that should be used. Defaults
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggOutput(const std::string nme, FLAG_TYPE flags = 0,
-	    const COMM_TYPE commtype = DEFAULT_COMM) :
-    WrapComm(nme, utils::blankAddress,
-             SEND, flags | COMM_FLAG_INTERFACE, commtype) {}
+  YGG_API YggOutput(const std::string name, FLAG_TYPE flags = 0,
+                    const COMM_TYPE commtype = DEFAULT_COMM);
   
   /*!
     @brief Constructor for YggOutput with format.
-    @param[in] nme Name of output channel. This should be named as a
+    @param[in] name Name of output channel. This should be named as a
       model output the in YAML for the model calling it.
     @param[in] fmt Format string specifying the datatype of messages
       that will be sent using this comm. If messages are sent to an
@@ -119,19 +119,13 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggOutput(const std::string nme, const std::string fmt,
-	    bool as_array=false, FLAG_TYPE flags = 0,
-	    const COMM_TYPE commtype = DEFAULT_COMM) :
-    WrapComm(nme, utils::blankAddress,
-             SEND, flags | COMM_FLAG_INTERFACE, commtype) {
-    if (!this->addFormat(fmt, as_array))
-      this->throw_error("Invalid format");  // GCOV_EXCL_LINE
-  }
-    
+  YGG_API YggOutput(const std::string name, const std::string fmt,
+                    bool as_array=false, FLAG_TYPE flags = 0,
+                    const COMM_TYPE commtype = DEFAULT_COMM);
 
   /*!
     @brief Constructor for YggOutput with explicit datatype.
-    @param[in] nme Name of output channel. This should be named as a
+    @param[in] name Name of output channel. This should be named as a
       model output the in YAML for the model calling it.
     @param[in] schema Document containing JSON schema describing the type
       of data expected by the communicator.
@@ -140,13 +134,10 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggOutput(const std::string nme, yggdrasil_rapidjson::Document& schema,
-	    FLAG_TYPE flags = 0, const COMM_TYPE commtype = DEFAULT_COMM) :
-    WrapComm(nme, utils::blankAddress,
-             SEND, flags | COMM_FLAG_INTERFACE, commtype) {
-    if (!this->addSchema(schema))
-      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
-  }
+  YGG_API YggOutput(const std::string name,
+                    yggdrasil_rapidjson::Document& schema,
+                    FLAG_TYPE flags = 0,
+                    const COMM_TYPE commtype = DEFAULT_COMM);
 
 };
 	
@@ -170,11 +161,9 @@ public:
       for the response communicator. Defaults to DEFAULT_COMM that is
       set based on the available packages at compilation.
   */
-  YggRpcServer(const std::string name, FLAG_TYPE flags = 0,
-               const COMM_TYPE request_commtype = DEFAULT_COMM,
-               const COMM_TYPE response_commtype = DEFAULT_COMM) :
-    ServerComm(name, flags | COMM_FLAG_INTERFACE,
-               SERVER_COMM, request_commtype, response_commtype) {}
+  YGG_API YggRpcServer(const std::string name, FLAG_TYPE flags = 0,
+                       const COMM_TYPE request_commtype = DEFAULT_COMM,
+                       const COMM_TYPE response_commtype = DEFAULT_COMM);
 
   /*!
     @brief Constructor for YggRpcServer.
@@ -193,17 +182,11 @@ public:
       for the response communicator. Defaults to DEFAULT_COMM that is
       set based on the available packages at compilation.
    */
-  YggRpcServer(const std::string name, const std::string inFormat,
-	       const std::string outFormat, FLAG_TYPE flags = 0,
-	       const COMM_TYPE request_commtype = DEFAULT_COMM,
-	       const COMM_TYPE response_commtype = DEFAULT_COMM) :
-    ServerComm(name, flags | COMM_FLAG_INTERFACE,
-	       SERVER_COMM, request_commtype, response_commtype) {
-    if (!this->addFormat(inFormat))
-      this->throw_error("Invalid request format");
-    if (!this->addResponseFormat(outFormat))
-      this->throw_error("Invalid response format");
-  }
+  YGG_API YggRpcServer(const std::string name,
+                       const std::string inFormat,
+                       const std::string outFormat, FLAG_TYPE flags = 0,
+                       const COMM_TYPE request_commtype = DEFAULT_COMM,
+                       const COMM_TYPE response_commtype = DEFAULT_COMM);
 
   /*!
     @brief Constructor for YggRpcServer with explicit datatype.
@@ -222,17 +205,12 @@ public:
       for the response communicator. Defaults to DEFAULT_COMM that is
       set based on the available packages at compilation.
    */
-  YggRpcServer(const std::string name, const yggdrasil_rapidjson::Document& inType,
-	       const yggdrasil_rapidjson::Document& outType, FLAG_TYPE flags = 0,
-	       const COMM_TYPE request_commtype = DEFAULT_COMM,
-	       const COMM_TYPE response_commtype = DEFAULT_COMM) :
-    ServerComm(name, flags | COMM_FLAG_INTERFACE,
-	       SERVER_COMM, request_commtype, response_commtype) {
-    if (!this->addSchema(inType))
-      this->throw_error("Invalid request schema");  // GCOV_EXCL_LINE
-    if (!this->addResponseSchema(outType))
-      this->throw_error("Invalid response schema");  // GCOV_EXCL_LINE
-  }
+  YGG_API YggRpcServer(const std::string name,
+                       const yggdrasil_rapidjson::Document& inType,
+                       const yggdrasil_rapidjson::Document& outType,
+                       FLAG_TYPE flags = 0,
+                       const COMM_TYPE request_commtype = DEFAULT_COMM,
+                       const COMM_TYPE response_commtype = DEFAULT_COMM);
 
 };
 
@@ -257,11 +235,9 @@ public:
       used for response communicators. Defaults to DEFAULT_COMM that is
       set based on the available packages at compilation.
   */
-  YggRpcClient(const std::string name, FLAG_TYPE flags = 0,
-	       const COMM_TYPE request_commtype = DEFAULT_COMM,
-	       const COMM_TYPE response_commtype = DEFAULT_COMM) :
-    ClientComm(name, flags | COMM_FLAG_INTERFACE,
-	       CLIENT_COMM, request_commtype, response_commtype) {}
+  YGG_API YggRpcClient(const std::string name, FLAG_TYPE flags = 0,
+                       const COMM_TYPE request_commtype = DEFAULT_COMM,
+                       const COMM_TYPE response_commtype = DEFAULT_COMM);
   
   /*!
     @brief Constructor for YggRpcClient.
@@ -280,17 +256,11 @@ public:
       used for response communicators. Defaults to DEFAULT_COMM that is
       set based on the available packages at compilation.
    */
-  YggRpcClient(const std::string name, const std::string outFormat,
-	       const std::string inFormat, FLAG_TYPE flags = 0,
-	       const COMM_TYPE request_commtype = DEFAULT_COMM,
-	       const COMM_TYPE response_commtype = DEFAULT_COMM) :
-    ClientComm(name, flags | COMM_FLAG_INTERFACE,
-	       CLIENT_COMM, request_commtype, response_commtype) {
-    if (!this->addFormat(outFormat))
-      this->throw_error("Invalid request format");
-    if (!this->addResponseFormat(inFormat))
-      this->throw_error("Invalid response format");
-  }
+  YGG_API YggRpcClient(const std::string name,
+                       const std::string outFormat,
+                       const std::string inFormat, FLAG_TYPE flags = 0,
+                       const COMM_TYPE request_commtype = DEFAULT_COMM,
+                       const COMM_TYPE response_commtype = DEFAULT_COMM);
 
   /*!
     @brief Constructor for YggRpcClient with explicit datatype.
@@ -309,17 +279,12 @@ public:
       used for response communicators. Defaults to DEFAULT_COMM that is
       set based on the available packages at compilation.
    */
-  YggRpcClient(const std::string name, const yggdrasil_rapidjson::Document& outType,
-	       const yggdrasil_rapidjson::Document& inType, FLAG_TYPE flags = 0,
-	       const COMM_TYPE request_commtype = DEFAULT_COMM,
-	       const COMM_TYPE response_commtype = DEFAULT_COMM) :
-    ClientComm(name, flags | COMM_FLAG_INTERFACE,
-	       CLIENT_COMM, request_commtype, response_commtype) {
-    if (!this->addSchema(outType))
-      this->throw_error("Invalid request schema");  // GCOV_EXCL_LINE
-    if (!this->addResponseSchema(inType))
-      this->throw_error("Invalid response schema");  // GCOV_EXCL_LINE
-  }
+  YGG_API YggRpcClient(const std::string name,
+                       const yggdrasil_rapidjson::Document& outType,
+                       const yggdrasil_rapidjson::Document& inType,
+                       FLAG_TYPE flags = 0,
+                       const COMM_TYPE request_commtype = DEFAULT_COMM,
+                       const COMM_TYPE response_commtype = DEFAULT_COMM);
   
 };
 
@@ -347,34 +312,10 @@ public:
       used for response communicators. Defaults to DEFAULT_COMM that is
       set based on the available packages at compilation.
    */
-  YggTimesync(const std::string name="timesync",
-	      const std::string t_units="", FLAG_TYPE flags = 0,
-	      const COMM_TYPE request_commtype = DEFAULT_COMM,
-	      const COMM_TYPE response_commtype = DEFAULT_COMM) :
-    YggRpcClient(name, flags, request_commtype, response_commtype) {
-    if (!this->addSchema("{ \"type\": \"array\","
-			 "  \"items\": ["
-			 "    {"
-			 "      \"type\": \"scalar\", "
-			 "      \"subtype\": \"float\","
-			 "      \"precision\": 8"
-			 "    },"
-			 "    { \"type\": \"object\" }"
-			 "  ]"
-			 "}"))
-      this->throw_error("Invalid time schema");  // GCOV_EXCL_LINE
-    if (t_units.size() > 0) {
-      (*(this->getMetadata().getSchema()))["items"][0].AddMember(
-	 yggdrasil_rapidjson::Value("units", 5,
-			  this->getMetadata().GetAllocator()).Move(),
-	 yggdrasil_rapidjson::Value(t_units.c_str(),
-			  static_cast<yggdrasil_rapidjson::SizeType>(t_units.size()),
-			  this->getMetadata().GetAllocator()).Move(),
-	 this->getMetadata().GetAllocator());
-    }
-    if (!this->addResponseSchema("{ \"type\": \"object\" }", true))
-      this->throw_error("Invalid state schema");  // GCOV_EXCL_LINE
-  }
+  YGG_API YggTimesync(const std::string name="timesync",
+                      const std::string t_units="", FLAG_TYPE flags = 0,
+                      const COMM_TYPE request_commtype = DEFAULT_COMM,
+                      const COMM_TYPE response_commtype = DEFAULT_COMM);
   
 };
 
@@ -395,16 +336,16 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  explicit YggAsciiFileOutput(const std::string name, FLAG_TYPE flags = 0,
-			      const COMM_TYPE commtype = DEFAULT_COMM) :
-    YggOutput(name, flags, commtype) {}
+  YGG_API explicit YggAsciiFileOutput(const std::string name,
+                                      FLAG_TYPE flags = 0,
+                                      const COMM_TYPE commtype = DEFAULT_COMM);
   
   /*!
     @brief Send a single line to a file or queue.
     @param[in] line character pointer to line that should be sent.
     @returns int 0 if send was succesfull. All other values indicate errors.
    */
-  int send_line(const char *line) { return send(line, strlen(line)); }
+  YGG_API int send_line(const char *line);
 
 };
 
@@ -425,9 +366,9 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  explicit YggAsciiFileInput(const std::string name, FLAG_TYPE flags = 0,
-			     const COMM_TYPE commtype = DEFAULT_COMM) :
-    YggInput(name, flags, commtype) {}
+  YGG_API explicit YggAsciiFileInput(const std::string name,
+                                     FLAG_TYPE flags = 0,
+                                     const COMM_TYPE commtype = DEFAULT_COMM);
 
   /*!
     @brief Receive a single line from an associated file or queue.
@@ -437,8 +378,7 @@ public:
     @returns Number of bytes read/received. Negative values indicate
       that there was either an error or the EOF message was received.
    */
-  long recv_line(char *line, const size_t n)
-  { return this->recv(line, n, false); }
+  YGG_API long recv_line(char *line, const size_t n);
   
 };
 
@@ -462,10 +402,10 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggAsciiTableOutput(const std::string name, const std::string fmt,
-		      FLAG_TYPE flags = 0,
-		      const COMM_TYPE commtype = DEFAULT_COMM) :
-    YggOutput(name, fmt, false, flags, commtype) {}
+  YGG_API YggAsciiTableOutput(const std::string name,
+                              const std::string fmt,
+                              FLAG_TYPE flags = 0,
+                              const COMM_TYPE commtype = DEFAULT_COMM);
 
 };
 
@@ -486,9 +426,8 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggAsciiTableInput(const std::string name, FLAG_TYPE flags = 0,
-		     const COMM_TYPE commtype = DEFAULT_COMM) :
-    YggInput(name, flags, commtype) {}
+  YGG_API YggAsciiTableInput(const std::string name, FLAG_TYPE flags = 0,
+                             const COMM_TYPE commtype = DEFAULT_COMM);
 
   /*!
     @brief Constructor for YggAsciiTableInput.
@@ -501,10 +440,10 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggAsciiTableInput(const std::string name, const std::string fmt,
-		     FLAG_TYPE flags = 0,
-		     const COMM_TYPE commtype = DEFAULT_COMM) :
-    YggInput(name, fmt, false, flags, commtype) {}
+  YGG_API YggAsciiTableInput(const std::string name,
+                             const std::string fmt,
+                             FLAG_TYPE flags = 0,
+                             const COMM_TYPE commtype = DEFAULT_COMM);
 
 };
 
@@ -527,10 +466,10 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggAsciiArrayOutput(const std::string name, const std::string fmt,
-		      FLAG_TYPE flags = 0,
-		      const COMM_TYPE commtype = DEFAULT_COMM) :
-    YggOutput(name, fmt, true, flags, commtype) {}
+  YGG_API YggAsciiArrayOutput(const std::string name,
+                              const std::string fmt,
+                              FLAG_TYPE flags = 0,
+                              const COMM_TYPE commtype = DEFAULT_COMM);
 
 };
 
@@ -551,9 +490,8 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggAsciiArrayInput(const std::string name, FLAG_TYPE flags = 0,
-                     const COMM_TYPE commtype = DEFAULT_COMM) :
-    YggInput(name, flags, commtype) {}
+  YGG_API YggAsciiArrayInput(const std::string name, FLAG_TYPE flags = 0,
+                             const COMM_TYPE commtype = DEFAULT_COMM);
 
   /*!
     @brief Constructor for YggAsciiArrayInput.
@@ -566,9 +504,10 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggAsciiArrayInput(const std::string name, const std::string fmt,
-		     FLAG_TYPE flags = 0, const COMM_TYPE commtype = DEFAULT_COMM) :
-    YggInput(name, fmt, true, flags, commtype) {}
+  YGG_API YggAsciiArrayInput(const std::string name,
+                             const std::string fmt,
+                             FLAG_TYPE flags = 0,
+                             const COMM_TYPE commtype = DEFAULT_COMM);
 
 };
 
@@ -589,12 +528,8 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggPlyOutput(const std::string name, FLAG_TYPE flags = 0,
-	       const COMM_TYPE commtype = DEFAULT_COMM) :
-    YggOutput(name, flags, commtype) {
-    if (!this->addSchema("{\"type\": \"ply\"}"))
-      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
-  }
+  YGG_API YggPlyOutput(const std::string name, FLAG_TYPE flags = 0,
+                       const COMM_TYPE commtype = DEFAULT_COMM);
 
 };
 
@@ -615,12 +550,8 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggPlyInput(const std::string name, FLAG_TYPE flags = 0,
-	      const COMM_TYPE commtype = DEFAULT_COMM) :
-    YggInput(name, flags, commtype) {
-    if (!this->addSchema("{\"type\": \"ply\"}"))
-      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
-  }
+  YGG_API YggPlyInput(const std::string name, FLAG_TYPE flags = 0,
+                      const COMM_TYPE commtype = DEFAULT_COMM);
   
 };
 
@@ -641,12 +572,8 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggObjOutput(const std::string name, FLAG_TYPE flags = 0,
-	       const COMM_TYPE commtype = DEFAULT_COMM) :
-    YggOutput(name, flags, commtype) {
-    if (!this->addSchema("{\"type\": \"obj\"}"))
-      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
-  }
+  YGG_API YggObjOutput(const std::string name, FLAG_TYPE flags = 0,
+                       const COMM_TYPE commtype = DEFAULT_COMM);
   
 };
 
@@ -667,12 +594,8 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggObjInput(const std::string name, FLAG_TYPE flags = 0,
-	      const COMM_TYPE commtype = DEFAULT_COMM) :
-    YggInput(name, flags, commtype) {
-    if (!this->addSchema("{\"type\": \"obj\"}"))
-      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
-  }
+  YGG_API YggObjInput(const std::string name, FLAG_TYPE flags = 0,
+                      const COMM_TYPE commtype = DEFAULT_COMM);
 
 };
 
@@ -693,12 +616,8 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggGenericOutput(const std::string name, FLAG_TYPE flags = 0,
-		   const COMM_TYPE commtype = DEFAULT_COMM) :
-    YggOutput(name, flags, commtype) {
-    if (!this->addSchema("{\"type\": \"any\"}"))
-      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
-  }
+  YGG_API YggGenericOutput(const std::string name, FLAG_TYPE flags = 0,
+                           const COMM_TYPE commtype = DEFAULT_COMM);
   
 };
 
@@ -720,12 +639,8 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggGenericInput(const std::string name, FLAG_TYPE flags = 0,
-		  const COMM_TYPE commtype = DEFAULT_COMM) :
-    YggInput(name, flags, commtype) {
-    if (!this->addSchema("{\"type\": \"any\"}"))
-      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
-  }
+  YGG_API YggGenericInput(const std::string name, FLAG_TYPE flags = 0,
+                          const COMM_TYPE commtype = DEFAULT_COMM);
 
 };
 
@@ -746,12 +661,8 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggAnyOutput(const std::string name, FLAG_TYPE flags = 0,
-	       const COMM_TYPE commtype = DEFAULT_COMM) :
-    YggOutput(name, flags, commtype) {
-    if (!this->addSchema("{\"type\": \"any\"}"))
-      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
-  }
+  YGG_API YggAnyOutput(const std::string name, FLAG_TYPE flags = 0,
+                       const COMM_TYPE commtype = DEFAULT_COMM);
   
 };
 
@@ -773,12 +684,8 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggAnyInput(const std::string name, FLAG_TYPE flags = 0,
-	      const COMM_TYPE commtype = DEFAULT_COMM) :
-    YggInput(name, flags, commtype) {
-    if (!this->addSchema("{\"type\": \"any\"}"))
-      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
-  }
+  YGG_API YggAnyInput(const std::string name, FLAG_TYPE flags = 0,
+                      const COMM_TYPE commtype = DEFAULT_COMM);
 
 };
 
@@ -799,12 +706,8 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggJSONArrayOutput(const std::string name, FLAG_TYPE flags = 0,
-		     const COMM_TYPE commtype = DEFAULT_COMM) :
-    YggOutput(name, flags, commtype) {
-    if (!this->addSchema("{\"type\": \"array\"}"))
-      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
-  }
+  YGG_API YggJSONArrayOutput(const std::string name, FLAG_TYPE flags = 0,
+                             const COMM_TYPE commtype = DEFAULT_COMM);
   
 };
 
@@ -825,12 +728,8 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggJSONArrayInput(const std::string name, FLAG_TYPE flags = 0,
-		    const COMM_TYPE commtype = DEFAULT_COMM) :
-    YggInput(name, flags, commtype) {
-    if (!this->addSchema("{\"type\": \"array\"}"))
-      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
-  }
+  YGG_API YggJSONArrayInput(const std::string name, FLAG_TYPE flags = 0,
+                            const COMM_TYPE commtype = DEFAULT_COMM);
 
 };
 
@@ -851,12 +750,9 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggJSONObjectOutput(const std::string name, FLAG_TYPE flags = 0,
-		      const COMM_TYPE commtype = DEFAULT_COMM) :
-    YggOutput(name, flags, commtype) {
-    if (!this->addSchema("{\"type\": \"object\"}"))
-      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
-  }
+  YGG_API YggJSONObjectOutput(const std::string name,
+                              FLAG_TYPE flags = 0,
+                              const COMM_TYPE commtype = DEFAULT_COMM);
   
 };
 
@@ -878,12 +774,8 @@ public:
       to DEFAULT_COMM that is set based on the available packages at
       compilation.
    */
-  YggJSONObjectInput(const std::string name, FLAG_TYPE flags = 0,
-		     const COMM_TYPE commtype = DEFAULT_COMM) :
-    YggInput(name, flags, commtype) {
-    if (!this->addSchema("{\"type\": \"object\"}"))
-      this->throw_error("Invalid schema");  // GCOV_EXCL_LINE
-  }
+  YGG_API YggJSONObjectInput(const std::string name, FLAG_TYPE flags = 0,
+                             const COMM_TYPE commtype = DEFAULT_COMM);
   
 };
 

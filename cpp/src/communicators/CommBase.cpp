@@ -45,7 +45,6 @@ Comm_t::Comm_t(const std::string &nme,
   index_in_register(-1), thread_id(), metadata(),
   timeout_recv(YGG_MAX_TIME), workers(), global_comm(nullptr),
   language(NO_LANGUAGE), model(), partner_model() {
-  std::cerr << "Comm_t: " << nme << " -> " << name << std::endl;
   _before_open(supp);
 }
 
@@ -87,7 +86,6 @@ void Comm_t::_before_open(const SupplementCommArgs& supp) {
     std::string prefix(model_name);
     prefix += ":";
     if (name.rfind(prefix, 0) != 0) {
-      std::cerr << "FROM PREFIX: " << prefix << ", " << name << std::endl;
       prefix += name;
       name = prefix;
     }
@@ -464,7 +462,6 @@ bool Comm_t::create_global_scope_comm(const SupplementCommArgs& supp) {
   }
   if ((flags & COMM_FLAG_WRAPPER) &&
       !(global_type == SERVER_COMM || global_type == CLIENT_COMM)) {
-    std::cerr << "HERE: " << name << std::endl;
     log_debug() << "create_global_scope_comm: COMM_FLAG_WRAPPER for non-server/client: " << COMM_TYPE_cls2str(global_type) << std::endl;
   }
   if (name.empty() || (!(flags & COMM_FLAG_GLOBAL)) ||

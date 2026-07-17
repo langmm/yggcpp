@@ -67,11 +67,9 @@ WrapComm::WrapComm(const std::string &nme,
   CommBase(std::move(nme), address, direction, flgs | COMM_FLAG_WRAPPER,
 	   type, wrapspp),
   wrapflags(wrapflgs | flgs), wraptype(wraptyp), wrapsupp(wrapspp) {
-  std::cerr << "WrapComm[before open]: " << nme << " -> " << this->name << std::endl;
   if (wraptype == NULL_COMM)
     wraptype = type;
   ADD_CONSTRUCTOR_OPEN(WrapComm)
-  std::cerr << "WrapComm[after open]: " << nme << " -> " << this->name << std::endl;
 }
 WrapComm::WrapComm(const std::string &nme,
 		   const DIRECTION dirn,
@@ -79,17 +77,13 @@ WrapComm::WrapComm(const std::string &nme,
 		   FLAG_TYPE wrapflgs, const COMM_TYPE wraptype,
 		   const SupplementCommArgs& wrapsupp) :
   WrapComm(nme, utils::blankAddress, dirn, flgs, type,
-	   wrapflgs, wraptype, wrapsupp) {
-  std::cerr << "WrapComm: " << nme << " -> " << this->name << std::endl;
-}
+	   wrapflgs, wraptype, wrapsupp) {}
 WrapComm::WrapComm(const utils::Address &addr,
 		   const DIRECTION dirn,
 		   FLAG_TYPE flgs, const COMM_TYPE type,
 		   FLAG_TYPE wrapflgs, const COMM_TYPE wraptype,
 		   const SupplementCommArgs& wrapsupp) :
-  WrapComm("", addr, dirn, flgs, type, wrapflgs, wraptype, wrapsupp) {
-  std::cerr << "WrapComm: NO NAME" << std::endl;
-}
+  WrapComm("", addr, dirn, flgs, type, wrapflgs, wraptype, wrapsupp) {}
 WrapComm::WrapComm(Comm_t* comm) :
   WrapComm(comm->getName(), utils::Address(comm->getAddress()),
 	   comm->getDirection(),

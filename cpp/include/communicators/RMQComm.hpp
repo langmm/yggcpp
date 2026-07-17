@@ -1,14 +1,4 @@
 #pragma once
-#ifdef RMQINSTALLED
-
-#ifdef YGG_RMQ_NOINCLUDEDIR
-#include <amqp.h>
-#include <amqp_tcp_socket.h>
-#else // YGG_RMQ_NOINCLUDEDIR
-#include <rabbitmq-c/amqp.h>
-#include <rabbitmq-c/tcp_socket.h>
-#endif // YGG_RMQ_NOINCLUDEDIR
-#endif // RMQINSTALLED
 #include "communicators/CommBase.hpp"
 
 #define _RMQ_PARAM_SEP "_RMQPARAM_"
@@ -68,33 +58,9 @@ namespace YggInterface {
        *   queue_name
        */
       void _format_address();
-#ifdef RMQINSTALLED
-      /**
-       * @brief Process an amqp error
-       * @param[in] x Error code
-       * @param[in] context String for log message describing where the
-       *   error initiated
-       * @return true if successful, false otherwise
-       */
-      bool _check_amqp_error(int x, const std::string& context) const;
-      /**
-       * @brief Process an amqp error in a reply
-       * @param[in] x Reply
-       * @param[in] context String for log message describing where the
-       *   error initiated
-       * @return true if successful, false otherwise
-       */
-      bool _check_amqp_reply_error(amqp_rpc_reply_t x,
-				   const std::string& context) const;
-#endif // RMQINSTALLED
       std::string logInst_;         /**< Identifier to use for instance in log messages */
       std::string address;          /**< Connection address */
       DIRECTION direction;          /**< Connection direction */
-#ifdef RMQINSTALLED
-      amqp_connection_state_t conn; /**< Connection */
-      amqp_socket_t* socket;        /**< Socket */
-      amqp_channel_t channel;       /**< Channel */
-#endif // RMQINSTALLED
       std::string url;              /**< Connection URL */
       std::string host;             /**< Connection host */
       std::string user;             /**< Connection user */
@@ -103,6 +69,9 @@ namespace YggInterface {
       std::string vhost;            /**< Connection virtual host */
       std::string exchange;         /**< Connection exchange */
       std::string queue_name;       /**< Connection queue name */
+    private:
+      class ImplAMQP;               /**< Forward declaration of AMQP implementation */
+      std::unique_ptr<ImplAMQP> pImplAMQP; /**< Pointer to AMQP implementation */
     };
 
     /**
