@@ -200,7 +200,7 @@ void IPCComm::_close(bool call_base) {
 
 int IPCComm::count_queues() { return 0; }
 int IPCComm::remove_comm(bool) { return -1; }
-int IPCComm::nmsg(DIRECTION dir) const { return -1; }
+int IPCComm::nmsg(DIRECTION) const { return -1; }
 int IPCComm::send_single(utils::Header&) { return -1; }
 long IPCComm::recv_single(utils::Header&) { return -1; }
 

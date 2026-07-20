@@ -476,8 +476,8 @@ int ZMQReply::find(std::string) { return -1; }
 int ZMQReply::set(std::string) { return -1; }
 bool ZMQReply::recv(std::string, bool*) { return false; }
 bool ZMQReply::recv_stage1(std::string) { return false; }
-bool ZMQReply::recv_stage2(std::string, bool* closed) { return false; }
-bool ZMQReply::send() {}
+bool ZMQReply::recv_stage2(std::string, bool*) { return false; }
+bool ZMQReply::send() { return false; }
 bool ZMQReply::send_stage1(std::string&) { return false; }
 bool ZMQReply::send_stage2(const std::string&) { return false; }
 
