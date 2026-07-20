@@ -32,6 +32,9 @@ jobs:
           - os: windows-2022
             python-version: "3.11"
             builder: rattler-flang
+          - os: windows-2022
+            python-version: "3.11"
+            builder: rattler-ifx
       fail-fast: false
     steps:
       - name: Check out repository code
@@ -104,6 +107,10 @@ jobs:
         if: matrix.builder == 'rattler-flang'
         run: |
           rattler-build build --recipe "conda.recipe/recipe.yaml" --output-dir $HOME/local_channel/ --variant python=${{ matrix.python-version }} --variant fortran_compiler=flang --no-build-id --no-include-recipe
+      - name: Build standalone conda recipe with intel ifx fortran compiler (using rattler-build)
+        if: matrix.builder == 'rattler-ifx'
+        run: |
+          rattler-build build --recipe "conda.recipe/recipe.yaml" --output-dir $HOME/local_channel/ --variant python=${{ matrix.python-version }} --variant fortran_compiler=ifx --no-build-id --no-include-recipe
       - name: Build standalone conda recipe for MSVC/GNU fortran build (using rattler-build)
         if: matrix.builder == 'rattler-msvc-gnu'
         run: |

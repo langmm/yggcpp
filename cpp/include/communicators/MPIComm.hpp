@@ -101,7 +101,6 @@ protected:
     YGG_API int send_single(utils::Header& header) override;
     /** \copydoc YggInterface::communicator::Comm_t::recv_single */
     YGG_API long recv_single(utils::Header& header) override;
-    /** \copydoc YggInterface::communicator::CommBase::create_worker */
     WORKER_METHOD_DECS(MPIComm);
   
 private:

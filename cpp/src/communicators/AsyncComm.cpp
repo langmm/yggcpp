@@ -23,37 +23,78 @@ using namespace YggInterface::utils;
 // AsyncBuffer //
 /////////////////
 
+/**
+ * @brief Wrapper for threaded buffer implementation.
+ */
 class AsyncBuffer::ImplBuffer {
 public:
 #ifdef THREADSINSTALLED
+  /**
+   * @brief Constructor.
+   * @param[in] flag_init Initial value for flag.
+   */
   ImplBuffer(const bool& flag_init = false) :
     flag(flag_init), mutex(), cv() {}
-  void notify() {
-    cv.notify_all();
-  }
-  void lock() { mutex.lock(); }
-  void unlock() { mutex.unlock(); }
-  void set_flag(const bool& new_flag) {
-    flag.store(new_flag);
-  }
-  bool get_flag() const {
-    return flag.load();
-  }
   std::atomic_bool flag;           /**< boolean flag */
   std::mutex mutex;                /**< mutex for locking thread */
   std::condition_variable cv;      /**< conditional variable for state */
 #else // THREADSINSTALLED
+  /**
+   * @brief Constructor.
+   * @param[in] flag_init Initial value for flag.
+   */
   ImplBuffer(const bool& flag_init = false) :
     flag(flag_init) {
     UNINSTALLED_ERROR(THREADS);
   }
-  void notify() {}
-  void lock() {}
-  void unlock() {}
-  void set_flag(const bool& new_flag) { flag = new_flag; }
-  bool get_flag() const { return flag; }
   bool flag;                       /**< boolean flag */
 #endif // THREADSINSTALLED
+  /**
+   * @brief Notify all threads.
+   */
+  void notify() {
+#ifdef THREADSINSTALLED
+    cv.notify_all();
+#endif // THREADSINSTALLED
+  }
+  /**
+   * @brief Lock the mutex.
+   */
+  void lock() {
+#ifdef THREADSINSTALLED
+    mutex.lock();
+#endif // THREADSINSTALLED
+  }
+  /**
+   * @brief Unlock the mutex.
+   */
+  void unlock() {
+#ifdef THREADSINSTALLED
+    mutex.unlock();
+#endif // THREADSINSTALLED
+  }
+  /**
+   * @brief Set the flag value.
+   * @param[in] new_flag New flag value.
+   */
+  void set_flag(const bool& new_flag) {
+#ifdef THREADSINSTALLED
+    flag.store(new_flag);
+#else // THREADSINSTALLED
+    flag = new_flag;
+#endif // THREADSINSTALLED
+  }
+  /**
+   * @brief Get the flag value.
+   * @returns Flag value.
+   */
+  bool get_flag() const {
+#ifdef THREADSINSTALLED
+    return flag.load();
+#else // THREADSINSTALLED
+    return flag;
+#endif // THREADSINSTALLED
+  }
 };
 
 AsyncBuffer::AsyncBuffer(const std::string logInst) :
@@ -200,23 +241,23 @@ bool AsyncBuffer::wait_for(const int64_t&,
 // AsyncStatus //
 //////////////////
 
+/**
+ * @brief Wrapper for threaded status implementation.
+ */
 class AsyncStatus::ImplStatus {
 public:
 #ifdef THREADSINSTALLED
+  /**
+   * @brief Constructor.
+   * @param[in] flag_init Initial value for flag.
+   */
   ImplStatus(const bool& flag_init = false) :
     flag(flag_init), mutex(), cv(), status(THREAD_INACTIVE), thread() {}
-  void notify() {
-    cv.notify_all();
-  }
-  void lock() { mutex.lock(); }
-  void unlock() { mutex.unlock(); }
-  void set_flag(const bool& new_flag) {
-    flag.store(new_flag);
-  }
-  bool get_flag() const {
-    return flag.load();
-  }
-  int get_status() const { return status.load(); }
+  std::atomic_bool flag;           /**< boolean flag */
+  std::mutex mutex;                /**< mutex for locking thread */
+  std::condition_variable cv;      /**< conditional variable for state */
+  std::atomic_int status;          /**< bit flags describing thread status */
+  std::unique_ptr<std::thread> thread; /**< thread for performing async task */
   bool _wait_status(const int new_status,
                     std::unique_lock<std::mutex>& lk) {
     if (!(status.load() & new_status)) {
@@ -225,32 +266,89 @@ public:
     }
     return true;
   }
-  bool wait_status(const int new_status) {
-    std::unique_lock<std::mutex> lk(mutex);
-    return _wait_status(new_status, lk);
-  }
-  std::atomic_bool flag;           /**< boolean flag */
-  std::mutex mutex;                /**< mutex for locking thread */
-  std::condition_variable cv;      /**< conditional variable for state */
-  std::atomic_int status;          /**< bit flags describing thread status */
-  std::unique_ptr<std::thread> thread; /**< thread for performing async task */
 #else // THREADSINSTALLED
+  /**
+   * @brief Constructor.
+   * @param[in] flag_init Initial value for flag.
+   */
   ImplStatus(const bool& flag_init = false) :
     flag(flag_init), status(THREAD_COMPLETE | THREAD_ERROR) {
     UNINSTALLED_ERROR(THREADS);
   }
-  void notify() {}
-  void lock() {}
-  void unlock() {}
-  void set_flag(const bool& new_flag) { flag = new_flag; }
-  bool get_flag() const { return flag; }
-  int get_status() const { return status; }
-  bool wait_status(const int new_status) {
-    return (status & new_status);
-  }
   bool flag;                       /**< boolean flag */
   int status;                      /**< bit flags describing thread status */
 #endif // THREADSINSTALLED
+  /**
+   * @brief Notify all threads.
+   */
+  void notify() {
+#ifdef THREADSINSTALLED
+    cv.notify_all();
+#endif // THREADSINSTALLED
+  }
+  /**
+   * @brief Lock the mutex.
+   */
+  void lock() {
+#ifdef THREADSINSTALLED
+    mutex.lock();
+#endif // THREADSINSTALLED
+  }
+  /**
+   * @brief Unlock the mutex.
+   */
+  void unlock() {
+#ifdef THREADSINSTALLED
+    mutex.unlock();
+#endif // THREADSINSTALLED
+  }
+  /**
+   * @brief Set the flag value.
+   * @param[in] new_flag New flag value.
+   */
+  void set_flag(const bool& new_flag) {
+#ifdef THREADSINSTALLED
+    flag.store(new_flag);
+#else // THREADSINSTALLED
+    flag = new_flag;
+#endif // THREADSINSTALLED
+  }
+  /**
+   * @brief Get the flag value.
+   * @returns Flag value.
+   */
+  bool get_flag() const {
+#ifdef THREADSINSTALLED
+    return flag.load();
+#else // THREADSINSTALLED
+    return flag;
+#endif // THREADSINSTALLED
+  }
+  /**
+   * @brief Get the status value.
+   * @returns Status value.
+   */
+  int get_status() const {
+#ifdef THREADSINSTALLED
+    return status.load();
+#else // THREADSINSTALLED
+    return status;
+#endif // THREADSINSTALLED
+  }
+  /**
+   * @brief Wait for the specified status bit flags to be set.
+   * @param[in] new_status Bit flags to wait for.
+   * @returns true if the end status has the specified bit flags set,
+   *   false otherwise.
+   */
+  bool wait_status(const int new_status) {
+#ifdef THREADSINSTALLED
+    std::unique_lock<std::mutex> lk(mutex);
+    return _wait_status(new_status, lk);
+#else // THREADSINSTALLED
+    return (status & new_status);
+#endif // THREADSINSTALLED
+  }
 };
 
 AsyncStatus::AsyncStatus(const std::string& logInst) :

@@ -77,10 +77,10 @@ namespace YggInterface {
        * @return Result of receive/send. Negative values indicate an error
        */
       long on_message();
-      Comm_t* icomm; //! Input communicator
-      Comm_t* ocomm; //! Output communicator
-      std::vector<YggInterface::utils::filterFunc> filters; //! Filters
-      std::vector<YggInterface::utils::transformFunc> transforms; //! Transforms
+      Comm_t* icomm; /**< Input communicator */
+      Comm_t* ocomm; /**< Output communicator */
+      std::vector<YggInterface::utils::filterFunc> filters; /**< Filters */
+      std::vector<YggInterface::utils::transformFunc> transforms; /**< Transforms */
     };
 
   }

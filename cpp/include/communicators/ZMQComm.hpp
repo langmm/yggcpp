@@ -229,9 +229,9 @@ public:
   
 protected:
     /** \copydoc YggInterface::communicator::CommBase::send_single */
-    YGG_API int send_single(utils::Header& msg) override;
+    YGG_API int send_single(utils::Header& header) override;
     /** \copydoc YggInterface::communicator::CommBase::recv_single */
-    YGG_API long recv_single(utils::Header& msg) override;
+    YGG_API long recv_single(utils::Header& header) override;
     /**
      * @brief Wait for the message was received signal
      * @param[in] header The header to use
@@ -248,7 +248,6 @@ protected:
     YGG_API virtual bool do_reply_send(const utils::Header& header);
     /** \copydoc YggInterface::communicator::CommBase::create_header_send */
     YGG_API bool create_header_send(utils::Header& header) override;
-    /** \copydoc YggInterface::communicator::CommBase::create_worker */
     WORKER_METHOD_DECS(ZMQComm);
     /** \copydoc YggInterface::communicator::CommBase::create_worker_send */
     YGG_API Comm_t* create_worker_send(utils::Header& head) override;
