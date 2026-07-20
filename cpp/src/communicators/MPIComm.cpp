@@ -103,7 +103,12 @@ COMM_CONSTRUCTOR_CORE_DEF(MPIComm, 0)
 
 #if defined(MPIINSTALLED) && defined(MPI_COMM_WORLD)
 // #ifdef MPIINSTALLED
-bool MPIComm::isInstalled() { return true; }
+bool MPIComm::isInstalled() {
+  int flag = 0;
+  MPI_Initialized(&flag);
+  if (!flag) return false;
+  return true;
+}
 #else // MPIINSTALLED
 bool MPIComm::isInstalled() { return false; }
 #endif // MPIINSTALLED

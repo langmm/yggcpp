@@ -82,11 +82,15 @@ class TestComm_t_Installed:
             pytest.skip(f"Communicator type {commtype} is not installed")
 
     @pytest.fixture(scope="class")
-    def comm_send_kwargs(self):
+    def comm_send_kwargs(self, commtype):
+        if commtype == YggInterface.COMM_TYPE.MPI_COMM:
+            return {"address": "0"}
         return {}
 
     @pytest.fixture(scope="class")
-    def comm_recv_kwargs(self):
+    def comm_recv_kwargs(self, commtype):
+        if commtype == YggInterface.COMM_TYPE.MPI_COMM:
+            return {"address": "0"}
         return {}
 
     @pytest.fixture

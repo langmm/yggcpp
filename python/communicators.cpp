@@ -1013,6 +1013,7 @@ static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds) {
     if (dont_open) {
       flags |= COMM_FLAG_DELAYED_OPEN;
     }
+    std::string error_msg;
     try {
       s->comm = YggInterface::communicator::new_Comm_t(
 		       (DIRECTION)dirn, (COMM_TYPE)commtype, name, adr,
@@ -1023,11 +1024,13 @@ static int Comm_t_init(PyObject* self, PyObject* args, PyObject* kwds) {
 		       static_cast<FLAG_TYPE>(request_flags),
 		       static_cast<FLAG_TYPE>(response_flags),
 		       (LANGUAGE)language);
-    } catch (...) {
+    } catch (std::exception& e) {
+      error_msg = e.what();
       s->comm = NULL;
     }
     if (!s->comm) {
-      PyErr_SetString(PyExc_RuntimeError, "Error initializing comm");
+      PyErr_Format(PyExc_RuntimeError, "Error initializing comm: %s",
+                   error_msg.c_str());
       return -1;
     }
     if (!datatype.IsNull()) {
@@ -1110,8 +1113,10 @@ PyObject* Comm_t_open(PyObject* self, PyObject*) {
   try {
     ((pyComm_t*)self)->comm->open();
     Py_RETURN_NONE;
-  } catch (...) {
-    PyErr_SetString(PyExc_RuntimeError, "Error opening comm at the C++ level");
+  } catch (std::exception& e) {
+    std::string error_msg = e.what();
+    PyErr_Format(PyExc_RuntimeError, "Error opening comm at the C++ level: %s",
+                 error_msg.c_str());
     return NULL;
   }
 }
@@ -1119,8 +1124,10 @@ PyObject* Comm_t_close(PyObject* self, PyObject*) {
   try {
     ((pyComm_t*)self)->comm->close();
     Py_RETURN_NONE;
-  } catch (...) {
-    PyErr_SetString(PyExc_RuntimeError, "Error closing comm at the C++ level");
+  } catch (std::exception& e) {
+    std::string error_msg = e.what();
+    PyErr_Format(PyExc_RuntimeError, "Error closing comm at the C++ level: %s",
+                 error_msg.c_str());
     return NULL;
   }
 }
