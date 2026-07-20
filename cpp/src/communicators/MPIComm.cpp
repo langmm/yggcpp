@@ -1,61 +1,100 @@
-#include "communicators/MPIComm.hpp"
 #ifdef MPIINSTALLED
+#define OMPI_SKIP_MPICXX 1
 #include <mpi.h>
 #endif /*MPIINSTALLED*/
+#include "communicators/MPIComm.hpp"
 
 using namespace YggInterface::communicator;
 using namespace YggInterface::utils;
 
-#if defined(MPIINSTALLED) && defined(MPI_COMM_WORLD)
+#ifdef MPIINSTALLED
+bool _check_mpi_return_code(int code, std::string& msg) {
+  msg = "";
+  if (code == MPI_SUCCESS)
+    return true;
+  else if (code == MPI_ERR_COMM)
+    msg = "Invalid communicator";
+  else if (code == MPI_ERR_TAG)
+    msg = "Invalid tag";
+  else if (code == MPI_ERR_RANK)
+    msg = "Invalid rank";
+  else if (code == MPI_ERR_TYPE)
+    msg = "Invalid datatype";
+  else if (code == MPI_ERR_COUNT)
+    msg = "Invalid count";
+  return false;
+}
+#define CHECK_MPISTATUS_CODE_(method, context, rank)            \
+  {                                                             \
+    int error_code = method;                                    \
+    std::string error_msg;                                      \
+    if (!_check_mpi_return_code(error_code, error_msg)) {       \
+      log_error() << context << " (tag = " <<                   \
+        handle->tag << ", rank = " << rank << "): " <<          \
+        error_msg << std::endl;                                 \
+      return -1;                                                \
+    }                                                           \
+  }
+#define CHECK_MPISTATUS_STATUS_(status, context, rank)  \
+  {                                                     \
+    if (status.MPI_ERROR) {                             \
+      log_error() << context << " (tag = " <<           \
+        handle->tag << ", rank = " << rank <<           \
+        "): Error in status - " << status.MPI_ERROR <<  \
+        std::endl;                                      \
+      return -1;                                        \
+    }                                                   \
+  }
+#define CHECK_MPISTATUS_(method, context, rank) \
+  CHECK_MPISTATUS_CODE_(method, context, rank)  \
+  CHECK_MPISTATUS_STATUS_(status, context, rank)
+
+#endif // MPIINSTALLED
+
+class mpi_registry_t::ImplMPI {
+public:
+#if defined(MPIINSTALLED)  // && defined(MPI_COMM_WORLD)
+  ImplMPI() : comm(MPI_COMM_WORLD) {
+    
+  }
+  MPI_Comm comm;
+#endif // MPIINSTALLED
+};
+
+mpi_registry_t::mpi_registry_t() :
+  procs(), tag(0), pImplMPI(std::make_unique<ImplMPI>()) {
+}
 
 mpi_registry_t::~mpi_registry_t() = default;
 
-int mpi_registry_t::Probe(int source, MPI_Status *status) const {
-  int out = MPI_Probe(source, tag, comm, status);
-  CheckReturn(out, "Probe", source);
-  if (status->MPI_ERROR) {
-    YggLogError << "Probe(" << tag << "): Error in status: " << status->MPI_ERROR << std::endl;
-  }
-  return out;
+#if defined(MPIINSTALLED)
+
+int mpi_registry_t::Probe(int source, void *status) const {
+  return MPI_Probe(source, tag, pImplMPI->comm, (MPI_Status*)status);
 }
 
-int mpi_registry_t::Send(const void *buf, int count, MPI_Datatype datatype, int dest) const {
-  int out = MPI_Send(buf, count, datatype, dest, tag, comm);
-  CheckReturn(out, "Send", dest);
-  return out;
+int mpi_registry_t::Send(const void *buf, int count, void* datatype, int dest) const {
+  return MPI_Send(buf, count, (MPI_Datatype)datatype, dest, tag, pImplMPI->comm);
 }
 
-int mpi_registry_t::Recv(void *buf, int count, MPI_Datatype datatype, int source,
-			 MPI_Status *status) const {
-  int out = MPI_Recv(buf, count, datatype, source, tag, comm, status);
-  CheckReturn(out, "Recv", source);
-  return out;
+int mpi_registry_t::Recv(void *buf, int count, void* datatype, int source,
+			 void *status) const {
+  return MPI_Recv(buf, count, (MPI_Datatype)datatype, source, tag, pImplMPI->comm, (MPI_Status*)status);
 }
 
-#endif
+#else // MPIINSTALLED
 
-void mpi_registry_t::CheckReturn(int code, const std::string& method, int rank) const {
-  if (code == MPI_SUCCESS)
-    return;
-  else if (code == MPI_ERR_COMM)
-    YggLogError << method << "(" << tag << "): Invalid communicator" << std::endl;
-  else if (code == MPI_ERR_TAG)
-    YggLogError << method << "(" << tag << "): Invalid tag" << std::endl;
-  else if (code == MPI_ERR_RANK)
-    YggLogError << method << "(" << tag << "): Invalid rank '" <<
-      rank << "'" << std::endl;
-  else if (code == MPI_ERR_TYPE)
-    YggLogError << method << "(" << tag << "): Invalid datatype" << std::endl;
-  else if (code == MPI_ERR_COUNT)
-    YggLogError << method << "(" << tag << "): Invalid count" << std::endl;
-}
+int mpi_registry_t::Probe(int, void*) const { return -1; }
+int mpi_registry_t::Send(const void*, int, int, int) const { return -1; }
+int mpi_registry_t::Recv(void*, int, int, int, void*) const { return -1; }
+
+#endif // MPIINSTALLED
 
 COMM_CONSTRUCTOR_CORE_DEF(MPIComm, 0)
 
-#if defined(MPIINSTALLED) && defined(MPI_COMM_WORLD)
-
 void MPIComm::_open(bool call_base) {
   BEFORE_OPEN_DEF;
+#if defined(MPIINSTALLED) && defined(MPI_COMM_WORLD)
   updateMaxMsgSize(2147483647);
   if (!this->address.valid()) {
     if (ctx->for_testing_)
@@ -66,7 +105,7 @@ void MPIComm::_open(bool call_base) {
   if (this->name.empty()) {
     this->name = "tempinitMPI." + address.address();
   }
-  handle = new mpi_registry_t(MPI_COMM_WORLD);
+  handle = new mpi_registry_t();
   handle->procs.clear();
   handle->tag = 0;
   std::vector<std::string> adrs = YggInterface::utils::split(this->address.address(), ",");
@@ -89,6 +128,9 @@ void MPIComm::_open(bool call_base) {
       handle->procs.push_back(stoi(a));
     }
   }
+#else // MPIINSTALLED
+  UNINSTALLED_ERROR(MPI);
+#endif // MPIINSTALLED
   AFTER_OPEN_DEF;
 }
 
@@ -98,8 +140,13 @@ void MPIComm::_close(bool call_base) {
   AFTER_CLOSE_DEF;
 }
 
+std::vector<YggInterface::utils::Address>& MPIComm::getAddresses() {
+  return addresses;
+}
+
+#if defined(MPIINSTALLED)
+
 int MPIComm::mpi_comm_source_id() const {
-#if defined(MPIINSTALLED) && defined(MPI_COMM_WORLD)  
     if (direction == SEND)
         return 0;
     if (!handle) {
@@ -109,11 +156,8 @@ int MPIComm::mpi_comm_source_id() const {
     //mpi_registry_t* reg = (mpi_registry_t*)(x->handle);
     MPI_Status status;
     int address = MPI_ANY_SOURCE;
-    if ((handle->Probe(address, &status) != MPI_SUCCESS) ||
-	status.MPI_ERROR) {
-      log_error() << "mpi_comm_source_id(" << name << "): Error in probe" << std::endl;
-      return -1;
-    }
+    CHECK_MPISTATUS_(handle->Probe(address, &status),
+                     "mpi_comm_source_id: Error in probe", address);
     int flag;
     MPI_Test_cancelled(&status, &flag);
     if (flag) {
@@ -129,9 +173,6 @@ int MPIComm::mpi_comm_source_id() const {
         }
     }
     return 0;
-#else
-    return -1;
-#endif
 }
 
 int MPIComm::nmsg(DIRECTION dir) const {
@@ -159,14 +200,10 @@ int MPIComm::send_single(utils::Header& header) {
     log_debug() << "send_single: " << header.size_msg << " bytes" << std::endl;
     int ret = (int)(header.size_msg);
     int adr = static_cast<int>(handle->procs[handle->tag % handle->procs.size()]);
-    if (handle->Send(&ret, 1, MPI_INT, adr) != MPI_SUCCESS) {
-      log_error() << "send_single: Error sending message size for tag = " << handle->tag << std::endl;
-      return -1;
-    }
-    if (handle->Send(header.data_msg(), ret, MPI_CHAR, adr) != MPI_SUCCESS) {
-      log_error() << "send_single: Error receiving message for tag = " << handle->tag << std::endl;
-      return -1;
-    }
+    CHECK_MPISTATUS_CODE_(handle->Send(&ret, 1, MPI_INT, adr),
+                          "send_single: Error sending message size", adr);
+    CHECK_MPISTATUS_CODE_(handle->Send(header.data_msg(), ret, MPI_CHAR, adr),
+                          "send_single: Error receiving message", adr);
     log_debug() << "send_single: returning " <<  ret << std::endl;
     handle->tag++;
     return ret;
@@ -177,27 +214,19 @@ long MPIComm::recv_single(utils::Header& header) {
     log_debug() << "recv_single" << std::endl;
     MPI_Status status;
     int adr = mpi_comm_source_id();
-    if (handle->Probe(adr, &status) != MPI_SUCCESS || status.MPI_ERROR) {
-        log_error() << "recv_single: Error in probe for tag = " << handle->tag << std::endl;
-        return -1;
-    }
+    CHECK_MPISTATUS_(handle->Probe(adr, &status),
+                     "recv_single: Error in probe", adr);
     int ret = 0;
-    if (handle->Recv(&ret, 1, MPI_INT, adr, &status) != MPI_SUCCESS ||
-	status.MPI_ERROR) {
-        log_error() << "recv_single: Error receiving message size for tag = " << handle->tag << std::endl;
-        return -1;
-    }
+    CHECK_MPISTATUS_(handle->Recv(&ret, 1, MPI_INT, adr, &status),
+                     "recv_single: Error receiving message size", adr);
     ret = static_cast<int>(header.on_recv(nullptr, ret));
     if (ret < 0) {
       log_error() << "recv_single: Error reallocating data" << std::endl;
       return ret;
     }
-    if (handle->Recv(header.data_msg(), ret,
-		     MPI_CHAR, adr, &status) != MPI_SUCCESS ||
-	status.MPI_ERROR) {
-        log_error() << "recv_single: Error receiving message for tag = " << handle->tag << std::endl;
-        return -1;
-    }
+    CHECK_MPISTATUS_(handle->Recv(header.data_msg(), ret,
+                                  MPI_CHAR, adr, &status),
+                     "recv_single: Error receiving message", adr);
     header.data_msg()[ret] = '\0';
     ret = header.on_recv(header.data_msg(), ret);
     log_debug() << "recv_single: returns " << ret << " bytes" << std::endl;
@@ -207,17 +236,15 @@ long MPIComm::recv_single(utils::Header& header) {
 
 WORKER_METHOD_DEFS(MPIComm)
 
-#else
+#undef CHECK_MPISTATUS_
+#undef CHECK_MPISTATUS_STATUS_
+#undef CHECK_MPISTATUS_CODE_
 
-void MPIComm::_open(bool call_base) {
-  BEFORE_OPEN_DEF;
-  UNINSTALLED_ERROR(MPI);
-  AFTER_OPEN_DEF;
-}
+#else // MPIINSTALLED
 
-void MPIComm::_close(bool call_base) {
-  BEFORE_CLOSE_DEF;
-  AFTER_CLOSE_DEF;
-}
+int MPIComm::mpi_comm_source_id() const { return -1; }
+int MPIComm::nmsg(DIRECTION) const { return -1; }
+int MPIComm::send_single(utils::Header&) { return -1; }
+long MPIComm::recv_single(utils::Header&) { return -1; }
 
-#endif
+#endif // MPIINSTALLED

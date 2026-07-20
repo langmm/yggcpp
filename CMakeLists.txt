@@ -292,7 +292,7 @@ add_yggdrasil_option(
 ##########
 
 add_yggdrasil_option(
-  OMP DEPENDENCY OpenMP
+  OMP DEPENDENCY OpenMP PRIVATE
   FOUND_VAR OpenMP_CXX_FOUND
   LIBRARIES OpenMP::OpenMP_CXX
 )
@@ -375,7 +375,7 @@ endif()
 # MPI #
 #######
 
-add_yggdrasil_option(MPI COMM LIBRARIES MPI::MPI_CXX)
+add_yggdrasil_option(MPI COMM LIBRARIES MPI::MPI_CXX PRIVATE)
 
 ###################
 # Embedded Python #

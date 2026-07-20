@@ -19,12 +19,11 @@ using namespace YggInterface::mock;
   if (COUNT_ALT >= 0 && COUNT >= COUNT_ALT)		\
     MPISTATUS = MPISTATUS_ALT;				\
   COUNT++;						\
-  CheckReturn(out, #method);				\
   return out
 
 class mpi_registry_mock : public mpi_registry_t {
 public:
-    mpi_registry_mock(MPI_Comm comm) : mpi_registry_t(comm) {
+    mpi_registry_mock() : mpi_registry_t() {
         procs = {51000, 50000};
         MPISTATUS = 0;
         MPICANCEL = false;
@@ -34,7 +33,8 @@ public:
 	MPISTATUS_ALT = 0;
 	msg = "\"This is a message\"";
     }
-    int Probe(int, MPI_Status *status) const override {
+    int Probe(int, void* status0) const override {
+        MPI_Status* status = (MPI_Status*)status0;
         MPI_Status_set_cancelled(status, MPICANCEL);
 	status->MPI_ERROR = MPISTATUS;
 	status->MPI_SOURCE = 0;
@@ -43,14 +43,18 @@ public:
 	DO_MPI_MOCK_OUT(Probe);
     }
 
-    int Send(const void* buf, int, MPI_Datatype dt, int) const override {
+    int Send(const void* buf, int, void* dt0, int) const override {
+        MPI_Datatype dt = (MPI_Datatype)dt0;
         if (dt != MPI_Datatype(MPI_INT)) {
 	  msg.assign((char*)buf);
 	}
         DO_MPI_MOCK_OUT(Send);
     }
 
-    int Recv(void* buf, int, MPI_Datatype dt, int, MPI_Status* status) const override {
+    int Recv(void* buf, int, void* dt0, int,
+             void* status0) const override {
+        MPI_Datatype dt = (MPI_Datatype)dt0;
+        MPI_Status* status = (MPI_Status*)status0;
         MPI_Status_set_cancelled(status, MPICANCEL);
         status->MPI_ERROR = MPISTATUS;
         char* cmsg = const_cast<char*>(msg.c_str());
@@ -98,7 +102,7 @@ public:
   }
   void init() {
     tmp = getHandle();
-    setHandle(new mpi_registry_mock(MPI_COMM_WORLD));
+    setHandle(new mpi_registry_mock());
   }
   void restore() {
     if (tmp) {
