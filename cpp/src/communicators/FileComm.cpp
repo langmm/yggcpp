@@ -9,6 +9,8 @@ COMM_CONSTRUCTOR_CORE_DEF_PARAM(FileComm, 0,
 				     std::fstream::out),
 				mutex(name))
 
+bool FileComm::isInstalled() { return true; }
+
 void FileComm::_open(bool call_base) {
   BEFORE_OPEN_DEF;
   updateMaxMsgSize(0);

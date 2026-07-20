@@ -41,6 +41,8 @@ long ValueManager::recv(utils::Header& header) {
 
 COMM_CONSTRUCTOR_CORE_DEF(ValueComm, 0)
 
+bool ValueComm::isInstalled() { return true; }
+
 void ValueComm::_open(bool call_base) {
   BEFORE_OPEN_DEF;
   updateMaxMsgSize(0);

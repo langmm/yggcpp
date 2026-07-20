@@ -1,16 +1,6 @@
 #pragma once
 
 #include "utils/tools.hpp"
-
-#ifdef IPCINSTALLED
-#include <fcntl.h>           /* For O_* constants */
-#include <sys/stat.h>        /* For mode constants */
-#include <sys/msg.h>
-#include <sys/types.h>
-#include <sys/sem.h>
-#include <sys/shm.h>
-#endif // IPCINSTALLED
-
 #include "communicators/CommBase.hpp"
 
 namespace YggInterface {
@@ -33,7 +23,6 @@ class IPCComm : public CommBase<int> {
 public:
     COMM_CONSTRUCTOR_CORE_DEC(IPCComm, IPC_COMM, IPC_INSTALLED_FLAG)
 
-#ifdef IPCINSTALLED
 
     /*!
       @brief Get the number of IPC queues that are currently open.
@@ -61,7 +50,6 @@ protected:
     YGG_API long recv_single(utils::Header& header) override;
   
     WORKER_METHOD_DECS(IPCComm);
-#endif // IPCINSTALLED
 
 private:
     friend class ClientComm;   //!< @see ClientComm

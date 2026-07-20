@@ -1,3 +1,12 @@
+#include "utils/tools.hpp"
+#ifdef IPCINSTALLED
+#include <fcntl.h>           /* For O_* constants */
+#include <sys/stat.h>        /* For mode constants */
+#include <sys/msg.h>
+#include <sys/types.h>
+#include <sys/sem.h>
+#include <sys/shm.h>
+#endif // IPCINSTALLED
 #include "communicators/IPCComm.hpp"
 
 using namespace YggInterface::communicator;
@@ -6,23 +15,12 @@ using namespace YggInterface::utils;
 COMM_CONSTRUCTOR_CORE_DEF(IPCComm, 0)
 
 #ifdef IPCINSTALLED
+bool IPCComm::isInstalled() { return true; }
+#else // IPCINSTALLED
+bool IPCComm::isInstalled() { return false; }
+#endif // IPCINSTALLED
 
-int IPCComm::count_queues() {
-  std::shared_ptr<FILE> pipe(popen("ipcs -q", "r"), pclose);
-  int out = 0;
-  char c[2];
-  if (!pipe)
-    YggLogThrowError("ERROR getting ipcs count");  // GCOV_EXCL_LINE
-  while (pipe.get() && !feof(pipe.get())) {
-    if (fgets(c, 2, pipe.get()) != NULL) {
-      if (c[0] == '\n')
-	out++;
-    } else {
-      break;
-    }
-  }
-  return out;
-}
+#ifdef IPCINSTALLED
 
 void IPCComm::_open(bool call_base) {
   BEFORE_OPEN_DEF;
@@ -73,7 +71,22 @@ void IPCComm::_close(bool call_base) {
   AFTER_CLOSE_DEF;
 }
 
-ADD_KEY_TRACKER_DEFS(IPCComm)
+int IPCComm::count_queues() {
+  std::shared_ptr<FILE> pipe(popen("ipcs -q", "r"), pclose);
+  int out = 0;
+  char c[2];
+  if (!pipe)
+    YggLogThrowError("ERROR getting ipcs count");  // GCOV_EXCL_LINE
+  while (pipe.get() && !feof(pipe.get())) {
+    if (fgets(c, 2, pipe.get()) != NULL) {
+      if (c[0] == '\n')
+	out++;
+    } else {
+      break;
+    }
+  }
+  return out;
+}
 
 int IPCComm::remove_comm(bool close_comm) {
     if (close_comm) {
@@ -172,8 +185,6 @@ long IPCComm::recv_single(utils::Header& header) {
     return ret;
 }
 
-WORKER_METHOD_DEFS(IPCComm)
-
 #else  /*IPCINSTALLED*/
 
 void IPCComm::_open(bool call_base) {
@@ -187,4 +198,15 @@ void IPCComm::_close(bool call_base) {
   AFTER_CLOSE_DEF;
 }
 
+int IPCComm::count_queues() { return 0; }
+int IPCComm::remove_comm(bool) { return -1; }
+int IPCComm::nmsg(DIRECTION dir) const { return -1; }
+int IPCComm::send_single(utils::Header&) { return -1; }
+long IPCComm::recv_single(utils::Header&) { return -1; }
+
 #endif /*IPCINSTALLED*/
+
+ADD_KEY_TRACKER_DEFS(IPCComm)
+
+WORKER_METHOD_DEFS(IPCComm)
+

@@ -248,6 +248,19 @@ void ZMQSocket::destroy() {
     zmq_close(handle);
   handle = NULL;
 }
+
+#else // ZMQINSTALLED
+
+template<typename T>
+int ZMQSocket::set(int, const T&) { return -1; }
+void ZMQSocket::init(int, utils::Address&, int, int, int) {
+  UNINSTALLED_ERROR(ZMQ);
+}
+int ZMQSocket::poll(int, int) { return -1; }
+int ZMQSocket::send(const std::string&) { return -1; }
+int ZMQSocket::recv(std::string&) { return -1; }
+void ZMQSocket::destroy() {}
+
 #endif // ZMQINSTALLED
 
 ZMQSocket::~ZMQSocket() {
@@ -455,6 +468,19 @@ bool ZMQReply::send_stage2(const std::string& msg_data) {
   return true;
 }
 
+#else // ZMQINSTALLED
+
+void ZMQReply::clear() {}
+int ZMQReply::create(std::string&) { return -1; }
+int ZMQReply::find(std::string) { return -1; }
+int ZMQReply::set(std::string) { return -1; }
+bool ZMQReply::recv(std::string, bool*) { return false; }
+bool ZMQReply::recv_stage1(std::string) { return false; }
+bool ZMQReply::recv_stage2(std::string, bool* closed) { return false; }
+bool ZMQReply::send() {}
+bool ZMQReply::send_stage1(std::string&) { return false; }
+bool ZMQReply::send_stage2(const std::string&) { return false; }
+
 #endif // ZMQINSTALLED
 
 /////////////
@@ -468,6 +494,12 @@ void ZMQComm::disable_handshake() {
 }
 
 COMM_CONSTRUCTOR_CORE_DEF_PARAM(ZMQComm, 0, reply(direction))
+
+#ifdef ZMQINSTALLED
+bool ZMQComm::isInstalled() { return true; }
+#else // ZMQINSTALLED
+bool ZMQComm::isInstalled() { return false; }
+#endif // ZMQINSTALLED
 
 #ifdef ZMQINSTALLED
 
@@ -621,8 +653,6 @@ bool ZMQComm::create_header_send(Header& header) {
   return out;
 }
 
-WORKER_METHOD_DEFS(ZMQComm)
-
 Comm_t* ZMQComm::create_worker_send(Header& head) {
   // Should never be called with global comm
   // if (global_comm)
@@ -729,4 +759,17 @@ void ZMQComm::_close(bool call_base) {
   AFTER_CLOSE_DEF;
 }
 
+int ZMQComm::nmsg(DIRECTION) const { return -1; }
+int ZMQComm::send_single(utils::Header&) { return -1; }
+bool ZMQComm::do_reply_send(const utils::Header&) { return false; }
+long ZMQComm::recv_single(utils::Header&) { return -1; }
+bool ZMQComm::do_reply_recv(const Header&) { return false; }
+bool ZMQComm::create_header_send(Header&) { return false; }
+Comm_t* ZMQComm::create_worker_send(Header&) { return nullptr; }
+Comm_t* ZMQComm::create_worker_recv(Header&) { return nullptr; }
+bool ZMQComm::afterSendRecv(Comm_t*, Comm_t*) { return false; }
+bool ZMQComm::genMetadata(std::string&) { return false; }
+
 #endif // ZMQINSTALLED
+
+WORKER_METHOD_DEFS(ZMQComm)

@@ -1,9 +1,6 @@
 #pragma once
 
 #include "communicators/AsyncComm.hpp"
-#ifdef THREADSINSTALLED
-#include <atomic>
-#endif // THREADSINSTALLED
 
 namespace YggInterface {
   namespace communicator {
@@ -40,7 +37,6 @@ namespace YggInterface {
       std::string logClass() const override { return "Proxy"; }
       /** \copydoc YggInterface::utils::LogBase::logInst */
       YGG_API std::string logInst() const override;
-#ifdef THREADSINSTALLED
       /**
        * @brief Get the address for either of the proxy's communicators
        * @param[in] dir Direction of comm to get the address for
@@ -85,7 +81,6 @@ namespace YggInterface {
       Comm_t* ocomm; //! Output communicator
       std::vector<YggInterface::utils::filterFunc> filters; //! Filters
       std::vector<YggInterface::utils::transformFunc> transforms; //! Transforms
-#endif // THREADSINSTALLED
     };
 
   }

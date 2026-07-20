@@ -321,6 +321,12 @@ long RMQConnection::recv(utils::Header&) { return -1; }
 
 COMM_CONSTRUCTOR_CORE_DEF(RMQComm, 0)
 
+#ifdef RMQINSTALLED
+bool RMQComm::isInstalled() { return true; }
+#else // RMQINSTALLED
+bool RMQComm::isInstalled() { return false; }
+#endif // RMQINSTALLED
+
 void RMQComm::_open(bool call_base) {
   BEFORE_OPEN_DEF;
   updateMaxMsgSize(1048576); // 2**20

@@ -2,15 +2,12 @@
 
 #include "communicators/CommBase.hpp"
 #include "utils/serialization.hpp"
-#ifdef THREADSINSTALLED
-#include <atomic>
-#include <condition_variable>
-#endif // THREADSINSTALLED
 
 namespace YggInterface {
   namespace communicator {
 
     class AsyncBacklog;
+    class Proxy;
 
     /**
      * @brief Buffer for storying async messages across threads.
@@ -23,6 +20,8 @@ namespace YggInterface {
        *   identifying the instance
        */
       AsyncBuffer(const std::string logInst);
+      /** @brief Destructor */
+      ~AsyncBuffer();
       /** \copydoc YggInterface::utils::LogBase::logClass */
       std::string logClass() const override { return "AsyncBuffer"; }
       /** \copydoc YggInterface::utils::LogBase::logInst */
@@ -101,11 +100,10 @@ namespace YggInterface {
        */
       bool pop(utils::Header& header, size_t idx=0,
 	       bool dont_notify=false);
-#ifdef THREADSINSTALLED
       /**
        * @brief Notify all threads waiting on the buffer.
        */
-      void notify() { cv.notify_all(); }
+      void notify();
       /**
        * @brief Check if a message is waiting in the buffer.
        * @param[in] id ID of message that should be checked for in the
@@ -134,7 +132,7 @@ namespace YggInterface {
       /**
        * @brief Wait until a message is added to the buffer or the
        *   specified time has passed.
-       * @param[in] rel_time Maximum time to wait.
+       * @param[in] twait Maximum time to wait (in microseconds).
        * @param[in] id ID of message that should be checked for in the
        *   buffer. If not provided, any message will be checked for.
        * @param[in] negative If true, the check will be that a message
@@ -144,50 +142,14 @@ namespace YggInterface {
        *   id is present or negative is true and a message that matches
        *   id is NOT present.
        */
-      template< class Rep, class Period >
-      bool wait_for(const std::chrono::duration<Rep, Period>& rel_time,
-		    const std::string id="", const bool negative=false) {
-	std::unique_lock<std::mutex> lk(m);
-	if (message_waiting(id, negative))
-	  return true;
-	return cv.wait_for(lk, rel_time, [this, id, negative]{
-	  return message_waiting(id, negative); });
-      }
-#endif // THREADSINSTALLED
+      bool wait_for(const int64_t& twait,
+		    const std::string id="", const bool negative=false);
     private:
       std::vector<utils::Header> buffer; /**< messages to be processed */
-#ifdef THREADSINSTALLED
-      std::atomic_bool closed;           /**< whether the buffer is closed */
-      std::mutex m;                      /**< mutex for locking buffer */
-      std::condition_variable cv;        /**< conditional variable for buffer state */
-#endif // THREADSINSTALLED
       std::string logInst_;              /**< log string for instance */
+      class ImplBuffer;                  /**< Forward declartion of buffer implementation */
+      std::unique_ptr<ImplBuffer> pImplBuffer; /**< Pointer to buffer implementation */
     };
-
-#define START_THREAD(args)						\
-    std::unique_lock<std::mutex> lk(mutex);				\
-    thread = std::unique_ptr<std::thread>(new std::thread args);	\
-    log_debug() << "start: waiting for thread to start" << std::endl;	\
-    _wait_status(THREAD_STARTED | THREAD_COMPLETE, lk);			\
-    log_debug() << "start: thread started" << std::endl
-    // set_status_lock(THREAD_INIT)
-#define STOP_THREAD							\
-    log_debug() << "stop: begin" << std::endl;				\
-    set_status_lock(THREAD_CLOSING);					\
-    wait_status(THREAD_COMPLETE);					\
-    try {								\
-      if (thread->joinable()) {						\
-	thread->join();							\
-      }									\
-      log_debug() << "stop: joinable = " << thread->joinable() << std::endl; \
-    } catch (const std::system_error& e) {				\
-      log_error() << "stop: Error joining thread (" << e.code() << "): " << e.what() << std::endl; \
-    }									\
-    if (status.load() & THREAD_ERROR) {					\
-      log_error() << "stop: Error on thread" << std::endl;		\
-    }									\
-    log_debug() << "stop: end" << std::endl
-    
 
     /**
      * @brief Base class for handling synchronization between async
@@ -198,29 +160,67 @@ namespace YggInterface {
       AsyncStatus(const AsyncStatus&) = delete;
       AsyncStatus& operator=(const AsyncStatus&) = delete;
     public:
+      friend class AsyncBacklog;
+      friend class Proxy;
       /**
        * @brief Constructor
        * @param[in] logInst String that should be used to describe the
        *   instance in log messages.
        */
       AsyncStatus(const std::string& logInst = "");
-#ifdef THREADSINSTALLED
-      /**
-       * @brief Start the thread, passing the provided arguments on to
-       *   the thread constructor.
-       */
-      template<typename... T>
-      void start(T&&... t) {
-	START_THREAD((std::forward<T>(t)...));
-      }
-      /**
-       * @brief Stop the thread execution.
-       */
-      void stop();
-#endif // THREADSINSTALLED
+      /** @brief Destructor */
+      ~AsyncStatus();
       /** \copydoc YggInterface::utils::LogBase::logInst */
       std::string logInst() const override { return logInst_; }
-#ifdef THREADSINSTALLED
+      /**
+       * @brief Notify all threads waiting on the status.
+       */
+      void notify();
+      /**
+       * @brief Check of the status is locked.
+       * @returns true if locked, false otherwise.
+       */
+      bool is_locked() const;
+      /**
+       * @brief Lock the status.
+       */
+      void lock();
+      /**
+       * @brief Unlock the status.
+       */
+      void unlock();
+      /**
+       * @brief Stop the thread.
+       */
+      void stop_thread();
+      /**
+       * @brief Get a pointer to the thread.
+       * @returns Thread pointer.
+       */
+      void* get_thread();
+      /**
+       * @brief Get a pointer to the thread.
+       * @returns Thread pointer.
+       */
+      const void* get_thread() const;
+      /**
+       * @brief Set the managed thread pointer and wait for it to report
+       *   that it has started.
+       * @param[in] ptr Pointer to thread that will be managed.
+       * @param[in] lock_ptr Pointer to mutex lock that should be used
+       *   to wait for the thread to report it has started.
+       */
+      void set_thread(void* ptr, void* lock_ptr = nullptr);
+      /**
+       * @brief Get a pointer to the mutex.
+       * @returns Mutex pointer.
+       */
+      void* get_mutex();
+      /**
+       * @brief Get the thread status.
+       * @returns int Current status.
+       */
+      int get_status() const;
       /**
        * @brief Update the thread status with the provided bitwise flags
        *   without locking the thread (assumes lock acquired in larger
@@ -247,40 +247,22 @@ namespace YggInterface {
       /**
        * @brief Wait for the status to match a set of status flags.
        * @param[in] new_status Status flags to wait for.
-       * @param[in] lk Lock to use for status.
-       * @return true if Status flags set.
-       */
-      bool _wait_status(const int new_status,
-			std::unique_lock<std::mutex>& lk);
-      /**
-       * @brief Wait for the status to match a set of status flags.
-       * @param[in] new_status Status flags to wait for.
        * @return true if Status flags set.
        */
       bool wait_status(const int new_status);
       /**
        * @brief Wait for the status to match a set of status flags or
        *   the specified time to have elapsed.
-       * @param[in] rel_time Maximum time to wait.
+       * @param[in] twait Maximum time to wait in micro seconds.
        * @param[in] new_status Status flags to wait for.
        * @return true if Status flags set.
        */
-      template< class Rep, class Period >
-      bool wait_for_status(const std::chrono::duration<Rep, Period>& rel_time,
-			   const int new_status) {
-	if (status.load() & new_status)
-	  return true;
-	std::unique_lock<std::mutex> lk(mutex);
-	return cv_status.wait_for(lk, rel_time, [this, new_status]{
-	  return (this->status.load() & new_status); });
-      }
-      std::mutex mutex;                    /**< mutex for locking the thread */
-      std::atomic_bool locked;             /**< whether the thread is locked */
-      std::atomic_int status;              /**< bit flags describing thread status */
-      std::condition_variable cv_status;   /**< conditional variable for waiting on a status */
-      std::unique_ptr<std::thread> thread; /**< thread for performing async task */
-#endif // THREADSINSTALLED
+      bool wait_for_status(const int64_t& twait,
+			   const int new_status);
+    private:
       std::string logInst_;                /**< log string for instance */
+      class ImplStatus;                    /**< Forward declartion of status implementation */
+      std::unique_ptr<ImplStatus> pImplStatus; /**< Pointer to status implementation */
     };
 
     /**
@@ -335,7 +317,7 @@ namespace YggInterface {
     };
     
     /**
-     * @brief Lock guard/mutex for asynchronous communication with a AsyncBacklog class.
+     * @brief Lock guard/mutex for asynchronous communication with a AsyncStatus class.
      */
     class AsyncLockGuard {
     private:
@@ -344,14 +326,15 @@ namespace YggInterface {
     public:
       /**
        * @brief Create an instance
-       * @param[in] backlog Instance of the AsyncBacklog class being used for communication
+       * @param[in] status Instance of the AsyncStatus class being used
+       *   for communication
        * @param[in] dont_lock If true, then immediately lock the mutex.
        */
-      AsyncLockGuard(AsyncBacklog* backlog, bool dont_lock=false);
+      AsyncLockGuard(AsyncStatus* status, bool dont_lock=false);
       /** @brief Destructor */
       ~AsyncLockGuard();
       bool locked;            /**< indicates whether the lock is currently enabled */
-      AsyncBacklog* backlog;  /**< the AsyncBacklog instance to work with */
+      AsyncStatus* status;  /**< the AsyncStatus instance to work with */
     };
 
     /**

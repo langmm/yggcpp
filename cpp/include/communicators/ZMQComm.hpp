@@ -61,7 +61,6 @@ public:
   void init(int type0, const std::string& address,
 	    int linger = 0, int immediate = 1,
 	    int sndtimeo = -1);
-#ifdef ZMQINSTALLED
   /*!
    * @brief Initialize the socket
    * @param[in] type0 The type of zmq socket
@@ -106,31 +105,9 @@ public:
    * @brief Destroy the socket
    */
   void destroy();
-#else
   /*!
-   * @brief Initialize the socket
-   * @param[in] type0 The type of zmq socket
-   * @param[in] address The  address for this socket to connect to
-   * @param[in] linger How long to allow queued messages to linger after a socket closes. A value of -1 means infinite wait.
-   * @param[in] immediate If set to 1 then messages will only be queued on completed connections
-   * @param[in] sndtimeo Sending timeout in ms. A value of -1 will block until the message is sent.
-   * @see utils::Address
+   * @brief Destructor.
    */
-  void init(int type0, utils::Address& address,
-            int linger = 0, int immediate = 1,
-            int sndtimeo = -1) {
-    UNUSED(type0);
-    UNUSED(address);
-    UNUSED(linger);
-    UNUSED(immediate);
-    UNUSED(sndtimeo);
-    UNINSTALLED_ERROR(ZMQ);
-  }
-  /*!
-   * @brief Destroy the socket
-   */
-  void destroy() {}
-#endif
   ~ZMQSocket();
   /** \copydoc YggInterface::utils::LogBase::logClass */
   std::string logClass() const override { return "ZMQSocket"; }
@@ -160,7 +137,6 @@ public:
      * @param dir The direction for the reply
      */
   YGG_API explicit ZMQReply(DIRECTION dir);
-#ifdef ZMQINSTALLED
   /*!
    * @brief Clear the socket
    */
@@ -222,7 +198,6 @@ public:
    * @return true on success
    */
   YGG_API bool send_stage2(const std::string& msg_data);
-#endif // ZMQINSTALLED
   /*! \copydoc YggInterface::utils::LogBase::logClass */
   std::string logClass() const override { return "ZMQReply"; }
   
@@ -248,8 +223,6 @@ public:
 class ZMQComm : public CommBase<ZMQSocket> {
 public:
     COMM_CONSTRUCTOR_CORE_DEC(ZMQComm, ZMQ_COMM, ZMQ_INSTALLED_FLAG)
-
-#ifdef ZMQINSTALLED
 
     /** \copydoc YggInterface::communicator::Comm_t::nmsg */
     YGG_API int nmsg(DIRECTION dir=NONE) const override;
@@ -281,7 +254,6 @@ protected:
     YGG_API Comm_t* create_worker_send(utils::Header& head) override;
     /** \copydoc YggInterface::communicator::CommBase::create_worker_recv */
     YGG_API Comm_t* create_worker_recv(utils::Header& head) override;
-#endif
 
 private:
     friend class ClientComm;   //!< @see ClientComm
@@ -291,12 +263,10 @@ private:
 
     // Test methods
  public:
-#ifdef ZMQINSTALLED
     /** \copydoc YggInterface::communicator::Comm_t::afterSendRecv */
     YGG_API bool afterSendRecv(Comm_t* sComm, Comm_t* rComm) override;
     /** \copydoc YggInterface::communicator::Comm_t::genMetadata */
     YGG_API bool genMetadata(std::string& out) override;
-#endif // ZMQINSTALLED
     /**
      * @brief Get the reply
      * @return The reply

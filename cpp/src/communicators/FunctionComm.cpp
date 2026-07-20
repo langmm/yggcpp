@@ -373,6 +373,8 @@ void FunctionWrapper::clear() {
 
 COMM_CONSTRUCTOR_CORE_DEF(FunctionComm, COMM_FLAG_DONT_SERIALIZE)
 
+bool FunctionComm::isInstalled() { return true; }
+
 void FunctionComm::_open(bool call_base) {
   BEFORE_OPEN_DEF;
   updateMaxMsgSize(0);

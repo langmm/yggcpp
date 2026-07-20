@@ -1,4 +1,8 @@
 #include "communicators/AsyncComm.hpp"
+#ifdef THREADSINSTALLED
+#include <atomic>
+#include <condition_variable>
+#endif // THREADSINSTALLED
 #include "communicators/ClientComm.hpp"
 #include "communicators/ServerComm.hpp"
 #include "utils/logging.hpp"
@@ -9,7 +13,7 @@ using namespace YggInterface::utils;
 #ifdef THREADSINSTALLED
 #define LOCK_BUFFER(name)					\
   log_verbose() << #name << ": Before lock" << std::endl;	\
-  const std::lock_guard<std::mutex> lk(m);			\
+  const std::lock_guard<std::mutex> lk(pImplBuffer->mutex);     \
   log_verbose() << #name << ": After lock" << std::endl
 #else
 #define LOCK_BUFFER(name)
@@ -19,23 +23,53 @@ using namespace YggInterface::utils;
 // AsyncBuffer //
 /////////////////
 
+class AsyncBuffer::ImplBuffer {
+public:
 #ifdef THREADSINSTALLED
+  ImplBuffer(const bool& flag_init = false) :
+    flag(flag_init), mutex(), cv() {}
+  void notify() {
+    cv.notify_all();
+  }
+  void lock() { mutex.lock(); }
+  void unlock() { mutex.unlock(); }
+  void set_flag(const bool& new_flag) {
+    flag.store(new_flag);
+  }
+  bool get_flag() const {
+    return flag.load();
+  }
+  std::atomic_bool flag;           /**< boolean flag */
+  std::mutex mutex;                /**< mutex for locking thread */
+  std::condition_variable cv;      /**< conditional variable for state */
+#else // THREADSINSTALLED
+  ImplBuffer(const bool& flag_init = false) :
+    flag(flag_init) {
+    UNINSTALLED_ERROR(THREADS);
+  }
+  void notify() {}
+  void lock() {}
+  void unlock() {}
+  void set_flag(const bool& new_flag) { flag = new_flag; }
+  bool get_flag() const { return flag; }
+  bool flag;                       /**< boolean flag */
+#endif // THREADSINSTALLED
+};
+
 AsyncBuffer::AsyncBuffer(const std::string logInst) :
-  buffer(), closed(false), m(), cv(), logInst_(logInst) {}
+  buffer(), logInst_(logInst),
+  pImplBuffer(std::make_unique<ImplBuffer>()) {}
+AsyncBuffer::~AsyncBuffer() {}
 void AsyncBuffer::close() {
   {
     LOCK_BUFFER(close);
-    closed.store(true);
+    pImplBuffer->set_flag(true);
   }
-  cv.notify_all();
+  pImplBuffer->notify();
 }
-bool AsyncBuffer::is_closed() const { return closed.load(); }
-#else // THREADSINSTALLED
-AsyncBuffer::AsyncBuffer(const std::string logInst) :
-  buffer(), logInst_(logInst) {}
-void AsyncBuffer::close() {}
-bool AsyncBuffer::is_closed() const { return true; }
-#endif // THREADSINSTALLED
+bool AsyncBuffer::is_closed() const {
+  return pImplBuffer->get_flag();
+}
 
 size_t AsyncBuffer::size() {
   LOCK_BUFFER(size);
@@ -75,16 +109,12 @@ bool AsyncBuffer::insert(utils::Header& header, size_t idx,
     if (for_send)
       buffer[idx].flags |= HEAD_FLAG_ASYNC;
   }
-#ifdef THREADSINSTALLED
   if (!dont_notify) {
       log_debug() << "insert[" << idx << "]: " <<
 	"Notifying threads of message" <<
 	" (send = " << for_send << ")" << std::endl;
-    cv.notify_all();
+      pImplBuffer->notify();
   }
-#else // THREADSINSTALLED
-  UNUSED(dont_notify);
-#endif // THREADSINSTALLED
   return true;
 }
 bool AsyncBuffer::append(utils::Header& header, bool move,
@@ -110,12 +140,8 @@ bool AsyncBuffer::get(utils::Header& header, size_t idx,
     out = header.CopyFrom(buffer[idx]);
   if (out && erase) {
     buffer.erase(buffer.begin() + idx);
-#ifdef THREADSINSTALLED
     if (!dont_notify)
-      cv.notify_all();
-#else // THREADSINSTALLED
-    UNUSED(dont_notify);
-#endif // THREADSINSTALLED
+      pImplBuffer->notify();
   }
   return out;
 }
@@ -123,7 +149,9 @@ bool AsyncBuffer::pop(utils::Header& header, size_t idx,
 		      bool dont_notify) {
   return get(header, idx, true, true, dont_notify);
 }
-#ifdef THREADSINSTALLED
+void AsyncBuffer::notify() {
+  pImplBuffer->notify();
+}
 bool AsyncBuffer::message_waiting(const std::string id,
 				  const bool negative) {
   if (is_closed()) // exit early
@@ -141,12 +169,29 @@ bool AsyncBuffer::message_waiting(const std::string id,
   }
   return negative;
 }
+#ifdef THREADSINSTALLED
 bool AsyncBuffer::wait(const std::string id, const bool negative) {
-  std::unique_lock<std::mutex> lk(m);
+  std::unique_lock<std::mutex> lk(pImplBuffer->mutex);
   if (message_waiting(id, negative))
     return true;
-  cv.wait(lk, [this, id, negative]{
+  pImplBuffer->cv.wait(lk, [this, id, negative]{
     return message_waiting(id, negative); });
+  return true;
+}
+bool AsyncBuffer::wait_for(const int64_t& twait,
+                           const std::string id, const bool negative) {
+  std::unique_lock<std::mutex> lk(pImplBuffer->mutex);
+  if (message_waiting(id, negative))
+    return true;
+  return pImplBuffer->cv.wait_for(lk, std::chrono::microseconds(twait), [this, id, negative]{
+    return message_waiting(id, negative); });
+}
+#else // THREADSINSTALLED
+bool AsyncBuffer::wait(const std::string, const bool) {
+  return true; // exit early
+}
+bool AsyncBuffer::wait_for(const int64_t&,
+                           const std::string, const bool) {
   return true;
 }
 #endif // THREADSINSTALLED
@@ -155,54 +200,164 @@ bool AsyncBuffer::wait(const std::string id, const bool negative) {
 // AsyncStatus //
 //////////////////
 
+class AsyncStatus::ImplStatus {
+public:
 #ifdef THREADSINSTALLED
-
-AsyncStatus::AsyncStatus(const std::string& logInst) :
-  mutex(), locked(false),
-  status(THREAD_INACTIVE), cv_status(), thread(),
-  logInst_(logInst) {}
-
+  ImplStatus(const bool& flag_init = false) :
+    flag(flag_init), mutex(), cv(), status(THREAD_INACTIVE), thread() {}
+  void notify() {
+    cv.notify_all();
+  }
+  void lock() { mutex.lock(); }
+  void unlock() { mutex.unlock(); }
+  void set_flag(const bool& new_flag) {
+    flag.store(new_flag);
+  }
+  bool get_flag() const {
+    return flag.load();
+  }
+  int get_status() const { return status.load(); }
+  bool _wait_status(const int new_status,
+                    std::unique_lock<std::mutex>& lk) {
+    if (!(status.load() & new_status)) {
+      cv.wait(lk, [this, new_status]{
+        return (status.load() & new_status); });
+    }
+    return true;
+  }
+  bool wait_status(const int new_status) {
+    std::unique_lock<std::mutex> lk(mutex);
+    return _wait_status(new_status, lk);
+  }
+  std::atomic_bool flag;           /**< boolean flag */
+  std::mutex mutex;                /**< mutex for locking thread */
+  std::condition_variable cv;      /**< conditional variable for state */
+  std::atomic_int status;          /**< bit flags describing thread status */
+  std::unique_ptr<std::thread> thread; /**< thread for performing async task */
 #else // THREADSINSTALLED
+  ImplStatus(const bool& flag_init = false) :
+    flag(flag_init), status(THREAD_COMPLETE | THREAD_ERROR) {
+    UNINSTALLED_ERROR(THREADS);
+  }
+  void notify() {}
+  void lock() {}
+  void unlock() {}
+  void set_flag(const bool& new_flag) { flag = new_flag; }
+  bool get_flag() const { return flag; }
+  int get_status() const { return status; }
+  bool wait_status(const int new_status) {
+    return (status & new_status);
+  }
+  bool flag;                       /**< boolean flag */
+  int status;                      /**< bit flags describing thread status */
+#endif // THREADSINSTALLED
+};
 
 AsyncStatus::AsyncStatus(const std::string& logInst) :
-  logInst_(logInst) {
-  UNINSTALLED_ERROR(THREADS);
+  logInst_(logInst),
+  pImplStatus(std::make_unique<ImplStatus>()) {}
+void AsyncStatus::notify() {
+  pImplStatus->notify();
 }
-
-#endif // THREADSINSTALLED
-
-#ifdef THREADSINSTALLED
-void AsyncStatus::stop() {
-  STOP_THREAD;
+AsyncStatus::~AsyncStatus() {}
+bool AsyncStatus::is_locked() const {
+  return pImplStatus->get_flag();
 }
-#endif // THREADSINSTALLED
-
-#ifdef THREADSINSTALLED
+void AsyncStatus::lock() {
+  if (!is_locked()) {
+    pImplStatus->lock();
+    pImplStatus->set_flag(true);
+  }
+}
+void AsyncStatus::unlock() {
+  if (is_locked()) {
+    pImplStatus->set_flag(false);
+    pImplStatus->unlock();
+  }
+}
 void AsyncStatus::set_status(const int new_status, bool dont_notify,
 			     bool negative) {
   if (negative)
-    status &= new_status;
+    pImplStatus->status &= new_status;
   else
-    status |= new_status;
+    pImplStatus->status |= new_status;
   if (!dont_notify)
-    cv_status.notify_all();
+    pImplStatus->notify();
 }
 void AsyncStatus::set_status_lock(const int new_status, bool dont_notify,
-				   bool negative) {
-  std::unique_lock<std::mutex> lk(mutex);
+                                  bool negative) {
+  pImplStatus->lock();
   set_status(new_status, dont_notify, negative);
+  pImplStatus->unlock();
 }
-bool AsyncStatus::_wait_status(const int new_status,
-			       std::unique_lock<std::mutex>& lk) {
-  if (!(status.load() & new_status)) {
-    cv_status.wait(lk, [this, new_status]{
-      return (status.load() & new_status); });
+int AsyncStatus::get_status() const {
+  return pImplStatus->get_status();
+}
+
+#ifdef THREADSINSTALLED
+void AsyncStatus::stop_thread() {
+  if(!pImplStatus->thread.get()) {
+    log_debug() << "stop_thread: No thread currently managed" << std::endl;
+    return;
   }
-  return true;
+  log_debug() << "stop_thread: begin" << std::endl;
+  set_status_lock(THREAD_CLOSING);
+  wait_status(THREAD_COMPLETE);
+  try {
+    if (pImplStatus->thread->joinable()) {
+      pImplStatus->thread->join();
+    }
+    log_debug() << "stop_thread: joinable = " << pImplStatus->thread->joinable() << std::endl;
+  } catch (const std::system_error& e) {
+    log_error() << "stop_thread: Error joining thread (" << e.code() << "): " << e.what() << std::endl;
+  }
+  if (get_status() & THREAD_ERROR) {
+    log_error() << "stop_thread: Error on thread" << std::endl;
+  }
+  log_debug() << "stop_thread: end" << std::endl;
+}
+void* AsyncStatus::get_thread() {
+  return (void*)(pImplStatus->thread.get());
+}
+const void* AsyncStatus::get_thread() const {
+  return (const void*)(pImplStatus->thread.get());
+}
+void AsyncStatus::set_thread(void* ptr, void* lock_ptr) {
+  pImplStatus->thread.reset((std::thread*)ptr);
+  if (lock_ptr == nullptr || ptr == nullptr) return;
+  std::unique_lock<std::mutex>* lk = (std::unique_lock<std::mutex>*)lock_ptr;
+  log_debug() << "set_thread: waiting for thread to start" << std::endl;
+  pImplStatus->_wait_status(THREAD_STARTED | THREAD_COMPLETE, *lk);
+  log_debug() << "set_thread: thread started" << std::endl;
+}
+void* AsyncStatus::get_mutex() {
+  return (void*)(&(pImplStatus->mutex));
 }
 bool AsyncStatus::wait_status(const int new_status) {
-  std::unique_lock<std::mutex> lk(mutex);
-  return _wait_status(new_status, lk);
+  return pImplStatus->wait_status(new_status);
+}
+bool AsyncStatus::wait_for_status(const int64_t& twait,
+                                  const int new_status) {
+  if (pImplStatus->status.load() & new_status)
+    return true;
+  std::unique_lock<std::mutex> lk(pImplStatus->mutex);
+  return pImplStatus->cv.wait_for(lk, std::chrono::microseconds(twait),
+                                  [this, new_status]{
+    return (this->pImplStatus->status.load() & new_status); });
+}
+#else // THREADSINSTALLED
+void AsyncStatus::stop_thread() {}
+void* AsyncStatus::get_thread() { return nullptr; }
+const void* AsyncStatus::get_thread() const { return nullptr; }
+void AsyncStatus::set_thread(void*, void*) {
+  UNINSTALLED_ERROR(THREADS);
+}
+void* AsyncStatus::get_mutex() { return nullptr; }
+bool AsyncStatus::wait_status(const int new_status) {
+  return pImplStatus->wait_status(new_status);
+}
+bool AsyncStatus::wait_for_status(const int64_t&, const int new_status) {
+  return pImplStatus->wait_status(new_status);
 }
 #endif // THREADSINSTALLED
 
@@ -213,32 +368,25 @@ bool AsyncStatus::wait_status(const int new_status) {
 
 // TODO: Preserve backlog buffers?
 
+AsyncBacklog::AsyncBacklog(AsyncComm* parent) :
+  AsyncStatus(parent->logInst()),
+  comm(nullptr), backlog(parent->logInst()) {
 #ifdef THREADSINSTALLED
-
-AsyncBacklog::AsyncBacklog(AsyncComm* parent) :
-  AsyncStatus(parent->logInst()),
-  comm(nullptr), backlog(parent->logInst()) {
-  START_THREAD((&AsyncBacklog::on_thread, this, parent));
-  // start(&AsyncBacklog::on_thread, this, parent);
-}
-
+  std::unique_lock<std::mutex> lk(pImplStatus->mutex);
+  pImplStatus->thread = std::unique_ptr<std::thread>
+    (new std::thread(&AsyncBacklog::on_thread, this, parent));
+  log_debug() << "start: waiting for thread to start" << std::endl;
+  pImplStatus->_wait_status(THREAD_STARTED | THREAD_COMPLETE, lk);
+  log_debug() << "start: thread started" << std::endl;
 #else // THREADSINSTALLED
-
-AsyncBacklog::AsyncBacklog(AsyncComm* parent) :
-  AsyncStatus(parent->logInst()),
-  comm(nullptr), backlog(parent->logInst()) {
   UNINSTALLED_ERROR(THREADS);
-}
-
 #endif // THREADSINSTALLED
+}
 
 AsyncBacklog::~AsyncBacklog() {
   log_debug() << "~AsyncBacklog: begin" << std::endl;
-#ifdef THREADSINSTALLED
   backlog.close();
-  STOP_THREAD;
-  // stop();
-#endif // THREADSINSTALLED
+  this->stop_thread();
   log_debug() << "~AsyncBacklog: end" << std::endl;
 }
 
@@ -248,7 +396,7 @@ void AsyncBacklog::on_thread(AsyncComm* parent) {
 #ifdef THREADSINSTALLED
     DIRECTION direction = parent->getDirection();
     {
-      const std::lock_guard<std::mutex> comm_lock(mutex);
+      const std::lock_guard<std::mutex> comm_lock(pImplStatus->mutex);
       FLAG_TYPE flgs_comm = (parent->getFlags() & ~COMM_FLAG_ASYNC
                              & ~COMM_FLAG_GLOBAL) | COMM_FLAG_ASYNC_WRAPPED;
       COMM_TYPE comm_type = parent->getCommType();
@@ -292,7 +440,7 @@ void AsyncBacklog::on_thread(AsyncComm* parent) {
     // wait_status(THREAD_INIT);
     if (direction == SEND) {
       while (!backlog.is_closed()) {
-	cv_status.notify_all(); // Periodically notify
+        notify(); // Periodically notify
 	int ret = send();
 	if (ret == 0) {
 	  backlog.wait();
@@ -303,7 +451,7 @@ void AsyncBacklog::on_thread(AsyncComm* parent) {
       }
     } else if (direction == RECV) {
       while (!backlog.is_closed()) {
-	cv_status.notify_all(); // Periodically notify
+        notify(); // Periodically notify
 	long ret = recv();
 	if (ret == 0) {
 	  std::this_thread::sleep_for(std::chrono::microseconds(YGG_SLEEP_TIME));
@@ -315,7 +463,7 @@ void AsyncBacklog::on_thread(AsyncComm* parent) {
     }
     backlog.close();
     {
-      const std::lock_guard<std::mutex> comm_lock(mutex);
+      const std::lock_guard<std::mutex> comm_lock(pImplStatus->mutex);
       if (comm) {
 	delete comm;
 	comm = nullptr;
@@ -343,14 +491,14 @@ int AsyncBacklog::signon_status() {
   if (is_closing())
     return SIGNON_ERROR;
 #ifdef THREADSINSTALLED
-  if (!(status.load() & THREAD_IS_CLIENT))
+  if (!(get_status() & THREAD_IS_CLIENT))
     return SIGNON_COMPLETE;
-  if (!(status.load() & THREAD_SIGNON_SENT))
+  if (!(get_status() & THREAD_SIGNON_SENT))
     return SIGNON_NOT_SENT;
   // Don't early exit to allow update to THREAD_HAS_RESPONSE
-  if (status.load() & THREAD_SIGNON_RECV)
+  if (get_status() & THREAD_SIGNON_RECV)
     return SIGNON_COMPLETE;
-  const std::lock_guard<std::mutex> comm_lock(mutex);
+  const std::lock_guard<std::mutex> comm_lock(pImplStatus->mutex);
   if (is_closing() || !(comm)) {
     return SIGNON_ERROR;
   }
@@ -393,7 +541,7 @@ bool AsyncBacklog::wait_for_signon() {
 	status == SIGNON_COMPLETE)
       return true;
     {
-      const std::lock_guard<std::mutex> comm_lock(mutex);
+      const std::lock_guard<std::mutex> comm_lock(pImplStatus->mutex);
       if (is_closing() || !(comm)) {
 	return false;
       }
@@ -425,7 +573,7 @@ int AsyncBacklog::send() {
   }
   utils::Header header(true);
   if (backlog.pop(header, 0, true)) {
-    const std::lock_guard<std::mutex> comm_lock(mutex);
+    const std::lock_guard<std::mutex> comm_lock(pImplStatus->mutex);
     out = comm->send_single(header);
     if (out >= 0) {
       log_debug() << "send: Sent message from backlog" << std::endl;
@@ -448,11 +596,10 @@ int AsyncBacklog::send() {
 
 long AsyncBacklog::recv() {
   long out = 0;
-#ifdef THREADSINSTALLED
   bool received = false;
   utils::Header header(true);
   {
-    const std::lock_guard<std::mutex> comm_lock(mutex);
+    const std::lock_guard<std::mutex> comm_lock(pImplStatus->mutex);
     int nmsg = comm->nmsg();
     if (nmsg > 0) {
       out = comm->recv_single(header);
@@ -474,7 +621,6 @@ long AsyncBacklog::recv() {
 	out = -1;
     }
   }
-#endif // THREADSINSTALLED
   return out;
 }
 
@@ -482,25 +628,17 @@ long AsyncBacklog::recv() {
 // AsyncLockGuard //
 ////////////////////
 
-AsyncLockGuard::AsyncLockGuard(AsyncBacklog* bcklog, bool dont_lock) :
-  locked(false), backlog(bcklog) {
-#ifdef THREADSINSTALLED
-  if (!(dont_lock || backlog->locked.load())) {
+AsyncLockGuard::AsyncLockGuard(AsyncStatus* stat, bool dont_lock) :
+  locked(false), status(stat) {
+  if (!(dont_lock || status->is_locked())) {
     locked = true;
-    backlog->mutex.lock();
-    backlog->locked.store(true);
+    status->lock();
   }
-#else // THREADSINSTALLED
-  UNUSED(dont_lock);
-#endif // THREADSINSTALLED
 }
 AsyncLockGuard::~AsyncLockGuard() {
-#ifdef THREADSINSTALLED
   if (locked) {
-    backlog->locked.store(false);
-    backlog->mutex.unlock();
+    status->unlock();
   }
-#endif // THREADSINSTALLED
 }
 
 
@@ -514,6 +652,8 @@ COMM_CONSTRUCTOR_CORE_DEF_PARAM(AsyncComm, COMM_FLAG_ASYNC,
 				response_commtype(supp.response_commtype),
 				request_flags(supp.request_flags),
 				response_flags(supp.response_flags))
+
+bool AsyncComm::isInstalled() { return true; }
 
 void AsyncComm::_open(bool call_base) {
   BEFORE_OPEN_DEF;
@@ -587,8 +727,7 @@ int AsyncComm::wait_for_recv(const int64_t& tout) const {
 	//   for it to exit the buffer.
 	log_debug() << "wait_for_recv: timeout = " << tout <<
 	  " microseconds (client response)" << std::endl;
-	handle->backlog.wait_for(std::chrono::microseconds(tout),
-				 req_id, true);
+	handle->backlog.wait_for(tout, req_id, true);
 	{
 	  if (handle->is_closing()) {
 	    log_error() << "wait_for_recv: Comm is closed (request)" << std::endl;
@@ -608,7 +747,7 @@ int AsyncComm::wait_for_recv(const int64_t& tout) const {
   }
   log_debug() << "wait_for_recv: timeout = " << tout <<
     " microseconds" << std::endl;
-  if (!handle->backlog.wait_for(std::chrono::microseconds(tout))) {
+  if (!handle->backlog.wait_for(tout)) {
     ret = 0;
     goto cleanup;
   }
@@ -788,3 +927,4 @@ RESPONSE_SCHEMA(addResponseFormat, fromFormat,
 		(format_str, use_generic))
 
 #undef RESPONSE_SCHEMA
+#undef LOCK_BUFFER

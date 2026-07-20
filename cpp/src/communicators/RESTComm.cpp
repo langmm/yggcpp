@@ -165,6 +165,12 @@ long RESTConnection::recv(utils::Header&) { return -1; }
 
 COMM_CONSTRUCTOR_CORE_DEF(RESTComm, 0)
 
+#ifdef RESTINSTALLED
+bool RESTComm::isInstalled() { return true; }
+#else // RESTINSTALLED
+bool RESTComm::isInstalled() { return false; }
+#endif // RESTINSTALLED
+
 void RESTComm::_open(bool call_base) {
   BEFORE_OPEN_DEF;
   updateMaxMsgSize(2048); // Based on limit for GET requests on most servers

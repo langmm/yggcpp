@@ -252,6 +252,8 @@ COMM_CONSTRUCTOR_CORE_DEF_PARAM(ForkComm,
 				forktype(FORK_DEFAULT),
 				ncomm(supp.ncomm))
 
+bool ForkComm::isInstalled() { return true; }
+
 void ForkComm::_open(bool call_base) {
   if (flags & COMM_FLAG_FORK_CYCLE)
     forktype = FORK_CYCLE;

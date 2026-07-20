@@ -101,6 +101,13 @@ int mpi_registry_t::Recv(int&, int, void*) const { return -1; }
 
 COMM_CONSTRUCTOR_CORE_DEF(MPIComm, 0)
 
+#if defined(MPIINSTALLED) && defined(MPI_COMM_WORLD)
+// #ifdef MPIINSTALLED
+bool MPIComm::isInstalled() { return true; }
+#else // MPIINSTALLED
+bool MPIComm::isInstalled() { return false; }
+#endif // MPIINSTALLED
+
 void MPIComm::_open(bool call_base) {
   BEFORE_OPEN_DEF;
 #if defined(MPIINSTALLED) && defined(MPI_COMM_WORLD)

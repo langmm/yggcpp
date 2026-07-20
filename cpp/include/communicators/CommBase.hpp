@@ -23,33 +23,6 @@ const FLAG_TYPE COMM_FLAG_RPC = COMM_FLAG_SERVER | COMM_FLAG_CLIENT;
 #define COMM_BASE_MAX_MSG_SIZE
 #endif
 
-#define IPC_INSTALLED_FLAG 0
-#define ZMQ_INSTALLED_FLAG 0
-#define MPI_INSTALLED_FLAG 0
-#define RMQ_INSTALLED_FLAG 0
-#define REST_INSTALLED_FLAG 0
-
-#ifdef IPCINSTALLED
-#undef IPC_INSTALLED_FLAG
-#define IPC_INSTALLED_FLAG 1
-#endif
-#ifdef ZMQINSTALLED
-#undef ZMQ_INSTALLED_FLAG
-#define ZMQ_INSTALLED_FLAG 1
-#endif
-#if defined(MPIINSTALLED) && defined(MPI_COMM_WORLD)
-#undef MPI_INSTALLED_FLAG
-#define MPI_INSTALLED_FLAG 1
-#endif
-#ifdef RMQINSTALLED // TODO: Check for RMQ server
-#undef RMQ_INSTALLED_FLAG
-#define RMQ_INSTALLED_FLAG 1
-#endif
-#ifdef RESTINSTALLED
-#undef REST_INSTALLED_FLAG
-#define REST_INSTALLED_FLAG 1
-#endif
-
 #ifdef YGGDRASIL_PYGIL_NO_MANAGEMENT
 #define YGGCOMM_PYGIL_ALLOW_THREADS_BEGIN(method, reterr)
 #define YGGCOMM_PYGIL_ALLOW_THREADS_END(method, reterr)
@@ -200,7 +173,7 @@ public:									\
 
 #define ADD_METHODS_BASE(cls, typ, flag)				\
   /** \copydoc YggInterface::communicator::Comm_t::isInstalled */	\
-  static bool isInstalled() { return flag; }				\
+  static bool isInstalled();                                            \
   /** \copydoc YggInterface::communicator::Comm_t::defaultCommType */	\
   static COMM_TYPE defaultCommType() { return typ; }			\
   COMM_DESTRUCTOR_DEC(cls, CommBase)

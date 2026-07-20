@@ -5,6 +5,8 @@ using namespace YggInterface::utils;
 
 COMM_CONSTRUCTOR_CORE_DEF_PARAM(BufferComm, 0, memory(NULL))
 
+bool BufferComm::isInstalled() { return true; }
+
 void BufferComm::_open(bool call_base) {
   BEFORE_OPEN_DEF;
   updateMaxMsgSize(MAX_SHARED_MEM_SIZE);
