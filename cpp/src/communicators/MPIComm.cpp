@@ -242,8 +242,6 @@ long MPIComm::recv_single(utils::Header& header) {
     return ret;
 }
 
-WORKER_METHOD_DEFS(MPIComm)
-
 #undef CHECK_MPISTATUS_
 #undef CHECK_MPISTATUS_STATUS_
 #undef CHECK_MPISTATUS_CODE_
@@ -256,3 +254,5 @@ int MPIComm::send_single(utils::Header&) { return -1; }
 long MPIComm::recv_single(utils::Header&) { return -1; }
 
 #endif // MPIINSTALLED
+
+WORKER_METHOD_DEFS(MPIComm)
