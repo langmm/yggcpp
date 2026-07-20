@@ -384,7 +384,12 @@ add_yggdrasil_option(MPI COMM LIBRARIES MPI::MPI_CXX PRIVATE)
 include(EmbedLanguage)
 
 if(NOT YGGDRASIL_DISABLE_Python_C_API)
-    embed_language(Python)
+    if(YGGDRASIL_RAPIDJSON_PYTHON_WRAPPER)
+      set(Python_COMPONENTS Interpreter Development.Module NumPy)
+    else()
+      set(Python_COMPONENTS Interpreter Development NumPy)
+    endif()
+    embed_language(Python COMPONENTS ${Python_COMPONENTS})
 
     # There is an issue with embedding Python on Windows in conda environments
     # https://github.com/ContinuumIO/anaconda-issues/issues/11374

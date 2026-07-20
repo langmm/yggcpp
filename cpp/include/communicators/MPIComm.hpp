@@ -16,9 +16,11 @@ public:
     mpi_registry_t& operator=(const mpi_registry_t&) = delete;
     virtual ~mpi_registry_t();
     virtual int Probe(int source, void *status) const;
-    virtual int Send(const void *buf, int count, void* datatype, int dest) const;
-    virtual int Recv(void *buf, int count, void* datatype, int source,
+    virtual int Send(const void *data, int size, int dest) const;
+    virtual int Send(const int data, int dest) const;
+    virtual int Recv(void *data, int size, int source,
 		     void *status) const;
+    virtual int Recv(int& data, int source, void *status) const;
     std::vector<size_t> procs; /**< IDs for partner processes. */
     int tag; /**< Tag for next message. */
 private:

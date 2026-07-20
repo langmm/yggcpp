@@ -4,7 +4,7 @@ function(embed_language LANGUAGE)
   set(oneValueArgs FIND_METHOD DEPENDENCY)
   set(multiValueArgs FIND_ARGS LIBRARIES LIBRARIES_Python
       LIBRARY_DIRS INCLUDE_DIRS DEFINITIONS DEFINITIONS_MISSING
-      DEPENDENCY_PROPERTIES SEARCH_ARGS)
+      DEPENDENCY_PROPERTIES SEARCH_ARGS COMPONENTS)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
   check_no_unparsed(ARGS)
   set(DEFAULT_ENABLED ON)
@@ -35,7 +35,7 @@ function(embed_language LANGUAGE)
         FIND_ARGS ARGS "${options}"
         LIBRARIES LIBRARIES_Python
         LIBRARY_DIRS INCLUDE_DIRS DEFINITIONS DEFINITIONS_MISSING
-        DEPENDENCY_PROPERTIES SEARCH_ARGS
+        DEPENDENCY_PROPERTIES SEARCH_ARGS COMPONENTS
       )
       add_yggdrasil_dependency(
         ${ARGS_DEPENDENCY} ${FIND_ARGS}

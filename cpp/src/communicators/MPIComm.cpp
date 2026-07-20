@@ -73,20 +73,29 @@ int mpi_registry_t::Probe(int source, void *status) const {
   return MPI_Probe(source, tag, pImplMPI->comm, (MPI_Status*)status);
 }
 
-int mpi_registry_t::Send(const void *buf, int count, void* datatype, int dest) const {
-  return MPI_Send(buf, count, (MPI_Datatype)datatype, dest, tag, pImplMPI->comm);
+int mpi_registry_t::Send(const void *data, int size, int dest) const {
+  return MPI_Send(data, size, MPI_CHAR, dest, tag, pImplMPI->comm);
+}
+int mpi_registry_t::Send(const int data, int dest) const {
+  return MPI_Send(&data, 1, MPI_INT, dest, tag, pImplMPI->comm);
 }
 
-int mpi_registry_t::Recv(void *buf, int count, void* datatype, int source,
+
+int mpi_registry_t::Recv(void *data, int size, int source,
 			 void *status) const {
-  return MPI_Recv(buf, count, (MPI_Datatype)datatype, source, tag, pImplMPI->comm, (MPI_Status*)status);
+  return MPI_Recv(data, size, MPI_CHAR, source, tag, pImplMPI->comm, (MPI_Status*)status);
+}
+int mpi_registry_t::Recv(int& data, int source, void *status) const {
+  return MPI_Recv(&data, 1, MPI_INT, source, tag, pImplMPI->comm, (MPI_Status*)status);
 }
 
 #else // MPIINSTALLED
 
 int mpi_registry_t::Probe(int, void*) const { return -1; }
-int mpi_registry_t::Send(const void*, int, int, int) const { return -1; }
-int mpi_registry_t::Recv(void*, int, int, int, void*) const { return -1; }
+int mpi_registry_t::Send(const void*, int, int) const { return -1; }
+int mpi_registry_t::Send(const int, int) const { return -1; }
+int mpi_registry_t::Recv(void*, int, int, void*) const { return -1; }
+int mpi_registry_t::Recv(int&, int, void*) const { return -1; }
 
 #endif // MPIINSTALLED
 
@@ -200,9 +209,9 @@ int MPIComm::send_single(utils::Header& header) {
     log_debug() << "send_single: " << header.size_msg << " bytes" << std::endl;
     int ret = (int)(header.size_msg);
     int adr = static_cast<int>(handle->procs[handle->tag % handle->procs.size()]);
-    CHECK_MPISTATUS_CODE_(handle->Send(&ret, 1, MPI_INT, adr),
+    CHECK_MPISTATUS_CODE_(handle->Send(ret, adr),
                           "send_single: Error sending message size", adr);
-    CHECK_MPISTATUS_CODE_(handle->Send(header.data_msg(), ret, MPI_CHAR, adr),
+    CHECK_MPISTATUS_CODE_(handle->Send(header.data_msg(), ret, adr),
                           "send_single: Error receiving message", adr);
     log_debug() << "send_single: returning " <<  ret << std::endl;
     handle->tag++;
@@ -217,15 +226,14 @@ long MPIComm::recv_single(utils::Header& header) {
     CHECK_MPISTATUS_(handle->Probe(adr, &status),
                      "recv_single: Error in probe", adr);
     int ret = 0;
-    CHECK_MPISTATUS_(handle->Recv(&ret, 1, MPI_INT, adr, &status),
+    CHECK_MPISTATUS_(handle->Recv(ret, adr, &status),
                      "recv_single: Error receiving message size", adr);
     ret = static_cast<int>(header.on_recv(nullptr, ret));
     if (ret < 0) {
       log_error() << "recv_single: Error reallocating data" << std::endl;
       return ret;
     }
-    CHECK_MPISTATUS_(handle->Recv(header.data_msg(), ret,
-                                  MPI_CHAR, adr, &status),
+    CHECK_MPISTATUS_(handle->Recv(header.data_msg(), ret, adr, &status),
                      "recv_single: Error receiving message", adr);
     header.data_msg()[ret] = '\0';
     ret = header.on_recv(header.data_msg(), ret);

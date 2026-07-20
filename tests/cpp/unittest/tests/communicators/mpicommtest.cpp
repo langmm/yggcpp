@@ -43,28 +43,29 @@ public:
 	DO_MPI_MOCK_OUT(Probe);
     }
 
-    int Send(const void* buf, int, void* dt0, int) const override {
-        MPI_Datatype dt = (MPI_Datatype)dt0;
-        if (dt != MPI_Datatype(MPI_INT)) {
-	  msg.assign((char*)buf);
-	}
+    int Send(const void *data, int, int) const override {
+        msg.assign((char*)data);
+        DO_MPI_MOCK_OUT(Send);
+    }
+    int Send(const int, int) const override {
         DO_MPI_MOCK_OUT(Send);
     }
 
-    int Recv(void* buf, int, void* dt0, int,
-             void* status0) const override {
-        MPI_Datatype dt = (MPI_Datatype)dt0;
+    int Recv(void *data, int, int, void* status0) const override {
         MPI_Status* status = (MPI_Status*)status0;
         MPI_Status_set_cancelled(status, MPICANCEL);
         status->MPI_ERROR = MPISTATUS;
         char* cmsg = const_cast<char*>(msg.c_str());
         int sz = static_cast<int>(msg.size());
-        if(dt == MPI_Datatype(MPI_INT)) {
-            memcpy(buf, &sz, sizeof(int));
-        } else {
-	    memcpy(buf, cmsg, sizeof(char) * static_cast<size_t>(sz));
-        }
-	DO_MPI_MOCK_OUT(Recv);
+        memcpy(data, cmsg, sizeof(char) * static_cast<size_t>(sz));
+        DO_MPI_MOCK_OUT(Recv);
+    }
+    int Recv(int& data, int, void *status0) const override {
+        MPI_Status* status = (MPI_Status*)status0;
+        MPI_Status_set_cancelled(status, MPICANCEL);
+        status->MPI_ERROR = MPISTATUS;
+        data = static_cast<int>(msg.size());
+        DO_MPI_MOCK_OUT(Recv);
     }
     static int MPISTATUS;
     static bool MPICANCEL;
