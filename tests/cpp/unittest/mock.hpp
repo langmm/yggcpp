@@ -23,6 +23,7 @@
 #include <zmq.h>
 #endif // ZMQINSTALLED
 #ifdef MPIINSTALLED
+#define OMPI_SKIP_MPICXX 1
 #include <mpi.h>
 #endif // MPIINSTALLED
 #ifdef RMQINSTALLED
