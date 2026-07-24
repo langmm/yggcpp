@@ -19,8 +19,6 @@ macro(ygginterface_options OUTPUT_VARIABLE)
     YGG_BUILD_UBSAN
     YGG_ENABLE_INSTRUMENTATION_OPT
     YGG_ENABLE_COVERAGE
-    YGG_DEBUG_LEVEL
-    YGG_DEFAULT_COMM
     YGG_LINK_Python_TO_CXX
     WRAP_YGGDRASIL_RAPIDJSON_FOR_DLL
   )
@@ -31,8 +29,6 @@ macro(ygginterface_options_create)
   option(YGG_BUILD_UBSAN "Build with undefined behavior sanitizer (gcc/clang)" OFF)
   option(YGG_ENABLE_INSTRUMENTATION_OPT "Build yggdrasil with -march or -mcpu options" ON)
   option(YGG_ENABLE_COVERAGE "Enable coverage reporting" OFF)
-  option(YGG_DEBUG_LEVEL "Level that should be used for logging" OFF)
-  set(YGG_DEFAULT_COMM "" CACHE STRING "Default communicator")
   option(YGG_LINK_Python_TO_CXX "Link the Python extension to the C++ interface library" OFF)
   option(WRAP_YGGDRASIL_RAPIDJSON_FOR_DLL "Build yggdrasil using a wrapper for yggdrasil_rapidjson to force it into a DLL (enabled automatically when compiling with MSVC" OFF)
   option(YGGDRASIL_DISABLE_Python_C_API "Disable the Python C API in YggdrasilRapidJSON" OFF)
@@ -183,25 +179,10 @@ macro(ygginterface_options_config PREFIX)
     set(YGGDRASIL_RAPIDJSON_PYTHON_WRAPPER ON)
   endif()
   yggdrasil_rapidjson_options_config(${PREFIX})
-  if(YGG_DEBUG_LEVEL)
-    list(
-      APPEND ${PREFIX}_PUBLIC_COMPILE_FLAGS
-      -DYGG_DEBUG=${YGG_DEBUG_LEVEL}
-    )
-  endif()
   list(
     APPEND ${PREFIX}_PUBLIC_LIBRARIES
     YggdrasilRapidJSON
   )
-  if((NOT YGG_DEFAULT_COMM) AND YGG_COMMS_AVAILABLE)
-    list(GET YGG_COMMS_AVAILABLE 0 YGG_DEFAULT_COMM)
-  endif()
-  if(YGG_DEFAULT_COMM)
-    list(
-      APPEND ${PREFIX}_PUBLIC_COMPILE_FLAGS
-      -DDEFAULT_COMM_PREFIX=${YGG_DEFAULT_COMM}
-    )
-  endif()
   if(YGG_LINK_Python_TO_CXX)
     list(
       APPEND ${PREFIX}_PUBLIC_COMPILE_FLAGS

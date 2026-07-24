@@ -46,6 +46,16 @@
   end enum
 
 
+  enum, bind( C )
+     enumerator :: &
+        LOG_ALL = 0, &
+        LOG_VERBOSE = 5, &
+        LOG_DEBUG = 10, &
+        LOG_INFO = 20, &
+        LOG_ERROR = 40
+  end enum
+
+
   integer(kind=int64), parameter :: COMM_FLAG_VALID = 1_int64
   integer(kind=int64), parameter :: COMM_FLAG_GLOBAL = 2_int64
   integer(kind=int64), parameter :: COMM_FLAG_GLOBAL_WRAPPED = 4_int64

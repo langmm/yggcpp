@@ -19,16 +19,16 @@ using namespace YggInterface;
   cls sComm cls_args;					\
   unsetenv("output_OUT")
 #define INIT_INPUT_NOARGS(cls)				\
-  INIT_INPUT_BASE(cls ## Input, ("input"), COMM_BASE,	\
+  INIT_INPUT_BASE(cls ## Input, ("input"), DefaultComm,	\
 		  ("", SEND))
 #define INIT_OUTPUT_NOARGS(cls)					\
-  INIT_OUTPUT_BASE(cls ## Output, ("output"), COMM_BASE,	\
+  INIT_OUTPUT_BASE(cls ## Output, ("output"), DefaultComm,	\
 		   ("", RECV))
 #define INIT_INPUT(cls, ...)						\
-  INIT_INPUT_BASE(cls ## Input, ("input", __VA_ARGS__), COMM_BASE,	\
+  INIT_INPUT_BASE(cls ## Input, ("input", __VA_ARGS__), DefaultComm,	\
 		  ("", SEND))
 #define INIT_OUTPUT(cls, ...)						\
-  INIT_OUTPUT_BASE(cls ## Output, ("output", __VA_ARGS__), COMM_BASE,	\
+  INIT_OUTPUT_BASE(cls ## Output, ("output", __VA_ARGS__), DefaultComm,	\
 		   ("", RECV))
 #define INIT_INPUT_RPC_NOARGS(cls)				\
   INIT_INPUT_BASE(cls, ("input"), ClientComm, (""))

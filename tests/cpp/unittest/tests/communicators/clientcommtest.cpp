@@ -6,8 +6,6 @@
 #include "../../mock.hpp"
 #include "commtest.hpp"
 
-#ifdef COMM_BASE
-
 using namespace YggInterface;
 using namespace YggInterface::communicator;
 using namespace YggInterface::mock;
@@ -381,5 +379,3 @@ TEST(ClientComm, global) {
   }
   ygg_cleanup(CLEANUP_COMMS);
 }
-
-#endif

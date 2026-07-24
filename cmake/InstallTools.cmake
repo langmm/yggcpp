@@ -358,7 +358,8 @@ function(complete_install PROJECT)
       MODULE_SCRIPT_DIR
       HEADER_DIR DOC_DIR CONFIG_TEMPLATE_DIR)
   set(multiValueArgs TARGETS POSSIBLE_TARGETS
-      HEADERS MODULES_INCLUDE MODULES_EXCLUDE DOCS)
+      HEADERS HEADERS_RULES
+      MODULES_INCLUDE MODULES_EXCLUDE DOCS)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
   if(NOT ARGS_EXPORT)
     set(ARGS_EXPORT ${PROJECT}Targets)
@@ -493,6 +494,7 @@ function(complete_install PROJECT)
         install(
           DIRECTORY ${header}
           DESTINATION ${ARGS_INSTALL_INCLUDEDIR}
+          ${ARGS_HEADERS_RULES}
           ${COMPONENT_ARGS}
         )
         list(APPEND HEADER_DIRS "${header}")

@@ -71,6 +71,17 @@ const std::map<const ENV_VAR, const std::string>& YggInterface::utils::ENV_VAR_m
   return map;
 };
 
+const std::map<const LOGGING_LEVEL, const std::string>& YggInterface::utils::LOGGING_LEVEL_map() {
+  static const std::map<const LOGGING_LEVEL, const std::string> map {
+    {LOG_ALL    , "LOG_ALL"    },
+    {LOG_VERBOSE, "LOG_VERBOSE"},
+    {LOG_DEBUG  , "LOG_DEBUG"  },
+    {LOG_INFO   , "LOG_INFO"   },
+    {LOG_ERROR  , "LOG_ERROR"  },
+  };
+  return map;
+};
+
 const std::map<const COMM_FLAG, const std::string>& YggInterface::utils::COMM_FLAG_map() {
   static const std::map<const COMM_FLAG, const std::string> map {
     {COMM_FLAG_VALID               , "VALID"               },
@@ -227,6 +238,9 @@ std::string YggInterface::utils::CLEANUP_MODE2str(const CLEANUP_MODE key) {  ret
 }
 
 std::string YggInterface::utils::ENV_VAR2str(const ENV_VAR key) {  return YggInterface::utils::ENV_VAR_map().find(key)->second;
+}
+
+std::string YggInterface::utils::LOGGING_LEVEL2str(const LOGGING_LEVEL key) {  return YggInterface::utils::LOGGING_LEVEL_map().find(key)->second;
 }
 
 std::string YggInterface::utils::COMM_FLAG2str(const COMM_FLAG key) {  return YggInterface::utils::COMM_FLAG_map().find(key)->second;

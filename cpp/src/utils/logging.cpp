@@ -1,5 +1,6 @@
 #include "utils/tools.hpp"
 #include "utils/logging.hpp"
+#include "utils/enums_utils.hpp"
 
 #include <utility>
 
@@ -12,14 +13,35 @@ namespace YggInterface {
   
 namespace utils {
 
+/*! @brief Define old style names for compatibility. */
+#ifdef PSI_DEBUG
+#define YGG_DEBUG PSI_DEBUG
+#endif
+
 int YggdrasilLogger::_ygg_error_flag = 0;
-YggdrasilLogger::YggdrasilLogger(std::string nme, size_t lvl, bool is_err) :
-  name(nme), level(lvl), is_error(is_err), ss(nullptr), t(std::chrono::system_clock::now()) {
-  if (eval())
+#ifdef YGG_DEBUG
+int YggdrasilLogger::_ygg_default_level = YGG_DEBUG;
+#else // YGG_DEBUG
+int YggdrasilLogger::_ygg_default_level = static_cast<int>(LOG_INFO);
+#endif // YGG_DEBUG
+YggdrasilLogger::YggdrasilLogger(std::string nme, bool emit, bool is_err) :
+  name(nme), ss(nullptr), t(std::chrono::system_clock::now()) {
+  if (is_err) {
+    emit = true;
+    YggdrasilLogger::_ygg_error_flag = 1;
+  }
+  if (emit)
     ss = new std::ostringstream();
 }
+YggdrasilLogger::YggdrasilLogger(int lvl, std::string nme) :
+  YggdrasilLogger(nme,
+                  (lvl >= YggdrasilLogger::_ygg_default_level),
+                  (lvl >= static_cast<int>(LOG_ERROR))) {
+  if (name.empty())
+    name = YggdrasilLogger::level2str(lvl);
+}
 YggdrasilLogger::YggdrasilLogger(YggdrasilLogger&& rhs) :
-  name(rhs.name), level(rhs.level), is_error(rhs.is_error), ss(rhs.ss), t(rhs.t) {
+  name(rhs.name), ss(rhs.ss), t(rhs.t) {
   rhs.ss = nullptr;
 }
 YggdrasilLogger::~YggdrasilLogger() {
@@ -42,15 +64,30 @@ YggdrasilLogger::~YggdrasilLogger() {
     ss = nullptr;
   }
 }
-bool YggdrasilLogger::eval() {
-  bool out = is_error;
-  if (is_error)
-    YggdrasilLogger::_ygg_error_flag = 1;
-#ifdef YGG_DEBUG
-  if (YGG_DEBUG <= level)
-    out = true;
-#endif
-  return out;
+
+std::string YggdrasilLogger::level2str(const int level) {
+  std::string outStr;
+  if (!YggInterface::utils::enum_key_search_round(YggInterface::utils::LOGGING_LEVEL_map(),
+                                                  level, outStr))
+    outStr = "USER";
+  return outStr;
+}
+int YggdrasilLogger::str2level(const std::string& level) {
+  if (level.empty())
+    return -1;
+  if (std::all_of(level.begin(), level.end(), [](unsigned char c) {
+    return std::isdigit(c);
+  })) {
+    return std::stoi(level);
+  }
+  LOGGING_LEVEL key = LOG_ALL;
+  if (YggInterface::utils::enum_value_search(YggInterface::utils::LOGGING_LEVEL_map(),
+                                             level, key, true))
+    return static_cast<int>(key);
+  return -1;
+}
+void YggdrasilLogger::set_default_level(const int level) {
+  _ygg_default_level = level;
 }
 
 std::string YggdrasilLogger::_getLogPretex() {
@@ -99,6 +136,43 @@ std::string string_format_va(const std::string fmt, va_list op) {
       size *= 2;      // Guess at a larger size (OS specific)
   }
   return str;
+}
+
+LogBase::LogBase() : loglevel(YggdrasilLogger::_ygg_default_level) {
+  // TODO: Check environment variable?
+}
+LogBase::~LogBase() {}
+std::string LogBase::logClass() const { return ""; }
+std::string LogBase::logInst() const { return ""; }
+std::string LogBase::logStr() const {
+  std::string out = logClass();
+  std::string out_inst = logInst();
+  if (!out_inst.empty())
+    out += "(" + out_inst + ")";
+  return out;
+}
+void LogBase::throw_error(const std::string msg) const {
+  utils::YggLogThrowError(logStr() + "::" + msg);
+}
+YggdrasilLogger LogBase::log(int lvl, std::string nme) const {
+  if (nme.empty())
+    nme = YggdrasilLogger::level2str(lvl);
+  YggdrasilLogger out(nme, (lvl >= loglevel), (lvl >= LOG_ERROR));
+  if (out.ss)
+    out << logStr() << "::";
+  return out;
+}
+YggdrasilLogger LogBase::log_error() const {
+  return log ygglog_param_error;
+}
+YggdrasilLogger LogBase::log_info() const {
+  return log ygglog_param_info;
+}
+YggdrasilLogger LogBase::log_debug() const {
+  return log ygglog_param_debug;
+}
+YggdrasilLogger LogBase::log_verbose() const {
+  return log ygglog_param_verbose;
 }
 
 }}

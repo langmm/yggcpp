@@ -3,7 +3,6 @@
 #include <vector>
 #include "communicators/RPCComm.hpp"
 
-#ifdef COMM_BASE
 namespace YggInterface {
 namespace communicator {
 
@@ -37,5 +36,3 @@ protected:
 
 }
 } // YggInterface
-
-#endif

@@ -9,7 +9,8 @@
 
 #define UNUSED(arg) ((void)&(arg))
 #define STRINGIFY(x) #x
-
+#define CONCAT_AGAIN(n1, n2) n1##n2
+#define CONCAT(n1, n2) CONCAT_AGAIN(n1, n2)
 
 #ifdef __cplusplus
 #include <vector>
@@ -34,11 +35,7 @@
 #include <cerrno>
 #include <ctime>
 #include <cstring>
-#ifdef THREADSINSTALLED
-#include <thread>
 #include <chrono>
-#include <mutex>
-#endif // THREADSINSTALLED
 
 #ifndef print_complex
 #define print_complex(x) printf("%lf+%lfj\n", (double)creal(x), (double)cimag(x))
@@ -78,10 +75,6 @@
 
 #define STRBUFF 100
 
-/*! @brief Define old style names for compatibility. */
-#ifdef PSI_DEBUG
-#define YGG_DEBUG PSI_DEBUG
-#endif
 #include "utils/complex_type.hpp"
 
 #define DELIMITER ','
@@ -145,20 +138,9 @@ int unsetenv(const char *name) {
 namespace YggInterface {
 namespace utils {
 
-#ifdef THREADSINSTALLED
-#define THREAD_USLEEP(x) std::this_thread::sleep_for(std::chrono::microseconds(x))
-#else // THREADSINSTALLED
-#define THREAD_USLEEP(x) usleep(x)
-#endif // THREADSINSTALLED
-  /*
-#define TIMEOUT_LOOP(TOUT, TSTEP)					\
-  for (int istep = 0; (TOUT < 0 || istep < ((TOUT / TSTEP) + 1)); istep++)
-  */
 #define TIMEOUT_LOOP(TOUT, TSTEP)		\
   std::chrono::time_point<std::chrono::system_clock> timeout_start = std::chrono::system_clock::now(); \
   for (int istep = 0; istep >= 0 && (TOUT < 0 || (std::chrono::system_clock::now() - timeout_start) <= std::chrono::microseconds(TOUT)); istep++)
-#define AFTER_TIMEOUT_LOOP(TSTEP)		\
-  THREAD_USLEEP(TSTEP)
 
 /*! @brief Macro to define global vars to be used across thread */
 #if defined(_MSC_VER) && defined(_OPENMP)
@@ -174,47 +156,7 @@ namespace utils {
   extern T name args;
 #endif // _OPENMP
 #endif // _MSC_VER
-#define YGG_THREAD_LOCAL static thread_local
-#define YGG_THREAD_LOCAL_VAR(T, name, args)	\
-  extern thread_local T name args;
-#define YGG_THREAD_LOCAL_VAR_DEF(T, name, args)	\
-  thread_local T name args;
 
-/*! @brief Macro to open section that should be synchronized across
-  threads, typically where thread global variables are acessed. */
-#ifdef THREADSINSTALLED
-#ifdef _OPENMP
-#define YGG_THREADING_ACTIVE 1
-#define YGG_THREAD_SAFE_BEGIN(name)		\
-  _Pragma(STRINGIFY(omp critical (name))) {	\
-    const std::lock_guard<std::mutex> name ## _lock(global_context->name ## _mutex);
-#define YGG_THREAD_SAFE_BEGIN_LOCAL(name)	\
-  _Pragma(STRINGIFY(omp critical (name))) {	\
-    const std::lock_guard<std::mutex> name ## _lock(name ## _mutex);
-#else // _OPENMP
-#define YGG_THREAD_SAFE_BEGIN(name)		\
-  {						\
-    const std::lock_guard<std::mutex> name ## _lock(global_context->name ## _mutex);
-#define YGG_THREAD_SAFE_BEGIN_LOCAL(name)	\
-  {						\
-    const std::lock_guard<std::mutex> name ## _lock(name ## _mutex);
-#endif // _OPENMP
-#else // THREADSINSTALLED
-#ifdef _OPENMP
-#define YGG_THREADING_ACTIVE 1
-#define YGG_THREAD_SAFE_BEGIN(name)		\
-  _Pragma(STRINGIFY(omp critical (name))) {
-#define YGG_THREAD_SAFE_BEGIN_LOCAL(name)	\
-  YGG_THREAD_SAFE_BEGIN(name)
-#else // _OPENMP
-#define YGG_THREAD_SAFE_BEGIN(name)		\
-  {
-#define YGG_THREAD_SAFE_BEGIN_LOCAL(name)	\
-  YGG_THREAD_SAFE_BEGIN(name)
-#endif // _OPENMP
-#endif // THREADSINSTALLED
-#define YGG_THREAD_SAFE_END			\
-  }
 
 
 /*!
@@ -228,6 +170,12 @@ unsigned long ptr2seed(void *ptr) {
     auto seed = (unsigned long) (v & 0xFFFFFFFFLL);
     return seed;
 }
+
+/**
+ * @brief Put the thread to sleep for x microseconds.
+ * @param[in] x Number of microseconds to put the thread to sleep.
+ */
+YGG_API void thread_usleep(const uint64_t x = YGG_SLEEP_TIME);
 
 /*!
   @brief Get the ID for the current thread (if inside one).

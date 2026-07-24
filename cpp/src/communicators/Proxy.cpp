@@ -1,6 +1,8 @@
 #include "communicators/Proxy.hpp"
 #ifdef THREADSINSTALLED
+#include <thread>
 #include <atomic>
+#include <mutex>
 #endif // THREADSINSTALLED
 #include "utils/logging.hpp"
 

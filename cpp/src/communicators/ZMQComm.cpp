@@ -2,10 +2,11 @@
 #ifdef ZMQINSTALLED
 #include <zmq.h>
 #endif
-#include "communicators/DefaultComm.hpp"
 #include "communicators/WrapComm.hpp"
 #include "utils/tools.hpp"
 #include "utils/logging.hpp"
+#include "utils/multiprocessing.hpp"
+#include "utils/internal.hpp"
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 /* double YggInterface::communicator::_wait_send_t = 0;  // 0.0001; */
@@ -453,7 +454,7 @@ bool ZMQReply::send_stage2(const std::string& msg_data) {
     return false;
   }
   // Sleep briefly to ensure receive is complete
-  // THREAD_USLEEP(100);
+  // utils::thread_usleep();
   // Check for purge or EOF
   // if (is_purge) {
   //   log_verbose() << "send_stage2: PURGE received" << std::endl;

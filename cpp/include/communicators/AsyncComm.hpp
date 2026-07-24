@@ -377,8 +377,9 @@ namespace YggInterface {
       utils::Metadata response_metadata; /**< Metadata for response communicator in RPC comm */
       COMM_TYPE request_commtype;        /**< Request communicator type for RPC comm */
       COMM_TYPE response_commtype;       /**< Response communicator type for RPC comm */
-      FLAG_TYPE request_flags;                 /**< Request communicator flags for RPC comm */
-      FLAG_TYPE response_flags;                /**< Request communicator flags for RPC comm */
+      FLAG_TYPE request_flags;           /**< Request communicator flags for RPC comm */
+      FLAG_TYPE response_flags;          /**< Request communicator flags for RPC comm */
+      bool no_create_header_send;        /**< true if the wrapped communicator does not have a create_header_send method */
 
     public:
       // RPC methods

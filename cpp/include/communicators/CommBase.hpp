@@ -410,80 +410,6 @@ public:									\
     abbr ## _install_error();					\
     return NULL;						\
   }
-#define ADD_KEY_TRACKER_DECS						\
-  private:								\
-  /** @brief Check if a key is already registered */			\
-  /** @param[in] key Key to check */					\
-  /** @return Negative index+1 of key if present, 0 otherwise */	\
-  int check_key(int key);						\
-  /** @brief Add a key to the set of registered keys */			\
-  /** @param[in] key Key to add */					\
-  /** @return 0 on success, -1 on error */				\
-  int track_key(int key);						\
-  /** @brief Remove a key from those registered */			\
-  /** @param[in] key Key to remove from registry */			\
-  /** @return 0 on success, -1 on error */				\
-  int untrack_key(int key);						\
-  static int _keysUsed[MAX_KEYS_ALLOWED]; /**< Registry of keys */	\
-  static unsigned _NkeysUsed; /**< Number of registered keys */		\
-  static bool _rand_seeded /**< true if rand has been seeded for keys */
-#define ADD_KEY_TRACKER_DEFS(cls)					\
-  int cls::_keysUsed[MAX_KEYS_ALLOWED];					\
-  unsigned cls::_NkeysUsed = 0;						\
-  bool cls::_rand_seeded = false;					\
-  int cls::check_key(int key) {						\
-    unsigned i;								\
-    int error_code = 0;							\
-    YGG_THREAD_SAFE_BEGIN(cls) {					\
-      for (i = 0; i < cls::_NkeysUsed; i++ ) {				\
-	if (cls::_keysUsed[i] == key) {					\
-	  error_code = -(static_cast<int>(i) + 1);			\
-	  break;							\
-	}								\
-      }									\
-      /* Fail if > _yggTrackChannels channels used */			\
-    } YGG_THREAD_SAFE_END;						\
-    return error_code;							\
-  }									\
-  int cls::track_key(int key) {						\
-    int ret = 0;							\
-    YGG_THREAD_SAFE_BEGIN(cls) {					\
-      if (cls::_NkeysUsed++ >= MAX_KEYS_ALLOWED) {			\
-	log_error() << "Too many channels in use, max: " << MAX_KEYS_ALLOWED << std::endl; \
-	ret = -1;							\
-      } else {								\
-	cls::_keysUsed[cls::_NkeysUsed] = key;				\
-      }									\
-    } YGG_THREAD_SAFE_END;						\
-    return ret;								\
-  }									\
-  int cls::untrack_key(int key) {					\
-    int ret = 0; /* -1; */						\
-    unsigned i;								\
-    YGG_THREAD_SAFE_BEGIN(cls) {					\
-      for (i = 0; i < cls::_NkeysUsed; i++) {				\
-	if (key == cls::_keysUsed[i]) {					\
-	  memmove(cls::_keysUsed + i, cls::_keysUsed + i + 1,		\
-		  (MAX_KEYS_ALLOWED - (i + 1))*sizeof(int));		\
-	  cls::_NkeysUsed--;						\
-	  ret = 0;							\
-	  break;							\
-	}								\
-      }									\
-    } YGG_THREAD_SAFE_END;						\
-    return ret;								\
-  }
-#define CREATE_KEY(cls)				\
-  YGG_THREAD_SAFE_BEGIN(cls) {			\
-    if (!cls::_rand_seeded) {			\
-      std::srand(ptr2seed(this));		\
-      cls::_rand_seeded = true;			\
-    }						\
-  } YGG_THREAD_SAFE_END;			\
-  while (key == 0 || check_key(key) < 0) {	\
-    key = std::rand();				\
-  }
-
 
 using namespace yggdrasil_rapidjson;
 
@@ -501,8 +427,6 @@ class IPCComm;
 class WrapComm;
 class RequestList;
 class ForkTines;
-
-  // typedef struct comm_t comm_t;
 
   /**
    * @brief Structure for organizing supplemental communicator parameters
@@ -1385,10 +1309,25 @@ public:
     */
     YGG_API_DEF static bool isInstalled() { return false; }
     /**
+      @brief Get the default communicator type from an environment
+        variable.
+      @param[in] default_comm_env Environment variable to check.
+      @returns Enumerated communicator type
+    */
+    static COMM_TYPE defaultCommTypeEnv(const std::string& default_comm_env);
+    /**
       @brief Get the default communicator type for this class
       @returns Enumerated communicator type
     */
-    static COMM_TYPE defaultCommType() { return DEFAULT_COMM; }
+    static COMM_TYPE defaultCommType();
+    /**
+      @brief Get the default communicator type for a named communicator
+      @param[in] name Communicator name
+      @param[in] dir Communicator direction
+      @returns Enumerated communicator type
+    */
+    static COMM_TYPE defaultCommType(const std::string& name,
+                                     const DIRECTION dir);
 
     /**
       @brief Get the list of worker comms used for large messages.
@@ -1648,21 +1587,15 @@ protected:
      *   to store an address for an interface comm during an integration.
      * @param[in] name Communicator name.
      * @param[in] dir Direction of the communicator.
+     * @param[in] suffix Suffix to add to the environment variable.
      * @param[in] opp If true, get the environment variable for the
      *   opposing communicator.
      * @return Environment variable name.
      */
-    static std::string envName(const std::string& name,
-			       DIRECTION dir, bool opp=false) {
-      std::string out = name;
-      if (out.size() > COMM_NAME_SIZE)
-	out.resize(COMM_NAME_SIZE);
-      if (((!opp) && dir == SEND) || (opp && dir == RECV))
-	out += "_OUT";
-      else if (((!opp) && dir == RECV) || (opp && dir == SEND))
-	out += "_IN";
-      return out;
-    }
+    YGG_API static std::string envName(const std::string& name,
+                                       DIRECTION dir,
+                                       const std::string& suffix="",
+                                       bool opp=false);
 
     /**
      * @brief Get the environment variable where communicator type is
@@ -1673,11 +1606,8 @@ protected:
      *   opposing communicator.
      * @returns Environment variable name.
      */
-    static std::string envComm(const std::string& name,
-			       DIRECTION dir, bool opp=false) {
-      std::string out(envName(name, dir, opp) + "_COMM");
-      return out;
-    }
+    YGG_API static std::string envComm(const std::string& name,
+                                       DIRECTION dir, bool opp=false);
   
     /**
      * @brief Get an alternate form of the name that could be used as an
@@ -1685,28 +1615,30 @@ protected:
      * @param[in] name Original environment variable.
      * @returns Alternate environment variable.
      */
-    static std::string altEnvName(const std::string& name) {
-      std::string out(name);
-      size_t loc;
-      while ((loc = out.find(":")) != std::string::npos) {
-	out.replace(loc, 1, "__COLON__");
-      }
-      return out;
-    }
+    YGG_API static std::string altEnvName(const std::string& name);
 
     /**
-     * @brief Get an environment variable for a communicator, checking
-     *   alternate versions.
+     * @brief Get an environment variable, checking alternate versions.
      * @param[in] name Environment variable to get.
      * @return Contents of the environment variable if it exists. Empty
      *    if it does not exist.
      */
-    static std::string getEnvVar(const std::string& name) {
-      std::string out = utils::getenv(name);
-      if (out.empty())
-        out = utils::getenv(altEnvName(name));
-      return out;
-    }
+    YGG_API static std::string getEnvVar(const std::string& name);
+    /**
+     * @brief Get an environment variable for a communicator, checking
+     *   alternate versions.
+     * @param[in] name Communicator name.
+     * @param[in] dir Direction of the communicator.
+     * @param[in] suffix Suffix to add to the environment variable.
+     * @param[in] opp If true, get the environment variable for the
+     *   opposing communicator.
+     * @return Contents of the environment variable if it exists. Empty
+     *    if it does not exist.
+     */
+    YGG_API static std::string getCommEnvVar(const std::string& name,
+                                             DIRECTION dir,
+                                             const std::string& suffix="",
+                                             bool opp=false);
 
     /**
      * @brief Get the address that should be used for the opposing comm.

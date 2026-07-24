@@ -8,6 +8,7 @@
 #include "utils/tools.hpp"
 #include "utils/yggdrasil_rapidjson_wrapper.hpp"
 #include "utils/embedded_python.hpp"
+#include "utils/internal.hpp"
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 int YggInterface::communicator::global_scope_comm = 0;
@@ -20,9 +21,22 @@ std::shared_ptr<YggInterface::communicator::CommContext> YggInterface::communica
 
 using namespace YggInterface::communicator;
 
+#define YGG_THREAD_MUTEX(name) name ## _mutex(STRINGIFY(name))
 CommContext::CommContext(bool for_testing) :
-  LogBase(), registry_(), thread_id(utils::get_thread_id()),
-  for_testing_(for_testing), cleanup_mode_(), zmq_ctx(NULL), rng() {
+  LogBase(), registry_(), func_registry_(), embed_registry_(),
+  thread_id(utils::get_thread_id()),
+  for_testing_(for_testing), cleanup_mode_(), zmq_ctx(NULL), rng(),
+  YGG_THREAD_MUTEX(init),
+  YGG_THREAD_MUTEX(clean),
+  YGG_THREAD_MUTEX(client),
+  YGG_THREAD_MUTEX(comms),
+  YGG_THREAD_MUTEX(IPCComm),
+  YGG_THREAD_MUTEX(zmq),
+  YGG_THREAD_MUTEX(zmqport),
+  YGG_THREAD_MUTEX(uuid),
+  YGG_THREAD_MUTEX(functions),
+  YGG_THREAD_MUTEX(embed)
+{
   log_debug() << "CommContext: New context" << std::endl;
 #ifdef YGG_ZMQ_PRELOAD
   hzmqDLL = LoadLibrary(TEXT("zmq"));
@@ -32,6 +46,8 @@ CommContext::CommContext(bool for_testing) :
 #endif // YGG_ZMQ_PRELOAD
   init(for_testing);
 }
+#undef YGG_THREAD_MUTEX
+
 CommContext::~CommContext() {
   log_debug() << "~CommContext: Begin destructor" << std::endl;
   cleanup(CLEANUP_ATEXIT);
@@ -43,6 +59,7 @@ CommContext::~CommContext() {
 int CommContext::init(bool for_testing) {
   log_debug() << "init: Begin" << std::endl;
   for_testing_ = for_testing;
+  check_env_vars();
 #define ADD_EMBEDDED(cls, do_init)					\
   {									\
     utils::cls* iembed = new utils::cls();				\
@@ -79,6 +96,16 @@ int CommContext::init(bool for_testing) {
   rng.seed((uint64_t)(this));
   std::srand(ptr2seed(this));
   return 0;
+}
+void CommContext::check_env_vars() {
+  std::string out = utils::getenv("YGG_DEFAULT_LOG_LEVEL");
+  if (out.empty())
+    return;
+  int level = utils::YggdrasilLogger::str2level(out);
+  if (level >= 0) {
+    utils::YggdrasilLogger::set_default_level(level);
+    this->loglevel = level;
+  }
 }
 void CommContext::cleanup(CLEANUP_MODE mode) {
   log_debug() << "cleanup: mode = " << mode << std::endl;
@@ -364,9 +391,7 @@ void YggInterface::communicator::global_scope_comm_on() {
   set_global_scope_comm(1);
 }
 void YggInterface::communicator::global_scope_comm_off() {
-  // #ifndef _OPENMP
   set_global_scope_comm(0);
-  // #endif
 }
 int YggInterface::communicator::ygg_init(bool for_testing) {
   if (!global_context) {

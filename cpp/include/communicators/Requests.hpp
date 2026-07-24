@@ -3,10 +3,8 @@
 #include "YggInterface_export.h"
 #include <utility>
 #include <vector>
-#include "communicators/DefaultComm.hpp"
 #include "communicators/CommBase.hpp"
 
-#ifdef COMM_BASE
 namespace YggInterface {
 namespace communicator {
 
@@ -625,4 +623,3 @@ public:
 };
 }
 }
-#endif // COMM_BASE

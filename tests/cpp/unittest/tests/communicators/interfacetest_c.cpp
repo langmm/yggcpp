@@ -18,18 +18,18 @@ using namespace YggInterface::communicator;
   comm_t sComm = cls cls_args;					\
   unsetenv("output_OUT")
 #define INIT_INPUT_NOARGS(cls)					\
-  INIT_INPUT_BASE(ygg ## cls ## Input, ("input"), COMM_BASE,	\
+  INIT_INPUT_BASE(ygg ## cls ## Input, ("input"), DefaultComm,	\
 		  ("", SEND))
 #define INIT_OUTPUT_NOARGS(cls)					\
-  INIT_OUTPUT_BASE(ygg ## cls ## Output, ("output"), COMM_BASE,	\
+  INIT_OUTPUT_BASE(ygg ## cls ## Output, ("output"), DefaultComm,	\
 		   ("", RECV))
 #define INIT_INPUT(cls, ...)						\
   INIT_INPUT_BASE(ygg ## cls ## Input, ("input", __VA_ARGS__),		\
-		  COMM_BASE,						\
+		  DefaultComm,						\
 		  ("", SEND))
 #define INIT_OUTPUT(cls, ...)						\
   INIT_OUTPUT_BASE(ygg ## cls ## Output, ("output", __VA_ARGS__),	\
-		   COMM_BASE,						\
+		   DefaultComm,						\
 		   ("", RECV))
 #define DO_SEND_RECV_BASE_C(init_data, comp_data, send_method, recv_method, send_eof, afterSendRecv, finally) \
   init_data;								\
@@ -86,9 +86,9 @@ using namespace YggInterface::communicator;
 		      destroy_generic(&data_send); destroy_generic(&data_recv))
 
 INTERFACE_TEST(Base,
-	       INIT_INPUT_BASE(yggInput, ("input"), COMM_BASE,
+	       INIT_INPUT_BASE(yggInput, ("input"), DefaultComm,
 			       ("", SEND)),
-	       INIT_OUTPUT_BASE(yggOutput, ("output"), COMM_BASE,
+	       INIT_OUTPUT_BASE(yggOutput, ("output"), DefaultComm,
 				("", RECV)),
 	       INIT_DATA_CHAR, COMP_DATA_CHAR,
 	       ygg_send, (data_send, n_send), (data_send),
@@ -100,13 +100,13 @@ INTERFACE_TEST(
   INIT_INPUT_BASE(
     yggInputType,
     ("input", &datatype),
-    COMM_BASE,
+    DefaultComm,
     ("", SEND)); sComm.addSchema("{\"type\": \"number\"}"),
   dtype_t datatype = create_dtype_from_schema("{\"type\": \"number\"}", false);
   INIT_OUTPUT_BASE(
     yggOutputType,
     ("output", &datatype),
-    COMM_BASE,
+    DefaultComm,
     ("", RECV)),
   INIT_DATA_SINGLE(double, 1.5), COMP_DATA_SINGLE,
   yggSend, (data_send), (1, data_send),
@@ -117,12 +117,12 @@ INTERFACE_TEST(
   INIT_INPUT_BASE(
     yggInputFmt,
     ("input", "%d\t%lf\t%5s"),
-    COMM_BASE,
+    DefaultComm,
     ("", SEND)); EXPECT_TRUE(sComm.addFormat("%d\t%lf\t%5s")),
   INIT_OUTPUT_BASE(
     yggOutputFmt,
     ("output", "%d\t%lf\t%5s"),
-    COMM_BASE,
+    DefaultComm,
     ("", RECV)),
   INIT_DATA_TRIPLE, COMP_DATA_TRIPLE,
   yggSend, (a_send, b_send, c_send, nc_send), SEND_NARGS_TRIPLE,
@@ -411,21 +411,21 @@ TEST(comm_t, ErrorsInit) {
 }
 TEST(comm_t, ErrorsFormat) {
   {
-    COMM_BASE alt("", RECV);
+    DefaultComm alt("", RECV);
     setenv("output_OUT", alt.getAddress().c_str(), 1);
     comm_t tmp = yggOutputFmt("output", "%j");
     EXPECT_FALSE(tmp.comm);
     unsetenv("output_OUT");
   }
   {
-    COMM_BASE alt("", SEND);
+    DefaultComm alt("", SEND);
     setenv("input_IN", alt.getAddress().c_str(), 1);
     comm_t tmp = yggInputFmt("input", "%j");
     EXPECT_FALSE(tmp.comm);
     unsetenv("input_IN");
   }
   {
-    COMM_BASE alt("", RECV);
+    DefaultComm alt("", RECV);
     setenv("output_OUT", alt.getAddress().c_str(), 1);
     comm_t tmp = yggAsciiArrayOutput("output", "%j");
     EXPECT_FALSE(tmp.comm);
@@ -442,9 +442,9 @@ TEST(comm_t, ErrorsFormat) {
 
 INTERFACE_TEST_BASE(
   Pointers,
-  INIT_INPUT_BASE(yggInput, ("input"), COMM_BASE,
+  INIT_INPUT_BASE(yggInput, ("input"), DefaultComm,
 		  ("", SEND)),
-  INIT_OUTPUT_BASE(yggOutputFmt, ("output", "%lf"), COMM_BASE,
+  INIT_OUTPUT_BASE(yggOutputFmt, ("output", "%lf"), DefaultComm,
 		   ("", RECV)),
   INIT_DATA_PTRS, COMP_DATA_SINGLE,
   pcommSend, (1, pp_send, 0), sendVar, (data_send),

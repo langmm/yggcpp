@@ -1,5 +1,6 @@
 #include "utils/tools.hpp"
 #include "utils/embedded_languages.hpp"
+#include "utils/internal.hpp"
 
 
 using namespace YggInterface::utils;

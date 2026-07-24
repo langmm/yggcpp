@@ -17,6 +17,7 @@
 #define YGG_ZMQ_PRESERVE_CONTEXT 1
 #endif
 #include <random>
+#include "utils/multiprocessing.hpp"
 
 namespace YggInterface {
 
@@ -76,12 +77,10 @@ namespace YggInterface {
       CLEANUP_MODE cleanup_mode_;     //!< Mode of current cleanup action
       void* zmq_ctx;                  //!< ZeroMQ context
       std::mt19937 rng;               //!< Random number generator
-#ifdef YGG_ZMQ_PRELOAD
-      HINSTANCE hzmqDLL;              //!< Preloaded ZeroMQ DLL
-#endif // YGG_ZMQ_PRELOAD
-#ifdef THREADSINSTALLED
-#define YGG_THREAD_MUTEX(name)			\
-      std::mutex name ## _mutex;
+#define YGG_THREAD_MUTEX(name)                  \
+      utils::ThreadMutex name ## _mutex;
+      // NOTE: If any additional mutexes are added, they must also be
+      //   initialized in the constructor definition in CommContext.cpp
       YGG_THREAD_MUTEX(init)
       YGG_THREAD_MUTEX(clean)
       YGG_THREAD_MUTEX(client)
@@ -93,7 +92,9 @@ namespace YggInterface {
       YGG_THREAD_MUTEX(functions)
       YGG_THREAD_MUTEX(embed)
 #undef YGG_THREAD_MUTEX
-#endif // THREADSINSTALLED
+#ifdef YGG_ZMQ_PRELOAD
+      HINSTANCE hzmqDLL;              //!< Preloaded ZeroMQ DLL
+#endif // YGG_ZMQ_PRELOAD
 
       /**
        * @brief Initialize the context.
@@ -101,6 +102,14 @@ namespace YggInterface {
        * @return 0 on success
        */
       YGG_API int init(bool for_testing=false);
+      /**
+       * @brief Check various configuration parameters that can be set
+       *   via environment variables:
+       *
+       *   YGG_DEFAULT_LOG_LEVEL Default logging level.
+       *   YGG_DEFAULT_COMM      Default communicator type.
+       */
+      YGG_API void check_env_vars();
       /**
        * @brief Cleanup the context's resources
        * @param[in] mode Enumerated flag specifying which resources

@@ -1,0 +1,4 @@
+#pragma once
+
+#define DefaultComm @YGG_DEFAULT_COMM_CLASS@
+#include "communicators/@YGG_DEFAULT_COMM_CLASS@.hpp"

@@ -73,6 +73,8 @@ ygginterface_options_create()
 include(AddYggInterface)
 include(BuildTools)
 
+set(YGG_DEFAULT_COMM "" CACHE STRING "Default communicator")
+set(YGG_DEBUG_LEVEL "" CACHE STRING "Level that should be used for logging")
 option(YGG_Python_LIBRARY_WRAP "Build the Yggdrasil Python interface library by wrapping the C++ module" ON)
 option(ALLOW_SKBUILD_NONPython "Allow the non-Python interfaces (C/C++/Fortran) to be built from SKBUILD" OFF)
 option(YGG_BUILD_TESTS "Build tests" OFF)
@@ -403,9 +405,52 @@ endif()
 # Select default comm #
 #######################
 
-if((NOT YGG_DEFAULT_COMM) AND YGG_COMMS_AVAILABLE)
-  list(GET YGG_COMMS_AVAILABLE 0 YGG_DEFAULT_COMM)
-  list(APPEND YGG_INSTALL_DEFS -DDEFAULT_COMM_PREFIX=${YGG_DEFAULT_COMM})
+if(NOT YGG_DEFAULT_COMM)
+  if(YGG_COMMS_AVAILABLE)
+    list(GET YGG_COMMS_AVAILABLE 0 YGG_DEFAULT_COMM)
+  else()
+    set(YGG_DEFAULT_COMM FILE)
+  endif()
+endif()
+if(YGG_DEFAULT_COMM MATCHES "(.*)Comm$")
+  set(YGG_DEFAULT_COMM_CLASS ${YGG_DEFAULT_COMM})
+  set(YGG_DEFAULT_COMM ${CMAKE_MATCH_1})
+else()
+  set(YGG_DEFAULT_COMM_CLASS ${YGG_DEFAULT_COMM}Comm)
+endif()
+if("${YGG_DEFAULT_COMM}" STREQUAL "File" OR
+   "${YGG_DEFAULT_COMM}" STREQUAL "FILE")
+  set(YGG_DEFAULT_COMM FILE)
+  set(YGG_DEFAULT_COMM_CLASS FileComm)
+endif()
+if(NOT "${YGG_DEFAULT_COMM}" IN_LIST YGG_COMMS_AVAILABLE)
+  message(FATAL_ERROR "YGG_DEFAULT_COMM = ${YGG_DEFAULT_COMM}, which is not installed")
+endif()
+message(DEBUG "YGG_DEFAULT_COMM = ${YGG_DEFAULT_COMM}")
+message(DEBUG "YGG_DEFAULT_COMM_CLASS = ${YGG_DEFAULT_COMM_CLASS}")
+configure_file(
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/include/communicators/DefaultComm.hpp.in
+  ${CMAKE_CURRENT_SOURCE_DIR}/cpp/include/communicators/DefaultComm.hpp
+  @ONLY
+)
+# list(APPEND DEPS_PRIVATE_COMPILE_FLAGS -DDEFAULT_COMM_PREFIX=${YGG_DEFAULT_COMM})
+
+###################
+# Set debug level #
+###################
+if (YGG_DEBUG_LEVEL)
+  if(YGG_DEBUG_LEVEL STREQUAL "DEBUG")
+    set(YGG_DEBUG_LEVEL 10)
+  elseif(YGG_DEBUG_LEVEL STREQUAL "INFO")
+    set(YGG_DEBUG_LEVEL 20)
+  elseif(YGG_DEBUG_LEVEL STREQUAL "ERROR")
+    set(YGG_DEBUG_LEVEL 40)
+  elseif(YGG_DEBUG_LEVEL STREQUAL "VERBOSE")
+    set(YGG_DEBUG_LEVEL 5)
+  elseif(NOT YGG_DEBUG_LEVEL MATCHES "^[0-9]+$")
+    message(FATAL_ERROR "Invalid YGG_DEBUG_LEVEL value \"${YGG_DEBUG_LEVEL}\", must be a numeric level or one of the named levels (e.g. DEBUG, VERBOSE)")
+  endif()
+  list(APPEND DEPS_PRIVATE_COMPILE_FLAGS -DYGG_DEBUG=${YGG_DEBUG_LEVEL})
 endif()
 
 ###################
@@ -637,6 +682,7 @@ if(YGG_INSTALL_TARGETS)
     POSSIBLE_TARGETS ${YGG_INSTALL_TARGETS_SUPPORTED}
     VERSION ${YGGINTERFACE_VERSION}
     HEADERS ${YGG_INSTALL_INCLUDES}
+    HEADERS_RULES PATTERN "internal.hpp" EXCLUDE
     # HEADER_DIR cpp/include/
     NESTED_INCLUDEDIR
     MODULE_DIR "${CMAKE_CURRENT_LIST_DIR}/cmake"

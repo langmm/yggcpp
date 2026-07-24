@@ -1,4 +1,7 @@
 #include "communicators/BufferComm.hpp"
+#include "utils/tools.hpp"
+#include "utils/internal.hpp"
+#include "utils/multiprocessing.hpp"
 
 using namespace YggInterface::communicator;
 using namespace YggInterface::utils;
@@ -19,7 +22,7 @@ void BufferComm::_open(bool call_base) {
 				   this->address.address(),
 				   created);
   {
-    ProcessLockGuard<ProcessMutex> lock_guard(handle->mutex);
+    LockGuard<ProcessMutex> lock_guard(handle->mutex);
     // Initialize memory
     memory = (shmbuf_t*)(handle->memory);
     memory->count = 0;
@@ -42,7 +45,7 @@ int BufferComm::nmsg(DIRECTION dir) const {
     return 0;
   int out = -1;
   {
-    // ProcessLockGuard<ProcessMutex> lock_guard(const_cast<ProcessMutex*>(&(handle->mutex))[0]);
+    // LockGuard<ProcessMutex> lock_guard(const_cast<ProcessMutex*>(&(handle->mutex))[0]);
     if (memory == NULL)
       return -1;  // GCOV_EXCL_LINE
     out = memory->count;
@@ -60,13 +63,13 @@ int BufferComm::send_single(utils::Header& header) {
   while (is_full) {
     if (handle == NULL || memory == NULL)
       return -1;  // GCOV_EXCL_LINE
-    ProcessLockGuard<ProcessMutex> lock_guard(handle->mutex);
+    LockGuard<ProcessMutex> lock_guard(handle->mutex);
     is_full = (memory->count == (MAX_BUFFERS - 1));
     if (is_full) {
       log_debug() << "send_single: Shared memory buffers are full (" <<
 	memory->count << " messages (MAX_BUFFERS = " << MAX_BUFFERS <<
 	"), sleep" << std::endl;
-      THREAD_USLEEP(YGG_SLEEP_TIME);
+      utils::thread_usleep();
     } else {
       log_debug() << "send_single: Adding message to the buffer: count = "
 		  << memory->count << std::endl;
@@ -87,7 +90,7 @@ long BufferComm::recv_single(utils::Header& header) {
   log_debug() << "recv_single:" << std::endl;
   if (handle == NULL)
     return -1;  // GCOV_EXCL_LINE
-  ProcessLockGuard<ProcessMutex> lock_guard(handle->mutex);
+  LockGuard<ProcessMutex> lock_guard(handle->mutex);
   if (memory == NULL || memory->count == 0)
     return -1;  // GCOV_EXCL_LINE
   int next_size = memory->size[0];

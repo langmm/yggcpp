@@ -1,6 +1,9 @@
 #include "communicators/comms.hpp"
 #include "utils/yggdrasil_rapidjson_wrapper.hpp"
 #include "utils/enums_utils.hpp"
+#include "utils/tools.hpp"
+#include "utils/internal.hpp"
+#include "utils/multiprocessing.hpp"
 
 using namespace YggInterface::communicator;
 using namespace YggInterface::utils;
@@ -90,6 +93,12 @@ void Comm_t::_before_open(const SupplementCommArgs& supp) {
       name = prefix;
     }
   }
+  
+  std::string logLevelStr = getCommEnvVar(name, direction, "_LOG_LEVEL");
+  int logLevelKey = utils::YggdrasilLogger::str2level(logLevelStr);
+  if (logLevelKey >= 0)
+    this->loglevel = logLevelKey;
+  
   setLanguage(supp.language);
   
   create_global_scope_comm(supp);
@@ -210,6 +219,81 @@ bool Comm_t::_coerce_to_dict(const yggdrasil_rapidjson::Document& src,
   return true;
 }
 
+COMM_TYPE Comm_t::defaultCommTypeEnv(const std::string& default_comm_env) {
+  COMM_TYPE type = NULL_COMM;
+  std::string default_comm;
+  default_comm = Comm_t::getEnvVar(default_comm_env);
+  if (!default_comm.empty()) {
+    YggLogDebug << "defaultCommTypeEnv: default comm from environment " <<
+      "variable: " << default_comm_env << " = \"" <<
+      default_comm << "\"" << std::endl;
+    if (!enum_value_search(COMM_TYPE_map(), default_comm, type)) {
+      YggLogError << "defaultCommTypeEnv: Invalid " << default_comm_env <<
+        " value \"" << default_comm << "\"" << std::endl;
+    }
+  }
+  if (type == DEFAULT_COMM) {
+    YggLogDebug << "defaultCommTypeEnv: Environment variable specified default comm, another method will be used to determine the default comm type." << std::endl;
+    type = NULL_COMM;
+  }
+  return type;
+}
+COMM_TYPE Comm_t::defaultCommType() {
+  static COMM_TYPE type = Comm_t::defaultCommTypeEnv("YGG_DEFAULT_COMM");
+  if (type == NULL_COMM)
+    type = DefaultComm::defaultCommType();
+  return type;
+}
+COMM_TYPE Comm_t::defaultCommType(const std::string& name,
+                                  const DIRECTION dir) {
+  COMM_TYPE type = Comm_t::defaultCommTypeEnv(Comm_t::envComm(name, dir));
+  if (type == NULL_COMM)
+    type = Comm_t::defaultCommType();
+  return type;
+}
+
+std::string Comm_t::envName(const std::string& name, DIRECTION dir,
+                            const std::string& suffix, bool opp) {
+  std::string out = name;
+  if (out.size() > COMM_NAME_SIZE)
+    out.resize(COMM_NAME_SIZE);
+  if (((!opp) && dir == SEND) || (opp && dir == RECV))
+    out += "_OUT";
+  else if (((!opp) && dir == RECV) || (opp && dir == SEND))
+    out += "_IN";
+  out += suffix;
+  return out;
+}
+
+std::string Comm_t::envComm(const std::string& name, DIRECTION dir,
+                            bool opp) {
+  return Comm_t::envName(name, dir, "_COMM", opp);
+}
+
+std::string Comm_t::altEnvName(const std::string& name) {
+  std::string out(name);
+  size_t loc;
+  while ((loc = out.find(":")) != std::string::npos) {
+    out.replace(loc, 1, "__COLON__");
+  }
+  return out;
+}
+
+std::string Comm_t::getEnvVar(const std::string& name) {
+  std::string out = utils::getenv(name);
+  if (out.empty())
+    out = utils::getenv(Comm_t::altEnvName(name));
+  return out;
+}
+std::string Comm_t::getCommEnvVar(const std::string& name, DIRECTION dir,
+                                  const std::string& suffix, bool opp) {
+  std::string out = Comm_t::getEnvVar(Comm_t::envName(name, dir, suffix, opp));
+  // if (out.empty() && !suffix.empty()) {
+  //   out = utils::getenv("YGG_DEFAULT" + suffix);
+  // }
+  return out;
+}
+
 std::string Comm_t::getOppAddress() const {
   return getAddress();
 }
@@ -227,7 +311,7 @@ COMM_TYPE Comm_t::getOppCommType() const {
 void Comm_t::setOppEnv() const {
   if (address.valid() && !(flags & COMM_FLAG_WRAPPER)) {
     std::string env_name = altEnvName(name);
-    std::string opp_name = envName(env_name, direction, true);
+    std::string opp_name = envName(env_name, direction, "", true);
     std::string opp_comm = envComm(env_name, direction, true);
     std::string opp_addr = getOppAddress();
     std::string opp_type = YggInterface::utils::COMM_TYPE_map().find(getOppCommType())->second;
@@ -242,7 +326,7 @@ void Comm_t::setOppEnv() const {
 void Comm_t::unsetOppEnv() const {
   log_debug() << "unsetOppEnv" << std::endl;
   std::string env_name = altEnvName(name);
-  std::string opp_name = envName(env_name, direction, true);
+  std::string opp_name = envName(env_name, direction, "", true);
   std::string opp_comm = envComm(env_name, direction, true);
   unsetenv(opp_name.c_str());
   unsetenv(opp_comm.c_str());
@@ -629,23 +713,7 @@ Comm_t* YggInterface::communicator::new_Comm_t(
     return new AsyncComm(name, addr, dir, flags, type, supp);
   }
   if (type == DEFAULT_COMM) {
-    std::string default_comm, default_comm_env;
-    if (default_comm.empty()) {
-      default_comm_env = Comm_t::envComm(name, dir);
-      default_comm = Comm_t::getEnvVar(default_comm_env);
-    }
-    if (default_comm.empty()) {
-      default_comm_env = "YGG_DEFAULT_COMM";
-      default_comm = Comm_t::getEnvVar(default_comm_env);
-    }
-    if (!default_comm.empty()) {
-      YggLogDebug << "new_Comm_t: default comm from environment " <<
-	"variable = \"" << default_comm << "\"" << std::endl;
-      if (!enum_value_search(COMM_TYPE_map(), default_comm, type)) {
-	YggLogError << "new_Comm_t: Invalid " << default_comm_env <<
-	  " value \"" << default_comm << "\"" << std::endl;
-      }
-    }
+    type = Comm_t::defaultCommType(name, dir);
   }
   Comm_t* out = nullptr;
   switch(type) {
@@ -653,8 +721,6 @@ Comm_t* YggInterface::communicator::new_Comm_t(
     break;
   }
   case DEFAULT_COMM: {
-    out = new COMM_BASE(name, addr, dir, flags,
-			 COMM_BASE::defaultCommType(), supp);
     break;
   }
   case IPC_COMM: {
@@ -709,7 +775,7 @@ bool YggInterface::communicator::is_commtype_installed(const COMM_TYPE type) {
   case NULL_COMM:
     break;
   case DEFAULT_COMM:
-    return COMM_BASE::isInstalled();
+    return YggInterface::communicator::is_commtype_installed(Comm_t::defaultCommType());
   case IPC_COMM:
     return IPCComm::isInstalled();
   case ZMQ_COMM:
@@ -925,7 +991,7 @@ int Comm_t::wait_for_recv(const int64_t& tout) const {
       goto cleanup;
     }
     log_debug() << "wait_for_recv: No messages, sleep " << YGG_SLEEP_TIME << " (timeout = " << tout << ")" << std::endl;
-    AFTER_TIMEOUT_LOOP(YGG_SLEEP_TIME);
+    utils::thread_usleep();
   }
   N = nmsg(RECV);
  cleanup:

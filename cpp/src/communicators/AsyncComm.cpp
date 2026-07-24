@@ -1,5 +1,6 @@
 #include "communicators/AsyncComm.hpp"
 #ifdef THREADSINSTALLED
+#include <thread>
 #include <atomic>
 #include <condition_variable>
 #endif // THREADSINSTALLED
@@ -517,17 +518,24 @@ void AsyncBacklog::on_thread(AsyncComm* parent) {
 			parent->response_flags,
 			parent->language);
       if (comm) {
+        COMM_TYPE wrapped_comm_type = comm->getCommType();
 	parent->updateMaxMsgSize(comm->getMaxMsgSize());
 	parent->address.address(comm->getAddress());
 	parent->updateMsgBufSize(comm->getMsgBufSize());
 	parent->getFlags() |= (comm->getFlags() & ~flgs_comm);
-	if (comm->getCommType() == CLIENT_COMM) {
+	if (wrapped_comm_type == CLIENT_COMM) {
 	  set_status(THREAD_IS_CLIENT, true);
 	} else {
 	  set_status(THREAD_SIGNON_SENT | THREAD_SIGNON_RECV, true);
+          if (wrapped_comm_type == IPC_COMM ||
+              wrapped_comm_type == MPI_COMM ||
+              wrapped_comm_type == FILE_COMM) {
+            // Communicators that don't have a create_header_send method
+            parent->no_create_header_send = true;
+          }
 	}
 	set_status(THREAD_STARTED);
-	log_debug() << "on_thread: Created " << COMM_TYPE2str(comm->getCommType()) << " comm on thread" << std::endl;
+	log_debug() << "on_thread: Created " << COMM_TYPE2str(wrapped_comm_type) << " comm on thread" << std::endl;
       } else {
 	log_error() << "on_thread: Failed to create comm on thread" << std::endl;
 	backlog.close();
@@ -621,7 +629,7 @@ int AsyncBacklog::signon_status() {
       return SIGNON_ERROR;
   }
   return SIGNON_NOT_WAITING;
-#else // SIGNON_NOT_WAITING
+#else // THREADSINSTALLED
   return SIGNON_ERROR;
 #endif // THREADSINSTALLED
 }
@@ -749,7 +757,8 @@ COMM_CONSTRUCTOR_CORE_DEF_PARAM(AsyncComm, COMM_FLAG_ASYNC,
 				request_commtype(supp.request_commtype),
 				response_commtype(supp.response_commtype),
 				request_flags(supp.request_flags),
-				response_flags(supp.response_flags))
+				response_flags(supp.response_flags),
+                                no_create_header_send(false))
 
 bool AsyncComm::isInstalled() { return true; }
 
@@ -963,10 +972,7 @@ bool AsyncComm::create_header_send(Header& header) {
   }
   // Early exit without lock if wrapped class dosn't have a
   //   create_header_send member
-  if (type == IPC_COMM || type == MPI_COMM || type == FILE_COMM ||
-      (type == DEFAULT_COMM && (COMM_BASE_TYPE == IPC_COMM ||
-				COMM_BASE_TYPE == MPI_COMM ||
-				COMM_BASE_TYPE == FILE_COMM)))
+  if (no_create_header_send)
     return true;
   const AsyncLockGuard lock(handle);
   if (handle->is_closing() || !(handle->comm)) {

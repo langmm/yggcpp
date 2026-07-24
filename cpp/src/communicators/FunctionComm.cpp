@@ -1,6 +1,7 @@
 #include "communicators/FunctionComm.hpp"
 #include "utils/enums_utils.hpp"
 #include "utils/tools.hpp"
+#include "utils/internal.hpp"
 #include "utils/multiprocessing.hpp"
 #include "utils/embedded_languages.hpp"
 #ifdef _WIN32

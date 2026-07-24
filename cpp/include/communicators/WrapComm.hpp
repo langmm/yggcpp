@@ -1,7 +1,6 @@
 #pragma once
 
 #include "communicators/CommBase.hpp"
-#include "communicators/DefaultComm.hpp"
 
 #define WRAP_METHOD_NORET(name, argsT, args, err, mods)	\
   YGG_API void name argsT mods
@@ -123,7 +122,7 @@ namespace YggInterface {
       /** \copydoc YggInterface::communicator::Comm_t::defaultCommType */
       static COMM_TYPE defaultCommType() { return DEFAULT_COMM; }
       /** \copydoc YggInterface::communicator::Comm_t::isInstalled */
-      static bool isInstalled() { return DefaultComm::isInstalled(); }
+      static bool isInstalled() { return is_commtype_installed(DEFAULT_COMM); }
 
       /**
        * @brief Get the wrapped communicator

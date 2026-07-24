@@ -8,6 +8,9 @@
 #include <sys/shm.h>
 #endif // IPCINSTALLED
 #include "communicators/IPCComm.hpp"
+#include "utils/tools.hpp"
+#include "utils/internal.hpp"
+#include "utils/multiprocessing.hpp"
 
 using namespace YggInterface::communicator;
 using namespace YggInterface::utils;
@@ -28,7 +31,15 @@ void IPCComm::_open(bool call_base) {
   int key = 0;
   bool created = ((!address.valid()) || address.address().empty());
   if (created) {
-    CREATE_KEY(IPCComm);
+    YGG_THREAD_SAFE_BEGIN(IPCComm) {
+      if (!IPCComm::_rand_seeded) {
+        std::srand(ptr2seed(this));
+        IPCComm::_rand_seeded = true;
+      }
+    } YGG_THREAD_SAFE_END;
+    while (key == 0 || check_key(key) < 0) {
+      key = std::rand();
+    }
     address.address(std::to_string(key));
   } else {
     key = this->address.key();
@@ -133,13 +144,13 @@ int IPCComm::send_single(utils::Header& header) {
 	}
         if ((ret == -1) && (errno == EAGAIN)) {
 	    log_debug() << "send_single: msgsnd, sleep" << std::endl;
-	    THREAD_USLEEP(YGG_SLEEP_TIME);
+            utils::thread_usleep();
         } else { // GCOVR_EXCL_LINE
             struct msqid_ds buf;
             int rtrn = msgctl(handle[0], IPC_STAT, &buf);
             if ((rtrn == 0) && ((buf.msg_qnum + header.size_msg) > buf.msg_qbytes)) {
 	        log_debug() << "send_single: msgsnd, queue full, sleep" << std::endl;
-		THREAD_USLEEP(YGG_SLEEP_TIME);
+                utils::thread_usleep();
             } else { // GCOVR_EXCL_LINE
 	        log_error() << "send_single: msgsnd(" << handle[0] << ", " << &t << ", " << header.size_msg
                              << ", IPC_NOWAIT) ret(" << ret << "), errno(" << errno << "): " << strerror(errno) << std::endl;
@@ -165,7 +176,7 @@ long IPCComm::recv_single(utils::Header& header) {
         ret = msgrcv(handle[0], &t, maxMsgSize, 0, IPC_NOWAIT);
         if (ret == -1 && errno == ENOMSG) {
 	    log_debug() << "recv_single: no input, sleep" << std::endl;
-	    THREAD_USLEEP(YGG_SLEEP_TIME);
+            utils::thread_usleep();
         } else { // GCOVR_EXCL_LINE
 	    log_debug() << "recv_single: received input: " << ret << " bytes" << std::endl;
             break;
@@ -206,7 +217,51 @@ long IPCComm::recv_single(utils::Header&) { return -1; }
 
 #endif /*IPCINSTALLED*/
 
-ADD_KEY_TRACKER_DEFS(IPCComm)
+int IPCComm::_keysUsed[MAX_KEYS_ALLOWED];
+unsigned IPCComm::_NkeysUsed = 0;
+bool IPCComm::_rand_seeded = false;
+int IPCComm::check_key(int key) {
+  unsigned i;
+  int error_code = 0;
+  YGG_THREAD_SAFE_BEGIN(IPCComm) {
+    for (i = 0; i < IPCComm::_NkeysUsed; i++ ) {
+      if (IPCComm::_keysUsed[i] == key) {
+        error_code = -(static_cast<int>(i) + 1);
+        break;
+      }
+    }
+    /* Fail if > _yggTrackChannels channels used */
+  } YGG_THREAD_SAFE_END;
+  return error_code;
+}
+int IPCComm::track_key(int key) {
+  int ret = 0;
+  YGG_THREAD_SAFE_BEGIN(IPCComm) {
+    if (IPCComm::_NkeysUsed++ >= MAX_KEYS_ALLOWED) {
+      log_error() << "Too many channels in use, max: " << MAX_KEYS_ALLOWED << std::endl;
+      ret = -1;
+    } else {
+      IPCComm::_keysUsed[IPCComm::_NkeysUsed] = key;
+    }
+  } YGG_THREAD_SAFE_END;
+  return ret;
+}
+int IPCComm::untrack_key(int key) {
+  int ret = 0; /* -1; */
+  unsigned i;
+  YGG_THREAD_SAFE_BEGIN(IPCComm) {
+    for (i = 0; i < IPCComm::_NkeysUsed; i++) {
+      if (key == IPCComm::_keysUsed[i]) {
+        memmove(IPCComm::_keysUsed + i, IPCComm::_keysUsed + i + 1,
+                (MAX_KEYS_ALLOWED - (i + 1))*sizeof(int));
+        IPCComm::_NkeysUsed--;
+        ret = 0;
+        break;
+      }
+    }
+  } YGG_THREAD_SAFE_END;
+  return ret;
+}
 
 WORKER_METHOD_DEFS(IPCComm)
 

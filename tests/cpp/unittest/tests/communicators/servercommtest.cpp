@@ -6,8 +6,6 @@
 #include "../../mock.hpp"
 #include "commtest.hpp"
 
-#ifdef COMM_BASE
-
 using namespace YggInterface;
 using namespace YggInterface::communicator;
 using namespace YggInterface::mock;
@@ -107,5 +105,3 @@ TEST(ServerComm, signon) {
   EXPECT_GE(cc.sendVar(msg_send), 0);
   EXPECT_GE(sc.recvVar(msg_recv), 0);
 }
-
-#endif

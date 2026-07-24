@@ -63,6 +63,17 @@ enum ENV_VAR {
   YGG_BROKER_SERVER_ADDRESS  //!< Address of the broker to use
 };
 
+/**
+ * Log levels
+ */
+enum LOGGING_LEVEL {
+  LOG_ALL     = 0,  /**< All log messages will be displayed. */
+  LOG_VERBOSE = 5,  /**< Verbose log messages will be displayed. */
+  LOG_DEBUG   = 10, /**< Debug log messages will be displayed. */
+  LOG_INFO    = 20, /**< Info log messages will be displayed. */
+  LOG_ERROR   = 40  /**< Error log messages will be displayed. */
+};
+
 /*!
   @brief Bit flags describing the communicator.
   

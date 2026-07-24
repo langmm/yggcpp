@@ -1,5 +1,11 @@
 #include "utils/multiprocessing.hpp"
 #include <fstream>
+#ifdef THREADSINSTALLED
+#include <thread>
+#include <atomic>
+#include <mutex>
+#include <condition_variable>
+#endif // THREADSINSTALLED
 
 using namespace YggInterface::utils;
 
@@ -421,6 +427,45 @@ int SysVSharedMem::local_destroy() {
 #undef IPC_DESTRUCTOR
 
 /////////////////////////////////
+// ThreadMutex
+/////////////////////////////////
+
+/**
+ * @brief Wrapper for mutex implementation.
+ */
+class ThreadMutex::Impl {
+public:
+#ifdef THREADSINSTALLED
+  /** @brief Constructor */
+  Impl() : mutex() {}
+  std::mutex mutex;                /**< mutex for locking thread */
+#else // THREADSINSTALLED
+  /** @brief Constructor */
+  Impl() {}
+#endif // THREADSINSTALLED
+};
+
+ThreadMutex::ThreadMutex(const std::string& nme) :
+  name(nme), pImpl(std::make_unique<ThreadMutex::Impl>()) {}
+ThreadMutex::~ThreadMutex() {}
+void ThreadMutex::lock() {
+#ifdef THREADSINSTALLED
+  log_verbose() << "lock: begin" << std::endl;
+  if (pImpl)
+    pImpl->mutex.lock();
+  log_verbose() << "lock: end" << std::endl;
+#endif // THREADSINSTALLED
+}
+void ThreadMutex::unlock() {
+#ifdef THREADSINSTALLED
+  log_verbose() << "unlock: begin" << std::endl;
+  if (pImpl)
+    pImpl->mutex.unlock();
+  log_verbose() << "unlock: end" << std::endl;
+#endif // THREADSINSTALLED
+}
+
+/////////////////////////////////
 // ProcessMutex
 /////////////////////////////////
 
@@ -466,16 +511,16 @@ void ProcessMutex::close(bool remove_file) {
 }
 
 void ProcessMutex::lock() {
-  log_debug() << "lock: begin" << std::endl;
+  log_verbose() << "lock: begin" << std::endl;
   if (handle) {
     if (handle->lock() == -1)
       throw_error("lock: Failed to take ownership of the mutex");
   }
-  log_debug() << "lock: done" << std::endl; 
+  log_verbose() << "lock: done" << std::endl; 
 }
 
 bool ProcessMutex::try_lock() {
-  log_debug() << "try_lock: begin" << std::endl;
+  log_verbose() << "try_lock: begin" << std::endl;
   bool out = false;
   if (handle) {
     int res = handle->lock(true);
@@ -484,15 +529,15 @@ bool ProcessMutex::try_lock() {
     else if (res != -2)
       throw_error("try_lock: Failed to take ownership of the mutex");
   }
-  log_debug() << "try_lock: done" << std::endl;
+  log_verbose() << "try_lock: done" << std::endl;
   return out;
 }
 
 void ProcessMutex::unlock() {
-  log_debug() << "unlock: begin" << std::endl;
+  log_verbose() << "unlock: begin" << std::endl;
   if (handle && handle->unlock(true) == -1)
     throw_error("unlock: Failed to release mutex");
-  log_debug() << "unlock: done" << std::endl;
+  log_verbose() << "unlock: done" << std::endl;
 }
 
 int ProcessMutex::nproc() const {
@@ -515,7 +560,7 @@ ProcessSharedMemory::ProcessSharedMemory(const std::string& nme,
   log_debug() << "ProcessSharedMemory: begin" << std::endl;
   mutex.init(name + "_mutex", address + "_mutex", created);
   {
-    ProcessLockGuard<ProcessMutex> lock_guard(mutex);
+    LockGuard<ProcessMutex> lock_guard(mutex);
 #ifdef _WIN32
     handle = new Win32SharedMem(size, address);
 #else
@@ -527,7 +572,7 @@ ProcessSharedMemory::ProcessSharedMemory(const std::string& nme,
 }
 
 ProcessSharedMemory::~ProcessSharedMemory() {
-  ProcessLockGuard<ProcessMutex> lock_guard(mutex);
+  LockGuard<ProcessMutex> lock_guard(mutex);
   if (handle) {
     log_debug() << "~ProcessSharedMemory: before destroy" << std::endl;
     if (mutex.nproc() == 1 && handle->destroy() == -1)

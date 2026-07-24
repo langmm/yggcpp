@@ -11,6 +11,7 @@ namespace YggInterface {
     const std::map<const DIRECTION, const std::string>& DIRECTION_map();
     const std::map<const CLEANUP_MODE, const std::string>& CLEANUP_MODE_map();
     const std::map<const ENV_VAR, const std::string>& ENV_VAR_map();
+    const std::map<const LOGGING_LEVEL, const std::string>& LOGGING_LEVEL_map();
     const std::map<const COMM_FLAG, const std::string>& COMM_FLAG_map();
     const std::map<const COMM_FLAG, const std::string>& FILE_FLAG_map();
     const std::map<const LANGUAGE, const std::string>& LANGUAGE_map();
@@ -25,6 +26,7 @@ namespace YggInterface {
     std::string DIRECTION2str(const DIRECTION key);
     std::string CLEANUP_MODE2str(const CLEANUP_MODE key);
     std::string ENV_VAR2str(const ENV_VAR key);
+    std::string LOGGING_LEVEL2str(const LOGGING_LEVEL key);
     std::string COMM_FLAG2str(const COMM_FLAG key);
     std::string FILE_FLAG2str(const COMM_FLAG key);
     std::string LANGUAGE2str(const LANGUAGE key);

@@ -11,6 +11,7 @@
 #include <sys/sem.h>
 #include <sys/shm.h>
 #endif
+#include <memory>
 
 namespace YggInterface {
   namespace utils {
@@ -345,6 +346,35 @@ namespace YggInterface {
 #undef IPC_DESTRUCTOR
 
     /**
+     * @brief Wrapper for std::mutex to allow build with or without
+     *   Threads dependency.
+     */
+    class ThreadMutex : public YggInterface::utils::LogBase {
+      ThreadMutex(const ThreadMutex&) = delete;
+      ThreadMutex& operator=(const ThreadMutex&) = delete;
+    public:
+      /**
+       * @brief Constructor
+       * @param[in] name The name for the mutex.
+       */
+      YGG_API ThreadMutex(const std::string& name = "");
+      /** @brief Destructor */
+      YGG_API ~ThreadMutex();
+      /** @brief Lock the mutex */
+      YGG_API void lock();
+      /** @brief Unlock the mutex */
+      YGG_API void unlock();
+      /** \copydoc YggInterface::utils::LogBase::logClass */
+      std::string logClass() const override { return "ThreadMutex"; }
+      /** \copydoc YggInterface::utils::LogBase::logInst */
+      std::string logInst() const override { return name; }
+      std::string name;                    /**< Mutex name */
+    private:
+      class Impl;  /**< Forward declaration of implementation */
+      std::unique_ptr<Impl> pImpl; /**< Pointer to implementation */
+    };
+
+    /**
      * @brief Mutual exclusion for inter-process synchronization similar
      *   to the std::mutex class for threads.
      */
@@ -423,9 +453,9 @@ namespace YggInterface {
      * @tparam mutex_type Mutex type.
      */
     template<class Mutex>
-    class ProcessLockGuard : public YggInterface::utils::LogBase {
-      ProcessLockGuard(const ProcessLockGuard&) = delete;
-      ProcessLockGuard& operator=(const ProcessLockGuard&) = delete;
+    class LockGuard : public YggInterface::utils::LogBase {
+      LockGuard(const LockGuard&) = delete;
+      LockGuard& operator=(const LockGuard&) = delete;
     public:
       typedef Mutex mutex_type; /**< Mutex type */
       /**
@@ -433,18 +463,18 @@ namespace YggInterface {
        * @param[in] m Process mutex that should be locked until the
        *   lock guard goes out of scope.
        */
-      explicit ProcessLockGuard(mutex_type& m) :
+      explicit LockGuard(mutex_type& m) :
 	mutex(m) {
 	mutex.lock();
       }
       /**
        * @brief Destructor to unlock the mutex.
        */
-      ~ProcessLockGuard() {
+      ~LockGuard() {
 	mutex.unlock();
       }
       /** \copydoc YggInterface::utils::LogBase::logClass */
-      std::string logClass() const override { return "ProcessLockGuard"; }
+      std::string logClass() const override { return "LockGuard"; }
       /** \copydoc YggInterface::utils::LogBase::logInst */
       std::string logInst() const override { return mutex.logInst(); }
     private:

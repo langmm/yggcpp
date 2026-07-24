@@ -4,7 +4,14 @@
 
 #include "utils/tools.hpp"
 #include "utils/yggdrasil_rapidjson_wrapper.hpp"
-
+#include "utils/internal.hpp"
+#include <chrono>
+#ifdef THREADSINSTALLED
+#include <thread>
+#endif // THREADSINSTALLED
+#ifdef _OPENMP
+#include <omp.h>
+#endif // _OPENMP
 
 std::string YggInterface::utils::getenv(const std::string& name) {
   std::string out;
@@ -12,6 +19,14 @@ std::string YggInterface::utils::getenv(const std::string& name) {
   if (temp)
     out.assign(temp);
   return out;
+}
+
+void YggInterface::utils::thread_usleep(const uint64_t x) {
+#ifdef THREADSINSTALLED
+  std::this_thread::sleep_for(std::chrono::microseconds(x));
+#else // THREADSINSTALLED
+  usleep(x);
+#endif // THREADSINSTALLED
 }
 
 std::string YggInterface::utils::get_thread_id() {

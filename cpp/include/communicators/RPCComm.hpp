@@ -1,6 +1,5 @@
 #pragma once
 
-#include "communicators/DefaultComm.hpp"
 #include "communicators/CommBase.hpp"
 #include "communicators/Requests.hpp"
 #include "communicators/WrapComm.hpp"

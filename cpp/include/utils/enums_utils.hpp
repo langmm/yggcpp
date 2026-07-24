@@ -23,6 +23,32 @@ namespace YggInterface {
       }
       return false;
     }
+    template<typename T1>
+    bool enum_key_search_round(const std::map<const T1, const std::string> map,
+                               const int& key,
+                               std::string& val,
+                               const bool round_up = false) {
+      bool out = false;
+      for (typename std::map<const T1, const std::string>::const_iterator it = map.cbegin();
+	   it != map.cend(); it++) {
+	if (static_cast<int>(it->first) == key) {
+	  val = it->second;
+	  return true;
+	} else if (static_cast<int>(it->first) < key) {
+          if (!round_up) {
+            out = true;
+            val = it->second;
+          }
+        } else {
+          if (round_up) {
+            out = true;
+            val = it->second;
+          }
+          break;
+        }
+      }
+      return out;
+    }
 			 
     template<typename T1>
     bool enum_value_search(const std::map<const T1, const std::string> map,

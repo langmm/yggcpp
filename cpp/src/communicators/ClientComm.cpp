@@ -1,7 +1,6 @@
 #include "communicators/ClientComm.hpp"
 #include "utils/tools.hpp"
-
-#ifdef COMM_BASE
+#include "utils/internal.hpp"
 
 using namespace YggInterface::communicator;
 using namespace YggInterface::utils;
@@ -219,5 +218,3 @@ long ClientComm::recv_single(utils::Header& header) {
     }
     return ret;
 }
-
-#endif

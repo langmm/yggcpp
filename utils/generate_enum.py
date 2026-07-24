@@ -68,11 +68,19 @@ def parse(src=None, verbose=False):
                 lastval = None
             else:
                 member = {'doc': '', 'val': lastval + 1}
-                rem = lines[i].split('//', 1)
-                if len(rem) == 2:
-                    member['doc'] = rem[1].strip().rstrip('!<')
-                rem = rem[0].split(',')[0]
-                rem = rem.split("=", 1)
+                line = lines[i]
+                if '//' in line:
+                    rem = line.split('//', 1)
+                    if len(rem) == 2:
+                        member['doc'] = rem[1].strip().lstrip('!<')
+                    line = rem[0]
+                if '/**' in line:
+                    rem = line.split('/**', 1)
+                    if len(rem) == 2:
+                        member['doc'] = rem[1].strip().lstrip('<').rstrip('*/')
+                    line = rem[0]
+                line = line.split(',')[0]
+                rem = line.split("=", 1)
                 if len(rem) == 2:
                     member['explicit_val'] = True
                     member['val'] = eval(rem[1].strip().rstrip('LL'))

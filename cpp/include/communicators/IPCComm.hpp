@@ -54,7 +54,27 @@ protected:
 private:
     friend class ClientComm;   //!< @see ClientComm
     friend class ServerComm;   //!< @see ServerComm
-    ADD_KEY_TRACKER_DECS;
+    /**
+     * @brief Check if a key is already registered
+     * @param[in] key Key to check
+     * @return Negative index+1 of key if present, 0 otherwise
+     */
+    int check_key(int key);
+    /**
+     * @brief Add a key to the set of registered keys
+     * @param[in] key Key to add
+     * @return 0 on success, -1 on error
+     */
+    int track_key(int key);
+    /**
+     * @brief Remove a key from those registered
+     * @param[in] key Key to remove from registry
+     * @return 0 on success, -1 on error
+     */
+    int untrack_key(int key);
+    static int _keysUsed[MAX_KEYS_ALLOWED]; /**< Registry of keys */
+    static unsigned _NkeysUsed; /**< Number of registered keys */
+    static bool _rand_seeded; /**< true if rand has been seeded for keys */
 };
 
 }

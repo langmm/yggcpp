@@ -1,7 +1,6 @@
 #pragma once
 
 #include "communicators/ClientComm.hpp"
-#include "communicators/DefaultComm.hpp"
 #include "communicators/IPCComm.hpp"
 #include "communicators/MPIComm.hpp"
 #include "communicators/RPCComm.hpp"
@@ -17,3 +16,4 @@
 #include "communicators/BufferComm.hpp"
 #include "communicators/FunctionComm.hpp"
 #include "communicators/StateInterface.hpp"
+#include "communicators/DefaultComm.hpp"

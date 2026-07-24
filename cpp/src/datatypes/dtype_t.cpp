@@ -1,6 +1,8 @@
 #include "datatypes/dtype_t.hpp"
 #include "utils/serialization.hpp"
 #include "utils/tools.hpp"
+#include "utils/internal.hpp"
+#include "utils/multiprocessing.hpp"
 #include "utils/yggdrasil_rapidjson_wrapper.hpp"
 
 #define STRLEN_RJ(var)				\

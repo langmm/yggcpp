@@ -52,7 +52,7 @@ void FileComm::_open(bool call_base) {
   }
   mutex.init(this->name, this->address.address(), created);
   {
-    ProcessLockGuard<ProcessMutex> lock_guard(mutex);
+    LockGuard<ProcessMutex> lock_guard(mutex);
     handle = new std::fstream(this->address.address().c_str(), mode);
   }
   // }
@@ -62,7 +62,7 @@ void FileComm::_open(bool call_base) {
 void FileComm::_close(bool call_base) {
   BEFORE_CLOSE_DEF;
   if (handle && !global_comm) {
-    ProcessLockGuard<ProcessMutex> lock_guard(mutex);
+    LockGuard<ProcessMutex> lock_guard(mutex);
     handle->close();
   }
   // TODO: This can probably be removed and we can rely on the mutex
@@ -96,7 +96,7 @@ int FileComm::nmsg(DIRECTION dir) const {
   int out = -1;
   {
     refresh();
-    ProcessLockGuard<ProcessMutex> lock_guard(const_cast<ProcessMutex*>(&mutex)[0]);
+    LockGuard<ProcessMutex> lock_guard(const_cast<ProcessMutex*>(&mutex)[0]);
     if (!handle->fail()) {
       if (handle->eof() && !handle->fail())
 	handle->clear();
@@ -112,7 +112,7 @@ int FileComm::nmsg(DIRECTION dir) const {
 }
 
 int FileComm::send_single(utils::Header& header) {
-  ProcessLockGuard<ProcessMutex> lock_guard(mutex);
+  LockGuard<ProcessMutex> lock_guard(mutex);
   assert(!global_comm);
   if (header.on_send() < 0)
     return -1;
@@ -128,7 +128,7 @@ int FileComm::send_single(utils::Header& header) {
 }
 
 long FileComm::recv_single(utils::Header& header) {
-  ProcessLockGuard<ProcessMutex> lock_guard(mutex);
+  LockGuard<ProcessMutex> lock_guard(mutex);
   assert(!global_comm);
   log_debug() << "recv_single:" << std::endl;
   refresh();

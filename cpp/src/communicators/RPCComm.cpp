@@ -1,5 +1,4 @@
 #include "communicators/RPCComm.hpp"
-#include "communicators/DefaultComm.hpp"
 
 using namespace YggInterface::communicator;
 using namespace YggInterface::utils;
