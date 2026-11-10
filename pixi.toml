@@ -1,0 +1,91 @@
+[workspace]
+name = "yggcpp"
+version = "0.1.0"
+description = "A framework for connecting computational models from multiple languages."
+authors = ["Meagan Lang <langmm.astro@gmail.com>"]
+channels = ["conda-forge"]
+platforms = ["osx-arm64", "osx-64", "linux-64", "win-64"]
+
+[dependencies]
+python = "3.12.*"
+numpy = ">=1.23"
+cmake = ">=3.18"
+ninja = ">=1.11"
+pkg-config = "*"
+yggdrasil-rapidjson = ">=1.1.0.5"
+libcurl = "*"
+zeromq = "*"
+openmpi = "*"
+jinja2 = "<3.1.0"
+pyyaml = "*"
+flask = "*"
+
+[target.unix.dependencies]
+sysv_ipc = "*"
+
+[target.osx.dependencies]
+llvm-openmp = "*"
+
+[activation.env]
+CMAKE_GENERATOR = "Ninja"
+CMAKE_PREFIX_PATH = "$CONDA_PREFIX"
+
+[tasks]
+clean = "python -c \"import glob, shutil; [shutil.rmtree(p, ignore_errors=True) for p in glob.glob('build*') + ['_install', '_skbuild', 'conda_build']]\""
+
+[feature.cxx.dependencies]
+c-compiler = "*"
+cxx-compiler = "*"
+
+[feature.cxx.tasks]
+configure-cxx = "cmake -S . -B build/cxx -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_CXX_LIBRARY=ON -DBUILD_Fortran_LIBRARY=OFF -DBUILD_Python_LIBRARY=OFF -DYGG_BUILD_TESTS=OFF -DYGG_BUILD_CXX_TESTS=ON -DYGG_SKIP_VALGRIND_TESTS=ON -DENABLE_RMQ=OFF"
+build-cxx = { cmd = "cmake --build build/cxx --parallel", depends-on = ["configure-cxx"] }
+test-cxx = { cmd = "ctest --test-dir build/cxx --output-on-failure", depends-on = ["build-cxx"] }
+install-cxx = { cmd = "cmake --install build/cxx --prefix _install", depends-on = ["build-cxx"] }
+
+[feature.fortran.dependencies]
+fortran-compiler = "*"
+
+[feature.fortran.tasks]
+configure-fortran = "cmake -S . -B build/fortran -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_CXX_LIBRARY=ON -DBUILD_Fortran_LIBRARY=ON -DBUILD_Python_LIBRARY=OFF -DYGG_BUILD_TESTS=OFF -DYGG_BUILD_CXX_TESTS=OFF -DYGG_BUILD_Fortran_TESTS=ON -DYGG_Fortran_REQUIRED=ON -DYGG_SKIP_VALGRIND_TESTS=ON -DENABLE_RMQ=OFF"
+build-fortran = { cmd = "cmake --build build/fortran --parallel", depends-on = ["configure-fortran"] }
+test-fortran = { cmd = "ctest --test-dir build/fortran --output-on-failure", depends-on = ["build-fortran"] }
+install-fortran = { cmd = "cmake --install build/fortran --prefix _install", depends-on = ["build-fortran"] }
+
+[feature.python.activation.env]
+SKBUILD_CMAKE_DEFINE = "ENABLE_RMQ=OFF;CMAKE_CXX_FLAGS=-DYggInterface_EXPORTS=1"
+
+[feature.python.dependencies]
+pip = "*"
+scikit-build-core = "*"
+setuptools_scm = "*"
+hatch-fancy-pypi-readme = "*"
+pytest = "*"
+
+[feature.python.tasks]
+build-python = "python -m pip install --no-build-isolation --no-deps -v ."
+develop-python = "python -m pip install --no-build-isolation --no-deps -v -e ."
+test-python = { cmd = "python -m pytest -sv tests/python", depends-on = ["build-python"] }
+
+[feature.docs.dependencies]
+doxygen = ">=1.9.2"
+graphviz = "*"
+
+[feature.docs.tasks]
+docs = "cmake -S . -B build/docs -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DYGG_BUILD_DOCS=ON -DBUILD_CXX_LIBRARY=OFF -DBUILD_Fortran_LIBRARY=OFF -DBUILD_Python_LIBRARY=OFF -DDOXYGEN_CHECK_MISSING=OFF && cmake --build build/docs --target docs"
+
+[feature.dev.dependencies]
+ccache = "*"
+
+[feature.dev.tasks]
+configure = "cmake -S . -B build/all -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_CXX_LIBRARY=ON -DBUILD_Fortran_LIBRARY=ON -DBUILD_Python_LIBRARY=ON -DYGG_BUILD_TESTS=ON -DYGG_Fortran_REQUIRED=ON -DYGG_SKIP_VALGRIND_TESTS=ON -DENABLE_RMQ=OFF"
+build = { cmd = "cmake --build build/all --parallel", depends-on = ["configure"] }
+test = { cmd = "ctest --test-dir build/all --output-on-failure", depends-on = ["build"] }
+install = { cmd = "cmake --install build/all --prefix _install", depends-on = ["build"] }
+
+[environments]
+default = { features = ["cxx", "fortran", "python", "docs", "dev"], solve-group = "default" }
+cxx = { features = ["cxx"], solve-group = "cxx" }
+fortran = { features = ["cxx", "fortran"], solve-group = "fortran" }
+python = { features = ["cxx", "python"], solve-group = "python" }
+docs = { features = ["cxx", "docs"], solve-group = "docs" }

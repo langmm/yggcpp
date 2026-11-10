@@ -289,6 +289,12 @@ public:
 };
 
 
+class YggFunction : public FunctionComm {
+public:
+  YGG_API YggFunction(const std::string name, FLAG_TYPE flags = 0);
+};
+
+
 /*!
   @brief Timesync communicator for syncing model states with other
     models in a Yggdrasil integration.

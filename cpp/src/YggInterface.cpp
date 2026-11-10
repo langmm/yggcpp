@@ -113,6 +113,9 @@ YggRpcClient::YggRpcClient(const std::string name,
     this->throw_error("Invalid response schema");  // GCOV_EXCL_LINE
 }
 
+YggFunction::YggFunction(const std::string name, FLAG_TYPE flags) :
+  FunctionComm(name, SEND, flags | COMM_FLAG_INTERFACE) {}
+
 YggTimesync::YggTimesync(const std::string name,
                          const std::string t_units,
                          FLAG_TYPE flags,

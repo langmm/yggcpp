@@ -1,6 +1,7 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
+.DS_Store
 
 # Temporary files
 *~
@@ -39,6 +40,8 @@ __pycache__/
 *.app
 
 # builds
+.pixi/
+_install/
 cmake-build*
 .idea/*
 CMakeLists.txt.user
