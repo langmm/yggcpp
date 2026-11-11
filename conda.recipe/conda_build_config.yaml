@@ -1,7 +1,7 @@
 c_compiler:
   - gcc                         # [linux]
   - clang                       # [osx]
-  - vs2017                      # [win]
+  - vs2026                      # [win]
 c_stdlib:
   - sysroot                     # [linux]
   - macosx_deployment_target    # [osx]
@@ -12,17 +12,17 @@ c_stdlib_version:
 cxx_compiler:
   - gxx                         # [linux]
   - clangxx                     # [osx]
-  - vs2017                      # [win]
+  - vs2026                      # [win]
 fortran_compiler:
   - gfortran
 # fortran_compiler_version:
 #   - 14
-fortran_toolchain_variant:
-  - ""
-  # - "m2w64"                     # [win]
-cxx_toolchain_variant:
-  - ""
-  # - m2w64                       # [win]
+# fortran_toolchain_variant:
+#   - ""
+#   # - "m2w64"                     # [win]
+# cxx_toolchain_variant:
+#   - ""
+#   # - m2w64                       # [win]
 m2w64_c_stdlib:                 # [win]
   - m2w64-sysroot               # [win]
 m2w64_c_stdlib_version:         # [win]

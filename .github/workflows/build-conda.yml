@@ -1,0 +1,98 @@
+name: Test of conda recipe build
+'on':
+  push:
+    branches-ignore:
+     - gh-pages
+    tags:
+     - '*'
+  schedule:
+  - cron: 0 10 * * 1
+  workflow_dispatch:
+
+jobs:
+  build-conda:
+    name: Build and test conda ${{ matrix.recipe }} on ${{ matrix.os }} (Varient ${{ matrix.variant }}, Python ${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash -el {0}
+    strategy:
+      matrix:
+        # TODO: Revert to windows-latest
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ["3.11"]
+        recipe: [recipe]  # , recipe-unified
+        variant: [""]
+        variant-flags: [""]
+        include:
+          - os: windows-latest
+            variant: m2w64
+            variant-flags: "--variant cxx_toolchain_variant=m2w64 --variant fortran_toolchain_variant=m2w64"
+          - os: windows-latest
+            variant: m2w64-fortran
+            variant-flags: "--variant fortran_toolchain_variant=m2w64"
+          - os: windows-latest
+            variant: msvc-gnu
+            variant-flags: "--variant fortran_toolchain_varient=msvc_gnu"
+          - os: windows-latest
+            variant: flang
+            variant-flags: "--variant fortran_compiler=flang"
+          - os: windows-latest
+            variant: ifx
+            variant-flags: "--variant fortran_compiler=ifx"
+      fail-fast: false
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v6
+        with:
+          submodules: true
+          fetch-tags: true
+
+      ###################################
+      # CONDA SETUP
+      ###################################
+      - name: Set up MSVC Compiler on windows
+        uses: ilammy/msvc-dev-cmd@v1
+        if: matrix.os == 'windows-latest'
+
+      - name: Remove Strawberry Perl from PATH
+        if: matrix.os == 'windows-latest'
+        shell: pwsh -command ". '{0}'"
+        run: |
+          $env:PATH = $env:PATH -replace "C:\\Strawberry\\c\\bin;", ""
+          "PATH=$env:PATH" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Get-ChildItem -Path C:\Strawberry -Recurse | Remove-Item -force -recurse
+          Remove-Item C:\Strawberry -Force
+      - name: Remove Java_Temurin-Hotspot_jdk from PATH
+        if: matrix.os == 'windows-latest'
+        shell: pwsh -command ". '{0}'"
+        run: |
+          $env:PATH = $env:PATH -replace "C:\\hostedtoolcache\\windows\\Java_Temurin-Hotspot_jdk\\17.0.19-10\\x64\\bin;", ""
+          "PATH=$env:PATH" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Get-ChildItem -Path C:\hostedtoolcache\windows\Java_Temurin-Hotspot_jdk -Recurse | Remove-Item -force -recurse
+          Remove-Item C:\hostedtoolcache\windows\Java_Temurin-Hotspot_jdk -Force
+
+      - uses: prefix-dev/setup-pixi@v0.10.2
+        with:
+          environments: build-conda
+
+      - name: Build the conda package (Unix)
+        if: matrix.os != 'windows-latest'
+        run: pixi run -e build-conda build-conda conda.recipe/${{ matrix.recipe }}.yaml -- --variant python=${{ matrix.python-version }} ${{ matrix.variant-flags }}
+      - name: Build the conda package (Windows)
+        if: matrix.os == 'windows-latest'
+        run: pixi run -e build-conda build-conda conda.recipe/${{ matrix.recipe }}.yaml -- --variant python=${{ matrix.python-version }} ${{ matrix.variant-flags }} --variant c_compiler=vs2017 --variant cxx_compiler=vs2017
+      # rattler-build build --recipe "conda.recipe/recipe.yaml" --output-dir $HOME/local_channel/ --variant python=${{ matrix.python-version }} --no-build-id --no-include-recipe
+
+  all_recipes_built:
+    runs-on: ubuntu-latest
+    name: All recipes were successfully built
+    needs: [build-conda]
+    if: always()
+    steps:
+      - name: All tests ok
+        if: ${{ !(contains(needs.*.result, 'failure')) }}
+        run: exit 0
+      - name: Some tests failed
+        if: ${{ contains(needs.*.result, 'failure') }}
+        run: exit 1

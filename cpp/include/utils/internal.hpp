@@ -6,7 +6,7 @@
 
 #include "YggInterface_export.h"
 
-#if defined(YggInterface_EXPORTS) || defined(YggInterface_fortran_EXPORTS)
+#if defined(YggInterface_EXPORTS) || defined(YggInterface_fortran_EXPORTS) || defined(YGGDRASIL_RAPIDJSON_PYTHON_WRAPPER)
 
 /** @brief Macro for declaring a thread local variable */
 #ifdef THREADSINSTALLED

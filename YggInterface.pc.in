@@ -1,3 +1,5 @@
+prefix=${pcfiledir}/../..
+
 Name: @TARGET@
 Description: Interface library for @TARGET_COMPILE_LANGUAGE@ models in yggdrasil integrations
 Version: @PROJECT_VERSION@

@@ -4,10 +4,14 @@ version = "0.1.0"
 description = "A framework for connecting computational models from multiple languages."
 authors = ["Meagan Lang <langmm.astro@gmail.com>"]
 channels = ["conda-forge"]
-platforms = ["osx-arm64", "osx-64", "linux-64", "win-64"]
+platforms = ["osx-arm64", "osx-64", "linux-64", "linux-aarch64", "win-64"]
+preview = ["pixi-build"]
+build-variants-files = [
+  "./conda.recipe/conda_build_config.yaml",
+]
 
 [dependencies]
-python = "3.12.*"
+python = ">=3.11"
 numpy = ">=1.23"
 cmake = ">=3.18"
 ninja = ">=1.11"
@@ -16,7 +20,7 @@ yggdrasil-rapidjson = ">=1.1.0.5"
 libcurl = "*"
 zeromq = "*"
 openmpi = "*"
-jinja2 = "<3.1.0"
+jinja2 = "*"
 pyyaml = "*"
 flask = "*"
 
@@ -32,6 +36,69 @@ CMAKE_PREFIX_PATH = "$CONDA_PREFIX"
 
 [tasks]
 clean = "python -c \"import glob, shutil; [shutil.rmtree(p, ignore_errors=True) for p in glob.glob('build*') + ['_install', '_skbuild', 'conda_build']]\""
+configure = {
+  cmd = "cmake -S . -B build/all -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_CXX_LIBRARY=ON -DBUILD_Fortran_LIBRARY=ON -DBUILD_Python_LIBRARY=ON -DYGG_BUILD_TESTS=ON -DYGG_Fortran_REQUIRED=ON -DYGG_SKIP_VALGRIND_TESTS=ON -DENABLE_RMQ=OFF {{ extra_flags }}",
+  args = [
+    { arg = "extra_flags", default = "" },
+  ],
+}
+build = {
+  cmd = "cmake --build build/all --parallel",
+  args = [
+    { arg = "extra_flags", default = "" },
+  ],
+  depends-on = [
+    {
+      task = "configure",
+      args = ["{{ extra_flags }}"],
+    }
+  ]
+}
+test = {
+  cmd = "ctest --test-dir build/all --output-on-failure",
+  args = [
+    { arg = "extra_flags", default = "" },
+  ],
+  depends-on = [
+    {
+      task = "build",
+      args = ["{{ extra_flags }}"],
+    }
+  ],
+  
+}
+install = {
+  cmd = "cmake --install build/all --prefix _install",
+  args = [
+    { arg = "extra_flags", default = "" },
+  ],
+  depends-on = [
+    {
+      task = "build",
+      args = ["{{ extra_flags }}"],
+    }
+  ]
+}
+all-tests = {
+  description = "Run tests for all supported interfaces",
+  depends-on = ["test", "test-python"],
+}
+
+[feature.py311.dependencies]
+python = "3.11.*"
+
+[feature.py312.dependencies]
+python = "3.12.*"
+
+[feature.py313.dependencies]
+python = "3.13.*"
+
+[feature.py314.dependencies]
+python = "3.14.*"
+
+[feature.py315.dependencies]
+python = "3.15.*"
+libpython = "3.15.*"
 
 [feature.cxx.dependencies]
 c-compiler = "*"
@@ -53,7 +120,7 @@ test-fortran = { cmd = "ctest --test-dir build/fortran --output-on-failure", dep
 install-fortran = { cmd = "cmake --install build/fortran --prefix _install", depends-on = ["build-fortran"] }
 
 [feature.python.activation.env]
-SKBUILD_CMAKE_DEFINE = "ENABLE_RMQ=OFF;CMAKE_CXX_FLAGS=-DYggInterface_EXPORTS=1"
+SKBUILD_CMAKE_DEFINE = "ENABLE_RMQ=OFF"
 
 [feature.python.dependencies]
 pip = "*"
@@ -61,11 +128,26 @@ scikit-build-core = "*"
 setuptools_scm = "*"
 hatch-fancy-pypi-readme = "*"
 pytest = "*"
+python-build = "*"
 
 [feature.python.tasks]
-build-python = "python -m pip install --no-build-isolation --no-deps -v ."
+install-python = "python -m pip install --no-build-isolation --no-deps -v ."
 develop-python = "python -m pip install --no-build-isolation --no-deps -v -e ."
-test-python = { cmd = "python -m pytest -sv tests/python", depends-on = ["build-python"] }
+test-python = { cmd = "python -m pytest -sv tests/python", depends-on = ["install-python"] }
+
+[feature.coverage.dependencies]
+lcov = "*"
+gcovr = "*"
+
+[feature.coverage.tasks]
+coverage = {
+  depends-on = [{
+    task = "test",
+    args = [
+      "-DYGGDRASIL_RAPIDJSON_ENABLE_COVERAGE=ON"
+    ],
+  }],
+}
 
 [feature.docs.dependencies]
 doxygen = ">=1.9.2"
@@ -76,16 +158,42 @@ docs = "cmake -S . -B build/docs -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DYG
 
 [feature.dev.dependencies]
 ccache = "*"
+git = "*"
+git-cliff = "*"
 
 [feature.dev.tasks]
-configure = "cmake -S . -B build/all -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_CXX_LIBRARY=ON -DBUILD_Fortran_LIBRARY=ON -DBUILD_Python_LIBRARY=ON -DYGG_BUILD_TESTS=ON -DYGG_Fortran_REQUIRED=ON -DYGG_SKIP_VALGRIND_TESTS=ON -DENABLE_RMQ=OFF"
-build = { cmd = "cmake --build build/all --parallel", depends-on = ["configure"] }
-test = { cmd = "ctest --test-dir build/all --output-on-failure", depends-on = ["build"] }
-install = { cmd = "cmake --install build/all --prefix _install", depends-on = ["build"] }
+setup-hooks = {
+  description = "Enable the tracked git hooks in githooks/",
+  cmd = "git config core.hooksPath githooks",
+}
+changelog = {
+  cmd = "git-cliff 9d764bfa1605147affd8deeb9afb7a1051a542c3..HEAD --prepend",
+  # Use this version after first release
+  # cmd = "git-cliff --unreleased --bump --prepend",
+  description = "Update the change log",
+}
+
+[feature.build-conda.dependencies]
+rattler-build = "*"
+
+[feature.build-conda.tasks.build-conda]
+description = "Build conda package with pixi publish"
+args = [
+    { arg = "recipe", default = "conda.recipe/recipe.yaml" },
+    { arg = "output_dir", default = "build_conda" },
+]
+cmd = "pixi publish --path {{ recipe }} --target-dir {{ output_dir }}"
 
 [environments]
-default = { features = ["cxx", "fortran", "python", "docs", "dev"], solve-group = "default" }
+default = { features = ["cxx", "fortran", "python", "coverage", "docs", "dev"], solve-group = "default" }
+coverage = { features = ["cxx", "fortran", "python", "coverage"], solve-group = "coverage" }
 cxx = { features = ["cxx"], solve-group = "cxx" }
 fortran = { features = ["cxx", "fortran"], solve-group = "fortran" }
 python = { features = ["cxx", "python"], solve-group = "python" }
 docs = { features = ["cxx", "docs"], solve-group = "docs" }
+build-conda = { features = ["build-conda"] }
+test-py311 = { features = ["py311", "cxx", "fortran", "python"] }
+test-py312 = { features = ["py312", "cxx", "fortran", "python"] }
+test-py313 = { features = ["py313", "cxx", "fortran", "python"] }
+test-py314 = { features = ["py314", "cxx", "fortran", "python"] }
+test-py315 = { features = ["py315", "cxx", "fortran", "python"] }

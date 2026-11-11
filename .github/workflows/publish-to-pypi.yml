@@ -1,0 +1,123 @@
+name: Build to PyPI
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+
+  build_sdist:
+    name: Build sdist
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v6
+        with:
+          fetch-tags: true
+      - name: Set up pixi
+        uses: prefix-dev/setup-pixi@v0.10.2
+        with:
+          environments: python
+      - name: Build sdist
+        run: pixi run -e python python -m build --sdist
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: sdist
+          path: dist/*.tar.gz
+
+  build_wheels:
+    name: Build wheels on ${{matrix.arch}} for ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+        arch:
+          - auto
+        include:
+          - os: ubuntu-latest
+            arch: aarch64
+          - os: ubuntu-latest
+            arch: ppc64le
+          - os: macos-latest
+            arch: arm64
+      fail-fast: false
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v6
+        with:
+          submodules: true
+          fetch-tags: true
+
+      # - name: Install Python
+      #   uses: actions/setup-python@v6
+
+      - uses: docker/setup-qemu-action@v3
+        if:  ${{ matrix.arch == 'aarch64' || matrix.arch == 'ppc64le' }}
+        name: Set up QEMU
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v3.3.1
+        env:
+          CIBW_ARCHS_LINUX: ${{ matrix.arch }}
+          CIBW_ARCHS_MACOS: ${{ matrix.arch }}
+          CIBW_TEST_REQUIRES: "pytest"
+          CIBW_TEST_COMMAND: "pytest -sv {project}/tests/python"
+          CIBW_SKIP: "cp38* cp39* cp310-manylinux_i686 cp311-manylinux_i686 cp312-manylinux_i686 *-musllinux_*"
+          # Skip tests on emulated hardware, take too long or not supported
+          CIBW_TEST_SKIP: "*-*linux_{aarch64,ppc64le} *-macosx_*:arm64"
+          CIBW_ENABLE: cpython-prerelease
+          CIBW_ENVIRONMENT: "PIP_ONLY_BINARY=numpy"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: wheels-for-${{ matrix.os }}-${{ matrix.arch }}
+          path: ./wheelhouse/*.whl
+
+  all_tests_passed:
+    runs-on: ubuntu-latest
+    name: All wheels built
+    needs: [build_sdist, build_wheels]
+    if: always()
+    steps:
+      - name: All tests ok
+        if: ${{ !(contains(needs.*.result, 'failure')) }}
+        run: exit 0
+      - name: Some tests failed
+        if: ${{ contains(needs.*.result, 'failure') }}
+        run: exit 1
+
+  publish:
+    name: Publish to PyPI
+    needs: [build_sdist, build_wheels]
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+
+    # Upload only for release (if the job is run on push)
+    # if: github.event_name == 'release'
+
+    steps:
+      - uses: actions/download-artifact@v7
+        with:
+          path: dist
+          pattern: wheels-for-*
+          merge-multiple: true
+      - uses: actions/download-artifact@v7
+        with:
+          path: dist
+          pattern: sdist
+          merge-multiple: true
+      - name: Check downloaded artifacts
+        run: ls dist
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

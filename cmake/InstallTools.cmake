@@ -145,7 +145,7 @@ endfunction()
 
 function(get_target_install_property OUTPUT_VAR TARGET PROPERTY)
   set(options APPEND RECURSIVE COMPLETE)
-  set(oneValueArgs COMPILE_LANGUAGE LINK_LANGUAGE)
+  set(oneValueArgs COMPILE_LANGUAGE LINK_LANGUAGE PROPERTY_DIR)
   set(multiValueArgs LOCAL_TARGETS)
   cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
   if(NOT ARGS_LINK_LANGUAGE)
@@ -154,17 +154,18 @@ function(get_target_install_property OUTPUT_VAR TARGET PROPERTY)
   if(NOT ARGS_COMPILE_LANGUAGE)
     set(ARGS_COMPILE_LANGUAGE ${ARGS_LINK_LANGUAGE})
   endif()
-  set(PROPERTY_DIR)
-  if(PROPERTY STREQUAL "INCLUDE_DIRECTORIES"
-     OR PROPERTY STREQUAL "LINK_DIRECTORIES")
-    set(PROPERTY_DIR ${CMAKE_INSTALL_PREFIX})
+  if((NOT ARGS_PROPERTY_DIR)
+     AND (PROPERTY STREQUAL "INCLUDE_DIRECTORIES"
+          OR PROPERTY STREQUAL "LINK_DIRECTORIES"))
+    set(ARGS_PROPERTY_DIR ${CMAKE_INSTALL_PREFIX})
   endif()
   if(NOT ARGS_APPEND)
     set(${OUTPUT_VAR})
   endif()
   set(RECURSIVE_ARGS
       COMPILE_LANGUAGE ${ARGS_COMPILE_LANGUAGE}
-      LINK_LANGUAGE ${ARGS_LINK_LANGUAGE})
+      LINK_LANGUAGE ${ARGS_LINK_LANGUAGE}
+      PROPERTY_DIR "${ARGS_PROPERTY_DIR}")
   if(ARGS_COMPLETE)
     list(APPEND RECURSIVE_ARGS COMPLETE)
   endif()
@@ -292,13 +293,18 @@ function(install_pkgconfig)
     )
   endif()
   set(FILES)
+  set(PREFIX_DIR "\$\{prefix\}")
+  cmake_path(
+    APPEND PREFIX_DIR "${CMAKE_INSTALL_LIBDIR}"
+    OUTPUT_VARIABLE PREFIX_LIBDIR
+  )
   foreach(TARGET IN LISTS ARGS_TARGETS)
     set(TARGET_COMPILE_LANGUAGE ${${TARGET}_LANGUAGES})
     get_target_property(TARGET_LINK_LANGUAGE ${TARGET} LINKER_LANGUAGE)
     # message(DEBUG "${TARGET}: ${TARGET_COMPILE_LANGUAGE}")
     set(properties COMPILE_OPTIONS LINK_OPTIONS)
     set(TARGET_COMPILE_OPTIONS)
-    set(TARGET_LINK_OPTIONS -L${CMAKE_INSTALL_FULL_LIBDIR} -l${TARGET})
+    set(TARGET_LINK_OPTIONS "-L${PREFIX_LIBDIR}" -l${TARGET})
     foreach(name IN LISTS properties)
       get_target_install_property(
         TARGET_${name}
@@ -307,6 +313,7 @@ function(install_pkgconfig)
         LINK_LANGUAGE ${TARGET_LINK_LANGUAGE}
         RECURSIVE COMPLETE APPEND
         LOCAL_TARGETS ${ARGS_TARGETS}
+        PROPERTY_DIR "${PREFIX_DIR}"
       )
     endforeach()
     cmake_path(
