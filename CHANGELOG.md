@@ -11,6 +11,7 @@ This project adheres to [Semantic Versioning](http://semver.org/).
 - Finalize conda recipe dependencies by determining which dependencies should remain in build/host/run
 - Verify all tests are passing
 - Throw error on creation of an invalid communicator in C++?
+- Set DOXYGEN_CHECK_MISSING to ON in doc tests
 
 ### Features
 

@@ -23,6 +23,13 @@ outputs:
       name: ygginterface-cxx
     build:
       variant:
+        use_keys:
+          - m2w64_c_stdlib
+          - m2w64_c_stdlib_version
+          - m2w64_c_compiler
+          - m2w64_c_compiler_version
+          - m2w64_cxx_compiler
+          - m2w64_cxx_compiler_version
         ignore_keys:
           - fortran_toolchain_variant
       script:
@@ -46,9 +53,9 @@ outputs:
         - if: cxx_toolchain_variant is defined and cxx_toolchain_variant == "m2w64"
           then:
             - binutils <2.43
-            - ${{ stdlib('m2w64_c') }}
-            - ${{ compiler('m2w64_c') }}
-            - ${{ compiler('m2w64_cxx') }}
+            - ${{ stdlib('m2w64_c') if cxx_toolchain_variant is defined }}
+            - ${{ compiler('m2w64_c') if cxx_toolchain_variant is defined}}
+            - ${{ compiler('m2w64_cxx') if cxx_toolchain_variant is defined}}
         - if: cxx_toolchain_variant is not defined or cxx_toolchain_variant != "m2w64"
           then:
             - ${{ stdlib('c') }}
@@ -147,6 +154,15 @@ outputs:
     build:
       string: v${{ version | version_to_buildstring }}${{ fortran_toolchain_variant if fortran_toolchain_variant is defined }}_py${{ python | version_to_buildstring }}_h${{ hash }}_${{ build_number }}
       variant:
+        use_keys:
+          - m2w64_c_stdlib
+          - m2w64_c_stdlib_version
+          - m2w64_c_compiler
+          - m2w64_c_compiler_version
+          - m2w64_cxx_compiler
+          - m2w64_cxx_compiler_version
+          - m2w64_fortran_compiler
+          - m2w64_fortran_compiler_version
         ignore_keys:
           - cxx_toolchain_variant
       script:

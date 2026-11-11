@@ -17,22 +17,31 @@ cmake = ">=3.18"
 ninja = ">=1.11"
 pkg-config = "*"
 yggdrasil-rapidjson = ">=1.1.0.5"
+jinja2 = "*"
+pyyaml = "*"
+
+[feature.optional.dependencies]
 libcurl = "*"
 zeromq = "*"
 openmpi = "*"
-jinja2 = "*"
-pyyaml = "*"
 flask = "*"
+# librabbitmq = "*"
 
-[target.unix.dependencies]
+[feature.optional.target.unix.dependencies]
 sysv_ipc = "*"
 
-[target.osx.dependencies]
+[feature.optional.target.osx.dependencies]
 llvm-openmp = "*"
 
 [activation.env]
 CMAKE_GENERATOR = "Ninja"
 CMAKE_PREFIX_PATH = "$CONDA_PREFIX"
+CMAKE_INSTALL_PREFIX = "$CONDA_PREFIX"
+
+# Set these by default?
+# -DYGG_DEBUG_LEVEL=5
+# -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON
+# -DCMAKE_MESSAGE_LOG_LEVEL:STRING=DEBUG
 
 [tasks]
 clean = "python -c \"import glob, shutil; [shutil.rmtree(p, ignore_errors=True) for p in glob.glob('build*') + ['_install', '_skbuild', 'conda_build']]\""
@@ -68,20 +77,34 @@ test = {
   
 }
 install = {
-  cmd = "cmake --install build/all --prefix _install",
-  args = [
-    { arg = "extra_flags", default = "" },
-  ],
+  cmd = "cmake --install build/all",
   depends-on = [
     {
       task = "build",
-      args = ["{{ extra_flags }}"],
     }
   ]
 }
+configure-speed = {
+  cmd = "cmake -S tests/speedtest -B build/speed -G Ninja -DCOMM=ALL",
+  # -DENABLE_Fortran=OFF
+  depends-on = [
+    {
+      task = "install",
+      args = ["--prefix", "$CONDA_PREFIX"],
+    },
+  ],
+}
+build-speed = {
+  cmd = "cmake --build build/speed --config Release",
+  depends-on = ["configure-speed"],
+}
+test-speed = {
+  cmd = "ctest --test-dir build/speed --output-on-failure -VV -C Release",
+  depends-on = ["build-speed"],
+}
 all-tests = {
   description = "Run tests for all supported interfaces",
-  depends-on = ["test", "test-python"],
+  depends-on = ["test", "test-python", "test-speed"],
 }
 
 [feature.py311.dependencies]
@@ -108,16 +131,23 @@ cxx-compiler = "*"
 configure-cxx = "cmake -S . -B build/cxx -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_CXX_LIBRARY=ON -DBUILD_Fortran_LIBRARY=OFF -DBUILD_Python_LIBRARY=OFF -DYGG_BUILD_TESTS=OFF -DYGG_BUILD_CXX_TESTS=ON -DYGG_SKIP_VALGRIND_TESTS=ON -DENABLE_RMQ=OFF"
 build-cxx = { cmd = "cmake --build build/cxx --parallel", depends-on = ["configure-cxx"] }
 test-cxx = { cmd = "ctest --test-dir build/cxx --output-on-failure", depends-on = ["build-cxx"] }
-install-cxx = { cmd = "cmake --install build/cxx --prefix _install", depends-on = ["build-cxx"] }
+install-cxx = { cmd = "cmake --install build/cxx", depends-on = ["build-cxx"] }
 
 [feature.fortran.dependencies]
 fortran-compiler = "*"
+
+[feature.fortran.target.win.dependencies]
+gcc = "*"
+gxx = "*"
+gfortran = "*"
+binutils = "<2.45"
+libpython = "*"
 
 [feature.fortran.tasks]
 configure-fortran = "cmake -S . -B build/fortran -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_CXX_LIBRARY=ON -DBUILD_Fortran_LIBRARY=ON -DBUILD_Python_LIBRARY=OFF -DYGG_BUILD_TESTS=OFF -DYGG_BUILD_CXX_TESTS=OFF -DYGG_BUILD_Fortran_TESTS=ON -DYGG_Fortran_REQUIRED=ON -DYGG_SKIP_VALGRIND_TESTS=ON -DENABLE_RMQ=OFF"
 build-fortran = { cmd = "cmake --build build/fortran --parallel", depends-on = ["configure-fortran"] }
 test-fortran = { cmd = "ctest --test-dir build/fortran --output-on-failure", depends-on = ["build-fortran"] }
-install-fortran = { cmd = "cmake --install build/fortran --prefix _install", depends-on = ["build-fortran"] }
+install-fortran = { cmd = "cmake --install build/fortran", depends-on = ["build-fortran"] }
 
 [feature.python.activation.env]
 SKBUILD_CMAKE_DEFINE = "ENABLE_RMQ=OFF"
@@ -140,15 +170,67 @@ lcov = "*"
 gcovr = "*"
 
 [feature.coverage.tasks]
-coverage = {
-  depends-on = [{
-    task = "test",
-    args = [
-      "-DYGGDRASIL_RAPIDJSON_ENABLE_COVERAGE=ON"
-    ],
-  }],
+configure-coverage = {
+  cmd = "cmake -S . -B build/coverage -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_CXX_LIBRARY=ON -DBUILD_Fortran_LIBRARY=ON -DBUILD_Python_LIBRARY=OFF -DYGG_BUILD_TESTS=ON -DYGG_BUILD_Python_TESTS=OFF -DYGG_Fortran_REQUIRED=ON -DYGG_SKIP_VALGRIND_TESTS=ON -DYGG_ENABLE_COVERAGE=ON -DENABLE_RMQ=OFF",
+}
+build-coverage = {
+  cmd = "cmake --build build/coverage --parallel",
+  depends-on = ["configure-coverage"],
+}
+test-coverage = {
+  cmd = "ctest --test-dir build/coverage --output-on-failure",
+  depends-on = ["build-coverage"],
 }
 
+[feature.valgrind.target.linux.dependencies]
+valgrind = "*"
+
+[feature.valgrind.tasks]
+configure-valgrind = {
+  cmd = "cmake -S . -B build/valgrind -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_CXX_LIBRARY=ON -DBUILD_Fortran_LIBRARY=ON -DBUILD_Python_LIBRARY=OFF -DYGG_BUILD_TESTS=ON -DYGG_BUILD_Python_TESTS=OFF -DYGG_Fortran_REQUIRED=ON -DYGG_SKIP_VALGRIND_TESTS=OFF -DYGG_ENABLE_INSTRUMENTATION_OPT=OFF -DYGGDRASIL_DISABLE_Python_C_API=ON -DENABLE_OMP=OFF -DYGG_EMBED_Python=OFF",
+}
+build-valgrind = {
+  cmd = "cmake --build build/valgrind --parallel",
+  depends-on = ["configure-valgrind"],
+}
+test-valgrind = {
+  cmd = "ctest --test-dir build/valgrind --output-on-failure",
+  depends-on = ["build-valgrind"],
+}
+
+[feature.asan.activation.env]
+ASAN_OPTIONS = "detect_odr_violation=0:detect_container_overflow=0"
+
+[feature.asan.target.osx.activation.env]
+DYLD_INSERT_LIBRARIES = "$(clang -print-file-name=libclang_rt.asan_osx_dynamic.dylib)"
+
+[feature.asan.tasks]
+configure-asan = {
+  cmd = "cmake -S . -B build/asan -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_CXX_LIBRARY=ON -DBUILD_Fortran_LIBRARY=ON -DBUILD_Python_LIBRARY=ON -DYGG_BUILD_TESTS=ON -DYGG_Fortran_REQUIRED=ON -DYGG_SKIP_VALGRIND_TESTS=ON -DYGG_BUILD_ASAN=ON -DYGG_BUILD_UBSAN=ON -DENABLE_RMQ=OFF",
+  # -DYGGDRASIL_DISABLE_Python_C_API=ON
+}
+build-asan = {
+  cmd = "cmake --build build/asan --parallel",
+  depends-on = ["configure-asan"],
+}
+test-asan = {
+  cmd = "ctest --test-dir build/asan --output-on-failure -E valgrind*",
+  depends-on = ["build-asan"],
+}
+  
+[feature.elf.tasks]
+configure-elf = {
+  cmd = "cmake -S . -B build/elf -G Ninja -DCMAKE_BUILD_TYPE=Debug -DBUILD_CXX_LIBRARY=ON -DBUILD_Fortran_LIBRARY=ON -DBUILD_Python_LIBRARY=OFF -DYGG_BUILD_TESTS=ON -DYGG_Fortran_REQUIRED=ON -DYGG_BUILD_Python_TESTS=OFF -DYGG_SKIP_VALGRIND_TESTS=ON -DYGG_ENABLE_ELF=ON -DENABLE_RMQ=OFF",
+}
+build-elf = {
+  cmd = "cmake --build build/elf --parallel",
+  depends-on = ["configure-elf"],
+}
+test-elf = {
+  cmd = "ctest --test-dir build/elf --output-on-failure",
+  depends-on = ["build-elf"],
+}
+  
 [feature.docs.dependencies]
 doxygen = ">=1.9.2"
 graphviz = "*"
@@ -185,15 +267,20 @@ args = [
 cmd = "pixi publish --path {{ recipe }} --target-dir {{ output_dir }}"
 
 [environments]
-default = { features = ["cxx", "fortran", "python", "coverage", "docs", "dev"], solve-group = "default" }
-coverage = { features = ["cxx", "fortran", "python", "coverage"], solve-group = "coverage" }
-cxx = { features = ["cxx"], solve-group = "cxx" }
-fortran = { features = ["cxx", "fortran"], solve-group = "fortran" }
-python = { features = ["cxx", "python"], solve-group = "python" }
+default = { features = ["cxx", "fortran", "python", "docs", "dev", "optional"], solve-group = "default" }
+core = { features = ["cxx", "fortran", "python"], solve-group = "default" }
+coverage = { features = ["cxx", "fortran", "python", "optional", "coverage"], solve-group = "coverage" }
+valgrind = { features = ["cxx", "fortran", "python", "optional", "valgrind"], solve-group = "valgrind" }
+asan = { features = ["cxx", "fortran", "python", "optional", "asan"], solve-group = "asan" }
+elf = { features = ["cxx", "fortran", "python", "optional", "elf"], solve-group = "elf" }
+cxx = { features = ["cxx", "optional"], solve-group = "cxx" }
+fortran = { features = ["cxx", "fortran", "optional"], solve-group = "fortran" }
+python = { features = ["cxx", "python", "optional"], solve-group = "python" }
 docs = { features = ["cxx", "docs"], solve-group = "docs" }
 build-conda = { features = ["build-conda"] }
-test-py311 = { features = ["py311", "cxx", "fortran", "python"] }
-test-py312 = { features = ["py312", "cxx", "fortran", "python"] }
-test-py313 = { features = ["py313", "cxx", "fortran", "python"] }
-test-py314 = { features = ["py314", "cxx", "fortran", "python"] }
-test-py315 = { features = ["py315", "cxx", "fortran", "python"] }
+test-py315-core = { features = ["py315", "cxx", "fortran", "python"] }
+test-py311 = { features = ["py311", "cxx", "fortran", "python", "optional"] }
+test-py312 = { features = ["py312", "cxx", "fortran", "python", "optional"] }
+test-py313 = { features = ["py313", "cxx", "fortran", "python", "optional"] }
+test-py314 = { features = ["py314", "cxx", "fortran", "python", "optional"] }
+test-py315 = { features = ["py315", "cxx", "fortran", "python", "optional"] }

@@ -26,18 +26,28 @@ jobs:
         variant-flags: [""]
         include:
           - os: windows-latest
+            python-version: "3.11"
+            recipe: recipe
             variant: m2w64
             variant-flags: "--variant cxx_toolchain_variant=m2w64 --variant fortran_toolchain_variant=m2w64"
           - os: windows-latest
+            python-version: "3.11"
+            recipe: recipe
             variant: m2w64-fortran
             variant-flags: "--variant fortran_toolchain_variant=m2w64"
           - os: windows-latest
+            python-version: "3.11"
+            recipe: recipe
             variant: msvc-gnu
             variant-flags: "--variant fortran_toolchain_varient=msvc_gnu"
           - os: windows-latest
+            python-version: "3.11"
+            recipe: recipe
             variant: flang
             variant-flags: "--variant fortran_compiler=flang"
           - os: windows-latest
+            python-version: "3.11"
+            recipe: recipe
             variant: ifx
             variant-flags: "--variant fortran_compiler=ifx"
       fail-fast: false
