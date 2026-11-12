@@ -673,7 +673,7 @@ function(find_compiler_external language)
       VARIABLES ${EXTERNAL_VARIABLES}
       VERBOSE LOG_LEVEL DEBUG
     )
-    message(STATUS "Located external compiler for ${language} (GENERATOR=${ARGS_GENERATOR}, LINKER_LANGUAGE=${ARGS_LINKER_LANGUAGE})")
+    message(STATUS "Located external compiler for ${language} (GENERATOR=${ARGS_GENERATOR}, LINKER_LANGUAGE=${ARGS_LINKER_LANGUAGE}): CMAKE_${language}_COMPILER = ${CMAKE_${language}_COMPILER}")
   elseif(ARGS_REQUIRED)
     message(FATAL_ERROR "Failed to locate a ${language} external compiler (CMAKE_GENERATOR = \"${ARGS_GENERATOR}\")")
   endif()
