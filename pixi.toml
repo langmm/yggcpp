@@ -53,7 +53,7 @@ llvm-openmp = "*"
 
 [activation.env]
 CMAKE_GENERATOR = "Ninja"
-YGGCPP_CONFIGURE_FLAGS_BASE = "-G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$PREFIX -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DPython3_EXECUTABLE=$PYTHON -DENABLE_RMQ=OFF"
+YGGCPP_CONFIGURE_FLAGS_BASE = "-G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DPython3_EXECUTABLE=$PYTHON -DENABLE_RMQ=OFF"
 
 # Set these by default?
 # -DYGG_DEBUG_LEVEL=5
@@ -125,17 +125,24 @@ install = {
   depends-on = [
     {
       task = "build",
-      args = ["all"],
+      args = [
+        "all",
+        # "-DYGG_BUILD_TESTS=OFF"
+      ],
     }
   ]
 }
 configure-speed = {
-  cmd = "cmake -S tests/speedtest -B build/speed -G Ninja -DCOMM=ALL -DCMAKE_PREFIX_PATH=$CONDA_PREFIX",
+  cmd = "cmake --install build/all --prefix $CONDA_PREFIX && cmake -S tests/speedtest -B build/speed -G Ninja -DCOMM=ALL -DCMAKE_PREFIX_PATH=$CONDA_PREFIX",
   # -DENABLE_Fortran=OFF
   depends-on = [
     {
-      task = "install",
-      args = ["--prefix", "$CONDA_PREFIX"],
+      task = "build",
+      args = ["all"],
+      # $CONDA_PREFIX not expanded by shell if passed as argument to
+      #   underlying install command
+      # task = "install",
+      # args = ["--prefix", "$CONDA_PREFIX"],
     },
   ],
 }
@@ -149,7 +156,7 @@ test-speed = {
 }
 all-tests = {
   description = "Run tests for all supported interfaces",
-  depends-on = ["test", "test-python", "test-speed"],
+  depends-on = ["test", "test-speed"],
 }
 
 [feature.py311.dependencies]
@@ -322,7 +329,7 @@ doxygen = ">=1.9.2"
 graphviz = "*"
 
 [feature.docs.tasks]
-docs = "cmake -S . -B build/docs $YGGCPP_CONFIGURE_FLAGS_BASE -DCMAKE_BUILD_TYPE=RelWithDebInfo -DYGG_BUILD_DOCS=ON -DBUILD_CXX_LIBRARY=OFF -DBUILD_Fortran_LIBRARY=OFF -DBUILD_Python_LIBRARY=OFF -DDOXYGEN_CHECK_MISSING=ON && cmake --build build/docs --target docs"
+docs = "dot -c || true; cmake -S . -B build/docs $YGGCPP_CONFIGURE_FLAGS_BASE -DCMAKE_BUILD_TYPE=RelWithDebInfo -DYGG_BUILD_DOCS=ON -DBUILD_CXX_LIBRARY=OFF -DBUILD_Fortran_LIBRARY=OFF -DBUILD_Python_LIBRARY=OFF -DDOXYGEN_CHECK_MISSING=ON && cmake --build build/docs --target docs"
 
 [feature.dev.dependencies]
 ccache = "*"

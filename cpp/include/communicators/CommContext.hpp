@@ -77,21 +77,18 @@ namespace YggInterface {
       CLEANUP_MODE cleanup_mode_;     //!< Mode of current cleanup action
       void* zmq_ctx;                  //!< ZeroMQ context
       std::mt19937 rng;               //!< Random number generator
-#define YGG_THREAD_MUTEX(name)                  \
-      utils::ThreadMutex name ## _mutex;
       // NOTE: If any additional mutexes are added, they must also be
       //   initialized in the constructor definition in CommContext.cpp
-      YGG_THREAD_MUTEX(init)
-      YGG_THREAD_MUTEX(clean)
-      YGG_THREAD_MUTEX(client)
-      YGG_THREAD_MUTEX(comms)
-      YGG_THREAD_MUTEX(IPCComm)
-      YGG_THREAD_MUTEX(zmq)
-      YGG_THREAD_MUTEX(zmqport)
-      YGG_THREAD_MUTEX(uuid)
-      YGG_THREAD_MUTEX(functions)
-      YGG_THREAD_MUTEX(embed)
-#undef YGG_THREAD_MUTEX
+      utils::ThreadMutex init_mutex;      //!< Mutex for initialization
+      utils::ThreadMutex clean_mutex;     //!< Mutex for cleanup
+      utils::ThreadMutex client_mutex;    //!< Mutex for client operations
+      utils::ThreadMutex comms_mutex;     //!< Mutex for communicator registry
+      utils::ThreadMutex IPCComm_mutex;   //!< Mutex for IPC communicators
+      utils::ThreadMutex zmq_mutex;       //!< Mutex for ZeroMQ context
+      utils::ThreadMutex zmqport_mutex;   //!< Mutex for ZeroMQ port allocation
+      utils::ThreadMutex uuid_mutex;      //!< Mutex for UUID generation
+      utils::ThreadMutex functions_mutex; //!< Mutex for function registry
+      utils::ThreadMutex embed_mutex;     //!< Mutex for embedded languages
 #ifdef YGG_ZMQ_PRELOAD
       HINSTANCE hzmqDLL;              //!< Preloaded ZeroMQ DLL
 #endif // YGG_ZMQ_PRELOAD

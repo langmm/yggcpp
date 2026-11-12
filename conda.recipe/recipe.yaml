@@ -295,25 +295,9 @@ outputs:
           run:
             - if: fortran_toolchain_variant is not defined or (fortran_toolchain_variant != "m2w64" and fortran_toolchain_variant != "msvc_gnu")
               then:
-                # - ${{ stdlib('c') }}
-                # - ${{ compiler('c') }}
-                # - ${{ compiler('cxx') }}
                 - ${{ compiler('fortran') }}
-            - if: fortran_toolchain_variant is defined and fortran_toolchain_variant == "m2w64"
+            - if: fortran_toolchain_variant is defined and (fortran_toolchain_variant == "m2w64" or fortran_toolchain_variant == "msvc_gnu")
               then:
-                # - binutils <2.43
-                # - ${{ stdlib('m2w64_c') }}
-                # - ${{ compiler('m2w64_c') }}
-                # - ${{ compiler('m2w64_cxx') }}
-                - ${{ compiler('m2w64_fortran') }}
-            - if: fortran_toolchain_variant is defined and fortran_toolchain_variant == "msvc_gnu"
-              then:
-                # - ${{ stdlib('c') }}
-                # - ${{ compiler('c') }}
-                # - ${{ compiler('cxx') }}
-                # - ${{ stdlib('m2w64_c') }}
-                # - ${{ compiler('m2w64_c') }}
-                # - ${{ compiler('m2w64_cxx') }}
                 - ${{ compiler('m2w64_fortran') }}
             - cmake
             - flask
@@ -419,6 +403,8 @@ outputs:
       script:
       variant:
         use_keys:
+          - cxx_toolchain_variant
+          - fortran_toolchain_variant
           - c_stdlib
           - c_stdlib_version
           - c_compiler
@@ -456,19 +442,22 @@ outputs:
             - flask
             - ninja
             - cmake
+            - if: fortran_toolchain_variant is not defined or (fortran_toolchain_variant != "m2w64" and fortran_toolchain_variant != "msvc_gnu")
+              then:
+                - ${{ compiler('fortran') }}
+            - if: fortran_toolchain_variant is defined and (fortran_toolchain_variant == "m2w64" or fortran_toolchain_variant == "msvc_gnu")
+              then:
+                - ${{ compiler('m2w64_fortran') }}
             - if: cxx_toolchain_variant is not defined or cxx_toolchain_variant != "m2w64"
               then:
                 - ${{ stdlib('c') }}
                 - ${{ compiler('c') }}
                 - ${{ compiler('cxx') }}
-                - ${{ compiler('fortran') }}
-            - if: win
+            - if: cxx_toolchain_variant is defined and cxx_toolchain_variant == "m2w64"
               then:
-                - binutils <2.43
                 - ${{ stdlib('m2w64_c') }}
                 - ${{ compiler('m2w64_c') }}
                 - ${{ compiler('m2w64_cxx') }}
-                - ${{ compiler('m2w64_fortran') }}
         files:
           source:
             - tests/

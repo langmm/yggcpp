@@ -630,7 +630,6 @@ jobs:
       - uses: prefix-dev/setup-pixi@v0.11.3
         with:
           environments: test-${{ matrix.pixi-environment }}
-          activate-environment: test-${{ matrix.pixi-environment }}
       - name: Show shell hook
         run: pixi shell-hook -e test-${{ matrix.pixi-environment }}
       - name: Run tests
@@ -647,7 +646,6 @@ jobs:
       - uses: prefix-dev/setup-pixi@v0.11.3
         with:
           environments: coverage
-          activate-environment: coverage
       - name: Run tests
         run: pixi run -e coverage test-coverage -- --output-on-failure --verbose
       - name: Upload coverage report
@@ -669,7 +667,6 @@ jobs:
       - uses: prefix-dev/setup-pixi@v0.11.3
         with:
           environments: elf
-          activate-environment: elf
       - name: Run tests
         run: pixi run -e elf test-elf -- --output-on-failure --verbose
 
@@ -684,7 +681,6 @@ jobs:
       - uses: prefix-dev/setup-pixi@v0.11.3
         with:
           environments: asan
-          activate-environment: asan
       - name: Run tests
         run: pixi run -e asan test-asan -- --output-on-failure --verbose
 
@@ -699,7 +695,6 @@ jobs:
       - uses: prefix-dev/setup-pixi@v0.11.3
         with:
           environments: valgrind
-          activate-environment: valgrind
       - name: Run tests
         run: pixi run -e valgrind test-valgrind -- --output-on-failure --verbose
 

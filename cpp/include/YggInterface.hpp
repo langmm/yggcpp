@@ -289,8 +289,16 @@ public:
 };
 
 
+/*!
+  @brief Function communicator for interfacing with functions.
+ */
 class YggFunction : public FunctionComm {
 public:
+  /*!
+    @brief Constructor for YggFunction.
+    @param[in] name Name of the function communicator.
+    @param[in] flags Bit flags to set communicator properties.
+   */
   YGG_API YggFunction(const std::string name, FLAG_TYPE flags = 0);
 };
 
