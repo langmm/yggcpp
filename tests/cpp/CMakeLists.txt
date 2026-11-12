@@ -1,10 +1,17 @@
 message(STATUS "C++/C TESTING ON")
 
+set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${PROJECT_SOURCE_DIR}/cmake")
+set(YGGDRASIL_RAPIDJSON_BUILD_THIRDPARTY_GTEST ${YGG_BUILD_THIRDPARTY_GTEST})
+if(NOT YGGDRASIL_RAPIDJSON_BUILD_THIRDPARTY_GTEST)
+  find_package(GTest)
+endif()
 enable_testing()
 
-set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${PROJECT_SOURCE_DIR}/cmake")
-set(RAPIDJSON_BUILD_THIRDPARTY_GTEST ${YGG_BUILD_THIRDPARTY_GTEST})
-find_package(GTestSrc)
+if(GTEST_FOUND)
+    set(TEST_LIBRARIES GTest::gtest GTest::gtest_main)
+else()
+    find_package(GTestSrc)
+endif()
 
 # find_package(cmocka)
 # if(cmocka_FOUND)
@@ -52,7 +59,7 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND YGG_ENABLE_ELF)
    set(TEST_LIBRARIES ${TEST_LIBRARIES} dl)
 endif()
 
-if(GTESTSRC_FOUND)
+if(GTEST_FOUND OR GTESTSRC_FOUND)
     add_subdirectory(unittest)
 endif()
 

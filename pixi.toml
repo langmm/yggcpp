@@ -10,6 +10,24 @@ build-variants-files = [
   "./conda.recipe/conda_build_config.yaml",
 ]
 
+[package.build]
+backend = {
+  name = "pixi-build-rattler-build",
+  # name = "pixi-build-cmake",
+  version = "*",
+  # channels = [
+  #   "https://prefix.dev/conda-forge",
+  # ]
+}
+
+# [package.build-dependencies]
+
+# [package.build.config]
+# compilers = ["c", "cxx", "fortran"]
+# extra-args = [
+#   "-DENABLE_RMQ=OFF",
+# ]
+
 [dependencies]
 python = ">=3.11"
 numpy = ">=1.23"
@@ -35,7 +53,7 @@ llvm-openmp = "*"
 
 [activation.env]
 CMAKE_GENERATOR = "Ninja"
-YGGCPP_CONFIGURE_FLAGS_BASE = "-G Ninja -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DENABLE_RMQ=OFF"
+YGGCPP_CONFIGURE_FLAGS_BASE = "-G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$PREFIX -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DPython3_EXECUTABLE=$PYTHON -DENABLE_RMQ=OFF"
 
 # Set these by default?
 # -DYGG_DEBUG_LEVEL=5
@@ -150,6 +168,19 @@ python = "3.14.*"
 python = "3.15.*"
 libpython = "3.15.*"
 
+# These variables are not set in pixi environments...
+# [feature.cxx.target.osx.activation.env]
+# CC = "clang"
+# CXX = "clang++"
+
+# [feature.cxx.target.linux.activation.env]
+# CC = "gcc"
+# CXX = "g++"
+
+# [feature.cxx.target.win.activation.env]
+# CC = "cl.exe"
+# CXX = "cl.exe"
+
 [feature.cxx.dependencies]
 c-compiler = "*"
 cxx-compiler = "*"
@@ -171,7 +202,11 @@ install-cxx = {
   depends-on = ["build-cxx"]
 }
 
-[feature.fortran.dependencies]
+# These variables are not set in pixi environments...
+[feature.fortran.activation.env]
+FC = "gfortran"
+
+[feature.fortran.target.unix.dependencies]
 fortran-compiler = "*"
 
 [feature.fortran.target.win.dependencies]
@@ -287,7 +322,7 @@ doxygen = ">=1.9.2"
 graphviz = "*"
 
 [feature.docs.tasks]
-docs = "cmake -S . -B build/docs $YGGCPP_CONFIGURE_FLAGS_BASE -DCMAKE_BUILD_TYPE=RelWithDebInfo -DYGG_BUILD_DOCS=ON -DBUILD_CXX_LIBRARY=OFF -DBUILD_Fortran_LIBRARY=OFF -DBUILD_Python_LIBRARY=OFF -DDOXYGEN_CHECK_MISSING=OFF && cmake --build build/docs --target docs"
+docs = "cmake -S . -B build/docs $YGGCPP_CONFIGURE_FLAGS_BASE -DCMAKE_BUILD_TYPE=RelWithDebInfo -DYGG_BUILD_DOCS=ON -DBUILD_CXX_LIBRARY=OFF -DBUILD_Fortran_LIBRARY=OFF -DBUILD_Python_LIBRARY=OFF -DDOXYGEN_CHECK_MISSING=ON && cmake --build build/docs --target docs"
 
 [feature.dev.dependencies]
 ccache = "*"
