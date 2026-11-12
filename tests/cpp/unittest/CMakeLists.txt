@@ -73,7 +73,8 @@ gtest_discover_tests(unittest DISCOVERY_MODE PRE_TEST
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|ARMClang")
     add_custom_command(TARGET unittest POST_BUILD
             COMMAND dsymutil unittest
-            WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+            WORKING_DIRECTORY ${PARENT_BINARY_DIR}
+            # WORKING_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
             COMMENT "Creating debug symbols...")
 endif(CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang|ARMClang")
 if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")

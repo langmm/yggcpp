@@ -103,10 +103,10 @@ jobs:
       - name: All tests ok
         if: ${{ !(contains(needs.*.result, 'failure')) }}
         run: |
-          echo "Success status: ${{ needs.test-matrix.result }}"
+          echo "Success status: ${{ needs.build-conda.result }}"
           exit 0
       - name: Some tests failed
         if: ${{ contains(needs.*.result, 'failure') }}
         run: |
-          echo "Failure status: ${{ needs.test-matrix.result }}"
+          echo "Failure status: ${{ needs.build-conda.result }}"
           exit 1

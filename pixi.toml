@@ -38,6 +38,9 @@ yggdrasil-rapidjson = ">=1.1.0.5"
 jinja2 = "*"
 pyyaml = "*"
 
+[target.win.dependencies]
+zeromq = "*"
+
 [feature.optional.dependencies]
 libcurl = "*"
 zeromq = "*"
@@ -53,7 +56,8 @@ llvm-openmp = "*"
 
 [activation.env]
 CMAKE_GENERATOR = "Ninja"
-YGGCPP_CONFIGURE_FLAGS_BASE = "-G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DPython3_EXECUTABLE=$PYTHON -DENABLE_RMQ=OFF"
+YGGCPP_CONFIGURE_FLAGS_BASE = "-G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DPython3_EXECUTABLE=$PYTHON -DBUILD_CXX_LIBRARY=ON -DBUILD_Fortran_LIBRARY=ON -DBUILD_Python_LIBRARY=ON -DYGG_Fortran_REQUIRED=ON -DYGG_SKIP_VALGRIND_TESTS=ON -DYGG_ENABLE_ELF=OFF -DENABLE_RMQ=OFF"
+YGGCPP_CONFIGURE_FLAGS_BASE2 = ""
 
 # Set these by default?
 # -DYGG_DEBUG_LEVEL=5
@@ -61,15 +65,21 @@ YGGCPP_CONFIGURE_FLAGS_BASE = "-G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFI
 # -DCMAKE_MESSAGE_LOG_LEVEL:STRING=DEBUG
 
 [feature.optional-required.target.win.activation.env]
-YGGCPP_CONFIGURE_FLAGS_BASE = "-G Ninja -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DREQUIRE_ZMQ=ON -DREQUIRE_MPI=ON -DREQUIRE_RMQ=ON -DREQUIRE_THREADS=ON -DREQUIRE_REST=ON -DREQUIRE_OMP=ON"
+YGGCPP_CONFIGURE_FLAGS_BASE2 = "-DREQUIRE_ZMQ=ON -DREQUIRE_MPI=ON -DREQUIRE_RMQ=ON -DREQUIRE_THREADS=ON -DREQUIRE_REST=ON -DREQUIRE_OMP=ON"
 
 [feature.optional-required.target.unix.activation.env]
-YGGCPP_CONFIGURE_FLAGS_BASE = "-G Ninja -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DREQUIRE_ZMQ=ON -DREQUIRE_MPI=ON -DREQUIRE_RMQ=ON -DREQUIRE_THREADS=ON -DREQUIRE_REST=ON -DREQUIRE_OMP=ON -DREQUIRE_IPC=ON"
+YGGCPP_CONFIGURE_FLAGS_BASE2 = "-DREQUIRE_ZMQ=ON -DREQUIRE_MPI=ON -DREQUIRE_RMQ=ON -DREQUIRE_THREADS=ON -DREQUIRE_REST=ON -DREQUIRE_OMP=ON -DREQUIRE_IPC=ON"
+
+[feature.core.target.win.activation.env]
+YGGCPP_CONFIGURE_FLAGS_BASE2 = "-REQUIRE_ZMQ=ON  -DENABLE_MPI=OFF -DENABLE_RMQ=OFF -DENABLE_THREADS=OFF -DENABLE_REST=OFF -DENABLE_OMP=OFF"
+
+[feature.core.target.unix.activation.env]
+YGGCPP_CONFIGURE_FLAGS_BASE2 = "-DENABLE_ZMQ=OFF -DENABLE_MPI=OFF -DENABLE_RMQ=OFF -DENABLE_THREADS=OFF -DENABLE_REST=OFF -DENABLE_OMP=OFF"
 
 [tasks]
 clean = "python -c \"import glob, shutil; [shutil.rmtree(p, ignore_errors=True) for p in glob.glob('build*') + ['_install', '_skbuild', 'conda_build']]\""
 configure = {
-  cmd = "cmake -S . -B build/{{ name }} $YGGCPP_CONFIGURE_FLAGS_BASE {{ configure_flags }}",
+  cmd = "cmake -S . -B build/{{ name }} $YGGCPP_CONFIGURE_FLAGS_BASE $YGGCPP_CONFIGURE_FLAGS_BASE2 {{ configure_flags }}",
   args = [
     {
       arg = "name",
@@ -77,7 +87,7 @@ configure = {
     },
     {
       arg = "configure_flags",
-      default = "-DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_CXX_LIBRARY=ON -DBUILD_Fortran_LIBRARY=ON -DBUILD_Python_LIBRARY=ON -DYGG_BUILD_TESTS=ON -DYGG_Fortran_REQUIRED=ON -DYGG_SKIP_VALGRIND_TESTS=ON"
+      default = "-DYGG_BUILD_TESTS=ON",
     },
   ],
 }
@@ -90,7 +100,7 @@ build = {
     },
     {
       arg = "configure_flags",
-      default = "-DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_CXX_LIBRARY=ON -DBUILD_Fortran_LIBRARY=ON -DBUILD_Python_LIBRARY=ON -DYGG_BUILD_TESTS=ON -DYGG_Fortran_REQUIRED=ON -DYGG_SKIP_VALGRIND_TESTS=ON"
+      default = "-DYGG_BUILD_TESTS=ON",
     },
   ],
   depends-on = [
@@ -109,7 +119,7 @@ test = {
     },
     {
       arg = "configure_flags",
-      default = "-DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_CXX_LIBRARY=ON -DBUILD_Fortran_LIBRARY=ON -DBUILD_Python_LIBRARY=ON -DYGG_BUILD_TESTS=ON -DYGG_Fortran_REQUIRED=ON -DYGG_SKIP_VALGRIND_TESTS=ON"
+      default = "-DYGG_BUILD_TESTS=ON",
     },
   ],
   depends-on = [
@@ -194,7 +204,7 @@ cxx-compiler = "*"
 
 [feature.cxx.tasks]
 configure-cxx = {
-  cmd = "cmake -S . -B build/cxx $YGGCPP_CONFIGURE_FLAGS_BASE -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_CXX_LIBRARY=ON -DBUILD_Fortran_LIBRARY=OFF -DBUILD_Python_LIBRARY=OFF -DYGG_BUILD_TESTS=OFF -DYGG_BUILD_CXX_TESTS=ON -DYGG_SKIP_VALGRIND_TESTS=ON",
+  cmd = "cmake -S . -B build/cxx $YGGCPP_CONFIGURE_FLAGS_BASE $YGGCPP_CONFIGURE_FLAGS_BASE2 -DBUILD_Fortran_LIBRARY=OFF -DBUILD_Python_LIBRARY=OFF -DYGG_BUILD_TESTS=OFF -DYGG_BUILD_CXX_TESTS=ON",
 }
 build-cxx = {
   cmd = "cmake --build build/cxx --parallel",
@@ -225,7 +235,7 @@ libpython = "*"
 
 [feature.fortran.tasks]
 configure-fortran = {
-  cmd = "cmake -S . -B build/fortran $YGGCPP_CONFIGURE_FLAGS_BASE -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBUILD_CXX_LIBRARY=ON -DBUILD_Fortran_LIBRARY=ON -DBUILD_Python_LIBRARY=OFF -DYGG_BUILD_TESTS=OFF -DYGG_BUILD_CXX_TESTS=OFF -DYGG_BUILD_Fortran_TESTS=ON -DYGG_Fortran_REQUIRED=ON -DYGG_SKIP_VALGRIND_TESTS=ON"
+  cmd = "cmake -S . -B build/fortran $YGGCPP_CONFIGURE_FLAGS_BASE $YGGCPP_CONFIGURE_FLAGS_BASE2 -DBUILD_Python_LIBRARY=OFF -DYGG_BUILD_TESTS=OFF -DYGG_BUILD_CXX_TESTS=OFF -DYGG_BUILD_Fortran_TESTS=ON -DYGG_Fortran_REQUIRED=ON",
 }
 build-fortran = {
   cmd = "cmake --build build/fortran --parallel",
@@ -267,7 +277,7 @@ test-coverage = {
       task = "test",
       args = [
         "coverage",
-        "-DCMAKE_BUILD_TYPE=Debug -DBUILD_CXX_LIBRARY=ON -DBUILD_Fortran_LIBRARY=ON -DBUILD_Python_LIBRARY=OFF -DYGG_BUILD_TESTS=ON -DYGG_BUILD_Python_TESTS=OFF -DYGG_Fortran_REQUIRED=ON -DYGG_SKIP_VALGRIND_TESTS=ON -DYGG_ENABLE_COVERAGE=ON"
+        "-DCMAKE_BUILD_TYPE=Debug -DBUILD_CXX_LIBRARY=ON -DBUILD_Fortran_LIBRARY=ON -DBUILD_Python_LIBRARY=OFF -DYGG_BUILD_TESTS=ON -DYGG_BUILD_Python_TESTS=OFF -DYGG_Fortran_REQUIRED=ON -DYGG_ENABLE_COVERAGE=ON"
       ]
     },
   ],
@@ -283,7 +293,7 @@ test-valgrind = {
       task = "test",
       args = [
         "valgrind",
-        "-DCMAKE_BUILD_TYPE=Debug -DBUILD_CXX_LIBRARY=ON -DBUILD_Fortran_LIBRARY=ON -DBUILD_Python_LIBRARY=OFF -DYGG_BUILD_TESTS=ON -DYGG_BUILD_Python_TESTS=OFF -DYGG_Fortran_REQUIRED=ON -DYGG_SKIP_VALGRIND_TESTS=OFF -DYGG_ENABLE_INSTRUMENTATION_OPT=OFF -DYGGDRASIL_DISABLE_Python_C_API=ON -DENABLE_OMP=OFF -DYGG_EMBED_Python=OFF"
+        "-DCMAKE_BUILD_TYPE=Debug -DBUILD_Python_LIBRARY=OFF -DYGG_BUILD_TESTS=ON -DYGG_BUILD_Python_TESTS=OFF -DYGG_SKIP_VALGRIND_TESTS=OFF -DYGG_ENABLE_INSTRUMENTATION_OPT=OFF -DYGGDRASIL_DISABLE_Python_C_API=ON -DENABLE_OMP=OFF -DYGG_EMBED_Python=OFF"
       ]
     },
   ],
@@ -304,13 +314,13 @@ test-asan = {
       task = "test",
       args = [
         "asan",
-        "-DCMAKE_BUILD_TYPE=Debug -DBUILD_CXX_LIBRARY=ON -DBUILD_Fortran_LIBRARY=ON -DBUILD_Python_LIBRARY=ON -DYGG_BUILD_TESTS=ON -DYGG_Fortran_REQUIRED=ON -DYGG_SKIP_VALGRIND_TESTS=ON -DYGG_BUILD_ASAN=ON -DYGG_BUILD_UBSAN=ON",  # -DYGGDRASIL_DISABLE_Python_C_API=ON",
+        "-DCMAKE_BUILD_TYPE=Debug -DBUILD_Python_LIBRARY=ON -DYGG_BUILD_TESTS=ON -DYGG_BUILD_ASAN=ON -DYGG_BUILD_UBSAN=ON",  # -DYGGDRASIL_DISABLE_Python_C_API=ON",
         "-E valgrind*",
       ],
     }
   ]
 }
-  
+
 [feature.elf.tasks]
 test-elf = {
   depends-on = [
@@ -318,7 +328,7 @@ test-elf = {
       task = "test",
       args = [
         "elf",
-        "-DCMAKE_BUILD_TYPE=Debug -DBUILD_CXX_LIBRARY=ON -DBUILD_Fortran_LIBRARY=ON -DBUILD_Python_LIBRARY=OFF -DYGG_BUILD_TESTS=ON -DYGG_Fortran_REQUIRED=ON -DYGG_BUILD_Python_TESTS=OFF -DYGG_SKIP_VALGRIND_TESTS=ON -DYGG_ENABLE_ELF=ON"
+        "-DCMAKE_BUILD_TYPE=Debug -DBUILD_Python_LIBRARY=OFF -DYGG_BUILD_TESTS=ON -DYGG_BUILD_Python_TESTS=OFF -DYGG_ENABLE_ELF=ON"
       ],
     }
   ]
@@ -329,7 +339,7 @@ doxygen = ">=1.9.2"
 graphviz = "*"
 
 [feature.docs.tasks]
-docs = "dot -c || true; cmake -S . -B build/docs $YGGCPP_CONFIGURE_FLAGS_BASE -DCMAKE_BUILD_TYPE=RelWithDebInfo -DYGG_BUILD_DOCS=ON -DBUILD_CXX_LIBRARY=OFF -DBUILD_Fortran_LIBRARY=OFF -DBUILD_Python_LIBRARY=OFF -DDOXYGEN_CHECK_MISSING=ON && cmake --build build/docs --target docs"
+docs = "dot -c || true; cmake -S . -B build/docs $YGGCPP_CONFIGURE_FLAGS_BASE $YGGCPP_CONFIGURE_FLAGS_BASE2 -DYGG_BUILD_DOCS=ON -DBUILD_CXX_LIBRARY=OFF -DBUILD_Fortran_LIBRARY=OFF -DBUILD_Python_LIBRARY=OFF -DDOXYGEN_CHECK_MISSING=ON && cmake --build build/docs --target docs"
 
 [feature.dev.dependencies]
 ccache = "*"
@@ -361,7 +371,7 @@ cmd = "pixi publish --path {{ recipe }} --target-dir {{ output_dir }}"
 
 [environments]
 default = { features = ["cxx", "fortran", "python", "docs", "dev", "optional"], solve-group = "default" }
-core = { features = ["cxx", "fortran", "python"], solve-group = "default" }
+core = { features = ["cxx", "fortran", "python", "core"], solve-group = "default" }
 optional = { features = ["cxx", "fortran", "python", "docs", "dev", "optional", "optional-required"], solve-group = "default" }
 coverage = { features = ["cxx", "fortran", "python", "optional", "coverage"], solve-group = "coverage" }
 valgrind = { features = ["cxx", "fortran", "python", "optional", "valgrind"], solve-group = "valgrind" }
