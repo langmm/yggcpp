@@ -161,6 +161,7 @@ outputs:
       string: v${{ version | version_to_buildstring }}${{ fortran_toolchain_variant if fortran_toolchain_variant is defined }}_py${{ python | version_to_buildstring }}_h${{ hash }}_${{ build_number }}
       variant:
         use_keys:
+          - fortran_toolchain_variant
           - c_stdlib
           - c_stdlib_version
           - c_compiler
@@ -260,8 +261,14 @@ outputs:
                 - Library/cmake/YggInterface/YggInterfaceTargets.cmake
                 - Library/cmake/YggInterface/YggInterfaceTargetsSplit-YggInterface_fortran.cmake
                 - Library/lib/pkgconfig/YggInterface_fortran.pc
-                - Library/lib/libYggInterface_fortran.dll.a
-                - Library/bin/libYggInterface_fortran.dll
+                - if: fortran_toolchain_variant is not defined or fortran_toolchain_variant == "msvc_gnu"
+                  then:
+                    - Library/lib/YggInterface_fortran.lib
+                    - Library/bin/YggInterface_fortran.dll
+                - if: fortran_toolchain_variant is defined and fortran_toolchain_variant == "m2w64"
+                  then:
+                    - Library/lib/libYggInterface_fortran.dll.a
+                    - Library/bin/libYggInterface_fortran.dll
             - if: unix
               then:
                 - lib/cmake/YggInterface/YggInterfaceConfig.cmake
@@ -288,25 +295,25 @@ outputs:
           run:
             - if: fortran_toolchain_variant is not defined or (fortran_toolchain_variant != "m2w64" and fortran_toolchain_variant != "msvc_gnu")
               then:
-                - ${{ stdlib('c') }}
-                - ${{ compiler('c') }}
-                - ${{ compiler('cxx') }}
+                # - ${{ stdlib('c') }}
+                # - ${{ compiler('c') }}
+                # - ${{ compiler('cxx') }}
                 - ${{ compiler('fortran') }}
             - if: fortran_toolchain_variant is defined and fortran_toolchain_variant == "m2w64"
               then:
-                - binutils <2.43
-                - ${{ stdlib('m2w64_c') }}
-                - ${{ compiler('m2w64_c') }}
-                - ${{ compiler('m2w64_cxx') }}
+                # - binutils <2.43
+                # - ${{ stdlib('m2w64_c') }}
+                # - ${{ compiler('m2w64_c') }}
+                # - ${{ compiler('m2w64_cxx') }}
                 - ${{ compiler('m2w64_fortran') }}
             - if: fortran_toolchain_variant is defined and fortran_toolchain_variant == "msvc_gnu"
               then:
-                - ${{ stdlib('c') }}
-                - ${{ compiler('c') }}
-                - ${{ compiler('cxx') }}
-                - ${{ stdlib('m2w64_c') }}
-                - ${{ compiler('m2w64_c') }}
-                - ${{ compiler('m2w64_cxx') }}
+                # - ${{ stdlib('c') }}
+                # - ${{ compiler('c') }}
+                # - ${{ compiler('cxx') }}
+                # - ${{ stdlib('m2w64_c') }}
+                # - ${{ compiler('m2w64_c') }}
+                # - ${{ compiler('m2w64_cxx') }}
                 - ${{ compiler('m2w64_fortran') }}
             - cmake
             - flask

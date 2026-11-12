@@ -287,7 +287,7 @@ doxygen = ">=1.9.2"
 graphviz = "*"
 
 [feature.docs.tasks]
-docs = "cmake -S . -B build/docs -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DYGG_BUILD_DOCS=ON -DBUILD_CXX_LIBRARY=OFF -DBUILD_Fortran_LIBRARY=OFF -DBUILD_Python_LIBRARY=OFF -DDOXYGEN_CHECK_MISSING=OFF && cmake --build build/docs --target docs"
+docs = "cmake -S . -B build/docs $YGGCPP_CONFIGURE_FLAGS_BASE -DCMAKE_BUILD_TYPE=RelWithDebInfo -DYGG_BUILD_DOCS=ON -DBUILD_CXX_LIBRARY=OFF -DBUILD_Fortran_LIBRARY=OFF -DBUILD_Python_LIBRARY=OFF -DDOXYGEN_CHECK_MISSING=OFF && cmake --build build/docs --target docs"
 
 [feature.dev.dependencies]
 ccache = "*"

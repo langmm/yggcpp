@@ -102,7 +102,11 @@ jobs:
     steps:
       - name: All tests ok
         if: ${{ !(contains(needs.*.result, 'failure')) }}
-        run: exit 0
+        run: |
+          echo "Success status: ${{ needs.test-matrix.result }}"
+          exit 0
       - name: Some tests failed
         if: ${{ contains(needs.*.result, 'failure') }}
-        run: exit 1
+        run: |
+          echo "Failure status: ${{ needs.test-matrix.result }}"
+          exit 1
