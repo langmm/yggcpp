@@ -36,7 +36,7 @@ llvm-openmp = "*"
 [activation.env]
 CMAKE_GENERATOR = "Ninja"
 CMAKE_PREFIX_PATH = "$CONDA_PREFIX"
-CMAKE_INSTALL_PREFIX = "$CONDA_PREFIX"
+# CMAKE_INSTALL_PREFIX = "$CONDA_PREFIX"
 
 # Set these by default?
 # -DYGG_DEBUG_LEVEL=5

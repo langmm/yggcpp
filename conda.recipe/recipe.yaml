@@ -24,6 +24,12 @@ outputs:
     build:
       variant:
         use_keys:
+          - c_stdlib
+          - c_stdlib_version
+          - c_compiler
+          - c_compiler_version
+          - cxx_compiler
+          - cxx_compiler_version
           - m2w64_c_stdlib
           - m2w64_c_stdlib_version
           - m2w64_c_compiler
@@ -137,7 +143,7 @@ outputs:
                 - ${{ stdlib('m2w64_c') }}
                 - ${{ compiler('m2w64_c') }}
                 - ${{ compiler('m2w64_cxx') }}
-            - if: cxx_toolchain_variant is not defined or cxx_toolchain_variant == ""
+            - if: cxx_toolchain_variant is not defined or cxx_toolchain_variant != "m2w64"
               then:
                 - ${{ stdlib('c') }}
                 - ${{ compiler('c') }}
@@ -155,6 +161,14 @@ outputs:
       string: v${{ version | version_to_buildstring }}${{ fortran_toolchain_variant if fortran_toolchain_variant is defined }}_py${{ python | version_to_buildstring }}_h${{ hash }}_${{ build_number }}
       variant:
         use_keys:
+          - c_stdlib
+          - c_stdlib_version
+          - c_compiler
+          - c_compiler_version
+          - cxx_compiler
+          - cxx_compiler_version
+          - fortran_compiler
+          - fortran_compiler_version
           - m2w64_c_stdlib
           - m2w64_c_stdlib_version
           - m2w64_c_compiler
@@ -188,6 +202,12 @@ outputs:
         # - if: fortran_toolchain_variant == cxx_toolchain_variant or (fortran_toolchain_variant == "msvc_gnu" and cxx_toolchain_variant == "")
         #   then:
         #     - ${{ pin_subpackage('ygginterface-cxx', exact=True) }}
+        - if: fortran_toolchain_variant is not defined or (fortran_toolchain_variant != "m2w64" and fortran_toolchain_variant != "msvc_gnu")
+          then:
+            - ${{ stdlib('c') }}
+            - ${{ compiler('c') }}
+            - ${{ compiler('cxx') }}
+            - ${{ compiler('fortran') }}
         - if: fortran_toolchain_variant is defined and fortran_toolchain_variant == "m2w64"
           then:
             - binutils <2.43
@@ -195,12 +215,6 @@ outputs:
             - ${{ compiler('m2w64_c') }}
             - ${{ compiler('m2w64_cxx') }}
             - ${{ compiler('m2w64_fortran') }}
-        - if: fortran_toolchain_variant is not defined or fortran_toolchain_variant == ""
-          then:
-            - ${{ stdlib('c') }}
-            - ${{ compiler('c') }}
-            - ${{ compiler('cxx') }}
-            - ${{ compiler('fortran') }}
         - if: fortran_toolchain_variant is defined and fortran_toolchain_variant == "msvc_gnu"
           then:
             - binutils <2.43
@@ -272,6 +286,12 @@ outputs:
         requirements:
           # TODO: Minimal requirements for testing
           run:
+            - if: fortran_toolchain_variant is not defined or (fortran_toolchain_variant != "m2w64" and fortran_toolchain_variant != "msvc_gnu")
+              then:
+                - ${{ stdlib('c') }}
+                - ${{ compiler('c') }}
+                - ${{ compiler('cxx') }}
+                - ${{ compiler('fortran') }}
             - if: fortran_toolchain_variant is defined and fortran_toolchain_variant == "m2w64"
               then:
                 - binutils <2.43
@@ -288,12 +308,6 @@ outputs:
                 - ${{ compiler('m2w64_c') }}
                 - ${{ compiler('m2w64_cxx') }}
                 - ${{ compiler('m2w64_fortran') }}
-            - if: fortran_toolchain_variant is not defined or fortran_toolchain_variant == ""
-              then:
-                - ${{ stdlib('c') }}
-                - ${{ compiler('c') }}
-                - ${{ compiler('cxx') }}
-                - ${{ compiler('fortran') }}
             - cmake
             - flask
             - ninja
@@ -306,6 +320,13 @@ outputs:
     build:
       string: v${{ version | version_to_buildstring }}_py${{ python | version_to_buildstring }}_h${{ hash }}_${{ build_number }}
       variant:
+        use_keys:
+          - c_stdlib
+          - c_stdlib_version
+          - c_compiler
+          - c_compiler_version
+          - cxx_compiler
+          - cxx_compiler_version
         ignore_keys:
           - cxx_toolchain_variant
           - fortran_toolchain_variant
@@ -389,6 +410,24 @@ outputs:
       name: ygginterface
     build:
       script:
+      variant:
+        use_keys:
+          - c_stdlib
+          - c_stdlib_version
+          - c_compiler
+          - c_compiler_version
+          - cxx_compiler
+          - cxx_compiler_version
+          - fortran_compiler
+          - fortran_compiler_version
+          - m2w64_c_stdlib
+          - m2w64_c_stdlib_version
+          - m2w64_c_compiler
+          - m2w64_c_compiler_version
+          - m2w64_cxx_compiler
+          - m2w64_cxx_compiler_version
+          - m2w64_fortran_compiler
+          - m2w64_fortran_compiler_version
     requirements:
       run:
         - ${{ pin_subpackage('ygginterface-cxx', exact=True) }}

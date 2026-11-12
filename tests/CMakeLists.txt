@@ -13,7 +13,7 @@ add_external_test_libraries(
 # C++/C Tests #
 ###############
 
-if(YGG_BUILD_TESTS OR YGG_BUILD_CXX_TESTS)
+if(YGG_BUILD_CXX_TESTS)
     set(SUBLIBFILE ${CMAKE_BINARY_DIR}/library_path.txt)
     add_custom_command(
         OUTPUT ${SUBLIBFILE}
@@ -34,7 +34,7 @@ endif()
 # Fortran Tests #
 #################
 
-if(YGG_BUILD_TESTS OR YGG_BUILD_Fortran_TESTS)
+if(YGG_BUILD_Fortran_TESTS)
     add_subdirectory(fortran)
 endif()
 
@@ -42,6 +42,6 @@ endif()
 # Python Tests #
 ################
 
-if(YGG_BUILD_TESTS OR YGG_BUILD_Python_TESTS)
+if(YGG_BUILD_Python_TESTS)
     add_subdirectory(python)
 endif()

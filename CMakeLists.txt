@@ -699,7 +699,7 @@ endif()
 # Tests #
 #########
 
-if(YGG_BUILD_TESTS OR YGG_BUILD_CXX_TESTS OR YGG_BUILD_Fortran_TESTS OR YGG_BUILD_Python_TESTS)
+if(YGG_BUILD_CXX_TESTS OR YGG_BUILD_Fortran_TESTS OR YGG_BUILD_Python_TESTS)
     enable_testing()
     include(CTest)
     add_subdirectory(tests)
