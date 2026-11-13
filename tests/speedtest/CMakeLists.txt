@@ -71,6 +71,7 @@ function(add_speed_test LANGUAGE LANGUAGE_EXT)
     include(TestTools)
     include(BuildTools)
     check_yggdrasil_option(${COMM} TYPE COMM REQUIRED)
+    check_yggdrasil_option(THREADS REQUIRED)
   endif()
   set(SOURCE_FILE "${LANGUAGE}_${COMM}/speedtest.${LANGUAGE_EXT}")
   configure_file(speedtest.${LANGUAGE_EXT}.in

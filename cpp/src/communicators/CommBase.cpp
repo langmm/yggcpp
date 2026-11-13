@@ -1011,7 +1011,7 @@ long Comm_t::recv_raw(Header& head) {
   Comm_t* xmulti = NULL;
   YGGCOMM_PYGIL_ALLOW_THREADS_BEGIN(recv_raw, -1)
   log_debug() << "recv_raw: Receiving from " << address.address() << std::endl;
-  if (direction != RECV && type != CLIENT_COMM) {
+  if (direction != RECV && type != CLIENT_COMM && type != FUNCTION_COMM) {
     log_debug() << "recv_raw: Attempt to receive from communicator set up to send" << std::endl;
     goto cleanup;
   }

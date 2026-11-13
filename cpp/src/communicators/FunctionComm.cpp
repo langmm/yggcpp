@@ -423,6 +423,13 @@ int FunctionComm::nmsg(DIRECTION dir) const {
     return handle->nmsg();
   return 0;
 }
+YggInterface::utils::Metadata& FunctionComm::getMetadata(const DIRECTION dir) {
+  if (global_comm)
+    return global_comm->getMetadata(dir);
+  if (dir == this->direction || dir == NONE)
+    return CommBase::getMetadata(dir);
+  return response_metadata;
+}
       
 int FunctionComm::send_single(utils::Header& header) {
   if (header.on_send() < 0)

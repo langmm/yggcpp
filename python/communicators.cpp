@@ -187,7 +187,7 @@ static PyTypeObject commMetaType = {
 	, 0                        /* tp_versions_used */
 #endif
 #if (PY_MAJOR_VERSION > 3 || (PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION >= 15))
-	, 0                        /* _tp_iteritem‎ */
+	, 0                        /* _tp_iteritem */
 #endif
 };
 
@@ -635,7 +635,7 @@ static PyTypeObject Comm_tType = {
 	, 0                        /* tp_versions_used */
 #endif
 #if (PY_MAJOR_VERSION > 3 || (PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION >= 15))
-	, 0                        /* _tp_iteritem‎ */
+	, 0                        /* _tp_iteritem */
 #endif
 };
 

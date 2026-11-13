@@ -183,7 +183,11 @@ namespace YggInterface {
 
       /** \copydoc YggInterface::communicator::Comm_t::nmsg */
       YGG_API int nmsg(DIRECTION dir=NONE) const override;
-      
+
+      /** \copydoc YggInterface::communicator::Comm_t::getMetadata */
+      YGG_API YggInterface::utils::Metadata& getMetadata(const DIRECTION dir=NONE) override;
+      utils::Metadata response_metadata;      //!< Metadata for the response
+
     protected:
       /** \copydoc YggInterface::communicator::Comm_t::send_single */
       YGG_API int send_single(utils::Header& header) override;
