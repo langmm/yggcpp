@@ -260,7 +260,7 @@ class TestComm_t_Installed:
         do_send_recv(message[1], msg_send_type=message[0], **kws)
 
     def test_send_recv_async(self, commtype, require_installed,
-                             comm_recv_kwargs):
+                             require_threads, comm_recv_kwargs):
         comm_recv = YggInterface.Comm_t(
             "test", commtype=commtype,
             direction=YggInterface.DIRECTION.RECV,
@@ -276,7 +276,8 @@ class TestComm_t_Installed:
         assert comm_recv.recv() == (True, msg)
 
     def test_send_recv_filter_recv(self, commtype, require_installed,
-                                   message_filter, comm_recv_kwargs):
+                                   require_threads, message_filter,
+                                   comm_recv_kwargs):
         comm_recv = YggInterface.Comm_t(
             "test", commtype=commtype,
             direction=YggInterface.DIRECTION.RECV,
@@ -298,7 +299,8 @@ class TestComm_t_Installed:
         comm_recv.close()
 
     def test_send_recv_filter_send(self, commtype, require_installed,
-                                   message_filter, comm_recv_kwargs):
+                                   require_threads, message_filter,
+                                   comm_recv_kwargs):
         comm_recv = YggInterface.Comm_t(
             "test", commtype=commtype,
             direction=YggInterface.DIRECTION.RECV,
@@ -320,7 +322,8 @@ class TestComm_t_Installed:
         comm_recv.close()
 
     def test_send_recv_transform_recv(self, commtype, require_installed,
-                                      message_transform, comm_recv_kwargs):
+                                      require_threads, message_transform,
+                                      comm_recv_kwargs):
         comm_recv = YggInterface.Comm_t(
             "test", commtype=commtype,
             direction=YggInterface.DIRECTION.RECV,
@@ -342,7 +345,7 @@ class TestComm_t_Installed:
         comm_recv.close()
 
     def test_send_recv_transform_send(self, commtype, require_installed,
-                                      comm_recv_kwargs):
+                                      require_threads, comm_recv_kwargs):
         comm_recv = YggInterface.Comm_t(
             "test", commtype=commtype,
             direction=YggInterface.DIRECTION.RECV,
@@ -366,7 +369,7 @@ class TestComm_t_Installed:
         comm_recv.close()
 
     def test_send_dict_recv(self, commtype, require_installed,
-                            comm_recv_kwargs):
+                            require_threads, comm_recv_kwargs):
         comm_recv = YggInterface.Comm_t(
             "test", commtype=commtype,
             direction=YggInterface.DIRECTION.RECV,
@@ -384,7 +387,7 @@ class TestComm_t_Installed:
         assert comm_recv.recv() == (True, msg_recv)
 
     def test_send_recv_dict(self, commtype, require_installed,
-                            comm_recv_kwargs):
+                            require_threads, comm_recv_kwargs):
         comm_recv = YggInterface.Comm_t(
             "test", commtype=commtype,
             direction=YggInterface.DIRECTION.RECV,
@@ -402,7 +405,7 @@ class TestComm_t_Installed:
         assert comm_recv.recv_dict(key_order=key_order) == (True, msg_recv)
 
     def test_send_array_recv(self, commtype, require_installed,
-                             comm_recv_kwargs):
+                             require_threads, comm_recv_kwargs):
         comm_recv = YggInterface.Comm_t(
             "test", commtype=commtype,
             direction=YggInterface.DIRECTION.RECV,
@@ -420,7 +423,7 @@ class TestComm_t_Installed:
         assert comm_recv.recv() == (True, msg_recv)
 
     def test_send_recv_array(self, commtype, require_installed,
-                             comm_recv_kwargs):
+                             require_threads, comm_recv_kwargs):
         comm_recv = YggInterface.Comm_t(
             "test", commtype=commtype,
             direction=YggInterface.DIRECTION.RECV,
@@ -438,7 +441,7 @@ class TestComm_t_Installed:
         assert comm_recv.recv_array(key_order=key_order) == (True, msg_recv)
 
     def test_send_structarray_recv(self, commtype, require_installed,
-                                   comm_recv_kwargs):
+                                   require_threads, comm_recv_kwargs):
         comm_recv = YggInterface.Comm_t(
             "test", commtype=commtype,
             direction=YggInterface.DIRECTION.RECV,
@@ -466,7 +469,7 @@ class TestComm_t_Installed:
         np.testing.assert_equal(msg_recv, msg_expc)
 
     def test_send_recv_structarray(self, commtype, require_installed,
-                                   comm_recv_kwargs):
+                                   require_threads, comm_recv_kwargs):
         comm_recv = YggInterface.Comm_t(
             "test", commtype=commtype,
             direction=YggInterface.DIRECTION.RECV,
@@ -610,7 +613,7 @@ class TestRPC:
                "REQUEST" + server.maxMsgSize * "0",
                "RESPONSE" + server.maxMsgSize * "0")
 
-    def test_send_recv_async(self):
+    def test_send_recv_async(self, require_threads):
         server = YggInterface.Comm_t(
             "test_server",
             commtype=YggInterface.COMM_TYPE.SERVER_COMM,
@@ -630,7 +633,7 @@ class TestRPC:
         client.close()
         server.close()
 
-    def test_call_async(self, do_rpc):
+    def test_call_async(self, do_rpc, require_threads):
         server = YggInterface.Comm_t(
             "test_server",
             commtype=YggInterface.COMM_TYPE.SERVER_COMM,

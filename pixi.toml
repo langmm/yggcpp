@@ -56,10 +56,10 @@ llvm-openmp = "*"
 
 [activation.env]
 CMAKE_GENERATOR = "Ninja"
-YGGCPP_CONFIGURE_FLAGS_BASE = "-G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DPython3_EXECUTABLE=$PYTHON -DBUILD_CXX_LIBRARY=ON -DBUILD_Fortran_LIBRARY=ON -DBUILD_Python_LIBRARY=ON -DYGG_SKIP_VALGRIND_TESTS=ON -DYGG_ENABLE_ELF=OFF -DENABLE_RMQ=OFF -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"
+YGGCPP_CONFIGURE_FLAGS_BASE = "-G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DPython3_EXECUTABLE=$PYTHON -DBUILD_CXX_LIBRARY=ON -DBUILD_Fortran_LIBRARY=ON -DBUILD_Python_LIBRARY=ON -DYGG_SKIP_VALGRIND_TESTS=ON -DYGG_ENABLE_ELF=OFF -DENABLE_RMQ=OFF"
 YGGCPP_CONFIGURE_FLAGS_BASE2 = ""
 
-# Set these by default?
+# Add any of these for debugging
 # -DYGG_DEBUG_LEVEL=5
 # -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON
 # -DCMAKE_MESSAGE_LOG_LEVEL:STRING=DEBUG
@@ -71,10 +71,12 @@ YGGCPP_CONFIGURE_FLAGS_BASE2 = "-DREQUIRE_ZMQ=ON -DREQUIRE_MPI=ON -DREQUIRE_RMQ=
 YGGCPP_CONFIGURE_FLAGS_BASE2 = "-DREQUIRE_ZMQ=ON -DREQUIRE_MPI=ON -DREQUIRE_RMQ=ON -DREQUIRE_THREADS=ON -DREQUIRE_REST=ON -DREQUIRE_OMP=ON -DREQUIRE_IPC=ON"
 
 [feature.core.target.win.activation.env]
-YGGCPP_CONFIGURE_FLAGS_BASE2 = "-REQUIRE_ZMQ=ON  -DENABLE_MPI=OFF -DENABLE_RMQ=OFF -DENABLE_THREADS=OFF -DENABLE_REST=OFF -DENABLE_OMP=OFF"
+YGGCPP_CONFIGURE_FLAGS_BASE2 = "-DREQUIRE_ZMQ=ON  -DENABLE_MPI=OFF -DENABLE_RMQ=OFF -DENABLE_THREADS=OFF -DENABLE_REST=OFF -DENABLE_OMP=OFF"
+SKBUILD_CMAKE_DEFINE = "CMAKE_PREFIX_PATH=$CONDA_PREFIX;REQUIRE_ZMQ=ON;ENABLE_MPI=OFF;ENABLE_RMQ=OFF'ENABLE_THREADS=OFF;ENABLE_REST=OFF;ENABLE_OMP=OFF"
 
 [feature.core.target.unix.activation.env]
 YGGCPP_CONFIGURE_FLAGS_BASE2 = "-DENABLE_ZMQ=OFF -DENABLE_MPI=OFF -DENABLE_RMQ=OFF -DENABLE_THREADS=OFF -DENABLE_REST=OFF -DENABLE_OMP=OFF"
+SKBUILD_CMAKE_DEFINE = "CMAKE_PREFIX_PATH=$CONDA_PREFIX;ENABLE_ZMQ=ON;ENABLE_MPI=OFF;ENABLE_RMQ=OFF'ENABLE_THREADS=OFF;ENABLE_REST=OFF;ENABLE_OMP=OFF"
 
 [tasks]
 clean = "python -c \"import glob, shutil; [shutil.rmtree(p, ignore_errors=True) for p in glob.glob('build*') + ['_install', '_skbuild', 'conda_build']]\""
@@ -143,8 +145,13 @@ install = {
   ]
 }
 configure-speed = {
-  # cmd = "cmake --install build/all --prefix {{ prefix }} && cmake -S tests/speedtest -B build/speed -G Ninja -DCOMM=ALL -DCMAKE_PREFIX_PATH={{ prefix }}",
-  cmd = "cmake -S tests/speedtest -B build/speed -G Ninja -DCOMM=ALL -DCMAKE_PREFIX_PATH={{ prefix }}",
+  cmd = """
+  {% if prefix[0] == '/' or (pixi.is_win and ':' in prefix) %}
+    cmake -S tests/speedtest -B build/speed -G Ninja -DCOMM=ALL -DCMAKE_PREFIX_PATH={{ prefix }}
+  {% else %}
+    cmake -S tests/speedtest -B build/speed -G Ninja -DCOMM=ALL -DCMAKE_PREFIX_PATH={{ pixi.init_cwd }}/{{ prefix }}
+  {% endif %}
+  """,
   # -DENABLE_Fortran=OFF
   args = [
     {
@@ -154,12 +161,6 @@ configure-speed = {
   ],
   depends-on = [
     {
-      # task = "build",
-      # args = ["all"],
-      # $CONDA_PREFIX not expanded by shell if passed as argument to
-      #   underlying install command
-      # task = "install",
-      # args = ["--prefix", "$CONDA_PREFIX"],
       task = "install",
       args = ["--prefix", "{{ prefix }}"],
     },
@@ -286,7 +287,7 @@ install-fortran = {
 }
 
 [feature.python.activation.env]
-SKBUILD_CMAKE_DEFINE = "ENABLE_RMQ=OFF"
+SKBUILD_CMAKE_DEFINE = "CMAKE_PREFIX_PATH=$CONDA_PREFIX;ENABLE_RMQ=OFF"
 
 [feature.python.dependencies]
 pip = "*"
@@ -417,7 +418,7 @@ fortran = { features = ["cxx", "fortran", "optional"], solve-group = "fortran" }
 python = { features = ["cxx", "python", "optional"], solve-group = "python" }
 docs = { features = ["cxx", "docs"], solve-group = "docs" }
 build-conda = { features = ["build-conda"] }
-test-py315-core = { features = ["py315", "cxx", "fortran", "python"] }
+test-py315-core = { features = ["py315", "cxx", "fortran", "python", "core"] }
 test-py311 = { features = ["py311", "cxx", "fortran", "python", "optional"] }
 test-py312 = { features = ["py312", "cxx", "fortran", "python", "optional"] }
 test-py313 = { features = ["py313", "cxx", "fortran", "python", "optional"] }

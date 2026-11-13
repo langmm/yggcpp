@@ -196,6 +196,10 @@ function(setup_python_search)
   if(${ARGS_PREFIX}_SETUP_PYTHON_SEARCH_PERFORMED)
     return()
   endif()
+  if(${ARGS_PREFIX}_FOUND AND TARGET ${ARGS_PREFIX}::NumPy)
+    message(STATUS "${ARGS_PREFIX} already found: ${ARGS_PREFIX}_EXECUTABLE = ${${ARGS_PREFIX}_EXECUTABLE}")
+    return()
+  endif()
   
   if (NOT DEFINED ${ARGS_PREFIX}_FIND_REGISTRY)
     set(${ARGS_PREFIX}_FIND_REGISTRY "LAST")
@@ -205,6 +209,7 @@ function(setup_python_search)
   endif ()
   if(${ARGS_PREFIX}_EXECUTABLE)
     if(NOT ${ARGS_PREFIX}_NumPy_INCLUDE_DIRS)
+      message(STATUS "Looking for Numpy includes (${${ARGS_PREFIX}_NumPy_INCLUDE_DIRS}) using ${ARGS_PREFIX}_EXECUTABLE = ${${ARGS_PREFIX}_EXECUTABLE}")
       execute_process(
         COMMAND ${${ARGS_PREFIX}_EXECUTABLE} -c "import numpy; print(numpy.get_include())"
         OUTPUT_VARIABLE ${ARGS_PREFIX}_NumPy_INCLUDE_DIRS

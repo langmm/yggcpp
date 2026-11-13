@@ -705,7 +705,9 @@ long AsyncBacklog::recv() {
   bool received = false;
   utils::Header header(true);
   {
+#ifdef THREADSINSTALLED
     const std::lock_guard<std::mutex> comm_lock(pImplStatus->mutex);
+#endif // THREADSINSTALLED
     int nmsg = comm->nmsg();
     if (nmsg > 0) {
       out = comm->recv_single(header);

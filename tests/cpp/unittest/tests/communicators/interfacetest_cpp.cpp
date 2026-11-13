@@ -400,6 +400,7 @@ bool example_state_fset(const std::string& name,
   return true;
 }
 
+#ifdef THREADSINSTALLED
 TEST(YggInterface, yggStateInterface) {
   {
     ClientComm sComm("state", COMM_FLAG_SET_OPP_ENV | COMM_FLAG_ASYNC);
@@ -439,6 +440,7 @@ TEST(YggInterface, yggStateInterface) {
   }
   ygg_cleanup(CLEANUP_COMMS);
 }
+#endif // THREADSINSTALLED
 
 #undef INTERFACE_TEST_SCHEMA
 #undef INTERFACE_TEST_NOARGS
@@ -459,6 +461,7 @@ TEST(YggInterface, yggStateInterface) {
 #undef INIT_INPUT_BASE
 
 
+#ifdef THREADSINSTALLED
 #ifdef _OPENMP
 TEST(DefaultCommu, openmp) {
   int nthreads = 2;
@@ -493,3 +496,4 @@ TEST(DefaultCommu, openmp) {
   EXPECT_GE(res_recv, 0);
 }
 #endif // _OPENMP
+#endif // THREADSINSTALLED

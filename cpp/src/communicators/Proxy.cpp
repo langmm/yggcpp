@@ -45,11 +45,11 @@ Proxy::~Proxy() {
 
 std::string Proxy::logInst() const {
   std::string out;
-#ifdef THREADSINSTALLED
+  if (!(icomm || ocomm))
+    return out;
   if (icomm) out += icomm->getAddress();
   out += "-2-";
   if (ocomm) out += ocomm->getAddress();
-#endif // THREADSINSTALLED
   return out;
 }
 

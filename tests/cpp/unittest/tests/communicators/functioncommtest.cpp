@@ -26,8 +26,10 @@ TEST(FunctionComm, call_c) {
   DO_FUNCTION_CALL;
 }
 
+#ifdef THREADSINSTALLED
 TEST(FunctionComm, call_c_async) {
   register_function("example_model_function", example_model_function);
   utils::Address addr("cxx::example_model_function");
   DO_FUNCTION_CALL_ASYNC;
 }
+#endif // THREADSINSTALLED

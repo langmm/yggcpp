@@ -76,6 +76,19 @@ def check_ipc_cleanup():
 
 
 @pytest.fixture
+def require_threads():
+    try:
+        import YggInterface
+        tmp = YggInterface.Comm_t(
+            "test", flags=YggInterface.COMM_FLAG.COMM_FLAG_ASYNC)
+        tmp.close()
+    except BaseException as e:
+        if "THREADSINSTALLED" in str(e):
+            pytest.skip(
+                "YggInterface was not built with thread support enabled")
+
+
+@pytest.fixture
 def compare_message():
 
     def compare_message_wrapped(actual, expected):

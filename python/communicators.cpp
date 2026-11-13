@@ -176,16 +176,19 @@ static PyTypeObject commMetaType = {
         NULL,                      /* tp_weaklist */
         0,                         /* tp_del */
         0,                         /* tp_version_tag */
-        0,                         /* tp_finalize */
+        0                          /* tp_finalize */
 #if (PY_MAJOR_VERSION > 3 || (PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION >= 8))
-        0,                         /* tp_vectorcall */
+        , 0                        /* tp_vectorcall */
 #endif
 #if (PY_MAJOR_VERSION > 3 || (PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION >= 12))
-	0,                         /* tp_watched */
+	, 0                        /* tp_watched */
 #endif
 #if (PY_MAJOR_VERSION > 3 || (PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION >= 13))
-	0,                         /* tp_versions_used */
+	, 0                        /* tp_versions_used */
 #endif
+// #if (PY_MAJOR_VERSION > 3 || (PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION >= 15))
+// 	, 0                        /* _tp_iteritem‎ */
+// #endif
 };
 
 PyObject* commMeta_new(PyTypeObject *type, PyObject* args, PyObject* kwds) {
@@ -621,16 +624,19 @@ static PyTypeObject Comm_tType = {
         NULL,                      /* tp_weaklist */
         0,                         /* tp_del */
         0,                         /* tp_version_tag */
-        0,                         /* tp_finalize */
+        0                          /* tp_finalize */
 #if (PY_MAJOR_VERSION > 3 || (PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION >= 8))
-        0,                         /* tp_vectorcall */
+        , 0                        /* tp_vectorcall */
 #endif
 #if (PY_MAJOR_VERSION > 3 || (PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION >= 12))
-	0,                         /* tp_watched */
+	, 0                        /* tp_watched */
 #endif
 #if (PY_MAJOR_VERSION > 3 || (PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION >= 13))
-	0,                         /* tp_versions_used */
+	, 0                        /* tp_versions_used */
 #endif
+// #if (PY_MAJOR_VERSION > 3 || (PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION >= 15))
+// 	, 0                        /* _tp_iteritem‎ */
+// #endif
 };
 
 
