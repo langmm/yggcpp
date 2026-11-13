@@ -75,8 +75,8 @@ def check_ipc_cleanup():
     assert ipc_queue_count() == count
 
 
-@pytest.fixture
-def require_threads():
+@pytest.fixture(scope="session")
+def threads_installed():
     try:
         import YggInterface
         tmp = YggInterface.Comm_t(
@@ -84,8 +84,15 @@ def require_threads():
         tmp.close()
     except BaseException as e:
         if "THREADSINSTALLED" in str(e):
-            pytest.skip(
-                "YggInterface was not built with thread support enabled")
+            return False
+    return True
+
+
+@pytest.fixture
+def require_threads(threads_installed):
+    if not threads_installed:
+        pytest.skip(
+            "YggInterface was not built with thread support enabled")
 
 
 @pytest.fixture

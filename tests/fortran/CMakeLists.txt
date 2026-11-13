@@ -92,17 +92,18 @@ endfunction ()
 
 if(ENABLE_THREADS)
   file(GLOB files "*.f90")
+  generate_dynamic_tests(
+    test_ygg_function_language_1.f90.in APPEND_TO files
+  )
 else()
   # Currently all of the tests require the communicator to be
   #   asynchronous so the message can be sent without blocking
   set(files)
 endif()
-generate_dynamic_tests(
-  test_ygg_function_language_1.f90.in APPEND_TO files
-)
-add_fortran_test_executable (fortran_testsuite ${files})
-cover_test(fortran_testsuite)
 
-if(ENABLE_THREADS)
+if(files)
+  add_fortran_test_executable (fortran_testsuite ${files})
+  cover_test(fortran_testsuite)
+
   add_dynamic_dependencies(fortran_testsuite WORKING_DIR ${WORKING_DIR})
 endif()

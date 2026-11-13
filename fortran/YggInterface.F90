@@ -19,7 +19,7 @@ module YggInterface
   real(16), parameter :: PI_16 = 4 * atan (1.0_16)
 #endif
 
-  include "YggInterface_enums.F90"
+#include "YggInterface_enums.F90"
   ! include "YggInterface_interfaces.F90"
 
   !> @brief Wrap a fortran variable so that yggdrasil can pass it to comm
@@ -886,7 +886,7 @@ module YggInterface
   public :: yggcomplex_long_double
 #endif
 
-  include "YggInterface_cdef.F90"
+#include "YggInterface_cdef.F90"
 
 #define WITH_GLOBAL_SCOPE(COMM) call set_global_comm(); COMM; call unset_global_comm()
 
@@ -902,14 +902,14 @@ module YggInterface
   
 contains
 
-  ! include "YggInterface_copy.F90"
-  include "YggInterface_realloc.F90"
-  include "YggInterface_c2f.F90"
-  include "YggInterface_arg.F90"
-  include "YggInterface_conv.F90"
-  include "YggInterface_assign.F90"
-  ! include "YggInterface_array.F90"
-  ! include "YggInterface_map.F90"
+  ! #include "YggInterface_copy.F90"
+#include "YggInterface_realloc.F90"
+#include "YggInterface_c2f.F90"
+#include "YggInterface_arg.F90"
+#include "YggInterface_conv.F90"
+#include "YggInterface_assign.F90"
+  ! #include "YggInterface_array.F90"
+  ! #include "YggInterface_map.F90"
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
   ! These must be explicit because the preprocess need to run to use a

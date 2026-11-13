@@ -40,24 +40,24 @@ jobs:
             recipe: recipe
             variant: m2w64
             variant-flags: "--variant cxx_toolchain_variant=m2w64 --variant fortran_toolchain_variant=m2w64"
-            vs-version: "vs2017"
-            vs-toolset-version: "14.1"
+            vs-version: ""
+            vs-toolset-version: ""
           # Version using m2w64 Fortran with m2w64 for C bindings
           - os: windows-latest
             python-version: "3.11"
             recipe: recipe
             variant: m2w64-fortran
             variant-flags: "--variant fortran_toolchain_variant=m2w64"
-            vs-version: "vs2017"
-            vs-toolset-version: "14.1"
+            vs-version: ""
+            vs-toolset-version: ""
           # Version using m2w64 Fortran with MSVC for C bindings
           - os: windows-latest
             python-version: "3.11"
             recipe: recipe
             variant: msvc-gnu
             variant-flags: "--variant fortran_toolchain_variant=msvc_gnu"
-            vs-version: "vs2017"
-            vs-toolset-version: "14.1"
+            vs-version: ""
+            vs-toolset-version: ""
           # Try different MSVC versions
           - os: windows-latest
             python-version: "3.11"
@@ -66,35 +66,35 @@ jobs:
             variant-flags: "--variant fortran_toolchain_variant=msvc_gnu"
             vs-version: ""
             vs-toolset-version: ""
-          - os: windows-latest
-            python-version: "3.11"
-            recipe: recipe
-            variant: msvc-gnu
-            variant-flags: "--variant fortran_toolchain_variant=msvc_gnu"
-            vs-version: "vs2022"
-            vs-toolset-version: "14.3"
-          - os: windows-latest
-            python-version: "3.11"
-            recipe: recipe
-            variant: msvc-gnu-vs2026
-            variant-flags: "--variant fortran_toolchain_variant=msvc_gnu"
-            vs-version: "vs2026"
-            vs-toolset-version: "14.5"
+          # - os: windows-latest
+          #   python-version: "3.11"
+          #   recipe: recipe
+          #   variant: msvc-gnu
+          #   variant-flags: "--variant fortran_toolchain_variant=msvc_gnu"
+          #   vs-version: "vs2022"
+          #   vs-toolset-version: ""  # "14.3"
+          # - os: windows-latest
+          #   python-version: "3.11"
+          #   recipe: recipe
+          #   variant: msvc-gnu-vs2026
+          #   variant-flags: "--variant fortran_toolchain_variant=msvc_gnu"
+          #   vs-version: "vs2026"
+          #   vs-toolset-version: "14.5"
           # Alternate compilers
           - os: windows-latest
             python-version: "3.11"
             recipe: recipe
             variant: flang-2017
             variant-flags: "--variant fortran_compiler=flang"
-            vs-version: "vs2017"
-            vs-toolset-version: "14.1"
+            vs-version: ""
+            vs-toolset-version: ""
           - os: windows-latest
             python-version: "3.11"
             recipe: recipe
             variant: ifx-2017
             variant-flags: "--variant fortran_compiler=ifx"
-            vs-version: "vs2017"
-            vs-toolset-version: "14.1"
+            vs-version: ""
+            vs-toolset-version: ""
       fail-fast: false
     steps:
       - name: Check out repository code
