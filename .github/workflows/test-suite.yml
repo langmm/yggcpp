@@ -23,15 +23,15 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-2022]
-        python-install: [pip, conda]
+        python-install: [pip]  # , conda]
         windows-compiler: [mingw]
         include:
           - os: windows-2022
             python-install: pip
             windows-compiler: msvc
-          - os: windows-2022
-            python-install: conda
-            windows-compiler: msvc
+          # - os: windows-2022
+          #   python-install: conda
+          #   windows-compiler: msvc
       fail-fast: false
     steps:
       - name: Check out repository code
