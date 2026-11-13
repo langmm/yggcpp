@@ -68,32 +68,32 @@ outputs:
             - ${{ compiler('c') }}
             - ${{ compiler('cxx') }}
         - cmake >=3.16
-        - libcurl
-        # - llvm-openmp
         - ninja
-        # - numpy
-        - openmpi
         - pkgconfig
+        # - libcurl
+        # # - llvm-openmp
+        # - openmpi
         # - python
-        - if: unix
-          then: sysv_ipc
-        - yggdrasil-rapidjson >=1.1.0.5
-        - zeromq
+        # - if: unix
+        #   then: sysv_ipc
+        # - yggdrasil-rapidjson >=1.1.0.5
+        # - zeromq
       host:
-        # - llvm-openmp
-        - ninja
         - numpy
-        - openmpi
-        - pip
+        # - pip
         - python
         - if: match(python, ">=3.15")
           then: libpython
+        # - llvm-openmp
+        - libcurl
+        - openmpi
         - if: unix
           then: sysv_ipc
         - yggdrasil-rapidjson >=1.1.0.5
         - zeromq
       run:
-        - yggdrasil-rapidjson >=1.1.0.5
+        - python
+        # - yggdrasil-rapidjson >=1.1.0.5
     tests:
       - package_contents:
           files:
@@ -200,9 +200,6 @@ outputs:
             - python
             - if: match(python, ">=3.15")
               then: libpython
-        # - if: fortran_toolchain_variant == cxx_toolchain_variant or (fortran_toolchain_variant == "msvc_gnu" and cxx_toolchain_variant == "")
-        #   then:
-        #     - ${{ pin_subpackage('ygginterface-cxx', exact=True) }}
         - if: fortran_toolchain_variant is not defined or (fortran_toolchain_variant != "m2w64" and fortran_toolchain_variant != "msvc_gnu")
           then:
             - ${{ stdlib('c') }}
@@ -227,30 +224,33 @@ outputs:
             - ${{ compiler('m2w64_cxx') }}
             - ${{ compiler('m2w64_fortran') }}
         - cmake >=3.16
-        - libcurl
-        # - llvm-openmp
         - ninja
-        - numpy >=1.13.0
-        - openmpi
         - pkgconfig
-        - python
-        - if: unix
-          then: sysv_ipc
-        - yggdrasil-rapidjson >=1.1.0.5
-        - zeromq
+        # - libcurl
+        # # - llvm-openmp
+        # - numpy >=1.13.0
+        # - openmpi
+        # - python
+        # - if: unix
+        #   then: sysv_ipc
+        # - yggdrasil-rapidjson >=1.1.0.5
+        # - zeromq
       host:
-        # - llvm-openmp
-        - ninja
-        - numpy >=1.13.0
-        - openmpi
-        - pip
+        # - pip
         - python
+        - numpy
+        - if: match(python, ">=3.15")
+          then: libpython
+        # - llvm-openmp
+        - libcurl
+        - openmpi
         - if: unix
           then: sysv_ipc
         - yggdrasil-rapidjson >=1.1.0.5
         - zeromq
       run:
-        - yggdrasil-rapidjson >=1.1.0.5
+        - python
+        # - yggdrasil-rapidjson >=1.1.0.5
     tests:
       - package_contents:
           files:
@@ -337,32 +337,32 @@ outputs:
             - python
             - if: match(python, ">=3.15")
               then: libpython
-        # - python
-        # - numpy >=1.13.0
         - cmake >=3.16
-        - libcurl
-        - ninja
         - pkgconfig
+        - ninja
         - ${{ stdlib('c') }}
         - ${{ compiler('c') }}
         - ${{ compiler('cxx') }}
-        - libcurl
-        # - llvm-openmp
-        - openmpi
-        - if: unix
-          then: sysv_ipc
-        - yggdrasil-rapidjson >=1.1.0.5
-        - zeromq
+        # - libcurl
+        # # - llvm-openmp
+        # - openmpi
+        # - if: unix
+        #   then: sysv_ipc
+        # - yggdrasil-rapidjson >=1.1.0.5
+        # - zeromq
       host:
         - hatch-fancy-pypi-readme
-        # - llvm-openmp
-        - ninja
-        - numpy >=1.13.0
-        - openmpi
-        - pip
-        - python
         - scikit-build-core
         - setuptools_scm
+        - pip
+        - python
+        # - ninja
+        - if: match(python, ">=3.15")
+          then: libpython
+        - numpy
+        # - llvm-openmp
+        - libcurl
+        - openmpi
         - if: unix
           then: sysv_ipc
         - yggdrasil-rapidjson >=1.1.0.5

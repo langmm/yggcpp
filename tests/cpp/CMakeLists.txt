@@ -38,7 +38,7 @@ if(GTESTSRC_FOUND)
     endif()
 
     IF(GTEST_SOURCE_DIR)
-        add_subdirectory(${GTEST_SOURCE_DIR}/../ ${CMAKE_BINARY_DIR}/googletest)
+        add_subdirectory(${GTEST_SOURCE_DIR} ${CMAKE_BINARY_DIR}/googletest)
         set(TEST_LIBRARIES gtest gtest_main)
     else()
         set(TEST_LIBRARIES ${GTEST_LIBRARY})

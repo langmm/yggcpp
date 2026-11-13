@@ -11,7 +11,7 @@ name: Test of conda recipe build
 
 jobs:
   build-conda:
-    name: Build and test conda ${{ matrix.recipe }} on ${{ matrix.os }} (Varient ${{ matrix.variant }}, Python ${{ matrix.python-version }})
+    name: Build and test conda ${{ matrix.recipe }} on ${{ matrix.os }} ${{ matrix.vs-version }} (Varient ${{ matrix.variant }}, Python ${{ matrix.python-version }})
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -22,34 +22,78 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: ["3.11"]
         recipe: [recipe]  # , recipe-unified
-        variant: ["default"]
-        variant-flags: [""]
         include:
+          - variant: "default"
+            variant-flags: ""
+            vs-version: ""
+            vs-toolset-version: ""
+          # The default for windows can be changed here
+          # - os: windows-latest
+          #   variant: "default"
+          #   variant-flags: ""
+          #   vs-version: "vs2017"
+          #   vs-toolset-version: "14.1"
+          # Version using m2w64 C, C++ & Fortran
           - os: windows-latest
             python-version: "3.11"
             recipe: recipe
             variant: m2w64
             variant-flags: "--variant cxx_toolchain_variant=m2w64 --variant fortran_toolchain_variant=m2w64"
+            vs-version: "vs2017"
+            vs-toolset-version: "14.1"
+          # Version using m2w64 Fortran with m2w64 for C bindings
           - os: windows-latest
             python-version: "3.11"
             recipe: recipe
             variant: m2w64-fortran
             variant-flags: "--variant fortran_toolchain_variant=m2w64"
+            vs-version: "vs2017"
+            vs-toolset-version: "14.1"
+          # Version using m2w64 Fortran with MSVC for C bindings
           - os: windows-latest
             python-version: "3.11"
             recipe: recipe
             variant: msvc-gnu
             variant-flags: "--variant fortran_toolchain_variant=msvc_gnu"
+            vs-version: "vs2017"
+            vs-toolset-version: "14.1"
+          # Try different MSVC versions
           - os: windows-latest
             python-version: "3.11"
             recipe: recipe
-            variant: flang
+            variant: msvc-gnu
+            variant-flags: "--variant fortran_toolchain_variant=msvc_gnu"
+            vs-version: ""
+            vs-toolset-version: ""
+          - os: windows-latest
+            python-version: "3.11"
+            recipe: recipe
+            variant: msvc-gnu
+            variant-flags: "--variant fortran_toolchain_variant=msvc_gnu"
+            vs-version: "vs2022"
+            vs-toolset-version: "14.3"
+          - os: windows-latest
+            python-version: "3.11"
+            recipe: recipe
+            variant: msvc-gnu-vs2026
+            variant-flags: "--variant fortran_toolchain_variant=msvc_gnu"
+            vs-version: "vs2026"
+            vs-toolset-version: "14.5"
+          # Alternate compilers
+          - os: windows-latest
+            python-version: "3.11"
+            recipe: recipe
+            variant: flang-2017
             variant-flags: "--variant fortran_compiler=flang"
+            vs-version: "vs2017"
+            vs-toolset-version: "14.1"
           - os: windows-latest
             python-version: "3.11"
             recipe: recipe
-            variant: ifx
+            variant: ifx-2017
             variant-flags: "--variant fortran_compiler=ifx"
+            vs-version: "vs2017"
+            vs-toolset-version: "14.1"
       fail-fast: false
     steps:
       - name: Check out repository code
@@ -63,7 +107,9 @@ jobs:
       ###################################
       - name: Set up MSVC Compiler on windows
         uses: ilammy/msvc-dev-cmd@v1
-        if: matrix.os == 'windows-latest'
+        if: matrix.vs-toolset-version != ''
+        with:
+          toolset: "${{ matrix.vs-toolset-version }}"
 
       - name: Remove Strawberry Perl from PATH
         if: matrix.os == 'windows-latest'
@@ -86,13 +132,12 @@ jobs:
         with:
           environments: build-conda
 
-      - name: Build the conda package (Unix)
-        if: matrix.os != 'windows-latest'
+      - name: Build the conda package
+        if: matrix.vs-version == ''
         run: pixi run -e build-conda build-conda conda.recipe/${{ matrix.recipe }}.yaml -- --variant python=${{ matrix.python-version }} ${{ matrix.variant-flags }}
-      - name: Build the conda package (Windows)
-        if: matrix.os == 'windows-latest'
-        run: pixi run -e build-conda build-conda conda.recipe/${{ matrix.recipe }}.yaml -- --variant python=${{ matrix.python-version }} ${{ matrix.variant-flags }} --variant c_compiler=vs2017 --variant cxx_compiler=vs2017
-      # rattler-build build --recipe "conda.recipe/recipe.yaml" --output-dir $HOME/local_channel/ --variant python=${{ matrix.python-version }} --no-build-id --no-include-recipe
+      - name: Build the conda package (specific MSVC version)
+        if: matrix.vs-version != ''
+        run: pixi run -e build-conda build-conda conda.recipe/${{ matrix.recipe }}.yaml -- --variant python=${{ matrix.python-version }} ${{ matrix.variant-flags }} --variant c_compiler=${{ matrix.vs-version }} --variant cxx_compiler=${{ matrix.vs-version }}
 
   all_recipes_built:
     runs-on: ubuntu-latest

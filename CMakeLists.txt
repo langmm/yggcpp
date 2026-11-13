@@ -79,7 +79,7 @@ option(YGG_Python_LIBRARY_WRAP "Build the Yggdrasil Python interface library by 
 option(ALLOW_SKBUILD_NONPython "Allow the non-Python interfaces (C/C++/Fortran) to be built from SKBUILD" OFF)
 option(YGG_BUILD_TESTS "Build tests" OFF)
 # option(YGG_TEST_WITH_LLDB "Run tests with lldb" OFF)
-option(YGG_BUILD_THIRDPARTY_GTEST "Use gtest installation in 'thirdpart/gtest' by default if available" ON)
+option(YGG_BUILD_THIRDPARTY_GTEST "Use gtest installation in 'thirdpart/gtest' by default if available" OFF)
 option(YGG_SKIP_VALGRIND_TESTS "Disable valgrind tests" OFF)
 option(GENERATE_YGGDRASIL_RAPIDJSON_WRAPPER "Generate the yggdrasil_rapidjson wrapper from the C++ interface" OFF)
 option(GENERATE_INTERFACE "Generate the interface" OFF)

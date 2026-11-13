@@ -299,7 +299,7 @@ function(add_dynamic_dependencies TARGET)
     foreach(script ${EMBEDDED_TEST_SCRIPTS})
       set(ifixture copy_${script}_for_${TARGET})
       add_test(
-        ${ifixture}
+        NAME ${ifixture}
 	COMMAND ${CMAKE_COMMAND} -E copy ${script} ${ARGS_WORKING_DIR}
       )
       set_tests_properties(

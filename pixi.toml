@@ -56,7 +56,7 @@ llvm-openmp = "*"
 
 [activation.env]
 CMAKE_GENERATOR = "Ninja"
-YGGCPP_CONFIGURE_FLAGS_BASE = "-G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DPython3_EXECUTABLE=$PYTHON -DBUILD_CXX_LIBRARY=ON -DBUILD_Fortran_LIBRARY=ON -DBUILD_Python_LIBRARY=ON -DYGG_Fortran_REQUIRED=ON -DYGG_SKIP_VALGRIND_TESTS=ON -DYGG_ENABLE_ELF=OFF -DENABLE_RMQ=OFF"
+YGGCPP_CONFIGURE_FLAGS_BASE = "-G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_PREFIX_PATH=$CONDA_PREFIX -DPython3_EXECUTABLE=$PYTHON -DBUILD_CXX_LIBRARY=ON -DBUILD_Fortran_LIBRARY=ON -DBUILD_Python_LIBRARY=ON -DYGG_SKIP_VALGRIND_TESTS=ON -DYGG_ENABLE_ELF=OFF -DENABLE_RMQ=OFF -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON"
 YGGCPP_CONFIGURE_FLAGS_BASE2 = ""
 
 # Set these by default?
@@ -87,7 +87,7 @@ configure = {
     },
     {
       arg = "configure_flags",
-      default = "-DYGG_BUILD_TESTS=ON",
+      default = "-DYGG_Fortran_REQUIRED=ON -DYGG_BUILD_TESTS=ON",
     },
   ],
 }
@@ -100,7 +100,7 @@ build = {
     },
     {
       arg = "configure_flags",
-      default = "-DYGG_BUILD_TESTS=ON",
+      default = "-DYGG_Fortran_REQUIRED=ON -DYGG_BUILD_TESTS=ON",
     },
   ],
   depends-on = [
@@ -119,7 +119,7 @@ test = {
     },
     {
       arg = "configure_flags",
-      default = "-DYGG_BUILD_TESTS=ON",
+      default = "-DYGG_Fortran_REQUIRED=ON -DYGG_BUILD_TESTS=ON",
     },
   ],
   depends-on = [
@@ -143,26 +143,57 @@ install = {
   ]
 }
 configure-speed = {
-  cmd = "cmake --install build/all --prefix $CONDA_PREFIX && cmake -S tests/speedtest -B build/speed -G Ninja -DCOMM=ALL -DCMAKE_PREFIX_PATH=$CONDA_PREFIX",
+  # cmd = "cmake --install build/all --prefix {{ prefix }} && cmake -S tests/speedtest -B build/speed -G Ninja -DCOMM=ALL -DCMAKE_PREFIX_PATH={{ prefix }}",
+  cmd = "cmake -S tests/speedtest -B build/speed -G Ninja -DCOMM=ALL -DCMAKE_PREFIX_PATH={{ prefix }}",
   # -DENABLE_Fortran=OFF
+  args = [
+    {
+      arg = "prefix",
+      default = "_install",
+    },
+  ],
   depends-on = [
     {
-      task = "build",
-      args = ["all"],
+      # task = "build",
+      # args = ["all"],
       # $CONDA_PREFIX not expanded by shell if passed as argument to
       #   underlying install command
       # task = "install",
       # args = ["--prefix", "$CONDA_PREFIX"],
+      task = "install",
+      args = ["--prefix", "{{ prefix }}"],
     },
   ],
 }
 build-speed = {
   cmd = "cmake --build build/speed --config Release",
-  depends-on = ["configure-speed"],
+  args = [
+    {
+      arg = "prefix",
+      default = "_install",
+    },
+  ],
+  depends-on = [
+    {
+      task = "configure-speed",
+      args = ["{{ prefix }}"],
+    }
+  ],
 }
 test-speed = {
   cmd = "ctest --test-dir build/speed --output-on-failure -VV -C Release",
-  depends-on = ["build-speed"],
+  args = [
+    {
+      arg = "prefix",
+      default = "_install",
+    },
+  ],
+  depends-on = [
+    {
+      task = "build-speed",
+      args = ["{{ prefix }}"],
+    }
+  ],
 }
 all-tests = {
   description = "Run tests for all supported interfaces",
@@ -201,6 +232,7 @@ libpython = "3.15.*"
 [feature.cxx.dependencies]
 c-compiler = "*"
 cxx-compiler = "*"
+gtest = "*"
 
 [feature.cxx.tasks]
 configure-cxx = {
@@ -222,6 +254,9 @@ install-cxx = {
 # These variables are not set in pixi environments...
 [feature.fortran.activation.env]
 FC = "gfortran"
+
+[feature.fortran.dependencies]
+gtest = "*"
 
 [feature.fortran.target.unix.dependencies]
 fortran-compiler = "*"
@@ -293,7 +328,7 @@ test-valgrind = {
       task = "test",
       args = [
         "valgrind",
-        "-DCMAKE_BUILD_TYPE=Debug -DBUILD_Python_LIBRARY=OFF -DYGG_BUILD_TESTS=ON -DYGG_BUILD_Python_TESTS=OFF -DYGG_SKIP_VALGRIND_TESTS=OFF -DYGG_ENABLE_INSTRUMENTATION_OPT=OFF -DYGGDRASIL_DISABLE_Python_C_API=ON -DENABLE_OMP=OFF -DYGG_EMBED_Python=OFF"
+        "-DCMAKE_BUILD_TYPE=Debug -DBUILD_Python_LIBRARY=OFF -DYGG_BUILD_TESTS=ON -DYGG_BUILD_Python_TESTS=OFF -DYGG_Fortran_REQUIRED=ON -DYGG_SKIP_VALGRIND_TESTS=OFF -DYGG_ENABLE_INSTRUMENTATION_OPT=OFF -DYGGDRASIL_DISABLE_Python_C_API=ON -DENABLE_OMP=OFF -DYGG_EMBED_Python=OFF"
       ]
     },
   ],
@@ -314,7 +349,7 @@ test-asan = {
       task = "test",
       args = [
         "asan",
-        "-DCMAKE_BUILD_TYPE=Debug -DBUILD_Python_LIBRARY=ON -DYGG_BUILD_TESTS=ON -DYGG_BUILD_ASAN=ON -DYGG_BUILD_UBSAN=ON",  # -DYGGDRASIL_DISABLE_Python_C_API=ON",
+        "-DCMAKE_BUILD_TYPE=Debug -DBUILD_Python_LIBRARY=ON -DYGG_BUILD_TESTS=ON -DYGG_Fortran_REQUIRED=ON -DYGG_BUILD_ASAN=ON -DYGG_BUILD_UBSAN=ON",  # -DYGGDRASIL_DISABLE_Python_C_API=ON",
         "-E valgrind*",
       ],
     }
@@ -328,7 +363,7 @@ test-elf = {
       task = "test",
       args = [
         "elf",
-        "-DCMAKE_BUILD_TYPE=Debug -DBUILD_Python_LIBRARY=OFF -DYGG_BUILD_TESTS=ON -DYGG_BUILD_Python_TESTS=OFF -DYGG_ENABLE_ELF=ON"
+        "-DCMAKE_BUILD_TYPE=Debug -DBUILD_Python_LIBRARY=OFF -DYGG_BUILD_TESTS=ON -DYGG_BUILD_Python_TESTS=OFF -DYGG_Fortran_REQUIRED=ON -DYGG_ENABLE_ELF=ON"
       ],
     }
   ]
